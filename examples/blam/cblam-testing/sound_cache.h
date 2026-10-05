@@ -109,7 +109,6 @@ struct SoundCache
             return;
         for(auto const& range : ranges_)
         {
-            cDebug("- Range");
             ranges.emplace_back(
                 SoundItem::pitch_range_t{
                     .range = &range,
@@ -120,7 +119,6 @@ struct SoundCache
             auto& out = ranges.back();
             for(auto const& perm : perms_.value())
             {
-                cDebug("  - Permutation");
                 out.permutations.emplace_back(
                     SoundItem::permutation_t{
                         .permutation = &perm,
@@ -235,7 +233,6 @@ struct SoundCache
             return {};
         SoundItem out;
 
-        cDebug("Sound:");
         switch(tag.tag_class)
         {
         case blam::tag_class_t::lsnd:
@@ -252,7 +249,6 @@ struct SoundCache
         }
 
         // TODO: Make smartness about discarding unplayed buffers
-        cDebug("Sound:");
         upload_samples(out);
 
         return out;

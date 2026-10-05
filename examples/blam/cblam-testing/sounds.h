@@ -44,6 +44,7 @@ struct BackgroundSoundTransitionEvent
 
     /* nullptr = fade out only, no new track */
     blam::tagref_t const* sound{nullptr};
+    blam::tag_t const*    sound_tag{nullptr};
 };
 
 struct SoundPreferences : compo::SubsystemBase

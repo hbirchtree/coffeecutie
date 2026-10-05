@@ -55,6 +55,7 @@ struct sound_unit_t
         {
             SoundItem::role_t role{};
             u32               pitch{0};
+            u32               permutation_group{0};
             u32               permutation{0};
         } active;
 
@@ -107,6 +108,7 @@ struct SoundSystem
     SoundCache<Ver>&           sound_cache;
     blam::tag_index_view<Ver>& index;
     LoadingStatus const*       loading;
+    stl_types::math::rng       random;
 
     std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>>
         cluster_events;
@@ -255,8 +257,18 @@ struct SoundSystem
                     meta.active.permutation = 0;
                     break;
                 case role_t::loop:
-                    // TODO: Add 50/50 chance of alt_loop
-                    meta.active.permutation = 0;
+                    // Check first which permutation group it's at
+                    // In title theme this has three groups, so switch between them
+                    meta.active.permutation_group ++;
+                    if(meta.active.permutation_group < pitch.range->actual_permutation_count)
+                    {
+                        // For now be dumb and simply advance
+                        meta.active.permutation = meta.active.permutation_group;
+                    } else
+                    {
+                        meta.active.permutation       = 0;
+                        meta.active.permutation_group = 0;
+                    }
                     break;
                 case role_t::alt_loop:
                     meta.active.role        = role_t::loop;
@@ -420,7 +432,10 @@ struct SoundSystem
     {
         auto sound = sound_cache.predict(tagref);
         if(!sound.valid())
+        {
+            cWarning("Tried to load sound, failed: {}", index.name_of(tagref));
             return {};
+        }
         SoundItem const& item  = (*sound_cache.find(sound)).second;
         auto select_first_role = [](SoundItem::track_t const& track) {
             if(track.sounds.find(SoundItem::role_t::start) !=
@@ -437,6 +452,7 @@ struct SoundSystem
                     .source = snd.alloc_source(),
                 });
         }
+        cDebug("Created sound unit tracks={}", tracks.size());
         return sound_unit_t{
             .source = tagref,
             .index  = sound,
@@ -446,6 +462,8 @@ struct SoundSystem
     }
 
     static constexpr u64 background_entity = 0;
+    /* Menu music has no cluster, so cluster changes must not replace it */
+    static constexpr u64 title_entity = 0x7fffffffffffffffULL;
 
     static blam::tagref_t const* resolve_bg_sound(
         BSPItem const* bsp, u32 cluster)
@@ -461,9 +479,25 @@ struct SoundSystem
         return nullptr;
     }
 
-    void transition_background(blam::tagref_t const* sound)
+    void transition_background(
+        blam::tagref_t const* sound,
+        blam::tag_t const* sound_tag = nullptr)
     {
-        auto it = active_sounds.find(background_entity);
+        blam::tagref_t tmp{};
+        u64            slot = background_entity;
+        if(sound_tag)
+        {
+            // Synthesize a fake tagref_t
+            // Hopefully only needed for the title track?
+            tmp   = sound_tag->as_ref();
+            sound = &tmp;
+            slot  = title_entity;
+        }
+        if(sound)
+            cDebug("Background music transition: {}", index.name_of(*sound));
+        else
+            cDebug("Clearing background music");
+        auto it = active_sounds.find(slot);
         if(it != active_sounds.end())
         {
             if(sound && it->second.source.tag_id == sound->tag_id)
@@ -484,7 +518,7 @@ struct SoundSystem
             if(unit.index.valid())
             {
                 stat_started++;
-                active_sounds[background_entity] = std::move(unit);
+                active_sounds[slot] = std::move(unit);
             }
         }
     }
@@ -542,7 +576,7 @@ struct SoundSystem
         {
             auto const& trans =
                 *reinterpret_cast<BackgroundSoundTransitionEvent const*>(data);
-            transition_background(trans.sound);
+            transition_background(trans.sound, trans.sound_tag);
             return;
         }
 

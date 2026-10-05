@@ -15,6 +15,7 @@
 #include <blam/volta/blam_p8_palette.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_shaders.h>
+#include <blam/volta/blam_sound.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_swizzle.h>
 #include <blam/volta/blam_ui.h>
@@ -64,6 +65,7 @@ blam::map_ptr g_raw_magic;
 bool          g_dump_hex = false;
 bool          g_dump_mirrors  = false;
 size_t        g_scan_window   = 0;
+bool          g_find_refs     = false;
 bool          g_dump_player   = false;
 bool          g_dump_scenario = false;
 bool          g_dump_bones    = false;
@@ -2789,20 +2791,30 @@ void dump_player_biped(
     fmt::print("no globals tag\n");
 }
 
-/* Walks a tag's bytes looking for embedded tagrefs, for tags whose layout is
- * not described anywhere. A hit must carry a tag id present in the index whose
- * class agrees with the reference -- strong enough that false positives are
- * rare. Looked up against a prebuilt map because find() throws on a malformed
- * tagref, which is exactly what scanning produces. */
+/* Tags by id, for resolving raw tag ids and validating scanned tagrefs.
+ * Looked up against a prebuilt map because find() throws on a malformed
+ * tagref. */
 template<typename Ver>
-void scan_tagrefs(
-    blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
+std::map<u32, blam::tag_t const*> const& tags_by_id(
+    blam::tag_index_view<Ver> const& index)
 {
     static std::map<u32, blam::tag_t const*> by_id;
     if(by_id.empty())
         for(blam::tag_t const& t : index)
             if(t.valid())
                 by_id.emplace(t.tag_id, &t);
+    return by_id;
+}
+
+/* Walks a tag's bytes looking for embedded tagrefs, for tags whose layout is
+ * not described anywhere. A hit must carry a tag id present in the index whose
+ * class agrees with the reference -- strong enough that false positives are
+ * rare. */
+template<typename Ver>
+void scan_tagrefs(
+    blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
+{
+    auto const& by_id = tags_by_id(index);
 
     auto data = tag.template data<u8>(g_magic);
     if(!data.has_value())
@@ -3070,6 +3082,466 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
 }
 
 template<typename Ver>
+std::string describe_tag_id(blam::tag_index_view<Ver> const& index, u32 id)
+{
+    auto const& by_id = tags_by_id(index);
+    auto        it    = by_id.find(id);
+    if(it == by_id.end())
+        return fmt::format("<unknown 0x{:x}>", id);
+    return fmt::format(
+        "[{}] {}",
+        it->second->tagclass[0].str(),
+        it->second->to_name().to_string(g_magic));
+}
+
+/* Every 4-byte-aligned tagref in [base, base+size) that resolves to a real
+ * tag of the class it claims */
+template<typename Ver>
+void scan_region_tagrefs(
+    blam::tag_index_view<Ver> const& index, u8 const* base, size_t size)
+{
+    auto const& by_id = tags_by_id(index);
+    for(size_t off = 0; off + 16 <= size; off += 4)
+    {
+        auto const* r = reinterpret_cast<blam::tagref_t const*>(base + off);
+        if(!r->valid())
+            continue;
+        auto it = by_id.find(r->tag_id);
+        if(it == by_id.end() || it->second->tag_class() != r->tag_class)
+            continue;
+        fmt::print(
+            "    +0x{:06x}  {}\n", off, describe_tag_id(index, r->tag_id));
+    }
+}
+
+/* Prints the words of a padding run that are not zero */
+template<size_t N>
+void print_nonzero(char const* label, u32 const (&words)[N])
+{
+    bool any = false;
+    for(size_t i = 0; i < N; i++)
+    {
+        u32 const w = blam::from_le(words[i]);
+        if(w == 0)
+            continue;
+        if(!any)
+            fmt::print("    {}:", label);
+        any = true;
+        f32 f;
+        memcpy(&f, &w, sizeof(f));
+        fmt::print(" [{}]=0x{:08x}({:g})", i, w, f);
+    }
+    if(any)
+        fmt::print("\n");
+}
+
+/* A snd!'s pitch ranges and their permutation chains. Permutations below
+ * actual_permutation_count are the ones playback may start on; each follows
+ * next_permutation_idx until -1. Anything not reachable from a start is
+ * listed separately so it stands out. */
+template<typename Ver>
+void dump_snd(blam::tag_index_view<Ver> const& index, blam::tagref_t const& ref)
+{
+    using namespace blam::sound;
+    auto res = index.template resource<sound>(ref);
+    if(!res.has_value())
+    {
+        fmt::print("    <sound data unavailable (sounds.map missing?)>\n");
+        return;
+    }
+    auto const& [tag, snd, heap] = res.value();
+    fmt::print("    ");
+    print_enum("type", snd->type);
+    print_enum("codec", snd->codec);
+    print_enum("channels", snd->channels);
+    print_enum("rate", snd->sample_rate);
+    print_enum("flags", snd->flags);
+    fmt::print(
+        "gain={} distance=[{}, {}] max_play_time={}\n",
+        snd->gain_modifier,
+        snd->min_distance,
+        snd->max_distance,
+        snd->maximum_play_time);
+    if(snd->promotion_sound.valid())
+        fmt::print(
+            "    promotion={} count={}\n",
+            snd->promotion_sound.to_name().to_string(g_magic),
+            snd->promotion_count);
+
+    auto ranges = index.deref(*tag, snd->pitch_ranges_);
+    if(!ranges.has_value())
+    {
+        fmt::print("    pitch ranges unreadable\n");
+        return;
+    }
+    for(auto [ri, range] : stl_types::enumerate(ranges.value()))
+    {
+        auto perms = index.deref(*tag, range.permutations_);
+        u32  n     = perms.has_value() ? perms.value().size() : 0;
+        fmt::print(
+            "    pitch_range[{}] '{}' natural={} bend=[{}, {}] "
+            "actual_permutation_count={} permutations={}\n",
+            ri,
+            range.name.str(),
+            range.natural_pitch,
+            range.bend_bounds[0],
+            range.bend_bounds[1],
+            range.actual_permutation_count,
+            n);
+        if(n == 0)
+            continue;
+        auto const& p = perms.value();
+        for(auto [pi, perm] : stl_types::enumerate(p))
+            fmt::print(
+                "      perm[{:>3}] '{}' next={:>3} gain={} skip={} "
+                "buffer_size={} sample_size={}\n",
+                pi,
+                perm.name.str(),
+                perm.next_permutation_idx,
+                perm.gain,
+                perm.skip_fraction,
+                perm.buffer_size,
+                perm.sample_size);
+
+        std::vector<bool> reached(n, false);
+        u32 const starts = std::min<u32>(
+            n, static_cast<u32>(std::max<i16>(range.actual_permutation_count, 0)));
+        for(u32 s = 0; s < starts; s++)
+        {
+            fmt::print("      chain from {}:", s);
+            i32 cur = static_cast<i32>(s);
+            u32 hops = 0;
+            while(cur >= 0 && static_cast<u32>(cur) < n && hops++ <= n)
+            {
+                fmt::print(" {}", cur);
+                reached[cur] = true;
+                cur = p[cur].next_permutation_idx;
+            }
+            if(cur == -1)
+                fmt::print(" -> end\n");
+            else
+                fmt::print(" -> {} (bad)\n", cur);
+        }
+        std::string orphans;
+        for(u32 i = 0; i < n; i++)
+            if(!reached[i])
+                orphans += fmt::format(" {}", i);
+        if(!orphans.empty())
+            fmt::print("      not reachable from a start:{}\n", orphans);
+    }
+}
+
+template<typename Ver>
+void dump_lsnd(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
+{
+    using namespace blam::sound;
+    auto lsnd = tag.template data<looping_sound>(g_magic);
+    if(!lsnd.has_value())
+        return;
+    auto const* l = lsnd.value();
+    fmt::print("  ");
+    print_enum("flags", l->flags);
+    fmt::print("zero_detail_period={}\n", l->zero_detail_sound_period);
+
+    auto print_ref = [&](char const* role, blam::tagref_t const& ref) {
+        if(!ref.valid())
+            return;
+        fmt::print("   {}: {}\n", role, ref.to_name().to_string(g_magic));
+        dump_snd(index, ref);
+    };
+    if(auto tracks = index.deref(l->tracks); tracks.has_value())
+        for(auto [ti, t] : stl_types::enumerate(tracks.value()))
+        {
+            fmt::print("  track[{}] ", ti);
+            print_enum("flags", t.flags);
+            fmt::print(
+                "gain={} fade_in={} fade_out={}\n",
+                t.gain,
+                t.fade_in_duration,
+                t.fade_out_duration);
+            print_ref("start", t.start);
+            print_ref("loop", t.loop);
+            print_ref("end", t.end);
+            print_ref("alternate_loop", t.alternate_loop);
+            print_ref("alternate_end", t.alternate_end);
+        }
+    if(auto details = index.deref(l->detail_sounds); details.has_value())
+        for(auto [di, d] : stl_types::enumerate(details.value()))
+        {
+            fmt::print(
+                "  detail[{}] period=[{}, {}] gain={}\n",
+                di,
+                d.random_period_bounds[0],
+                d.random_period_bounds[1],
+                d.gain);
+            print_ref("sound", d.sound);
+        }
+}
+
+/* sbsp tag data is not behind the tag index entry; it is a separate region
+ * that the scenario's bsp_info block points at, with its own magic. */
+template<typename Ver>
+void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
+{
+    using namespace blam::bsp;
+
+    auto scn = index.scenario();
+    if(!scn.has_value())
+    {
+        fmt::print("  no scenario tag\n");
+        return;
+    }
+    auto infos = scn.value()->bsp_info.data(index.magic());
+    if(infos.has_error())
+    {
+        fmt::print("  scenario bsp_info unreadable\n");
+        return;
+    }
+
+    for(info const& bsp : infos.value())
+    {
+        if(bsp.tag.tag_id != tag.tag_id)
+            continue;
+        auto const magic   = bsp.bsp_magic(index.magic());
+        auto       maybe_h = bsp.to_header(index.magic());
+        fmt::print(
+            "  section file_offset=0x{:x} size=0x{:x} magic=0x{:x}\n",
+            blam::from_le(bsp.offset),
+            blam::from_le(bsp.size),
+            blam::from_le(bsp.magic));
+        if(!maybe_h.has_value())
+        {
+            fmt::print("  header unreadable\n");
+            return;
+        }
+        header const& h = *maybe_h.value();
+
+        fmt::print(
+            "  lightmaps={} vehicle floor={} ceiling={}\n",
+            h.lightmap_.valid() ? h.lightmap_.to_name().to_string(g_magic)
+                                : sv("<none>"),
+            h.vehicle_floor,
+            h.vehicle_ceiling);
+        print_nonzero("unknown1", h.unknown1);
+
+        auto count = [](char const* label, auto const& ref) {
+            fmt::print(
+                "    {:<22} {}\n", label, blam::from_le(ref.count));
+        };
+        fmt::print("  blocks:\n");
+        count("collision_materials", h.collision_materials);
+        count("collision_header", h.collision_header);
+        count("nodes", h.nodes);
+        count("leaves", h.leaves);
+        count("leaf_surfaces", h.leaf_surfaces);
+        count("surfaces", h.surfaces);
+        count("lightmaps", h.lightmaps);
+        count("lens_flares", h.lens_flares);
+        count("lens_flare_markers", h.lens_flare_markers);
+        count("clusters", h.clusters);
+        count("cluster_portals", h.cluster_portals);
+        count("breakable_surfaces", h.breakables_surfaces);
+        count("fog_planes", h.fog_planes);
+        count("fog_regions", h.fog_regions);
+        count("weather_palettes", h.weather_palettes);
+        count("weather_polyhedras", h.weather_polyhedras);
+        count("pathfinding_surfaces", h.pathfinding_surfaces);
+        count("pathfinding_edges", h.pathfinding_edges);
+        count("background_sound", h.background_sound);
+        count("sound_env", h.sound_env);
+        count("markers", h.markers);
+        count("detail_objects", h.detail_objects);
+        count("runtime_decals", h.runtime_decals);
+        count("leaf_map_leaves", h.leaf_map_leaves);
+        count("leaf_map_portals", h.leaf_map_portals);
+        fmt::print("    cluster_data_size      {}\n", h.cluster_data_size);
+        fmt::print("    sound_pas_data_size    {}\n", h.sound_pas_data_size);
+        print_nonzero("padding0", h.padding0);
+        print_nonzero("padding1", h.padding1);
+        print_nonzero("padding2", h.padding2);
+        print_nonzero("padding3", h.padding3);
+        print_nonzero("padding4", h.padding4);
+        print_nonzero("padding5", h.padding5);
+        print_nonzero("unknown4", h.unkown4);
+
+        auto name_of = [](blam::tagref_t const& ref) {
+            return ref.valid() ? ref.to_name().to_string(g_magic)
+                               : sv("<none>");
+        };
+
+        if(auto flares = h.lens_flares.data(magic); flares.has_value())
+            for(auto [i, flare] : stl_types::enumerate(flares.value()))
+                fmt::print("  lens_flare[{}] {}\n", i, name_of(flare));
+
+        if(auto pal = h.weather_palettes.data(magic); pal.has_value())
+            for(auto [i, w] : stl_types::enumerate(pal.value()))
+                fmt::print(
+                    "  weather[{}] '{}' particles={} wind={}\n",
+                    i,
+                    w.name.str(),
+                    name_of(w.particle_system),
+                    name_of(w.wind));
+
+        if(auto pal = h.background_sound.data(magic); pal.has_value())
+            for(auto [i, s] : stl_types::enumerate(pal.value()))
+            {
+                /* Guerilla: 4 bytes pad, then a 32-char scale function */
+                std::string_view scale(
+                    reinterpret_cast<char const*>(&s.padding[1]),
+                    strnlen(reinterpret_cast<char const*>(&s.padding[1]), 32));
+                fmt::print(
+                    "  background_sound[{}] '{}' sound={} scale_function='{}'\n",
+                    i,
+                    s.name.str(),
+                    name_of(s.bg_sound),
+                    scale);
+                print_nonzero("padding", s.padding);
+            }
+
+        if(auto pal = h.sound_env.data(magic); pal.has_value())
+            for(auto [i, s] : stl_types::enumerate(pal.value()))
+                fmt::print(
+                    "  sound_env[{}] '{}' environment={}\n",
+                    i,
+                    s.name.str(),
+                    name_of(s.environment));
+
+        if(auto markers = h.markers.data(magic); markers.has_value())
+            for(auto [i, m] : stl_types::enumerate(markers.value()))
+                fmt::print(
+                    "  marker[{}] '{}' pos={}\n", i, m.name.str(), m.position);
+
+        if(auto clusters = h.clusters.data(magic); clusters.has_value())
+            for(auto [i, c] :
+                stl_types::enumerate(clusters.value()))
+            {
+                fmt::print(
+                    "  cluster[{}] sky={} fog={} bg_sound={} sound_env={} "
+                    "weather={} transition_bsp={} subclusters={} mirrors={} "
+                    "portals={} predicted={}\n",
+                    i,
+                    c.sky,
+                    c.fog,
+                    c.background_sound,
+                    c.sound_env,
+                    c.weather,
+                    c.transition_bsp,
+                    blam::from_le(c.sub_clusters.count),
+                    blam::from_le(c.mirrors.count),
+                    blam::from_le(c.portals.count),
+                    blam::from_le(c.predicted_resources.count));
+                print_nonzero("unknown1", c.unknown1);
+                if(auto res = c.predicted_resources.data(magic);
+                   res.has_value())
+                    for(predicted_resource const& r : res.value())
+                        fmt::print(
+                            "    predicted {}\n",
+                            describe_tag_id(index, r.tag_id));
+            }
+
+        /* Anything the struct does not describe yet still shows up here */
+        fmt::print("  tagrefs anywhere in the section:\n");
+        scan_region_tagrefs(
+            index,
+            reinterpret_cast<u8 const*>(index.magic().base_ptr) +
+                blam::from_le(bsp.offset),
+            blam::from_le(bsp.size));
+        return;
+    }
+    fmt::print("  not listed in the scenario's bsp_info\n");
+}
+
+/* Every place in the map file that holds this tag's id: full tagrefs,
+ * predicted resources, script node data. Each hit is attributed to the tag
+ * whose data starts closest before it, which is only a guess for data that
+ * lives in a shared region. */
+template<typename Ver>
+void find_tag_id_refs(
+    blam::tag_index_view<Ver> const& index, blam::tag_t const& target)
+{
+    auto const* file  = reinterpret_cast<u8 const*>(g_raw_magic.base_ptr);
+    size_t const size = g_raw_magic.max_size;
+
+    struct region
+    {
+        size_t              start;
+        blam::tag_t const*  tag;
+    };
+    std::vector<region> regions;
+    for(blam::tag_t const& t : index)
+    {
+        if(!t.valid() || t.tag_class() == blam::tag_class_t::sbsp)
+            continue;
+        if(t.storage == blam::tag_storage_t::external)
+            continue;
+        auto d = t.template data<u8>(g_magic);
+        if(!d.has_value())
+            continue;
+        auto const* p = d.value();
+        if(p < file || p >= file + size)
+            continue;
+        regions.push_back({static_cast<size_t>(p - file), &t});
+    }
+    if(auto scn = index.scenario(); scn.has_value())
+        if(auto infos = scn.value()->bsp_info.data(index.magic());
+           infos.has_value())
+            for(blam::bsp::info const& bsp : infos.value())
+            {
+                auto it = tags_by_id(index).find(bsp.tag.tag_id);
+                if(it != tags_by_id(index).end())
+                    regions.push_back({blam::from_le(bsp.offset), it->second});
+            }
+    std::sort(regions.begin(), regions.end(), [](auto const& a, auto const& b) {
+        return a.start < b.start;
+    });
+
+    u32 const id   = target.tag_id;
+    u32       hits = 0;
+    for(size_t off = 0; off + 4 <= size; off += 4)
+    {
+        u32 v;
+        memcpy(&v, file + off, sizeof(v));
+        if(v != id)
+            continue;
+        /* The index entry itself */
+        if(file + off == reinterpret_cast<u8 const*>(&target.tag_id))
+            continue;
+        hits++;
+
+        bool full_ref = false;
+        if(off >= 12)
+        {
+            u32 cls;
+            memcpy(&cls, file + off - 12, sizeof(cls));
+            full_ref = cls == static_cast<u32>(target.tag_class());
+        }
+
+        auto it = std::upper_bound(
+            regions.begin(), regions.end(), off, [](size_t o, region const& r) {
+                return o < r.start;
+            });
+        if(it == regions.begin())
+        {
+            fmt::print(
+                "  file+0x{:08x} {} (before any tag data)\n",
+                off,
+                full_ref ? "tagref" : "raw id");
+            continue;
+        }
+        --it;
+        fmt::print(
+            "  file+0x{:08x} {}  in [{}] {} +0x{:x}\n",
+            off,
+            full_ref ? "tagref" : "raw id",
+            it->tag->tagclass[0].str(),
+            it->tag->to_name().to_string(g_magic),
+            off - it->start);
+    }
+    if(hits == 0)
+        fmt::print("  no references\n");
+}
+
+template<typename Ver>
 void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 {
     using namespace blam::shader;
@@ -3083,6 +3555,12 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         auto data = tag.template data<T>(g_magic);
         return data.has_value() ? data.value() : nullptr;
     };
+
+    if(g_find_refs)
+    {
+        find_tag_id_refs(index, tag);
+        return;
+    }
 
     if(g_scan_window > 0)
     {
@@ -3242,6 +3720,15 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         {
             dump_antr(info);
         }
+        break;
+    case blam::tag_class_t::sbsp:
+        dump_sbsp(index, tag);
+        break;
+    case blam::tag_class_t::lsnd:
+        dump_lsnd(index, tag);
+        break;
+    case blam::tag_class_t::snd:
+        dump_snd(index, tag.as_ref());
         break;
     default:
         fmt::print("  (no decoder for this class)\n");
@@ -3473,6 +3960,23 @@ void open_map(
         g_have_bitmaps_file      = true;
     }
 
+    /* PC and Custom Edition keep sound headers' pitch ranges and samples in
+     * sounds.map; Xbox stores them in the map itself. */
+    Coffee::Resource sounds_file(
+        platform::url::constructors::MkUrl(
+            path.substr(0, path.find_last_of('/') + 1) + "sounds.map"));
+    if(map.map->version == blam::version_t::xbox)
+        index.add_atlas(blam::atlas_type_t::sounds, map.magic);
+    else if(Coffee::FileMap(sounds_file))
+    {
+        auto bytes = sounds_file.data();
+        index.add_atlas(
+            blam::atlas_type_t::sounds,
+            blam::map_ptr(semantic::Span<const blam::byte_t>(
+                reinterpret_cast<blam::byte_t const*>(bytes.data()),
+                bytes.size())));
+    }
+
     if(g_dump_mirrors)
     {
         dump_mirrors<Ver>(map, index);
@@ -3573,6 +4077,9 @@ int inspect_main()
          "Scan this many bytes of each tag for embedded tag references",
          cxxopts::value<int>())
         //
+        ("find-refs",
+         "Find every occurrence of each matching tag's id in the map file")
+        //
         ("dump-player-biped",
          "Resolve the player's spawn unit and its model from globals")
         //
@@ -3615,6 +4122,7 @@ int inspect_main()
     bool list_only  = arguments.count("list") > 0;
     g_dump_hex      = arguments.count("dump-hex") > 0;
     g_dump_mirrors  = arguments.count("dump-mirrors") > 0;
+    g_find_refs     = arguments.count("find-refs") > 0;
     g_dump_player   = arguments.count("dump-player-biped") > 0;
     g_dump_scenario = arguments.count("dump-scenario") > 0;
     g_spawn_hex     = arguments.count("dump-spawn-hex") > 0;

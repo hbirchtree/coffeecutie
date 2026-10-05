@@ -82,6 +82,24 @@ static void load_sounds(compo::EntityContainer& e, blam::map_ptr const& magic)
     sounds.load_sounds_from(magic);
     loading_status.loaded_sounds = LoadingStatus::loaded;
     loading_status.check_all_loaded();
+
+    if(files.container.map->map_type == blam::maptype_t::ui)
+    {
+        auto* sound_bus = e.service<comp_app::EventBus<SoundEvent>>();
+        auto title_tag_name = "sound\\music\\title1\\title1";
+        auto title = sounds.index.find(title_tag_name);
+        if(title == sounds.index.end())
+        {
+            cWarning("Title track not found: {}", title_tag_name);
+            return;
+        } else
+            cDebug("Title track found, queueing");
+        SoundEvent ev{.type = SoundEvent::background_sound_transition};
+        BackgroundSoundTransitionEvent transition{
+            .sound_tag = &(*title),
+        };
+        sound_bus->process(ev, &transition);
+    }
 }
 
 static void init_map(
