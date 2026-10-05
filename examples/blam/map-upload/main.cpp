@@ -1,5 +1,6 @@
 #include <blam/dimeter/h2_file_header.h>
 #include <blam/dimeter/h2_tag_index.h>
+#include <blam/transcode/map_transcode.h>
 #include <blam/volta/blam_atlas.h>
 #include <blam/volta/blam_file_header.h>
 #include <blam/volta/blam_stl.h>
@@ -10,8 +11,12 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
+#include <cstdlib>
 #include <cstring>
+#include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 #if !defined(BLAM_HAS_COMPRESSION)
@@ -23,7 +28,19 @@
  * is, and only hands the whole file over to blam_upload_decompress() when it
  * is a compressed map. Everything else goes into IndexedDB untouched. For
  * Halo 2 maps it also reads the 32-byte tag index the header points to and
- * passes it to blam_upload_identify_halo2(). */
+ * passes it to blam_upload_identify_halo2().
+ *
+ * Halo PC, Custom Edition and Xbox maps can have their bitmaps transcoded on
+ * the way in (blam_upload_transcode_*), for GPUs that cannot sample BCn, and
+ * Xbox maps always get their swizzled textures made linear. A PC level map's
+ * images live in bitmaps.map, so the original bitmaps.map is held here while
+ * every level map dropped with it is transcoded. A map takes minutes to
+ * encode, so that runs on its own thread and the page polls it. */
+
+/* JS refers to the heap as it was when the page last looked. Memory grown
+ * from the worker leaves those views on the old, shorter buffer, and touching
+ * HEAPU8 from library code is what renews them. */
+EM_JS(void, refresh_heap_views, (), { HEAPU8.length; });
 
 namespace {
 
@@ -68,6 +85,34 @@ upload_info_t info{};
 std::array<char, sizeof(blam::dimeter::file_header_xbox_t)> halo2_header;
 std::vector<char>                                           result;
 std::string                                                 last_error;
+
+struct transcode_session_t
+{
+    std::optional<mtx::kernel_fn> kernel;
+    bool                          deswizzle{true};
+    /* Original bitmaps.map, malloc()ed by the page and owned from here */
+    libc_types::u8*    bitmaps{nullptr};
+    u32                bitmaps_size{0};
+    std::vector<char>  out_bitmaps;
+    mtx::shared_cache  cache;
+
+    /* The map being transcoded, malloc()ed by the page */
+    char*              map{nullptr};
+    u32                map_size{0};
+    std::thread        worker;
+    std::atomic<bool>  finished{false};
+    bool               ok{false};
+    std::string        error;
+    mtx::map_stats     stats;
+    /* Images done and in total, read from JS while the worker runs */
+    std::atomic<u32>   progress[2]{};
+};
+
+/* Read field by field from JS */
+static_assert(sizeof(mtx::map_stats) == 24);
+static_assert(sizeof(std::atomic<u32>[2]) == 8);
+
+transcode_session_t transcode;
 
 kind_t kind_of(blam::version_t version)
 {
@@ -354,6 +399,158 @@ EMSCRIPTEN_KEEPALIVE u32 blam_upload_result_size()
 EMSCRIPTEN_KEEPALIVE void blam_upload_result_free()
 {
     result = {};
+}
+
+/*!
+ * \brief Pick the kernel for blam_upload_transcode_map(): ES3 (ETC2),
+ * ES2, PowerVR or Gekko, see mtx::make_kernel(), or "" for none. With
+ * deswizzle, Xbox textures stored swizzled are made linear.
+ */
+EMSCRIPTEN_KEEPALIVE i32 blam_upload_transcode_target(
+    char const* target, i32 deswizzle)
+{
+    last_error.clear();
+    transcode.deswizzle = deswizzle != 0;
+    if(!*target)
+    {
+        transcode.kernel = mtx::kernel_fn{};
+        return 1;
+    }
+    transcode.kernel = mtx::make_kernel(target);
+    if(!transcode.kernel)
+        last_error = "unknown transcode target";
+    return transcode.kernel.has_value();
+}
+
+/*!
+ * \brief Hold on to the original bitmaps.map for the level maps transcoded
+ * after this. Takes ownership of data, which must come from malloc().
+ */
+EMSCRIPTEN_KEEPALIVE void blam_upload_transcode_begin(char* data, u32 size)
+{
+    std::free(transcode.bitmaps);
+    transcode.bitmaps      = reinterpret_cast<libc_types::u8*>(data);
+    transcode.bitmaps_size = size;
+    transcode.out_bitmaps.assign(
+        transcode.bitmaps, transcode.bitmaps + transcode.bitmaps_size);
+    transcode.cache = {};
+}
+
+/*!
+ * \brief Start transcoding one uncompressed Halo PC, Custom Edition or Xbox map,
+ * which takes ownership of data (from malloc()). Poll it with
+ * blam_upload_transcode_poll(). Without blam_upload_transcode_begin(), only
+ * images stored in the map itself are transcoded.
+ */
+EMSCRIPTEN_KEEPALIVE i32 blam_upload_transcode_map(char* data, u32 size)
+{
+    result.clear();
+    last_error.clear();
+    if(!transcode.kernel || transcode.worker.joinable())
+    {
+        last_error = transcode.kernel ? "already transcoding a map"
+                                      : "no transcode target";
+        std::free(data);
+        return 0;
+    }
+
+    /* Allocated here, so the worker only fills it in */
+    result.assign(data, data + size);
+    transcode.map      = data;
+    transcode.map_size = size;
+    transcode.finished = false;
+    transcode.progress[0] = 0;
+    transcode.progress[1] = 0;
+    transcode.worker      = std::thread([] {
+        auto& t = transcode;
+        try
+        {
+            auto res = mtx::transcode_map(
+                gsl::span(reinterpret_cast<libc_types::u8 const*>(t.map), t.map_size),
+                gsl::span<libc_types::u8 const>(t.bitmaps, t.bitmaps_size),
+                gsl::span(
+                    reinterpret_cast<libc_types::u8*>(result.data()),
+                    result.size()),
+                gsl::span(
+                    reinterpret_cast<libc_types::u8*>(t.out_bitmaps.data()),
+                    t.out_bitmaps.size()),
+                *t.kernel,
+                {
+                    .threads =
+                        std::max(1u, std::thread::hardware_concurrency()),
+                    .deswizzle = t.deswizzle,
+                    .cache     = &t.cache,
+                    .progress =
+                        [](u32 done, u32 total) {
+                            transcode.progress[0] = done;
+                            transcode.progress[1] = total;
+                        },
+                });
+            t.ok    = res.ok;
+            t.error = res.error;
+            t.stats = res.stats;
+        } catch(std::exception const& e)
+        {
+            t.ok    = false;
+            t.error = e.what();
+        }
+        t.finished = true;
+    });
+    return 1;
+}
+
+/*!
+ * \brief 0 while the map is being transcoded, then 1 when it was, with the
+ * patched map as the result, or -1 when it failed (blam_upload_error())
+ */
+EMSCRIPTEN_KEEPALIVE i32 blam_upload_transcode_poll()
+{
+    refresh_heap_views();
+    if(!transcode.finished)
+        return 0;
+    transcode.worker.join();
+    std::free(transcode.map);
+    transcode.map = nullptr;
+    refresh_heap_views();
+    if(!transcode.ok)
+    {
+        last_error = transcode.error;
+        result     = {};
+        return -1;
+    }
+    return 1;
+}
+
+/* Images done and in total in the map being transcoded, two u32 */
+EMSCRIPTEN_KEEPALIVE std::atomic<u32> const* blam_upload_transcode_progress()
+{
+    return transcode.progress;
+}
+
+/* mtx::map_stats of the last map transcoded, six u32 */
+EMSCRIPTEN_KEEPALIVE mtx::map_stats const* blam_upload_transcode_stats()
+{
+    return &transcode.stats;
+}
+
+/*!
+ * \brief Hand over the bitmaps.map patched by every map transcoded since
+ * blam_upload_transcode_begin() as the result, and let go of the original
+ */
+EMSCRIPTEN_KEEPALIVE void blam_upload_transcode_end()
+{
+    if(transcode.worker.joinable())
+    {
+        transcode.worker.join();
+        std::free(transcode.map);
+        transcode.map = nullptr;
+    }
+    result = std::move(transcode.out_bitmaps);
+    std::free(transcode.bitmaps);
+    transcode.bitmaps      = nullptr;
+    transcode.bitmaps_size = 0;
+    transcode.out_bitmaps  = {};
+    transcode.cache        = {};
 }
 
 EMSCRIPTEN_KEEPALIVE char const* blam_upload_error()

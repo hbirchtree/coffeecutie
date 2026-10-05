@@ -5,7 +5,7 @@ coffee_application(
   TARGET BlamMapUpload
   TITLE "Blam Map Upload"
   SOURCES main.cpp
-  LIBRARIES Core Blam CoreZ GraphicsDefines
+  LIBRARIES Core Blam BlamTranscode CoreZ GraphicsDefines
   ICON_ASSET ${CMAKE_CURRENT_SOURCE_DIR}/../cblam-testing/icon_asset_plain.svg
   SHELL ${CMAKE_CURRENT_SOURCE_DIR}/shell.html
   USE_CMD

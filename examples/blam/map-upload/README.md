@@ -29,6 +29,37 @@ Load one with `BlamGraphics.html?map=/pc/bloodgulch.map`. The page links each
 stored map to the BlamGraphics build for its version when it is served from
 the GitHub Pages layout (`bin/`, `custom/bin/`, `xbox/bin/`, `mcc/bin/`).
 
+## Texture transcoding
+
+**Optimize for performance** (on by default) stores Xbox textures
+unswizzled. The Xbox keeps its uncompressed textures (lightmaps, many cube
+maps) Morton-swizzled, and BlamGraphics otherwise deswizzles every one while
+loading. The image's `swizzled` flag is cleared as it is rewritten, so the
+runtime never does it twice. Volume textures are left swizzled. Unchecked,
+and with no transcode target, maps are stored as they were before.
+
+Halo PC, Custom Edition and Xbox textures are S3TC (DXT). Browsers on GPUs without
+`WEBGL_compressed_texture_s3tc`, which is most phones, make BlamGraphics
+decode every one of them in software. The page checks WebGL 2 for S3TC and
+ETC2 (`WEBGL_compressed_texture_etc`) and, when only ETC2 is there, picks
+ETC2 as the transcode target. It can be changed in the drop-down.
+
+Transcoding uses the same kernels as `MapTranscode` (the `BlamTranscode`
+library, `src/coffee/blam/transcode`), on a thread per core. Only 2D
+textures are encoded; cube maps and volume textures are kept as they are.
+
+Xbox maps carry their own textures and are transcoded one by one, after
+they are decompressed. On PC and Custom Edition most textures live in `bitmaps.map`
+and are shared between level maps, so a level map is only transcoded when
+`bitmaps.map` is dropped with it. The original `bitmaps.map` is held in wasm
+while each level map patches its images into a copy, which is stored last.
+Drop the whole `maps` folder at once.
+
+Which stored files were transcoded together is kept in `localStorage`. A
+level map stored without the `bitmaps.map` it belongs with is marked
+"Textures out of sync", and one dropped without `bitmaps.map` while the
+stored one is transcoded is skipped.
+
 ## How files are identified
 
 Only the first 2 KiB of a file is read for this (`blam_upload_identify()` in

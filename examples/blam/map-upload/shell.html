@@ -187,6 +187,18 @@
 
     #runtime-status { color: var(--muted); margin-top: 12px; }
     #runtime-status:empty { display: none; }
+    #gpu-caps { color: var(--muted); margin: 6px 0 0; font-size: .9rem; }
+    #gpu-caps:empty { display: none; }
+    input[type=checkbox] { accent-color: var(--accent); }
+    .tag {
+      display: inline-flex;
+      padding: 2px 10px;
+      border: 1px dashed var(--accent);
+      border-radius: 100px;
+      font-size: .8rem;
+      white-space: nowrap;
+    }
+    .tag.warn { border-color: var(--warn); color: var(--warn); }
 
     .options {
       display: flex;
@@ -315,7 +327,8 @@
     <p>
       Drop Halo CE or Halo 2 <code>.map</code> files, or a whole
       <code>maps</code> folder. Each file is identified by its contents, Xbox
-      maps are decompressed, and the result is kept in this browser for
+      maps are decompressed and their textures unswizzled, textures can be
+      transcoded for this GPU, and the result is kept in this browser for
       BlamGraphics to load without downloading anything. Nothing leaves your
       machine.
     </p>
@@ -351,6 +364,27 @@
         <option value="h2xbox">/h2xbox/ (Halo 2 Xbox)</option>
         <option value="h2vista">/h2vista/ (Halo 2 Vista)</option>
       </select>
+    </div>
+    <div class="options">
+      <label for="transcode-target">
+        Transcode Halo PC, Custom Edition and Xbox textures to
+      </label>
+      <select id="transcode-target">
+        <option value="">nothing, store them as they are (S3TC/DXT)</option>
+        <option value="ES3">ETC2, for GPUs without S3TC (most phones)</option>
+      </select>
+    </div>
+    <p id="gpu-caps"></p>
+    <div class="options">
+      <label>
+        <input type="checkbox" id="optimize" checked>
+        Optimize for performance
+      </label>
+      <span>
+        (Xbox textures are stored unswizzled, so BlamGraphics does not have
+        to while loading. Unchecked, maps are stored as they are, apart from
+        the transcoding above.)
+      </span>
     </div>
   </section>
 
@@ -448,11 +482,20 @@
        'cannot be told apart (compressed?)',
   };
 
+  /* Transcode targets offered on the page, values are mtx::make_kernel()
+   * names. TRANSCODE_PREFIXES keep their textures in bitmaps.map, which
+   * has to be transcoded together with the maps; Xbox maps hold their own. */
+  const TRANSCODE_LABELS = { ES3: 'ETC2' };
+  const TRANSCODE_PREFIXES = ['pc', 'custom'];
+  const TRANSCODE_STATE_KEY = 'blam-map-upload-transcode';
+
   const drop = document.getElementById('drop');
   const picker = document.getElementById('picker');
   const results = document.getElementById('results');
   const resourceTarget = document.getElementById('resource-target');
   const halo2Target = document.getElementById('halo2-target');
+  const transcodeSelect = document.getElementById('transcode-target');
+  const optimize = document.getElementById('optimize');
   const runtimeStatus = document.getElementById('runtime-status');
 
   let ready = false;
@@ -565,6 +608,147 @@
       Module._blam_upload_result_free();
       Module._free(ptr);
     }
+  }
+
+  /* ---------- Transcoding ---------- */
+
+  function takeResult() {
+    try {
+      const data = Module._blam_upload_result_data();
+      const size = Module._blam_upload_result_size();
+      return Module.HEAPU8.slice(data, data + size).buffer;
+    } finally {
+      Module._blam_upload_result_free();
+    }
+  }
+
+  /* Holds the original bitmaps.map in wasm for the maps transcoded after */
+  /* target '' for no texture target; deswizzle makes Xbox textures linear */
+  function transcodeTarget(target, deswizzle) {
+    /* NUL-terminated; a '\0' escape would reach the page as U+FFFD once
+     * the release build minifies it into a raw NUL */
+    const text = new TextEncoder().encode(target);
+    const bytes = new Uint8Array(text.length + 1);
+    bytes.set(text);
+    const name = toHeap(bytes);
+    try {
+      if (!Module._blam_upload_transcode_target(name, deswizzle ? 1 : 0))
+        throw new Error(cString(Module._blam_upload_error(), 256));
+    } finally {
+      Module._free(name);
+    }
+  }
+
+  async function transcodeBegin(target, bitmapsFile) {
+    transcodeTarget(target, optimize.checked);
+    /* Owned by wasm from here, freed by blam_upload_transcode_end() */
+    const ptr = toHeap(new Uint8Array(await bitmapsFile.arrayBuffer()));
+    Module._blam_upload_transcode_begin(ptr, bitmapsFile.size);
+  }
+
+  /* Runs on a wasm thread, onProgress(done, total) counts images to encode.
+   * Takes the map's bytes, an uncompressed map. */
+  async function transcodeMap(bytes, onProgress) {
+    /* Owned by wasm from here */
+    const ptr = toHeap(bytes);
+    try {
+      if (!Module._blam_upload_transcode_map(ptr, bytes.length))
+        throw new Error(cString(Module._blam_upload_error(), 256));
+      let state;
+      while ((state = Module._blam_upload_transcode_poll()) === 0) {
+        const progress = new DataView(
+          Module.HEAPU8.buffer, Module._blam_upload_transcode_progress(), 8);
+        onProgress(progress.getUint32(0, true), progress.getUint32(4, true));
+        await new Promise(resolve => setTimeout(resolve, 250));
+      }
+      if (state < 0)
+        throw new Error(cString(Module._blam_upload_error(), 256) ||
+                        'transcoding failed');
+      /* mtx::map_stats */
+      const stats = new DataView(
+        Module.HEAPU8.buffer, Module._blam_upload_transcode_stats(), 24);
+      return {
+        data: takeResult(),
+        converted: stats.getUint32(0, true),
+        deswizzled: stats.getUint32(20, true),
+      };
+    } finally {
+      Module._blam_upload_result_free();
+    }
+  }
+
+  /* The bitmaps.map patched by every map transcoded since transcodeBegin() */
+  function transcodeEnd() {
+    Module._blam_upload_transcode_end();
+    return takeResult();
+  }
+
+  /* Which stored files were transcoded, and for which maps the stored
+   * bitmaps.map was. A level map whose textures sit in bitmaps.map only
+   * works with the bitmaps.map transcoded together with it. Kept next to
+   * IndexedDB in this browser's localStorage. */
+  function loadTranscodeState() {
+    try {
+      const state = JSON.parse(localStorage.getItem(TRANSCODE_STATE_KEY));
+      if (state && state.prefixes && state.transcoded)
+        return state;
+    } catch (e) { /* missing or unreadable */ }
+    return { prefixes: {}, transcoded: {} };
+  }
+
+  function saveTranscodeState(state) {
+    try {
+      localStorage.setItem(TRANSCODE_STATE_KEY, JSON.stringify(state));
+    } catch (e) { /* best effort */ }
+  }
+
+  function transcodeInSync(state, prefix, key) {
+    const bitmaps = state.prefixes[prefix] || { target: '', maps: [] };
+    const target = state.transcoded[key] || '';
+    if (bitmaps.target)
+      return target === bitmaps.target && bitmaps.maps.includes(key);
+    return !target;
+  }
+
+  /* BlamGraphics samples S3TC directly where WebGL has it, and decodes
+   * it in software everywhere else, so only offer ETC2 where it helps */
+  function detectGpu() {
+    const caps = { webgl2: false, s3tc: false, etc: false };
+    try {
+      const gl = document.createElement('canvas').getContext('webgl2');
+      if (!gl)
+        return caps;
+      const exts = gl.getSupportedExtensions() || [];
+      caps.webgl2 = true;
+      caps.s3tc = exts.includes('WEBGL_compressed_texture_s3tc');
+      caps.etc = exts.includes('WEBGL_compressed_texture_etc');
+      const lose = gl.getExtension('WEBGL_lose_context');
+      if (lose)
+        lose.loseContext();
+    } catch (e) { /* no WebGL */ }
+    return caps;
+  }
+
+  function showGpuCaps() {
+    const caps = detectGpu();
+    const out = document.getElementById('gpu-caps');
+    if (!caps.webgl2) {
+      out.textContent = 'This browser has no WebGL 2, which BlamGraphics needs.';
+      return;
+    }
+    const yes = ok => ok ? 'yes' : 'no';
+    let advice;
+    if (caps.s3tc)
+      advice = 'Maps work here as they are.';
+    else if (caps.etc)
+      advice = 'Without S3TC every texture is decoded in software, ' +
+               'transcoding to ETC2 keeps them compressed on the GPU.';
+    else
+      advice = 'Neither is available, textures are decoded in software.';
+    out.textContent = `This GPU, through WebGL 2: S3TC ${yes(caps.s3tc)}, ` +
+                      `ETC2 ${yes(caps.etc)}. ${advice}`;
+    if (!caps.s3tc && caps.etc)
+      transcodeSelect.value = 'ES3';
   }
 
   /* ---------- Gathering dropped files ---------- */
@@ -693,6 +877,7 @@
       return;
     busy = true;
     drop.classList.add('disabled');
+    let session = null;
 
     try {
       const batch = [];
@@ -729,7 +914,35 @@
       const halo2Files = halo2Prefix(batch);
       let stored = 0;
 
-      for (const { file, info, kind, set } of batch) {
+      /* Maps are transcoded along with the bitmaps.map dropped with them,
+       * which is written last, once every one of them has patched it */
+      const target = transcodeSelect.value;
+      const label = TRANSCODE_LABELS[target];
+      const state = loadTranscodeState();
+      const bitmapsItem = resources.error
+        ? null
+        : batch.find(item => item.kind.resource === 'bitmaps.map');
+      const bitmapsPrefix = bitmapsItem ? resources.prefix : null;
+      if (target && bitmapsItem && TRANSCODE_PREFIXES.includes(bitmapsPrefix)) {
+        try {
+          bitmapsItem.set(undefined, undefined, 'Reading…', 'busy');
+          await transcodeBegin(target, bitmapsItem.file);
+          session = { prefix: bitmapsPrefix, maps: [] };
+          bitmapsItem.set(undefined, undefined,
+                          'Waiting for the maps dropped with it', 'busy');
+        } catch (e) {
+          Module._blam_upload_transcode_end();
+          Module._blam_upload_result_free();
+          bitmapsItem.set(undefined, undefined,
+                          'Not transcoded: ' + (e.message || e), 'warn');
+        }
+      }
+      const ordered = session
+        ? [...batch.filter(item => item !== bitmapsItem), bitmapsItem]
+        : batch;
+
+      for (const item of ordered) {
+        const { file, info, kind, set } = item;
         let key;
         if (kind.prefix && kind.halo2CacheFile) {
           key = `/${kind.prefix}/${kind.halo2CacheFile}`;
@@ -752,23 +965,103 @@
           continue;
         }
 
+        const transcodable = TRANSCODE_PREFIXES.includes(kind.prefix);
+        const storedBitmaps = transcodable && state.prefixes[kind.prefix];
+        if (transcodable && bitmapsPrefix !== kind.prefix &&
+            storedBitmaps && storedBitmaps.target) {
+          set(undefined, key,
+              `Skipped: /${kind.prefix}/bitmaps.map is transcoded to ` +
+              `${TRANSCODE_LABELS[storedBitmaps.target] || storedBitmaps.target}, ` +
+              'drop this map together with the original bitmaps.map', 'warn');
+          continue;
+        }
+
         try {
           let data;
-          if (kind.prefix && info.compressed) {
+          let note = '';
+          let transcoded = false;
+          if (session && item === bitmapsItem) {
+            set(undefined, key, `Writing textures transcoded to ${label}…`, 'busy');
+            await nextFrame();
+            session.ended = true;
+            data = transcodeEnd();
+            transcoded = true;
+            const count = session.maps.length;
+            note = `, holds textures transcoded to ${label} for ${count} ` +
+                   (count === 1 ? 'map' : 'maps');
+          } else if (kind.prefix === 'xbox' && (target || optimize.checked)) {
+            /* Xbox maps hold their own textures, no bitmaps.map involved */
+            let bytes;
+            if (info.compressed) {
+              set(undefined, key, 'Decompressing…', 'busy');
+              await nextFrame();
+              bytes = new Uint8Array(await decompress(file));
+            } else {
+              bytes = new Uint8Array(await file.arrayBuffer());
+            }
+            transcodeTarget(target, optimize.checked);
+            const what = target
+              ? `Transcoding textures to ${label}`
+              : 'Optimizing textures';
+            set(undefined, key, `${what}…`, 'busy');
+            const result = await transcodeMap(bytes, (done, total) => set(
+              undefined, key, `${what}, ${done} of ${total}…`, 'busy'));
+            data = result.data;
+            transcoded = !!target;
+            const parts = [];
+            if (result.deswizzled)
+              parts.push(`${result.deswizzled} textures unswizzled`);
+            if (target)
+              parts.push(`${result.converted} textures transcoded to ${label}`);
+            if (parts.length)
+              note = ', ' + parts.join(', ');
+          } else if (kind.prefix && info.compressed) {
             set(undefined, key, 'Decompressing…', 'busy');
             await nextFrame();
             data = await decompress(file);
+          } else if (session && kind.prefix === session.prefix) {
+            set(undefined, key, `Transcoding textures to ${label}…`, 'busy');
+            const result = await transcodeMap(
+              new Uint8Array(await file.arrayBuffer()), (done, total) => set(
+              undefined, key,
+              `Transcoding textures to ${label}, ${done} of ${total}…`, 'busy'));
+            data = result.data;
+            transcoded = true;
+            note = `, ${result.converted} textures transcoded to ${label}`;
           } else {
             /* Uncompressed and resource maps are stored byte for byte */
             set(undefined, key, 'Reading…', 'busy');
             data = await file.arrayBuffer();
+            if (target && transcodable)
+              note = ', textures not transcoded: drop it with bitmaps.map';
           }
           set(undefined, key, 'Storing…', 'busy');
           await putFile(key, data);
+
+          if (kind.resource === 'bitmaps.map' &&
+              TRANSCODE_PREFIXES.includes(resources.prefix)) {
+            state.prefixes[resources.prefix] = transcoded
+              ? { target, maps: session.maps }
+              : { target: '', maps: [] };
+          } else if (transcodable) {
+            if (transcoded) {
+              state.transcoded[key] = target;
+              session.maps.push(key);
+            } else {
+              delete state.transcoded[key];
+            }
+          } else if (kind.prefix === 'xbox') {
+            if (transcoded)
+              state.transcoded[key] = target;
+            else
+              delete state.transcoded[key];
+          }
+          saveTranscodeState(state);
+
           const mib = (data.byteLength / (1024 * 1024)).toFixed(1);
-          set(undefined, key, info.compressed && kind.prefix
+          set(undefined, key, (info.compressed && kind.prefix
               ? `Stored, decompressed to ${mib} MiB`
-              : `Stored, ${mib} MiB`, 'ok');
+              : `Stored, ${mib} MiB`) + note, 'ok');
           stored++;
         } catch (e) {
           set(undefined, key, 'Failed: ' + (e.message || e), 'bad');
@@ -778,6 +1071,11 @@
       if (stored && navigator.storage && navigator.storage.persist)
         navigator.storage.persist().catch(() => {});
     } finally {
+      /* Let go of bitmaps.map when something threw before it was written */
+      if (session && !session.ended) {
+        Module._blam_upload_transcode_end();
+        Module._blam_upload_result_free();
+      }
       busy = false;
       drop.classList.remove('disabled');
       refreshStored();
@@ -816,6 +1114,7 @@
 
     container.innerHTML = '';
     let any = false;
+    const transcode = loadTranscodeState();
     for (const prefix of PREFIXES) {
       const own = keys.filter(key => key.startsWith(`/${prefix}/`)).sort();
       if (!own.length)
@@ -833,6 +1132,26 @@
 
         const file = key.slice(prefix.length + 2);
         const isResource = ['bitmaps.map', 'sounds.map', 'loc.map'].includes(file);
+        if (TRANSCODE_PREFIXES.includes(prefix) || prefix === 'xbox') {
+          const target = file === 'bitmaps.map'
+            ? (transcode.prefixes[prefix] || {}).target
+            : !isResource && transcode.transcoded[key];
+          if (target) {
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.textContent = TRANSCODE_LABELS[target] || target;
+            item.append(tag);
+          }
+          if (TRANSCODE_PREFIXES.includes(prefix) && !isResource &&
+              !transcodeInSync(transcode, prefix, key)) {
+            const tag = document.createElement('span');
+            tag.className = 'tag warn';
+            tag.textContent = 'Textures out of sync';
+            tag.title = `Not transcoded together with /${prefix}/bitmaps.map, ` +
+                        'drop it again along with the original bitmaps.map';
+            item.append(tag);
+          }
+        }
         if (BLAMG_PREFIXES.includes(prefix) && !isResource) {
           const url = blamGraphicsUrl(prefix, key);
           if (url) {
@@ -852,6 +1171,11 @@
           remove.disabled = true;
           try {
             await deleteFile(key);
+            const state = loadTranscodeState();
+            delete state.transcoded[key];
+            if (file === 'bitmaps.map')
+              delete state.prefixes[prefix];
+            saveTranscodeState(state);
           } finally {
             refreshStored();
           }
@@ -916,6 +1240,7 @@
     },
   };
 
+  showGpuCaps();
   if (typeof indexedDB === 'undefined')
     runtimeStatus.textContent = 'This browser has no IndexedDB, maps cannot be stored.';
   refreshStored();

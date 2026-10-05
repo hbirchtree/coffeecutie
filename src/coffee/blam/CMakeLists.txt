@@ -28,3 +28,7 @@ target_compile_options(Blam PUBLIC
 if(NOT (GAMECUBE OR WII))
   target_link_libraries(Blam PRIVATE GraphicsDefines)
 endif()
+
+if(BUILD_ASSET_TOOLS OR EMSCRIPTEN)
+  add_subdirectory(transcode)
+endif()

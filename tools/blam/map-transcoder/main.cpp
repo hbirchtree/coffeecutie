@@ -8,38 +8,36 @@
  * map. Images that don't fit their slot, or in a format we don't handle, are
  * left untouched (the runtime still decodes those the old way).
  *
- * Usage: MapTranscode <in.map> <in bitmaps.map> <out.map> <out bitmaps.map> */
+ * Xbox maps carry their pixels themselves and are written out inflated, with
+ * swizzled textures made linear.
+ *
+ * Usage: MapTranscode <in.map> [in bitmaps.map] --output-map <out.map>
+ *        [--output-bitmaps <out bitmaps.map>] */
 
 #include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/coffee.h>
 
+#include <blam/transcode/map_transcode.h>
+#include <blam/volta/blam_stl.h>
+#include <blam/volta/blam_versions.h>
 #include <cxxopts.hpp>
 #include <filesystem>
-#include <magic_enum/magic_enum.hpp>
-#include <peripherals/semantic/chunk.h>
-
-#include <blam/volta/blam_bitm.h>
-#include <blam/volta/blam_endian.h>
-#include <blam/volta/blam_stl.h>
-#include <blam/volta/blam_tag_classes.h>
 
 #include "cfiles.h"
 #include "coffee/application/application_start.h"
 #include "coffee/core/coffee_args.h"
 #include "coffee/core/url.h"
-#include "transcode.h"
 
-#include <cstring>
 #include <fstream>
+#include <optional>
 #include <vector>
 
 using namespace Coffee;
 using libc_types::u16;
 using libc_types::u32;
 using libc_types::u8;
-using version_t = blam::pc_version_t;
 
 static bool write_file(char const* path, std::vector<u8> const& data)
 {
@@ -52,40 +50,30 @@ static bool write_file(char const* path, std::vector<u8> const& data)
     return f.good();
 }
 
-struct stats
-{
-    u32 converted{0}, skipped{0}, skipped_read{0};
-    u32 saved_bytes{0};
-};
-
-static void patch_u16(std::vector<u8>& buf, size_t off, u16 v)
-{
-    std::memcpy(buf.data() + off, &v, sizeof(v)); // host LE == map LE
-}
-
-static void patch_u32(std::vector<u8>& buf, size_t off, u32 v)
-{
-    std::memcpy(buf.data() + off, &v, sizeof(v));
-}
-
 i32 coffee_main(i32, cstring_w*)
 {
-    using blam::from_le;
-    using blam::bitm::image_t;
-
     cxxopts::ParseResult arguments;
     {
         cxxopts::Options options(
             "MapTranscoder", "A Blam! map bitmap transcoder");
         Coffee::BaseArgParser::GetBase(options);
-        options.custom_help("[input map.map] [input bitmaps.map] [OPTION...]");
+        options.custom_help(
+            "[input map.map] [input bitmaps.map, not for Xbox] [OPTION...]");
 
         options.add_options("Target")
             //
             ("target",
              "Target device, determines default texture formats; Gekko, "
-             "PowerVR, ES2, ES3",
+             "PowerVR, ES2, ES3, or none to only deswizzle Xbox textures",
              cxxopts::value<std::string>()->default_value("Gekko"))
+            //
+            ("jobs",
+             "Threads to encode images on",
+             cxxopts::value<unsigned>()->default_value("1"))
+            //
+            ("etc-effort",
+             "etc2comp effort for ES2/ES3, 0-100",
+             cxxopts::value<float>()->default_value("40"))
             //
             ;
 
@@ -107,11 +95,11 @@ i32 coffee_main(i32, cstring_w*)
         options.add_options("File I/O")
             //
             ("output-bitmaps",
-             "Output patched bitmaps.map file (Gekko target)",
+             "Output patched bitmaps.map file",
              cxxopts::value<std::string>())
             //
             ("output-map",
-             "Output patched map file (Gekko target)",
+             "Output patched map file, decompressed for Xbox",
              cxxopts::value<std::string>())
             //
             ;
@@ -170,7 +158,7 @@ i32 coffee_main(i32, cstring_w*)
             return 0;
         }
 
-        if(arguments.unmatched().size() < 2)
+        if(arguments.unmatched().empty())
         {
             return 1;
         }
@@ -184,15 +172,20 @@ i32 coffee_main(i32, cstring_w*)
             ? std::optional(arguments["lightmap-format"].as<std::string>())
             : std::nullopt;
 
-    if(!arguments.count("output-map") || !arguments.count("output-bitmaps"))
+    bool const has_bitmaps = arguments.unmatched().size() > 1;
+    if(!arguments.count("output-map") ||
+       (has_bitmaps && !arguments.count("output-bitmaps")))
     {
-        cWarning("target requires --output-map and --output-bitmaps");
+        cWarning("requires --output-map, and --output-bitmaps with bitmaps.map");
         return 6;
     }
 
-    Resource map(MkUrl(arguments.unmatched()[0]));
-    Resource bitmaps(MkUrl(arguments.unmatched()[1]));
-    if(!FileMap(map, RSCA::ReadOnly) || !FileMap(bitmaps, RSCA::ReadOnly))
+    Resource                map(MkUrl(arguments.unmatched()[0]));
+    std::optional<Resource> bitmaps;
+    if(has_bitmaps)
+        bitmaps.emplace(MkUrl(arguments.unmatched()[1]));
+    if(!FileMap(map, RSCA::ReadOnly) ||
+       (bitmaps && !FileMap(*bitmaps, RSCA::ReadOnly)))
     {
         cWarning("Failed to open map/bitmaps file");
         return 3;
@@ -200,157 +193,85 @@ i32 coffee_main(i32, cstring_w*)
 
     gsl::span<u8 const> map_span(
         reinterpret_cast<u8 const*>(map.data().data()), map.data().size());
-    gsl::span<u8 const> bitmaps_span(
-        reinterpret_cast<u8 const*>(bitmaps.data().data()),
-        bitmaps.data().size());
-    u8 const* base = map_span.data();
+    gsl::span<u8 const> bitmaps_span;
+    if(bitmaps)
+        bitmaps_span = gsl::span<u8 const>(
+            reinterpret_cast<u8 const*>(bitmaps->data().data()),
+            bitmaps->data().size());
 
-    auto parsed = blam::map_container<version_t>::from_bytes(
-        semantic::BytesConst::ofBytes(map_span.data(), map_span.size()),
-        version_t{},
-        [](std::string_view, libc_types::i16) {});
-    if(parsed.has_error())
+    // Xbox maps are compressed on disc, they are transcoded inflated
+    std::vector<char> inflated;
     {
-        cWarning(
-            "map parse failed err={0}", magic_enum::enum_name(parsed.error()));
-        return 4;
-    }
-    auto const& c = parsed.value();
-
-    // Patched output copies (only written for the Gekko target).
-    std::vector<u8> out_map(map_span.begin(), map_span.end());
-    std::vector<u8> out_bitmaps(bitmaps_span.begin(), bitmaps_span.end());
-
-    // The active target's whole encode step, behind one uniform interface
-    // (see transcode.h's kernel_fn doc). Adding a target = writing one
-    // make_kernel()-style factory in transcode.h and one branch here; the
-    // rest of this function (I/O, the per-image loop, patching) is generic.
-    mtx::kernel_fn kernel;
-    if(target == "Gekko")
-        kernel = mtx::gekko::make_kernel(lightmap_format);
-    else if(target == "PowerVR")
-        kernel = mtx::powervr::make_kernel();
-    else if(target == "ES2")
-        kernel = mtx::es2::make_kernel();
-    else if(target == "ES3")
-        kernel = mtx::es3::make_kernel();
-    else
-    {
-        cWarning("No target defined, no transcode kernel");
-        return 7;
-    }
-
-    stats     st;
-    u32 const tag_count = from_le(c.tags->tag_count);
-    for(u32 i = 0; i < tag_count; i++)
-    {
-        blam::tag_t const& t = c.tags->tags(c.map)[i];
-        if(!t.matches(blam::tag_class_t::bitm))
-            continue;
-        auto hr = t.data<blam::bitm::header_t>(c.magic);
-        if(hr.has_error())
-            continue;
-        auto imgs = hr.value()->images.data(c.magic);
-        if(imgs.has_error())
-            continue;
-
-        for(image_t const& img : imgs.value())
+        using Ver = blam::xbox_version_t;
+        auto xbox = blam::map_container<Ver>::from_bytes(
+            semantic::BytesConst::ofBytes(map_span.data(), map_span.size()),
+            Ver());
+        if(xbox.has_value() && !xbox.value().decompressed.empty())
         {
-            auto const fmt = from_le(img.format);
-            i16 const  w   = from_le(img.isize.x);
-            i16 const  h   = from_le(img.isize.y);
-            if(w <= 0 || h <= 0)
-                continue;
-
-            u32 const src_size = from_le(img.size);
-
-            // Locate source pixels (as a span into the read-only mapped
-            // input) + their destination offset in the output copies.
-            gsl::span<u8 const> src_px;
-            u8*                 dst_base = nullptr;
-            size_t              dst_off  = 0;
-            if(img.shared())
-            {
-                u32 const off = from_le(img.offset);
-                if(static_cast<size_t>(off) + src_size > bitmaps_span.size())
-                {
-                    st.skipped_read++;
-                    continue;
-                }
-                src_px   = bitmaps_span.subspan(off, src_size);
-                dst_base = out_bitmaps.data();
-                dst_off  = off;
-            } else
-            {
-                auto pix =
-                    blam::reference<u8>{.count = img.size, .offset = img.offset}
-                        .data(c.magic);
-                if(pix.has_error())
-                {
-                    st.skipped_read++;
-                    continue;
-                }
-                size_t const foff =
-                    reinterpret_cast<u8 const*>(pix.value().data()) - base;
-                src_px   = map_span.subspan(foff, src_size);
-                dst_base = out_map.data();
-                dst_off  = foff;
-            }
-
-            auto result = kernel(
-                fmt,
-                src_px,
-                src_size,
-                static_cast<u16>(w),
-                static_cast<u16>(h),
-                from_le(img.mipmaps));
-            if(!result)
-            {
-                st.skipped++;
-                continue;
-            }
-
-            std::memcpy(
-                dst_base + dst_off, result->data.data(), result->data.size());
-
-            // Patch the image_t in the output map: new format + size +
-            // mip levels, verbatim from the kernel. Member-address
-            // arithmetic (not offsetof) avoids -Winvalid-offsetof on
-            // image_t's vector members.
-            auto foff_of = [&](void const* p) -> size_t {
-                return reinterpret_cast<u8 const*>(p) - base;
-            };
-            patch_u16(
-                out_map,
-                foff_of(&img.format),
-                static_cast<u16>(result->format));
-            patch_u32(
-                out_map,
-                foff_of(&img.size),
-                static_cast<u32>(result->data.size()));
-            patch_u16(out_map, foff_of(&img.mipmaps), result->maxlod);
-
-            st.converted++;
-            st.saved_bytes += src_size - static_cast<u32>(result->data.size());
+            inflated = std::move(xbox.value().decompressed);
+            map_span = gsl::span<u8 const>(
+                reinterpret_cast<u8 const*>(inflated.data()), inflated.size());
         }
     }
 
+    mtx::kernel_fn kernel;
+    if(target != "none")
+    {
+        auto found = mtx::make_kernel(
+            target, lightmap_format, arguments["etc-effort"].as<float>());
+        if(!found)
+        {
+            cWarning("No target defined, no transcode kernel");
+            return 7;
+        }
+        kernel = std::move(*found);
+    }
+
+    std::vector<u8> out_map(map_span.begin(), map_span.end());
+    std::vector<u8> out_bitmaps(bitmaps_span.begin(), bitmaps_span.end());
+
+    auto res =
+        mtx::transcode_map(
+            map_span,
+            bitmaps_span,
+            out_map,
+            out_bitmaps,
+            kernel,
+            {.threads = arguments["jobs"].as<unsigned>()});
+    if(!res.ok)
+    {
+        cWarning("map parse failed: {0}", res.error);
+        return 4;
+    }
+    auto const& st = res.stats;
+
     cDebug(
-        "converted={0} skipped={1} read={2} saved={3} KiB",
+        "converted={0} deswizzled={1} skipped={2} read={3} saved={4} KiB",
         st.converted,
+        st.deswizzled,
         st.skipped,
         st.skipped_read,
         st.saved_bytes / 1024);
 
-    auto const out_map_path  = arguments["output-map"].as<std::string>();
-    auto const out_bmap_path = arguments["output-bitmaps"].as<std::string>();
-    if(!write_file(out_map_path.c_str(), out_map) ||
-       !write_file(out_bmap_path.c_str(), out_bitmaps))
+    auto const out_map_path = arguments["output-map"].as<std::string>();
+    if(!write_file(out_map_path.c_str(), out_map))
     {
         cWarning("failed to write output (or an output file already exists)");
         return 5;
     }
-    cDebug("wrote {0} + {1}", out_map_path, out_bmap_path);
+    cDebug("wrote {0}", out_map_path);
+    if(has_bitmaps)
+    {
+        auto const out_bmap_path =
+            arguments["output-bitmaps"].as<std::string>();
+        if(!write_file(out_bmap_path.c_str(), out_bitmaps))
+        {
+            cWarning(
+                "failed to write output (or an output file already exists)");
+            return 5;
+        }
+        cDebug("wrote {0}", out_bmap_path);
+    }
     return 0;
 }
 

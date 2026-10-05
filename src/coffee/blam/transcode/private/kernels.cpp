@@ -1,5 +1,3 @@
-#pragma once
-
 /* Host-side pixel transcoders for the offline map bitmap transcoder. Each takes
  * a linear Halo source image and produces a GameCube GX-native *tiled* buffer,
  * ready to upload with no runtime decode. Multi-byte GX texels are big-endian.
@@ -7,6 +5,8 @@
  * These mirror the runtime re-tilers in examples/blam/gx-bsp/main.cpp
  * (tile_rgb565, dxt_to_cmpr) but run on the host so the console never decodes.
  */
+
+#include <blam/transcode/kernels.h>
 
 #include <blam/volta/blam_bitm.h>
 #include <peripherals/identify/compiler/unreachable.h>
@@ -203,32 +203,6 @@ inline bool walk_mips(
     }
     return out_levels > 0;
 }
-
-/* --- transcode kernel interface --------------------------------------------
- * A "kernel" is one target's whole encode step, in a shape that's the same
- * for every target: given a source image's format/pixels/dims/mip count,
- * either produce the bytes to write in its place (+ the on-disk format code
- * to patch into image_t::format, + GX maxlod / mip levels for targets that
- * have mips) or return nullopt to leave the source untouched. Adding a new
- * target (another game console, another GPU) means writing one function
- * matching `kernel_fn` -- main.cpp's per-image loop and file I/O don't
- * change. `format` is the RAW on-disk value already computed for the target
- * (e.g. gexxo::native::to_blam(gx_format) for Gekko) -- kernels own their own
- * format-marker scheme; the caller just writes whatever value comes back. */
-struct transcode_result
-{
-    blam::bitm::format_t format; // patched into image_t::format verbatim
-    u16             maxlod; // patched into image_t::mipmaps verbatim (0 if n/a)
-    std::vector<u8> data;
-};
-
-using kernel_fn = std::function<std::optional<transcode_result>(
-    format_t            src_fmt,
-    gsl::span<u8 const> src_px,
-    u32                 src_size,
-    u16                 w,
-    u16                 h,
-    u16                 src_mip_count)>;
 
 namespace gekko {
 
@@ -647,8 +621,7 @@ inline bool transcode_mipped(
  * transcode_mipped's rgb565_to_cmpr). `lightmap_format` is the raw
  * --lightmap-format value (unset/empty = native); interpreting it is Gekko's
  * own business -- other targets can give the same flag a different meaning. */
-inline mtx::kernel_fn make_kernel(
-    std::optional<std::string> const& lightmap_format)
+kernel_fn make_kernel(std::optional<std::string> const& lightmap_format)
 {
     bool const lightmap_cmpr =
         lightmap_format &&
@@ -869,7 +842,7 @@ inline std::vector<u8> encode_pvrtc(
  * We'll passthrough the R/RG formats since they map nicely enough
  * We'll transcode lightmaps to PVRTC RGB
  */
-inline mtx::kernel_fn make_kernel()
+kernel_fn make_kernel()
 {
     return [](format_t            src_fmt,
               gsl::span<u8 const> src_px,
@@ -933,7 +906,7 @@ inline mtx::kernel_fn make_kernel()
             return std::nullopt;
         return mtx::transcode_result{
             out_fmt,
-            static_cast<u16>(out_levels > 0 ? out_levels - 1 : 0),
+            static_cast<u16>(src_mip_count ? out_levels : 0),
             std::move(tiled)};
     };
 }
@@ -950,7 +923,11 @@ namespace etc {
  * delete[] it here. Output is already block-padded (etc2comp pads internally
  * to 4x4 blocks), so its reported byte count is used as-is. */
 inline std::vector<u8> encode(
-    gsl::span<u8 const> rgba, u16 w, u16 h, Etc::Image::Format fmt)
+    gsl::span<u8 const> rgba,
+    u16                 w,
+    u16                 h,
+    Etc::Image::Format  fmt,
+    float               effort)
 {
     std::vector<float> src(static_cast<size_t>(w) * h * 4);
     for(size_t i = 0; i < src.size(); i++)
@@ -964,8 +941,11 @@ inline std::vector<u8> encode(
         w,
         h,
         fmt,
-        Etc::ErrorMetric::RGBA,
-        ETCCOMP_DEFAULT_EFFORT_LEVEL,
+        // Halo keeps data in alpha (blend masks, transparent shaders' own
+        // channels) and still uses the colour under it; RGBA would weight
+        // colour by alpha and drop it where alpha is 0
+        Etc::ErrorMetric::RGBX,
+        effort,
         1,
         1,
         &bits,
@@ -989,7 +969,7 @@ inline std::vector<u8> encode(
  * two texture units per material and shader-side combining, same situation
  * PVRTC was in before its runtime existed. */
 inline std::vector<u8> encode_split_alpha(
-    gsl::span<u8 const> rgba, u16 w, u16 h)
+    gsl::span<u8 const> rgba, u16 w, u16 h, float effort)
 {
     std::vector<u8> alpha_rgba(rgba.size());
     for(size_t i = 0; i < static_cast<size_t>(w) * h; i++)
@@ -1000,8 +980,9 @@ inline std::vector<u8> encode_split_alpha(
         alpha_rgba[i * 4 + 2] = a;
         alpha_rgba[i * 4 + 3] = 255;
     }
-    auto rgb_bits   = encode(rgba, w, h, Etc::Image::Format::ETC1);
-    auto alpha_bits = encode(alpha_rgba, w, h, Etc::Image::Format::ETC1);
+    auto rgb_bits   = encode(rgba, w, h, Etc::Image::Format::ETC1, effort);
+    auto alpha_bits =
+        encode(alpha_rgba, w, h, Etc::Image::Format::ETC1, effort);
 
     std::vector<u8> out;
     out.reserve(rgb_bits.size() + alpha_bits.size());
@@ -1019,9 +1000,9 @@ inline std::vector<u8> encode_split_alpha(
  * already ES2-baseline-compatible and is left untouched (nullopt). */
 namespace es2 {
 
-inline mtx::kernel_fn make_kernel()
+kernel_fn make_kernel(float effort)
 {
-    return [](format_t            src_fmt,
+    return [effort](format_t            src_fmt,
               gsl::span<u8 const> src_px,
               u32                 src_size,
               u16                 w,
@@ -1053,9 +1034,13 @@ inline mtx::kernel_fn make_kernel()
                src_mip_count,
                [&](gsl::span<u8 const> rgba, u16 wl, u16 hl) {
                    return split_alpha
-                              ? etc::encode_split_alpha(rgba, wl, hl)
+                              ? etc::encode_split_alpha(rgba, wl, hl, effort)
                               : etc::encode(
-                                    rgba, wl, hl, Etc::Image::Format::ETC1);
+                                    rgba,
+                                    wl,
+                                    hl,
+                                    Etc::Image::Format::ETC1,
+                                    effort);
                },
                tiled,
                out_levels))
@@ -1063,7 +1048,7 @@ inline mtx::kernel_fn make_kernel()
 
         return mtx::transcode_result{
             out_fmt,
-            static_cast<u16>(out_levels > 0 ? out_levels - 1 : 0),
+            static_cast<u16>(src_mip_count ? out_levels : 0),
             std::move(tiled)};
     };
 }
@@ -1075,9 +1060,9 @@ inline mtx::kernel_fn make_kernel()
  * is left untouched (nullopt). */
 namespace es3 {
 
-inline mtx::kernel_fn make_kernel()
+kernel_fn make_kernel(float effort)
 {
-    return [](format_t            src_fmt,
+    return [effort](format_t            src_fmt,
               gsl::span<u8 const> src_px,
               u32                 src_size,
               u16                 w,
@@ -1110,7 +1095,7 @@ inline mtx::kernel_fn make_kernel()
                h,
                src_mip_count,
                [&](gsl::span<u8 const> rgba, u16 wl, u16 hl) {
-                   return etc::encode(rgba, wl, hl, etc_fmt);
+                   return etc::encode(rgba, wl, hl, etc_fmt, effort);
                },
                tiled,
                out_levels))
@@ -1118,11 +1103,27 @@ inline mtx::kernel_fn make_kernel()
 
         return mtx::transcode_result{
             out_fmt,
-            static_cast<u16>(out_levels > 0 ? out_levels - 1 : 0),
+            static_cast<u16>(src_mip_count ? out_levels : 0),
             std::move(tiled)};
     };
 }
 
 } // namespace es3
+
+std::optional<kernel_fn> make_kernel(
+    std::string_view                  target,
+    std::optional<std::string> const& lightmap_format,
+    float                             etc_effort)
+{
+    if(target == "Gekko")
+        return gekko::make_kernel(lightmap_format);
+    if(target == "PowerVR")
+        return powervr::make_kernel();
+    if(target == "ES2")
+        return es2::make_kernel(etc_effort);
+    if(target == "ES3")
+        return es3::make_kernel(etc_effort);
+    return std::nullopt;
+}
 
 } // namespace mtx

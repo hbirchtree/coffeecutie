@@ -88,6 +88,14 @@
                 "vulkan-headers"
             ]
         },
+        "map-transcode": {
+            "description": "Bitmap transcoders shared by MapTranscode and BlamMapUpload",
+            "dependencies": [
+                "bcdec",
+                "etc2comp",
+                "pvrtc"
+            ]
+        },
         "media": {
             "description": "Media encoding",
             "dependencies": [
