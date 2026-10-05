@@ -308,7 +308,7 @@ PixDesc desc_of(texture_format_t const& fmt)
     case format_t::compressed_rg11_eac:
         return CompFmt(pix_fmt::ETC2, pix_flags::RG);
     case format_t::compressed_rgb8_etc2:
-        return CompFmt(pix_fmt::ETC2, pix_flags::RGBA);
+        return CompFmt(pix_fmt::ETC2, pix_flags::RGB);
     case format_t::compressed_rgba8_etc2_eac:
         return CompFmt(pix_fmt::ETC2, pix_flags::RGBA);
     case format_t::compressed_rgb8_punchthrough_alpha1_etc2:

@@ -246,9 +246,10 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
 
     for(auto const& format : compressed_formats<T>(features))
     {
-        const bool matching = fmt.pixfmt == format.desc.pixfmt &&
-                              fmt.comp == format.desc.comp &&
-                              fmt.cmpflg == format.desc.cmpflg;
+        const bool matching =
+            fmt.pixfmt == format.desc.pixfmt && fmt.comp == format.desc.comp &&
+            fmt.cmpflg == format.desc.cmpflg &&
+            (fmt.pixfmt != P::ETC2 || fmt.pixflg == format.desc.pixflg);
         if(matching && format.condition)
             return format.out;
     }

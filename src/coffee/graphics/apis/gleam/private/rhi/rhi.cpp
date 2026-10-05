@@ -583,7 +583,8 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.texture.samplers                = api_version >= 0x300;
         out.texture.texture_3d              = api_version >= 0x300;
         out.texture.tex_layer_query         = api_version >= 0x300;
-        out.texture.tex.gl.etc2             = api_version >= 0x300;
+        out.texture.tex.gl.etc2 =
+            supports_extension(extensions, "WEBGL_compressed_texture_etc");
         out.vertex.attribute_binding        = api_version >= 0x300;
         out.vertex.vertex_arrays            = api_version >= 0x300;
         out.vertex.vertex_attrib_i_pointer  = api_version >= 0x300;
