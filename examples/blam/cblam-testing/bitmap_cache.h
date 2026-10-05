@@ -112,7 +112,7 @@ struct BitmapCache
         PixDesc const& fmt, blam::bitm::type_t type)
     {
         return std::make_tuple(
-            type, fmt.pixfmt, fmt.comp, fmt.bfmt, fmt.cmpflg);
+            type, fmt.pixfmt, fmt.comp, fmt.bfmt, fmt.cmpflg, fmt.pixflg);
     }
 
     static inline PixDesc upload_fmt(blam::bitm::image_t const& image)
@@ -484,6 +484,10 @@ struct BitmapCache
             }
             break;
         }
+        case pix_fmt::ETC2:
+            return bitm.image.fmt.pixflg == typing::pixels::pix_flags::RGBA
+                       ? 0x0E000000
+                       : 0x0D000000;
         case pix_fmt::RGB565:
             return 0x04000000;
         case pix_fmt::R8:

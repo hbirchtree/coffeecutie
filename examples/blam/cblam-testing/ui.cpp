@@ -1647,6 +1647,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             glm::translate(
                 Matf3(1), Vecf2{-screen_size.x / 2.f, -screen_size.y / 2.f});
 
+        auto etc2_sampler = [&](typing::pixels::pix_flags flags) {
+            if(!api.feature_info().texture.tex.gl.etc2)
+                flags = typing::pixels::pix_flags::None;
+            return flags == typing::pixels::pix_flags::None
+                       ? bitm_cache
+                             .template get_bucket<gfx::compat::texture_2da_t>(
+                                 CompFmt(pix_fmt::BCn, comp_flags::BC1))
+                             .sampler
+                       : bitm_cache
+                             .template get_bucket<gfx::compat::texture_2da_t>(
+                                 CompFmt(pix_fmt::ETC2, flags))
+                             .sampler;
+        };
+
         auto do_submit = [&](Matf3 const& matrix, u32 offset, u32 count) {
             api.submit(
                 gfx::draw_command{
@@ -1712,7 +1726,15 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         bitm_cache
                             .template get_bucket<gfx::compat::texture_2da_t>(
                                 PixDesc(pix_fmt::RG8))
-                            .sampler}),
+                            .sampler},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_etc2_rgb"sv, 7},
+                        etc2_sampler(typing::pixels::pix_flags::RGB)},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_etc2_rgba"sv, 8},
+                        etc2_sampler(typing::pixels::pix_flags::RGBA)}),
                 gfx::make_buffer_list(
                     gfx::buffer_definition_t{
                         .stage  = typing::graphics::ShaderStage::Fragment,

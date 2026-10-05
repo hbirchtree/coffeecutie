@@ -22,6 +22,8 @@ layout(location = 15, binding = 5) uniform sampler2DArray source_r8;
 layout(location = 16, binding = 6) uniform sampler2DArray source_rg8;
 layout(location = 17, binding = 7) uniform sampler2DArray source_rgba4;
 layout(location = 18, binding = 8) uniform sampler2DArray source_rgba8;
+layout(location = 32, binding = 13) uniform sampler2DArray source_etc2_rgb;
+layout(location = 33, binding = 14) uniform sampler2DArray source_etc2_rgba;
 
 #if USE_REFLECTIONS == 1 && USE_ARRAY_CUBEMAP == 1
 layout(location = 19, binding = 9) uniform samplerCubeArray source_cube_bc1;
@@ -141,6 +143,8 @@ const uint TEX_A8     = 9u;  /* 000A */
 const uint TEX_Y8     = 10u; /* LLL1 */
 const uint TEX_AY8    = 11u; /* LLLL */
 const uint TEX_A8Y8   = 12u; /* LLLA (r=L, g=A) */
+const uint TEX_ETC2_RGB  = 13u;
+const uint TEX_ETC2_RGBA = 14u;
 
 vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset, in Material mat)
 {
@@ -177,6 +181,10 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
         return sample_map(map_id, tex_id, source_rgba4, offset, mat).bgra;
     else if(source == TEX_RGBA8)
         return sample_map(map_id, tex_id, source_rgba8, offset, mat).bgra;
+    else if(source == TEX_ETC2_RGB)
+        return sample_map(map_id, tex_id, source_etc2_rgb, offset, mat);
+    else if(source == TEX_ETC2_RGBA)
+        return sample_map(map_id, tex_id, source_etc2_rgba, offset, mat);
     return vec4(vec3(1), 1);
 }
 

@@ -43,8 +43,13 @@ using typing::vector_types::Veci3;
 using typing::vector_types::Vecui2;
 using typing::vector_types::Vecui3;
 
-using bitm_format_hash = std::
-    tuple<blam::bitm::type_t, pix_fmt, pix_components, bit_fmt, comp_flags>;
+using bitm_format_hash = std::tuple<
+    blam::bitm::type_t,
+    pix_fmt,
+    pix_components,
+    bit_fmt,
+    comp_flags,
+    typing::pixels::pix_flags>;
 
 /* Camera frustum built from a projection×view matrix (Gribb-Hartmann).
  * Only the four side planes are used; near/far are skipped because the

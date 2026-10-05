@@ -1776,7 +1776,7 @@ void BitmapCache<V>::calculate_storage()
     size_t total = 0;
     for(auto const& [hash, res] : m_reservations)
     {
-        auto [type, pixfmt, comp, bfmt, cmpflg] = hash;
+        auto [type, pixfmt, comp, bfmt, cmpflg, pixflg] = hash;
 
         u32 mips = res.fmt.pixfmt == pix_fmt::RGB565
                        ? 1u
@@ -1860,7 +1860,7 @@ void BitmapCache<V>::reserve_storage()
                 .convert<u32>();
         bucket->surface->alloc(size);
 
-        auto [type, fmt, _, __, comp] = hash;
+        auto [type, fmt, _, __, comp, ___] = hash;
         std::string bucket_name       = fmt::format(
             "cache_{0}_{1}_{2}",
             magic_enum::enum_name(type),

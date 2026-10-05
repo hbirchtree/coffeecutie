@@ -1713,6 +1713,28 @@ struct MeshRenderer
                     .template get_bucket<gfx::compat::texture_2da_t>(
                         PixDesc(pix_fmt::RGBA8))
                     .sampler});
+        if(m_api->feature_info().texture.tex.gl.etc2 &&
+           m_api->limits().textures.texture_units > 14)
+        {
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_etc2_rgb"sv, 13},
+                    bitm_cache
+                        .template get_bucket<gfx::compat::texture_2da_t>(
+                            CompFmt(
+                                pix_fmt::ETC2, typing::pixels::pix_flags::RGB))
+                        .sampler});
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_etc2_rgba"sv, 14},
+                    bitm_cache
+                        .template get_bucket<gfx::compat::texture_2da_t>(
+                            CompFmt(
+                                pix_fmt::ETC2, typing::pixels::pix_flags::RGBA))
+                        .sampler});
+        }
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
         if(std::get<0>(m_api->api_version()) == 2)
             return;

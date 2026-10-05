@@ -24,6 +24,8 @@ layout(location = 13, binding = 3) uniform sampler2DArray source_rgba4;
 layout(location = 14, binding = 4) uniform sampler2DArray source_rgba8;
 layout(location = 15, binding = 5) uniform sampler2DArray source_font;
 layout(location = 16, binding = 6) uniform sampler2DArray source_rg8;
+layout(location = 17, binding = 7) uniform sampler2DArray source_etc2_rgb;
+layout(location = 18, binding = 8) uniform sampler2DArray source_etc2_rgba;
 
 const uint TEX_BC1    = 1u;
 const uint TEX_BC2    = 2u;
@@ -32,6 +34,8 @@ const uint TEX_RGBA4  = 7u;
 const uint TEX_RGBA8  = 8u;
 const uint TEX_FONT   = 9u;
 const uint TEX_A8Y8   = 12u;
+const uint TEX_ETC2_RGB  = 13u;
+const uint TEX_ETC2_RGBA = 14u;
 
 vec4 sample_color()
 {
@@ -62,6 +66,10 @@ vec4 sample_color()
         vec2 la = texture(source_rg8, vec3(sample_coord, layer), bias).rg;
         return vec4(la.rrr, la.g);
     }
+    else if(source == TEX_ETC2_RGB)
+        return texture(source_etc2_rgb, vec3(sample_coord, layer), bias);
+    else if(source == TEX_ETC2_RGBA)
+        return texture(source_etc2_rgba, vec3(sample_coord, layer), bias);
     else if(source == TEX_FONT)
     {
         float alpha = texture(source_font, vec3(sample_coord, layer)).r;
