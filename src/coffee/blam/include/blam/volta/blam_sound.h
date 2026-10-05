@@ -20,6 +20,7 @@ struct pitch_permutation_t
         ogg,
     } codec;
 
+    /* Next chunk of the same piece, -1 when the piece ends */
     i16 next_permutation_idx;
     u32 unknown2[2];
     u32 samples_pointer;
@@ -52,6 +53,10 @@ struct pitch_range_t
     bl_string name;
     f32       natural_pitch;
     Vecf2     bend_bounds;
+    /* Permutations [0, actual_permutation_count) each start a piece (or are
+     * a standalone variant); the rest are follow-on chunks reached only
+     * through next_permutation_idx. When a piece ends, playback picks
+     * another starting permutation, never the index after the last chunk. */
     i16       actual_permutation_count;
     f32       playback_rate;
     i32       padding[2];
