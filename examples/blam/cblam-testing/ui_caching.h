@@ -308,6 +308,12 @@ struct UIElementCache
             if(sl.list_footer_bitmap.valid())
                 out.spinner_footer =
                     bitm_cache.resolve_all(sl.list_footer_bitmap);
+            /* Item templates of a list generated in code */
+            if(auto children = ui_el->child_widgets.data(magic);
+               children.has_value())
+                for(auto const& child : children.value())
+                    if(auto c = predict(child.widget); c.valid())
+                        out.children.push_back(c);
             /* The values come from the text box's string list */
             [[fallthrough]];
         }

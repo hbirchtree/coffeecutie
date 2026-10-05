@@ -217,7 +217,8 @@ static void load_resources(
     if(!lobby_controllers.empty())
         num_seats = static_cast<u16>(lobby_controllers.size());
     u64 main_biped_id{0};
-    if(num_pinfo == 0)
+    /* The menu made one seat; a lobby can ask for more */
+    if(num_pinfo == 0 || (!lobby_controllers.empty() && num_pinfo < num_seats))
     {
         cDebug("Creating player data");
         auto* controllers         = e.service<comp_app::ControllerInput>();
@@ -226,6 +227,8 @@ static void load_resources(
             allocated_controllers = 0;
         for(auto i : range<>(num_seats))
         {
+            if(i < num_pinfo)
+                continue;
             // Uncomplicate the rest of the codebase by not creating
             // more local seats than supported
             if(i != 0 && !const_config::supports_splitscreen)
@@ -264,6 +267,18 @@ static void load_resources(
             }
         }
     }
+    /* Seats that sat in the menu go on to play the game */
+    if(changed.container.map->map_type != blam::maptype_t::ui)
+        for(auto player : e.select<PlayerInfo, PlayerInput, PlayerCamera>())
+        {
+            auto [info, input, camera] = player.components();
+            if(info.is_remote())
+                continue;
+            input.input_mode = PlayerInput::input_mode_t::game;
+            if(info.seat_idx < lobby_controllers.size())
+                camera.controller.index = lobby_controllers[info.seat_idx];
+        }
+
     rq::runtime_queue::Queue(
         rq::dependent_task<void, void>::CreateSink(
             loading_status.finished.get_future(),

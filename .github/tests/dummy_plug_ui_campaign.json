@@ -1,0 +1,94 @@
+{
+    "comment": "Xbox ui.map: Campaign > profile > level (a30) > Normal, then loads a30 and captures it in game.",
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 960
+        }
+    },
+    "events": [
+        {
+            "time": 6000,
+            "type": "controller_connect",
+            "index": 0
+        },
+        {
+            "time": 6200,
+            "type": "screenshot",
+            "name": "menu_main"
+        },
+        {
+            "time": 6400,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 6700,
+            "type": "screenshot",
+            "name": "campaign_profile"
+        },
+        {
+            "time": 6900,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 7200,
+            "type": "screenshot",
+            "name": "campaign_levels"
+        },
+        {
+            "time": 7400,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 7700,
+            "type": "screenshot",
+            "name": "campaign_level_a30"
+        },
+        {
+            "time": 7900,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 8200,
+            "type": "screenshot",
+            "name": "campaign_difficulty"
+        },
+        {
+            "time": 8400,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 8700,
+            "type": "screenshot",
+            "name": "campaign_difficulty_normal"
+        },
+        {
+            "time": 8900,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 908900,
+            "type": "screenshot",
+            "name": "campaign_ingame"
+        },
+        {
+            "time": 938900,
+            "type": "screenshot",
+            "name": "campaign_ingame_later"
+        }
+    ],
+    "end_time": 943900,
+    "frame_delta": 100.0
+}

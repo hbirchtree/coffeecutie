@@ -189,6 +189,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     bool                            m_click_pending{false};
     CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
     generation_idx_t                m_cursor_bitmap;
+    generation_idx_t                m_default_font; /*!< for text with none */
     VirtualKeyboardData             m_keyboard;
 
     /* hudg's button icons, drawn for "%a-button" style tokens in text */
@@ -248,6 +249,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         /* Stack entry whose slot replacements apply, and this widget's slot */
         UIScreen::frame_t const* stack_frame{nullptr};
         std::vector<u16>         slot{};
+        /* Generated list item this widget belongs to; item_root is the
+         * template's own container, which keeps its normal background */
+        UIDataSource::list_t const* list{nullptr};
+        std::optional<u16>          item{};
+        bool                        item_root{false};
     };
 
     Vecf2 window_to_ui(Vecf2 const& point)
@@ -327,8 +333,21 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(!children_opt.has_value())
             return;
         auto const children = children_opt.value();
+        /* Generated items are centred on the selected one */
+        auto const* list     = list_of(el);
+        i32 const   first    = list ? static_cast<i32>(list->get()) -
+                                    static_cast<i32>(el.children.size() / 2)
+                                    : 0;
         for(auto const& [i, child] : stl_types::const_enumerate(el.children))
         {
+            std::optional<u16> item = layout.item;
+            if(list)
+            {
+                i32 const at = first + static_cast<i32>(i);
+                if(at < 0 || at >= static_cast<i32>(list->count()))
+                    continue;
+                item = static_cast<u16>(at);
+            }
             auto const& meta = children[i];
             auto        slot = layout.slot;
             slot.push_back(static_cast<u16>(i));
@@ -345,6 +364,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     .index       = layout.index,
                     .stack_frame = layout.stack_frame,
                     .slot        = std::move(slot),
+                    .list        = list ? list : layout.list,
+                    .item        = item,
+                    .item_root   = list != nullptr,
                 },
                 visit);
         }
@@ -370,6 +392,35 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     static bool has_flag(UIElementItem const& el, blam::ui_element::flags_t f)
     {
         return static_cast<u32>(el.ui_element->flags) & static_cast<u32>(f);
+    }
+
+    /* The provider's list, for a widget whose items are generated in code */
+    UIDataSource::list_t const* list_of(UIElementItem const& el) const
+    {
+        using items_t = blam::ui_element::list_items_t;
+        if(!m_data || !(el.ui_element->list_items.flags &
+                        items_t::list_items_generated_in_code))
+            return nullptr;
+        auto inputs = el.ui_element->data_inputs.data(bitm_cache.magic);
+        if(!inputs.has_value())
+            return nullptr;
+        for(auto const& input : inputs.value())
+            if(auto const* list = m_data->list(input.function))
+                return list;
+        return nullptr;
+    }
+
+    /* A column list's items take focus with no handlers of their own */
+    bool focusable_child(UIElementItem const& parent, UIElementItem const& child)
+    {
+        using flags_t = blam::ui_element::flags_t;
+        if(child.visible &&
+           parent.ui_element->widget_type ==
+               blam::ui_element::widget_type_t::column_list &&
+           (has_flag(parent, flags_t::dpad_ud_tabs_through_items) ||
+            has_flag(parent, flags_t::dpad_lr_tabs_through_items)))
+            return true;
+        return focusable(child);
     }
 
     /* Can the widget, or anything below it, take input? */
@@ -400,7 +451,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         {
             i32 idx = ((from + step * n) % count + count) % count;
             if(auto* child = find_item(el.children[idx]);
-               child && focusable(*child))
+               child && focusable_child(el, *child))
                 return static_cast<u16>(idx);
         }
         return std::nullopt;
@@ -421,7 +472,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             auto* current = idx < el->children.size()
                                 ? find_item(el->children[idx])
                                 : nullptr;
-            if(!current || !focusable(*current))
+            if(!current || !focusable_child(*el, *current))
             {
                 auto first = next_focusable(*el, 0, 1);
                 if(!first)
@@ -478,10 +529,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         bool handled = false;
         for(auto const& eh : handlers.value())
         {
-            /* PC tags put confirm on the left mouse button */
+            /* PC tags put confirm on the left mouse button, or on a
+             * list's activator */
             bool matches = eh.event_type == type ||
                            (type == eh_t::type_t::a_btn &&
-                            eh.event_type == eh_t::type_t::left_mouse);
+                            (eh.event_type == eh_t::type_t::left_mouse ||
+                             eh.event_type == eh_t::type_t::custom_activator));
             if(!matches)
                 continue;
 
@@ -504,6 +557,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     /* A provider's binding wins over the screen's own copy */
     u16 spinner_get(UIScreen const* screen, UIElementItem const& el) const
     {
+        if(auto const* list = list_of(el))
+            return list->get();
         if(m_data)
             if(auto const* value = m_data->value(el.tag_name))
                 return value->get();
@@ -512,6 +567,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
     void spinner_set(UIScreen& screen, UIElementItem const& el, u16 value)
     {
+        if(auto const* list = list_of(el))
+        {
+            list->set(value);
+            return;
+        }
         if(m_data)
             if(auto const* bound = m_data->value(el.tag_name))
             {
@@ -849,8 +909,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                has_flag(el, flags_t::dpad_lr_tabs_through_items))
             {
                 /* Clamped: the arrows mark the ends of the range */
-                i32 const last =
-                    static_cast<i32>(std::max<size_t>(el.text_strings.size(), 1)) - 1;
+                auto const* list = list_of(el);
+                i32 const   last =
+                    static_cast<i32>(std::max<size_t>(
+                        list ? list->count() : el.text_strings.size(), 1)) -
+                    1;
                 spinner_set(
                     screen,
                     el,
@@ -1197,10 +1260,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 layout_data_t const& layout) -> bool {
                 if(!el.background.empty())
                 {
-                    /* Description images hold one image per list item;
-                     * elsewhere image 1 is the focused look */
+                    /* Description images hold one image per list item, as
+                     * do a generated item's pictures; elsewhere image 1 is
+                     * the focused look */
+                    auto const item_image =
+                        layout.item && !layout.item_root && layout.list &&
+                                layout.list->image
+                            ? std::optional<u16>(
+                                  layout.list->image(*layout.item))
+                            : std::nullopt;
                     auto const& im =
-                        layout.index
+                        item_image
+                            ? el.background[std::min<size_t>(
+                                  *item_image, el.background.size() - 1)]
+                        : layout.index
                             ? (*layout.index < el.background.size()
                                    ? el.background[*layout.index]
                                    : el.background[0])
@@ -1226,6 +1299,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     };
                     arrow(el.spinner_header, sl.header_bounds);
                     arrow(el.spinner_footer, sl.footer_bounds);
+                    /* Its items are the children, not a string */
+                    if(list_of(el))
+                        return true;
                 }
 
                 if(el.ui_element->widget_type != widget_type::text_box &&
@@ -1233,9 +1309,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     return true;
 
                 auto const& tb = el.ui_element->text_box;
-                if(!el.font_id.valid())
+                /* Some generated item templates name no font */
+                auto const font_id =
+                    el.font_id.valid() ? el.font_id : m_default_font;
+                if(!font_id.valid())
                     return false;
-                auto font_it = font_cache.find(el.font_id);
+                auto font_it = font_cache.find(font_id);
                 if(font_it == font_cache.end())
                     return false;
                 FontItem const& font_item = font_it->second;
@@ -1258,6 +1337,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         provided = (*bound)(text);
                         text     = provided;
                     }
+                if(layout.list && layout.item && layout.list->text)
+                {
+                    provided = layout.list->text(el.tag_name, *layout.item);
+                    text     = provided;
+                }
                 if(text.empty())
                     return false;
                 std::u16string const expanded = expand_tokens(text);
@@ -2046,6 +2130,7 @@ void load_ui_items(
     }
     try
     {
+        e.subsystem_cast<UIRenderer>().m_default_font = large_ui_font;
         e.subsystem_cast<UIRenderer>().m_keyboard     = std::move(keyboard);
         e.subsystem_cast<UIRenderer>().m_button_icons = std::move(button_icons);
     } catch(...)

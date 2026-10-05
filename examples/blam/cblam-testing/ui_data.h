@@ -51,6 +51,20 @@ struct UIDataSource : compo::SubsystemBase
         setter_t set;
     };
 
+    /* A list whose items the engine generates. Each visible item is a
+     * template of name, picture and description widgets; the template's
+     * text boxes are told apart only by their tag names. */
+    struct list_t
+    {
+        std::function<libc_types::u16()> count;
+        getter_t                         get; /*!< selected item */
+        setter_t                         set;
+        std::function<std::u16string(std::string_view widget, libc_types::u16 item)>
+                                                          text;
+        std::function<libc_types::u16(libc_types::u16 item)> image;
+    };
+    using data_function_t = blam::ui_element::data_function_t;
+
     void on_function(blam::ui_element::function_t function, function_t&& handler)
     {
         m_functions[function] = std::move(handler);
@@ -64,6 +78,12 @@ struct UIDataSource : compo::SubsystemBase
     void bind_text(std::string_view widget, text_t&& text)
     {
         m_texts[std::string(widget)] = std::move(text);
+    }
+
+    /* Keyed by the list widget's game data input */
+    void bind_list(data_function_t input, list_t&& list)
+    {
+        m_lists[input] = std::move(list);
     }
 
     /* nullopt when no provider handles the function */
@@ -87,6 +107,12 @@ struct UIDataSource : compo::SubsystemBase
         return it != m_texts.end() ? &it->second : nullptr;
     }
 
+    list_t const* list(data_function_t input) const
+    {
+        auto it = m_lists.find(input);
+        return it != m_lists.end() ? &it->second : nullptr;
+    }
+
     libc_types::u64 next_token()
     {
         return ++m_token;
@@ -96,5 +122,6 @@ struct UIDataSource : compo::SubsystemBase
     std::unordered_map<blam::ui_element::function_t, function_t> m_functions;
     std::unordered_map<std::string, value_t>        m_values;
     std::unordered_map<std::string, text_t>         m_texts;
+    std::unordered_map<data_function_t, list_t>     m_lists;
     libc_types::u64                                 m_token{0};
 };

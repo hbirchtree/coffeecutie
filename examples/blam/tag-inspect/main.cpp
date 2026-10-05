@@ -536,6 +536,9 @@ void dump_dela(blam::ui_element const* info)
         info->millis_to_auto_close,
         info->millis_auto_close_fade_time);
     fmt::print("  background={}\n", name_of(info->background));
+    fmt::print(
+        "  list_items_flags={:#x}\n",
+        static_cast<u32>(info->list_items.flags));
 
     /* data_inputs are what let a widget show something the tag cannot know --
      * a profile name, a map count -- so a widget that changes at runtime and
@@ -558,6 +561,7 @@ void dump_dela(blam::ui_element const* info)
             fmt::print("    ");
             print_enum("event", ev.event_type);
             fmt::print("flags={} ({})", flags_to_string(ev.flags), static_cast<u32>(ev.flags));
+            fmt::print(" function={} ", static_cast<u32>(ev.function));
             auto script = ev.script.str();
             fmt::print(
                 "widget={} sound={} script=\"{}\"\n",

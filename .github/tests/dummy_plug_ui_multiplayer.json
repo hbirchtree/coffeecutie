@@ -1,0 +1,204 @@
+{
+    "comment": "Xbox ui.map: Multiplayer > split screen > join > map (Blood Gulch) > Slayer > start, then loads bloodgulch and captures it in game.",
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 960
+        }
+    },
+    "events": [
+        {
+            "time": 6000,
+            "type": "controller_connect",
+            "index": 0
+        },
+        {
+            "time": 6200,
+            "type": "screenshot",
+            "name": "menu_main"
+        },
+        {
+            "time": 6400,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 6700,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 7000,
+            "type": "screenshot",
+            "name": "mp_type"
+        },
+        {
+            "time": 7200,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 7500,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 7800,
+            "type": "screenshot",
+            "name": "mp_join"
+        },
+        {
+            "time": 8000,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 8300,
+            "type": "screenshot",
+            "name": "mp_profile"
+        },
+        {
+            "time": 8500,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 8800,
+            "type": "screenshot",
+            "name": "mp_profile_chosen"
+        },
+        {
+            "time": 9000,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 9300,
+            "type": "screenshot",
+            "name": "mp_maps"
+        },
+        {
+            "time": 9500,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 9800,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 10100,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 10400,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 10700,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 11000,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 11300,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 11600,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 11900,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 12200,
+            "type": "screenshot",
+            "name": "mp_map_bloodgulch"
+        },
+        {
+            "time": 12400,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 12700,
+            "type": "screenshot",
+            "name": "mp_gametypes"
+        },
+        {
+            "time": 12900,
+            "type": "controller_button",
+            "button": "POV_LEFT",
+            "duration": 100
+        },
+        {
+            "time": 13200,
+            "type": "screenshot",
+            "name": "mp_gametype_koth"
+        },
+        {
+            "time": 13400,
+            "type": "controller_button",
+            "button": "POV_RIGHT",
+            "duration": 100
+        },
+        {
+            "time": 13700,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 14000,
+            "type": "screenshot",
+            "name": "mp_pregame"
+        },
+        {
+            "time": 14200,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 914200,
+            "type": "screenshot",
+            "name": "mp_ingame"
+        },
+        {
+            "time": 944200,
+            "type": "screenshot",
+            "name": "mp_ingame_later"
+        }
+    ],
+    "end_time": 949200,
+    "frame_delta": 100.0
+}

@@ -17,6 +17,7 @@
 #include "selected_version.h"
 #include "sounds.h"
 #include "ui.h"
+#include "ui_game_setup.h"
 #include "ui_profile.h"
 #include "ui_caching.h"
 
@@ -503,6 +504,7 @@ i32 blam_main()
             alloc_renderer(e);
             alloc_ui_system(e);
             alloc_profile_provider(e);
+            alloc_game_setup_provider(e);
             alloc_networking(
                 e,
                 arguments.count("gateway-auth-secret")
