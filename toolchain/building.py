@@ -367,6 +367,59 @@ def _is_ci() -> bool:
     return os.environ.get("CI", "").lower() in ("true", "1")
 
 
+def _own_cgroup() -> Path | None:
+    """cgroup v2 directory of this process, or None."""
+    try:
+        rel = Path("/proc/self/cgroup").read_text().split("0::", 1)[1].split()[0]
+    except (OSError, IndexError):
+        return None
+    return Path("/sys/fs/cgroup") / rel.lstrip("/")
+
+
+def _enter_build_cgroup() -> None:
+    """Move this process into a `build` cgroup capped at a fraction of the
+    container's memory, so an OOM kills a compiler instead of the shell.
+
+    Only applies inside a delegated cgroup v2 namespace with a memory limit
+    (docker's default). The container's processes are first moved into an
+    `init` leaf, because cgroup v2 refuses to enable controllers on a group
+    that still has processes. BUILD_MEMORY_FRACTION (default 0.8, 0 = off).
+    """
+    fraction = float(os.environ.get("BUILD_MEMORY_FRACTION", "0.8"))
+    root = Path("/sys/fs/cgroup")
+    if fraction <= 0 or _own_cgroup() not in (root, root / "init"):
+        return
+    try:
+        limit = int((root / "memory.max").read_text())
+    except (OSError, ValueError):
+        return
+    build = root / "build"
+    try:
+        if "memory" not in (root / "cgroup.subtree_control").read_text().split():
+            (root / "init").mkdir(exist_ok=True)
+            # Loop: processes may fork into the root while we move them.
+            for _ in range(10):
+                pids = (root / "cgroup.procs").read_text().split()
+                if not pids:
+                    break
+                for pid in pids:
+                    try:
+                        (root / "init" / "cgroup.procs").write_text(pid)
+                    except OSError:
+                        pass  # exited meanwhile
+            (root / "cgroup.subtree_control").write_text("+memory")
+        build.mkdir(exist_ok=True)
+        (build / "memory.max").write_text(str(int(limit * fraction)))
+        (build / "cgroup.procs").write_text(str(os.getpid()))
+    except OSError as e:
+        print(f":: could not set up build cgroup ({e}); building uncapped")
+        return
+    print(
+        f":: build cgroup capped at {_fmt_bytes(int(limit * fraction))} "
+        f"({fraction:.0%} of container)"
+    )
+
+
 def _cgroup_memory_limit() -> int | None:
     """Effective cgroup memory limit in bytes, or None if unlimited.
 
@@ -386,11 +439,14 @@ def _cgroup_memory_limit() -> int | None:
         except ValueError:
             return None
 
+    own = _own_cgroup()
     limits = [
         lim
         for lim in (
             read_limit(Path("/sys/fs/cgroup/memory.max")),
             read_limit(Path("/sys/fs/cgroup/memory.high")),
+            read_limit(own / "memory.max") if own else None,
+            read_limit(own / "memory.high") if own else None,
             read_limit(Path("/sys/fs/cgroup/memory/memory.limit_in_bytes")),
         )
         if lim is not None
@@ -1861,12 +1917,16 @@ def main() -> None:
             # gh: toolchain download via GitHub Releases
             check_programs("gh")
 
+        if not dry_run:
+            _enter_build_cgroup()
         plan = build_plan_for(target, host, base_dir, cmake_extra_args)
         plan.execute(dry_run=dry_run)
 
     elif cmd == "host-build":
         check_programs("cmake", "ninja", "vcpkg")
         host.build_mode = args.mode
+        if not dry_run:
+            _enter_build_cgroup()
         plan = host_tools_plan(host, base_dir)
         plan.execute(dry_run=dry_run)
 
