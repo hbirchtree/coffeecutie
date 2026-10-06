@@ -163,6 +163,8 @@ struct PostProcessParameters : compo::SubsystemBase
     Vecf4 rgb_comp{};
     f32   camo_scale{0.05f};
 
+    bool forge_overlay{false};
+
     bool doom_mode{false};
 };
 

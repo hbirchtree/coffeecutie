@@ -18,7 +18,7 @@
 #include <peripherals/stl/type_list.h>
 
 using ScreenClearManifest = compo::SubsystemManifest<
-    empty_list_t,
+    type_list_t<const PlayerInfo, const PlayerCamera>,
     type_list_t<gfx::system, BlamResources, PostProcessParameters>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 
@@ -56,12 +56,16 @@ struct ScreenClear
     std::shared_ptr<gfx::program_t> blur_down_program;
     std::shared_ptr<gfx::program_t> blur_up_program;
 
+    std::shared_ptr<gfx::texture_2d_t> forge_cursor;
+    std::shared_ptr<gfx::sampler_t>    forge_cursor_smp;
+
     struct screen_quad_t
     {
         Vecf2                         position; /* Position in display coords */
         Vecf2                         size;     /* Size in display coords */
         Vecf2                         atlas_offset{0.f, 0.f};
         Vecf2                         atlas_scale{1.f, 1.f};
+        std::optional<Vecf3>          tint;
         std::weak_ptr<gfx::sampler_t> sampler; /* Sampler to draw on the quad */
     };
 

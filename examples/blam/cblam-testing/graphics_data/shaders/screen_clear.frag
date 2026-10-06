@@ -2,17 +2,25 @@
 precision highp float;
 precision highp sampler2D;
 varying vec2 in_tex;
+
+// Sampling
 uniform sampler2D source;
-uniform float gamma;
-uniform float exposure;
 uniform vec2 offset;
 uniform vec2 scale;
-uniform int mode;
 
+// Post-processing
+uniform float gamma;
+uniform float exposure;
+uniform vec3  tint;
+
+uniform int mode;
+// RGB-defocus/chromatic aberration
+// It's only uniform
 uniform vec4 rgb_comp_defocus;
+// Simulated gaussian blur
 uniform vec2 blur_distance;
 
-// Creates RGB channel desync
+// Creates chromatic aberration
 vec4 rgb_defocus()
 {
     vec4 color = texture2D(source, offset + in_tex * scale).rrra;
@@ -63,7 +71,7 @@ vec4 gaussian_blur_sample()
 
 vec4 plain_sample()
 {
-    return texture2D(source, offset + in_tex * scale).rgba;
+    return texture2D(source, offset + in_tex * scale).rgba * vec4(tint, 1.0);
 }
 
 void main()

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="32"
+   height="32"
+   viewBox="0 0 32 32"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="forge.svg"
+   inkscape:export-filename="forge.png"
+   inkscape:export-xdpi="384"
+   inkscape:export-ydpi="384"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:zoom="22.693708"
+     inkscape:cx="4.8030934"
+     inkscape:cy="13.175458"
+     inkscape:window-width="2560"
+     inkscape:window-height="1372"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#000000"
+       id="rect470"
+       width="33.092873"
+       height="33.313198"
+       x="-0.74910629"
+       y="-0.70504123" />
+    <circle
+       style="fill:#b3b3b3;stroke-width:0.933333"
+       id="path111"
+       cx="16"
+       cy="16.906525"
+       r="14" />
+    <circle
+       style="fill:#000000;stroke-width:0.889499"
+       id="path270"
+       cx="16"
+       cy="19.022507"
+       r="12" />
+    <circle
+       style="fill:#000000;stroke-width:2.19245"
+       id="path344-3"
+       cx="16"
+       cy="5.1929307"
+       r="3.6083753" />
+    <circle
+       style="fill:#ffffff;stroke-width:1.64434"
+       id="path344"
+       cx="16"
+       cy="5.1929307"
+       r="2.7062814" />
+  </g>
+</svg>

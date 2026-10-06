@@ -123,6 +123,12 @@
                 "source": "textures/machinery.png",
                 "name": "machinery",
                 "format": "rgb565"
+            },
+            {
+                "source": "textures/forge.png",
+                "name": "forge_cursor",
+                "format": "r8",
+                "channel": "r"
             }
         ],
         "meshes": [

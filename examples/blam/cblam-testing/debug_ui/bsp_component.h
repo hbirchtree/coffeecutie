@@ -209,6 +209,7 @@ struct BlamBspWidget
                             10.f,
                             120.f);
                     }
+                    ImGui::Checkbox("Forge overlay", &postprocess->forge_overlay);
                     ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
                     ImGui::SliderFloat(
                         "Exposure", &postprocess->exposure, -10.f, 10.f);
