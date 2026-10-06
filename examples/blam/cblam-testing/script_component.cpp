@@ -207,6 +207,14 @@ struct BlamScript
             };
 
         m_script.init_globals(m_env.globals, m_strings, {hnd});
+
+        // By default on ui.map, start with running
+        // The camera track it follows runs pretty solidly in our
+        // script engine by now
+        if(m_map->map_type() == blam::maptype_t::ui)
+        {
+            m_running = true;
+        }
     }
 
     void start_restricted(Proxy& p, time_point const& t)

@@ -212,6 +212,11 @@ struct map_container
     {
         return tags->scenario(map, magic);
     }
+
+    inline auto map_type() const
+    {
+        return map->map_type;
+    }
 };
 
 template<typename Ver>
