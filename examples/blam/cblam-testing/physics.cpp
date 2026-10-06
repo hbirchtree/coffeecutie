@@ -207,11 +207,11 @@ struct PhysicsSystem
         {
             auto          player = player_;
             PlayerCamera& camera = player.template get<PlayerCamera>();
-            if(!camera.mode.physics)
+            auto          info   = p.template get<PlayerInfo>(player.id());
+            if(!info || !info->mode.physics || info->is_remote())
                 continue;
             auto phys_it = m_bodies.find(player.id());
-            auto info    = p.template get<PlayerInfo>(player.id());
-            if(phys_it == m_bodies.end() || !info)
+            if(phys_it == m_bodies.end())
                 continue;
             entity_body& phys = (*phys_it).second;
             btVector3&   origin =
@@ -261,7 +261,7 @@ struct PhysicsSystem
             if(!biped_in_play(info, camera, net))
                 continue;
             u64 const  id        = player.id();
-            bool const kinematic = info.is_remote() || !camera.mode.physics;
+            bool const kinematic = info.is_remote() || !info.mode.physics;
             auto const shape     = info.biped;
             live.insert(id);
 

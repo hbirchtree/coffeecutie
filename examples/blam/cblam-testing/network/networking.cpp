@@ -369,10 +369,22 @@ struct alignas(8) CameraSync
     static constexpr auto message_type = MessageBase::CameraSync;
     static constexpr u32  self_id      = 0xFFFF;
 
-    Vecf4 position;
-    Quatf rotation;
-    u32   target_player{0xFFFF};
-    f32   fade{1.f};
+    enum flags_t : u32
+    {
+        none    = 0x0,
+        physics = 0x1, /*!< PlayerInfo::mode.physics */
+    };
+
+    Vecf4   position;
+    Quatf   rotation;
+    u32     target_player{0xFFFF};
+    f32     fade{1.f};
+    flags_t flags{none};
+
+    static flags_t flags_of(PlayerInfo const& info)
+    {
+        return info.mode.physics ? physics : none;
+    }
 };
 
 struct alignas(8) Screenshot
@@ -490,7 +502,7 @@ static_assert(sizeof(EntitySpawn) == 56);
 static_assert(sizeof(SpawnRequest) == 48);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 48);
-static_assert(sizeof(Message<CameraSync>) == 56);
+static_assert(sizeof(Message<CameraSync>) == 64);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
@@ -1014,6 +1026,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .position      = Vecf4(cam.camera.position, 0),
                     .rotation      = cam.camera.rotation,
                     .target_player = info.player_idx,
+                    .flags         = CameraSync::flags_of(info),
                 }));
         }
     }
@@ -1039,7 +1052,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         cam->camera.position = position;
         cam->camera.rotation = rotation;
-        if(!cam->mode.physics)
+        if(!info->mode.physics)
             return;
         Physics::Event     ev{Physics::Event::Translate};
         Physics::Translate translate{
@@ -2551,6 +2564,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 auto& net  = entity.get<NetworkInfo>();
                 if(!is_networked(entity.id(), info))
                     continue;
+                if(!info.is_remote() && info.mode.physics != net.sent_physics)
+                    net.changes.viewport = true;
 
                 // Server-enforced viewport/transform permissions
                 auto send_permissions = [&] {
@@ -2582,8 +2597,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             .position      = Vecf4(cam.camera.position, 0),
                             .rotation      = cam.camera.rotation,
                             .target_player = info.player_idx,
+                            .flags         = CameraSync::flags_of(info),
                         }));
                     net.changes.viewport = net.changes.transform = false;
+                    net.sent_physics     = info.mode.physics;
                 };
 
                 /* Lock before moving to birds-eye, move to spawn before
@@ -2619,19 +2636,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(m_client_player.exists() && m_join_confirmed)
             {
                 // Push our camera updates to server on change
-                auto& net = m_client_player.get<NetworkInfo>();
-                if(net.changes.viewport || net.changes.transform)
+                auto& net  = m_client_player.get<NetworkInfo>();
+                auto& info = m_client_player.get<PlayerInfo>();
+                if(net.changes.viewport || net.changes.transform ||
+                   info.mode.physics != net.sent_physics)
                 {
                     auto& camera = m_client_player.get<PlayerCamera>();
-                    auto& info   = m_client_player.get<PlayerInfo>();
                     send_single(
                         m_connection,
                         Message<CameraSync>({
                             .position      = Vecf4{camera.camera.position, 0},
                             .rotation      = camera.camera.rotation,
                             .target_player = info.player_idx,
+                            .flags         = CameraSync::flags_of(info),
                         }));
                     net.changes.viewport = net.changes.transform = false;
+                    net.sent_physics     = info.mode.physics;
                 }
             }
 
@@ -2725,6 +2745,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto& cam           = player_info.biped.get<PlayerCamera>();
             cam.camera.position = Vecf3(sync.position);
             cam.camera.rotation = sync.rotation;
+            info.mode.physics   = sync.flags & CameraSync::physics;
 
             auto targets = verified_connections();
             targets.erase(connection);
@@ -2735,6 +2756,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .position      = sync.position,
                     .rotation      = sync.rotation,
                     .target_player = player_info.idx,
+                    .flags         = sync.flags,
                 }),
                 k_nSteamNetworkingSend_Reliable,
                 std::move(targets));
@@ -2911,6 +2933,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     continue;
                 cam.camera.position = Vecf3(sync.position);
                 cam.camera.rotation = sync.rotation;
+                info.mode.physics   = sync.flags & CameraSync::physics;
                 // TODO: With a fresh viewport, we should compute relevance of
                 // entities Distance, visibility in frustum and projectile type
                 break;

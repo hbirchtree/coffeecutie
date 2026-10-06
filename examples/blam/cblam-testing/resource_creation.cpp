@@ -141,9 +141,10 @@ void create_resources(compo::EntityContainer& e)
                         std::out_of_range(
                             "tried to teleport player, but no target"));
                 }();
-                auto& cam = player.get<PlayerCamera>();
-                auto& net = player.get<NetworkInfo>();
-                if(cam.mode.physics)
+                auto& cam  = player.get<PlayerCamera>();
+                auto& net  = player.get<NetworkInfo>();
+                auto& info = player.get<PlayerInfo>();
+                if(info.mode.physics)
                 {
                     Physics::Event     ev{Physics::Event::Translate};
                     Physics::Translate translate{
@@ -332,12 +333,14 @@ void create_resources(compo::EntityContainer& e)
                  if(ev.event == "camera")
                  {
                      PlayerCamera* target{};
+                     PlayerInfo*   target_info{};
                      for(auto const& en : e.select<PlayerCamera, PlayerInfo>())
                      {
                          auto [cam, info] = en.components();
                          if(info.seat_idx != 0)
                              continue;
-                         target = &cam;
+                         target      = &cam;
+                         target_info = &info;
                      }
                      if(!target)
                      {
@@ -376,8 +379,8 @@ void create_resources(compo::EntityContainer& e)
                          target->camera.fieldOfView = ev.data["fov"].get<f32>();
                      }
                      /* Headless equivalent of the ImGui "Physics" checkbox */
-                     target->mode.physics =
-                         ev.data.value("physics", target->mode.physics);
+                     target_info->mode.physics =
+                         ev.data.value("physics", target_info->mode.physics);
                  }
                  if(ev.event == "dump_state")
                  {
@@ -430,7 +433,7 @@ void create_resources(compo::EntityContainer& e)
                              {"remote", info.is_remote()},
                              {"loading_progress", info.loading_progress},
                              {"connected", net.connected},
-                             {"physics", cam.mode.physics},
+                             {"physics", info.mode.physics},
                              {"position", vec(cam.camera.position)},
                              {"biped", std::move(biped)},
                          });

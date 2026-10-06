@@ -545,6 +545,7 @@ struct NetworkInfo
         bool viewport : 1 {false};
         bool permissions : 1 {false};
     } changes;
+    bool sent_physics{false};
 
     f32                       priority{0.f};
     f32                       relevance{0.f};
@@ -614,6 +615,11 @@ struct PlayerInfo
 
     /*! False while held before spawning */
     bool spawned{true};
+
+    struct
+    {
+        bool physics{false};
+    } mode;
 
     bool is_remote() const
     {
@@ -721,12 +727,6 @@ struct PlayerCamera
 
     struct
     {
-        bool freecam{false};
-        bool physics{false};
-    } mode;
-
-    struct
-    {
         Vecf2 movement_plane; /*!< Physics impulse movement
                                * forward = normalized to ground level */
         Vecf3 movement;       /*!< Freecam instant movement
@@ -821,7 +821,7 @@ static const auto player_recipe = compo::EntityRecipe{
             compo::type_hash_v<Model>(),
             compo::type_hash_v<Visibility>(),
         },
-    .tags = PlayerBiped,
+    .tags = PlayerBiped | PositioningDynamic,
 };
 
 static const auto skybox_model = compo::EntityRecipe{

@@ -19,14 +19,25 @@ using typing::vector_types::Vecf3;
 
 struct material
 {
+    enum flags_t : u32
+    {
+        none = 0x0,
+        head = 0x1,
+    };
+
     bl_string name;
-    u32       flags;
+    flags_t   flags;
     u16       material_type; /* breakable surface material enum */
     u16       padding;
-    u32       unknown[8];
+    f32       shield_leak_percentage;
+    f32       shield_damage_multiplier;
+    u32       padding2[3];
+    f32       body_damage_multiplier;
+    u32       padding3[2];
 };
 
 static_assert(sizeof(material) == 72);
+static_assert(offsetof(material, body_damage_multiplier) == 0x3c);
 
 struct permutation
 {

@@ -770,7 +770,7 @@ i32 blam_main()
                             input.up     |= key_pressed(Input::CK_Up);
                             input.down   |= key_pressed(Input::CK_Down);
                         }
-                    } else if(!cam.mode.physics)
+                    } else if(!info.mode.physics)
                     {
                         // Check that there's input
                         // Avoid needless movement
@@ -784,7 +784,7 @@ i32 blam_main()
                                 input.accel);
                             net.changes.transform = net.changes.viewport = true;
                         }
-                    } else
+                    } else if(!info.is_remote())
                     {
                         cam.camera.position = freecam_pos;
                         // TODO: Check for changes in position on physics

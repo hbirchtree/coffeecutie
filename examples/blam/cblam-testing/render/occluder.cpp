@@ -444,7 +444,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         };
 
         u32 model_visible = 0, model_pvs_culled = 0, model_frustum_culled = 0,
-            model_dist_culled = 0, model_total = 0;
+            model_dist_culled = 0, model_total = 0, intentional_culled = 0;
 
         /* Counters describe the primary viewport, as they did when culling was
          * single-view. */
@@ -456,6 +456,20 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 Visibility&  vis   = ref.template get<Visibility>();
 
                 model_total++;
+
+                // Players who are not physics-based should turn up as
+                // only their monitor form, not both
+                // The monitor renderer reciprocally does not render when physics is on
+                if(PlayerInfo const* info = p.template get<PlayerInfo>(ent.id());
+                        info && !info->mode.physics)
+                {
+                    for(auto const& [idx, view] : cull_targets)
+                    {
+                        vis.set_visibility(false, idx.first, idx.second);
+                    }
+                    intentional_culled ++;
+                    continue;
+                }
 
                 if(!cull_bsp)
                 {
@@ -514,10 +528,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         Coffee::Profiler::PopContext(); /* Occluder::model_cull_dynamic */
 
         debug_clusters();
-    }
-
-    void compute_player_visibility()
-    {
     }
 
     void update_debug_viz(Proxy& p)

@@ -2427,6 +2427,9 @@ struct MeshRenderer
             auto const& [cam, info] = entity.components();
             if(!info.is_remote() && !cam.is_active())
                 continue;
+            // Skip monitor render when physics mode is on for player
+            if(info.mode.physics)
+                continue;
             /* Same basis graphics.cpp folds into the view matrix */
             static const Matf4 bsp_basis{
                 {0, 0, 1, 0},
