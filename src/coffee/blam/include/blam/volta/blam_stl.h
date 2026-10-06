@@ -461,10 +461,26 @@ class tag_index_view
             std::is_same_v<Ver, custom_version_t> &&
             (std::is_same_v<T, sound::pitch_permutation_t> ||
              std::is_same_v<T, sound::pitch_range_t>);
-        // Some structures, eg. pitch ranges and permutations are relative to
-        // the sound struct
+        // Custom Edition keeps external sounds in sounds.map as the sound
+        // struct followed by its pitch ranges. The pitch range pointer is
+        // stale; permutation offsets are relative to the end of the struct.
         if(use_relative_offset && tag.storage == tag_storage_t::external)
-            ref.offset = tag.offset + sizeof(sound::sound);
+        {
+            auto atlas_ = m_atlases.find(atlas_type_t::sounds);
+            if(atlas_ == m_atlases.end())
+                return std::nullopt;
+            auto const& atlas = atlas_->second;
+            auto loc = atlas.header->by_name(tag.to_name().to_string(m_ptr));
+            if(!loc)
+                return std::nullopt;
+            u32 base = from_le((*loc)->offset) + sizeof(sound::sound);
+            if constexpr(std::is_same_v<T, sound::pitch_permutation_t>)
+                base += from_le(ref.offset);
+            ref.offset = to_le(base);
+            if(auto val = ref.data(atlas.magic); val.has_value())
+                return val.value();
+            return std::nullopt;
+        }
         if(auto int_val = ref.data(m_ptr); int_val.has_value())
             return int_val.value();
         // Other times, we're getting sample data from the atlas

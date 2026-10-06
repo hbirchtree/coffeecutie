@@ -3169,7 +3169,7 @@ void dump_snd(blam::tag_index_view<Ver> const& index, blam::tagref_t const& ref)
     if(snd->promotion_sound.valid())
         fmt::print(
             "    promotion={} count={}\n",
-            snd->promotion_sound.to_name().to_string(g_magic),
+            describe_tag_id(index, snd->promotion_sound.tag_id),
             snd->promotion_count);
 
     auto ranges = index.deref(*tag, snd->pitch_ranges_);
