@@ -254,7 +254,7 @@ struct BSPItem
     blam::tag_t const*       tag{nullptr};
     /* BSP-section magic for resolving reflexives inside mesh on demand
      * (cluster_for_point, raycast) */
-    blam::map_ptr bsp_magic{};
+    blam::bsp_ptr bsp_magic{};
     /* Index into the scenario's structure BSP list (bsp_info order); used to
      * match against bsp_switch_trigger source/destination. */
     libc_types::i16                                         section_idx{-1};

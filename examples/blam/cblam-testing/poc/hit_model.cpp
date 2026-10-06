@@ -47,8 +47,8 @@ void surface_loop(
  * plane are tested for containing the hit point; the one that does names the
  * material. */
 std::int16_t surface_material(
-    blam::collision::bsp const& bsp,
-    blam::map_ptr const&        magic,
+    blam::collision::model_bsp const& bsp,
+    blam::map_ptr const&              magic,
     std::int32_t                plane,
     vec3 const&                 point,
     std::int16_t                fallback)

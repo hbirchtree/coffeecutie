@@ -351,25 +351,25 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             auto vertex_id = lightmap.lightmap_idx |
                              (static_cast<u64>(mat.shader.tag_id) << 32);
 
-            blam::reference<libc_types::byte_t, blam::xbox_t> vref{}, lref{};
-            blam::map_ptr                                     vmag = bsp_magic;
-            if constexpr(std::is_same_v<V, blam::mcc_version_t>)
-            {
-                using lv    = blam::bsp::material::pc_light_vertex;
-                u32 vsz     = mat.pc.count * mat.vertex_size();
-                u32 vend    = mat.pc.padding2[0];
-                vref.count  = vsz;
-                vref.offset = mcc_vert_base + vend - vsz;
-                lref.count  = mat.pc.count * sizeof(lv);
-                lref.offset = mcc_vert_base + vend;
-                vmag        = vertex_magic;
-            } else
-            {
-                vref = mat.vertices();
-                lref = mat.light_verts();
-            }
-            auto vr = vref.data(vmag);
-            auto lr = lref.data(vmag);
+            auto [vr, lr] = [&] {
+                if constexpr(std::is_same_v<V, blam::mcc_version_t>)
+                {
+                    using lv = blam::bsp::material::pc_light_vertex;
+                    blam::vertex_reference<libc_types::byte_t, blam::xbox_t>
+                        vref{}, lref{};
+                    u32 vsz     = mat.pc.count * mat.vertex_size();
+                    u32 vend    = mat.pc.padding2[0];
+                    vref.count  = vsz;
+                    vref.offset = mcc_vert_base + vend - vsz;
+                    lref.count  = mat.pc.count * sizeof(lv);
+                    lref.offset = mcc_vert_base + vend;
+                    return std::pair(
+                        vref.data(vertex_magic), lref.data(vertex_magic));
+                } else
+                    return std::pair(
+                        mat.vertices().data(bsp_magic),
+                        mat.light_verts().data(bsp_magic));
+            }();
             if(!vr.has_value() || !lr.has_value())
                 continue;
             auto vertices       = vr.value();

@@ -100,23 +100,28 @@ struct ray_hit
     i32   plane{-1};
 };
 
-struct bsp
+template<ptr_tag Heap>
+struct bsp_t
 {
-    reference<bsp_3d>      nodes_3d;
-    reference<plane>       planes;
-    reference<leaf>        leaves;
-    reference<bsp_2d_ref>  bsp_2d_refs;
-    reference<bsp_2d_node> bsp_2d_nodes;
-    reference<surface>     surfaces;
-    reference<edge>        edges;
-    reference<vertex>      vertices;
+    template<typename T>
+    using ref = reference<T, grbx_t, atlas_type_t::map_file, Heap>;
+    using ptr = map_ptr_base<Heap>;
+
+    ref<bsp_3d>      nodes_3d;
+    ref<plane>       planes;
+    ref<leaf>        leaves;
+    ref<bsp_2d_ref>  bsp_2d_refs;
+    ref<bsp_2d_node> bsp_2d_nodes;
+    ref<surface>     surfaces;
+    ref<edge>        edges;
+    ref<vertex>      vertices;
 
     /* Walk the solid-leaf tree from the root down to the leaf containing
      * point. Children with the sign bit set are leaves
      * (index = child & 0x7fffffff); -1 means solid space. Returns nullopt
      * for solid/outside-the-map points and on malformed data. */
     inline std::optional<u32> find_leaf(
-        Vecf3 const& point, map_ptr const& magic) const
+        Vecf3 const& point, ptr const& magic) const
     {
         auto nodes_  = nodes_3d.data(magic);
         auto planes_ = planes.data(magic);
@@ -156,7 +161,7 @@ struct bsp
      * Plane-level precision: gives hit point/normal/plane; surface +
      * material resolution via the leaf's 2D BSPs is a later refinement. */
     inline std::optional<ray_hit> raycast(
-        Vecf3 const& start, Vecf3 const& end, map_ptr const& magic) const
+        Vecf3 const& start, Vecf3 const& end, ptr const& magic) const
     {
         auto nodes_  = nodes_3d.data(magic);
         auto planes_ = planes.data(magic);
@@ -167,16 +172,21 @@ struct bsp
         if(node_span.empty() || plane_span.empty())
             return std::nullopt;
         ray_hit hit{};
-        if(raycast_r(node_span, plane_span, 0, 0.f, 1.f, start, end, hit) == 2)
+        if(raycast_r(node_span, plane_span, 0, 0.f, 1.f, start, end, hit) &
+           ray_hit_found)
             return hit;
         return std::nullopt;
     }
 
-    /* Subsegment classification:
-     *   0 = no hit, contains empty space
-     *   1 = entirely solid
-     *   2 = hit recorded in out (first empty→solid crossing in ray order)
-     */
+    /* Subsegment classification, as bits: whether it starts and ends in
+     * solid space, and whether out holds a hit (the first empty→solid
+     * crossing in ray order). A crossing is where the near half ends empty
+     * and the far half starts solid; the far half need not stay solid, or a
+     * ray passing through a thin solid would lose its entry point. */
+    static constexpr int ray_start_solid = 1;
+    static constexpr int ray_end_solid   = 2;
+    static constexpr int ray_hit_found   = 4;
+
     template<typename NodeSpan, typename PlaneSpan>
     static int raycast_r(
         NodeSpan const&  nodes,
@@ -189,7 +199,7 @@ struct bsp
         ray_hit&         out)
     {
         if(node == -1)
-            return 1; /* solid space */
+            return ray_start_solid | ray_end_solid;
         if(node < 0)
             return 0; /* empty leaf */
         if(static_cast<u32>(node) >= nodes.size())
@@ -210,23 +220,25 @@ struct bsp
         i32   near_c = d0 >= 0.f ? n.front : n.back;
         i32   far_c  = d0 >= 0.f ? n.back : n.front;
         int   rn     = raycast_r(nodes, planes, near_c, t0, tm, p0, mid, out);
-        if(rn == 2)
-            return 2;
+        if(rn & ray_hit_found)
+            return rn;
         int rf = raycast_r(nodes, planes, far_c, tm, t1, mid, p1, out);
-        if(rf == 2)
-            return 2;
-        if(rn == 0 && rf == 1)
+        int const ends = (rn & ray_start_solid) | (rf & ray_end_solid);
+        if(!(rn & ray_end_solid) && (rf & ray_start_solid))
         {
-            /* near side passed through empty space, far side is solid
-             * right at the crossing → surface here */
+            /* Empty right before the plane, solid right after: the surface,
+             * ahead of anything the far half found */
             out.t      = tm;
             out.normal = d0 >= 0.f ? pl.plane : -pl.plane;
             out.plane  = n.plane;
-            return 2;
+            return ends | ray_hit_found;
         }
-        return (rn == 1 && rf == 1) ? 1 : 0;
+        return ends | (rf & ray_hit_found);
     }
 };
+
+using bsp       = bsp_t<ptr_tag::bsp>; /* structure BSP collision */
+using model_bsp = bsp_t<ptr_tag::map>; /* coll tag node geometry */
 
 } // namespace collision
 
@@ -243,8 +255,8 @@ struct section
     u32 header_offset;
 
     /* Below values are only valid on Xbox */
-    reference<comp_vertex, xbox_t>   xbox_vertices;
-    reference<comp_lightmap, xbox_t> xbox_lightmaps;
+    bsp_reference<comp_vertex, xbox_t>   xbox_vertices;
+    bsp_reference<comp_lightmap, xbox_t> xbox_lightmaps;
     bl_tag                           tag;
 
     /*!
@@ -252,7 +264,7 @@ struct section
      * Uses bsp_magic()
      * \return
      */
-    inline reference<header, xbox_t> to_header() const
+    inline bsp_reference<header, xbox_t> to_header() const
     {
         // count is a host literal -> store little-endian; header_offset is a
         // little-endian map field -> leave as-is (reference::data un-swaps it).
@@ -268,18 +280,18 @@ struct info
     u32      zero;
     tagref_t tag;
 
-    inline map_ptr bsp_magic(map_ptr const& map_magic) const
+    inline bsp_ptr bsp_magic(map_ptr const& map_magic) const
     {
-        // magic/offset are little-endian map fields; the resulting map_ptr is
-        // host order (consumed by reference::data which expects host).
-        return {
-            {map_magic.base_ptr, map_magic.max_size},
-            from_le(magic) - from_le(offset)};
+        u32 const off = from_le(offset);
+        u32 const len = from_le(size);
+        if(off > map_magic.max_size || len > map_magic.max_size - off)
+            return {};
+        return {{map_magic.base_ptr + off, len}, from_le(magic)};
     }
 
-    inline section const& to_bsp(map_ptr const& magic) const
+    inline section const& to_bsp(bsp_ptr const& magic) const
     {
-        return *C_RCAST<section const*>(magic.base_ptr + from_le(offset));
+        return *C_RCAST<section const*>(magic.base_ptr);
     }
 
     inline std::optional<header const*> to_header(map_ptr const& magic) const
@@ -315,7 +327,7 @@ struct material
     tagref_t                      shader;
     u16                           shader_permutation;
     flags_t                       flags; /*!< Mesh indices */
-    reference<vert::face, xbox_t> surfaces;
+    bsp_reference<vert::face, xbox_t> surfaces;
     Vecf3                         centroid;
     Vecf3                         ambient_col;
     u32                           dist_light_count;
@@ -339,9 +351,9 @@ struct material
             u32                       padding2[3];
             u32                       something;
             u32                       padding3;
-            reference<byte_t, xbox_t> uncompressed_vertices;
+            bsp_reference<byte_t, xbox_t> uncompressed_vertices;
             u32                       padding4[3];
-            reference<byte_t, xbox_t> compressed_vertices;
+            bsp_reference<byte_t, xbox_t> compressed_vertices;
         } pc;
 
         struct
@@ -351,11 +363,11 @@ struct material
         struct
         {
             u32                            pad[3];
-            reference<pc_vertex, xbox_t>   pc_vertices_data;
+            bsp_reference<pc_vertex, xbox_t>   pc_vertices_data;
             u32                            memory_vertex_offset;
             u32                            vert_reflexive;
             u32                            unknown_always_3;
-            reference<xbox_vertex, xbox_t> xbox_vertices_data;
+            bsp_reference<xbox_vertex, xbox_t> xbox_vertices_data;
             u32                            memory_lightmap_offset;
             u32                            lightmap_vert_reflexive;
             u32                            unknown_zero[2];
@@ -372,7 +384,7 @@ struct material
         u32 all[22];
     };
 
-    inline reference<byte_t, xbox_t> vertices() const
+    inline bsp_reference<byte_t, xbox_t> vertices() const
     {
         //        reflexive_t<pc_vertex, xbox_t> base = pc_vertices_data;
         //        base.offset += pc_vertex_data_offset;
@@ -400,7 +412,7 @@ struct material
             };
     }
 
-    inline reference<byte_t, xbox_t> light_verts() const
+    inline bsp_reference<byte_t, xbox_t> light_verts() const
     {
         //        reflexive_t<pc_light_vertex, xbox_t> out;
         //        /* Offset to vertex segment */
@@ -437,26 +449,7 @@ struct material
             return sizeof(xbox_vertex);
     }
 
-    //    inline reflexive_t<xbox_light_vertex, xbox_t> xbox_light_verts() const
-    //    {
-    //        reflexive_t<xbox_light_vertex, xbox_t> out;
-    //        /* Offset to vertex segment */
-    //        out.count  = xbox_vertices_data.count;
-    //        out.offset = xbox_vertices_data.offset + vertex_data_offset;
-    //        /* Skip normal vertices to find light vertices */
-    //        out.offset += sizeof(xbox_vertex) * xbox_vertices_data.count;
-    //        return out;
-    //    }
-
-    //    inline reflexive_t<xbox_vertex, xbox_t> xbox_vertices() const
-    //    {
-    //        auto base = xbox_vertices_data;
-    //        base.offset += vertex_data_offset;
-    //        return base;
-    //    }
-
-    //    C_DEPRECATED_S("not how you get indices")
-    inline reference<vert::face> indices(header const& head) const;
+    inline bsp_reference<vert::face> indices(header const& head) const;
 };
 
 using node = bounding_box;
@@ -470,7 +463,7 @@ struct predicted_resource
 struct subcluster
 {
     bounding_box   bounds;
-    reference<u32> indices; /* Points into surfaces on header */
+    bsp_reference<u32> indices; /* Points into surfaces on header */
 };
 
 struct mirror
@@ -479,7 +472,7 @@ struct mirror
     f32                               d;
     u32                               padding[5];
     tagref_typed_t<tag_class_t::shdr> shader;
-    reference<Vecf3>                  vertices;
+    bsp_reference<Vecf3>                  vertices;
 };
 
 static_assert(sizeof(mirror) == 64);
@@ -493,13 +486,13 @@ struct cluster
     i16                           weather;
     i16                           transition_bsp;
     u32                           unknown1[7];
-    reference<predicted_resource> predicted_resources;
-    reference<subcluster>         sub_clusters;
+    bsp_reference<predicted_resource> predicted_resources;
+    bsp_reference<subcluster>         sub_clusters;
     u16                           first_lens_flare_marker;
     u16                           lens_flare_marker_count;
-    reference<vert::idx_t>        surface_indices;
-    reference<mirror>             mirrors;
-    reference<i16> portals; /* points into cluster_portals on header */
+    bsp_reference<vert::idx_t>        surface_indices;
+    bsp_reference<mirror>             mirrors;
+    bsp_reference<i16> portals; /* points into cluster_portals on header */
 };
 
 struct cluster_portal
@@ -511,7 +504,7 @@ struct cluster_portal
     Vecf3            centroid;
     f32              bound_radius;
     u32              unknown[7];
-    reference<Vecf3> vertices;
+    bsp_reference<Vecf3> vertices;
 };
 
 struct breakable_surface
@@ -551,7 +544,7 @@ struct alignas(4) lightmap
     i16 lightmap_idx;
     /* Intentionally leave 2 bytes here for padding */
     u32                 unknown[4];
-    reference<material> materials;
+    bsp_reference<material> materials;
 };
 
 static_assert(sizeof(lightmap) == 32);
@@ -585,7 +578,7 @@ struct weather_polyhedra
         f32   d;
     };
 
-    reference<plane> planes;
+    bsp_reference<plane> planes;
 };
 
 struct pathfinding_surface
@@ -633,11 +626,11 @@ struct leaf_map_leaf
     struct face
     {
         u16              node_index;
-        reference<Vecf2> vertices;
+        bsp_reference<Vecf2> vertices;
     };
 
-    reference<face> faces;
-    reference<u16>  portal_indices;
+    bsp_reference<face> faces;
+    bsp_reference<u16>  portal_indices;
 };
 
 struct leaf_map_portal
@@ -645,7 +638,7 @@ struct leaf_map_portal
     i32              plane_idx;
     i32              back_leaf;
     i32              front_leaf;
-    reference<Vecf3> vertices;
+    bsp_reference<Vecf3> vertices;
 };
 
 struct header
@@ -654,48 +647,48 @@ struct header
     f32                            vehicle_floor;
     f32                            vehicle_ceiling;
     u32                            unknown1[35];
-    reference<shader::shader_desc> collision_materials;
-    reference<collision::bsp>      collision_header;
+    bsp_reference<shader::shader_desc> collision_materials;
+    bsp_reference<collision::bsp>      collision_header;
     /* Volumes in world-space where leaf surfaces reside */
-    reference<node> nodes;
+    bsp_reference<node> nodes;
     bounding_box    world_bounds;
-    reference<leaf> leaves;
+    bsp_reference<leaf> leaves;
     /* Grouping of surfaces, each one a pair of surfaces and node */
-    reference<leaf_surface>                      leaf_surfaces;
-    reference<vert::face>                        surfaces;
-    reference<lightmap>                          lightmaps;
-    reference<tagref_typed_t<tag_class_t::lens>> lens_flares;
-    reference<lens_flare_marker>                 lens_flare_markers;
+    bsp_reference<leaf_surface>                      leaf_surfaces;
+    bsp_reference<vert::face>                        surfaces;
+    bsp_reference<lightmap>                          lightmaps;
+    bsp_reference<tagref_typed_t<tag_class_t::lens>> lens_flares;
+    bsp_reference<lens_flare_marker>                 lens_flare_markers;
     u32                                          padding0[3];
     /* Clusters contain some properties such as sky, fog, sound, weather
      * Subclusters contain surface indices
      */
-    reference<cluster>                   clusters;
+    bsp_reference<cluster>                   clusters;
     i32                                  cluster_data_size;
     u32                                  padding1[4];
-    reference<cluster_portal>            cluster_portals;
+    bsp_reference<cluster_portal>        cluster_portals;
     u32                                  padding2[3];
-    reference<breakable_surface>         breakables_surfaces;
-    reference<byte_t>                    fog_planes;
-    reference<byte_t>                    fog_regions;
+    bsp_reference<breakable_surface>     breakables_surfaces;
+    bsp_reference<byte_t>                fog_planes;
+    bsp_reference<byte_t>                fog_regions;
     u32                                  padding3[9];
-    reference<weather_palette>           weather_palettes;
-    reference<weather_polyhedra>         weather_polyhedras;
+    bsp_reference<weather_palette>       weather_palettes;
+    bsp_reference<weather_polyhedra>     weather_polyhedras;
     u32                                  padding4[6];
-    reference<pathfinding_surface>       pathfinding_surfaces;
-    reference<pathfinding_edge>          pathfinding_edges;
-    reference<background_sound_palette>  background_sound;
-    reference<sound_environment_palette> sound_env;
+    bsp_reference<pathfinding_surface>   pathfinding_surfaces;
+    bsp_reference<pathfinding_edge>      pathfinding_edges;
+    bsp_reference<background_sound_palette> background_sound;
+    bsp_reference<sound_environment_palette> sound_env;
     i32                                  sound_pas_data_size;
     u32                                  padding5[10];
-    reference<marker>                    markers;
-    reference<detail_object>             detail_objects;
-    reference<runtime_decal>             runtime_decals;
-    reference<leaf_map_leaf>             leaf_map_leaves;
-    reference<leaf_map_portal>           leaf_map_portals;
+    bsp_reference<marker>                    markers;
+    bsp_reference<detail_object>             detail_objects;
+    bsp_reference<runtime_decal>             runtime_decals;
+    bsp_reference<leaf_map_leaf>             leaf_map_leaves;
+    bsp_reference<leaf_map_portal>           leaf_map_portals;
     u32                                  unkown4[3];
 
-    inline reference<vert::face> all_indices() const
+    inline bsp_reference<vert::face> all_indices() const
     {
         return surfaces;
     }
@@ -707,7 +700,7 @@ struct header
      * original engine resolves the camera cluster. Returns nullopt for
      * solid/outside-the-map points. */
     inline std::optional<u32> cluster_for_point(
-        Vecf3 const& point, map_ptr const& magic) const
+        Vecf3 const& point, bsp_ptr const& magic) const
     {
         auto coll = collision_header.data(magic, single_value);
         if(coll.has_error())
@@ -730,7 +723,7 @@ struct header
     /* Hitscan against the structure BSP's collision tree, see
      * collision::bsp::raycast. */
     inline std::optional<collision::ray_hit> raycast(
-        Vecf3 const& start, Vecf3 const& end, map_ptr const& magic) const
+        Vecf3 const& start, Vecf3 const& end, bsp_ptr const& magic) const
     {
         auto coll = collision_header.data(magic, single_value);
         if(coll.has_error())
@@ -747,7 +740,7 @@ static_assert(offsetof(header, clusters) == 308);
 static_assert(offsetof(header, cluster_portals) == 340);
 static_assert(sizeof(header) == 648);
 
-inline reference<vert::face> material::indices(header const& head) const
+inline bsp_reference<vert::face> material::indices(header const& head) const
 {
     //    return {
     //        .count  = index_count(),

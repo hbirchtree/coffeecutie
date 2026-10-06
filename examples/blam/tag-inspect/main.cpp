@@ -3862,7 +3862,7 @@ void dump_mirrors(
                         continue;
 
                     auto const* vr = reinterpret_cast<
-                        blam::reference<typing::vector_types::Vecf3> const*>(
+                        blam::bsp_reference<typing::vector_types::Vecf3> const*>(
                         e + 16 + pad + 16);
                     const u32 vcount = blam::from_le(vr->count);
                     if(vcount < 3 || vcount > 256)

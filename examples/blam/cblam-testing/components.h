@@ -471,7 +471,7 @@ struct Cluster
     blam::bsp::cluster const* cluster;
     u32                       id;
 
-    bool contains(Matf4 const& transform, blam::map_ptr const& magic) const
+    bool contains(Matf4 const& transform, blam::bsp_ptr const& magic) const
     {
         auto subclusters_ = cluster->sub_clusters.data(magic);
         if(!subclusters_.has_value())

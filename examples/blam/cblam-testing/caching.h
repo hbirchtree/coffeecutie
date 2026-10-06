@@ -64,9 +64,7 @@ struct ModelCache
         tags         = map.tags;
         index        = blam::tag_index_view(map);
         magic        = map.magic;
-        vertex_magic = V::version_v == blam::version_t::xbox
-                           ? map.magic
-                           : tags->vertex_magic(magic);
+        vertex_magic = tags->vertex_magic(magic);
         vert_ptr = 0, element_ptr = 0;
         this->evict_all();
     }
@@ -75,7 +73,7 @@ struct ModelCache
     blam::tag_index_t<V> const* tags;
     blam::tag_index_view<V>     index;
     blam::map_ptr               magic;
-    blam::map_ptr               vertex_magic;
+    blam::vertex_ptr            vertex_magic;
     BitmapCache<V>&             bitm_cache;
     ShaderCache<V>&             shader_cache;
     gfx::api*                   allocator;
@@ -204,9 +202,7 @@ struct BSPCache
     {
         index        = blam::tag_index_view(map);
         magic        = map.magic;
-        vertex_magic = V::version_v == blam::version_t::xbox
-                           ? map.magic
-                           : map.tags->vertex_magic(magic);
+        vertex_magic = map.tags->vertex_magic(magic);
         vert_ptr = 0, element_ptr = 0, light_ptr = 0;
         evict_all();
 
@@ -240,7 +236,7 @@ struct BSPCache
     comp_app::EventBus<SoundEvent>*       sound_bus;
     blam::tag_index_view<V>               index;
     blam::map_ptr                         magic;
-    blam::map_ptr                         vertex_magic;
+    blam::vertex_ptr                      vertex_magic;
     std::vector<blam::scn::skybox const*> sky_palette;
 
     /* Structure BSP switching (scenario bsp_switch_triggers): crossing

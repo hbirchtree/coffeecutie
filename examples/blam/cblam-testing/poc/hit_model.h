@@ -31,7 +31,7 @@ struct HitNode
     std::int16_t                               parent{-1};
     mat4                                       bind{1.f}; /* node -> biped */
     mat4                                       inv_bind{1.f};
-    std::vector<blam::collision::bsp const*>   bsps;
+    std::vector<blam::collision::model_bsp const*> bsps;
     vec3                                       lo{0.f}; /* node space bounds */
     vec3                                       hi{0.f};
     vec3                                       center{0.f}; /* node space */
@@ -41,7 +41,7 @@ struct HitNode
 
 struct HitModel
 {
-    blam::bsp_ptr            magic;
+    blam::map_ptr            magic;
     std::vector<HitNode>     nodes;
     std::vector<HitMaterial> materials;
 

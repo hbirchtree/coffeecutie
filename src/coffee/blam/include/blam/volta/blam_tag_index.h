@@ -135,8 +135,8 @@ template<typename V>
 struct alignas(4) tag_index_t : stl_types::non_copy
 {
     using vertex_array =
-        reference<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
-    using index_array = reference<vert::idx_t, xbox_t>;
+        vertex_reference<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
+    using index_array = vertex_reference<vert::idx_t, xbox_t>;
 
     /*!
      * \brief My theory is that this is the pointer to the location in memory in
@@ -201,9 +201,11 @@ struct alignas(4) tag_index_t : stl_types::non_copy
         return base_reflexive;
     }
 
-    inline map_ptr vertex_magic(map_ptr const& base) const
+    inline vertex_ptr vertex_magic(map_ptr const& base) const
     {
-        return map_ptr{{base.base_ptr, base.max_size}, 0};
+        u32 const magic =
+            std::is_same_v<V, xbox_version_t> ? base.file_offset : 0;
+        return vertex_ptr{{base.base_ptr, base.max_size}, magic};
     }
 
     /*!

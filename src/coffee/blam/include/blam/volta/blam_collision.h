@@ -71,7 +71,7 @@ struct node
     /* Solid-leaf BSP(s) for this node, same structure as the structure
      * BSP's collision (bsp3d nodes/planes/leaves/bsp2d/surfaces/edges/
      * vertices). Usually 1 for solid nodes, 0 for purely structural ones. */
-    reference<collision::bsp> bsps;
+    reference<collision::model_bsp> bsps;
 };
 
 static_assert(sizeof(node) == 64);

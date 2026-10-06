@@ -180,7 +180,7 @@ struct xbox_ref
     {
         /* Xbox mod2 vertices are mod2_vertex<compressed> (i16 texcoord + node
          * weights), NOT the weightless BSP vertex<compressed>. */
-        reference<vert::mod2_vertex<vert::compressed>> out;
+        vertex_reference<vert::mod2_vertex<vert::compressed>> out;
         out.count  = vert_count;
         out.offset = offset;
         return out;
@@ -203,7 +203,7 @@ struct part
     reference<u32> triangles;
     u32            pad_[1];
 
-    reference<vert::idx_t, xbox_t> indices;
+    vertex_reference<vert::idx_t, xbox_t> indices;
 
     u32 pad2;
 

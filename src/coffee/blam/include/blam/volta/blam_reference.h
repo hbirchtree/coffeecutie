@@ -12,6 +12,7 @@
 namespace blam {
 
 using libc_types::u32;
+using libc_types::u64;
 
 struct single_value_t
 {
@@ -22,7 +23,8 @@ constexpr single_value_t single_value;
 template<
     typename T,
     typename V        = grbx_t,
-    atlas_type_t Type = atlas_type_t::map_file>
+    atlas_type_t Type = atlas_type_t::map_file,
+    ptr_tag PtrType   = ptr_tag::map>
 /*!
  * \brief Points to a chunk of memory within the file
  */
@@ -54,7 +56,7 @@ struct alignas(4) reference
      * \brief Function for dereferencing reflexive data. Will do basic error
      * checking eg. the pointer is within the map file and that count > 0
      */
-    result<span_type, std::string_view> data(map_ptr const& magic) const
+    result<span_type, std::string_view> data(map_ptr_base<PtrType> const& magic) const
     {
         using namespace std::string_view_literals;
 
@@ -71,7 +73,8 @@ struct alignas(4) reference
             return stl_types::success(span_type());
 
         auto computed_offset = host_offset - magic.file_offset;
-        if(computed_offset > magic.max_size)
+        if(computed_offset > magic.max_size ||
+           u64(host_count) * sizeof(T) > magic.max_size - computed_offset)
             return stl_types::failure("reflexive pointer out of bounds"sv);
 
         span_type chunk =
@@ -84,7 +87,7 @@ struct alignas(4) reference
     }
 
     result<T const*, std::string_view> data(
-        map_ptr const& magic, single_value_t) const
+        map_ptr_base<PtrType> const& magic, single_value_t) const
     {
         using namespace std::string_view_literals;
 
@@ -99,7 +102,7 @@ struct alignas(4) reference
     template<typename T2>
     inline auto as() const
     {
-        return reinterpret_cast<reference<T2, V> const*>(this);
+        return reinterpret_cast<reference<T2, V, Type, PtrType> const*>(this);
     }
 
     /*! Element count in host byte order (the raw \c count field is stored
@@ -117,5 +120,12 @@ static_assert(
 static_assert(
     sizeof(reference<int, xbox_t>) == 8,
     "reference_t<..., xbox_t> needs to be 8 bytes");
+
+template<typename T, typename V = grbx_t>
+using bsp_reference = reference<T, V, atlas_type_t::map_file, ptr_tag::bsp>;
+
+template<typename T, typename V = grbx_t>
+using vertex_reference =
+    reference<T, V, atlas_type_t::map_file, ptr_tag::vertex>;
 
 } // namespace blam
