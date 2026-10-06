@@ -1,5 +1,6 @@
 #pragma once
 
+#include "blam_files.h"
 #include "caching.h"
 #include "components.h"
 #include "data.h"
@@ -29,8 +30,11 @@ using BlamBspWidgetManifest = compo::SubsystemManifest<
         BlamResources,
         PostProcessParameters,
         RenderingParameters,
-        SoundPreferences>,
-    empty_list_t>;
+        SoundPreferences,
+        BlamFiles<halo_version>>,
+    type_list_t<
+        comp_app::EventBus<SoundEvent>
+    >>;
 
 template<typename V>
 struct BlamBspWidget
@@ -240,10 +244,36 @@ struct BlamBspWidget
                 }
                 if(ImGui::BeginTabItem("Sound"))
                 {
+                    auto* sound_bus = e.template service<comp_app::EventBus<SoundEvent>>();
+                    BlamFiles<halo_version>& files = e.template subsystem<BlamFiles<halo_version>>();
                     SoundPreferences* pref;
                     e.subsystem(pref);
                     ImGui::SliderFloat(
                         "Master volume", &pref->master_volume, 0.f, 1.f);
+                    if(ImGui::BeginCombo("Sound", sound_tester.selected
+                            ? sound_tester.selected : ""))
+                    {
+                        for(auto snd : sound_tester.sounds)
+                            if(ImGui::Selectable(snd))
+                                sound_tester.selected = snd;
+                        ImGui::EndCombo();
+                    }
+                    ImGui::InputFloat3("Position", &sound_tester.position.x);
+                    ImGui::Columns(2);
+                    ImGui::Checkbox("Relative", &sound_tester.relative);
+                    while(ImGui::Button("Play"))
+                    {
+                        if(!sound_tester.selected)
+                            break;
+                        SoundEvent ev {.type = SoundEvent::play_sound};
+                        PlaySoundEvent play{
+                            .sound_tag = &(*m_index.find(sound_tester.selected)),
+                            .position  = sound_tester.position,
+                            .relative  = sound_tester.relative,
+                        };
+                        sound_bus->inject(ev, &play);
+                        break;
+                    }
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();
@@ -256,4 +286,12 @@ struct BlamBspWidget
 
     std::map<std::string_view, bool> m_bsps;
     u32                              m_selected_camera{0};
+    blam::tag_index_view<halo_version> m_index;
+    struct
+    {
+        std::vector<const char*> sounds{};
+        const char*              selected{};
+        Vecf3                    position{};
+        bool                     relative{};
+    } sound_tester;
 };

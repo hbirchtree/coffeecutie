@@ -407,6 +407,7 @@ void create_resources(compo::EntityContainer& e)
                              {"in_play", biped_in_play(info, cam, net)},
                              {"spawned", info.spawned},
                              {"eye_offset", info.biped.eye_offset()},
+                             {"eye_height", info.biped.eye_height},
                              {"model", nullptr},
                              {"body", nullptr},
                          };
@@ -1335,7 +1336,9 @@ void create_camera(
             continue;
         auto& location =
             info.seat_idx < spawns.size() ? spawns[info.seat_idx] : spawns[0];
-        cam.camera.position = location.pos;
+        /* The camera is the eye, not the spawn point under it */
+        cam.camera.position =
+            location.pos + Vecf3{0, 0, info.biped.eye_height};
         cam.camera.rotation =
             glm::angleAxis(glm::pi<f32>() - location.rot, Vecf3{0.f, 1.f, 0.f});
     }

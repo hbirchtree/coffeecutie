@@ -15,6 +15,8 @@
 #include "selected_version.h"
 #include "shader_cache.h"
 #include "types.h"
+#include <algorithm>
+#include <map>
 #include <optional>
 #include <set>
 
@@ -35,7 +37,7 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         TriggerVolume,
         Visibility,
         WorldInfo,
-        const PlayerCamera,
+        PlayerCamera,
         PlayerInfo>,
     type_list_t<
         BitmapCache<Ver>,
@@ -46,7 +48,9 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         ModelCache<Ver>,
         ShaderCache<Ver>,
         const LoadingStatus>,
-    empty_list_t>;
+    type_list_t<
+        comp_app::EventBus<SoundEvent>
+    >>;
 
 template<typename Ver>
 struct ResourceLoader
@@ -411,6 +415,19 @@ struct ResourceLoader
         }
     }
 
+    void load_sound_scenery(Proxy& p, u32 section)
+    {
+        BlamFiles<Ver>& files         = p.template subsystem<BlamFiles<Ver>>();
+        comp_app::EventBus<SoundEvent>* sound_bus =
+            p.template service<comp_app::EventBus<SoundEvent>>();
+
+        auto&                           container = files.container;
+        auto const&                     magic     = container.magic;
+        blam::scn::scenario<Ver> const* scenario = container.scenario().value();
+
+        blam::bsp::info const* info = scenario->bsp_info.data(magic).value().data();
+    }
+
     void load_debug_shapes(Proxy& p)
     {
         BlamFiles<Ver>& files         = p.template subsystem<BlamFiles<Ver>>();
@@ -716,6 +733,7 @@ struct ResourceLoader
             // break;
         }
         load_world_lighting(p, 0);
+        load_sound_scenery(p, section);
     }
 
     /* A device machine's power comes from the scenario device group it points
@@ -1456,6 +1474,80 @@ struct ResourceLoader
         return nullptr;
     }
 
+    /*! The biped's coll tag as hulls in bind pose; coll nodes mirror the
+     * mod2 skeleton by name */
+    std::shared_ptr<PlayerInfo::biped_collision_t const> biped_collision(
+        blam::scn::biped const& biped, blam::map_ptr const& magic)
+    {
+        auto coll_it = index.find(biped.collider);
+        auto mod2_it = index.find(biped.model);
+        if(coll_it == index.end() || mod2_it == index.end())
+            return nullptr;
+        auto coll = (*coll_it).template data<blam::coll::header>(magic);
+        auto mod2 = (*mod2_it).template data<blam::mod2::header<Ver>>(magic);
+        if(coll.has_error() || mod2.has_error())
+            return nullptr;
+        auto bones     = mod2.value()->bones.data(magic);
+        auto nodes     = coll.value()->nodes.data(magic);
+        auto materials = coll.value()->materials.data(magic);
+        if(bones.has_error() || nodes.has_error())
+            return nullptr;
+
+        /* Bind pose, the same way caching.cpp builds inv_bind */
+        auto const&        bone_span = bones.value();
+        std::vector<Matf4> world_bind(bone_span.size());
+        for(u32 i = 0; i < bone_span.size(); i++)
+        {
+            auto const& b     = bone_span[i];
+            Matf4 const local = glm::translate(Matf4(1), b.translation) *
+                                glm::mat4_cast(glm::conjugate(b.rotation));
+            world_bind[i] =
+                b.parent != blam::mod2::bone::invalid_bone && b.parent < i
+                    ? world_bind[b.parent] * local
+                    : local;
+        }
+
+        auto out = std::make_shared<PlayerInfo::biped_collision_t>();
+        for(auto const& node : nodes.value())
+        {
+            Matf4 bind(1);
+            for(u32 i = 0; i < bone_span.size(); i++)
+                if(bone_span[i].name.str() == node.name.str())
+                {
+                    bind = world_bind[i];
+                    break;
+                }
+
+            PlayerInfo::biped_collision_t::node_t hull;
+            std::map<i16, u32>                    uses;
+            if(auto bsps = node.bsps.data(magic); bsps.has_value())
+                for(auto const& bsp : bsps.value())
+                {
+                    if(auto verts = bsp.vertices.data(magic); verts.has_value())
+                        for(auto const& v : verts.value())
+                            hull.points.push_back(
+                                Vecf3(bind * Vecf4(v.point, 1.f)));
+                    if(auto surfs = bsp.surfaces.data(magic); surfs.has_value())
+                        for(auto const& s : surfs.value())
+                            uses[s.material]++;
+                }
+            if(hull.points.empty())
+                continue;
+            /* A node is the head if most of its surfaces are */
+            auto most = std::max_element(
+                uses.begin(), uses.end(), [](auto const& a, auto const& b) {
+                    return a.second < b.second;
+                });
+            if(most != uses.end() && materials.has_value() &&
+               most->first >= 0 &&
+               static_cast<size_t>(most->first) < materials.value().size())
+                hull.head = materials.value()[most->first].flags &
+                            blam::coll::material::head;
+            out->nodes.push_back(std::move(hull));
+        }
+        return out;
+    }
+
     /* Models follow biped_in_play(), and are remounted after a map load */
     void reconcile_player_bipeds(Proxy& p, BlamFiles<Ver> const& files)
     {
@@ -1479,6 +1571,8 @@ struct ResourceLoader
                     };
                 else
                     cWarning("Biped has no collision size, using defaults");
+                biped_model.shape.collision =
+                    biped_collision(*biped, files.container.magic);
             }
         }
 
@@ -1489,6 +1583,9 @@ struct ResourceLoader
             auto [cam, info, net, model] = player.components();
             if(!biped_model.model.valid() || !biped_in_play(info, cam, net))
                 continue;
+            /* The camera is the eye, keep the feet where they were */
+            cam.camera.position.z +=
+                biped_model.shape.eye_height - info.biped.eye_height;
             info.biped = biped_model.shape;
             live.insert(player.id());
             /* Once per load, so a model that fails to mount isn't retried */

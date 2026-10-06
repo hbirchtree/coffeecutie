@@ -10,6 +10,9 @@
 #include "network/networking.h"
 #include "offline_maps.h"
 #include "physics.h"
+#if defined(POC_COMBAT)
+#include "poc/app_combat.h"
+#endif
 #include "render/occluder.h"
 #include "render/rendering.h"
 #include "resource_creation.h"
@@ -262,6 +265,9 @@ i32 blam_main()
             alloc_scripting(e);
             setup_load_eventhandlers(e);
             alloc_camera_control(e);
+#if defined(POC_COMBAT)
+            alloc_poc_combat(e);
+#endif
 
             auto& params = e.register_subsystem_inplace<RenderingParameters>();
             if(arguments.contains("gfx-tex-resolution"))
@@ -896,12 +902,16 @@ i32 blam_main()
                 cam.matrix       = cam.matrix * view_matrix;
                 cam.rotation = glm::mat4_cast(cam.camera.rotation) * bsp_basis;
 
-                mod.position = cam.camera.position;
-                mod.rotation = cam.camera.rotation;
-                mod.transform =
-                    glm::translate(Matf4(1), mod.position) *
-                    glm::transpose(cam.rotation) * bsp_basis *
-                    glm::rotate(Matf4(1), glm::pi<f32>(), Vecf3{0, 0, 1});
+                /* The biped stands under its camera, turned only by yaw,
+                 * the way scenery is placed */
+                Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) *
+                                      Vecf3{0.f, 0.f, -1.f};
+                mod.position =
+                    cam.camera.position - Vecf3{0, 0, info.biped.eye_height};
+                mod.rotation =
+                    Quatf(Vecf3(0, 0, std::atan2(forward.y, forward.x)));
+                mod.transform = glm::translate(Matf4(1), mod.position) *
+                                glm::mat4_cast(mod.rotation);
             }
 
             /* Controllers no player owns still drive the menus, seated by

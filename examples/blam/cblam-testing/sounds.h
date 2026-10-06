@@ -35,7 +35,14 @@ struct PlaySoundEvent
     static constexpr auto event_type = SoundEvent::play_sound;
 
     blam::tagref_t const* sound{};
+    blam::tag_t const*    sound_tag{};
     compo::time_point     time{};
+
+    /* relative = position is an offset from the listener, {0,0,0} = at the ear
+     * Positioning only affects mono sounds */
+    Vecf3                 position{};
+    bool                  relative{false};
+    bool                  looping{false};
 };
 
 struct BackgroundSoundTransitionEvent
@@ -44,7 +51,7 @@ struct BackgroundSoundTransitionEvent
 
     /* nullptr = fade out only, no new track */
     blam::tagref_t const* sound{nullptr};
-    blam::tag_t const*    sound_tag{nullptr};
+    blam::tag_t const*    sound_tag{nullptr}; // special-case for title track for now
 };
 
 struct SoundPreferences : compo::SubsystemBase

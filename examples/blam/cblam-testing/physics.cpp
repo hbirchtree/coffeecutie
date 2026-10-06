@@ -237,6 +237,14 @@ struct PhysicsSystem
         m_frame++;
     }
 
+    /* Which way a biped under this camera faces, about +Z */
+    static f32 camera_yaw(PlayerCamera const& camera)
+    {
+        Vecf3 const forward = glm::transpose(Matf3(camera.rotation)) *
+                              Vecf3{0.f, 0.f, -1.f};
+        return std::atan2(forward.y, forward.x);
+    }
+
     /* Bodies follow biped_in_play(). A local seat in physics mode drives
      * its camera with a dynamic body; anyone else gets a kinematic one that
      * follows their camera, so collisions happen where bipeds are drawn. */
@@ -267,6 +275,10 @@ struct PhysicsSystem
                                                Vecf3{0, 0, shape.eye_offset()}
                                          : camera.camera.position +
                                                Vecf3{0, 0, shape.spawn_lift()};
+                /* Bodies following a camera are what others hit, so they
+                 * get the coll model; a body the player moves with keeps the
+                 * capsule the biped tag sizes for movement */
+                bool const hulls = kinematic && shape.collision;
                 create_body(Physics::BodyCreationShape{
                     .entity_id = id,
                     /* The capsule's height is its cylinder, between the caps */
@@ -276,9 +288,14 @@ struct PhysicsSystem
                          std::max(shape.height - 2 * shape.radius, 0.f)},
                     .position  = origin,
                     .mass      = kinematic ? 0.f : 1.f,
-                    .shape     = Physics::BodyCreationShape::Capsule,
+                    .shape     = hulls ? Physics::BodyCreationShape::Hulls
+                                       : Physics::BodyCreationShape::Capsule,
                     .kinematic = kinematic,
                     .lock      = {.rotation = true},
+                    .hulls     = shape.collision,
+                    /* Hull points are from the feet; the origin is mid-body */
+                    .offset    = {0, 0, -shape.height / 2},
+                    .yaw       = camera_yaw(camera),
                 });
                 m_player_bodies[id] = {.kinematic = kinematic, .shape = shape};
                 data.physics_id     = id;
@@ -288,7 +305,9 @@ struct PhysicsSystem
             } else if(kinematic)
                 move_kinematic(
                     id,
-                    camera.camera.position - Vecf3{0, 0, shape.eye_offset()});
+                    camera.camera.position - Vecf3{0, 0, shape.eye_offset()},
+                    shape.collision ? std::optional(camera_yaw(camera))
+                                    : std::nullopt);
         }
 
         for(auto it = m_player_bodies.begin(); it != m_player_bodies.end();)
@@ -305,12 +324,21 @@ struct PhysicsSystem
         }
     }
 
-    void move_kinematic(u64 entity_id, Vecf3 const& position)
+    static btTransform yaw_basis(f32 yaw)
+    {
+        btTransform transform;
+        transform.setIdentity();
+        transform.setRotation(btQuaternion(btVector3(0, 0, 1), yaw));
+        return transform;
+    }
+
+    void move_kinematic(
+        u64 entity_id, Vecf3 const& position, std::optional<f32> yaw = {})
     {
         auto it = m_bodies.find(entity_id);
         if(it == m_bodies.end())
             return;
-        btTransform transform = m_world_basis;
+        btTransform transform = yaw ? yaw_basis(*yaw) : m_world_basis;
         transform.setOrigin(btVector3(position.x, position.y, position.z));
         it->second.world_body->setWorldTransform(transform);
     }
@@ -522,6 +550,7 @@ struct PhysicsSystem
             m_world->removeRigidBody(entity_body.world_body.get());
             entity_body.world_body.reset();
             entity_body.world_shape.reset();
+            entity_body.child_shapes.clear();
             entity_body.mesh_iface.reset();
         }
 
@@ -541,6 +570,27 @@ struct PhysicsSystem
         case Physics::BodyCreationShape::Box: {
             entity_body.world_shape = std::make_unique<btBoxShape>(btVector3(
                 body_create.scale.x, body_create.scale.y, body_create.scale.z));
+            break;
+        }
+        case Physics::BodyCreationShape::Hulls: {
+            if(!body_create.hulls)
+                break;
+            auto compound = std::make_unique<btCompoundShape>();
+            for(auto const& node : body_create.hulls->nodes)
+            {
+                auto hull = std::make_unique<btConvexHullShape>();
+                for(auto const& pt : node.points)
+                {
+                    Vecf3 const at = pt + body_create.offset;
+                    hull->addPoint(btVector3(at.x, at.y, at.z), false);
+                }
+                hull->recalcLocalAabb();
+                btTransform identity;
+                identity.setIdentity();
+                compound->addChildShape(identity, hull.get());
+                entity_body.child_shapes.push_back(std::move(hull));
+            }
+            entity_body.world_shape = std::move(compound);
             break;
         }
         }
@@ -575,7 +625,10 @@ struct PhysicsSystem
             entity_body.world_body->setAngularFactor(btVector3(0, 0, 0));
         } else
             entity_body.world_body->setFriction(1.f);
-        btTransform transform = m_world_basis;
+        btTransform transform = body_create.shape ==
+                                        Physics::BodyCreationShape::Hulls
+                                    ? yaw_basis(body_create.yaw)
+                                    : m_world_basis;
         transform.setOrigin(btVector3(
             body_create.position.x,
             body_create.position.y,
@@ -921,7 +974,9 @@ struct PhysicsSystem
     struct entity_body
     {
         std::unique_ptr<btTriangleIndexVertexArray> mesh_iface;
-        std::unique_ptr<btCollisionShape>           world_shape;
+        /* Children of a compound world_shape */
+        std::vector<std::unique_ptr<btCollisionShape>> child_shapes;
+        std::unique_ptr<btCollisionShape>               world_shape;
         std::unique_ptr<btRigidBody>                world_body;
         std::shared_ptr<void>                       keep_alive;
         /* Lazily reserved on first debug draw, released in remove_body() */

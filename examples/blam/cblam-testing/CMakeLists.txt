@@ -178,3 +178,6 @@ if(BLAM_CURSED)
       -DBLAM_CURSED_ENABLED
     )
 endif()
+
+# Combat/netcode proof-of-concept (headless BlamPoc)
+add_subdirectory(poc)

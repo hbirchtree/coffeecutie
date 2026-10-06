@@ -88,6 +88,7 @@ struct BodyCreationShape
         Capsule,
         Sphere,
         Box,
+        Hulls, /*!< One convex hull per node, from `hulls` */
     } shape{Capsule};
 
     /*!< Overlap sensor: detected but never collided with
@@ -101,6 +102,12 @@ struct BodyCreationShape
     {
         bool rotation{false};
     } lock{};
+
+    /*! For Hulls: points are added to `offset` (body space, +Z up) and the
+     * body faces +X turned by `yaw` about +Z */
+    std::shared_ptr<PlayerInfo::biped_collision_t const> hulls;
+    Vecf3                                                offset{};
+    f32                                                  yaw{0.f};
 };
 
 struct BodyRemoval

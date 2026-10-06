@@ -20,7 +20,7 @@ void install_imgui_widgets(
     // auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
 
     auto& imgui = e.register_subsystem_inplace<imgui::ImGuiSystem>(800);
-    e.register_subsystem_inplace<BlamBspWidget<halo_version>>();
+    auto& bsp = e.register_subsystem_inplace<BlamBspWidget<halo_version>>();
     e.register_subsystem_inplace<BlamDebugUi>();
     auto& textures =
         e.register_subsystem_inplace<BlamTextureBrowser<halo_version>>();
@@ -41,6 +41,14 @@ void install_imgui_widgets(
     gbus.addEventFunction<MapChangedEvent<halo_version>>(
         0, [&](auto&, MapChangedEvent<halo_version>* changed) {
             textures.m_map = &changed->container;
+            bsp.m_index = blam::tag_index_view<halo_version>(changed->container);
+            bsp.sound_tester = {};
+            for(auto const& tag : bsp.m_index)
+            {
+                if(tag.tag_class() != blam::tag_class_t::snd)
+                    continue;
+                bsp.sound_tester.sounds.push_back(bsp.m_index.name_of(tag).data());
+            }
         });
 
     if(false)

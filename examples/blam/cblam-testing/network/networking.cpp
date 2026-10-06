@@ -1143,7 +1143,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     continue;
                 if(held.spawn)
                 {
-                    cam.camera.position = held.spawn->pos;
+                    cam.camera.position =
+                        held.spawn->pos + Vecf3{0, 0, info.biped.eye_height};
                     cam.camera.rotation = glm::angleAxis(
                         glm::pi<f32>() - held.spawn->rot,
                         Vecf3{0.f, 1.f, 0.f});

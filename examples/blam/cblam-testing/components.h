@@ -7,6 +7,7 @@
 
 #include <blam/volta/blam_scenario.h>
 #include <chrono>
+#include <memory>
 #include <coffee/core/input/standard_input_handlers.h>
 #include <peripherals/concepts/graphics_api.h>
 #include <utility>
@@ -558,6 +559,19 @@ struct PlayerInfo
     /*! For local seats the server does not know about */
     static constexpr u32 local_only_idx_base = 0x10000;
 
+    /*! The biped's coll tag as one convex hull per collision node, in
+     * biped space (feet at the origin, facing +X), bind pose */
+    struct biped_collision_t
+    {
+        struct node_t
+        {
+            std::vector<Vecf3> points;
+            bool               head{false};
+        };
+
+        std::vector<node_t> nodes;
+    };
+
     /*! From the biped tag; the defaults stand in until one is loaded */
     struct biped_shape_t
     {
@@ -565,15 +579,20 @@ struct PlayerInfo
         f32 height{0.7f};      /*!< Capsule, end to end */
         f32 eye_height{0.55f}; /*!< Camera above the feet */
 
+        /*! Hit shape for bodies that follow a camera; the capsule above is
+         * what a biped moves with */
+        std::shared_ptr<biped_collision_t const> collision;
+
         f32 eye_offset() const
         {
             return eye_height - height / 2;
         }
 
-        /*! Body origin above a spawn point, dropping it in from just above */
+        /*! Body origin relative to the camera (the eye) when spawning,
+         * dropping it in from just above where it will stand */
         f32 spawn_lift() const
         {
-            return height / 2 + 0.25f;
+            return 0.25f - eye_offset();
         }
 
         bool operator==(biped_shape_t const&) const = default;

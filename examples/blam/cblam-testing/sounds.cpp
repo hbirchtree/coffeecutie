@@ -34,6 +34,7 @@
 #include <oaf/ogg/ogg_decode.h>
 #include <oaf/wav/wav_decode.h>
 #include <peripherals/stl/enumerate.h>
+#include <ranges>
 
 #if defined(OAF_IMA_DECODER_ENABLED)
 #include <oaf/ima_adpcm/decode.h>
@@ -71,6 +72,11 @@ struct sound_unit_t
     f32                     fade_rate{0.f}; /* vol/sec, negative = fade out */
     bool                    fading_in{true};
     bool                    fading_out{false};
+    bool                    queued_all{false};
+    bool                    finished{false};
+
+    // Not used for audio tracks, more for standalone sounds
+    std::optional<compo::time_point> time{};
 };
 
 template<typename Ver>
@@ -116,6 +122,8 @@ struct SoundSystem
     std::map<u64, sound_unit_t> active_sounds;
     std::map<u64, sound_unit_t> fading_sounds;
     u64                         next_fade_id{0x8000000000000000ULL};
+
+    std::vector<sound_unit_t> singleshot_sounds;
 
     std::vector<std::shared_ptr<oaf::buffer_t>> buffers;
     std::vector<std::shared_ptr<oaf::source_t>> sources;
@@ -274,6 +282,8 @@ struct SoundSystem
                     meta.active.role        = role_t::loop;
                     meta.active.permutation = 0;
                     break;
+                case role_t::end:
+                    break;
                 default:
                     // TODO: Figure out when to play end
                     break;
@@ -288,6 +298,68 @@ struct SoundSystem
             }
         }
         return any_done;
+    }
+
+    void update_singleshot_sound(sound_unit_t& sound)
+    {
+        if(sound.queued_all)
+        {
+            bool playing = false;
+            for(auto& meta : sound.tracks)
+            {
+                if(!meta.source)
+                    continue;
+                auto [queued, processed] = meta.source->buffer_queue();
+                playing = playing || processed < queued;
+            }
+            sound.finished = !playing;
+            return;
+        }
+        sound.queued_all = true;
+
+        SoundItem const& item = (*sound_cache.find(sound.index)).second;
+        for(auto i : stl_types::range<size_t>(item.tracks.size()))
+        {
+            auto const& track = item.tracks.at(i);
+            auto&       meta  = sound.tracks.at(i);
+
+            auto sounds_it = track.sounds.find(meta.active.role);
+            auto bufs_it   = track.buffers.find(meta.active.role);
+            if(!meta.source || sounds_it == track.sounds.end() ||
+               bufs_it == track.buffers.end())
+                continue;
+            auto const [tag, props, heap] = sounds_it->second;
+            auto const& bufs              = bufs_it->second;
+
+            if(meta.active.pitch >= bufs.size())
+                continue;
+            auto const& pitch = bufs.at(meta.active.pitch);
+            if(meta.active.permutation >= pitch.permutations.size())
+                continue;
+
+            meta.source->template set_property<oaf::source_property::gain>(
+                props->gain_modifier *
+                pitch.permutations.at(meta.active.permutation)
+                    .permutation->gain);
+
+            /* queue() restarts a playing source, so the whole chain goes in
+             * before it gets going. Bounded in case the chain is cyclic */
+            u32 perm = meta.active.permutation;
+            for(auto _ : stl_types::range<size_t>(pitch.permutations.size()))
+            {
+                auto const& buf = pitch.permutations.at(perm);
+                if(!buf.buffer)
+                    break;
+                meta.source->queue(*buf.buffer);
+                meta.queued_bufs.push_back(buf.buffer);
+
+                i16 next = buf.permutation->next_permutation_idx;
+                if(next < 0 ||
+                   static_cast<u32>(next) >= pitch.permutations.size())
+                    break;
+                perm = static_cast<u32>(next);
+            }
+        }
     }
 
     /*! Copy an event's payload so it survives the trip to this thread */
@@ -412,6 +484,16 @@ struct SoundSystem
         for(auto id : fading_finished)
             fading_sounds.erase(id);
 
+        for(auto& sound : singleshot_sounds)
+        {
+            update_singleshot_sound(sound);
+        }
+        auto num_cleared = std::erase_if(singleshot_sounds, [](sound_unit_t const& unit) {
+            return unit.finished;
+        });
+        if(num_cleared > 0)
+            cDebug("Cleaned up {} singleshot sounds", num_cleared);
+
         for(auto const player : p.template select<PlayerInfo, PlayerCamera>())
         {
             auto const [info, cam] = player.components();
@@ -438,9 +520,11 @@ struct SoundSystem
         }
         SoundItem const& item  = (*sound_cache.find(sound)).second;
         auto select_first_role = [](SoundItem::track_t const& track) {
-            if(track.sounds.find(SoundItem::role_t::start) !=
-               track.sounds.end())
+            if(track.sounds.contains(SoundItem::role_t::start))
                 return SoundItem::role_t::start;
+            /* Plain snd! tags only have a main track */
+            if(track.sounds.contains(SoundItem::role_t::main))
+                return SoundItem::role_t::main;
             return SoundItem::role_t::loop;
         };
         std::vector<sound_unit_t::track_t> tracks;
@@ -595,9 +679,34 @@ struct SoundSystem
         }
         if(ev.type == SoundEvent::play_sound)
         {
-            // auto const& play  = reinterpret_cast<PlaySoundEvent
-            // const*>(data); auto        sound =
-            // sound_cache.predict(*play->sound);
+            auto const& play  = reinterpret_cast<PlaySoundEvent const*>(data);
+            auto* ref = play->sound;
+            blam::tagref_t ref_{};
+            // When we want to use sounds not sourced by tagref
+            if(play->sound_tag)
+            {
+                ref_ = play->sound_tag->as_ref();
+                ref = &ref_;
+            }
+            if(!ref)
+            {
+                cWarning("No ref for PlaySoundEvent");
+                return;
+            }
+            cDebug("Queueing PlaySoundEvent for {}", index.name_of(*ref));
+            auto unit = make_sound_unit(*ref, LoopSoundEvent::usage_t::general);
+            if(!unit.index.valid())
+                return;
+            for(auto& track : unit.tracks)
+            {
+                track.source->template set_property<
+                    oaf::source_property::relative>(play->relative);
+                track.source->template set_property<
+                    oaf::source_property::position>(play->position);
+                track.source->template set_property<
+                    oaf::source_property::spatialized>(true);
+            }
+            singleshot_sounds.push_back(std::move(unit));
         }
     }
 };
