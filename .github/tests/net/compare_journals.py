@@ -151,9 +151,9 @@ def close(a, b, tolerance):
 
 def check_bipeds(label, players):
     """A player's biped (model + collision body) exists exactly while it is
-    in play, and sits where its camera is: the model at the camera, and the
-    body under it, whether the body drives the camera (local physics mode)
-    or follows it (everyone else)."""
+    in play, and sits where its camera is: the model's feet eye_height under
+    the camera, and the body under it, whether the body drives the camera
+    (local physics mode) or follows it (everyone else)."""
     problems = 0
     in_play = 0
     for p in players:
@@ -174,7 +174,10 @@ def check_bipeds(label, players):
             problems += 1
             print(f"FAIL: {label}: player_idx={idx} is in play without a "
                   f"biped model")
-        elif not close(model["position"], p["position"], 0.05):
+        elif not close(model["position"],
+                       [p["position"][0], p["position"][1],
+                        p["position"][2] - biped.get("eye_height", 0.0)],
+                       0.05):
             problems += 1
             print(f"FAIL: {label}: player_idx={idx} model at "
                   f"{model['position']}, camera at {p['position']}")
