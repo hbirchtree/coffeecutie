@@ -183,16 +183,13 @@ struct listener_t
     requires is_mat_property<Prop> && is_listener_property<Prop>
     void set_property(Matf3 const& rotation)
     {
-        glm::mat<3, 2, f32> prop;
-
-        // Row 2 is the view-space +Z row; the camera looks down -Z, so
-        // negate it to get the actual look/"at" direction (see the matching
-        // extraction + comment in standard_input_handlers.h's tick()).
-        Vecf3 forward = -Vecf3{rotation[0][2], rotation[1][2], rotation[2][2]};
-        Vecf3 right   = Vecf3{rotation[0][0], rotation[1][0], rotation[2][0]};
-        prop[0]       = forward;
-        prop[1]       = glm::cross(right, forward);
-        alListenerfv(enum_to_al(Prop), &prop[0][0]);
+        // Rows of the world->view rotation; the camera looks down -Z
+        Vecf3 const up = Vecf3{rotation[0][1], rotation[1][1], rotation[2][1]};
+        Vecf3 const forward =
+            -Vecf3{rotation[0][2], rotation[1][2], rotation[2][2]};
+        f32 const prop[6] = {
+            forward.x, forward.y, forward.z, up.x, up.y, up.z};
+        alListenerfv(enum_to_al(Prop), prop);
         detail::check_error("alListenerfv");
     }
 };
