@@ -36,16 +36,11 @@ void alloc_profile_provider(compo::EntityContainer& e)
         };
     };
     using func_t = blam::ui_element::function_t;
-    constexpr libc_types::u16 mp_profile_change_name     = 41;
-    constexpr libc_types::u16 player_profile_change_name = 66;
     data.on_function(func_t::player_profile_change_name, set_name(profile.name));
     data.on_function(func_t::mp_profile_change_name, set_name(profile.game_setting_name));
 
     /* Split screen lobby; the seat of a quadrant's event is its controller */
     auto& lobby = e.register_subsystem_inplace<LocalLobby>();
-    constexpr libc_types::u16 clear_multiplayer_player_joins = 14;
-    constexpr libc_types::u16 join_controller_to_mp_game     = 15;
-    constexpr libc_types::u16 mp_profile_set_for_controller  = 37;
     data.on_function(func_t::clear_multiplayer_player_joins, [&lobby](UIFunctionCall const&) {
         lobby = {};
         return ui_result_t::ok;
