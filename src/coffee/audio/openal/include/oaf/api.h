@@ -25,6 +25,9 @@ namespace detail {
 
 void buffer_dealloc(ALuint buf);
 void source_dealloc(ALuint src);
+void filter_dealloc(ALuint filter);
+void effect_dealloc(ALuint effect);
+void effect_slot_dealloc(ALuint slot);
 void check_error(std::string_view call);
 
 } // namespace detail
@@ -55,6 +58,66 @@ struct features_t
         bool spatialize{false};
         bool loopback{false};
     } soft;
+
+    /* ALC_EXT_EFX, checked at runtime */
+    bool efx{false};
+    u32  efx_sends{0};
+};
+
+using filter_handle_t = semantic::generic_handle_t<
+    ALuint,
+    semantic::handle_modes::auto_close,
+    0u,
+    detail::filter_dealloc>;
+using effect_handle_t = semantic::generic_handle_t<
+    ALuint,
+    semantic::handle_modes::auto_close,
+    0u,
+    detail::effect_dealloc>;
+using effect_slot_handle_t = semantic::generic_handle_t<
+    ALuint,
+    semantic::handle_modes::auto_close,
+    0u,
+    detail::effect_slot_dealloc>;
+
+/* EAX reverb parameters, linear gains. Defaults are EFX's */
+struct reverb_t
+{
+    f32 density{1.f};
+    f32 diffusion{1.f};
+    f32 gain{0.32f};
+    f32 gain_hf{0.89f};
+    f32 decay_time{1.49f};
+    f32 decay_hf_ratio{0.83f};
+    f32 reflections_gain{0.05f};
+    f32 reflections_delay{0.007f};
+    f32 late_reverb_gain{1.26f};
+    f32 late_reverb_delay{0.011f};
+    f32 room_rolloff{0.f};
+    f32 hf_reference{5000.f};
+};
+
+/* Low-pass, meant for a source's dry path */
+struct filter_t
+{
+    filter_t();
+
+    void set_lowpass(f32 gain, f32 gain_hf);
+
+    filter_handle_t m_handle{};
+};
+
+/* Reverb effect loaded into an auxiliary slot */
+struct effect_slot_t
+{
+    effect_slot_t();
+
+    void set_reverb(reverb_t const& reverb);
+    void set_gain(f32 gain);
+
+    effect_handle_t      m_effect{};
+    effect_slot_handle_t m_handle{};
+    bool                 m_eax{false};
 };
 
 struct buffer_t
@@ -157,6 +220,9 @@ struct source_t
 
     void spatialize_as(spatialize_t v);
 
+    void set_direct_filter(filter_t const* filter);
+    void set_send(u32 send, effect_slot_t const* slot);
+
     source_handle_t   m_handle{};
     features_t const& m_features;
 };
@@ -216,6 +282,14 @@ struct api
     auto alloc_source()
     {
         return std::make_shared<source_t>(m_features);
+    }
+
+    std::shared_ptr<filter_t>      alloc_filter();
+    std::shared_ptr<effect_slot_t> alloc_effect_slot();
+
+    auto const& features() const
+    {
+        return m_features;
     }
 
     auto& listener()

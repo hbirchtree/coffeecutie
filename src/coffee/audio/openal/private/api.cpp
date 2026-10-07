@@ -5,10 +5,15 @@
 #if __has_include(<AL/alext.h>)
 #include <AL/alext.h>
 #endif
+#if __has_include(<AL/efx.h>)
+#include <AL/efx.h>
+#define OAF_HAS_EFX 1
+#endif
 
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/debug/formatting.h>
 #include <fmt/format.h>
+#include <algorithm>
 #include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/hex.h>
@@ -94,6 +99,31 @@ void alcDeviceResumeSOFT(ALCdevice* device)
     deviceResumeSOFT(device);
 }
 
+#if defined(OAF_HAS_EFX)
+struct efx_procs_t
+{
+    LPALGENFILTERS                 gen_filters{};
+    LPALDELETEFILTERS              delete_filters{};
+    LPALFILTERI                    filteri{};
+    LPALFILTERF                    filterf{};
+    LPALGENEFFECTS                 gen_effects{};
+    LPALDELETEEFFECTS              delete_effects{};
+    LPALEFFECTI                    effecti{};
+    LPALEFFECTF                    effectf{};
+    LPALGENAUXILIARYEFFECTSLOTS    gen_slots{};
+    LPALDELETEAUXILIARYEFFECTSLOTS delete_slots{};
+    LPALAUXILIARYEFFECTSLOTI       sloti{};
+    LPALAUXILIARYEFFECTSLOTF       slotf{};
+
+    bool complete() const
+    {
+        return gen_filters && delete_filters && filteri && filterf &&
+               gen_effects && delete_effects && effecti && effectf &&
+               gen_slots && delete_slots && sloti && slotf;
+    }
+} efx;
+#endif
+
 } // namespace
 
 using namespace Coffee::Logging;
@@ -106,6 +136,27 @@ void detail::buffer_dealloc(ALuint buf)
 void detail::source_dealloc(ALuint src)
 {
     alDeleteSources(1, &src);
+}
+
+void detail::filter_dealloc(ALuint filter)
+{
+#if defined(OAF_HAS_EFX)
+    efx.delete_filters(1, &filter);
+#endif
+}
+
+void detail::effect_dealloc(ALuint effect)
+{
+#if defined(OAF_HAS_EFX)
+    efx.delete_effects(1, &effect);
+#endif
+}
+
+void detail::effect_slot_dealloc(ALuint slot)
+{
+#if defined(OAF_HAS_EFX)
+    efx.delete_slots(1, &slot);
+#endif
 }
 
 void detail::check_error(std::string_view call)
@@ -166,6 +217,169 @@ void source_t::spatialize_as(spatialize_t v)
         v == spatialize_t::mono_only ? AL_AUTO_SOFT
         : v == spatialize_t::never   ? AL_FALSE
                                      : AL_TRUE);
+}
+
+void source_t::set_direct_filter(filter_t const* filter)
+{
+#if defined(OAF_HAS_EFX)
+    if(!m_features.efx)
+        return;
+    alSourcei(
+        m_handle,
+        AL_DIRECT_FILTER,
+        filter ? static_cast<ALint>(filter->m_handle.hnd) : AL_FILTER_NULL);
+    detail::check_error("alSourcei(AL_DIRECT_FILTER)");
+#else
+    (void)filter;
+#endif
+}
+
+void source_t::set_send(u32 send, effect_slot_t const* slot)
+{
+#if defined(OAF_HAS_EFX)
+    if(!m_features.efx || send >= m_features.efx_sends)
+        return;
+    alSource3i(
+        m_handle,
+        AL_AUXILIARY_SEND_FILTER,
+        slot ? static_cast<ALint>(slot->m_handle.hnd) : AL_EFFECTSLOT_NULL,
+        static_cast<ALint>(send),
+        AL_FILTER_NULL);
+    detail::check_error("alSource3i(AL_AUXILIARY_SEND_FILTER)");
+#else
+    (void)send;
+    (void)slot;
+#endif
+}
+
+filter_t::filter_t()
+{
+#if defined(OAF_HAS_EFX)
+    if(!efx.gen_filters)
+        return;
+    efx.gen_filters(1, &m_handle.hnd);
+    efx.filteri(m_handle, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+    detail::check_error("alGenFilters");
+#endif
+}
+
+void filter_t::set_lowpass(f32 gain, f32 gain_hf)
+{
+#if defined(OAF_HAS_EFX)
+    if(!m_handle)
+        return;
+    efx.filterf(m_handle, AL_LOWPASS_GAIN, std::clamp(gain, 0.f, 1.f));
+    efx.filterf(m_handle, AL_LOWPASS_GAINHF, std::clamp(gain_hf, 0.f, 1.f));
+    detail::check_error("alFilterf");
+#else
+    (void)gain;
+    (void)gain_hf;
+#endif
+}
+
+effect_slot_t::effect_slot_t()
+{
+#if defined(OAF_HAS_EFX)
+    if(!efx.gen_effects)
+        return;
+    efx.gen_effects(1, &m_effect.hnd);
+    /* EAX reverb has the HF reference, plain reverb is the fallback */
+    alGetError();
+    efx.effecti(m_effect, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
+    m_eax = alGetError() == AL_NO_ERROR;
+    if(!m_eax)
+        efx.effecti(m_effect, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
+    efx.gen_slots(1, &m_handle.hnd);
+    efx.sloti(m_handle, AL_EFFECTSLOT_EFFECT, static_cast<ALint>(m_effect.hnd));
+    detail::check_error("alGenAuxiliaryEffectSlots");
+#endif
+}
+
+void effect_slot_t::set_reverb(reverb_t const& r)
+{
+#if defined(OAF_HAS_EFX)
+    if(!m_handle)
+        return;
+    /* Out-of-range values are rejected outright, keeping the old value */
+    auto set = [this](ALenum eax, ALenum std_, f32 v, f32 lo, f32 hi) {
+        efx.effectf(m_effect, m_eax ? eax : std_, std::clamp(v, lo, hi));
+    };
+    set(AL_EAXREVERB_DENSITY, AL_REVERB_DENSITY, r.density, 0.f, 1.f);
+    set(AL_EAXREVERB_DIFFUSION, AL_REVERB_DIFFUSION, r.diffusion, 0.f, 1.f);
+    set(AL_EAXREVERB_GAIN, AL_REVERB_GAIN, r.gain, 0.f, 1.f);
+    set(AL_EAXREVERB_GAINHF, AL_REVERB_GAINHF, r.gain_hf, 0.f, 1.f);
+    set(AL_EAXREVERB_DECAY_TIME,
+        AL_REVERB_DECAY_TIME,
+        r.decay_time,
+        0.1f,
+        20.f);
+    set(AL_EAXREVERB_DECAY_HFRATIO,
+        AL_REVERB_DECAY_HFRATIO,
+        r.decay_hf_ratio,
+        0.1f,
+        2.f);
+    set(AL_EAXREVERB_REFLECTIONS_GAIN,
+        AL_REVERB_REFLECTIONS_GAIN,
+        r.reflections_gain,
+        0.f,
+        3.16f);
+    set(AL_EAXREVERB_REFLECTIONS_DELAY,
+        AL_REVERB_REFLECTIONS_DELAY,
+        r.reflections_delay,
+        0.f,
+        0.3f);
+    set(AL_EAXREVERB_LATE_REVERB_GAIN,
+        AL_REVERB_LATE_REVERB_GAIN,
+        r.late_reverb_gain,
+        0.f,
+        10.f);
+    set(AL_EAXREVERB_LATE_REVERB_DELAY,
+        AL_REVERB_LATE_REVERB_DELAY,
+        r.late_reverb_delay,
+        0.f,
+        0.1f);
+    set(AL_EAXREVERB_ROOM_ROLLOFF_FACTOR,
+        AL_REVERB_ROOM_ROLLOFF_FACTOR,
+        r.room_rolloff,
+        0.f,
+        10.f);
+    if(m_eax)
+        efx.effectf(
+            m_effect,
+            AL_EAXREVERB_HFREFERENCE,
+            std::clamp(r.hf_reference, 1000.f, 20000.f));
+    /* A slot keeps its own copy, so the effect has to be reattached */
+    efx.sloti(m_handle, AL_EFFECTSLOT_EFFECT, static_cast<ALint>(m_effect.hnd));
+    detail::check_error("alEffectf(reverb)");
+#else
+    (void)r;
+#endif
+}
+
+void effect_slot_t::set_gain(f32 gain)
+{
+#if defined(OAF_HAS_EFX)
+    if(!m_handle)
+        return;
+    efx.slotf(m_handle, AL_EFFECTSLOT_GAIN, std::clamp(gain, 0.f, 1.f));
+    detail::check_error("alAuxiliaryEffectSlotf");
+#else
+    (void)gain;
+#endif
+}
+
+std::shared_ptr<filter_t> api::alloc_filter()
+{
+    if(!m_features.efx)
+        return nullptr;
+    return std::make_shared<filter_t>();
+}
+
+std::shared_ptr<effect_slot_t> api::alloc_effect_slot()
+{
+    if(!m_features.efx)
+        return nullptr;
+    return std::make_shared<effect_slot_t>();
 }
 
 std::string api::error_string(ALCenum err)
@@ -323,6 +537,36 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         alIsExtensionPresent("AL_SOFT_block_alignment");
     m_features.soft.spatialize =
         alIsExtensionPresent("AL_SOFT_source_spatialize");
+
+#if defined(OAF_HAS_EFX)
+    if(has_extension("ALC_EXT_EFX"))
+    {
+        const auto get_al_proc = []<typename T>(const char* name, T& proc) {
+            proc = reinterpret_cast<T>(alGetProcAddress(name));
+        };
+        get_al_proc("alGenFilters", efx.gen_filters);
+        get_al_proc("alDeleteFilters", efx.delete_filters);
+        get_al_proc("alFilteri", efx.filteri);
+        get_al_proc("alFilterf", efx.filterf);
+        get_al_proc("alGenEffects", efx.gen_effects);
+        get_al_proc("alDeleteEffects", efx.delete_effects);
+        get_al_proc("alEffecti", efx.effecti);
+        get_al_proc("alEffectf", efx.effectf);
+        get_al_proc("alGenAuxiliaryEffectSlots", efx.gen_slots);
+        get_al_proc("alDeleteAuxiliaryEffectSlots", efx.delete_slots);
+        get_al_proc("alAuxiliaryEffectSloti", efx.sloti);
+        get_al_proc("alAuxiliaryEffectSlotf", efx.slotf);
+
+        ALCint sends{0};
+        alcGetIntegerv(m_device, ALC_MAX_AUXILIARY_SENDS, 1, &sends);
+        m_features.efx       = efx.complete() && sends > 0;
+        m_features.efx_sends = static_cast<u32>(std::max(sends, 0));
+    }
+#endif
+    cDebug(
+        "OpenAL EFX: {} ({} sends)",
+        m_features.efx ? "enabled" : "unavailable",
+        m_features.efx_sends);
 
     return std::nullopt;
 }
@@ -486,6 +730,7 @@ void system::collect_info(comp_app::interfaces::AppInfo& appInfo)
     alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
     alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);
     appInfo.add("al:version", fmt::format("{}.{}", major, minor));
+    appInfo.add("al:efx", m_features.efx ? "yes" : "no");
 
     if constexpr(compile_info::platform::is_emscripten)
     {
