@@ -31,6 +31,7 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         Model,
         MultiplayerSpawn,
         NetworkInfo,
+        ObjectPhysics,
         ObjectSpawn,
         ShaderData,
         SubModel,
@@ -80,6 +81,15 @@ struct ResourceLoader
     };
 
     std::map<u64, player_biped_t> player_bipeds;
+
+    /*! Per map: coll geometry by (coll, mod2) tag id, mod2 bounds */
+    struct
+    {
+        u32 load_generation{};
+        std::map<std::pair<u32, u32>, std::shared_ptr<CollisionGeometry const>>
+            collision;
+        std::map<u32, std::optional<std::pair<Vecf3, Vecf3>>> bounds;
+    } physics_cache;
 
     struct
     {
@@ -900,10 +910,15 @@ struct ResourceLoader
         if(idle)
             recipe.components.push_back(
                 compo::type_hash_v<AnimationPlayback>());
+        auto physics = object_physics(p, *instance_tag);
+        if(physics)
+            recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
 
         auto parent_ = p.create_entity(recipe);
         if(idle)
             parent_.template get<AnimationPlayback>().layers[0] = *idle;
+        if(physics)
+            parent_.template get<ObjectPhysics>() = std::move(*physics);
 
         Model&       model = parent_.template get<Model>();
         ObjectSpawn& spawn = parent_.template get<ObjectSpawn>();
@@ -1191,6 +1206,9 @@ struct ResourceLoader
 
         EntityRecipe equip = shared_recipes::multiplayer_spawn;
         equip.tags         = equip.tags | tags;
+        auto physics       = object_physics(p, *item_tag);
+        if(physics)
+            equip.components.push_back(compo::type_hash_v<ObjectPhysics>());
 
         EntityRecipe submodel = shared_recipes::submodel;
         submodel.tags         = submodel.tags | (tags & SubObjectMask);
@@ -1199,6 +1217,8 @@ struct ResourceLoader
         Model&            model_ = set.template get<Model>();
         MultiplayerSpawn& spawn  = set.template get<MultiplayerSpawn>();
 
+        if(physics)
+            set.template get<ObjectPhysics>() = std::move(*physics);
         spawn.item       = &item;
         spawn.spawn      = &equipment_ref;
         spawn.collection = items->first;
@@ -1421,10 +1441,15 @@ struct ResourceLoader
         if(idle)
             recipe.components.push_back(
                 compo::type_hash_v<AnimationPlayback>());
+        auto physics = object_physics(p, object_tag);
+        if(physics)
+            recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
 
         auto ent = p.create_entity(recipe);
         if(idle)
             ent.template get<AnimationPlayback>().layers[0] = *idle;
+        if(physics)
+            ent.template get<ObjectPhysics>() = std::move(*physics);
 
         Model& model        = ent.template get<Model>();
         model.tag           = &(*model_it);
@@ -1494,13 +1519,24 @@ struct ResourceLoader
         return nullptr;
     }
 
-    /*! The biped's coll tag as hulls in bind pose; coll nodes mirror the
-     * mod2 skeleton by name */
-    std::shared_ptr<PlayerInfo::biped_collision_t const> biped_collision(
-        blam::scn::biped const& biped, blam::map_ptr const& magic)
+    /*! A coll tag in bind pose, as one hull per node plus its exact
+     * surfaces; coll nodes mirror the mod2 skeleton by name */
+    std::shared_ptr<CollisionGeometry const> object_collision(
+        BlamFiles<Ver> const& files,
+        blam::tagref_t const& collider,
+        blam::tagref_t const& model)
     {
-        auto coll_it = index.find(biped.collider);
-        auto mod2_it = index.find(biped.model);
+        auto const& magic = files.container.magic;
+        if(physics_cache.load_generation != files.load_generation)
+            physics_cache = {.load_generation = files.load_generation};
+        auto key = std::pair{collider.tag_id, model.tag_id};
+        if(auto it = physics_cache.collision.find(key);
+           it != physics_cache.collision.end())
+            return it->second;
+        auto& out = physics_cache.collision[key];
+
+        auto coll_it = index.find(collider);
+        auto mod2_it = index.find(model);
         if(coll_it == index.end() || mod2_it == index.end())
             return nullptr;
         auto coll = (*coll_it).template data<blam::coll::header>(magic);
@@ -1527,7 +1563,8 @@ struct ResourceLoader
                     : local;
         }
 
-        auto out = std::make_shared<PlayerInfo::biped_collision_t>();
+        auto geometry = std::make_shared<CollisionGeometry>();
+        std::vector<i32> polygon;
         for(auto const& node : nodes.value())
         {
             Matf4 bind(1);
@@ -1538,19 +1575,49 @@ struct ResourceLoader
                     break;
                 }
 
-            PlayerInfo::biped_collision_t::node_t hull;
-            std::map<i16, u32>                    uses;
-            if(auto bsps = node.bsps.data(magic); bsps.has_value())
-                for(auto const& bsp : bsps.value())
+            CollisionGeometry::node_t hull;
+            std::map<i16, u32>        uses;
+            auto bsps = node.bsps.data(magic);
+            if(bsps.has_error())
+                continue;
+            for(auto const& bsp : bsps.value())
+            {
+                auto verts = bsp.vertices.data(magic);
+                auto surfs = bsp.surfaces.data(magic);
+                auto edges = bsp.edges.data(magic);
+                if(verts.has_error() || surfs.has_error() || edges.has_error())
+                    continue;
+                auto const& vs = verts.value();
+                auto const& es = edges.value();
+                for(auto const& v : vs)
+                    hull.points.push_back(Vecf3(bind * Vecf4(v.point, 1.f)));
+                /* Winged-edge walk, fanned into triangles */
+                for(u32 si = 0; si < surfs.value().size(); si++)
                 {
-                    if(auto verts = bsp.vertices.data(magic); verts.has_value())
-                        for(auto const& v : verts.value())
-                            hull.points.push_back(
-                                Vecf3(bind * Vecf4(v.point, 1.f)));
-                    if(auto surfs = bsp.surfaces.data(magic); surfs.has_value())
-                        for(auto const& s : surfs.value())
-                            uses[s.material]++;
+                    uses[surfs.value()[si].material]++;
+                    polygon.clear();
+                    i32 const first = surfs.value()[si].first_edge;
+                    i32       e     = first;
+                    u32       guard = 0;
+                    do
+                    {
+                        if(e < 0 || static_cast<u32>(e) >= es.size())
+                            break;
+                        auto const& edge = es[e];
+                        bool const  left =
+                            edge.left_surface == static_cast<i32>(si);
+                        polygon.push_back(
+                            left ? edge.start_vertex : edge.end_vertex);
+                        e = left ? edge.forward_edge : edge.reverse_edge;
+                    } while(e != first && ++guard < 32);
+                    for(u32 i = 2; i < polygon.size(); i++)
+                        for(i32 corner : {polygon[0], polygon[i - 1], polygon[i]})
+                            if(corner >= 0 &&
+                               static_cast<u32>(corner) < vs.size())
+                                geometry->triangles.push_back(
+                                    Vecf3(bind * Vecf4(vs[corner].point, 1.f)));
                 }
+            }
             if(hull.points.empty())
                 continue;
             /* A node is the head if most of its surfaces are */
@@ -1563,8 +1630,96 @@ struct ResourceLoader
                static_cast<size_t>(most->first) < materials.value().size())
                 hull.head = materials.value()[most->first].flags &
                             blam::coll::material::head;
-            out->nodes.push_back(std::move(hull));
+            geometry->nodes.push_back(std::move(hull));
         }
+        /* Corners that fell outside the vertex list break the triples */
+        geometry->triangles.resize(geometry->triangles.size() / 3 * 3);
+        if(!geometry->nodes.empty())
+            out = std::move(geometry);
+        return out;
+    }
+
+    /*! Model-space bounds of a model's highest LOD */
+    std::optional<std::pair<Vecf3, Vecf3>> model_bounds(
+        ModelCache<Ver>& model_cache, blam::tagref_t const& model)
+    {
+        if(auto it = physics_cache.bounds.find(model.tag_id);
+           it != physics_cache.bounds.end())
+            return it->second;
+        auto&                                    out = physics_cache.bounds[model.tag_id];
+        blam::mod2::header<Ver> const* header = model_cache.get_header(model);
+        if(!header)
+            return out;
+        auto data = header->model_at(blam::mod2::lod_high_ext, model_cache.magic);
+        if(!data.has_value())
+            return out;
+        Vecf3 lo(std::numeric_limits<f32>::max()), hi(-std::numeric_limits<f32>::max());
+        for(auto const* part : data.value().parts)
+            if(auto verts = model_cache.vertex_data(*part); verts.has_value())
+                for(auto const& v : verts.value())
+                {
+                    lo = glm::min(lo, Vecf3(v.position));
+                    hi = glm::max(hi, Vecf3(v.position));
+                }
+        if(lo.x <= hi.x)
+            out = std::pair{lo, hi};
+        return out;
+    }
+
+    /*! How a world object collides: scenery is fixed in place, vehicles
+     * move on their coll hulls, items are boxes (grenades spheres) that
+     * only meet the world and each other */
+    std::optional<ObjectPhysics> object_physics(
+        Proxy& p, blam::tag_t const& tag)
+    {
+        using blam::tag_class_t;
+        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        auto const&      magic       = files.container.magic;
+        if(physics_cache.load_generation != files.load_generation)
+            physics_cache = {.load_generation = files.load_generation};
+
+        auto object_ = tag.template data<blam::scn::object>(magic);
+        if(object_.has_error())
+            return std::nullopt;
+        blam::scn::object const& object = object_.value()[0];
+
+        if(tag.matches(tag_class_t::scen) || tag.matches(tag_class_t::vehi))
+        {
+            auto collision =
+                object_collision(files, object.collider, object.model);
+            if(!collision)
+                return std::nullopt;
+            bool const moves = tag.matches(tag_class_t::vehi);
+            if(!moves && collision->triangles.empty())
+                return std::nullopt;
+            return ObjectPhysics{
+                .collision = std::move(collision),
+                .mass      = moves ? 1000.f : 0.f,
+            };
+        }
+
+        if(!tag.matches(tag_class_t::weap) && !tag.matches(tag_class_t::eqip) &&
+           !tag.matches(tag_class_t::garb))
+            return std::nullopt;
+        auto bounds = model_bounds(model_cache, object.model);
+        if(!bounds)
+            return std::nullopt;
+        /* Thin models still need some thickness to rest on */
+        Vecf3 const half =
+            glm::max((bounds->second - bounds->first) * .5f, Vecf3(.05f));
+        ObjectPhysics out{
+            .half_extents = half,
+            .center       = (bounds->first + bounds->second) * .5f,
+            .mass         = 1.f,
+            .item         = true,
+        };
+        if(tag.matches(tag_class_t::eqip))
+            if(auto equip = tag.template data<blam::scn::equipment>(magic);
+               equip.has_value() &&
+               equip.value()[0].powerup_type ==
+                   blam::scn::equipment::powerup_type_t::grenade)
+                out.radius = (half.x + half.y + half.z) / 3.f;
         return out;
     }
 
@@ -1591,8 +1746,8 @@ struct ResourceLoader
                     };
                 else
                     cWarning("Biped has no collision size, using defaults");
-                biped_model.shape.collision =
-                    biped_collision(*biped, files.container.magic);
+                biped_model.shape.collision = object_collision(
+                    files, biped->collider, biped->model);
             }
         }
 

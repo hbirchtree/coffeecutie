@@ -516,6 +516,49 @@ struct DepthInfo
         false}; /*! Objects such as transparent ones need to be drawn anyway */
 };
 
+/*! A coll tag in object space (bind pose) */
+struct CollisionGeometry
+{
+    /*! One convex hull per collision node */
+    struct node_t
+    {
+        std::vector<Vecf3> points;
+        bool               head{false};
+    };
+
+    std::vector<node_t> nodes;
+    std::vector<Vecf3>  triangles; /*!< Exact surfaces, 3 per triangle */
+};
+
+/*! Collision for a world object: static ones use the exact coll surfaces,
+ * moving ones its hulls, or a box/sphere when there is no coll tag */
+struct ObjectPhysics
+{
+    using value_type = ObjectPhysics;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    std::shared_ptr<CollisionGeometry const> collision;
+
+    Vecf3 half_extents{}; /*!< Box, when there is no collision */
+    Vecf3 center{};       /*!< Box/sphere centre in object space */
+    f32   radius{0.f};    /*!< Sphere instead of a box */
+    f32   mass{0.f};      /*!< 0 = static */
+    bool  item{false};    /*!< Only collides with the world and other items */
+
+    /*! Who moves a body with mass: this peer's simulation, or someone else
+     * (the server) through Model, with the body following kinematically */
+    enum authority_t : u8
+    {
+        Simulated,
+        Follower,
+    } authority{Simulated};
+
+    /*! Simulated bodies, as of the last physics step */
+    Vecf3 linear_velocity{};
+    Vecf3 angular_velocity{};
+    bool  sleeping{false};
+};
+
 struct PhysicsData
 {
     using value_type = PhysicsData;
@@ -560,18 +603,9 @@ struct PlayerInfo
     /*! For local seats the server does not know about */
     static constexpr u32 local_only_idx_base = 0x10000;
 
-    /*! The biped's coll tag as one convex hull per collision node, in
-     * biped space (feet at the origin, facing +X), bind pose */
-    struct biped_collision_t
-    {
-        struct node_t
-        {
-            std::vector<Vecf3> points;
-            bool               head{false};
-        };
-
-        std::vector<node_t> nodes;
-    };
+    /*! The biped's coll tag in biped space (feet at the origin, facing
+     * +X) */
+    using biped_collision_t = CollisionGeometry;
 
     /*! From the biped tag; the defaults stand in until one is loaded */
     struct biped_shape_t

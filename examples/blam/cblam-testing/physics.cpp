@@ -49,6 +49,8 @@ template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
     type_list_t<
         DebugDraw,
+        Model,
+        ObjectPhysics,
         PhysicsData,
         PlayerCamera,
         const PlayerInfo,
@@ -105,7 +107,10 @@ struct PhysicsSystem
 
         /* Without ground, new bodies would fall through the map */
         if(m_world_body)
+        {
             reconcile_player_bodies(p);
+            reconcile_object_bodies(p);
+        }
 
         // Simulate when there is anything in the world: the Halo BSP body,
         // streamed RS2 region bodies, or the debug probe. Gating solely on
@@ -117,7 +122,8 @@ struct PhysicsSystem
         if(m_next_process_time > t)
             return;
 
-        m_world->stepSimulation(1.f / 60.f, 4);
+        carry_grabbed(p);
+        m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
         m_next_process_time = t + 16ms;
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
@@ -290,6 +296,7 @@ struct PhysicsSystem
                     .mass      = kinematic ? 0.f : 1.f,
                     .shape     = hulls ? Physics::BodyCreationShape::Hulls
                                        : Physics::BodyCreationShape::Capsule,
+                    .group     = Physics::BodyCreationShape::Character,
                     .kinematic = kinematic,
                     .lock      = {.rotation = true},
                     .hulls     = shape.collision,
@@ -321,6 +328,220 @@ struct PhysicsSystem
             if(PhysicsData* data = p.template get<PhysicsData>(it->first))
                 data->enabled = data->kinematic = false;
             it = m_player_bodies.erase(it);
+        }
+    }
+
+    /* World objects with an ObjectPhysics get one body each. Simulated
+     * ones carry their Model along; followers are carried by it. */
+    void reconcile_object_bodies(Proxy& p)
+    {
+        using Shape = Physics::BodyCreationShape;
+        std::set<u64> live;
+        for(auto object : p.template select<Model, ObjectPhysics>())
+        {
+            auto [model, physics] = object.components();
+            u64 const  id         = object.id();
+            bool const moves      = physics.mass > 0.f;
+            bool const follower =
+                moves && physics.authority == ObjectPhysics::Follower;
+            live.insert(id);
+            auto existing = m_object_bodies.find(id);
+            if(existing == m_object_bodies.end() ||
+               existing->second != physics.authority)
+            {
+                m_object_bodies[id]  = physics.authority;
+                Shape::shape_t shape =
+                    physics.collision ? (moves ? Shape::Hulls : Shape::Mesh)
+                    : physics.radius > 0.f ? Shape::Sphere
+                                           : Shape::Box;
+                create_body(Shape{
+                    .entity_id = id,
+                    .scale     = shape == Shape::Sphere
+                                     ? Vecf3(physics.radius)
+                                     : physics.half_extents,
+                    .position  = model.position,
+                    .mass      = follower ? 0.f : physics.mass,
+                    .shape     = shape,
+                    .group     = physics.item ? Shape::Item
+                                 : moves      ? Shape::Vehicle
+                                              : Shape::AnyGroup,
+                    .kinematic = follower,
+                    .hulls     = physics.collision,
+                    .offset    = physics.center,
+                    .rotation  = model.rotation,
+                });
+                continue;
+            }
+            if(!moves)
+                continue;
+            auto it = m_bodies.find(id);
+            if(it == m_bodies.end())
+                continue;
+            btRigidBody& body = *it->second.world_body;
+            if(follower)
+            {
+                btTransform transform;
+                transform.setRotation(btQuaternion(
+                    model.rotation.x,
+                    model.rotation.y,
+                    model.rotation.z,
+                    model.rotation.w));
+                transform.setOrigin(btVector3(
+                    model.position.x, model.position.y, model.position.z));
+                body.setWorldTransform(transform);
+                continue;
+            }
+            physics.sleeping = !body.isActive();
+            if(physics.sleeping)
+            {
+                physics.linear_velocity = physics.angular_velocity = {};
+                continue;
+            }
+            auto to_vec = [](btVector3 const& v) {
+                return Vecf3{v.x(), v.y(), v.z()};
+            };
+            physics.linear_velocity  = to_vec(body.getLinearVelocity());
+            physics.angular_velocity = to_vec(body.getAngularVelocity());
+            btTransform const& transform = body.getWorldTransform();
+            btQuaternion const rotation  = transform.getRotation();
+            model.position = to_vec(transform.getOrigin());
+            model.rotation =
+                Quatf(rotation.w(), rotation.x(), rotation.y(), rotation.z());
+            model.update_matrix();
+        }
+
+        for(auto it = m_object_bodies.begin(); it != m_object_bodies.end();)
+        {
+            if(live.contains(it->first))
+            {
+                ++it;
+                continue;
+            }
+            remove_body(it->first);
+            it = m_object_bodies.erase(it);
+        }
+    }
+
+    static btTransform camera_transform(Physics::Grab const& grab)
+    {
+        Quatf const& to_world = grab.to_world;
+        btTransform  transform;
+        transform.setRotation(
+            btQuaternion(to_world.x, to_world.y, to_world.z, to_world.w));
+        transform.setOrigin(
+            btVector3(grab.origin.x, grab.origin.y, grab.origin.z));
+        return transform;
+    }
+
+    /* Swap a body between simulated and carried: Bullet wants it out of the
+     * world while its mass and flags change */
+    void set_carried(u64 entity_id, bool carried, f32 mass)
+    {
+        auto&        body  = m_bodies.at(entity_id);
+        btRigidBody& rigid = *body.world_body;
+        m_world->removeRigidBody(&rigid);
+        btVector3 inertia(0, 0, 0);
+        if(carried)
+        {
+            rigid.setMassProps(0.f, inertia);
+            rigid.setCollisionFlags(
+                rigid.getCollisionFlags() |
+                btCollisionObject::CF_KINEMATIC_OBJECT);
+            rigid.setActivationState(DISABLE_DEACTIVATION);
+        } else
+        {
+            body.world_shape->calculateLocalInertia(mass, inertia);
+            rigid.setMassProps(mass, inertia);
+            rigid.setCollisionFlags(
+                rigid.getCollisionFlags() &
+                ~btCollisionObject::CF_KINEMATIC_OBJECT);
+            /* Held still, it ran up sleep time; don't let it nap mid-air */
+            rigid.forceActivationState(ACTIVE_TAG);
+            rigid.setDeactivationTime(0.f);
+        }
+        rigid.updateInertiaTensor();
+        add_to_world(rigid, body.group);
+    }
+
+    /* The first thing along the view, if it is a moving object this peer
+     * simulates */
+    std::optional<u64> pick(Proxy& p, Physics::Grab const& grab)
+    {
+        Vecf3 const     forward  = grab.to_world * Vecf3{0.f, 0.f, -1.f};
+        Vecf3 const     end      = grab.origin + forward * grab_range;
+        btVector3 const from(grab.origin.x, grab.origin.y, grab.origin.z);
+        btVector3 const to(end.x, end.y, end.z);
+        btCollisionWorld::AllHitsRayResultCallback hits(from, to);
+        /* Items only accept the world and each other; the cursor sees all */
+        hits.m_collisionFilterGroup = btBroadphaseProxy::AllFilter;
+        m_world->rayTest(from, to, hits);
+        std::optional<u64> nearest;
+        f32                nearest_t = 2.f;
+        for(int i = 0; i < hits.m_collisionObjects.size(); i++)
+        {
+            u64 const id = u64(reinterpret_cast<uintptr_t>(
+                hits.m_collisionObjects[i]->getUserPointer()));
+            /* Flycam sits inside its own biped's hulls */
+            if(id == grab.entity_id || hits.m_hitFractions[i] >= nearest_t)
+                continue;
+            nearest_t = hits.m_hitFractions[i];
+            nearest   = id;
+        }
+        if(!nearest)
+            return std::nullopt;
+        auto const* physics = p.template get<ObjectPhysics>(*nearest);
+        if(!physics || physics->mass <= 0.f ||
+           physics->authority != ObjectPhysics::Simulated)
+            return std::nullopt;
+        return nearest;
+    }
+
+    void carry_grabbed(Proxy& p)
+    {
+        for(auto it = m_grab_requests.begin(); it != m_grab_requests.end();)
+        {
+            Physics::Grab const& grab    = it->second;
+            auto                 carried = m_grabs.find(grab.entity_id);
+            if(carried != m_grabs.end() &&
+               !m_bodies.contains(carried->second.object))
+                carried = m_grabs.erase(carried);
+
+            if(grab.held && carried == m_grabs.end())
+            {
+                if(auto object = pick(p, grab))
+                {
+                    set_carried(*object, true, 0.f);
+                    m_grabs[grab.entity_id] = {
+                        .object   = *object,
+                        .relative = camera_transform(grab).inverse() *
+                                    m_bodies.at(*object)
+                                        .world_body->getWorldTransform(),
+                    };
+                    cDebug("physics: {} grabbed {}", grab.entity_id, *object);
+                }
+            } else if(grab.held)
+            {
+                btRigidBody& rigid =
+                    *m_bodies.at(carried->second.object).world_body;
+                btTransform const target =
+                    camera_transform(grab) * carried->second.relative;
+                carried->second.velocity =
+                    (target.getOrigin() -
+                     rigid.getWorldTransform().getOrigin()) /
+                    step_seconds;
+                rigid.setWorldTransform(target);
+            } else if(carried != m_grabs.end())
+            {
+                u64 const   object  = carried->second.object;
+                auto const* physics = p.template get<ObjectPhysics>(object);
+                set_carried(object, false, physics ? physics->mass : 1.f);
+                /* Let go mid-swing, it keeps going */
+                m_bodies.at(object).world_body->setLinearVelocity(
+                    carried->second.velocity);
+                m_grabs.erase(carried);
+                cDebug("physics: {} dropped {}", grab.entity_id, object);
+            }
+            it = grab.held ? std::next(it) : m_grab_requests.erase(it);
         }
     }
 
@@ -593,6 +814,43 @@ struct PhysicsSystem
             entity_body.world_shape = std::move(compound);
             break;
         }
+        case Physics::BodyCreationShape::Mesh: {
+            if(!body_create.hulls || body_create.hulls->triangles.empty())
+                break;
+            auto        mesh = std::make_unique<btTriangleMesh>();
+            auto const& tris = body_create.hulls->triangles;
+            for(size_t i = 0; i + 2 < tris.size(); i += 3)
+            {
+                auto pt = [&](Vecf3 const& v) {
+                    Vecf3 const at = v + body_create.offset;
+                    return btVector3(at.x, at.y, at.z);
+                };
+                mesh->addTriangle(pt(tris[i]), pt(tris[i + 1]), pt(tris[i + 2]));
+            }
+            entity_body.world_shape =
+                std::make_unique<btBvhTriangleMeshShape>(mesh.get(), true);
+            entity_body.mesh_iface = std::move(mesh);
+            break;
+        }
+        }
+        /* Primitives are centred on the body; move them off it */
+        bool const primitive =
+            body_create.shape == Physics::BodyCreationShape::Box ||
+            body_create.shape == Physics::BodyCreationShape::Sphere;
+        if(primitive && entity_body.world_shape &&
+           body_create.offset != Vecf3{})
+        {
+            auto        compound = std::make_unique<btCompoundShape>();
+            btTransform child;
+            child.setIdentity();
+            child.setOrigin(btVector3(
+                body_create.offset.x,
+                body_create.offset.y,
+                body_create.offset.z));
+            compound->addChildShape(child, entity_body.world_shape.get());
+            entity_body.child_shapes.push_back(
+                std::move(entity_body.world_shape));
+            entity_body.world_shape = std::move(compound);
         }
         if(!entity_body.world_shape)
         {
@@ -625,10 +883,15 @@ struct PhysicsSystem
             entity_body.world_body->setAngularFactor(btVector3(0, 0, 0));
         } else
             entity_body.world_body->setFriction(1.f);
-        btTransform transform = body_create.shape ==
-                                        Physics::BodyCreationShape::Hulls
-                                    ? yaw_basis(body_create.yaw)
-                                    : m_world_basis;
+        btTransform transform = m_world_basis;
+        if(body_create.rotation)
+            transform.setRotation(btQuaternion(
+                body_create.rotation->x,
+                body_create.rotation->y,
+                body_create.rotation->z,
+                body_create.rotation->w));
+        else if(body_create.shape == Physics::BodyCreationShape::Hulls)
+            transform = yaw_basis(body_create.yaw);
         transform.setOrigin(btVector3(
             body_create.position.x,
             body_create.position.y,
@@ -648,7 +911,57 @@ struct PhysicsSystem
                 btCollisionObject::CF_KINEMATIC_OBJECT);
             entity_body.world_body->setActivationState(DISABLE_DEACTIVATION);
         }
-        m_world->addRigidBody(entity_body.world_body.get());
+        if(body_create.group == Physics::BodyCreationShape::Item)
+        {
+            /* Small and fast: sweep them so they can't tunnel the ground */
+            btVector3 lo, hi;
+            entity_body.world_shape->getAabb(transform, lo, hi);
+            /* Items are placed by where they rest; started inside the floor
+             * they would be pushed out through its back */
+            if(f32 const sink = body_create.position.z - lo.z(); sink > 0.f)
+            {
+                transform.getOrigin().setZ(transform.getOrigin().z() + sink + .01f);
+                entity_body.world_body->setWorldTransform(transform);
+            }
+            btVector3 const extent = hi - lo;
+            f32 const       thin =
+                std::min({extent.x(), extent.y(), extent.z()}) * .5f;
+            entity_body.world_body->setCcdMotionThreshold(thin);
+            entity_body.world_body->setCcdSweptSphereRadius(thin * .8f);
+            if(body_create.shape == Physics::BodyCreationShape::Sphere)
+            {
+                entity_body.world_body->setRollingFriction(.02f);
+                entity_body.world_body->setSpinningFriction(.02f);
+            }
+        }
+        entity_body.group = body_create.group;
+        add_to_world(*entity_body.world_body, body_create.group);
+    }
+
+    void add_to_world(btRigidBody& body, Physics::BodyCreationShape::group_t group)
+    {
+        using filter = btBroadphaseProxy::CollisionFilterGroups;
+        int constexpr all = filter::AllFilter;
+        switch(group)
+        {
+        case Physics::BodyCreationShape::AnyGroup:
+            m_world->addRigidBody(&body);
+            break;
+        case Physics::BodyCreationShape::Character:
+            m_world->addRigidBody(
+                &body, filter::CharacterFilter, all ^ filter::DebrisFilter);
+            break;
+        case Physics::BodyCreationShape::Vehicle:
+            m_world->addRigidBody(
+                &body, filter::DefaultFilter, all ^ filter::DebrisFilter);
+            break;
+        case Physics::BodyCreationShape::Item:
+            m_world->addRigidBody(
+                &body,
+                filter::DebrisFilter,
+                filter::StaticFilter | filter::DebrisFilter);
+            break;
+        }
     }
 
     /* Sleeping bodies are not woken when the static mesh under them is
@@ -727,6 +1040,9 @@ struct PhysicsSystem
         }
         m_bodies.clear();
         m_player_bodies.clear();
+        m_object_bodies.clear();
+        m_grabs.clear();
+        m_grab_requests.clear();
         m_built_section = -2;
     }
 
@@ -981,6 +1297,8 @@ struct PhysicsSystem
         std::shared_ptr<void>                       keep_alive;
         /* Lazily reserved on first debug draw, released in remove_body() */
         DebugMarkers::strip_slot_t debug_slot{};
+        Physics::BodyCreationShape::group_t group{
+            Physics::BodyCreationShape::AnyGroup};
     };
 
     std::map<u64, entity_body> m_bodies;
@@ -992,6 +1310,19 @@ struct PhysicsSystem
     };
 
     std::map<u64, player_body_t> m_player_bodies;
+    std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
+
+    /* Forge grabs, by holder */
+    struct grab_t
+    {
+        u64         object{0};
+        btTransform relative; /*!< Object in camera space */
+        btVector3   velocity{0, 0, 0}; /*!< Over the last step */
+    };
+    static constexpr f32           grab_range   = 40.f;
+    static constexpr f32           step_seconds = 1.f / 60.f;
+    std::map<u64, Physics::Grab>   m_grab_requests;
+    std::map<u64, grab_t>          m_grabs;
 
     DebugMarkers*              m_markers{nullptr};
     DebugMarkers::strip_slot_t m_probe_slot{};
@@ -1050,6 +1381,12 @@ void alloc_physics(compo::EntityContainer& container)
     phys_bus.addEventFunction<Physics::Translate>(
         0, [&physics](Physics::Event&, Physics::Translate* translation) {
             physics.translate(*translation);
+        });
+    phys_bus.addEventFunction<Physics::Grab>(
+        0, [&physics](Physics::Event&, Physics::Grab* grab) {
+            /* A release only matters to a holder that has something */
+            if(grab->held || physics.m_grabs.contains(grab->entity_id))
+                physics.m_grab_requests[grab->entity_id] = *grab;
         });
     phys_bus.addEventFunction<Physics::ProbeHere>(
         0, [&container, &physics](Physics::Event&, Physics::ProbeHere*) {

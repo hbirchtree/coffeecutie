@@ -9,6 +9,7 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
+#include <deque>
 #include <gsl/span_ext>
 #include <peripherals/stl/base64.h>
 #include <peripherals/stl/string/replace.h>
@@ -51,7 +52,7 @@ extern "C" void SteamNetworkingSockets_Poll(int msMaxWaitTime);
 #endif
 
 using NetworkingManifest = compo::SubsystemManifest<
-    type_list_t<PlayerInfo, NetworkInfo, PlayerCamera>,
+    type_list_t<PlayerInfo, NetworkInfo, PlayerCamera, Model, ObjectPhysics>,
     type_list_t<NetworkState, PhysicsBus>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
@@ -387,6 +388,27 @@ struct alignas(8) CameraSync
     }
 };
 
+/*! A moving object at a server time. Sent while it is awake, once more as
+ *  it falls asleep, and all of them to a peer once it is verified. */
+struct alignas(8) ObjectSync
+{
+    static constexpr auto message_type = MessageBase::ObjectSync;
+
+    enum flags_t : u32
+    {
+        none     = 0x0,
+        sleeping = 0x1,
+    };
+
+    i64     server_time_us{0}; /*!< Server steady clock */
+    Quatf   rotation;
+    Vecf4   position; /*!< w unused, as are the velocities' */
+    Vecf4   linear_velocity;
+    Vecf4   angular_velocity;
+    u32     net_id{0};
+    flags_t flags{none};
+};
+
 struct alignas(8) Screenshot
 {
     static constexpr auto message_type = MessageBase::Screenshot;
@@ -503,6 +525,7 @@ static_assert(sizeof(SpawnRequest) == 48);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 48);
 static_assert(sizeof(Message<CameraSync>) == 64);
+static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
@@ -2616,6 +2639,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
             }
         }
+        if(is_server())
+            send_object_sync(p, t);
         if(m_left_server)
             leave_server(p);
         if(m_connection)
@@ -2675,11 +2700,127 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 client_receive_payload(p, payload);
                 message->Release();
             }
+            follow_objects(p);
         }
 #if defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM)
         SteamNetworkingSockets_Poll(0);
 #endif
         m_impl->RunCallbacks();
+    }
+
+    /* Moving objects are the server's: it sends what they do, at most
+     * object_sync_rate per second, and everything once to new peers */
+    void send_object_sync(Proxy& p, time_point const& t)
+    {
+        auto const now = m_net_state.server_now();
+        if(!now || t < m_next_object_sync)
+            return;
+        m_next_object_sync = t + object_sync_interval;
+
+        i64 const time_us = std::chrono::duration_cast<std::chrono::microseconds>(
+                                now->time_since_epoch())
+                                .count();
+        std::vector<ObjectSync> changed, all;
+        for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
+        {
+            auto [model, physics, net] = object.components();
+            if(physics.mass <= 0.f || net.instance_id == 0)
+                continue;
+            ObjectSync const sync{
+                .server_time_us   = time_us,
+                .rotation         = model.rotation,
+                .position         = Vecf4(model.position, 0),
+                .linear_velocity  = Vecf4(physics.linear_velocity, 0),
+                .angular_velocity = Vecf4(physics.angular_velocity, 0),
+                .net_id           = net.instance_id,
+                .flags = physics.sleeping ? ObjectSync::sleeping
+                                          : ObjectSync::none,
+            };
+            all.push_back(sync);
+            auto& was_asleep = m_object_asleep[net.instance_id];
+            if(!physics.sleeping || !was_asleep)
+                changed.push_back(sync);
+            was_asleep = physics.sleeping;
+        }
+
+        std::set<HSteamNetConnection> fresh, current;
+        for(auto& [connection, state] : m_connections)
+        {
+            if(!state.verified)
+                continue;
+            (state.objects_synced ? current : fresh).insert(connection);
+            state.objects_synced = true;
+        }
+        if(!fresh.empty() && !all.empty())
+            send_all<ObjectSync>(
+                MessageBase{MessageBase::ObjectSync},
+                gsl::span<ObjectSync>(all),
+                k_nSteamNetworkingSend_Reliable,
+                fresh);
+        if(!current.empty() && !changed.empty())
+            send_all<ObjectSync>(
+                MessageBase{MessageBase::ObjectSync},
+                gsl::span<ObjectSync>(changed),
+                k_nSteamNetworkingSend_UnreliableNoNagle,
+                current,
+                FRAME_UPDATE_LANE);
+    }
+
+    /* A replica shows moving objects where the server had them
+     * object_interp_delay ago, between the two snapshots around then */
+    void follow_objects(Proxy& p)
+    {
+        auto const now = m_net_state.server_now();
+        if(!m_join_confirmed || !now)
+            return;
+        i64 const at = std::chrono::duration_cast<std::chrono::microseconds>(
+                           (*now - object_interp_delay).time_since_epoch())
+                           .count();
+        for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
+        {
+            auto [model, physics, net] = object.components();
+            if(physics.mass <= 0.f)
+                continue;
+            physics.authority = ObjectPhysics::Follower;
+            auto it           = m_object_history.find(net.instance_id);
+            if(net.instance_id == 0 || it == m_object_history.end() ||
+               it->second.empty())
+                continue;
+            auto const& history = it->second;
+            auto        next    = std::find_if(
+                history.begin(), history.end(), [at](ObjectSync const& s) {
+                    return s.server_time_us > at;
+                });
+            ObjectSync const& to =
+                next == history.end() ? history.back() : *next;
+            ObjectSync const& from =
+                next == history.begin() || next == history.end() ? to
+                                                                 : *(next - 1);
+            f32 const span = static_cast<f32>(to.server_time_us - from.server_time_us);
+            f32 const alpha =
+                span > 0.f ? glm::clamp(
+                                 static_cast<f32>(at - from.server_time_us) / span,
+                                 0.f,
+                                 1.f)
+                           : 1.f;
+            follow(model, physics, from, to, alpha);
+        }
+    }
+
+    /* Every correction of a followed object goes through here */
+    static void follow(
+        Model&            model,
+        ObjectPhysics&    physics,
+        ObjectSync const& from,
+        ObjectSync const& to,
+        f32               alpha)
+    {
+        model.position = glm::mix(Vecf3(from.position), Vecf3(to.position), alpha);
+        model.rotation = glm::slerp(from.rotation, to.rotation, alpha);
+        model.update_matrix();
+        physics.linear_velocity  = Vecf3(to.linear_velocity);
+        physics.angular_velocity = Vecf3(to.angular_velocity);
+        physics.sleeping         = to.flags & ObjectSync::sleeping;
     }
 
     void server_close_peer_connection(
@@ -2712,6 +2853,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     void leave_server(Proxy& p)
     {
+        m_object_history.clear();
+        for(auto object : p.select<ObjectPhysics>())
+            object.get<ObjectPhysics>().authority = ObjectPhysics::Simulated;
         m_left_server    = false;
         m_join_confirmed = false;
         p.subsystem<NetworkState>().remote_player_idx.reset();
@@ -2913,6 +3057,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         switch(payload.type)
         {
+        case MessageBase::ObjectSync: {
+            for(auto const& sync : payload.values<ObjectSync>())
+            {
+                auto& history = m_object_history[sync.net_id];
+                /* Unreliable: late arrivals are dropped, not reordered */
+                if(!history.empty() &&
+                   history.back().server_time_us >= sync.server_time_us)
+                    continue;
+                history.push_back(sync);
+                while(history.size() > object_history_size)
+                    history.pop_front();
+            }
+            break;
+        }
         case MessageBase::CameraSync: {
             auto const& sync    = payload.value<CameraSync>();
             auto const self_idx = p.subsystem<NetworkState>().remote_player_idx;
@@ -3283,6 +3441,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         std::optional<time_point>         last_seen{};
         bool                              invited{false};
         bool verified{false}; /*!< Map fingerprint matched ours */
+        bool objects_synced{false}; /*!< Has had every moving object */
     };
 
     std::map<HSteamNetConnection, connection_state_t>      m_connections{};
@@ -3298,6 +3457,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::optional<u32> m_pending_focus{};
 
     static constexpr auto spawn_hold = std::chrono::seconds(5);
+
+    /* Moving objects */
+    static constexpr auto object_sync_interval = std::chrono::milliseconds(33);
+    static constexpr auto object_interp_delay  = std::chrono::milliseconds(100);
+    static constexpr size_t object_history_size = 8;
+    time_point                               m_next_object_sync{};
+    std::map<u32, bool>                      m_object_asleep;
+    std::map<u32, std::deque<ObjectSync>>    m_object_history;
     struct held_player_t
     {
         u32                                                 player_idx{};

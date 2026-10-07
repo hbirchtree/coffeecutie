@@ -216,6 +216,7 @@ i32 blam_main()
             e.register_component_inplace<Model>();
             e.register_component_inplace<MultiplayerSpawn>();
             e.register_component_inplace<NetworkInfo>();
+            e.register_component_inplace<ObjectPhysics>();
             e.register_component_inplace<ObjectSpawn>();
             e.register_component_inplace<PlayerCamera>();
             e.register_component_inplace<PlayerInfo>();
@@ -784,6 +785,8 @@ i32 blam_main()
                                 input.accel);
                             net.changes.transform = net.changes.viewport = true;
                         }
+                        if(controller_connected && controller_buttons().back)
+                            info.mode.physics = !info.mode.physics;
                     } else if(!info.is_remote())
                     {
                         cam.camera.position = freecam_pos;
@@ -813,6 +816,8 @@ i32 blam_main()
                          * cap at 1, partial stick deflection stays analog */
                         if(f32 len2 = glm::dot(dir, dir); len2 > 1.f)
                             dir /= std::sqrt(len2);
+                        if(controller_connected && controller_buttons().back)
+                            info.mode.physics = !info.mode.physics;
 
                         const f32 move_speed = 10.f * input.accel;
                         const f32 jump_speed = 4.f;
@@ -901,6 +906,29 @@ i32 blam_main()
                 cam.matrix[2][2] = 0.f;
                 cam.matrix       = cam.matrix * view_matrix;
                 cam.rotation = glm::mat4_cast(cam.camera.rotation) * bsp_basis;
+
+                /* Forge: right trigger in flycam carries what the cursor
+                 * (screen centre) points at */
+                if(!info.is_remote())
+                {
+                    constexpr i16 trigger_pressed = 8192;
+                    bool const    trigger =
+                        controllers && cam.controller.index &&
+                        controllers->state(*cam.controller.index).axes.e.t_r >
+                            trigger_pressed;
+                    Physics::Event ev{Physics::Event::Grab};
+                    Physics::Grab  grab{
+                         .entity_id = entity.id(),
+                         .origin    = cam.camera.position,
+                         .to_world =
+                            Quatf(glm::transpose(Matf3(cam.rotation))),
+                         .held = trigger && info.permissions.camera &&
+                                !info.mode.physics &&
+                                input.input_mode ==
+                                    PlayerInput::input_mode_t::game,
+                    };
+                    e.subsystem_cast<PhysicsBus>().process(ev, &grab);
+                }
 
                 /* The biped stands under its camera, turned only by yaw,
                  * the way scenery is placed */

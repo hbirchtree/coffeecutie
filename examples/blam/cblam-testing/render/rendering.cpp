@@ -3449,7 +3449,9 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     for(auto const& player : e.select<PlayerInfo, PlayerCamera>())
     {
         auto [info, camera] = player.components();
-        if(info.mode.physics || !camera.is_active())
+        if(info.mode.physics ||
+                !camera.is_active() ||
+                !postprocess.forge_overlay)
             continue;
         f32 aspect = fb_size.aspect();
         auto bounds = screen_bounds(info);

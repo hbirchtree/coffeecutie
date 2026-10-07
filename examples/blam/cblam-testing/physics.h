@@ -4,6 +4,7 @@
 #include "peripherals/semantic/enum/data_types.h"
 
 #include <memory>
+#include <optional>
 
 #if defined(FEATURE_ENABLE_BULLET3)
 class btTriangleIndexVertexArray;
@@ -29,6 +30,8 @@ struct Event
         Overlap, /*!< Collision event between two bodies */
 
         ProbeHere, /*!< Put debug probe at camera position, for testing */
+
+        Grab, /*!< Forge-style carrying of an object in front of a camera */
 
         Reset, /*!< Tear down all bodies + the world mesh ahead of a map
                 * change. Mesh-based bodies reference their source
@@ -89,7 +92,17 @@ struct BodyCreationShape
         Sphere,
         Box,
         Hulls, /*!< One convex hull per node, from `hulls` */
+        Mesh,  /*!< Exact triangles from `hulls`, static only */
     } shape{Capsule};
+
+    /*! Who touches whom: items only meet the world and each other */
+    enum group_t
+    {
+        AnyGroup, /*!< Bullet's default for the body type */
+        Character,
+        Vehicle,
+        Item,
+    } group{AnyGroup};
 
     /*!< Overlap sensor: detected but never collided with
      * (CF_NO_CONTACT_RESPONSE); pairs touching a sensor emit
@@ -103,11 +116,12 @@ struct BodyCreationShape
         bool rotation{false};
     } lock{};
 
-    /*! For Hulls: points are added to `offset` (body space, +Z up) and the
-     * body faces +X turned by `yaw` about +Z */
-    std::shared_ptr<PlayerInfo::biped_collision_t const> hulls;
-    Vecf3                                                offset{};
-    f32                                                  yaw{0.f};
+    /*! Geometry is moved by `offset` (body space, +Z up). Hull bodies
+     * face +X turned by `yaw` about +Z unless `rotation` is given. */
+    std::shared_ptr<CollisionGeometry const> hulls;
+    Vecf3                                    offset{};
+    f32                                      yaw{0.f};
+    std::optional<Quatf>                     rotation;
 };
 
 struct BodyRemoval
@@ -148,6 +162,18 @@ struct Overlap
 {
     static constexpr auto event_type = Event::Overlap;
     u64                   entity_id_1{}, entity_id_2{};
+};
+
+/*! Sent every frame per local camera. While `held`, the first moving
+ * object along the view is carried kinematically, keeping where it sat
+ * relative to the camera; let go, it is simulated again */
+struct Grab
+{
+    static constexpr auto event_type = Event::Grab;
+    u64                   entity_id{0}; /*!< Holder */
+    Vecf3                 origin{};
+    Quatf to_world{}; /*!< Camera to world; the view is its -Z */
+    bool                  held{false};
 };
 
 struct ProbeHere
