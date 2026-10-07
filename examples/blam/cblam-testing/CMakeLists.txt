@@ -39,6 +39,7 @@ coffee_application(
   SOURCES
         caching.cpp
         camera_control.cpp
+        gameplay.cpp
         debug_ui/widgets.cpp
         graphics.cpp
         loading.cpp

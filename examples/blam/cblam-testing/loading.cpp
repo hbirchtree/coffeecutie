@@ -1668,6 +1668,31 @@ struct ResourceLoader
         return out;
     }
 
+    /*! A vehi tag's speeds and turning, from Halo's 30 Hz ticks */
+    std::optional<VehicleDrive> vehicle_drive(
+        blam::tag_t const& tag, blam::map_ptr const& magic)
+    {
+        auto vehicle_ = tag.template data<blam::scn::vehicle>(magic);
+        if(!vehicle_.has_value())
+            return std::nullopt;
+        blam::scn::vehicle const& vehicle = vehicle_.value()[0];
+        constexpr f32             tick    = 30.f;
+        /* Jeeps store their wheel angle in degrees (30), the banshee in
+         * radians (pi/2) */
+        auto angle = [](f32 a) {
+            return std::abs(a) > glm::two_pi<f32>() ? glm::radians(a) : a;
+        };
+        return VehicleDrive{
+            .type          = static_cast<VehicleDrive::type_t>(vehicle.vehicle_type),
+            .forward_speed = vehicle.maximum_forward_speed * tick,
+            .reverse_speed = vehicle.maximum_reverse_speed * tick,
+            .acceleration  = vehicle.speed_acceleration * tick * tick,
+            .deceleration  = vehicle.speed_deceleration * tick * tick,
+            .max_turn      = angle(vehicle.maximum_left_turn),
+            .turn_rate     = angle(vehicle.turn_rate),
+        };
+    }
+
     /*! A phys tag, or null if it has no mass points to stand on */
     std::shared_ptr<MassPoints const> object_mass_points(
         BlamFiles<Ver> const& files, blam::tagref_t const& physics)
@@ -1706,6 +1731,9 @@ struct ResourceLoader
            powered.has_value())
             for(auto const& p : powered.value())
                 data->powered.push_back({
+                    .traction =
+                        (p.flags & powered_mass_point::flags_t::ground_friction) !=
+                        powered_mass_point::flags_t::none,
                     .antigrav = (p.flags & powered_mass_point::flags_t::antigrav) !=
                                 powered_mass_point::flags_t::none,
                     .strength      = p.antigrav_strength,
@@ -1791,6 +1819,7 @@ struct ResourceLoader
             return ObjectPhysics{
                 .collision   = std::move(collision),
                 .mass_points = mass_points,
+                .drive       = moves ? vehicle_drive(tag, magic) : std::nullopt,
                 .mass        = !moves         ? 0.f
                                : mass_points ? mass_points->mass
                                              : 1000.f,
@@ -1846,6 +1875,16 @@ struct ResourceLoader
                     cWarning("Biped has no collision size, using defaults");
                 biped_model.shape.collision = object_collision(
                     files, biped->collider, biped->model);
+                auto const& magic = files.container.magic;
+                if(auto graph = index.find(biped->anim_graph);
+                   graph != index.end())
+                    if(auto antr =
+                           (*graph).template data<blam::antr::header>(magic);
+                       antr.has_value())
+                        biped_model.shape.anim_graph = &antr.value()[0];
+                if(auto foot = index.find(biped->footsteps); foot != index.end())
+                    biped_model.shape.footsteps = &(*foot);
+                biped_model.shape.load_generation = files.load_generation;
             }
         }
 

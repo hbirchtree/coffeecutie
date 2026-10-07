@@ -788,9 +788,26 @@ bool ModelCache<V>::sample_animation(
     return true;
 }
 
+/* Whether the foot frame came up between two frame positions, wrapping
+ * through the loop start when the second is behind the first */
+static bool foot_down(
+    blam::antr::animation const& clip, i32 foot, f32 from, f32 to, f32 start)
+{
+    /* Both unset means none; turn animations count past their own end */
+    bool const unset =
+        clip.left_foot_frame_index == 0 && clip.right_foot_frame_index == 0;
+    if(unset || foot < 0 || foot >= clip.frame_count)
+        return false;
+    f32 const f = static_cast<f32>(foot);
+    if(to >= from)
+        return f > from && f <= to;
+    return f > from || (f >= start && f <= to);
+}
+
 template<typename V>
 void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
 {
+    anim.footsteps = AnimationPlayback::no_feet;
     for(auto& layer : anim.layers)
     {
         if(!layer.active() || layer.paused || layer.finished)
@@ -800,14 +817,12 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
         if(!clip)
             continue;
 
+        f32 const rate   = frame_rate_of(*clip);
+        f32 const before = layer.time * rate;
         layer.time = std::max(0.f, layer.time + delta * layer.rate);
 
-        f32 const rate   = frame_rate_of(*clip);
         f32 const length = static_cast<f32>(clip->frame_count) / rate;
-        if(layer.time < length)
-            continue;
-
-        if(layer.loop)
+        if(layer.time >= length && layer.loop)
         {
             /* A looping animation restarts at loop_frame, not at zero. */
             f32 const start = static_cast<f32>(loop_start_frame(*clip)) / rate;
@@ -815,8 +830,18 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
             layer.time      = span > 0.f
                                   ? start + std::fmod(layer.time - start, span)
                                   : start;
-            continue;
         }
+        f32 const after = layer.time * rate;
+        f32 const start = static_cast<f32>(loop_start_frame(*clip));
+        if(foot_down(*clip, clip->left_foot_frame_index, before, after, start))
+            anim.footsteps |= AnimationPlayback::left_foot;
+        if(foot_down(*clip, clip->right_foot_frame_index, before, after, start))
+            anim.footsteps |= AnimationPlayback::right_foot;
+        if(layer.time < length)
+            continue;
+
+        if(layer.loop)
+            continue;
 
         /* Chain where the tag says to, else hold the last frame. One step
          * per call, so a cyclic next_animation cannot spin. */

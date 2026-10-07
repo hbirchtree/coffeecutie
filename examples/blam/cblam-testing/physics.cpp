@@ -52,9 +52,13 @@ using namespace std::chrono;
 class MassPointAction : public btActionInterface
 {
   public:
-    MassPointAction(btRigidBody& body, std::shared_ptr<MassPoints const> data)
+    MassPointAction(
+        btRigidBody&                      body,
+        std::shared_ptr<MassPoints const> data,
+        std::optional<VehicleDrive>       drive)
         : m_body(body)
         , m_data(std::move(data))
+        , m_drive(drive)
     {
         for(auto const& point : m_data->points)
         {
@@ -68,10 +72,26 @@ class MassPointAction : public btActionInterface
         }
     }
 
+    /* Held for a few substeps, so a frame rate under the step rate doesn't
+     * make the throttle stutter */
+    void steer(f32 throttle, btVector3 const& aim)
+    {
+        m_throttle   = std::clamp(throttle, -1.f, 1.f);
+        m_aim        = aim;
+        m_input_left = 12;
+    }
+
     void updateAction(btCollisionWorld* world, btScalar dt) override
     {
         if(m_body.isStaticOrKinematicObject() || !m_body.isActive())
             return;
+        bool const driven = m_drive && m_input_left > 0;
+        if(m_input_left > 0)
+            m_input_left--;
+        if(!driven)
+            m_throttle = 0.f;
+        /* Wheels roll while there is a driver giving throttle */
+        bool const rolling = driven && std::abs(m_throttle) > .05f;
         MassPoints const& data  = *m_data;
         btTransform const body  = m_body.getWorldTransform();
         btVector3 const   com   = to_bt(data.center_of_mass);
@@ -116,13 +136,29 @@ class MassPointAction : public btActionInterface
                 push = std::max(push, 0.f);
                 m_body.applyImpulse(touch.normal * (push * dt), rel);
 
+                /* The hulls take part of the weight when the springs
+                 * bottom out, so grip goes by at least the point's share */
+                f32 const load = std::max(push, mass * gravity / count);
                 f32 const grip =
                     slope(touch.normal.z(), data.ground_normal_k0,
                           data.ground_normal_k1) *
-                    data.ground_friction * friction_scale * push * dt;
-                friction(point, body, touch.normal, v, rel, grip, mass / count);
+                    data.ground_friction * friction_scale * load * dt;
+                bool const drives = traction(point);
+                friction(
+                    point,
+                    body,
+                    touch.normal,
+                    v,
+                    rel,
+                    grip,
+                    mass / count,
+                    drives && steered(point) ? m_steering : 0.f,
+                    drives && rolling);
             }
         }
+
+        if(driven)
+            drive(touches, body, mass, dt);
 
         for(size_t i = 0; i < data.points.size(); i++)
             if(lifts(data.points[i]))
@@ -134,9 +170,99 @@ class MassPointAction : public btActionInterface
     }
 
   private:
+    template<typename Touches>
+    void drive(
+        Touches const& touches, btTransform const& body, f32 mass, f32 dt)
+    {
+        VehicleDrive const& d = *m_drive;
+        btVector3 forward     = body.getBasis() * btVector3(1, 0, 0);
+        forward.setZ(0.f);
+        if(forward.length2() < 1e-6f)
+            return;
+        forward.normalize();
+        btVector3 aim = m_aim;
+        aim.setZ(0.f);
+        aim = aim.length2() > 1e-6f ? aim.normalized() : forward;
+        f32 const heading =
+            std::atan2(forward.cross(aim).z(), forward.dot(aim));
+
+        /* Toward the target speed, no harder than the tag allows */
+        btVector3 const velocity = m_body.getLinearVelocity();
+        f32 const       speed    = velocity.dot(forward);
+        f32 const       target   = m_throttle >= 0.f
+                                       ? m_throttle * d.forward_speed
+                                       : m_throttle * d.reverse_speed;
+        bool const speeding_up =
+            std::abs(target) > std::abs(speed) && target * speed >= 0.f;
+        f32 const limit =
+            speeding_up || d.deceleration <= 0.f ? d.acceleration
+                                                 : d.deceleration;
+        f32 const accel =
+            std::clamp((target - speed) / dt, -limit, limit);
+
+        bool const wheeled = d.type == VehicleDrive::human_jeep ||
+                             d.type == VehicleDrive::human_tank;
+        if(wheeled)
+        {
+            /* Through the tires or treads touching the ground */
+            size_t pushing = 0;
+            for(auto const& touch : touches)
+                pushing += traction(m_data->points[touch.point]);
+            for(auto const& touch : touches)
+                if(pushing && traction(m_data->points[touch.point]))
+                    m_body.applyImpulse(
+                        forward * (mass * accel * dt / pushing),
+                        touch.at - body.getOrigin());
+        } else
+        {
+            m_body.applyCentralImpulse(forward * (mass * accel * dt));
+            /* Hovercraft would otherwise drift sideways like on ice */
+            btVector3 drift = velocity - forward * speed;
+            drift.setZ(0.f);
+            m_body.applyCentralImpulse(
+                drift * (-mass * std::min(1.f, hover_grip * dt)));
+        }
+
+        if(d.type == VehicleDrive::human_jeep)
+        {
+            /* Front wheels turn toward the aim at the tag's rate */
+            f32 const want = std::clamp(heading, -d.max_turn, d.max_turn);
+            f32 const step = (d.turn_rate > 0.f ? d.turn_rate : 3.f) * dt;
+            m_steering += std::clamp(want - m_steering, -step, step);
+            return;
+        }
+        /* Everything else turns its body toward the aim */
+        f32 const rate = d.turn_rate > 0.f && d.turn_rate < 10.f
+                             ? std::max(d.turn_rate, default_yaw_rate)
+                             : default_yaw_rate;
+        f32 const want  = std::clamp(heading * 3.f, -rate, rate);
+        btVector3 const up = btVector3(0, 0, 1);
+        f32 const yaw   = m_body.getAngularVelocity().dot(up);
+        f32 const inertia =
+            m_data->moments.z > 0.f ? m_data->moments.z : mass;
+        m_body.applyTorqueImpulse(
+            up * (inertia * (want - yaw) * std::min(1.f, 10.f * dt)));
+    }
+
+    bool traction(MassPoints::point_t const& point) const
+    {
+        return point.powered >= 0 &&
+               static_cast<size_t>(point.powered) < m_data->powered.size() &&
+               m_data->powered[point.powered].traction;
+    }
+
+    /* Front wheels steer */
+    bool steered(MassPoints::point_t const& point) const
+    {
+        return m_drive && m_drive->type == VehicleDrive::human_jeep &&
+               point.position.x > m_data->center_of_mass.x;
+    }
+
     static constexpr f32 ground_damping_ratio   = 0.5f;
     static constexpr f32 antigrav_damping_ratio = 0.3f;
     static constexpr f32 friction_scale         = 4.f;
+    static constexpr f32 hover_grip             = 3.f;  /* 1/s */
+    static constexpr f32 default_yaw_rate       = 1.5f; /* rad/s */
 
     static btVector3 to_bt(Vecf3 const& v)
     {
@@ -209,7 +335,9 @@ class MassPointAction : public btActionInterface
         btVector3 const&           v,
         btVector3 const&           rel,
         f32                        grip,
-        f32                        share)
+        f32                        share,
+        f32                        steering,
+        bool                       rolling)
     {
         btVector3 const slip = v - normal * v.dot(normal);
         auto oppose = [&](btVector3 const& component, f32 limit) {
@@ -219,16 +347,21 @@ class MassPointAction : public btActionInterface
             f32 const stop = std::min(speed * share, limit);
             m_body.applyImpulse(component * (-stop / speed), rel);
         };
-        if(point.friction == MassPoints::point_t::friction_t::point)
+        if(point.friction == MassPoints::point_t::friction_t::point && !rolling)
         {
             oppose(slip, grip * point.parallel);
             return;
         }
+        /* A driven tread rolls along the body like a wheel */
         btVector3 axis =
-            point.friction == MassPoints::point_t::friction_t::forward ? to_bt(point.forward)
+            point.friction == MassPoints::point_t::friction_t::point ||
+                    point.friction == MassPoints::point_t::friction_t::forward
+                ? to_bt(point.forward)
             : point.friction == MassPoints::point_t::friction_t::up
                 ? to_bt(point.up)
                 : to_bt(point.up).cross(to_bt(point.forward));
+        if(steering != 0.f)
+            axis = axis.rotate(to_bt(point.up), steering);
         axis = body.getBasis() * axis;
         axis -= normal * axis.dot(normal);
         if(axis.length2() < 1e-6f)
@@ -238,7 +371,8 @@ class MassPointAction : public btActionInterface
         }
         axis.normalize();
         btVector3 const along = axis * slip.dot(axis);
-        oppose(along, grip * point.parallel);
+        if(!rolling)
+            oppose(along, grip * point.parallel);
         oppose(slip - along, grip * point.perpendicular);
     }
 
@@ -284,6 +418,11 @@ class MassPointAction : public btActionInterface
     std::vector<std::unique_ptr<btSphereShape>>     m_spheres;
     std::vector<std::unique_ptr<btCollisionObject>> m_probes;
     size_t                                          m_lifting{0};
+    std::optional<VehicleDrive>                     m_drive;
+    f32                                             m_throttle{0.f};
+    btVector3                                       m_aim{1, 0, 0};
+    u32                                             m_input_left{0};
+    f32                                             m_steering{0.f};
 };
 
 template<typename V>
@@ -319,7 +458,8 @@ struct PhysicsSystem
             m_broadphase.get(),
             m_solver.get(),
             m_config.get());
-        m_world->setGravity(btVector3(0, 0, -9.81f));
+        /* Halo's gravity: 9.81 m/s^2 with a world unit of 10 ft */
+        m_world->setGravity(btVector3(0, 0, -halo_gravity));
         m_world_basis.setIdentity();
         m_world_basis.setRotation(
             btQuaternion(btVector3(1, 0, 0), stl_types::math::pi / 2));
@@ -620,6 +760,7 @@ struct PhysicsSystem
                     .offset    = physics.mass_points ? -com : physics.center,
                     .rotation  = model.rotation,
                     .mass_points = physics.mass_points,
+                    .drive       = physics.drive,
                 });
                 continue;
             }
@@ -915,6 +1056,7 @@ struct PhysicsSystem
         m_built_section = cache.active_section;
 
         BSPItem const* item = find_section_item(cache);
+        m_world_item        = item;
 
         /* Tear down previous static body */
         if(m_world_body)
@@ -1180,7 +1322,10 @@ struct PhysicsSystem
             entity_body.world_body->setFriction(0.f);
             entity_body.world_body->setAngularFactor(btVector3(0, 0, 0));
         } else
-            entity_body.world_body->setFriction(1.f);
+            /* A vehicle's mass points do its friction; its hulls only
+             * stop hard landings */
+            entity_body.world_body->setFriction(
+                body_create.mass_points ? 0.f : 1.f);
         btTransform transform = m_world_basis;
         if(body_create.rotation)
             transform.setRotation(btQuaternion(
@@ -1243,7 +1388,8 @@ struct PhysicsSystem
             f32 const air = 1.f - std::pow(
                 1.f - std::clamp(points->air_friction, 0.f, 1.f), 30.f);
             rigid.setDamping(air, air);
-            entity_body.action = std::make_unique<MassPointAction>(rigid, points);
+            entity_body.action = std::make_unique<MassPointAction>(
+                rigid, points, body_create.drive);
             m_world->addAction(entity_body.action.get());
         }
     }
@@ -1355,6 +1501,7 @@ struct PhysicsSystem
         m_bodies.clear();
         m_player_bodies.clear();
         m_object_bodies.clear();
+        m_world_item = nullptr;
         /* Bodies are gone; holders no longer carry anything */
         m_grabs.clear();
         m_grab_requests.clear();
@@ -1373,6 +1520,68 @@ struct PhysicsSystem
         body.world_body->activate(true);
         body.world_body->applyCentralImpulse(
             btVector3(impulse.impulse.x, impulse.impulse.y, impulse.impulse.z));
+    }
+
+    void steer(Physics::Drive const& drive)
+    {
+        auto it = m_bodies.find(drive.vehicle);
+        if(it == m_bodies.end() || !it->second.action)
+            return;
+        it->second.world_body->activate(true);
+        it->second.action->steer(
+            drive.throttle,
+            btVector3(drive.aim.x, drive.aim.y, drive.aim.z));
+    }
+
+    /* The structure BSP surface along a ray, and its collision material */
+    void probe_ground(Physics::GroundProbe const& probe)
+    {
+        if(!m_world_body || !m_world_item || !m_bus)
+            return;
+        struct closest_t : btCollisionWorld::ClosestRayResultCallback
+        {
+            using ClosestRayResultCallback::ClosestRayResultCallback;
+            int triangle{-1};
+
+            btScalar addSingleResult(
+                btCollisionWorld::LocalRayResult& hit, bool normal_in_world)
+                override
+            {
+                triangle = hit.m_localShapeInfo
+                               ? hit.m_localShapeInfo->m_triangleIndex
+                               : -1;
+                return ClosestRayResultCallback::addSingleResult(
+                    hit, normal_in_world);
+            }
+        };
+        btVector3 const from(probe.from.x, probe.from.y, probe.from.z);
+        btVector3 const to(probe.to.x, probe.to.y, probe.to.z);
+        closest_t       ground(from, to);
+        ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
+        m_world->rayTest(from, to, ground);
+        if(!ground.hasHit() ||
+           ground.m_collisionObject != m_world_body.get() ||
+           ground.triangle < 0 ||
+           static_cast<size_t>(ground.triangle) >= m_tri_surface.size())
+            return;
+        u32 const surface = m_tri_surface[ground.triangle];
+        if(surface >= m_world_item->coll_surfaces.size())
+            return;
+        i16 const material = m_world_item->coll_surfaces[surface].material;
+        auto      shaders  = m_world_item->mesh->collision_materials.data(
+            m_world_item->bsp_magic);
+        if(!shaders.has_value() || material < 0 ||
+           static_cast<size_t>(material) >= shaders.value().size())
+            return;
+        btVector3 const      at = ground.m_hitPointWorld;
+        Physics::Event       event{Physics::Event::GroundHit};
+        Physics::GroundHit   hit{
+              .entity_id = probe.entity_id,
+              .user      = probe.user,
+              .point     = {at.x(), at.y(), at.z()},
+              .shader    = &shaders.value()[material].shader,
+        };
+        m_bus->process(event, &hit);
     }
 
     void set_linear_velocity(Physics::Velocity const& velocity)
@@ -1639,6 +1848,8 @@ struct PhysicsSystem
 
     std::map<u64, player_body_t> m_player_bodies;
     std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
+    /* The section the world mesh was built from */
+    BSPItem const* m_world_item{nullptr};
 
     /* Forge grabs, by holder */
     struct grab_t
@@ -1648,6 +1859,7 @@ struct PhysicsSystem
         btVector3   velocity{0, 0, 0}; /*!< Over the last step */
     };
     static constexpr f32           hull_margin  = .005f;
+    static constexpr f32           halo_gravity = 9.81f / 3.048f;
     static constexpr f32           grab_range   = 40.f;
     static constexpr f32           step_seconds = 1.f / 60.f;
     std::map<u64, Physics::Grab>   m_grab_requests;
@@ -1711,6 +1923,14 @@ void alloc_physics(compo::EntityContainer& container)
     phys_bus.addEventFunction<Physics::Translate>(
         0, [&physics](Physics::Event&, Physics::Translate* translation) {
             physics.translate(*translation);
+        });
+    phys_bus.addEventFunction<Physics::GroundProbe>(
+        0, [&physics](Physics::Event&, Physics::GroundProbe* probe) {
+            physics.probe_ground(*probe);
+        });
+    phys_bus.addEventFunction<Physics::Drive>(
+        0, [&physics](Physics::Event&, Physics::Drive* drive) {
+            physics.steer(*drive);
         });
     phys_bus.addEventFunction<Physics::Grab>(
         0, [&physics](Physics::Event&, Physics::Grab* grab) {

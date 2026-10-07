@@ -9,6 +9,7 @@
 #include "map_marker.h"
 #include "network/networking.h"
 #include "offline_maps.h"
+#include "gameplay.h"
 #include "physics.h"
 #if defined(POC_COMBAT)
 #include "poc/app_combat.h"
@@ -263,6 +264,7 @@ i32 blam_main()
             alloc_resource_loader(e);
             alloc_occluder(e);
             alloc_physics(e);
+            alloc_gameplay(e);
             alloc_scripting(e);
             setup_load_eventhandlers(e);
             alloc_camera_control(e);
@@ -771,6 +773,9 @@ i32 blam_main()
                             input.up     |= key_pressed(Input::CK_Up);
                             input.down   |= key_pressed(Input::CK_Down);
                         }
+                    } else if(info.riding.vehicle != 0)
+                    {
+                        /* A rider's camera and vehicle belong to Gameplay */
                     } else if(!info.mode.physics)
                     {
                         // Check that there's input
@@ -820,7 +825,9 @@ i32 blam_main()
                             info.mode.physics = !info.mode.physics;
 
                         const f32 move_speed = 10.f * input.accel;
-                        const f32 jump_speed = 4.f;
+                        /* As high as 4 wu/s jumped under 9.81, in Halo's
+                         * gravity */
+                        const f32 jump_speed = 2.3f;
 
                         Physics::Event    ev{Physics::Event::Velocity};
                         Physics::Velocity velocity{
@@ -831,6 +838,29 @@ i32 blam_main()
                         };
                         e.subsystem_cast<PhysicsBus>().process(ev, &velocity);
                     }
+
+                    /* Gameplay acts on these */
+                    constexpr i16 trigger_pressed = 8192;
+                    /* Throttle is the stick or W/S as is; movement is
+                     * scaled for flying the camera */
+                    f32 throttle = 0.f;
+                    if(controller_connected)
+                        throttle -= convert_i16_f(
+                            controllers->state(*cam.controller.index)
+                                .axes.e.l_y);
+                    if(cam.keyboard.enabled)
+                        throttle += (key_pressed(Input::CK_w) ? 1.f : 0.f) -
+                                    (key_pressed(Input::CK_s) ? 1.f : 0.f);
+                    input.intent = {
+                        .throttle = std::clamp(throttle, -1.f, 1.f),
+                        .use      = (controller_connected &&
+                                controller_buttons().x) ||
+                               (cam.keyboard.enabled &&
+                                key_pressed(Input::CK_f)),
+                        .grab = controller_connected &&
+                                controllers->state(*cam.controller.index)
+                                        .axes.e.t_r > trigger_pressed,
+                    };
 
                     /* Sampled in every mode, freecam included */
                     if(controller_connected)
@@ -907,28 +937,6 @@ i32 blam_main()
                 cam.matrix       = cam.matrix * view_matrix;
                 cam.rotation = glm::mat4_cast(cam.camera.rotation) * bsp_basis;
 
-                /* Forge: right trigger in flycam carries what the cursor
-                 * (screen centre) points at */
-                if(!info.is_remote())
-                {
-                    constexpr i16 trigger_pressed = 8192;
-                    bool const    trigger =
-                        controllers && cam.controller.index &&
-                        controllers->state(*cam.controller.index).axes.e.t_r >
-                            trigger_pressed;
-                    Physics::Event ev{Physics::Event::Grab};
-                    Physics::Grab  grab{
-                         .entity_id = entity.id(),
-                         .origin    = cam.camera.position,
-                         .to_world =
-                            Quatf(glm::transpose(Matf3(cam.rotation))),
-                         .held = trigger && info.permissions.camera &&
-                                !info.mode.physics &&
-                                input.input_mode ==
-                                    PlayerInput::input_mode_t::game,
-                    };
-                    e.subsystem_cast<PhysicsBus>().process(ev, &grab);
-                }
 
                 /* The biped stands under its camera, turned only by yaw,
                  * the way scenery is placed */

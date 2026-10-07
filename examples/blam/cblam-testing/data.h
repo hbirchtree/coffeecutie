@@ -331,6 +331,8 @@ struct GameEvent
          * are sent over the wire in GameEventWrapper */
         SpawnObject,
         DespawnObject,
+        UnitEnterVehicle,
+        UnitExitVehicle,
     };
 
     EventType type{None};
@@ -549,6 +551,26 @@ struct DespawnObjectEvent
     static constexpr auto event_type = GameEvent::DespawnObject;
 
     libc_types::u32 net_id{0};
+};
+
+/*! A unit takes a seat in a vehicle, as the unit_enter_vehicle script
+ *  function and a player's use button do. Seats are looked up by label as
+ *  scripts name them; an empty label takes the first driver's seat. */
+struct UnitEnterVehicleEvent
+{
+    static constexpr auto event_type = GameEvent::UnitEnterVehicle;
+
+    libc_types::u64 unit{0};    /*!< Player entity */
+    libc_types::u64 vehicle{0}; /*!< Vehicle entity */
+    blam::bl_string seat{};
+};
+
+/*! The unit_exit_vehicle script function, or a rider pressing use */
+struct UnitExitVehicleEvent
+{
+    static constexpr auto event_type = GameEvent::UnitExitVehicle;
+
+    libc_types::u64 unit{0};
 };
 
 struct PlayModelAnimationEvent

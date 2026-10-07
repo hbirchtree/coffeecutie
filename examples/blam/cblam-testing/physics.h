@@ -32,6 +32,9 @@ struct Event
         ProbeHere, /*!< Put debug probe at camera position, for testing */
 
         Grab,    /*!< Forge-style carrying of an object in front of a camera */
+        Drive,   /*!< A driver's throttle and aim for a vehicle */
+        GroundProbe, /*!< What is underfoot: answered with GroundHit */
+        GroundHit,
         Grabbed, /*!< A holder picked an object up */
         Dropped, /*!< A holder let go, or its object went away */
 
@@ -128,6 +131,7 @@ struct BodyCreationShape
     /*! Body mass, inertia and ground contact from a phys tag; the body
      * origin is its centre of mass */
     std::shared_ptr<MassPoints const> mass_points;
+    std::optional<VehicleDrive>       drive;
 };
 
 struct BodyRemoval
@@ -180,6 +184,38 @@ struct Grab
     Vecf3                 origin{};
     Quatf to_world{}; /*!< Camera to world; the view is its -Z */
     bool                  held{false};
+};
+
+/*! Sent every frame while a driver sits in `vehicle`. The vehicle heads
+ * where `aim` points (the driver's view), at `throttle` of its top speed
+ * forward, or backward when negative. */
+struct Drive
+{
+    static constexpr auto event_type = Event::Drive;
+    u64                   vehicle{0};
+    f32                   throttle{0.f};
+    Vecf3                 aim{1, 0, 0};
+};
+
+/*! Asks what the world is made of along from -> to; answered at once with
+ * a GroundHit when it hits the structure BSP */
+struct GroundProbe
+{
+    static constexpr auto event_type = Event::GroundProbe;
+    u64                   entity_id{0};
+    Vecf3                 from{};
+    Vecf3                 to{};
+    u32                   user{0}; /*!< Handed back in the hit */
+};
+
+struct GroundHit
+{
+    static constexpr auto event_type = Event::GroundHit;
+    u64                   entity_id{0};
+    u32                   user{0};
+    Vecf3                 point{};
+    /*! The surface's collision material, a shader with its physics material */
+    blam::tagref_t const* shader{nullptr};
 };
 
 struct Grabbed

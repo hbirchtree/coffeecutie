@@ -48,6 +48,15 @@ struct AnimationPlayback
 
     std::array<AnimationLayer, max_layers> layers{};
 
+    /* Feet that came down during the last advance (the antr foot frames) */
+    enum footstep_t : libc_types::u8
+    {
+        no_feet    = 0x0,
+        left_foot  = 0x1,
+        right_foot = 0x2,
+    };
+    libc_types::u8 footsteps{no_feet};
+
     /* Where this instance's bones landed in its bucket's window, negative if
      * unposed. Scratch owned by DrawListBuilder. */
     libc_types::i32 bone_base{-1};

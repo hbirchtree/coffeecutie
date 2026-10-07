@@ -5,9 +5,11 @@
 #include "caching.h"
 #include "types.h"
 
+#include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_scenario.h>
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <coffee/core/input/standard_input_handlers.h>
 #include <peripherals/concepts/graphics_api.h>
 #include <utility>
@@ -536,6 +538,7 @@ struct MassPoints
 {
     struct powered_t
     {
+        bool traction{false}; /*!< ground friction: drives the vehicle */
         bool antigrav{false};
         f32  strength{0.f};
         f32  offset{0.f};
@@ -581,6 +584,29 @@ struct MassPoints
     std::vector<point_t>   points;
 };
 
+/*! How a vehicle tag drives, per second and in radians */
+struct VehicleDrive
+{
+    enum type_t : u16
+    {
+        human_tank,
+        human_jeep,
+        human_boat,
+        human_plane,
+        alien_scout,
+        alien_fighter,
+        turret,
+    };
+
+    type_t type{human_jeep};
+    f32    forward_speed{0.f};
+    f32    reverse_speed{0.f};
+    f32    acceleration{0.f};
+    f32    deceleration{0.f};
+    f32    max_turn{0.f};  /*!< Steered wheel angle */
+    f32    turn_rate{0.f}; /*!< How fast the wheels or the body turn */
+};
+
 /*! Collision for a world object: static ones use the exact coll surfaces,
  * moving ones its hulls, or a box/sphere when there is no coll tag */
 struct ObjectPhysics
@@ -591,6 +617,7 @@ struct ObjectPhysics
     std::shared_ptr<CollisionGeometry const> collision;
     /*! Vehicles: the body and what it touches the ground with */
     std::shared_ptr<MassPoints const> mass_points;
+    std::optional<VehicleDrive>       drive;
 
     Vecf3 half_extents{}; /*!< Box, when there is no collision */
     Vecf3 center{};       /*!< Box/sphere centre in object space */
@@ -673,6 +700,12 @@ struct PlayerInfo
          * what a biped moves with */
         std::shared_ptr<biped_collision_t const> collision;
 
+        /*! Its animations, and what its feet sound like on each material;
+         * from the map loaded as `load_generation` */
+        blam::antr::header const* anim_graph{nullptr};
+        blam::tag_t const*        footsteps{nullptr};
+        u32                       load_generation{0};
+
         f32 eye_offset() const
         {
             return eye_height - height / 2;
@@ -704,6 +737,14 @@ struct PlayerInfo
 
     /*! False while held before spawning */
     bool spawned{true};
+
+    /*! The vehicle seat this player sits in, while vehicle != 0 */
+    struct
+    {
+        u64  vehicle{0};
+        i16  seat{-1};
+        bool driver{false};
+    } riding;
 
     struct
     {
@@ -773,6 +814,15 @@ struct PlayerInput
     // In-game actions, these need indirection for network
     bool jump{false};
 
+    /*! This frame's input as gameplay reads it; overwritten by the next
+     * sampling, so subsystems running before that still see it */
+    struct
+    {
+        f32  throttle{0.f}; /*!< Forward is positive */
+        bool use{false};    /*!< Held: enter or leave a vehicle */
+        bool grab{false};   /*!< Held: forge grab */
+    } intent;
+
     std::optional<Vecf3> position; /*!< teleport target */
     std::optional<Quatf> rotation; /*!< absolute orientation */
 
@@ -835,7 +885,8 @@ struct PlayerCamera
 inline bool biped_in_play(
     PlayerInfo const& info, PlayerCamera const& cam, NetworkInfo const& net)
 {
-    if(!info.spawned)
+    /* A rider is part of the vehicle */
+    if(!info.spawned || info.riding.vehicle != 0)
         return false;
     if(info.is_remote())
         return net.connected && info.loading_progress >= 100;
@@ -909,6 +960,7 @@ static const auto player_recipe = compo::EntityRecipe{
 
             compo::type_hash_v<Model>(),
             compo::type_hash_v<Visibility>(),
+            compo::type_hash_v<AnimationPlayback>(),
         },
     .tags = PlayerBiped | PositioningDynamic,
 };
