@@ -249,4 +249,27 @@ struct looping_sound
 
 static_assert(sizeof(looping_sound) == 84);
 
+/* Reverb parameters, already linear (EFX/EAX reverb units) */
+struct environment
+{
+    u32 flags;
+    i16 priority;
+    u16 padding;
+    f32 room_intensity;
+    f32 room_intensity_hf;
+    f32 room_rolloff;
+    f32 decay_time;
+    f32 decay_hf_ratio;
+    f32 reflections_intensity;
+    f32 reflections_delay;
+    f32 reverb_intensity;
+    f32 reverb_delay;
+    f32 diffusion;
+    f32 density;
+    f32 hf_reference;
+    u32 padding2[4];
+};
+
+static_assert(sizeof(environment) == 72);
+
 } // namespace blam::sound

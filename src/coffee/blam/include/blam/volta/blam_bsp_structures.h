@@ -603,8 +603,11 @@ struct sound_environment_palette
 {
     bl_string                         name;
     tagref_typed_t<tag_class_t::snde> environment;
-    // snde structure has not been added in blam_sound.h yet
+    u32                               padding[8];
 };
+
+static_assert(sizeof(background_sound_palette) == 116);
+static_assert(sizeof(sound_environment_palette) == 80);
 
 struct marker
 {
@@ -738,6 +741,7 @@ static_assert(offsetof(header, surfaces) == 248);
 static_assert(offsetof(header, lightmaps) == 260);
 static_assert(offsetof(header, clusters) == 308);
 static_assert(offsetof(header, cluster_portals) == 340);
+static_assert(offsetof(header, sound_env) == 0x208);
 static_assert(sizeof(header) == 648);
 
 inline bsp_reference<vert::face> material::indices(header const& head) const
