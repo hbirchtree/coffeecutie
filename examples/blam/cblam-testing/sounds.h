@@ -14,6 +14,10 @@ struct SoundEvent
     } type;
 
     libc_types::u64 entity_id{0};
+
+    /* entity_id range for scenario sound scenery ('SSCE' << 32) */
+    static constexpr libc_types::u64 sound_scenery_base =
+        0x5353434500000000ULL;
 };
 
 struct LoopSoundEvent

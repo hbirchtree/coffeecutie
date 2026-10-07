@@ -264,6 +264,7 @@ struct BSPItem
     std::vector<gfx::draw_command::data_t>                  portals;
     std::vector<u32>                                        portal_color_ptrs;
     std::vector<blam::bsp::background_sound_palette const*> bg_sound_palette;
+    std::vector<blam::bsp::sound_environment_palette const*> sound_env_palette;
 
     /* Collision surface mesh (winged-edge) from the collision BSP;
      * consumed by the physics subsystem for triangle soup generation.

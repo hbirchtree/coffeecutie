@@ -56,6 +56,12 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             for(auto const& snd : bg_sound.value())
                 out.bg_sound_palette.push_back(&snd);
         }
+        auto sound_env = section.sound_env.data(bsp_magic);
+        if(sound_env.has_value())
+        {
+            for(auto const& env : sound_env.value())
+                out.sound_env_palette.push_back(&env);
+        }
     }
 
     //        for(auto const& portal : portals)

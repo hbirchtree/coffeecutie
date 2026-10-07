@@ -444,17 +444,44 @@ struct ResourceLoader
             return;
         }
         auto palette = palette_.value();
+        blam::tag_index_view index(container);
         SoundEvent ev{.type = SoundEvent::play_sound};
         PlaySoundEvent play{
             .looping = true,
         };
-        for(blam::scn::sound_scenery const& instance : instances_.value())
+        for(auto const& [i, instance] :
+            stl_types::const_enumerate(instances_.value()))
         {
-            blam::tagref_t const* tag =
-                &palette[instance.ref.index].at(instance.desired_permutation);
-            play.sound = tag;
-            play.position = instance.pos;
-            sound_bus->process(ev, &play);
+            if(instance.ref.index < 0 ||
+               static_cast<size_t>(instance.ref.index) >= palette.size())
+                continue;
+            /* Palette entries are a tagref to the ssce object (+ padding),
+             * the sound itself is an lsnd attachment on that object */
+            auto object_tag = index.tag_of(palette[instance.ref.index][0]);
+            if(!object_tag)
+                continue;
+            auto object =
+                (*object_tag)->template data<blam::scn::object>(magic);
+            if(!object.has_value())
+                continue;
+            auto attachments = object.value()[0].attachments.data(magic);
+            if(!attachments.has_value())
+                continue;
+            for(auto const& [j, attachment] :
+                stl_types::const_enumerate(attachments.value()))
+            {
+                auto const& sound =
+                    static_cast<blam::tagref_t const&>(attachment.type);
+                if(!sound.matches(blam::tag_class_t::lsnd))
+                    continue;
+                /* Stable per instance, so reloading a BSP section replaces
+                 * instead of stacking */
+                ev.entity_id =
+                    SoundEvent::sound_scenery_base | (i << 8) | j;
+                play.sound    = &sound;
+                play.position = instance.pos;
+                sound_bus->inject(ev, &play);
+            }
         }
     }
 

@@ -2,6 +2,7 @@
 
 #include "blam/volta/blam_tag_index.h"
 #include "blam/volta/blam_tag_ref.h"
+#include "caching.h"
 #include "caching_item.h"
 #include "coffee/net/curl_context.h"
 #include "components.h"
@@ -45,7 +46,11 @@ using Coffee::Logging::cDebug;
 template<typename Ver>
 using SoundManifest = compo::SubsystemManifest<
     type_list_t<const PlayerCamera, const PlayerInfo, const SoundEffects>,
-    type_list_t<const LoadingStatus, const SoundPreferences, SoundCache<Ver>>,
+    type_list_t<
+        const LoadingStatus,
+        const SoundPreferences,
+        SoundCache<Ver>,
+        const BSPCache<Ver>>,
     empty_list_t>;
 
 struct sound_unit_t
@@ -62,6 +67,8 @@ struct sound_unit_t
 
         std::deque<std::shared_ptr<oaf::buffer_t>> queued_bufs{};
         std::shared_ptr<oaf::source_t>             source;
+        std::shared_ptr<oaf::filter_t>             filter; /* occlusion */
+        f32 base_gain{1.f}; /* before occlusion, without EFX */
     };
 
     blam::tagref_t          source{};
@@ -74,6 +81,12 @@ struct sound_unit_t
     bool                    fading_out{false};
     bool                    queued_all{false};
     bool                    finished{false};
+
+    /* World position, empty for listener-relative sounds */
+    std::optional<Vecf3> position{};
+    f32                  occlusion{0.f}; /* smoothed, 0 = clear */
+    f32                  occlusion_applied{-1.f};
+    f32                  occlusion_target{0.f}; /* fraction of rays blocked */
 
     // Not used for audio tracks, more for standalone sounds
     std::optional<compo::time_point> time{};
@@ -118,6 +131,25 @@ struct SoundSystem
 
     std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>>
         cluster_events;
+
+    /* Cluster reverb, two slots so environment changes crossfade.
+     * Declared before the sounds, a slot can't be deleted while in use */
+    struct environment_t
+    {
+        std::shared_ptr<oaf::effect_slot_t> slots[2];
+        f32                   gain[2]{0.f, 0.f};
+        f32                   target{0.f}; /* of the active slot */
+        u32                   active{0};
+        blam::tagref_t const* ref{nullptr};
+        bool                  initialized{false};
+        bool                  enabled{true};
+    } environment;
+
+    Vecf3 listener_pos{};
+    bool  has_listener{false};
+    bool  occlusion_enabled{true};
+    bool  occlusion_gain_only{false}; /* the no-EFX path, for tuning */
+    bool  occlusion_efx_applied{false};
 
     std::map<u64, sound_unit_t> active_sounds;
     std::map<u64, sound_unit_t> fading_sounds;
@@ -173,7 +205,7 @@ struct SoundSystem
         for(auto i : stl_types::range<size_t>(item.tracks.size()))
         {
             auto const& track = item.tracks.at(i);
-            auto const& meta  = sound.tracks.at(i);
+            auto&       meta  = sound.tracks.at(i);
 
             auto sounds_it = track.sounds.find(meta.active.role);
             if(sounds_it == track.sounds.end())
@@ -190,8 +222,7 @@ struct SoundSystem
 
             f32 perm_gain =
                 pitch.permutations[meta.active.permutation].permutation->gain;
-            meta.source->template set_property<oaf::source_property::gain>(
-                props->gain_modifier * perm_gain * sound.volume);
+            set_gain(sound, meta, props->gain_modifier * perm_gain * sound.volume);
         }
     }
 
@@ -247,9 +278,11 @@ struct SoundSystem
             //     tag->to_name().to_string(heap),
             //     meta.active.permutation);
             meta.source->queue(*current_buf.buffer);
-            meta.source->template set_property<oaf::source_property::gain>(
+            set_gain(
+                sound,
+                meta,
                 props->gain_modifier * current_buf.permutation->gain *
-                effective_volume);
+                    effective_volume);
             meta.queued_bufs.push_back(current_buf.buffer);
 
             bool looping = item.looping_sound;
@@ -337,10 +370,12 @@ struct SoundSystem
             if(meta.active.permutation >= pitch.permutations.size())
                 continue;
 
-            meta.source->template set_property<oaf::source_property::gain>(
+            set_gain(
+                sound,
+                meta,
                 props->gain_modifier *
-                pitch.permutations.at(meta.active.permutation)
-                    .permutation->gain);
+                    pitch.permutations.at(meta.active.permutation)
+                        .permutation->gain);
 
             /* queue() restarts a playing source, so the whole chain goes in
              * before it gets going. Bounded in case the chain is cyclic */
@@ -422,6 +457,7 @@ struct SoundSystem
 
     void start_restricted(Proxy& p, compo::time_point const& t)
     {
+        init_environment();
         cluster_events->poll();
         drain_inbox();
 
@@ -452,6 +488,8 @@ struct SoundSystem
         if(has_pending_cluster &&
            loading->loaded_sounds == LoadingStatus::loaded)
             apply_pending_cluster();
+        update_environment(dt);
+        update_occlusion(p, dt);
 
         std::vector<u64> finished;
         for(auto& [id, sound] : active_sounds)
@@ -501,6 +539,8 @@ struct SoundSystem
                 continue;
             auto const& cached   = cam.camera_.cached;
             auto&       listener = snd.listener();
+            listener_pos         = cam.camera.position;
+            has_listener         = true;
             listener.template set_property<oaf::listener_property::position>(
                 cam.camera.position);
             listener.template set_property<oaf::listener_property::orientation>(
@@ -626,6 +666,240 @@ struct SoundSystem
         if(sound)
             stat_bg_with_snd++;
         transition_background(sound);
+        transition_environment(
+            resolve_sound_env(pending_bsp, pending_cluster));
+    }
+
+    static blam::tagref_t const* resolve_sound_env(
+        BSPItem const* bsp, u32 cluster)
+    {
+        if(!bsp || cluster >= bsp->clusters.size())
+            return nullptr;
+        i16 env_idx = bsp->clusters[cluster].cluster->sound_env;
+        if(env_idx < 0 ||
+           static_cast<u32>(env_idx) >= bsp->sound_env_palette.size() ||
+           !bsp->sound_env_palette[env_idx])
+            return nullptr;
+        return &static_cast<blam::tagref_t const&>(
+            bsp->sound_env_palette[env_idx]->environment);
+    }
+
+    void init_environment()
+    {
+        auto& env = environment;
+        if(env.initialized)
+            return;
+        env.initialized = true;
+        for(auto& slot : env.slots)
+        {
+            slot = snd.alloc_effect_slot();
+            if(!slot)
+                return;
+            slot->set_gain(0.f);
+        }
+    }
+
+    void transition_environment(blam::tagref_t const* ref)
+    {
+        auto& env = environment;
+        if(!env.slots[0] || !env.slots[1])
+            return;
+        if(ref == env.ref || (ref && env.ref && ref->tag_id == env.ref->tag_id))
+            return;
+        env.ref = ref;
+
+        blam::sound::environment const* snde{nullptr};
+        if(ref)
+            if(auto data = index.template data<blam::sound::environment>(*ref))
+                snde = data.value();
+
+        /* The old environment fades out in the other slot */
+        env.active ^= 1;
+        env.target = snde ? 1.f : 0.f;
+        if(snde)
+            env.slots[env.active]->set_reverb(oaf::reverb_t{
+                .density           = snde->density,
+                .diffusion         = snde->diffusion,
+                .gain              = snde->room_intensity,
+                .gain_hf           = snde->room_intensity_hf,
+                .decay_time        = snde->decay_time,
+                .decay_hf_ratio    = snde->decay_hf_ratio,
+                .reflections_gain  = snde->reflections_intensity,
+                .reflections_delay = snde->reflections_delay,
+                .late_reverb_gain  = snde->reverb_intensity,
+                .late_reverb_delay = snde->reverb_delay,
+                .room_rolloff      = snde->room_rolloff,
+                .hf_reference      = snde->hf_reference,
+            });
+        if(ref)
+            cDebug("Sound environment: {}", index.name_of(*ref));
+        else
+            cDebug("Sound environment: none");
+    }
+
+    void update_environment(f32 dt)
+    {
+        auto& env = environment;
+        if(!env.slots[0] || !env.slots[1])
+            return;
+        constexpr f32 fade_rate = 1.f; /* per second */
+        for(u32 i : {0u, 1u})
+        {
+            f32 target =
+                (i == env.active && env.enabled) ? env.target : 0.f;
+            f32 gain = env.gain[i];
+            gain     = gain < target ? std::min(target, gain + fade_rate * dt)
+                                     : std::max(target, gain - fade_rate * dt);
+            if(gain == env.gain[i])
+                continue;
+            env.gain[i] = gain;
+            env.slots[i]->set_gain(gain);
+        }
+    }
+
+    bool occlusion_uses_efx() const
+    {
+        return snd.features().efx && !occlusion_gain_only;
+    }
+
+    /* Every gain write goes through here so the gain-only occlusion path
+     * is not overwritten by fades and queueing */
+    void set_gain(
+        sound_unit_t const& unit, sound_unit_t::track_t& meta, f32 gain)
+    {
+        meta.base_gain = gain;
+        f32 occlusion  = occlusion_uses_efx() ? 0.f : unit.occlusion;
+        meta.source->template set_property<oaf::source_property::gain>(
+            gain * (1.f - 0.6f * occlusion));
+    }
+
+    static BSPItem const* active_bsp(BSPCache<Ver> const& cache)
+    {
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() &&
+               candidate.section_idx == cache.active_section)
+                return &candidate;
+        return nullptr;
+    }
+
+    /* Fraction of a ray fan that is blocked: the direct line, plus offsets
+     * around both ends so edges and doorways give partial values */
+    static f32 occlusion_fraction(
+        BSPItem const& bsp, Vecf3 const& listener, Vecf3 const& source)
+    {
+        Vecf3 const to_source = source - listener;
+        f32 const   distance  = glm::length(to_source);
+        if(distance < 0.2f)
+            return 0.f;
+        Vecf3 const dir   = to_source / distance;
+        Vecf3       right = glm::cross(dir, Vecf3{0.f, 0.f, 1.f});
+        right = glm::dot(right, right) < 1e-4f ? Vecf3{1.f, 0.f, 0.f}
+                                               : glm::normalize(right);
+        Vecf3 const up = glm::cross(right, dir);
+
+        constexpr f32 source_spread   = 0.3f; /* ~1m */
+        constexpr f32 listener_spread = 0.15f;
+        std::array<Vecf3, 4> const offsets{right, -right, up, -up};
+
+        u32  blocked{0};
+        u32  total{0};
+        auto cast = [&](Vecf3 const& from, Vecf3 const& to) {
+            /* An end inside solid says nothing about the path between */
+            if(!bsp.find_cluster(from) || !bsp.find_cluster(to))
+                return;
+            Vecf3 const span   = to - from;
+            f32 const   length = glm::length(span);
+            if(length < 0.2f)
+                return;
+            /* Stop short, sources tend to sit on a floor or in a wall */
+            Vecf3 const end = from + span * ((length - 0.1f) / length);
+            total++;
+            if(bsp.raycast(from, end).has_value())
+                blocked++;
+        };
+        cast(listener, source);
+        for(auto const& offset : offsets)
+            cast(listener, source + offset * source_spread);
+        for(auto const& offset : offsets)
+            cast(listener + offset * listener_spread, source);
+
+        return total ? static_cast<f32>(blocked) / static_cast<f32>(total)
+                     : 0.f;
+    }
+
+    void apply_occlusion(sound_unit_t& unit)
+    {
+        if(std::abs(unit.occlusion - unit.occlusion_applied) < 0.005f)
+            return;
+        unit.occlusion_applied = unit.occlusion;
+        bool const efx         = occlusion_uses_efx();
+        f32 const  occlusion   = unit.occlusion;
+        for(auto& track : unit.tracks)
+        {
+            if(efx && !track.filter)
+            {
+                track.filter = snd.alloc_filter();
+                if(track.filter)
+                    track.source->set_direct_filter(track.filter.get());
+            }
+            if(track.filter)
+                track.filter->set_lowpass(
+                    efx ? 1.f - 0.2f * occlusion : 1.f,
+                    efx ? 1.f - 0.75f * occlusion : 1.f);
+            set_gain(unit, track, track.base_gain);
+        }
+    }
+
+    void update_occlusion(Proxy& p, f32 dt)
+    {
+        BSPCache<Ver> const* bsp_cache{};
+        p.subsystem(bsp_cache);
+        BSPItem const* bsp = bsp_cache ? active_bsp(*bsp_cache) : nullptr;
+        /* Outside the level (flycam) everything would read as occluded */
+        bool const trace = occlusion_enabled && bsp && has_listener &&
+                           bsp->find_cluster(listener_pos).has_value();
+        f32 const      blend = std::min(1.f, dt / 0.15f); /* ~150ms */
+        bool const     reapply = occlusion_uses_efx() != occlusion_efx_applied;
+        occlusion_efx_applied  = occlusion_uses_efx();
+
+        auto update = [&](sound_unit_t& unit) {
+            if(!unit.position)
+                return;
+            f32 target =
+                trace ? occlusion_fraction(*bsp, listener_pos, *unit.position)
+                      : 0.f;
+            if(target != unit.occlusion_target)
+            {
+                unit.occlusion_target = target;
+                cDebug(
+                    "Sound {} at {} occlusion {:.2f} from {}",
+                    index.name_of(unit.source),
+                    *unit.position,
+                    target,
+                    listener_pos);
+            }
+            unit.occlusion += (target - unit.occlusion) * blend;
+            if(reapply)
+                unit.occlusion_applied = -1.f;
+            apply_occlusion(unit);
+        };
+        for(auto& [id, unit] : active_sounds)
+            update(unit);
+        for(auto& [id, unit] : fading_sounds)
+            update(unit);
+        for(auto& unit : singleshot_sounds)
+            update(unit);
+    }
+
+    /* Both slots get a send, the slot gains decide which one is heard */
+    void attach_environment(sound_unit_t& unit)
+    {
+        auto& env = environment;
+        if(!env.slots[0] || !env.slots[1])
+            return;
+        for(auto& track : unit.tracks)
+            for(u32 i : {0u, 1u})
+                track.source->set_send(i, env.slots[i].get());
     }
 
     virtual void process(SoundEvent& ev, libc_types::c_ptr data) final
@@ -693,6 +967,14 @@ struct SoundSystem
                 cWarning("No ref for PlaySoundEvent");
                 return;
             }
+            if(play->looping)
+            {
+                /* Same entity again (BSP section reload) keeps it running */
+                auto it = active_sounds.find(ev.entity_id);
+                if(it != active_sounds.end() &&
+                   it->second.source.tag_id == ref->tag_id)
+                    return;
+            }
             cDebug("Queueing PlaySoundEvent for {}", index.name_of(*ref));
             auto unit = make_sound_unit(*ref, LoopSoundEvent::usage_t::general);
             if(!unit.index.valid())
@@ -703,10 +985,17 @@ struct SoundSystem
                     oaf::source_property::relative>(play->relative);
                 track.source->template set_property<
                     oaf::source_property::position>(play->position);
-                track.source->template set_property<
-                    oaf::source_property::spatialized>(true);
+                track.source->spatialize_as(oaf::source_t::always);
             }
-            singleshot_sounds.push_back(std::move(unit));
+            if(!play->relative)
+            {
+                unit.position = play->position;
+                attach_environment(unit);
+            }
+            if(play->looping)
+                active_sounds[ev.entity_id] = std::move(unit);
+            else
+                singleshot_sounds.push_back(std::move(unit));
         }
     }
 };
@@ -743,6 +1032,10 @@ struct SoundUISystem
         auto& sound_cache = p.subsystem<SoundCache<halo_version>>();
         auto& snd         = p.subsystem<SoundSystem<halo_version>>();
         auto& loading     = p.subsystem<LoadingStatus>();
+
+        if(loading.loading)
+            return;
+
         if(ImGui::Begin("Sound"))
         {
             if(ImGui::BeginTabBar("AudioTabs"))
@@ -762,6 +1055,24 @@ struct SoundUISystem
                         snd.stat_bg_with_snd,
                         snd.stat_started,
                         snd.stat_replayed);
+                    {
+                        auto const& env = snd.environment;
+                        std::string_view env_name =
+                            env.ref ? snd.index.name_of(*env.ref) : "none";
+                        ImGui::Text(
+                            "environment: %.*s efx=%s gains=%.2f/%.2f",
+                            static_cast<int>(env_name.size()),
+                            env_name.data(),
+                            env.slots[0] ? "yes" : "no",
+                            env.gain[0],
+                            env.gain[1]);
+                        ImGui::Checkbox("Reverb", &snd.environment.enabled);
+                        ImGui::SameLine();
+                        ImGui::Checkbox("Occlusion", &snd.occlusion_enabled);
+                        ImGui::SameLine();
+                        ImGui::Checkbox(
+                            "Gain-only occlusion", &snd.occlusion_gain_only);
+                    }
                     ImGui::Separator();
                     auto sound_row = [&](u64                 entity,
                                          sound_unit_t const& sound,
@@ -775,6 +1086,11 @@ struct SoundUISystem
                             static_cast<int>(name.size()),
                             name.data());
                         ImGui::Text("    [volume] %f", sound.volume);
+                        if(sound.position)
+                            ImGui::Text(
+                                "    [occlusion] %.2f (target %.2f)",
+                                sound.occlusion,
+                                sound.occlusion_target);
                         if(item_it == sound_cache.end())
                         {
                             ImGui::Text("    [not in cache]");
