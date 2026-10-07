@@ -2254,10 +2254,20 @@ void dump_antr(blam::antr::header const* animation)
     {
         auto anim_type = magic_enum::enum_name(anim.type);
         fmt::print(
-            "    animation {}: name={} type={}\n",
+            "    animation {}: name={} type={} frames={} loop={} key={},{} "
+            "sound={}@{} feet L@{} R@{} next={}\n",
             i,
             anim.name.str(),
-            anim_type);
+            anim_type,
+            anim.frame_count,
+            anim.loop_frame,
+            anim.key_frame,
+            anim.second_key_frame,
+            anim.sound_index,
+            anim.sound_frame_index,
+            anim.left_foot_frame_index,
+            anim.right_foot_frame_index,
+            anim.next_animation);
     }
 }
 
@@ -3472,6 +3482,10 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         };
         fmt::print("  blocks:\n");
         count("collision_materials", h.collision_materials);
+        if(auto materials = h.collision_materials.data(magic);
+           materials.has_value())
+            for(auto const& material : materials.value())
+                fmt::print("      {}\n", name_of(material.shader));
         count("collision_header", h.collision_header);
         count("nodes", h.nodes);
         count("leaves", h.leaves);
