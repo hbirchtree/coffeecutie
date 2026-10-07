@@ -221,7 +221,8 @@ struct source_t
     void spatialize_as(spatialize_t v);
 
     void set_direct_filter(filter_t const* filter);
-    void set_send(u32 send, effect_slot_t const* slot);
+    void set_send(
+        u32 send, effect_slot_t const* slot, filter_t const* filter = nullptr);
 
     source_handle_t   m_handle{};
     features_t const& m_features;

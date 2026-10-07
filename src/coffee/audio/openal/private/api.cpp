@@ -234,7 +234,8 @@ void source_t::set_direct_filter(filter_t const* filter)
 #endif
 }
 
-void source_t::set_send(u32 send, effect_slot_t const* slot)
+void source_t::set_send(
+    u32 send, effect_slot_t const* slot, filter_t const* filter)
 {
 #if defined(OAF_HAS_EFX)
     if(!m_features.efx || send >= m_features.efx_sends)
@@ -244,11 +245,12 @@ void source_t::set_send(u32 send, effect_slot_t const* slot)
         AL_AUXILIARY_SEND_FILTER,
         slot ? static_cast<ALint>(slot->m_handle.hnd) : AL_EFFECTSLOT_NULL,
         static_cast<ALint>(send),
-        AL_FILTER_NULL);
+        filter ? static_cast<ALint>(filter->m_handle.hnd) : AL_FILTER_NULL);
     detail::check_error("alSource3i(AL_AUXILIARY_SEND_FILTER)");
 #else
     (void)send;
     (void)slot;
+    (void)filter;
 #endif
 }
 

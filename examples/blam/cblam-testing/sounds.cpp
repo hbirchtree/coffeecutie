@@ -35,6 +35,7 @@
 #include <oaf/ogg/ogg_decode.h>
 #include <oaf/wav/wav_decode.h>
 #include <peripherals/stl/enumerate.h>
+#include <queue>
 #include <ranges>
 
 #if defined(OAF_IMA_DECODER_ENABLED)
@@ -68,6 +69,7 @@ struct sound_unit_t
         std::deque<std::shared_ptr<oaf::buffer_t>> queued_bufs{};
         std::shared_ptr<oaf::source_t>             source;
         std::shared_ptr<oaf::filter_t>             filter; /* occlusion */
+        std::shared_ptr<oaf::filter_t>             send_filter;
         f32 base_gain{1.f}; /* before occlusion, without EFX */
     };
 
@@ -87,6 +89,16 @@ struct sound_unit_t
     f32                  occlusion{0.f}; /* smoothed, 0 = clear */
     f32                  occlusion_applied{-1.f};
     f32                  occlusion_target{0.f}; /* fraction of rays blocked */
+    bool                 has_sends{false};
+
+    /* Route through the cluster portals, used to move the apparent
+     * position towards the opening when the direct path is blocked */
+    std::vector<BSPItem::Portal const*> route{};
+    BSPItem const*                      route_bsp{nullptr};
+    u32                route_from{std::numeric_limits<u32>::max()};
+    std::optional<u32> cluster{}; /* of the sound, for route_bsp */
+    f32 route_remaining{0.f}; /* first portal to the sound, via centroids */
+    Vecf3 position_applied{};
 
     // Not used for audio tracks, more for standalone sounds
     std::optional<compo::time_point> time{};
@@ -148,8 +160,23 @@ struct SoundSystem
     Vecf3 listener_pos{};
     bool  has_listener{false};
     bool  occlusion_enabled{true};
+    bool  portal_routing{true};
     bool  occlusion_gain_only{false}; /* the no-EFX path, for tuning */
     bool  occlusion_efx_applied{false};
+
+    /* Occlusion response, tunable from the Sound panel. Cuts are what is
+     * lost when every ray is blocked; curve > 1 keeps partial blocking
+     * (around a corner) mild while fully enclosed sounds drop hard */
+    struct occlusion_tuning_t
+    {
+        f32 dry_gain{0.65f};
+        f32 dry_hf{0.9f};
+        f32 wet_gain{0.7f}; /* reverb send, only near full occlusion */
+        f32 gain_only{0.75f};
+        f32 curve{2.f};
+
+        bool operator==(occlusion_tuning_t const&) const = default;
+    } occlusion_tuning, occlusion_tuning_applied;
 
     std::map<u64, sound_unit_t> active_sounds;
     std::map<u64, sound_unit_t> fading_sounds;
@@ -770,7 +797,9 @@ struct SoundSystem
         meta.base_gain = gain;
         f32 occlusion  = occlusion_uses_efx() ? 0.f : unit.occlusion;
         meta.source->template set_property<oaf::source_property::gain>(
-            gain * (1.f - 0.6f * occlusion));
+            gain *
+            (1.f - occlusion_tuning.gain_only *
+                       std::pow(occlusion, occlusion_tuning.curve)));
     }
 
     static BSPItem const* active_bsp(BSPCache<Ver> const& cache)
@@ -805,7 +834,7 @@ struct SoundSystem
         u32  total{0};
         auto cast = [&](Vecf3 const& from, Vecf3 const& to) {
             /* An end inside solid says nothing about the path between */
-            if(!bsp.find_cluster(from) || !bsp.find_cluster(to))
+            if(!bsp.find_cluster_tree(from) || !bsp.find_cluster_tree(to))
                 return;
             Vecf3 const span   = to - from;
             f32 const   length = glm::length(span);
@@ -832,8 +861,12 @@ struct SoundSystem
         if(std::abs(unit.occlusion - unit.occlusion_applied) < 0.005f)
             return;
         unit.occlusion_applied = unit.occlusion;
-        bool const efx         = occlusion_uses_efx();
-        f32 const  occlusion   = unit.occlusion;
+        bool const  efx       = occlusion_uses_efx();
+        auto const& tune      = occlusion_tuning;
+        f32 const   occlusion = efx ? unit.occlusion : 0.f;
+        f32 const   shaped    = std::pow(occlusion, tune.curve);
+        /* The reverb only goes once the sound is properly enclosed */
+        f32 const wet = std::pow(occlusion, tune.curve * 2.f);
         for(auto& track : unit.tracks)
         {
             if(efx && !track.filter)
@@ -844,10 +877,148 @@ struct SoundSystem
             }
             if(track.filter)
                 track.filter->set_lowpass(
-                    efx ? 1.f - 0.2f * occlusion : 1.f,
-                    efx ? 1.f - 0.75f * occlusion : 1.f);
+                    1.f - tune.dry_gain * shaped, 1.f - tune.dry_hf * occlusion);
+            if(efx && unit.has_sends && !track.send_filter)
+            {
+                track.send_filter = snd.alloc_filter();
+                if(track.send_filter)
+                    for(u32 i : {0u, 1u})
+                        track.source->set_send(
+                            i,
+                            environment.slots[i].get(),
+                            track.send_filter.get());
+            }
+            if(track.send_filter)
+                track.send_filter->set_lowpass(
+                    1.f - tune.wet_gain * wet, 1.f - tune.dry_hf * wet);
             set_gain(unit, track, track.base_gain);
         }
+    }
+
+    /* Portals crossed on the shortest walk between two clusters, walking
+     * between portal centroids */
+    static std::vector<BSPItem::Portal const*> find_route(
+        BSPItem const& bsp, u32 from, Vecf3 const& from_pos, u32 to)
+    {
+        auto const count = bsp.clusters.size();
+        if(from >= count || to >= count)
+            return {};
+        constexpr f32 unreached = std::numeric_limits<f32>::max();
+        std::vector<f32>                    cost(count, unreached);
+        std::vector<Vecf3>                  entry(count);
+        std::vector<BSPItem::Portal const*> via(count, nullptr);
+        std::vector<u32>                    parent(count, 0);
+        using node_t = std::pair<f32, u32>;
+        std::priority_queue<node_t, std::vector<node_t>, std::greater<>> open;
+
+        cost[from]  = 0.f;
+        entry[from] = from_pos;
+        open.push({0.f, from});
+        while(!open.empty())
+        {
+            auto [c, cluster] = open.top();
+            open.pop();
+            if(c > cost[cluster])
+                continue;
+            if(cluster == to)
+            {
+                std::vector<BSPItem::Portal const*> route;
+                for(u32 at = to; at != from; at = parent[at])
+                    route.push_back(via[at]);
+                std::reverse(route.begin(), route.end());
+                return route;
+            }
+            for(auto const& portal : bsp.clusters[cluster].portals)
+            {
+                i32 adj = portal.data->front_cluster == static_cast<i16>(cluster)
+                              ? portal.data->back_cluster
+                              : portal.data->front_cluster;
+                if(adj < 0 || static_cast<size_t>(adj) >= count)
+                    continue;
+                Vecf3 const point = portal.data->centroid;
+                f32 const   next  = c + glm::distance(entry[cluster], point);
+                if(next >= cost[adj])
+                    continue;
+                cost[adj]   = next;
+                entry[adj]  = point;
+                via[adj]    = &portal;
+                parent[adj] = cluster;
+                open.push({next, static_cast<u32>(adj)});
+            }
+        }
+        return {};
+    }
+
+    void update_route(
+        sound_unit_t& unit, BSPItem const* bsp, std::optional<u32> listener)
+    {
+        if(unit.route_bsp != bsp)
+        {
+            unit.route_bsp  = bsp;
+            unit.cluster    = bsp ? bsp->find_cluster_tree(*unit.position)
+                                  : std::nullopt;
+            unit.route_from = std::numeric_limits<u32>::max();
+            unit.route.clear();
+        }
+        if(!portal_routing || !bsp || !listener || !unit.cluster ||
+           *listener == *unit.cluster)
+        {
+            unit.route.clear();
+            unit.route_from = std::numeric_limits<u32>::max();
+            return;
+        }
+        /* Only searched when the listener changes cluster */
+        if(unit.route_from == *listener)
+            return;
+        unit.route_from      = *listener;
+        unit.route           = find_route(
+            *bsp, *listener, listener_pos, *unit.cluster);
+        unit.route_remaining = 0.f;
+        if(unit.route.empty())
+            return;
+        for(size_t i = 0; i + 1 < unit.route.size(); i++)
+            unit.route_remaining += glm::distance(
+                unit.route[i]->data->centroid,
+                unit.route[i + 1]->data->centroid);
+        unit.route_remaining +=
+            glm::distance(unit.route.back()->data->centroid, *unit.position);
+        cDebug(
+            "Sound {} in cluster {} from cluster {}: {} portals, +{:.1f}",
+            index.name_of(unit.source),
+            *unit.cluster,
+            *listener,
+            unit.route.size(),
+            unit.route_remaining);
+    }
+
+    /* Blend from the real position towards the route by how blocked the
+     * direct path is, so a sound in plain view stays where it is */
+    void apply_position(sound_unit_t& unit)
+    {
+        Vecf3 position = *unit.position;
+        if(!unit.route.empty() && has_listener)
+        {
+            f32 const   weight      = unit.occlusion;
+            Vecf3 const to_real     = position - listener_pos;
+            Vecf3 const to_anchor =
+                unit.route.front()->data->centroid - listener_pos;
+            f32 const   real_dist   = glm::length(to_real);
+            f32 const   anchor_dist = glm::length(to_anchor);
+            if(weight > 0.f && real_dist > 1e-3f && anchor_dist > 1e-3f)
+            {
+                Vecf3 const direction = glm::normalize(glm::mix(
+                    to_real / real_dist, to_anchor / anchor_dist, weight));
+                f32 const distance = glm::mix(
+                    real_dist, anchor_dist + unit.route_remaining, weight);
+                position = listener_pos + direction * distance;
+            }
+        }
+        if(position == unit.position_applied)
+            return;
+        unit.position_applied = position;
+        for(auto& track : unit.tracks)
+            track.source->template set_property<oaf::source_property::position>(
+                position);
     }
 
     void update_occlusion(Proxy& p, f32 dt)
@@ -855,12 +1026,17 @@ struct SoundSystem
         BSPCache<Ver> const* bsp_cache{};
         p.subsystem(bsp_cache);
         BSPItem const* bsp = bsp_cache ? active_bsp(*bsp_cache) : nullptr;
+        std::optional<u32> const listener_cluster =
+            bsp && has_listener ? bsp->find_cluster_tree(listener_pos)
+                                : std::nullopt;
         /* Outside the level (flycam) everything would read as occluded */
-        bool const trace = occlusion_enabled && bsp && has_listener &&
-                           bsp->find_cluster(listener_pos).has_value();
+        bool const trace = occlusion_enabled && listener_cluster.has_value();
         f32 const      blend = std::min(1.f, dt / 0.15f); /* ~150ms */
-        bool const     reapply = occlusion_uses_efx() != occlusion_efx_applied;
-        occlusion_efx_applied  = occlusion_uses_efx();
+        bool const reapply =
+            occlusion_uses_efx() != occlusion_efx_applied ||
+            !(occlusion_tuning == occlusion_tuning_applied);
+        occlusion_efx_applied    = occlusion_uses_efx();
+        occlusion_tuning_applied = occlusion_tuning;
 
         auto update = [&](sound_unit_t& unit) {
             if(!unit.position)
@@ -882,6 +1058,8 @@ struct SoundSystem
             if(reapply)
                 unit.occlusion_applied = -1.f;
             apply_occlusion(unit);
+            update_route(unit, bsp, listener_cluster);
+            apply_position(unit);
         };
         for(auto& [id, unit] : active_sounds)
             update(unit);
@@ -897,6 +1075,7 @@ struct SoundSystem
         auto& env = environment;
         if(!env.slots[0] || !env.slots[1])
             return;
+        unit.has_sends = true;
         for(auto& track : unit.tracks)
             for(u32 i : {0u, 1u})
                 track.source->set_send(i, env.slots[i].get());
@@ -909,7 +1088,13 @@ struct SoundSystem
         {
             active_sounds.clear();
             fading_sounds.clear();
+            singleshot_sounds.clear();
             queued_events.clear();
+            /* These point into the old map */
+            environment.ref     = nullptr;
+            environment.target  = 0.f;
+            pending_bsp         = nullptr;
+            has_pending_cluster = false;
             return;
         }
         if(ev.type == SoundEvent::stop_sound)
@@ -989,7 +1174,8 @@ struct SoundSystem
             }
             if(!play->relative)
             {
-                unit.position = play->position;
+                unit.position         = play->position;
+                unit.position_applied = play->position;
                 attach_environment(unit);
             }
             if(play->looping)
@@ -1072,6 +1258,14 @@ struct SoundUISystem
                         ImGui::SameLine();
                         ImGui::Checkbox(
                             "Gain-only occlusion", &snd.occlusion_gain_only);
+                        ImGui::SameLine();
+                        ImGui::Checkbox("Portal routing", &snd.portal_routing);
+                        auto& tune = snd.occlusion_tuning;
+                        ImGui::SliderFloat("Dry gain cut", &tune.dry_gain, 0.f, 1.f);
+                        ImGui::SliderFloat("Dry HF cut", &tune.dry_hf, 0.f, 1.f);
+                        ImGui::SliderFloat("Reverb cut", &tune.wet_gain, 0.f, 1.f);
+                        ImGui::SliderFloat("Gain-only cut", &tune.gain_only, 0.f, 1.f);
+                        ImGui::SliderFloat("Curve", &tune.curve, 0.5f, 4.f);
                     }
                     ImGui::Separator();
                     auto sound_row = [&](u64                 entity,
@@ -1091,6 +1285,18 @@ struct SoundUISystem
                                 "    [occlusion] %.2f (target %.2f)",
                                 sound.occlusion,
                                 sound.occlusion_target);
+                        if(!sound.route.empty())
+                        {
+                            Vecf3 const via = sound.route.front()->data->centroid;
+                            ImGui::Text(
+                                "    [route] %zu portals, via %.1f,%.1f,%.1f "
+                                "+%.1f",
+                                sound.route.size(),
+                                via.x,
+                                via.y,
+                                via.z,
+                                sound.route_remaining);
+                        }
                         if(item_it == sound_cache.end())
                         {
                             ImGui::Text("    [not in cache]");
