@@ -3456,11 +3456,15 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         f32 aspect = fb_size.aspect();
         auto bounds = screen_bounds(info);
         auto size = Vecf2{bounds.z * 0.1f / aspect, bounds.w * 0.1f};
+        /* Green while carrying something, cyan when idle */
+        auto const* physics = e.get<PhysicsData>(player.id());
+        bool const  holding = physics && physics->grabbed != 0;
         extra_quads.push_back({
             .position = Vecf2{bounds.x, bounds.y} +
                         Vecf2{bounds.z / 2 - size.x / 2, bounds.w / 2 + size.y / 2},
             .size     = Vecf2{size.x, -size.y},
-            .tint     = Vecf3{0.05f, 1.f, 0.1f},
+            .tint     = holding ? Vecf3{0.05f, 1.f, 0.1f}
+                                : Vecf3{0.1f, 0.75f, 1.f},
             .sampler  = forge_cursor_smp,
         });
     }

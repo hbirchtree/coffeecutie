@@ -45,6 +45,247 @@ using namespace std::chrono;
  *     zero preprocessing, usable even when physics is compiled out
  * On section load both are run over a validation ray grid and compared.
  */
+/* A vehicle meets the world only through its mass points: spheres that sink
+ * into the ground up to `ground_depth` like springs, hover on antigrav, and
+ * grip along or across their forward axis. Halo's fractions are per 30 Hz
+ * tick. Spring stiffness and the friction scale are tuning, not tag data. */
+class MassPointAction : public btActionInterface
+{
+  public:
+    MassPointAction(btRigidBody& body, std::shared_ptr<MassPoints const> data)
+        : m_body(body)
+        , m_data(std::move(data))
+    {
+        for(auto const& point : m_data->points)
+        {
+            auto sphere = std::make_unique<btSphereShape>(point.radius);
+            auto probe  = std::make_unique<btCollisionObject>();
+            probe->setCollisionShape(sphere.get());
+            m_spheres.push_back(std::move(sphere));
+            m_probes.push_back(std::move(probe));
+            if(lifts(point))
+                m_lifting++;
+        }
+    }
+
+    void updateAction(btCollisionWorld* world, btScalar dt) override
+    {
+        if(m_body.isStaticOrKinematicObject() || !m_body.isActive())
+            return;
+        MassPoints const& data  = *m_data;
+        btTransform const body  = m_body.getWorldTransform();
+        btVector3 const   com   = to_bt(data.center_of_mass);
+        f32 const         mass  = data.mass;
+        f32 const         gravity = m_body.getGravity().length();
+
+        struct touch_t
+        {
+            size_t    point;
+            btVector3 at;
+            f32       depth;
+            btVector3 normal;
+        };
+        std::vector<touch_t> touches;
+        for(size_t i = 0; i < data.points.size(); i++)
+        {
+            btVector3 const at = body * (to_bt(data.points[i].position) - com);
+            if(auto touch = deepest_contact(world, i, at))
+                touches.push_back({i, at, touch->first, touch->second});
+        }
+
+        if(!touches.empty() && data.ground_depth > 0.f)
+        {
+            /* Shared so the vehicle settles half way into ground_depth,
+             * however many points touch */
+            f32 const count = static_cast<f32>(touches.size());
+            f32 const stiffness =
+                2.f * mass * gravity / data.ground_depth;
+            f32 const damping =
+                2.f * ground_damping_ratio * std::sqrt(stiffness * mass);
+            for(auto const& touch : touches)
+            {
+                auto const&     point = data.points[touch.point];
+                btVector3 const rel   = touch.at - body.getOrigin();
+                btVector3 const v     = m_body.getVelocityInLocalPoint(rel);
+                f32 const       vn    = v.dot(touch.normal);
+                f32             push =
+                    (stiffness * touch.depth - damping * vn) / count;
+                if(touch.depth > data.ground_depth)
+                    push += 10.f * stiffness *
+                            (touch.depth - data.ground_depth) / count;
+                push = std::max(push, 0.f);
+                m_body.applyImpulse(touch.normal * (push * dt), rel);
+
+                f32 const grip =
+                    slope(touch.normal.z(), data.ground_normal_k0,
+                          data.ground_normal_k1) *
+                    data.ground_friction * friction_scale * push * dt;
+                friction(point, body, touch.normal, v, rel, grip, mass / count);
+            }
+        }
+
+        for(size_t i = 0; i < data.points.size(); i++)
+            if(lifts(data.points[i]))
+                antigrav(world, i, body, com, mass, gravity, dt);
+    }
+
+    void debugDraw(btIDebugDraw*) override
+    {
+    }
+
+  private:
+    static constexpr f32 ground_damping_ratio   = 0.5f;
+    static constexpr f32 antigrav_damping_ratio = 0.3f;
+    static constexpr f32 friction_scale         = 4.f;
+
+    static btVector3 to_bt(Vecf3 const& v)
+    {
+        return {v.x, v.y, v.z};
+    }
+
+    static f32 slope(f32 normal_z, f32 k0, f32 k1)
+    {
+        if(k1 <= k0)
+            return normal_z >= k1 ? 1.f : 0.f;
+        return std::clamp((normal_z - k0) / (k1 - k0), 0.f, 1.f);
+    }
+
+    bool lifts(MassPoints::point_t const& point) const
+    {
+        return point.powered >= 0 &&
+               static_cast<size_t>(point.powered) < m_data->powered.size() &&
+               m_data->powered[point.powered].antigrav &&
+               m_data->powered[point.powered].height > 0.f;
+    }
+
+    /* Deepest overlap of point i with the static world: depth and the
+     * normal out of the world */
+    std::optional<std::pair<f32, btVector3>> deepest_contact(
+        btCollisionWorld* world, size_t i, btVector3 const& at)
+    {
+        struct deepest_t : btCollisionWorld::ContactResultCallback
+        {
+            btCollisionObject const* self{};
+            f32                      depth{0.f};
+            btVector3                normal{0, 0, 1};
+
+            btScalar addSingleResult(
+                btManifoldPoint&                cp,
+                btCollisionObjectWrapper const* a,
+                int,
+                int,
+                btCollisionObjectWrapper const*,
+                int,
+                int) override
+            {
+                f32 const d = -cp.getDistance();
+                if(d <= depth)
+                    return 0;
+                depth  = d;
+                normal = a->getCollisionObject() == self
+                             ? cp.m_normalWorldOnB
+                             : -cp.m_normalWorldOnB;
+                return 0;
+            }
+        } deepest;
+        btTransform transform;
+        transform.setIdentity();
+        transform.setOrigin(at);
+        m_probes[i]->setWorldTransform(transform);
+        deepest.self                  = m_probes[i].get();
+        deepest.m_collisionFilterGroup = btBroadphaseProxy::DefaultFilter;
+        deepest.m_collisionFilterMask  = btBroadphaseProxy::StaticFilter;
+        world->contactTest(m_probes[i].get(), deepest);
+        if(deepest.depth <= 0.f)
+            return std::nullopt;
+        return std::pair{deepest.depth, deepest.normal.normalized()};
+    }
+
+    /* Coulomb friction, split along the point's friction axis */
+    void friction(
+        MassPoints::point_t const& point,
+        btTransform const&         body,
+        btVector3 const&           normal,
+        btVector3 const&           v,
+        btVector3 const&           rel,
+        f32                        grip,
+        f32                        share)
+    {
+        btVector3 const slip = v - normal * v.dot(normal);
+        auto oppose = [&](btVector3 const& component, f32 limit) {
+            f32 const speed = component.length();
+            if(speed < 1e-5f || limit <= 0.f)
+                return;
+            f32 const stop = std::min(speed * share, limit);
+            m_body.applyImpulse(component * (-stop / speed), rel);
+        };
+        if(point.friction == MassPoints::point_t::friction_t::point)
+        {
+            oppose(slip, grip * point.parallel);
+            return;
+        }
+        btVector3 axis =
+            point.friction == MassPoints::point_t::friction_t::forward ? to_bt(point.forward)
+            : point.friction == MassPoints::point_t::friction_t::up
+                ? to_bt(point.up)
+                : to_bt(point.up).cross(to_bt(point.forward));
+        axis = body.getBasis() * axis;
+        axis -= normal * axis.dot(normal);
+        if(axis.length2() < 1e-6f)
+        {
+            oppose(slip, grip * point.perpendicular);
+            return;
+        }
+        axis.normalize();
+        btVector3 const along = axis * slip.dot(axis);
+        oppose(along, grip * point.parallel);
+        oppose(slip - along, grip * point.perpendicular);
+    }
+
+    /* Lift that fades out at `height` above the ground, sharing the
+     * vehicle's weight between the lifting points */
+    void antigrav(
+        btCollisionWorld*  world,
+        size_t             i,
+        btTransform const& body,
+        btVector3 const&   com,
+        f32                mass,
+        f32                gravity,
+        f32                dt)
+    {
+        auto const& point   = m_data->points[i];
+        auto const& powered = m_data->powered[point.powered];
+        btVector3 const at  = body * (to_bt(point.position) - com);
+        btVector3 const from =
+            at + btVector3(0, 0, -powered.offset);
+        btVector3 const to = from - btVector3(0, 0, powered.height);
+        btCollisionWorld::ClosestRayResultCallback ground(from, to);
+        ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
+        world->rayTest(from, to, ground);
+        if(!ground.hasHit())
+            return;
+        f32 const height    = ground.m_closestHitFraction * powered.height;
+        f32 const share     = mass / static_cast<f32>(m_lifting);
+        f32 const stiffness = powered.strength * share * gravity /
+                              powered.height;
+        btVector3 const rel = at - body.getOrigin();
+        f32 const       vz  = m_body.getVelocityInLocalPoint(rel).z();
+        f32 lift = stiffness * (powered.height - height) -
+                   2.f * antigrav_damping_ratio *
+                       std::sqrt(stiffness * share) * vz;
+        lift *= slope(
+            ground.m_hitNormalWorld.z(), powered.normal_k0, powered.normal_k1);
+        if(lift > 0.f)
+            m_body.applyImpulse(btVector3(0, 0, lift * dt), rel);
+    }
+
+    btRigidBody&                                    m_body;
+    std::shared_ptr<MassPoints const>               m_data;
+    std::vector<std::unique_ptr<btSphereShape>>     m_spheres;
+    std::vector<std::unique_ptr<btCollisionObject>> m_probes;
+    size_t                                          m_lifting{0};
+};
+
 template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
     type_list_t<
@@ -95,6 +336,10 @@ struct PhysicsSystem
 
         if(loading->loading)
             return;
+
+        if(std::exchange(m_reset_holders, false))
+            for(auto holder : p.template select<PhysicsData>())
+                holder.template get<PhysicsData>().grabbed = 0;
 
         /* Rebuild on section change, but also retry while no world mesh
          * exists yet — the BSP cache is populated asynchronously after the
@@ -345,6 +590,10 @@ struct PhysicsSystem
             bool const follower =
                 moves && physics.authority == ObjectPhysics::Follower;
             live.insert(id);
+            /* Bodies with a phys tag turn about its centre of mass */
+            Vecf3 const com = physics.mass_points
+                                  ? physics.mass_points->center_of_mass
+                                  : Vecf3{};
             auto existing = m_object_bodies.find(id);
             if(existing == m_object_bodies.end() ||
                existing->second != physics.authority)
@@ -359,16 +608,18 @@ struct PhysicsSystem
                     .scale     = shape == Shape::Sphere
                                      ? Vecf3(physics.radius)
                                      : physics.half_extents,
-                    .position  = model.position,
+                    .position  = model.position + model.rotation * com,
                     .mass      = follower ? 0.f : physics.mass,
                     .shape     = shape,
-                    .group     = physics.item ? Shape::Item
-                                 : moves      ? Shape::Vehicle
-                                              : Shape::AnyGroup,
+                    .group     = physics.item          ? Shape::Item
+                                 : physics.mass_points ? Shape::Grounded
+                                 : moves               ? Shape::Vehicle
+                                                       : Shape::AnyGroup,
                     .kinematic = follower,
                     .hulls     = physics.collision,
-                    .offset    = physics.center,
+                    .offset    = physics.mass_points ? -com : physics.center,
                     .rotation  = model.rotation,
+                    .mass_points = physics.mass_points,
                 });
                 continue;
             }
@@ -386,8 +637,8 @@ struct PhysicsSystem
                     model.rotation.y,
                     model.rotation.z,
                     model.rotation.w));
-                transform.setOrigin(btVector3(
-                    model.position.x, model.position.y, model.position.z));
+                Vecf3 const origin = model.position + model.rotation * com;
+                transform.setOrigin(btVector3(origin.x, origin.y, origin.z));
                 body.setWorldTransform(transform);
                 continue;
             }
@@ -404,9 +655,10 @@ struct PhysicsSystem
             physics.angular_velocity = to_vec(body.getAngularVelocity());
             btTransform const& transform = body.getWorldTransform();
             btQuaternion const rotation  = transform.getRotation();
-            model.position = to_vec(transform.getOrigin());
             model.rotation =
                 Quatf(rotation.w(), rotation.x(), rotation.y(), rotation.z());
+            model.position =
+                to_vec(transform.getOrigin()) - model.rotation * com;
             model.update_matrix();
         }
 
@@ -450,7 +702,13 @@ struct PhysicsSystem
             rigid.setActivationState(DISABLE_DEACTIVATION);
         } else
         {
-            body.world_shape->calculateLocalInertia(mass, inertia);
+            if(body.mass_points)
+                inertia = btVector3(
+                    body.mass_points->moments.x,
+                    body.mass_points->moments.y,
+                    body.mass_points->moments.z);
+            else
+                body.world_shape->calculateLocalInertia(mass, inertia);
             rigid.setMassProps(mass, inertia);
             rigid.setCollisionFlags(
                 rigid.getCollisionFlags() &
@@ -496,6 +754,36 @@ struct PhysicsSystem
         return nearest;
     }
 
+    /* Holders show what they carry in PhysicsData, and listeners hear
+     * when it changes */
+    void announce_hold(
+        Proxy&           p,
+        u64              holder,
+        u64              object,
+        bool             held,
+        btVector3 const& velocity = {0, 0, 0})
+    {
+        cDebug("physics: {} {} {}", holder, held ? "grabbed" : "dropped", object);
+        if(auto* data = p.template get<PhysicsData>(holder))
+            data->grabbed = held ? object : 0;
+        if(!m_bus)
+            return;
+        if(held)
+        {
+            Physics::Event   event{Physics::Event::Grabbed};
+            Physics::Grabbed grabbed{.holder = holder, .object = object};
+            m_bus->process(event, &grabbed);
+            return;
+        }
+        Physics::Event   event{Physics::Event::Dropped};
+        Physics::Dropped dropped{
+            .holder   = holder,
+            .object   = object,
+            .velocity = {velocity.x(), velocity.y(), velocity.z()},
+        };
+        m_bus->process(event, &dropped);
+    }
+
     void carry_grabbed(Proxy& p)
     {
         for(auto it = m_grab_requests.begin(); it != m_grab_requests.end();)
@@ -504,7 +792,10 @@ struct PhysicsSystem
             auto                 carried = m_grabs.find(grab.entity_id);
             if(carried != m_grabs.end() &&
                !m_bodies.contains(carried->second.object))
+            {
+                announce_hold(p, grab.entity_id, carried->second.object, false);
                 carried = m_grabs.erase(carried);
+            }
 
             if(grab.held && carried == m_grabs.end())
             {
@@ -517,7 +808,7 @@ struct PhysicsSystem
                                     m_bodies.at(*object)
                                         .world_body->getWorldTransform(),
                     };
-                    cDebug("physics: {} grabbed {}", grab.entity_id, *object);
+                    announce_hold(p, grab.entity_id, *object, true);
                 }
             } else if(grab.held)
             {
@@ -538,8 +829,9 @@ struct PhysicsSystem
                 /* Let go mid-swing, it keeps going */
                 m_bodies.at(object).world_body->setLinearVelocity(
                     carried->second.velocity);
+                announce_hold(
+                    p, grab.entity_id, object, false, carried->second.velocity);
                 m_grabs.erase(carried);
-                cDebug("physics: {} dropped {}", grab.entity_id, object);
             }
             it = grab.held ? std::next(it) : m_grab_requests.erase(it);
         }
@@ -768,7 +1060,7 @@ struct PhysicsSystem
          * stepSimulation() crashes. */
         if(entity_body.world_body)
         {
-            m_world->removeRigidBody(entity_body.world_body.get());
+            detach(entity_body);
             entity_body.world_body.reset();
             entity_body.world_shape.reset();
             entity_body.child_shapes.clear();
@@ -805,6 +1097,8 @@ struct PhysicsSystem
                     Vecf3 const at = pt + body_create.offset;
                     hull->addPoint(btVector3(at.x, at.y, at.z), false);
                 }
+                /* Bullet's default 0.04 margin would grow every node */
+                hull->setMargin(hull_margin);
                 hull->recalcLocalAabb();
                 btTransform identity;
                 identity.setIdentity();
@@ -861,7 +1155,11 @@ struct PhysicsSystem
             return;
         }
         btVector3 local_inertia(0, 0, 0);
-        if(body_create.mass > 0.f)
+        if(body_create.mass > 0.f && body_create.mass_points)
+        {
+            auto const& moments = body_create.mass_points->moments;
+            local_inertia       = btVector3(moments.x, moments.y, moments.z);
+        } else if(body_create.mass > 0.f)
             entity_body.world_shape->calculateLocalInertia(
                 body_create.mass, local_inertia);
 
@@ -934,8 +1232,20 @@ struct PhysicsSystem
                 entity_body.world_body->setSpinningFriction(.02f);
             }
         }
-        entity_body.group = body_create.group;
+        entity_body.group       = body_create.group;
+        entity_body.mass_points = body_create.mass_points;
         add_to_world(*entity_body.world_body, body_create.group);
+        if(auto const& points = body_create.mass_points;
+           points && !body_create.kinematic && body_create.mass > 0.f)
+        {
+            btRigidBody& rigid = *entity_body.world_body;
+            rigid.setGravity(m_world->getGravity() * points->gravity_scale);
+            f32 const air = 1.f - std::pow(
+                1.f - std::clamp(points->air_friction, 0.f, 1.f), 30.f);
+            rigid.setDamping(air, air);
+            entity_body.action = std::make_unique<MassPointAction>(rigid, points);
+            m_world->addAction(entity_body.action.get());
+        }
     }
 
     void add_to_world(btRigidBody& body, Physics::BodyCreationShape::group_t group)
@@ -952,6 +1262,12 @@ struct PhysicsSystem
                 &body, filter::CharacterFilter, all ^ filter::DebrisFilter);
             break;
         case Physics::BodyCreationShape::Vehicle:
+            m_world->addRigidBody(
+                &body, filter::DefaultFilter, all ^ filter::DebrisFilter);
+            break;
+        case Physics::BodyCreationShape::Grounded:
+            /* Mass points carry it; the hulls (a warthog's coll tires are
+             * smaller than its mass point ones) only stop hard landings */
             m_world->addRigidBody(
                 &body, filter::DefaultFilter, all ^ filter::DebrisFilter);
             break;
@@ -1004,8 +1320,7 @@ struct PhysicsSystem
         auto it = m_bodies.find(entity_id);
         if(it == m_bodies.end())
             return;
-        if(it->second.world_body)
-            m_world->removeRigidBody(it->second.world_body.get());
+        detach(it->second);
         /* Give the debug-marker slot back so repeated join/leave (netcode
          * testing) or body rebuilds don't permanently eat buffer space. */
         if(m_markers)
@@ -1033,16 +1348,17 @@ struct PhysicsSystem
         m_tri_surface.clear();
         for(auto& [entity, body] : m_bodies)
         {
-            if(body.world_body)
-                m_world->removeRigidBody(body.world_body.get());
+            detach(body);
             if(m_markers)
                 m_markers->release_strip(body.debug_slot);
         }
         m_bodies.clear();
         m_player_bodies.clear();
         m_object_bodies.clear();
+        /* Bodies are gone; holders no longer carry anything */
         m_grabs.clear();
         m_grab_requests.clear();
+        m_reset_holders = true;
         m_built_section = -2;
     }
 
@@ -1299,7 +1615,19 @@ struct PhysicsSystem
         DebugMarkers::strip_slot_t debug_slot{};
         Physics::BodyCreationShape::group_t group{
             Physics::BodyCreationShape::AnyGroup};
+        std::shared_ptr<MassPoints const> mass_points;
+        std::unique_ptr<MassPointAction>  action;
     };
+
+    /* Out of the world, ahead of the body and its shapes going */
+    void detach(entity_body& body)
+    {
+        if(body.action)
+            m_world->removeAction(body.action.get());
+        body.action.reset();
+        if(body.world_body)
+            m_world->removeRigidBody(body.world_body.get());
+    }
 
     std::map<u64, entity_body> m_bodies;
 
@@ -1319,10 +1647,12 @@ struct PhysicsSystem
         btTransform relative; /*!< Object in camera space */
         btVector3   velocity{0, 0, 0}; /*!< Over the last step */
     };
+    static constexpr f32           hull_margin  = .005f;
     static constexpr f32           grab_range   = 40.f;
     static constexpr f32           step_seconds = 1.f / 60.f;
     std::map<u64, Physics::Grab>   m_grab_requests;
     std::map<u64, grab_t>          m_grabs;
+    bool                           m_reset_holders{false};
 
     DebugMarkers*              m_markers{nullptr};
     DebugMarkers::strip_slot_t m_probe_slot{};

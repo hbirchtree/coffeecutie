@@ -31,7 +31,9 @@ struct Event
 
         ProbeHere, /*!< Put debug probe at camera position, for testing */
 
-        Grab, /*!< Forge-style carrying of an object in front of a camera */
+        Grab,    /*!< Forge-style carrying of an object in front of a camera */
+        Grabbed, /*!< A holder picked an object up */
+        Dropped, /*!< A holder let go, or its object went away */
 
         Reset, /*!< Tear down all bodies + the world mesh ahead of a map
                 * change. Mesh-based bodies reference their source
@@ -101,6 +103,7 @@ struct BodyCreationShape
         AnyGroup, /*!< Bullet's default for the body type */
         Character,
         Vehicle,
+        Grounded, /*!< A vehicle meeting the world through `mass_points` */
         Item,
     } group{AnyGroup};
 
@@ -122,6 +125,9 @@ struct BodyCreationShape
     Vecf3                                    offset{};
     f32                                      yaw{0.f};
     std::optional<Quatf>                     rotation;
+    /*! Body mass, inertia and ground contact from a phys tag; the body
+     * origin is its centre of mass */
+    std::shared_ptr<MassPoints const> mass_points;
 };
 
 struct BodyRemoval
@@ -174,6 +180,21 @@ struct Grab
     Vecf3                 origin{};
     Quatf to_world{}; /*!< Camera to world; the view is its -Z */
     bool                  held{false};
+};
+
+struct Grabbed
+{
+    static constexpr auto event_type = Event::Grabbed;
+    u64                   holder{0};
+    u64                   object{0};
+};
+
+struct Dropped
+{
+    static constexpr auto event_type = Event::Dropped;
+    u64                   holder{0};
+    u64                   object{0};
+    Vecf3                 velocity{}; /*!< It was let go with */
 };
 
 struct ProbeHere

@@ -2,6 +2,7 @@
 #include "bitmap_cache.h"
 #include "blam/volta/blam_globals.h"
 #include "blam/volta/blam_mod2.h"
+#include "blam/volta/blam_physics.h"
 #include "blam/volta/blam_scenario.h"
 #include "blam/volta/blam_stl.h"
 #include "blam/volta/blam_tag_ref.h"
@@ -89,6 +90,7 @@ struct ResourceLoader
         std::map<std::pair<u32, u32>, std::shared_ptr<CollisionGeometry const>>
             collision;
         std::map<u32, std::optional<std::pair<Vecf3, Vecf3>>> bounds;
+        std::map<u32, std::shared_ptr<MassPoints const>>      mass_points;
     } physics_cache;
 
     struct
@@ -1666,6 +1668,70 @@ struct ResourceLoader
         return out;
     }
 
+    /*! A phys tag, or null if it has no mass points to stand on */
+    std::shared_ptr<MassPoints const> object_mass_points(
+        BlamFiles<Ver> const& files, blam::tagref_t const& physics)
+    {
+        if(auto it = physics_cache.mass_points.find(physics.tag_id);
+           it != physics_cache.mass_points.end())
+            return it->second;
+        auto& out = physics_cache.mass_points[physics.tag_id];
+
+        auto const& magic = files.container.magic;
+        auto        tag   = index.find(physics);
+        if(tag == index.end())
+            return nullptr;
+        auto header_ = (*tag).template data<blam::phys::header>(magic);
+        if(!header_.has_value())
+            return nullptr;
+        blam::phys::header const& header  = header_.value()[0];
+        auto                      points_ = header.mass_points.data(magic);
+        if(!points_.has_value() || points_.value().empty() || header.mass <= 0.f)
+            return nullptr;
+
+        using blam::phys::powered_mass_point;
+        auto data = std::make_shared<MassPoints>(MassPoints{
+            .mass                 = header.mass,
+            .center_of_mass       = header.center_of_mass,
+            .moments              = header.moments,
+            .gravity_scale        = header.gravity_scale,
+            .ground_friction      = header.ground_friction,
+            .ground_depth         = header.ground_depth,
+            .ground_damp_fraction = header.ground_damp_fraction,
+            .ground_normal_k1     = header.ground_normal_k1,
+            .ground_normal_k0     = header.ground_normal_k0,
+            .air_friction         = header.air_friction,
+        });
+        if(auto powered = header.powered_mass_points.data(magic);
+           powered.has_value())
+            for(auto const& p : powered.value())
+                data->powered.push_back({
+                    .antigrav = (p.flags & powered_mass_point::flags_t::antigrav) !=
+                                powered_mass_point::flags_t::none,
+                    .strength      = p.antigrav_strength,
+                    .offset        = p.antigrav_offset,
+                    .height        = p.antigrav_height,
+                    .damp_fraction = p.antigrav_damp_fraction,
+                    .normal_k1     = p.antigrav_normal_k1,
+                    .normal_k0     = p.antigrav_normal_k0,
+                });
+        for(auto const& p : points_.value())
+            data->points.push_back({
+                .position      = p.position,
+                .forward       = p.forward,
+                .up            = p.up,
+                .radius        = p.radius,
+                .mass          = p.mass,
+                .powered       = p.powered_mass_point,
+                .friction      = static_cast<MassPoints::point_t::friction_t>(
+                    p.friction_type),
+                .parallel      = p.friction_parallel_scale,
+                .perpendicular = p.friction_perpendicular_scale,
+            });
+        out = std::move(data);
+        return out;
+    }
+
     /*! Model-space bounds of a model's highest LOD */
     std::optional<std::pair<Vecf3, Vecf3>> model_bounds(
         ModelCache<Ver>& model_cache, blam::tagref_t const& model)
@@ -1720,9 +1786,14 @@ struct ResourceLoader
             bool const moves = tag.matches(tag_class_t::vehi);
             if(!moves && collision->triangles.empty())
                 return std::nullopt;
+            auto mass_points = moves ? object_mass_points(files, object.physics)
+                                     : nullptr;
             return ObjectPhysics{
-                .collision = std::move(collision),
-                .mass      = moves ? 1000.f : 0.f,
+                .collision   = std::move(collision),
+                .mass_points = mass_points,
+                .mass        = !moves         ? 0.f
+                               : mass_points ? mass_points->mass
+                                             : 1000.f,
             };
         }
 

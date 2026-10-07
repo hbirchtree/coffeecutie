@@ -530,6 +530,57 @@ struct CollisionGeometry
     std::vector<Vecf3>  triangles; /*!< Exact surfaces, 3 per triangle */
 };
 
+/*! A phys tag: the body's mass and the spheres (mass points) it meets the
+ * world with, model space */
+struct MassPoints
+{
+    struct powered_t
+    {
+        bool antigrav{false};
+        f32  strength{0.f};
+        f32  offset{0.f};
+        f32  height{0.f};
+        f32  damp_fraction{0.f};
+        f32  normal_k1{1.f};
+        f32  normal_k0{0.f};
+    };
+
+    struct point_t
+    {
+        enum class friction_t : u16
+        {
+            point,
+            forward,
+            left,
+            up,
+        };
+
+        Vecf3      position{};
+        Vecf3      forward{1, 0, 0};
+        Vecf3      up{0, 0, 1};
+        f32        radius{0.f};
+        f32        mass{0.f};
+        i16        powered{-1};
+        friction_t friction{friction_t::point};
+        f32        parallel{1.f};
+        f32        perpendicular{1.f};
+    };
+
+    f32   mass{0.f};
+    Vecf3 center_of_mass{};
+    Vecf3 moments{}; /*!< Principal inertia, xx yy zz */
+    f32   gravity_scale{1.f};
+    f32   ground_friction{0.f};
+    f32   ground_depth{0.f};
+    f32   ground_damp_fraction{0.f};
+    f32   ground_normal_k1{1.f};
+    f32   ground_normal_k0{0.f};
+    f32   air_friction{0.f};
+
+    std::vector<powered_t> powered;
+    std::vector<point_t>   points;
+};
+
 /*! Collision for a world object: static ones use the exact coll surfaces,
  * moving ones its hulls, or a box/sphere when there is no coll tag */
 struct ObjectPhysics
@@ -538,6 +589,8 @@ struct ObjectPhysics
     using type       = compo::alloc::VectorContainer<value_type>;
 
     std::shared_ptr<CollisionGeometry const> collision;
+    /*! Vehicles: the body and what it touches the ground with */
+    std::shared_ptr<MassPoints const> mass_points;
 
     Vecf3 half_extents{}; /*!< Box, when there is no collision */
     Vecf3 center{};       /*!< Box/sphere centre in object space */
@@ -571,6 +624,8 @@ struct PhysicsData
 
     bool enabled{false};
     bool kinematic{false};
+
+    u64 grabbed{0}; /*!< Entity this player carries (forge), 0 = none */
 };
 
 struct NetworkInfo

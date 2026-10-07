@@ -18,7 +18,7 @@
 #include <peripherals/stl/type_list.h>
 
 using ScreenClearManifest = compo::SubsystemManifest<
-    type_list_t<const PlayerInfo, const PlayerCamera>,
+    type_list_t<const PlayerInfo, const PlayerCamera, const PhysicsData>,
     type_list_t<gfx::system, BlamResources, PostProcessParameters>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 
