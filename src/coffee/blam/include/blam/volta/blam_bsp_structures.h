@@ -644,13 +644,23 @@ struct leaf_map_portal
     bsp_reference<Vecf3> vertices;
 };
 
+/* What a collision surface is made of: its shader carries the physics
+ * material (dirt, metal, ...) that footsteps and impacts sound like */
+struct collision_material
+{
+    tagref_t shader;
+    u32      padding;
+};
+
+static_assert(sizeof(collision_material) == 20);
+
 struct header
 {
     tagref_t                       lightmap_; /* Lightmap texture(s) */
     f32                            vehicle_floor;
     f32                            vehicle_ceiling;
     u32                            unknown1[35];
-    bsp_reference<shader::shader_desc> collision_materials;
+    bsp_reference<collision_material>  collision_materials;
     bsp_reference<collision::bsp>      collision_header;
     /* Volumes in world-space where leaf surfaces reside */
     bsp_reference<node> nodes;
