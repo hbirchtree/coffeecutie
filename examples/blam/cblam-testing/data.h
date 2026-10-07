@@ -282,6 +282,12 @@ struct LoadingStatus : compo::SubsystemBase
     }
 };
 
+struct GameState : compo::SubsystemBase
+{
+    // TODO: Find pointer to game rules data
+    // It might be filled in from ui.map?
+};
+
 struct GameEvent
 {
     enum EventType

@@ -425,7 +425,27 @@ struct ResourceLoader
         auto const&                     magic     = container.magic;
         blam::scn::scenario<Ver> const* scenario = container.scenario().value();
 
-        blam::bsp::info const* info = scenario->bsp_info.data(magic).value().data();
+        auto sound_scenery_ = scenario->objects.sound_scenery;
+        auto instances_ = sound_scenery_.instances.data(magic);
+        auto palette_ = sound_scenery_.palette.data(magic);
+        if(!instances_.has_value() || !palette_.has_value())
+        {
+            cWarning("No sound scenery data located");
+            return;
+        }
+        auto palette = palette_.value();
+        SoundEvent ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{
+            .looping = true,
+        };
+        for(blam::scn::sound_scenery const& instance : instances_.value())
+        {
+            blam::tagref_t const* tag =
+                &palette[instance.ref.index].at(instance.desired_permutation);
+            play.sound = tag;
+            play.position = instance.pos;
+            sound_bus->process(ev, &play);
+        }
     }
 
     void load_debug_shapes(Proxy& p)

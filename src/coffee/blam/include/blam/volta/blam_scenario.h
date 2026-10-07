@@ -1290,7 +1290,7 @@ struct scenario
         reflex_group<machine_spawn>       machines;
         reflex_group<control>             controls;
         reflex_group<light_fixture_spawn> light_fixtures;
-        reflex_group<sound_scenery>       snd_scenery;
+        reflex_group<scn::sound_scenery>  sound_scenery;
 
         u32 padding3[21];
     } objects;
