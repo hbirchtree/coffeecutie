@@ -105,4 +105,11 @@ void alloc_camera_control(compo::EntityContainer& e)
                 lerp->duration.count());
             camera.incoming_lerps.push_back(*lerp);
         });
+    game_bus.addEventData({
+        1024, [&camera](GameEvent& e, void*) {
+            if(e.type != GameEvent::MapAllLoaded)
+                return;
+            camera.incoming_lerps.clear();
+        },
+    });
 }
