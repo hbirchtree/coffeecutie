@@ -9,10 +9,12 @@
 #include <blam/volta/blam_actor.h>
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
+#include <blam/volta/blam_collision.h>
 #include <blam/volta/blam_font.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_p8_palette.h>
+#include <blam/volta/blam_physics.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_sound.h>
@@ -1865,6 +1867,142 @@ void dump_biped(blam::scn::biped const* biped)
         });
 }
 
+void dump_collision(blam::coll::header const* coll)
+{
+    fmt::print(
+        "  [coll]\n    flags=0x{:x} pathfinding x={:g}..{:g} y={:g}..{:g} "
+        "z={:g}..{:g}\n",
+        coll->flags,
+        coll->x_min, coll->x_max,
+        coll->y_min, coll->y_max,
+        coll->z_min, coll->z_max);
+    dump_block("materials", coll->materials, [](blam::coll::material const& m) {
+        fmt::print(
+            "{} flags=0x{:x} shield x{:g} body x{:g}\n",
+            m.name.str(),
+            static_cast<u32>(m.flags),
+            m.shield_damage_multiplier,
+            m.body_damage_multiplier);
+    });
+    dump_block("regions", coll->regions, [](blam::coll::region const& r) {
+        fmt::print("{} damage_threshold={:g}\n", r.name.str(), r.damage_threshold);
+    });
+    /* Vertices are in node space; bounds help tell which node is what */
+    dump_block("nodes", coll->nodes, [](blam::coll::node const& n) {
+        u32   verts = 0;
+        Vecf3 lo(std::numeric_limits<f32>::max());
+        Vecf3 hi(-std::numeric_limits<f32>::max());
+        auto  bsps = n.bsps.data(g_magic);
+        if(bsps.has_value())
+            for(auto const& bsp : bsps.value())
+                if(auto v = bsp.vertices.data(g_magic); v.has_value())
+                    for(auto const& vert : v.value())
+                    {
+                        verts++;
+                        lo = glm::min(lo, vert.point);
+                        hi = glm::max(hi, vert.point);
+                    }
+        fmt::print(
+            "{} region={} parent={} bsps={} verts={}",
+            n.name.str(),
+            static_cast<i16>(n.region),
+            n.parent,
+            bsps.has_value() ? bsps.value().size() : 0,
+            verts);
+        if(verts)
+            fmt::print(
+                " node-space ({:g}, {:g}, {:g})..({:g}, {:g}, {:g})",
+                lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
+        fmt::print("\n");
+    });
+}
+
+void dump_physics(blam::phys::header const* phys)
+{
+    fmt::print(
+        "  [phys]\n    radius={:g} moment_scale={:g} mass={:g} "
+        "center_of_mass=({:g}, {:g}, {:g}) density={:g} gravity_scale={:g}\n",
+        phys->radius,
+        phys->moment_scale,
+        phys->mass,
+        phys->center_of_mass.x,
+        phys->center_of_mass.y,
+        phys->center_of_mass.z,
+        phys->density,
+        phys->gravity_scale);
+    fmt::print(
+        "    ground friction={:g} depth={:g} damp_fraction={:g} "
+        "normal k1={:g} k0={:g}\n",
+        phys->ground_friction,
+        phys->ground_depth,
+        phys->ground_damp_fraction,
+        phys->ground_normal_k1,
+        phys->ground_normal_k0);
+    fmt::print(
+        "    water friction={:g} depth={:g} density={:g} air_friction={:g}\n",
+        phys->water_friction,
+        phys->water_depth,
+        phys->water_density,
+        phys->air_friction);
+    fmt::print(
+        "    moments xx={:g} yy={:g} zz={:g}\n",
+        phys->moments.x,
+        phys->moments.y,
+        phys->moments.z);
+    dump_block(
+        "inertial_matrix_and_inverse",
+        phys->inertial_matrix_and_inverse,
+        [](blam::phys::inertial_matrix const& m) {
+            fmt::print(
+                "[{:g} {:g} {:g}] [{:g} {:g} {:g}] [{:g} {:g} {:g}]\n",
+                m.m[0][0], m.m[0][1], m.m[0][2],
+                m.m[1][0], m.m[1][1], m.m[1][2],
+                m.m[2][0], m.m[2][1], m.m[2][2]);
+        });
+    dump_block(
+        "powered_mass_points",
+        phys->powered_mass_points,
+        [](blam::phys::powered_mass_point const& p) {
+            fmt::print("{} ", p.name.str());
+            print_flags("flags", p.flags);
+            fmt::print(
+                "\n          antigrav strength={:g} offset={:g} height={:g} "
+                "damp_fraction={:g} normal k1={:g} k0={:g}\n",
+                p.antigrav_strength,
+                p.antigrav_offset,
+                p.antigrav_height,
+                p.antigrav_damp_fraction,
+                p.antigrav_normal_k1,
+                p.antigrav_normal_k0);
+        });
+    f32 total = 0.f;
+    dump_block(
+        "mass_points",
+        phys->mass_points,
+        [&total](blam::phys::mass_point const& m) {
+            total += m.mass;
+            fmt::print(
+                "{} powered={} node={} ", m.name.str(), m.powered_mass_point,
+                m.model_node);
+            print_flags("flags", m.flags);
+            print_enum("friction", m.friction_type);
+            fmt::print(
+                "\n          position=({:g}, {:g}, {:g}) forward=({:g}, {:g}, "
+                "{:g}) up=({:g}, {:g}, {:g}) radius={:g}\n"
+                "          mass={:g} (relative {:g}) density={:g} (relative "
+                "{:g}) friction parallel={:g} perpendicular={:g}\n",
+                m.position.x, m.position.y, m.position.z,
+                m.forward.x, m.forward.y, m.forward.z,
+                m.up.x, m.up.y, m.up.z,
+                m.radius,
+                m.mass, m.relative_mass,
+                m.density, m.relative_density,
+                m.friction_parallel_scale,
+                m.friction_perpendicular_scale);
+        });
+    fmt::print("    mass point total={:g} (body {:g})\n", total, phys->mass);
+}
+
 void dump_vehicle(blam::scn::vehicle const* vehicle)
 {
     dump_unit(vehicle);
@@ -2274,7 +2412,7 @@ void dump_spawn_hex(blam::map_container<Ver> const& map)
     hex_instances("machines", o.machines.instances, n);
     hex_instances("controls", o.controls.instances, n);
     hex_instances("light_fixtures", o.light_fixtures.instances, n);
-    hex_instances("sound_scenery", o.snd_scenery.instances, n);
+    hex_instances("sound_scenery", o.sound_scenery.instances, n);
     hex_instances("player_start.locations", s->player_start.locations, n);
     hex_instances("netgame.flags", s->netgame.flags, n);
     hex_instances("netgame.equipment", s->netgame.equipment, n);
@@ -2519,10 +2657,10 @@ void dump_scenario(blam::map_container<Ver> const& map)
                 obj.cutoff_angle);
         }
     }
-    fmt::print("sound scenery: {}\n", s->objects.snd_scenery.instances.count);
-    if(auto objects = s->objects.snd_scenery.instances.data(map.magic); objects.has_value())
+    fmt::print("sound scenery: {}\n", s->objects.sound_scenery.instances.count);
+    if(auto objects = s->objects.sound_scenery.instances.data(map.magic); objects.has_value())
     {
-        auto palette = s->objects.snd_scenery.palette.data(map.magic).value();
+        auto palette = s->objects.sound_scenery.palette.data(map.magic).value();
         for(blam::scn::sound_scenery const& obj : objects.value())
         {
             fmt::print("  sound_scenery: obj_name={}\n",
@@ -3581,6 +3719,14 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     case blam::tag_class_t::vehi:
         if(auto* info = header_of((blam::scn::vehicle*)nullptr))
             dump_vehicle(info);
+        break;
+    case blam::tag_class_t::phys:
+        if(auto* info = header_of((blam::phys::header*)nullptr))
+            dump_physics(info);
+        break;
+    case blam::tag_class_t::coll:
+        if(auto* info = header_of((blam::coll::header*)nullptr))
+            dump_collision(info);
         break;
     case blam::tag_class_t::weap:
         if(auto* info = header_of((blam::scn::weapon*)nullptr))
