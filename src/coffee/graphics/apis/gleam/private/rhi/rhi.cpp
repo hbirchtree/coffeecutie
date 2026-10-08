@@ -32,6 +32,7 @@
 #include <glw/extensions/EXT_discard_framebuffer.h>
 #include <glw/extensions/EXT_draw_elements_base_vertex.h>
 #include <glw/extensions/EXT_multi_draw_arrays.h>
+#include <glw/extensions/EXT_texture_rg.h>
 #include <glw/extensions/KHR_debug.h>
 #include <glw/extensions/KHR_parallel_shader_compile.h>
 #include <glw/extensions/NV_pixel_buffer_object.h>
@@ -609,6 +610,13 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.rendertarget.depth24 =
             api_version >= 0x300 ||
             supports_extension(extensions, oes::depth24::name);
+
+        out.texture.tex.gl.r8  = api_version >= 0x300;
+        out.texture.tex.gl.rg8 = api_version >= 0x300;
+        out.texture.tex.ext.r8 =
+            supports_extension(extensions, ext::texture_rg::name);
+        out.texture.tex.ext.rg8 =
+            supports_extension(extensions, ext::texture_rg::name);
 
         out.buffer.mapping                 = api_version >= 0x300;
         out.buffer.pbo                     = api_version >= 0x300;

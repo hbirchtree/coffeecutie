@@ -241,6 +241,39 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
     if(it != direct_mapping.end())
         return it->second;
 
+    switch(fmt.pixfmt)
+    {
+    case P::R8:
+        if(!features.tex.gl.r8)
+        {
+            if(features.tex.ext.r8)
+                return {T::r8_ext, group::pixel_type::unsigned_byte, group::pixel_format::red};
+#if defined(GL_LUMINANCE)
+            else
+                return {
+                    static_cast<T>(GL_LUMINANCE),
+                    group::pixel_type::unsigned_byte,
+                    group::pixel_format::luminance,
+                };
+#endif
+        }
+        break;
+    case P::RG8:
+        if(!features.tex.gl.rg8 && features.tex.ext.rg8)
+            return {T::rg8_ext, group::pixel_type::unsigned_byte, group::pixel_format::rg};
+#if defined(GL_LUMINANCE_ALPHA)
+            else
+                return {
+                    static_cast<T>(GL_LUMINANCE_ALPHA),
+                    group::pixel_type::unsigned_byte,
+                    group::pixel_format::luminance_alpha,
+                };
+#endif
+        break;
+    default:
+        break;
+    }
+
     auto fmt_name = compile_info::debug_mode ? magic_enum::enum_name(fmt.pixfmt)
                                              : std::string_view();
 
@@ -254,9 +287,10 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
             return format.out;
     }
 
-    Throw(undefined_behavior(
-        "unhandled pixel format: " +
-        std::string(fmt_name.begin(), fmt_name.end())));
+    Throw(undefined_behavior(fmt::format(
+        "unhandled pixel format: {} ({:x})",
+        fmt_name,
+        static_cast<u32>(fmt.pixfmt))));
 }
 
 template std::

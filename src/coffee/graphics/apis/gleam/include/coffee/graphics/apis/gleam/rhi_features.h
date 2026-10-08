@@ -211,6 +211,9 @@ struct features
                 bool s3tc{false};
                 bool rgtc{false};
                 bool bptc{false};
+
+                bool r8{false};
+                bool rg8{false};
             } ext;
 
             struct
@@ -236,6 +239,9 @@ struct features
                 bool bptc{false};
                 bool rgtc{false};
                 bool astc{false};
+
+                bool r8{true};
+                bool rg8{true};
             } gl;
         } tex;
 
