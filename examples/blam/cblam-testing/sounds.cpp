@@ -71,6 +71,7 @@ struct sound_unit_t
         std::shared_ptr<oaf::filter_t>             filter; /* occlusion */
         std::shared_ptr<oaf::filter_t>             send_filter;
         f32 base_gain{1.f}; /* before occlusion, without EFX */
+        f32 max_distance{0.f}; /* snd! max distance, 0 = unlimited */
     };
 
     blam::tagref_t          source{};
@@ -174,6 +175,10 @@ struct SoundSystem
         f32 wet_gain{0.7f}; /* reverb send, only near full occlusion */
         f32 gain_only{0.75f};
         f32 curve{2.f};
+        /* Neither is in the tags (snde room rolloff applies on top), so
+         * both default to off. Air absorption is per meter, ~3m/unit */
+        f32 room_rolloff{0.f};
+        f32 air_absorption{0.f};
 
         bool operator==(occlusion_tuning_t const&) const = default;
     } occlusion_tuning, occlusion_tuning_applied;
@@ -597,11 +602,24 @@ struct SoundSystem
         std::vector<sound_unit_t::track_t> tracks;
         for(auto const& track : item.tracks)
         {
-            tracks.emplace_back(
+            auto& meta = tracks.emplace_back(
                 sound_unit_t::track_t{
                     .active = {.role = select_first_role(track)},
                     .source = snd.alloc_source(),
                 });
+            auto sounds_it = track.sounds.find(meta.active.role);
+            if(sounds_it == track.sounds.end())
+                continue;
+            auto const props = std::get<1>(sounds_it->second);
+            if(!props || props->min_distance <= 0.f)
+                continue;
+            /* DirectSound 3D: full volume inside min distance, inverse
+             * rolloff past it, nothing past max distance */
+            meta.source->template set_property<
+                oaf::source_property::reference_distance>(props->min_distance);
+            meta.source->template set_property<
+                oaf::source_property::rolloff_factor>(1.f);
+            meta.max_distance = props->max_distance;
         }
         cDebug("Created sound unit tracks={}", tracks.size());
         return sound_unit_t{
@@ -797,9 +815,24 @@ struct SoundSystem
         meta.base_gain = gain;
         f32 occlusion  = occlusion_uses_efx() ? 0.f : unit.occlusion;
         meta.source->template set_property<oaf::source_property::gain>(
-            gain *
+            gain * range_gain(unit, meta) *
             (1.f - occlusion_tuning.gain_only *
                        std::pow(occlusion, occlusion_tuning.curve)));
+    }
+
+    /* Fades out over the last part of max distance instead of cutting */
+    f32 range_gain(
+        sound_unit_t const& unit, sound_unit_t::track_t const& meta) const
+    {
+        if(!unit.position || !has_listener || meta.max_distance <= 0.f)
+            return 1.f;
+        constexpr f32 fade_fraction = 0.2f;
+        f32 const distance = glm::distance(unit.position_applied, listener_pos);
+        return glm::clamp(
+            (meta.max_distance - distance) /
+                (meta.max_distance * fade_fraction),
+            0.f,
+            1.f);
     }
 
     static BSPItem const* active_bsp(BSPCache<Ver> const& cache)
@@ -891,6 +924,15 @@ struct SoundSystem
             if(track.send_filter)
                 track.send_filter->set_lowpass(
                     1.f - tune.wet_gain * wet, 1.f - tune.dry_hf * wet);
+            if(efx)
+            {
+                track.source->template set_property<
+                    oaf::source_property::room_rolloff_factor>(
+                    tune.room_rolloff);
+                track.source->template set_property<
+                    oaf::source_property::air_absorption_factor>(
+                    tune.air_absorption);
+            }
             set_gain(unit, track, track.base_gain);
         }
     }
@@ -1266,6 +1308,10 @@ struct SoundUISystem
                         ImGui::SliderFloat("Reverb cut", &tune.wet_gain, 0.f, 1.f);
                         ImGui::SliderFloat("Gain-only cut", &tune.gain_only, 0.f, 1.f);
                         ImGui::SliderFloat("Curve", &tune.curve, 0.5f, 4.f);
+                        ImGui::SliderFloat(
+                            "Reverb rolloff", &tune.room_rolloff, 0.f, 2.f);
+                        ImGui::SliderFloat(
+                            "Air absorption", &tune.air_absorption, 0.f, 10.f);
                     }
                     ImGui::Separator();
                     auto sound_row = [&](u64                 entity,
