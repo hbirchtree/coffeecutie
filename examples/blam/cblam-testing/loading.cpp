@@ -433,6 +433,9 @@ struct ResourceLoader
         comp_app::EventBus<SoundEvent>* sound_bus =
             p.template service<comp_app::EventBus<SoundEvent>>();
 
+        if(!sound_bus)
+            return;
+
         auto&                           container = files.container;
         auto const&                     magic     = container.magic;
         blam::scn::scenario<Ver> const* scenario = container.scenario().value();
