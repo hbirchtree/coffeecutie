@@ -406,7 +406,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
          * renderers where models are costly. */
         const auto resolve_cluster =
             [](BSPItem const* bsp, Vecf3 const& pos) -> std::optional<u32> {
-            for(f32 up : {0.f, 2.f, 5.f, 10.f, 20.f})
+            for(f32 up : {0.f, .1f, .5f, 2.f, 5.f, 10.f, 20.f})
                 if(auto ci = bsp->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
                     return ci;
             if(auto mc = bsp->find_cluster(pos))

@@ -729,6 +729,8 @@ struct PhysicsSystem
             bool const moves      = physics.mass > 0.f;
             bool const follower =
                 moves && physics.authority == ObjectPhysics::Follower;
+            if(physics.mass > 0.f && !in_active_section(model.position))
+                continue;
             live.insert(id);
             /* Bodies with a phys tag turn about its centre of mass */
             Vecf3 const com = physics.mass_points
@@ -976,6 +978,23 @@ struct PhysicsSystem
             }
             it = grab.held ? std::next(it) : m_grab_requests.erase(it);
         }
+    }
+
+    /* Whether an object is in the active section */
+    bool in_active_section(Vecf3 const& pos) const
+    {
+        if(!m_world_item || !m_world_item->mesh)
+            return true;
+        auto [p1, p2]  = m_world_item->mesh->world_bounds.points();
+        Vecf3 const lo = glm::min(p1, p2);
+        Vecf3 const hi = glm::max(p1, p2);
+        if(!glm::all(glm::greaterThanEqual(pos, lo)) ||
+           !glm::all(glm::lessThanEqual(pos, hi)))
+            return false;
+        for(f32 up : {0.f, .1f, .5f})
+            if(m_world_item->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
+                return true;
+        return false;
     }
 
     static btTransform yaw_basis(f32 yaw)

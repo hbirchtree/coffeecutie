@@ -686,6 +686,10 @@ static u32 loop_start_frame(blam::antr::animation const& anim)
 template<typename V>
 u32 ModelCache<V>::bone_count(generation_idx_t model_id)
 {
+    /* A model from before a map switch, still on a player who has not been
+     * remounted yet: nothing to pose */
+    if(model_id.gen < this->generation)
+        return 0;
     return this->get(model_id).bone_count();
 }
 
@@ -864,6 +868,8 @@ template<typename V>
 void ModelCache<V>::evaluate_pose(
     generation_idx_t model_id, AnimationPlayback const& anim, Span<Matf4> dest)
 {
+    if(model_id.gen < this->generation)
+        return;
     ModelItem<V>& item = this->get(model_id);
 
     u32 const n = item.bone_count();
