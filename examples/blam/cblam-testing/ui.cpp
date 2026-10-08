@@ -98,6 +98,7 @@ using UIRendererManifest = compo::SubsystemManifest<
     type_list_t<
         gfx::system,
         RenderingParameters,
+        ScreenText,
         UIEventBus,
         UIDataSource>,
     type_list_t<
@@ -1600,6 +1601,43 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
         u32 ui_vert_count = static_cast<u32>(vertex_data.size());
 
+        /* Overlay text, in window pixels like the cursor */
+        auto&     screen_text = e.subsystem<ScreenText>();
+        u32 const text_start  = static_cast<u32>(vertex_data.size());
+        auto const font_it = m_default_font.valid() && !screen_text.lines.empty()
+                                 ? font_cache.find(m_default_font)
+                                 : font_cache.end();
+        if(font_it != font_cache.end())
+        {
+            FontItem const& font = font_it->second;
+            widget_data_t   data{
+                  .vertex_data   = vertex_data,
+                  .instance_data = instance_vertex_data,
+                  .box           = {},
+            };
+            constexpr u32 kFontSource = 9u;
+            for(auto const& line : screen_text.lines)
+            {
+                std::u16string_view text = line.text;
+                /* Whole glyphs that fit */
+                if(line.max_width > 0.f)
+                    while(!text.empty() && font.measure(text) > line.max_width)
+                        text.remove_suffix(1);
+                push_glyphs(
+                    data,
+                    font,
+                    text,
+                    line.baseline.x,
+                    line.baseline.y,
+                    line.color,
+                    (kFontSource << 24) | font.atlas_layer);
+            }
+        }
+        screen_text.lines.clear();
+        u32 const text_count =
+            static_cast<u32>(vertex_data.size()) - text_start;
+        u32 const cursor_start = static_cast<u32>(vertex_data.size());
+
         bool cursor_visible = m_mouse_active && m_cursor_bitmap.valid();
         if(cursor_visible)
         {
@@ -1747,8 +1785,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
         if(ui_vert_count > 0)
             do_submit(screen_scale, 0, ui_vert_count);
+        if(text_count > 0)
+            do_submit(cursor_scale, text_start, text_count);
         if(cursor_visible)
-            do_submit(cursor_scale, ui_vert_count, 6);
+            do_submit(cursor_scale, cursor_start, 6);
     }
 };
 
@@ -1764,6 +1804,7 @@ void alloc_ui_system(compo::EntityContainer& e)
             std::ref(e.subsystem_cast<BitmapCache<halo_version>>()),
             std::ref(e.subsystem_cast<FontCache<halo_version>>()));
     e.register_component_inplace<UIScreen>();
+    e.register_subsystem_inplace<ScreenText>();
     e.register_subsystem_inplace<UIEventBus>();
     e.register_subsystem_inplace<UIDataSource>();
 }

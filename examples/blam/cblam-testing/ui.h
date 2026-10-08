@@ -5,6 +5,23 @@
 #include "data.h"
 #include "selected_version.h"
 
+/* Text over the 3D view outside any Halo menu, like the forge menu. The UI
+ * renderer draws it in window pixels, y down, and clears it every frame. */
+struct ScreenText : compo::SubsystemBase
+{
+    using type = ScreenText;
+
+    struct line_t
+    {
+        std::u16string text;
+        Vecf2          baseline; /*!< Where the baseline starts */
+        Vecf4          color{1.f};
+        f32            max_width{0.f}; /*!< Cut off past this; 0 = no limit */
+    };
+
+    std::vector<line_t> lines;
+};
+
 struct UIEvent
 {
     enum type_t
