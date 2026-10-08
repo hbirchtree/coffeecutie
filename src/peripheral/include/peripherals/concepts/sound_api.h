@@ -75,6 +75,8 @@ enum class source_property
     inner_cone_angle,
     outer_cone_angle,
     outer_cone_gain,
+    room_rolloff_factor,   /* EFX */
+    air_absorption_factor, /* EFX */
 
     // true/false
     looping,

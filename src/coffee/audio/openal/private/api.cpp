@@ -634,6 +634,12 @@ ALenum enum_to_al(source_property prop)
         return AL_CONE_OUTER_ANGLE;
     case semantic::concepts::sound::source_property::outer_cone_gain:
         return AL_CONE_OUTER_GAIN;
+#if defined(OAF_HAS_EFX)
+    case semantic::concepts::sound::source_property::room_rolloff_factor:
+        return AL_ROOM_ROLLOFF_FACTOR;
+    case semantic::concepts::sound::source_property::air_absorption_factor:
+        return AL_AIR_ABSORPTION_FACTOR;
+#endif
     default:
         return AL_NONE;
     }
