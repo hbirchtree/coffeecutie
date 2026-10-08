@@ -2,6 +2,7 @@
 #include "camera_control.h"
 #include "components.h"
 #include "data.h"
+#include "forge_controller.h"
 #include "input/touch_overlay.h"
 #include "journal.h"
 #include "loading.h"
@@ -525,6 +526,7 @@ i32 blam_main()
 #if defined(BLAM_CURSED_ENABLED)
             cursed::setup_cursed_loaders(e);
 #endif
+            alloc_forge_controller(e);
 
             using namespace ::platform::url::constructors;
 
@@ -790,8 +792,23 @@ i32 blam_main()
                                 input.accel);
                             net.changes.transform = net.changes.viewport = true;
                         }
-                        if(controller_connected && controller_buttons().back)
-                            info.mode.physics = !info.mode.physics;
+                        if(controller_connected)
+                        {
+                            input.back |= controller_buttons().back;
+
+                            input.forge.cancel |= controller_buttons().b;
+                            input.forge.accept |= controller_buttons().a;
+                            input.forge.up     |= controller_buttons().p_up;
+                            input.forge.down   |= controller_buttons().p_down;
+                            input.forge.left   |= controller_buttons().p_left;
+                            input.forge.right  |= controller_buttons().p_right;
+                        }
+
+                        /* Forge menu input */
+                        if(input.forge.up)
+                            input.forge.nav_y = std::max(1u, input.forge.nav_y - 1);
+                        if(input.forge.down)
+                            input.forge.nav_y = std::min(10u, input.forge.nav_y + 1);
                     } else if(!info.is_remote())
                     {
                         cam.camera.position = freecam_pos;
@@ -821,8 +838,8 @@ i32 blam_main()
                          * cap at 1, partial stick deflection stays analog */
                         if(f32 len2 = glm::dot(dir, dir); len2 > 1.f)
                             dir /= std::sqrt(len2);
-                        if(controller_connected && controller_buttons().back)
-                            info.mode.physics = !info.mode.physics;
+                        if(controller_connected)
+                            input.back |= controller_buttons().back;
 
                         const f32 move_speed = 10.f * input.accel;
                         /* As high as 4 wu/s jumped under 9.81, in Halo's
@@ -897,7 +914,10 @@ i32 blam_main()
                     if(input.option_2)
                         emit_nav_event(UINavigation::option_2);
                     if(input.back)
+                    {
                         emit_nav_event(UINavigation::back);
+                        info.mode.physics = !info.mode.physics;
+                    }
                     if(input.left)
                         emit_nav_event(UINavigation::left);
                     if(input.right)

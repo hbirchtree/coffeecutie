@@ -822,6 +822,17 @@ struct PlayerInput
         bool use{false};    /*!< Held: enter or leave a vehicle */
         bool grab{false};   /*!< Held: forge grab */
     } intent;
+    struct
+    {
+        debounced_button_t cancel{};
+        debounced_button_t accept{};
+        debounced_button_t up{};
+        debounced_button_t down{};
+        debounced_button_t left{};
+        debounced_button_t right{};
+
+        u32 nav_y{1};
+    } forge;
 
     std::optional<Vecf3> position; /*!< teleport target */
     std::optional<Quatf> rotation; /*!< absolute orientation */
@@ -839,6 +850,13 @@ struct PlayerInput
         right.frame_end();
         up.frame_end();
         down.frame_end();
+
+        forge.cancel.frame_end();
+        forge.accept.frame_end();
+        forge.up.frame_end();
+        forge.down.frame_end();
+        forge.left.frame_end();
+        forge.right.frame_end();
     }
 };
 

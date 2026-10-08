@@ -32,8 +32,6 @@
 #include <peripherals/stl/tuple_hash.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
 
-#include "crunched/loading_screen.h"
-
 using namespace libc_types::size_literals;
 using namespace std::string_view_literals;
 using namespace Coffee::resource_literals;
@@ -3352,7 +3350,7 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
                       : postprocess.blur > 0            ? 1
                                                         : 0;
 
-    Vecf3 tint{1, 1, 1};
+    Vecf4 tint{1, 1, 1, 1};
 
     auto params_v = gfx::make_uniform_list(
         typing::graphics::ShaderStage::Vertex,
@@ -3413,68 +3411,12 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)},
         gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)});
 
-    // Set up forge cursors
-    u32 num_players{0};
-    for(auto const& player : e.select<PlayerInfo, PlayerCamera>())
-    {
-        auto [info, camera] = player.components();
-        if(info.mode.physics || !camera.is_active())
-            continue;
-        num_players++;
-    }
-    auto screen_bounds = [&](PlayerInfo const& info) -> Vecf4 {
-        switch(num_players)
-        {
-        case 2:
-            return Vecf4(
-                0,
-                (fb_size.h / 2) * info.seat_idx,
-                fb_size.w,
-                fb_size.h / 2);
-        case 3:
-        case 4:
-        {
-            auto x = info.seat_idx % 2;
-            auto y = 1 - info.seat_idx / 2;
-            return Vecf4(
-                (fb_size.w / 2) * x,
-                (fb_size.h / 2) * y,
-                fb_size.w / 2,
-                fb_size.h / 2);
-        }
-        default:
-            return Vecf4(0, 0, fb_size.w, fb_size.h);
-        }
-    };
-    for(auto const& player : e.select<PlayerInfo, PlayerCamera>())
-    {
-        auto [info, camera] = player.components();
-        if(info.mode.physics ||
-                !camera.is_active() ||
-                !postprocess.forge_overlay)
-            continue;
-        f32 aspect = fb_size.aspect();
-        auto bounds = screen_bounds(info);
-        auto size = Vecf2{bounds.z * 0.1f / aspect, bounds.w * 0.1f};
-        /* Green while carrying something, cyan when idle */
-        auto const* physics = e.get<PhysicsData>(player.id());
-        bool const  holding = physics && physics->grabbed != 0;
-        extra_quads.push_back({
-            .position = Vecf2{bounds.x, bounds.y} +
-                        Vecf2{bounds.z / 2 - size.x / 2, bounds.w / 2 + size.y / 2},
-            .size     = Vecf2{size.x, -size.y},
-            .tint     = holding ? Vecf3{0.05f, 1.f, 0.1f}
-                                : Vecf3{0.1f, 0.75f, 1.f},
-            .sampler  = forge_cursor_smp,
-        });
-    }
-
     for(screen_quad_t const& draw : extra_quads)
     {
         if(draw.sampler.expired())
             continue;
 
-        tint = draw.tint.value_or(Vecf3{1, 1, 1});
+        tint = draw.tint.value_or(Vecf4{1, 1, 1, 1});
 
         Vecf3 translation(Vecf2(draw.position) * item_scale - 1.f, 0.f);
         Vecf3 scale(
@@ -3608,20 +3550,6 @@ void ScreenClear::load_resources(gleam::system& api, BlamResources& resources)
         offscreen_sampler->set_edge_policy(1, typing::WrapPolicy::Clamp);
     }
 
-    {
-        forge_cursor = api.alloc_texture(gfx::textures::d2, pix_fmt::R8, 1);
-        auto const& desc = blam::loading::forge_cursor_desc;
-        auto const& data = blam::loading::forge_cursor_data;
-        forge_cursor->alloc(size_3d<u32>(desc.width, desc.height, 1));
-        forge_cursor->upload(data, Veci2{0, 0}, size_2d<i32>(desc.width, desc.height));
-        forge_cursor->set_swizzle(
-            gfx::textures::swizzle_t::red,
-            gfx::textures::swizzle_t::red,
-            gfx::textures::swizzle_t::red,
-            gfx::textures::swizzle_t::red);
-        forge_cursor_smp = forge_cursor->sampler();
-        forge_cursor_smp->alloc();
-    }
 }
 
 void alloc_renderer(EntityContainer& container)

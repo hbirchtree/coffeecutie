@@ -41,6 +41,7 @@ coffee_application(
         camera_control.cpp
         gameplay.cpp
         debug_ui/widgets.cpp
+        forge_controller.cpp
         graphics.cpp
         loading.cpp
         map_loading.cpp

@@ -125,8 +125,8 @@
                 "format": "rgb565"
             },
             {
-                "source": "textures/forge.png",
-                "name": "forge_cursor",
+                "source": "textures/forge_ui.png",
+                "name": "forge_ui",
                 "format": "r8",
                 "channel": "r"
             }

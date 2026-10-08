@@ -11,7 +11,7 @@ uniform vec2 scale;
 // Post-processing
 uniform float gamma;
 uniform float exposure;
-uniform vec3  tint;
+uniform vec4  tint;
 
 uniform int mode;
 // RGB-defocus/chromatic aberration
@@ -71,7 +71,7 @@ vec4 gaussian_blur_sample()
 
 vec4 plain_sample()
 {
-    return texture2D(source, offset + in_tex * scale).rgba * vec4(tint, 1.0);
+    return texture2D(source, offset + in_tex * scale).rgba * tint;
 }
 
 void main()
