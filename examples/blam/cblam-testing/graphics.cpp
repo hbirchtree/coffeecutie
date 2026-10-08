@@ -793,22 +793,7 @@ i32 blam_main()
                             net.changes.transform = net.changes.viewport = true;
                         }
                         if(controller_connected)
-                        {
                             input.back |= controller_buttons().back;
-
-                            input.forge.cancel |= controller_buttons().b;
-                            input.forge.accept |= controller_buttons().a;
-                            input.forge.up     |= controller_buttons().p_up;
-                            input.forge.down   |= controller_buttons().p_down;
-                            input.forge.left   |= controller_buttons().p_left;
-                            input.forge.right  |= controller_buttons().p_right;
-                        }
-
-                        /* Forge menu input */
-                        if(input.forge.up)
-                            input.forge.nav_y = std::max(1u, input.forge.nav_y - 1);
-                        if(input.forge.down)
-                            input.forge.nav_y = std::min(10u, input.forge.nav_y + 1);
                     } else if(!info.is_remote())
                     {
                         cam.camera.position = freecam_pos;
