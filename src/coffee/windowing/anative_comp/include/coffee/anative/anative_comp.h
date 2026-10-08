@@ -81,6 +81,8 @@ struct KeyboardInput
 {
     void startWriting() const;
     void stopWriting() const;
+
+    mutable bool m_writing{false};
 };
 
 struct MouseInput
@@ -95,6 +97,7 @@ struct MouseInput
 
     comp_app::position_t m_position{};
     MouseButton          m_buttons{MouseButton::NoneBtn};
+    MouseButton m_contactButton{MouseButton::NoneBtn};
 };
 
 struct AndroidEventBus

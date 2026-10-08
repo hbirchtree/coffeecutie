@@ -156,6 +156,13 @@ struct input_method_manager
     static void hide_soft_input();
 };
 
+struct key_character_map
+{
+    /* Unicode code point for the key, 0 if it produces none */
+    static libc_types::i32 unicode_char(
+        libc_types::i32 device, libc_types::i32 keycode, libc_types::i32 meta);
+};
+
 struct network_stats
 {
     enum network_class

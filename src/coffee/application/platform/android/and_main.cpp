@@ -440,6 +440,24 @@ void input_method_manager::hide_soft_input()
     input_method_manager[hideSoftInputFromWindow](token, 0);
 }
 
+libc_types::i32 key_character_map::unicode_char(
+    libc_types::i32 device, libc_types::i32 keycode, libc_types::i32 meta)
+{
+    auto KeyCharacterMap = "android.view.KeyCharacterMap"_jclass;
+    auto load = "load"_jmethod.arg<jint>().ret("android.view.KeyCharacterMap");
+    auto get  = "get"_jmethod.arg<jint>().arg<jint>().ret<re::int_>();
+
+    try
+    {
+        auto map = KeyCharacterMap[load](device);
+        return map[get](keycode, meta);
+    } catch(jnipp::java_exception const&)
+    {
+        /* Device went away between the event and the lookup */
+        return 0;
+    }
+}
+
 std::optional<network_stats::result_t> network_stats::query(network_class net)
 {
     if(coffee_app->activity->sdkVersion < 23)

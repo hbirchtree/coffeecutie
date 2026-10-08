@@ -220,6 +220,7 @@ void KeyboardInput::startWriting() const
     //         ANativeActivity_showSoftInput(
     //             (*window).activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
     // #endif
+    m_writing = true;
     android::input_method_manager::show_soft_input();
 }
 
@@ -231,6 +232,7 @@ void KeyboardInput::stopWriting() const
     //             (*window).activity,
     //             ANATIVEACTIVITY_HIDE_SOFT_INPUT_IMPLICIT_ONLY);
     // #endif
+    m_writing = false;
     android::input_method_manager::hide_soft_input();
 }
 
@@ -282,115 +284,105 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
     using namespace libc_types;
     using namespace Coffee::Input;
     using MouseButton = MouseInput::MouseButton;
-    using IBus        = comp_app::BasicEventBus<CIEvent>;
 
-    IBus*                inputBus = m_container->service<IBus>();
-    anative::MouseInput* mouse    = m_container->service<anative::MouseInput>();
+    anative::MouseInput* mouse = m_container->service<anative::MouseInput>();
 
-    i32 type = AInputEvent_getType(event);
-    // AMotionEvent_getMetaState
+    if(i32 type = AInputEvent_getType(event); type != AINPUT_EVENT_TYPE_MOTION)
+    {
+        Coffee::cDebug("Unrecognized mouse event: {0}", type);
+        return;
+    }
 
-    constexpr std::array<MouseButton, 3> supported_buttons = {{
+    const auto action =
+        AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
+    const Vecf2 pos{AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0)};
+    const Vecf2 previous{
+        static_cast<f32>(mouse->m_position.x),
+        static_cast<f32>(mouse->m_position.y),
+    };
+
+    constexpr std::array<std::pair<i32, MouseButton>, 7> mapping           = {{
+        {AMOTION_EVENT_BUTTON_PRIMARY, MouseButton::LeftButton},
+        {AMOTION_EVENT_BUTTON_SECONDARY, MouseButton::RightButton},
+        {AMOTION_EVENT_BUTTON_TERTIARY, MouseButton::MiddleButton},
+        {AMOTION_EVENT_BUTTON_BACK, MouseButton::X1Button},
+        {AMOTION_EVENT_BUTTON_FORWARD, MouseButton::X2Button},
+        {AMOTION_EVENT_BUTTON_STYLUS_PRIMARY, MouseButton::RightButton},
+        {AMOTION_EVENT_BUTTON_STYLUS_SECONDARY, MouseButton::MiddleButton},
+    }};
+    constexpr std::array<MouseButton, 5>                 supported_buttons = {{
         MouseButton::LeftButton,
         MouseButton::MiddleButton,
         MouseButton::RightButton,
+        MouseButton::X1Button,
+        MouseButton::X2Button,
     }};
 
-    switch(type)
+    const i32   native_buttons = AMotionEvent_getButtonState(event);
+    MouseButton held           = MouseButton::NoneBtn;
+    for(auto [native, mapped] : mapping)
+        if(native_buttons & native)
+            held |= mapped;
+
+    if(action == AMOTION_EVENT_ACTION_DOWN && native_buttons == 0)
+        mouse->m_contactButton = MouseButton::LeftButton;
+    else if(
+        action == AMOTION_EVENT_ACTION_UP ||
+        action == AMOTION_EVENT_ACTION_CANCEL)
+        mouse->m_contactButton = MouseButton::NoneBtn;
+    held |= mouse->m_contactButton;
+
+    CIEvent ievent;
+
+    switch(action)
     {
-    case AINPUT_EVENT_TYPE_MOTION: {
-        auto action         = AMotionEvent_getAction(event);
-        auto x              = AMotionEvent_getX(event, 0);
-        auto y              = AMotionEvent_getY(event, 0);
-        auto currentButtons = [event, mouse]() {
-            constexpr std::array<std::pair<int, MouseButton>, 3> mapping = {{
-                {AMOTION_EVENT_BUTTON_PRIMARY, MouseButton::LeftButton},
-                {AMOTION_EVENT_BUTTON_SECONDARY, MouseButton::RightButton},
-                {AMOTION_EVENT_BUTTON_TERTIARY, MouseButton::MiddleButton},
-            }};
-            auto         android_buttons = AMotionEvent_getButtonState(event);
-            MouseButton& buttons         = mouse->m_buttons;
-            MouseButton  changed         = MouseButton::NoneBtn;
-            for(auto [native, mapped] : mapping)
-            {
-                const bool current  = android_buttons & native;
-                const bool previous = buttons & mapped;
-                if(current == previous)
-                    continue;
-
-                if(current)
-                    buttons |= mapped;
-                else
-                    buttons = buttons & (MouseButton::AllButtons ^ mapped);
-                changed |= mapped;
-            }
-            return changed;
-        }();
-
-        CIEvent ievent;
-
-        switch(action)
-        {
-        case AMOTION_EVENT_ACTION_HOVER_ENTER:
-        case AMOTION_EVENT_ACTION_HOVER_MOVE: {
-            ievent.type = CIEvent::MouseMove;
-            CIMouseMoveEvent hover;
-            hover.origin = Vecf2{x, y};
-            hover.delta  = {};
-            inputBus->inject(ievent, &hover);
-            break;
-        }
-        case AMOTION_EVENT_ACTION_BUTTON_PRESS:
-        case AMOTION_EVENT_ACTION_BUTTON_RELEASE: {
-            for(auto button : supported_buttons)
-            {
-                if((button & currentButtons) == MouseButton::NoneBtn)
-                    continue;
-                const bool current = mouse->buttons() & button;
-                ievent.type        = CIEvent::MouseButton;
-                CIMouseButtonEvent click;
-                click.btn = button;
-                click.mod = current ? CIMouseButtonEvent::Pressed
-                                    : CIMouseButtonEvent::NoneModifier;
-                click.pos = Vecf2(x, y);
-                inputBus->inject(ievent, &click);
-                cDebug(
-                    "Click: {} = {}:{}",
-                    click.pos,
-                    static_cast<int>(click.btn),
-                    static_cast<int>(click.mod));
-            }
-
-            break;
-        }
-        case AMOTION_EVENT_ACTION_UP:
-        case AMOTION_EVENT_ACTION_DOWN: {
-            ievent.type = CIEvent::MouseButton;
-            CIMouseButtonEvent click;
-
-            auto buttons = AMotionEvent_getButtonState(event);
-            click.btn    = buttons & AMOTION_EVENT_BUTTON_STYLUS_PRIMARY
-                               ? MouseButton::RightButton
-                               : MouseButton::LeftButton;
-
-            click.mod = action == AMOTION_EVENT_ACTION_DOWN
-                            ? CIMouseButtonEvent::Pressed
-                            : CIMouseButtonEvent::NoneModifier;
-            click.pos = Vecf2(x, y);
-            inputBus->inject(ievent, &click);
-            break;
-        }
-        default:
-            break;
-        }
-
-        mouse->m_position = comp_app::position_t(x, y);
-
+    case AMOTION_EVENT_ACTION_HOVER_ENTER:
+    case AMOTION_EVENT_ACTION_HOVER_MOVE:
+    case AMOTION_EVENT_ACTION_MOVE: {
+        ievent.type = CIEvent::MouseMove;
+        /* Consumers take origin + delta as the new position */
+        CIMouseMoveEvent move =
+            action == AMOTION_EVENT_ACTION_HOVER_ENTER
+                ? CIMouseMoveEvent(pos)
+                : CIMouseMoveEvent(previous, pos - previous);
+        move.btn = static_cast<u8>(mouse->m_buttons);
+        m_inputBus->inject(ievent, &move);
+        break;
+    }
+    case AMOTION_EVENT_ACTION_SCROLL: {
+        ievent.type = CIEvent::Scroll;
+        CIScrollEvent scroll(
+            Vecf2{
+                AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HSCROLL, 0),
+                AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_VSCROLL, 0),
+            });
+        m_inputBus->inject(ievent, &scroll);
         break;
     }
     default:
-        Coffee::cDebug("Unrecognized mouse event: {0}", type);
         break;
+    }
+
+    mouse->m_position = comp_app::position_t(pos.x, pos.y);
+
+    /* Diff against the last state rather than trusting the action, the order
+     * of DOWN/BUTTON_PRESS and BUTTON_RELEASE/UP differs between devices */
+    for(auto button : supported_buttons)
+    {
+        const bool current = held & button;
+        if(current == static_cast<bool>(mouse->m_buttons & button))
+            continue;
+
+        mouse->m_buttons = current ? (mouse->m_buttons | button)
+                                   : (mouse->m_buttons & ~button);
+
+        ievent.type = CIEvent::MouseButton;
+        CIMouseButtonEvent click;
+        click.btn = button;
+        click.mod = current ? CIMouseButtonEvent::Pressed
+                            : CIMouseButtonEvent::NoneModifier;
+        click.pos = pos;
+        m_inputBus->inject(ievent, &click);
     }
 }
 
@@ -534,12 +526,16 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     i32 source   = AInputEvent_getSource(event);
     i32 deviceId = AInputEvent_getDeviceId(event);
 
-    i32                  button = AKeyEvent_getKeyCode(event);
-    i32                  flags  = AKeyEvent_getFlags(event);
-    [[maybe_unused]] i32 action = AKeyEvent_getAction(event);
-    [[maybe_unused]] i32 meta   = AKeyEvent_getMetaState(event);
+    i32 button = AKeyEvent_getKeyCode(event);
+    i32 flags  = AKeyEvent_getFlags(event);
+    i32 action = AKeyEvent_getAction(event);
+    i32 meta   = AKeyEvent_getMetaState(event);
+    i32 repeat = AKeyEvent_getRepeatCount(event);
 
     if(flags & AKEY_EVENT_FLAG_WOKE_HERE)
+        return;
+    /* Only carries a character string, which the NDK cannot read */
+    if(action == AKEY_EVENT_ACTION_MULTIPLE)
         return;
 
     if(flags & AKEY_EVENT_FLAG_KEEP_TOUCH_MODE)
@@ -551,18 +547,53 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
         m_appBus->inject(event, &switch_);
     }
 
-    const auto keyEvent = [this, flags, action, meta](u16 button) {
+    const auto keyEvent = [this, action, meta, repeat](u32 button) {
         CIEvent event;
         event.type = CIEvent::Keyboard;
         CIKeyEvent key;
         key.key = button;
         key.mod = action == AKEY_EVENT_ACTION_DOWN ? CIKeyEvent::PressedModifier
-                  : action == AKEY_EVENT_ACTION_MULTIPLE
-                      ? CIKeyEvent::RepeatedModifier
-                      : CIKeyEvent::NoneModifier;
+                                                   : CIKeyEvent::NoneModifier;
+        if(repeat > 0)
+            key.mod |= CIKeyEvent::RepeatedModifier;
         key.mod |= meta_to_key_modifier(meta);
         m_inputBus->inject(event, &key);
     };
+
+    if(auto keyboard = m_container->service<anative::KeyboardInput>();
+       keyboard && keyboard->m_writing && action == AKEY_EVENT_ACTION_DOWN)
+    {
+        const u32 cp = static_cast<u32>(
+            android::key_character_map::unicode_char(deviceId, button, meta));
+        /* Skip control characters and dead keys (COMBINING_ACCENT) */
+        if(cp >= 0x20 && cp != 0x7F && cp <= 0x10FFFF)
+        {
+            CIWriteEvent write;
+            if(cp < 0x80)
+                write.text.push_back(static_cast<char>(cp));
+            else if(cp < 0x800)
+                write.text += {
+                    static_cast<char>(0xC0 | (cp >> 6)),
+                    static_cast<char>(0x80 | (cp & 0x3F)),
+                };
+            else if(cp < 0x10000)
+                write.text += {
+                    static_cast<char>(0xE0 | (cp >> 12)),
+                    static_cast<char>(0x80 | ((cp >> 6) & 0x3F)),
+                    static_cast<char>(0x80 | (cp & 0x3F)),
+                };
+            else
+                write.text += {
+                    static_cast<char>(0xF0 | (cp >> 18)),
+                    static_cast<char>(0x80 | ((cp >> 12) & 0x3F)),
+                    static_cast<char>(0x80 | ((cp >> 6) & 0x3F)),
+                    static_cast<char>(0x80 | (cp & 0x3F)),
+                };
+            CIEvent ievent;
+            ievent.type = CIEvent::TextInput;
+            m_inputBus->inject(ievent, &write);
+        }
+    }
 
     if(button >= AKEYCODE_0 && button <= AKEYCODE_9)
     {
@@ -577,6 +608,11 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     if(button >= AKEYCODE_F1 && button <= AKEYCODE_F12)
     {
         keyEvent(CK_F1 + (button - AKEYCODE_F1));
+        return;
+    }
+    if(button >= AKEYCODE_NUMPAD_0 && button <= AKEYCODE_NUMPAD_9)
+    {
+        keyEvent(CK_KP_0 + (button - AKEYCODE_NUMPAD_0));
         return;
     }
 
@@ -594,15 +630,19 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
         navEvent(comp_app::NavigationEvent::Back);
         break;
     case AKEYCODE_DPAD_LEFT:
+        keyEvent(CK_Left);
         navEvent(comp_app::NavigationEvent::Left);
         break;
     case AKEYCODE_DPAD_RIGHT:
+        keyEvent(CK_Right);
         navEvent(comp_app::NavigationEvent::Right);
         break;
     case AKEYCODE_DPAD_UP:
+        keyEvent(CK_Up);
         navEvent(comp_app::NavigationEvent::Up);
         break;
     case AKEYCODE_DPAD_DOWN:
+        keyEvent(CK_Down);
         navEvent(comp_app::NavigationEvent::Down);
         break;
     case AKEYCODE_DPAD_CENTER:
@@ -613,10 +653,43 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     case AKEYCODE_SHIFT_RIGHT: keyEvent(CK_RShift); break;
     case AKEYCODE_CTRL_LEFT: keyEvent(CK_LCtrl); break;
     case AKEYCODE_CTRL_RIGHT: keyEvent(CK_RCtrl); break;
+    case AKEYCODE_ALT_LEFT: keyEvent(CK_LAlt); break;
+    case AKEYCODE_ALT_RIGHT: keyEvent(CK_AltGr); break;
+    case AKEYCODE_META_LEFT: keyEvent(CK_LSuper); break;
+    case AKEYCODE_META_RIGHT: keyEvent(CK_RSuper); break;
+    case AKEYCODE_CAPS_LOCK: keyEvent(CK_CapsLock); break;
+    case AKEYCODE_NUM_LOCK: keyEvent(CK_NumLock); break;
+    case AKEYCODE_MENU: keyEvent(CK_Menu); break;
+    case AKEYCODE_SYSRQ: keyEvent(CK_PrntScrn); break;
+    case AKEYCODE_BREAK: keyEvent(CK_Pause); break;
+    case AKEYCODE_ESCAPE: keyEvent(CK_Escape); break;
+    case AKEYCODE_TAB: keyEvent(CK_HTab); break;
     case AKEYCODE_SPACE: keyEvent(CK_Space); break;
     case AKEYCODE_ENTER: keyEvent(CK_EnterNL); break;
-    case AKEYCODE_DEL: keyEvent(CK_Delete); break;
-    case AKEYCODE_FORWARD_DEL: keyEvent(CK_BackSpace); break;
+    case AKEYCODE_DEL: keyEvent(CK_BackSpace); break;
+    case AKEYCODE_FORWARD_DEL: keyEvent(CK_Delete); break;
+    case AKEYCODE_INSERT: keyEvent(CK_Insert); break;
+    case AKEYCODE_MOVE_HOME: keyEvent(CK_Home); break;
+    case AKEYCODE_MOVE_END: keyEvent(CK_End); break;
+    case AKEYCODE_PAGE_UP: keyEvent(CK_PgUp); break;
+    case AKEYCODE_PAGE_DOWN: keyEvent(CK_PgDn); break;
+    case AKEYCODE_NUMPAD_ENTER: keyEvent(CK_KP_Enter); break;
+    case AKEYCODE_NUMPAD_MULTIPLY: keyEvent(CK_KP_Mul); break;
+    case AKEYCODE_NUMPAD_SUBTRACT: keyEvent(CK_KP_Sub); break;
+    case AKEYCODE_NUMPAD_ADD: keyEvent(CK_KP_Add); break;
+    case AKEYCODE_NUMPAD_DIVIDE: keyEvent(CK_KP_Div); break;
+    case AKEYCODE_NUMPAD_COMMA: keyEvent(CK_KP_Comma); break;
+    case AKEYCODE_GRAVE: keyEvent('`'); break;
+    case AKEYCODE_MINUS: keyEvent('-'); break;
+    case AKEYCODE_EQUALS: keyEvent('='); break;
+    case AKEYCODE_LEFT_BRACKET: keyEvent('['); break;
+    case AKEYCODE_RIGHT_BRACKET: keyEvent(']'); break;
+    case AKEYCODE_BACKSLASH: keyEvent('\\'); break;
+    case AKEYCODE_SEMICOLON: keyEvent(';'); break;
+    case AKEYCODE_APOSTROPHE: keyEvent('\''); break;
+    case AKEYCODE_SLASH: keyEvent('/'); break;
+    case AKEYCODE_COMMA: keyEvent(','); break;
+    case AKEYCODE_PERIOD: keyEvent('.'); break;
         // clang-format on
     default:
         cDebug("Keycode: {0} {1} {2}", deviceId, source, button);
