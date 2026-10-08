@@ -93,7 +93,7 @@
         },
         {
             "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
-            "displayName": "Beaglebone ARMv7 TI-SGX OpenGL ES 2.0 (NullWS)",
+            "displayName": "Beaglebone ARMv7 TI-SGX OpenGL ES 2.0 (NullWS, Cortex-A8, NEON+VFPv3)",
             "inherits": ["vcpkg-base-linux-egl-es20"],
             "cacheVariables": {
                 "BUILD_GLSCREENSHOT": "ON",
@@ -108,7 +108,7 @@
         },
         {
             "name": "desktop-x86_64-buildroot-linux-gnu-multi",
-            "displayName": "Linux x86_64v3 AVX2 Core OpenGL (SDL3)",
+            "displayName": "Linux x86_64v3 Core OpenGL (SDL3, AVX2)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -131,7 +131,7 @@
         },
         {
             "name": "desktop-x64-linux-multi",
-            "displayName": "Linux x86_64 AVX2 Core OpenGL (SDL3) (System libs)",
+            "displayName": "Linux x86_64 AVX2 Core OpenGL (SDL3, system libs)",
             "inherits": ["vcpkg-base"],
             "generator": "Ninja",
             "condition": {
@@ -164,7 +164,7 @@
         },
         {
             "name": "desktop-x86_64v2-buildroot-linux-gnu-multi",
-            "displayName": "Linux x86_64v2 SSE4.2 Core OpenGL (SDL3)",
+            "displayName": "Linux x86_64v2 Core OpenGL (SDL3, SSE4.2)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
@@ -186,7 +186,7 @@
         },
         {
             "name": "desktop-aarch64-buildroot-linux-gnu-multi",
-            "displayName": "Linux ARMv8.1 OpenGL ES 3.x (SDL3)",
+            "displayName": "Linux ARMv8 OpenGL ES 3.x (SDL3, ARMv8)",
             "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
                 "BUILD_GLSCREENSHOT": "ON",
