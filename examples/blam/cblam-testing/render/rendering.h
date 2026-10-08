@@ -60,9 +60,6 @@ struct ScreenClear
     std::shared_ptr<gfx::program_t> blur_down_program;
     std::shared_ptr<gfx::program_t> blur_up_program;
 
-    std::shared_ptr<gfx::texture_2d_t> forge_cursor;
-    std::shared_ptr<gfx::sampler_t>    forge_cursor_smp;
-
     struct screen_quad_t
     {
         Vecf2                         position; /* Position in display coords */
