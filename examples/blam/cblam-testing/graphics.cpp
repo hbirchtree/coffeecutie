@@ -10,7 +10,9 @@
 #include "map_marker.h"
 #include "network/networking.h"
 #include "offline_maps.h"
+#include "animation_controller.h"
 #include "gameplay.h"
+#include "impact_sounds.h"
 #include "physics.h"
 #if defined(POC_COMBAT)
 #include "poc/app_combat.h"
@@ -266,6 +268,8 @@ i32 blam_main()
             alloc_occluder(e);
             alloc_physics(e);
             alloc_gameplay(e);
+            alloc_animation_controller(e);
+            alloc_impact_sounds(e);
             alloc_scripting(e);
             setup_load_eventhandlers(e);
             alloc_camera_control(e);
@@ -865,9 +869,12 @@ i32 blam_main()
                                 controller_buttons().x) ||
                                (cam.keyboard.enabled &&
                                 key_pressed(Input::CK_f)),
-                        .grab = controller_connected &&
-                                controllers->state(*cam.controller.index)
-                                        .axes.e.t_r > trigger_pressed,
+                        .grab = (controller_connected &&
+                                 controllers->state(*cam.controller.index)
+                                         .axes.e.t_r > trigger_pressed) ||
+                                (cam.keyboard.enabled &&
+                                 (input.mouse_buttons &
+                                  Input::CIMouseButtonEvent::RightButton)),
                     };
 
                     /* Sampled in every mode, freecam included */
@@ -950,15 +957,18 @@ i32 blam_main()
 
 
                 /* The biped stands under its camera, turned only by yaw,
-                 * the way scenery is placed */
-                Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) *
-                                      Vecf3{0.f, 0.f, -1.f};
-                mod.position =
-                    cam.camera.position - Vecf3{0, 0, info.biped.eye_height};
-                mod.rotation =
-                    Quatf(Vecf3(0, 0, std::atan2(forward.y, forward.x)));
-                mod.transform = glm::translate(Matf4(1), mod.position) *
-                                glm::mat4_cast(mod.rotation);
+                 * the way scenery is placed; Gameplay seats a rider's */
+                if(info.riding.vehicle == 0)
+                {
+                    Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) *
+                                          Vecf3{0.f, 0.f, -1.f};
+                    mod.position = cam.camera.position -
+                                   Vecf3{0, 0, info.biped.eye_height};
+                    mod.rotation =
+                        Quatf(Vecf3(0, 0, std::atan2(forward.y, forward.x)));
+                    mod.transform = glm::translate(Matf4(1), mod.position) *
+                                    glm::mat4_cast(mod.rotation);
+                }
             }
 
             /* Controllers no player owns still drive the menus, seated by

@@ -66,6 +66,7 @@ blam::map_ptr g_magic;
 blam::map_ptr g_raw_magic;
 bool          g_dump_hex = false;
 bool          g_dump_mirrors  = false;
+bool          g_dump_overlay_frames = false;
 size_t        g_scan_window   = 0;
 bool          g_find_refs     = false;
 bool          g_dump_player   = false;
@@ -2229,10 +2230,104 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
     }
 }
 
+/* Each animated node's rotation (axis*angle, degrees) and translation per
+ * frame. Overlay frames are deltas, so an aim/look grid's centre is zero */
+void dump_overlay_frames(blam::antr::animation const& anim)
+{
+    auto frames = anim.frame_data.data(g_magic);
+    if(anim.is_compressed() || !frames.has_value() || anim.frame_size <= 0)
+        return;
+    auto       bytes = frames.value();
+    auto quat_at = [&](i32 frame, u32 node) {
+        size_t off = static_cast<size_t>(frame) * anim.frame_size;
+        for(u32 i = 0; i < node; i++)
+            off += (anim.has_rotation(i) ? 8 : 0) +
+                   (anim.has_translation(i) ? 12 : 0) +
+                   (anim.has_scale(i) ? 4 : 0);
+        if(off + 8 > bytes.size())
+            return Quatf(1, 0, 0, 0);
+        return glm::conjugate(
+            reinterpret_cast<blam::antr::compressed_quat_t const*>(
+                bytes.data() + off)
+                ->decompress());
+    };
+    for(u32 node = 0; node < static_cast<u32>(anim.node_count); node++)
+    {
+        if(!anim.has_rotation(node))
+            continue;
+        fmt::print("      node {}:", node);
+        for(i32 frame = 0; frame < anim.frame_count; frame++)
+        {
+            Quatf const d     = quat_at(frame, node);
+            f32 const   angle = glm::degrees(glm::angle(d));
+            Vecf3 const axis  = angle > .5f ? glm::axis(d) * angle : Vecf3(0);
+            fmt::print(" [{:.0f} {:.0f} {:.0f}]", axis.x, axis.y, axis.z);
+        }
+        fmt::print("\n");
+    }
+    for(u32 node = 0; node < static_cast<u32>(anim.node_count); node++)
+    {
+        if(!anim.has_translation(node))
+            continue;
+        fmt::print("      node {} translation:", node);
+        for(i32 frame = 0; frame < anim.frame_count; frame++)
+        {
+            size_t off = static_cast<size_t>(frame) * anim.frame_size;
+            for(u32 i = 0; i < node; i++)
+                off += (anim.has_rotation(i) ? 8 : 0) +
+                       (anim.has_translation(i) ? 12 : 0) +
+                       (anim.has_scale(i) ? 4 : 0);
+            off += anim.has_rotation(node) ? 8 : 0;
+            if(off + 12 > bytes.size())
+                break;
+            auto t = *reinterpret_cast<Vecf3 const*>(bytes.data() + off);
+            fmt::print(" [{:.3f} {:.3f} {:.3f}]", t.x, t.y, t.z);
+        }
+        fmt::print("\n");
+    }
+}
+
 void dump_antr(blam::antr::header const* animation)
 {
     fmt::print("  objects={}\n", animation->objects.count);
     fmt::print("  units={}\n", animation->units.count);
+    auto print_bounds = [](char const* what, blam::antr::screen_bounds const& b) {
+        fmt::print(
+            "      {}: yaw/frame R={:.4f} L={:.4f} frames R={} L={} pitch/frame "
+            "D={:.4f} U={:.4f} frames D={} U={}\n",
+            what,
+            b.right_yaw_per_frame,
+            b.left_yaw_per_frame,
+            b.right_frame_count,
+            b.left_frame_count,
+            b.down_pitch_per_frame,
+            b.up_pitch_per_frame,
+            b.down_pitch_frame_count,
+            b.up_pitch_frame_count);
+    };
+    auto print_slots = [](auto const& refs) {
+        if(!refs.has_value())
+            return;
+        fmt::print("        slots:");
+        for(auto [i, ref] : stl_types::enumerate(refs.value()))
+            if(ref.animation >= 0)
+                fmt::print(" {}={}", i, ref.animation);
+        fmt::print("\n");
+    };
+    if(auto units = animation->units.data(g_magic); units.has_value())
+        for(auto [i, unit] : stl_types::enumerate(units.value()))
+        {
+            fmt::print("    unit {}: label={}\n", i, unit.label.str());
+            print_bounds("looking", unit.looking_bounds);
+            print_slots(unit.animations.data(g_magic));
+            if(auto weapons = unit.weapons.data(g_magic); weapons.has_value())
+                for(auto [j, weapon] : stl_types::enumerate(weapons.value()))
+                {
+                    fmt::print("      weapon {}: name={}\n", j, weapon.name.str());
+                    print_bounds("aiming", weapon.aiming_bounds);
+                    print_slots(weapon.animations.data(g_magic));
+                }
+        }
     fmt::print("  weapons={}\n", animation->weapons.count);
     fmt::print("  vehicles={}\n", animation->vehicles.count);
     fmt::print("  devices={}\n", animation->devices.count);
@@ -2268,6 +2363,8 @@ void dump_antr(blam::antr::header const* animation)
             anim.left_foot_frame_index,
             anim.right_foot_frame_index,
             anim.next_animation);
+        if(g_dump_overlay_frames && anim.type == blam::antr::anim_type::overlay)
+            dump_overlay_frames(anim);
     }
 }
 
@@ -4242,6 +4339,8 @@ int inspect_main()
          cxxopts::value<std::string>())
         //
         ("dump-mirrors", "Walk BSP clusters and report their mirror blocks")
+        ("dump-overlay-frames",
+         "For antr overlays, print each frame's node deltas")
         //
         ("scan-tagrefs",
          "Scan this many bytes of each tag for embedded tag references",
@@ -4292,6 +4391,7 @@ int inspect_main()
     bool list_only  = arguments.count("list") > 0;
     g_dump_hex      = arguments.count("dump-hex") > 0;
     g_dump_mirrors  = arguments.count("dump-mirrors") > 0;
+    g_dump_overlay_frames = arguments.count("dump-overlay-frames") > 0;
     g_find_refs     = arguments.count("find-refs") > 0;
     g_dump_player   = arguments.count("dump-player-biped") > 0;
     g_dump_scenario = arguments.count("dump-scenario") > 0;

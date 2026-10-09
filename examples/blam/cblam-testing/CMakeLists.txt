@@ -40,6 +40,8 @@ coffee_application(
         caching.cpp
         camera_control.cpp
         gameplay.cpp
+        animation_controller.cpp
+        impact_sounds.cpp
         debug_ui/widgets.cpp
         forge_controller.cpp
         graphics.cpp

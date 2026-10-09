@@ -5,6 +5,7 @@
 #include <chrono>
 #include <future>
 #include <limits>
+#include <string>
 
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_stl.h>
@@ -573,9 +574,23 @@ struct UnitExitVehicleEvent
     libc_types::u64 unit{0};
 };
 
+/*! Plays an animation from an entity's own graph, as custom_animation does
+ *  for scripts. Composes by the animation's own type: a base one crossfades
+ *  in and holds off the unit's own movement until it ends, a replacement
+ *  plays in the action slot, an overlay on top. An empty name with no index
+ *  fades the entity's custom animations out. */
 struct PlayModelAnimationEvent
 {
     static constexpr auto event_type = GameEvent::PlayModelAnimation;
+
+    libc_types::u64 entity{0};
+    std::string     name{};       /*!< e.g. "stand rifle melee" */
+    libc_types::i32 animation{-1}; /*!< Index into the graph, wins over name */
+
+    bool            loop{false};
+    libc_types::f32 fade{.2f}; /*!< Seconds to blend in, 0 = cut */
+    libc_types::f32 rate{1.f};
+    libc_types::f32 weight{1.f};
 };
 
 struct PlayerTeleportEvent

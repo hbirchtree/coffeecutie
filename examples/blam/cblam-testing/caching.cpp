@@ -727,7 +727,7 @@ blam::antr::animation const* ModelCache<V>::find_animation(
         return nullptr;
 
     auto const& anim = anims[layer.animation];
-    if(anim.is_compressed() || anim.frame_count <= 0 || anim.frame_size <= 0)
+    if(anim.is_compressed() || anim.frame_count <= 0 || anim.frame_size < 0)
         return nullptr;
 
     return &anim;
@@ -748,11 +748,14 @@ bool ModelCache<V>::sample_animation(
 {
     auto default_bytes_opt = anim.default_data.data(magic);
     auto frame_bytes_opt   = anim.frame_data.data(magic);
-    if(!default_bytes_opt.has_value() || !frame_bytes_opt.has_value())
+    if(!default_bytes_opt.has_value() ||
+       (!frame_bytes_opt.has_value() && anim.frame_size > 0))
         return false;
 
     auto default_bytes = default_bytes_opt.value();
-    auto frame_bytes   = frame_bytes_opt.value();
+    auto frame_bytes   = frame_bytes_opt.has_value()
+                             ? frame_bytes_opt.value()
+                             : semantic::Span<const byte_t>{};
 
     rot.assign(node_count, Quatf(1, 0, 0, 0));
     trans.assign(node_count, Vecf3(0));
@@ -822,13 +825,59 @@ static bool foot_down(
     return f > from || (f >= start && f <= to);
 }
 
+/* Whether a key frame was passed going from one frame position to the next;
+ * inclusive of where the layer starts, so a key on frame 0 is heard */
+static bool key_passed(i32 key, i32 count, f32 from, f32 to, f32 start)
+{
+    if(key < 0 || key >= count)
+        return false;
+    f32 const f = static_cast<f32>(key);
+    if(to >= from)
+        return f >= from && f < to;
+    return f >= from || (f >= start && f < to);
+}
+
 template<typename V>
 void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
 {
     anim.footsteps = AnimationPlayback::no_feet;
+    anim.cue_count = 0;
+
+    /* Synced layers follow the heaviest one's phase */
+    AnimationLayer* lead = nullptr;
     for(auto& layer : anim.layers)
+        if(layer.sync && layer.active() &&
+           (!lead || layer.weight > lead->weight))
+            lead = &layer;
+    f32 lead_phase = -1.f;
+
+    std::array<AnimationLayer*, AnimationPlayback::max_layers> order{};
+    size_t                                                     count = 0;
+    if(lead)
+        order[count++] = lead;
+    for(auto& layer : anim.layers)
+        if(&layer != lead)
+            order[count++] = &layer;
+
+    for(size_t i = 0; i < count; i++)
     {
-        if(!layer.active() || layer.paused || layer.finished)
+        AnimationLayer& layer = *order[i];
+        if(!layer.graph)
+            continue;
+        if(layer.target >= 0.f && layer.weight != layer.target)
+        {
+            f32 const step = layer.fade > 0.f ? layer.fade * delta : 1.f;
+            layer.weight   = layer.weight < layer.target
+                                 ? std::min(layer.target, layer.weight + step)
+                                 : std::max(layer.target, layer.weight - step);
+        }
+        if(layer.weight <= 0.f && layer.target == 0.f)
+        {
+            layer = AnimationLayer{};
+            continue;
+        }
+        if(!layer.active() || layer.paused || layer.finished ||
+           layer.grid_columns > 0)
             continue;
 
         auto const* clip = find_animation(layer);
@@ -836,10 +885,15 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
             continue;
 
         f32 const rate   = frame_rate_of(*clip);
-        f32 const before = layer.time * rate;
-        layer.time = std::max(0.f, layer.time + delta * layer.rate);
-
         f32 const length = static_cast<f32>(clip->frame_count) / rate;
+        f32 const before = layer.time * rate;
+        bool const follower = layer.sync && lead && &layer != lead &&
+                              lead_phase >= 0.f;
+        if(follower)
+            layer.time = lead_phase * length;
+        else
+            layer.time = std::max(0.f, layer.time + delta * layer.rate);
+
         if(layer.time >= length && layer.loop)
         {
             /* A looping animation restarts at loop_frame, not at zero. */
@@ -849,12 +903,29 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
                                   ? start + std::fmod(layer.time - start, span)
                                   : start;
         }
+        if(&layer == lead)
+            lead_phase = length > 0.f ? layer.time / length : 0.f;
+
         f32 const after = layer.time * rate;
         f32 const start = static_cast<f32>(loop_start_frame(*clip));
-        if(foot_down(*clip, clip->left_foot_frame_index, before, after, start))
-            anim.footsteps |= AnimationPlayback::left_foot;
-        if(foot_down(*clip, clip->right_foot_frame_index, before, after, start))
-            anim.footsteps |= AnimationPlayback::right_foot;
+        /* A blend's feet are the lead's, or they would double up */
+        if(!follower)
+        {
+            if(foot_down(
+                   *clip, clip->left_foot_frame_index, before, after, start))
+                anim.footsteps |= AnimationPlayback::left_foot;
+            if(foot_down(
+                   *clip, clip->right_foot_frame_index, before, after, start))
+                anim.footsteps |= AnimationPlayback::right_foot;
+            if(clip->sound_index >= 0 && anim.cue_count < anim.cues.size() &&
+               key_passed(
+                   clip->sound_frame_index,
+                   clip->frame_count,
+                   before,
+                   after,
+                   start))
+                anim.cues[anim.cue_count++] = {layer.graph, clip->sound_index};
+        }
         if(layer.time < length)
             continue;
 
@@ -877,6 +948,53 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
 
 template void ModelCache<halo_version>::advance_playback(
     AnimationPlayback&, f32);
+
+/* Blends `from` toward `to` by t, node by node */
+static void mix_into(
+    std::vector<Quatf>&       rot,
+    std::vector<Vecf3>&       trans,
+    std::vector<Quatf> const& to_rot,
+    std::vector<Vecf3> const& to_trans,
+    f32                       t)
+{
+    for(size_t i = 0; i < rot.size(); i++)
+    {
+        rot[i]   = glm::slerp(rot[i], to_rot[i], t);
+        trans[i] = glm::mix(trans[i], to_trans[i], t);
+    }
+}
+
+/* Bilinear between the four grid frames around a layer's cell */
+template<typename V>
+bool ModelCache<V>::sample_grid(
+    blam::antr::animation const& clip, AnimationLayer const& layer, u32 n)
+{
+    i32 const cols = layer.grid_columns;
+    i32 const rows = std::max(1, clip.frame_count / cols);
+    f32 const x    = std::clamp(layer.cell.x, 0.f, static_cast<f32>(cols - 1));
+    f32 const y    = std::clamp(layer.cell.y, 0.f, static_cast<f32>(rows - 1));
+    i32 const c0   = static_cast<i32>(x);
+    i32 const r0   = static_cast<i32>(y);
+    i32 const c1   = std::min(c0 + 1, cols - 1);
+    i32 const r1   = std::min(r0 + 1, rows - 1);
+    f32 const fx   = x - static_cast<f32>(c0);
+    f32 const fy   = y - static_cast<f32>(r0);
+
+    auto frame = [&](i32 c, i32 r) {
+        return static_cast<u32>(std::min(r * cols + c, clip.frame_count - 1));
+    };
+    if(!sample_animation(clip, frame(c0, r0), n, m_layer_rot, m_layer_trans))
+        return false;
+    if(fx > 0.f && sample_animation(clip, frame(c1, r0), n, m_ref_rot, m_ref_trans))
+        mix_into(m_layer_rot, m_layer_trans, m_ref_rot, m_ref_trans, fx);
+    if(fy <= 0.f ||
+       !sample_animation(clip, frame(c0, r1), n, m_row_rot, m_row_trans))
+        return true;
+    if(fx > 0.f && sample_animation(clip, frame(c1, r1), n, m_ref_rot, m_ref_trans))
+        mix_into(m_row_rot, m_row_trans, m_ref_rot, m_ref_trans, fx);
+    mix_into(m_layer_rot, m_layer_trans, m_row_rot, m_row_trans, fy);
+    return true;
+}
 
 template<typename V>
 void ModelCache<V>::evaluate_pose(
@@ -914,6 +1032,7 @@ void ModelCache<V>::evaluate_pose(
         m_trans[i] = bones[i].translation;
     }
 
+    f32 base_weight = 0.f;
     for(auto const& layer : anim.layers)
     {
         if(!layer.active())
@@ -926,41 +1045,45 @@ void ModelCache<V>::evaluate_pose(
         f32 const rate  = frame_rate_of(*clip);
         u32 const count = static_cast<u32>(clip->frame_count);
 
-        f32 const position = layer.time * rate;
-        u32       f0       = static_cast<u32>(position);
-        if(f0 >= count)
-            f0 = count - 1;
-        u32 const f1    = f0 + 1 < count ? f0 + 1
-                          : layer.loop   ? loop_start_frame(*clip)
-                                         : f0;
-        f32 const blend = position - std::floor(position);
+        if(layer.grid_columns > 0)
+        {
+            if(!sample_grid(*clip, layer, n))
+                continue;
+        } else
+        {
+            f32 const position = layer.time * rate;
+            u32       f0       = static_cast<u32>(position);
+            if(f0 >= count)
+                f0 = count - 1;
+            u32 const f1    = f0 + 1 < count ? f0 + 1
+                              : layer.loop   ? loop_start_frame(*clip)
+                                             : f0;
+            f32 const blend = position - std::floor(position);
 
-        if(!sample_animation(*clip, f0, n, m_layer_rot, m_layer_trans))
-            continue;
+            if(!sample_animation(*clip, f0, n, m_layer_rot, m_layer_trans))
+                continue;
 
-        /* Source runs at 30Hz, we do not, so ride between the two frames. */
-        if(f1 != f0 && blend > 0.f &&
-           sample_animation(*clip, f1, n, m_ref_rot, m_ref_trans))
-            for(u32 i = 0; i < n; i++)
-            {
-                m_layer_rot[i] =
-                    glm::slerp(m_layer_rot[i], m_ref_rot[i], blend);
-                m_layer_trans[i] =
-                    glm::mix(m_layer_trans[i], m_ref_trans[i], blend);
-            }
+            /* Source runs at 30Hz, we do not, so ride between the two
+             * frames. */
+            if(f1 != f0 && blend > 0.f &&
+               sample_animation(*clip, f1, n, m_ref_rot, m_ref_trans))
+                mix_into(m_layer_rot, m_layer_trans, m_ref_rot, m_ref_trans, blend);
+        }
 
         f32 const w = std::clamp(layer.weight, 0.f, 1.f);
 
         switch(clip->type)
         {
         case blam::antr::anim_type::base:
-            /* Sets the whole skeleton. */
-            for(u32 i = 0; i < n; i++)
-            {
-                m_rot[i]   = glm::slerp(m_rot[i], m_layer_rot[i], w);
-                m_trans[i] = glm::mix(m_trans[i], m_layer_trans[i], w);
-            }
+        {
+            /* Sets the whole skeleton; base layers average by weight, so
+             * the first replaces the bind pose outright */
+            if(w <= 0.f)
+                break;
+            base_weight += w;
+            mix_into(m_rot, m_trans, m_layer_rot, m_layer_trans, w / base_weight);
             break;
+        }
         case blam::antr::anim_type::replacement:
             /* Only the nodes it animates; a lower layer keeps the rest. */
             for(u32 i = 0; i < n; i++)
@@ -972,21 +1095,15 @@ void ModelCache<V>::evaluate_pose(
             }
             break;
         case blam::antr::anim_type::overlay:
-            /* Offset from the overlay's own frame 0, added to what is
-             * already posed. */
-            if(!sample_animation(*clip, 0, n, m_ref_rot, m_ref_trans))
-                break;
+            /* Frames are deltas from the neutral pose (identity at an aim
+             * grid's centre), added to what is already posed. */
             for(u32 i = 0; i < n; i++)
             {
                 if(clip->has_rotation(i))
-                {
-                    Quatf offset =
-                        glm::conjugate(m_ref_rot[i]) * m_layer_rot[i];
-                    m_rot[i] =
-                        m_rot[i] * glm::slerp(Quatf(1, 0, 0, 0), offset, w);
-                }
+                    m_rot[i] = m_rot[i] *
+                               glm::slerp(Quatf(1, 0, 0, 0), m_layer_rot[i], w);
                 if(clip->has_translation(i))
-                    m_trans[i] += (m_layer_trans[i] - m_ref_trans[i]) * w;
+                    m_trans[i] += m_layer_trans[i] * w;
             }
             break;
         }

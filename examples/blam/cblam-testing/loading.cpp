@@ -948,7 +948,11 @@ struct ResourceLoader
 
         auto parent_ = p.create_entity(recipe);
         if(idle)
-            parent_.template get<AnimationPlayback>().layers[0] = *idle;
+        {
+            auto& anim     = parent_.template get<AnimationPlayback>();
+            anim.layers[0] = *idle;
+            anim.graph     = idle->graph;
+        }
         if(physics)
             parent_.template get<ObjectPhysics>() = std::move(*physics);
 
@@ -1479,7 +1483,11 @@ struct ResourceLoader
 
         auto ent = p.create_entity(recipe);
         if(idle)
-            ent.template get<AnimationPlayback>().layers[0] = *idle;
+        {
+            auto& anim     = ent.template get<AnimationPlayback>();
+            anim.layers[0] = *idle;
+            anim.graph     = idle->graph;
+        }
         if(physics)
             ent.template get<ObjectPhysics>() = std::move(*physics);
 
@@ -1599,15 +1607,16 @@ struct ResourceLoader
         std::vector<i32> polygon;
         for(auto const& node : nodes.value())
         {
-            Matf4 bind(1);
+            CollisionGeometry::node_t hull;
+            Matf4                     bind(1);
             for(u32 i = 0; i < bone_span.size(); i++)
                 if(bone_span[i].name.str() == node.name.str())
                 {
-                    bind = world_bind[i];
+                    bind      = world_bind[i];
+                    hull.bone = static_cast<i32>(i);
                     break;
                 }
 
-            CollisionGeometry::node_t hull;
             std::map<i16, u32>        uses;
             auto bsps = node.bsps.data(magic);
             if(bsps.has_error())
@@ -1829,6 +1838,20 @@ struct ResourceLoader
             };
         }
 
+        /* Light enough to carry about in forge */
+        if(tag.matches(tag_class_t::bipd))
+        {
+            auto collision =
+                object_collision(files, object.collider, object.model);
+            if(!collision)
+                return std::nullopt;
+            return ObjectPhysics{
+                .collision = std::move(collision),
+                .mass      = 1.f,
+                .upright   = true,
+            };
+        }
+
         if(!tag.matches(tag_class_t::weap) && !tag.matches(tag_class_t::eqip) &&
            !tag.matches(tag_class_t::garb))
             return std::nullopt;
@@ -1853,7 +1876,7 @@ struct ResourceLoader
         return out;
     }
 
-    /* Models follow biped_in_play(), and are remounted after a map load */
+    /* Models follow biped_shown(), and are remounted after a map load */
     void reconcile_player_bipeds(Proxy& p, BlamFiles<Ver> const& files)
     {
         LoadingStatus const* loading;
@@ -1896,7 +1919,7 @@ struct ResourceLoader
             p.template select<PlayerCamera, PlayerInfo, NetworkInfo, Model>())
         {
             auto [cam, info, net, model] = player.components();
-            if(!biped_model.model.valid() || !biped_in_play(info, cam, net))
+            if(!biped_model.model.valid() || !biped_shown(info, cam, net))
                 continue;
             /* The camera is the eye, keep the feet where they were */
             cam.camera.position.z +=

@@ -525,6 +525,7 @@ struct CollisionGeometry
     struct node_t
     {
         std::vector<Vecf3> points;
+        i32                bone{-1};
         bool               head{false};
     };
 
@@ -624,6 +625,7 @@ struct ObjectPhysics
     f32   radius{0.f};    /*!< Sphere instead of a box */
     f32   mass{0.f};      /*!< 0 = static */
     bool  item{false};    /*!< Only collides with the world and other items */
+    bool  upright{false}; /*!< Bipeds: never tip, hulls follow the pose */
 
     /*! Who moves a body with mass: this peer's simulation, or someone else
      * (the server) through Model, with the body following kinematically */
@@ -637,6 +639,7 @@ struct ObjectPhysics
     Vecf3 linear_velocity{};
     Vecf3 angular_velocity{};
     bool  sleeping{false};
+    bool  grounded{false}; /*!< Upright bodies: world geometry just under it */
 };
 
 struct PhysicsData
@@ -651,6 +654,7 @@ struct PhysicsData
 
     bool enabled{false};
     bool kinematic{false};
+    bool grounded{false};
 
     u64 grabbed{0}; /*!< Entity this player carries (forge), 0 = none */
 };
@@ -744,6 +748,7 @@ struct PlayerInfo
         u64  vehicle{0};
         i16  seat{-1};
         bool driver{false};
+        bool exiting{false};
     } riding;
 
     struct
@@ -797,6 +802,7 @@ struct PlayerInput
     } input_mode{input_mode_t::game};
 
     StandardCamera::Reg keys; /*!< held keys, from KeyboardInput */
+    libc_types::u32 mouse_buttons{0};
     Vecf2 look_delta{};       /*!< accumulated look; zeroed once applied */
     Vecf3 movement{};
     f32   accel{1.f}; /*!< speed modifier chosen by the source */
@@ -882,16 +888,22 @@ struct PlayerCamera
     }
 };
 
-/*! Whether a player should have a biped (model + collision body) */
-inline bool biped_in_play(
+/*! Whether a player's biped is drawn and animated, riders included */
+inline bool biped_shown(
     PlayerInfo const& info, PlayerCamera const& cam, NetworkInfo const& net)
 {
-    /* A rider is part of the vehicle */
-    if(!info.spawned || info.riding.vehicle != 0)
+    if(!info.spawned)
         return false;
     if(info.is_remote())
         return net.connected && info.loading_progress >= 100;
     return cam.is_active();
+}
+
+/*! Whether a player's biped also has a collision body */
+inline bool biped_in_play(
+    PlayerInfo const& info, PlayerCamera const& cam, NetworkInfo const& net)
+{
+    return info.riding.vehicle == 0 && biped_shown(info, cam, net);
 }
 
 struct CameraLerp

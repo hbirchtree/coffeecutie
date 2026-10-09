@@ -665,25 +665,14 @@ struct DrawListBuilder
         if(time - last_update <= std::chrono::seconds(10) && !invalidated)
             return;
 
-        /* Clocks move on once per frame; posing happens per viewport, and
-         * chaining to next_animation would double-step if it lived there.
-         * A hitch must not fling every animation forward, hence the clamp. */
+        /* Clocks are moved on by AnimationController; posing happens per
+         * viewport here */
         {
-            f32 delta = last_update.time_since_epoch().count() > 0
-                            ? stl_types::chrono::to_f32(time - last_update)
-                            : 0.f;
-            delta     = std::clamp(delta, 0.f, 0.25f);
-
-            ModelCache<Version>* model_cache;
-            p.subsystem(model_cache);
             u32 playbacks = 0;
             for(auto ent : p.template select<AnimationPlayback>())
             {
-                auto& anim     = ent.template get<AnimationPlayback>();
-                anim.bone_base = kBoneUnposed;
+                ent.template get<AnimationPlayback>().bone_base = kBoneUnposed;
                 playbacks++;
-                if(delta > 0.f)
-                    model_cache->advance_playback(anim, delta);
             }
             /* Last frame's figures. `denied` above zero means instances fell
              * back to their bind pose for want of window. */

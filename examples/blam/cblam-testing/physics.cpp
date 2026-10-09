@@ -17,6 +17,7 @@
 #include <BulletCollision/CollisionDispatch/btCollisionObject.h>
 #include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
 #include <BulletCollision/CollisionShapes/btCapsuleShape.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <BulletCollision/CollisionShapes/btCollisionShape.h>
 #include <BulletCollision/CollisionShapes/btConcaveShape.h>
 #include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
@@ -434,7 +435,8 @@ using PhysicsManifest = compo::SubsystemManifest<
         PhysicsData,
         PlayerCamera,
         const PlayerInfo,
-        const NetworkInfo>,
+        const NetworkInfo,
+        const AnimationPlayback>,
     type_list_t<const BSPCache<V>, DebugMarkers, const LoadingStatus>,
     empty_list_t>;
 
@@ -495,6 +497,7 @@ struct PhysicsSystem
         {
             reconcile_player_bodies(p);
             reconcile_object_bodies(p);
+            pose_hulls(p);
         }
 
         // Simulate when there is anything in the world: the Halo BSP body,
@@ -510,6 +513,7 @@ struct PhysicsSystem
         carry_grabbed(p);
         m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
         m_next_process_time = t + 16ms;
+        report_impacts();
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
          * contact manifolds for CF_NO_CONTACT_RESPONSE bodies, the solver
@@ -564,10 +568,11 @@ struct PhysicsSystem
                 break;
             m_markers = markers;
             markers->map();
+            draw_hulls(p, *markers);
             for(auto& [entity, body] : m_bodies)
             {
                 DebugDraw* debug = p.template get<DebugDraw>(entity);
-                if(!debug)
+                if(!debug || !body.child_bones.empty())
                     continue;
                 if(!body.debug_slot.valid())
                 {
@@ -623,6 +628,14 @@ struct PhysicsSystem
             auto const& origin =
                 it->second.world_body->getWorldTransform().getOrigin();
             data->position = {origin.x(), origin.y(), origin.z()};
+            data->grounded = on_ground(*it->second.world_body);
+        }
+        for(auto const& [entity, _] : m_object_bodies)
+        {
+            auto* physics = p.template get<ObjectPhysics>(entity);
+            auto  it      = m_bodies.find(entity);
+            if(physics && physics->upright && it != m_bodies.end())
+                physics->grounded = on_ground(*it->second.world_body);
         }
 
         m_frame++;
@@ -666,10 +679,9 @@ struct PhysicsSystem
                                                Vecf3{0, 0, shape.eye_offset()}
                                          : camera.camera.position +
                                                Vecf3{0, 0, shape.spawn_lift()};
-                /* Bodies following a camera are what others hit, so they
-                 * get the coll model; a body the player moves with keeps the
-                 * capsule the biped tag sizes for movement */
-                bool const hulls = kinematic && shape.collision;
+                /* The coll model, posed by the animation; the capsule is
+                 * only for bipeds without one */
+                bool const hulls = static_cast<bool>(shape.collision);
                 create_body(Physics::BodyCreationShape{
                     .entity_id = id,
                     /* The capsule's height is its cylinder, between the caps */
@@ -688,6 +700,7 @@ struct PhysicsSystem
                     /* Hull points are from the feet; the origin is mid-body */
                     .offset    = {0, 0, -shape.height / 2},
                     .yaw       = camera_yaw(camera),
+                    .posed     = hulls,
                 });
                 m_player_bodies[id] = {.kinematic = kinematic, .shape = shape};
                 data.physics_id     = id;
@@ -700,6 +713,8 @@ struct PhysicsSystem
                     camera.camera.position - Vecf3{0, 0, shape.eye_offset()},
                     shape.collision ? std::optional(camera_yaw(camera))
                                     : std::nullopt);
+            else if(shape.collision)
+                face(id, camera_yaw(camera));
         }
 
         for(auto it = m_player_bodies.begin(); it != m_player_bodies.end();)
@@ -760,16 +775,22 @@ struct PhysicsSystem
                     .mass      = follower ? 0.f : physics.mass,
                     .shape     = shape,
                     .group     = physics.item          ? Shape::Item
+                                 : physics.upright     ? Shape::Character
                                  : physics.mass_points ? Shape::Grounded
                                  : moves               ? Shape::Vehicle
                                                        : Shape::AnyGroup,
                     .kinematic = follower,
+                    .lock      = {.rotation = physics.upright},
                     .hulls     = physics.collision,
                     .offset    = physics.mass_points ? -com : physics.center,
                     .rotation  = model.rotation,
                     .mass_points = physics.mass_points,
                     .drive       = physics.drive,
+                    .posed       = physics.upright,
                 });
+                /* Nothing drives it, so it has to stop on its own */
+                if(physics.upright && m_bodies.contains(id))
+                    m_bodies.at(id).world_body->setFriction(1.f);
                 continue;
             }
             if(!moves)
@@ -964,8 +985,15 @@ struct PhysicsSystem
             {
                 btRigidBody& rigid =
                     *m_bodies.at(carried->second.object).world_body;
-                btTransform const target =
+                btTransform target =
                     camera_transform(grab) * carried->second.relative;
+                /* A biped is carried standing, turning only about +Z */
+                if(!m_bodies.at(carried->second.object).child_bones.empty())
+                {
+                    btVector3 const x = target.getBasis().getColumn(0);
+                    target.setRotation(btQuaternion(
+                        btVector3(0, 0, 1), std::atan2(x.y(), x.x())));
+                }
                 carried->second.velocity =
                     (target.getOrigin() -
                      rigid.getWorldTransform().getOrigin()) /
@@ -1028,6 +1056,30 @@ struct PhysicsSystem
         transform.setIdentity();
         transform.setRotation(btQuaternion(btVector3(0, 0, 1), yaw));
         return transform;
+    }
+
+    /* Whether static geometry lies just below a body's lowest point */
+    bool on_ground(btRigidBody const& body) const
+    {
+        btVector3 lo, hi;
+        body.getAabb(lo, hi);
+        btVector3 const centre = (lo + hi) * .5f;
+        btVector3 const from(centre.x(), centre.y(), lo.z() + ground_probe_up);
+        btVector3 const to(centre.x(), centre.y(), lo.z() - ground_probe_down);
+        btCollisionWorld::ClosestRayResultCallback hit(from, to);
+        hit.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
+        m_world->rayTest(from, to, hit);
+        return hit.hasHit();
+    }
+
+    /* Turns a posed hull body that cannot rotate itself, in place */
+    void face(u64 entity_id, f32 yaw)
+    {
+        auto it = m_bodies.find(entity_id);
+        if(it == m_bodies.end() || it->second.child_bones.empty())
+            return;
+        btTransform& transform = it->second.world_body->getWorldTransform();
+        transform.setRotation(btQuaternion(btVector3(0, 0, 1), yaw));
     }
 
     void move_kinematic(
@@ -1289,6 +1341,9 @@ struct PhysicsSystem
             entity_body.child_shapes.clear();
             entity_body.mesh_iface.reset();
         }
+        entity_body.child_bones.clear();
+        entity_body.child_bounds.clear();
+        entity_body.child_heads.clear();
 
         switch(body_create.shape)
         {
@@ -1327,8 +1382,22 @@ struct PhysicsSystem
                 identity.setIdentity();
                 compound->addChildShape(identity, hull.get());
                 entity_body.child_shapes.push_back(std::move(hull));
+                if(body_create.posed)
+                {
+                    Vecf3 lo(std::numeric_limits<f32>::max());
+                    Vecf3 hi(std::numeric_limits<f32>::lowest());
+                    for(auto const& pt : node.points)
+                    {
+                        lo = glm::min(lo, pt + body_create.offset);
+                        hi = glm::max(hi, pt + body_create.offset);
+                    }
+                    entity_body.child_bones.push_back(node.bone);
+                    entity_body.child_bounds.push_back({lo, hi});
+                    entity_body.child_heads.push_back(node.head);
+                }
             }
             entity_body.world_shape = std::move(compound);
+            entity_body.child_offset = body_create.offset;
             break;
         }
         case Physics::BodyCreationShape::Mesh: {
@@ -1642,6 +1711,86 @@ struct PhysicsSystem
     }
 
     /* The structure BSP surface along a ray, and its collision material */
+    /* A world mesh triangle's collision material (a shader) */
+    blam::tagref_t const* surface_shader(int triangle) const
+    {
+        if(!m_world_item || triangle < 0 ||
+           static_cast<size_t>(triangle) >= m_tri_surface.size())
+            return nullptr;
+        u32 const surface = m_tri_surface[triangle];
+        if(surface >= m_world_item->coll_surfaces.size())
+            return nullptr;
+        i16 const material = m_world_item->coll_surfaces[surface].material;
+        auto      shaders  = m_world_item->mesh->collision_materials.data(
+            m_world_item->bsp_magic);
+        if(!shaders.has_value() || material < 0 ||
+           static_cast<size_t>(material) >= shaders.value().size())
+            return nullptr;
+        return &shaders.value()[material].shader;
+    }
+
+    /* Hits strong enough to hear, one per body per cooldown. Resting and
+     * sliding contacts take out far less speed per step than a landing. */
+    void report_impacts()
+    {
+        if(!m_bus)
+            return;
+        auto* dispatcher = m_world->getDispatcher();
+        for(int i = 0; i < dispatcher->getNumManifolds(); ++i)
+        {
+            btPersistentManifold const* manifold =
+                dispatcher->getManifoldByIndexInternal(i);
+            auto const* a = btRigidBody::upcast(manifold->getBody0());
+            auto const* b = btRigidBody::upcast(manifold->getBody1());
+            if(!a || !b)
+                continue;
+            f32 const inv_mass = a->getInvMass() + b->getInvMass();
+            int       best     = -1;
+            f32       speed    = 0.f;
+            for(int j = 0; j < manifold->getNumContacts(); j++)
+                if(f32 s = manifold->getContactPoint(j).getAppliedImpulse() *
+                           inv_mass;
+                   s > speed)
+                {
+                    speed = s;
+                    best  = j;
+                }
+            if(best < 0 || speed < impact_speed)
+                continue;
+            /* The moving one hears it; the world has no entity */
+            bool const a_world = a == m_world_body.get();
+            bool const b_world = b == m_world_body.get();
+            auto const* mover  = a_world ? b : a;
+            auto const* other  = a_world ? a : b;
+            u64 const   id     = u64(reinterpret_cast<uintptr_t>(
+                mover->getUserPointer()));
+            if(id == 0 || mover->getInvMass() <= 0.f ||
+               m_player_bodies.contains(id))
+                continue;
+            if(auto last = m_last_impact.find(id);
+               last != m_last_impact.end() &&
+               m_frame - last->second < impact_cooldown)
+                continue;
+            m_last_impact[id] = m_frame;
+            auto const& point = manifold->getContactPoint(best);
+            btVector3 const at = point.getPositionWorldOnA();
+            Physics::Event  event{Physics::Event::Impact};
+            Physics::Impact impact{
+                .entity_id = id,
+                .other     = a_world || b_world
+                                 ? 0
+                                 : u64(reinterpret_cast<uintptr_t>(
+                                       other->getUserPointer())),
+                .point     = {at.x(), at.y(), at.z()},
+                .speed     = speed,
+                .shader    = a_world   ? surface_shader(point.m_index0)
+                             : b_world ? surface_shader(point.m_index1)
+                                       : nullptr,
+            };
+            m_bus->process(event, &impact);
+        }
+    }
+
     void probe_ground(Physics::GroundProbe const& probe)
     {
         if(!m_world_body || !m_world_item || !m_bus)
@@ -1667,19 +1816,10 @@ struct PhysicsSystem
         closest_t       ground(from, to);
         ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
         m_world->rayTest(from, to, ground);
-        if(!ground.hasHit() ||
-           ground.m_collisionObject != m_world_body.get() ||
-           ground.triangle < 0 ||
-           static_cast<size_t>(ground.triangle) >= m_tri_surface.size())
+        if(!ground.hasHit() || ground.m_collisionObject != m_world_body.get())
             return;
-        u32 const surface = m_tri_surface[ground.triangle];
-        if(surface >= m_world_item->coll_surfaces.size())
-            return;
-        i16 const material = m_world_item->coll_surfaces[surface].material;
-        auto      shaders  = m_world_item->mesh->collision_materials.data(
-            m_world_item->bsp_magic);
-        if(!shaders.has_value() || material < 0 ||
-           static_cast<size_t>(material) >= shaders.value().size())
+        auto const* shader = surface_shader(ground.triangle);
+        if(!shader)
             return;
         btVector3 const      at = ground.m_hitPointWorld;
         Physics::Event       event{Physics::Event::GroundHit};
@@ -1687,7 +1827,7 @@ struct PhysicsSystem
               .entity_id = probe.entity_id,
               .user      = probe.user,
               .point     = {at.x(), at.y(), at.z()},
-              .shader    = &shaders.value()[material].shader,
+              .shader    = shader,
         };
         m_bus->process(event, &hit);
     }
@@ -1938,7 +2078,123 @@ struct PhysicsSystem
             Physics::BodyCreationShape::AnyGroup};
         std::shared_ptr<MassPoints const> mass_points;
         std::unique_ptr<MassPointAction>  action;
+        /* Hull children that follow the animation: their bone, their bind
+         * bounds (body space) for the debug boxes, and the shift that put
+         * the hull points into body space */
+        std::vector<i32>                        child_bones;
+        std::vector<std::pair<Vecf3, Vecf3>>    child_bounds;
+        std::vector<bool>                       child_heads;
+        Vecf3                                   child_offset{};
     };
+
+    /* Hull children take their bone's skinning matrix from the last pose,
+     * so what others hit is where the limbs are drawn */
+    void pose_hulls(Proxy& p)
+    {
+        for(auto& [entity, body] : m_bodies)
+        {
+            if(body.child_bones.empty())
+                continue;
+            auto* compound =
+                static_cast<btCompoundShape*>(body.world_shape.get());
+            auto const* anim = p.template get<AnimationPlayback>(entity);
+            Matf4 const to   = glm::translate(Matf4(1), body.child_offset);
+            Matf4 const from = glm::translate(Matf4(1), -body.child_offset);
+            for(size_t i = 0; i < body.child_bones.size(); i++)
+            {
+                i32 const bone = body.child_bones[i];
+                Matf4 const skin =
+                    anim && bone >= 0 &&
+                            static_cast<size_t>(bone) < anim->pose.size()
+                        ? anim->pose[bone]
+                        : Matf4(1);
+                Matf4 const m = to * skin * from;
+                btTransform t;
+                t.setFromOpenGLMatrix(glm::value_ptr(m));
+                compound->updateChildTransform(static_cast<int>(i), t, false);
+            }
+            compound->recalculateLocalAabb();
+        }
+    }
+
+    /* A box around each posed hull piece, red for the head */
+    void draw_hulls(Proxy& p, DebugMarkers& markers)
+    {
+        size_t used = 0;
+        for(auto& [entity, body] : m_bodies)
+        {
+            if(body.child_bones.empty())
+                continue;
+            auto const* compound =
+                static_cast<btCompoundShape const*>(body.world_shape.get());
+            btTransform const& world = body.world_body->getWorldTransform();
+            for(size_t i = 0; i < body.child_bounds.size(); i++)
+            {
+                auto const* marker = hull_marker(p, markers, used++);
+                if(!marker)
+                    return;
+                btTransform const piece = world * compound->getChildTransform(i);
+                auto box = DebugMarkers::box_vertices(
+                    body.child_bounds[i].first, body.child_bounds[i].second);
+                for(auto& v : box)
+                {
+                    btVector3 const w = piece * btVector3(v.x, v.y, v.z);
+                    v                 = {w.x(), w.y(), w.z()};
+                }
+                markers.put_strip(
+                    marker->vert_offset,
+                    marker->color_idx,
+                    box,
+                    body.child_heads[i] ? Vecf3{1.f, .2f, .2f}
+                                        : Vecf3{0.f, 1.f, 1.f});
+            }
+        }
+        /* Spare markers collapse to a point */
+        std::array<Vecf3, 16> const none{};
+        for(; used < m_hull_markers.size(); used++)
+            markers.put_strip(
+                m_hull_markers[used].slot.vert_offset,
+                m_hull_markers[used].slot.color_idx,
+                none,
+                Vecf3{});
+    }
+
+    /* The n-th pooled marker, made on demand; entities do not outlive a
+     * map change, so a vanished one is remade */
+    DebugMarkers::strip_slot_t const* hull_marker(
+        Proxy& p, DebugMarkers& markers, size_t n)
+    {
+        if(n < m_hull_markers.size() &&
+           !p.template get<DebugDraw>(m_hull_markers[n].entity))
+        {
+            for(size_t i = n; i < m_hull_markers.size(); i++)
+                markers.release_strip(m_hull_markers[i].slot);
+            m_hull_markers.resize(n);
+        }
+        if(n < m_hull_markers.size())
+            return &m_hull_markers[n].slot;
+        auto slot = markers.acquire_strip(16);
+        if(!slot.valid())
+            return nullptr;
+        compo::EntityRecipe recipe;
+        recipe.components = {compo::type_hash_v<DebugDraw>()};
+        auto       ent    = p.create_entity(recipe);
+        DebugDraw& draw   = ent.template get<DebugDraw>();
+        draw.data.arrays  = {
+             .count  = slot.vert_count,
+             .offset = slot.vert_offset,
+        };
+        draw.color_ptr = slot.color_idx;
+        m_hull_markers.push_back({ent.id(), slot});
+        return &m_hull_markers.back().slot;
+    }
+
+    struct hull_marker_t
+    {
+        u64                        entity{0};
+        DebugMarkers::strip_slot_t slot{};
+    };
+    std::vector<hull_marker_t> m_hull_markers;
 
     /* Out of the world, ahead of the body and its shapes going */
     void detach(entity_body& body)
@@ -1973,6 +2229,11 @@ struct PhysicsSystem
         btVector3   velocity{0, 0, 0}; /*!< Over the last step */
     };
     static constexpr f32           hull_margin  = .005f;
+    static constexpr f32 impact_speed    = .8f; /* wu/s */
+    static constexpr u32 impact_cooldown = 9;
+    std::map<u64, u32>   m_last_impact;
+    static constexpr f32 ground_probe_up   = .2f;
+    static constexpr f32 ground_probe_down = .15f;
     static constexpr f32           halo_gravity = 9.81f / 3.048f;
     static constexpr f32           grab_range   = 40.f;
     static constexpr f32           ground_reach = 30.f; /* wu below */

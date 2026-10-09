@@ -157,11 +157,15 @@ struct ModelCache
   private:
     /* Pose scratch, reused across models so a pose allocates nothing.
      * Main-thread only, like the subsystem that drives it. */
-    std::vector<Quatf> m_rot, m_layer_rot, m_ref_rot;
-    std::vector<Vecf3> m_trans, m_layer_trans, m_ref_trans;
+    std::vector<Quatf> m_rot, m_layer_rot, m_ref_rot, m_row_rot;
+    std::vector<Vecf3> m_trans, m_layer_trans, m_ref_trans, m_row_trans;
     std::vector<Matf4> m_world;
 
     blam::antr::animation const* find_animation(AnimationLayer const& layer);
+    bool                         sample_grid(
+                                blam::antr::animation const& clip,
+                                AnimationLayer const&        layer,
+                                u32                          node_count);
     bool                         sample_animation(
                                 blam::antr::animation const& anim,
                                 u32                          frame,

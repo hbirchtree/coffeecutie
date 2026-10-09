@@ -95,6 +95,19 @@ void create_resources(compo::EntityContainer& e)
                 cWarning("No camera selected");
                 return nullptr;
             }));
+        eventhandler->addEventFunction<Input::CIMouseButtonEvent>(
+            1024, [&e](Input::CIEvent&, Input::CIMouseButtonEvent* button) {
+                for(auto entity : e.select<PlayerCamera, PlayerInput>())
+                {
+                    auto [cam, input] = entity.components();
+                    if(!cam.keyboard.enabled)
+                        continue;
+                    if(button->mod == Input::CIMouseButtonEvent::Pressed)
+                        input.mouse_buttons |= button->btn;
+                    else
+                        input.mouse_buttons &= ~u32(button->btn);
+                }
+            });
         eventhandler->addEventHandler(
             1024, StandardCamera::MouseInput([&e] -> Vecf2* {
                 for(auto entity : e.select<
@@ -335,10 +348,11 @@ void create_resources(compo::EntityContainer& e)
                  {
                      PlayerCamera* target{};
                      PlayerInfo*   target_info{};
+                     u32 const     seat = ev.data.value("seat", 0u);
                      for(auto const& en : e.select<PlayerCamera, PlayerInfo>())
                      {
                          auto [cam, info] = en.components();
-                         if(info.seat_idx != 0)
+                         if(info.seat_idx != seat)
                              continue;
                          target      = &cam;
                          target_info = &info;
@@ -546,6 +560,23 @@ void create_resources(compo::EntityContainer& e)
                          Vecf3{0.f, 0.f, 1.f});
                      GameEvent spawn_ev{.type = GameEvent::SpawnObject};
                      e.subsystem_cast<GameEventBus>().inject(spawn_ev, &spawn);
+                 }
+                 if(ev.event == "play_animation")
+                 {
+                     u32 const seat = ev.data.value("seat", 0u);
+                     PlayModelAnimationEvent play{
+                         .name      = ev.data.value("name", std::string{}),
+                         .animation = ev.data.value("animation", -1),
+                         .loop      = ev.data.value("loop", false),
+                         .fade      = ev.data.value("fade", .2f),
+                         .rate      = ev.data.value("rate", 1.f),
+                         .weight    = ev.data.value("weight", 1.f),
+                     };
+                     for(auto const& en : e.select<PlayerInfo>())
+                         if(en.template get<PlayerInfo>().seat_idx == seat)
+                             play.entity = en.id();
+                     GameEvent play_ev{.type = GameEvent::PlayModelAnimation};
+                     e.subsystem_cast<GameEventBus>().inject(play_ev, &play);
                  }
                  if(ev.event == "switch_map")
                  {

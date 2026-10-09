@@ -5,10 +5,6 @@
 #include "data.h"
 #include "physics.h"
 #include "selected_version.h"
-#include "sounds.h"
-
-#include <blam/volta/blam_effects.h>
-#include <blam/volta/blam_shaders.h>
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
@@ -24,15 +20,14 @@ using GameplayManifest = compo::SubsystemManifest<
         const PlayerInput,
         PlayerCamera,
         NetworkInfo,
-        const Model,
-        const ObjectPhysics,
-        AnimationPlayback>,
+        Model,
+        const ObjectPhysics>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
         const BlamFiles<halo_version>,
         const LoadingStatus>,
-    type_list_t<comp_app::EventBus<SoundEvent>>>;
+    empty_list_t>;
 
 struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
 {
@@ -48,15 +43,17 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
 
     void start_restricted(Proxy& p, time_point const& t)
     {
+        m_now = t;
         auto& physics = p.template subsystem<PhysicsBus>();
         auto& game    = p.template subsystem<GameEventBus>();
-
-        f32 const dt =
-            m_last_frame == time_point{}
-                ? 0.f
-                : std::chrono::duration<f32>(t - m_last_frame).count();
-        m_last_frame = t;
-        animate_bipeds(p, physics, dt);
+        if(auto const generation =
+               p.template subsystem<BlamFiles<halo_version>>().load_generation;
+           generation != m_markers_generation)
+        {
+            m_markers.clear();
+            m_leaving.clear();
+            m_markers_generation = generation;
+        }
 
         for(auto player : p.template select<
                           PlayerInfo,
@@ -95,6 +92,99 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             enter_vehicle(p, enter);
         for(auto const& exit : std::exchange(m_exits, {}))
             exit_vehicle(p, exit);
+        for(auto it = m_leaving.begin(); it != m_leaving.end();)
+        {
+            if(it->second > t)
+            {
+                ++it;
+                continue;
+            }
+            leave_vehicle(p, it->first);
+            it = m_leaving.erase(it);
+        }
+
+        for(auto rider : p.template select<PlayerInfo, Model>())
+        {
+            auto [info, model] = rider.components();
+            if(info.riding.vehicle != 0)
+                seat(p, info, model);
+        }
+    }
+
+    /* A rider sits at its seat's marker, moving with the vehicle */
+    void seat(Proxy& p, PlayerInfo const& info, Model& model)
+    {
+        auto const* vehicle = p.template get<Model>(info.riding.vehicle);
+        if(!vehicle)
+            return;
+        auto const& marker = seat_marker(p, *vehicle, info.riding.seat);
+        if(!marker)
+            return;
+        Matf4 const world = vehicle->transform * *marker;
+        model.position    = Vecf3(world[3]);
+        model.rotation    = glm::normalize(Quatf(Matf3(world)));
+        model.update_matrix();
+    }
+
+    /* Model space transform of a seat's marker in the bind pose */
+    std::optional<Matf4> const& seat_marker(
+        Proxy& p, Model const& vehicle, i16 seat_index)
+    {
+        static std::optional<Matf4> const none;
+        auto const seats = seats_of(p, vehicle);
+        if(!seats || seat_index < 0 ||
+           static_cast<size_t>(seat_index) >= seats->size())
+            return none;
+        return marker_transform(
+            p,
+            vehicle,
+            std::string((*seats)[seat_index].marker_name.str()));
+    }
+
+    /* Model space transform of a named marker in the bind pose */
+    std::optional<Matf4> const& marker_transform(
+        Proxy& p, Model const& vehicle, std::string const& name)
+    {
+        auto key = std::pair{vehicle.tag, name};
+        if(auto it = m_markers.find(key); it != m_markers.end())
+            return it->second;
+        auto& out = m_markers[key];
+        auto const& magic =
+            p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        if(!vehicle.tag)
+            return out;
+        auto mod2 = vehicle.tag->data<blam::mod2::header<halo_version>>(magic);
+        if(!mod2.has_value())
+            return out;
+        auto markers = mod2.value()[0].markers.data(magic);
+        auto bones   = mod2.value()[0].bones.data(magic);
+        if(!markers.has_value() || !bones.has_value())
+            return out;
+        for(auto const& marker : markers.value())
+        {
+            if(marker.name.str() != name)
+                continue;
+            auto instances = marker.instances.data(magic);
+            if(!instances.has_value() || instances.value().empty())
+                break;
+            auto const& at = instances.value()[0];
+            /* Bind pose of its node, the way caching.cpp builds inv_bind */
+            Matf4 node(1);
+            for(i32 i = at.node_idx; i >= 0 &&
+                                     static_cast<size_t>(i) < bones.value().size();)
+            {
+                auto const& b = bones.value()[i];
+                node = glm::translate(Matf4(1), b.translation) *
+                       glm::mat4_cast(glm::conjugate(b.rotation)) * node;
+                i = b.parent == blam::mod2::bone::invalid_bone ? -1 : b.parent;
+            }
+            Quatf const rotation(
+                at.rotation.w, at.rotation.x, at.rotation.y, at.rotation.z);
+            out = node * glm::translate(Matf4(1), at.position) *
+                  glm::mat4_cast(glm::conjugate(rotation));
+            break;
+        }
+        return out;
     }
 
     /* A rider gets out; anyone else gets in the closest vehicle in reach */
@@ -131,7 +221,69 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             return;
         GameEvent             ev{.type = GameEvent::UnitEnterVehicle};
         UnitEnterVehicleEvent enter{.unit = player, .vehicle = nearest};
+        auto const&           vehicle = *p.template get<Model>(nearest);
+        auto const            taken   = taken_seats(p, nearest);
+        f32                   closest = std::numeric_limits<f32>::max();
+        auto const            seats   = seats_of(p, vehicle);
+        for(i16 i = 0; seats && i < static_cast<i16>(seats->size()); i++)
+        {
+            if(taken.contains(i))
+                continue;
+            auto const& at = entry_point(p, vehicle, i);
+            if(!at)
+                continue;
+            if(f32 d = glm::distance(*at, feet); d < closest)
+            {
+                closest    = d;
+                enter.seat = (*seats)[i].label;
+            }
+        }
+        if(closest == std::numeric_limits<f32>::max())
+            return;
         game.process(ev, &enter);
+    }
+
+    using seats_t = semantic::Span<blam::scn::unit::seat_t const>;
+
+    /* The vehicle's seats, from its unit tag */
+    std::optional<seats_t> seats_of(Proxy& p, Model const& vehicle)
+    {
+        if(!vehicle.origin_object)
+            return std::nullopt;
+        auto const& magic =
+            p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto unit = vehicle.origin_object->data<blam::scn::unit>(magic);
+        if(!unit.has_value())
+            return std::nullopt;
+        auto seats = unit.value()[0].seats.data(magic);
+        if(!seats.has_value())
+            return std::nullopt;
+        return seats.value();
+    }
+
+    std::set<i16> taken_seats(Proxy& p, u64 vehicle)
+    {
+        std::set<i16> taken;
+        for(auto rider : p.template select<PlayerInfo>())
+            if(auto const& riding = rider.template get<PlayerInfo>().riding;
+               riding.vehicle == vehicle)
+                taken.insert(riding.seat);
+        return taken;
+    }
+
+    /* Where a seat is got into and out of */
+    std::optional<Vecf3> entry_point(Proxy& p, Model const& vehicle, i16 seat)
+    {
+        auto const seats = seats_of(p, vehicle);
+        if(!seats || seat < 0 || static_cast<size_t>(seat) >= seats->size())
+            return std::nullopt;
+        std::string const name((*seats)[seat].marker_name.str());
+        auto const*       marker = &marker_transform(p, vehicle, name + " enter");
+        if(!*marker)
+            marker = &marker_transform(p, vehicle, name);
+        if(!*marker)
+            return std::nullopt;
+        return Vecf3(vehicle.transform * (**marker)[3]);
     }
 
     /* Behind the vehicle along the view, which is also where a driver
@@ -156,7 +308,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             vehicle->position + Vecf3{0.f, 0.f, chase_height} -
             view * chase_distance;
         net.changes.transform = net.changes.viewport = true;
-        if(!info.riding.driver)
+        if(!info.riding.driver || info.riding.exiting)
             return;
         bool const playing =
             input.input_mode == PlayerInput::input_mode_t::game;
@@ -215,200 +367,89 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         }
     }
 
+    /* The seat's exit animation plays out before the rider stands up */
     void exit_vehicle(Proxy& p, UnitExitVehicleEvent const& exit)
     {
         auto* info = p.template get<PlayerInfo>(exit.unit);
-        auto* cam  = p.template get<PlayerCamera>(exit.unit);
+        if(!info || info->riding.vehicle == 0 || info->riding.exiting)
+            return;
+        f32 const seconds = exit_length(p, *info);
+        if(seconds <= 0.f)
+        {
+            leave_vehicle(p, exit.unit);
+            return;
+        }
+        info->riding.exiting = true;
+        m_leaving[exit.unit] =
+            m_now + std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        std::chrono::duration<f32>(seconds));
+    }
+
+    /* How long the rider's graph plays the seat's exit for, 0 if none */
+    f32 exit_length(Proxy& p, PlayerInfo const& info)
+    {
+        auto const* vehicle = p.template get<Model>(info.riding.vehicle);
+        auto const* graph   = info.biped.anim_graph;
+        auto const  seats   = vehicle ? seats_of(p, *vehicle) : std::nullopt;
+        if(!graph || !seats || info.riding.seat < 0 ||
+           static_cast<size_t>(info.riding.seat) >= seats->size())
+            return 0.f;
+        auto const label = (*seats)[info.riding.seat].label.str();
+        auto const& magic =
+            p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto units = graph->units.data(magic);
+        auto anims = graph->animations.data(magic);
+        if(!units.has_value() || !anims.has_value())
+            return 0.f;
+        for(auto const& unit : units.value())
+        {
+            if(unit.label.str() != label)
+                continue;
+            auto slots = unit.animations.data(magic);
+            if(!slots.has_value() ||
+               slots.value().size() <= blam::antr::unit::exit)
+                return 0.f;
+            i16 const index = slots.value()[blam::antr::unit::exit].animation;
+            if(index < 0 || static_cast<size_t>(index) >= anims.value().size())
+                return 0.f;
+            auto const& clip = anims.value()[index];
+            f32 const   rate =
+                (static_cast<u16>(clip.flags) &
+                 static_cast<u16>(blam::antr::anim_flags::pal_25hz))
+                      ? 25.f
+                      : 30.f;
+            return static_cast<f32>(clip.frame_count) / rate;
+        }
+        return 0.f;
+    }
+
+    /* Standing at the seat's entry point, else on the vehicle's left */
+    void leave_vehicle(Proxy& p, u64 unit)
+    {
+        auto* info = p.template get<PlayerInfo>(unit);
+        auto* cam  = p.template get<PlayerCamera>(unit);
         if(!info || !cam || info->riding.vehicle == 0)
             return;
-        /* Out on its left side, standing */
         if(auto const* vehicle = p.template get<Model>(info->riding.vehicle))
         {
-            Vecf3 left = vehicle->rotation * Vecf3{0.f, 1.f, 0.f};
-            left.z     = 0.f;
-            if(glm::dot(left, left) > 1e-6f)
-                left = glm::normalize(left);
+            Vecf3 feet;
+            if(auto at = entry_point(p, *vehicle, info->riding.seat))
+                feet = *at;
+            else
+            {
+                Vecf3 left = vehicle->rotation * Vecf3{0.f, 1.f, 0.f};
+                left.z     = 0.f;
+                if(glm::dot(left, left) > 1e-6f)
+                    left = glm::normalize(left);
+                feet = vehicle->position + left * exit_distance;
+            }
             cam->camera.position =
-                vehicle->position + left * exit_distance +
-                Vecf3{0.f, 0.f, info->biped.eye_height + .3f};
+                feet + Vecf3{0.f, 0.f, info->biped.eye_height + .3f};
         }
         cDebug("Player {} leaves {}", info->player_idx, info->riding.vehicle);
         info->riding = {};
-        if(auto* net = p.template get<NetworkInfo>(exit.unit))
+        if(auto* net = p.template get<NetworkInfo>(unit))
             net->changes.viewport = net->changes.transform = true;
-    }
-
-    /* A biped walks the way its camera moves, in the animation its graph
-     * names for that; feet coming down are heard on what they land on */
-    void animate_bipeds(Proxy& p, PhysicsBus& physics, f32 dt)
-    {
-        auto const& files   = p.template subsystem<BlamFiles<halo_version>>();
-        auto const& loading = p.template subsystem<LoadingStatus>();
-        bool const  loaded  = loading.loaded_map == LoadingStatus::loaded;
-        if(files.load_generation != m_names_generation)
-        {
-            m_names.clear();
-            m_names_generation = files.load_generation;
-        }
-
-        for(auto player : p.template select<
-                          PlayerInfo,
-                          PlayerCamera,
-                          NetworkInfo,
-                          AnimationPlayback>())
-        {
-            auto [info, cam, net, anim] = player.components();
-            auto const& biped           = info.biped;
-            /* Graphs from an unloaded map must not be touched */
-            if(!loaded || !biped.anim_graph ||
-               biped.load_generation != files.load_generation ||
-               !biped_in_play(info, cam, net))
-            {
-                anim.stop(0);
-                m_walkers.erase(player.id());
-                continue;
-            }
-
-            Vecf3 const feet =
-                cam.camera.position - Vecf3{0.f, 0.f, biped.eye_height};
-            auto& walker = m_walkers[player.id()];
-            Vecf3 velocity{};
-            if(walker.seen && dt > 0.f)
-                velocity = (feet - walker.feet) / dt;
-            walker.feet = feet;
-            walker.seen = true;
-            velocity.z  = 0.f;
-            /* Smoothed: remote cameras arrive in steps */
-            walker.velocity = glm::mix(walker.velocity, velocity, .3f);
-            f32 const speed = glm::length(walker.velocity);
-
-            Vecf3 forward =
-                glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
-            forward.z = 0.f;
-            forward   = glm::dot(forward, forward) > 1e-6f
-                            ? glm::normalize(forward)
-                            : Vecf3{1.f, 0.f, 0.f};
-            Vecf3 const left{-forward.y, forward.x, 0.f};
-
-            char const* move = nullptr;
-            if(speed > walk_threshold)
-            {
-                f32 const ahead = glm::dot(walker.velocity, forward);
-                f32 const side  = glm::dot(walker.velocity, left);
-                move            = std::abs(ahead) >= std::abs(side)
-                                      ? (ahead > 0.f ? "move-front" : "move-back")
-                                      : (side > 0.f ? "move-left" : "move-right");
-            }
-            i32 const animation =
-                move ? find(p, biped.anim_graph, {std::string("stand unarmed ") + move})
-                     : find(
-                           p,
-                           biped.anim_graph,
-                           {"stand unarmed idle",
-                            "stand rifle idle",
-                            "stand pistol idle"});
-            if(animation < 0)
-            {
-                anim.stop(0);
-                continue;
-            }
-            auto& base = anim.layers[0];
-            if(base.graph != biped.anim_graph ||
-               base.animation != static_cast<u32>(animation))
-                anim.play(0, biped.anim_graph, static_cast<u32>(animation));
-            base.rate =
-                move ? std::clamp(speed / stride_speed, .5f, 2.f) : 1.f;
-
-            /* Markers come from the last frame's advance */
-            if(anim.footsteps && biped.footsteps)
-                for(auto foot :
-                    {AnimationPlayback::left_foot, AnimationPlayback::right_foot})
-                {
-                    if(!(anim.footsteps & foot))
-                        continue;
-                    Physics::Event       ev{Physics::Event::GroundProbe};
-                    Physics::GroundProbe probe{
-                        .entity_id = player.id(),
-                        .from      = feet + Vecf3{0.f, 0.f, .3f},
-                        .to        = feet - Vecf3{0.f, 0.f, .4f},
-                        .user      = speed > run_threshold ? running : walking,
-                    };
-                    physics.process(ev, &probe);
-                }
-            anim.footsteps = AnimationPlayback::no_feet;
-        }
-
-        for(auto const& hit : std::exchange(m_steps, {}))
-            footstep(p, hit);
-    }
-
-    /* The first of `names` the graph has */
-    i32 find(
-        Proxy&                             p,
-        blam::antr::header const*          graph,
-        std::initializer_list<std::string> names)
-    {
-        for(auto const& name : names)
-        {
-            auto key = std::pair{graph, name};
-            if(auto it = m_names.find(key); it != m_names.end())
-            {
-                if(it->second >= 0)
-                    return it->second;
-                continue;
-            }
-            auto& index = m_names[key];
-            index       = -1;
-            auto const& magic =
-                p.template subsystem<BlamFiles<halo_version>>().container.magic;
-            if(auto anims = graph->animations.data(magic); anims.has_value())
-                for(i32 i = 0; i < static_cast<i32>(anims.value().size()); i++)
-                    if(anims.value()[i].name.str() == name)
-                    {
-                        index = i;
-                        break;
-                    }
-            if(index >= 0)
-                return index;
-        }
-        return -1;
-    }
-
-    /* foot tag: effects[walk|run].materials[the shader's physics material] */
-    void footstep(Proxy& p, Physics::GroundHit const& hit)
-    {
-        auto const* info = p.template get<PlayerInfo>(hit.entity_id);
-        if(!info || !info->biped.footsteps || !hit.shader ||
-           !hit.shader->valid())
-            return;
-        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        auto const& magic = files.container.magic;
-        blam::tag_index_view<halo_version> index(files.container);
-        auto shader = index.find(*hit.shader);
-        if(shader == index.end())
-            return;
-        auto surface =
-            (*shader).template data<blam::shader::radiosity_properties>(magic);
-        auto feet = info->biped.footsteps->template data<
-            blam::scn::material_effects>(magic);
-        if(!surface.has_value() || !feet.has_value())
-            return;
-        auto effects = feet.value()[0].effects.data(magic);
-        if(!effects.has_value() || hit.user >= effects.value().size())
-            return;
-        auto materials = effects.value()[hit.user].materials.data(magic);
-        auto material  = static_cast<size_t>(surface.value()[0].physics);
-        if(!materials.has_value() || material >= materials.value().size())
-            return;
-        blam::tagref_t const& sound = materials.value()[material].sound;
-        if(!sound.valid())
-            return;
-        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
-        if(!sounds)
-            return;
-        SoundEvent     ev{.type = SoundEvent::play_sound};
-        PlaySoundEvent play{.sound = &sound, .position = hit.point};
-        sounds->inject(ev, &play);
     }
 
     static constexpr f32 vehicle_reach  = 2.5f;
@@ -420,34 +461,18 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
     std::vector<UnitEnterVehicleEvent> m_enters;
     std::vector<UnitExitVehicleEvent>  m_exits;
     std::map<u64, bool>                m_using;
+    std::map<std::pair<blam::tag_t const*, std::string>, std::optional<Matf4>>
+        m_markers;
+    /* Riders playing their exit, and when they stand up */
+    std::map<u64, time_point> m_leaving;
+    time_point                m_now{};
+    u32 m_markers_generation{0};
 
-    /* Footsteps: foot tag effect slots, and how fast a stride goes */
-    static constexpr u32 walking        = 0;
-    static constexpr u32 running        = 1;
-    static constexpr f32 walk_threshold = .25f; /* wu/s */
-    static constexpr f32 run_threshold  = 2.5f;
-    static constexpr f32 stride_speed   = 1.5f;
-
-    struct walker_t
-    {
-        Vecf3 feet{};
-        Vecf3 velocity{};
-        bool  seen{false};
-    };
-    time_point                                                 m_last_frame{};
-    std::map<u64, walker_t>                                    m_walkers;
-    std::map<std::pair<blam::antr::header const*, std::string>, i32> m_names;
-    u32                                     m_names_generation{0};
-    std::vector<Physics::GroundHit>         m_steps;
 };
 
 void alloc_gameplay(compo::EntityContainer& e)
 {
     auto& gameplay = e.register_subsystem_inplace<Gameplay>();
-    e.subsystem_cast<PhysicsBus>().addEventFunction<Physics::GroundHit>(
-        0, [&gameplay](Physics::Event&, Physics::GroundHit* hit) {
-            gameplay.m_steps.push_back(*hit);
-        });
     auto& game     = e.subsystem_cast<GameEventBus>();
     game.addEventFunction<UnitEnterVehicleEvent>(
         1024, [&gameplay](GameEvent&, UnitEnterVehicleEvent* enter) {

@@ -37,6 +37,7 @@ struct Event
         GroundHit,
         Grabbed, /*!< A holder picked an object up */
         Dropped, /*!< A holder let go, or its object went away */
+        Impact,  /*!< A body struck the world or another body, audibly */
 
         Reset, /*!< Tear down all bodies + the world mesh ahead of a map
                 * change. Mesh-based bodies reference their source
@@ -132,6 +133,8 @@ struct BodyCreationShape
      * origin is its centre of mass */
     std::shared_ptr<MassPoints const> mass_points;
     std::optional<VehicleDrive>       drive;
+    /*! Hull children follow the entity's AnimationPlayback::pose */
+    bool posed{false};
 };
 
 struct BodyRemoval
@@ -231,6 +234,18 @@ struct Dropped
     u64                   holder{0};
     u64                   object{0};
     Vecf3                 velocity{}; /*!< It was let go with */
+};
+
+/*! A dynamic body hit something hard enough to be heard */
+struct Impact
+{
+    static constexpr auto event_type = Event::Impact;
+    u64                   entity_id{0};
+    u64                   other{0}; /*!< Body it hit, 0 for the world */
+    Vecf3                 point{};
+    f32                   speed{0.f}; /*!< Closing speed taken out, wu/s */
+    /*! The world surface's collision material, when it hit the world */
+    blam::tagref_t const* shader{nullptr};
 };
 
 struct ProbeHere
