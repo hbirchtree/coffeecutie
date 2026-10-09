@@ -72,7 +72,7 @@
         "gns": {
             "description": "GameNetworkingSockets",
             "dependencies": [
-                { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" },
+                { "name": "gamenetworkingsockets", "platform": "!emscripten" },
                 { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "!emscripten & !android" },
                 { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "emscripten" }
             ]
