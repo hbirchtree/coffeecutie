@@ -389,6 +389,16 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 vertices.begin(),
                 vertices.end(),
                 vert_buffer.begin() + vert_ptr);
+            if constexpr(std::is_same_v<V, blam::xbox_version_t>)
+                if(snorm8_normals)
+                {
+                    using xvert = blam::vert::vertex<blam::vert::compressed>;
+                    auto* dest  = reinterpret_cast<xvert*>(
+                        vert_buffer.data() + vert_ptr);
+                    auto  count = vertices.size_bytes() / sizeof(xvert);
+                    for(auto i : range<size_t>(count))
+                        repack_normals_snorm8(dest[i]);
+                }
             std::copy(
                 light_vertices.begin(),
                 light_vertices.end(),
@@ -597,6 +607,10 @@ ModelItem<V> ModelCache<V>::predict_impl(
                 (*element_buffer.at(element_ptr)).template as<element_type>();
 
             std::copy(vertices.begin(), vertices.end(), vert_dest.begin());
+            if constexpr(std::is_same_v<V, blam::xbox_version_t>)
+                if(snorm8_normals)
+                    for(auto i : range<size_t>(vertices.size()))
+                        repack_normals_snorm8(vert_dest[i]);
             std::copy(elements.begin(), elements.end(), element_dest.begin());
 
             /* Remap local node indices to global bone indices (PC only) */

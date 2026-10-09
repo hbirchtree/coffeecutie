@@ -16,11 +16,14 @@ attribute vec2 tex;
 uniform mat4 camera;             /* view-projection (folds the BSP basis) */
 uniform mat4 models[MODEL_BATCH]; /* per-instance world transforms */
 uniform int  glw_InstanceID;     /* emulated instance index, 0..batch-1 */
+uniform vec2 base_map_scale;
 
 varying vec2 frag_tex;
+varying vec2 frag_base_tex;
 
 void main()
 {
-    frag_tex    = tex;
+    frag_tex      = tex;
+    frag_base_tex = tex * base_map_scale;
     gl_Position = camera * models[glw_InstanceID] * vec4(position, 1.0);
 }

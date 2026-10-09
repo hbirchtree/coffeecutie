@@ -717,6 +717,20 @@ void create_resources(compo::EntityContainer& e)
         auto& light     = common_attributes.back();
         light.buffer.id = 1;
     }
+
+    /* ES2 has no integer attributes, the caches repack normals to snorm8x4 */
+    bool const snorm8_normals =
+        std::is_same_v<halo_version, blam::xbox_version_t> &&
+        !api.feature_info().vertex.vertex_attrib_i_pointer;
+    auto const as_snorm8 = [](gfx::vertex_attribute& attr) {
+        attr.value.type  = semantic::type_t::i8;
+        attr.value.count = 4;
+        attr.value.flags = gfx::vertex_attribute::attribute_flags::packed |
+                           gfx::vertex_attribute::attribute_flags::normalized;
+    };
+    if(snorm8_normals)
+        for(u32 i : {2u, 3u, 4u})
+            as_snorm8(common_attributes.at(i));
     for(auto i : range<u32>(6))
     {
         common_attributes.at(i).index = i;
@@ -754,6 +768,9 @@ void create_resources(compo::EntityContainer& e)
     if constexpr(std::is_same_v<halo_version, blam::xbox_version_t>)
         common_attributes.at(1) = gfx::vertex_attribute::from_member(
             &model_vertex_type::texcoord, gfx::vertex_float_type);
+    if(snorm8_normals)
+        for(u32 i : {2u, 3u, 4u})
+            as_snorm8(common_attributes.at(i));
 
     for(auto i : range<u32>(5))
     {

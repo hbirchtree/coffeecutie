@@ -12,8 +12,12 @@ uniform mat4 camera;
 uniform mat3 cameraRotation;
 uniform vec3 camera_position;
 uniform int glw_InstanceID;
+uniform vec2 base_map_scale;
+uniform vec2 micro_map_scale;
 
 varying vec2 frag_tex;
+varying vec2 frag_base_tex;
+varying vec2 frag_micro_tex;
 varying vec3 frag_normal;
 varying vec2 frag_light_tex;
 varying float frag_instanceId;
@@ -21,6 +25,8 @@ varying float frag_instanceId;
 void main()
 {
     frag_tex = tex;
+    frag_base_tex = tex * base_map_scale;
+    frag_micro_tex = tex * micro_map_scale;
     frag_normal = normal;
     frag_light_tex = light_tex;
     frag_instanceId = float(glw_InstanceID);

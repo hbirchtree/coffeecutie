@@ -27,6 +27,36 @@
 
 struct DebugMarkers;
 
+/* ES2 has no integer vertex attributes: re-encode a signed 11/11/10 vector
+ * as snorm8x4 in the same 4 bytes, read as a normalized i8 vec. */
+inline u32 snorm8_from_r11g11b10(u32 v)
+{
+    auto to_snorm8 = [](u32 field, u32 bits) {
+        i32 const sign_bit = 1 << (bits - 1);
+        i32 const value    = field >= u32(sign_bit) ? i32(field) - (1 << bits)
+                                                    : i32(field);
+        f32 const f = std::clamp(f32(value) / f32(sign_bit - 1), -1.f, 1.f);
+        return static_cast<libc_types::i8>(std::lround(f * 127.f));
+    };
+    std::array<libc_types::i8, 4> const out = {
+        to_snorm8(v & 0x7FFu, 11),
+        to_snorm8((v >> 11) & 0x7FFu, 11),
+        to_snorm8((v >> 22) & 0x3FFu, 10),
+        0,
+    };
+    u32 packed;
+    std::memcpy(&packed, out.data(), sizeof(packed));
+    return packed;
+}
+
+template<typename Vertex>
+inline void repack_normals_snorm8(Vertex& v)
+{
+    v.normal  = snorm8_from_r11g11b10(v.normal);
+    v.binorm  = snorm8_from_r11g11b10(v.binorm);
+    v.tangent = snorm8_from_r11g11b10(v.tangent);
+}
+
 using libc_types::byte_t;
 using semantic::Bytes;
 using semantic::BytesConst;
@@ -80,6 +110,9 @@ struct ModelCache
 
     Bytes vert_buffer, element_buffer;
     u32   vert_ptr, element_ptr;
+
+    /* ES2: compressed normals are rewritten as snorm8x4 on upload */
+    bool snorm8_normals{false};
 
     blam::mod2::header<V> const* get_header(blam::tagref_t const& mod2)
     {
@@ -260,6 +293,9 @@ struct BSPCache
     DebugMarkers* debug_markers{nullptr};
 
     u32 vert_ptr, element_ptr, light_ptr;
+
+    /* ES2: compressed normals are rewritten as snorm8x4 on upload */
+    bool snorm8_normals{false};
 
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override;
 

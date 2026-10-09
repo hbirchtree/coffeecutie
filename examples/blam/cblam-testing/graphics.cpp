@@ -475,15 +475,21 @@ i32 blam_main()
                 auto& shader_cache =
                     e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(bitm_cache));
-                e.register_subsystem_inplace<ModelCache<halo_version>>(
-                    std::ref(bitm_cache), std::ref(shader_cache), &gfx);
+                bool const snorm8_normals =
+                    !gfx.feature_info().vertex.vertex_attrib_i_pointer;
+                auto& model_cache =
+                    e.register_subsystem_inplace<ModelCache<halo_version>>(
+                        std::ref(bitm_cache), std::ref(shader_cache), &gfx);
+                model_cache.snorm8_normals = snorm8_normals;
                 e.register_subsystem_inplace<DebugMarkers>().enabled =
                     &e.subsystem_cast<RenderingParameters>().debug_markers;
-                e.register_subsystem_inplace<BSPCache<halo_version>>(
-                    std::ref(bitm_cache),
-                    std::ref(shader_cache),
-                    std::ref(sound_cache),
-                    e.service<comp_app::EventBus<SoundEvent>>());
+                auto& bsp_cache =
+                    e.register_subsystem_inplace<BSPCache<halo_version>>(
+                        std::ref(bitm_cache),
+                        std::ref(shader_cache),
+                        std::ref(sound_cache),
+                        e.service<comp_app::EventBus<SoundEvent>>());
+                bsp_cache.snorm8_normals = snorm8_normals;
                 auto& font_cache =
                     e.register_subsystem_inplace<FontCache<halo_version>>(&gfx);
                 e.register_subsystem_inplace<UIElementCache<halo_version>>(
