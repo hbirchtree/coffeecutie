@@ -266,10 +266,14 @@ inline optional<tuple<error, std::string_view>> api::submit(
         using buffer_target = group::buffer_target_arb;
 
         draw_cache.last_vao = vao.get();
-        for(auto const& attrib : vao->m_attribute_names)
-            cmd::bind_attrib_location(
-                program->m_handle, attrib.second, attrib.first);
-        cmd::link_program(program->m_handle);
+        if(program->m_attribute_names != vao->m_attribute_names)
+        {
+            for(auto const& attrib : vao->m_attribute_names)
+                cmd::bind_attrib_location(
+                    program->m_handle, attrib.second, attrib.first);
+            cmd::link_program(program->m_handle);
+            program->m_attribute_names = vao->m_attribute_names;
+        }
         for(auto const& attrib : vao->m_attributes)
         {
             if(vao->m_buffers.at(attrib.buffer.id).expired())
@@ -293,6 +297,21 @@ inline optional<tuple<error, std::string_view>> api::submit(
             cmd::bind_buffer(
                 buffer_target::element_array_buffer, element_buf->m_handle);
         }
+    } else
+    {
+        using buffer_target = group::buffer_target_arb;
+        if(program->m_attribute_names != vao->m_attribute_names)
+        {
+            for(auto const& attrib : vao->m_attribute_names)
+                cmd::bind_attrib_location(
+                    program->m_handle, attrib.second, attrib.first);
+            cmd::link_program(program->m_handle);
+            program->m_attribute_names = vao->m_attribute_names;
+        }
+        if(!vao->m_element_buffer.expired())
+            cmd::bind_buffer(
+                buffer_target::element_array_buffer,
+                vao->m_element_buffer.lock()->m_handle);
     }
 
     if(change_program)
