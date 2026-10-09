@@ -64,12 +64,13 @@ struct screen_bounds
 {
     f32 right_yaw_per_frame;
     f32 left_yaw_per_frame;
-    u32 right_frame_count;
-    u32 left_frame_count;
+    i16 right_frame_count;
+    i16 left_frame_count;
     f32 down_pitch_per_frame;
     f32 up_pitch_per_frame;
-    u32 down_pitch_frame_count;
-    u32 up_pitch_frame_count;
+    i16 down_pitch_frame_count;
+    i16 up_pitch_frame_count;
+    u32 padding[2];
 };
 
 static_assert(sizeof(screen_bounds) == 32);
