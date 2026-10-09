@@ -72,6 +72,7 @@ struct sound_unit_t
         std::shared_ptr<oaf::filter_t>             send_filter;
         f32 base_gain{1.f}; /* before occlusion, without EFX */
         f32 max_distance{0.f}; /* snd! max distance, 0 = unlimited */
+        f32 range_applied{1.f};
     };
 
     blam::tagref_t          source{};
@@ -812,10 +813,11 @@ struct SoundSystem
     void set_gain(
         sound_unit_t const& unit, sound_unit_t::track_t& meta, f32 gain)
     {
-        meta.base_gain = gain;
-        f32 occlusion  = occlusion_uses_efx() ? 0.f : unit.occlusion;
+        meta.base_gain     = gain;
+        meta.range_applied = range_gain(unit, meta);
+        f32 occlusion      = occlusion_uses_efx() ? 0.f : unit.occlusion;
         meta.source->template set_property<oaf::source_property::gain>(
-            gain * range_gain(unit, meta) *
+            gain * meta.range_applied *
             (1.f - occlusion_tuning.gain_only *
                        std::pow(occlusion, occlusion_tuning.curve)));
     }
@@ -828,11 +830,21 @@ struct SoundSystem
             return 1.f;
         constexpr f32 fade_fraction = 0.2f;
         f32 const distance = glm::distance(unit.position_applied, listener_pos);
-        return glm::clamp(
-            (meta.max_distance - distance) /
-                (meta.max_distance * fade_fraction),
-            0.f,
-            1.f);
+        return 1.f - glm::smoothstep(
+                         meta.max_distance * (1.f - fade_fraction),
+                         meta.max_distance,
+                         distance);
+    }
+
+    /* The range fade follows the listener, not only gain writes */
+    void apply_range(sound_unit_t& unit)
+    {
+        for(auto& track : unit.tracks)
+        {
+            f32 const range = range_gain(unit, track);
+            if(std::abs(range - track.range_applied) > 0.005f)
+                set_gain(unit, track, track.base_gain);
+        }
     }
 
     static BSPItem const* active_bsp(BSPCache<Ver> const& cache)
@@ -1102,6 +1114,7 @@ struct SoundSystem
             apply_occlusion(unit);
             update_route(unit, bsp, listener_cluster);
             apply_position(unit);
+            apply_range(unit);
         };
         for(auto& [id, unit] : active_sounds)
             update(unit);
