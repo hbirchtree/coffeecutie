@@ -124,7 +124,7 @@ struct StandardCamera
 
         void operator()(CIEvent const&, CIMouseMoveEvent const* ev)
         {
-            if(ev->btn != m_button)
+            if(!(ev->btn & m_button))
                 return;
             auto* look = m_look();
             if(!look)
