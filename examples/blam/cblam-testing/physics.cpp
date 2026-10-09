@@ -729,7 +729,12 @@ struct PhysicsSystem
             bool const moves      = physics.mass > 0.f;
             bool const follower =
                 moves && physics.authority == ObjectPhysics::Follower;
-            if(physics.mass > 0.f && !in_active_section(model.position))
+            auto const section = m_object_sections.find(id);
+            bool const simulated =
+                section != m_object_sections.end() &&
+                section->second == m_built_section;
+            if(moves && !simulated &&
+               (!in_active_section(model.position) || !grounded(model.position)))
                 continue;
             live.insert(id);
             /* Bodies with a phys tag turn about its centre of mass */
@@ -740,7 +745,8 @@ struct PhysicsSystem
             if(existing == m_object_bodies.end() ||
                existing->second != physics.authority)
             {
-                m_object_bodies[id]  = physics.authority;
+                m_object_bodies[id]   = physics.authority;
+                m_object_sections[id] = m_built_section;
                 Shape::shape_t shape =
                     physics.collision ? (moves ? Shape::Hulls : Shape::Mesh)
                     : physics.radius > 0.f ? Shape::Sphere
@@ -813,6 +819,7 @@ struct PhysicsSystem
                 continue;
             }
             remove_body(it->first);
+            m_object_sections.erase(it->first);
             it = m_object_bodies.erase(it);
         }
     }
@@ -997,6 +1004,24 @@ struct PhysicsSystem
         return false;
     }
 
+    /* This section's ground somewhere below; otherwise it lies on another
+     * section's and would fall through this one */
+    bool grounded(Vecf3 const& pos) const
+    {
+        btVector3 const from(pos.x, pos.y, pos.z + .5f);
+        btVector3 const to(pos.x, pos.y, pos.z - ground_reach);
+        btCollisionWorld::ClosestRayResultCallback ground(from, to);
+        ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
+        m_world->rayTest(from, to, ground);
+        if(!ground.hasHit())
+            return false;
+        /* The bounds box is no ground */
+        return std::none_of(
+            m_bounds.begin(), m_bounds.end(), [&ground](auto const& bound) {
+                return bound.second.get() == ground.m_collisionObject;
+            });
+    }
+
     static btTransform yaw_basis(f32 yaw)
     {
         btTransform transform;
@@ -1069,6 +1094,41 @@ struct PhysicsSystem
         return nullptr;
     }
 
+    /* Planes on the section's world bounds, facing in: objects flung out of
+     * the level stop at its box instead of falling forever */
+    void build_bounds(BSPItem const& item)
+    {
+        clear_bounds();
+        auto [p1, p2]  = item.mesh->world_bounds.points();
+        Vecf3 const lo = glm::min(p1, p2);
+        Vecf3 const hi = glm::max(p1, p2);
+        std::array<std::pair<btVector3, f32>, 6> const planes = {{
+            {{0, 0, 1}, lo.z},
+            {{0, 0, -1}, -hi.z},
+            {{1, 0, 0}, lo.x},
+            {{-1, 0, 0}, -hi.x},
+            {{0, 1, 0}, lo.y},
+            {{0, -1, 0}, -hi.y},
+        }};
+        for(auto const& [normal, distance] : planes)
+        {
+            auto shape = std::make_unique<btStaticPlaneShape>(normal, distance);
+            btRigidBody::btRigidBodyConstructionInfo info(0.f, nullptr, shape.get());
+            info.m_startWorldTransform.setIdentity();
+            auto body = std::make_unique<btRigidBody>(info);
+            body->setFriction(1.f);
+            m_world->addRigidBody(body.get());
+            m_bounds.push_back({std::move(shape), std::move(body)});
+        }
+    }
+
+    void clear_bounds()
+    {
+        for(auto& [shape, body] : m_bounds)
+            m_world->removeRigidBody(body.get());
+        m_bounds.clear();
+    }
+
     void rebuild_world(BSPCache<V> const& cache)
     {
         Coffee::ProfContext _("Physics::rebuild_world()");
@@ -1082,6 +1142,7 @@ struct PhysicsSystem
         {
             m_world->removeRigidBody(m_world_body.get());
             m_world_body.reset();
+            clear_bounds();
         }
         if(m_probe_body)
         {
@@ -1133,6 +1194,7 @@ struct PhysicsSystem
         m_world_body = std::make_unique<btRigidBody>(info);
         m_world_body->setFriction(1.f);
         m_world->addRigidBody(m_world_body.get());
+        build_bounds(*item);
 
         cDebug(
             "physics: section {} baked: {} surfaces -> {} tris, "
@@ -1385,16 +1447,41 @@ struct PhysicsSystem
                 transform.getOrigin().setZ(transform.getOrigin().z() + sink + .01f);
                 entity_body.world_body->setWorldTransform(transform);
             }
-            btVector3 const extent = hi - lo;
-            f32 const       thin =
-                std::min({extent.x(), extent.y(), extent.z()}) * .5f;
-            entity_body.world_body->setCcdMotionThreshold(thin);
-            entity_body.world_body->setCcdSweptSphereRadius(thin * .8f);
             if(body_create.shape == Physics::BodyCreationShape::Sphere)
             {
                 entity_body.world_body->setRollingFriction(.02f);
                 entity_body.world_body->setSpinningFriction(.02f);
             }
+        }
+        if(body_create.mass > 0.f && !body_create.kinematic)
+        {
+            /* Swept by their thinnest side, or fast ones tunnel the BSP */
+            btVector3 lo, hi;
+            entity_body.world_shape->getAabb(transform, lo, hi);
+            /* Vehicles are placed by their model origin on the ground, and
+             * a hull reaching below it would sink out through the floor */
+            if(auto const& points = body_create.mass_points)
+            {
+                btVector3 const com = transform.getBasis() *
+                                      btVector3(
+                                          points->center_of_mass.x,
+                                          points->center_of_mass.y,
+                                          points->center_of_mass.z);
+                f32 const origin = transform.getOrigin().z() - com.z();
+                if(f32 const sink = origin - lo.z(); sink > 0.f)
+                {
+                    transform.getOrigin().setZ(
+                        transform.getOrigin().z() + sink + .01f);
+                    entity_body.world_body->setWorldTransform(transform);
+                    lo.setZ(lo.z() + sink + .01f);
+                    hi.setZ(hi.z() + sink + .01f);
+                }
+            }
+            btVector3 const extent = hi - lo;
+            f32 const       thin =
+                std::min({extent.x(), extent.y(), extent.z()}) * .5f;
+            entity_body.world_body->setCcdMotionThreshold(thin);
+            entity_body.world_body->setCcdSweptSphereRadius(thin * .8f);
         }
         entity_body.group       = body_create.group;
         entity_body.mass_points = body_create.mass_points;
@@ -1501,6 +1588,7 @@ struct PhysicsSystem
         {
             m_world->removeRigidBody(m_world_body.get());
             m_world_body.reset();
+            clear_bounds();
         }
         if(m_probe_body)
         {
@@ -1520,6 +1608,7 @@ struct PhysicsSystem
         m_bodies.clear();
         m_player_bodies.clear();
         m_object_bodies.clear();
+        m_object_sections.clear();
         m_world_item = nullptr;
         /* Bodies are gone; holders no longer carry anything */
         m_grabs.clear();
@@ -1828,6 +1917,10 @@ struct PhysicsSystem
     std::unique_ptr<btTriangleIndexVertexArray> m_mesh_iface;
     std::unique_ptr<btBvhTriangleMeshShape>     m_world_shape;
     std::unique_ptr<btRigidBody>                m_world_body;
+    std::vector<std::pair<
+        std::unique_ptr<btStaticPlaneShape>,
+        std::unique_ptr<btRigidBody>>>
+        m_bounds;
     std::unique_ptr<btSphereShape>              m_probe_shape;
     std::unique_ptr<btRigidBody>                m_probe_body;
 
@@ -1867,6 +1960,8 @@ struct PhysicsSystem
 
     std::map<u64, player_body_t> m_player_bodies;
     std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
+    /* The section an object's body was made in */
+    std::map<u64, i16> m_object_sections;
     /* The section the world mesh was built from */
     BSPItem const* m_world_item{nullptr};
 
@@ -1880,6 +1975,7 @@ struct PhysicsSystem
     static constexpr f32           hull_margin  = .005f;
     static constexpr f32           halo_gravity = 9.81f / 3.048f;
     static constexpr f32           grab_range   = 40.f;
+    static constexpr f32           ground_reach = 30.f; /* wu below */
     static constexpr f32           step_seconds = 1.f / 60.f;
     std::map<u64, Physics::Grab>   m_grab_requests;
     std::map<u64, grab_t>          m_grabs;

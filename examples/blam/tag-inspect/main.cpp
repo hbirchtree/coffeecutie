@@ -3475,6 +3475,12 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
             h.vehicle_floor,
             h.vehicle_ceiling);
         print_nonzero("unknown1", h.unknown1);
+        {
+            auto [lo, hi] = h.world_bounds.points();
+            fmt::print(
+                "  world_bounds ({:g}, {:g}, {:g})..({:g}, {:g}, {:g})\n",
+                lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);
+        }
 
         auto count = [](char const* label, auto const& ref) {
             fmt::print(
