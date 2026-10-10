@@ -826,6 +826,7 @@ struct PlayerInfo
         f32 run_speed{2.25f};
         f32 back_speed{2.25f};
         f32 strafe_speed{2.25f};
+        f32 jump_velocity{2.3f}; /*!< wu/s, from the biped tag */
 
         /*! Hit shape for bodies that follow a camera; the capsule above is
          * what a biped moves with */

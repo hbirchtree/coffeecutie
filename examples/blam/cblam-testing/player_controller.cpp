@@ -24,8 +24,6 @@ struct PlayerController
     using type  = PlayerController;
     using Proxy = compo::proxy_of<PlayerControllerManifest>;
 
-    /* As high as 4 wu/s jumped under 9.81, in Halo's gravity */
-    static constexpr f32 jump_speed = 2.3f;
     /* A press this long before landing still jumps on landing */
     static constexpr duration jump_buffer = 150ms;
     /* A press this long after stepping off an edge still jumps */
@@ -378,7 +376,7 @@ struct PlayerController
         auto const* data     = p.get<PhysicsData>(id);
         bool const  grounded = data && data->enabled && data->grounded;
         f32 const   jump     = take_jump(m_jumps[id], input.intent, grounded, t)
-                                   ? jump_speed
+                                   ? info.biped.jump_velocity
                                    : 0.f;
 
         Physics::Event    ev{Physics::Event::Velocity};

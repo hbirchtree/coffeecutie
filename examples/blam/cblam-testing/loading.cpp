@@ -2325,6 +2325,9 @@ struct ResourceLoader
                     };
                 else
                     cWarning("Biped has no collision size, using defaults");
+                /* The tag has it per tick, at 30 Hz */
+                if(biped->jump_velocity > 0.f)
+                    biped_model.shape.jump_velocity = biped->jump_velocity * 30.f;
                 biped_model.shape.collision = object_collision(
                     files, biped->collider, biped->model);
                 auto const& magic = files.container.magic;
