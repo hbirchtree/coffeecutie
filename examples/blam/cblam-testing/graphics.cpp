@@ -100,6 +100,10 @@ i32 blam_main()
              "Range of 1-4 of texture quality, 4 is highest",
              cxxopts::value<int>())
             //
+            ("gfx-lod-cap",
+             "Most detailed model level allowed, 0 (full) to 4 (lowest)",
+             cxxopts::value<int>())
+            //
             ;
         options.add_options("Networking")
             //
@@ -278,6 +282,9 @@ i32 blam_main()
                 params.mipmap_bias = arguments["gfx-tex-resolution"].as<int>();
             else
                 params.mipmap_bias = 0;
+            if(arguments.contains("gfx-lod-cap"))
+                params.lod_cap = static_cast<libc_types::u32>(
+                    std::clamp(arguments["gfx-lod-cap"].as<int>(), 0, 4));
 
             auto& gfx  = e.register_subsystem_inplace<gfx::system>();
             auto  opts = [&arguments]() -> gleam::api::load_options_t {

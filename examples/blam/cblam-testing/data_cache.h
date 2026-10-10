@@ -111,6 +111,22 @@ struct DataCache
         generation++;
     }
 
+    void evict(generation_idx_t id)
+    {
+        if(id.gen != generation)
+            return;
+        auto it = find_id(id.i);
+        if(it == m_cache.end())
+            return;
+        for(auto key = m_cache_key.begin(); key != m_cache_key.end(); ++key)
+            if(key->second == it->first)
+            {
+                m_cache_key.erase(key);
+                break;
+            }
+        it->second = T{};
+    }
+
     cache_id_t counter{0};
     /* Dense: id N lives at index N-1. A deque so references and pointers
      * into entries survive later insertions. */

@@ -988,7 +988,10 @@ struct DrawListBuilder
                 auto         parent = p.template ref<Proxy>(model.parent);
                 Model const& mod    = *mod_ptr;
 
-                if(!parent.template get<Visibility>().visible_for(m_seat) ||
+                Visibility const& vis = parent.template get<Visibility>();
+                u8 const lod = mod.lod_resolve(vis.lod_for(m_seat));
+                if(!vis.visible_for(m_seat) ||
+                   !((model.lod_mask >> lod) & 1) ||
                    (!rendering_params->render_scenery &&
                     (ent.tags() & ObjectSkybox) == 0))
                 {

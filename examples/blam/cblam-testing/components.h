@@ -64,14 +64,26 @@ struct Visibility
     using viewport_id = std::pair<u32, bool>;
 
     std::map<viewport_id, bool> visible{};
+    // Detail level the occluder picked, per viewport, in mod2_lod order
+    std::map<viewport_id, u8> lod{};
     // Interior is invariant to viewports
     bool interior{false};
+
+    u8 lod_for(u32 player_id = 0, bool mirror = false) const
+    {
+        auto it = lod.find(std::make_pair(player_id, mirror));
+        return it == lod.end() ? 0 : it->second;
+    }
     // Set for player biped to prevent rendering for self
     std::optional<u32> skip_render_for;
+    // Set for first-person models, only drawn for their owner and never culled
+    std::optional<u32> only_render_for;
     bool _dummy{};
 
     bool visible_for(u32 player_id = 0, bool mirror = false) const
     {
+        if(only_render_for.has_value())
+            return !mirror && *only_render_for == player_id;
         if(skip_render_for.has_value() && !mirror)
             if(*skip_render_for == player_id)
                 return false;
@@ -179,6 +191,8 @@ struct SubModel
 
     generation_idx_t shader;
     generation_idx_t model;
+    /* Detail levels this part is drawn for, bit per mod2_lod */
+    u8 lod_mask{0x1F};
 
     template<typename V>
     void initialize(
@@ -233,6 +247,30 @@ struct Model
 
     blam::tag_t const* tag{nullptr};
     blam::tag_t const* origin_object{nullptr};
+
+    std::array<generation_idx_t, 5> lod_models{};
+    std::array<libc_types::f32, 5>  lod_cutoff{};
+    u8                              lod_built{0};
+    libc_types::f32 render_radius{0.f};
+
+    u8 lod_resolve(u8 wanted) const
+    {
+        for(int l = std::min<int>(wanted, 4); l >= 0; l--)
+            if((lod_built >> l) & 1)
+                return static_cast<u8>(l);
+        for(int l = wanted + 1; l < 5; l++)
+            if((lod_built >> l) & 1)
+                return static_cast<u8>(l);
+        return 0;
+    }
+
+    bool has_lods() const
+    {
+        for(auto cutoff : lod_cutoff)
+            if(cutoff > 0.f)
+                return true;
+        return false;
+    }
 
     std::array<libc_types::f32, 4> object_function{{-1.f, -1.f, -1.f, -1.f}};
     libc_types::f32                meter_value{-1.f};

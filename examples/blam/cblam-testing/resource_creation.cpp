@@ -325,6 +325,8 @@ void create_resources(compo::EntityContainer& e)
                      set_val("debug_triggers", rp.debug_triggers);
                      set_val("tex_res", rp.tex_res);
                      set_val("draw_distance", rp.draw_distance);
+                     set_val("lod_scale", rp.lod_scale);
+                     set_val("lod_cap", rp.lod_cap);
                      set_val("current_bsp_cluster", rp.current_bsp_cluster);
 
                      if(auto it = d.find("clear_color");

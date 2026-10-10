@@ -215,6 +215,8 @@ struct RenderingParameters : compo::SubsystemBase
 
     f32 tex_res{0.f};
     f32 draw_distance{500.f};
+    f32 lod_scale{1.f};
+    libc_types::u32 lod_cap{0};
 
     libc_types::u32 current_bsp_cluster{
         std::numeric_limits<libc_types::u32>::max()};

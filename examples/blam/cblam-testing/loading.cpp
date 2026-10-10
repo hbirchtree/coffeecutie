@@ -122,6 +122,7 @@ struct ResourceLoader
 
         i16 skybox_id{-1};
         i16 weather_id{-1};
+        i16 section{-1};
     } current;
 
     /* ModelCache::predict_impl copies vertices straight into vert_buffer /
@@ -171,6 +172,7 @@ struct ResourceLoader
             current.load_generation = files.load_generation;
             current.skybox_id       = -1;
             current.weather_id      = -1;
+            current.section         = -1;
         }
         BlamResources&    resources  = p.template subsystem<BlamResources>();
         BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
@@ -192,7 +194,14 @@ struct ResourceLoader
 
         reconcile_player_bipeds(p, files);
 
-        if(!pending_cluster_change && pending_bsps.empty() &&
+        bool const section_changed = current.section >= 0 &&
+                                     pending_bsps.empty() &&
+                                     bsp_cache.active_section != current.section;
+
+        auto const lod_requests = collect_lod_requests(p);
+
+        if(!section_changed && lod_requests.empty() &&
+           !pending_cluster_change && pending_bsps.empty() &&
            pending_models.empty() && pending_mounts.empty() &&
            pending_objects.empty() && pending_despawns.empty())
             return;
@@ -200,6 +209,9 @@ struct ResourceLoader
         /* Everything below can reach ModelCache::predict(), so the model
          * buffers stay mapped across the whole batch. */
         model_buffer_scope_t model_buffers(resources, model_cache);
+
+        if(section_changed)
+            switch_section(p, bsp_cache.active_section);
 
         // Pending cluster first so we can use the shared model loading after
         if(pending_cluster_change)
@@ -239,6 +251,91 @@ struct ResourceLoader
         for(auto net_id : pending_despawns)
             despawn_object(p, net_id);
         pending_despawns.clear();
+
+        build_lods(p, lod_requests);
+    }
+
+    std::vector<std::pair<u64, u8>> collect_lod_requests(Proxy& p)
+    {
+        std::vector<std::pair<u64, u8>> out;
+        for(auto ent : p.template select<Model, Visibility>())
+        {
+            auto [model, vis] = ent.components();
+            if(model.lod_built == 0)
+                continue;
+            for(auto const& [view, lod] : vis.lod)
+                if(lod < 5 && !((model.lod_built >> lod) & 1))
+                {
+                    out.emplace_back(ent.id(), lod);
+                    break;
+                }
+        }
+        return out;
+    }
+
+    void init_lods(
+        Proxy& p, Model& model, blam::scn::object const& object)
+    {
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        model.lod_models[0]          = model.model;
+        model.lod_built              = 1;
+        f32 const radius = object.render_bound_radius > 0.f
+                               ? object.render_bound_radius
+                               : object.bound_radius;
+        model.render_radius = radius + glm::length(object.bound_offset);
+        if(auto const* header = model_cache.get_header(object.model))
+            model.lod_cutoff = header->detail_cutoff;
+    }
+
+    void build_lods(Proxy& p, std::vector<std::pair<u64, u8>> const& requests)
+    {
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        for(auto const& [id, lod] : requests)
+        {
+            auto   ent   = p.ref(id);
+            Model& model = ent.template get<Model>();
+            if(!model.tag)
+                continue;
+            model.lod_built |= 1 << lod;
+            ModelAssembly assem = model_cache.predict_regions(
+                model.tag->as_ref(), static_cast<blam::mod2::mod2_lod>(lod));
+            if(assem.models.empty())
+                continue;
+            generation_idx_t const item = assem.models.at(0);
+            model.lod_models[lod]       = item;
+
+            bool aliased = false;
+            for(u32 other = 0; other < 5 && !aliased; other++)
+            {
+                if(other == lod || !((model.lod_built >> other) & 1) ||
+                   !(model.lod_models[other] == item))
+                    continue;
+                for(auto const& part : model.parts)
+                    if(auto* sub = p.template get<SubModel>(part.id());
+                       sub && ((sub->lod_mask >> other) & 1))
+                        sub->lod_mask |= 1 << lod;
+                aliased = true;
+            }
+            cDebug(
+                "LOD {} for {}: {}",
+                lod,
+                index.name_of(*model.tag),
+                aliased ? "shares geometry with a built level"
+                        : "new geometry");
+            if(aliased)
+                continue;
+
+            compo::EntityRecipe submodel = shared_recipes::submodel;
+            submodel.tags = submodel.tags | (ent.tags() & SubObjectMask);
+            build_submodels(
+                p,
+                ent,
+                model,
+                item,
+                submodel,
+                render_layer::world,
+                static_cast<u8>(1 << lod));
+        }
     }
 
     /* Sun direction/colour and fog for the world UBO, taken from the
@@ -716,16 +813,10 @@ struct ResourceLoader
                     trigger_vols[sw.trigger_volume].name.str());
             }
         }
-        std::vector<generation_idx_t> bsp_meshes;
+        bsp_cache.sections.clear();
         if(auto bsps = scenario->bsp_info.data(magic); bsps.has_value())
-        {
-            u32 i{};
             for(blam::bsp::info const& bsp : bsps.value())
-            {
-                cDebug("- BSP info #{}", ++i);
-                bsp_meshes.push_back(bsp_cache.predict(bsp));
-            }
-        }
+                bsp_cache.sections.push_back(&bsp);
 
         /* Initial active section: trust the first spawn's bsp_index unless its
          * position resolves into a different section's BSP tree (b40's first
@@ -737,65 +828,176 @@ struct ResourceLoader
                 auto const& loc = locations.value()[0];
                 bsp_cache.active_section =
                     static_cast<libc_types::i16>(loc.bsp_index);
-                for(auto& [id, item] : bsp_cache.m_cache)
-                    if(item.find_cluster_tree(loc.pos).has_value())
+                /* Spawns sit on the floor, often in a solid leaf: probe up
+                 * through the body like the occluder does for scenery */
+                for(f32 up : {0.f, .5f, 2.f, 5.f})
+                    if(auto section = bsp_cache.section_of_point(
+                           loc.pos + Vecf3{0.f, 0.f, up}))
                     {
-                        bsp_cache.active_section = item.section_idx;
+                        bsp_cache.active_section = *section;
                         break;
                     }
             }
+            if(bsp_cache.active_section < 0 ||
+               static_cast<size_t>(bsp_cache.active_section) >=
+                   bsp_cache.sections.size())
+                bsp_cache.active_section = 0;
             cDebug("Initial BSP section: {}", bsp_cache.active_section);
         }
+
+        /* Only the active section is resident */
+        std::optional<generation_idx_t> mesh_id;
+        if(!bsp_cache.sections.empty())
+            mesh_id = bsp_cache.predict(
+                *bsp_cache.sections[bsp_cache.active_section]);
 
         gpu.bsp_buf->unmap();
         gpu.bsp_index->unmap();
         gpu.bsp_light_buf->unmap();
         debug_markers.unmap();
 
-        EntityRecipe bsp_ = shared_recipes::bsp;
+        if(mesh_id)
+            spawn_bsp_chunks(p, *mesh_id);
+        current.section = bsp_cache.active_section;
 
-        for(auto const& mesh_id : bsp_meshes)
-        {
-            auto const& bsp = bsp_cache.get(mesh_id);
-            for(auto const& group : bsp.groups)
-                for(BSPItem::Mesh const& mesh : group.meshes)
-                {
-                    auto          mesh_ent = p.create_entity(bsp_);
-                    BspReference& bsp_ref =
-                        mesh_ent.template get<BspReference>();
-
-                    bsp_ref.shader         = mesh.shader;
-                    bsp_ref.lightmap       = mesh.light_bitm;
-                    bsp_ref.bsp            = mesh_id;
-                    bsp_ref.cluster_idx    = mesh.cluster_idx;
-                    bsp_ref.subcluster_idx = mesh.subcluster_idx;
-                    bsp_ref.clusters       = mesh.clusters;
-                    bsp_ref.bmin           = mesh.bmin;
-                    bsp_ref.bmax           = mesh.bmax;
-                    bsp_ref.has_bounds     = mesh.has_bounds;
-
-                    bsp_ref.sort_center =
-                        mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
-                    DrawState& bsp_draw = mesh_ent.template get<DrawState>();
-                    bsp_draw.draw.data.push_back(mesh.draw);
-
-                    ShaderData& shader_ = mesh_ent.template get<ShaderData>();
-                    ShaderItem const& shader_it = shader_cache.get(mesh.shader);
-                    shader_.shader              = shader_it.header;
-                    shader_.shader_tag          = shader_it.tag;
-                    shader_.shader_id           = mesh.shader;
-
-                    bsp_draw.current_pass =
-                        shader_.get_render_pass(shader_cache);
-                    bsp_draw.draw.data.back().debug_identifier = fmt::format(
-                        "{} {}",
-                        shader_it.tag->tagclass.front().str(),
-                        shader_it.tag->to_name().to_string(shader_cache.magic));
-                }
-            // break;
-        }
         load_world_lighting(p, 0);
         load_sound_scenery(p, section);
+    }
+
+    /* One entity per BSP mesh chunk of a resident section */
+    void spawn_bsp_chunks(Proxy& p, generation_idx_t mesh_id)
+    {
+        using namespace compo;
+
+        BSPCache<Ver>&    bsp_cache = p.template subsystem<BSPCache<Ver>>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
+
+        EntityRecipe bsp_ = shared_recipes::bsp;
+
+        auto const& bsp = bsp_cache.get(mesh_id);
+        for(auto const& group : bsp.groups)
+            for(BSPItem::Mesh const& mesh : group.meshes)
+            {
+                auto          mesh_ent = p.create_entity(bsp_);
+                BspReference& bsp_ref  = mesh_ent.template get<BspReference>();
+
+                bsp_ref.shader         = mesh.shader;
+                bsp_ref.lightmap       = mesh.light_bitm;
+                bsp_ref.bsp            = mesh_id;
+                bsp_ref.cluster_idx    = mesh.cluster_idx;
+                bsp_ref.subcluster_idx = mesh.subcluster_idx;
+                bsp_ref.clusters       = mesh.clusters;
+                bsp_ref.bmin           = mesh.bmin;
+                bsp_ref.bmax           = mesh.bmax;
+                bsp_ref.has_bounds     = mesh.has_bounds;
+
+                bsp_ref.sort_center =
+                    mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
+                DrawState& bsp_draw = mesh_ent.template get<DrawState>();
+                bsp_draw.draw.data.push_back(mesh.draw);
+
+                ShaderData&       shader_   = mesh_ent.template get<ShaderData>();
+                ShaderItem const& shader_it = shader_cache.get(mesh.shader);
+                shader_.shader              = shader_it.header;
+                shader_.shader_tag          = shader_it.tag;
+                shader_.shader_id           = mesh.shader;
+
+                bsp_draw.current_pass = shader_.get_render_pass(shader_cache);
+                bsp_draw.draw.data.back().debug_identifier = fmt::format(
+                    "{} {}",
+                    shader_it.tag->tagclass.front().str(),
+                    shader_it.tag->to_name().to_string(shader_cache.magic));
+            }
+    }
+
+    /* Scenery and light fixtures carry the sections they are placed in */
+    static bool placed_in_section(
+        blam::scn::object_spawn const& spawn, i16 section)
+    {
+        u16 const mask = static_cast<u16>(spawn.bsp_flags);
+        return mask == 0 || section < 0 || section >= 16 ||
+               ((mask >> section) & 1);
+    }
+
+    /* Moves the resident BSP section and the static objects placed in it */
+    void switch_section(Proxy& p, i16 section)
+    {
+        ProfContext _(__FUNCTION__);
+
+        BlamFiles<Ver>& files         = p.template subsystem<BlamFiles<Ver>>();
+        BSPCache<Ver>&  bsp_cache     = p.template subsystem<BSPCache<Ver>>();
+        BlamResources&  gpu           = p.template subsystem<BlamResources>();
+        DebugMarkers&   debug_markers = p.template subsystem<DebugMarkers>();
+
+        if(section < 0 ||
+           static_cast<size_t>(section) >= bsp_cache.sections.size())
+            return;
+        cDebug("Switching resident BSP section {} -> {}", current.section, section);
+        current.section = section;
+
+        p.remove_entity_if([](compo::Entity const& e) {
+            return stl_types::any_flag_of(e.tags, ObjectBsp);
+        });
+        for(auto const& [id, item] : bsp_cache.m_cache)
+            if(item.valid())
+                bsp_cache.release({id, bsp_cache.generation});
+
+        debug_markers.map();
+        bsp_cache.debug_markers  = &debug_markers;
+        bsp_cache.vert_buffer    = gpu.bsp_buf->map<byte_t>(0);
+        bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
+        bsp_cache.light_buffer   = gpu.bsp_light_buf->map<byte_t>(0);
+        auto mesh_id = bsp_cache.predict(*bsp_cache.sections[section]);
+        gpu.bsp_buf->unmap();
+        gpu.bsp_index->unmap();
+        gpu.bsp_light_buf->unmap();
+        debug_markers.unmap();
+
+        if(mesh_id.valid())
+            spawn_bsp_chunks(p, mesh_id);
+
+        /* Static objects: drop the ones not placed here, spawn the ones that
+         * are and were skipped so far */
+        std::set<u32> present, doomed;
+        for(auto ent : p.template select<ObjectSpawn, NetworkInfo>())
+        {
+            auto [spawn, net] = ent.components();
+            auto const group  = SpawnObjectEvent::scenario_group(net.instance_id);
+            if(group != ScenarioGroup::Scenery &&
+               group != ScenarioGroup::LightFixture)
+                continue;
+            if(spawn.header && !placed_in_section(*spawn.header, section))
+                doomed.insert(net.instance_id);
+            else
+                present.insert(net.instance_id);
+        }
+        for(u32 net_id : doomed)
+            despawn_object(p, net_id);
+
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+        auto const& magic = files.container.magic;
+        for(auto group_id : {ScenarioGroup::Scenery, ScenarioGroup::LightFixture})
+            with_scenario_group(
+                *scenario, group_id, [&](auto const& group_data, u32 tags) {
+                    auto palette   = group_data.palette.data(magic);
+                    auto instances = group_data.instances.data(magic);
+                    if(palette.has_error() || instances.has_error())
+                        return;
+                    for(auto const& [i, instance] :
+                        stl_types::const_enumerate(instances.value()))
+                    {
+                        auto const net_id = SpawnObjectEvent::scenario_net_id(
+                            group_id, static_cast<u32>(i));
+                        if(present.contains(net_id) ||
+                           !placed_in_section(instance, section))
+                            continue;
+                        build_scenario_object(
+                            p, palette.value(), instance, tags, net_id);
+                    }
+                });
     }
 
     /* A device machine's power comes from the scenario device group it points
@@ -853,13 +1055,17 @@ struct ResourceLoader
             palette.size());
 
         bool const dynamic = group_id >= ScenarioGroup::Vehicle;
+        i16 const  section =
+            p.template subsystem<BSPCache<Ver>>().active_section;
 
         for(u32 i = 0; i < instances.size(); ++i)
         {
             auto const net_id = SpawnObjectEvent::scenario_net_id(group_id, i);
             if(!dynamic)
             {
-                build_scenario_object(p, palette, instances[i], tags, net_id);
+                if(placed_in_section(instances[i], section))
+                    build_scenario_object(
+                        p, palette, instances[i], tags, net_id);
                 continue;
             }
             auto const& instance = instances[i];
@@ -967,6 +1173,7 @@ struct ResourceLoader
         model.model         = mesh_data.models.at(0);
         model.origin_object = instance_tag;
         model.initialize(&instance);
+        init_lods(p, model, instance_obj[0]);
         depth.position = model.position;
 
         NetworkInfo& netinfo = parent_.template get<NetworkInfo>();
@@ -1099,7 +1306,8 @@ struct ResourceLoader
         compo::EntityRef<compo::EntityContainer>& parent_,
         Model&                                    model,
         generation_idx_t const&                   model_id,
-        compo::EntityRecipe const&                submodel)
+        compo::EntityRecipe const&                submodel,
+        u8                                        lod_mask = 0x1F)
     {
         ShaderCache<Ver>& shader_cache =
             p.template subsystem<ShaderCache<Ver>>();
@@ -1122,6 +1330,7 @@ struct ResourceLoader
             SubModel& submod_ = submod.template get<SubModel>();
 
             submod_.parent      = parent_.id();
+            submod_.lod_mask    = lod_mask;
             DrawState& sub_draw = submod.template get<DrawState>();
             submod_.template initialize<Ver>(model_id, sub, sub_draw);
 
@@ -1495,6 +1704,7 @@ struct ResourceLoader
         model.tag           = &(*model_it);
         model.model         = mesh_data.models.at(0);
         model.origin_object = &object_tag;
+        init_lods(p, model, object);
         model.position      = spawn.position;
         model.rotation      = spawn.rotation;
         model.update_matrix();
@@ -1507,7 +1717,8 @@ struct ResourceLoader
         netinfo.instance_id  = spawn.net_id;
 
         for(auto const& model_id : mesh_data.models)
-            build_submodels(p, ent, model, model_id, submodel);
+            build_submodels(
+                p, ent, model, model_id, submodel, 1);
     }
 
     void despawn_object(Proxy& p, u32 net_id)

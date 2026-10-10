@@ -640,7 +640,8 @@ struct BitmapItem
 
         u32   layer{0};
         u32   array_level{0}; /*!< mip level the image occupies in its bucket */
-        Vecf2 offset{};
+        Veci2 pixel_offset{}; /*!< where the upload writes */
+        Vecf2 offset{};       /*!< normalized, what the shader samples with */
         Vecf2 scale{};
         Veci2 gutter{}; /*!< wrap padding reserved around the tile */
         f32   bias{0.f};

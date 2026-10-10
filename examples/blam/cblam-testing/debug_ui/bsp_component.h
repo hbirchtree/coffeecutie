@@ -229,6 +229,11 @@ struct BlamBspWidget
                         reinterpret_cast<i32*>(&rendering->mipmap_bias),
                         0,
                         4);
+                    ImGui::SliderInt(
+                        "Model detail cap (0 = full)",
+                        reinterpret_cast<i32*>(&rendering->lod_cap),
+                        0,
+                        4);
                     if(ImGui::Checkbox("Doom mode", &postprocess->doom_mode))
                         postprocess->scale =
                             postprocess->doom_mode ? 0.25f : 1.f;

@@ -7,6 +7,7 @@
 #include <blam/volta/blam_sound.h>
 
 #include <peripherals/semantic/chunk_ops.h>
+#include <peripherals/stl/enumerate.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
 #include <coffee/graphics/apis/gleam/rhi.h>
@@ -196,6 +197,25 @@ struct ModelCache
         if(!header)
             return {};
 
+        /* Levels that share geometry share the upload */
+        auto const key = std::make_tuple(tag.tag_id, max_lod);
+        if(!this->m_cache_key.contains(key))
+            if(auto parts = header->model_at(max_lod, magic))
+                for(u32 other = 0; other < 5; other++)
+                {
+                    auto other_lod = static_cast<blam::mod2::mod2_lod>(other);
+                    auto cached    = this->m_cache_key.find(
+                        std::make_tuple(tag.tag_id, other_lod));
+                    if(other_lod == max_lod || cached == this->m_cache_key.end())
+                        continue;
+                    auto other_parts = header->model_at(other_lod, magic);
+                    if(other_parts && other_parts->parts == parts->parts)
+                    {
+                        this->m_cache_key.emplace(key, cached->second);
+                        break;
+                    }
+                }
+
         assem.models.push_back(this->predict(tag, max_lod));
 
         //        for(auto const& region : header->regions.data(magic).value())
@@ -244,8 +264,8 @@ struct BSPCache
         evict_all();
 
         bsp_switches.clear();
-        active_section   = 0;
-        next_section_idx = 0;
+        sections.clear();
+        active_section = 0;
         sky_palette.clear();
         if(auto scen_opt = map.tags->scenario(map.map, map.magic))
         {
@@ -288,7 +308,34 @@ struct BSPCache
 
     std::vector<bsp_switch_t> bsp_switches;
     libc_types::i16           active_section{0};
-    libc_types::i16           next_section_idx{0}; /* predict_impl ordering */
+
+    /* The scenario's structure BSPs in bsp_info order */
+    std::vector<blam::bsp::info const*> sections;
+
+    /* Which section's tree holds the point */
+    std::optional<libc_types::i16> section_of_point(Vecf3 const& point) const
+    {
+        for(auto const& [i, info] : stl_types::const_enumerate(sections))
+        {
+            auto bsp_magic = info->bsp_magic(magic);
+            auto header    = info->to_bsp(bsp_magic)
+                              .to_header()
+                              .data(bsp_magic, blam::single_value);
+            if(header.has_error())
+                continue;
+            if(header.value()->cluster_for_point(point, bsp_magic))
+                return static_cast<libc_types::i16>(i);
+        }
+        return std::nullopt;
+    }
+
+    /* Drops a resident section. One section is resident at a time, so the
+     * vertex arenas simply start over. */
+    void release(generation_idx_t id)
+    {
+        this->evict(id);
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0;
+    }
 
     Span<byte_t>           vert_buffer;
     Span<byte_t>           light_buffer;

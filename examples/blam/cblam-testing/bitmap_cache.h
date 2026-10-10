@@ -37,6 +37,9 @@ struct BitmapCache
         Veci2 max_size{};
         u32   layers{0};
 
+        gfx::texture_atlas_t packer;
+        std::string          debug_name;
+
         template<typename T>
         auto& texture_as()
         {
@@ -98,12 +101,23 @@ struct BitmapCache
         PixDesc            fmt;
         blam::bitm::type_t type;
         Veci2              max_size{};
-        u32                layers{0};
     };
 
-    std::map<bitm_format_hash, TextureBucket>         tex_buckets;
-    std::map<bitm_format_hash, storage_reservation_t> m_reservations;
-    std::map<std::tuple<u32, i16>, bitmap_slot_t>     m_slots;
+    struct census_entry_t
+    {
+        bitm_format_hash bucket;
+        Veci2            size{};
+        u32              bias{0};
+        u16              mipmaps{0};
+        bool             own_layer{false};
+    };
+
+    using slot_map_t = std::map<std::tuple<u32, i16>, bitmap_slot_t>;
+
+    std::map<bitm_format_hash, TextureBucket>           tex_buckets;
+    std::map<bitm_format_hash, storage_reservation_t>   m_reservations;
+    std::map<std::tuple<u32, i16>, census_entry_t>      m_census;
+    slot_map_t                                          m_slots;
 
     u32  max_mipmap{3};
     bool supports_tex3d{true};
@@ -217,9 +231,8 @@ struct BitmapCache
         if(size.x % 4 != 0 || size.y % 4 != 0)
             return;
 
-        Veci2 const pool_offset =
-            Veci2(img.image.offset[0], img.image.offset[1]);
-        u32 const dst_level = mipmap;
+        Veci2 const pool_offset = img.image.pixel_offset;
+        u32 const   dst_level   = mipmap;
 
         mipmap += img.mipmaps.base;
 
@@ -386,6 +399,7 @@ struct BitmapCache
 
         auto& bucket =
             get_bucket<BucketType>(img.image.fmt, img.image.mip->type);
+        ensure_layers<BucketType>(bucket, img.image.layer + 1);
 
         C_UNUSED(auto name) = img.tag->to_name().to_string(magic);
 
@@ -393,7 +407,7 @@ struct BitmapCache
 
         for(auto i : range<u16>(img.mipmaps.last - img.mipmaps.base))
         {
-            auto offset = Veci2(img.image.offset[0], img.image.offset[1]);
+            auto offset = img.image.pixel_offset;
             if(offset.x % 4 != 0 || offset.y % 4 != 0)
                 break;
 
@@ -416,6 +430,61 @@ struct BitmapCache
 
     void reserve_storage();
 
+    typename slot_map_t::iterator assign_slot(
+        std::tuple<u32, i16> const& key);
+
+    /* Storage follows demand: a bucket starts empty and is reallocated the
+     * first time a slot lands past its last layer. Immutable storage cannot
+     * grow, so everything resident is uploaded again into the new array; the
+     * headroom keeps that rare once the load burst is over. */
+    template<typename T>
+    void ensure_layers(TextureBucket& bucket, u32 needed)
+    {
+        if(needed <= bucket.layers)
+            return;
+        u32 const layers = std::max(
+            needed, bucket.layers + std::max<u32>(4, bucket.layers / 4));
+        auto& texture = bucket.template texture_as<T>();
+        if(bucket.layers > 0)
+            texture.dealloc();
+        texture.alloc(
+            size_3d<u32>{
+                static_cast<u32>(bucket.max_size.x),
+                static_cast<u32>(bucket.max_size.y),
+                layers});
+        allocator->debug().annotate(texture, bucket.debug_name.data());
+        u32 const before = std::exchange(bucket.layers, layers);
+        size_t    layer_bytes = 0;
+        for(u32 mip = 0; mip < texture.m_mipmaps; mip++)
+            layer_bytes += gl::tex::format_of(bucket.fmt).data_size(
+                Veci2{
+                    std::max(bucket.max_size.x >> mip, 1),
+                    std::max(bucket.max_size.y >> mip, 1)});
+        if(bucket.type == blam::bitm::type_t::tex_cube)
+            layer_bytes *= 6;
+        cDebug(
+            "Texture bucket {}: {} -> {} layers of {}x{}, {:.1f} MB",
+            bucket.debug_name,
+            before,
+            layers,
+            bucket.max_size.x,
+            bucket.max_size.y,
+            static_cast<f32>(layer_bytes * layers) / (1024.f * 1024.f));
+        if(before == 0)
+            return;
+        auto const hash = create_hash(bucket.fmt, bucket.type);
+        for(auto const& [key, id] : this->m_cache_key)
+        {
+            auto it = this->find_id(id);
+            if(it == this->m_cache.end())
+                continue;
+            BitmapItem& item = it->second;
+            if(!item.valid() || item.image.bucket != hash)
+                continue;
+            commit_bitmap<T>(item);
+        }
+    }
+
     void begin_map()
     {
         calculate_storage();
@@ -435,6 +504,7 @@ struct BitmapCache
 
         tex_buckets.clear();
         m_reservations.clear();
+        m_census.clear();
         m_slots.clear();
     }
 

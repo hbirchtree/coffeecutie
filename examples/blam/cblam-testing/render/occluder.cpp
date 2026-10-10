@@ -64,6 +64,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         Vecf3   pos;
         Matf4   mvp;
         Frustum f;
+        f32     proj_scale;
     };
 
     std::vector<eye_marker_t> eye_pool;
@@ -121,9 +122,11 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             if(info.is_remote())
                 continue;
             cull_targets[std::make_pair(info.seat_idx, false)] = {
-                .pos = cam.camera.position,
-                .mvp = cam.matrix,
-                .f   = Frustum::from_mvp(cam.matrix),
+                .pos        = cam.camera.position,
+                .mvp        = cam.matrix,
+                .f          = Frustum::from_mvp(cam.matrix),
+                .proj_scale = glm::length(
+                    Vecf3(cam.matrix[0][1], cam.matrix[1][1], cam.matrix[2][1])),
             };
         }
 
@@ -142,18 +145,15 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         last_camera_pos = seat0_cam.pos;
         if(camera_jump > 5.f)
         {
-            for(auto& [id, item] : bsp_cache->m_cache)
-                if(item.valid() &&
-                   item.find_cluster_tree(seat0_cam.pos).has_value())
-                {
-                    if(item.section_idx != bsp_cache->active_section)
-                        cDebug(
-                            "BSP teleport: section {} → {}",
-                            bsp_cache->active_section,
-                            item.section_idx);
-                    bsp_cache->active_section = item.section_idx;
-                    break;
-                }
+            if(auto section = bsp_cache->section_of_point(seat0_cam.pos);
+               section && *section != bsp_cache->active_section)
+            {
+                cDebug(
+                    "BSP teleport: section {} → {}",
+                    bsp_cache->active_section,
+                    *section);
+                bsp_cache->active_section = *section;
+            }
         }
 
         /* Structure BSP switching: the active section changes only when the
@@ -380,6 +380,38 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 return glm::distance(mod.position, frustum.pos) < draw_dist;
             };
 
+        /* Detail level from the model's size on screen against the mod2
+         * cutoffs */
+        f32 const  lod_scale   = rendering->lod_scale;
+        f32 const  half_height = 240.f;
+        u8 const   lod_cap = static_cast<u8>(std::min<u32>(rendering->lod_cap, 4));
+        const auto pick_lod    = [lod_scale, half_height, lod_cap](
+                                  cull_target_t const& view,
+                                  Model const&         model,
+                                  u8                   prev) -> u8 {
+            if(lod_scale <= 0.f || model.render_radius <= 0.f ||
+               !model.has_lods())
+                return lod_cap;
+            f32 const depth =
+                glm::dot(Vecf3(view.f.cam_plane), model.position) +
+                view.f.cam_plane.w;
+            if(depth <= 1e-3f)
+                return lod_cap;
+            f32 const pixels = 2.f * model.render_radius * view.proj_scale *
+                               half_height / depth * lod_scale;
+            for(u8 level = lod_cap; level < 4; level++)
+            {
+                f32 threshold = model.lod_cutoff[4 - level];
+                if(level < prev)
+                    threshold *= 1.1f;
+                else if(level == prev)
+                    threshold *= .9f;
+                if(pixels >= threshold)
+                    return level;
+            }
+            return 4;
+        };
+
         enum class model_vis
         {
             visible,
@@ -387,11 +419,14 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             frustum_culled,
             dist_culled,
         };
-        /* Conservative bounding radius for frustum-culling models; mod2
-         * headers carry no decoded bounding sphere, and the largest placed
-         * objects (trees, vehicles) stay within ~5 world units of their
-         * origin. */
+        /* Bounding radius for frustum-culling models: the object tag's
+         * render sphere when the spawn recorded one, else a conservative
+         * constant. */
         constexpr f32 model_radius = 5.f;
+        const auto    radius_of    = [](Model const& model) {
+            return model.render_radius > 0.f ? std::max(model.render_radius, 1.f)
+                                             : model_radius;
+        };
 
         /* Resolving which cluster a model sits in is the expensive half of
          * model culling, and it depends only on the model -- so it runs once
@@ -435,7 +470,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                                         Model const&          model,
                                         std::optional<u32>    cidx,
                                         bool in_section) -> model_vis {
-            if(!view.f.sphere_visible(model.position, model_radius))
+            if(!view.f.sphere_visible(model.position, radius_of(model)))
                 return model_vis::frustum_culled;
             if(cidx ? !cluster_ok(st, *cidx) : !in_section)
                 return model_vis::pvs_culled;
@@ -477,6 +512,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                     {
                         bool ok = in_draw_distance(view, model);
                         vis.set_visibility(ok, idx.first, idx.second);
+                        if(ok)
+                            vis.lod[idx] = pick_lod(
+                                view, model, vis.lod_for(idx.first, idx.second));
                         if(idx == primary_view)
                             (ok ? model_visible : model_dist_culled)++;
                     }
@@ -497,6 +535,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                         view, viewport_pvs[idx], model, cidx, in_section);
                     vis.set_visibility(
                         state == model_vis::visible, idx.first, idx.second);
+                    if(state == model_vis::visible)
+                        vis.lod[idx] = pick_lod(
+                            view, model, vis.lod_for(idx.first, idx.second));
 
                     if(idx != primary_view)
                         continue;

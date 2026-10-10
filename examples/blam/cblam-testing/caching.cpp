@@ -34,10 +34,12 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     auto const& section = *section_.value();
 
     BSPItem out;
-    out.mesh        = &section;
-    out.tag         = &(*index.find(bsp.tag));
-    out.bsp_magic   = bsp_magic;
-    out.section_idx = next_section_idx++;
+    out.mesh      = &section;
+    out.tag       = &(*index.find(bsp.tag));
+    out.bsp_magic = bsp_magic;
+    for(auto const& [i, info] : stl_types::const_enumerate(sections))
+        if(info == &bsp)
+            out.section_idx = static_cast<libc_types::i16>(i);
 
     u32 const mcc_vert_base = bsp.to_bsp(bsp_magic).xbox_vertices.offset;
 
@@ -1792,31 +1794,13 @@ void BitmapCache<V>::calculate_storage()
     ProfContext _("Calculating texture storage");
 
     m_slots.clear();
+    m_census.clear();
     m_reservations.clear();
 
-    struct entry_t
-    {
-        u32   tag_id;
-        i16   idx;
-        Veci2 size;
-        u32   bias;
-        u16   mipmaps;
-        bool  own_layer;
-    };
-
-    struct pool_t
-    {
-        PixDesc              fmt;
-        blam::bitm::type_t   type;
-        Veci2                max{};
-        std::vector<entry_t> images;
-    };
-
-    std::map<bitm_format_hash, pool_t> pools;
-
-    /* Every bitm tag in the map is a candidate layer; which model or BSP
-     * happens to reference it is irrelevant here, and tracing that would just
-     * rebuild the eager traversal this exists to avoid. */
+    /* Every bitm tag in the map is measured, because a bucket's layer size is
+     * set by the largest image that can ever land in it. Nothing is packed or
+     * committed here: that waits for the first request, so only what the map
+     * actually draws takes up storage. */
     for(blam::tag_t const& tag : index)
     {
         if(!tag.valid() || !tag.matches(blam::tag_class_t::bitm))
@@ -1840,7 +1824,7 @@ void BitmapCache<V>::calculate_storage()
             PixDesc fmt  = upload_fmt(image);
             auto    hash = create_hash(fmt, image.type);
 
-            auto& pool = pools[hash];
+            auto& pool = m_reservations[hash];
             pool.fmt   = fmt;
             pool.type  = image.type;
 
@@ -1854,131 +1838,26 @@ void BitmapCache<V>::calculate_storage()
             bool own_layer = header->type == blam::bitm::bitmap_type_t::cube ||
                              !supports_tex3d;
 
-            pool.images.push_back({
-                .tag_id    = tag.tag_id,
-                .idx       = this_idx,
-                .size      = Veci2(size.x, size.y),
-                .bias      = bias,
-                .mipmaps   = image.mipmaps,
-                .own_layer = own_layer,
+            m_census.insert({
+                std::make_tuple(tag.tag_id, this_idx),
+                census_entry_t{
+                    .bucket    = hash,
+                    .size      = Veci2(size.x, size.y),
+                    .bias      = bias,
+                    .mipmaps   = image.mipmaps,
+                    .own_layer = own_layer,
+                },
             });
 
-            pool.max.x = std::max<i32>(pool.max.x, size.x);
-            pool.max.y = std::max<i32>(pool.max.y, size.y);
+            pool.max_size.x = std::max<i32>(pool.max_size.x, size.x);
+            pool.max_size.y = std::max<i32>(pool.max_size.y, size.y);
         }
     }
 
-    /* Assign every image a layer and an offset. Because the whole map is
-     * known here, the assignment is final: a layer index handed out later by
-     * predict_impl never moves, so material data and draw batching are
-     * unaffected by what happens to be resident. */
-    for(auto& [hash, pool] : pools)
-    {
-        /* The atlas needs the bucket's real mip count: the gutter has to
-         * survive down to the coarsest level anything samples. */
-        u32 const            mips = pool.fmt.pixfmt == pix_fmt::RGB565 ? 1u
-                                    : max_mipmap > params->mipmap_bias
-                                        ? max_mipmap - params->mipmap_bias
-                                        : 1u;
-        gfx::texture_atlas_t atlas(pool.max, mips);
-
-        for(entry_t const& e : pool.images)
-        {
-            bitmap_slot_t slot;
-            slot.max_size = pool.max;
-
-            if(e.bias > 0)
-            {
-                slot.mip_base = e.bias;
-                slot.mip_last = e.bias + std::min<i32>(8, e.mipmaps - e.bias);
-            } else
-            {
-                slot.mip_base = 0;
-                slot.mip_last = e.mipmaps;
-            }
-
-            auto const placement = e.own_layer ? atlas.reserve_layer(e.size)
-                                               : atlas.reserve(e.size);
-            auto const rect      = atlas.reference_of(placement);
-
-            slot.layer        = placement.layer;
-            slot.pixel_offset = placement.offset;
-            slot.gutter       = placement.gutter;
-            slot.offset       = rect.offset;
-            slot.scale        = rect.scale;
-
-            if(e.own_layer)
-            {
-                /* A layer to itself is addressed whole, whatever it holds. */
-                slot.offset = {0.f, 0.f};
-                slot.scale  = {1.f, 1.f};
-
-                if(pool.type == blam::bitm::type_t::tex_cube)
-                {
-                    u32 level = 0;
-                    while(level < 15 && (pool.max.x >> level) > e.size.x &&
-                          (pool.max.y >> level) > e.size.y)
-                        level++;
-                    if((pool.max.x >> level) == e.size.x &&
-                       (pool.max.y >> level) == e.size.y)
-                        slot.array_level = level;
-                }
-            }
-
-            m_slots.insert({std::make_tuple(e.tag_id, e.idx), slot});
-        }
-
-        m_reservations.insert({
-            hash,
-            {
-                .fmt      = pool.fmt,
-                .type     = pool.type,
-                .max_size = pool.max,
-                .layers   = atlas.layers(),
-            },
-        });
-    }
-
-    /* Report what the reservation will cost: this is committed up front for
-     * the whole map, whether or not a given bitmap is ever requested. */
-    size_t total = 0;
-    for(auto const& [hash, res] : m_reservations)
-    {
-        auto [type, pixfmt, comp, bfmt, cmpflg, pixflg] = hash;
-
-        u32 mips = res.fmt.pixfmt == pix_fmt::RGB565
-                       ? 1u
-                       : (max_mipmap - params->mipmap_bias);
-        if(res.type == blam::bitm::type_t::tex_cube)
-            mips = cube_mip_levels(res.fmt, res.max_size);
-        size_t layer_bytes = 0;
-        for(u32 mip = 0; mip < mips; mip++)
-        {
-            Veci2 mip_size{
-                std::max(res.max_size.x >> mip, 1),
-                std::max(res.max_size.y >> mip, 1)};
-            layer_bytes += gl::tex::format_of(res.fmt).data_size(mip_size);
-        }
-
-        size_t faces = res.type == blam::bitm::type_t::tex_cube ? 6 : 1;
-        size_t bytes = layer_bytes * res.layers * faces;
-        total += bytes;
-
-        cDebug(
-            " - {}/{}/{}: {}x{}x{} = {:.2f} MB",
-            magic_enum::enum_name(type),
-            magic_enum::enum_name(pixfmt),
-            magic_enum::enum_name(cmpflg),
-            res.max_size.x,
-            res.max_size.y,
-            res.layers,
-            static_cast<f32>(bytes) / (1024.f * 1024.f));
-    }
     cDebug(
-        "Texture storage: {} images in {} buckets, {:.2f} MB reserved",
-        m_slots.size(),
-        m_reservations.size(),
-        static_cast<f32>(total) / (1024.f * 1024.f));
+        "Texture storage: {} images in {} buckets, committed on demand",
+        m_census.size(),
+        m_reservations.size());
 }
 
 template<typename V>
@@ -2017,31 +1896,92 @@ void BitmapCache<V>::reserve_storage()
             continue;
 
         bucket->max_size = res.max_size;
-        bucket->layers   = res.layers;
+        bucket->layers   = 0;
 
         if(res.type == blam::bitm::type_t::tex_cube)
             bucket->surface->m_mipmaps = cube_mip_levels(res.fmt, res.max_size);
 
-        auto size =
-            size_3d<i32>{
-                res.max_size.x, res.max_size.y, static_cast<i32>(res.layers)}
-                .convert<u32>();
-        bucket->surface->alloc(size);
+        /* The packer needs the bucket's real mip count: the gutter has to
+         * survive down to the coarsest level anything samples. */
+        u32 const mips = res.fmt.pixfmt == pix_fmt::RGB565 ? 1u
+                         : max_mipmap > params->mipmap_bias
+                             ? max_mipmap - params->mipmap_bias
+                             : 1u;
+        bucket->packer = gfx::texture_atlas_t(res.max_size, mips);
 
         auto [type, fmt, _, __, comp, ___] = hash;
-        std::string bucket_name       = fmt::format(
+        bucket->debug_name            = fmt::format(
             "cache_{0}_{1}_{2}",
             magic_enum::enum_name(type),
             magic_enum::enum_name(fmt),
             magic_enum::enum_name(comp));
-        allocator->debug().annotate(*bucket->surface, bucket_name.data());
     }
+}
+
+template<typename V>
+typename BitmapCache<V>::slot_map_t::iterator BitmapCache<V>::assign_slot(
+    std::tuple<u32, i16> const& key)
+{
+    auto census = m_census.find(key);
+    if(census == m_census.end())
+        return m_slots.end();
+    census_entry_t const& e = census->second;
+
+    auto bucket_it = tex_buckets.find(e.bucket);
+    if(bucket_it == tex_buckets.end())
+        return m_slots.end();
+    TextureBucket& bucket = bucket_it->second;
+
+    bitmap_slot_t slot;
+    slot.max_size = bucket.max_size;
+
+    if(e.bias > 0)
+    {
+        slot.mip_base = e.bias;
+        slot.mip_last = e.bias + std::min<i32>(8, e.mipmaps - e.bias);
+    } else
+    {
+        slot.mip_base = 0;
+        slot.mip_last = e.mipmaps;
+    }
+
+    auto const placement = e.own_layer ? bucket.packer.reserve_layer(e.size)
+                                       : bucket.packer.reserve(e.size);
+    auto const rect      = bucket.packer.reference_of(placement);
+
+    slot.layer        = placement.layer;
+    slot.pixel_offset = placement.offset;
+    slot.gutter       = placement.gutter;
+    slot.offset       = rect.offset;
+    slot.scale        = rect.scale;
+
+    if(e.own_layer)
+    {
+        /* A layer to itself is addressed whole, whatever it holds. */
+        slot.offset = {0.f, 0.f};
+        slot.scale  = {1.f, 1.f};
+
+        if(bucket.type == blam::bitm::type_t::tex_cube)
+        {
+            u32 level = 0;
+            while(level < 15 && (bucket.max_size.x >> level) > e.size.x &&
+                  (bucket.max_size.y >> level) > e.size.y)
+                level++;
+            if((bucket.max_size.x >> level) == e.size.x &&
+               (bucket.max_size.y >> level) == e.size.y)
+                slot.array_level = level;
+        }
+    }
+
+    return m_slots.insert({key, slot}).first;
 }
 
 template u32 BitmapCache<halo_version>::bias_of(
     blam::bitm::image_t const& img) const;
 template void BitmapCache<halo_version>::calculate_storage();
 template void BitmapCache<halo_version>::reserve_storage();
+template typename BitmapCache<halo_version>::slot_map_t::iterator
+BitmapCache<halo_version>::assign_slot(std::tuple<u32, i16> const& key);
 
 template<typename V>
 BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
@@ -2088,10 +2028,12 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
         img.bucket  = create_hash(fmt, img.mip->type);
         img.fmt     = fmt;
 
-        /* Slot was decided for every image in the map by calculate_storage();
-         * a bitmap with no slot is one the census never saw, which means the
-         * array it would land in was never sized for it. */
-        auto slot_it = m_slots.find(std::make_tuple(bitmap.tag_id, idx));
+        /* The slot is cut on first request; an image without one is one the
+         * census never saw, so no bucket was ever sized for it. */
+        auto const key     = std::make_tuple(bitmap.tag_id, idx);
+        auto       slot_it = m_slots.find(key);
+        if(slot_it == m_slots.end())
+            slot_it = assign_slot(key);
         if(slot_it == m_slots.end())
         {
             cWarning("No storage slot reserved for bitmap {}", shader_name);
@@ -2102,16 +2044,11 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
         img.layer        = slot.layer;
         img.array_level  = slot.array_level;
         img.gutter       = slot.gutter;
+        img.pixel_offset = slot.pixel_offset;
+        img.offset       = slot.offset;
+        img.scale        = slot.scale;
         out.mipmaps.base = slot.mip_base;
         out.mipmaps.last = slot.mip_last;
-        /* Upload wants pixels; the shader wants normalized UVs. Commit
-         * first, then swap in the normalized pair. */
-        img.offset = {
-            static_cast<f32>(slot.pixel_offset.x),
-            static_cast<f32>(slot.pixel_offset.y)};
-        img.scale = {
-            static_cast<f32>(slot.scale[0] * slot.max_size.x),
-            static_cast<f32>(slot.scale[1] * slot.max_size.y)};
 
         switch(im[0].type)
         {
@@ -2141,9 +2078,6 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
                 magic_enum::enum_name(im[0].type));
             return {};
         }
-
-        img.offset = slot.offset;
-        img.scale  = slot.scale;
     } else
         return {};
 
