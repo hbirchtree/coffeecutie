@@ -422,7 +422,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         /* Bounding radius for frustum-culling models: the object tag's
          * render sphere when the spawn recorded one, else a conservative
          * constant. */
-        constexpr f32 model_radius = 5.f;
+        static constexpr f32 model_radius = 5.f;
         const auto    radius_of    = [](Model const& model) {
             return model.render_radius > 0.f ? std::max(model.render_radius, 1.f)
                                              : model_radius;
