@@ -1029,6 +1029,15 @@ inline bool biped_in_play(
     return info.riding.vehicle == 0 && biped_shown(info, cam, net);
 }
 
+struct BipedStatus
+{
+    using value_type = BipedStatus;
+    using type = compo::alloc::VectorContainer<BipedStatus>;
+
+    u16 health{};
+    u16 shield{};
+};
+
 struct BipedEquipment
 {
     using value_type = BipedEquipment;
@@ -1127,6 +1136,8 @@ static const auto player_recipe = compo::EntityRecipe{
             compo::type_hash_v<SoundEffects>(),
             compo::type_hash_v<PhysicsData>(),
             compo::type_hash_v<DebugDraw>(),
+            compo::type_hash_v<BipedStatus>(),
+            compo::type_hash_v<BipedEquipment>(),
 
             compo::type_hash_v<Model>(),
             compo::type_hash_v<Visibility>(),
