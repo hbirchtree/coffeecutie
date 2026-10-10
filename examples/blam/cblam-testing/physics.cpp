@@ -171,7 +171,7 @@ class MassPointAction : public btActionInterface
                     grip,
                     mass / count,
                     drives && steered(point) ? m_steering : 0.f,
-                    drives && rolling);
+                    (drives || m_lifting > 0) && rolling);
             }
         }
 
@@ -477,8 +477,8 @@ class MassPointAction : public btActionInterface
     static constexpr f32 halo_tick_rate         = 30.f; /* Hz */
     static constexpr f32 hover_grip             = 3.f;  /* 1/s */
     /* Of forward speed, for a scout's tag-less strafe and reverse */
-    static constexpr f32 scout_slide            = .6f;
-    static constexpr f32 scout_reverse          = .5f;
+    static constexpr f32 scout_slide            = .9f;
+    static constexpr f32 scout_reverse          = .9f;
     static constexpr f32 default_yaw_rate       = 1.5f; /* rad/s */
 
     static btVector3 to_bt(Vecf3 const& v)
