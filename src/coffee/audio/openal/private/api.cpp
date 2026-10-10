@@ -41,6 +41,12 @@ constexpr u32 ALC_HRTF_REQUIRED_SOFT            = 0x0003;
 constexpr u32 ALC_HRTF_HEADPHONES_DETECTED_SOFT = 0x0004;
 constexpr u32 ALC_HRTF_UNSUPPORTED_FORMAT_SOFT  = 0x0005;
 #endif
+#if !defined(AL_DIRECT_CHANNELS_SOFT)
+constexpr u32 AL_DIRECT_CHANNELS_SOFT = 0x1033;
+#endif
+#if !defined(AL_REMIX_UNMATCHED_SOFT)
+constexpr u32 AL_REMIX_UNMATCHED_SOFT = 0x0002;
+#endif
 #if !defined(AL_SOURCE_SPATIALIZE_SOFT)
 constexpr u32 AL_SOURCE_SPATIALIZE_SOFT = 0x1214;
 constexpr u32 AL_AUTO_SOFT              = 0x0002;
@@ -217,6 +223,19 @@ void source_t::spatialize_as(spatialize_t v)
         v == spatialize_t::mono_only ? AL_AUTO_SOFT
         : v == spatialize_t::never   ? AL_FALSE
                                      : AL_TRUE);
+}
+
+void source_t::set_direct_channels(bool direct)
+{
+    if(!m_features.soft.direct_channels)
+        return;
+    /* Plain AL_TRUE drops channels the output lacks, e.g. mono's center */
+    ALint const mode = !direct ? AL_FALSE
+                       : m_features.soft.direct_channels_remix
+                           ? static_cast<ALint>(AL_REMIX_UNMATCHED_SOFT)
+                           : AL_TRUE;
+    alSourcei(m_handle, AL_DIRECT_CHANNELS_SOFT, mode);
+    detail::check_error("alSourcei(AL_DIRECT_CHANNELS_SOFT)");
 }
 
 void source_t::set_direct_filter(filter_t const* filter)
@@ -539,6 +558,10 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         alIsExtensionPresent("AL_SOFT_block_alignment");
     m_features.soft.spatialize =
         alIsExtensionPresent("AL_SOFT_source_spatialize");
+    m_features.soft.direct_channels =
+        alIsExtensionPresent("AL_SOFT_direct_channels");
+    m_features.soft.direct_channels_remix =
+        alIsExtensionPresent("AL_SOFT_direct_channels_remix");
 
 #if defined(OAF_HAS_EFX)
     if(has_extension("ALC_EXT_EFX"))

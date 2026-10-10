@@ -56,6 +56,8 @@ struct features_t
     {
         bool block_alignment{false};
         bool spatialize{false};
+        bool direct_channels{false};
+        bool direct_channels_remix{false};
         bool loopback{false};
     } soft;
 
@@ -219,6 +221,8 @@ struct source_t
     };
 
     void spatialize_as(spatialize_t v);
+    /* Bypasses panning and HRTF, for music that is already mixed */
+    void set_direct_channels(bool direct);
 
     void set_direct_filter(filter_t const* filter);
     void set_send(

@@ -662,6 +662,9 @@ struct SoundSystem
             if(sounds_it == track.sounds.end())
                 continue;
             auto const props = std::get<1>(sounds_it->second);
+            /* Music is mixed already, panning and HRTF only colour it */
+            if(props && props->type == blam::sound::sound::music)
+                meta.source->set_direct_channels(true);
             if(!props || props->min_distance <= 0.f)
                 continue;
             /* DirectSound 3D: full volume inside min distance, inverse
