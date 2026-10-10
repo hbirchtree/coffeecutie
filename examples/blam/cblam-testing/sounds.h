@@ -11,6 +11,7 @@ struct SoundEvent
         clear_all,
         stop_sound,
         background_sound_transition,
+        update_sound,
     } type;
 
     libc_types::u64 entity_id{0};
@@ -32,6 +33,16 @@ struct LoopSoundEvent
 
     blam::tagref_t const* sound{};
     usage_t               usage{usage_t::general};
+};
+
+/*! Moves a looping sound for `entity_id`, scales its gain and pitch */
+struct UpdateSoundEvent
+{
+    static constexpr auto event_type = SoundEvent::update_sound;
+
+    Vecf3           position{};
+    libc_types::f32 gain{1.f};
+    libc_types::f32 pitch{1.f};
 };
 
 struct PlaySoundEvent

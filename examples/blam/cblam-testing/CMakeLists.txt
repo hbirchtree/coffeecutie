@@ -42,6 +42,7 @@ coffee_application(
         gameplay.cpp
         animation_controller.cpp
         impact_sounds.cpp
+        vehicle_sounds.cpp
         debug_ui/widgets.cpp
         forge_controller.cpp
         graphics.cpp

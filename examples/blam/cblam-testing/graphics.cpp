@@ -13,6 +13,7 @@
 #include "animation_controller.h"
 #include "gameplay.h"
 #include "impact_sounds.h"
+#include "vehicle_sounds.h"
 #include "physics.h"
 #include "player_controller.h"
 #if defined(POC_COMBAT)
@@ -271,6 +272,7 @@ i32 blam_main()
             alloc_gameplay(e);
             alloc_animation_controller(e);
             alloc_impact_sounds(e);
+            alloc_vehicle_sounds(e);
             alloc_scripting(e);
             setup_load_eventhandlers(e);
             alloc_camera_control(e);

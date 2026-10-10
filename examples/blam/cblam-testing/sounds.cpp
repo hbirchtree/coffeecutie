@@ -81,6 +81,7 @@ struct sound_unit_t
     std::vector<track_t>    tracks;
     LoopSoundEvent::usage_t usage{LoopSoundEvent::usage_t::general};
     f32                     volume{1.f};
+    f32                     gain_scale{1.f}; /* from UpdateSoundEvent */
     f32                     fade_rate{0.f}; /* vol/sec, negative = fade out */
     bool                    fading_in{true};
     bool                    fading_out{false};
@@ -220,7 +221,8 @@ struct SoundSystem
             std::monostate,
             LoopSoundEvent,
             PlaySoundEvent,
-            BackgroundSoundTransitionEvent>
+            BackgroundSoundTransitionEvent,
+            UpdateSoundEvent>
             data{};
     };
 
@@ -256,7 +258,11 @@ struct SoundSystem
 
             f32 perm_gain =
                 pitch.permutations[meta.active.permutation].permutation->gain;
-            set_gain(sound, meta, props->gain_modifier * perm_gain * sound.volume);
+            set_gain(
+                sound,
+                meta,
+                props->gain_modifier * perm_gain * sound.volume *
+                    sound.gain_scale);
         }
     }
 
@@ -451,6 +457,9 @@ struct SoundSystem
             out.data =
                 *reinterpret_cast<BackgroundSoundTransitionEvent const*>(data);
             break;
+        case SoundEvent::update_sound:
+            out.data = *reinterpret_cast<UpdateSoundEvent const*>(data);
+            break;
         default:
             break;
         }
@@ -537,7 +546,8 @@ struct SoundSystem
                 if(sound.volume >= 1.f)
                     sound.fading_in = false;
             }
-            if(update_sound_tracks(sound, item, sound.volume))
+            if(update_sound_tracks(
+                   sound, item, sound.volume * sound.gain_scale))
                 finished.push_back(id);
         }
         for(auto id : finished)
@@ -1183,6 +1193,9 @@ struct SoundSystem
         /* Queue events until sound assets are ready. */
         if(loading->loaded_sounds != LoadingStatus::loaded)
         {
+            /* Nothing to move yet, and the next one supersedes it */
+            if(ev.type == SoundEvent::update_sound)
+                return;
             auto event = capture(ev, data);
 
             if(std::holds_alternative<std::monostate>(event.data))
@@ -1212,6 +1225,23 @@ struct SoundSystem
             }
             if(unit.index.valid())
                 active_sounds[ev.entity_id] = std::move(unit);
+        }
+        if(ev.type == SoundEvent::update_sound)
+        {
+            auto const* update = reinterpret_cast<UpdateSoundEvent const*>(data);
+            auto        it     = active_sounds.find(ev.entity_id);
+            if(it == active_sounds.end())
+                return;
+            auto& unit = it->second;
+            if(unit.position)
+                unit.position = update->position;
+            unit.gain_scale = update->gain;
+            for(auto& track : unit.tracks)
+                if(track.source)
+                    track.source->template set_property<
+                        oaf::source_property::pitch>(update->pitch);
+            apply_volume(unit, (*sound_cache.find(unit.index)).second);
+            return;
         }
         if(ev.type == SoundEvent::play_sound)
         {
