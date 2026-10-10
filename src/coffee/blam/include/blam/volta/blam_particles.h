@@ -712,4 +712,84 @@ static_assert(offsetof(lens_flare, horizontal_scale) == 0xa0);
 static_assert(offsetof(lens_flare, reflections) == 0xc4);
 static_assert(sizeof(lens_flare) == 240);
 
+/*! Rain, snow and the like falling around the camera, aka rain */
+struct weather_particle_system
+{
+    struct particle_type_t
+    {
+        enum class flags_t : u32
+        {
+            none                      = 0x0,
+            interpolate_colors_in_hsv = 0x1,
+            along_long_hue_path       = 0x2,
+            random_rotation           = 0x4,
+        };
+
+        enum class direction_source_t : u16
+        {
+            from_velocity,
+            from_acceleration,
+        };
+
+        bl_string                         name;
+        flags_t                           flags;
+        f32                               fade_in_start_distance;
+        f32                               fade_in_end_distance;
+        f32                               fade_out_start_distance;
+        f32                               fade_out_end_distance;
+        f32                               fade_in_start_height;
+        f32                               fade_in_end_height;
+        f32                               fade_out_start_height;
+        f32                               fade_out_end_height;
+        u32                               padding[24];
+        Vecf2                             particle_count; /* per cubic world unit */
+        tagref_typed_t<tag_class_t::pphy> physics;
+        u32                               padding2[4];
+        Vecf2                             acceleration_magnitude;
+        f32                               acceleration_turning_rate;
+        f32                               acceleration_change_rate;
+        u32                               padding3[8];
+        Vecf2                             particle_radius;
+        Vecf2                             animation_rate;
+        Vecf2                             rotation_rate;
+        u32                               padding4[8];
+        Vecf4                             color_lower_bound; // argb
+        Vecf4                             color_upper_bound; // argb
+        f32                               sprite_size;
+        u32                               padding5[15];
+        tagref_typed_t<tag_class_t::bitm> sprite_bitmap;
+        particle_orientation_t            render_mode;
+        direction_source_t                render_direction_source;
+        u32                               padding6[9];
+        particle_shader_t                 shader;
+    };
+
+    u32                        flags;
+    u32                        padding[8];
+    reference<particle_type_t> particle_types;
+};
+
+C_FLAGS(weather_particle_system::particle_type_t::flags_t, u32)
+
+static_assert(offsetof(weather_particle_system::particle_type_t, particle_count) == 0xa4);
+static_assert(offsetof(weather_particle_system::particle_type_t, particle_radius) == 0xfc);
+static_assert(offsetof(weather_particle_system::particle_type_t, color_lower_bound) == 0x134);
+static_assert(offsetof(weather_particle_system::particle_type_t, sprite_bitmap) == 0x194);
+static_assert(offsetof(weather_particle_system::particle_type_t, shader) == 0x1cc);
+static_assert(sizeof(weather_particle_system::particle_type_t) == 604);
+static_assert(sizeof(weather_particle_system) == 48);
+
+/*! How air moves things, aka wind */
+struct wind
+{
+    Vecf2 velocity;
+    Vecf2 variation_area; /* yaw, pitch */
+    f32   local_variation_weight;
+    f32   local_variation_rate;
+    f32   damping;
+    u32   padding[9];
+};
+
+static_assert(sizeof(wind) == 64);
+
 } // namespace blam::scn

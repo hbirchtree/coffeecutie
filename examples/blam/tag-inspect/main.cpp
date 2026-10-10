@@ -1639,6 +1639,36 @@ void dump_point_physics(blam::scn::point_physics const* pphy)
         pphy->elasticity);
 }
 
+void dump_weather(blam::scn::weather_particle_system const* rain)
+{
+    fmt::print("  [rain]\n");
+    dump_block("particle_types", rain->particle_types, [](auto const& t) {
+        print_enum("render", t.render_mode);
+        fmt::print(
+            "name={} count={} radius={} fade_dist=({}, {})..({}, {}) "
+            "fade_height=({}, {})..({}, {}) accel={} color={}..{} bitmap={} "
+            "physics={}\n",
+            t.name.str(),
+            t.particle_count,
+            t.particle_radius,
+            t.fade_in_start_distance,
+            t.fade_in_end_distance,
+            t.fade_out_start_distance,
+            t.fade_out_end_distance,
+            t.fade_in_start_height,
+            t.fade_in_end_height,
+            t.fade_out_start_height,
+            t.fade_out_end_height,
+            t.acceleration_magnitude,
+            t.color_lower_bound,
+            t.color_upper_bound,
+            name_of(t.sprite_bitmap),
+            name_of(t.physics));
+        fmt::print("    ");
+        dump_particle_shader(t.shader);
+    });
+}
+
 void dump_equipment(blam::scn::equipment const* equipment)
 {
     dump_item(equipment);
@@ -4252,6 +4282,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     case blam::tag_class_t::lens:
         if(auto* info = header_of((blam::scn::lens_flare*)nullptr))
             dump_lens_flare(info);
+        break;
+    case blam::tag_class_t::rain:
+        if(auto* info = header_of((blam::scn::weather_particle_system*)nullptr))
+            dump_weather(info);
         break;
     case blam::tag_class_t::pphy:
         if(auto* info = header_of((blam::scn::point_physics*)nullptr))

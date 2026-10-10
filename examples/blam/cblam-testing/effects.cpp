@@ -239,6 +239,7 @@ struct EffectSystem
             m_attached.clear();
             m_requests.clear();
             m_flare_seen.clear();
+            m_weather = {};
         }
         m_magic = &files.container.magic;
         m_index = blam::tag_index_view<halo_version>(files.container);
@@ -258,6 +259,7 @@ struct EffectSystem
         step_contrails(p, scene, dt);
         draw_volumes(p, scene);
         step_flares(p, scene, dt);
+        step_weather(p, scene, dt);
     }
 
     /* ---- Tag lookups ---- */
@@ -1425,7 +1427,204 @@ struct EffectSystem
         }
     }
 
+    /* ---- Weather ---- */
+
+    struct weather_particle_t
+    {
+        Vecf3 position{};
+        Vecf3 velocity{};
+        Vecf3 wander{}; /* bugs pick a heading and change it now and then */
+        f32   radius{0.f};
+        Vecf4 color{1.f};
+        f32   rotation{0.f};
+        f32   spin{0.f};
+        f32   frame{0.f};
+        f32   frame_rate{0.f};
+    };
+
+    struct weather_type_t
+    {
+        blam::scn::weather_particle_system::particle_type_t const* tag{nullptr};
+        motion_t                                         motion{};
+        std::vector<weather_particle_t>                  particles;
+    };
+
+    struct weather_t
+    {
+        blam::scn::weather_particle_system const* tag{nullptr};
+        Vecf3                                     wind{};
+        std::vector<weather_type_t>               types;
+    } m_weather;
+
+    /* Weather of the cluster the primary eye stands in, in a box about it */
+    void step_weather(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        std::optional<Vecf3> eye;
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
+        {
+            auto [cam, info] = ent.components();
+            if(!info.is_remote() && info.seat_idx == 0)
+                eye = cam.camera.position;
+        }
+        auto const& cache = p.template subsystem<BSPCache<halo_version>>();
+        BSPItem const* bsp = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        blam::bsp::weather_palette const* weather = nullptr;
+        if(eye && bsp && bsp->mesh)
+            if(auto cluster = bsp->find_cluster_tree(*eye))
+            {
+                auto clusters = bsp->mesh->clusters.data(bsp->bsp_magic);
+                auto palette  = bsp->mesh->weather_palettes.data(bsp->bsp_magic);
+                if(clusters.has_value() && palette.has_value() &&
+                   *cluster < clusters.value().size())
+                {
+                    i16 const w = clusters.value()[*cluster].weather;
+                    if(w >= 0 && static_cast<size_t>(w) < palette.value().size())
+                        weather = &palette.value()[w];
+                }
+            }
+        auto const* tag = weather ? tag_data<blam::scn::weather_particle_system>(
+                                        weather->particle_system, blam::tag_class_t::rain)
+                                  : nullptr;
+        if(tag != m_weather.tag)
+            start_weather(tag, weather);
+        if(!tag || !eye)
+            return;
+
+        for(auto& type : m_weather.types)
+        {
+            auto const& t      = *type.tag;
+            f32 const   reach  = std::max(t.fade_out_end_distance, 1.f);
+            for(auto& w : type.particles)
+            {
+                if(t.acceleration_magnitude.y > 0.f &&
+                   uniform(0.f, 1.f) < dt * std::max(t.acceleration_change_rate, .5f))
+                    w.wander = cone(Vecf3{0, 0, 1}, glm::pi<f32>()) *
+                               uniform(t.acceleration_magnitude);
+                w.velocity += (Vecf3{0, 0, type.motion.gravity} + w.wander) * dt;
+                /* Drag pulls it along with the air */
+                w.velocity += (m_weather.wind - w.velocity) *
+                              std::min(1.f, type.motion.drag * dt);
+                w.position += w.velocity * dt;
+                /* Wrap around the eye, so the box goes where it goes */
+                Vecf3 rel  = w.position - *eye + reach;
+                rel        = rel - glm::floor(rel / (2.f * reach)) * (2.f * reach);
+                w.position = *eye + rel - reach;
+                w.rotation += w.spin * dt;
+                w.frame += w.frame_rate * dt;
+
+                f32 const d = glm::distance(w.position, *eye);
+                f32 const alpha =
+                    glm::smoothstep(t.fade_in_start_distance, t.fade_in_end_distance, d) *
+                    (1.f - glm::smoothstep(
+                               t.fade_out_start_distance, t.fade_out_end_distance, d));
+                if(alpha <= 0.f || sheltered(*bsp, w.position))
+                    continue;
+                bool const along =
+                    t.render_mode == blam::scn::particle_orientation_t::parallel_to_direction;
+                scene.sprites.push_back({
+                    .position = w.position,
+                    .radius   = w.radius,
+                    .axis     = along ? w.velocity * weather_streak : Vecf3{},
+                    .rotation = w.rotation,
+                    .color    = w.color * Vecf4(1.f, 1.f, 1.f, alpha),
+                    .bitmap   = &static_cast<blam::tagref_t const&>(t.sprite_bitmap),
+                    .sequence = 0,
+                    .frame    = static_cast<i16>(w.frame),
+                    .blend    = t.shader.blend_function,
+                });
+            }
+        }
+    }
+
+    void start_weather(
+        blam::scn::weather_particle_system const* tag,
+        blam::bsp::weather_palette const*         palette)
+    {
+        m_weather = {.tag = tag};
+        if(!tag)
+            return;
+        if(auto const* wind = tag_data<blam::scn::wind>(palette->wind, blam::tag_class_t::wind))
+        {
+            Vecf3 dir = palette->wind_direction;
+            if(glm::length(dir) > 0.f)
+                dir = glm::normalize(dir);
+            m_weather.wind = dir * palette->wind_magnitude *
+                             (wind->velocity.x + wind->velocity.y) * .5f;
+        }
+        auto types = tag->particle_types.data(*m_magic);
+        if(!types.has_value())
+            return;
+        size_t wanted = 0;
+        std::vector<size_t> counts;
+        for(auto const& t : types.value())
+        {
+            f32 const reach = std::max(t.fade_out_end_distance, 1.f);
+            counts.push_back(static_cast<size_t>(
+                (t.particle_count.x + t.particle_count.y) * .5f * std::pow(2.f * reach, 3.f)));
+            wanted += counts.back();
+        }
+        /* Thinner, rather than smaller, when there would be too many */
+        f32 const thin =
+            wanted > max_weather ? static_cast<f32>(max_weather) / wanted : 1.f;
+        for(size_t i = 0; i < types.value().size(); i++)
+        {
+            auto const& t = types.value()[i];
+            weather_type_t type{
+                .tag    = &t,
+                .motion = motion_t::from(
+                    tag_data<point_physics>(t.physics, blam::tag_class_t::pphy)),
+            };
+            f32 const reach = std::max(t.fade_out_end_distance, 1.f);
+            size_t const n  = static_cast<size_t>(counts[i] * thin);
+            for(size_t k = 0; k < n; k++)
+                type.particles.push_back({
+                    .position = Vecf3(uniform(-reach, reach), uniform(-reach, reach),
+                                      uniform(-reach, reach)),
+                    .velocity = m_weather.wind,
+                    .radius   = uniform(t.particle_radius),
+                    .color    = glm::mix(
+                        rgba(t.color_lower_bound), rgba(t.color_upper_bound), uniform(0.f, 1.f)),
+                    .rotation = uniform(0.f, glm::two_pi<f32>()),
+                    .spin     = uniform(t.rotation_rate),
+                    .frame    = uniform(0.f, 16.f),
+                    .frame_rate = uniform(t.animation_rate),
+                });
+            m_weather.types.push_back(std::move(type));
+        }
+    }
+
+    /* Inside a weather polyhedron: under cover */
+    static bool sheltered(BSPItem const& bsp, Vecf3 const& at)
+    {
+        auto polyhedra = bsp.mesh->weather_polyhedras.data(bsp.bsp_magic);
+        if(!polyhedra.has_value())
+            return false;
+        for(auto const& poly : polyhedra.value())
+        {
+            if(glm::distance(at, poly.sphere.center) > poly.sphere.radius)
+                continue;
+            auto planes = poly.planes.data(bsp.bsp_magic);
+            if(!planes.has_value())
+                continue;
+            bool inside = true;
+            for(auto const& plane : planes.value())
+                if(glm::dot(plane.plane, at) - plane.d > 0.f)
+                {
+                    inside = false;
+                    break;
+                }
+            if(inside)
+                return true;
+        }
+        return false;
+    }
+
     static constexpr size_t max_particles        = 4096;
+    static constexpr size_t max_weather          = 3000;
+    static constexpr f32    weather_streak       = 1.f / 30.f; /* rain stretches a tick's travel */
     static constexpr f32    flare_fade_rate      = 8.f;    /* per second */
     static constexpr f32    sun_distance         = 2000.f; /* wu */
     static constexpr size_t max_contrail_points  = 256;

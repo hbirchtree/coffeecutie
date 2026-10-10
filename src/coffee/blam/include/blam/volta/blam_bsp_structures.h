@@ -561,14 +561,22 @@ static_assert(sizeof(lens_flare_marker) == 16);
 struct weather_palette
 {
     bl_string                         name;
-    tagref_typed_t<tag_class_t::part> particle_system;
+    tagref_typed_t<tag_class_t::rain> particle_system;
+    u32                               padding;
     bl_string                         scale_function;
+    u32                               padding2[11];
     tagref_typed_t<tag_class_t::wind> wind;
     Vecf3                             wind_direction;
     f32                               wind_magnitude;
+    u32                               padding3;
     bl_string                         wind_scale_function;
+    u32                               padding4[11];
 };
 
+static_assert(offsetof(weather_palette, wind) == 0x80);
+static_assert(sizeof(weather_palette) == 240);
+
+/*! Where weather does not fall: inside every plane */
 struct weather_polyhedra
 {
     struct
@@ -576,6 +584,7 @@ struct weather_polyhedra
         Vecf3 center;
         f32   radius;
     } sphere;
+    u32 padding;
 
     struct plane
     {
@@ -585,6 +594,8 @@ struct weather_polyhedra
 
     bsp_reference<plane> planes;
 };
+
+static_assert(sizeof(weather_polyhedra) == 32);
 
 struct pathfinding_surface
 {
