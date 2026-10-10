@@ -337,6 +337,7 @@ struct GameEvent
         UnitEnterVehicle,
         UnitExitVehicle,
         ServerDisconnected,
+        SpawnEffect,
     };
 
     EventType type{None};
@@ -556,6 +557,19 @@ struct DespawnObjectEvent
     static constexpr auto event_type = GameEvent::DespawnObject;
 
     libc_types::u32 net_id{0};
+};
+
+/*! Plays an effe (or a lone snd!) at a point, or on an entity's markers.
+ *  Local only: every peer plays the effects of what it simulates. */
+struct SpawnEffectEvent
+{
+    static constexpr auto event_type = GameEvent::SpawnEffect;
+
+    blam::tagref_t  effect{};
+    Vecf3           position{};
+    Vecf3           direction{1.f, 0.f, 0.f}; /*!< Forward, e.g. a surface normal */
+    Vecf3           velocity{};               /*!< Inherited by what it creates */
+    libc_types::u64 parent{0};                /*!< Followed while it plays */
 };
 
 /*! A unit takes a seat in a vehicle, as the unit_enter_vehicle script

@@ -35,6 +35,7 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         NetworkInfo,
         ObjectPhysics,
         ObjectSpawn,
+        Projectile,
         ShaderData,
         SubModel,
         TriggerVolume,
@@ -1698,16 +1699,22 @@ struct ResourceLoader
             return;
         blam::scn::object const& object = object_data.value()[0];
 
-        auto model_it = index.find(object.model);
-        if(model_it == index.end())
+        /* Bullets and plasma are only their attachments */
+        bool const projectile = object_tag.matches(blam::tag_class_t::proj);
+        auto       model_it   = index.find(object.model);
+        if(model_it == index.end() && !projectile)
             return;
 
-        ModelAssembly mesh_data =
-            model_cache.predict_regions(object.model, model_lod);
-        if(mesh_data.models.empty())
+        ModelAssembly mesh_data;
+        if(model_it != index.end())
         {
-            cWarning("Failed to load model for {}", index.name_of(object_tag));
-            return;
+            mesh_data = model_cache.predict_regions(object.model, model_lod);
+            if(mesh_data.models.empty())
+            {
+                cWarning(
+                    "Failed to load model for {}", index.name_of(object_tag));
+                return;
+            }
         }
 
         u32 const tags = object_class_tags(object_tag);
@@ -1727,6 +1734,8 @@ struct ResourceLoader
         auto physics = object_physics(p, object_tag);
         if(physics)
             recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
+        if(projectile)
+            recipe.components.push_back(compo::type_hash_v<Projectile>());
 
         auto ent = p.create_entity(recipe);
         if(graph)
@@ -1739,9 +1748,31 @@ struct ResourceLoader
         if(physics)
             ent.template get<ObjectPhysics>() = std::move(*physics);
 
-        Model& model        = ent.template get<Model>();
-        model.tag           = &(*model_it);
-        model.model         = mesh_data.models.at(0);
+        if(projectile)
+        {
+            auto const* proj = object_tag.template data<blam::scn::projectile>(
+                                             files.container.magic)
+                                   .value();
+            /* Grenades get their speed from the thrower */
+            constexpr f32 throw_speed = 6.f; /* wu/s */
+            auto&         flight      = ent.template get<Projectile>();
+            flight.tag                = proj;
+            flight.velocity =
+                spawn.rotation * Vecf3{1.f, 0.f, 0.f} *
+                (proj->initial_velocity > 0.f ? proj->initial_velocity * 30.f
+                                              : throw_speed);
+            if(proj->detonation_timer_starts ==
+                   blam::scn::projectile::timer_starts_t::immediately &&
+               proj->timer.y > 0.f)
+                flight.timer = proj->timer.y;
+        }
+
+        Model& model = ent.template get<Model>();
+        if(model_it != index.end())
+        {
+            model.tag   = &(*model_it);
+            model.model = mesh_data.models.at(0);
+        }
         model.origin_object = &object_tag;
         init_lods(p, model, object);
         model.position      = spawn.position;

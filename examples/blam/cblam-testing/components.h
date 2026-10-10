@@ -715,6 +715,21 @@ struct VehicleDrive
     }
 };
 
+/*! A projectile in flight, moved by ProjectileSystem */
+struct Projectile
+{
+    using value_type = Projectile;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    blam::scn::projectile const* tag{nullptr};
+    Vecf3                        velocity{}; /* wu/s */
+    libc_types::f32              travelled{0.f};
+    libc_types::f32              age{0.f};
+    libc_types::f32              timer{-1.f}; /* seconds to detonation, <0 = not started */
+    libc_types::u64              owner{0};    /* passes through its body */
+    libc_types::u32              bounces{0};
+};
+
 /*! Collision for a world object: static ones use the exact coll surfaces,
  * moving ones its hulls, or a box/sphere when there is no coll tag */
 struct ObjectPhysics

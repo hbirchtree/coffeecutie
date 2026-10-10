@@ -506,9 +506,13 @@ void create_resources(compo::EntityContainer& e)
                              (*pos)[0].get<f32>(),
                              (*pos)[1].get<f32>(),
                              (*pos)[2].get<f32>()};
-                     spawn.rotation = glm::angleAxis(
-                         ev.data.value("yaw", 0.f) * glm::pi<f32>() / 180.f,
-                         Vecf3{0.f, 0.f, 1.f});
+                     spawn.rotation =
+                         glm::angleAxis(
+                             ev.data.value("yaw", 0.f) * glm::pi<f32>() / 180.f,
+                             Vecf3{0.f, 0.f, 1.f}) *
+                         glm::angleAxis(
+                             -ev.data.value("pitch", 0.f) * glm::pi<f32>() / 180.f,
+                             Vecf3{0.f, 1.f, 0.f});
                      GameEvent spawn_ev{.type = GameEvent::SpawnObject};
                      e.subsystem_cast<GameEventBus>().inject(spawn_ev, &spawn);
                  }

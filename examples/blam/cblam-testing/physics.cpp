@@ -2294,6 +2294,58 @@ struct PhysicsSystem
         m_bus->process(event, &hit);
     }
 
+    void raycast(Physics::Raycast& ray)
+    {
+        if(!m_world)
+            return;
+        struct closest_t : btCollisionWorld::ClosestRayResultCallback
+        {
+            using ClosestRayResultCallback::ClosestRayResultCallback;
+            int                      triangle{-1};
+            btCollisionObject const* ignore{nullptr};
+
+            bool needsCollision(btBroadphaseProxy* proxy) const override
+            {
+                auto const* object =
+                    static_cast<btCollisionObject const*>(proxy->m_clientObject);
+                return object != ignore && object->hasContactResponse() &&
+                       ClosestRayResultCallback::needsCollision(proxy);
+            }
+
+            btScalar addSingleResult(
+                btCollisionWorld::LocalRayResult& hit, bool normal_in_world)
+                override
+            {
+                triangle = hit.m_localShapeInfo
+                               ? hit.m_localShapeInfo->m_triangleIndex
+                               : -1;
+                return ClosestRayResultCallback::addSingleResult(
+                    hit, normal_in_world);
+            }
+        };
+        btVector3 const from(ray.from.x, ray.from.y, ray.from.z);
+        btVector3 const to(ray.to.x, ray.to.y, ray.to.z);
+        closest_t       closest(from, to);
+        if(auto it = m_bodies.find(ray.ignore);
+           ray.ignore != 0 && it != m_bodies.end())
+            closest.ignore = it->second.world_body.get();
+        m_world->rayTest(from, to, closest);
+        if(!closest.hasHit())
+            return;
+        bool const structure = closest.m_collisionObject == m_world_body.get();
+        btVector3 const at     = closest.m_hitPointWorld;
+        btVector3 const normal = closest.m_hitNormalWorld;
+        ray.hit       = true;
+        ray.fraction  = static_cast<f32>(closest.m_closestHitFraction);
+        ray.point     = {at.x(), at.y(), at.z()};
+        ray.normal    = {normal.x(), normal.y(), normal.z()};
+        ray.entity_id = structure ? 0
+                                  : u64(reinterpret_cast<uintptr_t>(
+                                        closest.m_collisionObject
+                                            ->getUserPointer()));
+        ray.shader = structure ? surface_shader(closest.triangle) : nullptr;
+    }
+
     /* Carried momentum fades: fast against the ground, slowly in the air */
     void bleed_carried()
     {
@@ -2818,6 +2870,10 @@ void alloc_physics(compo::EntityContainer& container)
     phys_bus.addEventFunction<Physics::GroundProbe>(
         0, [&physics](Physics::Event&, Physics::GroundProbe* probe) {
             physics.probe_ground(*probe);
+        });
+    phys_bus.addEventFunction<Physics::Raycast>(
+        0, [&physics](Physics::Event&, Physics::Raycast* ray) {
+            physics.raycast(*ray);
         });
     phys_bus.addEventFunction<Physics::Drive>(
         0, [&physics](Physics::Event&, Physics::Drive* drive) {

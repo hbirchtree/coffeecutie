@@ -358,11 +358,17 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
                             net.client_state != NetworkState::ClientState::None;
         Vecf3 const forward =
             glm::transpose(Matf3(camera.rotation)) * Vecf3{0.f, 0.f, -1.f};
+        Quatf rotation = glm::angleAxis(
+            std::atan2(forward.y, forward.x), Vecf3{0.f, 0.f, 1.f});
+        /* Projectiles fly where the camera looks, pitch included */
+        if(entry.tag->matches(blam::tag_class_t::proj))
+            rotation *= glm::angleAxis(
+                -std::asin(std::clamp(forward.z, -1.f, 1.f)),
+                Vecf3{0.f, 1.f, 0.f});
         SpawnObjectEvent spawn{
-            .object   = entry.tag->as_ref(),
-            .position = camera.camera.position + forward * spawn_distance,
-            .rotation = glm::angleAxis(
-                std::atan2(forward.y, forward.x), Vecf3{0.f, 0.f, 1.f}),
+            .object       = entry.tag->as_ref(),
+            .position     = camera.camera.position + forward * spawn_distance,
+            .rotation     = rotation,
             .server_owned = client,
         };
         GameEvent ev{.type = GameEvent::SpawnObject};

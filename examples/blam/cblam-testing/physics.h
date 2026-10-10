@@ -38,6 +38,7 @@ struct Event
         Grabbed, /*!< A holder picked an object up */
         Dropped, /*!< A holder let go, or its object went away */
         Impact,  /*!< A body struck the world or another body, audibly */
+        Raycast, /*!< First thing along a segment, answered in place */
 
         Reset, /*!< Tear down all bodies + the world mesh ahead of a map
                 * change. Mesh-based bodies reference their source
@@ -219,6 +220,24 @@ struct GroundHit
     u32                   user{0};
     Vecf3                 point{};
     /*! The surface's collision material, a shader with its physics material */
+    blam::tagref_t const* shader{nullptr};
+};
+
+/*! The first solid thing from -> to: the structure or any body. The
+ * answer is written back into the request before process() returns */
+struct Raycast
+{
+    static constexpr auto event_type = Event::Raycast;
+    Vecf3                 from{};
+    Vecf3                 to{};
+    u64                   ignore{0}; /*!< Entity the ray passes through */
+
+    bool                  hit{false};
+    f32                   fraction{1.f};
+    Vecf3                 point{};
+    Vecf3                 normal{};
+    u64                   entity_id{0}; /*!< 0 for the structure */
+    /*! The structure's collision material, when it hit the structure */
     blam::tagref_t const* shader{nullptr};
 };
 
