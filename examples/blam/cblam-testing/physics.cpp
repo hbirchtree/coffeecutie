@@ -2242,8 +2242,9 @@ struct PhysicsSystem
         if(velocity.preserve_z)
             vel.setZ(body.world_body->getLinearVelocity().z());
         bool const grounded = on_ground(*body.world_body, true);
-        /* Grip while standing still, or slopes slide it */
-        bool const idle = velocity.jump == 0.f && grounded &&
+        /* Grip while standing still, or slopes slide it; a body on its way
+         * up has just jumped and is left alone */
+        bool const idle = velocity.jump == 0.f && grounded && vel.z() < .1f &&
                           btVector3(vel.x(), vel.y(), 0.f).length2() < 1e-4f;
         body.world_body->setFriction(idle ? standing_friction : 0.f);
         if(idle)
