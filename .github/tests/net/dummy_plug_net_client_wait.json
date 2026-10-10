@@ -1,18 +1,28 @@
 {
-    "comment": "Client of the host-leaves scenario: joins via --server and waits; expect a disconnect from the peer",
     "graphics": {
         "window": {
             "width": 640,
             "height": 480
         }
     },
+    "frame_delta": 100.0,
+    "end_time": 2000000,
+    "comment": "Client of the host-leaves / host-dies scenarios: joins via --server, waits, screenshots late enough to show the menu or the error dialog",
     "events": [
         {
             "time": 1000,
             "type": "controller_connect",
             "index": 0
+        },
+        {
+            "time": 600000,
+            "type": "screenshot",
+            "name": "client_600k"
+        },
+        {
+            "time": 1200000,
+            "type": "screenshot",
+            "name": "client_1200k"
         }
-    ],
-    "frame_delta": 100.0,
-    "end_time": 400000
+    ]
 }

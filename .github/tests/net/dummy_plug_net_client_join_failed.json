@@ -1,0 +1,12 @@
+{
+    "comment": "Client whose --server never answers: main menu with the failed-to-join dialog, then A dismisses it",
+    "graphics": {"window": {"width": 640, "height": 480}},
+    "events": [
+        {"time": 1000, "type": "controller_connect", "index": 0},
+        {"time": 300000, "type": "screenshot", "name": "dialog"},
+        {"time": 320000, "type": "controller_button", "button": "A", "duration": 100},
+        {"time": 340000, "type": "screenshot", "name": "dismissed"}
+    ],
+    "frame_delta": 100.0,
+    "end_time": 2000000
+}
