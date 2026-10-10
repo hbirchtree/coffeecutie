@@ -75,9 +75,10 @@ class MassPointAction : public btActionInterface
 
     /* Held for a few substeps, so a frame rate under the step rate doesn't
      * make the throttle stutter */
-    void steer(f32 throttle, btVector3 const& aim)
+    void steer(f32 throttle, f32 strafe, btVector3 const& aim)
     {
         m_throttle   = std::clamp(throttle, -1.f, 1.f);
+        m_strafe     = std::clamp(strafe, -1.f, 1.f);
         m_aim        = aim;
         m_input_left = 12;
     }
@@ -90,9 +91,12 @@ class MassPointAction : public btActionInterface
         if(m_input_left > 0)
             m_input_left--;
         if(!driven)
-            m_throttle = 0.f;
-        /* Wheels roll while there is a driver giving throttle */
-        bool const rolling = driven && std::abs(m_throttle) > .05f;
+            m_throttle = m_strafe = 0.f;
+        /* Wheels hold when parked or crawling, so no creeping down slopes */
+        bool const idling =
+            std::abs(m_throttle) <= stick_deadzone &&
+            m_body.getLinearVelocity().length() < handbrake_speed;
+        bool const rolling = driven && !m_braking && !idling;
         MassPoints const& data  = *m_data;
         btTransform const body  = m_body.getWorldTransform();
         btVector3 const   com   = to_bt(data.center_of_mass);
@@ -107,6 +111,8 @@ class MassPointAction : public btActionInterface
             btVector3 normal;
         };
         std::vector<touch_t> touches;
+        m_depths.assign(data.points.size(), 0.f);
+        m_slip = 0.f;
         for(size_t i = 0; i < data.points.size(); i++)
         {
             btVector3 const at = body * (to_bt(data.points[i].position) - com);
@@ -116,11 +122,10 @@ class MassPointAction : public btActionInterface
 
         if(!touches.empty() && data.ground_depth > 0.f)
         {
-            /* Shared so the vehicle settles half way into ground_depth,
-             * however many points touch */
+            /* Settles a third into ground_depth however many points touch */
             f32 const count = static_cast<f32>(touches.size());
             f32 const stiffness =
-                2.f * mass * gravity / data.ground_depth;
+                mass * gravity / (ground_rest_fraction * data.ground_depth);
             f32 const damping =
                 2.f * ground_damping_ratio * std::sqrt(stiffness * mass);
             for(auto const& touch : touches)
@@ -137,14 +142,26 @@ class MassPointAction : public btActionInterface
                 push = std::max(push, 0.f);
                 m_body.applyImpulse(touch.normal * (push * dt), rel);
 
-                /* The hulls take part of the weight when the springs
-                 * bottom out, so grip goes by at least the point's share */
-                f32 const load = std::max(push, mass * gravity / count);
+                /* ground_friction: slide fraction removed per 30 Hz tick */
                 f32 const grip =
                     slope(touch.normal.z(), data.ground_normal_k0,
                           data.ground_normal_k1) *
-                    data.ground_friction * friction_scale * load * dt;
+                    (1.f - std::pow(1.f - std::clamp(data.ground_friction, 0.f, 1.f),
+                                    halo_tick_rate * dt));
                 bool const drives = traction(point);
+                m_depths[touch.point] = touch.depth;
+                if(drives)
+                {
+                    btVector3 axis = to_bt(point.forward);
+                    if(steered(point))
+                        axis = axis.rotate(to_bt(point.up), m_steering);
+                    axis = body.getBasis() * axis;
+                    btVector3 const slide =
+                        v - touch.normal * v.dot(touch.normal);
+                    m_slip = std::max(
+                        m_slip,
+                        f32((slide - axis * slide.dot(axis)).length()));
+                }
                 friction(
                     point,
                     body,
@@ -159,21 +176,41 @@ class MassPointAction : public btActionInterface
         }
 
         if(driven)
-            drive(touches, body, mass, dt);
+            drive(touches, body, mass, gravity, dt);
+        else
+            m_braking = false;
 
         for(size_t i = 0; i < data.points.size(); i++)
             if(lifts(data.points[i]))
                 antigrav(world, i, body, com, mass, gravity, dt);
+
+        /* Hovercraft keep level; a flying banshee holds its own attitude */
+        if(m_lifting > 0 &&
+           !(driven && m_drive->type == VehicleDrive::alien_fighter))
+            level(btVector3(0, 0, 1), level_frequency, dt);
     }
 
     void debugDraw(btIDebugDraw*) override
     {
     }
 
+    /* For animation and sound: what the last step saw */
+    void state(ObjectPhysics::vehicle_t& out) const
+    {
+        out.ground_depth = m_depths;
+        out.steering     = m_steering;
+        out.throttle     = m_throttle;
+        out.slip         = m_slip;
+    }
+
   private:
     template<typename Touches>
     void drive(
-        Touches const& touches, btTransform const& body, f32 mass, f32 dt)
+        Touches const&     touches,
+        btTransform const& body,
+        f32                mass,
+        f32                gravity,
+        f32                dt)
     {
         VehicleDrive const& d = *m_drive;
         btVector3 forward     = body.getBasis() * btVector3(1, 0, 0);
@@ -184,65 +221,227 @@ class MassPointAction : public btActionInterface
         btVector3 aim = m_aim;
         aim.setZ(0.f);
         aim = aim.length2() > 1e-6f ? aim.normalized() : forward;
-        f32 const heading =
-            std::atan2(forward.cross(aim).z(), forward.dot(aim));
 
-        /* Toward the target speed, no harder than the tag allows */
-        btVector3 const velocity = m_body.getLinearVelocity();
-        f32 const       speed    = velocity.dot(forward);
-        f32 const       target   = m_throttle >= 0.f
-                                       ? m_throttle * d.forward_speed
-                                       : m_throttle * d.reverse_speed;
-        bool const speeding_up =
-            std::abs(target) > std::abs(speed) && target * speed >= 0.f;
-        f32 const limit =
-            speeding_up || d.deceleration <= 0.f ? d.acceleration
-                                                 : d.deceleration;
-        f32 const accel =
-            std::clamp((target - speed) / dt, -limit, limit);
-
-        bool const wheeled = d.type == VehicleDrive::human_jeep ||
-                             d.type == VehicleDrive::human_tank;
-        if(wheeled)
+        switch(d.type)
         {
-            /* Through the tires or treads touching the ground */
-            size_t pushing = 0;
-            for(auto const& touch : touches)
-                pushing += traction(m_data->points[touch.point]);
+        case VehicleDrive::human_jeep:
+        case VehicleDrive::human_tank:
+            return roll(touches, body, forward, aim, mass, dt);
+        case VehicleDrive::alien_fighter:
+            return fly(body, mass, gravity, dt);
+        default:
+            return hover(forward, aim, mass, dt);
+        }
+    }
+
+    /* Accelerate, brake or coast toward `target` along `forward` */
+    f32 accelerate(f32 speed, f32 target, f32 dt)
+    {
+        VehicleDrive const& d = *m_drive;
+        m_braking = target * speed < 0.f && std::abs(speed) > .1f;
+        if(m_braking)
+            return std::clamp(
+                -speed / dt, -d.deceleration_or_accel(), d.deceleration_or_accel());
+        if(std::abs(target) <= std::abs(speed) && target * speed >= 0.f)
+            return 0.f;
+        return std::clamp(
+            (target - speed) / dt, -d.acceleration, d.acceleration);
+    }
+
+    /* Jeeps steer front wheels toward the look; tanks turn their body */
+    template<typename Touches>
+    void roll(
+        Touches const&     touches,
+        btTransform const& body,
+        btVector3 const&   forward,
+        btVector3 const&   aim,
+        f32                mass,
+        f32                dt)
+    {
+        VehicleDrive const& d = *m_drive;
+        /* Stick is throttle, look steers; reversed while backing up */
+        f32 const push   = std::abs(m_throttle) > stick_deadzone ? m_throttle : 0.f;
+        f32 const target = push >= 0.f ? push * d.forward_speed
+                                       : push * d.reverse_speed;
+        f32 const look =
+            std::atan2(forward.cross(aim).z(), forward.dot(aim));
+        f32 const heading =
+            look * steer_gain *
+            (m_body.getLinearVelocity().dot(forward) < -.1f || target < 0.f
+                 ? -1.f
+                 : 1.f);
+
+        btVector3 const velocity = m_body.getLinearVelocity();
+        f32 const       accel    = accelerate(velocity.dot(forward), target, dt);
+        size_t          pushing  = 0;
+        for(auto const& touch : touches)
+            pushing += traction(m_data->points[touch.point]);
+        if(accel != 0.f)
             for(auto const& touch : touches)
                 if(pushing && traction(m_data->points[touch.point]))
                     m_body.applyImpulse(
                         forward * (mass * accel * dt / pushing),
                         touch.at - body.getOrigin());
-        } else
-        {
-            m_body.applyCentralImpulse(forward * (mass * accel * dt));
-            /* Hovercraft would otherwise drift sideways like on ice */
-            btVector3 drift = velocity - forward * speed;
-            drift.setZ(0.f);
-            m_body.applyCentralImpulse(
-                drift * (-mass * std::min(1.f, hover_grip * dt)));
-        }
 
         if(d.type == VehicleDrive::human_jeep)
         {
-            /* Front wheels turn toward the aim at the tag's rate */
-            f32 const want = std::clamp(heading, -d.max_turn, d.max_turn);
+            /* Front wheels turn toward the heading at the tag's rate */
+            f32 const want_turn = std::clamp(heading, -d.max_turn, d.max_turn);
             f32 const step = (d.turn_rate > 0.f ? d.turn_rate : 3.f) * dt;
-            m_steering += std::clamp(want - m_steering, -step, step);
+            m_steering += std::clamp(want_turn - m_steering, -step, step);
             return;
         }
-        /* Everything else turns its body toward the aim */
+        turn_toward(heading, mass, dt);
+    }
+
+    /* Antigrav: face the look, push along the nose */
+    void hover(btVector3 const& forward, btVector3 const& aim, f32 mass, f32 dt)
+    {
+        VehicleDrive const& d = *m_drive;
+        f32 const heading =
+            std::atan2(forward.cross(aim).z(), forward.dot(aim));
+        /* Scout strafe/reverse speeds are hardcoded, not in the tag */
+        bool const      scout   = d.type == VehicleDrive::alien_scout;
+        f32 const       reverse = d.reverse_speed > 0.f ? d.reverse_speed
+                                  : scout ? d.forward_speed * scout_reverse
+                                          : 0.f;
+        btVector3 const velocity = m_body.getLinearVelocity();
+        f32 const       speed    = velocity.dot(forward);
+        f32 const       target   = m_throttle >= 0.f
+                                       ? m_throttle * d.forward_speed
+                                       : m_throttle * reverse;
+        /* Released: slow at half acceleration */
+        f32 const slow = std::abs(m_throttle) <= stick_deadzone
+                             ? .5f * d.acceleration
+                         : m_throttle < 0.f && reverse <= 0.f
+                             ? d.deceleration_or_accel()
+                             : 0.f;
+        f32 const accel =
+            slow > 0.f ? std::clamp(-speed / dt, -slow, slow)
+                       : accelerate(speed, target, dt);
+        m_body.applyCentralImpulse(forward * (mass * accel * dt));
+
+        /* Slide with the stick, otherwise resist sideways drift */
+        btVector3 const right(forward.y(), -forward.x(), 0.f);
+        f32 const       slide_speed =
+            d.slide_speed > 0.f ? d.slide_speed
+            : scout             ? d.forward_speed * scout_slide
+                                : 0.f;
+        f32 const side   = velocity.dot(right);
+        f32 const want   = std::abs(m_strafe) > stick_deadzone
+                               ? m_strafe * slide_speed
+                               : 0.f;
+        f32 const limit  = want != 0.f
+                               ? (d.slide_acceleration > 0.f
+                                      ? d.slide_acceleration
+                                      : d.acceleration)
+                               : hover_grip * std::abs(side);
+        f32 const strafe = std::clamp((want - side) / dt, -limit, limit);
+        m_body.applyCentralImpulse(right * (mass * strafe * dt));
+        turn_toward(heading * 3.f, mass, dt);
+    }
+
+    /* Yaw rate toward `want`, no faster than the tag's turn rate */
+    void turn_toward(f32 want, f32 mass, f32 dt)
+    {
+        VehicleDrive const& d = *m_drive;
         f32 const rate = d.turn_rate > 0.f && d.turn_rate < 10.f
                              ? std::max(d.turn_rate, default_yaw_rate)
                              : default_yaw_rate;
-        f32 const want  = std::clamp(heading * 3.f, -rate, rate);
-        btVector3 const up = btVector3(0, 0, 1);
-        f32 const yaw   = m_body.getAngularVelocity().dot(up);
-        f32 const inertia =
+        want = std::clamp(want, -rate, rate);
+        btVector3 const up(0, 0, 1);
+        f32 const       yaw = m_body.getAngularVelocity().dot(up);
+        f32 const       inertia =
             m_data->moments.z > 0.f ? m_data->moments.z : mass;
         m_body.applyTorqueImpulse(
             up * (inertia * (want - yaw) * std::min(1.f, 10.f * dt)));
+    }
+
+    /* Banshee flight: lift cancels gravity, nose follows the look */
+    void fly(btTransform const& body, f32 mass, f32 gravity, f32 dt)
+    {
+        VehicleDrive const& d = *m_drive;
+        m_body.applyCentralImpulse(btVector3(0, 0, mass * gravity * dt));
+
+        /* Attitude: nose toward the aim, pitch held inside the tag's limit */
+        btVector3 aim = m_aim.length2() > 1e-6f ? m_aim.normalized()
+                                                : body.getBasis().getColumn(0);
+        f32 const max_pitch =
+            std::min(d.max_turn > 0.f ? d.max_turn : 1.f, max_flight_pitch);
+        f32 const pitch = std::clamp(
+            f32(std::asin(std::clamp(f32(aim.z()), -1.f, 1.f))),
+            -max_pitch,
+            max_pitch);
+        btVector3 flat(aim.x(), aim.y(), 0.f);
+        flat = flat.length2() > 1e-6f ? flat.normalized()
+                                      : btVector3(body.getBasis().getColumn(0).x(),
+                                                  body.getBasis().getColumn(0).y(),
+                                                  0.f).normalized();
+        btVector3 const nose = flat * std::cos(pitch) +
+                               btVector3(0, 0, std::sin(pitch));
+        /* Bank into the turn by how fast it is turning */
+        f32 const yaw_rate = m_body.getAngularVelocity().z();
+        f32 const bank =
+            std::clamp(-yaw_rate * bank_per_yaw_rate, -max_bank, max_bank);
+        btVector3 const side = btVector3(0, 0, 1).cross(nose).normalized();
+        btVector3 const up_level = nose.cross(side).normalized();
+        btVector3 const up = up_level.rotate(nose, bank);
+        aim_attitude(body, nose, up, flight_frequency, dt);
+
+        /* Speed along the nose, the rest of the velocity bled off */
+        btVector3 const forward  = body.getBasis().getColumn(0);
+        btVector3 const velocity = m_body.getLinearVelocity();
+        f32 const       speed    = velocity.dot(forward);
+        f32 const       target   = m_throttle >= 0.f
+                                       ? m_throttle * d.forward_speed
+                                       : m_throttle * d.reverse_speed;
+        f32 const accel = accelerate(speed, target, dt);
+        /* Let go of the stick, it slows to a hover */
+        f32 const coast = std::abs(m_throttle) <= stick_deadzone
+                              ? std::clamp(
+                                    -speed / dt,
+                                    -d.deceleration_or_accel(),
+                                    d.deceleration_or_accel())
+                              : accel;
+        m_body.applyCentralImpulse(forward * (mass * coast * dt));
+        btVector3 const slip = velocity - forward * speed;
+        m_body.applyCentralImpulse(
+            slip * (-mass * std::min(1.f, flight_grip * dt)));
+    }
+
+    /* Damped spring turning the body to `nose` and `up` */
+    void aim_attitude(
+        btTransform const& body,
+        btVector3 const&   nose,
+        btVector3 const&   up,
+        f32                frequency,
+        f32                dt)
+    {
+        btMatrix3x3 const& basis = body.getBasis();
+        btVector3 const error = basis.getColumn(0).cross(nose) +
+                                basis.getColumn(2).cross(up);
+        spring_torque(error, m_body.getAngularVelocity(), frequency, dt);
+    }
+
+    /* Rights the body toward `target` up, leaving its heading alone */
+    void level(btVector3 const& target, f32 frequency, f32 dt)
+    {
+        btVector3 const up    = m_body.getWorldTransform().getBasis().getColumn(2);
+        btVector3 const error = up.cross(target);
+        btVector3       spin  = m_body.getAngularVelocity();
+        spin -= target * spin.dot(target);
+        spring_torque(error, spin, frequency, dt);
+    }
+
+    void spring_torque(
+        btVector3 const& error, btVector3 const& spin, f32 frequency, f32 dt)
+    {
+        f32 const       w0 = glm::two_pi<f32>() * frequency;
+        btVector3 const want =
+            error * (w0 * w0) - spin * (2.f * attitude_damping * w0);
+        btMatrix3x3 const inertia =
+            m_body.getInvInertiaTensorWorld().inverse();
+        m_body.applyTorqueImpulse(inertia * want * dt);
     }
 
     bool traction(MassPoints::point_t const& point) const
@@ -260,9 +459,26 @@ class MassPointAction : public btActionInterface
     }
 
     static constexpr f32 ground_damping_ratio   = 0.5f;
-    static constexpr f32 antigrav_damping_ratio = 0.3f;
-    static constexpr f32 friction_scale         = 4.f;
+    static constexpr f32 ground_rest_fraction   = 1.f / 3.f;
+    /* Firm enough that a landing settles instead of bouncing off */
+    static constexpr f32 antigrav_damping_ratio = 0.6f;
+    static constexpr f32 stick_deadzone         = .15f;
+    static constexpr f32 handbrake_speed        = .5f; /* wu/s */
+    static constexpr f32 static_slide           = .3f; /* wu/s */
+    /* Wheel angle per radian of look off the nose */
+    static constexpr f32 steer_gain             = 2.5f;
+    static constexpr f32 level_frequency        = .8f;  /* Hz */
+    static constexpr f32 flight_frequency       = 1.2f; /* Hz */
+    static constexpr f32 attitude_damping       = .9f;
+    static constexpr f32 max_flight_pitch       = 1.2f; /* rad */
+    static constexpr f32 max_bank               = .6f;  /* rad */
+    static constexpr f32 bank_per_yaw_rate      = .35f; /* rad per rad/s */
+    static constexpr f32 flight_grip            = 2.f;  /* 1/s */
+    static constexpr f32 halo_tick_rate         = 30.f; /* Hz */
     static constexpr f32 hover_grip             = 3.f;  /* 1/s */
+    /* Of forward speed, for a scout's tag-less strafe and reverse */
+    static constexpr f32 scout_slide            = .6f;
+    static constexpr f32 scout_reverse          = .5f;
     static constexpr f32 default_yaw_rate       = 1.5f; /* rad/s */
 
     static btVector3 to_bt(Vecf3 const& v)
@@ -341,12 +557,16 @@ class MassPointAction : public btActionInterface
         bool                       rolling)
     {
         btVector3 const slip = v - normal * v.dot(normal);
-        auto oppose = [&](btVector3 const& component, f32 limit) {
+        /* Hold when barely sliding and not rolling */
+        if(!rolling && grip > 0.f && slip.length() < static_slide)
+            grip = 1.f;
+        /* Takes `fraction` of this point's share of the slide out */
+        auto oppose = [&](btVector3 const& component, f32 fraction) {
             f32 const speed = component.length();
-            if(speed < 1e-5f || limit <= 0.f)
+            if(speed < 1e-5f || fraction <= 0.f)
                 return;
-            f32 const stop = std::min(speed * share, limit);
-            m_body.applyImpulse(component * (-stop / speed), rel);
+            m_body.applyImpulse(
+                component * (-share * std::min(fraction, 1.f)), rel);
         };
         if(point.friction == MassPoints::point_t::friction_t::point && !rolling)
         {
@@ -424,6 +644,10 @@ class MassPointAction : public btActionInterface
     btVector3                                       m_aim{1, 0, 0};
     u32                                             m_input_left{0};
     f32                                             m_steering{0.f};
+    f32                                             m_strafe{0.f};
+    bool                                            m_braking{false};
+    std::vector<f32>                                m_depths;
+    f32                                             m_slip{0.f};
 };
 
 template<typename V>
@@ -829,6 +1053,8 @@ struct PhysicsSystem
             };
             physics.linear_velocity  = to_vec(body.getLinearVelocity());
             physics.angular_velocity = to_vec(body.getAngularVelocity());
+            if(it->second.action)
+                it->second.action->state(physics.vehicle);
             btTransform const& transform = body.getWorldTransform();
             btQuaternion const rotation  = transform.getRotation();
             model.rotation =
@@ -1769,6 +1995,7 @@ struct PhysicsSystem
         it->second.world_body->activate(true);
         it->second.action->steer(
             drive.throttle,
+            drive.steer,
             btVector3(drive.aim.x, drive.aim.y, drive.aim.z));
     }
 

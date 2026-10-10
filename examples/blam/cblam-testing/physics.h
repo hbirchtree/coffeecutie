@@ -197,7 +197,8 @@ struct Drive
     static constexpr auto event_type = Event::Drive;
     u64                   vehicle{0};
     f32                   throttle{0.f};
-    Vecf3                 aim{1, 0, 0};
+    f32                   steer{0.f}; /*!< Stick right, -1..1 */
+    Vecf3                 aim{1, 0, 0}; /*!< Where the driver looks */
 };
 
 /*! Asks what the world is made of along from -> to; answered at once with

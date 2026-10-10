@@ -438,6 +438,7 @@ struct PlayerController
         Physics::Drive drive{
             .vehicle  = info.riding.vehicle,
             .throttle = input.intent.throttle,
+            .steer    = input.intent.steer,
             .aim      = cam.camera_.cached.forward,
         };
         physics.process(ev, &drive);

@@ -702,6 +702,15 @@ struct VehicleDrive
     f32    deceleration{0.f};
     f32    max_turn{0.f};  /*!< Steered wheel angle */
     f32    turn_rate{0.f}; /*!< How fast the wheels or the body turn */
+    f32    wheel_circumference{0.f};
+    f32    slide_speed{0.f}; /*!< Sideways, either way */
+    f32    slide_acceleration{0.f};
+
+    /*! Braking; tags without one slow down as fast as they speed up */
+    f32 deceleration_or_accel() const
+    {
+        return deceleration > 0.f ? deceleration : acceleration;
+    }
 };
 
 /*! Collision for a world object: static ones use the exact coll surfaces,
@@ -736,6 +745,15 @@ struct ObjectPhysics
     Vecf3 angular_velocity{};
     bool  sleeping{false};
     bool  grounded{false}; /*!< Upright bodies: world geometry just under it */
+
+    /*! Vehicles, as of the last physics step */
+    struct vehicle_t
+    {
+        std::vector<f32> ground_depth; /*!< Per mass point, 0 = off it */
+        f32              steering{0.f}; /*!< Steered wheels, radians */
+        f32              throttle{0.f}; /*!< The driver's, -1..1 */
+        f32              slip{0.f};     /*!< Fastest sideways tire slide */
+    } vehicle;
 };
 
 struct PhysicsData

@@ -1916,6 +1916,12 @@ struct ResourceLoader
             .deceleration  = vehicle.speed_deceleration * tick * tick,
             .max_turn      = angle(vehicle.maximum_left_turn),
             .turn_rate     = angle(vehicle.turn_rate),
+            .wheel_circumference = vehicle.wheel_circumference,
+            .slide_speed = std::max(
+                               vehicle.maximum_left_slide,
+                               vehicle.maximum_right_slide) *
+                           tick,
+            .slide_acceleration = vehicle.slide_acceleration * tick * tick,
         };
     }
 
