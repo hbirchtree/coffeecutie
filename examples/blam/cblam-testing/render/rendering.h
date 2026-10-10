@@ -11,6 +11,7 @@
 #include <coffee/graphics/apis/gleam/rhi_vertex.h>
 #include "components.h"
 #include "data.h"
+#include "effects.h"
 
 #include <coffee/components/subsystem.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
@@ -101,6 +102,7 @@ using MeshRendererManifest = compo::SubsystemManifest<
         ScreenClear,
         LoadingStatus,
         DebugMarkers,
+        const EffectScene,
         gfx::system>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 

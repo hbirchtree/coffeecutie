@@ -4,6 +4,9 @@
             "shaders/debug_lines.vert",
             "shaders/debug_lines.frag",
 
+            "shaders/effects.vert",
+            "shaders/effects.frag",
+
             "shaders/map.vert",
             "shaders/map_xbox.vert",
             "shaders/scenery.vert",

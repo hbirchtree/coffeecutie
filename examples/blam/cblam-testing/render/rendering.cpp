@@ -1,4 +1,5 @@
 #include "render/rendering.h"
+#include "render/effect_drawing.h"
 
 #include "caching.h"
 #include "caching_item.h"
@@ -1531,6 +1532,7 @@ struct MeshRenderer
         Matf4 matrix;
         Vecf3 position;
         Matf3 rotation;
+        Matf3 view; /* world to view, for camera-facing geometry */
     };
 
     gfx::api*            m_api;
@@ -1547,6 +1549,8 @@ struct MeshRenderer
     BSPCache<Version>&    bsp_cache;
 
     std::vector<cached_player_t> m_players;
+
+    EffectDrawer<Version> m_effects;
 
     std::shared_ptr<gfx::texture_2d_t> meow_tex;
     std::shared_ptr<gfx::sampler_t>    meow_sampler;
@@ -2189,6 +2193,98 @@ struct MeshRenderer
             get_view_state(0));
     }
 
+    /* Particles, contrails and light volumes, over the world's transparents */
+    void render_effects(Proxy& p, gfx::depth_extended_state const& depth)
+    {
+        using namespace std::string_view_literals;
+        using typing::pixels::CompFmt;
+        using typing::pixels::PixDesc;
+        using typing::pixels::comp_flags;
+        using typing::pixels::pix_fmt;
+
+        auto const& scene = p.template subsystem<EffectScene>();
+        if(m_players.empty() || (scene.sprites.empty() && scene.ribbons.empty()) ||
+           !m_effects.load(*m_api))
+            return;
+        m_effects.build(
+            scene,
+            bitm_cache,
+            m_players[0].position,
+            p.template subsystem<BlamFiles<Version>>().load_generation);
+        if(m_effects.batches.empty())
+            return;
+        m_effects.upload();
+
+        auto bucket = [this](PixDesc const& fmt) {
+            return bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(fmt)
+                .sampler;
+        };
+        auto etc2 = [&](typing::pixels::pix_flags flags) {
+            return m_api->feature_info().texture.tex.gl.etc2
+                       ? bucket(CompFmt(pix_fmt::ETC2, flags))
+                       : bucket(CompFmt(pix_fmt::BCn, comp_flags::BC1));
+        };
+        auto const stage = typing::graphics::ShaderStage::Fragment;
+        for(auto i : stl_types::range<u32>(m_players.size()))
+        {
+            auto const& player = m_players[i];
+            Matf3 const to_world = glm::transpose(player.view);
+            Vecf3 const right    = to_world * Vecf3{1.f, 0.f, 0.f};
+            Vecf3 const up       = to_world * Vecf3{0.f, 1.f, 0.f};
+            for(auto const& batch : m_effects.batches)
+                m_api->submit(
+                    {
+                        .program       = m_effects.program,
+                        .vertices      = m_effects.array,
+                        .render_target = m_resources.offscreen,
+                        .call =
+                            gfx::draw_command::call_spec_t{
+                                .indexed = false,
+                                .mode    = gfx::drawing::primitive::triangle,
+                            },
+                        .data = {{.arrays = {.count = batch.count, .offset = batch.offset}}},
+                    },
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Vertex,
+                        gfx::uniform_pair{{"camera"sv, 0}, semantic::SpanOne(player.matrix)},
+                        gfx::uniform_pair{{"eye"sv, 1}, semantic::SpanOne(player.position)},
+                        gfx::uniform_pair{{"cam_right"sv, 2}, semantic::SpanOne(right)},
+                        gfx::uniform_pair{{"cam_up"sv, 3}, semantic::SpanOne(up)}),
+                    gfx::make_uniform_list(
+                        stage,
+                        gfx::uniform_pair{{"blend_mode"sv, 4}, semantic::SpanOne(batch.mode)}),
+                    gfx::make_sampler_list(
+                        gleam::sampler_definition_t{
+                            stage, {"source_bc1"sv, 0},
+                            bucket(CompFmt(pix_fmt::BCn, comp_flags::BC1))},
+                        gleam::sampler_definition_t{
+                            stage, {"source_bc2"sv, 1},
+                            bucket(CompFmt(pix_fmt::BCn, comp_flags::BC2))},
+                        gleam::sampler_definition_t{
+                            stage, {"source_bc3"sv, 2},
+                            bucket(CompFmt(pix_fmt::BCn, comp_flags::BC3))},
+                        gleam::sampler_definition_t{
+                            stage, {"source_rgb565"sv, 3}, bucket(PixDesc(pix_fmt::RGB565))},
+                        gleam::sampler_definition_t{
+                            stage, {"source_r8"sv, 4}, bucket(PixDesc(pix_fmt::R8))},
+                        gleam::sampler_definition_t{
+                            stage, {"source_rg8"sv, 5}, bucket(PixDesc(pix_fmt::RG8))},
+                        gleam::sampler_definition_t{
+                            stage, {"source_rgba4"sv, 6}, bucket(PixDesc(pix_fmt::RGBA4))},
+                        gleam::sampler_definition_t{
+                            stage, {"source_rgba8"sv, 7}, bucket(PixDesc(pix_fmt::RGBA8))},
+                        gleam::sampler_definition_t{
+                            stage, {"source_etc2_rgb"sv, 8},
+                            etc2(typing::pixels::pix_flags::RGB)},
+                        gleam::sampler_definition_t{
+                            stage, {"source_etc2_rgba"sv, 9},
+                            etc2(typing::pixels::pix_flags::RGBA)}),
+                    gfx::blend_state{batch.blend},
+                    gfx::depth_extended_state{depth},
+                    get_view_state(i));
+        }
+    }
+
     bool load_monitor()
     {
         if(monitor_program)
@@ -2549,6 +2645,7 @@ struct MeshRenderer
                 .matrix   = cam.matrix,
                 .position = cam.camera.position,
                 .rotation = glm::mat3_cast(cam.camera.rotation),
+                .view     = Matf3(cam.rotation),
             });
         }
         std::sort(
@@ -2816,6 +2913,8 @@ struct MeshRenderer
                     transparent_depth);
             }
         }
+
+        render_effects(p, transparent_depth);
 
         if(!postprocess_tex)
         {
