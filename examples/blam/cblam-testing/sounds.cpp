@@ -17,6 +17,7 @@
 #include "subsystem.h"
 #include "types.h"
 #include <algorithm>
+#include <random>
 #include <glm/matrix.hpp>
 #include <magic_enum/magic_enum.hpp>
 
@@ -608,6 +609,25 @@ struct SoundSystem
                     .active = {.role = select_first_role(track)},
                     .source = snd.alloc_source(),
                 });
+            /* A one-shot plays one of its permutations, picked at random;
+             * each chains through its own pieces to the end */
+            if(!item.looping_sound)
+                if(auto bufs = track.buffers.find(meta.active.role);
+                   bufs != track.buffers.end() && !bufs->second.empty() &&
+                   bufs->second.front().range)
+                {
+                    u32 const count = std::min<u32>(
+                        bufs->second.front().range->actual_permutation_count,
+                        bufs->second.front().permutations.size());
+                    if(count > 1)
+                    {
+                        u32 const pick =
+                            std::uniform_int_distribution<u32>(0, count - 1)(
+                                m_permutation_rng);
+                        meta.active.permutation_group = pick;
+                        meta.active.permutation       = pick;
+                    }
+                }
             auto sounds_it = track.sounds.find(meta.active.role);
             if(sounds_it == track.sounds.end())
                 continue;
@@ -630,6 +650,8 @@ struct SoundSystem
             .usage  = usage,
         };
     }
+
+    std::minstd_rand m_permutation_rng{std::random_device{}()};
 
     static constexpr u64 background_entity = 0;
     /* Menu music has no cluster, so cluster changes must not replace it */

@@ -511,8 +511,14 @@ struct PhysicsSystem
             return;
 
         carry_grabbed(p);
+        m_before_step.clear();
+        for(auto const& [_, body] : m_bodies)
+            if(body.world_body && body.world_body->getInvMass() > 0.f)
+                m_before_step[body.world_body.get()] =
+                    body.world_body->getLinearVelocity();
         m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
         m_next_process_time = t + 16ms;
+        m_steps++;
         report_impacts();
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
@@ -1344,6 +1350,7 @@ struct PhysicsSystem
         entity_body.child_bones.clear();
         entity_body.child_bounds.clear();
         entity_body.child_heads.clear();
+        entity_body.created = m_steps;
 
         switch(body_create.shape)
         {
@@ -1745,16 +1752,30 @@ struct PhysicsSystem
             if(!a || !b)
                 continue;
             f32 const inv_mass = a->getInvMass() + b->getInvMass();
-            int       best     = -1;
-            f32       speed    = 0.f;
+            /* Velocity lost along the normal, toward each body */
+            auto lost = [this](btRigidBody const* body, btVector3 const& n) {
+                auto it = m_before_step.find(body);
+                if(it == m_before_step.end())
+                    return 0.f;
+                return f32((body->getLinearVelocity() - it->second).dot(n));
+            };
+            int best  = -1;
+            f32 speed = 0.f;
             for(int j = 0; j < manifold->getNumContacts(); j++)
-                if(f32 s = manifold->getContactPoint(j).getAppliedImpulse() *
-                           inv_mass;
-                   s > speed)
+            {
+                auto const&     point = manifold->getContactPoint(j);
+                /* Points from b to a */
+                btVector3 const n     = point.m_normalWorldOnB;
+                f32 const       s     = std::max(
+                    {point.getAppliedImpulse() * inv_mass,
+                     lost(a, n),
+                     lost(b, -n)});
+                if(s > speed)
                 {
                     speed = s;
                     best  = j;
                 }
+            }
             if(best < 0 || speed < impact_speed)
                 continue;
             /* The moving one hears it; the world has no entity */
@@ -1767,11 +1788,15 @@ struct PhysicsSystem
             if(id == 0 || mover->getInvMass() <= 0.f ||
                m_player_bodies.contains(id))
                 continue;
+            if(auto body = m_bodies.find(id);
+               body == m_bodies.end() ||
+               m_steps - body->second.created < impact_settle)
+                continue;
             if(auto last = m_last_impact.find(id);
                last != m_last_impact.end() &&
-               m_frame - last->second < impact_cooldown)
+               m_steps - last->second < impact_cooldown)
                 continue;
-            m_last_impact[id] = m_frame;
+            m_last_impact[id] = m_steps;
             auto const& point = manifold->getContactPoint(best);
             btVector3 const at = point.getPositionWorldOnA();
             Physics::Event  event{Physics::Event::Impact};
@@ -2085,6 +2110,8 @@ struct PhysicsSystem
         std::vector<std::pair<Vecf3, Vecf3>>    child_bounds;
         std::vector<bool>                       child_heads;
         Vecf3                                   child_offset{};
+        /* Step it was made in; it settles silently for a while */
+        u32 created{0};
     };
 
     /* Hull children take their bone's skinning matrix from the last pose,
@@ -2229,9 +2256,12 @@ struct PhysicsSystem
         btVector3   velocity{0, 0, 0}; /*!< Over the last step */
     };
     static constexpr f32           hull_margin  = .005f;
-    static constexpr f32 impact_speed    = .8f; /* wu/s */
+    static constexpr f32 impact_speed    = .5f; /* wu/s */
     static constexpr u32 impact_cooldown = 9;
+    static constexpr u32 impact_settle   = 60;
+    u32                  m_steps{0};
     std::map<u64, u32>   m_last_impact;
+    std::map<btRigidBody const*, btVector3> m_before_step;
     static constexpr f32 ground_probe_up   = .2f;
     static constexpr f32 ground_probe_down = .15f;
     static constexpr f32           halo_gravity = 9.81f / 3.048f;
