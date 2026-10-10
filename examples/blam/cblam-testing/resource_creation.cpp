@@ -1286,7 +1286,7 @@ void create_shaders(compo::EntityContainer& e)
     const bool use_spv = features.program.spirv;
     const bool use_uber =
         features.texture.cube_array /*&& features.buffer.ssbo*/
-        && !lowspec_hardware && !bugs.adreno;
+        && !lowspec_hardware && !bugs.adreno_3xx && !bugs.freedreno;
     const bool use_uber_lite = features.buffer.ubo /*&& !bugs.adreno_3xx*/;
 
     if(use_spv && false)

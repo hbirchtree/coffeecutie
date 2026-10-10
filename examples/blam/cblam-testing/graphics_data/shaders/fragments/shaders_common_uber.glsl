@@ -654,19 +654,56 @@ float sotr_somap(float v, uint m)
 }
 
 /* Combiner register file (color_output destinations / inputs):
- * reg[1]=scratch_color_0 (final), reg[2]=scratch_color_1,
- * reg[3]=vertex_color_0, reg[4]=vertex_color_1, reg[5..8]=map_color_0..3.
+ * r1=scratch_color_0 (final), r2=scratch_color_1,
+ * r3=vertex_color_0, r4=vertex_color_1, r5..r8=map_color_0..3.
  * Stages may WRITE any of these (incl. vertex/map registers) and later
- * stages read them back. reg[0] is the discard sink.
+ * stages read them back. Register 0 is the discard sink.
  * Vertex registers initialize to 1 — the engine substitutes fade factors
  * there and "no fade" is 1, not 0 (0 nukes any multiply stage to black). */
 
-/* GLSL passes arrays by value, so handing the register file to the four
- * colour and four alpha input lookups copies all nine entries eight times per
- * stage. At global scope it is read in place. */
-vec4 sotr_reg[9];
+/* Separate globals rather than an array: a dynamically indexed array gets
+ * private memory on Adreno, which halved the frame rate wherever sotr drew.
+ * Globals also avoid GLSL's by-value array copies into the input lookups. */
+vec4 sotr_r1, sotr_r2, sotr_r3, sotr_r4, sotr_r5, sotr_r6, sotr_r7, sotr_r8;
 
-/* Get color input (blam::shader::color_input) as vec3. reg[3]/reg[4] are the
+vec4 sotr_get(uint i)
+{
+    if(i == 1u) return sotr_r1;
+    if(i == 2u) return sotr_r2;
+    if(i == 3u) return sotr_r3;
+    if(i == 4u) return sotr_r4;
+    if(i == 5u) return sotr_r5;
+    if(i == 6u) return sotr_r6;
+    if(i == 7u) return sotr_r7;
+    if(i == 8u) return sotr_r8;
+    return vec4(0);
+}
+
+void sotr_set_rgb(uint i, vec3 v)
+{
+    if(i == 1u) sotr_r1.rgb = v;
+    else if(i == 2u) sotr_r2.rgb = v;
+    else if(i == 3u) sotr_r3.rgb = v;
+    else if(i == 4u) sotr_r4.rgb = v;
+    else if(i == 5u) sotr_r5.rgb = v;
+    else if(i == 6u) sotr_r6.rgb = v;
+    else if(i == 7u) sotr_r7.rgb = v;
+    else if(i == 8u) sotr_r8.rgb = v;
+}
+
+void sotr_set_a(uint i, float v)
+{
+    if(i == 1u) sotr_r1.a = v;
+    else if(i == 2u) sotr_r2.a = v;
+    else if(i == 3u) sotr_r3.a = v;
+    else if(i == 4u) sotr_r4.a = v;
+    else if(i == 5u) sotr_r5.a = v;
+    else if(i == 6u) sotr_r6.a = v;
+    else if(i == 7u) sotr_r7.a = v;
+    else if(i == 8u) sotr_r8.a = v;
+}
+
+/* Get color input (blam::shader::color_input) as vec3. r3/r4 are the
  * vertex registers: vertex_color_0 is the diffuse light, vertex_color_1 the
  * perpendicular fade. */
 vec3 sotr_cin(uint i, vec4 c0, vec4 c1)
@@ -675,14 +712,14 @@ vec3 sotr_cin(uint i, vec4 c0, vec4 c1)
     if(i ==  2u) return vec3(0.5);
     if(i ==  3u) return vec3(-1);
     if(i ==  4u) return vec3(-0.5);
-    if(i >=  5u && i <=  8u) return sotr_reg[i].rgb;           // map_color_0..3
-    if(i ==  9u || i == 10u) return sotr_reg[i - 6u].rgb;      // vertex_color_0/1
-    if(i == 11u || i == 12u) return sotr_reg[i - 10u].rgb;     // scratch_color_0/1
+    if(i >=  5u && i <=  8u) return sotr_get(i).rgb;           // map_color_0..3
+    if(i ==  9u || i == 10u) return sotr_get(i - 6u).rgb;      // vertex_color_0/1
+    if(i == 11u || i == 12u) return sotr_get(i - 10u).rgb;     // scratch_color_0/1
     if(i == 13u) return c0.rgb;                           // constant_color_0
     if(i == 14u) return c1.rgb;                           // constant_color_1
-    if(i >= 15u && i <= 18u) return vec3(sotr_reg[i - 10u].a); // map_alpha_0..3
-    if(i == 19u || i == 20u) return vec3(sotr_reg[i - 16u].a); // vertex_alpha_0/1
-    if(i == 21u || i == 22u) return vec3(sotr_reg[i - 20u].a); // scratch_alpha_0/1
+    if(i >= 15u && i <= 18u) return vec3(sotr_get(i - 10u).a); // map_alpha_0..3
+    if(i == 19u || i == 20u) return vec3(sotr_get(i - 16u).a); // vertex_alpha_0/1
+    if(i == 21u || i == 22u) return vec3(sotr_get(i - 20u).a); // scratch_alpha_0/1
     if(i == 23u) return vec3(c0.a);                       // constant_alpha_0
     if(i == 24u) return vec3(c1.a);                       // constant_alpha_1
     return vec3(0); // zero
@@ -697,14 +734,14 @@ float sotr_ain(uint i, vec4 c0, vec4 c1)
     if(i ==  2u) return 0.5;
     if(i ==  3u) return -1.0;
     if(i ==  4u) return -0.5;
-    if(i >=  5u && i <= 8u)  return sotr_reg[i].a;          // map_alpha_0..3
-    if(i ==  9u || i == 10u) return sotr_reg[i - 6u].a;     // vertex_alpha_0/1
-    if(i == 11u || i == 12u) return sotr_reg[i - 10u].a;    // scratch_alpha_0/1
+    if(i >=  5u && i <= 8u)  return sotr_get(i).a;          // map_alpha_0..3
+    if(i ==  9u || i == 10u) return sotr_get(i - 6u).a;     // vertex_alpha_0/1
+    if(i == 11u || i == 12u) return sotr_get(i - 10u).a;    // scratch_alpha_0/1
     if(i == 13u) return c0.a;
     if(i == 14u) return c1.a;
-    if(i >= 15u && i <= 18u) return sotr_reg[i - 10u].b;    // map_blue_0..3
-    if(i == 19u || i == 20u) return sotr_reg[i - 16u].b;    // vertex_blue_0/1
-    if(i == 21u || i == 22u) return sotr_reg[i - 20u].b;    // scratch_blue_0/1
+    if(i >= 15u && i <= 18u) return sotr_get(i - 10u).b;    // map_blue_0..3
+    if(i == 19u || i == 20u) return sotr_get(i - 16u).b;    // vertex_blue_0/1
+    if(i == 21u || i == 22u) return sotr_get(i - 20u).b;    // scratch_blue_0/1
     if(i == 23u) return c0.b;    // constant_blue_0
     if(i == 24u) return c1.b;    // constant_blue_1
     return 0.0;
@@ -726,19 +763,18 @@ vec4 shader_transparent(in Material mat)
     vec4 uv01 = mat.material.input2;
     vec4 uv23 = mat.material.input3;
 
-    sotr_reg[0] = vec4(0);
-    sotr_reg[1] = vec4(0);
-    sotr_reg[2] = vec4(0);
-    sotr_reg[3] = vec4(1);
-    sotr_reg[4] = vec4(1);
-    sotr_reg[5] = get_color_with_offset(0u, uv01.xy, mat);
-    sotr_reg[6] = get_color_with_offset(1u, uv01.zw, mat);
-    sotr_reg[7] = get_color_with_offset(2u, uv23.xy, mat);
-    sotr_reg[8] = get_color_with_offset(3u, uv23.zw, mat);
+    sotr_r1 = vec4(0);
+    sotr_r2 = vec4(0);
+    sotr_r3 = vec4(1);
+    sotr_r4 = vec4(1);
+    sotr_r5 = get_color_with_offset(0u, uv01.xy, mat);
+    sotr_r6 = get_color_with_offset(1u, uv01.zw, mat);
+    sotr_r7 = get_color_with_offset(2u, uv23.xy, mat);
+    sotr_r8 = get_color_with_offset(3u, uv23.zw, mat);
 
     int num_stages = int(TR_DATA.num_stages);
     if(num_stages == 0)
-        return sotr_reg[5];
+        return sotr_r5;
 
     for(int si = 0; si < num_stages && si < 7; si++)
     {
@@ -783,7 +819,7 @@ vec4 shader_transparent(in Material mat)
         bool alpha_mux = (TR_STAGE.flags & 2u) != 0u;
         if((TR_STAGE.flags & 4u) != 0u)
             c0 = mix(TR_STAGE.color0, TR_STAGE.color0_up,
-                     clamp(sotr_reg[1].a, 0.0, 1.0));
+                     clamp(sotr_r1.a, 0.0, 1.0));
         float aa = sotr_smap(sotr_ain(aa_i, c0, c1), aa_m);
         float ab = sotr_smap(sotr_ain(ab_i, c0, c1), ab_m);
         float ac = sotr_smap(sotr_ain(ac_i, c0, c1), ac_m);
@@ -792,7 +828,7 @@ vec4 shader_transparent(in Material mat)
         float a_ab = aa * ab;
         float a_cd = ac * ad;
         float a_sum =
-            alpha_mux ? (sotr_reg[1].a >= 0.5 ? a_cd : a_ab) : (a_ab + a_cd);
+            alpha_mux ? (sotr_r1.a >= 0.5 ? a_cd : a_ab) : (a_ab + a_cd);
 
         /* Color: get + map inputs */
         vec3 ca = sotr_cmap(sotr_cin(ca_i, c0, c1), ca_m);
@@ -808,27 +844,19 @@ vec4 shader_transparent(in Material mat)
          * else AB. Summing where mux was meant over-brightens badly. */
         bool color_mux = (TR_STAGE.flags & 1u) != 0u;
         vec3 c_sum =
-            color_mux ? (sotr_reg[1].a >= 0.5 ? c_cd : c_ab) : (c_ab + c_cd);
+            color_mux ? (sotr_r1.a >= 0.5 ? c_cd : c_ab) : (c_ab + c_cd);
 
         /* Route color outputs; registers clamp to [-1, 1] on write. */
-        if(c_ab_d <= 8u)
-            sotr_reg[c_ab_d].rgb = clamp(sotr_omap(c_ab, c_om), -1.0, 1.0);
-        if(c_cd_d <= 8u)
-            sotr_reg[c_cd_d].rgb = clamp(sotr_omap(c_cd, c_om), -1.0, 1.0);
-        if(c_sum_d <= 8u)
-            sotr_reg[c_sum_d].rgb = clamp(sotr_omap(c_sum, c_om), -1.0, 1.0);
-        sotr_reg[0] = vec4(0); /* keep the discard sink discarded */
+        sotr_set_rgb(c_ab_d, clamp(sotr_omap(c_ab, c_om), -1.0, 1.0));
+        sotr_set_rgb(c_cd_d, clamp(sotr_omap(c_cd, c_om), -1.0, 1.0));
+        sotr_set_rgb(c_sum_d, clamp(sotr_omap(c_sum, c_om), -1.0, 1.0));
 
-        if(a_ab_d <= 8u)
-            sotr_reg[a_ab_d].a = clamp(sotr_somap(a_ab, a_om), -1.0, 1.0);
-        if(a_cd_d <= 8u)
-            sotr_reg[a_cd_d].a = clamp(sotr_somap(a_cd, a_om), -1.0, 1.0);
-        if(a_sum_d <= 8u)
-            sotr_reg[a_sum_d].a = clamp(sotr_somap(a_sum, a_om), -1.0, 1.0);
-        sotr_reg[0] = vec4(0);
+        sotr_set_a(a_ab_d, clamp(sotr_somap(a_ab, a_om), -1.0, 1.0));
+        sotr_set_a(a_cd_d, clamp(sotr_somap(a_cd, a_om), -1.0, 1.0));
+        sotr_set_a(a_sum_d, clamp(sotr_somap(a_sum, a_om), -1.0, 1.0));
     }
 
-    vec4 sc0 = sotr_reg[1];
+    vec4 sc0 = sotr_r1;
 
     /* blend_mode (chicago::framebuffer_blending):
      * 0=alpha_blend 1=multiply 2=double_multiply 3=add 4=subtract
@@ -1108,6 +1136,18 @@ vec3 ripple_normal(
                .rgb * 2.0 - 1.0;
 }
 
+vec3 ripple_layer(
+    in uint  map_id,
+    in float angle,
+    in float velocity,
+    in vec2  offset,
+    in float repeats,
+    in Material mat)
+{
+    vec2 dir = vec2(cos(angle), sin(angle));
+    return ripple_normal(map_id, offset + dir * velocity * time, repeats, mat);
+}
+
 vec4 shader_water(in Material mat)
 {
     const int ALPHA_MODULATES_REFLECT    = 0x1;
@@ -1135,25 +1175,22 @@ vec4 shader_water(in Material mat)
     vec4 velocities    = mat.material.input5;
     vec4 contributions = mat.material.input6;
     vec4 repeats       = max(mat.material.input9, vec4(1.0));
-    vec2 offsets[4]    = vec2[4](
-        mat.material.input7.xy, mat.material.input7.zw,
-        mat.material.input8.xy, mat.material.input8.zw);
 
-    vec3  bump_sum = vec3(0.0);
-    float weight   = 0.0;
-    g_min_lod      = mat.material.input10.x;
-    for(int i = 0; i < 4; i++)
-    {
-        /* Every layer is sampled whether it contributes or not: skipping one
-         * would make the texture gradient undefined for the whole quad. */
-        vec2 dir = vec2(cos(angles[i]), sin(angles[i]));
-        bump_sum += contributions[i] * ripple_normal(
-            bump_map_id,
-            offsets[i] + dir * velocities[i] * time,
-            repeats[i],
-            mat);
-        weight   += contributions[i];
-    }
+    /* Unrolled by hand: indexing the layer arrays with a loop counter keeps
+     * them in private memory on some mobile compilers. Every layer is sampled
+     * whether it contributes or not: skipping one would make the texture
+     * gradient undefined for the whole quad. */
+    g_min_lod = mat.material.input10.x;
+    vec3 bump_sum =
+        contributions.x * ripple_layer(bump_map_id, angles.x, velocities.x,
+                                       mat.material.input7.xy, repeats.x, mat)
+        + contributions.y * ripple_layer(bump_map_id, angles.y, velocities.y,
+                                         mat.material.input7.zw, repeats.y, mat)
+        + contributions.z * ripple_layer(bump_map_id, angles.z, velocities.z,
+                                         mat.material.input8.xy, repeats.z, mat)
+        + contributions.w * ripple_layer(bump_map_id, angles.w, velocities.w,
+                                         mat.material.input8.zw, repeats.w, mat);
+    float weight = dot(contributions, vec4(1.0));
     g_min_lod = -1.0;
     vec3 bump_ts = weight > 0.0 && dot(bump_sum, bump_sum) > 1e-8
         ? normalize(bump_sum) : vec3(0.0, 0.0, 1.0);
