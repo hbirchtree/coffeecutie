@@ -191,6 +191,11 @@ struct source_t
     {
         alSourceQueueBuffers(m_handle, 1, &buf.m_handle.hnd);
         detail::check_error("alSourceQueueBuffers");
+        /* Playing again would rewind to the head of the queue */
+        ALint state{};
+        alGetSourcei(m_handle, AL_SOURCE_STATE, &state);
+        if(state == AL_PLAYING || state == AL_PAUSED)
+            return;
         alSourcePlay(m_handle);
         detail::check_error("alSourcePlay");
     }

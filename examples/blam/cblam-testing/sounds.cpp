@@ -437,8 +437,7 @@ struct SoundSystem
                     pitch.permutations.at(meta.active.permutation)
                         .permutation->gain);
 
-            /* queue() restarts a playing source, so the whole chain goes in
-             * before it gets going. Bounded in case the chain is cyclic */
+            /* The whole chain goes in at once, bounded in case it is cyclic */
             u32 perm = meta.active.permutation;
             for(auto _ : stl_types::range<size_t>(pitch.permutations.size()))
             {
