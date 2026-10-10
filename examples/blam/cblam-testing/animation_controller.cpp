@@ -70,6 +70,7 @@ struct AnimationController
         for(auto const& play : std::exchange(m_requests, {}))
             apply(p, play);
         animate_bipeds(p, dt);
+        animate_vehicles(p, dt);
         end_actions(p);
 
         auto& cache = p.template subsystem<ModelCache<halo_version>>();
@@ -205,11 +206,14 @@ struct AnimationController
                 glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
             if(info.riding.vehicle != 0)
             {
-                animate_rider(p, player.id(), info, anim, look);
+                animate_rider(p, player.id(), info, anim, look, dt);
                 continue;
             }
-            m_walkers[player.id()].seat    = {};
-            m_walkers[player.id()].exiting = false;
+            m_walkers[player.id()].seat         = {};
+            m_walkers[player.id()].exiting      = false;
+            m_walkers[player.id()].seen_vehicle = false;
+            for(u32 i = 0; i < 3; i++)
+                anim.stop(AnimationPlayback::lean_slot + i);
             auto const* data = p.template get<PhysicsData>(player.id());
             /* Only a body in physics mode can leave the ground */
             bool const grounded =
@@ -391,7 +395,8 @@ struct AnimationController
         u64                id,
         PlayerInfo const&  info,
         AnimationPlayback& anim,
-        Vecf3 const&       look)
+        Vecf3 const&       look,
+        f32                dt)
     {
         auto const* vehicle = p.template get<Model>(info.riding.vehicle);
         if(!vehicle || !vehicle->origin_object)
@@ -461,6 +466,168 @@ struct AnimationController
             1.f,
             yaw);
         anim.stop(AnimationPlayback::aim_move_slot);
+
+        /* Leaning with the vehicle's acceleration, in its own frame */
+        auto const* physics = p.template get<ObjectPhysics>(info.riding.vehicle);
+        Vecf3 accel{};
+        if(physics && dt > 0.f && walker.seen_vehicle)
+            accel = glm::conjugate(vehicle->rotation) *
+                    ((physics->linear_velocity - walker.vehicle_velocity) / dt);
+        walker.vehicle_velocity = physics ? physics->linear_velocity : Vecf3{};
+        walker.seen_vehicle     = physics != nullptr;
+        walker.lean = glm::mix(walker.lean, accel, std::min(1.f, lean_rate * dt));
+        UnitSlot const leans[3] = {
+            UnitSlot::acc_front_back,
+            UnitSlot::acc_left_right,
+            UnitSlot::acc_up_down};
+        for(u32 i = 0; i < 3; i++)
+        {
+            f32 const amount =
+                std::clamp(walker.lean[i] / lean_full, -1.f, 1.f);
+            frame_strip(
+                anim.layers[AnimationPlayback::lean_slot + i],
+                graph,
+                st[leans[i]],
+                .5f + .5f * amount,
+                magic);
+        }
+    }
+
+    /* Vehicle pose from physics. Layers: 0 canopy, 1 steering, 2 wheels,
+     * 3.. suspension. */
+    void animate_vehicles(Proxy& p, f32 dt)
+    {
+        auto const& magic =
+            p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        std::set<u64> driven;
+        for(auto rider : p.template select<PlayerInfo>())
+            if(auto const& riding = rider.template get<PlayerInfo>().riding;
+               riding.vehicle != 0 && riding.driver)
+                driven.insert(riding.vehicle);
+
+        for(auto ent : p.template select<Model, ObjectPhysics, AnimationPlayback>())
+        {
+            auto [model, physics, anim] = ent.components();
+            if(!physics.drive || !physics.mass_points || !anim.graph)
+                continue;
+            auto const* graph    = anim.graph;
+            auto        vehicles = graph->vehicles.data(magic);
+            if(!vehicles.has_value() || vehicles.value().empty())
+                continue;
+            auto const& vehicle = vehicles.value()[0];
+            auto        slots   = vehicle.animations.data(magic);
+            auto slot = [&](u32 i) -> i32 {
+                return slots.has_value() && i < slots.value().size()
+                           ? slots.value()[i].animation
+                           : -1;
+            };
+            using V = blam::antr::vehicle;
+
+            /* Canopy shut with a driver. Banshee clip names are inverted:
+             * "closing" ends open, "opening" ends shut */
+            auto const& st = stance(p, graph, "stand", "");
+            i32 const   canopy = driven.contains(ent.id())
+                                     ? st[UnitSlot::opening]
+                                     : st[UnitSlot::closing];
+            auto& base = anim.layers[0];
+            if(canopy < 0)
+                base = AnimationLayer{};
+            else if(base.graph != graph ||
+                    base.animation != static_cast<u32>(canopy))
+                base = AnimationLayer{
+                    .graph         = graph,
+                    .animation     = static_cast<u32>(canopy),
+                    .animated_only = true,
+                    .loop          = false,
+                };
+
+            /* Steering: the wheels' angle, or a hovercraft's turning */
+            auto const& v     = physics.vehicle;
+            f32 const   steer = physics.drive->type == VehicleDrive::human_jeep
+                                    ? v.steering
+                                    : physics.angular_velocity.z * hover_lean;
+            aim(anim.layers[1],
+                graph,
+                slot(V::steering),
+                vehicle.steering_bounds,
+                0.f,
+                1.f,
+                steer);
+
+            /* Wheels turn a frame per fraction of their circumference */
+            Vecf3 const forward = model.rotation * Vecf3{1.f, 0.f, 0.f};
+            auto&       spin    = m_wheel_turn[ent.id()];
+            if(physics.drive->wheel_circumference > 0.f)
+                spin = std::fmod(
+                    spin + glm::dot(physics.linear_velocity, forward) * dt /
+                               physics.drive->wheel_circumference + 1.f,
+                    1.f);
+            frame_strip(anim.layers[2], graph, slot(V::ground_speed), spin, magic);
+            anim.layers[2].grid_wrap = true;
+
+            /* Suspension; airborne wheel = fully extended */
+            u32  layer = 3;
+            auto suspension = vehicle.suspension_animations.data(magic);
+            for(size_t i = 0; suspension.has_value() &&
+                              i < suspension.value().size() &&
+                              layer < AnimationPlayback::max_layers;
+                i++, layer++)
+            {
+                auto const& s     = suspension.value()[i];
+                auto const& point = s.mass_point_index;
+                f32         depth = s.full_extension_ground_depth;
+                if(point >= 0 &&
+                   static_cast<size_t>(point) < v.ground_depth.size() &&
+                   static_cast<size_t>(point) <
+                       physics.mass_points->points.size() &&
+                   v.ground_depth[point] > 0.f)
+                    depth = v.ground_depth[point] -
+                            physics.mass_points->points[point].radius;
+                f32 const span = s.full_compression_ground_depth -
+                                 s.full_extension_ground_depth;
+                f32 const travel =
+                    span != 0.f
+                        ? std::clamp(
+                              (depth - s.full_extension_ground_depth) / span,
+                              0.f,
+                              1.f)
+                        : 0.f;
+                frame_strip(anim.layers[layer], graph, s.animation.animation, travel, magic);
+            }
+            for(; layer < AnimationPlayback::max_layers; layer++)
+                anim.layers[layer] = AnimationLayer{};
+        }
+    }
+
+    /* An overlay posed at `at` (0..1) along its frames, by grid */
+    static void frame_strip(
+        AnimationLayer&           layer,
+        blam::antr::header const* graph,
+        i32                       animation,
+        f32                       at,
+        blam::map_ptr const&      magic)
+    {
+        auto anims = graph->animations.data(magic);
+        if(animation < 0 || !anims.has_value() ||
+           static_cast<size_t>(animation) >= anims.value().size())
+        {
+            layer = AnimationLayer{};
+            return;
+        }
+        i32 const frames = anims.value()[animation].frame_count;
+        if(frames <= 0)
+        {
+            layer = AnimationLayer{};
+            return;
+        }
+        if(layer.graph != graph || layer.animation != static_cast<u32>(animation))
+            layer = AnimationLayer{
+                .graph        = graph,
+                .animation    = static_cast<u32>(animation),
+                .grid_columns = static_cast<u16>(frames),
+            };
+        layer.cell = {
+            at * static_cast<f32>(layer.grid_wrap ? frames : frames - 1), 0.f};
     }
 
     /* Stride directions, in the order movement shares are worked out */
@@ -770,6 +937,10 @@ struct AnimationController
         std::pair<u64, i16> seat{0, -1};
         bool                entering{false};
         bool                exiting{false};
+        /* Rider lean: last vehicle velocity, smoothed acceleration */
+        Vecf3 vehicle_velocity{};
+        Vecf3 lean{};
+        bool  seen_vehicle{false};
         bool  hard_landing{false};
         bool  seen{false};
         bool  running{false};
@@ -790,6 +961,12 @@ struct AnimationController
     std::map<u64, walker_t>                      m_walkers;
     std::map<u64, custom_t>                      m_custom;
     std::vector<PlayModelAnimationEvent>         m_requests;
+    std::map<u64, f32>                           m_wheel_turn;
+    /* Steering pose per rad/s a hovercraft turns at */
+    static constexpr f32 hover_lean = .3f;
+    /* Acceleration that leans a rider all the way, and how fast it follows */
+    static constexpr f32 lean_full = 4.f; /* wu/s^2 */
+    static constexpr f32 lean_rate = 6.f; /* 1/s */
     std::vector<Physics::GroundHit>              m_steps;
 };
 

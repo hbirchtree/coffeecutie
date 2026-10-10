@@ -33,6 +33,9 @@ struct AnimationLayer
     /* Aim/look overlays are a yaw x pitch grid of poses, picked by `cell`
      * (fractional column, row) instead of by time. 0 = plays by time. */
     libc_types::u16 grid_columns{0};
+    bool            grid_wrap{false}; /* last column blends into the first */
+    /* Only touch animated nodes; vehicle base clips aren't bind pose */
+    bool animated_only{false};
     typing::vector_types::Vecf2 cell{};
 
     bool loop{true};
@@ -63,7 +66,8 @@ struct AnimationPlayback
         aim_slot      = 5,
         aim_move_slot = 6,
         overlay_slot  = 7, /* fire, gestures */
-        max_layers    = 8,
+        lean_slot     = 8, /* riders: front-back, left-right, up-down */
+        max_layers    = 11,
     };
 
     std::array<AnimationLayer, max_layers> layers{};

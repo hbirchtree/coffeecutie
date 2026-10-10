@@ -1141,11 +1141,14 @@ struct ResourceLoader
             model_cache.predict_regions(instance_obj[0].model, model_lod);
 
         auto idle = find_idle_animation(p, instance_obj[0].anim_graph);
+        auto const* graph =
+            idle ? idle->graph
+                 : vehicle_graph(p, *instance_tag, instance_obj[0].anim_graph);
 
         /* Only objects that actually animate carry the component, so
          * static scenery pays neither the state nor a bone slot. */
         EntityRecipe recipe = parent;
-        if(idle)
+        if(graph)
             recipe.components.push_back(
                 compo::type_hash_v<AnimationPlayback>());
         auto physics = object_physics(p, *instance_tag);
@@ -1153,11 +1156,12 @@ struct ResourceLoader
             recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
 
         auto parent_ = p.create_entity(recipe);
-        if(idle)
+        if(graph)
         {
-            auto& anim     = parent_.template get<AnimationPlayback>();
-            anim.layers[0] = *idle;
-            anim.graph     = idle->graph;
+            auto& anim = parent_.template get<AnimationPlayback>();
+            if(idle)
+                anim.layers[0] = *idle;
+            anim.graph = graph;
         }
         if(physics)
             parent_.template get<ObjectPhysics>() = std::move(*physics);
@@ -1226,6 +1230,22 @@ struct ResourceLoader
     /* The idle animation in an object's animation graph. Scans unit weapons
      * for "stand * idle*" with frame data, falling back to weapons[0] idle —
      * weapons[0] may be a vehicle-driver slot for some bipeds. */
+    /* A vehicle's graph, for objects with no idle animation */
+    blam::antr::header const* vehicle_graph(
+        Proxy& p, blam::tag_t const& tag, blam::tagref_t const& anim_graph)
+    {
+        if(!tag.matches(blam::tag_class_t::vehi) || !anim_graph.valid())
+            return nullptr;
+        auto const& magic = p.template subsystem<BlamFiles<Ver>>().container.magic;
+        auto        antr  = index.find(anim_graph);
+        if(antr == index.end())
+            return nullptr;
+        auto header = (*antr).template data<blam::antr::header>(magic);
+        if(!header.has_value() || header.value()[0].vehicles.count == 0)
+            return nullptr;
+        return &header.value()[0];
+    }
+
     std::optional<AnimationLayer> find_idle_animation(
         Proxy& p, blam::tagref_t const& anim_graph)
     {
@@ -1686,7 +1706,9 @@ struct ResourceLoader
         submodel.tags         = submodel.tags | (tags & SubObjectMask);
 
         auto idle = find_idle_animation(p, object.anim_graph);
-        if(idle)
+        auto const* graph =
+            idle ? idle->graph : vehicle_graph(p, object_tag, object.anim_graph);
+        if(graph)
             recipe.components.push_back(
                 compo::type_hash_v<AnimationPlayback>());
         auto physics = object_physics(p, object_tag);
@@ -1694,11 +1716,12 @@ struct ResourceLoader
             recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
 
         auto ent = p.create_entity(recipe);
-        if(idle)
+        if(graph)
         {
-            auto& anim     = ent.template get<AnimationPlayback>();
-            anim.layers[0] = *idle;
-            anim.graph     = idle->graph;
+            auto& anim = ent.template get<AnimationPlayback>();
+            if(idle)
+                anim.layers[0] = *idle;
+            anim.graph = graph;
         }
         if(physics)
             ent.template get<ObjectPhysics>() = std::move(*physics);

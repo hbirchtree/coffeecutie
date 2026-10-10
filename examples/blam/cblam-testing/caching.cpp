@@ -973,11 +973,14 @@ bool ModelCache<V>::sample_grid(
 {
     i32 const cols = layer.grid_columns;
     i32 const rows = std::max(1, clip.frame_count / cols);
-    f32 const x    = std::clamp(layer.cell.x, 0.f, static_cast<f32>(cols - 1));
+    f32 const x    = layer.grid_wrap
+                         ? std::fmod(std::fmod(layer.cell.x, f32(cols)) + cols,
+                                     f32(cols))
+                         : std::clamp(layer.cell.x, 0.f, static_cast<f32>(cols - 1));
     f32 const y    = std::clamp(layer.cell.y, 0.f, static_cast<f32>(rows - 1));
     i32 const c0   = static_cast<i32>(x);
     i32 const r0   = static_cast<i32>(y);
-    i32 const c1   = std::min(c0 + 1, cols - 1);
+    i32 const c1   = layer.grid_wrap ? (c0 + 1) % cols : std::min(c0 + 1, cols - 1);
     i32 const r1   = std::min(r0 + 1, rows - 1);
     f32 const fx   = x - static_cast<f32>(c0);
     f32 const fy   = y - static_cast<f32>(r0);
@@ -1074,7 +1077,11 @@ void ModelCache<V>::evaluate_pose(
 
         f32 const w = std::clamp(layer.weight, 0.f, 1.f);
 
-        switch(clip->type)
+        auto const type = layer.animated_only &&
+                                  clip->type == blam::antr::anim_type::base
+                              ? blam::antr::anim_type::replacement
+                              : clip->type;
+        switch(type)
         {
         case blam::antr::anim_type::base:
         {
