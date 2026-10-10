@@ -2822,7 +2822,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         i64 const time_us = std::chrono::duration_cast<std::chrono::microseconds>(
                                 now->time_since_epoch())
                                 .count();
-        std::vector<ObjectSync> changed, all;
+        std::vector<ObjectSync> changed, settled, all;
         for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
         {
             auto [model, physics, net] = object.components();
@@ -2840,8 +2840,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             };
             all.push_back(sync);
             auto& was_asleep = m_object_asleep[net.instance_id];
-            if(!physics.sleeping || !was_asleep)
+            if(!physics.sleeping)
                 changed.push_back(sync);
+            else if(!was_asleep)
+                settled.push_back(sync);
             was_asleep = physics.sleeping;
         }
 
@@ -2866,6 +2868,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 k_nSteamNetworkingSend_UnreliableNoNagle,
                 current,
                 FRAME_UPDATE_LANE);
+        /* The last sync until it wakes, losing it leaves clients mid-motion */
+        if(!current.empty() && !settled.empty())
+            send_all<ObjectSync>(
+                MessageBase{MessageBase::ObjectSync},
+                gsl::span<ObjectSync>(settled),
+                k_nSteamNetworkingSend_Reliable,
+                current);
     }
 
     /* Whether a camera moved since last sent; records it if so */
