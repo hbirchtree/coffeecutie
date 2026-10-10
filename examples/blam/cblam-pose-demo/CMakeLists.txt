@@ -24,6 +24,21 @@ coffee_application(
 )
 add_dependencies(BlamPoseDemo BlamPoseDemo.assets)
 
+set(BUNDLED_LIBS)
+# OpenAL has to have shared linkage
+if(BUILD_OPENAL AND NOT EMSCRIPTEN)
+    if(ANDROID)
+        find_package(OpenSL REQUIRED)
+    endif()
+    find_package(OpenAL CONFIG REQUIRED)
+    get_target_property(OPENAL_LIB OpenAL::OpenAL IMPORTED_LOCATION_DEBUG)
+    set(BUNDLED_LIBS
+        $<IF:$<CONFIG:Debug>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_DEBUG>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_RELEASE>>
+    )
+elseif(BUILD_OPENAL AND EMSCRIPTEN)
+    set(BUNDLED_LIBS OpenAL_ImaDecoder)
+endif()
+
 target_include_directories(BlamPoseDemo PRIVATE ${CBLAM_TESTING_DIR})
 # rendering.cpp includes the crunched header, so this target needs the
 # generated include dir and the translation unit holding the data

@@ -2,6 +2,7 @@
 #include "components.h"
 #include "data.h"
 #include "journal.h"
+#include "map_marker.h"
 #include "network/networking.h"
 #include "physics.h"
 #include "pose_apply.h"
@@ -25,6 +26,10 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/core/task_queue/task.h>
+
+#if defined(FEATURE_ENABLE_OAF)
+#include <oaf/api_system.h>
+#endif
 
 using namespace Coffee;
 
@@ -101,6 +106,8 @@ i32 pose_demo_main()
              * — the reused caching.cpp/resource_creation.cpp/rendering.cpp
              * select<>/get<> across all of these. */
             e.register_component_inplace<AnimationPlayback>();
+            e.register_component_inplace<BipedEquipment>();
+            e.register_component_inplace<BipedStatus>();
             e.register_component_inplace<BspReference>();
             e.register_component_inplace<CameraLerp>();
             e.register_component_inplace<DebugDraw>();
@@ -127,6 +134,7 @@ i32 pose_demo_main()
             e.register_subsystem_inplace<Journal>();
             e.register_subsystem_inplace<BlamFiles<halo_version>>();
             e.register_subsystem_inplace<LoadingStatus>();
+            e.register_subsystem_inplace<DebugMarkers>();
 
             e.register_subsystem_inplace<PhysicsBus>();
             auto& net_state = e.register_subsystem_inplace<NetworkState>();
@@ -176,8 +184,19 @@ i32 pose_demo_main()
             });
             cDebug("GL version: {0} {1}", gfx.api_name(), gfx.api_version());
 
+            oaf::api* sound_api{nullptr};
+#if defined(FEATURE_ENABLE_OAF)
+            auto& snd = e.register_subsystem_inplace<oaf::system>();
+            if(auto error = snd.load(e))
+            {
+                cWarning("Failed to init audio: {}", error.value());
+            }
+            snd.set_distance_model(oaf::api::exponential);
+            sound_api = &snd;
+#endif
+
             auto& sound_cache =
-                e.register_subsystem_inplace<SoundCache<halo_version>>(nullptr);
+                e.register_subsystem_inplace<SoundCache<halo_version>>(sound_api);
 
             {
                 auto& bitm_cache =
@@ -188,6 +207,11 @@ i32 pose_demo_main()
                         std::ref(bitm_cache));
                 e.register_subsystem_inplace<ModelCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache), &gfx);
+                e.register_subsystem_inplace<BSPCache<halo_version>>(
+                    std::ref(bitm_cache),
+                    std::ref(shader_cache),
+                    std::ref(sound_cache),
+                    e.service<comp_app::EventBus<SoundEvent>>());
             }
 
             if(auto window = e.service<comp_app::WindowInfo>())
