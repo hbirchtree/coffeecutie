@@ -577,12 +577,19 @@ struct AnimationController
             {
                 auto const& s     = suspension.value()[i];
                 auto const& point = s.mass_point_index;
-                f32         depth = s.full_extension_ground_depth;
+                /* Hanging wheels drop toward the ground, up to full
+                 * extension; tag depth is the centre's height below it */
+                f32 depth = s.full_extension_ground_depth;
                 if(point >= 0 &&
-                   static_cast<size_t>(point) < v.ground_depth.size() &&
-                   static_cast<size_t>(point) <
-                       physics.mass_points->points.size() &&
-                   v.ground_depth[point] > 0.f)
+                   static_cast<size_t>(point) < v.ground_height.size() &&
+                   v.ground_height[point] >= 0.f)
+                    depth = -v.ground_height[point];
+                else if(
+                    point >= 0 &&
+                    static_cast<size_t>(point) < v.ground_depth.size() &&
+                    static_cast<size_t>(point) <
+                        physics.mass_points->points.size() &&
+                    v.ground_depth[point] > 0.f)
                     depth = v.ground_depth[point] -
                             physics.mass_points->points[point].radius;
                 f32 const span = s.full_compression_ground_depth -

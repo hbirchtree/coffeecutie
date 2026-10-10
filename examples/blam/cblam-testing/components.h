@@ -752,6 +752,9 @@ struct ObjectPhysics
     struct vehicle_t
     {
         std::vector<f32> ground_depth; /*!< Per mass point, 0 = off it */
+        /*! Wheel centres above the ground along the suspension, negative
+         *  when it is out of reach */
+        std::vector<f32> ground_height;
         f32              steering{0.f}; /*!< Steered wheels, radians */
         f32              throttle{0.f}; /*!< The driver's, -1..1 */
         f32              slip{0.f};     /*!< Fastest sideways tire slide */

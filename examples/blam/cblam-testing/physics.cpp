@@ -71,6 +71,15 @@ class MassPointAction : public btActionInterface
             if(lifts(point))
                 m_lifting++;
         }
+        /* The points the vehicle rests on: those whose bottom is within
+         * half the ground depth of the lowest */
+        f32 lowest = std::numeric_limits<f32>::max();
+        for(auto const& point : m_data->points)
+            lowest = std::min(lowest, point.position.z - point.radius);
+        for(auto const& point : m_data->points)
+            m_supporting += point.position.z - point.radius <=
+                            lowest + .5f * m_data->ground_depth;
+        m_supporting = std::max<size_t>(m_supporting, 1);
     }
 
     /* Held for a few substeps, so a frame rate under the step rate doesn't
@@ -112,33 +121,55 @@ class MassPointAction : public btActionInterface
         };
         std::vector<touch_t> touches;
         m_depths.assign(data.points.size(), 0.f);
+        m_heights.assign(data.points.size(), -1.f);
         m_slip = 0.f;
         for(size_t i = 0; i < data.points.size(); i++)
         {
             btVector3 const at = body * (to_bt(data.points[i].position) - com);
-            if(auto touch = deepest_contact(world, i, at))
+            /* Wheels and treads by a ray down their suspension, reaching past
+             * the wheel so a hanging one knows how far the ground is; the
+             * rest by sphere, to catch walls too */
+            f32 const radius = data.points[i].radius;
+            std::optional<std::pair<f32, btVector3>> touch;
+            if(traction(data.points[i]))
+            {
+                auto ground = wheel_contact(
+                    world,
+                    at,
+                    radius + suspension_reach,
+                    body.getBasis() * btVector3(0, 0, -1));
+                m_heights[i] = ground ? ground->first : -1.f;
+                if(ground && ground->first < radius)
+                    touch = std::pair{radius - ground->first, ground->second};
+            } else
+                touch = deepest_contact(world, i, at);
+            if(touch)
                 touches.push_back({i, at, touch->first, touch->second});
         }
 
         if(!touches.empty() && data.ground_depth > 0.f)
         {
-            /* Settles a third into ground_depth however many points touch */
+            /* A spring per supporting point, each carrying its share and
+             * settling a third into ground_depth, whatever the others do */
             f32 const count = static_cast<f32>(touches.size());
+            f32 const share = mass / static_cast<f32>(m_supporting);
             f32 const stiffness =
-                mass * gravity / (ground_rest_fraction * data.ground_depth);
+                share * gravity / (ground_rest_fraction * data.ground_depth);
             f32 const damping =
-                2.f * ground_damping_ratio * std::sqrt(stiffness * mass);
+                2.f * ground_damping_ratio * std::sqrt(stiffness * share);
             for(auto const& touch : touches)
             {
                 auto const&     point = data.points[touch.point];
                 btVector3 const rel   = touch.at - body.getOrigin();
                 btVector3 const v     = m_body.getVelocityInLocalPoint(rel);
                 f32 const       vn    = v.dot(touch.normal);
-                f32             push =
-                    (stiffness * touch.depth - damping * vn) / count;
+                f32 push = stiffness * touch.depth - damping * vn;
+                /* Bottomed out: a stiff stop, damped so it doesn't bounce */
                 if(touch.depth > data.ground_depth)
-                    push += 10.f * stiffness *
-                            (touch.depth - data.ground_depth) / count;
+                    push += bottom_stiffness * stiffness *
+                                (touch.depth - data.ground_depth) -
+                            std::sqrt(bottom_stiffness) * damping *
+                                std::min(vn, 0.f);
                 push = std::max(push, 0.f);
                 m_body.applyImpulse(touch.normal * (push * dt), rel);
 
@@ -197,7 +228,8 @@ class MassPointAction : public btActionInterface
     /* For animation and sound: what the last step saw */
     void state(ObjectPhysics::vehicle_t& out) const
     {
-        out.ground_depth = m_depths;
+        out.ground_depth  = m_depths;
+        out.ground_height = m_heights;
         out.steering     = m_steering;
         out.throttle     = m_throttle;
         out.slip         = m_slip;
@@ -485,8 +517,17 @@ class MassPointAction : public btActionInterface
                point.position.x > m_data->center_of_mass.x;
     }
 
-    static constexpr f32 ground_damping_ratio   = 0.5f;
-    static constexpr f32 ground_rest_fraction   = 1.f / 3.f;
+    static constexpr f32 ground_damping_ratio   = 0.9f;
+    /* Stiffness past ground_depth, as a multiple of the spring's */
+    static constexpr f32 bottom_stiffness       = 10.f;
+    /* How far past a wheel its ray looks for the ground */
+    static constexpr f32 suspension_reach       = .5f;
+    static constexpr f32 ground_rest_fraction   = 1.f / 4.f;
+
+  public:
+    static constexpr f32 rest_depth_fraction = ground_rest_fraction;
+
+  private:
     /* Firm enough that a landing settles instead of bouncing off */
     static constexpr f32 antigrav_damping_ratio = 0.6f;
     static constexpr f32 stick_deadzone         = .15f;
@@ -527,6 +568,25 @@ class MassPointAction : public btActionInterface
                static_cast<size_t>(point.powered) < m_data->powered.size() &&
                m_data->powered[point.powered].antigrav &&
                m_data->powered[point.powered].height > 0.f;
+    }
+
+    /* How far below `at` the ground is along `down`, within `reach`, and
+     * its normal */
+    std::optional<std::pair<f32, btVector3>> wheel_contact(
+        btCollisionWorld* world,
+        btVector3 const&  at,
+        f32               reach,
+        btVector3 const&  down) const
+    {
+        btVector3 const to = at + down * reach;
+        btCollisionWorld::ClosestRayResultCallback ground(at, to);
+        ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
+        world->rayTest(at, to, ground);
+        if(!ground.hasHit())
+            return std::nullopt;
+        return std::pair{
+            reach * ground.m_closestHitFraction,
+            ground.m_hitNormalWorld.normalized()};
     }
 
     /* Deepest overlap of point i with the static world: depth and the
@@ -676,6 +736,8 @@ class MassPointAction : public btActionInterface
     bool                                            m_braking{false};
     bool                                            m_reversing{false};
     std::vector<f32>                                m_depths;
+    size_t                                          m_supporting{0};
+    std::vector<f32>                                m_heights;
     f32                                             m_slip{0.f};
 };
 
@@ -1924,6 +1986,19 @@ struct PhysicsSystem
             entity_body.action = std::make_unique<MassPointAction>(
                 rigid, points, body_create.drive);
             m_world->addAction(entity_body.action.get());
+            /* The coll hull sits just above the springs' rest (its tires are
+             * smaller than the mass points'), so it meets the ground on every
+             * bump: a soft, damped stop there instead of a rigid kick */
+            if(points->ground_depth > 0.f && points->mass > 0.f)
+            {
+                f32 const gravity = rigid.getGravity().length();
+                f32 const springs = points->mass * gravity /
+                                    (MassPointAction::rest_depth_fraction *
+                                     points->ground_depth);
+                f32 const stiffness = hull_contact_stiffness * springs;
+                rigid.setContactStiffnessAndDamping(
+                    stiffness, 2.f * std::sqrt(stiffness * points->mass));
+            }
         }
     }
 
@@ -2649,6 +2724,8 @@ struct PhysicsSystem
     static constexpr f32           hull_margin  = .005f;
     /* Friction of a biped standing still */
     static constexpr f32 standing_friction    = 1.f;
+    /* A vehicle hull's ground contact, as a multiple of its suspension */
+    static constexpr f32 hull_contact_stiffness = 10.f;
     /* How fast carried momentum is lost, wu/s^2 */
     static constexpr f32 carried_ground_decel = 12.f;
     static constexpr f32 carried_air_decel    = .5f;
