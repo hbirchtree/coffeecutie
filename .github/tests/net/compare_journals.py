@@ -160,7 +160,8 @@ def check_bipeds(label, players):
     """A player's biped (model + collision body) exists exactly while it is
     in play, and sits where its camera is: the model's feet eye_height under
     the camera, and the body under it, whether the body drives the camera
-    (local physics mode) or follows it (everyone else)."""
+    (local physics mode) or follows it (everyone else). A rider's biped sits
+    in its seat instead, its body kinematic and with its model."""
     problems = 0
     in_play = 0
     for p in players:
@@ -177,6 +178,23 @@ def check_bipeds(label, players):
                           f"but still has a {what}")
             continue
         in_play += 1
+        if biped.get("riding"):
+            for what, value in (("model", model), ("body", body)):
+                if value is None:
+                    problems += 1
+                    print(f"FAIL: {label}: player_idx={idx} rides without a "
+                          f"{what}")
+            if model is not None and body is not None:
+                if not body["kinematic"]:
+                    problems += 1
+                    print(f"FAIL: {label}: player_idx={idx} rides with a "
+                          f"dynamic body")
+                if not close(model["position"][:2], body["position"][:2], 0.2):
+                    problems += 1
+                    print(f"FAIL: {label}: player_idx={idx} rides with its "
+                          f"body at {body['position']}, model at "
+                          f"{model['position']}")
+            continue
         if model is None:
             problems += 1
             print(f"FAIL: {label}: player_idx={idx} is in play without a "

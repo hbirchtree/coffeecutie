@@ -1,0 +1,48 @@
+{
+    "comment": "Host of a --listen game: once the client has joined, pause, 3 down to LEAVE GAME, A; expect every client dropped, listen socket closed, ui.map loaded",
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480
+        }
+    },
+    "events": [
+        {
+            "time": 1000,
+            "type": "controller_connect",
+            "index": 0
+        },
+        {
+            "time": 60000,
+            "type": "controller_button",
+            "button": "START",
+            "duration": 100
+        },
+        {
+            "time": 61000,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 61200,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 61400,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 62000,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        }
+    ],
+    "frame_delta": 100.0,
+    "end_time": 400000
+}

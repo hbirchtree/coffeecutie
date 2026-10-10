@@ -1,0 +1,92 @@
+{
+    "comment": "PC campaign map: pause, 5 down to QUIT, A; expect ui.map, then down + A opens MULTIPLAYER from the main menu",
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 960
+        }
+    },
+    "events": [
+        {
+            "time": 1000,
+            "type": "controller_connect",
+            "index": 0
+        },
+        {
+            "time": 2000,
+            "type": "controller_button",
+            "button": "START",
+            "duration": 100
+        },
+        {
+            "time": 2600,
+            "type": "screenshot",
+            "name": "pause_menu"
+        },
+        {
+            "time": 3000,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 3200,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 3400,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 3600,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 3800,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 4200,
+            "type": "screenshot",
+            "name": "leave_focused"
+        },
+        {
+            "time": 4400,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 900000,
+            "type": "screenshot",
+            "name": "main_menu"
+        },
+        {
+            "time": 901000,
+            "type": "controller_button",
+            "button": "POV_DOWN",
+            "duration": 100
+        },
+        {
+            "time": 901500,
+            "type": "controller_button",
+            "button": "A",
+            "duration": 100
+        },
+        {
+            "time": 902500,
+            "type": "screenshot",
+            "name": "menu_nav"
+        }
+    ],
+    "frame_delta": 100.0,
+    "end_time": 903000
+}

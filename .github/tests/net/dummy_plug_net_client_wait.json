@@ -1,0 +1,18 @@
+{
+    "comment": "Client of the host-leaves scenario: joins via --server and waits; expect a disconnect from the peer",
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480
+        }
+    },
+    "events": [
+        {
+            "time": 1000,
+            "type": "controller_connect",
+            "index": 0
+        }
+    ],
+    "frame_delta": 100.0,
+    "end_time": 400000
+}
