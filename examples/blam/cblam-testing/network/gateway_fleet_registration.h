@@ -167,8 +167,6 @@ class GatewayFleetRegistration final
     std::unordered_map<std::string, ClientRelay> m_relays;
     std::vector<SteamNetworkingIPAddr>           m_closedRelays;
 
-    std::string m_trackingId;
-
     void onClientRelay(
         std::string const& sessionId,
         int                relayPort,
@@ -178,6 +176,8 @@ class GatewayFleetRegistration final
     void pollRelayKeepalives();
     void sendRelayPunch(int relayPort, std::string const& payload);
 #endif
+
+    std::string m_trackingId;
 
     mutable std::mutex m_mutex;
     bool               m_wsOpen{false};
