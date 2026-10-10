@@ -66,7 +66,7 @@ struct texture_2da_t : texture_array_base_t
             m_type = textures::type::d2;
     }
 
-    virtual void alloc(size_type const& size, bool create_storage = true)
+    virtual void alloc(size_type const& size, bool create_storage = true) override
     {
         if(!m_compat_active)
         {
@@ -240,7 +240,7 @@ struct texture_cube_array_t : texture_cube_base_t
             m_type = textures::type::cube;
     }
 
-    virtual void alloc(size_type const& size, bool create_storage = true)
+    virtual void alloc(size_type const& size, bool create_storage = true) override
     {
         if constexpr(has_cube_array_target)
         {
