@@ -509,7 +509,10 @@ FORCEDINLINE void EntityContainer::remove_entity_if(
         for(auto id : removed_ids)
             component.second->unregister_entity(id);
     }
-    std::erase_if(entities, predicate);
+    /* Not the predicate again: it may look at the components just removed */
+    std::erase_if(entities, [&removed_ids](Entity const& e) {
+        return std::binary_search(removed_ids.begin(), removed_ids.end(), e.id);
+    });
 }
 
 /* create_entity appends with a strictly increasing id and removal erases in
