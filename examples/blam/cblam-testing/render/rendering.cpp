@@ -2853,12 +2853,13 @@ struct MeshRenderer
             render_monitors(i, opaque_stencil);
 
         // Grass of the resident section, alpha tested
+        auto const& container = p.template subsystem<BlamFiles<Version>>().container;
+        /* A client with no map yet has no tag index to ask */
         m_detail_objects.update(
             bsp_cache,
             bitm_cache,
-            p.template subsystem<BlamFiles<Version>>()
-                .container.scenario()
-                .value_or(nullptr));
+            container.map && container.tags ? container.scenario().value_or(nullptr)
+                                             : nullptr);
         render_detail_objects(opaque_stencil);
 
         // Special case for 3 players; black out the 4th quadrant
