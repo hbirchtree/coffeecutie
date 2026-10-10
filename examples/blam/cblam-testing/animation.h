@@ -105,6 +105,10 @@ struct AnimationPlayback
      * the layers cannot express. Wins over them when long enough. */
     std::vector<typing::vector_types::Matf4> external_pose;
 
+    /* Graph node per model bone, e.g. first-person hands + weapon share one
+     * graph. Empty = node i drives bone i. */
+    std::vector<libc_types::i16> bone_nodes;
+
     /* Starts `animation` from `graph` on `slot`, from the beginning. */
     void play(
         libc_types::u32           slot,

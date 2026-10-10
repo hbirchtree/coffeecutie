@@ -526,8 +526,23 @@ void create_resources(compo::EntityContainer& e)
                      for(auto const& en : e.select<PlayerInfo>())
                          if(en.template get<PlayerInfo>().seat_idx == seat)
                              play.entity = en.id();
-                     GameEvent play_ev{.type = GameEvent::PlayModelAnimation};
-                     e.subsystem_cast<GameEventBus>().inject(play_ev, &play);
+                     /* "first_person": play on hands and weapon */
+                     std::vector<u64> targets{play.entity};
+                     if(ev.data.value("first_person", false))
+                     {
+                         targets.clear();
+                         for(auto const& en : e.select<Attachment>())
+                             if(en.template get<Attachment>().parent ==
+                                play.entity)
+                                 targets.push_back(en.id());
+                     }
+                     for(u64 target : targets)
+                     {
+                         play.entity = target;
+                         GameEvent play_ev{
+                             .type = GameEvent::PlayModelAnimation};
+                         e.subsystem_cast<GameEventBus>().inject(play_ev, &play);
+                     }
                  }
                  if(ev.event == "enter_vehicle")
                  {

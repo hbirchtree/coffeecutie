@@ -101,6 +101,12 @@ struct PlayerController
             if(info.riding.vehicle == 0)
                 place_biped(cam, info, model);
         }
+        for(auto ent : p.select<Attachment, Model>())
+        {
+            auto [attachment, model] = ent.components();
+            if(auto const* cam = p.get<PlayerCamera>(attachment.parent))
+                place_first_person(*cam, attachment, model);
+        }
         menu_pads(p, controllers, ui, render);
     }
 
@@ -481,6 +487,22 @@ struct PlayerController
         model.rotation  = Quatf(Vecf3(0, 0, std::atan2(forward.y, forward.x)));
         model.transform = glm::translate(Matf4(1), model.position) *
                           glm::mat4_cast(model.rotation);
+    }
+
+    /* First-person models: +X forward, +Z up; camera: -Z forward, +Y up */
+    static void place_first_person(
+        PlayerCamera const& cam, Attachment const& attachment, Model& model)
+    {
+        static const Matf3 model_to_view{
+            {0, 0, -1},
+            {-1, 0, 0},
+            {0, 1, 0},
+        };
+        Matf3 const world = glm::transpose(Matf3(cam.rotation)) * model_to_view;
+        model.position    = cam.camera.position;
+        model.rotation    = glm::normalize(Quatf(world));
+        model.transform   = glm::translate(Matf4(1), model.position) *
+                          Matf4(world) * attachment.offset;
     }
 
     /* Unowned controllers drive menus by index, for split-screen joins */

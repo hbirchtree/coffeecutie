@@ -161,6 +161,7 @@ struct ModelCache
     std::vector<Quatf> m_rot, m_layer_rot, m_ref_rot, m_row_rot;
     std::vector<Vecf3> m_trans, m_layer_trans, m_ref_trans, m_row_trans;
     std::vector<Matf4> m_world;
+    std::vector<i16>   m_node_parents;
 
     blam::antr::animation const* find_animation(AnimationLayer const& layer);
     bool                         sample_grid(

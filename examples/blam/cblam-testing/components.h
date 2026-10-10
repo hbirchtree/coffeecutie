@@ -1050,6 +1050,16 @@ struct BipedEquipment
     std::vector<equipment_t> equipment; // grenades, powerups
 };
 
+/*! Follows another entity each frame (a player's eye) */
+struct Attachment
+{
+    using value_type = Attachment;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    u64   parent{0};
+    Matf4 offset{1};
+};
+
 struct CameraLerp
 {
     using value_type = CameraLerp;
@@ -1120,6 +1130,18 @@ static const auto player_recipe = compo::EntityRecipe{
             compo::type_hash_v<AnimationPlayback>(),
         },
     .tags = PlayerBiped | PositioningDynamic,
+};
+
+/* Drawn in the first-person passes, for one seat only */
+static const auto first_person_model = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<Attachment>(),
+            compo::type_hash_v<Model>(),
+            compo::type_hash_v<Visibility>(),
+            compo::type_hash_v<AnimationPlayback>(),
+        },
+    .tags = ObjectGC,
 };
 
 static const auto skybox_model = compo::EntityRecipe{

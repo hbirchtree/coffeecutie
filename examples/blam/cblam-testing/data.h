@@ -433,6 +433,7 @@ struct MountModelEvent
     static constexpr auto event_type = GameEvent::MountModel;
     blam::tagref_typed_t<blam::tag_class_t::mod2> model;
     u64                                           entity_id{0};
+    bool                                          first_person{false};
 };
 
 struct SpawnBipedEvent

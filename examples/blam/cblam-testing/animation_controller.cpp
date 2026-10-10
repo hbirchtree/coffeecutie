@@ -27,6 +27,7 @@ using AnimationControllerManifest = compo::SubsystemManifest<
         const Model,
         const ObjectPhysics,
         const PhysicsData,
+        const Attachment,
         AnimationPlayback>,
     type_list_t<
         PhysicsBus,
@@ -71,6 +72,7 @@ struct AnimationController
             apply(p, play);
         animate_bipeds(p, dt);
         animate_vehicles(p, dt);
+        animate_first_person(p, files);
         end_actions(p);
 
         auto& cache = p.template subsystem<ModelCache<halo_version>>();
@@ -700,6 +702,28 @@ struct AnimationController
         }
         m_custom.erase(it);
         return false;
+    }
+
+    /* First-person models return to idle once a requested clip ends */
+    void animate_first_person(Proxy& p, BlamFiles<halo_version> const& files)
+    {
+        using fp_slot     = blam::antr::first_person_weapon;
+        auto const& magic = files.container.magic;
+        for(auto ent : p.template select<Attachment, AnimationPlayback>())
+        {
+            auto& anim = ent.template get<AnimationPlayback>();
+            if(!anim.graph || custom_playing(ent.id(), anim))
+                continue;
+            auto fp = anim.graph->first_person_weapons.data(magic);
+            if(!fp.has_value() || fp.value().empty())
+                continue;
+            auto slots = fp.value()[0].animations.data(magic);
+            if(!slots.has_value() || slots.value().size() <= fp_slot::idle)
+                continue;
+            i32 const idle = slots.value()[fp_slot::idle].animation;
+            if(idle >= 0)
+                anim.crossfade(anim.graph, static_cast<u32>(idle), blend_time);
+        }
     }
 
     /* One-shot actions and overlays fade once they have played out */

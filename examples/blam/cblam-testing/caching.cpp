@@ -1027,14 +1027,28 @@ void ModelCache<V>::evaluate_pose(
         return;
     auto bones = bones_opt.value();
 
+    /* With bone_nodes, pose the whole graph and read bones off its nodes */
+    m_node_parents.clear();
+    if(anim.bone_nodes.size() >= n && anim.graph)
+        if(auto nodes = anim.graph->nodes.data(magic); nodes.has_value())
+            for(auto const& node : nodes.value())
+                m_node_parents.push_back(node.parent);
+    bool const remap = !m_node_parents.empty();
+    u32 const  k = remap ? static_cast<u32>(m_node_parents.size()) : n;
+    auto       node_of = [&anim, remap](u32 bone) -> u32 {
+        return remap ? static_cast<u32>(anim.bone_nodes[bone]) : bone;
+    };
+
     /* Start from the bind pose: a layer that animates nothing then leaves
      * the model as its vertices already stand. */
-    m_rot.assign(n, Quatf(1, 0, 0, 0));
-    m_trans.assign(n, Vecf3(0));
+    m_rot.assign(k, Quatf(1, 0, 0, 0));
+    m_trans.assign(k, Vecf3(0));
     for(u32 i = 0; i < n; i++)
     {
-        m_rot[i]   = glm::conjugate(bones[i].rotation);
-        m_trans[i] = bones[i].translation;
+        if(node_of(i) >= k)
+            continue;
+        m_rot[node_of(i)]   = glm::conjugate(bones[i].rotation);
+        m_trans[node_of(i)] = bones[i].translation;
     }
 
     f32 base_weight = 0.f;
@@ -1052,7 +1066,7 @@ void ModelCache<V>::evaluate_pose(
 
         if(layer.grid_columns > 0)
         {
-            if(!sample_grid(*clip, layer, n))
+            if(!sample_grid(*clip, layer, k))
                 continue;
         } else
         {
@@ -1065,15 +1079,16 @@ void ModelCache<V>::evaluate_pose(
                                              : f0;
             f32 const blend = position - std::floor(position);
 
-            if(!sample_animation(*clip, f0, n, m_layer_rot, m_layer_trans))
+            if(!sample_animation(*clip, f0, k, m_layer_rot, m_layer_trans))
                 continue;
 
             /* Source runs at 30Hz, we do not, so ride between the two
              * frames. */
             if(f1 != f0 && blend > 0.f &&
-               sample_animation(*clip, f1, n, m_ref_rot, m_ref_trans))
+               sample_animation(*clip, f1, k, m_ref_rot, m_ref_trans))
                 mix_into(m_layer_rot, m_layer_trans, m_ref_rot, m_ref_trans, blend);
         }
+
 
         f32 const w = std::clamp(layer.weight, 0.f, 1.f);
 
@@ -1095,7 +1110,7 @@ void ModelCache<V>::evaluate_pose(
         }
         case blam::antr::anim_type::replacement:
             /* Only the nodes it animates; a lower layer keeps the rest. */
-            for(u32 i = 0; i < n; i++)
+            for(u32 i = 0; i < k; i++)
             {
                 if(clip->has_rotation(i))
                     m_rot[i] = glm::slerp(m_rot[i], m_layer_rot[i], w);
@@ -1106,7 +1121,7 @@ void ModelCache<V>::evaluate_pose(
         case blam::antr::anim_type::overlay:
             /* Frames are deltas from the neutral pose (identity at an aim
              * grid's centre), added to what is already posed. */
-            for(u32 i = 0; i < n; i++)
+            for(u32 i = 0; i < k; i++)
             {
                 if(clip->has_rotation(i))
                     m_rot[i] = m_rot[i] *
@@ -1120,19 +1135,22 @@ void ModelCache<V>::evaluate_pose(
 
     /* Bones are in DFS order, so a parent is always resolved before its
      * child. */
-    m_world.assign(n, Matf4(1));
-    for(u32 i = 0; i < n; i++)
+    m_world.assign(k, Matf4(1));
+    for(u32 i = 0; i < k; i++)
     {
         Matf4 local =
             glm::translate(Matf4(1), m_trans[i]) * glm::mat4_cast(m_rot[i]);
-        u16 parent = bones[i].parent;
+        /* Graph roots name themselves or -1, neither below i */
+        u32 parent = remap ? static_cast<u32>(m_node_parents[i])
+                           : bones[i].parent;
         m_world[i] = (parent != blam::mod2::bone::invalid_bone && parent < i)
                          ? m_world[parent] * local
                          : local;
     }
 
     for(u32 i = 0; i < n; i++)
-        dest[i] = m_world[i] * item.inv_bind[i];
+        dest[i] = node_of(i) < k ? m_world[node_of(i)] * item.inv_bind[i]
+                                 : Matf4(1);
 }
 
 template void ModelCache<halo_version>::evaluate_pose(
