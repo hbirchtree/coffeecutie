@@ -106,7 +106,7 @@ echo "::endgroup::"
 echo "===================================="
 
 # Find assets directory
-ASSETS_DIR=$(find $BUILDDIR -name assets -type d | head -n 1)
+ASSETS_DIR=$(find $BUILDDIR -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
 
 # Create a temp dir for this test
 # So we know what's new on reruns

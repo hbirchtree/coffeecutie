@@ -662,7 +662,7 @@ jobs:
       id: server
       run: |
         BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
-        ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
+        ASSETS_DIR=$(find server_artifacts -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
         DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
         SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
         chmod +x "$BINARY"
@@ -846,7 +846,7 @@ jobs:
       id: server
       run: |
         BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
-        ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
+        ASSETS_DIR=$(find server_artifacts -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
         DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
         SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
         chmod +x "$BINARY"
@@ -941,7 +941,7 @@ jobs:
       id: server
       run: |
         BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
-        ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
+        ASSETS_DIR=$(find server_artifacts -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
         DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
         SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
         chmod +x "$BINARY"
@@ -1050,7 +1050,7 @@ jobs:
       id: server
       run: |
         BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
-        ASSETS_DIR=$(find server_artifacts -name assets -type d | head -n 1)
+        ASSETS_DIR=$(find server_artifacts -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
         DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
         SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
         chmod +x "$BINARY"
