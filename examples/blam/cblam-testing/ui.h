@@ -5,6 +5,8 @@
 #include "data.h"
 #include "selected_version.h"
 
+#include <string>
+
 /* Text over the 3D view outside any Halo menu, like the forge menu. The UI
  * renderer draws it in window pixels, y down, and clears it every frame. */
 struct ScreenText : compo::SubsystemBase
@@ -29,6 +31,7 @@ struct UIEvent
         navigation,
         menu_leave,
         function_done,
+        open_widget,
     } type;
 };
 
@@ -69,6 +72,15 @@ struct UIFunctionDone
 
     libc_types::u64 token{};
     bool            ok{true};
+};
+
+/* Opens a widget by tag path on the seat's screen, e.g. an error dialog */
+struct UIOpenWidget
+{
+    static constexpr auto event_type = UIEvent::open_widget;
+
+    libc_types::u32 seat_idx{};
+    std::string     widget;
 };
 
 using UIEventBus = comp_app::BasicEventBus<UIEvent>;

@@ -39,6 +39,15 @@ struct GameSetup : compo::SubsystemBase
         m_pending = std::move(map);
     }
 
+    /* Back to the menu because the server went away; message indexes
+     * displayed_error_messages and shows once ui.map is up */
+    void leave(std::optional<libc_types::u16> message, std::string detail);
+
+    std::u16string const& error_text() const
+    {
+        return m_error_text;
+    }
+
     void start_frame(ContainerProxy&, time_point const&) override;
 
     bool main_thread_only() const override
@@ -52,8 +61,16 @@ struct GameSetup : compo::SubsystemBase
     }
 
   private:
+    struct error_t
+    {
+        libc_types::u16 message;
+        std::string     detail;
+    };
+
     compo::EntityContainer&    m_container;
     std::optional<std::string> m_pending;
+    std::optional<error_t>     m_error;
+    std::u16string             m_error_text;
 };
 
 /* Registers GameSetup and the level, map, game type and difficulty hooks;

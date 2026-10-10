@@ -336,6 +336,7 @@ struct GameEvent
         DespawnObject,
         UnitEnterVehicle,
         UnitExitVehicle,
+        ServerDisconnected,
     };
 
     EventType type{None};
@@ -678,6 +679,21 @@ struct ServerCameraControl
 struct ServerDisconnectEvent
 {
     static constexpr auto event_type = GameEvent::ServerDisconnect;
+};
+
+/* The server went away; only host_left is a clean close */
+struct ServerDisconnectedEvent
+{
+    static constexpr auto event_type = GameEvent::ServerDisconnected;
+
+    enum reason_t : libc_types::u8
+    {
+        host_left,
+        join_failed,     /*!< Never got in */
+        connection_lost, /*!< Timed out while connected */
+        closed,          /*!< Closed by the peer for another reason */
+    } reason{closed};
+    std::string detail; /*!< GNS's end reason text */
 };
 
 struct ServerJoinInfo

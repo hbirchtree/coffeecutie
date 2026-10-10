@@ -1549,21 +1549,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         clients.push_back(connection);
                     cDebug("Stopping server, dropping {} clients", clients.size());
                     for(auto connection : clients)
-                        server_close_peer_connection(connection, 0, true);
+                        server_close_peer_connection(
+                            connection,
+                            k_ESteamNetConnectionEnd_App_Generic,
+                            true,
+                            "Host left the game");
                     stop_server();
                     return;
                 }
                 if(m_connection == k_HSteamNetConnection_Invalid)
                     return;
                 cDebug("Leaving server ({})", remote_name());
-                journal("net_disconnected", {{"server", remote_name()}});
-                m_clock                         = {};
-                m_net_state.server_clock_offset = std::nullopt;
-                m_impl->CloseConnection(m_connection, 0, nullptr, true);
-                m_connections.erase(m_connection);
-                m_connection             = {};
-                m_net_state.client_state = NetworkState::ClientState::None;
-                m_left_server            = true;
+                close_server_connection(m_connection, true);
             });
         m_game_bus.addEventFunction<MapListingEvent>(
             0, [this](GameEvent&, MapListingEvent* listing) {
@@ -2386,28 +2383,38 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_impl->CloseConnection(info->m_hConn, 0, nullptr, false);
                 m_connections.erase(info->m_hConn);
                 m_connection = {};
+                server_gone(
+                    ServerDisconnectedEvent::join_failed,
+                    info->m_info.m_szEndDebug);
                 break;
             }
-            cDebug(
-                "Problem with connection to server {}",
-                client_name(info->m_hConn));
-            m_connection_last_seen = compo::clock::now();
+            /* GNS has given up on it; nothing else closes the handle */
+            cWarning(
+                "Lost connection to server {}: {}",
+                client_name(info->m_hConn),
+                info->m_info.m_szEndDebug);
+            close_server_connection(info->m_hConn, false);
+            server_gone(
+                ServerDisconnectedEvent::connection_lost,
+                info->m_info.m_szEndDebug);
             break;
         case k_ESteamNetworkingConnectionState_ClosedByPeer:
         case k_ESteamNetworkingConnectionState_Dead: {
-            m_net_state.client_state = NetworkState::ClientState::Disconnecting;
-            cDebug("Disonnected from server/peer ({})", remote_name());
-            journal("net_disconnected", {{"server", remote_name()}});
-            m_clock                        = {};
-            m_net_state.server_clock_offset = std::nullopt;
-            m_impl->CloseConnection(
+            auto const reason = info->m_info.m_eEndReason;
+            bool const by_app = reason >= k_ESteamNetConnectionEnd_App_Min &&
+                                reason <= k_ESteamNetConnectionEnd_App_Max;
+            cDebug(
+                "Disconnected from server/peer ({}): {}",
+                remote_name(),
+                info->m_info.m_szEndDebug);
+            close_server_connection(
                 info->m_hConn,
-                0,
-                nullptr,
                 info->m_info.m_eState ==
                     k_ESteamNetworkingConnectionState_ClosedByPeer);
-            m_connection  = {};
-            m_left_server = true;
+            server_gone(
+                by_app ? ServerDisconnectedEvent::host_left
+                       : ServerDisconnectedEvent::closed,
+                info->m_info.m_szEndDebug);
             break;
         }
         case k_ESteamNetworkingConnectionState_None: {
@@ -3006,8 +3013,35 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         physics.sleeping         = to.flags & ObjectSync::sleeping;
     }
 
+    /* The connection to the server is over, whoever ended it */
+    void close_server_connection(HSteamNetConnection connection, bool linger)
+    {
+        m_net_state.client_state = NetworkState::ClientState::Disconnecting;
+        journal("net_disconnected", {{"server", remote_name()}});
+        m_clock                         = {};
+        m_net_state.server_clock_offset = std::nullopt;
+        m_impl->CloseConnection(connection, 0, nullptr, linger);
+        m_connections.erase(connection);
+        m_connection  = {};
+        m_left_server = true;
+    }
+
+    void server_gone(
+        ServerDisconnectedEvent::reason_t reason, char const* detail)
+    {
+        GameEvent               ev{GameEvent::ServerDisconnected};
+        ServerDisconnectedEvent gone{
+            .reason = reason,
+            .detail = detail ? detail : "",
+        };
+        m_game_bus.inject(ev, &gone);
+    }
+
     void server_close_peer_connection(
-        HSteamNetConnection connection, int code, bool linger)
+        HSteamNetConnection connection,
+        int                 code,
+        bool                linger,
+        char const*         reason = nullptr)
     {
         if(auto& player = m_connections[connection].biped; player.exists())
             player.get<NetworkInfo>().connected = false;
@@ -3031,7 +3065,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #endif
         update_player_counts();
         send_player_roster();
-        m_impl->CloseConnection(connection, code, nullptr, linger);
+        m_impl->CloseConnection(connection, code, reason, linger);
     }
 
     void leave_server(Proxy& p)
@@ -3041,6 +3075,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             object.get<ObjectPhysics>().authority = ObjectPhysics::Simulated;
         m_left_server    = false;
         m_join_confirmed = false;
+        p.subsystem<NetworkState>().client_state = NetworkState::ClientState::None;
         p.subsystem<NetworkState>().remote_player_idx.reset();
         p.remove_entity_if([&p](compo::Entity const& e) {
             auto* info = p.get<PlayerInfo>(e.id);

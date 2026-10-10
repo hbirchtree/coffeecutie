@@ -239,6 +239,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     std::shared_ptr<UIEventBus::queue_type<UINavigation>> m_nav_queue;
     std::vector<UINavigation> m_nav_events; /*!< filled by m_nav_queue */
 
+    std::shared_ptr<UIEventBus::queue_type<UIOpenWidget>> m_open_queue;
+    std::vector<UIOpenWidget>                             m_open_events;
+
     struct widget_data_t
     {
         std::vector<vertex_t>&          vertex_data;
@@ -754,6 +757,15 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             : 8);
             }
         }
+    }
+
+    generation_idx_t find_widget(std::string_view path)
+    {
+        for(blam::tag_t const& tag : ui_cache.index)
+            if(tag.matches(blam::tag_class_t::DeLa) &&
+               tag.to_name().to_string(ui_cache.magic) == path)
+                return ui_cache.predict(tag.as_ref());
+        return {};
     }
 
     void open_widget(UIScreen& screen, generation_idx_t widget, bool replace)
@@ -1493,11 +1505,17 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     0, [this](UIEvent&, UIFunctionDone* done) {
                         m_done.push_back(*done);
                     });
+            m_open_queue =
+                e.subsystem<UIEventBus>().addQueuedEventFunction<UIOpenWidget>(
+                    0, [this](UIEvent&, UIOpenWidget* open) {
+                        m_open_events.push_back(*open);
+                    });
         }
         mouse_pos = window_to_ui(m_mouse_raw);
         m_data = &e.subsystem<UIDataSource>();
         m_nav_queue->poll();
         m_done_queue->poll();
+        m_open_queue->poll();
 
         std::vector<vertex_t>          vertex_data;
         std::vector<instance_vertex_t> instance_vertex_data;
@@ -1554,6 +1572,26 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             }
         }
         m_nav_events.clear();
+
+        for(auto const& open : m_open_events)
+        {
+            auto const widget = find_widget(open.widget);
+            if(!widget.valid())
+            {
+                cWarning("UI: no widget {}", open.widget);
+                continue;
+            }
+            for(auto const& entity : e.select<UIScreen>())
+            {
+                auto& screen = e.ref<Proxy>(entity.id()).get<UIScreen>();
+                if(!screen.accepts(open.seat_idx))
+                    continue;
+                m_screen_id = entity.id();
+                m_seat      = open.seat_idx;
+                open_widget(screen, widget, false);
+            }
+        }
+        m_open_events.clear();
 
         if(render_ui)
         {

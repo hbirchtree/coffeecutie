@@ -4,6 +4,7 @@
 #include "data.h"
 #include "network/networking.h"
 #include "selected_version.h"
+#include "ui.h"
 #include "ui_caching.h"
 #include "ui_data.h"
 #include "ui_profile.h"
@@ -120,19 +121,54 @@ std::vector<u16> available_maps(
 
 } // namespace
 
+namespace {
+
+bool in_menu(compo::EntityContainer& e)
+{
+    auto const* map = e.subsystem_cast<BlamFiles<halo_version>>().container.map;
+    return map && map->map_type == blam::maptype_t::ui &&
+           !e.subsystem_cast<LoadingStatus>().loading;
+}
+
+} // namespace
+
+void GameSetup::leave(std::optional<u16> message, std::string detail)
+{
+    if(message)
+        m_error = error_t{*message, std::move(detail)};
+    if(!in_menu(m_container))
+        start("ui");
+}
+
 void GameSetup::start_frame(ContainerProxy&, time_point const&)
 {
-    if(!m_pending)
+    if(m_pending)
+    {
+        auto const map = *std::exchange(m_pending, std::nullopt);
+        auto       name = blam::bl_string::from(map);
+        if(!name)
+            return;
+        Coffee::Logging::cDebug("UI: starting {}", map);
+        m_container.subsystem_cast<RenderingParameters>().render_ui = false;
+        GameEvent          ev{GameEvent::MapLoadByName};
+        MapLoadByNameEvent load{.map_name = *name};
+        m_container.subsystem_cast<GameEventBus>().inject(ev, &load);
         return;
-    auto const map = *std::exchange(m_pending, std::nullopt);
-    auto       name = blam::bl_string::from(map);
-    if(!name)
+    }
+    if(!m_error || !in_menu(m_container))
         return;
-    Coffee::Logging::cDebug("UI: starting {}", map);
-    m_container.subsystem_cast<RenderingParameters>().render_ui = false;
-    GameEvent          ev{GameEvent::MapLoadByName};
-    MapLoadByNameEvent load{.map_name = *name};
-    m_container.subsystem_cast<GameEventBus>().inject(ev, &load);
+    auto const strings =
+        strings_of(m_container, "ui\\shell\\strings\\displayed_error_messages");
+    m_error_text = m_error->message < strings.size()
+                       ? strings[m_error->message]
+                       : std::u16string{};
+    if(!m_error->detail.empty())
+        m_error_text += u"\n" + std::u16string(
+                                    m_error->detail.begin(), m_error->detail.end());
+    m_error.reset();
+    UIEvent      ev{.type = UIEvent::open_widget};
+    UIOpenWidget open{.widget = "ui\\shell\\error\\error_modal_fullscreen"};
+    m_container.subsystem_cast<UIEventBus>().inject(ev, &open);
 }
 
 void alloc_game_setup_provider(compo::EntityContainer& e)
@@ -233,6 +269,34 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
     };
     data.on_function(func_t::pause_game_return_to_main_menu, leave_game);
     data.on_function(func_t::mp_game_player_quit, leave_game);
+
+    /* Dropped by the server: back to the menu, with a dialog unless the
+     * host simply left. displayed_error_messages: 4 game closed down,
+     * 6 connection lost, 7 failed to join */
+    e.subsystem_cast<GameEventBus>().addEventFunction<ServerDisconnectedEvent>(
+        0, [&setup](GameEvent&, ServerDisconnectedEvent* gone) {
+            using reason_t = ServerDisconnectedEvent::reason_t;
+            std::optional<u16> message;
+            switch(gone->reason)
+            {
+            case reason_t::closed:
+                message = 4;
+                break;
+            case reason_t::connection_lost:
+                message = 6;
+                break;
+            case reason_t::join_failed:
+                message = 7;
+                break;
+            case reason_t::host_left:
+                break;
+            }
+            setup.leave(message, gone->detail);
+        });
+    data.bind_text("error_text_box", [&setup](std::u16string_view text) {
+        return setup.error_text().empty() ? std::u16string(text)
+                                          : setup.error_text();
+    });
 
     /* The selection lives in GameSetup, the lists only page through it */
     auto clamp_to = [](std::shared_ptr<list_source_t> const& src, u16 value) {
