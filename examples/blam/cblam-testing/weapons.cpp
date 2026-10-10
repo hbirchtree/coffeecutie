@@ -76,7 +76,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         {
             auto [input, info, cam, net] = ent.components();
             auto const* weapon_tag       = info.biped.weapon;
-            if(info.is_remote() || !weapon_tag ||
+            /* Only a body fires; the free camera has nothing to shoot with */
+            if(info.is_remote() || !weapon_tag || !info.mode.physics ||
                !biped_in_play(info, cam, net))
                 continue;
             auto weapon = weapon_tag->template data<weapon_t>(magic);
