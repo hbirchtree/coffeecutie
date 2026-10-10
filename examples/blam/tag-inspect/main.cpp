@@ -2330,6 +2330,27 @@ void dump_antr(blam::antr::header const* animation)
         }
     fmt::print("  weapons={}\n", animation->weapons.count);
     fmt::print("  vehicles={}\n", animation->vehicles.count);
+    if(auto vehicles = animation->vehicles.data(g_magic); vehicles.has_value())
+        for(auto [i, vehicle] : stl_types::enumerate(vehicles.value()))
+        {
+            print_bounds("steering", vehicle.steering_bounds);
+            print_slots(vehicle.animations.data(g_magic));
+            if(auto susp = vehicle.suspension_animations.data(g_magic);
+               susp.has_value())
+                for(auto const& s : susp.value())
+                    fmt::print(
+                        "        suspension mass_point={} animation={} "
+                        "extension={:.3f} compression={:.3f}\n",
+                        s.mass_point_index,
+                        s.animation.animation,
+                        s.full_extension_ground_depth,
+                        s.full_compression_ground_depth);
+        }
+    fmt::print(
+        "  first_person_weapons={}\n", animation->first_person_weapons.count);
+    if(auto fp = animation->first_person_weapons.data(g_magic); fp.has_value())
+        for(auto const& weapon : fp.value())
+            print_slots(weapon.animations.data(g_magic));
     fmt::print("  devices={}\n", animation->devices.count);
     fmt::print("  nodes={}\n", animation->nodes.count);
     for(auto [i, node] :
@@ -2350,7 +2371,7 @@ void dump_antr(blam::antr::header const* animation)
         auto anim_type = magic_enum::enum_name(anim.type);
         fmt::print(
             "    animation {}: name={} type={} frames={} loop={} key={},{} "
-            "sound={}@{} feet L@{} R@{} next={}\n",
+            "sound={}@{} feet L@{} R@{} next={} nodes={} checksum={:#010x}{}\n",
             i,
             anim.name.str(),
             anim_type,
@@ -2362,7 +2383,10 @@ void dump_antr(blam::antr::header const* animation)
             anim.sound_frame_index,
             anim.left_foot_frame_index,
             anim.right_foot_frame_index,
-            anim.next_animation);
+            anim.next_animation,
+            anim.node_count,
+            static_cast<u32>(anim.node_list_checksum),
+            anim.is_compressed() ? " compressed" : "");
         if(g_dump_overlay_frames && anim.type == blam::antr::anim_type::overlay)
             dump_overlay_frames(anim);
     }
@@ -2371,6 +2395,7 @@ void dump_antr(blam::antr::header const* animation)
 template<typename Ver>
 void dump_mode(blam::mod2::header<Ver> const* info)
 {
+    fmt::print("  node_list_checksum={:#010x}\n", info->node_list_checksum);
     if(auto markers = info->markers.data(g_magic); markers.has_value())
     {
         fmt::print("  markers={}\n", markers.value().size());
@@ -3035,6 +3060,14 @@ void dump_player_biped(
             report("singleplayer", sp.value()[0].unit);
         else
             fmt::print("singleplayer unit: <none>\n");
+
+        if(auto fp = glob.value()->first_person.data(g_magic);
+           fp.has_value() && !fp.value().empty())
+            fmt::print(
+                "first-person hands: {}\n",
+                fp.value()[0].hands.to_name().to_string(g_magic));
+        else
+            fmt::print("first-person hands: <none>\n");
         return;
     }
     fmt::print("no globals tag\n");
