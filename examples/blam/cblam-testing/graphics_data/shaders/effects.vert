@@ -9,7 +9,7 @@ layout(location = 2) in vec4 corner; /* x, y in [-1, 1], z radius, w rotation */
 layout(location = 3) in vec2 tex;
 layout(location = 4) in vec4 color;
 layout(location = 5) in vec4 atlas;  /* scale xy, offset zw */
-layout(location = 6) in vec4 source; /* format, layer, kind (0 sprite, 1 ribbon) */
+layout(location = 6) in vec4 source; /* format, layer, kind (0 sprite, 1 ribbon, 2 flare), opaque */
 
 layout(location = 0) uniform mat4 camera;
 layout(location = 1) uniform vec3 eye;
@@ -50,11 +50,21 @@ void main()
             at = vec2(corner.x * corner.z, corner.y * max(corner.z, stretch * 0.5));
         }
         world = position + right * at.x + up * at.y;
-    } else
+    } else if(source.z < 1.5)
     {
         vec3 side = cross(axis, eye - position);
         side      = length(side) > 0.0001 ? normalize(side) : cam_right;
         world     = position + side * corner.x * corner.z;
+    } else
+    {
+        /* Lens flares are already on screen; axis.x squares them up */
+        vec2 at = position.xy + corner.xy * vec2(corner.z * axis.x, corner.z);
+        gl_Position = vec4(at, 0.9999, 1.0);
+        frag.tex    = tex;
+        frag.color  = color;
+        frag.atlas  = atlas;
+        frag.source = source;
+        return;
     }
     gl_Position  = camera * vec4(world, 1.0);
     frag.tex    = tex;

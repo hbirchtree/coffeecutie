@@ -5,6 +5,7 @@
 #include <coffee/components/subsystem.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
+#include <array>
 #include <vector>
 
 /* What effects look like this frame, rebuilt every frame by EffectSystem and
@@ -56,15 +57,27 @@ struct EffectScene : compo::SubsystemBase
         blam::tagref_t const* lens_flare{nullptr};
     };
 
+    /* A lens flare and how much of it each local seat sees */
+    struct flare_t
+    {
+        blam::scn::lens_flare const* tag{nullptr};
+        Vecf3                        position{}; /* a direction when infinite */
+        bool                         infinite{false};
+        Vecf3                        color{1.f};
+        std::array<f32, 4>           visibility{};
+    };
+
     std::vector<sprite_t> sprites;
     std::vector<ribbon_t> ribbons;
     std::vector<light_t>  lights;
+    std::vector<flare_t>  flares;
 
     void clear()
     {
         sprites.clear();
         ribbons.clear();
         lights.clear();
+        flares.clear();
     }
 };
 

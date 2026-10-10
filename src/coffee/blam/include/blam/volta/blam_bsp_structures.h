@@ -551,7 +551,12 @@ static_assert(sizeof(lightmap) == 32);
 
 struct lens_flare_marker
 {
+    Vecf3 position;
+    i8    direction[3]; /* -127..127 */
+    i8    lens_flare;   /* index into the bsp's lens_flares */
 };
+
+static_assert(sizeof(lens_flare_marker) == 16);
 
 struct weather_palette
 {

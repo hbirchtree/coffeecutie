@@ -28,7 +28,7 @@ vec4 sample_texture()
     uint  format = uint(frag.source.x + 0.5);
     float layer  = frag.source.y;
     /* Ribbons repeat along their length within the atlas tile */
-    vec2 uv     = frag.source.z > 0.5 ? fract(frag.tex) : frag.tex;
+    vec2 uv     = frag.source.z > 0.5 && frag.source.z < 1.5 ? fract(frag.tex) : frag.tex;
     vec3 coord  = vec3(uv * frag.atlas.xy + frag.atlas.zw, layer);
     if(format == 0u)
     {
@@ -74,7 +74,10 @@ vec4 sample_texture()
 
 void main()
 {
-    vec4 c = sample_texture() * frag.color;
+    vec4 c = sample_texture();
+    if(frag.source.w > 0.5)
+        c.a = 1.0;
+    c *= frag.color;
     if(blend_mode > 1.5)
         out_color = vec4(mix(vec3(1.0), c.rgb, c.a), 1.0);
     else

@@ -20,14 +20,24 @@
 #include <unordered_map>
 
 using EffectManifest = compo::SubsystemManifest<
-    type_list_t<const Model, const Projectile, const ObjectPhysics>,
-    type_list_t<EffectScene, PhysicsBus, const BlamFiles<halo_version>>,
+    type_list_t<
+        const Model,
+        const Projectile,
+        const ObjectPhysics,
+        const PlayerCamera,
+        const PlayerInfo>,
+    type_list_t<
+        EffectScene,
+        PhysicsBus,
+        const BlamFiles<halo_version>,
+        const BSPCache<halo_version>>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 namespace {
 
 using blam::scn::contrail;
 using blam::scn::effect;
+using blam::scn::lens_flare;
 using blam::scn::light;
 using blam::scn::light_volume;
 using blam::scn::particle;
@@ -113,6 +123,9 @@ struct EffectSystem
         f32                                      color_pick{0.f};
     };
 
+    /* An attachment's object function; none = always full */
+    using scale_t = blam::shader::animation_src;
+
     struct effect_instance_t
     {
         effect const* tag{nullptr};
@@ -120,6 +133,7 @@ struct EffectSystem
         Vecf3         velocity{};
         u64           parent{0};
         bool          attached{false}; /* loops while its object lives */
+        scale_t       scale{};
 
         i32  event{0};
         f32  time{0.f};
@@ -139,6 +153,9 @@ struct EffectSystem
         Vecf3        color{1.f};
         f32          age{0.f};
         f32          life{-1.f}; /* <0 = while its parent lives */
+        u64          id{0};      /* keys its lens flare's fading */
+        scale_t      scale{};
+        f32          level{1.f}; /* this frame's object function */
     };
 
     struct system_instance_t
@@ -150,6 +167,7 @@ struct EffectSystem
         Vecf3                  velocity{};
         f32                    age{0.f};
         bool                   attached{false};
+        scale_t                scale{};
 
         struct type_state_t
         {
@@ -177,6 +195,7 @@ struct EffectSystem
         Vecf3                        head{};
         bool                         has_head{false};
         bool                         detached{false};
+        scale_t                      scale{};
         f32                          owed{0.f};
         std::deque<contrail_point_t> points; /* newest first */
     };
@@ -186,6 +205,7 @@ struct EffectSystem
         light_volume const* tag{nullptr};
         u64                 parent{0};
         std::string         marker{};
+        scale_t             scale{};
     };
 
     EffectSystem()
@@ -216,6 +236,7 @@ struct EffectSystem
             m_particles.clear();
             m_attached.clear();
             m_requests.clear();
+            m_flare_seen.clear();
         }
         m_magic = &files.container.magic;
         m_index = blam::tag_index_view<halo_version>(files.container);
@@ -234,6 +255,7 @@ struct EffectSystem
         step_particles(p, scene, dt);
         step_contrails(p, scene, dt);
         draw_volumes(p, scene);
+        step_flares(p, scene, dt);
     }
 
     /* ---- Tag lookups ---- */
@@ -325,6 +347,18 @@ struct EffectSystem
         };
     }
 
+    /* An attachment's object function, off until something sets it */
+    f32 scale_of(Proxy& p, u64 entity, scale_t scale)
+    {
+        if(scale == scale_t::none)
+            return 1.f;
+        auto const* model = p.template get<Model>(entity);
+        auto const  i     = static_cast<size_t>(scale) - 1;
+        if(!model || i >= model->object_function.size())
+            return 0.f;
+        return std::clamp(model->object_function[i], 0.f, 1.f);
+    }
+
     Vecf3 velocity_of(Proxy& p, u64 entity)
     {
         if(auto const* flight = p.template get<Projectile>(entity))
@@ -412,17 +446,22 @@ struct EffectSystem
             if(auto attachments = obj.attachments.data(*m_magic);
                attachments.has_value())
                 for(auto const& a : attachments.value())
-                    attach_one(p, ent.id(), a.type, std::string(a.marker.str()));
+                    attach_one(
+                        p, ent.id(), a.type, std::string(a.marker.str()), a.primary_scale);
             if(auto widgets = obj.widgets.data(*m_magic); widgets.has_value())
                 for(auto const& w : widgets.value())
-                    attach_one(p, ent.id(), w.widget, {});
+                    attach_one(p, ent.id(), w.widget, {}, scale_t::none);
         }
         for(auto it = m_attached.begin(); it != m_attached.end();)
             it = live.contains(*it) ? std::next(it) : m_attached.erase(it);
     }
 
     void attach_one(
-        Proxy& p, u64 entity, blam::tagref_t const& ref, std::string const& marker)
+        Proxy&                p,
+        u64                   entity,
+        blam::tagref_t const& ref,
+        std::string const&    marker,
+        scale_t               scale)
     {
         using blam::tag_class_t;
         if(p.template get<Projectile>(entity))
@@ -430,19 +469,24 @@ struct EffectSystem
         {
         case tag_class_t::cont:
             if(auto const* tag = tag_data<contrail>(ref, tag_class_t::cont))
-                m_contrails.push_back({.tag = tag, .parent = entity, .marker = marker});
+                m_contrails.push_back(
+                    {.tag = tag, .parent = entity, .marker = marker, .scale = scale});
             break;
         case tag_class_t::ligh:
             if(auto const* tag = tag_data<light>(ref, tag_class_t::ligh))
+            {
                 m_lights.push_back(make_light(tag, {}, entity, marker, -1.f));
+                m_lights.back().scale = scale;
+            }
             break;
         case tag_class_t::mgs2:
             if(auto const* tag = tag_data<light_volume>(ref, tag_class_t::mgs2))
-                m_volumes.push_back({.tag = tag, .parent = entity, .marker = marker});
+                m_volumes.push_back(
+                    {.tag = tag, .parent = entity, .marker = marker, .scale = scale});
             break;
         case tag_class_t::pctl:
             if(auto const* tag = tag_data<particle_system>(ref, tag_class_t::pctl))
-                start_system(tag, {}, entity, marker, {}, true);
+                start_system(tag, {}, entity, marker, {}, true, scale);
             break;
         case tag_class_t::effe:
             if(auto const* tag = tag_data<effect>(ref, tag_class_t::effe))
@@ -453,6 +497,7 @@ struct EffectSystem
                     .place    = at.value_or(place_t{}),
                     .parent   = entity,
                     .attached = true,
+                    .scale    = scale,
                 });
             }
             break;
@@ -477,6 +522,8 @@ struct EffectSystem
         {
             if(!p.template get<Model>(fx.parent))
                 return false;
+            if(scale_of(p, fx.parent, fx.scale) <= 0.f)
+                return true;
             if(auto at = marker_place(p, fx.parent, {}))
                 fx.place.position = at->position;
             fx.velocity = velocity_of(p, fx.parent);
@@ -538,8 +585,12 @@ struct EffectSystem
                 case tag_class_t::ligh:
                     if(auto const* tag = tag_data<light>(part.type, tag_class_t::ligh))
                         m_lights.push_back(make_light(
-                            tag, at, 0, {}, tag->duration > 0.f ? tag->duration
-                                                                : default_light_life));
+                            tag,
+                            at,
+                            0,
+                            {},
+                            tag->duration > 0.f ? tag->duration / ticks_per_second
+                                                : default_light_life));
                     break;
                 case tag_class_t::pctl:
                     if(auto const* tag = tag_data<particle_system>(
@@ -644,12 +695,31 @@ struct EffectSystem
             .parent = parent,
             .marker = marker,
             .radius = tag->radius * uniform(tag->radius_modifier),
-            .color  = Vecf3(glm::mix(
-                rgba(tag->color_lower_bound),
-                rgba(tag->color_upper_bound),
-                uniform(0.f, 1.f))),
+            .color  = Vecf3(rgba(tag->color_upper_bound)),
             .life = life,
+            .id   = ++m_light_ids,
         };
+    }
+
+    static f32 falloff(blam::scn::function_type_t function, f32 t)
+    {
+        using fn = blam::scn::function_type_t;
+        t        = std::clamp(t, 0.f, 1.f);
+        switch(function)
+        {
+        case fn::early:
+            return 1.f - (1.f - t) * (1.f - t);
+        case fn::very_early:
+            return 1.f - std::pow(1.f - t, 4.f);
+        case fn::late:
+            return t * t;
+        case fn::very_late:
+            return std::pow(t, 4.f);
+        case fn::cosine:
+            return .5f - .5f * std::cos(t * glm::pi<f32>());
+        default:
+            return t;
+        }
     }
 
     void step_lights(Proxy& p, EffectScene& scene, f32 dt)
@@ -667,17 +737,28 @@ struct EffectSystem
                     continue;
                 }
                 l.place = *at;
+                l.level = scale_of(p, l.parent, l.scale);
             } else if(l.life >= 0.f && l.age >= l.life)
             {
                 it = m_lights.erase(it);
                 continue;
             }
-            f32 const fade =
-                l.life > 0.f ? 1.f - std::clamp(l.age / l.life, 0.f, 1.f) : 1.f;
+            /* Timed lights fade from the upper color to the lower one */
+            Vecf3 color = l.color * l.level;
+            if(l.life > 0.f)
+                color = glm::mix(
+                    color,
+                    Vecf3(rgba(l.tag->color_lower_bound)),
+                    falloff(l.tag->falloff_function, l.age / l.life));
+            if(glm::dot(color, color) <= 1e-6f)
+            {
+                ++it;
+                continue;
+            }
             scene.lights.push_back({
                 .position   = l.place.position,
                 .radius     = l.radius,
-                .color      = l.color * fade,
+                .color      = color,
                 .lens_flare = l.tag->lens_flare.valid()
                                   ? &static_cast<blam::tagref_t const&>(
                                         l.tag->lens_flare)
@@ -695,7 +776,8 @@ struct EffectSystem
         u64                    parent,
         std::string const&     marker,
         Vecf3 const&           velocity,
-        bool                   attached)
+        bool                   attached,
+        scale_t                scale = scale_t::none)
     {
         system_instance_t sys{
             .tag      = tag,
@@ -704,6 +786,7 @@ struct EffectSystem
             .marker   = marker,
             .velocity = velocity,
             .attached = attached,
+            .scale    = scale,
         };
         auto types = tag->particle_types.data(*m_magic);
         if(!types.has_value())
@@ -737,6 +820,8 @@ struct EffectSystem
             sys.velocity = velocity_of(p, sys.parent);
         }
         sys.age += dt;
+        f32 const level =
+            sys.parent != 0 ? scale_of(p, sys.parent, sys.scale) : 1.f;
         auto types = sys.tag->particle_types.data(*m_magic);
         if(!types.has_value())
             return false;
@@ -752,7 +837,7 @@ struct EffectSystem
             if(states.has_value() && state.state < states.value().size())
             {
                 auto const& s = states.value()[state.state];
-                state.owed += s.particle_creation_rate * dt;
+                state.owed += s.particle_creation_rate * dt * level;
                 state.left -= dt;
                 if(state.left <= 0.f)
                 {
@@ -767,7 +852,7 @@ struct EffectSystem
                             uniform(states.value()[state.state].duration_bounds);
                 }
             }
-            for(; state.owed >= 1.f && m_particles.size() < max_particles;
+            for(; level > 0.f && state.owed >= 1.f && m_particles.size() < max_particles;
                 state.owed -= 1.f)
                 emit_system(sys, type);
             state.owed = std::min(state.owed, 1.f);
@@ -1002,9 +1087,11 @@ struct EffectSystem
             {
                 /* Points are laid along the path since the last frame, at
                  * the ages they would have had */
-                if(c.has_head && dt > 0.f)
+                /* Nothing to trail behind something standing still */
+                if(c.has_head && dt > 0.f && glm::distance(at->position, c.head) > 1e-3f)
                 {
-                    c.owed += c.tag->point_generation_rate * dt;
+                    c.owed += c.tag->point_generation_rate * dt *
+                              scale_of(p, c.parent, c.scale);
                     i32 const n = static_cast<i32>(c.owed);
                     c.owed -= static_cast<f32>(n);
                     /* Oldest first: last frame's head, then evenly to now */
@@ -1099,8 +1186,9 @@ struct EffectSystem
                 it = m_volumes.erase(it);
                 continue;
             }
-            auto frames = it->tag->frames.data(*m_magic);
-            if(frames.has_value() && !frames.value().empty())
+            f32 const level  = scale_of(p, it->parent, it->scale);
+            auto      frames = it->tag->frames.data(*m_magic);
+            if(level > 0.f && frames.has_value() && !frames.value().empty())
             {
                 auto const& f     = frames.value()[0];
                 i32 const   count = std::max<i32>(it->tag->count, 1);
@@ -1115,7 +1203,8 @@ struct EffectSystem
                         .position = at->position + at->forward * along,
                         .radius   = glm::mix(f.radius_hither, f.radius_yon, rt),
                         .color    = glm::mix(
-                            rgba(f.tint_color_hither), rgba(f.tint_color_yon), ct),
+                                     rgba(f.tint_color_hither), rgba(f.tint_color_yon), ct) *
+                                 Vecf4(1.f, 1.f, 1.f, level),
                         .bitmap   = it->tag->map.valid()
                                         ? &static_cast<blam::tagref_t const&>(it->tag->map)
                                         : nullptr,
@@ -1128,9 +1217,205 @@ struct EffectSystem
         }
     }
 
+    /* ---- Lens flares ---- */
+
+    struct flare_source_t
+    {
+        lens_flare const* tag{nullptr};
+        Vecf3             position{};
+        Vecf3             direction{}; /* the way it shines, zero = all ways */
+        bool              infinite{false};
+        Vecf3             color{1.f};
+        u64               key{0};
+        u64               ignore{0}; /* its own object does not hide it */
+    };
+
+    struct viewer_t
+    {
+        u32   seat{0};
+        Vecf3 eye{};
+    };
+
+    void step_flares(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        std::vector<viewer_t> viewers;
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
+        {
+            auto [cam, info] = ent.components();
+            if(info.is_remote() || info.seat_idx >= 4)
+                continue;
+            viewers.push_back({info.seat_idx, cam.camera.position});
+        }
+        if(viewers.empty())
+            return;
+
+        std::vector<flare_source_t> sources;
+        for(auto const& l : m_lights)
+            if(auto const* lens = l.level <= 0.f ? nullptr :
+                   tag_data<lens_flare>(l.tag->lens_flare, blam::tag_class_t::lens))
+                sources.push_back({
+                    .tag       = lens,
+                    .position  = l.place.position,
+                    .direction = lens->cutoff_angle > 0.f ? l.place.forward : Vecf3{},
+                    .color     = l.color * l.level,
+                    .key       = l.id,
+                    .ignore    = l.parent,
+                });
+        structure_flares(p, viewers.front().eye, sources);
+
+        auto& physics = p.template subsystem<PhysicsBus>();
+        f32 const step = std::min(1.f, dt * flare_fade_rate);
+        for(auto const& src : sources)
+        {
+            auto& seen = m_flare_seen[src.key];
+            EffectScene::flare_t flare{
+                .tag      = src.tag,
+                .position = src.infinite ? src.direction : src.position,
+                .infinite = src.infinite,
+                .color    = src.color,
+            };
+            bool any = false;
+            for(auto const& v : viewers)
+            {
+                f32 const target = flare_target(physics, src, v.eye);
+                f32&      vis    = seen[v.seat];
+                vis += (target - vis) * step;
+                flare.visibility[v.seat] = vis;
+                any = any || vis > .002f;
+            }
+            if(any)
+                scene.flares.push_back(flare);
+        }
+        std::erase_if(m_flare_seen, [&sources](auto const& entry) {
+            return std::none_of(sources.begin(), sources.end(), [&entry](auto const& s) {
+                return s.key == entry.first;
+            });
+        });
+    }
+
+    /* Fade by distance and angle, then nothing in the way */
+    f32 flare_target(PhysicsBus& physics, flare_source_t const& src, Vecf3 const& eye)
+    {
+        lens_flare const& lens = *src.tag;
+        f32               out  = 1.f;
+        Vecf3             to_eye{};
+        f32               distance = 0.f;
+        if(!src.infinite)
+        {
+            to_eye   = eye - src.position;
+            distance = glm::length(to_eye);
+            if(distance < 1e-3f)
+                return 0.f;
+            to_eye /= distance;
+            if(lens.far_fade_distance > lens.near_fade_distance)
+                out *= 1.f - std::clamp(
+                                 (distance - lens.near_fade_distance) /
+                                     (lens.far_fade_distance - lens.near_fade_distance),
+                                 0.f,
+                                 1.f);
+            if(lens.cutoff_angle > 0.f && glm::length(src.direction) > 0.f)
+            {
+                f32 const c = glm::dot(glm::normalize(src.direction), to_eye);
+                out *= glm::smoothstep(
+                    std::cos(lens.cutoff_angle), std::cos(lens.falloff_angle), c);
+            }
+        }
+        if(out <= 0.f)
+            return 0.f;
+        if((lens.flags & lens_flare::flags_t::no_occlusion_test) !=
+           lens_flare::flags_t::none)
+            return out;
+        Vecf3 const to = src.infinite
+                             ? eye + src.direction * sun_distance
+                             : src.position + to_eye * std::min(
+                                                  lens.occlusion_radius, distance * .5f);
+        Physics::Event   ev{Physics::Event::Raycast};
+        Physics::Raycast ray{.from = eye, .to = to, .ignore = src.ignore};
+        physics.process(ev, &ray);
+        if(ray.hit && ray.entity_id != src.ignore)
+            return 0.f;
+        return out;
+    }
+
+    /* The section's flare markers, and the sun of the sky above the eye */
+    void structure_flares(Proxy& p, Vecf3 const& eye, std::vector<flare_source_t>& out)
+    {
+        auto const& cache = p.template subsystem<BSPCache<halo_version>>();
+        BSPItem const* bsp = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        if(!bsp || !bsp->mesh)
+            return;
+        auto const& magic   = bsp->bsp_magic;
+        auto        palette = bsp->mesh->lens_flares.data(magic);
+        auto        markers = bsp->mesh->lens_flare_markers.data(magic);
+        if(palette.has_value() && markers.has_value())
+            for(size_t i = 0; i < markers.value().size(); i++)
+            {
+                auto const& m = markers.value()[i];
+                if(m.lens_flare < 0 ||
+                   static_cast<size_t>(m.lens_flare) >= palette.value().size())
+                    continue;
+                auto const* lens = tag_data<lens_flare>(
+                    palette.value()[m.lens_flare], blam::tag_class_t::lens);
+                if(!lens)
+                    continue;
+                out.push_back({
+                    .tag       = lens,
+                    .position  = m.position,
+                    .direction = Vecf3(m.direction[0], m.direction[1], m.direction[2]) / 127.f,
+                    .key       = (1ull << 62) | (u64(bsp->section_idx) << 20) | i,
+                });
+            }
+
+        auto cluster = bsp->find_cluster_tree(eye);
+        if(!cluster)
+            return;
+        auto clusters = bsp->mesh->clusters.data(magic);
+        auto scenario = p.template subsystem<BlamFiles<halo_version>>()
+                            .container.scenario();
+        if(!clusters.has_value() || *cluster >= clusters.value().size() ||
+           !scenario.has_value() || !scenario.value())
+            return;
+        i16 const sky = clusters.value()[*cluster].sky;
+        auto      skies = scenario.value()->info.skyboxes.data(*m_magic);
+        if(sky < 0 || !skies.has_value() || static_cast<size_t>(sky) >= skies.value().size())
+            return;
+        auto const* skybox =
+            tag_data<blam::scn::skybox>(skies.value()[sky], blam::tag_class_t::sky);
+        if(!skybox)
+            return;
+        auto lights = skybox->lights.data(*m_magic);
+        if(!lights.has_value())
+            return;
+        for(size_t i = 0; i < lights.value().size(); i++)
+        {
+            auto const& l    = lights.value()[i];
+            auto const* lens = tag_data<lens_flare>(l.lens_flare, blam::tag_class_t::lens);
+            if(!lens)
+                continue;
+            f32 const yaw   = l.radiosity.direction.x;
+            f32 const pitch = l.radiosity.direction.y;
+            out.push_back({
+                .tag       = lens,
+                .direction = Vecf3(
+                    std::cos(pitch) * std::cos(yaw),
+                    std::cos(pitch) * std::sin(yaw),
+                    std::sin(pitch)),
+                .infinite = true,
+                .color    = l.radiosity.color,
+                .key      = (2ull << 62) | i,
+            });
+        }
+    }
+
     static constexpr size_t max_particles        = 4096;
+    static constexpr f32    flare_fade_rate      = 8.f;    /* per second */
+    static constexpr f32    sun_distance         = 2000.f; /* wu */
     static constexpr size_t max_contrail_points  = 256;
     static constexpr f32    default_light_life   = .25f;
+    static constexpr f32    ticks_per_second     = 30.f;
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
     static constexpr f32    pctl_scale_to_radius = 64.f; /* scale is per bitmap pixel */
 
@@ -1149,6 +1434,8 @@ struct EffectSystem
     std::vector<volume_instance_t>   m_volumes;
     std::vector<sprite_particle_t>   m_particles;
     std::set<u64>                    m_attached;
+    u64                              m_light_ids{0};
+    std::unordered_map<u64, std::array<f32, 4>> m_flare_seen;
 
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<Matf4>>
         m_markers;

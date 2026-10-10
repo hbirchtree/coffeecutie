@@ -1533,6 +1533,8 @@ struct MeshRenderer
         Vecf3 position;
         Matf3 rotation;
         Matf3 view; /* world to view, for camera-facing geometry */
+        f32   focal{1.f};
+        f32   aspect{1.f};
     };
 
     gfx::api*            m_api;
@@ -2203,7 +2205,8 @@ struct MeshRenderer
         using typing::pixels::pix_fmt;
 
         auto const& scene = p.template subsystem<EffectScene>();
-        if(m_players.empty() || (scene.sprites.empty() && scene.ribbons.empty()) ||
+        if(m_players.empty() ||
+           (scene.sprites.empty() && scene.ribbons.empty() && scene.flares.empty()) ||
            !m_effects.load(*m_api))
             return;
         m_effects.build(
@@ -2211,7 +2214,16 @@ struct MeshRenderer
             bitm_cache,
             m_players[0].position,
             p.template subsystem<BlamFiles<Version>>().load_generation);
-        if(m_effects.batches.empty())
+        std::vector<typename EffectDrawer<Version>::viewer_t> viewers;
+        for(auto const& player : m_players)
+            viewers.push_back({
+                .matrix = player.matrix,
+                .seat   = player.seat_idx,
+                .focal  = player.focal,
+                .aspect = player.aspect,
+            });
+        m_effects.build_flares(scene, bitm_cache, viewers);
+        if(m_effects.vertices.empty())
             return;
         m_effects.upload();
 
@@ -2231,7 +2243,11 @@ struct MeshRenderer
             Matf3 const to_world = glm::transpose(player.view);
             Vecf3 const right    = to_world * Vecf3{1.f, 0.f, 0.f};
             Vecf3 const up       = to_world * Vecf3{0.f, 1.f, 0.f};
-            for(auto const& batch : m_effects.batches)
+            std::vector<typename EffectDrawer<Version>::batch_t> batches =
+                m_effects.batches;
+            if(i < m_effects.flare_batches.size() && m_effects.flare_batches[i].count)
+                batches.push_back(m_effects.flare_batches[i]);
+            for(auto const& batch : batches)
                 m_api->submit(
                     {
                         .program       = m_effects.program,
@@ -2646,6 +2662,8 @@ struct MeshRenderer
                 .position = cam.camera.position,
                 .rotation = glm::mat3_cast(cam.camera.rotation),
                 .view     = Matf3(cam.rotation),
+                .focal    = 1.f / std::tan(glm::radians(cam.camera.fieldOfView) * .5f),
+                .aspect   = cam.camera.aspect,
             });
         }
         std::sort(

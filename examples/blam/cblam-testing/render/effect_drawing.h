@@ -50,6 +50,7 @@ struct EffectDrawer
         Vecf4 atlas{1.f, 1.f, 0.f, 0.f};
         f32   format{0.f};
         f32   layer{0.f};
+        f32   opaque{0.f}; /* 1: the alpha byte is padding */
         bool  ok{true};
     };
 
@@ -60,6 +61,15 @@ struct EffectDrawer
 
     std::vector<vertex_t> vertices;
     std::vector<batch_t>  batches;
+    std::vector<batch_t>  flare_batches; /* one per viewer, additive */
+
+    struct viewer_t
+    {
+        Matf4 matrix;
+        u32   seat{0};
+        f32   focal{1.f}; /* 1 / tan(half the vertical fov) */
+        f32   aspect{1.f};
+    };
 
     std::map<std::tuple<blam::tagref_t const*, i16, i16>, image_t> images;
     u32 image_generation{~0u};
@@ -126,7 +136,8 @@ struct EffectDrawer
         if(!first.valid())
             return out;
         auto const* header = cache.find(first)->second.header;
-        i16         index  = 0;
+        /* A negative sequence names the image directly */
+        i16 index = sequence < 0 ? frame : 0;
         if(auto sequences = header->sequences.data(cache.magic);
            sequences.has_value() && sequence >= 0 &&
            static_cast<size_t>(sequence) < sequences.value().size())
@@ -149,8 +160,12 @@ struct EffectDrawer
             Vecf2 atlas_scale;
             u32   layer;
         } atlas{};
-        if(!cache.assign_atlas_data(atlas, cache.resolve(*bitmap, index)))
+        auto const* item = cache.assign_atlas_data(atlas, cache.resolve(*bitmap, index));
+        if(!item)
             return out;
+        out.opaque = item->image.mip && item->image.mip->format == blam::bitm::format_t::XRGB8
+                         ? 1.f
+                         : 0.f;
         out.atlas  = Vecf4(atlas.atlas_scale, atlas.atlas_offset);
         out.format = static_cast<f32>(atlas.layer >> 24);
         out.layer  = static_cast<f32>(atlas.layer & 0xFFFFFF);
@@ -250,7 +265,7 @@ struct EffectDrawer
                     glm::mix(img.rect.w, img.rect.y, t.y)),
                 .color    = s.color,
                 .atlas    = img.atlas,
-                .source   = Vecf4(img.format, img.layer, 0.f, 0.f),
+                .source   = Vecf4(img.format, img.layer, 0.f, img.opaque),
             });
         }
     }
@@ -274,7 +289,7 @@ struct EffectDrawer
                 .tex      = Vecf2(pts[i].v, side > 0.f ? 1.f : 0.f),
                 .color    = pts[i].color,
                 .atlas    = img.atlas,
-                .source   = Vecf4(img.format, img.layer, 1.f, 0.f),
+                .source   = Vecf4(img.format, img.layer, 1.f, img.opaque),
             };
         };
         for(size_t i = 0; i + 1 < pts.size(); i++)
@@ -282,6 +297,83 @@ struct EffectDrawer
             vertex_t const a0 = vertex(i, -1.f), a1 = vertex(i, 1.f);
             vertex_t const b0 = vertex(i + 1, -1.f), b1 = vertex(i + 1, 1.f);
             vertices.insert(vertices.end(), {a0, b0, b1, a0, b1, a1});
+        }
+    }
+
+    /* Reflections strung along the line from the flare through the
+     * centre of each viewer's screen */
+    void build_flares(
+        EffectScene const& scene, BitmapCache<V>& cache, std::vector<viewer_t> const& viewers)
+    {
+        using reflection_flags = blam::scn::lens_flare::reflection_t::flags_t;
+        flare_batches.clear();
+        for(auto const& viewer : viewers)
+        {
+            batch_t batch{
+                .offset = static_cast<u32>(vertices.size()),
+                .mode   = 1.f,
+                .blend  = {.additive = true},
+            };
+            for(auto const& flare : scene.flares)
+            {
+                f32 const vis = viewer.seat < 4 ? flare.visibility[viewer.seat] : 0.f;
+                if(vis <= .002f)
+                    continue;
+                Vecf4 const clip =
+                    viewer.matrix * Vecf4(flare.position, flare.infinite ? 0.f : 1.f);
+                if(clip.w <= 1e-4f)
+                    continue;
+                Vecf2 const at = Vecf2(clip) / clip.w;
+                if(std::abs(at.x) > 1.2f || std::abs(at.y) > 1.2f)
+                    continue;
+                auto reflections = flare.tag->reflections.data(cache.magic);
+                if(!reflections.has_value())
+                    continue;
+                for(auto const& r : reflections.value())
+                {
+                    image_t const& img = image(
+                        cache,
+                        &static_cast<blam::tagref_t const&>(flare.tag->bitmap),
+                        -1,
+                        r.bitmap_index);
+                    if(!img.ok)
+                        continue;
+                    bool const fixed =
+                        (r.flags & reflection_flags::radius_not_scaled_by_distance) !=
+                        reflection_flags::none;
+                    f32 const radius = std::max(r.radius.x, r.radius.y);
+                    /* Screen fractions are NDC half-sizes; world radii shrink with depth */
+                    f32 const half = fixed || flare.infinite
+                                         ? radius
+                                         : radius * viewer.focal / clip.w;
+                    Vecf3 const tint(r.tint_color.y, r.tint_color.z, r.tint_color.w);
+                    Vecf3 const rgb =
+                        glm::mix(flare.color, tint, r.tint_color.x) *
+                        std::max(r.brightness.x, r.brightness.y) * vis;
+                    Vecf2 const centre = at * (1.f - 2.f * r.position);
+                    constexpr std::array<Vecf2, 6> corners = {{
+                        {-1.f, -1.f}, {1.f, -1.f}, {1.f, 1.f},
+                        {-1.f, -1.f}, {1.f, 1.f}, {-1.f, 1.f},
+                    }};
+                    for(auto const& c : corners)
+                    {
+                        Vecf2 const t = (c + 1.f) * .5f;
+                        vertices.push_back({
+                            .position = Vecf3(centre, 0.f),
+                            .axis     = Vecf3(1.f / std::max(viewer.aspect, .1f), 0.f, 0.f),
+                            .corner   = Vecf4(c, half, 0.f),
+                            .tex      = Vecf2(
+                                glm::mix(img.rect.x, img.rect.z, t.x),
+                                glm::mix(img.rect.w, img.rect.y, t.y)),
+                            .color    = Vecf4(rgb, 1.f),
+                            .atlas    = img.atlas,
+                            .source   = Vecf4(img.format, img.layer, 2.f, img.opaque),
+                        });
+                    }
+                }
+            }
+            batch.count = static_cast<u32>(vertices.size()) - batch.offset;
+            flare_batches.push_back(batch);
         }
     }
 
