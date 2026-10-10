@@ -21,7 +21,8 @@ using GameplayManifest = compo::SubsystemManifest<
         PlayerCamera,
         NetworkInfo,
         Model,
-        const ObjectPhysics>,
+        const ObjectPhysics,
+        PhysicsData>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
@@ -427,6 +428,23 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             }
             cam->camera.position =
                 feet + Vecf3{0.f, 0.f, info->biped.eye_height + .3f};
+
+            /* Out at the speed the vehicle was moving at that spot */
+            auto const* physics =
+                p.template get<ObjectPhysics>(info->riding.vehicle);
+            auto* data = p.template get<PhysicsData>(unit);
+            if(physics && data)
+            {
+                Vecf3 const centre =
+                    vehicle->position +
+                    vehicle->rotation *
+                        (physics->mass_points
+                             ? physics->mass_points->center_of_mass
+                             : Vecf3{});
+                data->launch =
+                    physics->linear_velocity +
+                    glm::cross(physics->angular_velocity, feet - centre);
+            }
         }
         cDebug("Player {} leaves {}", info->player_idx, info->riding.vehicle);
         info->riding = {};

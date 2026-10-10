@@ -744,6 +744,7 @@ struct PhysicsSystem
         m_next_process_time = t + 16ms;
         m_steps++;
         report_impacts();
+        bleed_carried();
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
          * contact manifolds for CF_NO_CONTACT_RESPONSE bodies, the solver
@@ -892,16 +893,20 @@ struct PhysicsSystem
                           PhysicsData>())
         {
             auto [camera, info, net, data] = player.components();
-            if(!biped_in_play(info, camera, net))
+            if(!biped_shown(info, camera, net))
                 continue;
-            u64 const  id        = player.id();
-            bool const kinematic = info.is_remote() || !info.mode.physics;
-            auto const shape     = info.biped;
+            u64 const  id     = player.id();
+            /* Riders: hittable in the seat, but don't collide */
+            bool const riding = info.riding.vehicle != 0;
+            bool const kinematic =
+                riding || info.is_remote() || !info.mode.physics;
+            auto const shape = info.biped;
             live.insert(id);
 
             auto existing = m_player_bodies.find(id);
             if(existing == m_player_bodies.end() ||
                existing->second.kinematic != kinematic ||
+               existing->second.riding != riding ||
                existing->second.shape != shape || !m_bodies.contains(id))
             {
                 Vecf3 const origin = kinematic
@@ -932,11 +937,31 @@ struct PhysicsSystem
                     .yaw       = camera_yaw(camera),
                     .posed     = hulls,
                 });
-                m_player_bodies[id] = {.kinematic = kinematic, .shape = shape};
+                m_player_bodies[id] = {
+                    .kinematic = kinematic, .riding = riding, .shape = shape};
+                if(riding && m_bodies.contains(id))
+                {
+                    auto& rider = *m_bodies.at(id).world_body;
+                    rider.setCollisionFlags(
+                        rider.getCollisionFlags() |
+                        btCollisionObject::CF_NO_CONTACT_RESPONSE);
+                }
                 data.physics_id     = id;
                 data.enabled        = true;
                 data.kinematic      = kinematic;
                 data.position       = origin;
+                if(auto launch = std::exchange(data.launch, std::nullopt);
+                   launch && !kinematic && m_bodies.contains(id))
+                {
+                    auto& body = m_bodies.at(id);
+                    body.world_body->setLinearVelocity(
+                        btVector3(launch->x, launch->y, launch->z));
+                    body.carried = btVector3(launch->x, launch->y, 0.f);
+                }
+            } else if(riding)
+            {
+                if(auto const* model = p.template get<Model>(id))
+                    seat_body(id, *model, shape);
             } else if(kinematic)
                 move_kinematic(
                     id,
@@ -1357,6 +1382,22 @@ struct PhysicsSystem
             hit.m_collisionFilterMask ^= filter::CharacterFilter;
         m_world->rayTest(from, to, hit);
         return hit.hasHit();
+    }
+
+    /* Moves a rider's body onto its seated model */
+    void seat_body(
+        u64 entity_id, Model const& model, PlayerInfo::biped_shape_t const& shape)
+    {
+        auto it = m_bodies.find(entity_id);
+        if(it == m_bodies.end())
+            return;
+        Vecf3 const origin =
+            model.position + model.rotation * Vecf3{0, 0, shape.height / 2};
+        btTransform transform;
+        transform.setRotation(btQuaternion(
+            model.rotation.x, model.rotation.y, model.rotation.z, model.rotation.w));
+        transform.setOrigin(btVector3(origin.x, origin.y, origin.z));
+        it->second.world_body->setWorldTransform(transform);
     }
 
     /* Turns a posed hull body that cannot rotate itself, in place */
@@ -2139,6 +2180,26 @@ struct PhysicsSystem
         m_bus->process(event, &hit);
     }
 
+    /* Carried momentum fades: fast against the ground, slowly in the air */
+    void bleed_carried()
+    {
+        for(auto const& [id, _] : m_player_bodies)
+        {
+            auto it = m_bodies.find(id);
+            if(it == m_bodies.end() || it->second.carried.isZero())
+                continue;
+            auto&     carried = it->second.carried;
+            f32 const speed   = carried.length();
+            f32 const slow =
+                (on_ground(*it->second.world_body, true)
+                     ? carried_ground_decel
+                                                   : carried_air_decel) *
+                step_seconds;
+            carried = speed > slow ? carried * ((speed - slow) / speed)
+                                   : btVector3(0, 0, 0);
+        }
+    }
+
     void set_linear_velocity(Physics::Velocity const& velocity)
     {
         auto body_it = m_bodies.find(velocity.entity_id);
@@ -2148,6 +2209,7 @@ struct PhysicsSystem
         /* No cDebug here: biped movement sends this every frame */
         btVector3 vel(
             velocity.velocity.x, velocity.velocity.y, velocity.velocity.z);
+        vel += body.carried;
         if(velocity.preserve_z)
             vel.setZ(body.world_body->getLinearVelocity().z());
         bool const grounded = on_ground(*body.world_body, true);
@@ -2406,6 +2468,8 @@ struct PhysicsSystem
         Vecf3                                   child_offset{};
         /* Step it was made in; it settles silently for a while */
         u32 created{0};
+        /* Horizontal momentum kept after exiting a vehicle */
+        btVector3 carried{0, 0, 0};
     };
 
     /* Hull children take their bone's skinning matrix from the last pose,
@@ -2534,6 +2598,7 @@ struct PhysicsSystem
     struct player_body_t
     {
         bool                      kinematic{};
+        bool                      riding{};
         PlayerInfo::biped_shape_t shape{};
     };
 
@@ -2554,6 +2619,9 @@ struct PhysicsSystem
     static constexpr f32           hull_margin  = .005f;
     /* Friction of a biped standing still */
     static constexpr f32 standing_friction    = 1.f;
+    /* How fast carried momentum is lost, wu/s^2 */
+    static constexpr f32 carried_ground_decel = 12.f;
+    static constexpr f32 carried_air_decel    = .5f;
     static constexpr f32 impact_speed    = .5f; /* wu/s */
     static constexpr u32 impact_cooldown = 9;
     static constexpr u32 impact_settle   = 60;

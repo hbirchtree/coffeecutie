@@ -116,11 +116,13 @@ struct Visibility
     std::optional<u32> only_render_for;
     bool _dummy{};
 
-    bool visible_for(u32 player_id = 0, bool mirror = false) const
+    /* `show_self`: draw own biped, for third-person cameras */
+    bool visible_for(
+        u32 player_id = 0, bool mirror = false, bool show_self = false) const
     {
         if(only_render_for.has_value())
             return !mirror && *only_render_for == player_id;
-        if(skip_render_for.has_value() && !mirror)
+        if(skip_render_for.has_value() && !mirror && !show_self)
             if(*skip_render_for == player_id)
                 return false;
         if(auto vis = visible.find(std::make_pair(player_id, mirror));
@@ -771,6 +773,9 @@ struct PhysicsData
     bool grounded{false};
 
     u64 grabbed{0}; /*!< Entity this player carries (forge), 0 = none */
+
+    /*! Initial velocity of the next body, e.g. exiting a vehicle; used once */
+    std::optional<Vecf3> launch;
 };
 
 struct NetworkInfo

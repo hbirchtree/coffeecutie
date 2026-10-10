@@ -371,7 +371,8 @@ void create_resources(compo::EntityContainer& e)
                              return nlohmann::json{v.x, v.y, v.z};
                          };
                          nlohmann::json biped = {
-                             {"in_play", biped_in_play(info, cam, net)},
+                             {"in_play", biped_shown(info, cam, net)},
+                             {"riding", info.riding.vehicle != 0},
                              {"spawned", info.spawned},
                              {"eye_offset", info.biped.eye_offset()},
                              {"eye_height", info.biped.eye_height},
@@ -527,6 +528,38 @@ void create_resources(compo::EntityContainer& e)
                              play.entity = en.id();
                      GameEvent play_ev{.type = GameEvent::PlayModelAnimation};
                      e.subsystem_cast<GameEventBus>().inject(play_ev, &play);
+                 }
+                 if(ev.event == "enter_vehicle")
+                 {
+                     /* {"seat": n, "label": "W-driver"}: nearest vehicle */
+                     u32 const seat = ev.data.value("seat", 0u);
+                     UnitEnterVehicleEvent enter{};
+                     if(auto label = blam::bl_string::from(
+                            ev.data.value("label", std::string{})))
+                         enter.seat = *label;
+                     Vecf3 feet{};
+                     for(auto const& en : e.select<PlayerInfo, PlayerCamera>())
+                         if(en.template get<PlayerInfo>().seat_idx == seat)
+                         {
+                             enter.unit = en.id();
+                             feet = en.template get<PlayerCamera>().camera.position;
+                         }
+                     f32 best = 5.f;
+                     for(auto const& en : e.select<Model, ObjectPhysics>())
+                     {
+                         auto const& physics = en.template get<ObjectPhysics>();
+                         f32 const   d       = glm::distance(
+                             en.template get<Model>().position, feet);
+                         if(physics.drive && d < best)
+                         {
+                             best          = d;
+                             enter.vehicle = en.id();
+                         }
+                     }
+                     if(enter.unit == 0 || enter.vehicle == 0)
+                         return;
+                     GameEvent enter_ev{.type = GameEvent::UnitEnterVehicle};
+                     e.subsystem_cast<GameEventBus>().inject(enter_ev, &enter);
                  }
                  if(ev.event == "switch_map")
                  {

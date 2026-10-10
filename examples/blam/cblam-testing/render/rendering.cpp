@@ -995,7 +995,11 @@ struct DrawListBuilder
 
                 Visibility const& vis = parent.template get<Visibility>();
                 u8 const lod = mod.lod_resolve(vis.lod_for(m_seat));
-                if(!vis.visible_for(m_seat) ||
+                /* A rider's chase camera sees its own biped */
+                auto const* rider = p.template get<PlayerInfo>(model.parent);
+                bool const  third_person =
+                    rider && rider->riding.vehicle != 0;
+                if(!vis.visible_for(m_seat, false, third_person) ||
                    !((model.lod_mask >> lod) & 1) ||
                    (!rendering_params->render_scenery &&
                     (ent.tags() & ObjectSkybox) == 0))
