@@ -260,16 +260,43 @@ class MassPointAction : public btActionInterface
     {
         VehicleDrive const& d = *m_drive;
         /* Stick is throttle, look steers; reversed while backing up */
-        f32 const push   = std::abs(m_throttle) > stick_deadzone ? m_throttle : 0.f;
-        f32 const target = push >= 0.f ? push * d.forward_speed
-                                       : push * d.reverse_speed;
+        f32 push   = std::abs(m_throttle) > stick_deadzone ? m_throttle : 0.f;
+        f32 target = push >= 0.f ? push * d.forward_speed
+                                 : push * d.reverse_speed;
         f32 const look =
             std::atan2(forward.cross(aim).z(), forward.dot(aim));
-        f32 const heading =
+        f32 heading =
             look * steer_gain *
             (m_body.getLinearVelocity().dot(forward) < -.1f || target < 0.f
                  ? -1.f
                  : 1.f);
+        /* A tank drives where the stick points from the view: hull turns
+         * toward it, backing up when it points behind */
+        if(d.type == VehicleDrive::human_tank)
+        {
+            btVector3 const right(aim.y(), -aim.x(), 0.f);
+            btVector3       want = aim * m_throttle + right * m_strafe;
+            push    = std::min(1.f, f32(want.length()));
+            heading = 0.f;
+            target  = 0.f;
+            if(push > stick_deadzone)
+            {
+                want /= want.length();
+                f32 const angle =
+                    std::atan2(forward.cross(want).z(), forward.dot(want));
+                m_reversing =
+                    d.reverse_speed > 0.f &&
+                    std::abs(angle) >
+                        (m_reversing ? reverse_angle - .35f : reverse_angle);
+                heading = m_reversing ? std::remainder(
+                                            angle - glm::pi<f32>(),
+                                            glm::two_pi<f32>())
+                                      : angle;
+                heading *= steer_gain;
+                target = m_reversing ? -push * d.reverse_speed
+                                     : push * d.forward_speed;
+            }
+        }
 
         btVector3 const velocity = m_body.getLinearVelocity();
         f32 const       accel    = accelerate(velocity.dot(forward), target, dt);
@@ -463,6 +490,7 @@ class MassPointAction : public btActionInterface
     /* Firm enough that a landing settles instead of bouncing off */
     static constexpr f32 antigrav_damping_ratio = 0.6f;
     static constexpr f32 stick_deadzone         = .15f;
+    static constexpr f32 reverse_angle          = 1.9f; /* rad, ~110 deg */
     static constexpr f32 handbrake_speed        = .5f; /* wu/s */
     static constexpr f32 static_slide           = .3f; /* wu/s */
     /* Wheel angle per radian of look off the nose */
@@ -646,6 +674,7 @@ class MassPointAction : public btActionInterface
     f32                                             m_steering{0.f};
     f32                                             m_strafe{0.f};
     bool                                            m_braking{false};
+    bool                                            m_reversing{false};
     std::vector<f32>                                m_depths;
     f32                                             m_slip{0.f};
 };
