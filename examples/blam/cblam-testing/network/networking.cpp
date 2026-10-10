@@ -28,6 +28,8 @@ using Coffee::Logging::cBasicPrint;
 #include "physics.h"
 #include "selected_version.h"
 #include "webrtc_identity.h"
+
+#include <url/url.h>
 #include "webrtc_signaling.h"
 
 #include <GameNetworkingSockets/steam/isteamnetworkingsockets.h>
@@ -637,15 +639,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         meta["player_count"]     = player_count;
         meta["player_count_max"] = 16;
 
-        if(m_server_auth.type == AuthType::HmacSha256 &&
-           !m_server_auth.hmac_key.empty())
-        {
-            meta = sign_metadata_hmac(std::move(meta), m_server_auth.hmac_key);
-        } else if(
-            m_server_auth.type == AuthType::Ed25519 && m_server_key)
-        {
+        if(m_server_auth.type == AuthType::Ed25519 && m_server_key)
             meta = sign_metadata_ed25519(std::move(meta), m_server_key);
-        }
 
         return meta.dump();
     }
@@ -1237,9 +1232,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return std::string(out);
     }
 
-    /* Long enough that a server does not silently stop being joinable during a
-     * session, short enough that a leaked key has a horizon. */
-    static constexpr int k_self_signed_cert_seconds = 60 * 60 * 24;
+    /* Effectively unlimited. Nothing renews the certificate, and a server must
+     * not stop accepting authenticated clients after some uptime; the verifier
+     * does not check expiry either. A leaked key is handled by rotating it. */
+    static constexpr int k_self_signed_cert_seconds = 60 * 60 * 24 * 365 * 10;
 
     /* Issue ourselves a GNS certificate over our own connection key, signed by
      * the same Ed25519 key we sign metadata with. A client that was handed the
@@ -1247,10 +1243,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
      * connect_server_webrtc), and GNS then refuses any cert that key did not
      * sign -- which is what stops a relay on the rendezvous path from
      * substituting its own cert and reading the session. Without a cert the
-     * peer presents an unsigned one, which the pinning client rejects.
-     *
-     * Only meaningful for ed25519: an hmac join URL carries a symmetric secret,
-     * so every client holding the link could forge the server's cert too. */
+     * peer presents an unsigned one, which the pinning client rejects. */
     void install_self_signed_cert()
     {
         if(m_server_auth.type != AuthType::Ed25519 ||
@@ -1304,10 +1297,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* A server always has a keypair, so the join string it hands out
      * authenticates it by default. The key is held only in memory, so the
      * join string changes every run. Done at listen time: a client needs no
-     * identity, and the Listen button reaches here without any CLI flags. */
+     * identity, and the Listen button reaches here without any CLI flags.
+     * A browser-hosted server gets its key here too, so it can be pinned. */
     void ensure_server_identity()
     {
-#if !(defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM))
         if(m_server_auth.type != AuthType::None)
             return;
         m_server_key    = Ed25519Key::generate();
@@ -1325,7 +1318,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             derive_identity_ed25519(m_server_auth.ed25519_public_key).c_str());
         m_impl->ResetIdentity(&m_identity);
         install_self_signed_cert();
-#endif
     }
 
     /* address is ip:port, or a gateway URL when server_id is set */
@@ -1339,8 +1331,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             join += "#" + server_id;
             if(!auth.empty())
                 join += ";" + auth;
-        } else if(m_server_auth.type == AuthType::Ed25519)
-            /* An hmac secret only verifies gateway metadata */
+        } else if(!auth.empty())
             join += "#" + auth;
         m_net_state.join_string = join;
 
@@ -1350,7 +1341,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_impl->GetListenSocketAddress(m_socket, &bound) &&
             (bound.IsIPv6AllZeros() || (bound.IsIPv4() && !bound.GetIPv4()));
         cDebug("Join this server with: --server {}", join);
-        cDebug("Join this server from a browser: https://<server>/<path>/?map=<map>&server={}",
+        /* In the fragment: the key never reaches the page host or a Referer */
+        cDebug(
+            "Join this server from a browser: "
+            "https://<server>/<path>/#map=<map>&server={}",
             stl_types::str::replace::str<char>(join, "#", "%23"));
         if(wildcard)
             cDebug(
@@ -1362,7 +1356,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     Networking(
         GameEventBus&      game_bus,
         NetworkState&      net_state,
-        std::string const& gateway_auth_secret,
         std::string const& gateway_auth_key)
         : m_game_bus(game_bus)
         , m_net_state(net_state)
@@ -1390,21 +1383,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_identity.SetGenericString(randomIdentity);
         if(!GameNetworkingSockets_Init(&m_identity, ec))
 #else
-        if(!gateway_auth_secret.empty())
-        {
-            m_server_auth.type     = AuthType::HmacSha256;
-            m_server_auth.hmac_key = b64::decode(gateway_auth_secret);
-            if(m_server_auth.hmac_key.empty())
-                cWarning(
-                    "--gateway-auth-secret decoded to an empty key; is it "
-                    "valid base64?");
-            m_identity.SetGenericString(
-                derive_identity_hmac(m_server_auth.hmac_key).c_str());
-        } else if(!gateway_auth_key.empty())
+        if(!gateway_auth_key.empty())
         {
             /* A persistent identity; without one, a server gets an in-memory
-             * key when it starts listening */
-            m_server_key = Ed25519Key::load_or_generate(gateway_auth_key);
+             * key when it starts listening. A bare file name lives in the
+             * config directory, not wherever the process was started. */
+            std::string key_path = gateway_auth_key;
+            if(key_path.find_first_of("/\\") == std::string::npos)
+                key_path = *platform::url::constructors::MkUrl(
+                    key_path, semantic::RSCA::ConfigFile);
+            m_server_key = Ed25519Key::load_or_generate(key_path);
             if(auto public_key = m_server_key.public_key(); !public_key.empty())
             {
                 m_server_auth.type               = AuthType::Ed25519;
@@ -1413,7 +1401,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     derive_identity_ed25519(m_server_auth.ed25519_public_key)
                         .c_str());
             } else
-                cWarning("Failed to load server key {}", gateway_auth_key);
+                cWarning("Failed to load server key {}", key_path);
         }
         if(m_identity.IsInvalid())
             m_identity.SetLocalHost();
@@ -1447,6 +1435,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     connect_symmetric(connect->remote);
                 else if(connect->type == ServerConnectEvent::Server)
                 {
+                    /* Per join: a key or identity from an earlier one must not
+                     * carry over to a server that never offered one */
+                    m_client_auth = {};
+                    m_expected_server_identity.clear();
                     /* A gateway join URL carries the key in its fragment and
                      * parses it later; this is the plain-address route in. */
                     if(!connect->server_public_key.empty())
@@ -1698,11 +1690,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Pin the server's public key for one outgoing connection, so GNS accepts
      * only a certificate that key signed. Deliberately not folded into
      * create_callbacks(): that is shared with the listen socket, and a server
-     * pinning a root would demand certs from clients, which are anonymous.
-     *
-     * Only ed25519 carries a public key. An hmac join URL holds a symmetric
-     * secret, so a client could mint the server's certificate itself and the
-     * check would prove nothing. */
+     * pinning a root would demand certs from clients, which are anonymous. */
     void add_pinned_root_config(
         std::vector<SteamNetworkingConfigValue_t>& config)
     {
@@ -1843,20 +1831,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_net_state.client_state = NetworkState::ClientState::Error;
             return;
         }
-        if(m_client_auth.type == AuthType::HmacSha256 &&
-           m_client_auth.hmac_key.empty())
-            cWarning(
-                "WebRTC HMAC secret in URL decoded to an empty key; is it "
-                "valid base64?");
         cDebug(
             "Bootstrapping WebRTC DataChannel via gateway {} for serverId={} "
             "auth={}",
             parsed.gateway_url,
             parsed.server_id,
-            m_client_auth.type == AuthType::HmacSha256
-                ? "hmac-sha256"
-                : (m_client_auth.type == AuthType::Ed25519 ? "ed25519"
-                                                           : "none"));
+            m_client_auth.type == AuthType::Ed25519 ? "ed25519" : "none");
         m_utils->SetGlobalConfigValueInt32(
             k_ESteamNetworkingConfig_LogLevel_P2PRendezvous,
             k_ESteamNetworkingSocketsDebugOutputType_Verbose);
@@ -1890,16 +1870,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         auto metadata = m_webrtcBootstrap->Metadata();
         if(m_client_auth.type != AuthType::None && !metadata.is_null())
         {
-            bool verified = false;
-            if(m_client_auth.type == AuthType::HmacSha256)
-            {
-                verified =
-                    verify_metadata_hmac(metadata, m_client_auth.hmac_key);
-            } else if(m_client_auth.type == AuthType::Ed25519)
-            {
-                verified = verify_metadata_ed25519(
-                    metadata, m_client_auth.ed25519_public_key);
-            }
+            bool verified = m_client_auth.type == AuthType::Ed25519 &&
+                            verify_metadata_ed25519(
+                                metadata, m_client_auth.ed25519_public_key);
             if(!verified)
             {
                 cWarning("WebRTC server metadata verification failed");
@@ -2284,7 +2257,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         case k_ESteamNetworkingConnectionState_Connected: {
             m_net_state.client_state   = NetworkState::ClientState::Connected;
             m_net_state.remote_address = remote_name();
-            cDebug("Connection to server/peer established ({})", remote_name());
+            bool const authenticated =
+                !(info->m_info.m_nFlags &
+                  k_nSteamNetworkConnectionInfoFlags_Unauthenticated);
+            cDebug(
+                "Connection to server/peer established ({}, {})",
+                remote_name(),
+                authenticated ? "authenticated" : "unauthenticated");
             journal("net_connected", {{"server", remote_name()}});
             m_connection_last_seen = std::nullopt;
             m_clock = {.active = true, .burst = clock_burst_samples};
@@ -3542,9 +3521,7 @@ std::vector<NetworkState::RosterEntry> PlayerRoster::roster(
 }
 
 void alloc_networking(
-    compo::EntityContainer& e,
-    std::string const&      gateway_auth_secret,
-    std::string const&      gateway_auth_key)
+    compo::EntityContainer& e, std::string const& gateway_auth_key)
 {
     ProfContext _;
     e.register_subsystem_inplace<NetworkState>();
@@ -3553,7 +3530,6 @@ void alloc_networking(
     auto& networking = e.register_subsystem_inplace<Networking>(
         std::ref(e.subsystem_cast<GameEventBus>()),
         std::ref(e.subsystem_cast<NetworkState>()),
-        gateway_auth_secret,
         gateway_auth_key);
     networking.m_journal = &e.subsystem_cast<Journal>();
 #endif

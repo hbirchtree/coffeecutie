@@ -154,11 +154,23 @@ webrtc_prepare_out_dir() {
     return 0
 }
 
+# Kills a harness-started job and everything under it. Each job runs under
+# timeout(1), which puts itself and its descendants in their own process
+# group, so the group is the whole tree. `cb run` interposes a python process
+# that a plain kill would stop while leaving the engine running behind it,
+# still holding its port when the next pair starts.
+webrtc_kill_tree() {
+    local pid="$1"
+    [ -n "$pid" ] || return 0
+    kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null
+    return 0
+}
+
 # Kills every PID this harness may have started. Callers trap it on EXIT.
 webrtc_cleanup_pids() {
     local pid
     for pid in "${WEBRTC_CLIENT_PID:-}" "${WEBRTC_SERVER_PID:-}" "${WEBRTC_GW_PID:-}"; do
-        [ -n "$pid" ] && kill "$pid" 2>/dev/null
+        webrtc_kill_tree "$pid"
     done
     return 0
 }

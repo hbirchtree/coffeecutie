@@ -91,7 +91,7 @@ echo "Local addrs: $(hostname -I 2>/dev/null || echo unknown)"
 webrtc_install_playwright "$HERE/../web"
 
 cleanup() {
-    [ -n "${WEBRTC_SERVER_PID:-}" ] && kill "$WEBRTC_SERVER_PID" 2>/dev/null
+    webrtc_kill_tree "${WEBRTC_SERVER_PID:-}"
 }
 trap cleanup EXIT
 

@@ -123,10 +123,6 @@ i32 blam_main()
              "Server ID to register under with --gateway-register",
              cxxopts::value<std::string>())
             //
-            ("gateway-auth-secret",
-             "HMAC-SHA256 key (base64) for signing WebRTC server metadata",
-             cxxopts::value<std::string>())
-            //
             ("gateway-auth-key",
              "Path to the server's Ed25519 private key PEM, which signs its "
              "certificate and WebRTC metadata. Generated if the file does not "
@@ -527,9 +523,6 @@ i32 blam_main()
             alloc_game_setup_provider(e);
             alloc_networking(
                 e,
-                arguments.count("gateway-auth-secret")
-                    ? arguments["gateway-auth-secret"].as<std::string>()
-                    : std::string(),
                 arguments.count("gateway-auth-key")
                     ? arguments["gateway-auth-key"].as<std::string>()
                     : std::string());
@@ -670,10 +663,6 @@ i32 blam_main()
                                 ? arguments["gateway-server-id"]
                                       .as<std::string>()
                                 : std::string("default");
-                        if(arguments.count("gateway-auth-secret"))
-                            connect.gateway_auth_secret =
-                                arguments["gateway-auth-secret"]
-                                    .as<std::string>();
                         if(arguments.count("gateway-auth-key"))
                             connect.gateway_auth_key =
                                 arguments["gateway-auth-key"].as<std::string>();

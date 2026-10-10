@@ -86,6 +86,12 @@ static char* platform_get_query_string()
         EM_ASM_PTR({ return stringToNewUTF8(window.location.search); }));
 }
 
+static char* platform_get_fragment_string()
+{
+    return reinterpret_cast<char*>(
+        EM_ASM_PTR({ return stringToNewUTF8(window.location.hash); }));
+}
+
 namespace {
 
 /* window.location.search returns the query string exactly as it appears
@@ -134,30 +140,33 @@ std::map<std::string, std::string> query_params()
 #ifdef COFFEE_WASM
     using namespace stl_types::str::split;
 
-    std::string query_string(platform_get_query_string());
-
-    if(query_string.empty())
-        return {};
-    query_string = query_string.substr(1);
-
     std::map<std::string, std::string> out;
-    for(auto it = spliterator<char>(query_string, '&');
-        it != spliterator<char>();
-        ++it)
-    {
-        auto param = *it;
-        auto split = param.find('=');
-        if(split == std::string::npos)
+    auto parse = [&out](std::string params) {
+        if(params.empty())
+            return;
+        params = params.substr(1); /* '?' or '#' */
+        for(auto it = spliterator<char>(params, '&');
+            it != spliterator<char>();
+            ++it)
         {
-            /* Valueless flag (?foo&bar=1): present with empty value, so
-             * contains()-style checks (e.g. "dummy_plug") see it */
-            if(!param.empty())
-                out[percent_decode(param)] = {};
-            continue;
+            auto param = *it;
+            auto split = param.find('=');
+            if(split == std::string::npos)
+            {
+                /* Valueless flag (?foo&bar=1): present with empty value, so
+                 * contains()-style checks (e.g. "dummy_plug") see it */
+                if(!param.empty())
+                    out[percent_decode(param)] = {};
+                continue;
+            }
+            out[percent_decode(param.substr(0, split))] =
+                percent_decode(param.substr(split + 1));
         }
-        out[percent_decode(param.substr(0, split))] =
-            percent_decode(param.substr(split + 1));
-    }
+    };
+    parse(platform_get_query_string());
+    /* The fragment never leaves the browser, so a join string carrying key
+     * material belongs there. It wins over the query string. */
+    parse(platform_get_fragment_string());
     return out;
 #else
     return {};

@@ -121,6 +121,4 @@ struct PlayerRoster : compo::SubsystemBase
 };
 
 void alloc_networking(
-    compo::EntityContainer& e,
-    std::string const&      gateway_auth_secret = {},
-    std::string const&      gateway_auth_key    = {});
+    compo::EntityContainer& e, std::string const& gateway_auth_key = {});

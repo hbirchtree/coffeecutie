@@ -261,11 +261,13 @@ async function main() {
     const { server: srv, port } = await startServer(cfg.bundleDir);
     server = srv;
 
-    // ?server=ws://... becomes argv ["--server", "ws://..."] via
-    // Coffee::CoffeeInit's query-param shim (src/coffee/application/private/coffee.cpp)
-    // -- identical to the native --server CLI flag from this same file's
-    // examples/blam/cblam-testing/graphics.cpp cxxopts parsing.
-    const url = `http://127.0.0.1:${port}/${cfg.page}?server=${encodeURIComponent(cfg.serverUrl)}`;
+    // #server=ws://... becomes argv ["--server", "ws://..."] via the
+    // emscripten URL-parameter shim (emscripten::args::query_params, which
+    // reads the fragment as well as the query string) -- identical to the
+    // native --server CLI flag graphics.cpp parses. It rides in the fragment,
+    // like the join string the server prints, so a key in it never reaches
+    // the page host or a Referer header.
+    const url = `http://127.0.0.1:${port}/${cfg.page}#server=${encodeURIComponent(cfg.serverUrl)}`;
     record(`Serving ${cfg.bundleDir} at ${url}`);
 
 

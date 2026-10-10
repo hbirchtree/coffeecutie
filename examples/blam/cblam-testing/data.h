@@ -633,11 +633,10 @@ struct ServerConnectEvent
     std::string gateway_register_url;
     std::string gateway_server_id;
 
-    /* Only used with type == Listen and gateway_register_url non-empty:
-     * enables signed metadata so clients can verify the server's identity
-     * independently of the gateway. */
-    std::string gateway_auth_secret; /* HMAC-SHA256 key, base64 */
-    std::string gateway_auth_key;    /* Ed25519 private key PEM path */
+    /* Only used with type == Listen: the server's Ed25519 private key PEM
+     * path, which signs its certificate and gateway metadata. Empty = a key
+     * generated in memory for this run. */
+    std::string gateway_auth_key;
 
     /* Only used with type == Server, and only for a remote that is a plain
      * address rather than a gateway join URL (which carries the key in its

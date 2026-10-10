@@ -22,6 +22,10 @@ Usage:
       model and has a collision body where its camera is (and nobody else
       does), and a networked player in play on both sides is at the same
       place, within POSITION_TOLERANCE (default 1.0, world units).
+      Replicated objects present on both sides must be within
+      OBJECT_POSITION_TOLERANCE (default 0.05) of each other: the dumps are
+      taken at different moments, so physics drift of a few millimetres is
+      expected where a desync is not.
       MIN_IN_PLAY=N requires every dump to show at least N players in play,
       e.g. both sides' split screen seats.
 
@@ -116,6 +120,7 @@ def compare_rosters(a_label, a_roster, b_label, b_roster):
 
 def compare_objects(a_label, a_objects, b_label, b_objects):
     problems = 0
+    tolerance = float(os.environ.get("OBJECT_POSITION_TOLERANCE", "0.05"))
     a_by = {o["net_id"]: o for o in a_objects}
     b_by = {o["net_id"]: o for o in b_objects}
     print(f"{a_label} objects: {len(a_by)}  {b_label} objects: {len(b_by)}")
@@ -134,10 +139,12 @@ def compare_objects(a_label, a_objects, b_label, b_objects):
             print(f"FAIL: net_id={net_id} tag mismatch: "
                   f"{a_label}={a_o['tag_class']}:{a_o['tag_id']} "
                   f"{b_label}={b_o['tag_class']}:{b_o['tag_id']}")
-        if any(abs(x - y) > 1e-3
-               for x, y in zip(a_o["position"], b_o["position"])):
+        delta = max(abs(x - y)
+                    for x, y in zip(a_o["position"], b_o["position"]))
+        if delta > tolerance:
             problems += 1
-            print(f"FAIL: net_id={net_id} position mismatch: "
+            print(f"FAIL: net_id={net_id} position mismatch (off by "
+                  f"{delta:.4f}, tolerance {tolerance}): "
                   f"{a_label}={a_o['position']} {b_label}={b_o['position']}")
     return problems
 

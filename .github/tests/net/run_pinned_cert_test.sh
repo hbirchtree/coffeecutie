@@ -60,8 +60,10 @@ fi
 echo "Server key : $GOOD_KEY_B64"
 echo "Wrong key  : $WRONG_KEY_B64"
 
-# Runs one server/client pair with the given pin ("" for none), and reports
-# whether the client reached a connected state. Sets RUN_CONNECTED.
+# Runs one server/client pair with the given pin ("" for none). Sets
+# RUN_CONNECTED (yes/no/error), RUN_TRUST (authenticated/unauthenticated/none,
+# from the client's connect line) and RUN_REFUSED (yes when GNS rejected the
+# server's cert against the pin).
 run_pair() {
     local label="$1" pin="$2" out="$OUT_DIR/$1"
     mkdir -p "$out"
@@ -81,7 +83,7 @@ run_pair() {
     if [ "$booted" != "1" ]; then
         echo "FAIL[$label]: server never started listening"
         webrtc_dump "server.log (tail)" "$WEBRTC_SERVER_LOG" 40
-        kill "$WEBRTC_SERVER_PID" 2>/dev/null
+        webrtc_kill_tree "$WEBRTC_SERVER_PID"
         RUN_CONNECTED=error
         return
     fi
@@ -97,13 +99,26 @@ run_pair() {
     fi
 
     wait "$WEBRTC_CLIENT_PID" 2>/dev/null
-    kill "$WEBRTC_SERVER_PID" 2>/dev/null
+    webrtc_kill_tree "$WEBRTC_SERVER_PID"
     wait "$WEBRTC_SERVER_PID" 2>/dev/null
 
+    RUN_CONNECTED=no
+    RUN_TRUST=none
+    RUN_REFUSED=no
     if grep -q "Connection to server/peer established" "$WEBRTC_CLIENT_LOG" 2>/dev/null; then
         RUN_CONNECTED=yes
-    else
-        RUN_CONNECTED=no
+        # The trust state GNS reports for the session, logged at connect:
+        # "authenticated" only when a pinned key verified the server's cert
+        if grep -q "established (.*, authenticated)" "$WEBRTC_CLIENT_LOG"; then
+            RUN_TRUST=authenticated
+        elif grep -q "established (.*, unauthenticated)" "$WEBRTC_CLIENT_LOG"; then
+            RUN_TRUST=unauthenticated
+        fi
+    fi
+    # GNS's reason for refusing a cert the pinned key did not sign. Without
+    # this, a client that crashed or never ran would pass case 2 as well.
+    if grep -q "does not chain to the pinned root" "$WEBRTC_CLIENT_LOG" 2>/dev/null; then
+        RUN_REFUSED=yes
     fi
 }
 
@@ -111,13 +126,15 @@ echo
 echo "=== 1. correct key: the connection should complete ==="
 run_pair good "$GOOD_KEY_B64"
 GOOD_RESULT="$RUN_CONNECTED"
-echo "connected=$GOOD_RESULT"
+GOOD_TRUST="$RUN_TRUST"
+echo "connected=$GOOD_RESULT trust=$GOOD_TRUST"
 
 echo
 echo "=== 2. wrong key: the connection should be refused ==="
 run_pair wrong "$WRONG_KEY_B64"
 WRONG_RESULT="$RUN_CONNECTED"
-echo "connected=$WRONG_RESULT"
+WRONG_REFUSED="$RUN_REFUSED"
+echo "connected=$WRONG_RESULT refused=$WRONG_REFUSED"
 
 echo
 echo "=== 3. no key: should still connect, just unauthenticated ==="
@@ -125,20 +142,25 @@ echo "=== 3. no key: should still connect, just unauthenticated ==="
 # the key -- they simply cannot tell who they are talking to.
 run_pair nokey ""
 NOKEY_RESULT="$RUN_CONNECTED"
-echo "connected=$NOKEY_RESULT"
+NOKEY_TRUST="$RUN_TRUST"
+echo "connected=$NOKEY_RESULT trust=$NOKEY_TRUST"
+
+GOOD_OK=0; WRONG_OK=0; NOKEY_OK=0
+[ "$GOOD_RESULT" = "yes" ] && [ "$GOOD_TRUST" = "authenticated" ] && GOOD_OK=1
+[ "$WRONG_RESULT" = "no" ] && [ "$WRONG_REFUSED" = "yes" ] && WRONG_OK=1
+[ "$NOKEY_RESULT" = "yes" ] && [ "$NOKEY_TRUST" = "unauthenticated" ] && NOKEY_OK=1
 
 echo
 echo "================ pinned certificate result ================"
-[ "$GOOD_RESULT" = "yes" ] && echo "  PASS  correct key connects" \
-                           || echo "  FAIL  correct key did not connect"
-[ "$WRONG_RESULT" = "no" ]  && echo "  PASS  wrong key is refused" \
-                           || echo "  FAIL  wrong key was NOT refused"
-[ "$NOKEY_RESULT" = "yes" ] && echo "  PASS  keyless client still connects" \
-                           || echo "  FAIL  keyless client was locked out"
+[ "$GOOD_OK" = "1" ]  && echo "  PASS  correct key connects, authenticated" \
+                      || echo "  FAIL  correct key: connected=$GOOD_RESULT trust=$GOOD_TRUST"
+[ "$WRONG_OK" = "1" ] && echo "  PASS  wrong key is refused for its cert" \
+                      || echo "  FAIL  wrong key: connected=$WRONG_RESULT refused=$WRONG_REFUSED"
+[ "$NOKEY_OK" = "1" ] && echo "  PASS  keyless client connects, unauthenticated" \
+                      || echo "  FAIL  keyless client: connected=$NOKEY_RESULT trust=$NOKEY_TRUST"
 echo "==========================================================="
 
-if [ "$GOOD_RESULT" = "yes" ] && [ "$WRONG_RESULT" = "no" ] \
-   && [ "$NOKEY_RESULT" = "yes" ]; then
+if [ "$GOOD_OK" = "1" ] && [ "$WRONG_OK" = "1" ] && [ "$NOKEY_OK" = "1" ]; then
     echo "PASS  (logs in $OUT_DIR)"
     exit 0
 fi

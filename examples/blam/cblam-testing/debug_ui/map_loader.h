@@ -630,9 +630,8 @@ struct BlamMapBrowser
                     if(ImGui::IsItemHovered())
                         ImGui::SetTooltip(
                             "ws://gateway#serverId or\n"
-                            "ws://gateway#serverId;auth=hmac:base64secret or\n"
-                            "ws://"
-                            "gateway#serverId;auth=ed25519:base64publickey");
+                            "ws://gateway#serverId;"
+                            "auth=ed25519:base64publickey");
                     ImGui::NextColumn();
                     if(ImGui::Button("Connect"))
                     {

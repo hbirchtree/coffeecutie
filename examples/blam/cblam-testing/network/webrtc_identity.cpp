@@ -10,7 +10,6 @@
 #include <peripherals/stl/string/hex.h>
 
 #include <openssl/evp.h>
-#include <openssl/hmac.h>
 #include <openssl/pem.h>
 #include <openssl/sha.h>
 
@@ -22,6 +21,11 @@
 #if __has_include(<sys/stat.h>)
 #include <sys/stat.h>
 #endif
+#if !defined(_WIN32) && __has_include(<fcntl.h>) && __has_include(<unistd.h>)
+#include <fcntl.h>
+#include <unistd.h>
+#define WEBRTC_IDENTITY_POSIX_OPEN 1
+#endif
 
 using namespace Coffee::Logging;
 
@@ -29,34 +33,10 @@ namespace webrtc_signaling {
 
 namespace {
 
-std::string hex_encode(std::vector<uint8_t> const& bytes)
-{
-    std::string out;
-    out.reserve(bytes.size() * 2);
-    for(auto b : bytes)
-        out += fmt::format("{:02x}", b);
-    return out;
-}
-
 std::string base64_encode(std::vector<uint8_t> const& bytes)
 {
     return b64::encode(
         semantic::Span<const uint8_t>(bytes.data(), bytes.size()));
-}
-
-std::vector<uint8_t> hmac_sha256(
-    std::vector<uint8_t> const& key, std::string_view data)
-{
-    std::vector<uint8_t> result(SHA256_DIGEST_LENGTH);
-    HMAC(
-        EVP_sha256(),
-        key.data(),
-        static_cast<int>(key.size()),
-        reinterpret_cast<const unsigned char*>(data.data()),
-        data.size(),
-        result.data(),
-        nullptr);
-    return result;
 }
 
 nlohmann::json sort_json(nlohmann::json const& j)
@@ -105,18 +85,25 @@ EVP_PKEY* load_or_generate_ed25519_key(std::string const& path)
     if(!pkey)
         return nullptr;
 
-    if(FILE* f = std::fopen(path.c_str(), "w"); f)
+    FILE* f = nullptr;
+#if defined(WEBRTC_IDENTITY_POSIX_OPEN)
+    /* Owner-only from creation, no window with wider permissions */
+    if(int fd = ::open(
+           path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+       fd >= 0)
+    {
+        ::fchmod(fd, S_IRUSR | S_IWUSR);
+        f = ::fdopen(fd, "w");
+        if(!f)
+            ::close(fd);
+    }
+#else
+    f = std::fopen(path.c_str(), "w");
+#endif
+    if(f)
     {
         PEM_write_PrivateKey(f, pkey, nullptr, nullptr, 0, nullptr, nullptr);
         std::fclose(f);
-#if defined(S_IRUSR) && defined(S_IWUSR)
-        if(::chmod(path.c_str(), S_IRUSR | S_IWUSR) != 0)
-            cWarning(
-                "Failed to set restrictive permissions on Ed25519 identity "
-                "key {}: {}",
-                path,
-                std::strerror(errno));
-#endif
     } else
     {
         cWarning(
@@ -233,11 +220,7 @@ WebrtcAuth parse_auth_param(std::string_view param)
         auth.type = AuthType::Invalid;
         return auth;
     }
-    if(type == "hmac")
-    {
-        auth.type     = AuthType::HmacSha256;
-        auth.hmac_key = std::move(key);
-    } else if(type == "ed25519" && key.size() == 32)
+    if(type == "ed25519" && key.size() == 32)
     {
         auth.type               = AuthType::Ed25519;
         auth.ed25519_public_key = std::move(key);
@@ -253,8 +236,6 @@ std::string format_auth_param(WebrtcAuth const& auth)
 {
     switch(auth.type)
     {
-    case AuthType::HmacSha256:
-        return "auth=hmac:" + base64_encode(auth.hmac_key);
     case AuthType::Ed25519:
         return "auth=ed25519:" + base64_encode(auth.ed25519_public_key);
     default:
@@ -272,7 +253,7 @@ std::string canonical_metadata_json(nlohmann::json const& meta)
  * longer. A full 32-byte digest is 44 base64 characters, so an untruncated
  * identity never fit: it was rejected, the identity stayed invalid and fell
  * back to localhost, which in turn made GNS treat every connection as
- * anonymous and send an unsigned certificate. 96 bits leaves both prefixes
+ * anonymous and send an unsigned certificate. 96 bits leaves the prefix
  * comfortably inside the limit, and the signature -- not the identity string
  * -- is what authenticates a peer. */
 constexpr size_t k_identity_digest_bytes = 12;
@@ -283,45 +264,6 @@ static std::string truncated_identity(
     auto bytes = digest;
     bytes.resize(std::min(bytes.size(), k_identity_digest_bytes));
     return std::string(prefix) + base64_encode(bytes);
-}
-
-std::string derive_identity_hmac(std::vector<uint8_t> const& key)
-{
-    auto hash = hmac_sha256(key, "coffee-webrtc-identity-v1");
-    return truncated_identity("hmac-sha256:", hash);
-}
-
-nlohmann::json sign_metadata_hmac(
-    nlohmann::json meta, std::vector<uint8_t> const& key)
-{
-    meta["identity"]      = derive_identity_hmac(key);
-    std::string canonical = canonical_metadata_json(meta);
-    auto        hmac      = hmac_sha256(key, canonical);
-    meta["auth"]          = nlohmann::json{
-                 {"type", "hmac-sha256"},
-                 {"hmac", hex_encode(hmac)},
-    };
-    return meta;
-}
-
-bool verify_metadata_hmac(
-    nlohmann::json const& meta, std::vector<uint8_t> const& key)
-{
-    if(!meta.contains("auth"))
-        return false;
-    auto auth = meta["auth"];
-    if(auth.value("type", std::string()) != "hmac-sha256")
-        return false;
-    auto expected_hex = auth.value("hmac", std::string());
-    if(expected_hex.empty())
-        return false;
-
-    nlohmann::json stripped = meta;
-    stripped.erase("auth");
-    std::string canonical    = canonical_metadata_json(stripped);
-    auto        computed     = hmac_sha256(key, canonical);
-    auto        computed_hex = hex_encode(computed);
-    return computed_hex == expected_hex;
 }
 
 std::string derive_identity_ed25519(std::vector<uint8_t> const& public_key)
