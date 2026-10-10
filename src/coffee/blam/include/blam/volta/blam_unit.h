@@ -1129,4 +1129,102 @@ struct equipment : item
 static_assert(offsetof(equipment, pickup_sound) == 0x310);
 static_assert(sizeof(equipment) == 944);
 
+struct projectile : object
+{
+    enum class flags_t : u32
+    {
+        none                          = 0x0,
+        oriented_along_velocity       = 0x1,
+        ai_must_use_ballistic_aiming  = 0x2,
+        detonation_max_time_if_attached = 0x4,
+        has_super_combining_explosion = 0x8,
+        combine_with_parent_velocity  = 0x10,
+        random_attached_detonation_time = 0x20,
+        minimum_unattached_detonation_time = 0x40,
+    };
+
+    enum class timer_starts_t : u16
+    {
+        immediately,
+        after_first_bounce,
+        when_at_rest,
+    };
+
+    enum class response_t : u16
+    {
+        disappear,
+        detonate,
+        reflect,
+        overpenetrate,
+        attach,
+    };
+
+    /*! What happens on hitting each material, indexed by material_type_t */
+    struct material_response_t
+    {
+        u16                               flags;
+        response_t                        default_response;
+        tagref_typed_t<tag_class_t::effe> default_effect;
+        u32                               padding[4];
+        response_t                        potential_response;
+        u16                               potential_flags;
+        f32                               potential_skip_fraction;
+        Vecf2                             potential_between; // angles
+        Vecf2                             potential_and;     // velocities
+        tagref_typed_t<tag_class_t::effe> potential_effect;
+        u32                               padding2[4];
+        u16                               scale_effects_by;
+        u16                               padding3;
+        f32                               angular_noise;
+        f32                               velocity_noise;
+        tagref_typed_t<tag_class_t::effe> detonation_effect;
+        u32                               padding4[6];
+        f32                               initial_friction;
+        f32                               maximum_distance;
+        f32                               parallel_friction;
+        f32                               perpendicular_friction;
+    };
+
+    flags_t                           projectile_flags;
+    timer_starts_t                    detonation_timer_starts;
+    object_noise_t                    impact_noise;
+    u16                               function_inputs[4];
+    tagref_typed_t<tag_class_t::effe> super_detonation;
+    f32                               ai_perception_radius;
+    f32                               collision_radius;
+    f32                               arming_time;
+    f32                               danger_radius;
+    tagref_typed_t<tag_class_t::effe> detonation_effect;
+    Vecf2                             timer; // seconds to detonation
+    f32                               minimum_velocity;
+    f32                               maximum_range;
+    f32                               air_gravity_scale;
+    Vecf2                             air_damage_range;
+    f32                               water_gravity_scale;
+    Vecf2                             water_damage_range;
+    f32                               initial_velocity; // per tick, x30
+    f32                               final_velocity;   // per tick, x30
+    f32                               guided_angular_velocity;
+    object_noise_t                    detonation_noise;
+    u16                               padding;
+    tagref_typed_t<tag_class_t::effe> detonation_started;
+    tagref_typed_t<tag_class_t::snd>  flyby_sound;
+    tagref_typed_t<tag_class_t::jpt>  attached_detonation_damage;
+    tagref_typed_t<tag_class_t::jpt>  impact_damage;
+    u32                               padding2[3];
+    reference<material_response_t>    material_responses;
+};
+
+C_FLAGS(projectile::flags_t, u32)
+
+static_assert(offsetof(projectile::material_response_t, potential_response) == 0x24);
+static_assert(offsetof(projectile::material_response_t, detonation_effect) == 0x68);
+static_assert(sizeof(projectile::material_response_t) == 160);
+static_assert(offsetof(projectile, projectile_flags) == 0x17c);
+static_assert(offsetof(projectile, detonation_effect) == 0x1ac);
+static_assert(offsetof(projectile, initial_velocity) == 0x1e4);
+static_assert(offsetof(projectile, flyby_sound) == 0x204);
+static_assert(offsetof(projectile, material_responses) == 0x240);
+static_assert(sizeof(projectile) == 588);
+
 } // namespace blam::scn

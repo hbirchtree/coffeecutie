@@ -13,6 +13,7 @@
 #include <blam/volta/blam_font.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_mod2.h>
+#include <blam/volta/blam_particles.h>
 #include <blam/volta/blam_p8_palette.h>
 #include <blam/volta/blam_physics.h>
 #include <blam/volta/blam_scenario.h>
@@ -1334,6 +1335,290 @@ void dump_weapon(blam::scn::weapon const* weapon)
                     e.shot_count[1],
                     name_of(e.firing_effect),
                     name_of(e.firing_damage));
+    });
+}
+
+void dump_projectile(blam::scn::projectile const* proj)
+{
+    dump_object(proj);
+
+    fmt::print("  [proj]\n    ");
+    print_flags("flags", proj->projectile_flags);
+    print_enum("timer_starts", proj->detonation_timer_starts);
+    fmt::print("\n    timer={} arming={} collision_radius={}\n", proj->timer, proj->arming_time, proj->collision_radius);
+    fmt::print(
+        "    velocity initial={} final={} min={} range={} air_gravity={} water_gravity={} guided={}\n",
+        proj->initial_velocity,
+        proj->final_velocity,
+        proj->minimum_velocity,
+        proj->maximum_range,
+        proj->air_gravity_scale,
+        proj->water_gravity_scale,
+        proj->guided_angular_velocity);
+    fmt::print("    detonation_effect ={}\n", name_of(proj->detonation_effect));
+    fmt::print("    detonation_started={}\n", name_of(proj->detonation_started));
+    fmt::print("    super_detonation  ={}\n", name_of(proj->super_detonation));
+    fmt::print("    flyby_sound       ={}\n", name_of(proj->flyby_sound));
+    fmt::print("    impact_damage     ={}\n", name_of(proj->impact_damage));
+    dump_block("material_responses", proj->material_responses, [](auto const& r) {
+        print_enum("default", r.default_response);
+        print_enum("potential", r.potential_response);
+        fmt::print(
+            "effect={} detonation={} potential_effect={}\n",
+            name_of(r.default_effect),
+            name_of(r.detonation_effect),
+            name_of(r.potential_effect));
+    });
+}
+
+void dump_particle_shader(blam::scn::particle_shader_t const& s)
+{
+    fmt::print("    shader: ");
+    print_flags("flags", s.flags);
+    print_enum("blend", s.blend_function);
+    print_enum("fade", s.fade_mode);
+    print_enum("anchor", s.anchor);
+    fmt::print("secondary={}\n", name_of(s.secondary_bitmap));
+}
+
+void dump_effect(blam::scn::effect const* effect)
+{
+    fmt::print("  [effe]\n    ");
+    print_flags("flags", effect->flags);
+    fmt::print(
+        "loop_start={} loop_stop={} damage_radius={}\n",
+        effect->loop_start_event,
+        effect->loop_stop_event,
+        effect->maximum_damage_radius);
+    dump_block("locations", effect->locations, [](auto const& l) {
+        fmt::print("{}\n", l.marker_name.str());
+    });
+    dump_block("events", effect->events, [](auto const& ev) {
+        fmt::print(
+            "skip={} delay={} duration={}\n",
+            ev.skip_fraction,
+            ev.delay_bounds,
+            ev.duration_bounds);
+        auto parts = ev.parts.data(g_magic);
+        if(parts.has_value())
+            for(auto const& part : parts.value())
+            {
+                fmt::print("        part ");
+                print_enum("create_in", part.create_in);
+                fmt::print(
+                    "location={} type={} velocity={} cone={} radius={}\n",
+                    part.location,
+                    name_of(part.type),
+                    part.velocity_bounds,
+                    part.velocity_cone_angle,
+                    part.radius_modifier_bounds);
+            }
+        auto particles = ev.particles.data(g_magic);
+        if(particles.has_value())
+            for(auto const& p : particles.value())
+            {
+                fmt::print("        particle ");
+                print_enum("create", p.create);
+                print_enum("distribution", p.distribution_function);
+                print_flags("flags", p.flags);
+                fmt::print(
+                    "location={} type={} count={} radius={} velocity={} cone={} "
+                    "dist_radius={} dir={} offset={} tint={}..{}\n",
+                    p.location,
+                    name_of(p.particle_type),
+                    p.count,
+                    p.radius,
+                    p.velocity,
+                    p.velocity_cone_angle,
+                    p.distribution_radius,
+                    p.relative_direction,
+                    p.relative_offset,
+                    p.tint_lower_bound,
+                    p.tint_upper_bound);
+            }
+    });
+}
+
+void dump_particle(blam::scn::particle const* part)
+{
+    fmt::print("  [part]\n    ");
+    print_flags("flags", part->flags);
+    print_enum("orientation", part->orientation);
+    fmt::print(
+        "\n    bitmap={} physics={}\n    lifespan={} fade_in={} fade_out={} "
+        "radius_anim={} anim_rate={} sprite_size={}\n    sequences first={} "
+        "initial={} looping={} final={}\n    collision={} death={}\n",
+        name_of(part->bitmap),
+        name_of(part->physics),
+        part->lifespan,
+        part->fade_in_time,
+        part->fade_out_time,
+        part->radius_animation,
+        part->animation_rate,
+        part->sprite_size,
+        part->first_sequence_index,
+        part->initial_sequence_count,
+        part->looping_sequence_count,
+        part->final_sequence_count,
+        name_of(part->collision_effect),
+        name_of(part->death_effect));
+    dump_particle_shader(part->shader);
+}
+
+void dump_particle_system(blam::scn::particle_system const* pctl)
+{
+    fmt::print(
+        "  [pctl]\n    physics={} update={}\n",
+        name_of(pctl->point_physics),
+        pctl->system_update_physics);
+    dump_block("types", pctl->particle_types, [](auto const& t) {
+        print_flags("flags", t.flags);
+        print_enum("creation", t.particle_creation_physics);
+        fmt::print(
+            "name={} initial_count={} radius={}\n",
+            t.name.str(),
+            t.initial_particle_count,
+            t.radius);
+        auto states = t.states.data(g_magic);
+        if(states.has_value())
+            for(auto const& s : states.value())
+                fmt::print(
+                    "        state {} duration={} transition={} scale={} "
+                    "min_count={} rate={} color={}\n",
+                    s.name.str(),
+                    s.duration_bounds,
+                    s.transition_time_bounds,
+                    s.scale_multiplier,
+                    s.minimum_particle_count,
+                    s.particle_creation_rate,
+                    s.color_multiplier);
+        auto pstates = t.particle_states.data(g_magic);
+        if(pstates.has_value())
+            for(auto const& s : pstates.value())
+            {
+                fmt::print(
+                    "        particle_state {} duration={} bitmap={} seq={} "
+                    "scale={} anim_rate={} rot_rate={} colors={}..{} physics={}\n",
+                    s.name.str(),
+                    s.duration_bounds,
+                    name_of(s.bitmaps),
+                    s.sequence_index,
+                    s.scale,
+                    s.animation_rate,
+                    s.rotation_rate,
+                    s.color_1,
+                    s.color_2,
+                    name_of(s.point_physics));
+                fmt::print("    ");
+                dump_particle_shader(s.shader);
+            }
+    });
+}
+
+void dump_contrail(blam::scn::contrail const* cont)
+{
+    fmt::print("  [cont]\n    ");
+    print_flags("flags", cont->flags);
+    print_enum("render", cont->render_type);
+    fmt::print(
+        "\n    rate={} velocity={} cone={} inherit={} repeats=({}, {}) "
+        "anim=({}, {}) bitmap={} seq={}+{}\n",
+        cont->point_generation_rate,
+        cont->point_velocity,
+        cont->point_velocity_cone_angle,
+        cont->inherited_velocity_fraction,
+        cont->texture_repeats_u,
+        cont->texture_repeats_v,
+        cont->texture_animation_u,
+        cont->texture_animation_v,
+        name_of(cont->bitmap),
+        cont->first_sequence_index,
+        cont->sequence_count);
+    dump_particle_shader(cont->shader);
+    dump_block("point_states", cont->point_states, [](auto const& s) {
+        fmt::print(
+            "duration={} transition={} width={} color={}..{} physics={}\n",
+            s.duration,
+            s.transition_duration,
+            s.width,
+            s.color_lower_bound,
+            s.color_upper_bound,
+            name_of(s.physics));
+    });
+}
+
+void dump_light(blam::scn::light const* light)
+{
+    fmt::print("  [ligh]\n    ");
+    print_flags("flags", light->flags);
+    fmt::print(
+        "\n    radius={} modifier={} color={}..{} intensity={} rgb={} "
+        "duration={} falloff={}\n    lens_flare={} cube={}\n",
+        light->radius,
+        light->radius_modifier,
+        light->color_lower_bound,
+        light->color_upper_bound,
+        light->intensity,
+        light->color,
+        light->duration,
+        enum_name(light->falloff_function),
+        name_of(light->lens_flare),
+        name_of(light->primary_cube_map));
+}
+
+void dump_light_volume(blam::scn::light_volume const* mgs2)
+{
+    fmt::print(
+        "  [mgs2]\n    marker={} fade=({}, {}) brightness=({}, {}) map={} "
+        "seq={} count={}\n",
+        mgs2->attachment_marker.str(),
+        mgs2->near_fade_distance,
+        mgs2->far_fade_distance,
+        mgs2->perpendicular_brightness_scale,
+        mgs2->parallel_brightness_scale,
+        name_of(mgs2->map),
+        mgs2->sequence_index,
+        mgs2->count);
+    dump_block("frames", mgs2->frames, [](auto const& f) {
+        fmt::print(
+            "offset={} length={} radius=({}, {}) tint={}..{} exp=({}, {})\n",
+            f.offset_from_marker,
+            f.length,
+            f.radius_hither,
+            f.radius_yon,
+            f.tint_color_hither,
+            f.tint_color_yon,
+            f.tint_color_exponent,
+            f.brightness_exponent);
+    });
+}
+
+void dump_lens_flare(blam::scn::lens_flare const* lens)
+{
+    fmt::print("  [lens]\n    ");
+    print_flags("flags", lens->flags);
+    fmt::print(
+        "\n    falloff={} cutoff={} occlusion_radius={} fade=({}, {}) "
+        "bitmap={} scale=({}, {})\n",
+        lens->falloff_angle,
+        lens->cutoff_angle,
+        lens->occlusion_radius,
+        lens->near_fade_distance,
+        lens->far_fade_distance,
+        name_of(lens->bitmap),
+        lens->horizontal_scale,
+        lens->vertical_scale);
+    dump_block("reflections", lens->reflections, [](auto const& r) {
+        print_flags("flags", r.flags);
+        fmt::print(
+            "bitmap={} position={} radius={} brightness={} tint={} color={}..{}\n",
+            r.bitmap_index,
+            r.position,
+            r.radius,
+            r.brightness,
+            r.tint_color,
+            r.color_lower_bound,
+            r.color_upper_bound);
     });
 }
 
@@ -3916,9 +4201,40 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     case blam::tag_class_t::ctrl:
     case blam::tag_class_t::lifi:
     case blam::tag_class_t::ssce:
-    case blam::tag_class_t::proj:
         if(auto* info = header_of((blam::scn::object*)nullptr))
             dump_object(info);
+        break;
+    case blam::tag_class_t::proj:
+        if(auto* info = header_of((blam::scn::projectile*)nullptr))
+            dump_projectile(info);
+        break;
+    case blam::tag_class_t::effe:
+        if(auto* info = header_of((blam::scn::effect*)nullptr))
+            dump_effect(info);
+        break;
+    case blam::tag_class_t::part:
+        if(auto* info = header_of((blam::scn::particle*)nullptr))
+            dump_particle(info);
+        break;
+    case blam::tag_class_t::pctl:
+        if(auto* info = header_of((blam::scn::particle_system*)nullptr))
+            dump_particle_system(info);
+        break;
+    case blam::tag_class_t::cont:
+        if(auto* info = header_of((blam::scn::contrail*)nullptr))
+            dump_contrail(info);
+        break;
+    case blam::tag_class_t::ligh:
+        if(auto* info = header_of((blam::scn::light*)nullptr))
+            dump_light(info);
+        break;
+    case blam::tag_class_t::mgs2:
+        if(auto* info = header_of((blam::scn::light_volume*)nullptr))
+            dump_light_volume(info);
+        break;
+    case blam::tag_class_t::lens:
+        if(auto* info = header_of((blam::scn::lens_flare*)nullptr))
+            dump_lens_flare(info);
         break;
     case blam::tag_class_t::sotr:
         if(auto* info = header_of((shader_transparent*)nullptr))
