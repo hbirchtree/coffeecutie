@@ -151,6 +151,9 @@ inline bool pass_is_order_independent(Passes pass)
     case Pass_Multiply:
     case Pass_Water:
     case Pass_Max:
+    case Pass_FP_Additive:
+    case Pass_FP_Multiply:
+    case Pass_FP_Max:
         return true;
     default:
         return false;
@@ -733,6 +736,8 @@ struct DrawListBuilder
 
             for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
             {
+                if(!pass_is_sorted(static_cast<Passes>(pi)))
+                    continue;
                 bool grouped =
                     pass_is_order_independent(static_cast<Passes>(pi));
                 model_build()[static_cast<Passes>(pi)].sort_by_depth(
@@ -904,7 +909,7 @@ struct DrawListBuilder
                                : MatClass_Base;
             wf.material_classes |= mat_cls;
             model_tracker_t slot{};
-            if(bsp_draw.current_pass > Pass_LastOpaque)
+            if(pass_is_sorted(bsp_draw.current_pass))
                 slot = wf.insert_sortable(
                     bsp_draw.draw.data.front(), bsp.sort_center, mat_cls);
             else
@@ -1009,7 +1014,7 @@ struct DrawListBuilder
                     bool const is_skinned =
                         a && a->animating() &&
                         model_cache->bone_count(mod.model) > 0;
-                    if(model_draw.current_pass > Pass_LastOpaque)
+                    if(pass_is_sorted(model_draw.current_pass))
                     {
                         if(sweep != 0)
                             continue;
@@ -1025,7 +1030,7 @@ struct DrawListBuilder
                         .mode      = gfx::drawing::primitive::triangle_strip,
                 };
                 auto sh_it   = shader_cache.find(model.shader);
-                u8   mat_cls = model_draw.current_pass == Pass_Postprocess
+                u8   mat_cls = pass_is_postprocess(model_draw.current_pass)
                                    ? MatClass_Camo
                                : sh_it != shader_cache.end()
                                    ? material_class_of(sh_it->second.tag_class)
@@ -1041,7 +1046,7 @@ struct DrawListBuilder
                                          : 0;
                 bool const skinned = bones > 0;
 
-                if(model_draw.current_pass > Pass_LastOpaque)
+                if(pass_is_sorted(model_draw.current_pass))
                 {
                     Vecf3 center   = Vecf3(mod.transform[3]);
                     track.model_id = wf.insert_sortable(
@@ -1187,7 +1192,7 @@ struct DrawListBuilder
             /* Trackers still address the layout only for opaque passes;
              * sort_by_depth rebuilt the transparent ones after these indices
              * were handed out. Those come from the sorted arrays below. */
-            if(sm_draw.current_pass > Pass_LastOpaque)
+            if(pass_is_sorted(sm_draw.current_pass))
                 continue;
 
             Pass& pass = model_build()[sm_draw.current_pass];
@@ -1221,6 +1226,8 @@ struct DrawListBuilder
          * sortable draw always holds exactly one instance. */
         for(i32 pi = Pass_LastOpaque + 1; pi < Pass_Count; ++pi)
         {
+            if(!pass_is_sorted(static_cast<Passes>(pi)))
+                continue;
             Pass&  pass = model_build()[static_cast<Passes>(pi)];
             size_t ci   = 0;
             for(size_t bi = 0; bi < pass.draws.size(); bi++)
@@ -1525,6 +1532,9 @@ struct MeshRenderer
     RenderingParameters& m_render_params;
     int                  m_render_flags{0x0};
     bool                 m_water_modulate{false};
+    bool                 m_first_person{false};
+
+    static constexpr double first_person_depth = 0.98;
 
     ShaderCache<Version>& shader_cache;
     BitmapCache<Version>& bitm_cache;
@@ -1770,7 +1780,8 @@ struct MeshRenderer
         using typing::vector_types::Veci4;
 
         const auto depth = gfx::depth_state{
-            .range    = Vecd2{0.0, 1.0},
+            .range    = m_first_person ? Vecd2{first_person_depth, 1.0}
+                                       : Vecd2{0.0, 1.0},
             .reversed = true,
         };
 
@@ -2500,11 +2511,14 @@ struct MeshRenderer
             {
             case Pass_SkyAdditive:
             case Pass_Additive:
+            case Pass_FP_Additive:
                 return {.additive = true};
             case Pass_SkyMultiply:
             case Pass_Multiply:
+            case Pass_FP_Multiply:
                 return {.multiply = true};
             case Pass_Max:
+            case Pass_FP_Max:
                 return {.maximum = true};
             case Pass_Water:
                 return {.additive = true};
@@ -2683,10 +2697,9 @@ struct MeshRenderer
         PostProcessParameters const* postproc;
         p.subsystem(postproc);
 
-        // Draws on top of framebuffer
-        for(i32 pi = Pass_Postprocess; pi < Pass_Count; ++pi)
-        {
-            auto pass = static_cast<Passes>(pi);
+        /* Camo reads the scene as it was before first-person */
+        auto render_camo = [&](Passes pass) {
+            m_first_person = pass_is_first_person(pass);
             for(auto i : stl_types::range<u32>(m_players.size()))
             {
                 /* UV units of displacement at the silhouette. */
@@ -2709,7 +2722,39 @@ struct MeshRenderer
                             postprocess_sampler,
                         }));
             }
+            m_first_person = false;
+        };
+
+        render_camo(Pass_Postprocess);
+
+        // First-person models, each seat only draws its own
+        m_first_person = true;
+        for(i32 pi = Pass_FP_Opaque; pi <= Pass_LastFP; ++pi)
+        {
+            auto pass = static_cast<Passes>(pi);
+            for(auto i : stl_types::range<u32>(m_players.size()))
+            {
+                if(pass == Pass_FP_Opaque)
+                    render_pass(
+                        p,
+                        i,
+                        t,
+                        builder.model_submit(i)[pass],
+                        opaque_stencil,
+                        cull_front);
+                else
+                    render_pass(
+                        p,
+                        i,
+                        t,
+                        builder.model_submit(i)[pass],
+                        blend_for_pass(pass),
+                        transparent_depth);
+            }
         }
+        m_first_person = false;
+
+        render_camo(Pass_FP_Postprocess);
 
         render_debug_lines(p);
     }
@@ -3063,13 +3108,16 @@ struct LegacyMeshRenderer
         for(auto ent : p.template select<SubModel, DrawState>())
         {
             auto const& [sm, sm_draw] = ent.components();
+            if(pass_is_first_person(sm_draw.current_pass))
+                continue;
             auto const* mod_ptr = p.template get<Model>(sm.parent);
             if(!mod_ptr)
                 continue;
             auto         parent = p.template ref<Proxy>(sm.parent);
             Model const& mod    = *mod_ptr;
-            if(!parent.template get<Visibility>().visible_for(0) ||
-               !sm.shader.valid())
+            Visibility const& vis = parent.template get<Visibility>();
+            if(!vis.visible_for(0) || !sm.shader.valid() ||
+               !((sm.lod_mask >> mod.lod_resolve(vis.lod_for(0))) & 1))
                 continue;
 
             auto shader_it = shader_cache.find(sm.shader);

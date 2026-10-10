@@ -49,9 +49,45 @@ enum Passes
     Pass_Glass,
     Pass_Max, // component_max blend (GL_MAX), e.g. stacked holograms
 
-    Pass_Postprocess, // effects that rely on framebuffer data
+    // Effects that rely on framebuffer data, read from a copy of the world
+    // taken before first-person is drawn
+    Pass_Postprocess,
+
+    // First-person models — drawn after the world into a depth slice nearest
+    // the camera, only for the owning seat. Models only, so no water
+    Pass_FP_Opaque,
+    Pass_FP_Additive,
+    Pass_FP_Multiply,
+    Pass_FP_Max,
+    Pass_FP_Glass,
+    Pass_LastFP = Pass_FP_Glass,
+    Pass_FP_Postprocess, // reads the same pre-first-person copy
 
     Pass_Count,
+};
+
+inline bool pass_is_first_person(Passes pass)
+{
+    return pass >= Pass_FP_Opaque && pass <= Pass_FP_Postprocess;
+}
+
+inline bool pass_is_postprocess(Passes pass)
+{
+    return pass == Pass_Postprocess || pass == Pass_FP_Postprocess;
+}
+
+/* Blended passes, sorted by depth and inserted one instance per draw */
+inline bool pass_is_sorted(Passes pass)
+{
+    return pass > Pass_LastOpaque && pass != Pass_FP_Opaque;
+}
+
+/* Which set of passes a shader is placed in */
+enum class render_layer
+{
+    world,
+    skybox,
+    first_person,
 };
 
 struct Visibility
@@ -339,7 +375,7 @@ struct ShaderData
 
     template<typename V>
     inline Passes get_render_pass(
-        ShaderCache<V>& cache, bool skybox = false) const
+        ShaderCache<V>& cache, render_layer layer = render_layer::world) const
     {
         using tc = blam::tag_class_t;
         using namespace enum_helpers;
@@ -348,21 +384,41 @@ struct ShaderData
         [[maybe_unused]] auto name =
             shader_tag->to_name().to_string(cache.magic);
 
-        auto sky_pass = [skybox](Passes p) -> Passes {
-            if(!skybox)
-                return p;
-            switch(p)
+        auto sky_pass = [layer](Passes p) -> Passes {
+            switch(layer)
             {
-            case Pass_Opaque:
-            case Pass_Alphatest:
-                return Pass_SkyOpaque;
-            case Pass_Additive:
-                return Pass_SkyAdditive;
-            case Pass_Multiply:
-                return Pass_SkyMultiply;
-            default:
-                return Pass_SkyGlass;
+            case render_layer::world:
+                return p;
+            case render_layer::skybox:
+                switch(p)
+                {
+                case Pass_Opaque:
+                case Pass_Alphatest:
+                    return Pass_SkyOpaque;
+                case Pass_Additive:
+                    return Pass_SkyAdditive;
+                case Pass_Multiply:
+                    return Pass_SkyMultiply;
+                default:
+                    return Pass_SkyGlass;
+                }
+            case render_layer::first_person:
+                switch(p)
+                {
+                case Pass_Opaque:
+                case Pass_Alphatest:
+                    return Pass_FP_Opaque;
+                case Pass_Additive:
+                    return Pass_FP_Additive;
+                case Pass_Multiply:
+                    return Pass_FP_Multiply;
+                case Pass_Max:
+                    return Pass_FP_Max;
+                default:
+                    return Pass_FP_Glass;
+                }
             }
+            return p;
         };
 
         switch(shader_tag->tagclass_e[0])
@@ -371,7 +427,9 @@ struct ShaderData
             auto info = shader_data<shader_model>();
             // TODO: Distinguish other postprocess shaders
             if(camouflaged)
-                return Pass_Postprocess;
+                return layer == render_layer::first_person
+                           ? Pass_FP_Postprocess
+                           : Pass_Postprocess;
             bool alpha_test =
                 !feval(info->flags & shader_model::model_flags::no_alpha_test);
             return sky_pass(alpha_test ? Pass_Alphatest : Pass_Opaque);

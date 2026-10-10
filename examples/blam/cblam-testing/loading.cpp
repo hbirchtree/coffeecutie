@@ -509,8 +509,8 @@ struct ResourceLoader
                         shader_cache.get(region.shader);
                     shader_.initialize(shader_it, submodel);
 
-                    sub_draw.current_pass =
-                        shader_.get_render_pass(shader_cache, true);
+                    sub_draw.current_pass = shader_.get_render_pass(
+                        shader_cache, render_layer::skybox);
 
                     // Annotate DrawState with the shader info
                     auto shader_name = index.name_of(*shader_.shader_tag);
@@ -1181,7 +1181,8 @@ struct ResourceLoader
         netinfo.instance_id  = net_id;
 
         for(auto const& model_ : mesh_data.models)
-            build_submodels(p, parent_, model, model_, submodel);
+            build_submodels(
+                p, parent_, model, model_, submodel, render_layer::world, 1);
     }
 
     /* Calls fn(group, tags) with the scenario palette group_id names */
@@ -1307,6 +1308,7 @@ struct ResourceLoader
         Model&                                    model,
         generation_idx_t const&                   model_id,
         compo::EntityRecipe const&                submodel,
+        render_layer                              layer    = render_layer::world,
         u8                                        lod_mask = 0x1F)
     {
         ShaderCache<Ver>& shader_cache =
@@ -1338,7 +1340,8 @@ struct ResourceLoader
             ShaderItem const& shader_it = shader_cache.get(sub.shader);
             shader_.initialize(shader_it, submod_);
 
-            sub_draw.current_pass = shader_.get_render_pass(shader_cache);
+            sub_draw.current_pass =
+                shader_.get_render_pass(shader_cache, layer);
 
             // Annotate DrawState with the shader info
             auto shader_name = index.name_of(*shader_.shader_tag);
@@ -1718,7 +1721,7 @@ struct ResourceLoader
 
         for(auto const& model_id : mesh_data.models)
             build_submodels(
-                p, ent, model, model_id, submodel, 1);
+                p, ent, model, model_id, submodel, render_layer::world, 1);
     }
 
     void despawn_object(Proxy& p, u32 net_id)
