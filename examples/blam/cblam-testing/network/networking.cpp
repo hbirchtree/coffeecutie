@@ -54,7 +54,13 @@ extern "C" void SteamNetworkingSockets_Poll(int msMaxWaitTime);
 #endif
 
 using NetworkingManifest = compo::SubsystemManifest<
-    type_list_t<PlayerInfo, NetworkInfo, PlayerCamera, Model, ObjectPhysics>,
+    type_list_t<
+        PlayerInfo,
+        NetworkInfo,
+        PlayerCamera,
+        Model,
+        ObjectPhysics,
+        const PlayerInput>,
     type_list_t<NetworkState, PhysicsBus>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
@@ -200,6 +206,10 @@ struct MessageBase
         MapVerify,
 
         ClockSync,
+
+        /* Vehicle seats */
+        SeatSync,
+        DriveInput,
     } type{None};
 
     u32 request{};
@@ -390,6 +400,39 @@ struct alignas(8) CameraSync
     }
 };
 
+/*! A player's vehicle seat; sent on change and to newly verified peers */
+struct alignas(8) SeatSync
+{
+    static constexpr auto message_type = MessageBase::SeatSync;
+
+    enum flags_t : u32
+    {
+        none    = 0x0,
+        driver  = 0x1,
+        exiting = 0x2, /*!< Playing the seat's exit */
+    };
+
+    u32     player_idx{0};
+    u32     vehicle{0}; /*!< The vehicle's net id, 0 on foot */
+    i16     seat{-1};
+    u16     padding{0};
+    flags_t flags{none};
+
+    bool operator==(SeatSync const&) const = default;
+};
+
+/*! A driving client's input, sent to the server every frame */
+struct alignas(8) DriveInput
+{
+    static constexpr auto message_type = MessageBase::DriveInput;
+
+    Vecf4 aim;
+    u32   vehicle{0}; /*!< The vehicle's net id */
+    f32   throttle{0.f};
+    f32   steer{0.f};
+    u32   padding{0};
+};
+
 /*! A moving object at a server time. Sent while it is awake, once more as
  *  it falls asleep, and all of them to a peer once it is verified. */
 struct alignas(8) ObjectSync
@@ -528,6 +571,8 @@ static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 48);
 static_assert(sizeof(Message<CameraSync>) == 64);
 static_assert(sizeof(ObjectSync) == 80);
+static_assert(sizeof(SeatSync) == 16);
+static_assert(sizeof(DriveInput) == 32);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
@@ -2653,7 +2698,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
         }
         if(is_server())
+        {
+            send_seats(p);
             send_object_sync(p, t);
+        }
         if(m_left_server)
             leave_server(p);
         if(m_connection)
@@ -2691,6 +2739,31 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     net.changes.viewport = net.changes.transform = false;
                     net.sent_physics     = info.mode.physics;
                 }
+                if(SeatSync const seat = seat_of(p, info);
+                   !m_sent_own_seat || *m_sent_own_seat != seat)
+                {
+                    send_single(m_connection, Message<SeatSync>(SeatSync(seat)));
+                    m_sent_own_seat = seat;
+                }
+                /* The vehicle is simulated on the server; drive it there */
+                if(auto const* input = p.get<PlayerInput>(m_client_player.id());
+                   input && info.riding.driver && !info.riding.exiting)
+                    if(auto const* net =
+                           p.get<NetworkInfo>(info.riding.vehicle);
+                       net && net->instance_id != 0)
+                    {
+                        auto const& camera = m_client_player.get<PlayerCamera>();
+                        send_all(
+                            Message<DriveInput>({
+                                .aim = Vecf4(camera.camera_.cached.forward, 0),
+                                .vehicle  = net->instance_id,
+                                .throttle = input->intent.throttle,
+                                .steer    = input->intent.steer,
+                            }),
+                            k_nSteamNetworkingSend_UnreliableNoNagle,
+                            {m_connection},
+                            FRAME_UPDATE_LANE);
+                    }
             }
 
             int                       num_msgs = -1;
@@ -2777,6 +2850,79 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 k_nSteamNetworkingSend_UnreliableNoNagle,
                 current,
                 FRAME_UPDATE_LANE);
+    }
+
+    /* A player's seat as peers know it: the vehicle by its net id */
+    static SeatSync seat_of(Proxy& p, PlayerInfo const& info)
+    {
+        SeatSync out{.player_idx = info.player_idx};
+        if(info.riding.vehicle == 0)
+            return out;
+        auto const* net = p.template get<NetworkInfo>(info.riding.vehicle);
+        if(!net || net->instance_id == 0)
+            return out;
+        out.vehicle = net->instance_id;
+        out.seat    = info.riding.seat;
+        out.flags   = static_cast<SeatSync::flags_t>(
+            (info.riding.driver ? SeatSync::driver : 0) |
+            (info.riding.exiting ? SeatSync::exiting : 0));
+        return out;
+    }
+
+    /* Seats a remote player as another peer reported */
+    static void apply_seat(Proxy& p, PlayerInfo& info, SeatSync const& seat)
+    {
+        info.riding = {};
+        if(seat.vehicle == 0)
+            return;
+        for(auto object : p.template select<NetworkInfo, ObjectPhysics>())
+        {
+            auto [net, physics] = object.components();
+            if(net.instance_id != seat.vehicle || !physics.drive)
+                continue;
+            info.riding = {
+                .vehicle = object.id(),
+                .seat    = seat.seat,
+                .driver  = (seat.flags & SeatSync::driver) != 0,
+                .exiting = (seat.flags & SeatSync::exiting) != 0,
+            };
+            return;
+        }
+    }
+
+    /* Every player's seat as it changes, and all riders to a fresh peer */
+    void send_seats(Proxy& p)
+    {
+        std::vector<SeatSync> changed, riders;
+        for(auto player : p.select<PlayerInfo>())
+        {
+            auto const& info = player.get<PlayerInfo>();
+            if(!is_networked(player.id(), info))
+                continue;
+            SeatSync const seat = seat_of(p, info);
+            if(seat.vehicle != 0)
+                riders.push_back(seat);
+            auto& sent = m_sent_seats[info.player_idx];
+            if(sent != seat)
+                changed.push_back(seat);
+            sent = seat;
+        }
+        std::set<HSteamNetConnection> fresh, current;
+        for(auto& [connection, state] : m_connections)
+            if(state.verified)
+                (state.objects_synced ? current : fresh).insert(connection);
+        if(!fresh.empty() && !riders.empty())
+            send_all<SeatSync>(
+                MessageBase{MessageBase::SeatSync},
+                gsl::span<SeatSync>(riders),
+                k_nSteamNetworkingSend_Reliable,
+                fresh);
+        if(!current.empty() && !changed.empty())
+            send_all<SeatSync>(
+                MessageBase{MessageBase::SeatSync},
+                gsl::span<SeatSync>(changed),
+                k_nSteamNetworkingSend_Reliable,
+                current);
     }
 
     /* A replica shows moving objects where the server had them
@@ -2917,6 +3063,36 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }),
                 k_nSteamNetworkingSend_Reliable,
                 std::move(targets));
+            break;
+        }
+        case MessageBase::DriveInput: {
+            /* Only the vehicle the sender's own player drives */
+            if(!player_info.biped.exists())
+                break;
+            auto const& drive  = payload.value<DriveInput>();
+            auto const& riding = player_info.biped.get<PlayerInfo>().riding;
+            auto const* net    = riding.vehicle != 0
+                                     ? p.get<NetworkInfo>(riding.vehicle)
+                                     : nullptr;
+            if(!riding.driver || riding.exiting || !net ||
+               net->instance_id != drive.vehicle)
+                break;
+            Physics::Event ev{Physics::Event::Drive};
+            Physics::Drive input{
+                .vehicle  = riding.vehicle,
+                .throttle = drive.throttle,
+                .steer    = drive.steer,
+                .aim      = Vecf3(drive.aim),
+            };
+            p.subsystem<PhysicsBus>().process(ev, &input);
+            break;
+        }
+        case MessageBase::SeatSync: {
+            /* Only ever the sender's own player, whatever index it names */
+            if(!player_info.biped.exists())
+                break;
+            for(auto const& seat : payload.values<SeatSync>())
+                apply_seat(p, player_info.biped.get<PlayerInfo>(), seat);
             break;
         }
         case MessageBase::PlayerJoin: {
@@ -3070,6 +3246,24 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         switch(payload.type)
         {
+        case MessageBase::SeatSync: {
+            auto const self_idx = p.subsystem<NetworkState>().remote_player_idx;
+            for(auto const& seat : payload.values<SeatSync>())
+            {
+                if(seat.player_idx == self_idx)
+                    continue;
+                for(auto entity : p.select<PlayerInfo>())
+                {
+                    auto& info = entity.get<PlayerInfo>();
+                    if(info.is_remote() && info.player_idx == seat.player_idx)
+                    {
+                        apply_seat(p, info, seat);
+                        break;
+                    }
+                }
+            }
+            break;
+        }
         case MessageBase::ObjectSync: {
             for(auto const& sync : payload.values<ObjectSync>())
             {
@@ -3477,6 +3671,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr size_t object_history_size = 8;
     time_point                               m_next_object_sync{};
     std::map<u32, bool>                      m_object_asleep;
+    /* Last seat sent per player index; the client's own, to the server */
+    std::map<u32, SeatSync>                  m_sent_seats;
+    std::optional<SeatSync>                  m_sent_own_seat;
     std::map<u32, std::deque<ObjectSync>>    m_object_history;
     struct held_player_t
     {
