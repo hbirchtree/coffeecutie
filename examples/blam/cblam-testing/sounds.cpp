@@ -38,6 +38,7 @@
 #include <peripherals/stl/enumerate.h>
 #include <queue>
 #include <ranges>
+#include <unordered_map>
 
 #if defined(OAF_IMA_DECODER_ENABLED)
 #include <oaf/ima_adpcm/decode.h>
@@ -95,13 +96,28 @@ struct sound_unit_t
     f32                  occlusion_target{0.f}; /* fraction of rays blocked */
     bool                 has_sends{false};
 
-    /* Route through the cluster portals, used to move the apparent
-     * position towards the opening when the direct path is blocked */
-    std::vector<BSPItem::Portal const*> route{};
-    BSPItem const*                      route_bsp{nullptr};
-    u32                route_from{std::numeric_limits<u32>::max()};
+    /* Walk from each portal to the sound, used to move the apparent
+     * position towards the openings when the direct path is blocked */
+    struct portal_cost_t
+    {
+        f32   cost{0.f}; /* from the centroid */
+        f32   rest{0.f}; /* from next */
+        Vecf3 next{};    /* where the walk continues towards the sound */
+        Vecf3 normal{};
+        blam::bsp::cluster_portal const* next_portal{}; /* null at the sound */
+    };
+
+    std::unordered_map<blam::bsp::cluster_portal const*, portal_cost_t>
+                       portal_costs{};
+    BSPItem const*     route_bsp{nullptr};
     std::optional<u32> cluster{}; /* of the sound, for route_bsp */
-    f32 route_remaining{0.f}; /* first portal to the sound, via centroids */
+    /* Nearest open point, sounds are often placed inside a wall or device */
+    std::optional<Vecf3> open_position{};
+    Vecf3                route_origin{}; /* sound position the costs are from */
+    /* Smoothed turn and extra distance from the real position */
+    Quatf route_turn{1.f, 0.f, 0.f, 0.f};
+    f32   route_extra{0.f};
+    f32   route_distance{0.f}; /* 0 = direct */
     Vecf3 position_applied{};
 
     // Not used for audio tracks, more for standalone sounds
@@ -182,6 +198,10 @@ struct SoundSystem
          * both default to off. Air absorption is per meter, ~3m/unit */
         f32 room_rolloff{0.f};
         f32 air_absorption{0.f};
+        /* Seconds, for occlusion and the routed position */
+        f32 smoothing{0.3f};
+        /* Units, how much longer a portal's way may be and still pull */
+        f32 portal_spread{2.f};
 
         bool operator==(occlusion_tuning_t const&) const = default;
     } occlusion_tuning, occlusion_tuning_applied;
@@ -981,124 +1001,256 @@ struct SoundSystem
         }
     }
 
-    /* Portals crossed on the shortest walk between two clusters, walking
-     * between portal centroids */
-    static std::vector<BSPItem::Portal const*> find_route(
-        BSPItem const& bsp, u32 from, Vecf3 const& from_pos, u32 to)
+    static Vecf3 portal_normal(BSPItem::Portal const& portal)
     {
-        auto const count = bsp.clusters.size();
-        if(from >= count || to >= count)
-            return {};
-        constexpr f32 unreached = std::numeric_limits<f32>::max();
-        std::vector<f32>                    cost(count, unreached);
-        std::vector<Vecf3>                  entry(count);
-        std::vector<BSPItem::Portal const*> via(count, nullptr);
-        std::vector<u32>                    parent(count, 0);
-        using node_t = std::pair<f32, u32>;
-        std::priority_queue<node_t, std::vector<node_t>, std::greater<>> open;
-
-        cost[from]  = 0.f;
-        entry[from] = from_pos;
-        open.push({0.f, from});
-        while(!open.empty())
-        {
-            auto [c, cluster] = open.top();
-            open.pop();
-            if(c > cost[cluster])
-                continue;
-            if(cluster == to)
-            {
-                std::vector<BSPItem::Portal const*> route;
-                for(u32 at = to; at != from; at = parent[at])
-                    route.push_back(via[at]);
-                std::reverse(route.begin(), route.end());
-                return route;
-            }
-            for(auto const& portal : bsp.clusters[cluster].portals)
-            {
-                i32 adj = portal.data->front_cluster == static_cast<i16>(cluster)
-                              ? portal.data->back_cluster
-                              : portal.data->front_cluster;
-                if(adj < 0 || static_cast<size_t>(adj) >= count)
-                    continue;
-                Vecf3 const point = portal.data->centroid;
-                f32 const   next  = c + glm::distance(entry[cluster], point);
-                if(next >= cost[adj])
-                    continue;
-                cost[adj]   = next;
-                entry[adj]  = point;
-                via[adj]    = &portal;
-                parent[adj] = cluster;
-                open.push({next, static_cast<u32>(adj)});
-            }
-        }
-        return {};
+        Vecf3       normal{0.f};
+        auto const& v = portal.vertices;
+        for(size_t i = 0; i < v.size(); i++)
+            normal += glm::cross(v[i], v[(i + 1) % v.size()]);
+        return glm::length(normal) > 1e-6f ? glm::normalize(normal) : normal;
     }
 
-    void update_route(
-        sound_unit_t& unit, BSPItem const* bsp, std::optional<u32> listener)
+    /* Where the way from the listener to next goes through the portal */
+    static Vecf3 portal_crossing(
+        blam::bsp::cluster_portal const&   portal,
+        sound_unit_t::portal_cost_t const& entry,
+        Vecf3 const&                       from)
     {
-        if(unit.route_bsp != bsp)
+        Vecf3 const centroid = portal.centroid;
+        Vecf3 const n        = entry.normal;
+        if(glm::dot(n, n) < 0.5f)
+            return centroid;
+        f32 const from_side = glm::dot(from - centroid, n);
+        f32 const next_side = glm::dot(entry.next - centroid, n);
+        Vecf3     point     = from - n * from_side;
+        if(from_side * next_side < 0.f)
+            point =
+                glm::mix(from, entry.next, from_side / (from_side - next_side));
+        /* The bounding disk, a little generous at the polygon's corners */
+        Vecf3 radial = point - centroid;
+        radial -= n * glm::dot(radial, n);
+        f32 const length = glm::length(radial);
+        f32 const radius = portal.bound_radius;
+        if(length > radius)
+            radial *= radius / length;
+        return centroid + radial;
+    }
+
+    /* Shortest walk from the sound to every portal, between centroids */
+    static auto find_portal_costs(
+        BSPItem const& bsp, u32 from, Vecf3 const& from_pos)
+    {
+        using portal_t = blam::bsp::cluster_portal;
+        std::unordered_map<portal_t const*, sound_unit_t::portal_cost_t> costs;
+        using node_t = std::pair<f32, portal_t const*>;
+        std::priority_queue<node_t, std::vector<node_t>, std::greater<>> open;
+
+        auto relax =
+            [&](u32 cluster, f32 base, Vecf3 const& at, portal_t const* via) {
+                for(auto const& portal : bsp.clusters[cluster].portals)
+                {
+                    f32 const next =
+                        base + glm::distance(at, portal.data->centroid);
+                    auto [it, fresh] = costs.try_emplace(portal.data);
+                    if(!fresh && next >= it->second.cost)
+                        continue;
+                    it->second = {next, base, at, portal_normal(portal), via};
+                    open.push({next, portal.data});
+                }
+            };
+        if(from >= bsp.clusters.size())
+            return costs;
+        relax(from, 0.f, from_pos, nullptr);
+        while(!open.empty())
         {
-            unit.route_bsp  = bsp;
-            unit.cluster    = bsp ? bsp->find_cluster_tree(*unit.position)
-                                  : std::nullopt;
-            unit.route_from = std::numeric_limits<u32>::max();
-            unit.route.clear();
+            auto [cost, portal] = open.top();
+            open.pop();
+            if(cost > costs[portal].cost)
+                continue;
+            for(i32 side : {portal->front_cluster, portal->back_cluster})
+                if(side >= 0 && static_cast<size_t>(side) < bsp.clusters.size())
+                    relax(
+                        static_cast<u32>(side), cost, portal->centroid, portal);
         }
-        if(!portal_routing || !bsp || !listener || !unit.cluster ||
-           *listener == *unit.cluster)
+        return costs;
+    }
+
+    /* The sound's point if it is in a cluster, else a nearby one that is */
+    static std::optional<Vecf3> find_open_position(
+        BSPItem const& bsp, Vecf3 const& position)
+    {
+        if(bsp.find_cluster_tree(position))
+            return position;
+        std::array<Vecf3, 14> directions{};
+        u32                   n{0};
+        for(i32 axis = 0; axis < 3; axis++)
+            for(f32 sign : {1.f, -1.f})
+            {
+                Vecf3 d{0.f};
+                d[axis]         = sign;
+                directions[n++] = d;
+            }
+        for(f32 x : {1.f, -1.f})
+            for(f32 y : {1.f, -1.f})
+                for(f32 z : {1.f, -1.f})
+                    directions[n++] = glm::normalize(Vecf3{x, y, z});
+        for(f32 radius : {0.1f, 0.25f, 0.5f, 1.f})
+            for(auto const& d : directions)
+                if(bsp.find_cluster_tree(position + d * radius))
+                    return position + d * radius;
+        return std::nullopt;
+    }
+
+    void update_route(sound_unit_t& unit, BSPItem const* bsp)
+    {
+        /* Moving sounds only rebuild once they have gone some way */
+        if(unit.route_bsp == bsp &&
+           glm::distance(unit.route_origin, *unit.position) < 1.f)
+            return;
+        unit.route_bsp    = bsp;
+        unit.route_origin = *unit.position;
+        unit.open_position =
+            bsp ? find_open_position(*bsp, *unit.position) : std::nullopt;
+        unit.cluster = unit.open_position
+                           ? bsp->find_cluster_tree(*unit.open_position)
+                           : std::nullopt;
+        unit.portal_costs.clear();
+        if(unit.cluster)
+            unit.portal_costs =
+                find_portal_costs(*bsp, *unit.cluster, *unit.open_position);
+    }
+
+    /* Way out of the listener's cluster towards the sound. Portals that are
+     * nearly as short pull too, so the direction never flips between them */
+    std::optional<Vecf3> routed_position(
+        sound_unit_t const& unit, BSPItem const& bsp, u32 listener) const
+    {
+        if(unit.portal_costs.empty() || !unit.cluster ||
+           listener == *unit.cluster || listener >= bsp.clusters.size())
+            return std::nullopt;
+        auto const& portals = bsp.clusters[listener].portals;
+
+        struct candidate_t
         {
-            unit.route.clear();
-            unit.route_from = std::numeric_limits<u32>::max();
-            return;
+            f32   total;
+            Vecf3 crossing;
+            Vecf3 next;
+        };
+
+        /* Each portal on the way is crossed where the line towards the
+         * next one goes, so both sides of a portal agree on the length */
+        auto candidate =
+            [&](BSPItem::Portal const& portal) -> std::optional<candidate_t> {
+            candidate_t result{0.f, {}, {}};
+            Vecf3       at = listener_pos;
+            Vecf3       end{};
+            auto const* step = portal.data;
+            for(u32 depth = 0; step; depth++)
+            {
+                auto it = unit.portal_costs.find(step);
+                if(it == unit.portal_costs.end() || depth > 256)
+                    return std::nullopt;
+                Vecf3 const crossing = portal_crossing(*step, it->second, at);
+                result.total += glm::distance(at, crossing);
+                if(depth == 0)
+                    result.crossing = crossing;
+                if(depth == 1)
+                    result.next = crossing;
+                at   = crossing;
+                end  = it->second.next;
+                step = it->second.next_portal;
+                if(depth == 0 && !step)
+                    result.next = end;
+            }
+            result.total += glm::distance(at, end);
+            return result;
+        };
+        f32 best = std::numeric_limits<f32>::max();
+        for(auto const& portal : portals)
+            if(auto c = candidate(portal))
+                best = std::min(best, c->total);
+        if(best == std::numeric_limits<f32>::max())
+            return std::nullopt;
+
+        f32 const spread = std::max(occlusion_tuning.portal_spread, 0.01f);
+        Vecf3     direction{0.f};
+        for(auto const& portal : portals)
+        {
+            auto c = candidate(portal);
+            if(!c)
+                continue;
+            f32 const weight = std::exp(-(c->total - best) / spread);
+            /* Close to a portal, listen through it to what comes after */
+            f32 const   near  = glm::distance(listener_pos, c->crossing);
+            Vecf3 const after = c->next - listener_pos;
+            Vecf3       look =
+                glm::length(after) > 1e-3f ? glm::normalize(after) : Vecf3{0.f};
+            if(near > 1e-3f)
+                look = glm::mix(
+                    look,
+                    (c->crossing - listener_pos) / near,
+                    glm::smoothstep(0.f, 1.f, near));
+            direction += look * weight;
         }
-        /* Only searched when the listener changes cluster */
-        if(unit.route_from == *listener)
-            return;
-        unit.route_from      = *listener;
-        unit.route           = find_route(
-            *bsp, *listener, listener_pos, *unit.cluster);
-        unit.route_remaining = 0.f;
-        if(unit.route.empty())
-            return;
-        for(size_t i = 0; i + 1 < unit.route.size(); i++)
-            unit.route_remaining += glm::distance(
-                unit.route[i]->data->centroid,
-                unit.route[i + 1]->data->centroid);
-        unit.route_remaining +=
-            glm::distance(unit.route.back()->data->centroid, *unit.position);
-        cDebug(
-            "Sound {} in cluster {} from cluster {}: {} portals, +{:.1f}",
-            index.name_of(unit.source),
-            *unit.cluster,
-            *listener,
-            unit.route.size(),
-            unit.route_remaining);
+        if(glm::length(direction) < 1e-3f)
+            return std::nullopt;
+        return listener_pos + glm::normalize(direction) * best;
+    }
+
+    static Quatf rotation_between(Vecf3 const& from, Vecf3 const& to)
+    {
+        f32 const cos_angle = glm::dot(from, to);
+        if(cos_angle < -0.9999f)
+        {
+            Vecf3 const other = std::abs(from.x) < 0.9f ? Vecf3{1.f, 0.f, 0.f}
+                                                        : Vecf3{0.f, 1.f, 0.f};
+            return glm::angleAxis(
+                glm::pi<f32>(), glm::normalize(glm::cross(from, other)));
+        }
+        Vecf3 const axis = glm::cross(from, to);
+        return glm::normalize(Quatf(1.f + cos_angle, axis.x, axis.y, axis.z));
     }
 
     /* Blend from the real position towards the route by how blocked the
      * direct path is, so a sound in plain view stays where it is */
-    void apply_position(sound_unit_t& unit)
+    void apply_position(
+        sound_unit_t&      unit,
+        BSPItem const*     bsp,
+        std::optional<u32> listener,
+        f32                blend)
     {
-        Vecf3 position = *unit.position;
-        if(!unit.route.empty() && has_listener)
+        Vecf3 const real = *unit.position;
+        Quatf       turn{1.f, 0.f, 0.f, 0.f};
+        f32         extra{0.f};
+        unit.route_distance = 0.f;
+        std::optional<Vecf3> routed;
+        if(portal_routing && bsp && listener && has_listener)
+            routed = routed_position(unit, *bsp, *listener);
+        Vecf3 const to_real   = real - listener_pos;
+        f32 const   real_dist = glm::length(to_real);
+        if(routed)
         {
-            f32 const   weight      = unit.occlusion;
-            Vecf3 const to_real     = position - listener_pos;
-            Vecf3 const to_anchor =
-                unit.route.front()->data->centroid - listener_pos;
-            f32 const   real_dist   = glm::length(to_real);
-            f32 const   anchor_dist = glm::length(to_anchor);
-            if(weight > 0.f && real_dist > 1e-3f && anchor_dist > 1e-3f)
+            f32 const   weight     = unit.occlusion;
+            Vecf3 const to_route   = *routed - listener_pos;
+            f32 const   route_dist = glm::length(to_route);
+            unit.route_distance    = route_dist;
+            if(weight > 0.f && real_dist > 1e-3f && route_dist > 1e-3f)
             {
-                Vecf3 const direction = glm::normalize(glm::mix(
-                    to_real / real_dist, to_anchor / anchor_dist, weight));
-                f32 const distance = glm::mix(
-                    real_dist, anchor_dist + unit.route_remaining, weight);
-                position = listener_pos + direction * distance;
+                Vecf3 const direction = glm::normalize(
+                    glm::mix(
+                        to_real / real_dist, to_route / route_dist, weight));
+                turn  = rotation_between(to_real / real_dist, direction);
+                extra = glm::mix(real_dist, route_dist, weight) - real_dist;
             }
         }
+        /* Smoothed as a turn and a length, a lerped offset cuts corners */
+        unit.route_turn = glm::slerp(unit.route_turn, turn, blend);
+        unit.route_extra += (extra - unit.route_extra) * blend;
+        Vecf3 const position =
+            has_listener && real_dist > 1e-3f
+                ? listener_pos + (unit.route_turn * (to_real / real_dist)) *
+                                     (real_dist + unit.route_extra)
+                : real;
         if(position == unit.position_applied)
             return;
         unit.position_applied = position;
@@ -1117,7 +1269,8 @@ struct SoundSystem
                                 : std::nullopt;
         /* Outside the level (flycam) everything would read as occluded */
         bool const trace = occlusion_enabled && listener_cluster.has_value();
-        f32 const      blend = std::min(1.f, dt / 0.15f); /* ~150ms */
+        f32 const  blend =
+            std::min(1.f, dt / std::max(occlusion_tuning.smoothing, 1e-3f));
         bool const reapply =
             occlusion_uses_efx() != occlusion_efx_applied ||
             !(occlusion_tuning == occlusion_tuning_applied);
@@ -1127,9 +1280,13 @@ struct SoundSystem
         auto update = [&](sound_unit_t& unit) {
             if(!unit.position)
                 return;
-            f32 target =
-                trace ? occlusion_fraction(*bsp, listener_pos, *unit.position)
-                      : 0.f;
+            update_route(unit, bsp);
+            f32 target = trace
+                             ? occlusion_fraction(
+                                   *bsp,
+                                   listener_pos,
+                                   unit.open_position.value_or(*unit.position))
+                             : 0.f;
             if(target != unit.occlusion_target)
             {
                 unit.occlusion_target = target;
@@ -1144,8 +1301,7 @@ struct SoundSystem
             if(reapply)
                 unit.occlusion_applied = -1.f;
             apply_occlusion(unit);
-            update_route(unit, bsp, listener_cluster);
-            apply_position(unit);
+            apply_position(unit, bsp, listener_cluster, blend);
             apply_range(unit);
         };
         for(auto& [id, unit] : active_sounds)
@@ -1377,6 +1533,10 @@ struct SoundUISystem
                             "Reverb rolloff", &tune.room_rolloff, 0.f, 2.f);
                         ImGui::SliderFloat(
                             "Air absorption", &tune.air_absorption, 0.f, 10.f);
+                        ImGui::SliderFloat(
+                            "Smoothing", &tune.smoothing, 0.f, 1.f);
+                        ImGui::SliderFloat(
+                            "Portal spread", &tune.portal_spread, 0.f, 10.f);
                     }
                     ImGui::Separator();
                     auto sound_row = [&](u64                 entity,
@@ -1396,18 +1556,11 @@ struct SoundUISystem
                                 "    [occlusion] %.2f (target %.2f)",
                                 sound.occlusion,
                                 sound.occlusion_target);
-                        if(!sound.route.empty())
-                        {
-                            Vecf3 const via = sound.route.front()->data->centroid;
+                        if(sound.route_distance > 0.f)
                             ImGui::Text(
-                                "    [route] %zu portals, via %.1f,%.1f,%.1f "
-                                "+%.1f",
-                                sound.route.size(),
-                                via.x,
-                                via.y,
-                                via.z,
-                                sound.route_remaining);
-                        }
+                                "    [route] %.1f via portals, %zu costed",
+                                sound.route_distance,
+                                sound.portal_costs.size());
                         if(item_it == sound_cache.end())
                         {
                             ImGui::Text("    [not in cache]");
