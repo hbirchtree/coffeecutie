@@ -198,6 +198,15 @@ struct texture_2da_t : texture_array_base_t
         return m_textures.at(i);
     }
 
+    void dealloc() override
+    {
+        for(auto& layer : m_textures)
+            layer->dealloc();
+        m_textures.clear();
+        m_page_allocated.clear();
+        texture_array_base_t::dealloc();
+    }
+
     texture_usage_hint_t m_hints{texture_usage_hint_t::no_hints};
     std::vector<std::shared_ptr<texture_2d_t>> m_textures;
     /* sparse_atlas: per-layer lazy-allocation flags */
@@ -302,6 +311,15 @@ struct texture_cube_array_t : texture_cube_base_t
         if(i >= m_textures.size())
             return nullptr;
         return m_textures.at(i);
+    }
+
+    void dealloc() override
+    {
+        for(auto& layer : m_textures)
+            layer->dealloc();
+        m_textures.clear();
+        m_page_allocated.clear();
+        texture_cube_base_t::dealloc();
     }
 
     texture_usage_hint_t m_hints{texture_usage_hint_t::no_hints};

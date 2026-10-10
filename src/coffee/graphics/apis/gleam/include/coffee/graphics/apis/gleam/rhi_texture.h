@@ -86,7 +86,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
     virtual void alloc(size_type const& size, bool create_storage = true);
 
-    inline void dealloc()
+    virtual void dealloc()
     {
         cmd::delete_textures(SpanOne<u32>(m_handle));
         m_handle.release();
