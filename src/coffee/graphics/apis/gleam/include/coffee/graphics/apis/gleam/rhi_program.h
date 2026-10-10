@@ -111,10 +111,61 @@ struct program_t
     using compile_error_t = std::tuple<std::string>;
     using compile_log_t = std::tuple<std::string /* log text*/, int /* ??? */>;
 
-    program_t(features::programs features, debug::api& debug)
+    program_t(
+        features::programs features, debug::api& debug, bool adreno = false)
         : m_features(features)
         , m_debug(debug)
+        , m_adreno(adreno)
     {
+    }
+
+    /* On Adreno big enough programs fail to link */
+    static constexpr libc_types::szptr adreno_large_stage = 160 * 1024;
+
+    std::string stage_sizes() const
+    {
+        std::string out;
+        for(auto const& [stage, shader] : m_stages)
+            out += fmt::format(
+                "{}{}: {} KB",
+                out.empty() ? "" : ", ",
+                stage == stage_t::Vertex     ? "vertex"
+                : stage == stage_t::Fragment ? "fragment"
+                : stage == stage_t::Compute  ? "compute"
+                                             : "other",
+                shader->m_data.size() / 1024);
+        return out;
+    }
+
+    void warn_adreno_size() const
+    {
+        if(!m_adreno)
+            return;
+        for(auto const& [stage, shader] : m_stages)
+            if(shader->m_format == shader_format_t::source &&
+               shader->m_data.size() >= adreno_large_stage)
+            {
+                Coffee::cWarning(
+                    "Adreno: large shader ({}), linking may fail with an empty "
+                    "log. Shrink it (hoist work out of branches) or split it",
+                    stage_sizes());
+                return;
+            }
+    }
+
+    /* Empty-log link failures on Adreno are the compiler giving up, so say so
+     * instead of reporting an empty error */
+    std::string explain_link_failure(std::string info) const
+    {
+        constexpr std::string_view blank{" \t\r\n\0", 5};
+        if(!m_adreno || info.find_first_not_of(blank) != std::string::npos)
+            return info;
+        return fmt::format(
+            "Adreno: program link failed with no info log. The driver likely "
+            "hit an internal compiler limit because the program is too large "
+            "or complex ({}). Shrink it (hoist work out of branches) or split "
+            "it",
+            stage_sizes());
     }
 
     void add(stage_t stage, std::shared_ptr<shader_t> shader)
@@ -172,7 +223,8 @@ struct program_t
             gl::group::program_property_arb::link_status,
             SpanOne(link_status));
         if(!link_status)
-            return stl_types::failure(compile_error_t{info});
+            return stl_types::failure(
+                compile_error_t{explain_link_failure(std::move(info))});
 
         return stl_types::success(compile_log_t{info, 1});
     }
@@ -186,6 +238,7 @@ struct program_t
         m_explicit_uniform_state.clear();
 
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
+        warn_adreno_size();
 #if GLEAM_MAX_VERSION >= 0x460
         while(m_features.spirv)
         {
@@ -434,6 +487,7 @@ struct program_t
 
     features::programs m_features;
     debug::api         m_debug;
+    bool               m_adreno{false};
     stage_map_t        m_stages;
     hnd                m_handle;
     bool               m_async_waiting{false};

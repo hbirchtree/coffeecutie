@@ -83,7 +83,7 @@ struct api
     inline auto alloc_program()
     {
         return std::make_shared<program_t>(
-            m_features.program, std::ref(*m_debug));
+            m_features.program, std::ref(*m_debug), m_workarounds.bugs.adreno);
     }
 
     inline auto alloc_rendertarget()
