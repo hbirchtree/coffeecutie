@@ -470,6 +470,8 @@ struct ResourceLoader
             if(skybox_.outdoor_fog.opaque_distance < 1)
                 world_data[0].fog.distances.w = 1000.f;
 
+            world_data[0].point_count = {};
+            resources.world             = world_data[0];
             resources.world_store->unmap();
 
             if(skybox_.model.valid())

@@ -2195,6 +2195,43 @@ struct MeshRenderer
             get_view_state(0));
     }
 
+    /* The dynamic lights that matter most to the primary view */
+    void upload_point_lights(Proxy& p)
+    {
+        auto const& scene = p.template subsystem<EffectScene>();
+        auto&       world = m_resources.world;
+        Vecf3 const eye   = m_players.empty() ? Vecf3{} : m_players[0].position;
+
+        std::vector<EffectScene::light_t const*> lights;
+        for(auto const& l : scene.lights)
+            if(l.radius > 0.f && glm::dot(l.color, l.color) > 1e-4f &&
+               glm::distance(l.position, eye) < l.radius + point_light_range)
+                lights.push_back(&l);
+        auto weight = [&eye](EffectScene::light_t const* l) {
+            return (l->color.r + l->color.g + l->color.b) * l->radius /
+                   (1.f + glm::distance(l->position, eye));
+        };
+        size_t const count = std::min(lights.size(), materials::max_point_lights);
+        std::partial_sort(
+            lights.begin(), lights.begin() + count, lights.end(),
+            [&weight](auto a, auto b) { return weight(a) > weight(b); });
+        for(size_t i = 0; i < count; i++)
+            world.points[i] = {
+                .position = Vecf4(lights[i]->position, lights[i]->radius),
+                .color    = Vecf4(lights[i]->color, 1.f),
+            };
+        bool const had = world.point_count.x > 0.f;
+        world.point_count.x = static_cast<f32>(count);
+        if(count == 0 && !had)
+            return;
+        auto mapped = m_resources.world_store->template map<materials::world_data>(0);
+        if(!mapped.empty())
+            mapped[0] = world;
+        m_resources.world_store->unmap();
+    }
+
+    static constexpr f32 point_light_range = 60.f; /* wu past a light's radius */
+
     /* Particles, contrails and light volumes, over the world's transparents */
     void render_effects(Proxy& p, gfx::depth_extended_state const& depth)
     {
@@ -2776,6 +2813,8 @@ struct MeshRenderer
                 return {};
             }
         };
+
+        upload_point_lights(p);
 
         /* Primary player is always the first one (seat_idx == 0) */
         u32 primary_player = 0;

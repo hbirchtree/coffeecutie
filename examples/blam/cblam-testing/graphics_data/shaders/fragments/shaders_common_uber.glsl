@@ -74,12 +74,40 @@ struct FogProperties
 };
 
 const int MAX_WORLD_LIGHTS = 8;
+const int MAX_POINT_LIGHTS = 8;
+
+struct PointLight
+{
+    vec4 position; /* xyz, w = radius */
+    vec4 color;
+};
 
 layout(binding = 2, std140) uniform WorldProperties
 {
     LightProperties lighting[MAX_WORLD_LIGHTS];
     FogProperties fog;
+    PointLight points[MAX_POINT_LIGHTS];
+    vec4 point_count;
 } world;
+
+/* Dynamic lights: explosions, muzzle flashes, plasma */
+vec3 point_lighting(vec3 position, vec3 normal)
+{
+    vec3 sum   = vec3(0);
+    int  count = int(world.point_count.x);
+    for(int i = 0; i < MAX_POINT_LIGHTS; i++)
+    {
+        if(i >= count)
+            break;
+        vec4  pl   = world.points[i].position;
+        vec3  d    = pl.xyz - position;
+        float dist = length(d);
+        float att  = clamp(1.0 - dist / max(pl.w, 0.001), 0.0, 1.0);
+        float ndl  = max(dot(normal, d / max(dist, 0.0001)), 0.0);
+        sum += world.points[i].color.rgb * att * att * ndl;
+    }
+    return sum;
+}
 
 const uint INTERIOR_LIGHTING = 0u;
 const uint EXTERIOR_LIGHTING = 1u;
@@ -436,7 +464,7 @@ vec4 shader_environment(in Material mat)
     if(has_micro == 1)
         out_color = apply_detail(out_color, micro.rgb, micro_func);
 #if USE_LIGHTMAPS == 1
-    out_color *= lightmap.rgb;
+    out_color *= lightmap.rgb + point_lighting(frag.position, normalize(frag.normal));
 #endif
 #if USE_REFLECTIONS == 1
     vec3 refl_out = reflection * refl_color * refl_strength * specular;
@@ -998,7 +1026,7 @@ vec4 shader_model(in Material mat)
              * world.lighting[li].light_color.a
              * max(0.0, dot(frag.normal, normalize(light_dir.xyz)));
     }
-    lit = clamp(lit, 0.1, 1.0);
+    lit = clamp(lit, 0.1, 1.0) + point_lighting(frag.position, normalize(frag.normal));
 
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
         return vec4(normalize(frag.normal), 1);

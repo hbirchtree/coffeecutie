@@ -20,6 +20,7 @@
 #include <peripherals/typing/vectors/glm_vector_types.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
+#include "materials.h"
 #include "graphics_api.h"
 
 using namespace Coffee::StandardInput;
@@ -95,6 +96,8 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::revolving_buffer_t> material_store;
     std::shared_ptr<gfx::revolving_buffer_t> transparent_store;
     std::shared_ptr<gfx::buffer_t>           world_store;
+    /* What world_store holds; it is rewritten whole each frame */
+    materials::world_data world{};
     std::shared_ptr<gfx::revolving_buffer_t>
         bone_matrix_buf; /* per-frame bone transforms, separate from static
                             vertex data */
