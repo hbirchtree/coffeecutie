@@ -1002,6 +1002,30 @@ inline bool biped_in_play(
     return info.riding.vehicle == 0 && biped_shown(info, cam, net);
 }
 
+struct BipedEquipment
+{
+    using value_type = BipedEquipment;
+    using type = compo::alloc::VectorContainer<BipedEquipment>;
+
+    // We need the biped reference to check
+    // certain params related to weapons and equipment
+    blam::scn::biped const* biped{nullptr};
+    struct weapon_t
+    {
+        blam::scn::weapon const* weapon{nullptr};
+        u16 rounds_loaded{0};
+        u16 rounds_total{0};
+    };
+    struct equipment_t
+    {
+        blam::scn::equipment const* equip{nullptr};
+        u16                         left{0};
+        std::chrono::seconds        time_left{};
+    };
+    std::array<weapon_t, 2>  weapons;
+    std::vector<equipment_t> equipment; // grenades, powerups
+};
+
 struct CameraLerp
 {
     using value_type = CameraLerp;
