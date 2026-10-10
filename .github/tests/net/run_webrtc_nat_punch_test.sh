@@ -115,6 +115,17 @@ if ! webrtc_wait_for_registration "$SERVER_LOG" "$SERVER_ID" "$BOOT_TIMEOUT" "$W
         echo "  (the signaling websocket never connected -- the remote gateway in"
         echo "   WEBRTC_GATEWAY_SERVER is down or unreachable, so this ran before"
         echo "   any punch was attempted)"
+        # A proxy in front of the gateway can refuse the upgrade; show its answer
+        PROBE_URL="$(echo "${GATEWAY_URL%%#*}" | sed -E 's#^ws(s?)://#http\1://#')/server-signal"
+        PROBE_HOST="$(echo "$PROBE_URL" | sed -E 's#^https?://##; s#[/:].*##')"
+        PROBE=$(curl -sS -o /dev/null -D - --http1.1 --max-time 10 \
+            -H "Connection: Upgrade" -H "Upgrade: websocket" \
+            -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+            "$PROBE_URL" 2>&1 | tr -d '\r' | grep -iE "^HTTP/|^server:|^curl:" |
+            sed -E 's/^(curl: \([0-9]+\)).*/\1/' | tr '\n' ' ')
+        echo "  runner probe of the upgrade: ${PROBE:-no response}"
+        grep "libdatachannel:" "$SERVER_LOG" | head -n 5 |
+            sed "s#$PROBE_HOST#<gateway>#g; s/^/  /"
     else
         echo "  (the remote gateway never got our punch, or its reply never came back --"
         echo "   check that its UDP punch port is reachable and that it is actually up)"
