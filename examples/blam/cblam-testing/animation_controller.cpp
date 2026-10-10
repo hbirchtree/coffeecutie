@@ -94,8 +94,10 @@ struct AnimationController
             auto const* info    = p.template get<PlayerInfo>(ent.id());
             auto const* physics = p.template get<ObjectPhysics>(ent.id());
             auto const* model   = p.template get<Model>(ent.id());
-            bool const  posed   = (info && info->biped.collision) ||
-                                (physics && physics->upright);
+            /* First-person models too, for markers such as the muzzle */
+            bool const posed = (info && info->biped.collision) ||
+                               (physics && physics->upright) ||
+                               p.template get<Attachment>(ent.id()) != nullptr;
             if(posed && model && anim.graph)
             {
                 anim.pose.assign(cache.bone_count(model->model), Matf4(1));

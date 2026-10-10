@@ -15,6 +15,7 @@
 #include "impact_sounds.h"
 #include "projectiles.h"
 #include "effects.h"
+#include "weapons.h"
 #include "vehicle_sounds.h"
 #include "physics.h"
 #include "player_controller.h"
@@ -281,6 +282,7 @@ i32 blam_main()
             alloc_vehicle_sounds(e);
             alloc_projectiles(e);
             alloc_effects(e);
+            alloc_weapons(e);
             alloc_scripting(e);
             setup_load_eventhandlers(e);
             alloc_camera_control(e);

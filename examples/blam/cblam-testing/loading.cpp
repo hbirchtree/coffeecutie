@@ -111,6 +111,7 @@ struct ResourceLoader
         std::vector<i16>          hands_nodes;
         blam::tagref_typed_t<blam::tag_class_t::mod2> fp_weapon{};
         std::vector<i16>                              weapon_nodes;
+        blam::tag_t const*                            weapon{nullptr};
     } biped_model;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>> spawn_bsp_queue;
@@ -1934,7 +1935,10 @@ struct ResourceLoader
             biped_model.weapon_nodes =
                 graph_nodes_of(files, weapon.value()->first_person_model, *graph);
             if(!biped_model.weapon_nodes.empty())
+            {
                 biped_model.fp_weapon = weapon.value()->first_person_model;
+                biped_model.weapon    = &tag;
+            }
             cDebug(
                 "First-person hands animated by {}, weapon {}",
                 index.name_of(*graph_tag),
@@ -2388,6 +2392,7 @@ struct ResourceLoader
                 }
                 if(auto foot = index.find(biped->footsteps); foot != index.end())
                     biped_model.shape.footsteps = &(*foot);
+                biped_model.shape.weapon          = biped_model.weapon;
                 biped_model.shape.load_generation = files.load_generation;
             }
         }
@@ -2471,8 +2476,12 @@ struct ResourceLoader
                 biped_model.hands_nodes));
             if(biped_model.fp_weapon.valid())
                 models.push_back(spawn_first_person(
-                    p, player.id(), info.seat_idx, biped_model.fp_weapon,
-                    biped_model.weapon_nodes));
+                    p,
+                    player.id(),
+                    info.seat_idx,
+                    biped_model.fp_weapon,
+                    biped_model.weapon_nodes,
+                    biped_model.weapon));
         }
 
         for(auto it = first_person_models.begin();
@@ -2494,10 +2503,13 @@ struct ResourceLoader
         u64                                                  player,
         u32                                                  seat,
         blam::tagref_typed_t<blam::tag_class_t::mod2> const& model,
-        std::vector<i16> const&                              nodes)
+        std::vector<i16> const&                              nodes,
+        blam::tag_t const*                                   object = nullptr)
     {
         auto ent = p.create_entity(shared_recipes::first_person_model);
         p.template get<Attachment>(ent.id())->parent = player;
+        /* The weapon's attachments, e.g. its muzzle flash, ride along */
+        p.template get<Model>(ent.id())->origin_object = object;
         if(biped_model.fp_graph && !nodes.empty())
         {
             auto* anim       = p.template get<AnimationPlayback>(ent.id());

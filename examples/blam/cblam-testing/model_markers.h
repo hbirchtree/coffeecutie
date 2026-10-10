@@ -9,8 +9,15 @@
 #include <optional>
 #include <string_view>
 
+/* A marker in the bind pose, and the node it rides on */
+struct bound_marker_t
+{
+    typing::vector_types::Matf4 transform;
+    libc_types::i32             node{-1};
+};
+
 /* Model space transform of a named marker on a mod2, in the bind pose */
-inline std::optional<typing::vector_types::Matf4> bind_marker(
+inline std::optional<bound_marker_t> bind_marker_node(
     blam::tag_t const& model, std::string_view name, blam::map_ptr const& magic)
 {
     using typing::vector_types::Matf4;
@@ -43,8 +50,19 @@ inline std::optional<typing::vector_types::Matf4> bind_marker(
         }
         Quatf const rotation(
             at.rotation.w, at.rotation.x, at.rotation.y, at.rotation.z);
-        return node * glm::translate(Matf4(1), at.position) *
-               glm::mat4_cast(glm::conjugate(rotation));
+        return bound_marker_t{
+            node * glm::translate(Matf4(1), at.position) *
+                glm::mat4_cast(glm::conjugate(rotation)),
+            at.node_idx,
+        };
     }
+    return std::nullopt;
+}
+
+inline std::optional<typing::vector_types::Matf4> bind_marker(
+    blam::tag_t const& model, std::string_view name, blam::map_ptr const& magic)
+{
+    if(auto marker = bind_marker_node(model, name, magic))
+        return marker->transform;
     return std::nullopt;
 }

@@ -188,7 +188,7 @@ struct PlayerController
             input.movement  = {};
             intent.move     = {};
             intent.throttle = intent.steer = 0.f;
-            intent.use = intent.grab = intent.jump = false;
+            intent.use = intent.grab = intent.jump = intent.fire = false;
             return;
         }
 
@@ -207,9 +207,12 @@ struct PlayerController
             move /= std::sqrt(len2);
         intent.move = move;
         intent.use  = (pad && b.x) || (keyboard && key(CK_f));
-        intent.grab = (pad && state.axes.e.t_r > trigger_pressed) ||
+        intent.grab = (pad && state.axes.e.t_l > trigger_pressed) ||
                       (keyboard &&
                        (input.mouse_buttons & CIMouseButtonEvent::RightButton));
+        intent.fire = (pad && state.axes.e.t_r > trigger_pressed) ||
+                      (keyboard &&
+                       (input.mouse_buttons & CIMouseButtonEvent::LeftButton));
     }
 
     static seat_t seat_of(PlayerInfo const& info)

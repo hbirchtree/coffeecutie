@@ -25,7 +25,9 @@ using EffectManifest = compo::SubsystemManifest<
         const Projectile,
         const ObjectPhysics,
         const PlayerCamera,
-        const PlayerInfo>,
+        const PlayerInfo,
+        const Attachment,
+        const AnimationPlayback>,
     type_list_t<
         EffectScene,
         PhysicsBus,
@@ -336,10 +338,18 @@ struct EffectSystem
             auto key = std::pair{model->tag, marker};
             auto it  = m_markers.find(key);
             if(it == m_markers.end())
-                it = m_markers.emplace(key, bind_marker(*model->tag, marker, *m_magic))
+                it = m_markers
+                         .emplace(key, bind_marker_node(*model->tag, marker, *m_magic))
                          .first;
             if(it->second)
-                at = at * *it->second;
+            {
+                /* An animated model carries its markers along with the pose */
+                auto const* anim = p.template get<AnimationPlayback>(entity);
+                auto const  node = static_cast<size_t>(it->second->node);
+                if(anim && it->second->node >= 0 && node < anim->pose.size())
+                    at = at * anim->pose[node];
+                at = at * it->second->transform;
+            }
         }
         return place_t{
             .position = Vecf3(at[3]),
@@ -610,7 +620,12 @@ struct EffectSystem
     /* A burst of part sprites */
     void emit(Proxy& p, effect_instance_t const& fx, effect::particle_t const& burst)
     {
-        if(burst.create == effect::camera_mode_t::only_in_first_person)
+        /* First-person effects play on first-person models only */
+        bool const first_person =
+            fx.parent != 0 && p.template get<Attachment>(fx.parent);
+        if(burst.create == effect::camera_mode_t::only_in_first_person && !first_person)
+            return;
+        if(burst.create == effect::camera_mode_t::only_in_third_person && first_person)
             return;
         auto const* part =
             tag_data<particle>(burst.particle_type, blam::tag_class_t::part);
@@ -1437,7 +1452,7 @@ struct EffectSystem
     u64                              m_light_ids{0};
     std::unordered_map<u64, std::array<f32, 4>> m_flare_seen;
 
-    std::map<std::pair<blam::tag_t const*, std::string>, std::optional<Matf4>>
+    std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>>
         m_markers;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnEffectEvent>> m_spawn_queue;

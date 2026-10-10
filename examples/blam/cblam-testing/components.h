@@ -851,6 +851,8 @@ struct PlayerInfo
          * from the map loaded as `load_generation` */
         blam::antr::header const* anim_graph{nullptr};
         blam::tag_t const*        footsteps{nullptr};
+        /*! What it holds: the weapon its first-person view shows */
+        blam::tag_t const*        weapon{nullptr};
         u32                       load_generation{0};
 
         f32 eye_offset() const
@@ -970,6 +972,7 @@ struct PlayerInput
         f32   steer{0.f};    /*!< Right is positive */
         bool  use{false};    /*!< Held: enter or leave a vehicle */
         bool  grab{false};   /*!< Held: forge grab */
+        bool  fire{false};   /*!< Held: pull the trigger */
         bool  jump{false};   /*!< Wanted; cleared once taken or stale */
     } intent;
 

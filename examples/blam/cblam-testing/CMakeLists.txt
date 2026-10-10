@@ -45,6 +45,7 @@ coffee_application(
         vehicle_sounds.cpp
         projectiles.cpp
         effects.cpp
+        weapons.cpp
         debug_ui/widgets.cpp
         forge_controller.cpp
         graphics.cpp
