@@ -3,6 +3,7 @@
 #include "blam_files.h"
 #include "components.h"
 #include "data.h"
+#include "model_markers.h"
 #include "physics.h"
 #include "selected_version.h"
 
@@ -150,41 +151,11 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         if(auto it = m_markers.find(key); it != m_markers.end())
             return it->second;
         auto& out = m_markers[key];
-        auto const& magic =
-            p.template subsystem<BlamFiles<halo_version>>().container.magic;
-        if(!vehicle.tag)
-            return out;
-        auto mod2 = vehicle.tag->data<blam::mod2::header<halo_version>>(magic);
-        if(!mod2.has_value())
-            return out;
-        auto markers = mod2.value()[0].markers.data(magic);
-        auto bones   = mod2.value()[0].bones.data(magic);
-        if(!markers.has_value() || !bones.has_value())
-            return out;
-        for(auto const& marker : markers.value())
-        {
-            if(marker.name.str() != name)
-                continue;
-            auto instances = marker.instances.data(magic);
-            if(!instances.has_value() || instances.value().empty())
-                break;
-            auto const& at = instances.value()[0];
-            /* Bind pose of its node, the way caching.cpp builds inv_bind */
-            Matf4 node(1);
-            for(i32 i = at.node_idx; i >= 0 &&
-                                     static_cast<size_t>(i) < bones.value().size();)
-            {
-                auto const& b = bones.value()[i];
-                node = glm::translate(Matf4(1), b.translation) *
-                       glm::mat4_cast(glm::conjugate(b.rotation)) * node;
-                i = b.parent == blam::mod2::bone::invalid_bone ? -1 : b.parent;
-            }
-            Quatf const rotation(
-                at.rotation.w, at.rotation.x, at.rotation.y, at.rotation.z);
-            out = node * glm::translate(Matf4(1), at.position) *
-                  glm::mat4_cast(glm::conjugate(rotation));
-            break;
-        }
+        if(vehicle.tag)
+            out = bind_marker(
+                *vehicle.tag,
+                name,
+                p.template subsystem<BlamFiles<halo_version>>().container.magic);
         return out;
     }
 

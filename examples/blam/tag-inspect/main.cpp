@@ -1622,6 +1622,23 @@ void dump_lens_flare(blam::scn::lens_flare const* lens)
     });
 }
 
+void dump_point_physics(blam::scn::point_physics const* pphy)
+{
+    fmt::print("  [pphy]\n    ");
+    print_flags("flags", pphy->flags);
+    fmt::print(
+        "\n    mass_scale={} gravity air={} water={} density={} friction "
+        "air={} water={} surface={} elasticity={}\n",
+        pphy->mass_scale,
+        pphy->air_gravity_scale,
+        pphy->water_gravity_scale,
+        pphy->density,
+        pphy->air_friction,
+        pphy->water_friction,
+        pphy->surface_friction,
+        pphy->elasticity);
+}
+
 void dump_equipment(blam::scn::equipment const* equipment)
 {
     dump_item(equipment);
@@ -4235,6 +4252,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     case blam::tag_class_t::lens:
         if(auto* info = header_of((blam::scn::lens_flare*)nullptr))
             dump_lens_flare(info);
+        break;
+    case blam::tag_class_t::pphy:
+        if(auto* info = header_of((blam::scn::point_physics*)nullptr))
+            dump_point_physics(info);
         break;
     case blam::tag_class_t::sotr:
         if(auto* info = header_of((shader_transparent*)nullptr))
