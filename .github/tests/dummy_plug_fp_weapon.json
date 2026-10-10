@@ -1,0 +1,54 @@
+{
+ "graphics": {
+  "window": {
+   "width": 1280,
+   "height": 720,
+   "depth": 24
+  },
+  "gl": [
+   {
+    "major": 4,
+    "minor": 6
+   }
+  ],
+  "gles": [],
+  "screenshot_quality": 90
+ },
+ "audio": {
+  "frequency": 48000,
+  "channels": 2,
+  "format": "f32"
+ },
+ "events": [
+  {
+   "time": 3000,
+   "type": "camera",
+   "physics": true
+  },
+  {
+   "time": 4000,
+   "type": "screenshot",
+   "name": "fp_idle"
+  },
+  {
+   "time": 4200,
+   "type": "play_animation",
+   "seat": 0,
+   "first_person": true,
+   "name": "first-person reload-full",
+   "fade": 0.1
+  },
+  {
+   "time": 5400,
+   "type": "screenshot",
+   "name": "fp_reload"
+  },
+  {
+   "time": 8500,
+   "type": "screenshot",
+   "name": "fp_back_to_idle"
+  }
+ ],
+ "end_time": 25000,
+ "frame_delta": 100
+}
