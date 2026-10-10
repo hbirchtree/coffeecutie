@@ -205,7 +205,7 @@ struct ResourceLoader
         despawn_object_queue->poll();
 
         reconcile_player_bipeds(p, files);
-        reconcile_first_person(p);
+        reconcile_first_person(p, files);
 
         bool const section_changed = current.section >= 0 &&
                                      pending_bsps.empty() &&
@@ -2325,19 +2325,22 @@ struct ResourceLoader
     }
 
     /* Hands for local seats on foot; not in freecam or vehicles */
-    void reconcile_first_person(Proxy& p)
+    void reconcile_first_person(Proxy& p, BlamFiles<Ver> const& files)
     {
         LoadingStatus const* loading;
         p.subsystem(loading);
         if(loading->loaded_map != LoadingStatus::loaded)
             return;
+        /* Nobody is in first person on the main menu */
+        bool const menu =
+            files.container.map->map_type == blam::maptype_t::ui;
 
         std::set<u64> live;
         for(auto player :
             p.template select<PlayerCamera, PlayerInfo, NetworkInfo>())
         {
             auto [cam, info, net] = player.components();
-            if(!biped_model.hands.valid() || info.is_remote() ||
+            if(menu || !biped_model.hands.valid() || info.is_remote() ||
                !info.mode.physics || !biped_in_play(info, cam, net))
                 continue;
             live.insert(player.id());
