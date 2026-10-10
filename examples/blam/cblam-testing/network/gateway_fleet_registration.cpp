@@ -37,6 +37,8 @@ constexpr std::chrono::seconds kHeartbeatInterval{10};
  * without being chatty. */
 constexpr std::chrono::seconds kRegistrationPunchInterval{1};
 constexpr std::chrono::seconds kRegistrationRetryInterval{7};
+/* How long to wait before reopening a failed or dropped signaling socket */
+constexpr std::chrono::seconds kReconnectInterval{5};
 /* How often each per-client relay re-punches to keep its NAT mapping
  * alive for the life of that client's connection. */
 constexpr std::chrono::seconds kRelayPunchInterval{2};
@@ -108,7 +110,10 @@ GatewayFleetRegistration::GatewayFleetRegistration(
 GatewayFleetRegistration::~GatewayFleetRegistration()
 {
     if(m_ws)
+    {
+        m_ws->onClosed(nullptr);
         m_ws->close();
+    }
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
     if(m_challengeSock >= 0)
         ::close(m_challengeSock);
@@ -186,7 +191,52 @@ void GatewayFleetRegistration::Start()
             "webrtc_signaling: gateway_fleet_registration: websocket error: {}",
             error);
     });
+    m_ws->onClosed([this]() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_wsOpen          = false;
+        m_wsClosed        = true;
+        m_active          = false;
+        m_havePunchTarget = false;
+    });
+
+    /* Its handshake failures (e.g. a proxy's HTTP status) only go here */
+    static std::once_flag rtc_logger;
+    std::call_once(rtc_logger, [] {
+        rtc::InitLogger(
+            rtc::LogLevel::Warning, [](rtc::LogLevel, std::string message) {
+                cWarning("libdatachannel: {}", message);
+            });
+    });
+
+    m_lastConnectAttempt = std::chrono::steady_clock::now();
     m_ws->open(m_registerUrl + "/server-signal");
+}
+
+void GatewayFleetRegistration::pollReconnect()
+{
+    auto now = std::chrono::steady_clock::now();
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if(!m_wsClosed || now - m_lastConnectAttempt < kReconnectInterval)
+            return;
+        m_wsClosed           = false;
+        m_lastConnectAttempt = now;
+    }
+    cDebug(
+        "webrtc_signaling: gateway_fleet_registration: reconnecting to the "
+        "gateway");
+    try
+    {
+        m_ws->open(m_registerUrl + "/server-signal");
+    } catch(std::exception const& e)
+    {
+        cWarning(
+            "webrtc_signaling: gateway_fleet_registration: reconnect "
+            "failed: {}",
+            e.what());
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_wsClosed = true;
+    }
 }
 
 void GatewayFleetRegistration::onWebSocketOpen()
@@ -517,7 +567,11 @@ void GatewayFleetRegistration::Poll()
         active = m_active;
     }
     if(!wsOpen)
+    {
+        if(m_ws)
+            pollReconnect();
         return;
+    }
 
     if(!active)
     {

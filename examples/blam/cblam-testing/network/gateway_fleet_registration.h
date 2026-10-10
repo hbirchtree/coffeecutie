@@ -121,6 +121,7 @@ class GatewayFleetRegistration final
     void onWebSocketOpen();
     void onWebSocketMessage(std::string const& text);
     void sendRegister();
+    void pollReconnect();
     void sendHeartbeat();
     void pollChallengeSocket();
     void sendRegistrationPunch();
@@ -181,6 +182,8 @@ class GatewayFleetRegistration final
 
     mutable std::mutex m_mutex;
     bool               m_wsOpen{false};
+    /* Set by onClosed, Poll() reopens after kReconnectInterval */
+    bool               m_wsClosed{false};
     bool               m_active{false};
     /* True once register-pending delivered the punch port; no punches go
      * out before that. */
@@ -188,6 +191,7 @@ class GatewayFleetRegistration final
     std::chrono::steady_clock::time_point m_lastHeartbeat{};
     std::chrono::steady_clock::time_point m_lastRegistrationPunch{};
     std::chrono::steady_clock::time_point m_lastRegisterSent{};
+    std::chrono::steady_clock::time_point m_lastConnectAttempt{};
 
     /* Rendezvous received from the gateway, waiting to be fed to GNS */
     std::vector<std::pair<std::string, std::string>> m_incomingSignals;
