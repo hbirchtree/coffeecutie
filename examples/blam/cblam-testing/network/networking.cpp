@@ -1493,6 +1493,33 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         publish_join_string(local_name());
                 }
             });
+        /* Host drops clients and stops listening; client disconnects.
+         * GNS reports no status change for a locally closed connection */
+        m_game_bus.addEventFunction<ServerDisconnectEvent>(
+            0, [this](GameEvent&, ServerDisconnectEvent*) {
+                if(is_server())
+                {
+                    std::vector<HSteamNetConnection> clients;
+                    for(auto const& [connection, _] : m_connections)
+                        clients.push_back(connection);
+                    cDebug("Stopping server, dropping {} clients", clients.size());
+                    for(auto connection : clients)
+                        server_close_peer_connection(connection, 0, true);
+                    stop_server();
+                    return;
+                }
+                if(m_connection == k_HSteamNetConnection_Invalid)
+                    return;
+                cDebug("Leaving server ({})", remote_name());
+                journal("net_disconnected", {{"server", remote_name()}});
+                m_clock                         = {};
+                m_net_state.server_clock_offset = std::nullopt;
+                m_impl->CloseConnection(m_connection, 0, nullptr, true);
+                m_connections.erase(m_connection);
+                m_connection             = {};
+                m_net_state.client_state = NetworkState::ClientState::None;
+                m_left_server            = true;
+            });
         m_game_bus.addEventFunction<MapListingEvent>(
             0, [this](GameEvent&, MapListingEvent* listing) {
                 m_map_directory = listing->directory;
@@ -2045,7 +2072,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         m_impl->CloseListenSocket(m_socket);
         m_impl->DestroyPollGroup(m_poll_group);
-        m_net_state.server_state = NetworkState::ServerState::Error;
+        m_socket     = k_HSteamListenSocket_Invalid;
+        m_poll_group = k_HSteamNetPollGroup_Invalid;
+#if defined(USE_WEBRTC_TRANSPORT)
+        m_webrtcServer.reset();
+#endif
+        m_net_state.server_state = NetworkState::ServerState::None;
+        m_net_state.local_address.reset();
         m_net_state.join_string.reset();
     }
 

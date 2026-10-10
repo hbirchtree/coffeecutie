@@ -242,9 +242,6 @@ static void load_resources(
             /* On a client, only seat 0 is known to the server */
             if(i != 0 && e.subsystem_cast<NetworkState>().remote_player_idx)
                 info.player_idx = PlayerInfo::local_only_idx_base + i;
-            if(changed.container.map->map_type == blam::maptype_t::ui)
-                ref.get<PlayerInput>().input_mode =
-                    PlayerInput::input_mode_t::menu;
             auto& camera    = ref.get<PlayerCamera>();
             if(i == 0)
             {
@@ -267,17 +264,19 @@ static void load_resources(
             }
         }
     }
-    /* Seats that sat in the menu go on to play the game */
-    if(changed.container.map->map_type != blam::maptype_t::ui)
-        for(auto player : e.select<PlayerInfo, PlayerInput, PlayerCamera>())
-        {
-            auto [info, input, camera] = player.components();
-            if(info.is_remote())
-                continue;
-            input.input_mode = PlayerInput::input_mode_t::game;
-            if(info.seat_idx < lobby_controllers.size())
-                camera.controller.index = lobby_controllers[info.seat_idx];
-        }
+    /* Local seats: menu input on ui.map, game input elsewhere */
+    bool const in_menu =
+        changed.container.map->map_type == blam::maptype_t::ui;
+    for(auto player : e.select<PlayerInfo, PlayerInput, PlayerCamera>())
+    {
+        auto [info, input, camera] = player.components();
+        if(info.is_remote())
+            continue;
+        input.input_mode = in_menu ? PlayerInput::input_mode_t::menu
+                                   : PlayerInput::input_mode_t::game;
+        if(!in_menu && info.seat_idx < lobby_controllers.size())
+            camera.controller.index = lobby_controllers[info.seat_idx];
+    }
 
     rq::runtime_queue::Queue(
         rq::dependent_task<void, void>::CreateSink(

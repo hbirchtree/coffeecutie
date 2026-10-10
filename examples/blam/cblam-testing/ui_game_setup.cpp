@@ -2,6 +2,7 @@
 
 #include "blam_files.h"
 #include "data.h"
+#include "network/networking.h"
 #include "selected_version.h"
 #include "ui_caching.h"
 #include "ui_data.h"
@@ -221,6 +222,17 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
             setup.start(std::string(map));
             return ui_result_t::ok;
         });
+
+    /* QUIT / LEAVE GAME: disconnect, then load ui.map */
+    auto leave_game = [&e, &setup](UIFunctionCall const&) {
+        GameEvent             ev{GameEvent::ServerDisconnect};
+        ServerDisconnectEvent disconnect{};
+        e.subsystem_cast<GameEventBus>().inject(ev, &disconnect);
+        setup.start("ui");
+        return ui_result_t::ok;
+    };
+    data.on_function(func_t::pause_game_return_to_main_menu, leave_game);
+    data.on_function(func_t::mp_game_player_quit, leave_game);
 
     /* The selection lives in GameSetup, the lists only page through it */
     auto clamp_to = [](std::shared_ptr<list_source_t> const& src, u16 value) {
