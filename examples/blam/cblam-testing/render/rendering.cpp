@@ -8,7 +8,9 @@
 #include "loading_screen.h"
 #include "map_marker.h"
 #include "materials.h"
+#include "render/detail_objects.h"
 #include "selected_version.h"
+#include "shader_compiler.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_shaders.h>
@@ -1576,6 +1578,12 @@ struct MeshRenderer
     std::shared_ptr<gfx::program_t>      monitor_program;
     bool                                 monitor_failed{false};
 
+    DetailObjects<Version>                                 m_detail_objects;
+    std::shared_ptr<gfx::buffer_t>                         detail_vbo;
+    std::shared_ptr<gfx::vertex_array_t>                   detail_vao;
+    std::shared_ptr<gfx::program_t>                        detail_program;
+    std::vector<typename DetailObjects<Version>::vertex_t> m_detail_vertices;
+
     struct pending_change_t
     {
         enum change_t
@@ -2353,6 +2361,129 @@ struct MeshRenderer
         }
     }
 
+    /* Every viewport's sprites go into one upload, then one draw per
+     * viewport and sprite plate */
+    template<typename... Args>
+    void render_detail_objects(Args&&... extra)
+    {
+        using vertex_t = typename DetailObjects<Version>::vertex_t;
+
+        if(m_detail_objects.cells.empty())
+            return;
+
+        auto        _ = m_api->debug().scope("Detail objects");
+        ProfContext __;
+
+        if(!detail_program)
+        {
+            create_shaders(
+                *m_api,
+                std::array<shader_pair_t, 1>{{{
+                    .vertex_file   = "detail_object"sv,
+                    .fragment_file = "detail_object"sv,
+                    .shader        = detail_program,
+                }}});
+            detail_vbo = m_api->alloc_buffer(
+                gfx::buffers::vertex, RSCA::WriteOnly | RSCA::Streaming);
+            detail_vbo->alloc();
+            detail_vao = m_api->alloc_vertex_array();
+            detail_vao->alloc();
+            detail_vao->add(
+                gfx::vertex_attribute::from_member(&vertex_t::position).at(0));
+            detail_vao->add(
+                gfx::vertex_attribute::from_member(&vertex_t::tex_coord).at(1));
+            detail_vao->add(
+                gfx::vertex_attribute::from_member(
+                    &vertex_t::color, gfx::vertex_float_type)
+                    .at(2));
+            detail_vao->set_buffer(gfx::buffers::vertex, detail_vbo, 0);
+        }
+
+        struct draw_t
+        {
+            u32 view, group, offset, count;
+        };
+
+        std::vector<draw_t> draws;
+        m_detail_vertices.clear();
+        for(auto i : stl_types::range<u32>(m_players.size()))
+        {
+            m_detail_objects.build(m_players[i].position);
+            for(auto const& [g, group] :
+                stl_types::const_enumerate(m_detail_objects.groups))
+            {
+                if(group.vertices.empty())
+                    continue;
+                draws.push_back({
+                    .view   = i,
+                    .group  = static_cast<u32>(g),
+                    .offset = static_cast<u32>(m_detail_vertices.size()),
+                    .count  = static_cast<u32>(group.vertices.size()),
+                });
+                m_detail_vertices.insert(
+                    m_detail_vertices.end(),
+                    group.vertices.begin(),
+                    group.vertices.end());
+            }
+        }
+        if(draws.empty())
+            return;
+        detail_vbo->commit(
+            semantic::Bytes::ofContainer(m_detail_vertices).view);
+
+        for(auto const& draw : draws)
+        {
+            auto const& group = m_detail_objects.groups[draw.group];
+            auto        item  = bitm_cache.find(group.bitmap);
+            if(item == bitm_cache.m_cache.end())
+                continue;
+            auto const& image  = item->second.image;
+            i32 const   source = static_cast<i32>(group.source);
+            auto        res    = m_api->submit(
+                {
+                              .program       = detail_program,
+                              .vertices      = detail_vao,
+                              .render_target = m_resources.offscreen,
+                              .call = {.mode = gfx::drawing::primitive::triangle},
+                              .data =
+                        {{.arrays =
+                                        {.count = draw.count, .offset = draw.offset}}},
+                },
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{
+                                  {"camera"sv, 0},
+                        semantic::SpanOne(m_players[draw.view].matrix)}),
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Fragment,
+                    gfx::uniform_pair{
+                                  {"texture_source"sv, 1},
+                        semantic::SpanOne<const i32>(source)},
+                    gfx::uniform_pair{
+                                  {"bias"sv, 2},
+                        semantic::SpanOne<const f32>(image.bias)}),
+                gfx::make_sampler_list(
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                                  {"source"sv, 0},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                image.fmt, image.mip->type)
+                            .sampler}),
+                get_view_state(draw.view),
+                std::forward<Args&&>(extra)...);
+            if(res)
+            {
+                auto [err, msg] = *res;
+                cWarning(
+                    "Failed to draw detail objects: {}: {}",
+                    gleam::detail::draw_error_to_string(err),
+                    msg);
+                return;
+            }
+        }
+    }
+
     void upload_draw_lists(DrawListBuilder<Version> const& builder)
     {
         if(!m_api->feature_info().program.buffer_binding)
@@ -2566,6 +2697,15 @@ struct MeshRenderer
         // Player camera monitors, opaque, after the world so they depth test
         for(auto i : stl_types::range<u32>(m_players.size()))
             render_monitors(i, opaque_stencil);
+
+        // Grass of the resident section, alpha tested
+        m_detail_objects.update(
+            bsp_cache,
+            bitm_cache,
+            p.template subsystem<BlamFiles<Version>>()
+                .container.scenario()
+                .value_or(nullptr));
+        render_detail_objects(opaque_stencil);
 
         // Special case for 3 players; black out the 4th quadrant
         if(m_players.size() == 3 && !compile_info::platform::is_emscripten)

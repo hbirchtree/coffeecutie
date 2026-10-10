@@ -34,6 +34,8 @@
 
             "shaders/ui.vert",
             "shaders/ui.frag",
+            "shaders/detail_object.vert",
+            "shaders/detail_object.frag",
             "shaders/white.frag",
             "shaders/wireframe.frag"
         ],

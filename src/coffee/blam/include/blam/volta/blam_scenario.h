@@ -1067,7 +1067,50 @@ struct decal_ref
 struct detail_object_collection_ref
 {
     tagref_typed_t<tag_class_t::dobc> reference;
+    u32                               padding[8];
 };
+
+static_assert(sizeof(detail_object_collection_ref) == 48);
+
+struct detail_object_collection
+{
+    enum class collection_type_t : u16
+    {
+        screen_facing,
+        viewer_facing,
+    };
+
+    struct type_t
+    {
+        bl_string name;
+        u8        sequence;
+        u8        flags;
+        u8        first_sprite;
+        u8        sprite_count;
+        f32       color_override;
+        u32       padding[2];
+        f32       near_fade;
+        f32       far_fade;
+        f32       size; /*!< world units per sprite pixel */
+        u32       padding1;
+        Vecf3     min_color;
+        Vecf3     max_color;
+        u32       ambient_color;
+        u32       padding2;
+    };
+
+    collection_type_t                 collection_type;
+    u16                               padding;
+    f32                               global_z_offset;
+    u32                               padding1[11];
+    tagref_typed_t<tag_class_t::bitm> sprite_plate;
+    reference<type_t>                 types;
+    u32                               padding2[12];
+};
+
+static_assert(sizeof(detail_object_collection::type_t) == 96);
+static_assert(offsetof(detail_object_collection, sprite_plate) == 0x34);
+static_assert(sizeof(detail_object_collection) == 128);
 
 struct shader_index
 {

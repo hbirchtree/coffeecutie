@@ -616,9 +616,52 @@ struct marker
     Vecf3                       position;
 };
 
+/* Grass and other sprites over the ground, binned into 8-unit cells. A cell
+ * holds one layer per set bit of `layers`, one per scenario detail object
+ * collection, each with its own count and z reference. */
 struct detail_object
 {
+    static constexpr f32 cell_size = 8.f;
+
+    struct cell
+    {
+        i16 x, y, z;
+        i16 offset_z;
+        u32 layers;
+        i32 first_instance;
+        i32 first_count; /*!< counts/z_references index of the first layer */
+        u32 padding[3];
+    };
+
+    struct instance
+    {
+        u8  x, y, z; /*!< x, y in 1/256 cell, z through the z reference */
+        u8  data;    /*!< sprite index, running across the collection's types */
+        u16 color;   /*!< baked lighting, R5G6B5 */
+    };
+
+    bsp_reference<cell>     cells;
+    bsp_reference<instance> instances;
+    bsp_reference<i16>      counts;
+    bsp_reference<Vecf4>    z_references;
+    u32                     flags;
+    u32                     padding[3];
+
+    static inline Vecf3 position(
+        cell const& c, Vecf4 const& z_ref, instance const& i)
+    {
+        f32 const u = i.x / 256.f;
+        f32 const v = i.y / 256.f;
+        f32 const z = from_le(c.z) + from_le(z_ref.w) +
+                      from_le(c.offset_z) / 255.f + from_le(z_ref.x) * u +
+                      from_le(z_ref.y) * v + from_le(z_ref.z) * (i.z / 255.f);
+        return Vecf3(from_le(c.x) + u, from_le(c.y) + v, z) * cell_size;
+    }
 };
+
+static_assert(sizeof(detail_object::cell) == 32);
+static_assert(sizeof(detail_object::instance) == 6);
+static_assert(sizeof(detail_object) == 64);
 
 struct runtime_decal
 {
