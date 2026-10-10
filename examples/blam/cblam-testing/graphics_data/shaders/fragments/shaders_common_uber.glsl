@@ -30,7 +30,7 @@ layout(location = 19, binding = 9) uniform samplerCubeArray source_cube_bc1;
 layout(location = 20, binding = 10) uniform samplerCubeArray source_cube_rgb565;
 layout(location = 30, binding = 11) uniform samplerCubeArray source_cube_rgba8;
 #elif USE_REFLECTIONS == 1
-layout(location = 19) uniform samplerCube source_cube;
+layout(location = 19, binding = 12) uniform samplerCube source_cube;
 #endif
 
 layout(location = 21) uniform vec3 camera_position;
@@ -112,22 +112,45 @@ vec3 light_direction()
     return normalize(transpose(tbn_matrix()) * world_key_light());
 }
 
-vec4 sample_map(
-    in uint map_id,
-    in int layer,
-    in sampler2DArray sampler,
-    in vec2 offset,
-    in Material mat)
+/* Coordinates and gradients for one map fetch. Worked out once per sample so
+ * the per-format branches below only differ in the texture they read. */
+struct MapCoord
+{
+    vec3 tc;
+    vec2 dx;
+    vec2 dy;
+};
+
+MapCoord map_coord(in uint map_id, in int layer, in vec2 offset, in Material mat)
 {
     vec2 uvscale = mat.maps[map_id].uv_scale;
     vec2 adjust  = vec2(
         uvscale.x != 0.0 ? offset.x / uvscale.x : offset.x,
         uvscale.y != 0.0 ? offset.y / uvscale.y : offset.y);
-    return get_map(map_id,
-        layer,
-        sampler,
-        frag.tex + adjust,
-        mat);
+
+    vec2 scale = mat.maps[map_id].atlas_scale;
+    vec2 uv    = (frag.tex + adjust) * uvscale;
+    vec2 grad  = scale * exp2(mat.maps[map_id].bias);
+
+    MapCoord c;
+    c.tc = vec3((uv - floor(uv)) * scale + mat.maps[map_id].atlas_offset,
+                layer & 0xFFFF);
+    c.dx = dFdx(uv) * grad;
+    c.dy = dFdy(uv) * grad;
+    return c;
+}
+
+vec4 fetch_map(in sampler2DArray sampler, in MapCoord c)
+{
+    if(g_min_lod >= 0.0)
+    {
+        vec2  size      = vec2(textureSize(sampler, 0).xy);
+        float footprint = max(length(c.dx * size), length(c.dy * size));
+        float k         = max(1.0, exp2(g_min_lod) / max(footprint, 1e-6));
+        c.dx *= k;
+        c.dy *= k;
+    }
+    return textureGrad(sampler, c.tc, c.dx, c.dy);
 }
 
 const uint TEX_BC1    = 1u;
@@ -148,43 +171,47 @@ const uint TEX_ETC2_RGBA = 14u;
 
 vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset, in Material mat)
 {
-    uint source = tex_id >> 24;
+    if(tex_id == -1)
+        return vec4(1.0);
+
+    uint     source = uint(tex_id) >> 24;
+    MapCoord c      = map_coord(map_id, tex_id, offset, mat);
     if(source == TEX_BC1)
-        return sample_map(map_id, tex_id, source_bc1, offset, mat);
+        return fetch_map(source_bc1, c);
     else if(source == TEX_BC2)
-        return sample_map(map_id, tex_id, source_bc2, offset, mat);
+        return fetch_map(source_bc2, c);
     else if(source == TEX_BC3)
-        return sample_map(map_id, tex_id, source_bc3, offset, mat);
+        return fetch_map(source_bc3, c);
     else if(source == TEX_R8)
-        return sample_map(map_id, tex_id, source_r8, offset, mat);
+        return fetch_map(source_r8, c);
     else if(source == TEX_RG8)
-        return sample_map(map_id, tex_id, source_rg8, offset, mat);
+        return fetch_map(source_rg8, c);
     else if(source == TEX_A8)
         /* D3D A8 samples RGB as 1 (white), alpha from the texture — the
          * cloud mask multiplies onto the cloud color this way. */
-        return vec4(1, 1, 1, sample_map(map_id, tex_id, source_r8, offset, mat).r);
+        return vec4(1, 1, 1, fetch_map(source_r8, c).r);
     else if(source == TEX_Y8)
-        return vec4(vec3(sample_map(map_id, tex_id, source_r8, offset, mat).r), 1);
+        return vec4(vec3(fetch_map(source_r8, c).r), 1);
     else if(source == TEX_AY8)
     {
-        float l = sample_map(map_id, tex_id, source_r8, offset, mat).r;
+        float l = fetch_map(source_r8, c).r;
         return vec4(vec3(l), l);
     }
     else if(source == TEX_A8Y8)
     {
-        vec2 la = sample_map(map_id, tex_id, source_rg8, offset, mat).rg;
+        vec2 la = fetch_map(source_rg8, c).rg;
         return vec4(vec3(la.r), la.g);
     }
     else if(source == TEX_RGB565)
-        return sample_map(map_id, tex_id, source_rgb565, offset, mat).bgra;
+        return fetch_map(source_rgb565, c).bgra;
     else if(source == TEX_RGBA4)
-        return sample_map(map_id, tex_id, source_rgba4, offset, mat).bgra;
+        return fetch_map(source_rgba4, c).bgra;
     else if(source == TEX_RGBA8)
-        return sample_map(map_id, tex_id, source_rgba8, offset, mat).bgra;
+        return fetch_map(source_rgba8, c).bgra;
     else if(source == TEX_ETC2_RGB)
-        return sample_map(map_id, tex_id, source_etc2_rgb, offset, mat);
+        return fetch_map(source_etc2_rgb, c);
     else if(source == TEX_ETC2_RGBA)
-        return sample_map(map_id, tex_id, source_etc2_rgba, offset, mat);
+        return fetch_map(source_etc2_rgba, c);
     return vec4(vec3(1), 1);
 }
 
