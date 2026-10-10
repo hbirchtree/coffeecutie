@@ -913,16 +913,17 @@ struct PlayerInput
     debounced_button_t down{};
     debounced_button_t left{};
     debounced_button_t right{};
-    // In-game actions, these need indirection for network
-    bool jump{false};
+    debounced_button_t jump{}; /*!< Press edge; the controller keeps it */
 
-    /*! This frame's input as gameplay reads it; overwritten by the next
-     * sampling, so subsystems running before that still see it */
-    struct
+    /*! What the player wants, for whatever their input is routed to */
+    struct intent_t
     {
-        f32  throttle{0.f}; /*!< Forward is positive */
-        bool use{false};    /*!< Held: enter or leave a vehicle */
-        bool grab{false};   /*!< Held: forge grab */
+        Vecf2 move{};       /*!< Forward and right, camera-relative, |move| <= 1 */
+        f32   throttle{0.f}; /*!< Forward is positive */
+        f32   steer{0.f};    /*!< Right is positive */
+        bool  use{false};    /*!< Held: enter or leave a vehicle */
+        bool  grab{false};   /*!< Held: forge grab */
+        bool  jump{false};   /*!< Wanted; cleared once taken or stale */
     } intent;
 
     std::optional<Vecf3> position; /*!< teleport target */
@@ -941,7 +942,7 @@ struct PlayerInput
         right.frame_end();
         up.frame_end();
         down.frame_end();
-
+        jump.frame_end();
     }
 };
 

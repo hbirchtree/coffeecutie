@@ -634,14 +634,14 @@ struct PhysicsSystem
             auto const& origin =
                 it->second.world_body->getWorldTransform().getOrigin();
             data->position = {origin.x(), origin.y(), origin.z()};
-            data->grounded = on_ground(*it->second.world_body);
+            data->grounded = on_ground(*it->second.world_body, true);
         }
         for(auto const& [entity, _] : m_object_bodies)
         {
             auto* physics = p.template get<ObjectPhysics>(entity);
             auto  it      = m_bodies.find(entity);
             if(physics && physics->upright && it != m_bodies.end())
-                physics->grounded = on_ground(*it->second.world_body);
+                physics->grounded = on_ground(*it->second.world_body, false);
         }
 
         m_frame++;
@@ -1064,16 +1064,71 @@ struct PhysicsSystem
         return transform;
     }
 
-    /* Whether static geometry lies just below a body's lowest point */
-    bool on_ground(btRigidBody const& body) const
+    /* Something to stand on: an upward contact, else a ray just below.
+     * `bipeds_count`: other bipeds count as ground */
+    bool on_ground(btRigidBody const& body, bool bipeds_count) const
     {
+        using filter = btBroadphaseProxy::CollisionFilterGroups;
+        auto counts  = [bipeds_count](btCollisionObject const* other) {
+            return other->hasContactResponse() &&
+                   (bipeds_count ||
+                    !(other->getBroadphaseHandle()->m_collisionFilterGroup &
+                      filter::CharacterFilter));
+        };
+
+        auto* dispatcher = m_world->getDispatcher();
+        for(int i = 0; i < dispatcher->getNumManifolds(); ++i)
+        {
+            btPersistentManifold const* manifold =
+                dispatcher->getManifoldByIndexInternal(i);
+            btCollisionObject const* a = manifold->getBody0();
+            btCollisionObject const* b = manifold->getBody1();
+            if(a != &body && b != &body)
+                continue;
+            if(!counts(a == &body ? b : a))
+                continue;
+            for(int j = 0; j < manifold->getNumContacts(); j++)
+            {
+                auto const& point = manifold->getContactPoint(j);
+                if(point.getDistance() > ground_contact_slop)
+                    continue;
+                /* Points from b to a: the push on this body */
+                f32 const up = (a == &body ? 1.f : -1.f) *
+                               static_cast<f32>(point.m_normalWorldOnB.z());
+                if(up > ground_normal_min)
+                    return true;
+            }
+        }
+
+        struct probe_t : btCollisionWorld::ClosestRayResultCallback
+        {
+            btCollisionObject const* self;
+
+            probe_t(
+                btVector3 const&         from,
+                btVector3 const&         to,
+                btCollisionObject const* self)
+                : ClosestRayResultCallback(from, to)
+                , self(self)
+            {
+            }
+
+            bool needsCollision(btBroadphaseProxy* proxy) const override
+            {
+                auto const* object =
+                    static_cast<btCollisionObject const*>(proxy->m_clientObject);
+                return object != self && object->hasContactResponse() &&
+                       ClosestRayResultCallback::needsCollision(proxy);
+            }
+        };
         btVector3 lo, hi;
         body.getAabb(lo, hi);
         btVector3 const centre = (lo + hi) * .5f;
         btVector3 const from(centre.x(), centre.y(), lo.z() + ground_probe_up);
         btVector3 const to(centre.x(), centre.y(), lo.z() - ground_probe_down);
-        btCollisionWorld::ClosestRayResultCallback hit(from, to);
-        hit.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
+        probe_t         hit(from, to, &body);
+        if(!bipeds_count)
+            hit.m_collisionFilterMask ^= filter::CharacterFilter;
         m_world->rayTest(from, to, hit);
         return hit.hasHit();
     }
@@ -1868,8 +1923,20 @@ struct PhysicsSystem
             velocity.velocity.x, velocity.velocity.y, velocity.velocity.z);
         if(velocity.preserve_z)
             vel.setZ(body.world_body->getLinearVelocity().z());
-        if(velocity.jump != 0.f &&
-           std::abs(body.world_body->getLinearVelocity().z()) < 0.1f)
+        bool const grounded = on_ground(*body.world_body, true);
+        /* Grip while standing still, or slopes slide it */
+        bool const idle = velocity.jump == 0.f && grounded &&
+                          btVector3(vel.x(), vel.y(), 0.f).length2() < 1e-4f;
+        body.world_body->setFriction(idle ? standing_friction : 0.f);
+        if(idle)
+        {
+            if(body.world_body->isActive())
+                body.world_body->setLinearVelocity(
+                    btVector3(0, 0, std::min(vel.z(), 0.f)));
+            return;
+        }
+        /* Jump needs ground, not zero Z velocity (slopes break that) */
+        if(velocity.jump != 0.f && grounded)
             vel.setZ(velocity.jump);
         body.world_body->activate(true); /* sleeping bodies ignore velocity */
         body.world_body->setLinearVelocity(vel);
@@ -2120,7 +2187,9 @@ struct PhysicsSystem
     {
         for(auto& [entity, body] : m_bodies)
         {
-            if(body.child_bones.empty())
+            /* Kinematic only; idle anims would shove simulated bodies */
+            if(body.child_bones.empty() ||
+               !body.world_body->isStaticOrKinematicObject())
                 continue;
             auto* compound =
                 static_cast<btCompoundShape*>(body.world_shape.get());
@@ -2256,6 +2325,8 @@ struct PhysicsSystem
         btVector3   velocity{0, 0, 0}; /*!< Over the last step */
     };
     static constexpr f32           hull_margin  = .005f;
+    /* Friction of a biped standing still */
+    static constexpr f32 standing_friction    = 1.f;
     static constexpr f32 impact_speed    = .5f; /* wu/s */
     static constexpr u32 impact_cooldown = 9;
     static constexpr u32 impact_settle   = 60;
@@ -2264,6 +2335,8 @@ struct PhysicsSystem
     std::map<btRigidBody const*, btVector3> m_before_step;
     static constexpr f32 ground_probe_up   = .2f;
     static constexpr f32 ground_probe_down = .15f;
+    static constexpr f32 ground_contact_slop = .05f; /* wu */
+    static constexpr f32 ground_normal_min   = .5f;  /* cos 60 deg */
     static constexpr f32           halo_gravity = 9.81f / 3.048f;
     static constexpr f32           grab_range   = 40.f;
     static constexpr f32           ground_reach = 30.f; /* wu below */

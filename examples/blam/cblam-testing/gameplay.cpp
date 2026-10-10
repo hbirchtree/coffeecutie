@@ -85,7 +85,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             was_using = input.intent.use;
 
             if(info.riding.vehicle != 0)
-                ride(p, physics, info, input, cam, net);
+                ride(p, info, cam, net);
         }
 
         for(auto const& enter : std::exchange(m_enters, {}))
@@ -286,15 +286,8 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         return Vecf3(vehicle.transform * (**marker)[3]);
     }
 
-    /* Behind the vehicle along the view, which is also where a driver
-     * steers toward */
-    void ride(
-        Proxy&             p,
-        PhysicsBus&        physics,
-        PlayerInfo&        info,
-        PlayerInput const& input,
-        PlayerCamera&      cam,
-        NetworkInfo&       net)
+    /* The chase camera sits behind the vehicle along the view */
+    void ride(Proxy& p, PlayerInfo& info, PlayerCamera& cam, NetworkInfo& net)
     {
         auto const* vehicle = p.template get<Model>(info.riding.vehicle);
         if(!vehicle)
@@ -308,17 +301,6 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             vehicle->position + Vecf3{0.f, 0.f, chase_height} -
             view * chase_distance;
         net.changes.transform = net.changes.viewport = true;
-        if(!info.riding.driver || info.riding.exiting)
-            return;
-        bool const playing =
-            input.input_mode == PlayerInput::input_mode_t::game;
-        Physics::Event ev{Physics::Event::Drive};
-        Physics::Drive drive{
-            .vehicle  = info.riding.vehicle,
-            .throttle = playing ? input.intent.throttle : 0.f,
-            .aim      = view,
-        };
-        physics.process(ev, &drive);
     }
 
     /* Seats come from the vehicle's unit tag; a seat is taken while another

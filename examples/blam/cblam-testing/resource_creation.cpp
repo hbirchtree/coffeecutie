@@ -77,59 +77,6 @@ void create_resources(compo::EntityContainer& e)
                     window.lock()->close();
                 }));
 
-        eventhandler->addEventHandler(
-            1024, StandardCamera::KeyboardInput([&e] -> StandardCamera::Reg* {
-                for(auto entity : e.select<
-                                  PlayerCamera,
-                                  PlayerInput,
-                                  PlayerInfo,
-                                  NetworkInfo>())
-                {
-                    auto [cam, input, info, net] = entity.components();
-                    if(cam.keyboard.enabled && info.permissions.camera)
-                    {
-                        net.changes.viewport = net.changes.transform = true;
-                        return &input.keys;
-                    }
-                }
-                cWarning("No camera selected");
-                return nullptr;
-            }));
-        eventhandler->addEventFunction<Input::CIMouseButtonEvent>(
-            1024, [&e](Input::CIEvent&, Input::CIMouseButtonEvent* button) {
-                for(auto entity : e.select<PlayerCamera, PlayerInput>())
-                {
-                    auto [cam, input] = entity.components();
-                    if(!cam.keyboard.enabled)
-                        continue;
-                    if(button->mod == Input::CIMouseButtonEvent::Pressed)
-                        input.mouse_buttons |= button->btn;
-                    else
-                        input.mouse_buttons &= ~u32(button->btn);
-                }
-            });
-        eventhandler->addEventHandler(
-            1024, StandardCamera::MouseInput([&e] -> Vecf2* {
-                for(auto entity : e.select<
-                                  PlayerCamera,
-                                  PlayerInput,
-                                  PlayerInfo,
-                                  NetworkInfo>())
-                {
-                    auto [cam, input, info, net] = entity.components();
-                    if(cam.keyboard.enabled && info.permissions.camera)
-                    {
-                        net.changes.viewport = true;
-                        return &input.look_delta;
-                    }
-                }
-                cWarning("No camera selected");
-                return nullptr;
-            }));
-        /* Physics-mode (biped) movement is not event-driven: the camera
-         * loop in graphics.cpp reads held keys every frame and sends a
-         * Physics::Velocity event, so movement doesn't stutter at the OS
-         * key-repeat rate. */
         auto& gbus = e.subsystem_cast<GameEventBus>();
         auto& pbus = e.subsystem_cast<PhysicsBus>();
         gbus.addEventFunction<PlayerTeleportEvent>(
@@ -441,6 +388,7 @@ void create_resources(compo::EntityContainer& e)
                             phys && phys->enabled)
                              biped["body"] = {
                                  {"kinematic", phys->kinematic},
+                                 {"grounded", phys->grounded},
                                  {"position", vec(phys->position)},
                              };
                          players.push_back({

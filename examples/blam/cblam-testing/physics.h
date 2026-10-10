@@ -159,8 +159,8 @@ struct Velocity
                                        * gravity/falling integrates normally;
                                        * velocity.z is ignored */
     f32 jump{0.f}; /*!< If non-zero, set Z velocity to this value — but only
-                    * when the body is vertically at rest (grounded-ish).
-                    * Applied on top of preserve_z. */
+                    * with ground just under the body. Applied on top of
+                    * preserve_z. */
 };
 
 struct Translate
