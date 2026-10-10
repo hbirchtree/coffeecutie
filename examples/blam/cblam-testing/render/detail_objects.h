@@ -80,6 +80,9 @@ struct DetailObjects
     {
         using namespace libc_types;
 
+        if(!scenario)
+            return;
+
         blam::bsp::info const* info = nullptr;
         if(scenario && bsp_cache.active_section >= 0 &&
            static_cast<size_t>(bsp_cache.active_section) <
