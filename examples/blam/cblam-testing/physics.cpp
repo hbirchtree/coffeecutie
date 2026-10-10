@@ -89,17 +89,23 @@ class MassPointAction : public btActionInterface
         m_throttle   = std::clamp(throttle, -1.f, 1.f);
         m_strafe     = std::clamp(strafe, -1.f, 1.f);
         m_aim        = aim;
-        m_input_left = 12;
+        m_input_left  = input_hold_steps;
+        m_driver_left = driver_hold_steps;
     }
 
     void updateAction(btCollisionWorld* world, btScalar dt) override
     {
         if(m_body.isStaticOrKinematicObject() || !m_body.isActive())
             return;
-        bool const driven = m_drive && m_input_left > 0;
+        /* A driver stays aboard through slow or late frames; their stick
+         * only counts while fresh. Lift and handbrake need the driver, not
+         * the input, or a banshee drops between frames. */
+        bool const driven = m_drive && m_driver_left > 0;
+        if(m_driver_left > 0)
+            m_driver_left--;
         if(m_input_left > 0)
             m_input_left--;
-        if(!driven)
+        else
             m_throttle = m_strafe = 0.f;
         /* Wheels hold when parked or crawling, so no creeping down slopes */
         bool const idling =
@@ -531,6 +537,9 @@ class MassPointAction : public btActionInterface
     /* Firm enough that a landing settles instead of bouncing off */
     static constexpr f32 antigrav_damping_ratio = 0.6f;
     static constexpr f32 stick_deadzone         = .15f;
+    /* Substeps (120 Hz) a driver's input stays fresh, and the driver aboard */
+    static constexpr u32 input_hold_steps       = 12;
+    static constexpr u32 driver_hold_steps      = 240;
     static constexpr f32 reverse_angle          = 1.9f; /* rad, ~110 deg */
     static constexpr f32 handbrake_speed        = .5f; /* wu/s */
     static constexpr f32 static_slide           = .3f; /* wu/s */
@@ -731,6 +740,7 @@ class MassPointAction : public btActionInterface
     f32                                             m_throttle{0.f};
     btVector3                                       m_aim{1, 0, 0};
     u32                                             m_input_left{0};
+    u32                                             m_driver_left{0};
     f32                                             m_steering{0.f};
     f32                                             m_strafe{0.f};
     bool                                            m_braking{false};
