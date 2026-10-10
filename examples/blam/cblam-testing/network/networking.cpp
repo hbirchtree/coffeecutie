@@ -2673,6 +2673,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 auto send_viewport = [&] {
                     if(!net.changes.viewport)
                         return;
+                    if(!camera_moved(entity.id(), cam) &&
+                       info.mode.physics == net.sent_physics)
+                    {
+                        net.changes.viewport = net.changes.transform = false;
+                        return;
+                    }
                     send_all(
                         Message<CameraSync>({
                             .position      = Vecf4(cam.camera.position, 0),
@@ -2724,8 +2730,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 // Push our camera updates to server on change
                 auto& net  = m_client_player.get<NetworkInfo>();
                 auto& info = m_client_player.get<PlayerInfo>();
-                if(net.changes.viewport || net.changes.transform ||
-                   info.mode.physics != net.sent_physics)
+                if(info.mode.physics != net.sent_physics ||
+                   ((net.changes.viewport || net.changes.transform) &&
+                    camera_moved(
+                        m_client_player.id(),
+                        m_client_player.get<PlayerCamera>())))
                 {
                     auto& camera = m_client_player.get<PlayerCamera>();
                     send_single(
@@ -2850,6 +2859,21 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 k_nSteamNetworkingSend_UnreliableNoNagle,
                 current,
                 FRAME_UPDATE_LANE);
+    }
+
+    /* Whether a camera moved since last sent; records it if so */
+    bool camera_moved(u64 entity, PlayerCamera const& cam)
+    {
+        auto it = m_sent_cameras.find(entity);
+        bool const moved =
+            it == m_sent_cameras.end() ||
+            glm::distance(it->second.first, cam.camera.position) >
+                camera_epsilon ||
+            std::abs(glm::dot(it->second.second, cam.camera.rotation)) <
+                1.f - rotation_epsilon;
+        if(moved)
+            m_sent_cameras[entity] = {cam.camera.position, cam.camera.rotation};
+        return moved;
     }
 
     /* A player's seat as peers know it: the vehicle by its net id */
@@ -3673,6 +3697,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u32, bool>                      m_object_asleep;
     /* Last seat sent per player index; the client's own, to the server */
     std::map<u32, SeatSync>                  m_sent_seats;
+    /* Camera last sent per player entity, and what counts as moving */
+    std::map<u64, std::pair<Vecf3, Quatf>>   m_sent_cameras;
+    static constexpr f32                     camera_epsilon   = .002f;
+    static constexpr f32                     rotation_epsilon = 1e-6f;
     std::optional<SeatSync>                  m_sent_own_seat;
     std::map<u32, std::deque<ObjectSync>>    m_object_history;
     struct held_player_t
