@@ -2331,7 +2331,12 @@ struct MeshRenderer
                             etc2(typing::pixels::pix_flags::RGB)},
                         gleam::sampler_definition_t{
                             stage, {"source_etc2_rgba"sv, 9},
-                            etc2(typing::pixels::pix_flags::RGBA)}),
+                            etc2(typing::pixels::pix_flags::RGBA)},
+                        gleam::sampler_definition_t{
+                            stage, {"source_rgb5a1"sv, 10},
+                            m_effects.rgb5a1_fmt
+                                ? bucket(*m_effects.rgb5a1_fmt)
+                                : bucket(CompFmt(pix_fmt::BCn, comp_flags::BC1))}),
                     gfx::blend_state{batch.blend},
                     gfx::depth_extended_state{depth},
                     get_view_state(i));

@@ -20,6 +20,7 @@ layout(location = 16, binding = 6) uniform sampler2DArray source_rgba4;
 layout(location = 17, binding = 7) uniform sampler2DArray source_rgba8;
 layout(location = 18, binding = 8) uniform sampler2DArray source_etc2_rgb;
 layout(location = 19, binding = 9) uniform sampler2DArray source_etc2_rgba;
+layout(location = 20, binding = 10) uniform sampler2DArray source_rgb5a1;
 
 layout(location = 0) out vec4 out_color;
 
@@ -69,6 +70,20 @@ vec4 sample_texture()
         return texture(source_etc2_rgb, coord);
     if(format == 14u)
         return texture(source_etc2_rgba, coord);
+    if(format == 15u)
+    {
+        /* D3D A1R5G5B5 words, uploaded as GL 5_5_5_1: rebuild the word */
+        ivec3 size  = textureSize(source_rgb5a1, 0);
+        ivec2 texel = clamp(ivec2(coord.xy * vec2(size.xy)), ivec2(0), size.xy - 1);
+        vec4  t     = texelFetch(source_rgb5a1, ivec3(texel, int(layer)), 0);
+        uint  word  = (uint(t.r * 31.0 + 0.5) << 11) | (uint(t.g * 31.0 + 0.5) << 6) |
+                     (uint(t.b * 31.0 + 0.5) << 1) | (t.a > 0.5 ? 1u : 0u);
+        return vec4(
+            float((word >> 10) & 31u) / 31.0,
+            float((word >> 5) & 31u) / 31.0,
+            float(word & 31u) / 31.0,
+            float(word >> 15));
+    }
     return vec4(1.0, 0.0, 1.0, 1.0);
 }
 

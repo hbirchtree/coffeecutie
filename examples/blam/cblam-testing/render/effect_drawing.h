@@ -34,6 +34,7 @@ struct EffectDrawer
         Vecf4 color;
         Vecf4 atlas;  /* scale xy, offset zw */
         Vecf4 source; /* format, layer, kind */
+        Vecf4 shape;  /* pivot xy, aspect */
     };
 
     struct batch_t
@@ -51,6 +52,8 @@ struct EffectDrawer
         f32   format{0.f};
         f32   layer{0.f};
         f32   opaque{0.f}; /* 1: the alpha byte is padding */
+        Vecf2 pivot{.5f, .5f}; /* registration point within the frame */
+        f32   aspect{1.f};     /* width over height, in texels */
         bool  ok{true};
     };
 
@@ -72,6 +75,9 @@ struct EffectDrawer
     };
 
     std::map<std::tuple<blam::tagref_t const*, i16, i16>, image_t> images;
+
+    static constexpr u32     rgb5a1_code = 15;
+    std::optional<PixDesc>   rgb5a1_fmt;
     u32 image_generation{~0u};
 
     bool load(gfx::api& api)
@@ -108,6 +114,7 @@ struct EffectDrawer
         array->add(gfx::vertex_attribute::from_member(&vertex_t::color).at(4));
         array->add(gfx::vertex_attribute::from_member(&vertex_t::atlas).at(5));
         array->add(gfx::vertex_attribute::from_member(&vertex_t::source).at(6));
+        array->add(gfx::vertex_attribute::from_member(&vertex_t::shape).at(7));
         array->set_buffer(gfx::buffers::vertex, buffer, 0);
         array->set_attribute_names({
             {"position", 0},
@@ -117,6 +124,7 @@ struct EffectDrawer
             {"color", 4},
             {"atlas", 5},
             {"source", 6},
+            {"shape", 7},
         });
         return true;
     }
@@ -150,6 +158,17 @@ struct EffectDrawer
                     sprites.value()[static_cast<size_t>(frame) % sprites.value().size()];
                 index    = sprite.bitmap_index;
                 out.rect = Vecf4(sprite.left, sprite.top, sprite.right, sprite.bottom);
+                Vecf2 const extent(sprite.right - sprite.left, sprite.bottom - sprite.top);
+                if(extent.x > 0.f && extent.y > 0.f)
+                    out.pivot = glm::clamp(
+                        sprite.registration_point / extent, Vecf2(0.f), Vecf2(1.f));
+                if(auto images = header->images.data(cache.magic);
+                   images.has_value() && sprite.bitmap_index < images.value().size())
+                {
+                    auto const& size = images.value()[sprite.bitmap_index].isize;
+                    if(extent.y * size.y > 0.f)
+                        out.aspect = (extent.x * size.x) / (extent.y * size.y);
+                }
             } else if(seq.bitmap_count > 0)
                 index = static_cast<i16>(
                     seq.first_bitmap + static_cast<u32>(frame) % seq.bitmap_count);
@@ -168,6 +187,12 @@ struct EffectDrawer
                          : 0.f;
         out.atlas  = Vecf4(atlas.atlas_scale, atlas.atlas_offset);
         out.format = static_cast<f32>(atlas.layer >> 24);
+        /* A1R5G5B5 has its own bucket but no code of its own in the atlas */
+        if(item->image.fmt.pixfmt == typing::pixels::pix_fmt::RGB5A1)
+        {
+            out.format  = static_cast<f32>(rgb5a1_code);
+            rgb5a1_fmt  = item->image.fmt;
+        }
         out.layer  = static_cast<f32>(atlas.layer & 0xFFFFFF);
         out.ok     = true;
         return out;
@@ -266,6 +291,7 @@ struct EffectDrawer
                 .color    = s.color,
                 .atlas    = img.atlas,
                 .source   = Vecf4(img.format, img.layer, 0.f, img.opaque),
+                .shape    = Vecf4(img.pivot, img.aspect, 0.f),
             });
         }
     }
@@ -290,6 +316,7 @@ struct EffectDrawer
                 .color    = pts[i].color,
                 .atlas    = img.atlas,
                 .source   = Vecf4(img.format, img.layer, 1.f, img.opaque),
+                .shape    = Vecf4(.5f, .5f, 1.f, 0.f),
             };
         };
         for(size_t i = 0; i + 1 < pts.size(); i++)
@@ -368,6 +395,7 @@ struct EffectDrawer
                             .color    = Vecf4(rgb, 1.f),
                             .atlas    = img.atlas,
                             .source   = Vecf4(img.format, img.layer, 2.f, img.opaque),
+                            .shape    = Vecf4(.5f, .5f, 1.f, 0.f),
                         });
                     }
                 }
