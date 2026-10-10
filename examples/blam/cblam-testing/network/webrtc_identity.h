@@ -47,6 +47,15 @@ WebrtcAuth parse_auth_param(std::string_view param);
 /*! Inverse of parse_auth_param. Empty for AuthType::None. */
 std::string format_auth_param(WebrtcAuth const& auth);
 
+/*! Empty on malformed input */
+std::vector<uint8_t> hex_decode(std::string_view hex);
+
+/*! What a server signs to prove to a gateway that it holds the key its
+ *  serverId is registered under: the gateway's challenge nonce, bound to
+ *  that id so the signature fits no other name. */
+std::string gateway_registration_challenge(
+    std::string_view serverId, std::string_view nonce);
+
 /*! Produce a deterministic, compact JSON representation suitable for
  * signing/verification. Object keys are sorted recursively. */
 std::string canonical_metadata_json(nlohmann::json const& meta);
@@ -70,6 +79,8 @@ class Ed25519Key
     }
 
     std::vector<uint8_t> public_key() const;
+    /*! Base64 of public_key(), as the join string and the gateway carry it */
+    std::string public_key_base64() const;
     /*! Empty on failure */
     std::vector<uint8_t> sign(std::string_view data) const;
 

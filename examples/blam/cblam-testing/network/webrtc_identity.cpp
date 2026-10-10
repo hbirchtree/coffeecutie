@@ -243,6 +243,42 @@ std::string format_auth_param(WebrtcAuth const& auth)
     }
 }
 
+std::vector<uint8_t> hex_decode(std::string_view in)
+{
+    if(in.size() % 2 != 0)
+        return {};
+    auto nibble = [](char c) -> int {
+        if(c >= '0' && c <= '9')
+            return c - '0';
+        if(c >= 'a' && c <= 'f')
+            return c - 'a' + 10;
+        if(c >= 'A' && c <= 'F')
+            return c - 'A' + 10;
+        return -1;
+    };
+    std::vector<uint8_t> out;
+    out.reserve(in.size() / 2);
+    for(size_t i = 0; i < in.size(); i += 2)
+    {
+        int hi = nibble(in[i]);
+        int lo = nibble(in[i + 1]);
+        if(hi < 0 || lo < 0)
+            return {};
+        out.push_back(static_cast<uint8_t>((hi << 4) | lo));
+    }
+    return out;
+}
+
+std::string gateway_registration_challenge(
+    std::string_view serverId, std::string_view nonce)
+{
+    std::string msg = "coffee-gateway-register-v1\n";
+    msg += serverId;
+    msg += '\n';
+    msg += nonce;
+    return msg;
+}
+
 std::string canonical_metadata_json(nlohmann::json const& meta)
 {
     return sort_json(meta).dump();
@@ -297,6 +333,11 @@ std::vector<uint8_t> Ed25519Key::public_key() const
 std::vector<uint8_t> Ed25519Key::sign(std::string_view data) const
 {
     return m_key ? ed25519_sign(m_key.get(), data) : std::vector<uint8_t>{};
+}
+
+std::string Ed25519Key::public_key_base64() const
+{
+    return base64_encode(public_key());
 }
 
 nlohmann::json sign_metadata_ed25519(

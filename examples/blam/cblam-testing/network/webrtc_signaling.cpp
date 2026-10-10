@@ -327,10 +327,12 @@ void GatewayConnectBootstrap::Release()
 GatewayAcceptSignaling::GatewayAcceptSignaling(
     GatewayServerRegistration* owner,
     std::string                sessionId,
+    std::string                hostToken,
     std::string                dataChannelGatewayUrl,
     HSteamNetConnection        hConn)
     : m_owner(owner)
     , m_sessionId(std::move(sessionId))
+    , m_hostToken(std::move(hostToken))
     , m_gatewayUrl(std::move(dataChannelGatewayUrl))
     , m_hConn(hConn)
 {
@@ -431,7 +433,9 @@ void GatewayAcceptSignaling::Start()
         std::lock_guard<std::mutex> lock(m_mutex);
         m_failed = true;
     });
-    m_ws->open(m_gatewayUrl + "/signal?role=host&session=" + m_sessionId);
+    m_ws->open(
+        m_gatewayUrl + "/signal?role=host&session=" + m_sessionId +
+        "&token=" + m_hostToken);
 }
 
 void GatewayAcceptSignaling::maybeSendOffer()
@@ -557,9 +561,11 @@ void GatewayAcceptSignaling::Release()
 GatewayServerRegistration::GatewayServerRegistration(
     std::string              gatewayUrl,
     std::string              serverId,
+    Ed25519Key               key,
     ISteamNetworkingSockets* sockets)
     : m_gatewayUrl(std::move(gatewayUrl))
     , m_serverId(std::move(serverId))
+    , m_key(std::move(key))
     , m_sockets(sockets)
 {
 }
@@ -598,6 +604,7 @@ void GatewayServerRegistration::sendRegister()
     nlohmann::json register_msg{
         {"type", "register"},
         {"serverId", m_serverId},
+        {"publicKey", m_key.public_key_base64()},
         {"serverTransports", nlohmann::json::array({"webrtc"})},
     };
     if(!m_ws->send(register_msg.dump()))
@@ -645,9 +652,43 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
             return;
         }
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_incoming.emplace_back(
-            std::move(sessionId),
-            std::string(reinterpret_cast<char const*>(raw.data()), raw.size()));
+        m_incoming.push_back(IncomingSignal{
+            .sessionId = std::move(sessionId),
+            .hostToken = msg.value("hostToken", std::string()),
+            .raw       = std::string(
+                reinterpret_cast<char const*>(raw.data()), raw.size()),
+        });
+    } else if(type == "register-pending")
+    {
+        /* The gateway's challenge: its nonce signed bound to our id, so the
+         * id is registered under our key and no other */
+        auto nonceHex   = msg.value("nonce", std::string());
+        auto nonceBytes = hex_decode(nonceHex);
+        if(nonceBytes.empty())
+        {
+            cWarning("webrtc_signaling: register-pending carried no nonce");
+            return;
+        }
+        std::string nonce(nonceBytes.begin(), nonceBytes.end());
+        auto        signature =
+            m_key.sign(gateway_registration_challenge(m_serverId, nonce));
+        if(signature.empty())
+        {
+            cWarning(
+                "webrtc_signaling: failed to sign the registration challenge");
+            return;
+        }
+        nlohmann::json response{
+            {"type", "challenge-response"},
+            {"serverId", m_serverId},
+            {"nonce", nonceHex},
+            {"signature",
+             b64::encode(
+                 semantic::Span<const uint8_t>(
+                     signature.data(), signature.size()))},
+        };
+        if(!m_ws->send(response.dump()))
+            cWarning("webrtc_signaling: failed to send challenge-response");
     } else if(type == "register-active")
     {
         auto trackingId = msg.value("serverTrackingId", std::string());
@@ -677,10 +718,11 @@ ISteamNetworkingConnectionSignaling* GatewayServerRegistration::
     OnConnectRequest(
         HSteamNetConnection hConn, const SteamNetworkingIdentity&, int)
 {
-    std::string sessionId;
+    std::string sessionId, hostToken;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         sessionId = m_pendingSessionId;
+        hostToken = m_pendingHostToken;
     }
     if(sessionId.empty())
     {
@@ -693,8 +735,8 @@ ISteamNetworkingConnectionSignaling* GatewayServerRegistration::
         return nullptr;
     }
 
-    auto* accept =
-        new GatewayAcceptSignaling(this, sessionId, m_gatewayUrl, hConn);
+    auto* accept = new GatewayAcceptSignaling(
+        this, sessionId, hostToken, m_gatewayUrl, hConn);
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_pendingAccepts.push_back(accept);
@@ -729,19 +771,20 @@ bool GatewayServerRegistration::SendOverServerSignal(
 /* Feeds queued rendezvous into GNS from the tick thread. */
 void GatewayServerRegistration::drainIncomingSignals()
 {
-    std::vector<std::pair<std::string, std::string>> incoming;
+    std::vector<IncomingSignal> incoming;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         incoming.swap(m_incoming);
     }
-    for(auto& [sessionId, raw] : incoming)
+    for(auto& signal : incoming)
     {
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            m_pendingSessionId = sessionId;
+            m_pendingSessionId = signal.sessionId;
+            m_pendingHostToken = signal.hostToken;
         }
         m_sockets->ReceivedP2PCustomSignal(
-            raw.data(), static_cast<int>(raw.size()), this);
+            signal.raw.data(), static_cast<int>(signal.raw.size()), this);
     }
 }
 

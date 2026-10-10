@@ -29,6 +29,10 @@
 #   -ice-udp-port-min/-max range. It is ICE-lite, so it advertises only the
 #   host candidates it gathers -- behind NAT or docker those are private
 #   addresses no browser can reach, and ICE fails after signaling succeeds.
+#   It must also allow the browser page's origin: the harness serves the
+#   page from http://127.0.0.1:<ephemeral port>, so the gateway needs
+#   "-allowed-origins http://127.0.0.1,<its real origins>" (no port = any
+#   port) or the signaling socket is refused before any punch is attempted.
 #
 #   GATEWAY_URL    REQUIRED -- ws(s):// base URL of the remote gateway
 #                  (CI passes the WEBRTC_GATEWAY_SERVER secret). Never

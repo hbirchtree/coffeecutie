@@ -5,6 +5,8 @@
 #include <GameNetworkingSockets/steam/isteamnetworkingsockets.h>
 #include <GameNetworkingSockets/steam/steamnetworkingcustomsignaling.h>
 
+#include "webrtc_identity.h"
+
 #include <rtc/rtc.hpp>
 
 #include <chrono>
@@ -73,6 +75,9 @@ class GatewayFleetRegistration final
     GatewayFleetRegistration(
         std::string              registerUrl,
         std::string              serverId,
+        /*! Signs the gateway's registration challenge; the gateway binds
+         *  serverId to its public key */
+        Ed25519Key               key,
         ISteamNetworkingSockets* sockets,
         HSteamListenSocket       listenSocket,
         /*! Advertise the relay only, and refuse rendezvous, so no client can
@@ -84,8 +89,8 @@ class GatewayFleetRegistration final
     void Start();
     void Poll();
 
-    /*! True once the return-routability challenge has passed and the
-     * gateway is actively routing browsers to this server. */
+    /*! True once the gateway has acknowledged the signed registration
+     * challenge and is actively routing browsers to this server. */
     bool Active() const;
 
     /*! Gateway relay addresses whose browser session has ended since the
@@ -127,6 +132,7 @@ class GatewayFleetRegistration final
 
     std::string m_registerUrl;
     std::string m_serverId;
+    Ed25519Key  m_key;
 
     ISteamNetworkingSockets* m_sockets;
     HSteamListenSocket       m_listenSocket;

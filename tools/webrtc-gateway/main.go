@@ -5,13 +5,24 @@
 // those datagrams (GameNetworkingSockets, in this project's case) — this
 // is a transport bridge, not a game-aware proxy.
 //
-// One topology only (see examples/blam/cblam-testing/WEBRTC_TRANSPORT.md):
+// One topology only (see
+// examples/blam/cblam-testing/network/WEBRTC_TRANSPORT.md):
 // "browser <-> gateway <-> native UDP server", where every destination
 // comes from the fleet registry — a game server registers over
-// /server-signal, proves return-routability by punching this gateway's
-// challenge socket, and browsers reach it via "/signal?server=<id>".
-// There is no hardcoded-destination mode: the gateway never sends to an
-// address it hasn't first observed as a packet source.
+// /server-signal under an Ed25519 public key, proves it holds that key by
+// signing a challenge nonce (and, for a UDP server, that it is routable, by
+// receiving the nonce through its own punch at this gateway's challenge
+// socket), and browsers reach it via "/signal?server=<id>". A serverId
+// stays bound to the key that claimed it (-server-id-memory), so no other
+// key can register the same name. There is no hardcoded-destination mode:
+// the gateway never sends to an address it hasn't first observed as a
+// packet source.
+//
+// What an unauthenticated peer may cost this process is bounded in
+// access.go: browser origins (-allowed-origins), per-address session and
+// registration caps keyed on the client behind the TLS-terminating proxy
+// (-trusted-proxy), message size limits and a deadline for the first
+// message on every signaling socket.
 //
 // Each client gets its own relay socket, whose local port is ephemeral by
 // default (-relay-port-min/-relay-port-max bound it to a range for hosting
@@ -50,6 +61,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
@@ -108,6 +120,17 @@ type signalMessage struct {
 	PunchPort        int    `json:"punchPort,omitempty"`
 	TrackingID       string `json:"trackingId,omitempty"`
 	ServerTrackingID string `json:"serverTrackingId,omitempty"`
+	// PublicKey (base64, raw 32-byte Ed25519) comes with "register" and names
+	// the key the serverId is bound to; Signature (base64) comes with
+	// "challenge-response" and is that key's signature over
+	// registrationChallenge(serverId, nonce).
+	PublicKey string `json:"publicKey,omitempty"`
+	Signature string `json:"signature,omitempty"`
+	// HostToken rides on every gns-rendezvous relayed to a WebRTC-hosted
+	// server: the credential its host-side DataChannel dial must present
+	// (/signal?role=host&session=<id>&token=<hostToken>). The client never
+	// sees it, so it cannot occupy its own session's host slot.
+	HostToken string `json:"hostToken,omitempty"`
 }
 
 const registerPunchPrefix = "COFFEE-REG-PUNCH:"
@@ -201,8 +224,8 @@ func (s *registeredServer) supports(transport string) bool {
 var relayPunchMarker = []byte("COFFEE-NAT-PUNCH")
 
 var upgrader = websocket.Upgrader{
-	// Phase 1 test harness only; a real deployment must restrict this.
-	CheckOrigin: func(r *http.Request) bool { return true },
+	// See checkOrigin (access.go) and -allowed-origins.
+	CheckOrigin: checkOrigin,
 }
 
 // clientSession is a registered /signal connection, keyed by session ID
@@ -218,6 +241,11 @@ type clientSession struct {
 	relayPort        int
 	trackingID       string
 	serverTrackingID string
+	// clientIP is what the per-address session cap was charged to.
+	clientIP string
+	// hostToken is the credential a WebRTC-hosted server presents to attach
+	// its half of this session's DataChannel bridge (see signalMessage).
+	hostToken string
 
 	mu sync.Mutex
 	// serverAddr is the resolved UDP address this session's relay socket
@@ -308,6 +336,20 @@ type PortPool struct {
 
 const maxMetadataBytes = 4096
 
+// Bounds on what a signaling peer may send: the largest legitimate message
+// is an SDP offer of a few kilobytes, and a GNS rendezvous blob is under two.
+const (
+	maxSignalMessageBytes  = 64 << 10
+	maxRendezvousDataBytes = 16 << 10
+	maxServerIDLength      = 64
+)
+
+var (
+	sessionLimiter      = newIPCounter()
+	registrationLimiter = newIPCounter()
+	serverIDOwners      = newIDOwnerTable(24 * time.Hour)
+)
+
 type serverMetadata struct {
 	// raw is the JSON payload exactly as the server sent it. The gateway
 	// does not interpret the contents beyond enforcing the size cap.
@@ -327,6 +369,11 @@ type registeredServer struct {
 	transports []string
 
 	trackingID string
+	// publicKey is the Ed25519 key this registration proved it holds; the
+	// serverId is bound to it (see serverIDOwners).
+	publicKey ed25519.PublicKey
+	// originIP is what the per-address registration cap was charged to.
+	originIP string
 
 	mu           sync.Mutex
 	active       bool
@@ -356,6 +403,18 @@ type serverSettings struct {
 	websocketAddr   net.Addr
 	challengeAddr   net.Addr
 	datachannelAddr net.Addr
+
+	// Access policy; see access.go.
+	trustedProxies  []*net.IPNet
+	allowedOrigins  []originRule
+	allowAllOrigins bool
+	// offerTimeout bounds how long a freshly upgraded signaling socket may
+	// stay silent before its first message (the offer, or the register).
+	offerTimeout          time.Duration
+	maxSessionsPerIP      int
+	maxSessions           int
+	maxRegistrationsPerIP int
+	maxRegistrations      int
 }
 
 type serverRegistry struct {
@@ -410,13 +469,6 @@ func newTrackingID(prefix string) string {
 		return prefix + "-" + fmt.Sprintf("%06x", time.Now().UnixNano()&0xffffff)
 	}
 	return prefix + "-" + strings.ToUpper(hex.EncodeToString(b))
-}
-
-func signalOrigin(r *http.Request) string {
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		return r.RemoteAddr + " (forwarded for " + fwd + ")"
-	}
-	return r.RemoteAddr
 }
 
 func newSessionID() string {
@@ -477,11 +529,36 @@ func main() {
 
 	adminAddr := flag.String("admin-port", ":2222", "SSH port for admin interface")
 	adminPrivateKey := flag.String("admin-private-key", "id_ed25519", "Private key to use as host key for admin server")
+
+	allowedOrigins := flag.String("allowed-origins", "", "comma-separated browser origins (scheme://host[:port]; no port = any port on that host) allowed to open signaling sockets. Empty = only pages served from the host this gateway is reached as; * = any origin")
+	trustedProxy := flag.String("trusted-proxy", "", "comma-separated addresses/CIDRs of the TLS-terminating proxy in front of this gateway. Only connections from these have X-Forwarded-For/X-Forwarded-Host believed; without it, per-address limits and logs see the proxy as the client")
+	offerTimeout := flag.Duration("offer-timeout", 15*time.Second, "how long a new signaling socket may stay silent before its first message (offer, or register) before it is dropped")
+	maxSessionsPerIP := flag.Int("max-sessions-per-ip", 8, "concurrent /signal sessions one client address may hold (0 = unlimited)")
+	maxSessions := flag.Int("max-sessions", 1024, "concurrent /signal sessions in total (0 = unlimited)")
+	maxRegistrationsPerIP := flag.Int("max-registrations-per-ip", 16, "concurrent server registrations one address may hold (0 = unlimited)")
+	maxRegistrations := flag.Int("max-registrations", 4096, "concurrent server registrations in total (0 = unlimited)")
+	serverIDMemory := flag.Duration("server-id-memory", 24*time.Hour, "how long a serverId stays bound to the key that last registered it after that registration ends (0 = for the life of the process)")
 	flag.Parse()
 
 	settings.registrationTTL = *registrationTTLFlag
 	settings.challengeTimeout = *challengeTimeoutFlag
 	settings.relayPunchTimeout = *relayPunchTimeoutFlag
+	settings.offerTimeout = *offerTimeout
+	settings.maxSessionsPerIP = *maxSessionsPerIP
+	settings.maxSessions = *maxSessions
+	settings.maxRegistrationsPerIP = *maxRegistrationsPerIP
+	settings.maxRegistrations = *maxRegistrations
+	serverIDOwners = newIDOwnerTable(*serverIDMemory)
+	var err error
+	if settings.trustedProxies, err = parseAddrList(*trustedProxy); err != nil {
+		log.Fatalf("-trusted-proxy: %v", err)
+	}
+	if settings.allowedOrigins, settings.allowAllOrigins, err = parseAllowedOrigins(*allowedOrigins); err != nil {
+		log.Fatalf("-allowed-origins: %v", err)
+	}
+	if len(settings.allowedOrigins) == 0 && !settings.allowAllOrigins {
+		log.Printf("no -allowed-origins: browser pages are accepted only from the host this gateway is reached as")
+	}
 
 	if (*iceUDPPortMin == 0) != (*iceUDPPortMax == 0) {
 		log.Fatalf("-ice-udp-port-min and -ice-udp-port-max must be set together")
@@ -566,7 +643,15 @@ func main() {
 	http.HandleFunc("/metadata", handleMetadataQuery)
 
 	log.Printf("webrtc-gateway listening on %s", *listenAddr)
-	if err := http.ListenAndServe(*listenAddr, nil); err != nil {
+	httpServer := &http.Server{
+		Addr: *listenAddr,
+		// Signaling sockets are hijacked past these; they bound the plain
+		// HTTP side (headers, /metadata, /server-list) against slow peers.
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+	}
+	if err := httpServer.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -664,22 +749,28 @@ func sweepExpiredRegistrations() {
 	defer ticker.Stop()
 	for range ticker.C {
 		now := time.Now()
-		var expired []*registeredServer
-		workingSet.servers.Lock()
+		type stale struct {
+			id  string
+			srv *registeredServer
+		}
+		var expired []stale
+		workingSet.servers.RLock()
 		for id, srv := range workingSet.servers.registry {
 			srv.mu.Lock()
-			stale := srv.active && now.After(srv.expiresAt)
+			dead := srv.active && now.After(srv.expiresAt)
 			srv.mu.Unlock()
-			if stale {
-				expired = append(expired, srv)
-				delete(workingSet.servers.registry, id)
-				log.Printf("%s registry entry %q expired (no heartbeat within TTL)", srv.tag(), id)
-				journalServerEvent(srv, id, "register-expired", "timeout", "no heartbeat within TTL")
+			if dead {
+				expired = append(expired, stale{id, srv})
 			}
 		}
-		workingSet.servers.Unlock()
-		for _, srv := range expired {
-			srv.conn.Close()
+		workingSet.servers.RUnlock()
+		for _, e := range expired {
+			if !removeRegistration(e.id, e.srv) {
+				continue
+			}
+			log.Printf("%s registry entry %q expired (no heartbeat within TTL)", e.srv.tag(), e.id)
+			journalServerEvent(e.srv, e.id, "register-expired", "timeout", "no heartbeat within TTL")
+			e.srv.conn.Close()
 		}
 	}
 }
@@ -688,7 +779,7 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	// A transportWebRTC server dials the same endpoint to supply the far
 	// half of one session's DataChannel bridge (see handleHostSignal).
 	if r.URL.Query().Get("role") == "host" {
-		handleHostSignal(w, r, r.URL.Query().Get("session"), iceUDPPortMin, iceUDPPortMax)
+		handleHostSignal(w, r, r.URL.Query().Get("session"), r.URL.Query().Get("token"), iceUDPPortMin, iceUDPPortMax)
 		return
 	}
 
@@ -713,12 +804,21 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		return
 	}
 
+	clientIP := clientAddr(r)
+	if !sessionLimiter.tryAcquire(clientIP, settings.maxSessionsPerIP, settings.maxSessions) {
+		log.Printf("%s rejecting /signal from %s: session cap reached", srv.tag(), signalOrigin(r))
+		http.Error(w, "too many sessions", http.StatusTooManyRequests)
+		return
+	}
+	defer sessionLimiter.release(clientIP)
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("websocket upgrade failed: %v", err)
 		return
 	}
 	defer conn.Close()
+	conn.SetReadLimit(maxSignalMessageBytes)
 
 	sessionID := newSessionID()
 	session := &clientSession{
@@ -727,6 +827,8 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		protocol:         "WebRTC",
 		trackingID:       newTrackingID("C"),
 		serverTrackingID: srv.trackingID,
+		clientIP:         clientIP,
+		hostToken:        newSessionID(),
 	}
 	log.Printf("[%s/%s] client session opened for server %q from %s",
 		session.serverTrackingID, session.trackingID, serverID, signalOrigin(r))
@@ -750,10 +852,12 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 	}()
 
 	var msg signalMessage
+	conn.SetReadDeadline(time.Now().Add(settings.offerTimeout))
 	if err := conn.ReadJSON(&msg); err != nil {
 		log.Printf("%s signal read failed: %v", session.tag(), err)
 		return
 	}
+	conn.SetReadDeadline(time.Time{})
 	if msg.Type != "offer" {
 		log.Printf("%s expected offer, got %q", session.tag(), msg.Type)
 		return
@@ -1049,7 +1153,11 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 		}
 		switch m.Type {
 		case "gns-rendezvous":
-			relayRendezvousToServer(serverID, sessionID, m.Data)
+			if len(m.Data) > maxRendezvousDataBytes {
+				log.Printf("%s dropping oversized gns-rendezvous (%d bytes)", session.tag(), len(m.Data))
+				continue
+			}
+			relayRendezvousToServer(serverID, sessionID, session.hostToken, m.Data)
 		case "gns-connected":
 			log.Printf("[%s/%s] GNS reports direct connection, retiring relay", session.serverTrackingID, session.trackingID)
 			journalClientEvent(session, "relay-retired", "ok", "GNS reports a direct connection")
@@ -1067,10 +1175,12 @@ func handleSignal(w http.ResponseWriter, r *http.Request, iceUDPPortMin, iceUDPP
 // for that one session. The gateway answers it exactly like a client's,
 // then splices the two channels together and copies messages across.
 //
-// The session ID is the capability here: it is 16 bytes of CSPRNG output
-// known only to the gateway, that client, and the server it was routed
-// to, and a session accepts exactly one host.
-func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, iceUDPPortMin, iceUDPPortMax int) {
+// The host token is the capability here: 16 bytes of CSPRNG output the
+// gateway tells only the server, on every gns-rendezvous it relays for the
+// session. The client knows its session ID but never the token, so it
+// cannot take its own session's host slot; and a session accepts exactly
+// one host.
+func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID, token string, iceUDPPortMin, iceUDPPortMax int) {
 	if sessionID == "" {
 		log.Printf("rejecting host /signal: missing ?session=<id>")
 		return
@@ -1080,6 +1190,11 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 	workingSet.clients.RUnlock()
 	if !ok {
 		log.Printf("rejecting host /signal: unknown session %s", sessionID)
+		return
+	}
+	if !hostTokenMatches(session, token) {
+		log.Printf("%s rejecting host /signal: bad host token", session.tag())
+		journalHostEvent(session, "host-attach", "rejected", "bad host token")
 		return
 	}
 
@@ -1108,12 +1223,15 @@ func handleHostSignal(w http.ResponseWriter, r *http.Request, sessionID string, 
 		return
 	}
 	defer conn.Close()
+	conn.SetReadLimit(maxSignalMessageBytes)
 
 	var msg signalMessage
+	conn.SetReadDeadline(time.Now().Add(settings.offerTimeout))
 	if err := conn.ReadJSON(&msg); err != nil {
 		log.Printf("%s host signal read failed: %v", session.tag(), err)
 		return
 	}
+	conn.SetReadDeadline(time.Time{})
 	if msg.Type != "offer" {
 		log.Printf("%s host signal: expected offer, got %q", session.tag(), msg.Type)
 		return
@@ -1238,6 +1356,8 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
+	conn.SetReadLimit(maxSignalMessageBytes)
+	originIP := clientAddr(r)
 
 	var (
 		myID    string
@@ -1248,15 +1368,14 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 		if myEntry == nil {
 			return
 		}
-		workingSet.servers.Lock()
-		if workingSet.servers.registry[myID] == myEntry {
-			delete(workingSet.servers.registry, myID)
-		}
-		workingSet.servers.Unlock()
+		removeRegistration(myID, myEntry)
 		log.Printf("%s server %q signaling connection closed", myEntry.tag(), myID)
 		journalServerEvent(myEntry, myID, "signaling-closed", "closed", "")
 	}()
 
+	// The register has to come first, and promptly: an idle socket here
+	// would otherwise cost nothing to hold open forever.
+	conn.SetReadDeadline(time.Now().Add(settings.offerTimeout))
 	for {
 		var m signalMessage
 		if err := conn.ReadJSON(&m); err != nil {
@@ -1264,8 +1383,28 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 		}
 		switch m.Type {
 		case "register":
-			id, entry, err := beginRegistration(conn, m, signalOrigin(r))
+			if myEntry != nil {
+				myEntry.mu.Lock()
+				alreadyActive := myEntry.active
+				myEntry.mu.Unlock()
+				if alreadyActive {
+					log.Printf("%s server signal: duplicate register ignored", myEntry.tag())
+					continue
+				}
+				// A retry while the challenge is still pending, or after it
+				// timed out: start over with a fresh nonce.
+				removeRegistration(myID, myEntry)
+				myID, myEntry = "", nil
+			}
+			if !registrationLimiter.tryAcquire(originIP, settings.maxRegistrationsPerIP, settings.maxRegistrations) {
+				log.Printf("rejecting registration for %q from %s: registration cap reached", m.ServerID, signalOrigin(r))
+				journalServerEvent(nil, m.ServerID, "register", "rejected", "registration cap reached")
+				conn.WriteJSON(signalMessage{Type: "error", Data: "registration cap reached"})
+				return
+			}
+			id, entry, err := beginRegistration(conn, m, signalOrigin(r), originIP)
 			if err != nil {
+				registrationLimiter.release(originIP)
 				log.Printf("rejecting registration for %q: %v", m.ServerID, err)
 				// No entry exists yet, so this row has no tracking ID to
 				// attribute -- searchable by serverID only.
@@ -1274,23 +1413,22 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			myID, myEntry = id, entry
+			conn.SetReadDeadline(time.Time{})
+			// Every server signs the nonce to prove it holds the key behind
+			// the ID. A UDP server's nonce only ever reaches it through the
+			// punch it sends to punchPort (told explicitly, never guessed
+			// from URLs), which is also its proof of routability; a
+			// WebRTC-hosted server has no UDP presence to prove and gets the
+			// nonce here.
 			reply := signalMessage{
 				Type:             "register-pending",
-				PunchPort:        settings.punchPortToAdvertise,
 				ServerTrackingID: entry.trackingID,
 			}
 			if entry.supports(transportWebRTC) {
-				// Nothing to punch -- it is routable the moment it
-				// registers (see beginRegistration).
-				reply = signalMessage{
-					Type:             "register-active",
-					ServerTransports: entry.transports,
-					ServerTrackingID: entry.trackingID,
-				}
+				reply.Nonce = hex.EncodeToString(entry.pendingNonce)
+			} else {
+				reply.PunchPort = settings.punchPortToAdvertise
 			}
-			// Tell a UDP server where to send its return-routability punch
-			// -- explicitly, never guessed from URLs (see PunchPort's
-			// field comment).
 			myEntry.writeMu.Lock()
 			err = conn.WriteJSON(reply)
 			myEntry.writeMu.Unlock()
@@ -1308,19 +1446,30 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 				myEntry.expiresAt = time.Now().Add(settings.registrationTTL)
 			}
 			myEntry.mu.Unlock()
+			serverIDOwners.touch(myID, time.Now())
 		case "challenge-response":
 			if myEntry == nil {
 				log.Printf("server signal: challenge-response before a successful register")
 				continue
 			}
-			completeChallenge(myID, myEntry, m.Nonce)
+			completeChallenge(myID, myEntry, m.Nonce, m.Signature)
 		case "metadata":
-			// The payload rides in "data" as an opaque string, so the
-			// bytes the server signed reach the client unchanged.
+			if myEntry == nil {
+				log.Printf("server signal: metadata before a successful register")
+				continue
+			}
+			// The payload rides in "data" as an opaque string, so the bytes
+			// the server signed reach the client unchanged -- but it has to
+			// be signed by the key this registration proved, or a server
+			// could publish a description of itself under some other key.
 			if len(m.Data) > 0 {
-				stashServerMetadata(myID, myEntry, []byte(m.Data))
+				acceptServerMetadata(myID, myEntry, []byte(m.Data))
 			}
 		case "gns-rendezvous":
+			if len(m.Data) > maxRendezvousDataBytes {
+				log.Printf("%s dropping oversized gns-rendezvous (%d bytes)", myEntry.tag(), len(m.Data))
+				continue
+			}
 			// myID, not anything in the message: the session has to belong
 			// to the server that sent this, like every other case here.
 			relayRendezvousToClient(myID, m.SessionID, m.Data)
@@ -1333,13 +1482,26 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (string, *registeredServer, error) {
+func beginRegistration(conn *websocket.Conn, m signalMessage, origin, originIP string) (string, *registeredServer, error) {
 	if m.ServerID == "" {
 		return "", nil, fmt.Errorf("register: missing serverId")
+	}
+	if len(m.ServerID) > maxServerIDLength {
+		return "", nil, fmt.Errorf("register: serverId longer than %d characters", maxServerIDLength)
 	}
 	transports, err := parseTransports(m)
 	if err != nil {
 		return "", nil, err
+	}
+	publicKey, err := parseServerPublicKey(m.PublicKey)
+	if err != nil {
+		return "", nil, fmt.Errorf("register: %w", err)
+	}
+	// The ID belongs to whichever key last proved it. A different key is
+	// refused before any challenge, so a squatter learns nothing about the
+	// real server beyond that the name is taken.
+	if err := serverIDOwners.check(m.ServerID, publicKey, time.Now()); err != nil {
+		return "", nil, fmt.Errorf("register: %w", err)
 	}
 
 	nonce := make([]byte, 16)
@@ -1351,20 +1513,11 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 		conn:         conn,
 		transports:   transports,
 		trackingID:   newTrackingID("S"),
+		publicKey:    publicKey,
+		originIP:     originIP,
 		active:       false,
 		pendingNonce: nonce,
 		expiresAt:    time.Now().Add(settings.challengeTimeout),
-	}
-	// A WebRTC-hosted server has no UDP presence to prove: the gateway
-	// only ever reaches it back down this same WebSocket, and the
-	// DataChannel it dials in with is itself ICE/DTLS-authenticated. The
-	// return-routability challenge would be checking an address that is
-	// never used, so it is skipped -- first-registered-wins below is the
-	// whole squatting story for these.
-	if entry.supports(transportWebRTC) {
-		entry.active = true
-		entry.pendingNonce = nil
-		entry.expiresAt = time.Now().Add(settings.registrationTTL)
 	}
 
 	workingSet.servers.Lock()
@@ -1375,25 +1528,21 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 	workingSet.servers.registry[m.ServerID] = entry
 	workingSet.servers.Unlock()
 
+	// Every server signs the nonce to prove it holds the key behind the ID.
+	// A UDP server additionally proves it is routable, since the nonce only
+	// reaches it through the punch it sends; a WebRTC-hosted server has no
+	// UDP presence to prove -- the gateway only ever reaches it back down
+	// this websocket -- so it is told the nonce directly.
+	detail := "awaiting return-routability punch and signature"
 	if entry.supports(transportWebRTC) {
-		log.Printf("[%s] server %q registration active from %s (webrtc-hosted, no UDP challenge)",
-			entry.trackingID, m.ServerID, origin)
-		journal.Record(journalEvent{
-			scope: "server", event: "register", outcome: "ok",
-			serverID: m.ServerID, serverTrackingID: entry.trackingID,
-			origin: origin, transport: strings.Join(entry.transports, ","),
-			detail: "webrtc-hosted, no UDP challenge",
-		})
-		return m.ServerID, entry, nil
+		detail = "awaiting signature (webrtc-hosted, no UDP challenge)"
 	}
-
-	log.Printf("[%s] register %q from %s: waiting for return-routability punch",
-		entry.trackingID, m.ServerID, origin)
+	log.Printf("[%s] register %q from %s: %s", entry.trackingID, m.ServerID, origin, detail)
 	journal.Record(journalEvent{
 		scope: "server", event: "register", outcome: "pending",
 		serverID: m.ServerID, serverTrackingID: entry.trackingID,
 		origin: origin, transport: strings.Join(entry.transports, ","),
-		detail: "awaiting return-routability punch",
+		detail: detail,
 	})
 
 	go func(id string, srv *registeredServer) {
@@ -1404,17 +1553,32 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin string) (st
 		if !expired {
 			return
 		}
-		workingSet.servers.Lock()
-		if workingSet.servers.registry[id] == srv {
-			delete(workingSet.servers.registry, id)
+		if removeRegistration(id, srv) {
+			log.Printf("%s register %q: challenge not completed in time, dropping registration", srv.tag(), id)
+			journalServerEvent(srv, id, "register", "timeout",
+				"challenge not completed within "+settings.challengeTimeout.String())
 		}
-		workingSet.servers.Unlock()
-		log.Printf("%s register %q: no punch/challenge received in time, dropping registration", srv.tag(), id)
-		journalServerEvent(srv, id, "register", "timeout",
-			"no punch/challenge within "+settings.challengeTimeout.String())
 	}(m.ServerID, entry)
 
 	return m.ServerID, entry, nil
+}
+
+// removeRegistration drops a registry entry if it is still the current one
+// for its ID, and gives back what it was charged. Returns whether this call
+// removed it: the websocket closing, the challenge timing out and the TTL
+// sweep can all race to do so, and only one may.
+func removeRegistration(id string, srv *registeredServer) bool {
+	workingSet.servers.Lock()
+	removed := workingSet.servers.registry[id] == srv
+	if removed {
+		delete(workingSet.servers.registry, id)
+	}
+	workingSet.servers.Unlock()
+	if removed {
+		registrationLimiter.release(srv.originIP)
+		serverIDOwners.touch(id, time.Now())
+	}
+	return removed
 }
 
 func challengeListener() {
@@ -1455,7 +1619,7 @@ func challengeListener() {
 	}
 }
 
-func completeChallenge(id string, srv *registeredServer, nonceHex string) {
+func completeChallenge(id string, srv *registeredServer, nonceHex, signature string) {
 	nonce, err := hex.DecodeString(nonceHex)
 	if err != nil {
 		log.Printf("%s challenge-response for %q: bad hex nonce: %v", srv.tag(), id, err)
@@ -1463,25 +1627,68 @@ func completeChallenge(id string, srv *registeredServer, nonceHex string) {
 		return
 	}
 	srv.mu.Lock()
-	defer srv.mu.Unlock()
 	if srv.active {
+		srv.mu.Unlock()
 		return
 	}
 	if subtle.ConstantTimeCompare(nonce, srv.pendingNonce) != 1 {
-		log.Printf("%s challenge-response for %q: nonce mismatch (got %d bytes %x, want %d bytes %x)",
-			srv.tag(), id, len(nonce), nonce, len(srv.pendingNonce), srv.pendingNonce)
+		srv.mu.Unlock()
+		// Neither nonce is logged: the pending one stays valid until the
+		// challenge times out.
+		log.Printf("%s challenge-response for %q: nonce mismatch (%d bytes, want %d)",
+			srv.tag(), id, len(nonce), len(srv.pendingNonce))
 		journalServerEvent(srv, id, "challenge-response", "error", "nonce mismatch")
+		return
+	}
+	if err := verifyRegistrationSignature(srv.publicKey, id, nonce, signature); err != nil {
+		srv.mu.Unlock()
+		log.Printf("%s challenge-response for %q: %v", srv.tag(), id, err)
+		journalServerEvent(srv, id, "challenge-response", "error", err.Error())
 		return
 	}
 	srv.active = true
 	srv.pendingNonce = nil
 	srv.expiresAt = time.Now().Add(settings.registrationTTL)
-	log.Printf("%s server %q registration active (challenge passed)", srv.tag(), id)
-	challengeAddr := ""
+	proof := "signature verified"
 	if srv.challengeAddr != nil {
-		challengeAddr = "challenge passed from " + srv.challengeAddr.String()
+		proof += ", punch from " + srv.challengeAddr.String()
 	}
-	journalServerEvent(srv, id, "register-active", "ok", challengeAddr)
+	transports := append([]string(nil), srv.transports...)
+	srv.mu.Unlock()
+
+	serverIDOwners.claim(id, srv.publicKey, time.Now())
+	log.Printf("%s server %q registration active (challenge passed: %s)", srv.tag(), id, proof)
+	journalServerEvent(srv, id, "register-active", "ok", proof)
+
+	srv.writeMu.Lock()
+	err = srv.conn.WriteJSON(signalMessage{
+		Type:             "register-active",
+		ServerTransports: transports,
+		ServerTrackingID: srv.trackingID,
+	})
+	srv.writeMu.Unlock()
+	if err != nil {
+		log.Printf("%s failed to send register-active to %q: %v", srv.tag(), id, err)
+	}
+}
+
+// acceptServerMetadata verifies a payload against the key the registration
+// proved before storing it. One that fails is dropped and the previous one
+// stays, so clients keep seeing a description that key signed rather than
+// none, and the server's log line says why.
+func acceptServerMetadata(id string, srv *registeredServer, raw []byte) {
+	if len(raw) > maxMetadataBytes {
+		log.Printf("%s server metadata from %s rejected: %d bytes exceeds %d byte cap",
+			srv.tag(), id, len(raw), maxMetadataBytes)
+		return
+	}
+	if err := verifyMetadataSignature(raw, srv.publicKey); err != nil {
+		log.Printf("%s server metadata from %s rejected: %v", srv.tag(), id, err)
+		journalServerEvent(srv, id, "metadata", "rejected", err.Error())
+		return
+	}
+	log.Printf("%s server metadata verified for %s (%d bytes)", srv.tag(), id, len(raw))
+	stashServerMetadata(id, srv, raw)
 }
 
 func stashServerMetadata(id string, srv *registeredServer, raw []byte) {
@@ -1499,7 +1706,7 @@ func stashServerMetadata(id string, srv *registeredServer, raw []byte) {
 	srv.mu.Unlock()
 }
 
-func relayRendezvousToServer(serverID, sessionID, data string) {
+func relayRendezvousToServer(serverID, sessionID, hostToken, data string) {
 	workingSet.servers.RLock()
 	srv, ok := workingSet.servers.registry[serverID]
 	var conn *websocket.Conn
@@ -1518,7 +1725,7 @@ func relayRendezvousToServer(serverID, sessionID, data string) {
 	}
 	srv.writeMu.Lock()
 	defer srv.writeMu.Unlock()
-	if err := conn.WriteJSON(signalMessage{Type: "gns-rendezvous", SessionID: sessionID, Data: data}); err != nil {
+	if err := conn.WriteJSON(signalMessage{Type: "gns-rendezvous", SessionID: sessionID, HostToken: hostToken, Data: data}); err != nil {
 		log.Printf("%s failed to relay rendezvous to server %q: %v", srv.tag(), serverID, err)
 	}
 }

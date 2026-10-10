@@ -155,6 +155,18 @@ fi
 webrtc_compare_journals "$WEBRTC_SERVER_JOURNAL" "$WEBRTC_CLIENT_JOURNAL" "$HERE/compare_journals.py"
 RESULT=$?
 
+# The gateway's side of the registration protocol: the server proved the key
+# its serverId is bound to, and the metadata it published verified against
+# that key. Without either, clients could not be served what the server
+# signed, so a connection alone would pass for the wrong reason.
+for marker in "registration active (challenge passed: signature verified" \
+              "server metadata verified for $SERVER_ID"; do
+    if ! grep -q "$marker" "$WEBRTC_GATEWAY_LOG" 2>/dev/null; then
+        echo "FAIL: gateway log lacks \"$marker\""
+        RESULT=1
+    fi
+done
+
 # Process logs are echoed only when something went wrong; they are in
 # OUT_DIR either way, which CI uploads as an artifact.
 if [ "$RESULT" != "0" ] || [ "$SERVER_EXIT" != "0" ] || [ "$CLIENT_EXIT" != "0" ]; then

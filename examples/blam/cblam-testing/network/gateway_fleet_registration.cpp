@@ -44,32 +44,6 @@ constexpr std::chrono::seconds kRelayPunchInterval{2};
 const std::string kRegisterPunchPrefix = "COFFEE-REG-PUNCH:";
 const std::string kRelayPunchPayload   = "COFFEE-NAT-PUNCH";
 
-std::string hexDecode(std::string const& in)
-{
-    if(in.size() % 2 != 0)
-        return {};
-    auto nibble = [](char c) -> int {
-        if(c >= '0' && c <= '9')
-            return c - '0';
-        if(c >= 'a' && c <= 'f')
-            return c - 'a' + 10;
-        if(c >= 'A' && c <= 'F')
-            return c - 'A' + 10;
-        return -1;
-    };
-    std::string out;
-    out.reserve(in.size() / 2);
-    for(size_t i = 0; i < in.size(); i += 2)
-    {
-        int hi = nibble(in[i]);
-        int lo = nibble(in[i + 1]);
-        if(hi < 0 || lo < 0)
-            return {};
-        out.push_back(static_cast<char>((hi << 4) | lo));
-    }
-    return out;
-}
-
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
 /* "ws(s)://host[:port][/path]" -> host. Only the host matters here: the
  * UDP punch PORT is told to us by the gateway (register-pending's
@@ -118,11 +92,13 @@ SteamNetworkingIPAddr toSteamAddr(sockaddr_in const& addr)
 GatewayFleetRegistration::GatewayFleetRegistration(
     std::string              registerUrl,
     std::string              serverId,
+    Ed25519Key               key,
     ISteamNetworkingSockets* sockets,
     HSteamListenSocket       listenSocket,
     bool                     relayOnly)
     : m_registerUrl(std::move(registerUrl))
     , m_serverId(std::move(serverId))
+    , m_key(std::move(key))
     , m_sockets(sockets)
     , m_listenSocket(listenSocket)
     , m_relayOnly(relayOnly)
@@ -250,6 +226,17 @@ void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
             msg.value("data", std::string()));
         std::lock_guard<std::mutex> lock(m_mutex);
         m_active = false;
+    } else if(type == "register-active")
+    {
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_active = true;
+        }
+        cDebug(
+            "webrtc_signaling: gateway_fleet_registration: registration "
+            "active for serverId={} [{}] (challenge passed)",
+            m_serverId,
+            m_trackingId.empty() ? "no tracking id" : m_trackingId);
     } else if(type == "register-pending")
     {
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
@@ -322,6 +309,7 @@ void GatewayFleetRegistration::sendRegister()
     nlohmann::json reg{
         {"type", "register"},
         {"serverId", m_serverId},
+        {"publicKey", m_key.public_key_base64()},
         {"serverTransports",
          m_relayOnly ? nlohmann::json::array({"relay"})
                      : nlohmann::json::array({"direct", "relay"})},
@@ -391,25 +379,31 @@ void GatewayFleetRegistration::pollChallengeSocket()
     if(n <= 0)
         return;
 
-    auto nonce = hex::encode(std::string(buf, static_cast<size_t>(n)));
+    /* The nonce came back through our own punch, which is the gateway's
+     * proof that we are routable; signing it bound to our id proves we hold
+     * the key the id is registered under. Active only on the gateway's ack. */
+    std::string nonce(buf, static_cast<size_t>(n));
+    auto        signature =
+        m_key.sign(gateway_registration_challenge(m_serverId, nonce));
+    if(signature.empty())
+    {
+        cWarning(
+            "webrtc_signaling: gateway_fleet_registration: failed to sign "
+            "the registration challenge");
+        return;
+    }
     nlohmann::json response{
         {"type", "challenge-response"},
         {"serverId", m_serverId},
-        {"nonce", nonce},
+        {"nonce", hex::encode(nonce)},
+        {"signature",
+         b64::encode(
+             semantic::Span<const uint8_t>(signature.data(), signature.size()))},
     };
-    if(m_ws && m_ws->send(response.dump()))
-    {
-        /* Optimistic: the gateway sends no separate "you're active now"
-         * ack, so echoing the nonce successfully is the best local signal
-         * available without extending the wire protocol further. */
-        cDebug(
-            "webrtc_signaling: gateway_fleet_registration: registration "
-            "active for serverId={} [{}] (challenge passed)",
-            m_serverId,
-            m_trackingId.empty() ? "no tracking id" : m_trackingId);
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_active = true;
-    }
+    if(m_ws && !m_ws->send(response.dump()))
+        cWarning(
+            "webrtc_signaling: gateway_fleet_registration: failed to send "
+            "challenge-response");
 #endif
 }
 
@@ -449,7 +443,8 @@ void GatewayFleetRegistration::onClientRelay(
         m_relays[sessionId] =
             ClientRelay{relayPort, std::chrono::steady_clock::now()};
     }
-    std::string nonce = hexDecode(relayNonceHex);
+    auto        nonceBytes = hex_decode(relayNonceHex);
+    std::string nonce(nonceBytes.begin(), nonceBytes.end());
     sendRelayPunch(relayPort, nonce.empty() ? kRelayPunchPayload : nonce);
     cDebug(
         "webrtc_signaling: gateway_fleet_registration: relay punch started "

@@ -1475,6 +1475,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             webrtc_signaling::GatewayFleetRegistration>(
                             connect->gateway_register_url,
                             connect->gateway_server_id,
+                            m_server_key,
                             m_impl,
                             m_socket,
                             connect->relay_only);
@@ -2104,7 +2105,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         ensure_server_identity();
         m_webrtcServer =
             std::make_unique<webrtc_signaling::GatewayServerRegistration>(
-                gatewayUrl, serverId, m_impl);
+                gatewayUrl, serverId, m_server_key, m_impl);
         m_webrtcServer->Start();
         // Same poll group create_server uses -- independent of any listen
         // socket (connections get attached to it individually via

@@ -144,6 +144,9 @@ class GatewayAcceptSignaling final : public ISteamNetworkingConnectionSignaling
     GatewayAcceptSignaling(
         GatewayServerRegistration* owner,
         std::string                sessionId,
+        /*! Presented on the host-role dial; the gateway attaches it to the
+         *  rendezvous it relays for the session and tells nobody else */
+        std::string                hostToken,
         std::string                dataChannelGatewayUrl,
         HSteamNetConnection        hConn);
     ~GatewayAcceptSignaling();
@@ -190,6 +193,7 @@ class GatewayAcceptSignaling final : public ISteamNetworkingConnectionSignaling
 
     GatewayServerRegistration* m_owner;
     std::string                m_sessionId;
+    std::string                m_hostToken;
     std::string                m_gatewayUrl;
     HSteamNetConnection        m_hConn;
 
@@ -236,6 +240,9 @@ class GatewayServerRegistration final
     GatewayServerRegistration(
         std::string              gatewayUrl,
         std::string              serverId,
+        /*! Signs the gateway's registration challenge; the gateway binds
+         *  serverId to its public key */
+        Ed25519Key               key,
         ISteamNetworkingSockets* sockets);
     ~GatewayServerRegistration();
 
@@ -282,6 +289,7 @@ class GatewayServerRegistration final
 
     std::string                     m_gatewayUrl;
     std::string                     m_serverId;
+    Ed25519Key                      m_key;
     ISteamNetworkingSockets*        m_sockets;
     std::shared_ptr<rtc::WebSocket> m_ws;
 
@@ -297,12 +305,21 @@ class GatewayServerRegistration final
      * an EXISTING connection's signaling object once one exists; this is
      * only needed for the "brand new connection" case. */
     std::string                          m_pendingSessionId;
+    std::string                          m_pendingHostToken;
     std::vector<GatewayAcceptSignaling*> m_pendingAccepts;
     std::unordered_map<HSteamNetConnection, std::string>
                                                      m_sessionIdByConnection;
     std::unordered_map<HSteamNetConnection, int>     m_directRouteTicks;
     std::unordered_set<HSteamNetConnection>          m_relayRetired;
-    std::vector<std::pair<std::string, std::string>> m_incoming;
+    /* Rendezvous from the gateway waiting to be fed to GNS, each with the
+     * token the gateway attached for this session's host-side dial */
+    struct IncomingSignal
+    {
+        std::string sessionId;
+        std::string hostToken;
+        std::string raw;
+    };
+    std::vector<IncomingSignal> m_incoming;
     std::vector<std::string>                         m_outgoing;
 };
 

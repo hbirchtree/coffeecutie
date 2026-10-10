@@ -7,14 +7,19 @@
 // -> gateway -> client.
 //
 // Covers the parts no other local test can reach without the wasm/native
-// build: registry + return-routability challenge, per-client relay port
-// allocation, and the nonce-authenticated relay punch.
+// build: registry + key-bound registration (signed challenge, plus the
+// return-routability punch for a UDP server), per-client relay port
+// allocation, the nonce-authenticated relay punch, and the host token a
+// WebRTC-hosted server needs to attach its half of a bridge.
 //
 // Usage: go run ./selftest [-gateway-bin ../gateway]
 package main
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -31,24 +36,55 @@ import (
 )
 
 type signalMessage struct {
-	Type       string `json:"type"`
-	SDP        string `json:"sdp,omitempty"`
-	SessionID  string `json:"sessionId,omitempty"`
-	Data       string `json:"data,omitempty"`
-	ServerID   string `json:"serverId,omitempty"`
-	Transport  string `json:"transport,omitempty"`
-	Nonce      string `json:"nonce,omitempty"`
-	RelayPort  int    `json:"relayPort,omitempty"`
-	RelayNonce string `json:"relayNonce,omitempty"`
-	PunchPort  int    `json:"punchPort,omitempty"`
+	Type             string   `json:"type"`
+	SDP              string   `json:"sdp,omitempty"`
+	SessionID        string   `json:"sessionId,omitempty"`
+	Data             string   `json:"data,omitempty"`
+	ServerID         string   `json:"serverId,omitempty"`
+	ServerTransports []string `json:"serverTransports,omitempty"`
+	Nonce            string   `json:"nonce,omitempty"`
+	RelayPort        int      `json:"relayPort,omitempty"`
+	RelayNonce       string   `json:"relayNonce,omitempty"`
+	PunchPort        int      `json:"punchPort,omitempty"`
+	PublicKey        string   `json:"publicKey,omitempty"`
+	Signature        string   `json:"signature,omitempty"`
+	HostToken        string   `json:"hostToken,omitempty"`
 }
 
 const (
 	serverID           = "selftest"
 	registerPunchPfx   = "COFFEE-REG-PUNCH:"
+	registerSigPrefix  = "coffee-gateway-register-v1\n"
 	payload            = "coffee-selftest-ping"
 	relayPunchInterval = 500 * time.Millisecond
 )
+
+// The server's identity key, generated per run: what the registration is
+// bound to and what signs the challenge.
+var serverPub, serverPriv, _ = ed25519.GenerateKey(rand.Reader)
+
+// gatewayTransportName is how the gateway names each -transport in its
+// registry and answers.
+func gatewayTransportName(transport string) string {
+	if transport == "webrtc" {
+		return "webrtc"
+	}
+	return "relay"
+}
+
+func hasTransport(list []string, want string) bool {
+	for _, t := range list {
+		if t == want {
+			return true
+		}
+	}
+	return false
+}
+
+func signChallenge(nonce []byte) string {
+	msg := append([]byte(registerSigPrefix+serverID+"\n"), nonce...)
+	return base64.StdEncoding.EncodeToString(ed25519.Sign(serverPriv, msg))
+}
 
 func main() {
 	gatewayBin := flag.String("gateway-bin", "./gateway", "gateway binary to launch")
@@ -146,9 +182,10 @@ func runFleetServer(ctx context.Context, httpPort int, gameSock *net.UDPConn, tr
 	defer conn.Close()
 
 	if err := conn.WriteJSON(signalMessage{
-		Type:      "register",
-		ServerID:  serverID,
-		Transport: transport,
+		Type:             "register",
+		ServerID:         serverID,
+		ServerTransports: []string{gatewayTransportName(transport)},
+		PublicKey:        base64.StdEncoding.EncodeToString(serverPub),
 	}); err != nil {
 		fatal("server: register: %v", err)
 	}
@@ -168,19 +205,30 @@ func runFleetServer(ctx context.Context, httpPort int, gameSock *net.UDPConn, tr
 		}
 		switch m.Type {
 		case "register-active":
-			// webrtc-hosted: routable immediately, nothing to punch.
-			log.Printf("server: registration active (%s transport)", transport)
+			log.Printf("server: registration active (%v)", m.ServerTransports)
 		case "gns-rendezvous":
 			// The real server would feed this to GNS, which asks it to
 			// accept a connection; either way it is the trigger to supply
-			// this session's host-side DataChannel.
+			// this session's host-side DataChannel, using the token the
+			// gateway attached for exactly that.
 			log.Printf("server: rendezvous for session %s, dialing host role", m.SessionID)
-			go runWebRTCHost(ctx, httpPort, m.SessionID)
+			go runWebRTCHost(ctx, httpPort, m.SessionID, m.HostToken)
 		case "register-pending":
-			nonce := doChallenge(challengeSock, m.PunchPort)
+			// A UDP server gets its nonce through the punch (proving it is
+			// routable); a WebRTC-hosted one is told it here. Both sign it.
+			var nonce []byte
+			if m.PunchPort != 0 {
+				nonce = doChallenge(challengeSock, m.PunchPort)
+			} else {
+				var err error
+				if nonce, err = hex.DecodeString(m.Nonce); err != nil || len(nonce) == 0 {
+					fatal("server: register-pending carried no usable nonce: %v", err)
+				}
+			}
 			if err := conn.WriteJSON(signalMessage{
-				Type:  "challenge-response",
-				Nonce: hex.EncodeToString(nonce),
+				Type:      "challenge-response",
+				Nonce:     hex.EncodeToString(nonce),
+				Signature: signChallenge(nonce),
 			}); err != nil {
 				fatal("server: challenge-response: %v", err)
 			}
@@ -266,10 +314,11 @@ func echoRelayed(sock *net.UDPConn) {
 }
 
 // runWebRTCHost plays a WebRTC-hosted server's per-session half: dial
-// /signal?role=host&session=<id>, offer a DataChannel, and echo the
-// payload back uppercased once the gateway bridges it to the client's.
-func runWebRTCHost(ctx context.Context, httpPort int, sessionID string) {
-	url := fmt.Sprintf("ws://127.0.0.1:%d/signal?role=host&session=%s", httpPort, sessionID)
+// /signal?role=host&session=<id>&token=<hostToken>, offer a DataChannel,
+// and echo the payload back uppercased once the gateway bridges it to the
+// client's.
+func runWebRTCHost(ctx context.Context, httpPort int, sessionID, hostToken string) {
+	url := fmt.Sprintf("ws://127.0.0.1:%d/signal?role=host&session=%s&token=%s", httpPort, sessionID, hostToken)
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		fatal("host: dial %s: %v", url, err)
@@ -419,9 +468,9 @@ func runClient(ctx context.Context, httpPort int, received chan<- string, transp
 	if answer.Type != "answer" {
 		fatal("client: expected answer, got %q", answer.Type)
 	}
-	if answer.Transport != transport {
-		fatal("client: gateway reported server transport %q, expected %q",
-			answer.Transport, transport)
+	if want := gatewayTransportName(transport); !hasTransport(answer.ServerTransports, want) {
+		fatal("client: gateway reported server transports %v, expected %q",
+			answer.ServerTransports, want)
 	}
 	sessionMu.Lock()
 	clientSessionID = answer.SessionID
