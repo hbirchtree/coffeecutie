@@ -66,6 +66,15 @@ struct AnimationController
             m_walkers.clear();
             m_custom.clear();
             m_generation = files.load_generation;
+            /* Players outlive the load, their layers point into the old map.
+             * A fast load can finish before we ever see it unloaded. */
+            for(auto player :
+                p.template select<PlayerInfo, AnimationPlayback>())
+            {
+                auto& anim = player.template get<AnimationPlayback>();
+                anim.stop_all();
+                anim.graph = nullptr;
+            }
         }
 
         for(auto const& play : std::exchange(m_requests, {}))
