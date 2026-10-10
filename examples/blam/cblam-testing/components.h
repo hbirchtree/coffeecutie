@@ -822,6 +822,11 @@ struct PlayerInfo
         f32 height{0.7f};      /*!< Capsule, end to end */
         f32 eye_height{0.55f}; /*!< Camera above the feet */
 
+        /*! Ground speeds, wu/s, from the graph's move clips */
+        f32 run_speed{2.25f};
+        f32 back_speed{2.25f};
+        f32 strafe_speed{2.25f};
+
         /*! Hit shape for bodies that follow a camera; the capsule above is
          * what a biped moves with */
         std::shared_ptr<biped_collision_t const> collision;

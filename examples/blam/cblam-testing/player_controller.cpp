@@ -24,8 +24,6 @@ struct PlayerController
     using type  = PlayerController;
     using Proxy = compo::proxy_of<PlayerControllerManifest>;
 
-    /* wu/s on the ground; about a Halo biped's run */
-    static constexpr f32 run_speed = 2.25f;
     /* As high as 4 wu/s jumped under 9.81, in Halo's gravity */
     static constexpr f32 jump_speed = 2.3f;
     /* A press this long before landing still jumps on landing */
@@ -368,11 +366,14 @@ struct PlayerController
             f32 len2 = glm::dot(v, v);
             return len2 > 1e-8f ? v / std::sqrt(len2) : Vecf3{};
         };
-        auto const& basis = cam.camera_.cached;
-        Vecf3       dir   = planar(basis.forward) * input.intent.move.x +
-                    planar(basis.right) * input.intent.move.y;
-        if(f32 len2 = glm::dot(dir, dir); len2 > 1.f)
-            dir /= std::sqrt(len2);
+        /* Each way at its own clip's speed; |move| <= 1 keeps diagonals
+         * within the faster of the two */
+        auto const&  basis = cam.camera_.cached;
+        auto const&  biped = info.biped;
+        Vecf2 const& move  = input.intent.move;
+        f32 const    along = move.x >= 0.f ? biped.run_speed : biped.back_speed;
+        Vecf3 const  dir   = planar(basis.forward) * move.x * along +
+                          planar(basis.right) * move.y * biped.strafe_speed;
 
         auto const* data     = p.get<PhysicsData>(id);
         bool const  grounded = data && data->enabled && data->grounded;
@@ -383,7 +384,7 @@ struct PlayerController
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity velocity{
             .entity_id  = id,
-            .velocity   = dir * run_speed * input.accel,
+            .velocity   = dir * input.accel,
             .preserve_z = true,
             .jump       = jump,
         };

@@ -2236,6 +2236,68 @@ struct ResourceLoader
         return out;
     }
 
+    /* Ground speed of a move clip of the "stand" unit's first weapon, from
+     * its root motion; 0 when the graph has none */
+    static f32 stride_speed(
+        blam::antr::header const&                 graph,
+        blam::antr::unit_weapon::animation_idx_t  slot,
+        blam::map_ptr const&                      magic)
+    {
+        auto units = graph.units.data(magic);
+        auto anims = graph.animations.data(magic);
+        if(!units.has_value() || !anims.has_value())
+            return 0.f;
+        blam::antr::unit const* stand = nullptr;
+        for(auto const& unit : units.value())
+            if(unit.label.str() == "stand")
+                stand = &unit;
+        if(!stand)
+            return 0.f;
+        auto weapons = stand->weapons.data(magic);
+        if(!weapons.has_value() || weapons.value().empty())
+            return 0.f;
+        auto refs = weapons.value()[0].animations.data(magic);
+        if(!refs.has_value() || static_cast<size_t>(slot) >= refs.value().size())
+            return 0.f;
+        i16 const index = refs.value()[slot].animation;
+        if(index < 0 || static_cast<size_t>(index) >= anims.value().size())
+            return 0.f;
+        auto const& clip   = anims.value()[index];
+        u32         stride = 0;
+        switch(clip.frame_info_type_)
+        {
+        case blam::antr::frame_info_type::dx_dy:
+            stride = 8;
+            break;
+        case blam::antr::frame_info_type::dx_dy_dyaw:
+            stride = 12;
+            break;
+        case blam::antr::frame_info_type::dx_dy_dz_dyaw:
+            stride = 16;
+            break;
+        default:
+            return 0.f;
+        }
+        auto bytes = clip.frame_info.data(magic);
+        if(!bytes.has_value())
+            return 0.f;
+        u32 const frames = bytes.value().size() / stride;
+        if(frames == 0)
+            return 0.f;
+        f32 moved = 0.f;
+        for(u32 i = 0; i < frames; i++)
+        {
+            Vecf2 delta;
+            std::memcpy(&delta, bytes.value().data() + i * stride, sizeof(delta));
+            moved += glm::length(delta);
+        }
+        f32 const rate = (static_cast<u16>(clip.flags) &
+                          static_cast<u16>(blam::antr::anim_flags::pal_25hz))
+                             ? 25.f
+                             : 30.f;
+        return moved * rate / static_cast<f32>(frames);
+    }
+
     /* Models follow biped_shown(), and are remounted after a map load */
     void reconcile_player_bipeds(Proxy& p, BlamFiles<Ver> const& files)
     {
@@ -2272,6 +2334,22 @@ struct ResourceLoader
                            (*graph).template data<blam::antr::header>(magic);
                        antr.has_value())
                         biped_model.shape.anim_graph = &antr.value()[0];
+                if(auto const* graph = biped_model.shape.anim_graph)
+                {
+                    using Slot  = blam::antr::unit_weapon::animation_idx_t;
+                    auto& shape = biped_model.shape;
+                    if(f32 v = stride_speed(*graph, Slot::move_front, magic); v > 0.f)
+                        shape.run_speed = v;
+                    if(f32 v = stride_speed(*graph, Slot::move_back, magic); v > 0.f)
+                        shape.back_speed = v;
+                    if(f32 v = stride_speed(*graph, Slot::move_left, magic); v > 0.f)
+                        shape.strafe_speed = v;
+                    cDebug(
+                        "Biped speeds: forward {} back {} strafe {} wu/s",
+                        shape.run_speed,
+                        shape.back_speed,
+                        shape.strafe_speed);
+                }
                 if(auto foot = index.find(biped->footsteps); foot != index.end())
                     biped_model.shape.footsteps = &(*foot);
                 biped_model.shape.load_generation = files.load_generation;
