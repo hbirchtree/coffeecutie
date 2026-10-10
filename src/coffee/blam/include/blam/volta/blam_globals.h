@@ -23,7 +23,13 @@ struct player_information
     tagref_typed_t<tag_class_t::bipd> unit;
 };
 
-/*! Only the two blocks that name the player's unit are decoded; everything
+/*! What a player sees of themselves in first person. TODO: Decode the rest */
+struct first_person_interface
+{
+    tagref_typed_t<tag_class_t::mod2> hands;
+};
+
+/*! Only the blocks that name the player's unit and hands are decoded; everything
  *  ahead of them is skipped by offset, because the rest of the globals tag has
  *  no description we can check a layout against.
  *
@@ -34,9 +40,11 @@ struct globals
     u32                                padding[0x164 / 4];
     reference<multiplayer_information> multiplayer;
     reference<player_information>      player;
+    reference<first_person_interface>  first_person;
 };
 
 static_assert(offsetof(globals, multiplayer) == 0x164);
 static_assert(offsetof(globals, player) == 0x170);
+static_assert(offsetof(globals, first_person) == 0x17c);
 
 } // namespace blam::globals

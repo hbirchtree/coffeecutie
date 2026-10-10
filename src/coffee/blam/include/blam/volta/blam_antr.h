@@ -299,9 +299,10 @@ struct suspension_animation
     animation_ref animation;
     f32           full_extension_ground_depth;
     f32           full_compression_ground_depth;
+    u32           padding[2];
 };
 
-static_assert(sizeof(suspension_animation) == 12);
+static_assert(sizeof(suspension_animation) == 20);
 
 struct vehicle
 {
