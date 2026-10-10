@@ -53,7 +53,7 @@ void alloc_profile_provider(compo::EntityContainer& e)
         return ui_result_t::ok;
     });
     data.on_function(
-        func_t::mp_profile_set_for_controller, [&lobby](UIFunctionCall const& call) {
+        func_t::plyr_prof_set_for_game_1wide, [&lobby](UIFunctionCall const& call) {
             if(call.seat >= lobby.joined.size() || !lobby.joined[call.seat])
                 return ui_result_t::failed;
             lobby.profile_chosen[call.seat] = true;

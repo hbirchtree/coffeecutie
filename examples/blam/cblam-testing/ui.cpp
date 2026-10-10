@@ -18,6 +18,14 @@
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/enumerate.h>
 
+/* Handler ids run past magic_enum's default range */
+template<>
+struct magic_enum::customize::enum_range<blam::ui_element::function_t>
+{
+    static constexpr int min = 0;
+    static constexpr int max = 255;
+};
+
 using semantic::RSCA;
 
 /* One open menu, owned by a seat (or any seat, for the main menu) */
