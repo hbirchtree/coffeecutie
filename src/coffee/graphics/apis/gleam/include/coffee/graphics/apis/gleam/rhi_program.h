@@ -5,6 +5,7 @@
 #include "rhi_translate.h"
 #include "rhi_versioning.h"
 
+#include <coffee/core/debug/formatting.h>
 #include <peripherals/error/result.h>
 #include <peripherals/identify/compiler/unreachable.h>
 

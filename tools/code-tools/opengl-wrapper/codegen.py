@@ -518,9 +518,10 @@ def add_handle_check(params: list, i: int, debug_lines: list):
     }
     if name in map_names.keys():
         cap_name = map_names[name]
-    
+
+    guard = f' && {name} != 0' if name == 'sampler' else ''
     debug_lines.append(f'''#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && !defined(GLEAM_USE_LINKED)
-    if(glIs{cap_name}) glIs{cap_name}({name});
+    if(glIs{cap_name}{guard}) glIs{cap_name}({name});
 #endif''')
 
 

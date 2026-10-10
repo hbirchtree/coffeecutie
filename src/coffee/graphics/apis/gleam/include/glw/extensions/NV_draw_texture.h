@@ -45,7 +45,7 @@ STATICINLINE void draw_texture(
 #endif
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
-        if(glIsSampler)
+        if(glIsSampler && sampler != 0)
             glIsSampler(sampler);
 #endif
     }

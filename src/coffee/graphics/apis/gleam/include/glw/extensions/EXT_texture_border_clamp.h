@@ -34,7 +34,7 @@ STATICINLINE void get_sampler_parameter_iiv(
         GLW_FPTR_CHECK(GetSamplerParameterIivEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
-        if(glIsSampler)
+        if(glIsSampler && sampler != 0)
             glIsSampler(sampler);
 #endif
     }
@@ -76,7 +76,7 @@ STATICINLINE void get_sampler_parameter_iuiv(
         GLW_FPTR_CHECK(GetSamplerParameterIuivEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
-        if(glIsSampler)
+        if(glIsSampler && sampler != 0)
             glIsSampler(sampler);
 #endif
     }
@@ -193,7 +193,7 @@ STATICINLINE void sampler_parameter_iiv(
         GLW_FPTR_CHECK(SamplerParameterIivEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
-        if(glIsSampler)
+        if(glIsSampler && sampler != 0)
             glIsSampler(sampler);
 #endif
     }
@@ -236,7 +236,7 @@ STATICINLINE void sampler_parameter_iuiv(
         GLW_FPTR_CHECK(SamplerParameterIuivEXT)
 #if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
     !defined(GLEAM_USE_LINKED)
-        if(glIsSampler)
+        if(glIsSampler && sampler != 0)
             glIsSampler(sampler);
 #endif
     }

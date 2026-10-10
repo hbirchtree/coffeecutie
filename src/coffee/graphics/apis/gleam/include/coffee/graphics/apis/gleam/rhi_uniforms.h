@@ -694,6 +694,14 @@ inline void undo_command_modifier(
     if(view_info.depth.has_value())
     {
         cmd::disable(group::enable_cap::depth_test);
+        if(view_info.depth->range && !view_info.indexed)
+        {
+#if GLEAM_MAX_VERSION >= 0x100
+            cmd::depth_range(0.0, 1.0);
+#else
+            cmd::depth_rangef(0.f, 1.f);
+#endif
+        }
         if(view_info.depth->reversed)
         {
             cmd::depth_func(group::depth_function::less);
