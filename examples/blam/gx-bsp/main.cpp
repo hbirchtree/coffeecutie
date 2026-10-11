@@ -1713,6 +1713,9 @@ i32 coffee_main(i32, cstring_w*)
     }
 
     // Build GPU resources: per-page buffers + lightmap, per-submesh diffuse.
+    // TODO: Geometry stays resident twice, in page/part vectors and in the
+    // buffers' copies (~1-2MB on b30). Drop the vectors after commit, keep
+    // only the counts the draws need; reserve() them to skip growth slack.
     u32 diffuse_count = 0;
     u32 mdl_parts     = 0;
     try
