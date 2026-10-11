@@ -4007,6 +4007,32 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                     name_of(w.particle_system),
                     name_of(w.wind));
 
+        /* A polyhedron's centre is inside it: which side its planes face */
+        if(auto polys = h.weather_polyhedras.data(magic); polys.has_value())
+            for(auto [i, poly] : stl_types::enumerate(polys.value()))
+            {
+                auto planes = poly.planes.data(magic);
+                if(!planes.has_value())
+                    continue;
+                f32 lo = std::numeric_limits<f32>::max(), hi = -lo;
+                for(auto const& plane : planes.value())
+                {
+                    f32 const side =
+                        glm::dot(plane.plane, poly.sphere.center) - plane.d;
+                    lo = std::min(lo, side);
+                    hi = std::max(hi, side);
+                }
+                fmt::print(
+                    "  weather_polyhedron[{}] centre={} radius={} planes={} "
+                    "centre side={}..{}\n",
+                    i,
+                    poly.sphere.center,
+                    poly.sphere.radius,
+                    planes.value().size(),
+                    lo,
+                    hi);
+            }
+
         if(auto pal = h.background_sound.data(magic); pal.has_value())
             for(auto [i, s] : stl_types::enumerate(pal.value()))
             {

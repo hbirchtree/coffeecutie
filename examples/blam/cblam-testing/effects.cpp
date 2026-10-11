@@ -1692,9 +1692,10 @@ struct EffectSystem
             auto planes = poly.planes.data(bsp.bsp_magic);
             if(!planes.has_value())
                 continue;
+            /* Planes face inward: the centre is in front of every one */
             bool inside = true;
             for(auto const& plane : planes.value())
-                if(glm::dot(plane.plane, at) - plane.d > 0.f)
+                if(glm::dot(plane.plane, at) - plane.d < 0.f)
                 {
                     inside = false;
                     break;
