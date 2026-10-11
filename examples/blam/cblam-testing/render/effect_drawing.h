@@ -356,6 +356,12 @@ struct EffectDrawer
         image_t const& img = image(cache, r.bitmap, r.sequence, 0);
         if(!img.ok)
             return;
+        /* Repeats within its sprite, which the atlas transform takes in */
+        Vecf4 const atlas(
+            Vecf2(img.atlas) *
+                Vecf2(img.rect.z - img.rect.x, img.rect.w - img.rect.y),
+            Vecf2(img.atlas.z, img.atlas.w) +
+                Vecf2(img.atlas) * Vecf2(img.rect.x, img.rect.y));
         auto const& pts = r.points;
         auto tangent = [&pts](size_t i) {
             size_t const a = i > 0 ? i - 1 : i;
@@ -369,7 +375,7 @@ struct EffectDrawer
                 .corner   = Vecf4(side, 0.f, pts[i].width * .5f, 0.f),
                 .tex      = Vecf2(pts[i].v, side > 0.f ? 1.f : 0.f),
                 .color    = pts[i].color,
-                .atlas    = img.atlas,
+                .atlas    = atlas,
                 .source   = Vecf4(img.format, img.layer, 1.f, img.opaque),
                 .shape    = Vecf4(.5f, .5f, 1.f, 0.f),
             };
