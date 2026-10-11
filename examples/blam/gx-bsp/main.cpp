@@ -52,6 +52,8 @@
 #include <ogc/pad.h>
 #include <platforms/gekko/dvd.h>
 #include <platforms/gekko/paged_mmap.h>
+
+#include "net_client.h"
 #endif
 
 using namespace Coffee;
@@ -174,17 +176,29 @@ static char const* const g_kind_names[kind_count] = {
     "netgame items",
 };
 
+/* BlamGraphics' ScenarioGroup, per kind: servers address scenario
+ * placements as group << 24 | index << 8 | sub */
+static constexpr u32 g_kind_net_group[kind_count] = {1, 6, 5, 7, 8, 3, 4, 2, 9};
+
+static constexpr u32 net_id_of(object_kind kind, u32 index, u32 sub = 0)
+{
+    return (g_kind_net_group[kind] << 24) | ((index & 0xFFFF) << 8) |
+           (sub & 0xFF);
+}
+
 struct object_inst
 {
     u32   model_id;
     Matf4 xform;
     Vecf3 center{}; // world-space bounding sphere
     f32   radius{0};
+    u32   net_id{0};
 };
 
 static std::map<u32, model_t>   g_models;  // by mod2 tag id
 static std::vector<object_inst> g_objects; // placed instances
 static u32                      g_kind_count[kind_count] = {};
+static u32 g_player_model = 0xFFFFFFFF; // mod2 of the unit players spawn as
 
 static std::vector<page_t> g_pages;
 static Vecf3               g_bb_min{1e9f, 1e9f, 1e9f};
@@ -535,7 +549,8 @@ static bool place_object(
     blam::map_container<V> const& c,
     u32                           object_tag_id,
     Matf4 const&                  xform,
-    object_kind                   kind)
+    object_kind                   kind,
+    u32                           net_id = 0)
 {
     auto const* t = tag_by_id(c, object_tag_id);
     if(!t)
@@ -553,7 +568,7 @@ static bool place_object(
         return false;
     Vecf3 const wc = Vecf3(xform * Vecf4(mdl.center, 1.f));
 
-    g_objects.push_back({mod2_id, xform, wc, mdl.radius});
+    g_objects.push_back({mod2_id, xform, wc, mdl.radius, net_id});
     g_kind_count[kind]++;
     return true;
 }
@@ -568,9 +583,10 @@ static void place_group(
     auto pal   = group.palette.data(c.magic);
     if(insts.has_error() || pal.has_error())
         return;
-    for(Spawn const& s : insts.value())
+    for(u32 i = 0; i < insts.value().size(); i++)
     {
-        Vecf3 const pos{from_le(s.pos.x), from_le(s.pos.y), from_le(s.pos.z)};
+        Spawn const& s = insts.value()[i];
+        Vecf3 const  pos{from_le(s.pos.x), from_le(s.pos.y), from_le(s.pos.z)};
         if(!in_active_section(pos, static_cast<u16>(from_le(s.bsp_flags))))
             continue;
         i16 const ref = from_le(s.ref.index);
@@ -581,7 +597,8 @@ static void place_group(
             c,
             from_le(pal.value()[ref][0].tag_id),
             spawn_transform(pos, rot),
-            kind);
+            kind,
+            net_id_of(kind, i));
     }
 }
 
@@ -594,8 +611,9 @@ static void place_netgame_items(
     auto equipment = scn->netgame.equipment.data(c.magic);
     if(equipment.has_error())
         return;
-    for(auto const& entry : equipment.value())
+    for(u32 e = 0; e < equipment.value().size(); e++)
     {
+        auto const& entry    = equipment.value()[e];
         auto const* coll_tag = tag_by_id(c, from_le(entry.item.tag_id));
         if(!coll_tag || !coll_tag->matches(blam::tag_class_t::itmc))
             continue;
@@ -612,7 +630,8 @@ static void place_netgame_items(
             c,
             from_le(items.value()[0].item.tag_id),
             spawn_transform(pos, {from_le(entry.facing), 0.f, 0.f}),
-            kind_netgame_item);
+            kind_netgame_item,
+            net_id_of(kind_netgame_item, e));
     }
 }
 
@@ -673,6 +692,16 @@ static void build_objects(
                 if(place_object(c, biped, m, kind_biped))
                     n++;
             }
+        }
+    if(u32 const   biped = player_biped_id(c);
+       auto const* t     = tag_by_id(c, biped))
+        if(auto unit = t->template data<blam::scn::object>(c.magic);
+           !unit.has_error())
+        {
+            g_player_model = from_le(unit.value()->model.tag_id);
+            if(g_models.find(g_player_model) == g_models.end() &&
+               tag_by_id(c, g_player_model))
+                load_model_cpu(c, g_player_model);
         }
 
     u32 verts = 0;
@@ -775,6 +804,48 @@ static void append_material(
     }
 }
 
+/* BlamGraphics' MapFingerprint: FNV-1a 64 over every tag's classes, id and
+ * name as stored, which a server checks before trusting our tag ids */
+struct map_fingerprint
+{
+    u32 tag_hash[2]{};
+    u32 tag_count{0};
+    u32 base_tag{0};
+};
+
+static map_fingerprint g_fingerprint;
+
+template<typename V>
+static map_fingerprint fingerprint_of(blam::map_container<V> const& c)
+{
+    u64  hash   = 0xcbf29ce484222325;
+    auto update = [&hash](void const* data, size_t size) {
+        auto const* bytes = static_cast<u8 const*>(data);
+        for(size_t i = 0; i < size; ++i)
+            hash = (hash ^ bytes[i]) * 0x100000001b3;
+    };
+    map_fingerprint out;
+    u32 const       cnt = from_le(c.tags->tag_count);
+    auto const*     tg  = c.tags->tags(c.map);
+    for(u32 i = 0; i < cnt; i++)
+    {
+        update(tg[i].tagclass_e.data(), sizeof(tg[i].tagclass_e));
+        update(&tg[i].tag_id, sizeof(tg[i].tag_id));
+        u32 const              name = from_le(tg[i].name.offset);
+        std::string_view const str =
+            name ? std::string_view(
+                       reinterpret_cast<char const*>(
+                           c.magic.base_ptr + name - c.magic.file_offset))
+                 : std::string_view("[empty string]");
+        update(str.data(), str.size());
+        ++out.tag_count;
+    }
+    out.tag_hash[0] = static_cast<u32>(hash);
+    out.tag_hash[1] = static_cast<u32>(hash >> 32);
+    out.base_tag    = from_le(c.tags->base_tag);
+    return out;
+}
+
 template<typename V>
 static int extract_map(semantic::BytesConst const& bytes)
 {
@@ -794,6 +865,12 @@ static int extract_map(semantic::BytesConst const& bytes)
     }
     auto const& container = map.value();
     g_internal_magic      = container.magic.ptr_only();
+    g_fingerprint         = fingerprint_of(container);
+    LOG("fingerprint %08x%08x/%u/%08x",
+        g_fingerprint.tag_hash[1],
+        g_fingerprint.tag_hash[0],
+        g_fingerprint.tag_count,
+        g_fingerprint.base_tag);
 
     auto scn = container.tags->scenario(container.map, container.magic);
     if(!scn)
@@ -1360,6 +1437,122 @@ static void load_sun(Matf4 const& view)
 }
 #endif
 
+#if defined(COFFEE_GEKKO)
+/* --- network play through BlamGCGateway ----------------------------------- */
+
+static gx_net::client_t      g_net;
+static std::map<u32, size_t> g_net_objects;    // net id -> g_objects
+static std::map<u32, size_t> g_remote_players; // player idx -> g_objects
+static constexpr f32         kEyeHeight = 0.62f;
+
+/* gateway.txt on the disc: "gateway-ip[:port] [server-ip:port]", no file =
+ * no networking */
+static void start_network()
+{
+    namespace dvd = platform::file::gekko::dvd;
+    auto const* e = dvd::detail::find("gateway.txt");
+    if(!e || !e->size || e->size > 256)
+        return;
+    std::string cfg(e->size, '\0');
+    if(!dvd::detail::read_at(cfg.data(), e->size, e->off))
+        return;
+    while(!cfg.empty() && std::isspace(static_cast<u8>(cfg.back())))
+        cfg.pop_back();
+    auto const  space   = cfg.find(' ');
+    std::string gateway = cfg.substr(0, space);
+    std::string server =
+        space == std::string::npos ? std::string() : cfg.substr(space + 1);
+    for(size_t i = 0; i < g_objects.size(); i++)
+        if(g_objects[i].net_id)
+            g_net_objects[g_objects[i].net_id] = i;
+    if(!g_net.start(gateway, server))
+        LOG("network play unavailable");
+}
+
+static void place_instance(object_inst& inst, Matf4 const& xform)
+{
+    inst.xform  = xform;
+    auto it     = g_models.find(inst.model_id);
+    inst.center = Vecf3(
+        xform * Vecf4(it != g_models.end() ? it->second.center : Vecf3{}, 1.f));
+}
+
+static void poll_network(u32 frame)
+{
+    gx_net::fingerprint_t const fp{
+        {g_fingerprint.tag_hash[0], g_fingerprint.tag_hash[1]},
+        g_fingerprint.tag_count,
+        g_fingerprint.base_tag};
+    gx_net::handlers_t on;
+    on.object = [](gx_net::object_sync_t const& o) {
+        auto it = g_net_objects.find(o.net_id);
+        if(it == g_net_objects.end())
+            return;
+        place_instance(
+            g_objects[it->second],
+            glm::translate(Matf4{1.f}, o.position) *
+                glm::mat4_cast(o.rotation));
+    };
+    on.spawn = [](gx_net::entity_spawn_t const& e) {
+        auto it = g_net_objects.find(e.net_id);
+        if(it == g_net_objects.end())
+        {
+            // The map is unmapped by now, so nothing new can be loaded
+            LOG("net: no model for spawned object %08x (tag %08x)",
+                e.net_id,
+                e.tag_id);
+            return;
+        }
+        place_instance(
+            g_objects[it->second],
+            glm::translate(Matf4{1.f}, e.position) *
+                glm::mat4_cast(e.rotation));
+    };
+    on.camera = [](gx_net::camera_sync_t const& c) {
+        if(g_models.find(g_player_model) == g_models.end())
+            return;
+        auto it = g_remote_players.find(c.player_idx);
+        if(it == g_remote_players.end())
+        {
+            LOG("net: player %u is in the game", c.player_idx);
+            g_objects.push_back(
+                {g_player_model,
+                 Matf4{1.f},
+                 {},
+                 g_models[g_player_model].radius});
+            it = g_remote_players.emplace(c.player_idx, g_objects.size() - 1)
+                     .first;
+        }
+        f32 const yaw = std::atan2(c.forward.y, c.forward.x);
+        place_instance(
+            g_objects[it->second],
+            glm::rotate(
+                glm::translate(
+                    Matf4{1.f}, c.position - Vecf3{0.f, 0.f, kEyeHeight}),
+                yaw,
+                Vecf3{0.f, 0.f, 1.f}));
+    };
+    on.teleport = [](gx_net::camera_sync_t const& c) {
+        LOG("net: server put us at %d,%d,%d",
+            (int)c.position.x,
+            (int)c.position.y,
+            (int)c.position.z);
+        g_cam_pos   = c.position;
+        g_cam_yaw   = std::atan2(c.forward.y, c.forward.x);
+        g_cam_pitch = std::asin(std::clamp(c.forward.z, -1.f, 1.f));
+    };
+    on.player_spawn = [](Vecf3 const& pos, f32 facing) {
+        LOG("net: spawned at %d,%d,%d", (int)pos.x, (int)pos.y, (int)pos.z);
+        g_cam_pos   = pos + Vecf3{0.f, 0.f, kEyeHeight};
+        g_cam_yaw   = facing;
+        g_cam_pitch = 0.f;
+    };
+    g_net.poll(fp, on, frame);
+    if(frame % 2 == 0)
+        g_net.send_camera(g_cam_pos, cam_forward());
+}
+#endif
+
 i32 coffee_main(i32, cstring_w*)
 {
 #if defined(FEATURE_ENABLE_Gexxo)
@@ -1639,6 +1832,7 @@ i32 coffee_main(i32, cstring_w*)
 
 #if defined(COFFEE_GEKKO)
     PAD_Init();
+    start_network();
 #endif
 
     u64 window_start = gettime();
@@ -1651,6 +1845,9 @@ i32 coffee_main(i32, cstring_w*)
         if(dt <= 0.f || dt > 0.2f)
             dt = 1.f / 50.f; // clamp first/stalled frames
         update_camera(dt);
+#if defined(COFFEE_GEKKO)
+        poll_network(static_cast<u32>(i));
+#endif
 
         rt->clear(Vecf4{0.06f, 0.06f, 0.09f, 1.f}, 1.f, 0);
         Matf4 const     mv     = make_modelview(0.f);
