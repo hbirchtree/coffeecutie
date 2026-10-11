@@ -91,18 +91,15 @@ struct alignas(4) tag_t
     }
 
     template<typename T>
-    inline T const* data(magic_ptr const& magic) const
+    inline T const* data(tag_magic const& magic) const
     {
         if(!valid())
             return nullptr;
         i32 bytes = size();
         if(bytes > 0 && static_cast<u32>(bytes) < sizeof(T))
             return nullptr;
-        auto offset = magic.to_offset(
-            pointer(), bytes > 0 ? static_cast<u32>(bytes) : sizeof(T));
-        if(!offset)
-            return nullptr;
-        return reinterpret_cast<T const*>(magic.base + *offset);
+        return reinterpret_cast<T const*>(magic.resolve(
+            pointer(), bytes > 0 ? static_cast<u32>(bytes) : sizeof(T)));
     }
 };
 
