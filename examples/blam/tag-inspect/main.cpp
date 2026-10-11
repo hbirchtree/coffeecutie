@@ -1418,6 +1418,7 @@ void dump_effect(blam::scn::effect const* effect)
             for(auto const& p : particles.value())
             {
                 fmt::print("        particle ");
+                print_enum("create_in", p.create_in);
                 print_enum("create", p.create);
                 print_enum("distribution", p.distribution_function);
                 print_flags("flags", p.flags);

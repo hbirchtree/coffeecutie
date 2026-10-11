@@ -588,6 +588,8 @@ struct EffectSystem
         if(auto parts = ev.parts.data(*m_magic); parts.has_value())
             for(auto const& part : parts.value())
             {
+                if(!in_air(part.create_in))
+                    continue;
                 place_t const at = location(p, fx, part.location);
                 switch(class_of(part.type))
                 {
@@ -619,9 +621,18 @@ struct EffectSystem
                 emit(p, fx, burst);
     }
 
+    /* Everything happens in air for now: there is no water test yet */
+    static bool in_air(effect::create_in_t where)
+    {
+        return where == effect::create_in_t::any_environment ||
+               where == effect::create_in_t::air_only;
+    }
+
     /* A burst of part sprites */
     void emit(Proxy& p, effect_instance_t const& fx, effect::particle_t const& burst)
     {
+        if(!in_air(burst.create_in))
+            return;
         /* First-person effects play on first-person models only */
         bool const first_person =
             fx.parent != 0 && p.template get<Attachment>(fx.parent);
