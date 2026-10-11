@@ -406,6 +406,8 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
             });
         };
 
+        // Forge menu background
+        // Uses the middle of the arrow icon as a plain background
         extra_quads.push_back({
             .position = origin,
             .size = Vecf2{box_width, box_size},
@@ -454,6 +456,7 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
                 .tint = Vecf4{0.9f, 0.2f, 0.f, 0.35f},
                 .sampler = forge_cursor_smp,
             });
+            // A button
             extra_quads.push_back({
                 .position = select_box + Vecf2{
                     box_width - box_margin * 2 - icon_size - 2,
@@ -466,14 +469,15 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
                                                        : Vecf4{Vecf3{0.2f}, 1},
                 .sampler = forge_cursor_smp,
             });
-            extra_quads.push_back({
-                .position = select_box + Vecf2{2, 2},
-                .size = Vecf2{icon_size, icon_size},
-                .atlas_offset = Vecf2{0, 0},
-                .atlas_scale = Vecf2{0.5f, 0.5f},
-                .tint = Vecf4{0.7f, 0.7f, 0.7f, 0.8f},
-                .sampler = forge_cursor_smp,
-            });
+            // Spinner box arrow, left
+            // extra_quads.push_back({
+            //     .position = select_box + Vecf2{2, 2},
+            //     .size = Vecf2{icon_size, icon_size},
+            //     .atlas_offset = Vecf2{0, 0},
+            //     .atlas_scale = Vecf2{0.5f, 0.5f},
+            //     .tint = Vecf4{0.7f, 0.7f, 0.7f, 0.8f},
+            //     .sampler = forge_cursor_smp,
+            // });
         }
 
         /* Scrollbar when the list runs past the box */
