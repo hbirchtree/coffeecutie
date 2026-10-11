@@ -76,7 +76,7 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
             case 2:
                 return Vecf4(
                     0,
-                    (fb_size.h / 2) * info.seat_idx,
+                    (fb_size.h / 2) * (1 - info.seat_idx),
                     fb_size.w,
                     fb_size.h / 2);
             case 3:

@@ -207,7 +207,7 @@ struct PlayerController
             move /= std::sqrt(len2);
         intent.move = move;
         intent.use  = (pad && b.x) || (keyboard && key(CK_f));
-        intent.grab = (pad && state.axes.e.t_l > trigger_pressed) ||
+        intent.grab = (pad && state.axes.e.t_r > trigger_pressed) ||
                       (keyboard &&
                        (input.mouse_buttons & CIMouseButtonEvent::RightButton));
         intent.fire = (pad && state.axes.e.t_r > trigger_pressed) ||
