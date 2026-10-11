@@ -1150,8 +1150,11 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
         g_tiled_bufs.push_back(tiled);
         auto tex = std::make_shared<gexxo::texture_t>(
             gexxo::textures::type::d2, typing::pixels::PixDesc{}, 1);
-        tex->init_raw(
-            tiled, bw, bh, gxfmt, wrap, wrap, static_cast<u8>(maxlod - skip));
+        // Transcoded Xbox levels under one 8x8 CMPR tile come out wrong
+        u32 lod = maxlod - skip;
+        while(lod && std::min(bw >> lod, bh >> lod) < 8)
+            lod--;
+        tex->init_raw(tiled, bw, bh, gxfmt, wrap, wrap, static_cast<u8>(lod));
         return tex;
     }
 
@@ -1372,6 +1375,9 @@ i32 coffee_main(i32, cstring_w*)
 #endif
 
     LOG("start");
+#if defined(FEATURE_ENABLE_Gexxo)
+    u64 const load_start = gettime();
+#endif
     int stage = 6;
     try
     {
@@ -1547,6 +1553,8 @@ i32 coffee_main(i32, cstring_w*)
     platform::file::gekko::vmem::unmap(g_map_window);
     LOG("mem free after unmap: %u KiB", free_mem() / 1024);
 #endif
+    LOG("load took %u ms",
+        static_cast<unsigned>(ticks_to_millisecs(gettime() - load_start)));
 
     using stage_t   = gexxo::program_t::stage_t;
     using channel_t = gexxo::program_t::channel_t;
