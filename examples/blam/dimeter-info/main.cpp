@@ -3,10 +3,10 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/coffee.h>
 
-#include <blam/dimeter/h2_bitm.h>
-#include <blam/dimeter/h2_geometry.h>
-#include <blam/dimeter/h2_map.h>
-#include <blam/dimeter/h2_sound.h>
+#include <blam/dimeter/bitm.h>
+#include <blam/dimeter/geometry.h>
+#include <blam/dimeter/map.h>
+#include <blam/dimeter/sound.h>
 #include <blam/volta/blam_swizzle.h>
 
 #include <cstdio>

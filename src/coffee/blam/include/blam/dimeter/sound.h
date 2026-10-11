@@ -1,6 +1,6 @@
 #pragma once
 
-#include "h2_structures.h"
+#include "structures.h"
 
 #include <peripherals/identify/compiler/struct_packing.h>
 

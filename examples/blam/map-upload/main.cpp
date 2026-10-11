@@ -1,5 +1,5 @@
-#include <blam/dimeter/h2_file_header.h>
-#include <blam/dimeter/h2_tag_index.h>
+#include <blam/dimeter/file_header.h>
+#include <blam/dimeter/tag_index.h>
 #include <blam/transcode/map_transcode.h>
 #include <blam/volta/blam_atlas.h>
 #include <blam/volta/blam_file_header.h>

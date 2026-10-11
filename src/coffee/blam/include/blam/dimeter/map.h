@@ -1,6 +1,6 @@
 #pragma once
 
-#include "h2_tag_index.h"
+#include "tag_index.h"
 
 #include <peripherals/semantic/chunk.h>
 
