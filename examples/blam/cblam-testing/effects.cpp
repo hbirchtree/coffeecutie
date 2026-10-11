@@ -427,13 +427,25 @@ struct EffectSystem
         }
     }
 
-    void play_sound(Proxy& p, blam::tagref_t const& sound, Vecf3 const& at)
+    /* On a first-person model, the sound stays with the one who made it */
+    void play_sound(
+        Proxy& p, blam::tagref_t const& sound, Vecf3 const& at, u64 parent = 0)
     {
         auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
         if(!sounds || !sound.valid())
             return;
         SoundEvent     ev{.type = SoundEvent::play_sound};
         PlaySoundEvent play{.sound = &sound, .position = at};
+        auto const*    held = parent ? p.template get<Attachment>(parent) : nullptr;
+        if(auto const* cam = held ? p.template get<PlayerCamera>(held->parent) : nullptr)
+        {
+            /* Listener space: right, up, back */
+            auto const& basis = cam->camera_.cached;
+            Vecf3 const d     = at - cam->camera.position;
+            play.relative     = true;
+            play.position     = Vecf3(
+                glm::dot(d, basis.right), glm::dot(d, basis.up), -glm::dot(d, basis.forward));
+        }
         sounds->inject(ev, &play);
     }
 
@@ -595,7 +607,7 @@ struct EffectSystem
                 switch(class_of(part.type))
                 {
                 case tag_class_t::snd:
-                    play_sound(p, part.type, at.position);
+                    play_sound(p, part.type, at.position, fx.parent);
                     break;
                 case tag_class_t::ligh:
                     if(auto const* tag = tag_data<light>(part.type, tag_class_t::ligh))
