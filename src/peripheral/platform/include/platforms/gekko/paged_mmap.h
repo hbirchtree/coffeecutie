@@ -53,6 +53,9 @@ constexpr u32 kMaxRegions = GEKKO_MMAP_MAX_REGIONS;
 constexpr u32 kAramSize = 0x1000000;
 constexpr u32 kAramBase = 0x10000;
 
+// Sub-ranges of a DVD-paged region promoted to ARAM with stage()
+constexpr u32 kMaxSpans = 8;
+
 struct pte_t
 {
     u32 hi;
@@ -69,6 +72,16 @@ struct region_t
     u32  disc_off = 0;       // DVD-backed: file's disc byte offset
     bool aram     = false;   // staged in ARAM: page in via DMA, not DVD
     u32  aram_off = 0;       // ARAM offset of the staged file
+
+    struct span_t
+    {
+        u32 off;      // page-aligned file offset
+        u32 size;     // page-rounded
+        u32 aram_off; // where it was staged
+    };
+
+    span_t spans[kMaxSpans] = {};
+    u32    span_count       = 0;
 };
 
 inline pte_t*          g_htab       = nullptr;
@@ -87,8 +100,16 @@ struct range_alloc
         u32 size;
     };
 
-    hole h[2 * kMaxRegions];
+    hole h[2 * (kMaxRegions + kMaxSpans)];
     u32  n = 0;
+
+    u32 free_bytes() const
+    {
+        u32 sum = 0;
+        for(u32 i = 0; i < n; i++)
+            sum += h[i].size;
+        return sum;
+    }
 
     void init(u32 base, u32 size)
     {
@@ -117,7 +138,7 @@ struct range_alloc
 
     void free(u32 off, u32 size)
     {
-        if(n >= 2 * kMaxRegions)
+        if(n >= 2 * (kMaxRegions + kMaxSpans))
             return; // give up (leak) -- shouldn't happen with few regions
         h[n++] = {off, size};
         for(u32 i = 1; i < n; i++) // insertion sort by off
@@ -285,6 +306,23 @@ inline void fill_and_map(region_t const& r, u32 va)
         DCInvalidateRange(frame, kPageSize);
     } else if(r.dvd)
     {
+        for(u32 i = 0; i < r.span_count; i++)
+        {
+            auto const& sp = r.spans[i];
+            if(off - sp.off >= sp.size)
+                continue;
+            AR_StartDMA(
+                AR_ARAMTOMRAM,
+                virt_to_phys(frame),
+                sp.aram_off + (off - sp.off),
+                kPageSize);
+            while(AR_GetDMAStatus())
+                ;
+            DCInvalidateRange(frame, kPageSize);
+            g_frame_pte[idx] = map_page(va, virt_to_phys(frame));
+            g_frame_va[idx]  = va;
+            return;
+        }
         di_read(virt_to_phys(frame), kPageSize, r.disc_off + off);
         PPCSyncInner();
         DCInvalidateRange(frame, kPageSize);
@@ -494,9 +532,56 @@ inline void unmap(mapping const& m)
         detail::g_va.free(r.base, rounded);
         if(r.aram)
             detail::g_aram.free(r.aram_off, rounded);
-        r.active = false;
+        for(u32 s = 0; s < r.span_count; s++)
+            detail::g_aram.free(r.spans[s].aram_off, r.spans[s].size);
+        r = {};
         break;
     }
+}
+
+/* Promote [off, off+size) of a disc-paged mapping into ARAM, so its pages
+ * fault in by DMA instead of a DVD seek. For files too large to stage whole:
+ * stage what the CPU keeps walking, let the rest page off the disc. False if
+ * ARAM or the span table is full. */
+inline bool stage(mapping const& m, u32 off, u32 size)
+{
+    if(!m || !size || off >= m.size)
+        return false;
+    u32 const base = reinterpret_cast<u32>(m.base);
+    for(u32 i = 0; i < detail::kMaxRegions; i++)
+    {
+        auto& r = detail::g_regions[i];
+        if(!r.active || r.base != base)
+            continue;
+        if(r.aram)
+            return true; // the whole file is in ARAM already
+        if(!r.dvd || r.span_count == detail::kMaxSpans)
+            return false;
+        u32 const start = off & ~(detail::kPageSize - 1);
+        u32 const end =
+            detail::align_up((off + size < r.size) ? off + size : r.size);
+        u32 const len  = end - start;
+        u32 const aoff = detail::g_aram.alloc(len);
+        if(!aoff)
+            return false;
+        // The disc image ends 32B-aligned, not page-aligned
+        u32 const avail = r.size - start;
+        if(!detail::stage_to_aram(
+               r.disc_off + start, len < avail ? len : avail, aoff))
+        {
+            detail::g_aram.free(aoff, len);
+            return false;
+        }
+        r.spans[r.span_count++] = {start, len, aoff};
+        return true;
+    }
+    return false;
+}
+
+/* ARAM bytes still free for stage()/map() */
+inline u32 aram_free()
+{
+    return detail::g_aram.free_bytes();
 }
 
 /* Page faults serviced since the last full unmap -- instrumentation. */
