@@ -39,6 +39,7 @@ using EffectManifest = compo::SubsystemManifest<
 
 namespace {
 
+using blam::scn::antenna;
 using blam::scn::contrail;
 using blam::scn::decal_definition;
 using blam::scn::effect;
@@ -246,6 +247,7 @@ struct EffectSystem
             m_decal_bsp = nullptr;
             m_placed_decals.clear();
             m_effect_decals.clear();
+            m_antennas.clear();
         }
         m_magic = &files.container.magic;
         m_index = blam::tag_index_view<halo_version>(files.container);
@@ -267,6 +269,7 @@ struct EffectSystem
         step_flares(p, scene, dt);
         step_weather(p, scene, dt);
         step_decals(p, scene, dt);
+        step_antennas(p, scene, dt);
     }
 
     /* ---- Decals ---- */
@@ -579,6 +582,93 @@ struct EffectSystem
                 }
     }
 
+    /* ---- Antennas ---- */
+
+    struct antenna_instance_t
+    {
+        antenna const*     tag{nullptr};
+        u64                parent{0};
+        std::vector<Vecf3> points;
+        std::vector<Vecf3> velocity;
+    };
+
+    /* A chain of springs from the tag's marker, swaying as its object moves */
+    void step_antennas(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        for(auto it = m_antennas.begin(); it != m_antennas.end();)
+        {
+            auto&      a  = *it;
+            auto const at = marker_place(
+                p, a.parent, std::string(a.tag->attachment_marker_name.str()));
+            auto vertices = a.tag->vertices.data(*m_magic);
+            if(!at || !vertices.has_value() || vertices.value().empty())
+            {
+                it = m_antennas.erase(it);
+                continue;
+            }
+            auto const& verts = vertices.value();
+            if(a.points.size() != verts.size() + 1)
+            {
+                a.points.assign(verts.size() + 1, at->position);
+                a.velocity.assign(verts.size() + 1, Vecf3{});
+            }
+
+            a.points[0] = at->position;
+            Vecf3 dir   = at->forward;
+            for(size_t i = 0; i < verts.size(); i++)
+            {
+                auto const& v = verts[i];
+                Vecf3       x, y;
+                basis(dir, x, y);
+                dir = glm::normalize(
+                    dir * (std::cos(v.angle.y) * std::cos(v.angle.x)) +
+                    x * (std::cos(v.angle.y) * std::sin(v.angle.x)) +
+                    y * std::sin(v.angle.y));
+                Vecf3 const rest = a.points[i] + dir * v.length;
+                f32 const k = antenna_stiffness * a.tag->spring_strength_coeff *
+                              v.spring_strength_coeff;
+                Vecf3& pt  = a.points[i + 1];
+                Vecf3& vel = a.velocity[i + 1];
+                /* Small steps keep the stiff spring stable at low frame rates
+                 */
+                u32 const steps = std::max(
+                    1u, static_cast<u32>(std::ceil(dt * antenna_rate)));
+                for(u32 s = 0; s < steps; s++)
+                {
+                    f32 const h = dt / steps;
+                    vel += ((rest - pt) * k - vel * antenna_damping) * h;
+                    pt += vel * h;
+                }
+                /* Segments keep their length */
+                Vecf3 const span = pt - a.points[i];
+                f32 const   len  = glm::length(span);
+                pt = len > 1e-5f ? a.points[i] + span * (v.length / len) : rest;
+            }
+
+            EffectScene::ribbon_t ribbon{
+                .bitmap   = &static_cast<blam::tagref_t const&>(a.tag->bitmaps),
+                .sequence = verts[0].sequence_index,
+                .blend    = blam::scn::framebuffer_blending::alpha_blend,
+            };
+            f32 along = 0.f;
+            for(size_t i = 0; i < a.points.size(); i++)
+            {
+                if(i > 0)
+                    along += glm::distance(a.points[i], a.points[i - 1]);
+                ribbon.points.push_back({
+                    .position = a.points[i],
+                    .width    = antenna_width,
+                    .color = rgba(verts[std::min(i, verts.size() - 1)].color),
+                    .v     = along / std::max(a.tag->length, 1e-3f),
+                });
+            }
+            /* Ribbons are stored head first */
+            std::reverse(ribbon.points.begin(), ribbon.points.end());
+            scene.ribbons.push_back(std::move(ribbon));
+            ++it;
+        }
+    }
+
     /* ---- Tag lookups ---- */
 
     template<typename T>
@@ -821,6 +911,10 @@ struct EffectSystem
                 m_lights.push_back(make_light(tag, {}, entity, marker, -1.f));
                 m_lights.back().scale = scale;
             }
+            break;
+        case tag_class_t::ant:
+            if(auto const* tag = tag_data<antenna>(ref, tag_class_t::ant))
+                m_antennas.push_back({.tag = tag, .parent = entity});
             break;
         case tag_class_t::mgs2:
             if(auto const* tag = tag_data<light_volume>(ref, tag_class_t::mgs2))
@@ -2062,6 +2156,10 @@ struct EffectSystem
     static constexpr f32    debris_lifetime      = 30.f; /* seconds */
     static constexpr u64    flare_ray_interval   = 4;    /* frames */
     static constexpr f32    flare_surface_slop   = .1f;  /* wu */
+    static constexpr f32    antenna_stiffness    = 400.f;
+    static constexpr f32    antenna_damping      = 12.f;
+    static constexpr f32    antenna_rate         = 120.f; /* steps a second */
+    static constexpr f32    antenna_width        = .02f; /* wu */
     static constexpr f32    decal_cell           = 2.f;  /* wu, triangle bins */
     static constexpr f32    decal_lift           = .004f; /* wu off a face */
     static constexpr f32    decal_min_facing     = .3f;
@@ -2102,6 +2200,7 @@ struct EffectSystem
     std::unordered_map<u64, std::vector<u32>> m_decal_grid;
     std::vector<decal_instance_t>             m_placed_decals;
     std::vector<decal_instance_t>             m_effect_decals;
+    std::vector<antenna_instance_t>           m_antennas;
     u64                                   m_flare_frame{0};
 
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>>

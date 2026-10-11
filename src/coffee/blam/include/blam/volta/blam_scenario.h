@@ -697,26 +697,36 @@ using actor_variant_ref = tagref_t;
 
 struct antenna
 {
+    struct vertex
+    {
+        f32   spring_strength_coeff; // larger value = stronger spring
+        u32   padding[6];
+        Vecf2 angle;  // yaw, pitch toward the next vertex
+        f32   length; // to the next vertex
+        i16   sequence_index;
+        i16   padding1;
+        Vecf4 color;     // argb
+        Vecf4 lod_color; // argb, for the low-LOD line
+        u32   padding2[13];
+    };
+
     bl_string                         attachment_marker_name;
     tagref_typed_t<tag_class_t::bitm> bitmaps;
     tagref_typed_t<tag_class_t::pphy> physics;
+    u32                               padding[20];
     f32                               spring_strength_coeff;
     f32                               falloff_pixels;
     f32                               cutoff_pixels;
-
-    struct vertex
-    {
-        f32   spring_strength_coeff; // strength of the spring, larger value = stronger spring
-        Vecf2 angle; // yaw, pitch, direction toward next vertex
-        f32   length; // distance between this vertex and the next
-        i16   sequence_index; // bitmap group sequence index for this vertex's texture
-        i16   padding;
-        Vecf4 color; // color at this vertex
-        Vecf4 lod_color; // color at this vertex for low-LOD line prim
-    };
-
-    reference<vertex> vertices;
+    f32                               length; // cache only, all vertices
+    u32                               padding1[9];
+    reference<vertex>                 vertices;
 };
+
+static_assert(offsetof(antenna::vertex, angle) == 0x1c);
+static_assert(offsetof(antenna::vertex, color) == 0x2c);
+static_assert(sizeof(antenna::vertex) == 128);
+static_assert(offsetof(antenna, spring_strength_coeff) == 0x90);
+static_assert(offsetof(antenna, vertices) == 0xc4);
 
 namespace ai {
 
