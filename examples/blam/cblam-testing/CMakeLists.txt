@@ -121,6 +121,13 @@ endif()
 if(TARGET DiscordLatte)
     target_link_libraries(BlamGraphics PUBLIC DiscordLatte)
 endif()
+if(BUILD_GNS AND GameNetworkingSockets_FOUND AND NOT EMSCRIPTEN)
+    # Joins servers on behalf of consoles that only have UDP (GameCube)
+    add_subdirectory(
+        ${PROJECT_SOURCE_DIR}/tools/blam/gc-gateway
+        ${CMAKE_CURRENT_BINARY_DIR}/gc-gateway
+    )
+endif()
 if(BUILD_GNS AND GameNetworkingSockets_FOUND)
     target_link_libraries(BlamGraphics PUBLIC
         GameNetworkingSockets::GameNetworkingSockets_s
