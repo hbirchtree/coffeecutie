@@ -729,9 +729,9 @@ struct header
     bsp_reference<leaf_surface>                      leaf_surfaces;
     bsp_reference<vert::face>                        surfaces;
     bsp_reference<lightmap>                          lightmaps;
+    u32                                          padding0[3];
     bsp_reference<tagref_typed_t<tag_class_t::lens>> lens_flares;
     bsp_reference<lens_flare_marker>                 lens_flare_markers;
-    u32                                          padding0[3];
     /* Clusters contain some properties such as sky, fog, sound, weather
      * Subclusters contain surface indices
      */
