@@ -28,7 +28,7 @@
         "audio": {
             "description": "Audio output support",
             "dependencies": [
-                { "name": "openal-soft", "platform": "linux | osx | windows | android" },
+                { "name": "openal-soft", "platform": "linux | osx | windows | android | emscripten" },
                 { "name": "libvorbis" }
             ]
         },
