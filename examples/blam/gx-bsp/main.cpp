@@ -80,14 +80,23 @@ static constexpr u32 kSpawnBipeds = 4;
     } while(0)
 
 /* Interleaved GX vertex: position + diffuse UV + lightmap UV + detail UV
- * (diffuse UV pre-scaled by the shader's detail map scale). */
+ * (diffuse UV pre-scaled by the shader's detail map scale). The lightmap UV
+ * is S16 with 15 fraction bits, which keeps this as small as an Xbox BSP
+ * vertex, so the transcoder can write it in place. */
 struct gx_vertex
 {
     f32 pos[3];
     f32 duv[2];
-    f32 luv[2];
+    i16 luv[2];
     f32 detuv[2];
 };
+
+static_assert(sizeof(gx_vertex) == 32);
+
+static i16 to_s16_frac15(f32 v)
+{
+    return static_cast<i16>(std::clamp(v * 32768.f, -32768.f, 32767.f));
+}
 
 /* A run of triangles in a page sharing one diffuse texture. */
 struct submesh_t
@@ -256,6 +265,21 @@ static void stage_hot_range(char const* what, u32 off, u32 size)
         vmem::aram_free() / 1024);
 #else
     (void)what, (void)off, (void)size;
+#endif
+}
+
+/* Logs the time since the previous phase ended */
+static void load_phase(char const* name)
+{
+#if defined(COFFEE_GEKKO)
+    static u64 last = gettime();
+    u64 const  now  = gettime();
+    LOG("phase %s: %u ms",
+        name,
+        static_cast<unsigned>(ticks_to_millisecs(now - last)));
+    last = now;
+#else
+    (void)name;
 #endif
 }
 
@@ -475,43 +499,67 @@ static void load_model_cpu(blam::map_container<V> const& c, u32 mod2_id)
         mdl_part part;
         try
         {
-            auto vseg = p->vertex_segment(*c.tags, c.magic).data(vmag);
-            auto iseg = p->index_segment(*c.tags).data(vmag);
-            if(vseg.has_error() || iseg.has_error())
+            auto const vref = p->vertex_segment(*c.tags, c.magic);
+            auto       iseg = p->index_segment(*c.tags).data(vmag);
+            if(iseg.has_error())
                 continue;
-            for(auto const& mv : vseg.value())
+            if(from_le(p->vertex_type) == vert::vertex_type_t::mod2_gx_vertex)
             {
-                u8 const*  raw = reinterpret_cast<u8 const*>(&mv);
-                mdl_vertex v;
-                Vecf3      n;
-                for(u32 k = 0; k < 3; k++)
-                    v.pos[k] = rd<f32>(raw + k * 4);
-                if constexpr(std::is_same_v<V, xbox_version_t>)
+                // Transcoded offline: already GX arrays, big-endian
+                u32 const n   = from_le(vref.count);
+                auto      raw = *vref.template as<u8>();
+                raw.count     = to_le<u32>(n * sizeof(mdl_vertex));
+                auto bytes    = raw.data(vmag);
+                if(bytes.has_error())
+                    continue;
+                part.verts.resize(n);
+                std::memcpy(
+                    part.verts.data(),
+                    bytes.value().data(),
+                    n * sizeof(mdl_vertex));
+                for(auto const& v : part.verts)
                 {
-                    // mod2_vertex<compressed>: normal u32 @12, uv i16 @24
-                    n       = unpack_normal(rd<u32>(raw + 12));
-                    v.uv[0] = rd<i16>(raw + 24) / 32767.f * uvscale.x;
-                    v.uv[1] = rd<i16>(raw + 26) / 32767.f * uvscale.y;
-                } else
-                {
-                    // mod2_vertex<uncompressed>: normal f32x3 @12, uv @48
-                    n = {
-                        rd<f32>(raw + 12),
-                        rd<f32>(raw + 16),
-                        rd<f32>(raw + 20)};
-                    v.uv[0] = rd<f32>(raw + 48) * uvscale.x;
-                    v.uv[1] = rd<f32>(raw + 52) * uvscale.y;
+                    Vecf3 const p3{v.pos[0], v.pos[1], v.pos[2]};
+                    mn = glm::min(mn, p3);
+                    mx = glm::max(mx, p3);
                 }
-                for(u32 k = 0; k < 3; k++)
-                    v.nrm[k] = to_s8_frac6(n[k]);
-                v.pad = 0;
-                part.verts.push_back(v);
-                Vecf3 const p3{v.pos[0], v.pos[1], v.pos[2]};
-                mn = glm::min(mn, p3);
-                mx = glm::max(mx, p3);
+                part.indices.assign(iseg.value().begin(), iseg.value().end());
+            } else if(auto vseg = vref.data(vmag); !vseg.has_error())
+            {
+                for(auto const& mv : vseg.value())
+                {
+                    u8 const*  raw = reinterpret_cast<u8 const*>(&mv);
+                    mdl_vertex v;
+                    Vecf3      n;
+                    for(u32 k = 0; k < 3; k++)
+                        v.pos[k] = rd<f32>(raw + k * 4);
+                    if constexpr(std::is_same_v<V, xbox_version_t>)
+                    {
+                        // mod2_vertex<compressed>: normal u32 @12, uv i16 @24
+                        n       = unpack_normal(rd<u32>(raw + 12));
+                        v.uv[0] = rd<i16>(raw + 24) / 32767.f * uvscale.x;
+                        v.uv[1] = rd<i16>(raw + 26) / 32767.f * uvscale.y;
+                    } else
+                    {
+                        // mod2_vertex<uncompressed>: normal f32x3 @12, uv @48
+                        n = {
+                            rd<f32>(raw + 12),
+                            rd<f32>(raw + 16),
+                            rd<f32>(raw + 20)};
+                        v.uv[0] = rd<f32>(raw + 48) * uvscale.x;
+                        v.uv[1] = rd<f32>(raw + 52) * uvscale.y;
+                    }
+                    for(u32 k = 0; k < 3; k++)
+                        v.nrm[k] = to_s8_frac6(n[k]);
+                    v.pad = 0;
+                    part.verts.push_back(v);
+                    Vecf3 const p3{v.pos[0], v.pos[1], v.pos[2]};
+                    mn = glm::min(mn, p3);
+                    mx = glm::max(mx, p3);
+                }
+                for(u16 idx : iseg.value())
+                    part.indices.push_back(from_le(idx));
             }
-            for(u16 idx : iseg.value())
-                part.indices.push_back(from_le(idx));
         } catch(std::exception const&)
         {
             continue;
@@ -720,6 +768,56 @@ static void build_objects(
 
 /* --- geometry ------------------------------------------------------------- */
 
+/* Transcoded offline: the material's vertices are GX arrays already and its
+ * indices big-endian */
+static void append_gx_material(
+    page_t&                    page,
+    blam::bsp::material const& mat,
+    blam::bsp::header const&   hdr,
+    blam::bsp_ptr const&       bm,
+    shader_info const&         si)
+{
+    u32 const count = from_le(mat.pc.count);
+    auto      ref   = mat.vertices();
+    ref.count       = blam::to_le<u32>(count * sizeof(gx_vertex));
+    ref.offset      = mat.pc.compressed_vertices.offset;
+    auto verts      = ref.data(bm);
+    auto faces      = mat.indices(hdr).data(bm);
+    if(!count || verts.has_error() || faces.has_error())
+        return;
+    u16 const vert_base = static_cast<u16>(page.verts.size());
+    page.verts.resize(vert_base + count);
+    std::memcpy(
+        page.verts.data() + vert_base,
+        verts.value().data(),
+        count * sizeof(gx_vertex));
+    Vecf3 mn{1e9f, 1e9f, 1e9f}, mx{-1e9f, -1e9f, -1e9f};
+    for(u32 i = vert_base; i < page.verts.size(); i++)
+    {
+        auto const& v = page.verts[i];
+        Vecf3 const p{v.pos[0], v.pos[1], v.pos[2]};
+        mn = glm::min(mn, p);
+        mx = glm::max(mx, p);
+    }
+    g_bb_min            = glm::min(g_bb_min, mn);
+    g_bb_max            = glm::max(g_bb_max, mx);
+    u32 const idx_start = static_cast<u32>(page.indices.size());
+    for(auto const& f : faces.value())
+    {
+        page.indices.push_back(vert_base + f.x);
+        page.indices.push_back(vert_base + f.y);
+        page.indices.push_back(vert_base + f.z);
+    }
+    Vecf3 const center = (mn + mx) * 0.5f;
+    page.submeshes.push_back(
+        {idx_start,
+         static_cast<u32>(page.indices.size()) - idx_start,
+         center,
+         glm::length(mx - center),
+         si.diffuse,
+         si.detail});
+}
+
 template<typename V>
 static void append_material(
     blam::map_container<V> const& c,
@@ -729,8 +827,11 @@ static void append_material(
     blam::bsp_ptr const&          bm)
 {
     namespace vert = blam::vert;
-    auto verts     = mat.vertices().data(bm);
-    auto lverts    = mat.light_verts().data(bm);
+    if(from_le(mat.pc.type) == vert::vertex_type_t::sbsp_gx_vertex)
+        return append_gx_material(
+            page, mat, hdr, bm, resolve_shader(c, mat.shader));
+    auto verts  = mat.vertices().data(bm);
+    auto lverts = mat.light_verts().data(bm);
     if(verts.has_error() || lverts.has_error())
         return;
     bool const compressed =
@@ -768,12 +869,12 @@ static void append_material(
         gv.duv[1] = dv;
         if(compressed) // normal u32, then i16x2 normalized
         {
-            gv.luv[0] = rd<i16>(lv + 4) / 32767.f;
-            gv.luv[1] = rd<i16>(lv + 6) / 32767.f;
+            gv.luv[0] = rd<i16>(lv + 4);
+            gv.luv[1] = rd<i16>(lv + 6);
         } else // normal f32x3, then f32x2
         {
-            gv.luv[0] = rd<f32>(lv + 12);
-            gv.luv[1] = rd<f32>(lv + 16);
+            gv.luv[0] = to_s16_frac15(rd<f32>(lv + 12));
+            gv.luv[1] = to_s16_frac15(rd<f32>(lv + 16));
         }
         gv.detuv[0] = du * si.detail_scale; // detail tiles at a higher rate
         gv.detuv[1] = dv * si.detail_scale;
@@ -854,6 +955,7 @@ static int extract_map(semantic::BytesConst const& bytes)
         "tag data",
         from_le(fh->tag_index_offset),
         static_cast<u32>(bytes.size) - from_le(fh->tag_index_offset));
+    load_phase("map + stage tags");
 
     auto map = blam::map_container<V>::from_bytes(
         bytes, V{}, [](std::string_view, libc_types::i16) {});
@@ -865,7 +967,9 @@ static int extract_map(semantic::BytesConst const& bytes)
     }
     auto const& container = map.value();
     g_internal_magic      = container.magic.ptr_only();
-    g_fingerprint         = fingerprint_of(container);
+    load_phase("parse");
+    g_fingerprint = fingerprint_of(container);
+    load_phase("fingerprint");
     LOG("fingerprint %08x%08x/%u/%08x",
         g_fingerprint.tag_hash[1],
         g_fingerprint.tag_hash[0],
@@ -949,8 +1053,10 @@ static int extract_map(semantic::BytesConst const& bytes)
     }
 
     LOG("pages=%u", static_cast<unsigned>(g_pages.size()));
+    load_phase("bsp");
 
     build_objects(container, *scn);
+    load_phase("objects");
 
     return g_pages.empty() ? 5 : 0;
 }
@@ -958,6 +1064,7 @@ static int extract_map(semantic::BytesConst const& bytes)
 static int extract_bsp()
 {
     LOG("loading map bytes...");
+    load_phase("start");
     auto bytes = load_map_bytes();
     LOG("map bytes = %u", static_cast<unsigned>(bytes.size));
     if(bytes.size < sizeof(blam::file_header_t))
@@ -1647,7 +1754,9 @@ i32 coffee_main(i32, cstring_w*)
                 .value =
                     {.offset = offsetof(gx_vertex, luv),
                      .stride = sizeof(gx_vertex),
-                     .count  = 2},
+                     .count  = 2,
+                     .type   = semantic::type_t::i16,
+                     .frac   = 15},
             });
             page.vao->add({
                 .index = 3,
@@ -1734,6 +1843,7 @@ i32 coffee_main(i32, cstring_w*)
         // null and are simply skipped). Big maps don't fully fit in 24MB.
         LOG("gpu: out of memory, rendering partial scene");
     }
+    load_phase("gpu");
     LOG("gpu: %u object instances, %u model parts",
         static_cast<unsigned>(g_objects.size()),
         mdl_parts);
