@@ -78,8 +78,9 @@ const int MAX_POINT_LIGHTS = 8;
 
 struct PointLight
 {
-    vec4 position; /* xyz, w = radius */
-    vec4 color;
+    vec4 position;  /* xyz, w = radius */
+    vec4 color;     /* rgb, w = cos of the falloff angle */
+    vec4 direction; /* xyz, w = cos of the cutoff angle, -1 = all ways */
 };
 
 #if USE_MODEL_SHADERS == 1
@@ -120,6 +121,12 @@ vec3 point_lighting(vec3 position, vec3 normal)
         float dist = length(d);
         float att  = clamp(1.0 - dist / max(pl.w, 0.001), 0.0, 1.0);
         float ndl  = max(dot(normal, d / max(dist, 0.0001)), 0.0);
+        vec4  spot = world.points[i].direction;
+        if(spot.w > -0.99)
+            att *= smoothstep(
+                spot.w,
+                max(world.points[i].color.a, spot.w + 0.001),
+                dot(-d / max(dist, 0.0001), spot.xyz));
         sum += world.points[i].color.rgb * att * att * ndl;
     }
     return sum;

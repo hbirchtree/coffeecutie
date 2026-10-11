@@ -230,11 +230,13 @@ struct alignas(16) fog_properties
 constexpr size_t max_world_lights = 8;
 constexpr size_t max_point_lights = 8;
 
-/* A dynamic light: xyz + radius, rgb */
+/* A dynamic light: xyz + radius, rgb + cos of the falloff angle, the way it
+ * shines + cos of the cutoff angle (-1 = all ways) */
 struct alignas(16) point_light
 {
     Vecf4 position;
     Vecf4 color;
+    Vecf4 direction;
 };
 
 struct alignas(16) world_data
@@ -245,6 +247,6 @@ struct alignas(16) world_data
     Vecf4            point_count; /* x */
 };
 
-static_assert(sizeof(world_data) == 608);
+static_assert(sizeof(world_data) == 736);
 
 } // namespace materials

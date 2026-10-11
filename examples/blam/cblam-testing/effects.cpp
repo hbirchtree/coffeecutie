@@ -831,13 +831,16 @@ struct EffectSystem
                 continue;
             }
             scene.lights.push_back({
-                .position   = l.place.position,
-                .radius     = l.radius,
-                .color      = color,
-                .lens_flare = l.tag->lens_flare.valid()
-                                  ? &static_cast<blam::tagref_t const&>(
-                                        l.tag->lens_flare)
-                                  : nullptr,
+                .position = l.place.position,
+                .radius   = l.radius,
+                .color    = color,
+                .lens_flare =
+                    l.tag->lens_flare.valid()
+                        ? &static_cast<blam::tagref_t const&>(l.tag->lens_flare)
+                        : nullptr,
+                .direction   = l.place.forward,
+                .cos_falloff = l.tag->cos_falloff_angle,
+                .cos_cutoff  = l.tag->cos_cutoff_angle,
             });
             ++it;
         }

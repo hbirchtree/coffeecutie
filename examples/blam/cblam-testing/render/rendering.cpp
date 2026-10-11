@@ -2306,10 +2306,18 @@ struct MeshRenderer
             lights.begin(), lights.begin() + count, lights.end(),
             [&weight](auto a, auto b) { return weight(a) > weight(b); });
         for(size_t i = 0; i < count; i++)
+        {
+            auto const& l = *lights[i];
+            bool const  spot =
+                l.cos_cutoff > -.99f && glm::length(l.direction) > 0.f;
             world.points[i] = {
-                .position = Vecf4(lights[i]->position, lights[i]->radius),
-                .color    = Vecf4(lights[i]->color, 1.f),
+                .position = Vecf4(l.position, l.radius),
+                .color    = Vecf4(l.color, l.cos_falloff),
+                .direction =
+                    spot ? Vecf4(glm::normalize(l.direction), l.cos_cutoff)
+                         : Vecf4(0.f, 0.f, 0.f, -1.f),
             };
+        }
         bool const had = world.point_count.x > 0.f;
         world.point_count.x = static_cast<f32>(count);
         if(count == 0 && !had)

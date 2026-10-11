@@ -55,6 +55,9 @@ struct EffectScene : compo::SubsystemBase
         f32                   radius{0.f};
         Vecf3                 color{1.f};
         blam::tagref_t const* lens_flare{nullptr};
+        Vecf3                 direction{};       /* spotlights shine this way */
+        f32                   cos_falloff{-1.f}; /* full brightness inside */
+        f32                   cos_cutoff{-1.f};  /* dark outside, -1 = omni */
     };
 
     /* A lens flare and how much of it each local seat sees */
