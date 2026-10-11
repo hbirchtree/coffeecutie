@@ -269,7 +269,7 @@ struct BlamBspWidget
                     ImGui::Checkbox("Relative", &sound_tester.relative);
                     while(ImGui::Button("Play"))
                     {
-                        if(!sound_tester.selected)
+                        if(!sound_tester.selected || !sound_bus)
                             break;
                         SoundEvent ev {.type = SoundEvent::play_sound};
                         PlaySoundEvent play{

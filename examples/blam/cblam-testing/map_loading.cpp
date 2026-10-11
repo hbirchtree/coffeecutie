@@ -83,9 +83,9 @@ static void load_sounds(compo::EntityContainer& e, blam::map_ptr const& magic)
     loading_status.loaded_sounds = LoadingStatus::loaded;
     loading_status.check_all_loaded();
 
-    if(files.container.map->map_type == blam::maptype_t::ui)
+    auto* sound_bus = e.service<comp_app::EventBus<SoundEvent>>();
+    if(sound_bus && files.container.map->map_type == blam::maptype_t::ui)
     {
-        auto* sound_bus = e.service<comp_app::EventBus<SoundEvent>>();
         auto title_tag_name = "sound\\music\\title1\\title1";
         auto title = sounds.index.find(title_tag_name);
         if(title == sounds.index.end())

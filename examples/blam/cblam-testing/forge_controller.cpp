@@ -112,8 +112,8 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
                 continue;
             }
 
-            f32 aspect = fb_size.aspect();
             auto bounds = screen_bounds(info);
+            f32 aspect = bounds.z / bounds.w;
             auto size = Vecf2{bounds.z * 0.1f / aspect, bounds.w * 0.1f};
             /* Green while carrying something, cyan when idle */
             auto const* physics = p.get<PhysicsData>(player.id());
