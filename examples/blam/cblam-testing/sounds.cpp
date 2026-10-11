@@ -547,9 +547,9 @@ struct SoundSystem
                 deliver(event);
         }
 
-        if(has_pending_cluster &&
+        if(has_pending_cluster && loading->loaded_map == LoadingStatus::loaded &&
            loading->loaded_sounds == LoadingStatus::loaded)
-            apply_pending_cluster();
+            apply_pending_cluster(p.template subsystem<BSPCache<Ver>>());
         update_environment(dt);
         update_occlusion(p, dt);
 
@@ -747,21 +747,27 @@ struct SoundSystem
         }
     }
 
+    /* Applied once loaded, from start_restricted */
     void on_cluster_changed(BSPItem const* bsp, u32 cluster)
     {
         pending_bsp         = bsp;
         pending_cluster     = cluster;
         has_pending_cluster = true;
         stat_bg_total++;
-        if(loading->loaded_sounds == LoadingStatus::loaded)
-            apply_pending_cluster();
     }
 
-    void apply_pending_cluster()
+    void apply_pending_cluster(BSPCache<Ver> const& cache)
     {
         if(!has_pending_cluster)
             return;
         has_pending_cluster = false;
+        /* A change from before a map switch names a BSP that is gone */
+        bool const live = std::any_of(
+            cache.m_cache.begin(), cache.m_cache.end(), [this](auto const& entry) {
+                return &entry.second == pending_bsp && entry.second.valid();
+            });
+        if(!live)
+            return;
         auto* sound         = resolve_bg_sound(pending_bsp, pending_cluster);
         if(sound)
             stat_bg_with_snd++;
