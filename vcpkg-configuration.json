@@ -65,10 +65,11 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-ports",
-            "baseline": "95ee7ff2dbdcc4f8b1847ef80f873611fffe69ec",
+            "baseline": "9813fc7af56d6b395fbbea319f9842b2385ae5dd",
             "packages": [
                 "datachannel-wasm",
-                "gamenetworkingsockets"
+                "gamenetworkingsockets",
+                "openal-soft"
             ]
         }
     ]
