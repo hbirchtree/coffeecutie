@@ -13,6 +13,7 @@ struct map_stats
     u32 saved_bytes{0};
     u32 reused{0};     /*!< converted, found in the shared_cache */
     u32 deswizzled{0}; /*!< Xbox images written linear */
+    u32 gx_meshes{0};  /*!< model parts + BSP materials, see gx_vertices */
 };
 
 /* Images in bitmaps.map already transcoded into out_bitmaps, by offset, so
@@ -41,6 +42,9 @@ struct transcode_options
     unsigned threads{1};
     /* Write swizzled Xbox images linear, see transcode_map() */
     bool deswizzle{true};
+    /* Rewrite model and BSP vertices as GX vertex arrays for gx-bsp,
+     * flagged by their vertex type. Other readers can't use the map then. */
+    bool gx_vertices{false};
     /* Kept for the same out_bitmaps, see shared_cache */
     shared_cache* cache{nullptr};
     progress_fn   progress;

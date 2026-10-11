@@ -75,6 +75,11 @@ i32 coffee_main(i32, cstring_w*)
              "etc2comp effort for ES2/ES3, 0-100",
              cxxopts::value<float>()->default_value("40"))
             //
+            ("gx-vertices",
+             "Gekko: also rewrite model and BSP vertices as GX vertex arrays "
+             "(only gx-bsp can read the map then)",
+             cxxopts::value<bool>()->default_value("false"))
+            //
             ;
 
         options.add_options("Texture formats")
@@ -237,7 +242,8 @@ i32 coffee_main(i32, cstring_w*)
             out_map,
             out_bitmaps,
             kernel,
-            {.threads = arguments["jobs"].as<unsigned>()});
+            {.threads     = arguments["jobs"].as<unsigned>(),
+             .gx_vertices = arguments["gx-vertices"].as<bool>()});
     if(!res.ok)
     {
         cWarning("map parse failed: {0}", res.error);
@@ -246,12 +252,14 @@ i32 coffee_main(i32, cstring_w*)
     auto const& st = res.stats;
 
     cDebug(
-        "converted={0} deswizzled={1} skipped={2} read={3} saved={4} KiB",
+        "converted={0} deswizzled={1} skipped={2} read={3} saved={4} KiB "
+        "gx_meshes={5}",
         st.converted,
         st.deswizzled,
         st.skipped,
         st.skipped_read,
-        st.saved_bytes / 1024);
+        st.saved_bytes / 1024,
+        st.gx_meshes);
 
     auto const out_map_path = arguments["output-map"].as<std::string>();
     if(!write_file(out_map_path.c_str(), out_map))

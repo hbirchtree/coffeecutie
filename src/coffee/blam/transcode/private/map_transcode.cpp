@@ -1,6 +1,10 @@
 #include <blam/transcode/map_transcode.h>
 
 #include <blam/volta/blam_bitm.h>
+#include <blam/volta/blam_bsp_structures.h>
+#include <blam/volta/blam_mod2.h>
+#include <blam/volta/blam_scenario.h>
+#include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_endian.h>
 #include <blam/volta/blam_file_header.h>
 #include <blam/volta/blam_stl.h>
@@ -13,12 +17,16 @@
 #include <cstring>
 #include <exception>
 #include <mutex>
+#include <set>
 #include <thread>
 
 namespace mtx {
 namespace {
 
+using libc_types::f32;
 using libc_types::i16;
+using libc_types::i32;
+using libc_types::i8;
 
 void patch_u16(gsl::span<u8> buf, size_t off, u16 v)
 {
@@ -112,6 +120,276 @@ shared_cache::entry const* find_cached(
     if(it == cache.images.end() || it->second.source != source)
         return nullptr;
     return &it->second;
+}
+
+/* --- GX vertex arrays (gx-bsp) ---------------------------------------------
+ * BSP: pos, diffuse uv (f32), lightmap uv (s16, 15 fraction bits), detail
+ * uv (f32) = 32 bytes, over the material's vertices. Models: pos (f32), normal
+ * (s8, 6 fraction bits), pad, uv (f32) = 24 bytes over the part's vertices.
+ * Both big-endian, smaller than what they replace, and the indices are swapped
+ * in place. The vertex type is patched so the reader knows. */
+
+template<typename T>
+T read_le(u8 const* p)
+{
+    T v;
+    std::memcpy(&v, p, sizeof(T));
+    return blam::from_le(v);
+}
+
+void put_be32(u8* p, u32 v)
+{
+    v = __builtin_bswap32(v); // host LE -> GX BE
+    std::memcpy(p, &v, 4);
+}
+
+void put_bef(u8* p, f32 v)
+{
+    put_be32(p, std::bit_cast<u32>(v));
+}
+
+void put_be16(u8* p, u16 v)
+{
+    v = __builtin_bswap16(v);
+    std::memcpy(p, &v, 2);
+}
+
+i16 to_s16_frac15(f32 v)
+{
+    return static_cast<i16>(std::clamp(v * 32768.f, -32768.f, 32767.f));
+}
+
+/* Xbox 11:11:10 signed normal, r in the low bits */
+std::array<f32, 3> unpack_normal(u32 v)
+{
+    auto field = [](u32 x, u32 bits) {
+        i32 const s = static_cast<i32>(x << (32 - bits)) >> (32 - bits);
+        return static_cast<f32>(s) / static_cast<f32>((1 << (bits - 1)) - 1);
+    };
+    return {
+        field(v & 0x7FF, 11), field((v >> 11) & 0x7FF, 11), field(v >> 22, 10)};
+}
+
+i8 to_s8_frac6(f32 v)
+{
+    return static_cast<i8>(std::clamp(v * 64.f, -128.f, 127.f));
+}
+
+template<typename Ver>
+f32 detail_scale(blam::map_container<Ver> const& c, blam::tagref_t const& ref)
+{
+    using blam::from_le;
+    u32 const id  = from_le(ref.tag_id);
+    u32 const idx = id & 0xFFFF;
+    if(id == 0xFFFFFFFF || idx >= from_le(c.tags->tag_count))
+        return 1.f;
+    blam::tag_t const& t     = c.tags->tags(c.map)[idx];
+    f32                scale = 1.f;
+    if(t.matches(blam::tag_class_t::shader_environment))
+    {
+        if(auto sh = t.data<blam::shader::shader_env>(c.magic); sh.has_value())
+            scale = from_le(sh.value()->diffuse.primary.scale);
+    } else if(t.matches(blam::tag_class_t::shader_model))
+    {
+        if(auto sh = t.data<blam::shader::shader_model>(c.magic);
+           sh.has_value())
+            scale = from_le(sh.value()->maps.detail.scale);
+    }
+    return scale == 0.f ? 1.f : scale;
+}
+
+template<typename Ver>
+u32 transcode_gx_vertices(
+    blam::map_container<Ver> const& c, u8 const* base, gsl::span<u8> out_map)
+{
+    using blam::from_le;
+    namespace vert = blam::vert;
+    auto foff_of   = [&](void const* p) -> size_t {
+        return reinterpret_cast<u8 const*>(p) - base;
+    };
+    auto swap_indices = [&](size_t off, size_t count) {
+        for(size_t i = 0; i < count; i++)
+        {
+            u16 v = read_le<u16>(base + off + i * 2);
+            v     = __builtin_bswap16(v);
+            std::memcpy(out_map.data() + off + i * 2, &v, 2);
+        }
+    };
+    std::set<size_t> done; // vertex/index ranges shared by several meshes
+    u32              meshes = 0;
+
+    /* Models */
+    auto      vmag      = c.tags->vertex_magic(c.magic);
+    u32 const tag_count = from_le(c.tags->tag_count);
+    for(u32 ti = 0; ti < tag_count; ti++)
+    {
+        blam::tag_t const& t = c.tags->tags(c.map)[ti];
+        if(!t.matches(blam::tag_class_t::mod2) &&
+           !t.matches(blam::tag_class_t::mode))
+            continue;
+        auto hdr = t.data<blam::mod2::header<Ver>>(c.magic);
+        if(hdr.has_error())
+            continue;
+        f32 const us    = from_le(hdr.value()->uvscale.x);
+        f32 const vs    = from_le(hdr.value()->uvscale.y);
+        auto      geoms = hdr.value()->geometries.data(c.magic);
+        if(geoms.has_error())
+            continue;
+        for(auto const& geom : geoms.value())
+            for(auto const& wrap : geom.meshes(c.magic))
+            {
+                blam::mod2::part const& p  = wrap.data;
+                auto const              vt = from_le(p.vertex_type);
+                if(vt != vert::vertex_type_t::mod2_compressed_vertex &&
+                   vt != vert::vertex_type_t::mod2_uncompressed_vertex)
+                    continue;
+                try
+                {
+                    auto vspan = p.vertex_segment(*c.tags, c.magic).data(vmag);
+                    auto ispan = p.index_segment(*c.tags).data(vmag);
+                    if(vspan.has_error() || ispan.has_error() ||
+                       vspan.value().empty())
+                        continue;
+                    u8 const* src =
+                        reinterpret_cast<u8 const*>(vspan.value().data());
+                    size_t const voff = foff_of(src);
+                    size_t const vsize =
+                        vspan.value().size_bytes() / vspan.value().size();
+                    if(done.insert(voff).second)
+                        for(size_t i = 0; i < vspan.value().size(); i++)
+                        {
+                            u8 const* v   = src + i * vsize;
+                            u8*       dst = out_map.data() + voff + i * 24;
+                            std::array<f32, 3> n;
+                            f32                u, w;
+                            if(vt ==
+                               vert::vertex_type_t::mod2_compressed_vertex)
+                            {
+                                n = unpack_normal(read_le<u32>(v + 12));
+                                u = read_le<i16>(v + 24) / 32767.f;
+                                w = read_le<i16>(v + 26) / 32767.f;
+                            } else
+                            {
+                                n = {
+                                    read_le<f32>(v + 12),
+                                    read_le<f32>(v + 16),
+                                    read_le<f32>(v + 20)};
+                                u = read_le<f32>(v + 48);
+                                w = read_le<f32>(v + 52);
+                            }
+                            for(u32 k = 0; k < 3; k++)
+                            {
+                                put_bef(dst + k * 4, read_le<f32>(v + k * 4));
+                                dst[12 + k] =
+                                    static_cast<u8>(to_s8_frac6(n[k]));
+                            }
+                            dst[15] = 0;
+                            put_bef(dst + 16, u * us);
+                            put_bef(dst + 20, w * vs);
+                        }
+                    size_t const ioff = foff_of(ispan.value().data());
+                    if(done.insert(ioff).second)
+                        swap_indices(ioff, ispan.value().size());
+                } catch(std::exception const&)
+                {
+                    continue;
+                }
+                patch_u16(
+                    out_map,
+                    foff_of(&p.vertex_type),
+                    static_cast<u16>(vert::vertex_type_t::mod2_gx_vertex));
+                meshes++;
+            }
+    }
+
+    /* Structure BSPs */
+    auto scn = c.tags->scenario(c.map, c.magic);
+    if(!scn)
+        return meshes;
+    auto bsps = (*scn)->bsp_info.data(c.magic);
+    if(bsps.has_error())
+        return meshes;
+    for(auto const& bi : bsps.value())
+    {
+        auto const bm  = bi.bsp_magic(c.magic);
+        auto       hdr = bi.to_bsp(bm).to_header().data(bm, blam::single_value);
+        if(hdr.has_error())
+            continue;
+        auto lms = hdr.value()->lightmaps.data(bm);
+        if(lms.has_error())
+            continue;
+        for(auto const& lm : lms.value())
+        {
+            auto mats = lm.materials.data(bm);
+            if(mats.has_error())
+                continue;
+            for(blam::bsp::material const& mat : mats.value())
+            {
+                auto const type = from_le(mat.pc.type);
+                if(type != vert::vertex_type_t::sbsp_uncompressed_vertex &&
+                   type != vert::vertex_type_t::sbsp_compressed_vertex)
+                    continue;
+                bool const compressed =
+                    type == vert::vertex_type_t::sbsp_compressed_vertex;
+                auto const vref  = mat.vertices();
+                auto       verts = vref.data(bm);
+                auto       light = mat.light_verts().data(bm);
+                auto       faces = mat.indices(*hdr.value()).data(bm);
+                if(verts.has_error() || light.has_error() || faces.has_error())
+                    continue;
+                u32 const vsz    = compressed ? 32 : 56;
+                u32 const lsz    = compressed ? 8 : 20;
+                u32 const uv_off = compressed ? 24 : 48;
+                u32 const count  = from_le(mat.pc.count);
+                if(verts.value().size() < count * vsz ||
+                   light.value().size() < count * lsz)
+                    continue;
+                f32 const    scale = detail_scale(c, mat.shader);
+                u8 const*    src   = verts.value().data();
+                u8 const*    lsrc  = light.value().data();
+                size_t const voff  = foff_of(src);
+                if(!done.insert(voff).second)
+                    continue;
+                for(u32 i = 0; i < count; i++)
+                {
+                    u8 const* v   = src + i * vsz;
+                    u8 const* l   = lsrc + i * lsz;
+                    u8*       dst = out_map.data() + voff + i * 32;
+                    f32 const du  = read_le<f32>(v + uv_off);
+                    f32 const dv  = read_le<f32>(v + uv_off + 4);
+                    for(u32 k = 0; k < 3; k++)
+                        put_bef(dst + k * 4, read_le<f32>(v + k * 4));
+                    put_bef(dst + 12, du);
+                    put_bef(dst + 16, dv);
+                    for(u32 k = 0; k < 2; k++)
+                        put_be16(
+                            dst + 20 + k * 2,
+                            static_cast<u16>(
+                                compressed
+                                    ? read_le<i16>(l + 4 + k * 2)
+                                    : to_s16_frac15(
+                                          read_le<f32>(l + 12 + k * 4))));
+                    put_bef(dst + 24, du * scale);
+                    put_bef(dst + 28, dv * scale);
+                }
+                size_t const ioff = foff_of(faces.value().data());
+                if(done.insert(ioff).second)
+                    swap_indices(ioff, faces.value().size() * 3);
+                // The arrays start where the vertices did; keep that
+                // reachable through the compressed reference
+                patch_u32(
+                    out_map,
+                    foff_of(&mat.pc.compressed_vertices.offset),
+                    from_le(vref.offset));
+                patch_u16(
+                    out_map,
+                    foff_of(&mat.pc.type),
+                    static_cast<u16>(vert::vertex_type_t::sbsp_gx_vertex));
+                meshes++;
+            }
+        }
+    }
+    return meshes;
 }
 
 template<typename Ver>
@@ -406,6 +684,9 @@ map_transcode_result transcode(
         st.saved_bytes += from_le(repeat.img->size) -
                           static_cast<u32>(result->data.size());
     }
+
+    if(options.gx_vertices)
+        st.gx_meshes = transcode_gx_vertices(c, base, out_map);
 
     out.ok = true;
     return out;
