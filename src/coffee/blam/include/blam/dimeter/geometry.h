@@ -1,10 +1,38 @@
 #pragma once
 
+#include "collision.h"
 #include "structures.h"
 
+#include <array>
 #include <cstring>
 
+namespace blam::dimeter::scn {
+struct sky_ref_t;
+struct atmospheric_fog_t;
+struct planar_fog_t;
+struct tag_ref_t;
+} // namespace blam::dimeter::scn
+
+namespace blam::dimeter::obj::matg {
+struct material_t;
+} // namespace blam::dimeter::obj::matg
+
 namespace blam::dimeter::geo {
+
+struct shader_ref_t;
+struct model_node_t;
+struct bsp_cluster_t;
+struct bsp_geometry_section_t;
+struct bsp_instance_t;
+struct fog_plane_t;
+struct background_sound_palette_t;
+struct sound_environment_palette_t;
+struct weather_palette_t;
+struct conveyor_surface_t;
+struct environment_object_palette_t;
+struct structure_bsp_ref_t;
+struct part_t;
+struct subpart_t;
 
 /*!
  * Halo 2 render geometry (mode + sbsp) lives in per-section "geometry
@@ -63,16 +91,11 @@ static_assert(sizeof(resource_t) == 16);
  * shader */
 struct alignas(2) submesh_t
 {
-    i16 unknown_0[2];
-    i16 shader_index_raw;
-    u16 index_start_raw;
-    u16 index_length_raw;
-    u8  padding[62];
-
-    inline i16 shader_index() const
-    {
-        return from_le(shader_index_raw);
-    }
+    i16                       unknown_0[2];
+    block_index<shader_ref_t> shader;
+    u16                       index_start_raw;
+    u16                       index_length_raw;
+    u8                        padding[62];
 
     inline u16 index_start() const
     {
@@ -85,7 +108,7 @@ struct alignas(2) submesh_t
     }
 };
 
-static_assert(offsetof(submesh_t, shader_index_raw) == 4);
+static_assert(offsetof(submesh_t, shader) == 4);
 static_assert(sizeof(submesh_t) == 72);
 
 enum class classification_t : i16
@@ -99,19 +122,21 @@ enum class classification_t : i16
 /*! render_model (mode) section, elem in the tag's sections block */
 struct alignas(4) model_section_t
 {
-    classification_t      classification;
-    u16                   unknown_0;
-    u16                   vertex_count_raw;
-    u16                   face_count_raw;
-    u8                    unknown_1[12];
-    u8                    nodes_per_vertex;
-    u8                    unknown_2[35];
-    raw_ref               data;
-    i32                   data_size_raw;
-    i32                   unknown_3;
-    i32                   header_size_raw;
-    tag_block<resource_t> resources;
-    u8                    unknown_4[12];
+    classification_t          classification;
+    u16                       unknown_0;
+    u16                       vertex_count_raw;
+    u16                       face_count_raw;
+    u8                        unknown_1[12];
+    u8                        nodes_per_vertex;
+    u8                        unknown_2[23];
+    block_index<model_node_t> rigid_node; /* -1 unless rigid */
+    u8                        unknown_2b[10];
+    raw_ref                   data;
+    i32                       data_size_raw;
+    i32                       unknown_3;
+    i32                       header_size_raw;
+    tag_block<resource_t>     resources;
+    u8                        unknown_4[12];
 
     inline u16 vertex_count() const
     {
@@ -136,6 +161,7 @@ struct alignas(4) model_section_t
 };
 
 static_assert(offsetof(model_section_t, nodes_per_vertex) == 20);
+static_assert(offsetof(model_section_t, rigid_node) == 0x2C);
 static_assert(offsetof(model_section_t, data) == 56);
 static_assert(offsetof(model_section_t, header_size_raw) == 68);
 static_assert(offsetof(model_section_t, resources) == 72);
@@ -150,27 +176,70 @@ struct alignas(4) model_bounds_t
     f32 z_min, z_max;
     f32 u_min, u_max;
     f32 v_min, v_max;
-    u8  padding[16];
+    f32 u2_min, u2_max; /*!< Secondary (lightmap) texcoord */
+    f32 v2_min, v2_max;
 };
 
 static_assert(sizeof(model_bounds_t) == 56);
 
+/*! Section index per LOD, L1 (lowest) .. L6 (highest); -1 = absent */
+struct alignas(4) model_permutation_t
+{
+    string_id          name;
+    std::array<i16, 6> lod_section_raw;
+
+    inline i16 lod_section(u32 lod) const
+    {
+        return from_le(lod_section_raw[lod]);
+    }
+
+    /*! Most detailed section present */
+    inline i16 best_section() const
+    {
+        for(int lod = 5; lod >= 0; lod--)
+            if(lod_section(lod) >= 0)
+                return lod_section(lod);
+        return -1;
+    }
+};
+
+static_assert(sizeof(model_permutation_t) == 16);
+
 struct alignas(4) model_region_t
 {
-    string_id     name;
-    u32           unknown_0;
-    tag_block<u8> permutations; /* elem 16: name sid, 6× lod section idx */
+    string_id                      name;
+    u32                            unknown_0;
+    tag_block<model_permutation_t> permutations;
 };
 
 static_assert(sizeof(model_region_t) == 16);
+
+/*! Skeleton node; rigid sections are stored in their node's space */
+struct alignas(4) model_node_t
+{
+    string_id                 name;
+    block_index<model_node_t> parent;
+    block_index<model_node_t> first_child;
+    block_index<model_node_t> next_sibling;
+    i16                       unknown_0;
+    Vecf3                     position;
+    Quatf                     rotation; /* x, y, z, w */
+    f32                       inverse_scale;
+    std::array<f32, 12>       inverse_transform;
+    f32                       distance_from_parent;
+};
+
+static_assert(offsetof(model_node_t, position) == 12);
+static_assert(offsetof(model_node_t, rotation) == 24);
+static_assert(sizeof(model_node_t) == 96);
 
 /*! Shader table entry of mode/sbsp (32 bytes on Xbox); submesh
  * shader_index values index this table */
 struct alignas(4) shader_ref_t
 {
-    u8            unknown_0[8];
-    tag_reference shader;
-    u8            unknown_1[16];
+    u8                               unknown_0[8];
+    tag_reference<tag_class_t::shad> shader;
+    u8                               unknown_1[16];
 };
 
 static_assert(offsetof(shader_ref_t, shader) == 8);
@@ -180,9 +249,9 @@ static_assert(sizeof(shader_ref_t) == 32);
  * reachable without evaluating the shader template */
 struct alignas(4) shad_runtime_property_t
 {
-    tag_reference diffuse;
-    tag_reference lightmap_emissive;
-    u8            unknown_0[0x40];
+    tag_reference<tag_class_t::bitm> diffuse;
+    tag_reference<tag_class_t::bitm> lightmap_emissive;
+    u8                               unknown_0[0x40];
 };
 
 static_assert(sizeof(shad_runtime_property_t) == 0x50);
@@ -191,8 +260,8 @@ static_assert(sizeof(shad_runtime_property_t) == 0x50);
  * (datum only, no class) */
 struct alignas(4) shader_map_t
 {
-    datum_index bitmap;
-    u8          unknown_0[8];
+    tag_id<tag_class_t::bitm> bitmap;
+    u8                        unknown_0[8];
 };
 
 static_assert(sizeof(shader_map_t) == 12);
@@ -205,14 +274,24 @@ struct alignas(4) vec4_t
 /*! shad postprocess ("shader properties"): the compiled form of the
  * authoring-time parameters. Bitmaps[i] pairs with TilingData entries;
  * for base maps slot/tile 0 is the usual arrangement. */
+/*! Pixel constant: a packed colour, R, G, B, A bytes */
+struct alignas(4) pixel_constant_t
+{
+    u8 r, g, b, a;
+};
+
+static_assert(sizeof(pixel_constant_t) == 4);
+
 struct alignas(4) shader_properties_t
 {
-    datum_index             shader_template;
-    tag_block<shader_map_t> bitmaps;
-    u8                      unknown_0[8];
-    tag_block<vec4_t>       tiling; /* 0x14; xy = uv scale */
-    u8                      unknown_1[96];
+    tag_id<tag_class_t::stem>   shader_template;
+    tag_block<shader_map_t>     bitmaps;
+    tag_block<pixel_constant_t> pixel_constants;
+    tag_block<vec4_t>           tiling; /* vertex constants, xy = uv scale */
+    u8                          unknown_1[96];
 };
+
+static_assert(offsetof(shader_properties_t, pixel_constants) == 0x0C);
 
 static_assert(offsetof(shader_properties_t, tiling) == 0x14);
 static_assert(sizeof(shader_properties_t) == 124);
@@ -221,12 +300,12 @@ static_assert(sizeof(shader_properties_t) == 124);
  * stripped; runtime properties + postprocess survive) */
 struct alignas(4) shad_header_t
 {
-    tag_reference                      shader_template;
+    tag_reference<tag_class_t::stem>   shader_template;
     string_id                          material_name;
     tag_block<shad_runtime_property_t> runtime_properties;
     u32                                flags;
     tag_block<u8> parameters; /* empty in shipped Xbox caches */
-    tag_block<shader_properties_t> properties; /* 0x20 */
+    tag_block<shader_properties_t> properties;
 };
 
 static_assert(offsetof(shad_header_t, runtime_properties) == 0x0C);
@@ -238,31 +317,34 @@ struct alignas(4) model_header_t
     string_id                  name;
     u32                        flags;
     u8                         unknown_0[12];
-    tag_block<model_bounds_t>  bounds;   /* 0x14 */
-    tag_block<model_region_t>  regions;  /* 0x1C */
-    tag_block<model_section_t> sections; /* 0x24 */
-    u8                         unknown_1[52];
-    tag_block<shader_ref_t>    shaders; /* 0x60 */
+    tag_block<model_bounds_t>  bounds;
+    tag_block<model_region_t>  regions;
+    tag_block<model_section_t> sections;
+    u8                         unknown_1[28];
+    tag_block<model_node_t>    nodes;
+    u8                         unknown_2[16];
+    tag_block<shader_ref_t>    shaders;
 };
 
 static_assert(offsetof(model_header_t, bounds) == 0x14);
 static_assert(offsetof(model_header_t, sections) == 0x24);
+static_assert(offsetof(model_header_t, nodes) == 0x48);
 static_assert(offsetof(model_header_t, shaders) == 96);
 
 /*! sbsp cluster / section geometry, shared field layout (cluster elem is
  * 176 bytes, bsp section elem 200; both start identically) */
 struct alignas(4) bsp_section_common_t
 {
-    u16                   vertex_count_raw;
-    u16                   face_count_raw;
-    u8                    unknown_0[20];
-    tag_block<u8>         bounds;
-    u8                    unknown_1[8];
-    raw_ref               data;
-    i32                   data_size_raw;
-    i32                   header_size_raw;
-    i32                   unknown_2;
-    tag_block<resource_t> resources;
+    u16                       vertex_count_raw;
+    u16                       face_count_raw;
+    u8                        unknown_0[20];
+    bsp_block<model_bounds_t> bounds; /* compression info, 0x18 */
+    u8                        unknown_1[8];
+    raw_ref                   data;
+    i32                       data_size_raw;
+    i32                       header_size_raw;
+    i32                       unknown_2;
+    bsp_block<resource_t>     resources;
 
     inline u16 vertex_count() const
     {
@@ -288,17 +370,126 @@ struct alignas(4) bsp_section_common_t
 static_assert(offsetof(bsp_section_common_t, data) == 40);
 static_assert(offsetof(bsp_section_common_t, resources) == 56);
 
+/*! Portal between two clusters: a convex polygon with its plane */
+struct alignas(4) portal_vertex_t
+{
+    Vecf3 point;
+};
+
+static_assert(sizeof(portal_vertex_t) == 12);
+
+enum class portal_flags_t : u32
+{
+    ai_cannot_hear   = 0x1,
+    one_way          = 0x2,
+    door             = 0x4,
+    no_way           = 0x8,
+    one_way_reversed = 0x10,
+    no_one_can_hear  = 0x20,
+};
+
+struct alignas(4) cluster_portal_t
+{
+    block_index<bsp_cluster_t> back;
+    block_index<bsp_cluster_t> front;
+    i32                        plane_raw;
+    Vecf3                      centroid;
+    f32                        bounding_radius;
+    u32                        flags_raw;
+    bsp_block<portal_vertex_t> vertices;
+
+    inline i16 back_cluster() const
+    {
+        return back.value();
+    }
+
+    inline i16 front_cluster() const
+    {
+        return front.value();
+    }
+
+    inline bool has(portal_flags_t flag) const
+    {
+        return from_le(flags_raw) & static_cast<u32>(flag);
+    }
+};
+
+static_assert(offsetof(cluster_portal_t, vertices) == 0x1C);
+static_assert(sizeof(cluster_portal_t) == 0x24);
+
+/*! Collision BSP leaf -> cluster */
+struct alignas(4) bsp_leaf_t
+{
+    block_index<bsp_cluster_t> cluster;
+    i16                        surface_reference_count;
+    i32                        first_surface_reference;
+};
+
+static_assert(sizeof(bsp_leaf_t) == 8);
+
+struct alignas(2) index16_t
+{
+    i16 raw;
+
+    inline i16 value() const
+    {
+        return from_le(raw);
+    }
+};
+
+/*! sbsp cluster: section geometry plus its portals and instanced geometry */
+enum class cluster_flags_t : u16
+{
+    none                   = 0x0,
+    one_way_portal         = 0x1,
+    door_portal            = 0x2,
+    postprocessed_geometry = 0x4,
+    is_the_sky             = 0x8,
+};
+C_FLAGS(cluster_flags_t, u16);
+
 struct alignas(4) bsp_cluster_t : bsp_section_common_t
 {
-    u8 unknown_3[112];
+    u8                                      unknown_3[20];
+    f32                                     x_min, x_max;
+    f32                                     y_min, y_max;
+    f32                                     z_min, z_max;
+    block_index<scn::sky_ref_t, i8>         sky; /* into the scenario's skies */
+    i8                                      media_index;
+    block_index<scn::sky_ref_t, i8>         visible_sky;
+    block_index<scn::atmospheric_fog_t, i8> atmospheric_fog;
+    i8                                      planar_fog_designator;
+    block_index<fog_plane_t, i8>            visible_fog_plane;
+    block_index<background_sound_palette_t> background_sound;
+    block_index<sound_environment_palette_t> sound_environment;
+    block_index<weather_palette_t>           weather;
+    block_index<structure_bsp_ref_t>         transition_bsp;
+    i16                                      unknown_4[3];
+    cluster_flags_t                          flags;
+    i16                                      unknown_5;
+    bsp_block<u8>                            predicted_resources; /* elem 8 */
+    bsp_block<index16_t>                     portals;
+    i32                                      checksum;
+    bsp_block<index16_t>                     instance_indices;
+    bsp_block<index16_t>                     index_reorder;
+    data_reference<heap_t::bsp>              collision_mopp;
 };
 
+static_assert(offsetof(bsp_cluster_t, x_min) == 0x54);
+static_assert(offsetof(bsp_cluster_t, portals) == 0x8C);
+static_assert(offsetof(bsp_cluster_t, instance_indices) == 0x98);
 static_assert(sizeof(bsp_cluster_t) == 176);
 
+/*! Instanced geometry definition: render section plus its own collision
+ * BSP, both in definition space */
 struct alignas(4) bsp_geometry_section_t : bsp_section_common_t
 {
-    u8 unknown_3[136];
+    u8                       unknown_3[48];
+    coll::bsp_t<heap_t::bsp> collision; /* inline, definition space */
+    u8                       unknown_4[24];
 };
+
+static_assert(offsetof(bsp_geometry_section_t, collision) == 0x70);
 
 static_assert(sizeof(bsp_geometry_section_t) == 200);
 
@@ -307,50 +498,338 @@ static_assert(sizeof(bsp_geometry_section_t) == 200);
  * placed geometry, radius matches its extent) — this is the per-instance
  * culling volume the engine pairs with the owning cluster's portal
  * visibility. */
-struct alignas(4) bsp_instance_t
+enum class instance_pathfinding_policy_t : u16
 {
-    f32       scale;
-    f32       transform[12]; /* 4x3 row-major rotation+translation */
-    i16       section_index_raw;
-    u16       flags;
-    f32       unknown_0;
-    f32       sphere_center[3]; /* 0x3C, world space */
-    f32       sphere_radius;    /* 0x48 */
-    u32       checksum;
-    string_id name;
-    u8        unknown_1[4];
-
-    inline i16 section_index() const
-    {
-        return from_le(section_index_raw);
-    }
+    cutout = 0,
+    static_,
+    none,
 };
 
-static_assert(offsetof(bsp_instance_t, section_index_raw) == 52);
+enum class instance_lightmapping_policy_t : u16
+{
+    per_pixel = 0,
+    per_vertex,
+};
+
+struct alignas(4) bsp_instance_t
+{
+    f32 scale;
+    f32 transform[12]; /* 4x3 row-major rotation+translation */
+    block_index<bsp_geometry_section_t> section;
+    u16                                 flags;
+    f32                                 unknown_0;
+    f32                                 sphere_center[3]; /* world space */
+    f32                                 sphere_radius;
+    u32                                 checksum;
+    string_id                           name;
+    instance_pathfinding_policy_t       pathfinding_policy;
+    instance_lightmapping_policy_t      lightmapping_policy;
+};
+
+static_assert(offsetof(bsp_instance_t, section) == 52);
 static_assert(offsetof(bsp_instance_t, sphere_center) == 0x3C);
 static_assert(offsetof(bsp_instance_t, sphere_radius) == 0x48);
 static_assert(offsetof(bsp_instance_t, name) == 80);
 static_assert(sizeof(bsp_instance_t) == 88);
 
-/*! sbsp tag body, geometry-relevant fields only (Xbox offsets) */
-struct alignas(4) bsp_header_t
+struct alignas(4) collision_material_t
 {
-    u8                                unknown_0[52];
-    f32                               x_min, x_max;
-    f32                               y_min, y_max;
-    f32                               z_min, z_max;
-    u8                                unknown_1[80];
-    tag_block<bsp_cluster_t>          clusters; /* 156 */
-    tag_block<shader_ref_t>           shaders;  /* 164 */
-    u8                                unknown_2[140];
-    tag_block<bsp_geometry_section_t> sections;  /* 312 */
-    tag_block<bsp_instance_t>         instances; /* 320 */
+    tag_reference<tag_class_t::shad>   old_shader;
+    block_index<obj::matg::material_t> global_material;
+    block_index<conveyor_surface_t>    conveyor_surface;
+    tag_reference<tag_class_t::shad>   shader;
 };
 
+static_assert(sizeof(collision_material_t) == 0x14);
+
+enum class fog_plane_flags_t : u16
+{
+    none                            = 0x0,
+    extend_infinitely_while_visible = 0x1,
+    do_not_floodfill                = 0x2,
+    aggressive_floodfill            = 0x4,
+};
+C_FLAGS(fog_plane_flags_t, u16);
+
+struct alignas(4) fog_plane_t
+{
+    block_index<scn::planar_fog_t> scenario_planar_fog;
+    i16                            unknown_0;
+    Vecf4                          plane; /*!< normal, distance */
+    fog_plane_flags_t              flags;
+    i16                            priority_raw;
+};
+
+static_assert(sizeof(fog_plane_t) == 0x18);
+
+/*! Shared by the sbsp and the scenario's palettes */
+struct alignas(4) weather_palette_t
+{
+    bl_string                        name;
+    tag_reference<tag_class_t::weat> weather_system;
+    u8                               unknown_0[0x4C - 0x28];
+    tag_reference<tag_class_t::wind> wind;
+    Vecf3                            wind_direction;
+    f32                              wind_magnitude;
+    u32                              unknown_1;
+    bl_string                        wind_scale_function;
+};
+
+static_assert(offsetof(weather_palette_t, wind) == 0x4C);
+static_assert(sizeof(weather_palette_t) == 0x88);
+
+enum class sound_scale_flags_t : u32
+{
+    none                                   = 0x0,
+    override_default_scale                 = 0x1,
+    use_adjacent_cluster_as_portal_scale   = 0x2,
+    use_adjacent_cluster_as_exterior_scale = 0x4,
+    scale_with_weather_intensity           = 0x8,
+};
+C_FLAGS(sound_scale_flags_t, u32);
+
+struct alignas(4) background_sound_palette_t
+{
+    bl_string                        name;
+    tag_reference<tag_class_t::lsnd> background_sound;
+    tag_reference<tag_class_t::lsnd> inside_cluster_sound;
+    u8                               unknown_0[0x44 - 0x30];
+    f32                              cutoff_distance;
+    sound_scale_flags_t              scale_flags;
+    f32                              interior_scale;
+    f32                              portal_scale;
+    f32                              exterior_scale;
+    f32                              interpolation_speed;
+    u8                               unknown_1[8];
+};
+
+static_assert(offsetof(background_sound_palette_t, cutoff_distance) == 0x44);
+static_assert(sizeof(background_sound_palette_t) == 0x64);
+
+struct alignas(4) sound_environment_palette_t
+{
+    bl_string                        name;
+    tag_reference<tag_class_t::snde> sound_environment;
+    f32                              cutoff_distance;
+    f32                              interpolation_speed;
+    u8                               unknown_0[0x48 - 0x30];
+};
+
+static_assert(sizeof(sound_environment_palette_t) == 0x48);
+
+struct alignas(4) weather_polyhedron_t
+{
+    Vecf3                    center;
+    f32                      radius;
+    bsp_block<coll::plane_t> planes;
+};
+
+static_assert(sizeof(weather_polyhedron_t) == 0x18);
+
+struct alignas(4) conveyor_surface_t
+{
+    Vecf3 u;
+    Vecf3 v;
+};
+
+static_assert(sizeof(conveyor_surface_t) == 0x18);
+
+struct alignas(4) breakable_surface_t
+{
+    block_index<bsp_instance_t> instance;
+    i16                         breakable_surface_raw;
+    Vecf3                       centroid;
+    f32                         radius;
+    i32                         collision_surface_raw;
+};
+
+static_assert(sizeof(breakable_surface_t) == 0x18);
+
+/*! Named point in the BSP, e.g. for scripted object placement */
+struct alignas(4) marker_t
+{
+    bl_string name;
+    Quatf     rotation; /*!< quaternion i, j, k, w */
+    Vecf3     position;
+};
+
+static_assert(sizeof(marker_t) == 0x3C);
+
+struct alignas(4) runtime_decal_t
+{
+    Vecf3                       position;
+    block_index<scn::tag_ref_t> decal_type;
+    i8                          yaw;
+    i8                          pitch;
+};
+
+static_assert(sizeof(runtime_decal_t) == 0x10);
+
+/*! Which object classes an environment object palette entry stands for */
+enum class object_type_flags_t : u32
+{
+    none          = 0x0,
+    biped         = 0x1,
+    vehicle       = 0x2,
+    weapon        = 0x4,
+    equipment     = 0x8,
+    garbage       = 0x10,
+    projectile    = 0x20,
+    scenery       = 0x40,
+    machine       = 0x80,
+    control       = 0x100,
+    light_fixture = 0x200,
+    sound_scenery = 0x400,
+    crate         = 0x800,
+    creature      = 0x1000,
+};
+C_FLAGS(object_type_flags_t, u32);
+
+struct alignas(4) environment_object_palette_t
+{
+    object_reference                 definition;
+    tag_reference<tag_class_t::mode> model;
+    object_type_flags_t              object_type;
+};
+
+static_assert(sizeof(environment_object_palette_t) == 0x14);
+
+/*! Objects baked into the BSP at export (the scenario placements they
+ * came from are named) */
+struct alignas(4) environment_object_t
+{
+    bl_string                                 name;
+    Quatf                                     rotation;
+    Vecf3                                     translation;
+    block_index<environment_object_palette_t> palette;
+    i16                                       unknown_0;
+    datum_index                               unique_id;
+    bl_tag                                    exported_object_type;
+    bl_string                                 scenario_object_name;
+};
+
+static_assert(offsetof(environment_object_t, unique_id) == 0x40);
+static_assert(sizeof(environment_object_t) == 0x68);
+
+/*! Ambience and reverb cluster groups: which clusters share a sound space */
+struct alignas(4) sound_cluster_t
+{
+    i16                  unknown_0[2];
+    bsp_block<index16_t> enclosing_portal_designators;
+    bsp_block<index16_t> interior_cluster_indices;
+};
+
+static_assert(sizeof(sound_cluster_t) == 0x14);
+
+struct alignas(4) transparent_plane_t
+{
+    i16   section_raw;
+    i16   part_raw;
+    Vecf4 plane;
+};
+
+static_assert(sizeof(transparent_plane_t) == 0x14);
+
+struct alignas(4) water_definition_t
+{
+    tag_reference<tag_class_t::shad> shader;
+    bsp_block<u8> section; /*!< elem 0x44, same shape as a cluster's */
+    u8            unknown_0[0xAC - 0x10];
+};
+
+static_assert(sizeof(water_definition_t) == 0xAC);
+
+/*! sbsp tag body (Xbox offsets, Assembly's sbsp.xml); pathfinding,
+ * decorator and MOPP data stay opaque */
+struct alignas(4) bsp_header_t
+{
+    u8                                      unknown_0[12];
+    bsp_block<collision_material_t>         collision_materials;
+    bsp_block<coll::bsp_t<heap_t::bsp>>     collision; /* world space */
+    u8                                      unknown_0b[16];
+    bsp_block<bsp_leaf_t>                   leaves;
+    f32                                     x_min, x_max;
+    f32                                     y_min, y_max;
+    f32                                     z_min, z_max;
+    bsp_block<u8>                           surface_references; /* elem 8 */
+    data_reference<heap_t::bsp>             cluster_data;
+    bsp_block<cluster_portal_t>             portals;
+    bsp_block<fog_plane_t>                  fog_planes;
+    u8                                      unknown_1[0x84 - 0x6C];
+    bsp_block<weather_palette_t>            weather_palette;
+    bsp_block<weather_polyhedron_t>         weather_polyhedra;
+    bsp_block<u8>                           detail_objects; /* elem 0x24 */
+    bsp_block<bsp_cluster_t>                clusters;
+    bsp_block<shader_ref_t>                 shaders;
+    bsp_block<index16_t>                    sky_owner_cluster;
+    bsp_block<conveyor_surface_t>           conveyor_surfaces;
+    bsp_block<breakable_surface_t>          breakable_surfaces;
+    bsp_block<u8>                           pathfinding_data; /* elem 0x74 */
+    bsp_block<u8>                           pathfinding_edges;
+    bsp_block<background_sound_palette_t>   background_sound_palette;
+    bsp_block<sound_environment_palette_t>  sound_environment_palette;
+    data_reference<heap_t::bsp>             sound_pas_data;
+    bsp_block<marker_t>                     markers;
+    bsp_block<runtime_decal_t>              runtime_decals;
+    bsp_block<environment_object_palette_t> environment_object_palette;
+    bsp_block<environment_object_t>         environment_objects;
+    u8                                      unknown_2[0x138 - 0x10C];
+    bsp_block<bsp_geometry_section_t>       sections;
+    bsp_block<bsp_instance_t>               instances;
+    bsp_block<sound_cluster_t>              ambience_sound_clusters;
+    bsp_block<sound_cluster_t>              reverb_sound_clusters;
+    bsp_block<transparent_plane_t>          transparent_planes;
+    u8                                      unknown_3[0x1C0 - 0x160];
+    f32                                     vehicle_spherical_limit_radius;
+    Vecf3                                   vehicle_spherical_limit_center;
+    bsp_block<u8>                           debug_info; /* elem 0x58 */
+    tag_reference<tag_class_t::decr>        decorators;
+    data_reference<heap_t::bsp>             mopp_codes;
+    u32                                     unknown_4;
+    Vecf3                                   mopp_bounds_min;
+    Vecf3                                   mopp_bounds_max;
+    data_reference<heap_t::bsp>             breakable_surface_mopp_codes;
+    bsp_block<u8>                 breakable_surface_key_table; /* elem 0x20 */
+    bsp_block<water_definition_t> water_definitions;
+    bsp_block<u8>                 portal_device_mapping;   /* elem 0x10 */
+    bsp_block<u8>                 audibility;              /* elem 0x34 */
+    bsp_block<u8>                 object_fake_lightprobes; /* elem 0x5C */
+    bsp_block<u8>                 decorator_cache;         /* elem 0x30 */
+};
+
+static_assert(offsetof(bsp_header_t, collision) == 0x14);
+static_assert(offsetof(bsp_header_t, leaves) == 0x2C);
+static_assert(offsetof(bsp_header_t, portals) == 0x5C);
+static_assert(offsetof(bsp_header_t, x_min) == 52);
+static_assert(offsetof(bsp_header_t, weather_palette) == 0x84);
 static_assert(offsetof(bsp_header_t, clusters) == 156);
 static_assert(offsetof(bsp_header_t, shaders) == 164);
+static_assert(offsetof(bsp_header_t, background_sound_palette) == 0xD4);
+static_assert(offsetof(bsp_header_t, markers) == 0xEC);
+static_assert(offsetof(bsp_header_t, environment_objects) == 0x104);
 static_assert(offsetof(bsp_header_t, sections) == 312);
 static_assert(offsetof(bsp_header_t, instances) == 320);
+static_assert(offsetof(bsp_header_t, vehicle_spherical_limit_radius) == 0x1C0);
+static_assert(offsetof(bsp_header_t, mopp_bounds_min) == 0x1EC);
+static_assert(offsetof(bsp_header_t, water_definitions) == 0x214);
+static_assert(sizeof(bsp_header_t) == 0x23C);
+
+/*! First 16 bytes of a BSP region: the sbsp body follows it, the ltmp body
+ * is wherever lightmap_pointer says (both relative to the region's magic) */
+struct alignas(4) bsp_region_header_t
+{
+    u32    size_raw;
+    u32    sbsp_pointer_raw;
+    u32    lightmap_pointer_raw;
+    bl_tag tag; /*!< 'sbsp' */
+
+    inline u32 lightmap_pointer() const
+    {
+        return from_le(lightmap_pointer_raw);
+    }
+};
+
+static_assert(sizeof(bsp_region_header_t) == 16);
 
 /*! scnr structure-bsp entry: BSP tag meta lives in its own file region
  * with its own virtual base, unlike every other tag. Pointers inside it
@@ -358,12 +837,15 @@ static_assert(offsetof(bsp_header_t, instances) == 320);
  * body sits at file offset meta_address + 16. */
 struct alignas(4) structure_bsp_ref_t
 {
-    u32           meta_address_raw; /*!< File offset of the BSP region */
-    i32           size_raw;
-    u32           magic_raw; /*!< Virtual address of the region */
-    u32           unknown_0;
-    tag_reference bsp;
-    u8            unknown_1[44];
+    u32 meta_address_raw; /*!< File offset of the BSP region */
+    i32 size_raw;
+    u32 magic_raw; /*!< Virtual address of the region */
+    u32 unknown_0;
+    tag_reference<tag_class_t::sbsp> bsp;
+    tag_reference<tag_class_t::ltmp> lightmap; /*!< ltmp */
+    u8                               unknown_1[0x40 - 0x20];
+    block_index<scn::sky_ref_t> default_sky; /* into the scenario's skies */
+    i16                         unknown_2;
 
     inline u32 meta_address() const
     {
@@ -374,9 +856,42 @@ struct alignas(4) structure_bsp_ref_t
     {
         return from_le(magic_raw);
     }
+
+    /*! The region's own translation; file = meta_address + (ptr - magic) */
+    inline bsp_magic region_magic(tag_magic const& map_magic) const
+    {
+        if(meta_address() > map_magic.max_size)
+            return {};
+        return bsp_magic{
+            .base        = map_magic.base,
+            .max_size    = map_magic.max_size,
+            .meta_offset = meta_address(),
+            .mask        = magic(),
+        };
+    }
+
+    inline bsp_region_header_t const* region(tag_magic const& map_magic) const
+    {
+        if(!map_magic.base || meta_address() > map_magic.max_size ||
+           map_magic.max_size - meta_address() < sizeof(bsp_region_header_t))
+            return nullptr;
+        return reinterpret_cast<bsp_region_header_t const*>(
+            map_magic.base + meta_address());
+    }
+
+    /*! The sbsp body directly follows the region header */
+    inline bsp_header_t const* body(tag_magic const& map_magic) const
+    {
+        auto const* head = region(map_magic);
+        if(!head || map_magic.max_size - meta_address() <
+                        sizeof(bsp_region_header_t) + sizeof(bsp_header_t))
+            return nullptr;
+        return reinterpret_cast<bsp_header_t const*>(head + 1);
+    }
 };
 
 static_assert(offsetof(structure_bsp_ref_t, bsp) == 16);
+static_assert(offsetof(structure_bsp_ref_t, lightmap) == 24);
 static_assert(sizeof(structure_bsp_ref_t) == 68);
 
 /*! The one piece of scnr needed for geometry: the structure bsps block at
@@ -395,13 +910,13 @@ struct alignas(4) part_t
 {
     i16 type_raw; /*!< 0 not drawn, 1 shadow only, 2 opaque shadow-casting,
                        3 opaque non-shadowing, 4 transparent, 5 lightmap */
-    u16 flags;
-    i16 material_index_raw;
-    u16 strip_start_raw;
-    u16 strip_length_raw;
-    i16 first_subpart_raw;
-    i16 subpart_count_raw;
-    u8  node_info[2];
+    u16                       flags;
+    block_index<shader_ref_t> material;
+    u16                       strip_start_raw;
+    u16                       strip_length_raw;
+    block_index<subpart_t>    first_subpart;
+    i16                       subpart_count_raw;
+    u8                        node_info[2];
     f32 centroid[3]; /*!< The only spatial hint shipped per part */
     u8  node_indices[4];
     f32 node_weights[3];
@@ -422,7 +937,7 @@ struct alignas(2) subpart_t
     i16 index_start_raw;
     i16 index_length_raw;
     i16 visibility_bounds_index_raw; /*!< -1 in every shipped cache */
-    i16 part_index_raw;
+    block_index<part_t> part;
 };
 
 static_assert(sizeof(subpart_t) == 8);
@@ -436,9 +951,9 @@ struct alignas(4) block_header_t
     u8     unknown_1[2];
     u16    subpart_count_raw;
     u8     unknown_2[26];
-    u16    index_count_raw; /*!< strip/list u16 index total, offset 40 */
+    u16    index_count_raw; /*!< strip/list u16 index total */
     u8     unknown_3[54];
-    f32    centroid[3]; /*!< offset 96; roughly the section center */
+    f32    centroid[3]; /*!< roughly the section center */
     u32    unknown_4;
 };
 
