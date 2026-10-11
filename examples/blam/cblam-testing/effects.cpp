@@ -1308,6 +1308,7 @@ struct EffectSystem
         u32   seat{0};
         Vecf3 eye{};
         Matf4 view{}; /* projection * view */
+        u64   body{0}; /* the viewer's own, which the eye sits inside */
     };
 
     void step_flares(Proxy& p, EffectScene& scene, f32 dt)
@@ -1318,7 +1319,8 @@ struct EffectSystem
             auto [cam, info] = ent.components();
             if(info.is_remote() || info.seat_idx >= 4)
                 continue;
-            viewers.push_back({info.seat_idx, cam.camera.position, cam.matrix});
+            viewers.push_back(
+                {info.seat_idx, cam.camera.position, cam.matrix, ent.id()});
         }
         if(viewers.empty())
             return;
@@ -1360,7 +1362,7 @@ struct EffectSystem
                 if(!on_screen(v.view, src))
                     target = 0.f;
                 else if(look)
-                    target = flare_target(physics, src, v.eye);
+                    target = flare_target(physics, src, v.eye, v.body);
                 f32& vis = seen.visibility[v.seat];
                 vis += (target - vis) * step;
                 flare.visibility[v.seat] = vis;
@@ -1389,7 +1391,8 @@ struct EffectSystem
     }
 
     /* Fade by distance and angle, then nothing in the way */
-    f32 flare_target(PhysicsBus& physics, flare_source_t const& src, Vecf3 const& eye)
+    f32 flare_target(
+        PhysicsBus& physics, flare_source_t const& src, Vecf3 const& eye, u64 viewer)
     {
         lens_flare const& lens = *src.tag;
         f32               out  = 1.f;
@@ -1425,9 +1428,14 @@ struct EffectSystem
                              : src.position + to_eye * std::min(
                                                   lens.occlusion_radius, distance * .5f);
         Physics::Event   ev{Physics::Event::Raycast};
-        Physics::Raycast ray{.from = eye, .to = to, .ignore = src.ignore};
+        Physics::Raycast ray{.from = eye, .to = to, .ignore = viewer};
         physics.process(ev, &ray);
-        if(ray.hit && ray.entity_id != src.ignore)
+        /* The structure reports entity 0, so a source without an object
+         * of its own must not discount it */
+        bool const own = src.ignore != 0 && ray.entity_id == src.ignore;
+        /* Markers sit a hair inside the fixture they light; that is not cover */
+        bool const at_source = glm::distance(ray.point, to) < flare_surface_slop;
+        if(ray.hit && !own && !at_source)
             return 0.f;
         return out;
     }
@@ -1717,6 +1725,7 @@ struct EffectSystem
     static constexpr f32    ticks_per_second     = 30.f;
     static constexpr f32    debris_lifetime      = 30.f; /* seconds */
     static constexpr u64    flare_ray_interval   = 4;    /* frames */
+    static constexpr f32    flare_surface_slop   = .1f;  /* wu */
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
     static constexpr f32    pctl_scale_to_radius = 64.f; /* scale is per bitmap pixel */
 
