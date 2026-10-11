@@ -18,6 +18,7 @@
 #include <map>
 #include <random>
 #include <unordered_map>
+#include <unordered_set>
 
 using EffectManifest = compo::SubsystemManifest<
     type_list_t<
@@ -1261,6 +1262,7 @@ struct EffectSystem
     {
         u32   seat{0};
         Vecf3 eye{};
+        Matf4 view{}; /* projection * view */
     };
 
     void step_flares(Proxy& p, EffectScene& scene, f32 dt)
@@ -1271,7 +1273,7 @@ struct EffectSystem
             auto [cam, info] = ent.components();
             if(info.is_remote() || info.seat_idx >= 4)
                 continue;
-            viewers.push_back({info.seat_idx, cam.camera.position});
+            viewers.push_back({info.seat_idx, cam.camera.position, cam.matrix});
         }
         if(viewers.empty())
             return;
@@ -1292,9 +1294,14 @@ struct EffectSystem
 
         auto& physics = p.template subsystem<PhysicsBus>();
         f32 const step = std::min(1.f, dt * flare_fade_rate);
+        m_flare_frame++;
         for(auto const& src : sources)
         {
-            auto& seen = m_flare_seen[src.key];
+            auto [entry, fresh] = m_flare_seen.try_emplace(src.key);
+            auto& seen          = entry->second;
+            /* Rays are dear: each flare looks again every few frames */
+            bool const look =
+                fresh || (src.key + m_flare_frame) % flare_ray_interval == 0;
             EffectScene::flare_t flare{
                 .tag      = src.tag,
                 .position = src.infinite ? src.direction : src.position,
@@ -1304,8 +1311,12 @@ struct EffectSystem
             bool any = false;
             for(auto const& v : viewers)
             {
-                f32 const target = flare_target(physics, src, v.eye);
-                f32&      vis    = seen[v.seat];
+                f32& target = seen.target[v.seat];
+                if(!on_screen(v.view, src))
+                    target = 0.f;
+                else if(look)
+                    target = flare_target(physics, src, v.eye);
+                f32& vis = seen.visibility[v.seat];
                 vis += (target - vis) * step;
                 flare.visibility[v.seat] = vis;
                 any = any || vis > .002f;
@@ -1313,11 +1324,23 @@ struct EffectSystem
             if(any)
                 scene.flares.push_back(flare);
         }
-        std::erase_if(m_flare_seen, [&sources](auto const& entry) {
-            return std::none_of(sources.begin(), sources.end(), [&entry](auto const& s) {
-                return s.key == entry.first;
-            });
+        std::unordered_set<u64> live;
+        for(auto const& src : sources)
+            live.insert(src.key);
+        std::erase_if(m_flare_seen, [&live](auto const& entry) {
+            return !live.contains(entry.first);
         });
+    }
+
+    /* Off screen a flare cannot be seen, so it needs no occlusion ray */
+    static bool on_screen(Matf4 const& view, flare_source_t const& src)
+    {
+        Vecf4 const clip = view * (src.infinite ? Vecf4(src.direction, 0.f)
+                                                : Vecf4(src.position, 1.f));
+        /* Sprites reach past the edge while their centre is just outside */
+        f32 const reach = clip.w * 1.2f;
+        return clip.w > 0.f && std::abs(clip.x) < reach &&
+               std::abs(clip.y) < reach;
     }
 
     /* Fade by distance and angle, then nothing in the way */
@@ -1377,15 +1400,20 @@ struct EffectSystem
         auto const& magic   = bsp->bsp_magic;
         auto        palette = bsp->mesh->lens_flares.data(magic);
         auto        markers = bsp->mesh->lens_flare_markers.data(magic);
-        if(palette.has_value() && markers.has_value())
+        /* A handful of flare tags shared by thousands of markers */
+        std::vector<lens_flare const*> lenses;
+        if(palette.has_value())
+            for(auto const& ref : palette.value())
+                lenses.push_back(
+                    tag_data<lens_flare>(ref, blam::tag_class_t::lens));
+        if(markers.has_value())
             for(size_t i = 0; i < markers.value().size(); i++)
             {
                 auto const& m = markers.value()[i];
                 if(m.lens_flare < 0 ||
-                   static_cast<size_t>(m.lens_flare) >= palette.value().size())
+                   static_cast<size_t>(m.lens_flare) >= lenses.size())
                     continue;
-                auto const* lens = tag_data<lens_flare>(
-                    palette.value()[m.lens_flare], blam::tag_class_t::lens);
+                auto const* lens = lenses[m.lens_flare];
                 if(!lens)
                     continue;
                 out.push_back({
@@ -1640,6 +1668,7 @@ struct EffectSystem
     static constexpr size_t max_contrail_points  = 256;
     static constexpr f32    default_light_life   = .25f;
     static constexpr f32    ticks_per_second     = 30.f;
+    static constexpr u64    flare_ray_interval   = 4;    /* frames */
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
     static constexpr f32    pctl_scale_to_radius = 64.f; /* scale is per bitmap pixel */
 
@@ -1659,7 +1688,15 @@ struct EffectSystem
     std::vector<sprite_particle_t>   m_particles;
     std::set<u64>                    m_attached;
     u64                              m_light_ids{0};
-    std::unordered_map<u64, std::array<f32, 4>> m_flare_seen;
+
+    struct flare_seen_t
+    {
+        std::array<f32, 4> visibility{};
+        std::array<f32, 4> target{}; /* as of its last occlusion ray */
+    };
+
+    std::unordered_map<u64, flare_seen_t> m_flare_seen;
+    u64                                   m_flare_frame{0};
 
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>>
         m_markers;
