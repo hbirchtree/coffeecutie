@@ -9,12 +9,130 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <glm/ext/quaternion_common.hpp>
 
 #include <magic_enum/magic_enum.hpp>
 #include <peripherals/stl/magic_enum.hpp>
 
 using Profiler = Coffee::Profiler;
+
+namespace {
+
+/* Signed r11g11b10, as unpack_uvec3.glsl reads it */
+Vecf3 unpack_signed_r11g11b10(u32 v)
+{
+    auto field = [](u32 b, u32 bits) {
+        u32 const sign = 1u << (bits - 1);
+        f32 const x    = b >= sign ? f32(b) - f32(1u << bits) : f32(b);
+        return x / f32(sign - 1);
+    };
+    return {
+        field(v & 0x7FF, 11), field((v >> 11) & 0x7FF, 11), field(v >> 22, 10)};
+}
+
+template<typename Bytes, typename LightBytes, typename Faces>
+void add_light_probe(
+    BSPItem&                   out,
+    blam::bsp::material const& mat,
+    generation_idx_t           light_bitm,
+    Bytes const&               vertices,
+    LightBytes const&          light_vertices,
+    Faces const&               faces)
+{
+    using pc_light_vertex   = blam::bsp::material::pc_light_vertex;
+    using xbox_light_vertex = blam::bsp::material::xbox_light_vertex;
+    if(!faces.has_value())
+        return;
+    bool const packed =
+        mat.vertex_size() != sizeof(blam::bsp::material::pc_vertex);
+    size_t const vsize = mat.vertex_size();
+    size_t const lsize =
+        packed ? sizeof(xbox_light_vertex) : sizeof(pc_light_vertex);
+    size_t const count =
+        std::min(vertices.size() / vsize, light_vertices.size() / lsize);
+
+    auto& probe      = out.light_probes.emplace_back();
+    probe.light_bitm = light_bitm;
+    for(auto const& face : faces.value())
+    {
+        BSPItem::LightProbe::triangle_t tri;
+        bool                            ok = true;
+        for(u32 k = 0; k < 3 && ok; k++)
+        {
+            size_t const i = face[k];
+            if(i >= count)
+            {
+                ok = false;
+                break;
+            }
+            std::memcpy(
+                &tri.position[k], vertices.data() + i * vsize, sizeof(Vecf3));
+            byte_t const* lv = light_vertices.data() + i * lsize;
+            if(packed)
+            {
+                u32 normal;
+                i16 uv[2];
+                std::memcpy(&normal, lv, sizeof(normal));
+                std::memcpy(uv, lv + sizeof(normal), sizeof(uv));
+                tri.direction[k] = unpack_signed_r11g11b10(normal);
+                tri.uv[k]        = Vecf2(uv[0], uv[1]) / 32767.f;
+            } else
+            {
+                std::memcpy(&tri.direction[k], lv, sizeof(Vecf3));
+                std::memcpy(&tri.uv[k], lv + sizeof(Vecf3), sizeof(Vecf2));
+            }
+            probe.bmin = glm::min(probe.bmin, tri.position[k]);
+            probe.bmax = glm::max(probe.bmax, tri.position[k]);
+        }
+        if(ok)
+            probe.triangles.push_back(tri);
+    }
+}
+
+} // namespace
+
+std::optional<BSPItem::light_sample_t> BSPItem::light_below(
+    Vecf3 const& point) const
+{
+    constexpr f32 above = .05f; /* surfaces just over the point still count */
+    std::optional<light_sample_t> out;
+    f32                           best = std::numeric_limits<f32>::lowest();
+    for(auto const& probe : light_probes)
+    {
+        if(point.x < probe.bmin.x || point.x > probe.bmax.x ||
+           point.y < probe.bmin.y || point.y > probe.bmax.y ||
+           probe.bmin.z > point.z + above || probe.bmax.z < best)
+            continue;
+        for(auto const& tri : probe.triangles)
+        {
+            Vecf2 const a   = Vecf2(tri.position[0]);
+            Vecf2 const e0  = Vecf2(tri.position[1]) - a;
+            Vecf2 const e1  = Vecf2(tri.position[2]) - a;
+            Vecf2 const d   = Vecf2(point) - a;
+            f32 const   den = e0.x * e1.y - e0.y * e1.x;
+            if(std::abs(den) < 1e-9f)
+                continue;
+            f32 const u = (d.x * e1.y - d.y * e1.x) / den;
+            f32 const v = (e0.x * d.y - e0.y * d.x) / den;
+            if(u < 0.f || v < 0.f || u + v > 1.f)
+                continue;
+            Vecf3 const w(1.f - u - v, u, v);
+            f32 const   z = w.x * tri.position[0].z + w.y * tri.position[1].z +
+                          w.z * tri.position[2].z;
+            if(z > point.z + above || z <= best)
+                continue;
+            best = z;
+            out  = light_sample_t{
+                 .light_bitm = probe.light_bitm,
+                 .uv = tri.uv[0] * w.x + tri.uv[1] * w.y + tri.uv[2] * w.z,
+                 .direction = tri.direction[0] * w.x + tri.direction[1] * w.y +
+                             tri.direction[2] * w.z,
+            };
+        }
+    }
+    return out;
+}
 
 template<typename V>
 BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
@@ -386,6 +504,13 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
             vertex_ranges[vertex_id] = {vert_ptr, vertices.size()};
             index_ranges[vertex_id] = {mat.surfaces.count, mat.surfaces.offset};
             lightmap_refs[vertex_id] = {light_bitm, shader};
+            add_light_probe(
+                out,
+                mat,
+                light_bitm,
+                vertices,
+                light_vertices,
+                mat.indices(section).data(bsp_magic));
 
             std::copy(
                 vertices.begin(),

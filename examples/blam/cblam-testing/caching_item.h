@@ -250,6 +250,33 @@ struct BSPItem
 
     static_assert(sizeof(FlatSubcluster) == 32);
 
+    /* Lightmapped triangles of one material, which light the objects above
+     * them: the lightmap texel and the radiosity's incident direction */
+    struct LightProbe
+    {
+        struct triangle_t
+        {
+            std::array<Vecf3, 3> position;
+            std::array<Vecf2, 3> uv;
+            std::array<Vecf3, 3> direction; /*!< length = how directional */
+        };
+
+        generation_idx_t        light_bitm;
+        Vecf3                   bmin{std::numeric_limits<f32>::max()};
+        Vecf3                   bmax{std::numeric_limits<f32>::lowest()};
+        std::vector<triangle_t> triangles;
+    };
+
+    struct light_sample_t
+    {
+        generation_idx_t light_bitm;
+        Vecf2            uv;
+        Vecf3            direction;
+    };
+
+    /* The lightmapped surface straight below a point */
+    std::optional<light_sample_t> light_below(Vecf3 const& point) const;
+
     blam::bsp::header const* mesh{nullptr};
     blam::tag_t const*       tag{nullptr};
     /* BSP-section magic for resolving reflexives inside mesh on demand
@@ -265,6 +292,7 @@ struct BSPItem
     std::vector<u32>                                        portal_color_ptrs;
     std::vector<blam::bsp::background_sound_palette const*> bg_sound_palette;
     std::vector<blam::bsp::sound_environment_palette const*> sound_env_palette;
+    std::vector<LightProbe>                                  light_probes;
 
     /* Collision surface mesh (winged-edge) from the collision BSP;
      * consumed by the physics subsystem for triangle soup generation.

@@ -26,9 +26,9 @@ layout(location = 6) in vec2  i_node_weights; /* blend weights */
 struct InstanceData {
     mat4 transform;
     int  bone_base;
-    int  _pad0;
-    int  _pad1;
-    int  _pad2;
+    int  light_layer;
+    uint light_uv;
+    uint light_dir;
 };
 
 layout(binding = 0, std140) uniform MatrixStore

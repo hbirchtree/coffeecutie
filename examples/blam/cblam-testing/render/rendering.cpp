@@ -71,7 +71,12 @@ struct alignas(16) PerInstanceData
 {
     Matf4 transform;
     i32   bone_base{-1};
-    i32   pad[3]{};
+    /* The lightmap under the object, -1 = sky lighting: format << 24 | layer,
+     * atlas uv as unorm16 pair, incident direction snorm8 xyz + unorm8 how
+     * directional it is */
+    i32 light_layer{-1};
+    u32 light_uv{0};
+    u32 light_dir{0};
 };
 
 static_assert(sizeof(PerInstanceData) == 80);
@@ -586,7 +591,8 @@ using DrawListBuilderManifest = compo::SubsystemManifest<
         ModelCache<V>,
         ShaderCache<V>,
         RenderingParameters,
-        LoadingStatus>,
+        LoadingStatus,
+        const BSPCache<V>>,
     empty_list_t>;
 
 template<typename Version = blam::xbox_version_t>
@@ -978,6 +984,7 @@ struct DrawListBuilder
 
         for(Pass& pass : model_build())
             pass.clear();
+        m_light_frame++;
 
         /* Skinned and unskinned go in on separate sweeps: they interleave in
          * entity order, and since the two never share a bucket, inserting
@@ -1146,6 +1153,10 @@ struct DrawListBuilder
             auto& pid     = pass.matrix_mapping[instance_id];
             pid.transform = model.transform;
             pid.bone_base = kBoneUnposed;
+            auto const& light = object_light(p, smodel.parent, model);
+            pid.light_layer   = light.layer;
+            pid.light_uv      = light.uv;
+            pid.light_dir     = light.dir;
             populate_mod2_material(
                 smodel,
                 sm_draw.current_pass,
@@ -1154,6 +1165,9 @@ struct DrawListBuilder
                 instance_id,
                 parent.template get<Visibility>().interior);
         }
+        std::erase_if(m_object_light, [this](auto const& entry) {
+            return entry.second.frame != m_light_frame;
+        });
     }
 
     /* Reserves and fills one bone window per bucket, once the layout is
@@ -1162,6 +1176,82 @@ struct DrawListBuilder
      * bone_base is bucket-relative, so a bucket only has to fit
      * kMaxBoneMatrices rather than the frame. Parents sharing a bucket share
      * a block; one whose submodels straddle a family split pays per bucket. */
+    struct object_light_t
+    {
+        Vecf3 at{};
+        i16   section{-1};
+        u32   generation{0};
+        u64   frame{0};
+        i32   layer{-1};
+        u32   uv{0};
+        u32   dir{0};
+    };
+
+    std::unordered_map<u64, object_light_t> m_object_light;
+    u64                                     m_light_frame{0};
+
+    static constexpr f32 light_resample_distance = .25f; /* wu */
+
+    /* Objects take their light from the lightmap below them, as Halo does,
+     * looked up again once they move */
+    object_light_t const& object_light(Proxy& p, u64 entity, Model const& model)
+    {
+        auto const& bsp_cache  = p.template subsystem<BSPCache<Version>>();
+        auto&       bitm_cache = p.template subsystem<BitmapCache<Version>>();
+
+        Vecf3 at = model.position;
+        if(model.origin_object)
+            if(auto obj = model.origin_object->template data<blam::scn::object>(
+                   bitm_cache.magic);
+               obj.has_value())
+                at += model.rotation * obj.value()[0].bound_offset;
+
+        u32 const generation =
+            bitm_cache.generation ^ (bsp_cache.generation << 16);
+        auto& light = m_object_light[entity];
+        light.frame = m_light_frame;
+        if(light.section == bsp_cache.active_section &&
+           light.generation == generation &&
+           glm::distance(light.at, at) < light_resample_distance)
+            return light;
+        light = {
+            .at         = at,
+            .section    = bsp_cache.active_section,
+            .generation = generation,
+            .frame      = m_light_frame,
+        };
+
+        BSPItem const* bsp = nullptr;
+        for(auto const& [id, item] : bsp_cache.m_cache)
+            if(item.valid() && item.section_idx == bsp_cache.active_section)
+                bsp = &item;
+        auto sample = bsp ? bsp->light_below(at) : std::nullopt;
+
+        struct
+        {
+            Vecf2 atlas_offset, atlas_scale;
+            u32   layer;
+        } atlas{};
+
+        if(!sample || !bitm_cache.assign_atlas_data(atlas, sample->light_bitm))
+            return light;
+        Vecf2 const uv = glm::clamp(
+            atlas.atlas_offset + atlas.atlas_scale * sample->uv, 0.f, 1.f);
+        f32 const   strength = glm::length(sample->direction);
+        Vecf3 const dir =
+            strength > 1e-4f ? sample->direction / strength : Vecf3{0, 0, 1};
+        auto const snorm8 = [](f32 v) {
+            return static_cast<u32>(glm::clamp((v + 1.f) * 127.5f, 0.f, 255.f));
+        };
+        light.layer = static_cast<i32>(atlas.layer);
+        light.uv    = static_cast<u32>(uv.x * 65535.f) |
+                   (static_cast<u32>(uv.y * 65535.f) << 16);
+        light.dir =
+            snorm8(dir.x) | (snorm8(dir.y) << 8) | (snorm8(dir.z) << 16) |
+            (static_cast<u32>(glm::clamp(strength, 0.f, 1.f) * 255.f) << 24);
+        return light;
+    }
+
     void allocate_bones(Proxy& p)
     {
         ModelCache<Version>* model_cache;

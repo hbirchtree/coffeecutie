@@ -82,6 +82,22 @@ struct PointLight
     vec4 color;
 };
 
+#if USE_MODEL_SHADERS == 1
+/* Same block as scenery_common.glsl: the lightmap under the object */
+struct InstanceData {
+    mat4 transform;
+    int  bone_base;
+    int  light_layer;
+    uint light_uv;
+    uint light_dir;
+};
+
+layout(binding = 0, std140) uniform MatrixStore
+{
+    InstanceData data[128];
+} matrices;
+#endif
+
 layout(binding = 2, std140) uniform WorldProperties
 {
     LightProperties lighting[MAX_WORLD_LIGHTS];
@@ -341,6 +357,61 @@ vec4 shader_dummy(in Material mat)
     return get_color(base_map_id, mat);
 }
 
+/* The lightmap texel under the object, brighter on the side facing the
+ * radiosity's incident direction by how directional it is */
+bool object_lightmap(out vec3 lit)
+{
+    lit = vec3(0);
+#if USE_MODEL_SHADERS == 1
+    InstanceData inst = matrices.data[frag.instanceId];
+    if(inst.light_layer < 0)
+        return false;
+    vec2  uv     = vec2(inst.light_uv & 0xFFFFu, inst.light_uv >> 16) / 65535.0;
+    int   layer  = inst.light_layer & 0xFFFF;
+    uint  source = uint(inst.light_layer) >> 24;
+    vec3  lm     = source == TEX_RGBA8
+        ? texture(source_rgba8, vec3(uv, layer), -100.0).bgr
+        : texture(source_rgb565, vec3(uv, layer), -100.0).rgb;
+    uvec4 packed = (uvec4(inst.light_dir) >> uvec4(0, 8, 16, 24)) & 0xFFu;
+    vec3  dir    = vec3(packed.xyz) / 127.5 - 1.0;
+    float facing = max(0.0, dot(normalize(frag.normal), normalize(dir)));
+    lit = lm * mix(1.0, 2.0 * facing, float(packed.w) / 255.0);
+    return true;
+#else
+    return false;
+#endif
+}
+
+/* An object's light: the lightmap under it, else the skybox's lights for
+ * where the camera stands (.w holds them: 1 = exteriors, 2 = interiors) over
+ * the matching ambient. Without the flag test a level's sun lights its
+ * corridors as brightly as its hillsides. */
+vec3 object_lighting(in Material mat)
+{
+    bool interior   = (uint(mat.material.flags) & MATERIAL_FLAG_INTERIOR) != 0u;
+    uint light_mask = interior ? 2u : 1u;
+    vec3 lit = interior
+        ? world.fog.indoor_ambient.rgb * world.fog.indoor_ambient.a
+        : world.fog.outdoor_ambient.rgb * world.fog.outdoor_ambient.a;
+    vec3 under;
+    if(object_lightmap(under))
+        lit = under;
+    else
+        for(int li = 0; li < MAX_WORLD_LIGHTS; li++)
+        {
+            vec4 light_dir = world.lighting[li].light_direction;
+            if(dot(light_dir.xyz, light_dir.xyz) < 1e-6)
+                continue;
+            if((uint(light_dir.w) & light_mask) == 0u)
+                continue;
+            lit += world.lighting[li].light_color.rgb
+                 * world.lighting[li].light_color.a
+                 * max(0.0, dot(frag.normal, normalize(light_dir.xyz)));
+        }
+    return clamp(lit, 0.1, 1.0) +
+           point_lighting(frag.position, normalize(frag.normal));
+}
+
 vec4 shader_environment(in Material mat)
 {
     const int TYPE_NORMAL           = 0;
@@ -465,6 +536,8 @@ vec4 shader_environment(in Material mat)
         out_color = apply_detail(out_color, micro.rgb, micro_func);
 #if USE_LIGHTMAPS == 1
     out_color *= lightmap.rgb + point_lighting(frag.position, normalize(frag.normal));
+#else
+    out_color *= object_lighting(mat);
 #endif
 #if USE_REFLECTIONS == 1
     vec3 refl_out = reflection * refl_color * refl_strength * specular;
@@ -1006,27 +1079,7 @@ vec4 shader_model(in Material mat)
 
     // Diffuse lighting via geometry normal (soso has no bump map texture).
     // frag.normal is world-space and interpolated per-vertex (Gouraud approximation).
-    /* Skybox lighting: every light whose flags cover where the camera stands
-     * (.w holds them: 1 = exteriors, 2 = interiors), over the matching
-     * ambient. Without the flag test a level's sun lights its corridors as
-     * brightly as its hillsides. */
-    bool interior   = (uint(mat.material.flags) & MATERIAL_FLAG_INTERIOR) != 0u;
-    uint light_mask = interior ? 2u : 1u;
-    vec3 lit = interior
-        ? world.fog.indoor_ambient.rgb * world.fog.indoor_ambient.a
-        : world.fog.outdoor_ambient.rgb * world.fog.outdoor_ambient.a;
-    for(int li = 0; li < MAX_WORLD_LIGHTS; li++)
-    {
-        vec4 light_dir = world.lighting[li].light_direction;
-        if(dot(light_dir.xyz, light_dir.xyz) < 1e-6)
-            continue;
-        if((uint(light_dir.w) & light_mask) == 0u)
-            continue;
-        lit += world.lighting[li].light_color.rgb
-             * world.lighting[li].light_color.a
-             * max(0.0, dot(frag.normal, normalize(light_dir.xyz)));
-    }
-    lit = clamp(lit, 0.1, 1.0) + point_lighting(frag.position, normalize(frag.normal));
+    vec3 lit = object_lighting(mat);
 
     if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
         return vec4(normalize(frag.normal), 1);
