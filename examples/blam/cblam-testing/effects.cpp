@@ -1862,16 +1862,32 @@ struct EffectSystem
                              ? eye + src.direction * sun_distance
                              : src.position + to_eye * std::min(
                                                   lens.occlusion_radius, distance * .5f);
-        Physics::Event   ev{Physics::Event::Raycast};
-        Physics::Raycast ray{.from = eye, .to = to, .ignore = viewer};
-        physics.process(ev, &ray);
-        /* The structure reports entity 0, so a source without an object
-         * of its own must not discount it */
-        bool const own = src.ignore != 0 && ray.entity_id == src.ignore;
-        /* Markers sit a hair inside the fixture they light; that is not cover */
-        bool const at_source = glm::distance(ray.point, to) < flare_surface_slop;
-        if(ray.hit && !own && !at_source)
-            return 0.f;
+        /* Structure that is never drawn, such as a level's ceiling, hides nothing */
+        Vecf3 from = eye;
+        for(u32 pass = 0; pass < flare_ray_passes; pass++)
+        {
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = to, .ignore = viewer};
+            physics.process(ev, &ray);
+            if(!ray.hit)
+                break;
+            /* Sky and level bounds have no material and are never drawn */
+            bool const unseen =
+                ray.invisible || (ray.entity_id == 0 && !ray.shader);
+            if(unseen)
+            {
+                from = ray.point + glm::normalize(to - from) * flare_ray_step;
+                continue;
+            }
+            /* The structure reports entity 0, so a source without an
+             * object of its own must not discount it */
+            bool const own = src.ignore != 0 && ray.entity_id == src.ignore;
+            /* Markers sit a hair inside the fixture they light; that is not cover */
+            bool const at_source = glm::distance(ray.point, to) < flare_surface_slop;
+            if(!own && !at_source)
+                return 0.f;
+            break;
+        }
         return out;
     }
 
@@ -2161,6 +2177,8 @@ struct EffectSystem
     static constexpr f32    debris_lifetime      = 30.f; /* seconds */
     static constexpr u64    flare_ray_interval   = 4;    /* frames */
     static constexpr f32    flare_surface_slop   = .1f;  /* wu */
+    static constexpr u32    flare_ray_passes     = 4;
+    static constexpr f32    flare_ray_step       = .01f; /* wu past an invisible hit */
     static constexpr f32    antenna_stiffness    = 400.f;
     static constexpr f32    antenna_damping      = 12.f;
     static constexpr f32    antenna_rate         = 120.f; /* steps a second */

@@ -239,6 +239,8 @@ struct Raycast
     u64                   entity_id{0}; /*!< 0 for the structure */
     /*! The structure's collision material, when it hit the structure */
     blam::tagref_t const* shader{nullptr};
+    /*! A structure surface that collides but is never drawn, e.g. a ceiling */
+    bool invisible{false};
 };
 
 struct Grabbed

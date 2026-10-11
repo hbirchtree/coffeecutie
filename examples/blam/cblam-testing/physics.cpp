@@ -2165,6 +2165,17 @@ struct PhysicsSystem
 
     /* The structure BSP surface along a ray, and its collision material */
     /* A world mesh triangle's collision material (a shader) */
+    bool surface_invisible(int triangle) const
+    {
+        if(!m_world_item || triangle < 0 ||
+           static_cast<size_t>(triangle) >= m_tri_surface.size())
+            return false;
+        u32 const surface = m_tri_surface[triangle];
+        return surface < m_world_item->coll_surfaces.size() &&
+               (m_world_item->coll_surfaces[surface].flags &
+                blam::collision::surface::invisible);
+    }
+
     blam::tagref_t const* surface_shader(int triangle) const
     {
         if(!m_world_item || triangle < 0 ||
@@ -2352,7 +2363,8 @@ struct PhysicsSystem
                                   : u64(reinterpret_cast<uintptr_t>(
                                         closest.m_collisionObject
                                             ->getUserPointer()));
-        ray.shader = structure ? surface_shader(closest.triangle) : nullptr;
+        ray.shader    = structure ? surface_shader(closest.triangle) : nullptr;
+        ray.invisible = structure && surface_invisible(closest.triangle);
     }
 
     /* Carried momentum fades: fast against the ground, slowly in the air */
