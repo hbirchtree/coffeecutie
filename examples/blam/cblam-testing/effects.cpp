@@ -33,6 +33,7 @@ using EffectManifest = compo::SubsystemManifest<
         EffectScene,
         PhysicsBus,
         GameEventBus,
+        const LoadingStatus,
         const BlamFiles<halo_version>,
         const BSPCache<halo_version>>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
@@ -254,6 +255,10 @@ struct EffectSystem
 
         auto& scene = p.template subsystem<EffectScene>();
         scene.clear();
+        scene.generation = files.load_generation;
+        /* A map half loaded has no tags to read */
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+            return;
 
         attach(p);
         m_spawn_queue->poll();

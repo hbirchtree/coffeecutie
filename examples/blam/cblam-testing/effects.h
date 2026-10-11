@@ -89,6 +89,9 @@ struct EffectScene : compo::SubsystemBase
     std::vector<decal_t const*>
         decals; /* near the eye, owned by EffectSystem */
 
+    /* The map load it was built for; its tag pointers are from that map */
+    libc_types::u32 generation{0};
+
     void clear()
     {
         sprites.clear();

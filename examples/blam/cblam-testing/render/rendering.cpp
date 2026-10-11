@@ -2340,6 +2340,10 @@ struct MeshRenderer
         using typing::pixels::pix_fmt;
 
         auto const& scene = p.template subsystem<EffectScene>();
+        /* A scene from before a map switch names the old map's bitmaps */
+        if(scene.generation != p.template subsystem<BlamFiles<Version>>().load_generation ||
+           p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+            return;
         if(m_players.empty() ||
            (scene.sprites.empty() && scene.ribbons.empty() &&
             scene.flares.empty() && scene.decals.empty()) ||
