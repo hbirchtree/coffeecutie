@@ -3,12 +3,19 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/coffee.h>
 
+#include "dump.h"
+#include "dump_objects.h"
+#include "dump_scenario.h"
+
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/geometry.h>
 #include <blam/dimeter/map.h>
 #include <blam/dimeter/sound.h>
 #include <blam/volta/blam_swizzle.h>
+#include <coffee/core/coffee_args.h>
+#include <cxxopts.hpp>
 
+#include <array>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -21,6 +28,8 @@
 using namespace Coffee;
 using semantic::BytesConst;
 using semantic::Span;
+using libc_types::i64;
+using typing::vector_types::Vecf3;
 
 namespace {
 
@@ -748,10 +757,10 @@ void emit_triangles(obj_writer& obj, Span<const u16> indices, bool strip)
  * != nullptr places the section in world space */
 template<typename Section, blam::dimeter::heap_t Heap>
 bool append_section(
-    obj_writer&                               obj,
-    blam::dimeter::raw_pool const&            pool,
-    blam::dimeter::magic_ptr_base<Heap> const& magic,
-    Section const&                            section,
+    obj_writer&                                   obj,
+    blam::dimeter::raw_pool const&                pool,
+    blam::dimeter::magic_ptr_base<Heap> const&    magic,
+    Section const&                                section,
     std::string const&                        name,
     blam::dimeter::geo::model_bounds_t const* bounds,
     blam::dimeter::geo::bsp_instance_t const* instance  = nullptr,
@@ -947,18 +956,11 @@ u32 extract_bsp_meshes(
     u32 extracted = 0;
     for(auto const& ref : bsp_refs.value())
     {
-        u32 region = ref.meta_address();
-        if(region + 16 + sizeof(geo::bsp_header_t) > map.data.size())
+        auto        located   = h2::locate_bsp(map, ref);
+        auto const* bsp       = located.body;
+        auto        bsp_magic = located.magic;
+        if(!bsp)
             continue;
-
-        h2::bsp_magic region_magic{
-            .base        = map.data.data(),
-            .max_size    = static_cast<u32>(map.data.size()),
-            .meta_offset = region,
-            .mask        = ref.magic(),
-        };
-        auto const* bsp = reinterpret_cast<geo::bsp_header_t const*>(
-            map.data.data() + region + 16);
 
         auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
         auto        name    = bsp_tag ? std::string(map.tag_name(*bsp_tag))
@@ -968,7 +970,7 @@ u32 extract_bsp_meshes(
          * diffuse bitmaps alongside */
         material_db              db;
         std::vector<std::string> materials;
-        auto                     shader_refs = bsp->shaders.data(region_magic);
+        auto                     shader_refs = bsp->shaders.data(bsp_magic);
         if(!shader_refs.has_error())
             for(auto const& sref : shader_refs.value())
                 materials.push_back(
@@ -978,13 +980,13 @@ u32 extract_bsp_meshes(
         obj.mtllib(sanitize(name) + ".mtl");
         u32 sections = 0;
 
-        auto clusters = bsp->clusters.data(region_magic);
+        auto clusters = bsp->clusters.data(bsp_magic);
         if(!clusters.has_error())
             for(size_t i = 0; i < clusters.value().size(); i++)
                 sections += append_section(
                     obj,
                     pool,
-                    region_magic,
+                    bsp_magic,
                     clusters.value()[i],
                     "cluster_" + std::to_string(i),
                     nullptr,
@@ -993,8 +995,8 @@ u32 extract_bsp_meshes(
 
         /* Instanced geometry: place each instance of its section in world
          * space; sections never referenced still get dumped at identity */
-        auto              geom      = bsp->sections.data(region_magic);
-        auto              instances = bsp->instances.data(region_magic);
+        auto              geom      = bsp->sections.data(bsp_magic);
+        auto              instances = bsp->instances.data(bsp_magic);
         std::vector<bool> instanced;
         if(!geom.has_error())
             instanced.assign(geom.value().size(), false);
@@ -1013,7 +1015,7 @@ u32 extract_bsp_meshes(
                 sections += append_section(
                     obj,
                     pool,
-                    region_magic,
+                    bsp_magic,
                     geom.value()[sidx],
                     "instance_" + sanitize(iname),
                     nullptr,
@@ -1027,7 +1029,7 @@ u32 extract_bsp_meshes(
                     sections += append_section(
                         obj,
                         pool,
-                        region_magic,
+                        bsp_magic,
                         geom.value()[i],
                         "orphan_section_" + std::to_string(i),
                         nullptr,
@@ -1185,24 +1187,289 @@ int print_map(blam::dimeter::map_container<V> const& map)
     return 0;
 }
 
+/* --- tag selection ----------------------------------------------------- */
+
+struct options_t
+{
+    std::string class_filter;
+    std::string name_filter;
+    bool        list{false};
+    bool        dump{false};
+    bool        scenario{false};
+    std::string collision_obj;
+    std::string cluster_at;
+    bool        scripts{false};
+    std::string lightmap_dir;
+    std::string extract_dir;
+    u32         limit{10};
+};
+
+template<typename V>
+bool tag_selected(
+    blam::dimeter::map_container<V> const& map,
+    blam::dimeter::tag_t const&            tag,
+    options_t const&                       options,
+    bool                                   needs_data = true)
+{
+    /* sbsp entries carry no pointer; their bodies live in BSP regions */
+    if(needs_data && !tag.valid())
+        return false;
+    if(!options.class_filter.empty() &&
+       dimeter_info::class_name(tag.tag_class) != options.class_filter)
+        return false;
+    if(!options.name_filter.empty() &&
+       map.tag_name(tag).find(options.name_filter) == std::string_view::npos)
+        return false;
+    return true;
+}
+
+/* sbsp bodies live in their own regions, reached through the scenario */
+template<typename V, typename Fn>
+void for_each_bsp(blam::dimeter::map_container<V> const& map, Fn&& fn)
+{
+    namespace geo        = blam::dimeter::geo;
+    auto const* scnr_tag = map.scenario();
+    auto const* scnr =
+        scnr_tag ? scnr_tag->template data<geo::scnr_bsps_t>(map.magic())
+                 : nullptr;
+    if(!scnr)
+        return;
+    auto refs = scnr->structure_bsps.data(map.magic());
+    if(refs.has_error())
+        return;
+    for(auto const& ref : refs.value())
+        if(auto located = blam::dimeter::locate_bsp(map, ref); located.body)
+            fn(ref, *located.body, located.magic);
+}
+
+/* World + placed instance collision as one OBJ, surfaces on vertices at
+ * infinity left out */
+template<typename V>
+bool write_collision_obj(
+    blam::dimeter::map_container<V> const& map, std::string const& path)
+{
+    namespace h2  = blam::dimeter;
+    namespace geo = blam::dimeter::geo;
+    using blam::from_le;
+
+    obj_writer obj;
+    u32        groups = 0;
+    auto       append = [&](h2::coll::bsp_t<h2::heap_t::bsp> const& bsp,
+                      h2::bsp_magic const&                 magic,
+                      f32 const*             m, /* 4x3 row-major or null */
+                      f32                    scale,
+                      std::string const&     name) {
+        auto surfaces = bsp.surfaces.data(magic);
+        auto edges    = bsp.edges.data(magic);
+        auto vertices = bsp.vertices.data(magic);
+        if(surfaces.has_error() || edges.has_error() || vertices.has_error() ||
+           vertices.value().empty())
+            return;
+        obj.group(name);
+        std::vector<bool> finite;
+        for(auto const& v : vertices.value())
+        {
+            f32 x = from_le(v.point[0]), y = from_le(v.point[1]),
+                z = from_le(v.point[2]);
+            finite.push_back(
+                std::isfinite(x) && std::isfinite(y) && std::isfinite(z));
+            if(!finite.back())
+                x = y = z = 0.f;
+            if(m)
+            {
+                x *= scale;
+                y *= scale;
+                z *= scale;
+                obj.vertex(
+                    x * m[0] + y * m[3] + z * m[6] + m[9],
+                    x * m[1] + y * m[4] + z * m[7] + m[10],
+                    x * m[2] + y * m[5] + z * m[8] + m[11]);
+            } else
+                obj.vertex(x, y, z);
+            obj.texcoord(0.f, 0.f);
+        }
+        std::vector<u32> polygon;
+        for(u32 si = 0; si < surfaces.value().size(); si++)
+        {
+            if(surfaces.value()[si].has(h2::coll::surface_flags_t::invalid))
+                continue;
+            polygon.clear();
+            bool usable = true;
+            h2::coll::walk_surface(
+                surfaces.value(), edges.value(), si, [&](i16 vertex) {
+                    if(vertex >= 0 && static_cast<size_t>(vertex) < finite.size() &&
+                       finite[vertex])
+                        polygon.push_back(static_cast<u32>(vertex));
+                    else
+                        usable = false;
+                });
+            if(!usable)
+                continue;
+            for(size_t i = 2; i < polygon.size(); i++)
+                obj.triangle(polygon[0], polygon[i - 1], polygon[i]);
+        }
+        obj.end_group(static_cast<u32>(vertices.value().size()));
+        groups++;
+    };
+
+    for_each_bsp(
+        map,
+        [&](geo::structure_bsp_ref_t const& ref,
+            geo::bsp_header_t const&        bsp,
+            h2::bsp_magic const&            magic) {
+            auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
+            auto        name    = bsp_tag ? sanitize(map.tag_name(*bsp_tag))
+                                          : "bsp_" + std::to_string(groups);
+            if(auto coll = bsp.collision.data(magic); !coll.has_error())
+                for(auto const& c : coll.value())
+                    append(c, magic, nullptr, 1.f, name + "_world");
+            auto geom      = bsp.sections.data(magic);
+            auto instances = bsp.instances.data(magic);
+            if(geom.has_error() || instances.has_error())
+                return;
+            for(auto const& [i, inst] : stl_types::enumerate(instances.value()))
+            {
+                auto sidx = inst.section.value();
+                if(sidx < 0 || static_cast<size_t>(sidx) >= geom.value().size())
+                    continue;
+                std::array<f32, 12> m;
+                for(size_t k = 0; k < m.size(); k++)
+                    m[k] = from_le(inst.transform[k]);
+                auto iname = std::string(map.string(inst.name));
+                if(iname.empty())
+                    iname = "instance_" + std::to_string(i);
+                append(
+                    geom.value()[sidx].collision,
+                    magic,
+                    m.data(),
+                    from_le(inst.scale),
+                    name + "_" + sanitize(iname));
+            }
+        });
+    if(!groups)
+        return false;
+    bool ok = obj.write(path);
+    cBasicPrint("Collision: {0} groups -> {1}", groups, path);
+    return ok;
+}
+
+/* Which collision leaf and cluster a point falls in, per BSP */
+template<typename V>
+void probe_cluster(blam::dimeter::map_container<V> const& map, Vecf3 point)
+{
+    using blam::from_le;
+    for_each_bsp(map, [&](auto const& ref, auto const& bsp, auto magic) {
+        auto const* tag = map.tag_at(ref.bsp.tag_id);
+        auto        coll = bsp.collision.data(magic);
+        auto        leaves = bsp.leaves.data(magic);
+        if(coll.has_error() || coll.value().empty() || leaves.has_error())
+            return;
+        auto leaf =
+            coll.value()[0].find_leaf(point.x, point.y, point.z, magic);
+        i32 cluster = -1;
+        if(leaf && *leaf < leaves.value().size())
+            cluster = leaves.value()[*leaf].cluster.value();
+        cBasicPrint(
+            "{0}: ({1}, {2}, {3}) -> leaf {4} cluster {5}",
+            tag ? map.tag_name(*tag) : std::string_view{},
+            point.x,
+            point.y,
+            point.z,
+            leaf ? static_cast<i64>(*leaf) : -1,
+            cluster);
+        if(cluster < 0)
+            return;
+        auto clusters = bsp.clusters.data(magic);
+        if(clusters.has_error() ||
+           static_cast<size_t>(cluster) >= clusters.value().size())
+            return;
+        auto const& c = clusters.value()[cluster];
+        cBasicPrint(
+            "  bounds x[{0}, {1}] y[{2}, {3}] z[{4}, {5}]",
+            from_le(c.x_min),
+            from_le(c.x_max),
+            from_le(c.y_min),
+            from_le(c.y_max),
+            from_le(c.z_min),
+            from_le(c.z_max));
+    });
+}
+
+/* Every cluster's lightmap as a PPM, named by BSP and cluster */
+template<typename V>
+void write_lightmaps(
+    blam::dimeter::map_container<V> const& map,
+    blam::dimeter::raw_pool const&         pool,
+    std::string const&                     dir)
+{
+    namespace h2 = blam::dimeter;
+    u32 bsp_idx = 0, written = 0;
+    for_each_bsp(
+        map,
+        [&](h2::geo::structure_bsp_ref_t const& ref,
+            h2::geo::bsp_header_t const&,
+            h2::bsp_magic const& magic) {
+            u32         bi   = bsp_idx++;
+            auto const* ltmp = h2::locate_bsp(map, ref).lightmap;
+            if(!ltmp)
+                return;
+            auto groups = ltmp->groups.data(magic);
+            if(groups.has_error() || groups.value().empty())
+                return;
+            auto const& group    = groups.value()[0];
+            auto        infos    = group.cluster_render_info.data(magic);
+            auto        palettes = group.section_palette.data(magic);
+            auto const* bitm_tag = map.tag_at(group.bitmap_group.tag_id);
+            auto const* bitm =
+                bitm_tag
+                    ? bitm_tag->template data<h2::bitm::header_t>(map.magic())
+                    : nullptr;
+            if(infos.has_error() || palettes.has_error() || !bitm)
+                return;
+            auto images = bitm->images.data(map.magic());
+            if(images.has_error())
+                return;
+            for(auto const& [ci, info] : stl_types::enumerate(infos.value()))
+            {
+                i16 ii = info.bitmap.value();
+                i8  pi = info.palette.value();
+                if(ii < 0 || static_cast<size_t>(ii) >= images.value().size() ||
+                   pi < 0 || static_cast<size_t>(pi) >= palettes.value().size())
+                    continue;
+                auto image = h2::ltmp::decode(
+                    pool, images.value()[ii], palettes.value()[pi]);
+                if(!image)
+                    continue;
+                std::vector<char> ppm;
+                auto header = fmt::format("P6\n{} {}\n255\n", image->width, image->height);
+                ppm.insert(ppm.end(), header.begin(), header.end());
+                for(size_t p = 0; p < image->rgba.size(); p += 4)
+                    ppm.insert(
+                        ppm.end(),
+                        {static_cast<char>(image->rgba[p]),
+                         static_cast<char>(image->rgba[p + 1]),
+                         static_cast<char>(image->rgba[p + 2])});
+                if(write_file(
+                       fmt::format("{}/bsp{}_cluster{:03}_img{}_pal{}.ppm", dir, bi, ci, ii, pi),
+                       ppm))
+                    written++;
+            }
+        });
+    cBasicPrint("Lightmaps: {0} written to {1}", written, dir);
+}
+
 /* --- entry point ------------------------------------------------------ */
 
 template<typename V>
 int run_map(
-    blam::dimeter::map_container<V> const& map,
+    blam::dimeter::map_container<V> const& map_in,
     BytesConst const&                      map_data,
     std::string const&                     map_dir,
-    std::string const&                     extract_dir,
-    u32                                    limit)
+    options_t const&                       options)
 {
-    print_map(map);
-    if(extract_dir.empty())
-        return 0;
-
     namespace h2 = blam::dimeter;
     using namespace platform::url::constructors;
 
-    /* Raw data may live in the global cache files next to the map */
     h2::raw_pool pool;
     pool.files[static_cast<u8>(h2::raw_file_t::local)] =
         Span<const byte_t>(map_data.data, map_data.size);
@@ -1224,18 +1491,103 @@ int run_map(
             cBasicPrint("Raw pool: attached {0}", name);
         }
     }
+    /* Vista borrows weapons, templates and the like from shared.map */
+    auto map        = map_in;
+    auto map_shared = h2::load_shared(map, pool);
+    if(map_shared)
+    {
+        map.shared = &*map_shared;
+        cBasicPrint("Shared tags: attached, {0} tags", map_shared->tags().size());
+    }
+
+    bool const selecting = options.list || options.dump;
+    if(!selecting && !options.scenario)
+        print_map(map);
+
+    if(options.list)
+        for(auto const& [i, tag] : stl_types::enumerate(map.tags()))
+            if(tag_selected(map, tag, options))
+                fmt::print(
+                    "{:5} [{}] {} ({} bytes)\n",
+                    i,
+                    dimeter_info::class_name(tag.tag_class),
+                    map.tag_name(tag),
+                    tag.size());
+
+    if(options.dump)
+    {
+        for(auto const& tag : map.tags())
+            if(tag_selected(map, tag, options))
+                dimeter_info::dump_any(map, tag);
+        for_each_bsp(
+            map,
+            [&](h2::geo::structure_bsp_ref_t const& ref,
+                h2::geo::bsp_header_t const&        bsp,
+                h2::bsp_magic const&                magic) {
+                auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
+                if(!bsp_tag || !tag_selected(map, *bsp_tag, options, false))
+                    return;
+                fmt::print(
+                    "{} [sbsp] region {:#x}\n",
+                    map.tag_name(*bsp_tag),
+                    ref.meta_address());
+                dimeter_info::dump_sbsp(map, bsp, magic);
+                dimeter_info::dump_sbsp_extras(map, bsp, magic);
+                if(auto const* ltmp = h2::locate_bsp(map, ref).lightmap)
+                {
+                    fmt::print("{} [ltmp]\n", map.tag_name(*bsp_tag));
+                    dimeter_info::dump_ltmp(map, *ltmp, magic);
+                }
+            });
+    }
+
+    if(options.scenario)
+        if(auto const* scnr = map.scenario())
+            dimeter_info::dump_any(map, *scnr);
+    if(options.scripts)
+        if(auto const* scnr_tag = map.scenario())
+            if(auto const* scnr = scnr_tag->template data<h2::scn::scenario_t>(
+                   map.magic()))
+                dimeter_info::dump_scripts(map, *scnr, true);
+
+    if(!options.collision_obj.empty())
+        write_collision_obj(map, options.collision_obj);
+    if(!options.cluster_at.empty())
+    {
+        Vecf3 point{};
+        if(std::sscanf(
+               options.cluster_at.c_str(),
+               "%f,%f,%f",
+               &point.x,
+               &point.y,
+               &point.z) == 3)
+            probe_cluster(map, point);
+    }
+
+    if(options.extract_dir.empty() && options.lightmap_dir.empty())
+        return 0;
+
+    /* Raw data may live in the global cache files next to the map */
 
     std::error_code mkdir_ec;
-    std::filesystem::create_directories(extract_dir, mkdir_ec);
+    if(!options.lightmap_dir.empty())
+    {
+        std::filesystem::create_directories(options.lightmap_dir, mkdir_ec);
+        write_lightmaps(map, pool, options.lightmap_dir);
+    }
+    if(options.extract_dir.empty())
+        return 0;
+    std::filesystem::create_directories(options.extract_dir, mkdir_ec);
 
     cBasicPrint("Extracting bitmaps:");
-    u32 bitmaps = extract_bitmaps(map, pool, extract_dir, limit);
+    u32 bitmaps = extract_bitmaps(map, pool, options.extract_dir, options.limit);
     cBasicPrint("Extracting sounds:");
-    u32 sounds = extract_sounds(map, pool, extract_dir, limit);
+    u32 sounds = extract_sounds(map, pool, options.extract_dir, options.limit);
     cBasicPrint("Extracting BSP meshes:");
-    u32 bsps = extract_bsp_meshes(map, pool, extract_dir);
+    u32 bsps = extract_bsp_meshes(map, pool, options.extract_dir);
     cBasicPrint("Extracting model meshes:");
-    u32 models = extract_model_meshes(map, pool, extract_dir, limit);
+    u32 models =
+        extract_model_meshes(map, pool, options.extract_dir, options.limit);
     cBasicPrint(
         "Extracted {0} bitmaps, {1} sounds, {2} BSPs, {3} models",
         bitmaps,
@@ -1247,25 +1599,93 @@ int run_map(
 
 } // namespace
 
-i32 coffee_main(i32 argc, cstring_w* argv)
+i32 coffee_main(i32, cstring_w*)
 {
     using namespace platform::url::constructors;
     using blam::dimeter::map_container;
 
-    if(argc < 2)
+    cxxopts::Options opts(
+        "Halo 2 Map Info", "Inspect and extract from a Halo 2 cache file");
+    opts.add_options("Help")("h,help", "Show this help info");
+    opts.positional_help("<map file>");
+    opts.add_options("Tag selection")
+        //
+        ("c,class", "Only tags of this class, e.g. shad", cxxopts::value<std::string>())
+        //
+        ("n,name", "Only tags whose name contains this", cxxopts::value<std::string>())
+        //
+        ("l,list", "List matching tags")
+        //
+        ("d,dump",
+         "Dump decoded data of matching tags (bitm, shad, stem, mode, scnr, "
+         "sbsp, sky, hlmt, objects)")
+        //
+        ("scenario", "Dump the scenario: skies, BSPs, scenery, spawns")
+        //
+        ("collision-obj",
+         "Write the collision BSPs (world + instances) as an OBJ",
+         cxxopts::value<std::string>())
+        //
+        ("dump-lightmaps",
+         "Write every cluster's lightmap as a PPM into this directory",
+         cxxopts::value<std::string>())
+        //
+        ("cluster-at",
+         "Which cluster holds the point x,y,z",
+         cxxopts::value<std::string>())
+        //
+        ("scripts", "Decompile the scenario's scripts and globals")
+        //
+        ;
+    opts.add_options("Extraction")
+        //
+        ("e,extract",
+         "Extract bitmaps (DDS), sounds (WAV/WMA) and meshes (OBJ) here",
+         cxxopts::value<std::string>())
+        //
+        ("limit",
+         "Per-category cap on extracted assets, 0 = everything",
+         cxxopts::value<int>()->default_value("10"))
+        //
+        ;
+
+    auto& args      = Coffee::GetInitArgs();
+    auto  arguments = opts.parse(args.size(), args.data());
+    if(Coffee::BaseArgParser::PerformDefaults(opts, args) >= 0)
+        return 0;
+
+    /* The launcher may put a resource directory first; the map is the
+     * first positional that is a file */
+    std::string map_path;
+    for(auto const& positional : arguments.unmatched())
+        if(std::filesystem::is_regular_file(positional))
+        {
+            map_path = positional;
+            break;
+        }
+    if(map_path.empty())
     {
-        cBasicPrint(
-            "usage: {0} <map file> [extract dir] [limit]\n"
-            "  limit: per-category cap on extracted assets, 0 = everything "
-            "(default 10)",
-            argv[0]);
+        cBasicPrint("Needs a map file, check --help");
         return 1;
     }
 
-    std::string extract_dir = argc > 2 ? argv[2] : "";
-    u32         limit = argc > 3 ? static_cast<u32>(std::atoi(argv[3])) : 10;
+    options_t options{
+        .class_filter = arguments.as_optional<std::string>("class").value_or(""),
+        .name_filter  = arguments.as_optional<std::string>("name").value_or(""),
+        .list         = arguments.count("list") > 0,
+        .dump         = arguments.count("dump") > 0,
+        .scenario     = arguments.count("scenario") > 0,
+        .collision_obj =
+            arguments.as_optional<std::string>("collision-obj").value_or(""),
+        .cluster_at =
+            arguments.as_optional<std::string>("cluster-at").value_or(""),
+        .scripts = arguments.count("scripts") > 0,
+        .lightmap_dir =
+            arguments.as_optional<std::string>("dump-lightmaps").value_or(""),
+        .extract_dir = arguments.as_optional<std::string>("extract").value_or(""),
+        .limit       = static_cast<u32>(arguments["limit"].as<int>()),
+    };
 
-    std::string map_path(argv[1]);
     auto        slash   = map_path.find_last_of('/');
     std::string map_dir = slash == std::string::npos
                               ? std::string(".")
@@ -1279,27 +1699,28 @@ i32 coffee_main(i32 argc, cstring_w* argv)
         return 1;
     }
 
+    int rc = 1;
     if(auto map = map_container<blam::dimeter::xbox_version_t>::from_bytes(
            map_data, blam::dimeter::xbox_version);
        map.has_value())
     {
         cBasicPrint("-- Halo 2 Xbox cache file --");
-        return run_map(map.value(), map_data, map_dir, extract_dir, limit);
-    }
-
-    if(auto map = map_container<blam::dimeter::vista_version_t>::from_bytes(
-           map_data, blam::dimeter::vista_version);
-       map.has_value())
+        rc = run_map(map.value(), map_data, map_dir, options);
+    } else if(auto map =
+                  map_container<blam::dimeter::vista_version_t>::from_bytes(
+                      map_data, blam::dimeter::vista_version);
+              map.has_value())
     {
         cBasicPrint("-- Halo 2 Vista cache file --");
-        return run_map(map.value(), map_data, map_dir, extract_dir, limit);
+        rc = run_map(map.value(), map_data, map_dir, options);
     } else
-    {
         cBasicPrint(
             "not a (supported) Halo 2 map: error {0}",
             static_cast<int>(map.error()));
-        return 1;
-    }
+
+    /* quick_exit skips stdio teardown, which would drop a short dump */
+    fflush(stdout);
+    std::quick_exit(rc);
 }
 
-COFFEE_APPLICATION_MAIN(coffee_main)
+COFFEE_APPLICATION_MAIN_CUSTOM(coffee_main, 0x1 | 0x2)
