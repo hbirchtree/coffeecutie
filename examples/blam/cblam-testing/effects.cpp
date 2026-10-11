@@ -657,7 +657,9 @@ struct EffectSystem
                 glm::angleAxis(
                     -std::asin(std::clamp(dir.z, -1.f, 1.f)), Vecf3{0, 1, 0}),
             .local_only = true,
-            .velocity   = dir * uniform(part.velocity_bounds) + fx.velocity,
+            /* Debris barely moves on its own; Halo flings it with the same
+             * event's jpt! instantaneous acceleration, not applied yet */
+            .velocity = dir * uniform(part.velocity_bounds) + fx.velocity,
             .angular_velocity = cone(Vecf3{0, 0, 1}, glm::pi<f32>()) *
                                 uniform(part.angular_velocity_bounds),
             .lifetime = garbage ? debris_lifetime : 0.f,
