@@ -516,6 +516,44 @@ void create_resources(compo::EntityContainer& e)
                      GameEvent spawn_ev{.type = GameEvent::SpawnObject};
                      e.subsystem_cast<GameEventBus>().inject(spawn_ev, &spawn);
                  }
+                 if(ev.event == "spawn_effect")
+                 {
+                     /* {"tag": "<effe name>", "position": [x,y,z],
+                      *  "yaw": deg, "pitch": deg} */
+                     auto  name  = ev.data.value("tag", std::string{});
+                     auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+                     blam::tag_index_view<halo_version> index(files.container);
+                     blam::tag_t const*                 found = nullptr;
+                     for(auto const& tag : index)
+                         if(tag.matches(blam::tag_class_t::effe) &&
+                            index.name_of(tag) == name)
+                             found = &tag;
+                     if(!found)
+                     {
+                         cWarning("spawn_effect: no effect named {}", name);
+                         return;
+                     }
+                     f32 const yaw =
+                         ev.data.value("yaw", 0.f) * glm::pi<f32>() / 180.f;
+                     f32 const pitch =
+                         ev.data.value("pitch", 0.f) * glm::pi<f32>() / 180.f;
+                     SpawnEffectEvent play{
+                         .effect = found->as_ref(),
+                         .direction =
+                             Vecf3{
+                                 std::cos(pitch) * std::cos(yaw),
+                                 std::cos(pitch) * std::sin(yaw),
+                                 std::sin(pitch)},
+                     };
+                     if(auto pos = ev.data.find("position");
+                        pos != ev.data.end() && pos->size() == 3)
+                         play.position = Vecf3{
+                             (*pos)[0].get<f32>(),
+                             (*pos)[1].get<f32>(),
+                             (*pos)[2].get<f32>()};
+                     GameEvent play_ev{.type = GameEvent::SpawnEffect};
+                     e.subsystem_cast<GameEventBus>().inject(play_ev, &play);
+                 }
                  if(ev.event == "play_animation")
                  {
                      u32 const seat = ev.data.value("seat", 0u);
