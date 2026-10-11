@@ -476,7 +476,6 @@ struct EffectSystem
         scale_t               scale)
     {
         using blam::tag_class_t;
-        if(p.template get<Projectile>(entity))
         switch(class_of(ref))
         {
         case tag_class_t::cont:
