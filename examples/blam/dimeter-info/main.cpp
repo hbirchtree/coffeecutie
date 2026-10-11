@@ -665,7 +665,7 @@ struct material_db
                 auto        tiling  = p.tiling.data(map.magic());
                 if(!bitmaps.has_error() && !tiling.has_error())
                     for(size_t s = 0; s < bitmaps.value().size(); s++)
-                        if(from_le(bitmaps.value()[s].bitmap.raw) ==
+                        if(from_le(bitmaps.value()[s].bitmap.id.raw) ==
                                diffuse_datum &&
                            s < tiling.value().size())
                         {
@@ -746,11 +746,11 @@ void emit_triangles(obj_writer& obj, Span<const u16> indices, bool strip)
 /* Shared blob walk for both BSP (f32 verts) and model (i16-normalized
  * verts) sections; bounds != nullptr selects the model decode, instance
  * != nullptr places the section in world space */
-template<typename Section>
+template<typename Section, blam::dimeter::heap_t Heap>
 bool append_section(
     obj_writer&                               obj,
     blam::dimeter::raw_pool const&            pool,
-    blam::dimeter::magic_ptr const&           magic,
+    blam::dimeter::magic_ptr_base<Heap> const& magic,
     Section const&                            section,
     std::string const&                        name,
     blam::dimeter::geo::model_bounds_t const* bounds,
@@ -905,7 +905,7 @@ bool append_section(
         {
             u32 start  = subs[s].index_start();
             u32 len    = subs[s].index_length();
-            i16 shader = subs[s].shader_index();
+            i16 shader = subs[s].shader.value();
             if(start + len > index_count || !len)
                 continue;
             if(shader >= 0 && static_cast<size_t>(shader) < materials->size() &&
@@ -951,7 +951,7 @@ u32 extract_bsp_meshes(
         if(region + 16 + sizeof(geo::bsp_header_t) > map.data.size())
             continue;
 
-        h2::magic_ptr bsp_magic{
+        h2::bsp_magic region_magic{
             .base        = map.data.data(),
             .max_size    = static_cast<u32>(map.data.size()),
             .meta_offset = region,
@@ -968,7 +968,7 @@ u32 extract_bsp_meshes(
          * diffuse bitmaps alongside */
         material_db              db;
         std::vector<std::string> materials;
-        auto                     shader_refs = bsp->shaders.data(bsp_magic);
+        auto                     shader_refs = bsp->shaders.data(region_magic);
         if(!shader_refs.has_error())
             for(auto const& sref : shader_refs.value())
                 materials.push_back(
@@ -978,13 +978,13 @@ u32 extract_bsp_meshes(
         obj.mtllib(sanitize(name) + ".mtl");
         u32 sections = 0;
 
-        auto clusters = bsp->clusters.data(bsp_magic);
+        auto clusters = bsp->clusters.data(region_magic);
         if(!clusters.has_error())
             for(size_t i = 0; i < clusters.value().size(); i++)
                 sections += append_section(
                     obj,
                     pool,
-                    bsp_magic,
+                    region_magic,
                     clusters.value()[i],
                     "cluster_" + std::to_string(i),
                     nullptr,
@@ -993,8 +993,8 @@ u32 extract_bsp_meshes(
 
         /* Instanced geometry: place each instance of its section in world
          * space; sections never referenced still get dumped at identity */
-        auto              geom      = bsp->sections.data(bsp_magic);
-        auto              instances = bsp->instances.data(bsp_magic);
+        auto              geom      = bsp->sections.data(region_magic);
+        auto              instances = bsp->instances.data(region_magic);
         std::vector<bool> instanced;
         if(!geom.has_error())
             instanced.assign(geom.value().size(), false);
@@ -1003,7 +1003,7 @@ u32 extract_bsp_meshes(
             for(size_t i = 0; i < instances.value().size(); i++)
             {
                 auto const& inst = instances.value()[i];
-                auto        sidx = inst.section_index();
+                auto        sidx = inst.section.value();
                 if(sidx < 0 || static_cast<size_t>(sidx) >= geom.value().size())
                     continue;
                 instanced[sidx] = true;
@@ -1013,7 +1013,7 @@ u32 extract_bsp_meshes(
                 sections += append_section(
                     obj,
                     pool,
-                    bsp_magic,
+                    region_magic,
                     geom.value()[sidx],
                     "instance_" + sanitize(iname),
                     nullptr,
@@ -1027,7 +1027,7 @@ u32 extract_bsp_meshes(
                     sections += append_section(
                         obj,
                         pool,
-                        bsp_magic,
+                        region_magic,
                         geom.value()[i],
                         "orphan_section_" + std::to_string(i),
                         nullptr,
