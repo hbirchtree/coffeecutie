@@ -445,6 +445,9 @@ struct EffectSystem
             play.relative     = true;
             play.position     = Vecf3(
                 glm::dot(d, basis.right), glm::dot(d, basis.up), -glm::dot(d, basis.forward));
+            /* A marker the first-person model lacks lands on the eye */
+            if(glm::dot(d, d) < 1e-6f)
+                play.position = Vecf3{0.f, 0.f, -missing_marker_ahead};
         }
         sounds->inject(ev, &play);
     }
@@ -1703,6 +1706,7 @@ struct EffectSystem
     }
 
     static constexpr size_t max_particles        = 4096;
+    static constexpr f32    missing_marker_ahead = 1.f; /* wu */
     static constexpr size_t max_weather          = 3000;
     static constexpr f32    weather_streak       = 1.f / 30.f; /* rain stretches a tick's travel */
     static constexpr f32    flare_fade_rate      = 8.f;    /* per second */
