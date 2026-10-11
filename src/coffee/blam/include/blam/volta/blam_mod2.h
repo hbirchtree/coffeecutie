@@ -229,7 +229,7 @@ struct part
         if constexpr(std::is_same_v<V, xbox_version_t>)
         {
             reference<xbox_ref> out;
-            out.count  = 1;
+            out.count  = to_le<u32>(1);
             out.offset = vertex_ref_offset;
             return out.data(magic, blam::single_value)
                 .value()
