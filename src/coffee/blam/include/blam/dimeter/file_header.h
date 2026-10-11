@@ -1,6 +1,6 @@
 #pragma once
 
-#include "h2_structures.h"
+#include "structures.h"
 
 namespace blam::dimeter {
 
