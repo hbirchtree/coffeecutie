@@ -1,13 +1,13 @@
-/* Trimmed BlamGraphics alternative for the GameCube (gexxo): load a PC Halo map
- * (demand-paged), walk its BSP geometry, and draw it diffuse * lightmap with
- * the GX fixed-function pipeline.
+/* Trimmed BlamGraphics alternative for the GameCube (gexxo): load a PC or Xbox
+ * Halo map (demand-paged), walk its BSP geometry, and draw it diffuse *
+ * lightmap with the GX fixed-function pipeline, plus the placed objects lit by
+ * a GX hardware light.
  *
  * Per BSP `lightmap` struct = one page (geometry sharing a lightmap bitmap).
  * Each material in a page = a submesh with its own diffuse texture (from the
- * shader's base map). Vertices carry both the diffuse UV (pc_vertex.texcoord)
- * and the lightmap UV (light_vertex.texcoord). Lightmaps are RGB565, diffuse
- * maps are DXT1 -> both decoded into GX tiled formats. Two TEV stages multiply
- * diffuse by lightmap. Everything is byte-swapped to host (big-endian) order.
+ * shader's base map). Vertices carry both the diffuse UV and the lightmap UV.
+ * Everything is byte-swapped to host (big-endian) order, and Xbox's compressed
+ * vertices are expanded on the way, since GX can't read either map's layout.
  */
 
 #include <coffee/core/CApplication>
@@ -27,10 +27,13 @@
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
 #include <blam/volta/blam_endian.h>
+#include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_stl.h>
+#include <blam/volta/blam_swizzle.h>
+#include <blam/volta/blam_unit.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -54,14 +57,17 @@
 using namespace Coffee;
 using blam::from_le;
 using typing::vector_types::Matf4;
+using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf3;
 using typing::vector_types::Vecf4;
 
-using version_t      = blam::pc_version_t;
-using pc_vertex_t    = blam::vert::vertex<blam::vert::uncompressed>;
-using light_vertex_t = blam::vert::light_vertex<blam::vert::uncompressed>;
-
 static constexpr char const* MAP_NAME = "bloodgulch.map";
+
+// Highest-detail model LOD; GC memory may want lod_high or lod_medium
+static constexpr auto kModelLod = blam::mod2::lod_high_ext;
+
+// Player bipeds stood on the first spawn points, MP maps place none
+static constexpr u32 kSpawnBipeds = 4;
 
 #define LOG(...)                     \
     do                               \
@@ -112,17 +118,20 @@ struct page_t
 #endif
 };
 
-/* Scenery: placed mod2 model instances. Geometry is per unique model (deduped
- * by mod2 tag id); each instance just carries a world transform. */
-struct scn_vertex
+/* Objects: placed mod2 model instances. Geometry is per unique model (deduped
+ * by mod2 tag id); each instance just carries a world transform. Normals are
+ * S8 with 6 fraction bits, which is what GX lighting reads natively. */
+struct mdl_vertex
 {
     f32 pos[3];
+    i8  nrm[3];
+    i8  pad;
     f32 uv[2];
 };
 
-struct scn_part
+struct mdl_part
 {
-    std::vector<scn_vertex>    verts;
+    std::vector<mdl_vertex>    verts;
     std::vector<u16>           indices; // triangle strip
     blam::bitm::image_t const* diffuse_img{nullptr};
 #if defined(FEATURE_ENABLE_Gexxo)
@@ -132,14 +141,40 @@ struct scn_part
 #endif
 };
 
-struct scenery_model
+struct model_t
 {
-    std::vector<scn_part> parts;
+    std::vector<mdl_part> parts;
     Vecf3                 center{}; // local-space bounding sphere (for culling)
     f32                   radius{0};
 };
 
-struct scenery_inst
+enum object_kind
+{
+    kind_scenery,
+    kind_biped,
+    kind_vehicle,
+    kind_equipment,
+    kind_weapon,
+    kind_machine,
+    kind_control,
+    kind_light_fixture,
+    kind_netgame_item,
+    kind_count,
+};
+
+static char const* const g_kind_names[kind_count] = {
+    "scenery",
+    "bipeds",
+    "vehicles",
+    "equipment",
+    "weapons",
+    "machines",
+    "controls",
+    "light fixtures",
+    "netgame items",
+};
+
+struct object_inst
 {
     u32   model_id;
     Matf4 xform;
@@ -147,8 +182,9 @@ struct scenery_inst
     f32   radius{0};
 };
 
-static std::map<u32, scenery_model> g_models;  // by mod2 tag id
-static std::vector<scenery_inst>    g_scenery; // placed instances
+static std::map<u32, model_t>   g_models;  // by mod2 tag id
+static std::vector<object_inst> g_objects; // placed instances
+static u32                      g_kind_count[kind_count] = {};
 
 static std::vector<page_t> g_pages;
 static Vecf3               g_bb_min{1e9f, 1e9f, 1e9f};
@@ -160,10 +196,9 @@ static bool  g_have_spawn = false;
 static Vecf3 g_spawn_pos{};
 static f32   g_spawn_rot = 0.f;
 static i16   g_spawn_bsp = 0; // which structure BSP the spawn is in
+static u32   g_bsp_count = 0;
 
-// Active (spawn) BSP header + its magic.
-static blam::bsp::header const* g_active_hdr = nullptr;
-static blam::bsp_ptr            g_active_bm;
+static bool g_xbox = false;
 
 struct page_bitmap
 {
@@ -191,22 +226,76 @@ static semantic::BytesConst load_map_bytes()
 #endif
 }
 
+/* Promote a file range of the map to ARAM when the whole map didn't fit:
+ * whatever the CPU keeps walking (tag data, the active BSP) shouldn't page
+ * off the disc, bitmaps and sounds are read at most once. */
+static void stage_hot_range(char const* what, u32 off, u32 size)
+{
+#if defined(COFFEE_GEKKO)
+    namespace vmem = platform::file::gekko::vmem;
+    bool const ok  = vmem::stage(g_map_window, off, size);
+    LOG("stage %s: %u KiB at 0x%x -> %s (ARAM free %u KiB)",
+        what,
+        size / 1024,
+        off,
+        ok ? "ARAM" : "disc",
+        vmem::aram_free() / 1024);
+#else
+    (void)what, (void)off, (void)size;
+#endif
+}
+
+/* Little-endian scalar out of unaligned map bytes */
+template<typename T>
+static T rd(u8 const* p)
+{
+    T v;
+    std::memcpy(&v, p, sizeof(T));
+    return from_le(v);
+}
+
+/* Xbox 11:11:10 signed normal (r = low 11 bits) */
+static Vecf3 unpack_normal(u32 v)
+{
+    auto field = [](u32 x, u32 bits) {
+        i32 const s = static_cast<i32>(x << (32 - bits)) >> (32 - bits);
+        return static_cast<f32>(s) / static_cast<f32>((1 << (bits - 1)) - 1);
+    };
+    return {
+        field(v & 0x7FF, 11), field((v >> 11) & 0x7FF, 11), field(v >> 22, 10)};
+}
+
+static i8 to_s8_frac6(f32 v)
+{
+    return static_cast<i8>(std::clamp(v * 64.f, -128.f, 127.f));
+}
+
 /* --- tag/shader/bitmap resolution ----------------------------------------- */
 
-static blam::bitm::header_t const* resolve_bitm(
-    blam::map_container<version_t> const& c, blam::tagref_t const& ref)
+template<typename V>
+static blam::tag_t const* tag_by_id(blam::map_container<V> const& c, u32 tag_id)
 {
     u32 const cnt = from_le(c.tags->tag_count);
-    u32 const tid = from_le(ref.tag_id);
-    u32 const idx = tid & 0xFFFF; // salt is the high 16 bits; index is the low
-    if(tid == 0xFFFFFFFF || idx >= cnt)
+    u32 const idx = tag_id & 0xFFFF; // salt is the high 16 bits
+    if(tag_id == 0xFFFFFFFF || idx >= cnt)
         return nullptr;
-    auto hr = c.tags->tags(c.map)[idx].data<blam::bitm::header_t>(c.magic);
+    return &c.tags->tags(c.map)[idx];
+}
+
+template<typename V>
+static blam::bitm::header_t const* resolve_bitm(
+    blam::map_container<V> const& c, blam::tagref_t const& ref)
+{
+    auto const* t = tag_by_id(c, from_le(ref.tag_id));
+    if(!t)
+        return nullptr;
+    auto hr = t->template data<blam::bitm::header_t>(c.magic);
     return hr.has_error() ? nullptr : hr.value();
 }
 
+template<typename V>
 static blam::bitm::image_t const* first_image(
-    blam::map_container<version_t> const& c, blam::bitm::header_t const* bitm)
+    blam::map_container<V> const& c, blam::bitm::header_t const* bitm)
 {
     if(!bitm)
         return nullptr;
@@ -224,28 +313,27 @@ struct shader_info
 };
 
 /* Material shader -> base diffuse + (primary) detail map. shader_environment
- * (BSP) + shader_model (scenery) are handled; other classes are untextured. */
+ * (BSP) + shader_model (objects) are handled; other classes are untextured. */
+template<typename V>
 static shader_info resolve_shader(
-    blam::map_container<version_t> const& c, blam::tagref_t const& shader_ref)
+    blam::map_container<V> const& c, blam::tagref_t const& shader_ref)
 {
     shader_info out;
-    u32 const   cnt = from_le(c.tags->tag_count);
-    u32 const   sid = from_le(shader_ref.tag_id);
-    if(sid == 0xFFFFFFFF || (sid & 0xFFFF) >= cnt)
+    auto const* st = tag_by_id(c, from_le(shader_ref.tag_id));
+    if(!st)
         return out;
-    blam::tag_t const& st = c.tags->tags(c.map)[sid & 0xFFFF];
-    if(st.matches(blam::tag_class_t::shader_environment))
+    if(st->matches(blam::tag_class_t::shader_environment))
     {
-        auto sh = st.data<blam::shader::shader_env>(c.magic);
+        auto sh = st->template data<blam::shader::shader_env>(c.magic);
         if(sh.has_error())
             return out;
         out.diffuse = first_image(c, resolve_bitm(c, sh.value()->diffuse.base));
         out.detail =
             first_image(c, resolve_bitm(c, sh.value()->diffuse.primary.map));
         out.detail_scale = from_le(sh.value()->diffuse.primary.scale);
-    } else if(st.matches(blam::tag_class_t::shader_model))
+    } else if(st->matches(blam::tag_class_t::shader_model))
     {
-        auto sh = st.data<blam::shader::shader_model>(c.magic);
+        auto sh = st->template data<blam::shader::shader_model>(c.magic);
         if(sh.has_error())
             return out;
         out.diffuse = first_image(c, resolve_bitm(c, sh.value()->maps.base));
@@ -329,22 +417,36 @@ static std::optional<u32> cluster_at(Vecf3 const& pt)
     return std::nullopt;
 }
 
-/* --- scenery (mod2 models) ------------------------------------------------ */
+/* Is a placement in the loaded structure BSP. bsp_flags is a section mask
+ * (filled for scenery + light fixtures only), else ask the collision tree. */
+static bool in_active_section(Vecf3 const& pos, u16 bsp_flags)
+{
+    if(g_bsp_count <= 1)
+        return true;
+    if(bsp_flags)
+        return (bsp_flags >> g_spawn_bsp) & 1;
+    return cluster_at(pos).has_value();
+}
 
-static void load_model_cpu(blam::map_container<version_t> const& c, u32 mod2_id)
+/* --- objects (mod2 models) ------------------------------------------------ */
+
+template<typename V>
+static void load_model_cpu(blam::map_container<V> const& c, u32 mod2_id)
 {
     using namespace blam;
-    u32 const cnt = from_le(c.tags->tag_count);
-    if((mod2_id & 0xFFFF) >= cnt)
+    auto const* t = tag_by_id(c, mod2_id);
+    if(!t)
         return;
-    // NB: inside `using namespace blam`, the file-local `version_t` alias
-    // collides with the enum blam::version_t, so spell out pc_version_t.
-    auto hdr =
-        c.tags->tags(c.map)[mod2_id & 0xFFFF].data<mod2::header<pc_version_t>>(
-            c.magic);
+    auto hdr = t->template data<mod2::header<V>>(c.magic);
     if(hdr.has_error())
         return;
-    auto md = hdr.value()->model_at(mod2::lod_high_ext, c.magic);
+    std::optional<mod2::model_data_t> md;
+    try
+    {
+        md = hdr.value()->model_at(kModelLod, c.magic);
+    } catch(std::exception const&)
+    {
+    }
     if(!md)
         return;
     Vecf2 const uvscale{
@@ -352,33 +454,54 @@ static void load_model_cpu(blam::map_container<version_t> const& c, u32 mod2_id)
     auto shaders = hdr.value()->shaders.data(c.magic);
     auto vmag    = c.tags->vertex_magic(c.magic);
 
-    scenery_model model;
-    Vecf3         mn{1e9f, 1e9f, 1e9f}, mx{-1e9f, -1e9f, -1e9f};
+    model_t model;
+    Vecf3   mn{1e9f, 1e9f, 1e9f}, mx{-1e9f, -1e9f, -1e9f};
     for(mod2::part const* p : md->parts)
     {
-        auto vseg = p->vertex_segment(*c.tags, c.magic).data(vmag);
-        auto iseg = p->index_segment(*c.tags).data(vmag);
-        if(vseg.has_error() || iseg.has_error())
-            continue;
-        scn_part part;
-        for(auto const& mv : vseg.value()) // mod2_vertex<uncompressed>
+        mdl_part part;
+        try
         {
-            scn_vertex  v;
-            Vecf3 const p3{
-                from_le(mv.position.x),
-                from_le(mv.position.y),
-                from_le(mv.position.z)};
-            v.pos[0] = p3.x;
-            v.pos[1] = p3.y;
-            v.pos[2] = p3.z;
-            v.uv[0]  = from_le(mv.texcoord.x) * uvscale.x;
-            v.uv[1]  = from_le(mv.texcoord.y) * uvscale.y;
-            part.verts.push_back(v);
-            mn = glm::min(mn, p3);
-            mx = glm::max(mx, p3);
+            auto vseg = p->vertex_segment(*c.tags, c.magic).data(vmag);
+            auto iseg = p->index_segment(*c.tags).data(vmag);
+            if(vseg.has_error() || iseg.has_error())
+                continue;
+            for(auto const& mv : vseg.value())
+            {
+                u8 const*  raw = reinterpret_cast<u8 const*>(&mv);
+                mdl_vertex v;
+                Vecf3      n;
+                for(u32 k = 0; k < 3; k++)
+                    v.pos[k] = rd<f32>(raw + k * 4);
+                if constexpr(std::is_same_v<V, xbox_version_t>)
+                {
+                    // mod2_vertex<compressed>: normal u32 @12, uv i16 @24
+                    n       = unpack_normal(rd<u32>(raw + 12));
+                    v.uv[0] = rd<i16>(raw + 24) / 32767.f * uvscale.x;
+                    v.uv[1] = rd<i16>(raw + 26) / 32767.f * uvscale.y;
+                } else
+                {
+                    // mod2_vertex<uncompressed>: normal f32x3 @12, uv @48
+                    n = {
+                        rd<f32>(raw + 12),
+                        rd<f32>(raw + 16),
+                        rd<f32>(raw + 20)};
+                    v.uv[0] = rd<f32>(raw + 48) * uvscale.x;
+                    v.uv[1] = rd<f32>(raw + 52) * uvscale.y;
+                }
+                for(u32 k = 0; k < 3; k++)
+                    v.nrm[k] = to_s8_frac6(n[k]);
+                v.pad = 0;
+                part.verts.push_back(v);
+                Vecf3 const p3{v.pos[0], v.pos[1], v.pos[2]};
+                mn = glm::min(mn, p3);
+                mx = glm::max(mx, p3);
+            }
+            for(u16 idx : iseg.value())
+                part.indices.push_back(from_le(idx));
+        } catch(std::exception const&)
+        {
+            continue;
         }
-        for(u16 idx : iseg.value())
-            part.indices.push_back(from_le(idx));
         if(!shaders.has_error())
         {
             u16 const si = from_le(p->shader_idx);
@@ -397,81 +520,203 @@ static void load_model_cpu(blam::map_container<version_t> const& c, u32 mod2_id)
     g_models[mod2_id] = std::move(model);
 }
 
-static void build_scenery(
-    blam::map_container<version_t> const& c,
-    blam::scn::scenario<version_t> const* scn)
+static Matf4 spawn_transform(Vecf3 const& pos, Vecf3 const& rot)
 {
-    using namespace blam;
-    u32 const cnt   = from_le(c.tags->tag_count);
-    auto      insts = scn->objects.scenery.instances.data(c.magic);
-    auto      pal   = scn->objects.scenery.palette.data(c.magic);
+    Matf4 m = glm::translate(Matf4{1.f}, pos);
+    m       = glm::rotate(m, rot.x, Vecf3{0, 0, 1}); // yaw (Z up)
+    m       = glm::rotate(m, rot.y, Vecf3{0, 1, 0}); // pitch
+    m       = glm::rotate(m, rot.z, Vecf3{1, 0, 0}); // roll
+    return m;
+}
+
+/* Any object tag (obje and everything deriving from it) -> its model */
+template<typename V>
+static bool place_object(
+    blam::map_container<V> const& c,
+    u32                           object_tag_id,
+    Matf4 const&                  xform,
+    object_kind                   kind)
+{
+    auto const* t = tag_by_id(c, object_tag_id);
+    if(!t)
+        return false;
+    auto obj = t->template data<blam::scn::object>(c.magic);
+    if(obj.has_error())
+        return false;
+    u32 const mod2_id = from_le(obj.value()->model.tag_id);
+    if(!tag_by_id(c, mod2_id))
+        return false;
+    if(g_models.find(mod2_id) == g_models.end())
+        load_model_cpu(c, mod2_id);
+    auto const& mdl = g_models[mod2_id];
+    if(mdl.parts.empty())
+        return false;
+    Vecf3 const wc = Vecf3(xform * Vecf4(mdl.center, 1.f));
+
+    g_objects.push_back({mod2_id, xform, wc, mdl.radius});
+    g_kind_count[kind]++;
+    return true;
+}
+
+template<typename V, typename Spawn>
+static void place_group(
+    blam::map_container<V> const&         c,
+    blam::scn::reflex_group<Spawn> const& group,
+    object_kind                           kind)
+{
+    auto insts = group.instances.data(c.magic);
+    auto pal   = group.palette.data(c.magic);
     if(insts.has_error() || pal.has_error())
         return;
-    u32 skipped = 0;
-    for(scn::scenery_spawn const& s : insts.value())
+    for(Spawn const& s : insts.value())
     {
         Vecf3 const pos{from_le(s.pos.x), from_le(s.pos.y), from_le(s.pos.z)};
-
-        // Only load objects that resolve to a cluster of the active BSP
-        // (cluster_at uses the RAM collision copy -> no paging). Points in
-        // another section / solid space return nullopt.
-        if(!cluster_at(pos))
-        {
-            skipped++;
+        if(!in_active_section(pos, static_cast<u16>(from_le(s.bsp_flags))))
             continue;
-        }
-
-        i16 const ref = from_le(s.ref);
+        i16 const ref = from_le(s.ref.index);
         if(ref < 0 || static_cast<size_t>(ref) >= pal.value().size())
             continue;
-        u32 const scen_id = from_le(pal.value()[ref][0].tag_id);
-        if(scen_id == 0xFFFFFFFF || (scen_id & 0xFFFF) >= cnt)
-            continue;
-        auto scen =
-            c.tags->tags(c.map)[scen_id & 0xFFFF].data<scn::scenery>(c.magic);
-        if(scen.has_error())
-            continue;
-        u32 const mod2_id = from_le(scen.value()->model.tag_id);
-        if(mod2_id == 0xFFFFFFFF || (mod2_id & 0xFFFF) >= cnt)
-            continue;
-
         Vecf3 const rot{from_le(s.rot.x), from_le(s.rot.y), from_le(s.rot.z)};
-        Matf4       m = glm::translate(Matf4{1.f}, pos);
-        m             = glm::rotate(m, rot.x, Vecf3{0, 0, 1}); // yaw (Z up)
-        m             = glm::rotate(m, rot.y, Vecf3{0, 1, 0}); // pitch
-        m             = glm::rotate(m, rot.z, Vecf3{1, 0, 0}); // roll
-
-        if(g_models.find(mod2_id) == g_models.end())
-            load_model_cpu(c, mod2_id);
-
-        // World-space bounding sphere for frustum culling.
-        auto const& mdl = g_models[mod2_id];
-        Vecf3 const wc  = Vecf3(m * Vecf4(mdl.center, 1.f));
-        g_scenery.push_back({mod2_id, m, wc, mdl.radius});
+        place_object(
+            c,
+            from_le(pal.value()[ref][0].tag_id),
+            spawn_transform(pos, rot),
+            kind);
     }
-    LOG("scenery: %u instances, %u models (%u off-section skipped)",
-        static_cast<unsigned>(g_scenery.size()),
+}
+
+/* Netgame weapons/equipment hang off item collections, not object palettes;
+ * place the collection's first item */
+template<typename V>
+static void place_netgame_items(
+    blam::map_container<V> const& c, blam::scn::scenario<V> const* scn)
+{
+    auto equipment = scn->netgame.equipment.data(c.magic);
+    if(equipment.has_error())
+        return;
+    for(auto const& entry : equipment.value())
+    {
+        auto const* coll_tag = tag_by_id(c, from_le(entry.item.tag_id));
+        if(!coll_tag || !coll_tag->matches(blam::tag_class_t::itmc))
+            continue;
+        auto coll =
+            coll_tag->template data<blam::scn::item_collection>(c.magic);
+        if(coll.has_error())
+            continue;
+        auto items = coll.value()->items.data(c.magic);
+        if(items.has_error() || items.value().empty())
+            continue;
+        Vecf3 const pos{
+            from_le(entry.pos.x), from_le(entry.pos.y), from_le(entry.pos.z)};
+        place_object(
+            c,
+            from_le(items.value()[0].item.tag_id),
+            spawn_transform(pos, {from_le(entry.facing), 0.f, 0.f}),
+            kind_netgame_item);
+    }
+}
+
+/* The unit players spawn as (globals: multiplayer, else singleplayer) */
+template<typename V>
+static u32 player_biped_id(blam::map_container<V> const& c)
+{
+    u32 const   cnt = from_le(c.tags->tag_count);
+    auto const* tg  = c.tags->tags(c.map);
+    for(u32 i = 0; i < cnt; i++)
+    {
+        if(!tg[i].matches(blam::tag_class_t::matg))
+            continue;
+        auto g = tg[i].template data<blam::globals::globals>(c.magic);
+        if(g.has_error())
+            return 0xFFFFFFFF;
+        if(auto mp = g.value()->multiplayer.data(c.magic);
+           !mp.has_error() && !mp.value().empty())
+            return from_le(mp.value()[0].unit.tag_id);
+        if(auto sp = g.value()->player.data(c.magic);
+           !sp.has_error() && !sp.value().empty())
+            return from_le(sp.value()[0].unit.tag_id);
+        return 0xFFFFFFFF;
+    }
+    return 0xFFFFFFFF;
+}
+
+template<typename V>
+static void build_objects(
+    blam::map_container<V> const& c, blam::scn::scenario<V> const* scn)
+{
+    auto const& o = scn->objects;
+    place_group(c, o.scenery, kind_scenery);
+    place_group(c, o.bipeds, kind_biped);
+    place_group(c, o.vehicles, kind_vehicle);
+    place_group(c, o.equips, kind_equipment);
+    place_group(c, o.weapon_spawns, kind_weapon);
+    place_group(c, o.machines, kind_machine);
+    place_group(c, o.controls, kind_control);
+    place_group(c, o.light_fixtures, kind_light_fixture);
+    place_netgame_items(c, scn);
+
+    if(u32 const biped = player_biped_id(c); biped != 0xFFFFFFFF)
+        if(auto locs = scn->player_start.locations.data(c.magic);
+           !locs.has_error())
+        {
+            u32 n = 0;
+            for(auto const& l : locs.value())
+            {
+                if(n == kSpawnBipeds)
+                    break;
+                if(from_le(l.bsp_index) != static_cast<u16>(g_spawn_bsp))
+                    continue;
+                Vecf3 const pos{
+                    from_le(l.pos.x), from_le(l.pos.y), from_le(l.pos.z)};
+                Matf4 const m =
+                    spawn_transform(pos, {from_le(l.rot), 0.f, 0.f});
+                if(place_object(c, biped, m, kind_biped))
+                    n++;
+            }
+        }
+
+    u32 verts = 0;
+    for(auto const& [id, m] : g_models)
+        for(auto const& p : m.parts)
+            verts += static_cast<u32>(p.verts.size());
+    for(u32 k = 0; k < kind_count; k++)
+        if(g_kind_count[k])
+            LOG("objects: %u %s", g_kind_count[k], g_kind_names[k]);
+    LOG("objects: %u placed, %u models, %u verts (%u KiB as GX vertices)",
+        static_cast<unsigned>(g_objects.size()),
         static_cast<unsigned>(g_models.size()),
-        skipped);
+        verts,
+        static_cast<unsigned>(verts * sizeof(mdl_vertex) / 1024));
 }
 
 /* --- geometry ------------------------------------------------------------- */
 
+template<typename V>
 static void append_material(
-    blam::map_container<version_t> const& c,
-    page_t&                               page,
-    blam::bsp::material const&            mat,
-    blam::bsp::header const&              hdr,
-    blam::bsp_ptr const&                  bm)
+    blam::map_container<V> const& c,
+    page_t&                       page,
+    blam::bsp::material const&    mat,
+    blam::bsp::header const&      hdr,
+    blam::bsp_ptr const&          bm)
 {
-    auto verts  = mat.vertices().data(bm);
-    auto lverts = mat.light_verts().data(bm);
+    namespace vert = blam::vert;
+    auto verts     = mat.vertices().data(bm);
+    auto lverts    = mat.light_verts().data(bm);
     if(verts.has_error() || lverts.has_error())
         return;
-    auto vspan  = verts.value();
-    auto lspan  = lverts.value();
-    u32  nverts = static_cast<u32>(vspan.size_bytes() / sizeof(pc_vertex_t));
-    u32  nlight = static_cast<u32>(lspan.size_bytes() / sizeof(light_vertex_t));
+    bool const compressed =
+        from_le(mat.pc.type) != vert::vertex_type_t::sbsp_uncompressed_vertex;
+    u32 const vsz = compressed ? sizeof(vert::vertex<vert::compressed>)
+                               : sizeof(vert::vertex<vert::uncompressed>);
+    u32 const lsz = compressed ? sizeof(vert::light_vertex<vert::compressed>)
+                               : sizeof(vert::light_vertex<vert::uncompressed>);
+    // Diffuse UV follows position + 3 normals (packed u32 or f32x3 each)
+    u32 const uv_off = compressed ? 24 : 48;
+
+    auto      vspan  = verts.value();
+    auto      lspan  = lverts.value();
+    u32 const nverts = static_cast<u32>(vspan.size_bytes() / vsz);
+    u32 const nlight = static_cast<u32>(lspan.size_bytes() / lsz);
     if(nverts == 0 || nlight < nverts)
         return;
 
@@ -481,24 +726,26 @@ static void append_material(
     u16 const vert_base = static_cast<u16>(page.verts.size());
     for(u32 i = 0; i < nverts; i++)
     {
-        auto const* pv = reinterpret_cast<pc_vertex_t const*>(
-            vspan.data() + i * sizeof(pc_vertex_t));
-        auto const* lv = reinterpret_cast<light_vertex_t const*>(
-            lspan.data() + i * sizeof(light_vertex_t));
-        Vecf3 const p{
-            from_le(pv->position.x),
-            from_le(pv->position.y),
-            from_le(pv->position.z)};
-        f32 const du = from_le(pv->texcoord.x);
-        f32 const dv = from_le(pv->texcoord.y);
-        gx_vertex gv;
-        gv.pos[0]   = p.x;
-        gv.pos[1]   = p.y;
-        gv.pos[2]   = p.z;
-        gv.duv[0]   = du;
-        gv.duv[1]   = dv;
-        gv.luv[0]   = from_le(lv->texcoord.x);
-        gv.luv[1]   = from_le(lv->texcoord.y);
+        u8 const*   pv = vspan.data() + i * vsz;
+        u8 const*   lv = lspan.data() + i * lsz;
+        Vecf3 const p{rd<f32>(pv), rd<f32>(pv + 4), rd<f32>(pv + 8)};
+        f32 const   du = rd<f32>(pv + uv_off);
+        f32 const   dv = rd<f32>(pv + uv_off + 4);
+        gx_vertex   gv;
+        gv.pos[0] = p.x;
+        gv.pos[1] = p.y;
+        gv.pos[2] = p.z;
+        gv.duv[0] = du;
+        gv.duv[1] = dv;
+        if(compressed) // normal u32, then i16x2 normalized
+        {
+            gv.luv[0] = rd<i16>(lv + 4) / 32767.f;
+            gv.luv[1] = rd<i16>(lv + 6) / 32767.f;
+        } else // normal f32x3, then f32x2
+        {
+            gv.luv[0] = rd<f32>(lv + 12);
+            gv.luv[1] = rd<f32>(lv + 16);
+        }
         gv.detuv[0] = du * si.detail_scale; // detail tiles at a higher rate
         gv.detuv[1] = dv * si.detail_scale;
         page.verts.push_back(gv);
@@ -528,16 +775,17 @@ static void append_material(
     }
 }
 
-static int extract_bsp()
+template<typename V>
+static int extract_map(semantic::BytesConst const& bytes)
 {
-    LOG("loading map bytes...");
-    auto bytes = load_map_bytes();
-    LOG("map bytes = %u", static_cast<unsigned>(bytes.size));
-    if(!bytes.size)
-        return 1;
+    auto const* fh = reinterpret_cast<blam::file_header_t const*>(bytes.data);
+    stage_hot_range(
+        "tag data",
+        from_le(fh->tag_index_offset),
+        static_cast<u32>(bytes.size) - from_le(fh->tag_index_offset));
 
-    auto map = blam::map_container<version_t>::from_bytes(
-        bytes, version_t{}, [](std::string_view, libc_types::i16) {});
+    auto map = blam::map_container<V>::from_bytes(
+        bytes, V{}, [](std::string_view, libc_types::i16) {});
     if(map.has_error())
     {
         g_err = static_cast<int>(map.error());
@@ -570,9 +818,8 @@ static int extract_bsp()
     auto bsps = (*scn)->bsp_info.data(container.magic);
     if(bsps.has_error())
         return 4;
-    LOG("bsp_info count=%u spawn_bsp=%d",
-        static_cast<unsigned>(bsps.value().size()),
-        (int)g_spawn_bsp);
+    g_bsp_count = static_cast<u32>(bsps.value().size());
+    LOG("bsp_info count=%u spawn_bsp=%d", g_bsp_count, (int)g_spawn_bsp);
 
     // Only the spawn's structure BSP -- campaign maps have several BSPs that
     // overlap in world space (Halo loads one at a time), and rendering them all
@@ -582,13 +829,12 @@ static int extract_bsp()
     {
         if(bsp_idx++ != static_cast<u32>(g_spawn_bsp))
             continue;
+        stage_hot_range("bsp", from_le(bi.offset), from_le(bi.size));
         auto const bm = bi.bsp_magic(container.magic);
         auto hdr_r    = bi.to_bsp(bm).to_header().data(bm, blam::single_value);
         if(hdr_r.has_error())
             continue;
         auto const* hdr = hdr_r.value();
-        g_active_hdr    = hdr;
-        g_active_bm     = bm;
         build_cluster_lookup(*hdr, bm);
         LOG("cluster lookup: %u nodes, %u leaves",
             static_cast<unsigned>(g_coll_nodes.size()),
@@ -627,9 +873,36 @@ static int extract_bsp()
 
     LOG("pages=%u", static_cast<unsigned>(g_pages.size()));
 
-    build_scenery(container, *scn);
+    build_objects(container, *scn);
 
     return g_pages.empty() ? 5 : 0;
+}
+
+static int extract_bsp()
+{
+    LOG("loading map bytes...");
+    auto bytes = load_map_bytes();
+    LOG("map bytes = %u", static_cast<unsigned>(bytes.size));
+    if(bytes.size < sizeof(blam::file_header_t))
+        return 1;
+
+    auto const* fh = reinterpret_cast<blam::file_header_t const*>(bytes.data);
+    auto const  version = from_le(fh->version);
+    if(version == blam::version_t::xbox)
+    {
+        // Compressed Xbox maps would need inflating into RAM; the transcoder
+        // writes them out inflated
+        if(from_le(fh->decomp_len) != bytes.size)
+        {
+            LOG("xbox map is compressed, run it through MapTranscode");
+            return 2;
+        }
+        g_xbox = true;
+        LOG("xbox map");
+        return extract_map<blam::xbox_version_t>(bytes);
+    }
+    LOG("pc map");
+    return extract_map<blam::pc_version_t>(bytes);
 }
 
 #if defined(FEATURE_ENABLE_Gexxo)
@@ -675,7 +948,7 @@ static std::map<blam::bitm::image_t const*, std::shared_ptr<gexxo::texture_t>>
 
 /* Tile a linear RGB565 image into the GX 4x4 layout. swap=true byte-swaps each
  * texel (for little-endian map data); swap=false stores host order (for values
- * computed on the big-endian CPU, e.g. DXT1-decompressed pixels). */
+ * computed on the big-endian CPU). */
 static void tile_rgb565(u16 const* src, u16* dst, u16 w, u16 h, bool swap)
 {
     u32 o = 0;
@@ -732,9 +1005,10 @@ static bool read_bitmap_pixels(
     blam::map_ptr const&         internal_magic,
     std::vector<libc_types::u8>& out)
 {
-    u32 const  size   = from_le(img.size);
-    bool const shared = (static_cast<u16>(from_le(img.flags)) &
-                         static_cast<u16>(blam::bitm::flags_t::shared)) != 0;
+    u32 const  size = from_le(img.size);
+    bool const shared =
+        !g_xbox && (static_cast<u16>(from_le(img.flags)) &
+                    static_cast<u16>(blam::bitm::flags_t::shared)) != 0;
     out.resize(size);
 #if defined(COFFEE_GEKKO)
     if(shared)
@@ -764,6 +1038,48 @@ static bool is_gx_native(blam::bitm::format_t fmt)
     return (static_cast<u16>(fmt) &
             static_cast<u16>(blam::bitm::format_t::PLATFORM_SPECIFIC_MASK)) !=
            0;
+}
+
+/* Linear RGB565 (little-endian) out of an uncompressed source: deswizzles
+ * Xbox images and narrows 32-bit ones (stored B,G,R,A). */
+static bool to_linear_rgb565(
+    blam::bitm::image_t const&   img,
+    std::vector<libc_types::u8>& px,
+    u16                          w,
+    u16                          h)
+{
+    using fmt_t    = blam::bitm::format_t;
+    auto const fmt = from_le(img.format);
+    u32 const  bpp = fmt == fmt_t::R5G6B5 ? 2 : 4;
+    u32 const  n   = static_cast<u32>(w) * h;
+    if(px.size() < n * bpp)
+        return false;
+    if(static_cast<u16>(from_le(img.flags)) &
+       static_cast<u16>(blam::bitm::flags_t::swizzled))
+    {
+        std::vector<libc_types::u8> lin(n * bpp);
+        if(!blam::swizzle::deswizzle_bytes(
+               semantic::Span<const u8>(px.data(), n * bpp),
+               semantic::Span<u8>(lin.data(), lin.size()),
+               w,
+               h,
+               bpp))
+            return false;
+        px = std::move(lin);
+    }
+    if(bpp == 4)
+    {
+        for(u32 i = 0; i < n; i++)
+        {
+            u8 const* s = px.data() + i * 4;
+            u16 const c = static_cast<u16>(
+                ((s[2] >> 3) << 11) | ((s[1] >> 2) << 5) | (s[0] >> 3));
+            px[i * 2]     = c & 0xFF; // keep it little-endian like R5G6B5
+            px[i * 2 + 1] = c >> 8;
+        }
+        px.resize(n * 2);
+    }
+    return true;
 }
 
 /* Decode a bitmap image (RGB565 or DXT1) into a GX texture. wrap = GX_CLAMP for
@@ -839,25 +1155,28 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
         return tex;
     }
 
-    bool const is_bcn = fmt == blam::bitm::format_t::BC1 ||
-                        fmt == blam::bitm::format_t::BC2 ||
-                        fmt == blam::bitm::format_t::BC3;
-    if(fmt != blam::bitm::format_t::R5G6B5 && !is_bcn)
-        return nullptr; // uncompressed/palettised not handled yet
+    using fmt_t = blam::bitm::format_t;
+    bool const is_bcn =
+        fmt == fmt_t::BC1 || fmt == fmt_t::BC2 || fmt == fmt_t::BC3;
+    bool const is_565 =
+        fmt == fmt_t::R5G6B5 || fmt == fmt_t::XRGB8 || fmt == fmt_t::ARGB8;
+    if(!is_565 && !is_bcn)
+        return nullptr; // palettised/intensity need the transcoder
 
     std::vector<libc_types::u8> pixels;
     if(!read_bitmap_pixels(img, magic, pixels))
+        return nullptr;
+    if(is_565 && !to_linear_rgb565(img, pixels, w, h))
         return nullptr;
 
     // Lightmaps (RGB565 source) tile 4x4 -> GX_TF_RGB565 (2 B/px);
     // diffuse/detail (DXT source) re-tile -> GX_TF_CMPR (0.5 B/px, 4x smaller
     // than expanding).
-    bool const is_565 = fmt == blam::bitm::format_t::R5G6B5;
-    u16 const  tw     = is_565 ? ((w + 3) & ~3) : ((w + 7) & ~7);
-    u16 const  th     = is_565 ? ((h + 3) & ~3) : ((h + 7) & ~7);
-    u32 const  tbytes = is_565 ? (static_cast<u32>(tw) * th * 2)
-                               : (static_cast<u32>(tw) * th / 2);
-    u8 const   gxfmt  = is_565 ? GX_TF_RGB565 : GX_TF_CMPR;
+    u16 const tw     = is_565 ? ((w + 3) & ~3) : ((w + 7) & ~7);
+    u16 const th     = is_565 ? ((h + 3) & ~3) : ((h + 7) & ~7);
+    u32 const tbytes = is_565 ? (static_cast<u32>(tw) * th * 2)
+                              : (static_cast<u32>(tw) * th / 2);
+    u8 const  gxfmt  = is_565 ? GX_TF_RGB565 : GX_TF_CMPR;
 
     if(g_tex_used + tbytes > kTexBudget)
         return nullptr;
@@ -865,16 +1184,10 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
     if(!tiled)
         return nullptr;
     g_tex_used += tbytes;
-    extern u32 g_lm_bytes, g_dxt_bytes;
     (is_565 ? g_lm_bytes : g_dxt_bytes) += tbytes;
 
     if(is_565)
     {
-        if(pixels.size() < static_cast<size_t>(w) * h * 2)
-        {
-            free(tiled);
-            return nullptr;
-        }
         // Map RGB565 is little-endian -> swap to big-endian for GX.
         tile_rgb565(
             reinterpret_cast<u16 const*>(pixels.data()),
@@ -884,7 +1197,7 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
             true);
     } else // BC1/BC2/BC3 -> GX_TF_CMPR (re-tile the DXT1 colour block)
     {
-        bool const bc1 = fmt == blam::bitm::format_t::BC1;
+        bool const bc1 = fmt == fmt_t::BC1;
         dxt_to_cmpr(
             pixels.data(),
             reinterpret_cast<u8*>(tiled),
@@ -971,9 +1284,10 @@ static void update_camera(f32 dt)
 {
     if(!g_cam_ready)
     {
-        g_cam_pos   = g_spawn_pos + Vecf3{0.f, 0.f, 0.65f};
+        // Behind and above the first spawn, so its biped is in view
         g_cam_yaw   = g_spawn_rot;
-        g_cam_pitch = 0.f;
+        g_cam_pitch = -0.25f;
+        g_cam_pos   = g_spawn_pos - cam_forward() * 1.5f + Vecf3{0, 0, 0.9f};
         g_cam_ready = true;
     }
 #if defined(COFFEE_GEKKO)
@@ -1028,6 +1342,19 @@ static Matf4 make_modelview(f32 spin)
     m = glm::translate(m, -center);
     return m;
 }
+
+/* One directional sun for the objects, in eye space (GX lights are) */
+static void load_sun(Matf4 const& view)
+{
+    Vecf3 const dir = glm::normalize(Vecf3{-0.4f, -0.3f, -0.85f});
+    Vecf3 const eye = glm::mat3(view) * dir;
+    GXLightObj  sun;
+    // A far point light is how GX does a directional one
+    GX_InitLightPos(&sun, -eye.x * 1e5f, -eye.y * 1e5f, -eye.z * 1e5f);
+    GX_InitLightColor(&sun, GXColor{0xC8, 0xC4, 0xB8, 0xFF});
+    GX_LoadLightObj(&sun, GX_LIGHT0);
+    GX_SetChanAmbColor(GX_COLOR0A0, GXColor{0x58, 0x58, 0x60, 0xFF});
+}
 #endif
 
 i32 coffee_main(i32, cstring_w*)
@@ -1055,6 +1382,9 @@ i32 coffee_main(i32, cstring_w*)
         stage = 6;
     }
     LOG("done stage=%d err=%d", stage, g_err);
+#if defined(COFFEE_GEKKO)
+    LOG("map pages faulted: %u", platform::file::gekko::vmem::fault_count());
+#endif
 
 #if defined(FEATURE_ENABLE_Gexxo)
     static Vecf4 const fail_colors[] = {
@@ -1078,7 +1408,7 @@ i32 coffee_main(i32, cstring_w*)
 
     // Build GPU resources: per-page buffers + lightmap, per-submesh diffuse.
     u32 diffuse_count = 0;
-    u32 scn_parts     = 0;
+    u32 mdl_parts     = 0;
     try
     {
         for(u32 pi = 0; pi < g_pages.size(); pi++)
@@ -1149,7 +1479,7 @@ i32 coffee_main(i32, cstring_w*)
             diffuse_count,
             static_cast<unsigned>(g_diffuse_cache.size()));
 
-        // Scenery model parts -> GPU (position + diffuse UV; strip indices).
+        // Model parts -> GPU (position + normal + diffuse UV; strip indices).
         for(auto& [id, model] : g_models)
             for(auto& part : model.parts)
             {
@@ -1164,29 +1494,40 @@ i32 coffee_main(i32, cstring_w*)
                 part.vbo->alloc();
                 part.ebo->alloc();
                 part.vbo->commit(
-                    gsl::span<scn_vertex const>(
+                    gsl::span<mdl_vertex const>(
                         part.verts.data(), part.verts.size()));
                 part.ebo->commit(
                     gsl::span<u16 const>(
                         part.indices.data(), part.indices.size()));
+                // Canonical GX order: POS, NRM, TEX0
                 part.vao->add({
                     .index = 0,
                     .role  = gexxo::vertex_attribute::position,
                     .value =
-                        {.offset = 0, .stride = sizeof(scn_vertex), .count = 3},
+                        {.offset = 0, .stride = sizeof(mdl_vertex), .count = 3},
                 });
                 part.vao->add({
                     .index = 1,
+                    .role  = gexxo::vertex_attribute::normal,
+                    .value =
+                        {.offset = offsetof(mdl_vertex, nrm),
+                         .stride = sizeof(mdl_vertex),
+                         .count  = 3,
+                         .type   = semantic::type_t::i8,
+                         .frac   = 6},
+                });
+                part.vao->add({
+                    .index = 2,
                     .role  = gexxo::vertex_attribute::texcoord0,
                     .value =
-                        {.offset = offsetof(scn_vertex, uv),
-                         .stride = sizeof(scn_vertex),
+                        {.offset = offsetof(mdl_vertex, uv),
+                         .stride = sizeof(mdl_vertex),
                          .count  = 2},
                 });
                 part.vao->set_buffer(gexxo::buffers::vertex, part.vbo, 0);
                 part.vao->set_buffer(gexxo::buffers::element, part.ebo);
                 part.diffuse = load_diffuse(part.diffuse_img);
-                scn_parts++;
+                mdl_parts++;
             }
     } catch(std::bad_alloc const&)
     {
@@ -1194,15 +1535,12 @@ i32 coffee_main(i32, cstring_w*)
         // null and are simply skipped). Big maps don't fully fit in 24MB.
         LOG("gpu: out of memory, rendering partial scene");
     }
-    LOG("gpu: %u scenery instances, %u model parts",
-        static_cast<unsigned>(g_scenery.size()),
-        scn_parts);
-    {
-        extern u32 g_lm_bytes, g_dxt_bytes;
-        LOG("tex mem: lightmap(RGB565)=%u KiB, diffuse/detail(CMPR)=%u KiB",
-            g_lm_bytes / 1024,
-            g_dxt_bytes / 1024);
-    }
+    LOG("gpu: %u object instances, %u model parts",
+        static_cast<unsigned>(g_objects.size()),
+        mdl_parts);
+    LOG("tex mem: lightmap(RGB565)=%u KiB, diffuse/detail(CMPR)=%u KiB",
+        g_lm_bytes / 1024,
+        g_dxt_bytes / 1024);
     LOG("mem free after load: %u KiB", free_mem() / 1024);
 
 #if defined(COFFEE_GEKKO)
@@ -1257,11 +1595,6 @@ i32 coffee_main(i32, cstring_w*)
           .op       = stage_t::replace,
           .texcoord = stage_t::texcoord0,
           .texmap   = stage_t::texmap0}};
-    // flat material colour (untextured scenery parts) -> per-instance palette.
-    auto prog_flat      = gfx.alloc_program();
-    prog_flat->channels = {channel_t{.channel = channel_t::color0a0}};
-    prog_flat->stages   = {
-        stage_t{.stage = stage_t::stage0, .op = stage_t::pass}};
     // lightmap only (material has no diffuse): with one tex-gen only texcoord0
     // is generated, so output the lightmap UV (vertex TEX1) into texcoord0.
     auto prog_lm      = gfx.alloc_program();
@@ -1271,6 +1604,26 @@ i32 coffee_main(i32, cstring_w*)
           .op       = stage_t::replace,
           .texcoord = stage_t::texcoord0,
           .texmap   = stage_t::texmap0}};
+    // Objects: diffuse * (ambient + sun), or just the lit material colour
+    channel_t const lit{
+        .channel          = channel_t::color0a0,
+        .lighting         = true,
+        .ambient_src      = channel_t::src_reg,
+        .diffuse_src      = channel_t::src_reg,
+        .light_mask       = GX_LIGHT0,
+        .diffuse_function = channel_t::diffuse_clamp,
+    };
+    auto prog_obj           = gfx.alloc_program();
+    prog_obj->channels      = {lit};
+    prog_obj->stages        = {stage_t{
+               .stage    = stage_t::stage0,
+               .op       = stage_t::modulate,
+               .texcoord = stage_t::texcoord0,
+               .texmap   = stage_t::texmap0}};
+    auto prog_obj_flat      = gfx.alloc_program();
+    prog_obj_flat->channels = {lit};
+    prog_obj_flat->stages   = {
+        stage_t{.stage = stage_t::stage0, .op = stage_t::pass}};
 
     using bind_t = gexxo::texture_binding_t;
 
@@ -1380,8 +1733,9 @@ i32 coffee_main(i32, cstring_w*)
             }
         }
 
-        // Scenery: each instance's model parts at camera * model transform.
-        for(auto const& inst : g_scenery)
+        // Objects: each instance's model parts at camera * model transform.
+        load_sun(mv);
+        for(auto const& inst : g_objects)
         {
             if(!sphere_visible(fr, inst.center, inst.radius))
             {
@@ -1412,13 +1766,19 @@ i32 coffee_main(i32, cstring_w*)
                                 {.count = static_cast<u32>(part.verts.size())},
                             .instances = {.count = 1},
                         },
-                    .program             = part.diffuse ? prog_diff : prog_flat,
-                    .vertices            = part.vao,
+                    .program  = part.diffuse ? prog_obj : prog_obj_flat,
+                    .vertices = part.vao,
                     .instance_transforms = gsl::span<Matf4 const>(smvs, 1),
+                    .material_color      = Vecf4{1.f},
                 };
                 if(part.diffuse)
                     cmd.textures = {bind_t{.texture = part.diffuse}};
-                gfx.submit(cmd, gexxo::cull_state{.front_face = false});
+                // Model base map alpha is a mask (change colour, specular),
+                // not coverage
+                gfx.submit(
+                    cmd,
+                    gexxo::cull_state{.front_face = false},
+                    gexxo::blend_state{.opaque = true});
             }
         }
         gexxo::swapBuffers();
