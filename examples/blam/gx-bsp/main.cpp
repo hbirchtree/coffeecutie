@@ -163,7 +163,7 @@ static i16   g_spawn_bsp = 0; // which structure BSP the spawn is in
 
 // Active (spawn) BSP header + its magic.
 static blam::bsp::header const* g_active_hdr = nullptr;
-static blam::map_ptr            g_active_bm;
+static blam::bsp_ptr            g_active_bm;
 
 struct page_bitmap
 {
@@ -279,7 +279,7 @@ static std::vector<coll_plane> g_coll_planes;
 static std::vector<i16>        g_leaf_cluster;
 
 static void build_cluster_lookup(
-    blam::bsp::header const& hdr, blam::map_ptr const& bm)
+    blam::bsp::header const& hdr, blam::bsp_ptr const& bm)
 {
     auto coll = hdr.collision_header.data(bm, blam::single_value);
     if(coll.has_error())
@@ -462,7 +462,7 @@ static void append_material(
     page_t&                               page,
     blam::bsp::material const&            mat,
     blam::bsp::header const&              hdr,
-    blam::map_ptr const&                  bm)
+    blam::bsp_ptr const&                  bm)
 {
     auto verts  = mat.vertices().data(bm);
     auto lverts = mat.light_verts().data(bm);
