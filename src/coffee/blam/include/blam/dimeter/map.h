@@ -15,6 +15,9 @@ namespace blam::dimeter {
 struct raw_pool
 {
     std::array<Span<const byte_t>, 4> files;
+    /*! Vista: the side map whose tags this map borrows; their "local" raw
+     * data is in that file */
+    raw_file_t shared_file{raw_file_t::local};
 
     inline optional<Span<const byte_t>> resolve(raw_ref ref, u32 size) const
     {
@@ -25,6 +28,26 @@ struct raw_pool
         if(file.empty() || offset > file.size() || size > file.size() - offset)
             return std::nullopt;
         return file.subspan(offset, size);
+    }
+
+    /*! Like resolve(), for a reference held by `owner`: a tag borrowed from
+     * the shared map keeps its raw data there */
+    template<heap_t Heap>
+    inline optional<Span<const byte_t>> resolve(
+        magic_ptr_base<Heap> const& magic,
+        void const*                 owner,
+        raw_ref                     ref,
+        u32                         size) const
+    {
+        auto const* at = reinterpret_cast<byte_t const*>(owner);
+        if(ref.valid() && ref.file() == raw_file_t::local &&
+           shared_file != raw_file_t::local && magic.shared.base &&
+           at >= magic.shared.base &&
+           at < magic.shared.base + magic.shared.max_size)
+            ref.raw = to_le(
+                (static_cast<u32>(shared_file) << 30) |
+                (ref.offset() & 0x3FFFFFFF));
+        return resolve(ref, size);
     }
 };
 
@@ -54,6 +77,10 @@ struct map_container
 
     Span<const byte_t> data;
 
+    /*! Vista: the map every tag this one lists as null is borrowed from
+     * (shared.map or single_player_shared.map); same table numbering */
+    map_container const* shared{nullptr};
+
     static result_type from_bytes(semantic::BytesConst const& map, V)
     {
         if(map.size < sizeof(header_type))
@@ -79,7 +106,8 @@ struct map_container
         u32  group_ptr = from_le(index->group_table_pointer);
         bool is_vista  = group_ptr < from_le(header->meta_size);
         if(is_vista != std::is_same_v<V, vista_version_t>)
-            return stl_types::failure(map_load_error::incompatible_map_version_expected_halo2);
+            return stl_types::failure(
+                map_load_error::incompatible_map_version_expected_halo2);
 
         map_container out{
             .header = header,
@@ -104,9 +132,9 @@ struct map_container
     }
 
     /*! Resolves pointers within the tag index (group + tag tables) */
-    inline magic_ptr index_magic() const
+    inline dimeter::index_magic index_magic() const
     {
-        return magic_ptr{
+        return dimeter::index_magic{
             .base        = data.data(),
             .max_size    = static_cast<u32>(data.size()),
             .meta_offset = from_le(header->meta_offset),
@@ -114,15 +142,24 @@ struct map_container
         };
     }
 
-    /*! Resolves pointers within tag data (tag_t::data, tag_block) */
-    inline magic_ptr magic() const
+    /*! Resolves pointers within tag data (tag_t::data, tag_block), the
+     * shared map's heap included */
+    inline tag_magic magic() const
     {
-        return magic_ptr{
+        tag_magic out{
             .base        = data.data(),
             .max_size    = static_cast<u32>(data.size()),
             .meta_offset = from_le(header->meta_offset),
             .mask        = meta_mask,
         };
+        if(shared)
+            out.shared = {
+                .base        = shared->data.data(),
+                .max_size    = static_cast<u32>(shared->data.size()),
+                .meta_offset = from_le(shared->header->meta_offset),
+                .mask        = shared->meta_mask,
+            };
+        return out;
     }
 
     inline Span<group_t const> groups() const
@@ -130,8 +167,8 @@ struct map_container
         i32 count = from_le(index->group_count);
         if(count <= 0)
             return {};
-        magic_ptr   magic  = index_magic();
-        auto const* groups = magic.as<group_t>(
+        auto        magic  = index_magic();
+        auto const* groups = magic.template as<group_t>(
             from_le(index->group_table_pointer), static_cast<u32>(count));
         if(!groups)
             return {};
@@ -143,8 +180,8 @@ struct map_container
         i32 count = from_le(index->tag_count);
         if(count <= 0)
             return {};
-        magic_ptr   magic = index_magic();
-        auto const* tags  = magic.as<tag_t>(
+        auto        magic = index_magic();
+        auto const* tags  = magic.template as<tag_t>(
             from_le(index->tag_table_pointer), static_cast<u32>(count));
         if(!tags)
             return {};
@@ -157,6 +194,10 @@ struct map_container
         u16  idx   = id.index();
         if(!id.valid() || idx >= table.size())
             return nullptr;
+        if(!table[idx].valid() && shared)
+            if(auto const* borrowed = shared->tag_at(id);
+               borrowed && borrowed->valid())
+                return borrowed;
         return &table[idx];
     }
 
@@ -177,6 +218,9 @@ struct map_container
     inline std::string_view tag_name(tag_t const& tag) const
     {
         auto table = tags();
+        if(shared &&
+           (&tag < table.data() || &tag >= table.data() + table.size()))
+            return shared->tag_name(tag);
         if(table.empty() || &tag < table.data())
             return {};
         auto position = static_cast<u32>(&tag - table.data());
@@ -243,5 +287,32 @@ struct map_container
         return std::string_view(start, ::strnlen(start, max_len));
     }
 };
+
+/*! The side map a Vista map borrows tags from, when the pool has it and
+ * the tag tables line up; the caller keeps it alive and sets map.shared */
+template<typename V>
+inline std::optional<map_container<V>> load_shared(
+    map_container<V> const& map, raw_pool& pool)
+{
+    if constexpr(!std::is_same_v<V, vista_version_t>)
+        return std::nullopt;
+    else
+    {
+        for(auto slot : {raw_file_t::shared, raw_file_t::single_player_shared})
+        {
+            auto const& bytes = pool.files[static_cast<u8>(slot)];
+            if(bytes.empty())
+                continue;
+            auto side = map_container<V>::from_bytes(
+                semantic::BytesConst::ofBytes(bytes.data(), bytes.size()), V{});
+            if(!side.has_value() || from_le(side.value().index->tag_count) !=
+                                        from_le(map.index->tag_count))
+                continue;
+            pool.shared_file = slot;
+            return side.value();
+        }
+        return std::nullopt;
+    }
+}
 
 } // namespace blam::dimeter
