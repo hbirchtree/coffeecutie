@@ -553,6 +553,12 @@ struct SpawnObjectEvent
     bool server_owned{false};
     /* Set on a replica for server_owned requests, which are then dropped */
     bool deferred{false};
+
+    /* Created by an effect, which every peer plays itself: never replicated */
+    bool            local_only{false};
+    Vecf3           velocity{};         /*!< wu/s, bodies with mass */
+    Vecf3           angular_velocity{}; /*!< rad/s */
+    libc_types::f32 lifetime{0.f};      /*!< seconds, 0 = until despawned */
 };
 
 struct DespawnObjectEvent

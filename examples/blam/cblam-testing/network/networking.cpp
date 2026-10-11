@@ -1594,7 +1594,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
          * from already carries the net id */
         m_game_bus.addEventFunction<SpawnObjectEvent>(
             0, [this](GameEvent&, SpawnObjectEvent* spawn) {
-                if(spawn->origin != MapLoadEvent::Local)
+                if(spawn->origin != MapLoadEvent::Local || spawn->local_only)
                     return;
                 bool const replica = !is_server() &&
                                      m_connection != k_HSteamNetConnection_Invalid;

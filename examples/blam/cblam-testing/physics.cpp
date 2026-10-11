@@ -1147,6 +1147,15 @@ struct PhysicsSystem
                 /* Nothing drives it, so it has to stop on its own */
                 if(physics.upright && m_bodies.contains(id))
                     m_bodies.at(id).world_body->setFriction(1.f);
+                /* Thrown by an effect, or the motion of the body it replaces */
+                if(moves && !follower && m_bodies.contains(id))
+                {
+                    auto&       body = *m_bodies.at(id).world_body;
+                    auto const& v    = physics.linear_velocity;
+                    auto const& w    = physics.angular_velocity;
+                    body.setLinearVelocity(btVector3(v.x, v.y, v.z));
+                    body.setAngularVelocity(btVector3(w.x, w.y, w.z));
+                }
                 continue;
             }
             if(!moves)

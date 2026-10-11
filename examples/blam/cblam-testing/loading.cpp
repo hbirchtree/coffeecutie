@@ -73,6 +73,15 @@ struct ResourceLoader
     std::vector<SpawnModelEvent>       pending_models;
     std::vector<MountModelEvent>       pending_mounts;
     std::vector<SpawnObjectEvent>      pending_objects;
+
+    struct expiry_t
+    {
+        u64               entity;
+        compo::time_point at;
+    };
+
+    std::vector<expiry_t>              expiring;
+    compo::time_point                  now{};
     std::vector<u32>                   pending_despawns;
     std::optional<ClusterChangedEvent> pending_cluster_change;
 
@@ -208,6 +217,10 @@ struct ResourceLoader
 
         reconcile_player_bipeds(p, files);
         reconcile_first_person(p, files);
+
+        now = t;
+        if(!expiring.empty())
+            expire_objects(p);
 
         bool const section_changed = current.section >= 0 &&
                                      pending_bsps.empty() &&
@@ -1753,7 +1766,12 @@ struct ResourceLoader
             anim.graph = graph;
         }
         if(physics)
-            ent.template get<ObjectPhysics>() = std::move(*physics);
+        {
+            auto& body            = ent.template get<ObjectPhysics>();
+            body                  = std::move(*physics);
+            body.linear_velocity  = spawn.velocity;
+            body.angular_velocity = spawn.angular_velocity;
+        }
 
         if(projectile)
         {
@@ -1796,6 +1814,32 @@ struct ResourceLoader
         for(auto const& model_id : mesh_data.models)
             build_submodels(
                 p, ent, model, model_id, submodel, render_layer::world, 1);
+
+        if(spawn.lifetime > 0.f)
+            expiring.push_back(
+                {.entity = ent.id(),
+                 .at     = now +
+                       std::chrono::duration_cast<compo::time_point::duration>(
+                           std::chrono::duration<f32>(spawn.lifetime))});
+    }
+
+    /* Local debris whose time is up, with its submodels */
+    void expire_objects(Proxy& p)
+    {
+        std::set<u64> doomed;
+        std::erase_if(expiring, [&](expiry_t const& e) {
+            if(e.at > now)
+                return false;
+            doomed.insert(e.entity);
+            if(auto const* model = p.template get<Model>(e.entity))
+                for(auto const& part : model->parts)
+                    doomed.insert(part.id());
+            return true;
+        });
+        if(!doomed.empty())
+            p.remove_entity_if([&doomed](compo::Entity const& e) {
+                return doomed.contains(e.id);
+            });
     }
 
     void despawn_object(Proxy& p, u32 net_id)

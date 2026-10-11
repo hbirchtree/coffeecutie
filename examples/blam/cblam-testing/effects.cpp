@@ -32,6 +32,7 @@ using EffectManifest = compo::SubsystemManifest<
     type_list_t<
         EffectScene,
         PhysicsBus,
+        GameEventBus,
         const BlamFiles<halo_version>,
         const BSPCache<halo_version>>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
@@ -612,13 +613,42 @@ struct EffectSystem
                         start_system(tag, at, 0, {}, fx.velocity, false);
                     break;
                 default:
-                    /* Objects, decals and damage are not created yet */
+                    if(auto it = m_index.find(part.type);
+                       it != m_index.end() && (*it).matches(tag_class_t::obje))
+                        spawn_part_object(p, fx, part, at);
+                    /* Decals and damage are not created yet */
                     break;
                 }
             }
         if(auto particles = ev.particles.data(*m_magic); particles.has_value())
             for(auto const& burst : particles.value())
                 emit(p, fx, burst);
+    }
+
+    /* Debris and projectiles, local to this peer like the effect itself */
+    void spawn_part_object(
+        Proxy&                   p,
+        effect_instance_t const& fx,
+        effect::part_t const&    part,
+        place_t const&           at)
+    {
+        Vecf3 const dir     = cone(at.forward, part.velocity_cone_angle);
+        bool const  garbage = class_of(part.type) == blam::tag_class_t::garb;
+        SpawnObjectEvent spawn{
+            .object   = part.type,
+            .position = at.position,
+            .rotation =
+                glm::angleAxis(std::atan2(dir.y, dir.x), Vecf3{0, 0, 1}) *
+                glm::angleAxis(
+                    -std::asin(std::clamp(dir.z, -1.f, 1.f)), Vecf3{0, 1, 0}),
+            .local_only = true,
+            .velocity   = dir * uniform(part.velocity_bounds) + fx.velocity,
+            .angular_velocity = cone(Vecf3{0, 0, 1}, glm::pi<f32>()) *
+                                uniform(part.angular_velocity_bounds),
+            .lifetime = garbage ? debris_lifetime : 0.f,
+        };
+        GameEvent ev{.type = GameEvent::SpawnObject};
+        p.template subsystem<GameEventBus>().inject(ev, &spawn);
     }
 
     /* Everything happens in air for now: there is no water test yet */
@@ -1668,6 +1698,7 @@ struct EffectSystem
     static constexpr size_t max_contrail_points  = 256;
     static constexpr f32    default_light_life   = .25f;
     static constexpr f32    ticks_per_second     = 30.f;
+    static constexpr f32    debris_lifetime      = 30.f; /* seconds */
     static constexpr u64    flare_ray_interval   = 4;    /* frames */
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
     static constexpr f32    pctl_scale_to_radius = 64.f; /* scale is per bitmap pixel */
