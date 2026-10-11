@@ -21,6 +21,9 @@
 #if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
 #include <coffee/comp_app/dummy_plug.h>
 #endif
+#if defined(COFFEE_EMSCRIPTEN)
+#include "web_output.h"
+#endif
 
 namespace oaf {
 
@@ -440,6 +443,17 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         return "loopback was requested, but not supported by platform";
 
     auto name = device.name.value_or("");
+#if defined(COFFEE_EMSCRIPTEN)
+    /* The page's AudioContext plays what a loopback device mixes */
+    m_web_output.reset();
+    if(loopback_supported)
+        m_web_output = web::open_output();
+    if(m_web_output)
+    {
+        get_proc("alcLoopbackOpenDeviceSOFT", loopbackOpenDeviceSOFT);
+        m_device = alcLoopbackOpenDeviceSOFT(nullptr);
+    } else
+#endif
 #if defined(ALC_SOFT_loopback)
     if(loopback_supported && loopback_requested)
     {
@@ -538,6 +552,17 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         attrs.push_back(info.fmt.frequency);
     }
 #endif
+#if defined(COFFEE_EMSCRIPTEN)
+    if(m_web_output)
+    {
+        attrs.push_back(ALC_FORMAT_CHANNELS_SOFT);
+        attrs.push_back(ALC_STEREO_SOFT);
+        attrs.push_back(ALC_FORMAT_TYPE_SOFT);
+        attrs.push_back(ALC_FLOAT_SOFT);
+        attrs.push_back(ALC_FREQUENCY);
+        attrs.push_back(static_cast<ALCint>(web::sample_rate(*m_web_output)));
+    }
+#endif
 
     attrs.push_back(0);
 
@@ -592,6 +617,11 @@ std::optional<std::string> api::load(DeviceHandle&& device)
         "OpenAL EFX: {} ({} sends)",
         m_features.efx ? "enabled" : "unavailable",
         m_features.efx_sends);
+
+#if defined(COFFEE_EMSCRIPTEN)
+    if(m_web_output)
+        web::start_output(*m_web_output, m_device);
+#endif
 
     return std::nullopt;
 }
@@ -737,11 +767,7 @@ void system::start_frame(compo::ContainerProxy&, const compo::time_point& t)
 
 void system::collect_info(comp_app::interfaces::AppInfo& appInfo)
 {
-#if defined(COFFEE_EMSCRIPTEN)
-    appInfo.add("al:api", "Emscripten");
-#else
     appInfo.add("al:api", "openal-soft");
-#endif
     appInfo.add("al:device", device());
     std::string all_extensions;
     if(auto extensions = alcGetString(m_device, ALC_EXTENSIONS))

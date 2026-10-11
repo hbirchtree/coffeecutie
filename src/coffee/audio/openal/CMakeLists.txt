@@ -34,15 +34,20 @@ if(EMSCRIPTEN)
   add_dependencies(OAF OpenAL_ImaDecoder)
 endif()
 
+if(ANDROID)
+  find_package(OpenSL REQUIRED)
+endif()
+find_package(OpenAL CONFIG REQUIRED)
+target_link_libraries(OAF PUBLIC OpenAL::OpenAL)
+
 if(EMSCRIPTEN)
-  # Emscripten requires that we link this one instead
-  # It invokes the built-in OpenAL support on top of WebAudio
-  target_link_options(OAF PUBLIC -lopenal)
-else()
-  # Otherwise we use openal-soft
-  if(ANDROID)
-    find_package(OpenSL REQUIRED)
-  endif()
-  find_package(OpenAL CONFIG REQUIRED)
-  target_link_libraries(OAF PUBLIC OpenAL::OpenAL)
+  # openal-soft is a side module, mixed into WebAudio by web_output.cpp
+  target_sources(OAF PRIVATE private/web_output.cpp)
+  # Emscripten's libopenal.js would shadow the side module's AL functions,
+  # so link the default JS libraries without it
+  target_link_options(OAF PUBLIC
+    -sAUTO_JS_LIBRARIES=0
+    -lwebgl.js -lglut.js -lxlib.js -legl.js -luuid.js -lglew.js
+    -lidbstore.js -lasync.js -lsdl.js
+  )
 endif()

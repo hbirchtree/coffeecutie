@@ -17,6 +17,10 @@ namespace oaf {
 
 using namespace semantic::concepts::sound;
 
+namespace web {
+struct output_t;
+} // namespace web
+
 static_assert(std::is_same_v<ALuint, u32>);
 static_assert(std::is_same_v<ALfloat, f32>);
 static_assert(std::is_same_v<ALint, libc_types::i32>);
@@ -345,6 +349,9 @@ struct api
     };
 
     std::optional<loopback_data_t> m_loopback{};
+
+    /* The browser's audio output, mixing a loopback device */
+    std::shared_ptr<web::output_t> m_web_output{};
 };
 
 // static_assert(API<api>);

@@ -26,7 +26,8 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
         $<IF:$<CONFIG:Debug>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_DEBUG>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_RELEASE>>
     )
 elseif(BUILD_OPENAL AND EMSCRIPTEN)
-    set(BUNDLED_LIBS OpenAL_ImaDecoder)
+    find_package(OpenAL CONFIG REQUIRED)
+    set(BUNDLED_LIBS OpenAL_ImaDecoder OpenAL::OpenAL)
 endif()
 
 resource_dir_package(
@@ -90,9 +91,10 @@ target_sources(BlamGraphics PRIVATE ${BLAMG_CRUNCHED_SOURCES})
 #  # $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/caching.h>
 #  # $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/components.h>
 #)
+# Two of the pool go to openal-soft: its mixer and its event thread
 set_target_properties(
   BlamGraphics
-  PROPERTIES EMSCRIPTEN_THREADPOOL_SIZE 3
+  PROPERTIES EMSCRIPTEN_THREADPOOL_SIZE 5
              EMSCRIPTEN_GROWABLE_MEMORY OFF
              EMSCRIPTEN_HEAP_SIZE 1024
 )
