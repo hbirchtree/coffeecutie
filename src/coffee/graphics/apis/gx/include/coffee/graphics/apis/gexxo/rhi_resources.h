@@ -430,6 +430,7 @@ struct vertex_attribute
         u32              count{4};
         semantic::type_t type{semantic::type_t::f32};
         attribute_flags  flags{attribute_flags::none};
+        u8               frac{0}; // fixed-point fraction bits for int types
     } value;
 
     struct
@@ -551,7 +552,7 @@ struct vertex_array_t
             .vtxattr  = detail::role_to_attr(attribute),
             .comptype = detail::attr_to_type(attribute),
             .compsize = detail::attr_to_fmt(attribute),
-            .frac     = 0,
+            .frac     = attribute.value.frac,
         };
     }
 
@@ -843,6 +844,10 @@ struct draw_command
     int                    uniforms{};
     int                    buffers{};
     int                    samplers{};
+
+    /* Material register colour for channels sourcing GX_SRC_REG, else a
+     * per-instance debug palette */
+    std::optional<Vecf4> material_color{};
 };
 
 /* A recorded GX display list: the GX_Begin..vertices..GX_End command stream for
@@ -908,6 +913,7 @@ struct blend_state
     bool additive{false};
     bool multiply{false};
     bool maximum{false};
+    bool opaque{false}; // no blending, alpha is ignored
 };
 
 struct depth_state

@@ -3,6 +3,7 @@
 #include "peripherals/enum/helpers.h"
 #include "rhi_resources.h"
 
+#include <algorithm>
 #include <array>
 #include <ogc/cache.h>
 #include <ogc/gx.h>
@@ -243,7 +244,9 @@ inline void apply_state(cull_state const& state)
 
 inline void apply_state(blend_state const& state)
 {
-    if(state.additive)
+    if(state.opaque)
+        GX_SetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+    else if(state.additive)
         GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_NONE);
     else if(state.multiply)
         GX_SetBlendMode(GX_BM_BLEND, GX_BL_DSTCLR, GX_BL_INVSRCALPHA, GX_NONE);
@@ -384,7 +387,7 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
             gxattr,
             detail::attr_to_type(attr),
             detail::attr_to_fmt(attr),
-            0 /*frac*/);
+            attr.value.frac);
         if(cmd.call.indexed)
         {
             auto buffer = vao.m_vertex_buffers.find(attr.buffer.id);
@@ -454,6 +457,10 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         {0xE0, 0xE0, 0x40}, /* yellow*/
     };
 
+    bool const has_normals = std::any_of(
+        vao.m_attributes.begin(), vao.m_attributes.end(), [](auto const& a) {
+            return a.role == vertex_attribute::normal;
+        });
     for(u32 inst = cmd.data.instances.offset;
         inst < (cmd.call.instanced ? cmd.data.instances.count : 0);
         inst++)
@@ -464,12 +471,23 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
             detail::glm_to_mtx(
                 xforms[inst], mv); /* xforms are modelview already */
             GX_LoadPosMtxImm(mv, GX_PNMTX0);
+            if(has_normals)
+                GX_LoadNrmMtxImm(mv, GX_PNMTX0);
         }
 
         /* Per-instance material colour (used when a channel sources GX_SRC_REG;
          * ignored when it sources the vertex colour). Kept outside the list. */
-        auto const&   col    = palette[inst % 4];
-        GXColor const matcol = {col[0], col[1], col[2], 0xFF};
+        auto const& col    = palette[inst % 4];
+        GXColor     matcol = {col[0], col[1], col[2], 0xFF};
+        if(cmd.material_color)
+        {
+            auto const& m = *cmd.material_color;
+            matcol        = {
+                static_cast<u8>(m.r * 255.f),
+                static_cast<u8>(m.g * 255.f),
+                static_cast<u8>(m.b * 255.f),
+                static_cast<u8>(m.a * 255.f)};
+        }
         GX_SetChanMatColor(GX_COLOR0A0, matcol);
 
         GX_CallDispList(dl.buffer, dl.size);
