@@ -923,8 +923,15 @@ struct EffectSystem
             break;
         case tag_class_t::mgs2:
             if(auto const* tag = tag_data<light_volume>(ref, tag_class_t::mgs2))
-                m_volumes.push_back(
-                    {.tag = tag, .parent = entity, .marker = marker, .scale = scale});
+                /* As a widget it names its own marker */
+                m_volumes.push_back({
+                    .tag    = tag,
+                    .parent = entity,
+                    .marker = marker.empty()
+                                  ? std::string(tag->attachment_marker.str())
+                                  : marker,
+                    .scale  = scale,
+                });
             break;
         case tag_class_t::pctl:
             if(auto const* tag = tag_data<particle_system>(ref, tag_class_t::pctl))
@@ -1694,7 +1701,9 @@ struct EffectSystem
                 it = m_volumes.erase(it);
                 continue;
             }
-            f32 const level  = scale_of(p, it->parent, it->scale);
+            /* Its own brightness source, e.g. a flashlight's switch */
+            f32 const level = scale_of(p, it->parent, it->scale) *
+                              scale_of(p, it->parent, it->tag->brightness_scale_source);
             auto      frames = it->tag->frames.data(*m_magic);
             if(level > 0.f && frames.has_value() && !frames.value().empty())
             {

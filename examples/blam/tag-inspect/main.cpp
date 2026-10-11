@@ -1125,7 +1125,15 @@ void dump_object(blam::scn::object const* obj)
         print_enum("function", f.function);
         print_enum("map_to", f.map_to);
         print_enum("bounds_mode", f.bounds_mode);
-        fmt::print("bounds={:g} scale_by={:g}\n", f.bounds, f.scale_by);
+        print_enum("scale_period_by", f.scale_period_by);
+        print_enum("scale_function_by", f.scale_function_by);
+        print_enum("add", f.add);
+        print_enum("scale_result_by", f.scale_result_by);
+        fmt::print(
+            "turn_off_with={} bounds={:g} scale_by={:g}\n",
+            f.turn_off_with,
+            f.bounds,
+            f.scale_by);
     });
 
     auto colors = obj->change_colors.data(g_magic);
