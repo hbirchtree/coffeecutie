@@ -1821,6 +1821,18 @@ struct ResourceLoader
                  .at     = now +
                        std::chrono::duration_cast<compo::time_point::duration>(
                            std::chrono::duration<f32>(spawn.lifetime))});
+        if(object.creation_effect.valid())
+        {
+            GameEvent        ev{.type = GameEvent::SpawnEffect};
+            SpawnEffectEvent play{
+                .effect    = object.creation_effect,
+                .position  = model.position,
+                .direction = model.rotation * Vecf3{1.f, 0.f, 0.f},
+                .velocity  = spawn.velocity,
+                .parent    = ent.id(),
+            };
+            game_bus->inject(ev, &play);
+        }
     }
 
     /* Local debris whose time is up, with its submodels */
