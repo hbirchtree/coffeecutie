@@ -16,6 +16,7 @@ struct EffectScene : compo::SubsystemBase
 
     using Vecf3 = typing::vector_types::Vecf3;
     using Vecf4 = typing::vector_types::Vecf4;
+    using Vec2    = typing::vector_types::Vecf2;
     using f32   = libc_types::f32;
     using i16   = libc_types::i16;
     using blend_t = blam::scn::framebuffer_blending;
@@ -60,6 +61,17 @@ struct EffectScene : compo::SubsystemBase
         f32                   cos_cutoff{-1.f};  /* dark outside, -1 = omni */
     };
 
+    /* A mark on the structure: the world triangles it covers */
+    struct decal_t
+    {
+        blam::tagref_t const* bitmap{nullptr};
+        i16                   frame{0};
+        blend_t               blend{blend_t::multiply};
+        Vecf4                 color{1.f};
+        std::vector<Vecf3>    positions; /* triangles */
+        std::vector<Vec2>     uv;        /* 0..1 across the decal */
+    };
+
     /* A lens flare and how much of it each local seat sees */
     struct flare_t
     {
@@ -74,6 +86,8 @@ struct EffectScene : compo::SubsystemBase
     std::vector<ribbon_t> ribbons;
     std::vector<light_t>  lights;
     std::vector<flare_t>  flares;
+    std::vector<decal_t const*>
+        decals; /* near the eye, owned by EffectSystem */
 
     void clear()
     {
@@ -81,6 +95,7 @@ struct EffectScene : compo::SubsystemBase
         ribbons.clear();
         lights.clear();
         flares.clear();
+        decals.clear();
     }
 };
 

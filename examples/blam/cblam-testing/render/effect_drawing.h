@@ -228,6 +228,31 @@ struct EffectDrawer
         vertices.clear();
         batches.clear();
 
+        /* Decals first, flat on the world, a batch per blend */
+        for(blend_t blend :
+            {blend_t::alpha_blend,
+             blend_t::multiply,
+             blend_t::double_multiply,
+             blend_t::add})
+        {
+            batch_t batch{.offset = static_cast<u32>(vertices.size())};
+            if(blend == blend_t::multiply || blend == blend_t::double_multiply)
+            {
+                batch.mode  = blend == blend_t::multiply ? 2.f : 3.f;
+                batch.blend = {.multiply = true};
+            } else if(blend == blend_t::add)
+            {
+                batch.mode  = 1.f;
+                batch.blend = {.additive = true};
+            }
+            for(auto const* d : scene.decals)
+                if(decal_group(d->blend) == blend)
+                    add_decal(cache, *d);
+            batch.count = static_cast<u32>(vertices.size()) - batch.offset;
+            if(batch.count > 0)
+                batches.push_back(batch);
+        }
+
         /* Back to front, so alpha blending layers right */
         std::vector<EffectScene::sprite_t const*> sprites;
         sprites.reserve(scene.sprites.size());
@@ -294,6 +319,36 @@ struct EffectDrawer
                 .shape    = Vecf4(img.pivot, img.aspect, 0.f),
             });
         }
+    }
+
+    static blend_t decal_group(blend_t blend)
+    {
+        switch(blend)
+        {
+        case blend_t::multiply:
+        case blend_t::double_multiply:
+        case blend_t::add:
+            return blend;
+        default:
+            return blend_t::alpha_blend;
+        }
+    }
+
+    void add_decal(BitmapCache<V>& cache, EffectScene::decal_t const& d)
+    {
+        image_t const& img = image(cache, d.bitmap, 0, d.frame);
+        if(!img.ok)
+            return;
+        for(size_t i = 0; i < d.positions.size(); i++)
+            vertices.push_back({
+                .position = d.positions[i],
+                .tex      = Vecf2(
+                    glm::mix(img.rect.x, img.rect.z, d.uv[i].x),
+                    glm::mix(img.rect.w, img.rect.y, d.uv[i].y)),
+                .color  = d.color,
+                .atlas  = img.atlas,
+                .source = Vecf4(img.format, img.layer, 3.f, img.opaque),
+            });
     }
 
     void add_ribbon(BitmapCache<V>& cache, EffectScene::ribbon_t const& r)

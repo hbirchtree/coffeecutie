@@ -169,6 +169,42 @@ static_assert(offsetof(particle, sprite_size) == 0xa8);
 static_assert(offsetof(particle, shader) == 0xd4);
 static_assert(sizeof(particle) == 356);
 
+/*! A mark left on the structure, aka deca */
+struct decal_definition
+{
+    u16                               flags;
+    u16                               type; /* scratch, splatter, burn, sign */
+    u16                               layer;
+    u16                               padding;
+    tagref_typed_t<tag_class_t::deca> next_decal_in_chain;
+    Vecf2                             radius; /* wu */
+    u32                               padding1[3];
+    Vecf2                             intensity;
+    Vecf3                             color_lower_bound;
+    Vecf3                             color_upper_bound;
+    u32                               padding2[3];
+    i16                               animation_loop_frame;
+    i16                               animation_speed; /* ticks per frame */
+    u32                               padding3[7];
+    Vecf2                             lifetime;   /* seconds */
+    Vecf2                             decay_time; /* seconds, fading out */
+    u32                               padding4[14];
+    framebuffer_blending              blend_function;
+    u16                               padding5;
+    u32                               padding6[5];
+    tagref_typed_t<tag_class_t::bitm> map;
+    u32                               padding7[5];
+    f32                               maximum_sprite_extent;
+};
+
+static_assert(offsetof(decal_definition, radius) == 0x18);
+static_assert(offsetof(decal_definition, intensity) == 0x2c);
+static_assert(offsetof(decal_definition, color_lower_bound) == 0x34);
+static_assert(offsetof(decal_definition, lifetime) == 0x78);
+static_assert(offsetof(decal_definition, blend_function) == 0xc0);
+static_assert(offsetof(decal_definition, map) == 0xd8);
+static_assert(offsetof(decal_definition, maximum_sprite_extent) == 0xfc);
+
 /*! Many particles moving as one, e.g. smoke, aka pctl */
 struct particle_system
 {

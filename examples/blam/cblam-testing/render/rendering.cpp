@@ -2341,7 +2341,8 @@ struct MeshRenderer
 
         auto const& scene = p.template subsystem<EffectScene>();
         if(m_players.empty() ||
-           (scene.sprites.empty() && scene.ribbons.empty() && scene.flares.empty()) ||
+           (scene.sprites.empty() && scene.ribbons.empty() &&
+            scene.flares.empty() && scene.decals.empty()) ||
            !m_effects.load(*m_api))
             return;
         m_effects.build(

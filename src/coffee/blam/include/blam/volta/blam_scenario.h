@@ -1054,10 +1054,13 @@ struct references
 
 struct decal
 {
-    i16   unk1;
-    i16   unk2;
-    Vecf3 pos;
+    i16   type; /*!< into the scenario's decal palette */
+    i8    yaw;
+    i8    pitch;
+    Vecf3 position;
 };
+
+static_assert(sizeof(decal) == 16);
 
 struct decal_ref
 {
@@ -1355,7 +1358,12 @@ struct scenario
 
     reference<starting_equip>               starting_equipment;
     reference<bsp_trigger>                  bsp_switch_triggers;
-    reflex_group<decal>                     decals;
+
+    struct
+    {
+        reference<decal>     instances;
+        reference<decal_ref> palette; /* 16-byte entries, unlike objects' */
+    } decals;
     reference<detail_object_collection_ref> detail_object_collection;
     u32                                     padding4[21];
 

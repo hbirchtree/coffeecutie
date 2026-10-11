@@ -10,7 +10,7 @@ layout(location = 3) in vec2 tex;
 layout(location = 4) in vec4 color;
 layout(location = 5) in vec4 atlas;  /* scale xy, offset zw */
 layout(location = 7) in vec4 shape;  /* pivot xy, aspect */
-layout(location = 6) in vec4 source; /* format, layer, kind (0 sprite, 1 ribbon, 2 flare), opaque */
+layout(location = 6) in vec4 source; /* format, layer, kind (0 sprite, 1 ribbon, 2 flare, 3 decal), opaque */
 
 layout(location = 0) uniform mat4 camera;
 layout(location = 1) uniform vec3 eye;
@@ -61,6 +61,10 @@ void main()
         vec3 side = cross(axis, eye - position);
         side      = length(side) > 0.0001 ? normalize(side) : cam_right;
         world     = position + side * corner.x * corner.z;
+    } else if(source.z > 2.5)
+    {
+        /* Decals are already clipped onto the world */
+        world = position;
     } else
     {
         /* Lens flares are already on screen; axis.x squares them up */

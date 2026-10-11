@@ -8,7 +8,7 @@ layout(location = 0) in FragmentData
     flat vec4 source;
 } frag;
 
-layout(location = 4) uniform float blend_mode; /* 0 alpha, 1 add, 2 multiply */
+layout(location = 4) uniform float blend_mode; /* 0 alpha, 1 add, 2 multiply, 3 double multiply */
 
 layout(location = 10, binding = 0) uniform sampler2DArray source_bc1;
 layout(location = 11, binding = 1) uniform sampler2DArray source_bc2;
@@ -93,7 +93,9 @@ void main()
     if(frag.source.w > 0.5)
         c.a = 1.0;
     c *= frag.color;
-    if(blend_mode > 1.5)
+    if(blend_mode > 2.5)
+        out_color = vec4(mix(vec3(1.0), 2.0 * c.rgb, c.a), 1.0);
+    else if(blend_mode > 1.5)
         out_color = vec4(mix(vec3(1.0), c.rgb, c.a), 1.0);
     else
         out_color = c;

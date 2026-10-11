@@ -40,6 +40,7 @@ using EffectManifest = compo::SubsystemManifest<
 namespace {
 
 using blam::scn::contrail;
+using blam::scn::decal_definition;
 using blam::scn::effect;
 using blam::scn::lens_flare;
 using blam::scn::light;
@@ -242,6 +243,9 @@ struct EffectSystem
             m_requests.clear();
             m_flare_seen.clear();
             m_weather = {};
+            m_decal_bsp = nullptr;
+            m_placed_decals.clear();
+            m_effect_decals.clear();
         }
         m_magic = &files.container.magic;
         m_index = blam::tag_index_view<halo_version>(files.container);
@@ -262,6 +266,317 @@ struct EffectSystem
         draw_volumes(p, scene);
         step_flares(p, scene, dt);
         step_weather(p, scene, dt);
+        step_decals(p, scene, dt);
+    }
+
+    /* ---- Decals ---- */
+
+    struct decal_instance_t
+    {
+        EffectScene::decal_t look;
+        Vecf3                center{};
+        f32                  intensity{1.f};
+        f32                  age{0.f};
+        f32 life{0.f}; /* effect decals only; placed ones stay */
+        f32 decay{0.f};
+        f32 alpha{1.f};
+    };
+
+    using triangle_t = std::array<Vecf3, 3>;
+
+    static u64 decal_cell_key(Vecf3 const& at)
+    {
+        auto const c = glm::ivec3(glm::floor(at / decal_cell));
+        return (u64(u32(c.x) & 0x1FFFFF) << 42) |
+               (u64(u32(c.y) & 0x1FFFFF) << 21) | u64(u32(c.z) & 0x1FFFFF);
+    }
+
+    /* The resident section's triangles, binned for decals to find */
+    void index_decal_triangles(BSPItem const& bsp)
+    {
+        m_decal_triangles.clear();
+        m_decal_grid.clear();
+        for(auto const& probe : bsp.light_probes)
+            for(auto const& tri : probe.triangles)
+            {
+                auto const index = static_cast<u32>(m_decal_triangles.size());
+                m_decal_triangles.push_back(tri.position);
+                Vecf3 const lo = glm::min(
+                    glm::min(tri.position[0], tri.position[1]),
+                    tri.position[2]);
+                Vecf3 const hi = glm::max(
+                    glm::max(tri.position[0], tri.position[1]),
+                    tri.position[2]);
+                for(f32 x = lo.x; x < hi.x + decal_cell; x += decal_cell)
+                    for(f32 y = lo.y; y < hi.y + decal_cell; y += decal_cell)
+                        for(f32 z = lo.z; z < hi.z + decal_cell;
+                            z += decal_cell)
+                            m_decal_grid[decal_cell_key(
+                                             glm::min(Vecf3(x, y, z), hi))]
+                                .push_back(index);
+            }
+    }
+
+    std::vector<u32> decal_candidates(Vecf3 const& lo, Vecf3 const& hi) const
+    {
+        std::vector<u32> out;
+        for(f32 x = lo.x; x < hi.x + decal_cell; x += decal_cell)
+            for(f32 y = lo.y; y < hi.y + decal_cell; y += decal_cell)
+                for(f32 z = lo.z; z < hi.z + decal_cell; z += decal_cell)
+                    if(auto it = m_decal_grid.find(
+                           decal_cell_key(glm::min(Vecf3(x, y, z), hi)));
+                       it != m_decal_grid.end())
+                        out.insert(
+                            out.end(), it->second.begin(), it->second.end());
+        std::sort(out.begin(), out.end());
+        out.erase(std::unique(out.begin(), out.end()), out.end());
+        return out;
+    }
+
+    /* Triangles wind clockwise seen from the front */
+    static Vecf3 triangle_normal(triangle_t const& t)
+    {
+        Vecf3 const n = glm::cross(t[2] - t[0], t[1] - t[0]);
+        f32 const   l = glm::length(n);
+        return l > 1e-9f ? n / l : Vecf3{};
+    }
+
+    /* The structure's triangles within a square of `radius` about `at`,
+     * clipped to it and lifted off the surface; `spin` turns it, 0..1 */
+    std::optional<decal_instance_t> make_decal(
+        decal_definition const& tag,
+        Vecf3 const&            at,
+        Vecf3 const&            normal,
+        f32                     spin)
+    {
+        if(m_decal_triangles.empty() || glm::length(normal) < 1e-4f)
+            return std::nullopt;
+        f32 const radius =
+            glm::mix(tag.radius.x, tag.radius.y, uniform(0.f, 1.f));
+        Vecf3 const n = glm::normalize(normal);
+        if(radius <= 0.f)
+            return std::nullopt;
+        Vecf3 x, y;
+        basis(n, x, y);
+        f32 const   angle = spin * glm::two_pi<f32>();
+        Vecf3 const t     = x * std::cos(angle) + y * std::sin(angle);
+        Vecf3 const b     = glm::cross(n, t);
+
+        decal_instance_t out{
+            .center    = at,
+            .intensity = uniform(tag.intensity),
+            .life      = uniform(tag.lifetime),
+            .decay     = uniform(tag.decay_time),
+        };
+        auto& look  = out.look;
+        look.bitmap = &static_cast<blam::tagref_t const&>(tag.map);
+        look.frame  = static_cast<i16>(uniform(0.f, 64.f));
+        look.blend  = tag.blend_function;
+        look.color  = Vecf4(
+            glm::mix(
+                tag.color_lower_bound,
+                tag.color_upper_bound,
+                uniform(0.f, 1.f)),
+            out.intensity);
+
+        Vecf3 const reach(radius * 1.5f);
+        for(u32 index : decal_candidates(at - reach, at + reach))
+        {
+            auto const& tri = m_decal_triangles[index];
+            if(glm::dot(triangle_normal(tri), n) < decal_min_facing)
+                continue;
+            /* Sutherland-Hodgman against the box, in decal units */
+            std::vector<Vecf3> poly;
+            for(auto const& v : tri)
+            {
+                Vecf3 const d = v - at;
+                poly.push_back(
+                    Vecf3(glm::dot(d, t), glm::dot(d, b), glm::dot(d, n)) /
+                    radius);
+            }
+            for(u32 axis = 0; axis < 3 && poly.size() >= 3; axis++)
+                for(f32 side : {-1.f, 1.f})
+                {
+                    std::vector<Vecf3> kept;
+                    for(size_t i = 0; i < poly.size(); i++)
+                    {
+                        Vecf3 const& a  = poly[i];
+                        Vecf3 const& c  = poly[(i + 1) % poly.size()];
+                        f32 const    da = 1.f - side * a[axis];
+                        f32 const    dc = 1.f - side * c[axis];
+                        if(da >= 0.f)
+                            kept.push_back(a);
+                        if((da >= 0.f) != (dc >= 0.f))
+                            kept.push_back(glm::mix(a, c, da / (da - dc)));
+                    }
+                    poly = std::move(kept);
+                }
+            /* Counter-clockwise seen from the front, as effects draw */
+            for(size_t i = 1; i + 1 < poly.size(); i++)
+                for(auto const& v : {poly[0], poly[i + 1], poly[i]})
+                {
+                    look.positions.push_back(
+                        at + (t * v.x + b * v.y + n * v.z) * radius +
+                        n * decal_lift);
+                    look.uv.push_back((Vecf2(v.x, v.y) + 1.f) * .5f);
+                }
+        }
+        if(look.positions.empty())
+            return std::nullopt;
+        return out;
+    }
+
+    void add_effect_decal(decal_instance_t decal)
+    {
+        if(m_effect_decals.size() >= max_effect_decals)
+            m_effect_decals.erase(m_effect_decals.begin());
+        m_effect_decals.push_back(std::move(decal));
+    }
+
+    /* Scenario decals lying on the resident section's surfaces */
+    void place_scenario_decals(Proxy& p)
+    {
+        m_placed_decals.clear();
+        auto scenario = p.template subsystem<BlamFiles<halo_version>>()
+                            .container.scenario();
+        if(!scenario.has_value() || !scenario.value())
+            return;
+        auto instances = scenario.value()->decals.instances.data(*m_magic);
+        auto palette   = scenario.value()->decals.palette.data(*m_magic);
+        if(!instances.has_value() || !palette.has_value())
+            return;
+        for(auto const& [i, decal] :
+            stl_types::const_enumerate(instances.value()))
+        {
+            if(decal.type < 0 ||
+               static_cast<size_t>(decal.type) >= palette.value().size())
+                continue;
+            auto const* tag = tag_data<decal_definition>(
+                palette.value()[decal.type].reference, blam::tag_class_t::deca);
+            auto const normal = surface_under_decal(decal.position);
+            if(!tag || !normal)
+                continue;
+            if(auto d = make_decal(
+                   *tag, decal.position, *normal, (decal.yaw + 128) / 256.f))
+                m_placed_decals.push_back(std::move(*d));
+        }
+    }
+
+    /* The nearest face along a short ray: where it is hit, and its normal */
+    std::optional<std::pair<Vecf3, Vecf3>> decal_surface(
+        Vecf3 const& from, Vecf3 const& way) const
+    {
+        Vecf3 const                            to = from + way * decal_reach;
+        std::optional<std::pair<Vecf3, Vecf3>> out;
+        f32                                    best = 1.f;
+        for(u32 index :
+            decal_candidates(glm::min(from, to), glm::max(from, to)))
+        {
+            auto const& tri = m_decal_triangles[index];
+            /* Moller-Trumbore over the segment */
+            Vecf3 const e1 = tri[1] - tri[0];
+            Vecf3 const e2 = tri[2] - tri[0];
+            Vecf3 const d  = to - from;
+            Vecf3 const q  = glm::cross(d, e2);
+            f32 const   a  = glm::dot(e1, q);
+            if(std::abs(a) < 1e-9f)
+                continue;
+            Vecf3 const s = from - tri[0];
+            f32 const   u = glm::dot(s, q) / a;
+            Vecf3 const r = glm::cross(s, e1);
+            f32 const   v = glm::dot(d, r) / a;
+            f32 const   t = glm::dot(e2, r) / a;
+            if(u < 0.f || v < 0.f || u + v > 1.f || t < 0.f || t >= best)
+                continue;
+            Vecf3 n = triangle_normal(tri);
+            if(glm::dot(n, way) > 0.f)
+                n = -n;
+            best = t;
+            out  = std::pair{from + d * t, n};
+        }
+        return out;
+    }
+
+    /* The face a placed decal lies on */
+    std::optional<Vecf3> surface_under_decal(Vecf3 const& at) const
+    {
+        Vecf3 const          reach(decal_surface_slack);
+        std::optional<Vecf3> out;
+        f32                  best = decal_surface_slack;
+        for(u32 index : decal_candidates(at - reach, at + reach))
+        {
+            auto const& tri = m_decal_triangles[index];
+            Vecf3 const n   = triangle_normal(tri);
+            f32 const   d   = std::abs(glm::dot(at - tri[0], n));
+            if(d >= best)
+                continue;
+            /* Inside the triangle, seen along its normal */
+            Vecf3 const p      = at - n * glm::dot(at - tri[0], n);
+            bool        inside = true;
+            for(u32 k = 0; k < 3 && inside; k++)
+                inside = glm::dot(
+                             glm::cross(tri[(k + 1) % 3] - tri[k], p - tri[k]),
+                             n) <= 1e-4f;
+            if(!inside)
+                continue;
+            best = d;
+            out  = n;
+        }
+        return out;
+    }
+
+    void step_decals(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        auto const&    cache = p.template subsystem<BSPCache<halo_version>>();
+        BSPItem const* bsp   = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() &&
+               candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        if(bsp != m_decal_bsp)
+        {
+            m_decal_bsp = bsp;
+            m_effect_decals.clear();
+            if(bsp)
+            {
+                index_decal_triangles(*bsp);
+                place_scenario_decals(p);
+            } else
+            {
+                m_decal_triangles.clear();
+                m_decal_grid.clear();
+                m_placed_decals.clear();
+            }
+        }
+
+        /* Effect decals last their lifetime, then fade over their decay */
+        for(auto& d : m_effect_decals)
+        {
+            d.age += dt;
+            d.alpha = d.age <= d.life ? 1.f
+                      : d.decay > 0.f
+                          ? std::max(0.f, 1.f - (d.age - d.life) / d.decay)
+                          : 0.f;
+        }
+        std::erase_if(
+            m_effect_decals, [](auto const& d) { return d.alpha <= 0.f; });
+
+        std::optional<Vecf3> eye;
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
+        {
+            auto [cam, info] = ent.components();
+            if(!info.is_remote() && cam.is_active())
+                eye = cam.camera.position;
+        }
+        if(!eye)
+            return;
+        for(auto* list : {&m_placed_decals, &m_effect_decals})
+            for(auto& d : *list)
+                if(glm::distance(d.center, *eye) < decal_draw_distance)
+                {
+                    d.look.color.a = d.intensity * d.alpha;
+                    scene.decals.push_back(&d.look);
+                }
     }
 
     /* ---- Tag lookups ---- */
@@ -627,11 +942,27 @@ struct EffectSystem
                            part.type, tag_class_t::pctl))
                         start_system(tag, at, 0, {}, fx.velocity, false);
                     break;
+                case tag_class_t::deca:
+                    if(auto const* tag = tag_data<decal_definition>(
+                           part.type, tag_class_t::deca))
+                        /* Impacts face out of the surface, "gravity" into it */
+                        for(Vecf3 const way : {-at.forward, at.forward})
+                            if(auto hit = decal_surface(at.position, way))
+                            {
+                                if(auto d = make_decal(
+                                       *tag,
+                                       hit->first,
+                                       hit->second,
+                                       uniform(0.f, 1.f)))
+                                    add_effect_decal(std::move(*d));
+                                break;
+                            }
+                    break;
                 default:
                     if(auto it = m_index.find(part.type);
                        it != m_index.end() && (*it).matches(tag_class_t::obje))
                         spawn_part_object(p, fx, part, at);
-                    /* Decals and damage are not created yet */
+                    /* Damage is not applied yet */
                     break;
                 }
             }
@@ -1731,6 +2062,13 @@ struct EffectSystem
     static constexpr f32    debris_lifetime      = 30.f; /* seconds */
     static constexpr u64    flare_ray_interval   = 4;    /* frames */
     static constexpr f32    flare_surface_slop   = .1f;  /* wu */
+    static constexpr f32    decal_cell           = 2.f;  /* wu, triangle bins */
+    static constexpr f32    decal_lift           = .004f; /* wu off a face */
+    static constexpr f32    decal_min_facing     = .3f;
+    static constexpr f32    decal_surface_slack  = .1f;  /* wu off a face */
+    static constexpr f32    decal_draw_distance  = 60.f;
+    static constexpr f32    decal_reach          = 2.f;  /* wu to a face */
+    static constexpr size_t max_effect_decals    = 256;
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
     static constexpr f32    pctl_scale_to_radius = 64.f; /* scale is per bitmap pixel */
 
@@ -1758,6 +2096,12 @@ struct EffectSystem
     };
 
     std::unordered_map<u64, flare_seen_t> m_flare_seen;
+
+    BSPItem const*                            m_decal_bsp{nullptr};
+    std::vector<triangle_t>                   m_decal_triangles;
+    std::unordered_map<u64, std::vector<u32>> m_decal_grid;
+    std::vector<decal_instance_t>             m_placed_decals;
+    std::vector<decal_instance_t>             m_effect_decals;
     u64                                   m_flare_frame{0};
 
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>>
