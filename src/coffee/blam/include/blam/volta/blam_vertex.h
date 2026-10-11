@@ -23,6 +23,11 @@ enum class vertex_type_t : u16
     sbsp_compressed_light_vertex,
     mod2_uncompressed_vertex,
     mod2_compressed_vertex,
+
+    /* Rewritten offline into GX vertex arrays (big-endian, as gx-bsp draws
+     * them), indices byte-swapped with them. Only gx-bsp reads these */
+    sbsp_gx_vertex = 0x100,
+    mod2_gx_vertex = 0x101,
 };
 
 template<typename T>

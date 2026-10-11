@@ -333,7 +333,8 @@ inline std::optional<model_data_t> header<V>::model_at(
                 if(!stl_types::any_of(
                        from_le(part.data.vertex_type),
                        vert::vertex_type_t::mod2_compressed_vertex,
-                       vert::vertex_type_t::mod2_uncompressed_vertex))
+                       vert::vertex_type_t::mod2_uncompressed_vertex,
+                       vert::vertex_type_t::mod2_gx_vertex))
                     continue;
                 meshes.push_back(&part.data);
             }
