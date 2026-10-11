@@ -928,10 +928,14 @@ struct ResourceLoader
             }
     }
 
-    /* Scenery and light fixtures carry the sections they are placed in */
+    /* Scenery and light fixtures carry the sections they are placed in.
+     * "Not placed automatically" ones wait for a script to create them. */
     static bool placed_in_section(
         blam::scn::object_spawn const& spawn, i16 section)
     {
+        using spawn_flags = blam::scn::object_spawn::spawn_flags;
+        if((spawn.flags & spawn_flags::automatic) != spawn_flags::none)
+            return false;
         u16 const mask = static_cast<u16>(spawn.bsp_flags);
         return mask == 0 || section < 0 || section >= 16 ||
                ((mask >> section) & 1);
