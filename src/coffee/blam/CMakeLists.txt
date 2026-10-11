@@ -4,6 +4,7 @@
 set(BLAM_SOURCES
   private/volta/blam_map.cpp
   private/volta/blam_bytecode.cpp
+  private/dimeter/script_opcodes.cpp
 )
 set(BLAM_LIBS Core) # result/semantic/task_queue (got via Image transitively before)
 if(NOT (GAMECUBE OR WII))
