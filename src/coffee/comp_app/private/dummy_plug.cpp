@@ -1110,8 +1110,9 @@ void insert_dummy_plug(
 #if defined(COFFEE_EMSCRIPTEN)
 extern "C" EMSCRIPTEN_KEEPALIVE int coffee_app_loaded()
 {
-    auto& container = ::comp_app::createContainer();
-    auto* app_info  = container.service<comp_app::AppInfo>();
+    auto* container = ::comp_app::currentContainer();
+    auto* app_info =
+        container ? container->service<comp_app::AppInfo>() : nullptr;
     return (app_info &&
             app_info->state() == comp_app::interfaces::AppInfo::loaded)
                ? 1
@@ -1137,7 +1138,10 @@ extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(
     if(!event.is_object() || !event.contains("type"))
         return;
 
-    auto&      container = ::comp_app::createContainer();
+    auto* current = ::comp_app::currentContainer();
+    if(!current)
+        return;
+    auto&      container = *current;
     const auto type =
         magic_enum::enum_cast<type_t>(event.value("type", std::string_view()))
             .value_or(type_t::custom);
