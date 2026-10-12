@@ -352,10 +352,15 @@ struct app_loadable_matcher
     }
 };
 
+static std::shared_ptr<detail::EntityContainer> container;
+
+detail::EntityContainer* currentContainer()
+{
+    return container.get();
+}
+
 detail::EntityContainer& createContainer()
 {
-    static std::shared_ptr<detail::EntityContainer> container;
-
     if(container)
         return *container;
 
