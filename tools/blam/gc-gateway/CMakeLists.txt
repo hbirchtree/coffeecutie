@@ -11,3 +11,6 @@ target_include_directories(BlamGCGateway PRIVATE
 target_link_libraries(BlamGCGateway PRIVATE
     GameNetworkingSockets::GameNetworkingSockets_s
 )
+if(WIN32)
+    target_link_libraries(BlamGCGateway PRIVATE ws2_32)
+endif()

@@ -13,10 +13,15 @@
 #include <GameNetworkingSockets/steam/isteamnetworkingutils.h>
 #include <GameNetworkingSockets/steam/steamnetworkingsockets.h>
 
+#if defined(COFFEE_WINDOWS)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#endif
 
 #include <chrono>
 #include <cstring>
@@ -44,7 +49,17 @@ struct session_t
     clock_type::time_point last_seen{};
 };
 
-int                                g_socket = -1;
+#if defined(COFFEE_WINDOWS)
+using socket_t                    = SOCKET;
+constexpr socket_t invalid_socket = INVALID_SOCKET;
+constexpr int      recv_flags     = 0; /* FIONBIO set on the socket instead */
+#else
+using socket_t                    = int;
+constexpr socket_t invalid_socket = -1;
+constexpr int      recv_flags     = MSG_DONTWAIT;
+#endif
+
+socket_t                           g_socket = invalid_socket;
 ISteamNetworkingSockets*           g_gns    = nullptr;
 std::string                        g_default_server;
 std::map<u64, session_t>           g_sessions;
@@ -72,7 +87,7 @@ void send_datagram(
         std::memcpy(buf.data() + sizeof(hdr), data, size);
     sendto(
         g_socket,
-        buf.data(),
+        reinterpret_cast<char const*>(buf.data()),
         buf.size(),
         0,
         reinterpret_cast<sockaddr const*>(&s.addr),
@@ -263,17 +278,25 @@ i32 coffee_main(i32, cstring_w*)
     }
     g_gns = SteamNetworkingSockets();
 
+#if defined(COFFEE_WINDOWS)
+    WSADATA wsa;
+    WSAStartup(MAKEWORD(2, 2), &wsa);
+#endif
     g_socket = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in local{};
     local.sin_family      = AF_INET;
     local.sin_port        = htons(port);
     local.sin_addr.s_addr = htonl(INADDR_ANY);
-    if(g_socket < 0 ||
+    if(g_socket == invalid_socket ||
        bind(g_socket, reinterpret_cast<sockaddr*>(&local), sizeof(local)) < 0)
     {
         cWarning("Failed to listen on UDP port {}", port);
         return 1;
     }
+#if defined(COFFEE_WINDOWS)
+    u_long non_blocking = 1;
+    ioctlsocket(g_socket, FIONBIO, &non_blocking);
+#endif
     cDebug(
         "Gateway listening on UDP {}, default server {}",
         port,
@@ -288,9 +311,9 @@ i32 coffee_main(i32, cstring_w*)
             socklen_t   from_len = sizeof(from);
             auto const  got      = recvfrom(
                 g_socket,
-                buf.data(),
+                reinterpret_cast<char*>(buf.data()),
                 buf.size(),
-                MSG_DONTWAIT,
+                recv_flags,
                 reinterpret_cast<sockaddr*>(&from),
                 &from_len);
             if(got <= 0)
