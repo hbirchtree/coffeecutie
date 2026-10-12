@@ -1554,9 +1554,10 @@ optional<error> api::load(load_options_t options)
 
     {
         auto [vendor, renderer] = device();
-        if(vendor.starts_with("Qualcomm") || vendor == "freedreno")
+        if(vendor.find("Qualcomm") != std::string::npos ||
+           vendor == "freedreno")
         {
-            if(renderer.starts_with("Adreno (TM) 3"))
+            if(renderer.find("Adreno (TM) 3") != std::string::npos)
                 m_workarounds.bugs.adreno_3xx = true;
             m_workarounds.bugs.adreno = true;
             m_features.draw.indirect  = false;
