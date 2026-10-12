@@ -75,6 +75,7 @@ function(ANDROIDAPK_PACKAGE)
       COMPANY
       APK_TARGET
       APK_MIN_TARGET
+      ICON_ASSET
   )
 
   set(multiOpts SOURCES RESOURCES BUNDLE_LIBRARIES)
@@ -341,6 +342,24 @@ function(ANDROIDAPK_PACKAGE)
     COMMAND ${CMAKE_COMMAND} -E make_directory
             "${ANDROID_LIB_OUTPUT_DIRECTORY}"
   )
+
+  #
+  # Launcher icons from SVG, replacing the template mipmaps
+  #
+  if(AAPK_ICON_ASSET AND INKSCAPE_PROGRAM AND MAGICK_PROGRAM)
+    set(ICON_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/${AAPK_TARGET}.icons")
+    svg_to_android_mipmaps("${AAPK_ICON_ASSET}" "${ICON_OUTPUT_DIR}" ICON_FILES)
+    add_custom_target("${AAPK_TARGET}.icons" DEPENDS ${ICON_FILES})
+    add_dependencies("${AAPK_TARGET}.project" "${AAPK_TARGET}.icons")
+    add_custom_command(
+      TARGET "${AAPK_TARGET}.project"
+      PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${ICON_OUTPUT_DIR}"
+              "${BUILD_OUTDIR}/${APK_RSC_PREFIX}"
+    )
+  elseif(AAPK_ICON_ASSET)
+    message(WARNING "${AAPK_TARGET}: inkscape/ImageMagick missing, using default icon")
+  endif()
 
   #
   # Install asset files
