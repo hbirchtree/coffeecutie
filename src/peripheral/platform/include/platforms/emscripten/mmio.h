@@ -14,6 +14,9 @@ struct mem_mapping_ex_t : posix::mem_mapping_t
 
 std::future<posix::mem_mapping_t> mmap_async(Url const& file);
 
+/* A fetched file is owned by Fetch, not an mmap */
+std::optional<posix::posix_error> unmap(posix::mem_mapping_t&& mapping);
+
 /*!
  * \brief Marks URLs starting with prefix as offline-only: mmap_async() loads
  * them from the Emscripten Fetch IndexedDB cache (emscripten_filesystem ->

@@ -42,6 +42,7 @@ class FileMapper : public compo::SubsystemBase
 #endif
     };
 
+    /*! A file still mapped by an earlier fetch is handed out again */
     std::future<std::shared_ptr<Resource>> fetch(platform::url::Url const& src);
 
   private:
@@ -59,7 +60,7 @@ class FileMapper : public compo::SubsystemBase
         } posix;
     };
 
-    std::map<platform::url::Url, std::weak_ptr<Resource>> m_resources;
+    std::map<std::string, std::weak_ptr<Resource>> m_resources;
     std::map<platform::url::Url, ResourceCleanupData>     m_resource_cleaners;
 };
 

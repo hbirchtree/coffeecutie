@@ -20,6 +20,14 @@ FileMapper::Resource::operator semantic::BytesConst() const
 std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
     const platform::url::Url& src)
 {
+    if(auto it = m_resources.find(src.internUrl); it != m_resources.end())
+        if(auto live = it->second.lock())
+        {
+            std::promise<std::shared_ptr<Resource>> out;
+            out.set_value(std::move(live));
+            return out.get_future();
+        }
+
     auto res = std::make_shared<Resource>();
 
     res->m_url = src;
@@ -41,11 +49,12 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
                 [this, res, prom](mapping_t* data) mutable {
                     // res->m_alloc   = std::move(data->alloc.allocation);
                     res->m_mapping = platform::file::map_handle{
-                        // .view = gsl::span<char>(
-                        //     res->m_alloc.data(), res->m_alloc.size()),
-                        .view   = data->view,
-                        .access = semantic::RSCA::ReadOnly,
+                        .view     = data->view,
+                        .access   = semantic::RSCA::ReadOnly,
+                        .fetch_fd = data->fetch_fd,
                     };
+                    if(data->view.data())
+                        m_resources[res->m_url.internUrl] = res;
                     prom->set_value(std::move(res));
                 }))
             .assume_value();
@@ -62,6 +71,7 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
             {
                 res->m_mapping = std::move(mapping.value());
                 res->m_url     = src;
+                m_resources[src.internUrl] = res;
                 out.set_value(std::move(res));
             } else
                 /* mapping failed despite a valid size: return empty rather
