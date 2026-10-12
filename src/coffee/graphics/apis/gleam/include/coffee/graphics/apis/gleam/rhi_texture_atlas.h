@@ -176,11 +176,12 @@ inline padded_tile_t pad_tile(
         size,
         data};
 
-    /* A gutter narrower than a block cannot be expressed, and one wider than
-     * the tile would need more than a single wrap period. */
+    /* A gutter narrower than a block cannot be expressed. One wider than the
+     * tile wraps it more than once, so the padded rect always starts where the
+     * slot does: Adreno 8xx rejects compressed uploads below its first row. */
     const Veci2 pad{
-        std::min<i32>((gutter[0] >> level) / block_w * block_w, size[0]),
-        std::min<i32>((gutter[1] >> level) / block_h * block_h, size[1])};
+        (gutter[0] >> level) / block_w * block_w,
+        (gutter[1] >> level) / block_h * block_h};
 
     if(unit == 0 || size[0] < block_w || size[1] < block_h ||
        (pad[0] == 0 && pad[1] == 0))
@@ -201,9 +202,13 @@ inline padded_tile_t pad_tile(
             data.data() + static_cast<size_t>(src_y) * tile_w * unit;
         u8* dst = scratch.data() + static_cast<size_t>(y) * dst_w * unit;
 
-        std::memcpy(dst, src + (tile_w - pad_w) * unit, pad_w * unit);
-        std::memcpy(dst + pad_w * unit, src, tile_w * unit);
-        std::memcpy(dst + (pad_w + tile_w) * unit, src, pad_w * unit);
+        for(i32 x = 0; x < dst_w;)
+        {
+            const i32 src_x = ((x - pad_w) % tile_w + tile_w) % tile_w;
+            const i32 run   = std::min(tile_w - src_x, dst_w - x);
+            std::memcpy(dst + x * unit, src + src_x * unit, run * unit);
+            x += run;
+        }
     }
 
     return padded_tile_t{
