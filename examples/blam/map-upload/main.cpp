@@ -109,7 +109,7 @@ struct transcode_session_t
 };
 
 /* Read field by field from JS */
-static_assert(sizeof(mtx::map_stats) == 24);
+static_assert(sizeof(mtx::map_stats) == 28);
 static_assert(sizeof(std::atomic<u32>[2]) == 8);
 
 transcode_session_t transcode;

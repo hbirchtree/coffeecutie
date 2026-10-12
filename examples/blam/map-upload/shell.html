@@ -666,7 +666,7 @@
                         'transcoding failed');
       /* mtx::map_stats */
       const stats = new DataView(
-        Module.HEAPU8.buffer, Module._blam_upload_transcode_stats(), 24);
+        Module.HEAPU8.buffer, Module._blam_upload_transcode_stats(), 28);
       return {
         data: takeResult(),
         converted: stats.getUint32(0, true),
