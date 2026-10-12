@@ -5,6 +5,9 @@
 namespace comp_app {
 
 extern detail::EntityContainer& createContainer();
+/*! The container main created, or null: what JS entry points may use, as
+ * a page polls them before the runtime is up */
+extern detail::EntityContainer* currentContainer();
 
 extern void configureDefaults(AppLoader& loader);
 
