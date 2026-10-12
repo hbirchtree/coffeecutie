@@ -911,9 +911,7 @@ STATICINLINE void InitializeState(struct android_app* state)
         if(!android_bus)
             return 0;
 
-        android_bus->handleInputEvent(event);
-
-        return 1;
+        return android_bus->handleInputEvent(event) ? 1 : 0;
     };
 
     auto activityName =

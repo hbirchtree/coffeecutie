@@ -106,15 +106,15 @@ struct AndroidEventBus
 {
     virtual void load(entity_container& e, comp_app::app_error&) override;
 
-    void handleKeyEvent(AInputEvent* event);
-    void handleMotionEvent(AInputEvent* event);
+    bool handleKeyEvent(AInputEvent* event);
+    bool handleMotionEvent(AInputEvent* event);
 
-    void handleMouseEvent(AInputEvent* event);
+    bool handleMouseEvent(AInputEvent* event);
     bool handleGamepadEvent(AInputEvent* event);
     bool handleTouchEvent(AInputEvent* event);
 
-    void handleInputEvent(AInputEvent* event);
-    void handleWindowEvent(android_app* app, libc_types::i32 event);
+    bool handleInputEvent(AInputEvent* event);
+    bool handleWindowEvent(android_app* app, libc_types::i32 event);
 
     void emitLifecycleEvent(comp_app::LifecycleEvent event);
 

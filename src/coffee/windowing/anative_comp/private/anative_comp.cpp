@@ -279,7 +279,7 @@ void AndroidEventBus::load(entity_container& e, comp_app::app_error&)
         m_container->service<comp_app::BasicEventBus<comp_app::AppEvent>>();
 }
 
-void AndroidEventBus::handleMouseEvent(AInputEvent* event)
+bool AndroidEventBus::handleMouseEvent(AInputEvent* event)
 {
     using namespace libc_types;
     using namespace Coffee::Input;
@@ -290,7 +290,7 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
     if(i32 type = AInputEvent_getType(event); type != AINPUT_EVENT_TYPE_MOTION)
     {
         Coffee::cDebug("Unrecognized mouse event: {0}", type);
-        return;
+        return false;
     }
 
     const auto action =
@@ -384,6 +384,7 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
         click.pos = pos;
         m_inputBus->inject(ievent, &click);
     }
+    return true;
 }
 
 bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
@@ -518,7 +519,7 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
     return false;
 }
 
-void AndroidEventBus::handleKeyEvent(AInputEvent* event)
+bool AndroidEventBus::handleKeyEvent(AInputEvent* event)
 {
     using namespace libc_types;
     using namespace Coffee::Input;
@@ -533,10 +534,10 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     i32 repeat = AKeyEvent_getRepeatCount(event);
 
     if(flags & AKEY_EVENT_FLAG_WOKE_HERE)
-        return;
+        return false;
     /* Only carries a character string, which the NDK cannot read */
     if(action == AKEY_EVENT_ACTION_MULTIPLE)
-        return;
+        return false;
 
     if(flags & AKEY_EVENT_FLAG_KEEP_TOUCH_MODE)
         ;
@@ -598,56 +599,55 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     if(button >= AKEYCODE_0 && button <= AKEYCODE_9)
     {
         keyEvent(CK_0 + (button - AKEYCODE_0));
-        return;
+        return true;
     }
     if(button >= AKEYCODE_A && button <= AKEYCODE_Z)
     {
         keyEvent(CK_a + (button - AKEYCODE_A));
-        return;
+        return true;
     }
     if(button >= AKEYCODE_F1 && button <= AKEYCODE_F12)
     {
         keyEvent(CK_F1 + (button - AKEYCODE_F1));
-        return;
+        return true;
     }
     if(button >= AKEYCODE_NUMPAD_0 && button <= AKEYCODE_NUMPAD_9)
     {
         keyEvent(CK_KP_0 + (button - AKEYCODE_NUMPAD_0));
-        return;
+        return true;
     }
 
-    const auto navEvent = [this](comp_app::NavigationEvent::Type key) {
+    const auto navEvent = [this](comp_app::NavigationEvent::Type key) -> bool {
         if(!m_appBus)
-            return;
+            return false;
         comp_app::AppEvent        event{comp_app::AppEvent::NavigationEvent};
         comp_app::NavigationEvent nav{key};
         m_appBus->inject(event, &nav);
+        return true;
     };
 
     switch(button)
     {
     case AKEYCODE_BACK:
-        navEvent(comp_app::NavigationEvent::Back);
-        break;
+        return navEvent(comp_app::NavigationEvent::Back);
     case AKEYCODE_DPAD_LEFT:
         keyEvent(CK_Left);
         navEvent(comp_app::NavigationEvent::Left);
-        break;
+        return true;
     case AKEYCODE_DPAD_RIGHT:
         keyEvent(CK_Right);
         navEvent(comp_app::NavigationEvent::Right);
-        break;
+        return true;
     case AKEYCODE_DPAD_UP:
         keyEvent(CK_Up);
         navEvent(comp_app::NavigationEvent::Up);
-        break;
+        return true;
     case AKEYCODE_DPAD_DOWN:
         keyEvent(CK_Down);
         navEvent(comp_app::NavigationEvent::Down);
-        break;
+        return true;
     case AKEYCODE_DPAD_CENTER:
-        navEvent(comp_app::NavigationEvent::Confirm);
-        break;
+        return navEvent(comp_app::NavigationEvent::Confirm);
         // clang-format off
     case AKEYCODE_SHIFT_LEFT: keyEvent(CK_LShift); break;
     case AKEYCODE_SHIFT_RIGHT: keyEvent(CK_RShift); break;
@@ -695,9 +695,10 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
         cDebug("Keycode: {0} {1} {2}", deviceId, source, button);
         break;
     }
+    return false;
 }
 
-void AndroidEventBus::handleMotionEvent(AInputEvent* event)
+bool AndroidEventBus::handleMotionEvent(AInputEvent* event)
 {
     using namespace libc_types;
     using enum_helpers::feval;
@@ -722,11 +723,12 @@ void AndroidEventBus::handleMotionEvent(AInputEvent* event)
     } else if(
         feval<i32>(source, AINPUT_SOURCE_TOUCHSCREEN) &&
         !feval<i32>(source, AINPUT_SOURCE_STYLUS))
-        handleTouchEvent(event);
+        return handleTouchEvent(event);
     else if(
         feval<i32>(source, AINPUT_SOURCE_MOUSE) ||
         feval<i32>(source, AINPUT_SOURCE_STYLUS))
-        handleMouseEvent(event);
+        return handleMouseEvent(event);
+    return false;
 }
 
 bool AndroidEventBus::handleTouchEvent(AInputEvent* event)
@@ -879,7 +881,7 @@ bool AndroidEventBus::handleTouchEvent(AInputEvent* event)
     return false;
 }
 
-void AndroidEventBus::handleInputEvent(AInputEvent* event)
+bool AndroidEventBus::handleInputEvent(AInputEvent* event)
 {
     using namespace enum_helpers;
     using namespace libc_types;
@@ -891,24 +893,21 @@ void AndroidEventBus::handleInputEvent(AInputEvent* event)
        feval<i32>(source, AINPUT_SOURCE_JOYSTICK))
     {
         if(handleGamepadEvent(event))
-            return;
+            return true;
     }
 
     if((source & AINPUT_SOURCE_KEYBOARD) == AINPUT_SOURCE_KEYBOARD)
     {
-        handleKeyEvent(event);
-        return;
+        return handleKeyEvent(event);
     }
 
     switch(type)
     {
     case AINPUT_EVENT_TYPE_KEY: {
-        handleKeyEvent(event);
-        break;
+        return handleKeyEvent(event);
     }
     case AINPUT_EVENT_TYPE_MOTION: {
-        handleMotionEvent(event);
-        break;
+        return handleMotionEvent(event);
     }
     case AINPUT_EVENT_TYPE_CAPTURE:
         cDebug("AINPUT_CAPTURE");
@@ -923,9 +922,11 @@ void AndroidEventBus::handleInputEvent(AInputEvent* event)
         cDebug("AINPUT_FOCUS");
         break;
     }
+
+    return false;
 }
 
-void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
+bool AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
 {
     Coffee::cDebug("App event: {0}", event);
 
@@ -935,12 +936,12 @@ void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
     case APP_CMD_RESUME:
         emitLifecycleEvent(
             comp_app::LifecycleEvent{comp_app::LifecycleEvent::Foreground});
-        break;
+        return true;
     case APP_CMD_PAUSE:
     case APP_CMD_STOP:
         emitLifecycleEvent(
             comp_app::LifecycleEvent{comp_app::LifecycleEvent::Background});
-        break;
+        return true;
 
     case APP_CMD_INIT_WINDOW:
         emitLifecycleEvent(
@@ -955,16 +956,16 @@ void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
             ANativeWindow_getHeight(app->window)};
         auto event = DEvent::Create(0, DEvent::Resize);
         display_bus->inject(event, &resize);
-        break;
+        return true;
     }
     case APP_CMD_TERM_WINDOW:
         emitLifecycleEvent(
             comp_app::LifecycleEvent{comp_app::LifecycleEvent::Terminate});
-        break;
+        return true;
     case APP_CMD_DESTROY:
         emitLifecycleEvent(
             comp_app::LifecycleEvent{comp_app::LifecycleEvent::ResourcesLost});
-        break;
+        return true;
 
     case APP_CMD_INPUT_CHANGED:
         // AInputQueue changed
@@ -981,7 +982,7 @@ void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
     case APP_CMD_LOW_MEMORY:
         emitLifecycleEvent(
             comp_app::LifecycleEvent{comp_app::LifecycleEvent::LowMemory});
-        break;
+        return true;
 
     case APP_CMD_SAVE_STATE:
         // App should save temporary state
@@ -990,6 +991,7 @@ void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
     case APP_CMD_WINDOW_REDRAW_NEEDED:
         break;
     }
+    return false;
 }
 
 void AndroidEventBus::emitLifecycleEvent(comp_app::LifecycleEvent event)
