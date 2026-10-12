@@ -1,0 +1,20 @@
+diff --git a/src/freedreno/drm-shim/freedreno_noop.c b/src/freedreno/drm-shim/freedreno_noop.c
+index 76f213f..b0dd654 100644
+--- a/src/freedreno/drm-shim/freedreno_noop.c
++++ b/src/freedreno/drm-shim/freedreno_noop.c
+@@ -260,6 +260,15 @@ static const struct msm_device_info device_infos[] = {
+ static void
+ msm_driver_get_device_info(void)
+ {
++   /* FD_CHIP_ID=<hex> selects chips without a gpu_id, eg. 06030500 (a643) */
++   static struct msm_device_info custom = {.gmem_size = 1024 * 1024};
++   const char *chip = getenv("FD_CHIP_ID");
++   if (chip) {
++      custom.chip_id = strtoul(chip, NULL, 16);
++      device_info = &custom;
++      return;
++   }
++
+    const char *env = getenv("FD_GPU_ID");
+ 
+    if (!env) {
