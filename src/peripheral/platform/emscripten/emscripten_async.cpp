@@ -83,6 +83,14 @@ static std::optional<posix::mem_mapping_t> mmap_download(const char* hash)
         return std::nullopt;
 }
 
+std::optional<posix::posix_error> unmap(posix::mem_mapping_t&& mapping)
+{
+    if(!mapping.fetch_fd)
+        return posix::unmap(std::move(mapping));
+    emscripten_fetch_close(static_cast<emscripten_fetch_t*>(mapping.fetch_fd));
+    return std::nullopt;
+}
+
 std::future<posix::mem_mapping_t> mmap_async(Url const& file)
 {
     auto hash = std::to_string(std::hash<std::string>()(file.internUrl));
@@ -119,8 +127,8 @@ std::future<posix::mem_mapping_t> mmap_async(Url const& file)
                                         : EMSCRIPTEN_FETCH_PERSIST_FILE);
     attrs.userData  = data.hash.data();
     attrs.onsuccess = [](emscripten_fetch_t* fetch) {
-        auto& data =
-            mmap_async_data[reinterpret_cast<const char*>(fetch->userData)];
+        std::string key(reinterpret_cast<const char*>(fetch->userData));
+        auto&       data = mmap_async_data[key];
         data.promise.set_value(
             posix::mem_mapping_t{
                 .view = posix::mem_mapping_t::span_type(
@@ -128,6 +136,7 @@ std::future<posix::mem_mapping_t> mmap_async(Url const& file)
                 .access   = RSCA::ReadOnly,
                 .fetch_fd = fetch,
             });
+        mmap_async_data.erase(key);
     };
     attrs.onerror = [](emscripten_fetch_t* fetch) {
         auto  key  = reinterpret_cast<const char*>(fetch->userData);

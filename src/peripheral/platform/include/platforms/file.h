@@ -98,7 +98,11 @@ using posix::read;
 using posix::write;
 
 using posix::map;
+#if defined(COFFEE_EMSCRIPTEN)
+using emscripten::unmap;
+#else
 using posix::unmap;
+#endif
 
 using posix::create;
 using posix::create_directory;
