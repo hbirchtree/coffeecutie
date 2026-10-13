@@ -20,7 +20,7 @@ using vecb4 = glm::tvec4<libc_types::u8>;
  * are unused, and 255 is the flat normal with alpha 0 -- the hole an
  * alpha-tested shader cuts.
  */
-constexpr std::array<vecb4, 256> p8_bump_palette = {{
+inline const std::array<vecb4, 256> p8_bump_palette = {{
     vecb4{0xcc, 0x19, 0x7a, 0xff}, vecb4{0xcc, 0x19, 0x7e, 0xff},
     vecb4{0xcc, 0x19, 0x80, 0xff}, vecb4{0xcc, 0x19, 0x81, 0xff},
     vecb4{0xcc, 0x19, 0x85, 0xff}, vecb4{0xe2, 0x2f, 0x74, 0xff},

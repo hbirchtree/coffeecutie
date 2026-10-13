@@ -299,9 +299,13 @@ struct EffectDrawer
         image_t const& img = image(cache, s.bitmap, s.sequence, s.frame);
         if(!img.ok || s.radius <= 0.f || s.color.a <= 0.f)
             return;
-        constexpr std::array<Vecf2, 6> corners = {{
-            {-1.f, -1.f}, {1.f, -1.f}, {1.f, 1.f},
-            {-1.f, -1.f}, {1.f, 1.f}, {-1.f, 1.f},
+        static std::array<Vecf2, 6> const corners = {{
+            {-1.f, -1.f},
+            {1.f, -1.f},
+            {1.f, 1.f},
+            {-1.f, -1.f},
+            {1.f, 1.f},
+            {-1.f, 1.f},
         }};
         for(auto const& c : corners)
         {
@@ -439,9 +443,13 @@ struct EffectDrawer
                         glm::mix(flare.color, tint, r.tint_color.x) *
                         std::max(r.brightness.x, r.brightness.y) * vis;
                     Vecf2 const centre = at * (1.f - 2.f * r.position);
-                    constexpr std::array<Vecf2, 6> corners = {{
-                        {-1.f, -1.f}, {1.f, -1.f}, {1.f, 1.f},
-                        {-1.f, -1.f}, {1.f, 1.f}, {-1.f, 1.f},
+                    static std::array<Vecf2, 6> const corners = {{
+                        {-1.f, -1.f},
+                        {1.f, -1.f},
+                        {1.f, 1.f},
+                        {-1.f, -1.f},
+                        {1.f, 1.f},
+                        {-1.f, 1.f},
                     }};
                     for(auto const& c : corners)
                     {

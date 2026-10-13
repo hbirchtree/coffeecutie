@@ -72,6 +72,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 set(CMAKE_CXX_SCAN_FOR_MODULES FALSE)
 
+# glm SIMD for aligned_* types; default types stay packed for tag layouts
+add_compile_definitions(GLM_FORCE_INTRINSICS)
+
 if(NOT IOS AND NOT MINGW)
   include(CheckIPOSupported)
   check_ipo_supported(RESULT LTOSupported)
