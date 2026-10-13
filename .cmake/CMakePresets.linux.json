@@ -120,6 +120,7 @@
                 "GENERATE_FLATPAK": "ON",
                 "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/x86_64v3-buildroot-linux-gnu.toolchain.cmake",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64-buildroot-linux-gnu"
             },
@@ -175,6 +176,7 @@
                 "GENERATE_FLATPAK": "ON",
                 "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/x86_64v2-buildroot-linux-gnu.toolchain.cmake",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64v2-buildroot-linux-gnu"
             },
