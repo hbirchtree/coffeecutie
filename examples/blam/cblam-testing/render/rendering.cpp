@@ -3895,9 +3895,10 @@ struct LegacyMeshRenderer
             anim->lookahead);
         out.offset = static_cast<u32>(m_bone_rows.size());
         out.rows   = bones * 3;
+        Matf4a const transform(mod.transform);
         for(auto const& bone : m_pose)
         {
-            Matf4 const m = mod.transform * bone;
+            Matf4a const m = transform * Matf4a(bone);
             for(auto r : stl_types::range<u32>(3))
                 m_bone_rows.push_back(
                     Vecf4(m[0][r], m[1][r], m[2][r], m[3][r]));

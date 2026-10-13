@@ -1204,11 +1204,11 @@ void ModelCache<V>::evaluate_pose(
 
     /* Bones are in DFS order, so a parent is always resolved before its
      * child. */
-    m_world.assign(k, Matf4(1));
+    m_world.assign(k, Matf4a(1));
     for(u32 i = 0; i < k; i++)
     {
-        Matf4 local =
-            glm::translate(Matf4(1), m_trans[i]) * glm::mat4_cast(m_rot[i]);
+        Matf4a local(glm::mat4_cast(m_rot[i]));
+        local[3] = Vecf4a(m_trans[i], 1.f);
         /* Graph roots name themselves or -1, neither below i */
         u32 parent = remap ? static_cast<u32>(m_node_parents[i])
                            : bones[i].parent;
@@ -1218,8 +1218,9 @@ void ModelCache<V>::evaluate_pose(
     }
 
     for(u32 i = 0; i < n; i++)
-        dest[i] = node_of(i) < k ? m_world[node_of(i)] * item.inv_bind[i]
-                                 : Matf4(1);
+        dest[i] = node_of(i) < k
+                      ? Matf4(m_world[node_of(i)] * Matf4a(item.inv_bind[i]))
+                      : Matf4(1);
 }
 
 template void ModelCache<halo_version>::evaluate_pose(

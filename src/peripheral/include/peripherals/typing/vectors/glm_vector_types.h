@@ -11,6 +11,7 @@
 #include <glm/mat3x3.hpp>
 #include <glm/mat4x4.hpp>
 
+#include <glm/gtc/type_aligned.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 #include <peripherals/libc/types.h>
@@ -75,6 +76,10 @@ using Matf3 = glm::mat3;
 using Matf4 = glm::mat4;
 
 using Quatf = glm::tquat<f32>;
+
+/* SIMD with GLM_FORCE_INTRINSICS; never in tag layouts */
+using Vecf4a = glm::aligned_vec4;
+using Matf4a = glm::aligned_mat4;
 
 static_assert(sizeof(Vecf2) == 8);
 static_assert(sizeof(Vecf3) == 12);
