@@ -65,7 +65,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-ports",
-            "baseline": "9813fc7af56d6b395fbbea319f9842b2385ae5dd",
+            "baseline": "2fcc66dbc6c753bfb1defc1f3b1ff4b2530c6d50",
             "packages": [
                 "datachannel-wasm",
                 "gamenetworkingsockets",
