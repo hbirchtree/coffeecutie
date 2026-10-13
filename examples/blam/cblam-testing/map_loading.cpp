@@ -554,10 +554,18 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                     std::move(resource);
             }));
 
+    auto map_file = [&load, &file_mapper]() {
+        if(!load.file_data)
+            return file_mapper.fetch(*load.file);
+        std::promise<std::shared_ptr<AsyncResource>> ready;
+        ready.set_value(load.file_data);
+        return ready.get_future();
+    }();
+
     auto map_read_task =
         rq::dependent_task<std::shared_ptr<AsyncResource>, result_type>::
             CreateProcessor(
-                file_mapper.fetch(*load.file),
+                std::move(map_file),
                 [progress_cb,
                  store_map_file](std::shared_ptr<AsyncResource>* data) mutable
                     -> result_type {

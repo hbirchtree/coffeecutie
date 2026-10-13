@@ -23,6 +23,7 @@
 #include <coffee/components/subsystem.h>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
+#include <coffee/core/task_queue/task.h>
 #include <coffee/graphics/apis/gleam/rhi.h>
 #include <coffee/graphics/apis/gleam/rhi_buffer.h>
 #include <coffee/graphics/apis/gleam/rhi_compat.h>
@@ -461,17 +462,118 @@ struct H2MapRenderer
     {
         if(!load.file)
             return false;
+        /* Fetched and sniffed below already, and found not to be ours */
+        if(load.file_data)
+            return false;
+        /* Outside the virtual filesystem (web) a file only arrives
+         * asynchronously: take the load and hand it back if it is Halo 1 */
+        if(compile_info::platform::is_emscripten &&
+           !platform::file::exists(*load.file).has_value())
+        {
+            fetch_and_load(load);
+            return true;
+        }
         auto file  = std::make_unique<Resource>(*load.file);
         auto bytes = C_OCAST<BytesConst>(*file);
-        /* Xbox and Vista headers share the id/version/footer positions */
-        if(!bytes.data || bytes.size < sizeof(dim::file_header_xbox_t) ||
-           !reinterpret_cast<dim::file_header_xbox_t const*>(bytes.data)
-                ->valid())
+        if(!is_halo2_cache(bytes))
         {
             unload();
             return false;
         }
+        dim::raw_pool                          pool;
+        std::vector<std::unique_ptr<Resource>> side_files;
+        auto                                   map_dir = load.file->path().dirname();
+        for(auto const& [slot, name] : side_cache_names)
+        {
+            auto res = std::make_unique<Resource>(
+                (map_dir / name).url(load.file->flags));
+            auto side = C_OCAST<BytesConst>(*res);
+            if(side.data && side.size)
+            {
+                pool.files[static_cast<u8>(slot)] =
+                    Span<const byte_t>(side.data, side.size);
+                side_files.push_back(std::move(res));
+            }
+        }
+        return load_cache(load, bytes, pool);
+    }
 
+    static bool is_halo2_cache(BytesConst const& bytes)
+    {
+        /* Xbox and Vista headers share the id/version/footer positions */
+        return bytes.data && bytes.size >= sizeof(dim::file_header_xbox_t) &&
+               reinterpret_cast<dim::file_header_xbox_t const*>(bytes.data)
+                   ->valid();
+    }
+
+    /* Bitmap pixels may live in the global cache files next to the map */
+    static constexpr std::array<std::pair<dim::raw_file_t, const char*>, 3>
+        side_cache_names = {{
+            {dim::raw_file_t::mainmenu, "mainmenu.map"},
+            {dim::raw_file_t::shared, "shared.map"},
+            {dim::raw_file_t::single_player_shared, "single_player_shared.map"},
+        }};
+
+    /* Web: the map, then the side caches, each through FileMapper; the
+     * load itself runs on the main queue once everything is in */
+    void fetch_and_load(MapLoadEvent const& load)
+    {
+        using AsyncResource = comp_app::FileMapper::Resource;
+        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
+        auto  task   = rq::CreateMultiTask<void>(
+            [this, load = MapLoadEvent(load)](
+                std::shared_ptr<AsyncResource> file) mutable {
+                auto bytes =
+                    file ? static_cast<BytesConst>(*file) : BytesConst{};
+                if(!is_halo2_cache(bytes))
+                {
+                    /* Not ours: the Halo 1 loader gets the fetched file */
+                    load.file_data =
+                        file ? file : std::make_shared<AsyncResource>();
+                    GameEvent ev{GameEvent::MapLoadStart};
+                    m_container.subsystem_cast<GameEventBus>().inject(
+                        ev, &load);
+                    return;
+                }
+                auto& mapper =
+                    m_container.subsystem_cast<comp_app::FileMapper>();
+                auto map_dir = load.file->path().dirname();
+                auto side    = [&](const char* name) {
+                    return mapper.fetch((map_dir / name).url(load.file->flags));
+                };
+                auto sides = rq::CreateMultiTask<void>(
+                    [this, load, file](
+                        std::shared_ptr<AsyncResource> mainmenu,
+                        std::shared_ptr<AsyncResource> shared,
+                        std::shared_ptr<AsyncResource> sp_shared) {
+                        dim::raw_pool pool;
+                        auto          take = [&pool](
+                                        dim::raw_file_t                       slot,
+                                        std::shared_ptr<AsyncResource> const& res) {
+                            if(!res)
+                                return;
+                            auto bytes = static_cast<BytesConst>(*res);
+                            if(bytes.data && bytes.size)
+                                pool.files[static_cast<u8>(slot)] =
+                                    Span<const byte_t>(bytes.data, bytes.size);
+                        };
+                        take(dim::raw_file_t::mainmenu, mainmenu);
+                        take(dim::raw_file_t::shared, shared);
+                        take(dim::raw_file_t::single_player_shared, sp_shared);
+                        load_cache(load, static_cast<BytesConst>(*file), pool);
+                    },
+                    side(side_cache_names[0].second),
+                    side(side_cache_names[1].second),
+                    side(side_cache_names[2].second));
+                rq::runtime_queue::Queue(std::move(sides)).assume_value();
+            },
+            mapper.fetch(*load.file));
+        rq::runtime_queue::Queue(std::move(task)).assume_value();
+    }
+
+    bool load_cache(
+        MapLoadEvent const& load, BytesConst const& bytes, dim::raw_pool& pool)
+    {
         unload();
         /* Same teardown as open_map(): the Halo 1 world goes away */
         m_container.remove_entity_if([](compo::Entity const& en) {
@@ -488,29 +590,8 @@ struct H2MapRenderer
             m_container.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
         }
 
-        /* Bitmap pixels may live in the global cache files next to the map */
-        dim::raw_pool pool;
         pool.files[static_cast<u8>(dim::raw_file_t::local)] =
             Span<const byte_t>(bytes.data, bytes.size);
-        std::vector<std::unique_ptr<Resource>>            side_files;
-        constexpr std::pair<dim::raw_file_t, const char*> side_names[3] = {
-            {dim::raw_file_t::mainmenu, "mainmenu.map"},
-            {dim::raw_file_t::shared, "shared.map"},
-            {dim::raw_file_t::single_player_shared, "single_player_shared.map"},
-        };
-        auto map_dir = load.file->path().dirname();
-        for(auto const& [slot, name] : side_names)
-        {
-            auto res = std::make_unique<Resource>(
-                (map_dir / name).url(load.file->flags));
-            auto side = C_OCAST<BytesConst>(*res);
-            if(side.data && side.size)
-            {
-                pool.files[static_cast<u8>(slot)] =
-                    Span<const byte_t>(side.data, side.size);
-                side_files.push_back(std::move(res));
-            }
-        }
 
         ensure_gpu();
 
@@ -543,7 +624,7 @@ struct H2MapRenderer
         if(!loaded)
             cWarning("H2: nothing loaded from {}", load.file->internUrl);
         /* The GPU owns copies of everything; the mappings can go */
-        return true;
+        return loaded;
     }
 
     void unload()
@@ -776,7 +857,9 @@ struct H2MapRenderer
                      .stride = sizeof(Vertex),
                      .count  = 4,
                      .type   = semantic::type_t::u8,
-                     .flags  = gfx::vertex_attribute::attribute_flags::normalized},
+                     /* packed: a float input, never an integer attribute */
+                     .flags  = gfx::vertex_attribute::attribute_flags::packed |
+                              gfx::vertex_attribute::attribute_flags::normalized},
             });
         m_vao->set_attribute_names({
             {"position", 0},

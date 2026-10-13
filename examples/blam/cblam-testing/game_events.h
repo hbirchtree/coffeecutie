@@ -14,6 +14,7 @@
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_tag_classes.h>
 #include <blam/volta/blam_tag_ref.h>
+#include <coffee/comp_app/file_mapper.h>
 #include <coffee/comp_app/services.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/vectors/glm_vector_types.h>
@@ -93,6 +94,9 @@ struct MapLoadEvent
 
     std::optional<platform::url::Url> directory{};
     std::optional<platform::url::Url> file{};
+    /*! The file as already fetched by a loader that only sniffed it; the
+     * next loader takes it instead of fetching again */
+    std::shared_ptr<comp_app::FileMapper::Resource> file_data{};
 };
 
 struct MapLoadByNameEvent
