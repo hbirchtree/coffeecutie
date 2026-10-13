@@ -30,14 +30,11 @@ struct raw_pool
         return file.subspan(offset, size);
     }
 
-    /*! Like resolve(), for a reference held by `owner`: a tag borrowed from
-     * the shared map keeps its raw data there */
+    /*! A reference held by `owner`, pointed at the file it really lives
+     * in: a tag borrowed from the shared map keeps its raw data there */
     template<heap_t Heap>
-    inline optional<Span<const byte_t>> resolve(
-        magic_ptr_base<Heap> const& magic,
-        void const*                 owner,
-        raw_ref                     ref,
-        u32                         size) const
+    inline raw_ref rebase(
+        magic_ptr_base<Heap> const& magic, void const* owner, raw_ref ref) const
     {
         auto const* at = reinterpret_cast<byte_t const*>(owner);
         if(ref.valid() && ref.file() == raw_file_t::local &&
@@ -47,7 +44,17 @@ struct raw_pool
             ref.raw = to_le(
                 (static_cast<u32>(shared_file) << 30) |
                 (ref.offset() & 0x3FFFFFFF));
-        return resolve(ref, size);
+        return ref;
+    }
+
+    template<heap_t Heap>
+    inline optional<Span<const byte_t>> resolve(
+        magic_ptr_base<Heap> const& magic,
+        void const*                 owner,
+        raw_ref                     ref,
+        u32                         size) const
+    {
+        return resolve(rebase(magic, owner, ref), size);
     }
 };
 

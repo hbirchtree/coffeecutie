@@ -464,7 +464,11 @@ struct H2MapRenderer
             return false;
         /* Fetched and sniffed below already, and found not to be ours */
         if(load.file_data)
+        {
+            unload();
+            release_shared();
             return false;
+        }
         /* Outside the virtual filesystem (web) a file only arrives
          * asynchronously: take the load and hand it back if it is Halo 1 */
         if(compile_info::platform::is_emscripten &&
@@ -473,29 +477,51 @@ struct H2MapRenderer
             fetch_and_load(load);
             return true;
         }
-        auto file  = std::make_unique<Resource>(*load.file);
-        auto bytes = C_OCAST<BytesConst>(*file);
+        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
+        auto  file   = mapper.fetch(*load.file).get();
+        auto  bytes  = file ? static_cast<BytesConst>(*file) : BytesConst{};
         if(!is_halo2_cache(bytes))
         {
             unload();
+            release_shared();
             return false;
         }
-        dim::raw_pool                          pool;
-        std::vector<std::unique_ptr<Resource>> side_files;
-        auto                                   map_dir = load.file->path().dirname();
-        for(auto const& [slot, name] : side_cache_names)
-        {
-            auto res = std::make_unique<Resource>(
-                (map_dir / name).url(load.file->flags));
-            auto side = C_OCAST<BytesConst>(*res);
-            if(side.data && side.size)
-            {
-                pool.files[static_cast<u8>(slot)] =
-                    Span<const byte_t>(side.data, side.size);
-                side_files.push_back(std::move(res));
-            }
-        }
+        for(size_t i = 0; i < side_cache_names.size(); i++)
+            m_side_files[i] = mapper.fetch(side_cache_url(load, i)).get();
+        dim::raw_pool pool;
+        side_pool(pool);
         return load_cache(load, bytes, pool);
+    }
+
+    platform::url::Url side_cache_url(MapLoadEvent const& load, size_t i) const
+    {
+        return (load.file->path().dirname() / side_cache_names[i].second)
+            .url(load.file->flags);
+    }
+
+    /* The side caches found; one that is gone is let go of */
+    void side_pool(dim::raw_pool& pool)
+    {
+        for(size_t i = 0; i < side_cache_names.size(); i++)
+        {
+            auto& res = m_side_files[i];
+            auto  bytes = res ? static_cast<BytesConst>(*res) : BytesConst{};
+            if(!bytes.data || !bytes.size)
+            {
+                res.reset();
+                continue;
+            }
+            pool.files[static_cast<u8>(side_cache_names[i].first)] =
+                Span<const byte_t>(bytes.data, bytes.size);
+        }
+    }
+
+    /* Everything kept across map changes: the side caches and the
+     * textures uploaded from them */
+    void release_shared()
+    {
+        m_side_files       = {};
+        m_shared_textures.clear();
     }
 
     static bool is_halo2_cache(BytesConst const& bytes)
@@ -537,34 +563,19 @@ struct H2MapRenderer
                 }
                 auto& mapper =
                     m_container.subsystem_cast<comp_app::FileMapper>();
-                auto map_dir = load.file->path().dirname();
-                auto side    = [&](const char* name) {
-                    return mapper.fetch((map_dir / name).url(load.file->flags));
-                };
                 auto sides = rq::CreateMultiTask<void>(
                     [this, load, file](
                         std::shared_ptr<AsyncResource> mainmenu,
                         std::shared_ptr<AsyncResource> shared,
                         std::shared_ptr<AsyncResource> sp_shared) {
+                        m_side_files = {mainmenu, shared, sp_shared};
                         dim::raw_pool pool;
-                        auto          take = [&pool](
-                                        dim::raw_file_t                       slot,
-                                        std::shared_ptr<AsyncResource> const& res) {
-                            if(!res)
-                                return;
-                            auto bytes = static_cast<BytesConst>(*res);
-                            if(bytes.data && bytes.size)
-                                pool.files[static_cast<u8>(slot)] =
-                                    Span<const byte_t>(bytes.data, bytes.size);
-                        };
-                        take(dim::raw_file_t::mainmenu, mainmenu);
-                        take(dim::raw_file_t::shared, shared);
-                        take(dim::raw_file_t::single_player_shared, sp_shared);
+                        side_pool(pool);
                         load_cache(load, static_cast<BytesConst>(*file), pool);
                     },
-                    side(side_cache_names[0].second),
-                    side(side_cache_names[1].second),
-                    side(side_cache_names[2].second));
+                    mapper.fetch(side_cache_url(load, 0)),
+                    mapper.fetch(side_cache_url(load, 1)),
+                    mapper.fetch(side_cache_url(load, 2)));
                 rq::runtime_queue::Queue(std::move(sides)).assume_value();
             },
             mapper.fetch(*load.file));
@@ -594,6 +605,7 @@ struct H2MapRenderer
             Span<const byte_t>(bytes.data, bytes.size);
 
         ensure_gpu();
+        m_generation++;
 
         bool loaded = false;
         if(auto map = dim::map_container<dim::xbox_version_t>::from_bytes(
@@ -622,9 +634,21 @@ struct H2MapRenderer
                 "H2: not a supported Halo 2 cache: error {}",
                 static_cast<int>(map.error()));
         if(!loaded)
+        {
             cWarning("H2: nothing loaded from {}", load.file->internUrl);
-        /* The GPU owns copies of everything; the mappings can go */
-        return loaded;
+            release_shared();
+            return false;
+        }
+        /* Shared textures this map did not ask for go away */
+        size_t const before = m_shared_textures.size();
+        std::erase_if(m_shared_textures, [this](auto const& entry) {
+            return entry.second.generation != m_generation;
+        });
+        cDebug(
+            "H2: {} shared textures kept, {} evicted",
+            m_shared_textures.size(),
+            before - m_shared_textures.size());
+        return true;
     }
 
     void unload()
@@ -950,7 +974,7 @@ struct H2MapRenderer
             gather_collision(*bsp, bsp_magic, *collision);
             auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
             m_sections.push_back(Section{
-                .name      = bsp_tag ? std::string(map.tag_name(*bsp_tag)) : "",
+                .name      = bsp_tag ? std::string(map.name_of(*bsp_tag)) : "",
                 .lo        = {from_le(bsp->x_min), from_le(bsp->y_min), from_le(bsp->z_min)},
                 .hi        = {from_le(bsp->x_max), from_le(bsp->y_max), from_le(bsp->z_max)},
                 .collision = std::move(collision),
@@ -1101,7 +1125,7 @@ struct H2MapRenderer
                 "H2: sbsp {} ({}): {} of {} clusters + {} instances + {} "
                 "orphan sections emitted, {} materials",
                 bsp_idx++,
-                bsp_tag ? map.tag_name(*bsp_tag) : std::string_view{},
+                bsp_tag ? map.name_of(*bsp_tag) : std::string_view{},
                 sections,
                 cluster_count,
                 instance_count,
@@ -2098,7 +2122,7 @@ struct H2MapRenderer
         if(!model)
         {
             if(m_model_fail_logged++ < 3)
-                cDebug("H2: {}: model body unresolved", map.tag_name(mode_tag));
+                cDebug("H2: {}: model body unresolved", map.name_of(mode_tag));
             return 0;
         }
         auto bounds   = model->bounds.data(map.magic());
@@ -2109,7 +2133,7 @@ struct H2MapRenderer
            m_model_fail_logged++ < 3)
             cDebug(
                 "H2: {}: bounds {} sections {} regions {}",
-                map.tag_name(mode_tag),
+                map.name_of(mode_tag),
                 bounds.has_error() ? "error" : std::to_string(bounds.value().size()),
                 sections.has_error() ? "error" : std::to_string(sections.value().size()),
                 regions.has_error() ? "error" : std::to_string(regions.value().size()));
@@ -2617,7 +2641,7 @@ struct H2MapRenderer
             m_sky_scale = sky_radius / radius;
         cDebug(
             "H2: sky {}: {} sections, radius {}",
-            map.tag_name(*sky_tag),
+            map.name_of(*sky_tag),
             sections,
             radius);
     }
@@ -2645,7 +2669,7 @@ struct H2MapRenderer
             return it->second;
 
         Material mat{
-            .name    = std::string(map.tag_name(*shad_tag)),
+            .name    = std::string(map.name_of(*shad_tag)),
             .texture = m_white,
             .sampler = m_white_sampler,
             .sky     = sky,
@@ -2756,6 +2780,15 @@ struct H2MapRenderer
         auto key = static_cast<u16>(bitm_tag - map.tags().data());
         if(auto it = m_textures.find(key); it != m_textures.end())
             return it->second;
+        auto shared = shared_key(map, pool, *bitm_tag);
+        if(shared)
+            if(auto it = m_shared_textures.find(*shared);
+               it != m_shared_textures.end())
+            {
+                it->second.generation = m_generation;
+                m_textures.emplace(key, it->second.texture);
+                return it->second.texture;
+            }
         auto tex = upload_bitmap(map, pool, *bitm_tag);
         if(!tex)
             return std::nullopt;
@@ -2767,7 +2800,37 @@ struct H2MapRenderer
             typing::Filtering::Linear);
         out.sampler->set_anisotropic(4);
         m_textures.emplace(key, out);
+        if(shared)
+            m_shared_textures[*shared] = {out, m_generation};
         return out;
+    }
+
+    /* Pixels in a side cache are the same for every map: the slot and
+     * offset of the first lod identify them across loads */
+    template<typename V>
+    static std::optional<u64> shared_key(
+        dim::map_container<V> const& map,
+        dim::raw_pool const&         pool,
+        dim::tag_t const&            bitm_tag)
+    {
+        auto const* bitm =
+            bitm_tag.template data<dim::bitm::header_t>(map.magic());
+        if(!bitm)
+            return std::nullopt;
+        auto images = bitm->images.data(map.magic());
+        if(images.has_error() || images.value().empty())
+            return std::nullopt;
+        dim::bitm::image_t const& img = images.value()[0];
+        for(int lod = 0; lod < 3; lod++)
+        {
+            if(!from_le(img.lod_size[lod]))
+                continue;
+            auto ref = pool.rebase(map.magic(), &img, img.lod_offset[lod]);
+            if(!ref.valid() || ref.file() == dim::raw_file_t::local)
+                return std::nullopt;
+            return (static_cast<u64>(ref.file()) << 32) | ref.offset();
+        }
+        return std::nullopt;
     }
 
     /* First image of a bitm tag with its mip chain, from whichever LOD is
@@ -2874,7 +2937,7 @@ struct H2MapRenderer
             cDebug(
                 "H2: bitm {}: {}x{} format {} lod{} ({} bytes) -> {} of {} "
                 "mip levels{}",
-                map.tag_name(bitm_tag),
+                map.name_of(bitm_tag),
                 width,
                 height,
                 static_cast<u16>(format),
@@ -3002,6 +3065,14 @@ struct H2MapRenderer
     std::vector<Material>          m_materials;
     std::unordered_map<u32, i32>   m_material_index; /* shad tag -> slot */
     std::unordered_map<u16, Texture> m_textures;     /* bitm tag -> gpu */
+    struct SharedTexture
+    {
+        Texture texture;
+        u32     generation;
+    };
+    std::unordered_map<u64, SharedTexture> m_shared_textures; /* side slot:offset */
+    std::array<std::shared_ptr<comp_app::FileMapper::Resource>, 3> m_side_files;
+    u32                                    m_generation{0};
     std::vector<std::unique_ptr<LightmapImage>>  m_lightmaps;
     std::vector<std::vector<LightBucket>>        m_buckets;        /* per BSP */
     std::vector<std::unordered_map<u32, SceneryLight>> m_scenery_lights; /* per BSP */
