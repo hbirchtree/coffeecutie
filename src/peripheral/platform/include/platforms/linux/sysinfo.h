@@ -324,6 +324,8 @@ inline std::optional<std::string> version()
 namespace platform::info::device::linux_ {
 namespace detail {
 using namespace proc::linux_::detail;
+
+std::optional<std::string> cpuinfo_hardware();
 }
 
 constexpr std::string_view dmi_root = "/sys/class/dmi/id";

@@ -310,6 +310,36 @@ std::map<u32, libc_types::u64> thread_cpu_ticks()
 
 } // namespace platform::info::proc::linux_
 
+namespace platform::info::device::linux_::detail {
+
+std::optional<std::string> cpuinfo_hardware()
+{
+    using namespace stl_types::str;
+    using namespace url::constructors;
+
+    if(auto lines = file::libc::read_lines("/proc/cpuinfo"_sys);
+       lines.has_value())
+    {
+        auto it = lines.value();
+        do
+        {
+            auto comps = stl_types::str::split::str(*it, ':');
+            std::vector<std::string_view> components(
+                comps.begin(), comps.end());
+            if(components.size() < 2)
+                continue;
+            auto field_key   = trim::right(components.at(0));
+            auto field_value = trim::left(components.at(1));
+
+            if(field_key == "Hardware")
+                return std::string(field_value);
+        } while(!(++it).empty());
+    }
+    return std::nullopt;
+}
+
+}
+
 namespace platform::info::device::linux_ {
 
 std::optional<std::pair<std::string, std::string>> device()

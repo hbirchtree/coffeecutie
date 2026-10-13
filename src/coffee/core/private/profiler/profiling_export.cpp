@@ -166,6 +166,27 @@ STATICINLINE void PutRuntimeInfo(json& target)
     if(auto browser = platform::info::os::emscripten::browser_name())
         runtime["browserAgent"] = *browser;
 #endif
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+    using namespace url::constructors;
+    // Don't replace machine/motherboard
+    // Just include the Hardware string if present
+    if(auto hw = platform::info::device::linux_::detail::cpuinfo_hardware())
+    {
+        runtime["linuxHardware"] = *hw;
+    }
+    if(auto dtCompat = platform::info::device::linux_::detail::read_dt_strings(
+        "/proc/device-tree/compatible"_sys);
+        !dtCompat.empty())
+    {
+        runtime["linuxDevicetreeCompat"] = dtCompat;
+    }
+    if(auto dtModel = platform::info::device::linux_::detail::read_dt_strings(
+        "/proc/device-tree/model"_sys);
+        !dtModel.empty())
+    {
+        runtime["linuxDevicetreeModel"] = dtModel.back();
+    }
+#endif
     {
         json args = nlohmann::json::array();
         for(auto const& arg : GetInitArgs())
