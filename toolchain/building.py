@@ -1515,7 +1515,8 @@ def cmd_run(
     prog_args: list[str],
     dry_run: bool,
     use_gdb: bool = False,
-    use_valgrind_tool: str | None = None
+    use_valgrind_tool: str | None = None,
+    use_heaptrack: bool = False
 ) -> None:
     """Run a natively-supported built target, forwarding *prog_args* to it."""
     runnable, why = _native_runnable(target, host)
@@ -1544,6 +1545,8 @@ def cmd_run(
             "valgrind",
             f"--tool={use_valgrind_tool}"
         ] + cmd
+    elif use_heaptrack:
+        cmd = ["heaptrack"] + cmd
 
     if dry_run:
         print(f"Would run (cwd={base_dir}):")
@@ -1559,6 +1562,8 @@ def cmd_run(
         os.execvpe("gdb", cmd, env)
     elif use_valgrind_tool is not None:
         os.execvpe("valgrind", cmd, env)
+    elif use_heaptrack:
+        os.execvpe("heaptrack", cmd, env)
     else:
         os.execvpe(str(binary), cmd, env)
 
@@ -1797,6 +1802,10 @@ def main() -> None:
         "--valgrind-tool", dest='valgrind_tool', default=None, metavar='VALGRIND_TOOL',
         help="Wrap program in a Valgrind tool (Linux only)"
     )
+    p.add_argument(
+        "--heaptrack", action="store_true",
+        help="Wrap program in heaptrack, writing heaptrack.<binary>.<pid>.zst/gz to the repo root (Linux only)"
+    )
 
     # print-env
     p = sub.add_parser("print-env", help="Print environment variables for a preset")
@@ -1941,7 +1950,8 @@ def main() -> None:
             cmake_extra_args,
             dry_run,
             use_gdb=args.gdb,
-            use_valgrind_tool=args.valgrind_tool)
+            use_valgrind_tool=args.valgrind_tool,
+            use_heaptrack=args.heaptrack)
 
     elif cmd == "print-env":
         check_programs("cmake")
