@@ -12,6 +12,12 @@
 #include <platforms/pimpl_state.h>
 #include <platforms/profiling.h>
 
+#if defined(COFFEE_EMSCRIPTEN)
+#include <fmt/core.h>
+#include <platforms/emscripten/fsio.h>
+#include <sys/stat.h>
+#endif
+
 #include <fmt_extensions/format.h>
 
 #if defined(COFFEE_ANDROID)
@@ -80,13 +86,12 @@ static void ensure_indexeddb_filesystem_mounted()
 
     if(!mounted)
     {
-        // clang-format off
-        EM_ASM(
-            FS.mkdir("/config");
-            FS.mount(IDBFS, {}, "/config");
-            FS.syncfs("/config");
-        );
-        // clang-format on
+        /* /config lives in OPFS; without it, in memory */
+        if(!platform::file::emscripten::persistent_mkdir("/config"))
+        {
+            ::mkdir("/config", 0755);
+            fmt::print(stderr, "No OPFS: /config is in memory\n");
+        }
         mounted = true;
     }
 }

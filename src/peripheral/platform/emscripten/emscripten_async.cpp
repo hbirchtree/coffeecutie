@@ -6,6 +6,9 @@
 
 #include <emscripten/emscripten.h>
 #include <emscripten/fetch.h>
+#include <emscripten/wasmfs.h>
+#include <sys/stat.h>
+#include <thread>
 
 #include <cctype>
 #include <cstring>
@@ -14,17 +17,26 @@
 
 namespace platform::file::emscripten {
 
-static void sync_storage(semantic::RSCA storage)
+/* /config is on OPFS under WasmFS: a closed file is already durable */
+static void sync_storage(semantic::RSCA)
 {
-    if(enum_helpers::feval(storage, RSCA::ConfigFile))
-        // clang-format off
-        EM_ASM(
-            FS.syncfs((err) => {
-                if(err)
-                    console.err("Error during syncfs: ", err);
-            });
-        );
-    // clang-format on
+}
+
+bool persistent_mkdir(const char* path)
+{
+    static backend_t opfs = [] {
+        backend_t out = nullptr;
+        /* Creating the backend blocks until the main thread is back in its
+         * event loop, so not from the main thread itself */
+        std::thread([&out] { out = wasmfs_create_opfs_backend(); }).join();
+        return out;
+    }();
+    if(!opfs)
+        return false;
+    struct stat st{};
+    if(::stat(path, &st) == 0)
+        return S_ISDIR(st.st_mode);
+    return wasmfs_create_directory(path, 0777, opfs) == 0;
 }
 
 static std::map<int, semantic::RSCA> fd_tracking{};

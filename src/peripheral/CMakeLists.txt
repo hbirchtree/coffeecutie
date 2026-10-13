@@ -223,12 +223,11 @@ elseif(EMSCRIPTEN)
     -Wno-pthreads-mem-growth
     #--no-heap-copy # DEPRECATED
     -sLLD_REPORT_UNDEFINED
+    # WasmFS: the filesystem lives in wasm, so a pthread reads without
+    # proxying to the main thread; OPFS backs the map store
+    -sWASMFS
+    -lopfs.js
     # -sSAFE_HEAP=1 -sALLOW_MEMORY_GROWTH
-  )
-  target_link_libraries(
-    PeripheralLib
-    PUBLIC
-    idbfs.js
   )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   find_package(Threads REQUIRED)
