@@ -36,13 +36,13 @@ static_assert(sizeof(tag_index_t) == 0x20);
  */
 struct alignas(4) group_t
 {
-    bl_tag group;
-    bl_tag parent;
-    bl_tag grandparent;
+    tag_class group;
+    tag_class parent;
+    tag_class grandparent;
 
     inline bool has_parent() const
     {
-        return static_cast<u32>(parent) != 0xFFFFFFFFu;
+        return parent.valid();
     }
 };
 
@@ -55,10 +55,10 @@ static_assert(sizeof(group_t) == 0xC);
  */
 struct alignas(4) tag_t
 {
-    bl_tag      tag_class;
-    datum_index tag_id;
-    u32         pointer_raw; /*!< Virtual address of the tag data */
-    i32         size_raw;
+    struct tag_class tag_class;
+    datum_index      tag_id;
+    u32              pointer_raw; /*!< Virtual address of the tag data */
+    i32              size_raw;
 
     inline u32 pointer() const
     {
@@ -77,7 +77,7 @@ struct alignas(4) tag_t
         if(tag_class_name.size() != 4)
             return false;
         for(size_t i = 0; i < 4; i++)
-            if(tag_class.data[i] != tag_class_name[3 - i])
+            if(tag_class.raw.data[i] != tag_class_name[3 - i])
                 return false;
         return true;
     }
@@ -87,7 +87,7 @@ struct alignas(4) tag_t
      */
     inline bool valid() const
     {
-        return static_cast<u32>(tag_class) != 0xFFFFFFFFu && pointer_raw != 0;
+        return tag_class.valid() && pointer_raw != 0;
     }
 
     template<typename T>

@@ -92,7 +92,7 @@ struct alignas(4) environment_object_t
     i16                                   unknown_0;
     datum_index                           unique_id;
     u32                                   unknown_1;
-    bl_tag                                object_definition_tag;
+    tag_class                             object_definition_tag;
     i32                                   object_raw;
     u8                                    unknown_2[0x40 - 0x14];
 };
