@@ -6,7 +6,7 @@
 <!--    </foreground>-->
     <item android:drawable="@drawable/ic_banner_background" android:gravity="fill" />
     <item
-        android:drawable="@drawable/ic_launcher_foreground"
+        android:drawable="@mipmap/ic_launcher_foreground"
         android:height="80dp"
         android:width="80dp"
         android:gravity="center_vertical"

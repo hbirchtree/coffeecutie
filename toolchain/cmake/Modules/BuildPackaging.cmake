@@ -230,7 +230,6 @@ StartupWMClass=${APP_TARGET}
   set_target_properties(
     ${APP_TARGET}
     PROPERTIES APP_TITLE "${APP_TITLE}"
-               APP_COLOR "#E91E63"
                APP_INFO_STRING "${APP_INFO_STRING}"
                APP_COPYRIGHT "${APP_COPYRIGHT}"
                APP_COMPANY "${APP_COMPANY}"
@@ -238,7 +237,17 @@ StartupWMClass=${APP_TARGET}
                APP_VERSION_STR "${COFFEE_BUILD_STRING}"
                ICON_SOURCE "${ICON_ASSET}"
                PKG_NAME "${APP_PACKAGE_PREFIX}.${APP_TARGET}"
+                # Currently only used by Android
+                # On Android, the icon asset will be rasterized
+                # This avoid the painful BS of the vector-drawables
                IS_GAME "true"
+               APP_COLOR "#E91E63"
+               APP_PRIMARY_COLOR "#1576DD" # Affect dynamic icon background
+               APP_SECONDARY_COLOR "#6007C6"
+               # Affects grid on dynamic icon
+               # Builds a layering effect
+               # Set to #00000000 to disable
+               APP_GRID_COLOR "#11FFFFFF"
   )
 
   target_compile_definitions(

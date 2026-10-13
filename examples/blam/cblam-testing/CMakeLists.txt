@@ -97,6 +97,9 @@ set_target_properties(
   PROPERTIES EMSCRIPTEN_THREADPOOL_SIZE 5
              EMSCRIPTEN_GROWABLE_MEMORY OFF
              EMSCRIPTEN_HEAP_SIZE 1024
+             APP_PRIMARY_COLOR "#081F49"
+             APP_SECONDARY_COLOR "#1F0445"
+             APP_GRID_COLOR "#11FFFFFF"
 )
 target_compile_definitions(BlamGraphics
     PUBLIC
