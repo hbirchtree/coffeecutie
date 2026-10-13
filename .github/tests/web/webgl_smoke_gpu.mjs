@@ -64,16 +64,32 @@ function startServer(rootDir) {
         res.writeHead(403).end('forbidden');
         return;
       }
-      const body = await readFile(filePath);
-      res.writeHead(200, {
+      const whole = await readFile(filePath);
+      const headers = {
         'Content-Type': MIME[extname(filePath)] || 'application/octet-stream',
-        'Content-Length': body.length,
+        ...(process.env.NO_RANGE ? {} : { 'Accept-Ranges': 'bytes' }),
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Embedder-Policy': 'require-corp',
         'Cross-Origin-Resource-Policy': 'cross-origin',
         'Cache-Control': 'no-store',
-      });
-      res.end(body);
+      };
+      // Range requests: the wasm build reads the big cache files by slice
+      // NO_RANGE=1 plays a server without Range support
+      const range = process.env.NO_RANGE ? null : /^bytes=(\d+)-(\d*)$/.exec(req.headers.range || '');
+      if (range) {
+        const start = Number(range[1]);
+        const end = range[2] === '' ? whole.length - 1 : Math.min(Number(range[2]), whole.length - 1);
+        if (start > end) {
+          res.writeHead(416, { 'Content-Range': `bytes */${whole.length}` }).end();
+          return;
+        }
+        const body = whole.subarray(start, end + 1);
+        res.writeHead(206, { ...headers, 'Content-Length': body.length, 'Content-Range': `bytes ${start}-${end}/${whole.length}` });
+        res.end(body);
+        return;
+      }
+      res.writeHead(200, { ...headers, 'Content-Length': whole.length });
+      res.end(whole);
     } catch {
       res.writeHead(404).end('not found');
     }
