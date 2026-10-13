@@ -519,7 +519,20 @@ struct H2MapRenderer
         else if(auto map = dim::map_container<dim::vista_version_t>::from_bytes(
                     bytes, dim::vista_version);
                 map.has_value())
-            loaded = load_map(map.value(), pool);
+        {
+            /* Vista borrows weapons, templates and the like from shared.map */
+            auto vista  = map.value();
+            auto shared = dim::load_shared(vista, pool);
+            if(shared)
+                vista.shared = &*shared;
+            cDebug(
+                "H2: shared map {}; side files {} / {} / {} bytes",
+                shared ? "attached" : "none",
+                pool.files[static_cast<u8>(dim::raw_file_t::mainmenu)].size(),
+                pool.files[static_cast<u8>(dim::raw_file_t::shared)].size(),
+                pool.files[static_cast<u8>(dim::raw_file_t::single_player_shared)].size());
+            loaded = load_map(vista, pool);
+        }
         else
             cWarning(
                 "H2: not a supported Halo 2 cache: error {}",
@@ -816,8 +829,9 @@ struct H2MapRenderer
         {
             auto collision = std::make_shared<CollisionMesh>();
             /* The BSP region has its own virtual base */
-            auto const* bsp       = ref.body(map.magic());
-            auto        bsp_magic = ref.region_magic(map.magic());
+            auto        located   = dim::locate_bsp(map, ref);
+            auto const* bsp       = located.body;
+            auto        bsp_magic = located.magic;
             if(!bsp)
                 continue;
             if(!center)
@@ -850,8 +864,7 @@ struct H2MapRenderer
             std::vector<LightmapImage const*> instance_lightmaps;
             std::vector<LightBucket>          buckets;
             std::vector<SceneryLight>         instance_lights;
-            if(auto const* region = ref.region(map.magic()))
-                if(auto const* ltmp = dim::ltmp::from_region(*region, bsp_magic))
+            if(auto const* ltmp = located.lightmap)
                     if(auto groups = ltmp->groups.data(bsp_magic);
                        !groups.has_error() && !groups.value().empty())
                     {
@@ -1509,9 +1522,18 @@ struct H2MapRenderer
         i32 data_size    = section.data_size();
         if(!vertex_count || data_size <= 0)
             return 0;
-        auto block = pool.resolve(section.data, static_cast<u32>(data_size));
+        auto block =
+            pool.resolve(magic, &section, section.data, static_cast<u32>(data_size));
         if(!block)
+        {
+            if(m_model_fail_logged++ < 3)
+                cDebug(
+                    "H2: section raw {}+{:#x} ({} bytes) unresolved",
+                    static_cast<u32>(section.data.file()),
+                    section.data.offset(),
+                    data_size);
             return 0;
+        }
         auto resources = section.resources.data(magic);
         if(resources.has_error())
             return 0;
@@ -1549,8 +1571,10 @@ struct H2MapRenderer
         u32  nstride = has_n ? streams.normal->size() / vertex_count : 0;
         if(pstride < (bounds ? 6u : 12u))
             return 0;
-        /* 4 = packed normal; 12 = packed normal, binormal, tangent */
-        if(!m_normal_order_logged && has_n && nstride != 4 && nstride != 12)
+        /* 4 = packed normal; 12 = packed normal, binormal, tangent; 36 =
+         * the same three as floats (Vista) */
+        if(!m_normal_order_logged && has_n && nstride != 4 && nstride != 12 &&
+           nstride != 36)
         {
             cDebug("H2: unhandled normal stream stride {}", nstride);
             m_normal_order_logged = true;
@@ -1605,7 +1629,14 @@ struct H2MapRenderer
                     out.texcoord = {from_le(uv[0]), from_le(uv[1])};
                 }
             }
-            if(has_n && (nstride == 4 || nstride == 12))
+            if(has_n && nstride == 36)
+            {
+                f32 n[3];
+                std::memcpy(n, bytes + base + streams.normal->offset() + v * nstride, 12);
+                Vecf3 normal{from_le(n[0]), from_le(n[1]), from_le(n[2])};
+                normals_a.push_back(glm::normalize(rotation * normal));
+                normals_b.push_back(normals_a.back());
+            } else if(has_n && (nstride == 4 || nstride == 12))
             {
                 u32 packed;
                 std::memcpy(
@@ -1898,10 +1929,23 @@ struct H2MapRenderer
         auto const* model =
             mode_tag.template data<geo::model_header_t>(map.magic());
         if(!model)
+        {
+            if(m_model_fail_logged++ < 3)
+                cDebug("H2: {}: model body unresolved", map.tag_name(mode_tag));
             return 0;
+        }
         auto bounds   = model->bounds.data(map.magic());
         auto sections = model->sections.data(map.magic());
         auto regions  = model->regions.data(map.magic());
+        if((bounds.has_error() || bounds.value().empty() ||
+            sections.has_error() || regions.has_error()) &&
+           m_model_fail_logged++ < 3)
+            cDebug(
+                "H2: {}: bounds {} sections {} regions {}",
+                map.tag_name(mode_tag),
+                bounds.has_error() ? "error" : std::to_string(bounds.value().size()),
+                sections.has_error() ? "error" : std::to_string(sections.value().size()),
+                regions.has_error() ? "error" : std::to_string(regions.value().size()));
         if(bounds.has_error() || bounds.value().empty() ||
            sections.has_error() || regions.has_error())
             return 0;
@@ -2524,6 +2568,7 @@ struct H2MapRenderer
             : mat.detail_mode == 1 ? ", detail"
                                    : "",
             resolved ? "" : " (template unresolved)");
+
         m_materials.insert(m_materials.end() - 1, std::move(mat));
         i32 idx = static_cast<i32>(m_materials.size()) - 2;
         /* Everything after the inserted slot moved by one: only the
@@ -2593,12 +2638,24 @@ struct H2MapRenderer
         for(int lod = 0; lod < 3; lod++)
         {
             u32 lod_size = from_le(img.lod_size[lod]);
-            if(lod_size < base)
+            if(!lod_size)
                 continue;
-            auto raw = pool.resolve(img.lod_offset[lod], lod_size);
+            auto raw = pool.resolve(map.magic(), &img, img.lod_offset[lod], lod_size);
             if(!raw)
                 continue;
             auto const* src = reinterpret_cast<u8 const*>(raw->data());
+            /* Vista: the lod is a zlib stream of the same layout */
+            std::optional<std::vector<u8>> inflated;
+            if(dim::bitm::is_zlib(*raw))
+            {
+                inflated = dim::bitm::inflate(*raw);
+                if(!inflated)
+                    continue;
+                src      = inflated->data();
+                lod_size = static_cast<u32>(inflated->size());
+            }
+            if(lod_size < base)
+                continue;
 
             /* Mips follow the base level back to back */
             struct level_t
@@ -2770,6 +2827,7 @@ struct H2MapRenderer
     bool                           m_log_draws{false};
     u32                            m_objects_total{0}, m_objects_clustered{0};
     bool m_visibility_enabled{!std::getenv("COFFEE_H2_NO_VISIBILITY")};
+    u32  m_model_fail_logged{0};
     std::vector<Vertex>            m_vertices;
     std::vector<u16>               m_indices;
     std::vector<Material>          m_materials;
