@@ -818,7 +818,7 @@ struct PhysicsSystem
             rebuild_world(*bsp_cache);
 
         /* Without ground, new bodies would fall through the map */
-        if(m_world_body)
+        if(has_ground())
         {
             reconcile_player_bodies(p);
             reconcile_object_bodies(p);
@@ -2100,6 +2100,18 @@ struct PhysicsSystem
             m_markers->release_strip(it->second.debug_slot);
         m_bodies.erase(it);
         wake_dynamic_bodies();
+    }
+
+    /* The BSP world mesh, or a static body adopted from elsewhere (RS2
+     * regions, Halo 2 collision) */
+    bool has_ground() const
+    {
+        if(m_world_body)
+            return true;
+        for(auto const& [_, body] : m_bodies)
+            if(body.world_body && body.world_body->getInvMass() == 0.f)
+                return true;
+        return false;
     }
 
     void reset_world()

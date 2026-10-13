@@ -1,0 +1,178 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "03a: pelican and gun tower placements",
+    "events": [
+        {
+            "time": 500,
+            "type": "camera",
+            "fov": 60
+        },
+        {
+            "time": 1000,
+            "type": "camera",
+            "position": [
+                -38.84,
+                -297.63,
+                -1.2300000000000004
+            ],
+            "rotation": [
+                -20,
+                0
+            ]
+        },
+        {
+            "time": 1300,
+            "type": "screenshot",
+            "name": "pelican_0"
+        },
+        {
+            "time": 1600,
+            "type": "camera",
+            "position": [
+                -38.84,
+                -297.63,
+                -1.2300000000000004
+            ],
+            "rotation": [
+                -20,
+                90
+            ]
+        },
+        {
+            "time": 1900,
+            "type": "screenshot",
+            "name": "pelican_90"
+        },
+        {
+            "time": 2200,
+            "type": "camera",
+            "position": [
+                -38.84,
+                -297.63,
+                -1.2300000000000004
+            ],
+            "rotation": [
+                -20,
+                180
+            ]
+        },
+        {
+            "time": 2500,
+            "type": "screenshot",
+            "name": "pelican_180"
+        },
+        {
+            "time": 2800,
+            "type": "camera",
+            "position": [
+                -38.84,
+                -297.63,
+                -1.2300000000000004
+            ],
+            "rotation": [
+                -20,
+                270
+            ]
+        },
+        {
+            "time": 3100,
+            "type": "screenshot",
+            "name": "pelican_270"
+        },
+        {
+            "time": 3400,
+            "type": "camera",
+            "position": [
+                -515.34,
+                -425.19,
+                -3.1900000000000004
+            ],
+            "rotation": [
+                -20,
+                0
+            ]
+        },
+        {
+            "time": 3700,
+            "type": "screenshot",
+            "name": "guntower_0"
+        },
+        {
+            "time": 4000,
+            "type": "camera",
+            "position": [
+                -515.34,
+                -425.19,
+                -3.1900000000000004
+            ],
+            "rotation": [
+                -20,
+                90
+            ]
+        },
+        {
+            "time": 4300,
+            "type": "screenshot",
+            "name": "guntower_90"
+        },
+        {
+            "time": 4600,
+            "type": "camera",
+            "position": [
+                -515.34,
+                -425.19,
+                -3.1900000000000004
+            ],
+            "rotation": [
+                -20,
+                180
+            ]
+        },
+        {
+            "time": 4900,
+            "type": "screenshot",
+            "name": "guntower_180"
+        },
+        {
+            "time": 5200,
+            "type": "camera",
+            "position": [
+                -515.34,
+                -425.19,
+                -3.1900000000000004
+            ],
+            "rotation": [
+                -20,
+                270
+            ]
+        },
+        {
+            "time": 5500,
+            "type": "screenshot",
+            "name": "guntower_270"
+        },
+        {}
+    ],
+    "frame_delta": 100.0,
+    "end_time": 6300
+}

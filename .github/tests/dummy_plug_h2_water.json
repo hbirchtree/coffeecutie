@@ -1,0 +1,214 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "beavercreek: the stream and the sky",
+    "events": [
+        {
+            "time": 500,
+            "type": "camera",
+            "fov": 70
+        },
+        {
+            "time": 1000,
+            "type": "camera",
+            "position": [
+                1.0,
+                0.0,
+                0.3
+            ],
+            "rotation": [
+                -30,
+                0
+            ]
+        },
+        {
+            "time": 1300,
+            "type": "screenshot",
+            "name": "water0_0"
+        },
+        {
+            "time": 1600,
+            "type": "camera",
+            "position": [
+                1.0,
+                0.0,
+                0.3
+            ],
+            "rotation": [
+                -30,
+                90
+            ]
+        },
+        {
+            "time": 1900,
+            "type": "screenshot",
+            "name": "water0_90"
+        },
+        {
+            "time": 2200,
+            "type": "camera",
+            "position": [
+                1.0,
+                0.0,
+                0.3
+            ],
+            "rotation": [
+                -30,
+                180
+            ]
+        },
+        {
+            "time": 2500,
+            "type": "screenshot",
+            "name": "water0_180"
+        },
+        {
+            "time": 2800,
+            "type": "camera",
+            "position": [
+                1.0,
+                0.0,
+                0.3
+            ],
+            "rotation": [
+                -30,
+                270
+            ]
+        },
+        {
+            "time": 3100,
+            "type": "screenshot",
+            "name": "water0_270"
+        },
+        {
+            "time": 3400,
+            "type": "camera",
+            "position": [
+                1.0,
+                4.5,
+                0.1
+            ],
+            "rotation": [
+                -45,
+                0
+            ]
+        },
+        {
+            "time": 3700,
+            "type": "screenshot",
+            "name": "water1_0"
+        },
+        {
+            "time": 4000,
+            "type": "camera",
+            "position": [
+                1.0,
+                4.5,
+                0.1
+            ],
+            "rotation": [
+                -45,
+                90
+            ]
+        },
+        {
+            "time": 4300,
+            "type": "screenshot",
+            "name": "water1_90"
+        },
+        {
+            "time": 4600,
+            "type": "camera",
+            "position": [
+                1.0,
+                4.5,
+                0.1
+            ],
+            "rotation": [
+                -45,
+                180
+            ]
+        },
+        {
+            "time": 4900,
+            "type": "screenshot",
+            "name": "water1_180"
+        },
+        {
+            "time": 5200,
+            "type": "camera",
+            "position": [
+                1.0,
+                4.5,
+                0.1
+            ],
+            "rotation": [
+                -45,
+                270
+            ]
+        },
+        {
+            "time": 5500,
+            "type": "screenshot",
+            "name": "water1_270"
+        },
+        {
+            "time": 5800,
+            "type": "camera",
+            "position": [
+                -3.68,
+                1.81,
+                0.46
+            ],
+            "rotation": [
+                45,
+                0
+            ]
+        },
+        {
+            "time": 6100,
+            "type": "screenshot",
+            "name": "sky_45"
+        },
+        {
+            "time": 6400,
+            "type": "camera",
+            "position": [
+                -3.68,
+                1.81,
+                0.46
+            ],
+            "rotation": [
+                80,
+                0
+            ]
+        },
+        {
+            "time": 6700,
+            "type": "screenshot",
+            "name": "sky_80"
+        },
+        {}
+    ],
+    "frame_delta": 100.0,
+    "end_time": 7500
+}

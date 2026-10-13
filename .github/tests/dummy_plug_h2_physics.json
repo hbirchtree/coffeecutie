@@ -1,0 +1,36 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Halo 2 map: drop the player onto the collision mesh and dump where it settled",
+    "events": [
+        {"time":  500, "type": "camera", "fov": 70, "rotation": [0, 0]},
+        {"time": 1000, "type": "dump_state"},
+        {"time": 1200, "type": "camera", "position": [-3.68, 1.81, 3.5]},
+        {"time": 1500, "type": "camera", "physics": true},
+        {"time": 2000, "type": "screenshot", "name": "h2_physics_falling"},
+        {"time": 6000, "type": "dump_state"},
+        {"time": 6500, "type": "screenshot", "name": "h2_physics_settled"},
+        {}
+    ],
+    "frame_delta": 50.0,
+    "end_time": 7000
+}
