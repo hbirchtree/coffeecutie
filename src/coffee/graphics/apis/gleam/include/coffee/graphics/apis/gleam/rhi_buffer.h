@@ -70,8 +70,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     inline void commit(size_t size)
     {
         m_cached_size = size;
-        if(no_mapping_optimization() || slow_mapping_optimization())
-            m_allocation.resize(size);
+        m_allocation  = {};
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && immutable())
         {
@@ -112,13 +111,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     inline void commit(Span const& data)
     {
         m_cached_size = data.size();
-        if(no_mapping_optimization() || slow_mapping_optimization())
-        {
-            auto bytes =
-                semantic::mem_chunk<const char>::ofContainer(data).view;
-            m_allocation.resize(bytes.size());
-            std::copy(bytes.begin(), bytes.end(), m_allocation.begin());
-        }
+        m_allocation  = {};
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && immutable())
         {
@@ -163,20 +156,17 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             cmd::named_buffer_sub_data(m_handle, offset, data);
         } else
 #endif
-            if(!no_mapping_optimization() && !slow_mapping_optimization())
         {
+            if(!m_allocation.empty())
+            {
+                auto bytes =
+                    semantic::mem_chunk<const char>::ofContainer(data).view;
+                std::copy(
+                    bytes.begin(), bytes.end(), m_allocation.begin() + offset);
+            }
             cmd::bind_buffer(convert::to(m_type), m_handle);
             cmd::buffer_sub_data(convert::to(m_type), offset, data);
             m_usage.buffers.upload_data += data.size();
-            m_usage.buffers.uploads++;
-        } else
-        {
-            auto bytes =
-                semantic::mem_chunk<const char>::ofContainer(data).view;
-            auto target = map<char>(offset, bytes.size());
-            std::copy(bytes.begin(), bytes.end(), target.begin());
-            unmap();
-            m_usage.buffers.upload_data += bytes.size();
             m_usage.buffers.uploads++;
         }
     }
@@ -218,8 +208,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             if(no_mapping_optimization() || slow_mapping_optimization())
             {
                 if(m_allocation.size() != buffer_size)
-                    Throw(undefined_behavior(
-                        "client-storage desynced from buffer"));
+                    m_allocation.resize(buffer_size);
                 m_mapping = {offset, actual_size};
                 pointer   = m_allocation.data() + offset;
                 break;
