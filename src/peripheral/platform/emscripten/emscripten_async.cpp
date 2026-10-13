@@ -1,4 +1,5 @@
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <platforms/emscripten/fsio.h>
 #include <platforms/emscripten/mmio.h>
 #include <platforms/emscripten/rdwrio.h>
@@ -6,6 +7,8 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/fetch.h>
 
+#include <cctype>
+#include <cstring>
 #include <mutex>
 #include <vector>
 
@@ -89,6 +92,106 @@ std::optional<posix::posix_error> unmap(posix::mem_mapping_t&& mapping)
         return posix::unmap(std::move(mapping));
     emscripten_fetch_close(static_cast<emscripten_fetch_t*>(mapping.fetch_fd));
     return std::nullopt;
+}
+
+/* One synchronous GET, with a Range when last >= first; the response stays
+ * open for the caller, whatever its status */
+static emscripten_fetch_t* fetch_sync(
+    std::string const& url, std::uint64_t first = 1, std::uint64_t last = 0)
+{
+    auto        range     = fmt::format("bytes={}-{}", first, last);
+    const char* headers[] = {"Range", range.c_str(), nullptr};
+    emscripten_fetch_attr_t attrs;
+    emscripten_fetch_attr_init(&attrs);
+    strncpy(attrs.requestMethod, "GET", 3);
+    attrs.attributes =
+        EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_SYNCHRONOUS;
+    if(last >= first)
+        attrs.requestHeaders = headers;
+    return emscripten_fetch(&attrs, url.c_str());
+}
+
+static emscripten_fetch_t* fetch_sync_range(
+    std::string const& url, std::uint64_t first, std::uint64_t last)
+{
+    auto* fetch = fetch_sync(url, first, last);
+    if(!fetch)
+        return nullptr;
+    if(fetch->status != 206)
+    {
+        fmt::print(
+            stderr,
+            "fetch_range: {} bytes={}-{}: status {}, no partial content\n",
+            url,
+            first,
+            last,
+            fetch->status);
+        emscripten_fetch_close(fetch);
+        return nullptr;
+    }
+    return fetch;
+}
+
+range_probe_t fetch_probe(std::string const& url)
+{
+    auto* fetch = fetch_sync(url, 0, 0);
+    if(!fetch)
+        return {};
+    range_probe_t out{.status = fetch->status};
+    if(fetch->status == 200)
+    {
+        /* Range ignored: the file is already here, keep it */
+        out.size  = fetch->numBytes;
+        out.whole = posix::mem_mapping_t{
+            .view = posix::mem_mapping_t::span_type(
+                const_cast<char*>(fetch->data), fetch->numBytes),
+            .access   = RSCA::ReadOnly,
+            .fetch_fd = fetch,
+        };
+        return out;
+    }
+    if(fetch->status != 206)
+    {
+        emscripten_fetch_close(fetch);
+        return out;
+    }
+    auto len = emscripten_fetch_get_response_headers_length(fetch);
+    std::string headers(len + 1, '\0');
+    emscripten_fetch_get_response_headers(fetch, headers.data(), headers.size());
+    emscripten_fetch_close(fetch);
+    /* content-range: bytes 0-0/429017088 */
+    for(auto& c : headers)
+        c = static_cast<char>(tolower(c));
+    auto at = headers.find("content-range:");
+    auto slash = at == std::string::npos ? at : headers.find('/', at);
+    if(slash == std::string::npos)
+        return out;
+    for(auto p = slash + 1; p < headers.size() && isdigit(headers[p]); p++)
+        out.size = out.size * 10 + static_cast<std::uint64_t>(headers[p] - '0');
+    return out;
+}
+
+bool fetch_range(
+    std::string const& url, std::uint64_t offset, gsl::span<char> dst)
+{
+    if(dst.empty())
+        return true;
+    auto* fetch = fetch_sync_range(url, offset, offset + dst.size() - 1);
+    if(!fetch)
+        return false;
+    bool ok = fetch->numBytes == dst.size();
+    if(ok)
+        memcpy(dst.data(), fetch->data, dst.size());
+    else
+        fmt::print(
+            stderr,
+            "fetch_range: {} +{}: got {} of {} bytes\n",
+            url,
+            offset,
+            fetch->numBytes,
+            dst.size());
+    emscripten_fetch_close(fetch);
+    return ok;
 }
 
 std::future<posix::mem_mapping_t> mmap_async(Url const& file)
