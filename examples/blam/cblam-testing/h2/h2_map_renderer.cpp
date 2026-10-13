@@ -7,12 +7,14 @@
 #include "sounds.h"
 
 #include <blam/dimeter/h2_bitm.h>
+#include <blam/dimeter/h2_collision.h>
 #include <blam/dimeter/h2_geometry.h>
 #include <blam/dimeter/h2_lightmap.h>
 #include <blam/dimeter/h2_map.h>
 #include <blam/dimeter/h2_material.h>
 #include <blam/dimeter/h2_scenario.h>
 #include <blam/dimeter/h2_shader.h>
+#include <blam/common/portal_walk.h>
 #include <blam/volta/blam_swizzle.h>
 
 #include <coffee/components/proxy.h>
@@ -41,6 +43,8 @@
 #include <bit>
 #include <cmath>
 #include <cstdlib>
+#include <limits>
+#include <optional>
 #include <cstring>
 #include <set>
 #include <unordered_map>
@@ -50,7 +54,8 @@ void update_camera_aspect(compo::EntityContainer& e);
 namespace h2 {
 
 namespace dim = blam::dimeter;
-namespace geo = blam::dimeter::geo;
+namespace geo  = blam::dimeter::geo;
+namespace coll = blam::dimeter::coll;
 using blam::from_le;
 using Coffee::Resource;
 using libc_types::i64;
@@ -64,9 +69,34 @@ struct Vertex
     Vecf2 texcoord;
     Vecf3 normal;
     Vecf3 lightmap{0.f, 0.f, -1.f}; /*!< Atlas u, v, layer; -1 = none */
+    u8    light[4]{0, 0, 0, 0};     /*!< Baked per-vertex light, a = valid */
 };
 
-static_assert(sizeof(Vertex) == 44);
+static_assert(sizeof(Vertex) == 48);
+
+/* Lighting an external source supplies for a section's vertices: lightmap
+ * texcoords (i16 pairs expanded through `bounds`) or per-vertex colours */
+struct ExternalLighting
+{
+    Span<i16 const>            lightmap_uv; /*!< 2 per vertex */
+    geo::model_bounds_t const* bounds{nullptr};
+    Span<u8 const>             rgb; /*!< 3 per vertex */
+};
+
+/* One ltmp geometry bucket decoded: the streams per-vertex lit instances
+ * and scenery index into by vertex */
+struct LightBucket
+{
+    std::vector<i16> uv;  /*!< 2 per vertex */
+    std::vector<u8>  rgb; /*!< 3 per vertex */
+};
+
+/* Where a scenery placement's baked lighting lives */
+struct SceneryLight
+{
+    i32              bucket{-1};
+    std::vector<i16> section_offsets; /*!< Vertex offset per model section */
+};
 
 /* One cluster's lightmap, decoded to RGBA and placed in the atlas */
 struct LightmapImage
@@ -153,15 +183,25 @@ static constexpr std::string_view variant_files[] = {
 static_assert(
     std::size(variant_files) == static_cast<size_t>(Variant::count));
 
+/* Where a draw lives, each -1 = unconstrained: `section` is the structure
+ * BSP it belongs to, `cluster` or `instance` its place in the visibility
+ * data of `cluster_section` */
+struct DrawTag
+{
+    i32 section{-1};
+    i32 cluster_section{-1};
+    i32 cluster{-1};
+    i32 instance{-1};
+};
+
 /* One shad tag: its diffuse map and every draw range using it */
 struct Material
 {
     Variant                                variant{Variant::base};
-    /* Draw ranges with the structure BSP they belong to; -1 = always */
     struct draw_t
     {
         gfx::draw_command::data_t cmd;
-        i32                       section;
+        DrawTag                   tag;
     };
     std::vector<draw_t>                    section_draws;
     std::string                            name;
@@ -197,9 +237,56 @@ struct CollisionMesh
  * collides, each carries its own far-off stand-ins for the others */
 struct Section
 {
+    struct Portal
+    {
+        i16                front, back;
+        std::vector<Vecf3> vertices;
+
+        inline i16 front_cluster() const
+        {
+            return front;
+        }
+
+        inline i16 back_cluster() const
+        {
+            return back;
+        }
+    };
+
+    struct Cluster
+    {
+        Vecf3               lo, hi;
+        std::vector<Portal> portals;
+    };
+
     std::string                    name;
     Vecf3                          lo, hi; /*!< World bounds, stand-ins included */
     std::shared_ptr<CollisionMesh> collision;
+
+    /* Visibility: the collision tree's leaves name their cluster, clusters
+     * their portals; instances list the clusters that own them */
+    std::vector<coll::bsp3d_node_t> nodes;
+    std::vector<coll::plane_t>      planes;
+    std::vector<i16>                leaf_cluster;
+    std::vector<Cluster>            clusters;
+    std::vector<std::vector<i16>>   instance_clusters;
+
+    /* The cluster around a point, nullopt in solid space */
+    inline std::optional<u32> cluster_of(Vecf3 const& p) const
+    {
+        auto leaf = coll::find_leaf(
+            Span<coll::bsp3d_node_t const>(nodes),
+            Span<coll::plane_t const>(planes),
+            p.x,
+            p.y,
+            p.z);
+        if(!leaf || *leaf >= leaf_cluster.size())
+            return std::nullopt;
+        i16 c = leaf_cluster[*leaf];
+        if(c < 0 || static_cast<size_t>(c) >= clusters.size())
+            return std::nullopt;
+        return static_cast<u32>(c);
+    }
 };
 
 /* Camera inside this volume while in `source` switches to `destination` */
@@ -458,6 +545,10 @@ struct H2MapRenderer
         m_material_index.clear();
         m_textures.clear();
         m_sections.clear();
+        m_visible.clear();
+        m_buckets.clear();
+        m_scenery_lights.clear();
+        m_objects_total = m_objects_clustered = 0;
         m_switches.clear();
         m_active = -1;
         m_lightmaps.clear();
@@ -485,6 +576,8 @@ struct H2MapRenderer
 
         auto& resources = p.template subsystem<BlamResources>();
         update_section(camera->camera.position);
+        update_visibility(camera->camera.position, camera->matrix);
+        size_t draws_total = 0, draws_visible = 0;
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
         for(int pass = 0; pass < 3; pass++)
@@ -497,8 +590,10 @@ struct H2MapRenderer
                     continue;
                 mat.draws.clear();
                 for(auto const& d : mat.section_draws)
-                    if(d.section < 0 || d.section == m_active)
+                    if(draw_visible(d.tag))
                         mat.draws.push_back(d.cmd);
+                draws_total += mat.section_draws.size();
+                draws_visible += mat.draws.size();
                 if(mat.draws.empty())
                     continue;
                 Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
@@ -600,6 +695,11 @@ struct H2MapRenderer
                     m_draw_error_logged = true;
                 }
             }
+        if(m_log_draws)
+        {
+            cDebug("H2: drew {} of {} ranges", draws_visible, draws_total);
+            m_log_draws = false;
+        }
     }
 
   private:
@@ -641,11 +741,22 @@ struct H2MapRenderer
                      .stride = sizeof(Vertex),
                      .count  = 3},
             });
+        m_vao->add(
+            gfx::vertex_attribute{
+                .index = 4,
+                .value =
+                    {.offset = offsetof(Vertex, light),
+                     .stride = sizeof(Vertex),
+                     .count  = 4,
+                     .type   = semantic::type_t::u8,
+                     .flags  = gfx::vertex_attribute::attribute_flags::normalized},
+            });
         m_vao->set_attribute_names({
             {"position", 0},
             {"texcoord", 1},
             {"normal", 2},
             {"lightmap", 3},
+            {"vertex_light", 4},
         });
 
         m_vertex_buf =
@@ -731,13 +842,35 @@ struct H2MapRenderer
                 .hi        = {from_le(bsp->x_max), from_le(bsp->y_max), from_le(bsp->z_max)},
                 .collision = std::move(collision),
             });
+            gather_visibility(*bsp, bsp_magic, m_sections.back());
 
-            /* Lightmaps: one image per cluster, through the region's ltmp */
+            /* Lightmaps: one image per cluster and per per-pixel instance,
+             * through the region's ltmp; buckets light the rest per vertex */
             std::vector<LightmapImage const*> cluster_lightmaps;
+            std::vector<LightmapImage const*> instance_lightmaps;
+            std::vector<LightBucket>          buckets;
+            std::vector<SceneryLight>         instance_lights;
             if(auto const* region = ref.region(map.magic()))
                 if(auto const* ltmp = dim::ltmp::from_region(*region, bsp_magic))
-                    cluster_lightmaps =
-                        load_lightmaps(map, pool, *ltmp, bsp_magic);
+                    if(auto groups = ltmp->groups.data(bsp_magic);
+                       !groups.has_error() && !groups.value().empty())
+                    {
+                        auto const& group = groups.value()[0];
+                        cluster_lightmaps = load_lightmaps(
+                            map, pool, group, group.cluster_render_info, bsp_magic);
+                        instance_lightmaps = load_lightmaps(
+                            map, pool, group, group.instance_render_info, bsp_magic);
+                        buckets         = load_buckets(pool, group, bsp_magic);
+                        instance_lights = load_bucket_refs(
+                            group.instance_bucket_refs, bsp_magic);
+                        m_scenery_lights.push_back(
+                            load_scenery_lights(group, bsp_magic));
+                        m_buckets.push_back(buckets);
+                    }
+            if(m_scenery_lights.size() <= bsp_idx)
+                m_scenery_lights.resize(bsp_idx + 1);
+            if(m_buckets.size() <= bsp_idx)
+                m_buckets.resize(bsp_idx + 1);
 
             u32  cluster_count = 0, instance_count = 0, orphan_count = 0;
             u32  sections  = 0;
@@ -761,7 +894,11 @@ struct H2MapRenderer
                         materials,
                         false,
                         lightmap,
-                        static_cast<i32>(bsp_idx));
+                        DrawTag{
+                            .section         = static_cast<i32>(bsp_idx),
+                            .cluster_section = static_cast<i32>(bsp_idx),
+                            .cluster = static_cast<i32>(cluster_count - 1),
+                        });
                 }
             std::vector<bool> instanced;
             if(!geom.has_error())
@@ -774,7 +911,38 @@ struct H2MapRenderer
                        static_cast<size_t>(sidx) >= geom.value().size())
                         continue;
                     instanced[sidx] = true;
-                    instance_count++;
+                    /* Per-pixel instances have a lightmap and bucket UVs,
+                     * per-vertex ones bucket colours */
+                    ExternalLighting     lighting;
+                    LightmapImage const* lightmap = nullptr;
+                    auto                 def_bounds =
+                        geom.value()[sidx].bounds.data(bsp_magic);
+                    if(instance_count < instance_lights.size())
+                    {
+                        auto const& light = instance_lights[instance_count];
+                        u32         vo    = light.section_offsets.empty()
+                                                ? 0
+                                                : static_cast<u32>(std::max<i16>(
+                                                      0, light.section_offsets[0]));
+                        u32 count = geom.value()[sidx].vertex_count();
+                        if(light.bucket >= 0 &&
+                           static_cast<size_t>(light.bucket) < buckets.size())
+                        {
+                            auto const& bucket = buckets[light.bucket];
+                            bool per_pixel = from_le(inst.lightmapping_policy) == 0;
+                            if(per_pixel && instance_count < instance_lightmaps.size() &&
+                               bucket.uv.size() >= (vo + count) * 2)
+                            {
+                                lightmap = instance_lightmaps[instance_count];
+                                lighting.lightmap_uv =
+                                    Span<i16 const>(bucket.uv.data() + vo * 2, count * 2);
+                                if(!def_bounds.has_error() && !def_bounds.value().empty())
+                                    lighting.bounds = &def_bounds.value()[0];
+                            } else if(bucket.rgb.size() >= (vo + count) * 3)
+                                lighting.rgb =
+                                    Span<u8 const>(bucket.rgb.data() + vo * 3, count * 3);
+                        }
+                    }
                     sections += append_section(
                         pool,
                         bsp_magic,
@@ -783,8 +951,14 @@ struct H2MapRenderer
                         nullptr,
                         materials,
                         false,
-                        nullptr,
-                        static_cast<i32>(bsp_idx));
+                        lightmap,
+                        DrawTag{
+                            .section         = static_cast<i32>(bsp_idx),
+                            .cluster_section = static_cast<i32>(bsp_idx),
+                            .instance        = static_cast<i32>(instance_count),
+                        },
+                        lighting);
+                    instance_count++;
                 }
             if(!geom.has_error())
                 for(size_t i = 0; i < geom.value().size(); i++)
@@ -800,7 +974,7 @@ struct H2MapRenderer
                             materials,
                             false,
                             nullptr,
-                            static_cast<i32>(bsp_idx));
+                            DrawTag{.section = static_cast<i32>(bsp_idx)});
                     }
 
             cDebug(
@@ -824,7 +998,7 @@ struct H2MapRenderer
             load_switches(map, *scenario);
             if(auto locs = scenario->player_starting_locations.data(map.magic());
                !locs.has_error() && !locs.value().empty())
-                start_section = locs.value()[0].bsp_index();
+                start_section = locs.value()[0].bsp_index.value();
         }
 
         if(m_vertices.empty())
@@ -1015,20 +1189,195 @@ struct H2MapRenderer
             return;
         for(auto const& sw : switches.value())
         {
-            i16 vi = sw.trigger_volume();
-            if(vi < 0 || static_cast<size_t>(vi) >= volumes.value().size())
+            auto const* vp = sw.trigger_volume.in(volumes.value());
+            if(!vp)
                 continue;
-            auto const& v = volumes.value()[vi];
+            auto const& v = *vp;
             Vecf3       a{from_le(v.position[0]), from_le(v.position[1]), from_le(v.position[2])};
             Vecf3       e{from_le(v.extents[0]), from_le(v.extents[1]), from_le(v.extents[2])};
             m_switches.push_back(SwitchTrigger{
                 .lo          = glm::min(a, a + e),
                 .hi          = glm::max(a, a + e),
-                .source      = sw.source_bsp(),
-                .destination = sw.destination_bsp(),
+                .source      = sw.source_bsp.value(),
+                .destination = sw.destination_bsp.value(),
             });
         }
         cDebug("H2: {} bsp switch triggers", m_switches.size());
+    }
+
+    /* Leaf -> cluster, portals (copied into both clusters they join) and
+     * the clusters each instance is listed under */
+    void gather_visibility(
+        geo::bsp_header_t const& bsp, dim::bsp_magic const& magic, Section& out)
+    {
+        if(auto coll = bsp.collision.data(magic);
+           !coll.has_error() && !coll.value().empty())
+        {
+            auto nodes  = coll.value()[0].bsp3d_nodes.data(magic);
+            auto planes = coll.value()[0].planes.data(magic);
+            if(!nodes.has_error() && !planes.has_error())
+            {
+                out.nodes.assign(nodes.value().begin(), nodes.value().end());
+                out.planes.assign(planes.value().begin(), planes.value().end());
+            }
+        }
+        if(auto leaves = bsp.leaves.data(magic); !leaves.has_error())
+            for(auto const& l : leaves.value())
+                out.leaf_cluster.push_back(l.cluster());
+        auto portals  = bsp.portals.data(magic);
+        auto clusters = bsp.clusters.data(magic);
+        if(clusters.has_error())
+            return;
+        auto instances = bsp.instances.data(magic);
+        if(!instances.has_error())
+            out.instance_clusters.resize(instances.value().size());
+        for(auto const& [ci, c] : stl_types::enumerate(clusters.value()))
+        {
+            Section::Cluster cluster{
+                .lo = {from_le(c.x_min), from_le(c.y_min), from_le(c.z_min)},
+                .hi = {from_le(c.x_max), from_le(c.y_max), from_le(c.z_max)},
+            };
+            if(auto refs = c.portals.data(magic);
+               !refs.has_error() && !portals.has_error())
+                for(auto const& ref : refs.value())
+                {
+                    i16 pi = ref.value();
+                    if(pi < 0 ||
+                       static_cast<size_t>(pi) >= portals.value().size())
+                        continue;
+                    auto const& p = portals.value()[pi];
+                    Section::Portal portal{
+                        .front = p.front_cluster(), .back = p.back_cluster()};
+                    if(auto verts = p.vertices.data(magic); !verts.has_error())
+                        for(auto const& v : verts.value())
+                            portal.vertices.push_back(Vecf3{
+                                from_le(v.point[0]),
+                                from_le(v.point[1]),
+                                from_le(v.point[2])});
+                    cluster.portals.push_back(std::move(portal));
+                }
+            if(auto refs = c.instance_indices.data(magic); !refs.has_error())
+                for(auto const& ref : refs.value())
+                {
+                    i16 ii = ref.value();
+                    if(ii >= 0 &&
+                       static_cast<size_t>(ii) < out.instance_clusters.size())
+                        out.instance_clusters[ii].push_back(
+                            static_cast<i16>(ci));
+                }
+            out.clusters.push_back(std::move(cluster));
+        }
+        u32 listed = 0;
+        for(auto const& ic : out.instance_clusters)
+            listed += !ic.empty();
+        cDebug(
+            "H2: visibility: {} leaves, {} clusters, {} portals, {} of {} "
+            "instances listed",
+            out.leaf_cluster.size(),
+            out.clusters.size(),
+            portals.has_error() ? 0 : portals.value().size(),
+            listed,
+            out.instance_clusters.size());
+    }
+
+    /* The cluster an object stands in. Placed objects name their origin
+     * BSP; others get the smallest section holding them. Objects planted
+     * into the ground sit in solid space, so a point above is tried too. */
+    DrawTag object_tag(Vecf3 const& pos, i32 bsp, i32 origin_bsp)
+    {
+        DrawTag tag{.section = bsp};
+        i32     section = bsp >= 0 ? bsp : origin_bsp;
+        if(section < 0 || static_cast<size_t>(section) >= m_sections.size())
+        {
+            f32 best_volume = 0.f;
+            for(size_t i = 0; i < m_sections.size(); i++)
+            {
+                auto const& sec = m_sections[i];
+                if(glm::any(glm::lessThan(pos, sec.lo)) ||
+                   glm::any(glm::greaterThan(pos, sec.hi)))
+                    continue;
+                Vecf3 size   = sec.hi - sec.lo;
+                f32   volume = size.x * size.y * size.z;
+                if(section < 0 || volume < best_volume)
+                    section = static_cast<i32>(i), best_volume = volume;
+            }
+        }
+        m_objects_total++;
+        if(section < 0 || static_cast<size_t>(section) >= m_sections.size())
+            return tag;
+        auto const& sec = m_sections[section];
+        for(f32 up : {0.f, 0.3f, 1.f})
+            if(auto c = sec.cluster_of(pos + Vecf3{0.f, 0.f, up}))
+            {
+                tag.cluster_section = section;
+                tag.cluster         = static_cast<i32>(*c);
+                m_objects_clustered++;
+                break;
+            }
+        return tag;
+    }
+
+    /* The camera's cluster and the clusters its portals open onto. Solid
+     * space (noclip through rock) keeps the last set. */
+    void update_visibility(Vecf3 const& eye, Matf4 const& mvp)
+    {
+        if(m_active < 0 || !m_visibility_enabled)
+        {
+            m_visible.clear();
+            return;
+        }
+        auto const& sec     = m_sections[m_active];
+        auto        cluster = sec.cluster_of(eye);
+        if(!cluster)
+        {
+            if(m_visible.size() != sec.clusters.size())
+                m_visible.clear();
+            return;
+        }
+        if(*cluster != m_camera_cluster || mvp != m_last_mvp ||
+           m_visible.size() != sec.clusters.size())
+        {
+            m_visible = blam::portal_walk::visible_set(
+                sec.clusters, *cluster, mvp, m_portal_scratch);
+            m_last_mvp = mvp;
+        }
+        if(*cluster != m_camera_cluster)
+        {
+            u32 count = 0;
+            for(bool v : m_visible)
+                count += v;
+            cDebug(
+                "H2: cluster {} of {}, {} visible",
+                *cluster,
+                sec.clusters.size(),
+                count);
+            m_camera_cluster = *cluster;
+            m_log_draws      = true;
+        }
+    }
+
+    bool draw_visible(DrawTag const& tag) const
+    {
+        if(tag.section >= 0 && tag.section != m_active)
+            return false;
+        if(m_visible.empty() || tag.cluster_section != m_active)
+            return true;
+        if(tag.cluster >= 0)
+            return static_cast<size_t>(tag.cluster) < m_visible.size() &&
+                   m_visible[tag.cluster];
+        if(tag.instance >= 0)
+        {
+            auto const& owners = m_sections[m_active].instance_clusters;
+            if(static_cast<size_t>(tag.instance) >= owners.size() ||
+               owners[tag.instance].empty())
+                return true;
+            for(i16 c : owners[tag.instance])
+                if(c >= 0 && static_cast<size_t>(c) < m_visible.size() &&
+                   m_visible[c])
+                    return true;
+            return false;
+        }
+        return true;
     }
 
     /* Switch sections when the camera enters a trigger for the active one.
@@ -1051,6 +1400,9 @@ struct H2MapRenderer
             }
         if(m_active >= 0 && inside(m_sections[m_active].lo, m_sections[m_active].hi))
             return;
+        /* Bounds overlap between sections (a cinematic BSP sits over 03a's
+         * landing pad); being in one of a section's clusters is decisive,
+         * the smallest containing bounds only a last resort */
         i32 best = -1;
         f32 best_volume = 0.f;
         for(size_t i = 0; i < m_sections.size(); i++)
@@ -1058,6 +1410,11 @@ struct H2MapRenderer
             auto const& sec = m_sections[i];
             if(!inside(sec.lo, sec.hi))
                 continue;
+            if(sec.cluster_of(eye))
+            {
+                best = static_cast<i32>(i);
+                break;
+            }
             Vecf3 size   = sec.hi - sec.lo;
             f32   volume = size.x * size.y * size.z;
             if(best < 0 || volume < best_volume)
@@ -1079,7 +1436,9 @@ struct H2MapRenderer
             Physics::BodyRemoval removal{.entity_id = collision_body_id};
             m_container.subsystem_cast<PhysicsBus>().process(event, &removal);
         }
-        m_active = section;
+        m_active         = section;
+        m_camera_cluster = std::numeric_limits<u32>::max();
+        m_visible.clear();
         cDebug("H2: section {} ({}) active", section, m_sections[section].name);
         submit_collision(m_sections[section].collision);
     }
@@ -1143,7 +1502,8 @@ struct H2MapRenderer
         std::vector<i32> const&    materials,
         bool                             sky,
         LightmapImage const*             lightmap = nullptr,
-        i32                              bsp      = -1)
+        DrawTag const&                   tag      = {},
+        ExternalLighting const&          external = {})
     {
         u16 vertex_count = section.vertex_count();
         i32 data_size    = section.data_size();
@@ -1195,7 +1555,10 @@ struct H2MapRenderer
             cDebug("H2: unhandled normal stream stride {}", nstride);
             m_normal_order_logged = true;
         }
-        bool has_lm = lightmap && in_block(streams.lightmap) &&
+        bool const external_lm =
+            lightmap && external.lightmap_uv.size() >= vertex_count * 2u;
+        bool const external_rgb = external.rgb.size() >= vertex_count * 3u;
+        bool has_lm = lightmap && !external_lm && in_block(streams.lightmap) &&
                       streams.lightmap->size() / vertex_count == 4;
         Vecf2 const lm_scale{
             static_cast<f32>(lightmap ? lightmap->width : 0) / LightmapAtlas::page,
@@ -1253,7 +1616,26 @@ struct H2MapRenderer
                 normals_a.push_back(glm::normalize(rotation * unpack_11_11_10(packed)));
                 normals_b.push_back(glm::normalize(rotation * unpack_10_11_11(packed)));
             }
-            if(has_lm)
+            if(external_lm)
+            {
+                i16   q0 = from_le(external.lightmap_uv[v * 2]);
+                i16   q1 = from_le(external.lightmap_uv[v * 2 + 1]);
+                Vecf2 uv;
+                if(external.bounds)
+                    uv = {
+                        expand(
+                            q0,
+                            from_le(external.bounds->u2_min),
+                            from_le(external.bounds->u2_max)),
+                        expand(
+                            q1,
+                            from_le(external.bounds->v2_min),
+                            from_le(external.bounds->v2_max))};
+                else
+                    uv = {(q0 / 32767.f + 1.f) * 0.5f, (q1 / 32767.f + 1.f) * 0.5f};
+                out.lightmap = Vecf3(
+                    uv * lm_scale + lm_offset, static_cast<f32>(lightmap->layer));
+            } else if(has_lm)
             {
                 i16 q[2];
                 std::memcpy(
@@ -1262,6 +1644,12 @@ struct H2MapRenderer
                 Vecf2 uv{from_le(q[0]) / 32767.f, from_le(q[1]) / 32767.f};
                 out.lightmap = Vecf3(
                     uv * lm_scale + lm_offset, static_cast<f32>(lightmap->layer));
+            }
+            if(external_rgb)
+            {
+                for(u32 c = 0; c < 3; c++)
+                    out.light[c] = external.rgb[v * 3 + c];
+                out.light[3] = 255;
             }
             m_vertices.push_back(out);
         }
@@ -1373,7 +1761,7 @@ struct H2MapRenderer
                             },
                         .instances = {.count = 1, .offset = 0},
                     },
-                .section = bsp,
+                .tag = tag,
             });
             m_indices.insert(m_indices.end(), list.begin(), list.end());
             emitted++;
@@ -1382,39 +1770,29 @@ struct H2MapRenderer
         return emitted ? 1 : 0;
     }
 
-    /* A render model under `transform`: permutation 0 of every region at
-     * its most detailed LOD. Rigid sections are stored in their node's
-     * space; everything else is already in model space. */
-    template<typename V>
-    u32 append_model(
-        dim::map_container<V> const& map,
-        dim::raw_pool const&         pool,
-        dim::tag_t const&            mode_tag,
-        Matf4 const&                 transform,
-        bool                         sky,
-        i32                          bsp = -1)
+    /* Index into a region's permutations for a variant map, 0 when unset */
+    static size_t permutation_of(
+        std::unordered_map<u32, i16> const* permutations,
+        dim::string_id                      region,
+        size_t                              count)
     {
-        auto const* model =
-            mode_tag.template data<geo::model_header_t>(map.magic());
-        if(!model)
+        if(!permutations)
             return 0;
-        auto bounds   = model->bounds.data(map.magic());
-        auto sections = model->sections.data(map.magic());
-        auto regions  = model->regions.data(map.magic());
-        if(bounds.has_error() || bounds.value().empty() ||
-           sections.has_error() || regions.has_error())
+        auto it = permutations->find(from_le(region.raw));
+        if(it == permutations->end() || it->second < 0 ||
+           static_cast<size_t>(it->second) >= count)
             return 0;
+        return static_cast<size_t>(it->second);
+    }
 
-        std::vector<i32> materials;
-        if(auto shader_refs = model->shaders.data(map.magic());
-           !shader_refs.has_error())
-            for(auto const& sref : shader_refs.value())
-                materials.push_back(
-                    material_for(map, pool, sref.shader.tag_id, sky));
-
-        /* Parents precede their children in the node list */
+    /* Model-space transform of every node; parents precede their children
+     * in the list */
+    template<typename V>
+    static std::vector<Matf4> model_nodes(
+        dim::map_container<V> const& map, geo::model_header_t const& model)
+    {
         std::vector<Matf4> node_world;
-        if(auto nodes = model->nodes.data(map.magic()); !nodes.has_error())
+        if(auto nodes = model.nodes.data(map.magic()); !nodes.has_error())
             for(auto const& node : nodes.value())
             {
                 Vecf3 position{
@@ -1434,6 +1812,108 @@ struct H2MapRenderer
                         ? node_world[parent] * local
                         : local);
             }
+        return node_world;
+    }
+
+    /* An object's collision model (hlmt -> coll), permutation 0 of every
+     * region, into the collision mesh of the section(s) it is placed in.
+     * The coll nodes mirror the render model's, which carry the transforms. */
+    template<typename V>
+    u32 append_object_collision(
+        dim::map_container<V> const& map,
+        dim::tag_reference const&           object,
+        Matf4 const&                        transform,
+        i32                                 section,
+        std::unordered_map<u32, i16> const* permutations = nullptr)
+    {
+        auto const* obje_tag = map.tag_at(object.tag_id);
+        auto const* obje =
+            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic())
+                     : nullptr;
+        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
+        auto const* hlmt =
+            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
+                     : nullptr;
+        auto const* coll_tag = hlmt ? map.tag_at(hlmt->collision_model.tag_id)
+                                    : nullptr;
+        auto const* coll =
+            coll_tag ? coll_tag->template data<dim::obj::coll::model_t>(map.magic())
+                     : nullptr;
+        if(!coll)
+            return 0;
+        std::vector<Matf4> node_world;
+        if(auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id))
+            if(auto const* model =
+                   mode_tag->template data<geo::model_header_t>(map.magic()))
+                node_world = model_nodes(map, *model);
+        auto regions = coll->regions.data(map.magic());
+        if(regions.has_error())
+            return 0;
+        u32 triangles = 0;
+        for(auto const& region : regions.value())
+        {
+            auto perms = region.permutations.data(map.magic());
+            if(perms.has_error() || perms.value().empty())
+                continue;
+            auto bsps = perms.value()[permutation_of(permutations, region.name, perms.value().size())]
+                            .bsps.data(map.magic());
+            if(bsps.has_error())
+                continue;
+            for(auto const& ref : bsps.value())
+            {
+                Matf4 local = transform;
+                i16   node  = ref.node.value();
+                if(node >= 0 && static_cast<size_t>(node) < node_world.size())
+                    local = transform * node_world[node];
+                for(size_t i = 0; i < m_sections.size(); i++)
+                {
+                    if(section >= 0 && static_cast<i32>(i) != section)
+                        continue;
+                    auto& mesh  = *m_sections[i].collision;
+                    size_t before = mesh.indices.size();
+                    append_collision(ref.bsp, map.magic(), local, mesh);
+                    if(static_cast<i32>(i) == section || section < 0)
+                        triangles += (mesh.indices.size() - before) / 3;
+                }
+            }
+        }
+        return triangles;
+    }
+
+    /* A render model under `transform`: permutation 0 of every region at
+     * its most detailed LOD. Rigid sections are stored in their node's
+     * space; everything else is already in model space. */
+    template<typename V>
+    u32 append_model(
+        dim::map_container<V> const& map,
+        dim::raw_pool const&         pool,
+        dim::tag_t const&            mode_tag,
+        Matf4 const&                 transform,
+        bool                         sky,
+        DrawTag const&               tag          = {},
+        SceneryLight const*          lighting     = nullptr,
+        LightBucket const*           bucket       = nullptr,
+        std::unordered_map<u32, i16> const* permutations = nullptr)
+    {
+        auto const* model =
+            mode_tag.template data<geo::model_header_t>(map.magic());
+        if(!model)
+            return 0;
+        auto bounds   = model->bounds.data(map.magic());
+        auto sections = model->sections.data(map.magic());
+        auto regions  = model->regions.data(map.magic());
+        if(bounds.has_error() || bounds.value().empty() ||
+           sections.has_error() || regions.has_error())
+            return 0;
+
+        std::vector<i32> materials;
+        if(auto shader_refs = model->shaders.data(map.magic());
+           !shader_refs.has_error())
+            for(auto const& sref : shader_refs.value())
+                materials.push_back(
+                    material_for(map, pool, sref.shader.tag_id, sky));
+
+        std::vector<Matf4> node_world = model_nodes(map, *model);
 
         u32 emitted = 0;
         for(auto const& region : regions.value())
@@ -1441,7 +1921,8 @@ struct H2MapRenderer
             auto perms = region.permutations.data(map.magic());
             if(perms.has_error() || perms.value().empty())
                 continue;
-            i16 sidx = perms.value()[0].best_section();
+            i16 sidx = perms.value()[permutation_of(permutations, region.name, perms.value().size())]
+                           .best_section();
             if(sidx < 0 || static_cast<size_t>(sidx) >= sections.value().size())
                 continue;
             auto const& section = sections.value()[sidx];
@@ -1449,6 +1930,17 @@ struct H2MapRenderer
             i16         node    = section.rigid_node_index();
             if(node >= 0 && static_cast<size_t>(node) < node_world.size())
                 local = transform * node_world[node];
+            /* Baked per-vertex light, one bucket range per model section */
+            ExternalLighting external;
+            if(lighting && bucket && !lighting->section_offsets.empty())
+            {
+                size_t slot = std::min<size_t>(
+                    static_cast<size_t>(sidx), lighting->section_offsets.size() - 1);
+                u32 vo    = static_cast<u32>(std::max<i16>(0, lighting->section_offsets[slot]));
+                u32 count = section.vertex_count();
+                if(bucket->rgb.size() >= (vo + count) * 3)
+                    external.rgb = Span<u8 const>(bucket->rgb.data() + vo * 3, count * 3);
+            }
             emitted += append_section(
                 pool,
                 map.magic(),
@@ -1458,7 +1950,8 @@ struct H2MapRenderer
                 materials,
                 sky,
                 nullptr,
-                bsp);
+                tag,
+                external);
         }
         return emitted;
     }
@@ -1467,18 +1960,15 @@ struct H2MapRenderer
      * the atlas; returns one entry per cluster, null where there is none */
     template<typename V>
     std::vector<LightmapImage const*> load_lightmaps(
-        dim::map_container<V> const& map,
-        dim::raw_pool const&         pool,
-        dim::ltmp::header_t const&   ltmp,
-        dim::bsp_magic const&        magic)
+        dim::map_container<V> const&                            map,
+        dim::raw_pool const&                                    pool,
+        dim::ltmp::group_t const&                               group,
+        dim::tag_block<dim::ltmp::render_info_t, dim::heap_t::bsp> const& render_info,
+        dim::bsp_magic const&                                   magic)
     {
         std::vector<LightmapImage const*> out;
-        auto groups = ltmp.groups.data(magic);
-        if(groups.has_error() || groups.value().empty())
-            return out;
-        auto const& group    = groups.value()[0];
-        auto        infos    = group.cluster_render_info.data(magic);
-        auto        palettes = group.section_palette.data(magic);
+        auto infos    = render_info.data(magic);
+        auto palettes = group.section_palette.data(magic);
         if(infos.has_error() || palettes.has_error())
             return out;
         auto const* bitm_tag = map.tag_at(group.bitmap_group.tag_id);
@@ -1530,12 +2020,87 @@ struct H2MapRenderer
             out.push_back(m_lightmaps.back().get());
         }
         cDebug(
-            "H2: lightmaps: {} clusters, {} images decoded, {} failed, {} "
+            "H2: lightmaps: {} sections, {} images decoded, {} failed, {} "
             "atlas pages",
             out.size(),
             decoded.size(),
             failed,
             m_lightmap_atlas.pages.size());
+        return out;
+    }
+
+    /* The buckets' (0,0) lightmap texcoord and (0,1) colour streams */
+    static std::vector<LightBucket> load_buckets(
+        dim::raw_pool const&      pool,
+        dim::ltmp::group_t const& group,
+        dim::bsp_magic const&     magic)
+    {
+        std::vector<LightBucket> out;
+        auto                     buckets = group.geometry_buckets.data(magic);
+        if(buckets.has_error())
+            return out;
+        for(auto const& b : buckets.value())
+        {
+            LightBucket bucket;
+            i32         size = b.data_size();
+            auto        block =
+                size > 0 ? pool.resolve(b.data, static_cast<u32>(size)) : std::nullopt;
+            auto resources = b.resources.data(magic);
+            if(block && !resources.has_error())
+            {
+                auto const* bytes = reinterpret_cast<u8 const*>(block->data());
+                i32         base  = b.base_address();
+                for(auto const& r : resources.value())
+                {
+                    if(r.type0() != 0 || r.offset() < 0 || r.size() <= 0 ||
+                       static_cast<i64>(base) + r.offset() + r.size() >
+                           static_cast<i64>(block->size()))
+                        continue;
+                    auto const* at = bytes + base + r.offset();
+                    if(r.type1() == 0)
+                    {
+                        bucket.uv.resize(static_cast<size_t>(r.size()) / 2);
+                        std::memcpy(bucket.uv.data(), at, bucket.uv.size() * 2);
+                    } else if(r.type1() == 1)
+                        bucket.rgb.assign(at, at + r.size());
+                }
+            }
+            out.push_back(std::move(bucket));
+        }
+        return out;
+    }
+
+    static std::vector<SceneryLight> load_bucket_refs(
+        dim::tag_block<dim::ltmp::bucket_ref_t, dim::heap_t::bsp> const& refs,
+        dim::bsp_magic const&                                           magic)
+    {
+        std::vector<SceneryLight> out;
+        auto                      list = refs.data(magic);
+        if(list.has_error())
+            return out;
+        for(auto const& r : list.value())
+        {
+            SceneryLight light{.bucket = r.bucket.value()};
+            if(auto offsets = r.section_offsets.data(magic); !offsets.has_error())
+                for(auto const& o : offsets.value())
+                    light.section_offsets.push_back(o.value());
+            out.push_back(std::move(light));
+        }
+        return out;
+    }
+
+    /* Scenery lighting keyed by the placement's unique id */
+    static std::unordered_map<u32, SceneryLight> load_scenery_lights(
+        dim::ltmp::group_t const& group, dim::bsp_magic const& magic)
+    {
+        std::unordered_map<u32, SceneryLight> out;
+        auto infos = group.scenery_object_info.data(magic);
+        auto refs  = load_bucket_refs(group.scenery_bucket_refs, magic);
+        if(infos.has_error())
+            return out;
+        for(auto const& [i, info] : stl_types::enumerate(infos.value()))
+            if(i < refs.size())
+                out.emplace(from_le(info.unique_id.raw), refs[i]);
         return out;
     }
 
@@ -1590,6 +2155,60 @@ struct H2MapRenderer
         return mode_tag && mode_tag->matches("mode") ? mode_tag : nullptr;
     }
 
+    /* The permutation each region shows for an object's variant, keyed by
+     * region name; the placement's variant, else the object's default.
+     * Empty = permutation 0 everywhere. Of several permutations the first
+     * with a chance stands in for the engine's weighted pick. */
+    template<typename V>
+    std::unordered_map<u32, i16> variant_permutations(
+        dim::map_container<V> const& map,
+        dim::tag_reference const&    object,
+        dim::string_id               variant)
+    {
+        std::unordered_map<u32, i16> out;
+        auto const* obje_tag = map.tag_at(object.tag_id);
+        auto const* obje =
+            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic())
+                     : nullptr;
+        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
+        auto const* hlmt =
+            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
+                     : nullptr;
+        if(!hlmt)
+            return out;
+        if(from_le(variant.raw) == 0)
+            variant = obje->default_model_variant;
+        if(from_le(variant.raw) == 0)
+            return out;
+        auto variants = hlmt->variants.data(map.magic());
+        if(variants.has_error())
+            return out;
+        for(auto const& v : variants.value())
+        {
+            if(from_le(v.name.raw) != from_le(variant.raw))
+                continue;
+            auto regions = v.regions.data(map.magic());
+            if(regions.has_error())
+                break;
+            for(auto const& region : regions.value())
+            {
+                auto perms = region.permutations.data(map.magic());
+                if(perms.has_error() || perms.value().empty())
+                    continue;
+                auto const* pick = &perms.value()[0];
+                for(auto const& perm : perms.value())
+                    if(from_le(perm.probability) > 0.f)
+                    {
+                        pick = &perm;
+                        break;
+                    }
+                out[from_le(region.name.raw)] = pick->runtime_permutation;
+            }
+            break;
+        }
+        return out;
+    }
+
     /* Every placement block of the scenario, then the multiplayer item and
      * vehicle spawns */
     template<typename V>
@@ -1598,11 +2217,17 @@ struct H2MapRenderer
         dim::raw_pool const&         pool,
         dim::scn::scenario_t const&  scnr)
     {
-        auto place = [&](dim::tag_t const* mode_tag,
-                         f32 const*        position,
-                         f32 const*        rotation,
-                         f32               scale,
-                         i32               bsp) {
+        u32  collision_triangles = 0, collision_objects = 0;
+        u32  lit_objects = 0, varied_objects = 0;
+        auto place = [&](dim::tag_t const*         mode_tag,
+                         dim::tag_reference const* object,
+                         Vecf3 const&              position,
+                         Vecf3 const&              rotation,
+                         f32                       scale,
+                         i32                       bsp,
+                         i32                       origin_bsp,
+                         u32                       unique_id,
+                         dim::string_id            variant) {
             Vecf3 pos{from_le(position[0]), from_le(position[1]), from_le(position[2])};
             Vecf3 rot = glm::radians(
                 Vecf3{from_le(rotation[0]), from_le(rotation[1]), from_le(rotation[2])});
@@ -1613,7 +2238,44 @@ struct H2MapRenderer
                 scale = 1.f;
             Matf4 transform = glm::translate(Matf4(1.f), pos) * glm::mat4_cast(q) *
                               glm::scale(Matf4(1.f), Vecf3(scale));
-            return append_model(map, pool, *mode_tag, transform, false, bsp) > 0;
+            DrawTag tag = object_tag(pos, bsp, origin_bsp);
+            std::unordered_map<u32, i16> permutations;
+            if(object)
+            {
+                permutations = variant_permutations(map, *object, variant);
+                if(!permutations.empty())
+                    varied_objects++;
+                if(u32 n = append_object_collision(
+                       map, *object, transform, bsp, &permutations))
+                {
+                    collision_triangles += n;
+                    collision_objects++;
+                }
+            }
+            /* The ltmp of the BSP the object was lit in knows it by id */
+            SceneryLight const* lighting = nullptr;
+            LightBucket const*  bucket   = nullptr;
+            for(size_t i = 0; i < m_scenery_lights.size() && unique_id; i++)
+                if(auto it = m_scenery_lights[i].find(unique_id);
+                   it != m_scenery_lights[i].end() && it->second.bucket >= 0 &&
+                   i < m_buckets.size() &&
+                   static_cast<size_t>(it->second.bucket) < m_buckets[i].size())
+                {
+                    lighting = &it->second;
+                    bucket   = &m_buckets[i][it->second.bucket];
+                    lit_objects++;
+                    break;
+                }
+            return append_model(
+                       map,
+                       pool,
+                       *mode_tag,
+                       transform,
+                       false,
+                       tag,
+                       lighting,
+                       bucket,
+                       &permutations) > 0;
         };
 
         auto block = [&](auto const& placements_block,
@@ -1626,16 +2288,25 @@ struct H2MapRenderer
             u32 placed = 0, skipped = 0;
             for(auto const& p : placements.value())
             {
-                i16 pi = p.palette_index();
+                auto const*       entry = p.palette.in(palette.value());
                 dim::tag_t const* mode_tag =
-                    pi >= 0 && static_cast<size_t>(pi) < palette.value().size()
-                        ? render_model_of(map, palette.value()[pi].tag)
-                        : nullptr;
+                    entry ? render_model_of(map, entry->tag) : nullptr;
                 /* Manual BSP flags: one bit per structure BSP; none = all */
                 u16 flags = static_cast<u16>(p.bsp_flags);
                 i32 bsp   = flags ? static_cast<i32>(std::countr_zero(flags)) : -1;
-                if(mode_tag &&
-                   place(mode_tag, p.position, p.rotation, from_le(p.scale), bsp))
+                dim::string_id variant{};
+                if constexpr(requires { p.variant; })
+                    variant = p.variant.variant_name;
+                if(mode_tag && place(
+                                   mode_tag,
+                                   &entry->tag,
+                                   p.position,
+                                   p.rotation,
+                                   from_le(p.scale),
+                                   bsp,
+                                   p.origin_bsp.value(),
+                                   from_le(p.unique_id.raw),
+                                   variant))
                     placed++;
                 else
                     skipped++;
@@ -1651,6 +2322,7 @@ struct H2MapRenderer
         block(scnr.machines, scnr.machine_palette, "machines");
         block(scnr.controls, scnr.control_palette, "controls");
         block(scnr.light_fixtures, scnr.light_fixture_palette, "light fixtures");
+        block(scnr.crates, scnr.crate_palette, "crates");
 
         /* Netgame spawns: the collection's first permutation stands in */
         if(auto spawns = scnr.netgame_equipment.data(map.magic());
@@ -1664,19 +2336,43 @@ struct H2MapRenderer
                     coll_tag ? coll_tag->template data<dim::scn::item_collection_t>(
                                    map.magic())
                              : nullptr;
-                dim::tag_t const* mode_tag = nullptr;
+                dim::tag_t const*         mode_tag = nullptr;
+                dim::tag_reference const* item     = nullptr;
+                dim::string_id            variant{};
                 if(coll)
                     if(auto perms = coll->permutations.data(map.magic());
                        !perms.has_error() && !perms.value().empty())
-                        mode_tag = render_model_of(map, perms.value()[0].item);
-                if(mode_tag &&
-                   place(mode_tag, spawn.position, spawn.orientation, 1.f, -1))
+                    {
+                        item     = &perms.value()[0].item;
+                        variant  = perms.value()[0].variant_name;
+                        mode_tag = render_model_of(map, *item);
+                    }
+                /* Pickups: drawn with their variant, never collided with */
+                if(mode_tag && place(
+                                   mode_tag,
+                                   nullptr,
+                                   spawn.position,
+                                   spawn.orientation,
+                                   1.f,
+                                   -1,
+                                   -1,
+                                   0,
+                                   variant))
                     placed++;
                 else
                     skipped++;
             }
             cDebug("H2: netgame equipment: {} placed, {} skipped", placed, skipped);
         }
+        cDebug(
+            "H2: {} of {} objects resolved to a cluster; {} contribute {} "
+            "collision triangles; {} lit per vertex; {} with a variant",
+            m_objects_clustered,
+            m_objects_total,
+            collision_objects,
+            collision_triangles,
+            lit_objects,
+            varied_objects);
     }
 
     /* The first sky's model, kept around the camera; scaled into the far
@@ -2066,12 +2762,22 @@ struct H2MapRenderer
     std::vector<Section>           m_sections;
     std::vector<SwitchTrigger>     m_switches;
     i32                            m_active{-1};
+    /* Per cluster of the active section; empty = everything */
+    std::vector<bool>      m_visible;
+    blam::portal_walk::scratch_t m_portal_scratch;
+    u32                    m_camera_cluster{std::numeric_limits<u32>::max()};
+    Matf4                          m_last_mvp{};
+    bool                           m_log_draws{false};
+    u32                            m_objects_total{0}, m_objects_clustered{0};
+    bool m_visibility_enabled{!std::getenv("COFFEE_H2_NO_VISIBILITY")};
     std::vector<Vertex>            m_vertices;
     std::vector<u16>               m_indices;
     std::vector<Material>          m_materials;
     std::unordered_map<u32, i32>   m_material_index; /* shad tag -> slot */
     std::unordered_map<u16, Texture> m_textures;     /* bitm tag -> gpu */
     std::vector<std::unique_ptr<LightmapImage>>  m_lightmaps;
+    std::vector<std::vector<LightBucket>>        m_buckets;        /* per BSP */
+    std::vector<std::unordered_map<u32, SceneryLight>> m_scenery_lights; /* per BSP */
     LightmapAtlas                                m_lightmap_atlas;
     std::shared_ptr<gfx::compat::texture_2da_t>  m_lightmap_tex;
     std::shared_ptr<gfx::sampler_t>              m_lightmap_sampler;
