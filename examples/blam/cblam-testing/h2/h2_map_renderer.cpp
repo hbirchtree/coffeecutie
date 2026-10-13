@@ -36,6 +36,11 @@
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
+#if defined(COFFEE_EMSCRIPTEN)
+#include <emscripten/heap.h>
+#include <malloc.h>
+#endif
+
 #if defined(FEATURE_ENABLE_BULLET3)
 #include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
 #include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
@@ -487,10 +492,48 @@ struct H2MapRenderer
             return false;
         }
         for(size_t i = 0; i < side_cache_names.size(); i++)
-            m_side_files[i] = mapper.fetch(side_cache_url(load, i)).get();
+            m_side_sources[i] =
+                side_pread() ? ranged_source(mapper.open_ranged(
+                                   side_cache_url(load, i)).get())
+                             : mapped_source(
+                                   mapper.fetch(side_cache_url(load, i)).get());
         dim::raw_pool pool;
         side_pool(pool);
         return load_cache(load, bytes, pool);
+    }
+
+    /* H2_SIDE_PREAD=1 takes the side caches through range reads on desktop
+     * too, the path the web always uses */
+    static bool side_pread()
+    {
+        if(compile_info::platform::is_emscripten)
+            return true;
+        auto v = platform::env::var("H2_SIDE_PREAD");
+        return v.has_value() && v.value() == "1";
+    }
+
+    static std::shared_ptr<dim::raw_source> mapped_source(
+        std::shared_ptr<comp_app::FileMapper::Resource> res)
+    {
+        auto bytes = res ? static_cast<BytesConst>(*res) : BytesConst{};
+        if(!bytes.data || !bytes.size)
+            return {};
+        return std::make_shared<dim::span_source>(
+            Span<const byte_t>(bytes.data, bytes.size), std::move(res));
+    }
+
+    static std::shared_ptr<dim::raw_source> ranged_source(
+        std::shared_ptr<comp_app::FileMapper::RangedFile> file)
+    {
+        if(!file || !file->size())
+            return {};
+        return std::make_shared<dim::pread_source>(
+            file->size(), [file](u64 offset, Span<byte_t> dst) {
+                return file->read(
+                    offset,
+                    gsl::span<char>(
+                        reinterpret_cast<char*>(dst.data()), dst.size()));
+            });
     }
 
     platform::url::Url side_cache_url(MapLoadEvent const& load, size_t i) const
@@ -499,28 +542,19 @@ struct H2MapRenderer
             .url(load.file->flags);
     }
 
-    /* The side caches found; one that is gone is let go of */
+    /* The side caches found */
     void side_pool(dim::raw_pool& pool)
     {
         for(size_t i = 0; i < side_cache_names.size(); i++)
-        {
-            auto& res = m_side_files[i];
-            auto  bytes = res ? static_cast<BytesConst>(*res) : BytesConst{};
-            if(!bytes.data || !bytes.size)
-            {
-                res.reset();
-                continue;
-            }
-            pool.files[static_cast<u8>(side_cache_names[i].first)] =
-                Span<const byte_t>(bytes.data, bytes.size);
-        }
+            if(m_side_sources[i])
+                pool.attach(side_cache_names[i].first, m_side_sources[i]);
     }
 
     /* Everything kept across map changes: the side caches and the
      * textures uploaded from them */
     void release_shared()
     {
-        m_side_files       = {};
+        m_side_sources     = {};
         m_shared_textures.clear();
     }
 
@@ -540,11 +574,14 @@ struct H2MapRenderer
             {dim::raw_file_t::single_player_shared, "single_player_shared.map"},
         }};
 
-    /* Web: the map, then the side caches, each through FileMapper; the
-     * load itself runs on the main queue once everything is in */
+    /* Web: the map, then the side caches, each brought into the local
+     * store by FileMapper off the main thread; the load itself runs on the
+     * main queue once everything is in. The side caches are read by range
+     * so the heap never holds them whole */
     void fetch_and_load(MapLoadEvent const& load)
     {
         using AsyncResource = comp_app::FileMapper::Resource;
+        using RangedFile    = comp_app::FileMapper::RangedFile;
         auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
         auto  task   = rq::CreateMultiTask<void>(
             [this, load = MapLoadEvent(load)](
@@ -565,20 +602,23 @@ struct H2MapRenderer
                     m_container.subsystem_cast<comp_app::FileMapper>();
                 auto sides = rq::CreateMultiTask<void>(
                     [this, load, file](
-                        std::shared_ptr<AsyncResource> mainmenu,
-                        std::shared_ptr<AsyncResource> shared,
-                        std::shared_ptr<AsyncResource> sp_shared) {
-                        m_side_files = {mainmenu, shared, sp_shared};
+                        std::shared_ptr<RangedFile> mainmenu,
+                        std::shared_ptr<RangedFile> shared,
+                        std::shared_ptr<RangedFile> sp_shared) {
+                        m_side_sources = {
+                            ranged_source(mainmenu),
+                            ranged_source(shared),
+                            ranged_source(sp_shared)};
                         dim::raw_pool pool;
                         side_pool(pool);
                         load_cache(load, static_cast<BytesConst>(*file), pool);
                     },
-                    mapper.fetch(side_cache_url(load, 0)),
-                    mapper.fetch(side_cache_url(load, 1)),
-                    mapper.fetch(side_cache_url(load, 2)));
+                    mapper.open_ranged(side_cache_url(load, 0)),
+                    mapper.open_ranged(side_cache_url(load, 1)),
+                    mapper.open_ranged(side_cache_url(load, 2)));
                 rq::runtime_queue::Queue(std::move(sides)).assume_value();
             },
-            mapper.fetch(*load.file));
+            mapper.fetch_cached(*load.file));
         rq::runtime_queue::Queue(std::move(task)).assume_value();
     }
 
@@ -601,8 +641,8 @@ struct H2MapRenderer
             m_container.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
         }
 
-        pool.files[static_cast<u8>(dim::raw_file_t::local)] =
-            Span<const byte_t>(bytes.data, bytes.size);
+        pool.attach(
+            dim::raw_file_t::local, Span<const byte_t>(bytes.data, bytes.size));
 
         ensure_gpu();
         m_generation++;
@@ -624,9 +664,9 @@ struct H2MapRenderer
             cDebug(
                 "H2: shared map {}; side files {} / {} / {} bytes",
                 shared ? "attached" : "none",
-                pool.files[static_cast<u8>(dim::raw_file_t::mainmenu)].size(),
-                pool.files[static_cast<u8>(dim::raw_file_t::shared)].size(),
-                pool.files[static_cast<u8>(dim::raw_file_t::single_player_shared)].size());
+                pool.file_size(dim::raw_file_t::mainmenu),
+                pool.file_size(dim::raw_file_t::shared),
+                pool.file_size(dim::raw_file_t::single_player_shared));
             loaded = load_map(vista, pool);
         }
         else
@@ -648,6 +688,23 @@ struct H2MapRenderer
             "H2: {} shared textures kept, {} evicted",
             m_shared_textures.size(),
             before - m_shared_textures.size());
+        for(size_t i = 0; i < side_cache_names.size(); i++)
+            if(auto* src = dynamic_cast<dim::pread_source*>(
+                   m_side_sources[i].get()))
+            {
+                cDebug(
+                    "H2: {} read by range: {} KiB of {} KiB",
+                    side_cache_names[i].second,
+                    src->bytes_read() >> 10,
+                    src->size() >> 10);
+                src->trim();
+            }
+#if defined(COFFEE_EMSCRIPTEN)
+        cDebug(
+            "H2: heap in use {} MiB of {} MiB",
+            static_cast<u64>(mallinfo().uordblks) >> 20,
+            static_cast<u64>(emscripten_get_heap_size()) >> 20);
+#endif
         return true;
     }
 
@@ -3071,7 +3128,7 @@ struct H2MapRenderer
         u32     generation;
     };
     std::unordered_map<u64, SharedTexture> m_shared_textures; /* side slot:offset */
-    std::array<std::shared_ptr<comp_app::FileMapper::Resource>, 3> m_side_files;
+    std::array<std::shared_ptr<dim::raw_source>, 3> m_side_sources;
     u32                                    m_generation{0};
     std::vector<std::unique_ptr<LightmapImage>>  m_lightmaps;
     std::vector<std::vector<LightBucket>>        m_buckets;        /* per BSP */
