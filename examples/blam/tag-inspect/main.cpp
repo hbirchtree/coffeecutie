@@ -84,6 +84,37 @@ std::string   g_dump_png_prefix{};
 blam::map_ptr g_bitm_magic;
 bool          g_have_bitmaps_file = false;
 
+/* Calls fn(i, item) or fn(item) per block element; skips unreadable blocks */
+template<
+    typename T,
+    typename V,
+    blam::atlas_type_t A,
+    blam::ptr_tag      P,
+    typename Fn>
+void each(
+    blam::map_ptr_base<P> const&       magic,
+    blam::reference<T, V, A, P> const& block,
+    Fn&&                               fn)
+{
+    auto items = block.data(magic);
+    if(items.has_error())
+        return;
+    for(auto const& [i, item] : stl_types::enumerate(items.value()))
+        if constexpr(std::is_invocable_v<Fn&, size_t, T const&>)
+            fn(i, item);
+        else
+            fn(item);
+}
+
+template<typename T, typename V, blam::atlas_type_t A, blam::ptr_tag P>
+size_t count_of(
+    blam::map_ptr_base<P> const&       magic,
+    blam::reference<T, V, A, P> const& block)
+{
+    auto items = block.data(magic);
+    return items.has_error() ? 0 : items.value().size();
+}
+
 /* Writes each byte position of a 32-bit image as its own greyscale PGM, so the
  * channel order can be settled by looking at which one carries the mask. */
 void dump_planes(
@@ -472,24 +503,22 @@ void dump_font_png(blam::font const* font, std::string_view name)
     u32 const h    = rows * static_cast<u32>(cell_h);
 
     std::vector<u8> rgba(static_cast<size_t>(w) * h * 4, 0);
-    u32             placed = 0, missing = 0, idx = 0;
+    u32             placed = 0, missing = 0;
 
-    for(auto const& ch : chars)
-    {
+    each(g_magic, font->characters, [&](size_t idx, auto const& ch) {
         u32 const cell_x = (idx % cols) * static_cast<u32>(cell_w);
         u32 const cell_y = (idx / cols) * static_cast<u32>(cell_h);
-        idx++;
 
         i32 const bw = ch.bitmap_width, bh = ch.bitmap_height;
         if(bw <= 0 || bh <= 0)
-            continue;
+            return;
 
         auto const data_size = static_cast<u32>(bw) * static_cast<u32>(bh);
         auto pix = font->pixel_data(ch.pixel_offset, data_size).data(g_magic);
         if(!pix.has_value() || pix.value().size() < data_size)
         {
             missing++;
-            continue;
+            return;
         }
         auto const* src = reinterpret_cast<u8 const*>(pix.value().data());
         for(i32 row = 0; row < bh; row++)
@@ -505,7 +534,7 @@ void dump_font_png(blam::font const* font, std::string_view name)
                 rgba[o + 3] = v;
             }
         placed++;
-    }
+    });
 
     auto path = fmt::format("{}{}.png", g_dump_png_prefix, flatten_name(name));
     if(write_png(path, rgba, w, h))
@@ -547,33 +576,31 @@ void dump_dela(blam::ui_element const* info)
     /* data_inputs are what let a widget show something the tag cannot know --
      * a profile name, a map count -- so a widget that changes at runtime and
      * has no obvious animation usually has one of these. */
-    if(auto inputs = info->data_inputs.data(g_magic); inputs.has_value())
-    {
-        fmt::print("  data_inputs={}\n", inputs.value().size());
-        for(auto [i, in] : stl_types::enumerate(inputs.value()))
-            fmt::print(
-                "    input {}: function={}\n",
-                i,
-                static_cast<unsigned>(in.function));
-    }
+    fmt::print("  data_inputs={}\n", count_of(g_magic, info->data_inputs));
+    each(g_magic, info->data_inputs, [](size_t i, auto const& in) {
+        fmt::print(
+            "    input {}: function={}\n",
+            i,
+            static_cast<unsigned>(in.function));
+    });
 
-    if(auto events = info->event_handlers.data(g_magic); events.has_value())
-    {
-        fmt::print("  event_handlers={}\n", events.value().size());
-        for(auto const& ev : events.value())
-        {
-            fmt::print("    ");
-            print_enum("event", ev.event_type);
-            fmt::print("flags={} ({})", flags_to_string(ev.flags), static_cast<u32>(ev.flags));
-            fmt::print(" function={} ", static_cast<u32>(ev.function));
-            auto script = ev.script.str();
-            fmt::print(
-                "widget={} sound={} script=\"{}\"\n",
-                name_of(ev.widget),
-                name_of(ev.sound),
-                script);
-        }
-    }
+    fmt::print(
+        "  event_handlers={}\n", count_of(g_magic, info->event_handlers));
+    each(g_magic, info->event_handlers, [](auto const& ev) {
+        fmt::print("    ");
+        print_enum("event", ev.event_type);
+        fmt::print(
+            "flags={} ({})",
+            flags_to_string(ev.flags),
+            static_cast<u32>(ev.flags));
+        fmt::print(" function={} ", static_cast<u32>(ev.function));
+        auto script = ev.script.str();
+        fmt::print(
+            "widget={} sound={} script=\"{}\"\n",
+            name_of(ev.widget),
+            name_of(ev.sound),
+            script);
+    });
 
     if(info->widget_type == blam::ui_element::widget_type_t::text_box)
     {
@@ -620,50 +647,44 @@ void dump_dela(blam::ui_element const* info)
             name_of(info->column_list.extended_description_widget));
     }
 
-    if(auto conditionals = info->conditional_widgets.data(g_magic); conditionals.has_value())
-    {
-        fmt::print("  conditional_widgets={}\n", conditionals->size());
-        for(auto const& cw : conditionals.value())
-        {
-            fmt::print("    tag=[{}] {}\n",
-                cw.widget_tag.tag_class_name(),
-                name_of(cw.widget_tag));
-        }
-    }
+    fmt::print(
+        "  conditional_widgets={}\n",
+        count_of(g_magic, info->conditional_widgets));
+    each(g_magic, info->conditional_widgets, [](auto const& cw) {
+        fmt::print(
+            "    tag=[{}] {}\n",
+            cw.widget_tag.tag_class_name(),
+            name_of(cw.widget_tag));
+    });
 
-    if(auto children = info->child_widgets.data(g_magic); children.has_value())
-    {
-        fmt::print("  child_widgets={}\n", children.value().size());
-        for(auto const& ch : children.value())
-        {
-            auto name = ch.name.str();
-            fmt::print("    name=\"{}\"\n", name);
-            fmt::print("      widget={}\n", name_of(ch.widget));
-            fmt::print("      offset=({},{})\n", ch.horizontal_offset, ch.vertical_offset);
-            fmt::print("      flags={}\n", flags_to_string(ch.flags));
-            fmt::print("      custom_controller_index={}\n", ch.custom_controller_index);
-        }
-    }
+    fmt::print("  child_widgets={}\n", count_of(g_magic, info->child_widgets));
+    each(g_magic, info->child_widgets, [](auto const& ch) {
+        auto name = ch.name.str();
+        fmt::print("    name=\"{}\"\n", name);
+        fmt::print("      widget={}\n", name_of(ch.widget));
+        fmt::print(
+            "      offset=({},{})\n", ch.horizontal_offset, ch.vertical_offset);
+        fmt::print("      flags={}\n", flags_to_string(ch.flags));
+        fmt::print(
+            "      custom_controller_index={}\n", ch.custom_controller_index);
+    });
 }
 
 void dump_ustr(blam::ui::unicode_string_list const* info)
 {
-    if(auto strings = info->data.data(g_magic); strings.has_value())
-    {
-        fmt::print("  strings={}\n", strings.value().size());
-        for(auto const& ustr : strings.value())
-        {
-            fmt::print("    \"{}\"\n", ustr.u8_str(g_magic));
-        }
-    }
+    fmt::print("  strings={}\n", count_of(g_magic, info->data));
+    each(g_magic, info->data, [](auto const& ustr) {
+        fmt::print("    \"{}\"\n", ustr.u8_str(g_magic));
+    });
 }
 
 void dump_soul(blam::ui_item_collection const* info)
 {
-    for(auto dela : info->widget_definitions.data(g_magic).value())
+    each(g_magic, info->widget_definitions, [](auto const& dela) {
         fmt::print("  widget=[{}] {}\n",
             dela.definition.tag_class_name(),
             name_of(dela.definition));
+    });
 }
 
 void dump_smet(blam::shader::shader_meter const* info)
@@ -703,9 +724,7 @@ void dump_font(blam::font const* font, std::string_view name)
         font->leadin_width,
         font->leadin_height);
 
-    auto chars = font->characters.data(g_magic);
-    fmt::print(
-        "  characters={}\n", chars.has_value() ? chars.value().size() : 0u);
+    fmt::print("  characters={}\n", count_of(g_magic, font->characters));
 
     if(font->bold.valid())
         fmt::print("    bold: {}\n", name_of(font->bold));
@@ -783,34 +802,23 @@ void dump_sotr(blam::shader::shader_transparent const* info)
         name_of(info->lens_flares.lens_flare),
         info->layers.size());
 
-    if(auto layers = info->layers.data(g_magic); layers.has_value())
-        for(auto const& layer : layers.value())
-            fmt::print("    layer: {}\n", name_of(layer));
+    each(g_magic, info->layers, [](auto const& layer) {
+        fmt::print("    layer: {}\n", name_of(layer));
+    });
 
-    auto maps = info->maps.data(g_magic);
-    fmt::print("  maps={}\n", maps.has_value() ? maps.value().size() : 0u);
-    if(maps.has_value())
-    {
-        u32 i = 0;
-        for(auto const& map : maps.value())
-        {
-            fmt::print("    map {}: ", i++);
-            print_enum("flags", map.flags);
-            fmt::print("\n");
-            print_bitm_ref(map.map);
-            print_anim("u", map.animation.u);
-            print_anim("v", map.animation.v);
-            print_anim("rot", map.animation.rot);
-            fmt::print(
-                "      rot_center={:g}\n", map.animation.rotation_center);
-        }
-    }
+    fmt::print("  maps={}\n", count_of(g_magic, info->maps));
+    each(g_magic, info->maps, [](size_t i, auto const& map) {
+        fmt::print("    map {}: ", i);
+        print_enum("flags", map.flags);
+        fmt::print("\n");
+        print_bitm_ref(map.map);
+        print_anim("u", map.animation.u);
+        print_anim("v", map.animation.v);
+        print_anim("rot", map.animation.rot);
+        fmt::print("      rot_center={:g}\n", map.animation.rotation_center);
+    });
 
-    auto stages = info->stages.data(g_magic);
-    fmt::print(
-        "  stages={}\n", stages.has_value() ? stages.value().size() : 0u);
-    if(!stages.has_value())
-        return;
+    fmt::print("  stages={}\n", count_of(g_magic, info->stages));
 
     auto cmap = [](shader_transparent::input_t   in,
                    shader_transparent::mapping_t m) {
@@ -820,10 +828,8 @@ void dump_sotr(blam::shader::shader_transparent const* info)
         fmt::print("{}/{} ", enum_name(in), enum_name(m));
     };
 
-    u32 i = 0;
-    for(auto const& s : stages.value())
-    {
-        fmt::print("    stage {}: ", i++);
+    each(g_magic, info->stages, [&](size_t i, auto const& s) {
+        fmt::print("    stage {}: ", i);
         print_enum("flags", s.flags);
         print_enum("color0_src", s.color0_source);
         print_enum("color0_fn", s.color0_func);
@@ -856,7 +862,7 @@ void dump_sotr(blam::shader::shader_transparent const* info)
         print_enum("sum", s.alpha.ab_cd_mux_sum);
         print_enum("map", s.alpha.output_map);
         fmt::print("\n");
-    }
+    });
 }
 
 /* ---- chicago (schi / scex) ---- */
@@ -1054,19 +1060,16 @@ void print_flags(char const* label, E flags)
 template<typename T, typename F>
 void dump_block(char const* label, blam::reference<T> const& block, F&& fn)
 {
-    auto elements = block.data(g_magic);
-    if(elements.has_error())
+    if(block.data(g_magic).has_error())
     {
         fmt::print("    {}: <unreadable>\n", label);
         return;
     }
-    fmt::print("    {}: {}\n", label, elements.value().size());
-    u32 idx = 0;
-    for(auto const& element : elements.value())
-    {
-        fmt::print("      [{}] ", idx++);
+    fmt::print("    {}: {}\n", label, count_of(g_magic, block));
+    each(g_magic, block, [&](size_t i, T const& element) {
+        fmt::print("      [{}] ", i);
         fn(element);
-    }
+    });
 }
 
 template<typename E, size_t N>
@@ -1136,43 +1139,25 @@ void dump_object(blam::scn::object const* obj)
             f.scale_by);
     });
 
-    auto colors = obj->change_colors.data(g_magic);
-    if(colors.has_error())
-    {
-        fmt::print("    change_colors: <unreadable>\n");
-        return;
-    }
-    fmt::print("    change_colors: {}\n", colors.value().size());
-
-    u32 idx = 0;
-    for(auto const& c : colors.value())
-    {
-        fmt::print("      [{}] ", idx++);
+    dump_block("change_colors", obj->change_colors, [](auto const& c) {
         print_enum("darken_by", c.darken_by);
         print_enum("scale_by", c.scale_by);
         print_enum("flags", c.scale_flags);
         fmt::print("\n");
         fmt::print(
             "          lower={:g} upper={:g}\n", c.lower_bound, c.upper_bound);
-
-        auto perms = c.permutations.data(g_magic);
-        if(perms.has_error())
-        {
-            fmt::print("          permutations: <unreadable>\n");
-            continue;
-        }
-        for(auto const& p : perms.value())
+        each(g_magic, c.permutations, [](auto const& p) {
             fmt::print(
                 "          perm weight={:g} lower={:g} upper={:g}\n",
                 p.weight,
                 p.lower_bound,
                 p.upper_bound);
-    }
+        });
+    });
 
-    auto resources = obj->predicted_resources.data(g_magic);
     fmt::print(
         "    predicted_resources: {}\n",
-        resources.has_value() ? resources.value().size() : 0u);
+        count_of(g_magic, obj->predicted_resources));
 }
 
 void dump_item(blam::scn::item const* item)
@@ -1301,13 +1286,12 @@ void dump_weapon(blam::scn::weapon const* weapon)
                 name_of(m.reloading_effect),
                 m.chamber_time,
                 name_of(m.chambering_effect));
-            auto objects = m.magazine_objects.data(g_magic);
-            if(objects.has_value())
-                for(auto const& o : objects.value())
-                    fmt::print(
-                        "          object rounds={} equipment={}\n",
-                        o.rounds,
-                        name_of(o.equipment));
+            each(g_magic, m.magazine_objects, [](auto const& o) {
+                fmt::print(
+                    "          object rounds={} equipment={}\n",
+                    o.rounds,
+                    name_of(o.equipment));
+            });
         });
     dump_block("triggers", weapon->triggers, [](weapon_t::trigger_t const& t) {
         print_flags("flags", t.flags);
@@ -1333,16 +1317,15 @@ void dump_weapon(blam::scn::weapon const* weapon)
             t.charging_time,
             name_of(t.charging_effect),
             t.first_person_offset);
-        auto effects = t.firing_effects.data(g_magic);
-        if(effects.has_value())
-            for(auto const& e : effects.value())
-                fmt::print(
-                    "          firing_effect shots={}..{} effect={} "
-                    "damage={}\n",
-                    e.shot_count[0],
-                    e.shot_count[1],
-                    name_of(e.firing_effect),
-                    name_of(e.firing_damage));
+        each(g_magic, t.firing_effects, [](auto const& e) {
+            fmt::print(
+                "          firing_effect shots={}..{} effect={} "
+                "damage={}\n",
+                e.shot_count[0],
+                e.shot_count[1],
+                name_of(e.firing_effect),
+                name_of(e.firing_damage));
+        });
     });
 }
 
@@ -1407,44 +1390,38 @@ void dump_effect(blam::scn::effect const* effect)
             ev.skip_fraction,
             ev.delay_bounds,
             ev.duration_bounds);
-        auto parts = ev.parts.data(g_magic);
-        if(parts.has_value())
-            for(auto const& part : parts.value())
-            {
-                fmt::print("        part ");
-                print_enum("create_in", part.create_in);
-                fmt::print(
-                    "location={} type={} velocity={} cone={} radius={}\n",
-                    part.location,
-                    name_of(part.type),
-                    part.velocity_bounds,
-                    part.velocity_cone_angle,
-                    part.radius_modifier_bounds);
-            }
-        auto particles = ev.particles.data(g_magic);
-        if(particles.has_value())
-            for(auto const& p : particles.value())
-            {
-                fmt::print("        particle ");
-                print_enum("create_in", p.create_in);
-                print_enum("create", p.create);
-                print_enum("distribution", p.distribution_function);
-                print_flags("flags", p.flags);
-                fmt::print(
-                    "location={} type={} count={} radius={} velocity={} cone={} "
-                    "dist_radius={} dir={} offset={} tint={}..{}\n",
-                    p.location,
-                    name_of(p.particle_type),
-                    p.count,
-                    p.radius,
-                    p.velocity,
-                    p.velocity_cone_angle,
-                    p.distribution_radius,
-                    p.relative_direction,
-                    p.relative_offset,
-                    p.tint_lower_bound,
-                    p.tint_upper_bound);
-            }
+        each(g_magic, ev.parts, [](auto const& part) {
+            fmt::print("        part ");
+            print_enum("create_in", part.create_in);
+            fmt::print(
+                "location={} type={} velocity={} cone={} radius={}\n",
+                part.location,
+                name_of(part.type),
+                part.velocity_bounds,
+                part.velocity_cone_angle,
+                part.radius_modifier_bounds);
+        });
+        each(g_magic, ev.particles, [](auto const& p) {
+            fmt::print("        particle ");
+            print_enum("create_in", p.create_in);
+            print_enum("create", p.create);
+            print_enum("distribution", p.distribution_function);
+            print_flags("flags", p.flags);
+            fmt::print(
+                "location={} type={} count={} radius={} velocity={} cone={} "
+                "dist_radius={} dir={} offset={} tint={}..{}\n",
+                p.location,
+                name_of(p.particle_type),
+                p.count,
+                p.radius,
+                p.velocity,
+                p.velocity_cone_angle,
+                p.distribution_radius,
+                p.relative_direction,
+                p.relative_offset,
+                p.tint_lower_bound,
+                p.tint_upper_bound);
+        });
     });
 }
 
@@ -1488,39 +1465,35 @@ void dump_particle_system(blam::scn::particle_system const* pctl)
             t.name.str(),
             t.initial_particle_count,
             t.radius);
-        auto states = t.states.data(g_magic);
-        if(states.has_value())
-            for(auto const& s : states.value())
-                fmt::print(
-                    "        state {} duration={} transition={} scale={} "
-                    "min_count={} rate={} color={}\n",
-                    s.name.str(),
-                    s.duration_bounds,
-                    s.transition_time_bounds,
-                    s.scale_multiplier,
-                    s.minimum_particle_count,
-                    s.particle_creation_rate,
-                    s.color_multiplier);
-        auto pstates = t.particle_states.data(g_magic);
-        if(pstates.has_value())
-            for(auto const& s : pstates.value())
-            {
-                fmt::print(
-                    "        particle_state {} duration={} bitmap={} seq={} "
-                    "scale={} anim_rate={} rot_rate={} colors={}..{} physics={}\n",
-                    s.name.str(),
-                    s.duration_bounds,
-                    name_of(s.bitmaps),
-                    s.sequence_index,
-                    s.scale,
-                    s.animation_rate,
-                    s.rotation_rate,
-                    s.color_1,
-                    s.color_2,
-                    name_of(s.point_physics));
-                fmt::print("    ");
-                dump_particle_shader(s.shader);
-            }
+        each(g_magic, t.states, [](auto const& s) {
+            fmt::print(
+                "        state {} duration={} transition={} scale={} "
+                "min_count={} rate={} color={}\n",
+                s.name.str(),
+                s.duration_bounds,
+                s.transition_time_bounds,
+                s.scale_multiplier,
+                s.minimum_particle_count,
+                s.particle_creation_rate,
+                s.color_multiplier);
+        });
+        each(g_magic, t.particle_states, [](auto const& s) {
+            fmt::print(
+                "        particle_state {} duration={} bitmap={} seq={} "
+                "scale={} anim_rate={} rot_rate={} colors={}..{} physics={}\n",
+                s.name.str(),
+                s.duration_bounds,
+                name_of(s.bitmaps),
+                s.sequence_index,
+                s.scale,
+                s.animation_rate,
+                s.rotation_rate,
+                s.color_1,
+                s.color_2,
+                name_of(s.point_physics));
+            fmt::print("    ");
+            dump_particle_shader(s.shader);
+        });
     });
 }
 
@@ -1697,25 +1670,16 @@ void dump_material_effects(blam::scn::material_effects const* effects)
     fmt::print("  [foot]\n");
     dump_block(
         "effects", effects->effects, [](material_effects::effect_t const& e) {
-            auto materials = e.materials.data(g_magic);
-            if(materials.has_error())
-            {
-                fmt::print("materials: <unreadable>\n");
-                return;
-            }
-            fmt::print("materials: {}\n", materials.value().size());
-            u32 i = 0;
-            for(auto const& m : materials.value())
-            {
-                auto material = static_cast<blam::scn::material_type_t>(i++);
+            fmt::print("materials: {}\n", count_of(g_magic, e.materials));
+            each(g_magic, e.materials, [](size_t i, auto const& m) {
                 if(!m.effect.valid() && !m.sound.valid())
-                    continue;
+                    return;
                 fmt::print(
                     "          {:<22} effect={} sound={}\n",
-                    enum_name(material),
+                    enum_name(static_cast<blam::scn::material_type_t>(i)),
                     name_of(m.effect),
                     name_of(m.sound));
-            }
+            });
         });
 }
 
@@ -1825,7 +1789,6 @@ void dump_hud_background(
 {
     fmt::print("    {}: {} ", label, name_of(background.interface_bitmap));
     print_hud_placement(background);
-    auto overlays = background.overlays.data(g_magic);
     fmt::print(
         "\n      colors default={} flashing={} disabled={} sequence={} "
         "overlays={}\n",
@@ -1833,7 +1796,7 @@ void dump_hud_background(
         argb(background.colors.flashing_color),
         argb(background.colors.disabled_color),
         background.sequence_index,
-        overlays.has_value() ? overlays.value().size() : 0u);
+        count_of(g_magic, background.overlays));
 }
 
 void dump_hud_meter(
@@ -2122,13 +2085,11 @@ void dump_unit(blam::scn::unit const* unit)
             s.yaw_rate,
             s.pitch_rate,
             name_of(s.built_in_gunner));
-        auto tracks = s.camera_tracks.data(g_magic);
-        auto huds   = s.hud_interfaces.data(g_magic);
         fmt::print(
             "          camera_tracks={} hud_interfaces={} "
             "hud_text_message_index={}\n",
-            tracks.has_value() ? tracks.value().size() : 0u,
-            huds.has_value() ? huds.value().size() : 0u,
+            count_of(g_magic, s.camera_tracks),
+            count_of(g_magic, s.hud_interfaces),
             s.hud_text_message_index);
     });
 }
@@ -2234,22 +2195,19 @@ void dump_collision(blam::coll::header const* coll)
         u32   verts = 0;
         Vecf3 lo(std::numeric_limits<f32>::max());
         Vecf3 hi(-std::numeric_limits<f32>::max());
-        auto  bsps = n.bsps.data(g_magic);
-        if(bsps.has_value())
-            for(auto const& bsp : bsps.value())
-                if(auto v = bsp.vertices.data(g_magic); v.has_value())
-                    for(auto const& vert : v.value())
-                    {
-                        verts++;
-                        lo = glm::min(lo, vert.point);
-                        hi = glm::max(hi, vert.point);
-                    }
+        each(g_magic, n.bsps, [&](auto const& bsp) {
+            each(g_magic, bsp.vertices, [&](auto const& vert) {
+                verts++;
+                lo = glm::min(lo, vert.point);
+                hi = glm::max(hi, vert.point);
+            });
+        });
         fmt::print(
             "{} region={} parent={} bsps={} verts={}",
             n.name.str(),
             static_cast<i16>(n.region),
             n.parent,
-            bsps.has_value() ? bsps.value().size() : 0,
+            count_of(g_magic, n.bsps),
             verts);
         if(verts)
             fmt::print(
@@ -2420,36 +2378,27 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
         header->import_width,
         header->import_height);
 
-    auto seqs = header->sequences.data(g_magic);
-    fmt::print("  sequences={}\n", seqs.has_value() ? seqs.value().size() : 0u);
-    if(seqs.has_value())
-    {
-        u32 i = 0;
-        for(auto const& seq : seqs.value())
-        {
-            auto sprites = seq.sprites.data(g_magic);
-            auto name    = seq.name.str();
+    fmt::print("  sequences={}\n", count_of(g_magic, header->sequences));
+    each(g_magic, header->sequences, [](size_t i, auto const& seq) {
+        fmt::print(
+            "    seq {}: \"{}\" first={} count={} sprites={}\n",
+            i,
+            seq.name.str(),
+            seq.first_bitmap,
+            seq.bitmap_count,
+            count_of(g_magic, seq.sprites));
+        each(g_magic, seq.sprites, [](auto const& spr) {
             fmt::print(
-                "    seq {}: \"{}\" first={} count={} sprites={}\n",
-                i++,
-                name,
-                seq.first_bitmap,
-                seq.bitmap_count,
-                sprites.has_value() ? sprites.value().size() : 0u);
-            if(!sprites.has_value())
-                continue;
-            for(auto const& spr : sprites.value())
-                fmt::print(
-                    "      sprite: bitmap={} l={:g} r={:g} t={:g} b={:g} "
-                    "reg={:g}\n",
-                    spr.bitmap_index,
-                    spr.left,
-                    spr.right,
-                    spr.top,
-                    spr.bottom,
-                    spr.registration_point);
-        }
-    }
+                "      sprite: bitmap={} l={:g} r={:g} t={:g} b={:g} "
+                "reg={:g}\n",
+                spr.bitmap_index,
+                spr.left,
+                spr.right,
+                spr.top,
+                spr.bottom,
+                spr.registration_point);
+        });
+    });
 
     auto images = header->images.data(g_magic);
     fmt::print(
@@ -2520,34 +2469,24 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
                     hi[c],
                     px ? static_cast<double>(sum[c]) / px : 0.0);
         }
-    u32 i = 0;
-    for(auto const& img : images.value())
-    {
+    each(g_magic, header->images, [](size_t i, auto const& img) {
         fmt::print(
-            "    image {}: {}x{}x{} ",
-            i++,
-            img.isize.x,
-            img.isize.y,
-            img.depth);
+            "    image {}: {}x{}x{} ", i, img.isize.x, img.isize.y, img.depth);
         print_enum("type", img.type);
         print_enum("format", img.format);
         print_enum("flags", img.flags);
         fmt::print("mips={} offset=0x{:x}\n", img.mipmaps, img.offset);
-    }
+    });
 
     if(g_dump_png_prefix.empty())
         return;
 
     auto base = flatten_name(name);
-    u32  idx  = 0;
-    for(auto const& img : images.value())
-    {
-        u32 const this_idx = idx++;
-        u32 const w        = static_cast<u32>(img.isize.x);
-        u32 const h        = static_cast<u32>(img.isize.y);
-        auto      label    = images.value().size() > 1
-                                 ? fmt::format("{}_{}", base, this_idx)
-                                 : base;
+    each(g_magic, header->images, [&](size_t i, auto const& img) {
+        u32 const w = static_cast<u32>(img.isize.x);
+        u32 const h = static_cast<u32>(img.isize.y);
+        auto      label =
+            images.value().size() > 1 ? fmt::format("{}_{}", base, i) : base;
 
         /* Cube faces are laid out differently on Xbox and PC, so go through
          * cube_face<V> rather than slicing data() by hand. */
@@ -2560,15 +2499,15 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
                     fmt::format("{}_face{}", label, face),
                     w,
                     h);
-            continue;
+            return;
         }
         if(img.type == blam::bitm::type_t::tex_3d)
         {
             fmt::print("      {}: 3D textures are not dumped\n", label);
-            continue;
+            return;
         }
         dump_image_png(img, img.data(pixel_magic(img), 0), label, w, h);
-    }
+    });
 }
 
 /* Each animated node's rotation (axis*angle, degrees) and translation per
@@ -2647,56 +2586,48 @@ void dump_antr(blam::antr::header const* animation)
             b.up_pitch_frame_count);
     };
     auto print_slots = [](auto const& refs) {
-        if(!refs.has_value())
+        if(refs.data(g_magic).has_error())
             return;
         fmt::print("        slots:");
-        for(auto [i, ref] : stl_types::enumerate(refs.value()))
+        each(g_magic, refs, [](size_t i, auto const& ref) {
             if(ref.animation >= 0)
                 fmt::print(" {}={}", i, ref.animation);
+        });
         fmt::print("\n");
     };
-    if(auto units = animation->units.data(g_magic); units.has_value())
-        for(auto [i, unit] : stl_types::enumerate(units.value()))
-        {
-            fmt::print("    unit {}: label={}\n", i, unit.label.str());
-            print_bounds("looking", unit.looking_bounds);
-            print_slots(unit.animations.data(g_magic));
-            if(auto weapons = unit.weapons.data(g_magic); weapons.has_value())
-                for(auto [j, weapon] : stl_types::enumerate(weapons.value()))
-                {
-                    fmt::print("      weapon {}: name={}\n", j, weapon.name.str());
-                    print_bounds("aiming", weapon.aiming_bounds);
-                    print_slots(weapon.animations.data(g_magic));
-                }
-        }
+    each(g_magic, animation->units, [&](size_t i, auto const& unit) {
+        fmt::print("    unit {}: label={}\n", i, unit.label.str());
+        print_bounds("looking", unit.looking_bounds);
+        print_slots(unit.animations);
+        each(g_magic, unit.weapons, [&](size_t j, auto const& weapon) {
+            fmt::print("      weapon {}: name={}\n", j, weapon.name.str());
+            print_bounds("aiming", weapon.aiming_bounds);
+            print_slots(weapon.animations);
+        });
+    });
     fmt::print("  weapons={}\n", animation->weapons.count);
     fmt::print("  vehicles={}\n", animation->vehicles.count);
-    if(auto vehicles = animation->vehicles.data(g_magic); vehicles.has_value())
-        for(auto [i, vehicle] : stl_types::enumerate(vehicles.value()))
-        {
-            print_bounds("steering", vehicle.steering_bounds);
-            print_slots(vehicle.animations.data(g_magic));
-            if(auto susp = vehicle.suspension_animations.data(g_magic);
-               susp.has_value())
-                for(auto const& s : susp.value())
-                    fmt::print(
-                        "        suspension mass_point={} animation={} "
-                        "extension={:.3f} compression={:.3f}\n",
-                        s.mass_point_index,
-                        s.animation.animation,
-                        s.full_extension_ground_depth,
-                        s.full_compression_ground_depth);
-        }
+    each(g_magic, animation->vehicles, [&](auto const& vehicle) {
+        print_bounds("steering", vehicle.steering_bounds);
+        print_slots(vehicle.animations);
+        each(g_magic, vehicle.suspension_animations, [](auto const& s) {
+            fmt::print(
+                "        suspension mass_point={} animation={} "
+                "extension={:.3f} compression={:.3f}\n",
+                s.mass_point_index,
+                s.animation.animation,
+                s.full_extension_ground_depth,
+                s.full_compression_ground_depth);
+        });
+    });
     fmt::print(
         "  first_person_weapons={}\n", animation->first_person_weapons.count);
-    if(auto fp = animation->first_person_weapons.data(g_magic); fp.has_value())
-        for(auto const& weapon : fp.value())
-            print_slots(weapon.animations.data(g_magic));
+    each(g_magic, animation->first_person_weapons, [&](auto const& weapon) {
+        print_slots(weapon.animations);
+    });
     fmt::print("  devices={}\n", animation->devices.count);
     fmt::print("  nodes={}\n", animation->nodes.count);
-    for(auto [i, node] :
-        stl_types::enumerate(animation->nodes.data(g_magic).value()))
-    {
+    each(g_magic, animation->nodes, [](size_t i, auto const& node) {
         auto joint = magic_enum::enum_name(node.joint_flags);
         fmt::print(
             "    node {}: name={} parent={} joint={}\n",
@@ -2704,11 +2635,9 @@ void dump_antr(blam::antr::header const* animation)
             node.name.str(),
             node.parent,
             joint);
-    }
+    });
     fmt::print("  animations={}\n", animation->animations.count);
-    for(auto [i, anim] :
-        stl_types::enumerate(animation->animations.data(g_magic).value()))
-    {
+    each(g_magic, animation->animations, [](size_t i, auto const& anim) {
         auto anim_type = magic_enum::enum_name(anim.type);
         fmt::print(
             "    animation {}: name={} type={} frames={} loop={} key={},{} "
@@ -2730,73 +2659,56 @@ void dump_antr(blam::antr::header const* animation)
             anim.is_compressed() ? " compressed" : "");
         if(g_dump_overlay_frames && anim.type == blam::antr::anim_type::overlay)
             dump_overlay_frames(anim);
-    }
+    });
 }
 
 template<typename Ver>
 void dump_mode(blam::mod2::header<Ver> const* info)
 {
     fmt::print("  node_list_checksum={:#010x}\n", info->node_list_checksum);
-    if(auto markers = info->markers.data(g_magic); markers.has_value())
-    {
-        fmt::print("  markers={}\n", markers.value().size());
-        for(auto [i, marker] : stl_types::enumerate(markers.value()))
-        {
-            fmt::print("    marker {}: name={}\n", i, marker.name.str());
-        }
-    }
-    if(auto regions = info->regions.data(g_magic); regions.has_value())
-    {
-        fmt::print("  regions={}\n", regions.value().size());
-        for(auto [i, region] : stl_types::enumerate(regions.value()))
-        {
-            fmt::print("    region {}: name={}\n", i, region.name.str());
-        }
-    }
+    fmt::print("  markers={}\n", count_of(g_magic, info->markers));
+    each(g_magic, info->markers, [](size_t i, auto const& marker) {
+        fmt::print("    marker {}: name={}\n", i, marker.name.str());
+    });
+    fmt::print("  regions={}\n", count_of(g_magic, info->regions));
+    each(g_magic, info->regions, [](size_t i, auto const& region) {
+        fmt::print("    region {}: name={}\n", i, region.name.str());
+    });
     /* shader_idx on a part indexes this list, so it is what names the shader
      * a piece of the model actually draws with. */
-    if(auto shaders = info->shaders.data(g_magic); shaders.has_value())
-    {
-        fmt::print("  shaders={}\n", shaders.value().size());
-        for(auto [i, shader] : stl_types::enumerate(shaders.value()))
-        {
-            /* tag_class_t holds a fourcc, which magic_enum cannot name. */
-            u32 const  cls       = static_cast<u32>(shader.ref.tag_class);
-            char const fourcc[5] = {
-                static_cast<char>((cls >> 24) & 0xFF),
-                static_cast<char>((cls >> 16) & 0xFF),
-                static_cast<char>((cls >> 8) & 0xFF),
-                static_cast<char>(cls & 0xFF),
-                0};
-            fmt::print(
-                "    shader {}: {} [{}]\n", i, name_of(shader.ref), fourcc);
-        }
-    }
+    fmt::print("  shaders={}\n", count_of(g_magic, info->shaders));
+    each(g_magic, info->shaders, [](size_t i, auto const& shader) {
+        /* tag_class_t holds a fourcc, which magic_enum cannot name. */
+        u32 const  cls       = static_cast<u32>(shader.ref.tag_class);
+        char const fourcc[5] = {
+            static_cast<char>((cls >> 24) & 0xFF),
+            static_cast<char>((cls >> 16) & 0xFF),
+            static_cast<char>((cls >> 8) & 0xFF),
+            static_cast<char>(cls & 0xFF),
+            0};
+        fmt::print("    shader {}: {} [{}]\n", i, name_of(shader.ref), fourcc);
+    });
     /* Per-part vertex_type: model_at() silently drops any part that is not
      * mod2_uncompressed(4) or mod2_compressed(5), so a part listed here with
      * another type is geometry the renderer never sees. */
-    if(auto geoms = info->geometries.data(g_magic); geoms.has_value())
-    {
-        fmt::print("  geometries={}\n", geoms.value().size());
-        for(auto [gi, geom] : stl_types::enumerate(geoms.value()))
+    fmt::print("  geometries={}\n", count_of(g_magic, info->geometries));
+    each(g_magic, info->geometries, [](size_t gi, auto const& geom) {
+        auto parts = geom.meshes(g_magic);
+        fmt::print("    geometry {}: parts={}\n", gi, parts.size());
+        for(auto [pi, part] : stl_types::enumerate(parts))
         {
-            auto parts = geom.meshes(g_magic);
-            fmt::print("    geometry {}: parts={}\n", gi, parts.size());
-            for(auto [pi, part] : stl_types::enumerate(parts))
-            {
-                auto vt = blam::from_le(part.data.vertex_type);
-                fmt::print(
-                    "      part {}: vertex_type={}{} shader_idx={}\n",
-                    pi,
-                    static_cast<unsigned>(vt),
-                    (vt == blam::vert::vertex_type_t::mod2_compressed_vertex ||
-                     vt == blam::vert::vertex_type_t::mod2_uncompressed_vertex)
-                        ? ""
-                        : "  <-- DROPPED by model_at",
-                    static_cast<unsigned>(blam::from_le(part.data.shader_idx)));
-            }
+            auto vt = blam::from_le(part.data.vertex_type);
+            fmt::print(
+                "      part {}: vertex_type={}{} shader_idx={}\n",
+                pi,
+                static_cast<unsigned>(vt),
+                (vt == blam::vert::vertex_type_t::mod2_compressed_vertex ||
+                 vt == blam::vert::vertex_type_t::mod2_uncompressed_vertex)
+                    ? ""
+                    : "  <-- DROPPED by model_at",
+                static_cast<unsigned>(blam::from_le(part.data.shader_idx)));
         }
-    }
+    });
 }
 
 /* ---- dispatch ---- */
@@ -2805,11 +2717,13 @@ void dump_mode(blam::mod2::header<Ver> const* info)
  * in b40), so every palette lookup goes through here rather than indexing. */
 template<typename P>
 std::string palette_entry(
-    P const& palette, i16 idx, blam::map_ptr const& magic)
+    P const& palette_block, i16 idx, blam::map_ptr const& magic)
 {
-    if(idx < 0 || static_cast<size_t>(idx) >= palette.size())
+    auto palette = palette_block.data(magic);
+    if(palette.has_error() || idx < 0 ||
+       static_cast<size_t>(idx) >= palette.value().size())
         return fmt::format("[{}]", idx);
-    auto const& ref = palette[idx][0];
+    auto const& ref = palette.value()[idx][0];
     return fmt::format(
         "[{}] \"{}\"", ref.tag_class_name(), ref.name.to_string(magic));
 }
@@ -2841,8 +2755,7 @@ template<typename T>
 void hex_instances(
     std::string_view label, blam::reference<T> const& ref, u32 limit)
 {
-    auto items = ref.data(g_magic);
-    if(!items.has_value())
+    if(ref.data(g_magic).has_error())
     {
         fmt::print("{}: <no data>\n", label);
         return;
@@ -2850,17 +2763,14 @@ void hex_instances(
     fmt::print(
         "\n== {} == count={} sizeof={}\n",
         label,
-        items.value().size(),
+        count_of(g_magic, ref),
         sizeof(T));
-    u32 i = 0;
-    for(T const& item : items.value())
-    {
+    each(g_magic, ref, [&](size_t i, T const& item) {
         if(i >= limit)
-            break;
+            return;
         fmt::print("  [{}]\n", i);
         hex_words(reinterpret_cast<blam::byte_t const*>(&item), sizeof(T));
-        i++;
-    }
+    });
 }
 
 template<typename Ver>
@@ -2915,25 +2825,26 @@ void dump_scenario(blam::map_container<Ver> const& map)
     fmt::print("\n");
 
     fmt::print("skyboxes: {}\n", s->info.skyboxes.count);
-    if(auto skyboxes = s->info.skyboxes.data(map.magic); skyboxes.has_value())
-        for(blam::scn::skybox_ref const& skybox : skyboxes.value())
-        {
-            fmt::print("  [{}] {}\n",
-                skybox.tag_class_name(),
-                skybox.name.to_string(map.magic));
-        }
+    each(map.magic, s->info.skyboxes, [&](blam::scn::skybox_ref const& skybox) {
+        fmt::print(
+            "  [{}] {}\n",
+            skybox.tag_class_name(),
+            skybox.name.to_string(map.magic));
+    });
 
     // Guerilla calls this child scenarios too
     // They're marked with scnr but the tags point to globals\\globals on a lot of maps??
     // Obviously a misnomer of some sort
     fmt::print("child scenarios: {}\n", s->info.child_scenarios.count);
-    if(auto child_scen = s->info.child_scenarios.data(map.magic); child_scen.has_value())
-        for(blam::tagref_t const& scenario : child_scen.value())
-        {
-            fmt::print("  [{}] {}\n",
+    each(
+        map.magic,
+        s->info.child_scenarios,
+        [&](blam::tagref_t const& scenario) {
+            fmt::print(
+                "  [{}] {}\n",
                 scenario.tag_class_name(),
                 scenario.name.to_string(map.magic));
-        }
+        });
 
     fmt::print("local north: {}\n", s->info.local_north);
 
@@ -2943,294 +2854,302 @@ void dump_scenario(blam::map_container<Ver> const& map)
 
     fmt::print("editor comments: {}\n", s->editor.comments.count);
     // TODO: Incorrect data here
-    // if(auto comments = s->editor.comments.data(map.magic); comments.has_value())
-    //     for(blam::scn::editor_comment const& comment : comments.value())
-    //     {
-    //         fmt::print("  comment: pos={} \"{}\"\n", comment.position, comment.comment.str());
-    //     }
+    // each(map.magic, s->editor.comments, [](blam::scn::editor_comment const&
+    // comment) {
+    //     fmt::print("  comment: pos={} \"{}\"\n", comment.position,
+    //     comment.comment.str());
+    // });
 
     fmt::print("object names: {}\n", s->objects.object_names.count);
     std::map<u16, std::string_view> obj_names;
     obj_names[-1] = "[undefined]";
-    if(auto names = s->objects.object_names.data(map.magic); names.has_value())
-        for(auto const& [i, name] : stl_types::enumerate(names.value()))
-        {
-            fmt::print("  object_name: \"{}\"\n", name.name.str());
-            obj_names[i] = name.name.str();
-        }
+    each(map.magic, s->objects.object_names, [&](size_t i, auto const& name) {
+        fmt::print("  object_name: \"{}\"\n", name.name.str());
+        obj_names[i] = name.name.str();
+    });
     fmt::print("scenery: {}\n", s->objects.scenery.instances.count);
-    if(auto objects = s->objects.scenery.instances.data(map.magic); objects.has_value())
-    {
-        auto palette = s->objects.scenery.palette.data(map.magic).value();
-        for(blam::scn::scenery_spawn const& obj : objects.value())
-        {
-            fmt::print("  scenery_spawn: obj_name={}\n",
-                obj_names[obj.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, obj.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.scenery.instances,
+        [&](blam::scn::scenery_spawn const& obj) {
+            fmt::print("  scenery_spawn: obj_name={}\n", obj_names[obj.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(s->objects.scenery.palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags));
-        }
-    }
+        });
     fmt::print("bipeds: {}\n", s->objects.bipeds.instances.count);
-    if(auto bipeds = s->objects.bipeds.instances.data(map.magic); bipeds.has_value())
-    {
-        auto palette = s->objects.bipeds.palette.data(map.magic).value();
-        for(blam::scn::biped_spawn const& biped : bipeds.value())
-        {
-            fmt::print("  biped_spawn: obj_name={}\n",
-                obj_names[biped.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, biped.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.bipeds.instances,
+        [&](blam::scn::biped_spawn const& biped) {
+            fmt::print("  biped_spawn: obj_name={}\n", obj_names[biped.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(s->objects.bipeds.palette, biped.ref, map.magic),
                 biped.desired_permutation);
             fmt::print("    pos={} rot={}\n", biped.pos, biped.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} biped flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={} biped flags={}\n",
                 static_cast<u16>(biped.bsp_flags),
                 flags_to_string(biped.flags),
                 flags_to_string(biped.biped_flags));
-        }
-    }
+        });
     fmt::print("vehicles: {}\n", s->objects.vehicles.instances.count);
-    if(auto objects = s->objects.vehicles.instances.data(map.magic); objects.has_value())
-    {
-        auto palette = s->objects.vehicles.palette.data(map.magic).value();
-        for(blam::scn::vehicle_spawn const& obj : objects.value())
-        {
-            fmt::print("  vehicle_spawn: obj_name={}\n",
-                obj_names[obj.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, obj.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.vehicles.instances,
+        [&](blam::scn::vehicle_spawn const& obj) {
+            fmt::print("  vehicle_spawn: obj_name={}\n", obj_names[obj.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(s->objects.vehicles.palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    vitality={} team={} multiplayer={}\n",
+            fmt::print(
+                "    vitality={} team={} multiplayer={}\n",
                 obj.vitality,
                 obj.team_index,
                 flags_to_string(obj.spawn_flags));
-            fmt::print("    bsp_flags={:#x} spawn_flags={} unit_flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={} unit_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
                 flags_to_string(obj.biped_flags));
-        }
-    }
+        });
     fmt::print("equips: {}\n", s->objects.equips.instances.count);
-    if(auto objects = s->objects.equips.instances.data(map.magic); objects.has_value())
-    {
-        auto palette = s->objects.equips.palette.data(map.magic).value();
-        for(blam::scn::equip_spawn const& obj : objects.value())
-        {
-            fmt::print("  equip_spawn: obj_name={}\n",
-                obj_names[obj.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, obj.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.equips.instances,
+        [&](blam::scn::equip_spawn const& obj) {
+            fmt::print("  equip_spawn: obj_name={}\n", obj_names[obj.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(s->objects.equips.palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} equip_flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={} equip_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
                 flags_to_string(obj.equip_flags));
-        }
-    }
+        });
     fmt::print("weapon spawns: {}\n", s->objects.weapon_spawns.instances.count);
-    if(auto objects = s->objects.weapon_spawns.instances.data(map.magic); objects.has_value())
-    {
-        auto palette = s->objects.weapon_spawns.palette.data(map.magic).value();
-        for(blam::scn::weapon_spawn const& obj : objects.value())
-        {
-            fmt::print("  weapon_spawn: obj_name={}\n",
-                obj_names[obj.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, obj.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.weapon_spawns.instances,
+        [&](blam::scn::weapon_spawn const& obj) {
+            fmt::print("  weapon_spawn: obj_name={}\n", obj_names[obj.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(
+                    s->objects.weapon_spawns.palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    rounds_left={} rounds_loaded={}\n",
+            fmt::print(
+                "    rounds_left={} rounds_loaded={}\n",
                 obj.rounds_left,
                 obj.rounds_loaded);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} weapon_flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={} weapon_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
                 flags_to_string(obj.weapon_flags));
-        }
-    }
+        });
     fmt::print("device groups: {}\n", s->objects.device_groups.count);
-    if(auto groups = s->objects.device_groups.data(map.magic); groups.has_value())
-        for(blam::scn::device_group const& group : groups.value())
-        {
+    each(
+        map.magic,
+        s->objects.device_groups,
+        [](blam::scn::device_group const&) {
             fmt::print("  device_group: \n");
-        }
+        });
     fmt::print("machines: {}\n", s->objects.machines.instances.count);
-    if(auto objects = s->objects.machines.instances.data(map.magic); objects.has_value())
-    {
-        auto palette = s->objects.machines.palette.data(map.magic).value();
-        for(blam::scn::machine_spawn const& obj : objects.value())
-        {
-            fmt::print("  machine_spawn: obj_name={}\n",
-                obj_names[obj.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, obj.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.machines.instances,
+        [&](blam::scn::machine_spawn const& obj) {
+            fmt::print("  machine_spawn: obj_name={}\n", obj_names[obj.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(s->objects.machines.palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    power_group={} position_group={}\n",
+            fmt::print(
+                "    power_group={} position_group={}\n",
                 obj.power_group.index,
                 obj.position_group.index);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} device_flags={} machine_flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={} device_flags={} "
+                "machine_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
                 flags_to_string(obj.device_flags),
                 flags_to_string(obj.machine_flags));
-        }
-    }
+        });
     fmt::print("controls: {}\n", s->objects.controls.instances.count);
-    if(auto objects = s->objects.controls.instances.data(map.magic); objects.has_value())
-    {
-        auto palette = s->objects.controls.palette.data(map.magic).value();
-        for(blam::scn::control const& obj : objects.value())
-        {
-            fmt::print("  control_spawn: obj_name={}\n",
-                obj_names[obj.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, obj.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.controls.instances,
+        [&](blam::scn::control const& obj) {
+            fmt::print("  control_spawn: obj_name={}\n", obj_names[obj.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(s->objects.controls.palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    power_group={} position_group={}\n",
+            fmt::print(
+                "    power_group={} position_group={}\n",
                 obj.power_group.index,
                 obj.position_group.index);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} device_flags={} control_flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={} device_flags={} "
+                "control_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
                 flags_to_string(obj.device_flags),
                 flags_to_string(obj.control_flags));
-        }
-    }
+        });
     fmt::print("light fixtures: {}\n", s->objects.light_fixtures.instances.count);
-    if(auto objects = s->objects.light_fixtures.instances.data(map.magic); objects.has_value())
-    {
-        auto palette = s->objects.light_fixtures.palette.data(map.magic).value();
-        for(blam::scn::light_fixture_spawn const& obj : objects.value())
-        {
-            fmt::print("  light_fixture_spawn: obj_name={}\n",
-                obj_names[obj.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, obj.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.light_fixtures.instances,
+        [&](blam::scn::light_fixture_spawn const& obj) {
+            fmt::print(
+                "  light_fixture_spawn: obj_name={}\n", obj_names[obj.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(
+                    s->objects.light_fixtures.palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    power_group={} position_group={}\n",
+            fmt::print(
+                "    power_group={} position_group={}\n",
                 obj.power_group.index,
                 obj.position_group.index);
-            fmt::print("    bsp_flags={:#x} spawn_flags={} device_flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={} device_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags),
                 flags_to_string(obj.device_flags));
-            fmt::print("    color={} intensity={} falloff_angle={} cutoff_angle={}\n",
+            fmt::print(
+                "    color={} intensity={} falloff_angle={} cutoff_angle={}\n",
                 obj.color,
                 obj.intensity,
                 obj.falloff_angle,
                 obj.cutoff_angle);
-        }
-    }
+        });
     fmt::print("sound scenery: {}\n", s->objects.sound_scenery.instances.count);
-    if(auto objects = s->objects.sound_scenery.instances.data(map.magic); objects.has_value())
-    {
-        auto palette = s->objects.sound_scenery.palette.data(map.magic).value();
-        for(blam::scn::sound_scenery const& obj : objects.value())
-        {
-            fmt::print("  sound_scenery: obj_name={}\n",
-                obj_names[obj.name]);
-            fmt::print("    palette={} permutation={}\n",
-                palette_entry(palette, obj.ref, map.magic),
+    each(
+        map.magic,
+        s->objects.sound_scenery.instances,
+        [&](blam::scn::sound_scenery const& obj) {
+            fmt::print("  sound_scenery: obj_name={}\n", obj_names[obj.name]);
+            fmt::print(
+                "    palette={} permutation={}\n",
+                palette_entry(
+                    s->objects.sound_scenery.palette, obj.ref, map.magic),
                 obj.desired_permutation);
             fmt::print("    pos={} rot={}\n", obj.pos, obj.rot);
-            fmt::print("    bsp_flags={:#x} spawn_flags={}\n",
+            fmt::print(
+                "    bsp_flags={:#x} spawn_flags={}\n",
                 static_cast<u16>(obj.bsp_flags),
                 flags_to_string(obj.flags));
-        }
-    }
+        });
 
-    if(auto p = s->player_start.profiles.data(g_magic); p.has_value())
-    {
-        fmt::print("player_starting_profiles: {}\n", p.value().size());
-        for(auto const& prof : p.value())
-            fmt::print(
-                "  {:<16} health={:g} shield={:g}  {} ({}) / {} ({})  nades "
-                "f={} "
-                "p={}\n",
-                prof.name.str(),
-                prof.health_modifier,
-                prof.shield_modifier,
-                name_of(prof.primary_weapon),
-                prof.rounds1_total,
-                name_of(prof.secondary_weapon),
-                prof.rounds2_total,
-                prof.frag_grenades,
-                prof.plasma_nades);
-    }
+    fmt::print(
+        "player_starting_profiles: {}\n",
+        count_of(g_magic, s->player_start.profiles));
+    each(g_magic, s->player_start.profiles, [](auto const& prof) {
+        fmt::print(
+            "  {:<16} health={:g} shield={:g}  {} ({}) / {} ({})  nades "
+            "f={} "
+            "p={}\n",
+            prof.name.str(),
+            prof.health_modifier,
+            prof.shield_modifier,
+            name_of(prof.primary_weapon),
+            prof.rounds1_total,
+            name_of(prof.secondary_weapon),
+            prof.rounds2_total,
+            prof.frag_grenades,
+            prof.plasma_nades);
+    });
 
-    if(auto l = s->player_start.locations.data(g_magic); l.has_value())
-    {
-        fmt::print("player_starting_locations: {}\n", l.value().size());
-        u32 shown = 0;
-        for(auto const& loc : l.value())
-        {
-            if(shown++ >= 4)
-            {
-                fmt::print("  ...\n");
-                break;
-            }
-            fmt::print(
-                "  pos={:.2f} rot={:.2f} team={} bsp={} modes=",
-                loc.pos,
-                loc.rot,
-                loc.team_index,
-                loc.bsp_index);
-            for(auto const& t : loc.types)
-                fmt::print("{} ", enum_name(t));
-            fmt::print("\n");
-        }
-    }
+    fmt::print(
+        "player_starting_locations: {}\n",
+        count_of(g_magic, s->player_start.locations));
+    each(g_magic, s->player_start.locations, [](size_t i, auto const& loc) {
+        if(i == 4)
+            fmt::print("  ...\n");
+        if(i >= 4)
+            return;
+        fmt::print(
+            "  pos={:.2f} rot={:.2f} team={} bsp={} modes=",
+            loc.pos,
+            loc.rot,
+            loc.team_index,
+            loc.bsp_index);
+        for(auto const& t : loc.types)
+            fmt::print("{} ", enum_name(t));
+        fmt::print("\n");
+    });
 
     fmt::print("trigger volumes: {}\n", s->trigger_volumes.count);
-    if(auto vols = s->trigger_volumes.data(map.magic); vols.has_value())
-        for(blam::scn::trigger_volume const& vol : vols.value())
-            fmt::print("  trigger volume \"{:<32}\"\n    pos={} extents={}\n",
+    each(
+        map.magic,
+        s->trigger_volumes,
+        [](blam::scn::trigger_volume const& vol) {
+            fmt::print(
+                "  trigger volume \"{:<32}\"\n    pos={} extents={}\n",
                 vol.name.str(),
                 vol.position,
                 vol.extents);
-    
-    fmt::print("recorded animations: {}\n", s->recorded_animations.count);
-    if(auto anims = s->recorded_animations.data(map.magic); anims.has_value())
-        for(blam::scn::recorded_animation const& rec : anims.value())
-            fmt::print("  recorded \"{:<32}\" version={}\n", rec.name.str(), rec.unit_control_data_version);
+        });
 
-    if(auto f = s->netgame.flags.data(g_magic); f.has_value())
-    {
-        fmt::print("netgame flags: {}\n", f.value().size());
-        for(blam::scn::multiplayer_flag const& flag : f.value())
-        {
-            fmt::print("  flag type={} team={} pos={}\n",
+    fmt::print("recorded animations: {}\n", s->recorded_animations.count);
+    each(
+        map.magic,
+        s->recorded_animations,
+        [](blam::scn::recorded_animation const& rec) {
+            fmt::print(
+                "  recorded \"{:<32}\" version={}\n",
+                rec.name.str(),
+                rec.unit_control_data_version);
+        });
+
+    fmt::print("netgame flags: {}\n", count_of(g_magic, s->netgame.flags));
+    each(
+        g_magic, s->netgame.flags, [](blam::scn::multiplayer_flag const& flag) {
+            fmt::print(
+                "  flag type={} team={} pos={}\n",
                 magic_enum::enum_name(flag.type),
                 flag.team_index,
                 flag.pos);
-        }
-    }
-    if(auto e = s->netgame.equipment.data(g_magic); e.has_value())
-    {
-        fmt::print("netgame equipment: {}\n", e.value().size());
-        for(blam::scn::multiplayer_equipment const& eq : e.value())
-        {
-            fmt::print("  equipment [{}] \"{}\" team={} pos={} spawn_time={} flags={}\n",
+        });
+    fmt::print(
+        "netgame equipment: {}\n", count_of(g_magic, s->netgame.equipment));
+    each(
+        g_magic,
+        s->netgame.equipment,
+        [&](blam::scn::multiplayer_equipment const& eq) {
+            fmt::print(
+                "  equipment [{}] \"{}\" team={} pos={} spawn_time={} "
+                "flags={}\n",
                 eq.item.tag_class_name(),
                 eq.item.name.to_string(map.magic),
                 eq.team_idx,
                 eq.pos,
                 eq.spawn_time,
                 flags_to_string(eq.flags));
-        }
-    }
+        });
 
-    if(auto q = s->starting_equipment.data(g_magic); q.has_value())
-        fmt::print("starting_equipment: {}\n", q.value().size());
+    fmt::print(
+        "starting_equipment: {}\n", count_of(g_magic, s->starting_equipment));
 }
 
 /* Recorded animations store per-tick control input rather than keyframes, so
@@ -3506,19 +3425,16 @@ template<typename T, typename Children>
 void hex_dump_block(
     blam::reference<T> const& block, std::string_view label, Children&& children)
 {
-    auto elements = block.data(g_magic);
-    if(!elements.has_value())
+    if(block.data(g_magic).has_error())
     {
         fmt::print("= {} <invalid reflexive>\n", label);
         return;
     }
-    u32 i = 0;
-    for(T const& element : elements.value())
-    {
-        auto element_label = fmt::format("{}[{}]", label, i++);
+    each(g_magic, block, [&](size_t i, T const& element) {
+        auto element_label = fmt::format("{}[{}]", label, i);
         hex_dump_struct(&element, element_label);
         children(element, element_label);
-    }
+    });
 }
 
 template<typename T>
@@ -3959,10 +3875,9 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         };
         fmt::print("  blocks:\n");
         count("collision_materials", h.collision_materials);
-        if(auto materials = h.collision_materials.data(magic);
-           materials.has_value())
-            for(auto const& material : materials.value())
-                fmt::print("      {}\n", name_of(material.shader));
+        each(magic, h.collision_materials, [](auto const& material) {
+            fmt::print("      {}\n", name_of(material.shader));
+        });
         count("collision_header", h.collision_header);
         count("nodes", h.nodes);
         count("leaves", h.leaves);
@@ -4002,101 +3917,91 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                                : sv("<none>");
         };
 
-        if(auto flares = h.lens_flares.data(magic); flares.has_value())
-            for(auto [i, flare] : stl_types::enumerate(flares.value()))
-                fmt::print("  lens_flare[{}] {}\n", i, name_of(flare));
+        each(magic, h.lens_flares, [&](size_t i, auto const& flare) {
+            fmt::print("  lens_flare[{}] {}\n", i, name_of(flare));
+        });
 
-        if(auto pal = h.weather_palettes.data(magic); pal.has_value())
-            for(auto [i, w] : stl_types::enumerate(pal.value()))
-                fmt::print(
-                    "  weather[{}] '{}' particles={} wind={}\n",
-                    i,
-                    w.name.str(),
-                    name_of(w.particle_system),
-                    name_of(w.wind));
+        each(magic, h.weather_palettes, [&](size_t i, auto const& w) {
+            fmt::print(
+                "  weather[{}] '{}' particles={} wind={}\n",
+                i,
+                w.name.str(),
+                name_of(w.particle_system),
+                name_of(w.wind));
+        });
 
         /* A polyhedron's centre is inside it: which side its planes face */
-        if(auto polys = h.weather_polyhedras.data(magic); polys.has_value())
-            for(auto [i, poly] : stl_types::enumerate(polys.value()))
-            {
-                auto planes = poly.planes.data(magic);
-                if(!planes.has_value())
-                    continue;
-                f32 lo = std::numeric_limits<f32>::max(), hi = -lo;
-                for(auto const& plane : planes.value())
-                {
-                    f32 const side =
-                        glm::dot(plane.plane, poly.sphere.center) - plane.d;
-                    lo = std::min(lo, side);
-                    hi = std::max(hi, side);
-                }
-                fmt::print(
-                    "  weather_polyhedron[{}] centre={} radius={} planes={} "
-                    "centre side={}..{}\n",
-                    i,
-                    poly.sphere.center,
-                    poly.sphere.radius,
-                    planes.value().size(),
-                    lo,
-                    hi);
-            }
+        each(magic, h.weather_polyhedras, [&](size_t i, auto const& poly) {
+            if(poly.planes.data(magic).has_error())
+                return;
+            f32 lo = std::numeric_limits<f32>::max(), hi = -lo;
+            each(magic, poly.planes, [&](auto const& plane) {
+                f32 const side =
+                    glm::dot(plane.plane, poly.sphere.center) - plane.d;
+                lo = std::min(lo, side);
+                hi = std::max(hi, side);
+            });
+            fmt::print(
+                "  weather_polyhedron[{}] centre={} radius={} planes={} "
+                "centre side={}..{}\n",
+                i,
+                poly.sphere.center,
+                poly.sphere.radius,
+                count_of(magic, poly.planes),
+                lo,
+                hi);
+        });
 
-        if(auto pal = h.background_sound.data(magic); pal.has_value())
-            for(auto [i, s] : stl_types::enumerate(pal.value()))
-            {
-                /* Guerilla: 4 bytes pad, then a 32-char scale function */
-                std::string_view scale(
-                    reinterpret_cast<char const*>(&s.padding[1]),
-                    strnlen(reinterpret_cast<char const*>(&s.padding[1]), 32));
-                fmt::print(
-                    "  background_sound[{}] '{}' sound={} scale_function='{}'\n",
-                    i,
-                    s.name.str(),
-                    name_of(s.bg_sound),
-                    scale);
-                print_nonzero("padding", s.padding);
-            }
+        each(magic, h.background_sound, [&](size_t i, auto const& s) {
+            /* Guerilla: 4 bytes pad, then a 32-char scale function */
+            std::string_view scale(
+                reinterpret_cast<char const*>(&s.padding[1]),
+                strnlen(reinterpret_cast<char const*>(&s.padding[1]), 32));
+            fmt::print(
+                "  background_sound[{}] '{}' sound={} scale_function='{}'\n",
+                i,
+                s.name.str(),
+                name_of(s.bg_sound),
+                scale);
+            print_nonzero("padding", s.padding);
+        });
 
-        if(auto pal = h.sound_env.data(magic); pal.has_value())
-            for(auto [i, s] : stl_types::enumerate(pal.value()))
-                fmt::print(
-                    "  sound_env[{}] '{}' environment={}\n",
-                    i,
-                    s.name.str(),
-                    name_of(s.environment));
+        each(magic, h.sound_env, [&](size_t i, auto const& s) {
+            fmt::print(
+                "  sound_env[{}] '{}' environment={}\n",
+                i,
+                s.name.str(),
+                name_of(s.environment));
+        });
 
-        if(auto markers = h.markers.data(magic); markers.has_value())
-            for(auto [i, m] : stl_types::enumerate(markers.value()))
-                fmt::print(
-                    "  marker[{}] '{}' pos={}\n", i, m.name.str(), m.position);
+        each(magic, h.markers, [](size_t i, auto const& m) {
+            fmt::print(
+                "  marker[{}] '{}' pos={}\n", i, m.name.str(), m.position);
+        });
 
-        if(auto clusters = h.clusters.data(magic); clusters.has_value())
-            for(auto [i, c] :
-                stl_types::enumerate(clusters.value()))
-            {
-                fmt::print(
-                    "  cluster[{}] sky={} fog={} bg_sound={} sound_env={} "
-                    "weather={} transition_bsp={} subclusters={} mirrors={} "
-                    "portals={} predicted={}\n",
-                    i,
-                    c.sky,
-                    c.fog,
-                    c.background_sound,
-                    c.sound_env,
-                    c.weather,
-                    c.transition_bsp,
-                    blam::from_le(c.sub_clusters.count),
-                    blam::from_le(c.mirrors.count),
-                    blam::from_le(c.portals.count),
-                    blam::from_le(c.predicted_resources.count));
-                print_nonzero("unknown1", c.unknown1);
-                if(auto res = c.predicted_resources.data(magic);
-                   res.has_value())
-                    for(predicted_resource const& r : res.value())
-                        fmt::print(
-                            "    predicted {}\n",
-                            describe_tag_id(index, r.tag_id));
-            }
+        each(magic, h.clusters, [&](size_t i, auto const& c) {
+            fmt::print(
+                "  cluster[{}] sky={} fog={} bg_sound={} sound_env={} "
+                "weather={} transition_bsp={} subclusters={} mirrors={} "
+                "portals={} predicted={}\n",
+                i,
+                c.sky,
+                c.fog,
+                c.background_sound,
+                c.sound_env,
+                c.weather,
+                c.transition_bsp,
+                blam::from_le(c.sub_clusters.count),
+                blam::from_le(c.mirrors.count),
+                blam::from_le(c.portals.count),
+                blam::from_le(c.predicted_resources.count));
+            print_nonzero("unknown1", c.unknown1);
+            each(
+                magic, c.predicted_resources, [&](predicted_resource const& r) {
+                    fmt::print(
+                        "    predicted {}\n", describe_tag_id(index, r.tag_id));
+                });
+        });
 
         /* Anything the struct does not describe yet still shows up here */
         fmt::print("  tagrefs anywhere in the section:\n");
@@ -4142,14 +4047,14 @@ void find_tag_id_refs(
         regions.push_back({static_cast<size_t>(p - file), &t});
     }
     if(auto scn = index.scenario(); scn.has_value())
-        if(auto infos = scn.value()->bsp_info.data(index.magic());
-           infos.has_value())
-            for(blam::bsp::info const& bsp : infos.value())
-            {
+        each(
+            index.magic(),
+            scn.value()->bsp_info,
+            [&](blam::bsp::info const& bsp) {
                 auto it = tags_by_id(index).find(bsp.tag.tag_id);
                 if(it != tags_by_id(index).end())
                     regions.push_back({blam::from_le(bsp.offset), it->second});
-            }
+            });
     std::sort(regions.begin(), regions.end(), [](auto const& a, auto const& b) {
         return a.start < b.start;
     });
@@ -4342,41 +4247,26 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         if(auto* info = header_of((shader_chicago<Ver>*)nullptr))
         {
             dump_chicago_base(info);
-            auto maps = info->maps.data(g_magic);
-            fmt::print(
-                "  maps={}\n", maps.has_value() ? maps.value().size() : 0u);
-            if(maps.has_value())
-            {
-                u32 i = 0;
-                for(auto const& map : maps.value())
-                    dump_chicago_maps(map, i++);
-            }
+            fmt::print("  maps={}\n", count_of(g_magic, info->maps));
+            each(g_magic, info->maps, [](size_t i, auto const& map) {
+                dump_chicago_maps(map, i);
+            });
         }
         break;
     case blam::tag_class_t::scex:
         if(auto* info = header_of((shader_chicago_extended<Ver>*)nullptr))
         {
             dump_chicago_base(info);
-            auto maps = info->maps_4stage.data(g_magic);
             fmt::print(
-                "  maps_4stage={}\n",
-                maps.has_value() ? maps.value().size() : 0u);
-            if(maps.has_value())
-            {
-                u32 i = 0;
-                for(auto const& map : maps.value())
-                    dump_chicago_maps(map, i++);
-            }
-            auto maps2 = info->maps_2stage.data(g_magic);
+                "  maps_4stage={}\n", count_of(g_magic, info->maps_4stage));
+            each(g_magic, info->maps_4stage, [](size_t i, auto const& map) {
+                dump_chicago_maps(map, i);
+            });
             fmt::print(
-                "  maps_2stage={}\n",
-                maps2.has_value() ? maps2.value().size() : 0u);
-            if(maps2.has_value())
-            {
-                u32 i = 0;
-                for(auto const& map : maps2.value())
-                    dump_chicago_maps(map, i++);
-            }
+                "  maps_2stage={}\n", count_of(g_magic, info->maps_2stage));
+            each(g_magic, info->maps_2stage, [](size_t i, auto const& map) {
+                dump_chicago_maps(map, i);
+            });
         }
         break;
     case blam::tag_class_t::mod2:
@@ -4486,8 +4376,7 @@ void dump_mirrors(
         sizeof(blam::bsp::cluster),
         sizeof(blam::bsp::mirror));
 
-    auto bsps = scn.value()->bsp_info.data(map.magic);
-    if(bsps.has_error())
+    if(scn.value()->bsp_info.data(map.magic).has_error())
     {
         fmt::print("no bsp_info\n");
         return;
@@ -4498,112 +4387,108 @@ void dump_mirrors(
     int              pass[16] = {};
     int              total    = 0;
 
-    u32 bsp_idx = 0;
-    for(blam::bsp::info const& bsp : bsps.value())
-    {
-        auto bsp_magic = bsp.bsp_magic(map.magic);
-        auto sec       = bsp.to_bsp(bsp_magic).to_header().data(
-            bsp_magic, blam::single_value);
-        if(sec.has_error())
-        {
-            bsp_idx++;
-            continue;
-        }
-        auto const& section  = *sec.value();
-        auto        clusters = section.clusters.data(bsp_magic);
-        if(clusters.has_error())
-        {
-            bsp_idx++;
-            continue;
-        }
+    each(
+        map.magic,
+        scn.value()->bsp_info,
+        [&](size_t bsp_idx, blam::bsp::info const& bsp) {
+            auto bsp_magic = bsp.bsp_magic(map.magic);
+            auto sec       = bsp.to_bsp(bsp_magic).to_header().data(
+                bsp_magic, blam::single_value);
+            if(sec.has_error())
+                return;
+            auto const& section = *sec.value();
 
-        u32 cluster_idx = 0;
-        for(blam::bsp::cluster const& cluster : clusters.value())
-        {
-            u32 const count = blam::from_le(cluster.mirrors.count);
-            if(count == 0 || count > 64)
-            {
-                if(count > 64)
+            each(
+                bsp_magic,
+                section.clusters,
+                [&](size_t cluster_idx, blam::bsp::cluster const& cluster) {
+                    u32 const count = blam::from_le(cluster.mirrors.count);
+                    if(count == 0 || count > 64)
+                    {
+                        if(count > 64)
+                            fmt::print(
+                                "bsp {} cluster {}: implausible mirror count "
+                                "{}\n",
+                                bsp_idx,
+                                cluster_idx,
+                                count);
+                        return;
+                    }
+                    u32 const   off = blam::from_le(cluster.mirrors.offset);
+                    auto const* raw = reinterpret_cast<const u8*>(
+                        bsp_magic.base_ptr + off - bsp_magic.file_offset);
+
                     fmt::print(
-                        "bsp {} cluster {}: implausible mirror count {}\n",
+                        "bsp {} cluster {}: {} mirror(s) @ 0x{:x}\n",
                         bsp_idx,
                         cluster_idx,
-                        count);
-                cluster_idx++;
-                continue;
-            }
-            u32 const   off = blam::from_le(cluster.mirrors.offset);
-            auto const* raw = reinterpret_cast<const u8*>(
-                bsp_magic.base_ptr + off - bsp_magic.file_offset);
+                        count,
+                        off);
+                    total += static_cast<int>(count);
 
-            fmt::print(
-                "bsp {} cluster {}: {} mirror(s) @ 0x{:x}\n",
-                bsp_idx,
-                cluster_idx,
-                count,
-                off);
-            total += static_cast<int>(count);
+                    for(size_t p = 0; p < kNPads; p++)
+                    {
+                        const int    pad    = kPads[p];
+                        const size_t stride = 16 + pad + 16 + 12;
+                        for(u32 m = 0; m < count; m++)
+                        {
+                            auto const* e = raw + m * stride;
+                            f32         n[4];
+                            memcpy(n, e, sizeof(n));
+                            const f32 len = std::sqrt(
+                                n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+                            if(std::fabs(len - 1.f) > 1e-3f)
+                                continue;
 
-            for(size_t p = 0; p < kNPads; p++)
-            {
-                const int    pad    = kPads[p];
-                const size_t stride = 16 + pad + 16 + 12;
-                for(u32 m = 0; m < count; m++)
-                {
-                    auto const* e = raw + m * stride;
-                    f32         n[4];
-                    memcpy(n, e, sizeof(n));
-                    const f32 len =
-                        std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
-                    if(std::fabs(len - 1.f) > 1e-3f)
-                        continue;
+                            auto const* sh =
+                                reinterpret_cast<blam::tagref_t const*>(
+                                    e + 16 + pad);
+                            if(!sh->valid() || !is_shader_class(sh->tag_class))
+                                continue;
 
-                    auto const* sh =
-                        reinterpret_cast<blam::tagref_t const*>(e + 16 + pad);
-                    if(!sh->valid() || !is_shader_class(sh->tag_class))
-                        continue;
+                            auto const* vr =
+                                reinterpret_cast<blam::bsp_reference<
+                                    typing::vector_types::Vecf3> const*>(
+                                    e + 16 + pad + 16);
+                            const u32 vcount = blam::from_le(vr->count);
+                            if(vcount < 3 || vcount > 256)
+                                continue;
+                            auto verts = vr->data(bsp_magic);
+                            if(verts.has_error())
+                                continue;
 
-                    auto const* vr = reinterpret_cast<
-                        blam::bsp_reference<typing::vector_types::Vecf3> const*>(
-                        e + 16 + pad + 16);
-                    const u32 vcount = blam::from_le(vr->count);
-                    if(vcount < 3 || vcount > 256)
-                        continue;
-                    auto verts = vr->data(bsp_magic);
-                    if(verts.has_error())
-                        continue;
+                            f32 resid = 0.f;
+                            for(auto const& v : verts.value())
+                                resid = std::max(
+                                    resid,
+                                    std::fabs(
+                                        n[0] * v[0] + n[1] * v[1] +
+                                        n[2] * v[2] - n[3]));
+                            if(resid >= 0.05f)
+                                continue;
+                            pass[p]++;
 
-                    f32 resid = 0.f;
-                    for(auto const& v : verts.value())
-                        resid = std::max(
-                            resid,
-                            std::fabs(
-                                n[0] * v[0] + n[1] * v[1] + n[2] * v[2] -
-                                n[3]));
-                    if(resid >= 0.05f)
-                        continue;
-                    pass[p]++;
-
-                    auto name = sh->to_name().to_string(map.magic);
-                    fmt::print(
-                        "    [pad={}] plane=({:.4f} {:.4f} {:.4f}) d={:.4f} "
-                        "verts={} resid={:.5f}\n      shader={} ({})\n",
-                        pad,
-                        n[0],
-                        n[1],
-                        n[2],
-                        n[3],
-                        vcount,
-                        resid,
-                        name,
-                        std::string_view(
-                            reinterpret_cast<const char*>(&sh->tag_class), 4));
-                }
-            }
-            cluster_idx++;
-        }
-        bsp_idx++;
-    }
+                            auto name = sh->to_name().to_string(map.magic);
+                            fmt::print(
+                                "    [pad={}] plane=({:.4f} {:.4f} {:.4f}) "
+                                "d={:.4f} "
+                                "verts={} resid={:.5f}\n      shader={} ({})\n",
+                                pad,
+                                n[0],
+                                n[1],
+                                n[2],
+                                n[3],
+                                vcount,
+                                resid,
+                                name,
+                                std::string_view(
+                                    reinterpret_cast<const char*>(
+                                        &sh->tag_class),
+                                    4));
+                        }
+                    }
+                });
+        });
 
     fmt::print("\ntotal mirrors found: {}\n", total);
     if(total == 0)
