@@ -187,7 +187,10 @@ elseif(EMSCRIPTEN)
     # Better than the prior "enable SSE to get SIMD"
     # https://emscripten.org/docs/porting/simd.html
     -mrelaxed-simd
-    -mfma
+    # TODO: There's an issue where _mm_popcnt_u32 does not
+    # want to work with WebAssembly, and it's in glm
+    #-mfma
+    -msse4.2
     # Wraps C++ exceptions to Wasm exceptions
     # Carries some code weight
     -fwasm-exceptions
