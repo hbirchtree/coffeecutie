@@ -57,7 +57,7 @@ static void* gles2_dl{};
 
 // For some reason, 32-bit ARM Android does not support the egl*Platform* APIs
 // But it's happy to say it supports EGL 1.5
-#if defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)
+#if defined(COFFEE_ANDROID) && (defined(COFFEE_ARCH_ARM32) || ANDROID_API_LEVEL <= 25)
 #define SUPPORTS_PLATFORM_DISPLAY_API 0
 #else
 #define SUPPORTS_PLATFORM_DISPLAY_API 1
