@@ -14,6 +14,7 @@ layout(location=3) in vec2 f_detail_uv;
 layout(location=4) in vec2 f_detail2_uv;
 layout(location=5) in vec2 f_illum_uv;
 layout(location=6) in vec3 f_lightmap;
+layout(location=8) in vec4 f_vertex_light;
 layout(location=7) in vec2 f_mask_uv;
 
 layout(location=2, binding=0) uniform sampler2D diffuse;
@@ -81,9 +82,11 @@ void main()
     alpha *= m.a * m.r;
 #endif
 #else
-    /* Baked lighting where the cluster has it, the sun stand-in elsewhere */
+    /* Baked lighting where the geometry has it, the sun stand-in elsewhere */
     if(f_lightmap.z >= 0.0)
         color *= texture(lightmaps, f_lightmap).rgb * 2.0;
+    else if(f_vertex_light.a > 0.0)
+        color *= f_vertex_light.rgb * 2.0;
     else
     {
         vec3 normal = surface_normal();
