@@ -98,6 +98,9 @@ struct BlamBspWidget
                     ImGui::Text("Model-specific");
                     ImGui::Checkbox(
                         "Render scenery", &rendering->render_scenery);
+                    ImGui::Checkbox(
+                        "Enhanced legacy renderer",
+                        &rendering->legacy_enhanced);
                     ImGui::Checkbox("Only detail map", &rendering->only_detail);
                     ImGui::Checkbox(
                         "Only multipurpose", &rendering->only_multipurpose);

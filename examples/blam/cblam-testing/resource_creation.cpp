@@ -247,6 +247,7 @@ void create_resources(compo::EntityContainer& e)
                      set_val("render_model_bones", rp.render_model_bones);
                      set_val("render_reflection", rp.render_reflection);
                      set_val("render_scenery", rp.render_scenery);
+                     set_val("legacy_enhanced", rp.legacy_enhanced);
                      set_val("meter_value", rp.meter_value);
                      for(auto i : stl_types::range<size_t>(4))
                      {

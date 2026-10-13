@@ -19,6 +19,7 @@
 #include <peripherals/typing/vectors/camera.h>
 #include <peripherals/typing/vectors/glm_vector_types.h>
 #include <peripherals/typing/vectors/vector_types.h>
+#include <platforms/environment.h>
 
 #include "materials.h"
 #include "game_events.h"
@@ -193,6 +194,10 @@ struct RenderingParameters : compo::SubsystemBase
     bool only_multipurpose2{false};
     bool render_model_bones{true};
     bool render_scenery{true};
+
+    // ES2 renderer: closer to the main renderer, at a cost
+    bool legacy_enhanced{
+        platform::env::var("COFFEE_LEGACY_ENHANCED").has_value()};
 
     // BSP-exclusive
     bool only_aux_channels{false};

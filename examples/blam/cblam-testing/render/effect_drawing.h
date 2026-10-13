@@ -78,6 +78,7 @@ struct EffectDrawer
 
     static constexpr u32     rgb5a1_code = 15;
     std::optional<PixDesc>   rgb5a1_fmt;
+    std::array<std::optional<PixDesc>, 16> formats; /* by format code */
     u32 image_generation{~0u};
 
     bool load(gfx::api& api)
@@ -101,6 +102,40 @@ struct EffectDrawer
             failed = true;
             return false;
         }
+        alloc_vertices(api);
+        return true;
+    }
+
+    /* ES2: GLSL 100 shaders that sample one texture per draw */
+    bool load_legacy(gfx::api& api)
+    {
+        using namespace Coffee::resource_literals;
+        if(program)
+            return true;
+        if(failed)
+            return false;
+        program = api.alloc_program();
+        program->add(
+            gfx::program_t::stage_t::Vertex,
+            api.alloc_shader("shaders/effects_legacy.vert"_rsc.data()));
+        program->add(
+            gfx::program_t::stage_t::Fragment,
+            api.alloc_shader("shaders/effects_legacy.frag"_rsc.data()));
+        if(auto res = program->compile(); res.has_error())
+        {
+            Coffee::cWarning(
+                "Failed to compile effect shader: {}",
+                std::get<0>(res.error()));
+            program.reset();
+            failed = true;
+            return false;
+        }
+        alloc_vertices(api);
+        return true;
+    }
+
+    void alloc_vertices(gfx::api& api)
+    {
         buffer = api.alloc_buffer(
             gfx::buffers::vertex,
             semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);
@@ -126,7 +161,6 @@ struct EffectDrawer
             {"source", 6},
             {"shape", 7},
         });
-        return true;
     }
 
     /* A sequence's frame: a sprite on a sheet, or a whole image */
@@ -194,6 +228,8 @@ struct EffectDrawer
             rgb5a1_fmt  = item->image.fmt;
         }
         out.layer  = static_cast<f32>(atlas.layer & 0xFFFFFF);
+        formats[static_cast<u32>(out.format) % formats.size()] =
+            item->image.fmt;
         out.ok     = true;
         return out;
     }
@@ -471,6 +507,69 @@ struct EffectDrawer
             }
             batch.count = static_cast<u32>(vertices.size()) - batch.offset;
             flare_batches.push_back(batch);
+        }
+    }
+
+    struct texture_run_t
+    {
+        batch_t batch;
+        u32     format{0};
+        u32     layer{0};
+    };
+
+    static std::pair<u32, u32> texture_of(vertex_t const& v)
+    {
+        return {static_cast<u32>(v.source.x), static_cast<u32>(v.source.y)};
+    }
+
+    /* Only alpha blending depends on draw order, so other batches are
+     * reordered to share textures */
+    void group_by_texture()
+    {
+        using triangle_t = std::array<vertex_t, 3>;
+        std::vector<triangle_t> triangles;
+        auto                    group = [&](batch_t const& batch) {
+            if(!batch.blend.additive && !batch.blend.multiply &&
+               !batch.blend.maximum)
+                return;
+            auto first = vertices.begin() + batch.offset;
+            triangles.resize(batch.count / 3);
+            for(size_t i = 0; i < triangles.size(); i++)
+                std::copy_n(first + i * 3, 3, triangles[i].begin());
+            std::stable_sort(
+                triangles.begin(),
+                triangles.end(),
+                [](auto const& a, auto const& b) {
+                    return texture_of(a[0]) < texture_of(b[0]);
+                });
+            for(size_t i = 0; i < triangles.size(); i++)
+                std::copy_n(triangles[i].begin(), 3, first + i * 3);
+        };
+        for(auto const& batch : batches)
+            group(batch);
+        for(auto const& batch : flare_batches)
+            group(batch);
+    }
+
+    /* Splits a batch where its texture changes */
+    static void split_by_texture(
+        std::vector<vertex_t> const& vertices,
+        batch_t const&               batch,
+        std::vector<texture_run_t>&  runs)
+    {
+        for(u32 i = batch.offset; i < batch.offset + batch.count; i += 3)
+        {
+            auto const [format, layer] = texture_of(vertices[i]);
+            if(i == batch.offset || runs.back().format != format ||
+               runs.back().layer != layer)
+            {
+                texture_run_t run{
+                    .batch = batch, .format = format, .layer = layer};
+                run.batch.offset = i;
+                run.batch.count  = 0;
+                runs.push_back(run);
+            }
+            runs.back().batch.count += 3;
         }
     }
 

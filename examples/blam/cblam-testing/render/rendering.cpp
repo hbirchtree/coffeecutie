@@ -3192,10 +3192,175 @@ struct LegacyMeshRenderer
         std::vector<Vecf2>                     micro_map_scale;
     };
 
+    EffectDrawer<Ver> m_effects;
+
     void start_restricted(Proxy& p, time_point const& time)
     {
         f32 t = std::fmod(stl_types::chrono::to_f32(time), 3600.f);
         legacy_render(p, t);
+        if(p.template subsystem<RenderingParameters>().legacy_enhanced)
+            render_effects(p);
+    }
+
+    /* Particles, contrails, decals and lens flares for the first player */
+    void render_effects(Proxy& p)
+    {
+        using namespace std::string_view_literals;
+        using typing::vector_types::Vecd2;
+        using effect_drawer = EffectDrawer<Ver>;
+
+        auto const& scene = p.template subsystem<EffectScene>();
+        if(scene.generation !=
+               p.template subsystem<BlamFiles<Ver>>().load_generation ||
+           p.template subsystem<LoadingStatus>().loaded_map !=
+               LoadingStatus::loaded)
+            return;
+        if(scene.sprites.empty() && scene.ribbons.empty() &&
+           scene.flares.empty() && scene.decals.empty())
+            return;
+
+        PlayerCamera const* cam{};
+        for(auto player : p.template select<PlayerInfo, PlayerCamera>())
+        {
+            auto [info, camera] = player.components();
+            if(info.seat_idx == 0)
+                cam = &camera;
+        }
+        gfx::system& api = p.template subsystem<gfx::system>();
+        if(!cam || !m_effects.load_legacy(api))
+            return;
+
+        ProfContext       _;
+        BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
+        Vecf3 const       eye        = cam->camera.position;
+        m_effects.build(
+            scene,
+            bitm_cache,
+            eye,
+            p.template subsystem<BlamFiles<Ver>>().load_generation);
+        m_effects.build_flares(
+            scene,
+            bitm_cache,
+            {{
+                .matrix = cam->matrix,
+                .seat   = 0,
+                .focal =
+                    1.f / std::tan(glm::radians(cam->camera.fieldOfView) * .5f),
+                .aspect = cam->camera.aspect,
+            }});
+        if(m_effects.vertices.empty())
+            return;
+        m_effects.group_by_texture();
+        m_effects.upload();
+
+        std::vector<typename effect_drawer::texture_run_t> runs;
+        for(auto const& batch : m_effects.batches)
+            effect_drawer::split_by_texture(m_effects.vertices, batch, runs);
+        for(auto const& batch : m_effects.flare_batches)
+            effect_drawer::split_by_texture(m_effects.vertices, batch, runs);
+
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+        f32 const la_textures = 0.f;
+#else
+        /* Without RG textures, two-channel images upload as luminance-alpha */
+        f32 const la_textures =
+            api.feature_info().texture.tex.ext.rg8 ? 0.f : 1.f;
+#endif
+        Matf3 const to_world  = glm::transpose(Matf3(cam->rotation));
+        Vecf3 const right     = to_world * Vecf3{1.f, 0.f, 0.f};
+        Vecf3 const up        = to_world * Vecf3{0.f, 1.f, 0.f};
+        auto const  stage     = typing::graphics::ShaderStage::Fragment;
+        auto const& resources = p.template subsystem<BlamResources>();
+
+        for(auto const& run : runs)
+        {
+            std::shared_ptr<gfx::sampler_t> sampler;
+            Vecf2                           texel_count{1.f, 1.f};
+            if(run.format != 0)
+            {
+                auto const& fmt =
+                    m_effects.formats[run.format % m_effects.formats.size()];
+                if(!fmt)
+                    continue;
+                auto bucket =
+                    bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                        *fmt);
+                auto sub =
+                    bucket.template texture_as<gfx::compat::texture_2da_t>()
+                        .subtexture(run.layer);
+                if(!sub)
+                    continue;
+                sampler = bucket.sampler;
+                sampler->rebind(sub);
+                auto const size = sub->size();
+                texel_count = Vecf2(std::max(size.w, 1u), std::max(size.h, 1u));
+            } else
+            {
+                /* Untextured glow: the shader ignores the sampler */
+                for(auto const& other : m_effects.formats)
+                    if(other)
+                    {
+                        sampler = bitm_cache
+                                      .template get_bucket<
+                                          gfx::compat::texture_2da_t>(*other)
+                                      .sampler;
+                        break;
+                    }
+                if(!sampler)
+                    continue;
+            }
+
+            /* GL_MAX is not core in ES2 */
+            gfx::blend_state blend = run.batch.blend;
+            if(blend.maximum)
+                blend = {.additive = true};
+            f32 const format = static_cast<f32>(run.format);
+
+            api.submit(
+                {
+                    .program       = m_effects.program,
+                    .vertices      = m_effects.array,
+                    .render_target = resources.offscreen,
+                    .call =
+                        gfx::draw_command::call_spec_t{
+                            .indexed = false,
+                            .mode    = gfx::drawing::primitive::triangle,
+                        },
+                    .data =
+                        {{.arrays =
+                              {.count  = run.batch.count,
+                               .offset = run.batch.offset}}},
+                },
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{
+                        {"camera"sv}, semantic::SpanOne(cam->matrix)},
+                    gfx::uniform_pair{{"eye"sv}, semantic::SpanOne(eye)},
+                    gfx::uniform_pair{
+                        {"cam_right"sv}, semantic::SpanOne(right)},
+                    gfx::uniform_pair{{"cam_up"sv}, semantic::SpanOne(up)}),
+                gfx::make_uniform_list(
+                    stage,
+                    gfx::uniform_pair{{"format"sv}, semantic::SpanOne(format)},
+                    gfx::uniform_pair{
+                        {"blend_mode"sv}, semantic::SpanOne(run.batch.mode)},
+                    gfx::uniform_pair{
+                        {"la_textures"sv}, semantic::SpanOne(la_textures)},
+                    gfx::uniform_pair{
+                        {"texel_count"sv}, semantic::SpanOne(texel_count)}),
+                gfx::make_sampler_list(
+                    gleam::sampler_definition_t{
+                        stage, {"source"sv, 0}, sampler}),
+                gfx::blend_state{blend},
+                gfx::depth_extended_state{.depth_write = false},
+                gfx::view_state{
+                    .depth =
+                        gfx::depth_state{
+                            .range    = Vecd2{0.0, 1.0},
+                            .reversed = true,
+                        },
+                });
+        }
     }
 
     void legacy_render(Proxy& p, f32 t)

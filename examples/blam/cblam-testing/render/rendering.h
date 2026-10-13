@@ -118,7 +118,9 @@ using LegacyMeshRendererManifest = compo::SubsystemManifest<
         const DrawState>,
     type_list_t<
         BitmapCache<V>,
+        const BlamFiles<V>,
         const BlamResources,
+        const EffectScene,
         gfx::system,
         LoadingStatus,
         ModelCache<V>,

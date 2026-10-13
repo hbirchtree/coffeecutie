@@ -1,0 +1,66 @@
+#version 100
+precision highp float;
+
+/* ES2 counterpart of effects.vert */
+
+attribute vec3 position;
+attribute vec3 axis;
+attribute vec4 corner; /* x, y in [-1, 1], z radius, w rotation */
+attribute vec2 tex;
+attribute vec4 color;
+attribute vec4 atlas;  /* scale xy, offset zw */
+attribute vec4 source; /* format, layer, kind (0 sprite, 1 ribbon, 2 flare, 3 decal), opaque */
+attribute vec4 shape;  /* pivot xy, aspect */
+
+uniform mat4 camera;
+uniform vec3 eye;
+uniform vec3 cam_right;
+uniform vec3 cam_up;
+
+varying vec4 frag_tex; /* uv, repeats, opaque */
+varying vec4 frag_color;
+varying vec4 frag_atlas;
+
+void main()
+{
+    frag_tex   = vec4(tex, source.z > 0.5 && source.z < 1.5 ? 1.0 : 0.0, source.w);
+    frag_color = color;
+    frag_atlas = atlas;
+
+    vec3 world;
+    if(source.z < 0.5)
+    {
+        float aspect = max(shape.z, 0.01);
+        vec2  size   = 2.0 * corner.z * vec2(min(aspect, 1.0), min(1.0 / aspect, 1.0));
+        vec2  t      = corner.xy * 0.5 + 0.5 - vec2(shape.x, 1.0 - shape.y);
+        float stretch = length(axis);
+        if(stretch > 0.0001)
+        {
+            vec3 up    = axis / stretch;
+            vec3 right = cross(up, eye - position);
+            right      = length(right) > 0.0001 ? normalize(right) : cam_right;
+            world = position + up * t.x * size.x + right * t.y * size.y;
+        } else
+        {
+            vec2  at = t * size;
+            float s  = sin(corner.w);
+            float c  = cos(corner.w);
+            at       = vec2(c * at.x - s * at.y, s * at.x + c * at.y);
+            world    = position + cam_right * at.x + cam_up * at.y;
+        }
+    } else if(source.z < 1.5)
+    {
+        vec3 side = cross(axis, eye - position);
+        side      = length(side) > 0.0001 ? normalize(side) : cam_right;
+        world     = position + side * corner.x * corner.z;
+    } else if(source.z > 2.5)
+    {
+        world = position;
+    } else
+    {
+        vec2 at = position.xy + corner.xy * vec2(corner.z * axis.x, corner.z);
+        gl_Position = vec4(at, 0.9999, 1.0);
+        return;
+    }
+    gl_Position = camera * vec4(world, 1.0);
+}
