@@ -156,7 +156,7 @@ inline resolved_t resolve(
                 auto const* spas = map.tag_at(pass.pass_id());
                 if(!spas)
                     continue;
-                auto name = map.tag_name(*spas);
+                auto name = map.name_of(*spas);
                 if(auto slash = name.find_last_of('\\'); slash != name.npos)
                     name = name.substr(slash + 1);
                 out.pass_names.push_back(name);

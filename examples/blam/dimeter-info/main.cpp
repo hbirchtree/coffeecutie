@@ -304,7 +304,7 @@ u32 extract_bitmaps(
                 }
 
                 auto path =
-                    outdir + "/" + sanitize(map.tag_name(tag)) +
+                    outdir + "/" + sanitize(map.name_of(tag)) +
                     (image_span.size() > 1 ? "_img" + std::to_string(img_idx)
                                            : "") +
                     ".dds";
@@ -461,7 +461,7 @@ u32 extract_sounds(
             if(payload.empty() || payload.size() != perm.sample_size())
                 continue;
 
-            auto path = outdir + "/" + sanitize(map.tag_name(tag)) +
+            auto path = outdir + "/" + sanitize(map.name_of(tag)) +
                         (perm_count > 1 ? "_perm" + std::to_string(p) : "") +
                         (adpcm ? ".wav" : ".wma");
             auto rate = h2::snd::to_hertz(sound->sample_rate);
@@ -609,7 +609,7 @@ std::optional<std::string> write_material_dds(
         } else
             std::memcpy(pixels.data(), src, base);
 
-        auto filename = sanitize(map.tag_name(bitm_tag)) + ".dds";
+        auto filename = sanitize(map.name_of(bitm_tag)) + ".dds";
         if(write_file(
                outdir + "/" + filename,
                make_dds(
@@ -646,7 +646,7 @@ struct material_db
         if(auto it = by_tag.find(shad_id.index()); it != by_tag.end())
             return it->second;
 
-        auto name = sanitize(map.tag_name(*shad_tag));
+        auto name = sanitize(map.name_of(*shad_tag));
         by_tag.emplace(shad_id.index(), name);
         mtl += "newmtl " + name + "\nKd 0.8 0.8 0.8\n";
 
@@ -963,7 +963,7 @@ u32 extract_bsp_meshes(
             continue;
 
         auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
-        auto        name    = bsp_tag ? std::string(map.tag_name(*bsp_tag))
+        auto        name    = bsp_tag ? std::string(map.name_of(*bsp_tag))
                                       : "bsp_" + std::to_string(extracted);
 
         /* Materials: one MTL entry per shader table slot, extracting the
@@ -1089,7 +1089,7 @@ u32 extract_model_meshes(
                 materials.push_back(
                     db.resolve(map, pool, outdir, sref.shader.tag_id));
 
-        auto       name = sanitize(map.tag_name(tag));
+        auto       name = sanitize(map.name_of(tag));
         obj_writer obj;
         obj.mtllib(name + ".mtl");
         u32 written = 0;
@@ -1151,12 +1151,12 @@ int print_map(blam::dimeter::map_container<V> const& map)
     if(auto const* scenario = map.scenario())
         cBasicPrint(
             "scnr:     {0} ({1} bytes)",
-            map.tag_name(*scenario),
+            map.name_of(*scenario),
             scenario->size());
     if(auto const* globals = map.globals())
         cBasicPrint(
             "matg:     {0} ({1} bytes)",
-            map.tag_name(*globals),
+            map.name_of(*globals),
             globals->size());
 
     std::map<std::string, std::pair<u32, u64>> class_counts;
@@ -1215,10 +1215,10 @@ bool tag_selected(
     if(needs_data && !tag.valid())
         return false;
     if(!options.class_filter.empty() &&
-       dimeter_info::class_name(tag.tag_class) != options.class_filter)
+       tag.tag_class.str() != options.class_filter)
         return false;
     if(!options.name_filter.empty() &&
-       map.tag_name(tag).find(options.name_filter) == std::string_view::npos)
+       map.name_of(tag).find(options.name_filter) == std::string_view::npos)
         return false;
     return true;
 }
@@ -1318,7 +1318,7 @@ bool write_collision_obj(
             geo::bsp_header_t const&        bsp,
             h2::bsp_magic const&            magic) {
             auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
-            auto        name    = bsp_tag ? sanitize(map.tag_name(*bsp_tag))
+            auto        name    = bsp_tag ? sanitize(map.name_of(*bsp_tag))
                                           : "bsp_" + std::to_string(groups);
             if(auto coll = bsp.collision.data(magic); !coll.has_error())
                 for(auto const& c : coll.value())
@@ -1371,7 +1371,7 @@ void probe_cluster(blam::dimeter::map_container<V> const& map, Vecf3 point)
             cluster = leaves.value()[*leaf].cluster.value();
         cBasicPrint(
             "{0}: ({1}, {2}, {3}) -> leaf {4} cluster {5}",
-            tag ? map.tag_name(*tag) : std::string_view{},
+            tag ? map.name_of(*tag) : std::string_view{},
             point.x,
             point.y,
             point.z,
@@ -1510,8 +1510,8 @@ int run_map(
                 fmt::print(
                     "{:5} [{}] {} ({} bytes)\n",
                     i,
-                    dimeter_info::class_name(tag.tag_class),
-                    map.tag_name(tag),
+                    tag.tag_class.str(),
+                    map.name_of(tag),
                     tag.size());
 
     if(options.dump)
@@ -1529,13 +1529,13 @@ int run_map(
                     return;
                 fmt::print(
                     "{} [sbsp] region {:#x}\n",
-                    map.tag_name(*bsp_tag),
+                    map.name_of(*bsp_tag),
                     ref.meta_address());
                 dimeter_info::dump_sbsp(map, bsp, magic);
                 dimeter_info::dump_sbsp_extras(map, bsp, magic);
                 if(auto const* ltmp = h2::locate_bsp(map, ref).lightmap)
                 {
-                    fmt::print("{} [ltmp]\n", map.tag_name(*bsp_tag));
+                    fmt::print("{} [ltmp]\n", map.name_of(*bsp_tag));
                     dimeter_info::dump_ltmp(map, *ltmp, magic);
                 }
             });

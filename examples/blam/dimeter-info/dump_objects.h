@@ -1053,8 +1053,8 @@ inline void dump_any(h2::map_container<V> const& map, h2::tag_t const& tag)
 {
     fmt::print(
         "{} [{}] {} bytes @{:#x}\n",
-        map.tag_name(tag),
-        class_name(tag.tag_class),
+        map.name_of(tag),
+        tag.tag_class.str(),
         tag.size(),
         tag.pointer());
     if(tag.matches("scnr"))
