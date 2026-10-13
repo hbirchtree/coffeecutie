@@ -95,7 +95,8 @@ function startServer(rootDir) {
     }
   });
   return new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', () => resolve({ server, port: server.address().port }));
+    // PORT pins the origin so a persistent profile (PROFILE_DIR) keeps its OPFS store
+    server.listen(Number(process.env.PORT || 0), '127.0.0.1', () => resolve({ server, port: server.address().port }));
   });
 }
 
@@ -353,7 +354,7 @@ async function main() {
     }
     record(`Serving ${cfg.bundleDir} at ${url}`);
 
-    browser = await chromium.launch({
+    const launchOpts = {
       headless: false,
       args: [
         // SwiftShader: pure-software OpenGL ES via ANGLE. Recent Chromium gates this
@@ -367,7 +368,16 @@ async function main() {
         '--enable-webgl',
         '--disable-dev-shm-usage',
       ],
-    });
+    };
+    // PROFILE_DIR: a persistent profile, so OPFS and IndexedDB survive between runs
+    const persistent = process.env.PROFILE_DIR
+      ? await chromium.launchPersistentContext(process.env.PROFILE_DIR, {
+          ...launchOpts,
+          viewport: cfg.viewport,
+          recordVideo: cfg.video ? { dir: cfg.outDir, size: cfg.viewport } : undefined,
+        })
+      : null;
+    browser = persistent ? persistent.browser() : await chromium.launch(launchOpts);
 
     let sawFatal = false;
     let pageErrors = 0;
@@ -375,7 +385,7 @@ async function main() {
       if (FATAL_PATTERNS.some((re) => re.test(text))) sawFatal = true;
     };
 
-    const context = await browser.newContext({
+    const context = persistent || await browser.newContext({
       viewport: cfg.viewport,
       recordVideo: cfg.video ? { dir: cfg.outDir, size: cfg.viewport } : undefined,
     });
