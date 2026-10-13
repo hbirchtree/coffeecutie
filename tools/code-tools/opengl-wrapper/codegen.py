@@ -108,6 +108,8 @@ transform_strings(std::vector<std::string_view> const& strings)
     std::vector<GLint> string_lengths;
     std::vector<const char*> cstrings;
     std::vector<std::string> stringstorage;
+    /* c_str() of a short string moves with it */
+    stringstorage.reserve(strings.size());
 
     for(auto const& view : strings)
     {
