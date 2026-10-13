@@ -3283,6 +3283,7 @@ struct LegacyMeshRenderer
         u32 const bones = cache.bone_count(mod.model);
         if(bones == 0 || bones > m_skinned.max_bones)
             return nullptr;
+        ProfContext _("legacy_render: Skinning pose");
         m_pose.assign(bones, Matf4(1));
         cache.evaluate_pose(
             mod.model, *anim, semantic::Span<Matf4>(m_pose.data(), bones));
@@ -4047,6 +4048,7 @@ struct LegacyMeshRenderer
         }
 
         /* Skinned soso: a draw per part, sharing textures within a shader */
+        Coffee::Profiler::PushContext("legacy_render: Skinned scenery");
         std::sort(
             skinned_draws.begin(),
             skinned_draws.end(),
@@ -4114,6 +4116,7 @@ struct LegacyMeshRenderer
                         },
                 });
         }
+        Coffee::Profiler::PopContext();
         Coffee::Profiler::PopContext();
     }
 };
