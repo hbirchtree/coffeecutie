@@ -35,6 +35,17 @@
             "shaders/rs2.vert",
             "shaders/rs2.frag",
 
+            "shaders/h2.vert",
+            "shaders/h2_base.frag",
+            "shaders/h2_detail.frag",
+            "shaders/h2_blend.frag",
+            "shaders/h2_base_illum.frag",
+            "shaders/h2_detail_illum.frag",
+            "shaders/h2_blend_illum.frag",
+            "shaders/h2_sky.frag",
+            "shaders/h2_sky_mask.frag",
+            "shaders/h2_water.frag",
+
             "shaders/ui.vert",
             "shaders/ui.frag",
             "shaders/detail_object.vert",

@@ -1,0 +1,124 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "beavercreek: rocket launcher spawn close-ups",
+    "events": [
+        {
+            "time": 500,
+            "type": "camera",
+            "fov": 60
+        },
+        {
+            "time": 1000,
+            "type": "camera",
+            "position": [
+                3.93,
+                4.609999999999999,
+                5.58
+            ],
+            "rotation": [
+                -40,
+                0
+            ]
+        },
+        {
+            "time": 1300,
+            "type": "screenshot",
+            "name": "rocket_0"
+        },
+        {
+            "time": 1600,
+            "type": "camera",
+            "position": [
+                3.93,
+                4.609999999999999,
+                5.58
+            ],
+            "rotation": [
+                -40,
+                90
+            ]
+        },
+        {
+            "time": 1900,
+            "type": "screenshot",
+            "name": "rocket_90"
+        },
+        {
+            "time": 2200,
+            "type": "camera",
+            "position": [
+                3.93,
+                4.609999999999999,
+                5.58
+            ],
+            "rotation": [
+                -40,
+                180
+            ]
+        },
+        {
+            "time": 2500,
+            "type": "screenshot",
+            "name": "rocket_180"
+        },
+        {
+            "time": 2800,
+            "type": "camera",
+            "position": [
+                3.93,
+                4.609999999999999,
+                5.58
+            ],
+            "rotation": [
+                -40,
+                270
+            ]
+        },
+        {
+            "time": 3100,
+            "type": "screenshot",
+            "name": "rocket_270"
+        },
+        {
+            "time": 3400,
+            "type": "camera",
+            "position": [
+                3.93,
+                5.51,
+                5.88
+            ],
+            "rotation": [
+                90,
+                0
+            ]
+        },
+        {
+            "time": 3700,
+            "type": "screenshot",
+            "name": "rocket_top"
+        },
+        {}
+    ],
+    "frame_delta": 100.0,
+    "end_time": 4500
+}
