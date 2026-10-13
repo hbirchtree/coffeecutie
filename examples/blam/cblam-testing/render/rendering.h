@@ -109,6 +109,7 @@ using MeshRendererManifest = compo::SubsystemManifest<
 template<typename V>
 using LegacyMeshRendererManifest = compo::SubsystemManifest<
     type_list_t<
+        const AnimationPlayback,
         const BspReference,
         const SubModel,
         const Model,

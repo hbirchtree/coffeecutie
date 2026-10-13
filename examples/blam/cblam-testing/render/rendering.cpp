@@ -3194,6 +3194,110 @@ struct LegacyMeshRenderer
 
     EffectDrawer<Ver> m_effects;
 
+    struct
+    {
+        std::shared_ptr<gfx::program_t> soso;
+        std::shared_ptr<gfx::program_t> chicago;
+        u32                             max_bones{0};
+        bool                            failed{false};
+    } m_skinned;
+
+    struct skinning_t
+    {
+        u32 offset{0};
+        u32 rows{0};
+    };
+
+    std::map<u64, skinning_t> m_skinned_parents;
+    std::vector<Vecf4>        m_bone_rows;
+    std::vector<Matf4>        m_pose;
+
+    bool load_skinned(gfx::system& api)
+    {
+        using namespace Coffee::resource_literals;
+        if(m_skinned.soso)
+            return true;
+        if(m_skinned.failed)
+            return false;
+        m_skinned.failed = true;
+        /* Three rows a bone next to the camera matrix; Halo caps skeletons at
+         * 64 */
+        u32 const vectors = api.limits().shaders.vertex_uniform_vectors;
+        m_skinned.max_bones =
+            std::min<u32>(vectors > 4 ? (vectors - 4) / 3 : 0, 64);
+        if(m_skinned.max_bones < 8)
+        {
+            cWarning(
+                "Skinning needs more than {} vertex uniform vectors", vectors);
+            return false;
+        }
+        gfx::shader_t::constants_t constants{
+            {"MAX_BONES", std::to_string(m_skinned.max_bones)}};
+        if constexpr(std::is_same_v<Ver, blam::xbox_version_t>)
+            constants.emplace("VERTEX_XBOX", "1");
+        auto compile = [&api, &constants](auto&& vertex, auto&& fragment) {
+            auto program = api.alloc_program();
+            program->add(
+                gfx::program_t::stage_t::Vertex,
+                api.alloc_shader(vertex.data(), constants));
+            program->add(
+                gfx::program_t::stage_t::Fragment,
+                api.alloc_shader(fragment.data()));
+            if(auto res = program->compile(); res.has_error())
+            {
+                cWarning(
+                    "Failed to compile skinned shader: {}",
+                    std::get<0>(res.error()));
+                program.reset();
+            }
+            return program;
+        };
+        m_skinned.soso = compile(
+            "shaders/scenery_legacy_skinned.vert"_rsc,
+            "shaders/scenery_legacy.frag"_rsc);
+        m_skinned.chicago = compile(
+            "shaders/scenery_legacy_skinned.vert"_rsc,
+            "shaders/scenery_legacy_chicago.frag"_rsc);
+        if(!m_skinned.soso || !m_skinned.chicago)
+        {
+            m_skinned.soso.reset();
+            m_skinned.chicago.reset();
+            return false;
+        }
+        m_skinned.failed = false;
+        return true;
+    }
+
+    /* An animating object's bones as affine rows with its transform folded
+     * in, posed once per frame. Null when it has nothing to skin with. */
+    skinning_t const* skin(
+        Proxy& p, ModelCache<Ver>& cache, u64 parent, Model const& mod)
+    {
+        if(auto it = m_skinned_parents.find(parent);
+           it != m_skinned_parents.end())
+            return it->second.rows ? &it->second : nullptr;
+        skinning_t& out  = m_skinned_parents[parent];
+        auto const* anim = p.template get<AnimationPlayback>(parent);
+        if(!anim || !anim->animating())
+            return nullptr;
+        u32 const bones = cache.bone_count(mod.model);
+        if(bones == 0 || bones > m_skinned.max_bones)
+            return nullptr;
+        m_pose.assign(bones, Matf4(1));
+        cache.evaluate_pose(
+            mod.model, *anim, semantic::Span<Matf4>(m_pose.data(), bones));
+        out.offset = static_cast<u32>(m_bone_rows.size());
+        out.rows   = bones * 3;
+        for(auto const& bone : m_pose)
+        {
+            Matf4 const m = mod.transform * bone;
+            for(auto r : stl_types::range<u32>(3))
+                m_bone_rows.push_back(
+                    Vecf4(m[0][r], m[1][r], m[2][r], m[3][r]));
+        }
+        return &out;
+    }
+
     void start_restricted(Proxy& p, time_point const& time)
     {
         f32 t = std::fmod(stl_types::chrono::to_f32(time), 3600.f);
@@ -3676,6 +3780,22 @@ struct LegacyMeshRenderer
 
         std::map<std::pair<cache_id_t, u64>, ModelBatch> soso_batches;
 
+        struct SkinnedDraw
+        {
+            generation_idx_t  shader;
+            u64               parent;
+            skinning_t const* bones;
+            DrawState const*  draw;
+            Vecf2             base_scale{1, 1};
+        };
+
+        std::vector<SkinnedDraw> skinned_draws;
+        bool const               skinning = rendering_props->legacy_enhanced &&
+                              rendering_props->render_model_bones &&
+                              load_skinned(*api);
+        m_skinned_parents.clear();
+        m_bone_rows.clear();
+
         /* Model lives on the parent entity, SubModel on its children —
          * they are never on the same entity, so Model cannot be part of
          * the fused select here */
@@ -3709,14 +3829,6 @@ struct LegacyMeshRenderer
             if(shitem.tag_class == blam::tag_class_t::schi ||
                shitem.tag_class == blam::tag_class_t::scex)
             {
-                auto vtx_u = gfx::make_uniform_list(
-                    typing::graphics::ShaderStage::Vertex,
-                    gfx::uniform_pair{
-                        {"camera"sv, 1},
-                        semantic::SpanOne<const Matf4>(camera)},
-                    gfx::uniform_pair{
-                        {"models"sv, 2},
-                        semantic::SpanOne<const Matf4>(mod.transform)});
                 auto const& maps = shitem.tag_class == blam::tag_class_t::schi
                                        ? shitem.schi.maps
                                        : shitem.scex.maps;
@@ -3760,31 +3872,60 @@ struct LegacyMeshRenderer
                     gfx::uniform_pair{
                         {"base_map_scale"sv, 5},
                         semantic::SpanOne<const Vecf2>(scale0)});
-                api->submit(
-                    {
-                        .program       = resources.chicago_pipeline,
-                        .vertices      = resources.model_attr,
-                        .render_target = resources.offscreen,
-                        .call =
-                            gfx::draw_command::call_spec_t{
-                                .indexed = true,
-                                .mode = gfx::drawing::primitive::triangle_strip,
-                            },
-                        .data = sm_draw.draw.data,
-                    },
-                    vtx_u,
-                    frg_u,
-                    samplers,
-                    gfx::cull_state{.front_face = true},
-                    gfx::view_state{
-                        .depth =
-                            gfx::depth_state{
-                                .range          = Vecd2{0.0, 0.0},
-                                .reversed       = true,
-                                .strict_greater = false,
-                            },
-                    },
-                    gfx::depth_extended_state{.depth_write = false});
+                auto draw = [&](auto&& vtx_u, auto const& program) {
+                    api->submit(
+                        {
+                            .program       = program,
+                            .vertices      = resources.model_attr,
+                            .render_target = resources.offscreen,
+                            .call =
+                                gfx::draw_command::call_spec_t{
+                                    .indexed = true,
+                                    .mode =
+                                        gfx::drawing::primitive::triangle_strip,
+                                },
+                            .data = sm_draw.draw.data,
+                        },
+                        vtx_u,
+                        frg_u,
+                        samplers,
+                        gfx::cull_state{.front_face = true},
+                        gfx::view_state{
+                            .depth =
+                                gfx::depth_state{
+                                    .range          = Vecd2{0.0, 0.0},
+                                    .reversed       = true,
+                                    .strict_greater = false,
+                                },
+                        },
+                        gfx::depth_extended_state{.depth_write = false});
+                };
+                if(auto const* bones =
+                       skinning ? skin(p, *model_cache, sm.parent, mod)
+                                : nullptr)
+                    draw(
+                        gfx::make_uniform_list(
+                            typing::graphics::ShaderStage::Vertex,
+                            gfx::uniform_pair{
+                                {"camera"sv},
+                                semantic::SpanOne<const Matf4>(camera)},
+                            gfx::uniform_pair{
+                                {"bones"sv},
+                                semantic::Span<const Vecf4>(
+                                    m_bone_rows.data() + bones->offset,
+                                    bones->rows)}),
+                        m_skinned.chicago);
+                else
+                    draw(
+                        gfx::make_uniform_list(
+                            typing::graphics::ShaderStage::Vertex,
+                            gfx::uniform_pair{
+                                {"camera"sv, 1},
+                                semantic::SpanOne<const Matf4>(camera)},
+                            gfx::uniform_pair{
+                                {"models"sv, 2},
+                                semantic::SpanOne<const Matf4>(mod.transform)}),
+                        resources.chicago_pipeline);
                 continue;
             }
 
@@ -3798,6 +3939,20 @@ struct LegacyMeshRenderer
                 continue;
             if(sm_draw.draw.data.empty())
                 continue;
+
+            if(auto const* bones =
+                   skinning ? skin(p, *model_cache, sm.parent, mod) : nullptr)
+            {
+                skinned_draws.push_back({
+                    .shader = sm.shader,
+                    .parent = sm.parent,
+                    .bones  = bones,
+                    .draw   = &sm_draw,
+                    .base_scale =
+                        bitm_it->second.image.scale * mitem.header->uvscale,
+                });
+                continue;
+            }
 
             auto const& geom = sm_draw.draw.data.front();
             auto& batch = soso_batches[{sm.shader.i, geom.elements.offset}];
@@ -3889,6 +4044,75 @@ struct LegacyMeshRenderer
                             },
                     });
             }
+        }
+
+        /* Skinned soso: a draw per part, sharing textures within a shader */
+        std::sort(
+            skinned_draws.begin(),
+            skinned_draws.end(),
+            [](auto const& a, auto const& b) {
+                return std::pair{a.shader.i, a.parent} <
+                       std::pair{b.shader.i, b.parent};
+            });
+        std::shared_ptr<gfx::sampler_t> skinned_sampler;
+        for(size_t i = 0; i < skinned_draws.size(); i++)
+        {
+            auto const& draw = skinned_draws[i];
+            if(i == 0 || skinned_draws[i - 1].shader.i != draw.shader.i)
+            {
+                BitmapItem const& base =
+                    bitm_cache
+                        .find(shader_cache.find(draw.shader)
+                                  ->second.soso.base_bitm)
+                        ->second;
+                auto base_tex =
+                    bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(
+                        base.image.fmt);
+                base_tex.sampler->rebind(
+                    base_tex.template texture_as<gfx::compat::texture_2da_t>()
+                        .subtexture(base.image.layer));
+                skinned_sampler = base_tex.sampler;
+            }
+            api->submit(
+                {
+                    .program       = m_skinned.soso,
+                    .vertices      = resources.model_attr,
+                    .render_target = resources.offscreen,
+                    .call =
+                        gfx::draw_command::call_spec_t{
+                            .indexed = true,
+                            .mode    = gfx::drawing::primitive::triangle_strip,
+                        },
+                    .data = draw.draw->draw.data,
+                },
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{
+                        {"camera"sv}, semantic::SpanOne<const Matf4>(camera)},
+                    gfx::uniform_pair{
+                        {"bones"sv},
+                        semantic::Span<const Vecf4>(
+                            m_bone_rows.data() + draw.bones->offset,
+                            draw.bones->rows)}),
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Fragment,
+                    gfx::uniform_pair{
+                        {"base_map_scale"sv},
+                        semantic::SpanOne<const Vecf2>(draw.base_scale)}),
+                gfx::make_sampler_list(
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"diffuse"sv, 0},
+                        skinned_sampler}),
+                gfx::cull_state{.front_face = true},
+                gfx::view_state{
+                    .depth =
+                        gfx::depth_state{
+                            .range          = Vecd2{0.0, 1.0},
+                            .reversed       = true,
+                            .strict_greater = true,
+                        },
+                });
         }
         Coffee::Profiler::PopContext();
     }
