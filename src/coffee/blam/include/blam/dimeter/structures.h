@@ -120,6 +120,41 @@ enum class tag_class_t : u32
     wind  = tag_fourcc("wind"),
 };
 
+/*! A tag class as a cache file stores it: the fourcc byte-reversed */
+struct alignas(4) tag_class
+{
+    bl_tag raw;
+
+    inline tag_class_t id() const
+    {
+        u32 v;
+        std::memcpy(&v, raw.data.data(), sizeof(v));
+        return static_cast<tag_class_t>(from_le(v));
+    }
+
+    inline std::string str() const
+    {
+        return raw.str();
+    }
+
+    inline bool valid() const
+    {
+        return id() != tag_class_t::none;
+    }
+
+    inline bool operator==(tag_class_t cls) const
+    {
+        return id() == cls;
+    }
+
+    inline bool operator==(tag_class const& other) const
+    {
+        return id() == other.id();
+    }
+};
+
+static_assert(sizeof(tag_class) == 4);
+
 /*!
  * \brief A tag's datum index on its own; the classes say which tags the
  * field may name, none admits any.
@@ -375,14 +410,12 @@ static_assert(sizeof(block_index<u32>) == 2);
 template<tag_class_t... Classes>
 struct alignas(4) tag_reference
 {
-    bl_tag      tag_class;
-    datum_index tag_id;
+    struct tag_class tag_class;
+    datum_index      tag_id;
 
     inline tag_class_t class_id() const
     {
-        u32 v;
-        std::memcpy(&v, &tag_class, sizeof(v));
-        return static_cast<tag_class_t>(from_le(v));
+        return tag_class.id();
     }
 
     inline bool valid() const

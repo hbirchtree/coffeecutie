@@ -30,14 +30,6 @@ using libc_types::u16;
 using libc_types::u32;
 using libc_types::u8;
 
-inline std::string class_name(blam::bl_tag const& tag_class)
-{
-    std::string out(4, ' ');
-    for(size_t i = 0; i < 4; i++)
-        out[i] = tag_class.data[3 - i];
-    return out;
-}
-
 template<typename V>
 inline std::string tag_label(
     h2::map_container<V> const& map, h2::datum_index id)
@@ -46,7 +38,7 @@ inline std::string tag_label(
     if(!tag)
         return id.valid() ? fmt::format("<bad tag {:#x}>", from_le(id.raw))
                           : "<none>";
-    return fmt::format("{} [{}]", map.tag_name(*tag), class_name(tag->tag_class));
+    return fmt::format("{} [{}]", map.name_of(*tag), tag->tag_class.str());
 }
 
 template<typename V>
@@ -60,15 +52,15 @@ inline std::string tag_label(
 template<typename V>
 inline bool derives_from(
     h2::map_container<V> const& map,
-    blam::bl_tag const&         tag_class,
+    h2::tag_class const&        tag_class,
     std::string_view            base)
 {
-    if(class_name(tag_class) == base)
+    if(tag_class.str() == base)
         return true;
     for(auto const& group : map.groups())
-        if(static_cast<u32>(group.group) == static_cast<u32>(tag_class))
-            return class_name(group.parent) == base ||
-                   class_name(group.grandparent) == base;
+        if(group.group == tag_class)
+            return group.parent.str() == base ||
+                   group.grandparent.str() == base;
     return false;
 }
 
@@ -173,7 +165,7 @@ inline void dump_stem(h2::map_container<V> const& map, h2::tag_t const& tag)
                 range.count(),
                 h2::passes::find([&] {
                     auto const* spas = map.tag_at(pass.pass_id());
-                    auto        name = spas ? map.tag_name(*spas) : std::string_view{};
+                    auto        name = spas ? map.name_of(*spas) : std::string_view{};
                     if(auto slash = name.find_last_of('\\'); slash != name.npos)
                         name = name.substr(slash + 1);
                     return name;
@@ -278,7 +270,7 @@ inline void dump_shad(h2::map_container<V> const& map, h2::tag_t const& tag)
     }
     fmt::print(
         "  base: {} via {} scale ({}, {}){}{}{}\n",
-        resolved.bitmap ? std::string(map.tag_name(*resolved.bitmap)) : "<none>",
+        resolved.bitmap ? std::string(map.name_of(*resolved.bitmap)) : "<none>",
         resolved.usage.empty() ? "first slot" : resolved.usage,
         resolved.scale_u,
         resolved.scale_v,
@@ -779,8 +771,8 @@ inline void dump_tag(
     if(header)
         fmt::print(
             "{} [{}] {} bytes @{:#x}\n",
-            map.tag_name(tag),
-            class_name(tag.tag_class),
+            map.name_of(tag),
+            tag.tag_class.str(),
             tag.size(),
             tag.pointer());
     if(tag.matches("bitm"))

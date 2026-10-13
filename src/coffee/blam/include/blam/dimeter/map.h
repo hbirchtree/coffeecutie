@@ -215,12 +215,12 @@ struct map_container
      * Tag names are stored in the header's file table, one entry per tag
      * table slot, looked up by position.
      */
-    inline std::string_view tag_name(tag_t const& tag) const
+    inline std::string_view name_of(tag_t const& tag) const
     {
         auto table = tags();
         if(shared &&
            (&tag < table.data() || &tag >= table.data() + table.size()))
-            return shared->tag_name(tag);
+            return shared->name_of(tag);
         if(table.empty() || &tag < table.data())
             return {};
         auto position = static_cast<u32>(&tag - table.data());

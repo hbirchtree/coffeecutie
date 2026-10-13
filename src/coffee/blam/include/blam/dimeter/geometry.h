@@ -704,7 +704,7 @@ struct alignas(4) environment_object_t
     block_index<environment_object_palette_t> palette;
     i16                                       unknown_0;
     datum_index                               unique_id;
-    bl_tag                                    exported_object_type;
+    tag_class                                 exported_object_type;
     bl_string                                 scenario_object_name;
 };
 
