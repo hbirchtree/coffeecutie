@@ -38,6 +38,20 @@ layout(location=18, binding=5) uniform sampler2D mask;
 #if H2_WATER
 layout(location=21) uniform vec3 camera_position;
 #endif
+#if !H2_SKY
+/* Atmospheric fog of the camera's cluster: rgb + max density, start and
+ * opaque distance; linear in between */
+layout(location=22) uniform vec4 fog_color;
+layout(location=23) uniform vec2 fog_range;
+layout(location=24) uniform vec3 fog_eye;
+
+vec3 fogged(vec3 color)
+{
+    float d = distance(fog_eye, f_world_pos);
+    float f = clamp((d - fog_range.x) / max(fog_range.y - fog_range.x, 1e-3), 0.0, 1.0);
+    return mix(color, fog_color.rgb, f * fog_color.a);
+}
+#endif
 
 layout(location=0) out vec4 out_color;
 
@@ -61,7 +75,7 @@ void main()
     vec3 deep = vec3(0.18, 0.26, 0.3);
     vec3 sky = vec3(0.7, 0.78, 0.88);
     vec3 col = mix(deep, sky, fresnel) * (0.85 + 0.3 * bump.z);
-    out_color = vec4(col, mix(0.45, 0.9, fresnel));
+    out_color = vec4(fogged(col), mix(0.45, 0.9, fresnel));
 #else
     vec4 base = texture(diffuse, f_texcoord);
     if(alpha_test != 0 && base.a < 0.5)
@@ -96,6 +110,7 @@ void main()
 #if H2_ILLUM
     color += texture(illum, f_illum_uv).rgb * illum_color;
 #endif
+    color = fogged(color);
     float alpha = 1.0;
 #endif
     out_color = vec4(color, alpha);

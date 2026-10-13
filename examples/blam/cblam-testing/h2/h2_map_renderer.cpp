@@ -6,14 +6,15 @@
 #include "resource_creation.h"
 #include "sounds.h"
 
-#include <blam/dimeter/h2_bitm.h>
-#include <blam/dimeter/h2_collision.h>
-#include <blam/dimeter/h2_geometry.h>
-#include <blam/dimeter/h2_lightmap.h>
-#include <blam/dimeter/h2_map.h>
-#include <blam/dimeter/h2_material.h>
-#include <blam/dimeter/h2_scenario.h>
-#include <blam/dimeter/h2_shader.h>
+#include <blam/dimeter/bitm.h>
+#include <blam/dimeter/collision.h>
+#include <blam/dimeter/geometry.h>
+#include <blam/dimeter/lightmap.h>
+#include <blam/dimeter/vista.h>
+#include <blam/dimeter/map.h>
+#include <blam/dimeter/material.h>
+#include <blam/dimeter/scenario.h>
+#include <blam/dimeter/shader.h>
 #include <blam/common/portal_walk.h>
 #include <blam/volta/blam_swizzle.h>
 
@@ -257,6 +258,8 @@ struct Section
     {
         Vecf3               lo, hi;
         std::vector<Portal> portals;
+        Vecf4               fog{0.f, 0.f, 0.f, 0.f}; /*!< rgb, max density */
+        Vecf2               fog_range{0.f, 1.f};    /*!< start, opaque distance */
     };
 
     std::string                    name;
@@ -431,7 +434,7 @@ static bool is_compressed(blam::bitm::format_t fmt)
 
 using H2RendererManifest = compo::SubsystemManifest<
     compo::type_list_t<const PlayerCamera, const PlayerInfo>,
-    compo::type_list_t<const BlamResources>,
+    compo::type_list_t<const BlamResources, const RenderingParameters>,
     compo::empty_list_t>;
 
 struct H2MapRenderer
@@ -588,8 +591,13 @@ struct H2MapRenderer
             return;
 
         auto& resources = p.template subsystem<BlamResources>();
-        update_section(camera->camera.position);
-        update_visibility(camera->camera.position, camera->matrix);
+        /* The debug UI's "Update occlusion" freezes the section and the
+         * visible set, so what was culled can be looked at from elsewhere */
+        if(p.template subsystem<RenderingParameters>().occluder_update)
+        {
+            update_section(camera->camera.position);
+            update_visibility(camera->camera.position, camera->matrix);
+        }
         size_t draws_total = 0, draws_visible = 0;
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
@@ -646,7 +654,13 @@ struct H2MapRenderer
                         semantic::SpanOne<const i32>(alpha_test)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
-                        semantic::SpanOne<const Vecf3>(mat.illum_color)});
+                        semantic::SpanOne<const Vecf3>(mat.illum_color)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"fog_color"}, semantic::SpanOne<const Vecf4>(m_fog)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"fog_range"}, semantic::SpanOne<const Vecf2>(m_fog_range)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"fog_eye"}, semantic::SpanOne<const Vecf3>(eye)});
                 auto lm_sampler = m_lightmap_sampler ? m_lightmap_sampler
                                                      : m_no_lightmaps_sampler;
                 auto samplers = gfx::make_sampler_list(
@@ -823,6 +837,8 @@ struct H2MapRenderer
         if(bsp_refs.has_error())
             return false;
 
+        auto const* scenario_body =
+            scnr_tag->template data<dim::scn::scenario_t>(map.magic());
         std::optional<Vecf3> center;
         u32                  bsp_idx = 0;
         for(auto const& ref : bsp_refs.value())
@@ -897,6 +913,13 @@ struct H2MapRenderer
                         cluster_count < cluster_lightmaps.size()
                             ? cluster_lightmaps[cluster_count]
                             : nullptr;
+                    if(scenario_body && cluster_count < m_sections.back().clusters.size())
+                        resolve_fog(
+                            map,
+                            *scenario_body,
+                            cluster,
+                            ref.default_sky.value(),
+                            m_sections.back().clusters[cluster_count]);
                     cluster_count++;
                     sections += append_section(
                         pool,
@@ -919,7 +942,7 @@ struct H2MapRenderer
             if(!geom.has_error() && !instances.has_error())
                 for(auto const& inst : instances.value())
                 {
-                    auto sidx = inst.section_index();
+                    auto sidx = inst.section.value();
                     if(sidx < 0 ||
                        static_cast<size_t>(sidx) >= geom.value().size())
                         continue;
@@ -942,7 +965,8 @@ struct H2MapRenderer
                            static_cast<size_t>(light.bucket) < buckets.size())
                         {
                             auto const& bucket = buckets[light.bucket];
-                            bool per_pixel = from_le(inst.lightmapping_policy) == 0;
+                            bool per_pixel = inst.lightmapping_policy ==
+                                             dim::geo::instance_lightmapping_policy_t::per_pixel;
                             if(per_pixel && instance_count < instance_lightmaps.size() &&
                                bucket.uv.size() >= (vo + count) * 2)
                             {
@@ -1157,7 +1181,7 @@ struct H2MapRenderer
         if(!geom.has_error() && !instances.has_error())
             for(auto const& inst : instances.value())
             {
-                auto sidx = inst.section_index();
+                auto sidx = inst.section.value();
                 if(sidx < 0 || static_cast<size_t>(sidx) >= geom.value().size())
                     continue;
                 append_collision(
@@ -1218,6 +1242,57 @@ struct H2MapRenderer
         cDebug("H2: {} bsp switch triggers", m_switches.size());
     }
 
+    /* The fog a cluster sits in: the scenario's palette entry it names,
+     * else its sky's atmospheric fog */
+    template<typename V>
+    void resolve_fog(
+        dim::map_container<V> const& map,
+        dim::scn::scenario_t const&  scnr,
+        geo::bsp_cluster_t const&    cluster,
+        i16                          default_sky,
+        Section::Cluster&            out)
+    {
+        if(cluster.atmospheric_fog.value() >= 0)
+            if(auto palette = scnr.atmospheric_fog_palette.data(map.magic());
+               !palette.has_error() &&
+               static_cast<size_t>(cluster.atmospheric_fog.value()) < palette.value().size())
+            {
+                auto const& f = palette.value()[cluster.atmospheric_fog.value()];
+                out.fog       = {
+                    from_le(f.color[0]),
+                    from_le(f.color[1]),
+                    from_le(f.color[2]),
+                    from_le(f.maximum_density)};
+                out.fog_range = {from_le(f.start_distance), from_le(f.opaque_distance)};
+                return;
+            }
+        /* Interior clusters name no sky; the BSP's default sky stands in */
+        i16 sky_index = cluster.sky.value() >= 0           ? cluster.sky.value()
+                        : cluster.visible_sky.value() >= 0 ? cluster.visible_sky.value()
+                                                         : default_sky;
+        if(sky_index < 0)
+            return;
+        auto skies = scnr.skies.data(map.magic());
+        if(skies.has_error() || static_cast<size_t>(sky_index) >= skies.value().size())
+            return;
+        auto const* sky_tag = map.tag_at(skies.value()[sky_index].sky.tag_id);
+        auto const* sky =
+            sky_tag ? sky_tag->template data<dim::obj::sky_t>(map.magic()) : nullptr;
+        if(!sky)
+            return;
+        if(auto fogs = sky->atmospheric_fog.data(map.magic());
+           !fogs.has_error() && !fogs.value().empty())
+        {
+            auto const& f = fogs.value()[0];
+            out.fog       = {
+                from_le(f.color[0]),
+                from_le(f.color[1]),
+                from_le(f.color[2]),
+                from_le(f.maximum_density)};
+            out.fog_range = {from_le(f.start_distance), from_le(f.opaque_distance)};
+        }
+    }
+
     /* Leaf -> cluster, portals (copied into both clusters they join) and
      * the clusters each instance is listed under */
     void gather_visibility(
@@ -1236,7 +1311,7 @@ struct H2MapRenderer
         }
         if(auto leaves = bsp.leaves.data(magic); !leaves.has_error())
             for(auto const& l : leaves.value())
-                out.leaf_cluster.push_back(l.cluster());
+                out.leaf_cluster.push_back(l.cluster.value());
         auto portals  = bsp.portals.data(magic);
         auto clusters = bsp.clusters.data(magic);
         if(clusters.has_error())
@@ -1359,11 +1434,19 @@ struct H2MapRenderer
             u32 count = 0;
             for(bool v : m_visible)
                 count += v;
+            m_fog       = sec.clusters[*cluster].fog;
+            m_fog_range = sec.clusters[*cluster].fog_range;
             cDebug(
-                "H2: cluster {} of {}, {} visible",
+                "H2: cluster {} of {}, {} visible, fog ({:.2f}, {:.2f}, {:.2f}) x{} over [{}, {}]",
                 *cluster,
                 sec.clusters.size(),
-                count);
+                count,
+                m_fog.r,
+                m_fog.g,
+                m_fog.b,
+                m_fog.a,
+                m_fog_range.x,
+                m_fog_range.y);
             m_camera_cluster = *cluster;
             m_log_draws      = true;
         }
@@ -1452,6 +1535,7 @@ struct H2MapRenderer
         m_active         = section;
         m_camera_cluster = std::numeric_limits<u32>::max();
         m_visible.clear();
+        m_fog = {};
         cDebug("H2: section {} ({}) active", section, m_sections[section].name);
         submit_collision(m_sections[section].collision);
     }
@@ -1724,7 +1808,7 @@ struct H2MapRenderer
             {
                 u32 start = subs[s].index_start();
                 u32 len   = subs[s].index_length();
-                i16 shader = subs[s].shader_index();
+                i16 shader = subs[s].shader.value();
                 if(!len || start + len > index_count)
                     continue;
                 i32 mat = shader >= 0 &&
@@ -1837,7 +1921,7 @@ struct H2MapRenderer
                     from_le(node.rotation[2])};
                 Matf4 local = glm::translate(Matf4(1.f), position) *
                               glm::mat4_cast(rotation);
-                i16 parent = node.parent();
+                i16 parent = node.parent.value();
                 node_world.push_back(
                     parent >= 0 && static_cast<size_t>(parent) < node_world.size()
                         ? node_world[parent] * local
@@ -1852,7 +1936,7 @@ struct H2MapRenderer
     template<typename V>
     u32 append_object_collision(
         dim::map_container<V> const& map,
-        dim::tag_reference const&           object,
+        dim::tag_reference<> const&           object,
         Matf4 const&                        transform,
         i32                                 section,
         std::unordered_map<u32, i16> const* permutations = nullptr)
@@ -1971,7 +2055,7 @@ struct H2MapRenderer
                 continue;
             auto const& section = sections.value()[sidx];
             Matf4       local   = transform;
-            i16         node    = section.rigid_node_index();
+            i16         node    = section.rigid_node.value();
             if(node >= 0 && static_cast<size_t>(node) < node_world.size())
                 local = transform * node_world[node];
             /* Baked per-vertex light, one bucket range per model section */
@@ -2029,8 +2113,8 @@ struct H2MapRenderer
         u32                             failed = 0;
         for(auto const& info : infos.value())
         {
-            i16 image_idx = info.bitmap_index();
-            i8  pal_idx   = info.palette_index;
+            i16 image_idx = info.bitmap.value();
+            i8  pal_idx   = info.palette.value();
             if(image_idx < 0 || static_cast<size_t>(image_idx) >= images.value().size() ||
                pal_idx < 0 || static_cast<size_t>(pal_idx) >= palettes.value().size())
             {
@@ -2180,7 +2264,7 @@ struct H2MapRenderer
     /* obje -> hlmt -> mode */
     template<typename V>
     dim::tag_t const* render_model_of(
-        dim::map_container<V> const& map, dim::tag_reference const& object)
+        dim::map_container<V> const& map, dim::tag_reference<> const& object)
     {
         auto const* obje_tag = map.tag_at(object.tag_id);
         auto const* obje =
@@ -2206,7 +2290,7 @@ struct H2MapRenderer
     template<typename V>
     std::unordered_map<u32, i16> variant_permutations(
         dim::map_container<V> const& map,
-        dim::tag_reference const&    object,
+        dim::tag_reference<> const&    object,
         dim::string_id               variant)
     {
         std::unordered_map<u32, i16> out;
@@ -2264,7 +2348,7 @@ struct H2MapRenderer
         u32  collision_triangles = 0, collision_objects = 0;
         u32  lit_objects = 0, varied_objects = 0;
         auto place = [&](dim::tag_t const*         mode_tag,
-                         dim::tag_reference const* object,
+                         dim::tag_reference<> const* object,
                          Vecf3 const&              position,
                          Vecf3 const&              rotation,
                          f32                       scale,
@@ -2343,7 +2427,7 @@ struct H2MapRenderer
                     variant = p.variant.variant_name;
                 if(mode_tag && place(
                                    mode_tag,
-                                   &entry->tag,
+                                   &entry->tag.untyped(),
                                    p.position,
                                    p.rotation,
                                    from_le(p.scale),
@@ -2381,13 +2465,13 @@ struct H2MapRenderer
                                    map.magic())
                              : nullptr;
                 dim::tag_t const*         mode_tag = nullptr;
-                dim::tag_reference const* item     = nullptr;
+                dim::tag_reference<> const* item     = nullptr;
                 dim::string_id            variant{};
                 if(coll)
                     if(auto perms = coll->permutations.data(map.magic());
                        !perms.has_error() && !perms.value().empty())
                     {
-                        item     = &perms.value()[0].item;
+                        item     = &perms.value()[0].item.untyped();
                         variant  = perms.value()[0].variant_name;
                         mode_tag = render_model_of(map, *item);
                     }
@@ -2646,9 +2730,9 @@ struct H2MapRenderer
             auto const* src = reinterpret_cast<u8 const*>(raw->data());
             /* Vista: the lod is a zlib stream of the same layout */
             std::optional<std::vector<u8>> inflated;
-            if(dim::bitm::is_zlib(*raw))
+            if(dim::vista::is_zlib(*raw))
             {
-                inflated = dim::bitm::inflate(*raw);
+                inflated = dim::vista::inflate(*raw);
                 if(!inflated)
                     continue;
                 src      = inflated->data();
@@ -2824,6 +2908,8 @@ struct H2MapRenderer
     blam::portal_walk::scratch_t m_portal_scratch;
     u32                    m_camera_cluster{std::numeric_limits<u32>::max()};
     Matf4                          m_last_mvp{};
+    Vecf4                          m_fog{0.f, 0.f, 0.f, 0.f};
+    Vecf2                          m_fog_range{0.f, 1.f};
     bool                           m_log_draws{false};
     u32                            m_objects_total{0}, m_objects_clustered{0};
     bool m_visibility_enabled{!std::getenv("COFFEE_H2_NO_VISIBILITY")};
