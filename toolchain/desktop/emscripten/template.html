@@ -158,6 +158,13 @@
     "event.preventDefault()" style="cursor: default;"></canvas>
   </div>
   <script type='text/javascript'>
+      // Stay out of the back/forward cache, where the wasm heap would stay pinned
+      window.addEventListener('unload', function() {});
+      // Chrome is retiring unload; a page restored anyway starts over
+      window.addEventListener('pageshow', function(event) {
+        if (event.persisted) location.reload();
+      });
+
       var statusElement = document.getElementById('status');
       var statusBar = document.querySelector('#status_banner');
       var progressElement = document.getElementById('progress');
