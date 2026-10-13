@@ -102,7 +102,7 @@ void ImGuiSystem::setup_inputs(Proxy& e)
             io.AddKeyEvent(
                 (*keymap)[key->key], key->mod & CIKeyEvent::PressedModifier);
 
-            if(io.WantCaptureMouseUnlessPopupClose)
+            if(io.WantCaptureKeyboard)
                 e.type = CIEvent::NoneType;
         });
 }

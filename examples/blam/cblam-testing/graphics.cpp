@@ -63,6 +63,10 @@
 #include <discord/discord_system.h>
 #endif
 
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+#include <coffee/comp_app/dummy_plug.h>
+#endif
+
 using namespace Coffee;
 
 void install_imgui_widgets(
@@ -551,6 +555,18 @@ i32 blam_main()
 #endif
             alloc_forge_controller(e);
             alloc_player_controller(e);
+
+            {
+                auto& postproc = e.subsystem_cast<PostProcessParameters>();
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+                auto& dummy = e.subsystem_cast<comp_app::AppLoader>()
+                    .config<comp_app::dummy_plug::Config>();
+                if(!dummy.enabled)
+                    postproc.forge_overlay = true;
+#else
+                postproc.forge_overlay = true;
+#endif
+            }
 
             using namespace ::platform::url::constructors;
 

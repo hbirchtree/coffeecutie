@@ -64,6 +64,7 @@ struct PlayerController
     void start_restricted(Proxy& p, time_point const& t)
     {
         duration const dt          = frame_delta(t);
+        auto*          mouse       = p.service<comp_app::MouseInput>();
         auto*          controllers = p.service<comp_app::ControllerInput>();
         auto&          ui          = p.subsystem<UIEventBus>();
         auto&          physics     = p.subsystem<PhysicsBus>();
@@ -177,7 +178,7 @@ struct PlayerController
             input.left |= key(CK_Left);
             input.right |= key(CK_Right);
             input.jump |= key(CK_Space);
-            input.back |= in_menu && key(CK_BackSpace);
+            input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
         }
 
         auto& intent = input.intent;
@@ -259,6 +260,8 @@ struct PlayerController
 
         bool const in_menu =
             input.input_mode == PlayerInput::input_mode_t::menu;
+        bool const was_in_menu = in_menu;
+        bool const was_physics = info.mode.physics;
         if(in_menu)
             route_menu(input, info, ui);
         /* Route even with the menu open (intents cleared) so things stop */
@@ -287,6 +290,19 @@ struct PlayerController
                 ui,
                 info.seat_idx,
                 to_menu ? UINavigation::open : UINavigation::close);
+        }
+
+        if(cam.keyboard.enabled)
+        {
+            auto* mouse = p.service<comp_app::MouseInput>();
+            if(was_in_menu != (input.input_mode == PlayerInput::input_mode_t::menu) ||
+                    (was_physics != info.mode.physics))
+            {
+                if(input.input_mode == PlayerInput::input_mode_t::game && info.mode.physics)
+                    mouse->setMouseGrab(true);
+                else
+                    mouse->setMouseGrab(false);
+            }
         }
 
         /* Resampled every frame */
@@ -574,33 +590,59 @@ void alloc_player_controller(compo::EntityContainer& e)
 
     e.register_subsystem_inplace<PlayerController>();
 
+    enum class input_mode_t
+    {
+        physics_only,
+        flycam_only,
+        gameplay_mode,
+        menu_mode,
+        all,
+    };
+
     /* The keyboard seat: whichever camera takes the keyboard */
-    auto keyboard_input = [&e]() -> PlayerInput* {
+    auto keyboard_input = [&e](input_mode_t mode) -> PlayerInput* {
         for(auto entity :
             e.select<PlayerCamera, PlayerInput, PlayerInfo, NetworkInfo>())
         {
             auto [cam, input, info, net] = entity.components();
             if(cam.keyboard.enabled && info.permissions.camera)
             {
+                const bool in_game = input.input_mode == PlayerInput::input_mode_t::game;
+                if(mode == input_mode_t::all)
+                    ;
+                else if(mode == input_mode_t::menu_mode && !in_game)
+                    ;
+                else if(mode == input_mode_t::gameplay_mode && in_game)
+                    ;
+                else if(mode == input_mode_t::physics_only && in_game && info.mode.physics)
+                    ;
+                else if(mode == input_mode_t::flycam_only && in_game && !info.mode.physics)
+                    ;
+                else
+                    continue;
                 net.changes.viewport = net.changes.transform = true;
                 return &input;
             }
         }
-        cWarning("No camera selected");
         return nullptr;
     };
 
     auto* input_bus = e.service<comp_app::BasicEventBus<CIEvent>>();
     input_bus->addEventHandler(
         1024, StandardCamera::KeyboardInput([keyboard_input] {
-            auto* input = keyboard_input();
+            auto* input = keyboard_input(input_mode_t::all);
             return input ? &input->keys : nullptr;
         }));
     input_bus->addEventHandler(
         1024, StandardCamera::MouseInput([keyboard_input] {
-            auto* input = keyboard_input();
+            auto* input = keyboard_input(input_mode_t::physics_only);
             return input ? &input->look_delta : nullptr;
-        }));
+        }, CIMouseButtonEvent::NoneBtn));
+    input_bus->addEventHandler(
+        1024, StandardCamera::MouseInput([keyboard_input] {
+            auto* input = keyboard_input(input_mode_t::flycam_only);
+            return input ? &input->look_delta : nullptr;
+        }, CIMouseButtonEvent::LeftButton));
     /* Latched from the event, so a tap shorter than a frame still jumps */
     input_bus->addEventFunction<CIKeyEvent>(
         1024, [keyboard_input](CIEvent&, CIKeyEvent* key) {
@@ -608,7 +650,7 @@ void alloc_player_controller(compo::EntityContainer& e)
                !(key->mod & CIKeyEvent::PressedModifier) ||
                (key->mod & CIKeyEvent::RepeatedModifier))
                 return;
-            if(auto* input = keyboard_input())
+            if(auto* input = keyboard_input(input_mode_t::gameplay_mode))
                 input->jump |= true;
         });
     input_bus->addEventFunction<CIMouseButtonEvent>(

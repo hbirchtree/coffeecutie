@@ -74,16 +74,6 @@ struct ImGuiSystem
         return true;
     }
 
-    virtual const ImGuiSystem& get() const final
-    {
-        return *this;
-    }
-
-    virtual ImGuiSystem& get() final
-    {
-        return *this;
-    }
-
     virtual void start_restricted(Proxy& p, time_point const& t) final;
     virtual void end_restricted(Proxy& e, time_point const&) final;
 

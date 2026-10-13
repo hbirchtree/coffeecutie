@@ -22,6 +22,9 @@ using PlayerControllerManifest = compo::SubsystemManifest<
         const Attachment,
         const PhysicsData>,
     type_list_t<PhysicsBus, UIEventBus, RenderingParameters>,
-    type_list_t<comp_app::ControllerInput>>;
+    type_list_t<
+        comp_app::ControllerInput,
+        comp_app::MouseInput
+    >>;
 
 void alloc_player_controller(compo::EntityContainer& e);
