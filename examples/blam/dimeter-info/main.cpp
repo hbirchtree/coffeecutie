@@ -1471,8 +1471,8 @@ int run_map(
     using namespace platform::url::constructors;
 
     h2::raw_pool pool;
-    pool.files[static_cast<u8>(h2::raw_file_t::local)] =
-        Span<const byte_t>(map_data.data, map_data.size);
+    pool.attach(
+        h2::raw_file_t::local, Span<const byte_t>(map_data.data, map_data.size));
     std::vector<std::unique_ptr<Resource>>           side_files;
     constexpr std::pair<h2::raw_file_t, const char*> side_names[3] = {
         {h2::raw_file_t::mainmenu, "mainmenu.map"},
@@ -1485,8 +1485,7 @@ int run_map(
         auto bytes = C_OCAST<BytesConst>(*res);
         if(bytes.data && bytes.size)
         {
-            pool.files[static_cast<u8>(slot)] =
-                Span<const byte_t>(bytes.data, bytes.size);
+            pool.attach(slot, Span<const byte_t>(bytes.data, bytes.size));
             side_files.push_back(std::move(res));
             cBasicPrint("Raw pool: attached {0}", name);
         }

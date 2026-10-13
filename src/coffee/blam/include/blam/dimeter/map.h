@@ -4,9 +4,196 @@
 
 #include <peripherals/semantic/chunk.h>
 
+#include <algorithm>
 #include <cstring>
+#include <functional>
+#include <memory>
+#include <vector>
 
 namespace blam::dimeter {
+
+/*!
+ * \brief Bytes of a raw block, alive for as long as the slice is held.
+ * A view into a mapped file has nothing to keep; a slice read on demand
+ * holds its buffer.
+ */
+struct raw_slice
+{
+    Span<const byte_t>          bytes;
+    std::shared_ptr<void const> keep;
+
+    inline byte_t const* data() const
+    {
+        return bytes.data();
+    }
+    inline size_t size() const
+    {
+        return bytes.size();
+    }
+    inline byte_t const* begin() const
+    {
+        return bytes.data();
+    }
+    inline byte_t const* end() const
+    {
+        return bytes.data() + bytes.size();
+    }
+    inline operator Span<const byte_t>() const
+    {
+        return bytes;
+    }
+};
+
+/*! A cache file the raw region is read out of */
+struct raw_source
+{
+    virtual ~raw_source() = default;
+
+    virtual u64 size() const = 0;
+    /*! [offset, offset+size), or nothing if out of range or unreadable */
+    virtual optional<raw_slice> slice(u64 offset, u64 size) = 0;
+};
+
+/*! A file that is all in memory: slices are views */
+struct span_source final : raw_source
+{
+    Span<const byte_t>          bytes;
+    std::shared_ptr<void const> keep;
+
+    span_source(Span<const byte_t> bytes, std::shared_ptr<void const> keep = {})
+        : bytes(bytes)
+        , keep(std::move(keep))
+    {
+    }
+
+    u64 size() const override
+    {
+        return bytes.size();
+    }
+    optional<raw_slice> slice(u64 offset, u64 size) override
+    {
+        if(offset > bytes.size() || size > bytes.size() - offset)
+            return std::nullopt;
+        return raw_slice{bytes.subspan(offset, size), keep};
+    }
+};
+
+/*!
+ * \brief A file read on demand through `read`, in chunks kept most recent
+ * first. A slice inside one chunk aliases it; one across chunks is copied.
+ */
+struct pread_source final : raw_source
+{
+    using reader_t = std::function<bool(u64 offset, Span<byte_t> dst)>;
+
+    pread_source(
+        u64      size,
+        reader_t read,
+        u32      chunk_size  = 4u << 20,
+        u32      chunk_count = 16)
+        : m_size(size)
+        , m_read(std::move(read))
+        , m_chunk_size(chunk_size)
+        , m_chunk_count(chunk_count)
+    {
+    }
+
+    u64 size() const override
+    {
+        return m_size;
+    }
+
+    optional<raw_slice> slice(u64 offset, u64 size) override
+    {
+        if(offset > m_size || size > m_size - offset)
+            return std::nullopt;
+        if(size == 0)
+            return raw_slice{};
+        u64 first = offset / m_chunk_size, last = (offset + size - 1) / m_chunk_size;
+        if(first == last)
+        {
+            auto chunk = fetch(first);
+            if(!chunk)
+                return std::nullopt;
+            u64 at = offset - first * m_chunk_size;
+            if(at + size > chunk->size())
+                return std::nullopt;
+            return raw_slice{
+                Span<const byte_t>(chunk->data() + at, size), chunk};
+        }
+        auto out = std::make_shared<std::vector<byte_t>>(size);
+        u64  done = 0;
+        for(u64 i = first; i <= last; i++)
+        {
+            auto chunk = fetch(i);
+            if(!chunk)
+                return std::nullopt;
+            u64 at = i == first ? offset - first * m_chunk_size : 0;
+            if(at > chunk->size())
+                return std::nullopt;
+            u64 take = std::min<u64>(chunk->size() - at, size - done);
+            std::memcpy(out->data() + done, chunk->data() + at, take);
+            done += take;
+        }
+        if(done != size)
+            return std::nullopt;
+        return raw_slice{Span<const byte_t>(out->data(), size), out};
+    }
+
+    void trim()
+    {
+        m_chunks = {};
+    }
+
+    /*! Bytes gone through `read` so far, for accounting */
+    u64 bytes_read() const
+    {
+        return m_bytes_read;
+    }
+
+  private:
+    using chunk_ptr = std::shared_ptr<std::vector<byte_t>>;
+    struct chunk_t
+    {
+        u64       index;
+        chunk_ptr data;
+        u64       stamp;
+    };
+
+    chunk_ptr fetch(u64 index)
+    {
+        for(auto& c : m_chunks)
+            if(c.index == index)
+            {
+                c.stamp = ++m_stamp;
+                return c.data;
+            }
+        u64 offset = index * m_chunk_size;
+        u64 size   = std::min<u64>(m_chunk_size, m_size - offset);
+        auto data  = std::make_shared<std::vector<byte_t>>(size);
+        if(!m_read(offset, Span<byte_t>(data->data(), size)))
+            return {};
+        m_bytes_read += size;
+        if(m_chunks.size() >= m_chunk_count)
+        {
+            auto oldest = std::min_element(
+                m_chunks.begin(), m_chunks.end(), [](auto& a, auto& b) {
+                    return a.stamp < b.stamp;
+                });
+            *oldest = chunk_t{index, data, ++m_stamp};
+        } else
+            m_chunks.push_back(chunk_t{index, data, ++m_stamp});
+        return data;
+    }
+
+    u64                  m_size;
+    reader_t             m_read;
+    u32                  m_chunk_size;
+    u32                  m_chunk_count;
+    std::vector<chunk_t> m_chunks;
+    u64                  m_stamp{0};
+    u64                  m_bytes_read{0};
+};
 
 /*!
  * \brief Resolves raw_refs across the cache file set. Slots follow
@@ -14,20 +201,41 @@ namespace blam::dimeter {
  */
 struct raw_pool
 {
-    std::array<Span<const byte_t>, 4> files;
+    std::array<std::shared_ptr<raw_source>, 4> files;
     /*! Vista: the side map whose tags this map borrows; their "local" raw
      * data is in that file */
     raw_file_t shared_file{raw_file_t::local};
 
-    inline optional<Span<const byte_t>> resolve(raw_ref ref, u32 size) const
+    inline void attach(raw_file_t slot, std::shared_ptr<raw_source> source)
+    {
+        files[static_cast<u8>(slot)] = std::move(source);
+    }
+    /*! A file already in memory */
+    inline void attach(
+        raw_file_t                  slot,
+        Span<const byte_t>          bytes,
+        std::shared_ptr<void const> keep = {})
+    {
+        attach(slot, std::make_shared<span_source>(bytes, std::move(keep)));
+    }
+    inline raw_source* file(raw_file_t slot) const
+    {
+        return files[static_cast<u8>(slot)].get();
+    }
+    inline u64 file_size(raw_file_t slot) const
+    {
+        auto* f = file(slot);
+        return f ? f->size() : 0;
+    }
+
+    inline optional<raw_slice> resolve(raw_ref ref, u32 size) const
     {
         if(!ref.valid())
             return std::nullopt;
-        auto const& file   = files[static_cast<u8>(ref.file())];
-        u32         offset = ref.offset();
-        if(file.empty() || offset > file.size() || size > file.size() - offset)
+        auto* file = this->file(ref.file());
+        if(!file)
             return std::nullopt;
-        return file.subspan(offset, size);
+        return file->slice(ref.offset(), size);
     }
 
     /*! A reference held by `owner`, pointed at the file it really lives
@@ -48,7 +256,7 @@ struct raw_pool
     }
 
     template<heap_t Heap>
-    inline optional<Span<const byte_t>> resolve(
+    inline optional<raw_slice> resolve(
         magic_ptr_base<Heap> const& magic,
         void const*                 owner,
         raw_ref                     ref,
@@ -307,11 +515,15 @@ inline std::optional<map_container<V>> load_shared(
     {
         for(auto slot : {raw_file_t::shared, raw_file_t::single_player_shared})
         {
-            auto const& bytes = pool.files[static_cast<u8>(slot)];
-            if(bytes.empty())
+            auto* file = pool.file(slot);
+            if(!file || !file->size())
+                continue;
+            /* A side map read on demand would be pulled in whole here */
+            auto bytes = file->slice(0, file->size());
+            if(!bytes)
                 continue;
             auto side = map_container<V>::from_bytes(
-                semantic::BytesConst::ofBytes(bytes.data(), bytes.size()), V{});
+                semantic::BytesConst::ofBytes(bytes->data(), bytes->size()), V{});
             if(!side.has_value() || from_le(side.value().index->tag_count) !=
                                         from_le(map.index->tag_count))
                 continue;
