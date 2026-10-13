@@ -144,6 +144,10 @@
             {
                 "source": "mesh/monitor.obj",
                 "name": "monitor"
+            },
+            {
+                "source": "mesh/cone.obj",
+                "name": "cone"
             }
         ],
         "text": [
