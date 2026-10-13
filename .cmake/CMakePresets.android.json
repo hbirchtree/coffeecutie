@@ -237,6 +237,12 @@
             "inherits": "base-linux"
         },
         {
+            "name": "android-arm64-25-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
+            "configurePreset": "android-arm64-25",
+            "inherits": "base-linux"
+        },
+        {
             "name": "android-arm64-25-dbg",
             "environment": {"BUILD_TYPE":"Debug"},
             "configurePreset": "android-arm64-25",
@@ -269,6 +275,12 @@
         {
             "name": "android-arm64-30-gl-rel",
             "environment": {"BUILD_TYPE":"Release"},
+            "configurePreset": "android-arm64-30-gl",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm64-30-gl-reldeb",
+            "environment": {"BUILD_TYPE":"RelWithDebInfo"},
             "configurePreset": "android-arm64-30-gl",
             "inherits": "base-linux"
         },
