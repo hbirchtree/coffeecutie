@@ -91,6 +91,23 @@ struct shader_t
     {
     }
 
+    /* GLSL takes its constants as #defines, right after any #version */
+    std::vector<std::string_view> glsl_sources(std::string& defines) const
+    {
+        std::string_view source(m_data.data(), m_data.size());
+        if(m_constants.empty())
+            return {source};
+        for(auto const& [name, value] : m_constants)
+            defines += "#define " + name + " " + value + "\n";
+        size_t cut = 0;
+        if(source.starts_with("#version"))
+        {
+            cut = source.find('\n');
+            cut = cut == std::string_view::npos ? source.size() : cut + 1;
+        }
+        return {source.substr(0, cut), defines, source.substr(cut)};
+    }
+
     semantic::Span<const char> m_data;
     constants_t                m_constants;
     std::string_view           m_entrypoint;
@@ -316,10 +333,10 @@ struct program_t
             {
                 auto [stage_type, stage_info] = stage;
 
-                auto const& shader_data = stage_info->m_data;
-                stage_info->m_handle    = cmd::create_shader_programv(
+                std::string defines;
+                stage_info->m_handle = cmd::create_shader_programv(
                     convert::to<group::shader_type>(stage_type),
-                    {std::string_view(shader_data.data(), shader_data.size())});
+                    stage_info->glsl_sources(defines));
                 auto log = detail::program_log(stage_info->m_handle);
                 if(stage_info->m_handle == 0)
                     return stl_types::failure(compile_error_t{log});
@@ -354,21 +371,20 @@ struct program_t
                 stage_info->m_handle = cmd::create_shader(
                     convert::to<group::shader_type>(stage_type));
 
-                i32 data_length = static_cast<i32>(stage_info->m_data.size());
-
                 if(stage_info->m_data.empty())
                     return stl_types::failure(
                         compile_error_t{
                             "No data provided for one of the shaders"});
 
+                std::string      defines;
+                auto             sources = stage_info->glsl_sources(defines);
+                std::vector<i32> lengths;
+                for(auto const& source : sources)
+                    lengths.push_back(static_cast<i32>(source.size()));
                 cmd::shader_source(
                     stage_info->m_handle,
-                    {
-                        std::string_view(
-                            stage_info->m_data.data(),
-                            stage_info->m_data.size()),
-                    },
-                    SpanOne(data_length));
+                    sources,
+                    semantic::Span<const i32>(lengths.data(), lengths.size()));
                 cmd::compile_shader(stage_info->m_handle);
                 if(!m_features.khr.parallel_shader_compile)
                 {
