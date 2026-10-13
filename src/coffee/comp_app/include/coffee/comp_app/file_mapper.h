@@ -2,14 +2,13 @@
 
 #include <coffee/components/subsystem.h>
 
-#include <condition_variable>
 #include <cstdint>
-#include <deque>
-#include <functional>
 #include <future>
-#include <mutex>
-#include <thread>
 #include <url/url.h>
+
+namespace rq {
+class runtime_queue;
+}
 
 namespace comp_app {
 
@@ -61,7 +60,7 @@ class FileMapper : public compo::SubsystemBase
         {
             return m_size;
         }
-        /*! Fills dst from offset. Blocks while the IO thread reads */
+        /*! Fills dst from offset. Blocks while the IO queue reads */
         bool read(std::uint64_t offset, gsl::span<char> dst);
 
       private:
@@ -71,17 +70,18 @@ class FileMapper : public compo::SubsystemBase
         FileMapper*               m_owner{nullptr};
     };
 
-    ~FileMapper();
-
     /*! A file still mapped by an earlier fetch is handed out again */
     std::future<std::shared_ptr<Resource>> fetch(platform::url::Url const& src);
 
     std::future<std::shared_ptr<RangedFile>> open_ranged(
         platform::url::Url const& src);
 
+    /*! The queue range reads run on; they block the caller, so it must
+     * never wait on the caller's thread. Without one, range reads fail */
+    void set_io_queue(rq::runtime_queue* queue);
+
   private:
-    /*! Runs fn on the IO thread, started on first use */
-    void run_io(std::function<void()>&& fn);
+    rq::runtime_queue* io_queue();
 
     struct ResourceCleanupData
     {
@@ -99,12 +99,7 @@ class FileMapper : public compo::SubsystemBase
 
     std::map<std::string, std::weak_ptr<Resource>> m_resources;
     std::map<platform::url::Url, ResourceCleanupData>     m_resource_cleaners;
-
-    std::thread                       m_io;
-    std::mutex                        m_io_lock;
-    std::condition_variable           m_io_wake;
-    std::deque<std::function<void()>> m_io_jobs;
-    bool                              m_io_quit{false};
+    rq::runtime_queue*                                    m_io_queue{nullptr};
 };
 
 } // namespace comp_app

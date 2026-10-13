@@ -10,6 +10,7 @@
 #include "physics.h"
 #include "shader_compiler.h"
 
+#include <coffee/comp_app/file_mapper.h>
 #include <coffee/comp_app/services.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/files/cfiles.h>
@@ -685,6 +686,9 @@ void create_resources(compo::EntityContainer& e)
 
     resources.background_worker =
         rq::runtime_queue::CreateNewThreadQueue("Background Worker").value();
+    /* Range reads of the Halo 2 side caches share it */
+    e.subsystem_cast<comp_app::FileMapper>().set_io_queue(
+        resources.background_worker);
 
     e.register_subsystem_inplace<PostProcessParameters>();
 

@@ -13,39 +13,27 @@ namespace comp_app {
 
 #if !defined(COFFEE_GEKKO)
 
-FileMapper::~FileMapper()
+void FileMapper::set_io_queue(rq::runtime_queue* queue)
 {
-    {
-        std::lock_guard _(m_io_lock);
-        m_io_quit = true;
-    }
-    m_io_wake.notify_all();
-    if(m_io.joinable())
-        m_io.join();
+    m_io_queue = queue;
 }
 
-void FileMapper::run_io(std::function<void()>&& fn)
+rq::runtime_queue* FileMapper::io_queue()
 {
-    std::lock_guard _(m_io_lock);
-    if(!m_io.joinable())
-        m_io = std::thread([this] {
-            std::unique_lock lock(m_io_lock);
-            while(!m_io_quit)
-            {
-                if(m_io_jobs.empty())
-                {
-                    m_io_wake.wait(lock);
-                    continue;
-                }
-                auto job = std::move(m_io_jobs.front());
-                m_io_jobs.pop_front();
-                lock.unlock();
-                job();
-                lock.lock();
-            }
-        });
-    m_io_jobs.push_back(std::move(fn));
-    m_io_wake.notify_one();
+    if(!m_io_queue)
+        fmt::print(stderr, "FileMapper: no IO queue set, range reads fail\n");
+    return m_io_queue;
+}
+
+/* Runs fn on the IO queue and hands back its result */
+template<typename T>
+static std::future<T> run_on(rq::runtime_queue* queue, std::function<T()>&& fn)
+{
+    auto task = rq::dependent_task<void, T>::CreateSource(std::move(fn));
+    auto fut  = task->get_future();
+    if(!queue || rq::runtime_queue::Queue(queue, std::move(task)).has_error())
+        return {};
+    return fut;
 }
 
 bool FileMapper::RangedFile::read(std::uint64_t offset, gsl::span<char> dst)
@@ -59,13 +47,11 @@ bool FileMapper::RangedFile::read(std::uint64_t offset, gsl::span<char> dst)
         return true;
     }
 #if defined(COFFEE_EMSCRIPTEN)
-    std::promise<bool> done;
-    auto               fut = done.get_future();
-    m_owner->run_io([&] {
-        done.set_value(
-            platform::file::emscripten::fetch_range(m_url.internUrl, offset, dst));
+    auto fut = run_on<bool>(m_owner->io_queue(), [this, offset, dst] {
+        return platform::file::emscripten::fetch_range(
+            m_url.internUrl, offset, dst);
     });
-    return fut.get();
+    return fut.valid() && fut.get();
 #else
     return false;
 #endif
@@ -74,8 +60,7 @@ bool FileMapper::RangedFile::read(std::uint64_t offset, gsl::span<char> dst)
 std::future<std::shared_ptr<FileMapper::RangedFile>> FileMapper::open_ranged(
     platform::url::Url const& src)
 {
-    auto out = std::make_shared<std::promise<std::shared_ptr<RangedFile>>>();
-    auto fut = out->get_future();
+    using file_ptr = std::shared_ptr<RangedFile>;
 #if defined(COFFEE_EMSCRIPTEN)
     const bool is_remote = !platform::file::exists(src).has_value() &&
                            enum_helpers::feval(src.flags, semantic::RSCA::AssetFile);
@@ -84,7 +69,7 @@ std::future<std::shared_ptr<FileMapper::RangedFile>> FileMapper::open_ranged(
         auto file     = std::make_shared<RangedFile>();
         file->m_url   = src;
         file->m_owner = this;
-        run_io([file, out] {
+        return run_on<file_ptr>(io_queue(), [file]() -> file_ptr {
             using namespace platform::file::emscripten;
             auto probe = fetch_probe(file->m_url.internUrl);
             if(probe.status == 200)
@@ -110,16 +95,17 @@ std::future<std::shared_ptr<FileMapper::RangedFile>> FileMapper::open_ranged(
                 }
             } else
                 file->m_size = probe.size;
-            out->set_value(file->m_size ? file : nullptr);
+            return file->m_size ? file : nullptr;
         });
-        return fut;
     }
 #endif
     /* Local files are mapped; the range reads are copies out of the view */
-    auto mapping = fetch(src).get();
+    std::promise<file_ptr> out;
+    auto                   fut     = out.get_future();
+    auto                   mapping = fetch(src).get();
     if(!mapping)
     {
-        out->set_value({});
+        out.set_value({});
         return fut;
     }
     auto file       = std::make_shared<RangedFile>();
@@ -127,7 +113,7 @@ std::future<std::shared_ptr<FileMapper::RangedFile>> FileMapper::open_ranged(
     file->m_owner   = this;
     file->m_mapping = mapping;
     file->m_size    = static_cast<semantic::BytesConst>(*mapping).size;
-    out->set_value(std::move(file));
+    out.set_value(std::move(file));
     return fut;
 }
 
