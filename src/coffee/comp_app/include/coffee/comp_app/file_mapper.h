@@ -56,6 +56,8 @@ class FileMapper : public compo::SubsystemBase
         friend class FileMapper;
 
       public:
+        ~RangedFile();
+
         std::uint64_t size() const
         {
             return m_size;
@@ -68,12 +70,21 @@ class FileMapper : public compo::SubsystemBase
         std::uint64_t             m_size{0};
         std::shared_ptr<Resource> m_mapping;
         FileMapper*               m_owner{nullptr};
+        int                       m_fd{-1}; /*!< web: the copy in the store */
     };
 
     /*! A file still mapped by an earlier fetch is handed out again */
     std::future<std::shared_ptr<Resource>> fetch(platform::url::Url const& src);
 
+    /*! On the web the file is first brought into the local store (OPFS),
+     * downloaded in chunks on the IO queue unless the copy there already has
+     * the server's size, and read from there. Elsewhere a view of the mapping */
     std::future<std::shared_ptr<RangedFile>> open_ranged(
+        platform::url::Url const& src);
+
+    /*! Like fetch(), but through the local store on the web: the bytes are
+     * read into the heap from the cached copy, not held by Fetch */
+    std::future<std::shared_ptr<Resource>> fetch_cached(
         platform::url::Url const& src);
 
     /*! The queue range reads run on; they block the caller, so it must
