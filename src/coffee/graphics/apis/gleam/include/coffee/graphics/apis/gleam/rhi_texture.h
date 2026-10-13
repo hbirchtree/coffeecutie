@@ -109,7 +109,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap);
 
     template<class Data, class SizeT>
-    requires(SizeT::length() == 3)
+    requires(semantic::concepts::static_length<SizeT>::value == 3)
     //
     inline auto software_decode_cast(Data&& data, SizeT const& size, i32 mipmap)
     {
@@ -121,7 +121,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     }
 
     template<class Data, class SizeT>
-    requires(SizeT::length() == 2)
+    requires(semantic::concepts::static_length<SizeT>::value == 2)
     //
     inline auto software_decode_cast(Data&& data, SizeT const& size, i32 mipmap)
     {
