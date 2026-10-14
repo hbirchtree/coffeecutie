@@ -556,7 +556,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
     auto map_file = [&load, &file_mapper]() {
         if(!load.file_data)
-            return file_mapper.fetch(*load.file);
+            return file_mapper.fetch_cached(*load.file);
         std::promise<std::shared_ptr<AsyncResource>> ready;
         ready.set_value(load.file_data);
         return ready.get_future();
@@ -620,8 +620,8 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
     if(!std::is_same_v<halo_version, blam::xbox_version_t>)
     {
-        auto bitmaps_file = file_mapper.fetch(listing.bitmap_file).share();
-        auto sounds_file  = file_mapper.fetch(listing.sound_file);
+        auto bitmaps_file = file_mapper.fetch_cached(listing.bitmap_file).share();
+        auto sounds_file  = file_mapper.fetch_cached(listing.sound_file);
 
         auto map_load_task = rq::CreateMultiTask<int>(
             std::move(map_load_fun), map_read_task->get_future(), bitmaps_file);

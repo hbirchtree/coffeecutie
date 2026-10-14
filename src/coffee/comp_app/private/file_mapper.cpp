@@ -284,8 +284,6 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
         !platform::file::exists(src).has_value() &&
         enum_helpers::feval(src.flags, semantic::RSCA::AssetFile);
 
-    if(is_remote && platform::file::emscripten::is_offline_url(src.internUrl))
-        return fetch_cached(src);
     if(is_remote)
     {
         using mapping_t = platform::file::posix::mem_mapping_t;
