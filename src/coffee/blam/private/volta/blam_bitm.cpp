@@ -5,7 +5,7 @@
 
 namespace blam::bitm {
 
-typing::pixels::PixDesc image_t::to_fmt() const
+typing::pixels::PixDesc to_pixdesc(format_t format)
 {
     using typing::pixels::CompFmt;
     using typing::pixels::PixDesc;
@@ -18,6 +18,7 @@ typing::pixels::PixDesc image_t::to_fmt() const
         return PixDesc(pix_fmt::R8, bit_fmt::u8, pix_components::R);
 
     case format_t::A8Y8:
+    case format_t::V8U8: /* signed; rebased to unsigned at upload */
         return PixDesc(pix_fmt::RG8, bit_fmt::u8, pix_components::RG);
     case format_t::R5G6B5:
         return PixDesc(pix_fmt::RGB565, bit_fmt::u16_565, pix_components::RGB);
@@ -55,6 +56,11 @@ typing::pixels::PixDesc image_t::to_fmt() const
     default:
         return {bit_fmt::undefined, pix_components::None};
     }
+}
+
+typing::pixels::PixDesc image_t::to_fmt() const
+{
+    return to_pixdesc(format);
 }
 
 } // namespace blam::bitm
