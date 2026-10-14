@@ -189,4 +189,53 @@ static_assert(offsetof(gestalt, pitch_ranges) == 0x20);
 static_assert(offsetof(gestalt, chunks) == 0x40);
 static_assert(sizeof(gestalt) == 0x58);
 
+/*! lsnd: a looping sound, layout from Assembly's Halo2 lsnd.xml */
+struct alignas(4) track_t
+{
+    string_id                       name;
+    u32                             flags;
+    f32                             gain;
+    f32                             fade_in_duration;
+    f32                             fade_out_duration;
+    tag_reference<tag_class_t::snd> in;
+    tag_reference<tag_class_t::snd> loop;
+    tag_reference<tag_class_t::snd> out;
+    tag_reference<tag_class_t::snd> alternate_loop;
+    tag_reference<tag_class_t::snd> alternate_out;
+    i16                             output_effect;
+    i16                             unknown_0;
+    tag_reference<tag_class_t::snd> alternate_transition_in;
+    tag_reference<tag_class_t::snd> alternate_transition_out;
+    f32                             alternate_crossfade_duration;
+    f32                             alternate_fade_out_duration;
+};
+
+static_assert(sizeof(track_t) == 0x58);
+
+struct alignas(4) detail_sound_t
+{
+    string_id                       name;
+    tag_reference<tag_class_t::snd> sound;
+    Vecf2                           random_period_bounds;
+    f32                             unknown_0;
+    u32                             flags;
+    Vecf2                           yaw_bounds;
+    Vecf2                           pitch_bounds;
+    Vecf2                           distance_bounds;
+};
+
+static_assert(sizeof(detail_sound_t) == 0x34);
+
+struct alignas(4) looping_sound
+{
+    u32                       flags;
+    Vecf2                     music_time;
+    Vecf2                     distance_bounds;
+    tag_reference<>           continuous_damage_effect;
+    tag_block<track_t>        tracks;
+    tag_block<detail_sound_t> detail_sounds;
+};
+
+static_assert(sizeof(looping_sound) == 0x2C);
+
 } // namespace blam::dimeter::snd

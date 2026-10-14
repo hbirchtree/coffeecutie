@@ -2,9 +2,11 @@
 
 #include "h2_bitmap.h"
 #include "h2_shell_data.h"
+#include "h2_sound.h"
 
 #include <blam/dimeter/font.h>
 #include <blam/dimeter/scenario.h>
+#include <blam/dimeter/sound.h>
 #include <blam/dimeter/ui.h>
 #include <coffee/core/CDebug>
 
@@ -30,6 +32,7 @@ struct ShellLoader
     dim::map_container<V> const& map;
     dim::raw_pool const&         pool;
     H2ShellData&                 out;
+    H2SoundBank&                 bank;
     std::map<u16, i32>           bitmap_index; /*!< tag -> out.bitmaps */
 
     static Vecf4 color_of(ui::color_argb_t const& c)
@@ -255,6 +258,7 @@ struct ShellLoader
         each(g.screen_animations, [&](ui::screen_animation_t const& a) {
             out.animations.push_back(animation(a));
         });
+        load_music(g);
         each(g.list_skins, [&](ui::list_skin_ref_t const& r) {
             if(auto const* tag = map.tag_at(r.skin.tag_id);
                tag && tag->matches("skin"))
@@ -385,6 +389,114 @@ struct ShellLoader
         }
     }
 
+    /* Permutation 0 of a snd!, its chunks joined: Xbox ADPCM blocks, or
+     * a WMA file for the "codec" encoding (whatever the compression byte
+     * says) */
+    bool sound_blocks(
+        dim::tag_reference<dim::tag_class_t::snd> const& ref,
+        dim::snd::gestalt const*                          gestalt,
+        H2Sound&                                          sound_out)
+    {
+        auto const* tag = map.tag_at(ref.tag_id);
+        auto const* sound =
+            tag && tag->matches("snd!") ? tag->template data<dim::snd::sound>(map.magic())
+                                        : nullptr;
+        bool const wma = sound && sound->encoding == dim::snd::encoding_t::codec;
+        if(!sound || !gestalt ||
+           (!wma && sound->compression != dim::snd::compression_t::xbox_adpcm))
+        {
+            cDebug(
+                "H2: sound {}: {} (compression {}, encoding {})",
+                tag ? map.name_of(*tag) : std::string_view("<none>"),
+                !sound ? "no sound body" : !gestalt ? "no gestalt" : "unsupported",
+                sound ? static_cast<int>(sound->compression) : -1,
+                sound ? static_cast<int>(sound->encoding) : -1);
+            return false;
+        }
+        auto ranges = gestalt->pitch_ranges.data(map.magic());
+        auto perms  = gestalt->permutations.data(map.magic());
+        auto chunks = gestalt->chunks.data(map.magic());
+        if(ranges.has_error() || perms.has_error() || chunks.has_error())
+            return false;
+        auto ri = from_le(sound->pitch_range_index);
+        if(ri < 0 || static_cast<size_t>(ri) >= ranges.value().size())
+            return false;
+        auto const& range = ranges.value()[ri];
+        auto        pi    = from_le(range.first_permutation);
+        if(pi < 0 || static_cast<size_t>(pi) >= perms.value().size() ||
+           from_le(range.permutation_count) < 1)
+            return false;
+        auto const& perm   = perms.value()[pi];
+        auto&       blocks = sound_out.blocks;
+        blocks.clear();
+        blocks.reserve(perm.sample_size());
+        i16 first = from_le(perm.first_chunk), count = from_le(perm.chunk_count);
+        for(i16 c = first; c < first + count; c++)
+        {
+            if(c < 0 || static_cast<size_t>(c) >= chunks.value().size())
+                return false;
+            auto const& chunk = chunks.value()[c];
+            auto        raw   = pool.resolve(chunk.offset, chunk.size());
+            if(!raw)
+                return false;
+            blocks.insert(
+                blocks.end(),
+                reinterpret_cast<char const*>(raw->data()),
+                reinterpret_cast<char const*>(raw->data()) + raw->size());
+        }
+        sound_out.name     = std::string(map.name_of(*tag));
+        sound_out.wma      = wma;
+        sound_out.channels = sound->encoding == dim::snd::encoding_t::stereo ? 2 : 1;
+        sound_out.rate     = dim::snd::to_hertz(sound->sample_rate);
+        cDebug(
+            "H2: sound {}: {} Hz {}ch, {} bytes{}",
+            sound_out.name,
+            sound_out.rate,
+            sound_out.channels,
+            blocks.size(),
+            wma ? " (wma)" : "");
+        return !blocks.empty();
+    }
+
+    std::string tag_label_or(dim::tag_t const* tag) const
+    {
+        return tag ? std::string(map.name_of(*tag)) : std::string("<none>");
+    }
+
+    /* wigl's main menu music: the first track's intro and loop */
+    void load_music(ui::shared_globals_t const& g)
+    {
+        auto const* lsnd_tag = map.tag_at(g.main_menu_music.tag_id);
+        auto const* lsnd =
+            lsnd_tag && lsnd_tag->matches("lsnd")
+                ? lsnd_tag->template data<dim::snd::looping_sound>(map.magic())
+                : nullptr;
+        if(!lsnd)
+        {
+            cDebug("H2: sound: no menu music lsnd ({})", tag_label_or(lsnd_tag));
+            return;
+        }
+        dim::snd::gestalt const* gestalt = nullptr;
+        for(auto const& tag : map.tags())
+            if(tag.valid() && tag.matches("ugh!"))
+            {
+                gestalt = tag.template data<dim::snd::gestalt>(map.magic());
+                break;
+            }
+        auto tracks = lsnd->tracks.data(map.magic());
+        if(tracks.has_error() || tracks.value().empty())
+        {
+            cDebug("H2: sound: lsnd without tracks");
+            return;
+        }
+        auto const& track = tracks.value()[0];
+        bank.music.name   = std::string(map.name_of(*lsnd_tag));
+        bank.music.gain   = from_le(track.gain) > 0.f ? from_le(track.gain) : 1.f;
+        sound_blocks(track.in, gestalt, bank.music.in);
+        sound_blocks(track.loop, gestalt, bank.music.loop);
+        bank.loaded = !bank.music.loop.blocks.empty();
+    }
+
     void load_camera_path()
     {
         auto const* scnr_tag = map.scenario();
@@ -463,11 +575,13 @@ inline bool load_shell(
     dim::raw_pool const&              pool,
     std::vector<std::string> const&   font_table,
     std::vector<ShellFontFile> const& font_files,
-    H2ShellData&                      out)
+    H2ShellData&                      out,
+    H2SoundBank&                      bank)
 {
     out        = {};
     out.loaded = false;
-    detail::ShellLoader<V> loader{api, map, pool, out};
+    bank       = {};
+    detail::ShellLoader<V> loader{api, map, pool, out, bank};
     out.loaded = loader.load(font_table, font_files);
     return out.loaded;
 }

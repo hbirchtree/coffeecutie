@@ -426,9 +426,11 @@ u32 extract_sounds(
             continue;
         if((adpcm && adpcm_left == 0) || (wma && wma_left == 0))
             continue;
+        /* "codec" encoding is a WMA file in the chunks whatever the
+         * compression byte says */
         u16 channels = sound->encoding == h2::snd::encoding_t::stereo ? 2 : 1;
-        if(adpcm && sound->encoding == h2::snd::encoding_t::codec)
-            continue;
+        if(sound->encoding == h2::snd::encoding_t::codec)
+            adpcm = false, wma = true;
 
         auto range_idx = from_le(sound->pitch_range_index);
         if(range_idx < 0 ||

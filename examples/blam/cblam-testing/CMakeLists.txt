@@ -59,6 +59,7 @@ coffee_application(
         h2/h2_occluder.cpp
         h2/h2_renderer.cpp
         h2/h2_shell.cpp
+        h2/h2_sound.cpp
         player_controller.cpp
         loading.cpp
         map_loading.cpp
