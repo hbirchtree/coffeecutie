@@ -1,6 +1,7 @@
 #pragma once
 
 #include <emscripten.h>
+#include <emscripten/heap.h>
 #include <peripherals/identify/architecture.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/string/split.h>
@@ -19,7 +20,7 @@ namespace platform::info::memory::emscripten {
 
 inline libc_types::u64 resident()
 {
-    return 0u;
+    return emscripten_get_heap_size();
 }
 
 inline libc_types::u64 total()
