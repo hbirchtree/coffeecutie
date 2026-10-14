@@ -27,7 +27,11 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
     )
 elseif(BUILD_OPENAL AND EMSCRIPTEN)
     find_package(OpenAL CONFIG REQUIRED)
-    set(BUNDLED_LIBS OpenAL_ImaDecoder OpenAL::OpenAL)
+    find_package(libwma CONFIG REQUIRED)
+    set(BUNDLED_LIBS
+        OpenAL::OpenAL
+        libwma::wma
+    )
 endif()
 
 resource_dir_package(
