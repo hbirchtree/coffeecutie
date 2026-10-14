@@ -363,46 +363,6 @@ static Vecf3 unpack_10_11_11(u32 v)
         snorm_bits((v >> 21) & 0x7FF, 11)};
 }
 
-static std::optional<typing::pixels::PixDesc> to_pixdesc(
-    blam::bitm::format_t fmt)
-{
-    using blam::bitm::format_t;
-    using typing::pixels::bit_fmt;
-    using typing::pixels::comp_flags;
-    using typing::pixels::CompFmt;
-    using typing::pix_components;
-    using typing::pixels::pix_fmt;
-    using typing::pixels::PixDesc;
-    switch(fmt)
-    {
-    case format_t::A8:
-    case format_t::Y8:
-    case format_t::AY8:
-        return PixDesc(pix_fmt::R8, bit_fmt::u8, pix_components::R);
-    case format_t::A8Y8:
-    case format_t::V8U8: /* signed; rebased to unsigned at upload */
-        return PixDesc(pix_fmt::RG8, bit_fmt::u8, pix_components::RG);
-    case format_t::R5G6B5:
-        return PixDesc(pix_fmt::RGB565, bit_fmt::u16_565, pix_components::RGB);
-    case format_t::A1RGB5:
-        return PixDesc(
-            pix_fmt::RGB5A1, bit_fmt::u16_1555, pix_components::RGBA);
-    case format_t::ARGB4:
-        return PixDesc(pix_fmt::RGBA4, bit_fmt::u16_4444, pix_components::RGBA);
-    case format_t::ARGB8:
-    case format_t::XRGB8:
-        return PixDesc(pix_fmt::RGBA8, bit_fmt::u8, pix_components::RGBA);
-    case format_t::BC1:
-        return CompFmt(pix_fmt::BCn, comp_flags::BC1);
-    case format_t::BC2:
-        return CompFmt(pix_fmt::BCn, comp_flags::BC2);
-    case format_t::BC3:
-        return CompFmt(pix_fmt::BCn, comp_flags::BC3);
-    default:
-        return std::nullopt;
-    }
-}
-
 /* Bytes of one mip level; 0 = unhandled format */
 static u32 level_bytes(blam::bitm::format_t fmt, u32 w, u32 h)
 {
@@ -2909,8 +2869,8 @@ struct H2MapRenderer
         if(from_le(img.type) != blam::bitm::type_t::tex_2d)
             return std::nullopt;
         auto format = from_le(img.format);
-        auto fmt    = to_pixdesc(format);
-        if(!fmt)
+        auto fmt    = blam::bitm::to_pixdesc(format);
+        if(fmt.pixfmt == typing::pixels::pix_fmt::None)
             return std::nullopt;
 
         u32 width  = static_cast<u32>(from_le(img.width));
@@ -3004,7 +2964,7 @@ struct H2MapRenderer
                 mip_count,
                 img.swizzled() && !compressed ? ", deswizzled" : "");
             auto tex = m_api->alloc_texture(
-                gfx::textures::d2, *fmt, static_cast<u32>(levels.size()));
+                gfx::textures::d2, fmt, static_cast<u32>(levels.size()));
             tex->alloc(size_3d<u32>{width, height, 1});
             /* One- and two-channel formats land in R/RG; spread them */
             using gfx::textures::swizzle_t;

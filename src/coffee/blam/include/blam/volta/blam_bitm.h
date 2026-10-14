@@ -99,6 +99,9 @@ C_FLAGS(flags_t, u16);
 
 struct header_t;
 
+/*! Engine pixel format of a bitmap format; pixfmt None if unhandled */
+typing::pixels::PixDesc to_pixdesc(format_t format);
+
 struct padding_t;
 struct image_t;
 struct sequence_t;
