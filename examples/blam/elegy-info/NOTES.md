@@ -123,13 +123,33 @@ Other families:
 
 ### Plan
 
-Hand-written shaders, not generated ones, so they stay few and optimisable
-(as for Halo 1 and 2):
+Hand-written shaders, not generated ones, laid out like Halo 1's
+`shaders_common_uber.glsl`:
 
-- one `shader` program covering the common options above as uniform or
-  `#define` branches; rare options fall back to the nearest path;
-- decal, terrain, foliage and water as small dedicated programs;
-- halogram and cortana later.
+- One uber shader per family; specializations are small files that set
+  `#define`s and include it, run through the offline shader transpiler so
+  the runtime gets slim binaries (as `h2_*.frag` / `map_uber*.frag` do).
+- Option choice is runtime data, not a define: the material UBO carries the
+  `rmdf` option index per category and the shader branches on it, the way
+  Halo 1 dispatches on `material_id`. Branches are uniform per draw, and
+  there is no per-combination variant explosion.
+- Defines gate pipeline features and feature level (full / lite / ES, BSP
+  vs model) and which options a binary compiles in.
+- Split into domains from the start. Halo 1 had to split its ubershader
+  after the fact (sotr, chicago) because the heaviest path in a binary sets
+  the register budget for everything sharing it. Initial domains:
+  - `shader` common: default/constant/detail albedo, bump off/standard/
+    detail, diffuse_only and two_lobe_phong, env none/per_pixel;
+  - `shader` heavy: cook_torrance, organism, glass, dynamic env map,
+    plasma/illum_detail self-illumination, parallax;
+  - decal, terrain, foliage, water as their own families;
+  - halogram, cortana later.
+- Rare options fall back to the nearest supported path.
+- Revisit the split with measurements once the GLSL exists, not by option
+  counts. In Halo 1 register spilling dominated the cost of the merged
+  ubershader, so spills/fills are the number to watch per domain
+  (`INTEL_DEBUG=fs`, `tools/shader-stats`), then register count and
+  instruction count.
 
-Bindings come from the `rmt2` name lists, so the program needs no knowledge
-of per-template register layouts.
+Bindings come from the `rmt2` name lists, so shaders need no knowledge of
+per-template register layouts.
