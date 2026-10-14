@@ -31,6 +31,7 @@ enum class map_load_error
     incompatible_map_version_expected_mcc,
     incompatible_map_version_expected_trial,
     incompatible_map_version_expected_halo2,
+    incompatible_map_version_expected_halo3,
 
     incompatible_endianness,
 
