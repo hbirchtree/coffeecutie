@@ -765,6 +765,17 @@ inline void dump_sky(h2::map_container<V> const& map, h2::tag_t const& tag)
 /*! Dispatch on class; sbsp bodies are only reachable through the scenario
  * (own region), so they are dumped from there */
 template<typename V>
+void dump_wgit(h2::map_container<V> const& map, h2::tag_t const& tag);
+template<typename V>
+void dump_skin(h2::map_container<V> const& map, h2::tag_t const& tag);
+template<typename V>
+void dump_wgtz(h2::map_container<V> const& map, h2::tag_t const& tag);
+template<typename V>
+void dump_wigl(h2::map_container<V> const& map, h2::tag_t const& tag);
+template<typename V>
+void dump_unic(h2::map_container<V> const& map, h2::tag_t const& tag);
+
+template<typename V>
 inline void dump_tag(
     h2::map_container<V> const& map, h2::tag_t const& tag, bool header = true)
 {
@@ -785,6 +796,16 @@ inline void dump_tag(
         dump_mode(map, tag);
     else if(tag.matches("sky "))
         dump_sky(map, tag);
+    else if(tag.matches("wgit"))
+        dump_wgit(map, tag);
+    else if(tag.matches("skin"))
+        dump_skin(map, tag);
+    else if(tag.matches("wgtz"))
+        dump_wgtz(map, tag);
+    else if(tag.matches("wigl"))
+        dump_wigl(map, tag);
+    else if(tag.matches("unic"))
+        dump_unic(map, tag);
 }
 
 } // namespace dimeter_info

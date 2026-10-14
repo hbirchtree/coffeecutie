@@ -6,6 +6,7 @@
 #include "dump.h"
 #include "dump_objects.h"
 #include "dump_scenario.h"
+#include "dump_ui.h"
 
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/geometry.h>
