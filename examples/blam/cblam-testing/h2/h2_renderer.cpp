@@ -77,7 +77,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         for(int pass = 0; pass < 3; pass++)
             for(auto const& [mi, mat] : stl_types::enumerate(scene.materials))
             {
-                int const mat_pass = mat.sky ? 0 : mat.water ? 2 : 1;
+                int const mat_pass = mat.sky ? 0 : (mat.water || mat.additive) ? 2 : 1;
                 /* Glass, decals: nothing sensible to draw them with yet */
                 if(mat_pass != pass || mat.section_draws.empty() ||
                    !mat.texture)
@@ -189,8 +189,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                             resources.offscreen_size.y},
                         .depth = gfx::depth_state{.reversed = true},
                     },
-                    gfx::depth_extended_state{.depth_write = !mat.sky && !mat.water},
-                    gfx::blend_state{});
+                    gfx::depth_extended_state{
+                        .depth_write = !mat.sky && !mat.water && !mat.additive},
+                    gfx::blend_state{.additive = mat.additive});
                 if(res.has_value() && !m_draw_error_logged)
                 {
                     cWarning("H2: failed to draw: {}", std::get<1>(*res));
