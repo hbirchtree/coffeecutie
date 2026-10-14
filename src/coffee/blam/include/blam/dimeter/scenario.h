@@ -883,7 +883,7 @@ struct alignas(4) cutscene_camera_point_t
     bl_string            name;
     u32                  unknown_0;
     Vecf3                position;
-    Vecf3                orientation; /*!< yaw, pitch, roll in degrees */
+    Vecf3                orientation; /*!< yaw, pitch, roll in radians */
 };
 
 static_assert(offsetof(cutscene_camera_point_t, position) == 0x28);

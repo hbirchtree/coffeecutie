@@ -622,6 +622,11 @@ inline void dump_scripts(
 template<typename V>
 inline void dump_cutscenes(h2::map_container<V> const& map, scn::scenario_t const& scnr)
 {
+    fmt::print(
+        "  cutscene blocks: {} flags, {} camera points, {} titles\n",
+        scnr.cutscene_flags.count(),
+        scnr.cutscene_camera_points.count(),
+        scnr.cutscene_titles.count());
     each(map, scnr.cutscene_flags, [&](size_t i, scn::cutscene_flag_t const& f) {
         fmt::print(
             "  cutscene flag {} '{}': at {} facing {}\n",
