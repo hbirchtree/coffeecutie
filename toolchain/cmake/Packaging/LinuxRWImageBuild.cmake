@@ -109,7 +109,7 @@ function(RWIMAGE_PACKAGE)
   endforeach()
 
   foreach(LIB ${RWI_BUNDLE_LIBRARIES} ${RWIMAGE_EXTRA_LIBRARIES})
-    if(NOT EXISTS ${LIB} AND NOT "${LIB}" MATCHES "$\<")
+    if(NOT EXISTS ${LIB} AND NOT "${LIB}" MATCHES "\\$<")
       continue()
     endif()
     add_custom_command(

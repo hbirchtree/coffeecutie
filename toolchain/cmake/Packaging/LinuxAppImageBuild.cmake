@@ -173,7 +173,7 @@ function(
 
   # Copy bundled libraries into AppDir
   foreach(LIB ${APPIMAGE_BUNDLE_LIBRARIES} ${APPIMAGE_EXTRA_LIBRARIES})
-    if(NOT EXISTS ${LIB} AND NOT "${LIB}" MATCHES "$\<")
+    if(NOT EXISTS ${LIB} AND NOT "${LIB}" MATCHES "\\$<")
       continue()
     endif()
     add_custom_command(

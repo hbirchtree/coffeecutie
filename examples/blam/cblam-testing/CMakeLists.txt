@@ -21,9 +21,11 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
         find_package(OpenSL REQUIRED)
     endif()
     find_package(OpenAL CONFIG REQUIRED)
+    find_package(libwma CONFIG REQUIRED)
     get_target_property(OPENAL_LIB OpenAL::OpenAL IMPORTED_LOCATION_DEBUG)
     set(BUNDLED_LIBS
-        $<IF:$<CONFIG:Debug>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_DEBUG>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_RELEASE>>
+        $<TARGET_SONAME_FILE:OpenAL::OpenAL>
+        $<TARGET_SONAME_FILE:libwma::wma>
     )
 elseif(BUILD_OPENAL AND EMSCRIPTEN)
     find_package(OpenAL CONFIG REQUIRED)

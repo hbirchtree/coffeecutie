@@ -28,7 +28,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-graphics",
-            "baseline": "3a59093316ef964cf8059bee02ced8eb15640fa4",
+            "baseline": "6784f02ff05259480b342cc7bbc51c5ccde6e4ec",
             "packages": [
                 "bc7enc",
                 "bcdec",
@@ -65,7 +65,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-ports",
-            "baseline": "2fcc66dbc6c753bfb1defc1f3b1ff4b2530c6d50",
+            "baseline": "b628dd42f4d11e8190f569a905bddcfd94f67b4e",
             "packages": [
                 "datachannel-wasm",
                 "gamenetworkingsockets",

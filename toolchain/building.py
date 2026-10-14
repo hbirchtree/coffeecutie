@@ -1508,6 +1508,20 @@ def _resolve_run_binary(bin_dir: Path, wanted: str | None) -> Path:
     return execs[0]
 
 
+def _vcpkg_lib_dir(build_dir: Path) -> Path | None:
+    """vcpkg's lib dir for the triplet and build type *build_dir* was configured with."""
+    try:
+        cache = (build_dir / "CMakeCache.txt").read_text()
+    except OSError:
+        return None
+    values = dict(re.findall(r"^(VCPKG_TARGET_TRIPLET|CMAKE_BUILD_TYPE):\w+=(.*)$", cache, re.M))
+    triplet = values.get("VCPKG_TARGET_TRIPLET")
+    if not triplet:
+        return None
+    root = build_dir / "vcpkg_installed" / triplet
+    return root / "debug" / "lib" if values.get("CMAKE_BUILD_TYPE") == "Debug" else root / "lib"
+
+
 def cmd_run(
     target: TargetSpec,
     host: HostInfo,
@@ -1527,11 +1541,12 @@ def cmd_run(
     binary = _resolve_run_binary(build_dir / "bin", target.cmake_target)
 
     env = {**os.environ}
-    lib_dir = build_dir / "lib"
     ld_var = "DYLD_LIBRARY_PATH" if host.os == "darwin" else "LD_LIBRARY_PATH"
-    if lib_dir.is_dir():
+    # Binaries have no RPATH (CMAKE_SKIP_RPATH), so shared vcpkg ports go here too
+    lib_dirs = [d for d in (build_dir / "lib", _vcpkg_lib_dir(build_dir)) if d and d.is_dir()]
+    if lib_dirs:
         prev = env.get(ld_var, "")
-        env[ld_var] = f"{lib_dir}:{prev}" if prev else str(lib_dir)
+        env[ld_var] = ":".join([*map(str, lib_dirs), *([prev] if prev else [])])
 
     cmd = [str(binary), *prog_args]
     if use_gdb:
@@ -1550,7 +1565,7 @@ def cmd_run(
 
     if dry_run:
         print(f"Would run (cwd={base_dir}):")
-        if lib_dir.is_dir():
+        if lib_dirs:
             print(f"  {ld_var}={env[ld_var]}")
         print(f"  {' '.join(cmd)}")
         return

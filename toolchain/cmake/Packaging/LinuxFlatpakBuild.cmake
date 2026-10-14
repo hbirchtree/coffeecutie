@@ -133,7 +133,7 @@ macro(
 
   # Copy bundled libraries into flatpak
   foreach(LIB ${FLATPAK_BUNDLE_LIBRARIES} ${FLATPAK_EXTRA_LIBRARIES})
-    if(NOT EXISTS ${LIB})
+    if(NOT EXISTS ${LIB} AND NOT "${LIB}" MATCHES "\\$<")
         continue()
     endif()
     add_custom_command(
