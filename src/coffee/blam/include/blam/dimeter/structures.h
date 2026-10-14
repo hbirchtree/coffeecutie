@@ -8,6 +8,7 @@
 #include <peripherals/enum/helpers.h>
 
 #include <cstring>
+#include <string_view>
 
 namespace blam::dimeter {
 
@@ -52,73 +53,137 @@ consteval u32 tag_fourcc(char const (&s)[5])
            (static_cast<u32>(s[2]) << 8) | static_cast<u32>(s[3]);
 }
 
-/*! Halo 2 tag classes, the same big-endian fourcc numbering as volta's */
+/*! Halo 2 tag classes, the same big-endian fourcc numbering as volta's;
+ * X(identifier, fourcc) */
+#define BLAM_DIMETER_TAG_CLASSES(X) \
+    X(cen_,    "*cen") \
+    X(eap_,    "*eap") \
+    X(ehi_,    "*ehi") \
+    X(igh_,    "*igh") \
+    X(ipd_,    "*ipd") \
+    X(qip_,    "*qip") \
+    X(rea_,    "*rea") \
+    X(sce_,    "*sce") \
+    X(comment, "/**/") \
+    X(fx,      "<fx>") \
+    X(adlg,    "adlg") \
+    X(ai__,    "ai**") \
+    X(ant,     "ant!") \
+    X(bipd,    "bipd") \
+    X(bitm,    "bitm") \
+    X(bloc,    "bloc") \
+    X(bsdt,    "bsdt") \
+    X(char_,   "char") \
+    X(cin_,    "cin*") \
+    X(clu_,    "clu*") \
+    X(clwd,    "clwd") \
+    X(coll,    "coll") \
+    X(colo,    "colo") \
+    X(cont,    "cont") \
+    X(crea,    "crea") \
+    X(ctrl,    "ctrl") \
+    X(dc_s,    "dc*s") \
+    X(dec_,    "dec*") \
+    X(deca,    "deca") \
+    X(decp,    "DECP") \
+    X(decr,    "DECR") \
+    X(devi,    "devi") \
+    X(dgr_,    "dgr*") \
+    X(effe,    "effe") \
+    X(egor,    "egor") \
+    X(eqip,    "eqip") \
+    X(fog,     "fog ") \
+    X(foot,    "foot") \
+    X(fpch,    "fpch") \
+    X(garb,    "garb") \
+    X(gldf,    "gldf") \
+    X(goof,    "goof") \
+    X(hlmt,    "hlmt") \
+    X(hmt,     "hmt ") \
+    X(hsc_,    "hsc*") \
+    X(hudg,    "hudg") \
+    X(item,    "item") \
+    X(itmc,    "itmc") \
+    X(jmad,    "jmad") \
+    X(jpt,     "jpt!") \
+    X(lens,    "lens") \
+    X(lifi,    "lifi") \
+    X(ligh,    "ligh") \
+    X(lsnd,    "lsnd") \
+    X(ltmp,    "ltmp") \
+    X(mach,    "mach") \
+    X(matg,    "matg") \
+    X(mcsr,    "mcsr") \
+    X(mdlg,    "mdlg") \
+    X(mgs2,    "MGS2") \
+    X(mode,    "mode") \
+    X(mulg,    "mulg") \
+    X(nhdt,    "nhdt") \
+    X(obje,    "obje") \
+    X(phmo,    "phmo") \
+    X(phys,    "phys") \
+    X(pmov,    "pmov") \
+    X(pphy,    "pphy") \
+    X(proj,    "proj") \
+    X(prt3,    "prt3") \
+    X(PRTM,    "PRTM") \
+    X(sbsp,    "sbsp") \
+    X(scen,    "scen") \
+    X(scnr,    "scnr") \
+    X(sfx,     "sfx+") \
+    X(shad,    "shad") \
+    X(sily,    "sily") \
+    X(skin,    "skin") \
+    X(sky,     "sky ") \
+    X(sncl,    "sncl") \
+    X(snd,     "snd!") \
+    X(snde,    "snde") \
+    X(snmx,    "snmx") \
+    X(spas,    "spas") \
+    X(spk,     "spk!") \
+    X(ssce,    "ssce") \
+    X(sslt,    "sslt") \
+    X(stem,    "stem") \
+    X(styl,    "styl") \
+    X(tdtl,    "tdtl") \
+    X(trak,    "trak") \
+    X(trg_,    "trg*") \
+    X(udlg,    "udlg") \
+    X(ugh,     "ugh!") \
+    X(unic,    "unic") \
+    X(unit,    "unit") \
+    X(vehc,    "vehc") \
+    X(vehi,    "vehi") \
+    X(vrtx,    "vrtx") \
+    X(weap,    "weap") \
+    X(weat,    "weat") \
+    X(wgit,    "wgit") \
+    X(wgtz,    "wgtz") \
+    X(wigl,    "wigl") \
+    X(wind,    "wind")
+
 enum class tag_class_t : u32
 {
     none = 0xFFFFFFFF,
-
-    bipd  = tag_fourcc("bipd"),
-    bitm  = tag_fourcc("bitm"),
-    bloc  = tag_fourcc("bloc"),
-    bsdt  = tag_fourcc("bsdt"),
-    char_ = tag_fourcc("char"),
-    coll  = tag_fourcc("coll"),
-    cont  = tag_fourcc("cont"),
-    crea  = tag_fourcc("crea"),
-    ctrl  = tag_fourcc("ctrl"),
-    decp  = tag_fourcc("DECP"),
-    decr  = tag_fourcc("DECR"),
-    devi  = tag_fourcc("devi"),
-    effe  = tag_fourcc("effe"),
-    eqip  = tag_fourcc("eqip"),
-    fog   = tag_fourcc("fog "),
-    foot  = tag_fourcc("foot"),
-    garb  = tag_fourcc("garb"),
-    gldf  = tag_fourcc("gldf"),
-    hlmt  = tag_fourcc("hlmt"),
-    hmt   = tag_fourcc("hmt "),
-    hudg  = tag_fourcc("hudg"),
-    item  = tag_fourcc("item"),
-    itmc  = tag_fourcc("itmc"),
-    jmad  = tag_fourcc("jmad"),
-    jpt   = tag_fourcc("jpt!"),
-    lens  = tag_fourcc("lens"),
-    lifi  = tag_fourcc("lifi"),
-    ligh  = tag_fourcc("ligh"),
-    lsnd  = tag_fourcc("lsnd"),
-    ltmp  = tag_fourcc("ltmp"),
-    mach  = tag_fourcc("mach"),
-    matg  = tag_fourcc("matg"),
-    mgs2  = tag_fourcc("MGS2"),
-    mode  = tag_fourcc("mode"),
-    nhdt  = tag_fourcc("nhdt"),
-    obje  = tag_fourcc("obje"),
-    phmo  = tag_fourcc("phmo"),
-    phys  = tag_fourcc("phys"),
-    proj  = tag_fourcc("proj"),
-    sbsp  = tag_fourcc("sbsp"),
-    scen  = tag_fourcc("scen"),
-    scnr  = tag_fourcc("scnr"),
-    sfx   = tag_fourcc("sfx+"),
-    shad  = tag_fourcc("shad"),
-    sky   = tag_fourcc("sky "),
-    snd   = tag_fourcc("snd!"),
-    snde  = tag_fourcc("snde"),
-    spk   = tag_fourcc("spk!"),
-    ssce  = tag_fourcc("ssce"),
-    stem  = tag_fourcc("stem"),
-    styl  = tag_fourcc("styl"),
-    trak  = tag_fourcc("trak"),
-    udlg  = tag_fourcc("udlg"),
-    unic  = tag_fourcc("unic"),
-    unit  = tag_fourcc("unit"),
-    vehc  = tag_fourcc("vehc"),
-    vehi  = tag_fourcc("vehi"),
-    weap  = tag_fourcc("weap"),
-    weat  = tag_fourcc("weat"),
-    wgit  = tag_fourcc("wgit"),
-    wind  = tag_fourcc("wind"),
+#define BLAM_DIMETER_TAG_CLASS_ENUM(id, fourcc) id = tag_fourcc(fourcc),
+    BLAM_DIMETER_TAG_CLASSES(BLAM_DIMETER_TAG_CLASS_ENUM)
+#undef BLAM_DIMETER_TAG_CLASS_ENUM
 };
+
+/*! The fourcc as written in tags; "????" for a class not listed */
+constexpr std::string_view to_string(tag_class_t cls)
+{
+    switch(cls)
+    {
+#define BLAM_DIMETER_TAG_CLASS_NAME(id, fourcc) \
+    case tag_class_t::id:                      \
+        return fourcc;
+        BLAM_DIMETER_TAG_CLASSES(BLAM_DIMETER_TAG_CLASS_NAME)
+#undef BLAM_DIMETER_TAG_CLASS_NAME
+    default:
+        return "????";
+    }
+}
 
 /*! A tag class as a cache file stores it: the fourcc byte-reversed */
 struct alignas(4) tag_class
@@ -132,9 +197,9 @@ struct alignas(4) tag_class
         return static_cast<tag_class_t>(from_le(v));
     }
 
-    inline std::string str() const
+    inline std::string_view str() const
     {
-        return raw.str();
+        return to_string(id());
     }
 
     inline bool valid() const

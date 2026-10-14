@@ -1168,7 +1168,7 @@ int print_map(blam::dimeter::map_container<V> const& map)
             null_tags++;
             continue;
         }
-        auto& [count, bytes] = class_counts[tag.tag_class.str()];
+        auto& [count, bytes] = class_counts[std::string(tag.tag_class.str())];
         count++;
         bytes += static_cast<u64>(tag.size());
     }
