@@ -70,16 +70,10 @@ struct alignas(4) tag_t
         return from_le(size_raw);
     }
 
-    /*! Compares against the human-readable class name, e.g. "bitm"; classes
-     * are stored byte-reversed in the file */
+    /*! Compares against the human-readable class name, e.g. "bitm" */
     inline bool matches(std::string_view tag_class_name) const
     {
-        if(tag_class_name.size() != 4)
-            return false;
-        for(size_t i = 0; i < 4; i++)
-            if(tag_class.raw.data[i] != tag_class_name[3 - i])
-                return false;
-        return true;
+        return tag_class.str() == tag_class_name;
     }
 
     /*!
