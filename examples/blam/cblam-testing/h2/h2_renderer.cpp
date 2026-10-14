@@ -134,7 +134,16 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Vecf2 const>{
                         {"fog_range"}, semantic::SpanOne<const Vecf2>(vis.fog_range)},
                     gfx::uniform_pair<Vecf3 const>{
-                        {"fog_eye"}, semantic::SpanOne<const Vecf3>(eye)});
+                        {"fog_eye"}, semantic::SpanOne<const Vecf3>(eye)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"planar_fog_plane"},
+                        semantic::SpanOne<const Vecf4>(vis.planar_fog.plane)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"planar_fog_color"},
+                        semantic::SpanOne<const Vecf4>(vis.planar_fog.color)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"planar_fog_opaque"},
+                        semantic::SpanOne<const Vecf2>(vis.planar_fog.opaque)});
                 auto lm_sampler = scene.lightmap_sampler
                                       ? scene.lightmap_sampler
                                       : m_no_lightmaps_sampler;
