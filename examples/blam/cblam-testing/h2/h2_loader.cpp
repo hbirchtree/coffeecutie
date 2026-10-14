@@ -1,4 +1,4 @@
-#include "h2_map_renderer.h"
+#include "h2_scene.h"
 
 #include "components.h"
 #include "data.h"
@@ -60,26 +60,11 @@ void update_camera_aspect(compo::EntityContainer& e);
 
 namespace h2 {
 
-namespace dim = blam::dimeter;
-namespace geo  = blam::dimeter::geo;
-namespace coll = blam::dimeter::coll;
 using blam::from_le;
 using Coffee::Resource;
 using libc_types::i64;
 using libc_types::i8;
 using semantic::BytesConst;
-using semantic::Span;
-
-struct Vertex
-{
-    Vecf3 position;
-    Vecf2 texcoord;
-    Vecf3 normal;
-    Vecf3 lightmap{0.f, 0.f, -1.f}; /*!< Atlas u, v, layer; -1 = none */
-    u8    light[4]{0, 0, 0, 0};     /*!< Baked per-vertex light, a = valid */
-};
-
-static_assert(sizeof(Vertex) == 48);
 
 /* Lighting an external source supplies for a section's vertices: lightmap
  * texcoords (i16 pairs expanded through `bounds`) or per-vertex colours */
@@ -88,221 +73,6 @@ struct ExternalLighting
     Span<i16 const>            lightmap_uv; /*!< 2 per vertex */
     geo::model_bounds_t const* bounds{nullptr};
     Span<u8 const>             rgb; /*!< 3 per vertex */
-};
-
-/* One ltmp geometry bucket decoded: the streams per-vertex lit instances
- * and scenery index into by vertex */
-struct LightBucket
-{
-    std::vector<i16> uv;  /*!< 2 per vertex */
-    std::vector<u8>  rgb; /*!< 3 per vertex */
-};
-
-/* Where a scenery placement's baked lighting lives */
-struct SceneryLight
-{
-    i32              bucket{-1};
-    std::vector<i16> section_offsets; /*!< Vertex offset per model section */
-};
-
-/* One cluster's lightmap, decoded to RGBA and placed in the atlas */
-struct LightmapImage
-{
-    u32             width{0}, height{0};
-    std::vector<u8> rgba;
-    u32             layer{0}, x{0}, y{0};
-};
-
-/* Shelf packer over fixed-size pages */
-struct LightmapAtlas
-{
-    static constexpr u32 page = 1024;
-
-    struct shelf_t
-    {
-        u32 x{0}, y{0}, height{0};
-    };
-    std::vector<shelf_t> pages; /*!< Current shelf per page */
-
-    bool place(LightmapImage& image)
-    {
-        if(image.width > page || image.height > page)
-            return false;
-        for(size_t layer = 0; layer < pages.size(); layer++)
-        {
-            auto& shelf = pages[layer];
-            if(shelf.x + image.width > page)
-            {
-                /* Next shelf */
-                if(shelf.y + shelf.height + image.height > page)
-                    continue;
-                shelf.y += shelf.height;
-                shelf.x      = 0;
-                shelf.height = 0;
-            }
-            if(shelf.y + image.height > page)
-                continue;
-            image.layer  = static_cast<u32>(layer);
-            image.x      = shelf.x;
-            image.y      = shelf.y;
-            shelf.x += image.width;
-            shelf.height = std::max(shelf.height, image.height);
-            return true;
-        }
-        pages.push_back({});
-        return place(image);
-    }
-};
-
-struct Texture
-{
-    std::shared_ptr<gfx::texture_2d_t> texture;
-    std::shared_ptr<gfx::sampler_t>    sampler;
-};
-
-/* Fragment program per material family; see fragments/h2_common.glsl */
-enum class Variant : u8
-{
-    base,
-    detail,
-    blend,
-    base_illum,
-    detail_illum,
-    blend_illum,
-    sky,
-    sky_mask,
-    water,
-    count,
-};
-
-static constexpr std::string_view variant_files[] = {
-    "h2_base",
-    "h2_detail",
-    "h2_blend",
-    "h2_base_illum",
-    "h2_detail_illum",
-    "h2_blend_illum",
-    "h2_sky",
-    "h2_sky_mask",
-    "h2_water",
-};
-
-static_assert(
-    std::size(variant_files) == static_cast<size_t>(Variant::count));
-
-/* Where a draw lives, each -1 = unconstrained: `section` is the structure
- * BSP it belongs to, `cluster` or `instance` its place in the visibility
- * data of `cluster_section` */
-struct DrawTag
-{
-    i32 section{-1};
-    i32 cluster_section{-1};
-    i32 cluster{-1};
-    i32 instance{-1};
-};
-
-/* One shad tag: its diffuse map and every draw range using it */
-struct Material
-{
-    Variant                                variant{Variant::base};
-    struct draw_t
-    {
-        gfx::draw_command::data_t cmd;
-        DrawTag                   tag;
-    };
-    std::vector<draw_t>                    section_draws;
-    std::string                            name;
-    std::shared_ptr<gfx::texture_2d_t>     texture;
-    std::shared_ptr<gfx::sampler_t>        sampler;
-    Vecf2                                  uv_scale{1.f, 1.f};
-    /* Detail layers: 1 = detail modulated x2, 2 = two details blended by
-     * the base alpha then modulated x2 */
-    i32                                    detail_mode{0};
-    Texture                                detail;
-    Vecf2                                  detail_scale{1.f, 1.f};
-    Texture                                detail2;
-    Vecf2                                  detail2_scale{1.f, 1.f};
-    Texture                                mask; /*!< Sky clouds: alpha */
-    Texture                                illum; /*!< Added on top */
-    Vecf2                                  illum_scale{1.f, 1.f};
-    Vecf3                                  illum_color{1.f, 1.f, 1.f};
-    bool                                   alpha_test{false};
-    bool                                   sky{false}; /*!< follows the camera, unlit */
-    bool                                   water{false}; /*!< bump in `texture`, drawn last */
-    Vecf2                                  mask_scale{1.f, 1.f};
-    std::vector<gfx::draw_command::data_t> draws;
-};
-
-/* Triangle soup for Bullet; owned by the physics body once adopted */
-struct CollisionMesh
-{
-    std::vector<Vecf3> vertices;
-    std::vector<i32>   indices;
-};
-
-/* One structure BSP of the scenario: only the active one draws and
- * collides, each carries its own far-off stand-ins for the others */
-struct Section
-{
-    struct Portal
-    {
-        i16                front, back;
-        std::vector<Vecf3> vertices;
-
-        inline i16 front_cluster() const
-        {
-            return front;
-        }
-
-        inline i16 back_cluster() const
-        {
-            return back;
-        }
-    };
-
-    struct Cluster
-    {
-        Vecf3               lo, hi;
-        std::vector<Portal> portals;
-        Vecf4               fog{0.f, 0.f, 0.f, 0.f}; /*!< rgb, max density */
-        Vecf2               fog_range{0.f, 1.f};    /*!< start, opaque distance */
-    };
-
-    std::string                    name;
-    Vecf3                          lo, hi; /*!< World bounds, stand-ins included */
-    std::shared_ptr<CollisionMesh> collision;
-
-    /* Visibility: the collision tree's leaves name their cluster, clusters
-     * their portals; instances list the clusters that own them */
-    std::vector<coll::bsp3d_node_t> nodes;
-    std::vector<coll::plane_t>      planes;
-    std::vector<i16>                leaf_cluster;
-    std::vector<Cluster>            clusters;
-    std::vector<std::vector<i16>>   instance_clusters;
-
-    /* The cluster around a point, nullopt in solid space */
-    inline std::optional<u32> cluster_of(Vecf3 const& p) const
-    {
-        auto leaf = coll::find_leaf(
-            Span<coll::bsp3d_node_t const>(nodes),
-            Span<coll::plane_t const>(planes),
-            p.x,
-            p.y,
-            p.z);
-        if(!leaf || *leaf >= leaf_cluster.size())
-            return std::nullopt;
-        i16 c = leaf_cluster[*leaf];
-        if(c < 0 || static_cast<size_t>(c) >= clusters.size())
-            return std::nullopt;
-        return static_cast<u32>(c);
-    }
-};
-
-/* Camera inside this volume while in `source` switches to `destination` */
-struct SwitchTrigger
-{
-    Vecf3 lo, hi;
-    i32   source, destination;
 };
 
 struct SectionStreams
@@ -398,27 +168,18 @@ static bool is_compressed(blam::bitm::format_t fmt)
     return fmt == format_t::BC1 || fmt == format_t::BC2 || fmt == format_t::BC3;
 }
 
-using H2RendererManifest = compo::SubsystemManifest<
-    compo::type_list_t<const PlayerCamera, const PlayerInfo>,
-    compo::type_list_t<const BlamResources, const RenderingParameters>,
-    compo::empty_list_t>;
 
-struct H2MapRenderer
-    : compo::RestrictedSubsystem<H2MapRenderer, H2RendererManifest>
+/* Parses a Halo 2 cache into H2Scene: geometry, materials, textures,
+ * lightmaps, placed objects, collision and visibility data. Event driven,
+ * no frame work */
+struct H2MapLoader : compo::SubsystemBase
 {
-    using Proxy = compo::proxy_of<H2RendererManifest>;
-    using type  = H2MapRenderer;
+    using type = H2MapLoader;
 
-    H2MapRenderer(compo::EntityContainer& e)
+    H2MapLoader(compo::EntityContainer& e, H2Scene& scene)
         : m_container(e)
+        , m_scene(scene)
     {
-        /* After MeshRenderer (3072), same slot as the RS2 loader */
-        priority = 3080;
-    }
-
-    bool main_thread_only() const override
-    {
-        return true;
     }
 
     /* True if the file is a Halo 2 cache; it is then loaded (or at least
@@ -605,7 +366,7 @@ struct H2MapRenderer
             dim::raw_file_t::local, Span<const byte_t>(bytes.data, bytes.size));
 
         ensure_gpu();
-        m_generation++;
+        m_scene.generation++;
 
         bool loaded = false;
         if(auto map = dim::map_container<dim::xbox_version_t>::from_bytes(
@@ -642,7 +403,7 @@ struct H2MapRenderer
         /* Shared textures this map did not ask for go away */
         size_t const before = m_shared_textures.size();
         std::erase_if(m_shared_textures, [this](auto const& entry) {
-            return entry.second.generation != m_generation;
+            return entry.second.generation != m_scene.generation;
         });
         cDebug(
             "H2: {} shared textures kept, {} evicted",
@@ -670,282 +431,41 @@ struct H2MapRenderer
 
     void unload()
     {
-        if(m_loaded && m_active >= 0)
-        {
-            Physics::Event       event{.type = Physics::Event::BodyRemoval};
-            Physics::BodyRemoval removal{.entity_id = collision_body_id};
-            m_container.subsystem_cast<PhysicsBus>().process(event, &removal);
-        }
-        m_loaded = false;
+        m_scene.loaded = false;
+        m_scene.sections.clear();
+        m_scene.switches.clear();
+        m_scene.materials.clear();
+        m_scene.lightmap_tex.reset();
+        m_scene.lightmap_sampler.reset();
+        m_scene.start_section = 0;
         m_vertices.clear();
         m_indices.clear();
-        m_materials.clear();
         m_material_index.clear();
         m_textures.clear();
-        m_sections.clear();
-        m_visible.clear();
         m_buckets.clear();
         m_scenery_lights.clear();
         m_objects_total = m_objects_clustered = 0;
-        m_switches.clear();
-        m_active = -1;
         m_lightmaps.clear();
         m_lightmap_atlas = {};
-        m_lightmap_tex.reset();
-        m_lightmap_sampler.reset();
         m_normal_order_logged = false;
     }
 
-    void start_restricted(Proxy& p, time_point const&)
-    {
-        if(!m_loaded)
-            return;
-        PlayerCamera const* camera{};
-        for(auto e : p.select<PlayerCamera, PlayerInfo>())
-        {
-            auto const& [cam, info] = e.components();
-            if(info.seat_idx != 0)
-                continue;
-            camera = &cam;
-            break;
-        }
-        if(!camera)
-            return;
-
-        auto& resources = p.template subsystem<BlamResources>();
-        /* The debug UI's "Update occlusion" freezes the section and the
-         * visible set, so what was culled can be looked at from elsewhere */
-        if(p.template subsystem<RenderingParameters>().occluder_update)
-        {
-            update_section(camera->camera.position);
-            update_visibility(camera->camera.position, camera->matrix);
-        }
-        size_t draws_total = 0, draws_visible = 0;
-        /* Sky first (never writes depth), opaque, then water blended over
-         * everything */
-        for(int pass = 0; pass < 3; pass++)
-            for(auto& mat : m_materials)
-            {
-                int const mat_pass = mat.sky ? 0 : mat.water ? 2 : 1;
-                /* Glass, decals: nothing sensible to draw them with yet */
-                if(mat_pass != pass || mat.section_draws.empty() ||
-                   mat.texture == m_white)
-                    continue;
-                mat.draws.clear();
-                for(auto const& d : mat.section_draws)
-                    if(draw_visible(d.tag))
-                        mat.draws.push_back(d.cmd);
-                draws_total += mat.section_draws.size();
-                draws_visible += mat.draws.size();
-                if(mat.draws.empty())
-                    continue;
-                Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
-                Vecf3 const& eye = camera->camera.position;
-                f32   scale  = mat.sky ? m_sky_scale : 1.f;
-                auto  vert_u = gfx::make_uniform_list(
-                    typing::graphics::ShaderStage::Vertex,
-                    gfx::uniform_pair<Matf4 const>{
-                        {"camera"},
-                        semantic::SpanOne<const Matf4>(camera->matrix)},
-                    gfx::uniform_pair<Vecf2 const>{
-                        {"uv_scale"},
-                        semantic::SpanOne<const Vecf2>(mat.uv_scale)},
-                    gfx::uniform_pair<Vecf3 const>{
-                        {"model_offset"}, semantic::SpanOne<const Vecf3>(offset)},
-                    gfx::uniform_pair<const f32>{
-                        {"model_scale"}, semantic::SpanOne<const f32>(scale)},
-                    gfx::uniform_pair<Vecf2 const>{
-                        {"detail_scale"},
-                        semantic::SpanOne<const Vecf2>(mat.detail_scale)},
-                    gfx::uniform_pair<Vecf2 const>{
-                        {"detail2_scale"},
-                        semantic::SpanOne<const Vecf2>(mat.detail2_scale)},
-                    gfx::uniform_pair<Vecf2 const>{
-                        {"illum_scale"},
-                        semantic::SpanOne<const Vecf2>(mat.illum_scale)},
-                    gfx::uniform_pair<Vecf2 const>{
-                        {"mask_scale"},
-                        semantic::SpanOne<const Vecf2>(mat.mask_scale)},
-                    gfx::uniform_pair<Vecf3 const>{
-                        {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
-                i32  alpha_test = mat.alpha_test ? 1 : 0;
-                auto frag_u     = gfx::make_uniform_list(
-                    typing::graphics::ShaderStage::Fragment,
-                    gfx::uniform_pair<const i32>{
-                        {"alpha_test"},
-                        semantic::SpanOne<const i32>(alpha_test)},
-                    gfx::uniform_pair<Vecf3 const>{
-                        {"illum_color"},
-                        semantic::SpanOne<const Vecf3>(mat.illum_color)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"fog_color"}, semantic::SpanOne<const Vecf4>(m_fog)},
-                    gfx::uniform_pair<Vecf2 const>{
-                        {"fog_range"}, semantic::SpanOne<const Vecf2>(m_fog_range)},
-                    gfx::uniform_pair<Vecf3 const>{
-                        {"fog_eye"}, semantic::SpanOne<const Vecf3>(eye)});
-                auto lm_sampler = m_lightmap_sampler ? m_lightmap_sampler
-                                                     : m_no_lightmaps_sampler;
-                auto samplers = gfx::make_sampler_list(
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"diffuse", 0},
-                        mat.sampler,
-                    },
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"detail", 1},
-                        mat.detail.sampler ? mat.detail.sampler : m_white_sampler,
-                    },
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"detail2", 2},
-                        mat.detail2.sampler ? mat.detail2.sampler
-                                            : m_white_sampler,
-                    },
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"illum", 3},
-                        mat.illum.sampler ? mat.illum.sampler : m_white_sampler,
-                    },
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"lightmaps", 4},
-                        lm_sampler,
-                    },
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"mask", 5},
-                        mat.mask.sampler ? mat.mask.sampler : m_white_sampler,
-                    });
-                auto res = m_api->submit(
-                    {
-                        .program       = m_programs[static_cast<size_t>(mat.variant)],
-                        .vertices      = m_vao,
-                        .render_target = resources.offscreen,
-                        .call          = {.indexed = true, .instanced = true},
-                        .data          = mat.draws,
-                    },
-                    vert_u,
-                    frag_u,
-                    samplers,
-                    gfx::view_state{
-                        .view = typing::vector_types::Veci4{
-                            0,
-                            0,
-                            resources.offscreen_size.x,
-                            resources.offscreen_size.y},
-                        .depth = gfx::depth_state{.reversed = true},
-                    },
-                    gfx::depth_extended_state{.depth_write = !mat.sky && !mat.water},
-                    gfx::blend_state{});
-                if(res.has_value() && !m_draw_error_logged)
-                {
-                    cWarning("H2: failed to draw: {}", std::get<1>(*res));
-                    m_draw_error_logged = true;
-                }
-            }
-        if(m_log_draws)
-        {
-            cDebug("H2: drew {} of {} ranges", draws_visible, draws_total);
-            m_log_draws = false;
-        }
-    }
-
   private:
+    /* The scene's buffers are the loader's to fill */
     void ensure_gpu()
     {
         if(m_api)
             return;
-        m_api = &m_container.subsystem_cast<gfx::system>();
+        m_api     = &m_container.subsystem_cast<gfx::system>();
         auto& api = *m_api;
-
-        m_vao = api.alloc_vertex_array();
-        m_vao->alloc();
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 0,
-                .value = {.offset = 0, .stride = sizeof(Vertex), .count = 3},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 1,
-                .value =
-                    {.offset = offsetof(Vertex, texcoord),
-                     .stride = sizeof(Vertex),
-                     .count  = 2},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 2,
-                .value =
-                    {.offset = offsetof(Vertex, normal),
-                     .stride = sizeof(Vertex),
-                     .count  = 3},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 3,
-                .value =
-                    {.offset = offsetof(Vertex, lightmap),
-                     .stride = sizeof(Vertex),
-                     .count  = 3},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 4,
-                .value =
-                    {.offset = offsetof(Vertex, light),
-                     .stride = sizeof(Vertex),
-                     .count  = 4,
-                     .type   = semantic::type_t::u8,
-                     /* packed: a float input, never an integer attribute */
-                     .flags  = gfx::vertex_attribute::attribute_flags::packed |
-                              gfx::vertex_attribute::attribute_flags::normalized},
-            });
-        m_vao->set_attribute_names({
-            {"position", 0},
-            {"texcoord", 1},
-            {"normal", 2},
-            {"lightmap", 3},
-            {"vertex_light", 4},
-        });
-
-        m_vertex_buf =
+        m_scene.vertex_buf =
             api.alloc_buffer(gfx::buffers::vertex, semantic::RSCA::ReadOnly);
-        m_element_buf =
+        m_scene.element_buf =
             api.alloc_buffer(gfx::buffers::element, semantic::RSCA::ReadOnly);
-        m_vertex_buf->alloc();
-        m_element_buf->alloc();
-        m_vao->set_buffer(gfx::buffers::vertex, m_vertex_buf, 0);
-        m_vao->set_buffer(gfx::buffers::element, m_element_buf);
-
-        /* Stand-in for materials without a usable diffuse map */
-        m_white = api.alloc_texture(
-            gfx::textures::d2,
-            typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8),
-            1);
-        m_white->alloc(size_3d<u32>{2, 2, 1});
-        m_white->upload(std::vector<u8>(16, 0xFF), Veci2{0, 0}, Veci2{2, 2}, 0);
-        m_white_sampler = m_white->sampler();
-        m_white_sampler->alloc();
-
-        m_no_lightmaps = std::make_shared<gfx::compat::texture_2da_t>(
-            &api, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
-        m_no_lightmaps->alloc(size_3d<u32>{2, 2, 1});
-        m_no_lightmaps->upload(
-            std::vector<u8>(16, 0xFF), Veci3{0, 0, 0}, size_3d<i32>{2, 2, 1});
-        m_no_lightmaps_sampler = m_no_lightmaps->sampler();
-        m_no_lightmaps_sampler->alloc();
-
-        for(size_t i = 0; i < m_programs.size(); i++)
-            create_program(
-                api,
-                shader_pair_t{
-                    .vertex_file   = "h2",
-                    .fragment_file = variant_files[i],
-                    .shader        = m_programs[i],
-                });
+        m_scene.vertex_buf->alloc();
+        m_scene.element_buf->alloc();
     }
+
 
     template<typename V>
     bool load_map(dim::map_container<V> const& map, dim::raw_pool const& pool)
@@ -990,13 +510,13 @@ struct H2MapRenderer
 
             gather_collision(*bsp, bsp_magic, *collision);
             auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
-            m_sections.push_back(Section{
+            m_scene.sections.push_back(Section{
                 .name      = bsp_tag ? std::string(map.name_of(*bsp_tag)) : "",
                 .lo        = {from_le(bsp->x_min), from_le(bsp->y_min), from_le(bsp->z_min)},
                 .hi        = {from_le(bsp->x_max), from_le(bsp->y_max), from_le(bsp->z_max)},
                 .collision = std::move(collision),
             });
-            gather_visibility(*bsp, bsp_magic, m_sections.back());
+            gather_visibility(*bsp, bsp_magic, m_scene.sections.back());
 
             /* Lightmaps: one image per cluster and per per-pixel instance,
              * through the region's ltmp; buckets light the rest per vertex */
@@ -1037,13 +557,13 @@ struct H2MapRenderer
                         cluster_count < cluster_lightmaps.size()
                             ? cluster_lightmaps[cluster_count]
                             : nullptr;
-                    if(scenario_body && cluster_count < m_sections.back().clusters.size())
+                    if(scenario_body && cluster_count < m_scene.sections.back().clusters.size())
                         resolve_fog(
                             map,
                             *scenario_body,
                             cluster,
                             ref.default_sky.value(),
-                            m_sections.back().clusters[cluster_count]);
+                            m_scene.sections.back().clusters[cluster_count]);
                     cluster_count++;
                     sections += append_section(
                         pool,
@@ -1166,12 +686,12 @@ struct H2MapRenderer
             return false;
 
         upload_lightmaps();
-        m_vertex_buf->commit(
+        m_scene.vertex_buf->commit(
             Span<const Vertex>(m_vertices.data(), m_vertices.size()));
-        m_element_buf->commit(
+        m_scene.element_buf->commit(
             Span<const u16>(m_indices.data(), m_indices.size()));
         u32 draws = 0;
-        for(auto const& mat : m_materials)
+        for(auto const& mat : m_scene.materials)
         {
             draws += mat.section_draws.size();
             if(!mat.water)
@@ -1203,7 +723,7 @@ struct H2MapRenderer
             map.name(),
             m_vertices.size(),
             m_indices.size(),
-            m_materials.size(),
+            m_scene.materials.size(),
             draws);
         m_vertices = std::vector<Vertex>();
         m_indices  = std::vector<u16>();
@@ -1224,12 +744,12 @@ struct H2MapRenderer
             }
         cDebug("H2: camera at ({}, {}, {}), yaw {}", eye.x, eye.y, eye.z, yaw);
         place_camera(eye, yaw);
-        if(start_section < 0 || static_cast<size_t>(start_section) >= m_sections.size())
+        if(start_section < 0 || static_cast<size_t>(start_section) >= m_scene.sections.size())
             start_section = 0;
-        set_active(start_section);
+        m_scene.start_section = start_section;
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", map.name()));
-        m_loaded = true;
+        m_scene.loaded = true;
 
         /* The Halo 1 systems key off LoadingStatus and would read their
          * empty container, so only the app-level state says "loaded" (which
@@ -1356,14 +876,14 @@ struct H2MapRenderer
             auto const& v = *vp;
             Vecf3       a{from_le(v.position[0]), from_le(v.position[1]), from_le(v.position[2])};
             Vecf3       e{from_le(v.extents[0]), from_le(v.extents[1]), from_le(v.extents[2])};
-            m_switches.push_back(SwitchTrigger{
+            m_scene.switches.push_back(SwitchTrigger{
                 .lo          = glm::min(a, a + e),
                 .hi          = glm::max(a, a + e),
                 .source      = sw.source_bsp.value(),
                 .destination = sw.destination_bsp.value(),
             });
         }
-        cDebug("H2: {} bsp switch triggers", m_switches.size());
+        cDebug("H2: {} bsp switch triggers", m_scene.switches.size());
     }
 
     /* The fog a cluster sits in: the scenario's palette entry it names,
@@ -1499,12 +1019,12 @@ struct H2MapRenderer
     {
         DrawTag tag{.section = bsp};
         i32     section = bsp >= 0 ? bsp : origin_bsp;
-        if(section < 0 || static_cast<size_t>(section) >= m_sections.size())
+        if(section < 0 || static_cast<size_t>(section) >= m_scene.sections.size())
         {
             f32 best_volume = 0.f;
-            for(size_t i = 0; i < m_sections.size(); i++)
+            for(size_t i = 0; i < m_scene.sections.size(); i++)
             {
-                auto const& sec = m_sections[i];
+                auto const& sec = m_scene.sections[i];
                 if(glm::any(glm::lessThan(pos, sec.lo)) ||
                    glm::any(glm::greaterThan(pos, sec.hi)))
                     continue;
@@ -1515,9 +1035,9 @@ struct H2MapRenderer
             }
         }
         m_objects_total++;
-        if(section < 0 || static_cast<size_t>(section) >= m_sections.size())
+        if(section < 0 || static_cast<size_t>(section) >= m_scene.sections.size())
             return tag;
-        auto const& sec = m_sections[section];
+        auto const& sec = m_scene.sections[section];
         for(f32 up : {0.f, 0.3f, 1.f})
             if(auto c = sec.cluster_of(pos + Vecf3{0.f, 0.f, up}))
             {
@@ -1527,171 +1047,6 @@ struct H2MapRenderer
                 break;
             }
         return tag;
-    }
-
-    /* The camera's cluster and the clusters its portals open onto. Solid
-     * space (noclip through rock) keeps the last set. */
-    void update_visibility(Vecf3 const& eye, Matf4 const& mvp)
-    {
-        if(m_active < 0 || !m_visibility_enabled)
-        {
-            m_visible.clear();
-            return;
-        }
-        auto const& sec     = m_sections[m_active];
-        auto        cluster = sec.cluster_of(eye);
-        if(!cluster)
-        {
-            if(m_visible.size() != sec.clusters.size())
-                m_visible.clear();
-            return;
-        }
-        if(*cluster != m_camera_cluster || mvp != m_last_mvp ||
-           m_visible.size() != sec.clusters.size())
-        {
-            m_visible = blam::portal_walk::visible_set(
-                sec.clusters, *cluster, mvp, m_portal_scratch);
-            m_last_mvp = mvp;
-        }
-        if(*cluster != m_camera_cluster)
-        {
-            u32 count = 0;
-            for(bool v : m_visible)
-                count += v;
-            m_fog       = sec.clusters[*cluster].fog;
-            m_fog_range = sec.clusters[*cluster].fog_range;
-            cDebug(
-                "H2: cluster {} of {}, {} visible, fog ({:.2f}, {:.2f}, {:.2f}) x{} over [{}, {}]",
-                *cluster,
-                sec.clusters.size(),
-                count,
-                m_fog.r,
-                m_fog.g,
-                m_fog.b,
-                m_fog.a,
-                m_fog_range.x,
-                m_fog_range.y);
-            m_camera_cluster = *cluster;
-            m_log_draws      = true;
-        }
-    }
-
-    bool draw_visible(DrawTag const& tag) const
-    {
-        if(tag.section >= 0 && tag.section != m_active)
-            return false;
-        if(m_visible.empty() || tag.cluster_section != m_active)
-            return true;
-        if(tag.cluster >= 0)
-            return static_cast<size_t>(tag.cluster) < m_visible.size() &&
-                   m_visible[tag.cluster];
-        if(tag.instance >= 0)
-        {
-            auto const& owners = m_sections[m_active].instance_clusters;
-            if(static_cast<size_t>(tag.instance) >= owners.size() ||
-               owners[tag.instance].empty())
-                return true;
-            for(i16 c : owners[tag.instance])
-                if(c >= 0 && static_cast<size_t>(c) < m_visible.size() &&
-                   m_visible[c])
-                    return true;
-            return false;
-        }
-        return true;
-    }
-
-    /* Switch sections when the camera enters a trigger for the active one.
-     * A camera that left the active section without crossing one (freecam,
-     * teleport) gets the smallest section whose bounds hold it. */
-    void update_section(Vecf3 const& eye)
-    {
-        auto inside = [&](Vecf3 const& lo, Vecf3 const& hi) {
-            return glm::all(glm::greaterThanEqual(eye, lo)) &&
-                   glm::all(glm::lessThanEqual(eye, hi));
-        };
-        for(auto const& sw : m_switches)
-            if(sw.source == m_active && sw.destination != m_active &&
-               sw.destination >= 0 &&
-               static_cast<size_t>(sw.destination) < m_sections.size() &&
-               inside(sw.lo, sw.hi))
-            {
-                set_active(sw.destination);
-                return;
-            }
-        if(m_active >= 0 && inside(m_sections[m_active].lo, m_sections[m_active].hi))
-            return;
-        /* Bounds overlap between sections (a cinematic BSP sits over 03a's
-         * landing pad); being in one of a section's clusters is decisive,
-         * the smallest containing bounds only a last resort */
-        i32 best = -1;
-        f32 best_volume = 0.f;
-        for(size_t i = 0; i < m_sections.size(); i++)
-        {
-            auto const& sec = m_sections[i];
-            if(!inside(sec.lo, sec.hi))
-                continue;
-            if(sec.cluster_of(eye))
-            {
-                best = static_cast<i32>(i);
-                break;
-            }
-            Vecf3 size   = sec.hi - sec.lo;
-            f32   volume = size.x * size.y * size.z;
-            if(best < 0 || volume < best_volume)
-                best = static_cast<i32>(i), best_volume = volume;
-        }
-        if(best >= 0)
-            set_active(best);
-    }
-
-    /* The active section's collision is the one static body */
-    void set_active(i32 section)
-    {
-        if(section == m_active || section < 0 ||
-           static_cast<size_t>(section) >= m_sections.size())
-            return;
-        if(m_active >= 0)
-        {
-            Physics::Event       event{.type = Physics::Event::BodyRemoval};
-            Physics::BodyRemoval removal{.entity_id = collision_body_id};
-            m_container.subsystem_cast<PhysicsBus>().process(event, &removal);
-        }
-        m_active         = section;
-        m_camera_cluster = std::numeric_limits<u32>::max();
-        m_visible.clear();
-        m_fog = {};
-        cDebug("H2: section {} ({}) active", section, m_sections[section].name);
-        submit_collision(m_sections[section].collision);
-    }
-
-    /* One static body for the active section, like the Halo 1 world mesh */
-    void submit_collision(std::shared_ptr<CollisionMesh> mesh)
-    {
-#if defined(FEATURE_ENABLE_BULLET3)
-        if(!mesh || mesh->indices.empty())
-            return;
-        auto body       = std::make_shared<Physics::BodyCreationPrebuilt>();
-        body->entity_id = collision_body_id;
-        body->mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
-        btIndexedMesh part;
-        part.m_numTriangles        = static_cast<int>(mesh->indices.size() / 3);
-        part.m_triangleIndexBase   = reinterpret_cast<unsigned char const*>(
-            mesh->indices.data());
-        part.m_triangleIndexStride = 3 * sizeof(i32);
-        part.m_numVertices = static_cast<int>(mesh->vertices.size());
-        part.m_vertexBase =
-            reinterpret_cast<unsigned char const*>(mesh->vertices.data());
-        part.m_vertexStride = sizeof(Vecf3);
-        part.m_vertexType   = PHY_FLOAT;
-        body->mesh_iface->addIndexedMesh(part, PHY_INTEGER);
-        body->shape = std::make_unique<btBvhTriangleMeshShape>(
-            body->mesh_iface.get(), true);
-        body->keep_alive = mesh;
-        Physics::Event event{.type = Physics::Event::BodyCreationPrebuilt};
-        m_container.subsystem_cast<PhysicsBus>().process(event, body.get());
-#else
-        (void)mesh;
-#endif
     }
 
     /*! Instance placement as a matrix: rows 0-2 of the 4x3 are the scaled
@@ -1901,7 +1256,7 @@ struct H2MapRenderer
         bool strip = static_cast<u32>(section.face_count()) * 3 != index_count;
 
         /* One triangle list per material of this section */
-        i32 fallback = static_cast<i32>(m_materials.size()) - 1;
+        i32 fallback = static_cast<i32>(m_scene.materials.size()) - 1;
         std::unordered_map<i32, std::vector<u16>> tris;
         auto emit = [&](std::vector<u16>& out, Span<const u16> range) {
             if(!strip)
@@ -1986,9 +1341,9 @@ struct H2MapRenderer
         for(auto& [mat, list] : tris)
         {
             if(list.empty() || mat < 0 ||
-               static_cast<size_t>(mat) >= m_materials.size())
+               static_cast<size_t>(mat) >= m_scene.materials.size())
                 continue;
-            m_materials[mat].section_draws.push_back({
+            m_scene.materials[mat].section_draws.push_back({
                 .cmd =
                     {
                         .elements =
@@ -2104,11 +1459,11 @@ struct H2MapRenderer
                 i16   node  = ref.node.value();
                 if(node >= 0 && static_cast<size_t>(node) < node_world.size())
                     local = transform * node_world[node];
-                for(size_t i = 0; i < m_sections.size(); i++)
+                for(size_t i = 0; i < m_scene.sections.size(); i++)
                 {
                     if(section >= 0 && static_cast<i32>(i) != section)
                         continue;
-                    auto& mesh  = *m_sections[i].collision;
+                    auto& mesh  = *m_scene.sections[i].collision;
                     size_t before = mesh.indices.size();
                     append_collision(ref.bsp, map.magic(), local, mesh);
                     if(static_cast<i32>(i) == section || section < 0)
@@ -2360,15 +1715,15 @@ struct H2MapRenderer
     {
         if(m_lightmaps.empty())
             return;
-        m_lightmap_tex = std::make_shared<gfx::compat::texture_2da_t>(
+        m_scene.lightmap_tex = std::make_shared<gfx::compat::texture_2da_t>(
             m_api, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
-        m_lightmap_tex->alloc(
+        m_scene.lightmap_tex->alloc(
             size_3d<u32>{
                 LightmapAtlas::page,
                 LightmapAtlas::page,
                 static_cast<u32>(m_lightmap_atlas.pages.size())});
         for(auto& image : m_lightmaps)
-            m_lightmap_tex->upload(
+            m_scene.lightmap_tex->upload(
                 std::move(image->rgba),
                 Veci3{
                     static_cast<i32>(image->x),
@@ -2379,9 +1734,9 @@ struct H2MapRenderer
                     static_cast<i32>(image->height),
                     1});
         m_lightmaps.clear();
-        m_lightmap_sampler = m_lightmap_tex->sampler();
-        m_lightmap_sampler->alloc();
-        m_lightmap_sampler->set_filtering(
+        m_scene.lightmap_sampler = m_scene.lightmap_tex->sampler();
+        m_scene.lightmap_sampler->alloc();
+        m_scene.lightmap_sampler->set_filtering(
             typing::Filtering::Linear, typing::Filtering::Linear);
     }
 
@@ -2635,7 +1990,7 @@ struct H2MapRenderer
         dim::raw_pool const&         pool,
         dim::scn::scenario_t const&  scnr)
     {
-        m_sky_scale  = 1.f;
+        m_scene.sky_scale  = 1.f;
         auto skies   = scnr.skies.data(map.magic());
         if(skies.has_error() || skies.value().empty())
             return;
@@ -2655,7 +2010,7 @@ struct H2MapRenderer
             radius = std::max(radius, glm::length(m_vertices[i].position));
         constexpr f32 sky_radius = 80.f; /* inside the 100 unit far plane */
         if(radius > sky_radius)
-            m_sky_scale = sky_radius / radius;
+            m_scene.sky_scale = sky_radius / radius;
         cDebug(
             "H2: sky {}: {} sections, radius {}",
             map.name_of(*sky_tag),
@@ -2663,7 +2018,7 @@ struct H2MapRenderer
             radius);
     }
 
-    /* Index into m_materials for a shad tag, created on first use. The last
+    /* Index into m_scene.materials for a shad tag, created on first use. The last
      * material is always the untextured fallback. */
     template<typename V>
     i32 material_for(
@@ -2672,23 +2027,19 @@ struct H2MapRenderer
         dim::datum_index             shad_id,
         bool                         sky = false)
     {
-        if(m_materials.empty())
-            m_materials.push_back(Material{
+        if(m_scene.materials.empty())
+            m_scene.materials.push_back(Material{
                 .name    = "<fallback>",
-                .texture = m_white,
-                .sampler = m_white_sampler,
             });
         auto const* shad_tag = map.tag_at(shad_id);
         if(!shad_tag)
-            return static_cast<i32>(m_materials.size()) - 1;
+            return static_cast<i32>(m_scene.materials.size()) - 1;
         u32 key = shad_id.index() | (sky ? 0x10000u : 0u);
         if(auto it = m_material_index.find(key); it != m_material_index.end())
             return it->second;
 
         Material mat{
             .name    = std::string(map.name_of(*shad_tag)),
-            .texture = m_white,
-            .sampler = m_white_sampler,
             .sky     = sky,
         };
         bool resolved = false;
@@ -2771,14 +2122,14 @@ struct H2MapRenderer
             mat.name,
             mat.uv_scale.x,
             mat.uv_scale.y,
-            mat.texture == m_white ? "no diffuse" : "textured",
+            !mat.texture ? "no diffuse" : "textured",
             mat.detail_mode == 2   ? ", blended detail"
             : mat.detail_mode == 1 ? ", detail"
                                    : "",
             resolved ? "" : " (template unresolved)");
 
-        m_materials.insert(m_materials.end() - 1, std::move(mat));
-        i32 idx = static_cast<i32>(m_materials.size()) - 2;
+        m_scene.materials.insert(m_scene.materials.end() - 1, std::move(mat));
+        i32 idx = static_cast<i32>(m_scene.materials.size()) - 2;
         /* Everything after the inserted slot moved by one: only the
          * fallback, which holds no cached index */
         m_material_index.emplace(key, idx);
@@ -2802,7 +2153,7 @@ struct H2MapRenderer
             if(auto it = m_shared_textures.find(*shared);
                it != m_shared_textures.end())
             {
-                it->second.generation = m_generation;
+                it->second.generation = m_scene.generation;
                 m_textures.emplace(key, it->second.texture);
                 return it->second.texture;
             }
@@ -2818,7 +2169,7 @@ struct H2MapRenderer
         out.sampler->set_anisotropic(4);
         m_textures.emplace(key, out);
         if(shared)
-            m_shared_textures[*shared] = {out, m_generation};
+            m_shared_textures[*shared] = {out, m_scene.generation};
         return out;
     }
 
@@ -3048,40 +2399,14 @@ struct H2MapRenderer
         update_camera_aspect(m_container);
     }
 
-    /* Entity id of the map's static collision body; out of the range the
-     * object spawns use */
-    static constexpr u64 collision_body_id = 0x4832'0000'0000'0000ull;
-
     compo::EntityContainer& m_container;
-    gfx::api*               m_api{nullptr};
+    H2Scene&                m_scene;
+    gfx::system*            m_api{nullptr};
 
-    std::shared_ptr<gfx::vertex_array_t> m_vao;
-    std::shared_ptr<gfx::buffer_t>       m_vertex_buf;
-    std::shared_ptr<gfx::buffer_t>       m_element_buf;
-    std::array<std::shared_ptr<gfx::program_t>, static_cast<size_t>(Variant::count)>
-        m_programs;
-    std::shared_ptr<gfx::texture_2d_t>   m_white;
-    std::shared_ptr<gfx::sampler_t>      m_white_sampler;
-
-    std::vector<Section>           m_sections;
-    std::vector<SwitchTrigger>     m_switches;
-    i32                            m_active{-1};
-    /* Per cluster of the active section; empty = everything */
-    std::vector<bool>      m_visible;
-    blam::portal_walk::scratch_t m_portal_scratch;
-    u32                    m_camera_cluster{std::numeric_limits<u32>::max()};
-    Matf4                          m_last_mvp{};
-    Vecf4                          m_fog{0.f, 0.f, 0.f, 0.f};
-    Vecf2                          m_fog_range{0.f, 1.f};
-    bool                           m_log_draws{false};
-    u32                            m_objects_total{0}, m_objects_clustered{0};
-    bool m_visibility_enabled{!std::getenv("COFFEE_H2_NO_VISIBILITY")};
-    u32  m_model_fail_logged{0};
-    std::vector<Vertex>            m_vertices;
-    std::vector<u16>               m_indices;
-    std::vector<Material>          m_materials;
-    std::unordered_map<u32, i32>   m_material_index; /* shad tag -> slot */
-    std::unordered_map<u16, Texture> m_textures;     /* bitm tag -> gpu */
+    std::vector<Vertex>              m_vertices;
+    std::vector<u16>                 m_indices;
+    std::unordered_map<u32, i32>     m_material_index; /* shad tag -> slot */
+    std::unordered_map<u16, Texture> m_textures;       /* bitm tag -> gpu */
     struct SharedTexture
     {
         Texture texture;
@@ -3089,31 +2414,30 @@ struct H2MapRenderer
     };
     std::unordered_map<u64, SharedTexture> m_shared_textures; /* side slot:offset */
     std::array<std::shared_ptr<dim::raw_source>, 3> m_side_sources;
-    u32                                    m_generation{0};
-    std::vector<std::unique_ptr<LightmapImage>>  m_lightmaps;
-    std::vector<std::vector<LightBucket>>        m_buckets;        /* per BSP */
+    std::vector<std::unique_ptr<LightmapImage>>        m_lightmaps;
+    std::vector<std::vector<LightBucket>>              m_buckets;        /* per BSP */
     std::vector<std::unordered_map<u32, SceneryLight>> m_scenery_lights; /* per BSP */
-    LightmapAtlas                                m_lightmap_atlas;
-    std::shared_ptr<gfx::compat::texture_2da_t>  m_lightmap_tex;
-    std::shared_ptr<gfx::sampler_t>              m_lightmap_sampler;
-    std::shared_ptr<gfx::compat::texture_2da_t>  m_no_lightmaps;
-    std::shared_ptr<gfx::sampler_t>              m_no_lightmaps_sampler;
-    f32                            m_sky_scale{1.f};
-    std::set<std::string>          m_unknown_passes;
-    bool                           m_loaded{false};
-    bool                           m_normal_order_logged{false};
-    bool                           m_draw_error_logged{false};
+    LightmapAtlas                                      m_lightmap_atlas;
+    std::set<std::string>                              m_unknown_passes;
+    u32  m_objects_total{0}, m_objects_clustered{0};
+    u32  m_model_fail_logged{0};
+    bool m_normal_order_logged{false};
 };
 
-void alloc_h2_renderer(compo::EntityContainer& e)
+void alloc_h2(compo::EntityContainer& e)
 {
-    auto& renderer = e.register_subsystem_inplace<H2MapRenderer>(std::ref(e));
+    auto& scene = e.register_subsystem_inplace<H2Scene>();
+    e.register_subsystem_inplace<H2Visibility>();
+    auto& loader =
+        e.register_subsystem_inplace<H2MapLoader>(std::ref(e), std::ref(scene));
     e.subsystem_cast<GameEventBus>().addEventFunction<MapLoadEvent>(
-        0, [&renderer](GameEvent& ev, MapLoadEvent* load) {
+        0, [&loader](GameEvent& ev, MapLoadEvent* load) {
             /* Consumed here: the Halo 1 loader never sees a Halo 2 map */
-            if(renderer.on_map_load(*load))
+            if(loader.on_map_load(*load))
                 ev.type = GameEvent::None;
         });
+    alloc_h2_occluder(e);
+    alloc_h2_renderer(e);
 }
 
 } // namespace h2
