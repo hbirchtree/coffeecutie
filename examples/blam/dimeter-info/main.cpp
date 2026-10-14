@@ -8,6 +8,8 @@
 #include "dump_scenario.h"
 #include "dump_ui.h"
 
+#include <blam/dimeter/font.h>
+
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/geometry.h>
 #include <blam/dimeter/map.h>
@@ -1597,6 +1599,67 @@ int run_map(
     return 0;
 }
 
+/* Header, metrics and a few glyphs as ASCII art */
+i32 dump_font(std::string const& path)
+{
+    using namespace platform::url::constructors;
+    Resource file(MkSysUrl(path));
+    auto     bytes = C_OCAST<BytesConst>(file);
+    auto     font  = blam::dimeter::font::font_t::from_bytes(
+        Span<const byte_t>(bytes.data, bytes.size));
+    if(!font)
+    {
+        cBasicPrint("{0}: not a Halo 2 font", path);
+        return 1;
+    }
+    fmt::print(
+        "{}: {} glyphs, ascent {} descent {} leading {}, {} kerning pairs, "
+        "max compressed {} bytes\n",
+        path,
+        font->glyphs.size(),
+        font->ascent(),
+        font->descent(),
+        blam::from_le(font->header->leading),
+        font->kerning.size(),
+        blam::from_le(font->header->max_compressed_size));
+    for(char32_t c : std::u32string(U"HA2g!"))
+    {
+        auto const* g = font->glyph(c);
+        if(!g)
+        {
+            fmt::print("'{}': no glyph\n", static_cast<char>(c));
+            continue;
+        }
+        blam::dimeter::font::image_t image;
+        bool ok = font->decode(*g, image);
+        fmt::print(
+            "'{}': advance {} size {}x{} origin ({}, {}) {} bytes{}\n",
+            static_cast<char>(c),
+            blam::from_le(g->advance),
+            blam::from_le(g->width),
+            blam::from_le(g->height),
+            blam::from_le(g->origin_x),
+            blam::from_le(g->origin_y),
+            blam::from_le(g->compressed_size),
+            ok ? "" : " (decode failed)");
+        static constexpr const char* shades = " .:-=+*#%@";
+        for(u32 y = 0; y < image.height; y++)
+        {
+            std::string row;
+            for(u32 x = 0; x < image.width; x++)
+            {
+                u8 a = image.rgba[(y * image.width + x) * 4 + 3];
+                row.push_back(shades[a * 9 / 255]);
+            }
+            fmt::print("  |{}|\n", row);
+        }
+    }
+    for(auto const& k : font->kerning)
+        if(k.first == 'A' || k.first == 'T')
+            fmt::print("  kern '{}{}' {}\n", static_cast<char>(k.first), static_cast<char>(k.second), blam::from_le(k.adjust));
+    return 0;
+}
+
 } // namespace
 
 i32 coffee_main(i32, cstring_w*)
@@ -1636,6 +1699,10 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("scripts", "Decompile the scenario's scripts and globals")
         //
+        ("font",
+         "Dump a Halo 2 font file (fonts/<name>) instead of a map",
+         cxxopts::value<std::string>())
+        //
         ;
     opts.add_options("Extraction")
         //
@@ -1653,6 +1720,9 @@ i32 coffee_main(i32, cstring_w*)
     auto  arguments = opts.parse(args.size(), args.data());
     if(Coffee::BaseArgParser::PerformDefaults(opts, args) >= 0)
         return 0;
+
+    if(auto font = arguments.as_optional<std::string>("font"))
+        return dump_font(*font);
 
     /* The launcher may put a resource directory first; the map is the
      * first positional that is a file */
