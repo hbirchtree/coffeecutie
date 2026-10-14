@@ -354,24 +354,12 @@
       </select>
     </div>
     <div class="options">
-      <label for="halo2-target">
-        When Xbox and Vista cannot be told apart, store Halo 2
-        <code>shared.map</code>, <code>single_player_shared.map</code> and
-        <code>mainmenu.map</code> under
-      </label>
-      <select id="halo2-target">
-        <option value="auto">the Halo 2 maps dropped with them</option>
-        <option value="h2xbox">/h2xbox/ (Halo 2 Xbox)</option>
-        <option value="h2vista">/h2vista/ (Halo 2 Vista)</option>
-      </select>
-    </div>
-    <div class="options">
       <label for="transcode-target">
         Transcode Halo PC, Custom Edition and Xbox textures to
       </label>
       <select id="transcode-target">
-        <option value="">nothing, store them as they are (S3TC/DXT)</option>
-        <option value="ES3">ETC2, for GPUs without S3TC (most phones)</option>
+        <option value="">nothing, store them as they are (BCn)</option>
+        <option value="ES3">ETC2, for GPUs without BCn (most phones)</option>
       </select>
     </div>
     <p id="gpu-caps"></p>
@@ -436,12 +424,11 @@
   /* Halo 2 tag index header, read at the map's meta_offset */
   const HALO2_INDEX_SIZE = 32;
   const MAX_FILE_SIZE = 0xffffffff;
-  const PREFIXES = ['pc', 'custom', 'xbox', 'mcc', 'h2xbox', 'h2vista'];
+  const PREFIXES = ['pc', 'custom', 'xbox', 'mcc', 'h2xbox'];
   /* Halo CE prefixes BlamGraphics loads from */
   const BLAMG_PREFIXES = ['pc', 'custom', 'xbox', 'mcc'];
   /* Halo CE prefixes that have resource maps */
   const RESOURCE_PREFIXES = ['pc', 'custom', 'mcc'];
-  const HALO2_PREFIXES = ['h2xbox', 'h2vista'];
   /* Halo 2 maps read raw data from these next to them, by name
    * (blam::dimeter::cache_type_t in the header's map_type) */
   const HALO2_CACHE_FILES = {
@@ -464,12 +451,12 @@
     8: { label: 'Localization resource map', resource: 'loc.map' },
     9: { label: 'Halo 2 map' },
     10: { label: 'Halo 2 Xbox map', prefix: 'h2xbox' },
-    11: { label: 'Halo 2 Vista map', prefix: 'h2vista' },
+    11: { label: 'Halo 2 Vista map' },
   };
   const SKIP_REASONS = {
     5: 'Skipped: Trial maps are not supported',
-    9: 'Skipped: no tag index where the header points, so Xbox and Vista ' +
-       'cannot be told apart (compressed?)',
+    9: 'Skipped: no tag index where the header points (compressed?)',
+    11: 'Skipped: Halo 2 Vista maps are not supported',
   };
 
   /* Transcode targets offered on the page, values are mtx::make_kernel()
@@ -483,7 +470,6 @@
   const picker = document.getElementById('picker');
   const results = document.getElementById('results');
   const resourceTarget = document.getElementById('resource-target');
-  const halo2Target = document.getElementById('halo2-target');
   const transcodeSelect = document.getElementById('transcode-target');
   const optimize = document.getElementById('optimize');
   const runtimeStatus = document.getElementById('runtime-status');
@@ -574,6 +560,22 @@
           keys.push(dirKey(prefix) + name);
     }
     return keys;
+  }
+
+  /* Everything else in OPFS: FileMapper's downloads, /config, leftovers */
+  async function listOther() {
+    const files = [];
+    const walk = async (dir, path) => {
+      for await (const [name, handle] of dir.entries()) {
+        const key = `${path}/${name}`;
+        if (handle.kind === 'directory')
+          await walk(handle, key);
+        else if (!PREFIXES.includes(path.slice(1)))
+          files.push({ key, size: (await handle.getFile()).size });
+      }
+    };
+    await walk(await opfsRoot(), '');
+    return files.sort((a, b) => a.key.localeCompare(b.key));
   }
 
   /* ---------- Wasm helpers ---------- */
@@ -782,11 +784,11 @@
     if (caps.s3tc)
       advice = 'Maps work here as they are.';
     else if (caps.etc)
-      advice = 'Without S3TC every texture is decoded in software, ' +
+      advice = 'Without BCn every texture is decoded in software, ' +
                'transcoding to ETC2 keeps them compressed on the GPU.';
     else
       advice = 'Neither is available, textures are decoded in software.';
-    out.textContent = `This GPU, through WebGL 2: S3TC ${yes(caps.s3tc)}, ` +
+    out.textContent = `This GPU, through WebGL 2: BCn ${yes(caps.s3tc)}, ` +
                       `ETC2 ${yes(caps.etc)}. ${advice}`;
     if (!caps.s3tc && caps.etc)
       transcodeSelect.value = 'ES3';
@@ -895,24 +897,6 @@
     };
   }
 
-  /* Halo 2's global cache files whose layout the tag index did not settle
-   * go with the Halo 2 maps dropped alongside them, or wherever the user
-   * picked */
-  function halo2Prefix(batch) {
-    if (halo2Target.value !== 'auto')
-      return { prefix: halo2Target.value };
-    const prefixes = new Set(batch
-      .map(item => item.kind.prefix)
-      .filter(prefix => HALO2_PREFIXES.includes(prefix)));
-    if (prefixes.size === 1)
-      return { prefix: [...prefixes][0] };
-    return {
-      error: prefixes.size
-        ? 'Both Xbox and Vista Halo 2 maps dropped together, pick a target above and drop this again'
-        : 'No Halo 2 map dropped with it to tell Xbox from Vista, pick a target above and drop this again',
-    };
-  }
-
   async function upload(files) {
     if (busy || !ready || !files.length)
       return;
@@ -933,9 +917,11 @@
           const info = await identify(file);
           let kind = KINDS[info.kind] || KINDS[0];
           const cacheFile = HALO2_CACHE_FILES[info.cacheType];
+          /* Global cache files may have too little tag data to tell Xbox
+           * from Vista; only Xbox is supported, so they are taken as Xbox */
           if (info.kind === KIND_HALO2_UNRESOLVED && cacheFile)
-            kind = { label: 'Halo 2 map, Xbox or Vista unknown', halo2CacheFile: cacheFile };
-          else if (kind.prefix && HALO2_PREFIXES.includes(kind.prefix) && cacheFile)
+            kind = { ...KINDS[10], halo2CacheFile: cacheFile };
+          else if (kind.prefix === 'h2xbox' && cacheFile)
             kind = { ...kind, halo2CacheFile: cacheFile };
           let detected = kind.label;
           if (kind.halo2CacheFile)
@@ -952,7 +938,6 @@
       }
 
       const resources = resourcePrefix(batch);
-      const halo2Files = halo2Prefix(batch);
       let stored = 0;
 
       /* Maps are transcoded along with the bitmaps.map dropped with them,
@@ -989,12 +974,6 @@
           key = dirKey(kind.prefix) + kind.halo2CacheFile;
         } else if (kind.prefix) {
           key = mapKey(kind.prefix, file.name);
-        } else if (kind.halo2CacheFile) {
-          if (halo2Files.error) {
-            set(undefined, '', halo2Files.error, 'warn');
-            continue;
-          }
-          key = dirKey(halo2Files.prefix) + kind.halo2CacheFile;
         } else if (kind.resource) {
           if (resources.error) {
             set(undefined, '', resources.error, 'warn');
@@ -1228,6 +1207,43 @@
     }
     if (!any)
       container.innerHTML = '<p class="empty">No maps stored in this browser yet.</p>';
+
+    let other = [];
+    try {
+      other = await listOther();
+    } catch (e) { /* the maps above are what matters */ }
+    if (other.length) {
+      const title = document.createElement('h3');
+      title.textContent = 'Other files';
+      const note = document.createElement('p');
+      note.textContent = 'Not in a map directory: copies BlamGraphics downloaded, ' +
+                         'its settings, or anything else left in this site\'s storage.';
+      const list = document.createElement('ul');
+      list.className = 'stored-list';
+      for (const { key, size } of other) {
+        const item = document.createElement('li');
+        const code = document.createElement('code');
+        code.textContent = key;
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = size < 1024 * 1024
+          ? `${(size / 1024).toFixed(1)} KiB`
+          : `${(size / (1024 * 1024)).toFixed(1)} MiB`;
+        const remove = pill('button', 'Delete');
+        remove.classList.add('danger');
+        remove.addEventListener('click', async () => {
+          remove.disabled = true;
+          try {
+            await deleteFile(key);
+          } finally {
+            refreshStored();
+          }
+        });
+        item.append(code, tag, remove);
+        list.append(item);
+      }
+      container.append(title, note, list);
+    }
 
     const usage = document.getElementById('storage-usage');
     if (navigator.storage && navigator.storage.estimate) {

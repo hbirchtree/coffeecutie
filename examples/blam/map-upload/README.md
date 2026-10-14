@@ -18,7 +18,6 @@ is `pc/bloodgulch.map`.
 | MCC map             | `/mcc/<name>.map`                             |
 | Resource maps       | `/<prefix>/bitmaps.map`, `sounds.map`, `loc.map` |
 | Halo 2 Xbox map     | `/h2xbox/<name>.map`                          |
-| Halo 2 Vista map    | `/h2vista/<name>.map`                         |
 
 File names are lowercased. Resource maps get their canonical name from their
 contents, whatever the file was called. Halo PC Trial maps and anything else
@@ -76,9 +75,8 @@ Only the first 2 KiB of a file is read for this (`blam_upload_identify()` in
   header itself tells them apart. The page also reads the 32-byte tag index
   at the header's `meta_offset`. As in `blam::dimeter::map_container`, its
   group table pointer is a virtual address on Xbox and a small offset on
-  Vista. Halo 2 maps are stored as they are; when no tag index is found
-  there (a compressed map, say), the file is skipped. BlamGraphics does not
-  load Halo 2 maps, so this only puts them in storage for now.
+  Vista. Only Xbox maps are stored, as they are; Vista maps are skipped, and
+  so is a map with no tag index there (a compressed map, say).
 - **Halo 2 `mainmenu.map`, `shared.map` and `single_player_shared.map`**
   exist for both Xbox and Vista, and every Halo 2 map reads raw data from
   them by those names in its own directory (see `dimeter-info`). They are
@@ -87,8 +85,7 @@ Only the first 2 KiB of a file is read for this (`blam_upload_identify()` in
   `shared.map` may carry too little tag data for the Xbox/Vista check. In
   that case `map_type` is read at both layouts' offsets (0x140 Xbox, 0x14C
   Vista) and trusted only when exactly one of them reads as one of these
-  files, and the file goes under the prefix of the Halo 2 maps dropped with
-  it, or the one picked on the page.
+  files. Either way it is stored under `/h2xbox/`.
 - **Trial maps** have the scrambled `Ehed`/`Gfot` header
   (`blam::file_header_trial_t`).
 - **`bitmaps.map`, `sounds.map` and `loc.map`** have no map header. They
