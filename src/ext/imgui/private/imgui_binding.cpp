@@ -300,13 +300,21 @@ void ImGuiSystem::start_restricted(Proxy& p, time_point const& t)
     m_im_data->time = time;
 
     // Setup inputs
-    if(auto mouse = p.service<comp_app::MouseInput>())
+    while(auto mouse = p.service<comp_app::MouseInput>())
     {
+        if(mouse->mouseGrabbed())
+        {
+            io.ConfigFlags |= ImGuiConfigFlags_NoMouse | ImGuiConfigFlags_NoKeyboard;
+            break;
+        }else
+            io.ConfigFlags &= ~(ImGuiConfigFlags_NoMouse | ImGuiConfigFlags_NoKeyboard);
+
         auto pos          = mouse->position();
         io.MousePosPrev   = io.MousePos;
         io.MousePos       = ImVec2(pos.x / uiScaling, pos.y / uiScaling);
         io.MouseWheel     = m_im_data->scroll;
         m_im_data->scroll = 0.0f;
+        break;
     }
 
     // Start the frame
