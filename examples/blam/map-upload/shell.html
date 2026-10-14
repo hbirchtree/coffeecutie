@@ -424,7 +424,11 @@
   /* Halo 2 tag index header, read at the map's meta_offset */
   const HALO2_INDEX_SIZE = 32;
   const MAX_FILE_SIZE = 0xffffffff;
-  const PREFIXES = ['pc', 'custom', 'xbox', 'mcc', 'h2xbox'];
+  const PREFIXES = ['pc', 'custom', 'xbox', 'mcc', 'halo2'];
+  /* Halo 2's UI fonts, read from fonts/ next to the maps */
+  const HALO2_FONTS = 'halo2/fonts';
+  /* Directories this page stores into */
+  const STORE_DIRS = [...PREFIXES, HALO2_FONTS];
   /* Halo CE prefixes BlamGraphics loads from */
   const BLAMG_PREFIXES = ['pc', 'custom', 'xbox', 'mcc'];
   /* Halo CE prefixes that have resource maps */
@@ -450,7 +454,7 @@
     7: { label: 'Sounds resource map', resource: 'sounds.map' },
     8: { label: 'Localization resource map', resource: 'loc.map' },
     9: { label: 'Halo 2 map' },
-    10: { label: 'Halo 2 Xbox map', prefix: 'h2xbox' },
+    10: { label: 'Halo 2 map', prefix: 'halo2' },
     11: { label: 'Halo 2 Vista map' },
   };
   const SKIP_REASONS = {
@@ -548,7 +552,7 @@
 
   async function listKeys() {
     const keys = [];
-    for (const prefix of PREFIXES) {
+    for (const prefix of STORE_DIRS) {
       let dir;
       try {
         dir = await opfsDir(opfsPath(dirKey(prefix)).slice(0, -1), false);
@@ -570,7 +574,7 @@
         const key = `${path}/${name}`;
         if (handle.kind === 'directory')
           await walk(handle, key);
-        else if (!PREFIXES.includes(path.slice(1)))
+        else if (!STORE_DIRS.includes(path.slice(1)))
           files.push({ key, size: (await handle.getFile()).size });
       }
     };
@@ -623,6 +627,15 @@
 
   async function readSlice(file, start, length) {
     return new Uint8Array(await file.slice(start, start + length).arrayBuffer());
+  }
+
+  /* blam::dimeter::font: a zeroed 0x200 bytes, then a header whose version
+   * is 0xF0000001, and the glyph table at 0x40400 */
+  async function isHalo2Font(file) {
+    if (file.size < 0x40400)
+      return false;
+    const head = await readSlice(file, 0x200, 4);
+    return new DataView(head.buffer).getUint32(0, true) === 0xF0000001;
   }
 
   /* Only reads the header, plus Halo 2's tag index header */
@@ -800,18 +813,20 @@
     return new Promise((resolve, reject) => reader.readEntries(resolve, reject));
   }
 
-  /* Folders only contribute .map files, so dropping a whole game folder
-   * does not read every file in it. Files dropped directly are always
-   * checked, whatever their name. */
-  async function collectEntry(entry, out) {
+  /* Folders only contribute .map files and whatever is in a fonts/ folder
+   * (Halo 2's UI fonts), so dropping a whole game folder does not read
+   * every file in it. Files dropped directly are always checked, whatever
+   * their name. */
+  async function collectEntry(entry, out, inFonts = false) {
     if (entry.isFile) {
-      if (entry.name.toLowerCase().endsWith('.map'))
+      if (inFonts || entry.name.toLowerCase().endsWith('.map'))
         out.push(await new Promise((resolve, reject) => entry.file(resolve, reject)));
     } else if (entry.isDirectory) {
+      const fonts = inFonts || entry.name.toLowerCase() === 'fonts';
       const reader = entry.createReader();
       for (let batch; (batch = await readEntries(reader)).length;)
         for (const child of batch)
-          await collectEntry(child, out);
+          await collectEntry(child, out, fonts);
     }
   }
 
@@ -908,6 +923,11 @@
       const batch = [];
       for (const file of files) {
         const set = addRow(file);
+        if (/^font_table.*\.txt$/i.test(file.name) || await isHalo2Font(file)) {
+          set('Halo 2 font', undefined, 'Waiting', 'busy');
+          batch.push({ file, info: {}, kind: { font: true }, set });
+          continue;
+        }
         /* Map offsets are u32, and main.cpp takes the size as one */
         if (file.size > MAX_FILE_SIZE) {
           set('Too large to be a Halo map', '', 'Skipped', 'warn');
@@ -921,7 +941,7 @@
            * from Vista; only Xbox is supported, so they are taken as Xbox */
           if (info.kind === KIND_HALO2_UNRESOLVED && cacheFile)
             kind = { ...KINDS[10], halo2CacheFile: cacheFile };
-          else if (kind.prefix === 'h2xbox' && cacheFile)
+          else if (kind.prefix === 'halo2' && cacheFile)
             kind = { ...kind, halo2CacheFile: cacheFile };
           let detected = kind.label;
           if (kind.halo2CacheFile)
@@ -974,6 +994,9 @@
           key = dirKey(kind.prefix) + kind.halo2CacheFile;
         } else if (kind.prefix) {
           key = mapKey(kind.prefix, file.name);
+        } else if (kind.font) {
+          /* Names are kept as they are, the font table refers to them so */
+          key = dirKey(HALO2_FONTS) + file.name;
         } else if (kind.resource) {
           if (resources.error) {
             set(undefined, '', resources.error, 'warn');
@@ -1122,6 +1145,59 @@
     return element;
   }
 
+  /* Whether font_table.txt and every font it names are stored. The table
+   * lists one font file per line, some more than once */
+  async function halo2FontStatus(keys, halo2Maps) {
+    const names = keys.map(key => key.slice(dirKey(HALO2_FONTS).length));
+    let missing = null;
+    if (names.includes('font_table.txt')) {
+      const table = await (await (await opfsDir(opfsPath(dirKey(HALO2_FONTS)).slice(0, -1), false))
+        .getFileHandle('font_table.txt')).getFile();
+      /* As blam::dimeter::font::parse_font_table() reads it */
+      const wanted = [...new Set((await table.text()).split(/[\r\n]/).filter(Boolean))];
+      missing = wanted.filter(name => !names.includes(name));
+    }
+
+    const section = document.createElement('div');
+    const title = document.createElement('h3');
+    title.textContent = 'Halo 2 fonts';
+    const status = document.createElement('p');
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    if (missing === null) {
+      tag.classList.add('warn');
+      tag.textContent = 'Missing';
+      status.append(tag, ' No font_table.txt stored. Add the files from the fonts folder ' +
+                         'next to the Halo 2 maps, or the main menu has no text.');
+    } else if (missing.length) {
+      tag.classList.add('warn');
+      tag.textContent = 'Incomplete';
+      status.append(tag, ` font_table.txt names fonts that are not stored: ${missing.join(', ')}`);
+    } else {
+      tag.textContent = 'In place';
+      status.append(tag, ` font_table.txt and ${names.length - 1} other files in ${dirKey(HALO2_FONTS)}`);
+    }
+    if (!halo2Maps)
+      status.append(' (no Halo 2 maps stored)');
+    section.append(title, status);
+
+    if (keys.length) {
+      const remove = pill('button', 'Delete fonts');
+      remove.classList.add('danger');
+      remove.addEventListener('click', async () => {
+        remove.disabled = true;
+        try {
+          for (const key of keys)
+            await deleteFile(key);
+        } finally {
+          refreshStored();
+        }
+      });
+      section.append(remove);
+    }
+    return section;
+  }
+
   async function refreshStored() {
     const container = document.getElementById('stored');
     let keys;
@@ -1136,7 +1212,8 @@
     let any = false;
     const transcode = loadTranscodeState();
     for (const prefix of PREFIXES) {
-      const own = keys.filter(key => key.startsWith(dirKey(prefix))).sort();
+      const own = keys.filter(key => key.startsWith(dirKey(prefix)) &&
+        !key.slice(dirKey(prefix).length).includes('/')).sort();
       if (!own.length)
         continue;
       any = true;
@@ -1205,6 +1282,14 @@
       }
       container.append(title, list);
     }
+    const fonts = keys.filter(key => key.startsWith(dirKey(HALO2_FONTS)));
+    const halo2Maps = keys.some(key => key.startsWith(dirKey('halo2')) &&
+                                       key.endsWith('.map'));
+    if (fonts.length || halo2Maps) {
+      any = true;
+      container.append(await halo2FontStatus(fonts, halo2Maps));
+    }
+
     if (!any)
       container.innerHTML = '<p class="empty">No maps stored in this browser yet.</p>';
 

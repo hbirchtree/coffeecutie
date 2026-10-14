@@ -17,9 +17,17 @@ is `pc/bloodgulch.map`.
 | Xbox map            | `/xbox/<name>.map` (decompressed when needed) |
 | MCC map             | `/mcc/<name>.map`                             |
 | Resource maps       | `/<prefix>/bitmaps.map`, `sounds.map`, `loc.map` |
-| Halo 2 Xbox map     | `/h2xbox/<name>.map`                          |
+| Halo 2 map          | `/halo2/<name>.map`                           |
+| Halo 2 UI fonts     | `/halo2/fonts/<name>`, names kept as they are |
 
-File names are lowercased. Resource maps get their canonical name from their
+Halo 2's main menu reads its fonts from `fonts/` next to the maps, so font
+files are stored there, picked or dropped, on their own or in a folder. They
+are recognised by the version `0xF0000001` at 0x200 (`blam::dimeter::font`),
+`font_table*.txt` by name. The stored maps list says whether `font_table.txt` and every
+font it names are in place, and warns when Halo 2 maps are stored without them.
+Files in OPFS outside these directories are listed under "Other files".
+
+Map file names are lowercased. Resource maps get their canonical name from their
 contents, whatever the file was called. Halo PC Trial maps and anything else
 are skipped.
 
@@ -85,7 +93,7 @@ Only the first 2 KiB of a file is read for this (`blam_upload_identify()` in
   `shared.map` may carry too little tag data for the Xbox/Vista check. In
   that case `map_type` is read at both layouts' offsets (0x140 Xbox, 0x14C
   Vista) and trusted only when exactly one of them reads as one of these
-  files. Either way it is stored under `/h2xbox/`.
+  files. Either way it is stored under `/halo2/`.
 - **Trial maps** have the scrambled `Ehed`/`Gfot` header
   (`blam::file_header_trial_t`).
 - **`bitmaps.map`, `sounds.map` and `loc.map`** have no map header. They

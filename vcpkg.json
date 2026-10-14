@@ -41,7 +41,7 @@
         "blam": {
             "description": "Blam! data support",
             "dependencies": [
-                { "name": "libwma", "platform": "linux | osx | windows | android" }
+                "libwma"
             ]
         },
         "cursed": {

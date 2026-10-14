@@ -36,7 +36,7 @@ constexpr std::string_view prefix = prefix_for(halo_version::version_v);
 
 /* Directories map-upload stores into, Halo 2 included */
 constexpr std::array<std::string_view, 5> upload_dirs = {
-    "/pc/", "/custom/", "/xbox/", "/mcc/", "/h2xbox/"};
+    "/pc/", "/custom/", "/xbox/", "/mcc/", "/halo2/"};
 
 /* FileMapper's store, where uploads are read from */
 constexpr std::string_view store_root = "/maps";

@@ -14,7 +14,7 @@ coffee_library(
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-if(EMSCRIPTEN)
+if(EMSCRIPTEN AND FALSE)
   find_package(Microsoft.GSL CONFIG REQUIRED)
   coffee_library(
     TARGET OpenAL_ImaDecoder
@@ -35,16 +35,17 @@ if(EMSCRIPTEN)
 endif()
 
 if(ANDROID)
+  # OpenSL is a dependency for OpenAL
   find_package(OpenSL REQUIRED)
 endif()
 find_package(OpenAL CONFIG REQUIRED)
 target_link_libraries(OAF PUBLIC OpenAL::OpenAL)
 
 # WMA through the libwma port (shared library, not on every platform)
-find_package(unofficial-libwma CONFIG QUIET)
-if(TARGET unofficial::libwma::wma)
+find_package(libwma CONFIG QUIET)
+if(TARGET libwma::wma)
   target_sources(OAF PRIVATE private/wma_decode.cpp)
-  target_link_libraries(OAF PUBLIC unofficial::libwma::wma)
+  target_link_libraries(OAF PUBLIC libwma::wma)
   target_compile_definitions(OAF PUBLIC -DOAF_WMA_DECODER_ENABLED=1)
 endif()
 
