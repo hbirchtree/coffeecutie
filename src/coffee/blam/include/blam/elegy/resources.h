@@ -33,7 +33,8 @@ static_assert(sizeof(definition_fixup_t) == 0x8);
 enum class resource_space_t : u8
 {
     definition = 2, /*!< The resource's slice of the info buffer */
-    data       = 4, /*!< The resource's bytes in its raw page */
+    data       = 4, /*!< The resource's bytes in its primary page */
+    secondary  = 6, /*!< ...and in its secondary page, e.g. a bitmap's top mip */
 };
 
 struct resource_type_t
@@ -198,15 +199,17 @@ static_assert(sizeof(d3d_structure<u8>) == 0xC);
 
 /*!
  * \brief One resource, resolved: its definition with the fixups to read
- * it by, and the page bytes it addresses. Keeps the page alive.
+ * it by, and the page bytes it addresses. Keeps the pages alive.
  */
 struct resource_view
 {
     Span<byte_t const>           definition;
     Span<byte_t const>           data;
+    Span<byte_t const>           secondary;
     std::map<u32, u32>           fixups;
     u32                          root{0};
     std::shared_ptr<void const>  keep;
+    std::shared_ptr<void const>  keep_secondary;
 
     template<typename T>
     inline T const* root_as() const
@@ -271,12 +274,19 @@ struct resource_view
     {
         i32  size  = ref.size;
         auto where = address(&ref.pointer);
-        if(size <= 0 || !where || where->first != resource_space_t::data)
+        if(size <= 0 || !where)
             return {};
-        if(where->second > data.size() ||
-           static_cast<u32>(size) > data.size() - where->second)
+        Span<byte_t const> page;
+        if(where->first == resource_space_t::data)
+            page = data;
+        else if(where->first == resource_space_t::secondary)
+            page = secondary;
+        else
             return {};
-        return data.subspan(where->second, static_cast<size_t>(size));
+        if(where->second > page.size() ||
+           static_cast<u32>(size) > page.size() - where->second)
+            return {};
+        return page.subspan(where->second, static_cast<size_t>(size));
     }
 };
 
@@ -382,6 +392,20 @@ struct resource_loader
         if(info_size > 0 && static_cast<u32>(info_offset) <= info.size() &&
            static_cast<u32>(info_size) <= info.size() - info_offset)
             out.definition = info.subspan(info_offset, info_size);
+        /* Optional detail; the primary page is usable without it */
+        if(segment->secondary_page.valid())
+            if(auto second = this->page(segment->secondary_page);
+               second.has_value())
+            {
+                auto const& more = *second.value();
+                u32 at = static_cast<u32>(segment->secondary_offset.value());
+                if(at <= more.size())
+                {
+                    out.secondary =
+                        Span<byte_t const>(more.data(), more.size()).subspan(at);
+                    out.keep_secondary = second.value();
+                }
+            }
         out.root = res->base_definition_address.value() & 0x0FFFFFFF;
         for(auto const& fix : res->resource_fixups.data(magic).value_or(Span<resource_fixup_t const>()))
             out.fixups[static_cast<u32>(fix.offset.value())] = fix.address;
