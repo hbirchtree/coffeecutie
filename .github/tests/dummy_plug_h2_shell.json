@@ -1,0 +1,40 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Halo 2 main menu: press start, pick a list entry, open the profile picker",
+    "events": [
+        {"time":  500, "type": "controller_connect", "index": 0},
+        {"time": 3000, "type": "screenshot", "name": "shell_start"},
+        {"time": 3500, "type": "controller_button", "index": 0, "button": "A", "duration": 300},
+        {"time": 5000, "type": "screenshot", "name": "shell_menu"},
+        {"time": 5500, "type": "controller_button", "index": 0, "button": "POV_DOWN", "duration": 300},
+        {"time": 6500, "type": "controller_button", "index": 0, "button": "POV_DOWN", "duration": 300},
+        {"time": 8000, "type": "screenshot", "name": "shell_menu_down"},
+        {"time": 8500, "type": "controller_button", "index": 0, "button": "A", "duration": 300},
+        {"time": 10000, "type": "screenshot", "name": "shell_profile"},
+        {"time": 10500, "type": "controller_button", "index": 0, "button": "B", "duration": 300},
+        {"time": 12000, "type": "screenshot", "name": "shell_back"},
+        {}
+    ],
+    "frame_delta": 100.0,
+    "end_time": 13000
+}

@@ -1,5 +1,6 @@
 #include "h2_bitmap.h"
 #include "h2_scene.h"
+#include "h2_shell_load.h"
 
 #include "components.h"
 #include "data.h"
@@ -48,6 +49,7 @@
 #endif
 
 #include <array>
+#include <functional>
 #include <bit>
 #include <cmath>
 #include <cstdlib>
@@ -141,9 +143,10 @@ struct H2MapLoader : compo::SubsystemBase
 {
     using type = H2MapLoader;
 
-    H2MapLoader(compo::EntityContainer& e, H2Scene& scene)
+    H2MapLoader(compo::EntityContainer& e, H2Scene& scene, H2ShellData& shell)
         : m_container(e)
         , m_scene(scene)
+        , m_shell(shell)
     {
     }
 
@@ -183,9 +186,61 @@ struct H2MapLoader : compo::SubsystemBase
                                    side_cache_url(load, i)).get())
                              : mapped_source(
                                    mapper.fetch(side_cache_url(load, i)).get());
+        m_font_table.clear();
+        m_font_files.clear();
+        if(is_mainmenu(bytes))
+        {
+            auto table = mapper.fetch(font_url(load, "font_table.txt")).get();
+            if(table)
+                m_font_table = font_table_of(static_cast<BytesConst>(*table));
+            for(auto const& name : font_names())
+                if(auto file = mapper.fetch(font_url(load, name)).get())
+                    m_font_files.push_back({name, file});
+        }
         dim::raw_pool pool;
         side_pool(pool);
         return load_cache(load, bytes, pool);
+    }
+
+    /* The shell's fonts live next to the map, in fonts/ */
+    platform::url::Url font_url(MapLoadEvent const& load, std::string const& name) const
+    {
+        return (load.file->path().dirname() / "fonts" / name).url(load.file->flags);
+    }
+
+    static std::vector<std::string> font_table_of(BytesConst const& bytes)
+    {
+        return blam::dimeter::font::parse_font_table(
+            Span<const byte_t>(reinterpret_cast<byte_t const*>(bytes.data), bytes.size));
+    }
+
+    /* Each font file once, in table order */
+    std::vector<std::string> font_names() const
+    {
+        std::vector<std::string> out;
+        for(auto const& name : m_font_table)
+            if(std::find(out.begin(), out.end(), name) == out.end())
+                out.push_back(name);
+        return out;
+    }
+
+    static bool is_mainmenu(BytesConst const& bytes)
+    {
+        if(!is_halo2_cache(bytes))
+            return false;
+        auto type = [](auto const& header) {
+            return from_le(static_cast<i32>(header.map_type)) ==
+                   static_cast<i32>(dim::cache_type_t::mainmenu);
+        };
+        if(auto map = dim::map_container<dim::xbox_version_t>::from_bytes(
+               bytes, dim::xbox_version);
+           map.has_value())
+            return type(*map.value().header);
+        if(auto map = dim::map_container<dim::vista_version_t>::from_bytes(
+               bytes, dim::vista_version);
+           map.has_value())
+            return type(*map.value().header);
+        return false;
     }
 
     /* H2_SIDE_PREAD=1 takes the side caches through range reads on desktop
@@ -295,9 +350,17 @@ struct H2MapLoader : compo::SubsystemBase
                             ranged_source(mainmenu),
                             ranged_source(shared),
                             ranged_source(sp_shared)};
-                        dim::raw_pool pool;
-                        side_pool(pool);
-                        load_cache(load, static_cast<BytesConst>(*file), pool);
+                        auto finish = [this, load, file] {
+                            dim::raw_pool pool;
+                            side_pool(pool);
+                            load_cache(load, static_cast<BytesConst>(*file), pool);
+                        };
+                        m_font_table.clear();
+                        m_font_files.clear();
+                        if(is_mainmenu(static_cast<BytesConst>(*file)))
+                            fetch_fonts(load, std::move(finish));
+                        else
+                            finish();
                     },
                     mapper.open_ranged(side_cache_url(load, 0)),
                     mapper.open_ranged(side_cache_url(load, 1)),
@@ -306,6 +369,50 @@ struct H2MapLoader : compo::SubsystemBase
             },
             mapper.fetch_cached(*load.file));
         rq::runtime_queue::Queue(std::move(task)).assume_value();
+    }
+
+    /* Web: font_table.txt, then the fonts it names one after the other,
+     * each through the store; `done` runs on the main queue after */
+    void fetch_fonts(MapLoadEvent const& load, std::function<void()> done)
+    {
+        using AsyncResource = comp_app::FileMapper::Resource;
+        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
+        rq::runtime_queue::Queue(
+            rq::dependent_task<std::shared_ptr<AsyncResource>, void>::CreateSink(
+                mapper.fetch_cached(font_url(load, "font_table.txt")),
+                [this, load, done = std::move(done)](
+                    std::shared_ptr<AsyncResource>* table) mutable {
+                    if(*table)
+                        m_font_table = font_table_of(static_cast<BytesConst>(**table));
+                    fetch_font(load, font_names(), 0, std::move(done));
+                }))
+            .assume_value();
+    }
+
+    void fetch_font(
+        MapLoadEvent const&      load,
+        std::vector<std::string> names,
+        size_t                   i,
+        std::function<void()>    done)
+    {
+        using AsyncResource = comp_app::FileMapper::Resource;
+        if(i >= names.size())
+        {
+            done();
+            return;
+        }
+        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
+        auto  url    = font_url(load, names[i]);
+        rq::runtime_queue::Queue(
+            rq::dependent_task<std::shared_ptr<AsyncResource>, void>::CreateSink(
+                mapper.fetch_cached(url),
+                [this, load, names = std::move(names), i, done = std::move(done)](
+                    std::shared_ptr<AsyncResource>* file) mutable {
+                    if(*file)
+                        m_font_files.push_back({names[i], *file});
+                    fetch_font(load, std::move(names), i + 1, std::move(done));
+                }))
+            .assume_value();
     }
 
     bool load_cache(
@@ -396,6 +503,7 @@ struct H2MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        m_shell.loaded = false;
         m_scene.loaded = false;
         m_scene.sections.clear();
         m_scene.switches.clear();
@@ -715,6 +823,24 @@ struct H2MapLoader : compo::SubsystemBase
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", map.name()));
         m_scene.loaded = true;
+
+        /* mainmenu.map brings the shell with it */
+        std::vector<ShellFontFile> fonts;
+        for(auto const& [name, file] : m_font_files)
+        {
+            auto bytes = static_cast<BytesConst>(*file);
+            fonts.push_back(
+                {name,
+                 Span<const byte_t>(
+                     reinterpret_cast<byte_t const*>(bytes.data), bytes.size)});
+        }
+        m_shell = {};
+        if(from_le(static_cast<i32>(map.header->map_type)) ==
+               static_cast<i32>(dim::cache_type_t::mainmenu) ||
+           !m_font_files.empty())
+            load_shell(*m_api, map, pool, m_font_table, fonts, m_shell);
+        m_shell.generation = m_scene.generation;
+        m_font_files.clear();
 
         /* The Halo 1 systems key off LoadingStatus and would read their
          * empty container, so only the app-level state says "loaded" (which
@@ -2184,7 +2310,11 @@ struct H2MapLoader : compo::SubsystemBase
 
     compo::EntityContainer& m_container;
     H2Scene&                m_scene;
+    H2ShellData&            m_shell;
     gfx::system*            m_api{nullptr};
+    std::vector<std::string> m_font_table;
+    std::vector<std::pair<std::string, std::shared_ptr<comp_app::FileMapper::Resource>>>
+        m_font_files;
 
     std::vector<Vertex>              m_vertices;
     std::vector<u16>                 m_indices;
@@ -2211,8 +2341,9 @@ void alloc_h2(compo::EntityContainer& e)
 {
     auto& scene = e.register_subsystem_inplace<H2Scene>();
     e.register_subsystem_inplace<H2Visibility>();
-    auto& loader =
-        e.register_subsystem_inplace<H2MapLoader>(std::ref(e), std::ref(scene));
+    auto& shell = e.register_subsystem_inplace<H2ShellData>();
+    auto& loader = e.register_subsystem_inplace<H2MapLoader>(
+        std::ref(e), std::ref(scene), std::ref(shell));
     e.subsystem_cast<GameEventBus>().addEventFunction<MapLoadEvent>(
         0, [&loader](GameEvent& ev, MapLoadEvent* load) {
             /* Consumed here: the Halo 1 loader never sees a Halo 2 map */
@@ -2221,6 +2352,7 @@ void alloc_h2(compo::EntityContainer& e)
         });
     alloc_h2_occluder(e);
     alloc_h2_renderer(e);
+    alloc_h2_shell(e);
 }
 
 } // namespace h2

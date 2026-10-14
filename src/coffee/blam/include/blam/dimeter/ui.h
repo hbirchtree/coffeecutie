@@ -676,6 +676,34 @@ inline std::string_view localized_string(
     return std::string_view(text, ::strnlen(text, end));
 }
 
+/*! A string of the list by its string id, found through the language's
+ * index table; empty if the list has no such string */
+template<typename Map>
+inline std::string_view list_string_by_id(
+    Map const& map, string_list_t const& list, language_t language, string_id id)
+{
+    auto const* globals = map.globals();
+    auto const* packs =
+        globals ? globals->template data<language_globals_t>(map.magic())
+                : nullptr;
+    if(!packs)
+        return {};
+    auto const& pack  = packs->languages[static_cast<size_t>(language)];
+    auto const& range = list.languages[static_cast<size_t>(language)];
+    u32         first = static_cast<u32>(std::max<i16>(0, from_le(range.first)));
+    u32         count = static_cast<u32>(std::max<i16>(0, from_le(range.count)));
+    u64         ioff  = from_le(pack.index_offset);
+    if(first + count > from_le(pack.string_count) ||
+       ioff + (first + count) * sizeof(locale_index_t) > map.data.size())
+        return {};
+    auto const* entries = reinterpret_cast<locale_index_t const*>(
+        map.data.data() + ioff);
+    for(u32 i = first; i < first + count; i++)
+        if(from_le(entries[i].id.raw) == from_le(id.raw))
+            return localized_string(map, language, i);
+    return {};
+}
+
 /*! The string list's text for one language */
 template<typename Map>
 inline std::string_view list_string(
