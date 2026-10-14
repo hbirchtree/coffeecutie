@@ -1927,9 +1927,9 @@ struct H2MapLoader : compo::SubsystemBase
                          u32                       unique_id,
                          dim::string_id            variant) {
             Vecf3 pos{from_le(position[0]), from_le(position[1]), from_le(position[2])};
-            Vecf3 rot = glm::radians(
-                Vecf3{from_le(rotation[0]), from_le(rotation[1]), from_le(rotation[2])});
-            /* Same yaw/pitch/roll order as the Halo 1 spawns */
+            /* Radians on disk (Assembly's "degree3" is a display unit);
+             * same yaw/pitch/roll order as the Halo 1 spawns */
+            Vecf3 rot{from_le(rotation[0]), from_le(rotation[1]), from_le(rotation[2])};
             Quatf q = Quatf(Vecf3(0, 0, 1) * rot.x) * Quatf(Vecf3(0, 1, 0) * rot.y) *
                       Quatf(Vecf3(1, 0, 0) * rot.z);
             if(scale <= 0.f)
