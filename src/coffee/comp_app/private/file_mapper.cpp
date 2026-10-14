@@ -77,6 +77,8 @@ static std::uint64_t store_sync(platform::url::Url const& url)
         return 0;
     auto path  = store_path(url);
     auto local = store_size(path);
+    if(is_offline_url(url.internUrl))
+        return local;
     auto probe = fetch_probe(url.internUrl);
     if(probe.status != 200 && probe.status != 206)
     {
@@ -280,6 +282,8 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
         !platform::file::exists(src).has_value() &&
         enum_helpers::feval(src.flags, semantic::RSCA::AssetFile);
 
+    if(is_remote && platform::file::emscripten::is_offline_url(src.internUrl))
+        return fetch_cached(src);
     if(is_remote)
     {
         using mapping_t = platform::file::posix::mem_mapping_t;
