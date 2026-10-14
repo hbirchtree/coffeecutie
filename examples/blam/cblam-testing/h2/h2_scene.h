@@ -177,6 +177,7 @@ struct Material
     bool                                   alpha_test{false};
     bool                                   sky{false}; /*!< follows the camera, unlit */
     bool                                   water{false}; /*!< bump in `texture`, drawn last */
+    bool                                   additive{false}; /*!< transparent template: glow pass */
     Vecf2                                  mask_scale{1.f, 1.f};
 };
 

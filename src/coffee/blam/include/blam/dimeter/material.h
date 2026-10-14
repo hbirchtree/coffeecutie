@@ -27,6 +27,9 @@ struct resolved_t
     bool             resolved{false}; /*!< Named through the template */
     bool             alpha_test{false};
     bool water{false}; /*!< water_pool: bump + reflection + fresnel */
+    /*! Template under shader_templates\transparent: never opaque, even
+     * when its passes are unknown */
+    bool             transparent{false};
     std::string_view blend_mode;
 
     std::vector<std::string_view>   usages;
@@ -126,6 +129,9 @@ inline resolved_t resolve(
     auto const* stem =
         stem_tag ? stem_tag->template data<stem::header_t>(map.magic())
                  : nullptr;
+    if(stem_tag &&
+       map.name_of(*stem_tag).find("\\transparent\\") != std::string_view::npos)
+        out.transparent = true;
     auto stem_props = stem ? stem->properties.data(map.magic())
                            : result<Span<stem::properties_t const>, error_msg>(
                                  stl_types::failure("no template"sv));

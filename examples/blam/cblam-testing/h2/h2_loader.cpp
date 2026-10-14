@@ -2152,6 +2152,7 @@ struct H2MapLoader : compo::SubsystemBase
             mat.uv_scale   = {base.scale_u, base.scale_v};
             mat.alpha_test = base.alpha_test;
             mat.water      = base.water;
+            mat.additive   = base.transparent && !base.water;
             if(mat.water)
                 if(auto bump = base.layer("bump_map"))
                     bitm_tag = bump->bitmap, mat.uv_scale = {bump->scale_u, bump->scale_v};
