@@ -2,16 +2,16 @@
 
 #include "selected_version.h"
 
+#include <array>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-/* Maps put in the browser's IndexedDB by BlamMapUpload
- * (examples/blam/map-upload). They live in the Emscripten Fetch cache
- * (database emscripten_filesystem, object store FILES), keyed by paths like
- * /pc/bloodgulch.map, which is where emscripten_fetch() looks before going to
- * the network. On other platforms these functions do nothing. */
+/* Maps put in the browser's OPFS by BlamMapUpload (examples/blam/map-upload).
+ * /pc/bloodgulch.map is requested as /maps/pc/bloodgulch.map, a file in
+ * comp_app::FileMapper's store, never fetched from the network. On other
+ * platforms these functions do nothing. */
 namespace offline_maps {
 
 /* Storage prefix for each game version, shared with map-upload's shell */
@@ -34,14 +34,24 @@ constexpr std::string_view prefix_for(blam::version_t version)
 
 constexpr std::string_view prefix = prefix_for(halo_version::version_v);
 
-/* Makes every upload prefix offline-only, so files under them are only
- * ever read from IndexedDB, never requested over the network */
+/* Directories map-upload stores into, Halo 2 included */
+constexpr std::array<std::string_view, 6> upload_dirs = {
+    "/pc/", "/custom/", "/xbox/", "/mcc/", "/h2xbox/", "/h2vista/"};
+
+/* FileMapper's store, where uploads are read from */
+constexpr std::string_view store_root = "/maps";
+
+/* Makes store_root offline-only, so files under it are only ever read
+ * from the store, never requested over the network */
 void register_storage();
+
+/* /xbox/bloodgulch.map -> /maps/xbox/bloodgulch.map, anything else as is */
+std::string resolve(std::string_view path);
 
 /* Files under directory/, as listed when the page started */
 std::vector<std::string> list(std::string_view directory);
 
-/* /<prefix>/ui.map when it was uploaded for this build's game version */
+/* /maps/<prefix>/ui.map when it was uploaded for this build's version */
 std::optional<std::string> default_map();
 
 } // namespace offline_maps

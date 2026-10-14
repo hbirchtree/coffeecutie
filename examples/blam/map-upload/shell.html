@@ -431,16 +431,6 @@
 <script>
   'use strict';
 
-  /* Emscripten's Fetch API caches files in this IndexedDB store, keyed by
-   * the URL passed to emscripten_fetch(). BlamGraphics requests maps by path
-   * (?map=/pc/bloodgulch.map, then /pc/bitmaps.map next to it), so storing
-   * them under those keys makes it load them from here instead of the
-   * network. Version 1 must match Fetch.init(): Emscripten clears the store
-   * on any upgrade, and a higher version would make its own open fail. */
-  const DB_NAME = 'emscripten_filesystem';
-  const DB_VERSION = 1;
-  const STORE = 'FILES';
-
   /* Enough for the whole 2 KiB map header; resource maps need 16 bytes */
   const HEADER_SIZE = 2048;
   /* Halo 2 tag index header, read at the map's meta_offset */
@@ -501,39 +491,90 @@
   let ready = false;
   let busy = false;
 
-  /* ---------- IndexedDB ---------- */
+  /* ---------- OPFS ---------- */
 
-  function openDb() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains(STORE))
-          db.createObjectStore(STORE);
-      };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+  /* BlamGraphics requests /pc/bloodgulch.map as /maps/pc/bloodgulch.map,
+   * a file in FileMapper's store, the OPFS root mounted as /maps: OPFS
+   * pc/bloodgulch.map */
+  const dirKey = prefix => `/${prefix}/`;
+  const opfsPath = key => key.slice(1).split('/');
+  const opfsRoot = () => navigator.storage.getDirectory();
+  const hasOpfs = () => !!(navigator.storage && navigator.storage.getDirectory);
+
+  async function opfsDir(parts, create) {
+    let dir = await opfsRoot();
+    for (const part of parts)
+      dir = await dir.getDirectoryHandle(part, { create });
+    return dir;
   }
 
-  async function withStore(mode, fn) {
-    const db = await openDb();
+  /* Without createWritable() (Safari), a worker's sync access handle */
+  const OPFS_WRITER = `onmessage = async ({ data: { path, buffer } }) => {
     try {
-      return await new Promise((resolve, reject) => {
-        const tx = db.transaction([STORE], mode);
-        const request = fn(tx.objectStore(STORE));
-        tx.oncomplete = () => resolve(request ? request.result : undefined);
-        tx.onerror = () => reject(tx.error);
-        tx.onabort = () => reject(tx.error || new Error('transaction aborted'));
+      let dir = await navigator.storage.getDirectory();
+      for (const part of path.slice(0, -1))
+        dir = await dir.getDirectoryHandle(part, { create: true });
+      const file = await dir.getFileHandle(path[path.length - 1], { create: true });
+      const handle = await file.createSyncAccessHandle();
+      try {
+        handle.truncate(0);
+        handle.write(new Uint8Array(buffer), { at: 0 });
+        handle.flush();
+      } finally {
+        handle.close();
+      }
+      postMessage(null);
+    } catch (e) {
+      postMessage(String(e.message || e));
+    }
+  };`;
+
+  async function putFile(key, buffer) {
+    const path = opfsPath(key);
+    const dir = await opfsDir(path.slice(0, -1), true);
+    const file = await dir.getFileHandle(path[path.length - 1], { create: true });
+    if (file.createWritable) {
+      const writable = await file.createWritable();
+      await writable.write(buffer);
+      await writable.close();
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([OPFS_WRITER], { type: 'text/javascript' }));
+    const worker = new Worker(url);
+    try {
+      const error = await new Promise((resolve, reject) => {
+        worker.onmessage = event => resolve(event.data);
+        worker.onerror = event => reject(new Error(event.message));
+        worker.postMessage({ path, buffer }, [buffer]);
       });
+      if (error)
+        throw new Error(error);
     } finally {
-      db.close();
+      worker.terminate();
+      URL.revokeObjectURL(url);
     }
   }
 
-  const putFile = (key, buffer) => withStore('readwrite', s => s.put(buffer, key));
-  const deleteFile = (key) => withStore('readwrite', s => s.delete(key));
-  const listKeys = () => withStore('readonly', s => s.getAllKeys());
+  async function deleteFile(key) {
+    const path = opfsPath(key);
+    await (await opfsDir(path.slice(0, -1), false)).removeEntry(path[path.length - 1]);
+  }
+
+  async function listKeys() {
+    const keys = [];
+    for (const prefix of PREFIXES) {
+      let dir;
+      try {
+        dir = await opfsDir(opfsPath(dirKey(prefix)).slice(0, -1), false);
+      } catch (e) {
+        continue; /* nothing stored for it */
+      }
+      for await (const [name, handle] of dir.entries())
+        if (handle.kind === 'file')
+          keys.push(dirKey(prefix) + name);
+    }
+    return keys;
+  }
 
   /* ---------- Wasm helpers ---------- */
 
@@ -547,7 +588,7 @@
   }
 
   /* slice() copies out of the (shared) heap into a plain ArrayBuffer, which
-   * is what IndexedDB and TextDecoder accept */
+   * is what OPFS and TextDecoder accept */
   function cString(ptr, max) {
     const heap = Module.HEAPU8;
     let end = ptr;
@@ -686,7 +727,7 @@
   /* Which stored files were transcoded, and for which maps the stored
    * bitmaps.map was. A level map whose textures sit in bitmaps.map only
    * works with the bitmaps.map transcoded together with it. Kept next to
-   * IndexedDB in this browser's localStorage. */
+   * the maps in this browser's localStorage. */
   function loadTranscodeState() {
     try {
       const state = JSON.parse(localStorage.getItem(TRANSCODE_STATE_KEY));
@@ -833,7 +874,7 @@
     let file = name.toLowerCase();
     if (!file.endsWith('.map'))
       file += '.map';
-    return `/${prefix}/${file}`;
+    return dirKey(prefix) + file;
   }
 
   /* Resource maps carry nothing that says whether they came from Halo PC,
@@ -945,7 +986,7 @@
         const { file, info, kind, set } = item;
         let key;
         if (kind.prefix && kind.halo2CacheFile) {
-          key = `/${kind.prefix}/${kind.halo2CacheFile}`;
+          key = dirKey(kind.prefix) + kind.halo2CacheFile;
         } else if (kind.prefix) {
           key = mapKey(kind.prefix, file.name);
         } else if (kind.halo2CacheFile) {
@@ -953,13 +994,13 @@
             set(undefined, '', halo2Files.error, 'warn');
             continue;
           }
-          key = `/${halo2Files.prefix}/${kind.halo2CacheFile}`;
+          key = dirKey(halo2Files.prefix) + kind.halo2CacheFile;
         } else if (kind.resource) {
           if (resources.error) {
             set(undefined, '', resources.error, 'warn');
             continue;
           }
-          key = `/${resources.prefix}/${kind.resource}`;
+          key = dirKey(resources.prefix) + kind.resource;
         } else {
           set(undefined, '', SKIP_REASONS[info.kind] || 'Skipped', 'warn');
           continue;
@@ -970,7 +1011,7 @@
         if (transcodable && bitmapsPrefix !== kind.prefix &&
             storedBitmaps && storedBitmaps.target) {
           set(undefined, key,
-              `Skipped: /${kind.prefix}/bitmaps.map is transcoded to ` +
+              `Skipped: ${dirKey(kind.prefix)}bitmaps.map is transcoded to ` +
               `${TRANSCODE_LABELS[storedBitmaps.target] || storedBitmaps.target}, ` +
               'drop this map together with the original bitmaps.map', 'warn');
           continue;
@@ -1036,6 +1077,7 @@
               note = ', textures not transcoded: drop it with bitmaps.map';
           }
           set(undefined, key, 'Storing…', 'busy');
+          const mib = (data.byteLength / (1024 * 1024)).toFixed(1);
           await putFile(key, data);
 
           if (kind.resource === 'bitmaps.map' &&
@@ -1058,7 +1100,6 @@
           }
           saveTranscodeState(state);
 
-          const mib = (data.byteLength / (1024 * 1024)).toFixed(1);
           set(undefined, key, (info.compressed && kind.prefix
               ? `Stored, decompressed to ${mib} MiB`
               : `Stored, ${mib} MiB`) + note, 'ok');
@@ -1116,12 +1157,12 @@
     let any = false;
     const transcode = loadTranscodeState();
     for (const prefix of PREFIXES) {
-      const own = keys.filter(key => key.startsWith(`/${prefix}/`)).sort();
+      const own = keys.filter(key => key.startsWith(dirKey(prefix))).sort();
       if (!own.length)
         continue;
       any = true;
       const title = document.createElement('h3');
-      title.textContent = `/${prefix}/`;
+      title.textContent = dirKey(prefix);
       const list = document.createElement('ul');
       list.className = 'stored-list';
       for (const key of own) {
@@ -1130,7 +1171,7 @@
         code.textContent = key;
         item.append(code);
 
-        const file = key.slice(prefix.length + 2);
+        const file = key.slice(dirKey(prefix).length);
         const isResource = ['bitmaps.map', 'sounds.map', 'loc.map'].includes(file);
         if (TRANSCODE_PREFIXES.includes(prefix) || prefix === 'xbox') {
           const target = file === 'bitmaps.map'
@@ -1147,7 +1188,7 @@
             const tag = document.createElement('span');
             tag.className = 'tag warn';
             tag.textContent = 'Textures out of sync';
-            tag.title = `Not transcoded together with /${prefix}/bitmaps.map, ` +
+            tag.title = `Not transcoded together with ${dirKey(prefix)}bitmaps.map, ` +
                         'drop it again along with the original bitmaps.map';
             item.append(tag);
           }
@@ -1241,9 +1282,10 @@
   };
 
   showGpuCaps();
-  if (typeof indexedDB === 'undefined')
-    runtimeStatus.textContent = 'This browser has no IndexedDB, maps cannot be stored.';
-  refreshStored();
+  if (!hasOpfs())
+    runtimeStatus.textContent = 'This browser has no OPFS, maps cannot be stored.';
+  else
+    refreshStored();
 </script>
 {{{ SCRIPT }}}
 </body>

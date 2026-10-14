@@ -583,12 +583,13 @@ i32 blam_main()
                            ? arguments.unmatched().at(
                                  compile_info::implicit_resource_dir ? 0 : 1)
                            : ".")
-                : arguments.count("map") ? arguments["map"].as<std::string>()
-                                         : ".",
+                : arguments.count("map")
+                    ? offline_maps::resolve(arguments["map"].as<std::string>())
+                    : ".",
                 compile_info::supports_command_line ? RSCA::SystemFile
                                                     : RSCA::AssetFile);
-            /* Maps uploaded with BlamMapUpload only exist in IndexedDB, so
-             * loads under their prefixes never go to the network. Without
+            /* Maps uploaded with BlamMapUpload only exist in OPFS, so
+             * loads under /maps never go to the network. Without
              * ?map=, boot this game version's uploaded ui.map if there is
              * one, instead of fetching the bundled one. */
             offline_maps::register_storage();

@@ -112,7 +112,7 @@ if(TARGET Net)
   target_link_libraries(BlamGraphics PUBLIC Net)
 endif()
 if(EMSCRIPTEN)
-  # Lists maps uploaded to IndexedDB by BlamMapUpload before main() runs
+  # Lists maps uploaded to OPFS by BlamMapUpload before main() runs
   target_link_options(BlamGraphics PUBLIC
     -sFETCH
     --pre-js=${CMAKE_CURRENT_SOURCE_DIR}/offline_maps_preload.js

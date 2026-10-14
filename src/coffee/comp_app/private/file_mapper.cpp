@@ -52,6 +52,8 @@ static bool store_ready()
 
 static std::string store_path(platform::url::Url const& url)
 {
+    if(platform::file::emscripten::is_offline_url(url.internUrl))
+        return url.internUrl;
     std::string name = url.internUrl;
     for(auto& c : name)
         if(c == '/' || c == '\\' || c == ':')

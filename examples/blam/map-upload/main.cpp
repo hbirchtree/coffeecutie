@@ -26,7 +26,7 @@
 /* The JS half of this tool lives in shell.html. It reads the first
  * header_size bytes of each dropped file, asks blam_upload_identify() what it
  * is, and only hands the whole file over to blam_upload_decompress() when it
- * is a compressed map. Everything else goes into IndexedDB untouched. For
+ * is a compressed map. Everything else goes into OPFS untouched. For
  * Halo 2 maps it also reads the 32-byte tag index the header points to and
  * passes it to blam_upload_identify_halo2().
  *

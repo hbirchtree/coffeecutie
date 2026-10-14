@@ -432,7 +432,7 @@ static MapListingEvent list_maps(
     auto maps_ = platform::file::list(listing.directory);
     if(maps_.has_error())
     {
-        /* Uploaded maps are in IndexedDB, not in the virtual filesystem */
+        /* Uploaded maps are listed from the OPFS snapshot taken at startup */
         auto offline = offline_maps::list(listing.directory.internUrl);
         if(!offline.empty())
         {

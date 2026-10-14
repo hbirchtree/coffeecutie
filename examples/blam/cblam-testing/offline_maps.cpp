@@ -17,14 +17,15 @@ namespace offline_maps {
 
 void register_storage()
 {
-    for(auto version : std::array{
-            blam::version_t::pc,
-            blam::version_t::custom_edition,
-            blam::version_t::xbox,
-            blam::version_t::mcc,
-        })
-        platform::file::emscripten::add_offline_prefix(
-            std::string(prefix_for(version)) + "/");
+    platform::file::emscripten::add_offline_prefix(std::string(store_root) + "/");
+}
+
+std::string resolve(std::string_view path)
+{
+    for(auto dir : upload_dirs)
+        if(path.starts_with(dir))
+            return std::string(store_root) + std::string(path);
+    return std::string(path);
 }
 
 std::vector<std::string> list(std::string_view directory)
@@ -63,16 +64,22 @@ std::optional<std::string> default_map()
 {
     if(prefix.empty())
         return std::nullopt;
-    auto files = list(prefix);
+    auto dir   = resolve(std::string(prefix) + "/");
+    auto files = list(dir);
     if(std::find(files.begin(), files.end(), "ui.map") == files.end())
         return std::nullopt;
-    return std::string(prefix) + "/ui.map";
+    return dir + "ui.map";
 }
 
 #else
 
 void register_storage()
 {
+}
+
+std::string resolve(std::string_view path)
+{
+    return std::string(path);
 }
 
 std::vector<std::string> list(std::string_view)

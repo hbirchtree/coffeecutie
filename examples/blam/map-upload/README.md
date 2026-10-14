@@ -7,9 +7,8 @@ onto the page.
 
 ## Where files go
 
-Files are written to the IndexedDB store that Emscripten's Fetch API uses as
-its cache: database `emscripten_filesystem`, object store `FILES`, value an
-`ArrayBuffer`, key the URL BlamGraphics requests:
+Files are written to the origin's OPFS at their path: `/pc/bloodgulch.map`
+is `pc/bloodgulch.map`.
 
 | Detected            | Stored as                                     |
 |---------------------|-----------------------------------------------|
@@ -114,11 +113,12 @@ CMake copies them into the bundle.
 
 ## BlamGraphics side
 
-`examples/blam/cblam-testing/offline_maps.*` marks `/pc/`, `/custom/`,
-`/xbox/` and `/mcc/` as offline-only, so `emscripten_fetch()` is called with
-`EMSCRIPTEN_FETCH_NO_DOWNLOAD` for them: a map missing from IndexedDB fails
-instead of being requested from the server. `offline_maps_preload.js` reads
-the stored keys before `main()`, which lets the map list show uploaded maps,
+`examples/blam/cblam-testing/offline_maps.*` turns `?map=/pc/...` into
+`/maps/pc/...` and marks `/maps/` as offline-only. `comp_app::FileMapper`
+mounts the OPFS root as `/maps` (its store) and reads those URLs from there
+without asking the server, so a map missing there fails instead of being
+downloaded. `offline_maps_preload.js` lists the OPFS directories before
+`main()`, which lets the map list show uploaded maps,
 and BlamGraphics boots `/<its version>/ui.map` when there is one and no
 `?map=` was given. The list is a snapshot taken at page load, so reload
 BlamGraphics after uploading.

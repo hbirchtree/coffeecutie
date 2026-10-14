@@ -1,5 +1,4 @@
-# Browser tool that stores Halo CE maps in IndexedDB for the web builds of
-# BlamGraphics, see shell.html. The page drives the exported functions in
+# Browser tool that stores Halo maps in OPFS for the web builds of BlamGraphics, see shell.html. The page drives the exported functions in
 # main.cpp with plain numbers as pointers, which only holds on wasm32.
 coffee_application(
   TARGET BlamMapUpload
