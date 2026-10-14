@@ -10,6 +10,7 @@
 
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/collision.h>
+#include <blam/dimeter/fog.h>
 #include <blam/dimeter/geometry.h>
 #include <blam/dimeter/lightmap.h>
 #include <blam/dimeter/vista.h>
@@ -590,6 +591,8 @@ struct H2MapLoader : compo::SubsystemBase
                 .collision = std::move(collision),
             });
             gather_visibility(*bsp, bsp_magic, m_scene.sections.back());
+            if(scenario_body)
+                gather_planar_fog(map, *scenario_body, *bsp, bsp_magic, m_scene.sections.back());
 
             /* Lightmaps: one image per cluster and per per-pixel instance,
              * through the region's ltmp; buckets light the rest per vertex */
@@ -897,6 +900,60 @@ struct H2MapLoader : compo::SubsystemBase
             for(size_t i = 2; i < polygon.size(); i++)
                 out.indices.insert(
                     out.indices.end(), {polygon[0], polygon[i - 1], polygon[i]});
+        }
+    }
+
+    /* The highest-priority fog plane with a fog tag: fills the space
+     * under it */
+    template<typename V>
+    void gather_planar_fog(
+        dim::map_container<V> const& map,
+        dim::scn::scenario_t const&  scnr,
+        geo::bsp_header_t const&     bsp,
+        dim::bsp_magic const&        magic,
+        Section&                     out)
+    {
+        auto planes  = bsp.fog_planes.data(magic);
+        auto palette = scnr.planar_fog_palette.data(map.magic());
+        if(planes.has_error() || palette.has_error())
+            return;
+        i16 best = std::numeric_limits<i16>::min();
+        for(auto const& fp : planes.value())
+        {
+            auto const* entry = fp.scenario_planar_fog.in(palette.value());
+            auto const* tag   = entry ? map.tag_at(entry->planar_fog.tag_id) : nullptr;
+            auto const* fog =
+                tag ? tag->template data<dim::fog::header_t>(map.magic()) : nullptr;
+            if(!fog || from_le(fp.priority_raw) <= best)
+                continue;
+            best = from_le(fp.priority_raw);
+            out.planar_fog = Section::PlanarFog{
+                .plane =
+                    {from_le(fp.plane[0]),
+                     from_le(fp.plane[1]),
+                     from_le(fp.plane[2]),
+                     from_le(fp.plane[3])},
+                .color =
+                    {from_le(fog->color.x),
+                     from_le(fog->color.y),
+                     from_le(fog->color.z),
+                     from_le(fog->maximum_density)},
+                .opaque = {from_le(fog->opaque_distance), from_le(fog->opaque_depth)},
+            };
+            cDebug(
+                "H2: planar fog {}: plane ({:.2f}, {:.2f}, {:.2f}; {:.1f}) colour "
+                "({:.2f}, {:.2f}, {:.2f}) density {} opaque {} into, {} below",
+                map.name_of(*tag),
+                out.planar_fog.plane.x,
+                out.planar_fog.plane.y,
+                out.planar_fog.plane.z,
+                out.planar_fog.plane.w,
+                out.planar_fog.color.r,
+                out.planar_fog.color.g,
+                out.planar_fog.color.b,
+                out.planar_fog.color.a,
+                out.planar_fog.opaque.x,
+                out.planar_fog.opaque.y);
         }
     }
 

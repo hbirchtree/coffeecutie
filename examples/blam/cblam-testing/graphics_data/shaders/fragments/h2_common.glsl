@@ -45,11 +45,34 @@ layout(location=22) uniform vec4 fog_color;
 layout(location=23) uniform vec2 fog_range;
 layout(location=24) uniform vec3 fog_eye;
 
+/* Planar fog of the active section: the volume under the plane, opaque
+ * `opaque.x` along the ray through it and `opaque.y` below the surface */
+layout(location=25) uniform vec4 planar_fog_plane;
+layout(location=26) uniform vec4 planar_fog_color;
+layout(location=27) uniform vec2 planar_fog_opaque;
+
 vec3 fogged(vec3 color)
 {
     float d = distance(fog_eye, f_world_pos);
     float f = clamp((d - fog_range.x) / max(fog_range.y - fog_range.x, 1e-3), 0.0, 1.0);
-    return mix(color, fog_color.rgb, f * fog_color.a);
+    color = mix(color, fog_color.rgb, f * fog_color.a);
+
+    /* Depth below the plane at the eye and the pixel; the density ramps
+     * from the surface to full at opaque.y below it, integrated along the
+     * part of the ray that is under the plane */
+    float de = planar_fog_plane.w - dot(planar_fog_plane.xyz, fog_eye);
+    float dp = planar_fog_plane.w - dot(planar_fog_plane.xyz, f_world_pos);
+    float t0 = de > 0.0 ? 0.0 : (dp > 0.0 ? de / (de - dp) : 1.0);
+    float t1 = dp > 0.0 ? 1.0 : (de > 0.0 ? de / (de - dp) : 0.0);
+    float len = max(t1 - t0, 0.0) * d;
+    float depth0 = max(mix(de, dp, t0), 0.0);
+    float depth1 = max(mix(de, dp, t1), 0.0);
+    float opaque_depth = max(planar_fog_opaque.y, 1e-3);
+    float density = 0.5 * (clamp(depth0 / opaque_depth, 0.0, 1.0) +
+                           clamp(depth1 / opaque_depth, 0.0, 1.0));
+    float optical = density * len / max(planar_fog_opaque.x, 1e-3);
+    float p = min(1.0 - exp(-optical), planar_fog_color.a);
+    return mix(color, planar_fog_color.rgb, p);
 }
 #endif
 

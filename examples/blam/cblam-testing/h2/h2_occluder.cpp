@@ -185,7 +185,8 @@ struct H2Occluder : compo::RestrictedSubsystem<H2Occluder, H2OccluderManifest>
         vis.active         = section;
         vis.camera_cluster = std::numeric_limits<u32>::max();
         vis.visible.clear();
-        vis.fog = {};
+        vis.fog        = {};
+        vis.planar_fog = scene.sections[section].planar_fog;
         cDebug("H2: section {} ({}) active", section, scene.sections[section].name);
         submit_collision(scene.sections[section].collision);
     }

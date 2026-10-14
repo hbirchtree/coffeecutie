@@ -216,9 +216,18 @@ struct Section
         Vecf2               fog_range{0.f, 1.f};    /*!< start, opaque distance */
     };
 
+    /* The section's planar fog: everything under `plane` (normal, d) */
+    struct PlanarFog
+    {
+        Vecf4 plane{0.f, 0.f, 1.f, -1e9f};
+        Vecf4 color{0.f, 0.f, 0.f, 0.f}; /*!< rgb, max density */
+        Vecf2 opaque{1.f, 1.f};          /*!< distance into, depth below */
+    };
+
     std::string                    name;
     Vecf3                          lo, hi; /*!< World bounds, stand-ins included */
     std::shared_ptr<CollisionMesh> collision;
+    PlanarFog                      planar_fog;
 
     /* Visibility: the collision tree's leaves name their cluster, clusters
      * their portals; instances list the clusters that own them */
@@ -285,6 +294,7 @@ struct H2Visibility : compo::SubsystemBase
     u32               camera_cluster{std::numeric_limits<u32>::max()};
     Vecf4             fog{0.f, 0.f, 0.f, 0.f};
     Vecf2             fog_range{0.f, 1.f};
+    Section::PlanarFog planar_fog;
 
     bool draw_visible(DrawTag const& tag, std::vector<Section> const& sections) const
     {
