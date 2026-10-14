@@ -40,6 +40,14 @@ endif()
 find_package(OpenAL CONFIG REQUIRED)
 target_link_libraries(OAF PUBLIC OpenAL::OpenAL)
 
+# WMA through the libwma port (shared library, not on every platform)
+find_package(unofficial-libwma CONFIG QUIET)
+if(TARGET unofficial::libwma::wma)
+  target_sources(OAF PRIVATE private/wma_decode.cpp)
+  target_link_libraries(OAF PUBLIC unofficial::libwma::wma)
+  target_compile_definitions(OAF PUBLIC -DOAF_WMA_DECODER_ENABLED=1)
+endif()
+
 if(EMSCRIPTEN)
   # openal-soft is a side module, mixed into WebAudio by web_output.cpp
   target_sources(OAF PRIVATE private/web_output.cpp)

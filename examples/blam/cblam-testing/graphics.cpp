@@ -13,6 +13,7 @@
 #include "animation_controller.h"
 #include "gameplay.h"
 #include "h2/h2_scene.h"
+#include "h2/h2_sound.h"
 #include "impact_sounds.h"
 #include "projectiles.h"
 #include "effects.h"
@@ -487,6 +488,16 @@ i32 blam_main()
 #endif
                 );
             alloc_sound_system(e, arguments.count("no-sound") ? false : true);
+            h2::alloc_h2_sound(
+                e,
+#if defined(FEATURE_ENABLE_OAF)
+                arguments.count("no-sound")
+                    ? nullptr
+                    : static_cast<oaf::api*>(&e.subsystem_cast<oaf::system>())
+#else
+                nullptr
+#endif
+            );
 
             {
                 auto& sound_pref = e.subsystem_cast<SoundPreferences>();

@@ -1,6 +1,7 @@
 #include "h2_bitmap.h"
 #include "h2_scene.h"
 #include "h2_shell_load.h"
+#include "h2_sound.h"
 
 #include "components.h"
 #include "data.h"
@@ -144,10 +145,12 @@ struct H2MapLoader : compo::SubsystemBase
 {
     using type = H2MapLoader;
 
-    H2MapLoader(compo::EntityContainer& e, H2Scene& scene, H2ShellData& shell)
+    H2MapLoader(
+        compo::EntityContainer& e, H2Scene& scene, H2ShellData& shell, H2SoundBank& bank)
         : m_container(e)
         , m_scene(scene)
         , m_shell(shell)
+        , m_bank(bank)
     {
     }
 
@@ -505,6 +508,7 @@ struct H2MapLoader : compo::SubsystemBase
     void unload()
     {
         m_shell.loaded = false;
+        m_bank.loaded  = false;
         m_scene.loaded = false;
         m_scene.sections.clear();
         m_scene.switches.clear();
@@ -838,11 +842,13 @@ struct H2MapLoader : compo::SubsystemBase
                      reinterpret_cast<byte_t const*>(bytes.data), bytes.size)});
         }
         m_shell = {};
+        m_bank  = {};
         if(from_le(static_cast<i32>(map.header->map_type)) ==
                static_cast<i32>(dim::cache_type_t::mainmenu) ||
            !m_font_files.empty())
-            load_shell(*m_api, map, pool, m_font_table, fonts, m_shell);
+            load_shell(*m_api, map, pool, m_font_table, fonts, m_shell, m_bank);
         m_shell.generation = m_scene.generation;
+        m_bank.generation  = m_scene.generation;
         m_font_files.clear();
 
         /* The Halo 1 systems key off LoadingStatus and would read their
@@ -2369,6 +2375,7 @@ struct H2MapLoader : compo::SubsystemBase
     compo::EntityContainer& m_container;
     H2Scene&                m_scene;
     H2ShellData&            m_shell;
+    H2SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
     std::vector<std::string> m_font_table;
     std::vector<std::pair<std::string, std::shared_ptr<comp_app::FileMapper::Resource>>>
@@ -2399,9 +2406,10 @@ void alloc_h2(compo::EntityContainer& e)
 {
     auto& scene = e.register_subsystem_inplace<H2Scene>();
     e.register_subsystem_inplace<H2Visibility>();
-    auto& shell = e.register_subsystem_inplace<H2ShellData>();
+    auto& shell  = e.register_subsystem_inplace<H2ShellData>();
+    auto& bank   = e.register_subsystem_inplace<H2SoundBank>();
     auto& loader = e.register_subsystem_inplace<H2MapLoader>(
-        std::ref(e), std::ref(scene), std::ref(shell));
+        std::ref(e), std::ref(scene), std::ref(shell), std::ref(bank));
     e.subsystem_cast<GameEventBus>().addEventFunction<MapLoadEvent>(
         0, [&loader](GameEvent& ev, MapLoadEvent* load) {
             /* Consumed here: the Halo 1 loader never sees a Halo 2 map */
