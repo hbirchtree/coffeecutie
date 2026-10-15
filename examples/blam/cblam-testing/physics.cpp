@@ -859,6 +859,9 @@ struct PhysicsSystem
             }
             record_bipeds(tick.tick);
         }
+        /* Models show the state after these ticks, for whatever reads them
+         * later this frame */
+        reconcile_object_bodies(p);
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
          * contact manifolds for CF_NO_CONTACT_RESPONSE bodies, the solver
