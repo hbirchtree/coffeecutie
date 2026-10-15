@@ -28,6 +28,7 @@ using Coffee::Logging::cBasicPrint;
 #include "journal.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "ticks.h"
 #include "webrtc_identity.h"
 
 #include <url/url.h>
@@ -63,7 +64,7 @@ using NetworkingManifest = compo::SubsystemManifest<
         ObjectPhysics,
         PhysicsData,
         const PlayerInput>,
-    type_list_t<NetworkState, PhysicsBus>,
+    type_list_t<NetworkState, PhysicsBus, const TickClock>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
 /* Lane 0 should be used for most common packets */
@@ -724,7 +725,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .rotation      = cam.camera.rotation,
                     .target_player = info.player_idx,
                     .flags         = camera_flags_of(info),
-                    .server_time_us = server_time_us(),
+                    .tick = tick_now(p),
                 }));
         }
     }
@@ -2340,7 +2341,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             .rotation      = cam.camera.rotation,
                             .target_player = info.player_idx,
                             .flags         = camera_flags_of(info),
-                            .server_time_us = server_time_us(),
+                            .tick = tick_now(p),
                         }));
                     net.changes.viewport = net.changes.transform = false;
                     net.sent_physics     = info.mode.physics;
@@ -2362,6 +2363,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(is_server())
         {
             send_seats(p);
+            send_tick_sync(p, t);
             send_grab_states(p);
             send_object_sync(p, t);
         }
@@ -2461,13 +2463,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_impl->RunCallbacks();
     }
 
-    i64 server_time_us() const
+    static u64 tick_now(Proxy& p)
     {
-        auto const now = m_net_state.server_now();
-        return now ? std::chrono::duration_cast<std::chrono::microseconds>(
-                         now->time_since_epoch())
-                         .count()
-                   : 0;
+        return p.subsystem<TickClock>().tick();
     }
 
     /* This peer's shots: a client's to the server, the server's to everyone */
@@ -2484,7 +2482,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 vehicle = net->instance_id;
             /* Others are shown where the latest sync put them */
             WeaponFire const wire{
-                .view_time_us = is_server() ? 0 : m_view_time_us,
+                .view_tick  = is_server() ? 0 : m_view_tick,
                 .position   = Vecf4(shot.position, 1.f),
                 .direction  = Vecf4(shot.direction, 0.f),
                 .weapon     = shot.weapon.tag_id,
@@ -2605,29 +2603,29 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     }
 
     /* How far back a client's shot may look: its ping and some slack */
-    std::optional<std::chrono::steady_clock::time_point> rewind_for(
-        HSteamNetConnection connection, i64 view_time_us)
+    std::optional<u64> rewind_for(
+        Proxy& p, HSteamNetConnection connection, u64 view_tick)
     {
-        if(view_time_us == 0)
+        if(view_tick == 0)
             return std::nullopt;
         using namespace std::chrono;
-        auto const now  = steady_clock::now();
-        steady_clock::duration back = rewind_slack;
+        milliseconds back = rewind_slack;
         SteamNetConnectionRealTimeStatus_t status{};
         if(m_impl->GetConnectionRealTimeStatus(connection, &status, 0, nullptr) ==
            k_EResultOK)
             back += milliseconds(status.m_nPing);
-        back = std::min<steady_clock::duration>(back, max_rewind);
-        auto const view = steady_clock::time_point(microseconds(view_time_us));
-        return std::clamp(view, now - back, now);
+        back = std::min(back, max_rewind);
+        u64 const now   = tick_now(p);
+        u64 const ticks = static_cast<u64>(back.count()) * TickClock::rate / 1000 + 1;
+        return std::clamp(view_tick, now > ticks ? now - ticks : 0, now);
     }
 
     /* Someone else's shot, fired here by `shooter` */
     bool fire_remote_shot(
         Proxy&                                               p,
         u64                                                  shooter,
-        WeaponFire const&                                    wire,
-        std::optional<std::chrono::steady_clock::time_point> view_time = {})
+        WeaponFire const&  wire,
+        std::optional<u64> view_tick = {})
     {
         if(!m_map)
             return false;
@@ -2658,10 +2656,40 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .trigger    = wire.trigger,
             .position   = Vecf3(wire.position),
             .direction  = glm::normalize(direction),
-            .view_time  = view_time,
+            .view_tick  = view_tick,
         };
         m_game_bus.inject(ev, &shot);
         return true;
+    }
+
+    /* The server's ticks to its clients: now and then, at once when it
+     * pauses or resumes, and to each peer as it verifies */
+    void send_tick_sync(Proxy& p, time_point const& t)
+    {
+        auto const& clock  = p.subsystem<TickClock>();
+        bool const  due    = t >= m_next_tick_sync || clock.paused() != m_sent_paused;
+        std::set<HSteamNetConnection> targets;
+        for(auto& [connection, state] : m_connections)
+            if(state.verified && (due || !state.tick_synced))
+            {
+                targets.insert(connection);
+                state.tick_synced = true;
+            }
+        if(due)
+        {
+            m_next_tick_sync = t + tick_sync_interval;
+            m_sent_paused    = clock.paused();
+        }
+        if(targets.empty())
+            return;
+        send_all(
+            Message<TickSync>({
+                .tick     = clock.tick(),
+                .start_us = clock.tick_began_us(),
+                .paused   = clock.paused(),
+            }),
+            k_nSteamNetworkingSend_Reliable,
+            std::move(targets));
     }
 
     /* Objects are simulated on the server, so forge grabs happen there */
@@ -3005,7 +3033,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             object.get<ObjectPhysics>().authority = ObjectPhysics::Simulated;
         m_left_server    = false;
         m_join_confirmed = false;
-        m_view_time_us   = 0;
+        m_view_tick      = 0;
+        m_net_state.tick_base.reset();
         m_sent_grab      = false;
         if(m_client_player.exists())
             if(auto* data = p.get<PhysicsData>(m_client_player.id()))
@@ -3054,7 +3083,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .rotation      = sync.rotation,
                     .target_player = player_info.idx,
                     .flags         = sync.flags,
-                    .server_time_us = server_time_us(),
+                    /* Its body moves there on the next tick here */
+                    .tick = tick_now(p) + 1,
                 }),
                 k_nSteamNetworkingSend_Reliable,
                 std::move(targets));
@@ -3124,7 +3154,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     p,
                     player_info.biped.id(),
                     wire,
-                    rewind_for(connection, wire.view_time_us));
+                    rewind_for(p, connection, wire.view_tick));
             journal(
                 fired ? "net_weapon_fire" : "net_weapon_fire_reject",
                 {{"player_idx", wire.player_idx}, {"weapon", wire.weapon}});
@@ -3339,6 +3369,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             receive_hit(p, payload.value<ObjectHit>());
             break;
         }
+        case MessageBase::TickSync: {
+            auto const& sync      = payload.value<TickSync>();
+            m_net_state.tick_base = NetworkState::TickBase{
+                .tick     = sync.tick,
+                .start_us = sync.start_us,
+                .paused   = sync.paused != 0,
+            };
+            break;
+        }
         case MessageBase::GrabState: {
             if(!m_client_player.exists())
                 break;
@@ -3391,7 +3430,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 cam.camera.position = Vecf3(sync.position);
                 cam.camera.rotation = sync.rotation;
                 info.mode.physics   = sync.flags & CameraSync::physics;
-                m_view_time_us = std::max(m_view_time_us, sync.server_time_us);
+                m_view_tick = std::max(m_view_tick, sync.tick);
                 // TODO: With a fresh viewport, we should compute relevance of
                 // entities Distance, visibility in frustum and projectile type
                 break;
@@ -3742,6 +3781,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         bool                              invited{false};
         bool verified{false}; /*!< Map fingerprint matched ours */
         u32  grabbed{0};      /*!< Net id it was last told it carries */
+        bool tick_synced{false}; /*!< Has had the server's tick clock */
         bool objects_synced{false}; /*!< Has had every moving object */
     };
 
@@ -3793,13 +3833,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr f32                                       max_shot_offset = 4.f;
     static constexpr f32                                       max_mount_offset = 8.f;
     static constexpr auto rewind_slack = std::chrono::milliseconds(250);
-    i64 m_view_time_us{0}; /*!< Newest server time of others shown here */
+    u64 m_view_tick{0}; /*!< Newest server tick of others shown here */
     static constexpr auto max_rewind   = std::chrono::milliseconds(1000);
     /* Hits this peer decided */
     std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>> m_hit_queue;
     std::vector<ObjectHitEvent>                               m_local_hits;
     /* Forge grabs: ours sent to the server, clients' carried here */
     bool          m_sent_grab{false};
+    /* Tick clock sync, to clients */
+    static constexpr auto tick_sync_interval = std::chrono::seconds(1);
+    time_point            m_next_tick_sync{};
+    bool                  m_sent_paused{false};
     std::set<u64> m_remote_holders;
     std::vector<EntitySpawn>                                    m_dynamic_spawns;
     std::atomic<u32> m_next_net_id{0}; /*!< Stamped on whichever thread spawns */

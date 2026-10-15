@@ -66,6 +66,12 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
         return m_paused.has_value();
     }
 
+    /*! When the last tick began, on the server clock when networked */
+    libc_types::i64 tick_began_us() const
+    {
+        return m_tick_began_us;
+    }
+
   private:
     friend void alloc_ticks(compo::EntityContainer& e);
 
@@ -79,7 +85,16 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
     libc_types::f32 m_alpha{0.f};
     libc_types::u32 m_resyncs{0};
     bool            m_started{false};
-    bool            m_networked{false};
+    libc_types::i64 m_tick_began_us{0};
+
+    /*! What tick numbers count: frames on our own, the server's clock, or
+     *  the ticks the server says it is on */
+    enum class time_base_t
+    {
+        frame,
+        server_time,
+        server_ticks,
+    } m_base{time_base_t::frame};
 };
 
 /*! A subsystem's subscription to ticks, drained on its own frame */

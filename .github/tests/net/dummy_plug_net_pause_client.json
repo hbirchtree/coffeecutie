@@ -1,0 +1,32 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Client side of the networked pause test, see dummy_plug_net_pause_server.json.",
+    "frame_delta": 33.3,
+    "events": [
+        {
+            "time": 1500,
+            "type": "camera",
+            "physics": true
+        },
+        {
+            "time": 13500,
+            "type": "dump_state"
+        }
+    ],
+    "end_time": 22000
+}

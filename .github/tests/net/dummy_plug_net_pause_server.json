@@ -1,0 +1,42 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Server side of the networked pause test: it pauses the simulation from 13 s to 21 s and dumps its tick clock while paused. The client follows the server's ticks (TickSync), so its dump, also taken during the pause, should show paused with the same tick or one past it.",
+    "frame_delta": 33.3,
+    "events": [
+        {
+            "time": 1500,
+            "type": "camera",
+            "physics": true
+        },
+        {
+            "time": 13000,
+            "type": "pause",
+            "paused": true
+        },
+        {
+            "time": 17000,
+            "type": "dump_state"
+        },
+        {
+            "time": 21000,
+            "type": "pause",
+            "paused": false
+        }
+    ],
+    "end_time": 26000
+}

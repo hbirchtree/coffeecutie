@@ -9,6 +9,7 @@
 #include "peripherals/constants.h"
 #include "physics.h"
 #include "shader_compiler.h"
+#include "ticks.h"
 
 #include <coffee/comp_app/file_mapper.h>
 #include <coffee/comp_app/services.h>
@@ -368,6 +369,12 @@ void create_resources(compo::EntityContainer& e)
                       * write holds end-of-test state; the harness diffs the
                       * two files directly once both processes have exited. */
                      nlohmann::json state;
+                     auto const&    clock = e.subsystem_cast<TickClock>();
+                     state["ticks"]       = {
+                         {"tick", clock.tick()},
+                         {"paused", clock.paused()},
+                         {"resyncs", clock.resyncs()},
+                     };
 
                      nlohmann::json& players = state["players"];
                      players                 = nlohmann::json::array();

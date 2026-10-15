@@ -18,21 +18,28 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
         server ? duration_cast<microseconds>(server->time_since_epoch()).count()
                : duration_cast<microseconds>(t.time_since_epoch()).count();
 
+    /* A client follows the server's ticks, pauses included */
+    auto const& follow = net.replica && server ? net.tick_base : std::nullopt;
+
     /* A new time base: start over from it */
-    bool const networked = server.has_value();
-    bool const restart   = !m_started || networked != m_networked;
+    auto const base      = !server   ? time_base_t::frame
+                           : follow ? time_base_t::server_ticks
+                                    : time_base_t::server_time;
+    bool const restart   = !m_started || base != m_base;
     if(restart)
     {
         m_started   = true;
-        m_networked = networked;
+        m_base      = base;
         m_paused_us = 0;
         if(m_paused)
             m_paused = base_us;
     }
 
     m_pause_queue->poll();
-    if(auto pause = std::exchange(m_pause_request, std::nullopt);
-       pause && *pause != paused())
+    auto pause = std::exchange(m_pause_request, std::nullopt);
+    if(follow)
+        pause = follow->paused;
+    if(pause && *pause != paused())
     {
         if(*pause)
             m_paused = base_us;
@@ -41,7 +48,12 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
     }
     if(m_paused)
         return;
-    i64 const now_us = base_us - m_paused_us;
+
+    /* Where tick 0 began on this time base */
+    i64 const origin_us =
+        follow ? follow->start_us - static_cast<i64>(follow->tick) * tick_us
+               : m_paused_us;
+    i64 const now_us = base_us - origin_us;
     u64 const now    = static_cast<u64>(std::max<i64>(now_us, 0) / tick_us);
 
     auto&     bus  = p.subsystem<GameEventBus>();
@@ -75,6 +87,7 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
             tick_us,
         0.f,
         1.f);
+    m_tick_began_us = base_us - static_cast<i64>(m_alpha * tick_us);
 }
 
 namespace {

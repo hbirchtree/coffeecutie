@@ -361,9 +361,9 @@ struct WeaponFireEvent
     libc_types::u16      trigger{0};
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
-    /*! When the shooter saw what it aimed at; the authority traces bipeds
-     *  back there. Steady clock, server time on the server */
-    std::optional<std::chrono::steady_clock::time_point> view_time{};
+    /*! The tick the shooter saw others at; the authority traces bipeds
+     *  back there */
+    std::optional<libc_types::u64> view_tick{};
 };
 
 /*! A shot struck an object or a biped, as the authority (the server, or a

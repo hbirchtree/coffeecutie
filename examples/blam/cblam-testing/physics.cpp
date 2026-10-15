@@ -803,7 +803,7 @@ struct PhysicsSystem
         p.subsystem(bsp_cache);
         p.subsystem(loading);
 
-        auto const ticks = m_ticks->take().size();
+        auto const ticks = m_ticks->take();
         if(loading->loading)
             return;
 
@@ -826,7 +826,6 @@ struct PhysicsSystem
             reconcile_player_bodies(p);
             reconcile_object_bodies(p);
             pose_hulls(p);
-            record_bipeds();
         }
 
         // Simulate when there is anything in the world: the Halo BSP body,
@@ -836,21 +835,25 @@ struct PhysicsSystem
         if(!m_world_body && m_bodies.empty() && !m_probe_body)
             return;
 
-        if(ticks == 0)
+        if(ticks.empty())
             return;
 
-        for(size_t step = 0; step < ticks * steps_per_tick; step++)
+        for(auto const& tick : ticks)
         {
-            carry_grabbed(p);
-            m_before_step.clear();
-            for(auto const& [_, body] : m_bodies)
-                if(body.world_body && body.world_body->getInvMass() > 0.f)
-                    m_before_step[body.world_body.get()] =
-                        body.world_body->getLinearVelocity();
-            m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
-            m_steps++;
-            report_impacts();
-            bleed_carried();
+            for(u32 step = 0; step < steps_per_tick; step++)
+            {
+                carry_grabbed(p);
+                m_before_step.clear();
+                for(auto const& [_, body] : m_bodies)
+                    if(body.world_body && body.world_body->getInvMass() > 0.f)
+                        m_before_step[body.world_body.get()] =
+                            body.world_body->getLinearVelocity();
+                m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
+                m_steps++;
+                report_impacts();
+                bleed_carried();
+            }
+            record_bipeds(tick.tick);
         }
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
@@ -2337,10 +2340,9 @@ struct PhysicsSystem
         m_bus->process(event, &hit);
     }
 
-    /* Where each biped's body was, for rays that look back in time */
-    void record_bipeds()
+    /* Where each biped's body was at each tick, for rays that look back */
+    void record_bipeds(u64 tick)
     {
-        auto const now = std::chrono::steady_clock::now();
         std::erase_if(m_biped_history, [this](auto const& e) {
             return !m_player_bodies.contains(e.first);
         });
@@ -2350,36 +2352,23 @@ struct PhysicsSystem
             if(it == m_bodies.end())
                 continue;
             auto& history = m_biped_history[id];
-            history.push_back({now, it->second.world_body->getWorldTransform()});
-            while(now - history.front().first > biped_history_span)
+            history.push_back({tick, it->second.world_body->getWorldTransform()});
+            while(history.size() > biped_history_ticks)
                 history.pop_front();
         }
     }
 
-    /* A biped's body at `at`, between the samples around it */
-    std::optional<btTransform> biped_at(
-        u64 id, std::chrono::steady_clock::time_point at) const
+    /* A biped's body as of `tick`, or the oldest kept */
+    std::optional<btTransform> biped_at(u64 id, u64 tick) const
     {
         auto it = m_biped_history.find(id);
         if(it == m_biped_history.end() || it->second.empty())
             return std::nullopt;
         auto const& history = it->second;
-        auto next = std::find_if(history.begin(), history.end(), [at](auto const& s) {
-            return s.first > at;
+        auto next = std::find_if(history.begin(), history.end(), [tick](auto const& s) {
+            return s.first > tick;
         });
-        if(next == history.begin())
-            return next->second;
-        if(next == history.end())
-            return history.back().second;
-        auto const& [t0, from] = *(next - 1);
-        auto const& [t1, to]   = *next;
-        btScalar const alpha =
-            std::chrono::duration<f32>(at - t0).count() /
-            std::max(std::chrono::duration<f32>(t1 - t0).count(), 1e-6f);
-        btTransform out;
-        out.setOrigin(from.getOrigin().lerp(to.getOrigin(), alpha));
-        out.setRotation(from.getRotation().slerp(to.getRotation(), alpha));
-        return out;
+        return next == history.begin() ? next->second : (next - 1)->second;
     }
 
     void raycast(Physics::Raycast& ray)
@@ -2898,10 +2887,10 @@ struct PhysicsSystem
     };
 
     std::map<u64, player_body_t> m_player_bodies;
-    /* Biped bodies over the last biped_history_span, oldest first */
-    using biped_sample_t = std::pair<std::chrono::steady_clock::time_point, btTransform>;
+    /* Biped bodies by tick, oldest first */
+    using biped_sample_t = std::pair<u64, btTransform>;
     std::map<u64, std::deque<biped_sample_t>> m_biped_history;
-    static constexpr auto biped_history_span = std::chrono::milliseconds(1200);
+    static constexpr size_t biped_history_ticks = TickClock::rate * 6 / 5;
     std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
     /* The section an object's body was made in */
     std::map<u64, i16> m_object_sections;
