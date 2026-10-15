@@ -2384,12 +2384,15 @@ struct PhysicsSystem
             btCollisionObject const* ignore{nullptr};
             /* Traced separately, where they were */
             std::set<btCollisionObject const*> rewound;
+            /* Riders collide with nothing, but are there to be hit */
+            std::set<btCollisionObject const*> bipeds;
 
             bool needsCollision(btBroadphaseProxy* proxy) const override
             {
                 auto const* object =
                     static_cast<btCollisionObject const*>(proxy->m_clientObject);
-                return object != ignore && object->hasContactResponse() &&
+                return object != ignore &&
+                       (object->hasContactResponse() || bipeds.contains(object)) &&
                        !rewound.contains(object) &&
                        ClosestRayResultCallback::needsCollision(proxy);
             }
@@ -2411,6 +2414,9 @@ struct PhysicsSystem
         if(auto it = m_bodies.find(ray.ignore);
            ray.ignore != 0 && it != m_bodies.end())
             closest.ignore = it->second.world_body.get();
+        for(auto const& [id, _] : m_player_bodies)
+            if(auto it = m_bodies.find(id); it != m_bodies.end())
+                closest.bipeds.insert(it->second.world_body.get());
         if(ray.rewind)
             for(auto const& [id, _] : m_biped_history)
                 if(auto it = m_bodies.find(id); it != m_bodies.end())

@@ -3099,15 +3099,27 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::WeaponFire: {
-            /* Only ever the sender's own player, from about where it is */
+            /* Only ever the sender's own player, from about where it is or
+             * the vehicle it rides */
             if(!player_info.biped.exists() || !player_info.verified)
                 break;
             WeaponFire wire = payload.value<WeaponFire>();
             wire.player_idx = player_info.idx;
-            auto const& eye =
-                player_info.biped.get<PlayerCamera>().camera.position;
+            Vecf3 anchor = player_info.biped.get<PlayerCamera>().camera.position;
+            f32   reach  = max_shot_offset;
+            if(wire.vehicle != 0)
+            {
+                u64 const   riding = player_info.biped.get<PlayerInfo>().riding.vehicle;
+                auto const* net    = riding ? p.get<NetworkInfo>(riding) : nullptr;
+                auto const* model  = riding ? p.get<Model>(riding) : nullptr;
+                reach = net && model && net->instance_id == wire.vehicle
+                            ? max_mount_offset
+                            : -1.f;
+                if(model)
+                    anchor = model->position;
+            }
             bool const fired =
-                glm::distance(Vecf3(wire.position), eye) <= max_shot_offset &&
+                glm::distance(Vecf3(wire.position), anchor) <= reach &&
                 fire_remote_shot(
                     p,
                     player_info.biped.id(),
@@ -3779,6 +3791,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     std::vector<WeaponFireEvent>                               m_local_shots;
     static constexpr f32                                       max_shot_offset = 4.f;
+    static constexpr f32                                       max_mount_offset = 8.f;
     static constexpr auto rewind_slack = std::chrono::milliseconds(250);
     i64 m_view_time_us{0}; /*!< Newest server time of others shown here */
     static constexpr auto max_rewind   = std::chrono::milliseconds(1000);

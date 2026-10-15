@@ -16,9 +16,13 @@ struct bound_marker_t
     libc_types::i32             node{-1};
 };
 
-/* Model space transform of a named marker on a mod2, in the bind pose */
+/* Model space transform of a named marker on a mod2, in the bind pose;
+ * markers with several instances (twin barrels) wrap around `instance` */
 inline std::optional<bound_marker_t> bind_marker_node(
-    blam::tag_t const& model, std::string_view name, blam::map_ptr const& magic)
+    blam::tag_t const&   model,
+    std::string_view     name,
+    blam::map_ptr const& magic,
+    libc_types::u32      instance = 0)
 {
     using typing::vector_types::Matf4;
     using typing::vector_types::Quatf;
@@ -37,7 +41,7 @@ inline std::optional<bound_marker_t> bind_marker_node(
         auto instances = marker.instances.data(magic);
         if(!instances.has_value() || instances.value().empty())
             return std::nullopt;
-        auto const& at = instances.value()[0];
+        auto const& at = instances.value()[instance % instances.value().size()];
         /* Bind pose of its node, the way caching.cpp builds inv_bind */
         Matf4 node(1);
         for(libc_types::i32 i = at.node_idx;
@@ -60,9 +64,12 @@ inline std::optional<bound_marker_t> bind_marker_node(
 }
 
 inline std::optional<typing::vector_types::Matf4> bind_marker(
-    blam::tag_t const& model, std::string_view name, blam::map_ptr const& magic)
+    blam::tag_t const&   model,
+    std::string_view     name,
+    blam::map_ptr const& magic,
+    libc_types::u32      instance = 0)
 {
-    if(auto marker = bind_marker_node(model, name, magic))
+    if(auto marker = bind_marker_node(model, name, magic, instance))
         return marker->transform;
     return std::nullopt;
 }
