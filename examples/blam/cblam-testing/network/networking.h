@@ -43,6 +43,16 @@ struct NetworkState : compo::SubsystemBase
     bool clock_authority{false}; /*!< This process is the server */
     bool replica{false}; /*!< Joined to a server, which decides what is hit */
 
+    /*! The server's tick clock, on a client: `tick` began at server time
+     *  `start_us`, and none follow while paused */
+    struct TickBase
+    {
+        libc_types::u64 tick{0};
+        libc_types::i64 start_us{0};
+        bool            paused{false};
+    };
+    std::optional<TickBase> tick_base;
+
     /*! GNS fake network conditions, applied when changed. They act on this
      *  process's own packets, so one side alone is enough. */
     struct Simulation

@@ -345,7 +345,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .from   = shot.position,
             .to     = shot.position + direction * Projectile::reach(proj),
             .ignore = shot.vehicle ? shot.vehicle : shot.shooter,
-            .rewind = shot.view_time,
+            .rewind = shot.view_tick,
         };
         p.template subsystem<PhysicsBus>().process(ev, &ray);
         if(!ray.hit || ray.entity_id == 0)

@@ -78,6 +78,9 @@ struct MessageBase
         /* Forge */
         GrabInput,
         GrabState,
+
+        /* Simulation clock */
+        TickSync,
     } type{None};
 
     u32 request{};
@@ -226,7 +229,7 @@ struct alignas(8) CameraSync
     u32     target_player{0xFFFF};
     f32     fade{1.f};
     flags_t flags{none};
-    i64     server_time_us{0}; /*!< When the server had it there, 0 from clients */
+    u64     tick{0}; /*!< Server tick it was there at, 0 from clients */
 };
 
 /*! A player's vehicle seat; sent on change and to newly verified peers */
@@ -268,7 +271,7 @@ struct alignas(8) WeaponFire
 {
     static constexpr auto message_type = MessageBase::WeaponFire;
 
-    i64   view_time_us{0}; /*!< Server time the shooter saw others at */
+    u64   view_tick{0}; /*!< Server tick the shooter saw others at */
     Vecf4 position;
     Vecf4 direction;
     u32   weapon{0}; /*!< weap tag id */
@@ -316,6 +319,18 @@ struct alignas(8) GrabState
     static constexpr auto message_type = MessageBase::GrabState;
 
     u32 object{0}; /*!< Net id, 0 = nothing */
+    u32 padding{0};
+};
+
+/*! The server's tick clock, which clients follow: tick `tick` began at
+ *  server time `start_us`, and none follow while paused */
+struct alignas(8) TickSync
+{
+    static constexpr auto message_type = MessageBase::TickSync;
+
+    u64 tick{0};
+    i64 start_us{0};
+    u32 paused{0};
     u32 padding{0};
 };
 
@@ -463,6 +478,7 @@ static_assert(sizeof(WeaponFire) == 64);
 static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);
+static_assert(sizeof(TickSync) == 24);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
