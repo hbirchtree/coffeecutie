@@ -1,0 +1,101 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Server side of the vehicle weapon test: it spawns a warthog for the client to man the gun of, and a ghost that it drives itself, facing the warthog 9 wu away. The ghost fires plasma bolts (projectiles, hits decided as they land) at 15 s, the client the warthog's chaingun (hitscan) at 17 s. Shots and hits are journaled as in the fire test.",
+    "frame_delta": 33.3,
+    "events": [
+        {
+            "time": 500,
+            "type": "controller_connect",
+            "index": 0
+        },
+        {
+            "time": 1000,
+            "type": "render_param",
+            "debug_markers": true
+        },
+        {
+            "time": 2000,
+            "type": "spawn_object",
+            "tag": "vehicles\\warthog\\mp_warthog",
+            "class": "vehi",
+            "position": [
+                97.0,
+                -141.0,
+                0.6
+            ],
+            "yaw": -90
+        },
+        {
+            "time": 2500,
+            "type": "spawn_object",
+            "tag": "vehicles\\ghost\\ghost_mp",
+            "class": "vehi",
+            "position": [
+                97.0,
+                -150.0,
+                0.6
+            ],
+            "yaw": 90
+        },
+        {
+            "time": 12000,
+            "type": "camera",
+            "position": [
+                96.0,
+                -150.5,
+                0.8
+            ],
+            "rotation": [
+                0,
+                270
+            ],
+            "physics": true
+        },
+        {
+            "time": 13000,
+            "type": "enter_vehicle",
+            "label": "G-driver"
+        },
+        {
+            "time": 13500,
+            "type": "camera",
+            "rotation": [
+                -4,
+                270
+            ]
+        },
+        {
+            "time": 15000,
+            "type": "controller_axis",
+            "axis": "TRIGGER_RIGHT",
+            "value": 1.0,
+            "duration": 1500,
+            "index": 0
+        },
+        {
+            "time": 17600,
+            "type": "screenshot",
+            "name": "server_view"
+        },
+        {
+            "time": 25000,
+            "type": "dump_state"
+        }
+    ],
+    "end_time": 26000
+}

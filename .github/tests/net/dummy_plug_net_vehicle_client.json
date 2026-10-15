@@ -1,0 +1,77 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Client side of the vehicle weapon test, see dummy_plug_net_vehicle_server.json: it takes the warthog's gunner seat and fires its chaingun at the ghost.",
+    "frame_delta": 33.3,
+    "events": [
+        {
+            "time": 500,
+            "type": "controller_connect",
+            "index": 0
+        },
+        {
+            "time": 1000,
+            "type": "render_param",
+            "debug_markers": true
+        },
+        {
+            "time": 12000,
+            "type": "camera",
+            "position": [
+                98.0,
+                -140.0,
+                0.8
+            ],
+            "rotation": [
+                0,
+                90
+            ],
+            "physics": true
+        },
+        {
+            "time": 13000,
+            "type": "enter_vehicle",
+            "label": "W-gunner"
+        },
+        {
+            "time": 13500,
+            "type": "camera",
+            "rotation": [
+                -4,
+                90
+            ]
+        },
+        {
+            "time": 15600,
+            "type": "screenshot",
+            "name": "client_view"
+        },
+        {
+            "time": 17000,
+            "type": "controller_axis",
+            "axis": "TRIGGER_RIGHT",
+            "value": 1.0,
+            "duration": 1500,
+            "index": 0
+        },
+        {
+            "time": 20000,
+            "type": "dump_state"
+        }
+    ],
+    "end_time": 21000
+}

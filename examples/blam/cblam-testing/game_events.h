@@ -297,7 +297,8 @@ struct SpawnObjectEvent
 
     /* Created by an effect, which every peer plays itself: never replicated */
     bool            local_only{false};
-    libc_types::u64 owner{0}; /*!< Projectiles: who fired it */
+    libc_types::u64 owner{0};   /*!< Projectiles: the body they leave through */
+    libc_types::u64 shooter{0}; /*!< Projectiles: the player who fired them */
     Vecf3           velocity{};         /*!< wu/s, bodies with mass */
     Vecf3           angular_velocity{}; /*!< rad/s */
     libc_types::f32 lifetime{0.f};      /*!< seconds, 0 = until despawned */
