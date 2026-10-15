@@ -18,6 +18,14 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
         server ? duration_cast<microseconds>(server->time_since_epoch()).count()
                : duration_cast<microseconds>(t.time_since_epoch()).count();
 
+    /* How long frames take here, smoothed: a pause must outlast one */
+    auto const wall     = steady_clock::now();
+    i64 const  frame_us = m_last_frame != steady_clock::time_point{}
+                              ? duration_cast<microseconds>(wall - m_last_frame).count()
+                              : 0;
+    m_frame_us += (frame_us - m_frame_us) / 4;
+    m_last_frame = wall;
+
     /* A client follows the server's ticks, pauses included */
     auto const& follow = net.replica && server ? net.tick_base : std::nullopt;
 
@@ -45,12 +53,14 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
                                       : std::nullopt;
         m_paused.reset();
     } else if(request && *request && !m_pause_at)
-        /* Clients get notice enough to reach the slowest of them, so all
-         * stop on the same tick */
+        /* Clients get notice enough to reach the slowest of them, sent at
+         * the end of a frame that may be slow, so all stop on the same tick */
         m_pause_at = m_tick + (net.clock_authority
                                    ? std::min<u64>(
-                                         pause_lead + net.worst_ping_ms / 2 *
-                                                          rate / 1000,
+                                         pause_lead +
+                                             net.worst_ping_ms / 2 * rate / 1000 +
+                                             2 * static_cast<u64>(m_frame_us) /
+                                                 tick_us,
                                          rate)
                                    : 0);
     else if(request && !*request && m_pause_at)
@@ -67,7 +77,11 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
     i64 const origin_us =
         follow ? follow->start_us - static_cast<i64>(follow->tick) * tick_us
                : m_paused_us;
-    i64 const now_us = base_us - origin_us;
+    /* A slowed server's ticks come slower, and so do ours */
+    i64 const now_us =
+        follow ? static_cast<i64>(follow->tick) * tick_us +
+                     (base_us - follow->start_us) * follow->speed_permille / 1000
+               : base_us - origin_us;
     u64 const now    = static_cast<u64>(std::max<i64>(now_us, 0) / tick_us);
     u64 const until  = m_pause_at ? std::min(now, *m_pause_at) : now;
 
@@ -86,15 +100,29 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
     {
         u64 const behind = until - m_tick;
         /* Too far behind: drop what a frame can't make up and run the rest.
-         * The server's time is everyone's, so it never skips: it slows */
+         * The server's time is everyone's, so it never skips ticks: its
+         * clock falls back instead, and everyone slows with it */
         bool const skip = behind > max_catch_up && !net.clock_authority;
         if(skip)
         {
             m_tick = until - max_catch_up;
             m_resyncs++;
-        }
-        for(u64 i = 0; i < std::min<u64>(behind, max_catch_up); i++)
+        } else if(behind > max_catch_up && !follow)
+            m_paused_us += static_cast<i64>(behind - max_catch_up) * tick_us;
+        u64 const run = std::min<u64>(behind, max_catch_up);
+        for(u64 i = 0; i < run; i++)
             emit(++m_tick, skip && i == 0);
+        m_window_ticks += run;
+    }
+
+    /* How much of its time the simulation keeps up with, over a second */
+    m_window_us += frame_us;
+    if(m_window_us >= 1'000'000)
+    {
+        m_speed = std::clamp(
+            static_cast<f32>(m_window_ticks * tick_us) / m_window_us, 0.f, 1.f);
+        m_window_ticks = 0;
+        m_window_us    = 0;
     }
 
     /* Stopped on the tick: time stands still from when the next would
