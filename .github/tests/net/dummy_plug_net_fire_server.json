@@ -15,7 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the weapon fire test: the two players face each other 4 wu apart, the server fires at 13 s and the client at 15 s. Each peer journals the other's shots (net_weapon_fire) and the screenshot catches the client's.",
+    "comment": "Server side of the weapon fire test: the two players face each other 4 wu apart, the server fires at 16 s and the client at 17 s, each aiming at the other's chest. Each peer journals the other's shots (net_weapon_fire) and every hit (net_object_hit), where the server decides it and where the client receives it; the screenshot catches the client's.",
     "frame_delta": 33.3,
     "events": [
         {
@@ -34,16 +34,16 @@
             "position": [
                 97.0,
                 -150.0,
-                2.0
+                0.8
             ],
             "rotation": [
-                0,
+                -3,
                 270
             ],
             "physics": true
         },
         {
-            "time": 13000,
+            "time": 16000,
             "type": "controller_axis",
             "axis": "TRIGGER_RIGHT",
             "value": 1.0,
@@ -51,14 +51,14 @@
             "index": 0
         },
         {
-            "time": 15600,
+            "time": 17600,
             "type": "screenshot",
             "name": "server_view"
         },
         {
-            "time": 19000,
+            "time": 25000,
             "type": "dump_state"
         }
     ],
-    "end_time": 20000
+    "end_time": 26000
 }

@@ -34,21 +34,21 @@
             "position": [
                 97.0,
                 -146.0,
-                2.0
+                0.8
             ],
             "rotation": [
-                0,
+                -3,
                 90
             ],
             "physics": true
         },
         {
-            "time": 13600,
+            "time": 15600,
             "type": "screenshot",
             "name": "client_view"
         },
         {
-            "time": 15000,
+            "time": 17000,
             "type": "controller_axis",
             "axis": "TRIGGER_RIGHT",
             "value": 1.0,
@@ -56,9 +56,9 @@
             "index": 0
         },
         {
-            "time": 17000,
+            "time": 20000,
             "type": "dump_state"
         }
     ],
-    "end_time": 18000
+    "end_time": 21000
 }

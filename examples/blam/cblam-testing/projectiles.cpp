@@ -3,6 +3,7 @@
 #include "blam_files.h"
 #include "components.h"
 #include "data.h"
+#include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
 
@@ -17,7 +18,11 @@
 
 using ProjectileManifest = compo::SubsystemManifest<
     type_list_t<Projectile, Model, const ObjectPhysics, const PlayerInfo>,
-    type_list_t<PhysicsBus, GameEventBus, const BlamFiles<halo_version>>,
+    type_list_t<
+        PhysicsBus,
+        GameEventBus,
+        const NetworkState,
+        const BlamFiles<halo_version>>,
     empty_list_t>;
 
 struct ProjectileSystem
@@ -129,6 +134,8 @@ struct ProjectileSystem
 
         response_t const what =
             response ? response->default_response : response_t::detonate;
+        if(ray.entity_id != 0)
+            struck(p, flight, model, ray);
         if(response)
             play(p, response->default_effect, ray.point, ray.normal, {});
 
@@ -184,6 +191,39 @@ struct ProjectileSystem
         default:
             return false;
         }
+    }
+
+    /* Hits on bodies, from the authority's copy; bullets fired as hitscan
+     * were resolved when the trigger was pulled */
+    void struck(
+        Proxy&                  p,
+        Projectile const&       flight,
+        Model const&            model,
+        Physics::Raycast const& ray)
+    {
+        if(Projectile::hitscan(*flight.tag) ||
+           p.template subsystem<NetworkState>().replica)
+            return;
+        auto const* target  = p.template get<PlayerInfo>(ray.entity_id);
+        auto const* shooter = p.template get<PlayerInfo>(flight.shooter);
+        ObjectHitEvent hit{
+            .projectile = model.origin_object ? model.origin_object->as_ref()
+                                              : blam::tagref_t{},
+            .damage     = flight.tag->impact_damage,
+            .target     = ray.entity_id,
+            .shooter    = flight.shooter,
+            .target_player =
+                target ? target->player_idx : ObjectHitEvent::no_player,
+            .shooter_player =
+                shooter ? shooter->player_idx : ObjectHitEvent::no_player,
+            .point     = ray.point,
+            .normal    = ray.normal,
+            .direction = direction(flight),
+            .part      = ray.part,
+            .head      = ray.head,
+        };
+        GameEvent ev{.type = GameEvent::ObjectHit};
+        p.template subsystem<GameEventBus>().inject(ev, &hit);
     }
 
     /* Plays the detonation, by the material's override or its own */

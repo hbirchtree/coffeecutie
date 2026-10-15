@@ -3,6 +3,8 @@
 #include "blam_files.h"
 #include "components.h"
 #include "data.h"
+#include "network/networking.h"
+#include "physics.h"
 #include "selected_version.h"
 
 #include <blam/volta/blam_antr.h>
@@ -23,7 +25,11 @@ using WeaponManifest = compo::SubsystemManifest<
         const Attachment,
         const AnimationPlayback,
         Model>,
-    type_list_t<GameEventBus, const BlamFiles<halo_version>>,
+    type_list_t<
+        GameEventBus,
+        PhysicsBus,
+        const NetworkState,
+        const BlamFiles<halo_version>>,
     empty_list_t>;
 
 struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
@@ -174,8 +180,14 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
         std::minstd_rand rng(shot.seed);
         Vecf3 const      forward = shot.direction;
-        if(trigger.projectile.valid())
+        if(auto projectile = index.find(trigger.projectile.tag_id);
+           trigger.projectile.valid() && projectile != index.end())
         {
+            auto const* proj =
+                (*projectile).template data<blam::scn::projectile>(magic).value();
+            /* Only the authority decides what bullets hit */
+            bool const resolve = Projectile::hitscan(*proj) &&
+                                 !p.template subsystem<NetworkState>().replica;
             i32 const count = std::max<i32>(trigger.projectiles_per_shot, 1);
             f32 const error = std::max(trigger.error_angle.x, trigger.minimum_error);
             for(i32 i = 0; i < count; i++)
@@ -183,6 +195,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 f32 const spread =
                     count > 1 ? std::max(error, trigger.distribution_angle * .5f) : error;
                 Vecf3 const dir = cone(rng, forward, spread);
+                if(resolve)
+                    trace(p, shot, (*projectile).as_ref(), *proj, dir);
                 SpawnObjectEvent spawn{
                     .object   = trigger.projectile,
                     .position = shot.position,
@@ -191,6 +205,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                                     -std::asin(std::clamp(dir.z, -1.f, 1.f)),
                                     Vecf3{0, 1, 0}),
                     .local_only = true,
+                    .owner      = shot.shooter,
                 };
                 GameEvent ev{.type = GameEvent::SpawnObject};
                 game.inject(ev, &spawn);
@@ -237,6 +252,43 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             GameEvent ev{.type = GameEvent::PlayModelAnimation};
             game.inject(ev, &play);
         }
+    }
+
+    /* A bullet's flight as one ray, against bipeds as the shooter saw them */
+    void trace(
+        Proxy&                       p,
+        WeaponFireEvent const&       shot,
+        blam::tagref_t const&        projectile,
+        blam::scn::projectile const& proj,
+        Vecf3 const&                 direction)
+    {
+        Physics::Event   ev{Physics::Event::Raycast};
+        Physics::Raycast ray{
+            .from   = shot.position,
+            .to     = shot.position + direction * Projectile::reach(proj),
+            .ignore = shot.shooter,
+            .rewind = shot.view_time,
+        };
+        p.template subsystem<PhysicsBus>().process(ev, &ray);
+        if(!ray.hit || ray.entity_id == 0)
+            return;
+        auto const*    target = p.template get<PlayerInfo>(ray.entity_id);
+        ObjectHitEvent hit{
+            .projectile     = projectile,
+            .damage         = proj.impact_damage,
+            .target         = ray.entity_id,
+            .shooter        = shot.shooter,
+            .target_player  = target ? target->player_idx : ObjectHitEvent::no_player,
+            .shooter_player = shot.player_idx,
+            .point          = ray.point,
+            .normal         = ray.normal,
+            .direction      = direction,
+            .part           = ray.part,
+            .head           = ray.head,
+            .hitscan        = true,
+        };
+        GameEvent hit_ev{.type = GameEvent::ObjectHit};
+        p.template subsystem<GameEventBus>().inject(hit_ev, &hit);
     }
 
     static i32 fire_clip(AnimationPlayback const& anim, blam::map_ptr const& magic)

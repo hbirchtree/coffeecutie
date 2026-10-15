@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <deque>
 #include <limits>
 #include <memory>
 #include <set>
@@ -823,6 +824,7 @@ struct PhysicsSystem
             reconcile_player_bodies(p);
             reconcile_object_bodies(p);
             pose_hulls(p);
+            record_bipeds();
         }
 
         // Simulate when there is anything in the world: the Halo BSP body,
@@ -2326,6 +2328,51 @@ struct PhysicsSystem
         m_bus->process(event, &hit);
     }
 
+    /* Where each biped's body was, for rays that look back in time */
+    void record_bipeds()
+    {
+        auto const now = std::chrono::steady_clock::now();
+        std::erase_if(m_biped_history, [this](auto const& e) {
+            return !m_player_bodies.contains(e.first);
+        });
+        for(auto const& [id, _] : m_player_bodies)
+        {
+            auto it = m_bodies.find(id);
+            if(it == m_bodies.end())
+                continue;
+            auto& history = m_biped_history[id];
+            history.push_back({now, it->second.world_body->getWorldTransform()});
+            while(now - history.front().first > biped_history_span)
+                history.pop_front();
+        }
+    }
+
+    /* A biped's body at `at`, between the samples around it */
+    std::optional<btTransform> biped_at(
+        u64 id, std::chrono::steady_clock::time_point at) const
+    {
+        auto it = m_biped_history.find(id);
+        if(it == m_biped_history.end() || it->second.empty())
+            return std::nullopt;
+        auto const& history = it->second;
+        auto next = std::find_if(history.begin(), history.end(), [at](auto const& s) {
+            return s.first > at;
+        });
+        if(next == history.begin())
+            return next->second;
+        if(next == history.end())
+            return history.back().second;
+        auto const& [t0, from] = *(next - 1);
+        auto const& [t1, to]   = *next;
+        btScalar const alpha =
+            std::chrono::duration<f32>(at - t0).count() /
+            std::max(std::chrono::duration<f32>(t1 - t0).count(), 1e-6f);
+        btTransform out;
+        out.setOrigin(from.getOrigin().lerp(to.getOrigin(), alpha));
+        out.setRotation(from.getRotation().slerp(to.getRotation(), alpha));
+        return out;
+    }
+
     void raycast(Physics::Raycast& ray)
     {
         if(!m_world)
@@ -2335,12 +2382,15 @@ struct PhysicsSystem
             using ClosestRayResultCallback::ClosestRayResultCallback;
             int                      triangle{-1};
             btCollisionObject const* ignore{nullptr};
+            /* Traced separately, where they were */
+            std::set<btCollisionObject const*> rewound;
 
             bool needsCollision(btBroadphaseProxy* proxy) const override
             {
                 auto const* object =
                     static_cast<btCollisionObject const*>(proxy->m_clientObject);
                 return object != ignore && object->hasContactResponse() &&
+                       !rewound.contains(object) &&
                        ClosestRayResultCallback::needsCollision(proxy);
             }
 
@@ -2361,7 +2411,28 @@ struct PhysicsSystem
         if(auto it = m_bodies.find(ray.ignore);
            ray.ignore != 0 && it != m_bodies.end())
             closest.ignore = it->second.world_body.get();
+        if(ray.rewind)
+            for(auto const& [id, _] : m_biped_history)
+                if(auto it = m_bodies.find(id); it != m_bodies.end())
+                    closest.rewound.insert(it->second.world_body.get());
         m_world->rayTest(from, to, closest);
+        if(ray.rewind)
+            for(auto const& [id, _] : m_biped_history)
+            {
+                auto it    = m_bodies.find(id);
+                auto where = biped_at(id, *ray.rewind);
+                if(id == ray.ignore || it == m_bodies.end() || !where)
+                    continue;
+                btTransform from_at, to_at;
+                from_at.setIdentity();
+                to_at.setIdentity();
+                from_at.setOrigin(from);
+                to_at.setOrigin(to);
+                btRigidBody const* body = it->second.world_body.get();
+                btCollisionWorld::rayTestSingle(
+                    from_at, to_at, const_cast<btRigidBody*>(body),
+                    body->getCollisionShape(), *where, closest);
+            }
         if(!closest.hasHit())
             return;
         bool const structure = closest.m_collisionObject == m_world_body.get();
@@ -2377,6 +2448,15 @@ struct PhysicsSystem
                                             ->getUserPointer()));
         ray.shader    = structure ? surface_shader(closest.triangle) : nullptr;
         ray.invisible = structure && surface_invisible(closest.triangle);
+        /* A compound's child index stands in for the triangle */
+        if(auto it = m_bodies.find(ray.entity_id);
+           !structure && it != m_bodies.end() && closest.triangle >= 0 &&
+           static_cast<size_t>(closest.triangle) < it->second.child_shapes.size())
+        {
+            ray.part = static_cast<i16>(closest.triangle);
+            auto const& heads = it->second.child_heads;
+            ray.head = ray.part < static_cast<i16>(heads.size()) && heads[ray.part];
+        }
     }
 
     /* Carried momentum fades: fast against the ground, slowly in the air */
@@ -2803,6 +2883,10 @@ struct PhysicsSystem
     };
 
     std::map<u64, player_body_t> m_player_bodies;
+    /* Biped bodies over the last biped_history_span, oldest first */
+    using biped_sample_t = std::pair<std::chrono::steady_clock::time_point, btTransform>;
+    std::map<u64, std::deque<biped_sample_t>> m_biped_history;
+    static constexpr auto biped_history_span = std::chrono::milliseconds(1200);
     std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
     /* The section an object's body was made in */
     std::map<u64, i16> m_object_sections;
