@@ -121,6 +121,12 @@ struct EffectSystem
         bool                  along_velocity{false};
         bool                  dies_on_contact{false};
 
+        /* Held to a marker on its parent, in the marker's forward/right/up */
+        u64         parent{0};
+        std::string marker{};
+        Vecf3       local{};
+        Vecf3       local_velocity{};
+
         /* pctl particles walk their type's particle states */
         particle_system::particle_state_t const* states{nullptr};
         u32                                      state_count{0};
@@ -798,13 +804,18 @@ struct EffectSystem
     }
 
     /* An effect location: a marker on its parent, or the special names */
-    place_t location(Proxy& p, effect_instance_t const& fx, i16 index)
+    std::string location_name(effect_instance_t const& fx, i16 index)
     {
-        std::string name;
         if(auto locations = fx.tag->locations.data(*m_magic);
            locations.has_value() && index >= 0 &&
            static_cast<size_t>(index) < locations.value().size())
-            name = std::string(locations.value()[index].marker_name.str());
+            return std::string(locations.value()[index].marker_name.str());
+        return {};
+    }
+
+    place_t location(Proxy& p, effect_instance_t const& fx, i16 index)
+    {
+        std::string const name = location_name(fx, index);
         if(name == "gravity")
             return {fx.place.position, {0.f, 0.f, -1.f}};
         if(fx.parent != 0 && name != "normal")
@@ -1193,6 +1204,24 @@ struct EffectSystem
             s.along_velocity = part->orientation ==
                                blam::scn::particle_orientation_t::parallel_to_direction;
             s.dies_on_contact = has(pflags::dies_on_contact_with_structure);
+            /* A muzzle flash rides the barrel it came out of */
+            if((burst.flags & effect::particle_t::flags_t::stay_attached_to_marker) !=
+                   effect::particle_t::flags_t::none &&
+               fx.parent != 0)
+            {
+                auto const marker = location_name(fx, burst.location);
+                if(marker_place(p, fx.parent, marker))
+                {
+                    auto const to_local = [&at, &x, &y](Vecf3 const& v) {
+                        return Vecf3{
+                            glm::dot(v, at.forward), glm::dot(v, x), glm::dot(v, y)};
+                    };
+                    s.parent         = fx.parent;
+                    s.marker         = marker;
+                    s.local          = to_local(s.look.position - at.position);
+                    s.local_velocity = to_local(s.velocity - fx.velocity);
+                }
+            }
             m_particles.push_back(s);
         }
     }
@@ -1477,30 +1506,46 @@ struct EffectSystem
                 m_particles.pop_back();
                 continue;
             }
-            s.velocity.z += s.motion.gravity * dt;
-            s.velocity *= std::exp(-s.motion.drag * dt);
-            Vecf3 const to = s.look.position + s.velocity * dt;
-            if(s.motion.collides || s.dies_on_contact)
+            std::optional<place_t> anchor =
+                s.parent ? marker_place(p, s.parent, s.marker) : std::nullopt;
+            if(!anchor)
+                s.parent = 0;
+            if(anchor)
             {
-                Physics::Event   ev{Physics::Event::Raycast};
-                Physics::Raycast ray{.from = s.look.position, .to = to};
-                physics.process(ev, &ray);
-                if(ray.hit && ray.entity_id == 0)
+                /* Placed off the marker as drawn, so no lookahead */
+                s.local += s.local_velocity * dt;
+                Vecf3 x, y;
+                basis(anchor->forward, x, y);
+                s.look.position = anchor->position + anchor->forward * s.local.x +
+                                  x * s.local.y + y * s.local.z;
+            } else
+            {
+                s.velocity.z += s.motion.gravity * dt;
+                s.velocity *= std::exp(-s.motion.drag * dt);
+                Vecf3 const to = s.look.position + s.velocity * dt;
+                if(s.motion.collides || s.dies_on_contact)
                 {
-                    if(s.dies_on_contact)
+                    Physics::Event   ev{Physics::Event::Raycast};
+                    Physics::Raycast ray{.from = s.look.position, .to = to};
+                    physics.process(ev, &ray);
+                    if(ray.hit && ray.entity_id == 0)
                     {
-                        m_particles[i] = m_particles.back();
-                        m_particles.pop_back();
-                        continue;
-                    }
-                    Vecf3 const n = ray.normal;
-                    s.velocity    = (s.velocity - 2.f * glm::dot(s.velocity, n) * n) *
-                                 s.motion.elasticity;
-                    s.look.position = ray.point + n * .01f;
+                        if(s.dies_on_contact)
+                        {
+                            m_particles[i] = m_particles.back();
+                            m_particles.pop_back();
+                            continue;
+                        }
+                        Vecf3 const n = ray.normal;
+                        s.velocity =
+                            (s.velocity - 2.f * glm::dot(s.velocity, n) * n) *
+                            s.motion.elasticity;
+                        s.look.position = ray.point + n * .01f;
+                    } else
+                        s.look.position = to;
                 } else
                     s.look.position = to;
-            } else
-                s.look.position = to;
+            }
             s.look.rotation += s.spin * dt;
             s.frame += s.frame_rate * dt;
 
@@ -1511,7 +1556,8 @@ struct EffectSystem
                 alpha *= (s.life - s.age) / s.fade_out;
 
             EffectScene::sprite_t look = s.look;
-            look.position += s.velocity * m_lookahead;
+            if(!anchor)
+                look.position += s.velocity * m_lookahead;
             look.rotation += s.spin * m_lookahead;
             look.color = s.tint * Vecf4(1.f, 1.f, 1.f, alpha);
             look.frame = static_cast<i16>(s.frame + s.frame_rate * m_lookahead);
