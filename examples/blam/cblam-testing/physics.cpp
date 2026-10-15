@@ -1181,6 +1181,11 @@ struct PhysicsSystem
                 Vecf3 const origin = model.position + model.rotation * com;
                 transform.setOrigin(btVector3(origin.x, origin.y, origin.z));
                 body.setWorldTransform(transform);
+                /* At rest it needs no contacts worked out every step */
+                int const state =
+                    physics.sleeping ? ISLAND_SLEEPING : DISABLE_DEACTIVATION;
+                if(body.getActivationState() != state)
+                    body.forceActivationState(state);
                 continue;
             }
             physics.sleeping = !body.isActive();
