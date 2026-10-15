@@ -563,6 +563,23 @@ i32 blam_main()
                     ? arguments["gateway-auth-key"].as<std::string>()
                     : std::string());
             alloc_ticks(e);
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+            /* Network scenarios script both ends on session time */
+            e.subsystem_cast<comp_app::AppLoader>()
+                .config<comp_app::dummy_plug::Config>()
+                .session_clock = [&net = e.subsystem_cast<NetworkState>()]()
+                -> std::optional<compo::clock::duration> {
+                using namespace std::chrono;
+                auto const origin = net.session_origin_us.load();
+                if(origin == 0)
+                    return std::nullopt;
+                return microseconds(
+                    duration_cast<microseconds>(
+                        steady_clock::now().time_since_epoch())
+                        .count() -
+                    origin);
+            };
+#endif
 #if defined(BLAM_CURSED_ENABLED)
             cursed::setup_cursed_loaders(e);
 #endif

@@ -29,6 +29,11 @@ Usage:
       MIN_IN_PLAY=N requires every dump to show at least N players in play,
       e.g. both sides' split screen seats.
 
+      Combat: every peer plays each shot once (WeaponFire) and hears of
+      each hit the authority decided (net_object_hit), so both lists must
+      agree. EXPECT_HITS=N requires at least N hits, EXPECT_GRABS=N at
+      least N grab state changes on each peer (net_grab).
+
   compare_journals.py --timeline <journal.jsonl> [more...]
       Prints all journals merged into one timeline (prefixed by journal
       name) instead of comparing. For eyeballing event ordering across
@@ -318,6 +323,40 @@ def clock_error(a_label, a_entries, b_label, b_entries):
     return 0
 
 
+def combat(label, entries):
+    shots = sum(1 for e in entries if e.get("type") == "game_event"
+                and e.get("data", {}).get("event") == "WeaponFire")
+    hits = sorted(json.dumps(e.get("data", {}), sort_keys=True)
+                  for e in entries if e.get("type") == "net_object_hit")
+    grabs = sum(1 for e in entries if e.get("type") == "net_grab")
+    return shots, hits, grabs
+
+
+def compare_combat(a_label, a_entries, b_label, b_entries):
+    problems = 0
+    a_shots, a_hits, _ = combat(a_label, a_entries)
+    b_shots, b_hits, b_grabs = combat(b_label, b_entries)
+    print(f"{a_label}: {a_shots} shots, {len(a_hits)} hits; "
+          f"{b_label}: {b_shots} shots, {len(b_hits)} hits, {b_grabs} grabs")
+    if a_shots != b_shots:
+        problems += 1
+        print(f"FAIL: {a_label} played {a_shots} shots, {b_label} {b_shots}")
+    if a_hits != b_hits:
+        problems += 1
+        print(f"FAIL: {a_label} decided {len(a_hits)} hits, "
+              f"{b_label} heard of {len(b_hits)} (or different ones)")
+    expect_hits = int(os.environ.get("EXPECT_HITS", "0"))
+    if len(a_hits) < expect_hits:
+        problems += 1
+        print(f"FAIL: {len(a_hits)} hits, expected at least {expect_hits}")
+    expect_grabs = int(os.environ.get("EXPECT_GRABS", "0"))
+    if b_grabs < expect_grabs:
+        problems += 1
+        print(f"FAIL: {b_label} saw {b_grabs} grab changes, "
+              f"expected at least {expect_grabs}")
+    return problems
+
+
 def label_for(path):
     # <out>/client0/journal.jsonl -> client0; <out>/journal.jsonl -> <out>
     return os.path.basename(os.path.dirname(os.path.abspath(path))) or path
@@ -388,6 +427,8 @@ def main():
         problems += unanswered_requests(label_for(path), entries)
         problems += clock_error(authority_label, authority_entries,
                                 label_for(path), entries)
+        problems += compare_combat(authority_label, authority_entries,
+                                   label_for(path), entries)
     for peer_label, peer in dumps[1:]:
         problems += compare_rosters(authority_label,
                                     authority.get("players", []),

@@ -4,6 +4,7 @@
 
 #include <coffee/components/types.h>
 
+#include <atomic>
 #include <optional>
 #include <vector>
 
@@ -52,6 +53,11 @@ struct NetworkState : compo::SubsystemBase
         bool            paused{false};
     };
     std::optional<TickBase> tick_base;
+
+    /*! Session time: the server's time since it began listening. This is
+     *  the local steady time (us) it started at, 0 while there is none.
+     *  Read from any thread. */
+    std::atomic<libc_types::i64> session_origin_us{0};
 
     /*! GNS fake network conditions, applied when changed. They act on this
      *  process's own packets, so one side alone is enough. */
