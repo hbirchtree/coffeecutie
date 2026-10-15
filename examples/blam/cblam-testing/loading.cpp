@@ -257,7 +257,6 @@ struct ResourceLoader
                 pending_cluster_change->cluster < bsp->clusters.size();
             if(live)
             {
-
                 load_world_lighting(
                     p,
                     pending_cluster_change->bsp->clusters
@@ -332,10 +331,12 @@ struct ResourceLoader
         ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
         for(auto const& [id, lod] : requests)
         {
-            auto   ent   = p.ref(id);
-            Model& model = ent.template get<Model>();
-            if(!model.tag)
+            /* Despawned since it was asked for, e.g. an answered impostor */
+            auto* found = p.template get<Model>(id);
+            if(!found || !found->tag)
                 continue;
+            auto   ent   = p.ref(id);
+            Model& model = *found;
             model.lod_built |= 1 << lod;
             ModelAssembly assem = model_cache.predict_regions(
                 model.tag->as_ref(), static_cast<blam::mod2::mod2_lod>(lod));
