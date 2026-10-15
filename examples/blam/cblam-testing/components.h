@@ -1052,6 +1052,8 @@ struct PlayerCamera
 
     /*! Where the eye was a tick ago, for a body-driven camera */
     std::optional<Vecf3> tick_eye{};
+    /*! Where the eye is drawn this frame, between ticks if it moves on them */
+    Vecf3 drawn_eye{};
 
     bool is_active() const
     {

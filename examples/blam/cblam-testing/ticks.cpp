@@ -255,11 +255,13 @@ struct MotionInterpolator
         for(auto ent : p.select<PlayerInfo, PlayerCamera>())
         {
             auto [info, cam] = ent.components();
+            cam.drawn_eye    = cam.camera.position;
             if(!cam.tick_eye || !ticked_eye(p, info) ||
                glm::distance(*cam.tick_eye, cam.camera.position) > max_tick_move)
                 continue;
             Vecf3 const eye   = glm::mix(*cam.tick_eye, cam.camera.position, alpha);
             Vecf3 const delta = eye - cam.camera.position;
+            cam.drawn_eye     = eye;
             build_camera_matrix(cam, eye);
             /* First-person models hang off the eye */
             for(auto held : p.select<Attachment, Model>())

@@ -749,6 +749,20 @@ struct EffectSystem
     /* ---- Placement ---- */
 
     /* Where a named marker is on an entity now, else its origin */
+    bool has_marker(Proxy& p, u64 entity, std::string const& marker)
+    {
+        auto const* model = p.template get<Model>(entity);
+        if(marker.empty() || !model || !model->tag)
+            return marker.empty();
+        auto key = std::pair{model->tag, marker};
+        auto it  = m_markers.find(key);
+        if(it == m_markers.end())
+            it = m_markers
+                     .emplace(key, bind_marker_node(*model->tag, marker, *m_magic))
+                     .first;
+        return it->second.has_value();
+    }
+
     std::optional<place_t> marker_place(
         Proxy& p, u64 entity, std::string const& marker)
     {
@@ -855,7 +869,11 @@ struct EffectSystem
 
     /* On a first-person model, the sound stays with the one who made it */
     void play_sound(
-        Proxy& p, blam::tagref_t const& sound, Vecf3 const& at, u64 parent = 0)
+        Proxy&                p,
+        blam::tagref_t const& sound,
+        Vecf3 const&          at,
+        u64                   parent    = 0,
+        bool                  on_marker = true)
     {
         auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
         if(!sounds || !sound.valid())
@@ -867,12 +885,12 @@ struct EffectSystem
         {
             /* Listener space: right, up, back */
             auto const& basis = cam->camera_.cached;
-            Vecf3 const d     = at - cam->camera.position;
+            Vecf3 const d     = at - cam->drawn_eye;
             play.relative     = true;
             play.position     = Vecf3(
                 glm::dot(d, basis.right), glm::dot(d, basis.up), -glm::dot(d, basis.forward));
-            /* A marker the first-person model lacks lands on the eye */
-            if(glm::dot(d, d) < 1e-6f)
+            /* A marker the first-person model lacks: just ahead of the eye */
+            if(!on_marker)
                 play.position = Vecf3{0.f, 0.f, -missing_marker_ahead};
         }
         sounds->inject(ev, &play);
@@ -1047,7 +1065,12 @@ struct EffectSystem
                 switch(class_of(part.type))
                 {
                 case tag_class_t::snd:
-                    play_sound(p, part.type, at.position, fx.parent);
+                    play_sound(
+                        p,
+                        part.type,
+                        at.position,
+                        fx.parent,
+                        has_marker(p, fx.parent, location_name(fx, part.location)));
                     break;
                 case tag_class_t::ligh:
                     if(auto const* tag = tag_data<light>(part.type, tag_class_t::ligh))
