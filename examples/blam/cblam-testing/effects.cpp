@@ -219,7 +219,7 @@ struct EffectSystem
 
     EffectSystem()
     {
-        this->priority = 904;
+        this->priority = 905;
     }
 
     void start_restricted(Proxy& p, time_point const&)
