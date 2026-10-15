@@ -15,7 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the vehicle weapon test, on session time: it spawns a warthog for the client to man the gun of, and a ghost it drives itself, facing the warthog 9 wu away. The ghost fires plasma bolts (projectiles, hits decided as they land) at 11 s, the client the warthog's chaingun (hitscan) at 13 s. Run with EXPECT_HITS.",
+    "comment": "Server side of the vehicle weapon test, on session time: it spawns a warthog for the client to man the gun of, and a ghost it drives itself, facing the warthog 9 wu away. The ghost fires plasma bolts (projectiles, hits decided as they land) at 11 s, the client the warthog's chaingun (hitscan) at 13 s.",
     "time_base": "session",
     "frame_delta": 33.3,
     "events": [

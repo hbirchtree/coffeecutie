@@ -44,6 +44,11 @@
 #                 movement + server-triggered map-switch scenario.
 #   CLIENT_DUMMY_PLUG_CONFIG  path to the client's dummy_plug config
 #                 (default: dummy_plug_net_client.json)
+#   SCENARIO      a scenario from scenarios.json: sets both dummy_plug
+#                 configs and the client's arguments, and what the journal
+#                 comparison expects (run_scenarios.sh runs them all)
+#   NETWORK       a network profile from scenarios.json (lag, jitter, loss
+#                 simulated on the client), default lan
 
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -69,6 +74,43 @@ CLIENT_DELAY="${CLIENT_DELAY:-0}"
 # the server had already exited ~9s before the client even tried). When
 # delaying, generate a server config whose schedule is shifted to actually
 # outlive the delay, and give RUN_TIMEOUT enough room too.
+SCENARIO="${SCENARIO:-}"
+NETWORK="${NETWORK:-lan}"
+eval "$(python3 - "$HERE/scenarios.json" "$NETWORK" <<'PYEOF'
+import json, sys
+manifest, name = sys.argv[1], sys.argv[2]
+network = json.load(open(manifest))["networks"].get(name)
+if network is None:
+    print(f"echo 'FAIL: no network profile {name} in {manifest}'; exit 2")
+    sys.exit()
+args = []
+for key, flag in (("lag_ms", "--net-lag"), ("jitter_ms", "--net-jitter"),
+                  ("loss_pct", "--net-loss")):
+    if key in network:
+        args += [flag, str(network[key])]
+if args:
+    print(f'CLIENT_EXTRA_ARGS="${{CLIENT_EXTRA_ARGS:-}} {" ".join(args)}"')
+PYEOF
+)"
+if [ -n "$SCENARIO" ]; then
+    eval "$(python3 - "$HERE/scenarios.json" "$SCENARIO" <<'PYEOF'
+import json, os, shlex, sys
+manifest, name = sys.argv[1], sys.argv[2]
+scenario = json.load(open(manifest))["scenarios"].get(name, {})
+if "server" not in scenario or "client" not in scenario:
+    print(f"echo 'FAIL: {name} is not a client/server scenario in {manifest}'; exit 2")
+    sys.exit()
+here = os.path.dirname(manifest)
+print(f"SERVER_DUMMY_PLUG_CONFIG={shlex.quote(os.path.join(here, scenario['server']))}")
+print(f"CLIENT_DUMMY_PLUG_CONFIG={shlex.quote(os.path.join(here, scenario['client']))}")
+args = " ".join(shlex.quote(a) for a in scenario.get("client_args", []))
+if args:
+    print(f"CLIENT_EXTRA_ARGS=\"${{CLIENT_EXTRA_ARGS:-}} \"{shlex.quote(args)}")
+if "client_delay" in scenario:
+    print(f"CLIENT_DELAY={int(scenario['client_delay'])}")
+PYEOF
+)"
+fi
 SERVER_DUMMY_PLUG_CONFIG="${SERVER_DUMMY_PLUG_CONFIG:-$HERE/dummy_plug_net_server.json}"
 CLIENT_DUMMY_PLUG_CONFIG="${CLIENT_DUMMY_PLUG_CONFIG:-$HERE/dummy_plug_net_client.json}"
 if [ "$CLIENT_DELAY" -gt 0 ]; then
@@ -148,7 +190,7 @@ if [ "$SERVER_EXIT" = "124" ] || [ "$CLIENT_EXIT" = "124" ]; then
     echo "FAIL: a process hit the ${RUN_TIMEOUT}s timeout (hung — likely connection never established)"
 fi
 
-webrtc_compare_journals "$WEBRTC_SERVER_JOURNAL" "$WEBRTC_CLIENT_JOURNAL" "$HERE/compare_journals.py"
+webrtc_compare_journals "$WEBRTC_SERVER_JOURNAL" "$WEBRTC_CLIENT_JOURNAL" "$HERE/compare_journals.py" "$SCENARIO" "$NETWORK"
 RESULT=$?
 
 # Process logs are echoed only when something went wrong; they are in

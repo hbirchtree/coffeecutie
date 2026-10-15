@@ -1,0 +1,120 @@
+{
+    "comment": "Client/server test scenarios. A scenario with server and client plugs runs as two processes through run_client_server_test.sh (SCENARIO=<name>, or run_scenarios.sh for all of them); one with a host plug is a single process that spawns its own client (the CI dummy plug jobs). compare_journals.py --scenario <name> checks the journals against the scenario's expect block. Every field but the plugs is optional. networks lists the network profiles (below) a scenario must pass under, default lan; a profile's lag_ms (round trip), jitter_ms and loss_pct are simulated on the client (--net-lag etc.), and its tolerance loosens the comparison. expect: objects = replicated objects the server spawned, in_play = players in play in every dump, hits = hits the server decided, grabs = grab state changes on each client, all minimums; tolerance overrides the comparison tolerances (position and object_position in world units, clock_us).",
+    "networks": {
+        "lan": {
+            "description": "Loopback, as it comes"
+        },
+        "lag150": {
+            "description": "A distant server",
+            "lag_ms": 150,
+            "jitter_ms": 5
+        },
+        "lag500": {
+            "description": "Half a second round trip",
+            "lag_ms": 500,
+            "jitter_ms": 10,
+            "tolerance": {
+                "clock_us": 20000
+            }
+        },
+        "lossy": {
+            "description": "Some delay, and packets lost both ways",
+            "lag_ms": 100,
+            "loss_pct": 5,
+            "tolerance": {
+                "clock_us": 10000
+            }
+        }
+    },
+    "scenarios": {
+        "default": {
+            "description": "Join, spawn and agree on the roster",
+            "server": "dummy_plug_net_server.json",
+            "client": "dummy_plug_net_client.json",
+            "networks": [
+                "lan",
+                "lag500"
+            ]
+        },
+        "scenario": {
+            "description": "Both walk around, then the server switches to beavercreek",
+            "server": "dummy_plug_net_server_scenario.json",
+            "client": "dummy_plug_net_client_scenario.json"
+        },
+        "spawn": {
+            "description": "Server spawns replicate; client requests are accepted or rejected",
+            "server": "dummy_plug_net_spawn_server.json",
+            "client": "dummy_plug_net_spawn_client.json",
+            "expect": {
+                "objects": 4
+            }
+        },
+        "fire": {
+            "description": "Both players shoot each other; shots relayed, hits decided by the server",
+            "server": "dummy_plug_net_fire_server.json",
+            "client": "dummy_plug_net_fire_client.json",
+            "expect": {
+                "hits": 20
+            },
+            "networks": [
+                "lan",
+                "lag150",
+                "lag500",
+                "lossy"
+            ]
+        },
+        "grab": {
+            "description": "The client forge-grabs a rifle the server spawned",
+            "server": "dummy_plug_net_grab_server.json",
+            "client": "dummy_plug_net_grab_client.json",
+            "expect": {
+                "grabs": 2
+            },
+            "networks": [
+                "lan",
+                "lag150",
+                "lag500",
+                "lossy"
+            ]
+        },
+        "vehicle": {
+            "description": "Ghost bolts from the server, warthog chaingun from the client",
+            "server": "dummy_plug_net_vehicle_server.json",
+            "client": "dummy_plug_net_vehicle_client.json",
+            "expect": {
+                "hits": 5
+            },
+            "networks": [
+                "lan",
+                "lag150",
+                "lag500",
+                "lossy"
+            ]
+        },
+        "pause": {
+            "description": "The server pauses; the client stops on the same tick",
+            "server": "dummy_plug_net_pause_server.json",
+            "client": "dummy_plug_net_pause_client.json",
+            "networks": [
+                "lan",
+                "lag150",
+                "lag500",
+                "lossy"
+            ]
+        },
+        "net_multiplayer": {
+            "description": "Self-contained host with a spawned client, map switch mid-session",
+            "host": "dummy_plug_net_host_scenario.json",
+            "expect": {
+                "in_play": 2
+            }
+        },
+        "net_splitscreen": {
+            "description": "As net_multiplayer, with a second split screen seat on each side",
+            "host": "dummy_plug_net_host_splitscreen.json",
+            "expect": {
+                "in_play": 3
+            }
+        }
+    }
+}

@@ -15,7 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the weapon fire test, on session time (both ends' clocks start when the server listens, so their events line up). The players face each other 4 wu apart and aim at each other's chest; the server fires at 10.5 s, the client at 12.5 s. Both journal every shot (WeaponFire) and every hit the server decided (net_object_hit); compare_journals checks they agree. Run with EXPECT_HITS to require hits.",
+    "comment": "Server side of the weapon fire test, on session time (both ends' clocks start when the server listens, so their events line up). The players face each other 4 wu apart and aim at each other's chest; the server fires at 10.5 s, the client at 12.5 s. Both journal every shot (WeaponFire) and every hit the server decided (net_object_hit); compare_journals checks they agree.",
     "time_base": "session",
     "frame_delta": 33.3,
     "events": [
