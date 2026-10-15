@@ -275,9 +275,14 @@ struct Model
     using type       = compo::alloc::VectorContainer<value_type>;
     using tag_type   = value_type;
 
-    Matf4 transform;
+    Matf4 transform; /*!< As drawn, between the last two ticks if it moves */
     Vecf3 position;
     Quatf rotation;
+
+    /*! The pose a tick ago, for drawing between ticks */
+    Vecf3 tick_position{};
+    Quatf tick_rotation{1.f, 0.f, 0.f, 0.f};
+    bool  tick_posed{false};
 
     generation_idx_t                              model;
     std::vector<ERef>                             parts;
@@ -1044,6 +1049,9 @@ struct PlayerCamera
 
     Matf4 matrix{};
     Matf4 rotation{};
+
+    /*! Where the eye was a tick ago, for a body-driven camera */
+    std::optional<Vecf3> tick_eye{};
 
     bool is_active() const
     {

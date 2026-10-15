@@ -470,28 +470,7 @@ struct PlayerController
 
     static void update_camera(PlayerCamera& cam)
     {
-        using namespace typing::vectors::scene;
-
-        cam.camera.zVals = {100.f, 0.001f};
-
-        /* Fold the vertex→BSP permutation into the rotation so that
-         * cam.camera.position can be stored in plain vertex space.
-         * Equivalent to: R * T(-bsp_pos) * bsp_basis. */
-        static const Matf4 bsp_basis{
-            {0, 0, 1, 0},
-            {1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 0, 1},
-        };
-
-        Matf4 const view_matrix = glm::translate(
-            glm::mat4_cast(cam.camera.rotation) * bsp_basis,
-            -cam.camera.position);
-
-        cam.matrix       = GenPerspective(cam.camera);
-        cam.matrix[2][2] = 0.f;
-        cam.matrix       = cam.matrix * view_matrix;
-        cam.rotation     = glm::mat4_cast(cam.camera.rotation) * bsp_basis;
+        build_camera_matrix(cam, cam.camera.position);
     }
 
     /* Biped under its camera, yaw only; riders are placed by Gameplay */
