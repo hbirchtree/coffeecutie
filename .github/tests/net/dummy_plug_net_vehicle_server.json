@@ -15,7 +15,8 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the vehicle weapon test: it spawns a warthog for the client to man the gun of, and a ghost that it drives itself, facing the warthog 9 wu away. The ghost fires plasma bolts (projectiles, hits decided as they land) at 15 s, the client the warthog's chaingun (hitscan) at 17 s. Shots and hits are journaled as in the fire test.",
+    "comment": "Server side of the vehicle weapon test, on session time: it spawns a warthog for the client to man the gun of, and a ghost it drives itself, facing the warthog 9 wu away. The ghost fires plasma bolts (projectiles, hits decided as they land) at 11 s, the client the warthog's chaingun (hitscan) at 13 s. Run with EXPECT_HITS.",
+    "time_base": "session",
     "frame_delta": 33.3,
     "events": [
         {
@@ -53,7 +54,7 @@
             "yaw": 90
         },
         {
-            "time": 12000,
+            "time": 9500,
             "type": "camera",
             "position": [
                 96.0,
@@ -67,12 +68,12 @@
             "physics": true
         },
         {
-            "time": 13000,
+            "time": 10000,
             "type": "enter_vehicle",
             "label": "G-driver"
         },
         {
-            "time": 13500,
+            "time": 10500,
             "type": "camera",
             "rotation": [
                 -4,
@@ -80,7 +81,7 @@
             ]
         },
         {
-            "time": 15000,
+            "time": 11000,
             "type": "controller_axis",
             "axis": "TRIGGER_RIGHT",
             "value": 1.0,
@@ -88,14 +89,14 @@
             "index": 0
         },
         {
-            "time": 17600,
+            "time": 13600,
             "type": "screenshot",
             "name": "server_view"
         },
         {
-            "time": 25000,
+            "time": 16000,
             "type": "dump_state"
         }
     ],
-    "end_time": 26000
+    "end_time": 16500
 }

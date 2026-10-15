@@ -16,6 +16,7 @@
         "screenshot_quality": 60
     },
     "comment": "Client side of the weapon fire test, see dummy_plug_net_fire_server.json. The screenshot catches the server's shots.",
+    "time_base": "session",
     "frame_delta": 33.3,
     "events": [
         {
@@ -29,7 +30,7 @@
             "debug_markers": true
         },
         {
-            "time": 12000,
+            "time": 9500,
             "type": "camera",
             "position": [
                 97.0,
@@ -43,12 +44,12 @@
             "physics": true
         },
         {
-            "time": 15600,
+            "time": 11100,
             "type": "screenshot",
             "name": "client_view"
         },
         {
-            "time": 17000,
+            "time": 12500,
             "type": "controller_axis",
             "axis": "TRIGGER_RIGHT",
             "value": 1.0,
@@ -56,9 +57,9 @@
             "index": 0
         },
         {
-            "time": 20000,
+            "time": 15000,
             "type": "dump_state"
         }
     ],
-    "end_time": 21000
+    "end_time": 15500
 }

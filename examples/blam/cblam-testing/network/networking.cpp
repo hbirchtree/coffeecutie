@@ -516,6 +516,25 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         base + *m_clock.applied - m_clock.server_base));
     }
 
+    /* Where session time began, on this process's steady clock */
+    void session_tick()
+    {
+        using namespace std::chrono;
+        i64 const steady_us =
+            duration_cast<microseconds>(steady_clock::now().time_since_epoch())
+                .count();
+        if(is_server() && m_session_start_us == 0)
+            m_session_start_us = steady_us;
+        i64 origin = 0;
+        if(is_server())
+            origin = m_session_start_us;
+        else if(m_session_start_us != 0 && m_net_state.server_clock_offset)
+            origin = m_session_start_us -
+                     duration_cast<microseconds>(*m_net_state.server_clock_offset)
+                         .count();
+        m_net_state.session_origin_us = origin;
+    }
+
     void clock_reply(
         HSteamNetConnection connection, ClockSync const& request, i64 received)
     {
@@ -1765,6 +1784,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         m_impl->CloseListenSocket(m_socket);
         m_impl->DestroyPollGroup(m_poll_group);
+        m_session_start_us = 0;
         m_socket     = k_HSteamListenSocket_Invalid;
         m_poll_group = k_HSteamNetPollGroup_Invalid;
 #if defined(USE_WEBRTC_TRANSPORT)
@@ -2184,6 +2204,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         send_hits(p);
         apply_simulation();
         clock_tick();
+        session_tick();
         if(is_server())
         {
 #if defined(USE_WEBRTC_TRANSPORT)
@@ -2764,8 +2785,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         send_all(
             Message<TickSync>({
                 .tick     = clock.tick(),
-                .start_us = clock.tick_began_us(),
-                .paused   = clock.paused(),
+                .start_us   = clock.tick_began_us(),
+                .session_us = m_session_start_us,
+                .paused     = clock.paused(),
             }),
             k_nSteamNetworkingSend_Reliable,
             std::move(targets));
@@ -3113,6 +3135,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_left_server    = false;
         m_join_confirmed = false;
         m_view_tick      = 0;
+        m_session_start_us = 0;
         m_net_state.tick_base.reset();
         m_sent_grab      = false;
         if(m_client_player.exists())
@@ -3459,6 +3482,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .start_us = sync.start_us,
                 .paused   = sync.paused != 0,
             };
+            m_session_start_us = sync.session_us;
             break;
         }
         case MessageBase::GrabState: {
@@ -3921,6 +3945,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr f32                                       max_mount_offset = 8.f;
     static constexpr auto rewind_slack = std::chrono::milliseconds(250);
     u64 m_view_tick{0}; /*!< Newest server tick of others shown here */
+    i64 m_session_start_us{0}; /*!< Server time the session began at */
     static constexpr auto max_rewind   = std::chrono::milliseconds(1000);
     /* Hits this peer decided */
     std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>> m_hit_queue;

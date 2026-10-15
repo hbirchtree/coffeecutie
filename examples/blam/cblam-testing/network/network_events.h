@@ -331,6 +331,7 @@ struct alignas(8) TickSync
 
     u64 tick{0};
     i64 start_us{0};
+    i64 session_us{0}; /*!< When the server began listening */
     u32 paused{0};
     u32 padding{0};
 };
@@ -498,7 +499,7 @@ static_assert(sizeof(WeaponFire) == 64);
 static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);
-static_assert(sizeof(TickSync) == 24);
+static_assert(sizeof(TickSync) == 32);
 static_assert(sizeof(TickInput) == 48);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);

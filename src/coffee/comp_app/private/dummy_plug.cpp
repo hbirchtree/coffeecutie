@@ -553,6 +553,7 @@ void fork_dummy_plugs(
         spawn_dummy_plug_children(config);
 #endif
 
+    dummy_plug.session = config.value("time_base", std::string()) == "session";
     if(config.contains("frame_delta"))
     {
         dummy_plug.frame_delta = std::chrono::microseconds(
@@ -567,9 +568,7 @@ void fork_dummy_plugs(
          * time_points, it should be deterministic. */
         container.set_timestamp_provider(
             [epoch = compo::clock::time_point() + container.epoch_offset(),
-             &dummy_plug]() {
-                return epoch + dummy_plug.frame_delta * dummy_plug.frame_index;
-            });
+             &dummy_plug]() { return epoch + dummy_plug.now(); });
         container.add_frame_end_callback([&dummy_plug, &container]() {
             auto* app_info = container.service<comp_app::AppInfo>();
             if(app_info &&
@@ -586,7 +585,8 @@ void fork_dummy_plugs(
         rq::runtime_queue::OverrideClock(
             [epoch = rq::detail::time_point() + container.epoch_offset(),
              &dummy_plug]() {
-                return epoch + dummy_plug.frame_delta * dummy_plug.frame_index;
+                return epoch + std::chrono::duration_cast<rq::detail::duration>(
+                                   dummy_plug.now());
             });
     }
 
@@ -879,6 +879,9 @@ void insert_dummy_plug(
                             &container,
                             flag         = false,
                             ready_marked = false,
+                            session_wait_start =
+                                std::optional<std::chrono::steady_clock::
+                                                  time_point>{},
                             children_wait_start =
                                 std::optional<std::chrono::steady_clock::
                                                   time_point>{}]() mutable {
@@ -946,7 +949,36 @@ void insert_dummy_plug(
 
             if(flag)
                 return;
-            cDebug("Queueing dummy plug events");
+
+            /* Session time: wait for the app to know it, or give up on it */
+            if(dummy_plug.session)
+            {
+                using namespace std::chrono;
+                if(!session_wait_start)
+                    session_wait_start = steady_clock::now();
+                if(!dummy_plug.session_clock || !dummy_plug.session_clock())
+                {
+                    auto const waited = steady_clock::now() - *session_wait_start;
+                    if(waited < milliseconds(config.value("session_wait_ms", 60000u)))
+                        return;
+                    cWarning("No session clock came up, using frame time");
+                    dummy_plug.session = false;
+                }
+            }
+            /* Event times are on the session clock, which has run a while */
+            auto const elapsed =
+                dummy_plug.session
+                    ? std::chrono::duration_cast<std::chrono::milliseconds>(
+                          dummy_plug.now())
+                    : std::chrono::milliseconds(0);
+            auto const start_of = [elapsed](nlohmann::json const& event,
+                                            std::string_view key = "time") {
+                auto const at = std::chrono::milliseconds(event.value(key, 0u));
+                return at > elapsed ? at - elapsed : std::chrono::milliseconds(0);
+            };
+            cDebug(
+                "Queueing dummy plug events{}",
+                dummy_plug.session ? " on the session clock" : "");
 
             const auto type_to_enum = [](nlohmann::json const&   event,
                                          std::string_view const& key) {
@@ -1002,13 +1034,15 @@ void insert_dummy_plug(
                 case type_t::controller_connect:
                 case type_t::key:
                 case type_t::mouse_button:
-                case type_t::mouse_move:
+                case type_t::mouse_move: {
+                    auto shifted    = event;
+                    shifted["time"] = start_of(event).count();
                     queue_input_event(
-                        input_bus, &dummy_controllers, type, event);
+                        input_bus, &dummy_controllers, type, shifted);
                     break;
+                }
                 case type_t::screenshot: {
-                    auto start_time =
-                        std::chrono::milliseconds(event.value("time", 0u));
+                    auto start_time = start_of(event);
                     rq::runtime_queue::QueueShot(
                         rq::runtime_queue::GetCurrentQueue().value(),
                         start_time,
@@ -1036,8 +1070,7 @@ void insert_dummy_plug(
                     out.data  = event;
                     out.data.erase("type");
                     out.data.erase("time");
-                    auto start_time =
-                        std::chrono::milliseconds(event.value("time", 0u));
+                    auto start_time = start_of(event);
                     rq::runtime_queue::QueueShot(
                         rq::runtime_queue::GetCurrentQueue().value(),
                         start_time,
@@ -1056,8 +1089,7 @@ void insert_dummy_plug(
                 }
             }
 
-            auto end_time =
-                std::chrono::milliseconds(config.value("end_time", 0u));
+            auto end_time = start_of(config, "end_time");
 
             if(config.contains("end_time"))
             {

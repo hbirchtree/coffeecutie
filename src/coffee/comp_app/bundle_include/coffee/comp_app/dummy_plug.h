@@ -1,5 +1,9 @@
 #pragma once
 
+#include <atomic>
+#include <functional>
+#include <optional>
+
 #include <coffee/comp_app/subsystems.h>
 #include <nlohmann/json.hpp>
 #include <peripherals/concepts/sound_api.h>
@@ -38,6 +42,30 @@ struct Config : comp_app::Config<Config>
     bool                          screenshot_armed{false};
     bool                          step_between_captures{false};
     bool                          defer_to_swap{false};
+
+    /*! "time_base": "session": event times count on a clock the app shares
+     *  between processes (e.g. a network session), once it reports one.
+     *  Called from any thread. */
+    std::function<std::optional<compo::clock::duration>()> session_clock{};
+    bool                                                   session{false};
+
+    /*! The plug's clock: frames x frame_delta, or session time once known.
+     *  Never runs backwards. */
+    compo::clock::duration now()
+    {
+        compo::clock::duration out =
+            frame_delta * static_cast<libc_types::i64>(frame_index);
+        if(session && session_clock)
+            if(auto at = session_clock())
+                out = *at;
+        auto last = m_last_now.load();
+        while(out > last && !m_last_now.compare_exchange_weak(last, out))
+            ;
+        return std::max(out, last);
+    }
+
+  private:
+    std::atomic<compo::clock::duration> m_last_now{};
 };
 
 /* Free-form dummy events we can insert and interpret per-application */
