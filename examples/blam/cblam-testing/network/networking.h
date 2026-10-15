@@ -55,6 +55,9 @@ struct NetworkState : compo::SubsystemBase
     };
     std::optional<TickBase> tick_base;
 
+    /*! On a server: the longest round trip to any client, ms */
+    libc_types::u32 worst_ping_ms{0};
+
     /*! Session time: the server's time since it began listening. This is
      *  the local steady time (us) it started at, 0 while there is none.
      *  Read from any thread. */
