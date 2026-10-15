@@ -81,6 +81,7 @@ struct MessageBase
 
         /* Simulation clock */
         TickSync,
+        TickInput,
     } type{None};
 
     u32 request{};
@@ -334,6 +335,25 @@ struct alignas(8) TickSync
     u32 padding{0};
 };
 
+/*! A client's input for one tick (PlayerTickInputEvent). Each packet
+ *  repeats the last few, so a lost one costs nothing */
+struct alignas(8) TickInput
+{
+    static constexpr auto message_type = MessageBase::TickInput;
+
+    u64   tick{0};
+    Quatf view;
+    typing::vector_types::Vecf2 move;
+    typing::vector_types::Vecf2 look;
+    u32   buttons{0};
+
+    enum flags_t : u32
+    {
+        none   = 0x0,
+        resync = 0x1, /*!< Skipped ahead to here, the gap was never played */
+    } flags{none};
+};
+
 /*! A moving object at a server time. Sent while it is awake, once more as
  *  it falls asleep, and all of them to a peer once it is verified. */
 struct alignas(8) ObjectSync
@@ -479,6 +499,7 @@ static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);
 static_assert(sizeof(TickSync) == 24);
+static_assert(sizeof(TickInput) == 48);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 

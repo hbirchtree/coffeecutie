@@ -1261,6 +1261,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 if(shot->origin == MapLoadEvent::Local)
                     m_local_shots.push_back(*shot);
             });
+        m_input_queue = m_game_bus.addQueuedEventFunction<PlayerTickInputEvent>(
+            0, [this](GameEvent&, PlayerTickInputEvent* input) {
+                if(input->origin == MapLoadEvent::Local)
+                    m_local_inputs.push_back(*input);
+            });
         m_hit_queue = m_game_bus.addQueuedEventFunction<ObjectHitEvent>(
             0, [this](GameEvent&, ObjectHitEvent* hit) {
                 if(hit->origin == MapLoadEvent::Local)
@@ -2414,6 +2419,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     m_sent_own_seat = seat;
                 }
                 send_grab(p, info);
+                send_inputs();
                 /* The vehicle is simulated on the server; drive it there */
                 if(auto const* input = p.get<PlayerInput>(m_client_player.id());
                    input && info.riding.driver && !info.riding.exiting)
@@ -2662,6 +2668,70 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return true;
     }
 
+    /* Our seat's input, a few ticks of it in each packet */
+    void send_inputs()
+    {
+        if(!m_input_queue)
+            return;
+        m_input_queue->poll();
+        /* Every new tick goes out, with the last few before it again */
+        while(m_sent_inputs.size() > input_redundancy)
+            m_sent_inputs.pop_front();
+        bool fresh = false;
+        for(auto const& input : std::exchange(m_local_inputs, {}))
+        {
+            if(!m_client_player.exists() || input.player != m_client_player.id())
+                continue;
+            m_sent_inputs.push_back({
+                .tick    = input.tick,
+                .view    = input.view,
+                .move    = input.move,
+                .look    = input.look,
+                .buttons = input.buttons,
+                .flags   = input.resync ? TickInput::resync : TickInput::none,
+            });
+            fresh = true;
+        }
+        if(!fresh)
+            return;
+        std::vector<TickInput> batch(m_sent_inputs.begin(), m_sent_inputs.end());
+        send_all<TickInput>(
+            MessageBase{MessageBase::TickInput},
+            gsl::span<TickInput>(batch),
+            k_nSteamNetworkingSend_UnreliableNoNagle,
+            {m_connection},
+            FRAME_UPDATE_LANE);
+    }
+
+    /* A client's inputs, each tick once; the gaps redundancy didn't cover */
+    void receive_inputs(
+        HSteamNetConnection connection, gsl::span<const TickInput> inputs)
+    {
+        auto& state = m_connections[connection];
+        for(auto const& input : inputs)
+        {
+            if(input.tick <= state.last_input)
+                continue;
+            /* A client that skipped ahead had no ticks to send */
+            if(state.last_input != 0 && !(input.flags & TickInput::resync))
+                state.inputs_lost += input.tick - state.last_input - 1;
+            state.last_input = input.tick;
+            state.inputs++;
+            GameEvent            ev{.type = GameEvent::PlayerTickInput};
+            PlayerTickInputEvent data{
+                .origin     = MapLoadEvent::Remote,
+                .player     = state.biped.exists() ? state.biped.id() : 0,
+                .player_idx = state.idx,
+                .tick       = input.tick,
+                .move       = input.move,
+                .look       = input.look,
+                .view       = input.view,
+                .buttons    = input.buttons,
+            };
+            m_game_bus.inject(ev, &data);
+        }
+    }
+
     /* The server's ticks to its clients: now and then, at once when it
      * pauses or resumes, and to each peer as it verifies */
     void send_tick_sync(Proxy& p, time_point const& t)
@@ -2679,6 +2749,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             m_next_tick_sync = t + tick_sync_interval;
             m_sent_paused    = clock.paused();
+            for(auto& [_, state] : m_connections)
+                if(state.inputs || state.inputs_lost)
+                {
+                    journal(
+                        "net_inputs",
+                        {{"player_idx", state.idx},
+                         {"received", std::exchange(state.inputs, 0)},
+                         {"lost", std::exchange(state.inputs_lost, 0)}});
+                }
         }
         if(targets.empty())
             return;
@@ -3088,6 +3167,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }),
                 k_nSteamNetworkingSend_Reliable,
                 std::move(targets));
+            break;
+        }
+        case MessageBase::TickInput: {
+            receive_inputs(connection, payload.values<TickInput>());
             break;
         }
         case MessageBase::GrabInput: {
@@ -3782,6 +3865,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         bool verified{false}; /*!< Map fingerprint matched ours */
         u32  grabbed{0};      /*!< Net id it was last told it carries */
         bool tick_synced{false}; /*!< Has had the server's tick clock */
+        /* Its input stream: newest tick, and counts since last journaled */
+        u64 last_input{0};
+        u64 inputs{0};
+        u64 inputs_lost{0};
         bool objects_synced{false}; /*!< Has had every moving object */
     };
 
@@ -3840,6 +3927,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::vector<ObjectHitEvent>                               m_local_hits;
     /* Forge grabs: ours sent to the server, clients' carried here */
     bool          m_sent_grab{false};
+    /* Our seat's input stream, the last few ticks of it resent */
+    static constexpr size_t input_redundancy = 4;
+    std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>> m_input_queue;
+    std::vector<PlayerTickInputEvent> m_local_inputs;
+    std::deque<TickInput>             m_sent_inputs;
     /* Tick clock sync, to clients */
     static constexpr auto tick_sync_interval = std::chrono::seconds(1);
     time_point            m_next_tick_sync{};
