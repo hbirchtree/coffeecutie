@@ -334,7 +334,7 @@ struct alignas(8) TickSync
     i64 session_us{0}; /*!< When the server began listening */
     u64 pause_at{0};   /*!< Last tick before a pause, 0 = none */
     u32 paused{0};
-    u32 padding{0};
+    u32 speed_permille{1000}; /*!< A slowed server's ticks per tick of time */
 };
 
 /*! A client's input for one tick (PlayerTickInputEvent). Each packet

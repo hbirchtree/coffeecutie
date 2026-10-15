@@ -2808,6 +2808,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .session_us = m_session_start_us,
                 .pause_at   = clock.pause_at().value_or(0),
                 .paused     = clock.paused(),
+                .speed_permille =
+                    static_cast<u32>(std::clamp(clock.speed(), .05f, 1.f) * 1000),
             }),
             k_nSteamNetworkingSend_Reliable,
             std::move(targets));
@@ -3500,8 +3502,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_net_state.tick_base = NetworkState::TickBase{
                 .tick     = sync.tick,
                 .start_us = sync.start_us,
-                .pause_at = sync.pause_at,
-                .paused   = sync.paused != 0,
+                .pause_at       = sync.pause_at,
+                .speed_permille = sync.speed_permille,
+                .paused         = sync.paused != 0,
             };
             m_session_start_us = sync.session_us;
             break;

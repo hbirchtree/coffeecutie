@@ -76,6 +76,12 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
         return m_pause_at;
     }
 
+    /*! Ticks run per tick due, smoothed: below 1 when frames can't keep up */
+    libc_types::f32 speed() const
+    {
+        return m_speed;
+    }
+
     /*! When the last tick began, on the server clock when networked */
     libc_types::i64 tick_began_us() const
     {
@@ -97,6 +103,11 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
     libc_types::u32 m_resyncs{0};
     bool            m_started{false};
     libc_types::i64 m_tick_began_us{0};
+    libc_types::i64 m_frame_us{0}; /*!< Wall time a frame takes, smoothed */
+    libc_types::f32 m_speed{1.f};
+    libc_types::u64 m_window_ticks{0};
+    libc_types::i64 m_window_us{0};
+    std::chrono::steady_clock::time_point m_last_frame{};
 
     /*! What tick numbers count: frames on our own, the server's clock, or
      *  the ticks the server says it is on */
