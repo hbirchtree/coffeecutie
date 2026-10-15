@@ -85,15 +85,16 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
     } else if(until > m_tick)
     {
         u64 const behind = until - m_tick;
-        /* The server's time is everyone's, so it never skips: it slows */
-        if(behind > max_catch_up && !net.clock_authority)
+        /* Too far behind: drop what a frame can't make up and run the rest.
+         * The server's time is everyone's, so it never skips: it slows */
+        bool const skip = behind > max_catch_up && !net.clock_authority;
+        if(skip)
         {
-            m_tick = until;
+            m_tick = until - max_catch_up;
             m_resyncs++;
-            emit(m_tick, true);
-        } else
-            for(u64 i = 0; i < std::min<u64>(behind, max_catch_up); i++)
-                emit(++m_tick, false);
+        }
+        for(u64 i = 0; i < std::min<u64>(behind, max_catch_up); i++)
+            emit(++m_tick, skip && i == 0);
     }
 
     /* Stopped on the tick: time stands still from when the next would
