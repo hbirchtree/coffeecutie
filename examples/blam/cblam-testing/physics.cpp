@@ -842,7 +842,11 @@ struct PhysicsSystem
         {
             for(u32 step = 0; step < steps_per_tick; step++)
             {
-                carry_grabbed(p);
+                /* The camera moved once this frame: the first step carries
+                 * it there, over all the time this frame's ticks cover */
+                bool const first = &tick == &ticks.front() && step == 0;
+                carry_grabbed(
+                    p, first ? ticks.size() * TickClock::tick_seconds : 0.f);
                 m_before_step.clear();
                 for(auto const& [_, body] : m_bodies)
                     if(body.world_body && body.world_body->getInvMass() > 0.f)
@@ -1336,7 +1340,9 @@ struct PhysicsSystem
         m_bus->process(event, &dropped);
     }
 
-    void carry_grabbed(Proxy& p)
+    /* `moved_over`: seconds the holder's latest move spans, 0 if it has
+     * already been carried there */
+    void carry_grabbed(Proxy& p, f32 moved_over)
     {
         for(auto it = m_grab_requests.begin(); it != m_grab_requests.end();)
         {
@@ -1375,10 +1381,11 @@ struct PhysicsSystem
                     target.setRotation(btQuaternion(
                         btVector3(0, 0, 1), std::atan2(x.y(), x.x())));
                 }
-                carried->second.velocity =
-                    (target.getOrigin() -
-                     rigid.getWorldTransform().getOrigin()) /
-                    step_seconds;
+                if(moved_over > 0.f)
+                    carried->second.velocity =
+                        (target.getOrigin() -
+                         rigid.getWorldTransform().getOrigin()) /
+                        moved_over;
                 rigid.setWorldTransform(target);
             } else if(carried != m_grabs.end())
             {
