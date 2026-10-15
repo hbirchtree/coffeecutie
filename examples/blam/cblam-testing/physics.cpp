@@ -7,6 +7,7 @@
 #include "map_marker.h"
 #include "peripherals/stl/math.h"
 #include "selected_version.h"
+#include "ticks.h"
 #include "types.h"
 
 #include <coffee/core/debug/formatting.h>
@@ -802,6 +803,7 @@ struct PhysicsSystem
         p.subsystem(bsp_cache);
         p.subsystem(loading);
 
+        auto const ticks = m_ticks->take().size();
         if(loading->loading)
             return;
 
@@ -834,20 +836,22 @@ struct PhysicsSystem
         if(!m_world_body && m_bodies.empty() && !m_probe_body)
             return;
 
-        if(m_next_process_time > t)
+        if(ticks == 0)
             return;
 
-        carry_grabbed(p);
-        m_before_step.clear();
-        for(auto const& [_, body] : m_bodies)
-            if(body.world_body && body.world_body->getInvMass() > 0.f)
-                m_before_step[body.world_body.get()] =
-                    body.world_body->getLinearVelocity();
-        m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
-        m_next_process_time = t + 16ms;
-        m_steps++;
-        report_impacts();
-        bleed_carried();
+        for(size_t step = 0; step < ticks * steps_per_tick; step++)
+        {
+            carry_grabbed(p);
+            m_before_step.clear();
+            for(auto const& [_, body] : m_bodies)
+                if(body.world_body && body.world_body->getInvMass() > 0.f)
+                    m_before_step[body.world_body.get()] =
+                        body.world_body->getLinearVelocity();
+            m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
+            m_steps++;
+            report_impacts();
+            bleed_carried();
+        }
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
          * contact manifolds for CF_NO_CONTACT_RESPONSE bodies, the solver
@@ -2928,6 +2932,7 @@ struct PhysicsSystem
     static constexpr f32           grab_range   = 40.f;
     static constexpr f32           ground_reach = 30.f; /* wu below */
     static constexpr f32           step_seconds = 1.f / 60.f;
+    static constexpr u32 steps_per_tick = 60 / TickClock::rate;
     std::map<u64, Physics::Grab>   m_grab_requests;
     std::map<u64, grab_t>          m_grabs;
     bool                           m_reset_holders{false};
@@ -2948,7 +2953,7 @@ struct PhysicsSystem
     i16               m_built_section{-2};
     u32               m_frame{0};
     bool              m_marker_spawned{false};
-    compo::time_point m_next_process_time{};
+    std::unique_ptr<TickQueue> m_ticks;
 };
 
 void alloc_physics(compo::EntityContainer& container)
@@ -2957,7 +2962,9 @@ void alloc_physics(compo::EntityContainer& container)
     auto&       phys_bus = container.register_subsystem_inplace<PhysicsBus>();
     auto&       physics =
         container.register_subsystem_inplace<PhysicsSystem<halo_version>>();
-    physics.m_bus = &phys_bus;
+    physics.m_bus   = &phys_bus;
+    physics.m_ticks = std::make_unique<TickQueue>(
+        container.subsystem_cast<GameEventBus>());
     phys_bus.addEventFunction<Physics::BodyCreationU16>(
         0, [&physics](Physics::Event&, Physics::BodyCreationU16* body_create) {
             physics.create_body(*body_create);

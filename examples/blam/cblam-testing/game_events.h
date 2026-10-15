@@ -79,6 +79,8 @@ struct GameEvent
         SpawnEffect,
         WeaponFire,
         ObjectHit,
+        Tick,
+        SimulationPause,
     };
 
     EventType type{None};
@@ -322,6 +324,26 @@ struct SpawnEffectEvent
     Vecf3           direction{1.f, 0.f, 0.f}; /*!< Forward, e.g. a surface normal */
     Vecf3           velocity{};               /*!< Inherited by what it creates */
     libc_types::u64 parent{0};                /*!< Followed while it plays */
+};
+
+/*! A simulation tick passed (TickClock). Raised in order, a few per frame
+ *  at most; subscribers take them queued and step once for each */
+struct TickEvent
+{
+    static constexpr auto event_type = GameEvent::Tick;
+
+    libc_types::u64 tick{0};
+    libc_types::f32 seconds{0.f};
+    /*! Time jumped to this tick: step once, don't make up the gap */
+    bool resync{false};
+};
+
+/*! Stops or restarts the simulation clock; drawing carries on */
+struct SimulationPauseEvent
+{
+    static constexpr auto event_type = GameEvent::SimulationPause;
+
+    bool paused{true};
 };
 
 /*! A trigger pulled. Raised Local by the shooter's peer, which Networking

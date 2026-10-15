@@ -7,6 +7,7 @@
 #include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "ticks.h"
 
 #include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_unit.h>
@@ -56,16 +57,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         this->priority = 850;
     }
 
-    void start_restricted(Proxy& p, time_point const& t)
+    void start_restricted(Proxy& p, time_point const&)
     {
-        f32 const dt =
-            m_last_frame == time_point{}
-                ? 0.f
-                : std::clamp(
-                      std::chrono::duration<f32>(t - m_last_frame).count(),
-                      0.f,
-                      .1f);
-        m_last_frame = t;
+        auto const ticks = m_ticks->take();
 
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         if(files.load_generation != m_generation)
@@ -88,8 +82,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* A gunner fires the vehicle's weapon, a body its own; the free
              * camera has nothing to shoot with */
             u64 const   vehicle = info.riding.vehicle;
+            /* Held weapons are only good for the map they were found in */
             auto const* weapon_tag =
-                vehicle ? mounted_weapon(p, info, files) : info.biped.weapon;
+                vehicle ? mounted_weapon(p, info, files)
+                : info.biped.load_generation == files.load_generation
+                    ? info.biped.weapon
+                    : nullptr;
             if(info.is_remote() || !weapon_tag ||
                (vehicle ? info.riding.exiting
                         : !info.mode.physics || !biped_in_play(info, cam, net)))
@@ -105,30 +103,36 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             trigger_t const& trigger = triggers.value()[0];
             bool const       held    = input.intent.fire;
 
-            state.fired    = false;
-            state.cooldown = std::max(state.cooldown - dt, 0.f);
             bool const repeats =
                 (trigger.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
                 trigger_t::flags_t::none;
-            if(held && state.cooldown <= 0.f && (repeats || !state.firing))
+            /* The trigger is looked at once a tick */
+            for(auto const& tick : ticks)
             {
-                f32 const rate = std::max(
-                    trigger.maximum_rate_of_fire.y > 0.f
-                        ? trigger.maximum_rate_of_fire.y
-                        : trigger.maximum_rate_of_fire.x,
-                    .5f);
-                state.cooldown += 1.f / rate;
-                state.fired        = true;
-                state.illumination = 1.f;
-                pull(p, ent.id(), info, cam, *weapon_tag, state.shots++);
+                f32 const dt   = tick.seconds;
+                state.fired    = false;
+                state.cooldown = std::max(state.cooldown - dt, 0.f);
+                if(held && state.cooldown <= 0.f && (repeats || !state.firing))
+                {
+                    f32 const rate = std::max(
+                        trigger.maximum_rate_of_fire.y > 0.f
+                            ? trigger.maximum_rate_of_fire.y
+                            : trigger.maximum_rate_of_fire.x,
+                        .5f);
+                    state.cooldown += 1.f / rate;
+                    state.fired        = true;
+                    state.illumination = 1.f;
+                    pull(p, ent.id(), info, cam, *weapon_tag, state.shots++);
+                }
+                state.firing = held;
+                if(trigger.illumination_recovery_time > 0.f)
+                    state.illumination = std::max(
+                        state.illumination -
+                            dt / trigger.illumination_recovery_time,
+                        0.f);
+                else if(!state.fired)
+                    state.illumination = 0.f;
             }
-            state.firing = held;
-            if(trigger.illumination_recovery_time > 0.f)
-                state.illumination = std::max(
-                    state.illumination - dt / trigger.illumination_recovery_time,
-                    0.f);
-            else if(!state.fired)
-                state.illumination = 0.f;
 
             if(!vehicle)
                 drive_functions(
@@ -485,12 +489,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr std::string_view gun_marker = "primary trigger";
     static constexpr f32              aim_reach  = 200.f;
 
-    time_point                m_last_frame{};
     u32                       m_generation{0};
     std::map<u64, state_t>    m_states;
     std::minstd_rand          m_rng{std::random_device{}()};
 
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
+    std::unique_ptr<TickQueue>                                 m_ticks;
     std::vector<WeaponFireEvent>                               m_shots;
 
     friend void alloc_weapons(compo::EntityContainer& e);
@@ -498,7 +502,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
 void alloc_weapons(compo::EntityContainer& e)
 {
-    auto& weapons = e.register_subsystem_inplace<WeaponSystem>();
+    auto& weapons   = e.register_subsystem_inplace<WeaponSystem>();
+    weapons.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
     weapons.m_fire_queue =
         e.subsystem_cast<GameEventBus>().addQueuedEventFunction<WeaponFireEvent>(
             0, [&weapons](GameEvent&, WeaponFireEvent* shot) {

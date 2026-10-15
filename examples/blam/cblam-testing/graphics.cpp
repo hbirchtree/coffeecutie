@@ -16,6 +16,7 @@
 #include "impact_sounds.h"
 #include "projectiles.h"
 #include "effects.h"
+#include "ticks.h"
 #include "weapons.h"
 #include "vehicle_sounds.h"
 #include "physics.h"
@@ -254,12 +255,16 @@ i32 blam_main()
             {
                 auto type_stack =
                     std::make_shared<std::vector<GameEvent::EventType>>();
+                /* Ticks are too many to be worth recording */
                 game_bus.addEventData(
                     {0, [type_stack](GameEvent& ev, const void*) {
-                         type_stack->push_back(ev.type);
+                         if(ev.type != GameEvent::Tick)
+                             type_stack->push_back(ev.type);
                      }});
                 game_bus.addEventData(
                     {9999, [&journal, type_stack](GameEvent& ev, const void*) {
+                         if(ev.type == GameEvent::Tick)
+                             return;
                          auto original = type_stack->back();
                          type_stack->pop_back();
                          nlohmann::json data{
@@ -552,6 +557,7 @@ i32 blam_main()
                 arguments.count("gateway-auth-key")
                     ? arguments["gateway-auth-key"].as<std::string>()
                     : std::string());
+            alloc_ticks(e);
 #if defined(BLAM_CURSED_ENABLED)
             cursed::setup_cursed_loaders(e);
 #endif
