@@ -70,6 +70,9 @@ struct MessageBase
         /* Vehicle seats */
         SeatSync,
         DriveInput,
+
+        /* Combat */
+        WeaponFire,
     } type{None};
 
     u32 request{};
@@ -253,6 +256,23 @@ struct alignas(8) DriveInput
     u32   padding{0};
 };
 
+/*! A trigger pulled (WeaponFireEvent): the client's own shots to the
+ *  server, which relays them with the shooter's index to everyone else */
+struct alignas(8) WeaponFire
+{
+    static constexpr auto message_type = MessageBase::WeaponFire;
+
+    Vecf4 position;
+    Vecf4 direction;
+    u32   weapon{0}; /*!< weap tag id */
+    u32   player_idx{0};
+    u32   vehicle{0}; /*!< The vehicle's net id, 0 = held */
+    u32   seed{0};
+    u16   trigger{0};
+    u16   padding{0};
+    u32   padding2{0};
+};
+
 /*! A moving object at a server time. Sent while it is awake, once more as
  *  it falls asleep, and all of them to a peer once it is verified. */
 struct alignas(8) ObjectSync
@@ -393,6 +413,7 @@ static_assert(sizeof(Message<CameraSync>) == 64);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(DriveInput) == 32);
+static_assert(sizeof(WeaponFire) == 56);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
