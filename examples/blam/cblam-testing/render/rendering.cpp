@@ -1419,11 +1419,14 @@ struct DrawListBuilder
                 {
                     local = static_cast<i32>(used);
                     m_bone_upload.resize(window + used + work.bones);
+                    auto const& playback =
+                        *p.template get<AnimationPlayback>(work.parent);
                     model_cache->evaluate_pose(
                         work.model,
-                        *p.template get<AnimationPlayback>(work.parent),
+                        playback,
                         Span<Matf4>(
-                            m_bone_upload.data() + window + used, work.bones));
+                            m_bone_upload.data() + window + used, work.bones),
+                        playback.lookahead);
                     m_bone_owners.push_back({work.parent, used});
                     used += work.bones;
                     m_posed_instances++;
@@ -3286,7 +3289,10 @@ struct LegacyMeshRenderer
         ProfContext _("legacy_render: Skinning pose");
         m_pose.assign(bones, Matf4(1));
         cache.evaluate_pose(
-            mod.model, *anim, semantic::Span<Matf4>(m_pose.data(), bones));
+            mod.model,
+            *anim,
+            semantic::Span<Matf4>(m_pose.data(), bones),
+            anim->lookahead);
         out.offset = static_cast<u32>(m_bone_rows.size());
         out.rows   = bones * 3;
         for(auto const& bone : m_pose)

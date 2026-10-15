@@ -150,10 +150,12 @@ struct ModelCache
 
     /* Composes `anim`'s layers into `dest`, bone_count() matrices. Only for
      * models that survived culling. */
+    /* `lookahead` seconds past where the layers stand, without advancing */
     void evaluate_pose(
         generation_idx_t         model_id,
         AnimationPlayback const& anim,
-        Span<Matf4>              dest);
+        Span<Matf4>              dest,
+        f32                      lookahead = 0.f);
 
   private:
     /* Pose scratch, reused across models so a pose allocates nothing.
