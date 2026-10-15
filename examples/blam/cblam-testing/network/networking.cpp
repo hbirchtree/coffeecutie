@@ -1303,6 +1303,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                  /* Each function will check the type of the event,
                   * only the matching one will send
                   */
+                 if(event.type == GameEvent::Tick ||
+                    event.type == GameEvent::PlayerTickInput)
+                     return;
                  if(is_server())
                  {
                      cDebug(
