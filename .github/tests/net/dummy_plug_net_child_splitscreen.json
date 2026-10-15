@@ -17,8 +17,9 @@
     },
     "frame_delta": 66.667,
     "comment": "Client child for dummy_plug_net_host_splitscreen.json. Same as dummy_plug_net_child_scenario.json, with a second local seat on controller 1 that flies around in freecam. That seat is never announced to the server, so it must leave the server's index space when the join is confirmed; before that fix, it shared index 1 with the server's own second seat and was moved by that player's camera updates.",
+    "time_base": "session",
     "events": [
-        {"time": 500, "type": "net_connect", "address": "127.0.0.1:27106"},
+        {"time": 500, "type": "net_connect", "clock": "local", "address": "127.0.0.1:27106"},
         {"time": 1000, "type": "render_param", "debug_markers": true},
         {"time": 1200, "type": "controller_connect", "index": 0},
         {"time": 1300, "type": "controller_connect", "index": 1},
@@ -31,8 +32,8 @@
         {"time": 15000, "type": "controller_axis", "axis": "LEFT_Y", "value": -1.0, "duration": 2000},
         {"time": 15000, "type": "controller_axis", "index": 1, "axis": "LEFT_Y", "value": 1.0, "duration": 1500},
         {"time": 17500, "type": "screenshot", "name": "client_split_post_switch_moved"},
-        {"time": 18000, "type": "dump_state"},
-        {"time": 18500, "type": "screenshot", "name": "client_split_final"}
+        {"time": 19500, "type": "dump_state"},
+        {"time": 20000, "type": "screenshot", "name": "client_split_final"}
     ],
     "end_time": 23000
 }

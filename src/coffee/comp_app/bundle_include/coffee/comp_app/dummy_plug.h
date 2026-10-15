@@ -44,8 +44,9 @@ struct Config : comp_app::Config<Config>
     bool                          defer_to_swap{false};
 
     /*! "time_base": "session": event times count on a clock the app shares
-     *  between processes (e.g. a network session), once it reports one.
-     *  Called from any thread. */
+     *  between processes (e.g. a network session), once it reports one;
+     *  events with "clock": "local" keep this process's own, for those that
+     *  start the session. Called from any thread. */
     std::function<std::optional<compo::clock::duration>()> session_clock{};
     bool                                                   session{false};
 

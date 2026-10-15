@@ -16,7 +16,8 @@
         "screenshot_quality": 60
     },
     "frame_delta": 66.667,
-    "comment": "Split screen on both ends of a multiplayer session: like dummy_plug_net_host_scenario.json, this process becomes the server and spawns one client child (dummy_plug_net_child_splitscreen.json), but each side also seats a second local player on controller 1. The server's second seat joins the roster, so the client must show it as a remote player rather than mistake it for its own second seat; the client's second seat stays local, outside the server's index space. Seat 0 on each side walks in physics mode, seat 1 flies in freecam, and the server switches to beavercreek mid-session, so every biped has to be re-mounted, re-bodied and re-synced after the reload. The journal check (MIN_IN_PLAY=3) then requires a model and collision body under every in-play player on both sides, and the two sides agreeing where each player is. Each process steps its own clock, so the same scripted time is not the same moment on both: the server dumps 1.5 s after the client and the client outlives the server, so both dumps fall after all movement has stopped and while both are still connected, which the journal check's position comparison relies on.",
+    "comment": "Split screen on both ends of a multiplayer session: like dummy_plug_net_host_scenario.json, this process becomes the server and spawns one client child (dummy_plug_net_child_splitscreen.json), but each side also seats a second local player on controller 1. The server's second seat joins the roster, so the client must show it as a remote player rather than mistake it for its own second seat; the client's second seat stays local, outside the server's index space. Seat 0 on each side walks in physics mode, seat 1 flies in freecam, and the server switches to beavercreek mid-session, so every biped has to be re-mounted, re-bodied and re-synced after the reload. The journal check (MIN_IN_PLAY=3) then requires a model and collision body under every in-play player on both sides, and the two sides agreeing where each player is. Both run on session time (net_listen and net_connect on their own clocks, since they start the session), so both dump at the same moment, after all movement has stopped and while still connected, which the journal check's position comparison relies on; the client outlives the server.",
+    "time_base": "session",
     "spawn": [
         {
             "config": "dummy_plug_net_child_splitscreen.json",
@@ -25,7 +26,7 @@
     ],
     "spawn_grace_ms": 1800000,
     "events": [
-        {"time": 500, "type": "net_listen", "address": "127.0.0.1:27106"},
+        {"time": 500, "type": "net_listen", "clock": "local", "address": "127.0.0.1:27106"},
         {"time": 1000, "type": "render_param", "debug_markers": true},
         {"time": 1200, "type": "controller_connect", "index": 0},
         {"time": 1300, "type": "controller_connect", "index": 1},
