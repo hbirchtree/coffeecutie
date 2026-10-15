@@ -15,7 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the networked forge grab test, on session time: it spawns an assault rifle in front of where the client's free camera will stand. The client carries it from its own camera; the server simulates the carry and replicates the rifle's motion (ObjectSync). Run with EXPECT_GRABS=2.",
+    "comment": "Server side of the networked forge grab test, on session time: it spawns an assault rifle in front of where the client's free camera will stand. The client carries it from its own camera; the server simulates the carry and replicates the rifle's motion (ObjectSync).",
     "time_base": "session",
     "frame_delta": 33.3,
     "events": [

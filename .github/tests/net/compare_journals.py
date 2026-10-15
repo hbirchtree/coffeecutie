@@ -12,30 +12,29 @@ of interest here:
   - dummy_event: what the test script injected, for timeline correlation
 
 Usage:
-  compare_journals.py <journal.jsonl> <journal.jsonl> [more...]
+  compare_journals.py [--scenario <name>] [--network <name>]
+                      <journal.jsonl> <journal.jsonl> [more...]
       Compares the LAST state_dump of every journal pairwise against the
-      first journal (treated as the server/authority). With EXPECT_OBJECTS=N
-      in the environment, the authority must also have spawned at least N
-      replicated objects.
+      first journal (treated as the server/authority).
 
-      Bipeds are checked too: within each dump, every player in play wears a
-      model and has a collision body where its camera is (and nobody else
-      does), and a networked player in play on both sides is at the same
-      place, within POSITION_TOLERANCE (default 1.0, world units).
-      Replicated objects present on both sides must be within
-      OBJECT_POSITION_TOLERANCE (default 0.05) of each other: the dumps are
-      taken at different moments, so physics drift of a few millimetres is
-      expected where a desync is not.
-      MIN_IN_PLAY=N requires every dump to show at least N players in play,
-      e.g. both sides' split screen seats.
+      Bipeds: within each dump, every player in play wears a model and has
+      a collision body where its camera is (and nobody else does), and a
+      networked player in play on both sides is at the same place.
+      Replicated objects present on both sides must be at the same place
+      too: the dumps are taken at different moments, so physics drift of a
+      few millimetres is expected where a desync is not.
 
       Combat: every peer plays each shot once (WeaponFire) and hears of
       each hit the authority decided (net_object_hit), so both lists must
-      agree. EXPECT_HITS=N requires at least N hits, EXPECT_GRABS=N at
-      least N grab state changes on each peer (net_grab).
+      agree.
 
       Ticks: a peer follows the authority's tick clock, so when the
       authority's dump is paused the peer's must be too, within a tick.
+
+      What a scenario must reach (hits, players in play, ...) and its
+      tolerances come from its entry in scenarios.json, next to this
+      script, given by --scenario; the network profile it ran under
+      (--network) can loosen the tolerances.
 
   compare_journals.py --timeline <journal.jsonl> [more...]
       Prints all journals merged into one timeline (prefixed by journal
@@ -47,6 +46,37 @@ import json
 import os
 import sys
 from collections import defaultdict
+
+DEFAULT_TOLERANCE = {"position": 1.0, "object_position": 0.05, "clock_us": 2000}
+
+MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "scenarios.json")
+
+# The scenario's "expect" block
+EXPECT = {}
+
+
+def load_expectations(scenario, network):
+    out = {"tolerance": dict(DEFAULT_TOLERANCE)}
+    if scenario is None and network is None:
+        return out
+    with open(MANIFEST) as f:
+        manifest = json.load(f)
+    for kind, name in (("networks", network), ("scenarios", scenario)):
+        if name is None:
+            continue
+        if name not in manifest[kind]:
+            raise SystemExit(f"unknown {kind[:-1]} {name!r}, see {MANIFEST}")
+        entry = manifest[kind][name]
+        expect = dict(entry.get("expect", {}))
+        out["tolerance"].update(entry.get("tolerance", {}))
+        out["tolerance"].update(expect.pop("tolerance", {}))
+        out.update(expect)
+    return out
+
+
+def tolerance(key):
+    return EXPECT.get("tolerance", DEFAULT_TOLERANCE)[key]
 
 
 def load_journal(path):
@@ -128,7 +158,7 @@ def compare_rosters(a_label, a_roster, b_label, b_roster):
 
 def compare_objects(a_label, a_objects, b_label, b_objects):
     problems = 0
-    tolerance = float(os.environ.get("OBJECT_POSITION_TOLERANCE", "0.05"))
+    limit = tolerance("object_position")
     a_by = {o["net_id"]: o for o in a_objects}
     b_by = {o["net_id"]: o for o in b_objects}
     print(f"{a_label} objects: {len(a_by)}  {b_label} objects: {len(b_by)}")
@@ -149,10 +179,10 @@ def compare_objects(a_label, a_objects, b_label, b_objects):
                   f"{b_label}={b_o['tag_class']}:{b_o['tag_id']}")
         delta = max(abs(x - y)
                     for x, y in zip(a_o["position"], b_o["position"]))
-        if delta > tolerance:
+        if delta > limit:
             problems += 1
             print(f"FAIL: net_id={net_id} position mismatch (off by "
-                  f"{delta:.4f}, tolerance {tolerance}): "
+                  f"{delta:.4f}, tolerance {limit}): "
                   f"{a_label}={a_o['position']} {b_label}={b_o['position']}")
     return problems
 
@@ -254,9 +284,9 @@ def compare_bipeds(a_label, a_roster, b_label, b_roster):
     """A networked player in play on both sides is at the same place on
     both. Each process dumps at its own scripted time, so positions are
     compared with a tolerance, and a player caught spawning between the two
-    dumps (in play on one side only) is only noted; MIN_IN_PLAY is what
+    dumps (in play on one side only) is only noted; the "in_play" expectation is what
     catches bipeds that never show up."""
-    tolerance = float(os.environ.get("POSITION_TOLERANCE", "1.0"))
+    limit = tolerance("position")
     problems = 0
     a_by = {e["player_idx"]: e for e in a_roster}
     b_by = {e["player_idx"]: e for e in b_roster}
@@ -277,10 +307,10 @@ def compare_bipeds(a_label, a_roster, b_label, b_roster):
                     zip(a_e["position"], b_e["position"]))
         print(f"player_idx={idx}: {a_label} sees {a_e['position']}, "
               f"{b_label} sees {b_e['position']} (off by {delta:.3f})")
-        if delta > tolerance:
+        if delta > limit:
             problems += 1
             print(f"FAIL: player_idx={idx} is {delta:.3f} apart between "
-                  f"{a_label} and {b_label} (tolerance {tolerance})")
+                  f"{a_label} and {b_label} (tolerance {limit})")
     return problems
 
 
@@ -316,11 +346,11 @@ def clock_error(a_label, a_entries, b_label, b_entries):
     truth = a_base - b_base
     error = samples[-1]["applied"] - truth
     best_rtt = min(s["rtt"] for s in samples)
-    tolerance = int(os.environ.get("CLOCK_TOLERANCE_US", "2000"))
+    limit = tolerance("clock_us")
     print(f"{b_label} clock: {len(samples)} samples, best rtt {best_rtt}us, "
-          f"error vs {a_label} {error}us (tolerance {tolerance}us), "
+          f"error vs {a_label} {error}us (tolerance {limit}us), "
           f"steady offset {samples[-1]['steady_offset']}us")
-    if abs(error) > tolerance:
+    if abs(error) > limit:
         print(f"FAIL: {b_label} clock offset off by {error}us")
         return 1
     return 0
@@ -348,11 +378,11 @@ def compare_combat(a_label, a_entries, b_label, b_entries):
         problems += 1
         print(f"FAIL: {a_label} decided {len(a_hits)} hits, "
               f"{b_label} heard of {len(b_hits)} (or different ones)")
-    expect_hits = int(os.environ.get("EXPECT_HITS", "0"))
+    expect_hits = EXPECT.get("hits", 0)
     if len(a_hits) < expect_hits:
         problems += 1
         print(f"FAIL: {len(a_hits)} hits, expected at least {expect_hits}")
-    expect_grabs = int(os.environ.get("EXPECT_GRABS", "0"))
+    expect_grabs = EXPECT.get("grabs", 0)
     if b_grabs < expect_grabs:
         problems += 1
         print(f"FAIL: {b_label} saw {b_grabs} grab changes, "
@@ -401,10 +431,22 @@ def main():
             return 2
         return timeline(paths)
 
+    scenario = network = None
+    while args[:1] in (["--scenario"], ["--network"]) and len(args) > 1:
+        if args[0] == "--scenario":
+            scenario = args[1]
+        else:
+            network = args[1]
+        args = args[2:]
     if len(args) < 2:
-        print(f"usage: {sys.argv[0]} <authority.jsonl> <peer.jsonl>... | "
-              f"--timeline <journal.jsonl>...", file=sys.stderr)
+        print(f"usage: {sys.argv[0]} [--scenario <name>] [--network <name>] "
+              f"<authority.jsonl> <peer.jsonl>... | "
+              f"--timeline <journal.jsonl>...",
+              file=sys.stderr)
         return 2
+
+    global EXPECT
+    EXPECT = load_expectations(scenario, network)
 
     dumps = []
     for path in args:
@@ -418,13 +460,13 @@ def main():
 
     problems = 0
     authority_label, authority = dumps[0]
-    expect_objects = int(os.environ.get("EXPECT_OBJECTS", "0"))
+    expect_objects = EXPECT.get("objects", 0)
     if len(authority.get("objects", [])) < expect_objects:
         problems += 1
         print(f"FAIL: {authority_label} has "
               f"{len(authority.get('objects', []))} replicated objects, "
               f"expected at least {expect_objects}")
-    min_in_play = int(os.environ.get("MIN_IN_PLAY", "0"))
+    min_in_play = EXPECT.get("in_play", 0)
     for i, (label, dump) in enumerate(dumps):
         players = dump.get("players", [])
         biped_problems, in_play = check_bipeds(label, players)

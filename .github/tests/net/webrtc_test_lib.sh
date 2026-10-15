@@ -272,6 +272,7 @@ webrtc_dump_matching() {
 # comparison's exit code.
 webrtc_compare_journals() {
     local server_journal="$1" client_journal="$2" compare_script="$3"
+    local scenario="${4:-}" network="${5:-}"
     local journal
     for journal in "$server_journal" "$client_journal"; do
         if [ ! -s "$journal" ]; then
@@ -285,7 +286,8 @@ webrtc_compare_journals() {
     echo "server: $server_journal"
     echo "client: $client_journal"
     echo "::group::journal comparison"
-    python3 "$compare_script" "$server_journal" "$client_journal"
+    python3 "$compare_script" ${scenario:+--scenario "$scenario"} \
+        ${network:+--network "$network"} "$server_journal" "$client_journal"
     local result=$?
     echo "::endgroup::"
     if [ "$result" != "0" ]; then
