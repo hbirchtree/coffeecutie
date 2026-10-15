@@ -202,9 +202,14 @@ webrtc_start_gateway() {
 webrtc_server_command() {
     local target="$1"
     shift
+    local lib_path="${SERVER_LIB_PATH:-}"
     if [ -n "${SERVER_BINARY:-}" ]; then
+        # Bundled shared libs (OpenAL, libwma) live next to the binary
+        if [ -d "$(dirname "$SERVER_BINARY")/lib" ]; then
+            lib_path="$(dirname "$SERVER_BINARY")/lib${lib_path:+:$lib_path}"
+        fi
         if [ -n "${SERVER_LD:-}" ]; then
-            WEBRTC_SERVER_CMD=("$SERVER_LD" --library-path "${SERVER_LIB_PATH:-}" "$SERVER_BINARY")
+            WEBRTC_SERVER_CMD=("$SERVER_LD" --library-path "$lib_path" "$SERVER_BINARY")
         else
             WEBRTC_SERVER_CMD=("$SERVER_BINARY")
         fi
@@ -213,8 +218,8 @@ webrtc_server_command() {
         WEBRTC_SERVER_CMD=(./cb run "$target" -- "$@")
     fi
     WEBRTC_SERVER_ENV=()
-    if [ -n "${SERVER_LIB_PATH:-}" ]; then
-        WEBRTC_SERVER_ENV=(env "LD_LIBRARY_PATH=$SERVER_LIB_PATH")
+    if [ -n "$lib_path" ]; then
+        WEBRTC_SERVER_ENV=(env "LD_LIBRARY_PATH=$lib_path")
     fi
     return 0
 }

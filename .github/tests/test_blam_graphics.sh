@@ -139,7 +139,9 @@ export COFFEE_DISABLE_PROFILER=1
 
 if [ -n "$SYS_LD" ] && [ -f "$BINARY" ]; then
     echo "::group::Running binary directly with sysroot loader"
-    LD_LIBRARY_PATH=$PWD/sysroot/lib $SYS_LD --library-path $PWD/sysroot/lib $BINARY $ASSETS_DIR $BOOT_MAP 2>&1 | tee "$TESTDIR/output.log"
+    # Bundled shared libs (OpenAL, libwma) live next to the binary
+    LIB_PATH=$(dirname $BINARY)/lib:$PWD/sysroot/lib
+    LD_LIBRARY_PATH=$LIB_PATH $SYS_LD --library-path $LIB_PATH $BINARY $ASSETS_DIR $BOOT_MAP 2>&1 | tee "$TESTDIR/output.log"
     RET=$?
     echo "Return code: $RET"
     echo "::endgroup::"

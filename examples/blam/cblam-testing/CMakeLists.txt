@@ -22,11 +22,13 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
     endif()
     find_package(OpenAL CONFIG REQUIRED)
     find_package(libwma CONFIG REQUIRED)
-    get_target_property(OPENAL_LIB OpenAL::OpenAL IMPORTED_LOCATION_DEBUG)
-    set(BUNDLED_LIBS
-        $<TARGET_SONAME_FILE:OpenAL::OpenAL>
-        $<TARGET_SONAME_FILE:libwma::wma>
-    )
+    # Some triplets (Android) still link OpenAL statically
+    foreach(lib OpenAL::OpenAL libwma::wma)
+        get_target_property(lib_type ${lib} TYPE)
+        if(lib_type STREQUAL "SHARED_LIBRARY")
+            list(APPEND BUNDLED_LIBS $<TARGET_SONAME_FILE:${lib}>)
+        endif()
+    endforeach()
 elseif(BUILD_OPENAL AND EMSCRIPTEN)
     find_package(OpenAL CONFIG REQUIRED)
     set(BUNDLED_LIBS OpenAL_ImaDecoder OpenAL::OpenAL)
