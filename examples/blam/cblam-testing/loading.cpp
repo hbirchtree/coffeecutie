@@ -244,8 +244,20 @@ struct ResourceLoader
         // Pending cluster first so we can use the shared model loading after
         if(pending_cluster_change)
         {
-            if(pending_cluster_change->bsp)
+            /* A change from before a map switch names a BSP that is gone */
+            auto const* bsp  = pending_cluster_change->bsp;
+            bool const  live =
+                bsp &&
+                std::any_of(
+                    bsp_cache.m_cache.begin(),
+                    bsp_cache.m_cache.end(),
+                    [bsp](auto const& entry) {
+                        return &entry.second == bsp && entry.second.valid();
+                    }) &&
+                pending_cluster_change->cluster < bsp->clusters.size();
+            if(live)
             {
+
                 load_world_lighting(
                     p,
                     pending_cluster_change->bsp->clusters
