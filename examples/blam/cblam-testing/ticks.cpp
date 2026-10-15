@@ -22,29 +22,37 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
     auto const& follow = net.replica && server ? net.tick_base : std::nullopt;
 
     /* A new time base: start over from it */
-    auto const base      = !server   ? time_base_t::frame
-                           : follow ? time_base_t::server_ticks
-                                    : time_base_t::server_time;
-    bool const restart   = !m_started || base != m_base;
+    auto const base    = !server   ? time_base_t::frame
+                         : follow ? time_base_t::server_ticks
+                                  : time_base_t::server_time;
+    bool const restart = !m_started || base != m_base;
     if(restart)
     {
         m_started   = true;
         m_base      = base;
         m_paused_us = 0;
-        if(m_paused)
-            m_paused = base_us;
+        m_paused.reset();
+        m_pause_at.reset();
     }
 
     m_pause_queue->poll();
-    auto pause = std::exchange(m_pause_request, std::nullopt);
+    auto const request = std::exchange(m_pause_request, std::nullopt);
     if(follow)
-        pause = follow->paused;
-    if(pause && *pause != paused())
     {
-        if(*pause)
-            m_paused = base_us;
-        else
-            m_paused_us += base_us - *std::exchange(m_paused, std::nullopt);
+        /* The server says where to stop; its next sync says when to go */
+        m_pause_at = follow->pause_at ? std::optional(follow->pause_at)
+                     : follow->paused ? std::optional(m_tick)
+                                      : std::nullopt;
+        m_paused.reset();
+    } else if(request && *request && !m_pause_at)
+        /* Clients get a few ticks' notice, so all stop on the same one */
+        m_pause_at = m_tick + (net.clock_authority ? pause_lead : 0);
+    else if(request && !*request && m_pause_at)
+    {
+        if(m_paused)
+            m_paused_us += base_us - *m_paused;
+        m_paused.reset();
+        m_pause_at.reset();
     }
     if(m_paused)
         return;
@@ -55,9 +63,10 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
                : m_paused_us;
     i64 const now_us = base_us - origin_us;
     u64 const now    = static_cast<u64>(std::max<i64>(now_us, 0) / tick_us);
+    u64 const until  = m_pause_at ? std::min(now, *m_pause_at) : now;
 
-    auto&     bus  = p.subsystem<GameEventBus>();
-    auto      emit = [&bus](u64 tick, bool resync) {
+    auto& bus  = p.subsystem<GameEventBus>();
+    auto  emit = [&bus](u64 tick, bool resync) {
         GameEvent ev{.type = GameEvent::Tick};
         TickEvent data{.tick = tick, .seconds = tick_seconds, .resync = resync};
         bus.inject(ev, &data);
@@ -67,18 +76,28 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
     {
         m_tick = now;
         emit(m_tick, true);
-    } else if(now > m_tick)
+    } else if(until > m_tick)
     {
-        u64 const behind = now - m_tick;
+        u64 const behind = until - m_tick;
         /* The server's time is everyone's, so it never skips: it slows */
         if(behind > max_catch_up && !net.clock_authority)
         {
-            m_tick = now;
+            m_tick = until;
             m_resyncs++;
             emit(m_tick, true);
         } else
             for(u64 i = 0; i < std::min<u64>(behind, max_catch_up); i++)
                 emit(++m_tick, false);
+    }
+
+    /* Stopped on the tick: time stands still from when the next would
+     * have begun, so it picks up there */
+    if(m_pause_at && m_tick >= *m_pause_at && now > *m_pause_at)
+    {
+        if(!follow)
+            m_paused = origin_us + static_cast<i64>(*m_pause_at + 1) * tick_us;
+        m_alpha = 1.f;
+        return;
     }
 
     m_alpha = std::clamp(

@@ -50,6 +50,7 @@ struct NetworkState : compo::SubsystemBase
     {
         libc_types::u64 tick{0};
         libc_types::i64 start_us{0};
+        libc_types::u64 pause_at{0}; /*!< Last tick before a pause, 0 = none */
         bool            paused{false};
     };
     std::optional<TickBase> tick_base;

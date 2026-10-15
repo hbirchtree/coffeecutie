@@ -2758,7 +2758,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     void send_tick_sync(Proxy& p, time_point const& t)
     {
         auto const& clock  = p.subsystem<TickClock>();
-        bool const  due    = t >= m_next_tick_sync || clock.paused() != m_sent_paused;
+        bool const  due    = t >= m_next_tick_sync || clock.paused() != m_sent_paused ||
+                         clock.pause_at() != m_sent_pause_at;
         std::set<HSteamNetConnection> targets;
         for(auto& [connection, state] : m_connections)
             if(state.verified && (due || !state.tick_synced))
@@ -2770,6 +2771,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             m_next_tick_sync = t + tick_sync_interval;
             m_sent_paused    = clock.paused();
+            m_sent_pause_at  = clock.pause_at();
             for(auto& [_, state] : m_connections)
                 if(state.inputs || state.inputs_lost)
                 {
@@ -2787,6 +2789,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .tick     = clock.tick(),
                 .start_us   = clock.tick_began_us(),
                 .session_us = m_session_start_us,
+                .pause_at   = clock.pause_at().value_or(0),
                 .paused     = clock.paused(),
             }),
             k_nSteamNetworkingSend_Reliable,
@@ -3480,6 +3483,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_net_state.tick_base = NetworkState::TickBase{
                 .tick     = sync.tick,
                 .start_us = sync.start_us,
+                .pause_at = sync.pause_at,
                 .paused   = sync.paused != 0,
             };
             m_session_start_us = sync.session_us;
@@ -3961,6 +3965,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr auto tick_sync_interval = std::chrono::seconds(1);
     time_point            m_next_tick_sync{};
     bool                  m_sent_paused{false};
+    std::optional<u64>    m_sent_pause_at;
     std::set<u64> m_remote_holders;
     std::vector<EntitySpawn>                                    m_dynamic_spawns;
     std::atomic<u32> m_next_net_id{0}; /*!< Stamped on whichever thread spawns */

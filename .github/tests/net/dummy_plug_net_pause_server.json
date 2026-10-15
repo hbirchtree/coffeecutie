@@ -15,7 +15,8 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the networked pause test: it pauses the simulation from 13 s to 21 s and dumps its tick clock while paused. The client follows the server's ticks (TickSync), so its dump, also taken during the pause, should show paused with the same tick or one past it.",
+    "comment": "Server side of the networked pause test, on session time: it pauses from 9 s to 13 s, and both ends dump their tick clocks at 11 s. Clients get a few ticks' notice of the pause (TickSync), so compare_journals expects both paused on the same tick.",
+    "time_base": "session",
     "frame_delta": 33.3,
     "events": [
         {
@@ -24,19 +25,19 @@
             "physics": true
         },
         {
-            "time": 13000,
+            "time": 9000,
             "type": "pause",
             "paused": true
         },
         {
-            "time": 17000,
+            "time": 11000,
             "type": "dump_state"
         },
         {
-            "time": 21000,
+            "time": 13000,
             "type": "pause",
             "paused": false
         }
     ],
-    "end_time": 26000
+    "end_time": 14000
 }

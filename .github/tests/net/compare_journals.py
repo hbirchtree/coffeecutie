@@ -34,6 +34,9 @@ Usage:
       agree. EXPECT_HITS=N requires at least N hits, EXPECT_GRABS=N at
       least N grab state changes on each peer (net_grab).
 
+      Ticks: a peer follows the authority's tick clock, so when the
+      authority's dump is paused the peer's must be too, within a tick.
+
   compare_journals.py --timeline <journal.jsonl> [more...]
       Prints all journals merged into one timeline (prefixed by journal
       name) instead of comparing. For eyeballing event ordering across
@@ -357,6 +360,18 @@ def compare_combat(a_label, a_entries, b_label, b_entries):
     return problems
 
 
+def compare_ticks(a_label, a_dump, b_label, b_dump):
+    a, b = a_dump.get("ticks"), b_dump.get("ticks")
+    if not a or not b or not a.get("paused"):
+        return 0
+    if not b.get("paused") or abs(a["tick"] - b["tick"]) > 1:
+        print(f"FAIL: {a_label} paused at tick {a['tick']}, {b_label} "
+              f"{'paused' if b.get('paused') else 'running'} at {b['tick']}")
+        return 1
+    print(f"{a_label} paused at tick {a['tick']}, {b_label} at {b['tick']}")
+    return 0
+
+
 def label_for(path):
     # <out>/client0/journal.jsonl -> client0; <out>/journal.jsonl -> <out>
     return os.path.basename(os.path.dirname(os.path.abspath(path))) or path
@@ -439,6 +454,7 @@ def main():
         problems += compare_objects(authority_label,
                                     authority.get("objects", []),
                                     peer_label, peer.get("objects", []))
+        problems += compare_ticks(authority_label, authority, peer_label, peer)
 
     if problems == 0:
         print("\nPASS: journals agree, no duplicates found")
