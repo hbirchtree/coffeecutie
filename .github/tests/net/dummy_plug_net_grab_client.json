@@ -1,0 +1,71 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Client side of the networked forge grab test, see dummy_plug_net_grab_server.json. Its free camera looks at the rifle, holds the trigger to grab it, rises 1.4 wu and lets go; the server answers with GrabState (net_grab in the journal).",
+    "frame_delta": 33.3,
+    "events": [
+        {
+            "time": 500,
+            "type": "controller_connect",
+            "index": 0
+        },
+        {
+            "time": 12000,
+            "type": "camera",
+            "position": [
+                97.0,
+                -145.0,
+                0.6
+            ],
+            "rotation": [
+                -13.5,
+                270
+            ]
+        },
+        {
+            "time": 14000,
+            "type": "controller_axis",
+            "axis": "TRIGGER_RIGHT",
+            "value": 1.0,
+            "duration": 4000,
+            "index": 0
+        },
+        {
+            "time": 16000,
+            "type": "camera",
+            "position": [
+                97.0,
+                -145.0,
+                2.0
+            ],
+            "rotation": [
+                -13.5,
+                270
+            ]
+        },
+        {
+            "time": 17000,
+            "type": "screenshot",
+            "name": "client_view"
+        },
+        {
+            "time": 23000,
+            "type": "dump_state"
+        }
+    ],
+    "end_time": 24000
+}

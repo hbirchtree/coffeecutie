@@ -1,0 +1,62 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Server side of the networked forge grab test: it spawns an assault rifle on the ground in front of where the client's free camera will stand, and watches. The client carries it from its own camera; the server simulates the carry and replicates the rifle's motion back (ObjectSync).",
+    "frame_delta": 33.3,
+    "events": [
+        {
+            "time": 1000,
+            "type": "render_param",
+            "debug_markers": true
+        },
+        {
+            "time": 2000,
+            "type": "spawn_object",
+            "tag": "weapons\\assault rifle\\assault rifle",
+            "class": "weap",
+            "position": [
+                97.0,
+                -143.0,
+                0.1
+            ],
+            "yaw": 0
+        },
+        {
+            "time": 12000,
+            "type": "camera",
+            "position": [
+                100.0,
+                -148.0,
+                1.5
+            ],
+            "rotation": [
+                0,
+                301
+            ]
+        },
+        {
+            "time": 21000,
+            "type": "screenshot",
+            "name": "server_view"
+        },
+        {
+            "time": 28000,
+            "type": "dump_state"
+        }
+    ],
+    "end_time": 29000
+}

@@ -61,6 +61,7 @@ using NetworkingManifest = compo::SubsystemManifest<
         PlayerCamera,
         Model,
         ObjectPhysics,
+        PhysicsData,
         const PlayerInput>,
     type_list_t<NetworkState, PhysicsBus>,
     type_list_t<comp_app::ScreenshotProvider>>;
@@ -2361,6 +2362,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(is_server())
         {
             send_seats(p);
+            send_grab_states(p);
             send_object_sync(p, t);
         }
         if(m_left_server)
@@ -2409,6 +2411,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     send_single(m_connection, Message<SeatSync>(SeatSync(seat)));
                     m_sent_own_seat = seat;
                 }
+                send_grab(p, info);
                 /* The vehicle is simulated on the server; drive it there */
                 if(auto const* input = p.get<PlayerInput>(m_client_player.id());
                    input && info.riding.driver && !info.riding.exiting)
@@ -2659,6 +2662,73 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         };
         m_game_bus.inject(ev, &shot);
         return true;
+    }
+
+    /* Objects are simulated on the server, so forge grabs happen there */
+    void send_grab(Proxy& p, PlayerInfo const& info)
+    {
+        auto const* input = p.get<PlayerInput>(m_client_player.id());
+        bool const  held  = input &&
+                          input->input_mode == PlayerInput::input_mode_t::game &&
+                          input->intent.grab && info.permissions.camera &&
+                          !info.mode.physics && info.riding.vehicle == 0;
+        if(!held && !m_sent_grab)
+            return;
+        auto const& cam = m_client_player.get<PlayerCamera>();
+        send_all(
+            Message<GrabInput>({
+                .origin   = Vecf4(cam.camera.position, 1.f),
+                .to_world = Quatf(glm::transpose(Matf3(cam.rotation))),
+                .held     = held,
+            }),
+            held ? k_nSteamNetworkingSend_UnreliableNoNagle
+                 : k_nSteamNetworkingSend_Reliable,
+            {m_connection},
+            FRAME_UPDATE_LANE);
+        m_sent_grab = held;
+    }
+
+    /* Tells each client what it carries; lets go for those who left */
+    void send_grab_states(Proxy& p)
+    {
+        std::set<u64> holders;
+        for(auto& [connection, state] : m_connections)
+        {
+            if(!state.biped.exists())
+                continue;
+            u64 const id = state.biped.id();
+            holders.insert(id);
+            auto const* data = p.get<PhysicsData>(id);
+            auto const* net  = data && data->grabbed
+                                   ? p.get<NetworkInfo>(data->grabbed)
+                                   : nullptr;
+            u32 const object = net ? net->instance_id : 0;
+            if(object == state.grabbed)
+                continue;
+            state.grabbed = object;
+            send_single(connection, Message<GrabState>({.object = object}));
+        }
+        for(u64 holder : std::exchange(m_remote_holders, {}))
+            if(!holders.contains(holder))
+                remote_grab(p, holder, {}, false);
+            else
+                m_remote_holders.insert(holder);
+    }
+
+    void remote_grab(Proxy& p, u64 holder, GrabInput const& grab, bool held)
+    {
+        Physics::Event ev{Physics::Event::Grab};
+        Physics::Grab  request{
+             .entity_id = holder,
+             .origin    = Vecf3(grab.origin),
+             .to_world  = grab.to_world,
+             .held      = held,
+        };
+        p.subsystem<PhysicsBus>().process(ev, &request);
+        if(held)
+            m_remote_holders.insert(holder);
+        else
+            m_remote_holders.erase(holder);
     }
 
     /* Moving objects are the server's: it sends what they do, at most
@@ -2936,6 +3006,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_left_server    = false;
         m_join_confirmed = false;
         m_view_time_us   = 0;
+        m_sent_grab      = false;
+        if(m_client_player.exists())
+            if(auto* data = p.get<PhysicsData>(m_client_player.id()))
+                data->grabbed = 0;
         p.subsystem<NetworkState>().client_state = NetworkState::ClientState::None;
         p.subsystem<NetworkState>().remote_player_idx.reset();
         p.remove_entity_if([&p](compo::Entity const& e) {
@@ -2984,6 +3058,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }),
                 k_nSteamNetworkingSend_Reliable,
                 std::move(targets));
+            break;
+        }
+        case MessageBase::GrabInput: {
+            /* Only the sender's own player, from its free camera */
+            if(!player_info.biped.exists())
+                break;
+            auto const& grab = payload.value<GrabInput>();
+            auto const& info = player_info.biped.get<PlayerInfo>();
+            auto const& eye =
+                player_info.biped.get<PlayerCamera>().camera.position;
+            bool const held =
+                grab.held && info.permissions.camera && !info.mode.physics &&
+                info.riding.vehicle == 0 &&
+                glm::distance(Vecf3(grab.origin), eye) <= max_shot_offset;
+            if(held || m_remote_holders.contains(player_info.biped.id()))
+                remote_grab(p, player_info.biped.id(), grab, held);
             break;
         }
         case MessageBase::DriveInput: {
@@ -3235,6 +3325,23 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         case MessageBase::ObjectHit: {
             receive_hit(p, payload.value<ObjectHit>());
+            break;
+        }
+        case MessageBase::GrabState: {
+            if(!m_client_player.exists())
+                break;
+            u32 const object  = payload.value<GrabState>().object;
+            u64       carried = 0;
+            if(object != 0)
+                for(auto entity : p.select<NetworkInfo>())
+                    if(entity.get<NetworkInfo>().instance_id == object)
+                    {
+                        carried = entity.id();
+                        break;
+                    }
+            if(auto* data = p.get<PhysicsData>(m_client_player.id()))
+                data->grabbed = carried;
+            journal("net_grab", {{"object", object}});
             break;
         }
         case MessageBase::ObjectSync: {
@@ -3622,6 +3729,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         std::optional<time_point>         last_seen{};
         bool                              invited{false};
         bool verified{false}; /*!< Map fingerprint matched ours */
+        u32  grabbed{0};      /*!< Net id it was last told it carries */
         bool objects_synced{false}; /*!< Has had every moving object */
     };
 
@@ -3677,6 +3785,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Hits this peer decided */
     std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>> m_hit_queue;
     std::vector<ObjectHitEvent>                               m_local_hits;
+    /* Forge grabs: ours sent to the server, clients' carried here */
+    bool          m_sent_grab{false};
+    std::set<u64> m_remote_holders;
     std::vector<EntitySpawn>                                    m_dynamic_spawns;
     std::atomic<u32> m_next_net_id{0}; /*!< Stamped on whichever thread spawns */
     std::atomic<u32> m_next_request_id{0};

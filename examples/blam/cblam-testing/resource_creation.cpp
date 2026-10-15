@@ -299,14 +299,17 @@ void create_resources(compo::EntityContainer& e)
                  {
                      PlayerCamera* target{};
                      PlayerInfo*   target_info{};
+                     NetworkInfo*  target_net{};
                      u32 const     seat = ev.data.value("seat", 0u);
-                     for(auto const& en : e.select<PlayerCamera, PlayerInfo>())
+                     for(auto const& en :
+                         e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
                      {
-                         auto [cam, info] = en.components();
+                         auto [cam, info, net] = en.components();
                          if(info.seat_idx != seat)
                              continue;
                          target      = &cam;
                          target_info = &info;
+                         target_net  = &net;
                      }
                      if(!target)
                      {
@@ -344,6 +347,9 @@ void create_resources(compo::EntityContainer& e)
                      {
                          target->camera.fieldOfView = ev.data["fov"].get<f32>();
                      }
+                     /* Synced like any other camera move */
+                     target_net->changes.transform = true;
+                     target_net->changes.viewport  = true;
                      /* Headless equivalent of the ImGui "Physics" checkbox */
                      target_info->mode.physics =
                          ev.data.value("physics", target_info->mode.physics);
