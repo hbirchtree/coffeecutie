@@ -16,6 +16,7 @@
 #include <blam/volta/blam_tag_ref.h>
 #include <coffee/comp_app/file_mapper.h>
 #include <coffee/comp_app/services.h>
+#include <peripherals/enum/helpers.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/vectors/glm_vector_types.h>
 #include <url/url.h>
@@ -340,20 +341,23 @@ struct TickEvent
     bool resync{false};
 };
 
+/*! What a player's controls ask for, by intent rather than by button */
+enum class InputIntent : libc_types::u32
+{
+    none = 0x0,
+    fire = 0x1,
+    grab = 0x2,
+    use  = 0x4,
+    jump = 0x8,
+};
+
+C_FLAGS(InputIntent, libc_types::u32)
+
 /*! One tick of a player's input, as a server would replay it. Raised
  *  Local for every tick by the seat's controller, Remote on the server */
 struct PlayerTickInputEvent
 {
     static constexpr auto event_type = GameEvent::PlayerTickInput;
-
-    enum buttons_t : libc_types::u32
-    {
-        none = 0x0,
-        fire = 0x1,
-        grab = 0x2,
-        use  = 0x4,
-        jump = 0x8,
-    };
 
     MapLoadEvent::Origin origin{MapLoadEvent::Local};
     libc_types::u64      player{0};
@@ -362,7 +366,7 @@ struct PlayerTickInputEvent
     Vecf2                move{};    /*!< Forward and right, -1..1 */
     Vecf2                look{};    /*!< Device look, summed over the tick */
     Quatf                view{1.f, 0.f, 0.f, 0.f}; /*!< Camera after it */
-    libc_types::u32      buttons{none};
+    InputIntent          intents{InputIntent::none}; /*!< Held */
     bool resync{false}; /*!< The clock skipped ahead to this tick */
 };
 

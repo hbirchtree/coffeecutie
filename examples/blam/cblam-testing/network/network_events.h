@@ -347,14 +347,16 @@ struct alignas(8) TickInput
     Quatf view;
     typing::vector_types::Vecf2 move;
     typing::vector_types::Vecf2 look;
-    u32   buttons{0};
+    InputIntent intents{InputIntent::none};
 
-    enum flags_t : u32
+    enum class flags_t : u32
     {
         none   = 0x0,
         resync = 0x1, /*!< Skipped ahead to here, the gap was never played */
-    } flags{none};
+    } flags{flags_t::none};
 };
+
+C_FLAGS(TickInput::flags_t, u32)
 
 /*! A moving object at a server time. Sent while it is awake, once more as
  *  it falls asleep, and all of them to a peer once it is verified. */

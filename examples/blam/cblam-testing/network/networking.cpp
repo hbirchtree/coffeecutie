@@ -2712,8 +2712,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .view    = input.view,
                 .move    = input.move,
                 .look    = input.look,
-                .buttons = input.buttons,
-                .flags   = input.resync ? TickInput::resync : TickInput::none,
+                .intents = input.intents,
+                .flags   = input.resync ? TickInput::flags_t::resync
+                                        : TickInput::flags_t::none,
             });
             fresh = true;
         }
@@ -2738,7 +2739,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(input.tick <= state.last_input)
                 continue;
             /* A client that skipped ahead had no ticks to send */
-            if(state.last_input != 0 && !(input.flags & TickInput::resync))
+            if(state.last_input != 0 &&
+               (input.flags & TickInput::flags_t::resync) == TickInput::flags_t::none)
                 state.inputs_lost += input.tick - state.last_input - 1;
             state.last_input = input.tick;
             state.inputs++;
@@ -2751,7 +2753,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .move       = input.move,
                 .look       = input.look,
                 .view       = input.view,
-                .buttons    = input.buttons,
+                .intents    = input.intents,
             };
             m_game_bus.inject(ev, &data);
         }
