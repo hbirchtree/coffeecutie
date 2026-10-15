@@ -108,21 +108,24 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
             m_tick = until - max_catch_up;
             m_resyncs++;
         } else if(behind > max_catch_up && !follow)
+        {
             m_paused_us += static_cast<i64>(behind - max_catch_up) * tick_us;
+            m_window_held_us += static_cast<i64>(behind - max_catch_up) * tick_us;
+        }
         u64 const run = std::min<u64>(behind, max_catch_up);
         for(u64 i = 0; i < run; i++)
             emit(++m_tick, skip && i == 0);
-        m_window_ticks += run;
     }
 
-    /* How much of its time the simulation keeps up with, over a second */
+    /* How much of its time the simulation keeps up with, over a second:
+     * all of it, but for what the clock was held back by */
     m_window_us += frame_us;
     if(m_window_us >= 1'000'000)
     {
         m_speed = std::clamp(
-            static_cast<f32>(m_window_ticks * tick_us) / m_window_us, 0.f, 1.f);
-        m_window_ticks = 0;
-        m_window_us    = 0;
+            1.f - static_cast<f32>(m_window_held_us) / m_window_us, 0.f, 1.f);
+        m_window_held_us = 0;
+        m_window_us      = 0;
     }
 
     /* Stopped on the tick: time stands still from when the next would
