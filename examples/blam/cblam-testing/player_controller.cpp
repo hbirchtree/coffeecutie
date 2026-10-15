@@ -124,13 +124,14 @@ struct PlayerController
             auto [cam, input, info] = player.components();
             if(info.is_remote() || !cam.is_active())
                 continue;
-            using buttons_t      = PlayerTickInputEvent::buttons_t;
-            auto const&    intent = input.intent;
-            u32 const      buttons =
-                (intent.fire ? buttons_t::fire : 0u) |
-                (intent.grab ? buttons_t::grab : 0u) |
-                (intent.use ? buttons_t::use : 0u) |
-                (intent.jump ? buttons_t::jump : 0u);
+            auto const& intent  = input.intent;
+            InputIntent intents = InputIntent::none;
+            for(auto [held, what] : {std::pair{intent.fire, InputIntent::fire},
+                                     std::pair{intent.grab, InputIntent::grab},
+                                     std::pair{intent.use, InputIntent::use},
+                                     std::pair{intent.jump, InputIntent::jump}})
+                if(held)
+                    intents |= what;
             Vecf2 const look = std::exchange(m_look[player.id()], Vecf2{}) /
                                static_cast<f32>(ticks.size());
             for(auto const& tick : ticks)
@@ -143,7 +144,7 @@ struct PlayerController
                     .move       = intent.move,
                     .look       = look,
                     .view       = cam.camera.rotation,
-                    .buttons    = buttons,
+                    .intents    = intents,
                     .resync     = tick.resync,
                 };
                 game.inject(ev, &data);
