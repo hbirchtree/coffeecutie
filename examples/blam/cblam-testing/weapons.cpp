@@ -64,6 +64,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         {
             m_generation = files.load_generation;
             m_states.clear();
+            m_fire_queue->poll();
+            m_shots.clear();
         }
         auto const& magic = files.container.magic;
 
@@ -106,7 +108,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 state.cooldown += 1.f / rate;
                 state.fired        = true;
                 state.illumination = 1.f;
-                fire(p, ent.id(), cam, trigger, magic);
+                pull(p, ent.id(), info, cam, *weapon_tag);
             }
             state.firing = held;
             if(trigger.illumination_recovery_time > 0.f)
@@ -121,22 +123,57 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         std::erase_if(m_states, [&live](auto const& e) {
             return !live.contains(e.first);
         });
+
+        m_fire_queue->poll();
+        for(auto const& shot : std::exchange(m_shots, {}))
+            fire(p, shot, files);
     }
 
-    /* Projectiles from the eye, the firing effect at the muzzle */
-    void fire(
-        Proxy&               p,
-        u64                  player,
-        PlayerCamera const&  cam,
-        trigger_t const&     trigger,
-        blam::map_ptr const& magic)
+    /* Raises the shot, from the eye; every peer fires it from the event */
+    void pull(
+        Proxy&              p,
+        u64                 player,
+        PlayerInfo const&   info,
+        PlayerCamera const& cam,
+        blam::tag_t const&  weapon)
     {
-        auto& game = p.template subsystem<GameEventBus>();
+        Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
+        Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
+        WeaponFireEvent shot{
+            .weapon     = weapon.as_ref(),
+            .shooter    = player,
+            .player_idx = info.player_idx,
+            .seed       = static_cast<u32>(m_rng()),
+            .position   = cam.camera.position + forward * muzzle_distance,
+            .direction  = forward,
+        };
+        GameEvent ev{.type = GameEvent::WeaponFire};
+        p.template subsystem<GameEventBus>().inject(ev, &shot);
+    }
 
-        Matf3 const to_world = glm::transpose(Matf3(cam.rotation));
-        Vecf3 const forward  = to_world * Vecf3{0.f, 0.f, -1.f};
-        Vecf3 const eye      = cam.camera.position;
+    /* Projectiles from the shot's origin, the firing effect at the muzzle */
+    void fire(
+        Proxy&                         p,
+        WeaponFireEvent const&         shot,
+        BlamFiles<halo_version> const& files)
+    {
+        auto&       game  = p.template subsystem<GameEventBus>();
+        auto const& magic = files.container.magic;
 
+        blam::tag_index_view<halo_version> index(files.container);
+        auto tag = index.find(shot.weapon.tag_id);
+        if(tag == index.end() || !(*tag).matches(blam::tag_class_t::weap))
+            return;
+        auto weapon = (*tag).template data<weapon_t>(magic);
+        if(!weapon.has_value())
+            return;
+        auto triggers = weapon.value()[0].triggers.data(magic);
+        if(!triggers.has_value() || shot.trigger >= triggers.value().size())
+            return;
+        trigger_t const& trigger = triggers.value()[shot.trigger];
+
+        std::minstd_rand rng(shot.seed);
+        Vecf3 const      forward = shot.direction;
         if(trigger.projectile.valid())
         {
             i32 const count = std::max<i32>(trigger.projectiles_per_shot, 1);
@@ -145,21 +182,22 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             {
                 f32 const spread =
                     count > 1 ? std::max(error, trigger.distribution_angle * .5f) : error;
-                Vecf3 const dir = cone(forward, spread);
+                Vecf3 const dir = cone(rng, forward, spread);
                 SpawnObjectEvent spawn{
                     .object   = trigger.projectile,
-                    .position = eye + forward * muzzle_distance,
+                    .position = shot.position,
                     .rotation = glm::angleAxis(std::atan2(dir.y, dir.x), Vecf3{0, 0, 1}) *
                                 glm::angleAxis(
                                     -std::asin(std::clamp(dir.z, -1.f, 1.f)),
                                     Vecf3{0, 1, 0}),
+                    .local_only = true,
                 };
                 GameEvent ev{.type = GameEvent::SpawnObject};
                 game.inject(ev, &spawn);
             }
         }
 
-        u64 const muzzle = first_person(p, player, true);
+        u64 const muzzle = first_person(p, shot.shooter, true);
         if(auto effects = trigger.firing_effects.data(magic);
            effects.has_value() && !effects.value().empty())
         {
@@ -167,13 +205,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if((trigger.flags & trigger_t::flags_t::random_firing_effects) !=
                trigger_t::flags_t::none)
                 pick = std::uniform_int_distribution<size_t>(
-                    0, effects.value().size() - 1)(m_rng);
+                    0, effects.value().size() - 1)(rng);
             auto const& effect = effects.value()[pick].firing_effect;
             if(effect.valid())
             {
                 SpawnEffectEvent play{
                     .effect    = effect,
-                    .position  = eye + forward * muzzle_distance,
+                    .position  = shot.position,
                     .direction = forward,
                     .parent    = muzzle,
                 };
@@ -185,7 +223,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         /* The first-person hands and weapon kick together */
         for(auto ent : p.template select<Attachment, AnimationPlayback>())
         {
-            if(ent.template get<Attachment>().parent != player)
+            if(ent.template get<Attachment>().parent != shot.shooter)
                 continue;
             auto const& anim = ent.template get<AnimationPlayback>();
             i32 const   clip = fire_clip(anim, magic);
@@ -301,13 +339,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return std::clamp(v, 0.f, 1.f);
     }
 
-    Vecf3 cone(Vecf3 const& dir, f32 angle)
+    static Vecf3 cone(std::minstd_rand& rng, Vecf3 const& dir, f32 angle)
     {
         if(angle <= 0.f)
             return dir;
         std::uniform_real_distribution<f32> unit(0.f, 1.f);
-        f32 const   z   = glm::mix(std::cos(angle), 1.f, unit(m_rng));
-        f32 const   phi = unit(m_rng) * glm::two_pi<f32>();
+        f32 const   z   = glm::mix(std::cos(angle), 1.f, unit(rng));
+        f32 const   phi = unit(rng) * glm::two_pi<f32>();
         f32 const   r   = std::sqrt(std::max(0.f, 1.f - z * z));
         Vecf3 const up  = std::abs(dir.z) < .99f ? Vecf3{0, 0, 1} : Vecf3{1, 0, 0};
         Vecf3 const x   = glm::normalize(glm::cross(up, dir));
@@ -322,9 +360,19 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     u32                       m_generation{0};
     std::map<u64, state_t>    m_states;
     std::minstd_rand          m_rng{std::random_device{}()};
+
+    std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
+    std::vector<WeaponFireEvent>                               m_shots;
+
+    friend void alloc_weapons(compo::EntityContainer& e);
 };
 
 void alloc_weapons(compo::EntityContainer& e)
 {
-    e.register_subsystem_inplace<WeaponSystem>();
+    auto& weapons = e.register_subsystem_inplace<WeaponSystem>();
+    weapons.m_fire_queue =
+        e.subsystem_cast<GameEventBus>().addQueuedEventFunction<WeaponFireEvent>(
+            0, [&weapons](GameEvent&, WeaponFireEvent* shot) {
+                weapons.m_shots.push_back(*shot);
+            });
 }

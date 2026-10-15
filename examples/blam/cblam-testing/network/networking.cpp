@@ -1253,6 +1253,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 else
                     replicate_spawn(*spawn);
             });
+        m_fire_queue = m_game_bus.addQueuedEventFunction<WeaponFireEvent>(
+            0, [this](GameEvent&, WeaponFireEvent* shot) {
+                if(shot->origin == MapLoadEvent::Local)
+                    m_local_shots.push_back(*shot);
+            });
         m_game_bus.addEventFunction<ServerCameraControl>(
             0, [this](GameEvent&, ServerCameraControl* cam) {
                 if(!is_server())
@@ -2161,6 +2166,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #endif
         if(m_spawn_queue)
             m_spawn_queue->poll();
+        send_shots(p);
         apply_simulation();
         clock_tick();
         if(is_server())
@@ -2441,6 +2447,76 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         SteamNetworkingSockets_Poll(0);
 #endif
         m_impl->RunCallbacks();
+    }
+
+    /* This peer's shots: a client's to the server, the server's to everyone */
+    void send_shots(Proxy& p)
+    {
+        if(!m_fire_queue)
+            return;
+        m_fire_queue->poll();
+        for(auto const& shot : std::exchange(m_local_shots, {}))
+        {
+            u32 vehicle = 0;
+            if(auto const* net = shot.vehicle ? p.get<NetworkInfo>(shot.vehicle)
+                                              : nullptr)
+                vehicle = net->instance_id;
+            WeaponFire const wire{
+                .position   = Vecf4(shot.position, 1.f),
+                .direction  = Vecf4(shot.direction, 0.f),
+                .weapon     = shot.weapon.tag_id,
+                .player_idx = shot.player_idx,
+                .vehicle    = vehicle,
+                .seed       = shot.seed,
+                .trigger    = shot.trigger,
+            };
+            if(is_server())
+            {
+                if(auto targets = verified_connections(); !targets.empty())
+                    send_all(
+                        Message<WeaponFire>(WeaponFire(wire)),
+                        k_nSteamNetworkingSend_Reliable,
+                        std::move(targets));
+            } else if(m_connection && m_join_confirmed)
+                send_single(m_connection, Message<WeaponFire>(WeaponFire(wire)));
+        }
+    }
+
+    /* Someone else's shot, fired here by `shooter` */
+    bool fire_remote_shot(Proxy& p, u64 shooter, WeaponFire const& wire)
+    {
+        if(!m_map)
+            return false;
+        blam::tag_index_view<halo_version> index(*m_map);
+        auto weapon = index.find(wire.weapon);
+        Vecf3 const direction = Vecf3(wire.direction);
+        if(weapon == index.end() || !(*weapon).valid() ||
+           !(*weapon).matches(blam::tag_class_t::weap) ||
+           !std::isfinite(glm::dot(direction, Vecf3(wire.position))) ||
+           glm::length(direction) < .5f)
+            return false;
+        u64 vehicle = 0;
+        if(wire.vehicle != 0)
+            for(auto object : p.select<NetworkInfo>())
+                if(object.get<NetworkInfo>().instance_id == wire.vehicle)
+                {
+                    vehicle = object.id();
+                    break;
+                }
+        GameEvent       ev{.type = GameEvent::WeaponFire};
+        WeaponFireEvent shot{
+            .origin     = MapLoadEvent::Remote,
+            .weapon     = (*weapon).as_ref(),
+            .shooter    = shooter,
+            .vehicle    = vehicle,
+            .player_idx = wire.player_idx,
+            .seed       = wire.seed,
+            .trigger    = wire.trigger,
+            .position   = Vecf3(wire.position),
+            .direction  = glm::normalize(direction),
+        };
+        m_game_bus.inject(ev, &shot);
+        return true;
     }
 
     /* Moving objects are the server's: it sends what they do, at most
@@ -2788,6 +2864,31 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             p.subsystem<PhysicsBus>().process(ev, &input);
             break;
         }
+        case MessageBase::WeaponFire: {
+            /* Only ever the sender's own player, from about where it is */
+            if(!player_info.biped.exists() || !player_info.verified)
+                break;
+            WeaponFire wire = payload.value<WeaponFire>();
+            wire.player_idx = player_info.idx;
+            auto const& eye =
+                player_info.biped.get<PlayerCamera>().camera.position;
+            bool const fired =
+                glm::distance(Vecf3(wire.position), eye) <= max_shot_offset &&
+                fire_remote_shot(p, player_info.biped.id(), wire);
+            journal(
+                fired ? "net_weapon_fire" : "net_weapon_fire_reject",
+                {{"player_idx", wire.player_idx}, {"weapon", wire.weapon}});
+            if(!fired)
+                break;
+            auto targets = verified_connections();
+            targets.erase(connection);
+            if(!targets.empty())
+                send_all(
+                    Message<WeaponFire>(std::move(wire)),
+                    k_nSteamNetworkingSend_Reliable,
+                    std::move(targets));
+            break;
+        }
         case MessageBase::SeatSync: {
             /* Only ever the sender's own player, whatever index it names */
             if(!player_info.biped.exists())
@@ -2962,6 +3063,25 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         break;
                     }
                 }
+            }
+            break;
+        }
+        case MessageBase::WeaponFire: {
+            auto const& wire     = payload.value<WeaponFire>();
+            auto const  self_idx = p.subsystem<NetworkState>().remote_player_idx;
+            if(wire.player_idx == self_idx)
+                break;
+            for(auto entity : p.select<PlayerInfo>())
+            {
+                auto const& info = entity.get<PlayerInfo>();
+                if(!info.is_remote() || info.player_idx != wire.player_idx)
+                    continue;
+                if(fire_remote_shot(p, entity.id(), wire))
+                    journal(
+                        "net_weapon_fire",
+                        {{"player_idx", wire.player_idx},
+                         {"weapon", wire.weapon}});
+                break;
             }
             break;
         }
@@ -3394,6 +3514,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     /* Dynamic objects; the server replays these to each peer as it verifies */
     std::shared_ptr<GameEventBus::queue_type<SpawnObjectEvent>> m_spawn_queue;
+    /* Shots fired here, and how far from its eye a client may fire */
+    std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
+    std::vector<WeaponFireEvent>                               m_local_shots;
+    static constexpr f32                                       max_shot_offset = 4.f;
     std::vector<EntitySpawn>                                    m_dynamic_spawns;
     std::atomic<u32> m_next_net_id{0}; /*!< Stamped on whichever thread spawns */
     std::atomic<u32> m_next_request_id{0};

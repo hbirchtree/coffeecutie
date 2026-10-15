@@ -77,6 +77,7 @@ struct GameEvent
         UnitExitVehicle,
         ServerDisconnected,
         SpawnEffect,
+        WeaponFire,
     };
 
     EventType type{None};
@@ -318,6 +319,23 @@ struct SpawnEffectEvent
     Vecf3           direction{1.f, 0.f, 0.f}; /*!< Forward, e.g. a surface normal */
     Vecf3           velocity{};               /*!< Inherited by what it creates */
     libc_types::u64 parent{0};                /*!< Followed while it plays */
+};
+
+/*! A trigger pulled. Raised Local by the shooter's peer, which Networking
+ *  relays; every peer plays the projectiles and the firing effect itself */
+struct WeaponFireEvent
+{
+    static constexpr auto event_type = GameEvent::WeaponFire;
+
+    MapLoadEvent::Origin origin{MapLoadEvent::Local};
+    blam::tagref_t       weapon{};  /*!< weap */
+    libc_types::u64      shooter{0}; /*!< Player entity */
+    libc_types::u64      vehicle{0}; /*!< Whose weapon it is, 0 = held */
+    libc_types::u32      player_idx{0};
+    libc_types::u32      seed{0}; /*!< Spread, the same on every peer */
+    libc_types::u16      trigger{0};
+    Vecf3                position{};           /*!< Where projectiles leave */
+    Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
 };
 
 /*! A unit takes a seat in a vehicle, as the unit_enter_vehicle script
