@@ -45,8 +45,14 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
                                       : std::nullopt;
         m_paused.reset();
     } else if(request && *request && !m_pause_at)
-        /* Clients get a few ticks' notice, so all stop on the same one */
-        m_pause_at = m_tick + (net.clock_authority ? pause_lead : 0);
+        /* Clients get notice enough to reach the slowest of them, so all
+         * stop on the same tick */
+        m_pause_at = m_tick + (net.clock_authority
+                                   ? std::min<u64>(
+                                         pause_lead + net.worst_ping_ms / 2 *
+                                                          rate / 1000,
+                                         rate)
+                                   : 0);
     else if(request && !*request && m_pause_at)
     {
         if(m_paused)

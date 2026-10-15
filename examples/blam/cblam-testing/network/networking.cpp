@@ -2392,6 +2392,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(is_server())
         {
             send_seats(p);
+            measure_pings();
             send_tick_sync(p, t);
             send_grab_states(p);
             send_object_sync(p, t);
@@ -2754,6 +2755,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             };
             m_game_bus.inject(ev, &data);
         }
+    }
+
+    void measure_pings()
+    {
+        u32 worst = 0;
+        for(auto const& [connection, _] : m_connections)
+        {
+            SteamNetConnectionRealTimeStatus_t status{};
+            if(m_impl->GetConnectionRealTimeStatus(connection, &status, 0, nullptr) ==
+               k_EResultOK)
+                worst = std::max(worst, static_cast<u32>(std::max(status.m_nPing, 0)));
+        }
+        m_net_state.worst_ping_ms = worst;
     }
 
     /* The server's ticks to its clients: now and then, at once when it
