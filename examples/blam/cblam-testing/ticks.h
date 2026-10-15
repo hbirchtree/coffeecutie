@@ -28,6 +28,8 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
     static constexpr libc_types::f32 tick_seconds = 1.f / rate;
     /*! Ticks one frame may run; a peer further behind skips ahead */
     static constexpr libc_types::u32 max_catch_up = 6;
+    /*! Notice a server gives its clients of a pause, in ticks */
+    static constexpr libc_types::u64 pause_lead = 6;
 
     TickClock()
     {
@@ -61,9 +63,16 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
         return m_resyncs;
     }
 
+    /*! Stopped, or stopping at pause_at() */
     bool paused() const
     {
-        return m_paused.has_value();
+        return m_pause_at.has_value() && m_tick >= *m_pause_at;
+    }
+
+    /*! The last tick before a pause, once one is asked for */
+    std::optional<libc_types::u64> pause_at() const
+    {
+        return m_pause_at;
     }
 
     /*! When the last tick began, on the server clock when networked */
@@ -80,6 +89,7 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
     /*! Time spent paused, taken out of the time base */
     libc_types::i64                 m_paused_us{0};
     std::optional<libc_types::i64>  m_paused; /*!< Since when */
+    std::optional<libc_types::u64>  m_pause_at;
 
     libc_types::u64 m_tick{0};
     libc_types::f32 m_alpha{0.f};

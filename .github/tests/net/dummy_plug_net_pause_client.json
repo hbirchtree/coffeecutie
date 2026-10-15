@@ -16,6 +16,7 @@
         "screenshot_quality": 60
     },
     "comment": "Client side of the networked pause test, see dummy_plug_net_pause_server.json.",
+    "time_base": "session",
     "frame_delta": 33.3,
     "events": [
         {
@@ -24,9 +25,9 @@
             "physics": true
         },
         {
-            "time": 13500,
+            "time": 11000,
             "type": "dump_state"
         }
     ],
-    "end_time": 22000
+    "end_time": 14000
 }
