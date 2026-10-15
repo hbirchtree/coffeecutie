@@ -386,7 +386,7 @@ struct alignas(8) ObjectSync
         sleeping = 0x1,
     };
 
-    i64     server_time_us{0}; /*!< Server steady clock */
+    u64     tick{0}; /*!< Server tick this is the state after */
     Quatf   rotation;
     Vecf4   position; /*!< w unused, as are the velocities' */
     Vecf4   linear_velocity;

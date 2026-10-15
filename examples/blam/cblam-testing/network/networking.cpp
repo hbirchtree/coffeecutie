@@ -2484,7 +2484,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 client_receive_payload(p, payload);
                 message->Release();
             }
-            follow_objects(p);
+            /* Others are shown where they were a few ticks ago */
+            u64 const tick = tick_now(p);
+            m_combat.viewing(tick > interp_ticks ? tick - interp_ticks : 0);
         }
 #if defined(USE_WEBRTC_TRANSPORT) && defined(COFFEE_WASM)
         SteamNetworkingSockets_Poll(0);
@@ -2787,18 +2789,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_remote_holders.erase(holder);
     }
 
-    /* Moving objects are the server's: it sends what they do, at most
-     * object_sync_rate per second, and everything once to new peers */
-    void send_object_sync(Proxy& p, time_point const& t)
+    /* Moving objects are the server's: it sends what they do each tick,
+     * and everything once to new peers */
+    void send_object_sync(Proxy& p, time_point const&)
     {
-        auto const now = m_net_state.server_now();
-        if(!now || t < m_next_object_sync)
+        /* Once per tick, the state after it */
+        u64 const tick = tick_now(p);
+        if(tick == m_synced_tick)
             return;
-        m_next_object_sync = t + object_sync_interval;
+        m_synced_tick = tick;
 
-        i64 const time_us = std::chrono::duration_cast<std::chrono::microseconds>(
-                                now->time_since_epoch())
-                                .count();
         std::vector<ObjectSync> changed, settled, all;
         for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
         {
@@ -2806,7 +2806,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(physics.mass <= 0.f || net.instance_id == 0)
                 continue;
             ObjectSync const sync{
-                .server_time_us   = time_us,
+                .tick             = tick,
                 .rotation         = model.rotation,
                 .position         = Vecf4(model.position, 0),
                 .linear_velocity  = Vecf4(physics.linear_velocity, 0),
@@ -2942,47 +2942,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 current);
     }
 
-    /* A replica shows moving objects where the server had them
-     * object_interp_delay ago, between the two snapshots around then */
-    void follow_objects(Proxy& p)
-    {
-        auto const now = m_net_state.server_now();
-        if(!m_join_confirmed || !now)
-            return;
-        i64 const at = std::chrono::duration_cast<std::chrono::microseconds>(
-                           (*now - object_interp_delay).time_since_epoch())
-                           .count();
-        for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
-        {
-            auto [model, physics, net] = object.components();
-            if(physics.mass <= 0.f)
-                continue;
-            physics.authority = ObjectPhysics::Follower;
-            auto it           = m_object_history.find(net.instance_id);
-            if(net.instance_id == 0 || it == m_object_history.end() ||
-               it->second.empty())
-                continue;
-            auto const& history = it->second;
-            auto        next    = std::find_if(
-                history.begin(), history.end(), [at](ObjectSync const& s) {
-                    return s.server_time_us > at;
-                });
-            ObjectSync const& to =
-                next == history.end() ? history.back() : *next;
-            ObjectSync const& from =
-                next == history.begin() || next == history.end() ? to
-                                                                 : *(next - 1);
-            f32 const span = static_cast<f32>(to.server_time_us - from.server_time_us);
-            f32 const alpha =
-                span > 0.f ? glm::clamp(
-                                 static_cast<f32>(at - from.server_time_us) / span,
-                                 0.f,
-                                 1.f)
-                           : 1.f;
-            follow(model, physics, from, to, alpha);
-        }
-    }
-
     /* Every correction of a followed object goes through here */
     static void follow(
         Model&            model,
@@ -3057,6 +3016,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     void leave_server(Proxy& p)
     {
         m_object_history.clear();
+        m_player_history.clear();
         for(auto object : p.select<ObjectPhysics>())
             object.get<ObjectPhysics>().authority = ObjectPhysics::Simulated;
         m_left_server    = false;
@@ -3406,8 +3366,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             {
                 auto& history = m_object_history[sync.net_id];
                 /* Unreliable: late arrivals are dropped, not reordered */
-                if(!history.empty() &&
-                   history.back().server_time_us >= sync.server_time_us)
+                if(!history.empty() && history.back().tick >= sync.tick)
                     continue;
                 history.push_back(sync);
                 while(history.size() > object_history_size)
@@ -3433,10 +3392,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
                 if(!info.is_remote() || info.player_idx != sync.target_player)
                     continue;
-                cam.camera.position = Vecf3(sync.position);
-                cam.camera.rotation = sync.rotation;
-                info.mode.physics   = sync.flags & CameraSync::physics;
-                m_combat.viewing(sync.tick);
+                /* Shown a few ticks behind, between the syncs around then */
+                auto& history = m_player_history[sync.target_player];
+                if(history.empty() || history.back().tick < sync.tick)
+                    history.push_back(sync);
+                while(history.size() > object_history_size)
+                    history.pop_front();
                 // TODO: With a fresh viewport, we should compute relevance of
                 // entities Distance, visibility in frustum and projectile type
                 break;
@@ -3811,10 +3772,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr auto spawn_hold = std::chrono::seconds(5);
 
     /* Moving objects */
-    static constexpr auto object_sync_interval = std::chrono::milliseconds(33);
-    static constexpr auto object_interp_delay  = std::chrono::milliseconds(100);
+    /* How many ticks behind the server a replica shows what moves */
+    static constexpr u64    interp_ticks        = 3;
     static constexpr size_t object_history_size = 8;
-    time_point                               m_next_object_sync{};
+    u64                     m_synced_tick{0};
     std::map<u32, bool>                      m_object_asleep;
     /* Last seat sent per player index; the client's own, to the server */
     std::map<u32, SeatSync>                  m_sent_seats;
@@ -3824,6 +3785,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr f32                     rotation_epsilon = 1e-6f;
     std::optional<SeatSync>                  m_sent_own_seat;
     std::map<u32, std::deque<ObjectSync>>    m_object_history;
+    /* Remote players' cameras by player index, newest last */
+    std::map<u32, std::deque<CameraSync>>    m_player_history;
+    friend struct ObjectFollower;
     struct held_player_t
     {
         u32                                                 player_idx{};
@@ -3887,6 +3851,99 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     bool m_relay_only{false};
 };
 
+using libc_types::f64;
+
+using FollowerManifest = compo::SubsystemManifest<
+    type_list_t<
+        Model,
+        ObjectPhysics,
+        PlayerCamera,
+        PlayerInfo,
+        const NetworkInfo>,
+    type_list_t<const TickClock, const Networking>,
+    empty_list_t>;
+
+/*! On a client, puts what the server moves where the server had it a few
+ *  ticks ago, between the snapshots around then. Ahead of input, physics
+ *  and seating, so they all see this frame's pose */
+struct ObjectFollower
+    : compo::RestrictedSubsystem<ObjectFollower, FollowerManifest>
+{
+    using type  = ObjectFollower;
+    using Proxy = compo::proxy_of<FollowerManifest>;
+
+    ObjectFollower()
+    {
+        this->priority = 790;
+    }
+
+    /* The two snapshots around `at`, and how far between them */
+    template<typename T>
+    static std::optional<std::tuple<T const&, T const&, f32>> around(
+        std::deque<T> const& history, f64 at)
+    {
+        if(history.empty())
+            return std::nullopt;
+        auto next = std::find_if(history.begin(), history.end(), [at](T const& s) {
+            return static_cast<f64>(s.tick) > at;
+        });
+        T const& to   = next == history.end() ? history.back() : *next;
+        T const& from = next == history.begin() || next == history.end()
+                            ? to
+                            : *(next - 1);
+        f64 const span = static_cast<f64>(to.tick) - static_cast<f64>(from.tick);
+        f32 const alpha =
+            span > 0. ? static_cast<f32>(std::clamp(
+                            (at - static_cast<f64>(from.tick)) / span, 0., 1.))
+                      : 1.f;
+        return std::tuple<T const&, T const&, f32>{from, to, alpha};
+    }
+
+    void start_restricted(Proxy& p, time_point const&)
+    {
+        auto const& net = p.subsystem<Networking>();
+        if(!net.m_join_confirmed)
+            return;
+        auto const& clock = p.subsystem<TickClock>();
+        f64 const   at    = static_cast<f64>(clock.tick()) + clock.alpha() -
+                       static_cast<f64>(Networking::interp_ticks);
+
+        for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
+        {
+            auto [model, physics, info] = object.components();
+            if(physics.mass <= 0.f)
+                continue;
+            physics.authority = ObjectPhysics::Follower;
+            auto it = net.m_object_history.find(info.instance_id);
+            if(info.instance_id == 0 || it == net.m_object_history.end())
+                continue;
+            if(auto pose = around(it->second, at))
+            {
+                auto const& [from, to, alpha] = *pose;
+                Networking::follow(model, physics, from, to, alpha);
+            }
+        }
+
+        for(auto player : p.select<PlayerInfo, PlayerCamera>())
+        {
+            auto [info, cam] = player.components();
+            if(!info.is_remote())
+                continue;
+            auto it = net.m_player_history.find(info.player_idx);
+            if(it == net.m_player_history.end())
+                continue;
+            if(auto pose = around(it->second, at))
+            {
+                auto const& [from, to, alpha] = *pose;
+                cam.camera.position =
+                    glm::mix(Vecf3(from.position), Vecf3(to.position), alpha);
+                cam.camera.rotation = glm::slerp(from.rotation, to.rotation, alpha);
+                info.mode.physics   = to.flags & CameraSync::physics;
+            }
+        }
+    }
+};
+
 #endif
 
 #include "components.h"
@@ -3932,6 +3989,7 @@ void alloc_networking(
         std::ref(e.subsystem_cast<NetworkState>()),
         gateway_auth_key);
     networking.m_journal = &e.subsystem_cast<Journal>();
+    e.register_subsystem_inplace<ObjectFollower>();
     networking.m_impact_queue =
         e.subsystem_cast<PhysicsBus>().addQueuedEventFunction<Physics::Impact>(
             0, [&networking](Physics::Event&, Physics::Impact* impact) {
