@@ -255,15 +255,20 @@ i32 blam_main()
             {
                 auto type_stack =
                     std::make_shared<std::vector<GameEvent::EventType>>();
-                /* Ticks are too many to be worth recording */
+                /* Per-tick events are too many to be worth recording */
+                auto const per_tick = [](GameEvent::EventType type) {
+                    return type == GameEvent::Tick ||
+                           type == GameEvent::PlayerTickInput;
+                };
                 game_bus.addEventData(
-                    {0, [type_stack](GameEvent& ev, const void*) {
-                         if(ev.type != GameEvent::Tick)
+                    {0, [type_stack, per_tick](GameEvent& ev, const void*) {
+                         if(!per_tick(ev.type))
                              type_stack->push_back(ev.type);
                      }});
                 game_bus.addEventData(
-                    {9999, [&journal, type_stack](GameEvent& ev, const void*) {
-                         if(ev.type == GameEvent::Tick)
+                    {9999,
+                     [&journal, type_stack, per_tick](GameEvent& ev, const void*) {
+                         if(per_tick(ev.type))
                              return;
                          auto original = type_stack->back();
                          type_stack->pop_back();

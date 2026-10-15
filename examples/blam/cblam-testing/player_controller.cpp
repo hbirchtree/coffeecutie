@@ -1,4 +1,5 @@
 #include "player_controller.h"
+#include "ticks.h"
 
 #include <coffee/comp_app/app_events.h>
 #include <coffee/components/proxy.h>
@@ -81,6 +82,8 @@ struct PlayerController
             if(info.permissions.camera)
             {
                 sample(input, cam, controllers, dt);
+                if(!info.is_remote())
+                    m_look[player.id()] += input.look_delta;
                 route(
                     p,
                     player.id(),
@@ -105,6 +108,47 @@ struct PlayerController
                 place_first_person(*cam, attachment, model);
         }
         menu_pads(p, controllers, ui, render);
+        tick_inputs(p);
+    }
+
+    /* Each tick's input from what the frame sampled: held state repeats,
+     * look is shared out over the ticks it spans */
+    void tick_inputs(Proxy& p)
+    {
+        auto const ticks = m_ticks->take();
+        if(ticks.empty())
+            return;
+        auto& game = p.subsystem<GameEventBus>();
+        for(auto player : p.select<PlayerCamera, PlayerInput, PlayerInfo>())
+        {
+            auto [cam, input, info] = player.components();
+            if(info.is_remote() || !cam.is_active())
+                continue;
+            using buttons_t      = PlayerTickInputEvent::buttons_t;
+            auto const&    intent = input.intent;
+            u32 const      buttons =
+                (intent.fire ? buttons_t::fire : 0u) |
+                (intent.grab ? buttons_t::grab : 0u) |
+                (intent.use ? buttons_t::use : 0u) |
+                (intent.jump ? buttons_t::jump : 0u);
+            Vecf2 const look = std::exchange(m_look[player.id()], Vecf2{}) /
+                               static_cast<f32>(ticks.size());
+            for(auto const& tick : ticks)
+            {
+                GameEvent            ev{.type = GameEvent::PlayerTickInput};
+                PlayerTickInputEvent data{
+                    .player     = player.id(),
+                    .player_idx = info.player_idx,
+                    .tick       = tick.tick,
+                    .move       = intent.move,
+                    .look       = look,
+                    .view       = cam.camera.rotation,
+                    .buttons    = buttons,
+                    .resync     = tick.resync,
+                };
+                game.inject(ev, &data);
+            }
+        }
     }
 
     duration frame_delta(time_point const& t)
@@ -559,6 +603,8 @@ struct PlayerController
     }
 
     time_point                m_last_time{};
+    std::unique_ptr<TickQueue> m_ticks;
+    std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */
     std::map<u64, jump_t>     m_jumps;
     std::array<menu_pad_t, 4> m_pads{};
 };
@@ -567,7 +613,8 @@ void alloc_player_controller(compo::EntityContainer& e)
 {
     using namespace Coffee::Input;
 
-    e.register_subsystem_inplace<PlayerController>();
+    auto& controller   = e.register_subsystem_inplace<PlayerController>();
+    controller.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
 
     enum class input_mode_t
     {

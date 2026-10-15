@@ -27,7 +27,7 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
     static constexpr libc_types::i64 tick_us = 1'000'000 / rate;
     static constexpr libc_types::f32 tick_seconds = 1.f / rate;
     /*! Ticks one frame may run; a peer further behind skips ahead */
-    static constexpr libc_types::u32 max_catch_up = 4;
+    static constexpr libc_types::u32 max_catch_up = 6;
 
     TickClock()
     {

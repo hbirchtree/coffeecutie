@@ -25,6 +25,7 @@ using libc_types::i32;
 using libc_types::u32;
 using libc_types::u64;
 using typing::vector_types::Quatf;
+using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf3;
 using typing::vector_types::Vecf4;
 
@@ -81,6 +82,7 @@ struct GameEvent
         ObjectHit,
         Tick,
         SimulationPause,
+        PlayerTickInput,
     };
 
     EventType type{None};
@@ -336,6 +338,32 @@ struct TickEvent
     libc_types::f32 seconds{0.f};
     /*! Time jumped to this tick: step once, don't make up the gap */
     bool resync{false};
+};
+
+/*! One tick of a player's input, as a server would replay it. Raised
+ *  Local for every tick by the seat's controller, Remote on the server */
+struct PlayerTickInputEvent
+{
+    static constexpr auto event_type = GameEvent::PlayerTickInput;
+
+    enum buttons_t : libc_types::u32
+    {
+        none = 0x0,
+        fire = 0x1,
+        grab = 0x2,
+        use  = 0x4,
+        jump = 0x8,
+    };
+
+    MapLoadEvent::Origin origin{MapLoadEvent::Local};
+    libc_types::u64      player{0};
+    libc_types::u32      player_idx{0};
+    libc_types::u64      tick{0};
+    Vecf2                move{};    /*!< Forward and right, -1..1 */
+    Vecf2                look{};    /*!< Device look, summed over the tick */
+    Quatf                view{1.f, 0.f, 0.f, 0.f}; /*!< Camera after it */
+    libc_types::u32      buttons{none};
+    bool resync{false}; /*!< The clock skipped ahead to this tick */
 };
 
 /*! Stops or restarts the simulation clock; drawing carries on */
