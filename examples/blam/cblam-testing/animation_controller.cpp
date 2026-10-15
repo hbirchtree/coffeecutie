@@ -7,6 +7,7 @@
 #include "physics.h"
 #include "selected_version.h"
 #include "sounds.h"
+#include "ticks.h"
 
 #include <blam/volta/blam_effects.h>
 #include <blam/volta/blam_shaders.h>
@@ -33,7 +34,8 @@ using AnimationControllerManifest = compo::SubsystemManifest<
         PhysicsBus,
         ModelCache<halo_version>,
         const BlamFiles<halo_version>,
-        const LoadingStatus>,
+        const LoadingStatus,
+        const TickClock>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 struct AnimationController
@@ -47,16 +49,15 @@ struct AnimationController
         this->priority = 900;
     }
 
-    void start_restricted(Proxy& p, time_point const& t)
+    void start_restricted(Proxy& p, time_point const&)
     {
-        f32 const dt =
-            m_last_frame == time_point{}
-                ? 0.f
-                : std::clamp(
-                      std::chrono::duration<f32>(t - m_last_frame).count(),
-                      0.f,
-                      .25f);
-        m_last_frame = t;
+        /* Playback steps with the simulation, and is drawn between ticks */
+        auto const ticks = m_ticks->take();
+        f32        dt    = 0.f;
+        for(auto const& tick : ticks)
+            dt += tick.seconds;
+        f32 const lookahead =
+            p.template subsystem<TickClock>().alpha() * TickClock::tick_seconds;
 
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         if(files.load_generation != m_generation)
@@ -79,8 +80,11 @@ struct AnimationController
 
         for(auto const& play : std::exchange(m_requests, {}))
             apply(p, play);
-        animate_bipeds(p, dt);
-        animate_vehicles(p, dt);
+        if(dt > 0.f)
+        {
+            animate_bipeds(p, dt);
+            animate_vehicles(p, dt);
+        }
         animate_first_person(p, files);
         end_actions(p);
 
@@ -88,8 +92,12 @@ struct AnimationController
         for(auto ent : p.template select<AnimationPlayback>())
         {
             auto& anim = ent.template get<AnimationPlayback>();
-            if(dt > 0.f)
-                cache.advance_playback(anim, dt);
+            for(auto const& tick : ticks)
+            {
+                cache.advance_playback(anim, tick.seconds);
+                hear(p, ent.id(), anim);
+            }
+            anim.lookahead = lookahead;
             /* Biped hulls follow the pose */
             auto const* info    = p.template get<PlayerInfo>(ent.id());
             auto const* physics = p.template get<ObjectPhysics>(ent.id());
@@ -107,7 +115,6 @@ struct AnimationController
                     Span<Matf4>(anim.pose.data(), anim.pose.size()));
             } else
                 anim.pose.clear();
-            hear(p, ent.id(), anim);
         }
 
         for(auto const& hit : std::exchange(m_steps, {}))
@@ -993,7 +1000,7 @@ struct AnimationController
         u32                       animation{0};
     };
 
-    time_point                                   m_last_frame{};
+    std::unique_ptr<TickQueue>                   m_ticks;
     u32                                          m_generation{0};
     std::map<
         std::tuple<blam::antr::header const*, std::string, std::string>,
@@ -1014,7 +1021,8 @@ struct AnimationController
 
 void alloc_animation_controller(compo::EntityContainer& e)
 {
-    auto& controller = e.register_subsystem_inplace<AnimationController>();
+    auto& controller   = e.register_subsystem_inplace<AnimationController>();
+    controller.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
     e.subsystem_cast<PhysicsBus>().addEventFunction<Physics::GroundHit>(
         0, [&controller](Physics::Event&, Physics::GroundHit* hit) {
             controller.m_steps.push_back(*hit);

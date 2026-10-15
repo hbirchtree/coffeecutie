@@ -7,6 +7,7 @@
 #include "physics.h"
 #include "selected_version.h"
 #include "sounds.h"
+#include "ticks.h"
 
 #include <blam/volta/blam_particles.h>
 #include <blam/volta/blam_unit.h>
@@ -35,7 +36,8 @@ using EffectManifest = compo::SubsystemManifest<
         GameEventBus,
         const LoadingStatus,
         const BlamFiles<halo_version>,
-        const BSPCache<halo_version>>,
+        const BSPCache<halo_version>,
+        const TickClock>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 namespace {
@@ -220,16 +222,14 @@ struct EffectSystem
         this->priority = 904;
     }
 
-    void start_restricted(Proxy& p, time_point const& t)
+    void start_restricted(Proxy& p, time_point const&)
     {
-        f32 const dt =
-            m_last_frame == time_point{}
-                ? 0.f
-                : std::clamp(
-                      std::chrono::duration<f32>(t - m_last_frame).count(),
-                      0.f,
-                      .1f);
-        m_last_frame = t;
+        /* Effects step with the simulation, and move on between ticks */
+        f32 dt = 0.f;
+        for(auto const& tick : m_ticks->take())
+            dt += tick.seconds;
+        m_lookahead =
+            p.template subsystem<TickClock>().alpha() * TickClock::tick_seconds;
 
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         if(files.load_generation != m_generation)
@@ -1511,9 +1511,13 @@ struct EffectSystem
                 alpha *= (s.life - s.age) / s.fade_out;
 
             EffectScene::sprite_t look = s.look;
+            look.position += s.velocity * m_lookahead;
+            look.rotation += s.spin * m_lookahead;
             look.color = s.tint * Vecf4(1.f, 1.f, 1.f, alpha);
-            look.frame = static_cast<i16>(s.frame);
-            look.axis  = s.along_velocity ? s.velocity * dt : Vecf3{};
+            look.frame = static_cast<i16>(s.frame + s.frame_rate * m_lookahead);
+            look.axis  = s.along_velocity
+                             ? s.velocity * TickClock::tick_seconds
+                             : Vecf3{};
             scene.sprites.push_back(look);
             ++i;
         }
@@ -2081,10 +2085,10 @@ struct EffectSystem
                 bool const along =
                     t.render_mode == blam::scn::particle_orientation_t::parallel_to_direction;
                 scene.sprites.push_back({
-                    .position = w.position,
+                    .position = w.position + w.velocity * m_lookahead,
                     .radius   = w.radius,
                     .axis     = along ? w.velocity * weather_streak : Vecf3{},
-                    .rotation = w.rotation,
+                    .rotation = w.rotation + w.spin * m_lookahead,
                     .color    = w.color * Vecf4(1.f, 1.f, 1.f, alpha),
                     .bitmap   = &static_cast<blam::tagref_t const&>(t.sprite_bitmap),
                     .sequence = 0,
@@ -2207,7 +2211,6 @@ struct EffectSystem
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
     static constexpr f32    pctl_scale_to_radius = 64.f; /* scale is per bitmap pixel */
 
-    time_point m_last_frame{};
     u32        m_generation{0};
 
     blam::map_ptr const*               m_magic{nullptr};
@@ -2244,12 +2247,15 @@ struct EffectSystem
         m_markers;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnEffectEvent>> m_spawn_queue;
+    std::unique_ptr<TickQueue>                                  m_ticks;
+    f32 m_lookahead{0.f}; /*!< Seconds past the last tick, for drawing */
 };
 
 void alloc_effects(compo::EntityContainer& e)
 {
     e.register_subsystem_inplace<EffectScene>();
-    auto& effects = e.register_subsystem_inplace<EffectSystem>();
+    auto& effects   = e.register_subsystem_inplace<EffectSystem>();
+    effects.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
     effects.m_spawn_queue =
         e.subsystem_cast<GameEventBus>().addQueuedEventFunction<SpawnEffectEvent>(
             0, [&effects](GameEvent&, SpawnEffectEvent* spawn) {

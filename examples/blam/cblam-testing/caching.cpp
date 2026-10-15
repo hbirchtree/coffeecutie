@@ -1128,7 +1128,10 @@ bool ModelCache<V>::sample_grid(
 
 template<typename V>
 void ModelCache<V>::evaluate_pose(
-    generation_idx_t model_id, AnimationPlayback const& anim, Span<Matf4> dest)
+    generation_idx_t         model_id,
+    AnimationPlayback const& anim,
+    Span<Matf4>              dest,
+    f32                      lookahead)
 {
     if(model_id.gen < this->generation)
         return;
@@ -1195,7 +1198,21 @@ void ModelCache<V>::evaluate_pose(
                 continue;
         } else
         {
-            f32 const position = layer.time * rate;
+            f32 time = layer.time;
+            if(lookahead > 0.f && !layer.paused && !layer.finished)
+            {
+                f32 const length = static_cast<f32>(count) / rate;
+                time += lookahead * layer.rate;
+                if(time >= length)
+                {
+                    f32 const start =
+                        static_cast<f32>(loop_start_frame(*clip)) / rate;
+                    time = layer.loop && length > start
+                               ? start + std::fmod(time - start, length - start)
+                               : length - 1.f / rate;
+                }
+            }
+            f32 const position = time * rate;
             u32       f0       = static_cast<u32>(position);
             if(f0 >= count)
                 f0 = count - 1;
@@ -1279,7 +1296,7 @@ void ModelCache<V>::evaluate_pose(
 }
 
 template void ModelCache<halo_version>::evaluate_pose(
-    generation_idx_t, AnimationPlayback const&, Span<Matf4>);
+    generation_idx_t, AnimationPlayback const&, Span<Matf4>, f32);
 
 template<typename V>
 ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)

@@ -93,6 +93,9 @@ struct AnimationPlayback
     std::array<cue_t, 4> cues{};
     libc_types::u8       cue_count{0};
 
+    /* Seconds past the last tick to draw it at, so it moves between ticks */
+    libc_types::f32 lookahead{0.f};
+
     /* Where this instance's bones landed in its bucket's window, negative if
      * unposed. Scratch owned by DrawListBuilder. */
     libc_types::i32 bone_base{-1};
