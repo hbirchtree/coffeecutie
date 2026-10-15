@@ -74,6 +74,10 @@ struct MessageBase
         /* Combat */
         WeaponFire,
         ObjectHit,
+
+        /* Forge */
+        GrabInput,
+        GrabState,
     } type{None};
 
     u32 request{};
@@ -294,6 +298,27 @@ struct alignas(8) ObjectHit
     u32   padding{0};
 };
 
+/*! A client's forge grab, carried out on the server: every frame while
+ *  held, and once more as it lets go */
+struct alignas(8) GrabInput
+{
+    static constexpr auto message_type = MessageBase::GrabInput;
+
+    Vecf4 origin;
+    Quatf to_world; /*!< Camera to world; the view is its -Z */
+    u32   held{0};
+    u32   padding{0};
+};
+
+/*! What the server has a client carrying, as it changes */
+struct alignas(8) GrabState
+{
+    static constexpr auto message_type = MessageBase::GrabState;
+
+    u32 object{0}; /*!< Net id, 0 = nothing */
+    u32 padding{0};
+};
+
 /*! A moving object at a server time. Sent while it is awake, once more as
  *  it falls asleep, and all of them to a peer once it is verified. */
 struct alignas(8) ObjectSync
@@ -436,6 +461,8 @@ static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(DriveInput) == 32);
 static_assert(sizeof(WeaponFire) == 64);
 static_assert(sizeof(ObjectHit) == 72);
+static_assert(sizeof(GrabInput) == 40);
+static_assert(sizeof(GrabState) == 8);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
