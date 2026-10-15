@@ -82,6 +82,9 @@ struct MessageBase
         /* Simulation clock */
         TickSync,
         TickInput,
+
+        /* Physics */
+        ObjectImpact,
     } type{None};
 
     u32 request{};
@@ -358,6 +361,19 @@ struct alignas(8) TickInput
 
 C_FLAGS(TickInput::flags_t, u32)
 
+/*! An object striking something hard enough to hear, on the server; a
+ *  client's copies only follow, so they never collide themselves */
+struct alignas(8) ObjectImpact
+{
+    static constexpr auto message_type = MessageBase::ObjectImpact;
+
+    Vecf4 point;
+    u32   object{0}; /*!< Net id */
+    u32   other{0};  /*!< Net id, 0 = the world or an object not replicated */
+    u32   shader{0}; /*!< The world surface's shader tag id, 0 = none */
+    f32   speed{0.f};
+};
+
 /*! A moving object at a server time. Sent while it is awake, once more as
  *  it falls asleep, and all of them to a peer once it is verified. */
 struct alignas(8) ObjectSync
@@ -504,6 +520,7 @@ static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);
 static_assert(sizeof(TickSync) == 40);
 static_assert(sizeof(TickInput) == 48);
+static_assert(sizeof(ObjectImpact) == 32);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 

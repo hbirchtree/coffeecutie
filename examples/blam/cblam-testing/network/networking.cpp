@@ -1339,6 +1339,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             [this](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) {
                 m_map         = finished->container;
                 m_combat.set_map(m_map);
+                m_impact_shaders.clear();
                 m_fingerprint = fingerprint_of(*m_map);
 #if defined(USE_WEBRTC_TRANSPORT)
                 publish_server_metadata();
@@ -2387,6 +2388,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         if(is_server())
         {
+            send_impacts(p);
             send_seats(p);
             measure_pings();
             send_tick_sync(p, t);
@@ -2600,6 +2602,77 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 worst = std::max(worst, static_cast<u32>(std::max(status.m_nPing, 0)));
         }
         m_net_state.worst_ping_ms = worst;
+    }
+
+    /* Impacts the server heard, for clients to hear too */
+    void send_impacts(Proxy& p)
+    {
+        if(!m_impact_queue)
+            return;
+        m_impact_queue->poll();
+        std::vector<ObjectImpact> impacts;
+        for(auto const& impact : std::exchange(m_impacts, {}))
+        {
+            auto const* net   = p.get<NetworkInfo>(impact.entity_id);
+            auto const* other = impact.other ? p.get<NetworkInfo>(impact.other)
+                                             : nullptr;
+            if(!net || net->instance_id == 0)
+                continue;
+            impacts.push_back({
+                .point  = Vecf4(impact.point, 1.f),
+                .object = net->instance_id,
+                .other  = other ? other->instance_id : 0,
+                .shader = impact.shader ? impact.shader->tag_id : 0,
+                .speed  = impact.speed,
+            });
+        }
+        if(!impacts.empty())
+            journal("net_impacts", {{"count", impacts.size()}});
+        if(auto targets = verified_connections(); !targets.empty() && !impacts.empty())
+            send_all<ObjectImpact>(
+                MessageBase{MessageBase::ObjectImpact},
+                gsl::span<ObjectImpact>(impacts),
+                k_nSteamNetworkingSend_UnreliableNoNagle,
+                std::move(targets),
+                FRAME_UPDATE_LANE);
+    }
+
+    /* An impact the server heard, on our copies of what it names */
+    void receive_impacts(Proxy& p, gsl::span<const ObjectImpact> impacts)
+    {
+        if(!m_map)
+            return;
+        auto entity_of = [&p](u32 net_id) -> u64 {
+            if(net_id == 0)
+                return 0;
+            for(auto object : p.select<NetworkInfo>())
+                if(object.get<NetworkInfo>().instance_id == net_id)
+                    return object.id();
+            return 0;
+        };
+        blam::tag_index_view<halo_version> index(*m_map);
+        journal("net_impacts", {{"count", impacts.size()}});
+        for(auto const& wire : impacts)
+        {
+            u64 const object = entity_of(wire.object);
+            if(object == 0)
+                continue;
+            /* Sound lookups take the shader by reference, so keep one */
+            blam::tagref_t const* shader = nullptr;
+            if(auto tag = wire.shader ? index.find(wire.shader) : index.end();
+               tag != index.end() && (*tag).valid())
+                shader = &m_impact_shaders.try_emplace(wire.shader, (*tag).as_ref())
+                              .first->second;
+            Physics::Event  ev{Physics::Event::Impact};
+            Physics::Impact impact{
+                .entity_id = object,
+                .other     = entity_of(wire.other),
+                .point     = Vecf3(wire.point),
+                .speed     = wire.speed,
+                .shader    = shader,
+            };
+            p.subsystem<PhysicsBus>().process(ev, &impact);
+        }
     }
 
     /* The server's ticks to its clients: now and then, at once when it
@@ -3295,6 +3368,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_combat.client_receive(p, payload.value<ObjectHit>());
             break;
         }
+        case MessageBase::ObjectImpact: {
+            receive_impacts(p, payload.values<ObjectImpact>());
+            break;
+        }
         case MessageBase::TickSync: {
             auto const& sync      = payload.value<TickSync>();
             m_net_state.tick_base = NetworkState::TickBase{
@@ -3771,6 +3848,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>> m_input_queue;
     std::vector<PlayerTickInputEvent> m_local_inputs;
     std::deque<TickInput>             m_sent_inputs;
+    /* Physics impacts heard on the server; shaders named by clients' */
+    std::shared_ptr<PhysicsBus::queue_type<Physics::Impact>> m_impact_queue;
+    std::vector<Physics::Impact>                             m_impacts;
+    std::map<u32, blam::tagref_t>                            m_impact_shaders;
     /* Tick clock sync, to clients */
     static constexpr auto tick_sync_interval = std::chrono::seconds(1);
     time_point            m_next_tick_sync{};
@@ -3851,5 +3932,11 @@ void alloc_networking(
         std::ref(e.subsystem_cast<NetworkState>()),
         gateway_auth_key);
     networking.m_journal = &e.subsystem_cast<Journal>();
+    networking.m_impact_queue =
+        e.subsystem_cast<PhysicsBus>().addQueuedEventFunction<Physics::Impact>(
+            0, [&networking](Physics::Event&, Physics::Impact* impact) {
+                if(networking.is_server())
+                    networking.m_impacts.push_back(*impact);
+            });
 #endif
 }
