@@ -3,6 +3,7 @@
 #include "components.h"
 #include "peripherals/semantic/enum/data_types.h"
 
+#include <chrono>
 #include <memory>
 #include <optional>
 
@@ -231,6 +232,8 @@ struct Raycast
     Vecf3                 from{};
     Vecf3                 to{};
     u64                   ignore{0}; /*!< Entity the ray passes through */
+    /*! Trace bipeds where they were at this (steady clock) time */
+    std::optional<std::chrono::steady_clock::time_point> rewind{};
 
     bool                  hit{false};
     f32                   fraction{1.f};
@@ -241,6 +244,9 @@ struct Raycast
     blam::tagref_t const* shader{nullptr};
     /*! A structure surface that collides but is never drawn, e.g. a ceiling */
     bool invisible{false};
+    /*! The collision node of a hull body, and whether it is a head */
+    i16  part{-1};
+    bool head{false};
 };
 
 struct Grabbed

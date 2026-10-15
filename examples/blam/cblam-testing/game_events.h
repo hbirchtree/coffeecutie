@@ -78,6 +78,7 @@ struct GameEvent
         ServerDisconnected,
         SpawnEffect,
         WeaponFire,
+        ObjectHit,
     };
 
     EventType type{None};
@@ -296,6 +297,7 @@ struct SpawnObjectEvent
 
     /* Created by an effect, which every peer plays itself: never replicated */
     bool            local_only{false};
+    libc_types::u64 owner{0}; /*!< Projectiles: who fired it */
     Vecf3           velocity{};         /*!< wu/s, bodies with mass */
     Vecf3           angular_velocity{}; /*!< rad/s */
     libc_types::f32 lifetime{0.f};      /*!< seconds, 0 = until despawned */
@@ -336,6 +338,32 @@ struct WeaponFireEvent
     libc_types::u16      trigger{0};
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
+    /*! When the shooter saw what it aimed at; the authority traces bipeds
+     *  back there. Steady clock, server time on the server */
+    std::optional<std::chrono::steady_clock::time_point> view_time{};
+};
+
+/*! A shot struck an object or a biped, as the authority (the server, or a
+ *  peer on its own) decides. Every peer gets each hit once, replicas as
+ *  Remote: what shields, health and damage go by */
+struct ObjectHitEvent
+{
+    static constexpr auto event_type = GameEvent::ObjectHit;
+    static constexpr libc_types::u32 no_player = 0xFFFFFFFF;
+
+    MapLoadEvent::Origin origin{MapLoadEvent::Local};
+    blam::tagref_t       projectile{}; /*!< proj */
+    blam::tagref_t       damage{};     /*!< jpt!, its impact damage */
+    libc_types::u64      target{0};    /*!< Entity struck */
+    libc_types::u64      shooter{0};   /*!< Player entity, 0 if unknown */
+    libc_types::u32      target_player{no_player};
+    libc_types::u32      shooter_player{no_player};
+    Vecf3                point{};
+    Vecf3                normal{};
+    Vecf3                direction{}; /*!< Of travel */
+    libc_types::i16      part{-1};    /*!< Collision node, -1 if unknown */
+    bool                 head{false};
+    bool                 hitscan{false}; /*!< Resolved as the trigger was pulled */
 };
 
 /*! A unit takes a seat in a vehicle, as the unit_enter_vehicle script

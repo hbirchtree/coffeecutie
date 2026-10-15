@@ -727,7 +727,23 @@ struct Projectile
     libc_types::f32              age{0.f};
     libc_types::f32              timer{-1.f}; /* seconds to detonation, <0 = not started */
     libc_types::u64              owner{0};    /* passes through its body */
+    libc_types::u64              shooter{0};  /* credited with its hits */
     libc_types::u32              bounces{0};
+
+    /*! Bullets fast enough to resolve as the trigger is pulled, along a
+     *  ray of `reach` */
+    static constexpr libc_types::f32 hitscan_speed = 8.f;   /* wu per tick */
+    static constexpr libc_types::f32 hitscan_reach = 300.f; /* without a range */
+
+    static bool hitscan(blam::scn::projectile const& tag)
+    {
+        return tag.initial_velocity >= hitscan_speed;
+    }
+
+    static libc_types::f32 reach(blam::scn::projectile const& tag)
+    {
+        return tag.maximum_range > 0.f ? tag.maximum_range : hitscan_reach;
+    }
 };
 
 /*! Collision for a world object: static ones use the exact coll surfaces,

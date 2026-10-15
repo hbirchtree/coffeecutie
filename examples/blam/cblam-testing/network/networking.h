@@ -41,6 +41,7 @@ struct NetworkState : compo::SubsystemBase
     using server_time_point = std::chrono::steady_clock::time_point;
 
     bool clock_authority{false}; /*!< This process is the server */
+    bool replica{false}; /*!< Joined to a server, which decides what is hit */
 
     /*! GNS fake network conditions, applied when changed. They act on this
      *  process's own packets, so one side alone is enough. */

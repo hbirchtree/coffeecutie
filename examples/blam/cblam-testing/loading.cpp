@@ -1782,6 +1782,7 @@ struct ResourceLoader
             constexpr f32 throw_speed = 6.f; /* wu/s */
             auto&         flight      = ent.template get<Projectile>();
             flight.tag                = proj;
+            flight.owner = flight.shooter = spawn.owner;
             flight.velocity =
                 spawn.rotation * Vecf3{1.f, 0.f, 0.f} *
                 (proj->initial_velocity > 0.f ? proj->initial_velocity * 30.f

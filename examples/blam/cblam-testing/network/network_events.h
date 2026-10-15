@@ -73,6 +73,7 @@ struct MessageBase
 
         /* Combat */
         WeaponFire,
+        ObjectHit,
     } type{None};
 
     u32 request{};
@@ -221,6 +222,7 @@ struct alignas(8) CameraSync
     u32     target_player{0xFFFF};
     f32     fade{1.f};
     flags_t flags{none};
+    i64     server_time_us{0}; /*!< When the server had it there, 0 from clients */
 };
 
 /*! A player's vehicle seat; sent on change and to newly verified peers */
@@ -262,6 +264,7 @@ struct alignas(8) WeaponFire
 {
     static constexpr auto message_type = MessageBase::WeaponFire;
 
+    i64   view_time_us{0}; /*!< Server time the shooter saw others at */
     Vecf4 position;
     Vecf4 direction;
     u32   weapon{0}; /*!< weap tag id */
@@ -271,6 +274,24 @@ struct alignas(8) WeaponFire
     u16   trigger{0};
     u16   padding{0};
     u32   padding2{0};
+};
+
+/*! A hit the server decided (ObjectHitEvent), to every peer */
+struct alignas(8) ObjectHit
+{
+    static constexpr auto message_type = MessageBase::ObjectHit;
+
+    Vecf4 point;
+    Vecf4 normal;
+    Vecf4 direction;
+    u32   projectile{0}; /*!< proj tag id */
+    u32   target{0};     /*!< Net id, when the target is not a player */
+    u32   target_player{0};
+    u32   shooter_player{0};
+    i16   part{-1};
+    libc_types::u8 head{0};
+    libc_types::u8 hitscan{0};
+    u32   padding{0};
 };
 
 /*! A moving object at a server time. Sent while it is awake, once more as
@@ -409,11 +430,12 @@ static_assert(sizeof(EntitySpawn) == 56);
 static_assert(sizeof(SpawnRequest) == 48);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 48);
-static_assert(sizeof(Message<CameraSync>) == 64);
+static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(DriveInput) == 32);
-static_assert(sizeof(WeaponFire) == 56);
+static_assert(sizeof(WeaponFire) == 64);
+static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 

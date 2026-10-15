@@ -723,6 +723,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .rotation      = cam.camera.rotation,
                     .target_player = info.player_idx,
                     .flags         = camera_flags_of(info),
+                    .server_time_us = server_time_us(),
                 }));
         }
     }
@@ -1257,6 +1258,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             0, [this](GameEvent&, WeaponFireEvent* shot) {
                 if(shot->origin == MapLoadEvent::Local)
                     m_local_shots.push_back(*shot);
+            });
+        m_hit_queue = m_game_bus.addQueuedEventFunction<ObjectHitEvent>(
+            0, [this](GameEvent&, ObjectHitEvent* hit) {
+                if(hit->origin == MapLoadEvent::Local)
+                    m_local_hits.push_back(*hit);
             });
         m_game_bus.addEventFunction<ServerCameraControl>(
             0, [this](GameEvent&, ServerCameraControl* cam) {
@@ -2166,7 +2172,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #endif
         if(m_spawn_queue)
             m_spawn_queue->poll();
+        m_net_state.replica = !is_server() && m_connection;
         send_shots(p);
+        send_hits(p);
         apply_simulation();
         clock_tick();
         if(is_server())
@@ -2331,6 +2339,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             .rotation      = cam.camera.rotation,
                             .target_player = info.player_idx,
                             .flags         = camera_flags_of(info),
+                            .server_time_us = server_time_us(),
                         }));
                     net.changes.viewport = net.changes.transform = false;
                     net.sent_physics     = info.mode.physics;
@@ -2449,6 +2458,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_impl->RunCallbacks();
     }
 
+    i64 server_time_us() const
+    {
+        auto const now = m_net_state.server_now();
+        return now ? std::chrono::duration_cast<std::chrono::microseconds>(
+                         now->time_since_epoch())
+                         .count()
+                   : 0;
+    }
+
     /* This peer's shots: a client's to the server, the server's to everyone */
     void send_shots(Proxy& p)
     {
@@ -2461,7 +2479,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(auto const* net = shot.vehicle ? p.get<NetworkInfo>(shot.vehicle)
                                               : nullptr)
                 vehicle = net->instance_id;
+            /* Others are shown where the latest sync put them */
             WeaponFire const wire{
+                .view_time_us = is_server() ? 0 : m_view_time_us,
                 .position   = Vecf4(shot.position, 1.f),
                 .direction  = Vecf4(shot.direction, 0.f),
                 .weapon     = shot.weapon.tag_id,
@@ -2482,8 +2502,129 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
+    /* The hits this server decided, to everyone */
+    void send_hits(Proxy& p)
+    {
+        if(!m_hit_queue)
+            return;
+        m_hit_queue->poll();
+        auto hits = std::exchange(m_local_hits, {});
+        if(!is_server())
+            return;
+        auto const targets = verified_connections();
+        for(auto const& hit : hits)
+        {
+            auto const* net = p.get<NetworkInfo>(hit.target);
+            ObjectHit const wire{
+                .point          = Vecf4(hit.point, 1.f),
+                .normal         = Vecf4(hit.normal, 0.f),
+                .direction      = Vecf4(hit.direction, 0.f),
+                .projectile     = hit.projectile.tag_id,
+                .target         = net ? net->instance_id : 0,
+                .target_player  = hit.target_player,
+                .shooter_player = hit.shooter_player,
+                .part           = hit.part,
+                .head           = hit.head,
+                .hitscan        = hit.hitscan,
+            };
+            journal_hit(wire);
+            if(!targets.empty() &&
+               (wire.target != 0 || wire.target_player != ObjectHitEvent::no_player))
+                send_all(
+                    Message<ObjectHit>(ObjectHit(wire)),
+                    k_nSteamNetworkingSend_Reliable,
+                    targets);
+        }
+    }
+
+    void journal_hit(ObjectHit const& hit)
+    {
+        journal(
+            "net_object_hit",
+            {{"target", hit.target},
+             {"target_player", hit.target_player},
+             {"shooter_player", hit.shooter_player},
+             {"part", hit.part},
+             {"head", hit.head != 0},
+             {"hitscan", hit.hitscan != 0}});
+    }
+
+    /* A hit from the server, on whatever it names here */
+    void receive_hit(Proxy& p, ObjectHit const& wire)
+    {
+        if(!m_map)
+            return;
+        blam::tag_index_view<halo_version> index(*m_map);
+        auto projectile = index.find(wire.projectile);
+        if(projectile == index.end() || !(*projectile).valid() ||
+           !(*projectile).matches(blam::tag_class_t::proj))
+            return;
+        u64 target = 0, shooter = 0;
+        for(auto entity : p.select<PlayerInfo>())
+        {
+            auto const idx = entity.get<PlayerInfo>().player_idx;
+            if(idx == wire.target_player)
+                target = entity.id();
+            if(idx == wire.shooter_player)
+                shooter = entity.id();
+        }
+        if(target == 0 && wire.target != 0)
+            for(auto object : p.select<NetworkInfo>())
+                if(object.get<NetworkInfo>().instance_id == wire.target)
+                {
+                    target = object.id();
+                    break;
+                }
+        if(target == 0)
+            return;
+        auto const proj =
+            (*projectile).data<blam::scn::projectile>(m_map->magic);
+        GameEvent      ev{.type = GameEvent::ObjectHit};
+        ObjectHitEvent hit{
+            .origin     = MapLoadEvent::Remote,
+            .projectile = (*projectile).as_ref(),
+            .damage = proj.has_value()
+                          ? blam::tagref_t(proj.value()->impact_damage)
+                          : blam::tagref_t{},
+            .target         = target,
+            .shooter        = shooter,
+            .target_player  = wire.target_player,
+            .shooter_player = wire.shooter_player,
+            .point          = Vecf3(wire.point),
+            .normal         = Vecf3(wire.normal),
+            .direction      = Vecf3(wire.direction),
+            .part           = wire.part,
+            .head           = wire.head != 0,
+            .hitscan        = wire.hitscan != 0,
+        };
+        journal_hit(wire);
+        m_game_bus.inject(ev, &hit);
+    }
+
+    /* How far back a client's shot may look: its ping and some slack */
+    std::optional<std::chrono::steady_clock::time_point> rewind_for(
+        HSteamNetConnection connection, i64 view_time_us)
+    {
+        if(view_time_us == 0)
+            return std::nullopt;
+        using namespace std::chrono;
+        auto const now  = steady_clock::now();
+        steady_clock::duration back = rewind_slack;
+        SteamNetConnectionRealTimeStatus_t status{};
+        if(m_impl->GetConnectionRealTimeStatus(connection, &status, 0, nullptr) ==
+           k_EResultOK)
+            back += milliseconds(status.m_nPing);
+        back = std::min<steady_clock::duration>(back, max_rewind);
+        auto const view = steady_clock::time_point(microseconds(view_time_us));
+        return std::clamp(view, now - back, now);
+    }
+
     /* Someone else's shot, fired here by `shooter` */
-    bool fire_remote_shot(Proxy& p, u64 shooter, WeaponFire const& wire)
+    bool fire_remote_shot(
+        Proxy&                                               p,
+        u64                                                  shooter,
+        WeaponFire const&                                    wire,
+        std::optional<std::chrono::steady_clock::time_point> view_time = {})
     {
         if(!m_map)
             return false;
@@ -2514,6 +2655,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .trigger    = wire.trigger,
             .position   = Vecf3(wire.position),
             .direction  = glm::normalize(direction),
+            .view_time  = view_time,
         };
         m_game_bus.inject(ev, &shot);
         return true;
@@ -2793,6 +2935,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             object.get<ObjectPhysics>().authority = ObjectPhysics::Simulated;
         m_left_server    = false;
         m_join_confirmed = false;
+        m_view_time_us   = 0;
         p.subsystem<NetworkState>().client_state = NetworkState::ClientState::None;
         p.subsystem<NetworkState>().remote_player_idx.reset();
         p.remove_entity_if([&p](compo::Entity const& e) {
@@ -2837,6 +2980,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .rotation      = sync.rotation,
                     .target_player = player_info.idx,
                     .flags         = sync.flags,
+                    .server_time_us = server_time_us(),
                 }),
                 k_nSteamNetworkingSend_Reliable,
                 std::move(targets));
@@ -2874,7 +3018,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 player_info.biped.get<PlayerCamera>().camera.position;
             bool const fired =
                 glm::distance(Vecf3(wire.position), eye) <= max_shot_offset &&
-                fire_remote_shot(p, player_info.biped.id(), wire);
+                fire_remote_shot(
+                    p,
+                    player_info.biped.id(),
+                    wire,
+                    rewind_for(connection, wire.view_time_us));
             journal(
                 fired ? "net_weapon_fire" : "net_weapon_fire_reject",
                 {{"player_idx", wire.player_idx}, {"weapon", wire.weapon}});
@@ -3085,6 +3233,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             break;
         }
+        case MessageBase::ObjectHit: {
+            receive_hit(p, payload.value<ObjectHit>());
+            break;
+        }
         case MessageBase::ObjectSync: {
             for(auto const& sync : payload.values<ObjectSync>())
             {
@@ -3120,6 +3272,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 cam.camera.position = Vecf3(sync.position);
                 cam.camera.rotation = sync.rotation;
                 info.mode.physics   = sync.flags & CameraSync::physics;
+                m_view_time_us = std::max(m_view_time_us, sync.server_time_us);
                 // TODO: With a fresh viewport, we should compute relevance of
                 // entities Distance, visibility in frustum and projectile type
                 break;
@@ -3518,6 +3671,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     std::vector<WeaponFireEvent>                               m_local_shots;
     static constexpr f32                                       max_shot_offset = 4.f;
+    static constexpr auto rewind_slack = std::chrono::milliseconds(250);
+    i64 m_view_time_us{0}; /*!< Newest server time of others shown here */
+    static constexpr auto max_rewind   = std::chrono::milliseconds(1000);
+    /* Hits this peer decided */
+    std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>> m_hit_queue;
+    std::vector<ObjectHitEvent>                               m_local_hits;
     std::vector<EntitySpawn>                                    m_dynamic_spawns;
     std::atomic<u32> m_next_net_id{0}; /*!< Stamped on whichever thread spawns */
     std::atomic<u32> m_next_request_id{0};
