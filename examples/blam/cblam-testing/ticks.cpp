@@ -163,21 +163,30 @@ using MotionManifest = compo::SubsystemManifest<
 using MotionProxy = compo::proxy_of<MotionManifest>;
 
 /* Moved by the simulation, a tick at a time */
-bool ticked(MotionProxy& p, u64 id)
+bool simulated(MotionProxy& p, u64 id)
 {
-    if(p.get<Projectile>(id))
-        return true;
-    if(auto const* info = p.get<PlayerInfo>(id))
-        return !info->is_remote() && info->mode.physics;
     auto const* physics = p.get<ObjectPhysics>(id);
     return physics && physics->mass > 0.f &&
            physics->authority == ObjectPhysics::Simulated;
 }
 
-/* A camera that follows a body or a vehicle seat */
-bool ticked_eye(PlayerInfo const& info)
+/* A camera that follows a body, or a seat in a vehicle simulated here; a
+ * vehicle following the server moves every frame */
+bool ticked_eye(MotionProxy& p, PlayerInfo const& info)
 {
-    return !info.is_remote() && (info.mode.physics || info.riding.vehicle);
+    if(info.is_remote())
+        return false;
+    return info.riding.vehicle ? simulated(p, info.riding.vehicle)
+                               : info.mode.physics;
+}
+
+bool ticked(MotionProxy& p, u64 id)
+{
+    if(p.get<Projectile>(id))
+        return true;
+    if(auto const* info = p.get<PlayerInfo>(id))
+        return ticked_eye(p, *info);
+    return simulated(p, id);
 }
 
 /* Further than this in a tick is a teleport, not motion */
@@ -207,7 +216,7 @@ struct MotionSnapshot : compo::RestrictedSubsystem<MotionSnapshot, MotionManifes
         for(auto ent : p.select<PlayerInfo, PlayerCamera>())
         {
             auto [info, cam] = ent.components();
-            cam.tick_eye     = ticked_eye(info)
+            cam.tick_eye     = ticked_eye(p, info)
                                    ? std::optional(cam.camera.position)
                                    : std::nullopt;
         }
@@ -246,7 +255,7 @@ struct MotionInterpolator
         for(auto ent : p.select<PlayerInfo, PlayerCamera>())
         {
             auto [info, cam] = ent.components();
-            if(!cam.tick_eye || !ticked_eye(info) ||
+            if(!cam.tick_eye || !ticked_eye(p, info) ||
                glm::distance(*cam.tick_eye, cam.camera.position) > max_tick_move)
                 continue;
             Vecf3 const eye   = glm::mix(*cam.tick_eye, cam.camera.position, alpha);
