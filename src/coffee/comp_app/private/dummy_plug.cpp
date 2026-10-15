@@ -879,6 +879,8 @@ void insert_dummy_plug(
                             &container,
                             flag         = false,
                             ready_marked = false,
+                            setup_done   = false,
+                            local_queued = false,
                             session_wait_start =
                                 std::optional<std::chrono::steady_clock::
                                                   time_point>{},
@@ -950,6 +952,138 @@ void insert_dummy_plug(
             if(flag)
                 return;
 
+            const auto type_to_enum = [](nlohmann::json const&   event,
+                                         std::string_view const& key) {
+                return magic_enum::enum_cast<type_t>(
+                           event.value("type", std::string_view()))
+                    .value_or(type_t::custom);
+            };
+            auto& perf_monitor =
+                container.subsystem_cast<comp_app::PerformanceMonitor>();
+            if(!setup_done)
+            {
+                perf_monitor.m_screenshot_quality = dummy_plug.screenshot_quality;
+                perf_monitor.m_synchronous_screenshots = true;
+
+                if(auto* framebuffer = container.service<GraphicsFramebuffer>())
+                {
+                    dummy_plug.defer_to_swap = true;
+                    framebuffer->add_pre_swap(
+                        [&perf_monitor, &container, &dummy_plug]() {
+                            if(!dummy_plug.screenshot_armed)
+                                return;
+                            auto& armed = dummy_plug.pending_actions.front();
+                            if(armed.settle > 0)
+                            {
+                                armed.settle--;
+                                return;
+                            }
+                            auto name = armed.screenshot;
+                            dummy_plug.pending_actions.erase(
+                                dummy_plug.pending_actions.begin());
+                            dummy_plug.screenshot_armed = false;
+                            dummy_plug.step_between_captures =
+                                !dummy_plug.pending_actions.empty();
+                            PerformanceMonitor::proxy_type proxy(container);
+                            cDebug("Capturing dummyplug screenshot: {}", name);
+                            perf_monitor.capture_screenshot(
+                                proxy, name, container.relative_timestamp());
+                        });
+                }
+                auto& dummy_bus = container.subsystem_cast<DummyEventBus>();
+                container.register_subsystem_inplace<DummyPlugDrain>(
+                    &dummy_plug, &dummy_bus);
+                setup_done = true;
+            }
+
+            /* Queues the events on one clock: "clock": "local" ones run on
+             * this process's own, the rest on the session's when there is
+             * one */
+            auto const queue_events = [&](bool local, auto const& start_of) {
+                for(auto const& event : config["events"])
+                {
+                    if(!event.contains("type"))
+                        continue;
+                    if((event.value("clock", std::string()) == "local") != local)
+                        continue;
+                    const auto type = type_to_enum(event, "type");
+
+                    cDebug("- {}: {}", magic_enum::enum_name(type), event.dump());
+
+                    switch(type)
+                    {
+                    case type_t::controller_axis:
+                    case type_t::controller_button:
+                    case type_t::controller_connect:
+                    case type_t::key:
+                    case type_t::mouse_button:
+                    case type_t::mouse_move: {
+                        auto shifted    = event;
+                        shifted["time"] = start_of(event).count();
+                        queue_input_event(
+                            input_bus, &dummy_controllers, type, shifted);
+                        break;
+                    }
+                    case type_t::screenshot: {
+                        auto start_time = start_of(event);
+                        rq::runtime_queue::QueueShot(
+                            rq::runtime_queue::GetCurrentQueue().value(),
+                            start_time,
+                            [&dummy_plug, &perf_monitor, &container, event]() {
+                                auto name = event.value("name", "dummy_screenshot");
+                                if(!dummy_plug.defer_to_swap)
+                                {
+                                    PerformanceMonitor::proxy_type proxy(container);
+                                    perf_monitor.capture_screenshot(
+                                        proxy,
+                                        name,
+                                        container.relative_timestamp());
+                                    return;
+                                }
+                                dummy_plug.pending_actions.push_back(
+                                    {.screenshot = name,
+                                     .settle = event.value("settle_frames", 2u)});
+                            })
+                            .assume_value();
+                        break;
+                    }
+                    case type_t::custom: {
+                        DummyEvent out{};
+                        out.event = event.value("type", std::string{});
+                        out.data  = event;
+                        out.data.erase("type");
+                        out.data.erase("time");
+                        out.data.erase("clock");
+                        auto start_time = start_of(event);
+                        rq::runtime_queue::QueueShot(
+                            rq::runtime_queue::GetCurrentQueue().value(),
+                            start_time,
+                            [&dummy_plug, out]() mutable {
+                                /* Queued rather than injected here: several events
+                                 * can come due in one pass, and one scheduled after
+                                 * a screenshot must not land in its frame. */
+                                dummy_plug.pending_actions.push_back(
+                                    {.event = out.event, .data = out.data});
+                            })
+                            .assume_value();
+                        break;
+                    }
+                    case type_t::none:
+                        break;
+                    }
+                }
+            };
+
+            /* Local events go out at once; they may be what starts the
+             * session */
+            if(dummy_plug.session && !local_queued)
+            {
+                queue_events(true, [](nlohmann::json const& event) {
+                    return std::chrono::milliseconds(event.value("time", 0u));
+                });
+                local_queued = true;
+            }
+
             /* Session time: wait for the app to know it, or give up on it */
             if(dummy_plug.session)
             {
@@ -979,115 +1113,10 @@ void insert_dummy_plug(
             cDebug(
                 "Queueing dummy plug events{}",
                 dummy_plug.session ? " on the session clock" : "");
+            queue_events(false, start_of);
+            if(!local_queued)
+                queue_events(true, start_of);
 
-            const auto type_to_enum = [](nlohmann::json const&   event,
-                                         std::string_view const& key) {
-                return magic_enum::enum_cast<type_t>(
-                           event.value("type", std::string_view()))
-                    .value_or(type_t::custom);
-            };
-            auto& perf_monitor =
-                container.subsystem_cast<comp_app::PerformanceMonitor>();
-            perf_monitor.m_screenshot_quality = dummy_plug.screenshot_quality;
-            perf_monitor.m_synchronous_screenshots = true;
-
-            if(auto* framebuffer = container.service<GraphicsFramebuffer>())
-            {
-                dummy_plug.defer_to_swap = true;
-                framebuffer->add_pre_swap(
-                    [&perf_monitor, &container, &dummy_plug]() {
-                        if(!dummy_plug.screenshot_armed)
-                            return;
-                        auto& armed = dummy_plug.pending_actions.front();
-                        if(armed.settle > 0)
-                        {
-                            armed.settle--;
-                            return;
-                        }
-                        auto name = armed.screenshot;
-                        dummy_plug.pending_actions.erase(
-                            dummy_plug.pending_actions.begin());
-                        dummy_plug.screenshot_armed = false;
-                        dummy_plug.step_between_captures =
-                            !dummy_plug.pending_actions.empty();
-                        PerformanceMonitor::proxy_type proxy(container);
-                        cDebug("Capturing dummyplug screenshot: {}", name);
-                        perf_monitor.capture_screenshot(
-                            proxy, name, container.relative_timestamp());
-                    });
-            }
-            auto& dummy_bus = container.subsystem_cast<DummyEventBus>();
-            container.register_subsystem_inplace<DummyPlugDrain>(
-                &dummy_plug, &dummy_bus);
-            for(auto const& event : config["events"])
-            {
-                if(!event.contains("type"))
-                    continue;
-                const auto type = type_to_enum(event, "type");
-
-                cDebug("- {}: {}", magic_enum::enum_name(type), event.dump());
-
-                switch(type)
-                {
-                case type_t::controller_axis:
-                case type_t::controller_button:
-                case type_t::controller_connect:
-                case type_t::key:
-                case type_t::mouse_button:
-                case type_t::mouse_move: {
-                    auto shifted    = event;
-                    shifted["time"] = start_of(event).count();
-                    queue_input_event(
-                        input_bus, &dummy_controllers, type, shifted);
-                    break;
-                }
-                case type_t::screenshot: {
-                    auto start_time = start_of(event);
-                    rq::runtime_queue::QueueShot(
-                        rq::runtime_queue::GetCurrentQueue().value(),
-                        start_time,
-                        [&dummy_plug, &perf_monitor, &container, event]() {
-                            auto name = event.value("name", "dummy_screenshot");
-                            if(!dummy_plug.defer_to_swap)
-                            {
-                                PerformanceMonitor::proxy_type proxy(container);
-                                perf_monitor.capture_screenshot(
-                                    proxy,
-                                    name,
-                                    container.relative_timestamp());
-                                return;
-                            }
-                            dummy_plug.pending_actions.push_back(
-                                {.screenshot = name,
-                                 .settle = event.value("settle_frames", 2u)});
-                        })
-                        .assume_value();
-                    break;
-                }
-                case type_t::custom: {
-                    DummyEvent out{};
-                    out.event = event.value("type", std::string{});
-                    out.data  = event;
-                    out.data.erase("type");
-                    out.data.erase("time");
-                    auto start_time = start_of(event);
-                    rq::runtime_queue::QueueShot(
-                        rq::runtime_queue::GetCurrentQueue().value(),
-                        start_time,
-                        [&dummy_plug, out]() mutable {
-                            /* Queued rather than injected here: several events
-                             * can come due in one pass, and one scheduled after
-                             * a screenshot must not land in its frame. */
-                            dummy_plug.pending_actions.push_back(
-                                {.event = out.event, .data = out.data});
-                        })
-                        .assume_value();
-                    break;
-                }
-                case type_t::none:
-                    break;
-                }
-            }
 
             auto end_time = start_of(config, "end_time");
 
@@ -1204,6 +1233,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(
         out.data  = event;
         out.data.erase("type");
         out.data.erase("time");
+        out.data.erase("clock");
         // cDebug("dummy plug live: custom event {} => {}", out.event,
         //        out.data.dump());
         container.subsystem_cast<DummyEventBus>().process(out, nullptr);

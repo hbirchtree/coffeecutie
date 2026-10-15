@@ -16,7 +16,8 @@
         "screenshot_quality": 60
     },
     "frame_delta": 66.667,
-    "comment": "Self-contained multiplayer scenario: no wrapper script. This process becomes the server (net_listen event), and the dummy plug spawn support (dummy_plug.cpp) fork+execs one client child seeded with the client scenario config plus --server argv. Child gets its own TMPDIR (<parent tmp>/client0) for its state.json/screenshots/log.txt; the parent reaps it at exit and fails if the child failed. Scenario itself matches dummy_plug_net_{server,client}_scenario.json: gamepad movement on bloodgulch, server-triggered switch to beavercreek, more movement, dump_state on both sides. Each process steps its own clock, so the same scripted time is not the same moment on both: the server dumps 1.5 s after the client and the client outlives the server, so both dumps fall after all movement has stopped and while both are still connected, which the journal check's position comparison relies on.",
+    "comment": "Self-contained multiplayer scenario: no wrapper script. This process becomes the server (net_listen event), and the dummy plug spawn support (dummy_plug.cpp) fork+execs one client child seeded with the client scenario config plus --server argv. Child gets its own TMPDIR (<parent tmp>/client0) for its state.json/screenshots/log.txt; the parent reaps it at exit and fails if the child failed. Scenario itself matches dummy_plug_net_{server,client}_scenario.json: gamepad movement on bloodgulch, server-triggered switch to beavercreek, more movement, dump_state on both sides. Both run on session time (net_listen and net_connect on their own clocks, since they start the session), so both dump at the same moment, after all movement has stopped and while still connected, which the journal check's position comparison relies on; the client outlives the server.",
+    "time_base": "session",
     "spawn": [
         {
             "config": "dummy_plug_net_child_scenario.json",
@@ -25,7 +26,7 @@
     ],
     "spawn_grace_ms": 1800000,
     "events": [
-        {"time": 500, "type": "net_listen", "address": "127.0.0.1:27105"},
+        {"time": 500, "type": "net_listen", "clock": "local", "address": "127.0.0.1:27105"},
         {"time": 1000, "type": "render_param", "debug_markers": true},
         {"time": 1200, "type": "controller_connect", "index": 0},
         {"time": 1500, "type": "camera", "physics": true},
