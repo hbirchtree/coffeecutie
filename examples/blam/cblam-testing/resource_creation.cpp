@@ -594,6 +594,12 @@ void create_resources(compo::EntityContainer& e)
                          e.subsystem_cast<GameEventBus>().inject(play_ev, &play);
                      }
                  }
+                 if(ev.event == "pause")
+                 {
+                     GameEvent            pause_ev{.type = GameEvent::SimulationPause};
+                     SimulationPauseEvent pause{.paused = ev.data.value("paused", true)};
+                     e.subsystem_cast<GameEventBus>().inject(pause_ev, &pause);
+                 }
                  if(ev.event == "enter_vehicle")
                  {
                      /* {"seat": n, "label": "W-driver"}: nearest vehicle */

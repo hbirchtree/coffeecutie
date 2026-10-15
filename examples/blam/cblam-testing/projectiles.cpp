@@ -6,6 +6,7 @@
 #include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "ticks.h"
 
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_unit.h>
@@ -40,26 +41,17 @@ struct ProjectileSystem
         this->priority = 903;
     }
 
-    void start_restricted(Proxy& p, time_point const& t)
+    void start_restricted(Proxy& p, time_point const&)
     {
-        f32 const dt =
-            m_last_frame == time_point{}
-                ? 0.f
-                : std::clamp(
-                      std::chrono::duration<f32>(t - m_last_frame).count(),
-                      0.f,
-                      .1f);
-        m_last_frame = t;
-        if(dt <= 0.f)
-            return;
-
         std::set<u64> spent;
-        for(auto ent : p.template select<Projectile, Model>())
-        {
-            auto [flight, model] = ent.components();
-            if(!flight.tag || !fly(p, flight, model, dt))
-                spent.insert(ent.id());
-        }
+        for(auto const& tick : m_ticks->take())
+            for(auto ent : p.template select<Projectile, Model>())
+            {
+                auto [flight, model] = ent.components();
+                if(!spent.contains(ent.id()) &&
+                   (!flight.tag || !fly(p, flight, model, tick.seconds)))
+                    spent.insert(ent.id());
+            }
         if(spent.empty())
             return;
         std::set<u64> doomed = spent;
@@ -326,11 +318,15 @@ struct ProjectileSystem
     static constexpr f32 surface_gap      = .01f;
     static constexpr f32 rest_speed       = .3f; /* wu/s */
 
-    time_point       m_last_frame{};
-    std::minstd_rand m_rng{std::random_device{}()};
+    std::minstd_rand           m_rng{std::random_device{}()};
+    std::unique_ptr<TickQueue> m_ticks;
+
+    friend void alloc_projectiles(compo::EntityContainer& e);
 };
 
 void alloc_projectiles(compo::EntityContainer& e)
 {
-    e.register_subsystem_inplace<ProjectileSystem>();
+    auto& projectiles = e.register_subsystem_inplace<ProjectileSystem>();
+    projectiles.m_ticks =
+        std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
 }
