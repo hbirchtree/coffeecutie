@@ -14,6 +14,8 @@ uniform float exposure;
 uniform vec4  tint;
 
 uniform int mode;
+// 1: Halo 3's final_composite_base.hlsl curve, linear in, gamma 2.2 out
+uniform int tone_curve;
 // RGB-defocus/chromatic aberration
 // It's only uniform
 uniform vec4 rgb_comp_defocus;
@@ -82,7 +84,14 @@ void main()
         : mode == 1
           ? gaussian_blur_sample()
           : plain_sample();
-    color.rgb = color.rgb / (color.rgb + vec3(1.0));
-    color.rgb = pow(exposure * color.rgb, vec3(1.0 / gamma));
+    if(tone_curve == 1)
+    {
+        vec3 x    = clamp(color.rgb, vec3(0.0), vec3(1.4938016));
+        color.rgb = pow((1.0041494 - 0.15 * x * x) * x, vec3(1.0 / 2.2));
+    } else
+    {
+        color.rgb = color.rgb / (color.rgb + vec3(1.0));
+        color.rgb = pow(exposure * color.rgb, vec3(1.0 / gamma));
+    }
     gl_FragColor = color;
 }
