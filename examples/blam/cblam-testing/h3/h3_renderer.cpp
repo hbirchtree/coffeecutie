@@ -92,7 +92,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     gfx::uniform_pair<Vecf2 const>{
                         {"detail2_scale"}, semantic::SpanOne<const Vecf2>(mat.detail2_scale)},
                     gfx::uniform_pair<Vecf2 const>{
-                        {"illum_scale"}, semantic::SpanOne<const Vecf2>(unit)},
+                        {"illum_scale"}, semantic::SpanOne<const Vecf2>(mat.illum_scale)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"mask_scale"}, semantic::SpanOne<const Vecf2>(unit)},
                     gfx::uniform_pair<Vecf2 const>{
@@ -218,7 +218,19 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf4 const>{
                             {"spec_tint1"}, semantic::SpanOne<const Vecf4>(mat.specular.tint1)},
                         gfx::uniform_pair<Vecf3 const>{
-                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
+                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)},
+                        gfx::uniform_pair<const i32>{
+                            {"self_illum_mode"}, semantic::SpanOne<const i32>(mat.self_illum)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"illum_color"}, semantic::SpanOne<const Vecf4>(mat.illum_color)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"illum_channels"},
+                            semantic::Span<const Vecf4>(mat.illum_channels.data(), 3)},
+                        gfx::uniform_pair<Vecf2 const>{
+                            {"illum_detail_ratio"},
+                            semantic::SpanOne<const Vecf2>(mat.illum_detail_ratio)},
+                        gfx::uniform_pair<const f32>{
+                            {"illum_curve"}, semantic::SpanOne<const f32>(mat.illum_curve)});
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},
@@ -230,7 +242,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{
                             stage_t::Fragment, {"specular_mask_map", 10}, or_white(mat.specular_mask_map)},
                         gfx::sampler_definition_t{
-                            stage_t::Fragment, {"material_map", 11}, or_white(mat.material_map)});
+                            stage_t::Fragment, {"material_map", 11}, or_white(mat.material_map)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"illum_map", 12}, or_white(mat.illum)},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"illum_detail_map", 13}, or_white(mat.illum_detail)});
                     res = submit(frag_u, samplers);
                 }
                 if(res.has_value() && !m_draw_error_logged)

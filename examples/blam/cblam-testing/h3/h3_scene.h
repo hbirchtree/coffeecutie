@@ -96,6 +96,16 @@ struct Material
     /* 0 none, 1 base map alpha, 2 specular mask texture alpha */
     i32                                    specular_mask{0};
     SpecularParams                         specular;
+    /* 0 off, 1 simple, 2 with detail, 3 three channel */
+    i32                                    self_illum{0};
+    Texture                                illum;
+    Vecf2                                  illum_scale{1.f, 1.f};
+    Texture                                illum_detail;
+    Vecf2                                  illum_detail_ratio{1.f, 1.f};
+    /* color (rgb) and intensity (a); three channel: a/b/c colors */
+    Vecf4                                  illum_color{1.f};
+    std::array<Vecf4, 3>                   illum_channels{};
+    f32                                    illum_curve{2.f};
     Texture                                specular_mask_map;
     Texture                                material_map;
     Texture                                bump;
