@@ -313,11 +313,23 @@ struct camera_fx_palette_t
 
 static_assert(sizeof(camera_fx_palette_t) == 0x30);
 
+/*! A sky: scenery modelled around the level, and the BSPs it shows in */
+struct scenario_sky_t
+{
+    tag_reference object;
+    be<i16>       name;
+    be<u16>       active_bsps; /*!< One bit per structure BSP, none = all */
+};
+
+static_assert(sizeof(scenario_sky_t) == 0x14);
+
 struct scenario_t
 {
     std::array<u8, 0x14>             unknown_0;
     tag_block<scenario_bsp_t>        bsps;
-    std::array<u8, 0x9C>             unknown_1;
+    tag_reference                    structure_seams;
+    tag_block<scenario_sky_t>        skies;
+    std::array<u8, 0x80>             unknown_1;
     tag_block<scenery_placement_t>   scenery;
     tag_block<palette_entry_t>       scenery_palette;
     std::array<u8, 0x180>            unknown_2;
@@ -329,6 +341,7 @@ struct scenario_t
 };
 
 static_assert(offsetof(scenario_t, bsps) == 0x14);
+static_assert(offsetof(scenario_t, skies) == 0x30);
 static_assert(offsetof(scenario_t, scenery) == 0xBC);
 static_assert(offsetof(scenario_t, scenery_palette) == 0xC8);
 static_assert(offsetof(scenario_t, starting_locations) == 0x254);

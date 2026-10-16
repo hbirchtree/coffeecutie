@@ -168,6 +168,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_indices.clear();
         m_material_index.clear();
         m_textures.clear();
+        m_model_views.clear();
         m_side_maps.clear();
         m_side_files.clear();
         m_loader.reset();
@@ -462,6 +463,7 @@ struct H3MapLoader : compo::SubsystemBase
             m_scene.auto_exposure.enabled = false;
         }
         load_scenery(*scnr, bsp);
+        load_sky(*scnr, bsp);
         if(m_vertices.empty())
             return false;
 
@@ -626,7 +628,6 @@ struct H3MapLoader : compo::SubsystemBase
         auto palette = scnr.scenery_palette.data(magic).value_or(
             Span<el::palette_entry_t const>());
         u32 placed = 0, skipped = 0, hidden = 0, lit = 0;
-        std::unordered_map<u32, std::optional<el::resource_view>> views;
         for(auto const& placement : scnr.scenery.data(magic).value_or(
                 Span<el::scenery_placement_t const>()))
         {
@@ -642,20 +643,6 @@ struct H3MapLoader : compo::SubsystemBase
                 hidden++;
                 continue;
             }
-            u32 key = map.id_of(*mode_tag).raw.value();
-            auto it = views.find(key);
-            if(it == views.end())
-            {
-                auto view = m_loader->load(model->geometry.resource);
-                it = views.emplace(key, view.has_value() ? std::optional(view.value())
-                                                         : std::nullopt).first;
-            }
-            if(!it->second)
-            {
-                skipped++;
-                continue;
-            }
-
             Vecf3 rot   = object.rotation;
             Quatf q     = Quatf(Vecf3(0, 0, 1) * rot.x) * Quatf(Vecf3(0, 1, 0) * rot.y) *
                       Quatf(Vecf3(1, 0, 0) * rot.z);
@@ -665,34 +652,9 @@ struct H3MapLoader : compo::SubsystemBase
             Matf4 transform = glm::translate(Matf4(1.f), object.position.value()) *
                               glm::mat4_cast(q) * glm::scale(Matf4(1.f), Vecf3(scale));
 
-            auto meshes = model->geometry.meshes.data(magic).value_or(Span<el::mesh_t const>());
-            auto compression = model->geometry.compression.data(magic).value_or(
-                Span<el::compression_t const>());
-            auto materials = model->materials.data(magic).value_or(
-                Span<el::geometry_material_t const>());
-            u32  emitted = 0;
-            auto light   = m_scene.baked.below(object.position.value());
+            auto light = m_scene.baked.below(object.position.value());
             lit += light.has_value();
-            for(auto const& region : model->regions.data(magic).value_or(
-                    Span<el::region_t const>()))
-            {
-                auto perms = region.permutations.data(magic).value_or(
-                    Span<el::permutation_t const>());
-                if(perms.empty() || !perms[0].mesh.valid())
-                    continue;
-                i16 first = perms[0].mesh.value();
-                i16 count = std::max<i16>(perms[0].mesh_count.value(), 1);
-                for(i16 m = first; m < first + count && static_cast<size_t>(m) < meshes.size(); m++)
-                    emitted += append_mesh(
-                        *it->second,
-                        meshes[m],
-                        compression.empty() ? nullptr : &compression[0],
-                        transform,
-                        materials,
-                        {},
-                        {},
-                        light ? &*light : nullptr);
-            }
+            u32 emitted = append_model(*mode_tag, transform, light ? &*light : nullptr);
             if(emitted)
                 placed++;
             else
@@ -705,6 +667,72 @@ struct H3MapLoader : compo::SubsystemBase
             lit,
             skipped,
             hidden);
+    }
+
+    /* A render model's first permutation of every region, moved by
+     * `transform`; geometry resources are loaded once per model */
+    u32 append_model(
+        el::tag_t const& mode_tag, Matf4 const& transform, el::vertex_light_t const* light)
+    {
+        auto const& map   = *m_map;
+        auto        magic = map.magic();
+        auto const* model = map.tag_data<el::render_model_t>(mode_tag);
+        if(!model)
+            return 0;
+        u32  key = map.id_of(mode_tag).raw.value();
+        auto it  = m_model_views.find(key);
+        if(it == m_model_views.end())
+        {
+            auto view = m_loader->load(model->geometry.resource);
+            it        = m_model_views
+                     .emplace(key, view.has_value() ? std::optional(view.value()) : std::nullopt)
+                     .first;
+        }
+        if(!it->second)
+            return 0;
+        auto meshes = model->geometry.meshes.data(magic).value_or(Span<el::mesh_t const>());
+        auto compression = model->geometry.compression.data(magic).value_or(
+            Span<el::compression_t const>());
+        auto materials = model->materials.data(magic).value_or(
+            Span<el::geometry_material_t const>());
+        u32 emitted = 0;
+        for(auto const& region : model->regions.data(magic).value_or(Span<el::region_t const>()))
+        {
+            auto perms = region.permutations.data(magic).value_or(Span<el::permutation_t const>());
+            if(perms.empty() || !perms[0].mesh.valid())
+                continue;
+            i16 first = perms[0].mesh.value();
+            i16 count = std::max<i16>(perms[0].mesh_count.value(), 1);
+            for(i16 m = first; m < first + count && static_cast<size_t>(m) < meshes.size(); m++)
+                emitted += append_mesh(
+                    *it->second,
+                    meshes[m],
+                    compression.empty() ? nullptr : &compression[0],
+                    transform,
+                    materials,
+                    {},
+                    {},
+                    light);
+        }
+        return emitted;
+    }
+
+    /* The skies active in this BSP: scenery modelled in world space around
+     * the level, so placed at the origin */
+    void load_sky(el::scenario_t const& scnr, i16 bsp_index)
+    {
+        auto const& map   = *m_map;
+        auto        magic = map.magic();
+        u32         drawn = 0;
+        for(auto const& sky : scnr.skies.data(magic).value_or(Span<el::scenario_sky_t const>()))
+        {
+            u16 active = sky.active_bsps;
+            if(active && !(active & (1u << bsp_index)))
+                continue;
+            if(auto const* mode_tag = render_model_of(sky.object))
+                drawn += append_model(*mode_tag, Matf4(1.f), nullptr);
+        }
+        cDebug("H3: sky: {} meshes", drawn);
     }
 
     el::tag_t const* render_model_of(el::tag_reference const& object_ref) const
@@ -1500,6 +1528,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     std::unordered_map<u32, size_t>                    m_material_index;
     std::unordered_map<u32, std::optional<Texture>>    m_textures;
+    std::unordered_map<u32, std::optional<el::resource_view>> m_model_views;
 };
 
 void alloc_h3(compo::EntityContainer& e)
