@@ -5,6 +5,8 @@
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
+#include <algorithm>
+#include <array>
 #include <functional>
 #include <peripherals/stl/range.h>
 
@@ -63,6 +65,12 @@ bool texture_t::requires_software_decode() const
                                   m_features.tex.arb.bptc ||
                                   m_features.tex.ext.bptc;
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN)
+        /* A swizzle the context cannot do is applied by decoding; it has to
+         * be set before alloc() */
+        if(m_emulate_swizzle &&
+           stl_types::any_of(
+               m_format.cmpflg, Comp::BC1, Comp::BC2, Comp::BC3, Comp::BC4, Comp::BC5))
+            return true;
         if(stl_types::any_of(
                m_format.cmpflg, Comp::BC1, Comp::BC2, Comp::BC3) &&
            !s3tc_support)
@@ -117,10 +125,75 @@ std::optional<PixDesc> texture_t::software_decode_format() const
 }
 
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN)
+using soft_swizzle_t = std::array<std::optional<textures::swizzle_t>, 4>;
+
+/* BC4/BC5 as the hardware samples them: (r, 0, 0, 1) and (r, g, 0, 1) */
+static void expand_rgtc(
+    void (*decode)(const void*, void*, int),
+    u32         channels,
+    const char* block,
+    char*       out,
+    u32         out_pitch)
+{
+    std::array<libc_types::u8, 32> texels{};
+    decode(block, texels.data(), static_cast<int>(4 * channels));
+    for(u32 y = 0; y < 4; y++)
+        for(u32 x = 0; x < 4; x++)
+        {
+            auto* px = reinterpret_cast<libc_types::u8*>(out + y * out_pitch + x * 4);
+            libc_types::u8 const* in = texels.data() + (y * 4 + x) * channels;
+            px[0] = in[0];
+            px[1] = channels > 1 ? in[1] : libc_types::u8(0);
+            px[2] = 0;
+            px[3] = 255;
+        }
+}
+
+/* The swizzle the texture would have applied, on RGBA8 */
+static void apply_swizzle(std::vector<char>& rgba, soft_swizzle_t const& swizzle)
+{
+    using textures::swizzle_t;
+    if(std::none_of(swizzle.begin(), swizzle.end(), [](auto const& s) {
+           return s.has_value();
+       }))
+        return;
+    for(size_t i = 0; i + 3 < rgba.size(); i += 4)
+    {
+        std::array<char, 4> in{rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]};
+        for(size_t c = 0; c < 4; c++)
+        {
+            if(!swizzle[c])
+                continue;
+            switch(*swizzle[c])
+            {
+            case swizzle_t::red:
+                rgba[i + c] = in[0];
+                break;
+            case swizzle_t::green:
+                rgba[i + c] = in[1];
+                break;
+            case swizzle_t::blue:
+                rgba[i + c] = in[2];
+                break;
+            case swizzle_t::alpha:
+                rgba[i + c] = in[3];
+                break;
+            case swizzle_t::one:
+                rgba[i + c] = static_cast<char>(0xFF);
+                break;
+            case swizzle_t::zero:
+                rgba[i + c] = 0;
+                break;
+            }
+        }
+    }
+}
+
 static std::vector<char> software_decode_bcn(
     PixDesc const&               m_format,
     semantic::Span<const char>&& data,
-    size_3d<i32> const&          size)
+    size_3d<i32> const&          size,
+    soft_swizzle_t const&        swizzle)
 {
     using typing::pixels::comp_flags;
     using bcdec_transform_t     = void (*)(const void*, void*, int);
@@ -147,11 +220,18 @@ static std::vector<char> software_decode_bcn(
         transform = bcdec_bc7;
         blk_size  = BCDEC_BC7_BLOCK_SIZE;
         break;
+    case comp_flags::BC4:
+    case comp_flags::BC5:
+        break;
     default:
         break;
     }
 
-    if(!transform)
+    bool const rgtc = stl_types::any_of(m_format.cmpflg, comp_flags::BC4, comp_flags::BC5);
+    if(rgtc)
+        blk_size = m_format.cmpflg == comp_flags::BC4 ? BCDEC_BC4_BLOCK_SIZE
+                                                      : BCDEC_BC5_BLOCK_SIZE;
+    if(!transform && !rgtc)
         Throw(texture_decode_not_implemented(
             "this variation of BCn not implemented"));
 
@@ -163,11 +243,15 @@ static std::vector<char> software_decode_bcn(
         for(auto x : stl_types::range<int>(blk_pitch))
         {
             auto blk_idx = (y * blk_pitch + x) * blk_size;
-            transform(
-                data.subspan(blk_idx, blk_size).data(),
-                &out.at((y * size.w + x) * 16),
-                out_pitch);
+            auto* dst    = &out.at((y * size.w + x) * 16);
+            if(m_format.cmpflg == comp_flags::BC4)
+                expand_rgtc(bcdec_bc4, 1, data.subspan(blk_idx, blk_size).data(), dst, out_pitch);
+            else if(m_format.cmpflg == comp_flags::BC5)
+                expand_rgtc(bcdec_bc5, 2, data.subspan(blk_idx, blk_size).data(), dst, out_pitch);
+            else
+                transform(data.subspan(blk_idx, blk_size).data(), dst, out_pitch);
         }
+    apply_swizzle(out, swizzle);
 
     Coffee::cDebug(
         "Expanded BCn image from {0} bytes to {1} bytes",
@@ -225,9 +309,10 @@ std::future<std::vector<char>> texture_t::software_decode(
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN)
     if(m_format.pixfmt == pix_fmt::BCn)
     {
-        auto task = rq::dependent_task<void, std::vector<char>>::CreateSource(
-            [fmt = m_format, data, size]() mutable {
-                return software_decode_bcn(fmt, std::move(data), size);
+        auto swizzle = m_emulate_swizzle ? m_soft_swizzle : soft_swizzle_t{};
+        auto task    = rq::dependent_task<void, std::vector<char>>::CreateSource(
+            [fmt = m_format, data, size, swizzle]() mutable {
+                return software_decode_bcn(fmt, std::move(data), size, swizzle);
             });
         auto fut = task->output.get_future();
         auto res = rq::runtime_queue::Queue(m_decoder_queue, std::move(task));
