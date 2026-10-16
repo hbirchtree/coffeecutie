@@ -16,7 +16,7 @@ namespace h3 {
 
 using H3RendererManifest = compo::SubsystemManifest<
     compo::type_list_t<const PlayerCamera, const PlayerInfo>,
-    compo::type_list_t<const H3Scene, const BlamResources, gfx::system>,
+    compo::type_list_t<const H3Scene, const BlamResources, const PostProcessParameters, gfx::system>,
     compo::empty_list_t>;
 
 /* Submits every material of the scene; no visibility yet */
@@ -62,6 +62,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             return;
 
         auto&        resources = p.template subsystem<BlamResources>();
+        auto const&  post      = p.template subsystem<PostProcessParameters>();
+        Vecf2 const  composite{post.exposure, post.gamma};
         Vecf3 const  offset{};
         f32 const    scale = 1.f;
         Vecf2 const  unit{1.f, 1.f};
@@ -159,6 +161,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
                         gfx::uniform_pair<const f32>{
                             {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
+                        gfx::uniform_pair<Vecf2 const>{
+                            {"composite"}, semantic::SpanOne<const Vecf2>(composite)},
                         gfx::uniform_pair<const f32>{
                             {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)});
                     auto const& l = mat.layers;
@@ -196,6 +200,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
                         gfx::uniform_pair<const f32>{
                             {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
+                        gfx::uniform_pair<Vecf2 const>{
+                            {"composite"}, semantic::SpanOne<const Vecf2>(composite)},
                         gfx::uniform_pair<const f32>{
                             {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)},
                         gfx::uniform_pair<const i32>{
