@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../h2/h2_scene.h"
+#include "h3_lighting.h"
 
 #include <coffee/components/subsystem.h>
 #include <coffee/graphics/apis/gleam/rhi_buffer.h>
@@ -137,7 +138,9 @@ struct H3Scene : compo::SubsystemBase
     std::shared_ptr<gfx::sampler_t>             lightprobe_sampler;
     Vecf4                                       lightprobe_scale{1.f};
     f32                                         intensity_scale{1.f};
-    f32                                         exposure{1.f}; /*!< Linear */
+    f32                                         exposure{1.f}; /*!< Linear, at load */
+    AutoExposure                                auto_exposure;
+    BakedLight                                  baked;
     std::shared_ptr<gfx::buffer_t> vertex_buf;
     std::shared_ptr<gfx::buffer_t> element_buf;
 };
