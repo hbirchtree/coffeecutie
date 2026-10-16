@@ -178,3 +178,25 @@ and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
   visibility, collision, web loading.
 - Headless check: `.github/tests/dummy_plug_h3.json` (four views from the
   spawn).
+
+## Sound
+
+- `snd!` holds indices into the map's `ugh!` (sound_cache_file_gestalt):
+  codec, first pitch range + count, playback, scale, extra info, plus the
+  `sound_resource_definition` resource at 0x18.
+- Pitch range permutations are packed as required:6 count:6 first:20.
+  A permutation names a run of chunks; chunk offsets address the
+  resource's primary page bytes followed by its secondary page bytes
+  (short sounds sit in the primary, music in the secondary). Size word:
+  low 24 bits size, top byte flags.
+- Codecs over all 39 retail maps: XMA2 (compression 7) for ~109k sounds,
+  Xbox ADPCM for 7. 44.1 kHz almost everywhere; mono, stereo, quad and
+  5.1 (every two channels one XMA stream).
+- `ElegyInfo --sounds -e <dir>` wraps each permutation as RIFF XMA2
+  (`xma2_format_t`); ffmpeg decodes all 116 mainmenu permutations and a
+  5.1 cinematic track to the expected sample counts.
+- XMA is the 360's hardware format, derived from WMA Pro; `libwma` (WMA
+  v2, used for Halo 2) cannot decode it. libavcodec's xma1/xma2 decoders
+  (wmaprodec) are LGPL-2.1+ when ffmpeg is built without `--enable-gpl`,
+  so a runtime decoder must link it dynamically (vcpkg's ffmpeg is
+  currently only in the optional "media" feature and static by default).
