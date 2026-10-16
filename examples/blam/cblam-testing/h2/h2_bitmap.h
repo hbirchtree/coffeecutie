@@ -3,6 +3,7 @@
 #include "h2_scene.h"
 
 #include <blam/dimeter/bitm.h>
+#include <blam/dimeter/bump_palette.h>
 #include <blam/dimeter/map.h>
 #include <blam/dimeter/vista.h>
 #include <blam/volta/blam_swizzle.h>
@@ -35,6 +36,7 @@ inline u32 level_bytes(blam::bitm::format_t fmt, u32 w, u32 h)
     case format_t::A8:
     case format_t::Y8:
     case format_t::AY8:
+    case format_t::P8:
         return w * h;
     case format_t::A8Y8:
     case format_t::V8U8:
@@ -105,7 +107,9 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
     if(from_le(img.type) != blam::bitm::type_t::tex_2d)
         return std::nullopt;
     auto format = from_le(img.format);
-    auto fmt    = blam::bitm::to_pixdesc(format);
+    bool p8     = format == blam::bitm::format_t::P8;
+    /* P8 bumps are expanded to RGBA8 normals at load */
+    auto fmt = blam::bitm::to_pixdesc(p8 ? blam::bitm::format_t::ARGB8 : format);
     if(fmt.pixfmt == typing::pixels::pix_fmt::None)
         return std::nullopt;
 
@@ -165,6 +169,15 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
                     std::memcpy(out.data(), in.data(), bytes);
             } else
                 std::memcpy(out.data(), in.data(), bytes);
+            if(p8)
+            {
+                std::vector<u8> rgba(bytes * 4);
+                dim::bitm::expand_p8(
+                    level.pixels,
+                    Span<dim::bitm::vecb4>(
+                        reinterpret_cast<dim::bitm::vecb4*>(rgba.data()), bytes));
+                level.pixels = std::move(rgba);
+            }
             if(format == blam::bitm::format_t::V8U8)
                 for(auto& b : level.pixels)
                     b = static_cast<u8>(b + 0x80);
