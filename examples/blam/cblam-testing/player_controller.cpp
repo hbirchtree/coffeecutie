@@ -211,6 +211,8 @@ struct PlayerController
             input.left |= b.p_left;
             input.right |= b.p_right;
             input.jump |= b.a;
+            input.swap |= b.y;
+            input.reload |= b.x;
             /* B backs out of menus only; back also toggles freecam */
             input.back |= b.back || (in_menu && b.b);
         }
@@ -223,18 +225,25 @@ struct PlayerController
             input.left |= key(CK_Left);
             input.right |= key(CK_Right);
             input.jump |= key(CK_Space);
+            input.swap |= key(CK_HTab);
+            input.reload |= key(CK_r);
             input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
         }
 
         auto& intent = input.intent;
         if(input.jump)
             intent.jump = true;
+        if(input.swap)
+            intent.swap = true;
+        if(input.reload)
+            intent.reload = true;
         if(in_menu)
         {
             input.movement  = {};
             intent.move     = {};
             intent.throttle = intent.steer = 0.f;
             intent.use = intent.grab = intent.jump = intent.fire = false;
+            intent.swap = intent.reload = false;
             return;
         }
 
