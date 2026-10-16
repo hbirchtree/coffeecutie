@@ -208,6 +208,53 @@ Visibility:
   sbsp 0x78-0xB3. `010_jungle`'s `010_bsp_intro` declares a world
   collision whose page is in none of the loaded maps.
 
+## Lighting and materials
+
+Bungie's shader source for Halo 3 is public
+(github.com/halohlsl/Halo3-Shader-Source, `hlsl/`); everything below was
+checked against both it and the map data.
+
+- Bump maps: DXN and CTX1 store y first, as ATI's 3Dc did. Against
+  `foam_height` the decoded normal is x = -dh/du, y = -dh/dv (v down the
+  rows), correlation 0.88 / 0.98. CTX1 is 8-byte blocks: two (y, x)
+  endpoints, then 2-bit indices shared by both channels picking endpoint 0,
+  1, 1/3 or 2/3. Detail bump adds its xy to the bump map's.
+- `sLdT` per BSP (`lightmap_bsp_t`): a lightprobe texture (array of 8
+  DXT5 slices) and a dominant light intensity texture (2 slices), one
+  1024x1024 atlas each. Every value is a slice pair (Bungie's "Luvw"):
+  `rgb = (rgb0 + rgb1) * 2 - 2` is a unit direction, `alpha0 * alpha1 *
+  max` its length, with `max` from the compression vectors (0, 2, 4, 6 for
+  the SH, 8 for the intensity; `decode_bpp16_luvw` in
+  lightmap_sampling.fx). On riverworld |rgb| is 1.00 +- 0.02 everywhere.
+- The four values are linear SH in D3DX order: L0, then -y, z, -x. With
+  that mapping the L1 vector points into the hemisphere above the surface
+  for 99.0% of cluster triangles (any other order or sign: <= 87%).
+- Diffuse is `ravi_order_2_with_dominant_light`: the dominant light
+  (direction = normalized luminance of (-L3, -L1, L2), intensity from its
+  texture) is taken out of the SH, the rest evaluated with 0.886227 /
+  1.023328 / pi, and the dominant light added back as a clamped cosine
+  times 0.281.
+- Lightmap texcoords: a `static_per_pixel` vertex buffer, two big-endian
+  UNORM16 per vertex. Clusters have it in vertex buffer slot 1; an
+  instance's `lightmap_texcoords` indexes the render geometry's per-instance
+  texcoord list (+0x70), whose entry names the buffer (184/185 vertex
+  counts match on riverworld). 99.3% of triangle centroids land on lit
+  texels.
+- Per-vertex light (`static_per_vertex`, 20 bytes): five signed 8-bit RGBE
+  values, exponent first with scale 2^(e * 31.75): dominant intensity,
+  then L0..L3. Instances use it when the lightmap's instance entry names a
+  per-vertex block instead of the texture (hemisphere test 97.4%).
+- Exposure is in stops: the cluster's camera FX palette entry (scenario
+  0x504) or the scenario's own camera effects (0x6B0, multiplayer) give an
+  auto exposure range; the middle of it stands in for auto exposure.
+- Material models: two_lobe_phong and cook_torrance follow
+  `calc_material_*_ps` (analytic lobe on the dominant light, area lobe from
+  the SH around the reflection). Cook-Torrance's area lobe in the game uses
+  pre-integrated lookup tables the engine binds globally; an order 2 SH
+  lobe stands in. Not done: anti-shadow, dynamic lights, environment maps,
+  organism/glass/foliage, scenery lighting (objects sample the lightmap
+  below them), quadratic SH probes.
+
 ## BlamGraphics first pass (`cblam-testing/h3`)
 
 `H3MapLoader` takes a `MapLoadEvent` whose header is Halo 3 (version 11)
@@ -225,11 +272,11 @@ and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
   and opaque / alpha blend / additive passes from the rmdf options.
   Helpers without a base map (`z_invis_lightquad`) are not drawn.
 - Textures: top level only, no mips. dxt5a/dxn families go up as BC4/BC5
-  with channel swizzles; CTX1 and dxt3a are not uploaded yet.
-- Not done: lightmaps / per-vertex lighting from `sLdT` (the shader falls
-  back to a sun term, so Forerunner metals with dark albedo look dark),
-  specular and env maps, detail maps, sky, crates/machines, BSP switching,
-  visibility, collision, web loading.
+  with channel swizzles, CTX1 decoded to RG8; dxt3a is not uploaded yet.
+- Lighting as in "Lighting and materials"; scenery still falls back to a
+  sun term.
+- Not done: env maps, sky, crates/machines, BSP switching, visibility,
+  web loading.
 - Headless check: `.github/tests/dummy_plug_h3.json` (four views from the
   spawn).
 
