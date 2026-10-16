@@ -88,6 +88,8 @@ struct MessageBase
 
         /* What players hold */
         EquipmentSync,
+        WeaponPickup,
+        ObjectDespawn,
     } type{None};
 
     u32 request{};
@@ -272,11 +274,28 @@ struct alignas(8) EquipmentSync
     };
 
     u32     player_idx{0};
-    u32     weapon{0}; /*!< Tag id, 0 for none */
+    u32     weapon{0}; /*!< Tag ids, 0 for none */
     flags_t flags{none};
-    u32     padding{0};
+    u32     slung{0};
 
     bool operator==(EquipmentSync const&) const = default;
+};
+
+/*! The server gave a client's player a weapon off the ground */
+struct alignas(8) WeaponPickup
+{
+    static constexpr auto message_type = MessageBase::WeaponPickup;
+
+    u32 player_idx{0};
+    u32 weapon{0};
+};
+
+/*! An object the server removed */
+struct ObjectDespawn
+{
+    static constexpr auto message_type = MessageBase::ObjectDespawn;
+
+    u32 net_id{0};
 };
 
 /*! A driving client's input, sent to the server every frame */
@@ -536,6 +555,8 @@ static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(EquipmentSync) == 16);
+static_assert(sizeof(WeaponPickup) == 8);
+static_assert(sizeof(ObjectDespawn) == 4);
 static_assert(sizeof(DriveInput) == 32);
 static_assert(sizeof(WeaponFire) == 64);
 static_assert(sizeof(ObjectHit) == 72);

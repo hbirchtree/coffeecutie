@@ -2560,10 +2560,7 @@ struct ResourceLoader
             }
             for(auto const& change : pending_equips)
                 if(change.entity_id == player.id())
-                    if(auto tag = index.find(change.weapon);
-                       tag != index.end() &&
-                       (*tag).matches(blam::tag_class_t::weap))
-                        take_in_hand(equip, &(*tag), files);
+                    equip_weapon(equip, info, cam, change, files);
             auto& weapon = equip.weapons[0];
             if(weapon.tag != biped.held_tag)
             {
@@ -2708,12 +2705,42 @@ struct ResourceLoader
         return out;
     }
 
-    /* The other weapon is drawn, or a new one taken; the one in hand is
-     * slung if there is room, else dropped */
-    static void take_in_hand(
-        BipedEquipment& equip, blam::tag_t const* tag, BlamFiles<Ver> const& files)
+    blam::tag_t const* weapon_tag(u32 id)
     {
-        auto& [held, slung] = equip.weapons;
+        auto tag = id ? index.find(id) : index.end();
+        return tag != index.end() && (*tag).matches(blam::tag_class_t::weap)
+                   ? &(*tag)
+                   : nullptr;
+    }
+
+    void equip_weapon(
+        BipedEquipment&         equip,
+        PlayerInfo const&       info,
+        PlayerCamera const&     cam,
+        EquipWeaponEvent const& change,
+        BlamFiles<Ver> const&   files)
+    {
+        auto&       [held, slung] = equip.weapons;
+        auto const* tag           = weapon_tag(change.weapon);
+        if(!tag)
+            return;
+        if(change.mode == EquipWeaponEvent::replicate)
+        {
+            if(held.tag != tag)
+                held = armed(tag, files);
+            if(auto const* other = weapon_tag(change.slung); slung.tag != other)
+                slung = armed(other, files);
+            return;
+        }
+        if(change.mode == EquipWeaponEvent::pick_up)
+            for(auto* carried : {&held, &slung})
+                if(carried->tag == tag)
+                {
+                    take_ammo(*carried, armed(tag, files), files);
+                    return;
+                }
+        /* The other weapon is drawn, or a new one taken; the one in hand is
+         * slung if there is room, else dropped */
         if(held.tag == tag)
             return;
         if(slung.tag == tag)
@@ -2722,9 +2749,46 @@ struct ResourceLoader
         {
             if(!slung.weapon)
                 slung = held;
+            else if(change.mode == EquipWeaponEvent::pick_up && !info.is_remote())
+                drop(held, cam, info.biped.eye_height);
             held = armed(tag, files);
         }
         equip.reloading = false;
+    }
+
+    /* A full magazine's worth, up to what can be carried */
+    static void take_ammo(
+        BipedEquipment::weapon_t&       carried,
+        BipedEquipment::weapon_t const& found,
+        BlamFiles<Ver> const&           files)
+    {
+        auto const& magic     = files.container.magic;
+        auto        triggers  = carried.weapon->triggers.data(magic);
+        auto        magazines = carried.weapon->magazines.data(magic);
+        i32         cap       = std::numeric_limits<u16>::max();
+        if(triggers.has_value() && !triggers.value().empty() && magazines.has_value())
+            if(auto const i = triggers.value()[0].magazine;
+               i >= 0 && static_cast<size_t>(i) < magazines.value().size())
+                cap = magazines.value()[i].rounds_reserved_maximum;
+        carried.rounds_total = static_cast<u16>(std::clamp<i32>(
+            carried.rounds_total + found.rounds_loaded, 0, std::max(cap, 0)));
+    }
+
+    /* Thrown down ahead of the feet, through the usual spawn path */
+    void drop(BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height)
+    {
+        Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+        Vecf3 const flat    = glm::length(Vecf2(forward)) > 1e-3f
+                                  ? glm::normalize(Vecf3(forward.x, forward.y, 0.f))
+                                  : Vecf3{1.f, 0.f, 0.f};
+        SpawnObjectEvent spawn{
+            .object   = weapon.tag->as_ref(),
+            .position = cam.camera.position - Vecf3{0.f, 0.f, eye_height * .5f} + flat * .5f,
+            .server_owned = true,
+            .velocity     = flat + Vecf3{0.f, 0.f, 1.f},
+        };
+        GameEvent ev{.type = GameEvent::SpawnObject};
+        game_bus->inject(ev, &spawn);
     }
 
     /* The scenario's first starting profile, else the map's first weapon */

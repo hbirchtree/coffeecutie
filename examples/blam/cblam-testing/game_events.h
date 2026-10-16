@@ -192,8 +192,19 @@ struct MountModelEvent
 struct EquipWeaponEvent
 {
     static constexpr auto event_type = GameEvent::EquipWeapon;
-    u64                   entity_id{0};
-    u32                   weapon{0};
+
+    enum how_t : libc_types::u8
+    {
+        draw,      /*!< Into the hand; the one there is slung if there is room */
+        replicate, /*!< What its peer says it carries, `slung` included */
+        pick_up,   /*!< Off the ground: ammo if carried, else as draw, dropping
+                        what does not fit */
+    };
+
+    u64    entity_id{0};
+    u32    weapon{0};
+    u32    slung{0};
+    how_t  mode{draw};
 };
 
 struct SpawnBipedEvent
