@@ -252,8 +252,23 @@ checked against both it and the map data.
   the SH around the reflection). Cook-Torrance's area lobe in the game uses
   pre-integrated lookup tables the engine binds globally; an order 2 SH
   lobe stands in. Not done: anti-shadow, dynamic lights, environment maps,
-  organism/glass/foliage, scenery lighting (objects sample the lightmap
-  below them), quadratic SH probes.
+  organism/glass/foliage, quadratic SH probes.
+- Scenery takes the SH and dominant light of the lightmapped triangle
+  under its origin (texel decoded on the CPU), baked into its vertex
+  light; diffuse only.
+- Self-illumination (`calc_self_illumination_*_ps`): simple, illum_detail
+  and 3_channel_self_illum; other options with a map draw as simple.
+  Added after exposure: the game scales it by `g_alt_exposure`, which
+  keeps it steady as exposure changes.
+- Tone curve (`final_composite_base.hlsl`): linear x exposure, clamped at
+  1.4938, then 1.00415x - 0.15x^3 (which meets 1 there), then display
+  gamma. The shared composite is Halo 1's (Reinhard, x2, gamma 0.7), so
+  the H3 shader writes the value that composite turns into Halo 3's
+  curve. Overbright values need a float colour buffer: RGB16F on
+  desktop, RGBA16F on WebGL (RGB16F is never renderable there).
+- Exposure: auto exposure (`auto_exposure_brightness`, in stops) is not
+  modelled; the middle of the range stands in. Interiors such as
+  030_outskirts' first BSP come out very dark.
 
 ## BlamGraphics first pass (`cblam-testing/h3`)
 
@@ -275,8 +290,14 @@ and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
   with channel swizzles, CTX1 decoded to RG8; dxt3a is not uploaded yet.
 - Lighting as in "Lighting and materials"; scenery still falls back to a
   sun term.
-- Not done: env maps, sky, crates/machines, BSP switching, visibility,
-  web loading.
+- Web: the map arrives through the Halo 2 loader's fetch (it hands non-
+  Halo 2 maps back with `file_data`); the side caches it names are opened
+  through FileMapper's store and read by range (`cache_source`), then the
+  load finishes. `H3_SIDE_PREAD=1` takes the same path on desktop. BC4/BC5
+  without RGTC and swizzles without texture swizzle go through gleam's
+  bcdec software decode; one-channel uncompressed formats are expanded to
+  RGBA8.
+- Not done: env maps, sky, crates/machines, BSP switching, visibility.
 - Headless check: `.github/tests/dummy_plug_h3.json` (four views from the
   spawn).
 
