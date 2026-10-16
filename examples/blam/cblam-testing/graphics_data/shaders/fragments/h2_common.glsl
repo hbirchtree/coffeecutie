@@ -20,6 +20,14 @@ layout(location=9) in vec2 f_bump_uv;
 
 layout(location=2, binding=0) uniform sampler2D diffuse;
 layout(location=3) uniform int alpha_test;
+#ifndef H3_TINT
+#define H3_TINT 0
+#endif
+#if H3_TINT
+/* Halo 3 albedo colour; alpha carries through for blended methods */
+layout(location=28) uniform vec4 albedo_tint;
+layout(location=29) uniform int blended;
+#endif
 #if H2_DETAIL >= 1
 layout(location=9, binding=1) uniform sampler2D detail;
 #endif
@@ -129,6 +137,9 @@ void main()
     vec4 base = texture(diffuse, f_texcoord);
     if(alpha_test != 0 && base.a < 0.5)
         discard;
+#if H3_TINT
+    base *= albedo_tint;
+#endif
     vec3 color = base.rgb;
 #if H2_DETAIL == 1
     color *= texture(detail, f_detail_uv).rgb * 2.0;
@@ -161,7 +172,11 @@ void main()
     color += texture(illum, f_illum_uv).rgb * illum_color;
 #endif
     color = fogged(color);
+#if H3_TINT
+    float alpha = blended != 0 ? base.a : 1.0;
+#else
     float alpha = 1.0;
+#endif
 #endif
     out_color = vec4(color, alpha);
 #endif
