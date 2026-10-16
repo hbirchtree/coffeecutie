@@ -91,6 +91,13 @@ struct H3Scene : compo::SubsystemBase
     u32  generation{0}; /*!< Bumped per load, so readers can resync */
 
     std::vector<Material>          materials;
+    /* Baked light: linear SH as DXT5 slice pairs (see blam/elegy/structure.h)
+     * and the max luminance of each coefficient */
+    std::shared_ptr<gfx::compat::texture_2da_t> lightprobe;
+    std::shared_ptr<gfx::sampler_t>             lightprobe_sampler;
+    Vecf4                                       lightprobe_scale{1.f};
+    f32                                         intensity_scale{1.f};
+    f32                                         exposure{1.f}; /*!< Linear */
     std::shared_ptr<gfx::buffer_t> vertex_buf;
     std::shared_ptr<gfx::buffer_t> element_buf;
 };

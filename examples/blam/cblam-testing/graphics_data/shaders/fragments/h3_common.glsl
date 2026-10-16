@@ -12,6 +12,7 @@ layout(location=1) in vec2 f_texcoord;
 layout(location=2) in vec3 f_normal;
 layout(location=3) in vec2 f_detail_uv;
 layout(location=4) in vec2 f_detail2_uv;
+layout(location=6) in vec3 f_lightmap;
 layout(location=9) in vec2 f_bump_uv;
 
 layout(location=3) uniform int alpha_test;
@@ -62,6 +63,11 @@ layout(location=87) uniform int bump_mode;
 layout(location=88) uniform vec2 bump_detail_ratio;
 #endif
 
+/* Baked light: SH coefficient pairs in layers 0-7, max luminance of each */
+layout(location=89, binding=9) uniform sampler2DArray lightprobe;
+layout(location=90) uniform vec4 lightprobe_scale;
+layout(location=91) uniform float exposure;
+
 layout(location=0) out vec4 out_color;
 
 const float detail_multiplier = 4.59479; /* 2^2.2 */
@@ -96,6 +102,27 @@ vec3 bumped_normal(vec3 n)
     return normalize(mat3(t * s, bt * s, n) * tn);
 }
 #endif
+
+/* One linear SH coefficient (RGB) from its two DXT5 slices: length from
+ * alpha, direction from rgb */
+vec3 lightprobe_coefficient(float slice, float scale)
+{
+    vec4 a = texture(lightprobe, vec3(f_lightmap.xy, slice));
+    vec4 b = texture(lightprobe, vec3(f_lightmap.xy, slice + 1.0));
+    return ((a.rgb + b.rgb) * 2.0 - 2.0) * (a.a * b.a * scale);
+}
+
+/* Diffuse reflectance (irradiance / pi) of linear SH in D3DX order:
+ * L0, then -y, z, -x */
+vec3 baked_diffuse(vec3 n)
+{
+    vec3 l0 = lightprobe_coefficient(0.0, lightprobe_scale.x);
+    vec3 l1 = lightprobe_coefficient(2.0, lightprobe_scale.y);
+    vec3 l2 = lightprobe_coefficient(4.0, lightprobe_scale.z);
+    vec3 l3 = lightprobe_coefficient(6.0, lightprobe_scale.w);
+    vec3 e = 0.886227 * l0 + 1.023328 * (-n.y * l1 + n.z * l2 - n.x * l3);
+    return max(e, vec3(0.0)) / 3.14159265;
+}
 
 #if H3_TERRAIN
 vec3 terrain_layer(
@@ -158,7 +185,12 @@ void main()
     if(bump_mode != 0)
         normal = bumped_normal(normal);
 #endif
-    vec3 sun    = normalize(vec3(0.3, 0.2, 1.0));
-    color *= 0.45 + 0.55 * abs(dot(normal, sun));
+    if(f_lightmap.z >= 0.0)
+        color *= baked_diffuse(normal) * exposure;
+    else
+    {
+        vec3 sun = normalize(vec3(0.3, 0.2, 1.0));
+        color *= 0.45 + 0.55 * abs(dot(normal, sun));
+    }
     out_color = vec4(pow(max(color, vec3(0.0)), vec3(1.0 / 2.2)), alpha);
 }
