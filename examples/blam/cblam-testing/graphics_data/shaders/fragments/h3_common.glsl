@@ -84,6 +84,15 @@ layout(location=98) uniform vec4 spec_tint1;
 layout(location=99) uniform vec3 camera_position;
 layout(location=100, binding=10) uniform sampler2D specular_mask_map;
 layout(location=101, binding=11) uniform sampler2D material_map;
+/* Self-illumination: 0 off, 1 simple, 2 with detail, 3 three channel */
+layout(location=5) in vec2 f_illum_uv;
+layout(location=104) uniform int self_illum_mode;
+layout(location=105) uniform vec4 illum_color; /* rgb, intensity in a */
+layout(location=106) uniform vec4 illum_channels[3];
+layout(location=109) uniform vec2 illum_detail_ratio;
+layout(location=110) uniform float illum_curve;
+layout(location=111, binding=12) uniform sampler2D illum_map;
+layout(location=112, binding=13) uniform sampler2D illum_detail_map;
 #endif
 
 layout(location=0) out vec4 out_color;
@@ -244,6 +253,26 @@ vec3 material_specular(
 }
 #endif
 
+#if !H3_TERRAIN
+/* Halo 3's calc_self_illumination_*_ps; added after exposure, as the
+ * game's ILLUM_SCALE keeps it independent of exposure */
+vec3 self_illumination()
+{
+    if(self_illum_mode == 0)
+        return vec3(0.0);
+    vec3 map = decode(texture(illum_map, f_illum_uv).rgb, illum_curve);
+    if(self_illum_mode == 3)
+        return (map.r * illum_channels[0].a * illum_channels[0].rgb +
+                map.g * illum_channels[1].a * illum_channels[1].rgb +
+                map.b * illum_channels[2].a * illum_channels[2].rgb) *
+               illum_color.a;
+    if(self_illum_mode == 2)
+        map *= decode(texture(illum_detail_map, f_illum_uv * illum_detail_ratio).rgb, illum_curve) *
+               detail_multiplier;
+    return map * illum_color.rgb * illum_color.a;
+}
+#endif
+
 /* Halo 3's tone curve (final_composite_base.hlsl: clamp at 1.4938, then
  * 1.00415x - 0.15x^3, which meets 1 there) and display gamma, written so
  * the shared composite's Reinhard, exposure and gamma give it back */
@@ -337,5 +366,8 @@ void main()
         vec3 sun = normalize(vec3(0.3, 0.2, 1.0));
         color *= 0.45 + 0.55 * abs(dot(normal, sun));
     }
+#if !H3_TERRAIN
+    color += self_illumination();
+#endif
     out_color = vec4(tone_map(color), alpha);
 }

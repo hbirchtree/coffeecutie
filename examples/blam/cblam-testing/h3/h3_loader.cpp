@@ -941,6 +941,8 @@ struct H3MapLoader : compo::SubsystemBase
             if(albedo == "constant_color")
                 mat.variant = Variant::base;
             load_specular(mat, option("material_model"), option("specular_mask"), constants);
+            load_self_illum(mat, option("self_illumination"), slot("self_illum_map"),
+                            slot("self_illum_detail_map"), constants);
             if(auto const* mask = slot("specular_mask_texture"))
                 mat.specular_mask_map = mask->texture;
             if(auto const* material_map = slot("material_texture"))
@@ -966,6 +968,43 @@ struct H3MapLoader : compo::SubsystemBase
         size_t idx = m_scene.materials.size() - 1;
         m_material_index.emplace(key, idx);
         return idx;
+    }
+
+    /* Self-illumination: simple, with a detail map, or three tinted
+     * channels; other options with a map fall back to simple */
+    template<typename Slot>
+    static void load_self_illum(
+        Material&                                     mat,
+        std::string_view                              option,
+        Slot const*                                   map,
+        Slot const*                                   detail,
+        std::unordered_map<std::string, Vecf4> const& constants)
+    {
+        if(!map || option.empty() || option == "off")
+            return;
+        auto value = [&](char const* name, Vecf4 fallback) {
+            auto it = constants.find(name);
+            return it == constants.end() ? fallback : it->second;
+        };
+        mat.illum       = map->texture;
+        mat.illum_scale = map->scale;
+        mat.illum_curve = map->curve;
+        mat.self_illum  = 1;
+        mat.illum_color = Vecf4(
+            Vecf3(value("self_illum_color", Vecf4(1.f))), value("self_illum_intensity", Vecf4(1.f)).x);
+        if(option == "illum_detail" && detail && map->scale.x != 0.f && map->scale.y != 0.f)
+        {
+            mat.self_illum         = 2;
+            mat.illum_detail       = detail->texture;
+            mat.illum_detail_ratio = detail->scale / map->scale;
+        } else if(option == "3_channel_self_illum")
+        {
+            mat.self_illum     = 3;
+            mat.illum_channels = {
+                value("channel_a", Vecf4(1.f)),
+                value("channel_b", Vecf4(1.f)),
+                value("channel_c", Vecf4(1.f))};
+        }
     }
 
     /* Material model parameters from the compiled float constants */
