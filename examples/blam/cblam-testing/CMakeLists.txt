@@ -74,8 +74,6 @@ coffee_application(
         h2/h2_renderer.cpp
         h2/h2_shell.cpp
         h2/h2_sound.cpp
-        h3/h3_loader.cpp
-        h3/h3_renderer.cpp
         player_controller.cpp
         loading.cpp
         map_loading.cpp
@@ -197,6 +195,9 @@ if(TARGET ImGui)
 endif()
 if(TARGET OAF)
     target_link_libraries(BlamGraphics PUBLIC OAF)
+endif()
+if(BUILD_BLAM_ELEGY)
+    target_sources(BlamGraphics PRIVATE h3/h3_loader.cpp h3/h3_renderer.cpp)
 endif()
 if(BUILD_PHYSICS AND BULLET_FOUND)
     target_compile_definitions(BlamGraphics PRIVATE -DFEATURE_ENABLE_BULLET3=1)

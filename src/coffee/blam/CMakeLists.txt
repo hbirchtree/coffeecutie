@@ -8,8 +8,11 @@ set(BLAM_SOURCES
 )
 set(BLAM_LIBS Core) # result/semantic/task_queue (got via Image transitively before)
 if(NOT (GAMECUBE OR WII))
-  list(APPEND BLAM_SOURCES private/volta/blam_bitm.cpp private/elegy/resources.cpp)
+  list(APPEND BLAM_SOURCES private/volta/blam_bitm.cpp)
   list(APPEND BLAM_LIBS Image CoreZ GLTextureFormats)
+  if(BUILD_BLAM_ELEGY)
+    list(APPEND BLAM_SOURCES private/elegy/resources.cpp)
+  endif()
 endif()
 
 coffee_library(
@@ -19,6 +22,10 @@ coffee_library(
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
               $<INSTALL_INTERFACE:include>
 )
+
+if(BUILD_BLAM_ELEGY AND NOT (GAMECUBE OR WII))
+  target_compile_definitions(Blam PUBLIC BLAM_ELEGY=1)
+endif()
 
 target_compile_options(Blam PUBLIC
     # We're doing some checks for the sizes of structs, so ignore the warnings...

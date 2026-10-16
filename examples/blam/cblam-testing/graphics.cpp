@@ -14,7 +14,9 @@
 #include "gameplay.h"
 #include "h2/h2_scene.h"
 #include "h2/h2_sound.h"
+#if defined(BLAM_ELEGY)
 #include "h3/h3_scene.h"
+#endif
 #include "impact_sounds.h"
 #include "projectiles.h"
 #include "effects.h"
@@ -305,7 +307,9 @@ i32 blam_main()
             alloc_hud(e);
             alloc_scripting(e);
             h2::alloc_h2(e);
+#if defined(BLAM_ELEGY)
             h3::alloc_h3(e);
+#endif
             setup_load_eventhandlers(e);
             alloc_camera_control(e);
 #if defined(POC_COMBAT)
