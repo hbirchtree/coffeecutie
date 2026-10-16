@@ -121,6 +121,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 auto or_white = [&](Texture const& t) {
                     return t.sampler ? t.sampler : m_white_sampler;
                 };
+                auto const& lightprobe = scene.lightprobe_sampler ? scene.lightprobe_sampler
+                                                                  : m_no_lightprobe_sampler;
+                Vecf3 const eye   = camera->camera.position;
+                i32 const   model = static_cast<i32>(mat.model);
                 using stage_t = typing::graphics::ShaderStage;
                 std::optional<std::tuple<gfx::error, std::string_view>> res;
                 if(terrain)
@@ -149,7 +153,14 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf4 const>{
                             {"layer_base_curve"}, semantic::SpanOne<const Vecf4>(base_curve)},
                         gfx::uniform_pair<Vecf4 const>{
-                            {"layer_detail_curve"}, semantic::SpanOne<const Vecf4>(detail_curve)});
+                            {"layer_detail_curve"}, semantic::SpanOne<const Vecf4>(detail_curve)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"lightprobe_scale"},
+                            semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
+                        gfx::uniform_pair<const f32>{
+                            {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
+                        gfx::uniform_pair<const f32>{
+                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)});
                     auto const& l = mat.layers;
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"base_m0", 0}, or_white(l[0].base)},
@@ -160,7 +171,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail_m1", 5}, or_white(l[1].detail)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail_m2", 6}, or_white(l[2].detail)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail_m3", 7}, or_white(l[3].detail)},
-                        gfx::sampler_definition_t{stage_t::Fragment, {"blend_map", 8}, or_white(mat.blend)});
+                        gfx::sampler_definition_t{stage_t::Fragment, {"blend_map", 8}, or_white(mat.blend)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe});
                     res = submit(frag_u, samplers);
                 } else
                 {
@@ -178,14 +190,41 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"bump_mode"}, semantic::SpanOne<const i32>(mat.bump_mode)},
                         gfx::uniform_pair<Vecf2 const>{
                             {"bump_detail_ratio"},
-                            semantic::SpanOne<const Vecf2>(mat.bump_detail_ratio)});
+                            semantic::SpanOne<const Vecf2>(mat.bump_detail_ratio)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"lightprobe_scale"},
+                            semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
+                        gfx::uniform_pair<const f32>{
+                            {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
+                        gfx::uniform_pair<const f32>{
+                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)},
+                        gfx::uniform_pair<const i32>{
+                            {"material_model"}, semantic::SpanOne<const i32>(model)},
+                        gfx::uniform_pair<const i32>{
+                            {"specular_mask_mode"}, semantic::SpanOne<const i32>(mat.specular_mask)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"spec_coefficients"},
+                            semantic::SpanOne<const Vecf4>(mat.specular.coefficients)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"spec_lobe"}, semantic::SpanOne<const Vecf4>(mat.specular.lobe)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"spec_tint0"}, semantic::SpanOne<const Vecf4>(mat.specular.tint0)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"spec_tint1"}, semantic::SpanOne<const Vecf4>(mat.specular.tint1)},
+                        gfx::uniform_pair<Vecf3 const>{
+                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail2", 2}, or_white(mat.detail2)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"bump_map", 3}, or_white(mat.bump)},
                         gfx::sampler_definition_t{
-                            stage_t::Fragment, {"bump_detail_map", 4}, or_white(mat.bump_detail)});
+                            stage_t::Fragment, {"bump_detail_map", 4}, or_white(mat.bump_detail)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"specular_mask_map", 10}, or_white(mat.specular_mask_map)},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"material_map", 11}, or_white(mat.material_map)});
                     res = submit(frag_u, samplers);
                 }
                 if(res.has_value() && !m_draw_error_logged)
@@ -247,7 +286,12 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         m_white->upload(std::vector<u8>(16, 0xFF), Veci2{0, 0}, Veci2{2, 2}, 0);
         m_white_sampler = m_white->sampler();
         m_white_sampler->alloc();
-
+        m_no_lightprobe = std::make_shared<gfx::compat::texture_2da_t>(
+            &api, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
+        m_no_lightprobe->alloc(size_3d<u32>{2, 2, 1});
+        m_no_lightprobe->upload(std::vector<u8>(16, 0xFF), Veci3{0, 0, 0}, size_3d<i32>{2, 2, 1});
+        m_no_lightprobe_sampler = m_no_lightprobe->sampler();
+        m_no_lightprobe_sampler->alloc();
 
         for(size_t i = 0; i < m_programs.size(); i++)
             create_program(
@@ -268,6 +312,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         m_programs;
     std::shared_ptr<gfx::texture_2d_t>          m_white;
     std::shared_ptr<gfx::sampler_t>             m_white_sampler;
+    std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightprobe;
+    std::shared_ptr<gfx::sampler_t>             m_no_lightprobe_sampler;
     bool                                        m_draw_error_logged{false};
 };
 

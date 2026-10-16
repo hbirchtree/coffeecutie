@@ -162,6 +162,8 @@ struct H3MapLoader : compo::SubsystemBase
         }
         m_scene.loaded = false;
         m_scene.materials.clear();
+        m_scene.lightprobe.reset();
+        m_scene.lightprobe_sampler.reset();
         m_vertices.clear();
         m_indices.clear();
         m_material_index.clear();
@@ -371,6 +373,7 @@ struct H3MapLoader : compo::SubsystemBase
 
         if(!load_bsp(bsp))
             return false;
+        m_scene.exposure = exposure_at(*scnr, bsp, eye);
         load_scenery(*scnr, bsp);
         if(m_vertices.empty())
             return false;
@@ -447,20 +450,42 @@ struct H3MapLoader : compo::SubsystemBase
         auto materials = bsp->materials.data(magic).value_or(
             Span<el::geometry_material_t const>());
 
-        u32 clusters = 0, instances = 0;
-        for(auto const& cluster : bsp->clusters.data(magic).value_or(
-                Span<el::cluster_t const>()))
-            if(auto const* mesh = cluster.mesh.resolve(meshes))
-                clusters += append_mesh(view.value(), *mesh, nullptr, Matf4(1.f), materials) > 0;
+        load_lightprobes(*lit);
+        auto lit_clusters = lit->clusters.data(magic).value_or(
+            Span<el::lightmap_target_t const>());
+        auto lit_instances = lit->instances.data(magic).value_or(
+            Span<el::lightmap_instance_t const>());
+        auto instance_texcoords = geometry.per_instance_lightmap_texcoords.data(magic).value_or(
+            Span<el::instance_lightmap_texcoords_t const>());
+        auto per_vertex = lit->per_vertex.data(magic).value_or(
+            Span<el::lightmap_per_vertex_t const>());
+        bool const have_lightprobes = m_scene.lightprobe != nullptr;
+
+        u32  clusters = 0, instances = 0;
+        auto cluster_list = bsp->clusters.data(magic).value_or(Span<el::cluster_t const>());
+        for(size_t i = 0; i < cluster_list.size(); i++)
+        {
+            auto const* mesh = cluster_list[i].mesh.resolve(meshes);
+            if(!mesh)
+                continue;
+            std::vector<Vecf2> uvs;
+            if(have_lightprobes && i < lit_clusters.size() &&
+               lit_clusters[i].texture_array_index.value() >= 0)
+                uvs = el::lightmap_texcoords(view.value(), mesh->vertex_buffers[1]);
+            clusters +=
+                append_mesh(view.value(), *mesh, nullptr, Matf4(1.f), materials, uvs) > 0;
+        }
 
         auto resources = m_loader->load(bsp->tag_resources);
         Span<el::instanced_geometry_definition_t const> definitions;
         if(resources.has_value())
             if(auto const* root = resources->root_as<el::structure_bsp_resources_t>())
                 definitions = resources->block(root->instanced_geometry);
-        for(auto const& instance : bsp->instances.data(magic).value_or(
-                Span<el::instanced_geometry_t const>()))
+        auto instance_list = bsp->instances.data(magic).value_or(
+            Span<el::instanced_geometry_t const>());
+        for(size_t i = 0; i < instance_list.size(); i++)
         {
+            auto const& instance   = instance_list[i];
             auto const* definition = instance.definition.resolve(definitions);
             if(!definition)
                 continue;
@@ -473,12 +498,30 @@ struct H3MapLoader : compo::SubsystemBase
             transform[1] = Vecf4(instance.left.value() * scale, 0.f);
             transform[2] = Vecf4(instance.up.value() * scale, 0.f);
             transform[3] = Vecf4(instance.position.value(), 1.f);
+            /* An instance's texcoords are its own buffer, through the
+             * lightmap's per-instance list */
+            std::vector<Vecf2>              uvs;
+            std::vector<el::vertex_light_t> lights;
+            i16 texcoords = instance.lightmap_texcoords;
+            if(have_lightprobes && i < lit_instances.size() &&
+               lit_instances[i].target.texture_array_index.value() >= 0 && texcoords >= 0 &&
+               static_cast<size_t>(texcoords) < instance_texcoords.size())
+                uvs = el::lightmap_texcoords(
+                    view.value(), instance_texcoords[static_cast<size_t>(texcoords)].vertex_buffer);
+            else if(i < lit_instances.size() && lit_instances[i].target.per_vertex.value() >= 0 &&
+                    static_cast<size_t>(lit_instances[i].target.per_vertex.value()) < per_vertex.size())
+                lights = el::vertex_lights(
+                    view.value(),
+                    per_vertex[static_cast<size_t>(lit_instances[i].target.per_vertex.value())]
+                        .vertex_buffer);
             instances += append_mesh(
                              view.value(),
                              *mesh,
                              definition->compression.resolve(compression),
                              transform,
-                             materials) > 0;
+                             materials,
+                             uvs,
+                             lights) > 0;
         }
         cDebug(
             "H3: {}: {} clusters, {} instances",
@@ -589,7 +632,9 @@ struct H3MapLoader : compo::SubsystemBase
         el::mesh_t const&                     mesh,
         el::compression_t const*              compression,
         Matf4 const&                          transform,
-        Span<el::geometry_material_t const>   materials)
+        Span<el::geometry_material_t const>   materials,
+        std::vector<Vecf2> const&             lightmap_uvs = {},
+        std::vector<el::vertex_light_t> const& vertex_lights = {})
     {
         auto magic   = m_map->magic();
         auto buffers = el::mesh_buffers::from(view, mesh);
@@ -599,12 +644,31 @@ struct H3MapLoader : compo::SubsystemBase
             return 0;
         u32  vbase  = static_cast<u32>(m_vertices.size());
         auto normal = glm::mat3(glm::inverseTranspose(transform));
-        for(auto const& v : m_decoded)
-            m_vertices.push_back(Vertex{
-                .position = Vecf3(transform * Vecf4(v.position, 1.f)),
-                .texcoord = v.texcoord,
-                .normal   = glm::normalize(normal * v.normal),
-            });
+        bool const lit        = lightmap_uvs.size() == m_decoded.size();
+        bool const vertex_lit = vertex_lights.size() == m_decoded.size();
+        for(size_t i = 0; i < m_decoded.size(); i++)
+        {
+            auto const& v = m_decoded[i];
+            Vertex      out{
+                     .position = Vecf3(transform * Vecf4(v.position, 1.f)),
+                     .texcoord = v.texcoord,
+                     .normal   = glm::normalize(normal * v.normal),
+                     .lightmap = lit ? Vecf3(lightmap_uvs[i], 0.f) : Vecf3(0.f, 0.f, -1.f),
+            };
+            if(vertex_lit)
+            {
+                /* Stored at a quarter, so 8 bits reach 4x the white point */
+                Vecf3 light = glm::clamp(
+                    diffuse_radiance(vertex_lights[i], out.normal) * 0.25f * 255.f,
+                    Vecf3(0.f),
+                    Vecf3(255.f));
+                out.light[0] = static_cast<u8>(light.x);
+                out.light[1] = static_cast<u8>(light.y);
+                out.light[2] = static_cast<u8>(light.z);
+                out.light[3] = 255;
+            }
+            m_vertices.push_back(out);
+        }
 
         auto parts = mesh.parts.data(magic).value_or(Span<el::part_t const>());
         u32  emitted = 0;
@@ -658,7 +722,8 @@ struct H3MapLoader : compo::SubsystemBase
             Vecf2   scale;
             f32     curve;
         };
-        std::unordered_map<std::string, Slot> slots;
+        std::unordered_map<std::string, Slot>  slots;
+        std::unordered_map<std::string, Vecf4> constants;
         auto posts = method->postprocess.data(magic).value_or(
             Span<el::render_method_postprocess_t const>());
         if(!posts.empty())
@@ -677,8 +742,11 @@ struct H3MapLoader : compo::SubsystemBase
             auto floats = post.float_constants.data(magic).value_or(
                 Span<el::be<Vecf4> const>());
             for(size_t i = 0; i < floats.size() && i < float_names.size(); i++)
+            {
                 if(map.string(float_names[i]) == "albedo_color")
                     mat.tint = floats[i];
+                constants.emplace(std::string(map.string(float_names[i])), floats[i].value());
+            }
             /* Every named texture slot, with its uv scale from the float
              * constant its transform names */
             for(size_t i = 0; i < textures.size() && i < names.size(); i++)
@@ -769,6 +837,11 @@ struct H3MapLoader : compo::SubsystemBase
             }
             if(albedo == "constant_color")
                 mat.variant = Variant::base;
+            load_specular(mat, option("material_model"), option("specular_mask"), constants);
+            if(auto const* mask = slot("specular_mask_texture"))
+                mat.specular_mask_map = mask->texture;
+            if(auto const* material_map = slot("material_texture"))
+                mat.material_map = material_map->texture;
             auto bump = option("bump_mapping");
             if(auto const* map = slot("bump_map"); map && (bump == "standard" || bump == "detail"))
             {
@@ -790,6 +863,201 @@ struct H3MapLoader : compo::SubsystemBase
         size_t idx = m_scene.materials.size() - 1;
         m_material_index.emplace(key, idx);
         return idx;
+    }
+
+    /* Material model parameters from the compiled float constants */
+    static void load_specular(
+        Material&                                     mat,
+        std::string_view                              model,
+        std::string_view                              mask,
+        std::unordered_map<std::string, Vecf4> const& constants)
+    {
+        auto value = [&](char const* name, Vecf4 fallback) {
+            auto it = constants.find(name);
+            return it == constants.end() ? fallback : it->second;
+        };
+        auto scalar = [&](char const* name, f32 fallback) {
+            return value(name, Vecf4(fallback)).x;
+        };
+        auto& s = mat.specular;
+        s.coefficients = {
+            scalar("specular_coefficient", 0.f),
+            scalar("diffuse_coefficient", 1.f),
+            scalar("analytical_specular_contribution", 0.5f),
+            scalar("area_specular_contribution", 0.5f)};
+        if(model == "two_lobe_phong")
+        {
+            mat.model = MaterialModel::two_lobe_phong;
+            s.lobe    = {
+                scalar("normal_specular_power", 10.f),
+                scalar("glancing_specular_power", 10.f),
+                scalar("fresnel_curve_steepness", 5.f),
+                scalar("albedo_specular_tint_blend", 0.f)};
+            s.tint0 = value("normal_specular_tint", Vecf4(1.f));
+            s.tint1 = value("glancing_specular_tint", Vecf4(1.f));
+        } else if(model == "cook_torrance")
+        {
+            mat.model = MaterialModel::cook_torrance;
+            s.lobe    = {
+                scalar("roughness", 0.1f),
+                scalar("albedo_blend", 0.f),
+                scalar("use_material_texture", 0.f),
+                0.f};
+            s.tint0 = value("fresnel_color", Vecf4(0.5f));
+            s.tint1 = value("specular_tint", Vecf4(1.f));
+        }
+        if(mask == "specular_mask_from_diffuse")
+            mat.specular_mask = 1;
+        else if(mask == "specular_mask_from_texture" || mask == "specular_mask_from_color_texture")
+            mat.specular_mask = 2;
+    }
+
+    /* Diffuse radiance from linear SH and a dominant light, as Halo 3's
+     * ravi_order_2_with_dominant_light; see h3_common.glsl */
+    static Vecf3 diffuse_radiance(el::vertex_light_t const& light, Vecf3 const& n)
+    {
+        auto const& sh  = light.sh;
+        Vecf3 const lum = {0.212656f, 0.715158f, 0.0721856f};
+        Vecf3       dir = {
+            -glm::dot(sh[3], lum), -glm::dot(sh[1], lum), glm::dot(sh[2], lum)};
+        dir = glm::length(dir) > 1e-6f ? glm::normalize(dir) : Vecf3(0.f, 0.f, 1.f);
+        Vecf3 out;
+        for(int c = 0; c < 3; c++)
+        {
+            Vecf3 linear = Vecf3(sh[3][c], sh[1][c], -sh[2][c]) +
+                           0.4886025f * dir * light.intensity[c];
+            f32 dc = sh[0][c] - 0.2820948f * light.intensity[c];
+            out[c] = (0.886227f * dc - 1.023328f * glm::dot(n, linear)) / glm::pi<f32>();
+        }
+        return glm::max(out, Vecf3(0.f)) +
+               std::max(glm::dot(dir, n), 0.f) * light.intensity * 0.281f;
+    }
+
+    /* Linear exposure for the camera FX of the cluster holding `eye`: the
+     * middle of its auto exposure range, standing in for auto exposure */
+    f32 exposure_at(el::scenario_t const& scnr, i16 bsp_index, Vecf3 const& eye)
+    {
+        auto const& map   = *m_map;
+        auto        magic = map.magic();
+        auto bsps = scnr.bsps.data(magic).value_or(Span<el::scenario_bsp_t const>());
+        auto const* bsp_tag = static_cast<size_t>(bsp_index) < bsps.size()
+                                  ? map.tag_at(bsps[static_cast<size_t>(bsp_index)].bsp.id)
+                                  : nullptr;
+        auto const* bsp = bsp_tag ? map.tag_data<el::structure_bsp_t>(*bsp_tag) : nullptr;
+        int camera_fx = -1;
+        if(bsp)
+            if(auto resources = m_loader->load(bsp->tag_resources); resources.has_value())
+                if(auto const* root = resources->root_as<el::structure_bsp_resources_t>())
+                {
+                    auto collision = resources->block(root->collision_bsps);
+                    auto leaves    = bsp->leaves.data(magic).value_or(Span<libc_types::i8 const>());
+                    auto clusters  = bsp->clusters.data(magic).value_or(
+                        Span<el::cluster_t const>());
+                    auto leaf = collision.empty()
+                                    ? std::nullopt
+                                    : el::coll::bsp_view_t::from(resources.value(), collision[0])
+                                          .find_leaf(eye);
+                    int cluster = leaf && *leaf < leaves.size() ? leaves[*leaf] : -1;
+                    if(cluster >= 0 && static_cast<size_t>(cluster) < clusters.size())
+                        camera_fx = clusters[static_cast<size_t>(cluster)].camera_fx;
+                }
+        auto palette = scnr.camera_fx.data(magic).value_or(Span<el::camera_fx_palette_t const>());
+        if(camera_fx < 0 || static_cast<size_t>(camera_fx) >= palette.size())
+            camera_fx = palette.empty() ? -1 : 0;
+        el::bounds_f range{};
+        bool         found    = false;
+        auto const*  settings_tag = map.tag_at(scnr.camera_effects.id);
+        if(camera_fx >= 0)
+        {
+            auto const& entry = palette[static_cast<size_t>(camera_fx)];
+            if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::force_exposure))
+                return std::exp2(entry.forced_exposure.value());
+            if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::override_exposure_bounds))
+                range = entry.exposure_range, found = true;
+            else if(auto const* tag = map.tag_at(entry.settings.id))
+                settings_tag = tag;
+        }
+        if(!found && settings_tag && map.is(*settings_tag, "cfxs"))
+            if(auto const* settings = map.tag_data<el::camera_fx_settings_t>(*settings_tag))
+                range = settings->exposure_range, found = true;
+        if(!found)
+            return 1.f;
+        f32 stops = (range.min.value() + range.max.value()) * 0.5f;
+        cDebug("H3: camera fx {}, exposure {} stops", camera_fx, stops);
+        return std::exp2(stops);
+    }
+
+    /* The BSP's lightprobe texture and dominant light intensity, both
+     * arrays of DXT5 slice pairs, as one texture array: SH coefficients in
+     * layers 0-7, intensity in 8-9 */
+    void load_lightprobes(el::lightmap_bsp_t const& lit)
+    {
+        auto const& map   = *m_map;
+        auto        magic = map.magic();
+        m_scene.lightprobe.reset();
+        m_scene.lightprobe_sampler.reset();
+        std::vector<std::vector<u8>> layers;
+        u32 width = 0, height = 0;
+        for(auto const* ref : {&lit.lightprobe_texture, &lit.intensity_texture})
+        {
+            auto const* tag    = map.tag_at(ref->id);
+            auto const* bitmap = tag ? map.tag_data<el::bitmap_t>(*tag) : nullptr;
+            auto images = bitmap ? bitmap->images.data(magic).value_or(
+                                       Span<el::bitmap_image_t const>())
+                                 : Span<el::bitmap_image_t const>();
+            auto hardware = bitmap ? bitmap->hardware_textures.data(magic).value_or(
+                                         Span<el::hardware_texture_t const>())
+                                   : Span<el::hardware_texture_t const>();
+            if(images.empty() || hardware.empty() ||
+               images[0].format.value() != el::bitmap_format_t::dxt5)
+                return;
+            auto const& image = images[0];
+            u32 w = static_cast<u32>(image.width.value());
+            u32 h = static_cast<u32>(image.height.value());
+            if((width && w != width) || (height && h != height))
+                return;
+            width = w, height = h;
+            auto view = m_loader->load(hardware[0].resource);
+            if(!view.has_value())
+                return;
+            auto stored = el::top_level(view.value(), image);
+            u32  stride = el::slice_stride(image.format.value(), w, h);
+            for(u32 z = 0; z < image.depth; z++)
+            {
+                if(size_t(z) * stride >= stored.size())
+                    return;
+                layers.emplace_back();
+                if(!el::linearize(
+                       stored.subspan(size_t(z) * stride),
+                       image.format.value(),
+                       w,
+                       h,
+                       image.xbox_flags,
+                       layers.back()))
+                    return;
+            }
+        }
+        if(layers.size() != 10)
+        {
+            cWarning("H3: lightprobe textures have {} slices, expected 10", layers.size());
+            return;
+        }
+        auto tex = std::make_shared<gfx::compat::texture_2da_t>(
+            m_api, blam::bitm::to_pixdesc(blam::bitm::format_t::BC3), 1);
+        tex->alloc(size_3d<u32>{width, height, static_cast<u32>(layers.size())});
+        for(size_t z = 0; z < layers.size(); z++)
+            tex->upload(
+                std::move(layers[z]),
+                Veci3{0, 0, static_cast<i32>(z)},
+                size_3d<i32>{static_cast<i32>(width), static_cast<i32>(height), 1});
+        m_scene.lightprobe         = tex;
+        m_scene.lightprobe_sampler = tex->sampler();
+        m_scene.lightprobe_sampler->alloc();
+        m_scene.lightprobe_sampler->set_filtering(
+            typing::Filtering::Linear, typing::Filtering::Linear);
+        auto const& c = lit.compression;
+        m_scene.lightprobe_scale = {c[0].value().x, c[2].value().x, c[4].value().x, c[6].value().x};
+        m_scene.intensity_scale  = c[8].value().x;
     }
 
     /* Alpha test and blending from the definition's options; every
