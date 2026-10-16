@@ -437,6 +437,12 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             cmd::bind_texture(convert::to(m_type), 0);
         }
     }
+    /* A swizzle set before alloc() */
+    auto const& sw = m_soft_swizzle;
+    if(m_features.swizzle && std::any_of(sw.begin(), sw.end(), [](auto const& s) {
+           return s.has_value();
+       }))
+        set_swizzle(sw[0], sw[1], sw[2], sw[3]);
 }
 
 size_3d<u32> texture_t::size()

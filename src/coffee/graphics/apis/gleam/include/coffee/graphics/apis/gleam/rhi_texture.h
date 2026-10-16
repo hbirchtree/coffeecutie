@@ -190,6 +190,14 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         std::optional<textures::swizzle_t> blue,
         std::optional<textures::swizzle_t> alpha)
     {
+        /* Kept for alloc() when set before it, and for software-decoded
+         * uploads to apply where there is no texture swizzle (WebGL) */
+        m_soft_swizzle = {red, green, blue, alpha};
+        if(m_handle == 0u)
+        {
+            m_emulate_swizzle = !m_features.swizzle;
+            return;
+        }
 #if GLEAM_MAX_VERSION_ES >= 0x300 || GLEAM_MAX_VERSION > 0x0
         set_channel_swizzle(
             group::texture_parameter_name::texture_swizzle_r, red);
@@ -204,6 +212,8 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
     features::textures  m_features{};
     workarounds         m_workarounds{};
+    std::array<std::optional<textures::swizzle_t>, 4> m_soft_swizzle{};
+    bool m_emulate_swizzle{false}; /*!< Set before alloc() on a context without swizzle */
     debug::api&         m_debug;
     rq::runtime_queue*& m_decoder_queue;
     PixDesc             m_format{};
