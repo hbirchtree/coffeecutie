@@ -145,7 +145,7 @@ std::array<compressed_format_t<T>, 27> compressed_formats(
         {CF(P::BCn, M::BC2),          {f::compressed_rgba_s3tc_dxt3_ext, b::unsigned_byte, p::rgba}, s3tc},
         {CF(P::BCn, M::BC3),          {f::compressed_rgba_s3tc_dxt5_ext, b::unsigned_byte, p::rgba}, s3tc},
 #endif
-#if GLEAM_MAX_VERSION >= 0x300
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         {CF(P::BCn, M::BC4),  {f::compressed_red_rgtc1,               b::unsigned_byte, p::red},  rgtc},
         {CF(P::BCn, M::BC5),  {f::compressed_rg_rgtc2,                b::unsigned_byte, p::rg},   rgtc},
 #endif
