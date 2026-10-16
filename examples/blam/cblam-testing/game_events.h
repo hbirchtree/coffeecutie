@@ -84,6 +84,7 @@ struct GameEvent
         Tick,
         SimulationPause,
         PlayerTickInput,
+        EquipWeapon,
     };
 
     EventType type{None};
@@ -185,6 +186,14 @@ struct MountModelEvent
     blam::tagref_typed_t<blam::tag_class_t::mod2> model;
     u64                                           entity_id{0};
     bool                                          first_person{false};
+};
+
+/*! A player's biped takes a weapon in hand, by its tag id */
+struct EquipWeaponEvent
+{
+    static constexpr auto event_type = GameEvent::EquipWeapon;
+    u64                   entity_id{0};
+    u32                   weapon{0};
 };
 
 struct SpawnBipedEvent

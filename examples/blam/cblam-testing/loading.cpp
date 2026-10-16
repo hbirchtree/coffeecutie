@@ -75,6 +75,7 @@ struct ResourceLoader
     std::vector<SpawnEquipmentEvent>   pending_equipment;
     std::vector<SpawnModelEvent>       pending_models;
     std::vector<MountModelEvent>       pending_mounts;
+    std::vector<EquipWeaponEvent>      pending_equips;
     std::vector<SpawnObjectEvent>      pending_objects;
 
     struct expiry_t
@@ -92,14 +93,30 @@ struct ResourceLoader
     struct player_biped_t
     {
         u32              load_generation{};
-        std::vector<u64> parts;
-        u64              held{0}; /*!< Its weapon */
+        std::vector<u64>   parts;
+        u64                held{0}; /*!< Its weapon */
+        blam::tag_t const* held_tag{nullptr};
     };
 
     std::map<u64, player_biped_t> player_bipeds;
 
     /*! Each local seat's first-person models (hands, weapon), by player */
-    std::map<u64, std::vector<u64>> first_person_models;
+    struct first_person_t
+    {
+        std::vector<u64>   models;
+        blam::tag_t const* weapon{nullptr};
+    };
+    std::map<u64, first_person_t> first_person_models;
+
+    /*! A weapon's first-person graph, its idle and bone->node maps */
+    struct first_person_fit_t
+    {
+        blam::antr::header const*                     graph{nullptr};
+        u32                                           idle{0};
+        std::vector<i16>                              hands_nodes;
+        blam::tagref_typed_t<blam::tag_class_t::mod2> model{};
+        std::vector<i16>                              weapon_nodes;
+    };
 
     /*! Per map: coll geometry by (coll, mod2) tag id, mod2 bounds */
     struct
@@ -118,13 +135,11 @@ struct ResourceLoader
         blam::tagref_typed_t<blam::tag_class_t::mod2> hands{};
         PlayerInfo::biped_shape_t                     shape{};
 
-        /* First-person graph fitting the hands, its idle and bone->node maps */
-        blam::antr::header const* fp_graph{nullptr};
-        u32                       fp_idle{0};
-        std::vector<i16>          hands_nodes;
-        blam::tagref_typed_t<blam::tag_class_t::mod2> fp_weapon{};
-        std::vector<i16>                              weapon_nodes;
-        blam::tag_t const*                            weapon{nullptr};
+        /* Per weapon, if its graph fits the hands; bare hands take the
+         * first that does, everyone starts with the first with a model */
+        std::map<blam::tag_t const*, std::optional<first_person_fit_t>> fits;
+        std::optional<first_person_fit_t>                               hands_fit;
+        blam::tag_t const*                                              weapon{nullptr};
 
         blam::scn::biped const*       biped{nullptr};
         std::optional<bound_marker_t> hand; /*!< Where it holds a weapon */
@@ -139,6 +154,8 @@ struct ResourceLoader
         spawn_model_queue;
     std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>
         mount_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>
+        equip_weapon_queue;
     std::shared_ptr<GameEventBus::queue_type<SpawnObjectEvent>>
         spawn_object_queue;
     std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>>
@@ -215,6 +232,7 @@ struct ResourceLoader
 
         cluster_queue->poll();
         mount_model_queue->poll();
+        equip_weapon_queue->poll();
         // spawn_biped_queue->poll();
         spawn_bsp_queue->poll();
         // spawn_equip_queue->poll();
@@ -1974,62 +1992,80 @@ struct ResourceLoader
         return map;
     }
 
-    /* First weapon whose first-person graph covers every hands bone */
+    /* The weapon's first-person graph, if it covers every hands bone */
+    std::optional<first_person_fit_t> fit_first_person(
+        blam::tag_t const& tag, BlamFiles<Ver> const& files)
+    {
+        auto const& magic  = files.container.magic;
+        auto        weapon = tag.template data<blam::scn::weapon>(magic);
+        if(!weapon.has_value())
+            return std::nullopt;
+        auto graph_tag = index.find(weapon.value()->first_person_animations);
+        if(graph_tag == index.end())
+            return std::nullopt;
+        auto graph_ = graph_tag->template data<blam::antr::header>(magic);
+        if(!graph_.has_value())
+            return std::nullopt;
+        blam::antr::header const* graph = graph_.value();
+
+        auto clips = graph->animations.data(magic);
+        auto fp    = graph->first_person_weapons.data(magic);
+        if(!clips.has_value() || !fp.has_value() || fp.value().empty())
+            return std::nullopt;
+        auto slots = fp.value()[0].animations.data(magic);
+        using fp_slot = blam::antr::first_person_weapon;
+        if(!slots.has_value() || slots.value().size() <= fp_slot::idle)
+            return std::nullopt;
+        i32 const idle = slots.value()[fp_slot::idle].animation;
+        if(idle < 0 || static_cast<size_t>(idle) >= clips.value().size() ||
+           clips.value()[idle].is_compressed())
+            return std::nullopt;
+
+        auto hands = graph_nodes_of(files, biped_model.hands, *graph);
+        if(hands.empty())
+            return std::nullopt;
+        first_person_fit_t fit{
+            .graph        = graph,
+            .idle         = static_cast<u32>(idle),
+            .hands_nodes  = std::move(hands),
+            .weapon_nodes = graph_nodes_of(
+                files, weapon.value()->first_person_model, *graph),
+        };
+        if(!fit.weapon_nodes.empty())
+            fit.model = weapon.value()->first_person_model;
+        return fit;
+    }
+
+    std::optional<first_person_fit_t> const& first_person_of(
+        blam::tag_t const& tag, BlamFiles<Ver> const& files)
+    {
+        auto it = biped_model.fits.find(&tag);
+        if(it == biped_model.fits.end())
+            it = biped_model.fits.emplace(&tag, fit_first_person(tag, files)).first;
+        return it->second;
+    }
+
+    /* Bare hands, and the weapon everyone starts with */
     void fit_first_person_graph(BlamFiles<Ver> const& files)
     {
-        auto const& magic = files.container.magic;
-
         for(blam::tag_t const& tag : index)
         {
             if(!tag.valid() || !tag.matches(blam::tag_class_t::weap))
                 continue;
-            auto weapon = tag.template data<blam::scn::weapon>(magic);
-            if(!weapon.has_value())
+            auto const& fit = first_person_of(tag, files);
+            if(!fit)
                 continue;
-            auto graph_tag = index.find(weapon.value()->first_person_animations);
-            if(graph_tag == index.end())
-                continue;
-            auto graph_ = graph_tag->template data<blam::antr::header>(magic);
-            if(!graph_.has_value())
-                continue;
-            blam::antr::header const* graph = graph_.value();
-
-            auto clips = graph->animations.data(magic);
-            auto fp    = graph->first_person_weapons.data(magic);
-            if(!clips.has_value() || !fp.has_value() || fp.value().empty())
-                continue;
-            auto slots = fp.value()[0].animations.data(magic);
-            using fp_slot = blam::antr::first_person_weapon;
-            if(!slots.has_value() || slots.value().size() <= fp_slot::idle)
-                continue;
-            i32 const idle = slots.value()[fp_slot::idle].animation;
-            if(idle < 0 || static_cast<size_t>(idle) >= clips.value().size() ||
-               clips.value()[idle].is_compressed())
-                continue;
-
-            auto hands = graph_nodes_of(files, biped_model.hands, *graph);
-            if(hands.empty())
-                continue;
-
-            biped_model.fp_graph    = graph;
-            biped_model.fp_idle     = static_cast<u32>(idle);
-            biped_model.hands_nodes = std::move(hands);
-            biped_model.weapon_nodes =
-                graph_nodes_of(files, weapon.value()->first_person_model, *graph);
-            if(!biped_model.weapon_nodes.empty())
+            if(!biped_model.hands_fit)
+                biped_model.hands_fit = fit;
+            if(fit->model.valid())
             {
-                biped_model.fp_weapon = weapon.value()->first_person_model;
-                biped_model.weapon    = &tag;
+                biped_model.weapon = &tag;
+                cDebug("Players start with {}", index.name_of(tag));
+                return;
             }
-            cDebug(
-                "First-person hands animated by {}, weapon {}",
-                index.name_of(*graph_tag),
-                biped_model.fp_weapon.valid()
-                    ? index.name_of(biped_model.fp_weapon)
-                    : std::string_view("<none>"));
-            return;
         }
-        cDebug("No weapon's first-person graph fits the hands");
+        if(!biped_model.hands_fit)
+            cDebug("No weapon's first-person graph fits the hands");
     }
 
     /*! A coll tag in bind pose, as one hull per node plus its exact
@@ -2500,28 +2536,43 @@ struct ResourceLoader
             live.insert(player.id());
             /* Once per load, so a model that fails to mount isn't retried */
             auto& biped = player_bipeds[player.id()];
-            if(biped.load_generation == files.load_generation)
-                continue;
-            biped.load_generation = files.load_generation;
-            pending_mounts.push_back({
-                .model     = biped_model.model,
-                .entity_id = player.id(),
-            });
-            equip = {
-                .biped           = biped_model.biped,
-                .load_generation = files.load_generation,
-            };
-            if(biped_model.weapon)
-                equip.weapons[0] = {
-                    .weapon = biped_model.weapon
-                                  ->template data<blam::scn::weapon>(
-                                      files.container.magic)
-                                  .value(),
-                    .tag  = biped_model.weapon,
-                    .held = biped.held = respawn_held(
-                        p, player.id(), biped.held, files),
+            if(biped.load_generation != files.load_generation)
+            {
+                biped.load_generation = files.load_generation;
+                biped.held_tag        = nullptr;
+                pending_mounts.push_back({
+                    .model     = biped_model.model,
+                    .entity_id = player.id(),
+                });
+            }
+            /* Everyone starts with the map's weapon, until told otherwise */
+            if(equip.load_generation != files.load_generation)
+            {
+                equip = {
+                    .biped           = biped_model.biped,
+                    .load_generation = files.load_generation,
                 };
+                equip.weapons[0] = armed(biped_model.weapon, files);
+            }
+            for(auto const& change : pending_equips)
+                if(change.entity_id == player.id())
+                    if(auto tag = index.find(change.weapon);
+                       tag != index.end() &&
+                       (*tag).matches(blam::tag_class_t::weap))
+                        equip.weapons[0] = armed(&(*tag), files);
+            auto& weapon = equip.weapons[0];
+            if(weapon.tag != biped.held_tag)
+            {
+                biped.held_tag = weapon.tag;
+                biped.held     = respawn_held(p, player.id(), biped.held, weapon.tag, files);
+            }
+            weapon.held = biped.held;
         }
+        /* Changes for bodies not shown yet wait for them */
+        std::erase_if(pending_equips, [&](EquipWeaponEvent const& e) {
+            return live.contains(e.entity_id) ||
+                   !p.template get<PlayerInfo>(e.entity_id);
+        });
 
         std::set<u64> doomed;
         for(auto it = player_bipeds.begin(); it != player_bipeds.end();)
@@ -2572,25 +2623,38 @@ struct ResourceLoader
                !info.mode.physics || !biped_in_play(info, cam, net))
                 continue;
             live.insert(player.id());
+            /* What it holds, else bare hands */
+            auto const* equip = p.template get<BipedEquipment>(player.id());
+            auto const* held =
+                equip ? equip->held(files.load_generation) : nullptr;
+            blam::tag_t const* weapon = held ? held->tag : nullptr;
+            auto const*        fit    = weapon ? &first_person_of(*weapon, files)
+                                               : &biped_model.hands_fit;
+            if(!*fit)
+                fit = &biped_model.hands_fit;
+            first_person_fit_t const* posed = *fit ? &**fit : nullptr;
             /* A map load takes them with the rest of ObjectGC */
-            auto& models = first_person_models[player.id()];
-            if(!models.empty() &&
-               std::all_of(models.begin(), models.end(), [&p](u64 id) {
+            auto& fp = first_person_models[player.id()];
+            if(!fp.models.empty() && fp.weapon == weapon &&
+               std::all_of(fp.models.begin(), fp.models.end(), [&p](u64 id) {
                    return p.template get<Model>(id) != nullptr;
                }))
                 continue;
-            despawn_first_person(p, models);
-            models.push_back(spawn_first_person(
-                p, player.id(), info.seat_idx, biped_model.hands,
-                biped_model.hands_nodes));
-            if(biped_model.fp_weapon.valid())
-                models.push_back(spawn_first_person(
+            despawn_first_person(p, fp.models);
+            fp.weapon = weapon;
+            static std::vector<i16> const unposed;
+            fp.models.push_back(spawn_first_person(
+                p, player.id(), info.seat_idx, biped_model.hands, posed,
+                posed ? posed->hands_nodes : unposed));
+            if(posed && posed->model.valid())
+                fp.models.push_back(spawn_first_person(
                     p,
                     player.id(),
                     info.seat_idx,
-                    biped_model.fp_weapon,
-                    biped_model.weapon_nodes,
-                    biped_model.weapon));
+                    posed->model,
+                    posed,
+                    posed->weapon_nodes,
+                    weapon));
         }
 
         for(auto it = first_person_models.begin();
@@ -2601,24 +2665,39 @@ struct ResourceLoader
                 ++it;
                 continue;
             }
-            despawn_first_person(p, it->second);
+            despawn_first_person(p, it->second.models);
             it = first_person_models.erase(it);
         }
     }
 
+    static BipedEquipment::weapon_t armed(
+        blam::tag_t const* tag, BlamFiles<Ver> const& files)
+    {
+        if(!tag)
+            return {};
+        auto weapon = tag->template data<blam::scn::weapon>(files.container.magic);
+        if(!weapon.has_value())
+            return {};
+        return {.weapon = weapon.value(), .tag = tag};
+    }
+
     /* The held weapon's own model, in the biped's hand */
     u64 respawn_held(
-        Proxy& p, u64 player, u64 old, BlamFiles<Ver> const& files)
+        Proxy&                p,
+        u64                   player,
+        u64                   old,
+        blam::tag_t const*    tag,
+        BlamFiles<Ver> const& files)
     {
         if(old)
         {
             std::vector<u64> models{old};
             despawn_first_person(p, models);
         }
-        auto weapon = biped_model.weapon->template data<blam::scn::weapon>(
-            files.container.magic);
-        if(!biped_model.hand || !weapon.has_value() ||
-           !weapon.value()[0].model.valid())
+        if(!tag || !biped_model.hand)
+            return 0;
+        auto weapon = tag->template data<blam::scn::weapon>(files.container.magic);
+        if(!weapon.has_value() || !weapon.value()[0].model.valid())
             return 0;
         auto ent = p.create_entity(shared_recipes::held_model);
         *p.template get<HeldObject>(ent.id()) = {
@@ -2626,7 +2705,7 @@ struct ResourceLoader
             .node   = biped_model.hand->node,
             .offset = biped_model.hand->transform,
         };
-        p.template get<Model>(ent.id())->origin_object = biped_model.weapon;
+        p.template get<Model>(ent.id())->origin_object = tag;
         /* Hidden from its holder's own view, like the body */
         if(auto const* body = p.template get_at<Visibility, 0>(player))
         {
@@ -2650,6 +2729,7 @@ struct ResourceLoader
         u64                                                  player,
         u32                                                  seat,
         blam::tagref_typed_t<blam::tag_class_t::mod2> const& model,
+        first_person_fit_t const*                            fit,
         std::vector<i16> const&                              nodes,
         blam::tag_t const*                                   object = nullptr)
     {
@@ -2657,15 +2737,12 @@ struct ResourceLoader
         p.template get<Attachment>(ent.id())->parent = player;
         /* The weapon's attachments, e.g. its muzzle flash, ride along */
         p.template get<Model>(ent.id())->origin_object = object;
-        if(biped_model.fp_graph && !nodes.empty())
+        if(fit && !nodes.empty())
         {
             auto* anim       = p.template get<AnimationPlayback>(ent.id());
-            anim->graph      = biped_model.fp_graph;
+            anim->graph      = fit->graph;
             anim->bone_nodes = nodes;
-            anim->play(
-                AnimationPlayback::base_slot,
-                biped_model.fp_graph,
-                biped_model.fp_idle);
+            anim->play(AnimationPlayback::base_slot, fit->graph, fit->idle);
         }
         /* Both buffers: it never changes, and must hold this frame */
         p.template get_at<Visibility, 0>(ent.id())->only_render_for = seat;
@@ -2775,6 +2852,14 @@ void alloc_resource_loader(compo::EntityContainer& e)
     loader.mount_model_queue = game_bus.addQueuedEventFunction<MountModelEvent>(
         0, [&loader](GameEvent&, MountModelEvent* spawn) {
             loader.pending_mounts.push_back(*spawn);
+        });
+    loader.equip_weapon_queue = game_bus.addQueuedEventFunction<EquipWeaponEvent>(
+        0, [&loader](GameEvent&, EquipWeaponEvent* equip) {
+            /* The latest per body counts */
+            std::erase_if(loader.pending_equips, [equip](EquipWeaponEvent const& e) {
+                return e.entity_id == equip->entity_id;
+            });
+            loader.pending_equips.push_back(*equip);
         });
     /* Above 0 so Networking's stamping handler runs first and the queued copy
      * carries the replicated net_id */
