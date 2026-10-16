@@ -63,6 +63,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
 
         auto&        resources = p.template subsystem<BlamResources>();
         auto const&  post      = p.template subsystem<PostProcessParameters>();
+        f32 const    exposure  = adapt_exposure(scene, camera->camera.position);
         Vecf2 const  composite{post.exposure, post.gamma};
         Vecf3 const  offset{};
         f32 const    scale = 1.f;
@@ -160,7 +161,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"lightprobe_scale"},
                             semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
                         gfx::uniform_pair<const f32>{
-                            {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
+                            {"exposure"}, semantic::SpanOne<const f32>(exposure)},
                         gfx::uniform_pair<Vecf2 const>{
                             {"composite"}, semantic::SpanOne<const Vecf2>(composite)},
                         gfx::uniform_pair<const f32>{
@@ -199,7 +200,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"lightprobe_scale"},
                             semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
                         gfx::uniform_pair<const f32>{
-                            {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
+                            {"exposure"}, semantic::SpanOne<const f32>(exposure)},
                         gfx::uniform_pair<Vecf2 const>{
                             {"composite"}, semantic::SpanOne<const Vecf2>(composite)},
                         gfx::uniform_pair<const f32>{
@@ -257,6 +258,25 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     }
 
   private:
+    /* Auto exposure: moves a little towards the camera's target each frame */
+    f32 adapt_exposure(H3Scene const& scene, Vecf3 const& eye)
+    {
+        if(!scene.auto_exposure.enabled)
+            return scene.exposure;
+        if(m_exposure_generation != scene.generation)
+        {
+            m_exposure_generation = scene.generation;
+            m_stops               = std::log2(scene.exposure);
+        }
+        if(auto light = scene.baked.below(eye))
+        {
+            f32 target = scene.auto_exposure.stops_for(glm::dot(
+                diffuse_radiance(*light, Vecf3(0.f, 0.f, 1.f)), Vecf3(0.2126f, 0.7152f, 0.0722f)));
+            m_stops += (target - m_stops) * 0.1f;
+        }
+        return std::exp2(m_stops);
+    }
+
     void ensure_gpu()
     {
         if(m_api)
@@ -335,6 +355,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::sampler_t>             m_white_sampler;
     std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightprobe;
     std::shared_ptr<gfx::sampler_t>             m_no_lightprobe_sampler;
+    f32                                         m_stops{0.f};
+    u32                                         m_exposure_generation{~0u};
     bool                                        m_draw_error_logged{false};
 };
 
