@@ -16,7 +16,7 @@ namespace h3 {
 
 using H3RendererManifest = compo::SubsystemManifest<
     compo::type_list_t<const PlayerCamera, const PlayerInfo>,
-    compo::type_list_t<const H3Scene, const BlamResources, const PostProcessParameters, gfx::system>,
+    compo::type_list_t<const H3Scene, const BlamResources, gfx::system>,
     compo::empty_list_t>;
 
 /* Submits every material of the scene; no visibility yet */
@@ -62,9 +62,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             return;
 
         auto&        resources = p.template subsystem<BlamResources>();
-        auto const&  post      = p.template subsystem<PostProcessParameters>();
         f32 const    exposure  = adapt_exposure(scene, camera->camera.position);
-        Vecf2 const  composite{post.exposure, post.gamma};
         Vecf3 const  offset{};
         f32 const    scale = 1.f;
         Vecf2 const  unit{1.f, 1.f};
@@ -128,6 +126,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                                                                   : m_no_lightprobe_sampler;
                 Vecf3 const eye   = camera->camera.position;
                 i32 const   model = static_cast<i32>(mat.model);
+                i32 const   black_point = mat.black_point ? 1 : 0;
                 using stage_t = typing::graphics::ShaderStage;
                 std::optional<std::tuple<gfx::error, std::string_view>> res;
                 if(terrain)
@@ -162,10 +161,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
                         gfx::uniform_pair<const f32>{
                             {"exposure"}, semantic::SpanOne<const f32>(exposure)},
-                        gfx::uniform_pair<Vecf2 const>{
-                            {"composite"}, semantic::SpanOne<const Vecf2>(composite)},
                         gfx::uniform_pair<const f32>{
-                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)});
+                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"atmosphere"},
+                            semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
+                        gfx::uniform_pair<Vecf3 const>{
+                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
                     auto const& l = mat.layers;
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"base_m0", 0}, or_white(l[0].base)},
@@ -201,10 +203,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
                         gfx::uniform_pair<const f32>{
                             {"exposure"}, semantic::SpanOne<const f32>(exposure)},
-                        gfx::uniform_pair<Vecf2 const>{
-                            {"composite"}, semantic::SpanOne<const Vecf2>(composite)},
                         gfx::uniform_pair<const f32>{
                             {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"atmosphere"},
+                            semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
+                        gfx::uniform_pair<Vecf3 const>{
+                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)},
                         gfx::uniform_pair<const i32>{
                             {"material_model"}, semantic::SpanOne<const i32>(model)},
                         gfx::uniform_pair<const i32>{
@@ -218,10 +223,14 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"spec_tint0"}, semantic::SpanOne<const Vecf4>(mat.specular.tint0)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"spec_tint1"}, semantic::SpanOne<const Vecf4>(mat.specular.tint1)},
-                        gfx::uniform_pair<Vecf3 const>{
-                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)},
                         gfx::uniform_pair<const i32>{
                             {"self_illum_mode"}, semantic::SpanOne<const i32>(mat.self_illum)},
+                        gfx::uniform_pair<const i32>{
+                            {"black_point"}, semantic::SpanOne<const i32>(black_point)},
+                        gfx::uniform_pair<Vecf2 const>{
+                            {"detail3_ratio"}, semantic::SpanOne<const Vecf2>(mat.detail3_ratio)},
+                        gfx::uniform_pair<const f32>{
+                            {"detail3_curve"}, semantic::SpanOne<const f32>(mat.detail3_curve)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"illum_color"}, semantic::SpanOne<const Vecf4>(mat.illum_color)},
                         gfx::uniform_pair<Vecf4 const>{
@@ -246,7 +255,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             stage_t::Fragment, {"material_map", 11}, or_white(mat.material_map)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"illum_map", 12}, or_white(mat.illum)},
                         gfx::sampler_definition_t{
-                            stage_t::Fragment, {"illum_detail_map", 13}, or_white(mat.illum_detail)});
+                            stage_t::Fragment, {"illum_detail_map", 13}, or_white(mat.illum_detail)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail3", 14}, or_white(mat.detail3)});
                     res = submit(frag_u, samplers);
                 }
                 if(res.has_value() && !m_draw_error_logged)

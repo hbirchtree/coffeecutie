@@ -28,6 +28,8 @@ enum class Variant : u8
     two_detail,
     detail_blend,
     terrain,
+    detail_overlay, /*!< two_detail_overlay */
+    three_detail,   /*!< three_detail_blend */
     count,
 };
 
@@ -37,6 +39,8 @@ inline constexpr std::string_view variant_files[] = {
     "h3_two_detail",
     "h3_detail_blend",
     "h3_terrain",
+    "h3_detail_overlay",
+    "h3_three_detail",
 };
 
 static_assert(std::size(variant_files) == static_cast<size_t>(Variant::count));
@@ -89,6 +93,10 @@ struct Material
     Vecf2                                  detail_scale{1.f, 1.f};
     Texture                                detail2;
     Vecf2                                  detail2_scale{1.f, 1.f};
+    /* detail_map_overlay or detail_map3, at base uv * ratio */
+    Texture                                detail3;
+    Vecf2                                  detail3_ratio{1.f, 1.f};
+    f32                                    detail3_curve{2.f};
     /* Decode exponents of base, detail, detail2 (see h3_common.glsl) */
     Vecf3                                  curves{2.f, 2.f, 2.f};
     /* 0 none, 1 bump map, 2 plus detail bump; detail uv = bump uv * ratio */
@@ -99,6 +107,7 @@ struct Material
     SpecularParams                         specular;
     /* 0 off, 1 simple, 2 with detail, 3 three channel */
     i32                                    self_illum{0};
+    bool                                   black_point{false}; /*!< two_detail_black_point */
     Texture                                illum;
     Vecf2                                  illum_scale{1.f, 1.f};
     Texture                                illum_detail;
@@ -140,6 +149,9 @@ struct H3Scene : compo::SubsystemBase
     f32                                         intensity_scale{1.f};
     f32                                         exposure{1.f}; /*!< Linear, at load */
     AutoExposure                                auto_exposure;
+    /* Halo 3's v_atmosphere_constant_0..5 and _extra for compute_scattering
+     * (atmosphere.fx); disabled when constant 1's w is negative */
+    std::array<Vecf4, 7>                        atmosphere{Vecf4(0.f), Vecf4(0.f, 0.f, 0.f, -1.f)};
     BakedLight                                  baked;
     std::shared_ptr<gfx::buffer_t> vertex_buf;
     std::shared_ptr<gfx::buffer_t> element_buf;
