@@ -266,9 +266,19 @@ checked against both it and the map data.
   the H3 shader writes the value that composite turns into Halo 3's
   curve. Overbright values need a float colour buffer: RGB16F on
   desktop, RGBA16F on WebGL (RGB16F is never renderable there).
-- Exposure: auto exposure (`auto_exposure_brightness`, in stops) is not
-  modelled; the middle of the range stands in. Interiors such as
-  030_outskirts' first BSP come out very dark.
+- Exposure: the scene's mean luminance is taken as the baked diffuse light
+  under the camera times 0.35, and exposure = clamp(target - log2(that))
+  inside the camera FX range, moved 10% of the way each frame. The cfxs
+  target is in stops; a palette entry's forced target is linear. Checked
+  against MCC captures of Valhalla (frame means 0.28-0.35 outdoors): the
+  model gives ~0.1 stops there, Guardian clamps to 1.25, the Outskirts
+  hangar to 3.5 (it is lit by dynamic lights in the game, not baked).
+- Comparing with captures (`.github/tests/references/h3`, MCC): dummy plug
+  camera rotation is [pitch, yaw] in degrees with yaw = world facing - 180,
+  negative pitch looking down; fov is vertical, Halo's 78 horizontal is
+  about 48 at the captures' aspect. Valhalla's bases sit at x 81.5,
+  y -60 (blue, by the waterfall) and y -144 (red); the dam wall at x 40-48
+  with the river along its foot. `H3_BSP` and `H3_EXPOSURE` help.
 
 ## BlamGraphics first pass (`cblam-testing/h3`)
 
