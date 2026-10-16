@@ -165,6 +165,8 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.materials.clear();
         m_scene.lightprobe.reset();
         m_scene.lightprobe_sampler.reset();
+        m_lit_triangles.clear();
+        m_lightprobe_layers.clear();
         m_vertices.clear();
         m_indices.clear();
         m_material_index.clear();
@@ -616,7 +618,7 @@ struct H3MapLoader : compo::SubsystemBase
         auto        magic = map.magic();
         auto palette = scnr.scenery_palette.data(magic).value_or(
             Span<el::palette_entry_t const>());
-        u32 placed = 0, skipped = 0, hidden = 0;
+        u32 placed = 0, skipped = 0, hidden = 0, lit = 0;
         std::unordered_map<u32, std::optional<el::resource_view>> views;
         for(auto const& placement : scnr.scenery.data(magic).value_or(
                 Span<el::scenery_placement_t const>()))
@@ -661,7 +663,9 @@ struct H3MapLoader : compo::SubsystemBase
                 Span<el::compression_t const>());
             auto materials = model->materials.data(magic).value_or(
                 Span<el::geometry_material_t const>());
-            u32 emitted = 0;
+            u32  emitted = 0;
+            auto light   = light_below(object.position.value());
+            lit += light.has_value();
             for(auto const& region : model->regions.data(magic).value_or(
                     Span<el::region_t const>()))
             {
@@ -677,7 +681,10 @@ struct H3MapLoader : compo::SubsystemBase
                         meshes[m],
                         compression.empty() ? nullptr : &compression[0],
                         transform,
-                        materials);
+                        materials,
+                        {},
+                        {},
+                        light ? &*light : nullptr);
             }
             if(emitted)
                 placed++;
@@ -685,8 +692,10 @@ struct H3MapLoader : compo::SubsystemBase
                 skipped++;
         }
         cDebug(
-            "H3: scenery: {} placed, {} skipped, {} editor-only or modelless",
+            "H3: scenery: {} placed ({} lit from below), {} skipped, {} editor-only or "
+            "modelless",
             placed,
+            lit,
             skipped,
             hidden);
     }
@@ -712,7 +721,8 @@ struct H3MapLoader : compo::SubsystemBase
         Matf4 const&                          transform,
         Span<el::geometry_material_t const>   materials,
         std::vector<Vecf2> const&             lightmap_uvs = {},
-        std::vector<el::vertex_light_t> const& vertex_lights = {})
+        std::vector<el::vertex_light_t> const& vertex_lights = {},
+        el::vertex_light_t const*              object_light  = nullptr)
     {
         auto magic   = m_map->magic();
         auto buffers = el::mesh_buffers::from(view, mesh);
@@ -723,7 +733,7 @@ struct H3MapLoader : compo::SubsystemBase
         u32  vbase  = static_cast<u32>(m_vertices.size());
         auto normal = glm::mat3(glm::inverseTranspose(transform));
         bool const lit        = lightmap_uvs.size() == m_decoded.size();
-        bool const vertex_lit = vertex_lights.size() == m_decoded.size();
+        bool const vertex_lit = vertex_lights.size() == m_decoded.size() || object_light;
         for(size_t i = 0; i < m_decoded.size(); i++)
         {
             auto const& v = m_decoded[i];
@@ -737,7 +747,8 @@ struct H3MapLoader : compo::SubsystemBase
             {
                 /* Stored at a quarter, so 8 bits reach 4x the white point */
                 Vecf3 light = glm::clamp(
-                    diffuse_radiance(vertex_lights[i], out.normal) * 0.25f * 255.f,
+                    diffuse_radiance(object_light ? *object_light : vertex_lights[i], out.normal) *
+                        0.25f * 255.f,
                     Vecf3(0.f),
                     Vecf3(255.f));
                 out.light[0] = static_cast<u8>(light.x);
@@ -750,6 +761,21 @@ struct H3MapLoader : compo::SubsystemBase
 
         auto parts = mesh.parts.data(magic).value_or(Span<el::part_t const>());
         u32  emitted = 0;
+        /* Lightmapped triangles, for lighting objects placed on them */
+        auto keep_lit = [&](std::vector<std::array<u16, 3>> const& triangles) {
+            if(!lit)
+                return;
+            for(auto const& t : triangles)
+            {
+                LitTriangle out;
+                for(int c = 0; c < 3; c++)
+                {
+                    out.position[c] = m_vertices[vbase + t[c]].position;
+                    out.uv[c]       = lightmap_uvs[t[c]];
+                }
+                m_lit_triangles.push_back(out);
+            }
+        };
         auto emit = [&](i16 material, u32 start, u32 count) {
             m_triangles.clear();
             buffers.triangles(mesh.index_type, start, count, m_triangles);
@@ -771,6 +797,7 @@ struct H3MapLoader : compo::SubsystemBase
             });
             for(auto const& t : m_triangles)
                 m_indices.insert(m_indices.end(), t.begin(), t.end());
+            keep_lit(m_triangles);
             emitted++;
         };
         if(parts.empty())
@@ -990,6 +1017,52 @@ struct H3MapLoader : compo::SubsystemBase
             mat.specular_mask = 2;
     }
 
+    /* The baked light on the lightmapped surface under `position`, as
+     * objects in Halo 3 take it from the lightmap below them */
+    std::optional<el::vertex_light_t> light_below(Vecf3 const& position) const
+    {
+        if(m_lightprobe_layers.size() != 10 || m_lit_triangles.empty())
+            return std::nullopt;
+        f32 const top  = position.z + 0.5f;
+        f32       best = -std::numeric_limits<f32>::max();
+        Vecf2     uv{};
+        for(auto const& t : m_lit_triangles)
+        {
+            auto const& p = t.position;
+            Vecf2 a{p[0].x, p[0].y}, b{p[1].x, p[1].y}, c{p[2].x, p[2].y};
+            f32   d = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+            if(std::abs(d) < 1e-8f)
+                continue;
+            f32 w0 = ((b.y - c.y) * (position.x - c.x) + (c.x - b.x) * (position.y - c.y)) / d;
+            f32 w1 = ((c.y - a.y) * (position.x - c.x) + (a.x - c.x) * (position.y - c.y)) / d;
+            f32 w2 = 1.f - w0 - w1;
+            if(w0 < 0.f || w1 < 0.f || w2 < 0.f)
+                continue;
+            f32 z = w0 * p[0].z + w1 * p[1].z + w2 * p[2].z;
+            if(z > top || z <= best)
+                continue;
+            best = z;
+            uv   = w0 * t.uv[0] + w1 * t.uv[1] + w2 * t.uv[2];
+        }
+        if(best == -std::numeric_limits<f32>::max())
+            return std::nullopt;
+        u32 x = std::min(static_cast<u32>(uv.x * m_lightprobe_size.x), m_lightprobe_size.x - 1);
+        u32 y = std::min(static_cast<u32>(uv.y * m_lightprobe_size.y), m_lightprobe_size.y - 1);
+        auto value = [&](u32 pair, f32 scale) {
+            auto t0 = el::dxt5_texel(m_lightprobe_layers[pair * 2], m_lightprobe_size.x, x, y);
+            auto t1 = el::dxt5_texel(m_lightprobe_layers[pair * 2 + 1], m_lightprobe_size.x, x, y);
+            Vecf3 dir;
+            for(int c = 0; c < 3; c++)
+                dir[c] = (t0[c] + t1[c]) / 255.f * 2.f - 2.f;
+            return dir * (t0[3] / 255.f) * (t1[3] / 255.f) * scale;
+        };
+        auto const& s = m_scene.lightprobe_scale;
+        return el::vertex_light_t{
+            .sh        = {value(0, s.x), value(1, s.y), value(2, s.z), value(3, s.w)},
+            .intensity = value(4, m_scene.intensity_scale),
+        };
+    }
+
     /* Diffuse radiance from linear SH and a dominant light, as Halo 3's
      * ravi_order_2_with_dominant_light; see h3_common.glsl */
     static Vecf3 diffuse_radiance(el::vertex_light_t const& light, Vecf3 const& n)
@@ -1123,6 +1196,9 @@ struct H3MapLoader : compo::SubsystemBase
         auto tex = std::make_shared<gfx::compat::texture_2da_t>(
             m_api, blam::bitm::to_pixdesc(blam::bitm::format_t::BC3), 1);
         tex->alloc(size_3d<u32>{width, height, static_cast<u32>(layers.size())});
+        /* Kept for lighting objects from the lightmap under them */
+        m_lightprobe_layers = layers;
+        m_lightprobe_size   = {width, height};
         for(size_t z = 0; z < layers.size(); z++)
             tex->upload(
                 std::move(layers[z]),
@@ -1416,6 +1492,15 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<u16>                                   m_indices;
     std::vector<el::vertex_t>                          m_decoded;
     std::vector<std::array<u16, 3>>                    m_triangles;
+
+    struct LitTriangle
+    {
+        std::array<Vecf3, 3> position;
+        std::array<Vecf2, 3> uv;
+    };
+    std::vector<LitTriangle>     m_lit_triangles;
+    std::vector<std::vector<u8>> m_lightprobe_layers;
+    Vecui2                       m_lightprobe_size{};
     std::unordered_map<u32, size_t>                    m_material_index;
     std::unordered_map<u32, std::optional<Texture>>    m_textures;
 };
