@@ -3,6 +3,10 @@
 #include <coffee/comp_app/services.h>
 #include <coffee/core/types/display/event.h>
 
+#include <map>
+#include <optional>
+#include <peripherals/typing/vectors/vector_types.h>
+
 struct SDL_Window;
 struct SDL_Surface;
 struct SDL_GLContextState;
@@ -258,8 +262,20 @@ struct MouseInput
     virtual void                 warp(const comp_app::position_t& newPos) final;
     virtual MouseButton          buttons() const final;
 
-    MouseButton       m_buttons = MouseButton::NoneBtn;
-    entity_container* m_container;
+    struct finger_t
+    {
+        typing::vector_types::Vecf2 origin, previous;
+    };
+    struct pinch_t
+    {
+        typing::vector_types::Vecf2 origin;
+        libc_types::f32             distance;
+    };
+
+    MouseButton                         m_buttons = MouseButton::NoneBtn;
+    std::map<libc_types::u64, finger_t> m_fingers;
+    std::optional<pinch_t>              m_pinch;
+    entity_container*                   m_container;
 };
 
 struct Clipboard

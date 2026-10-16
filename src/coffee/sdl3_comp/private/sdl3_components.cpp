@@ -1114,6 +1114,63 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
         }
     }
 
+    // Finger coordinates are normalized; scale to what the framebuffer reports
+    Vecf2 window_px{1.f};
+    if(auto fb = m_container->service<comp_app::GraphicsFramebuffer>())
+        window_px = Vecf2(fb->size().w, fb->size().h);
+    // Pinch spans the two fingers down; a third lifting ends it too
+    auto pinch_pair = [this] {
+        auto it = m_fingers.begin();
+        Vecf2 a = it->second.previous;
+        Vecf2 b = std::next(it)->second.previous;
+        return std::pair{a, b};
+    };
+    while(SDL_PeepEvents(
+        &event,
+        1,
+        SDL_GETEVENT,
+        SDL_EVENT_FINGER_DOWN,
+        SDL_EVENT_FINGER_CANCELED))
+    {
+        const Vecf2 pos = Vecf2(event.tfinger.x, event.tfinger.y) * window_px;
+        if(event.type == SDL_EVENT_FINGER_DOWN)
+        {
+            m_fingers[event.tfinger.fingerID] = {pos, pos};
+            if(m_fingers.size() == 2)
+            {
+                auto [a, b] = pinch_pair();
+                m_pinch     = pinch_t{(a + b) / 2.f, glm::length(a - b)};
+            }
+            continue;
+        }
+        auto it = m_fingers.find(event.tfinger.fingerID);
+        if(it == m_fingers.end())
+            continue;
+        CITouchMotionEvent move{};
+        move.finger   = static_cast<libc_types::u16>(event.tfinger.fingerID);
+        move.origin   = it->second.origin;
+        move.previous = it->second.previous;
+        move.current  = pos;
+        move.pressure = event.tfinger.pressure;
+        move.end      = event.type != SDL_EVENT_FINGER_MOTION;
+        it->second.previous = pos;
+        EMIT_IEVENT(move)
+        if(m_pinch && (move.end || m_fingers.size() == 2))
+        {
+            auto [a, b] = pinch_pair();
+            CITouchPinchEvent pinch;
+            pinch.origin = m_pinch->origin;
+            pinch.factor = move.end || m_pinch->distance <= 0.f
+                               ? 1.f
+                               : glm::length(a - b) / m_pinch->distance;
+            EMIT_IEVENT(pinch)
+            if(move.end)
+                m_pinch = std::nullopt;
+        }
+        if(move.end)
+            m_fingers.erase(it);
+    }
+
     while(SDL_PeepEvents(
         &event, 1, SDL_GETEVENT, SDL_EVENT_DROP_FILE, SDL_EVENT_DROP_COMPLETE))
     {
