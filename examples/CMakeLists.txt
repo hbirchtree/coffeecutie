@@ -23,7 +23,9 @@ if(BUILD_BLAM AND NOT (
 )
   # Apple's Clang yells at tag-inspect
   add_subdirectory(blam/dimeter-info)
-  add_subdirectory(blam/elegy-info)
+  if(BUILD_BLAM_ELEGY)
+    add_subdirectory(blam/elegy-info)
+  endif()
   add_subdirectory(blam/map-decompress)
   add_subdirectory(blam/script-dumper)
   add_subdirectory(blam/tag-inspect)

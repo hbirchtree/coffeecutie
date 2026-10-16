@@ -12,6 +12,7 @@ option(BUILD_UTILITIES "Build tools" ON)
 
 option(BUILD_BLAM "Build Blam! data readers" ON)
 option(BUILD_BLAM_DIMETER "Build Halo 2 (dimeter) readers and tools" ON)
+option(BUILD_BLAM_ELEGY "Build Halo 3 (elegy) readers and tools" OFF)
 option(BUILD_GNS "Build GameNetworkingSockets" ON)
 option(BUILD_HEADFUL "Build with graphics/windowing support" ON)
 option(BUILD_LIBOGC "Build libogc components (GameCube/Wii only)" OFF)

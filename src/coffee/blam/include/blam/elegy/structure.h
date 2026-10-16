@@ -1,6 +1,7 @@
 #pragma once
 
 #include "model.h"
+#include "objects.h"
 
 namespace blam::elegy {
 
@@ -148,13 +149,21 @@ struct scenario_bsp_t
 
 static_assert(sizeof(scenario_bsp_t) == 0x6C);
 
-/*! scenario ("scnr"), the BSP list only */
+/*! scenario ("scnr"): BSPs, scenery and where players start */
 struct scenario_t
 {
-    std::array<u8, 0x14>      unknown_0;
-    tag_block<scenario_bsp_t> bsps;
+    std::array<u8, 0x14>             unknown_0;
+    tag_block<scenario_bsp_t>        bsps;
+    std::array<u8, 0x9C>             unknown_1;
+    tag_block<scenery_placement_t>   scenery;
+    tag_block<palette_entry_t>       scenery_palette;
+    std::array<u8, 0x180>            unknown_2;
+    tag_block<starting_location_t>   starting_locations;
 };
 
 static_assert(offsetof(scenario_t, bsps) == 0x14);
+static_assert(offsetof(scenario_t, scenery) == 0xBC);
+static_assert(offsetof(scenario_t, scenery_palette) == 0xC8);
+static_assert(offsetof(scenario_t, starting_locations) == 0x254);
 
 } // namespace blam::elegy
