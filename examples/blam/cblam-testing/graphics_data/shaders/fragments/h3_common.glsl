@@ -68,6 +68,8 @@ layout(location=89, binding=9) uniform sampler2DArray lightprobe;
 layout(location=90) uniform vec4 lightprobe_scale;
 layout(location=91) uniform float exposure;
 layout(location=92) uniform float intensity_scale;
+/* The shared composite's exposure and gamma, see screen_clear.frag */
+layout(location=102) uniform vec2 composite;
 layout(location=8) in vec4 f_vertex_light;
 
 #if !H3_TERRAIN
@@ -242,6 +244,17 @@ vec3 material_specular(
 }
 #endif
 
+/* Halo 3's tone curve (final_composite_base.hlsl: clamp at 1.4938, then
+ * 1.00415x - 0.15x^3, which meets 1 there) and display gamma, written so
+ * the shared composite's Reinhard, exposure and gamma give it back */
+vec3 tone_map(vec3 linear)
+{
+    vec3 x       = clamp(linear, vec3(0.0), vec3(1.4938016));
+    vec3 display = pow((1.0041494 - 0.15 * x * x) * x, vec3(1.0 / 2.2));
+    vec3 q       = min(pow(display, vec3(composite.y)) / composite.x, vec3(0.999));
+    return q / (1.0 - q);
+}
+
 #if H3_TERRAIN
 vec3 terrain_layer(
     sampler2D base, sampler2D det, vec4 scale, float detailed, float base_curve, float detail_curve)
@@ -324,5 +337,5 @@ void main()
         vec3 sun = normalize(vec3(0.3, 0.2, 1.0));
         color *= 0.45 + 0.55 * abs(dot(normal, sun));
     }
-    out_color = vec4(pow(max(color, vec3(0.0)), vec3(1.0 / 2.2)), alpha);
+    out_color = vec4(tone_map(color), alpha);
 }

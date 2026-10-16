@@ -4753,6 +4753,7 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
             {"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)},
         gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)},
+        gfx::uniform_pair{{"tone_curve"}, semantic::SpanOne(postprocess.tone_curve)},
         gfx::uniform_pair{{"tonemap"}, semantic::SpanOne(tonemap)});
 
     // clang-format off
@@ -4785,6 +4786,7 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     f32   one = 1.f;
     Vecf2 no_blur{0.f, 0.f};
     effect_mode = 0;
+    i32   no_curve = 0;
 
     params_f = gfx::make_uniform_list(
         typing::graphics::ShaderStage::Fragment,
@@ -4797,6 +4799,7 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
             {"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)},
         gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)},
+        gfx::uniform_pair{{"tone_curve"}, semantic::SpanOne(no_curve)},
         gfx::uniform_pair{{"tonemap"}, semantic::SpanOne(overlay_tonemap)});
 
     for(screen_quad_t const& draw : extra_quads)
