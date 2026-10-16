@@ -7,6 +7,9 @@
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
+#if defined(BLAM_ELEGY_XMA2)
+#include <blam/elegy/xma2.h>
+#endif
 #include <blam/elegy/structure.h>
 #include <cxxopts.hpp>
 
@@ -808,6 +811,31 @@ std::vector<char> make_xma2_riff(elegy::xma2_format_t const& format, Span<byte_t
     return out;
 }
 
+#if defined(BLAM_ELEGY_XMA2)
+std::vector<char> make_wav(elegy::pcm_t const& pcm)
+{
+    std::vector<char> out;
+    u32  bytes = static_cast<u32>(pcm.samples.size() * sizeof(i16));
+    auto u32le = [&](u32 v) { append<u32>(out, blam::to_le(v)); };
+    auto u16le = [&](u16 v) { append<u16>(out, blam::to_le(v)); };
+    out.insert(out.end(), {'R', 'I', 'F', 'F'});
+    u32le(36 + bytes);
+    out.insert(out.end(), {'W', 'A', 'V', 'E', 'f', 'm', 't', ' '});
+    u32le(16);
+    u16le(1);
+    u16le(static_cast<u16>(pcm.channels));
+    u32le(pcm.rate);
+    u32le(pcm.rate * pcm.channels * 2);
+    u16le(static_cast<u16>(pcm.channels * 2));
+    u16le(16);
+    out.insert(out.end(), {'d', 'a', 't', 'a'});
+    u32le(bytes);
+    for(i16 sample : pcm.samples)
+        append<i16>(out, blam::to_le(sample));
+    return out;
+}
+#endif
+
 int dump_sounds(
     elegy::map_container const& map,
     elegy::resource_loader&     loader,
@@ -873,17 +901,27 @@ int dump_sounds(
                 if(options.extract_dir.empty() || bytes.empty() ||
                    codec->compression != elegy::sound_compression_t::xma2)
                     continue;
-                auto file = make_xma2_riff(
-                    elegy::xma2_format_t::from(*codec, samples, static_cast<u32>(bytes.size())),
-                    bytes);
-                auto path = fmt::format(
-                    "{}/{}_{}.xma",
+                auto format =
+                    elegy::xma2_format_t::from(*codec, samples, static_cast<u32>(bytes.size()));
+                auto file = make_xma2_riff(format, bytes);
+                auto stem = fmt::format(
+                    "{}/{}_{}",
                     options.extract_dir,
                     sanitize(name),
                     perm_name ? map.string(*perm_name) : std::string_view("perm"));
-                std::ofstream(path, std::ios::binary)
+                std::ofstream(stem + ".xma", std::ios::binary)
                     .write(file.data(), static_cast<std::streamsize>(file.size()));
                 written++;
+#if defined(BLAM_ELEGY_XMA2)
+                elegy::pcm_t pcm;
+                if(elegy::decode_xma2(format, bytes, pcm))
+                {
+                    auto wav = make_wav(pcm);
+                    std::ofstream(stem + ".wav", std::ios::binary)
+                        .write(wav.data(), static_cast<std::streamsize>(wav.size()));
+                } else
+                    fmt::print("      XMA2 decode failed\n");
+#endif
             }
         }
         loader.trim();
@@ -995,7 +1033,9 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("bitmaps", "List bitmap images")
         //
-        ("sounds", "List sounds; with -e, write each permutation as RIFF XMA2")
+        ("sounds",
+         "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
+         "when built with BUILD_OPENAL_XMA2)")
         //
         ("obj", "Write decoded geometry to this OBJ", cxxopts::value<std::string>())
         //
