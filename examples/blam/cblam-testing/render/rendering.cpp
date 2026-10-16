@@ -716,7 +716,7 @@ struct DrawListBuilder
                 break;
             m_views.push_back({
                 .seat     = info.seat_idx,
-                .position = cam.camera.position,
+                .position = cam.drawn_eye,
             });
         }
         std::sort(
@@ -2815,7 +2815,7 @@ struct MeshRenderer
             m_players.push_back({
                 .seat_idx = info.seat_idx,
                 .matrix   = cam.matrix,
-                .position = cam.camera.position,
+                .position = cam.drawn_eye,
                 .rotation = glm::mat3_cast(cam.camera.rotation),
                 .view     = Matf3(cam.rotation),
                 .focal    = 1.f / std::tan(glm::radians(cam.camera.fieldOfView) * .5f),
@@ -3351,7 +3351,7 @@ struct LegacyMeshRenderer
 
         ProfContext       _;
         BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
-        Vecf3 const       eye        = cam->camera.position;
+        Vecf3 const       eye        = cam->drawn_eye;
         m_effects.build(
             scene,
             bitm_cache,

@@ -258,19 +258,19 @@ struct MotionInterpolator
         {
             auto [info, cam] = ent.components();
             cam.drawn_eye    = cam.camera.position;
-            if(!cam.tick_eye || !ticked_eye(p, info) ||
-               glm::distance(*cam.tick_eye, cam.camera.position) > max_tick_move)
-                continue;
-            Vecf3 const eye   = glm::mix(*cam.tick_eye, cam.camera.position, alpha);
-            Vecf3 const delta = eye - cam.camera.position;
-            cam.drawn_eye     = eye;
-            build_camera_matrix(cam, eye);
-            /* First-person models hang off the eye */
+            if(cam.tick_eye && ticked_eye(p, info) &&
+               glm::distance(*cam.tick_eye, cam.camera.position) <= max_tick_move)
+            {
+                cam.drawn_eye = glm::mix(*cam.tick_eye, cam.camera.position, alpha);
+                build_camera_matrix(cam, cam.drawn_eye);
+            }
+            /* First-person models hang off the eye as drawn, once this
+             * frame's ticks have moved the camera */
             for(auto held : p.select<Attachment, Model>())
             {
                 auto [attachment, model] = held.components();
                 if(attachment.parent == ent.id())
-                    model.transform = glm::translate(Matf4(1), delta) * model.transform;
+                    place_first_person(cam, cam.drawn_eye, attachment, model);
             }
         }
         /* Held objects ride their holder's pose as drawn */

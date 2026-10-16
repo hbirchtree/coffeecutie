@@ -28,6 +28,23 @@ using PlayerControllerManifest = compo::SubsystemManifest<
         comp_app::MouseInput
     >>;
 
+/*! First-person models at `eye`: models +X forward, +Z up; camera -Z
+ *  forward, +Y up */
+inline void place_first_person(
+    PlayerCamera const& cam, Vecf3 const& eye, Attachment const& attachment, Model& model)
+{
+    static const Matf3 model_to_view{
+        {0, 0, -1},
+        {-1, 0, 0},
+        {0, 1, 0},
+    };
+    Matf3 const world = glm::transpose(Matf3(cam.rotation)) * model_to_view;
+    model.position    = eye;
+    model.rotation    = glm::normalize(Quatf(world));
+    model.transform =
+        glm::translate(Matf4(1), eye) * Matf4(world) * attachment.offset;
+}
+
 /*! A camera's projection and view, from `eye` and its rotation */
 inline void build_camera_matrix(PlayerCamera& cam, Vecf3 const& eye)
 {
