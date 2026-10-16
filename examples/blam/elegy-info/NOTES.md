@@ -252,8 +252,33 @@ checked against both it and the map data.
   the SH around the reflection). Cook-Torrance's area lobe in the game uses
   pre-integrated lookup tables the engine binds globally; an order 2 SH
   lobe stands in. Not done: anti-shadow, dynamic lights, environment maps,
-  organism/glass/foliage, scenery lighting (objects sample the lightmap
-  below them), quadratic SH probes.
+  organism/glass/foliage, quadratic SH probes.
+- Scenery takes the SH and dominant light of the lightmapped triangle
+  under its origin (texel decoded on the CPU), baked into its vertex
+  light; diffuse only.
+- Self-illumination (`calc_self_illumination_*_ps`): simple, illum_detail
+  and 3_channel_self_illum; other options with a map draw as simple.
+  Added after exposure: the game scales it by `g_alt_exposure`, which
+  keeps it steady as exposure changes.
+- Tone curve (`final_composite_base.hlsl`): linear x exposure, clamped at
+  1.4938, then 1.00415x - 0.15x^3 (which meets 1 there), then display
+  gamma. The shared composite is Halo 1's (Reinhard, x2, gamma 0.7), so
+  the H3 shader writes the value that composite turns into Halo 3's
+  curve. Overbright values need a float colour buffer: RGB16F on
+  desktop, RGBA16F on WebGL (RGB16F is never renderable there).
+- Exposure: the scene's mean luminance is taken as the baked diffuse light
+  under the camera times 0.35, and exposure = clamp(target - log2(that))
+  inside the camera FX range, moved 10% of the way each frame. The cfxs
+  target is in stops; a palette entry's forced target is linear. Checked
+  against MCC captures of Valhalla (frame means 0.28-0.35 outdoors): the
+  model gives ~0.1 stops there, Guardian clamps to 1.25, the Outskirts
+  hangar to 3.5 (it is lit by dynamic lights in the game, not baked).
+- Comparing with captures (`.github/tests/references/h3`, MCC): dummy plug
+  camera rotation is [pitch, yaw] in degrees with yaw = world facing - 180,
+  negative pitch looking down; fov is vertical, Halo's 78 horizontal is
+  about 48 at the captures' aspect. Valhalla's bases sit at x 81.5,
+  y -60 (blue, by the waterfall) and y -144 (red); the dam wall at x 40-48
+  with the river along its foot. `H3_BSP` and `H3_EXPOSURE` help.
 
 ## BlamGraphics first pass (`cblam-testing/h3`)
 
@@ -275,8 +300,14 @@ and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
   with channel swizzles, CTX1 decoded to RG8; dxt3a is not uploaded yet.
 - Lighting as in "Lighting and materials"; scenery still falls back to a
   sun term.
-- Not done: env maps, sky, crates/machines, BSP switching, visibility,
-  web loading.
+- Web: the map arrives through the Halo 2 loader's fetch (it hands non-
+  Halo 2 maps back with `file_data`); the side caches it names are opened
+  through FileMapper's store and read by range (`cache_source`), then the
+  load finishes. `H3_SIDE_PREAD=1` takes the same path on desktop. BC4/BC5
+  without RGTC and swizzles without texture swizzle go through gleam's
+  bcdec software decode; one-channel uncompressed formats are expanded to
+  RGBA8.
+- Not done: env maps, sky, crates/machines, BSP switching, visibility.
 - Headless check: `.github/tests/dummy_plug_h3.json` (four views from the
   spawn).
 

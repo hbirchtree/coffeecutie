@@ -11,7 +11,13 @@ if(NOT (GAMECUBE OR WII))
   list(APPEND BLAM_SOURCES private/volta/blam_bitm.cpp)
   list(APPEND BLAM_LIBS Image CoreZ GLTextureFormats)
   if(BUILD_BLAM_ELEGY)
-    list(APPEND BLAM_SOURCES private/elegy/resources.cpp)
+    list(APPEND BLAM_SOURCES
+        private/elegy/bitmap.cpp
+        private/elegy/collision.cpp
+        private/elegy/geometry.cpp
+        private/elegy/map.cpp
+        private/elegy/resources.cpp
+        private/elegy/sound.cpp)
   endif()
 endif()
 
