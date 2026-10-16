@@ -158,6 +158,16 @@ static_assert(sizeof(compression_t) == 0x2C);
  * \brief render_geometry, embedded in mode, sbsp and sLdT. The vertex and
  * index buffers are in the resource it names.
  */
+/*! An instance's lightmap texcoords: a static_per_pixel vertex buffer */
+struct instance_lightmap_texcoords_t
+{
+    tag_block<std::array<u8, 0x60>> texcoords;
+    be<i16>                         vertex_buffer;
+    u16                             unknown_0;
+};
+
+static_assert(sizeof(instance_lightmap_texcoords_t) == 0x10);
+
 struct render_geometry_t
 {
     be<u32>                               flags;
@@ -170,7 +180,7 @@ struct render_geometry_t
     tag_block<std::array<u8, 0xC>>        per_mesh_node_map;
     tag_block<std::array<u8, 0xC>>        per_mesh_subpart_visibility;
     tag_block<std::array<u8, 0x20>>       per_mesh_prt;
-    tag_block<std::array<u8, 0x10>>       per_instance_lightmap_texcoords;
+    tag_block<instance_lightmap_texcoords_t> per_instance_lightmap_texcoords;
     datum_index                           resource;
     u32                                   unknown_0;
 };
@@ -294,6 +304,82 @@ struct vertex_t
     std::array<u8, 4>  nodes{};
     Vecf4              weights{};
 };
+
+/*!
+ * \brief Lightmap texcoords from a static_per_pixel vertex buffer: two
+ * unsigned 16-bit normalized values per vertex. Empty if the buffer is
+ * missing or of another format.
+ */
+inline std::vector<Vecf2> lightmap_texcoords(resource_view const& view, i16 vertex_buffer)
+{
+    std::vector<Vecf2> out;
+    auto const* api = view.root_as<render_geometry_api_t>();
+    if(!api || vertex_buffer < 0)
+        return out;
+    auto vbs = view.block(api->vertex_buffers);
+    if(static_cast<size_t>(vertex_buffer) >= vbs.size())
+        return out;
+    auto const* vb = view.resolve(vbs[static_cast<size_t>(vertex_buffer)]);
+    if(!vb || vb->format.value() != vertex_format_t::static_per_pixel)
+        return out;
+    auto bytes = view.bytes(vb->data);
+    u32  count = static_cast<u32>(vb->count.value());
+    if(u64(count) * 4 > bytes.size())
+        return out;
+    out.resize(count);
+    for(u32 i = 0; i < count; i++)
+    {
+        std::array<be<u16>, 2> uv;
+        std::memcpy(uv.data(), bytes.data() + i * 4, 4);
+        out[i] = Vecf2(uv[0].value(), uv[1].value()) / 65535.f;
+    }
+    return out;
+}
+
+/*! Baked light at a vertex: linear SH (D3DX order) and dominant intensity */
+struct vertex_light_t
+{
+    std::array<Vecf3, 4> sh;
+    Vecf3                intensity;
+};
+
+/*!
+ * \brief Per-vertex baked light from a static_per_vertex buffer: five
+ * signed 8-bit RGBE values (exponent first, scale 2^(e * 31.75)), the
+ * dominant light intensity then the four SH coefficients.
+ */
+inline std::vector<vertex_light_t> vertex_lights(resource_view const& view, i32 vertex_buffer)
+{
+    std::vector<vertex_light_t> out;
+    auto const* api = view.root_as<render_geometry_api_t>();
+    if(!api || vertex_buffer < 0)
+        return out;
+    auto vbs = view.block(api->vertex_buffers);
+    if(static_cast<size_t>(vertex_buffer) >= vbs.size())
+        return out;
+    auto const* vb = view.resolve(vbs[static_cast<size_t>(vertex_buffer)]);
+    if(!vb || vb->format.value() != vertex_format_t::static_per_vertex)
+        return out;
+    auto bytes = view.bytes(vb->data);
+    u32  count = static_cast<u32>(vb->count.value());
+    if(u64(count) * 20 > bytes.size())
+        return out;
+    auto snorm = [](byte_t b) { return std::max(static_cast<i8>(b) / 127.f, -1.f); };
+    out.resize(count);
+    for(u32 i = 0; i < count; i++)
+    {
+        byte_t const* v = bytes.data() + i * 20;
+        std::array<Vecf3, 5> values;
+        for(u32 k = 0; k < 5; k++)
+        {
+            byte_t const* e = v + k * 4;
+            values[k] = Vecf3(snorm(e[1]), snorm(e[2]), snorm(e[3])) *
+                        std::exp2(snorm(e[0]) * 31.75f);
+        }
+        out[i] = {.sh = {values[1], values[2], values[3], values[4]}, .intensity = values[0]};
+    }
+    return out;
+}
 
 /*!
  * \brief A mesh's buffers, located in its geometry resource

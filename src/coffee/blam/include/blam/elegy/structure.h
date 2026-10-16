@@ -189,14 +189,66 @@ struct structure_bsp_resources_t
     resource_block<instanced_geometry_definition_t> instanced_geometry;
 };
 
-struct lightmap_bsp_t
+/*! Baked lighting stored per vertex, in a static_per_vertex buffer */
+struct lightmap_per_vertex_t
 {
-    be<u16>                 flags;
-    be<i16>                 bsp; /*!< Into the scenario's structure BSPs */
-    std::array<u8, 0x12C>   unknown_0;
-    render_geometry_t       geometry;
+    tag_block<std::array<u8, 0x20>> probes;
+    be<i32>                         vertex_buffer;
 };
 
+static_assert(sizeof(lightmap_per_vertex_t) == 0x10);
+
+/*! Where a cluster's or instance's light comes from; -1 for none */
+struct lightmap_target_t
+{
+    be<i16> texture_array_index;
+    be<i16> per_vertex;
+};
+
+struct lightmap_instance_t
+{
+    lightmap_target_t target;
+    be<i16>           probe;
+    u16               unknown_0;
+};
+
+static_assert(sizeof(lightmap_instance_t) == 0x8);
+
+/*! Light at one point: dominant light, quadratic SH per colour channel */
+struct lightmap_probe_t
+{
+    std::array<be<i16>, 4>  dominant_direction;
+    std::array<be<i16>, 4>  dominant_intensity;
+    std::array<be<i16>, 27> sh;
+    u16                     unknown_0;
+};
+
+static_assert(sizeof(lightmap_probe_t) == 0x48);
+
+/*!
+ * \brief One BSP's baked lighting. Texels hold linear SH (4 coefficients)
+ * plus the dominant light intensity, each as two DXT5 slices: the length
+ * of the RGB vector is alpha0 * alpha1 * max_luminance, its direction
+ * (rgb0 + rgb1) * 2 - 2. max_luminance per vector is in `compression`.
+ */
+struct lightmap_bsp_t
+{
+    be<u16>                          flags;
+    be<i16>                          bsp; /*!< Into the scenario's structure BSPs */
+    be<i32>                          checksum;
+    std::array<be<Vecf3>, 18>        compression;
+    tag_reference                    lightprobe_texture;
+    tag_reference                    intensity_texture;
+    tag_block<lightmap_per_vertex_t> per_vertex;
+    tag_block<lightmap_target_t>     clusters;
+    tag_block<lightmap_instance_t>   instances;
+    tag_block<lightmap_probe_t>      probes;
+    render_geometry_t                geometry;
+};
+
+static_assert(offsetof(lightmap_bsp_t, lightprobe_texture) == 0xE0);
+static_assert(offsetof(lightmap_bsp_t, per_vertex) == 0x100);
+static_assert(offsetof(lightmap_bsp_t, probes) == 0x124);
 static_assert(offsetof(lightmap_bsp_t, geometry) == 0x130);
 static_assert(sizeof(lightmap_bsp_t) == 0x1B4);
 
@@ -220,6 +272,47 @@ struct scenario_bsp_t
 static_assert(sizeof(scenario_bsp_t) == 0x6C);
 
 /*! scenario ("scnr"): BSPs, scenery and where players start */
+/*! camera_fx_settings ("cfxs"), the exposure part; values in stops */
+struct camera_fx_settings_t
+{
+    be<u16>  flags;
+    u16      unknown_0;
+    be<f32>  exposure; /*!< Target when auto exposure is off */
+    be<f32>  maximum_change;
+    be<f32>  blend_speed;
+    bounds_f exposure_range;
+    be<f32>  auto_exposure_brightness;
+    be<f32>  auto_exposure_delay;
+};
+
+enum class camera_fx_flags_t : u8
+{
+    none                     = 0x0,
+    force_exposure           = 0x1,
+    force_auto_exposure      = 0x2,
+    override_exposure_bounds = 0x4,
+    override_inherent_bloom  = 0x8,
+    override_bloom_intensity = 0x10,
+};
+C_FLAGS(camera_fx_flags_t, u8);
+
+/*! What a cluster's camera_fx index names: settings plus overrides */
+struct camera_fx_palette_t
+{
+    string_id         name;
+    tag_reference     settings; /*!< Empty: globals\default */
+    camera_fx_flags_t flags;
+    u8                unknown_0;
+    u16               unknown_1;
+    be<f32>           forced_exposure;
+    be<f32>           forced_auto_exposure_brightness;
+    bounds_f          exposure_range;
+    be<f32>           inherent_bloom;
+    be<f32>           bloom_intensity;
+};
+
+static_assert(sizeof(camera_fx_palette_t) == 0x30);
+
 struct scenario_t
 {
     std::array<u8, 0x14>             unknown_0;
@@ -229,11 +322,17 @@ struct scenario_t
     tag_block<palette_entry_t>       scenery_palette;
     std::array<u8, 0x180>            unknown_2;
     tag_block<starting_location_t>   starting_locations;
+    std::array<u8, 0x2A4>            unknown_3;
+    tag_block<camera_fx_palette_t>   camera_fx;
+    std::array<u8, 0x1A0>            unknown_4;
+    tag_reference                    camera_effects; /*!< cfxs where no cluster names one */
 };
 
 static_assert(offsetof(scenario_t, bsps) == 0x14);
 static_assert(offsetof(scenario_t, scenery) == 0xBC);
 static_assert(offsetof(scenario_t, scenery_palette) == 0xC8);
 static_assert(offsetof(scenario_t, starting_locations) == 0x254);
+static_assert(offsetof(scenario_t, camera_fx) == 0x504);
+static_assert(offsetof(scenario_t, camera_effects) == 0x6B0);
 
 } // namespace blam::elegy

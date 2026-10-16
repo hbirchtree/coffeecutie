@@ -401,6 +401,21 @@ inline bool linearize(
 }
 
 /*!
+ * \brief Bytes from one slice of an array (or face of a cube) to the next:
+ * the surface padded to 32x32 blocks, then to 4 KiB.
+ */
+constexpr u32 slice_stride(bitmap_format_t format, u32 width, u32 height)
+{
+    auto layout = layout_of(format);
+    if(!layout.valid())
+        return 0;
+    u32 bw = (width + layout.block_edge - 1) / layout.block_edge;
+    u32 bh = (height + layout.block_edge - 1) / layout.block_edge;
+    u32 bytes = ((bw + 31) & ~31u) * ((bh + 31) & ~31u) * layout.block_bytes;
+    return (bytes + 4095) & ~4095u;
+}
+
+/*!
  * \brief CTX1 blocks, linearized, to (x, y) 8-bit texels. A block is two
  * endpoints stored y first, as DXN, and 2-bit indices shared by both
  * channels; the indices pick endpoint 0, 1, or 1/3 and 2/3 between them.

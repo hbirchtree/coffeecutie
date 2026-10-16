@@ -736,7 +736,8 @@ int dump_bitmaps(
                 static_cast<u8>(image.xbox_flags));
             if(options.extract_dir.empty() || i >= textures.size())
                 continue;
-            if(image.type.value() != elegy::bitmap_type_t::texture_2d)
+            auto type = image.type.value();
+            if(type != elegy::bitmap_type_t::texture_2d && type != elegy::bitmap_type_t::array)
                 continue;
             auto dds = dds_format(format);
             if(!dds)
@@ -750,26 +751,37 @@ int dump_bitmaps(
             auto stored = elegy::top_level(view.value(), image);
             u32  width = static_cast<u32>(image.width.value());
             u32  height = static_cast<u32>(image.height.value());
-            if(stored.empty() ||
-               !elegy::linearize(stored, format, width, height, image.xbox_flags, linear))
+            /* Array slices are written one file each */
+            u32 slices = type == elegy::bitmap_type_t::array ? std::max<u32>(image.depth, 1) : 1;
+            u32 stride = elegy::slice_stride(format, width, height);
+            for(u32 z = 0; z < slices; z++)
             {
-                fmt::print("    no pixel data\n");
-                continue;
+                if(size_t(z) * stride >= stored.size())
+                    break;
+                auto slice = stored.subspan(size_t(z) * stride);
+                if(slice.empty() ||
+                   !elegy::linearize(slice, format, width, height, image.xbox_flags, linear))
+                {
+                    fmt::print("    no pixel data\n");
+                    break;
+                }
+                /* CTX1 has no DDS form; written decoded, x in red */
+                if(format == elegy::bitmap_format_t::ctx1)
+                {
+                    std::vector<byte_t> blocks = std::move(linear);
+                    elegy::decode_ctx1(blocks, width, height, linear);
+                }
+                auto path = fmt::format(
+                    "{}/{}{}{}.dds",
+                    options.extract_dir,
+                    sanitize(name),
+                    images.size() > 1 ? fmt::format("_{}", i) : std::string(),
+                    slices > 1 ? fmt::format("_z{}", z) : std::string());
+                auto file = make_dds(*dds, width, height, linear);
+                std::ofstream(path, std::ios::binary)
+                    .write(file.data(), static_cast<std::streamsize>(file.size()));
+                written++;
             }
-            /* CTX1 has no DDS form; written decoded, x in red */
-            if(format == elegy::bitmap_format_t::ctx1)
-            {
-                std::vector<byte_t> blocks = std::move(linear);
-                elegy::decode_ctx1(blocks, width, height, linear);
-            }
-            auto path = fmt::format(
-                "{}/{}{}.dds",
-                options.extract_dir,
-                sanitize(name),
-                images.size() > 1 ? fmt::format("_{}", i) : std::string());
-            auto file = make_dds(*dds, width, height, linear);
-            std::ofstream(path, std::ios::binary).write(file.data(), static_cast<std::streamsize>(file.size()));
-            written++;
         }
         loader.trim();
         if(options.limit && count >= options.limit)
