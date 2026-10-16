@@ -85,6 +85,9 @@ struct MessageBase
 
         /* Physics */
         ObjectImpact,
+
+        /* What players hold */
+        EquipmentSync,
     } type{None};
 
     u32 request{};
@@ -255,6 +258,17 @@ struct alignas(8) SeatSync
     flags_t flags{none};
 
     bool operator==(SeatSync const&) const = default;
+};
+
+/*! What a player holds; sent on change and to newly verified peers */
+struct alignas(8) EquipmentSync
+{
+    static constexpr auto message_type = MessageBase::EquipmentSync;
+
+    u32 player_idx{0};
+    u32 weapon{0}; /*!< Tag id, 0 for none */
+
+    bool operator==(EquipmentSync const&) const = default;
 };
 
 /*! A driving client's input, sent to the server every frame */
@@ -513,6 +527,7 @@ static_assert(sizeof(Message<PlayerJoin>) == 48);
 static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
+static_assert(sizeof(EquipmentSync) == 8);
 static_assert(sizeof(DriveInput) == 32);
 static_assert(sizeof(WeaponFire) == 64);
 static_assert(sizeof(ObjectHit) == 72);

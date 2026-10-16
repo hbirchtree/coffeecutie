@@ -607,6 +607,23 @@ void create_resources(compo::EntityContainer& e)
                      SimulationPauseEvent pause{.paused = ev.data.value("paused", true)};
                      e.subsystem_cast<GameEventBus>().inject(pause_ev, &pause);
                  }
+                 if(ev.event == "equip_weapon")
+                 {
+                     /* {"seat": n, "weapon": "weapons\\pistol\\pistol"} */
+                     u32 const seat  = ev.data.value("seat", 0u);
+                     auto const& files = e.subsystem_cast<BlamFiles<halo_version>>();
+                     blam::tag_index_view<halo_version> index(files.container);
+                     auto tag = index.tag_of(ev.data.value("weapon", std::string{}));
+                     if(!tag.has_value())
+                         return;
+                     EquipWeaponEvent equip{.weapon = (*tag)->tag_id};
+                     for(auto const& en : e.select<PlayerInfo>())
+                         if(en.template get<PlayerInfo>().seat_idx == seat &&
+                            !en.template get<PlayerInfo>().is_remote())
+                             equip.entity_id = en.id();
+                     GameEvent equip_ev{.type = GameEvent::EquipWeapon};
+                     e.subsystem_cast<GameEventBus>().inject(equip_ev, &equip);
+                 }
                  if(ev.event == "enter_vehicle")
                  {
                      /* {"seat": n, "label": "W-driver"}: nearest vehicle */
