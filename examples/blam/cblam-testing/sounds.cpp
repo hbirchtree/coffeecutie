@@ -612,9 +612,25 @@ struct SoundSystem
         }
     }
 
-    sound_unit_t make_sound_unit(
-        blam::tagref_t const& tagref, LoopSoundEvent::usage_t usage)
+    /* This map's own reference to a sound. One raised just before a map
+     * switch names the old map's tag, its name somewhere in the old data */
+    std::optional<blam::tagref_t> current(blam::tagref_t const& ref)
     {
+        auto it = index.find(ref.tag_id);
+        if(it == index.end() || !(*it).valid() ||
+           !((*it).matches(blam::tag_class_t::snd) ||
+             (*it).matches(blam::tag_class_t::lsnd)))
+            return std::nullopt;
+        return (*it).as_ref();
+    }
+
+    sound_unit_t make_sound_unit(
+        blam::tagref_t const& requested, LoopSoundEvent::usage_t usage)
+    {
+        auto const found = current(requested);
+        if(!found)
+            return {};
+        blam::tagref_t const& tagref = *found;
         auto sound = sound_cache.predict(tagref);
         if(!sound.valid())
         {
@@ -1431,8 +1447,9 @@ struct SoundSystem
                    it->second.source.tag_id == ref->tag_id)
                     return;
             }
-            cDebug("Queueing PlaySoundEvent for {}", index.name_of(*ref));
             auto unit = make_sound_unit(*ref, LoopSoundEvent::usage_t::general);
+            if(unit.index.valid())
+                cDebug("Queueing PlaySoundEvent for {}", index.name_of(unit.source));
             if(!unit.index.valid())
                 return;
             for(auto& track : unit.tracks)
