@@ -61,6 +61,7 @@ struct EffectDrawer
     std::shared_ptr<gfx::buffer_t>       buffer;
     std::shared_ptr<gfx::vertex_array_t> array;
     bool                                 failed{false};
+    bool                                 warned_nonfinite{false};
 
     std::vector<vertex_t> vertices;
     std::vector<batch_t>  batches;
@@ -289,14 +290,27 @@ struct EffectDrawer
                 batches.push_back(batch);
         }
 
-        /* Back to front, so alpha blending layers right */
-        std::vector<EffectScene::sprite_t const*> sprites;
-        sprites.reserve(scene.sprites.size());
+        /* Back to front, so alpha blending layers right. A sprite somewhere
+         * undefined can't be drawn, and would leave the sort unordered */
+        std::vector<std::pair<f32, EffectScene::sprite_t const*>> depths;
+        depths.reserve(scene.sprites.size());
         for(auto const& s : scene.sprites)
-            sprites.push_back(&s);
-        std::sort(sprites.begin(), sprites.end(), [&eye](auto a, auto b) {
-            return glm::distance(a->position, eye) > glm::distance(b->position, eye);
+        {
+            Vecf3 const d     = s.position - eye;
+            f32 const   depth = glm::dot(d, d);
+            if(std::isfinite(depth))
+                depths.emplace_back(depth, &s);
+            else if(!std::exchange(warned_nonfinite, true))
+                Coffee::cWarning(
+                    "Dropping a sprite at {}, it can't be placed", s.position);
+        }
+        std::sort(depths.begin(), depths.end(), [](auto const& a, auto const& b) {
+            return a.first > b.first;
         });
+        std::vector<EffectScene::sprite_t const*> sprites;
+        sprites.reserve(depths.size());
+        for(auto const& [_, s] : depths)
+            sprites.push_back(s);
 
         for(i32 group = 0; group < 4; group++)
         {

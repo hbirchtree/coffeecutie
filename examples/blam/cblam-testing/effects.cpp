@@ -711,9 +711,12 @@ struct EffectSystem
 
     static void basis(Vecf3 const& dir, Vecf3& x, Vecf3& y)
     {
-        Vecf3 const up = std::abs(dir.z) < .99f ? Vecf3{0, 0, 1} : Vecf3{1, 0, 0};
-        x              = glm::normalize(glm::cross(up, dir));
-        y              = glm::cross(dir, x);
+        Vecf3 const up    = std::abs(dir.z) < .99f ? Vecf3{0, 0, 1} : Vecf3{1, 0, 0};
+        Vecf3 const cross = glm::cross(up, dir);
+        f32 const   len   = glm::length(cross);
+        /* No direction to speak of: any frame will do */
+        x = len > 1e-6f ? cross / len : Vecf3{0, 1, 0};
+        y = glm::cross(dir, x);
     }
 
     /* A direction within `angle` of dir */
@@ -767,7 +770,9 @@ struct EffectSystem
         }
         return place_t{
             .position = Vecf3(at[3]),
-            .forward  = glm::normalize(Vecf3(at[0])),
+            .forward  = glm::length(Vecf3(at[0])) > 1e-6f
+                            ? glm::normalize(Vecf3(at[0]))
+                            : Vecf3{1.f, 0.f, 0.f},
         };
     }
 
