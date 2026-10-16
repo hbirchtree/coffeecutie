@@ -156,7 +156,9 @@ using MotionManifest = compo::SubsystemManifest<
         const PlayerInfo,
         const ObjectPhysics,
         const Projectile,
-        const Attachment>,
+        const Attachment,
+        const HeldObject,
+        const AnimationPlayback>,
     type_safety::type_list_t<const TickClock>,
     type_safety::empty_list_t>;
 
@@ -270,6 +272,21 @@ struct MotionInterpolator
                 if(attachment.parent == ent.id())
                     model.transform = glm::translate(Matf4(1), delta) * model.transform;
             }
+        }
+        /* Held objects ride their holder's pose as drawn */
+        for(auto ent : p.select<HeldObject, Model>())
+        {
+            auto [held, model] = ent.components();
+            auto const* holder = p.get<Model>(held.holder);
+            if(!holder)
+                continue;
+            Matf4       at   = holder->transform;
+            auto const* anim = p.get<AnimationPlayback>(held.holder);
+            if(anim && held.node >= 0 &&
+               static_cast<size_t>(held.node) < anim->pose.size())
+                at = at * anim->pose[held.node];
+            model.transform = at * held.offset;
+            model.position  = Vecf3(model.transform[3]);
         }
     }
 };

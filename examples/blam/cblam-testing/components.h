@@ -872,8 +872,6 @@ struct PlayerInfo
          * from the map loaded as `load_generation` */
         blam::antr::header const* anim_graph{nullptr};
         blam::tag_t const*        footsteps{nullptr};
-        /*! What it holds: the weapon its first-person view shows */
-        blam::tag_t const*        weapon{nullptr};
         u32                       load_generation{0};
 
         f32 eye_offset() const
@@ -1099,6 +1097,9 @@ struct BipedEquipment
     struct weapon_t
     {
         blam::scn::weapon const* weapon{nullptr};
+        blam::tag_t const*       tag{nullptr};
+        /*! Its third-person model, in the biped's hand */
+        u64 held{0};
         u16 rounds_loaded{0};
         u16 rounds_total{0};
     };
@@ -1110,6 +1111,27 @@ struct BipedEquipment
     };
     std::array<weapon_t, 2>  weapons;
     std::vector<equipment_t> equipment; // grenades, powerups
+    /*! The map the pointers above point into */
+    u32 load_generation{0};
+
+    weapon_t const* held(u32 generation) const
+    {
+        return generation == load_generation && weapons[0].weapon
+                   ? &weapons[0]
+                   : nullptr;
+    }
+};
+
+/*! Rides a node of another entity's pose, e.g. a weapon in a hand */
+struct HeldObject
+{
+    using value_type = HeldObject;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    u64   holder{0};
+    i32   node{-1};
+    Matf4 offset{1}; /*!< Bind-pose marker on the holder */
+    bool  shown{true};
 };
 
 /*! Follows another entity each frame (a player's eye) */
@@ -1251,6 +1273,18 @@ static const auto model = compo::EntityRecipe{
             compo::type_hash_v<Visibility>(),
         },
     .tags = ObjectGC,
+};
+
+/* An object held by a player biped */
+static const auto held_model = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<DepthInfo>(),
+            compo::type_hash_v<HeldObject>(),
+            compo::type_hash_v<Model>(),
+            compo::type_hash_v<Visibility>(),
+        },
+    .tags = PositioningDynamic | ObjectGC,
 };
 
 static const auto multiplayer_spawn = compo::EntityRecipe{

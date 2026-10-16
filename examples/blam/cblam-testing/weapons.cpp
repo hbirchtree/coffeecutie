@@ -26,6 +26,7 @@ using WeaponManifest = compo::SubsystemManifest<
         const NetworkInfo,
         const Attachment,
         const AnimationPlayback,
+        const BipedEquipment,
         Model>,
     type_list_t<
         GameEventBus,
@@ -82,12 +83,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* A gunner fires the vehicle's weapon, a body its own; the free
              * camera has nothing to shoot with */
             u64 const   vehicle = info.riding.vehicle;
-            /* Held weapons are only good for the map they were found in */
-            auto const* weapon_tag =
-                vehicle ? mounted_weapon(p, info, files)
-                : info.biped.load_generation == files.load_generation
-                    ? info.biped.weapon
-                    : nullptr;
+            auto const* equip = p.template get<BipedEquipment>(ent.id());
+            auto const* carried =
+                equip ? equip->held(files.load_generation) : nullptr;
+            auto const* weapon_tag = vehicle   ? mounted_weapon(p, info, files)
+                                     : carried ? carried->tag
+                                               : nullptr;
             if(info.is_remote() || !weapon_tag ||
                (vehicle ? info.riding.exiting
                         : !info.mode.physics || !biped_in_play(info, cam, net)))
@@ -287,8 +288,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             }
         }
 
-        u64 const muzzle =
-            shot.vehicle ? shot.vehicle : first_person(p, shot.shooter, true);
+        u64 const muzzle = shot.vehicle ? shot.vehicle : held_weapon(p, shot.shooter, files);
         if(auto effects = trigger.firing_effects.data(magic);
            effects.has_value() && !effects.value().empty())
         {
@@ -394,6 +394,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 return ent.id();
         }
         return 0;
+    }
+
+    /* The weapon a shooter is seen to fire: its first-person model for its
+     * own seat, the one in its hand for everyone else */
+    u64 held_weapon(Proxy& p, u64 shooter, BlamFiles<halo_version> const& files)
+    {
+        if(u64 const fp = first_person(p, shooter, true))
+            return fp;
+        auto const* equip = p.template get<BipedEquipment>(shooter);
+        auto const* held  = equip ? equip->held(files.load_generation) : nullptr;
+        return held && p.template get<Model>(held->held) ? held->held : 0;
     }
 
     /* The weapon's export inputs, through its object functions, onto the
