@@ -2,6 +2,8 @@
 
 #include "map.h"
 
+#include <cstring>
+#include <functional>
 #include <map>
 #include <memory>
 #include <vector>
@@ -316,6 +318,48 @@ enum class resource_error
 bool inflate_page(Span<byte_t const> compressed, Span<byte_t> out);
 
 /*!
+ * \brief A cache file other maps take pages from (mainmenu, shared,
+ * campaign), read by range so it need not be in memory.
+ */
+struct cache_source
+{
+    using reader_t = std::function<bool(u64 offset, Span<byte_t> dst)>;
+
+    u32      resource_offset{0}; /*!< File offset of the resource section */
+    reader_t read;
+
+    /*! From the start of the file; nullopt if it is not a Halo 3 cache */
+    static optional<cache_source> from_header(Span<byte_t const> head, reader_t read)
+    {
+        if(head.size() < sizeof(file_header_t))
+            return std::nullopt;
+        auto const* header = reinterpret_cast<file_header_t const*>(head.data());
+        if(!header->valid() || header->version.value() != halo3_version)
+            return std::nullopt;
+        return cache_source{
+            .resource_offset = header->section_offset(
+                section_t::resource, header->section(section_t::resource).virtual_address),
+            .read = std::move(read),
+        };
+    }
+
+    /*! A cache already in memory; `cache` must outlive the source */
+    static cache_source from_map(map_container const& cache)
+    {
+        return cache_source{
+            .resource_offset = cache.resource_offset(),
+            .read =
+                [data = cache.data](u64 offset, Span<byte_t> dst) {
+                    if(offset > data.size() || dst.size() > data.size() - offset)
+                        return false;
+                    std::memcpy(dst.data(), data.data() + offset, dst.size());
+                    return true;
+                },
+        };
+    }
+};
+
+/*!
  * \brief Resolves resources for one map: the zone/play tags, external
  * cache files attached by name, decompressed pages kept by index.
  */
@@ -341,9 +385,14 @@ struct resource_loader
     }
 
     /*! Attach an external cache, e.g. shared.map, by its file name */
+    inline void attach(std::string_view file_name, cache_source source)
+    {
+        m_caches.emplace_back(std::string(file_name), std::move(source));
+    }
+
     inline void attach(std::string_view file_name, map_container const& cache)
     {
-        m_caches.emplace_back(std::string(file_name), &cache);
+        attach(file_name, cache_source::from_map(cache));
     }
 
     inline Span<resource_t const> resources() const
@@ -451,20 +500,29 @@ struct resource_loader
         if(auto it = m_pages.find(index.value()); it != m_pages.end())
             return it->second;
 
-        map_container const* source = map;
-        if(page->cache.valid())
-        {
-            auto const* cache = page->cache.resolve(external_caches());
-            source            = cache ? attached(cache->file_name()) : nullptr;
-            if(!source)
-                return failure(resource_error::missing_cache_file);
-        }
-        u64 start = u64(source->resource_offset()) + u32(page->offset.value());
         u64 csize = static_cast<u32>(page->compressed_size.value());
         u64 usize = static_cast<u32>(page->size.value());
-        if(start > source->data.size() || csize > source->data.size() - start)
-            return failure(resource_error::page_out_of_bounds);
-        auto compressed = source->data.subspan(start, csize);
+        Span<byte_t const> compressed;
+        std::vector<byte_t> read_buffer;
+        if(page->cache.valid())
+        {
+            auto const* cache  = page->cache.resolve(external_caches());
+            auto const* source = cache ? attached(cache->file_name()) : nullptr;
+            if(!source)
+                return failure(resource_error::missing_cache_file);
+            read_buffer.resize(csize);
+            if(!source->read(
+                   u64(source->resource_offset) + u32(page->offset.value()),
+                   Span<byte_t>(read_buffer.data(), read_buffer.size())))
+                return failure(resource_error::page_out_of_bounds);
+            compressed = Span<byte_t const>(read_buffer.data(), read_buffer.size());
+        } else
+        {
+            u64 start = u64(map->resource_offset()) + u32(page->offset.value());
+            if(start > map->data.size() || csize > map->data.size() - start)
+                return failure(resource_error::page_out_of_bounds);
+            compressed = map->data.subspan(start, csize);
+        }
         auto out        = std::make_shared<std::vector<byte_t>>();
         if(page->codec.value() == page_codec_t::none)
             out->assign(compressed.begin(), compressed.end());
@@ -486,15 +544,15 @@ struct resource_loader
     }
 
   private:
-    inline map_container const* attached(std::string_view file_name) const
+    inline cache_source const* attached(std::string_view file_name) const
     {
         for(auto const& [name, cache] : m_caches)
             if(name == file_name)
-                return cache;
+                return &cache;
         return nullptr;
     }
 
-    std::vector<std::pair<std::string, map_container const*>> m_caches;
+    std::vector<std::pair<std::string, cache_source>>  m_caches;
     std::map<i16, std::shared_ptr<std::vector<byte_t>>>       m_pages;
 };
 
