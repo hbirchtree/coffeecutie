@@ -159,6 +159,8 @@ struct H3MapLoader : compo::SubsystemBase
             m_bank.music  = {};
             m_bank.generation++;
         }
+        if(m_scene.loaded)
+            m_container.subsystem_cast<PostProcessParameters>().tone_curve = 0;
         m_scene.loaded = false;
         m_scene.materials.clear();
         m_scene.lightprobe.reset();
@@ -240,6 +242,8 @@ struct H3MapLoader : compo::SubsystemBase
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", m_map->name()));
         m_scene.loaded = true;
+        /* Linear HDR out; the composite applies Halo 3's tone curve */
+        m_container.subsystem_cast<PostProcessParameters>().tone_curve = 1;
         /* The Halo 1 systems key off LoadingStatus; only the app state says
          * "loaded" (which is what the dummy plug waits for) */
         if(auto* app_info = m_container.service<comp_app::AppInfo>())
@@ -456,6 +460,7 @@ struct H3MapLoader : compo::SubsystemBase
         if(!load_bsp(bsp))
             return false;
         m_scene.exposure = exposure_at(*scnr, bsp, eye);
+        load_atmosphere();
         /* H3_EXPOSURE=<stops> overrides it, for comparing with captures */
         if(auto forced = platform::env::var("H3_EXPOSURE"); forced.has_value())
         {
@@ -968,12 +973,30 @@ struct H3MapLoader : compo::SubsystemBase
                 mat.curves.y     = detail->curve;
                 mat.variant      = Variant::detail;
             }
-            if(detail && detail2 && (albedo == "two_detail" || albedo == "detail_blend"))
+            mat.black_point = albedo == "two_detail_black_point";
+            auto const* detail3 = slot(albedo == "two_detail_overlay" ? "detail_map_overlay" : "detail_map3");
+            auto const* base    = slot("base_map");
+            if(detail && detail2 && detail3 && base && base->scale.x != 0.f && base->scale.y != 0.f &&
+               (albedo == "two_detail_overlay" || albedo == "three_detail_blend"))
+            {
+                mat.detail        = detail->texture;
+                mat.detail_scale  = detail->scale;
+                mat.curves.y      = detail->curve;
+                mat.detail2       = detail2->texture;
+                mat.detail2_scale = detail2->scale;
+                mat.curves.z      = detail2->curve;
+                mat.detail3       = detail3->texture;
+                mat.detail3_ratio = detail3->scale / base->scale;
+                mat.detail3_curve = detail3->curve;
+                mat.variant = albedo == "two_detail_overlay" ? Variant::detail_overlay
+                                                             : Variant::three_detail;
+            } else if(detail && detail2 &&
+               (albedo == "two_detail" || albedo == "detail_blend" || mat.black_point))
             {
                 mat.detail2       = detail2->texture;
                 mat.detail2_scale = detail2->scale;
                 mat.curves.z      = detail2->curve;
-                mat.variant = albedo == "two_detail" ? Variant::two_detail : Variant::detail_blend;
+                mat.variant = albedo == "detail_blend" ? Variant::detail_blend : Variant::two_detail;
             }
             if(albedo == "constant_color")
                 mat.variant = Variant::base;
@@ -1001,6 +1024,11 @@ struct H3MapLoader : compo::SubsystemBase
             /* Helpers like z_invis_lightquad carry only an alpha test map */
             mat.visible = mat.diffuse.sampler || mat.constant_color;
         }
+        /* H3_HIDE=<name part> leaves matching materials out, for finding
+         * which one draws what */
+        if(auto hide = platform::env::var("H3_HIDE");
+           hide.has_value() && !hide->empty() && mat.name.find(hide.value()) != std::string::npos)
+            mat.visible = false;
         m_scene.materials.push_back(std::move(mat));
         size_t idx = m_scene.materials.size() - 1;
         m_material_index.emplace(key, idx);
@@ -1089,6 +1117,41 @@ struct H3MapLoader : compo::SubsystemBase
             mat.specular_mask = 1;
         else if(mask == "specular_mask_from_texture" || mask == "specular_mask_from_color_texture")
             mat.specular_mask = 2;
+    }
+
+    /* The scenario's first atmosphere as compute_scattering's constants;
+     * clusters naming none (the multiplayer maps) get it too */
+    void load_atmosphere()
+    {
+        auto const& map = *m_map;
+        m_scene.atmosphere = {Vecf4(0.f), Vecf4(0.f, 0.f, 0.f, -1.f)};
+        auto const* tag    = map.find("skya");
+        auto const* sky    = tag ? map.tag_data<el::sky_atmosphere_t>(*tag) : nullptr;
+        auto settings = sky ? sky->settings.data(map.magic()).value_or(
+                                  Span<el::atmosphere_setting_t const>())
+                            : Span<el::atmosphere_setting_t const>();
+        if(settings.empty() ||
+           !enum_helpers::feval(settings[0].flags.value(), el::atmosphere_flags_t::enable_atmosphere))
+            return;
+        auto const& s       = settings[0];
+        f32 const   pitch   = glm::radians(s.sun_pitch.value());
+        f32 const   heading = glm::radians(s.sun_heading.value());
+        Vecf3 const sun_dir{
+            std::cos(pitch) * std::cos(heading), std::cos(pitch) * std::sin(heading), std::sin(pitch)};
+        /* The real sun lives elsewhere; its stand-in is the override */
+        Vecf3 const sun = s.sun_color.value() * s.sun_intensity.value();
+        Vecf3 const tr  = s.beta_m.value(), tm = s.beta_p.value();
+        f32 const   g   = s.sun_phase_function, log2e = 1.4426950f;
+        m_scene.atmosphere = {
+            Vecf4(sun_dir, s.distance_bias),
+            Vecf4(sun / glm::max(tr + tm, Vecf3(1e-9f)), s.max_fog_thickness),
+            Vecf4(tr * log2e, 1.f + g * g),
+            Vecf4(tm * log2e, s.sea_level),
+            Vecf4(s.beta_m_theta_prefix.value(), s.mie_height_scale),
+            Vecf4(s.beta_p_theta_prefix.value() * (1.f - g * g), s.rayleigh_height_scale),
+            Vecf4(2.f * g, 0.f, 0.f, 0.f),
+        };
+        cDebug("H3: atmosphere {}", map.string(s.name));
     }
 
     /* Linear exposure for the camera FX of the cluster holding `eye`: the

@@ -54,6 +54,8 @@
             "shaders/h3_two_detail.frag",
             "shaders/h3_detail_blend.frag",
             "shaders/h3_terrain.frag",
+            "shaders/h3_detail_overlay.frag",
+            "shaders/h3_three_detail.frag",
 
             "shaders/ui.vert",
             "shaders/ui.frag",
