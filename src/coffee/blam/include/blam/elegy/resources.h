@@ -376,36 +376,51 @@ struct resource_loader
                                   .resolve(segments);
         if(!segment)
             return failure(resource_error::bad_segment);
-        auto page = this->page(segment->primary_page);
-        if(!page.has_value())
-            return failure(page.error());
-        auto const& bytes  = *page.value();
-        u32         offset = static_cast<u32>(segment->primary_offset.value());
-        if(offset > bytes.size())
-            return failure(resource_error::page_out_of_bounds);
+        auto sizes = layout->sizes.data(magic).value_or(Span<raw_size_t const>());
+        /* A segment's bytes in one page, trimmed to its size entry */
+        auto part = [&](block_index<raw_page_t> index,
+                        i32                     at,
+                        block_index<raw_size_t> size,
+                        Span<byte_t const>&     out,
+                        std::shared_ptr<void const>& keep)
+            -> optional<resource_error> {
+            if(!index.valid())
+                return std::nullopt;
+            auto page = this->page(index);
+            if(!page.has_value())
+                return page.error();
+            auto const& bytes = *page.value();
+            if(at < 0 || static_cast<u32>(at) > bytes.size())
+                return resource_error::page_out_of_bounds;
+            out = Span<byte_t const>(bytes.data(), bytes.size()).subspan(at);
+            if(auto const* entry = size.resolve(sizes);
+               entry && entry->size.value() >= 0 &&
+               static_cast<size_t>(entry->size.value()) < out.size())
+                out = out.subspan(0, static_cast<size_t>(entry->size.value()));
+            keep = page.value();
+            return std::nullopt;
+        };
 
         resource_view out;
-        out.data = Span<byte_t const>(bytes.data(), bytes.size()).subspan(offset);
-        out.keep = page.value();
+        if(auto error = part(
+               segment->primary_page,
+               segment->primary_offset,
+               segment->primary_size,
+               out.data,
+               out.keep))
+            return failure(*error);
         auto info = gestalt->info_buffer.data(magic);
         i32  info_offset = res->info_offset, info_size = res->info_size;
         if(info_size > 0 && static_cast<u32>(info_offset) <= info.size() &&
            static_cast<u32>(info_size) <= info.size() - info_offset)
             out.definition = info.subspan(info_offset, info_size);
         /* Optional detail; the primary page is usable without it */
-        if(segment->secondary_page.valid())
-            if(auto second = this->page(segment->secondary_page);
-               second.has_value())
-            {
-                auto const& more = *second.value();
-                u32 at = static_cast<u32>(segment->secondary_offset.value());
-                if(at <= more.size())
-                {
-                    out.secondary =
-                        Span<byte_t const>(more.data(), more.size()).subspan(at);
-                    out.keep_secondary = second.value();
-                }
-            }
+        part(
+            segment->secondary_page,
+            segment->secondary_offset,
+            segment->secondary_size,
+            out.secondary,
+            out.keep_secondary);
         out.root = res->base_definition_address.value() & 0x0FFFFFFF;
         for(auto const& fix : res->resource_fixups.data(magic).value_or(Span<resource_fixup_t const>()))
             out.fixups[static_cast<u32>(fix.offset.value())] = fix.address;
