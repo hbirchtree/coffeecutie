@@ -6,6 +6,7 @@
 
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/shader.h>
+#include <blam/elegy/sound.h>
 #include <blam/elegy/structure.h>
 #include <cxxopts.hpp>
 
@@ -38,6 +39,7 @@ struct options_t
     bool        bsp;
     bool        shaders;
     bool        bitmaps;
+    bool        sounds;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -765,6 +767,136 @@ int dump_bitmaps(
     return 0;
 }
 
+const char* compression_name(elegy::sound_compression_t compression)
+{
+    using enum elegy::sound_compression_t;
+    switch(compression)
+    {
+    case none_be:
+        return "pcm_be";
+    case xbox_adpcm:
+        return "xbox_adpcm";
+    case ima_adpcm:
+        return "ima_adpcm";
+    case none_le:
+        return "pcm_le";
+    case wma:
+        return "wma";
+    case none:
+        return "pcm";
+    case xma:
+        return "xma";
+    case xma2:
+        return "xma2";
+    }
+    return "?";
+}
+
+/* RIFF WAVE around XMA2 data, as ffmpeg and vgmstream read it */
+std::vector<char> make_xma2_riff(elegy::xma2_format_t const& format, Span<byte_t const> data)
+{
+    std::vector<char> out;
+    auto u32le = [&](u32 v) { append<u32>(out, blam::to_le(v)); };
+    out.insert(out.end(), {'R', 'I', 'F', 'F'});
+    u32le(static_cast<u32>(4 + 8 + sizeof(format) + 8 + data.size()));
+    out.insert(out.end(), {'W', 'A', 'V', 'E', 'f', 'm', 't', ' '});
+    u32le(sizeof(format));
+    append(out, format);
+    out.insert(out.end(), {'d', 'a', 't', 'a'});
+    u32le(static_cast<u32>(data.size()));
+    out.insert(out.end(), data.begin(), data.end());
+    return out;
+}
+
+int dump_sounds(
+    elegy::map_container const& map,
+    elegy::resource_loader&     loader,
+    options_t const&            options)
+{
+    auto        magic       = map.magic();
+    auto const* gestalt_tag = map.find("ugh!");
+    auto const* gestalt = gestalt_tag ? map.tag_data<elegy::sound_gestalt_t>(*gestalt_tag) : nullptr;
+    if(!gestalt)
+    {
+        fmt::print("no sound gestalt\n");
+        return 1;
+    }
+    if(!options.extract_dir.empty())
+        std::filesystem::create_directories(options.extract_dir);
+    auto codecs = gestalt->codecs.data(magic).value_or(Span<elegy::sound_codec_t const>());
+    auto names  = gestalt->names.data(magic).value_or(Span<elegy::string_id const>());
+    u32  count = 0, written = 0, missing = 0;
+    for(auto const& tag : map.tags())
+    {
+        if(!tag.valid() || !map.is(tag, "snd!"))
+            continue;
+        auto name = map.name_of(tag);
+        if(name.find(options.name_filter) == std::string_view::npos)
+            continue;
+        auto const* sound = map.tag_data<elegy::sound_t>(tag);
+        if(!sound)
+            continue;
+        count++;
+        auto const* codec = sound->codec.resolve(codecs);
+        if(!codec)
+            continue;
+        auto view = loader.load(sound->resource);
+        fmt::print(
+            "{} [{} Hz x{} {}]{}\n",
+            name,
+            codec->rate(),
+            codec->channels(),
+            compression_name(codec->compression),
+            view.has_value() ? "" : " (no resource)");
+        if(!view.has_value())
+            missing++;
+        for(auto const& range : sound->pitch_ranges(*gestalt, magic))
+        {
+            auto const* range_name = range.name.resolve(names);
+            fmt::print(
+                "  pitch range {}: {} permutations\n",
+                range_name ? map.string(*range_name) : std::string_view("?"),
+                range.permutation_count());
+            for(auto const& perm : elegy::permutations_of(range, *gestalt, magic))
+            {
+                auto const* perm_name = perm.name.resolve(names);
+                u32 samples = perm.sample_count;
+                auto bytes = view.has_value()
+                                 ? elegy::permutation_data(perm, *gestalt, magic, view.value())
+                                 : std::vector<byte_t>();
+                fmt::print(
+                    "    {:<24} {:7.2f} s, {} chunks, {} bytes\n",
+                    perm_name ? map.string(*perm_name) : std::string_view("?"),
+                    codec->rate() ? static_cast<f64>(samples) / codec->rate() : 0.0,
+                    perm.chunk_count.value(),
+                    bytes.size());
+                if(options.extract_dir.empty() || bytes.empty() ||
+                   codec->compression != elegy::sound_compression_t::xma2)
+                    continue;
+                auto file = make_xma2_riff(
+                    elegy::xma2_format_t::from(*codec, samples, static_cast<u32>(bytes.size())),
+                    bytes);
+                auto path = fmt::format(
+                    "{}/{}_{}.xma",
+                    options.extract_dir,
+                    sanitize(name),
+                    perm_name ? map.string(*perm_name) : std::string_view("perm"));
+                std::ofstream(path, std::ios::binary)
+                    .write(file.data(), static_cast<std::streamsize>(file.size()));
+                written++;
+            }
+        }
+        loader.trim();
+        if(options.limit && count >= options.limit)
+            break;
+    }
+    fmt::print("{} sounds, {} without resource", count, missing);
+    if(!options.extract_dir.empty())
+        fmt::print(", wrote {} XMA files to {}", written, options.extract_dir);
+    fmt::print("\n");
+    return 0;
+}
+
 int run_map(
     elegy::map_container const& map,
     std::string const&          map_dir,
@@ -832,6 +964,8 @@ int run_map(
         rc |= dump_shaders(map, options);
     if(options.bitmaps)
         rc |= dump_bitmaps(map, *loader, options);
+    if(options.sounds)
+        rc |= dump_sounds(map, *loader, options);
     return rc;
 }
 
@@ -861,14 +995,16 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("bitmaps", "List bitmap images")
         //
+        ("sounds", "List sounds; with -e, write each permutation as RIFF XMA2")
+        //
         ("obj", "Write decoded geometry to this OBJ", cxxopts::value<std::string>())
         //
         ("e,extract",
-         "With --bitmaps, write each image's top level as DDS here",
+         "Extraction directory: --bitmaps writes DDS, --sounds XMA2",
          cxxopts::value<std::string>())
         //
         ("limit",
-         "Cap on shaders/bitmaps visited, 0 = everything",
+         "Cap on shaders/bitmaps/sounds visited, 0 = everything",
          cxxopts::value<int>()->default_value("0"))
         //
         ;
@@ -899,6 +1035,7 @@ i32 coffee_main(i32, cstring_w*)
         .bsp          = arguments.count("bsp") > 0,
         .shaders      = arguments.count("shaders") > 0,
         .bitmaps      = arguments.count("bitmaps") > 0,
+        .sounds       = arguments.count("sounds") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),
