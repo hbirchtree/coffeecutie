@@ -5,6 +5,7 @@
 #include <coffee/core/coffee_args.h>
 
 #include <blam/elegy/bitmap.h>
+#include <blam/elegy/collision.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
 #if defined(OAF_XMA2_DECODER_ENABLED)
@@ -43,6 +44,7 @@ struct options_t
     bool        shaders;
     bool        bitmaps;
     bool        sounds;
+    bool        collision;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -942,6 +944,186 @@ int dump_sounds(
     return 0;
 }
 
+/* Collision polygons as an OBJ, fanned, through `transform` */
+u32 write_collision(
+    obj_writer& obj, std::string_view name, elegy::coll::bsp_view_t const& bsp, glm::mat4 const& transform)
+{
+    obj.out << "o " << name << "\n";
+    for(auto const& v : bsp.vertices)
+    {
+        auto p = transform * glm::vec4(v.point.value(), 1.f);
+        obj.out << "v " << p.x << " " << p.y << " " << p.z << "\n";
+    }
+    u32 polygons = 0;
+    std::vector<u32> corners;
+    for(u32 s = 0; s < bsp.surfaces.size(); s++)
+    {
+        corners.clear();
+        if(bsp.walk_surface(s, [&](u32 v) { corners.push_back(v); }) < 3)
+            continue;
+        for(size_t i = 1; i + 1 < corners.size(); i++)
+            obj.out << "f " << obj.base + corners[0] << " " << obj.base + corners[i] << " "
+                    << obj.base + corners[i + 1] << "\n";
+        polygons++;
+    }
+    obj.base += static_cast<u32>(bsp.vertices.size());
+    return polygons;
+}
+
+int dump_collision(
+    elegy::map_container const& map,
+    elegy::resource_loader&     loader,
+    options_t const&            options,
+    obj_writer*                 obj)
+{
+    auto        magic        = map.magic();
+    auto const* scenario_tag = map.find("scnr");
+    auto const* scenario = scenario_tag ? map.tag_data<elegy::scenario_t>(*scenario_tag) : nullptr;
+    if(!scenario)
+        return 1;
+    for(auto const& ref : scenario->bsps.data(magic).value_or(Span<elegy::scenario_bsp_t const>()))
+    {
+        auto const* bsp_tag = map.tag_at(ref.bsp.id);
+        auto const* bsp = bsp_tag ? map.tag_data<elegy::structure_bsp_t>(*bsp_tag) : nullptr;
+        if(!bsp || map.name_of(*bsp_tag).find(options.name_filter) == std::string_view::npos)
+            continue;
+        auto resources = loader.load(bsp->tag_resources);
+        auto const* root = resources.has_value()
+                               ? resources->root_as<elegy::structure_bsp_resources_t>()
+                               : nullptr;
+        if(!root)
+        {
+            fmt::print("{}: no tag resources\n", map.name_of(*bsp_tag));
+            continue;
+        }
+        auto collision_bsps = resources->block(root->collision_bsps);
+        auto definitions    = resources->block(root->instanced_geometry);
+        auto leaves  = bsp->leaves.data(magic).value_or(Span<i8 const>());
+        auto clusters = bsp->clusters.data(magic).value_or(Span<elegy::cluster_t const>());
+        auto portals = bsp->cluster_portals.data(magic).value_or(
+            Span<elegy::cluster_portal_t const>());
+        fmt::print(
+            "{} [{} collision bsps, {} instance definitions, {} clusters, {} portals, {} leaves]\n",
+            map.name_of(*bsp_tag),
+            collision_bsps.size(),
+            definitions.size(),
+            clusters.size(),
+            portals.size(),
+            leaves.size());
+        if(collision_bsps.empty())
+            continue;
+        auto world = elegy::coll::bsp_view_t::from(resources.value(), collision_bsps[0]);
+        if(world.nodes.empty() && collision_bsps[0].bsp3d_nodes.count.value() > 0)
+            fmt::print(
+                "  world: {} nodes declared, but the resource page is not in the loaded maps\n",
+                collision_bsps[0].bsp3d_nodes.count.value());
+        fmt::print(
+            "  world: {} nodes, {} planes, {} leaves, {} bsp2d refs, {} bsp2d nodes, {} "
+            "surfaces, {} edges, {} vertices\n",
+            world.nodes.size(),
+            world.planes.size(),
+            world.leaves.size(),
+            world.bsp2d_references.size(),
+            world.bsp2d_nodes.size(),
+            world.surfaces.size(),
+            world.edges.size(),
+            world.vertices.size());
+
+        /* Spawns and scenery should sit in open space, in a cluster whose
+         * bounds hold them */
+        std::vector<Vecf3> points;
+        for(auto const& start : scenario->starting_locations.data(magic).value_or(
+                Span<elegy::starting_location_t const>()))
+            points.push_back(start.position.value());
+        for(auto const& placement : scenario->scenery.data(magic).value_or(
+                Span<elegy::scenery_placement_t const>()))
+            points.push_back(placement.object.position.value());
+        /* world_bounds is level-wide in campaigns; the clusters bound one BSP */
+        Vecf3 low(std::numeric_limits<f32>::max()), high(-std::numeric_limits<f32>::max());
+        for(auto const& cluster : clusters)
+            for(int k = 0; k < 3; k++)
+            {
+                low[k]  = std::min<f32>(low[k], cluster.bounds[k].min);
+                high[k] = std::max<f32>(high[k], cluster.bounds[k].max);
+            }
+        u32 tested = 0, inside = 0, elsewhere = 0, solid = 0;
+        for(auto p : points)
+        {
+            p.z += 0.3f;
+            bool in_world = true;
+            for(int k = 0; k < 3; k++)
+                in_world = in_world && p[k] >= low[k] && p[k] <= high[k];
+            if(!in_world)
+                continue;
+            tested++;
+            auto leaf = world.find_leaf(p);
+            i8   c    = leaf && *leaf < leaves.size() ? leaves[*leaf] : i8(-1);
+            if(c < 0 || static_cast<size_t>(c) >= clusters.size())
+            {
+                solid++;
+                continue;
+            }
+            auto const& b = clusters[static_cast<size_t>(c)].bounds;
+            bool in = true;
+            for(int k = 0; k < 3; k++)
+                in = in && p[k] >= b[k].min - 0.5f && p[k] <= b[k].max + 0.5f;
+            (in ? inside : elsewhere)++;
+        }
+        fmt::print(
+            "  point location: {} of {} spawns/scenery in their cluster's bounds, {} elsewhere, "
+            "{} in solid\n",
+            inside,
+            tested,
+            elsewhere,
+            solid);
+
+        /* Portal vertices should lie on the collision plane they name */
+        f32 worst = 0.f;
+        u32 vertices = 0;
+        for(auto const& portal : portals)
+        {
+            i32 pi = portal.plane;
+            if(pi < 0 || static_cast<size_t>(pi) >= world.planes.size())
+                continue;
+            auto const& plane = world.planes[static_cast<size_t>(pi)];
+            for(auto const& v : portal.vertices.data(magic).value_or(Span<elegy::be<Vecf3> const>()))
+            {
+                worst = std::max(
+                    worst,
+                    std::abs(glm::dot(plane.normal.value(), v.value()) - plane.distance.value()));
+                vertices++;
+            }
+        }
+        fmt::print("  portals: {} vertices, furthest {:.4f} from their plane\n", vertices, worst);
+
+        if(!obj)
+            continue;
+        u32 polygons = write_collision(*obj, "world", world, glm::mat4(1.f));
+        u32 placed   = 0;
+        for(auto const& instance : bsp->instances.data(magic).value_or(
+                Span<elegy::instanced_geometry_t const>()))
+        {
+            auto const* definition = instance.definition.resolve(definitions);
+            if(!definition)
+                continue;
+            glm::mat4 transform(1.f);
+            f32       scale = instance.scale;
+            transform[0]    = glm::vec4(instance.forward.value() * scale, 0.f);
+            transform[1]    = glm::vec4(instance.left.value() * scale, 0.f);
+            transform[2]    = glm::vec4(instance.up.value() * scale, 0.f);
+            transform[3]    = glm::vec4(instance.position.value(), 1.f);
+            polygons += write_collision(
+                *obj,
+                map.string(instance.name),
+                elegy::coll::bsp_view_t::from(resources.value(), definition->collision),
+                transform);
+            placed++;
+        }
+        fmt::print("  wrote {} collision polygons ({} instances)\n", polygons, placed);
+    }
+    return 0;
+}
+
 int run_map(
     elegy::map_container const& map,
     std::string const&          map_dir,
@@ -1011,6 +1193,8 @@ int run_map(
         rc |= dump_bitmaps(map, *loader, options);
     if(options.sounds)
         rc |= dump_sounds(map, *loader, options);
+    if(options.collision)
+        rc |= dump_collision(map, *loader, options, obj.get());
     return rc;
 }
 
@@ -1039,6 +1223,9 @@ i32 coffee_main(i32, cstring_w*)
         ("shaders", "Decode render methods: options, template, textures, constants")
         //
         ("bitmaps", "List bitmap images")
+        //
+        ("collision",
+         "Check BSP collision and portals; with --obj, write the collision polygons")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1083,6 +1270,7 @@ i32 coffee_main(i32, cstring_w*)
         .shaders      = arguments.count("shaders") > 0,
         .bitmaps      = arguments.count("bitmaps") > 0,
         .sounds       = arguments.count("sounds") > 0,
+        .collision    = arguments.count("collision") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),
