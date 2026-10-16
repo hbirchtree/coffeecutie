@@ -12,6 +12,7 @@ layout(location=1) in vec2 f_texcoord;
 layout(location=2) in vec3 f_normal;
 layout(location=3) in vec2 f_detail_uv;
 layout(location=4) in vec2 f_detail2_uv;
+layout(location=6) in vec3 f_lightmap;
 layout(location=9) in vec2 f_bump_uv;
 
 layout(location=3) uniform int alpha_test;
@@ -62,6 +63,27 @@ layout(location=87) uniform int bump_mode;
 layout(location=88) uniform vec2 bump_detail_ratio;
 #endif
 
+/* Baked light: SH coefficient pairs in layers 0-7, max luminance of each */
+layout(location=89, binding=9) uniform sampler2DArray lightprobe;
+layout(location=90) uniform vec4 lightprobe_scale;
+layout(location=91) uniform float exposure;
+layout(location=92) uniform float intensity_scale;
+layout(location=8) in vec4 f_vertex_light;
+
+#if !H3_TERRAIN
+/* Material model: 0 diffuse only, 1 two_lobe_phong, 2 cook_torrance; the
+ * parameters as SpecularParams in h3_scene.h */
+layout(location=93) uniform int material_model;
+layout(location=94) uniform int specular_mask_mode;
+layout(location=95) uniform vec4 spec_coefficients;
+layout(location=96) uniform vec4 spec_lobe;
+layout(location=97) uniform vec4 spec_tint0;
+layout(location=98) uniform vec4 spec_tint1;
+layout(location=99) uniform vec3 camera_position;
+layout(location=100, binding=10) uniform sampler2D specular_mask_map;
+layout(location=101, binding=11) uniform sampler2D material_map;
+#endif
+
 layout(location=0) out vec4 out_color;
 
 const float detail_multiplier = 4.59479; /* 2^2.2 */
@@ -94,6 +116,129 @@ vec3 bumped_normal(vec3 n)
     vec3 bt = dp2perp * duv1.y + dp1perp * duv2.y;
     float s = inversesqrt(max(max(dot(t, t), dot(bt, bt)), 1e-20));
     return normalize(mat3(t * s, bt * s, n) * tn);
+}
+#endif
+
+/* One linear SH coefficient (RGB) from its two DXT5 slices: length from
+ * alpha, direction from rgb */
+vec3 lightprobe_coefficient(float slice, float scale)
+{
+    vec4 a = texture(lightprobe, vec3(f_lightmap.xy, slice));
+    vec4 b = texture(lightprobe, vec3(f_lightmap.xy, slice + 1.0));
+    return ((a.rgb + b.rgb) * 2.0 - 2.0) * (a.a * b.a * scale);
+}
+
+struct baked_light_t
+{
+    vec3 l0, l1, l2, l3; /* Linear SH, D3DX order */
+    vec3 dir;            /* Dominant light, towards it */
+    vec3 intensity;
+};
+
+baked_light_t sample_baked_light()
+{
+    baked_light_t light;
+    light.l0 = lightprobe_coefficient(0.0, lightprobe_scale.x);
+    light.l1 = lightprobe_coefficient(2.0, lightprobe_scale.y);
+    light.l2 = lightprobe_coefficient(4.0, lightprobe_scale.z);
+    light.l3 = lightprobe_coefficient(6.0, lightprobe_scale.w);
+    light.intensity = lightprobe_coefficient(8.0, intensity_scale);
+    const vec3 lum = vec3(0.212656, 0.715158, 0.0721856);
+    vec3 dir = vec3(-dot(light.l3, lum), -dot(light.l1, lum), dot(light.l2, lum));
+    light.dir = dot(dir, dir) > 1e-12 ? normalize(dir) : vec3(0.0, 0.0, 1.0);
+    return light;
+}
+
+/* SH linear terms dotted with a direction, per channel, as Halo 3 packs
+ * them: (l3, l1, -l2) */
+vec3 sh_linear(baked_light_t light, vec3 d)
+{
+    return vec3(
+        dot(d, vec3(light.l3.r, light.l1.r, -light.l2.r)),
+        dot(d, vec3(light.l3.g, light.l1.g, -light.l2.g)),
+        dot(d, vec3(light.l3.b, light.l1.b, -light.l2.b)));
+}
+
+/* Diffuse radiance from linear SH in D3DX order (L0, then -y, z, -x) and
+ * the dominant light, as Halo 3's ravi_order_2_with_dominant_light: the
+ * dominant light leaves the SH and comes back as a clamped cosine */
+vec3 baked_diffuse(baked_light_t light, vec3 n)
+{
+    vec3 dc = light.l0 - 0.2820948 * light.intensity;
+    vec3 x1 = sh_linear(light, n) + 0.4886025 * dot(n, light.dir) * light.intensity;
+    vec3 e = (0.886227 * dc - 1.023328 * x1) / 3.14159265;
+    return max(e, vec3(0.0)) + max(dot(light.dir, n), 0.0) * light.intensity * 0.281;
+}
+
+#if !H3_TERRAIN
+/* Area specular from the SH around the reflection, order 2 (Halo 3's
+ * calculate_area_specular_phong_order_2, red DC and all) */
+vec3 area_specular(baked_light_t light, vec3 r, vec3 tint)
+{
+    return (light.l0.r * 0.4231425 - 0.3805236 * sh_linear(light, r)) * tint;
+}
+
+/* Specular radiance of the material model, and the diffuse scale; Halo 3's
+ * calc_material_*_ps without dynamic lights, anti-shadow or env maps */
+vec3 material_specular(
+    baked_light_t light, vec3 n, vec3 albedo, float mask, out float diffuse_scale)
+{
+    diffuse_scale = spec_coefficients.y;
+    if(material_model == 0)
+        return vec3(0.0);
+    vec3  v      = normalize(camera_position - f_world_pos);
+    vec3  r      = 2.0 * dot(v, n) * n - v;
+    float coeff  = spec_coefficients.x;
+    vec3  analytic, area;
+    if(material_model == 1)
+    {
+        float n_dot_v = max(dot(n, v), 0.0);
+        float blend = pow(1.0 - n_dot_v, spec_lobe.z);
+        float power = mix(spec_lobe.x, spec_lobe.y, blend);
+        vec3  tint = mix(mix(spec_tint0.rgb, spec_tint1.rgb, blend), albedo, spec_lobe.w);
+        float l_dot_r = dot(light.dir, r);
+        analytic = l_dot_r > 0.0
+            ? pow(l_dot_r, power) * ((power + 1.0) / 6.2832) * tint * light.intensity
+            : vec3(0.0);
+        area = area_specular(light, r, tint);
+    } else
+    {
+        vec4 params = vec4(coeff, spec_lobe.y, 0.0, spec_lobe.x);
+        if(spec_lobe.z > 0.5)
+            params = texture(material_map, f_texcoord);
+        coeff = params.r;
+        if(spec_lobe.z > 0.5)
+            diffuse_scale = 1.0 - params.r;
+        vec3 reflectance = mix(spec_tint0.rgb, albedo, params.g);
+        vec3 l = light.dir;
+        float n_dot_l = dot(n, l), n_dot_v = dot(n, v);
+        analytic = vec3(0.0);
+        if(min(n_dot_l, n_dot_v) > 0.0)
+        {
+            vec3  h = normalize(v + l);
+            float n_dot_h = dot(n, h), v_dot_h = dot(v, h);
+            float g_term = 2.0 * n_dot_h * min(n_dot_l, n_dot_v) / (clamp(v_dot_h, 0.0, 1.0) + 1e-5);
+            vec3  f0 = min(reflectance, vec3(0.999));
+            vec3  sq = sqrt(f0);
+            vec3  ior = (1.0 + sq) / (1.0 - sq);
+            vec3  g = sqrt(ior * ior + v_dot_h * v_dot_h - 1.0);
+            vec3  gpc = g + v_dot_h, gmc = g - v_dot_h;
+            vec3  rr = (v_dot_h * gpc - 1.0) / (v_dot_h * gmc + 1.0);
+            vec3  fresnel = 0.5 * (gmc * gmc) / (gpc * gpc + 1e-5) * (1.0 + rr * rr);
+            float m2 = max(params.a, 0.05);
+            m2 *= m2;
+            float c2 = n_dot_h * n_dot_h;
+            float distribution = exp((c2 - 1.0) / (m2 * c2)) / (m2 * c2 * c2 + 1e-5);
+            analytic = distribution * clamp(g_term, 0.0, 1.0) / (3.14159265 * n_dot_v + 1e-5) * fresnel;
+            analytic = min(analytic, vec3(n_dot_l + 1.0)) * light.intensity;
+        }
+        /* Stands in for the pre-integrated area lookup tables */
+        area = area_specular(light, r, reflectance);
+        analytic *= spec_tint1.rgb;
+        area *= spec_tint1.rgb;
+    }
+    return mask * coeff *
+           (max(analytic, vec3(0.0)) * spec_coefficients.z + max(area * spec_coefficients.w, vec3(0.0)));
 }
 #endif
 
@@ -158,7 +303,26 @@ void main()
     if(bump_mode != 0)
         normal = bumped_normal(normal);
 #endif
-    vec3 sun    = normalize(vec3(0.3, 0.2, 1.0));
-    color *= 0.45 + 0.55 * abs(dot(normal, sun));
+    if(f_lightmap.z >= 0.0)
+    {
+        baked_light_t light = sample_baked_light();
+#if H3_TERRAIN
+        color *= baked_diffuse(light, normal) * exposure;
+#else
+        float mask = specular_mask_mode == 1 ? base.a
+                   : specular_mask_mode == 2 ? texture(specular_mask_map, f_texcoord).a
+                                             : 1.0;
+        float diffuse_scale;
+        vec3  specular = material_specular(light, normal, color, mask, diffuse_scale);
+        color = (color * baked_diffuse(light, normal) * diffuse_scale + specular) * exposure;
+#endif
+    }
+    else if(f_vertex_light.a > 0.0)
+        color *= f_vertex_light.rgb * 4.0 * exposure;
+    else
+    {
+        vec3 sun = normalize(vec3(0.3, 0.2, 1.0));
+        color *= 0.45 + 0.55 * abs(dot(normal, sun));
+    }
     out_color = vec4(pow(max(color, vec3(0.0)), vec3(1.0 / 2.2)), alpha);
 }
