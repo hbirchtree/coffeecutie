@@ -2473,7 +2473,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
                 send_grab(p, info);
                 send_inputs();
-                /* The vehicle is simulated on the server; drive it there */
+                send_driven(p, info);
+                /* The server simulates the vehicle while nobody here drives
+                 * it; the driver's input still reaches it */
                 if(auto const* input = p.get<PlayerInput>(m_client_player.id());
                    input && info.riding.driver && !info.riding.exiting)
                     if(auto const* net =
@@ -2527,6 +2529,34 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static u64 tick_now(Proxy& p)
     {
         return p.subsystem<TickClock>().tick();
+    }
+
+    /* The vehicle this client drives is simulated here, so it answers the
+     * stick at once; the server follows the state it sends, each tick */
+    void send_driven(Proxy& p, PlayerInfo const& info)
+    {
+        if(!info.riding.driver || info.riding.exiting)
+            return;
+        auto const* net     = p.get<NetworkInfo>(info.riding.vehicle);
+        auto const* model   = p.get<Model>(info.riding.vehicle);
+        auto const* physics = p.get<ObjectPhysics>(info.riding.vehicle);
+        u64 const   tick    = tick_now(p);
+        if(!net || net->instance_id == 0 || !model || !physics ||
+           physics->authority != ObjectPhysics::Simulated ||
+           std::exchange(m_driven_tick, tick) == tick)
+            return;
+        send_all(
+            Message<ObjectSync>({
+                .tick             = tick,
+                .rotation         = model->rotation,
+                .position         = Vecf4(model->position, 0),
+                .linear_velocity  = Vecf4(physics->linear_velocity, 0),
+                .angular_velocity = Vecf4(physics->angular_velocity, 0),
+                .net_id           = net->instance_id,
+            }),
+            k_nSteamNetworkingSend_UnreliableNoNagle,
+            {m_connection},
+            FRAME_UPDATE_LANE);
     }
 
     /* Shots and hits, where CombatSync says they go */
@@ -2828,6 +2858,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(tick == m_synced_tick)
             return;
         m_synced_tick = tick;
+        std::erase_if(m_driven, [tick](auto const& e) {
+            return tick - e.second.seen > 4 * driven_timeout;
+        });
 
         std::vector<ObjectSync> changed, settled, all;
         for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
@@ -3149,6 +3182,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         m_object_history.clear();
         m_player_history.clear();
+        m_driven.clear();
         for(auto object : p.select<ObjectPhysics>())
             object.get<ObjectPhysics>().authority = ObjectPhysics::Simulated;
         m_left_server    = false;
@@ -3229,6 +3263,35 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 glm::distance(Vecf3(grab.origin), eye) <= max_grab_offset;
             if(held || m_remote_holders.contains(player_info.biped.id()))
                 remote_grab(p, player_info.biped.id(), grab, held);
+            break;
+        }
+        case MessageBase::ObjectSync: {
+            /* Only the vehicle the sender's own player drives */
+            if(!player_info.biped.exists())
+                break;
+            auto const& riding = player_info.biped.get<PlayerInfo>().riding;
+            auto const* net    = riding.vehicle != 0
+                                     ? p.get<NetworkInfo>(riding.vehicle)
+                                     : nullptr;
+            u64 const   now    = tick_now(p);
+            for(auto const& sync : payload.values<ObjectSync>())
+            {
+                if(!riding.driver || riding.exiting || !net ||
+                   net->instance_id != sync.net_id)
+                    continue;
+                auto& driven = m_driven[sync.net_id];
+                if(!driven.history.empty() && driven.history.back().tick >= sync.tick)
+                    continue;
+                f32 const lag = static_cast<f32>(
+                    now > sync.tick ? now - sync.tick : 0);
+                driven.lag = driven.history.empty()
+                                 ? lag
+                                 : glm::mix(driven.lag, lag, lag_smoothing);
+                driven.seen = now;
+                driven.history.push_back(sync);
+                while(driven.history.size() > object_history_size)
+                    driven.history.pop_front();
+            }
             break;
         }
         case MessageBase::DriveInput: {
@@ -3961,6 +4024,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>> m_despawn_queue;
     std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>   m_pickup_queue;
     std::map<u32, std::deque<ObjectSync>>    m_object_history;
+    /* On the server, vehicles their client drivers simulate: what they sent,
+     * and how many ticks it arrives behind */
+    struct driven_t
+    {
+        std::deque<ObjectSync> history;
+        f32                    lag{0.f};
+        u64                    seen{0};
+    };
+    std::map<u32, driven_t>                  m_driven;
+    u64                                      m_driven_tick{0};
+    static constexpr f32                     lag_smoothing = .1f;
+    /* Ticks without word before the server takes a vehicle back */
+    static constexpr u64                     driven_timeout = 30;
     /* Remote players' cameras by player index, newest last */
     std::map<u32, std::deque<CameraSync>>    m_player_history;
     friend struct ObjectFollower;
@@ -4075,20 +4151,73 @@ struct ObjectFollower
         return std::tuple<T const&, T const&, f32>{from, to, alpha};
     }
 
+    /* Vehicles driven by players of this peer */
+    static std::set<u64> driven_here(Proxy& p, bool remote)
+    {
+        std::set<u64> out;
+        for(auto player : p.select<PlayerInfo>())
+        {
+            auto const& info = player.get<PlayerInfo>();
+            if(info.is_remote() == remote && info.riding.driver && !info.riding.exiting)
+                out.insert(info.riding.vehicle);
+        }
+        return out;
+    }
+
+    /* The server follows what client drivers simulate, as far behind as
+     * their states arrive, and simulates the rest */
+    void follow_drivers(Proxy& p, Networking const& net, TickClock const& clock)
+    {
+        auto const drivers = driven_here(p, true);
+        u64 const  now     = clock.tick();
+        for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
+        {
+            auto [model, physics, info] = object.components();
+            auto it = net.m_driven.find(info.instance_id);
+            bool const following = info.instance_id != 0 &&
+                                   drivers.contains(object.id()) &&
+                                   it != net.m_driven.end() &&
+                                   now - it->second.seen <= Networking::driven_timeout;
+            if(!following)
+            {
+                if(physics.authority == ObjectPhysics::Follower)
+                    physics.authority = ObjectPhysics::Simulated;
+                continue;
+            }
+            physics.authority = ObjectPhysics::Follower;
+            f64 const at = static_cast<f64>(now) + clock.alpha() -
+                           static_cast<f64>(Networking::interp_ticks) - it->second.lag;
+            if(auto pose = around(it->second.history, at))
+            {
+                auto const& [from, to, alpha] = *pose;
+                Networking::follow(model, physics, from, to, alpha);
+            }
+        }
+    }
+
     void start_restricted(Proxy& p, time_point const&)
     {
-        auto const& net = p.subsystem<Networking>();
+        auto const& net   = p.subsystem<Networking>();
+        auto const& clock = p.subsystem<TickClock>();
+        if(net.is_server())
+            return follow_drivers(p, net, clock);
         if(!net.m_join_confirmed)
             return;
-        auto const& clock = p.subsystem<TickClock>();
-        f64 const   at    = static_cast<f64>(clock.tick()) + clock.alpha() -
+        f64 const at = static_cast<f64>(clock.tick()) + clock.alpha() -
                        static_cast<f64>(Networking::interp_ticks);
 
+        /* What this client drives, it simulates */
+        auto const mine = driven_here(p, false);
         for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
         {
             auto [model, physics, info] = object.components();
             if(physics.mass <= 0.f)
                 continue;
+            if(mine.contains(object.id()))
+            {
+                physics.authority = ObjectPhysics::Simulated;
+                continue;
+            }
             physics.authority = ObjectPhysics::Follower;
             auto it = net.m_object_history.find(info.instance_id);
             if(info.instance_id == 0 || it == net.m_object_history.end())
