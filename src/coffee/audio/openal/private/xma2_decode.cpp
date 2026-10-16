@@ -5,6 +5,7 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavutil/channel_layout.h>
+#include <libavutil/log.h>
 #include <libavutil/mem.h>
 }
 
@@ -95,6 +96,9 @@ bool decoder::decode_pcm(
     std::vector<i16>&            samples,
     format_t&                    fmt)
 {
+    /* Raw packets carry no timestamps, which libavcodec warns about per
+     * frame */
+    av_log_set_level(AV_LOG_ERROR);
     auto const* codec = avcodec_find_decoder(AV_CODEC_ID_XMA2);
     if(!codec || data.empty() || !stream.channels || !stream.rate)
         return false;
