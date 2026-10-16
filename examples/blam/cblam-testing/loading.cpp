@@ -113,6 +113,7 @@ struct ResourceLoader
     {
         blam::antr::header const*                     graph{nullptr};
         u32                                           idle{0};
+        i32                                           ready{-1};
         std::vector<i16>                              hands_nodes;
         blam::tagref_typed_t<blam::tag_class_t::mod2> model{};
         std::vector<i16>                              weapon_nodes;
@@ -2027,6 +2028,9 @@ struct ResourceLoader
         first_person_fit_t fit{
             .graph        = graph,
             .idle         = static_cast<u32>(idle),
+            .ready        = slots.value().size() > fp_slot::ready
+                                ? slots.value()[fp_slot::ready].animation
+                                : -1,
             .hands_nodes  = std::move(hands),
             .weapon_nodes = graph_nodes_of(
                 files, weapon.value()->first_person_model, *graph),
@@ -2640,6 +2644,7 @@ struct ResourceLoader
                    return p.template get<Model>(id) != nullptr;
                }))
                 continue;
+            bool const switched = !fp.models.empty() && fp.weapon != weapon;
             despawn_first_person(p, fp.models);
             fp.weapon = weapon;
             static std::vector<i16> const unposed;
@@ -2655,6 +2660,15 @@ struct ResourceLoader
                     posed,
                     posed->weapon_nodes,
                     weapon));
+            /* A new weapon is drawn */
+            if(switched && posed && posed->ready >= 0)
+                for(u64 id : fp.models)
+                {
+                    PlayModelAnimationEvent play{
+                        .entity = id, .animation = posed->ready, .fade = 0.f};
+                    GameEvent ev{.type = GameEvent::PlayModelAnimation};
+                    game_bus->inject(ev, &play);
+                }
         }
 
         for(auto it = first_person_models.begin();

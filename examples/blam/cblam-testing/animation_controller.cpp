@@ -82,6 +82,9 @@ struct AnimationController
 
         for(auto const& play : std::exchange(m_requests, {}))
             apply(p, play);
+        m_fire_queue->poll();
+        for(auto const& shot : std::exchange(m_shots, {}))
+            recoil(p, shot, files);
         if(dt > 0.f)
         {
             animate_bipeds(p, dt);
@@ -123,8 +126,9 @@ struct AnimationController
             footstep(p, hit);
     }
 
-    using Slot     = blam::antr::unit_weapon::animation_idx_t;
-    using UnitSlot = blam::antr::unit::animation_idx_t;
+    using Slot       = blam::antr::unit_weapon::animation_idx_t;
+    using UnitSlot   = blam::antr::unit::animation_idx_t;
+    using WeaponSlot = blam::antr::weapon_animation_idx_t;
 
     /* A unit's animations in one stance holding one weapon: the antr
      * unit/weapon slot table, so new behaviour only names a Slot */
@@ -132,12 +136,14 @@ struct AnimationController
     {
         std::array<i32, Slot::zapping + 1>      slots{};
         std::array<i32, UnitSlot::hovering + 1> unit_slots{};
+        std::array<i32, 10>                     weapon_slots{};
         blam::antr::screen_bounds               aim{};
 
         stance_t()
         {
             slots.fill(-1);
             unit_slots.fill(-1);
+            weapon_slots.fill(-1);
         }
 
         i32 operator[](Slot slot) const
@@ -150,10 +156,17 @@ struct AnimationController
         {
             return unit_slots[slot];
         }
+
+        /* The held weapon's own: fire, reload, melee */
+        i32 operator[](WeaponSlot slot) const
+        {
+            return weapon_slots[static_cast<size_t>(slot)];
+        }
     };
 
-    /* `unit` is the stance ("stand", "crouch", a seat), `weapon` what is
-     * held; the first weapon stands in when that one is missing */
+    /* `unit` is the stance ("stand", "crouch", a seat), `weapon` the held
+     * weapon's label: a weapon type ("ar") within a class ("rifle"), or the
+     * class itself; the first class stands in when neither is there */
     stance_t const& stance(
         Proxy&                    p,
         blam::antr::header const* graph,
@@ -184,9 +197,23 @@ struct AnimationController
         if(!weapons.has_value() || weapons.value().empty())
             return out;
         blam::antr::unit_weapon const* held = &weapons.value()[0];
+        blam::antr::weapon_type const* type = nullptr;
         for(auto const& candidate : weapons.value())
-            if(candidate.name.str() == weapon)
+        {
+            if(!type && candidate.name.str() == weapon)
                 held = &candidate;
+            if(auto types = candidate.weapon_types.data(magic); types.has_value())
+                for(auto const& t : types.value())
+                    if(t.label.str() == weapon)
+                    {
+                        held = &candidate;
+                        type = &t;
+                    }
+        }
+        if(type)
+            if(auto refs = type->animations.data(magic); refs.has_value())
+                for(size_t i = 0; i < out.weapon_slots.size() && i < refs.value().size(); i++)
+                    out.weapon_slots[i] = refs.value()[i].animation;
         auto refs = held->animations.data(magic);
         if(!refs.has_value())
             return out;
@@ -226,11 +253,10 @@ struct AnimationController
 
             Vecf3 const look =
                 glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+            std::string const weapon = held_label(p, player.id(), files);
             auto const* equip = p.template get<BipedEquipment>(player.id());
             auto const* held =
                 equip ? equip->held(files.load_generation) : nullptr;
-            std::string const weapon =
-                held ? std::string(held->weapon->label.str()) : unarmed;
             auto* in_hand = held ? p.template get<HeldObject>(held->held) : nullptr;
             if(info.riding.vehicle != 0)
             {
@@ -239,6 +265,13 @@ struct AnimationController
             }
             if(in_hand)
                 in_hand->shown = true;
+            /* A new weapon is drawn */
+            auto& drawn = m_walkers[player.id()].weapon;
+            if(!drawn.empty() && drawn != weapon)
+                if(i32 const ready = stance(p, biped.anim_graph, "stand", weapon)[Slot::ready];
+                   ready >= 0)
+                    apply(p, {.entity = player.id(), .animation = ready, .fade = .1f});
+            drawn = weapon;
             m_walkers[player.id()].seat         = {};
             m_walkers[player.id()].exiting      = false;
             m_walkers[player.id()].seen_vehicle = false;
@@ -855,6 +888,32 @@ struct AnimationController
             layer->weight = play.weight;
     }
 
+    /* The label of what a player holds, which picks its animations */
+    std::string held_label(Proxy& p, u64 id, BlamFiles<halo_version> const& files)
+    {
+        auto const* equip = p.template get<BipedEquipment>(id);
+        auto const* held  = equip ? equip->held(files.load_generation) : nullptr;
+        return held ? std::string(held->weapon->label.str()) : unarmed;
+    }
+
+    /* A body on foot kicks with each shot it fires */
+    void recoil(Proxy& p, WeaponFireEvent const& shot, BlamFiles<halo_version> const& files)
+    {
+        auto const* info = p.template get<PlayerInfo>(shot.shooter);
+        auto const* anim = p.template get<AnimationPlayback>(shot.shooter);
+        if(shot.vehicle || !info || info->riding.vehicle || !anim || !anim->graph)
+            return;
+        i32 const clip = stance(p, anim->graph, "stand", held_label(p, shot.shooter, files))
+            [WeaponSlot::fire_1];
+        auto anims = anim->graph->animations.data(files.container.magic);
+        /* A base clip would stop it walking */
+        if(clip < 0 || !anims.has_value() ||
+           static_cast<size_t>(clip) >= anims.value().size() ||
+           anims.value()[clip].type == blam::antr::anim_type::base)
+            return;
+        apply(p, {.entity = shot.shooter, .animation = clip, .fade = 0.f});
+    }
+
     /* The animation called `name`, cached per graph */
     i32 find(Proxy& p, blam::antr::header const* graph, std::string const& name)
     {
@@ -1013,6 +1072,7 @@ struct AnimationController
         bool  hard_landing{false};
         bool  seen{false};
         bool  running{false};
+        std::string weapon; /* the label its stance was last drawn for */
     };
     struct custom_t
     {
@@ -1030,6 +1090,8 @@ struct AnimationController
     std::map<u64, walker_t>                      m_walkers;
     std::map<u64, custom_t>                      m_custom;
     std::vector<PlayModelAnimationEvent>         m_requests;
+    std::vector<WeaponFireEvent>                 m_shots;
+    std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     std::map<u64, f32>                           m_wheel_turn;
     /* Steering pose per rad/s a hovercraft turns at */
     static constexpr f32 hover_lean = .3f;
@@ -1051,4 +1113,9 @@ void alloc_animation_controller(compo::EntityContainer& e)
         1024, [&controller](GameEvent&, PlayModelAnimationEvent* play) {
             controller.m_requests.push_back(*play);
         });
+    controller.m_fire_queue =
+        e.subsystem_cast<GameEventBus>().addQueuedEventFunction<WeaponFireEvent>(
+            0, [&controller](GameEvent&, WeaponFireEvent* shot) {
+                controller.m_shots.push_back(*shot);
+            });
 }

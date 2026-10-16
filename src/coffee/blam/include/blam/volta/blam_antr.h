@@ -161,8 +161,11 @@ enum class weapon_animation_idx_t
 struct weapon_type
 {
     bl_string                label;
+    u32                      padding[4];
     reference<animation_ref> animations; // indexed by weapon_animation_idx_t
 };
+
+static_assert(sizeof(weapon_type) == 60);
 
 struct unit_weapon
 {
