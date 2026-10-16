@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -43,6 +44,7 @@ struct EffectDrawer
         u32 count{0};
         f32 mode{0.f}; /* what the shader does with the color */
         gfx::blend_state blend{};
+        EffectScene::audience_t audience{};
     };
 
     struct image_t
@@ -254,8 +256,13 @@ struct EffectDrawer
         }
     }
 
+    /* `seat` builds for that seat alone; otherwise batches carry who sees them */
     void build(
-        EffectScene const& scene, BitmapCache<V>& cache, Vecf3 const& eye, u32 generation)
+        EffectScene const&     scene,
+        BitmapCache<V>&        cache,
+        Vecf3 const&           eye,
+        u32                    generation,
+        std::optional<u32>     seat = std::nullopt)
     {
         if(generation != image_generation)
         {
@@ -296,6 +303,8 @@ struct EffectDrawer
         depths.reserve(scene.sprites.size());
         for(auto const& s : scene.sprites)
         {
+            if(seat && !s.audience.sees(*seat))
+                continue;
             Vecf3 const d     = s.position - eye;
             f32 const   depth = glm::dot(d, d);
             if(std::isfinite(depth))
@@ -312,9 +321,27 @@ struct EffectDrawer
         for(auto const& [_, s] : depths)
             sprites.push_back(s);
 
+        std::vector<EffectScene::audience_t> audiences{{}};
+        auto const heard = [&](EffectScene::audience_t const& a) {
+            if(!seat && std::find(audiences.begin(), audiences.end(), a) == audiences.end())
+                audiences.push_back(a);
+        };
+        for(auto const* s : sprites)
+            heard(s->audience);
+        for(auto const& r : scene.ribbons)
+            heard(r.audience);
+        auto const in = [&](EffectScene::audience_t const& mine,
+                            EffectScene::audience_t const& audience) {
+            return seat ? mine.sees(*seat) : mine == audience;
+        };
+
         for(i32 group = 0; group < 4; group++)
+        for(auto const& audience : audiences)
         {
-            batch_t batch{.offset = static_cast<u32>(vertices.size())};
+            batch_t batch{
+                .offset   = static_cast<u32>(vertices.size()),
+                .audience = audience,
+            };
             switch(group)
             {
             case 1:
@@ -333,10 +360,10 @@ struct EffectDrawer
                 break;
             }
             for(auto const* s : sprites)
-                if(group_of(s->blend) == group)
+                if(group_of(s->blend) == group && in(s->audience, audience))
                     add_sprite(cache, *s);
             for(auto const& r : scene.ribbons)
-                if(group_of(r.blend) == group)
+                if(group_of(r.blend) == group && in(r.audience, audience))
                     add_ribbon(cache, r);
             batch.count = static_cast<u32>(vertices.size()) - batch.offset;
             if(batch.count > 0)
