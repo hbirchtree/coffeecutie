@@ -56,6 +56,12 @@ layout(location=9, binding=1) uniform sampler2D detail;
 #if H3_DETAIL >= 2
 layout(location=10, binding=2) uniform sampler2D detail2;
 #endif
+#if H3_DETAIL >= 4
+/* detail_map_overlay (4) or detail_map3 (5), at base uv * ratio */
+layout(location=121, binding=14) uniform sampler2D detail3;
+layout(location=122) uniform vec2 detail3_ratio;
+layout(location=123) uniform float detail3_curve;
+#endif
 layout(location=85, binding=3) uniform sampler2D bump_map;
 layout(location=86, binding=4) uniform sampler2D bump_detail_map;
 /* 0 none, 1 bump map, 2 plus the detail bump map at bump uv * ratio */
@@ -68,8 +74,9 @@ layout(location=89, binding=9) uniform sampler2DArray lightprobe;
 layout(location=90) uniform vec4 lightprobe_scale;
 layout(location=91) uniform float exposure;
 layout(location=92) uniform float intensity_scale;
-/* The shared composite's exposure and gamma, see screen_clear.frag */
-layout(location=102) uniform vec2 composite;
+layout(location=99) uniform vec3 camera_position;
+/* v_atmosphere_constant_0..5, _extra (Halo 3's atmosphere.fx) */
+layout(location=113) uniform vec4 atmosphere[7];
 layout(location=8) in vec4 f_vertex_light;
 
 #if !H3_TERRAIN
@@ -81,12 +88,12 @@ layout(location=95) uniform vec4 spec_coefficients;
 layout(location=96) uniform vec4 spec_lobe;
 layout(location=97) uniform vec4 spec_tint0;
 layout(location=98) uniform vec4 spec_tint1;
-layout(location=99) uniform vec3 camera_position;
 layout(location=100, binding=10) uniform sampler2D specular_mask_map;
 layout(location=101, binding=11) uniform sampler2D material_map;
 /* Self-illumination: 0 off, 1 simple, 2 with detail, 3 three channel */
 layout(location=5) in vec2 f_illum_uv;
 layout(location=104) uniform int self_illum_mode;
+layout(location=120) uniform int black_point;
 layout(location=105) uniform vec4 illum_color; /* rgb, intensity in a */
 layout(location=106) uniform vec4 illum_channels[3];
 layout(location=109) uniform vec2 illum_detail_ratio;
@@ -273,16 +280,42 @@ vec3 self_illumination()
 }
 #endif
 
-/* Halo 3's tone curve (final_composite_base.hlsl: clamp at 1.4938, then
- * 1.00415x - 0.15x^3, which meets 1 there) and display gamma, written so
- * the shared composite's Reinhard, exposure and gamma give it back */
-vec3 tone_map(vec3 linear)
+/* Halo 3's compute_scattering: extinction of the surface's light and the
+ * sunlight scattered in along the view ray */
+void compute_scattering(vec3 view_point, vec3 scene_point, out vec3 extinction, out vec3 inscatter)
 {
-    vec3 x       = clamp(linear, vec3(0.0), vec3(1.4938016));
-    vec3 display = pow((1.0041494 - 0.15 * x * x) * x, vec3(1.0 / 2.2));
-    vec3 q       = min(pow(display, vec3(composite.y)) / composite.x, vec3(0.999));
-    return q / (1.0 - q);
+    extinction = vec3(1.0);
+    inscatter  = vec3(0.0);
+    if(atmosphere[1].w < 0.0)
+        return;
+    vec3  sun_dir  = atmosphere[0].xyz;
+    vec3  view_vec = view_point - scene_point;
+    float dist     = length(view_vec);
+    view_vec /= max(dist, 1e-6);
+    float c_theta = -dot(view_vec, sun_dir);
+    dist = min(max(dist + atmosphere[0].w, 0.0), atmosphere[1].w);
+    const float log2_e = 1.4426950;
+    float view_height  = max(view_point.z - atmosphere[3].w, 0.0) * log2_e;
+    float scene_height = max(scene_point.z - atmosphere[3].w, 0.0) * log2_e;
+    float diff         = view_height - scene_height;
+    float mie_scale = atmosphere[4].w, ray_scale = atmosphere[5].w;
+    float dp, dm;
+    if(diff * diff > 0.001)
+    {
+        dp = -(exp2(-view_height / mie_scale) - exp2(-scene_height / mie_scale)) * dist * mie_scale / diff;
+        dm = -(exp2(-view_height / ray_scale) - exp2(-scene_height / ray_scale)) * dist * ray_scale / diff;
+    } else
+    {
+        dp = exp2(-view_height / mie_scale) * dist;
+        dm = exp2(-view_height / ray_scale) * dist;
+    }
+    extinction = exp2(-(atmosphere[2].xyz * dm + atmosphere[3].xyz * dp));
+    vec3  beta_m_theta = atmosphere[4].xyz * (1.0 + c_theta * c_theta);
+    float heyey        = atmosphere[2].w - atmosphere[6].x * c_theta;
+    vec3  beta_p_theta = atmosphere[5].xyz * pow(max(heyey, 1e-4), -1.5);
+    inscatter = atmosphere[1].xyz * (beta_m_theta + beta_p_theta) * (1.0 - extinction);
 }
+
 
 #if H3_TERRAIN
 vec3 terrain_layer(
@@ -324,10 +357,12 @@ void main()
         discard;
     vec3 color = decode(base.rgb, curves.x);
 #if H3_DETAIL >= 1
-    vec3 d1 = decode(texture(detail, f_detail_uv).rgb, curves.y);
+    vec4 detail_texel = texture(detail, f_detail_uv);
+    vec3 d1 = decode(detail_texel.rgb, curves.y);
 #endif
 #if H3_DETAIL >= 2
-    vec3 d2 = decode(texture(detail2, f_detail2_uv).rgb, curves.z);
+    vec4 detail2_texel = texture(detail2, f_detail2_uv);
+    vec3 d2 = decode(detail2_texel.rgb, curves.z);
 #endif
 #if H3_DETAIL == 1
     color *= d1 * detail_multiplier;
@@ -335,9 +370,37 @@ void main()
     color *= d1 * d2 * detail_multiplier * detail_multiplier;
 #elif H3_DETAIL == 3
     color *= mix(d1, d2, base.a) * detail_multiplier;
+#elif H3_DETAIL >= 4
+    vec4 detail3_texel = texture(detail3, f_texcoord * detail3_ratio);
+    vec3 d3 = decode(detail3_texel.rgb, detail3_curve);
+#endif
+#if H3_DETAIL == 4
+    /* two_detail_overlay: base x blend of the details by base alpha x overlay */
+    color *= mix(d1, d2, base.a) * d3 * detail_multiplier * detail_multiplier;
+#elif H3_DETAIL == 5
+    /* three_detail_blend: base alpha walks from detail 1 to 2 to 3 */
+    float blend1 = clamp(2.0 * base.a, 0.0, 1.0);
+    float blend2 = clamp(2.0 * base.a - 1.0, 0.0, 1.0);
+    color *= mix(mix(d1, d2, blend1), d3, blend2) * detail_multiplier;
 #endif
     color *= albedo_tint.rgb;
-    float alpha = blended != 0 ? base.a * albedo_tint.a : 1.0;
+    float coverage = base.a;
+#if H3_DETAIL == 4
+    coverage = mix(detail_texel.a, detail2_texel.a, base.a) * detail3_texel.a;
+#elif H3_DETAIL == 5
+    coverage = mix(mix(detail_texel.a, detail2_texel.a, blend1), detail3_texel.a, blend2);
+#endif
+#if H3_DETAIL == 2
+    /* two_detail_black_point: the base alpha is a black point for the
+     * details' alpha (apply_black_point in Halo 3's utilities.fx) */
+    if(black_point != 0)
+    {
+        float mid = (base.a + 1.0) * 0.5;
+        float a   = detail_texel.a * detail2_texel.a;
+        coverage  = mid * clamp((a - base.a) / (mid - base.a), 0.0, 1.0) + clamp(a - mid, 0.0, 1.0);
+    }
+#endif
+    float alpha = blended != 0 ? coverage * albedo_tint.a : 1.0;
 #endif
 
     vec3 normal = surface_normal();
@@ -369,5 +432,9 @@ void main()
 #if !H3_TERRAIN
     color += self_illumination();
 #endif
-    out_color = vec4(tone_map(color), alpha);
+    vec3 extinction, inscatter;
+    compute_scattering(camera_position, f_world_pos, extinction, inscatter);
+    color = color * extinction + inscatter * exposure;
+    /* Linear HDR: the composite applies Halo 3's tone curve */
+    out_color = vec4(max(color, vec3(0.0)), alpha);
 }
