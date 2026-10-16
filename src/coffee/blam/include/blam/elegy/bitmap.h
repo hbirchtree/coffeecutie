@@ -453,6 +453,46 @@ inline void decode_ctx1(
         }
 }
 
+/*! One texel of linearized DXT5 (BC3) blocks, RGBA */
+inline std::array<byte_t, 4> dxt5_texel(Span<byte_t const> blocks, u32 width, u32 x, u32 y)
+{
+    std::array<byte_t, 4> out{};
+    u32    bw = (width + 3) / 4;
+    size_t at = (size_t(y / 4) * bw + x / 4) * 16;
+    if(at + 16 > blocks.size())
+        return out;
+    byte_t const* b = blocks.data() + at;
+    u32           i = (y % 4) * 4 + (x % 4);
+    /* Alpha: BC4 */
+    u32 a0 = b[0], a1 = b[1];
+    u64 alpha_bits = 0;
+    for(u32 k = 0; k < 6; k++)
+        alpha_bits |= u64(b[2 + k]) << (8 * k);
+    u32 ai = (alpha_bits >> (3 * i)) & 7;
+    u32 alpha = ai == 0 ? a0
+                : ai == 1 ? a1
+                : a0 > a1 ? ((8 - ai) * a0 + (ai - 1) * a1) / 7
+                : ai < 6  ? ((6 - ai) * a0 + (ai - 1) * a1) / 5
+                : ai == 6 ? 0
+                          : 255;
+    /* Color: BC1, always four colors */
+    auto rgb = [](u32 c) {
+        return std::array<u32, 3>{
+            ((c >> 11) & 31) * 255 / 31, ((c >> 5) & 63) * 255 / 63, (c & 31) * 255 / 31};
+    };
+    auto c0 = rgb(u32(b[8]) | u32(b[9]) << 8);
+    auto c1 = rgb(u32(b[10]) | u32(b[11]) << 8);
+    u32  ci = ((u32(b[12]) | u32(b[13]) << 8 | u32(b[14]) << 16 | u32(b[15]) << 24) >> (2 * i)) & 3;
+    for(u32 c = 0; c < 3; c++)
+        out[c] = static_cast<byte_t>(
+            ci == 0   ? c0[c]
+            : ci == 1 ? c1[c]
+            : ci == 2 ? (2 * c0[c] + c1[c]) / 3
+                      : (c0[c] + 2 * c1[c]) / 3);
+    out[3] = static_cast<byte_t>(alpha);
+    return out;
+}
+
 /*!
  * \brief DXN keeps 3Dc's channel order, y in the first half of a block;
  * swapping the halves gives BC5 with x in red.
