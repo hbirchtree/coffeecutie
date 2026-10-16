@@ -340,13 +340,14 @@ inline void dump_mode(h2::map_container<V> const& map, h2::tag_t const& tag)
         {
             fmt::print(
                 "  section {}: class={} vertices={} faces={} nodes/vertex={} "
-                "rigid node={} data {}+{:#x} {} bytes base={}\n",
+                "rigid node={} node map={} data {}+{:#x} {} bytes base={}\n",
                 i,
                 static_cast<i16>(from_le(s.classification)),
                 s.vertex_count(),
                 s.face_count(),
                 s.nodes_per_vertex,
                 s.rigid_node.value(),
+                s.node_map_size,
                 raw_file_name(s.data),
                 s.data.offset(),
                 s.data_size(),
@@ -357,7 +358,7 @@ inline void dump_mode(h2::map_container<V> const& map, h2::tag_t const& tag)
         for(auto const& [i, n] : stl_types::enumerate(nodes.value()))
             fmt::print(
                 "  node {} {} parent={} pos=({}, {}, {}) rot=({}, {}, {}, {}) "
-                "inv_scale={}\n",
+                "inv_scale={} inv=[{}]\n",
                 i,
                 map.string(n.name),
                 n.parent.value(),
@@ -368,7 +369,8 @@ inline void dump_mode(h2::map_container<V> const& map, h2::tag_t const& tag)
                 from_le(n.rotation[1]),
                 from_le(n.rotation[2]),
                 from_le(n.rotation[3]),
-                from_le(n.inverse_scale));
+                from_le(n.inverse_scale),
+                fmt::join(n.inverse_transform, ", "));
     if(auto shaders = model->shaders.data(map.magic()); !shaders.has_error())
         for(auto const& [i, s] : stl_types::enumerate(shaders.value()))
             fmt::print("  shader {}: {}\n", i, tag_label(map, s.shader));

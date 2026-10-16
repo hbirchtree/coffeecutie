@@ -53,8 +53,9 @@ struct subpart_t;
  * vertex-buffers field at offset 56, the vertex buffer index). For BSP
  * cluster data: (0,72) = parts, (8,8) = subparts, (32,2) = strip indices,
  * (48,2) = MOPP reorder, (56,n) = vertex buffer n (0 = position,
- * 1 = texcoord, 2 = normal); mode sections add (100,1) = node map and
- * (68,68)/(84,4)/(92,2) prt-related blocks. The authoring "visibility
+ * 1 = texcoord, 2 = normal), (56,32) = the vertex buffer headers
+ * (vertex_buffer_t) describing them; mode sections add (100,1) = node map
+ * and (68,68)/(84,4)/(92,2) prt-related blocks. The authoring "visibility
  * bounds" block (16,20) is stripped from all shipped caches. */
 struct alignas(4) resource_t
 {
@@ -86,6 +87,37 @@ struct alignas(4) resource_t
 };
 
 static_assert(sizeof(resource_t) == 16);
+
+/*!
+ * Vertex buffer formats, from the buffer headers of every Xbox map. Compressed
+ * positions are i16 x3 against the model bounds; node indices go through the
+ * section's node map (straight to model nodes when it has none), weights are
+ * u8 summing to ~255. The float variants with odd ids never ship on Xbox.
+ */
+enum class vertex_type_t : u8
+{
+    point                 = 0x01, /*!< f32 x3 */
+    point_compressed      = 0x02, /*!< i16 x3 */
+    rigid_boned           = 0x04, /*!< i16 x3, node, pad */
+    skinned_2             = 0x06, /*!< i16 x3, pad x2, node x2, weight x2 */
+    skinned_3             = 0x08, /*!< i16 x3, node x3, weight x3 */
+    skinned_4             = 0x0A, /*!< i16 x3, pad x2, node x4, weight x4 */
+    texcoord              = 0x18, /*!< f32 x2 */
+    texcoord_compressed   = 0x19, /*!< i16 x2 */
+    tangent_space_packed  = 0x1B, /*!< normal, binormal, tangent: u32 each */
+    unknown_2f            = 0x2F, /*!< 3 bytes, scarab only */
+    unknown_30            = 0x30, /*!< 4 bytes, scarab only */
+};
+
+/*! Header of one vertex buffer of a section, (56,32) */
+struct alignas(1) vertex_buffer_t
+{
+    vertex_type_t       type;
+    u8                  stride;
+    std::array<u8, 30>  unknown_0;
+};
+
+static_assert(sizeof(vertex_buffer_t) == 32);
 
 /*! Submesh table entry inside the geometry block: one draw range per
  * shader */
@@ -128,7 +160,10 @@ struct alignas(4) model_section_t
     u16                       face_count_raw;
     u8                        unknown_1[12];
     u8                        nodes_per_vertex;
-    u8                        unknown_2[23];
+    u8                        unknown_2[15];
+    u8                        hardware_node_count;
+    u8                        node_map_size; /*!< Entries of the (100,1) map */
+    u8                        unknown_2a[6];
     block_index<model_node_t> rigid_node; /* -1 unless rigid */
     u8                        unknown_2b[10];
     raw_ref                   data;
@@ -161,6 +196,7 @@ struct alignas(4) model_section_t
 };
 
 static_assert(offsetof(model_section_t, nodes_per_vertex) == 20);
+static_assert(offsetof(model_section_t, node_map_size) == 0x25);
 static_assert(offsetof(model_section_t, rigid_node) == 0x2C);
 static_assert(offsetof(model_section_t, data) == 56);
 static_assert(offsetof(model_section_t, header_size_raw) == 68);
@@ -223,8 +259,9 @@ struct alignas(4) model_node_t
     block_index<model_node_t> next_sibling;
     i16                       unknown_0;
     Vecf3                     position;
-    Quatf                     rotation; /* x, y, z, w */
+    Quatf                     rotation; /* x, y, z, w, no conjugate */
     f32                       inverse_scale;
+    /*! Inverse of the bind pose: forward, left, up columns, then position */
     std::array<f32, 12>       inverse_transform;
     f32                       distance_from_parent;
 };
