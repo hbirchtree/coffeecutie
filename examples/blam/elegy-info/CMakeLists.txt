@@ -5,7 +5,7 @@ coffee_application(
   LIBRARIES Core Blam
 )
 
-# WAV output next to extracted XMA2 when OAF carries the decoder
-if(TARGET OAF)
-  target_link_libraries(ElegyInfo PRIVATE OAF)
+# WAV output next to extracted XMA2 when the decoder is built
+if(TARGET OAFXMA2Decoder)
+  target_link_libraries(ElegyInfo PRIVATE OAFXMA2Decoder)
 endif()

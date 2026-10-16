@@ -49,13 +49,19 @@ if(TARGET libwma::wma)
   target_compile_definitions(OAF PUBLIC -DOAF_WMA_DECODER_ENABLED=1)
 endif()
 
-# XMA2 through libavcodec: LGPL, so only ever a shared library
+# XMA2 through libavcodec: LGPL, so libavcodec is only ever a shared library
 if(BUILD_OPENAL_XMA2)
   find_package(FFMPEG REQUIRED)
-  target_sources(OAF PRIVATE private/xma2_decode.cpp)
-  target_include_directories(OAF PRIVATE ${FFMPEG_INCLUDE_DIRS})
-  target_link_libraries(OAF PUBLIC ${FFMPEG_LIBRARIES})
-  target_compile_definitions(OAF PUBLIC -DOAF_XMA2_DECODER_ENABLED=1)
+  coffee_library(
+    TARGET OAFXMA2Decoder
+    SOURCES private/xma2_decode.cpp
+    LIBRARIES Core
+    HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
+  target_include_directories(OAFXMA2Decoder PRIVATE ${FFMPEG_INCLUDE_DIRS})
+  target_link_libraries(OAFXMA2Decoder PUBLIC ${FFMPEG_LIBRARIES})
+  target_compile_definitions(OAFXMA2Decoder PUBLIC -DOAF_XMA2_DECODER_ENABLED=1)
+  target_link_libraries(OAF PUBLIC OAFXMA2Decoder)
 endif()
 
 if(EMSCRIPTEN)
