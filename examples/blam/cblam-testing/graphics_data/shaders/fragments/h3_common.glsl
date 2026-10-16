@@ -14,10 +14,11 @@ layout(location=3) in vec2 f_detail_uv;
 layout(location=4) in vec2 f_detail2_uv;
 
 layout(location=3) uniform int alpha_test;
-layout(location=28) uniform vec4 albedo_tint;
-layout(location=29) uniform int blended;
+/* H3's own uniforms start at 64, clear of h2.vert and h2_common */
+layout(location=64) uniform vec4 albedo_tint;
+layout(location=65) uniform int blended;
 /* Decode exponents: base, detail, detail2 (terrain: per layer, below) */
-layout(location=46) uniform vec3 curves;
+layout(location=66) uniform vec3 curves;
 
 #ifndef H3_DETAIL
 #define H3_DETAIL 0
@@ -27,24 +28,24 @@ layout(location=46) uniform vec3 curves;
 #endif
 
 #if H3_TERRAIN
-layout(location=30, binding=0) uniform sampler2D base_m0;
-layout(location=31, binding=1) uniform sampler2D base_m1;
-layout(location=32, binding=2) uniform sampler2D base_m2;
-layout(location=33, binding=3) uniform sampler2D base_m3;
-layout(location=34, binding=4) uniform sampler2D detail_m0;
-layout(location=35, binding=5) uniform sampler2D detail_m1;
-layout(location=36, binding=6) uniform sampler2D detail_m2;
-layout(location=37, binding=7) uniform sampler2D detail_m3;
-layout(location=38, binding=8) uniform sampler2D blend_map;
+layout(location=67, binding=0) uniform sampler2D base_m0;
+layout(location=68, binding=1) uniform sampler2D base_m1;
+layout(location=69, binding=2) uniform sampler2D base_m2;
+layout(location=70, binding=3) uniform sampler2D base_m3;
+layout(location=71, binding=4) uniform sampler2D detail_m0;
+layout(location=72, binding=5) uniform sampler2D detail_m1;
+layout(location=73, binding=6) uniform sampler2D detail_m2;
+layout(location=74, binding=7) uniform sampler2D detail_m3;
+layout(location=75, binding=8) uniform sampler2D blend_map;
 /* Per layer: base uv scale (xy), detail uv scale (zw) */
-layout(location=39) uniform vec4 layer_scale[4];
-layout(location=43) uniform vec2 blend_scale;
+layout(location=76) uniform vec4 layer_scale[4];
+layout(location=80) uniform vec2 blend_scale;
 /* Which layers the shader turns on, and which keep their detail */
-layout(location=44) uniform vec4 layer_enabled;
-layout(location=45) uniform vec4 layer_detailed;
+layout(location=81) uniform vec4 layer_enabled;
+layout(location=82) uniform vec4 layer_detailed;
 /* Decode exponents per layer: base, detail */
-layout(location=47) uniform vec4 layer_base_curve;
-layout(location=48) uniform vec4 layer_detail_curve;
+layout(location=83) uniform vec4 layer_base_curve;
+layout(location=84) uniform vec4 layer_detail_curve;
 #else
 layout(location=2, binding=0) uniform sampler2D diffuse;
 #if H3_DETAIL >= 1
