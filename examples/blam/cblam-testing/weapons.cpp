@@ -288,7 +288,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             }
         }
 
-        u64 const muzzle = shot.vehicle ? shot.vehicle : held_weapon(p, shot.shooter, files);
+        /* Its own seat sees the first-person weapon fire, every other the one
+         * in its hand; one of them makes the sound and light */
+        u64 const first = shot.vehicle ? shot.vehicle : first_person(p, shot.shooter, true);
+        u64 const third = shot.vehicle ? 0 : in_hand(p, shot.shooter, files);
         if(auto effects = trigger.firing_effects.data(magic);
            effects.has_value() && !effects.value().empty())
         {
@@ -298,16 +301,23 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 pick = std::uniform_int_distribution<size_t>(
                     0, effects.value().size() - 1)(rng);
             auto const& effect = effects.value()[pick].firing_effect;
-            if(effect.valid())
-            {
-                SpawnEffectEvent play{
-                    .effect    = effect,
-                    .position  = shot.position,
-                    .direction = forward,
-                    .parent    = muzzle,
+            auto const play = [&](u64 parent, bool visuals_only) {
+                SpawnEffectEvent spawn{
+                    .effect       = effect,
+                    .position     = shot.position,
+                    .direction    = forward,
+                    .parent       = parent,
+                    .visuals_only = visuals_only,
                 };
                 GameEvent ev{.type = GameEvent::SpawnEffect};
-                game.inject(ev, &play);
+                game.inject(ev, &spawn);
+            };
+            if(effect.valid())
+            {
+                if(first || !third)
+                    play(first, false);
+                if(third)
+                    play(third, first != 0);
             }
         }
 
@@ -396,12 +406,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return 0;
     }
 
-    /* The weapon a shooter is seen to fire: its first-person model for its
-     * own seat, the one in its hand for everyone else */
-    u64 held_weapon(Proxy& p, u64 shooter, BlamFiles<halo_version> const& files)
+    /* The shooter's weapon as others see it */
+    u64 in_hand(Proxy& p, u64 shooter, BlamFiles<halo_version> const& files)
     {
-        if(u64 const fp = first_person(p, shooter, true))
-            return fp;
         auto const* equip = p.template get<BipedEquipment>(shooter);
         auto const* held  = equip ? equip->held(files.load_generation) : nullptr;
         return held && p.template get<Model>(held->held) ? held->held : 0;

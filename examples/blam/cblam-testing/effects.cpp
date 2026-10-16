@@ -29,7 +29,8 @@ using EffectManifest = compo::SubsystemManifest<
         const PlayerCamera,
         const PlayerInfo,
         const Attachment,
-        const AnimationPlayback>,
+        const AnimationPlayback,
+        const Visibility>,
     type_list_t<
         EffectScene,
         PhysicsBus,
@@ -156,6 +157,9 @@ struct EffectSystem
         f32  duration{0.f};
         bool started{false};
         bool created{false};
+
+        EffectScene::audience_t audience{};
+        bool visuals_only{false}; /* no sounds, lights, decals or objects */
     };
 
     struct light_instance_t
@@ -183,6 +187,7 @@ struct EffectSystem
         f32                    age{0.f};
         bool                   attached{false};
         scale_t                scale{};
+        EffectScene::audience_t audience{};
 
         struct type_state_t
         {
@@ -675,6 +680,7 @@ struct EffectSystem
             }
             /* Ribbons are stored head first */
             std::reverse(ribbon.points.begin(), ribbon.points.end());
+            ribbon.audience = audience_of(p, a.parent);
             scene.ribbons.push_back(std::move(ribbon));
             ++it;
         }
@@ -851,20 +857,34 @@ struct EffectSystem
         switch(class_of(request.effect))
         {
         case blam::tag_class_t::snd:
-            play_sound(p, request.effect, place.position);
+            if(!request.visuals_only)
+                play_sound(p, request.effect, place.position);
             break;
         case blam::tag_class_t::effe:
             if(auto const* tag = tag_data<effect>(request.effect, blam::tag_class_t::effe))
+            {
                 m_effects.push_back({
                     .tag      = tag,
                     .place    = place,
                     .velocity = request.velocity,
                     .parent   = request.parent,
                 });
+                m_effects.back().audience     = audience_of(p, request.parent);
+                m_effects.back().visuals_only = request.visuals_only;
+            }
             break;
         default:
             break;
         }
+    }
+
+    /* Seen by the seats that see the model it comes off */
+    EffectScene::audience_t audience_of(Proxy& p, u64 parent)
+    {
+        auto const* vis = parent ? p.template get<Visibility>(parent) : nullptr;
+        if(!vis)
+            return {};
+        return {.only_seat = vis->only_render_for, .skip_seat = vis->skip_render_for};
     }
 
     /* On a first-person model, the sound stays with the one who made it */
@@ -969,7 +989,8 @@ struct EffectSystem
             break;
         case tag_class_t::pctl:
             if(auto const* tag = tag_data<particle_system>(ref, tag_class_t::pctl))
-                start_system(tag, {}, entity, marker, {}, true, scale);
+                start_system(
+                    tag, {}, entity, marker, {}, true, scale, audience_of(p, entity));
             break;
         case tag_class_t::effe:
             if(auto const* tag = tag_data<effect>(ref, tag_class_t::effe))
@@ -982,6 +1003,7 @@ struct EffectSystem
                     .attached = true,
                     .scale    = scale,
                 });
+                m_effects.back().audience = audience_of(p, entity);
             }
             break;
         default:
@@ -1061,6 +1083,8 @@ struct EffectSystem
             {
                 if(!in_air(part.create_in))
                     continue;
+                if(fx.visuals_only && class_of(part.type) != tag_class_t::pctl)
+                    continue;
                 place_t const at = location(p, fx, part.location);
                 switch(class_of(part.type))
                 {
@@ -1085,7 +1109,8 @@ struct EffectSystem
                 case tag_class_t::pctl:
                     if(auto const* tag = tag_data<particle_system>(
                            part.type, tag_class_t::pctl))
-                        start_system(tag, at, 0, {}, fx.velocity, false);
+                        start_system(
+                            tag, at, 0, {}, fx.velocity, false, scale_t::none, fx.audience);
                     break;
                 case tag_class_t::deca:
                     if(auto const* tag = tag_data<decal_definition>(
@@ -1245,6 +1270,7 @@ struct EffectSystem
                     s.local_velocity = to_local(s.velocity - fx.velocity);
                 }
             }
+            s.look.audience = fx.audience;
             m_particles.push_back(s);
         }
     }
@@ -1348,8 +1374,9 @@ struct EffectSystem
         u64                    parent,
         std::string const&     marker,
         Vecf3 const&           velocity,
-        bool                   attached,
-        scale_t                scale = scale_t::none)
+        bool                    attached,
+        scale_t                 scale    = scale_t::none,
+        EffectScene::audience_t audience = {})
     {
         system_instance_t sys{
             .tag      = tag,
@@ -1359,6 +1386,7 @@ struct EffectSystem
             .velocity = velocity,
             .attached = attached,
             .scale    = scale,
+            .audience = audience,
         };
         auto types = tag->particle_types.data(*m_magic);
         if(!types.has_value())
@@ -1468,6 +1496,7 @@ struct EffectSystem
             s.life += s.states[i].duration_bounds.y +
                       (i + 1 < s.state_count ? s.states[i].transition_time_bounds.y : 0.f);
         s.life = std::max(s.life, .05f);
+        s.look.audience = sys.audience;
         m_particles.push_back(s);
     }
 
@@ -1717,12 +1746,13 @@ struct EffectSystem
                 it = m_contrails.erase(it);
                 continue;
             }
-            build_ribbon(scene, c, tl);
+            build_ribbon(p, scene, c, tl);
             ++it;
         }
     }
 
-    void build_ribbon(EffectScene& scene, contrail_instance_t const& c, timeline_t const& tl)
+    void build_ribbon(
+        Proxy& p, EffectScene& scene, contrail_instance_t const& c, timeline_t const& tl)
     {
         EffectScene::ribbon_t ribbon{
             .bitmap   = &static_cast<blam::tagref_t const&>(c.tag->bitmap),
@@ -1763,6 +1793,7 @@ struct EffectSystem
             push(pt);
             prev = &pt;
         }
+        ribbon.audience = audience_of(p, c.parent);
         if(ribbon.points.size() >= 2)
             scene.ribbons.push_back(std::move(ribbon));
     }
@@ -1805,6 +1836,7 @@ struct EffectSystem
                                         : nullptr,
                         .sequence = it->tag->sequence_index,
                         .blend    = blend_t::add,
+                        .audience = audience_of(p, it->parent),
                     });
                 }
             }

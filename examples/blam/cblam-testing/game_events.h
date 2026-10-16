@@ -327,6 +327,8 @@ struct SpawnEffectEvent
     Vecf3           direction{1.f, 0.f, 0.f}; /*!< Forward, e.g. a surface normal */
     Vecf3           velocity{};               /*!< Inherited by what it creates */
     libc_types::u64 parent{0};                /*!< Followed while it plays */
+    /*! Another view of an effect played elsewhere: only what is seen */
+    bool visuals_only{false};
 };
 
 /*! A simulation tick passed (TickClock). Raised in order, a few per frame

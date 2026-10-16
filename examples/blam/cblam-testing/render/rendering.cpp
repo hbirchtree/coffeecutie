@@ -2395,6 +2395,9 @@ struct MeshRenderer
             if(i < m_effects.flare_batches.size() && m_effects.flare_batches[i].count)
                 batches.push_back(m_effects.flare_batches[i]);
             for(auto const& batch : batches)
+            {
+                if(!batch.audience.sees(player.seat_idx))
+                    continue;
                 m_api->submit(
                     {
                         .program       = m_effects.program,
@@ -2450,6 +2453,7 @@ struct MeshRenderer
                     gfx::blend_state{batch.blend},
                     gfx::depth_extended_state{depth},
                     get_view_state(i));
+            }
         }
     }
 
@@ -3352,7 +3356,8 @@ struct LegacyMeshRenderer
             scene,
             bitm_cache,
             eye,
-            p.template subsystem<BlamFiles<Ver>>().load_generation);
+            p.template subsystem<BlamFiles<Ver>>().load_generation,
+            0u);
         m_effects.build_flares(
             scene,
             bitm_cache,

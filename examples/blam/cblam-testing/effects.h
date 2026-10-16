@@ -6,6 +6,7 @@
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include <array>
+#include <optional>
 #include <vector>
 
 /* What effects look like this frame, rebuilt every frame by EffectSystem and
@@ -20,6 +21,22 @@ struct EffectScene : compo::SubsystemBase
     using f32   = libc_types::f32;
     using i16   = libc_types::i16;
     using blend_t = blam::scn::framebuffer_blending;
+    using u32     = libc_types::u32;
+
+    /* The local seats that see it, as for the model it comes off: a
+     * first-person model's only its own, a held weapon's all but its holder's */
+    struct audience_t
+    {
+        std::optional<u32> only_seat;
+        std::optional<u32> skip_seat;
+
+        bool sees(u32 seat) const
+        {
+            return only_seat ? *only_seat == seat : skip_seat != seat;
+        }
+
+        bool operator==(audience_t const&) const = default;
+    };
 
     struct sprite_t
     {
@@ -32,6 +49,7 @@ struct EffectScene : compo::SubsystemBase
         i16                   sequence{0};
         i16                   frame{0};        /* wraps by the sequence */
         blend_t               blend{blend_t::add};
+        audience_t            audience{};
     };
 
     struct ribbon_point_t
@@ -48,6 +66,7 @@ struct EffectScene : compo::SubsystemBase
         i16                         sequence{0};
         blend_t                     blend{blend_t::add};
         std::vector<ribbon_point_t> points; /* head first */
+        audience_t                  audience{};
     };
 
     struct light_t
