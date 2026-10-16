@@ -225,9 +225,14 @@ char* ua_platform_version()
 bool is_mobile()
 {
 #ifdef COFFEE_WASM
+    // userAgentData is Chromium-only; Firefox and iOS need the media query
     return EM_ASM_INT({
-        return navigator.userAgentData && navigator.userAgentData.mobile ? 1
-                                                                         : 0;
+        if(navigator.userAgentData && navigator.userAgentData.mobile)
+            return 1;
+        return typeof matchMedia != "undefined" &&
+                       matchMedia("(pointer: coarse)").matches
+                   ? 1
+                   : 0;
     });
 #else
     return false;
