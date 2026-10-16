@@ -652,6 +652,13 @@ struct H3MapLoader : compo::SubsystemBase
             return it->second;
 
         Material mat{.name = std::string(map.name_of(*tag))};
+        struct Slot
+        {
+            Texture texture;
+            Vecf2   scale;
+            f32     curve;
+        };
+        std::unordered_map<std::string, Slot> slots;
         auto posts = method->postprocess.data(magic).value_or(
             Span<el::render_method_postprocess_t const>());
         if(!posts.empty())
@@ -671,56 +678,133 @@ struct H3MapLoader : compo::SubsystemBase
                 Span<el::be<Vecf4> const>());
             for(size_t i = 0; i < floats.size() && i < float_names.size(); i++)
                 if(map.string(float_names[i]) == "albedo_color")
-                {
-                    /* Halo 3 shades in linear space; the stand-in shader
-                     * works on gamma-space texels */
-                    Vecf4 c  = floats[i];
-                    mat.tint = Vecf4(glm::pow(glm::max(Vecf3(c), Vecf3(0.f)), Vecf3(1.f / 2.2f)), c.w);
-                }
-            /* Terrain names its layers base_map_m_0 and so on */
+                    mat.tint = floats[i];
+            /* Every named texture slot, with its uv scale from the float
+             * constant its transform names */
             for(size_t i = 0; i < textures.size() && i < names.size(); i++)
             {
-                if(!map.string(names[i]).starts_with("base_map"))
-                    continue;
                 auto const* bitmap = map.tag_at(textures[i].bitmap.id);
                 auto        tex    = bitmap ? texture_for(*bitmap) : std::nullopt;
                 if(!tex)
-                    cDebug(
-                        "H3: {}: base map {} not uploaded",
-                        mat.name,
-                        bitmap ? map.name_of(*bitmap) : std::string_view("(none)"));
-                if(tex)
+                    continue;
+                Vecf2 scale{1.f, 1.f};
+                auto  transform = textures[i].transform;
+                if(transform >= 0 && static_cast<size_t>(transform) < floats.size())
                 {
-                    mat.diffuse = *tex;
-                    auto transform = textures[i].transform;
-                    if(transform >= 0 && static_cast<size_t>(transform) < floats.size())
-                    {
-                        Vecf4 st     = floats[transform];
-                        mat.uv_scale = {st.x, st.y};
-                    }
+                    Vecf4 st = floats[transform];
+                    scale    = {st.x, st.y};
                 }
-                break;
+                slots.emplace(
+                    std::string(map.string(names[i])), Slot{*tex, scale, curve_of(*bitmap)});
             }
         }
-        option_flags(*method, mat);
-        /* Helpers like z_invis_lightquad carry only an alpha test map */
-        mat.visible = mat.diffuse.sampler || mat.constant_color;
+        auto options = option_flags(*method, mat);
+        auto option  = [&](std::string const& category) -> std::string_view {
+            auto it = options.find(category);
+            return it == options.end() ? std::string_view() : std::string_view(it->second);
+        };
+        auto slot = [&](std::string const& name) -> Slot const* {
+            auto it = slots.find(name);
+            return it == slots.end() ? nullptr : &it->second;
+        };
+
+        if(map.is(*tag, "rmtr"))
+        {
+            /* Terrain: up to four layers weighted by the blend map */
+            mat.variant = Variant::terrain;
+            if(auto const* blend = slot("blend_map"))
+            {
+                mat.blend       = blend->texture;
+                mat.blend_scale = blend->scale;
+            }
+            bool any = false;
+            for(u32 k = 0; k < mat.layers.size(); k++)
+            {
+                auto& layer    = mat.layers[k];
+                auto  material = option(fmt::format("material_{}", k));
+                auto const* base   = slot(fmt::format("base_map_m_{}", k));
+                auto const* detail = slot(fmt::format("detail_map_m_{}", k));
+                layer.enabled = base && material != "off" && !material.empty();
+                if(!layer.enabled)
+                    continue;
+                any              = true;
+                layer.base       = base->texture;
+                layer.base_curve = base->curve;
+                layer.scale      = Vecf4(base->scale, 1.f, 1.f);
+                layer.detailed =
+                    detail && material.find("disable_detail") == std::string_view::npos;
+                if(detail)
+                {
+                    layer.detail       = detail->texture;
+                    layer.detail_curve = detail->curve;
+                    layer.scale        = Vecf4(base->scale, detail->scale);
+                }
+            }
+            /* Without a blend map only the first layer shows */
+            mat.visible = any && (mat.blend.sampler || mat.layers[0].enabled);
+        } else
+        {
+            if(auto const* base = slot("base_map"))
+            {
+                mat.diffuse  = base->texture;
+                mat.uv_scale = base->scale;
+                mat.curves.x = base->curve;
+            }
+            auto const* detail  = slot("detail_map");
+            auto const* detail2 = slot("detail_map2");
+            auto        albedo  = option("albedo");
+            if(detail)
+            {
+                mat.detail       = detail->texture;
+                mat.detail_scale = detail->scale;
+                mat.curves.y     = detail->curve;
+                mat.variant      = Variant::detail;
+            }
+            if(detail && detail2 && (albedo == "two_detail" || albedo == "detail_blend"))
+            {
+                mat.detail2       = detail2->texture;
+                mat.detail2_scale = detail2->scale;
+                mat.curves.z      = detail2->curve;
+                mat.variant = albedo == "two_detail" ? Variant::two_detail : Variant::detail_blend;
+            }
+            if(albedo == "constant_color")
+                mat.variant = Variant::base;
+            auto bump = option("bump_mapping");
+            if(auto const* map = slot("bump_map"); map && (bump == "standard" || bump == "detail"))
+            {
+                mat.bump       = map->texture;
+                mat.bump_scale = map->scale;
+                mat.bump_mode  = 1;
+                auto const* detail_bump = slot("bump_detail_map");
+                if(detail_bump && bump == "detail" && map->scale.x != 0.f && map->scale.y != 0.f)
+                {
+                    mat.bump_detail       = detail_bump->texture;
+                    mat.bump_detail_ratio = detail_bump->scale / map->scale;
+                    mat.bump_mode         = 2;
+                }
+            }
+            /* Helpers like z_invis_lightquad carry only an alpha test map */
+            mat.visible = mat.diffuse.sampler || mat.constant_color;
+        }
         m_scene.materials.push_back(std::move(mat));
         size_t idx = m_scene.materials.size() - 1;
         m_material_index.emplace(key, idx);
         return idx;
     }
 
-    /* Alpha test and additive blending from the definition's options */
-    void option_flags(el::render_method_t const& method, Material& mat)
+    /* Alpha test and blending from the definition's options; every
+     * category's choice, by name */
+    std::unordered_map<std::string, std::string> option_flags(
+        el::render_method_t const& method, Material& mat)
     {
+        std::unordered_map<std::string, std::string> out;
         auto const& map   = *m_map;
         auto        magic = map.magic();
         auto const* def_tag = map.tag_at(method.definition.id);
         auto const* def = def_tag ? map.tag_data<el::render_method_definition_t>(*def_tag)
                                   : nullptr;
         if(!def)
-            return;
+            return out;
         auto picked = method.options.data(magic).value_or(Span<el::be<i16> const>());
         auto categories = def->categories.data(magic).value_or(
             Span<el::render_method_category_t const>());
@@ -733,6 +817,7 @@ struct H3MapLoader : compo::SubsystemBase
                 continue;
             auto category = map.string(categories[i].name);
             auto option   = map.string(options[pick].name);
+            out.emplace(std::string(category), std::string(option));
             if(category == "albedo")
                 mat.constant_color = option == "constant_color";
             else if(category == "alpha_test")
@@ -742,6 +827,28 @@ struct H3MapLoader : compo::SubsystemBase
                 mat.additive = option == "additive";
                 mat.blended  = option == "alpha_blend" || option == "pre_multiplied_alpha";
             }
+        }
+        return out;
+    }
+
+    /* Exponent decoding a bitmap's texels to linear, by its curve */
+    f32 curve_of(el::tag_t const& bitmap_tag) const
+    {
+        auto const* bitmap = m_map->tag_data<el::bitmap_t>(bitmap_tag);
+        auto images = bitmap ? bitmap->images.data(m_map->magic()).value_or(
+                                   Span<el::bitmap_image_t const>())
+                             : Span<el::bitmap_image_t const>();
+        if(images.empty())
+            return 2.f;
+        switch(images[0].curve)
+        {
+        case 3: /* linear */
+        case 4: /* offset log */
+            return 1.f;
+        case 5: /* sRGB */
+            return 2.2f;
+        default: /* unknown, xRGB and gamma 2.0 */
+            return 2.f;
         }
     }
 
@@ -773,7 +880,8 @@ struct H3MapLoader : compo::SubsystemBase
         auto        format = image.format.value();
         auto        h1     = h1_format(format);
         auto        rgtc   = rgtc_format(format);
-        if(image.type.value() != el::bitmap_type_t::texture_2d || (!h1 && !rgtc))
+        bool const  ctx1   = format == el::bitmap_format_t::ctx1;
+        if(image.type.value() != el::bitmap_type_t::texture_2d || (!h1 && !rgtc && !ctx1))
         {
             cDebug(
                 "H3: bitmap {}: {} type {} not handled",
@@ -798,8 +906,24 @@ struct H3MapLoader : compo::SubsystemBase
             return std::nullopt;
         using blam::bitm::format_t;
         using gfx::textures::swizzle_t;
+        if(ctx1)
+        {
+            std::vector<u8> texels;
+            el::decode_ctx1(pixels, width, height, texels);
+            auto tex = m_api->alloc_texture(
+                gfx::textures::d2, blam::bitm::to_pixdesc(format_t::V8U8), 1);
+            tex->alloc(size_3d<u32>{width, height, 1});
+            tex->upload(
+                std::move(texels),
+                Veci2{0, 0},
+                Veci2{static_cast<i32>(width), static_cast<i32>(height)},
+                0);
+            return make_texture(tex);
+        }
         if(rgtc)
         {
+            if(format == el::bitmap_format_t::dxn)
+                el::dxn_to_bc5(pixels);
             auto tex = m_api->alloc_texture(gfx::textures::d2, rgtc->desc, 1);
             tex->alloc(size_3d<u32>{width, height, 1});
             auto const& sw = rgtc->swizzle;

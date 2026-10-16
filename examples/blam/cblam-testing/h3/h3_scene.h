@@ -7,6 +7,7 @@
 #include <coffee/graphics/apis/gleam/rhi_draw_command.h>
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -18,13 +19,62 @@ namespace h3 {
 using h2::Texture;
 using h2::Vertex;
 
-/* One render method: its base map and every draw range using it */
+/* Fragment program per material family; see fragments/h3_common.glsl */
+enum class Variant : u8
+{
+    base,
+    detail,
+    two_detail,
+    detail_blend,
+    terrain,
+    count,
+};
+
+inline constexpr std::string_view variant_files[] = {
+    "h3_base",
+    "h3_detail",
+    "h3_two_detail",
+    "h3_detail_blend",
+    "h3_terrain",
+};
+
+static_assert(std::size(variant_files) == static_cast<size_t>(Variant::count));
+
+/* One layer of a terrain material */
+struct TerrainLayer
+{
+    Texture base;
+    Texture detail;
+    Vecf4   scale{1.f, 1.f, 1.f, 1.f}; /*!< base uv scale, detail uv scale */
+    f32     base_curve{2.f};
+    f32     detail_curve{2.f};
+    bool    enabled{false};
+    bool    detailed{false};
+};
+
+/* One render method: its textures and every draw range using it */
 struct Material
 {
     std::vector<gfx::draw_command::data_t> draws;
     std::string                            name;
+    Variant                                variant{Variant::base};
     Texture                                diffuse;
     Vecf2                                  uv_scale{1.f, 1.f};
+    Texture                                detail;
+    Vecf2                                  detail_scale{1.f, 1.f};
+    Texture                                detail2;
+    Vecf2                                  detail2_scale{1.f, 1.f};
+    /* Decode exponents of base, detail, detail2 (see h3_common.glsl) */
+    Vecf3                                  curves{2.f, 2.f, 2.f};
+    /* 0 none, 1 bump map, 2 plus detail bump; detail uv = bump uv * ratio */
+    i32                                    bump_mode{0};
+    Texture                                bump;
+    Vecf2                                  bump_scale{1.f, 1.f};
+    Texture                                bump_detail;
+    Vecf2                                  bump_detail_ratio{1.f, 1.f};
+    std::array<TerrainLayer, 4>            layers;
+    Texture                                blend;
+    Vecf2                                  blend_scale{1.f, 1.f};
     bool                                   alpha_test{false};
     bool                                   additive{false};
     bool                                   blended{false}; /*!< alpha blend */
