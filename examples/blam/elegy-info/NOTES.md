@@ -153,3 +153,28 @@ Hand-written shaders, not generated ones, laid out like Halo 1's
 
 Bindings come from the `rmt2` name lists, so shaders need no knowledge of
 per-template register layouts.
+
+## BlamGraphics first pass (`cblam-testing/h3`)
+
+`H3MapLoader` takes a `MapLoadEvent` whose header is Halo 3 (version 11)
+and builds `H3Scene`; `H3Renderer` draws it with the Halo 2 vertex layout
+and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
+
+- Loads the BSP of the first player starting location from `sLdT`:
+  clusters plus placed instances.
+- Scenery: placements whose BSP mask includes that BSP, first permutation
+  of every region. Objects flagged "only visible in editor" in their
+  multiplayer block (respawn points, spawn zones, Forge items) are skipped;
+  on MP maps that is nearly all of the scenery.
+- Materials: `base_map` (or terrain `base_map_m_0`) with its UV scale,
+  `albedo_color` as a tint converted from linear to gamma, alpha test,
+  and opaque / alpha blend / additive passes from the rmdf options.
+  Helpers without a base map (`z_invis_lightquad`) are not drawn.
+- Textures: top level only, no mips. dxt5a/dxn families go up as BC4/BC5
+  with channel swizzles; CTX1 and dxt3a are not uploaded yet.
+- Not done: lightmaps / per-vertex lighting from `sLdT` (the shader falls
+  back to a sun term, so Forerunner metals with dark albedo look dark),
+  specular and env maps, detail maps, sky, crates/machines, BSP switching,
+  visibility, collision, web loading.
+- Headless check: `.github/tests/dummy_plug_h3.json` (four views from the
+  spawn).
