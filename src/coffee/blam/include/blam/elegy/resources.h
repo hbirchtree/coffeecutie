@@ -245,6 +245,7 @@ struct resource_view
             it->second & 0x0FFFFFFF);
     }
 
+    /*! A block's elements, in the definition or in the page data */
     template<typename T>
     inline Span<T const> block(resource_block<T> const& block) const
     {
@@ -252,12 +253,23 @@ struct resource_view
         if(count <= 0)
             return {};
         auto where = address(&block.pointer);
-        if(!where || where->first != resource_space_t::definition)
+        if(!where)
             return {};
-        auto const* items = at<T>(where->second, static_cast<u32>(count));
-        if(!items)
+        if(where->first == resource_space_t::definition)
+        {
+            auto const* items = at<T>(where->second, static_cast<u32>(count));
+            if(!items)
+                return {};
+            return Span<T const>(items, static_cast<size_t>(count));
+        }
+        auto page = where->first == resource_space_t::data        ? data
+                    : where->first == resource_space_t::secondary ? secondary
+                                                                  : Span<byte_t const>();
+        u64 bytes = u64(count) * sizeof(T);
+        if(where->second > page.size() || bytes > page.size() - where->second)
             return {};
-        return Span<T const>(items, static_cast<size_t>(count));
+        return Span<T const>(
+            reinterpret_cast<T const*>(page.data() + where->second), static_cast<size_t>(count));
     }
 
     template<typename T>
