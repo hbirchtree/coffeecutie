@@ -92,7 +92,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     gfx::uniform_pair<Vecf2 const>{
                         {"illum_scale"}, semantic::SpanOne<const Vecf2>(unit)},
                     gfx::uniform_pair<Vecf2 const>{
-                        {"mask_scale"}, semantic::SpanOne<const Vecf2>(unit)});
+                        {"mask_scale"}, semantic::SpanOne<const Vecf2>(unit)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"bump_scale"}, semantic::SpanOne<const Vecf2>(mat.bump_scale)});
                 i32 alpha_test = mat.alpha_test ? 1 : 0;
                 i32 blended    = pass > 0 ? 1 : 0;
                 auto view = gfx::view_state{
@@ -171,11 +173,19 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<const i32>{
                             {"blended"}, semantic::SpanOne<const i32>(blended)},
                         gfx::uniform_pair<Vecf3 const>{
-                            {"curves"}, semantic::SpanOne<const Vecf3>(mat.curves)});
+                            {"curves"}, semantic::SpanOne<const Vecf3>(mat.curves)},
+                        gfx::uniform_pair<const i32>{
+                            {"bump_mode"}, semantic::SpanOne<const i32>(mat.bump_mode)},
+                        gfx::uniform_pair<Vecf2 const>{
+                            {"bump_detail_ratio"},
+                            semantic::SpanOne<const Vecf2>(mat.bump_detail_ratio)});
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},
-                        gfx::sampler_definition_t{stage_t::Fragment, {"detail2", 2}, or_white(mat.detail2)});
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail2", 2}, or_white(mat.detail2)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"bump_map", 3}, or_white(mat.bump)},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"bump_detail_map", 4}, or_white(mat.bump_detail)});
                     res = submit(frag_u, samplers);
                 }
                 if(res.has_value() && !m_draw_error_logged)

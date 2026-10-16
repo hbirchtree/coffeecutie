@@ -769,6 +769,20 @@ struct H3MapLoader : compo::SubsystemBase
             }
             if(albedo == "constant_color")
                 mat.variant = Variant::base;
+            auto bump = option("bump_mapping");
+            if(auto const* map = slot("bump_map"); map && (bump == "standard" || bump == "detail"))
+            {
+                mat.bump       = map->texture;
+                mat.bump_scale = map->scale;
+                mat.bump_mode  = 1;
+                auto const* detail_bump = slot("bump_detail_map");
+                if(detail_bump && bump == "detail" && map->scale.x != 0.f && map->scale.y != 0.f)
+                {
+                    mat.bump_detail       = detail_bump->texture;
+                    mat.bump_detail_ratio = detail_bump->scale / map->scale;
+                    mat.bump_mode         = 2;
+                }
+            }
             /* Helpers like z_invis_lightquad carry only an alpha test map */
             mat.visible = mat.diffuse.sampler || mat.constant_color;
         }
@@ -866,7 +880,8 @@ struct H3MapLoader : compo::SubsystemBase
         auto        format = image.format.value();
         auto        h1     = h1_format(format);
         auto        rgtc   = rgtc_format(format);
-        if(image.type.value() != el::bitmap_type_t::texture_2d || (!h1 && !rgtc))
+        bool const  ctx1   = format == el::bitmap_format_t::ctx1;
+        if(image.type.value() != el::bitmap_type_t::texture_2d || (!h1 && !rgtc && !ctx1))
         {
             cDebug(
                 "H3: bitmap {}: {} type {} not handled",
@@ -891,8 +906,24 @@ struct H3MapLoader : compo::SubsystemBase
             return std::nullopt;
         using blam::bitm::format_t;
         using gfx::textures::swizzle_t;
+        if(ctx1)
+        {
+            std::vector<u8> texels;
+            el::decode_ctx1(pixels, width, height, texels);
+            auto tex = m_api->alloc_texture(
+                gfx::textures::d2, blam::bitm::to_pixdesc(format_t::V8U8), 1);
+            tex->alloc(size_3d<u32>{width, height, 1});
+            tex->upload(
+                std::move(texels),
+                Veci2{0, 0},
+                Veci2{static_cast<i32>(width), static_cast<i32>(height)},
+                0);
+            return make_texture(tex);
+        }
         if(rgtc)
         {
+            if(format == el::bitmap_format_t::dxn)
+                el::dxn_to_bc5(pixels);
             auto tex = m_api->alloc_texture(gfx::textures::d2, rgtc->desc, 1);
             tex->alloc(size_3d<u32>{width, height, 1});
             auto const& sw = rgtc->swizzle;

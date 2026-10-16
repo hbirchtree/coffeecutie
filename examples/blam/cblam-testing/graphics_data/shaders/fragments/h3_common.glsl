@@ -12,6 +12,7 @@ layout(location=1) in vec2 f_texcoord;
 layout(location=2) in vec3 f_normal;
 layout(location=3) in vec2 f_detail_uv;
 layout(location=4) in vec2 f_detail2_uv;
+layout(location=9) in vec2 f_bump_uv;
 
 layout(location=3) uniform int alpha_test;
 /* H3's own uniforms start at 64, clear of h2.vert and h2_common */
@@ -54,6 +55,11 @@ layout(location=9, binding=1) uniform sampler2D detail;
 #if H3_DETAIL >= 2
 layout(location=10, binding=2) uniform sampler2D detail2;
 #endif
+layout(location=85, binding=3) uniform sampler2D bump_map;
+layout(location=86, binding=4) uniform sampler2D bump_detail_map;
+/* 0 none, 1 bump map, 2 plus the detail bump map at bump uv * ratio */
+layout(location=87) uniform int bump_mode;
+layout(location=88) uniform vec2 bump_detail_ratio;
 #endif
 
 layout(location=0) out vec4 out_color;
@@ -71,6 +77,25 @@ vec3 surface_normal()
         ? normalize(f_normal)
         : normalize(cross(dFdx(f_world_pos), dFdy(f_world_pos)));
 }
+
+#if !H3_TERRAIN
+/* Tangent-space normal (x along +u, y along +v) in the frame of the uv
+ * gradients */
+vec3 bumped_normal(vec3 n)
+{
+    vec2 b = texture(bump_map, f_bump_uv).rg * 2.0 - 1.0;
+    if(bump_mode == 2)
+        b += texture(bump_detail_map, f_bump_uv * bump_detail_ratio).rg * 2.0 - 1.0;
+    vec3 tn = normalize(vec3(b, sqrt(max(1.0 - dot(b, b), 0.0)) + 1e-3));
+    vec3 dp1 = dFdx(f_world_pos), dp2 = dFdy(f_world_pos);
+    vec2 duv1 = dFdx(f_bump_uv), duv2 = dFdy(f_bump_uv);
+    vec3 dp2perp = cross(dp2, n), dp1perp = cross(n, dp1);
+    vec3 t = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3 bt = dp2perp * duv1.y + dp1perp * duv2.y;
+    float s = inversesqrt(max(max(dot(t, t), dot(bt, bt)), 1e-20));
+    return normalize(mat3(t * s, bt * s, n) * tn);
+}
+#endif
 
 #if H3_TERRAIN
 vec3 terrain_layer(
@@ -129,6 +154,10 @@ void main()
 #endif
 
     vec3 normal = surface_normal();
+#if !H3_TERRAIN
+    if(bump_mode != 0)
+        normal = bumped_normal(normal);
+#endif
     vec3 sun    = normalize(vec3(0.3, 0.2, 1.0));
     color *= 0.45 + 0.55 * abs(dot(normal, sun));
     out_color = vec4(pow(max(color, vec3(0.0)), vec3(1.0 / 2.2)), alpha);

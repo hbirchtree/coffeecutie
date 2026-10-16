@@ -66,6 +66,12 @@ struct Material
     Vecf2                                  detail2_scale{1.f, 1.f};
     /* Decode exponents of base, detail, detail2 (see h3_common.glsl) */
     Vecf3                                  curves{2.f, 2.f, 2.f};
+    /* 0 none, 1 bump map, 2 plus detail bump; detail uv = bump uv * ratio */
+    i32                                    bump_mode{0};
+    Texture                                bump;
+    Vecf2                                  bump_scale{1.f, 1.f};
+    Texture                                bump_detail;
+    Vecf2                                  bump_detail_ratio{1.f, 1.f};
     std::array<TerrainLayer, 4>            layers;
     Texture                                blend;
     Vecf2                                  blend_scale{1.f, 1.f};
