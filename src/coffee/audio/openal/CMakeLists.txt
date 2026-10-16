@@ -49,6 +49,21 @@ if(TARGET libwma::wma)
   target_compile_definitions(OAF PUBLIC -DOAF_WMA_DECODER_ENABLED=1)
 endif()
 
+# XMA2 through the ffmpeg-decoders port: LGPL libavcodec as its own shared
+# library (a side module on Emscripten), never linked in statically
+if(BUILD_OPENAL_XMA2)
+  find_package(ffmpeg-decoders CONFIG REQUIRED)
+  coffee_library(
+    TARGET OAFXMA2Decoder
+    SOURCES private/xma2_decode.cpp
+    LIBRARIES Core
+    HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
+  target_link_libraries(OAFXMA2Decoder PUBLIC ffmpeg-decoders::ffmpeg-decoders)
+  target_compile_definitions(OAFXMA2Decoder PUBLIC -DOAF_XMA2_DECODER_ENABLED=1)
+  target_link_libraries(OAF PUBLIC OAFXMA2Decoder)
+endif()
+
 if(EMSCRIPTEN)
   # openal-soft is a side module, mixed into WebAudio by web_output.cpp
   target_sources(OAF PRIVATE private/web_output.cpp)

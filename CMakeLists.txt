@@ -27,6 +27,10 @@ cmake_dependent_option(
   BUILD_OPENAL_WMA "Build the WMA decoder (LGPL)" ON
   "BUILD_BLAM;BUILD_BLAM_DIMETER;BUILD_OPENAL" OFF
 )
+cmake_dependent_option(
+  BUILD_OPENAL_XMA2 "Build the XMA2 decoder on a shared libavcodec (LGPL)" ON
+  "BUILD_BLAM;BUILD_BLAM_ELEGY;BUILD_OPENAL" OFF
+)
 
 if(BUILD_ASSET_TOOLS)
   list(APPEND VCPKG_MANIFEST_FEATURES pressure-cooker)
@@ -63,6 +67,9 @@ if(BUILD_OPENAL)
 endif()
 if(BUILD_OPENAL_WMA)
   list(APPEND VCPKG_MANIFEST_FEATURES wma)
+endif()
+if(BUILD_OPENAL_XMA2)
+  list(APPEND VCPKG_MANIFEST_FEATURES xma2)
 endif()
 if(BUILD_OPENGL)
   list(APPEND VCPKG_MANIFEST_FEATURES gleam)

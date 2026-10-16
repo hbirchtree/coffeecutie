@@ -315,6 +315,46 @@ static_assert(offsetof(sound_t, codec) == 0x4);
 static_assert(offsetof(sound_t, extra_info) == 0x12);
 static_assert(offsetof(sound_t, resource) == 0x18);
 
+/*! A looping sound's track: intro, loop and outro sounds, played in turn */
+struct looping_sound_track_t
+{
+    string_id     name;
+    be<u32>       flags;
+    be<f32>       gain; /*!< dB */
+    be<f32>       fade_in;
+    be<f32>       fade_out;
+    tag_reference in;
+    tag_reference loop;
+    tag_reference out;
+    tag_reference alternate_loop;
+    tag_reference alternate_out;
+    be<i16>       output_effect;
+    u16           unknown_0;
+    tag_reference alternate_transition_in;
+    tag_reference alternate_transition_out;
+    be<f32>       alternate_crossfade;
+    be<f32>       alternate_fade_out;
+};
+
+static_assert(offsetof(looping_sound_track_t, loop) == 0x24);
+static_assert(offsetof(looping_sound_track_t, alternate_transition_in) == 0x68);
+static_assert(sizeof(looping_sound_track_t) == 0x90);
+
+/*! sound_looping ("lsnd"): tracks in parallel plus random details */
+struct looping_sound_t
+{
+    be<u32>                          flags;
+    bounds_f                         music_time;
+    bounds_f                         distance;
+    tag_reference                    continuous_damage_effect;
+    be<i16>                          sound_class;
+    u16                              unknown_0;
+    tag_block<looping_sound_track_t> tracks;
+    tag_block<std::array<u8, 0x3C>>  details;
+};
+
+static_assert(offsetof(looping_sound_t, tracks) == 0x28);
+
 /*! A pitch range's permutations */
 inline Span<sound_permutation_t const> permutations_of(
     sound_pitch_range_t const& range,
