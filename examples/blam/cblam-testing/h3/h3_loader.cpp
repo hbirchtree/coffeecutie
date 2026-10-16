@@ -1,4 +1,5 @@
 #include "h3_scene.h"
+#include "h3_sound.h"
 
 #include "components.h"
 #include "data.h"
@@ -8,6 +9,7 @@
 
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/shader.h>
+#include <blam/elegy/sound.h>
 #include <blam/elegy/structure.h>
 #include <blam/volta/blam_bitm.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
@@ -24,6 +26,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 
 #include <bit>
+#include <cmath>
 #include <limits>
 #include <unordered_map>
 
@@ -113,9 +116,10 @@ struct H3MapLoader : compo::SubsystemBase
 {
     using type = H3MapLoader;
 
-    H3MapLoader(compo::EntityContainer& e, H3Scene& scene)
+    H3MapLoader(compo::EntityContainer& e, H3Scene& scene, H3SoundBank& bank)
         : m_container(e)
         , m_scene(scene)
+        , m_bank(bank)
     {
     }
 
@@ -150,6 +154,12 @@ struct H3MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        if(m_bank.loaded)
+        {
+            m_bank.loaded = false;
+            m_bank.music  = {};
+            m_bank.generation++;
+        }
         m_scene.loaded = false;
         m_scene.materials.clear();
         m_vertices.clear();
@@ -201,6 +211,8 @@ struct H3MapLoader : compo::SubsystemBase
         attach_side_caches(load);
 
         bool ok = load_world();
+        if(ok)
+            load_music();
         m_loader->trim();
         if(!ok)
         {
@@ -215,6 +227,84 @@ struct H3MapLoader : compo::SubsystemBase
         if(auto* app_info = m_container.service<comp_app::AppInfo>())
             app_info->setState(comp_app::interfaces::AppInfo::loaded);
         return true;
+    }
+
+    /* The menu's looping music: its first track's intro and every loop
+     * permutation, as XMA2 for the sound system to decode */
+    void load_music()
+    {
+        auto const& map   = *m_map;
+        auto        magic = map.magic();
+        auto const* music_tag = map.find("lsnd", "main_menu_music");
+        if(!music_tag)
+            for(auto const& tag : map.tags())
+                if(tag.valid() && map.is(tag, "lsnd") &&
+                   map.name_of(tag).starts_with("sound\\music\\"))
+                {
+                    music_tag = &tag;
+                    break;
+                }
+        auto const* gestalt_tag = map.find("ugh!");
+        auto const* looping =
+            music_tag ? map.tag_data<el::looping_sound_t>(*music_tag) : nullptr;
+        auto const* gestalt =
+            gestalt_tag ? map.tag_data<el::sound_gestalt_t>(*gestalt_tag) : nullptr;
+        if(!looping || !gestalt)
+            return;
+        auto tracks = looping->tracks.data(magic).value_or(
+            Span<el::looping_sound_track_t const>());
+        if(tracks.empty())
+            return;
+        auto codecs = gestalt->codecs.data(magic).value_or(Span<el::sound_codec_t const>());
+        auto names  = gestalt->names.data(magic).value_or(Span<el::string_id const>());
+
+        auto permutations = [&](el::tag_reference const& ref) {
+            std::vector<H3Sound> out;
+            auto const* tag   = map.tag_at(ref.id);
+            auto const* sound = tag ? map.tag_data<el::sound_t>(*tag) : nullptr;
+            auto const* codec = sound ? sound->codec.resolve(codecs) : nullptr;
+            if(!codec || codec->compression != el::sound_compression_t::xma2)
+                return out;
+            auto view = m_loader->load(sound->resource);
+            if(!view.has_value())
+                return out;
+            for(auto const& range : sound->pitch_ranges(*gestalt, magic))
+                for(auto const& perm : el::permutations_of(range, *gestalt, magic))
+                {
+                    auto bytes = el::permutation_data(perm, *gestalt, magic, view.value());
+                    if(bytes.empty())
+                        continue;
+                    auto const* name = perm.name.resolve(names);
+                    out.push_back(H3Sound{
+                        .name     = fmt::format(
+                            "{}:{}",
+                            map.name_of(*tag),
+                            name ? map.string(*name) : std::string_view("?")),
+                        .data     = std::vector<char>(bytes.begin(), bytes.end()),
+                        .rate     = codec->rate(),
+                        .channels = codec->channels(),
+                        .samples  = perm.sample_count,
+                    });
+                }
+            return out;
+        };
+
+        auto const& track = tracks[0];
+        auto        in    = permutations(track.in);
+        m_bank.music      = H3LoopingSound{
+                 .name  = std::string(map.name_of(*music_tag)),
+                 .in    = in.empty() ? H3Sound{} : std::move(in.front()),
+                 .loops = permutations(track.loop),
+                 .gain  = std::pow(10.f, track.gain.value() / 20.f),
+        };
+        m_bank.loaded     = !m_bank.music.loops.empty();
+        m_bank.generation = m_scene.generation;
+        cDebug(
+            "H3: music {}: intro {}, {} loop permutations, gain {}",
+            m_bank.music.name,
+            m_bank.music.in.data.empty() ? "none" : m_bank.music.in.name,
+            m_bank.music.loops.size(),
+            m_bank.music.gain);
     }
 
     /* Pages may live in mainmenu/shared/campaign.map next to the map */
@@ -814,6 +904,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     compo::EntityContainer& m_container;
     H3Scene&                m_scene;
+    H3SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
 
     std::shared_ptr<comp_app::FileMapper::Resource>              m_file;
@@ -833,7 +924,9 @@ struct H3MapLoader : compo::SubsystemBase
 void alloc_h3(compo::EntityContainer& e)
 {
     auto& scene  = e.register_subsystem_inplace<H3Scene>();
-    auto& loader = e.register_subsystem_inplace<H3MapLoader>(std::ref(e), std::ref(scene));
+    auto& bank   = e.register_subsystem_inplace<H3SoundBank>();
+    auto& loader = e.register_subsystem_inplace<H3MapLoader>(
+        std::ref(e), std::ref(scene), std::ref(bank));
     e.subsystem_cast<GameEventBus>().addEventFunction<MapLoadEvent>(
         0, [&loader](GameEvent& ev, MapLoadEvent* load) {
             /* Consumed here: the Halo 1 loader never sees a Halo 3 map */
