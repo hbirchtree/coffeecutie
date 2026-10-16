@@ -13,6 +13,7 @@
 #include "data.h"
 #include "map_marker.h"
 #include "materials.h"
+#include "model_markers.h"
 #include "selected_version.h"
 #include "shader_cache.h"
 #include "types.h"
@@ -26,10 +27,12 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
     type_list_t<
         AnimationPlayback,
         Attachment,
+        BipedEquipment,
         BspReference,
         DebugDraw,
         DepthInfo,
         DrawState,
+        HeldObject,
         Model,
         MultiplayerSpawn,
         NetworkInfo,
@@ -90,6 +93,7 @@ struct ResourceLoader
     {
         u32              load_generation{};
         std::vector<u64> parts;
+        u64              held{0}; /*!< Its weapon */
     };
 
     std::map<u64, player_biped_t> player_bipeds;
@@ -121,6 +125,9 @@ struct ResourceLoader
         blam::tagref_typed_t<blam::tag_class_t::mod2> fp_weapon{};
         std::vector<i16>                              weapon_nodes;
         blam::tag_t const*                            weapon{nullptr};
+
+        blam::scn::biped const*       biped{nullptr};
+        std::optional<bound_marker_t> hand; /*!< Where it holds a weapon */
     } biped_model;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>> spawn_bsp_queue;
@@ -2426,7 +2433,11 @@ struct ResourceLoader
             fit_first_person_graph(files);
             if(auto const* biped = player_biped(files))
             {
+                biped_model.biped = biped;
                 biped_model.model = biped->model;
+                if(auto mod2 = index.find(biped->model); mod2 != index.end())
+                    biped_model.hand = bind_marker_node(
+                        *mod2, hand_marker, files.container.magic);
                 if(biped->collision_radius > 0.f &&
                    biped->standing_collision_height > 0.f &&
                    biped->standing_camera_height > 0.f)
@@ -2467,16 +2478,19 @@ struct ResourceLoader
                 }
                 if(auto foot = index.find(biped->footsteps); foot != index.end())
                     biped_model.shape.footsteps = &(*foot);
-                biped_model.shape.weapon          = biped_model.weapon;
                 biped_model.shape.load_generation = files.load_generation;
             }
         }
 
         std::set<u64> live;
-        for(auto player :
-            p.template select<PlayerCamera, PlayerInfo, NetworkInfo, Model>())
+        for(auto player : p.template select<
+                          PlayerCamera,
+                          PlayerInfo,
+                          NetworkInfo,
+                          BipedEquipment,
+                          Model>())
         {
-            auto [cam, info, net, model] = player.components();
+            auto [cam, info, net, equip, model] = player.components();
             if(!biped_model.model.valid() || !biped_shown(info, cam, net))
                 continue;
             /* The camera is the eye, keep the feet where they were */
@@ -2493,6 +2507,20 @@ struct ResourceLoader
                 .model     = biped_model.model,
                 .entity_id = player.id(),
             });
+            equip = {
+                .biped           = biped_model.biped,
+                .load_generation = files.load_generation,
+            };
+            if(biped_model.weapon)
+                equip.weapons[0] = {
+                    .weapon = biped_model.weapon
+                                  ->template data<blam::scn::weapon>(
+                                      files.container.magic)
+                                  .value(),
+                    .tag  = biped_model.weapon,
+                    .held = biped.held = respawn_held(
+                        p, player.id(), biped.held, files),
+                };
         }
 
         std::set<u64> doomed;
@@ -2504,6 +2532,12 @@ struct ResourceLoader
                 continue;
             }
             doomed.insert(it->second.parts.begin(), it->second.parts.end());
+            if(Model const* held = p.template get<Model>(it->second.held))
+                for(auto const& part : held->parts)
+                    doomed.insert(part.id());
+            doomed.insert(it->second.held);
+            if(auto* equip = p.template get<BipedEquipment>(it->first))
+                *equip = {};
             if(Model* model = p.template get<Model>(it->first))
             {
                 model->parts.clear();
@@ -2571,6 +2605,44 @@ struct ResourceLoader
             it = first_person_models.erase(it);
         }
     }
+
+    /* The held weapon's own model, in the biped's hand */
+    u64 respawn_held(
+        Proxy& p, u64 player, u64 old, BlamFiles<Ver> const& files)
+    {
+        if(old)
+        {
+            std::vector<u64> models{old};
+            despawn_first_person(p, models);
+        }
+        auto weapon = biped_model.weapon->template data<blam::scn::weapon>(
+            files.container.magic);
+        if(!biped_model.hand || !weapon.has_value() ||
+           !weapon.value()[0].model.valid())
+            return 0;
+        auto ent = p.create_entity(shared_recipes::held_model);
+        *p.template get<HeldObject>(ent.id()) = {
+            .holder = player,
+            .node   = biped_model.hand->node,
+            .offset = biped_model.hand->transform,
+        };
+        p.template get<Model>(ent.id())->origin_object = biped_model.weapon;
+        /* Hidden from its holder's own view, like the body */
+        if(auto const* body = p.template get_at<Visibility, 0>(player))
+        {
+            p.template get_at<Visibility, 0>(ent.id())->skip_render_for =
+                body->skip_render_for;
+            p.template get_at<Visibility, 1>(ent.id())->skip_render_for =
+                body->skip_render_for;
+        }
+        pending_mounts.push_back({
+            .model     = weapon.value()[0].model,
+            .entity_id = ent.id(),
+        });
+        return ent.id();
+    }
+
+    static constexpr std::string_view hand_marker = "right hand";
 
     /* A model drawn at the player's eye in the first-person pass */
     u64 spawn_first_person(

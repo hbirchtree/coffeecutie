@@ -229,6 +229,7 @@ i32 blam_main()
             e.register_component_inplace<DebugDraw>();
             e.register_component_inplace<DepthInfo>();
             e.register_component_inplace<DrawState>();
+            e.register_component_inplace<HeldObject>();
             e.register_component_inplace<Light>();
             e.register_component_inplace<MeshTrackingData>();
             e.register_component_inplace<Model>();

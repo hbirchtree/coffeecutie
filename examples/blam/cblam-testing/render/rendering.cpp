@@ -585,7 +585,8 @@ using DrawListBuilderManifest = compo::SubsystemManifest<
         const ObjectSpawn,
         const Visibility,
         const PlayerCamera,
-        const PlayerInfo>,
+        const PlayerInfo,
+        const HeldObject>,
     type_list_t<
         BitmapCache<V>,
         ModelCache<V>,
@@ -1005,11 +1006,14 @@ struct DrawListBuilder
 
                 Visibility const& vis = parent.template get<Visibility>();
                 u8 const lod = mod.lod_resolve(vis.lod_for(m_seat));
-                /* A rider's chase camera sees its own biped */
-                auto const* rider = p.template get<PlayerInfo>(model.parent);
-                bool const  third_person =
+                /* A rider's chase camera sees its own biped, and its weapon */
+                auto const* held  = p.template get<HeldObject>(model.parent);
+                auto const* rider = p.template get<PlayerInfo>(
+                    held ? held->holder : model.parent);
+                bool const third_person =
                     rider && rider->riding.vehicle != 0;
-                if(!vis.visible_for(m_seat, false, third_person) ||
+                if((held && !held->shown) ||
+                   !vis.visible_for(m_seat, false, third_person) ||
                    !((model.lod_mask >> lod) & 1) ||
                    (!rendering_params->render_scenery &&
                     (ent.tags() & ObjectSkybox) == 0))
@@ -3817,7 +3821,8 @@ struct LegacyMeshRenderer
             auto         parent = p.template ref<Proxy>(sm.parent);
             Model const& mod    = *mod_ptr;
             Visibility const& vis = parent.template get<Visibility>();
-            if(!vis.visible_for(0) || !sm.shader.valid() ||
+            auto const*       held = p.template get<HeldObject>(sm.parent);
+            if((held && !held->shown) || !vis.visible_for(0) || !sm.shader.valid() ||
                !((sm.lod_mask >> mod.lod_resolve(vis.lod_for(0))) & 1))
                 continue;
 

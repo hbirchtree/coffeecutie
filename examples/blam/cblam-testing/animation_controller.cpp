@@ -29,6 +29,8 @@ using AnimationControllerManifest = compo::SubsystemManifest<
         const ObjectPhysics,
         const PhysicsData,
         const Attachment,
+        const BipedEquipment,
+        HeldObject,
         AnimationPlayback>,
     type_list_t<
         PhysicsBus,
@@ -156,7 +158,7 @@ struct AnimationController
         Proxy&                    p,
         blam::antr::header const* graph,
         std::string const&        unit  = "stand",
-        std::string const&        weapon = "unarmed")
+        std::string const&        weapon = unarmed)
     {
         auto key = std::tuple{graph, unit, weapon};
         if(auto it = m_stances.find(key); it != m_stances.end())
@@ -224,11 +226,19 @@ struct AnimationController
 
             Vecf3 const look =
                 glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+            auto const* equip = p.template get<BipedEquipment>(player.id());
+            auto const* held =
+                equip ? equip->held(files.load_generation) : nullptr;
+            std::string const weapon =
+                held ? std::string(held->weapon->label.str()) : unarmed;
+            auto* in_hand = held ? p.template get<HeldObject>(held->held) : nullptr;
             if(info.riding.vehicle != 0)
             {
-                animate_rider(p, player.id(), info, anim, look, dt);
+                animate_rider(p, player.id(), info, anim, look, weapon, in_hand, dt);
                 continue;
             }
+            if(in_hand)
+                in_hand->shown = true;
             m_walkers[player.id()].seat         = {};
             m_walkers[player.id()].exiting      = false;
             m_walkers[player.id()].seen_vehicle = false;
@@ -244,6 +254,7 @@ struct AnimationController
                 anim,
                 cam.camera.position - Vecf3{0.f, 0.f, biped.eye_height},
                 look,
+                weapon,
                 true,
                 grounded,
                 dt);
@@ -261,6 +272,7 @@ struct AnimationController
                 anim,
                 model.position,
                 model.rotation * Vecf3{1.f, 0.f, 0.f},
+                unarmed,
                 false,
                 physics.grounded,
                 dt);
@@ -277,6 +289,7 @@ struct AnimationController
         AnimationPlayback& anim,
         Vecf3 const&       feet,
         Vecf3 const&       look,
+        std::string const& weapon,
         bool               strides,
         bool               grounded,
         f32                dt)
@@ -298,7 +311,7 @@ struct AnimationController
         Vecf3 const left{-forward.y, forward.x, 0.f};
 
         auto const* graph = anim.graph;
-        auto const& st    = stance(p, graph);
+        auto const& st    = stance(p, graph, "stand", weapon);
         /* 0 standing, 1 walking; between, idle and stride blend */
         f32 const moving =
             std::clamp((speed - walk_threshold) / walk_threshold, 0.f, 1.f);
@@ -416,6 +429,8 @@ struct AnimationController
         PlayerInfo const&  info,
         AnimationPlayback& anim,
         Vecf3 const&       look,
+        std::string const& weapon,
+        HeldObject*        in_hand,
         f32                dt)
     {
         auto const* vehicle = p.template get<Model>(info.riding.vehicle);
@@ -430,12 +445,16 @@ struct AnimationController
         if(!seats.has_value() || info.riding.seat < 0 ||
            static_cast<size_t>(info.riding.seat) >= seats.value().size())
             return;
+        using seat_flags_t = blam::scn::unit::seat_t::seat_flags_t;
+        auto const& seat_tag = seats.value()[info.riding.seat];
+        /* Drivers put their weapon away */
+        bool const armed = (seat_tag.flags & seat_flags_t::allows_weapons) !=
+                           seat_flags_t::none;
+        if(in_hand)
+            in_hand->shown = armed;
         auto const* graph = anim.graph;
         auto const& st    = stance(
-            p,
-            graph,
-            std::string(seats.value()[info.riding.seat].label.str()),
-            "unarmed");
+            p, graph, std::string(seat_tag.label.str()), armed ? weapon : unarmed);
 
         auto&      walker = m_walkers[id];
         auto const seat   = std::pair{info.riding.vehicle, info.riding.seat};
@@ -957,6 +976,7 @@ struct AnimationController
     }
 
     /* Foot tag effect slots, how fast a stride goes, how long blends take */
+    static inline std::string const unarmed = "unarmed";
     static constexpr u32 walking        = 0;
     static constexpr u32 running        = 1;
     static constexpr f32 walk_threshold = .25f; /* wu/s */
