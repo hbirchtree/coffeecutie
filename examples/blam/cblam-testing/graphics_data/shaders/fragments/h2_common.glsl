@@ -16,6 +16,7 @@ layout(location=5) in vec2 f_illum_uv;
 layout(location=6) in vec3 f_lightmap;
 layout(location=8) in vec4 f_vertex_light;
 layout(location=7) in vec2 f_mask_uv;
+layout(location=9) in vec2 f_bump_uv;
 
 layout(location=2, binding=0) uniform sampler2D diffuse;
 layout(location=3) uniform int alpha_test;
@@ -31,6 +32,8 @@ layout(location=15) uniform vec3 illum_color;
 #endif
 #if !H2_SKY && !H2_WATER
 layout(location=14, binding=4) uniform sampler2DArray lightmaps;
+layout(location=29) uniform int bumped;
+layout(location=30, binding=6) uniform sampler2D bump;
 #endif
 #if H2_SKY_MASK
 layout(location=18, binding=5) uniform sampler2D mask;
@@ -86,6 +89,29 @@ vec3 surface_normal()
         : normalize(cross(dFdx(f_world_pos), dFdy(f_world_pos)));
 }
 
+#if !H2_SKY && !H2_WATER
+/* Normal map in the frame of the uv gradients, which is how the stored
+ * tangent (dP/du) and binormal (dP/dv) are laid out */
+vec3 bumped_normal(vec3 n)
+{
+    vec2 b  = texture(bump, f_bump_uv).rg * 2.0 - 1.0;
+    vec3 tn = vec3(b, sqrt(max(1.0 - dot(b, b), 0.0)));
+    vec3 dp1 = dFdx(f_world_pos), dp2 = dFdy(f_world_pos);
+    vec2 duv1 = dFdx(f_bump_uv), duv2 = dFdy(f_bump_uv);
+    vec3 dp2perp = cross(dp2, n), dp1perp = cross(n, dp1);
+    vec3 t = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3 bt = dp2perp * duv1.y + dp1perp * duv2.y;
+    float s = inversesqrt(max(max(dot(t, t), dot(bt, bt)), 1e-20));
+    return normalize(mat3(t * s, bt * s, n) * tn);
+}
+
+float sun_shade(vec3 n)
+{
+    vec3 sun = normalize(vec3(0.3, 0.2, 1.0));
+    return 0.45 + 0.55 * abs(dot(n, sun));
+}
+#endif
+
 void main()
 {
 #if H2_WATER
@@ -119,17 +145,18 @@ void main()
     alpha *= m.a * m.r;
 #endif
 #else
-    /* Baked lighting where the geometry has it, the sun stand-in elsewhere */
+    /* Baked lighting where the geometry has it, the sun stand-in elsewhere;
+     * baked light has no direction, so the bump shades relative to the sun */
+    vec3 normal = surface_normal();
+    float bump_shade = 1.0;
+    if(bumped != 0)
+        bump_shade = sun_shade(bumped_normal(normal)) / sun_shade(normal);
     if(f_lightmap.z >= 0.0)
-        color *= texture(lightmaps, f_lightmap).rgb * 2.0;
+        color *= texture(lightmaps, f_lightmap).rgb * 2.0 * bump_shade;
     else if(f_vertex_light.a > 0.0)
-        color *= f_vertex_light.rgb * 2.0;
+        color *= f_vertex_light.rgb * 2.0 * bump_shade;
     else
-    {
-        vec3 normal = surface_normal();
-        vec3 sun = normalize(vec3(0.3, 0.2, 1.0));
-        color *= 0.45 + 0.55 * abs(dot(normal, sun));
-    }
+        color *= sun_shade(normal) * bump_shade;
 #if H2_ILLUM
     color += texture(illum, f_illum_uv).rgb * illum_color;
 #endif
