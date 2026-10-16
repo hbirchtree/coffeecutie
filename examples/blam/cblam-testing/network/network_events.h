@@ -265,8 +265,16 @@ struct alignas(8) EquipmentSync
 {
     static constexpr auto message_type = MessageBase::EquipmentSync;
 
-    u32 player_idx{0};
-    u32 weapon{0}; /*!< Tag id, 0 for none */
+    enum flags_t : u32
+    {
+        none      = 0x0,
+        reloading = 0x1,
+    };
+
+    u32     player_idx{0};
+    u32     weapon{0}; /*!< Tag id, 0 for none */
+    flags_t flags{none};
+    u32     padding{0};
 
     bool operator==(EquipmentSync const&) const = default;
 };
@@ -527,7 +535,7 @@ static_assert(sizeof(Message<PlayerJoin>) == 48);
 static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
-static_assert(sizeof(EquipmentSync) == 8);
+static_assert(sizeof(EquipmentSync) == 16);
 static_assert(sizeof(DriveInput) == 32);
 static_assert(sizeof(WeaponFire) == 64);
 static_assert(sizeof(ObjectHit) == 72);

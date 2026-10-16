@@ -2556,14 +2556,14 @@ struct ResourceLoader
                     .biped           = biped_model.biped,
                     .load_generation = files.load_generation,
                 };
-                equip.weapons[0] = armed(biped_model.weapon, files);
+                starting_loadout(equip, files);
             }
             for(auto const& change : pending_equips)
                 if(change.entity_id == player.id())
                     if(auto tag = index.find(change.weapon);
                        tag != index.end() &&
                        (*tag).matches(blam::tag_class_t::weap))
-                        equip.weapons[0] = armed(&(*tag), files);
+                        take_in_hand(equip, &(*tag), files);
             auto& weapon = equip.weapons[0];
             if(weapon.tag != biped.held_tag)
             {
@@ -2684,15 +2684,82 @@ struct ResourceLoader
         }
     }
 
+    /* A weapon with its first trigger's magazine full */
     static BipedEquipment::weapon_t armed(
         blam::tag_t const* tag, BlamFiles<Ver> const& files)
     {
         if(!tag)
             return {};
-        auto weapon = tag->template data<blam::scn::weapon>(files.container.magic);
+        auto const& magic  = files.container.magic;
+        auto        weapon = tag->template data<blam::scn::weapon>(magic);
         if(!weapon.has_value())
             return {};
-        return {.weapon = weapon.value(), .tag = tag};
+        BipedEquipment::weapon_t out{.weapon = weapon.value(), .tag = tag};
+        auto triggers  = weapon.value()->triggers.data(magic);
+        auto magazines = weapon.value()->magazines.data(magic);
+        if(!triggers.has_value() || triggers.value().empty() || !magazines.has_value())
+            return out;
+        auto const index = triggers.value()[0].magazine;
+        if(index < 0 || static_cast<size_t>(index) >= magazines.value().size())
+            return out;
+        auto const& magazine = magazines.value()[index];
+        out.rounds_loaded    = static_cast<u16>(std::max<i16>(magazine.rounds_loaded_maximum, 0));
+        out.rounds_total     = static_cast<u16>(std::max<i16>(magazine.rounds_total_initial, 0));
+        return out;
+    }
+
+    /* The other weapon is drawn, or a new one taken; the one in hand is
+     * slung if there is room, else dropped */
+    static void take_in_hand(
+        BipedEquipment& equip, blam::tag_t const* tag, BlamFiles<Ver> const& files)
+    {
+        auto& [held, slung] = equip.weapons;
+        if(held.tag == tag)
+            return;
+        if(slung.tag == tag)
+            std::swap(held, slung);
+        else
+        {
+            if(!slung.weapon)
+                slung = held;
+            held = armed(tag, files);
+        }
+        equip.reloading = false;
+    }
+
+    /* The scenario's first starting profile, else the map's first weapon */
+    void starting_loadout(BipedEquipment& equip, BlamFiles<Ver> const& files)
+    {
+        auto const& magic    = files.container.magic;
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        blam::scn::player_starting_profile const* profile = nullptr;
+        if(scenario)
+            if(auto list = scenario->player_start.profiles.data(magic);
+               list.has_value() && !list.value().empty())
+                profile = &list.value()[0];
+        auto const slot = [&](blam::tagref_t const& ref, u16 loaded, u16 total) {
+            auto tag = ref.valid() ? index.find(ref.tag_id) : index.end();
+            if(tag == index.end())
+                return BipedEquipment::weapon_t{};
+            auto out = armed(&(*tag), files);
+            if(loaded || total)
+            {
+                out.rounds_loaded = loaded;
+                out.rounds_total  = total;
+            }
+            return out;
+        };
+        if(profile)
+        {
+            equip.weapons[0] = slot(
+                profile->primary_weapon, profile->rounds1_loaded, profile->rounds1_total);
+            equip.weapons[1] = slot(
+                profile->secondary_weapon, profile->rounds2_loaded, profile->rounds2_total);
+        }
+        if(!equip.weapons[0].weapon)
+            std::swap(equip.weapons[0], equip.weapons[1]);
+        if(!equip.weapons[0].weapon)
+            equip.weapons[0] = armed(biped_model.weapon, files);
     }
 
     /* The held weapon's own model, in the biped's hand */

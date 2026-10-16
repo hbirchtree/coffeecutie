@@ -66,7 +66,7 @@ using NetworkingManifest = compo::SubsystemManifest<
         ObjectPhysics,
         PhysicsData,
         const PlayerInput,
-        const BipedEquipment>,
+        BipedEquipment>,
     type_list_t<
         NetworkState,
         PhysicsBus,
@@ -2449,10 +2449,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     send_single(m_connection, Message<SeatSync>(SeatSync(seat)));
                     m_sent_own_seat = seat;
                 }
-                if(EquipmentSync const held{
-                       .player_idx = info.player_idx,
-                       .weapon     = weapon_of(p, m_client_player.id()),
-                   };
+                if(EquipmentSync const held = equipment_of(p, m_client_player.id(), info);
                    held.weapon && m_sent_own_equipment != held)
                 {
                     send_single(m_connection, Message<EquipmentSync>(EquipmentSync(held)));
@@ -2959,6 +2956,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 current);
     }
 
+    static EquipmentSync equipment_of(Proxy& p, u64 entity, PlayerInfo const& info)
+    {
+        auto const* equip = p.get<BipedEquipment>(entity);
+        return {
+            .player_idx = info.player_idx,
+            .weapon     = weapon_of(p, entity),
+            .flags      = equip && equip->reloading ? EquipmentSync::reloading
+                                                    : EquipmentSync::none,
+        };
+    }
+
     /* The tag id of what a player holds, 0 before the map gives it one */
     static u32 weapon_of(Proxy& p, u64 entity)
     {
@@ -2978,10 +2986,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto const& info = player.get<PlayerInfo>();
             if(!is_networked(player.id(), info))
                 continue;
-            EquipmentSync const held{
-                .player_idx = info.player_idx,
-                .weapon     = weapon_of(p, player.id()),
-            };
+            EquipmentSync const held = equipment_of(p, player.id(), info);
             if(held.weapon == 0)
                 continue;
             all.push_back(held);
@@ -3016,10 +3021,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             auto const& info = player.get<PlayerInfo>();
             auto        it   = m_remote_weapons.find(info.player_idx);
-            if(!info.is_remote() || it == m_remote_weapons.end() ||
-               weapon_of(p, player.id()) == it->second)
+            if(!info.is_remote() || it == m_remote_weapons.end())
                 continue;
-            EquipWeaponEvent equip{.entity_id = player.id(), .weapon = it->second};
+            if(auto* equip = p.get<BipedEquipment>(player.id()))
+                equip->reloading = it->second.flags & EquipmentSync::reloading;
+            if(weapon_of(p, player.id()) == it->second.weapon)
+                continue;
+            EquipWeaponEvent equip{.entity_id = player.id(), .weapon = it->second.weapon};
             GameEvent        ev{.type = GameEvent::EquipWeapon};
             m_game_bus.inject(ev, &equip);
         }
@@ -3234,7 +3242,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         case MessageBase::EquipmentSync: {
             /* Likewise only the sender's own */
             for(auto const& held : payload.values<EquipmentSync>())
-                m_remote_weapons[player_info.idx] = held.weapon;
+                m_remote_weapons[player_info.idx] = held;
             break;
         }
         case MessageBase::PlayerJoin: {
@@ -3392,7 +3400,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto const self_idx = p.subsystem<NetworkState>().remote_player_idx;
             for(auto const& held : payload.values<EquipmentSync>())
                 if(held.player_idx != self_idx)
-                    m_remote_weapons[held.player_idx] = held.weapon;
+                    m_remote_weapons[held.player_idx] = held;
             break;
         }
         case MessageBase::SeatSync: {
@@ -3883,7 +3891,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Weapons sent per player index, and those peers reported */
     std::map<u32, EquipmentSync>             m_sent_equipment;
     std::optional<EquipmentSync>             m_sent_own_equipment;
-    std::map<u32, u32>                       m_remote_weapons;
+    std::map<u32, EquipmentSync>             m_remote_weapons;
     std::map<u32, std::deque<ObjectSync>>    m_object_history;
     /* Remote players' cameras by player index, newest last */
     std::map<u32, std::deque<CameraSync>>    m_player_history;

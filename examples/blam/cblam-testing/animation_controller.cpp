@@ -272,6 +272,11 @@ struct AnimationController
                    ready >= 0)
                     apply(p, {.entity = player.id(), .animation = ready, .fade = .1f});
             drawn = weapon;
+            /* Reloads, in both views */
+            bool const reloading = equip && equip->reloading;
+            if(reloading && !m_walkers[player.id()].reloading)
+                reload(p, player.id(), biped.anim_graph, weapon, held, files);
+            m_walkers[player.id()].reloading = reloading;
             m_walkers[player.id()].seat         = {};
             m_walkers[player.id()].exiting      = false;
             m_walkers[player.id()].seen_vehicle = false;
@@ -896,6 +901,36 @@ struct AnimationController
         return held ? std::string(held->weapon->label.str()) : unarmed;
     }
 
+    void reload(
+        Proxy&                          p,
+        u64                             id,
+        blam::antr::header const*       graph,
+        std::string const&              weapon,
+        BipedEquipment::weapon_t const* held,
+        BlamFiles<halo_version> const&  files)
+    {
+        using fp_slot = blam::antr::first_person_weapon;
+        if(i32 const clip = stance(p, graph, "stand", weapon)[WeaponSlot::reload_1];
+           clip >= 0)
+            apply(p, {.entity = id, .animation = clip, .fade = .1f});
+        auto const slot = held && held->rounds_loaded == 0 ? fp_slot::reload_empty
+                                                           : fp_slot::reload_full;
+        auto const& magic = files.container.magic;
+        for(auto ent : p.template select<Attachment, AnimationPlayback>())
+        {
+            auto const& anim = ent.template get<AnimationPlayback>();
+            if(ent.template get<Attachment>().parent != id || !anim.graph)
+                continue;
+            auto fp = anim.graph->first_person_weapons.data(magic);
+            if(!fp.has_value() || fp.value().empty())
+                continue;
+            auto slots = fp.value()[0].animations.data(magic);
+            if(slots.has_value() && slots.value().size() > slot &&
+               slots.value()[slot].animation >= 0)
+                apply(p, {.entity = ent.id(), .animation = slots.value()[slot].animation, .fade = 0.f});
+        }
+    }
+
     /* A body on foot kicks with each shot it fires */
     void recoil(Proxy& p, WeaponFireEvent const& shot, BlamFiles<halo_version> const& files)
     {
@@ -1073,6 +1108,7 @@ struct AnimationController
         bool  seen{false};
         bool  running{false};
         std::string weapon; /* the label its stance was last drawn for */
+        bool        reloading{false};
     };
     struct custom_t
     {

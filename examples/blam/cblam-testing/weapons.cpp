@@ -20,13 +20,13 @@
 
 using WeaponManifest = compo::SubsystemManifest<
     type_list_t<
-        const PlayerInput,
+        PlayerInput,
         const PlayerInfo,
         const PlayerCamera,
         const NetworkInfo,
         const Attachment,
         const AnimationPlayback,
-        const BipedEquipment,
+        BipedEquipment,
         Model>,
     type_list_t<
         GameEventBus,
@@ -51,6 +51,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         u32  shots{0};          /* alternates twin barrels */
         bool firing{false};     /* held last frame */
         bool fired{false};      /* shot this frame */
+        f32  reloading{0.f};    /* seconds left */
+        blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
 
     WeaponSystem()
@@ -80,10 +82,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                        NetworkInfo>())
         {
             auto [input, info, cam, net] = ent.components();
+            /* Presses are taken whether or not they can be acted on */
+            bool const swap   = std::exchange(input.intent.swap, false);
+            bool       reload = std::exchange(input.intent.reload, false);
             /* A gunner fires the vehicle's weapon, a body its own; the free
              * camera has nothing to shoot with */
-            u64 const   vehicle = info.riding.vehicle;
-            auto const* equip = p.template get<BipedEquipment>(ent.id());
+            u64 const vehicle = info.riding.vehicle;
+            auto*     equip   = p.template get<BipedEquipment>(ent.id());
             auto const* carried =
                 equip ? equip->held(files.load_generation) : nullptr;
             auto const* weapon_tag = vehicle   ? mounted_weapon(p, info, files)
@@ -100,9 +105,24 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(!triggers.has_value() || triggers.value().empty())
                 continue;
             live.insert(ent.id());
-            auto&            state   = m_states[ent.id()];
+            auto& state = m_states[ent.id()];
+            /* Another weapon starts afresh */
+            if(state.weapon != weapon_tag)
+                state = {.weapon = weapon_tag};
             trigger_t const& trigger = triggers.value()[0];
             bool const       held    = input.intent.fire;
+
+            /* Bodies switch, reload and run dry; vehicle guns don't */
+            auto* ammo = vehicle ? nullptr : &equip->weapons[0];
+            if(ammo && swap && equip->weapons[1].weapon)
+            {
+                std::swap(equip->weapons[0], equip->weapons[1]);
+                equip->reloading = false;
+                continue;
+            }
+            auto const* magazine =
+                ammo ? magazine_of(weapon.value()[0], trigger, magic) : nullptr;
+            i16 const per_shot = std::max<i16>(trigger.rounds_per_shot, 1);
 
             bool const repeats =
                 (trigger.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
@@ -113,7 +133,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 f32 const dt   = tick.seconds;
                 state.fired    = false;
                 state.cooldown = std::max(state.cooldown - dt, 0.f);
-                if(held && state.cooldown <= 0.f && (repeats || !state.firing))
+                if(state.reloading > 0.f &&
+                   (state.reloading -= dt) <= 0.f && magazine)
+                    refill(*ammo, *magazine);
+                bool const loaded =
+                    !magazine || ammo->rounds_loaded >= per_shot;
+                if(magazine && state.reloading <= 0.f && ammo->rounds_total > 0 &&
+                   ammo->rounds_loaded < magazine->rounds_loaded_maximum &&
+                   (reload || !loaded))
+                {
+                    state.reloading = std::max(magazine->reload_time, dt);
+                    reload          = false;
+                }
+                if(held && loaded && state.reloading <= 0.f &&
+                   state.cooldown <= 0.f && (repeats || !state.firing))
                 {
                     f32 const rate = std::max(
                         trigger.maximum_rate_of_fire.y > 0.f
@@ -123,6 +156,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     state.cooldown += 1.f / rate;
                     state.fired        = true;
                     state.illumination = 1.f;
+                    if(magazine)
+                        ammo->rounds_loaded -= per_shot;
                     pull(p, ent.id(), info, cam, *weapon_tag, state.shots++);
                 }
                 state.firing = held;
@@ -136,8 +171,11 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             }
 
             if(!vehicle)
+            {
+                equip->reloading = state.reloading > 0.f;
                 drive_functions(
                     p, ent.id(), weapon.value()[0], state, held, magic);
+            }
         }
         std::erase_if(m_states, [&live](auto const& e) {
             return !live.contains(e.first);
@@ -404,6 +442,26 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 return ent.id();
         }
         return 0;
+    }
+
+    static weapon_t::magazine_t const* magazine_of(
+        weapon_t const& weapon, trigger_t const& trigger, blam::map_ptr const& magic)
+    {
+        auto magazines = weapon.magazines.data(magic);
+        if(trigger.magazine < 0 || !magazines.has_value() ||
+           static_cast<size_t>(trigger.magazine) >= magazines.value().size())
+            return nullptr;
+        return &magazines.value()[trigger.magazine];
+    }
+
+    /* Tops the magazine up from what is carried */
+    static void refill(BipedEquipment::weapon_t& ammo, weapon_t::magazine_t const& magazine)
+    {
+        u16 const room = static_cast<u16>(
+            std::max<i32>(magazine.rounds_loaded_maximum - ammo.rounds_loaded, 0));
+        u16 const taken = std::min(room, ammo.rounds_total);
+        ammo.rounds_loaded += taken;
+        ammo.rounds_total -= taken;
     }
 
     /* The shooter's weapon as others see it */
