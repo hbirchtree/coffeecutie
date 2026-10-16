@@ -198,5 +198,8 @@ and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
 - XMA is the 360's hardware format, derived from WMA Pro; `libwma` (WMA
   v2, used for Halo 2) cannot decode it. libavcodec's xma1/xma2 decoders
   (wmaprodec) are LGPL-2.1+ when ffmpeg is built without `--enable-gpl`,
-  so a runtime decoder must link it dynamically (vcpkg's ffmpeg is
-  currently only in the optional "media" feature and static by default).
+  so it is linked dynamically: `BUILD_OPENAL_XMA2` (on with
+  `BUILD_BLAM_ELEGY`, which is off by default) selects the `xma2` vcpkg
+  feature, an avcodec-only ffmpeg the desktop triplets build shared, and
+  `blam/elegy/xma2.h` decodes through it. Output matches the ffmpeg CLI
+  sample for sample on all mainmenu permutations.
