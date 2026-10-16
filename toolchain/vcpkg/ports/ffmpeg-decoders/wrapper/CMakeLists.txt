@@ -14,7 +14,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # Only the public av* API; ff_* stay internal, which ffmpeg's x86
     # assembly needs to link into a shared library (as ffmpeg's own does)
     target_link_options(ffmpeg-decoders PRIVATE
-        "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/exports.map"
+        "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/exports.ver"
         -Wl,-Bsymbolic
     )
 endif()
