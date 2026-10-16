@@ -457,6 +457,8 @@ struct H3MapLoader : compo::SubsystemBase
             Span<el::lightmap_instance_t const>());
         auto instance_texcoords = geometry.per_instance_lightmap_texcoords.data(magic).value_or(
             Span<el::instance_lightmap_texcoords_t const>());
+        auto per_vertex = lit->per_vertex.data(magic).value_or(
+            Span<el::lightmap_per_vertex_t const>());
         bool const have_lightprobes = m_scene.lightprobe != nullptr;
 
         u32  clusters = 0, instances = 0;
@@ -498,20 +500,28 @@ struct H3MapLoader : compo::SubsystemBase
             transform[3] = Vecf4(instance.position.value(), 1.f);
             /* An instance's texcoords are its own buffer, through the
              * lightmap's per-instance list */
-            std::vector<Vecf2> uvs;
+            std::vector<Vecf2>              uvs;
+            std::vector<el::vertex_light_t> lights;
             i16 texcoords = instance.lightmap_texcoords;
             if(have_lightprobes && i < lit_instances.size() &&
                lit_instances[i].target.texture_array_index.value() >= 0 && texcoords >= 0 &&
                static_cast<size_t>(texcoords) < instance_texcoords.size())
                 uvs = el::lightmap_texcoords(
                     view.value(), instance_texcoords[static_cast<size_t>(texcoords)].vertex_buffer);
+            else if(i < lit_instances.size() && lit_instances[i].target.per_vertex.value() >= 0 &&
+                    static_cast<size_t>(lit_instances[i].target.per_vertex.value()) < per_vertex.size())
+                lights = el::vertex_lights(
+                    view.value(),
+                    per_vertex[static_cast<size_t>(lit_instances[i].target.per_vertex.value())]
+                        .vertex_buffer);
             instances += append_mesh(
                              view.value(),
                              *mesh,
                              definition->compression.resolve(compression),
                              transform,
                              materials,
-                             uvs) > 0;
+                             uvs,
+                             lights) > 0;
         }
         cDebug(
             "H3: {}: {} clusters, {} instances",
@@ -623,7 +633,8 @@ struct H3MapLoader : compo::SubsystemBase
         el::compression_t const*              compression,
         Matf4 const&                          transform,
         Span<el::geometry_material_t const>   materials,
-        std::vector<Vecf2> const&             lightmap_uvs = {})
+        std::vector<Vecf2> const&             lightmap_uvs = {},
+        std::vector<el::vertex_light_t> const& vertex_lights = {})
     {
         auto magic   = m_map->magic();
         auto buffers = el::mesh_buffers::from(view, mesh);
@@ -633,16 +644,30 @@ struct H3MapLoader : compo::SubsystemBase
             return 0;
         u32  vbase  = static_cast<u32>(m_vertices.size());
         auto normal = glm::mat3(glm::inverseTranspose(transform));
-        bool const lit = lightmap_uvs.size() == m_decoded.size();
+        bool const lit        = lightmap_uvs.size() == m_decoded.size();
+        bool const vertex_lit = vertex_lights.size() == m_decoded.size();
         for(size_t i = 0; i < m_decoded.size(); i++)
         {
             auto const& v = m_decoded[i];
-            m_vertices.push_back(Vertex{
-                .position = Vecf3(transform * Vecf4(v.position, 1.f)),
-                .texcoord = v.texcoord,
-                .normal   = glm::normalize(normal * v.normal),
-                .lightmap = lit ? Vecf3(lightmap_uvs[i], 0.f) : Vecf3(0.f, 0.f, -1.f),
-            });
+            Vertex      out{
+                     .position = Vecf3(transform * Vecf4(v.position, 1.f)),
+                     .texcoord = v.texcoord,
+                     .normal   = glm::normalize(normal * v.normal),
+                     .lightmap = lit ? Vecf3(lightmap_uvs[i], 0.f) : Vecf3(0.f, 0.f, -1.f),
+            };
+            if(vertex_lit)
+            {
+                /* Stored at a quarter, so 8 bits reach 4x the white point */
+                Vecf3 light = glm::clamp(
+                    diffuse_radiance(vertex_lights[i], out.normal) * 0.25f * 255.f,
+                    Vecf3(0.f),
+                    Vecf3(255.f));
+                out.light[0] = static_cast<u8>(light.x);
+                out.light[1] = static_cast<u8>(light.y);
+                out.light[2] = static_cast<u8>(light.z);
+                out.light[3] = 255;
+            }
+            m_vertices.push_back(out);
         }
 
         auto parts = mesh.parts.data(magic).value_or(Span<el::part_t const>());
@@ -829,6 +854,27 @@ struct H3MapLoader : compo::SubsystemBase
         size_t idx = m_scene.materials.size() - 1;
         m_material_index.emplace(key, idx);
         return idx;
+    }
+
+    /* Diffuse radiance from linear SH and a dominant light, as Halo 3's
+     * ravi_order_2_with_dominant_light; see h3_common.glsl */
+    static Vecf3 diffuse_radiance(el::vertex_light_t const& light, Vecf3 const& n)
+    {
+        auto const& sh  = light.sh;
+        Vecf3 const lum = {0.212656f, 0.715158f, 0.0721856f};
+        Vecf3       dir = {
+            -glm::dot(sh[3], lum), -glm::dot(sh[1], lum), glm::dot(sh[2], lum)};
+        dir = glm::length(dir) > 1e-6f ? glm::normalize(dir) : Vecf3(0.f, 0.f, 1.f);
+        Vecf3 out;
+        for(int c = 0; c < 3; c++)
+        {
+            Vecf3 linear = Vecf3(sh[3][c], sh[1][c], -sh[2][c]) +
+                           0.4886025f * dir * light.intensity[c];
+            f32 dc = sh[0][c] - 0.2820948f * light.intensity[c];
+            out[c] = (0.886227f * dc - 1.023328f * glm::dot(n, linear)) / glm::pi<f32>();
+        }
+        return glm::max(out, Vecf3(0.f)) +
+               std::max(glm::dot(dir, n), 0.f) * light.intensity * 0.281f;
     }
 
     /* Linear exposure for the camera FX of the cluster holding `eye`: the

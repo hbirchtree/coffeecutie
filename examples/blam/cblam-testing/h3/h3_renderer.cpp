@@ -156,7 +156,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"lightprobe_scale"},
                             semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
                         gfx::uniform_pair<const f32>{
-                            {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)});
+                            {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
+                        gfx::uniform_pair<const f32>{
+                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)});
                     auto const& l = mat.layers;
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"base_m0", 0}, or_white(l[0].base)},
@@ -191,7 +193,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"lightprobe_scale"},
                             semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
                         gfx::uniform_pair<const f32>{
-                            {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)});
+                            {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
+                        gfx::uniform_pair<const f32>{
+                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)});
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},

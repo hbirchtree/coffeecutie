@@ -67,6 +67,8 @@ layout(location=88) uniform vec2 bump_detail_ratio;
 layout(location=89, binding=9) uniform sampler2DArray lightprobe;
 layout(location=90) uniform vec4 lightprobe_scale;
 layout(location=91) uniform float exposure;
+layout(location=92) uniform float intensity_scale;
+layout(location=8) in vec4 f_vertex_light;
 
 layout(location=0) out vec4 out_color;
 
@@ -112,16 +114,26 @@ vec3 lightprobe_coefficient(float slice, float scale)
     return ((a.rgb + b.rgb) * 2.0 - 2.0) * (a.a * b.a * scale);
 }
 
-/* Diffuse reflectance (irradiance / pi) of linear SH in D3DX order:
- * L0, then -y, z, -x */
+/* Diffuse radiance from linear SH in D3DX order (L0, then -y, z, -x) and
+ * the dominant light, as Halo 3's ravi_order_2_with_dominant_light: the
+ * dominant light leaves the SH and comes back as a clamped cosine */
 vec3 baked_diffuse(vec3 n)
 {
     vec3 l0 = lightprobe_coefficient(0.0, lightprobe_scale.x);
     vec3 l1 = lightprobe_coefficient(2.0, lightprobe_scale.y);
     vec3 l2 = lightprobe_coefficient(4.0, lightprobe_scale.z);
     vec3 l3 = lightprobe_coefficient(6.0, lightprobe_scale.w);
-    vec3 e = 0.886227 * l0 + 1.023328 * (-n.y * l1 + n.z * l2 - n.x * l3);
-    return max(e, vec3(0.0)) / 3.14159265;
+    vec3 intensity = lightprobe_coefficient(8.0, intensity_scale);
+    const vec3 lum = vec3(0.212656, 0.715158, 0.0721856);
+    vec3 dir = vec3(-dot(l3, lum), -dot(l1, lum), dot(l2, lum));
+    dir = dot(dir, dir) > 1e-12 ? normalize(dir) : vec3(0.0, 0.0, 1.0);
+    vec3 dc = l0 - 0.2820948 * intensity;
+    vec3 x1 = vec3(
+        dot(n, vec3(l3.r, l1.r, -l2.r) + 0.4886025 * dir * intensity.r),
+        dot(n, vec3(l3.g, l1.g, -l2.g) + 0.4886025 * dir * intensity.g),
+        dot(n, vec3(l3.b, l1.b, -l2.b) + 0.4886025 * dir * intensity.b));
+    vec3 e = (0.886227 * dc - 1.023328 * x1) / 3.14159265;
+    return max(e, vec3(0.0)) + max(dot(dir, n), 0.0) * intensity * 0.281;
 }
 
 #if H3_TERRAIN
@@ -187,6 +199,8 @@ void main()
 #endif
     if(f_lightmap.z >= 0.0)
         color *= baked_diffuse(normal) * exposure;
+    else if(f_vertex_light.a > 0.0)
+        color *= f_vertex_light.rgb * 4.0 * exposure;
     else
     {
         vec3 sun = normalize(vec3(0.3, 0.2, 1.0));
