@@ -4,6 +4,7 @@
 #include <coffee/core/coffee.h>
 
 #include "dump.h"
+#include "dump_anim.h"
 #include "dump_objects.h"
 #include "dump_scenario.h"
 #include "dump_ui.h"
@@ -1522,7 +1523,11 @@ int run_map(
     {
         for(auto const& tag : map.tags())
             if(tag_selected(map, tag, options))
+            {
                 dimeter_info::dump_any(map, tag);
+                if(tag.matches("jmad"))
+                    dimeter_info::dump_jmad(map, pool, tag);
+            }
         for_each_bsp(
             map,
             [&](h2::geo::structure_bsp_ref_t const& ref,
