@@ -129,8 +129,10 @@ struct H3MapLoader : compo::SubsystemBase
     {
         if(!load.file)
             return false;
-        /* Web files arrive asynchronously; not wired up for Halo 3 yet */
-        if(compile_info::platform::is_emscripten && !load.file_data)
+        /* Outside the virtual filesystem (web) the Halo 2 loader fetches the
+         * file and hands it back with file_data */
+        if(compile_info::platform::is_emscripten && !load.file_data &&
+           !platform::file::exists(*load.file).has_value())
             return false;
         auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
         auto  file   = load.file_data ? load.file_data : mapper.fetch(*load.file).get();
@@ -140,8 +142,7 @@ struct H3MapLoader : compo::SubsystemBase
             unload();
             return false;
         }
-        m_file = file;
-        return load_cache(load, bytes);
+        return load_cache(load, bytes, std::move(file));
     }
 
     static bool is_halo3_cache(BytesConst const& bytes)
@@ -176,9 +177,14 @@ struct H3MapLoader : compo::SubsystemBase
     }
 
   private:
-    bool load_cache(MapLoadEvent const& load, BytesConst const& bytes)
+    bool load_cache(
+        MapLoadEvent const&                             load,
+        BytesConst const&                               bytes,
+        std::shared_ptr<comp_app::FileMapper::Resource> file)
     {
         unload();
+        /* The map stays mapped for as long as it is loaded */
+        m_file = std::move(file);
         /* Same teardown as the other loaders: the previous world goes away */
         m_container.remove_entity_if([](compo::Entity const& en) {
             return stl_types::any_flag_of(en.tags, ObjectGC);
@@ -210,8 +216,18 @@ struct H3MapLoader : compo::SubsystemBase
             return false;
         }
         m_loader = std::make_unique<el::resource_loader>(*res);
+        if(side_pread())
+        {
+            open_side_caches(load, m_scene.generation, 0);
+            return true;
+        }
         attach_side_caches(load);
+        return finish_load(load);
+    }
 
+    /* The rest of a load, once the side caches are attached */
+    bool finish_load(MapLoadEvent const& load)
+    {
         bool ok = load_world();
         if(ok)
             load_music();
@@ -307,6 +323,68 @@ struct H3MapLoader : compo::SubsystemBase
             m_bank.music.in.data.empty() ? "none" : m_bank.music.in.name,
             m_bank.music.loops.size(),
             m_bank.music.gain);
+    }
+
+    /* H3_SIDE_PREAD=1 reads the side caches by range on desktop too, the
+     * path the web always takes */
+    static bool side_pread()
+    {
+        if(compile_info::platform::is_emscripten)
+            return true;
+        auto v = platform::env::var("H3_SIDE_PREAD");
+        return v.has_value() && v.value() == "1";
+    }
+
+    platform::url::Url side_cache_url(MapLoadEvent const& load, std::string_view name) const
+    {
+        return (load.file->path().dirname() / std::string(name)).url(load.file->flags);
+    }
+
+    /* Web: the side caches opened one after another through FileMapper's
+     * store, read by range; the load finishes on the main queue after. A
+     * newer load abandons the chain */
+    void open_side_caches(MapLoadEvent const& load, u32 generation, size_t i)
+    {
+        using RangedFile = comp_app::FileMapper::RangedFile;
+        if(generation != m_scene.generation || !m_loader)
+            return;
+        auto caches = m_loader->external_caches();
+        if(i >= caches.size())
+        {
+            finish_load(load);
+            return;
+        }
+        auto  name   = std::string(caches[i].file_name());
+        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
+        rq::runtime_queue::Queue(
+            rq::dependent_task<std::shared_ptr<RangedFile>, void>::CreateSink(
+                mapper.open_ranged(side_cache_url(load, name)),
+                [this, load, generation, i, name](std::shared_ptr<RangedFile>* file) {
+                    if(generation != m_scene.generation || !m_loader)
+                        return;
+                    attach_ranged(name, file ? *file : nullptr);
+                    open_side_caches(load, generation, i + 1);
+                }))
+            .assume_value();
+    }
+
+    void attach_ranged(std::string const& name, std::shared_ptr<comp_app::FileMapper::RangedFile> file)
+    {
+        auto read = [file](u64 offset, Span<byte_t> dst) {
+            return file->read(
+                offset, gsl::span<char>(reinterpret_cast<char*>(dst.data()), dst.size()));
+        };
+        std::vector<byte_t> head(sizeof(el::file_header_t));
+        auto source = file && file->size() && read(0, Span<byte_t>(head.data(), head.size()))
+                          ? el::cache_source::from_header(
+                                Span<byte_t const>(head.data(), head.size()), read)
+                          : std::nullopt;
+        if(!source)
+        {
+            cWarning("H3: {} not found, its pages are skipped", name);
+            return;
+        }
+        m_loader->attach(name, std::move(*source));
     }
 
     /* Pages may live in mainmenu/shared/campaign.map next to the map */
@@ -1193,9 +1271,10 @@ struct H3MapLoader : compo::SubsystemBase
             if(format == el::bitmap_format_t::dxn)
                 el::dxn_to_bc5(pixels);
             auto tex = m_api->alloc_texture(gfx::textures::d2, rgtc->desc, 1);
-            tex->alloc(size_3d<u32>{width, height, 1});
+            /* Before alloc: without texture swizzle (WebGL) it is decoded in */
             auto const& sw = rgtc->swizzle;
             tex->set_swizzle(sw[0], sw[1], sw[2], sw[3]);
+            tex->alloc(size_3d<u32>{width, height, 1});
             tex->upload(
                 std::move(pixels),
                 Veci2{0, 0},
@@ -1215,25 +1294,53 @@ struct H3MapLoader : compo::SubsystemBase
             for(auto& b : pixels)
                 b = static_cast<u8>(b + 0x80);
 
-        auto tex = m_api->alloc_texture(gfx::textures::d2, blam::bitm::to_pixdesc(*h1), 1);
-        tex->alloc(size_3d<u32>{width, height, 1});
+        /* One- and two-channel formats and where their channels go */
+        std::optional<std::array<swizzle_t, 4>> swizzle;
         switch(*h1)
         {
         case format_t::Y8:
-            tex->set_swizzle(swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::one);
+            swizzle = {swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::one};
             break;
         case format_t::AY8:
-            tex->set_swizzle(swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::red);
+            swizzle = {swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::red};
             break;
         case format_t::A8:
-            tex->set_swizzle(swizzle_t::one, swizzle_t::one, swizzle_t::one, swizzle_t::red);
+            swizzle = {swizzle_t::one, swizzle_t::one, swizzle_t::one, swizzle_t::red};
             break;
         case format_t::A8Y8:
-            tex->set_swizzle(swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::green);
+            swizzle = {swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::green};
             break;
         default:
             break;
         }
+        /* Without texture swizzle (WebGL) they go up expanded to RGBA8 */
+        if(swizzle && !m_api->feature_info().texture.swizzle)
+        {
+            u32 const channels = *h1 == format_t::A8Y8 ? 2 : 1;
+            std::vector<u8> rgba(size_t(width) * height * 4);
+            for(size_t i = 0; i < size_t(width) * height; i++)
+                for(size_t c = 0; c < 4; c++)
+                {
+                    auto sc = (*swizzle)[c];
+                    rgba[i * 4 + c] = sc == swizzle_t::red     ? pixels[i * channels]
+                                      : sc == swizzle_t::green ? pixels[i * channels + 1]
+                                      : sc == swizzle_t::one   ? u8(255)
+                                                               : u8(0);
+                }
+            auto tex = m_api->alloc_texture(
+                gfx::textures::d2, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
+            tex->alloc(size_3d<u32>{width, height, 1});
+            tex->upload(
+                std::move(rgba),
+                Veci2{0, 0},
+                Veci2{static_cast<i32>(width), static_cast<i32>(height)},
+                0);
+            return make_texture(tex);
+        }
+        auto tex = m_api->alloc_texture(gfx::textures::d2, blam::bitm::to_pixdesc(*h1), 1);
+        tex->alloc(size_3d<u32>{width, height, 1});
+        if(swizzle)
+            tex->set_swizzle((*swizzle)[0], (*swizzle)[1], (*swizzle)[2], (*swizzle)[3]);
         tex->upload(
             std::move(pixels),
             Veci2{0, 0},
