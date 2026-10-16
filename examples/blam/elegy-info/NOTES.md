@@ -198,5 +198,17 @@ and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
 - XMA is the 360's hardware format, derived from WMA Pro; `libwma` (WMA
   v2, used for Halo 2) cannot decode it. libavcodec's xma1/xma2 decoders
   (wmaprodec) are LGPL-2.1+ when ffmpeg is built without `--enable-gpl`,
-  so a runtime decoder must link it dynamically (vcpkg's ffmpeg is
-  currently only in the optional "media" feature and static by default).
+  so it is linked dynamically: `BUILD_OPENAL_XMA2` (on with
+  `BUILD_BLAM_ELEGY`, which is off by default) selects the `xma2` vcpkg
+  feature, i.e. the overlay port `ffmpeg-decoders[xma]`: ffmpeg's sources
+  configured with only the requested decoders (port features xma, wma,
+  wmapro, vorbis, opus, mp3, flac, adpcm), libavcodec + libavutil linked
+  into one shared library exporting only `av*`. A `.so` on desktop, a
+  `SIDE_MODULE` `libffmpeg-decoders.wasm` bundled with BlamGraphics on the
+  web. `OAFXMA2Decoder` (`oaf/xma2/xma2_decode.h`, beside the WMA decoder)
+  wraps it; output matches the ffmpeg CLI sample for sample.
+- BlamGraphics plays mainmenu's `main_menu_music` looping sound: the first
+  track's intro once, then the loop permutations in turn
+  (`H3SoundBank` / `ElegySoundSystem`, as `DimeterSoundSystem` for Halo 2).
+  Checked headless with openal-soft's wave backend: the capture follows the
+  intro's envelope (correlation 0.986 over 20 s).

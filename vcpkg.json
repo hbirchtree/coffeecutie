@@ -101,6 +101,17 @@
                 "libwma"
             ]
         },
+        "xma2": {
+            "description": "XMA2 audio decoding (Halo 3) through a shared, decoder-only libavcodec (LGPL)",
+            "dependencies": [
+                {
+                    "name": "ffmpeg-decoders",
+                    "default-features": false,
+                    "features": ["xma"],
+                    "platform": "linux | osx | emscripten"
+                }
+            ]
+        },
         "media": {
             "description": "Media encoding",
             "dependencies": [
