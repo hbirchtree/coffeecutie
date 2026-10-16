@@ -1287,6 +1287,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 else
                     replicate_spawn(*spawn);
             });
+        m_despawn_queue = m_game_bus.addQueuedEventFunction<DespawnObjectEvent>(
+            0, [this](GameEvent&, DespawnObjectEvent* gone) {
+                if(is_server() && gone->net_id != 0 &&
+                   !SpawnObjectEvent::is_impostor(gone->net_id))
+                    m_despawns.push_back({.net_id = gone->net_id});
+            });
+        m_pickup_queue = m_game_bus.addQueuedEventFunction<EquipWeaponEvent>(
+            0, [this](GameEvent&, EquipWeaponEvent* equip) {
+                if(is_server() && equip->mode == EquipWeaponEvent::pick_up)
+                    m_pickups.push_back(*equip);
+            });
         m_input_queue = m_game_bus.addQueuedEventFunction<PlayerTickInputEvent>(
             0, [this](GameEvent&, PlayerTickInputEvent* input) {
                 if(input->origin == MapLoadEvent::Local)
@@ -2206,6 +2217,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #endif
         if(m_spawn_queue)
             m_spawn_queue->poll();
+        if(m_despawn_queue)
+            m_despawn_queue->poll();
+        if(m_pickup_queue)
+            m_pickup_queue->poll();
         m_net_state.replica = !is_server() && m_connection;
         send_combat(p);
         apply_simulation();
@@ -2397,6 +2412,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             send_impacts(p);
             send_seats(p);
             send_equipment(p);
+            send_pickups();
             measure_pings();
             send_tick_sync(p, t);
             send_grab_states(p);
@@ -2956,25 +2972,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 current);
     }
 
+    /* What a player carries, by tag ids; nothing before the map gives it any */
     static EquipmentSync equipment_of(Proxy& p, u64 entity, PlayerInfo const& info)
     {
-        auto const* equip = p.get<BipedEquipment>(entity);
-        return {
-            .player_idx = info.player_idx,
-            .weapon     = weapon_of(p, entity),
-            .flags      = equip && equip->reloading ? EquipmentSync::reloading
-                                                    : EquipmentSync::none,
-        };
-    }
-
-    /* The tag id of what a player holds, 0 before the map gives it one */
-    static u32 weapon_of(Proxy& p, u64 entity)
-    {
-        auto const* equip = p.get<BipedEquipment>(entity);
-        auto const* held  = equip ? equip->held(
-                                       p.subsystem<BlamFiles<halo_version>>().load_generation)
-                                  : nullptr;
-        return held && held->tag ? held->tag->tag_id : 0;
+        EquipmentSync out{.player_idx = info.player_idx};
+        auto const*   equip = p.get<BipedEquipment>(entity);
+        if(!equip || !equip->held(p.subsystem<BlamFiles<halo_version>>().load_generation))
+            return out;
+        auto const& [held, slung] = equip->weapons;
+        out.weapon = held.tag ? held.tag->tag_id : 0;
+        out.slung  = slung.tag ? slung.tag->tag_id : 0;
+        out.flags  = equip->reloading ? EquipmentSync::reloading : EquipmentSync::none;
+        return out;
     }
 
     /* Every player's weapon as it changes, and all of them to a fresh peer */
@@ -3013,6 +3022,32 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 current);
     }
 
+    /* What the server took off the ground: gone for everyone, and a weapon
+     * for the client whose player picked it up */
+    void send_pickups()
+    {
+        std::set<HSteamNetConnection> verified;
+        for(auto& [connection, state] : m_connections)
+            if(state.verified)
+                verified.insert(connection);
+        if(!verified.empty() && !m_despawns.empty())
+            send_all<ObjectDespawn>(
+                MessageBase{MessageBase::ObjectDespawn},
+                gsl::span<ObjectDespawn>(m_despawns),
+                k_nSteamNetworkingSend_Reliable,
+                verified);
+        m_despawns.clear();
+        for(auto const& pickup : std::exchange(m_pickups, {}))
+            for(auto& [connection, state] : m_connections)
+                if(state.biped.exists() && state.biped.id() == pickup.entity_id)
+                    send_single(
+                        connection,
+                        Message<WeaponPickup>({
+                            .player_idx = state.idx,
+                            .weapon     = pickup.weapon,
+                        }));
+    }
+
     /* Remote players hold what their peer last reported, through a map load
      * and before their body exists */
     void equip_remote_players(Proxy& p)
@@ -3025,9 +3060,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 continue;
             if(auto* equip = p.get<BipedEquipment>(player.id()))
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
-            if(weapon_of(p, player.id()) == it->second.weapon)
+            auto const known = equipment_of(p, player.id(), info);
+            if(known.weapon == it->second.weapon && known.slung == it->second.slung)
                 continue;
-            EquipWeaponEvent equip{.entity_id = player.id(), .weapon = it->second.weapon};
+            EquipWeaponEvent equip{
+                .entity_id = player.id(),
+                .weapon    = it->second.weapon,
+                .slung     = it->second.slung,
+                .mode      = EquipWeaponEvent::replicate,
+            };
             GameEvent        ev{.type = GameEvent::EquipWeapon};
             m_game_bus.inject(ev, &equip);
         }
@@ -3401,6 +3442,29 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             for(auto const& held : payload.values<EquipmentSync>())
                 if(held.player_idx != self_idx)
                     m_remote_weapons[held.player_idx] = held;
+            break;
+        }
+        case MessageBase::WeaponPickup: {
+            auto const& pickup = payload.value<WeaponPickup>();
+            if(!m_client_player.exists() ||
+               pickup.player_idx != p.subsystem<NetworkState>().remote_player_idx)
+                break;
+            EquipWeaponEvent equip{
+                .entity_id = m_client_player.id(),
+                .weapon    = pickup.weapon,
+                .mode      = EquipWeaponEvent::pick_up,
+            };
+            GameEvent ev{.type = GameEvent::EquipWeapon};
+            m_game_bus.inject(ev, &equip);
+            break;
+        }
+        case MessageBase::ObjectDespawn: {
+            for(auto const& gone : payload.values<ObjectDespawn>())
+            {
+                DespawnObjectEvent despawn{.net_id = gone.net_id};
+                GameEvent          ev{.type = GameEvent::DespawnObject};
+                m_game_bus.inject(ev, &despawn);
+            }
             break;
         }
         case MessageBase::SeatSync: {
@@ -3892,6 +3956,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u32, EquipmentSync>             m_sent_equipment;
     std::optional<EquipmentSync>             m_sent_own_equipment;
     std::map<u32, EquipmentSync>             m_remote_weapons;
+    std::vector<ObjectDespawn>               m_despawns;
+    std::vector<EquipWeaponEvent>            m_pickups;
+    std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>> m_despawn_queue;
+    std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>   m_pickup_queue;
     std::map<u32, std::deque<ObjectSync>>    m_object_history;
     /* Remote players' cameras by player index, newest last */
     std::map<u32, std::deque<CameraSync>>    m_player_history;

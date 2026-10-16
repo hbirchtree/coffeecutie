@@ -17,6 +17,7 @@
 
 #include <map>
 #include <random>
+#include <set>
 
 using WeaponManifest = compo::SubsystemManifest<
     type_list_t<
@@ -184,6 +185,60 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         m_fire_queue->poll();
         for(auto const& shot : std::exchange(m_shots, {}))
             fire(p, shot, files);
+
+        m_use_queue->poll();
+        if(!p.template subsystem<NetworkState>().replica)
+            pick_up(p, files);
+    }
+
+    /* The authority hands out what bodies walk over, local and remote alike:
+     * ammo for what they carry, a weapon into a free slot, or a swap when
+     * they press use */
+    void pick_up(Proxy& p, BlamFiles<halo_version> const& files)
+    {
+        std::set<u64> taken;
+        for(auto ent : p.template select<PlayerInfo, PlayerCamera, NetworkInfo, BipedEquipment>())
+        {
+            auto [info, cam, net, equip] = ent.components();
+            bool const pressed           = std::exchange(m_use_pressed[ent.id()], false);
+            if(info.riding.vehicle || !info.mode.physics || !biped_in_play(info, cam, net) ||
+               !equip.held(files.load_generation))
+                continue;
+            Vecf3 const body =
+                cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f};
+            for(auto item : p.template select<Model, NetworkInfo>())
+            {
+                auto [model, item_net] = item.components();
+                auto const* tag        = model.origin_object;
+                if(item_net.instance_id == 0 ||
+                   SpawnObjectEvent::is_impostor(item_net.instance_id) ||
+                   !tag || !tag->matches(blam::tag_class_t::weap) ||
+                   taken.contains(item.id()) || p.template get<PlayerInfo>(item.id()))
+                    continue;
+                /* Items rest against the body, below its middle */
+                Vecf3 const to = model.position - body;
+                if(glm::length(Vecf2(to)) > pickup_reach ||
+                   std::abs(to.z) > info.biped.height)
+                    continue;
+                bool const carried =
+                    equip.weapons[0].tag == tag || equip.weapons[1].tag == tag;
+                if(!carried && equip.weapons[1].weapon && !pressed)
+                    continue;
+                taken.insert(item.id());
+                auto&              game = p.template subsystem<GameEventBus>();
+                DespawnObjectEvent gone{.net_id = item_net.instance_id};
+                GameEvent          despawn{.type = GameEvent::DespawnObject};
+                game.inject(despawn, &gone);
+                EquipWeaponEvent equip_ev{
+                    .entity_id = ent.id(),
+                    .weapon    = tag->tag_id,
+                    .mode      = EquipWeaponEvent::pick_up,
+                };
+                GameEvent ev{.type = GameEvent::EquipWeapon};
+                game.inject(ev, &equip_ev);
+                break;
+            }
+        }
     }
 
     /* The weapon of the vehicle seat a gunner sits in */
@@ -559,6 +614,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return x * (r * std::cos(phi)) + y * (r * std::sin(phi)) + dir * z;
     }
 
+    /* Across the ground from the middle of the body */
+    static constexpr f32 pickup_reach = .8f;
+
     /* Ahead of the eye, clear of the body that fires */
     static constexpr f32 muzzle_distance = .4f;
     /* Vehicle guns: where they fire from, and how far the crosshair looks */
@@ -570,6 +628,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     std::minstd_rand          m_rng{std::random_device{}()};
 
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
+    /* Use presses per player, from every seat's and client's tick input */
+    std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>> m_use_queue;
+    std::map<u64, bool> m_using, m_use_pressed;
     std::unique_ptr<TickQueue>                                 m_ticks;
     std::vector<WeaponFireEvent>                               m_shots;
 
@@ -584,5 +645,12 @@ void alloc_weapons(compo::EntityContainer& e)
         e.subsystem_cast<GameEventBus>().addQueuedEventFunction<WeaponFireEvent>(
             0, [&weapons](GameEvent&, WeaponFireEvent* shot) {
                 weapons.m_shots.push_back(*shot);
+            });
+    weapons.m_use_queue =
+        e.subsystem_cast<GameEventBus>().addQueuedEventFunction<PlayerTickInputEvent>(
+            0, [&weapons](GameEvent&, PlayerTickInputEvent* input) {
+                bool const use = (input->intents & InputIntent::use) != InputIntent::none;
+                if(!std::exchange(weapons.m_using[input->player], use) && use)
+                    weapons.m_use_pressed[input->player] = true;
             });
 }
