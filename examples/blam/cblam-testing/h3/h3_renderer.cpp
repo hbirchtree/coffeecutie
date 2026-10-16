@@ -123,6 +123,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 };
                 auto const& lightprobe = scene.lightprobe_sampler ? scene.lightprobe_sampler
                                                                   : m_no_lightprobe_sampler;
+                Vecf3 const eye   = camera->camera.position;
+                i32 const   model = static_cast<i32>(mat.model);
                 using stage_t = typing::graphics::ShaderStage;
                 std::optional<std::tuple<gfx::error, std::string_view>> res;
                 if(terrain)
@@ -195,7 +197,22 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<const f32>{
                             {"exposure"}, semantic::SpanOne<const f32>(scene.exposure)},
                         gfx::uniform_pair<const f32>{
-                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)});
+                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)},
+                        gfx::uniform_pair<const i32>{
+                            {"material_model"}, semantic::SpanOne<const i32>(model)},
+                        gfx::uniform_pair<const i32>{
+                            {"specular_mask_mode"}, semantic::SpanOne<const i32>(mat.specular_mask)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"spec_coefficients"},
+                            semantic::SpanOne<const Vecf4>(mat.specular.coefficients)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"spec_lobe"}, semantic::SpanOne<const Vecf4>(mat.specular.lobe)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"spec_tint0"}, semantic::SpanOne<const Vecf4>(mat.specular.tint0)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"spec_tint1"}, semantic::SpanOne<const Vecf4>(mat.specular.tint1)},
+                        gfx::uniform_pair<Vecf3 const>{
+                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},
@@ -203,7 +220,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{stage_t::Fragment, {"bump_map", 3}, or_white(mat.bump)},
                         gfx::sampler_definition_t{
                             stage_t::Fragment, {"bump_detail_map", 4}, or_white(mat.bump_detail)},
-                        gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe});
+                        gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"specular_mask_map", 10}, or_white(mat.specular_mask_map)},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"material_map", 11}, or_white(mat.material_map)});
                     res = submit(frag_u, samplers);
                 }
                 if(res.has_value() && !m_draw_error_logged)

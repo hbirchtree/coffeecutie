@@ -52,6 +52,30 @@ struct TerrainLayer
     bool    detailed{false};
 };
 
+/* Halo 3's material_model options this renders; the rest are diffuse */
+enum class MaterialModel : i32
+{
+    diffuse_only   = 0,
+    two_lobe_phong = 1,
+    cook_torrance  = 2,
+};
+
+/* Specular parameters, packed as the shader reads them */
+struct SpecularParams
+{
+    /* specular coefficient, diffuse coefficient, analytical and area
+     * specular contribution */
+    Vecf4 coefficients{0.f, 1.f, 1.f, 1.f};
+    /* two_lobe_phong: normal power, glancing power, fresnel steepness,
+     * albedo tint blend. cook_torrance: roughness, albedo blend,
+     * use material texture */
+    Vecf4 lobe{1.f, 1.f, 5.f, 0.f};
+    /* Normal tint (two_lobe_phong) or fresnel color (cook_torrance) */
+    Vecf4 tint0{1.f};
+    /* Glancing tint (two_lobe_phong) or specular tint (cook_torrance) */
+    Vecf4 tint1{1.f};
+};
+
 /* One render method: its textures and every draw range using it */
 struct Material
 {
@@ -68,6 +92,12 @@ struct Material
     Vecf3                                  curves{2.f, 2.f, 2.f};
     /* 0 none, 1 bump map, 2 plus detail bump; detail uv = bump uv * ratio */
     i32                                    bump_mode{0};
+    MaterialModel                          model{MaterialModel::diffuse_only};
+    /* 0 none, 1 base map alpha, 2 specular mask texture alpha */
+    i32                                    specular_mask{0};
+    SpecularParams                         specular;
+    Texture                                specular_mask_map;
+    Texture                                material_map;
     Texture                                bump;
     Vecf2                                  bump_scale{1.f, 1.f};
     Texture                                bump_detail;

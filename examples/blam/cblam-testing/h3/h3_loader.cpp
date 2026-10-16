@@ -722,7 +722,8 @@ struct H3MapLoader : compo::SubsystemBase
             Vecf2   scale;
             f32     curve;
         };
-        std::unordered_map<std::string, Slot> slots;
+        std::unordered_map<std::string, Slot>  slots;
+        std::unordered_map<std::string, Vecf4> constants;
         auto posts = method->postprocess.data(magic).value_or(
             Span<el::render_method_postprocess_t const>());
         if(!posts.empty())
@@ -741,8 +742,11 @@ struct H3MapLoader : compo::SubsystemBase
             auto floats = post.float_constants.data(magic).value_or(
                 Span<el::be<Vecf4> const>());
             for(size_t i = 0; i < floats.size() && i < float_names.size(); i++)
+            {
                 if(map.string(float_names[i]) == "albedo_color")
                     mat.tint = floats[i];
+                constants.emplace(std::string(map.string(float_names[i])), floats[i].value());
+            }
             /* Every named texture slot, with its uv scale from the float
              * constant its transform names */
             for(size_t i = 0; i < textures.size() && i < names.size(); i++)
@@ -833,6 +837,11 @@ struct H3MapLoader : compo::SubsystemBase
             }
             if(albedo == "constant_color")
                 mat.variant = Variant::base;
+            load_specular(mat, option("material_model"), option("specular_mask"), constants);
+            if(auto const* mask = slot("specular_mask_texture"))
+                mat.specular_mask_map = mask->texture;
+            if(auto const* material_map = slot("material_texture"))
+                mat.material_map = material_map->texture;
             auto bump = option("bump_mapping");
             if(auto const* map = slot("bump_map"); map && (bump == "standard" || bump == "detail"))
             {
@@ -854,6 +863,53 @@ struct H3MapLoader : compo::SubsystemBase
         size_t idx = m_scene.materials.size() - 1;
         m_material_index.emplace(key, idx);
         return idx;
+    }
+
+    /* Material model parameters from the compiled float constants */
+    static void load_specular(
+        Material&                                     mat,
+        std::string_view                              model,
+        std::string_view                              mask,
+        std::unordered_map<std::string, Vecf4> const& constants)
+    {
+        auto value = [&](char const* name, Vecf4 fallback) {
+            auto it = constants.find(name);
+            return it == constants.end() ? fallback : it->second;
+        };
+        auto scalar = [&](char const* name, f32 fallback) {
+            return value(name, Vecf4(fallback)).x;
+        };
+        auto& s = mat.specular;
+        s.coefficients = {
+            scalar("specular_coefficient", 0.f),
+            scalar("diffuse_coefficient", 1.f),
+            scalar("analytical_specular_contribution", 0.5f),
+            scalar("area_specular_contribution", 0.5f)};
+        if(model == "two_lobe_phong")
+        {
+            mat.model = MaterialModel::two_lobe_phong;
+            s.lobe    = {
+                scalar("normal_specular_power", 10.f),
+                scalar("glancing_specular_power", 10.f),
+                scalar("fresnel_curve_steepness", 5.f),
+                scalar("albedo_specular_tint_blend", 0.f)};
+            s.tint0 = value("normal_specular_tint", Vecf4(1.f));
+            s.tint1 = value("glancing_specular_tint", Vecf4(1.f));
+        } else if(model == "cook_torrance")
+        {
+            mat.model = MaterialModel::cook_torrance;
+            s.lobe    = {
+                scalar("roughness", 0.1f),
+                scalar("albedo_blend", 0.f),
+                scalar("use_material_texture", 0.f),
+                0.f};
+            s.tint0 = value("fresnel_color", Vecf4(0.5f));
+            s.tint1 = value("specular_tint", Vecf4(1.f));
+        }
+        if(mask == "specular_mask_from_diffuse")
+            mat.specular_mask = 1;
+        else if(mask == "specular_mask_from_texture" || mask == "specular_mask_from_color_texture")
+            mat.specular_mask = 2;
     }
 
     /* Diffuse radiance from linear SH and a dominant light, as Halo 3's
