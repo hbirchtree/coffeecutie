@@ -449,6 +449,10 @@ struct H3MapLoader : compo::SubsystemBase
             bsp = std::max<i16>(starts[0].bsp.value(), 0);
         }
 
+        /* H3_BSP=<index> loads that structure BSP instead, for comparing
+         * places away from the start */
+        if(auto forced = platform::env::var("H3_BSP"); forced.has_value())
+            bsp = static_cast<i16>(std::stoi(forced.value()));
         if(!load_bsp(bsp))
             return false;
         m_scene.exposure = exposure_at(*scnr, bsp, eye);
