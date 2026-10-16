@@ -272,6 +272,65 @@ struct scenario_bsp_t
 static_assert(sizeof(scenario_bsp_t) == 0x6C);
 
 /*! scenario ("scnr"): BSPs, scenery and where players start */
+enum class atmosphere_flags_t : u16
+{
+    none                     = 0x0,
+    enable_atmosphere        = 0x1,
+    override_real_sun_values = 0x2,
+    patchy_fog               = 0x4,
+};
+C_FLAGS(atmosphere_flags_t, u16);
+
+/*!
+ * \brief One atmosphere of a sky_atm_parameters ("skya") tag: the sun it
+ * scatters (when overriding the real one), and Rayleigh/Mie scattering
+ * with the coefficients already worked out (betas, theta prefixes).
+ */
+struct atmosphere_setting_t
+{
+    be<atmosphere_flags_t> flags;
+    u16                    unknown_0;
+    string_id              name;
+    be<f32>                sun_pitch;   /*!< Degrees above the horizon */
+    be<f32>                sun_heading; /*!< Degrees */
+    be<Vecf3>              sun_color;
+    be<f32>                sun_intensity;
+    be<f32>                sea_level;
+    be<f32>                rayleigh_height_scale;
+    be<f32>                mie_height_scale;
+    be<f32>                rayleigh_multiplier;
+    be<f32>                mie_multiplier;
+    be<f32>                sun_phase_function; /*!< Henyey-Greenstein g */
+    be<f32>                desaturation;
+    be<f32>                distance_bias;
+    be<f32>                max_fog_thickness;
+    be<Vecf3>              beta_m; /*!< Rayleigh */
+    be<Vecf3>              beta_p; /*!< Mie */
+    be<Vecf3>              beta_m_theta_prefix;
+    be<Vecf3>              beta_p_theta_prefix;
+    std::array<u8, 0x18>   patchy_fog;
+    tag_reference          weather_effect;
+    be<f32>                runtime_weight;
+    be<f32>                runtime_effect_weight;
+};
+
+static_assert(offsetof(atmosphere_setting_t, beta_m) == 0x44);
+static_assert(sizeof(atmosphere_setting_t) == 0xA4);
+
+/*! sky_atm_parameters ("skya"): patchy fog sheets and the atmospheres */
+struct sky_atmosphere_t
+{
+    be<u16>                         flags;
+    u16                             unknown_0;
+    tag_reference                   fog_bitmap;
+    std::array<u8, 0x20>            fog_sheets;
+    tag_block<atmosphere_setting_t> settings;
+    tag_block<std::array<u8, 0x14>> underwater;
+};
+
+static_assert(offsetof(sky_atmosphere_t, settings) == 0x34);
+static_assert(sizeof(sky_atmosphere_t) == 0x4C);
+
 /*! camera_fx_settings ("cfxs"), the exposure part; values in stops */
 struct camera_fx_settings_t
 {
@@ -313,11 +372,23 @@ struct camera_fx_palette_t
 
 static_assert(sizeof(camera_fx_palette_t) == 0x30);
 
+/*! A sky: scenery modelled around the level, and the BSPs it shows in */
+struct scenario_sky_t
+{
+    tag_reference object;
+    be<i16>       name;
+    be<u16>       active_bsps; /*!< One bit per structure BSP, none = all */
+};
+
+static_assert(sizeof(scenario_sky_t) == 0x14);
+
 struct scenario_t
 {
     std::array<u8, 0x14>             unknown_0;
     tag_block<scenario_bsp_t>        bsps;
-    std::array<u8, 0x9C>             unknown_1;
+    tag_reference                    structure_seams;
+    tag_block<scenario_sky_t>        skies;
+    std::array<u8, 0x80>             unknown_1;
     tag_block<scenery_placement_t>   scenery;
     tag_block<palette_entry_t>       scenery_palette;
     std::array<u8, 0x180>            unknown_2;
@@ -329,6 +400,7 @@ struct scenario_t
 };
 
 static_assert(offsetof(scenario_t, bsps) == 0x14);
+static_assert(offsetof(scenario_t, skies) == 0x30);
 static_assert(offsetof(scenario_t, scenery) == 0xBC);
 static_assert(offsetof(scenario_t, scenery_palette) == 0xC8);
 static_assert(offsetof(scenario_t, starting_locations) == 0x254);
