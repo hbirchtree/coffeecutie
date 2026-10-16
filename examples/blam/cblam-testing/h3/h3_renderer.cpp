@@ -62,13 +62,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             return;
 
         auto&        resources = p.template subsystem<BlamResources>();
-        Vecf3 const& eye       = camera->camera.position;
         Vecf3 const  offset{};
         f32 const    scale = 1.f;
         Vecf2 const  unit{1.f, 1.f};
-        Vecf4 const  no_fog{0.f, 0.f, 0.f, 0.f};
-        Vecf2 const  fog_range{0.f, 1.f};
-        Vecf4 const  no_plane{0.f, 0.f, 1.f, -1e9f};
         /* Opaque first, then alpha blended, then additive */
         for(int pass = 0; pass < 3; pass++)
             for(auto const& mat : scene.materials)
@@ -76,82 +72,112 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 int const mat_pass = mat.additive ? 2 : mat.blended ? 1 : 0;
                 if(mat_pass != pass || mat.draws.empty() || !mat.visible)
                     continue;
+                bool const terrain = mat.variant == Variant::terrain;
+                /* Terrain scales each layer in the fragment program */
+                Vecf2 const uv_scale = terrain ? unit : mat.uv_scale;
                 auto vert_u = gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Vertex,
                     gfx::uniform_pair<Matf4 const>{
                         {"camera"}, semantic::SpanOne<const Matf4>(camera->matrix)},
                     gfx::uniform_pair<Vecf2 const>{
-                        {"uv_scale"}, semantic::SpanOne<const Vecf2>(mat.uv_scale)},
+                        {"uv_scale"}, semantic::SpanOne<const Vecf2>(uv_scale)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"model_offset"}, semantic::SpanOne<const Vecf3>(offset)},
                     gfx::uniform_pair<const f32>{
                         {"model_scale"}, semantic::SpanOne<const f32>(scale)},
                     gfx::uniform_pair<Vecf2 const>{
-                        {"detail_scale"}, semantic::SpanOne<const Vecf2>(unit)},
+                        {"detail_scale"}, semantic::SpanOne<const Vecf2>(mat.detail_scale)},
                     gfx::uniform_pair<Vecf2 const>{
-                        {"detail2_scale"}, semantic::SpanOne<const Vecf2>(unit)},
+                        {"detail2_scale"}, semantic::SpanOne<const Vecf2>(mat.detail2_scale)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"illum_scale"}, semantic::SpanOne<const Vecf2>(unit)},
                     gfx::uniform_pair<Vecf2 const>{
-                        {"mask_scale"}, semantic::SpanOne<const Vecf2>(unit)},
-                    gfx::uniform_pair<Vecf3 const>{
-                        {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
-                i32  alpha_test = mat.alpha_test ? 1 : 0;
-                i32  blended    = pass > 0 ? 1 : 0;
-                auto frag_u     = gfx::make_uniform_list(
-                    typing::graphics::ShaderStage::Fragment,
-                    gfx::uniform_pair<const i32>{
-                        {"alpha_test"}, semantic::SpanOne<const i32>(alpha_test)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"albedo_tint"}, semantic::SpanOne<const Vecf4>(mat.tint)},
-                    gfx::uniform_pair<const i32>{
-                        {"blended"}, semantic::SpanOne<const i32>(blended)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"fog_color"}, semantic::SpanOne<const Vecf4>(no_fog)},
-                    gfx::uniform_pair<Vecf2 const>{
-                        {"fog_range"}, semantic::SpanOne<const Vecf2>(fog_range)},
-                    gfx::uniform_pair<Vecf3 const>{
-                        {"fog_eye"}, semantic::SpanOne<const Vecf3>(eye)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"planar_fog_plane"}, semantic::SpanOne<const Vecf4>(no_plane)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"planar_fog_color"}, semantic::SpanOne<const Vecf4>(no_fog)},
-                    gfx::uniform_pair<Vecf2 const>{
-                        {"planar_fog_opaque"}, semantic::SpanOne<const Vecf2>(unit)});
-                auto diffuse  = mat.diffuse.sampler ? mat.diffuse.sampler : m_white_sampler;
-                auto samplers = gfx::make_sampler_list(
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment, {"diffuse", 0}, diffuse},
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment, {"detail", 1}, m_white_sampler},
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment, {"detail2", 2}, m_white_sampler},
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment, {"illum", 3}, m_white_sampler},
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment,
-                        {"lightmaps", 4},
-                        m_no_lightmaps_sampler},
-                    gfx::sampler_definition_t{
-                        typing::graphics::ShaderStage::Fragment, {"mask", 5}, m_white_sampler});
-                auto res = m_api->submit(
+                        {"mask_scale"}, semantic::SpanOne<const Vecf2>(unit)});
+                i32 alpha_test = mat.alpha_test ? 1 : 0;
+                i32 blended    = pass > 0 ? 1 : 0;
+                auto view = gfx::view_state{
+                    .view = typing::vector_types::Veci4{
+                        0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
+                    .depth = gfx::depth_state{.reversed = true},
+                };
+                auto submit = [&](auto& frag_u, auto& samplers) {
+                    return m_api->submit(
+                        {
+                            .program       = m_programs[static_cast<size_t>(mat.variant)],
+                            .vertices      = m_vao,
+                            .render_target = resources.offscreen,
+                            .call          = {.indexed = true, .instanced = true},
+                            .data          = mat.draws,
+                        },
+                        vert_u,
+                        frag_u,
+                        samplers,
+                        view,
+                        gfx::depth_extended_state{.depth_write = pass == 0},
+                        gfx::blend_state{.additive = mat.additive});
+                };
+                auto or_white = [&](Texture const& t) {
+                    return t.sampler ? t.sampler : m_white_sampler;
+                };
+                using stage_t = typing::graphics::ShaderStage;
+                std::optional<std::tuple<gfx::error, std::string_view>> res;
+                if(terrain)
+                {
+                    std::array<Vecf4, 4> layer_scale;
+                    Vecf4 enabled{0.f}, detailed{0.f}, base_curve{2.f}, detail_curve{2.f};
+                    for(size_t k = 0; k < 4; k++)
                     {
-                        .program       = m_program,
-                        .vertices      = m_vao,
-                        .render_target = resources.offscreen,
-                        .call          = {.indexed = true, .instanced = true},
-                        .data          = mat.draws,
-                    },
-                    vert_u,
-                    frag_u,
-                    samplers,
-                    gfx::view_state{
-                        .view = typing::vector_types::Veci4{
-                            0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
-                        .depth = gfx::depth_state{.reversed = true},
-                    },
-                    gfx::depth_extended_state{.depth_write = pass == 0},
-                    gfx::blend_state{.additive = mat.additive});
+                        layer_scale[k]  = mat.layers[k].scale;
+                        enabled[k]      = mat.layers[k].enabled ? 1.f : 0.f;
+                        detailed[k]     = mat.layers[k].detailed ? 1.f : 0.f;
+                        base_curve[k]   = mat.layers[k].base_curve;
+                        detail_curve[k] = mat.layers[k].detail_curve;
+                    }
+                    auto frag_u = gfx::make_uniform_list(
+                        stage_t::Fragment,
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"layer_scale"},
+                            semantic::Span<const Vecf4>(layer_scale.data(), layer_scale.size())},
+                        gfx::uniform_pair<Vecf2 const>{
+                            {"blend_scale"}, semantic::SpanOne<const Vecf2>(mat.blend_scale)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"layer_enabled"}, semantic::SpanOne<const Vecf4>(enabled)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"layer_detailed"}, semantic::SpanOne<const Vecf4>(detailed)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"layer_base_curve"}, semantic::SpanOne<const Vecf4>(base_curve)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"layer_detail_curve"}, semantic::SpanOne<const Vecf4>(detail_curve)});
+                    auto const& l = mat.layers;
+                    auto samplers = gfx::make_sampler_list(
+                        gfx::sampler_definition_t{stage_t::Fragment, {"base_m0", 0}, or_white(l[0].base)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"base_m1", 1}, or_white(l[1].base)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"base_m2", 2}, or_white(l[2].base)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"base_m3", 3}, or_white(l[3].base)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail_m0", 4}, or_white(l[0].detail)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail_m1", 5}, or_white(l[1].detail)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail_m2", 6}, or_white(l[2].detail)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail_m3", 7}, or_white(l[3].detail)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"blend_map", 8}, or_white(mat.blend)});
+                    res = submit(frag_u, samplers);
+                } else
+                {
+                    auto frag_u = gfx::make_uniform_list(
+                        stage_t::Fragment,
+                        gfx::uniform_pair<const i32>{
+                            {"alpha_test"}, semantic::SpanOne<const i32>(alpha_test)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"albedo_tint"}, semantic::SpanOne<const Vecf4>(mat.tint)},
+                        gfx::uniform_pair<const i32>{
+                            {"blended"}, semantic::SpanOne<const i32>(blended)},
+                        gfx::uniform_pair<Vecf3 const>{
+                            {"curves"}, semantic::SpanOne<const Vecf3>(mat.curves)});
+                    auto samplers = gfx::make_sampler_list(
+                        gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail2", 2}, or_white(mat.detail2)});
+                    res = submit(frag_u, samplers);
+                }
                 if(res.has_value() && !m_draw_error_logged)
                 {
                     cWarning("H3: failed to draw: {}", std::get<1>(*res));
@@ -212,21 +238,15 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         m_white_sampler = m_white->sampler();
         m_white_sampler->alloc();
 
-        m_no_lightmaps = std::make_shared<gfx::compat::texture_2da_t>(
-            &api, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
-        m_no_lightmaps->alloc(size_3d<u32>{2, 2, 1});
-        m_no_lightmaps->upload(
-            std::vector<u8>(16, 0xFF), Veci3{0, 0, 0}, size_3d<i32>{2, 2, 1});
-        m_no_lightmaps_sampler = m_no_lightmaps->sampler();
-        m_no_lightmaps_sampler->alloc();
 
-        create_program(
-            api,
-            shader_pair_t{
-                .vertex_file   = "h2",
-                .fragment_file = "h3_base",
-                .shader        = m_program,
-            });
+        for(size_t i = 0; i < m_programs.size(); i++)
+            create_program(
+                api,
+                shader_pair_t{
+                    .vertex_file   = "h2",
+                    .fragment_file = variant_files[i],
+                    .shader        = m_programs[i],
+                });
     }
 
     compo::EntityContainer& m_container;
@@ -234,11 +254,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     u32                     m_generation{0};
 
     std::shared_ptr<gfx::vertex_array_t>        m_vao;
-    std::shared_ptr<gfx::program_t>             m_program;
+    std::array<std::shared_ptr<gfx::program_t>, static_cast<size_t>(Variant::count)>
+        m_programs;
     std::shared_ptr<gfx::texture_2d_t>          m_white;
     std::shared_ptr<gfx::sampler_t>             m_white_sampler;
-    std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightmaps;
-    std::shared_ptr<gfx::sampler_t>             m_no_lightmaps_sampler;
     bool                                        m_draw_error_logged{false};
 };
 
