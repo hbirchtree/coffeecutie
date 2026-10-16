@@ -165,8 +165,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.materials.clear();
         m_scene.lightprobe.reset();
         m_scene.lightprobe_sampler.reset();
-        m_lit_triangles.clear();
-        m_lightprobe_layers.clear();
+        m_scene.baked.clear();
         m_vertices.clear();
         m_indices.clear();
         m_material_index.clear();
@@ -451,9 +450,19 @@ struct H3MapLoader : compo::SubsystemBase
             bsp = std::max<i16>(starts[0].bsp.value(), 0);
         }
 
+        /* H3_BSP=<index> loads that structure BSP instead, for comparing
+         * places away from the start */
+        if(auto forced = platform::env::var("H3_BSP"); forced.has_value())
+            bsp = static_cast<i16>(std::stoi(forced.value()));
         if(!load_bsp(bsp))
             return false;
         m_scene.exposure = exposure_at(*scnr, bsp, eye);
+        /* H3_EXPOSURE=<stops> overrides it, for comparing with captures */
+        if(auto forced = platform::env::var("H3_EXPOSURE"); forced.has_value())
+        {
+            m_scene.exposure              = std::exp2(std::stof(forced.value()));
+            m_scene.auto_exposure.enabled = false;
+        }
         load_scenery(*scnr, bsp);
         if(m_vertices.empty())
             return false;
@@ -664,7 +673,7 @@ struct H3MapLoader : compo::SubsystemBase
             auto materials = model->materials.data(magic).value_or(
                 Span<el::geometry_material_t const>());
             u32  emitted = 0;
-            auto light   = light_below(object.position.value());
+            auto light   = m_scene.baked.below(object.position.value());
             lit += light.has_value();
             for(auto const& region : model->regions.data(magic).value_or(
                     Span<el::region_t const>()))
@@ -747,7 +756,7 @@ struct H3MapLoader : compo::SubsystemBase
             {
                 /* Stored at a quarter, so 8 bits reach 4x the white point */
                 Vecf3 light = glm::clamp(
-                    diffuse_radiance(object_light ? *object_light : vertex_lights[i], out.normal) *
+                    h3::diffuse_radiance(object_light ? *object_light : vertex_lights[i], out.normal) *
                         0.25f * 255.f,
                     Vecf3(0.f),
                     Vecf3(255.f));
@@ -767,13 +776,13 @@ struct H3MapLoader : compo::SubsystemBase
                 return;
             for(auto const& t : triangles)
             {
-                LitTriangle out;
+                BakedLight::Triangle out;
                 for(int c = 0; c < 3; c++)
                 {
                     out.position[c] = m_vertices[vbase + t[c]].position;
                     out.uv[c]       = lightmap_uvs[t[c]];
                 }
-                m_lit_triangles.push_back(out);
+                m_scene.baked.triangles.push_back(out);
             }
         };
         auto emit = [&](i16 material, u32 start, u32 count) {
@@ -1056,73 +1065,6 @@ struct H3MapLoader : compo::SubsystemBase
             mat.specular_mask = 2;
     }
 
-    /* The baked light on the lightmapped surface under `position`, as
-     * objects in Halo 3 take it from the lightmap below them */
-    std::optional<el::vertex_light_t> light_below(Vecf3 const& position) const
-    {
-        if(m_lightprobe_layers.size() != 10 || m_lit_triangles.empty())
-            return std::nullopt;
-        f32 const top  = position.z + 0.5f;
-        f32       best = -std::numeric_limits<f32>::max();
-        Vecf2     uv{};
-        for(auto const& t : m_lit_triangles)
-        {
-            auto const& p = t.position;
-            Vecf2 a{p[0].x, p[0].y}, b{p[1].x, p[1].y}, c{p[2].x, p[2].y};
-            f32   d = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
-            if(std::abs(d) < 1e-8f)
-                continue;
-            f32 w0 = ((b.y - c.y) * (position.x - c.x) + (c.x - b.x) * (position.y - c.y)) / d;
-            f32 w1 = ((c.y - a.y) * (position.x - c.x) + (a.x - c.x) * (position.y - c.y)) / d;
-            f32 w2 = 1.f - w0 - w1;
-            if(w0 < 0.f || w1 < 0.f || w2 < 0.f)
-                continue;
-            f32 z = w0 * p[0].z + w1 * p[1].z + w2 * p[2].z;
-            if(z > top || z <= best)
-                continue;
-            best = z;
-            uv   = w0 * t.uv[0] + w1 * t.uv[1] + w2 * t.uv[2];
-        }
-        if(best == -std::numeric_limits<f32>::max())
-            return std::nullopt;
-        u32 x = std::min(static_cast<u32>(uv.x * m_lightprobe_size.x), m_lightprobe_size.x - 1);
-        u32 y = std::min(static_cast<u32>(uv.y * m_lightprobe_size.y), m_lightprobe_size.y - 1);
-        auto value = [&](u32 pair, f32 scale) {
-            auto t0 = el::dxt5_texel(m_lightprobe_layers[pair * 2], m_lightprobe_size.x, x, y);
-            auto t1 = el::dxt5_texel(m_lightprobe_layers[pair * 2 + 1], m_lightprobe_size.x, x, y);
-            Vecf3 dir;
-            for(int c = 0; c < 3; c++)
-                dir[c] = (t0[c] + t1[c]) / 255.f * 2.f - 2.f;
-            return dir * (t0[3] / 255.f) * (t1[3] / 255.f) * scale;
-        };
-        auto const& s = m_scene.lightprobe_scale;
-        return el::vertex_light_t{
-            .sh        = {value(0, s.x), value(1, s.y), value(2, s.z), value(3, s.w)},
-            .intensity = value(4, m_scene.intensity_scale),
-        };
-    }
-
-    /* Diffuse radiance from linear SH and a dominant light, as Halo 3's
-     * ravi_order_2_with_dominant_light; see h3_common.glsl */
-    static Vecf3 diffuse_radiance(el::vertex_light_t const& light, Vecf3 const& n)
-    {
-        auto const& sh  = light.sh;
-        Vecf3 const lum = {0.212656f, 0.715158f, 0.0721856f};
-        Vecf3       dir = {
-            -glm::dot(sh[3], lum), -glm::dot(sh[1], lum), glm::dot(sh[2], lum)};
-        dir = glm::length(dir) > 1e-6f ? glm::normalize(dir) : Vecf3(0.f, 0.f, 1.f);
-        Vecf3 out;
-        for(int c = 0; c < 3; c++)
-        {
-            Vecf3 linear = Vecf3(sh[3][c], sh[1][c], -sh[2][c]) +
-                           0.4886025f * dir * light.intensity[c];
-            f32 dc = sh[0][c] - 0.2820948f * light.intensity[c];
-            out[c] = (0.886227f * dc - 1.023328f * glm::dot(n, linear)) / glm::pi<f32>();
-        }
-        return glm::max(out, Vecf3(0.f)) +
-               std::max(glm::dot(dir, n), 0.f) * light.intensity * 0.281f;
-    }
-
     /* Linear exposure for the camera FX of the cluster holding `eye`: the
      * middle of its auto exposure range, standing in for auto exposure */
     f32 exposure_at(el::scenario_t const& scnr, i16 bsp_index, Vecf3 const& eye)
@@ -1155,25 +1097,48 @@ struct H3MapLoader : compo::SubsystemBase
         if(camera_fx < 0 || static_cast<size_t>(camera_fx) >= palette.size())
             camera_fx = palette.empty() ? -1 : 0;
         el::bounds_f range{};
-        bool         found    = false;
-        auto const*  settings_tag = map.tag_at(scnr.camera_effects.id);
+        bool         found         = false;
+        bool         forced_target = false;
+        f32          target        = -4.5f;
+        auto const*  settings_tag  = map.tag_at(scnr.camera_effects.id);
+        m_scene.auto_exposure      = {};
         if(camera_fx >= 0)
         {
             auto const& entry = palette[static_cast<size_t>(camera_fx)];
             if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::force_exposure))
                 return std::exp2(entry.forced_exposure.value());
+            if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::force_auto_exposure))
+                /* Linear here, unlike the camera FX setting's stops */
+                target = std::log2(std::max<f32>(entry.forced_auto_exposure_brightness, 1e-6f)),
+                forced_target = true;
             if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::override_exposure_bounds))
                 range = entry.exposure_range, found = true;
-            else if(auto const* tag = map.tag_at(entry.settings.id))
+            if(auto const* tag = map.tag_at(entry.settings.id))
                 settings_tag = tag;
         }
-        if(!found && settings_tag && map.is(*settings_tag, "cfxs"))
-            if(auto const* settings = map.tag_data<el::camera_fx_settings_t>(*settings_tag))
-                range = settings->exposure_range, found = true;
+        auto const* settings = settings_tag && map.is(*settings_tag, "cfxs")
+                                   ? map.tag_data<el::camera_fx_settings_t>(*settings_tag)
+                                   : nullptr;
+        if(settings && !found)
+            range = settings->exposure_range, found = true;
+        if(settings && !forced_target)
+            target = settings->auto_exposure_brightness;
         if(!found)
             return 1.f;
-        f32 stops = (range.min.value() + range.max.value()) * 0.5f;
-        cDebug("H3: camera fx {}, exposure {} stops", camera_fx, stops);
+        m_scene.auto_exposure = {
+            .enabled = true, .target = target, .min = range.min, .max = range.max};
+        auto light = m_scene.baked.below(eye);
+        f32  stops = light ? m_scene.auto_exposure.stops_for(glm::dot(
+                                 h3::diffuse_radiance(*light, Vecf3(0.f, 0.f, 1.f)),
+                                 Vecf3(0.2126f, 0.7152f, 0.0722f)))
+                           : (range.min.value() + range.max.value()) * 0.5f;
+        cDebug(
+            "H3: camera fx {}, target {} stops, range [{}, {}], {} stops at the camera",
+            camera_fx,
+            target,
+            range.min.value(),
+            range.max.value(),
+            stops);
         return std::exp2(stops);
     }
 
@@ -1236,8 +1201,8 @@ struct H3MapLoader : compo::SubsystemBase
             m_api, blam::bitm::to_pixdesc(blam::bitm::format_t::BC3), 1);
         tex->alloc(size_3d<u32>{width, height, static_cast<u32>(layers.size())});
         /* Kept for lighting objects from the lightmap under them */
-        m_lightprobe_layers = layers;
-        m_lightprobe_size   = {width, height};
+        m_scene.baked.layers = layers;
+        m_scene.baked.size   = {width, height};
         for(size_t z = 0; z < layers.size(); z++)
             tex->upload(
                 std::move(layers[z]),
@@ -1251,6 +1216,8 @@ struct H3MapLoader : compo::SubsystemBase
         auto const& c = lit.compression;
         m_scene.lightprobe_scale = {c[0].value().x, c[2].value().x, c[4].value().x, c[6].value().x};
         m_scene.intensity_scale  = c[8].value().x;
+        m_scene.baked.scale           = m_scene.lightprobe_scale;
+        m_scene.baked.intensity_scale = m_scene.intensity_scale;
     }
 
     /* Alpha test and blending from the definition's options; every
@@ -1532,14 +1499,7 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<el::vertex_t>                          m_decoded;
     std::vector<std::array<u16, 3>>                    m_triangles;
 
-    struct LitTriangle
-    {
-        std::array<Vecf3, 3> position;
-        std::array<Vecf2, 3> uv;
-    };
-    std::vector<LitTriangle>     m_lit_triangles;
-    std::vector<std::vector<u8>> m_lightprobe_layers;
-    Vecui2                       m_lightprobe_size{};
+
     std::unordered_map<u32, size_t>                    m_material_index;
     std::unordered_map<u32, std::optional<Texture>>    m_textures;
 };
