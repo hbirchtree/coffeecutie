@@ -401,6 +401,54 @@ inline bool linearize(
 }
 
 /*!
+ * \brief CTX1 blocks, linearized, to (x, y) 8-bit texels. A block is two
+ * endpoints stored y first, as DXN, and 2-bit indices shared by both
+ * channels; the indices pick endpoint 0, 1, or 1/3 and 2/3 between them.
+ */
+inline void decode_ctx1(
+    Span<byte_t const> blocks, u32 width, u32 height, std::vector<byte_t>& out)
+{
+    u32 bw = (width + 3) / 4, bh = (height + 3) / 4;
+    out.assign(size_t(width) * height * 2, 0);
+    for(u32 by = 0; by < bh; by++)
+        for(u32 bx = 0; bx < bw; bx++)
+        {
+            size_t at = (size_t(by) * bw + bx) * 8;
+            if(at + 8 > blocks.size())
+                return;
+            byte_t const* b = blocks.data() + at;
+            std::array<std::array<byte_t, 2>, 4> palette;
+            for(u32 c = 0; c < 2; c++)
+            {
+                u32 e0 = b[1 - c], e1 = b[3 - c];
+                palette[0][c] = static_cast<byte_t>(e0);
+                palette[1][c] = static_cast<byte_t>(e1);
+                palette[2][c] = static_cast<byte_t>((2 * e0 + e1 + 1) / 3);
+                palette[3][c] = static_cast<byte_t>((e0 + 2 * e1 + 1) / 3);
+            }
+            u32 indices = u32(b[4]) | u32(b[5]) << 8 | u32(b[6]) << 16 | u32(b[7]) << 24;
+            for(u32 i = 0; i < 16; i++)
+            {
+                u32 x = bx * 4 + (i & 3), y = by * 4 + (i >> 2);
+                if(x >= width || y >= height)
+                    continue;
+                auto const& texel = palette[(indices >> (i * 2)) & 3];
+                std::memcpy(out.data() + (size_t(y) * width + x) * 2, texel.data(), 2);
+            }
+        }
+}
+
+/*!
+ * \brief DXN keeps 3Dc's channel order, y in the first half of a block;
+ * swapping the halves gives BC5 with x in red.
+ */
+inline void dxn_to_bc5(std::vector<byte_t>& blocks)
+{
+    for(auto it = blocks.begin(); blocks.end() - it >= 16; it += 16)
+        std::swap_ranges(it, it + 8, it + 8);
+}
+
+/*!
  * \brief The top level of an image's first hardware texture: secondary
  * data when the high resolution level was split off, else the start of the
  * primary data.

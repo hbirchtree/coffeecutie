@@ -495,8 +495,8 @@ struct dds_info
     u32 mask_a{0};
 };
 
-/* DDS can carry the PC-compatible formats once linearized; CTX1 and the
- * DXT3a family have no DDS equivalent */
+/* DDS can carry the PC-compatible formats once linearized, and CTX1
+ * decoded to two channels; the DXT3a family has no DDS equivalent */
 std::optional<dds_info> dds_format(elegy::bitmap_format_t format)
 {
     using enum elegy::bitmap_format_t;
@@ -507,6 +507,8 @@ std::optional<dds_info> dds_format(elegy::bitmap_format_t format)
     constexpr u32 A    = 0x2;
     switch(format)
     {
+    case ctx1:
+        return dds_info{.bpp = 16, .pf_flags = RGB, .mask_r = 0x00FF, .mask_g = 0xFF00};
     case dxt1:
         return dds_info{.fourcc = 0x31545844 /*DXT1*/};
     case dxt3:
@@ -753,6 +755,12 @@ int dump_bitmaps(
             {
                 fmt::print("    no pixel data\n");
                 continue;
+            }
+            /* CTX1 has no DDS form; written decoded, x in red */
+            if(format == elegy::bitmap_format_t::ctx1)
+            {
+                std::vector<byte_t> blocks = std::move(linear);
+                elegy::decode_ctx1(blocks, width, height, linear);
             }
             auto path = fmt::format(
                 "{}/{}{}.dds",
