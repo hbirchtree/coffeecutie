@@ -56,6 +56,10 @@
             "shaders/shadow_depth.vert",
             "shaders/shadow_depth.frag",
             "shaders/h3_base.frag",
+            "shaders/h3_detail.frag",
+            "shaders/h3_two_detail.frag",
+            "shaders/h3_detail_blend.frag",
+            "shaders/h3_terrain.frag",
 
             "shaders/ui.vert",
             "shaders/ui.frag",
