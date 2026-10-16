@@ -154,6 +154,60 @@ Hand-written shaders, not generated ones, laid out like Halo 1's
 Bindings come from the `rmt2` name lists, so shaders need no knowledge of
 per-template register layouts.
 
+## Collision and visibility (`blam/elegy/collision.h`)
+
+- The sbsp's `tag_resources` (0x37C) root is
+  `{collision_bsps, instanced_geometry}`. `collision_bsps` has one entry,
+  the world; every instance definition (0xB8) carries its own at +0x14.
+  A collision_bsp is eight resource blocks whose arrays are in the page
+  data (fixup space 4), not the definition.
+- Layouts are Halo 2's with wider indices:
+  - bsp3d node, 8 B: one u64, plane in bits 0-15, back child 16-39,
+    front child 40-63. A child with 0x800000 set is a leaf, 0xFFFFFF is
+    none (solid). Reading the children the other way round puts every
+    spawn in solid.
+  - plane 16 B (normal, d); leaf 8 B (u16 flags, u16 bsp2d reference
+    count, u32 first reference); bsp2d reference 4 B and bsp2d node 16 B
+    as Halo 2 (bit 15 = flipped plane / surface).
+  - surface 12 B: u16 plane, u16 first edge, i16 material, i16 breakable
+    set, i16 breakable surface, u8 flags, u8 best plane vertex.
+  - edge 12 B and vertex 16 B: Halo 2's, with u16 indices.
+- Collision leaf -> cluster is the sbsp's `leaves` block (0x30, one i8
+  per collision leaf, counts match). `ElegyInfo --collision` walks the
+  tree for every spawn and scenery placement: Valhalla 143/143 and
+  Guardian 73/77 land in a cluster whose bounds hold them, none in
+  solid. On campaign maps the BSPs overlap, so the points of a
+  neighbouring BSP show up as solid; almost none land in a wrong cluster.
+- Surfaces walk to convex polygons from `first_edge`: on an edge whose
+  left surface is ours take its start vertex and the forward edge, else
+  its end vertex and the reverse edge. The world polygons match the render
+  geometry top-down, plus invisible blockers; `--collision --obj` writes
+  world + transformed instances (instance transform as for rendering).
+- Collision surface -> render triangles: `structure_surfaces` (0x54,
+  {first, count}) into `surface_triangles` (0x60, {triangle, section});
+  instance definitions have the same pair at +0x98/+0xA4.
+- Havok MOPP: sbsp 0x90 for the world, instance definitions +0x80
+  (0x40 entries in the definition space, code bytes in the page). Not
+  needed for queries, the bsp3d tree answers point and ray tests alone.
+- `world_bounds` (0x3C) spans the whole level on campaign maps, the same
+  for every BSP; use the clusters' bounds for one BSP's extent.
+
+Visibility:
+
+- There is no PVS. Occlusion data is the cluster portals (0x6C, 0x28
+  each): back and front cluster, a collision plane index, centroid,
+  bounding radius, flags (ai can't hear, one way, door, no way, one way
+  reversed, no one can hear) and a convex vertex loop (0x1C). Each
+  cluster lists its portals at 0x3C. Portal vertices lie exactly on the
+  world collision plane they name (max distance 0.0000 on Valhalla and
+  Guardian), so the plane index is into the world collision_bsp.
+- Visibility is therefore Halo 2's: find the camera's cluster through the
+  collision tree, flood through portals clipped to the view. Cluster
+  `pvs_bound_objects` (0xC4) and per-cluster cubemaps are not decoded.
+- Open: instance definition blocks at +0x74 and +0x8C, cluster bytes 0x48-0x8F and the cluster MOPP block at 0x90,
+  sbsp 0x78-0xB3. `010_jungle`'s `010_bsp_intro` declares a world
+  collision whose page is in none of the loaded maps.
+
 ## BlamGraphics first pass (`cblam-testing/h3`)
 
 `H3MapLoader` takes a `MapLoadEvent` whose header is Halo 3 (version 11)
