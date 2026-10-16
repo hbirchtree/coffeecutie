@@ -114,7 +114,7 @@ vcpkg_cmake_configure(
         ${EXTRA_OPTIONS}
 )
 vcpkg_cmake_install()
-vcpkg_cmake_config_fixup(PACKAGE_NAME unofficial-ffmpeg-decoders)
+vcpkg_cmake_config_fixup(PACKAGE_NAME ffmpeg-decoders)
 
 file(INSTALL "${FFMPEG_PREFIX}/include/" DESTINATION "${CURRENT_PACKAGES_DIR}/include")
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")

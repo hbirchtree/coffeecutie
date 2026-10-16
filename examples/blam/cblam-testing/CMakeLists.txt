@@ -42,8 +42,8 @@ elseif(BUILD_OPENAL AND EMSCRIPTEN)
     endif()
     if(BUILD_OPENAL_XMA2)
         # Imported targets are per directory; OAF's find_package isn't seen here
-        find_package(unofficial-ffmpeg-decoders CONFIG REQUIRED)
-        list(APPEND BUNDLED_LIBS unofficial::ffmpeg-decoders::ffmpeg-decoders)
+        find_package(ffmpeg-decoders CONFIG REQUIRED)
+        list(APPEND BUNDLED_LIBS ffmpeg-decoders::ffmpeg-decoders)
     endif()
 endif()
 

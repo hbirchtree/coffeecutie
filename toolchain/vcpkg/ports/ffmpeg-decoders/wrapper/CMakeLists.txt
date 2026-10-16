@@ -29,7 +29,7 @@ install(TARGETS ffmpeg-decoders EXPORT ffmpeg-decoders-targets
     RUNTIME DESTINATION bin
 )
 install(EXPORT ffmpeg-decoders-targets
-    NAMESPACE unofficial::ffmpeg-decoders::
-    FILE unofficial-ffmpeg-decoders-config.cmake
-    DESTINATION share/unofficial-ffmpeg-decoders
+    NAMESPACE ffmpeg-decoders::
+    FILE ffmpeg-decoders-config.cmake
+    DESTINATION share/ffmpeg-decoders
 )

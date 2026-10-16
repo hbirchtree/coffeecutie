@@ -52,14 +52,14 @@ endif()
 # XMA2 through the ffmpeg-decoders port: LGPL libavcodec as its own shared
 # library (a side module on Emscripten), never linked in statically
 if(BUILD_OPENAL_XMA2)
-  find_package(unofficial-ffmpeg-decoders CONFIG REQUIRED)
+  find_package(ffmpeg-decoders CONFIG REQUIRED)
   coffee_library(
     TARGET OAFXMA2Decoder
     SOURCES private/xma2_decode.cpp
     LIBRARIES Core
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   )
-  target_link_libraries(OAFXMA2Decoder PUBLIC unofficial::ffmpeg-decoders::ffmpeg-decoders)
+  target_link_libraries(OAFXMA2Decoder PUBLIC ffmpeg-decoders::ffmpeg-decoders)
   target_compile_definitions(OAFXMA2Decoder PUBLIC -DOAF_XMA2_DECODER_ENABLED=1)
   target_link_libraries(OAF PUBLIC OAFXMA2Decoder)
 endif()
