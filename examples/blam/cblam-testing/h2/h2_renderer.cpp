@@ -118,14 +118,20 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Vecf2 const>{
                         {"mask_scale"},
                         semantic::SpanOne<const Vecf2>(mat.mask_scale)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"bump_scale"},
+                        semantic::SpanOne<const Vecf2>(mat.bump_scale)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
                 i32  alpha_test = mat.alpha_test ? 1 : 0;
+                i32  bumped     = mat.bump.sampler ? 1 : 0;
                 auto frag_u     = gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Fragment,
                     gfx::uniform_pair<const i32>{
                         {"alpha_test"},
                         semantic::SpanOne<const i32>(alpha_test)},
+                    gfx::uniform_pair<const i32>{
+                        {"bumped"}, semantic::SpanOne<const i32>(bumped)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
                         semantic::SpanOne<const Vecf3>(mat.illum_color)},
@@ -178,6 +184,11 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         typing::graphics::ShaderStage::Fragment,
                         {"mask", 5},
                         mat.mask.sampler ? mat.mask.sampler : m_white_sampler,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"bump", 6},
+                        mat.bump.sampler ? mat.bump.sampler : m_white_sampler,
                     });
                 auto res = m_api->submit(
                     {

@@ -2247,6 +2247,13 @@ struct H2MapLoader : compo::SubsystemBase
                     mat.detail       = *t;
                     mat.detail_scale = {d->scale_u, d->scale_v};
                 }
+            if(!mat.water && !sky)
+                if(auto b = base.layer("bump_map"))
+                    if(auto t = texture_for(map, pool, b->bitmap))
+                    {
+                        mat.bump       = *t;
+                        mat.bump_scale = {b->scale_u, b->scale_v};
+                    }
             if(sky)
                 if(auto m = base.layer("cloud_mask"))
                     if(auto t = texture_for(map, pool, m->bitmap))
@@ -2273,7 +2280,7 @@ struct H2MapLoader : compo::SubsystemBase
                       : static_cast<Variant>(
                             mat.detail_mode + (mat.illum.sampler ? 3 : 0));
         cDebug(
-            "H2: shad {}: uv scale {}x{}, {}{}{}",
+            "H2: shad {}: uv scale {}x{}, {}{}{}{}",
             mat.name,
             mat.uv_scale.x,
             mat.uv_scale.y,
@@ -2281,6 +2288,7 @@ struct H2MapLoader : compo::SubsystemBase
             mat.detail_mode == 2   ? ", blended detail"
             : mat.detail_mode == 1 ? ", detail"
                                    : "",
+            mat.bump.sampler ? ", bump" : "",
             resolved ? "" : " (template unresolved)");
 
         m_scene.materials.insert(m_scene.materials.end() - 1, std::move(mat));

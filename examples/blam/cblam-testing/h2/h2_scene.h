@@ -174,6 +174,8 @@ struct Material
     Texture                                illum; /*!< Added on top */
     Vecf2                                  illum_scale{1.f, 1.f};
     Vecf3                                  illum_color{1.f, 1.f, 1.f};
+    Texture                                bump; /*!< Normal map, rg = u, v */
+    Vecf2                                  bump_scale{1.f, 1.f};
     bool                                   alpha_test{false};
     bool                                   sky{false}; /*!< follows the camera, unlit */
     bool                                   water{false}; /*!< bump in `texture`, drawn last */

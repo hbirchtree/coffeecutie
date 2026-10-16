@@ -14,6 +14,7 @@ layout(location=5) out vec2 f_illum_uv;
 layout(location=6) out vec3 f_lightmap;
 layout(location=7) out vec2 f_mask_uv;
 layout(location=8) out vec4 f_vertex_light;
+layout(location=9) out vec2 f_bump_uv;
 
 layout(location=0) uniform mat4 camera;
 layout(location=1) uniform vec2 uv_scale;
@@ -24,6 +25,7 @@ layout(location=7) uniform vec2 detail_scale;
 layout(location=8) uniform vec2 detail2_scale;
 layout(location=12) uniform vec2 illum_scale;
 layout(location=20) uniform vec2 mask_scale;
+layout(location=28) uniform vec2 bump_scale;
 
 void main()
 {
@@ -36,6 +38,7 @@ void main()
     f_lightmap = lightmap;
     f_vertex_light = vertex_light;
     f_mask_uv = texcoord * mask_scale;
+    f_bump_uv = texcoord * bump_scale;
     f_normal = normal;
     gl_Position = camera * vec4(world, 1.0);
 }
