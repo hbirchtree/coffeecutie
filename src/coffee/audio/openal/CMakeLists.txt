@@ -49,6 +49,15 @@ if(TARGET libwma::wma)
   target_compile_definitions(OAF PUBLIC -DOAF_WMA_DECODER_ENABLED=1)
 endif()
 
+# XMA2 through libavcodec: LGPL, so only ever a shared library
+if(BUILD_OPENAL_XMA2)
+  find_package(FFMPEG REQUIRED)
+  target_sources(OAF PRIVATE private/xma2_decode.cpp)
+  target_include_directories(OAF PRIVATE ${FFMPEG_INCLUDE_DIRS})
+  target_link_libraries(OAF PUBLIC ${FFMPEG_LIBRARIES})
+  target_compile_definitions(OAF PUBLIC -DOAF_XMA2_DECODER_ENABLED=1)
+endif()
+
 if(EMSCRIPTEN)
   # openal-soft is a side module, mixed into WebAudio by web_output.cpp
   target_sources(OAF PRIVATE private/web_output.cpp)

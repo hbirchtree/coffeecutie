@@ -201,5 +201,6 @@ and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
   so it is linked dynamically: `BUILD_OPENAL_XMA2` (on with
   `BUILD_BLAM_ELEGY`, which is off by default) selects the `xma2` vcpkg
   feature, an avcodec-only ffmpeg the desktop triplets build shared, and
-  `blam/elegy/xma2.h` decodes through it. Output matches the ffmpeg CLI
+  `oaf/xma2/xma2_decode.h` (OAF, beside the WMA decoder) decodes
+  through it. Output matches the ffmpeg CLI
   sample for sample on all mainmenu permutations.

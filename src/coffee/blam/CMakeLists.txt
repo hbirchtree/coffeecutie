@@ -13,9 +13,6 @@ if(NOT (GAMECUBE OR WII))
   if(BUILD_BLAM_ELEGY)
     list(APPEND BLAM_SOURCES private/elegy/resources.cpp)
   endif()
-  if(BUILD_OPENAL_XMA2)
-    list(APPEND BLAM_SOURCES private/elegy/xma2.cpp)
-  endif()
 endif()
 
 coffee_library(
@@ -28,13 +25,6 @@ coffee_library(
 
 if(BUILD_BLAM_ELEGY AND NOT (GAMECUBE OR WII))
   target_compile_definitions(Blam PUBLIC BLAM_ELEGY=1)
-endif()
-if(BUILD_OPENAL_XMA2 AND NOT (GAMECUBE OR WII))
-  # Shared libavcodec only: the XMA2 decoder is LGPL
-  find_package(FFMPEG REQUIRED)
-  target_include_directories(Blam PRIVATE ${FFMPEG_INCLUDE_DIRS})
-  target_link_libraries(Blam PRIVATE ${FFMPEG_LIBRARIES})
-  target_compile_definitions(Blam PUBLIC BLAM_ELEGY_XMA2=1)
 endif()
 
 target_compile_options(Blam PUBLIC

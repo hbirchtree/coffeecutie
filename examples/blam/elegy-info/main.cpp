@@ -7,8 +7,8 @@
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
-#if defined(BLAM_ELEGY_XMA2)
-#include <blam/elegy/xma2.h>
+#if defined(OAF_XMA2_DECODER_ENABLED)
+#include <oaf/xma2/xma2_decode.h>
 #endif
 #include <blam/elegy/structure.h>
 #include <cxxopts.hpp>
@@ -811,11 +811,11 @@ std::vector<char> make_xma2_riff(elegy::xma2_format_t const& format, Span<byte_t
     return out;
 }
 
-#if defined(BLAM_ELEGY_XMA2)
-std::vector<char> make_wav(elegy::pcm_t const& pcm)
+#if defined(OAF_XMA2_DECODER_ENABLED)
+std::vector<char> make_wav(std::vector<i16> const& samples, u32 channels, u32 rate)
 {
     std::vector<char> out;
-    u32  bytes = static_cast<u32>(pcm.samples.size() * sizeof(i16));
+    u32  bytes = static_cast<u32>(samples.size() * sizeof(i16));
     auto u32le = [&](u32 v) { append<u32>(out, blam::to_le(v)); };
     auto u16le = [&](u16 v) { append<u16>(out, blam::to_le(v)); };
     out.insert(out.end(), {'R', 'I', 'F', 'F'});
@@ -823,14 +823,14 @@ std::vector<char> make_wav(elegy::pcm_t const& pcm)
     out.insert(out.end(), {'W', 'A', 'V', 'E', 'f', 'm', 't', ' '});
     u32le(16);
     u16le(1);
-    u16le(static_cast<u16>(pcm.channels));
-    u32le(pcm.rate);
-    u32le(pcm.rate * pcm.channels * 2);
-    u16le(static_cast<u16>(pcm.channels * 2));
+    u16le(static_cast<u16>(channels));
+    u32le(rate);
+    u32le(rate * channels * 2);
+    u16le(static_cast<u16>(channels * 2));
     u16le(16);
     out.insert(out.end(), {'d', 'a', 't', 'a'});
     u32le(bytes);
-    for(i16 sample : pcm.samples)
+    for(i16 sample : samples)
         append<i16>(out, blam::to_le(sample));
     return out;
 }
@@ -912,11 +912,18 @@ int dump_sounds(
                 std::ofstream(stem + ".xma", std::ios::binary)
                     .write(file.data(), static_cast<std::streamsize>(file.size()));
                 written++;
-#if defined(BLAM_ELEGY_XMA2)
-                elegy::pcm_t pcm;
-                if(elegy::decode_xma2(format, bytes, pcm))
+#if defined(OAF_XMA2_DECODER_ENABLED)
+                std::vector<i16>      pcm;
+                oaf::format_t         pcm_format;
+                oaf::decode::xma2::decoder xma2;
+                if(xma2.decode_pcm(
+                       gsl::span<const char>(
+                           reinterpret_cast<char const*>(bytes.data()), bytes.size()),
+                       {.channels = codec->channels(), .rate = codec->rate(), .samples = samples},
+                       pcm,
+                       pcm_format))
                 {
-                    auto wav = make_wav(pcm);
+                    auto wav = make_wav(pcm, codec->channels(), codec->rate());
                     std::ofstream(stem + ".wav", std::ios::binary)
                         .write(wav.data(), static_cast<std::streamsize>(wav.size()));
                 } else
