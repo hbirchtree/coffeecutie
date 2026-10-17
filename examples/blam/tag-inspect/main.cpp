@@ -3733,14 +3733,17 @@ void dump_snd(blam::tag_index_view<Ver> const& index, blam::tagref_t const& ref)
         for(auto [pi, perm] : stl_types::enumerate(p))
             fmt::print(
                 "      perm[{:>3}] '{}' next={:>3} gain={} skip={} "
-                "buffer_size={} sample_size={}\n",
+                "buffer_size={} sample_size={} decoded={} mouth={} subtitles={}\n",
                 pi,
                 perm.name.str(),
                 perm.next_permutation_idx,
                 perm.gain,
                 perm.skip_fraction,
                 perm.buffer_size,
-                perm.sample_size);
+                perm.sample_size,
+                perm.decoded_size,
+                perm.mouth_size,
+                perm.subtitle_size);
 
         std::vector<bool> reached(n, false);
         u32 const starts = std::min<u32>(
