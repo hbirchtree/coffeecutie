@@ -71,6 +71,12 @@ struct ShaderCache
         Vecf2 const&                    base_map_scale,
         std::optional<material_context> context = {});
 
+    /* Chicago maps: a cube first map is looked up by direction */
+    void first_map_cube(
+        materials::shader_data&       mat,
+        blam::shader::chicago::map_type type,
+        generation_idx_t const&       map);
+
     f32 meter_value_of(
         blam::shader::animation_src            src,
         std::optional<material_context> const& context) const;

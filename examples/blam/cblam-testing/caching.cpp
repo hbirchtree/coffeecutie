@@ -1623,6 +1623,18 @@ f32 ShaderCache<V>::meter_value_of(
 }
 
 template<typename V>
+void ShaderCache<V>::first_map_cube(
+    materials::shader_data&         mat,
+    blam::shader::chicago::map_type type,
+    generation_idx_t const&         map)
+{
+    if(type == blam::shader::chicago::map_type::map_2d || !map.valid())
+        return;
+    mat.lightmap.reflection = bitm_cache.get_atlas_layer(map);
+    mat.lightmap.meta2 |= static_cast<u32>(type) << 8;
+}
+
+template<typename V>
 void ShaderCache<V>::populate_material(
     materials::shader_data&            mat,
     const generation_idx_t&            shader_id,
@@ -1662,6 +1674,7 @@ void ShaderCache<V>::populate_material(
         }
 
         mat.lightmap.meta2 = static_cast<u32>(info->transparent.blend_function);
+        first_map_cube(mat, info->transparent.first_map_type, shader.scex.maps.at(0));
 
         mat.material.material = materials::id::scex;
         break;
@@ -1689,6 +1702,7 @@ void ShaderCache<V>::populate_material(
         }
 
         mat.lightmap.meta2 = static_cast<u32>(info->transparent.blend_function);
+        first_map_cube(mat, info->transparent.first_map_type, shader.schi.maps.at(0));
 
         mat.material.material = materials::id::schi;
         break;
