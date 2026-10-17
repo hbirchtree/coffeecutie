@@ -808,6 +808,17 @@ struct DrawListBuilder
      * "not looked at yet" from "asked and got nothing", so a parent's
      * submodels settle it once between them. */
     static constexpr i32 kBoneUnposed = -1;
+    /* light_layer of a seat's own body: its shadows draw it, nothing else */
+    static constexpr i32 kLightShadowOnly = 0x40000000;
+
+    /* A seat's own body and held weapon: hidden from its first-person
+     * view, but drawn into its shadows from the opaque passes */
+    bool shadow_only(Visibility const& vis, bool third_person, Passes pass) const
+    {
+        return vis.skip_render_for == m_seat && !third_person &&
+               vis.visible_for(m_seat, false, true) && pass >= Pass_Opaque &&
+               pass <= Pass_LastOpaque;
+    }
     static constexpr i32 kBoneDenied  = -2;
     using pass_set_t                  = std::array<Pass, Pass_Count>;
 
@@ -1020,9 +1031,10 @@ struct DrawListBuilder
                 auto const* rider = p.template get<PlayerInfo>(
                     held ? held->holder : model.parent);
                 bool const third_person =
-                    rider && rider->riding.vehicle != 0 && rider->riding.chase;
+                    rider && rider->riding.vehicle != 0;
+                bool const hidden = !vis.visible_for(m_seat, false, third_person);
                 if((held && !held->shown) ||
-                   !vis.visible_for(m_seat, false, third_person) ||
+                   (hidden && !shadow_only(vis, third_person, model_draw.current_pass)) ||
                    !((model.lod_mask >> lod) & 1) ||
                    (!rendering_params->render_scenery &&
                     (ent.tags() & ObjectSkybox) == 0))
@@ -1177,6 +1189,14 @@ struct DrawListBuilder
             pid.bone_base = kBoneUnposed;
             auto const& light = object_light(p, smodel.parent, model);
             pid.light_layer   = light.layer;
+            {
+                auto const* held  = p.template get<HeldObject>(smodel.parent);
+                auto const* rider = p.template get<PlayerInfo>(
+                    held ? held->holder : smodel.parent);
+                bool const third_person = rider && rider->riding.vehicle != 0;
+                if(!parent.template get<Visibility>().visible_for(m_seat, false, third_person))
+                    pid.light_layer = kLightShadowOnly;
+            }
             pid.light_uv      = light.uv;
             pid.light_dir     = light.dir;
             populate_mod2_material(
@@ -1832,10 +1852,14 @@ struct MeshRenderer
 
         auto        _ = m_api->debug().scope("Cascaded shadows");
         Matf4 light{1.f};
-        auto  vertex_u = gfx::make_uniform_list(
+        /* Seats' own bodies draw here only */
+        get_renderflag_uniform();
+        i32 const flags    = m_render_flags | 0x20000;
+        auto      vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{{"camera"sv, 1}, semantic::SpanOne<const Matf4>(light)},
-            get_renderflag_uniform());
+            gfx::uniform_pair{
+                {"render_flags"sv, 31}, semantic::SpanOne<const i32>(flags)});
 
         /* One seat's opaque objects into a tile, split into the runs of
          * instances that reach it; `once` skips instances already drawn */
