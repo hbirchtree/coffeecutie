@@ -5,7 +5,17 @@
  *   H2_WATER  water_pool: bump map in `diffuse`, fresnel-mixed tint
  *   H2_DETAIL 0 none, 1 detail map modulated x2, 2 two blend details mixed
  *             by the base alpha
- *   H2_ILLUM  self-illumination map added, tinted by its pass colour */
+ *   H2_ILLUM  self-illumination map added, tinted by its pass colour
+ *   H2_CLOUDS transparent clouds template: unlit, alpha from map and mask
+ *   H2_OCEAN  water_static: scrolling bump in `diffuse`, sky reflection in
+ *             `detail`, fresnel-mixed, faded by `mask` */
+
+#ifndef H2_CLOUDS
+#define H2_CLOUDS 0
+#endif
+#ifndef H2_OCEAN
+#define H2_OCEAN 0
+#endif
 
 layout(location=0) in vec3 f_world_pos;
 layout(location=1) in vec2 f_texcoord;
@@ -35,11 +45,14 @@ layout(location=14, binding=4) uniform sampler2DArray lightmaps;
 layout(location=29) uniform int bumped;
 layout(location=30, binding=6) uniform sampler2D bump;
 #endif
-#if H2_SKY_MASK
+#if H2_SKY_MASK || H2_CLOUDS || H2_OCEAN
 layout(location=18, binding=5) uniform sampler2D mask;
 #endif
-#if H2_WATER
+#if H2_WATER || H2_OCEAN
 layout(location=21) uniform vec3 camera_position;
+#endif
+#if H2_OCEAN
+layout(location=31) uniform float time;
 #endif
 #if !H2_SKY
 /* Atmospheric fog of the camera's cluster: rgb + max density, start and
@@ -114,7 +127,22 @@ float sun_shade(vec3 n)
 
 void main()
 {
-#if H2_WATER
+#if H2_OCEAN
+    /* Two wave layers drifting apart, sky seen along the reflection */
+    vec2 w0 = texture(diffuse, f_texcoord + time * vec2(0.013, 0.007)).rg;
+    vec2 w1 = texture(diffuse, f_texcoord * 1.7 - time * vec2(0.009, 0.011)).rg;
+    vec2 slope = (w0 + w1) - 1.0;
+    vec3 n = normalize(vec3(slope * 0.35, 1.0));
+    vec3 v = normalize(camera_position - f_world_pos);
+    vec3 r = reflect(-v, n);
+    float fresnel = 0.04 + 0.96 * pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 4.0);
+    vec2 sky_uv = r.xy / (1.0 + abs(r.z)) * 0.5 + 0.5;
+    vec3 sky = texture(detail, sky_uv).rgb;
+    vec3 deep = vec3(0.07, 0.11, 0.12);
+    vec3 col = mix(deep, sky, clamp(fresnel * 1.4, 0.0, 1.0));
+    float fade = texture(mask, f_mask_uv).r;
+    out_color = vec4(fogged(col), mix(0.6, 0.97, fresnel) * fade);
+#elif H2_WATER
     vec3 normal = surface_normal();
     /* Bump-perturbed surface normal, sky tint by fresnel, ground through */
     vec3 bump = normalize(vec3(texture(diffuse, f_texcoord).rg * 2.0 - 1.0, 1.5));
@@ -130,6 +158,11 @@ void main()
     if(alpha_test != 0 && base.a < 0.5)
         discard;
     vec3 color = base.rgb;
+#if H2_CLOUDS
+    vec4 m = texture(mask, f_mask_uv);
+    out_color = vec4(fogged(color * m.rgb), base.a * m.a);
+    return;
+#endif
 #if H2_DETAIL == 1
     color *= texture(detail, f_detail_uv).rgb * 2.0;
 #elif H2_DETAIL == 2
