@@ -72,7 +72,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                                                            : 0;
         i32 const debug_off = (params.render_fog ? 0 : 1) | (params.render_reflection ? 0 : 2) |
                               (params.render_lightmaps ? 0 : 4);
-        i32 const light_count = pack_lights(p, scene, camera->camera.position);
+        i32 light_count = 0;
         f32 const    exposure  = adapt_exposure(scene, camera->camera.position);
         auto const&  dynamic_cube = nearest_cubemap(scene, camera->camera.position);
         Vecf3 const  offset{};
@@ -147,6 +147,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 auto submit = [&](auto& frag_u, auto& samplers) {
                     std::optional<std::tuple<gfx::error, std::string_view>> out;
                     model_matrix = Matf4(1.f);
+                    /* The level by the lights nearest the camera, objects by theirs */
+                    light_count = pack_lights(p, scene, camera->camera.position);
                     if(!mat.draws.empty())
                         out = submit_draws(frag_u, samplers, mat.draws);
                     for(auto const& object : params.render_scenery ? mat.object_draws : no_objects)
@@ -155,6 +157,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         if(!placed)
                             continue;
                         model_matrix = placed->transform;
+                        light_count  = pack_lights(p, scene, placed->position);
                         if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
                             out = res;
                     }

@@ -209,25 +209,36 @@ vec3 baked_diffuse(baked_light_t light, vec3 n)
     return max(e, vec3(0.0)) + max(dot(light.dir, n), 0.0) * light.intensity * 0.281;
 }
 
+/* calculate_simple_light: radiance from light i and the direction to it;
+ * false outside its bounding radius */
+bool simple_light(int i, out vec3 to, out vec3 radiance)
+{
+    vec4 position  = simple_lights[i * 5];
+    vec4 direction = simple_lights[i * 5 + 1];
+    vec4 color     = simple_lights[i * 5 + 2];
+    vec4 falloff   = simple_lights[i * 5 + 3];
+    to             = position.xyz - f_world_pos;
+    float d2       = dot(to, to);
+    radiance       = vec3(0.0);
+    if(d2 >= simple_lights[i * 5 + 4].x)
+        return false;
+    to *= inversesqrt(max(d2, 1e-8));
+    vec2 f = vec2(1.0 / (position.w + d2), dot(to, direction.xyz));
+    f      = max(vec2(0.0001), f * falloff.xy + falloff.zw);
+    f.y    = pow(f.y, color.w) + direction.w;
+    radiance = color.rgb * clamp(f.x, 0.0, 1.0) * clamp(f.y, 0.0, 1.0);
+    return true;
+}
+
 /* calc_simple_lights_analytical's diffuse part */
 vec3 dynamic_diffuse(vec3 n)
 {
     vec3 sum = vec3(0.0);
     for(int i = 0; i < simple_light_count; i++)
     {
-        vec4 position = simple_lights[i * 5];
-        vec4 direction = simple_lights[i * 5 + 1];
-        vec4 color = simple_lights[i * 5 + 2];
-        vec4 falloff = simple_lights[i * 5 + 3];
-        vec3  to = position.xyz - f_world_pos;
-        float d2 = dot(to, to);
-        if(d2 >= simple_lights[i * 5 + 4].x)
-            continue;
-        to *= inversesqrt(max(d2, 1e-8));
-        vec2 f = vec2(1.0 / (position.w + d2), dot(to, direction.xyz));
-        f = max(vec2(0.0001), f * falloff.xy + falloff.zw);
-        f.y = pow(f.y, color.w) + direction.w;
-        sum += color.rgb * clamp(f.x, 0.0, 1.0) * clamp(f.y, 0.0, 1.0) * max(0.05, dot(n, to));
+        vec3 to, radiance;
+        if(simple_light(i, to, radiance))
+            sum += radiance * max(0.05, dot(n, to));
     }
     return sum;
 }
@@ -263,6 +274,13 @@ vec3 material_specular(
         analytic = l_dot_r > 0.0
             ? pow(l_dot_r, power) * ((power + 1.0) / 6.2832) * tint * light.intensity
             : vec3(0.0);
+        /* The dynamic lights through the same lobe */
+        for(int i = 0; i < simple_light_count; i++)
+        {
+            vec3 to, radiance;
+            if(simple_light(i, to, radiance) && dot(to, r) > 0.0)
+                analytic += pow(dot(to, r), power) * ((power + 1.0) / 6.2832) * tint * radiance;
+        }
         area = area_specular(light, r, tint);
     } else
     {
@@ -274,9 +292,14 @@ vec3 material_specular(
         if(spec_lobe.z > 0.5)
             diffuse_scale = 1.0 - params.r;
         vec3 reflectance = mix(spec_tint0.rgb, albedo, params.g);
-        vec3 l = light.dir;
-        float n_dot_l = dot(n, l), n_dot_v = dot(n, v);
         analytic = vec3(0.0);
+        /* The dominant baked light first, then the dynamic lights */
+        for(int i = -1; i < simple_light_count; i++)
+        {
+        vec3 l = light.dir, irradiance = light.intensity;
+        if(i >= 0 && !simple_light(i, l, irradiance))
+            continue;
+        float n_dot_l = dot(n, l), n_dot_v = dot(n, v);
         if(min(n_dot_l, n_dot_v) > 0.0)
         {
             vec3  h = normalize(v + l);
@@ -293,8 +316,9 @@ vec3 material_specular(
             m2 *= m2;
             float c2 = n_dot_h * n_dot_h;
             float distribution = exp((c2 - 1.0) / (m2 * c2)) / (m2 * c2 * c2 + 1e-5);
-            analytic = distribution * clamp(g_term, 0.0, 1.0) / (3.14159265 * n_dot_v + 1e-5) * fresnel;
-            analytic = min(analytic, vec3(n_dot_l + 1.0)) * light.intensity;
+            vec3 lobe = distribution * clamp(g_term, 0.0, 1.0) / (3.14159265 * n_dot_v + 1e-5) * fresnel;
+            analytic += min(lobe, vec3(n_dot_l + 1.0)) * irradiance;
+        }
         }
         /* Stands in for the pre-integrated area lookup tables */
         area = area_specular(light, r, reflectance);
