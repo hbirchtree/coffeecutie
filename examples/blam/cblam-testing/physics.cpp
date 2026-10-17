@@ -1115,7 +1115,7 @@ struct PhysicsSystem
             u64 const  id         = object.id();
             bool const moves      = physics.mass > 0.f;
             bool const follower =
-                moves && physics.authority == ObjectPhysics::Follower;
+                moves && (physics.authority == ObjectPhysics::Follower || physics.scripted);
             auto const section = m_object_sections.find(id);
             bool const simulated =
                 section != m_object_sections.end() &&

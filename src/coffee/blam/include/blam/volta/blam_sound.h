@@ -24,7 +24,7 @@ struct pitch_permutation_t
     i16 next_permutation_idx;
     u32 unknown2[2];
     u32 samples_pointer;
-    u32 unknown3;
+    u32 decoded_size; /* Ogg: bytes of 16-bit PCM once decoded */
 
     u32 buffer_size;
     u32 sample_size;

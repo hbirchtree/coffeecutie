@@ -31,6 +31,16 @@ using GameplayManifest = compo::SubsystemManifest<
         const LoadingStatus>,
     empty_list_t>;
 
+/* Seat labels as scripts spell them, whatever the case */
+static bool iequals(std::string_view a, std::string_view b)
+{
+    return a.size() == b.size() &&
+           std::equal(a.begin(), a.end(), b.begin(), [](char x, char y) {
+               return std::tolower(static_cast<unsigned char>(x)) ==
+                      std::tolower(static_cast<unsigned char>(y));
+           });
+}
+
 struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
 {
     using type  = Gameplay;
@@ -305,7 +315,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             bool const  driver =
                 (seat.flags & flags_t::driver) != flags_t::none;
             if(taken.contains(i) ||
-               (label.empty() ? !driver : seat.label.str() != label))
+               (label.empty() ? !driver : !iequals(seat.label.str(), label)))
                 continue;
             info->riding = {
                 .vehicle = enter.vehicle,

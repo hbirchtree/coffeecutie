@@ -4,12 +4,16 @@
 #include "cinematic.h"
 #include "components.h"
 #include "data.h"
+#include "model_markers.h"
 #include "network/networking.h"
 #include "script_vm.h"
 #include "selected_version.h"
+#include "sound_cache.h"
+#include "sounds.h"
 #include "ticks.h"
 
 #include <blam/volta/blam_actor.h>
+#include <blam/volta/blam_recorded_animation.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/hsc/blam_bytecode.h>
@@ -47,8 +51,9 @@ using BlamScriptManifest = compo::SubsystemManifest<
         GameEventBus,
         CinematicState,
         const NetworkState,
-        const BlamFiles<halo_version>>,
-    empty_list_t>;
+        const BlamFiles<halo_version>,
+        const SoundCache<halo_version>>,
+    type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 /* Runs the scenario's scripts against the world, a step each tick, where the
  * world is decided: offline, or on the server */
@@ -69,6 +74,9 @@ struct BlamScript
     static constexpr u32 max_log_lines = 1024;
     /* Net ids for what scripts place, apart from the server's own */
     static constexpr u32 script_net_id_base = 0xE0000000;
+    /* Sound entity ids: loops by tag, impulses counted */
+    static constexpr u64 script_sound_base   = 0x5343525000000000ULL;
+    static constexpr u64 script_impulse_base = 0x5343524900000000ULL;
 
     BlamScript()
     {
@@ -89,6 +97,11 @@ struct BlamScript
         m_scenario = scenario;
         m_named.clear();
         m_actors.clear();
+        m_recordings.clear();
+        m_riders.clear();
+        m_hovering.clear();
+        m_spawning.clear();
+        m_deferred.clear();
         m_log.clear();
 
         auto strings = scenario->string_segment(map.magic);
@@ -130,7 +143,15 @@ struct BlamScript
             return;
         m_proxy = &p;
         for(size_t i = 0; i < ticks.size(); i++)
+        {
+            run_deferred(p);
+            std::erase_if(m_spawning, [this, &p](u32 net_id) {
+                return entity_by_net_id(p, net_id) != 0;
+            });
             m_vm.tick();
+            play_recordings(p);
+            place_riders(p);
+        }
         m_proxy = nullptr;
     }
 
@@ -205,6 +226,41 @@ struct BlamScript
             return 0;
         return entity_by_net_id(
             p, SpawnObjectEvent::scenario_net_id(it->second.group, it->second.index));
+    }
+
+    /* Calls `fn` on each object a value names; a named object still being
+     * spawned gets it once it is there */
+    template<typename Fn>
+    void with_objects(Proxy& p, value_t const& v, Fn&& fn)
+    {
+        auto const objects = objects_of(p, v);
+        for(u64 id : objects)
+            fn(p, id);
+        if(!objects.empty() && v.pending.empty())
+            return;
+        std::vector<u32> waiting = v.pending;
+        if(auto it = m_named.find(std::string(text_of(v))); it != m_named.end())
+            waiting.push_back(
+                SpawnObjectEvent::scenario_net_id(it->second.group, it->second.index));
+        std::function<void(Proxy&, u64)> later(std::forward<Fn>(fn));
+        for(u32 net_id : waiting)
+            if(m_spawning.contains(net_id))
+                m_deferred.push_back({net_id, later});
+    }
+
+    /* What waited on objects now spawned */
+    void run_deferred(Proxy& p)
+    {
+        auto waiting = std::exchange(m_deferred, {});
+        for(auto& [net_id, fn] : waiting)
+        {
+            if(u64 const id = entity_by_net_id(p, net_id))
+            {
+                m_spawning.erase(net_id);
+                fn(p, id);
+            } else
+                m_deferred.emplace_back(net_id, std::move(fn));
+        }
     }
 
     /* An object value: a named scenario object, or what a list holds */
@@ -294,8 +350,9 @@ struct BlamScript
             }
             return {};
         case op::object_teleport:
-            for(u64 id : objects_of(p, arg(0)))
-                teleport(p, id, text_of(arg(1)));
+            with_objects(p, arg(0), [this, flag = std::string(text_of(arg(1)))](Proxy& p, u64 id) {
+                teleport(p, id, flag);
+            });
             return {};
 
         /* Trigger volumes */
@@ -366,12 +423,100 @@ struct BlamScript
             p.template subsystem<CinematicState>().input = arg(0).truthy();
             return {};
 
+        /* Sounds: an object's, or at the listener without one */
+        case op::sound_impulse_start:
+            play(p, arg(0), objects_of(p, arg(1)), false);
+            return {};
+        case op::sound_impulse_time:
+            return value_t::number(type_t::short_, length_of(p, arg(0)) * tick_rate);
+        case op::sound_looping_start:
+            play(p, arg(0), objects_of(p, arg(1)), true);
+            return {};
+        case op::sound_looping_stop:
+            if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>())
+            {
+                SoundEvent stop{.type = SoundEvent::stop_sound, .entity_id = loop_id(arg(0))};
+                sounds->inject(stop, nullptr);
+            }
+            return {};
+
+        /* Seats */
+        case op::unit_enter_vehicle:
+            with_objects(
+                p,
+                arg(1),
+                [this, units = arg(0), seat = std::string(text_of(arg(2)))](Proxy& p, u64 vehicle) {
+                    with_objects(p, units, [this, vehicle, seat](Proxy& p, u64 unit) {
+                        seat_unit(p, unit, vehicle, seat, true);
+                    });
+                });
+            return {};
+        case op::vehicle_load_magic:
+            with_objects(
+                p,
+                arg(0),
+                [this, units = arg(2), seat = std::string(text_of(arg(1)))](Proxy& p, u64 vehicle) {
+                    with_objects(p, units, [this, vehicle, seat](Proxy& p, u64 unit) {
+                        seat_unit(p, unit, vehicle, seat, false);
+                    });
+                });
+            return {};
+        case op::unit_exit_vehicle:
+            with_objects(p, arg(0), [this](Proxy& p, u64 unit) { unseat(p, unit); });
+            return {};
+        case op::vehicle_unload:
+            with_objects(p, arg(0), [this, seat = std::string(text_of(arg(1)))](Proxy& p, u64 vehicle) {
+                for(auto const& rider : std::vector(m_riders))
+                    if(rider.vehicle == vehicle && rider.seat.find(seat) != std::string::npos)
+                        unseat(p, rider.unit);
+                for(auto player : p.template select<PlayerInfo>())
+                    if(player.template get<PlayerInfo>().riding.vehicle == vehicle)
+                        unseat(p, player.id());
+            });
+            return {};
+
+        /* Recorded control, flown */
+        case op::recording_play:
+        case op::recording_play_and_hover:
+        case op::recording_play_and_delete:
+            with_objects(
+                p,
+                arg(0),
+                [this,
+                 name = std::string(text_of(arg(1))),
+                 end  = opcode == op::recording_play_and_hover    ? end_t::hover
+                        : opcode == op::recording_play_and_delete ? end_t::destroy
+                                                                  : end_t::stop](Proxy& p, u64 id) {
+                    start_recording(p, id, name, end);
+                });
+            return value_t::boolean(true);
+        case op::recording_kill:
+            for(u64 id : objects_of(p, arg(0)))
+                stop_recording(p, id, end_t::stop);
+            return {};
+        case op::recording_time: {
+            f32 left = 0.f;
+            for(u64 id : objects_of(p, arg(0)))
+                for(auto const& r : m_recordings)
+                    if(r.entity == id)
+                        left = std::max(left, static_cast<f32>(r.length - static_cast<i32>(r.play.tick())));
+            return value_t::number(type_t::short_, left);
+        }
+        case op::vehicle_hover:
+            with_objects(p, arg(0), [this, on = arg(1).truthy()](Proxy& p, u64 id) {
+                hover(p, id, on);
+            });
+            return {};
+
         /* Encounters, without minds of their own */
         case op::ai_place:
             ai_place(p, std::string(text_of(arg(0))));
             return {};
-        case op::ai_actors:
-            return list(ai_actors(p, text_of(arg(0))));
+        case op::ai_actors: {
+            auto out    = list(ai_actors(p, text_of(arg(0))));
+            out.pending = ai_spawning(text_of(arg(0)));
+            return out;
+        }
         case op::ai_living_count:
             return value_t::number(
                 type_t::short_, static_cast<f32>(ai_actors(p, text_of(arg(0))).size()));
@@ -413,6 +558,7 @@ struct BlamScript
             .server_owned = true,
         };
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
+        m_spawning.insert(net_id);
     }
 
     void despawn(Proxy& p, u64 id)
@@ -448,6 +594,298 @@ struct BlamScript
         model->update_matrix();
         if(auto* physics = p.template get<ObjectPhysics>(id))
             physics->teleported = true;
+    }
+
+    blam::tag_t const* sound_tag(value_t const& v) const
+    {
+        auto tag = m_tags.find(static_cast<u32>(v.integer));
+        if(tag == m_tags.end() ||
+           !((*tag).matches(blam::tag_class_t::snd) || (*tag).matches(blam::tag_class_t::lsnd)))
+            return nullptr;
+        return &(*tag);
+    }
+
+    /* A looping sound is known by its tag, impulses each by their own */
+    static u64 loop_id(value_t const& v)
+    {
+        return script_sound_base | static_cast<u32>(v.integer);
+    }
+
+    void play(Proxy& p, value_t const& sound, std::vector<u64> const& on, bool looping)
+    {
+        auto*       sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        auto const* tag    = sound_tag(sound);
+        if(!sounds || !tag)
+            return;
+        auto const* model = on.empty() ? nullptr : p.template get<Model>(on.front());
+        SoundEvent  ev{
+             .type      = SoundEvent::play_sound,
+             .entity_id = looping ? loop_id(sound) : script_impulse_base | m_next_impulse++,
+        };
+        PlaySoundEvent play{
+            .sound_tag = tag,
+            .position  = model ? model->position : Vecf3{},
+            .relative  = !model,
+            .looping   = looping,
+        };
+        sounds->inject(ev, &play);
+    }
+
+    /* Seconds a sound plays: its first piece, chunk by chunk */
+    f32 length_of(Proxy& p, value_t const& v) const
+    {
+        using sound_t     = blam::sound::sound;
+        auto const* tag   = sound_tag(v);
+        auto const& index = p.template subsystem<SoundCache<halo_version>>().index;
+        if(!tag || !tag->matches(blam::tag_class_t::snd))
+            return 0.f;
+        auto sound = tag->template data<sound_t>(m_magic);
+        if(!sound.has_value())
+            return 0.f;
+        auto ranges = index.deref(*tag, sound.value()->pitch_ranges_);
+        if(!ranges.has_value() || ranges.value().empty())
+            return 0.f;
+        auto perms = index.deref(*tag, ranges.value()[0].permutations_);
+        if(!perms.has_value() || perms.value().empty())
+            return 0.f;
+        f32 const channels = sound.value()->channels == sound_t::stereo ? 2.f : 1.f;
+        f32 const rate     = sound.value()->sample_rate == sound_t::_22kHz ? 22050.f : 44100.f;
+        f32       seconds  = 0.f;
+        for(i32 i = 0, guard = 0; i >= 0 && static_cast<size_t>(i) < perms.value().size() &&
+                                  guard < 256;
+            guard++)
+        {
+            auto const& chunk = perms.value()[i];
+            /* Ogg knows its decoded size, ADPCM packs 64 samples in 36 bytes */
+            f32 const samples = sound.value()->codec == sound_t::ogg
+                                    ? chunk.decoded_size / (2.f * channels)
+                                    : chunk.sample_size / (36.f * channels) * 64.f;
+            seconds += samples / rate;
+            i = chunk.next_permutation_idx;
+        }
+        return seconds;
+    }
+
+    /* ---- Seats ---- */
+
+    /* An AI body carried on a seat's marker; players ride for real */
+    struct rider_t
+    {
+        u64         unit;
+        u64         vehicle;
+        std::string seat;
+        Matf4       marker{1};
+    };
+
+    /* Into the seat labelled `seat`, or the first free one whose label holds
+     * it when not `exact` */
+    void seat_unit(Proxy& p, u64 unit, u64 vehicle, std::string const& seat, bool exact)
+    {
+        if(p.template get<PlayerInfo>(unit))
+        {
+            GameEvent             ev{.type = GameEvent::UnitEnterVehicle};
+            UnitEnterVehicleEvent enter{.unit = unit, .vehicle = vehicle};
+            if(auto label = blam::bl_string::from(seat))
+                enter.seat = *label;
+            p.template subsystem<GameEventBus>().inject(ev, &enter);
+            return;
+        }
+        auto const* model = p.template get<Model>(vehicle);
+        if(!model || !model->origin_object || !model->tag)
+            return;
+        auto vehi = model->origin_object->template data<blam::scn::unit>(m_magic);
+        if(!vehi.has_value())
+            return;
+        auto seats = vehi.value()[0].seats.data(m_magic);
+        if(!seats.has_value())
+            return;
+        for(auto const& candidate : seats.value())
+        {
+            std::string label(candidate.label.str());
+            std::transform(label.begin(), label.end(), label.begin(), [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+            });
+            bool const fits = exact ? label == seat : label.find(seat) != std::string::npos;
+            bool const taken = std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
+                return r.vehicle == vehicle && r.seat == label;
+            });
+            if(!fits || taken)
+                continue;
+            auto marker = bind_marker(*model->tag, candidate.marker_name.str(), m_magic);
+            unseat(p, unit);
+            m_riders.push_back({
+                .unit    = unit,
+                .vehicle = vehicle,
+                .seat    = label,
+                .marker  = marker.value_or(Matf4(1)),
+            });
+            carry(p, unit, true);
+            return;
+        }
+    }
+
+    void unseat(Proxy& p, u64 unit)
+    {
+        if(p.template get<PlayerInfo>(unit))
+        {
+            GameEvent            ev{.type = GameEvent::UnitExitVehicle};
+            UnitExitVehicleEvent exit{.unit = unit};
+            p.template subsystem<GameEventBus>().inject(ev, &exit);
+            return;
+        }
+        auto const before = m_riders.size();
+        std::erase_if(m_riders, [unit](rider_t const& r) { return r.unit == unit; });
+        if(m_riders.size() != before)
+            carry(p, unit, false);
+    }
+
+    /* Riders sit where their seats are as the vehicle moves */
+    void place_riders(Proxy& p)
+    {
+        for(auto const& rider : m_riders)
+        {
+            auto const* vehicle = p.template get<Model>(rider.vehicle);
+            auto*       unit    = p.template get<Model>(rider.unit);
+            if(!vehicle || !unit)
+                continue;
+            Matf4 const at = vehicle->transform * rider.marker;
+            unit->position = Vecf3(at[3]);
+            unit->rotation = glm::normalize(Quatf(Matf3(at)));
+            unit->update_matrix();
+        }
+    }
+
+    /* ---- Recordings ---- */
+
+    enum class end_t
+    {
+        stop,
+        hover,
+        destroy,
+    };
+
+    struct recording_t
+    {
+        u64                             entity;
+        blam::scn::recorded::playback   play;
+        i32                             length;
+        end_t                           end;
+        Vecf3                           velocity{};
+    };
+
+    void start_recording(Proxy& p, u64 id, std::string_view name, end_t end)
+    {
+        auto const* recording = named(m_scenario->recorded_animations, name);
+        if(!recording)
+            return log(fmt::format("recording_play: no recording {}", name));
+        auto stream = recording->stream(m_magic);
+        if(stream.has_error())
+            return log(fmt::format("recording_play: {} unreadable", name));
+        stop_recording(p, id, end_t::stop);
+        m_recordings.push_back({
+            .entity = id,
+            .play   = blam::scn::recorded::playback(stream.value()),
+            .length = recording->length_of_animation,
+            .end    = end,
+        });
+        carry(p, id, true);
+    }
+
+    void stop_recording(Proxy& p, u64 id, end_t end)
+    {
+        std::erase_if(m_recordings, [id](recording_t const& r) { return r.entity == id; });
+        switch(end)
+        {
+        case end_t::destroy:
+            despawn(p, id);
+            break;
+        case end_t::hover:
+            break;
+        case end_t::stop:
+            if(!m_hovering.contains(id))
+                carry(p, id, false);
+            break;
+        }
+    }
+
+    /* Held where it is, or let go to fall */
+    void hover(Proxy& p, u64 id, bool on)
+    {
+        if(on)
+            m_hovering.insert(id);
+        else
+            m_hovering.erase(id);
+        bool const playing = std::any_of(
+            m_recordings.begin(), m_recordings.end(), [id](recording_t const& r) {
+                return r.entity == id;
+            });
+        carry(p, id, on || playing);
+    }
+
+    void carry(Proxy& p, u64 id, bool scripted)
+    {
+        auto* physics = p.template get<ObjectPhysics>(id);
+        if(!physics || physics->scripted == scripted)
+            return;
+        physics->scripted   = scripted;
+        physics->teleported = true;
+    }
+
+    /* A tick of each recording: the unit faces where it says and moves at
+     * its throttle, within what its tag lets it */
+    void play_recordings(Proxy& p)
+    {
+        constexpr f32 dt = 1.f / tick_rate;
+        for(auto it = m_recordings.begin(); it != m_recordings.end();)
+        {
+            auto* model   = p.template get<Model>(it->entity);
+            auto* physics = p.template get<ObjectPhysics>(it->entity);
+            if(!model)
+            {
+                it = m_recordings.erase(it);
+                continue;
+            }
+            using namespace blam::scn::recorded;
+            auto const& input  = it->play.state();
+            auto const& facing = input.facing();
+            f32 const   yaw    = facing.yaw_radians();
+            Vecf3 const ahead{std::cos(yaw), std::sin(yaw), 0.f};
+            Vecf3 const right{std::sin(yaw), -std::cos(yaw), 0.f};
+            auto const* drive = physics && physics->drive ? &*physics->drive : nullptr;
+            /* Dropships climb on jump and sink on crouch; pitch is only
+             * where they look */
+            bool const  plane = drive && drive->type == VehicleDrive::human_plane;
+            f32 const   top   = drive ? drive->forward_speed * (plane ? plane_cruise : 1.f)
+                                      : default_speed;
+            f32 const   slide = drive ? drive->slide_speed : default_speed;
+            f32 const   accel = drive && drive->acceleration > 0.f ? drive->acceleration : default_acceleration;
+            f32 const   climb = plane ? (input.held(control_jump) ? 1.f : 0.f) -
+                                            (input.held(control_crouch) ? 1.f : 0.f)
+                                      : 0.f;
+            Vecf3 const want  = ahead * (input.movement.x * top) +
+                               right * (input.movement.y * slide) +
+                               Vecf3{0.f, 0.f, climb * slide};
+            Vecf3 const delta = want - it->velocity;
+            f32 const   step  = accel * dt;
+            it->velocity += glm::length(delta) > step ? glm::normalize(delta) * step : delta;
+
+            model->position += it->velocity * dt;
+            model->rotation = glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) *
+                              glm::angleAxis(-facing.pitch_radians(), Vecf3{0.f, 1.f, 0.f});
+            model->update_matrix();
+
+            if(it->play.advance())
+            {
+                ++it;
+                continue;
+            }
+            u64 const  id  = it->entity;
+            end_t const end = it->end;
+            it              = m_recordings.erase(it);
+            if(end == end_t::hover)
+                m_hovering.insert(id);
+            stop_recording(p, id, end);
+        }
     }
 
     template<typename Fn>
@@ -544,6 +982,7 @@ struct BlamScript
                     .server_owned = true,
                 };
                 p.template subsystem<GameEventBus>().inject(ev, &spawn);
+                m_spawning.insert(net_id);
                 /* Both the encounter and its squad name it */
                 m_actors[std::string(name)].push_back(net_id);
                 m_actors[fmt::format("{}/{}", name, squad.name.str())].push_back(net_id);
@@ -560,6 +999,16 @@ struct BlamScript
         if(!variant.has_value() || !variant.value()->unit.valid())
             return nullptr;
         return &static_cast<blam::tagref_t const&>(variant.value()->unit);
+    }
+
+    std::vector<u32> ai_spawning(std::string_view path) const
+    {
+        std::vector<u32> out;
+        if(auto it = m_actors.find(std::string(path)); it != m_actors.end())
+            for(u32 net_id : it->second)
+                if(m_spawning.contains(net_id))
+                    out.push_back(net_id);
+        return out;
     }
 
     std::vector<u64> ai_actors(Proxy& p, std::string_view path) const
@@ -620,6 +1069,12 @@ struct BlamScript
 #endif
 
     static constexpr f32 tick_rate = 30.f;
+    /* Recordings on something without a drive of its own */
+    static constexpr f32 default_speed        = 2.f;  /* wu/s */
+    static constexpr f32 default_acceleration = 4.f; /* wu/s^2 */
+    /* Of a plane's top speed at full throttle: b30's dropships land where
+     * their marines stand at this, not at the tag's maximum */
+    static constexpr f32 plane_cruise = .75f;
     /* Where a body is tested against volumes, above its feet */
     static constexpr f32 body_middle = .3f;
 
@@ -633,6 +1088,12 @@ struct BlamScript
     std::map<std::string, placement_t>      m_named;
     std::map<std::string, std::vector<u32>> m_actors;
     u32                                     m_next_actor{1};
+    u64                                     m_next_impulse{1};
+    std::vector<recording_t>                m_recordings;
+    std::vector<rider_t>                    m_riders;
+    std::set<u32>                           m_spawning;
+    std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> m_deferred;
+    std::set<u64>                           m_hovering;
     std::set<u32>                           m_unhandled;
     Proxy*                                  m_proxy{nullptr};
 

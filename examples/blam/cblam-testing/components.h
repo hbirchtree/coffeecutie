@@ -784,6 +784,7 @@ struct ObjectPhysics
     bool  sleeping{false};
     bool  grounded{false}; /*!< Upright bodies: world geometry just under it */
     bool  teleported{false}; /*!< Moved by hand: the body starts over there */
+    bool  scripted{false};   /*!< Moved by a script: carried, not simulated */
 
     /*! Vehicles, as of the last physics step */
     struct vehicle_t
