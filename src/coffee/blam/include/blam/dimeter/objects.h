@@ -1265,6 +1265,7 @@ C_FLAGS(device_lightmap_flags_t, u16);
 struct alignas(4) device_t : object_t
 {
     device_flags_t                   device_flags;
+    /* Times are stored as their reciprocals (1 / seconds) */
     f32                              power_transition_time;
     f32                              power_acceleration_time;
     f32                              position_transition_time;
