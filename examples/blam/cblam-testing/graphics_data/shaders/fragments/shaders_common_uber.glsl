@@ -409,7 +409,7 @@ vec3 cast_shadow(vec3 light)
     float sunlit = smoothstep(0.15, 0.45, dot(light, vec3(0.299, 0.587, 0.114)));
     float hidden = cascade_occlusion(
         frag.position, normalize(frag.normal), normalize(world_key_light()), camera_position);
-    return light * (1.0 - hidden * csm_params.z * mix(0.2, 1.0, sunlit));
+    return light * (1.0 - hidden * csm_params.y * mix(0.2, 1.0, sunlit));
 #else
     return light;
 #endif
