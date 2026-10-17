@@ -47,6 +47,7 @@
             "shaders/h2_water.frag",
             "shaders/h2_clouds.frag",
             "shaders/h2_ocean.frag",
+            "shaders/h2_plasma.frag",
             "shaders/h2_ui.vert",
             "shaders/h2_ui.frag",
 
