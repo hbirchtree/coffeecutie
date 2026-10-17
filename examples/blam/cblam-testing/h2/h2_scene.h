@@ -168,6 +168,9 @@ struct Material
     {
         gfx::draw_command::data_t cmd;
         DrawTag                   tag;
+        /*! Bounding sphere, center + radius; object space for objects
+         * drawn where they are */
+        Vecf4 bounds{0.f, 0.f, 0.f, -1.f};
     };
     std::vector<draw_t>                    section_draws;
     std::string                            name;
@@ -327,6 +330,8 @@ struct H2Scene : compo::SubsystemBase
     std::shared_ptr<gfx::sampler_t>             lightmap_sampler;
     f32                                         sky_scale{1.f};
     Vecf3                                       sky_clear{0.f, 0.f, 0.f};
+    /*! Towards the sky's first light, with a lens flare or not */
+    Vecf3                                       sun_direction{0.f, 0.f, 1.f};
     std::vector<SkyFlare>                       sky_flares;
     /*! The BSP's water definition: how the sea shades */
     struct water_t

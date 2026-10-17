@@ -1647,6 +1647,12 @@ struct H2MapLoader : compo::SubsystemBase
             if(list.empty() || mat < 0 ||
                static_cast<size_t>(mat) >= m_scene.materials.size())
                 continue;
+            Vecf3 lo(std::numeric_limits<f32>::max()), hi(std::numeric_limits<f32>::lowest());
+            for(u16 idx : list)
+            {
+                lo = glm::min(lo, m_vertices[vbase + idx].position);
+                hi = glm::max(hi, m_vertices[vbase + idx].position);
+            }
             m_scene.materials[mat].section_draws.push_back({
                 .cmd =
                     {
@@ -1659,7 +1665,8 @@ struct H2MapLoader : compo::SubsystemBase
                             },
                         .instances = {.count = 1, .offset = 0},
                     },
-                .tag = tag,
+                .tag    = tag,
+                .bounds = Vecf4((lo + hi) * .5f, glm::distance(lo, hi) * .5f),
             });
             m_indices.insert(m_indices.end(), list.begin(), list.end());
             emitted++;
@@ -2803,8 +2810,9 @@ struct H2MapLoader : compo::SubsystemBase
         dim::raw_pool const&         pool,
         dim::scn::scenario_t const&  scnr)
     {
-        m_scene.sky_scale  = 1.f;
-        m_scene.sky_clear  = {};
+        m_scene.sky_scale     = 1.f;
+        m_scene.sky_clear     = {};
+        m_scene.sun_direction = {0.f, 0.f, 1.f};
         m_scene.sky_flares.clear();
         auto skies   = scnr.skies.data(map.magic());
         if(skies.has_error() || skies.value().empty())
@@ -2822,6 +2830,14 @@ struct H2MapLoader : compo::SubsystemBase
             from_le(sky->clear_color[0]),
             from_le(sky->clear_color[1]),
             from_le(sky->clear_color[2])};
+        if(auto lights = sky->lights.data(map.magic());
+           !lights.has_error() && !lights.value().empty())
+        {
+            f32 const yaw   = from_le(lights.value()[0].direction[0]);
+            f32 const pitch = from_le(lights.value()[0].direction[1]);
+            m_scene.sun_direction = Vecf3{
+                std::cos(pitch) * std::cos(yaw), std::cos(pitch) * std::sin(yaw), std::sin(pitch)};
+        }
         load_sky_flares(map, pool, *sky);
         auto const* mode_tag = map.tag_at(sky->render_model.tag_id);
         if(!mode_tag || !mode_tag->matches("mode"))
