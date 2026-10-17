@@ -237,4 +237,24 @@ bool linearize(
     return true;
 }
 
+Span<byte_t const> top_level_interleaved(resource_view const& view, bitmap_image_t const& image)
+{
+    auto const* interop = view.root_as<d3d_structure<interleaved_interop_t>>();
+    auto const* pair    = interop ? view.resolve(*interop) : nullptr;
+    if(!pair || image.interleaved_texture < 0 || image.interleaved_texture > 1)
+        return {};
+    u32 faces  = image.type.value() == bitmap_type_t::cube_map ? 6
+                 : image.type.value() == bitmap_type_t::array ? std::max<u32>(image.depth, 1)
+                                                               : 1;
+    u64 bytes  = u64(slice_stride(image.format.value(), static_cast<u32>(image.width.value()),
+                                  static_cast<u32>(image.height.value()))) * faces;
+    auto level = enum_helpers::feval(image.xbox_flags, bitmap_xbox_flags_t::high_res_offset)
+                     ? view.bytes(pair->secondary)
+                     : view.bytes(pair->primary);
+    u64 at = bytes * static_cast<u64>(image.interleaved_texture);
+    if(at + bytes > level.size())
+        return {};
+    return level.subspan(at, bytes);
+}
+
 } // namespace blam::elegy
