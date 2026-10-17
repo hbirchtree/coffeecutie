@@ -2602,8 +2602,9 @@ struct H2MapLoader : compo::SubsystemBase
             m_scene.moving_objects.size());
     }
 
-    /* The first sky's model, kept around the camera; scaled into the far
-     * plane since its radius is in the thousands */
+    /* The first sky's model (empty palette slots skipped: the main menu's
+     * is the seventh), kept around the camera; scaled into the far plane
+     * since its radius is in the thousands */
     template<typename V>
     void load_sky(
         dim::map_container<V> const& map,
@@ -2616,7 +2617,10 @@ struct H2MapLoader : compo::SubsystemBase
         auto skies   = scnr.skies.data(map.magic());
         if(skies.has_error() || skies.value().empty())
             return;
-        auto const* sky_tag = map.tag_at(skies.value()[0].sky.tag_id);
+        dim::tag_t const* sky_tag = nullptr;
+        for(auto const& ref : skies.value())
+            if((sky_tag = map.tag_at(ref.sky.tag_id)))
+                break;
         auto const* sky =
             sky_tag ? sky_tag->template data<dim::obj::sky_t>(map.magic())
                     : nullptr;
