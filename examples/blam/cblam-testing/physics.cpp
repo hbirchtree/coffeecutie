@@ -1108,7 +1108,7 @@ struct PhysicsSystem
     void reconcile_object_bodies(Proxy& p)
     {
         using Shape = Physics::BodyCreationShape;
-        std::set<u64> live;
+        std::set<u64> live, frozen;
         for(auto object : p.template select<Model, ObjectPhysics>())
         {
             auto [model, physics] = object.components();
@@ -1120,9 +1120,19 @@ struct PhysicsSystem
             bool const simulated =
                 section != m_object_sections.end() &&
                 section->second == m_built_section;
+            /* Settled in another section: waits there, as sections overlap
+             * and its spot may lie in this one's space too */
+            if(moves && !simulated && section != m_object_sections.end() &&
+               glm::length(physics.linear_velocity) < .5f)
+            {
+                frozen.insert(id);
+                continue;
+            }
             if(moves && !simulated &&
                (!in_active_section(model.position) || !grounded(model.position)))
                 continue;
+            if(moves && section != m_object_sections.end())
+                section->second = m_built_section;
             live.insert(id);
             /* Bodies with a phys tag turn about its centre of mass */
             Vecf3 const com = physics.mass_points
@@ -1141,7 +1151,8 @@ struct PhysicsSystem
                 m_object_bodies[id]   = physics.authority;
                 m_object_sections[id] = m_built_section;
                 Shape::shape_t shape =
-                    physics.collision ? (moves ? Shape::Hulls : Shape::Mesh)
+                    /* Vehicles without a phys tag stand still, hulls and all */
+                    physics.collision ? (moves || physics.drive ? Shape::Hulls : Shape::Mesh)
                     : physics.radius > 0.f ? Shape::Sphere
                                            : Shape::Box;
                 create_body(Shape{
@@ -1219,8 +1230,10 @@ struct PhysicsSystem
                 it->second.action->state(physics.vehicle);
             btTransform const& transform = body.getWorldTransform();
             btQuaternion const rotation  = transform.getRotation();
-            model.rotation =
-                Quatf(rotation.w(), rotation.x(), rotation.y(), rotation.z());
+            /* Upright bodies never turn; what faces them is the model's */
+            if(!physics.upright)
+                model.rotation =
+                    Quatf(rotation.w(), rotation.x(), rotation.y(), rotation.z());
             model.position =
                 to_vec(transform.getOrigin()) - model.rotation * com;
             model.update_matrix();
@@ -1234,7 +1247,8 @@ struct PhysicsSystem
                 continue;
             }
             remove_body(it->first);
-            m_object_sections.erase(it->first);
+            if(!frozen.contains(it->first))
+                m_object_sections.erase(it->first);
             it = m_object_bodies.erase(it);
         }
     }

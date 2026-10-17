@@ -2359,15 +2359,17 @@ struct ResourceLoader
                 object_collision(files, object.collider, object.model);
             if(!collision)
                 return std::nullopt;
-            bool const moves = tag.matches(tag_class_t::vehi);
-            if(!moves && collision->triangles.empty())
+            /* A vehicle without a phys tag, such as a cryotube, stays put */
+            bool const vehicle = tag.matches(tag_class_t::vehi);
+            bool const moves   = vehicle && object.physics.valid();
+            if(!vehicle && collision->triangles.empty())
                 return std::nullopt;
             auto mass_points = moves ? object_mass_points(files, object.physics)
                                      : nullptr;
             return ObjectPhysics{
                 .collision   = std::move(collision),
                 .mass_points = mass_points,
-                .drive       = moves ? vehicle_drive(tag, magic) : std::nullopt,
+                .drive       = vehicle ? vehicle_drive(tag, magic) : std::nullopt,
                 .mass        = !moves         ? 0.f
                                : mass_points ? mass_points->mass
                                              : 1000.f,
