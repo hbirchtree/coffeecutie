@@ -525,6 +525,9 @@ struct H2MapLoader : compo::SubsystemBase
         m_objects_total = m_objects_clustered = 0;
         m_lightmaps.clear();
         m_lightmap_atlas = {};
+        m_light_triangles.clear();
+        m_light_grid.clear();
+        m_below_lit_objects = m_unlit_objects = 0;
         m_normal_order_logged = false;
     }
 
@@ -704,6 +707,7 @@ struct H2MapLoader : compo::SubsystemBase
                                     Span<u8 const>(bucket.rgb.data() + vo * 3, count * 3);
                         }
                     }
+                    size_t const first = m_vertices.size();
                     sections += append_section(
                         pool,
                         bsp_magic,
@@ -719,6 +723,8 @@ struct H2MapLoader : compo::SubsystemBase
                             .instance        = static_cast<i32>(instance_count),
                         },
                         lighting);
+                    if(!lightmap && lighting.rgb.empty())
+                        light_from_below(first, Vecf3(instance_transform(inst)[3]));
                     instance_count++;
                 }
             if(!geom.has_error())
@@ -1491,6 +1497,20 @@ struct H2MapLoader : compo::SubsystemBase
                 m_vertices[vbase + v].normal = chosen[v];
         }
 
+        if(lightmap && lm_scale.x > 0.f && lm_scale.y > 0.f)
+            for(auto const& [mat, list] : tris)
+                for(size_t i = 0; i + 2 < list.size(); i += 3)
+                {
+                    LightTriangle t{.image = lightmap};
+                    for(size_t c = 0; c < 3; c++)
+                    {
+                        auto const& v = m_vertices[vbase + list[i + c]];
+                        t.position[c] = v.position;
+                        t.uv[c] = (Vecf2(v.lightmap) - lm_offset) / lm_scale;
+                    }
+                    add_light_triangle(std::move(t));
+                }
+
         u32 emitted = 0;
         for(auto& [mat, list] : tris)
         {
@@ -1516,6 +1536,106 @@ struct H2MapLoader : compo::SubsystemBase
         }
         (void)sky;
         return emitted ? 1 : 0;
+    }
+
+    /* A lightmapped BSP triangle: objects without baked light take the
+     * lightmap under them, as the engine does */
+    struct LightTriangle
+    {
+        std::array<Vecf3, 3> position;
+        std::array<Vecf2, 3> uv; /*!< Within the image */
+        LightmapImage const* image{nullptr};
+    };
+
+    static constexpr f32 light_cell = 4.f;
+
+    static u64 light_cell_key(i32 x, i32 y)
+    {
+        return (static_cast<u64>(static_cast<u32>(x)) << 32) | static_cast<u32>(y);
+    }
+
+    void add_light_triangle(LightTriangle&& t)
+    {
+        Vecf2 lo = Vecf2(t.position[0]), hi = lo;
+        for(auto const& p : t.position)
+            lo = glm::min(lo, Vecf2(p)), hi = glm::max(hi, Vecf2(p));
+        auto const idx = static_cast<u32>(m_light_triangles.size());
+        m_light_triangles.push_back(std::move(t));
+        for(i32 x = static_cast<i32>(std::floor(lo.x / light_cell));
+            x <= static_cast<i32>(std::floor(hi.x / light_cell));
+            x++)
+            for(i32 y = static_cast<i32>(std::floor(lo.y / light_cell));
+                y <= static_cast<i32>(std::floor(hi.y / light_cell));
+                y++)
+                m_light_grid[light_cell_key(x, y)].push_back(idx);
+    }
+
+    /* The lightmap colour of the highest surface under a point */
+    std::optional<Vecf3> light_below(Vecf3 const& at) const
+    {
+        auto cell = m_light_grid.find(light_cell_key(
+            static_cast<i32>(std::floor(at.x / light_cell)),
+            static_cast<i32>(std::floor(at.y / light_cell))));
+        if(cell == m_light_grid.end())
+            return std::nullopt;
+        f32 const  top  = at.z + 0.25f;
+        f32        best = -std::numeric_limits<f32>::max();
+        Vecf3      out{};
+        bool       hit = false;
+        for(u32 idx : cell->second)
+        {
+            auto const& t  = m_light_triangles[idx];
+            Vecf2 const a  = Vecf2(t.position[0]);
+            Vecf2 const e1 = Vecf2(t.position[1]) - a, e2 = Vecf2(t.position[2]) - a;
+            f32 const   det = e1.x * e2.y - e2.x * e1.y;
+            if(std::abs(det) < 1e-6f)
+                continue;
+            Vecf2 const d = Vecf2(at) - a;
+            f32 const   u = (d.x * e2.y - e2.x * d.y) / det;
+            f32 const   v = (e1.x * d.y - d.x * e1.y) / det;
+            if(u < 0.f || v < 0.f || u + v > 1.f)
+                continue;
+            f32 const w = 1.f - u - v;
+            f32 const z = w * t.position[0].z + u * t.position[1].z + v * t.position[2].z;
+            if(z > top || z <= best)
+                continue;
+            Vecf2 const uv  = w * t.uv[0] + u * t.uv[1] + v * t.uv[2];
+            auto const& img = *t.image;
+            if(img.rgba.empty())
+                continue;
+            u32 const px = std::min(
+                static_cast<u32>(std::clamp(uv.x, 0.f, 1.f) * img.width), img.width - 1);
+            u32 const py = std::min(
+                static_cast<u32>(std::clamp(uv.y, 0.f, 1.f) * img.height), img.height - 1);
+            u8 const* c = img.rgba.data() + (py * img.width + px) * 4;
+            out  = Vecf3{c[0], c[1], c[2]} / 255.f;
+            best = z;
+            hit  = true;
+        }
+        return hit ? std::optional<Vecf3>(out) : std::nullopt;
+    }
+
+    /* Vertices from `first` on take the lightmap under `at`, shaded by their
+     * normals so the form survives */
+    void light_from_below(size_t first, Vecf3 const& at)
+    {
+        auto light = light_below(at);
+        if(!light)
+        {
+            m_unlit_objects++;
+            return;
+        }
+        m_below_lit_objects++;
+        Vecf3 const key = glm::normalize(Vecf3{0.3f, 0.2f, 1.f});
+        for(size_t i = first; i < m_vertices.size(); i++)
+        {
+            auto&     v     = m_vertices[i];
+            f32 const shade = 0.55f + 0.6f * std::max(glm::dot(v.normal, key), 0.f);
+            for(u32 c = 0; c < 3; c++)
+                v.light[c] = static_cast<u8>(
+                    std::clamp((*light)[c] * shade * 255.f, 0.f, 255.f));
+            v.light[3] = 255;
+        }
     }
 
     /* Index into a region's permutations for a variant map, 0 when unset */
@@ -2027,16 +2147,20 @@ struct H2MapLoader : compo::SubsystemBase
                     lit_objects++;
                     break;
                 }
-            return append_model(
-                       map,
-                       pool,
-                       *mode_tag,
-                       transform,
-                       false,
-                       tag,
-                       lighting,
-                       bucket,
-                       &permutations) > 0;
+            size_t const first  = m_vertices.size();
+            bool const   placed = append_model(
+                                    map,
+                                    pool,
+                                    *mode_tag,
+                                    transform,
+                                    false,
+                                    tag,
+                                    lighting,
+                                    bucket,
+                                    &permutations) > 0;
+            if(placed && !lighting)
+                light_from_below(first, Vecf3(transform[3]));
+            return placed;
         };
 
         auto block = [&](auto const& placements_block,
@@ -2127,12 +2251,15 @@ struct H2MapLoader : compo::SubsystemBase
         }
         cDebug(
             "H2: {} of {} objects resolved to a cluster; {} contribute {} "
-            "collision triangles; {} lit per vertex; {} with a variant",
+            "collision triangles; {} lit per vertex, {} from the lightmap "
+            "below, {} unlit; {} with a variant",
             m_objects_clustered,
             m_objects_total,
             collision_objects,
             collision_triangles,
             lit_objects,
+            m_below_lit_objects,
+            m_unlit_objects,
             varied_objects);
     }
 
@@ -2563,6 +2690,9 @@ struct H2MapLoader : compo::SubsystemBase
     std::vector<std::unique_ptr<LightmapImage>>        m_lightmaps;
     std::vector<std::vector<LightBucket>>              m_buckets;        /* per BSP */
     std::vector<std::unordered_map<u32, SceneryLight>> m_scenery_lights; /* per BSP */
+    std::vector<LightTriangle>                         m_light_triangles;
+    u32 m_below_lit_objects{0}, m_unlit_objects{0};
+    std::unordered_map<u64, std::vector<u32>>          m_light_grid;
     LightmapAtlas                                      m_lightmap_atlas;
     std::set<std::string>                              m_unknown_passes;
     u32  m_objects_total{0}, m_objects_clustered{0};

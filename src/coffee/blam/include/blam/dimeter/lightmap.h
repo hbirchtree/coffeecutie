@@ -128,6 +128,31 @@ struct alignas(4) scenery_object_info_t
 
 static_assert(sizeof(scenery_object_info_t) == 0xC);
 
+/*! Light at a sample point for objects: order-2 spherical harmonics per
+ * channel, and the dominant incoming direction */
+struct alignas(4) lighting_environment_t
+{
+    Vecf3              sample_point;
+    std::array<f32, 9> red;
+    std::array<f32, 9> green;
+    std::array<f32, 9> blue;
+    Vecf3              mean_direction;
+    Vecf3              intensity;
+    i32                specular_bitmap;
+    Vecf3              rotation_axis;
+    f32                rotation_speed;
+    Vecf3              bump_direction;
+    Vecf3              tint;
+    u16                procedural_override;
+    u16                flags; /* TODO: flags */
+    Vecf3              procedural_0;
+    Vecf3              procedural_1;
+    f32                procedural_w;
+};
+
+static_assert(offsetof(lighting_environment_t, mean_direction) == 0x78);
+static_assert(sizeof(lighting_environment_t) == 0xDC);
+
 struct alignas(4) group_t
 {
     u16                              type;  /* TODO: enumerate */
@@ -139,7 +164,7 @@ struct alignas(4) group_t
     bsp_block<cluster_t>             clusters;
     bsp_block<render_info_t>         cluster_render_info;
     bsp_block<cluster_t>             poop_definitions; /* instanced geometry */
-    bsp_block<u8>                    lighting_environments; /* elem 0xDC */
+    bsp_block<lighting_environment_t> lighting_environments;
     bsp_block<geometry_bucket_t>     geometry_buckets;
     bsp_block<render_info_t>         instance_render_info;
     bsp_block<bucket_ref_t>          instance_bucket_refs;

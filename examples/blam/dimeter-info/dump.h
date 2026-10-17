@@ -618,6 +618,25 @@ inline void dump_ltmp(
             count(g.instance_render_info),
             count(g.lighting_environments),
             count(g.geometry_buckets));
+        if(auto envs = g.lighting_environments.data(magic); !envs.has_error())
+            for(auto const& [ei, e] : stl_types::enumerate(envs.value()))
+                if(ei < 3)
+                    fmt::print(
+                        "    environment {} at ({}, {}, {}) sh0 rgb ({}, {}, {}) "
+                        "direction ({}, {}, {}) intensity ({}, {}, {})\n",
+                        ei,
+                        from_le(e.sample_point[0]),
+                        from_le(e.sample_point[1]),
+                        from_le(e.sample_point[2]),
+                        from_le(e.red[0]),
+                        from_le(e.green[0]),
+                        from_le(e.blue[0]),
+                        from_le(e.mean_direction[0]),
+                        from_le(e.mean_direction[1]),
+                        from_le(e.mean_direction[2]),
+                        from_le(e.intensity[0]),
+                        from_le(e.intensity[1]),
+                        from_le(e.intensity[2]));
         if(auto palettes = g.section_palette.data(magic);
            !palettes.has_error())
             for(auto const& [pi, pal] : stl_types::enumerate(palettes.value()))
