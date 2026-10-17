@@ -1210,6 +1210,7 @@ struct options_t
     std::string collision_obj;
     std::string cluster_at;
     bool        scripts{false};
+    bool        anim_check{false};
     std::string lightmap_dir;
     std::string extract_dir;
     u32         limit{10};
@@ -1565,6 +1566,15 @@ int run_map(
             });
     }
 
+    if(options.anim_check)
+    {
+        dimeter_info::anim_check_t check;
+        for(auto const& tag : map.tags())
+            if(tag.matches("jmad"))
+                dimeter_info::check_jmad(map, pool, tag, check);
+        dimeter_info::print_anim_check(check);
+    }
+
     if(options.scenario)
         if(auto const* scnr = map.scenario())
             dimeter_info::dump_any(map, *scnr);
@@ -1724,6 +1734,8 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("hex", "Hex dump the raw data of matching tags")
         //
+        ("anim-check", "Decode every animation and report per codec")
+        //
         ("font",
          "Dump a Halo 2 font file (fonts/<name>) instead of a map",
          cxxopts::value<std::string>())
@@ -1775,7 +1787,8 @@ i32 coffee_main(i32, cstring_w*)
             arguments.as_optional<std::string>("collision-obj").value_or(""),
         .cluster_at =
             arguments.as_optional<std::string>("cluster-at").value_or(""),
-        .scripts = arguments.count("scripts") > 0,
+        .scripts    = arguments.count("scripts") > 0,
+        .anim_check = arguments.count("anim-check") > 0,
         .lightmap_dir =
             arguments.as_optional<std::string>("dump-lightmaps").value_or(""),
         .extract_dir = arguments.as_optional<std::string>("extract").value_or(""),

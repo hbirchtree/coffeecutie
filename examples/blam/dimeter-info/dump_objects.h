@@ -411,8 +411,8 @@ inline void dump_object(h2::map_container<V> const& map, h2::tag_t const& tag)
             break;
         auto const& d = *reinterpret_cast<obj::device_t const*>(o);
         fmt::print(
-            "  device: flags={:#x} power transition={} s accel={} s position "
-            "transition={} s accel={} s depowered {} s / {} s delay={} s activation "
+            "  device: flags={:#x} power transition={}/s accel={}/s position "
+            "transition={}/s accel={}/s depowered {}/s / {}/s delay={} s activation "
             "radius={}\n    effects open {} close {} opened {} closed {} depowered {} "
             "repowered {} delay {}\n",
             from_le(d.device_flags),
