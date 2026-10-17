@@ -840,11 +840,12 @@ struct H2MapLoader : compo::SubsystemBase
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", map.name()));
         m_scene.loaded = true;
-        /* Halo 2's colours want no Halo 1 tonemap lift: shown as authored */
+        /* Halo 2's colours want no Halo 1 tonemap: shown as authored */
         auto& post       = m_container.subsystem_cast<PostProcessParameters>();
         post.exposure    = 1.f;
         post.gamma       = 1.f;
         post.auto_expose = false;
+        post.tonemap     = false;
 
         /* mainmenu.map brings the shell with it */
         std::vector<ShellFontFile> fonts;
