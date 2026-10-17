@@ -408,6 +408,55 @@ struct scenario_sky_t
 
 static_assert(sizeof(scenario_sky_t) == 0x14);
 
+/*! A zone set: which structure BSPs are loaded together */
+struct zone_set_t
+{
+    string_id name;
+    be<i32>   pvs;
+    be<u32>   flags;
+    be<u32>   bsps; /*!< One bit per structure BSP */
+    be<u32>   required_designer_zones;
+    be<u32>   forbidden_designer_zones;
+    be<u32>   cinematic_zones;
+    be<i32>   hint_previous;
+    be<i32>   audibility;
+};
+
+static_assert(sizeof(zone_set_t) == 0x24);
+
+/*! An oriented box: from position along forward, left and up by extents */
+struct trigger_volume_t
+{
+    string_id name;
+    be<i16>   object_name;
+    be<i16>   node;
+    string_id node_name;
+    be<Vecf3> forward;
+    be<Vecf3> up;
+    be<Vecf3> position;
+    be<Vecf3> extents;
+    be<f32>   unknown_0;
+    be<i16>   kill_trigger;
+    be<i16>   editor_folder;
+
+    /*! Whether `point` is inside */
+    bool contains(Vecf3 const& point) const;
+};
+
+static_assert(sizeof(trigger_volume_t) == 0x44);
+
+/*! Entering a trigger volume starts loading one zone set and switches to
+ * another */
+struct zone_set_switch_trigger_t
+{
+    be<u16> flags;
+    be<i16> begin_zone_set;
+    be<i16> trigger_volume;
+    be<i16> commit_zone_set;
+};
+
+static_assert(sizeof(zone_set_switch_trigger_t) == 0x8);
+
 struct scenario_t
 {
     static constexpr std::string_view group = "scnr";
@@ -416,7 +465,11 @@ struct scenario_t
     tag_block<scenario_bsp_t>        bsps;
     tag_reference                    structure_seams;
     tag_block<scenario_sky_t>        skies;
-    std::array<u8, 0x80>             unknown_1;
+    tag_block<std::array<u8, 0x2C>>  zone_set_pvs;
+    tag_block<std::array<u8, 0x64>>  zone_set_audibility;
+    tag_block<zone_set_t>            zone_sets;
+    tag_block<std::array<u8, 0xC>>   lighting_zone_sets;
+    std::array<u8, 0x50>             unknown_1;
     tag_block<scenery_placement_t>   scenery;
     tag_block<palette_entry_t>       scenery_palette;
     tag_block<biped_placement_t>     bipeds;
@@ -432,7 +485,10 @@ struct scenario_t
     tag_block<palette_entry_t>       machine_palette;
     std::array<u8, 0xFC>             unknown_6;
     tag_block<starting_location_t>   starting_locations;
-    std::array<u8, 0x2A4>            unknown_3;
+    tag_block<trigger_volume_t>      trigger_volumes;
+    std::array<u8, 0xC>              unknown_8;
+    tag_block<zone_set_switch_trigger_t> zone_set_switch_triggers;
+    std::array<u8, 0x280>            unknown_3;
     tag_block<camera_fx_palette_t>   camera_fx;
     std::array<u8, 0xD8>             unknown_4;
     tag_block<crate_placement_t>     crates;
@@ -449,7 +505,10 @@ static_assert(offsetof(scenario_t, bipeds) == 0xD4);
 static_assert(offsetof(scenario_t, vehicles) == 0xEC);
 static_assert(offsetof(scenario_t, weapons) == 0x11C);
 static_assert(offsetof(scenario_t, machines) == 0x140);
+static_assert(offsetof(scenario_t, zone_sets) == 0x54);
 static_assert(offsetof(scenario_t, starting_locations) == 0x254);
+static_assert(offsetof(scenario_t, trigger_volumes) == 0x260);
+static_assert(offsetof(scenario_t, zone_set_switch_triggers) == 0x278);
 static_assert(offsetof(scenario_t, crates) == 0x5E8);
 static_assert(offsetof(scenario_t, camera_fx) == 0x504);
 static_assert(offsetof(scenario_t, camera_effects) == 0x6B0);

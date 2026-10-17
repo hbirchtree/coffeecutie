@@ -50,6 +50,7 @@ struct options_t
     bool        objects;
     bool        nodes;
     bool        lights;
+    bool        zones;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -960,6 +961,44 @@ u32 write_collision(
     return polygons;
 }
 
+/* Zone sets, the BSPs each loads, and the triggers that switch them */
+int dump_zones(elegy::map_container const& map)
+{
+    auto const scenario = map.find<elegy::scenario_t>();
+    if(!scenario)
+        return 1;
+    auto bsps = map.span(scenario->bsps);
+    for(size_t i = 0; i < bsps.size(); i++)
+    {
+        auto const bsp = map.get<elegy::structure_bsp_t>(bsps[i].bsp);
+        fmt::print("bsp {}: {}\n", i, bsp ? map.name_of(*bsp.tag) : std::string_view("?"));
+    }
+    auto sets = map.span(scenario->zone_sets);
+    for(size_t i = 0; i < sets.size(); i++)
+        fmt::print("zone set {} '{}': bsps {:#x} flags {:#x}\n", i, map.string(sets[i].name), sets[i].bsps.value(),
+                   sets[i].flags.value());
+    auto volumes = map.span(scenario->trigger_volumes);
+    for(auto const& sw : map.span(scenario->zone_set_switch_triggers))
+    {
+        i16 const v = sw.trigger_volume;
+        if(v < 0 || static_cast<size_t>(v) >= volumes.size())
+            continue;
+        auto const& tv = volumes[static_cast<size_t>(v)];
+        Vecf3       p = tv.position, e = tv.extents, f = tv.forward, u = tv.up;
+        Vecf3 const center = p + f * (e.x * .5f) + glm::cross(u, f) * (e.y * .5f) + u * (e.z * .5f);
+        fmt::print("switch '{}': begin {} commit {} flags {:#x}, at ({:.1f}, {:.1f}, {:.1f}) extents ({:.1f}, {:.1f}, "
+                   "{:.1f}) forward ({:.2f}, {:.2f}, {:.2f}) up ({:.2f}, {:.2f}, {:.2f}) center ({:.1f}, {:.1f}, {:.1f})\n",
+                   map.string(tv.name), sw.begin_zone_set.value(), sw.commit_zone_set.value(), sw.flags.value(), p.x,
+                   p.y, p.z, e.x, e.y, e.z, f.x, f.y, f.z, u.x, u.y, u.z, center.x, center.y, center.z);
+    }
+    for(auto const& start : map.span(scenario->starting_locations))
+    {
+        Vecf3 p = start.position;
+        fmt::print("start at ({:.1f}, {:.1f}, {:.1f}) bsp {}\n", p.x, p.y, p.z, start.bsp.value());
+    }
+    return 0;
+}
+
 /* Lights: their shape and the raw functions colour and intensity follow */
 int dump_lights(elegy::map_container const& map, options_t const& options)
 {
@@ -1423,6 +1462,8 @@ int run_map(
         rc |= dump_nodes(map, *loader, options);
     if(options.lights)
         rc |= dump_lights(map, options);
+    if(options.zones)
+        rc |= dump_zones(map);
     return rc;
 }
 
@@ -1460,6 +1501,8 @@ i32 coffee_main(i32, cstring_w*)
         ("nodes", "Check render model node hierarchies and biped poses")
         //
         ("lights", "List lights and the functions their colour and intensity follow")
+        //
+        ("zones", "List zone sets and the triggers switching between them")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1508,6 +1551,7 @@ i32 coffee_main(i32, cstring_w*)
         .objects      = arguments.count("objects") > 0,
         .nodes        = arguments.count("nodes") > 0,
         .lights       = arguments.count("lights") > 0,
+        .zones        = arguments.count("zones") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),
