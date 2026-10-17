@@ -61,6 +61,9 @@ layout(location=84) uniform vec4 layer_detail_curve;
 layout(location=2, binding=0) uniform sampler2D diffuse;
 /* alpha_test simple (2): its own map, at base uv * ratio */
 layout(location=147, binding=5) uniform sampler2D alpha_test_map;
+/* The second nearest cubemap, blended in by env_dynamic_blend */
+layout(location=192, binding=6) uniform samplerCube env_dynamic2;
+layout(location=193) uniform float env_dynamic_blend;
 layout(location=148) uniform vec2 alpha_test_ratio;
 #if H3_DETAIL >= 1
 layout(location=9, binding=1) uniform sampler2D detail;
@@ -334,8 +337,8 @@ vec3 material_specular(
         vec3 reflection;
         if(env_mode == 1)
         {
-            vec4 c     = texture(env_dynamic, dir);
-            reflection = c.rgb * c.a * 256.0;
+            vec4 a     = texture(env_dynamic, dir), b = texture(env_dynamic2, dir);
+            reflection = mix(a.rgb * a.a, b.rgb * b.a, env_dynamic_blend) * 256.0;
         } else
         {
             vec4 c     = texture(env_map, dir);
