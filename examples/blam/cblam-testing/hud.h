@@ -46,6 +46,11 @@ struct HudScene : compo::SubsystemBase
 
     std::vector<view_t> views;
 
+    /* Over every view: a cutscene's fade, and its letterbox bars as a
+     * fraction of the height each */
+    Vecf4 fade{0.f};
+    f32   letterbox{0.f};
+
     /* The map load it was built for; its tag pointers are from that map */
     u32 generation{0};
 };

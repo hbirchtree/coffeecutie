@@ -1,6 +1,7 @@
 #include "hud.h"
 
 #include "blam_files.h"
+#include "cinematic.h"
 #include "components.h"
 #include "selected_version.h"
 
@@ -21,7 +22,11 @@ using HudManifest = compo::SubsystemManifest<
         const NetworkInfo,
         const BipedEquipment,
         const BipedStatus>,
-    type_list_t<HudScene, const BlamFiles<halo_version>, const LoadingStatus>,
+    type_list_t<
+        HudScene,
+        CinematicState,
+        const BlamFiles<halo_version>,
+        const LoadingStatus>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 
 namespace {
@@ -403,10 +408,21 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
 
     /* ---- Frame ---- */
 
-    void start_restricted(Proxy& p, time_point const&)
+    void start_restricted(Proxy& p, time_point const& t)
     {
         auto& scene = p.template subsystem<HudScene>();
         scene.views.clear();
+
+        /* Cutscenes cover it all */
+        auto& cinematic = p.template subsystem<CinematicState>();
+        f32 const dt    = m_last != time_point{} ? std::chrono::duration<f32>(t - m_last).count() : 0.f;
+        m_last          = t;
+        cinematic.fade.elapsed += dt;
+        scene.fade = Vecf4(cinematic.fade.color, cinematic.fade.opacity());
+        scene.letterbox = glm::clamp(
+            scene.letterbox + (cinematic.letterbox ? dt : -dt) / letterbox_seconds * letterbox_height,
+            0.f,
+            letterbox_height);
         auto const& files   = p.template subsystem<BlamFiles<halo_version>>();
         auto const& loading = p.template subsystem<LoadingStatus>();
         if(loading.loaded_map != LoadingStatus::loaded ||
@@ -445,8 +461,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto const* net    = p.template get<NetworkInfo>(id);
             auto const* equip  = p.template get<BipedEquipment>(id);
             auto const* status = p.template get<BipedStatus>(id);
-            if(!info || !cam || !net || !equip || !status ||
-               !biped_in_play(*info, *cam, *net) || !info->mode.physics)
+            if(!info || !cam || !net || !equip || !status || !cinematic.show_hud ||
+               cam->cinematic || !biped_in_play(*info, *cam, *net) || !info->mode.physics)
                 continue;
             m_view  = &out;
             m_width = out.width;
@@ -541,6 +557,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     }
 
     static constexpr u32 max_child_depth  = 4;
+    /* Bars of a letterbox, and how long they take to come in */
+    static constexpr f32 letterbox_height  = .125f;
+    static constexpr f32 letterbox_seconds = .5f;
+    time_point           m_last{};
     static constexpr f32 low_ammo_fraction = .25f;
 
     blam::map_ptr const*                 m_magic{nullptr};

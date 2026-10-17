@@ -1129,6 +1129,12 @@ struct PhysicsSystem
                                   ? physics.mass_points->center_of_mass
                                   : Vecf3{};
             auto existing = m_object_bodies.find(id);
+            if(std::exchange(physics.teleported, false) && existing != m_object_bodies.end())
+            {
+                remove_body(id);
+                m_object_bodies.erase(existing);
+                existing = m_object_bodies.end();
+            }
             if(existing == m_object_bodies.end() ||
                existing->second != physics.authority)
             {

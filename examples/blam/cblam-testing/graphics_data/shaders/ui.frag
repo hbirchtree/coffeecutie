@@ -39,6 +39,7 @@ const uint TEX_ETC2_RGBA = 14u;
 
 const uint USE_ALPHA = 1u;
 const uint METER     = 2u;
+const uint SOLID     = 4u;
 
 vec4 unpack_rgba8(uint v)
 {
@@ -97,7 +98,9 @@ void main()
     uint source = elements.instances[frag.element_id].texture_source.x >> 24;
     uvec4 extra = elements.instances[frag.element_id].extra;
     vec4 color = elements.instances[frag.element_id].color;
-    if(source == TEX_FONT)
+    if((extra.x & SOLID) != 0u)
+        out_color = color;
+    else if(source == TEX_FONT)
         out_color = background_color;
     /* Lit where the texel's alpha ramp is under the fill; the shape is in
      * its color channels */

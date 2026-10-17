@@ -783,6 +783,7 @@ struct ObjectPhysics
     Vecf3 angular_velocity{};
     bool  sleeping{false};
     bool  grounded{false}; /*!< Upright bodies: world geometry just under it */
+    bool  teleported{false}; /*!< Moved by hand: the body starts over there */
 
     /*! Vehicles, as of the last physics step */
     struct vehicle_t
