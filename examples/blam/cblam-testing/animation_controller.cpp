@@ -91,6 +91,7 @@ struct AnimationController
             animate_vehicles(p, dt);
         }
         animate_first_person(p, files);
+        animate_faces(p);
         end_actions(p);
 
         auto& cache = p.template subsystem<ModelCache<halo_version>>();
@@ -769,6 +770,43 @@ struct AnimationController
             col += yaw / bounds.right_yaw_per_frame;
         layer.cell   = {col, row};
         layer.weight = weight;
+    }
+
+    /* Talking opens the mouth as far as the line says; emotions hold a
+     * frame of their own overlay */
+    void animate_faces(Proxy& p)
+    {
+        for(auto ent : p.template select<AnimationPlayback>())
+        {
+            auto& anim = ent.template get<AnimationPlayback>();
+            if(!anim.graph)
+                continue;
+            auto const& st    = stance(p, anim.graph, "stand", unarmed);
+            auto        frame = [&](u32 slot, i32 clip, f32 time, f32 weight) {
+                auto& layer = anim.layers[slot];
+                if(clip < 0 || weight <= 0.f)
+                {
+                    if(layer.graph)
+                        anim.stop(slot);
+                    return;
+                }
+                if(layer.graph != anim.graph || layer.animation != static_cast<u32>(clip))
+                    layer = AnimationLayer{
+                        .graph     = anim.graph,
+                        .animation = static_cast<u32>(clip),
+                        .loop      = false,
+                        .paused    = true,
+                    };
+                layer.time   = time;
+                layer.weight = weight;
+            };
+            frame(AnimationPlayback::talk_slot, st[UnitSlot::talk], 0.f, anim.mouth);
+            frame(
+                AnimationPlayback::emotion_slot,
+                st[UnitSlot::emotions],
+                std::max<f32>(anim.emotion, 0.f) / 30.f,
+                anim.emotion >= 0 ? 1.f : 0.f);
+        }
     }
 
     /* A custom base animation holds the unit's own movement off */

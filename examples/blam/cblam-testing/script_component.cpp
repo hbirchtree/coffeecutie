@@ -35,6 +35,7 @@
 
 using libc_types::f32;
 using libc_types::u32;
+using libc_types::u8;
 using type_safety::empty_list_t;
 using type_safety::type_list_t;
 
@@ -48,7 +49,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
         const PlayerInput,
         const NetworkInfo,
         const CameraLerp,
-        const AnimationPlayback,
+        AnimationPlayback,
         Model,
         ObjectPhysics>,
     type_list_t<
@@ -119,6 +120,7 @@ struct BlamScript
         m_tests = {};
         m_loops.clear();
         m_impulses.clear();
+        m_speakers.clear();
         m_riders.clear();
         m_attached.clear();
         m_hovering.clear();
@@ -182,6 +184,7 @@ struct BlamScript
             play_recordings(p);
             play_custom(p);
             send_walks(p);
+            move_mouths(p);
             place_riders(p);
         }
         /* Every frame, so props follow the animated hands holding them */
@@ -509,9 +512,20 @@ struct BlamScript
             return {};
 
         /* Sounds: an object's, or at the listener without one */
-        case op::sound_impulse_start:
-            play(p, arg(0), objects_of(p, arg(1)), false);
+        case op::sound_impulse_start: {
+            auto const on = objects_of(p, arg(1));
+            play(p, arg(0), on, false);
             m_impulses[static_cast<u32>(arg(0).integer)] = m_vm.now();
+            /* A unit says it: its mouth follows the line */
+            if(!on.empty() && p.template get<AnimationPlayback>(on.front()))
+                m_speakers[on.front()] = {.mouth = mouth_of(p, arg(0)), .from = m_vm.now()};
+            return {};
+        }
+        case op::unit_set_emotion:
+            with_objects(p, arg(0), [emotion = static_cast<i16>(arg(1).as_real())](Proxy& p, u64 id) {
+                if(auto* anim = p.template get<AnimationPlayback>(id))
+                    anim->emotion = emotion;
+            });
             return {};
         case op::sound_impulse_time: {
             /* What is left of it, 0 once played out or never started */
@@ -831,6 +845,17 @@ struct BlamScript
         return &(*tag);
     }
 
+    bool unspatialized(value_t const& v) const
+    {
+        using sound_t   = blam::sound::sound;
+        auto const* tag = sound_tag(v);
+        if(!tag || !tag->matches(blam::tag_class_t::snd))
+            return false;
+        auto sound = tag->template data<sound_t>(m_magic);
+        return sound.has_value() &&
+               sound.value()->type == sound_t::scripted_dialog_force_unspatialized;
+    }
+
     /* A looping sound that repeats until stopped, not one played through */
     bool loops(value_t const& v) const
     {
@@ -854,7 +879,8 @@ struct BlamScript
         auto const* tag    = sound_tag(sound);
         if(!sounds || !tag)
             return;
-        auto const* model = on.empty() ? nullptr : p.template get<Model>(on.front());
+        auto const* model = on.empty() || unspatialized(sound) ? nullptr
+                                                               : p.template get<Model>(on.front());
         SoundEvent  ev{
              .type      = SoundEvent::play_sound,
              .entity_id = looping ? loop_id(sound) : script_impulse_base | m_next_impulse++,
@@ -901,6 +927,55 @@ struct BlamScript
             i = chunk.next_permutation_idx;
         }
         return seconds;
+    }
+
+    /* Mouth openness of a line, a byte per tick across its chunks */
+    std::vector<u8> mouth_of(Proxy& p, value_t const& v) const
+    {
+        using sound_t     = blam::sound::sound;
+        auto const* tag   = sound_tag(v);
+        auto const& index = p.template subsystem<SoundCache<halo_version>>().index;
+        std::vector<u8> out;
+        if(!tag || !tag->matches(blam::tag_class_t::snd))
+            return out;
+        auto sound = tag->template data<sound_t>(m_magic);
+        if(!sound.has_value())
+            return out;
+        auto ranges = index.deref(*tag, sound.value()->pitch_ranges_);
+        if(!ranges.has_value() || ranges.value().empty())
+            return out;
+        auto perms = index.deref(*tag, ranges.value()[0].permutations_);
+        if(!perms.has_value())
+            return out;
+        for(i32 i = 0, guard = 0; i >= 0 && static_cast<size_t>(i) < perms.value().size() &&
+                                  guard < 256;
+            guard++)
+        {
+            auto const& chunk = perms.value()[i];
+            if(auto bytes = chunk.mouth_data().data(m_magic); bytes.has_value())
+                out.insert(out.end(), bytes.value().begin(), bytes.value().end());
+            i = chunk.next_permutation_idx;
+        }
+        return out;
+    }
+
+    /* A tick of each speaker's mouth */
+    void move_mouths(Proxy& p)
+    {
+        for(auto it = m_speakers.begin(); it != m_speakers.end();)
+        {
+            auto*      anim = p.template get<AnimationPlayback>(it->first);
+            auto const at   = static_cast<size_t>(m_vm.now() - it->second.from);
+            if(!anim || at >= it->second.mouth.size())
+            {
+                if(anim)
+                    anim->mouth = 0.f;
+                it = m_speakers.erase(it);
+                continue;
+            }
+            anim->mouth = it->second.mouth[at] / 255.f;
+            ++it;
+        }
     }
 
     /* ---- Seats ---- */
@@ -1694,6 +1769,12 @@ struct BlamScript
     std::set<u64>                           m_hovering;
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, Vecf3>                    m_walking;
+    struct speaker_t
+    {
+        std::vector<u8> mouth;
+        libc_types::i64 from{0};
+    };
+    std::map<u64, speaker_t> m_speakers;
     std::set<u32>                           m_despawning;
     std::set<u32>                           m_recreate;
     std::map<blam::antr::header const*, Vecf2> m_walk_speeds;

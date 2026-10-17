@@ -68,13 +68,19 @@ struct AnimationPlayback
         aim_move_slot = 6,
         overlay_slot  = 7, /* fire, gestures */
         lean_slot     = 8, /* riders: front-back, left-right, up-down */
-        max_layers    = 11,
+        talk_slot     = 11,
+        emotion_slot  = 12,
+        max_layers    = 13,
     };
 
     std::array<AnimationLayer, max_layers> layers{};
 
     /* The entity's own graph, which names in play requests refer to */
     blam::antr::header const* graph{nullptr};
+
+    /* Faces: how open the mouth is (0-1), and the emotion frame shown */
+    libc_types::f32 mouth{0.f};
+    libc_types::i16 emotion{-1};
 
     /* Feet that came down during the last advance (the antr foot frames) */
     enum footstep_t : libc_types::u8
