@@ -75,6 +75,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             return;
 
         auto& resources = p.template subsystem<BlamResources>();
+        ensure_depth_sampler(resources);
+        Matf4 const inverse_camera = glm::inverse(camera->matrix);
+        Vecf2 const viewport{resources.offscreen_size};
         /* Below the horizon, where the sky model ends */
         resources.offscreen->clear(Vecf4(scene.sky_clear, 1.f));
         size_t draws_total = 0, draws_visible = 0;
@@ -158,6 +161,11 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Vecf4 const>{
                         {"env_glancing"},
                         semantic::SpanOne<const Vecf4>(mat.env_glancing)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"inverse_camera"},
+                        semantic::SpanOne<const Matf4>(inverse_camera)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"viewport_size"}, semantic::SpanOne<const Vecf2>(viewport)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
                         semantic::SpanOne<const Vecf3>(mat.illum_color)},
@@ -220,6 +228,11 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         typing::graphics::ShaderStage::Fragment,
                         {"env", 7},
                         mat.env_sampler ? mat.env_sampler : m_black_cube_sampler,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"scene_depth", 8},
+                        m_depth_sampler,
                     });
                 auto submit = [&](std::vector<gfx::draw_command::data_t> const& data) {
                     auto res = m_api->submit(
@@ -318,14 +331,6 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             return;
         m_flare_buf->commit(
             Span<const FlareVertex>(m_flare_vertices.data(), m_flare_vertices.size()));
-        if(m_depth_source != resources.depth)
-        {
-            m_depth_source  = resources.depth;
-            m_depth_sampler = resources.depth->sampler();
-            m_depth_sampler->alloc();
-            m_depth_sampler->set_filtering(
-                typing::Filtering::Nearest, typing::Filtering::Nearest);
-        }
         for(size_t i = 0; i < m_flare_samplers.size(); i++)
             m_api->submit(
                 gfx::draw_command{
@@ -365,6 +370,18 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_flare_vertices.clear();
         m_flare_samplers.clear();
         m_flare_light.clear();
+    }
+
+    /* The offscreen depth, read by the flares and the water */
+    void ensure_depth_sampler(BlamResources const& resources)
+    {
+        if(m_depth_source == resources.depth)
+            return;
+        m_depth_source  = resources.depth;
+        m_depth_sampler = resources.depth->sampler();
+        m_depth_sampler->alloc();
+        m_depth_sampler->set_filtering(
+            typing::Filtering::Nearest, typing::Filtering::Nearest);
     }
 
     void ensure_gpu()
