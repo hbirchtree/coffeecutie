@@ -1,6 +1,7 @@
 #include "h2_scene.h"
 
 #include "data.h"
+#include "render/cascaded_shadows.h"
 #include "resource_creation.h"
 
 #include <coffee/components/proxy.h>
@@ -90,6 +91,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Vecf3 const sun_color =
             scene.sky_flares.empty() ? Vecf3{0.f} : scene.sky_flares[0].color;
         Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
+        draw_shadows(p, scene, *camera, sun_direction);
+        auto const& csm = m_shadows.sampling;
         /* Below the horizon, where the sky model ends */
         resources.offscreen->clear(Vecf4(scene.sky_clear, 1.f));
         size_t draws_total = 0, draws_visible = 0;
@@ -209,7 +212,13 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Vecf4>(vis.planar_fog.color)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"planar_fog_opaque"},
-                        semantic::SpanOne<const Vecf2>(vis.planar_fog.opaque)});
+                        semantic::SpanOne<const Vecf2>(vis.planar_fog.opaque)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"csm_matrices"}, semantic::Span<const Matf4>(csm.matrices)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"csm_texel"}, semantic::SpanOne<const Vecf4>(csm.texel)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"csm_params"}, semantic::SpanOne<const Vecf4>(csm.params)});
                 auto lm_sampler = scene.lightmap_sampler
                                       ? scene.lightmap_sampler
                                       : m_no_lightmaps_sampler;
@@ -259,6 +268,11 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         typing::graphics::ShaderStage::Fragment,
                         {"scene_depth", 8},
                         m_depth_sampler,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"csm_atlas", 9},
+                        m_shadows.sampler(),
                     });
                 auto submit = [&](std::vector<gfx::draw_command::data_t> const& data) {
                     auto res = m_api->submit(
@@ -314,6 +328,56 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     }
 
   private:
+    /* Moving objects cast into each cascade; the BSP and static scenery
+     * have theirs baked into the lightmaps */
+    void draw_shadows(
+        Proxy& p, H2Scene const& scene, PlayerCamera const& camera, Vecf3 const& to_light)
+    {
+        m_shadows.update(
+            blam_render::CascadedShadowMap::frustum_from(
+                glm::inverse(camera.matrix), camera.camera.position),
+            to_light);
+        m_shadows.clear();
+        m_casters.clear();
+        for(auto const& mat : scene.materials)
+        {
+            if(mat.sky || mat.water || mat.ocean || mat.additive || mat.blended)
+                continue;
+            for(auto const& d : mat.section_draws)
+            {
+                auto idx = static_cast<size_t>(d.tag.object);
+                if(d.tag.object < 0 || idx >= scene.moving_objects.size())
+                    continue;
+                if(auto const* model = p.template get<Model>(scene.moving_objects[idx]))
+                    m_casters.push_back({d.cmd, model->transform});
+            }
+        }
+        for(u32 i = 0; i < m_shadows.cascades(); i++)
+            for(auto const& [cmd, model] : m_casters)
+            {
+                m_single.assign(1, cmd);
+                m_api->submit(
+                    {
+                        .program       = m_shadow_program,
+                        .vertices      = m_vao,
+                        .render_target = m_shadows.target(),
+                        .call          = {.indexed = true, .instanced = true},
+                        .data          = m_single,
+                    },
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Vertex,
+                        gfx::uniform_pair<Matf4 const>{
+                            {"light"},
+                            semantic::SpanOne<const Matf4>(m_shadows.light_matrix(i))},
+                        gfx::uniform_pair<Matf4 const>{
+                            {"model"}, semantic::SpanOne<const Matf4>(model)}),
+                    gfx::view_state{
+                        .view  = m_shadows.viewport(i),
+                        .depth = gfx::depth_state{},
+                    });
+            }
+    }
+
     struct FlareVertex
     {
         Vecf2 position;
@@ -528,6 +592,15 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_flare_buf->alloc();
         m_flare_vao->set_buffer(gfx::buffers::vertex, m_flare_buf, 0);
 
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "shadow_depth",
+                .fragment_file = "shadow_depth",
+                .shader        = m_shadow_program,
+            });
+        m_shadows.alloc(api, {});
+
         for(size_t i = 0; i < m_programs.size(); i++)
             create_program(
                 api,
@@ -566,6 +639,10 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     std::vector<Vecf2>                           m_flare_light;
     std::shared_ptr<gfx::texture_2d_t>           m_depth_source;
     std::shared_ptr<gfx::sampler_t>              m_depth_sampler;
+
+    blam_render::CascadedShadowMap  m_shadows;
+    std::shared_ptr<gfx::program_t> m_shadow_program;
+    std::vector<std::pair<gfx::draw_command::data_t, Matf4>> m_casters;
 };
 
 void alloc_h2_renderer(compo::EntityContainer& e)
