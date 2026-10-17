@@ -1099,7 +1099,7 @@ void print_physics(elegy::map_container const& map, elegy::tag_reference const& 
         {
             auto const* material = phmo->material(magic, hull.material);
             auto const* global =
-                material && globals ? globals->material(magic, material->global_material) : nullptr;
+                material && globals ? globals->material(magic, material->global_name()) : nullptr;
             Vecf3 lo(1e9f), hi(-1e9f);
             for(auto const& p : hull.points)
                 lo = glm::min(lo, p), hi = glm::max(hi, p);
@@ -1113,7 +1113,7 @@ void print_physics(elegy::map_container const& map, elegy::tag_reference const& 
                 hull.restitution,
                 hull.mass,
                 material ? map.string(material->name) : "?",
-                material ? map.string(material->global_material) : "?",
+                material ? map.string(material->global_name()) : "?",
                 global ? global->friction.value() : -1.f,
                 global ? global->restitution.value() : -1.f,
                 global ? global->density.value() : -1.f);

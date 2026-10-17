@@ -239,6 +239,12 @@ struct material_t
     be<i16>   phantom_type;
     u8        proxy_collision_group;
     u8        collision_group;
+
+    /*! The global material it is made of; its own name when none is given */
+    inline string_id global_name() const
+    {
+        return global_material.valid() ? global_material : name;
+    }
 };
 
 static_assert(sizeof(material_t) == 0xC);
