@@ -22,6 +22,11 @@
 #define H2_PLASMA 0
 #endif
 
+#include "render_flags.glsl"
+
+/* Debug views from RenderingParameters */
+layout(location=55) uniform int render_flags;
+
 layout(location=0) in vec3 f_world_pos;
 layout(location=1) in vec2 f_texcoord;
 layout(location=2) in vec3 f_normal;
@@ -95,6 +100,8 @@ layout(location=27) uniform vec2 planar_fog_opaque;
 
 vec3 fogged(vec3 color)
 {
+    if((render_flags & RENDER_FLAG_FOG) == 0)
+        return color;
     float d = distance(fog_eye, f_world_pos);
     float f = clamp((d - fog_range.x) / max(fog_range.y - fog_range.x, 1e-3), 0.0, 1.0);
     color = mix(color, fog_color.rgb, f * fog_color.a);
@@ -213,6 +220,18 @@ void main()
     if(alpha_test != 0 && base.a < 0.5)
         discard;
     vec3 color = base.rgb;
+    if((render_flags & RENDER_FLAG_ONLY_DIFFUSE) != 0)
+    {
+        out_color = vec4(color, 1.0);
+        return;
+    }
+#if H2_DETAIL >= 1
+    if((render_flags & RENDER_FLAG_ONLY_DETAIL) != 0)
+    {
+        out_color = vec4(texture(detail, f_detail_uv).rgb, 1.0);
+        return;
+    }
+#endif
 #if H2_CLOUDS
     vec4 m = texture(mask, f_mask_uv);
     out_color = vec4(fogged(color * m.rgb), base.a * m.a);
@@ -237,14 +256,34 @@ void main()
      * baked light has no direction, so the bump shades relative to the sun */
     vec3 normal = surface_normal();
     vec3 shading_normal = bumped != 0 ? bumped_normal(normal) : normal;
+    if((render_flags & RENDER_FLAG_ONLY_NORMALS) != 0)
+    {
+        out_color = vec4(normal * 0.5 + 0.5, 1.0);
+        return;
+    }
+    if((render_flags & RENDER_FLAG_ONLY_NORMALMAP) != 0)
+    {
+        out_color = vec4(shading_normal * 0.5 + 0.5, 1.0);
+        return;
+    }
     float bump_shade = sun_shade(shading_normal) / sun_shade(normal);
-    vec3 light = f_lightmap.z >= 0.0 ? texture(lightmaps, f_lightmap).rgb * 2.0
+    vec3 light = (render_flags & RENDER_FLAG_LIGHTMAP) == 0 ? vec3(1.0)
+               : f_lightmap.z >= 0.0 ? texture(lightmaps, f_lightmap).rgb * 2.0
                : f_vertex_light.a > 0.0 ? f_vertex_light.rgb * 2.0
                : vec3(sun_shade(normal));
     light *= cascade_shadow(f_world_pos, normal, sun_direction, camera_position);
+    if((render_flags & RENDER_FLAG_ONLY_LIGHTMAP) != 0)
+    {
+        out_color = vec4(light, 1.0);
+        return;
+    }
     color *= light * bump_shade;
+    bool only_env = (render_flags & RENDER_FLAG_ONLY_REFLECTIONS) != 0;
+    if(only_env)
+        color = vec3(0.0);
     /* Reflection masked by the base map's alpha, lit like the surface */
-    if(env_facing.a + env_glancing.a > 0.0)
+    if((render_flags & RENDER_FLAG_REFLECTION) != 0 &&
+       env_facing.a + env_glancing.a > 0.0)
     {
         vec3 v = normalize(camera_position - f_world_pos);
         vec3 r = reflect(-v, shading_normal);
@@ -254,9 +293,10 @@ void main()
                  base.a * light;
     }
 #if H2_ILLUM
-    color += texture(illum, f_illum_uv).rgb * illum_color;
+    if(!only_env)
+        color += texture(illum, f_illum_uv).rgb * illum_color;
 #endif
-    color = fogged(color);
+    color = only_env ? color : fogged(color);
     float alpha = 1.0;
 #endif
     out_color = vec4(color, alpha);
