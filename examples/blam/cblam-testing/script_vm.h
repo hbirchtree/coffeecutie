@@ -35,6 +35,7 @@ struct value_t
     i32              integer{0};
     u32              name{0}; /* literals: where their source text is */
     std::vector<u64> objects;
+    std::vector<u32> pending; /* net ids of objects still being spawned */
 
     static value_t of(type_t type)
     {
