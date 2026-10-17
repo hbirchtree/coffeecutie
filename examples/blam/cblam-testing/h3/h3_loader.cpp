@@ -752,7 +752,8 @@ struct H3MapLoader : compo::SubsystemBase
                 auto        physics  = physics_of(entry->object, scale);
                 if(!physics)
                 {
-                    append_model(model, object.transform(), lit);
+                    auto const skin = stored_pose(*model, object);
+                    append_model(model, object.transform(), lit, 0, Quatf(1.f, 0.f, 0.f, 0.f), skin);
                     fixed++;
                     continue;
                 }
@@ -775,6 +776,19 @@ struct H3MapLoader : compo::SubsystemBase
         place(scnr.weapons, scnr.weapon_palette, true);
         place(scnr.equipment, scnr.equipment_palette, true);
         cDebug("H3: objects: {} moving, {} fixed in place, {} editor-only or modelless", moving, fixed, hidden);
+    }
+
+    /* Skinning matrices for a placement posed by stored node orientations
+     * (corpses), none when it stands in the default pose */
+    std::vector<Matf4> stored_pose(el::render_model_t const& model, el::object_placement_t const& object) const
+    {
+        auto const stored = m_map->span(object.node_orientations);
+        if(stored.empty() ||
+           !enum_helpers::feval(object.placement_flags.value(), el::placement_flags_t::store_orientations))
+            return {};
+        auto pose = el::default_pose(*m_map, model);
+        el::apply_orientations(*m_map, stored[0], pose);
+        return el::skinning_matrices(*m_map, model, pose);
     }
 
     /* An object's physics model as one body (el::phys::body_of), scaled; flat
@@ -829,7 +843,8 @@ struct H3MapLoader : compo::SubsystemBase
         Matf4 const&                          transform,
         el::vertex_light_t const*             light,
         u64                                   entity         = 0,
-        Quatf const&                          light_rotation = Quatf(1.f, 0.f, 0.f, 0.f))
+        Quatf const&                          light_rotation = Quatf(1.f, 0.f, 0.f, 0.f),
+        Span<Matf4 const>                     skin           = {})
     {
         auto const& map = *m_map;
         if(!model)
@@ -859,7 +874,8 @@ struct H3MapLoader : compo::SubsystemBase
                 {},
                 light,
                 entity,
-                light_rotation);
+                light_rotation,
+                skin);
         return emitted;
     }
 
@@ -898,7 +914,8 @@ struct H3MapLoader : compo::SubsystemBase
         std::vector<el::vertex_light_t> const& vertex_lights = {},
         el::vertex_light_t const*              object_light  = nullptr,
         u64                                    entity        = 0,
-        Quatf const&                           light_rotation = Quatf(1.f, 0.f, 0.f, 0.f))
+        Quatf const&                           light_rotation = Quatf(1.f, 0.f, 0.f, 0.f),
+        Span<Matf4 const>                      skin           = {})
     {
         auto magic   = m_map->magic();
         auto buffers = el::mesh_buffers::from(view, mesh);
@@ -910,6 +927,8 @@ struct H3MapLoader : compo::SubsystemBase
         auto normal = glm::mat3(glm::inverseTranspose(transform));
         bool const lit        = lightmap_uvs.size() == m_decoded.size();
         bool const vertex_lit = vertex_lights.size() == m_decoded.size() || object_light;
+        if(!skin.empty())
+            pose_vertices(mesh, skin);
         for(size_t i = 0; i < m_decoded.size(); i++)
         {
             auto const& v = m_decoded[i];
@@ -989,6 +1008,34 @@ struct H3MapLoader : compo::SubsystemBase
         for(auto const& part : parts)
             emit(part.material, part.index_start, part.index_count);
         return emitted;
+    }
+
+    /* Decoded vertices moved from the default pose by per-node matrices: a
+     * rigid mesh by its node's, skinned vertices by their weighted sum */
+    void pose_vertices(el::mesh_t const& mesh, Span<Matf4 const> skin)
+    {
+        using el::vertex_type_t;
+        auto const type  = mesh.vertex_type;
+        bool const rigid = type == vertex_type_t::rigid || type == vertex_type_t::flat_rigid;
+        bool const skinned = type == vertex_type_t::skinned || type == vertex_type_t::flat_skinned;
+        if(rigid && (mesh.rigid_node < 0 || static_cast<size_t>(mesh.rigid_node) >= skin.size()))
+            return;
+        for(auto& v : m_decoded)
+        {
+            Matf4 m(1.f);
+            if(rigid)
+                m = skin[static_cast<size_t>(mesh.rigid_node)];
+            else if(skinned)
+            {
+                m = Matf4(0.f);
+                for(int k = 0; k < 4; k++)
+                    if(v.weights[k] > 0.f && v.nodes[k] < skin.size())
+                        m += skin[v.nodes[k]] * v.weights[k];
+            } else
+                continue;
+            v.position = Vecf3(m * Vecf4(v.position, 1.f));
+            v.normal   = glm::normalize(glm::mat3(m) * v.normal);
+        }
     }
 
     /* Material slot for a render method, built on first use */
