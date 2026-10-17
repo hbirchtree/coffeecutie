@@ -94,6 +94,12 @@ layout(location=101, binding=11) uniform sampler2D material_map;
 layout(location=5) in vec2 f_illum_uv;
 layout(location=104) uniform int self_illum_mode;
 layout(location=120) uniform int black_point;
+/* environment_mapping: 0 none, 1 dynamic (env_dynamic, RGBM x256), 2
+ * per_pixel (env_map); env_tint rgb, contribution a */
+layout(location=124) uniform int env_mode;
+layout(location=125) uniform vec4 env_tint;
+layout(location=126, binding=15) uniform samplerCube env_dynamic;
+layout(location=127, binding=16) uniform samplerCube env_map;
 layout(location=105) uniform vec4 illum_color; /* rgb, intensity in a */
 layout(location=106) uniform vec4 illum_channels[3];
 layout(location=109) uniform vec2 illum_detail_ratio;
@@ -207,6 +213,7 @@ vec3 material_specular(
     vec3  v      = normalize(camera_position - f_world_pos);
     vec3  r      = 2.0 * dot(v, n) * n - v;
     float coeff  = spec_coefficients.x;
+    float env_contribution = env_tint.a;
     vec3  analytic, area;
     if(material_model == 1)
     {
@@ -221,10 +228,11 @@ vec3 material_specular(
         area = area_specular(light, r, tint);
     } else
     {
-        vec4 params = vec4(coeff, spec_lobe.y, 0.0, spec_lobe.x);
+        vec4 params = vec4(coeff, spec_lobe.y, env_tint.a, spec_lobe.x);
         if(spec_lobe.z > 0.5)
             params = texture(material_map, f_texcoord);
         coeff = params.r;
+        env_contribution = params.b;
         if(spec_lobe.z > 0.5)
             diffuse_scale = 1.0 - params.r;
         vec3 reflectance = mix(spec_tint0.rgb, albedo, params.g);
@@ -255,8 +263,27 @@ vec3 material_specular(
         analytic *= spec_tint1.rgb;
         area *= spec_tint1.rgb;
     }
+    /* calc_environment_map_*_ps: the reflection weighted by the area
+     * specular, so it follows the local light */
+    vec3 env = vec3(0.0);
+    if(env_mode != 0)
+    {
+        vec3 dir = vec3(r.x, -r.y, r.z);
+        vec3 reflection;
+        if(env_mode == 1)
+        {
+            vec4 c     = texture(env_dynamic, dir);
+            reflection = c.rgb * c.a * 256.0;
+        } else
+        {
+            vec4 c     = texture(env_map, dir);
+            reflection = c.rgb * c.a;
+        }
+        env = reflection * (env_contribution * mask * coeff) * env_tint.rgb * max(area, vec3(0.0));
+    }
     return mask * coeff *
-           (max(analytic, vec3(0.0)) * spec_coefficients.z + max(area * spec_coefficients.w, vec3(0.0)));
+               (max(analytic, vec3(0.0)) * spec_coefficients.z + max(area * spec_coefficients.w, vec3(0.0))) +
+           env;
 }
 #endif
 
