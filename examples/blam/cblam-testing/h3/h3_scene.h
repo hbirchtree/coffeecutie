@@ -243,6 +243,7 @@ struct H3Scene : compo::SubsystemBase
      * (atmosphere.fx); disabled when constant 1's w is negative */
     std::array<Vecf4, 7>                        atmosphere{Vecf4(0.f), Vecf4(0.f, 0.f, 0.f, -1.f)};
     std::vector<BakedLight>                     baked; /*!< Per loaded BSP */
+    Vecf3                                       sun_direction{0.f, 0.f, 1.f}; /*!< Towards it */
     std::vector<CubeTexture>                    cubemaps;
     std::vector<CubemapProbe>                   cubemap_probes;
     std::vector<DynamicLight>                   lights;

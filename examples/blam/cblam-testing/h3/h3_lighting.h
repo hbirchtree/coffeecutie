@@ -82,8 +82,13 @@ struct BakedLight
             return std::nullopt;
         if(height)
             *height = best;
-        u32  x     = std::min(static_cast<u32>(uv.x * size.x), size.x - 1);
-        u32  y     = std::min(static_cast<u32>(uv.y * size.y), size.y - 1);
+        return at(std::min(static_cast<u32>(uv.x * size.x), size.x - 1),
+                  std::min(static_cast<u32>(uv.y * size.y), size.y - 1));
+    }
+
+    /* One lightmap texel's light */
+    el::vertex_light_t at(u32 x, u32 y) const
+    {
         auto value = [&](u32 pair, f32 s) {
             auto  t0 = el::dxt5_texel(layers[pair * 2], size.x, x, y);
             auto  t1 = el::dxt5_texel(layers[pair * 2 + 1], size.x, x, y);
@@ -96,6 +101,26 @@ struct BakedLight
             .sh        = {value(0, scale.x), value(1, scale.y), value(2, scale.z), value(3, scale.w)},
             .intensity = value(4, intensity_scale),
         };
+    }
+
+    /*! The sun, as the dominant light of the brightest texels: weighted by
+     * their dominant intensity squared, so skylight and lamps barely count */
+    std::optional<Vecf3> sun() const
+    {
+        if(layers.size() != 10 || !size.x || !size.y)
+            return std::nullopt;
+        Vecf3 const lum{0.212656f, 0.715158f, 0.0721856f};
+        Vecf3       sum{0.f};
+        for(u32 y = 0; y < size.y; y += 8)
+            for(u32 x = 0; x < size.x; x += 8)
+            {
+                auto const light = at(x, y);
+                Vecf3      dir{-glm::dot(light.sh[3], lum), -glm::dot(light.sh[1], lum), glm::dot(light.sh[2], lum)};
+                f32 const  bright = glm::dot(light.intensity, lum);
+                if(glm::length(dir) > 1e-6f && bright > 0.f)
+                    sum += glm::normalize(dir) * bright * bright;
+            }
+        return glm::length(sum) > 1e-6f ? std::optional(glm::normalize(sum)) : std::nullopt;
     }
 };
 

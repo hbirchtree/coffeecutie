@@ -637,6 +637,16 @@ struct H3MapLoader : compo::SubsystemBase
         /* Exposure from the one the camera is in */
         i16 const here = holding >= 0 ? holding : first;
         upload_lightprobes();
+        /* Where the sun is, for cast shadows: from the brightest baked light */
+        {
+            Vecf3 sum{0.f};
+            for(auto const& bsp : m_scene.baked)
+                if(auto sun = bsp.sun())
+                    sum += *sun;
+            m_scene.sun_direction = glm::length(sum) > 1e-6f ? glm::normalize(sum) : Vecf3(0.f, 0.f, 1.f);
+        }
+        cDebug("H3: sun towards ({}, {}, {})", m_scene.sun_direction.x, m_scene.sun_direction.y,
+               m_scene.sun_direction.z);
         m_scene.exposure = exposure_at(scnr, here, eye);
         load_atmosphere();
         /* H3_EXPOSURE=<stops> overrides it, for comparing with captures */
