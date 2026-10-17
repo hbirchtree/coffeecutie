@@ -13,6 +13,18 @@ struct palette_entry_t
 
 static_assert(sizeof(palette_entry_t) == 0x30);
 
+enum class placement_flags_t : u32
+{
+    none              = 0x0,
+    not_automatically = 0x1, /*!< Created by script, not at load */
+    not_on_easy       = 0x2,
+    not_on_normal     = 0x4,
+    not_on_hard       = 0x8,
+    never_placed      = 0x40,
+    create_at_rest    = 0x100,
+};
+C_FLAGS(placement_flags_t, u32);
+
 /*!
  * \brief Head every object placement in the scenario shares (scenery,
  * machines, crates, ...). Rotation is yaw/pitch/roll in radians.
@@ -21,7 +33,7 @@ struct object_placement_t
 {
     block_index<palette_entry_t> palette;
     be<i16>                      name;
-    be<u32>                      placement_flags;
+    be<placement_flags_t>        placement_flags;
     be<Vecf3>                    position;
     be<Vecf3>                    rotation;
     be<f32>                      scale;
@@ -45,6 +57,14 @@ struct object_placement_t
     string_id                    variant;
     be<u32>                      active_change_colors;
     std::array<be<u32>, 4>       change_colors;
+
+    /*! Whether the level creates it when it loads */
+    inline bool placed_at_load() const
+    {
+        return !stl_types::any_flag_of(
+            placement_flags.value(),
+            placement_flags_t::not_automatically | placement_flags_t::never_placed);
+    }
 };
 
 static_assert(offsetof(object_placement_t, rotation) == 0x14);
@@ -60,6 +80,22 @@ struct scenery_placement_t
 };
 
 static_assert(sizeof(scenery_placement_t) == 0xB4);
+
+/*! Placements of other object types: the same head up to the variant, then
+ * their own fields. Machines diverge after 0x54. */
+template<size_t Size>
+struct placement_t
+{
+    object_placement_t                object;
+    std::array<u8, Size - sizeof(object_placement_t)> unknown_0;
+};
+
+using biped_placement_t     = placement_t<0x74>;
+using vehicle_placement_t   = placement_t<0xA8>;
+using equipment_placement_t = placement_t<0x8C>;
+using weapon_placement_t    = placement_t<0xA8>;
+using machine_placement_t   = placement_t<0x70>;
+using crate_placement_t     = placement_t<0xB0>;
 
 struct starting_location_t
 {
