@@ -85,6 +85,7 @@ struct GameEvent
         SimulationPause,
         PlayerTickInput,
         EquipWeapon,
+        CinematicCamera,
     };
 
     EventType type{None};
@@ -501,6 +502,20 @@ struct PlayerCameraLerpEvent
     Vecf3                     position{};
     std::optional<Quatf>      rotation{};
     std::chrono::milliseconds duration{};
+    /*! Moves the cutscene camera rather than the player's own */
+    bool                           cinematic{false};
+    std::optional<libc_types::f32> fov{}; /*!< degrees */
+    /*! Held in this entity's space, following it */
+    libc_types::u64 relative_to{0};
+};
+
+/*! camera_control: a seat's view handed to the cutscene camera, or back */
+struct CinematicCameraEvent
+{
+    static constexpr auto event_type = GameEvent::CinematicCamera;
+
+    libc_types::u32 seat_idx{0};
+    bool            control{false};
 };
 
 struct ServerConnectEvent
