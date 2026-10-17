@@ -33,9 +33,11 @@ struct Vertex
     Vecf3 normal;
     Vecf3 lightmap{0.f, 0.f, -1.f}; /*!< Atlas u, v, layer; -1 = none */
     u8    light[4]{0, 0, 0, 0};     /*!< Baked per-vertex light, a = valid */
+    u8    nodes[4]{0, 0, 0, 0};     /*!< Model nodes skinning the vertex */
+    u8    weights[4]{0, 0, 0, 0};   /*!< Their weights; all 0 = unskinned */
 };
 
-static_assert(sizeof(Vertex) == 48);
+static_assert(sizeof(Vertex) == 56);
 
 /* One ltmp geometry bucket decoded: the streams per-vertex lit instances
  * and scenery index into by vertex */
@@ -154,6 +156,7 @@ struct DrawTag
     i32 cluster{-1};
     i32 instance{-1};
     i32  object{-1}; /*!< Into H2Scene::moving_objects: drawn where it is */
+    i32  animated{-1}; /*!< Into H2Scene::animated_objects */
     bool placed{false}; /*!< A scenario object, not structure */
 };
 
@@ -337,6 +340,24 @@ struct H2Scene : compo::SubsystemBase
     /*! Entities of the objects with physics; their geometry is in object
      * space and follows the entity's Model */
     std::vector<u64>                            moving_objects;
+
+    /*! One looping animation as skin matrices (bind pose model space to
+     * animated model space), frame-major */
+    struct animation_t
+    {
+        u32                frames{0};
+        u32                nodes{0};
+        f32                rate{30.f}; /*!< Frames a second */
+        std::vector<Matf4> palette;
+    };
+    /*! A placed object playing its idle loop; geometry in object space */
+    struct animated_t
+    {
+        Matf4 transform{1.f};
+        u32   animation{0};
+    };
+    std::vector<animation_t> animations;
+    std::vector<animated_t>  animated_objects;
 };
 
 /* What the occluder decided for this frame */
