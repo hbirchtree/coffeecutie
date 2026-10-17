@@ -12,6 +12,7 @@
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
 #include <blam/elegy/structure.h>
+#include <blam/elegy/views.h>
 #include <blam/volta/blam_bitm.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
@@ -284,33 +285,27 @@ struct H3MapLoader : compo::SubsystemBase
     {
         auto const& map   = *m_map;
         auto        magic = map.magic();
-        auto const* music_tag = map.find("lsnd", "main_menu_music");
-        if(!music_tag)
+        auto looping = map.find<el::looping_sound_t>("main_menu_music");
+        if(!looping)
             for(auto const& tag : map.tags())
                 if(tag.valid() && map.is(tag, "lsnd") &&
                    map.name_of(tag).starts_with("sound\\music\\"))
                 {
-                    music_tag = &tag;
+                    looping = map.get<el::looping_sound_t>(map.id_of(tag));
                     break;
                 }
-        auto const* gestalt_tag = map.find("ugh!");
-        auto const* looping =
-            music_tag ? map.tag_data<el::looping_sound_t>(*music_tag) : nullptr;
-        auto const* gestalt =
-            gestalt_tag ? map.tag_data<el::sound_gestalt_t>(*gestalt_tag) : nullptr;
+        auto gestalt = map.find<el::sound_gestalt_t>();
         if(!looping || !gestalt)
             return;
-        auto tracks = looping->tracks.data(magic).value_or(
-            Span<el::looping_sound_track_t const>());
+        auto tracks = looping->tracks.span(magic);
         if(tracks.empty())
             return;
-        auto codecs = gestalt->codecs.data(magic).value_or(Span<el::sound_codec_t const>());
-        auto names  = gestalt->names.data(magic).value_or(Span<el::string_id const>());
+        auto codecs = gestalt->codecs.span(magic);
+        auto names  = gestalt->names.span(magic);
 
         auto permutations = [&](el::tag_reference const& ref) {
             std::vector<H3Sound> out;
-            auto const* tag   = map.tag_at(ref.id);
-            auto const* sound = tag ? map.tag_data<el::sound_t>(*tag) : nullptr;
+            auto        sound = map.get<el::sound_t>(ref);
             auto const* codec = sound ? sound->codec.resolve(codecs) : nullptr;
             if(!codec || codec->compression != el::sound_compression_t::xma2)
                 return out;
@@ -327,7 +322,7 @@ struct H3MapLoader : compo::SubsystemBase
                     out.push_back(H3Sound{
                         .name     = fmt::format(
                             "{}:{}",
-                            map.name_of(*tag),
+                            map.name_of(*sound.tag),
                             name ? map.string(*name) : std::string_view("?")),
                         .data     = std::vector<char>(bytes.begin(), bytes.end()),
                         .rate     = codec->rate(),
@@ -341,7 +336,7 @@ struct H3MapLoader : compo::SubsystemBase
         auto const& track = tracks[0];
         auto        in    = permutations(track.in);
         m_bank.music      = H3LoopingSound{
-                 .name  = std::string(map.name_of(*music_tag)),
+                 .name  = std::string(map.name_of(*looping.tag)),
                  .in    = in.empty() ? H3Sound{} : std::move(in.front()),
                  .loops = permutations(track.loop),
                  .gain  = std::pow(10.f, track.gain.value() / 20.f),
@@ -460,8 +455,7 @@ struct H3MapLoader : compo::SubsystemBase
     {
         auto const& map   = *m_map;
         auto        magic = map.magic();
-        auto const* scnr_tag = map.find("scnr");
-        auto const* scnr = scnr_tag ? map.tag_data<el::scenario_t>(*scnr_tag) : nullptr;
+        auto scnr = map.find<el::scenario_t>();
         if(!scnr)
             return false;
 
@@ -471,8 +465,7 @@ struct H3MapLoader : compo::SubsystemBase
         Vecf3 eye{0.f, 0.f, 1.f};
         f32   yaw = 0.f;
         i16   bsp = 0;
-        auto  starts = scnr->starting_locations.data(magic).value_or(
-            Span<el::starting_location_t const>());
+        auto  starts = scnr->starting_locations.span(magic);
         if(!starts.empty())
         {
             eye = starts[0].position.value() + Vecf3{0.f, 0.f, 0.6f};
@@ -531,29 +524,11 @@ struct H3MapLoader : compo::SubsystemBase
     {
         auto const& map   = *m_map;
         auto        magic = map.magic();
-        auto const* scnr  = map.tag_data<el::scenario_t>(*map.find("scnr"));
-        auto bsps = scnr->bsps.data(magic).value_or(Span<el::scenario_bsp_t const>());
-        if(static_cast<size_t>(bsp_index) >= bsps.size())
-            return false;
-        auto const* bsp_tag = map.tag_at(bsps[bsp_index].bsp.id);
-        auto const* bsp = bsp_tag ? map.tag_data<el::structure_bsp_t>(*bsp_tag) : nullptr;
+        auto scnr = map.find<el::scenario_t>();
+        auto bsp  = scnr ? el::structure_bsp(map, *scnr, bsp_index) : el::tagged<el::structure_bsp_t>{};
         if(!bsp)
             return false;
-
-        el::lightmap_bsp_t const* lit = nullptr;
-        for(auto const& tag : map.tags())
-        {
-            if(!tag.valid() || !map.is(tag, "sLdT"))
-                continue;
-            auto const* lightmap = map.tag_data<el::scenario_lightmap_t>(tag);
-            for(auto const& entry : lightmap ? lightmap->bsps.data(magic).value_or(
-                                                   Span<el::lightmap_bsp_t const>())
-                                             : Span<el::lightmap_bsp_t const>())
-                if(entry.bsp.value() == bsp_index)
-                    lit = &entry;
-            if(lit)
-                break;
-        }
+        auto const* lit = el::lightmap_of(map, bsp_index);
         if(!lit)
         {
             cWarning("H3: no lightmap geometry for bsp {}", bsp_index);
@@ -567,25 +542,19 @@ struct H3MapLoader : compo::SubsystemBase
             return false;
         }
         auto const& geometry    = lit->geometry;
-        auto        meshes      = geometry.meshes.data(magic).value_or(Span<el::mesh_t const>());
-        auto        compression = geometry.compression.data(magic).value_or(
-            Span<el::compression_t const>());
-        auto materials = bsp->materials.data(magic).value_or(
-            Span<el::geometry_material_t const>());
+        auto        meshes      = geometry.meshes.span(magic);
+        auto        compression = geometry.compression.span(magic);
+        auto materials = bsp->materials.span(magic);
 
         load_lightprobes(*lit);
-        auto lit_clusters = lit->clusters.data(magic).value_or(
-            Span<el::lightmap_target_t const>());
-        auto lit_instances = lit->instances.data(magic).value_or(
-            Span<el::lightmap_instance_t const>());
-        auto instance_texcoords = geometry.per_instance_lightmap_texcoords.data(magic).value_or(
-            Span<el::instance_lightmap_texcoords_t const>());
-        auto per_vertex = lit->per_vertex.data(magic).value_or(
-            Span<el::lightmap_per_vertex_t const>());
+        auto lit_clusters = lit->clusters.span(magic);
+        auto lit_instances = lit->instances.span(magic);
+        auto instance_texcoords = geometry.per_instance_lightmap_texcoords.span(magic);
+        auto per_vertex = lit->per_vertex.span(magic);
         bool const have_lightprobes = m_scene.lightprobe != nullptr;
 
         u32  clusters = 0, instances = 0;
-        auto cluster_list = bsp->clusters.data(magic).value_or(Span<el::cluster_t const>());
+        auto cluster_list = bsp->clusters.span(magic);
         for(size_t i = 0; i < cluster_list.size(); i++)
         {
             auto const* mesh = cluster_list[i].mesh.resolve(meshes);
@@ -615,8 +584,7 @@ struct H3MapLoader : compo::SubsystemBase
                 Matf4(1.f),
                 *collision);
         size_t const world_triangles = collision->indices.size() / 3;
-        auto instance_list = bsp->instances.data(magic).value_or(
-            Span<el::instanced_geometry_t const>());
+        auto instance_list = bsp->instances.span(magic);
         for(size_t i = 0; i < instance_list.size(); i++)
         {
             auto const& instance   = instance_list[i];
@@ -626,12 +594,7 @@ struct H3MapLoader : compo::SubsystemBase
             auto const* mesh = definition->mesh.resolve(meshes);
             if(!mesh)
                 continue;
-            f32   scale = instance.scale;
-            Matf4 transform(1.f);
-            transform[0] = Vecf4(instance.forward.value() * scale, 0.f);
-            transform[1] = Vecf4(instance.left.value() * scale, 0.f);
-            transform[2] = Vecf4(instance.up.value() * scale, 0.f);
-            transform[3] = Vecf4(instance.position.value(), 1.f);
+            Matf4 const transform = instance.transform();
             append_collision(
                 el::coll::bsp_view_t::from(resources.value(), definition->collision),
                 transform,
@@ -663,7 +626,7 @@ struct H3MapLoader : compo::SubsystemBase
         }
         cDebug(
             "H3: {}: {} clusters, {} instances; collision {} world + {} instance triangles",
-            map.name_of(*bsp_tag),
+            map.name_of(*bsp.tag),
             clusters,
             instances,
             world_triangles,
@@ -737,39 +700,20 @@ struct H3MapLoader : compo::SubsystemBase
     /* Scenery placed in this BSP, first permutation of every region */
     void load_scenery(el::scenario_t const& scnr, i16 bsp_index)
     {
-        auto const& map   = *m_map;
-        auto        magic = map.magic();
-        auto palette = scnr.scenery_palette.data(magic).value_or(
-            Span<el::palette_entry_t const>());
         u32 placed = 0, skipped = 0, hidden = 0, lit = 0;
-        for(auto const& placement : scnr.scenery.data(magic).value_or(
-                Span<el::scenery_placement_t const>()))
+        for(auto const& [placement, entry] :
+            el::placements_at_load(*m_map, scnr.scenery, scnr.scenery_palette, bsp_index))
         {
             auto const& object = placement.object;
-            u16 flags = object.bsp_flags;
-            if((flags && !(flags & (1u << bsp_index))) || !object.placed_at_load())
-                continue;
-            auto const* entry = object.palette.resolve(palette);
-            auto const* mode_tag = entry ? render_model_of(entry->object) : nullptr;
-            auto const* model = mode_tag ? map.tag_data<el::render_model_t>(*mode_tag) : nullptr;
+            auto const  model  = entry ? drawn_model(entry->object) : el::tagged<el::render_model_t>{};
             if(!model)
             {
                 hidden++;
                 continue;
             }
-            Vecf3 rot   = object.rotation;
-            Quatf q     = Quatf(Vecf3(0, 0, 1) * rot.x) * Quatf(Vecf3(0, 1, 0) * rot.y) *
-                      Quatf(Vecf3(1, 0, 0) * rot.z);
-            f32   scale = object.scale;
-            if(scale <= 0.f)
-                scale = 1.f;
-            Matf4 transform = glm::translate(Matf4(1.f), object.position.value()) *
-                              glm::mat4_cast(q) * glm::scale(Matf4(1.f), Vecf3(scale));
-
             auto light = m_scene.baked.below(object.position.value());
             lit += light.has_value();
-            u32 emitted = append_model(*mode_tag, transform, light ? &*light : nullptr);
-            if(emitted)
+            if(append_model(model, object.transform(), light ? &*light : nullptr))
                 placed++;
             else
                 skipped++;
@@ -789,51 +733,39 @@ struct H3MapLoader : compo::SubsystemBase
     void load_objects(el::scenario_t const& scnr, i16 bsp_index)
     {
         u32  moving = 0, fixed = 0, hidden = 0;
-        auto place  = [&](auto const& placements, auto const& palette_block, bool item) {
-            using P      = typename std::decay_t<decltype(placements)>::value_type;
-            auto magic   = m_map->magic();
-            auto palette = palette_block.data(magic).value_or(Span<el::palette_entry_t const>());
-            for(auto const& placement : placements.data(magic).value_or(Span<P const>()))
+        auto place  = [&](auto const& placements, auto const& palette, bool item) {
+            for(auto const& [placement, entry] :
+                el::placements_at_load(*m_map, placements, palette, bsp_index))
             {
                 auto const& object = placement.object;
-                u16 const   flags  = object.bsp_flags;
-                if((flags && !(flags & (1u << bsp_index))) || !object.placed_at_load())
-                    continue;
-                auto const* entry    = object.palette.resolve(palette);
-                auto const* mode_tag = entry ? render_model_of(entry->object) : nullptr;
-                if(!mode_tag)
+                auto const  model  = entry ? drawn_model(entry->object) : el::tagged<el::render_model_t>{};
+                if(!model)
                 {
                     hidden++;
                     continue;
                 }
-                Vecf3 const rot = object.rotation;
-                Quatf const q   = Quatf(Vecf3(0, 0, 1) * rot.x) * Quatf(Vecf3(0, 1, 0) * rot.y) *
-                                Quatf(Vecf3(1, 0, 0) * rot.z);
-                f32 scale = object.scale;
-                if(scale <= 0.f)
-                    scale = 1.f;
+                f32 const   scale    = object.scale_or_one();
+                Quatf const q        = object.orientation();
                 Vecf3 const position = object.position;
                 auto const  light    = m_scene.baked.below(position);
                 auto const* lit      = light ? &*light : nullptr;
-                Matf4 const scaled   = glm::scale(Matf4(1.f), Vecf3(scale));
                 auto        physics  = physics_of(entry->object, scale);
                 if(!physics)
                 {
-                    append_model(
-                        *mode_tag, glm::translate(Matf4(1.f), position) * glm::mat4_cast(q) * scaled, lit);
+                    append_model(model, object.transform(), lit);
                     fixed++;
                     continue;
                 }
                 physics->item = item;
                 auto  ref     = m_container.create_entity(object_recipe);
-                auto& model   = *m_container.get<Model>(ref.id());
-                model.position      = position;
-                model.rotation      = q;
-                model.tick_position = position;
-                model.tick_rotation = q;
-                model.update_matrix();
+                auto& placed  = *m_container.get<Model>(ref.id());
+                placed.position      = position;
+                placed.rotation      = q;
+                placed.tick_position = position;
+                placed.tick_rotation = q;
+                placed.update_matrix();
                 *m_container.get<ObjectPhysics>(ref.id()) = std::move(*physics);
-                append_model(*mode_tag, scaled, lit, ref.id(), q);
+                append_model(model, glm::scale(Matf4(1.f), Vecf3(scale)), lit, ref.id(), q);
                 moving++;
             }
         };
@@ -845,93 +777,64 @@ struct H3MapLoader : compo::SubsystemBase
         cDebug("H3: objects: {} moving, {} fixed in place, {} editor-only or modelless", moving, fixed, hidden);
     }
 
-    /* An object's physics model as one body: the rigid bodies of its first
-     * permutation on the root node, none of them fixed in place. Surfaces
-     * keep their own friction and restitution. */
-    std::optional<ObjectPhysics> physics_of(el::tag_reference const& object_ref, f32 scale) const
+    /* An object's physics model as one body (el::phys::body_of), scaled; flat
+     * hulls get their shell's thickness so they have something to rest on */
+    std::optional<ObjectPhysics> physics_of(el::tag_reference const& object, f32 scale) const
     {
-        namespace ph      = el::phys;
-        auto const& map   = *m_map;
-        auto        magic = map.magic();
-        auto const* object_tag = map.tag_at(object_ref.id);
-        auto const* object = object_tag ? map.tag_data<el::object_t>(*object_tag) : nullptr;
-        auto const* model_tag = object ? map.tag_at(object->model.id) : nullptr;
-        auto const* model = model_tag ? map.tag_data<el::model_t>(*model_tag) : nullptr;
-        auto const* phmo_tag = model ? map.tag_at(model->physics_model.id) : nullptr;
-        auto const* phmo = phmo_tag ? map.tag_data<ph::physics_model_t>(*phmo_tag) : nullptr;
-        if(!phmo)
+        auto const physics = el::object_view::of(*m_map, object).physics_model;
+        auto const body    = physics ? el::phys::body_of(*physics, m_map->magic()) : std::nullopt;
+        if(!body)
             return std::nullopt;
         auto geometry = std::make_shared<CollisionGeometry>();
-        f32   mass = 0.f, friction = 0.f, restitution = 0.f, surface = 0.f;
-        Vecf3 center{};
-        for(auto const& body : phmo->rigid_bodies.data(magic).value_or(Span<ph::rigid_body_t const>()))
+        for(auto const& hull : body->hulls)
         {
-            if(body.permutation.value() > 0)
-                continue;
-            auto const motion = body.motion_type.value();
-            if(body.node.value() > 0 || motion == ph::motion_type_t::fixed ||
-               motion == ph::motion_type_t::keyframed)
-                return std::nullopt;
-            for(auto& hull : ph::hulls_of(*phmo, magic, body))
+            auto& node = geometry->nodes.emplace_back();
+            Vecf3 lo(std::numeric_limits<f32>::max()), hi(std::numeric_limits<f32>::lowest());
+            for(auto const& point : hull.points)
             {
-                auto& node = geometry->nodes.emplace_back();
-                Vecf3 lo(std::numeric_limits<f32>::max()), hi(std::numeric_limits<f32>::lowest());
-                for(auto const& point : hull.points)
-                {
-                    node.points.push_back(point * scale);
-                    lo = glm::min(lo, node.points.back());
-                    hi = glm::max(hi, node.points.back());
-                }
-                /* Flat hulls (rifles are quads) get their shell's thickness */
-                f32 const shell = std::max(hull.radius * scale, .01f);
-                for(glm::length_t axis = 0; axis < 3; axis++)
-                {
-                    if(hi[axis] - lo[axis] >= shell)
-                        continue;
-                    size_t const count = node.points.size();
-                    for(size_t i = 0; i < count; i++)
-                    {
-                        Vecf3 above = node.points[i], below = node.points[i];
-                        above[axis] += shell;
-                        below[axis] -= shell;
-                        node.points[i] = below;
-                        node.points.push_back(above);
-                    }
-                }
-                f32 const weight = std::max(hull.mass, 1e-3f);
-                friction += hull.friction * weight;
-                restitution += hull.restitution * weight;
-                surface += weight;
+                node.points.push_back(point * scale);
+                lo = glm::min(lo, node.points.back());
+                hi = glm::max(hi, node.points.back());
             }
-            mass += body.mass;
-            center += Vecf3(body.center_of_mass.value()) * scale * body.mass.value();
+            /* Rifles are quads */
+            f32 const shell = std::max(hull.radius * scale, .01f);
+            for(glm::length_t axis = 0; axis < 3; axis++)
+            {
+                if(hi[axis] - lo[axis] >= shell)
+                    continue;
+                size_t const count = node.points.size();
+                for(size_t i = 0; i < count; i++)
+                {
+                    Vecf3 above = node.points[i], below = node.points[i];
+                    above[axis] += shell;
+                    below[axis] -= shell;
+                    node.points[i] = below;
+                    node.points.push_back(above);
+                }
+            }
         }
-        if(geometry->nodes.empty() || mass <= 0.f)
-            return std::nullopt;
         return ObjectPhysics{
             .collision      = std::move(geometry),
-            .center_of_mass = center / mass,
-            .friction       = friction / surface,
-            .restitution    = restitution / surface,
-            .mass           = mass,
+            .center_of_mass = body->center_of_mass * scale,
+            .friction       = body->friction,
+            .restitution    = body->restitution,
+            .mass           = body->mass,
         };
     }
 
     /* A render model's first permutation of every region, moved by
      * `transform`; geometry resources are loaded once per model */
     u32 append_model(
-        el::tag_t const&          mode_tag,
-        Matf4 const&              transform,
-        el::vertex_light_t const* light,
-        u64                       entity         = 0,
-        Quatf const&              light_rotation = Quatf(1.f, 0.f, 0.f, 0.f))
+        el::tagged<el::render_model_t> const& model,
+        Matf4 const&                          transform,
+        el::vertex_light_t const*             light,
+        u64                                   entity         = 0,
+        Quatf const&                          light_rotation = Quatf(1.f, 0.f, 0.f, 0.f))
     {
-        auto const& map   = *m_map;
-        auto        magic = map.magic();
-        auto const* model = map.tag_data<el::render_model_t>(mode_tag);
+        auto const& map = *m_map;
         if(!model)
             return 0;
-        u32  key = map.id_of(mode_tag).raw.value();
+        u32  key = map.id_of(*model.tag).raw.value();
         auto it  = m_model_views.find(key);
         if(it == m_model_views.end())
         {
@@ -942,32 +845,21 @@ struct H3MapLoader : compo::SubsystemBase
         }
         if(!it->second)
             return 0;
-        auto meshes = model->geometry.meshes.data(magic).value_or(Span<el::mesh_t const>());
-        auto compression = model->geometry.compression.data(magic).value_or(
-            Span<el::compression_t const>());
-        auto materials = model->materials.data(magic).value_or(
-            Span<el::geometry_material_t const>());
-        u32 emitted = 0;
-        for(auto const& region : model->regions.data(magic).value_or(Span<el::region_t const>()))
-        {
-            auto perms = region.permutations.data(magic).value_or(Span<el::permutation_t const>());
-            if(perms.empty() || !perms[0].mesh.valid())
-                continue;
-            i16 first = perms[0].mesh.value();
-            i16 count = std::max<i16>(perms[0].mesh_count.value(), 1);
-            for(i16 m = first; m < first + count && static_cast<size_t>(m) < meshes.size(); m++)
-                emitted += append_mesh(
-                    *it->second,
-                    meshes[m],
-                    compression.empty() ? nullptr : &compression[0],
-                    transform,
-                    materials,
-                    {},
-                    {},
-                    light,
-                    entity,
-                    light_rotation);
-        }
+        auto compression = map.span(model->geometry.compression);
+        auto materials   = map.span(model->materials);
+        u32  emitted     = 0;
+        for(auto const* mesh : el::default_meshes(map, *model))
+            emitted += append_mesh(
+                *it->second,
+                *mesh,
+                compression.empty() ? nullptr : &compression[0],
+                transform,
+                materials,
+                {},
+                {},
+                light,
+                entity,
+                light_rotation);
         return emitted;
     }
 
@@ -978,28 +870,21 @@ struct H3MapLoader : compo::SubsystemBase
         auto const& map   = *m_map;
         auto        magic = map.magic();
         u32         drawn = 0;
-        for(auto const& sky : scnr.skies.data(magic).value_or(Span<el::scenario_sky_t const>()))
+        for(auto const& sky : scnr.skies.span(magic))
         {
             u16 active = sky.active_bsps;
             if(active && !(active & (1u << bsp_index)))
                 continue;
-            if(auto const* mode_tag = render_model_of(sky.object))
-                drawn += append_model(*mode_tag, Matf4(1.f), nullptr);
+            drawn += append_model(drawn_model(sky.object), Matf4(1.f), nullptr);
         }
         cDebug("H3: sky: {} meshes", drawn);
     }
 
-    el::tag_t const* render_model_of(el::tag_reference const& object_ref) const
+    /* What draws an object in a game; nothing for editor-only ones */
+    el::tagged<el::render_model_t> drawn_model(el::tag_reference const& object) const
     {
-        auto const& map = *m_map;
-        auto const* object_tag = map.tag_at(object_ref.id);
-        auto const* object = object_tag ? map.tag_data<el::object_t>(*object_tag) : nullptr;
-        if(object && object->editor_only(map.magic()))
-            return nullptr;
-        auto const* model_tag = object ? map.tag_at(object->model.id) : nullptr;
-        auto const* model = model_tag ? map.tag_data<el::model_t>(*model_tag) : nullptr;
-        auto const* mode_tag = model ? map.tag_at(model->render_model.id) : nullptr;
-        return mode_tag && map.is(*mode_tag, "mode") ? mode_tag : nullptr;
+        auto const view = el::object_view::of(*m_map, object);
+        return view.editor_only(*m_map) ? el::tagged<el::render_model_t>{} : view.render_model;
     }
 
     /* A mesh's triangles, one draw per part, vertices moved by `transform` */
@@ -1051,7 +936,7 @@ struct H3MapLoader : compo::SubsystemBase
             m_vertices.push_back(out);
         }
 
-        auto parts = mesh.parts.data(magic).value_or(Span<el::part_t const>());
+        auto parts = mesh.parts.span(magic);
         u32  emitted = 0;
         /* Lightmapped triangles, for lighting objects placed on them */
         auto keep_lit = [&](std::vector<std::array<u16, 3>> const& triangles) {
@@ -1109,17 +994,17 @@ struct H3MapLoader : compo::SubsystemBase
     /* Material slot for a render method, built on first use */
     size_t material_for(el::tag_reference const* method_ref)
     {
-        auto const& map   = *m_map;
-        auto        magic = map.magic();
-        auto const* tag   = method_ref ? map.tag_at(method_ref->id) : nullptr;
-        auto const* method = tag ? map.tag_data<el::render_method_t>(*tag) : nullptr;
-        if(!method)
+        auto const& map  = *m_map;
+        auto const  view = method_ref ? el::render_method_view::of(map, *method_ref)
+                                      : el::render_method_view{};
+        if(!view)
             return 0;
         u32 key = method_ref->id.raw.value();
         if(auto it = m_material_index.find(key); it != m_material_index.end())
             return it->second;
 
-        Material mat{.name = std::string(map.name_of(*tag))};
+        auto const* tag = view.method.tag;
+        Material    mat{.name = std::string(map.name_of(*tag))};
         m_pending_environment_map = nullptr;
         struct Slot
         {
@@ -1130,54 +1015,27 @@ struct H3MapLoader : compo::SubsystemBase
         std::unordered_map<std::string, Slot>  slots;
         std::unordered_map<std::string, Vecf4> constants;
         std::unordered_map<std::string, TextureTag> texture_tags;
-        auto posts = method->postprocess.data(magic).value_or(
-            Span<el::render_method_postprocess_t const>());
-        if(!posts.empty())
+        for(auto const& [name, value] : view.named_constants())
         {
-            auto const& post = posts[0];
-            Span<el::string_id const> names, float_names;
-            if(auto const* tmpl_tag = map.tag_at(post.shader_template.id))
-                if(auto const* tmpl = map.tag_data<el::render_method_template_t>(*tmpl_tag))
-                {
-                    names = tmpl->textures.data(magic).value_or(Span<el::string_id const>());
-                    float_names = tmpl->float_constants.data(magic).value_or(
-                        Span<el::string_id const>());
-                }
-            auto textures = post.textures.data(magic).value_or(
-                Span<el::postprocess_texture_t const>());
-            auto floats = post.float_constants.data(magic).value_or(
-                Span<el::be<Vecf4> const>());
-            for(size_t i = 0; i < floats.size() && i < float_names.size(); i++)
-            {
-                if(map.string(float_names[i]) == "albedo_color")
-                    mat.tint = floats[i];
-                constants.emplace(std::string(map.string(float_names[i])), floats[i].value());
-            }
-            /* Every named texture slot, with its uv scale from the float
-             * constant its transform names */
-            for(size_t i = 0; i < textures.size() && i < names.size(); i++)
-            {
-                auto const* bitmap = map.tag_at(textures[i].bitmap.id);
-                if(bitmap && map.string(names[i]) == "environment_map")
-                    m_pending_environment_map = bitmap;
-                if(bitmap)
-                    texture_tags.emplace(std::string(map.string(names[i])),
-                                         TextureTag{bitmap, transforms_of(textures[i], floats)});
-                auto        tex    = bitmap ? texture_for(*bitmap) : std::nullopt;
-                if(!tex)
-                    continue;
-                Vecf2 scale{1.f, 1.f};
-                auto  transform = textures[i].transform;
-                if(transform >= 0 && static_cast<size_t>(transform) < floats.size())
-                {
-                    Vecf4 st = floats[transform];
-                    scale    = {st.x, st.y};
-                }
-                slots.emplace(
-                    std::string(map.string(names[i])), Slot{*tex, scale, curve_of(*bitmap)});
-            }
+            if(name == "albedo_color")
+                mat.tint = value;
+            constants.emplace(std::string(name), value.value());
         }
-        auto options = option_flags(*method, mat);
+        /* Every named texture slot, with its uv scale from the float
+         * constant its transform names */
+        for(auto const& [name, texture] : view.named_textures())
+        {
+            auto const bitmap = map.get<el::bitmap_t>(texture.bitmap);
+            if(!bitmap)
+                continue;
+            if(name == "environment_map")
+                m_pending_environment_map = bitmap.tag;
+            Vecf4 const transform = view.transform_of(texture);
+            texture_tags.emplace(std::string(name), TextureTag{bitmap.tag, transform});
+            if(auto tex = texture_for(*bitmap.tag))
+                slots.emplace(std::string(name), Slot{*tex, Vecf2(transform), curve_of(*bitmap.tag)});
+        }
+        auto options = option_flags(view, mat);
         auto option  = [&](std::string const& category) -> std::string_view {
             auto it = options.find(category);
             return it == options.end() ? std::string_view() : std::string_view(it->second);
@@ -1312,15 +1170,6 @@ struct H3MapLoader : compo::SubsystemBase
         Vecf4            xform;
     };
 
-    static Vecf4 transforms_of(
-        el::postprocess_texture_t const& texture, Span<el::be<Vecf4> const> floats)
-    {
-        auto transform = texture.transform;
-        if(transform >= 0 && static_cast<size_t>(transform) < floats.size())
-            return floats[static_cast<size_t>(transform)].value();
-        return Vecf4(1.f, 1.f, 0.f, 0.f);
-    }
-
     /* shader_water: colour, static reflection cube, wave slopes, foam */
     void load_water(
         Material&                                          mat,
@@ -1378,9 +1227,8 @@ struct H3MapLoader : compo::SubsystemBase
     void upload_slopes(el::bitmap_t const& bitmap, WaterParams& w)
     {
         auto magic    = m_map->magic();
-        auto images   = bitmap.images.data(magic).value_or(Span<el::bitmap_image_t const>());
-        auto hardware = bitmap.hardware_textures.data(magic).value_or(
-            Span<el::hardware_texture_t const>());
+        auto images   = bitmap.images.span(magic);
+        auto hardware = bitmap.hardware_textures.span(magic);
         if(images.empty() || hardware.empty() ||
            images[0].format.value() != el::bitmap_format_t::v8u8)
             return;
@@ -1458,7 +1306,7 @@ struct H3MapLoader : compo::SubsystemBase
     std::optional<CubeTexture> upload_cube(el::bitmap_t const& bitmap, size_t index)
     {
         auto magic  = m_map->magic();
-        auto images = bitmap.images.data(magic).value_or(Span<el::bitmap_image_t const>());
+        auto images = bitmap.images.span(magic);
         if(index >= images.size())
             return std::nullopt;
         auto const& image = images[index];
@@ -1467,10 +1315,8 @@ struct H3MapLoader : compo::SubsystemBase
            (*h1 != blam::bitm::format_t::BC1 && *h1 != blam::bitm::format_t::BC2 &&
             *h1 != blam::bitm::format_t::BC3 && *h1 != blam::bitm::format_t::ARGB8))
             return std::nullopt;
-        auto hardware = bitmap.hardware_textures.data(magic).value_or(
-            Span<el::hardware_texture_t const>());
-        auto interleaved = bitmap.interleaved_textures.data(magic).value_or(
-            Span<el::hardware_texture_t const>());
+        auto hardware = bitmap.hardware_textures.span(magic);
+        auto interleaved = bitmap.interleaved_textures.span(magic);
         bool const in_pair = hardware.empty() && image.interleaved_interop >= 0 &&
                              static_cast<size_t>(image.interleaved_interop) < interleaved.size();
         if(!in_pair && index >= hardware.size())
@@ -1518,21 +1364,18 @@ struct H3MapLoader : compo::SubsystemBase
     {
         auto const& map   = *m_map;
         auto        magic = map.magic();
-        auto bsps = scnr.bsps.data(magic).value_or(Span<el::scenario_bsp_t const>());
+        auto bsps = scnr.bsps.span(magic);
         if(static_cast<size_t>(bsp_index) >= bsps.size())
             return;
         auto const& entry  = bsps[static_cast<size_t>(bsp_index)];
-        auto const* tag    = map.tag_at(entry.cubemaps.id);
-        auto const* bitmap = tag ? map.tag_data<el::bitmap_t>(*tag) : nullptr;
-        auto const* bsp_tag = map.tag_at(entry.bsp.id);
-        auto const* bsp = bsp_tag ? map.tag_data<el::structure_bsp_t>(*bsp_tag) : nullptr;
+        auto const  bitmap = map.get<el::bitmap_t>(entry.cubemaps);
+        auto const  bsp    = map.get<el::structure_bsp_t>(entry.bsp);
         if(!bitmap || !bsp)
             return;
-        auto images = bitmap->images.data(magic).value_or(Span<el::bitmap_image_t const>());
+        auto images = bitmap->images.span(magic);
         std::vector<i32> uploaded(images.size(), -1);
-        for(auto const& cluster : bsp->clusters.data(magic).value_or(Span<el::cluster_t const>()))
-            for(auto const& point : cluster.cubemaps.data(magic).value_or(
-                    Span<el::cluster_cubemap_t const>()))
+        for(auto const& cluster : bsp->clusters.span(magic))
+            for(auto const& point : cluster.cubemaps.span(magic))
             {
                 i16 index = point.bitmap_index;
                 if(index < 0 || static_cast<size_t>(index) >= images.size())
@@ -1642,11 +1485,8 @@ struct H3MapLoader : compo::SubsystemBase
     {
         auto const& map = *m_map;
         m_scene.atmosphere = {Vecf4(0.f), Vecf4(0.f, 0.f, 0.f, -1.f)};
-        auto const* tag    = map.find("skya");
-        auto const* sky    = tag ? map.tag_data<el::sky_atmosphere_t>(*tag) : nullptr;
-        auto settings = sky ? sky->settings.data(map.magic()).value_or(
-                                  Span<el::atmosphere_setting_t const>())
-                            : Span<el::atmosphere_setting_t const>();
+        auto const sky      = map.find<el::sky_atmosphere_t>();
+        auto       settings = sky ? map.span(sky->settings) : Span<el::atmosphere_setting_t const>();
         if(settings.empty() ||
            !enum_helpers::feval(settings[0].flags.value(), el::atmosphere_flags_t::enable_atmosphere))
             return;
@@ -1677,36 +1517,20 @@ struct H3MapLoader : compo::SubsystemBase
     {
         auto const& map   = *m_map;
         auto        magic = map.magic();
-        auto bsps = scnr.bsps.data(magic).value_or(Span<el::scenario_bsp_t const>());
-        auto const* bsp_tag = static_cast<size_t>(bsp_index) < bsps.size()
-                                  ? map.tag_at(bsps[static_cast<size_t>(bsp_index)].bsp.id)
-                                  : nullptr;
-        auto const* bsp = bsp_tag ? map.tag_data<el::structure_bsp_t>(*bsp_tag) : nullptr;
-        int camera_fx = -1;
+        auto const bsp       = el::structure_bsp(map, scnr, bsp_index);
+        int        camera_fx = -1;
         if(bsp)
             if(auto resources = m_loader->load(bsp->tag_resources); resources.has_value())
-                if(auto const* root = resources->root_as<el::structure_bsp_resources_t>())
-                {
-                    auto collision = resources->block(root->collision_bsps);
-                    auto leaves    = bsp->leaves.data(magic).value_or(Span<libc_types::i8 const>());
-                    auto clusters  = bsp->clusters.data(magic).value_or(
-                        Span<el::cluster_t const>());
-                    auto leaf = collision.empty()
-                                    ? std::nullopt
-                                    : el::coll::bsp_view_t::from(resources.value(), collision[0])
-                                          .find_leaf(eye);
-                    int cluster = leaf && *leaf < leaves.size() ? leaves[*leaf] : -1;
-                    if(cluster >= 0 && static_cast<size_t>(cluster) < clusters.size())
-                        camera_fx = clusters[static_cast<size_t>(cluster)].camera_fx;
-                }
-        auto palette = scnr.camera_fx.data(magic).value_or(Span<el::camera_fx_palette_t const>());
+                if(auto const* cluster = el::cluster_at(map, *bsp, resources.value(), eye))
+                    camera_fx = cluster->camera_fx;
+        auto palette = scnr.camera_fx.span(magic);
         if(camera_fx < 0 || static_cast<size_t>(camera_fx) >= palette.size())
             camera_fx = palette.empty() ? -1 : 0;
         el::bounds_f range{};
         bool         found         = false;
         bool         forced_target = false;
         f32          target        = -4.5f;
-        auto const*  settings_tag  = map.tag_at(scnr.camera_effects.id);
+        auto         settings      = map.get<el::camera_fx_settings_t>(scnr.camera_effects);
         m_scene.auto_exposure      = {};
         if(camera_fx >= 0)
         {
@@ -1719,12 +1543,9 @@ struct H3MapLoader : compo::SubsystemBase
                 forced_target = true;
             if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::override_exposure_bounds))
                 range = entry.exposure_range, found = true;
-            if(auto const* tag = map.tag_at(entry.settings.id))
-                settings_tag = tag;
+            if(auto const own = map.get<el::camera_fx_settings_t>(entry.settings))
+                settings = own;
         }
-        auto const* settings = settings_tag && map.is(*settings_tag, "cfxs")
-                                   ? map.tag_data<el::camera_fx_settings_t>(*settings_tag)
-                                   : nullptr;
         if(settings && !found)
             range = settings->exposure_range, found = true;
         if(settings && !forced_target)
@@ -1761,14 +1582,10 @@ struct H3MapLoader : compo::SubsystemBase
         u32 width = 0, height = 0;
         for(auto const* ref : {&lit.lightprobe_texture, &lit.intensity_texture})
         {
-            auto const* tag    = map.tag_at(ref->id);
-            auto const* bitmap = tag ? map.tag_data<el::bitmap_t>(*tag) : nullptr;
-            auto images = bitmap ? bitmap->images.data(magic).value_or(
-                                       Span<el::bitmap_image_t const>())
-                                 : Span<el::bitmap_image_t const>();
-            auto hardware = bitmap ? bitmap->hardware_textures.data(magic).value_or(
-                                         Span<el::hardware_texture_t const>())
-                                   : Span<el::hardware_texture_t const>();
+            auto const bitmap   = map.get<el::bitmap_t>(*ref);
+            auto       images   = bitmap ? map.span(bitmap->images) : Span<el::bitmap_image_t const>();
+            auto       hardware = bitmap ? map.span(bitmap->hardware_textures)
+                                         : Span<el::hardware_texture_t const>();
             if(images.empty() || hardware.empty() ||
                images[0].format.value() != el::bitmap_format_t::dxt5)
                 return;
@@ -1829,28 +1646,13 @@ struct H3MapLoader : compo::SubsystemBase
     /* Alpha test and blending from the definition's options; every
      * category's choice, by name */
     std::unordered_map<std::string, std::string> option_flags(
-        el::render_method_t const& method, Material& mat)
+        el::render_method_view const& view, Material& mat)
     {
         std::unordered_map<std::string, std::string> out;
-        auto const& map   = *m_map;
-        auto        magic = map.magic();
-        auto const* def_tag = map.tag_at(method.definition.id);
-        auto const* def = def_tag ? map.tag_data<el::render_method_definition_t>(*def_tag)
-                                  : nullptr;
-        if(!def)
-            return out;
-        auto picked = method.options.data(magic).value_or(Span<el::be<i16> const>());
-        auto categories = def->categories.data(magic).value_or(
-            Span<el::render_method_category_t const>());
-        for(size_t i = 0; i < categories.size() && i < picked.size(); i++)
+        for(auto const& [category, option] : view.options())
         {
-            auto options = categories[i].options.data(magic).value_or(
-                Span<el::render_method_option_t const>());
-            i16 pick = picked[i];
-            if(pick < 0 || static_cast<size_t>(pick) >= options.size())
+            if(option.empty())
                 continue;
-            auto category = map.string(categories[i].name);
-            auto option   = map.string(options[pick].name);
             out.emplace(std::string(category), std::string(option));
             if(category == "albedo")
                 mat.constant_color = option == "constant_color";
@@ -1883,9 +1685,7 @@ struct H3MapLoader : compo::SubsystemBase
     f32 curve_of(el::tag_t const& bitmap_tag) const
     {
         auto const* bitmap = m_map->tag_data<el::bitmap_t>(bitmap_tag);
-        auto images = bitmap ? bitmap->images.data(m_map->magic()).value_or(
-                                   Span<el::bitmap_image_t const>())
-                             : Span<el::bitmap_image_t const>();
+        auto images = bitmap ? m_map->span(bitmap->images) : Span<el::bitmap_image_t const>();
         if(images.empty())
             return 2.f;
         switch(images[0].curve)
@@ -1919,9 +1719,8 @@ struct H3MapLoader : compo::SubsystemBase
         auto const* bitmap = map.tag_data<el::bitmap_t>(bitmap_tag);
         if(!bitmap)
             return std::nullopt;
-        auto images = bitmap->images.data(magic).value_or(Span<el::bitmap_image_t const>());
-        auto hardware = bitmap->hardware_textures.data(magic).value_or(
-            Span<el::hardware_texture_t const>());
+        auto images = bitmap->images.span(magic);
+        auto hardware = bitmap->hardware_textures.span(magic);
         if(images.empty() || hardware.empty())
             return std::nullopt;
         auto const& image  = images[0];
