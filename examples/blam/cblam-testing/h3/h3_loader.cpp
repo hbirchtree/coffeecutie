@@ -488,7 +488,6 @@ struct H3MapLoader : compo::SubsystemBase
             m_scene.exposure              = std::exp2(std::stof(forced.value()));
             m_scene.auto_exposure.enabled = false;
         }
-        load_scenery(*scnr, bsp);
         load_objects(*scnr, bsp);
         load_sky(*scnr, bsp);
         load_cubemaps(*scnr, bsp);
@@ -698,38 +697,7 @@ struct H3MapLoader : compo::SubsystemBase
 #endif
     }
 
-    /* Scenery placed in this BSP, first permutation of every region */
-    void load_scenery(el::scenario_t const& scnr, i16 bsp_index)
-    {
-        u32 placed = 0, skipped = 0, hidden = 0, lit = 0;
-        for(auto const& [placement, entry] :
-            el::placements_at_load(*m_map, scnr.scenery, scnr.scenery_palette, bsp_index))
-        {
-            auto const& object = placement.object;
-            auto const  model  = entry ? drawn_model(entry->object) : el::tagged<el::render_model_t>{};
-            if(!model)
-            {
-                hidden++;
-                continue;
-            }
-            auto light = m_scene.baked.below(object.position.value());
-            lit += light.has_value();
-            attach_lights(entry->object, *model, object.transform(), 0);
-            if(append_model(model, object.transform(), light ? &*light : nullptr))
-                placed++;
-            else
-                skipped++;
-        }
-        cDebug(
-            "H3: scenery: {} placed ({} lit from below), {} skipped, {} editor-only or "
-            "modelless",
-            placed,
-            lit,
-            skipped,
-            hidden);
-    }
-
-    /* Bipeds, vehicles, crates, weapons and equipment placed in this BSP. Those whose physics
+    /* Scenery, bipeds, vehicles, crates, weapons and equipment placed in this BSP. Those whose physics
      * model moves become entities that physics carries; the rest are drawn
      * in place. */
     void load_objects(el::scenario_t const& scnr, i16 bsp_index)
@@ -760,7 +728,9 @@ struct H3MapLoader : compo::SubsystemBase
                     fixed++;
                     continue;
                 }
-                physics->item = item;
+                physics->item     = item;
+                physics->sleeping = enum_helpers::feval(
+                    object.placement_flags.value(), el::placement_flags_t::create_at_rest);
                 auto  ref     = m_container.create_entity(object_recipe);
                 auto& placed  = *m_container.get<Model>(ref.id());
                 placed.position      = position;
@@ -774,6 +744,7 @@ struct H3MapLoader : compo::SubsystemBase
                 moving++;
             }
         };
+        place(scnr.scenery, scnr.scenery_palette, false);
         /* Bipeds stand in their bind pose; their ragdolls are not bodies */
         place(scnr.bipeds, scnr.biped_palette, false);
         /* Vehicles are drawn where they are parked; their bodies span nodes */
