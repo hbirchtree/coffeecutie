@@ -917,6 +917,7 @@ struct PlayerInfo
         i16  seat{-1};
         bool driver{false};
         bool exiting{false};
+        bool chase{false}; /*!< Seen from behind the vehicle, not the seat */
     } riding;
 
     struct

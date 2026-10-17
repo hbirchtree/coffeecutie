@@ -268,20 +268,35 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         return Vecf3(vehicle.transform * (**marker)[3]);
     }
 
-    /* The chase camera sits behind the vehicle along the view */
+    /* Seats flagged for it get the chase camera behind the vehicle along
+     * the view; the rest see from the rider's eyes */
     void ride(Proxy& p, PlayerInfo& info, PlayerCamera& cam, NetworkInfo& net)
     {
+        using seat_flags = blam::scn::unit::seat_t::seat_flags_t;
         auto const* vehicle = p.template get<Model>(info.riding.vehicle);
         if(!vehicle)
         {
             info.riding = {};
             return;
         }
-        Vecf3 const view =
-            glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
-        cam.camera.position =
-            vehicle->position + Vecf3{0.f, 0.f, chase_height} -
-            view * chase_distance;
+        auto const seats = seats_of(p, *vehicle);
+        auto const seat  = info.riding.seat;
+        bool const known = seats && seat >= 0 && static_cast<size_t>(seat) < seats->size();
+        auto const& marker = seat_marker(p, *vehicle, seat);
+        info.riding.chase  = !known || !marker ||
+                            (static_cast<u32>((*seats)[seat].flags) &
+                             static_cast<u32>(seat_flags::third_person_camera));
+        if(!info.riding.chase)
+            cam.camera.position = Vecf3(vehicle->transform * (*marker)[3]) +
+                                  Vecf3{0.f, 0.f, info.biped.eye_height};
+        else
+        {
+            Vecf3 const view =
+                glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+            cam.camera.position =
+                vehicle->position + Vecf3{0.f, 0.f, chase_height} -
+                view * chase_distance;
+        }
         net.changes.transform = net.changes.viewport = true;
     }
 
