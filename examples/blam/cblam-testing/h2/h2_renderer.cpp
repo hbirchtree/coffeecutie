@@ -26,6 +26,7 @@ using H2RendererManifest = compo::SubsystemManifest<
         const H2Scene,
         const H2Visibility,
         const BlamResources,
+        const RenderingParameters,
         gfx::system>,
     compo::empty_list_t>;
 
@@ -53,6 +54,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             std::chrono::duration<f32>(now.time_since_epoch()).count(), 3600.f);
         auto const& scene = p.template subsystem<H2Scene>();
         auto const& vis   = p.template subsystem<H2Visibility>();
+        auto const& debug = p.template subsystem<RenderingParameters>();
         if(!scene.loaded)
             return;
         ensure_gpu();
@@ -91,10 +93,12 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Vecf3 const sun_color =
             scene.sky_flares.empty() ? Vecf3{0.f} : scene.sky_flares[0].color;
         Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
-        draw_shadows(p, scene, *camera, sun_direction);
-        auto const& csm = m_shadows.sampling;
+        draw_shadows(p, scene, *camera, sun_direction, debug.render_scenery);
+        auto const& csm          = m_shadows.sampling;
+        i32 const   render_flags = debug.render_flags();
         /* Below the horizon, where the sky model ends */
-        resources.offscreen->clear(Vecf4(scene.sky_clear, 1.f));
+        resources.offscreen->clear(
+            Vecf4(debug.debug_clear ? debug.clear_color : scene.sky_clear, 1.f));
         size_t draws_total = 0, draws_visible = 0;
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
@@ -114,7 +118,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 draws.clear();
                 m_moving.clear();
                 for(auto const& d : mat.section_draws)
-                    if(!vis.draw_visible(d.tag, scene.sections))
+                    if(!vis.draw_visible(d.tag, scene.sections) ||
+                       (d.tag.placed && !debug.render_scenery))
                         continue;
                     else if(d.tag.object >= 0)
                         m_moving.push_back(d);
@@ -173,6 +178,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const i32>(alpha_test)},
                     gfx::uniform_pair<const i32>{
                         {"bumped"}, semantic::SpanOne<const i32>(bumped)},
+                    gfx::uniform_pair<const i32>{
+                        {"render_flags"}, semantic::SpanOne<const i32>(render_flags)},
                     gfx::uniform_pair<const f32>{
                         {"time"}, semantic::SpanOne<const f32>(seconds)},
                     gfx::uniform_pair<Vecf3 const>{
@@ -331,7 +338,11 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     /* Moving objects cast into each cascade; the BSP and static scenery
      * have theirs baked into the lightmaps */
     void draw_shadows(
-        Proxy& p, H2Scene const& scene, PlayerCamera const& camera, Vecf3 const& to_light)
+        Proxy&              p,
+        H2Scene const&      scene,
+        PlayerCamera const& camera,
+        Vecf3 const&        to_light,
+        bool                casters)
     {
         m_shadows.update(
             blam_render::CascadedShadowMap::frustum_from(
@@ -341,7 +352,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_casters.clear();
         for(auto const& mat : scene.materials)
         {
-            if(mat.sky || mat.water || mat.ocean || mat.additive || mat.blended)
+            if(!casters || mat.sky || mat.water || mat.ocean || mat.additive ||
+               mat.blended)
                 continue;
             for(auto const& d : mat.section_draws)
             {

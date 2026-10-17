@@ -234,6 +234,21 @@ struct RenderingParameters : compo::SubsystemBase
     libc_types::u32 current_bsp_cluster{
         std::numeric_limits<libc_types::u32>::max()};
     bool interior{false};
+
+    /*! The debug toggles as the shaders' render_flags bits
+     * (fragments/render_flags.glsl) */
+    int render_flags() const
+    {
+        return (render_fog ? 0x1 : 0) | (render_lightmaps ? 0x2 : 0) |
+               (render_reflection ? 0x4 : 0) |
+               (render_model_bones ? 0x8 : 0) | (only_normals ? 0x10 : 0) |
+               (only_normalmaps ? 0x20 : 0) | (only_lightmaps ? 0x40 : 0) |
+               (only_reflections ? 0x80 : 0) |
+               (only_multipurpose ? 0x100 : 0) |
+               (only_multipurpose2 ? 0x200 : 0) | (only_diffuse ? 0x400 : 0) |
+               (only_detail ? 0x1000 : 0) | (only_micro ? 0x2000 : 0) |
+               (only_aux_channels ? 0x4000 : 0);
+    }
 };
 
 struct LoadingStatus : compo::SubsystemBase

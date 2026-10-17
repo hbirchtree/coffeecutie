@@ -2034,21 +2034,8 @@ struct MeshRenderer
     gfx::uniform_pair<const int> get_renderflag_uniform()
     {
         m_render_flags =
-            (m_render_params.render_fog ? 0x1 : 0) |
-            (m_render_params.render_lightmaps ? 0x2 : 0) |
-            (m_render_params.render_reflection ? 0x4 : 0) |
-            (m_render_params.render_model_bones ? 0x8 : 0) |
-            (m_render_params.only_normals ? 0x10 : 0) |
-            (m_render_params.only_normalmaps ? 0x20 : 0) |
-            (m_render_params.only_lightmaps ? 0x40 : 0) |
-            (m_render_params.only_reflections ? 0x80 : 0) |
-            (m_render_params.only_multipurpose ? 0x100 : 0) |
-            (m_render_params.only_multipurpose2 ? 0x200 : 0) |
-            (m_render_params.only_diffuse ? 0x400 : 0) |
+            m_render_params.render_flags() |
             (std::is_same_v<halo_version, blam::xbox_version_t> ? 0x800 : 0) |
-            (m_render_params.only_detail ? 0x1000 : 0) |
-            (m_render_params.only_micro ? 0x2000 : 0) |
-            (m_render_params.only_aux_channels ? 0x4000 : 0) |
             (m_render_params.interior ? 0x8000 : 0) |
             (m_water_modulate ? 0x10000 : 0);
         return gfx::uniform_pair{
