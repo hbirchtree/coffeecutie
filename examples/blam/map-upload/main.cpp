@@ -1,5 +1,6 @@
 #include <blam/dimeter/file_header.h>
 #include <blam/dimeter/tag_index.h>
+#include <blam/elegy/file_header.h>
 #include <blam/transcode/map_transcode.h>
 #include <blam/volta/blam_atlas.h>
 #include <blam/volta/blam_file_header.h>
@@ -28,7 +29,8 @@
  * is, and only hands the whole file over to blam_upload_decompress() when it
  * is a compressed map. Everything else goes into OPFS untouched. For
  * Halo 2 maps it also reads the 32-byte tag index the header points to and
- * passes it to blam_upload_identify_halo2().
+ * passes it to blam_upload_identify_halo2(). Halo 3 maps are told apart by
+ * their 12 KiB big-endian header alone.
  *
  * Halo PC, Custom Edition and Xbox maps can have their bitmaps transcoded on
  * the way in (blam_upload_transcode_*), for GPUs that cannot sample BCn, and
@@ -65,6 +67,8 @@ enum class kind_t : i32
     halo2       = 9,
     halo2_xbox  = 10,
     halo2_vista = 11,
+    halo3       = 12,
+    halo3_beta  = 13,
 };
 
 /* Read field by field from JS, layout is fixed */
@@ -75,7 +79,7 @@ struct upload_info_t
     u32  decomp_len;
     char name[36];
     u32  index_offset; /*!< Halo 2: where blam_upload_identify_halo2() reads */
-    i32  cache_type;   /*!< Halo 2: blam::dimeter::cache_type_t, or -1 */
+    i32  cache_type;   /*!< Halo 2/3: the header's cache_type_t, or -1 */
 };
 
 static_assert(sizeof(upload_info_t) == 56);
@@ -242,6 +246,32 @@ bool halo2_header_of(semantic::BytesConst const& data, u32 file_size)
     return true;
 }
 
+/* Halo 3 (Xbox 360) maps have a 0x3000-byte big-endian header, "head" and
+ * "foot" stored as bytes, version 11. The beta's version 9 header is laid out
+ * differently and only recognised to be skipped. */
+bool halo3_header_of(semantic::BytesConst const& data)
+{
+    using blam::elegy::file_header_t;
+    if(data.size < sizeof(file_header_t))
+        return false;
+    auto const* header = reinterpret_cast<file_header_t const*>(data.data);
+    if(header->id != blam::bl_header{'h', 'e', 'a', 'd'})
+        return false;
+    if(header->valid() && header->version.value() == blam::elegy::halo3_version)
+    {
+        info.kind       = static_cast<i32>(kind_t::halo3);
+        info.cache_type = static_cast<i32>(header->map_type.value());
+        copy_name(*header);
+        return true;
+    }
+    if(header->version.value() == 9)
+    {
+        info.kind = static_cast<i32>(kind_t::halo3_beta);
+        return true;
+    }
+    return false;
+}
+
 template<typename Ver>
 bool inflate(semantic::BytesConst const& data)
 {
@@ -267,7 +297,8 @@ bool inflate(semantic::BytesConst const& data)
 extern "C" {
 
 /*!
- * \brief Identify a file from its first bytes (at least 2048 for maps)
+ * \brief Identify a file from its first bytes (at least 2048 for maps, 0x3000
+ * for Halo 3)
  * \param file_size Size of the whole file, which may be more than size.
  * Maps address everything with u32 offsets, so the page rejects files of
  * 4 GiB or more before calling this.
@@ -290,6 +321,8 @@ EMSCRIPTEN_KEEPALIVE upload_info_t const* blam_upload_identify(
         return &info;
     }
     if(halo2_header_of(head, file_size))
+        return &info;
+    if(halo3_header_of(head))
         return &info;
 
     if(size >= sizeof(blam::file_header_trial_t) &&

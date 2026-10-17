@@ -34,9 +34,9 @@ constexpr std::string_view prefix_for(blam::version_t version)
 
 constexpr std::string_view prefix = prefix_for(halo_version::version_v);
 
-/* Directories map-upload stores into, Halo 2 included */
-constexpr std::array<std::string_view, 5> upload_dirs = {
-    "/pc/", "/custom/", "/xbox/", "/mcc/", "/halo2/"};
+/* Directories map-upload stores into, Halo 2 and 3 included */
+constexpr std::array<std::string_view, 6> upload_dirs = {
+    "/pc/", "/custom/", "/xbox/", "/mcc/", "/halo2/", "/halo3/"};
 
 /* FileMapper's store, where uploads are read from */
 constexpr std::string_view store_root = "/maps";
