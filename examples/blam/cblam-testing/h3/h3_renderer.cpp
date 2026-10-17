@@ -63,6 +63,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
 
         auto&        resources = p.template subsystem<BlamResources>();
         f32 const    exposure  = adapt_exposure(scene, camera->camera.position);
+        auto const&  dynamic_cube = nearest_cubemap(scene, camera->camera.position);
         Vecf3 const  offset{};
         f32 const    scale = 1.f;
         Vecf2 const  unit{1.f, 1.f};
@@ -227,6 +228,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"self_illum_mode"}, semantic::SpanOne<const i32>(mat.self_illum)},
                         gfx::uniform_pair<const i32>{
                             {"black_point"}, semantic::SpanOne<const i32>(black_point)},
+                        gfx::uniform_pair<const i32>{
+                            {"env_mode"}, semantic::SpanOne<const i32>(mat.env_mode)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"env_tint"}, semantic::SpanOne<const Vecf4>(mat.env_tint)},
                         gfx::uniform_pair<Vecf2 const>{
                             {"detail3_ratio"}, semantic::SpanOne<const Vecf2>(mat.detail3_ratio)},
                         gfx::uniform_pair<const f32>{
@@ -256,7 +261,12 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{stage_t::Fragment, {"illum_map", 12}, or_white(mat.illum)},
                         gfx::sampler_definition_t{
                             stage_t::Fragment, {"illum_detail_map", 13}, or_white(mat.illum_detail)},
-                        gfx::sampler_definition_t{stage_t::Fragment, {"detail3", 14}, or_white(mat.detail3)});
+                        gfx::sampler_definition_t{stage_t::Fragment, {"detail3", 14}, or_white(mat.detail3)},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"env_dynamic", 15}, dynamic_cube},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment,
+                            {"env_map", 16},
+                            mat.environment_map.sampler ? mat.environment_map.sampler : m_black_cube_sampler});
                     res = submit(frag_u, samplers);
                 }
                 if(res.has_value() && !m_draw_error_logged)
@@ -268,6 +278,24 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     }
 
   private:
+    /* The cubemap captured nearest the camera stands in for Halo 3's
+     * per-object pair of dynamic cubemaps */
+    std::shared_ptr<gfx::sampler_t> const& nearest_cubemap(H3Scene const& scene, Vecf3 const& eye)
+    {
+        f32         best  = std::numeric_limits<f32>::max();
+        auto const* found = &m_black_cube_sampler;
+        for(auto const& probe : scene.cubemap_probes)
+        {
+            f32 d = glm::distance(probe.position, eye);
+            if(d < best && probe.cubemap < scene.cubemaps.size())
+            {
+                best  = d;
+                found = &scene.cubemaps[probe.cubemap].sampler;
+            }
+        }
+        return *found;
+    }
+
     /* Auto exposure: moves a little towards the camera's target each frame */
     f32 adapt_exposure(H3Scene const& scene, Vecf3 const& eye)
     {
@@ -343,6 +371,15 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         m_no_lightprobe->upload(std::vector<u8>(16, 0xFF), Veci3{0, 0, 0}, size_3d<i32>{2, 2, 1});
         m_no_lightprobe_sampler = m_no_lightprobe->sampler();
         m_no_lightprobe_sampler->alloc();
+        m_black_cube = api.alloc_texture(
+            gfx::textures::cube, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
+        m_black_cube->alloc(size_3d<u32>{1, 1, 1});
+        std::array<u8, 4>                        black{0, 0, 0, 0};
+        std::array<semantic::Span<const u8>, 6> faces;
+        faces.fill(semantic::Span<const u8>(black.data(), black.size()));
+        m_black_cube->upload(faces, Veci2{0, 0}, Veci2{1, 1}, 0);
+        m_black_cube_sampler = m_black_cube->sampler();
+        m_black_cube_sampler->alloc();
 
         for(size_t i = 0; i < m_programs.size(); i++)
             create_program(
@@ -365,6 +402,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::sampler_t>             m_white_sampler;
     std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightprobe;
     std::shared_ptr<gfx::sampler_t>             m_no_lightprobe_sampler;
+    std::shared_ptr<gfx::texture_cube_t>        m_black_cube;
+    std::shared_ptr<gfx::sampler_t>             m_black_cube_sampler;
     f32                                         m_stops{0.f};
     u32                                         m_exposure_generation{~0u};
     bool                                        m_draw_error_logged{false};
