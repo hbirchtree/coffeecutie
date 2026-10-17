@@ -30,6 +30,7 @@ enum class Variant : u8
     terrain,
     detail_overlay, /*!< two_detail_overlay */
     three_detail,   /*!< three_detail_blend */
+    water,          /*!< rmw, drawn after a copy of the scene */
     count,
 };
 
@@ -41,6 +42,7 @@ inline constexpr std::string_view variant_files[] = {
     "h3_terrain",
     "h3_detail_overlay",
     "h3_three_detail",
+    "h3_water",
 };
 
 static_assert(std::size(variant_files) == static_cast<size_t>(Variant::count));
@@ -85,6 +87,7 @@ struct CubeTexture
 {
     std::shared_ptr<gfx::texture_cube_t> texture;
     std::shared_ptr<gfx::sampler_t>      sampler;
+    f32                                  curve{1.f}; /*!< Decode exponent */
 };
 
 /* A cubemap point of the BSP and its image */
@@ -92,6 +95,32 @@ struct CubemapProbe
 {
     Vecf3 position;
     u32   cubemap;
+};
+
+/* shader_water's parameters, as water_shading.fx reads them */
+struct WaterParams
+{
+    Texture                                   color;      /*!< watercolor_texture */
+    CubeTexture                               reflection; /*!< environment_map */
+    std::shared_ptr<gfx::compat::texture_2da_t> slopes;   /*!< wave_slope_array */
+    std::shared_ptr<gfx::sampler_t>           slopes_sampler;
+    Texture                                   foam;
+    Vecf4 slope_xform{1.f, 1.f, 0.f, 0.f};  /*!< wave_slope_array uv scale/offset */
+    Vecf4 shape_xform{1.f, 1.f, 0.f, 0.f};  /*!< wave_displacement_array uv scale/offset */
+    Vecf4 foam_xform{1.f, 1.f, 0.f, 0.f};
+    /* slope range xy, detail slope scale xy */
+    Vecf4 slope{0.5f, 0.4f, 10.f, 3.f};
+    /* wave height, aux height, detail steepness, minimal disturbance */
+    Vecf4 heights{0.5f, 0.6f, 0.5f, 1.f};
+    /* watercolor coefficient, reflection coefficient, fresnel r0, murkiness */
+    Vecf4 shading{1.f, 1.f, 0.1f, 3.f};
+    /* refraction shift, extinct distance, depth dominant ratio, bank depth */
+    Vecf4 refraction{0.12f, 1000.f, 0.95f, 0.22f};
+    /* sunspot cut, shadow intensity mark, slope array layers, has reflection */
+    Vecf4 misc{0.01f, 0.5f, 1.f, 0.f};
+    Vecf4 diffuse{0.f};                     /*!< water_diffuse */
+    /* Decode exponents: watercolor, reflection */
+    Vecf2 curves{2.f, 2.f};
 };
 
 /* One render method: its textures and every draw range using it */
@@ -148,6 +177,7 @@ struct Material
     bool                                   blended{false}; /*!< alpha blend */
     bool                                   constant_color{false};
     Vecf4                                  tint{1.f, 1.f, 1.f, 1.f};
+    WaterParams                            water;
     bool                                   visible{true};
 };
 
