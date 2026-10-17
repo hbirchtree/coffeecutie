@@ -769,6 +769,9 @@ struct ObjectPhysics
     f32   mass{0.f};      /*!< 0 = static */
     bool  item{false};    /*!< Only collides with the world and other items */
     bool  upright{false}; /*!< Bipeds: never tip, hulls follow the pose */
+    /*! The physics material; < 0 keeps the default */
+    f32   friction{-1.f};
+    f32   restitution{-1.f};
 
     /*! Who moves a body with mass: this peer's simulation, or someone else
      * (the server) through Model, with the body following kinematically */
