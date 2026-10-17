@@ -196,6 +196,21 @@ struct Material
     bool                                   visible{true};
 };
 
+/*! A light attached to a placed object, as simple_lights.fx takes it: in
+ * the object's space when it moves (entity), world space otherwise */
+struct DynamicLight
+{
+    u64   entity{0};
+    Vecf3 position{};
+    Vecf3 direction{0.f, 0.f, -1.f}; /*!< Towards where it shines */
+    Vecf3 color{};                   /*!< Times intensity */
+    f32   size{1.f};                 /*!< Softens the distance falloff */
+    f32   sphere{1.f};               /*!< Share of light outside the cone */
+    f32   smooth{1.f};
+    Vecf4 falloff{1.f, 0.f, 0.f, 1.f}; /*!< Distance and angle: scale xy, offset zw */
+    f32   radius{0.f};
+};
+
 struct H3Scene : compo::SubsystemBase
 {
     using type = H3Scene;
@@ -218,6 +233,7 @@ struct H3Scene : compo::SubsystemBase
     BakedLight                                  baked;
     std::vector<CubeTexture>                    cubemaps;
     std::vector<CubemapProbe>                   cubemap_probes;
+    std::vector<DynamicLight>                   lights;
     std::shared_ptr<gfx::buffer_t> vertex_buf;
     std::shared_ptr<gfx::buffer_t> element_buf;
 };
