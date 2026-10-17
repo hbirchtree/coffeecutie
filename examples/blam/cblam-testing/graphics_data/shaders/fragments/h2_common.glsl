@@ -274,7 +274,11 @@ void main()
                : f_lightmap.z >= 0.0 ? texture(lightmaps, f_lightmap).rgb * 2.0
                : f_vertex_light.a > 0.0 ? f_vertex_light.rgb * 2.0
                : vec3(sun_shade(normal));
-    light *= cascade_shadow(f_world_pos, normal, sun_direction, camera_position);
+    /* A cast shadow takes the sun's share out of the baked light: none
+     * where it is dim (shade the lightmap already holds) */
+    float sunlit = smoothstep(0.15, 0.45, dot(light, vec3(0.299, 0.587, 0.114)));
+    light *= 1.0 - cascade_occlusion(f_world_pos, normal, sun_direction, camera_position) *
+                       csm_params.y * sunlit;
     if((render_flags & RENDER_FLAG_ONLY_LIGHTMAP) != 0)
     {
         out_color = vec4(light, 1.0);

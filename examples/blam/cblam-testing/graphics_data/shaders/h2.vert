@@ -35,8 +35,8 @@ layout(location=39) uniform mat4 model;
 layout(location=46) uniform vec2 water_fan;
 layout(location=47) uniform vec2 water_eye;
 /* Animated objects: bind pose to animated pose per model node */
-layout(location=74) uniform int skinned;
-layout(location=80) uniform mat4 bones[64]; /* 80-335 */
+layout(location=84) uniform int skinned;
+layout(location=96) uniform mat4 bones[64]; /* 96-351 */
 
 void main()
 {

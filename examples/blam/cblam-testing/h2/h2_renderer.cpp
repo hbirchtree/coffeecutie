@@ -52,6 +52,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     {
         f32 const seconds = std::fmod(
             std::chrono::duration<f32>(now.time_since_epoch()).count(), 3600.f);
+        m_seconds = seconds;
         auto const& scene = p.template subsystem<H2Scene>();
         auto const& vis   = p.template subsystem<H2Visibility>();
         auto const& debug = p.template subsystem<RenderingParameters>();
@@ -88,13 +89,13 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         f32 const   sea_level = vis.planar_fog.plane.z > .9f && vis.planar_fog.plane.w > -1e8f
                                     ? vis.planar_fog.plane.w / vis.planar_fog.plane.z + .05f
                                     : 0.f;
-        Vecf3 const sun_direction =
-            scene.sky_flares.empty() ? Vecf3{0.f, 0.f, 1.f} : scene.sky_flares[0].direction;
+        Vecf3 const sun_direction = scene.sun_direction;
         Vecf3 const sun_color =
             scene.sky_flares.empty() ? Vecf3{0.f} : scene.sky_flares[0].color;
         Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
-        draw_shadows(p, scene, *camera, sun_direction, debug.render_scenery);
-        auto const& csm          = m_shadows.sampling;
+        draw_shadows(p, scene, vis, debug, *camera, sun_direction);
+        static blam_render::CascadedShadowMap::sampling_t const no_shadows{};
+        auto const& csm = debug.shadows ? m_shadows.sampling(0) : no_shadows;
         i32 const   render_flags = debug.render_flags();
         /* Below the horizon, where the sky model ends */
         resources.offscreen->clear(
@@ -236,7 +237,16 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Vecf4 const>{
                         {"csm_texel"}, semantic::SpanOne<const Vecf4>(csm.texel)},
                     gfx::uniform_pair<Vecf4 const>{
-                        {"csm_params"}, semantic::SpanOne<const Vecf4>(csm.params)});
+                        {"csm_params"}, semantic::SpanOne<const Vecf4>(csm.params)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"csm_tiles"}, semantic::Span<const Vecf4>(csm.tiles)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"csm_bias"}, semantic::SpanOne<const Vecf4>(csm.bias)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"csm_occluder"}, semantic::SpanOne<const Matf4>(csm.occluder)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"csm_occluder_info"},
+                        semantic::SpanOne<const Vecf4>(csm.occluder_info)});
                 auto lm_sampler = scene.lightmap_sampler
                                       ? scene.lightmap_sampler
                                       : m_no_lightmaps_sampler;
@@ -291,6 +301,16 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         typing::graphics::ShaderStage::Fragment,
                         {"csm_atlas", 9},
                         m_shadows.sampler(),
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"csm_occluder_atlas", 10},
+                        m_shadows.occluder_sampler(),
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"csm_occluder_tiles", 11},
+                        m_shadows.occluder_tiles_sampler(),
                     });
                 auto submit = [&](std::vector<gfx::draw_command::data_t> const& data) {
                     auto res = m_api->submit(
@@ -372,59 +392,164 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                          animation.palette[f1 * animation.nodes + i] * t;
     }
 
-    /* Moving objects cast into each cascade; the BSP and static scenery
-     * have theirs baked into the lightmaps */
+    /* Moving and animated objects cast into each cascade; the BSP and
+     * static scenery have their shadows baked, and only keep the casters'
+     * shadows off what they shade (the world map once, tiles near the
+     * camera each frame) */
     void draw_shadows(
-        Proxy&              p,
-        H2Scene const&      scene,
-        PlayerCamera const& camera,
-        Vecf3 const&        to_light,
-        bool                casters)
+        Proxy&                     p,
+        H2Scene const&             scene,
+        H2Visibility const&        vis,
+        RenderingParameters const& params,
+        PlayerCamera const&        camera,
+        Vecf3 const&               to_light)
     {
-        m_shadows.update(
-            blam_render::CascadedShadowMap::frustum_from(
-                glm::inverse(camera.matrix), camera.camera.position),
+        using Shadows = blam_render::CascadedShadowMap;
+        if(!params.shadows)
+            return;
+        Shadows::config_t const want{
+            .view_cascades       = std::clamp<u32>(params.shadow_cascades, 1, 3),
+            .resolution          = std::clamp<u32>(params.shadow_resolution, 256, 4096),
+            .occluder_resolution = 4096,
+            .occluder_tiles      = true,
+            /* The sky's light does not always match the bake's sun: far
+             * terrain (Coagulation's cliffs) is left to the lightmap */
+            .occluder_reach = 12.f,
+        };
+        auto const& have = m_shadows.config();
+        if(!m_shadows.valid() || have.view_cascades != want.view_cascades ||
+           have.resolution != want.resolution)
+            m_shadows.alloc(*m_api, want);
+        m_shadows.tune(params.shadow_distance, params.shadow_split);
+        m_shadows.update_view(
+            0,
+            Shadows::frustum_from(glm::inverse(camera.matrix), camera.camera.position),
             to_light);
-        m_shadows.clear();
-        m_casters.clear();
+
+        /* The active section's static draws, world space */
+        m_static.clear();
+        Vecf3 lo(std::numeric_limits<f32>::max()), hi(std::numeric_limits<f32>::lowest());
         for(auto const& mat : scene.materials)
         {
-            if(!casters || mat.sky || mat.water || mat.ocean || mat.additive ||
-               mat.blended)
+            /* What the opaque pass draws; cut-outs are left to the bake */
+            if(mat.sky || mat.water || mat.ocean || mat.additive || mat.blended ||
+               mat.alpha_test || !mat.texture)
                 continue;
             for(auto const& d : mat.section_draws)
+                if(d.tag.object < 0 && d.tag.animated < 0 && d.bounds.w >= 0.f && 
+                   (d.tag.section < 0 || d.tag.section == vis.active))
+                {
+                    m_static.push_back({d.cmd, d.bounds});
+                    lo = glm::min(lo, Vecf3(d.bounds) - d.bounds.w);
+                    hi = glm::max(hi, Vecf3(d.bounds) + d.bounds.w);
+                }
+        }
+        if(m_static.empty())
+            lo = hi = camera.camera.position;
+        Vecf3 const center = (lo + hi) * .5f;
+        f32 const   radius = std::max(glm::distance(lo, hi) * .5f, params.shadow_distance);
+        m_shadows.update_shared(center, radius, to_light);
+        m_shadows.clear();
+
+        auto const _ = m_api->debug().scope("H2 shadows");
+        Matf4      light{1.f}, model{1.f};
+        i32        skinned = 0;
+        f32 const  unit    = 1.f;
+        Vecf3 const origin{0.f};
+        Vecf2 const no_fan{0.f};
+        auto       vertex_u = gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Vertex,
+            gfx::uniform_pair<Matf4 const>{{"camera"}, semantic::SpanOne<const Matf4>(light)},
+            gfx::uniform_pair<Matf4 const>{{"model"}, semantic::SpanOne<const Matf4>(model)},
+            gfx::uniform_pair<const f32>{{"model_scale"}, semantic::SpanOne<const f32>(unit)},
+            gfx::uniform_pair<Vecf3 const>{
+                {"model_offset"}, semantic::SpanOne<const Vecf3>(origin)},
+            gfx::uniform_pair<Vecf2 const>{{"water_fan"}, semantic::SpanOne<const Vecf2>(no_fan)},
+            gfx::uniform_pair<const i32>{{"skinned"}, semantic::SpanOne<const i32>(skinned)},
+            gfx::uniform_pair<Matf4 const>{{"bones"}, semantic::Span<const Matf4>(m_bones)});
+        auto depth = [&](std::shared_ptr<gfx::rendertarget_t> const& target,
+                         typing::vector_types::Veci4 const&          view,
+                         std::vector<gfx::draw_command::data_t> const& data) {
+            if(data.empty())
+                return;
+            m_api->submit(
+                {
+                    .program       = m_shadow_program,
+                    .vertices      = m_vao,
+                    .render_target = target,
+                    .call          = {.indexed = true, .instanced = true},
+                    .data          = data,
+                },
+                vertex_u,
+                gfx::view_state{.view = view, .depth = gfx::depth_state{}});
+        };
+
+        /* Static geometry: the world map when the sun or section changes,
+         * the tiles around the camera every frame */
+        model   = Matf4(1.f);
+        skinned = 0;
+        if(m_shadows.update_occluder(center, radius, to_light))
+        {
+            light = m_shadows.occluder_matrix();
+            m_draws_scratch.clear();
+            for(auto const& d : m_static)
+                m_draws_scratch.push_back(d.cmd);
+            depth(m_shadows.occluder_target(), m_shadows.occluder_viewport(), m_draws_scratch);
+        }
+        for(u32 c = 0; c < m_shadows.config().view_cascades; c++)
+        {
+            u32 const tile = m_shadows.view_tile(0, c);
+            light          = m_shadows.light_matrix(tile);
+            m_draws_scratch.clear();
+            for(auto const& d : m_static)
+                if(m_shadows.covers(tile, Vecf3(d.bounds), d.bounds.w))
+                    m_draws_scratch.push_back(d.cmd);
+            depth(m_shadows.occluder_tiles_target(), m_shadows.viewport(tile), m_draws_scratch);
+        }
+
+        /* Casters, each where it stands */
+        if(!params.render_scenery)
+            return;
+        for(u32 tile = 0; tile < m_shadows.tiles(); tile++)
+        {
+            light = m_shadows.light_matrix(tile);
+            for(auto const& mat : scene.materials)
             {
-                auto idx = static_cast<size_t>(d.tag.object);
-                if(d.tag.object < 0 || idx >= scene.moving_objects.size())
+                if(mat.sky || mat.water || mat.ocean || mat.additive || mat.blended)
                     continue;
-                if(auto const* model = p.template get<Model>(scene.moving_objects[idx]))
-                    m_casters.push_back({d.cmd, model->transform});
+                for(auto const& d : mat.section_draws)
+                {
+                    if(d.tag.object >= 0 &&
+                       static_cast<size_t>(d.tag.object) < scene.moving_objects.size())
+                    {
+                        auto const* m =
+                            p.template get<Model>(scene.moving_objects[d.tag.object]);
+                        if(!m)
+                            continue;
+                        model   = m->transform;
+                        skinned = 0;
+                    } else if(d.tag.animated >= 0 &&
+                              static_cast<size_t>(d.tag.animated) < scene.animated_objects.size())
+                    {
+                        auto const& object = scene.animated_objects[d.tag.animated];
+                        model              = object.transform;
+                        skinned            = 1;
+                        pose(scene.animations[object.animation], m_seconds);
+                    } else
+                        continue;
+                    f32 const scale = std::max(
+                        {glm::length(Vecf3(model[0])),
+                         glm::length(Vecf3(model[1])),
+                         glm::length(Vecf3(model[2]))});
+                    if(d.bounds.w >= 0.f &&
+                       !m_shadows.covers(
+                           tile, Vecf3(model * Vecf4(Vecf3(d.bounds), 1.f)), d.bounds.w * scale))
+                        continue;
+                    m_single.assign(1, d.cmd);
+                    depth(m_shadows.target(), m_shadows.viewport(tile), m_single);
+                }
             }
         }
-        for(u32 i = 0; i < m_shadows.cascades(); i++)
-            for(auto const& [cmd, model] : m_casters)
-            {
-                m_single.assign(1, cmd);
-                m_api->submit(
-                    {
-                        .program       = m_shadow_program,
-                        .vertices      = m_vao,
-                        .render_target = m_shadows.target(),
-                        .call          = {.indexed = true, .instanced = true},
-                        .data          = m_single,
-                    },
-                    gfx::make_uniform_list(
-                        typing::graphics::ShaderStage::Vertex,
-                        gfx::uniform_pair<Matf4 const>{
-                            {"light"},
-                            semantic::SpanOne<const Matf4>(m_shadows.light_matrix(i))},
-                        gfx::uniform_pair<Matf4 const>{
-                            {"model"}, semantic::SpanOne<const Matf4>(model)}),
-                    gfx::view_state{
-                        .view  = m_shadows.viewport(i),
-                        .depth = gfx::depth_state{},
-                    });
-            }
     }
 
     /* Background seen through the planar fog volume: nothing drawn there
@@ -706,14 +831,14 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_flare_buf->alloc();
         m_flare_vao->set_buffer(gfx::buffers::vertex, m_flare_buf, 0);
 
+        /* The scene's own vertex stage, so skinned objects cast as drawn */
         create_program(
             api,
             shader_pair_t{
-                .vertex_file   = "shadow_depth",
+                .vertex_file   = "h2",
                 .fragment_file = "shadow_depth",
                 .shader        = m_shadow_program,
             });
-        m_shadows.alloc(api, {});
 
         create_program(
             api,
@@ -784,7 +909,14 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
 
     blam_render::CascadedShadowMap  m_shadows;
     std::shared_ptr<gfx::program_t> m_shadow_program;
-    std::vector<std::pair<gfx::draw_command::data_t, Matf4>> m_casters;
+    struct static_draw_t
+    {
+        gfx::draw_command::data_t cmd;
+        Vecf4                     bounds;
+    };
+    std::vector<static_draw_t>             m_static;
+    std::vector<gfx::draw_command::data_t> m_draws_scratch;
+    f32                                    m_seconds{0.f};
 };
 
 void alloc_h2_renderer(compo::EntityContainer& e)
