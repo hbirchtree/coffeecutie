@@ -497,7 +497,7 @@ void main()
 #endif
     }
     else if(f_vertex_light.a > 0.0 && baked)
-        color *= (f_vertex_light.rgb * 4.0 + dynamic_diffuse(normal)) * exposure;
+        color *= (f_vertex_light.rgb * f_vertex_light.rgb * 4.0 + dynamic_diffuse(normal)) * exposure;
     else
     {
         vec3 sun = normalize(vec3(0.3, 0.2, 1.0));

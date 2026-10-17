@@ -970,13 +970,16 @@ struct H3MapLoader : compo::SubsystemBase
             };
             if(vertex_lit)
             {
-                /* Stored at a quarter, so 8 bits reach 4x the white point */
-                Vecf3 light = glm::clamp(
-                    h3::diffuse_radiance(
-                        object_light ? *object_light : vertex_lights[i], light_rotation * out.normal) *
-                        0.25f * 255.f,
-                    Vecf3(0.f),
-                    Vecf3(255.f));
+                /* Square root of a quarter: 8 bits reach 4x the white point
+                 * and keep shade from rounding to black */
+                Vecf3 light = glm::sqrt(glm::clamp(
+                                  h3::diffuse_radiance(
+                                      object_light ? *object_light : vertex_lights[i],
+                                      light_rotation * out.normal) *
+                                      0.25f,
+                                  Vecf3(0.f),
+                                  Vecf3(1.f))) *
+                              255.f + .5f;
                 out.light[0] = static_cast<u8>(light.x);
                 out.light[1] = static_cast<u8>(light.y);
                 out.light[2] = static_cast<u8>(light.z);
