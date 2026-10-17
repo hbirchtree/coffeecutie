@@ -159,6 +159,27 @@ void decode_ctx1(
         }
 }
 
+void decode_dxt3a(Span<byte_t const> blocks, u32 width, u32 height, std::vector<byte_t>& out)
+{
+    u32 bw = (width + 3) / 4, bh = (height + 3) / 4;
+    out.assign(size_t(width) * height, 0);
+    for(u32 by = 0; by < bh; by++)
+        for(u32 bx = 0; bx < bw; bx++)
+        {
+            size_t at = (size_t(by) * bw + bx) * 8;
+            if(at + 8 > blocks.size())
+                return;
+            for(u32 i = 0; i < 16; i++)
+            {
+                u32 x = bx * 4 + (i & 3), y = by * 4 + (i >> 2);
+                if(x >= width || y >= height)
+                    continue;
+                u32 const nibble = (blocks[at + i / 2] >> ((i & 1) * 4)) & 0xF;
+                out[size_t(y) * width + x] = static_cast<byte_t>(nibble * 17);
+            }
+        }
+}
+
 std::array<byte_t, 4> dxt5_texel(Span<byte_t const> blocks, u32 width, u32 x, u32 y)
 {
     std::array<byte_t, 4> out{};
