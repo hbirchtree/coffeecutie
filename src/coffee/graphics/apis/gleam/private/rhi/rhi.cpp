@@ -437,6 +437,12 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             cmd::bind_texture(convert::to(m_type), 0);
         }
     }
+    /* A swizzle set before alloc() */
+    auto const& sw = m_soft_swizzle;
+    if(m_features.swizzle && std::any_of(sw.begin(), sw.end(), [](auto const& s) {
+           return s.has_value();
+       }))
+        set_swizzle(sw[0], sw[1], sw[2], sw[3]);
 }
 
 size_3d<u32> texture_t::size()
@@ -733,6 +739,13 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
             out.rendertarget.med_precision_color_format = pix_fmt::RGBA8;
     out.rendertarget.low_precision_color_format =
         api_type == api_type_t::es ? pix_fmt::RGB565 : pix_fmt::RGBA8;
+    /* WebGL renders to float only through EXT_color_buffer_float, and then
+     * to RGBA16F but never RGB16F; float keeps overbright values for the
+     * final tone curve */
+    if(platform_api == api_type_t::webgl && api_version >= 0x300 &&
+       supports_extension(extensions, "EXT_color_buffer_float"))
+        out.rendertarget.high_precision_color_format =
+            out.rendertarget.med_precision_color_format = pix_fmt::RGBA16F;
 
     out.debug.khr.debug = supports_extension(extensions, khr::debug::name);
 

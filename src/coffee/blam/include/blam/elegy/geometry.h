@@ -64,6 +64,16 @@ enum class part_flags_t : u8
 };
 C_FLAGS(part_flags_t, u8);
 
+enum class part_type_t : i8
+{
+    not_drawn            = 0,
+    opaque_shadow_only   = 1,
+    opaque_shadow_casting = 2,
+    opaque_nonshadowing  = 3,
+    transparent          = 4,
+    lightmap_only        = 5, /*!< Light emitters for the bake */
+};
+
 /*! A range of a mesh's index buffer drawn with one material */
 struct part_t
 {
@@ -73,9 +83,16 @@ struct part_t
     be<u16>      index_count;
     be<i16>      subpart_start;
     be<u16>      subpart_count;
-    i8           type;
+    part_type_t  type;
     part_flags_t flags;
     be<u16>      budget_vertex_count;
+
+    /*! Whether it is seen; the rest only shadows or lights the bake */
+    inline bool drawn() const
+    {
+        return type == part_type_t::opaque_shadow_casting ||
+               type == part_type_t::opaque_nonshadowing || type == part_type_t::transparent;
+    }
 };
 
 static_assert(sizeof(part_t) == 0x10);
@@ -158,6 +175,16 @@ static_assert(sizeof(compression_t) == 0x2C);
  * \brief render_geometry, embedded in mode, sbsp and sLdT. The vertex and
  * index buffers are in the resource it names.
  */
+/*! An instance's lightmap texcoords: a static_per_pixel vertex buffer */
+struct instance_lightmap_texcoords_t
+{
+    tag_block<std::array<u8, 0x60>> texcoords;
+    be<i16>                         vertex_buffer;
+    u16                             unknown_0;
+};
+
+static_assert(sizeof(instance_lightmap_texcoords_t) == 0x10);
+
 struct render_geometry_t
 {
     be<u32>                               flags;
@@ -167,10 +194,10 @@ struct render_geometry_t
     tag_block<std::array<u8, 0x18>>       user_data;
     std::array<u32, 3>                    per_mesh_temporary;
     tag_block<std::array<u8, 0x20>>       per_mesh_mopp;
-    tag_block<std::array<u8, 0xC>>        per_mesh_node_map;
+    tag_block<tag_block<u8>>              per_mesh_node_map; /*!< Mesh node index -> model node */
     tag_block<std::array<u8, 0xC>>        per_mesh_subpart_visibility;
     tag_block<std::array<u8, 0x20>>       per_mesh_prt;
-    tag_block<std::array<u8, 0x10>>       per_instance_lightmap_texcoords;
+    tag_block<instance_lightmap_texcoords_t> per_instance_lightmap_texcoords;
     datum_index                           resource;
     u32                                   unknown_0;
 };
@@ -296,6 +323,27 @@ struct vertex_t
 };
 
 /*!
+ * \brief Lightmap texcoords from a static_per_pixel vertex buffer: two
+ * unsigned 16-bit normalized values per vertex. Empty if the buffer is
+ * missing or of another format.
+ */
+std::vector<Vecf2> lightmap_texcoords(resource_view const& view, i16 vertex_buffer);
+
+/*! Baked light at a vertex: linear SH (D3DX order) and dominant intensity */
+struct vertex_light_t
+{
+    std::array<Vecf3, 4> sh;
+    Vecf3                intensity;
+};
+
+/*!
+ * \brief Per-vertex baked light from a static_per_vertex buffer: five
+ * signed 8-bit RGBE values (exponent first, scale 2^(e * 31.75)), the
+ * dominant light intensity then the four SH coefficients.
+ */
+std::vector<vertex_light_t> vertex_lights(resource_view const& view, i32 vertex_buffer);
+
+/*!
  * \brief A mesh's buffers, located in its geometry resource
  */
 struct mesh_buffers
@@ -346,98 +394,15 @@ struct mesh_buffers
      * Expand the vertex stream. Rigid and skinned vertices need the mesh's
      * compression bounds; world vertices are stored as-is.
      */
-    inline bool decode(
-        compression_t const* compression, std::vector<vertex_t>& out) const
-    {
-        if(!vertices)
-            return false;
-        u32 count  = vertex_count();
-        u32 stride = static_cast<u32>(vertices->stride.value());
-        auto format = vertices->format.value();
-        if(stride == 0 || u64(count) * stride > vertex_bytes.size())
-            return false;
-        out.resize(count);
-        for(u32 i = 0; i < count; i++)
-        {
-            auto const* at = vertex_bytes.data() + u64(i) * stride;
-            auto&       v  = out[i];
-            if(format == vertex_format_t::world && stride >= sizeof(world_vertex_t))
-            {
-                auto const& w = *reinterpret_cast<world_vertex_t const*>(at);
-                v.position    = w.position;
-                v.texcoord    = w.texcoord;
-                v.normal      = unpack_dhen3n(w.normal);
-                v.tangent     = unpack_dhen3n(w.tangent);
-                v.binormal    = unpack_dhen3n(w.binormal);
-            } else if(
-                (format == vertex_format_t::rigid ||
-                 format == vertex_format_t::skinned) &&
-                stride >= sizeof(rigid_vertex_t) && compression)
-            {
-                auto const& r = *reinterpret_cast<rigid_vertex_t const*>(at);
-                for(int c = 0; c < 3; c++)
-                    v.position[c] = compression_t::expand(
-                        unpack_unorm16(r.position[c]), compression->position[c]);
-                for(int c = 0; c < 2; c++)
-                    v.texcoord[c] = compression_t::expand(
-                        unpack_unorm16(r.texcoord[c]), compression->texcoord[c]);
-                v.normal   = unpack_dhen3n(r.normal);
-                v.tangent  = unpack_dhen3n(r.tangent);
-                v.binormal = unpack_dhen3n(r.binormal);
-                if(format == vertex_format_t::skinned &&
-                   stride >= sizeof(skinned_vertex_t))
-                {
-                    auto const& s =
-                        *reinterpret_cast<skinned_vertex_t const*>(at);
-                    v.nodes = s.nodes;
-                    for(int c = 0; c < 4; c++)
-                        v.weights[c] = s.weights[c] / 255.f;
-                }
-            } else
-                return false;
-        }
-        return true;
-    }
+    bool decode(
+        compression_t const* compression, std::vector<vertex_t>& out) const;
 
     /*! Triangles of a part (or the whole buffer), strips unrolled */
-    inline void triangles(
+    void triangles(
         primitive_t                       type,
         u32                               start,
         u32                               count,
-        std::vector<std::array<u16, 3>>& out) const
-    {
-        u32 total = index_count();
-        if(start > total)
-            return;
-        count = std::min(count, total - start);
-        if(type == primitive_t::triangle_list)
-        {
-            for(u32 i = 0; i + 2 < count; i += 3)
-                out.push_back(
-                    {index(start + i), index(start + i + 1),
-                     index(start + i + 2)});
-        } else if(type == primitive_t::triangle_strip)
-        {
-            /* 0xFFFF restarts the strip, and with it the winding */
-            u32 run = 0;
-            u16 a = 0, b = 0;
-            for(u32 i = 0; i < count; i++)
-            {
-                u16 c = index(start + i);
-                if(c == 0xFFFF)
-                {
-                    run = 0;
-                    continue;
-                }
-                if(run >= 2 && a != b && b != c && a != c)
-                    out.push_back(run & 1 ? std::array<u16, 3>{b, a, c}
-                                          : std::array<u16, 3>{a, b, c});
-                a = b;
-                b = c;
-                run++;
-            }
-        }
-    }
+        std::vector<std::array<u16, 3>>& out) const;
 };
 
 } // namespace blam::elegy

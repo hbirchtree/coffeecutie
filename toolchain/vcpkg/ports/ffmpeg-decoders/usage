@@ -1,0 +1,6 @@
+ffmpeg-decoders provides CMake targets:
+
+    find_package(ffmpeg-decoders CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE ffmpeg-decoders::ffmpeg-decoders)
+
+Pick decoders with port features, e.g. "ffmpeg-decoders[xma,wma]".

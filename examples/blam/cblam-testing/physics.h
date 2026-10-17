@@ -137,6 +137,9 @@ struct BodyCreationShape
     std::optional<VehicleDrive>       drive;
     /*! Hull children follow the entity's AnimationPlayback::pose */
     bool posed{false};
+    /*! Overrides the defaults below when set */
+    std::optional<f32> friction;
+    std::optional<f32> restitution;
 };
 
 struct BodyRemoval

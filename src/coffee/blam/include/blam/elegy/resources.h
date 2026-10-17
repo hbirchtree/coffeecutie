@@ -2,6 +2,8 @@
 
 #include "map.h"
 
+#include <cstring>
+#include <functional>
 #include <map>
 #include <memory>
 #include <vector>
@@ -33,7 +35,8 @@ static_assert(sizeof(definition_fixup_t) == 0x8);
 enum class resource_space_t : u8
 {
     definition = 2, /*!< The resource's slice of the info buffer */
-    data       = 4, /*!< The resource's bytes in its raw page */
+    data       = 4, /*!< The resource's bytes in its primary page */
+    secondary  = 6, /*!< ...and in its secondary page, e.g. a bitmap's top mip */
 };
 
 struct resource_type_t
@@ -198,15 +201,17 @@ static_assert(sizeof(d3d_structure<u8>) == 0xC);
 
 /*!
  * \brief One resource, resolved: its definition with the fixups to read
- * it by, and the page bytes it addresses. Keeps the page alive.
+ * it by, and the page bytes it addresses. Keeps the pages alive.
  */
 struct resource_view
 {
     Span<byte_t const>           definition;
     Span<byte_t const>           data;
+    Span<byte_t const>           secondary;
     std::map<u32, u32>           fixups;
     u32                          root{0};
     std::shared_ptr<void const>  keep;
+    std::shared_ptr<void const>  keep_secondary;
 
     template<typename T>
     inline T const* root_as() const
@@ -242,6 +247,7 @@ struct resource_view
             it->second & 0x0FFFFFFF);
     }
 
+    /*! A block's elements, in the definition or in the page data */
     template<typename T>
     inline Span<T const> block(resource_block<T> const& block) const
     {
@@ -249,12 +255,23 @@ struct resource_view
         if(count <= 0)
             return {};
         auto where = address(&block.pointer);
-        if(!where || where->first != resource_space_t::definition)
+        if(!where)
             return {};
-        auto const* items = at<T>(where->second, static_cast<u32>(count));
-        if(!items)
+        if(where->first == resource_space_t::definition)
+        {
+            auto const* items = at<T>(where->second, static_cast<u32>(count));
+            if(!items)
+                return {};
+            return Span<T const>(items, static_cast<size_t>(count));
+        }
+        auto page = where->first == resource_space_t::data        ? data
+                    : where->first == resource_space_t::secondary ? secondary
+                                                                  : Span<byte_t const>();
+        u64 bytes = u64(count) * sizeof(T);
+        if(where->second > page.size() || bytes > page.size() - where->second)
             return {};
-        return Span<T const>(items, static_cast<size_t>(count));
+        return Span<T const>(
+            reinterpret_cast<T const*>(page.data() + where->second), static_cast<size_t>(count));
     }
 
     template<typename T>
@@ -271,12 +288,19 @@ struct resource_view
     {
         i32  size  = ref.size;
         auto where = address(&ref.pointer);
-        if(size <= 0 || !where || where->first != resource_space_t::data)
+        if(size <= 0 || !where)
             return {};
-        if(where->second > data.size() ||
-           static_cast<u32>(size) > data.size() - where->second)
+        Span<byte_t const> page;
+        if(where->first == resource_space_t::data)
+            page = data;
+        else if(where->first == resource_space_t::secondary)
+            page = secondary;
+        else
             return {};
-        return data.subspan(where->second, static_cast<size_t>(size));
+        if(where->second > page.size() ||
+           static_cast<u32>(size) > page.size() - where->second)
+            return {};
+        return page.subspan(where->second, static_cast<size_t>(size));
     }
 };
 
@@ -292,6 +316,48 @@ enum class resource_error
 
 /*! Inflates a raw-deflate page into `out` */
 bool inflate_page(Span<byte_t const> compressed, Span<byte_t> out);
+
+/*!
+ * \brief A cache file other maps take pages from (mainmenu, shared,
+ * campaign), read by range so it need not be in memory.
+ */
+struct cache_source
+{
+    using reader_t = std::function<bool(u64 offset, Span<byte_t> dst)>;
+
+    u32      resource_offset{0}; /*!< File offset of the resource section */
+    reader_t read;
+
+    /*! From the start of the file; nullopt if it is not a Halo 3 cache */
+    static optional<cache_source> from_header(Span<byte_t const> head, reader_t read)
+    {
+        if(head.size() < sizeof(file_header_t))
+            return std::nullopt;
+        auto const* header = reinterpret_cast<file_header_t const*>(head.data());
+        if(!header->valid() || header->version.value() != halo3_version)
+            return std::nullopt;
+        return cache_source{
+            .resource_offset = header->section_offset(
+                section_t::resource, header->section(section_t::resource).virtual_address),
+            .read = std::move(read),
+        };
+    }
+
+    /*! A cache already in memory; `cache` must outlive the source */
+    static cache_source from_map(map_container const& cache)
+    {
+        return cache_source{
+            .resource_offset = cache.resource_offset(),
+            .read =
+                [data = cache.data](u64 offset, Span<byte_t> dst) {
+                    if(offset > data.size() || dst.size() > data.size() - offset)
+                        return false;
+                    std::memcpy(dst.data(), data.data() + offset, dst.size());
+                    return true;
+                },
+        };
+    }
+};
 
 /*!
  * \brief Resolves resources for one map: the zone/play tags, external
@@ -319,9 +385,14 @@ struct resource_loader
     }
 
     /*! Attach an external cache, e.g. shared.map, by its file name */
+    inline void attach(std::string_view file_name, cache_source source)
+    {
+        m_caches.emplace_back(std::string(file_name), std::move(source));
+    }
+
     inline void attach(std::string_view file_name, map_container const& cache)
     {
-        m_caches.emplace_back(std::string(file_name), &cache);
+        attach(file_name, cache_source::from_map(cache));
     }
 
     inline Span<resource_t const> resources() const
@@ -354,79 +425,11 @@ struct resource_loader
         return layout->external_caches.data(map->magic()).value_or(Span<external_cache_t const>());
     }
 
-    inline result<resource_view, resource_error> load(datum_index id)
-    {
-        using stl_types::failure;
-        auto const* res = resource(id);
-        if(!res)
-            return failure(resource_error::no_resource);
-        auto magic    = map->magic();
-        auto segments = layout->segments.data(magic).value_or(Span<raw_segment_t const>());
-        auto const* segment = block_index<raw_segment_t>{res->segment_index}
-                                  .resolve(segments);
-        if(!segment)
-            return failure(resource_error::bad_segment);
-        auto page = this->page(segment->primary_page);
-        if(!page.has_value())
-            return failure(page.error());
-        auto const& bytes  = *page.value();
-        u32         offset = static_cast<u32>(segment->primary_offset.value());
-        if(offset > bytes.size())
-            return failure(resource_error::page_out_of_bounds);
-
-        resource_view out;
-        out.data = Span<byte_t const>(bytes.data(), bytes.size()).subspan(offset);
-        out.keep = page.value();
-        auto info = gestalt->info_buffer.data(magic);
-        i32  info_offset = res->info_offset, info_size = res->info_size;
-        if(info_size > 0 && static_cast<u32>(info_offset) <= info.size() &&
-           static_cast<u32>(info_size) <= info.size() - info_offset)
-            out.definition = info.subspan(info_offset, info_size);
-        out.root = res->base_definition_address.value() & 0x0FFFFFFF;
-        for(auto const& fix : res->resource_fixups.data(magic).value_or(Span<resource_fixup_t const>()))
-            out.fixups[static_cast<u32>(fix.offset.value())] = fix.address;
-        return out;
-    }
+    result<resource_view, resource_error> load(datum_index id);
 
     /*! A page decompressed, cached by index */
-    inline result<std::shared_ptr<std::vector<byte_t> const>, resource_error>
-    page(block_index<raw_page_t> index)
-    {
-        using stl_types::failure;
-        auto pages = layout->pages.data(map->magic()).value_or(Span<raw_page_t const>());
-        auto const* page = index.resolve(pages);
-        if(!page)
-            return failure(resource_error::bad_segment);
-        if(auto it = m_pages.find(index.value()); it != m_pages.end())
-            return it->second;
-
-        map_container const* source = map;
-        if(page->cache.valid())
-        {
-            auto const* cache = page->cache.resolve(external_caches());
-            source            = cache ? attached(cache->file_name()) : nullptr;
-            if(!source)
-                return failure(resource_error::missing_cache_file);
-        }
-        u64 start = u64(source->resource_offset()) + u32(page->offset.value());
-        u64 csize = static_cast<u32>(page->compressed_size.value());
-        u64 usize = static_cast<u32>(page->size.value());
-        if(start > source->data.size() || csize > source->data.size() - start)
-            return failure(resource_error::page_out_of_bounds);
-        auto compressed = source->data.subspan(start, csize);
-        auto out        = std::make_shared<std::vector<byte_t>>();
-        if(page->codec.value() == page_codec_t::none)
-            out->assign(compressed.begin(), compressed.end());
-        else
-        {
-            out->resize(usize);
-            if(page->codec.value() != page_codec_t::deflate ||
-               !inflate_page(compressed, Span<byte_t>(out->data(), out->size())))
-                return failure(resource_error::decompression_failed);
-        }
-        m_pages[index.value()] = out;
-        return std::shared_ptr<std::vector<byte_t> const>(out);
-    }
+    result<std::shared_ptr<std::vector<byte_t> const>, resource_error>
+    page(block_index<raw_page_t> index);
 
     /*! Drop decompressed pages */
     inline void trim()
@@ -435,15 +438,15 @@ struct resource_loader
     }
 
   private:
-    inline map_container const* attached(std::string_view file_name) const
+    inline cache_source const* attached(std::string_view file_name) const
     {
         for(auto const& [name, cache] : m_caches)
             if(name == file_name)
-                return cache;
+                return &cache;
         return nullptr;
     }
 
-    std::vector<std::pair<std::string, map_container const*>> m_caches;
+    std::vector<std::pair<std::string, cache_source>>  m_caches;
     std::map<i16, std::shared_ptr<std::vector<byte_t>>>       m_pages;
 };
 

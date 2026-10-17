@@ -165,6 +165,9 @@ struct PostProcessParameters : compo::SubsystemBase
 
     f32   exposure{2.f};
     f32   gamma{.7f};
+    /* 0: Reinhard, exposure and gamma above; 1: Halo 3's tone curve on
+     * linear HDR the renderer already exposed */
+    i32   tone_curve{0};
     f32   scale{1.f};
     bool  auto_expose{true};
     f32   blur{0.f};

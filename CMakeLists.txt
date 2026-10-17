@@ -12,6 +12,7 @@ option(BUILD_UTILITIES "Build tools" ON)
 
 option(BUILD_BLAM "Build Blam! data readers" ON)
 option(BUILD_BLAM_DIMETER "Build Halo 2 (dimeter) readers and tools" ON)
+option(BUILD_BLAM_ELEGY "Build Halo 3 (elegy) readers and tools" OFF)
 option(BUILD_GNS "Build GameNetworkingSockets" ON)
 option(BUILD_HEADFUL "Build with graphics/windowing support" ON)
 option(BUILD_LIBOGC "Build libogc components (GameCube/Wii only)" OFF)
@@ -25,6 +26,10 @@ include(CMakeDependentOption)
 cmake_dependent_option(
   BUILD_OPENAL_WMA "Build the WMA decoder (LGPL)" ON
   "BUILD_BLAM;BUILD_BLAM_DIMETER;BUILD_OPENAL" OFF
+)
+cmake_dependent_option(
+  BUILD_OPENAL_XMA2 "Build the XMA2 decoder on a shared libavcodec (LGPL)" ON
+  "BUILD_BLAM;BUILD_BLAM_ELEGY;BUILD_OPENAL" OFF
 )
 
 if(BUILD_ASSET_TOOLS)
@@ -62,6 +67,9 @@ if(BUILD_OPENAL)
 endif()
 if(BUILD_OPENAL_WMA)
   list(APPEND VCPKG_MANIFEST_FEATURES wma)
+endif()
+if(BUILD_OPENAL_XMA2)
+  list(APPEND VCPKG_MANIFEST_FEATURES xma2)
 endif()
 if(BUILD_OPENGL)
   list(APPEND VCPKG_MANIFEST_FEATURES gleam)

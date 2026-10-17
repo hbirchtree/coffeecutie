@@ -765,6 +765,10 @@ struct ObjectPhysics
 
     Vecf3 half_extents{}; /*!< Box, when there is no collision */
     Vecf3 center{};       /*!< Box/sphere centre in object space */
+    Vecf3 center_of_mass{}; /*!< Hulls without a phys tag turn about this */
+    /*! The surface's own, when the object names one (Halo 3 materials) */
+    std::optional<f32> friction;
+    std::optional<f32> restitution;
     f32   radius{0.f};    /*!< Sphere instead of a box */
     f32   mass{0.f};      /*!< 0 = static */
     bool  item{false};    /*!< Only collides with the world and other items */

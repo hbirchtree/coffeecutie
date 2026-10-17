@@ -7,6 +7,32 @@
 namespace blam::elegy {
 
 /*!
+ * \brief A tag and its data as T, both null when there is no such tag or it
+ * is of another group. Dereferences to the data.
+ */
+template<typename T>
+struct tagged
+{
+    tag_t const* tag{nullptr};
+    T const*     data{nullptr};
+
+    inline explicit operator bool() const
+    {
+        return data != nullptr;
+    }
+
+    inline T const* operator->() const
+    {
+        return data;
+    }
+
+    inline T const& operator*() const
+    {
+        return *data;
+    }
+};
+
+/*!
  * \brief Read-only view of a Halo 3 cache file, held resident. Wires the
  * header's section masks into pointer translation the way Assembly's
  * ThirdGenHeader does: tag pointers land at
@@ -159,6 +185,42 @@ struct map_container
         return tag.data<T>(magic());
     }
 
+    /*! The tag `id` names, read as T; checked against T::group when T is
+     * one group's (object_t and render_method_t span several) */
+    template<typename T>
+    inline tagged<T> get(datum_index id) const
+    {
+        auto const* tag = tag_at(id);
+        if(!tag)
+            return {};
+        if constexpr(requires { T::group; })
+            if(!is(*tag, T::group))
+                return {};
+        auto const* data = tag_data<T>(*tag);
+        return data ? tagged<T>{tag, data} : tagged<T>{};
+    }
+
+    template<typename T>
+    inline tagged<T> get(tag_reference const& ref) const
+    {
+        return get<T>(ref.id);
+    }
+
+    /*! First tag of T's group whose name contains `name` */
+    template<typename T>
+    inline tagged<T> find(std::string_view name = {}) const
+    {
+        auto const* tag = find(T::group, name);
+        return tag ? get<T>(id_of(*tag)) : tagged<T>{};
+    }
+
+    /*! A block's elements in this map, none when it is out of bounds */
+    template<typename T>
+    inline Span<T const> span(tag_block<T> const& block) const
+    {
+        return block.span(magic());
+    }
+
     /*!
      * Resolve a string_id. Namespaces are runs of the string table; the
      * offsets come from Assembly's H3_StringIDs.xml. Namespace 0 holds
@@ -202,32 +264,12 @@ struct map_container
   private:
     /* Tag names and string_ids: u32 offsets into a buffer of NUL-terminated
      * strings, both addressed through the debug section */
-    inline std::string_view table_string(
+    std::string_view table_string(
         u32 position,
         u32 count,
         u32 index_address,
         u32 buffer_address,
-        u32 buffer_size) const
-    {
-        u32 map_size     = static_cast<u32>(data.size());
-        u32 index_offset = header->section_offset(section_t::debug, index_address);
-        u32 buffer_offset =
-            header->section_offset(section_t::debug, buffer_address);
-        if(position >= count || index_offset >= map_size ||
-           (map_size - index_offset) / 4 <= position ||
-           buffer_offset >= map_size || buffer_size > map_size - buffer_offset)
-            return {};
-        u32 offset;
-        std::memcpy(&offset, data.data() + index_offset + position * 4, 4);
-        offset = from_be(offset);
-        if(offset >= buffer_size)
-            return {};
-        auto const* start =
-            reinterpret_cast<char const*>(data.data() + buffer_offset + offset);
-        auto const* end = static_cast<char const*>(
-            std::memchr(start, 0, buffer_size - offset));
-        return std::string_view(start, end ? end - start : buffer_size - offset);
-    }
+        u32 buffer_size) const;
 };
 
 } // namespace blam::elegy

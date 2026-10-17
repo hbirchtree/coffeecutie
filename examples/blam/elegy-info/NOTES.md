@@ -1,0 +1,392 @@
+# Halo 3 (elegy) notes
+
+Findings from bringing up `blam/elegy` and ElegyInfo against the retail
+Xbox 360 maps in `/mnt/blam/halo3xbox` (build `11855.07.08.20.2317.halo3_ship`,
+version 11). Assembly's `Formats/Halo3` layouts and `Plugins/Halo3` were the
+starting point; anything about model, BSP or texture data was derived from
+the map bytes, since Assembly has no layouts for it.
+
+`/mnt/blam/halo3beta` is version 9 with a different header layout and is not
+supported.
+
+## Cache file
+
+- Everything is big-endian. `elegy::be<T>` swaps on read, per component for
+  vectors, and is free on big-endian hosts. It converts implicitly to `T`;
+  use `.value()` where a template or `auto` would see the wrapper.
+- Header is 0x3000 bytes. Pointers belong to one of four sections
+  (debug, resource, tag, locale): `sections[i]` gives a virtual base and
+  `offset_masks[i]` the value adding which yields a file offset.
+  - tag pointer -> `sections[tag].va + masks[tag] + (ptr - virtual_base)`
+  - debug pointer (tag names, string_ids) -> `ptr + masks[debug]`
+  - raw pages are relative to `sections[resource].va + masks[resource]`
+- `shared.map`, `campaign.map` have no tag index (index address 0); check
+  before parsing, a count read from them is garbage.
+- string_id is 16:8:8 (index, namespace, length); namespace start offsets
+  are in Assembly's `H3_StringIDs.xml`.
+
+## Resources
+
+- `zone` holds the resource table (0x40 entries) and the info buffer
+  resource definitions are sliced from; `play` holds external cache files,
+  pages, sizes and segments.
+- Page codec 0 is raw deflate. Pages may live in `mainmenu.map`,
+  `shared.map` or `campaign.map`, matched by file name.
+- A resource's fixups write addresses into its definition; the pointer
+  fields themselves are 0 in the file. High nibble of the address:
+  2 = definition offset, 4 = primary page, 6 = secondary page.
+- Some resource slots are empty in shipped maps (stripped): every sbsp's own
+  geometry resource, and a handful of bitmaps per map.
+
+## Geometry
+
+- render_geometry is embedded in `mode`, `sbsp` and `sLdT`. Its resource
+  root has four blocks; [2] vertex buffers (0x1C defs), [3] index buffers
+  (0x18 defs).
+- Vertex formats: 1 world (32 B, float position/uv), 2 rigid (24 B),
+  3 skinned (rigid + u8x4 nodes + u8x4 weights), 24 decorator (not done).
+- Rigid/skinned positions and texcoords are **unsigned** 16-bit normalized
+  (0..65535 -> compression bounds). Reading them as signed swaps the halves
+  of every model.
+- Normals/tangents/binormals are DHEN3N: 10:11:11 signed, x in the low bits.
+- Index buffers: type 5 strips (models), type 3 lists (BSP).
+- BSP render geometry is not in the sbsp: the lightmapper moves it to
+  `sLdT` (`lightmap_bsp[i]` + 0x130). Clusters name a mesh at 0x9C;
+  instances name a definition in the sbsp's tag resources (0xB8 each,
+  mesh at 0xB0, compression at 0xB2).
+- Sanity check used throughout: signed cosine between stored normals and
+  face normals is about 0.92-0.99 when decoding is right.
+
+## Textures
+
+- Bitmap images (0x30) carry format, type and Xbox flags; pixels are in the
+  matching `bitmap_texture_interop_resource`: a primary data_ref, a
+  secondary data_ref, then the GPU texture header
+  (width, height, depth, mips, type, high-res, D3D format word).
+- Xbox flags: 0x04 byte order, 0x08 tiled, 0x20 top mip in the secondary
+  page, 0x40 interleaved.
+- Tiled surfaces use `XGAddress2DTiledOffset` with 32x32-block macro tiles;
+  stored data stops at the last block in use. Untiled rows are 32 blocks
+  apart.
+- Byte order swaps per element: 8-in-16 for DXT/DXN/CTX1 and 16-bit
+  formats, 8-in-32 for 32-bit formats, none for 8-bit.
+- DXN is BC5 (x block, then y block). CTX1 is 360-only: 8 bytes per block,
+  two (x, y) u8 endpoints and shared 2-bit indices; z is reconstructed.
+  Normal maps are stored biased (unsigned).
+- The D3D format word mostly repeats the image entry; its extra content is
+  channel swizzle and sign, which the format names already imply.
+- Not done: lower mips and the packed mip tail, cube/array faces, PNG
+  export (other inspectors dump PNG; `-e` currently writes DDS).
+
+## Shaders
+
+All shader groups derive from `rm  ` and share `render_method_t`: the
+option picked per category of the `rmdf` definition, authored parameters,
+and the compiled postprocess block (template, textures, constants).
+
+- `rmdf` options name the HLSL functions of Bungie's shader source, e.g.
+  albedo/default -> `calc_albedo_default_ps`,
+  bump_mapping/standard -> `calc_bumpmap_default_ps`.
+- `rmt2` lists name the postprocess textures and constants by index
+  (`base_map`, `detail_map`, `albedo_color`, ...). A texture's `transform`
+  indexes the float constant holding its UV scale (xy) and offset (zw).
+- The compiled `vtsh`/`pixl` are Xenos microcode; translating those is out
+  of scope.
+
+### Survey over all retail maps
+
+Tag counts summed per map (shared tags count once per map):
+rmsh 16113, rmhg 821, rmd 591, rmtr 178, rmct 68, rmw 30, rmfl 28, rmcs 9.
+
+`shaders\shader` (704 distinct templates), option usage:
+
+| Category | Options in use |
+|---|---|
+| albedo | default 12472, constant_color 1302, two_detail 922, two_change_color 909, detail_blend 258; rare: two_detail_overlay, color_mask, four_change_color, three_detail_blend, two_detail_black_point |
+| bump_mapping | detail 7079, off 4525, standard 4509 |
+| material_model | two_lobe_phong 5330, cook_torrance 4826, diffuse_only 4299; rare: organism, single_lobe_phong, glass, none, foliage |
+| environment_mapping | none 7132, dynamic 6730, per_pixel 2198, from_flat_texture 53 |
+| self_illumination | off 10395, simple 3765, plasma 555, illum_detail 512, 3_channel 300, meter 221, others under 150 |
+| alpha_test | none 14368, simple 1745 |
+| blend_mode | opaque 12425, additive 2031, alpha_blend 1584, others under 50 |
+| parallax | off 15456, simple 462, interpolated 192 |
+| specular_mask | from_diffuse 10403, none 5136, from_texture 574 |
+
+Other families:
+
+- decal: diffuse_only + alpha_blend nearly everywhere; bump leave/standard.
+- halogram: additive; 8 self-illumination variants (plasma, illum_detail,
+  multilayer_additive, scope_blur, ...); overlay none/additive_detail.
+- terrain: morph blend of up to 4 materials, each diffuse or
+  diffuse+specular; env map none/per_pixel/dynamic.
+- foliage, cortana, water: one or two variants each.
+
+### Plan
+
+Hand-written shaders, not generated ones, laid out like Halo 1's
+`shaders_common_uber.glsl`:
+
+- One uber shader per family; specializations are small files that set
+  `#define`s and include it, run through the offline shader transpiler so
+  the runtime gets slim binaries (as `h2_*.frag` / `map_uber*.frag` do).
+- Option choice is runtime data, not a define: the material UBO carries the
+  `rmdf` option index per category and the shader branches on it, the way
+  Halo 1 dispatches on `material_id`. Branches are uniform per draw, and
+  there is no per-combination variant explosion.
+- Defines gate pipeline features and feature level (full / lite / ES, BSP
+  vs model) and which options a binary compiles in.
+- Split into domains from the start. Halo 1 had to split its ubershader
+  after the fact (sotr, chicago) because the heaviest path in a binary sets
+  the register budget for everything sharing it. Initial domains:
+  - `shader` common: default/constant/detail albedo, bump off/standard/
+    detail, diffuse_only and two_lobe_phong, env none/per_pixel;
+  - `shader` heavy: cook_torrance, organism, glass, dynamic env map,
+    plasma/illum_detail self-illumination, parallax;
+  - decal, terrain, foliage, water as their own families;
+  - halogram, cortana later.
+- Rare options fall back to the nearest supported path.
+- Revisit the split with measurements once the GLSL exists, not by option
+  counts. In Halo 1 register spilling dominated the cost of the merged
+  ubershader, so spills/fills are the number to watch per domain
+  (`INTEL_DEBUG=fs`, `tools/shader-stats`), then register count and
+  instruction count.
+
+Bindings come from the `rmt2` name lists, so shaders need no knowledge of
+per-template register layouts.
+
+## Collision and visibility (`blam/elegy/collision.h`)
+
+- The sbsp's `tag_resources` (0x37C) root is
+  `{collision_bsps, instanced_geometry}`. `collision_bsps` has one entry,
+  the world; every instance definition (0xB8) carries its own at +0x14.
+  A collision_bsp is eight resource blocks whose arrays are in the page
+  data (fixup space 4), not the definition.
+- Layouts are Halo 2's with wider indices:
+  - bsp3d node, 8 B: one u64, plane in bits 0-15, back child 16-39,
+    front child 40-63. A child with 0x800000 set is a leaf, 0xFFFFFF is
+    none (solid). Reading the children the other way round puts every
+    spawn in solid.
+  - plane 16 B (normal, d); leaf 8 B (u16 flags, u16 bsp2d reference
+    count, u32 first reference); bsp2d reference 4 B and bsp2d node 16 B
+    as Halo 2 (bit 15 = flipped plane / surface).
+  - surface 12 B: u16 plane, u16 first edge, i16 material, i16 breakable
+    set, i16 breakable surface, u8 flags, u8 best plane vertex.
+  - edge 12 B and vertex 16 B: Halo 2's, with u16 indices.
+- Collision leaf -> cluster is the sbsp's `leaves` block (0x30, one i8
+  per collision leaf, counts match). `ElegyInfo --collision` walks the
+  tree for every spawn and scenery placement: Valhalla 143/143 and
+  Guardian 73/77 land in a cluster whose bounds hold them, none in
+  solid. On campaign maps the BSPs overlap, so the points of a
+  neighbouring BSP show up as solid; almost none land in a wrong cluster.
+- Surfaces walk to convex polygons from `first_edge`: on an edge whose
+  left surface is ours take its start vertex and the forward edge, else
+  its end vertex and the reverse edge. The world polygons match the render
+  geometry top-down, plus invisible blockers; `--collision --obj` writes
+  world + transformed instances (instance transform as for rendering).
+- Collision surface -> render triangles: `structure_surfaces` (0x54,
+  {first, count}) into `surface_triangles` (0x60, {triangle, section});
+  instance definitions have the same pair at +0x98/+0xA4.
+- Havok MOPP: sbsp 0x90 for the world, instance definitions +0x80
+  (0x40 entries in the definition space, code bytes in the page). Not
+  needed for queries, the bsp3d tree answers point and ray tests alone.
+- `world_bounds` (0x3C) spans the whole level on campaign maps, the same
+  for every BSP; use the clusters' bounds for one BSP's extent.
+
+Visibility:
+
+- There is no PVS. Occlusion data is the cluster portals (0x6C, 0x28
+  each): back and front cluster, a collision plane index, centroid,
+  bounding radius, flags (ai can't hear, one way, door, no way, one way
+  reversed, no one can hear) and a convex vertex loop (0x1C). Each
+  cluster lists its portals at 0x3C. Portal vertices lie exactly on the
+  world collision plane they name (max distance 0.0000 on Valhalla and
+  Guardian), so the plane index is into the world collision_bsp.
+- Visibility is therefore Halo 2's: find the camera's cluster through the
+  collision tree, flood through portals clipped to the view. Cluster
+  `pvs_bound_objects` (0xC4) and per-cluster cubemaps are not decoded.
+- Open: instance definition blocks at +0x74 and +0x8C, cluster bytes 0x48-0x8F and the cluster MOPP block at 0x90,
+  sbsp 0x78-0xB3. `010_jungle`'s `010_bsp_intro` declares a world
+  collision whose page is in none of the loaded maps.
+
+## Lighting and materials
+
+Bungie's shader source for Halo 3 is public
+(github.com/halohlsl/Halo3-Shader-Source, `hlsl/`); everything below was
+checked against both it and the map data.
+
+- Bump maps: DXN and CTX1 store y first, as ATI's 3Dc did. Against
+  `foam_height` the decoded normal is x = -dh/du, y = -dh/dv (v down the
+  rows), correlation 0.88 / 0.98. CTX1 is 8-byte blocks: two (y, x)
+  endpoints, then 2-bit indices shared by both channels picking endpoint 0,
+  1, 1/3 or 2/3. Detail bump adds its xy to the bump map's.
+- `sLdT` per BSP (`lightmap_bsp_t`): a lightprobe texture (array of 8
+  DXT5 slices) and a dominant light intensity texture (2 slices), one
+  1024x1024 atlas each. Every value is a slice pair (Bungie's "Luvw"):
+  `rgb = (rgb0 + rgb1) * 2 - 2` is a unit direction, `alpha0 * alpha1 *
+  max` its length, with `max` from the compression vectors (0, 2, 4, 6 for
+  the SH, 8 for the intensity; `decode_bpp16_luvw` in
+  lightmap_sampling.fx). On riverworld |rgb| is 1.00 +- 0.02 everywhere.
+- The four values are linear SH in D3DX order: L0, then -y, z, -x. With
+  that mapping the L1 vector points into the hemisphere above the surface
+  for 99.0% of cluster triangles (any other order or sign: <= 87%).
+- Diffuse is `ravi_order_2_with_dominant_light`: the dominant light
+  (direction = normalized luminance of (-L3, -L1, L2), intensity from its
+  texture) is taken out of the SH, the rest evaluated with 0.886227 /
+  1.023328 / pi, and the dominant light added back as a clamped cosine
+  times 0.281.
+- Lightmap texcoords: a `static_per_pixel` vertex buffer, two big-endian
+  UNORM16 per vertex. Clusters have it in vertex buffer slot 1; an
+  instance's `lightmap_texcoords` indexes the render geometry's per-instance
+  texcoord list (+0x70), whose entry names the buffer (184/185 vertex
+  counts match on riverworld). 99.3% of triangle centroids land on lit
+  texels.
+- Per-vertex light (`static_per_vertex`, 20 bytes): five signed 8-bit RGBE
+  values, exponent first with scale 2^(e * 31.75): dominant intensity,
+  then L0..L3. Instances use it when the lightmap's instance entry names a
+  per-vertex block instead of the texture (hemisphere test 97.4%).
+- Exposure is in stops: the cluster's camera FX palette entry (scenario
+  0x504) or the scenario's own camera effects (0x6B0, multiplayer) give an
+  auto exposure range; the middle of it stands in for auto exposure.
+- Material models: two_lobe_phong and cook_torrance follow
+  `calc_material_*_ps` (analytic lobe on the dominant light, area lobe from
+  the SH around the reflection). Cook-Torrance's area lobe in the game uses
+  pre-integrated lookup tables the engine binds globally; an order 2 SH
+  lobe stands in. Not done: anti-shadow, dynamic lights, environment maps,
+  organism/glass/foliage, quadratic SH probes.
+- Scenery takes the SH and dominant light of the lightmapped triangle
+  under its origin (texel decoded on the CPU), baked into its vertex
+  light; diffuse only.
+- Self-illumination (`calc_self_illumination_*_ps`): simple, illum_detail
+  and 3_channel_self_illum; other options with a map draw as simple.
+  Added after exposure: the game scales it by `g_alt_exposure`, which
+  keeps it steady as exposure changes.
+- Tone curve (`final_composite_base.hlsl`): linear x exposure, clamped at
+  1.4938, then 1.00415x - 0.15x^3 (which meets 1 there), then display
+  gamma. The shared composite is Halo 1's (Reinhard, x2, gamma 0.7), so
+  the H3 shader writes the value that composite turns into Halo 3's
+  curve. Overbright values need a float colour buffer: RGB16F on
+  desktop, RGBA16F on WebGL (RGB16F is never renderable there).
+- Exposure: the scene's mean luminance is taken as the baked diffuse light
+  under the camera times 0.35, and exposure = clamp(target - log2(that))
+  inside the camera FX range, moved 10% of the way each frame. The cfxs
+  target is in stops; a palette entry's forced target is linear. Checked
+  against MCC captures of Valhalla (frame means 0.28-0.35 outdoors): the
+  model gives ~0.1 stops there, Guardian clamps to 1.25, the Outskirts
+  hangar to 3.5 (it is lit by dynamic lights in the game, not baked).
+- Comparing with captures (`.github/tests/references/h3`, MCC): dummy plug
+  camera rotation is [pitch, yaw] in degrees with yaw = world facing - 180,
+  negative pitch looking down; fov is vertical, Halo's 78 horizontal is
+  about 48 at the captures' aspect. Valhalla's bases sit at x 81.5,
+  y -60 (blue, by the waterfall) and y -144 (red); the dam wall at x 40-48
+  with the river along its foot. `H3_BSP` and `H3_EXPOSURE` help.
+
+## Sky, reflections and water
+
+- Skies: scenario +0x30, {object, name, active BSPs}; the sky object is
+  scenery modelled in world space around the level (Valhalla: dome, cloud
+  cards, distant mountains, sun). The dome is nearly black; its colour is
+  atmospheric scattering (`compute_scattering`, atmosphere.fx) with the
+  `skya` setting's precomputed betas, sun override and height scales.
+  Clusters name setting -1 on the multiplayer maps; setting 0 stands in.
+- Interleaved bitmaps: images with no hardware texture of their own share
+  `interleaved_textures` resources two at a time (interop 0x40: two data
+  references, two texture definitions); the pair's high resolution levels
+  follow each other in the secondary data. Cube faces are stored like array
+  slices, in D3D order (+X -X +Y -Y +Z -Z, +Z up in Halo's world).
+- Environment maps: `dynamic` samples the BSP's cubemaps (scenario BSP
+  +0x48; clusters list capture points with their image) as RGBM x256;
+  `per_pixel` the shader's own cube, decoded by its curve. Both are
+  weighted by the area specular, so reflections follow the baked light.
+  The game blends two cubemaps per object; the one nearest the camera
+  stands in.
+- Water (`rmw`, water_shading.fx): the scene behind is refracted by the
+  wave slopes (V8U8 array, frames of a loop) and fogged by the depth of
+  water it is seen through; a static cube reflection whose alpha separates
+  sunspot from sky (x `reflection_coefficient`, 600 on Valhalla); bank
+  alpha fades to the bed in the shallows. It needs the scene colour and
+  depth before water draws: a copy pass writes colour and distance into an
+  RGBA16F target. Not done: wave displacement and tessellation, foam,
+  ripples, underwater fog.
+
+## Zone sets (campaign sections)
+
+- Scenario +0x54: zone sets, 0x24 each; +0xC is a mask of the structure
+  BSPs loaded together (up to five on 010_jungle). +0x260 trigger volumes
+  (0x44: forward, up, position, extents; an oriented box from position along
+  forward, left = up x forward, and up). +0x278 zone set switch triggers,
+  {flags, begin zone set, trigger volume, commit zone set}: a "begin_zone_set"
+  volume only names one to preload, a "zone_set" volume commits it.
+- `ElegyInfo --zones` lists them, with each trigger's centre.
+- BlamGraphics loads the first zone set holding the start BSP (`H3_ZONE_SET`
+  picks another, `H3_BSP` one BSP with no switching) and reloads on entering
+  a commit trigger. Each loaded BSP has a slot: ten layers of one lightprobe
+  array (lightmaps differ in size, smaller ones sit in the corner and their
+  texcoords are scaled), per slot scales, the vertex lightmap z is the slot.
+- Placement bsp_flags are tested against the zone set's mask. Resource pages
+  are trimmed after each BSP: the web heap (1 GB) does not hold a large zone
+  set's pages at once.
+
+## BlamGraphics first pass (`cblam-testing/h3`)
+
+`H3MapLoader` takes a `MapLoadEvent` whose header is Halo 3 (version 11)
+and builds `H3Scene`; `H3Renderer` draws it with the Halo 2 vertex layout
+and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
+
+- Loads the BSP of the first player starting location from `sLdT`:
+  clusters plus placed instances.
+- Scenery: placements whose BSP mask includes that BSP, first permutation
+  of every region. Objects flagged "only visible in editor" in their
+  multiplayer block (respawn points, spawn zones, Forge items) are skipped;
+  on MP maps that is nearly all of the scenery.
+- Materials: `base_map` (or terrain `base_map_m_0`) with its UV scale,
+  `albedo_color` as a tint converted from linear to gamma, alpha test,
+  and opaque / alpha blend / additive passes from the rmdf options.
+  Helpers without a base map (`z_invis_lightquad`) are not drawn.
+- Textures: top level only, no mips. dxt5a/dxn families go up as BC4/BC5
+  with channel swizzles, CTX1 decoded to RG8; dxt3a is not uploaded yet.
+- Lighting as in "Lighting and materials"; scenery still falls back to a
+  sun term.
+- Web: the map arrives through the Halo 2 loader's fetch (it hands non-
+  Halo 2 maps back with `file_data`); the side caches it names are opened
+  through FileMapper's store and read by range (`cache_source`), then the
+  load finishes. `H3_SIDE_PREAD=1` takes the same path on desktop. BC4/BC5
+  without RGTC and swizzles without texture swizzle go through gleam's
+  bcdec software decode; one-channel uncompressed formats are expanded to
+  RGBA8.
+- Not done: env maps, sky, crates/machines, BSP switching, visibility.
+- Headless check: `.github/tests/dummy_plug_h3.json` (four views from the
+  spawn).
+
+## Sound
+
+- `snd!` holds indices into the map's `ugh!` (sound_cache_file_gestalt):
+  codec, first pitch range + count, playback, scale, extra info, plus the
+  `sound_resource_definition` resource at 0x18.
+- Pitch range permutations are packed as required:6 count:6 first:20.
+  A permutation names a run of chunks; chunk offsets address the
+  resource's primary page bytes followed by its secondary page bytes
+  (short sounds sit in the primary, music in the secondary). Size word:
+  low 24 bits size, top byte flags.
+- Codecs over all 39 retail maps: XMA2 (compression 7) for ~109k sounds,
+  Xbox ADPCM for 7. 44.1 kHz almost everywhere; mono, stereo, quad and
+  5.1 (every two channels one XMA stream).
+- `ElegyInfo --sounds -e <dir>` wraps each permutation as RIFF XMA2
+  (`xma2_format_t`); ffmpeg decodes all 116 mainmenu permutations and a
+  5.1 cinematic track to the expected sample counts.
+- XMA is the 360's hardware format, derived from WMA Pro; `libwma` (WMA
+  v2, used for Halo 2) cannot decode it. libavcodec's xma1/xma2 decoders
+  (wmaprodec) are LGPL-2.1+ when ffmpeg is built without `--enable-gpl`,
+  so it is linked dynamically: `BUILD_OPENAL_XMA2` (on with
+  `BUILD_BLAM_ELEGY`, which is off by default) selects the `xma2` vcpkg
+  feature, i.e. the overlay port `ffmpeg-decoders[xma]`: ffmpeg's sources
+  configured with only the requested decoders (port features xma, wma,
+  wmapro, vorbis, opus, mp3, flac, adpcm), libavcodec + libavutil linked
+  into one shared library exporting only `av*`. A `.so` on desktop, a
+  `SIDE_MODULE` `libffmpeg-decoders.wasm` bundled with BlamGraphics on the
+  web. `OAFXMA2Decoder` (`oaf/xma2/xma2_decode.h`, beside the WMA decoder)
+  wraps it; output matches the ffmpeg CLI sample for sample.
+- BlamGraphics plays mainmenu's `main_menu_music` looping sound: the first
+  track's intro once, then the loop permutations in turn
+  (`H3SoundBank` / `ElegySoundSystem`, as `DimeterSoundSystem` for Halo 2).
+  Checked headless with openal-soft's wave backend: the capture follows the
+  intro's envelope (correlation 0.986 over 20 s).
