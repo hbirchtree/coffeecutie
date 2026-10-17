@@ -874,6 +874,7 @@ struct H3MapLoader : compo::SubsystemBase
         };
         std::unordered_map<std::string, Slot>  slots;
         std::unordered_map<std::string, Vecf4> constants;
+        std::unordered_map<std::string, TextureTag> texture_tags;
         auto posts = method->postprocess.data(magic).value_or(
             Span<el::render_method_postprocess_t const>());
         if(!posts.empty())
@@ -904,6 +905,9 @@ struct H3MapLoader : compo::SubsystemBase
                 auto const* bitmap = map.tag_at(textures[i].bitmap.id);
                 if(bitmap && map.string(names[i]) == "environment_map")
                     m_pending_environment_map = bitmap;
+                if(bitmap)
+                    texture_tags.emplace(std::string(map.string(names[i])),
+                                         TextureTag{bitmap, transforms_of(textures[i], floats)});
                 auto        tex    = bitmap ? texture_for(*bitmap) : std::nullopt;
                 if(!tex)
                     continue;
@@ -928,7 +932,10 @@ struct H3MapLoader : compo::SubsystemBase
             return it == slots.end() ? nullptr : &it->second;
         };
 
-        if(map.is(*tag, "rmtr"))
+        if(map.is(*tag, "rmw "))
+        {
+            load_water(mat, constants, texture_tags);
+        } else if(map.is(*tag, "rmtr"))
         {
             /* Terrain: up to four layers weighted by the blend map */
             mat.variant = Variant::terrain;
@@ -1043,6 +1050,116 @@ struct H3MapLoader : compo::SubsystemBase
         return idx;
     }
 
+    /* A texture parameter's bitmap and its uv scale (xy) and offset (zw) */
+    struct TextureTag
+    {
+        el::tag_t const* bitmap;
+        Vecf4            xform;
+    };
+
+    static Vecf4 transforms_of(
+        el::postprocess_texture_t const& texture, Span<el::be<Vecf4> const> floats)
+    {
+        auto transform = texture.transform;
+        if(transform >= 0 && static_cast<size_t>(transform) < floats.size())
+            return floats[static_cast<size_t>(transform)].value();
+        return Vecf4(1.f, 1.f, 0.f, 0.f);
+    }
+
+    /* shader_water: colour, static reflection cube, wave slopes, foam */
+    void load_water(
+        Material&                                          mat,
+        std::unordered_map<std::string, Vecf4> const&      constants,
+        std::unordered_map<std::string, TextureTag> const& textures)
+    {
+        auto scalar = [&](char const* name, f32 fallback) {
+            auto it = constants.find(name);
+            return it == constants.end() ? fallback : it->second.x;
+        };
+        auto tag = [&](char const* name) -> TextureTag const* {
+            auto it = textures.find(name);
+            return it == textures.end() ? nullptr : &it->second;
+        };
+        auto& w     = mat.water;
+        mat.variant = Variant::water;
+        mat.visible = true;
+        if(auto const* t = tag("watercolor_texture"))
+            if(auto tex = texture_for(*t->bitmap))
+                w.color = *tex, w.curves.x = curve_of(*t->bitmap);
+        if(auto const* t = tag("environment_map"))
+            if(auto cube = cube_texture_for(*t->bitmap))
+                w.reflection = *cube, w.misc.w = 1.f, w.curves.y = cube->curve;
+        if(auto const* t = tag("wave_slope_array"))
+        {
+            w.slope_xform = t->xform;
+            if(auto const* bitmap = m_map->tag_data<el::bitmap_t>(*t->bitmap))
+                upload_slopes(*bitmap, w);
+        }
+        if(auto const* t = tag("wave_displacement_array"))
+            w.shape_xform = t->xform;
+        if(auto const* t = tag("foam_texture"))
+        {
+            w.foam_xform = t->xform;
+            if(auto tex = texture_for(*t->bitmap))
+                w.foam = *tex;
+        }
+        w.slope   = {scalar("slope_range_x", 0.5f), scalar("slope_range_y", 0.4f),
+                     scalar("detail_slope_scale_x", 10.f), scalar("detail_slope_scale_y", 3.f)};
+        w.heights = {scalar("wave_height", 0.5f), scalar("wave_height_aux", 0.6f),
+                     scalar("detail_slope_steepness", 0.5f), scalar("minimal_wave_disturbance", 1.f)};
+        w.shading = {scalar("watercolor_coefficient", 1.f), scalar("reflection_coefficient", 1.f),
+                     scalar("fresnel_coefficient", 0.1f), scalar("water_murkiness", 3.f)};
+        w.refraction = {scalar("refraction_texcoord_shift", 0.12f),
+                        scalar("refraction_extinct_distance", 1000.f),
+                        scalar("refraction_depth_dominant_ratio", 0.95f),
+                        scalar("bankalpha_infuence_depth", 0.22f)};
+        w.misc.x = scalar("sunspot_cut", 0.01f);
+        w.misc.y = scalar("shadow_intensity_mark", 0.5f);
+        if(auto it = constants.find("water_diffuse"); it != constants.end())
+            w.diffuse = it->second;
+    }
+
+    /* wave_slope_array: V8U8 slices, one per step of the wave animation */
+    void upload_slopes(el::bitmap_t const& bitmap, WaterParams& w)
+    {
+        auto magic    = m_map->magic();
+        auto images   = bitmap.images.data(magic).value_or(Span<el::bitmap_image_t const>());
+        auto hardware = bitmap.hardware_textures.data(magic).value_or(
+            Span<el::hardware_texture_t const>());
+        if(images.empty() || hardware.empty() ||
+           images[0].format.value() != el::bitmap_format_t::v8u8)
+            return;
+        auto const& image = images[0];
+        auto        view  = m_loader->load(hardware[0].resource);
+        if(!view.has_value())
+            return;
+        u32 width  = static_cast<u32>(image.width.value());
+        u32 height = static_cast<u32>(image.height.value());
+        u32 depth  = std::max<u32>(image.depth, 1);
+        u32 stride = el::slice_stride(image.format.value(), width, height);
+        auto stored = el::top_level(view.value(), image);
+        auto tex = std::make_shared<gfx::compat::texture_2da_t>(
+            m_api, blam::bitm::to_pixdesc(blam::bitm::format_t::V8U8), 1);
+        tex->alloc(size_3d<u32>{width, height, depth});
+        for(u32 z = 0; z < depth; z++)
+        {
+            std::vector<u8> pixels;
+            if(size_t(z) * stride >= stored.size() ||
+               !el::linearize(stored.subspan(size_t(z) * stride), image.format.value(), width,
+                              height, image.xbox_flags, pixels))
+                return;
+            for(auto& b : pixels)
+                b = static_cast<u8>(b + 0x80);
+            tex->upload(std::move(pixels), Veci3{0, 0, static_cast<i32>(z)},
+                        size_3d<i32>{static_cast<i32>(width), static_cast<i32>(height), 1});
+        }
+        w.slopes         = tex;
+        w.slopes_sampler = tex->sampler();
+        w.slopes_sampler->alloc();
+        w.slopes_sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+        w.misc.z = static_cast<f32>(depth);
+    }
+
     /* Environment mapping: the BSP's cubemaps (dynamic) or the shader's own
      * cube (per_pixel), tinted */
     void load_environment(
@@ -1093,7 +1210,7 @@ struct H3MapLoader : compo::SubsystemBase
         auto        h1    = h1_format(image.format.value());
         if(image.type.value() != el::bitmap_type_t::cube_map || !h1 ||
            (*h1 != blam::bitm::format_t::BC1 && *h1 != blam::bitm::format_t::BC2 &&
-            *h1 != blam::bitm::format_t::BC3))
+            *h1 != blam::bitm::format_t::BC3 && *h1 != blam::bitm::format_t::ARGB8))
             return std::nullopt;
         auto hardware = bitmap.hardware_textures.data(magic).value_or(
             Span<el::hardware_texture_t const>());
@@ -1124,13 +1241,18 @@ struct H3MapLoader : compo::SubsystemBase
                    image.xbox_flags,
                    faces[f]))
                 return std::nullopt;
+        /* Little-endian A8R8G8B8 is B,G,R,A */
+        if(*h1 == blam::bitm::format_t::ARGB8)
+            for(auto& face : faces)
+                for(size_t i = 0; i + 3 < face.size(); i += 4)
+                    std::swap(face[i], face[i + 2]);
         auto tex = m_api->alloc_texture(gfx::textures::cube, blam::bitm::to_pixdesc(*h1), 1);
         tex->alloc(size_3d<u32>{width, height, 1});
         std::array<semantic::Span<const u8>, 6> spans;
         for(u32 f = 0; f < 6; f++)
             spans[f] = semantic::Span<const u8>(faces[f].data(), faces[f].size());
         tex->upload(spans, Veci2{0, 0}, Veci2{static_cast<i32>(width), static_cast<i32>(height)}, 0);
-        CubeTexture out{.texture = tex, .sampler = tex->sampler()};
+        CubeTexture out{.texture = tex, .sampler = tex->sampler(), .curve = curve_of(image.curve)};
         out.sampler->alloc();
         out.sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
         return out;
@@ -1486,6 +1608,20 @@ struct H3MapLoader : compo::SubsystemBase
             }
         }
         return out;
+    }
+
+    static f32 curve_of(u8 curve)
+    {
+        switch(curve)
+        {
+        case 3: /* linear */
+        case 4: /* offset log */
+            return 1.f;
+        case 5: /* sRGB */
+            return 2.2f;
+        default: /* unknown, xRGB and gamma 2.0 */
+            return 2.f;
+        }
     }
 
     /* Exponent decoding a bitmap's texels to linear, by its curve */
