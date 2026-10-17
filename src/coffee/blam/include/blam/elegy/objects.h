@@ -164,13 +164,29 @@ struct multiplayer_object_t
 
 static_assert(sizeof(multiplayer_object_t) == 0xC4);
 
+/*! Something attached at a marker of an object's model: a light, an
+ * effect, a looping sound */
+struct object_attachment_t
+{
+    tag_reference type;
+    string_id     marker;
+    be<i16>       change_color;
+    be<i16>       unknown_0;
+    string_id     primary_scale;
+    string_id     secondary_scale;
+};
+
+static_assert(sizeof(object_attachment_t) == 0x20);
+
 /*! object ("obje") head, shared by scen, bloc, mach, ...: the model and
  * how multiplayer treats it */
 struct object_t
 {
     std::array<u8, 0x34>            unknown_0;
     tag_reference                   model;
-    std::array<u8, 0xA8>            unknown_1;
+    std::array<u8, 0x78>            unknown_1;
+    tag_block<object_attachment_t>  attachments;
+    std::array<u8, 0x24>            unknown_2;
     tag_block<multiplayer_object_t> multiplayer;
 
     inline bool editor_only(tag_magic const& magic) const
@@ -185,7 +201,56 @@ struct object_t
 };
 
 static_assert(offsetof(object_t, model) == 0x34);
+static_assert(offsetof(object_t, attachments) == 0xBC);
 static_assert(offsetof(object_t, multiplayer) == 0xEC);
+
+enum class light_type_t : u16
+{
+    sphere  = 0,
+    frustum = 1,
+};
+
+/*! A function a light's colour or intensity follows, as an input (or a
+ * constant) maps through it; see function_t */
+struct light_function_t
+{
+    string_id      input;
+    string_id      range;
+    be<u16>        output_modifier;
+    be<i16>        unknown_0;
+    string_id      output_modifier_input;
+    data_reference function;
+};
+
+static_assert(sizeof(light_function_t) == 0x24);
+
+/*! light ("ligh"): a dynamic light, sphere or frustum */
+struct light_t
+{
+    static constexpr std::string_view group = "ligh";
+
+    be<u32>          flags;
+    be<light_type_t> type;
+    be<i16>          unknown_0;
+    be<f32>          maximum_distance;
+    be<f32>          frustum_near_width;
+    be<f32>          frustum_height_scale;
+    be<f32>          frustum_field_of_view;
+    light_function_t color;
+    light_function_t intensity;
+    tag_reference    gel;
+    be<f32>          distance_diffusion;
+    be<f32>          angular_smoothness;
+    be<f32>          percent_spherical;
+    be<f32>          destroy_after;
+    std::array<u8, 4> priority;
+    tag_reference    lens_flare;
+};
+
+static_assert(offsetof(light_t, color) == 0x18);
+static_assert(offsetof(light_t, intensity) == 0x3C);
+static_assert(offsetof(light_t, gel) == 0x60);
+static_assert(offsetof(light_t, lens_flare) == 0x84);
 
 /*! model ("hlmt"): the render model and its LOD */
 struct model_t

@@ -86,10 +86,28 @@ std::vector<node_pose_t> default_pose(map_container const& map, render_model_t c
 void apply_orientations(
     map_container const& map, node_orientations_t const& stored, std::vector<node_pose_t>& pose);
 
+/*! Per node: its frame in object space under `pose` */
+std::vector<Matf4> node_matrices(
+    map_container const& map, render_model_t const& model, std::vector<node_pose_t> const& pose);
+
 /*! Per node: object space from the default pose to `pose` (world times the
  * inverse bind matrix), what skinned vertices are moved by */
 std::vector<Matf4> skinning_matrices(
     map_container const& map, render_model_t const& model, std::vector<node_pose_t> const& pose);
+
+/*! A marker's frame in object space, from its node's frame (node_matrices);
+ * the first marker of the group by that name */
+std::optional<Matf4> marker_frame(
+    map_container const& map, render_model_t const& model, string_id name, Span<Matf4 const> nodes);
+
+/*!
+ * \brief A function's steady value, for what holds still (a light's colour
+ * and intensity): the middle of a scalar function's range, the first colour
+ * of a colour function. The header's first byte is the type, the third the
+ * colour count; scalars are a float pair from 4, colours ARGB bytes from 4.
+ */
+f32   function_scalar(Span<byte_t const> function);
+Vecf3 function_color(Span<byte_t const> function);
 
 /*! A scenario's structure BSP by index */
 inline tagged<structure_bsp_t> structure_bsp(

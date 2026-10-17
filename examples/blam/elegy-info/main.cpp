@@ -49,6 +49,7 @@ struct options_t
     bool        collision;
     bool        objects;
     bool        nodes;
+    bool        lights;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -959,6 +960,42 @@ u32 write_collision(
     return polygons;
 }
 
+/* Lights: their shape and the raw functions colour and intensity follow */
+int dump_lights(elegy::map_container const& map, options_t const& options)
+{
+    for(auto const& tag : map.tags())
+    {
+        if(!tag.valid() || !map.is(tag, elegy::light_t::group) ||
+           map.name_of(tag).find(options.name_filter) == std::string_view::npos)
+            continue;
+        auto const* light = map.tag_data<elegy::light_t>(tag);
+        if(!light)
+            continue;
+        fmt::print(
+            "{}: type {} distance {} frustum near {} height {} fov {} diffusion {} smoothness {} spherical {} flags {:#x}\n",
+            map.name_of(tag),
+            static_cast<int>(light->type.value()),
+            light->maximum_distance.value(),
+            light->frustum_near_width.value(),
+            light->frustum_height_scale.value(),
+            light->frustum_field_of_view.value(),
+            light->distance_diffusion.value(),
+            light->angular_smoothness.value(),
+            light->percent_spherical.value(),
+            light->flags.value());
+        for(auto const* f : {&light->color, &light->intensity})
+        {
+            auto bytes = f->function.data(map.magic());
+            std::string hex;
+            for(auto b : bytes)
+                hex += fmt::format("{:02x}", b);
+            fmt::print("  {} input '{}' range '{}': {} bytes {}\n", f == &light->color ? "color" : "intensity",
+                       map.string(f->input), map.string(f->range), bytes.size(), hex);
+        }
+    }
+    return 0;
+}
+
 /* Node hierarchy checks: default pose against the inverse bind matrices
  * under each quaternion/matrix convention, and what the meshes index */
 int dump_nodes(elegy::map_container const& map, elegy::resource_loader& loader, options_t const& options)
@@ -1384,6 +1421,8 @@ int run_map(
         rc |= dump_objects(map, options);
     if(options.nodes)
         rc |= dump_nodes(map, *loader, options);
+    if(options.lights)
+        rc |= dump_lights(map, options);
     return rc;
 }
 
@@ -1419,6 +1458,8 @@ i32 coffee_main(i32, cstring_w*)
         ("objects", "List placed objects by type, with their physics models")
         //
         ("nodes", "Check render model node hierarchies and biped poses")
+        //
+        ("lights", "List lights and the functions their colour and intensity follow")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1466,6 +1507,7 @@ i32 coffee_main(i32, cstring_w*)
         .collision    = arguments.count("collision") > 0,
         .objects      = arguments.count("objects") > 0,
         .nodes        = arguments.count("nodes") > 0,
+        .lights       = arguments.count("lights") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),

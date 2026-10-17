@@ -67,27 +67,76 @@ void apply_orientations(
     }
 }
 
-std::vector<Matf4> skinning_matrices(
+std::vector<Matf4> node_matrices(
     map_container const& map, render_model_t const& model, std::vector<node_pose_t> const& pose)
 {
     auto const         nodes = map.span(model.nodes);
     std::vector<Matf4> world(nodes.size(), Matf4(1.f));
-    std::vector<Matf4> out(nodes.size(), Matf4(1.f));
     for(size_t i = 0; i < nodes.size() && i < pose.size(); i++)
     {
-        auto const& node  = nodes[i];
-        Matf4 const local = glm::translate(Matf4(1.f), pose[i].translation) * glm::mat4_cast(pose[i].rotation);
-        i16 const   parent = node.parent.value();
+        Matf4 const local  = glm::translate(Matf4(1.f), pose[i].translation) * glm::mat4_cast(pose[i].rotation);
+        i16 const   parent = nodes[i].parent.value();
         world[i] = parent >= 0 && static_cast<size_t>(parent) < i ? world[static_cast<size_t>(parent)] * local
                                                                  : local;
-        Matf4 inverse(1.f);
+    }
+    return world;
+}
+
+std::vector<Matf4> skinning_matrices(
+    map_container const& map, render_model_t const& model, std::vector<node_pose_t> const& pose)
+{
+    auto const nodes = map.span(model.nodes);
+    auto       out   = node_matrices(map, model, pose);
+    for(size_t i = 0; i < nodes.size() && i < out.size(); i++)
+    {
+        auto const& node = nodes[i];
+        Matf4       inverse(1.f);
         inverse[0] = Vecf4(node.inverse_forward.value(), 0.f);
         inverse[1] = Vecf4(node.inverse_left.value(), 0.f);
         inverse[2] = Vecf4(node.inverse_up.value(), 0.f);
         inverse[3] = Vecf4(node.inverse_position.value(), 1.f);
-        out[i]     = world[i] * inverse;
+        out[i]     = out[i] * inverse;
     }
     return out;
+}
+
+std::optional<Matf4> marker_frame(
+    map_container const& map, render_model_t const& model, string_id name, Span<Matf4 const> nodes)
+{
+    for(auto const& group : map.span(model.marker_groups))
+    {
+        if(group.name.raw.value() != name.raw.value())
+            continue;
+        for(auto const& marker : map.span(group.markers))
+        {
+            Vecf4 const r    = marker.rotation.value();
+            Matf4 const node = marker.node >= 0 && static_cast<size_t>(marker.node) < nodes.size()
+                                   ? nodes[static_cast<size_t>(marker.node)]
+                                   : Matf4(1.f);
+            return node * glm::translate(Matf4(1.f), marker.translation.value()) *
+                   glm::mat4_cast(Quatf(r.w, r.x, r.y, r.z));
+        }
+    }
+    return std::nullopt;
+}
+
+f32 function_scalar(Span<byte_t const> function)
+{
+    if(function.size() < 12)
+        return 0.f;
+    auto value = [&](size_t at) {
+        be<f32> v;
+        std::memcpy(v.raw.data(), function.data() + at, sizeof(v.raw));
+        return v.value();
+    };
+    return (value(4) + value(8)) * .5f;
+}
+
+Vecf3 function_color(Span<byte_t const> function)
+{
+    if(function.size() < 8 || function[2] == 0)
+        return Vecf3(1.f);
+    return Vecf3(function[5], function[6], function[7]) / 255.f;
 }
 
 render_method_view render_method_view::of(
