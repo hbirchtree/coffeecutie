@@ -38,6 +38,14 @@ layout(location = 22) uniform float time;
 // TODO: Add constant fallback on release mode
 layout(location = 31) uniform int render_flags;
 
+#ifndef USE_SHADOWS
+#define USE_SHADOWS 1
+#endif
+#if USE_SHADOWS == 1
+#define CSM_BINDING 15
+#include "cascaded_shadows.glsl"
+#endif
+
 const int RENDER_FLAG_FOG                = 0x1;
 const int RENDER_FLAG_LIGHTMAP           = 0x2;
 const int RENDER_FLAG_REFLECTION         = 0x4;
@@ -393,6 +401,20 @@ bool object_lightmap(out vec3 lit)
  * where the camera stands (.w holds them: 1 = exteriors, 2 = interiors) over
  * the matching ambient. Without the flag test a level's sun lights its
  * corridors as brightly as its hillsides. */
+/* Baked light already holds the static shadows: a cast shadow takes
+ * little from dim light, most from sunlit */
+vec3 cast_shadow(vec3 light)
+{
+#if USE_SHADOWS == 1
+    float sunlit = smoothstep(0.15, 0.45, dot(light, vec3(0.299, 0.587, 0.114)));
+    float hidden = cascade_occlusion(
+        frag.position, normalize(frag.normal), normalize(world_key_light()), camera_position);
+    return light * (1.0 - hidden * csm_params.z * mix(0.2, 1.0, sunlit));
+#else
+    return light;
+#endif
+}
+
 vec3 object_lighting(in Material mat)
 {
     bool interior   = (uint(mat.material.flags) & MATERIAL_FLAG_INTERIOR) != 0u;
@@ -415,7 +437,7 @@ vec3 object_lighting(in Material mat)
                  * world.lighting[li].light_color.a
                  * max(0.0, dot(frag.normal, normalize(light_dir.xyz)));
         }
-    return clamp(lit, 0.1, 1.0) +
+    return cast_shadow(clamp(lit, 0.1, 1.0)) +
            point_lighting(frag.position, normalize(frag.normal));
 }
 
@@ -542,7 +564,7 @@ vec4 shader_environment(in Material mat)
     if(has_micro == 1)
         out_color = apply_detail(out_color, micro.rgb, micro_func);
 #if USE_LIGHTMAPS == 1
-    out_color *= lightmap.rgb + point_lighting(frag.position, normalize(frag.normal));
+    out_color *= cast_shadow(lightmap.rgb) + point_lighting(frag.position, normalize(frag.normal));
 #else
     out_color *= object_lighting(mat);
 #endif
