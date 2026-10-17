@@ -183,9 +183,10 @@ std::future<std::shared_ptr<FileMapper::RangedFile>> FileMapper::open_ranged(
 {
     using file_ptr = std::shared_ptr<RangedFile>;
 #if defined(COFFEE_EMSCRIPTEN)
+    /* Store files are read by range too: they can be larger than the heap */
     const bool is_remote = !platform::file::exists(src).has_value() &&
                            enum_helpers::feval(src.flags, semantic::RSCA::AssetFile);
-    if(is_remote)
+    if(is_remote || platform::file::emscripten::is_offline_url(src.internUrl))
     {
         auto file     = std::make_shared<RangedFile>();
         file->m_url   = src;

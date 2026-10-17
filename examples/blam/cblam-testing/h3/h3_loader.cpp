@@ -129,8 +129,10 @@ struct H3MapLoader : compo::SubsystemBase
     {
         if(!load.file)
             return false;
-        /* Web files arrive asynchronously; not wired up for Halo 3 yet */
-        if(compile_info::platform::is_emscripten && !load.file_data)
+        /* Outside the virtual filesystem (web) the Halo 2 loader fetches the
+         * file and hands it back with file_data */
+        if(compile_info::platform::is_emscripten && !load.file_data &&
+           !platform::file::exists(*load.file).has_value())
             return false;
         auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
         auto  file   = load.file_data ? load.file_data : mapper.fetch(*load.file).get();
