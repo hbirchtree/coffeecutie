@@ -187,8 +187,9 @@ struct AnimationController
         for(auto const& candidate : units.value())
             if(candidate.label.str() == unit)
                 found = &candidate;
+        /* A stance the graph lacks falls back to standing */
         if(!found)
-            return out;
+            return unit == "stand" ? out : (out = stance(p, graph, "stand", weapon));
         if(auto refs = found->animations.data(magic); refs.has_value())
             for(size_t i = 0;
                 i < out.unit_slots.size() && i < refs.value().size();
@@ -319,7 +320,8 @@ struct AnimationController
                 unarmed,
                 true,
                 physics.grounded,
-                dt);
+                dt,
+                anim.stance);
         }
 
         for(auto it = m_walkers.begin(); it != m_walkers.end();)
@@ -336,7 +338,8 @@ struct AnimationController
         std::string const& weapon,
         bool               strides,
         bool               grounded,
-        f32                dt)
+        f32                dt,
+        std::string const& unit = "stand")
     {
         auto& walker = m_walkers[id];
         Vecf3 velocity{};
@@ -355,7 +358,7 @@ struct AnimationController
         Vecf3 const left{-forward.y, forward.x, 0.f};
 
         auto const* graph = anim.graph;
-        auto const& st    = stance(p, graph, "stand", weapon);
+        auto const& st    = stance(p, graph, unit, weapon);
         /* 0 standing, 1 walking; between, idle and stride blend */
         f32 const moving =
             std::clamp((speed - walk_threshold) / walk_threshold, 0.f, 1.f);

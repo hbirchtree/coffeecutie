@@ -521,6 +521,12 @@ struct BlamScript
                 m_speakers[on.front()] = {.mouth = mouth_of(p, arg(0)), .from = m_vm.now()};
             return {};
         }
+        case op::unit_set_seat:
+            with_objects(p, arg(0), [stance = std::string(text_of(arg(1)))](Proxy& p, u64 id) {
+                if(auto* anim = p.template get<AnimationPlayback>(id))
+                    anim->stance = stance;
+            });
+            return {};
         case op::unit_set_emotion:
             with_objects(p, arg(0), [emotion = static_cast<i16>(arg(1).as_real())](Proxy& p, u64 id) {
                 if(auto* anim = p.template get<AnimationPlayback>(id))
@@ -1495,11 +1501,15 @@ struct BlamScript
         auto const* graph = anim ? anim->graph : nullptr;
         if(!graph)
             return Vecf2(default_speed);
-        auto [it, fresh] = m_walk_speeds.try_emplace(graph);
+        auto [it, fresh] = m_walk_speeds.try_emplace(std::pair{graph, anim->stance});
         if(fresh)
         {
-            f32 const front = move_speed(*graph, Slot::move_front, m_magic);
-            f32 const side  = move_speed(*graph, Slot::move_left, m_magic);
+            f32 front = move_speed(*graph, Slot::move_front, m_magic, anim->stance, "unarmed");
+            f32 side  = move_speed(*graph, Slot::move_left, m_magic, anim->stance, "unarmed");
+            if(front <= 0.f)
+                front = move_speed(*graph, Slot::move_front, m_magic, "stand", "unarmed");
+            if(side <= 0.f)
+                side = move_speed(*graph, Slot::move_left, m_magic, "stand", "unarmed");
             it->second      = {front > 0.f ? front : default_speed, side > 0.f ? side : default_speed};
         }
         return it->second;
@@ -1777,7 +1787,7 @@ struct BlamScript
     std::map<u64, speaker_t> m_speakers;
     std::set<u32>                           m_despawning;
     std::set<u32>                           m_recreate;
-    std::map<blam::antr::header const*, Vecf2> m_walk_speeds;
+    std::map<std::pair<blam::antr::header const*, std::string>, Vecf2> m_walk_speeds;
     action_tests_t                          m_tests;
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
     std::set<u32>                           m_loops;
