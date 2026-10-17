@@ -257,6 +257,9 @@ struct MotionInterpolator
         for(auto ent : p.select<PlayerInfo, PlayerCamera>())
         {
             auto [info, cam] = ent.components();
+            /* CameraControl draws cutscenes */
+            if(cam.cinematic)
+                continue;
             cam.drawn_eye    = cam.camera.position;
             if(cam.tick_eye && ticked_eye(p, info) &&
                glm::distance(*cam.tick_eye, cam.camera.position) <= max_tick_move)

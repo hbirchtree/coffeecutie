@@ -33,6 +33,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
     i16            last_sky_idx{-1};
     u32            frame_counter{0};
     Vecf3          last_camera_pos{};
+    bool           was_scripted{false};
     BSPItem const* pvs_bsp{nullptr};
     u32            pvs_cluster{0};
     generation_idx_t
@@ -116,13 +117,16 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         Coffee::Profiler::PushContext("Occluder::pre_section");
 
         std::map<Visibility::viewport_id, cull_target_t> cull_targets;
+        /* Cutscenes pick their section with switch_bsp */
+        bool scripted = false;
         for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
         {
             auto [cam, info] = ent.components();
             if(info.is_remote())
                 continue;
+            scripted = scripted || (info.seat_idx == 0 && cam.cinematic);
             cull_targets[std::make_pair(info.seat_idx, false)] = {
-                .pos        = cam.camera.position,
+                .pos        = cam.cinematic ? cam.drawn_eye : cam.camera.position,
                 .mvp        = cam.matrix,
                 .f          = Frustum::from_mvp(cam.matrix),
                 .proj_scale = glm::length(
@@ -143,7 +147,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
          * rock — keeps trigger-only semantics. */
         f32 camera_jump = glm::distance(seat0_cam.pos, last_camera_pos);
         last_camera_pos = seat0_cam.pos;
-        if(camera_jump > 5.f)
+        /* A cutscene handing the camera back is no teleport either */
+        bool const released = std::exchange(was_scripted, scripted);
+        if(camera_jump > 5.f && !scripted && !released)
         {
             if(auto section = bsp_cache->section_of_point(seat0_cam.pos);
                section && *section != bsp_cache->active_section)
@@ -165,7 +171,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
          * nothing per frame. */
         for(auto const& sw : bsp_cache->bsp_switches)
         {
-            if(sw.source != bsp_cache->active_section)
+            if(scripted || sw.source != bsp_cache->active_section)
                 continue;
             if(!sw.volume->contains(seat0_cam.pos))
                 continue;
@@ -643,11 +649,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     void debug_occluder_probe()
     {
-        // /* Diagnostic (BLAM_OCCLUDER_PROBE=1): raycast a grid of view
         //  * directions and report each hit surface's cluster and whether the
         //  * portal walk marked it visible. FALSE rows are either portal-walk
         //  * under-reach or face→cluster mis-assignment. */
-        // if(::getenv("BLAM_OCCLUDER_PROBE") && current_bsp &&
         //    (frame_counter % 60) == 0)
         // {
         //     auto [camera_pos, camera_mvp, frustum] = seat0_cam;
