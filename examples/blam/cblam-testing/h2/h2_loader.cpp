@@ -2146,6 +2146,7 @@ struct H2MapLoader : compo::SubsystemBase
     {
         m_scene.sky_scale  = 1.f;
         m_scene.sky_clear  = {};
+        m_scene.sky_flares.clear();
         auto skies   = scnr.skies.data(map.magic());
         if(skies.has_error() || skies.value().empty())
             return;
@@ -2159,6 +2160,7 @@ struct H2MapLoader : compo::SubsystemBase
             from_le(sky->clear_color[0]),
             from_le(sky->clear_color[1]),
             from_le(sky->clear_color[2])};
+        load_sky_flares(map, pool, *sky);
         auto const* mode_tag = map.tag_at(sky->render_model.tag_id);
         if(!mode_tag || !mode_tag->matches("mode"))
             return;
@@ -2175,6 +2177,64 @@ struct H2MapLoader : compo::SubsystemBase
             map.name_of(*sky_tag),
             sections,
             radius);
+    }
+
+    /* Each sky light with a lens flare; yaw and pitch put the light around
+     * the world's z axis */
+    template<typename V>
+    void load_sky_flares(
+        dim::map_container<V> const& map,
+        dim::raw_pool const&         pool,
+        dim::obj::sky_t const&       sky)
+    {
+        auto lights = sky.lights.data(map.magic());
+        if(lights.has_error())
+            return;
+        for(auto const& light : lights.value())
+        {
+            auto const* lens_tag = map.tag_at(light.lens_flare.tag_id);
+            auto const* lens =
+                lens_tag ? lens_tag->template data<dim::obj::lens_t>(map.magic())
+                         : nullptr;
+            auto const* bitm = lens ? map.tag_at(lens->bitmap.tag_id) : nullptr;
+            if(!bitm)
+                continue;
+            auto reflections = lens->reflections.data(map.magic());
+            if(reflections.has_error())
+                continue;
+            f32 const yaw   = from_le(light.direction[0]);
+            f32 const pitch = from_le(light.direction[1]);
+            SkyFlare  flare{
+                 .direction = Vecf3{
+                    std::cos(pitch) * std::cos(yaw),
+                    std::cos(pitch) * std::sin(yaw),
+                    std::sin(pitch)},
+            };
+            for(auto const& r : reflections.value())
+            {
+                auto image = texture_for(
+                    map, pool, bitm, static_cast<size_t>(std::max<i16>(r.image, 0)));
+                if(!image)
+                    continue;
+                flare.sprites.push_back({
+                    .image    = *image,
+                    .position = from_le(r.position),
+                    .radius   = from_le(r.radius[1]),
+                    .color    = Vecf3{
+                        from_le(r.color[0]),
+                        from_le(r.color[1]),
+                        from_le(r.color[2])} *
+                             from_le(r.brightness[1]),
+                });
+            }
+            cDebug(
+                "H2: sky light ({}, {}): flare {}, {} sprites",
+                yaw,
+                pitch,
+                map.name_of(*lens_tag),
+                flare.sprites.size());
+            m_scene.sky_flares.push_back(std::move(flare));
+        }
     }
 
     /* Index into m_scene.materials for a shad tag, created on first use. The last
@@ -2402,14 +2462,16 @@ struct H2MapLoader : compo::SubsystemBase
     std::optional<Texture> texture_for(
         dim::map_container<V> const& map,
         dim::raw_pool const&         pool,
-        dim::tag_t const*            bitm_tag)
+        dim::tag_t const*            bitm_tag,
+        size_t                       image = 0)
     {
         if(!bitm_tag || !bitm_tag->matches("bitm"))
             return std::nullopt;
-        auto key = static_cast<u16>(bitm_tag - map.tags().data());
+        auto key = static_cast<u32>(bitm_tag - map.tags().data()) |
+                   static_cast<u32>(image << 16);
         if(auto it = m_textures.find(key); it != m_textures.end())
             return it->second;
-        auto shared = shared_key(map, pool, *bitm_tag);
+        auto shared = shared_key(map, pool, *bitm_tag, image);
         if(shared)
             if(auto it = m_shared_textures.find(*shared);
                it != m_shared_textures.end())
@@ -2418,7 +2480,7 @@ struct H2MapLoader : compo::SubsystemBase
                 m_textures.emplace(key, it->second.texture);
                 return it->second.texture;
             }
-        auto tex = upload_bitmap(*m_api, map, pool, *bitm_tag);
+        auto tex = upload_bitmap(*m_api, map, pool, *bitm_tag, image);
         if(!tex)
             return std::nullopt;
         Texture out{.texture = *tex, .sampler = (*tex)->sampler()};
@@ -2490,7 +2552,7 @@ struct H2MapLoader : compo::SubsystemBase
     std::vector<Vertex>              m_vertices;
     std::vector<u16>                 m_indices;
     std::unordered_map<u32, i32>     m_material_index; /* shad tag -> slot */
-    std::unordered_map<u16, Texture> m_textures;       /* bitm tag -> gpu */
+    std::unordered_map<u32, Texture> m_textures; /* bitm tag | image << 16 -> gpu */
     struct SharedTexture
     {
         Texture texture;
