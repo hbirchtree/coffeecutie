@@ -81,6 +81,19 @@ struct SpecularParams
     Vecf4 tint1{1.f};
 };
 
+struct CubeTexture
+{
+    std::shared_ptr<gfx::texture_cube_t> texture;
+    std::shared_ptr<gfx::sampler_t>      sampler;
+};
+
+/* A cubemap point of the BSP and its image */
+struct CubemapProbe
+{
+    Vecf3 position;
+    u32   cubemap;
+};
+
 /* One render method: its textures and every draw range using it */
 struct Material
 {
@@ -117,6 +130,11 @@ struct Material
     std::array<Vecf4, 3>                   illum_channels{};
     f32                                    illum_curve{2.f};
     Texture                                specular_mask_map;
+    /* environment_mapping: 0 none, 1 dynamic (the BSP's cubemaps), 2
+     * per_pixel (its own); tint rgb, contribution a */
+    i32                                    env_mode{0};
+    CubeTexture                            environment_map;
+    Vecf4                                  env_tint{1.f, 1.f, 1.f, 0.f};
     Texture                                material_map;
     Texture                                bump;
     Vecf2                                  bump_scale{1.f, 1.f};
@@ -153,6 +171,8 @@ struct H3Scene : compo::SubsystemBase
      * (atmosphere.fx); disabled when constant 1's w is negative */
     std::array<Vecf4, 7>                        atmosphere{Vecf4(0.f), Vecf4(0.f, 0.f, 0.f, -1.f)};
     BakedLight                                  baked;
+    std::vector<CubeTexture>                    cubemaps;
+    std::vector<CubemapProbe>                   cubemap_probes;
     std::shared_ptr<gfx::buffer_t> vertex_buf;
     std::shared_ptr<gfx::buffer_t> element_buf;
 };

@@ -167,6 +167,9 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.materials.clear();
         m_scene.lightprobe.reset();
         m_scene.lightprobe_sampler.reset();
+        m_scene.cubemaps.clear();
+        m_scene.cubemap_probes.clear();
+        m_cube_textures.clear();
         m_scene.baked.clear();
         m_vertices.clear();
         m_indices.clear();
@@ -471,6 +474,7 @@ struct H3MapLoader : compo::SubsystemBase
         }
         load_scenery(*scnr, bsp);
         load_sky(*scnr, bsp);
+        load_cubemaps(*scnr, bsp);
         if(m_vertices.empty())
             return false;
 
@@ -863,6 +867,7 @@ struct H3MapLoader : compo::SubsystemBase
             return it->second;
 
         Material mat{.name = std::string(map.name_of(*tag))};
+        m_pending_environment_map = nullptr;
         struct Slot
         {
             Texture texture;
@@ -899,6 +904,8 @@ struct H3MapLoader : compo::SubsystemBase
             for(size_t i = 0; i < textures.size() && i < names.size(); i++)
             {
                 auto const* bitmap = map.tag_at(textures[i].bitmap.id);
+                if(bitmap && map.string(names[i]) == "environment_map")
+                    m_pending_environment_map = bitmap;
                 auto        tex    = bitmap ? texture_for(*bitmap) : std::nullopt;
                 if(!tex)
                     continue;
@@ -1003,6 +1010,7 @@ struct H3MapLoader : compo::SubsystemBase
             if(albedo == "constant_color")
                 mat.variant = Variant::base;
             load_specular(mat, option("material_model"), option("specular_mask"), constants);
+            load_environment(mat, option("environment_mapping"), constants);
             load_self_illum(mat, option("self_illumination"), slot("self_illum_map"),
                             slot("self_illum_detail_map"), constants);
             if(auto const* mask = slot("specular_mask_texture"))
@@ -1035,6 +1043,138 @@ struct H3MapLoader : compo::SubsystemBase
         size_t idx = m_scene.materials.size() - 1;
         m_material_index.emplace(key, idx);
         return idx;
+    }
+
+    /* Environment mapping: the BSP's cubemaps (dynamic) or the shader's own
+     * cube (per_pixel), tinted */
+    void load_environment(
+        Material&                                     mat,
+        std::string_view                              option,
+        std::unordered_map<std::string, Vecf4> const& constants)
+    {
+        auto value = [&](char const* name, Vecf4 fallback) {
+            auto it = constants.find(name);
+            return it == constants.end() ? fallback : it->second;
+        };
+        mat.env_tint = Vecf4(
+            Vecf3(value("env_tint_color", Vecf4(1.f))),
+            value("environment_map_specular_contribution", Vecf4(0.f)).x);
+        if(option == "dynamic")
+            mat.env_mode = 1;
+        else if(option == "per_pixel" && m_pending_environment_map)
+        {
+            if(auto cube = cube_texture_for(*m_pending_environment_map))
+            {
+                mat.environment_map = *cube;
+                mat.env_mode        = 2;
+            }
+        }
+    }
+
+    /* A cube bitmap's first image, uploaded once per tag */
+    std::optional<CubeTexture> cube_texture_for(el::tag_t const& bitmap_tag)
+    {
+        auto key = m_map->id_of(bitmap_tag).raw.value();
+        if(auto it = m_cube_textures.find(key); it != m_cube_textures.end())
+            return it->second;
+        auto const* bitmap = m_map->tag_data<el::bitmap_t>(bitmap_tag);
+        auto out = bitmap ? upload_cube(*bitmap, 0) : std::nullopt;
+        m_cube_textures.emplace(key, out);
+        return out;
+    }
+
+    /* One cube image of a bitmap: six faces stored like array slices, in
+     * its own resource or interleaved with another image */
+    std::optional<CubeTexture> upload_cube(el::bitmap_t const& bitmap, size_t index)
+    {
+        auto magic  = m_map->magic();
+        auto images = bitmap.images.data(magic).value_or(Span<el::bitmap_image_t const>());
+        if(index >= images.size())
+            return std::nullopt;
+        auto const& image = images[index];
+        auto        h1    = h1_format(image.format.value());
+        if(image.type.value() != el::bitmap_type_t::cube_map || !h1 ||
+           (*h1 != blam::bitm::format_t::BC1 && *h1 != blam::bitm::format_t::BC2 &&
+            *h1 != blam::bitm::format_t::BC3))
+            return std::nullopt;
+        auto hardware = bitmap.hardware_textures.data(magic).value_or(
+            Span<el::hardware_texture_t const>());
+        auto interleaved = bitmap.interleaved_textures.data(magic).value_or(
+            Span<el::hardware_texture_t const>());
+        bool const in_pair = hardware.empty() && image.interleaved_interop >= 0 &&
+                             static_cast<size_t>(image.interleaved_interop) < interleaved.size();
+        if(!in_pair && index >= hardware.size())
+            return std::nullopt;
+        auto view = m_loader->load(
+            in_pair ? interleaved[static_cast<size_t>(image.interleaved_interop)].resource
+                    : hardware[index].resource);
+        if(!view.has_value())
+            return std::nullopt;
+        auto stored = in_pair ? el::top_level_interleaved(view.value(), image)
+                              : el::top_level(view.value(), image);
+        u32 width  = static_cast<u32>(image.width.value());
+        u32 height = static_cast<u32>(image.height.value());
+        u32 stride = el::slice_stride(image.format.value(), width, height);
+        std::array<std::vector<u8>, 6> faces;
+        for(u32 f = 0; f < 6; f++)
+            if(size_t(f) * stride >= stored.size() ||
+               !el::linearize(
+                   stored.subspan(size_t(f) * stride),
+                   image.format.value(),
+                   width,
+                   height,
+                   image.xbox_flags,
+                   faces[f]))
+                return std::nullopt;
+        auto tex = m_api->alloc_texture(gfx::textures::cube, blam::bitm::to_pixdesc(*h1), 1);
+        tex->alloc(size_3d<u32>{width, height, 1});
+        std::array<semantic::Span<const u8>, 6> spans;
+        for(u32 f = 0; f < 6; f++)
+            spans[f] = semantic::Span<const u8>(faces[f].data(), faces[f].size());
+        tex->upload(spans, Veci2{0, 0}, Veci2{static_cast<i32>(width), static_cast<i32>(height)}, 0);
+        CubeTexture out{.texture = tex, .sampler = tex->sampler()};
+        out.sampler->alloc();
+        out.sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+        return out;
+    }
+
+    /* The BSP's cubemaps and the points they were captured at */
+    void load_cubemaps(el::scenario_t const& scnr, i16 bsp_index)
+    {
+        auto const& map   = *m_map;
+        auto        magic = map.magic();
+        auto bsps = scnr.bsps.data(magic).value_or(Span<el::scenario_bsp_t const>());
+        if(static_cast<size_t>(bsp_index) >= bsps.size())
+            return;
+        auto const& entry  = bsps[static_cast<size_t>(bsp_index)];
+        auto const* tag    = map.tag_at(entry.cubemaps.id);
+        auto const* bitmap = tag ? map.tag_data<el::bitmap_t>(*tag) : nullptr;
+        auto const* bsp_tag = map.tag_at(entry.bsp.id);
+        auto const* bsp = bsp_tag ? map.tag_data<el::structure_bsp_t>(*bsp_tag) : nullptr;
+        if(!bitmap || !bsp)
+            return;
+        auto images = bitmap->images.data(magic).value_or(Span<el::bitmap_image_t const>());
+        std::vector<i32> uploaded(images.size(), -1);
+        for(auto const& cluster : bsp->clusters.data(magic).value_or(Span<el::cluster_t const>()))
+            for(auto const& point : cluster.cubemaps.data(magic).value_or(
+                    Span<el::cluster_cubemap_t const>()))
+            {
+                i16 index = point.bitmap_index;
+                if(index < 0 || static_cast<size_t>(index) >= images.size())
+                    continue;
+                if(uploaded[static_cast<size_t>(index)] < 0)
+                {
+                    auto cube = upload_cube(*bitmap, static_cast<size_t>(index));
+                    if(!cube)
+                        continue;
+                    uploaded[static_cast<size_t>(index)] = static_cast<i32>(m_scene.cubemaps.size());
+                    m_scene.cubemaps.push_back(*cube);
+                }
+                m_scene.cubemap_probes.push_back(
+                    {point.position.value(), static_cast<u32>(uploaded[static_cast<size_t>(index)])});
+            }
+        cDebug(
+            "H3: {} cubemaps at {} points", m_scene.cubemaps.size(), m_scene.cubemap_probes.size());
     }
 
     /* Self-illumination: simple, with a detail map, or three tinted
@@ -1594,6 +1734,8 @@ struct H3MapLoader : compo::SubsystemBase
     std::unordered_map<u32, size_t>                    m_material_index;
     std::unordered_map<u32, std::optional<Texture>>    m_textures;
     std::unordered_map<u32, std::optional<el::resource_view>> m_model_views;
+    std::unordered_map<u32, std::optional<CubeTexture>> m_cube_textures;
+    el::tag_t const*                                     m_pending_environment_map{nullptr};
 };
 
 void alloc_h3(compo::EntityContainer& e)
