@@ -35,13 +35,6 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
     endforeach()
 elseif(BUILD_OPENAL AND EMSCRIPTEN)
     find_package(OpenAL CONFIG REQUIRED)
-<<<<<<< HEAD
-    find_package(libwma CONFIG REQUIRED)
-    set(BUNDLED_LIBS
-        OpenAL::OpenAL
-        libwma::wma
-    )
-=======
     set(BUNDLED_LIBS OpenAL::OpenAL)
     if(BUILD_OPENAL_WMA)
         find_package(libwma CONFIG REQUIRED)
@@ -52,7 +45,6 @@ elseif(BUILD_OPENAL AND EMSCRIPTEN)
         find_package(unofficial-ffmpeg-decoders CONFIG REQUIRED)
         list(APPEND BUNDLED_LIBS unofficial::ffmpeg-decoders::ffmpeg-decoders)
     endif()
->>>>>>> 6ad5e7f73 (toolchain: Optionally include libwma)
 endif()
 
 resource_dir_package(
