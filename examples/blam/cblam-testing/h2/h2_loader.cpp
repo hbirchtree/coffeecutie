@@ -2145,6 +2145,7 @@ struct H2MapLoader : compo::SubsystemBase
         dim::scn::scenario_t const&  scnr)
     {
         m_scene.sky_scale  = 1.f;
+        m_scene.sky_clear  = {};
         auto skies   = scnr.skies.data(map.magic());
         if(skies.has_error() || skies.value().empty())
             return;
@@ -2154,6 +2155,10 @@ struct H2MapLoader : compo::SubsystemBase
                     : nullptr;
         if(!sky)
             return;
+        m_scene.sky_clear = Vecf3{
+            from_le(sky->clear_color[0]),
+            from_le(sky->clear_color[1]),
+            from_le(sky->clear_color[2])};
         auto const* mode_tag = map.tag_at(sky->render_model.tag_id);
         if(!mode_tag || !mode_tag->matches("mode"))
             return;
@@ -2215,7 +2220,13 @@ struct H2MapLoader : compo::SubsystemBase
             mat.uv_scale   = {base.scale_u, base.scale_v};
             mat.alpha_test = base.alpha_test;
             mat.water      = base.water;
-            mat.additive   = base.transparent && !base.water;
+            /* Transparent templates name their blend: one_add_*, two_add_*
+             * and the plasmas add, the rest alpha blend */
+            auto const& tmpl = base.template_name;
+            bool const  adds = tmpl.find("_add") != tmpl.npos ||
+                              tmpl.find("plasma") != tmpl.npos;
+            mat.additive = base.transparent && !base.water && adds;
+            mat.blended  = base.transparent && !base.water && !adds;
             if(mat.water)
                 if(auto bump = base.layer("bump_map"))
                     bitm_tag = bump->bitmap, mat.uv_scale = {bump->scale_u, bump->scale_v};
@@ -2254,7 +2265,9 @@ struct H2MapLoader : compo::SubsystemBase
                         mat.bump       = *t;
                         mat.bump_scale = {b->scale_u, b->scale_v};
                     }
-            if(sky)
+            if(tmpl == "water_static" || tmpl == "water_edge_blend")
+                ocean_material(map, pool, base, mat);
+            if(sky || tmpl.find("clouds") != tmpl.npos)
                 if(auto m = base.layer("cloud_mask"))
                     if(auto t = texture_for(map, pool, m->bitmap))
                     {
@@ -2276,7 +2289,9 @@ struct H2MapLoader : compo::SubsystemBase
                     }
         }
         mat.variant = mat.sky     ? (mat.mask.sampler ? Variant::sky_mask : Variant::sky)
+                      : mat.ocean ? Variant::ocean
                       : mat.water ? Variant::water
+                      : mat.mask.sampler ? Variant::clouds
                       : static_cast<Variant>(
                             mat.detail_mode + (mat.illum.sampler ? 3 : 0));
         cDebug(
@@ -2297,6 +2312,55 @@ struct H2MapLoader : compo::SubsystemBase
          * fallback, which holds no cached index */
         m_material_index.emplace(key, idx);
         return idx;
+    }
+
+    /* water_static's slots by index: wave bump, sky, gradients, fresnel. The
+     * edge blend (the infinite plane fading out) borrows them from the map's
+     * water_static and fades by its own first slot */
+    template<typename V>
+    void ocean_material(
+        dim::map_container<V> const&       map,
+        dim::raw_pool const&               pool,
+        dim::material::resolved_t const&   base,
+        Material&                          mat)
+    {
+        std::optional<dim::material::resolved_t> other;
+        auto const*                              src = &base;
+        if(base.template_name == "water_edge_blend")
+        {
+            if(!base.slot_bitmaps.empty())
+                if(auto t = texture_for(map, pool, base.slot_bitmaps[0]))
+                    mat.mask = *t;
+            for(auto const& tag : map.tags())
+            {
+                if(!tag.valid() || !tag.matches("shad"))
+                    continue;
+                auto const* shad =
+                    tag.template data<geo::shad_header_t>(map.magic());
+                auto const* stem = shad ? map.tag_at(shad->shader_template.tag_id)
+                                        : nullptr;
+                if(stem && map.name_of(*stem).ends_with("\\water_static"))
+                {
+                    other = dim::material::resolve(map, *shad);
+                    src   = &*other;
+                    break;
+                }
+            }
+        }
+        if(src->slot_bitmaps.size() < 2)
+            return;
+        auto bump = texture_for(map, pool, src->slot_bitmaps[0]);
+        auto sky  = texture_for(map, pool, src->slot_bitmaps[1]);
+        if(!bump || !sky)
+            return;
+        mat.ocean    = true;
+        mat.blended  = true;
+        mat.additive = false;
+        mat.texture  = bump->texture;
+        mat.sampler  = bump->sampler;
+        mat.detail   = *sky;
+        if(!src->tilings.empty() && src->tilings[0][0] != 0.f)
+            mat.uv_scale = {src->tilings[0][0], src->tilings[0][1]};
     }
 
     /* Uploaded once per bitm tag; detail maps are shared by many shaders */

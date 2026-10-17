@@ -120,6 +120,8 @@ enum class Variant : u8
     sky,
     sky_mask,
     water,
+    clouds,
+    ocean,
     count,
 };
 
@@ -133,6 +135,8 @@ inline constexpr std::string_view variant_files[] = {
     "h2_sky",
     "h2_sky_mask",
     "h2_water",
+    "h2_clouds",
+    "h2_ocean",
 };
 
 static_assert(
@@ -180,6 +184,10 @@ struct Material
     bool                                   sky{false}; /*!< follows the camera, unlit */
     bool                                   water{false}; /*!< bump in `texture`, drawn last */
     bool                                   additive{false}; /*!< transparent template: glow pass */
+    bool                                   blended{false};  /*!< transparent template: alpha blend */
+    /*! water_static and its edge blend: bump in `texture`, sky in `detail`,
+     * the edge fade in `mask` */
+    bool                                   ocean{false};
     Vecf2                                  mask_scale{1.f, 1.f};
 };
 
@@ -283,6 +291,7 @@ struct H2Scene : compo::SubsystemBase
     std::shared_ptr<gfx::compat::texture_2da_t> lightmap_tex;
     std::shared_ptr<gfx::sampler_t>             lightmap_sampler;
     f32                                         sky_scale{1.f};
+    Vecf3                                       sky_clear{0.f, 0.f, 0.f};
 };
 
 /* What the occluder decided for this frame */

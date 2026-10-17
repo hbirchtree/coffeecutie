@@ -2733,20 +2733,63 @@ struct alignas(4) sky_fog_t
 
 static_assert(sizeof(sky_fog_t) == 0x10);
 
+/*! Radiosity a sky light casts: the sun's colour and disc */
+struct alignas(4) sky_radiosity_t
+{
+    u32                flags; /* TODO: flags */
+    Vecf3              color;
+    f32                power;
+    f32                test_distance;
+    std::array<u32, 3> unknown_0;
+    f32                diameter; /*!< Radians */
+};
+
+static_assert(sizeof(sky_radiosity_t) == 0x28);
+
+struct alignas(4) sky_light_t
+{
+    Vecf3                            direction_vector;
+    Vecf2                            direction; /*!< Yaw, pitch in radians */
+    tag_reference<tag_class_t::lens> lens_flare;
+    tag_block<u8>                    fog;          /*!< elem 0x2C */
+    tag_block<u8>                    fog_opposite; /*!< elem 0x2C */
+    tag_block<sky_radiosity_t>       radiosity;
+};
+
+static_assert(sizeof(sky_light_t) == 0x34);
+
 struct alignas(4) sky_t
 {
     tag_reference<tag_class_t::mode> render_model; /*!< mode */
     tag_reference<tag_class_t::jmad> animation_graph;
-    u8                               unknown_0[0x34 - 0x10];
+    u32                              flags; /* TODO: flags */
+    f32                              render_model_scale;
+    f32                              movement_scale;
+    tag_block<u8>                    cube_map; /*!< elem 0xC */
+    Vecf3                            indoor_ambient;
+    u32                              unknown_0;
     Vecf3                            outdoor_ambient;
     u32                              unknown_1;
     f32                              fog_spread_distance;
     tag_block<fog_t>                 atmospheric_fog;
     tag_block<fog_t>                 secondary_fog;
     tag_block<sky_fog_t>             sky_fog;
+    tag_block<u8>                    patchy_fog; /*!< elem 0x50 */
+    std::array<f32, 4>               bloom_override;
+    tag_block<sky_light_t>           lights;
+    f32                              global_rotation;
+    tag_block<u8>                    shader_functions; /*!< elem 0x24 */
+    tag_block<u8>                    animations;       /*!< elem 0x24 */
+    std::array<u32, 3>               unknown_2;
+    /*! Shown where the sky model leaves gaps, below the horizon; only set
+     * where it shows (zanzibar's open sea) */
+    Vecf3                            clear_color;
 };
 
 static_assert(offsetof(sky_t, outdoor_ambient) == 0x34);
 static_assert(offsetof(sky_t, sky_fog) == 0x58);
+static_assert(offsetof(sky_t, lights) == 0x78);
+static_assert(offsetof(sky_t, clear_color) == 0xA0);
+static_assert(sizeof(sky_t) == 0xAC);
 
 } // namespace blam::dimeter::obj
