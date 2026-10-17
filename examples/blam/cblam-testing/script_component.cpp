@@ -981,6 +981,7 @@ struct BlamScript
                     encounter = &e;
         if(!encounter)
             return log(fmt::format("ai_place: no encounter {}", path));
+        log(fmt::format("ai_place: {}", path));
         auto squads  = encounter->squads.data(m_magic);
         auto palette = m_scenario->ai.actor_palette.data(m_magic);
         if(!squads.has_value() || !palette.has_value())
