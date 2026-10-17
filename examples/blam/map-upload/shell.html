@@ -325,7 +325,7 @@
 
   <section class="content">
     <p>
-      Drop Halo CE or Halo 2 <code>.map</code> files, or a whole
+      Drop Halo CE, Halo 2 or Halo 3 <code>.map</code> files, or a whole
       <code>maps</code> folder. Each file is identified by its contents, Xbox
       maps are decompressed and their textures unswizzled, textures can be
       transcoded for this GPU, and the result is kept in this browser for
@@ -419,12 +419,13 @@
 <script>
   'use strict';
 
-  /* Enough for the whole 2 KiB map header; resource maps need 16 bytes */
-  const HEADER_SIZE = 2048;
+  /* Enough for Halo 3's 12 KiB map header, earlier ones are 2 KiB;
+   * resource maps need 16 bytes */
+  const HEADER_SIZE = 0x3000;
   /* Halo 2 tag index header, read at the map's meta_offset */
   const HALO2_INDEX_SIZE = 32;
   const MAX_FILE_SIZE = 0xffffffff;
-  const PREFIXES = ['pc', 'custom', 'xbox', 'mcc', 'halo2'];
+  const PREFIXES = ['pc', 'custom', 'xbox', 'mcc', 'halo2', 'halo3'];
   /* Halo 2's UI fonts, read from fonts/ next to the maps */
   const HALO2_FONTS = 'halo2/fonts';
   /* Directories this page stores into */
@@ -439,6 +440,12 @@
     2: 'mainmenu.map',
     3: 'shared.map',
     4: 'single_player_shared.map',
+  };
+  /* Same for Halo 3 (blam::elegy::cache_type_t) */
+  const HALO3_CACHE_FILES = {
+    2: 'mainmenu.map',
+    3: 'shared.map',
+    4: 'campaign.map',
   };
 
   /* Keep in sync with kind_t in main.cpp */
@@ -456,11 +463,14 @@
     9: { label: 'Halo 2 map' },
     10: { label: 'Halo 2 map', prefix: 'halo2' },
     11: { label: 'Halo 2 Vista map' },
+    12: { label: 'Halo 3 map', prefix: 'halo3' },
+    13: { label: 'Halo 3 beta map' },
   };
   const SKIP_REASONS = {
     5: 'Skipped: Trial maps are not supported',
     9: 'Skipped: no tag index where the header points (compressed?)',
     11: 'Skipped: Halo 2 Vista maps are not supported',
+    13: 'Skipped: Halo 3 beta maps are not supported',
   };
 
   /* Transcode targets offered on the page, values are mtx::make_kernel()
@@ -936,16 +946,18 @@
         try {
           const info = await identify(file);
           let kind = KINDS[info.kind] || KINDS[0];
-          const cacheFile = HALO2_CACHE_FILES[info.cacheType];
+          const cacheFile = kind.prefix === 'halo3'
+            ? HALO3_CACHE_FILES[info.cacheType]
+            : HALO2_CACHE_FILES[info.cacheType];
           /* Global cache files may have too little tag data to tell Xbox
            * from Vista; only Xbox is supported, so they are taken as Xbox */
           if (info.kind === KIND_HALO2_UNRESOLVED && cacheFile)
-            kind = { ...KINDS[10], halo2CacheFile: cacheFile };
-          else if (kind.prefix === 'halo2' && cacheFile)
-            kind = { ...kind, halo2CacheFile: cacheFile };
+            kind = { ...KINDS[10], cacheFile };
+          else if (['halo2', 'halo3'].includes(kind.prefix) && cacheFile)
+            kind = { ...kind, cacheFile };
           let detected = kind.label;
-          if (kind.halo2CacheFile)
-            detected += `, ${kind.halo2CacheFile}`;
+          if (kind.cacheFile)
+            detected += `, ${kind.cacheFile}`;
           if (info.name)
             detected += ` (${info.name})`;
           if (kind.prefix && info.compressed)
@@ -990,8 +1002,8 @@
       for (const item of ordered) {
         const { file, info, kind, set } = item;
         let key;
-        if (kind.prefix && kind.halo2CacheFile) {
-          key = dirKey(kind.prefix) + kind.halo2CacheFile;
+        if (kind.prefix && kind.cacheFile) {
+          key = dirKey(kind.prefix) + kind.cacheFile;
         } else if (kind.prefix) {
           key = mapKey(kind.prefix, file.name);
         } else if (kind.font) {

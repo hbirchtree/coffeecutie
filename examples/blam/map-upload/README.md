@@ -1,9 +1,9 @@
 # Blam Map Upload
 
-A browser page (`BlamMapUpload.html`, web builds only) that stores Halo CE
-and Halo 2 maps in the browser, so the web builds of BlamGraphics can load
-them without downloading anything. Drop `.map` files or a whole `maps` folder
-onto the page.
+A browser page (`BlamMapUpload.html`, web builds only) that stores Halo CE,
+Halo 2 and Halo 3 maps in the browser, so the web builds of BlamGraphics can
+load them without downloading anything. Drop `.map` files or a whole `maps`
+folder onto the page.
 
 ## Where files go
 
@@ -19,6 +19,7 @@ is `pc/bloodgulch.map`.
 | Resource maps       | `/<prefix>/bitmaps.map`, `sounds.map`, `loc.map` |
 | Halo 2 map          | `/halo2/<name>.map`                           |
 | Halo 2 UI fonts     | `/halo2/fonts/<name>`, names kept as they are |
+| Halo 3 map          | `/halo3/<name>.map`                           |
 
 Halo 2's main menu reads its fonts from `fonts/` next to the maps, so font
 files are stored there, picked or dropped, on their own or in a folder. They
@@ -26,6 +27,10 @@ are recognised by the version `0xF0000001` at 0x200 (`blam::dimeter::font`),
 `font_table*.txt` by name. The stored maps list says whether `font_table.txt` and every
 font it names are in place, and warns when Halo 2 maps are stored without them.
 Files in OPFS outside these directories are listed under "Other files".
+
+Halo 3 maps read resource pages from `mainmenu.map`, `shared.map` and
+`campaign.map` next to them, so store those along with the levels; campaign
+levels need all three.
 
 Map file names are lowercased. Resource maps get their canonical name from their
 contents, whatever the file was called. Halo PC Trial maps and anything else
@@ -68,8 +73,8 @@ stored one is transcoded is skipped.
 
 ## How files are identified
 
-Only the first 2 KiB of a file is read for this (`blam_upload_identify()` in
-`main.cpp`):
+Only the first 2 KiB of a file (12 KiB for Halo 3) is read for this
+(`blam_upload_identify()` in `main.cpp`):
 
 - **Maps** have a 2048-byte header (`blam::file_header_t`) starting with
   `head` and ending with `foot`. The `u32` after `head` is the game version:
@@ -94,6 +99,12 @@ Only the first 2 KiB of a file is read for this (`blam_upload_identify()` in
   that case `map_type` is read at both layouts' offsets (0x140 Xbox, 0x14C
   Vista) and trusted only when exactly one of them reads as one of these
   files. Either way it is stored under `/halo2/`.
+- **Halo 3 maps** (Xbox 360) have a 0x3000-byte big-endian header
+  (`blam::elegy::file_header_t`): `head` and `foot` as bytes rather than a
+  little-endian `u32`, and version 11. They are stored as they are.
+  `mainmenu.map`, `shared.map` and `campaign.map` are recognised by
+  `map_type` (`blam::elegy::cache_type_t` 2, 3 and 4) and stored under those
+  names. The beta's version 9 maps have another layout and are skipped.
 - **Trial maps** have the scrambled `Ehed`/`Gfot` header
   (`blam::file_header_trial_t`).
 - **`bitmaps.map`, `sounds.map` and `loc.map`** have no map header. They
