@@ -6,6 +6,16 @@
 
 namespace blam::elegy {
 
+/*! A cubemap sampled for a cluster: where, and which image of the BSP's cubemap bitmap */
+struct cluster_cubemap_t
+{
+    be<Vecf3> position;
+    be<i16>   scenario_cubemap;
+    be<i16>   bitmap_index;
+};
+
+static_assert(sizeof(cluster_cubemap_t) == 0x10);
+
 struct cluster_t
 {
     std::array<bounds_f, 3>           bounds;
@@ -27,7 +37,7 @@ struct cluster_t
     tag_block<std::array<u8, 0x30>>   decorator_groups;
     tag_block<std::array<u8, 0x1>>    unknown_2;
     tag_block<std::array<u8, 0x4>>    pvs_bound_objects;
-    tag_block<std::array<u8, 0x10>>   cubemaps;
+    tag_block<cluster_cubemap_t>      cubemaps;
 };
 
 static_assert(offsetof(cluster_t, portals) == 0x3C);
@@ -266,8 +276,13 @@ struct scenario_bsp_t
     tag_reference         bsp;
     tag_reference         design;
     tag_reference         lighting;
-    std::array<u8, 0x3C>  unknown_0;
+    std::array<u8, 0x18>  unknown_0;
+    tag_reference         cubemaps; /*!< One cube image per cubemap point */
+    tag_reference         wind;
+    u32                   unknown_1;
 };
+
+static_assert(offsetof(scenario_bsp_t, cubemaps) == 0x48);
 
 static_assert(sizeof(scenario_bsp_t) == 0x6C);
 
