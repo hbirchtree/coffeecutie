@@ -727,7 +727,7 @@ struct H3MapLoader : compo::SubsystemBase
             hidden);
     }
 
-    /* Bipeds, crates, weapons and equipment placed in this BSP. Those whose physics
+    /* Bipeds, vehicles, crates, weapons and equipment placed in this BSP. Those whose physics
      * model moves become entities that physics carries; the rest are drawn
      * in place. */
     void load_objects(el::scenario_t const& scnr, i16 bsp_index)
@@ -772,6 +772,8 @@ struct H3MapLoader : compo::SubsystemBase
         };
         /* Bipeds stand in their bind pose; their ragdolls are not bodies */
         place(scnr.bipeds, scnr.biped_palette, false);
+        /* Vehicles are drawn where they are parked; their bodies span nodes */
+        place(scnr.vehicles, scnr.vehicle_palette, false);
         place(scnr.crates, scnr.crate_palette, false);
         place(scnr.weapons, scnr.weapon_palette, true);
         place(scnr.equipment, scnr.equipment_palette, true);
