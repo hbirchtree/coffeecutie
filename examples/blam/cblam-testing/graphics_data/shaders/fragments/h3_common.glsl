@@ -19,6 +19,11 @@ layout(location=3) uniform int alpha_test; /* 1 base map alpha, 2 alpha_test_map
 /* H3's own uniforms start at 64, clear of h2.vert and h2_common */
 layout(location=64) uniform vec4 albedo_tint;
 layout(location=65) uniform int blended; /* 1 alpha blended, 2 additive */
+/* RenderingParameters debug views: 1 albedo, 2 normals, 3 normal maps, 4
+ * baked light, 5 reflections */
+layout(location=149) uniform int debug_view;
+/* ... and what they turn off: 1 fog, 2 reflections, 4 baked light */
+layout(location=150) uniform int debug_off;
 /* Decode exponents: base, detail, detail2 (terrain: per layer, below) */
 layout(location=66) uniform vec3 curves;
 
@@ -272,7 +277,7 @@ vec3 material_specular(
     /* calc_environment_map_*_ps: the reflection weighted by the area
      * specular, so it follows the local light */
     vec3 env = vec3(0.0);
-    if(env_mode != 0)
+    if(env_mode != 0 && (debug_off & 2) == 0)
     {
         vec3 dir = vec3(r.x, -r.y, r.z);
         vec3 reflection;
@@ -429,25 +434,40 @@ void main()
 #endif
 
     vec3 normal = surface_normal();
+    vec3 geometric = normal;
 #if !H3_TERRAIN
     if(bump_mode != 0)
         normal = bumped_normal(normal);
 #endif
-    if(f_lightmap.z >= 0.0)
+    /* Raised to 2.2 so they read as they are after the composite's gamma */
+    if(debug_view == 1 || debug_view == 2 || debug_view == 3)
+    {
+        vec3 shown = debug_view == 1 ? color : (debug_view == 2 ? geometric : normal) * 0.5 + 0.5;
+        out_color = vec4(debug_view == 1 ? shown : pow(shown, vec3(2.2)), alpha);
+        return;
+    }
+    if(debug_view == 4)
+        color = vec3(1.0);
+    bool baked = (debug_off & 4) == 0;
+    if(f_lightmap.z >= 0.0 && baked)
     {
         baked_light_t light = sample_baked_light();
 #if H3_TERRAIN
-        color *= baked_diffuse(light, normal) * exposure;
+        color *= baked_diffuse(light, normal) * exposure * (debug_view == 5 ? 0.0 : 1.0);
 #else
         float mask = specular_mask_mode == 1 ? base.a
                    : specular_mask_mode == 2 ? texture(specular_mask_map, f_texcoord).a
                                              : 1.0;
         float diffuse_scale;
         vec3  specular = material_specular(light, normal, color, mask, diffuse_scale);
+        if(debug_view == 4)
+            specular = vec3(0.0), diffuse_scale = 1.0;
+        if(debug_view == 5)
+            color = vec3(0.0);
         color = (color * baked_diffuse(light, normal) * diffuse_scale + specular) * exposure;
 #endif
     }
-    else if(f_vertex_light.a > 0.0)
+    else if(f_vertex_light.a > 0.0 && baked)
         color *= f_vertex_light.rgb * 4.0 * exposure;
     else
     {
@@ -458,10 +478,12 @@ void main()
     /* material_model none (halograms): self-illumination alone */
     if(material_model == 3)
         color = vec3(0.0);
-    color += self_illumination();
+    if(debug_view == 0)
+        color += self_illumination();
 #endif
-    vec3 extinction, inscatter;
-    compute_scattering(camera_position, f_world_pos, extinction, inscatter);
+    vec3 extinction = vec3(1.0), inscatter = vec3(0.0);
+    if((debug_off & 1) == 0)
+        compute_scattering(camera_position, f_world_pos, extinction, inscatter);
     /* What is added to the scene only fades; the haze in front is already there */
     color = color * extinction + (blended == 2 ? vec3(0.0) : inscatter * exposure);
     /* Linear HDR: the composite applies Halo 3's tone curve */
