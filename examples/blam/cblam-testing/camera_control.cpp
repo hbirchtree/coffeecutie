@@ -40,6 +40,18 @@ f32 turn(lerp_t const& lerp, f32 s)
     return moving ? s * (2.f - s) : s * s * (3.f - 2.f * s);
 }
 
+/* A world rotation as the view rotation sees it: the view applies after the
+ * permutation build_camera_matrix folds in */
+Quatf in_view_basis(Matf4 const& space)
+{
+    static Matf3 const basis{
+        {0, 0, 1},
+        {1, 0, 0},
+        {0, 1, 0},
+    };
+    return glm::normalize(Quatf(basis * Matf3(space) * glm::transpose(basis)));
+}
+
 f32 progress(lerp_t const& lerp)
 {
     return glm::clamp(
@@ -157,7 +169,7 @@ struct CameraControl
             Matf4 const space = space_of(p, cam.cinematic->relative_to);
             Vecf3 const eye   = Vecf3(space * Vecf4(cam.cinematic->position, 1.f));
             Quatf const look  = cam.cinematic->relative_to
-                                    ? cam.cinematic->rotation * glm::inverse(Quatf(Matf3(space)))
+                                    ? cam.cinematic->rotation * glm::inverse(in_view_basis(space))
                                     : cam.cinematic->rotation;
             auto view               = cam;
             view.camera.rotation    = look;
@@ -193,7 +205,7 @@ struct CameraControl
         std::erase_if(lerps.lerps, [](lerp_t const& l) { return l.cinematic; });
 
         view.position    = Vecf3(change * Vecf4(view.position, 1.f));
-        view.rotation    = view.rotation * glm::inverse(Quatf(Matf3(change)));
+        view.rotation    = view.rotation * glm::inverse(in_view_basis(change));
         view.relative_to = to.relative_to;
         if(to.duration == 0ms)
         {
