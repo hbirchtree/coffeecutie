@@ -202,6 +202,9 @@ struct H3MapLoader : compo::SubsystemBase
         m_model_views.clear();
         m_side_maps.clear();
         m_side_files.clear();
+        m_zone_masks.clear();
+        m_switches.clear();
+        m_zone_set = -1;
         m_loader.reset();
         m_map.reset();
         m_file.reset();
@@ -460,9 +463,6 @@ struct H3MapLoader : compo::SubsystemBase
         if(!scnr)
             return false;
 
-        /* Fallback slot for parts whose render method is not usable */
-        m_scene.materials.push_back(Material{.name = "(fallback)"});
-
         Vecf3 eye{0.f, 0.f, 1.f};
         f32   yaw = 0.f;
         i16   bsp = 0;
@@ -474,13 +474,152 @@ struct H3MapLoader : compo::SubsystemBase
             bsp = std::max<i16>(starts[0].bsp.value(), 0);
         }
 
-        /* H3_BSP=<index> loads that structure BSP instead, for comparing
-         * places away from the start */
+        /* Zone sets, and the triggers that commit them */
+        m_zone_masks.clear();
+        m_switches.clear();
+        for(auto const& set : map.span(scnr->zone_sets))
+            m_zone_masks.push_back(set.bsps);
+        auto volumes = map.span(scnr->trigger_volumes);
+        for(auto const& sw : map.span(scnr->zone_set_switch_triggers))
+        {
+            i16 const volume = sw.trigger_volume, commit = sw.commit_zone_set;
+            if(commit >= 0 && static_cast<size_t>(commit) < m_zone_masks.size() && volume >= 0 &&
+               static_cast<size_t>(volume) < volumes.size())
+                m_switches.push_back({&volumes[static_cast<size_t>(volume)], commit, volumes[static_cast<size_t>(volume)].contains(eye)});
+        }
+        /* The first zone set holding the start; H3_ZONE_SET=<index> another */
+        u32 bsps   = 1u << bsp;
+        m_zone_set = -1;
+        for(size_t i = 0; i < m_zone_masks.size(); i++)
+            if(m_zone_masks[i] & bsps)
+            {
+                m_zone_set = static_cast<i32>(i), bsps = m_zone_masks[i];
+                break;
+            }
+        if(auto forced = platform::env::var("H3_ZONE_SET"); forced.has_value())
+            if(auto i = std::stoi(forced.value()); i >= 0 && static_cast<size_t>(i) < m_zone_masks.size())
+                m_zone_set = i, bsps = m_zone_masks[static_cast<size_t>(i)];
+        /* H3_BSP=<index> loads that structure BSP alone and stays there, for
+         * comparing places away from the start */
         if(auto forced = platform::env::var("H3_BSP"); forced.has_value())
-            bsp = static_cast<i16>(std::stoi(forced.value()));
-        if(!load_bsp(bsp))
+        {
+            bsps       = 1u << std::stoi(forced.value());
+            m_zone_set = -1;
+            m_switches.clear();
+        }
+        if(!build_zone(*scnr, bsps, eye))
             return false;
-        m_scene.exposure = exposure_at(*scnr, bsp, eye);
+        cDebug("H3: camera at ({}, {}, {}), yaw {}", eye.x, eye.y, eye.z, yaw);
+        place_camera(eye, yaw);
+        return true;
+    }
+
+    /* Crossing a zone set switch trigger loads that zone set's structure
+     * BSPs; the camera stays where it is */
+    void start_frame(compo::ContainerProxy&, time_point const&) override
+    {
+        if(!m_scene.loaded || m_switches.empty())
+            return;
+        std::optional<Vecf3> eye;
+        for(auto entity : m_container.select<PlayerCamera, PlayerInfo>())
+        {
+            auto const& [camera, info] = entity.components();
+            if(info.seat_idx == 0 && !info.is_remote())
+                eye = camera.camera.position;
+        }
+        if(!eye)
+            return;
+        /* On entering, as the game commits them: overlapping triggers of two
+         * zone sets would otherwise trade places every frame */
+        for(auto& sw : m_switches)
+        {
+            bool const entered = sw.volume->contains(*eye) && !sw.inside;
+            sw.inside          = sw.volume->contains(*eye);
+            if(entered && sw.zone_set != m_zone_set)
+            {
+                switch_zone(sw.zone_set, *eye);
+                return;
+            }
+        }
+    }
+
+    bool main_thread_only() const override
+    {
+        return true;
+    }
+
+    void switch_zone(i32 zone_set, Vecf3 const& eye)
+    {
+        auto const scnr = m_map->find<el::scenario_t>();
+        auto const sets = scnr ? m_map->span(scnr->zone_sets) : Span<el::zone_set_t const>();
+        if(zone_set < 0 || static_cast<size_t>(zone_set) >= sets.size())
+            return;
+        cDebug("H3: zone set {} '{}': bsps {:#x}", zone_set,
+               m_map->string(sets[static_cast<size_t>(zone_set)].name), m_zone_masks[static_cast<size_t>(zone_set)]);
+        m_zone_set = zone_set;
+        /* The world placed in the old BSPs goes; textures, cubes and model
+         * geometry views are kept */
+        m_container.remove_entity_if([](compo::Entity const& en) {
+            return stl_types::any_flag_of(en.tags, ObjectGC);
+        });
+        {
+            Physics::Event reset_ev{Physics::Event::Reset};
+            Physics::Reset reset{};
+            m_container.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
+        }
+        m_scene.generation++;
+        m_scene.materials.clear();
+        m_material_index.clear();
+        m_scene.cubemaps.clear();
+        m_scene.cubemap_probes.clear();
+        m_scene.lights.clear();
+        m_vertices.clear();
+        m_indices.clear();
+        build_zone(*scnr, m_zone_masks[static_cast<size_t>(zone_set)], eye);
+        m_loader->trim();
+    }
+
+    /* Everything of the structure BSPs in `bsps`: their geometry, baked
+     * light, collision and cubemaps, and the objects, lights and sky placed
+     * in them */
+    bool build_zone(el::scenario_t const& scnr, u32 bsps, Vecf3 const& eye)
+    {
+        auto const& map = *m_map;
+        /* Fallback slot for parts whose render method is not usable */
+        m_scene.materials.push_back(Material{.name = "(fallback)"});
+        /* One lightprobe array for all of them: the largest lightmap's size,
+         * smaller ones in its corner */
+        m_probe_extent = Vecui2(0);
+        m_probe_layers.clear();
+        m_scene.baked.clear();
+        m_scene.lightprobe.reset();
+        m_scene.lightprobe_sampler.reset();
+        for(i16 b = 0; b < 32; b++)
+            if(bsps & (1u << b))
+                if(auto const* lit = el::lightmap_of(map, b))
+                    m_probe_extent = glm::max(m_probe_extent, lightprobe_extent(*lit));
+        u32 slot = 0;
+        i16 first = -1, holding = -1;
+        for(i16 b = 0; b < 32 && slot < max_bsp_slots; b++)
+        {
+            if(!(bsps & (1u << b)))
+                continue;
+            if(load_bsp(b, slot))
+            {
+                first = first < 0 ? b : first;
+                if(holding < 0 && bsp_holds(scnr, b, eye))
+                    holding = b;
+            }
+            slot++;
+            /* One BSP's pages at a time, or a big zone set outgrows the web heap */
+            m_loader->trim();
+        }
+        if(first < 0)
+            return false;
+        /* Exposure from the one the camera is in */
+        i16 const here = holding >= 0 ? holding : first;
+        upload_lightprobes();
+        m_scene.exposure = exposure_at(scnr, here, eye);
         load_atmosphere();
         /* H3_EXPOSURE=<stops> overrides it, for comparing with captures */
         if(auto forced = platform::env::var("H3_EXPOSURE"); forced.has_value())
@@ -488,9 +627,11 @@ struct H3MapLoader : compo::SubsystemBase
             m_scene.exposure              = std::exp2(std::stof(forced.value()));
             m_scene.auto_exposure.enabled = false;
         }
-        load_objects(*scnr, bsp);
-        load_sky(*scnr, bsp);
-        load_cubemaps(*scnr, bsp);
+        load_objects(scnr, bsps);
+        load_sky(scnr, bsps);
+        for(i16 b = 0; b < 32; b++)
+            if(bsps & (1u << b))
+                load_cubemaps(scnr, b);
         if(m_vertices.empty())
             return false;
 
@@ -501,10 +642,10 @@ struct H3MapLoader : compo::SubsystemBase
         for(auto const& mat : m_scene.materials)
             draws += mat.draws.size();
         cDebug(
-            "H3: {}: bsp {}, {} vertices, {} indices, {} materials, {} draws, {} "
+            "H3: {}: bsps {:#x}, {} vertices, {} indices, {} materials, {} draws, {} "
             "textures",
             map.name(),
-            bsp,
+            bsps,
             m_vertices.size(),
             m_indices.size(),
             m_scene.materials.size(),
@@ -512,15 +653,24 @@ struct H3MapLoader : compo::SubsystemBase
             m_textures.size());
         m_vertices = {};
         m_indices  = {};
-
-        cDebug("H3: camera at ({}, {}, {}), yaw {}", eye.x, eye.y, eye.z, yaw);
-        place_camera(eye, yaw);
+        /* Model geometry is decoded; its pages need not stay */
+        m_model_views.clear();
         return true;
+    }
+
+    /* Whether `point` is in one of the structure BSP's clusters */
+    bool bsp_holds(el::scenario_t const& scnr, i16 bsp_index, Vecf3 const& point)
+    {
+        auto const bsp = el::structure_bsp(*m_map, scnr, bsp_index);
+        if(!bsp)
+            return false;
+        auto resources = m_loader->load(bsp->tag_resources);
+        return resources.has_value() && el::cluster_at(*m_map, *bsp, resources.value(), point);
     }
 
     /* The structure BSP's render geometry lives in the scenario lightmap:
      * clusters in world space, instances placed from their definitions */
-    bool load_bsp(i16 bsp_index)
+    bool load_bsp(i16 bsp_index, u32 slot)
     {
         auto const& map   = *m_map;
         auto        magic = map.magic();
@@ -546,12 +696,12 @@ struct H3MapLoader : compo::SubsystemBase
         auto        compression = geometry.compression.span(magic);
         auto materials = bsp->materials.span(magic);
 
-        load_lightprobes(*lit);
+        m_slot = slot;
+        bool const have_lightprobes = load_lightprobes(*lit, slot);
         auto lit_clusters = lit->clusters.span(magic);
         auto lit_instances = lit->instances.span(magic);
         auto instance_texcoords = geometry.per_instance_lightmap_texcoords.span(magic);
         auto per_vertex = lit->per_vertex.span(magic);
-        bool const have_lightprobes = m_scene.lightprobe != nullptr;
 
         u32  clusters = 0, instances = 0;
         auto cluster_list = bsp->clusters.span(magic);
@@ -631,7 +781,7 @@ struct H3MapLoader : compo::SubsystemBase
             instances,
             world_triangles,
             collision->indices.size() / 3 - world_triangles);
-        submit_collision(std::move(collision));
+        submit_collision(std::move(collision), collision_body_id + static_cast<u64>(bsp_index));
         return clusters + instances > 0;
     }
 
@@ -671,13 +821,13 @@ struct H3MapLoader : compo::SubsystemBase
     }
 
     /* One static body for the loaded structure BSP */
-    void submit_collision(std::shared_ptr<CollisionMesh> mesh)
+    void submit_collision(std::shared_ptr<CollisionMesh> mesh, u64 id)
     {
 #if defined(FEATURE_ENABLE_BULLET3)
         if(!mesh || mesh->indices.empty())
             return;
         auto body        = std::make_shared<Physics::BodyCreationPrebuilt>();
-        body->entity_id  = collision_body_id;
+        body->entity_id  = id;
         body->mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
         btIndexedMesh part;
         part.m_numTriangles        = static_cast<int>(mesh->indices.size() / 3);
@@ -700,12 +850,12 @@ struct H3MapLoader : compo::SubsystemBase
     /* Scenery, bipeds, vehicles, crates, weapons and equipment placed in this BSP. Those whose physics
      * model moves become entities that physics carries; the rest are drawn
      * in place. */
-    void load_objects(el::scenario_t const& scnr, i16 bsp_index)
+    void load_objects(el::scenario_t const& scnr, u32 bsps)
     {
         u32  moving = 0, fixed = 0, hidden = 0;
         auto place  = [&](auto const& placements, auto const& palette, bool item) {
             for(auto const& [placement, entry] :
-                el::placements_at_load(*m_map, placements, palette, bsp_index))
+                el::placements_at_load(*m_map, placements, palette, bsps))
             {
                 auto const& object = placement.object;
                 auto const  model  = entry ? drawn_model(entry->object) : el::tagged<el::render_model_t>{};
@@ -717,7 +867,7 @@ struct H3MapLoader : compo::SubsystemBase
                 f32 const   scale    = object.scale_or_one();
                 Quatf const q        = object.orientation();
                 Vecf3 const position = object.position;
-                auto const  light    = m_scene.baked.below(position);
+                auto const  light    = m_scene.light_below(position);
                 auto const* lit      = light ? &*light : nullptr;
                 auto        physics  = physics_of(entry->object, scale);
                 if(!physics)
@@ -911,7 +1061,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     /* The skies active in this BSP: scenery modelled in world space around
      * the level, so placed at the origin */
-    void load_sky(el::scenario_t const& scnr, i16 bsp_index)
+    void load_sky(el::scenario_t const& scnr, u32 bsps)
     {
         auto const& map   = *m_map;
         auto        magic = map.magic();
@@ -919,7 +1069,7 @@ struct H3MapLoader : compo::SubsystemBase
         for(auto const& sky : scnr.skies.span(magic))
         {
             u16 active = sky.active_bsps;
-            if(active && !(active & (1u << bsp_index)))
+            if(active && !(active & bsps))
                 continue;
             drawn += append_model(drawn_model(sky.object), Matf4(1.f), nullptr);
         }
@@ -966,7 +1116,8 @@ struct H3MapLoader : compo::SubsystemBase
                      .position = Vecf3(transform * Vecf4(v.position, 1.f)),
                      .texcoord = v.texcoord,
                      .normal   = glm::normalize(normal * v.normal),
-                     .lightmap = lit ? Vecf3(lightmap_uvs[i], 0.f) : Vecf3(0.f, 0.f, -1.f),
+                     .lightmap = lit ? Vecf3(lightmap_uvs[i] * m_slot_uv, static_cast<f32>(m_slot))
+                                     : Vecf3(0.f, 0.f, -1.f),
             };
             if(vertex_lit)
             {
@@ -1002,7 +1153,7 @@ struct H3MapLoader : compo::SubsystemBase
                     out.position[c] = m_vertices[vbase + t[c]].position;
                     out.uv[c]       = lightmap_uvs[t[c]];
                 }
-                m_scene.baked.triangles.push_back(out);
+                m_scene.baked[m_slot].triangles.push_back(out);
             }
         };
         auto emit = [&](i16 material, u32 start, u32 count) {
@@ -1697,7 +1848,7 @@ struct H3MapLoader : compo::SubsystemBase
             return 1.f;
         m_scene.auto_exposure = {
             .enabled = true, .target = target, .min = range.min, .max = range.max};
-        auto light = m_scene.baked.below(eye);
+        auto light = m_scene.light_below(eye);
         f32  stops = light ? m_scene.auto_exposure.stops_for(glm::dot(
                                  h3::diffuse_radiance(*light, Vecf3(0.f, 0.f, 1.f)),
                                  Vecf3(0.2126f, 0.7152f, 0.0722f)))
@@ -1712,15 +1863,25 @@ struct H3MapLoader : compo::SubsystemBase
         return std::exp2(stops);
     }
 
-    /* The BSP's lightprobe texture and dominant light intensity, both
-     * arrays of DXT5 slice pairs, as one texture array: SH coefficients in
-     * layers 0-7, intensity in 8-9 */
-    void load_lightprobes(el::lightmap_bsp_t const& lit)
+    /* A lightmap's size: its lightprobe texture's */
+    Vecui2 lightprobe_extent(el::lightmap_bsp_t const& lit) const
     {
-        auto const& map   = *m_map;
-        auto        magic = map.magic();
-        m_scene.lightprobe.reset();
-        m_scene.lightprobe_sampler.reset();
+        auto const bitmap = m_map->get<el::bitmap_t>(lit.lightprobe_texture);
+        auto       images = bitmap ? m_map->span(bitmap->images) : Span<el::bitmap_image_t const>();
+        return images.empty() ? Vecui2(0)
+                              : Vecui2(static_cast<u32>(images[0].width.value()), static_cast<u32>(images[0].height.value()));
+    }
+
+    /* A BSP's lightprobe texture and dominant light intensity, both arrays of
+     * DXT5 slice pairs: ten layers for its slot of the lightprobe array, and
+     * kept on the CPU for lighting objects from the lightmap under them */
+    bool load_lightprobes(el::lightmap_bsp_t const& lit, u32 slot)
+    {
+        auto const& map = *m_map;
+        if(m_scene.baked.size() <= slot)
+            m_scene.baked.resize(slot + 1);
+        if(m_probe_layers.size() <= slot)
+            m_probe_layers.resize(slot + 1), m_probe_sizes.resize(slot + 1);
         std::vector<std::vector<u8>> layers;
         u32 width = 0, height = 0;
         for(auto const* ref : {&lit.lightprobe_texture, &lit.intensity_texture})
@@ -1731,59 +1892,70 @@ struct H3MapLoader : compo::SubsystemBase
                                          : Span<el::hardware_texture_t const>();
             if(images.empty() || hardware.empty() ||
                images[0].format.value() != el::bitmap_format_t::dxt5)
-                return;
+                return false;
             auto const& image = images[0];
             u32 w = static_cast<u32>(image.width.value());
             u32 h = static_cast<u32>(image.height.value());
             if((width && w != width) || (height && h != height))
-                return;
+                return false;
             width = w, height = h;
             auto view = m_loader->load(hardware[0].resource);
             if(!view.has_value())
-                return;
+                return false;
             auto stored = el::top_level(view.value(), image);
             u32  stride = el::slice_stride(image.format.value(), w, h);
             for(u32 z = 0; z < image.depth; z++)
             {
                 if(size_t(z) * stride >= stored.size())
-                    return;
+                    return false;
                 layers.emplace_back();
                 if(!el::linearize(
-                       stored.subspan(size_t(z) * stride),
-                       image.format.value(),
-                       w,
-                       h,
-                       image.xbox_flags,
-                       layers.back()))
-                    return;
+                       stored.subspan(size_t(z) * stride), image.format.value(), w, h, image.xbox_flags, layers.back()))
+                    return false;
             }
         }
-        if(layers.size() != 10)
+        if(layers.size() != 10 || !m_probe_extent.x || !m_probe_extent.y)
         {
             cWarning("H3: lightprobe textures have {} slices, expected 10", layers.size());
-            return;
+            return false;
         }
+        auto&       baked = m_scene.baked[slot];
+        auto const& c     = lit.compression;
+        baked.layers          = layers;
+        baked.size            = {width, height};
+        baked.scale           = {c[0].value().x, c[2].value().x, c[4].value().x, c[6].value().x};
+        baked.intensity_scale = c[8].value().x;
+        m_scene.lightprobe_scales[slot]            = baked.scale;
+        m_scene.intensity_scales[slot / 4][slot % 4] = baked.intensity_scale;
+        m_probe_layers[slot] = std::move(layers);
+        m_probe_sizes[slot]  = {width, height};
+        /* Its texcoords reach only its corner of the array */
+        m_slot_uv = Vecf2(Vecui2(width, height)) / Vecf2(m_probe_extent);
+        return true;
+    }
+
+    /* The loaded BSPs' lightprobes as one array, ten layers a slot */
+    void upload_lightprobes()
+    {
+        if(m_probe_layers.empty() || !m_probe_extent.x || !m_probe_extent.y)
+            return;
         auto tex = std::make_shared<gfx::compat::texture_2da_t>(
             m_api, blam::bitm::to_pixdesc(blam::bitm::format_t::BC3), 1);
-        tex->alloc(size_3d<u32>{width, height, static_cast<u32>(layers.size())});
-        /* Kept for lighting objects from the lightmap under them */
-        m_scene.baked.layers = layers;
-        m_scene.baked.size   = {width, height};
-        for(size_t z = 0; z < layers.size(); z++)
-            tex->upload(
-                std::move(layers[z]),
-                Veci3{0, 0, static_cast<i32>(z)},
-                size_3d<i32>{static_cast<i32>(width), static_cast<i32>(height), 1});
+        tex->alloc(size_3d<u32>{m_probe_extent.x, m_probe_extent.y, static_cast<u32>(m_probe_layers.size() * 10)});
+        for(size_t slot = 0; slot < m_probe_layers.size(); slot++)
+        {
+            auto const size = m_probe_sizes[slot];
+            for(size_t z = 0; z < m_probe_layers[slot].size(); z++)
+                tex->upload(
+                    std::move(m_probe_layers[slot][z]),
+                    Veci3{0, 0, static_cast<i32>(slot * 10 + z)},
+                    size_3d<i32>{static_cast<i32>(size.x), static_cast<i32>(size.y), 1});
+        }
+        m_probe_layers.clear();
         m_scene.lightprobe         = tex;
         m_scene.lightprobe_sampler = tex->sampler();
         m_scene.lightprobe_sampler->alloc();
-        m_scene.lightprobe_sampler->set_filtering(
-            typing::Filtering::Linear, typing::Filtering::Linear);
-        auto const& c = lit.compression;
-        m_scene.lightprobe_scale = {c[0].value().x, c[2].value().x, c[4].value().x, c[6].value().x};
-        m_scene.intensity_scale  = c[8].value().x;
-        m_scene.baked.scale           = m_scene.lightprobe_scale;
-        m_scene.baked.intensity_scale = m_scene.intensity_scale;
+        m_scene.lightprobe_sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
     }
 
     /* Alpha test and blending from the definition's options; every
@@ -2068,6 +2240,23 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<std::unique_ptr<el::map_container>>              m_side_maps;
     std::unique_ptr<el::map_container>                           m_map;
     std::unique_ptr<el::resource_loader>                         m_loader;
+
+    /* Zone sets: each one's structure BSPs, and the triggers committing them */
+    struct ZoneSwitch
+    {
+        el::trigger_volume_t const* volume;
+        i32                         zone_set;
+        bool                        inside{false}; /*!< The camera, last frame */
+    };
+    std::vector<u32>        m_zone_masks;
+    std::vector<ZoneSwitch> m_switches;
+    i32                     m_zone_set{-1};
+    /* The BSP being loaded: its lightprobe slot and corner of the array */
+    u32                     m_slot{0};
+    Vecf2                   m_slot_uv{1.f, 1.f};
+    Vecui2                  m_probe_extent{0};
+    std::vector<std::vector<std::vector<u8>>> m_probe_layers;
+    std::vector<Vecui2>                       m_probe_sizes;
 
     std::vector<Vertex>                                m_vertices;
     std::vector<u16>                                   m_indices;
