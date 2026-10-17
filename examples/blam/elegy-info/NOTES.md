@@ -308,6 +308,24 @@ checked against both it and the map data.
   RGBA16F target. Not done: wave displacement and tessellation, foam,
   ripples, underwater fog.
 
+## Zone sets (campaign sections)
+
+- Scenario +0x54: zone sets, 0x24 each; +0xC is a mask of the structure
+  BSPs loaded together (up to five on 010_jungle). +0x260 trigger volumes
+  (0x44: forward, up, position, extents; an oriented box from position along
+  forward, left = up x forward, and up). +0x278 zone set switch triggers,
+  {flags, begin zone set, trigger volume, commit zone set}: a "begin_zone_set"
+  volume only names one to preload, a "zone_set" volume commits it.
+- `ElegyInfo --zones` lists them, with each trigger's centre.
+- BlamGraphics loads the first zone set holding the start BSP (`H3_ZONE_SET`
+  picks another, `H3_BSP` one BSP with no switching) and reloads on entering
+  a commit trigger. Each loaded BSP has a slot: ten layers of one lightprobe
+  array (lightmaps differ in size, smaller ones sit in the corner and their
+  texcoords are scaled), per slot scales, the vertex lightmap z is the slot.
+- Placement bsp_flags are tested against the zone set's mask. Resource pages
+  are trimmed after each BSP: the web heap (1 GB) does not hold a large zone
+  set's pages at once.
+
 ## BlamGraphics first pass (`cblam-testing/h3`)
 
 `H3MapLoader` takes a `MapLoadEvent` whose header is Halo 3 (version 11)

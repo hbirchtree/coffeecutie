@@ -181,16 +181,17 @@ inline auto placements(
            });
 }
 
-/*! The placements the level creates in `bsp` when it loads */
+/*! The placements the level creates in the structure BSPs of `bsps` (one
+ * bit each, a zone set's) when it loads */
 template<typename P>
 inline auto placements_at_load(
     map_container const&              map,
     tag_block<P> const&               block,
     tag_block<palette_entry_t> const& palette,
-    i16                               bsp)
+    u32                               bsps)
 {
-    return placements(map, block, palette) | std::views::filter([bsp](placed_t<P> const& placed) {
-               return placed.object().placed_at_load() && placed.object().in_bsp(bsp);
+    return placements(map, block, palette) | std::views::filter([bsps](placed_t<P> const& placed) {
+               return placed.object().placed_at_load() && placed.object().in_bsps(bsps);
            });
 }
 
