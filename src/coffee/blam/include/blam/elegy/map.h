@@ -7,6 +7,32 @@
 namespace blam::elegy {
 
 /*!
+ * \brief A tag and its data as T, both null when there is no such tag or it
+ * is of another group. Dereferences to the data.
+ */
+template<typename T>
+struct tagged
+{
+    tag_t const* tag{nullptr};
+    T const*     data{nullptr};
+
+    inline explicit operator bool() const
+    {
+        return data != nullptr;
+    }
+
+    inline T const* operator->() const
+    {
+        return data;
+    }
+
+    inline T const& operator*() const
+    {
+        return *data;
+    }
+};
+
+/*!
  * \brief Read-only view of a Halo 3 cache file, held resident. Wires the
  * header's section masks into pointer translation the way Assembly's
  * ThirdGenHeader does: tag pointers land at
@@ -157,6 +183,42 @@ struct map_container
     inline T const* tag_data(tag_t const& tag) const
     {
         return tag.data<T>(magic());
+    }
+
+    /*! The tag `id` names, read as T; checked against T::group when T is
+     * one group's (object_t and render_method_t span several) */
+    template<typename T>
+    inline tagged<T> get(datum_index id) const
+    {
+        auto const* tag = tag_at(id);
+        if(!tag)
+            return {};
+        if constexpr(requires { T::group; })
+            if(!is(*tag, T::group))
+                return {};
+        auto const* data = tag_data<T>(*tag);
+        return data ? tagged<T>{tag, data} : tagged<T>{};
+    }
+
+    template<typename T>
+    inline tagged<T> get(tag_reference const& ref) const
+    {
+        return get<T>(ref.id);
+    }
+
+    /*! First tag of T's group whose name contains `name` */
+    template<typename T>
+    inline tagged<T> find(std::string_view name = {}) const
+    {
+        auto const* tag = find(T::group, name);
+        return tag ? get<T>(id_of(*tag)) : tagged<T>{};
+    }
+
+    /*! A block's elements in this map, none when it is out of bounds */
+    template<typename T>
+    inline Span<T const> span(tag_block<T> const& block) const
+    {
+        return block.span(magic());
     }
 
     /*!

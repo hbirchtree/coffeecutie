@@ -65,6 +65,26 @@ struct object_placement_t
             placement_flags.value(),
             placement_flags_t::not_automatically | placement_flags_t::never_placed);
     }
+
+    /*! Whether it exists in structure BSP `bsp`; no flags means all */
+    inline bool in_bsp(i16 bsp) const
+    {
+        u16 const flags = bsp_flags;
+        return !flags || (bsp >= 0 && bsp < 16 && (flags & (1u << bsp)));
+    }
+
+    /*! Scale, with 0 read as 1 */
+    inline f32 scale_or_one() const
+    {
+        f32 const s = scale;
+        return s > 0.f ? s : 1.f;
+    }
+
+    /*! Yaw, pitch and roll: turns about +Z, then +Y, then +X */
+    Quatf orientation() const;
+
+    /*! Position, orientation and scale */
+    Matf4 transform() const;
 };
 
 static_assert(offsetof(object_placement_t, rotation) == 0x14);
@@ -153,6 +173,8 @@ static_assert(offsetof(object_t, multiplayer) == 0xEC);
 /*! model ("hlmt"): the render model and its LOD */
 struct model_t
 {
+    static constexpr std::string_view group = "hlmt";
+
     tag_reference        render_model;
     tag_reference        collision_model;
     tag_reference        animation;

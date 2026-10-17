@@ -260,6 +260,8 @@ static_assert(sizeof(sound_extra_info_t) == 0xC);
  */
 struct sound_gestalt_t
 {
+    static constexpr std::string_view group = "ugh!";
+
     tag_block<sound_codec_t>                 codecs;
     tag_block<sound_playback_t>              playbacks;
     tag_block<sound_scale_t>                 scales;
@@ -284,6 +286,8 @@ static_assert(offsetof(sound_gestalt_t, extra_infos) == 0xAC);
 /*! sound ("snd!"): indices into the gestalt plus its data resource */
 struct sound_t
 {
+    static constexpr std::string_view group = "snd!";
+
     be<u16>                                  flags;
     u8                                       sound_class;
     u8                                       pitch_range_count;
@@ -343,6 +347,8 @@ static_assert(sizeof(looping_sound_track_t) == 0x90);
 /*! sound_looping ("lsnd"): tracks in parallel plus random details */
 struct looping_sound_t
 {
+    static constexpr std::string_view group = "lsnd";
+
     be<u32>                          flags;
     bounds_f                         music_time;
     bounds_f                         distance;
