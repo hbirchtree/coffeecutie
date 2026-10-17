@@ -11,6 +11,7 @@ option(BUILD_TESTS "Build unit tests" ON)
 option(BUILD_UTILITIES "Build tools" ON)
 
 option(BUILD_BLAM "Build Blam! data readers" ON)
+option(BUILD_BLAM_DIMETER "Build Halo 2 (dimeter) readers and tools" ON)
 option(BUILD_GNS "Build GameNetworkingSockets" ON)
 option(BUILD_HEADFUL "Build with graphics/windowing support" ON)
 option(BUILD_LIBOGC "Build libogc components (GameCube/Wii only)" OFF)
@@ -19,6 +20,12 @@ option(BUILD_NET "Build with networking" ON)
 option(BUILD_OPENAL "Build with OpenAL-soft audio" ON)
 option(BUILD_OPENGL "Target OpenGL API" ON)
 option(BUILD_SDL3 "Build with SDL3 graphics backend" ON)
+
+include(CMakeDependentOption)
+cmake_dependent_option(
+  BUILD_OPENAL_WMA "Build the WMA decoder (LGPL)" ON
+  "BUILD_BLAM;BUILD_BLAM_DIMETER;BUILD_OPENAL" OFF
+)
 
 if(BUILD_ASSET_TOOLS)
   list(APPEND VCPKG_MANIFEST_FEATURES pressure-cooker)
@@ -52,6 +59,9 @@ if(BUILD_NET)
 endif()
 if(BUILD_OPENAL)
   list(APPEND VCPKG_MANIFEST_FEATURES audio)
+endif()
+if(BUILD_OPENAL_WMA)
+  list(APPEND VCPKG_MANIFEST_FEATURES wma)
 endif()
 if(BUILD_OPENGL)
   list(APPEND VCPKG_MANIFEST_FEATURES gleam)

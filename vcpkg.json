@@ -41,7 +41,6 @@
         "blam": {
             "description": "Blam! data support",
             "dependencies": [
-                "libwma"
             ]
         },
         "cursed": {
@@ -94,6 +93,12 @@
                 "bcdec",
                 "etc2comp",
                 "pvrtc"
+            ]
+        },
+        "wma": {
+            "description": "libwma for WMA file decode in OpenAL",
+            "dependencies": [
+                "libwma"
             ]
         },
         "media": {

@@ -21,9 +21,13 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
         find_package(OpenSL REQUIRED)
     endif()
     find_package(OpenAL CONFIG REQUIRED)
-    find_package(libwma CONFIG REQUIRED)
+    set(shared_libs OpenAL::OpenAL)
+    if(BUILD_OPENAL_WMA)
+        find_package(libwma CONFIG REQUIRED)
+        list(APPEND shared_libs libwma::wma)
+    endif()
     # Some triplets (Android) still link OpenAL statically
-    foreach(lib OpenAL::OpenAL libwma::wma)
+    foreach(lib ${shared_libs})
         get_target_property(lib_type ${lib} TYPE)
         if(lib_type STREQUAL "SHARED_LIBRARY")
             list(APPEND BUNDLED_LIBS $<TARGET_SONAME_FILE:${lib}>)
@@ -31,11 +35,24 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
     endforeach()
 elseif(BUILD_OPENAL AND EMSCRIPTEN)
     find_package(OpenAL CONFIG REQUIRED)
+<<<<<<< HEAD
     find_package(libwma CONFIG REQUIRED)
     set(BUNDLED_LIBS
         OpenAL::OpenAL
         libwma::wma
     )
+=======
+    set(BUNDLED_LIBS OpenAL::OpenAL)
+    if(BUILD_OPENAL_WMA)
+        find_package(libwma CONFIG REQUIRED)
+        list(APPEND BUNDLED_LIBS libwma::wma)
+    endif()
+    if(BUILD_OPENAL_XMA2)
+        # Imported targets are per directory; OAF's find_package isn't seen here
+        find_package(unofficial-ffmpeg-decoders CONFIG REQUIRED)
+        list(APPEND BUNDLED_LIBS unofficial::ffmpeg-decoders::ffmpeg-decoders)
+    endif()
+>>>>>>> 6ad5e7f73 (toolchain: Optionally include libwma)
 endif()
 
 resource_dir_package(
