@@ -1633,6 +1633,7 @@ struct MeshRenderer
         Matf3 view; /* world to view, for camera-facing geometry */
         f32   focal{1.f};
         f32   aspect{1.f};
+        bool  cinematic{false}; /* a cutscene camera: no first-person view */
     };
 
     gfx::api*            m_api;
@@ -2927,10 +2928,12 @@ struct MeshRenderer
                 .seat_idx = info.seat_idx,
                 .matrix   = cam.matrix,
                 .position = cam.drawn_eye,
-                .rotation = glm::mat3_cast(cam.camera.rotation),
+                .rotation = glm::mat3_cast(
+                    cam.cinematic ? cam.cinematic->rotation : cam.camera.rotation),
                 .view     = Matf3(cam.rotation),
-                .focal    = 1.f / std::tan(glm::radians(cam.camera.fieldOfView) * .5f),
+                .focal    = 1.f / std::tan(glm::radians(cam.cinematic ? cam.cinematic->fov : cam.camera.fieldOfView) * .5f),
                 .aspect   = cam.camera.aspect,
+                .cinematic = cam.cinematic.has_value(),
             });
         }
         std::sort(
@@ -3266,6 +3269,8 @@ struct MeshRenderer
             auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
             {
+                if(m_players[i].cinematic)
+                    continue;
                 if(pass == Pass_FP_Opaque)
                     render_pass(
                         p,

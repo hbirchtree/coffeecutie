@@ -1065,6 +1065,16 @@ struct PlayerCamera
     /*! Where the eye is drawn this frame, between ticks if it moves on them */
     Vecf3 drawn_eye{};
 
+    /*! A cutscene's camera, drawn instead while set */
+    struct cinematic_t
+    {
+        Vecf3 position{};
+        Quatf rotation{1.f, 0.f, 0.f, 0.f};
+        f32   fov{70.f}; /*!< degrees */
+        u64   relative_to{0}; /*!< position and rotation in its space */
+    };
+    std::optional<cinematic_t> cinematic;
+
     bool is_active() const
     {
         return keyboard.enabled || controller.index.has_value();
@@ -1166,10 +1176,16 @@ struct CameraLerp
 
     struct lerp_t
     {
-        Vecf3 p1, p2; /*!< units/s to move   */
+        Vecf3 p1, p2; /*!< from, to */
         Quatf r1, r2; /*!< target rotation, blended with slerp */
         std::chrono::milliseconds remaining_time;
         std::chrono::milliseconds total_time;
+        /*! Velocity it starts with, over the whole lerp: a lerp that cuts
+         *  into another carries on its motion instead of turning sharply */
+        Vecf3 v1{};
+        f32   fov1{0.f}, fov2{0.f};
+        bool  cinematic{false};
+        u64   relative_to{0};
     };
 
     std::vector<lerp_t> lerps;
