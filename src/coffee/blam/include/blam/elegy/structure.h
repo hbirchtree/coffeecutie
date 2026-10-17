@@ -71,6 +71,9 @@ struct instanced_geometry_t
     be<f32>                                       lightmap_resolution_scale;
     tag_block<std::array<u8, 0x70>>               physics;
     std::array<u32, 3>                            unknown_1;
+
+    /*! Its definition's space to the world: scaled basis and position */
+    Matf4 transform() const;
 };
 
 static_assert(offsetof(instanced_geometry_t, definition) == 0x34);
@@ -133,6 +136,8 @@ static_assert(sizeof(cluster_portal_t) == 0x28);
  */
 struct structure_bsp_t
 {
+    static constexpr std::string_view group = "sbsp";
+
     be<i32>                               import_checksum;
     be<i32>                               import_version;
     string_id                             name;
@@ -265,6 +270,8 @@ static_assert(sizeof(lightmap_bsp_t) == 0x1B4);
 /*! scenario_lightmap ("sLdT"), one entry per BSP */
 struct scenario_lightmap_t
 {
+    static constexpr std::string_view group = "sLdT";
+
     u32                       unknown_0;
     tag_block<lightmap_bsp_t> bsps;
 };
@@ -335,6 +342,8 @@ static_assert(sizeof(atmosphere_setting_t) == 0xA4);
 /*! sky_atm_parameters ("skya"): patchy fog sheets and the atmospheres */
 struct sky_atmosphere_t
 {
+    static constexpr std::string_view group = "skya";
+
     be<u16>                         flags;
     u16                             unknown_0;
     tag_reference                   fog_bitmap;
@@ -349,6 +358,8 @@ static_assert(sizeof(sky_atmosphere_t) == 0x4C);
 /*! camera_fx_settings ("cfxs"), the exposure part; values in stops */
 struct camera_fx_settings_t
 {
+    static constexpr std::string_view group = "cfxs";
+
     be<u16>  flags;
     u16      unknown_0;
     be<f32>  exposure; /*!< Target when auto exposure is off */
@@ -399,6 +410,8 @@ static_assert(sizeof(scenario_sky_t) == 0x14);
 
 struct scenario_t
 {
+    static constexpr std::string_view group = "scnr";
+
     std::array<u8, 0x14>             unknown_0;
     tag_block<scenario_bsp_t>        bsps;
     tag_reference                    structure_seams;

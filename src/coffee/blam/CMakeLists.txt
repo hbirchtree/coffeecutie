@@ -18,7 +18,8 @@ if(NOT (GAMECUBE OR WII))
         private/elegy/map.cpp
         private/elegy/physics.cpp
         private/elegy/resources.cpp
-        private/elegy/sound.cpp)
+        private/elegy/sound.cpp
+        private/elegy/views.cpp)
   endif()
 endif()
 
