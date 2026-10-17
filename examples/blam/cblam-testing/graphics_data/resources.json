@@ -47,6 +47,8 @@
             "shaders/h2_water.frag",
             "shaders/h2_ui.vert",
             "shaders/h2_ui.frag",
+            "shaders/shadow_depth.vert",
+            "shaders/shadow_depth.frag",
 
             "shaders/ui.vert",
             "shaders/ui.frag",
