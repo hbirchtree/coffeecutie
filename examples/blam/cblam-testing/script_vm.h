@@ -314,6 +314,13 @@ struct vm
             return value_t::number(type_t::short_, n.shorts[0]);
         case type_t::long_:
             return value_t::number(type_t::long_, static_cast<f32>(n.long_));
+        case type_t::game_difficulty:
+        case type_t::team:
+        case type_t::ai_def_state:
+        case type_t::actor_type:
+        case type_t::hud_corner:
+            /* Enumerators: the index, under a 0xFFFF salt */
+            return {.type = n.param_type, .integer = n.shorts[0]};
         default:
             /* Indices and tag data: the node's value */
             return {.type = n.param_type, .integer = n.long_, .name = n.data_ptr};

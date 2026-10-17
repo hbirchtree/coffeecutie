@@ -837,7 +837,7 @@ struct AnimationController
         auto* anim = p.template get<AnimationPlayback>(play.entity);
         if(!anim || !anim->graph)
             return;
-        auto const* graph = anim->graph;
+        auto const* graph = play.graph ? play.graph : anim->graph;
         f32 const   fade  = play.fade > 0.f ? 1.f / play.fade : 0.f;
 
         if(play.animation < 0 && play.name.empty())

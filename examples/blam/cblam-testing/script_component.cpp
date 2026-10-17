@@ -1,11 +1,13 @@
 #include "script_component.h"
 
 #include "blam_files.h"
+#include "caching.h"
 #include "cinematic.h"
 #include "components.h"
 #include "data.h"
 #include "model_markers.h"
 #include "network/networking.h"
+#include "physics.h"
 #include "script_vm.h"
 #include "selected_version.h"
 #include "sound_cache.h"
@@ -45,6 +47,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
         const PlayerInfo,
         const NetworkInfo,
         const CameraLerp,
+        const AnimationPlayback,
         Model,
         ObjectPhysics>,
     type_list_t<
@@ -52,7 +55,9 @@ using BlamScriptManifest = compo::SubsystemManifest<
         CinematicState,
         const NetworkState,
         const BlamFiles<halo_version>,
-        const SoundCache<halo_version>>,
+        const SoundCache<halo_version>,
+        BSPCache<halo_version>,
+        PhysicsBus>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 /* Script names are lowercased by the compiler; tag names keep their case */
@@ -108,9 +113,14 @@ struct BlamScript
         m_named.clear();
         m_actors.clear();
         m_recordings.clear();
+        m_custom.clear();
+        m_walk_speeds.clear();
         m_riders.clear();
+        m_attached.clear();
         m_hovering.clear();
         m_spawning.clear();
+        m_despawning.clear();
+        m_recreate.clear();
         m_deferred.clear();
         m_log.clear();
 
@@ -154,14 +164,18 @@ struct BlamScript
         m_proxy = &p;
         for(size_t i = 0; i < ticks.size(); i++)
         {
+            settle_despawns(p);
             run_deferred(p);
             std::erase_if(m_spawning, [this, &p](u32 net_id) {
-                return entity_by_net_id(p, net_id) != 0;
+                return live_entity(p, net_id) != 0;
             });
             m_vm.tick();
             play_recordings(p);
+            play_custom(p);
             place_riders(p);
         }
+        /* Every frame, so props follow the animated hands holding them */
+        place_attached(p);
         m_proxy = nullptr;
     }
 
@@ -234,7 +248,7 @@ struct BlamScript
         auto it = m_named.find(lowered(name));
         if(it == m_named.end())
             return 0;
-        return entity_by_net_id(
+        return live_entity(
             p, SpawnObjectEvent::scenario_net_id(it->second.group, it->second.index));
     }
 
@@ -264,7 +278,7 @@ struct BlamScript
         auto waiting = std::exchange(m_deferred, {});
         for(auto& [net_id, fn] : waiting)
         {
-            if(u64 const id = entity_by_net_id(p, net_id))
+            if(u64 const id = live_entity(p, net_id))
             {
                 m_spawning.erase(net_id);
                 fn(p, id);
@@ -348,13 +362,14 @@ struct BlamScript
                 despawn(p, id);
             return {};
         case op::object_create_containing:
+        case op::object_create_anew_containing:
         case op::object_destroy_containing:
             for(auto const& [name, placement] : m_named)
             {
                 if(name.find(text_of(arg(0))) == std::string::npos)
                     continue;
-                if(opcode == op::object_create_containing)
-                    object_create(p, name, false);
+                if(opcode != op::object_destroy_containing)
+                    object_create(p, name, opcode == op::object_create_anew_containing);
                 else if(u64 const id = named_entity(p, name))
                     despawn(p, id);
             }
@@ -363,6 +378,30 @@ struct BlamScript
             with_objects(p, arg(0), [this, flag = std::string(text_of(arg(1)))](Proxy& p, u64 id) {
                 teleport(p, id, flag);
             });
+            return {};
+
+        case op::object_set_facing:
+            with_objects(p, arg(0), [this, flag = std::string(text_of(arg(1)))](Proxy& p, u64 id) {
+                face(p, id, flag);
+            });
+            return {};
+        case op::objects_attach:
+            with_objects(
+                p,
+                arg(0),
+                [this,
+                 children = arg(2),
+                 marker   = std::string(text_of(arg(1))),
+                 at       = std::string(text_of(arg(3)))](Proxy& p, u64 parent) {
+                    with_objects(p, children, [this, parent, marker, at](Proxy& p, u64 child) {
+                        attach(p, parent, marker, child, at);
+                    });
+                });
+            return {};
+        case op::objects_detach:
+            for(u64 parent : objects_of(p, arg(0)))
+                for(u64 child : objects_of(p, arg(1)))
+                    detach(p, parent, child);
             return {};
 
         /* Trigger volumes */
@@ -521,6 +560,50 @@ struct BlamScript
             });
             return {};
 
+        /* Animations of the unit's own, or the cutscene's */
+        case op::custom_animation:
+            with_objects(
+                p,
+                arg(0),
+                [this,
+                 graph = graph_of(arg(1)),
+                 name  = std::string(text_of(arg(2))),
+                 blend = arg(3).truthy()](Proxy& p, u64 id) {
+                    custom_animation(p, id, graph, name, blend);
+                });
+            return value_t::boolean(true);
+        case op::unit_stop_custom_animation:
+            for(u64 id : objects_of(p, arg(0)))
+                stop_custom(p, id);
+            return {};
+        case op::unit_get_custom_animation_time:
+        case op::unit_is_playing_custom_animation: {
+            f32 left = 0.f;
+            for(u64 id : objects_of(p, arg(0)))
+                if(auto it = m_custom.find(id); it != m_custom.end())
+                    left = std::max(left, static_cast<f32>(it->second.clip->frame_count - it->second.frame));
+            if(opcode == op::unit_is_playing_custom_animation)
+                return value_t::boolean(left > 0.f);
+            return value_t::number(type_t::short_, left);
+        }
+
+        /* Played on normal, alone */
+        case op::game_difficulty_get:
+        case op::game_difficulty_get_real:
+            return {.type = type_t::game_difficulty, .integer = 1};
+
+        /* Structure BSPs */
+        case op::switch_bsp: {
+            auto&     bsps  = p.template subsystem<BSPCache<halo_version>>();
+            i32 const index = static_cast<i32>(arg(0).as_real());
+            if(index >= 0 && static_cast<size_t>(index) < bsps.sections.size())
+                bsps.active_section = static_cast<i16>(index);
+            return {};
+        }
+        case op::structure_bsp_index:
+            return value_t::number(
+                type_t::short_, p.template subsystem<BSPCache<halo_version>>().active_section);
+
         /* Encounters, without minds of their own */
         case op::ai_place:
             ai_place(p, std::string(text_of(arg(0))));
@@ -556,13 +639,23 @@ struct BlamScript
         auto const& placement = it->second;
         u32 const   net_id =
             SpawnObjectEvent::scenario_net_id(placement.group, placement.index);
-        if(u64 const existing = entity_by_net_id(p, net_id))
+        if(u64 const existing = live_entity(p, net_id))
         {
             if(!anew)
                 return;
             despawn(p, existing);
         }
         log(fmt::format("object_create: {}", name));
+        m_spawning.insert(net_id);
+        /* Same net id: only once the old one is gone */
+        if(m_despawning.contains(net_id))
+            m_recreate.insert(net_id);
+        else
+            spawn(p, placement, net_id);
+    }
+
+    void spawn(Proxy& p, placement_t const& placement, u32 net_id)
+    {
         GameEvent        ev{.type = GameEvent::SpawnObject};
         SpawnObjectEvent spawn{
             .object       = *placement.object,
@@ -571,7 +664,6 @@ struct BlamScript
             .server_owned = true,
         };
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
-        m_spawning.insert(net_id);
     }
 
     void despawn(Proxy& p, u64 id)
@@ -582,6 +674,44 @@ struct BlamScript
         GameEvent          ev{.type = GameEvent::DespawnObject};
         DespawnObjectEvent gone{.net_id = net->instance_id};
         p.template subsystem<GameEventBus>().inject(ev, &gone);
+        m_despawning.insert(net->instance_id);
+    }
+
+    /* Recreations wait for the objects they replace to be gone */
+    void settle_despawns(Proxy& p)
+    {
+        std::erase_if(m_despawning, [this, &p](u32 net_id) {
+            return entity_by_net_id(p, net_id) == 0;
+        });
+        for(auto it = m_recreate.begin(); it != m_recreate.end();)
+        {
+            if(m_despawning.contains(*it))
+            {
+                ++it;
+                continue;
+            }
+            for(auto const& [name, placement] : m_named)
+                if(SpawnObjectEvent::scenario_net_id(placement.group, placement.index) == *it)
+                    spawn(p, placement, *it);
+            it = m_recreate.erase(it);
+        }
+    }
+
+    /* Its entity, unless a script has destroyed it */
+    u64 live_entity(Proxy& p, u32 net_id) const
+    {
+        return m_despawning.contains(net_id) ? 0 : entity_by_net_id(p, net_id);
+    }
+
+    /* Facing a cutscene flag's way, where it stands */
+    void face(Proxy& p, u64 id, std::string_view flag_name)
+    {
+        auto const* flag  = named(m_scenario->cutscene.flags, flag_name);
+        auto*       model = p.template get<Model>(id);
+        if(!flag || !model)
+            return;
+        model->rotation = glm::angleAxis(flag->facing.x, Vecf3{0.f, 0.f, 1.f});
+        model->update_matrix();
     }
 
     /* Onto a cutscene flag, facing its way */
@@ -768,6 +898,216 @@ struct BlamScript
         }
     }
 
+    /* ---- Custom animations ---- */
+
+    struct custom_t
+    {
+        blam::antr::animation const* clip;
+        i32                          frame{0};
+        bool                         moves{false}; /* by its root motion */
+    };
+
+    blam::antr::header const* graph_of(value_t const& v) const
+    {
+        auto tag = m_tags.find(static_cast<u32>(v.integer));
+        if(tag == m_tags.end() || !(*tag).matches(blam::tag_class_t::antr))
+            return nullptr;
+        auto header = (*tag).template data<blam::antr::header>(m_magic);
+        return header.has_value() ? &header.value()[0] : nullptr;
+    }
+
+    void custom_animation(
+        Proxy& p, u64 id, blam::antr::header const* graph, std::string const& name, bool blend)
+    {
+        if(!graph)
+            return log(fmt::format("custom_animation: no graph for {}", name));
+        auto anims = graph->animations.data(m_magic);
+        if(!anims.has_value())
+            return;
+        for(i32 i = 0; i < static_cast<i32>(anims.value().size()); i++)
+        {
+            auto const& clip = anims.value()[i];
+            if(lowered(clip.name.str()) != lowered(name))
+                continue;
+            GameEvent               ev{.type = GameEvent::PlayModelAnimation};
+            PlayModelAnimationEvent play{
+                .entity    = id,
+                .animation = i,
+                .graph     = graph,
+                .fade      = blend ? .2f : 0.f,
+            };
+            p.template subsystem<GameEventBus>().inject(ev, &play);
+            bool const moves = clip.frame_info_type_ != blam::antr::frame_info_type::none;
+            m_custom[id]     = {.clip = &clip, .moves = moves};
+            if(moves && !walks(p, id))
+                carry(p, id, true);
+            return;
+        }
+        log(fmt::format("custom_animation: no animation {}", name));
+    }
+
+    void stop_custom(Proxy& p, u64 id)
+    {
+        auto it = m_custom.find(id);
+        if(it == m_custom.end())
+            return;
+        bool const moves = it->second.moves;
+        m_custom.erase(it);
+        GameEvent               ev{.type = GameEvent::PlayModelAnimation};
+        PlayModelAnimationEvent stop{.entity = id};
+        p.template subsystem<GameEventBus>().inject(ev, &stop);
+        if(moves && !playing_recording(id) && !m_hovering.contains(id))
+            stand(p, id);
+    }
+
+    bool playing_recording(u64 id) const
+    {
+        return std::any_of(m_recordings.begin(), m_recordings.end(), [id](recording_t const& r) {
+            return r.entity == id;
+        });
+    }
+
+    /* A tick of each: the unit moves as the clip's root does */
+    void play_custom(Proxy& p)
+    {
+        for(auto it = m_custom.begin(); it != m_custom.end();)
+        {
+            auto* model = p.template get<Model>(it->first);
+            auto& state = it->second;
+            if(!model || state.frame >= state.clip->frame_count)
+            {
+                u64 const id = (it++)->first;
+                if(model)
+                    stop_custom(p, id);
+                else
+                    m_custom.erase(id);
+                continue;
+            }
+            if(state.moves && !riding(it->first))
+            {
+                auto const [move, yaw] = root_motion(*state.clip, state.frame);
+                Vecf3 const step       = model->rotation * move;
+                if(walks(p, it->first))
+                    walk(p, it->first, step * tick_rate);
+                else
+                    model->position += step;
+                model->rotation = glm::normalize(glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) * model->rotation);
+                model->update_matrix();
+            }
+            state.frame++;
+            ++it;
+        }
+    }
+
+    /* A frame of the clip's root: a move in the unit's space, and a turn */
+    std::pair<Vecf3, f32> root_motion(blam::antr::animation const& clip, i32 frame) const
+    {
+        using blam::antr::frame_info_type;
+        u32 const stride = clip.frame_info_type_ == frame_info_type::dx_dy           ? 8
+                           : clip.frame_info_type_ == frame_info_type::dx_dy_dyaw    ? 12
+                           : clip.frame_info_type_ == frame_info_type::dx_dy_dz_dyaw ? 16
+                                                                                     : 0;
+        auto bytes = clip.frame_info.data(m_magic);
+        if(!stride || !bytes.has_value() || (frame + 1) * stride > bytes.value().size())
+            return {};
+        f32 delta[4]{};
+        std::memcpy(delta, bytes.value().data() + frame * stride, stride);
+        Vecf3 const move{delta[0], delta[1], stride == 16 ? delta[2] : 0.f};
+        f32 const   yaw = stride == 16 ? delta[3] : stride == 12 ? delta[2] : 0.f;
+        return {move, yaw};
+    }
+
+    /* Units on foot keep to the ground: physics walks them */
+    static bool walks(Proxy& p, u64 id)
+    {
+        auto const* physics = p.template get<ObjectPhysics>(id);
+        return physics && physics->upright;
+    }
+
+    bool riding(u64 id) const
+    {
+        return std::any_of(m_riders.begin(), m_riders.end(), [id](rider_t const& r) {
+            return r.unit == id;
+        });
+    }
+
+    static void walk(Proxy& p, u64 id, Vecf3 const& velocity)
+    {
+        Physics::Event    ev{Physics::Event::Velocity};
+        Physics::Velocity walking{.entity_id = id, .velocity = velocity, .preserve_z = true};
+        p.template subsystem<PhysicsBus>().process(ev, &walking);
+    }
+
+    /* Done being moved: a unit stops, anything else is let go */
+    void stand(Proxy& p, u64 id)
+    {
+        if(walks(p, id))
+            walk(p, id, {});
+        else
+            carry(p, id, false);
+    }
+
+    /* ---- Attachments ---- */
+
+    struct attached_t
+    {
+        u64            parent;
+        u64            child;
+        bound_marker_t marker;   /* on the parent */
+        Matf4          at{1.f};  /* the child's own marker, undone */
+    };
+
+    void attach(Proxy& p, u64 parent, std::string const& marker, u64 child, std::string const& at)
+    {
+        auto const* model = p.template get<Model>(parent);
+        auto const* held  = p.template get<Model>(child);
+        if(!model || !held || !model->tag || !held->tag)
+            return;
+        auto bound = marker.empty() ? std::optional<bound_marker_t>(bound_marker_t{Matf4(1.f)})
+                                    : bind_marker_node(*model->tag, marker, m_magic);
+        if(!bound)
+            return log(fmt::format("objects_attach: no marker {}", marker));
+        auto own = at.empty() ? std::optional<Matf4>(Matf4(1.f)) : bind_marker(*held->tag, at, m_magic);
+        detach(p, 0, child);
+        m_attached.push_back({
+            .parent = parent,
+            .child  = child,
+            .marker = *bound,
+            .at     = glm::inverse(own.value_or(Matf4(1.f))),
+        });
+        carry(p, child, true);
+    }
+
+    /* Every attachment of `child`, or only the one on `parent` */
+    void detach(Proxy& p, u64 parent, u64 child)
+    {
+        auto const gone = std::erase_if(m_attached, [parent, child](attached_t const& a) {
+            return a.child == child && (!parent || a.parent == parent);
+        });
+        if(gone && !playing_recording(child) && !m_hovering.contains(child))
+            carry(p, child, false);
+    }
+
+    void place_attached(Proxy& p)
+    {
+        for(auto const& a : m_attached)
+        {
+            auto const* parent = p.template get<Model>(a.parent);
+            auto*       child  = p.template get<Model>(a.child);
+            if(!parent || !child)
+                continue;
+            Matf4       at   = parent->transform;
+            auto const* anim = p.template get<AnimationPlayback>(a.parent);
+            auto const  node = static_cast<size_t>(a.marker.node);
+            if(anim && a.marker.node >= 0 && node < anim->pose.size())
+                at = at * anim->pose[node];
+            at              = at * a.marker.transform * a.at;
+            child->position = Vecf3(at[3]);
+            child->rotation = glm::normalize(Quatf(Matf3(at)));
+            child->update_matrix();
+        }
+    }
+
     /* ---- Recordings ---- */
 
     enum class end_t
@@ -801,7 +1141,8 @@ struct BlamScript
             .length = recording->length_of_animation,
             .end    = end,
         });
-        carry(p, id, true);
+        if(!walks(p, id))
+            carry(p, id, true);
     }
 
     void stop_recording(Proxy& p, u64 id, end_t end)
@@ -816,7 +1157,7 @@ struct BlamScript
             break;
         case end_t::stop:
             if(!m_hovering.contains(id))
-                carry(p, id, false);
+                stand(p, id);
             break;
         }
     }
@@ -868,9 +1209,10 @@ struct BlamScript
             /* Dropships climb on jump and sink on crouch; pitch is only
              * where they look */
             bool const  plane = drive && drive->type == VehicleDrive::human_plane;
+            auto const  feet  = drive ? Vecf2{} : walk_speeds(p, it->entity);
             f32 const   top   = drive ? drive->forward_speed * (plane ? plane_cruise : 1.f)
-                                      : default_speed;
-            f32 const   slide = drive ? drive->slide_speed : default_speed;
+                                      : feet.x;
+            f32 const   slide = drive ? drive->slide_speed : feet.y;
             f32 const   accel = drive && drive->acceleration > 0.f ? drive->acceleration : default_acceleration;
             f32 const   climb = plane ? (input.held(control_jump) ? 1.f : 0.f) -
                                             (input.held(control_crouch) ? 1.f : 0.f)
@@ -882,9 +1224,14 @@ struct BlamScript
             f32 const   step  = accel * dt;
             it->velocity += glm::length(delta) > step ? glm::normalize(delta) * step : delta;
 
-            model->position += it->velocity * dt;
-            model->rotation = glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) *
-                              glm::angleAxis(-facing.pitch_radians(), Vecf3{0.f, 1.f, 0.f});
+            /* Bipeds stay upright and on the ground */
+            bool const upright = physics && physics->upright;
+            if(upright)
+                walk(p, it->entity, it->velocity);
+            else
+                model->position += it->velocity * dt;
+            model->rotation    = glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) *
+                              glm::angleAxis(upright ? 0.f : -facing.pitch_radians(), Vecf3{0.f, 1.f, 0.f});
             model->update_matrix();
 
             if(it->play.advance())
@@ -899,6 +1246,24 @@ struct BlamScript
                 m_hovering.insert(id);
             stop_recording(p, id, end);
         }
+    }
+
+    /* A unit on foot covers the ground its move clips do */
+    Vecf2 walk_speeds(Proxy& p, u64 id)
+    {
+        using Slot        = blam::antr::unit_weapon::animation_idx_t;
+        auto const* anim  = p.template get<AnimationPlayback>(id);
+        auto const* graph = anim ? anim->graph : nullptr;
+        if(!graph)
+            return Vecf2(default_speed);
+        auto [it, fresh] = m_walk_speeds.try_emplace(graph);
+        if(fresh)
+        {
+            f32 const front = move_speed(*graph, Slot::move_front, m_magic);
+            f32 const side  = move_speed(*graph, Slot::move_left, m_magic);
+            it->second      = {front > 0.f ? front : default_speed, side > 0.f ? side : default_speed};
+        }
+        return it->second;
     }
 
     /* The title's text from the scenario's cutscene title strings */
@@ -1063,7 +1428,7 @@ struct BlamScript
         if(it == m_actors.end())
             return out;
         for(u32 net_id : it->second)
-            if(u64 const id = entity_by_net_id(p, net_id))
+            if(u64 const id = live_entity(p, net_id))
                 out.push_back(id);
         return out;
     }
@@ -1136,9 +1501,14 @@ struct BlamScript
     u64                                     m_next_impulse{1};
     std::vector<recording_t>                m_recordings;
     std::vector<rider_t>                    m_riders;
+    std::vector<attached_t>                 m_attached;
     std::set<u32>                           m_spawning;
     std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> m_deferred;
     std::set<u64>                           m_hovering;
+    std::map<u64, custom_t>                 m_custom;
+    std::set<u32>                           m_despawning;
+    std::set<u32>                           m_recreate;
+    std::map<blam::antr::header const*, Vecf2> m_walk_speeds;
     std::set<u32>                           m_unhandled;
     Proxy*                                  m_proxy{nullptr};
 

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_tag_classes.h>
@@ -477,6 +478,7 @@ struct PlayModelAnimationEvent
     libc_types::u64 entity{0};
     std::string     name{};       /*!< e.g. "stand rifle melee" */
     libc_types::i32 animation{-1}; /*!< Index into the graph, wins over name */
+    blam::antr::header const* graph{nullptr}; /*!< A cutscene's, else its own */
 
     bool            loop{false};
     libc_types::f32 fade{.2f}; /*!< Seconds to blend in, 0 = cut */
