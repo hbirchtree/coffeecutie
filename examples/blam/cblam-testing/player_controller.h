@@ -6,6 +6,7 @@
 #include <peripherals/stl/type_list.h>
 #include <peripherals/typing/vectors/matrix_functions.h>
 
+#include "cinematic.h"
 #include "components.h"
 #include "data.h"
 #include "physics.h"
@@ -22,7 +23,12 @@ using PlayerControllerManifest = compo::SubsystemManifest<
         Model,
         const Attachment,
         const PhysicsData>,
-    type_list_t<PhysicsBus, UIEventBus, RenderingParameters, GameEventBus>,
+    type_list_t<
+        PhysicsBus,
+        UIEventBus,
+        RenderingParameters,
+        GameEventBus,
+        const CinematicState>,
     type_list_t<
         comp_app::ControllerInput,
         comp_app::MouseInput

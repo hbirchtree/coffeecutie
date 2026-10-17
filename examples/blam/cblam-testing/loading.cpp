@@ -1143,8 +1143,11 @@ struct ResourceLoader
                 continue;
             }
             auto const& instance = instances[i];
+            using spawn_flags    = blam::scn::object_spawn::spawn_flags;
+            /* "Not placed automatically": a script creates it */
             if(instance.ref < 0 ||
-               static_cast<size_t>(instance.ref) >= palette.size())
+               static_cast<size_t>(instance.ref) >= palette.size() ||
+               (instance.flags & spawn_flags::automatic) != spawn_flags::none)
                 continue;
             raise_spawn(palette[instance.ref][0], instance.pos, net_id);
         }
