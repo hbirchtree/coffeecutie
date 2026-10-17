@@ -677,9 +677,20 @@ vec4 chicago_blend(vec4 c1, vec4 c2, vec4 c3, vec4 c4, uint flags, in Material m
     return out_color;
 }
 
+/* first_map_type: 1 reflects the view about the surface, 2-3 look along it */
+vec4 chicago_first_map(in vec2 offset, in Material mat)
+{
+    uint type = uint(mat.lightmap.meta2) >> 8;
+    if(type == 0u)
+        return get_color_with_offset(0u, offset, mat);
+    vec3 view_world = normalize(camera_position - frag.position);
+    vec3 dir = type == 1u ? reflect(-view_world, normalize(frag.normal)) : -view_world;
+    return get_cube_color(dir, mat);
+}
+
 vec4 chicago_framebuffer_alpha(vec4 color, in Material mat)
 {
-    uint bm = uint(mat.lightmap.meta2);
+    uint bm = uint(mat.lightmap.meta2) & 0xFFu;
     if(bm == 3u || bm == 5u || bm == 6u)
         color.a = 1.0;
     return color;
@@ -695,7 +706,7 @@ vec4 shader_chicago(in Material mat)
     vec2 o3 = mat.material.input2.zw;
     vec2 o4 = mat.material.input3.xy;
 
-    vec4 c1 = get_color_with_offset(0u, o1, mat);
+    vec4 c1 = chicago_first_map(o1, mat);
     vec4 c2 = get_color_with_offset(1u, o2, mat);
     vec4 c3 = get_color_with_offset(2u, o3, mat);
     vec4 c4 = get_color_with_offset(3u, o4, mat);
@@ -712,7 +723,7 @@ vec4 shader_chicago_extended(in Material mat)
     vec2 o3 = mat.material.input2.zw;
     vec2 o4 = mat.material.input3.xy;
 
-    vec4 c1 = get_color_with_offset(0u, o1, mat);
+    vec4 c1 = chicago_first_map(o1, mat);
     vec4 c2 = get_color_with_offset(1u, o2, mat);
     vec4 c3 = get_color_with_offset(2u, o3, mat);
     vec4 c4 = get_color_with_offset(3u, o4, mat);
