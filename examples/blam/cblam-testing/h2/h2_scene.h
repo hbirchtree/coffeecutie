@@ -153,7 +153,8 @@ struct DrawTag
     i32 cluster_section{-1};
     i32 cluster{-1};
     i32 instance{-1};
-    i32 object{-1}; /*!< Into H2Scene::moving_objects: drawn where it is */
+    i32  object{-1}; /*!< Into H2Scene::moving_objects: drawn where it is */
+    bool placed{false}; /*!< A scenario object, not structure */
 };
 
 /* One shad tag: its diffuse map and every draw range using it */
