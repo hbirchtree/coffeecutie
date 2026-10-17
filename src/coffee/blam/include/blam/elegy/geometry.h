@@ -177,7 +177,7 @@ struct render_geometry_t
     tag_block<std::array<u8, 0x18>>       user_data;
     std::array<u32, 3>                    per_mesh_temporary;
     tag_block<std::array<u8, 0x20>>       per_mesh_mopp;
-    tag_block<std::array<u8, 0xC>>        per_mesh_node_map;
+    tag_block<tag_block<u8>>              per_mesh_node_map; /*!< Mesh node index -> model node */
     tag_block<std::array<u8, 0xC>>        per_mesh_subpart_visibility;
     tag_block<std::array<u8, 0x20>>       per_mesh_prt;
     tag_block<instance_lightmap_texcoords_t> per_instance_lightmap_texcoords;

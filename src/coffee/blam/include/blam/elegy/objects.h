@@ -20,10 +20,27 @@ enum class placement_flags_t : u32
     not_on_easy       = 0x2,
     not_on_normal     = 0x4,
     not_on_hard       = 0x8,
-    never_placed      = 0x40,
-    create_at_rest    = 0x100,
+    never_placed       = 0x40,
+    create_at_rest     = 0x100,
+    store_orientations = 0x200, /*!< Posed by node_orientations */
 };
 C_FLAGS(placement_flags_t, u32);
+
+/*!
+ * \brief A posed object's nodes, relative to their parents. The flags are two
+ * node bit vectors back to back, rotations then translations; the shorts
+ * follow node by node, four for a rotation (i, j, k, w over 32767), three
+ * for a translation.
+ */
+struct node_orientations_t
+{
+    be<i16>            node_count;
+    be<i16>            unknown_0;
+    tag_block<u8>      node_flags;
+    tag_block<be<i16>> orientations;
+};
+
+static_assert(sizeof(node_orientations_t) == 0x1C);
 
 /*!
  * \brief Head every object placement in the scenario shares (scenery,
@@ -37,7 +54,7 @@ struct object_placement_t
     be<Vecf3>                    position;
     be<Vecf3>                    rotation;
     be<f32>                      scale;
-    tag_block<std::array<u8, 0x1C>> node_orientations;
+    tag_block<node_orientations_t> node_orientations;
     be<u16>                      transform_flags;
     be<u16>                      bsp_flags; /*!< One bit per structure BSP, none = all */
     string_id                    light_airprobe;

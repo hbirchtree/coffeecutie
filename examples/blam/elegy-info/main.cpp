@@ -48,6 +48,7 @@ struct options_t
     bool        sounds;
     bool        collision;
     bool        objects;
+    bool        nodes;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -958,6 +959,109 @@ u32 write_collision(
     return polygons;
 }
 
+/* Node hierarchy checks: default pose against the inverse bind matrices
+ * under each quaternion/matrix convention, and what the meshes index */
+int dump_nodes(elegy::map_container const& map, elegy::resource_loader& loader, options_t const& options)
+{
+    auto magic = map.magic();
+    for(auto const& tag : map.tags())
+    {
+        if(!tag.valid() || !map.is(tag, "mode") ||
+           map.name_of(tag).find(options.name_filter) == std::string_view::npos)
+            continue;
+        auto const* model = map.tag_data<elegy::render_model_t>(tag);
+        auto        nodes = model ? map.span(model->nodes) : Span<elegy::node_t const>();
+        if(nodes.empty())
+            continue;
+        fmt::print("{} [{} nodes]\n", map.name_of(tag), nodes.size());
+        for(int conj = 0; conj < 2; conj++)
+            for(int rows = 0; rows < 2; rows++)
+            {
+                std::vector<glm::mat4> world(nodes.size(), glm::mat4(1.f));
+                f32                    worst = 0.f;
+                for(size_t i = 0; i < nodes.size(); i++)
+                {
+                    auto const& n = nodes[i];
+                    Vecf4       r = n.default_rotation.value();
+                    glm::quat   q(r.w, r.x, r.y, r.z);
+                    if(conj)
+                        q = glm::conjugate(q);
+                    glm::mat4 local = glm::translate(glm::mat4(1.f), n.default_translation.value()) *
+                                      glm::mat4_cast(q);
+                    i16 parent = n.parent.value();
+                    world[i]   = parent >= 0 && static_cast<size_t>(parent) < i ? world[parent] * local
+                                                                                : local;
+                    glm::mat4 inverse(1.f);
+                    inverse[0] = glm::vec4(n.inverse_forward.value(), 0.f);
+                    inverse[1] = glm::vec4(n.inverse_left.value(), 0.f);
+                    inverse[2] = glm::vec4(n.inverse_up.value(), 0.f);
+                    inverse[3] = glm::vec4(n.inverse_position.value(), 1.f);
+                    if(rows)
+                    {
+                        glm::mat3 basis = glm::transpose(glm::mat3(inverse));
+                        inverse         = glm::mat4(basis);
+                        inverse[3]      = glm::vec4(n.inverse_position.value(), 1.f);
+                    }
+                    glm::mat4 product = world[i] * inverse;
+                    for(int c = 0; c < 4; c++)
+                        for(int r2 = 0; r2 < 4; r2++)
+                            worst = std::max(worst, std::abs(product[c][r2] - (c == r2 ? 1.f : 0.f)));
+                }
+                fmt::print("  quaternion {}, inverse as {}: worst |world * inverse - I| {:.5f}\n",
+                           conj ? "conjugated" : "as stored", rows ? "rows" : "columns", worst);
+            }
+        auto node_maps   = map.span(model->geometry.per_mesh_node_map);
+        auto meshes      = map.span(model->geometry.meshes);
+        auto compression = map.span(model->geometry.compression);
+        auto view        = loader.load(model->geometry.resource);
+        if(!view.has_value())
+            continue;
+        std::vector<elegy::vertex_t> vertices;
+        std::vector<triangle_t>      triangles;
+        geometry_stats               stats;
+        for(size_t m = 0; m < meshes.size(); m++)
+        {
+            u32 highest = 0;
+            f32 weight  = 0.f;
+            if(decode_mesh(view.value(), meshes[m], compression.empty() ? nullptr : &compression[0],
+                           vertices, triangles, magic, stats))
+                for(auto const& v : vertices)
+                {
+                    for(auto n : v.nodes)
+                        highest = std::max<u32>(highest, n);
+                    weight += v.weights.x + v.weights.y + v.weights.z + v.weights.w;
+                }
+            fmt::print("  mesh {}: type {} rigid node {} node map {} entries, {} vertices, highest node {}, mean weight sum {:.3f}\n",
+                       m, static_cast<int>(meshes[m].vertex_type), meshes[m].rigid_node,
+                       m < node_maps.size() ? map.span(node_maps[m]).size() : 0,
+                       vertices.size(), highest, vertices.empty() ? 0.f : weight / vertices.size());
+        }
+        loader.trim();
+    }
+    if(auto const scenario = map.find<elegy::scenario_t>())
+        for(auto const& [placement, entry] : elegy::placements(map, scenario->bipeds, scenario->biped_palette))
+        {
+            auto const* tag = entry ? map.get<elegy::object_t>(entry->object).tag : nullptr;
+            if(!tag || map.name_of(*tag).find(options.name_filter) == std::string_view::npos)
+                continue;
+            for(auto const& pose : map.span(placement.object.node_orientations))
+            {
+                auto flags = map.span(pose.node_flags);
+                auto rotations = map.span(pose.orientations);
+                std::string nodes;
+                for(size_t bit = 0; bit < flags.size() * 8; bit++)
+                    if(flags[bit / 8] & (1u << (bit % 8)))
+                        nodes += fmt::format(" {}", bit);
+                fmt::print("{} placement: {} nodes, flagged{}; {} shorts:", map.name_of(*tag),
+                           pose.node_count.value(), nodes, rotations.size());
+                for(auto const& r : rotations)
+                    fmt::print(" {}", r.value());
+                fmt::print("\n");
+            }
+        }
+    return 0;
+}
+
 /* A palette entry's physics model: its rigid bodies and their shapes */
 void print_physics(elegy::map_container const& map, elegy::tag_reference const& object_ref)
 {
@@ -1278,6 +1382,8 @@ int run_map(
         rc |= dump_collision(map, *loader, options, obj.get());
     if(options.objects)
         rc |= dump_objects(map, options);
+    if(options.nodes)
+        rc |= dump_nodes(map, *loader, options);
     return rc;
 }
 
@@ -1311,6 +1417,8 @@ i32 coffee_main(i32, cstring_w*)
          "Check BSP collision and portals; with --obj, write the collision polygons")
         //
         ("objects", "List placed objects by type, with their physics models")
+        //
+        ("nodes", "Check render model node hierarchies and biped poses")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1357,6 +1465,7 @@ i32 coffee_main(i32, cstring_w*)
         .sounds       = arguments.count("sounds") > 0,
         .collision    = arguments.count("collision") > 0,
         .objects      = arguments.count("objects") > 0,
+        .nodes        = arguments.count("nodes") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),
