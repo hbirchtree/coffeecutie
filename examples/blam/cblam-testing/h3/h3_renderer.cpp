@@ -16,7 +16,7 @@ namespace h3 {
 
 using H3RendererManifest = compo::SubsystemManifest<
     compo::type_list_t<const PlayerCamera, const PlayerInfo, const Model>,
-    compo::type_list_t<const H3Scene, const BlamResources, gfx::system>,
+    compo::type_list_t<const H3Scene, const BlamResources, const RenderingParameters, gfx::system>,
     compo::empty_list_t>;
 
 /* Submits every material of the scene; no visibility yet */
@@ -62,6 +62,16 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             return;
 
         auto&        resources = p.template subsystem<BlamResources>();
+        /* The debug views and switches of the rendering panel */
+        auto const& params     = p.template subsystem<RenderingParameters>();
+        i32 const   debug_view = params.only_diffuse      ? 1
+                                 : params.only_normals    ? 2
+                                 : params.only_normalmaps ? 3
+                                 : params.only_lightmaps  ? 4
+                                 : params.only_reflections ? 5
+                                                           : 0;
+        i32 const debug_off = (params.render_fog ? 0 : 1) | (params.render_reflection ? 0 : 2) |
+                              (params.render_lightmaps ? 0 : 4);
         f32 const    exposure  = adapt_exposure(scene, camera->camera.position);
         auto const&  dynamic_cube = nearest_cubemap(scene, camera->camera.position);
         Vecf3 const  offset{};
@@ -131,13 +141,14 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::depth_extended_state{.depth_write = pass == 0},
                         gfx::blend_state{.additive = mat.additive});
                 };
+                static std::vector<ObjectDraws> const no_objects;
                 /* The level, then each object where its Model is */
                 auto submit = [&](auto& frag_u, auto& samplers) {
                     std::optional<std::tuple<gfx::error, std::string_view>> out;
                     model_matrix = Matf4(1.f);
                     if(!mat.draws.empty())
                         out = submit_draws(frag_u, samplers, mat.draws);
-                    for(auto const& object : mat.object_draws)
+                    for(auto const& object : params.render_scenery ? mat.object_draws : no_objects)
                     {
                         auto const* placed = p.template get<Model>(object.entity);
                         if(!placed)
@@ -172,6 +183,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     }
                     auto frag_u = gfx::make_uniform_list(
                         stage_t::Fragment,
+                        gfx::uniform_pair<const i32>{
+                            {"debug_view"}, semantic::SpanOne<const i32>(debug_view)},
+                        gfx::uniform_pair<const i32>{
+                            {"debug_off"}, semantic::SpanOne<const i32>(debug_off)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"layer_scale"},
                             semantic::Span<const Vecf4>(layer_scale.data(), layer_scale.size())},
@@ -214,6 +229,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 {
                     auto frag_u = gfx::make_uniform_list(
                         stage_t::Fragment,
+                        gfx::uniform_pair<const i32>{
+                            {"debug_view"}, semantic::SpanOne<const i32>(debug_view)},
+                        gfx::uniform_pair<const i32>{
+                            {"debug_off"}, semantic::SpanOne<const i32>(debug_off)},
                         gfx::uniform_pair<const i32>{
                             {"alpha_test"}, semantic::SpanOne<const i32>(alpha_test)},
                         gfx::uniform_pair<Vecf4 const>{
