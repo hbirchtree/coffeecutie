@@ -1012,7 +1012,7 @@ struct DrawListBuilder
                 auto const* rider = p.template get<PlayerInfo>(
                     held ? held->holder : model.parent);
                 bool const third_person =
-                    rider && rider->riding.vehicle != 0;
+                    rider && rider->riding.vehicle != 0 && rider->riding.chase;
                 if((held && !held->shown) ||
                    !vis.visible_for(m_seat, false, third_person) ||
                    !((model.lod_mask >> lod) & 1) ||
