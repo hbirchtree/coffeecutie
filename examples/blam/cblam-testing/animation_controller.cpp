@@ -317,7 +317,7 @@ struct AnimationController
                 model.position,
                 model.rotation * Vecf3{1.f, 0.f, 0.f},
                 unarmed,
-                false,
+                true,
                 physics.grounded,
                 dt);
         }
