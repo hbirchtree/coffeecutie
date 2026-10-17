@@ -62,6 +62,9 @@
             "shaders/h3_terrain.frag",
             "shaders/h3_detail_overlay.frag",
             "shaders/h3_three_detail.frag",
+            "shaders/h3_water.frag",
+            "shaders/h3_quad.vert",
+            "shaders/h3_scene_copy.frag",
 
             "shaders/ui.vert",
             "shaders/ui.frag",

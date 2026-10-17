@@ -37,7 +37,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         return true;
     }
 
-    void start_restricted(Proxy& p, time_point const&)
+    void start_restricted(Proxy& p, time_point const& now)
     {
         auto const& scene = p.template subsystem<H3Scene>();
         if(!scene.loaded)
@@ -67,12 +67,20 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         Vecf3 const  offset{};
         f32 const    scale = 1.f;
         Vecf2 const  unit{1.f, 1.f};
-        /* Opaque first, then alpha blended, then additive */
+        if(m_start == time_point{})
+            m_start = now;
+        f32 const seconds = std::chrono::duration<f32>(now - m_start).count();
+        /* Opaque first, then water over a copy of the scene, then alpha
+         * blended, then additive */
         for(int pass = 0; pass < 3; pass++)
+        {
+            if(pass == 1)
+                draw_water(scene, resources, *camera, exposure, seconds);
             for(auto const& mat : scene.materials)
             {
                 int const mat_pass = mat.additive ? 2 : mat.blended ? 1 : 0;
-                if(mat_pass != pass || mat.draws.empty() || !mat.visible)
+                if(mat_pass != pass || mat.draws.empty() || !mat.visible ||
+                   mat.variant == Variant::water)
                     continue;
                 bool const terrain = mat.variant == Variant::terrain;
                 /* Terrain scales each layer in the fragment program */
@@ -232,6 +240,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"env_mode"}, semantic::SpanOne<const i32>(mat.env_mode)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"env_tint"}, semantic::SpanOne<const Vecf4>(mat.env_tint)},
+                        gfx::uniform_pair<const f32>{
+                            {"env_curve"}, semantic::SpanOne<const f32>(mat.environment_map.curve)},
                         gfx::uniform_pair<Vecf2 const>{
                             {"detail3_ratio"}, semantic::SpanOne<const Vecf2>(mat.detail3_ratio)},
                         gfx::uniform_pair<const f32>{
@@ -275,9 +285,159 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     m_draw_error_logged = true;
                 }
             }
+        }
     }
 
   private:
+    /* Water (water_shading.fx) reads the scene behind it: a copy of the
+     * colour and of how far away each pixel is, made once per frame */
+    void draw_water(
+        H3Scene const&       scene,
+        BlamResources const& resources,
+        PlayerCamera const&  camera,
+        f32                  exposure,
+        f32                  seconds)
+    {
+        using stage_t = typing::graphics::ShaderStage;
+        bool any      = false;
+        for(auto const& mat : scene.materials)
+            any = any || (mat.variant == Variant::water && mat.visible && !mat.draws.empty());
+        if(!any || !resources.color || !resources.depth)
+            return;
+        auto const size = resources.offscreen_size;
+        if(!m_copy_rt || m_copy_size != size)
+        {
+            m_copy_size = size;
+            m_copy      = m_api->alloc_texture(
+                gfx::textures::d2, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA16F), 1);
+            m_copy->alloc(size_3d<i32>{size.x, size.y, 1}.convert<u32>());
+            m_copy_rt = m_api->alloc_rendertarget();
+            m_copy_rt->alloc();
+            m_copy_rt->attach(gfx::render_targets::attachment::color, *m_copy, 0);
+            m_copy_rt->resize({0, 0, size.x, size.y});
+            m_copy_sampler = m_copy->sampler();
+            m_copy_sampler->alloc();
+            m_copy_sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+            m_scene_color_sampler = resources.color->sampler();
+            m_scene_color_sampler->alloc();
+            m_scene_depth_sampler = resources.depth->sampler();
+            m_scene_depth_sampler->alloc();
+            m_scene_depth_sampler->set_filtering(typing::Filtering::Nearest, typing::Filtering::Nearest);
+        }
+        auto viewport = gfx::view_state{
+            .view = typing::vector_types::Veci4{0, 0, size.x, size.y},
+        };
+        Vecf4 const quad_rect{1.f, 1.f, 0.f, 0.f};
+        Matf4 const inverse_camera = glm::inverse(camera.matrix);
+        Vecf3 const eye            = camera.camera.position;
+        i32         zero_to_one    = 0;
+#if GLEAM_MAX_VERSION >= 0x450
+        zero_to_one = m_api->feature_info().program.dsa ? 1 : 0;
+#endif
+        auto copy_v = gfx::make_uniform_list(
+            stage_t::Vertex,
+            gfx::uniform_pair<Vecf4 const>{{"quad_rect"}, semantic::SpanOne<const Vecf4>(quad_rect)});
+        auto copy_f = gfx::make_uniform_list(
+            stage_t::Fragment,
+            gfx::uniform_pair<Matf4 const>{
+                {"inverse_camera"}, semantic::SpanOne<const Matf4>(inverse_camera)},
+            gfx::uniform_pair<Vecf3 const>{{"eye"}, semantic::SpanOne<const Vecf3>(eye)},
+            gfx::uniform_pair<const i32>{
+                {"depth_zero_to_one"}, semantic::SpanOne<const i32>(zero_to_one)});
+        auto copy_s = gfx::make_sampler_list(
+            gfx::sampler_definition_t{stage_t::Fragment, {"scene_color", 0}, m_scene_color_sampler},
+            gfx::sampler_definition_t{stage_t::Fragment, {"scene_depth", 1}, m_scene_depth_sampler});
+        auto copy_res = m_api->submit(
+            {
+                .program       = m_copy_program,
+                .vertices      = m_vao,
+                .render_target = m_copy_rt,
+                .call          = {.indexed = false, .mode = gfx::drawing::primitive::triangle},
+                .data          = {{.arrays = {.count = 3}}},
+            },
+            copy_v,
+            copy_f,
+            copy_s,
+            viewport);
+        if(copy_res.has_value() && !m_draw_error_logged)
+        {
+            cWarning("H3: scene copy failed: {}", std::get<1>(*copy_res));
+            m_draw_error_logged = true;
+        }
+
+        Vecf3 const offset{};
+        f32 const   scale = 1.f;
+        Vecf2 const unit{1.f, 1.f};
+        Vecf2 const target{static_cast<f32>(size.x), static_cast<f32>(size.y)};
+        auto lightprobe = scene.lightprobe_sampler ? scene.lightprobe_sampler : m_no_lightprobe_sampler;
+        for(auto const& mat : scene.materials)
+        {
+            if(mat.variant != Variant::water || !mat.visible || mat.draws.empty())
+                continue;
+            auto const& w      = mat.water;
+            auto        vert_u = gfx::make_uniform_list(
+                stage_t::Vertex,
+                gfx::uniform_pair<Matf4 const>{{"camera"}, semantic::SpanOne<const Matf4>(camera.matrix)},
+                gfx::uniform_pair<Vecf2 const>{{"uv_scale"}, semantic::SpanOne<const Vecf2>(unit)},
+                gfx::uniform_pair<Vecf3 const>{{"model_offset"}, semantic::SpanOne<const Vecf3>(offset)},
+                gfx::uniform_pair<const f32>{{"model_scale"}, semantic::SpanOne<const f32>(scale)});
+            auto frag_u = gfx::make_uniform_list(
+                stage_t::Fragment,
+                gfx::uniform_pair<Vecf3 const>{{"camera_position"}, semantic::SpanOne<const Vecf3>(eye)},
+                gfx::uniform_pair<Vecf4 const>{
+                    {"atmosphere"},
+                    semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
+                gfx::uniform_pair<Vecf4 const>{
+                    {"lightprobe_scale"}, semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
+                gfx::uniform_pair<const f32>{{"exposure"}, semantic::SpanOne<const f32>(exposure)},
+                gfx::uniform_pair<const f32>{{"time"}, semantic::SpanOne<const f32>(seconds)},
+                gfx::uniform_pair<Vecf4 const>{{"slope_xform"}, semantic::SpanOne<const Vecf4>(w.slope_xform)},
+                gfx::uniform_pair<Vecf4 const>{{"shape_xform"}, semantic::SpanOne<const Vecf4>(w.shape_xform)},
+                gfx::uniform_pair<Vecf4 const>{{"slope"}, semantic::SpanOne<const Vecf4>(w.slope)},
+                gfx::uniform_pair<Vecf4 const>{{"heights"}, semantic::SpanOne<const Vecf4>(w.heights)},
+                gfx::uniform_pair<Vecf4 const>{{"shading"}, semantic::SpanOne<const Vecf4>(w.shading)},
+                gfx::uniform_pair<Vecf4 const>{{"refraction"}, semantic::SpanOne<const Vecf4>(w.refraction)},
+                gfx::uniform_pair<Vecf4 const>{{"misc"}, semantic::SpanOne<const Vecf4>(w.misc)},
+                gfx::uniform_pair<Vecf4 const>{{"water_diffuse"}, semantic::SpanOne<const Vecf4>(w.diffuse)},
+                gfx::uniform_pair<Vecf2 const>{{"viewport"}, semantic::SpanOne<const Vecf2>(target)},
+                gfx::uniform_pair<Vecf2 const>{{"water_curves"}, semantic::SpanOne<const Vecf2>(w.curves)});
+            auto samplers = gfx::make_sampler_list(
+                gfx::sampler_definition_t{
+                    stage_t::Fragment, {"water_color", 0}, w.color.sampler ? w.color.sampler : m_white_sampler},
+                gfx::sampler_definition_t{
+                    stage_t::Fragment,
+                    {"water_reflection", 1},
+                    w.reflection.sampler ? w.reflection.sampler : m_black_cube_sampler},
+                gfx::sampler_definition_t{
+                    stage_t::Fragment,
+                    {"water_slopes", 2},
+                    w.slopes_sampler ? w.slopes_sampler : m_no_lightprobe_sampler},
+                gfx::sampler_definition_t{stage_t::Fragment, {"scene_copy", 3}, m_copy_sampler},
+                gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe});
+            auto res = m_api->submit(
+                {
+                    .program       = m_programs[static_cast<size_t>(Variant::water)],
+                    .vertices      = m_vao,
+                    .render_target = resources.offscreen,
+                    .call          = {.indexed = true, .instanced = true},
+                    .data          = mat.draws,
+                },
+                vert_u,
+                frag_u,
+                samplers,
+                gfx::view_state{
+                    .view  = typing::vector_types::Veci4{0, 0, size.x, size.y},
+                    .depth = gfx::depth_state{.reversed = true},
+                },
+                gfx::depth_extended_state{.depth_write = true});
+            if(res.has_value() && !m_draw_error_logged)
+            {
+                cWarning("H3: water draw failed: {}", std::get<1>(*res));
+                m_draw_error_logged = true;
+            }
+        }
+    }
+
     /* The cubemap captured nearest the camera stands in for Halo 3's
      * per-object pair of dynamic cubemaps */
     std::shared_ptr<gfx::sampler_t> const& nearest_cubemap(H3Scene const& scene, Vecf3 const& eye)
@@ -381,6 +541,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         m_black_cube_sampler = m_black_cube->sampler();
         m_black_cube_sampler->alloc();
 
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "h3_quad",
+                .fragment_file = "h3_scene_copy",
+                .shader        = m_copy_program,
+            });
         for(size_t i = 0; i < m_programs.size(); i++)
             create_program(
                 api,
@@ -403,6 +570,14 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightprobe;
     std::shared_ptr<gfx::sampler_t>             m_no_lightprobe_sampler;
     std::shared_ptr<gfx::texture_cube_t>        m_black_cube;
+    std::shared_ptr<gfx::program_t>             m_copy_program;
+    std::shared_ptr<gfx::texture_2d_t>          m_copy;
+    std::shared_ptr<gfx::rendertarget_t>        m_copy_rt;
+    std::shared_ptr<gfx::sampler_t>             m_copy_sampler;
+    std::shared_ptr<gfx::sampler_t>             m_scene_color_sampler;
+    std::shared_ptr<gfx::sampler_t>             m_scene_depth_sampler;
+    Veci2                                       m_copy_size{};
+    time_point                                  m_start{};
     std::shared_ptr<gfx::sampler_t>             m_black_cube_sampler;
     f32                                         m_stops{0.f};
     u32                                         m_exposure_generation{~0u};
