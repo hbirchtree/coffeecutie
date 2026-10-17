@@ -50,6 +50,8 @@
             "shaders/h2_plasma.frag",
             "shaders/h2_ui.vert",
             "shaders/h2_flare.vert",
+            "shaders/h2_fog.vert",
+            "shaders/h2_fog.frag",
             "shaders/h2_ui.frag",
             "shaders/shadow_depth.vert",
             "shaders/shadow_depth.frag",
