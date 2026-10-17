@@ -4320,6 +4320,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
                                                         : 0;
 
     Vecf4 tint{1, 1, 1, 1};
+    i32   tonemap = postprocess.tonemap ? 1 : 0;
+    i32   overlay_tonemap = 1;
 
     auto params_v = gfx::make_uniform_list(
         typing::graphics::ShaderStage::Vertex,
@@ -4335,7 +4337,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{
             {"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)},
-        gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)});
+        gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)},
+        gfx::uniform_pair{{"tonemap"}, semantic::SpanOne(tonemap)});
 
     // clang-format off
     auto composite_result = api.submit(gfx::draw_command{
@@ -4378,7 +4381,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{
             {"rgb_comp_defocus"}, semantic::SpanOne(postprocess.rgb_comp)},
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)},
-        gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)});
+        gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)},
+        gfx::uniform_pair{{"tonemap"}, semantic::SpanOne(overlay_tonemap)});
 
     for(screen_quad_t const& draw : extra_quads)
     {
