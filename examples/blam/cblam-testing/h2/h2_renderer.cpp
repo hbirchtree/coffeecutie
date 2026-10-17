@@ -142,6 +142,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<const f32>{
                         {"time"}, semantic::SpanOne<const f32>(seconds)},
                     gfx::uniform_pair<Vecf3 const>{
+                        {"plasma_colors"},
+                        semantic::Span<const Vecf3>(mat.plasma_colors)},
+                    gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
                         semantic::SpanOne<const Vecf3>(mat.illum_color)},
                     gfx::uniform_pair<Vecf4 const>{
