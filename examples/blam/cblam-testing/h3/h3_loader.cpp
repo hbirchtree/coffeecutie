@@ -192,6 +192,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.lightprobe_sampler.reset();
         m_scene.cubemaps.clear();
         m_scene.cubemap_probes.clear();
+        m_scene.lights.clear();
         m_cube_textures.clear();
         m_scene.baked.clear();
         m_vertices.clear();
@@ -713,6 +714,7 @@ struct H3MapLoader : compo::SubsystemBase
             }
             auto light = m_scene.baked.below(object.position.value());
             lit += light.has_value();
+            attach_lights(entry->object, *model, object.transform(), 0);
             if(append_model(model, object.transform(), light ? &*light : nullptr))
                 placed++;
             else
@@ -754,6 +756,7 @@ struct H3MapLoader : compo::SubsystemBase
                 {
                     auto const skin = stored_pose(*model, object);
                     append_model(model, object.transform(), lit, 0, Quatf(1.f, 0.f, 0.f, 0.f), skin);
+                    attach_lights(entry->object, *model, object.transform(), 0);
                     fixed++;
                     continue;
                 }
@@ -767,6 +770,7 @@ struct H3MapLoader : compo::SubsystemBase
                 placed.update_matrix();
                 *m_container.get<ObjectPhysics>(ref.id()) = std::move(*physics);
                 append_model(model, glm::scale(Matf4(1.f), Vecf3(scale)), lit, ref.id(), q);
+                attach_lights(entry->object, *model, glm::scale(Matf4(1.f), Vecf3(scale)), ref.id());
                 moving++;
             }
         };
@@ -775,7 +779,60 @@ struct H3MapLoader : compo::SubsystemBase
         place(scnr.crates, scnr.crate_palette, false);
         place(scnr.weapons, scnr.weapon_palette, true);
         place(scnr.equipment, scnr.equipment_palette, true);
-        cDebug("H3: objects: {} moving, {} fixed in place, {} editor-only or modelless", moving, fixed, hidden);
+        cDebug(
+            "H3: objects: {} moving, {} fixed in place, {} editor-only or modelless; {} lights",
+            moving,
+            fixed,
+            hidden,
+            m_scene.lights.size());
+    }
+
+    /* The lights an object carries at its markers (ligh attachments), held
+     * still: colour and intensity at their steady value. Falloff constants
+     * put the light's edge at its maximum distance. */
+    void attach_lights(
+        el::tag_reference const& object, el::render_model_t const& model, Matf4 const& frame, u64 entity)
+    {
+        auto const& map  = *m_map;
+        auto const  view = el::object_view::of(map, object);
+        if(!view.object)
+            return;
+        std::vector<Matf4> nodes;
+        for(auto const& attachment : map.span(view.object->attachments))
+        {
+            auto const light = map.get<el::light_t>(attachment.type);
+            if(!light)
+                continue;
+            if(nodes.empty())
+                nodes = el::node_matrices(map, model, el::default_pose(map, model));
+            Matf4 const at = frame * el::marker_frame(map, model, attachment.marker, nodes).value_or(Matf4(1.f));
+            f32 const   radius = light->maximum_distance;
+            if(radius <= 0.f)
+                continue;
+            f32 const diffusion = std::max(light->distance_diffusion.value(), .01f);
+            f32 const size      = diffusion * diffusion;
+            f32 const at_light  = 1.f / size, at_edge = 1.f / (size + radius * radius);
+            f32 const scale     = 1.f / (at_light - at_edge);
+            DynamicLight out{
+                .entity    = entity,
+                .position  = Vecf3(at[3]),
+                .direction = glm::normalize(Vecf3(at[0])),
+                .color     = el::function_color(light->color.function.data(map.magic())) *
+                         el::function_scalar(light->intensity.function.data(map.magic())),
+                .size      = size,
+                .radius    = radius,
+            };
+            out.falloff = Vecf4(scale, 0.f, -at_edge * scale, 1.f);
+            if(light->type.value() == el::light_type_t::frustum)
+            {
+                f32 const edge = std::cos(light->frustum_field_of_view * .5f);
+                out.falloff.y  = 1.f / std::max(1.f - edge, 1e-3f);
+                out.falloff.w  = -edge * out.falloff.y;
+                out.sphere     = light->percent_spherical;
+                out.smooth     = std::max(light->angular_smoothness.value(), 1.f);
+            }
+            m_scene.lights.push_back(out);
+        }
     }
 
     /* Skinning matrices for a placement posed by stored node orientations
@@ -940,13 +997,16 @@ struct H3MapLoader : compo::SubsystemBase
             };
             if(vertex_lit)
             {
-                /* Stored at a quarter, so 8 bits reach 4x the white point */
-                Vecf3 light = glm::clamp(
-                    h3::diffuse_radiance(
-                        object_light ? *object_light : vertex_lights[i], light_rotation * out.normal) *
-                        0.25f * 255.f,
-                    Vecf3(0.f),
-                    Vecf3(255.f));
+                /* Square root of a quarter: 8 bits reach 4x the white point
+                 * and keep shade from rounding to black */
+                Vecf3 light = glm::sqrt(glm::clamp(
+                                  h3::diffuse_radiance(
+                                      object_light ? *object_light : vertex_lights[i],
+                                      light_rotation * out.normal) *
+                                      0.25f,
+                                  Vecf3(0.f),
+                                  Vecf3(1.f))) *
+                              255.f + .5f;
                 out.light[0] = static_cast<u8>(light.x);
                 out.light[1] = static_cast<u8>(light.y);
                 out.light[2] = static_cast<u8>(light.z);
