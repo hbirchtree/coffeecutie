@@ -231,6 +231,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     m_draw_error_logged = true;
                 }
             }
+        draw_flares(scene, *camera, resources);
         if(vis.camera_cluster != m_logged_cluster)
         {
             cDebug("H2: drew {} of {} ranges", draws_visible, draws_total);
@@ -239,6 +240,98 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     }
 
   private:
+    struct FlareVertex
+    {
+        Vecf2 position;
+        Vecf2 texcoord;
+        Vecf4 color;
+    };
+
+    /* Sky lights' lens flares; the vertex shader dims them by how much of
+     * the light the depth buffer shows covered */
+    void draw_flares(
+        H2Scene const&      scene,
+        PlayerCamera const& camera,
+        BlamResources const& resources)
+    {
+        f32 const aspect = static_cast<f32>(resources.offscreen_size.x) /
+                           static_cast<f32>(std::max(1, resources.offscreen_size.y));
+        for(auto const& flare : scene.sky_flares)
+        {
+            Vecf4 const clip = camera.matrix *
+                               Vecf4(camera.camera.position + flare.direction * 50.f, 1.f);
+            if(clip.w <= 0.f)
+                continue;
+            Vecf2 const ndc = Vecf2(clip) / clip.w;
+            if(std::abs(ndc.x) > 1.f || std::abs(ndc.y) > 1.f)
+                continue;
+            for(auto const& s : flare.sprites)
+            {
+                Vecf2 const at   = ndc * (1.f - 2.f * s.position);
+                Vecf2 const half = Vecf2{s.radius / aspect, s.radius};
+                Vecf4 const tint{s.color, 1.f};
+                FlareVertex tl{at + Vecf2{-half.x, half.y}, {0.f, 0.f}, tint};
+                FlareVertex tr{at + half, {1.f, 0.f}, tint};
+                FlareVertex bl{at - half, {0.f, 1.f}, tint};
+                FlareVertex br{at + Vecf2{half.x, -half.y}, {1.f, 1.f}, tint};
+                m_flare_vertices.insert(m_flare_vertices.end(), {tl, bl, br, tl, br, tr});
+                m_flare_samplers.push_back(s.image.sampler);
+                m_flare_light.push_back(ndc * 0.5f + 0.5f);
+            }
+        }
+        if(m_flare_vertices.empty())
+            return;
+        m_flare_buf->commit(
+            Span<const FlareVertex>(m_flare_vertices.data(), m_flare_vertices.size()));
+        if(m_depth_source != resources.depth)
+        {
+            m_depth_source  = resources.depth;
+            m_depth_sampler = resources.depth->sampler();
+            m_depth_sampler->alloc();
+            m_depth_sampler->set_filtering(
+                typing::Filtering::Nearest, typing::Filtering::Nearest);
+        }
+        for(size_t i = 0; i < m_flare_samplers.size(); i++)
+            m_api->submit(
+                gfx::draw_command{
+                    .program       = m_flare_program,
+                    .vertices      = m_flare_vao,
+                    .render_target = resources.offscreen,
+                    .call =
+                        {
+                            .instanced = false,
+                            .mode      = gfx::drawing::primitive::triangle,
+                        },
+                    .data = {{.arrays = {
+                                  .count  = 6,
+                                  .offset = static_cast<u32>(i * 6)}}},
+                },
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"light_uv"},
+                        semantic::SpanOne<const Vecf2>(m_flare_light[i])}),
+                gfx::make_sampler_list(
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"image", 0},
+                        m_flare_samplers[i],
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Vertex,
+                        {"scene_depth", 1},
+                        m_depth_sampler,
+                    }),
+                gfx::view_state{
+                    .view = typing::vector_types::Veci4{
+                        0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
+                },
+                gfx::blend_state{.additive = true});
+        m_flare_vertices.clear();
+        m_flare_samplers.clear();
+        m_flare_light.clear();
+    }
+
     void ensure_gpu()
     {
         if(m_api)
@@ -316,6 +409,33 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_no_lightmaps_sampler = m_no_lightmaps->sampler();
         m_no_lightmaps_sampler->alloc();
 
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "h2_flare",
+                .fragment_file = "h2_ui",
+                .shader        = m_flare_program,
+            });
+        m_flare_vao = api.alloc_vertex_array();
+        m_flare_vao->alloc();
+        m_flare_vao->add(gfx::vertex_attribute{
+            .index = 0,
+            .value = {.offset = 0, .stride = sizeof(FlareVertex), .count = 2},
+        });
+        m_flare_vao->add(gfx::vertex_attribute{
+            .index = 1,
+            .value = {.offset = offsetof(FlareVertex, texcoord), .stride = sizeof(FlareVertex), .count = 2},
+        });
+        m_flare_vao->add(gfx::vertex_attribute{
+            .index = 2,
+            .value = {.offset = offsetof(FlareVertex, color), .stride = sizeof(FlareVertex), .count = 4},
+        });
+        m_flare_vao->set_attribute_names({{"position", 0}, {"texcoord", 1}, {"color", 2}});
+        m_flare_buf = api.alloc_buffer(
+            gfx::buffers::vertex, semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);
+        m_flare_buf->alloc();
+        m_flare_vao->set_buffer(gfx::buffers::vertex, m_flare_buf, 0);
+
         for(size_t i = 0; i < m_programs.size(); i++)
             create_program(
                 api,
@@ -341,6 +461,15 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     /* Per material: this frame's visible ranges */
     std::vector<std::vector<gfx::draw_command::data_t>> m_draws;
     bool m_draw_error_logged{false};
+
+    std::shared_ptr<gfx::program_t>              m_flare_program;
+    std::shared_ptr<gfx::vertex_array_t>         m_flare_vao;
+    std::shared_ptr<gfx::buffer_t>               m_flare_buf;
+    std::vector<FlareVertex>                     m_flare_vertices;
+    std::vector<std::shared_ptr<gfx::sampler_t>> m_flare_samplers;
+    std::vector<Vecf2>                           m_flare_light;
+    std::shared_ptr<gfx::texture_2d_t>           m_depth_source;
+    std::shared_ptr<gfx::sampler_t>              m_depth_sampler;
 };
 
 void alloc_h2_renderer(compo::EntityContainer& e)

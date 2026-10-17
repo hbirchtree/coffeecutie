@@ -65,16 +65,17 @@ template<typename V>
 inline std::optional<u64> shared_key(
     dim::map_container<V> const& map,
     dim::raw_pool const&         pool,
-    dim::tag_t const&            bitm_tag)
+    dim::tag_t const&            bitm_tag,
+    size_t                       image = 0)
 {
     auto const* bitm =
         bitm_tag.template data<dim::bitm::header_t>(map.magic());
     if(!bitm)
         return std::nullopt;
     auto images = bitm->images.data(map.magic());
-    if(images.has_error() || images.value().empty())
+    if(images.has_error() || image >= images.value().size())
         return std::nullopt;
-    dim::bitm::image_t const& img = images.value()[0];
+    dim::bitm::image_t const& img = images.value()[image];
     for(int lod = 0; lod < 3; lod++)
     {
         if(!from_le(img.lod_size[lod]))
@@ -87,23 +88,24 @@ inline std::optional<u64> shared_key(
     return std::nullopt;
 }
 
-/* First image of a bitm tag with its mip chain, from whichever LOD is
+/* One image of a bitm tag with its mip chain, from whichever LOD is
  * present in the files we have */
 template<typename V>
 inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
     gfx::api&                    api,
     dim::map_container<V> const& map,
     dim::raw_pool const&         pool,
-    dim::tag_t const&            bitm_tag)
+    dim::tag_t const&            bitm_tag,
+    size_t                       image = 0)
 {
     auto const* bitm =
         bitm_tag.template data<dim::bitm::header_t>(map.magic());
     if(!bitm)
         return std::nullopt;
     auto images = bitm->images.data(map.magic());
-    if(images.has_error() || images.value().empty())
+    if(images.has_error() || image >= images.value().size())
         return std::nullopt;
-    dim::bitm::image_t const& img = images.value()[0];
+    dim::bitm::image_t const& img = images.value()[image];
     if(from_le(img.type) != blam::bitm::type_t::tex_2d)
         return std::nullopt;
     auto format = from_le(img.format);
