@@ -280,6 +280,34 @@ checked against both it and the map data.
   y -60 (blue, by the waterfall) and y -144 (red); the dam wall at x 40-48
   with the river along its foot. `H3_BSP` and `H3_EXPOSURE` help.
 
+## Sky, reflections and water
+
+- Skies: scenario +0x30, {object, name, active BSPs}; the sky object is
+  scenery modelled in world space around the level (Valhalla: dome, cloud
+  cards, distant mountains, sun). The dome is nearly black; its colour is
+  atmospheric scattering (`compute_scattering`, atmosphere.fx) with the
+  `skya` setting's precomputed betas, sun override and height scales.
+  Clusters name setting -1 on the multiplayer maps; setting 0 stands in.
+- Interleaved bitmaps: images with no hardware texture of their own share
+  `interleaved_textures` resources two at a time (interop 0x40: two data
+  references, two texture definitions); the pair's high resolution levels
+  follow each other in the secondary data. Cube faces are stored like array
+  slices, in D3D order (+X -X +Y -Y +Z -Z, +Z up in Halo's world).
+- Environment maps: `dynamic` samples the BSP's cubemaps (scenario BSP
+  +0x48; clusters list capture points with their image) as RGBM x256;
+  `per_pixel` the shader's own cube, decoded by its curve. Both are
+  weighted by the area specular, so reflections follow the baked light.
+  The game blends two cubemaps per object; the one nearest the camera
+  stands in.
+- Water (`rmw`, water_shading.fx): the scene behind is refracted by the
+  wave slopes (V8U8 array, frames of a loop) and fogged by the depth of
+  water it is seen through; a static cube reflection whose alpha separates
+  sunspot from sky (x `reflection_coefficient`, 600 on Valhalla); bank
+  alpha fades to the bed in the shallows. It needs the scene colour and
+  depth before water draws: a copy pass writes colour and distance into an
+  RGBA16F target. Not done: wave displacement and tessellation, foam,
+  ripples, underwater fog.
+
 ## BlamGraphics first pass (`cblam-testing/h3`)
 
 `H3MapLoader` takes a `MapLoadEvent` whose header is Halo 3 (version 11)
