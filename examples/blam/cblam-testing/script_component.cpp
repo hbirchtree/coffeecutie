@@ -416,6 +416,9 @@ struct BlamScript
         case op::cinematic_show_letterbox:
             p.template subsystem<CinematicState>().letterbox = arg(0).truthy();
             return {};
+        case op::cinematic_set_title:
+            set_title(p, text_of(arg(0)));
+            return {};
         case op::show_hud:
             p.template subsystem<CinematicState>().show_hud = arg(0).truthy();
             return {};
@@ -886,6 +889,37 @@ struct BlamScript
                 m_hovering.insert(id);
             stop_recording(p, id, end);
         }
+    }
+
+    /* The title's text from the scenario's cutscene title strings */
+    void set_title(Proxy& p, std::string_view name)
+    {
+        auto const* title = named(m_scenario->cutscene.titles, name);
+        auto        list  = m_tags.find(m_scenario->ui_text.cutscene_titles);
+        if(!title || !m_scenario->ui_text.cutscene_titles.valid() || list == m_tags.end())
+            return log(fmt::format("cinematic_set_title: no title {}", name));
+        auto strings = (*list).template data<blam::ui::unicode_string_list>(m_magic);
+        if(!strings.has_value())
+            return;
+        auto entries     = strings.value()->data.data(m_magic);
+        i32 const string = static_cast<i32>(title->string_index);
+        if(!entries.has_value() || string < 0 || static_cast<size_t>(string) >= entries.value().size())
+            return;
+        auto text = entries.value()[string].str(m_magic);
+        if(text.has_error())
+            return;
+        auto const& c = title->text_color;
+        p.template subsystem<CinematicState>().title = CinematicState::title_t{
+            .text     = std::u16string(text.value()),
+            .bounds   = Vecf4(title->text_bounds),
+            .align    = title->justification == blam::scn::cutscene_title::center ? .5f
+                        : title->justification == blam::scn::cutscene_title::right ? 1.f
+                                                                                   : 0.f,
+            .color    = (c.r | c.g | c.b) ? Vecf4(c.r, c.g, c.b, 255.f) / 255.f : Vecf4(1.f),
+            .fade_in  = title->fade_time / tick_rate,
+            .hold     = title->up_time / tick_rate,
+            .fade_out = title->fade_out_time / tick_rate,
+        };
     }
 
     template<typename Fn>

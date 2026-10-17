@@ -19,6 +19,7 @@ struct ScreenText : compo::SubsystemBase
         Vecf2          baseline; /*!< Where the baseline starts */
         Vecf4          color{1.f};
         f32            max_width{0.f}; /*!< Cut off past this; 0 = no limit */
+        f32            align{0.f}; /*!< Of its width left of the baseline: .5 centres */
     };
 
     std::vector<line_t> lines;

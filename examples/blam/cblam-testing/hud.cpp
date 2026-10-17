@@ -4,6 +4,7 @@
 #include "cinematic.h"
 #include "components.h"
 #include "selected_version.h"
+#include "ui.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_globals.h>
@@ -25,6 +26,7 @@ using HudManifest = compo::SubsystemManifest<
     type_list_t<
         HudScene,
         CinematicState,
+        ScreenText,
         const BlamFiles<halo_version>,
         const LoadingStatus>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
@@ -406,6 +408,24 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                      ov.sequence_index, color_of(ov.colors.default_color));
     }
 
+    /* A cutscene title, in the 640x480 space the tag places it in, centred
+     * on the window */
+    void title(Proxy& p, CinematicState::title_t& t, f32 dt, Vecf2 window)
+    {
+        t.elapsed += dt;
+        f32 const   scale = window.y / HudScene::height;
+        f32 const   left  = window.x * .5f - 320.f * scale;
+        f32 const   x     = glm::mix(t.bounds.y, t.bounds.w, t.align);
+        Vecf4       color = t.color;
+        color.a *= t.opacity();
+        p.template subsystem<ScreenText>().lines.push_back({
+            .text     = t.text,
+            .baseline = {left + x * scale, (t.bounds.x + t.bounds.z) * .5f * scale},
+            .color    = color,
+            .align    = t.align,
+        });
+    }
+
     /* ---- Frame ---- */
 
     void start_restricted(Proxy& p, time_point const& t)
@@ -423,6 +443,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             scene.letterbox + (cinematic.letterbox ? dt : -dt) / letterbox_seconds * letterbox_height,
             0.f,
             letterbox_height);
+        if(auto* fb = p.template service<comp_app::GraphicsFramebuffer>(); fb && cinematic.title)
+            title(p, *cinematic.title, dt, Vecf2(fb->size().w, fb->size().h));
+        if(cinematic.title && cinematic.title->opacity() <= 0.f &&
+           cinematic.title->elapsed > cinematic.title->fade_in)
+            cinematic.title.reset();
         auto const& files   = p.template subsystem<BlamFiles<halo_version>>();
         auto const& loading = p.template subsystem<LoadingStatus>();
         if(loading.loaded_map != LoadingStatus::loaded ||
