@@ -20,7 +20,7 @@
 namespace h2 {
 
 using H2RendererManifest = compo::SubsystemManifest<
-    compo::type_list_t<const PlayerCamera, const PlayerInfo>,
+    compo::type_list_t<const PlayerCamera, const PlayerInfo, const Model>,
     compo::type_list_t<
         const H2Scene,
         const H2Visibility,
@@ -91,13 +91,19 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     continue;
                 auto& draws = m_draws[mi];
                 draws.clear();
+                m_moving.clear();
                 for(auto const& d : mat.section_draws)
-                    if(vis.draw_visible(d.tag, scene.sections))
+                    if(!vis.draw_visible(d.tag, scene.sections))
+                        continue;
+                    else if(d.tag.object >= 0)
+                        m_moving.push_back(d);
+                    else
                         draws.push_back(d.cmd);
                 draws_total += mat.section_draws.size();
-                draws_visible += draws.size();
-                if(draws.empty())
+                draws_visible += draws.size() + m_moving.size();
+                if(draws.empty() && m_moving.empty())
                     continue;
+                Matf4 model_matrix{1.f};
                 Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
                 Vecf3 const& eye = camera->camera.position;
                 f32   scale  = mat.sky ? scene.sky_scale : 1.f;
@@ -106,6 +112,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Matf4 const>{
                         {"camera"},
                         semantic::SpanOne<const Matf4>(camera->matrix)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"model"}, semantic::SpanOne<const Matf4>(model_matrix)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"uv_scale"},
                         semantic::SpanOne<const Vecf2>(mat.uv_scale)},
@@ -213,33 +221,49 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         {"env", 7},
                         mat.env_sampler ? mat.env_sampler : m_black_cube_sampler,
                     });
-                auto res = m_api->submit(
+                auto submit = [&](std::vector<gfx::draw_command::data_t> const& data) {
+                    auto res = m_api->submit(
+                        {
+                            .program = m_programs[static_cast<size_t>(mat.variant)],
+                            .vertices      = m_vao,
+                            .render_target = resources.offscreen,
+                            .call          = {.indexed = true, .instanced = true},
+                            .data          = data,
+                        },
+                        vert_u,
+                        frag_u,
+                        samplers,
+                        gfx::view_state{
+                            .view = typing::vector_types::Veci4{
+                                0,
+                                0,
+                                resources.offscreen_size.x,
+                                resources.offscreen_size.y},
+                            .depth = gfx::depth_state{.reversed = true},
+                        },
+                        gfx::depth_extended_state{
+                            .depth_write = !mat.sky && !mat.water && !mat.additive &&
+                                           !mat.blended},
+                        gfx::blend_state{.additive = mat.additive});
+                    if(res.has_value() && !m_draw_error_logged)
                     {
-                        .program       = m_programs[static_cast<size_t>(mat.variant)],
-                        .vertices      = m_vao,
-                        .render_target = resources.offscreen,
-                        .call          = {.indexed = true, .instanced = true},
-                        .data          = draws,
-                    },
-                    vert_u,
-                    frag_u,
-                    samplers,
-                    gfx::view_state{
-                        .view = typing::vector_types::Veci4{
-                            0,
-                            0,
-                            resources.offscreen_size.x,
-                            resources.offscreen_size.y},
-                        .depth = gfx::depth_state{.reversed = true},
-                    },
-                    gfx::depth_extended_state{
-                        .depth_write =
-                            !mat.sky && !mat.water && !mat.additive && !mat.blended},
-                    gfx::blend_state{.additive = mat.additive});
-                if(res.has_value() && !m_draw_error_logged)
+                        cWarning("H2: failed to draw: {}", std::get<1>(*res));
+                        m_draw_error_logged = true;
+                    }
+                };
+                if(!draws.empty())
+                    submit(draws);
+                for(auto const& d : m_moving)
                 {
-                    cWarning("H2: failed to draw: {}", std::get<1>(*res));
-                    m_draw_error_logged = true;
+                    auto idx = static_cast<size_t>(d.tag.object);
+                    if(idx >= scene.moving_objects.size())
+                        continue;
+                    auto const* model = p.template get<Model>(scene.moving_objects[idx]);
+                    if(!model)
+                        continue;
+                    model_matrix = model->transform;
+                    m_single.assign(1, d.cmd);
+                    submit(m_single);
                 }
             }
         draw_flares(scene, *camera, resources);
@@ -487,6 +511,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     std::shared_ptr<gfx::sampler_t>             m_no_lightmaps_sampler;
     /* Per material: this frame's visible ranges */
     std::vector<std::vector<gfx::draw_command::data_t>> m_draws;
+    std::vector<Material::draw_t>                       m_moving;
+    std::vector<gfx::draw_command::data_t>              m_single;
     bool m_draw_error_logged{false};
 
     std::shared_ptr<gfx::program_t>              m_flare_program;
