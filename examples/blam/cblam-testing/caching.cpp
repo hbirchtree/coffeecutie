@@ -854,11 +854,143 @@ blam::antr::animation const* ModelCache<V>::find_animation(
         return nullptr;
 
     auto const& anim = anims[layer.animation];
-    if(anim.is_compressed() || anim.frame_count <= 0 || anim.frame_size < 0)
+    if(anim.frame_count <= 0 || anim.frame_size < 0)
         return nullptr;
 
     return &anim;
 }
+
+namespace {
+
+/* 48-bit rotation: x, y, z, w as 12-bit ones' complement, high to low */
+Quatf quat48(byte_t const* at)
+{
+    u16 words[3];
+    std::memcpy(words, at, sizeof(words));
+    u64 const bits = u64(words[2]) | (u64(words[1]) << 16) | (u64(words[0]) << 32);
+    auto part = [bits](u32 shift) {
+        i32 const v = static_cast<i32>((bits >> shift) & 0xfff);
+        return static_cast<f32>(v & 0x800 ? v - 4095 : v);
+    };
+    Quatf const q(part(0), part(36), part(24), part(12));
+    f32 const   length = glm::length(q);
+    return length > 0.f ? q / length : Quatf(1, 0, 0, 0);
+}
+
+Vecf3 vec3_at(byte_t const* at)
+{
+    Vecf3 out;
+    std::memcpy(&out, at, sizeof(out));
+    return out;
+}
+
+Quatf nlerp(Quatf const& a, Quatf b, f32 t)
+{
+    if(glm::dot(a, b) < 0.f)
+        b = -b;
+    return glm::normalize(a * (1.f - t) + b * t);
+}
+
+/* One channel of a compressed clip: per-node keyframe heads (count:12,
+ * first:20), the frame of each keyframe, a default per node, and values */
+struct compressed_stream_t
+{
+    u32 heads, frames, defaults, values, end;
+};
+
+/* A node's channel at `frame`: its default before keyframes take over,
+ * blended between the keyframes around the frame, held after the last */
+template<typename T, typename Decode, typename Mix>
+T sample_channel(
+    semantic::Span<const byte_t> block,
+    compressed_stream_t const&   stream,
+    i32                          track,
+    T const&                     fallback,
+    u32                          frame,
+    u32                          size,
+    Decode&&                     decode,
+    Mix&&                        mix)
+{
+    auto fits = [&block](size_t at, size_t bytes) { return at + bytes <= block.size(); };
+    size_t const head_at = stream.heads + 4u * static_cast<u32>(track);
+    if(track < 0 || frame == 0 || !fits(head_at, 4))
+        return fallback;
+    u32 head;
+    std::memcpy(&head, block.data() + head_at, 4);
+    u32 const count = head & 0xfff, first = head >> 12;
+    if(count == 0 || !fits(stream.frames + 2u * (first + count), 0) ||
+       !fits(stream.values + size * (first + count), 0))
+        return fallback;
+    auto key = [&](u32 i) {
+        u16 v;
+        std::memcpy(&v, block.data() + stream.frames + 2u * (first + i), 2);
+        return static_cast<u32>(v);
+    };
+    auto value = [&](u32 i) { return decode(block.data() + stream.values + size * (first + i)); };
+    if(frame < key(0))
+        return mix(fallback, value(0), static_cast<f32>(frame) / static_cast<f32>(key(0)));
+    if(frame >= key(count - 1))
+        return value(count - 1);
+    u32 i = 0;
+    while(i + 2 < count && key(i + 1) <= frame)
+        i++;
+    u32 const a = key(i), b = key(i + 1);
+    return mix(value(i), value(i + 1), static_cast<f32>(frame - a) / static_cast<f32>(b - a));
+}
+
+/* Cutscene clips: keyframed channels in a block of frame_data at
+ * compressed_data_offset, led by the offsets of their streams */
+bool sample_compressed(
+    blam::antr::animation const& anim,
+    semantic::Span<const byte_t> frame_bytes,
+    u32                          frame,
+    u32                          node_count,
+    std::vector<Quatf>&          rot,
+    std::vector<Vecf3>&          trans)
+{
+    constexpr u32 header_size = 44;
+    auto const    offset      = static_cast<size_t>(anim.compressed_data_offset);
+    if(anim.compressed_data_offset < 0 || offset + header_size > frame_bytes.size())
+        return false;
+    auto const block = frame_bytes.subspan(offset);
+    u32        h[11];
+    std::memcpy(h, block.data(), sizeof(h));
+    auto const size = static_cast<u32>(block.size());
+    compressed_stream_t const rotation{header_size, h[0], h[1], h[2], h[3]};
+    compressed_stream_t const translation{h[3], h[4], h[5], h[6], h[7]};
+    if(rotation.defaults + 6u * node_count > size || translation.defaults + 12u * node_count > size)
+        return false;
+
+    rot.assign(node_count, Quatf(1, 0, 0, 0));
+    trans.assign(node_count, Vecf3(0));
+    i32 rotated = 0, moved = 0;
+    for(u32 i = 0; i < node_count; i++)
+    {
+        rot[i] = sample_channel(
+            block,
+            rotation,
+            anim.has_rotation(i) ? rotated++ : -1,
+            quat48(block.data() + rotation.defaults + 6u * i),
+            frame,
+            6,
+            quat48,
+            nlerp);
+        trans[i] = sample_channel(
+            block,
+            translation,
+            anim.has_translation(i) ? moved++ : -1,
+            vec3_at(block.data() + translation.defaults + 12u * i),
+            frame,
+            12,
+            vec3_at,
+            [](Vecf3 const& a, Vecf3 const& b, f32 t) { return glm::mix(a, b, t); });
+    }
+    for(auto& q : rot)
+        q = glm::conjugate(q);
+    return true;
+}
+
+} // namespace
 
 /* Decodes one animation's node channels at `frame` into node-local TRS.
  * Interleaved BY NODE: each emits [rotation 8B][translation 12B][scale 4B],
@@ -875,6 +1007,9 @@ bool ModelCache<V>::sample_animation(
 {
     auto default_bytes_opt = anim.default_data.data(magic);
     auto frame_bytes_opt   = anim.frame_data.data(magic);
+    if(anim.is_compressed())
+        return frame_bytes_opt.has_value() &&
+               sample_compressed(anim, frame_bytes_opt.value(), frame, node_count, rot, trans);
     if(!default_bytes_opt.has_value() ||
        (!frame_bytes_opt.has_value() && anim.frame_size > 0))
         return false;
