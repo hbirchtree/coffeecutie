@@ -191,7 +191,6 @@ struct Material
     /*! water_static and its edge blend: bump in `texture`, sky in `detail`,
      * the edge fade in `mask` */
     bool                                   ocean{false};
-    bool                                   edge_blend{false}; /*!< fades in out at sea */
     bool                                   water_fan{false};  /*!< laid out around the camera */
     /*! plasma_alpha: noise A in `texture`, noise B in `detail`, shape in
      * `mask`; the pixel constants ramp it from dim to bright */

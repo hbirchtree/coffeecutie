@@ -2874,7 +2874,6 @@ struct H2MapLoader : compo::SubsystemBase
         auto const*                              src = &base;
         if(base.template_name == "water_edge_blend")
         {
-            mat.edge_blend = true;
             if(!base.slot_bitmaps.empty())
                 if(auto t = texture_for(map, pool, base.slot_bitmaps[0]))
                     mat.mask = *t;
