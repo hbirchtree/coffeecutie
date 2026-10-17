@@ -74,7 +74,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         i32 const debug_off = (params.render_fog ? 0 : 1) | (params.render_reflection ? 0 : 2) |
                               (params.render_lightmaps ? 0 : 4);
         i32 light_count = 0;
-        f32 const    exposure  = adapt_exposure(scene, camera->camera.position);
+        f32 const    exposure  = adapt_exposure(scene, camera->camera.position, now);
         auto const   cubes        = nearest_cubemaps(scene, camera->camera.position);
         auto const&  dynamic_cube = cubes.first;
         Vecf3 const  offset{};
@@ -693,8 +693,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         return {first, scene.cubemaps[found[1]].sampler, best[0] / std::max(best[0] + best[1], 1e-4f)};
     }
 
-    /* Auto exposure: moves a little towards the camera's target each frame */
-    f32 adapt_exposure(H3Scene const& scene, Vecf3 const& eye)
+    /* Auto exposure: eases towards the camera's target over a second or
+     * two. The target is the baked light around the camera, a few metres
+     * across so single lightmap texels don't make it flicker, and is
+     * refreshed a few times a second as it scans the lightmapped triangles */
+    f32 adapt_exposure(H3Scene const& scene, Vecf3 const& eye, time_point const& now)
     {
         if(!scene.auto_exposure.enabled)
             return scene.exposure;
@@ -702,13 +705,29 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         {
             m_exposure_generation = scene.generation;
             m_stops               = std::log2(scene.exposure);
+            m_target_stops.reset();
+            m_exposure_time = now;
+            m_target_time   = {};
         }
-        if(auto light = scene.light_below(eye))
+        if(now - m_target_time >= std::chrono::milliseconds(250))
         {
-            f32 target = scene.auto_exposure.stops_for(glm::dot(
-                diffuse_radiance(*light, Vecf3(0.f, 0.f, 1.f)), Vecf3(0.2126f, 0.7152f, 0.0722f)));
-            m_stops += (target - m_stops) * 0.1f;
+            m_target_time = now;
+            f32 luminance = 0.f;
+            u32 samples   = 0;
+            for(Vecf2 const offset : {Vecf2(0.f), Vecf2(2.f, 0.f), Vecf2(-2.f, 0.f), Vecf2(0.f, 2.f), Vecf2(0.f, -2.f)})
+                if(auto light = scene.light_below(eye + Vecf3(offset, 0.f)))
+                {
+                    luminance += glm::dot(
+                        diffuse_radiance(*light, Vecf3(0.f, 0.f, 1.f)), Vecf3(0.2126f, 0.7152f, 0.0722f));
+                    samples++;
+                }
+            if(samples)
+                m_target_stops = scene.auto_exposure.stops_for(luminance / static_cast<f32>(samples));
         }
+        f32 const dt = std::clamp(std::chrono::duration<f32>(now - m_exposure_time).count(), 0.f, .25f);
+        m_exposure_time = now;
+        if(m_target_stops)
+            m_stops += (*m_target_stops - m_stops) * (1.f - std::exp(-dt / exposure_time_constant));
         return std::exp2(m_stops);
     }
 
@@ -827,6 +846,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     time_point                                  m_start{};
     std::shared_ptr<gfx::sampler_t>             m_black_cube_sampler;
     f32                                         m_stops{0.f};
+    std::optional<f32>                          m_target_stops;
+    time_point                                  m_exposure_time{};
+    time_point                                  m_target_time{};
+    static constexpr f32                        exposure_time_constant = 1.5f; /*!< Seconds */
     u32                                         m_exposure_generation{~0u};
     bool                                        m_draw_error_logged{false};
     static constexpr size_t                     max_lights = 8;
