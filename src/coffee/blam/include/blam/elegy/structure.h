@@ -406,11 +406,25 @@ struct scenario_t
     std::array<u8, 0x80>             unknown_1;
     tag_block<scenery_placement_t>   scenery;
     tag_block<palette_entry_t>       scenery_palette;
-    std::array<u8, 0x180>            unknown_2;
+    tag_block<biped_placement_t>     bipeds;
+    tag_block<palette_entry_t>       biped_palette;
+    tag_block<vehicle_placement_t>   vehicles;
+    tag_block<palette_entry_t>       vehicle_palette;
+    tag_block<equipment_placement_t> equipment;
+    tag_block<palette_entry_t>       equipment_palette;
+    tag_block<weapon_placement_t>    weapons;
+    tag_block<palette_entry_t>       weapon_palette;
+    std::array<u8, 0xC>              unknown_5;
+    tag_block<machine_placement_t>   machines;
+    tag_block<palette_entry_t>       machine_palette;
+    std::array<u8, 0xFC>             unknown_6;
     tag_block<starting_location_t>   starting_locations;
     std::array<u8, 0x2A4>            unknown_3;
     tag_block<camera_fx_palette_t>   camera_fx;
-    std::array<u8, 0x1A0>            unknown_4;
+    std::array<u8, 0xD8>             unknown_4;
+    tag_block<crate_placement_t>     crates;
+    tag_block<palette_entry_t>       crate_palette;
+    std::array<u8, 0xB0>             unknown_7;
     tag_reference                    camera_effects; /*!< cfxs where no cluster names one */
 };
 
@@ -418,7 +432,12 @@ static_assert(offsetof(scenario_t, bsps) == 0x14);
 static_assert(offsetof(scenario_t, skies) == 0x30);
 static_assert(offsetof(scenario_t, scenery) == 0xBC);
 static_assert(offsetof(scenario_t, scenery_palette) == 0xC8);
+static_assert(offsetof(scenario_t, bipeds) == 0xD4);
+static_assert(offsetof(scenario_t, vehicles) == 0xEC);
+static_assert(offsetof(scenario_t, weapons) == 0x11C);
+static_assert(offsetof(scenario_t, machines) == 0x140);
 static_assert(offsetof(scenario_t, starting_locations) == 0x254);
+static_assert(offsetof(scenario_t, crates) == 0x5E8);
 static_assert(offsetof(scenario_t, camera_fx) == 0x504);
 static_assert(offsetof(scenario_t, camera_effects) == 0x6B0);
 

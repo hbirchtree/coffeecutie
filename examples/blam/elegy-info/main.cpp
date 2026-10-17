@@ -6,6 +6,7 @@
 
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/collision.h>
+#include <blam/elegy/physics.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
 #if defined(OAF_XMA2_DECODER_ENABLED)
@@ -45,6 +46,7 @@ struct options_t
     bool        bitmaps;
     bool        sounds;
     bool        collision;
+    bool        objects;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -1000,6 +1002,127 @@ u32 write_collision(
     return polygons;
 }
 
+/* A palette entry's physics model: its rigid bodies and their shapes */
+void print_physics(elegy::map_container const& map, elegy::tag_reference const& object_ref)
+{
+    using namespace elegy::phys;
+    auto        magic      = map.magic();
+    auto const* object_tag = map.tag_at(object_ref.id);
+    auto const* object = object_tag ? map.tag_data<elegy::object_t>(*object_tag) : nullptr;
+    auto const* model_tag = object ? map.tag_at(object->model.id) : nullptr;
+    auto const* model = model_tag ? map.tag_data<elegy::model_t>(*model_tag) : nullptr;
+    auto const* phmo_tag = model ? map.tag_at(model->physics_model.id) : nullptr;
+    auto const* phmo = phmo_tag ? map.tag_data<physics_model_t>(*phmo_tag) : nullptr;
+    if(!phmo)
+    {
+        fmt::print("    no physics model\n");
+        return;
+    }
+    auto const* globals_tag = map.find("matg");
+    auto const* globals = globals_tag ? map.tag_data<globals_t>(*globals_tag) : nullptr;
+    auto global_materials = globals ? globals->materials.data(magic).value_or(
+                                          Span<global_material_t const>())
+                                    : Span<global_material_t const>();
+    auto materials = phmo->materials.data(magic).value_or(Span<material_t const>());
+    fmt::print("    {} mass {}\n", map.name_of(*phmo_tag), phmo->mass.value());
+    for(auto const& body : phmo->rigid_bodies.data(magic).value_or(Span<rigid_body_t const>()))
+    {
+        auto hulls  = hulls_of(*phmo, magic, body);
+        u32  points = 0;
+        for(auto const& hull : hulls)
+            points += static_cast<u32>(hull.points.size());
+        fmt::print(
+            "      body node {} region {} permutation {} motion {} mass {} shape {}:{} -> {} hulls, {} points\n",
+            body.node.value(),
+            body.region.value(),
+            body.permutation.value(),
+            static_cast<int>(body.motion_type.value()),
+            body.mass.value(),
+            body.shape_type.value(),
+            body.shape_index.value(),
+            hulls.size(),
+            points);
+        if(body.shape_type.value() == static_cast<i16>(shape_type_t::list))
+            for(auto const& child : phmo->list_shapes.data(magic).value_or(Span<list_shape_t const>()))
+                fmt::print("        list shape {}:{}\n", child.type.value(), child.index.value());
+        for(auto const& hull : hulls)
+        {
+            auto const* material = hull.material >= 0 && static_cast<size_t>(hull.material) < materials.size()
+                                       ? &materials[static_cast<size_t>(hull.material)]
+                                       : nullptr;
+            global_material_t const* global = nullptr;
+            for(auto const& g : global_materials)
+                if(material && g.name.raw.value() == material->global_material.raw.value())
+                    global = &g;
+            Vecf3 lo(1e9f), hi(-1e9f);
+            for(auto const& p : hull.points)
+                lo = glm::min(lo, p), hi = glm::max(hi, p);
+            fmt::print(
+                "        {} points ({:.3f}, {:.3f}, {:.3f})..({:.3f}, {:.3f}, {:.3f}) "
+                "friction {} restitution {} mass {}; material {} -> {} (friction {}, "
+                "restitution {}, density {})\n",
+                hull.points.size(),
+                lo.x, lo.y, lo.z, hi.x, hi.y, hi.z,
+                hull.friction,
+                hull.restitution,
+                hull.mass,
+                material ? map.string(material->name) : "?",
+                material ? map.string(material->global_material) : "?",
+                global ? global->friction.value() : -1.f,
+                global ? global->restitution.value() : -1.f,
+                global ? global->density.value() : -1.f);
+        }
+    }
+}
+
+/* Objects placed in the scenario, by type, with their physics models */
+int dump_objects(elegy::map_container const& map, options_t const& options)
+{
+    auto        magic        = map.magic();
+    auto const* scenario_tag = map.find("scnr");
+    auto const* scenario = scenario_tag ? map.tag_data<elegy::scenario_t>(*scenario_tag) : nullptr;
+    if(!scenario)
+        return 1;
+    auto list = [&](std::string_view kind, auto const& placements, auto const& palette_block) {
+        using P      = typename std::decay_t<decltype(placements)>::value_type;
+        auto items   = placements.data(magic).value_or(Span<P const>());
+        auto palette = palette_block.data(magic).value_or(Span<elegy::palette_entry_t const>());
+        fmt::print("{}: {} placed, {} in the palette\n", kind, items.size(), palette.size());
+        for(size_t i = 0; i < palette.size(); i++)
+        {
+            auto const* tag = map.tag_at(palette[i].object.id);
+            if(!tag || map.name_of(*tag).find(options.name_filter) == std::string_view::npos)
+                continue;
+            u32 count = 0;
+            for(auto const& item : items)
+                count += item.object.palette.value() == static_cast<i16>(i);
+            fmt::print("  {} [{}] x{}\n", map.name_of(*tag), map.group_of(*tag)->group.str(), count);
+            for(auto const& item : items)
+                if(item.object.palette.value() == static_cast<i16>(i))
+                {
+                    Vecf3 const at = item.object.position.value();
+                    fmt::print(
+                        "    at ({:.2f}, {:.2f}, {:.2f}) bsp {} flags {:#x} placement {:#x}\n",
+                        at.x,
+                        at.y,
+                        at.z,
+                        item.object.origin_bsp.value(),
+                        item.object.bsp_flags.value(),
+                        static_cast<u32>(item.object.placement_flags.value()));
+                }
+            print_physics(map, palette[i].object);
+        }
+    };
+    list("scenery", scenario->scenery, scenario->scenery_palette);
+    list("bipeds", scenario->bipeds, scenario->biped_palette);
+    list("vehicles", scenario->vehicles, scenario->vehicle_palette);
+    list("equipment", scenario->equipment, scenario->equipment_palette);
+    list("weapons", scenario->weapons, scenario->weapon_palette);
+    list("machines", scenario->machines, scenario->machine_palette);
+    list("crates", scenario->crates, scenario->crate_palette);
+    return 0;
+}
+
 int dump_collision(
     elegy::map_container const& map,
     elegy::resource_loader&     loader,
@@ -1225,6 +1348,8 @@ int run_map(
         rc |= dump_sounds(map, *loader, options);
     if(options.collision)
         rc |= dump_collision(map, *loader, options, obj.get());
+    if(options.objects)
+        rc |= dump_objects(map, options);
     return rc;
 }
 
@@ -1256,6 +1381,8 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("collision",
          "Check BSP collision and portals; with --obj, write the collision polygons")
+        //
+        ("objects", "List placed objects by type, with their physics models")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1301,6 +1428,7 @@ i32 coffee_main(i32, cstring_w*)
         .bitmaps      = arguments.count("bitmaps") > 0,
         .sounds       = arguments.count("sounds") > 0,
         .collision    = arguments.count("collision") > 0,
+        .objects      = arguments.count("objects") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),
