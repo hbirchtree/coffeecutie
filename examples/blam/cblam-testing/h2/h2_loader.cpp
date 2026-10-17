@@ -80,6 +80,16 @@ struct ExternalLighting
     Span<u8 const>             rgb; /*!< 3 per vertex */
 };
 
+/* An object with a physics body: physics moves its Model */
+static const auto moving_recipe = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<Model>(),
+            compo::type_hash_v<ObjectPhysics>(),
+        },
+    .tags = ObjectGC,
+};
+
 struct SectionStreams
 {
     geo::resource_t const* index{nullptr};
@@ -516,6 +526,7 @@ struct H2MapLoader : compo::SubsystemBase
         m_scene.sections.clear();
         m_scene.switches.clear();
         m_scene.materials.clear();
+        m_scene.moving_objects.clear();
         m_scene.lightmap_tex.reset();
         m_scene.lightmap_sampler.reset();
         m_scene.start_section = 0;
@@ -2113,6 +2124,179 @@ struct H2MapLoader : compo::SubsystemBase
         return out;
     }
 
+    /* One convex hull per collision BSP of a collision model, posed by the
+     * render model's nodes */
+    template<typename V>
+    static void append_hulls(
+        dim::map_container<V> const&        map,
+        dim::obj::coll::model_t const&      coll,
+        Matf4 const&                        transform,
+        std::vector<Matf4> const&           node_world,
+        std::unordered_map<u32, i16> const* permutations,
+        CollisionGeometry&                  out)
+    {
+        auto regions = coll.regions.data(map.magic());
+        if(regions.has_error())
+            return;
+        for(auto const& region : regions.value())
+        {
+            auto perms = region.permutations.data(map.magic());
+            if(perms.has_error() || perms.value().empty())
+                continue;
+            auto bsps = perms.value()[permutation_of(
+                                          permutations, region.name, perms.value().size())]
+                            .bsps.data(map.magic());
+            if(bsps.has_error())
+                continue;
+            for(auto const& ref : bsps.value())
+            {
+                Matf4 local = transform;
+                i16   node  = ref.node.value();
+                if(node >= 0 && static_cast<size_t>(node) < node_world.size())
+                    local = transform * node_world[node];
+                auto vertices = ref.bsp.vertices.data(map.magic());
+                if(vertices.has_error())
+                    continue;
+                CollisionGeometry::node_t hull;
+                for(auto const& v : vertices.value())
+                {
+                    Vecf3 point{
+                        from_le(v.point[0]), from_le(v.point[1]), from_le(v.point[2])};
+                    if(std::isfinite(point.x) && std::isfinite(point.y) &&
+                       std::isfinite(point.z))
+                        hull.points.push_back(Vecf3(local * Vecf4(point, 1.f)));
+                }
+                if(hull.points.size() >= 4)
+                    out.nodes.push_back(std::move(hull));
+            }
+        }
+    }
+
+    /* Objects whose physics model has a body that is not fixed, and mass:
+     * hulls from the collision model, the material from the shapes */
+    template<typename V>
+    std::optional<ObjectPhysics> moving_physics(
+        dim::map_container<V> const&        map,
+        dim::tag_reference<> const&         object,
+        f32                                 scale,
+        std::unordered_map<u32, i16> const* permutations)
+    {
+        auto const* obje_tag = map.tag_at(object.tag_id);
+        auto const* obje =
+            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic())
+                     : nullptr;
+        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
+        auto const* hlmt =
+            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
+                     : nullptr;
+        /* Devices move as they are animated, never freely */
+        if(!hlmt || obje_tag->matches("mach") || obje_tag->matches("ctrl") ||
+           obje_tag->matches("lifi"))
+            return std::nullopt;
+        auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id);
+        auto const* model =
+            mode_tag ? mode_tag->template data<geo::model_header_t>(map.magic())
+                     : nullptr;
+        auto const* phmo_tag = map.tag_at(hlmt->physics_model.tag_id);
+        auto const* phmo =
+            phmo_tag ? phmo_tag->template data<dim::obj::phmo::model_t>(map.magic())
+                     : nullptr;
+        bool moves = false;
+        f32  mass  = phmo ? from_le(phmo->mass) : 0.f;
+        f32  sum   = 0.f;
+        if(phmo)
+            if(auto bodies = phmo->rigid_bodies.data(map.magic()); !bodies.has_error())
+                for(auto const& body : bodies.value())
+                {
+                    /* Fixed and keyframed (swaying foliage) bodies stay put */
+                    using motion = dim::obj::phmo::motion_type_t;
+                    auto const m = body.motion_type();
+                    moves |= m != motion::fixed && m != motion::keyframed;
+                    sum += from_le(body.mass);
+                }
+        if(mass <= 0.f)
+            mass = sum;
+        /* Weapons, equipment and debris without a physics model are light
+         * boxes, as in Halo 1 */
+        bool const item = obje_tag->matches("weap") || obje_tag->matches("eqip") ||
+                          obje_tag->matches("garb");
+        if(!(moves && mass > 0.f) && !item)
+            return std::nullopt;
+        if(!(moves && mass > 0.f))
+        {
+            if(!model)
+                return std::nullopt;
+            auto bounds = model->bounds.data(map.magic());
+            if(bounds.has_error() || bounds.value().empty())
+                return std::nullopt;
+            auto const& b  = bounds.value()[0];
+            Vecf3 const lo = Vecf3{from_le(b.x_min), from_le(b.y_min), from_le(b.z_min)} * scale;
+            Vecf3 const hi = Vecf3{from_le(b.x_max), from_le(b.y_max), from_le(b.z_max)} * scale;
+            return ObjectPhysics{
+                .half_extents = glm::max((hi - lo) * .5f, Vecf3(.05f)),
+                .center       = (hi + lo) * .5f,
+                .mass         = 1.f,
+                .item         = true,
+            };
+        }
+
+        ObjectPhysics out{.mass = mass};
+        f32 friction = 0.f, restitution = 0.f;
+        u32 shapes   = 0;
+        auto material = [&](auto const& block) {
+            if(auto data = block.data(map.magic()); !data.has_error())
+                for(auto const& s : data.value())
+                {
+                    friction += from_le(s.friction);
+                    restitution += from_le(s.restitution);
+                    shapes++;
+                }
+        };
+        material(phmo->spheres);
+        material(phmo->pills);
+        material(phmo->boxes);
+        if(shapes)
+        {
+            out.friction    = friction / static_cast<f32>(shapes);
+            out.restitution = restitution / static_cast<f32>(shapes);
+        }
+
+        /* One hull per collision BSP, posed by the render model's nodes */
+        auto const* coll_tag = map.tag_at(hlmt->collision_model.tag_id);
+        auto const* coll =
+            coll_tag ? coll_tag->template data<dim::obj::coll::model_t>(map.magic())
+                     : nullptr;
+        std::vector<Matf4> node_world;
+        if(model)
+            node_world = model_nodes(map, *model);
+        Matf4 const scaled = glm::scale(Matf4(1.f), Vecf3(scale));
+        auto        hulls  = std::make_shared<CollisionGeometry>();
+        if(coll)
+            append_hulls(map, *coll, scaled, node_world, permutations, *hulls);
+        /* Bipeds stand, light enough to carry about, as in Halo 1 */
+        if(obje_tag->matches("bipd"))
+        {
+            out.mass    = 1.f;
+            out.upright = true;
+        }
+        if(!hulls->nodes.empty())
+            out.collision = std::move(hulls);
+        else if(model)
+        {
+            /* No collision model: the render model's bounds */
+            auto bounds = model->bounds.data(map.magic());
+            if(bounds.has_error() || bounds.value().empty())
+                return std::nullopt;
+            auto const& b  = bounds.value()[0];
+            Vecf3 const lo = Vecf3{from_le(b.x_min), from_le(b.y_min), from_le(b.z_min)} * scale;
+            Vecf3 const hi = Vecf3{from_le(b.x_max), from_le(b.y_max), from_le(b.z_max)} * scale;
+            out.half_extents = glm::max((hi - lo) * .5f, Vecf3(.05f));
+            out.center       = (hi + lo) * .5f;
+        } else
+            return std::nullopt;
+        return out;
+    }
+
     /* Every placement block of the scenario, then the multiplayer item and
      * vehicle spawns */
     template<typename V>
@@ -2131,7 +2315,8 @@ struct H2MapLoader : compo::SubsystemBase
                          i32                       bsp,
                          i32                       origin_bsp,
                          u32                       unique_id,
-                         dim::string_id            variant) {
+                         dim::string_id            variant,
+                         bool                      collides = true) {
             Vecf3 pos{from_le(position[0]), from_le(position[1]), from_le(position[2])};
             /* Radians on disk (Assembly's "degree3" is a display unit);
              * same yaw/pitch/roll order as the Halo 1 spawns */
@@ -2144,18 +2329,29 @@ struct H2MapLoader : compo::SubsystemBase
                               glm::scale(Matf4(1.f), Vecf3(scale));
             DrawTag tag = object_tag(pos, bsp, origin_bsp);
             std::unordered_map<u32, i16> permutations;
+            std::optional<ObjectPhysics> physics;
             if(object)
             {
                 permutations = variant_permutations(map, *object, variant);
                 if(!permutations.empty())
                     varied_objects++;
+                physics = moving_physics(map, *object, scale, &permutations);
+            }
+            /* Moving objects keep their geometry in object space and their
+             * collision on their own body */
+            if(physics)
+            {
+                transform    = glm::scale(Matf4(1.f), Vecf3(scale));
+                tag.object   = static_cast<i32>(m_scene.moving_objects.size());
+                tag.cluster  = -1;
+                tag.instance = -1;
+            } else if(object && collides)
                 if(u32 n = append_object_collision(
                        map, *object, transform, bsp, &permutations))
                 {
                     collision_triangles += n;
                     collision_objects++;
                 }
-            }
             /* The ltmp of the BSP the object was lit in knows it by id */
             SceneryLight const* lighting = nullptr;
             LightBucket const*  bucket   = nullptr;
@@ -2182,7 +2378,17 @@ struct H2MapLoader : compo::SubsystemBase
                                     bucket,
                                     &permutations) > 0;
             if(placed && !lighting)
-                light_from_below(first, Vecf3(transform[3]));
+                light_from_below(first, pos);
+            if(placed && physics)
+            {
+                auto  ref   = m_container.create_entity(moving_recipe);
+                auto& model = ref.template get<Model>();
+                model.position = pos;
+                model.rotation = q;
+                model.update_matrix();
+                ref.template get<ObjectPhysics>() = std::move(*physics);
+                m_scene.moving_objects.push_back(ref.id());
+            }
             return placed;
         };
 
@@ -2255,17 +2461,19 @@ struct H2MapLoader : compo::SubsystemBase
                         variant  = perms.value()[0].variant_name;
                         mode_tag = render_model_of(map, *item);
                     }
-                /* Pickups: drawn with their variant, never collided with */
+                /* Pickups: drawn with their variant; only those with a
+                 * physics body collide */
                 if(mode_tag && place(
                                    mode_tag,
-                                   nullptr,
+                                   item,
                                    spawn.position,
                                    spawn.orientation,
                                    1.f,
                                    -1,
                                    -1,
                                    0,
-                                   variant))
+                                   variant,
+                                   false))
                     placed++;
                 else
                     skipped++;
@@ -2275,7 +2483,7 @@ struct H2MapLoader : compo::SubsystemBase
         cDebug(
             "H2: {} of {} objects resolved to a cluster; {} contribute {} "
             "collision triangles; {} lit per vertex, {} from the lightmap "
-            "below, {} unlit; {} with a variant",
+            "below, {} unlit; {} with a variant; {} move",
             m_objects_clustered,
             m_objects_total,
             collision_objects,
@@ -2283,7 +2491,8 @@ struct H2MapLoader : compo::SubsystemBase
             lit_objects,
             m_below_lit_objects,
             m_unlit_objects,
-            varied_objects);
+            varied_objects,
+            m_scene.moving_objects.size());
     }
 
     /* The first sky's model, kept around the camera; scaled into the far

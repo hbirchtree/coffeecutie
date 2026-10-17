@@ -153,6 +153,7 @@ struct DrawTag
     i32 cluster_section{-1};
     i32 cluster{-1};
     i32 instance{-1};
+    i32 object{-1}; /*!< Into H2Scene::moving_objects: drawn where it is */
 };
 
 /* One shad tag: its diffuse map and every draw range using it */
@@ -321,6 +322,9 @@ struct H2Scene : compo::SubsystemBase
     f32                                         sky_scale{1.f};
     Vecf3                                       sky_clear{0.f, 0.f, 0.f};
     std::vector<SkyFlare>                       sky_flares;
+    /*! Entities of the objects with physics; their geometry is in object
+     * space and follows the entity's Model */
+    std::vector<u64>                            moving_objects;
 };
 
 /* What the occluder decided for this frame */

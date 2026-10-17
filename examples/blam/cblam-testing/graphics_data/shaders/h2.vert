@@ -26,10 +26,12 @@ layout(location=8) uniform vec2 detail2_scale;
 layout(location=12) uniform vec2 illum_scale;
 layout(location=20) uniform vec2 mask_scale;
 layout(location=28) uniform vec2 bump_scale;
+/* Objects that move: object space to world */
+layout(location=39) uniform mat4 model;
 
 void main()
 {
-    vec3 world = position * model_scale + model_offset;
+    vec3 world = (model * vec4(position, 1.0)).xyz * model_scale + model_offset;
     f_world_pos = world;
     f_texcoord = texcoord * uv_scale;
     f_detail_uv = texcoord * detail_scale;
@@ -39,6 +41,6 @@ void main()
     f_vertex_light = vertex_light;
     f_mask_uv = texcoord * mask_scale;
     f_bump_uv = texcoord * bump_scale;
-    f_normal = normal;
+    f_normal = mat3(model) * normal;
     gl_Position = camera * vec4(world, 1.0);
 }
