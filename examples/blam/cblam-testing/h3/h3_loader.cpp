@@ -25,6 +25,11 @@
 
 #include <glm/gtc/matrix_inverse.hpp>
 
+#if defined(FEATURE_ENABLE_BULLET3)
+#include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
+#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
+#endif
+
 #include <bit>
 #include <cmath>
 #include <limits>
@@ -37,6 +42,16 @@ namespace h3 {
 namespace el = blam::elegy;
 using semantic::BytesConst;
 using semantic::Span;
+
+/* The structure BSP's static body in the physics world */
+inline constexpr u64 collision_body_id = 0x4833'0000'0000'0000ull;
+
+/* Collision polygons fanned into triangles, decoded out of the big-endian map */
+struct CollisionMesh
+{
+    std::vector<Vecf3> vertices;
+    std::vector<i32>   indices;
+};
 
 /* The pixel formats Halo 1/2 already upload, by Halo 3 format */
 static std::optional<blam::bitm::format_t> h1_format(el::bitmap_format_t format)
@@ -578,9 +593,20 @@ struct H3MapLoader : compo::SubsystemBase
 
         auto resources = m_loader->load(bsp->tag_resources);
         Span<el::instanced_geometry_definition_t const> definitions;
+        Span<el::coll::collision_bsp_t const>           collision_bsps;
         if(resources.has_value())
             if(auto const* root = resources->root_as<el::structure_bsp_resources_t>())
-                definitions = resources->block(root->instanced_geometry);
+            {
+                definitions    = resources->block(root->instanced_geometry);
+                collision_bsps = resources->block(root->collision_bsps);
+            }
+        auto collision = std::make_shared<CollisionMesh>();
+        if(!collision_bsps.empty())
+            append_collision(
+                el::coll::bsp_view_t::from(resources.value(), collision_bsps[0]),
+                Matf4(1.f),
+                *collision);
+        size_t const world_triangles = collision->indices.size() / 3;
         auto instance_list = bsp->instances.data(magic).value_or(
             Span<el::instanced_geometry_t const>());
         for(size_t i = 0; i < instance_list.size(); i++)
@@ -598,6 +624,10 @@ struct H3MapLoader : compo::SubsystemBase
             transform[1] = Vecf4(instance.left.value() * scale, 0.f);
             transform[2] = Vecf4(instance.up.value() * scale, 0.f);
             transform[3] = Vecf4(instance.position.value(), 1.f);
+            append_collision(
+                el::coll::bsp_view_t::from(resources.value(), definition->collision),
+                transform,
+                *collision);
             /* An instance's texcoords are its own buffer, through the
              * lightmap's per-instance list */
             std::vector<Vecf2>              uvs;
@@ -624,11 +654,76 @@ struct H3MapLoader : compo::SubsystemBase
                              lights) > 0;
         }
         cDebug(
-            "H3: {}: {} clusters, {} instances",
+            "H3: {}: {} clusters, {} instances; collision {} world + {} instance triangles",
             map.name_of(*bsp_tag),
             clusters,
-            instances);
+            instances,
+            world_triangles,
+            collision->indices.size() / 3 - world_triangles);
+        submit_collision(std::move(collision));
         return clusters + instances > 0;
+    }
+
+    /* Appends a collision BSP's surfaces as fanned triangles */
+    static void append_collision(
+        el::coll::bsp_view_t const& bsp, Matf4 const& transform, CollisionMesh& out)
+    {
+        i32 const vbase = static_cast<i32>(out.vertices.size());
+        /* Bounding surfaces sit on vertices at infinity, which a quantized
+         * BVH cannot hold */
+        std::vector<bool> finite;
+        finite.reserve(bsp.vertices.size());
+        for(auto const& v : bsp.vertices)
+        {
+            Vecf3 const point = v.point.value();
+            finite.push_back(std::isfinite(point.x) && std::isfinite(point.y) && std::isfinite(point.z));
+            out.vertices.push_back(finite.back() ? Vecf3(transform * Vecf4(point, 1.f)) : Vecf3{});
+        }
+        std::vector<i32> polygon;
+        for(u32 s = 0; s < bsp.surfaces.size(); s++)
+        {
+            if(stl_types::any_flag_of(bsp.surfaces[s].flags, el::coll::surface_flags_t::invalid))
+                continue;
+            polygon.clear();
+            bool usable = true;
+            bsp.walk_surface(s, [&](u32 vertex) {
+                if(vertex < finite.size() && finite[vertex])
+                    polygon.push_back(vbase + static_cast<i32>(vertex));
+                else
+                    usable = false;
+            });
+            if(!usable)
+                continue;
+            for(size_t i = 2; i < polygon.size(); i++)
+                out.indices.insert(out.indices.end(), {polygon[0], polygon[i - 1], polygon[i]});
+        }
+    }
+
+    /* One static body for the loaded structure BSP */
+    void submit_collision(std::shared_ptr<CollisionMesh> mesh)
+    {
+#if defined(FEATURE_ENABLE_BULLET3)
+        if(!mesh || mesh->indices.empty())
+            return;
+        auto body        = std::make_shared<Physics::BodyCreationPrebuilt>();
+        body->entity_id  = collision_body_id;
+        body->mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
+        btIndexedMesh part;
+        part.m_numTriangles        = static_cast<int>(mesh->indices.size() / 3);
+        part.m_triangleIndexBase   = reinterpret_cast<unsigned char const*>(mesh->indices.data());
+        part.m_triangleIndexStride = 3 * sizeof(i32);
+        part.m_numVertices         = static_cast<int>(mesh->vertices.size());
+        part.m_vertexBase   = reinterpret_cast<unsigned char const*>(mesh->vertices.data());
+        part.m_vertexStride = sizeof(Vecf3);
+        part.m_vertexType   = PHY_FLOAT;
+        body->mesh_iface->addIndexedMesh(part, PHY_INTEGER);
+        body->shape      = std::make_unique<btBvhTriangleMeshShape>(body->mesh_iface.get(), true);
+        body->keep_alive = std::move(mesh);
+        Physics::Event event{.type = Physics::Event::BodyCreationPrebuilt};
+        m_container.subsystem_cast<PhysicsBus>().process(event, body.get());
+#else
+        (void)mesh;
+#endif
     }
 
     /* Scenery placed in this BSP, first permutation of every region */
