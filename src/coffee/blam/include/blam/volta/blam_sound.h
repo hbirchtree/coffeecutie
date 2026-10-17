@@ -27,15 +27,29 @@ struct pitch_permutation_t
     u32 decoded_size; /* Ogg: bytes of 16-bit PCM once decoded */
 
     u32 buffer_size;
+    /* Three 20-byte data refs follow: samples, mouth aperture, subtitles */
     u32 sample_size;
     u32 channels_maybe;
     u32 sample_offset;
-    u32 pad[4];
-    u32 offset3;
-    u32 empty;
+    u32 pad[2];
 
-    reference<char> mouth_data;
-    reference<char> subtitle_data;
+    /* Mouth openness, a byte per tick of the samples */
+    u32 mouth_size;
+    u32 mouth_flags;
+    u32 mouth_offset;
+    u32 mouth_pointer;
+    u32 mouth_unused;
+
+    u32 subtitle_size;
+    u32 subtitle_flags;
+    u32 subtitle_offset;
+    u32 subtitle_pointer;
+    u32 subtitle_unused;
+
+    reference<u8> mouth_data() const
+    {
+        return {mouth_size, mouth_pointer};
+    }
 
     reference<char, xbox_t, atlas_type_t::sounds> sample_data() const
     {
