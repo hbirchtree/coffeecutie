@@ -53,7 +53,7 @@ struct BakedLight
 
     /* The baked light on the lightmapped surface under `position`, as
      * objects in Halo 3 take it from the lightmap below them */
-    std::optional<el::vertex_light_t> below(Vecf3 const& position) const
+    std::optional<el::vertex_light_t> below(Vecf3 const& position, f32* height = nullptr) const
     {
         if(layers.size() != 10 || triangles.empty())
             return std::nullopt;
@@ -80,6 +80,8 @@ struct BakedLight
         }
         if(best == -std::numeric_limits<f32>::max())
             return std::nullopt;
+        if(height)
+            *height = best;
         u32  x     = std::min(static_cast<u32>(uv.x * size.x), size.x - 1);
         u32  y     = std::min(static_cast<u32>(uv.y * size.y), size.y - 1);
         auto value = [&](u32 pair, f32 s) {

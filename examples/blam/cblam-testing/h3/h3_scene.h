@@ -219,6 +219,9 @@ struct DynamicLight
     f32   radius{0.f};
 };
 
+/* Structure BSPs one zone set can load at once, each with its lightmap */
+inline constexpr size_t max_bsp_slots = 8;
+
 struct H3Scene : compo::SubsystemBase
 {
     using type = H3Scene;
@@ -231,17 +234,33 @@ struct H3Scene : compo::SubsystemBase
      * and the max luminance of each coefficient */
     std::shared_ptr<gfx::compat::texture_2da_t> lightprobe;
     std::shared_ptr<gfx::sampler_t>             lightprobe_sampler;
-    Vecf4                                       lightprobe_scale{1.f};
-    f32                                         intensity_scale{1.f};
+    /* Per loaded BSP: SH coefficient scales, intensity scales four a vec4 */
+    std::array<Vecf4, max_bsp_slots>            lightprobe_scales{};
+    std::array<Vecf4, max_bsp_slots / 4>        intensity_scales{};
     f32                                         exposure{1.f}; /*!< Linear, at load */
     AutoExposure                                auto_exposure;
     /* Halo 3's v_atmosphere_constant_0..5 and _extra for compute_scattering
      * (atmosphere.fx); disabled when constant 1's w is negative */
     std::array<Vecf4, 7>                        atmosphere{Vecf4(0.f), Vecf4(0.f, 0.f, 0.f, -1.f)};
-    BakedLight                                  baked;
+    std::vector<BakedLight>                     baked; /*!< Per loaded BSP */
     std::vector<CubeTexture>                    cubemaps;
     std::vector<CubemapProbe>                   cubemap_probes;
     std::vector<DynamicLight>                   lights;
+
+    /*! The baked light under `position`, from whichever loaded BSP's
+     * lightmap lies highest below it */
+    std::optional<el::vertex_light_t> light_below(Vecf3 const& position) const
+    {
+        std::optional<el::vertex_light_t> out;
+        f32                               best = -std::numeric_limits<f32>::max();
+        for(auto const& bsp : baked)
+        {
+            f32 height = 0.f;
+            if(auto light = bsp.below(position, &height); light && height > best)
+                out = light, best = height;
+        }
+        return out;
+    }
     std::shared_ptr<gfx::buffer_t> vertex_buf;
     std::shared_ptr<gfx::buffer_t> element_buf;
 };

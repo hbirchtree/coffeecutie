@@ -211,12 +211,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf4 const>{
                             {"layer_detail_curve"}, semantic::SpanOne<const Vecf4>(detail_curve)},
                         gfx::uniform_pair<Vecf4 const>{
-                            {"lightprobe_scale"},
-                            semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
+                            {"lightprobe_scales"},
+                            semantic::Span<const Vecf4>(scene.lightprobe_scales.data(), scene.lightprobe_scales.size())},
                         gfx::uniform_pair<const f32>{
                             {"exposure"}, semantic::SpanOne<const f32>(exposure)},
-                        gfx::uniform_pair<const f32>{
-                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"intensity_scales"},
+                            semantic::Span<const Vecf4>(scene.intensity_scales.data(), scene.intensity_scales.size())},
                         gfx::uniform_pair<Vecf4 const>{
                             {"atmosphere"},
                             semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
@@ -264,12 +265,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"bump_detail_ratio"},
                             semantic::SpanOne<const Vecf2>(mat.bump_detail_ratio)},
                         gfx::uniform_pair<Vecf4 const>{
-                            {"lightprobe_scale"},
-                            semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
+                            {"lightprobe_scales"},
+                            semantic::Span<const Vecf4>(scene.lightprobe_scales.data(), scene.lightprobe_scales.size())},
                         gfx::uniform_pair<const f32>{
                             {"exposure"}, semantic::SpanOne<const f32>(exposure)},
-                        gfx::uniform_pair<const f32>{
-                            {"intensity_scale"}, semantic::SpanOne<const f32>(scene.intensity_scale)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"intensity_scales"},
+                            semantic::Span<const Vecf4>(scene.intensity_scales.data(), scene.intensity_scales.size())},
                         gfx::uniform_pair<Vecf4 const>{
                             {"atmosphere"},
                             semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
@@ -497,7 +499,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     {"atmosphere"},
                     semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
                 gfx::uniform_pair<Vecf4 const>{
-                    {"lightprobe_scale"}, semantic::SpanOne<const Vecf4>(scene.lightprobe_scale)},
+                    {"lightprobe_scales"},
+                    semantic::Span<const Vecf4>(scene.lightprobe_scales.data(), scene.lightprobe_scales.size())},
                 gfx::uniform_pair<const f32>{{"exposure"}, semantic::SpanOne<const f32>(exposure)},
                 gfx::uniform_pair<const f32>{{"time"}, semantic::SpanOne<const f32>(seconds)},
                 gfx::uniform_pair<Vecf4 const>{{"slope_xform"}, semantic::SpanOne<const Vecf4>(w.slope_xform)},
@@ -610,7 +613,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             m_exposure_generation = scene.generation;
             m_stops               = std::log2(scene.exposure);
         }
-        if(auto light = scene.baked.below(eye))
+        if(auto light = scene.light_below(eye))
         {
             f32 target = scene.auto_exposure.stops_for(glm::dot(
                 diffuse_radiance(*light, Vecf3(0.f, 0.f, 1.f)), Vecf3(0.2126f, 0.7152f, 0.0722f)));
