@@ -1127,7 +1127,7 @@ struct PhysicsSystem
             /* Bodies with a phys tag turn about its centre of mass */
             Vecf3 const com = physics.mass_points
                                   ? physics.mass_points->center_of_mass
-                                  : Vecf3{};
+                                  : physics.center_of_mass;
             auto existing = m_object_bodies.find(id);
             if(existing == m_object_bodies.end() ||
                existing->second != physics.authority)
@@ -1154,11 +1154,13 @@ struct PhysicsSystem
                     .kinematic = follower,
                     .lock      = {.rotation = physics.upright},
                     .hulls     = physics.collision,
-                    .offset    = physics.mass_points ? -com : physics.center,
+                    .offset    = physics.mass_points ? -com : physics.center - com,
                     .rotation  = model.rotation,
                     .mass_points = physics.mass_points,
                     .drive       = physics.drive,
                     .posed       = physics.upright,
+                    .friction    = physics.friction,
+                    .restitution = physics.restitution,
                 });
                 /* Nothing drives it, so it has to stop on its own */
                 if(physics.upright && m_bodies.contains(id))
@@ -1938,7 +1940,9 @@ struct PhysicsSystem
             /* A vehicle's mass points do its friction; its hulls only
              * stop hard landings */
             entity_body.world_body->setFriction(
-                body_create.mass_points ? 0.f : 1.f);
+                body_create.mass_points ? 0.f : body_create.friction.value_or(1.f));
+        if(body_create.restitution)
+            entity_body.world_body->setRestitution(*body_create.restitution);
         btTransform transform = m_world_basis;
         if(body_create.rotation)
             transform.setRotation(btQuaternion(
