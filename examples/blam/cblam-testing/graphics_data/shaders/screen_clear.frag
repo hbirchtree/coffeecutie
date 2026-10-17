@@ -12,6 +12,8 @@ uniform vec2 scale;
 uniform float gamma;
 uniform float exposure;
 uniform vec4  tint;
+/* 0 shows the scene as rendered, without the Reinhard curve */
+uniform int   tonemap;
 
 uniform int mode;
 // RGB-defocus/chromatic aberration
@@ -82,7 +84,8 @@ void main()
         : mode == 1
           ? gaussian_blur_sample()
           : plain_sample();
-    color.rgb = color.rgb / (color.rgb + vec3(1.0));
+    if(tonemap != 0)
+        color.rgb = color.rgb / (color.rgb + vec3(1.0));
     color.rgb = pow(exposure * color.rgb, vec3(1.0 / gamma));
     gl_FragColor = color;
 }
