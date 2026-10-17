@@ -144,6 +144,12 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Vecf3 const>{
                         {"plasma_colors"},
                         semantic::Span<const Vecf3>(mat.plasma_colors)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"env_facing"},
+                        semantic::SpanOne<const Vecf4>(mat.env_facing)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"env_glancing"},
+                        semantic::SpanOne<const Vecf4>(mat.env_glancing)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
                         semantic::SpanOne<const Vecf3>(mat.illum_color)},
@@ -201,6 +207,11 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         typing::graphics::ShaderStage::Fragment,
                         {"bump", 6},
                         mat.bump.sampler ? mat.bump.sampler : m_white_sampler,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"env", 7},
+                        mat.env_sampler ? mat.env_sampler : m_black_cube_sampler,
                     });
                 auto res = m_api->submit(
                     {
@@ -401,6 +412,20 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_white_sampler = m_white->sampler();
         m_white_sampler->alloc();
 
+        m_black_cube = api.alloc_texture(
+            gfx::textures::cube,
+            typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8),
+            1);
+        m_black_cube->alloc(size_3d<u32>{1, 1, 1});
+        {
+            std::array<u8, 4>             black{0, 0, 0, 255};
+            std::array<Span<const u8>, 6> faces;
+            faces.fill(Span<const u8>(black.data(), black.size()));
+            m_black_cube->upload(faces, Veci2{0, 0}, Veci2{1, 1}, 0);
+        }
+        m_black_cube_sampler = m_black_cube->sampler();
+        m_black_cube_sampler->alloc();
+
         m_no_lightmaps = std::make_shared<gfx::compat::texture_2da_t>(
             &api, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
         m_no_lightmaps->alloc(size_3d<u32>{2, 2, 1});
@@ -456,6 +481,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_programs;
     std::shared_ptr<gfx::texture_2d_t>          m_white;
     std::shared_ptr<gfx::sampler_t>             m_white_sampler;
+    std::shared_ptr<gfx::texture_cube_t>        m_black_cube;
+    std::shared_ptr<gfx::sampler_t>             m_black_cube_sampler;
     std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightmaps;
     std::shared_ptr<gfx::sampler_t>             m_no_lightmaps_sampler;
     /* Per material: this frame's visible ranges */
