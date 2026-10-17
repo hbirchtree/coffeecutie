@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstring>
 #include <vector>
 
 #include <blam/volta/blam_antr.h>
@@ -239,3 +240,65 @@ struct AnimationPlayback
         return best;
     }
 };
+
+/* Ground speed of a move clip of the "stand" unit's first weapon, from
+ * its root motion; 0 when the graph has none */
+inline libc_types::f32 move_speed(
+    blam::antr::header const&                 graph,
+    blam::antr::unit_weapon::animation_idx_t  slot,
+    blam::map_ptr const&                      magic)
+{
+    auto units = graph.units.data(magic);
+    auto anims = graph.animations.data(magic);
+    if(!units.has_value() || !anims.has_value())
+        return 0.f;
+    blam::antr::unit const* stand = nullptr;
+    for(auto const& unit : units.value())
+        if(unit.label.str() == "stand")
+            stand = &unit;
+    if(!stand)
+        return 0.f;
+    auto weapons = stand->weapons.data(magic);
+    if(!weapons.has_value() || weapons.value().empty())
+        return 0.f;
+    auto refs = weapons.value()[0].animations.data(magic);
+    if(!refs.has_value() || static_cast<size_t>(slot) >= refs.value().size())
+        return 0.f;
+    libc_types::i16 const index = refs.value()[slot].animation;
+    if(index < 0 || static_cast<size_t>(index) >= anims.value().size())
+        return 0.f;
+    auto const& clip   = anims.value()[index];
+    libc_types::u32 stride = 0;
+    switch(clip.frame_info_type_)
+    {
+    case blam::antr::frame_info_type::dx_dy:
+        stride = 8;
+        break;
+    case blam::antr::frame_info_type::dx_dy_dyaw:
+        stride = 12;
+        break;
+    case blam::antr::frame_info_type::dx_dy_dz_dyaw:
+        stride = 16;
+        break;
+    default:
+        return 0.f;
+    }
+    auto bytes = clip.frame_info.data(magic);
+    if(!bytes.has_value())
+        return 0.f;
+    libc_types::u32 const frames = bytes.value().size() / stride;
+    if(frames == 0)
+        return 0.f;
+    libc_types::f32 moved = 0.f;
+    for(libc_types::u32 i = 0; i < frames; i++)
+    {
+        typing::vector_types::Vecf2 delta;
+        std::memcpy(&delta, bytes.value().data() + i * stride, sizeof(delta));
+        moved += glm::length(delta);
+    }
+    libc_types::f32 const rate = (static_cast<libc_types::u16>(clip.flags) &
+                      static_cast<libc_types::u16>(blam::antr::anim_flags::pal_25hz))
+                         ? 25.f
+                         : 30.f;
+    return moved * rate / static_cast<libc_types::f32>(frames);
+}
