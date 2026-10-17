@@ -142,6 +142,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     {
         use_alpha = 0x1, /* the color's alpha fades the texel */
         meter     = 0x2,
+        solid     = 0x4, /* the color alone */
     };
 
     struct atlas_intermediate_t
@@ -1236,7 +1237,38 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             }
             out.emplace_back(matrix, static_cast<u32>(data.vertex_data.size()) - first);
         }
+
+        /* Letterbox bars and the fade go over the whole screen */
+        u32 const   first = static_cast<u32>(data.vertex_data.size());
+        f32 const   bar   = scene.letterbox * 2.f;
+        if(bar > 0.f)
+        {
+            push_solid(data, {-1.f, -1.f}, {1.f, -1.f + bar}, Vecf4(0, 0, 0, 1));
+            push_solid(data, {-1.f, 1.f - bar}, {1.f, 1.f}, Vecf4(0, 0, 0, 1));
+        }
+        if(scene.fade.a > 0.f)
+            push_solid(data, {-1.f, -1.f}, {1.f, 1.f}, scene.fade);
+        if(data.vertex_data.size() > first)
+            out.emplace_back(Matf3(1), static_cast<u32>(data.vertex_data.size()) - first);
         return out;
+    }
+
+    void push_solid(widget_data_t& data, Vecf2 min, Vecf2 max, Vecf4 const& color)
+    {
+        if(data.instance_data.size() >= kUiInstanceSlots)
+            return;
+        std::array<vertex_t, 6> verts = {{
+            {.position = {min.x, min.y}},
+            {.position = {max.x, min.y}},
+            {.position = {max.x, max.y}},
+            {.position = {min.x, min.y}},
+            {.position = {max.x, max.y}},
+            {.position = {min.x, max.y}},
+        }};
+        data.vertex_data.insert(data.vertex_data.end(), verts.begin(), verts.end());
+        instance_vertex_t inst{.color = color};
+        inst.extra[0] = solid;
+        data.instance_data.push_back(inst);
     }
 
     void draw_keyboard(widget_data_t data, VirtualKeyboard const& keyboard)
