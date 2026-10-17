@@ -290,6 +290,8 @@ struct Model
 
     blam::tag_t const* tag{nullptr};
     blam::tag_t const* origin_object{nullptr};
+    /* Region permutations, as mod2::header::model_at takes them */
+    libc_types::u32 permutations{0};
 
     std::array<generation_idx_t, 5> lod_models{};
     std::array<libc_types::f32, 5>  lod_cutoff{};

@@ -366,7 +366,9 @@ struct ResourceLoader
             Model& model = *found;
             model.lod_built |= 1 << lod;
             ModelAssembly assem = model_cache.predict_regions(
-                model.tag->as_ref(), static_cast<blam::mod2::mod2_lod>(lod));
+                model.tag->as_ref(),
+                static_cast<blam::mod2::mod2_lod>(lod),
+                model.permutations);
             if(assem.models.empty())
                 continue;
             generation_idx_t const item = assem.models.at(0);
@@ -1214,8 +1216,12 @@ struct ResourceLoader
         if(model_it == index.end())
             return;
 
-        ModelAssembly mesh_data =
-            model_cache.predict_regions(instance_obj[0].model, model_lod);
+        auto const* mod2         = model_cache.get_header(instance_obj[0].model);
+        u32 const   permutations = mod2 ? mod2->pick_permutations(
+                                            magic, instance.desired_permutation, net_id)
+                                        : 0;
+        ModelAssembly mesh_data  = model_cache.predict_regions(
+            instance_obj[0].model, model_lod, permutations);
 
         auto idle = find_idle_animation(p, instance_obj[0].anim_graph);
         auto const* graph =
@@ -1252,6 +1258,7 @@ struct ResourceLoader
         spawn.power         = device_power(files, instance);
         model.tag           = &(*model_it);
         model.model         = mesh_data.models.at(0);
+        model.permutations  = permutations;
         model.origin_object = instance_tag;
         model.initialize(&instance);
         init_lods(p, model, instance_obj[0]);
@@ -1769,9 +1776,12 @@ struct ResourceLoader
             return;
 
         ModelAssembly mesh_data;
+        u32           permutations = 0;
         if(model_it != index.end())
         {
-            mesh_data = model_cache.predict_regions(object.model, model_lod);
+            auto const* mod2 = model_cache.get_header(object.model);
+            permutations = mod2 ? mod2->pick_permutations(files.container.magic, 0, spawn.net_id) : 0;
+            mesh_data = model_cache.predict_regions(object.model, model_lod, permutations);
             if(mesh_data.models.empty())
             {
                 cWarning(
@@ -1842,8 +1852,9 @@ struct ResourceLoader
         Model& model = ent.template get<Model>();
         if(model_it != index.end())
         {
-            model.tag   = &(*model_it);
-            model.model = mesh_data.models.at(0);
+            model.tag          = &(*model_it);
+            model.model        = mesh_data.models.at(0);
+            model.permutations = permutations;
         }
         model.origin_object = &object_tag;
         init_lods(p, model, object);

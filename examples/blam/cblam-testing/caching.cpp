@@ -654,7 +654,7 @@ template BSPItem BSPCache<halo_version>::predict_impl(
 
 template<typename V>
 ModelItem<V> ModelCache<V>::predict_impl(
-    const blam::tagref_t& mod2, blam::mod2::mod2_lod lod)
+    const blam::tagref_t& mod2, blam::mod2::mod2_lod lod, u32 permutations)
 {
     auto _ = allocator->debug().scope("ModelCache");
 
@@ -677,7 +677,7 @@ ModelItem<V> ModelCache<V>::predict_impl(
         shaders = shaders_.value();
 
     blam::mod2::model_data_t model_data;
-    if(auto model_data_ = header->model_at(lod, magic); model_data_.has_value())
+    if(auto model_data_ = header->model_at(lod, magic, permutations); model_data_.has_value())
         model_data = std::move(model_data_.value());
     else
         return {};
@@ -807,7 +807,7 @@ ModelItem<V> ModelCache<V>::predict_impl(
 }
 
 template ModelItem<halo_version> ModelCache<halo_version>::predict_impl(
-    const blam::tagref_t& mod2, blam::mod2::mod2_lod lod);
+    const blam::tagref_t& mod2, blam::mod2::mod2_lod lod, u32 permutations);
 
 /* Halo animations are authored at 30Hz; PAL tags flag themselves as 25Hz. */
 static f32 frame_rate_of(blam::antr::animation const& anim)
