@@ -683,15 +683,23 @@ struct SoundSystem
             /* Music is mixed already, panning and HRTF only colour it */
             if(props && props->type == blam::sound::sound::music)
                 meta.source->set_direct_channels(true);
-            if(!props || props->min_distance <= 0.f)
+            if(!props)
+                continue;
+            /* Distances of 0 take the sound class's own, as tool fills in */
+            auto const defaults = default_distances(props->type);
+            f32 const  min_distance =
+                props->min_distance > 0.f ? props->min_distance : defaults.x;
+            f32 const max_distance =
+                props->max_distance > 0.f ? props->max_distance : defaults.y;
+            if(min_distance <= 0.f)
                 continue;
             /* DirectSound 3D: full volume inside min distance, inverse
              * rolloff past it, nothing past max distance */
             meta.source->template set_property<
-                oaf::source_property::reference_distance>(props->min_distance);
+                oaf::source_property::reference_distance>(min_distance);
             meta.source->template set_property<
                 oaf::source_property::rolloff_factor>(1.f);
-            meta.max_distance = props->max_distance;
+            meta.max_distance = max_distance;
         }
         cDebug("Created sound unit tracks={}", tracks.size());
         return sound_unit_t{
@@ -700,6 +708,58 @@ struct SoundSystem
             .tracks = std::move(tracks),
             .usage  = usage,
         };
+    }
+
+    /* Minimum and maximum distance by sound class, for tags that leave
+     * them 0 (the defaults tool and Invader compile in) */
+    static Vecf2 default_distances(blam::sound::sound::type_t type)
+    {
+        using sound_t = blam::sound::sound;
+        switch(type)
+        {
+        case sound_t::device_machinery:
+        case sound_t::device_force_field:
+        case sound_t::ambient_machinery:
+        case sound_t::ambient_nature:
+        case sound_t::device_door:
+        case sound_t::music:
+        case sound_t::device_nature:
+            return {.9f, 5.f};
+        case sound_t::weapon_empty:
+        case sound_t::weapon_idle:
+        case sound_t::weapon_ready:
+        case sound_t::weapon_reload:
+        case sound_t::weapon_charge:
+        case sound_t::weapon_overheat:
+            return {1.f, 9.f};
+        case sound_t::scripted_dialog_other:
+        case sound_t::scripted_dialog_player:
+        case sound_t::game_event:
+        case sound_t::unit_dialog:
+        case sound_t::scripted_dialog_force_unspatialized:
+            return {3.f, 20.f};
+        case sound_t::first_person_damage:
+        case sound_t::object_impacts:
+        case sound_t::ambient_computers:
+        case sound_t::particle_impacts:
+        case sound_t::device_computers:
+        case sound_t::slow_particle_impacts:
+            return {.5f, 3.f};
+        case sound_t::vehicle_engine:
+        case sound_t::projectile_impact:
+        case sound_t::vehicle_collision:
+            return {1.4f, 8.f};
+        case sound_t::weapon_fire:
+            return {4.f, 70.f};
+        case sound_t::scripted_effect:
+            return {2.f, 5.f};
+        case sound_t::projectile_detonation:
+            return {8.f, 120.f};
+        case sound_t::unit_footsteps:
+            return {.9f, 10.f};
+        default:
+            return {};
+        }
     }
 
     std::minstd_rand m_permutation_rng{std::random_device{}()};
