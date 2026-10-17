@@ -74,7 +74,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                               (params.render_lightmaps ? 0 : 4);
         i32 light_count = 0;
         f32 const    exposure  = adapt_exposure(scene, camera->camera.position);
-        auto const&  dynamic_cube = nearest_cubemap(scene, camera->camera.position);
+        auto const   cubes        = nearest_cubemaps(scene, camera->camera.position);
+        auto const&  dynamic_cube = cubes.first;
         Vecf3 const  offset{};
         f32 const    scale = 1.f;
         Vecf2 const  unit{1.f, 1.f};
@@ -249,6 +250,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"simple_light_count"}, semantic::SpanOne<const i32>(light_count)},
                         gfx::uniform_pair<const i32>{
                             {"alpha_test"}, semantic::SpanOne<const i32>(alpha_test)},
+                        gfx::uniform_pair<const f32>{
+                            {"env_dynamic_blend"}, semantic::SpanOne<const f32>(cubes.blend)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"albedo_tint"}, semantic::SpanOne<const Vecf4>(mat.tint)},
                         gfx::uniform_pair<const i32>{
@@ -334,6 +337,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             stage_t::Fragment, {"illum_detail_map", 13}, or_white(mat.illum_detail)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail3", 14}, or_white(mat.detail3)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"env_dynamic", 15}, dynamic_cube},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"env_dynamic2", 6}, cubes.second},
                         gfx::sampler_definition_t{
                             stage_t::Fragment,
                             {"env_map", 16},
@@ -545,20 +549,37 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
 
     /* The cubemap captured nearest the camera stands in for Halo 3's
      * per-object pair of dynamic cubemaps */
-    std::shared_ptr<gfx::sampler_t> const& nearest_cubemap(H3Scene const& scene, Vecf3 const& eye)
+    /* The two cubemaps captured nearest `eye` and how far towards the second
+     * to blend, so reflections fade between them instead of switching */
+    struct cubemap_pair_t
     {
-        f32         best  = std::numeric_limits<f32>::max();
-        auto const* found = &m_black_cube_sampler;
+        std::shared_ptr<gfx::sampler_t> first, second;
+        f32                              blend{0.f};
+    };
+
+    cubemap_pair_t nearest_cubemaps(H3Scene const& scene, Vecf3 const& eye) const
+    {
+        f32 best[2] = {std::numeric_limits<f32>::max(), std::numeric_limits<f32>::max()};
+        u32 found[2] = {~0u, ~0u};
         for(auto const& probe : scene.cubemap_probes)
         {
-            f32 d = glm::distance(probe.position, eye);
-            if(d < best && probe.cubemap < scene.cubemaps.size())
+            if(probe.cubemap >= scene.cubemaps.size())
+                continue;
+            f32 const d = glm::distance(probe.position, eye);
+            if(d < best[0])
             {
-                best  = d;
-                found = &scene.cubemaps[probe.cubemap].sampler;
-            }
+                if(found[0] != probe.cubemap)
+                    best[1] = best[0], found[1] = found[0];
+                best[0] = d, found[0] = probe.cubemap;
+            } else if(d < best[1] && probe.cubemap != found[0])
+                best[1] = d, found[1] = probe.cubemap;
         }
-        return *found;
+        if(found[0] == ~0u)
+            return {m_black_cube_sampler, m_black_cube_sampler, 0.f};
+        auto const& first = scene.cubemaps[found[0]].sampler;
+        if(found[1] == ~0u)
+            return {first, first, 0.f};
+        return {first, scene.cubemaps[found[1]].sampler, best[0] / std::max(best[0] + best[1], 1e-4f)};
     }
 
     /* Auto exposure: moves a little towards the camera's target each frame */
