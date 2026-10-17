@@ -45,6 +45,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
     type_list_t<
         const PlayerCamera,
         const PlayerInfo,
+        const PlayerInput,
         const NetworkInfo,
         const CameraLerp,
         const AnimationPlayback,
@@ -115,6 +116,9 @@ struct BlamScript
         m_recordings.clear();
         m_custom.clear();
         m_walk_speeds.clear();
+        m_tests = {};
+        m_loops.clear();
+        m_impulses.clear();
         m_riders.clear();
         m_attached.clear();
         m_hovering.clear();
@@ -159,9 +163,14 @@ struct BlamScript
         ImGui::End();
 #endif
 
-        if(!m_running || p.template subsystem<NetworkState>().replica)
+        if(p.template subsystem<NetworkState>().replica)
+            return;
+        if(std::exchange(m_stop_all, false))
+            stop_all(p);
+        if(!m_running)
             return;
         m_proxy = &p;
+        watch_player(p);
         for(size_t i = 0; i < ticks.size(); i++)
         {
             settle_despawns(p);
@@ -172,11 +181,35 @@ struct BlamScript
             m_vm.tick();
             play_recordings(p);
             play_custom(p);
+            send_walks(p);
             place_riders(p);
         }
         /* Every frame, so props follow the animated hands holding them */
         place_attached(p);
         m_proxy = nullptr;
+    }
+
+    /* Every thread ends and the players get their view and controls back */
+    void stop_all(Proxy& p)
+    {
+        for(size_t i = 0; i < m_vm.threads().size(); i++)
+            m_vm.stop(i);
+        for(auto const& r : std::vector(m_recordings))
+            stop_recording(p, r.entity, end_t::stop);
+        for(auto const& [id, custom] : std::map(m_custom))
+            stop_custom(p, id);
+        for_local_seats(p, [&](u32 seat) {
+            GameEvent            ev{.type = GameEvent::CinematicCamera};
+            CinematicCameraEvent control{.seat_idx = seat, .control = false};
+            p.template subsystem<GameEventBus>().inject(ev, &control);
+        });
+        auto& state     = p.template subsystem<CinematicState>();
+        state.fade      = {};
+        state.title.reset();
+        state.letterbox = false;
+        state.show_hud  = true;
+        state.input     = true;
+        log("stopped every script");
     }
 
     /* ---- Names ---- */
@@ -478,13 +511,23 @@ struct BlamScript
         /* Sounds: an object's, or at the listener without one */
         case op::sound_impulse_start:
             play(p, arg(0), objects_of(p, arg(1)), false);
+            m_impulses[static_cast<u32>(arg(0).integer)] = m_vm.now();
             return {};
-        case op::sound_impulse_time:
-            return value_t::number(type_t::short_, length_of(p, arg(0)) * tick_rate);
+        case op::sound_impulse_time: {
+            /* What is left of it, 0 once played out or never started */
+            auto it = m_impulses.find(static_cast<u32>(arg(0).integer));
+            if(it == m_impulses.end())
+                return value_t::number(type_t::short_, 0.f);
+            f32 const left = length_of(p, arg(0)) * tick_rate - static_cast<f32>(m_vm.now() - it->second);
+            return value_t::number(type_t::short_, std::max(left, 0.f));
+        }
         case op::sound_looping_start:
-            play(p, arg(0), objects_of(p, arg(1)), true);
+            /* Already playing: carries on */
+            if(!loops(arg(0)) || m_loops.insert(static_cast<u32>(arg(0).integer)).second)
+                play(p, arg(0), objects_of(p, arg(1)), true);
             return {};
         case op::sound_looping_stop:
+            m_loops.erase(static_cast<u32>(arg(0).integer));
             if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>())
             {
                 SoundEvent stop{.type = SoundEvent::stop_sound, .entity_id = loop_id(arg(0))};
@@ -559,6 +602,46 @@ struct BlamScript
                 hover(p, id, on);
             });
             return {};
+
+        /* The tutorial's questions about the first player */
+        case op::player_action_test_reset:
+            m_tests = {};
+            return {};
+        case op::player_action_test_look_relative_left:
+            return value_t::boolean(m_tests.left > look_test);
+        case op::player_action_test_look_relative_right:
+            return value_t::boolean(m_tests.right > look_test);
+        case op::player_action_test_look_relative_up:
+            return value_t::boolean(m_tests.up > look_test);
+        case op::player_action_test_look_relative_down:
+            return value_t::boolean(m_tests.down > look_test);
+        case op::player_action_test_look_relative_all_directions:
+            return value_t::boolean(
+                std::min({m_tests.left, m_tests.right, m_tests.up, m_tests.down}) > look_test);
+        case op::player_action_test_action:
+            return value_t::boolean(m_tests.action);
+        case op::player_action_test_accept:
+            return value_t::boolean(m_tests.accept);
+        case op::player_action_test_back:
+            return value_t::boolean(m_tests.back);
+        case op::player_action_test_primary_trigger:
+            return value_t::boolean(m_tests.primary);
+        case op::player_action_test_grenade_trigger:
+            return value_t::boolean(m_tests.grenade);
+        case op::player0_joystick_set_is_normal:
+            return value_t::boolean(true);
+        case op::player0_look_pitch_is_inverted:
+            return value_t::boolean(false);
+        case op::objects_can_see_object: {
+            auto const  targets = objects_of(p, arg(1));
+            auto const* target  = targets.empty() ? nullptr : p.template get<Model>(targets.front());
+            return value_t::boolean(
+                target && can_see(p, objects_of(p, arg(0)), target->position + Vecf3{0.f, 0.f, body_middle}, arg(2).as_real()));
+        }
+        case op::objects_can_see_flag: {
+            auto const* flag = named(m_scenario->cutscene.flags, text_of(arg(1)));
+            return value_t::boolean(flag && can_see(p, objects_of(p, arg(0)), flag->position, arg(2).as_real()));
+        }
 
         /* Animations of the unit's own, or the cutscene's */
         case op::custom_animation:
@@ -748,6 +831,17 @@ struct BlamScript
         return &(*tag);
     }
 
+    /* A looping sound that repeats until stopped, not one played through */
+    bool loops(value_t const& v) const
+    {
+        auto const* tag = sound_tag(v);
+        if(!tag || !tag->matches(blam::tag_class_t::lsnd))
+            return false;
+        auto lsnd = tag->template data<blam::sound::looping_sound>(m_magic);
+        return lsnd.has_value() &&
+               !(lsnd.value()[0].flags & blam::sound::looping_sound::not_a_loop);
+    }
+
     /* A looping sound is known by its tag, impulses each by their own */
     static u64 loop_id(value_t const& v)
     {
@@ -898,6 +992,67 @@ struct BlamScript
         }
     }
 
+    /* ---- The player, as the tutorial watches them ---- */
+
+    struct action_tests_t
+    {
+        std::optional<Vecf2> from; /* yaw, pitch at the reset */
+        f32  left{0.f}, right{0.f}, up{0.f}, down{0.f}; /* furthest turned */
+        bool action{false}, accept{false}, back{false}, primary{false}, grenade{false};
+    };
+
+    /* Where a unit looks from, and which way */
+    std::optional<std::pair<Vecf3, Vecf3>> eye_of(Proxy& p, u64 id) const
+    {
+        if(auto const* cam = p.template get<PlayerCamera>(id))
+            return std::pair{
+                cam->camera.position, glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f}};
+        if(auto const* model = p.template get<Model>(id))
+            return std::pair{
+                model->position + Vecf3{0.f, 0.f, eye_height}, model->rotation * Vecf3{1.f, 0.f, 0.f}};
+        return std::nullopt;
+    }
+
+    bool can_see(Proxy& p, std::vector<u64> const& viewers, Vecf3 const& target, f32 degrees) const
+    {
+        for(u64 id : viewers)
+            if(auto eye = eye_of(p, id))
+            {
+                Vecf3 const to = target - eye->first;
+                if(glm::length(to) < 1e-4f ||
+                   glm::dot(glm::normalize(to), glm::normalize(eye->second)) >=
+                       std::cos(glm::radians(degrees)))
+                    return true;
+            }
+        return false;
+    }
+
+    /* Every frame, so no press slips between ticks */
+    void watch_player(Proxy& p)
+    {
+        for(auto player : p.template select<PlayerInfo, PlayerInput, PlayerCamera>())
+        {
+            auto [info, input, cam] = player.components();
+            if(info.seat_idx != 0 || info.is_remote())
+                continue;
+            Vecf3 const f     = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+            Vecf2 const angle = {std::atan2(f.y, f.x), std::asin(glm::clamp(f.z, -1.f, 1.f))};
+            if(!m_tests.from)
+                m_tests.from = angle;
+            f32 const yaw   = std::remainder(angle.x - m_tests.from->x, glm::two_pi<f32>());
+            f32 const pitch = angle.y - m_tests.from->y;
+            m_tests.left    = std::max(m_tests.left, yaw);
+            m_tests.right   = std::max(m_tests.right, -yaw);
+            m_tests.up      = std::max(m_tests.up, pitch);
+            m_tests.down    = std::max(m_tests.down, -pitch);
+            m_tests.action |= input.intent.use;
+            m_tests.accept |= input.accept.current;
+            m_tests.back |= input.back.current;
+            m_tests.primary |= input.intent.fire;
+            m_tests.grenade |= input.intent.grenade || input.grenade.current;
+        }
+    }
+
     /* ---- Custom animations ---- */
 
     struct custom_t
@@ -1031,11 +1186,20 @@ struct BlamScript
         });
     }
 
-    static void walk(Proxy& p, u64 id, Vecf3 const& velocity)
+    /* A recording and a clip's root can both move a unit: summed, sent once */
+    void walk(Proxy&, u64 id, Vecf3 const& velocity)
     {
-        Physics::Event    ev{Physics::Event::Velocity};
-        Physics::Velocity walking{.entity_id = id, .velocity = velocity, .preserve_z = true};
-        p.template subsystem<PhysicsBus>().process(ev, &walking);
+        m_walking[id] += velocity;
+    }
+
+    void send_walks(Proxy& p)
+    {
+        for(auto const& [id, velocity] : std::exchange(m_walking, {}))
+        {
+            Physics::Event    ev{Physics::Event::Velocity};
+            Physics::Velocity walking{.entity_id = id, .velocity = velocity, .preserve_z = true};
+            p.template subsystem<PhysicsBus>().process(ev, &walking);
+        }
     }
 
     /* Done being moved: a unit stops, anything else is let go */
@@ -1450,6 +1614,9 @@ struct BlamScript
         {
             if(ImGui::Button(m_running ? "Pause" : "Run"))
                 m_running = !m_running;
+            ImGui::SameLine();
+            if(ImGui::Button("Stop all"))
+                m_stop_all = true;
             ImGui::BeginChild("conlog");
             for(auto const& line : m_log)
                 ImGui::TextDisabled("%s", line.c_str());
@@ -1458,12 +1625,29 @@ struct BlamScript
         }
         if(ImGui::BeginTabItem("Threads"))
         {
-            for(auto const& thread : m_vm.threads())
+            auto const& threads = m_vm.threads();
+            for(size_t i = 0; i < threads.size(); i++)
+            {
+                auto const& thread = threads[i];
+                ImGui::PushID(static_cast<int>(i));
+                if(thread.status == script_vm::status_t::dormant)
+                {
+                    if(ImGui::SmallButton("Wake"))
+                        m_vm.wake(i);
+                } else if(thread.status != script_vm::status_t::finished)
+                {
+                    if(ImGui::SmallButton("Stop"))
+                        m_vm.stop(i);
+                } else
+                    ImGui::TextDisabled("    ");
+                ImGui::SameLine();
                 ImGui::Text(
                     "%-32s %-10s %-9s",
                     thread.script->name.str().data(),
                     blam::hsc::to_string(thread.script->schedule).data(),
                     magic_enum::enum_name(thread.status).data());
+                ImGui::PopID();
+            }
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("HaloScript"))
@@ -1487,6 +1671,9 @@ struct BlamScript
     static constexpr f32 plane_cruise = .75f;
     /* Where a body is tested against volumes, above its feet */
     static constexpr f32 body_middle = .3f;
+    static constexpr f32 eye_height  = .6f;
+    /* How far a look test wants the view turned, radians */
+    static constexpr f32 look_test = .25f;
 
     blam::map_container<Ver> const* m_map{nullptr};
     blam::tag_index_view<Ver>       m_tags{};
@@ -1506,14 +1693,19 @@ struct BlamScript
     std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> m_deferred;
     std::set<u64>                           m_hovering;
     std::map<u64, custom_t>                 m_custom;
+    std::map<u64, Vecf3>                    m_walking;
     std::set<u32>                           m_despawning;
     std::set<u32>                           m_recreate;
     std::map<blam::antr::header const*, Vecf2> m_walk_speeds;
+    action_tests_t                          m_tests;
+    std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
+    std::set<u32>                           m_loops;
     std::set<u32>                           m_unhandled;
     Proxy*                                  m_proxy{nullptr};
 
     std::vector<std::string>   m_log;
     bool                       m_running{false};
+    bool                       m_stop_all{false};
     std::unique_ptr<TickQueue> m_ticks;
 };
 
