@@ -2267,6 +2267,8 @@ struct H2MapLoader : compo::SubsystemBase
                     }
             if(tmpl == "water_static" || tmpl == "water_edge_blend")
                 ocean_material(map, pool, base, mat);
+            if(tmpl.starts_with("plasma_alpha"))
+                plasma_material(map, pool, base, mat);
             if(sky || tmpl.find("clouds") != tmpl.npos)
                 if(auto m = base.layer("cloud_mask"))
                     if(auto t = texture_for(map, pool, m->bitmap))
@@ -2290,6 +2292,7 @@ struct H2MapLoader : compo::SubsystemBase
         }
         mat.variant = mat.sky     ? (mat.mask.sampler ? Variant::sky_mask : Variant::sky)
                       : mat.ocean ? Variant::ocean
+                      : mat.plasma ? Variant::plasma
                       : mat.water ? Variant::water
                       : mat.mask.sampler ? Variant::clouds
                       : static_cast<Variant>(
@@ -2361,6 +2364,37 @@ struct H2MapLoader : compo::SubsystemBase
         mat.detail   = *sky;
         if(!src->tilings.empty() && src->tilings[0][0] != 0.f)
             mat.uv_scale = {src->tilings[0][0], src->tilings[0][1]};
+    }
+
+    /* plasma_alpha and its active camo twin, by slot: noise A, noise B,
+     * shape; pixel constants 0 and 1 are the bright and dim colours */
+    template<typename V>
+    void plasma_material(
+        dim::map_container<V> const&     map,
+        dim::raw_pool const&             pool,
+        dim::material::resolved_t const& base,
+        Material&                        mat)
+    {
+        if(base.slot_bitmaps.size() < 3 || base.pixel_constants.size() < 2)
+            return;
+        auto a     = texture_for(map, pool, base.slot_bitmaps[0]);
+        auto b     = texture_for(map, pool, base.slot_bitmaps[1]);
+        auto shape = texture_for(map, pool, base.slot_bitmaps[2]);
+        if(!a || !b || !shape)
+            return;
+        mat.texture     = a->texture;
+        mat.sampler     = a->sampler;
+        mat.detail      = *b;
+        mat.detail_mode = 0;
+        mat.mask        = *shape;
+        mat.plasma      = true;
+        mat.additive    = true;
+        mat.blended     = false;
+        for(size_t i = 0; i < 2; i++)
+        {
+            auto const& c       = base.pixel_constants[i];
+            mat.plasma_colors[i] = Vecf3{c[0], c[1], c[2]} / 255.f;
+        }
     }
 
     /* Uploaded once per bitm tag; detail maps are shared by many shaders */
