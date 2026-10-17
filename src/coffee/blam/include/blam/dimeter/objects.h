@@ -2792,4 +2792,54 @@ static_assert(offsetof(sky_t, lights) == 0x78);
 static_assert(offsetof(sky_t, clear_color) == 0xA0);
 static_assert(sizeof(sky_t) == 0xAC);
 
+/*! One sprite of a lens flare, placed along the line from the light
+ * through the screen centre */
+struct alignas(4) lens_reflection_t
+{
+    u16   flags; /* TODO: flags */
+    i16   unknown_0;
+    i16   image; /*!< Into the flare bitmap */
+    i16   unknown_1;
+    f32   position; /*!< 0 at the light, 0.5 at the screen centre */
+    f32   rotation_offset;
+    Vecf2 radius;     /*!< Fraction of the screen height */
+    Vecf2 brightness;
+    f32   modulation;
+    Vecf3 color;
+};
+
+static_assert(sizeof(lens_reflection_t) == 0x30);
+
+/*! lens: lens flare */
+struct alignas(4) lens_t
+{
+    f32                                falloff_angle;
+    f32                                cutoff_angle;
+    f32                                cos_falloff_angle;
+    f32                                cos_cutoff_angle;
+    f32                                occlusion_radius;
+    u16                                occlusion_offset;
+    u16                                occlusion_inner_scale;
+    f32                                near_fade_distance;
+    f32                                far_fade_distance;
+    tag_reference<tag_class_t::bitm>   bitmap;
+    u16                                flags; /* TODO: flags */
+    i16                                unknown_0;
+    u16                                rotation_function;
+    i16                                unknown_1;
+    f32                                rotation_scale;
+    Vecf2                              corona_scale;
+    u16                                falloff_function;
+    i16                                unknown_2;
+    tag_block<lens_reflection_t>       reflections;
+    u16                                flags_2; /* TODO: flags */
+    i16                                unknown_3;
+    tag_block<u8>                      brightness; /*!< elem 8 */
+    tag_block<u8>                      color;      /*!< elem 8 */
+    tag_block<u8>                      rotation;   /*!< elem 8 */
+};
+
+static_assert(offsetof(lens_t, reflections) == 0x40);
+static_assert(sizeof(lens_t) == 0x64);
+
 } // namespace blam::dimeter::obj

@@ -197,6 +197,22 @@ struct Material
     Vecf2                                  mask_scale{1.f, 1.f};
 };
 
+/* A sky light's lens flare: sprites along the line from the light through
+ * the screen centre */
+struct SkyFlare
+{
+    struct Sprite
+    {
+        Texture image;
+        f32     position{0.f}; /*!< 0 at the light, 0.5 at the screen centre */
+        f32     radius{0.f};   /*!< Fraction of the screen height */
+        Vecf3   color{1.f, 1.f, 1.f};
+    };
+
+    Vecf3               direction{0.f, 0.f, 1.f}; /*!< Towards the light */
+    std::vector<Sprite> sprites;
+};
+
 /* Triangle soup for Bullet; owned by the physics body once adopted */
 struct CollisionMesh
 {
@@ -298,6 +314,7 @@ struct H2Scene : compo::SubsystemBase
     std::shared_ptr<gfx::sampler_t>             lightmap_sampler;
     f32                                         sky_scale{1.f};
     Vecf3                                       sky_clear{0.f, 0.f, 0.f};
+    std::vector<SkyFlare>                       sky_flares;
 };
 
 /* What the occluder decided for this frame */
