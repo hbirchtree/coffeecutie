@@ -10,7 +10,7 @@ struct Instance
     vec4 color;
     vec4 tex_scale_offset;
     uvec4 texture_source; // x = the value
-    uvec4 padding;
+    uvec4 extra; // x = flags; meters: y = empty color (RGBA8), z = fill
 };
 
 layout(binding = 0, std140) uniform InstanceData {
@@ -36,6 +36,14 @@ const uint TEX_FONT   = 9u;
 const uint TEX_A8Y8   = 12u;
 const uint TEX_ETC2_RGB  = 13u;
 const uint TEX_ETC2_RGBA = 14u;
+
+const uint USE_ALPHA = 1u;
+const uint METER     = 2u;
+
+vec4 unpack_rgba8(uint v)
+{
+    return vec4(v & 0xFFu, (v >> 8) & 0xFFu, (v >> 16) & 0xFFu, v >> 24) / 255.0;
+}
 
 vec4 sample_color()
 {
@@ -87,8 +95,21 @@ void main()
     vec3 coloring = elements.instances[frag.element_id].color.rgb;
     vec4 background_color = sample_color();
     uint source = elements.instances[frag.element_id].texture_source.x >> 24;
+    uvec4 extra = elements.instances[frag.element_id].extra;
+    vec4 color = elements.instances[frag.element_id].color;
     if(source == TEX_FONT)
         out_color = background_color;
+    /* Lit where the texel's alpha ramp is under the fill; the shape is in
+     * its color channels */
+    else if((extra.x & METER) != 0u)
+    {
+        bool lit = background_color.a <= uintBitsToFloat(extra.z);
+        vec4 tint = lit ? color : unpack_rgba8(extra.y);
+        float shape = max(background_color.r, max(background_color.g, background_color.b));
+        out_color = vec4(tint.rgb, shape * tint.a);
+    }
+    else if((extra.x & USE_ALPHA) != 0u)
+        out_color = vec4(color.rgb * background_color.rgb, background_color.a * color.a);
     else
         out_color = vec4(coloring.rgb * background_color.rgb, background_color.a);
 }

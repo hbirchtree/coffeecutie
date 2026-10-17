@@ -210,6 +210,7 @@ struct RenderingParameters : compo::SubsystemBase
     libc_types::f32                meter_value{0.f};
 
     bool  render_ui{false};
+    bool  render_hud{true}; /* hidden while a menu is up */
     bool  debug_clear{false}; // sets a different clear color for visibility
     Vecf3 clear_color{0, 0.2f, 0.5f};
 

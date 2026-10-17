@@ -1117,6 +1117,7 @@ struct BipedEquipment
     };
     std::array<weapon_t, 2>  weapons;
     std::vector<equipment_t> equipment; // grenades, powerups
+    u16 grenade{0}; /*!< The equipment entry thrown, and counted on the HUD */
     /*! The map the pointers above point into */
     u32  load_generation{0};
     bool reloading{false}; /*!< The held weapon, as everyone sees it */

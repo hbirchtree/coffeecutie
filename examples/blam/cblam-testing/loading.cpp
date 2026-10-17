@@ -28,6 +28,7 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         AnimationPlayback,
         Attachment,
         BipedEquipment,
+        BipedStatus,
         BspReference,
         DebugDraw,
         DepthInfo,
@@ -2557,6 +2558,8 @@ struct ResourceLoader
                     .load_generation = files.load_generation,
                 };
                 starting_loadout(equip, files);
+                if(auto* status = p.template get<BipedStatus>(player.id()))
+                    *status = {.health = full_status, .shield = full_status};
             }
             for(auto const& change : pending_equips)
                 if(change.entity_id == player.id())
@@ -2824,6 +2827,40 @@ struct ResourceLoader
             std::swap(equip.weapons[0], equip.weapons[1]);
         if(!equip.weapons[0].weapon)
             equip.weapons[0] = armed(biped_model.weapon, files);
+
+        /* Grenades by the globals' types, as many as the profile or a
+         * multiplayer spawn gives */
+        auto globals_tag = index.tag_of("globals\\globals");
+        if(!globals_tag.has_value())
+            return;
+        auto globals = (*globals_tag)->template data<blam::globals::globals>(magic);
+        if(!globals.has_value())
+            return;
+        auto grenades = globals.value()->grenades.data(magic);
+        if(!grenades.has_value())
+            return;
+        std::array<u16, 4> const counts = profile ? std::array<u16, 4>{
+                                              profile->frag_grenades,
+                                              profile->plasma_nades,
+                                              profile->c_nades,
+                                              profile->d_nades}
+                                                  : std::array<u16, 4>{};
+        bool const multiplayer =
+            files.container.map->map_type == blam::maptype_t::multiplayer;
+        for(size_t i = 0; i < grenades.value().size() && i < counts.size(); i++)
+        {
+            auto tag = index.find(grenades.value()[i].equipment.tag_id);
+            if(!grenades.value()[i].equipment.valid() || tag == index.end())
+                continue;
+            auto eqip = (*tag).template data<blam::scn::equipment>(magic);
+            if(eqip.has_value())
+                equip.equipment.push_back({
+                    .equip = eqip.value(),
+                    .left  = multiplayer ? static_cast<u16>(std::max<i16>(
+                                               grenades.value()[i].multiplayer_spawn_default, 0))
+                                         : counts[i],
+                });
+        }
     }
 
     /* The held weapon's own model, in the biped's hand */
@@ -2867,6 +2904,8 @@ struct ResourceLoader
     }
 
     static constexpr std::string_view hand_marker = "right hand";
+    /* Health and shield, as fractions of this */
+    static constexpr u16 full_status = 0xFFFF;
 
     /* A model drawn at the player's eye in the first-person pass */
     u64 spawn_first_person(

@@ -18,6 +18,7 @@
 #include "effects.h"
 #include "ticks.h"
 #include "weapons.h"
+#include "hud.h"
 #include "vehicle_sounds.h"
 #include "physics.h"
 #include "player_controller.h"
@@ -299,6 +300,7 @@ i32 blam_main()
             alloc_projectiles(e);
             alloc_effects(e);
             alloc_weapons(e);
+            alloc_hud(e);
             alloc_scripting(e);
             h2::alloc_h2_renderer(e);
             setup_load_eventhandlers(e);
