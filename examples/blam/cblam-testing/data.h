@@ -169,6 +169,7 @@ struct PostProcessParameters : compo::SubsystemBase
     f32   gamma{.7f};
     f32   scale{1.f};
     bool  auto_expose{true};
+    bool  tonemap{true};
     f32   blur{0.f};
     Vecf4 rgb_comp{};
     f32   camo_scale{0.05f};
