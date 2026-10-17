@@ -271,6 +271,7 @@ struct alignas(8) EquipmentSync
     {
         none      = 0x0,
         reloading = 0x1,
+        throwing  = 0x2,
     };
 
     u32     player_idx{0};
@@ -324,8 +325,12 @@ struct alignas(8) WeaponFire
     u32   vehicle{0}; /*!< The vehicle's net id, 0 = held */
     u32   seed{0};
     u16   trigger{0};
-    u16   padding{0};
-    u32   padding2{0};
+    enum flags_t : u16
+    {
+        none   = 0x0,
+        thrown = 0x1, /*!< A grenade, `weapon` its proj */
+    } flags{none};
+    u32 padding{0};
 };
 
 /*! A hit the server decided (ObjectHitEvent), to every peer */

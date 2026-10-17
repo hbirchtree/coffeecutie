@@ -413,6 +413,7 @@ struct WeaponFireEvent
     libc_types::u32      player_idx{0};
     libc_types::u32      seed{0}; /*!< Spread, the same on every peer */
     libc_types::u16      trigger{0};
+    bool                 thrown{false}; /*!< By hand: `weapon` is the grenade's proj */
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
     /*! The tick the shooter saw others at; the authority traces bipeds

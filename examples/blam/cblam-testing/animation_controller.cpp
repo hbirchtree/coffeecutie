@@ -277,6 +277,11 @@ struct AnimationController
             if(reloading && !m_walkers[player.id()].reloading)
                 reload(p, player.id(), biped.anim_graph, weapon, held, files);
             m_walkers[player.id()].reloading = reloading;
+            /* And grenade throws */
+            bool const throwing = equip && equip->throwing;
+            if(throwing && !m_walkers[player.id()].throwing)
+                toss(p, player.id(), biped.anim_graph, weapon, files);
+            m_walkers[player.id()].throwing = throwing;
             m_walkers[player.id()].seat         = {};
             m_walkers[player.id()].exiting      = false;
             m_walkers[player.id()].seen_vehicle = false;
@@ -901,20 +906,25 @@ struct AnimationController
         return held ? std::string(held->weapon->label.str()) : unarmed;
     }
 
-    void reload(
-        Proxy&                          p,
-        u64                             id,
-        blam::antr::header const*       graph,
-        std::string const&              weapon,
-        BipedEquipment::weapon_t const* held,
-        BlamFiles<halo_version> const&  files)
+    void toss(
+        Proxy&                         p,
+        u64                            id,
+        blam::antr::header const*      graph,
+        std::string const&             weapon,
+        BlamFiles<halo_version> const& files)
     {
-        using fp_slot = blam::antr::first_person_weapon;
-        if(i32 const clip = stance(p, graph, "stand", weapon)[WeaponSlot::reload_1];
-           clip >= 0)
+        if(i32 const clip = stance(p, graph, "stand", weapon)[Slot::throw_grenade]; clip >= 0)
             apply(p, {.entity = id, .animation = clip, .fade = .1f});
-        auto const slot = held && held->rounds_loaded == 0 ? fp_slot::reload_empty
-                                                           : fp_slot::reload_full;
+        first_person_clip(p, id, blam::antr::first_person_weapon::throw_grenade, files);
+    }
+
+    /* The same slot on each of a player's first-person models */
+    void first_person_clip(
+        Proxy&                                           p,
+        u64                                              id,
+        blam::antr::first_person_weapon::animation_idx_t slot,
+        BlamFiles<halo_version> const&                   files)
+    {
         auto const& magic = files.container.magic;
         for(auto ent : p.template select<Attachment, AnimationPlayback>())
         {
@@ -931,12 +941,32 @@ struct AnimationController
         }
     }
 
+    void reload(
+        Proxy&                          p,
+        u64                             id,
+        blam::antr::header const*       graph,
+        std::string const&              weapon,
+        BipedEquipment::weapon_t const* held,
+        BlamFiles<halo_version> const&  files)
+    {
+        using fp_slot = blam::antr::first_person_weapon;
+        if(i32 const clip = stance(p, graph, "stand", weapon)[WeaponSlot::reload_1];
+           clip >= 0)
+            apply(p, {.entity = id, .animation = clip, .fade = .1f});
+        first_person_clip(
+            p,
+            id,
+            held && held->rounds_loaded == 0 ? fp_slot::reload_empty : fp_slot::reload_full,
+            files);
+    }
+
     /* A body on foot kicks with each shot it fires */
     void recoil(Proxy& p, WeaponFireEvent const& shot, BlamFiles<halo_version> const& files)
     {
         auto const* info = p.template get<PlayerInfo>(shot.shooter);
         auto const* anim = p.template get<AnimationPlayback>(shot.shooter);
-        if(shot.vehicle || !info || info->riding.vehicle || !anim || !anim->graph)
+        if(shot.vehicle || shot.thrown || !info || info->riding.vehicle || !anim ||
+           !anim->graph)
             return;
         i32 const clip = stance(p, anim->graph, "stand", held_label(p, shot.shooter, files))
             [WeaponSlot::fire_1];
@@ -1109,6 +1139,7 @@ struct AnimationController
         bool  running{false};
         std::string weapon; /* the label its stance was last drawn for */
         bool        reloading{false};
+        bool        throwing{false};
     };
     struct custom_t
     {

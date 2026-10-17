@@ -128,6 +128,7 @@ class CombatSync
                         .vehicle    = vehicle,
                         .seed       = shot.seed,
                         .trigger    = shot.trigger,
+                        .flags      = shot.thrown ? WeaponFire::thrown : WeaponFire::none,
                     },
                 .route = {server ? route_t::clients : route_t::server},
             });
@@ -303,8 +304,9 @@ class CombatSync
         blam::tag_index_view<halo_version> index(*m_map);
         auto        weapon    = index.find(wire.weapon);
         Vecf3 const direction = Vecf3(wire.direction);
+        bool const  thrown    = wire.flags & WeaponFire::thrown;
         if(weapon == index.end() || !(*weapon).valid() ||
-           !(*weapon).matches(blam::tag_class_t::weap) ||
+           !(*weapon).matches(thrown ? blam::tag_class_t::proj : blam::tag_class_t::weap) ||
            !std::isfinite(glm::dot(direction, Vecf3(wire.position))) ||
            glm::length(direction) < .5f)
             return false;
@@ -325,6 +327,7 @@ class CombatSync
             .player_idx = wire.player_idx,
             .seed       = wire.seed,
             .trigger    = wire.trigger,
+            .thrown     = thrown,
             .position   = Vecf3(wire.position),
             .direction  = glm::normalize(direction),
             .view_tick  = view_tick,

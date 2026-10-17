@@ -213,6 +213,8 @@ struct PlayerController
             input.jump |= b.a;
             input.swap |= b.y;
             input.reload |= b.x;
+            input.grenade |= state.axes.e.t_l > trigger_pressed;
+            input.grenade_switch |= b.b_l;
             /* B backs out of menus only; back also toggles freecam */
             input.back |= b.back || (in_menu && b.b);
         }
@@ -227,6 +229,9 @@ struct PlayerController
             input.jump |= key(CK_Space);
             input.swap |= key(CK_HTab);
             input.reload |= key(CK_r);
+            input.grenade_switch |= key(CK_g);
+            /* Grabs in the free camera, throws on foot */
+            input.grenade |= (input.mouse_buttons & CIMouseButtonEvent::RightButton) != 0;
             input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
         }
 
@@ -237,6 +242,10 @@ struct PlayerController
             intent.swap = true;
         if(input.reload)
             intent.reload = true;
+        if(input.grenade)
+            intent.grenade = true;
+        if(input.grenade_switch)
+            intent.grenade_switch = true;
         if(in_menu)
         {
             input.movement  = {};
@@ -244,6 +253,7 @@ struct PlayerController
             intent.throttle = intent.steer = 0.f;
             intent.use = intent.grab = intent.jump = intent.fire = false;
             intent.swap = intent.reload = false;
+            intent.grenade = intent.grenade_switch = false;
             return;
         }
 

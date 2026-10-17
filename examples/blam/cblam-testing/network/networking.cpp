@@ -3015,7 +3015,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         auto const& [held, slung] = equip->weapons;
         out.weapon = held.tag ? held.tag->tag_id : 0;
         out.slung  = slung.tag ? slung.tag->tag_id : 0;
-        out.flags  = equip->reloading ? EquipmentSync::reloading : EquipmentSync::none;
+        out.flags  = static_cast<EquipmentSync::flags_t>(
+            (equip->reloading ? EquipmentSync::reloading : 0) |
+            (equip->throwing ? EquipmentSync::throwing : 0));
         return out;
     }
 
@@ -3092,7 +3094,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(!info.is_remote() || it == m_remote_weapons.end())
                 continue;
             if(auto* equip = p.get<BipedEquipment>(player.id()))
+            {
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
+                equip->throwing  = it->second.flags & EquipmentSync::throwing;
+            }
             auto const known = equipment_of(p, player.id(), info);
             if(known.weapon == it->second.weapon && known.slung == it->second.slung)
                 continue;

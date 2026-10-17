@@ -984,6 +984,8 @@ struct PlayerInput
     debounced_button_t jump{}; /*!< Press edge; the controller keeps it */
     debounced_button_t swap{};   /*!< Switch weapons */
     debounced_button_t reload{};
+    debounced_button_t grenade{};
+    debounced_button_t grenade_switch{};
 
     /*! What the player wants, for whatever their input is routed to */
     struct intent_t
@@ -997,6 +999,8 @@ struct PlayerInput
         bool  jump{false};   /*!< Wanted; cleared once taken or stale */
         bool  swap{false};   /*!< Pressed: switch weapons; cleared once taken */
         bool  reload{false}; /*!< Pressed; cleared once taken */
+        bool  grenade{false};        /*!< Pressed: throw; cleared once taken */
+        bool  grenade_switch{false}; /*!< Pressed; cleared once taken */
     } intent;
 
     std::optional<Vecf3> position; /*!< teleport target */
@@ -1018,6 +1022,8 @@ struct PlayerInput
         jump.frame_end();
         swap.frame_end();
         reload.frame_end();
+        grenade.frame_end();
+        grenade_switch.frame_end();
     }
 };
 
@@ -1121,6 +1127,7 @@ struct BipedEquipment
     /*! The map the pointers above point into */
     u32  load_generation{0};
     bool reloading{false}; /*!< The held weapon, as everyone sees it */
+    bool throwing{false};  /*!< A grenade, from wind-up to recovery */
 
     weapon_t const* held(u32 generation) const
     {
