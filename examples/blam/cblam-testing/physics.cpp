@@ -1137,7 +1137,7 @@ struct PhysicsSystem
             /* Bodies with a phys tag turn about its centre of mass */
             Vecf3 const com = physics.mass_points
                                   ? physics.mass_points->center_of_mass
-                                  : Vecf3{};
+                                  : physics.center_of_mass;
             auto existing = m_object_bodies.find(id);
             if(std::exchange(physics.teleported, false) && existing != m_object_bodies.end())
             {
@@ -1171,7 +1171,7 @@ struct PhysicsSystem
                     .kinematic = follower,
                     .lock      = {.rotation = physics.upright},
                     .hulls     = physics.collision,
-                    .offset    = physics.mass_points ? -com : physics.center,
+                    .offset    = physics.mass_points ? -com : physics.center - com,
                     .rotation  = model.rotation,
                     .mass_points = physics.mass_points,
                     .drive       = physics.drive,
