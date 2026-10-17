@@ -103,6 +103,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
         for(int pass = 0; pass < 4; pass++)
+        {
+            if(pass == 1 && debug.render_fog)
+                draw_background_fog(vis, camera->camera.position, inverse_camera, resources);
             for(auto const& [mi, mat] : stl_types::enumerate(scene.materials))
             {
                 /* Sky, opaque, the sea, then everything blended over it */
@@ -326,6 +329,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     submit(m_single);
                 }
             }
+        }
         draw_flares(scene, *camera, resources);
         if(vis.camera_cluster != m_logged_cluster)
         {
@@ -388,6 +392,48 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         .depth = gfx::depth_state{},
                     });
             }
+    }
+
+    /* Background seen through the planar fog volume: nothing drawn there
+     * fogs itself */
+    void draw_background_fog(
+        H2Visibility const&  vis,
+        Vecf3 const&         eye,
+        Matf4 const&         inverse_camera,
+        BlamResources const& resources)
+    {
+        auto const& fog = vis.planar_fog;
+        if(fog.plane.w < -1e8f || fog.color.a <= 0.f)
+            return;
+        m_api->submit(
+            gfx::draw_command{
+                .program       = m_fog_program,
+                .vertices      = m_fog_vao,
+                .render_target = resources.offscreen,
+                .call =
+                    {
+                        .instanced = false,
+                        .mode      = gfx::drawing::primitive::triangle,
+                    },
+                .data = {{.arrays = {.count = 3}}},
+            },
+            gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Fragment,
+                gfx::uniform_pair<Matf4 const>{
+                    {"inverse_camera"}, semantic::SpanOne<const Matf4>(inverse_camera)},
+                gfx::uniform_pair<Vecf3 const>{
+                    {"fog_eye"}, semantic::SpanOne<const Vecf3>(eye)},
+                gfx::uniform_pair<Vecf4 const>{
+                    {"planar_fog_plane"}, semantic::SpanOne<const Vecf4>(fog.plane)},
+                gfx::uniform_pair<Vecf4 const>{
+                    {"planar_fog_color"}, semantic::SpanOne<const Vecf4>(fog.color)},
+                gfx::uniform_pair<Vecf2 const>{
+                    {"planar_fog_opaque"}, semantic::SpanOne<const Vecf2>(fog.opaque)}),
+            gfx::view_state{
+                .view = typing::vector_types::Veci4{
+                    0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
+            },
+            gfx::blend_state{});
     }
 
     struct FlareVertex
@@ -613,6 +659,28 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             });
         m_shadows.alloc(api, {});
 
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "h2_fog",
+                .fragment_file = "h2_fog",
+                .shader        = m_fog_program,
+            });
+        m_fog_vao = api.alloc_vertex_array();
+        m_fog_vao->alloc();
+        m_fog_vao->add(gfx::vertex_attribute{
+            .index = 0,
+            .value = {.offset = 0, .stride = sizeof(Vecf2), .count = 2},
+        });
+        m_fog_vao->set_attribute_names({{"position", 0}});
+        m_fog_buf = api.alloc_buffer(gfx::buffers::vertex, semantic::RSCA::ReadOnly);
+        m_fog_buf->alloc();
+        {
+            std::array<Vecf2, 3> const screen{{{-1.f, -1.f}, {3.f, -1.f}, {-1.f, 3.f}}};
+            m_fog_buf->commit(Span<const Vecf2>(screen.data(), screen.size()));
+        }
+        m_fog_vao->set_buffer(gfx::buffers::vertex, m_fog_buf, 0);
+
         for(size_t i = 0; i < m_programs.size(); i++)
             create_program(
                 api,
@@ -651,6 +719,10 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     std::vector<Vecf2>                           m_flare_light;
     std::shared_ptr<gfx::texture_2d_t>           m_depth_source;
     std::shared_ptr<gfx::sampler_t>              m_depth_sampler;
+
+    std::shared_ptr<gfx::program_t>      m_fog_program;
+    std::shared_ptr<gfx::vertex_array_t> m_fog_vao;
+    std::shared_ptr<gfx::buffer_t>       m_fog_buf;
 
     blam_render::CascadedShadowMap  m_shadows;
     std::shared_ptr<gfx::program_t> m_shadow_program;
