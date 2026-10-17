@@ -170,6 +170,23 @@ struct vm
             }
     }
 
+    /* Ends a thread where it stands; a dormant one can still be woken */
+    void stop(size_t index)
+    {
+        if(index >= m_threads.size())
+            return;
+        auto& thread  = m_threads[index];
+        thread.status = status_t::finished;
+        thread.stack.clear();
+        thread.until = blam::hsc::terminator;
+    }
+
+    void wake(size_t index)
+    {
+        if(index < m_threads.size() && m_threads[index].status == status_t::dormant)
+            m_threads[index].status = status_t::running;
+    }
+
     i64 now() const
     {
         return m_now;

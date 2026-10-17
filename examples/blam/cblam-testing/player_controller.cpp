@@ -82,13 +82,15 @@ struct PlayerController
             if(info.permissions.camera)
             {
                 sample(input, cam, controllers, dt, info.mode.physics);
-                /* Cutscenes take the controls away */
+                /* Scripts take the controls away; looking around stays
+                 * unless a cutscene has the camera */
                 if(!p.template subsystem<CinematicState>().input && !info.is_remote() &&
                    input.input_mode == PlayerInput::input_mode_t::game)
                 {
-                    input.movement   = {};
-                    input.look_delta = {};
-                    input.intent     = {};
+                    input.movement = {};
+                    input.intent   = {};
+                    if(cam.cinematic)
+                        input.look_delta = {};
                 }
                 if(!info.is_remote())
                     m_look[player.id()] += input.look_delta;
