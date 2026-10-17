@@ -286,6 +286,26 @@ inline void dxn_to_bc5(std::vector<byte_t>& blocks)
 }
 
 /*!
+ * \brief bitmap_texture_interleaved_interop_resource: two images in one
+ * resource, as images name it by interleaved_interop/_texture.
+ */
+struct interleaved_interop_t
+{
+    data_reference                      primary;
+    data_reference                      secondary;
+    std::array<texture_definition_t, 2> textures;
+};
+
+static_assert(sizeof(interleaved_interop_t) == 0x40);
+
+/*!
+ * \brief The top level of an image stored with another in an interleaved
+ * resource: the pair's high resolution levels follow each other in the
+ * secondary data.
+ */
+Span<byte_t const> top_level_interleaved(resource_view const& view, bitmap_image_t const& image);
+
+/*!
  * \brief The top level of an image's first hardware texture: secondary
  * data when the high resolution level was split off, else the start of the
  * primary data.
