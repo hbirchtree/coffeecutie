@@ -10,6 +10,7 @@
 #include "ticks.h"
 
 #include <blam/volta/blam_antr.h>
+#include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_unit.h>
 
 #include <coffee/components/proxy.h>
@@ -70,8 +71,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         {
             m_generation = files.load_generation;
             m_states.clear();
+            m_throws.clear();
             m_fire_queue->poll();
             m_shots.clear();
+            m_grenades.clear();
         }
         auto const& magic = files.container.magic;
 
@@ -86,6 +89,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* Presses are taken whether or not they can be acted on */
             bool const swap   = std::exchange(input.intent.swap, false);
             bool       reload = std::exchange(input.intent.reload, false);
+            bool const toss   = std::exchange(input.intent.grenade, false);
+            bool const cycle  = std::exchange(input.intent.grenade_switch, false);
             /* A gunner fires the vehicle's weapon, a body its own; the free
              * camera has nothing to shoot with */
             u64 const vehicle = info.riding.vehicle;
@@ -111,7 +116,11 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(state.weapon != weapon_tag)
                 state = {.weapon = weapon_tag};
             trigger_t const& trigger = triggers.value()[0];
-            bool const       held    = input.intent.fire;
+
+            /* Grenades are thrown on foot, whatever is held */
+            bool const throwing =
+                !vehicle && grenade(p, ent.id(), info, cam, *equip, ticks, toss, cycle);
+            bool const held = input.intent.fire && !throwing;
 
             /* Bodies switch, reload and run dry; vehicle guns don't */
             auto* ammo = vehicle ? nullptr : &equip->weapons[0];
@@ -333,6 +342,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     {
         auto&       game  = p.template subsystem<GameEventBus>();
         auto const& magic = files.container.magic;
+        if(shot.thrown)
+            return thrown(p, shot, files);
 
         blam::tag_index_view<halo_version> index(files.container);
         auto tag = index.find(shot.weapon.tag_id);
@@ -519,6 +530,203 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         ammo.rounds_total -= taken;
     }
 
+    /* ---- Grenades ---- */
+
+    struct throw_t
+    {
+        f32 windup{-1.f}; /* seconds to the release, negative when not throwing */
+        f32 recover{0.f}; /* seconds until the hand is free again */
+        blam::tagref_t const* projectile{nullptr};
+    };
+
+    struct grenade_t
+    {
+        blam::scn::equipment const* equipment{nullptr};
+        blam::tagref_t const*       projectile{nullptr};
+        blam::tagref_t const*       throwing_effect{nullptr};
+    };
+
+    void load_grenades(BlamFiles<halo_version> const& files)
+    {
+        m_grenades.clear();
+        auto const&                        magic = files.container.magic;
+        blam::tag_index_view<halo_version> index(files.container);
+        auto globals_tag = index.tag_of("globals\\globals");
+        if(!globals_tag.has_value())
+            return;
+        auto globals = (*globals_tag)->template data<blam::globals::globals>(magic);
+        if(!globals.has_value())
+            return;
+        auto grenades = globals.value()->grenades.data(magic);
+        if(!grenades.has_value())
+            return;
+        for(auto const& grenade : grenades.value())
+        {
+            auto tag = index.find(grenade.equipment.tag_id);
+            if(!grenade.equipment.valid() || tag == index.end())
+                continue;
+            auto eqip = (*tag).template data<blam::scn::equipment>(magic);
+            if(!eqip.has_value())
+                continue;
+            m_grenades.push_back({
+                .equipment       = eqip.value(),
+                .projectile      = &static_cast<blam::tagref_t const&>(grenade.projectile),
+                .throwing_effect = &static_cast<blam::tagref_t const&>(grenade.throwing_effect),
+            });
+        }
+    }
+
+    grenade_t const* grenade_of(blam::scn::equipment const* equipment) const
+    {
+        for(auto const& grenade : m_grenades)
+            if(grenade.equipment == equipment)
+                return &grenade;
+        return nullptr;
+    }
+
+    /* Switches type, starts a throw and lets go at the animation's key
+     * frame; true while the hand is busy */
+    bool grenade(
+        Proxy&                         p,
+        u64                            player,
+        PlayerInfo const&              info,
+        PlayerCamera const&            cam,
+        BipedEquipment&                equip,
+        std::vector<TickEvent> const&  ticks,
+        bool                           toss,
+        bool                           cycle)
+    {
+        auto& state = m_throws[player];
+        auto& kinds = equip.equipment;
+        /* Once the map's globals can be read */
+        if(m_grenades.empty())
+            load_grenades(p.template subsystem<BlamFiles<halo_version>>());
+        if(cycle && !kinds.empty() && state.windup < 0.f)
+            /* The next type there are any of */
+            for(size_t i = 1; i <= kinds.size(); i++)
+                if(kinds[(equip.grenade + i) % kinds.size()].left > 0)
+                {
+                    equip.grenade = static_cast<u16>((equip.grenade + i) % kinds.size());
+                    break;
+                }
+        if(toss && state.windup < 0.f && state.recover <= 0.f && !equip.reloading &&
+           equip.grenade < kinds.size() && kinds[equip.grenade].left > 0)
+            if(auto const* type = grenade_of(kinds[equip.grenade].equip))
+            {
+                kinds[equip.grenade].left--;
+                state.projectile = type->projectile;
+                state.windup     = release_time(p, player);
+                state.recover    = state.windup + throw_recovery;
+                equip.throwing   = true;
+            }
+        for(auto const& tick : ticks)
+        {
+            state.recover = std::max(state.recover - tick.seconds, 0.f);
+            if(state.windup < 0.f || (state.windup -= tick.seconds) > 0.f)
+                continue;
+            state.windup = -1.f;
+            if(state.projectile)
+                toss_grenade(p, player, info, cam, equip, *state.projectile);
+        }
+        equip.throwing = state.windup >= 0.f || state.recover > 0.f;
+        return equip.throwing;
+    }
+
+    /* A grenade leaving the hand, at the thrower's grenade velocity */
+    void thrown(Proxy& p, WeaponFireEvent const& shot, BlamFiles<halo_version> const& files)
+    {
+        auto&       game  = p.template subsystem<GameEventBus>();
+        auto const* equip = p.template get<BipedEquipment>(shot.shooter);
+        f32 const   speed = equip && equip->biped && equip->biped->grenade_velocity > 0.f
+                                ? equip->biped->grenade_velocity
+                                : default_throw_speed;
+        Vecf3 const dir   = shot.direction;
+        SpawnObjectEvent spawn{
+            .object   = shot.weapon,
+            .position = shot.position,
+            .rotation = glm::angleAxis(std::atan2(dir.y, dir.x), Vecf3{0, 0, 1}) *
+                        glm::angleAxis(-std::asin(std::clamp(dir.z, -1.f, 1.f)), Vecf3{0, 1, 0}),
+            .local_only = true,
+            .owner      = shot.shooter,
+            .shooter    = shot.shooter,
+            .velocity   = dir * speed,
+        };
+        GameEvent ev{.type = GameEvent::SpawnObject};
+        game.inject(ev, &spawn);
+
+        for(auto const& grenade : m_grenades)
+            if(grenade.projectile->tag_id == shot.weapon.tag_id && grenade.throwing_effect->valid())
+            {
+                u64 const first = first_person(p, shot.shooter, false);
+                u64 const third = in_hand(p, shot.shooter, files);
+                auto const play = [&](u64 parent, bool visuals_only) {
+                    SpawnEffectEvent effect{
+                        .effect       = *grenade.throwing_effect,
+                        .position     = shot.position,
+                        .direction    = dir,
+                        .parent       = parent,
+                        .visuals_only = visuals_only,
+                    };
+                    GameEvent fx{.type = GameEvent::SpawnEffect};
+                    game.inject(fx, &effect);
+                };
+                if(first || !third)
+                    play(first, false);
+                if(third)
+                    play(third, first != 0);
+                break;
+            }
+    }
+
+    /* When the first-person hands' throw lets go */
+    f32 release_time(Proxy& p, u64 player)
+    {
+        using fp_slot     = blam::antr::first_person_weapon;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        for(auto ent : p.template select<Attachment, AnimationPlayback>())
+        {
+            auto const& anim = ent.template get<AnimationPlayback>();
+            if(ent.template get<Attachment>().parent != player || !anim.graph)
+                continue;
+            auto fp    = anim.graph->first_person_weapons.data(magic);
+            auto clips = anim.graph->animations.data(magic);
+            if(!fp.has_value() || fp.value().empty() || !clips.has_value())
+                continue;
+            auto slots = fp.value()[0].animations.data(magic);
+            if(!slots.has_value() || slots.value().size() <= fp_slot::throw_grenade)
+                continue;
+            i32 const clip = slots.value()[fp_slot::throw_grenade].animation;
+            if(clip >= 0 && static_cast<size_t>(clip) < clips.value().size() &&
+               clips.value()[clip].key_frame > 0)
+                return clips.value()[clip].key_frame / animation_rate;
+        }
+        return default_release;
+    }
+
+    /* Out of the eye along the view, every peer flying its own */
+    void toss_grenade(
+        Proxy&                p,
+        u64                   player,
+        PlayerInfo const&     info,
+        PlayerCamera const&   cam,
+        BipedEquipment const& equip,
+        blam::tagref_t const& projectile)
+    {
+        Vecf3 const forward =
+            glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+        WeaponFireEvent shot{
+            .weapon     = projectile,
+            .shooter    = player,
+            .player_idx = info.player_idx,
+            .seed       = static_cast<u32>(m_rng()),
+            .thrown     = true,
+            .position   = cam.camera.position + forward * muzzle_distance,
+            .direction  = forward,
+        };
+        GameEvent ev{.type = GameEvent::WeaponFire};
+        p.template subsystem<GameEventBus>().inject(ev, &shot);
+    }
+
     /* The shooter's weapon as others see it */
     u64 in_hand(Proxy& p, u64 shooter, BlamFiles<halo_version> const& files)
     {
@@ -614,6 +822,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return x * (r * std::cos(phi)) + y * (r * std::sin(phi)) + dir * z;
     }
 
+    /* Antr frames per second, and throws without a key frame */
+    static constexpr f32 animation_rate  = 30.f;
+    static constexpr f32 default_release     = .3f;
+    static constexpr f32 default_throw_speed = 6.f; /* wu/s */
+    /* Hand busy after letting go */
+    static constexpr f32 throw_recovery = .4f;
+
     /* Across the ground from the middle of the body */
     static constexpr f32 pickup_reach = .8f;
 
@@ -625,6 +840,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     u32                       m_generation{0};
     std::map<u64, state_t>    m_states;
+    std::map<u64, throw_t>    m_throws;
+    std::vector<grenade_t>    m_grenades;
     std::minstd_rand          m_rng{std::random_device{}()};
 
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
