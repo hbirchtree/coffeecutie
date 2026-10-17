@@ -2428,6 +2428,10 @@ struct H2MapLoader : compo::SubsystemBase
                    !rt.has_error() && !rt.value().empty())
                     bitm_tag = map.tag_at(rt.value()[0].diffuse.tag_id);
             mat.uv_scale   = {base.scale_u, base.scale_v};
+            /* Texture transforms (<usage>_u / _v rows) carry their scale
+             * in the layer lookup */
+            if(auto own = base.layer(base.usage))
+                mat.uv_scale = {own->scale_u, own->scale_v};
             mat.alpha_test = base.alpha_test;
             mat.water      = base.water;
             /* Transparent templates name their blend: one_add_*, two_add_*
