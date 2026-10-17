@@ -88,6 +88,7 @@ struct SectionStreams
     geo::resource_t const* normal{nullptr};
     geo::resource_t const* lightmap{nullptr}; /*!< i16 x2 secondary uv */
     geo::resource_t const* submeshes{nullptr};
+    geo::resource_t const* buffers{nullptr}; /*!< vertex_buffer_t per stream */
 };
 
 static SectionStreams find_streams(Span<geo::resource_t const> resources)
@@ -107,6 +108,8 @@ static SectionStreams find_streams(Span<geo::resource_t const> resources)
             out.normal = &r;
         else if(r.type0() == 56 && r.type1() == 3 && !out.lightmap)
             out.lightmap = &r;
+        else if(r.type0() == 56 && r.type1() == 32 && !out.buffers)
+            out.buffers = &r;
     }
     return out;
 }
@@ -1298,7 +1301,17 @@ struct H2MapLoader : compo::SubsystemBase
         u32  ustride = has_uv ? streams.texcoord->size() / vertex_count : 0;
         bool has_n   = in_block(streams.normal);
         u32  nstride = has_n ? streams.normal->size() / vertex_count : 0;
-        if(pstride < (bounds ? 6u : 12u))
+        /* Model streams are compressed against the bounds unless their
+         * buffer header says floats */
+        bool float_pos = !bounds, float_uv = !bounds;
+        if(in_block(streams.buffers, 2 * sizeof(geo::vertex_buffer_t)))
+        {
+            auto const* vb = reinterpret_cast<geo::vertex_buffer_t const*>(
+                bytes + base + streams.buffers->offset());
+            float_pos = vb[0].type == geo::vertex_type_t::point;
+            float_uv  = vb[1].type == geo::vertex_type_t::texcoord;
+        }
+        if(pstride < (float_pos ? 12u : 6u) || (!float_pos && !bounds))
             return 0;
         /* 4 = packed normal; 12 = packed normal, binormal, tangent; 36 =
          * the same three as floats (Vista) */
@@ -1326,7 +1339,7 @@ struct H2MapLoader : compo::SubsystemBase
             Vertex      out{};
             auto const* p = bytes + base + streams.position->offset() + v * pstride;
             Vecf3       pos;
-            if(bounds)
+            if(!float_pos)
             {
                 i16 q[3];
                 std::memcpy(q, p, 6);
@@ -1344,20 +1357,24 @@ struct H2MapLoader : compo::SubsystemBase
             if(has_uv)
             {
                 auto const* t = bytes + base + streams.texcoord->offset() + v * ustride;
-                if(bounds && ustride >= 4)
+                if(!float_uv && bounds && ustride >= 4)
                 {
                     i16 q[2];
                     std::memcpy(q, t, 4);
                     out.texcoord = {
                         expand(from_le(q[0]), from_le(bounds->u_min), from_le(bounds->u_max)),
                         expand(from_le(q[1]), from_le(bounds->v_min), from_le(bounds->v_max))};
-                } else if(!bounds && ustride >= 8)
+                } else if(float_uv && ustride >= 8)
                 {
                     f32 uv[2];
                     std::memcpy(uv, t, 8);
                     out.texcoord = {from_le(uv[0]), from_le(uv[1])};
                 }
             }
+            /* Sky domes put their sun-lit side by the sky's light only
+             * with v running the other way */
+            if(sky)
+                out.texcoord.y = 1.f - out.texcoord.y;
             if(has_n && nstride == 36)
             {
                 f32 n[3];
@@ -1540,7 +1557,6 @@ struct H2MapLoader : compo::SubsystemBase
             m_indices.insert(m_indices.end(), list.begin(), list.end());
             emitted++;
         }
-        (void)sky;
         return emitted ? 1 : 0;
     }
 
