@@ -120,19 +120,23 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 auto& draws = m_draws[mi];
                 draws.clear();
                 m_moving.clear();
+                m_animated.clear();
                 for(auto const& d : mat.section_draws)
                     if(!vis.draw_visible(d.tag, scene.sections) ||
                        (d.tag.placed && !debug.render_scenery))
                         continue;
                     else if(d.tag.object >= 0)
                         m_moving.push_back(d);
+                    else if(d.tag.animated >= 0)
+                        m_animated.push_back(d);
                     else
                         draws.push_back(d.cmd);
                 draws_total += mat.section_draws.size();
-                draws_visible += draws.size() + m_moving.size();
-                if(draws.empty() && m_moving.empty())
+                draws_visible += draws.size() + m_moving.size() + m_animated.size();
+                if(draws.empty() && m_moving.empty() && m_animated.empty())
                     continue;
                 Matf4 model_matrix{1.f};
+                i32   skinned = 0;
                 Vecf2 const water_fan{mat.water_fan ? 1.f : 0.f, sea_level};
                 Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
                 Vecf3 const& eye = camera->camera.position;
@@ -144,6 +148,10 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Matf4>(camera->matrix)},
                     gfx::uniform_pair<Matf4 const>{
                         {"model"}, semantic::SpanOne<const Matf4>(model_matrix)},
+                    gfx::uniform_pair<const i32>{
+                        {"skinned"}, semantic::SpanOne<const i32>(skinned)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"bones"}, semantic::Span<const Matf4>(m_bones)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"water_fan"}, semantic::SpanOne<const Vecf2>(water_fan)},
                     gfx::uniform_pair<Vecf2 const>{
@@ -328,6 +336,15 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     m_single.assign(1, d.cmd);
                     submit(m_single);
                 }
+                skinned = 1;
+                for(auto const& d : m_animated)
+                {
+                    auto const& object = scene.animated_objects[static_cast<size_t>(d.tag.animated)];
+                    pose(scene.animations[object.animation], seconds);
+                    model_matrix = object.transform;
+                    m_single.assign(1, d.cmd);
+                    submit(m_single);
+                }
             }
         }
         draw_flares(scene, *camera, resources);
@@ -339,6 +356,22 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     }
 
   private:
+    /* An animation's skin matrices at `seconds`, looping, between frames
+     * blended */
+    void pose(H2Scene::animation_t const& animation, f32 seconds)
+    {
+        if(animation.frames == 0)
+            return;
+        f32 const at   = std::fmod(seconds * animation.rate, static_cast<f32>(animation.frames));
+        u32 const f0   = static_cast<u32>(at) % animation.frames;
+        u32 const f1   = (f0 + 1) % animation.frames;
+        f32 const t    = at - std::floor(at);
+        u32 const n    = std::min<u32>(animation.nodes, m_bones.size());
+        for(u32 i = 0; i < n; i++)
+            m_bones[i] = animation.palette[f0 * animation.nodes + i] * (1.f - t) +
+                         animation.palette[f1 * animation.nodes + i] * t;
+    }
+
     /* Moving objects cast into each cascade; the BSP and static scenery
      * have theirs baked into the lightmaps */
     void draw_shadows(
@@ -582,12 +615,35 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                      .flags  = gfx::vertex_attribute::attribute_flags::packed |
                               gfx::vertex_attribute::attribute_flags::normalized},
             });
+        m_vao->add(
+            gfx::vertex_attribute{
+                .index = 5,
+                .value =
+                    {.offset = offsetof(Vertex, nodes),
+                     .stride = sizeof(Vertex),
+                     .count  = 4,
+                     .type   = semantic::type_t::u8,
+                     .flags  = gfx::vertex_attribute::attribute_flags::packed},
+            });
+        m_vao->add(
+            gfx::vertex_attribute{
+                .index = 6,
+                .value =
+                    {.offset = offsetof(Vertex, weights),
+                     .stride = sizeof(Vertex),
+                     .count  = 4,
+                     .type   = semantic::type_t::u8,
+                     .flags  = gfx::vertex_attribute::attribute_flags::packed |
+                              gfx::vertex_attribute::attribute_flags::normalized},
+            });
         m_vao->set_attribute_names({
             {"position", 0},
             {"texcoord", 1},
             {"normal", 2},
             {"lightmap", 3},
             {"vertex_light", 4},
+            {"bone_nodes", 5},
+            {"bone_weights", 6},
         });
 
 
@@ -708,6 +764,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     /* Per material: this frame's visible ranges */
     std::vector<std::vector<gfx::draw_command::data_t>> m_draws;
     std::vector<Material::draw_t>                       m_moving;
+    std::vector<Material::draw_t>                       m_animated;
+    std::array<Matf4, 64>                               m_bones{};
     std::vector<gfx::draw_command::data_t>              m_single;
     bool m_draw_error_logged{false};
 
