@@ -124,9 +124,17 @@ struct WaterParams
 };
 
 /* One render method: its textures and every draw range using it */
+/*! An object's draws in object space, placed by its entity's Model */
+struct ObjectDraws
+{
+    u64                                    entity{0};
+    std::vector<gfx::draw_command::data_t> draws;
+};
+
 struct Material
 {
     std::vector<gfx::draw_command::data_t> draws;
+    std::vector<ObjectDraws>               object_draws;
     std::string                            name;
     Variant                                variant{Variant::base};
     Texture                                diffuse;

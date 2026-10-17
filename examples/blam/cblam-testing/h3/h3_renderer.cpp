@@ -15,7 +15,7 @@
 namespace h3 {
 
 using H3RendererManifest = compo::SubsystemManifest<
-    compo::type_list_t<const PlayerCamera, const PlayerInfo>,
+    compo::type_list_t<const PlayerCamera, const PlayerInfo, const Model>,
     compo::type_list_t<const H3Scene, const BlamResources, gfx::system>,
     compo::empty_list_t>;
 
@@ -79,12 +79,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             for(auto const& mat : scene.materials)
             {
                 int const mat_pass = mat.additive ? 2 : mat.blended ? 1 : 0;
-                if(mat_pass != pass || mat.draws.empty() || !mat.visible ||
-                   mat.variant == Variant::water)
+                if(mat_pass != pass || (mat.draws.empty() && mat.object_draws.empty()) ||
+                   !mat.visible || mat.variant == Variant::water)
                     continue;
                 bool const terrain = mat.variant == Variant::terrain;
                 /* Terrain scales each layer in the fragment program */
                 Vecf2 const uv_scale = terrain ? unit : mat.uv_scale;
+                Matf4       model_matrix(1.f);
                 auto vert_u = gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Vertex,
                     gfx::uniform_pair<Matf4 const>{
@@ -104,7 +105,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     gfx::uniform_pair<Vecf2 const>{
                         {"mask_scale"}, semantic::SpanOne<const Vecf2>(unit)},
                     gfx::uniform_pair<Vecf2 const>{
-                        {"bump_scale"}, semantic::SpanOne<const Vecf2>(mat.bump_scale)});
+                        {"bump_scale"}, semantic::SpanOne<const Vecf2>(mat.bump_scale)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"model"}, semantic::SpanOne<const Matf4>(model_matrix)});
                 i32 alpha_test = mat.alpha_test ? 1 : 0;
                 i32 blended    = pass > 0 ? 1 : 0;
                 auto view = gfx::view_state{
@@ -112,14 +115,14 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
                     .depth = gfx::depth_state{.reversed = true},
                 };
-                auto submit = [&](auto& frag_u, auto& samplers) {
+                auto submit_draws = [&](auto& frag_u, auto& samplers, auto const& draws) {
                     return m_api->submit(
                         {
                             .program       = m_programs[static_cast<size_t>(mat.variant)],
                             .vertices      = m_vao,
                             .render_target = resources.offscreen,
                             .call          = {.indexed = true, .instanced = true},
-                            .data          = mat.draws,
+                            .data          = draws,
                         },
                         vert_u,
                         frag_u,
@@ -127,6 +130,23 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         view,
                         gfx::depth_extended_state{.depth_write = pass == 0},
                         gfx::blend_state{.additive = mat.additive});
+                };
+                /* The level, then each object where its Model is */
+                auto submit = [&](auto& frag_u, auto& samplers) {
+                    std::optional<std::tuple<gfx::error, std::string_view>> out;
+                    model_matrix = Matf4(1.f);
+                    if(!mat.draws.empty())
+                        out = submit_draws(frag_u, samplers, mat.draws);
+                    for(auto const& object : mat.object_draws)
+                    {
+                        auto const* placed = p.template get<Model>(object.entity);
+                        if(!placed)
+                            continue;
+                        model_matrix = placed->transform;
+                        if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
+                            out = res;
+                    }
+                    return out;
                 };
                 auto or_white = [&](Texture const& t) {
                     return t.sampler ? t.sampler : m_white_sampler;
@@ -367,6 +387,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
 
         Vecf3 const offset{};
         f32 const   scale = 1.f;
+        Matf4 const identity(1.f);
         Vecf2 const unit{1.f, 1.f};
         Vecf2 const target{static_cast<f32>(size.x), static_cast<f32>(size.y)};
         auto lightprobe = scene.lightprobe_sampler ? scene.lightprobe_sampler : m_no_lightprobe_sampler;
@@ -380,7 +401,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 gfx::uniform_pair<Matf4 const>{{"camera"}, semantic::SpanOne<const Matf4>(camera.matrix)},
                 gfx::uniform_pair<Vecf2 const>{{"uv_scale"}, semantic::SpanOne<const Vecf2>(unit)},
                 gfx::uniform_pair<Vecf3 const>{{"model_offset"}, semantic::SpanOne<const Vecf3>(offset)},
-                gfx::uniform_pair<const f32>{{"model_scale"}, semantic::SpanOne<const f32>(scale)});
+                gfx::uniform_pair<const f32>{{"model_scale"}, semantic::SpanOne<const f32>(scale)},
+                gfx::uniform_pair<Matf4 const>{{"model"}, semantic::SpanOne<const Matf4>(identity)});
             auto frag_u = gfx::make_uniform_list(
                 stage_t::Fragment,
                 gfx::uniform_pair<Vecf3 const>{{"camera_position"}, semantic::SpanOne<const Vecf3>(eye)},
@@ -552,7 +574,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             create_program(
                 api,
                 shader_pair_t{
-                    .vertex_file   = "h2",
+                    .vertex_file   = "h3",
                     .fragment_file = variant_files[i],
                     .shader        = m_programs[i],
                 });

@@ -767,6 +767,7 @@ struct ObjectPhysics
 
     Vecf3 half_extents{}; /*!< Box, when there is no collision */
     Vecf3 center{};       /*!< Box/sphere centre in object space */
+    Vecf3 center_of_mass{}; /*!< Hulls without a phys tag turn about this */
     f32   radius{0.f};    /*!< Sphere instead of a box */
     f32   mass{0.f};      /*!< 0 = static */
     bool  item{false};    /*!< Only collides with the world and other items */

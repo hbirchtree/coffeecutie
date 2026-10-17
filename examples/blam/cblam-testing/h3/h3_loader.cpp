@@ -8,6 +8,7 @@
 #include "sounds.h"
 
 #include <blam/elegy/bitmap.h>
+#include <blam/elegy/physics.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
 #include <blam/elegy/structure.h>
@@ -25,6 +26,11 @@
 
 #include <glm/gtc/matrix_inverse.hpp>
 
+#if defined(FEATURE_ENABLE_BULLET3)
+#include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
+#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
+#endif
+
 #include <bit>
 #include <cmath>
 #include <limits>
@@ -37,6 +43,22 @@ namespace h3 {
 namespace el = blam::elegy;
 using semantic::BytesConst;
 using semantic::Span;
+
+/* The structure BSP's static body in the physics world */
+inline constexpr u64 collision_body_id = 0x4833'0000'0000'0000ull;
+
+/* A placed object that moves: drawn where its Model is, simulated by physics */
+static const auto object_recipe = compo::EntityRecipe{
+    .components = {compo::type_hash_v<Model>(), compo::type_hash_v<ObjectPhysics>()},
+    .tags       = ObjectGC,
+};
+
+/* Collision polygons fanned into triangles, decoded out of the big-endian map */
+struct CollisionMesh
+{
+    std::vector<Vecf3> vertices;
+    std::vector<i32>   indices;
+};
 
 /* The pixel formats Halo 1/2 already upload, by Halo 3 format */
 static std::optional<blam::bitm::format_t> h1_format(el::bitmap_format_t format)
@@ -473,6 +495,7 @@ struct H3MapLoader : compo::SubsystemBase
             m_scene.auto_exposure.enabled = false;
         }
         load_scenery(*scnr, bsp);
+        load_objects(*scnr, bsp);
         load_sky(*scnr, bsp);
         load_cubemaps(*scnr, bsp);
         if(m_vertices.empty())
@@ -578,9 +601,20 @@ struct H3MapLoader : compo::SubsystemBase
 
         auto resources = m_loader->load(bsp->tag_resources);
         Span<el::instanced_geometry_definition_t const> definitions;
+        Span<el::coll::collision_bsp_t const>           collision_bsps;
         if(resources.has_value())
             if(auto const* root = resources->root_as<el::structure_bsp_resources_t>())
-                definitions = resources->block(root->instanced_geometry);
+            {
+                definitions    = resources->block(root->instanced_geometry);
+                collision_bsps = resources->block(root->collision_bsps);
+            }
+        auto collision = std::make_shared<CollisionMesh>();
+        if(!collision_bsps.empty())
+            append_collision(
+                el::coll::bsp_view_t::from(resources.value(), collision_bsps[0]),
+                Matf4(1.f),
+                *collision);
+        size_t const world_triangles = collision->indices.size() / 3;
         auto instance_list = bsp->instances.data(magic).value_or(
             Span<el::instanced_geometry_t const>());
         for(size_t i = 0; i < instance_list.size(); i++)
@@ -598,6 +632,10 @@ struct H3MapLoader : compo::SubsystemBase
             transform[1] = Vecf4(instance.left.value() * scale, 0.f);
             transform[2] = Vecf4(instance.up.value() * scale, 0.f);
             transform[3] = Vecf4(instance.position.value(), 1.f);
+            append_collision(
+                el::coll::bsp_view_t::from(resources.value(), definition->collision),
+                transform,
+                *collision);
             /* An instance's texcoords are its own buffer, through the
              * lightmap's per-instance list */
             std::vector<Vecf2>              uvs;
@@ -624,11 +662,76 @@ struct H3MapLoader : compo::SubsystemBase
                              lights) > 0;
         }
         cDebug(
-            "H3: {}: {} clusters, {} instances",
+            "H3: {}: {} clusters, {} instances; collision {} world + {} instance triangles",
             map.name_of(*bsp_tag),
             clusters,
-            instances);
+            instances,
+            world_triangles,
+            collision->indices.size() / 3 - world_triangles);
+        submit_collision(std::move(collision));
         return clusters + instances > 0;
+    }
+
+    /* Appends a collision BSP's surfaces as fanned triangles */
+    static void append_collision(
+        el::coll::bsp_view_t const& bsp, Matf4 const& transform, CollisionMesh& out)
+    {
+        i32 const vbase = static_cast<i32>(out.vertices.size());
+        /* Bounding surfaces sit on vertices at infinity, which a quantized
+         * BVH cannot hold */
+        std::vector<bool> finite;
+        finite.reserve(bsp.vertices.size());
+        for(auto const& v : bsp.vertices)
+        {
+            Vecf3 const point = v.point.value();
+            finite.push_back(std::isfinite(point.x) && std::isfinite(point.y) && std::isfinite(point.z));
+            out.vertices.push_back(finite.back() ? Vecf3(transform * Vecf4(point, 1.f)) : Vecf3{});
+        }
+        std::vector<i32> polygon;
+        for(u32 s = 0; s < bsp.surfaces.size(); s++)
+        {
+            if(stl_types::any_flag_of(bsp.surfaces[s].flags, el::coll::surface_flags_t::invalid))
+                continue;
+            polygon.clear();
+            bool usable = true;
+            bsp.walk_surface(s, [&](u32 vertex) {
+                if(vertex < finite.size() && finite[vertex])
+                    polygon.push_back(vbase + static_cast<i32>(vertex));
+                else
+                    usable = false;
+            });
+            if(!usable)
+                continue;
+            for(size_t i = 2; i < polygon.size(); i++)
+                out.indices.insert(out.indices.end(), {polygon[0], polygon[i - 1], polygon[i]});
+        }
+    }
+
+    /* One static body for the loaded structure BSP */
+    void submit_collision(std::shared_ptr<CollisionMesh> mesh)
+    {
+#if defined(FEATURE_ENABLE_BULLET3)
+        if(!mesh || mesh->indices.empty())
+            return;
+        auto body        = std::make_shared<Physics::BodyCreationPrebuilt>();
+        body->entity_id  = collision_body_id;
+        body->mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
+        btIndexedMesh part;
+        part.m_numTriangles        = static_cast<int>(mesh->indices.size() / 3);
+        part.m_triangleIndexBase   = reinterpret_cast<unsigned char const*>(mesh->indices.data());
+        part.m_triangleIndexStride = 3 * sizeof(i32);
+        part.m_numVertices         = static_cast<int>(mesh->vertices.size());
+        part.m_vertexBase   = reinterpret_cast<unsigned char const*>(mesh->vertices.data());
+        part.m_vertexStride = sizeof(Vecf3);
+        part.m_vertexType   = PHY_FLOAT;
+        body->mesh_iface->addIndexedMesh(part, PHY_INTEGER);
+        body->shape      = std::make_unique<btBvhTriangleMeshShape>(body->mesh_iface.get(), true);
+        body->keep_alive = std::move(mesh);
+        Physics::Event event{.type = Physics::Event::BodyCreationPrebuilt};
+        m_container.subsystem_cast<PhysicsBus>().process(event, body.get());
+#else
+        (void)mesh;
+#endif
     }
 
     /* Scenery placed in this BSP, first permutation of every region */
@@ -644,7 +747,7 @@ struct H3MapLoader : compo::SubsystemBase
         {
             auto const& object = placement.object;
             u16 flags = object.bsp_flags;
-            if(flags && !(flags & (1u << bsp_index)))
+            if((flags && !(flags & (1u << bsp_index))) || !object.placed_at_load())
                 continue;
             auto const* entry = object.palette.resolve(palette);
             auto const* mode_tag = entry ? render_model_of(entry->object) : nullptr;
@@ -680,10 +783,148 @@ struct H3MapLoader : compo::SubsystemBase
             hidden);
     }
 
+    /* Bipeds, crates, weapons and equipment placed in this BSP. Those whose physics
+     * model moves become entities that physics carries; the rest are drawn
+     * in place. */
+    void load_objects(el::scenario_t const& scnr, i16 bsp_index)
+    {
+        u32  moving = 0, fixed = 0, hidden = 0;
+        auto place  = [&](auto const& placements, auto const& palette_block, bool item) {
+            using P      = typename std::decay_t<decltype(placements)>::value_type;
+            auto magic   = m_map->magic();
+            auto palette = palette_block.data(magic).value_or(Span<el::palette_entry_t const>());
+            for(auto const& placement : placements.data(magic).value_or(Span<P const>()))
+            {
+                auto const& object = placement.object;
+                u16 const   flags  = object.bsp_flags;
+                if((flags && !(flags & (1u << bsp_index))) || !object.placed_at_load())
+                    continue;
+                auto const* entry    = object.palette.resolve(palette);
+                auto const* mode_tag = entry ? render_model_of(entry->object) : nullptr;
+                if(!mode_tag)
+                {
+                    hidden++;
+                    continue;
+                }
+                Vecf3 const rot = object.rotation;
+                Quatf const q   = Quatf(Vecf3(0, 0, 1) * rot.x) * Quatf(Vecf3(0, 1, 0) * rot.y) *
+                                Quatf(Vecf3(1, 0, 0) * rot.z);
+                f32 scale = object.scale;
+                if(scale <= 0.f)
+                    scale = 1.f;
+                Vecf3 const position = object.position;
+                auto const  light    = m_scene.baked.below(position);
+                auto const* lit      = light ? &*light : nullptr;
+                Matf4 const scaled   = glm::scale(Matf4(1.f), Vecf3(scale));
+                auto        physics  = physics_of(entry->object, scale);
+                if(!physics)
+                {
+                    append_model(
+                        *mode_tag, glm::translate(Matf4(1.f), position) * glm::mat4_cast(q) * scaled, lit);
+                    fixed++;
+                    continue;
+                }
+                physics->item = item;
+                auto  ref     = m_container.create_entity(object_recipe);
+                auto& model   = *m_container.get<Model>(ref.id());
+                model.position      = position;
+                model.rotation      = q;
+                model.tick_position = position;
+                model.tick_rotation = q;
+                model.update_matrix();
+                *m_container.get<ObjectPhysics>(ref.id()) = std::move(*physics);
+                append_model(*mode_tag, scaled, lit, ref.id(), q);
+                moving++;
+            }
+        };
+        /* Bipeds stand in their bind pose; their ragdolls are not bodies */
+        place(scnr.bipeds, scnr.biped_palette, false);
+        place(scnr.crates, scnr.crate_palette, false);
+        place(scnr.weapons, scnr.weapon_palette, true);
+        place(scnr.equipment, scnr.equipment_palette, true);
+        cDebug("H3: objects: {} moving, {} fixed in place, {} editor-only or modelless", moving, fixed, hidden);
+    }
+
+    /* An object's physics model as one body: the rigid bodies of its first
+     * permutation on the root node, none of them fixed in place. Surfaces
+     * keep their own friction and restitution. */
+    std::optional<ObjectPhysics> physics_of(el::tag_reference const& object_ref, f32 scale) const
+    {
+        namespace ph      = el::phys;
+        auto const& map   = *m_map;
+        auto        magic = map.magic();
+        auto const* object_tag = map.tag_at(object_ref.id);
+        auto const* object = object_tag ? map.tag_data<el::object_t>(*object_tag) : nullptr;
+        auto const* model_tag = object ? map.tag_at(object->model.id) : nullptr;
+        auto const* model = model_tag ? map.tag_data<el::model_t>(*model_tag) : nullptr;
+        auto const* phmo_tag = model ? map.tag_at(model->physics_model.id) : nullptr;
+        auto const* phmo = phmo_tag ? map.tag_data<ph::physics_model_t>(*phmo_tag) : nullptr;
+        if(!phmo)
+            return std::nullopt;
+        auto geometry = std::make_shared<CollisionGeometry>();
+        f32   mass = 0.f, friction = 0.f, restitution = 0.f, surface = 0.f;
+        Vecf3 center{};
+        for(auto const& body : phmo->rigid_bodies.data(magic).value_or(Span<ph::rigid_body_t const>()))
+        {
+            if(body.permutation.value() > 0)
+                continue;
+            auto const motion = body.motion_type.value();
+            if(body.node.value() > 0 || motion == ph::motion_type_t::fixed ||
+               motion == ph::motion_type_t::keyframed)
+                return std::nullopt;
+            for(auto& hull : ph::hulls_of(*phmo, magic, body))
+            {
+                auto& node = geometry->nodes.emplace_back();
+                Vecf3 lo(std::numeric_limits<f32>::max()), hi(std::numeric_limits<f32>::lowest());
+                for(auto const& point : hull.points)
+                {
+                    node.points.push_back(point * scale);
+                    lo = glm::min(lo, node.points.back());
+                    hi = glm::max(hi, node.points.back());
+                }
+                /* Flat hulls (rifles are quads) get their shell's thickness */
+                f32 const shell = std::max(hull.radius * scale, .01f);
+                for(glm::length_t axis = 0; axis < 3; axis++)
+                {
+                    if(hi[axis] - lo[axis] >= shell)
+                        continue;
+                    size_t const count = node.points.size();
+                    for(size_t i = 0; i < count; i++)
+                    {
+                        Vecf3 above = node.points[i], below = node.points[i];
+                        above[axis] += shell;
+                        below[axis] -= shell;
+                        node.points[i] = below;
+                        node.points.push_back(above);
+                    }
+                }
+                f32 const weight = std::max(hull.mass, 1e-3f);
+                friction += hull.friction * weight;
+                restitution += hull.restitution * weight;
+                surface += weight;
+            }
+            mass += body.mass;
+            center += Vecf3(body.center_of_mass.value()) * scale * body.mass.value();
+        }
+        if(geometry->nodes.empty() || mass <= 0.f)
+            return std::nullopt;
+        return ObjectPhysics{
+            .collision      = std::move(geometry),
+            .center_of_mass = center / mass,
+            .mass           = mass,
+            .friction       = friction / surface,
+            .restitution    = restitution / surface,
+        };
+    }
+
     /* A render model's first permutation of every region, moved by
      * `transform`; geometry resources are loaded once per model */
     u32 append_model(
-        el::tag_t const& mode_tag, Matf4 const& transform, el::vertex_light_t const* light)
+        el::tag_t const&          mode_tag,
+        Matf4 const&              transform,
+        el::vertex_light_t const* light,
+        u64                       entity         = 0,
+        Quatf const&              light_rotation = Quatf(1.f, 0.f, 0.f, 0.f))
     {
         auto const& map   = *m_map;
         auto        magic = map.magic();
@@ -723,7 +964,9 @@ struct H3MapLoader : compo::SubsystemBase
                     materials,
                     {},
                     {},
-                    light);
+                    light,
+                    entity,
+                    light_rotation);
         }
         return emitted;
     }
@@ -768,7 +1011,9 @@ struct H3MapLoader : compo::SubsystemBase
         Span<el::geometry_material_t const>   materials,
         std::vector<Vecf2> const&             lightmap_uvs = {},
         std::vector<el::vertex_light_t> const& vertex_lights = {},
-        el::vertex_light_t const*              object_light  = nullptr)
+        el::vertex_light_t const*              object_light  = nullptr,
+        u64                                    entity        = 0,
+        Quatf const&                           light_rotation = Quatf(1.f, 0.f, 0.f, 0.f))
     {
         auto magic   = m_map->magic();
         auto buffers = el::mesh_buffers::from(view, mesh);
@@ -793,7 +1038,8 @@ struct H3MapLoader : compo::SubsystemBase
             {
                 /* Stored at a quarter, so 8 bits reach 4x the white point */
                 Vecf3 light = glm::clamp(
-                    h3::diffuse_radiance(object_light ? *object_light : vertex_lights[i], out.normal) *
+                    h3::diffuse_radiance(
+                        object_light ? *object_light : vertex_lights[i], light_rotation * out.normal) *
                         0.25f * 255.f,
                     Vecf3(0.f),
                     Vecf3(255.f));
@@ -830,8 +1076,15 @@ struct H3MapLoader : compo::SubsystemBase
             auto const* method = material >= 0 && static_cast<size_t>(material) < materials.size()
                                      ? &materials[material].render_method
                                      : nullptr;
-            auto& mat = m_scene.materials[material_for(method)];
-            mat.draws.push_back({
+            auto& mat   = m_scene.materials[material_for(method)];
+            auto* draws = &mat.draws;
+            if(entity)
+            {
+                if(mat.object_draws.empty() || mat.object_draws.back().entity != entity)
+                    mat.object_draws.push_back({.entity = entity});
+                draws = &mat.object_draws.back().draws;
+            }
+            draws->push_back({
                 .elements =
                     {
                         .count         = static_cast<u32>(m_triangles.size() * 3),
