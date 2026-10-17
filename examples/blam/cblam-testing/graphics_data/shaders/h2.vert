@@ -40,7 +40,7 @@ void main()
     vec3 n     = mat3(model) * normal;
     if(water_fan.x > 0.5)
     {
-        float angle = position.y / 418.546 * 3.14159265;
+        float angle = position.y / 418.546 * 3.14159265 * 1.03;
         vec2  xy    = water_eye + position.x * vec2(cos(angle), sin(angle));
         world        = vec3(xy, water_fan.y);
         uv           = xy;
