@@ -734,25 +734,35 @@ int dump_bitmaps(
                 static_cast<u16>(image.type.value()),
                 image.mipmap_count,
                 static_cast<u8>(image.xbox_flags));
-            if(options.extract_dir.empty() || i >= textures.size())
+            auto interleaved = bitmap->interleaved_textures.data(magic).value_or(
+                Span<elegy::hardware_texture_t const>());
+            bool const in_pair = textures.empty() && image.interleaved_interop >= 0 &&
+                                 static_cast<size_t>(image.interleaved_interop) < interleaved.size();
+            if(options.extract_dir.empty() || (i >= textures.size() && !in_pair))
                 continue;
             auto type = image.type.value();
-            if(type != elegy::bitmap_type_t::texture_2d && type != elegy::bitmap_type_t::array)
+            if(type != elegy::bitmap_type_t::texture_2d && type != elegy::bitmap_type_t::array &&
+               type != elegy::bitmap_type_t::cube_map)
                 continue;
             auto dds = dds_format(format);
             if(!dds)
                 continue;
-            auto view = loader.load(textures[i].resource);
+            auto view = loader.load(
+                in_pair ? interleaved[static_cast<size_t>(image.interleaved_interop)].resource
+                        : textures[i].resource);
             if(!view.has_value())
             {
                 fmt::print("    {}\n", resource_error_name(view.error()));
                 continue;
             }
-            auto stored = elegy::top_level(view.value(), image);
+            auto stored = in_pair ? elegy::top_level_interleaved(view.value(), image)
+                              : elegy::top_level(view.value(), image);
             u32  width = static_cast<u32>(image.width.value());
             u32  height = static_cast<u32>(image.height.value());
-            /* Array slices are written one file each */
-            u32 slices = type == elegy::bitmap_type_t::array ? std::max<u32>(image.depth, 1) : 1;
+            /* Array slices and cube faces are written one file each */
+            u32 slices = type == elegy::bitmap_type_t::array      ? std::max<u32>(image.depth, 1)
+                         : type == elegy::bitmap_type_t::cube_map ? 6
+                                                                  : 1;
             u32 stride = elegy::slice_stride(format, width, height);
             for(u32 z = 0; z < slices; z++)
             {
