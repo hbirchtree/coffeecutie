@@ -59,6 +59,11 @@ layout(location=18, binding=5) uniform sampler2D mask;
 #endif
 #if !H2_SKY
 layout(location=21) uniform vec3 camera_position;
+/* The sky's light: glints off the waves, shadows of moving objects */
+layout(location=43) uniform vec3 sun_direction;
+#endif
+#if !H2_SKY && !H2_WATER
+#include "cascaded_shadows.glsl"
 #endif
 #if H2_OCEAN || H2_PLASMA
 layout(location=31) uniform float time;
@@ -68,8 +73,6 @@ layout(location=31) uniform float time;
 layout(location=40, binding=8) uniform sampler2D scene_depth;
 layout(location=50) uniform mat4 inverse_camera; /* 50-53 */
 layout(location=54) uniform vec2 viewport_size;
-/* The sky's light, for the glints off the waves */
-layout(location=43) uniform vec3 sun_direction;
 layout(location=44) uniform vec3 sun_color;
 /* The water definition's sun spot: rgb, specular power */
 layout(location=48) uniform vec4 sun_spot;
@@ -238,6 +241,7 @@ void main()
     vec3 light = f_lightmap.z >= 0.0 ? texture(lightmaps, f_lightmap).rgb * 2.0
                : f_vertex_light.a > 0.0 ? f_vertex_light.rgb * 2.0
                : vec3(sun_shade(normal));
+    light *= cascade_shadow(f_world_pos, normal, sun_direction, camera_position);
     color *= light * bump_shade;
     /* Reflection masked by the base map's alpha, lit like the surface */
     if(env_facing.a + env_glancing.a > 0.0)
