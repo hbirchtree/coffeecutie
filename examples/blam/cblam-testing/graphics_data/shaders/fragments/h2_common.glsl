@@ -119,8 +119,11 @@ vec3 fogged(vec3 color)
     float opaque_depth = max(planar_fog_opaque.y, 1e-3);
     float density = 0.5 * (clamp(depth0 / opaque_depth, 0.0, 1.0) +
                            clamp(depth1 / opaque_depth, 0.0, 1.0));
-    float optical = density * len / max(planar_fog_opaque.x, 1e-3);
-    float p = min(1.0 - exp(-optical), planar_fog_color.a);
+    /* No opaque distance: opacity by depth below the plane alone */
+    float p = planar_fog_opaque.x > 0.0
+        ? 1.0 - exp(-density * len / planar_fog_opaque.x)
+        : clamp(max(depth0, depth1) / opaque_depth, 0.0, 1.0);
+    p = min(p, planar_fog_color.a);
     return mix(color, planar_fog_color.rgb, p);
 }
 #endif
