@@ -274,6 +274,12 @@ inline u32 slice_stride(bitmap_format_t format, u32 width, u32 height)
 void decode_ctx1(
     Span<byte_t const> blocks, u32 width, u32 height, std::vector<byte_t>& out);
 
+/*!
+ * \brief DXT3A blocks (DXT3's explicit alpha on its own: 4 bits a texel, two
+ * a byte, low nibble first), linearized, to 8-bit texels
+ */
+void decode_dxt3a(Span<byte_t const> blocks, u32 width, u32 height, std::vector<byte_t>& out);
+
 /*! One texel of linearized DXT5 (BC3) blocks, RGBA */
 std::array<byte_t, 4> dxt5_texel(Span<byte_t const> blocks, u32 width, u32 x, u32 y);
 

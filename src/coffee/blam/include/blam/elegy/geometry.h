@@ -64,6 +64,16 @@ enum class part_flags_t : u8
 };
 C_FLAGS(part_flags_t, u8);
 
+enum class part_type_t : i8
+{
+    not_drawn            = 0,
+    opaque_shadow_only   = 1,
+    opaque_shadow_casting = 2,
+    opaque_nonshadowing  = 3,
+    transparent          = 4,
+    lightmap_only        = 5, /*!< Light emitters for the bake */
+};
+
 /*! A range of a mesh's index buffer drawn with one material */
 struct part_t
 {
@@ -73,9 +83,16 @@ struct part_t
     be<u16>      index_count;
     be<i16>      subpart_start;
     be<u16>      subpart_count;
-    i8           type;
+    part_type_t  type;
     part_flags_t flags;
     be<u16>      budget_vertex_count;
+
+    /*! Whether it is seen; the rest only shadows or lights the bake */
+    inline bool drawn() const
+    {
+        return type == part_type_t::opaque_shadow_casting ||
+               type == part_type_t::opaque_nonshadowing || type == part_type_t::transparent;
+    }
 };
 
 static_assert(sizeof(part_t) == 0x10);
