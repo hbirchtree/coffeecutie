@@ -65,6 +65,7 @@ enum class MaterialModel : i32
     diffuse_only   = 0,
     two_lobe_phong = 1,
     cook_torrance  = 2,
+    none           = 3, /*!< Halograms: no lighting, self-illumination only */
 };
 
 /* Specular parameters, packed as the shader reads them */
@@ -166,6 +167,10 @@ struct Material
     Vecf4                                  illum_color{1.f};
     std::array<Vecf4, 3>                   illum_channels{};
     f32                                    illum_curve{2.f};
+    /* multilayer: depth, contrast, layer count, darkening; uv scale and
+     * aspect ratio */
+    Vecf4                                  illum_layers{0.f, 1.f, 4.f, 1.f};
+    Vecf4                                  illum_layer_xform{1.f, 1.f, 1.f, 0.f};
     Texture                                specular_mask_map;
     /* environment_mapping: 0 none, 1 dynamic (the BSP's cubemaps), 2
      * per_pixel (its own); tint rgb, contribution a */
@@ -181,6 +186,8 @@ struct Material
     Texture                                blend;
     Vecf2                                  blend_scale{1.f, 1.f};
     bool                                   alpha_test{false};
+    Texture                                alpha_test_map; /*!< Tested instead of the base alpha */
+    Vecf2                                  alpha_test_ratio{1.f, 1.f};
     bool                                   additive{false};
     bool                                   blended{false}; /*!< alpha blend */
     bool                                   constant_color{false};

@@ -15,10 +15,10 @@ layout(location=4) in vec2 f_detail2_uv;
 layout(location=6) in vec3 f_lightmap;
 layout(location=9) in vec2 f_bump_uv;
 
-layout(location=3) uniform int alpha_test;
+layout(location=3) uniform int alpha_test; /* 1 base map alpha, 2 alpha_test_map */
 /* H3's own uniforms start at 64, clear of h2.vert and h2_common */
 layout(location=64) uniform vec4 albedo_tint;
-layout(location=65) uniform int blended;
+layout(location=65) uniform int blended; /* 1 alpha blended, 2 additive */
 /* Decode exponents: base, detail, detail2 (terrain: per layer, below) */
 layout(location=66) uniform vec3 curves;
 
@@ -50,6 +50,9 @@ layout(location=83) uniform vec4 layer_base_curve;
 layout(location=84) uniform vec4 layer_detail_curve;
 #else
 layout(location=2, binding=0) uniform sampler2D diffuse;
+/* alpha_test simple (2): its own map, at base uv * ratio */
+layout(location=147, binding=5) uniform sampler2D alpha_test_map;
+layout(location=148) uniform vec2 alpha_test_ratio;
 #if H3_DETAIL >= 1
 layout(location=9, binding=1) uniform sampler2D detail;
 #endif
@@ -103,6 +106,10 @@ layout(location=105) uniform vec4 illum_color; /* rgb, intensity in a */
 layout(location=106) uniform vec4 illum_channels[3];
 layout(location=109) uniform vec2 illum_detail_ratio;
 layout(location=110) uniform float illum_curve;
+/* multilayer: depth, contrast, layer count, darkening per layer */
+layout(location=145) uniform vec4 illum_layers;
+/* multilayer: the map's uv scale, then the texcoord aspect ratio */
+layout(location=146) uniform vec4 illum_layer_xform;
 layout(location=111, binding=12) uniform sampler2D illum_map;
 layout(location=112, binding=13) uniform sampler2D illum_detail_map;
 #endif
@@ -293,6 +300,32 @@ vec3 self_illumination()
 {
     if(self_illum_mode == 0)
         return vec3(0.0);
+    if(self_illum_mode == 4)
+    {
+        /* multilayer: the map stacked into the surface along the view in
+         * tangent space, each layer darker, the average raised to a contrast */
+        vec3  n    = surface_normal();
+        vec3  dp1  = dFdx(f_world_pos), dp2 = dFdy(f_world_pos);
+        vec2  duv1 = dFdx(f_illum_uv), duv2 = dFdy(f_illum_uv);
+        vec3  dp2perp = cross(dp2, n), dp1perp = cross(n, dp1);
+        vec3  t    = dp2perp * duv1.x + dp1perp * duv2.x;
+        vec3  bt   = dp2perp * duv1.y + dp1perp * duv2.y;
+        float s    = inversesqrt(max(max(dot(t, t), dot(bt, bt)), 1e-20));
+        vec3  v    = normalize(camera_position - f_world_pos);
+        vec2  view = vec2(dot(v, t * s), dot(v, bt * s));
+        float layers = max(illum_layers.z, 1.0);
+        vec2  offset = view * illum_layer_xform.xy * vec2(illum_layer_xform.z, 1.0) * illum_layers.x / layers;
+        vec2  uv     = f_illum_uv;
+        float darken = 1.0;
+        vec3  accum  = vec3(0.0);
+        for(int i = 0; i < int(layers); i++)
+        {
+            accum += darken * decode(texture(illum_map, uv).rgb, illum_curve);
+            uv -= offset;
+            darken *= illum_layers.w;
+        }
+        return pow(accum / layers, vec3(illum_layers.y)) * illum_color.rgb * illum_color.a;
+    }
     vec3 map = decode(texture(illum_map, f_illum_uv).rgb, illum_curve);
     if(self_illum_mode == 3)
         return (map.r * illum_channels[0].a * illum_channels[0].rgb +
@@ -344,7 +377,8 @@ void main()
     float alpha = 1.0;
 #else
     vec4 base = texture(diffuse, f_texcoord);
-    if(alpha_test != 0 && base.a < 0.5)
+    float tested = alpha_test == 2 ? texture(alpha_test_map, f_texcoord * alpha_test_ratio).a : base.a;
+    if(alpha_test != 0 && tested < 0.5)
         discard;
     vec3 color = decode(base.rgb, curves.x);
 #if H3_DETAIL >= 1
@@ -421,11 +455,15 @@ void main()
         color *= 0.45 + 0.55 * abs(dot(normal, sun));
     }
 #if !H3_TERRAIN
+    /* material_model none (halograms): self-illumination alone */
+    if(material_model == 3)
+        color = vec3(0.0);
     color += self_illumination();
 #endif
     vec3 extinction, inscatter;
     compute_scattering(camera_position, f_world_pos, extinction, inscatter);
-    color = color * extinction + inscatter * exposure;
+    /* What is added to the scene only fades; the haze in front is already there */
+    color = color * extinction + (blended == 2 ? vec3(0.0) : inscatter * exposure);
     /* Linear HDR: the composite applies Halo 3's tone curve */
     out_color = vec4(max(color, vec3(0.0)), alpha);
 }
