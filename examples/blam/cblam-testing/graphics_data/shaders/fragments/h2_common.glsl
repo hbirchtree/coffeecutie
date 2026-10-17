@@ -63,6 +63,12 @@ layout(location=21) uniform vec3 camera_position;
 #if H2_OCEAN || H2_PLASMA
 layout(location=31) uniform float time;
 #endif
+#if H2_OCEAN
+/* The opaque scene's depth, to find the ground under the water */
+layout(location=40, binding=8) uniform sampler2D scene_depth;
+layout(location=41) uniform mat4 inverse_camera;
+layout(location=42) uniform vec2 viewport_size;
+#endif
 #if H2_PLASMA
 layout(location=32) uniform vec3 plasma_colors[2]; /* bright, dim */
 #endif
@@ -157,10 +163,20 @@ void main()
     float fresnel = 0.04 + 0.96 * pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 4.0);
     vec2 sky_uv = r.xy / (1.0 + abs(r.z)) * 0.5 + 0.5;
     vec3 sky = texture(detail, sky_uv).rgb;
-    vec3 deep = vec3(0.07, 0.11, 0.12);
-    vec3 col = mix(deep, sky, clamp(fresnel * 1.4, 0.0, 1.0));
+    /* The reflection photo is bluer than the map's sky: keep its detail */
+    vec3 refl = mix(vec3(dot(sky, vec3(0.3, 0.59, 0.11))), sky, 0.25) * 1.15;
+    vec3 deep = vec3(0.10, 0.12, 0.12);
+    float glance = clamp(fresnel * 1.6, 0.0, 1.0);
+    vec3 col = mix(deep, refl, clamp(glance + 0.15, 0.0, 1.0));
     float fade = texture(mask, f_mask_uv).r;
-    out_color = vec4(fogged(col), mix(0.6, 0.97, fresnel) * fade);
+    /* How deep the ground is under this pixel; the shallows thin out to the
+     * sand, and nothing drawn (reversed z clears to 0) is open sea */
+    float ground = texelFetch(scene_depth, ivec2(gl_FragCoord.xy), 0).r;
+    vec4  under  = inverse_camera *
+                  vec4(gl_FragCoord.xy / viewport_size * 2.0 - 1.0, ground, 1.0);
+    float depth  = ground > 0.0 ? f_world_pos.z - under.z / under.w : 100.0;
+    float shallow = smoothstep(0.0, 1.5, depth);
+    out_color = vec4(fogged(col), mix(0.25, 0.95, glance) * fade * shallow);
 #elif H2_WATER
     vec3 normal = surface_normal();
     /* Bump-perturbed surface normal, sky tint by fresnel, ground through */
