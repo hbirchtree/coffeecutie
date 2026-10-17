@@ -762,6 +762,29 @@ inline void dump_sky(h2::map_container<V> const& map, h2::tag_t const& tag)
                 from_le(f.color[1]),
                 from_le(f.color[2]),
                 from_le(f.density));
+    if(auto lights = sky->lights.data(map.magic()); !lights.has_error())
+        for(auto const& l : lights.value())
+        {
+            fmt::print(
+                "  light direction=({}, {}) lens flare {}\n",
+                from_le(l.direction[0]),
+                from_le(l.direction[1]),
+                tag_label(map, l.lens_flare));
+            if(auto rad = l.radiosity.data(map.magic()); !rad.has_error())
+                for(auto const& r : rad.value())
+                    fmt::print(
+                        "    radiosity color=({}, {}, {}) power={} diameter={}\n",
+                        from_le(r.color[0]),
+                        from_le(r.color[1]),
+                        from_le(r.color[2]),
+                        from_le(r.power),
+                        from_le(r.diameter));
+        }
+    fmt::print(
+        "  clear color ({}, {}, {})\n",
+        from_le(sky->clear_color[0]),
+        from_le(sky->clear_color[1]),
+        from_le(sky->clear_color[2]));
 }
 
 /*! Dispatch on class; sbsp bodies are only reachable through the scenario

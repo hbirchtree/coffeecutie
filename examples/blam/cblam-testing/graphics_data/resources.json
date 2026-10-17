@@ -45,6 +45,8 @@
             "shaders/h2_sky.frag",
             "shaders/h2_sky_mask.frag",
             "shaders/h2_water.frag",
+            "shaders/h2_clouds.frag",
+            "shaders/h2_ocean.frag",
             "shaders/h2_ui.vert",
             "shaders/h2_ui.frag",
             "shaders/shadow_depth.vert",
