@@ -75,16 +75,34 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             return;
 
         auto& resources = p.template subsystem<BlamResources>();
+        ensure_depth_sampler(resources);
+        Matf4 const inverse_camera = glm::inverse(camera->matrix);
+        Vecf2 const viewport{resources.offscreen_size};
+        /* The water fan goes around the camera at sea level: the section's
+         * planar fog plane when it lies flat, lifted a little so sand at the
+         * waterline sinks under it and fades in */
+        Vecf2 const water_eye{camera->camera.position};
+        f32 const   sea_level = vis.planar_fog.plane.z > .9f && vis.planar_fog.plane.w > -1e8f
+                                    ? vis.planar_fog.plane.w / vis.planar_fog.plane.z + .05f
+                                    : 0.f;
+        Vecf3 const sun_direction =
+            scene.sky_flares.empty() ? Vecf3{0.f, 0.f, 1.f} : scene.sky_flares[0].direction;
+        Vecf3 const sun_color =
+            scene.sky_flares.empty() ? Vecf3{0.f} : scene.sky_flares[0].color;
+        Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
         /* Below the horizon, where the sky model ends */
         resources.offscreen->clear(Vecf4(scene.sky_clear, 1.f));
         size_t draws_total = 0, draws_visible = 0;
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
-        for(int pass = 0; pass < 3; pass++)
+        for(int pass = 0; pass < 4; pass++)
             for(auto const& [mi, mat] : stl_types::enumerate(scene.materials))
             {
-                int const mat_pass =
-                    mat.sky ? 0 : (mat.water || mat.additive || mat.blended) ? 2 : 1;
+                /* Sky, opaque, the sea, then everything blended over it */
+                int const mat_pass = mat.sky     ? 0
+                                     : mat.ocean ? 2
+                                     : (mat.water || mat.additive || mat.blended) ? 3
+                                                                                  : 1;
                 /* Glass, decals: nothing sensible to draw them with yet */
                 if(mat_pass != pass || mat.section_draws.empty() ||
                    !mat.texture)
@@ -104,6 +122,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 if(draws.empty() && m_moving.empty())
                     continue;
                 Matf4 model_matrix{1.f};
+                Vecf2 const water_fan{mat.water_fan ? 1.f : 0.f, sea_level};
                 Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
                 Vecf3 const& eye = camera->camera.position;
                 f32   scale  = mat.sky ? scene.sky_scale : 1.f;
@@ -114,6 +133,10 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Matf4>(camera->matrix)},
                     gfx::uniform_pair<Matf4 const>{
                         {"model"}, semantic::SpanOne<const Matf4>(model_matrix)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"water_fan"}, semantic::SpanOne<const Vecf2>(water_fan)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"water_eye"}, semantic::SpanOne<const Vecf2>(water_eye)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"uv_scale"},
                         semantic::SpanOne<const Vecf2>(mat.uv_scale)},
@@ -158,6 +181,17 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Vecf4 const>{
                         {"env_glancing"},
                         semantic::SpanOne<const Vecf4>(mat.env_glancing)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"inverse_camera"},
+                        semantic::SpanOne<const Matf4>(inverse_camera)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"viewport_size"}, semantic::SpanOne<const Vecf2>(viewport)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"sun_direction"}, semantic::SpanOne<const Vecf3>(sun_direction)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"sun_color"}, semantic::SpanOne<const Vecf3>(sun_color)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"sun_spot"}, semantic::SpanOne<const Vecf4>(sun_spot)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
                         semantic::SpanOne<const Vecf3>(mat.illum_color)},
@@ -220,6 +254,11 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         typing::graphics::ShaderStage::Fragment,
                         {"env", 7},
                         mat.env_sampler ? mat.env_sampler : m_black_cube_sampler,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"scene_depth", 8},
+                        m_depth_sampler,
                     });
                 auto submit = [&](std::vector<gfx::draw_command::data_t> const& data) {
                     auto res = m_api->submit(
@@ -318,14 +357,6 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             return;
         m_flare_buf->commit(
             Span<const FlareVertex>(m_flare_vertices.data(), m_flare_vertices.size()));
-        if(m_depth_source != resources.depth)
-        {
-            m_depth_source  = resources.depth;
-            m_depth_sampler = resources.depth->sampler();
-            m_depth_sampler->alloc();
-            m_depth_sampler->set_filtering(
-                typing::Filtering::Nearest, typing::Filtering::Nearest);
-        }
         for(size_t i = 0; i < m_flare_samplers.size(); i++)
             m_api->submit(
                 gfx::draw_command{
@@ -365,6 +396,18 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_flare_vertices.clear();
         m_flare_samplers.clear();
         m_flare_light.clear();
+    }
+
+    /* The offscreen depth, read by the flares and the water */
+    void ensure_depth_sampler(BlamResources const& resources)
+    {
+        if(m_depth_source == resources.depth)
+            return;
+        m_depth_source  = resources.depth;
+        m_depth_sampler = resources.depth->sampler();
+        m_depth_sampler->alloc();
+        m_depth_sampler->set_filtering(
+            typing::Filtering::Nearest, typing::Filtering::Nearest);
     }
 
     void ensure_gpu()
