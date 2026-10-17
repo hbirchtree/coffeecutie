@@ -78,6 +78,17 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         ensure_depth_sampler(resources);
         Matf4 const inverse_camera = glm::inverse(camera->matrix);
         Vecf2 const viewport{resources.offscreen_size};
+        /* The water fan goes around the camera at sea level: the section's
+         * planar fog plane when it lies flat */
+        Vecf2 const water_eye{camera->camera.position};
+        f32 const   sea_level = vis.planar_fog.plane.z > .9f && vis.planar_fog.plane.w > -1e8f
+                                    ? vis.planar_fog.plane.w / vis.planar_fog.plane.z
+                                    : 0.f;
+        Vecf3 const sun_direction =
+            scene.sky_flares.empty() ? Vecf3{0.f, 0.f, 1.f} : scene.sky_flares[0].direction;
+        Vecf3 const sun_color =
+            scene.sky_flares.empty() ? Vecf3{0.f} : scene.sky_flares[0].color;
+        Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
         /* Below the horizon, where the sky model ends */
         resources.offscreen->clear(Vecf4(scene.sky_clear, 1.f));
         size_t draws_total = 0, draws_visible = 0;
@@ -107,6 +118,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 if(draws.empty() && m_moving.empty())
                     continue;
                 Matf4 model_matrix{1.f};
+                Vecf2 const water_fan{mat.water_fan ? 1.f : 0.f, sea_level};
                 Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
                 Vecf3 const& eye = camera->camera.position;
                 f32   scale  = mat.sky ? scene.sky_scale : 1.f;
@@ -117,6 +129,10 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Matf4>(camera->matrix)},
                     gfx::uniform_pair<Matf4 const>{
                         {"model"}, semantic::SpanOne<const Matf4>(model_matrix)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"water_fan"}, semantic::SpanOne<const Vecf2>(water_fan)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"water_eye"}, semantic::SpanOne<const Vecf2>(water_eye)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"uv_scale"},
                         semantic::SpanOne<const Vecf2>(mat.uv_scale)},
@@ -143,6 +159,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
                 i32  alpha_test = mat.alpha_test ? 1 : 0;
                 i32  bumped     = mat.bump.sampler ? 1 : 0;
+                i32  edge_blend = mat.edge_blend ? 1 : 0;
                 auto frag_u     = gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Fragment,
                     gfx::uniform_pair<const i32>{
@@ -150,6 +167,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const i32>(alpha_test)},
                     gfx::uniform_pair<const i32>{
                         {"bumped"}, semantic::SpanOne<const i32>(bumped)},
+                    gfx::uniform_pair<const i32>{
+                        {"edge_blend"}, semantic::SpanOne<const i32>(edge_blend)},
                     gfx::uniform_pair<const f32>{
                         {"time"}, semantic::SpanOne<const f32>(seconds)},
                     gfx::uniform_pair<Vecf3 const>{
@@ -166,6 +185,12 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Matf4>(inverse_camera)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"viewport_size"}, semantic::SpanOne<const Vecf2>(viewport)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"sun_direction"}, semantic::SpanOne<const Vecf3>(sun_direction)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"sun_color"}, semantic::SpanOne<const Vecf3>(sun_color)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"sun_spot"}, semantic::SpanOne<const Vecf4>(sun_spot)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
                         semantic::SpanOne<const Vecf3>(mat.illum_color)},

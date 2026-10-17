@@ -28,12 +28,26 @@ layout(location=20) uniform vec2 mask_scale;
 layout(location=28) uniform vec2 bump_scale;
 /* Objects that move: object space to world */
 layout(location=39) uniform mat4 model;
+/* Water definitions are a polar fan (x = radius, y = angle) laid around
+ * the camera at sea level: water_fan x = on, y = sea level */
+layout(location=46) uniform vec2 water_fan;
+layout(location=47) uniform vec2 water_eye;
 
 void main()
 {
     vec3 world = (model * vec4(position, 1.0)).xyz * model_scale + model_offset;
+    vec2 uv    = texcoord;
+    vec3 n     = mat3(model) * normal;
+    if(water_fan.x > 0.5)
+    {
+        float angle = position.y / 418.546 * 3.14159265;
+        vec2  xy    = water_eye + position.x * vec2(cos(angle), sin(angle));
+        world        = vec3(xy, water_fan.y);
+        uv           = xy;
+        n            = vec3(0.0, 0.0, 1.0);
+    }
     f_world_pos = world;
-    f_texcoord = texcoord * uv_scale;
+    f_texcoord = uv * uv_scale;
     f_detail_uv = texcoord * detail_scale;
     f_detail2_uv = texcoord * detail2_scale;
     f_illum_uv = texcoord * illum_scale;
@@ -41,6 +55,6 @@ void main()
     f_vertex_light = vertex_light;
     f_mask_uv = texcoord * mask_scale;
     f_bump_uv = texcoord * bump_scale;
-    f_normal = mat3(model) * normal;
+    f_normal = n;
     gl_Position = camera * vec4(world, 1.0);
 }

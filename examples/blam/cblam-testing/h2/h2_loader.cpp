@@ -80,6 +80,41 @@ struct ExternalLighting
     Span<u8 const>             rgb; /*!< 3 per vertex */
 };
 
+/* A water definition as append_section sees a section: its counts are not
+ * stored, the vertices come from the position stream (f32 x3) */
+struct WaterSection
+{
+    geo::water_definition_t const*          water;
+    dim::raw_ref                            data;
+    dim::bsp_block<geo::resource_t>         resources;
+    u16                                     vertices{0};
+
+    void const* owner() const
+    {
+        return water;
+    }
+
+    u16 vertex_count() const
+    {
+        return vertices;
+    }
+
+    u16 face_count() const
+    {
+        return 0;
+    }
+
+    i32 data_size() const
+    {
+        return water->data_size();
+    }
+
+    i32 base_address() const
+    {
+        return water->base_address();
+    }
+};
+
 /* An object with a physics body: physics moves its Model */
 static const auto moving_recipe = compo::EntityRecipe{
     .components =
@@ -527,6 +562,7 @@ struct H2MapLoader : compo::SubsystemBase
         m_scene.switches.clear();
         m_scene.materials.clear();
         m_scene.moving_objects.clear();
+        m_scene.water = {};
         m_scene.lightmap_tex.reset();
         m_scene.lightmap_sampler.reset();
         m_scene.start_section = 0;
@@ -678,6 +714,9 @@ struct H2MapLoader : compo::SubsystemBase
                             .cluster = static_cast<i32>(cluster_count - 1),
                         });
                 }
+            if(auto waters = bsp->water_definitions.data(bsp_magic); !waters.has_error())
+                for(auto const& water : waters.value())
+                    sections += append_water(map, pool, bsp_magic, water, bsp_idx);
             std::vector<bool> instanced;
             if(!geom.has_error())
                 instanced.assign(geom.value().size(), false);
@@ -1266,8 +1305,11 @@ struct H2MapLoader : compo::SubsystemBase
         i32 data_size    = section.data_size();
         if(!vertex_count || data_size <= 0)
             return 0;
+        void const* owner = &section;
+        if constexpr(requires { section.owner(); })
+            owner = section.owner();
         auto block =
-            pool.resolve(magic, &section, section.data, static_cast<u32>(data_size));
+            pool.resolve(magic, owner, section.data, static_cast<u32>(data_size));
         if(!block)
         {
             if(m_model_fail_logged++ < 3)
@@ -1366,6 +1408,9 @@ struct H2MapLoader : compo::SubsystemBase
                 pos = {from_le(f[0]), from_le(f[1]), from_le(f[2])};
             }
             out.position = Vecf3(transform * Vecf4(pos, 1.f));
+            /* Water has positions only; its maps tile across the world */
+            if constexpr(std::is_same_v<Section, WaterSection>)
+                out.texcoord = Vecf2(out.position);
             if(has_uv)
             {
                 auto const* t = bytes + base + streams.texcoord->offset() + v * ustride;
@@ -1494,7 +1539,14 @@ struct H2MapLoader : compo::SubsystemBase
             }
         }
         if(!split)
-            emit(tris[fallback], index_span);
+        {
+            /* Water has one shader and no submesh table */
+            i32 mat = fallback;
+            if constexpr(std::is_same_v<Section, WaterSection>)
+                if(!materials.empty())
+                    mat = materials[0];
+            emit(tris[mat], index_span);
+        }
 
         /* Packed normals: pick the field order that agrees with the faces */
         if(!normals_a.empty())
@@ -2124,6 +2176,65 @@ struct H2MapLoader : compo::SubsystemBase
         return out;
     }
 
+    /* A BSP's water: its shader on its own geometry, and the tints the sea
+     * shades with */
+    template<typename V>
+    u32 append_water(
+        dim::map_container<V> const&   map,
+        dim::raw_pool const&           pool,
+        dim::bsp_magic const&          magic,
+        geo::water_definition_t const& water,
+        size_t                         bsp_idx)
+    {
+        auto resources = water.resources.data(magic);
+        if(resources.has_error())
+            return 0;
+        u32 positions = 0;
+        for(auto const& r : resources.value())
+            if(r.type0() == 56 && r.type1() == 0)
+                positions = static_cast<u32>(std::max(r.size(), 0));
+        WaterSection section{
+            .water     = &water,
+            .data      = water.data,
+            .resources = water.resources,
+            .vertices  = static_cast<u16>(positions / 12),
+        };
+        auto rgb = [](Vecf3 const& c) {
+            return Vecf3{from_le(c[0]), from_le(c[1]), from_le(c[2])};
+        };
+        m_scene.water = {
+            .sun_spot   = rgb(water.sun_spot_color),
+            .sun_power  = from_le(water.sun_specular_power),
+            .reflection = rgb(water.reflection_tint),
+            .refraction = rgb(water.refraction_tint),
+            .horizon    = rgb(water.horizon_color),
+        };
+        cDebug(
+            "H2: water {}: {} vertices, sun spot ({}, {}, {}) x{}, horizon ({}, {}, {})",
+            map.name_of(*map.tag_at(water.shader.tag_id)),
+            section.vertices,
+            m_scene.water.sun_spot.x,
+            m_scene.water.sun_spot.y,
+            m_scene.water.sun_spot.z,
+            m_scene.water.sun_power,
+            m_scene.water.horizon.x,
+            m_scene.water.horizon.y,
+            m_scene.water.horizon.z);
+        i32 const        mat = material_for(map, pool, water.shader.tag_id);
+        m_scene.materials[mat].water_fan = true;
+        std::vector<i32> materials(64, mat);
+        return append_section(
+            pool,
+            magic,
+            section,
+            Matf4(1.f),
+            nullptr,
+            materials,
+            false,
+            nullptr,
+            DrawTag{.section = static_cast<i32>(bsp_idx)});
+    }
+
     /* One convex hull per collision BSP of a collision model, posed by the
      * render model's nodes */
     template<typename V>
@@ -2569,6 +2680,12 @@ struct H2MapLoader : compo::SubsystemBase
                     std::cos(pitch) * std::sin(yaw),
                     std::sin(pitch)},
             };
+            if(auto rad = light.radiosity.data(map.magic());
+               !rad.has_error() && !rad.value().empty())
+                flare.color = Vecf3{
+                    from_le(rad.value()[0].color[0]),
+                    from_le(rad.value()[0].color[1]),
+                    from_le(rad.value()[0].color[2])};
             for(auto const& r : reflections.value())
             {
                 auto image = texture_for(
@@ -2757,6 +2874,7 @@ struct H2MapLoader : compo::SubsystemBase
         auto const*                              src = &base;
         if(base.template_name == "water_edge_blend")
         {
+            mat.edge_blend = true;
             if(!base.slot_bitmaps.empty())
                 if(auto t = texture_for(map, pool, base.slot_bitmaps[0]))
                     mat.mask = *t;
