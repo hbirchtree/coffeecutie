@@ -544,6 +544,9 @@ struct PlayerController
 
     static void update_camera(PlayerCamera& cam)
     {
+        /* CameraControl draws cutscenes */
+        if(cam.cinematic)
+            return;
         build_camera_matrix(cam, cam.camera.position);
     }
 
