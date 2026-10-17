@@ -13,6 +13,8 @@
 #include <coffee/graphics/apis/gleam/rhi_vertex.h>
 
 #include <array>
+#include <chrono>
+#include <cmath>
 #include <limits>
 
 namespace h2 {
@@ -44,8 +46,10 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         return true;
     }
 
-    void start_restricted(Proxy& p, time_point const&)
+    void start_restricted(Proxy& p, time_point const& now)
     {
+        f32 const seconds = std::fmod(
+            std::chrono::duration<f32>(now.time_since_epoch()).count(), 3600.f);
         auto const& scene = p.template subsystem<H2Scene>();
         auto const& vis   = p.template subsystem<H2Visibility>();
         if(!scene.loaded)
@@ -71,13 +75,16 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             return;
 
         auto& resources = p.template subsystem<BlamResources>();
+        /* Below the horizon, where the sky model ends */
+        resources.offscreen->clear(Vecf4(scene.sky_clear, 1.f));
         size_t draws_total = 0, draws_visible = 0;
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
         for(int pass = 0; pass < 3; pass++)
             for(auto const& [mi, mat] : stl_types::enumerate(scene.materials))
             {
-                int const mat_pass = mat.sky ? 0 : (mat.water || mat.additive) ? 2 : 1;
+                int const mat_pass =
+                    mat.sky ? 0 : (mat.water || mat.additive || mat.blended) ? 2 : 1;
                 /* Glass, decals: nothing sensible to draw them with yet */
                 if(mat_pass != pass || mat.section_draws.empty() ||
                    !mat.texture)
@@ -132,6 +139,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const i32>(alpha_test)},
                     gfx::uniform_pair<const i32>{
                         {"bumped"}, semantic::SpanOne<const i32>(bumped)},
+                    gfx::uniform_pair<const f32>{
+                        {"time"}, semantic::SpanOne<const f32>(seconds)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
                         semantic::SpanOne<const Vecf3>(mat.illum_color)},
@@ -210,7 +219,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         .depth = gfx::depth_state{.reversed = true},
                     },
                     gfx::depth_extended_state{
-                        .depth_write = !mat.sky && !mat.water && !mat.additive},
+                        .depth_write =
+                            !mat.sky && !mat.water && !mat.additive && !mat.blended},
                     gfx::blend_state{.additive = mat.additive});
                 if(res.has_value() && !m_draw_error_logged)
                 {
