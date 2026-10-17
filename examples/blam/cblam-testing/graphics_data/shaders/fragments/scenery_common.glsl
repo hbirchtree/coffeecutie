@@ -45,6 +45,9 @@ layout(binding = 3, std140) uniform BoneMatrices
 
 layout(location = 31) uniform int render_flags;
 const int RENDER_FLAG_BONES = 0x8;
+const int RENDER_FLAG_SHADOW_PASS = 0x20000;
+/* light_layer of a seat's own body: drawn into its shadows only */
+const int LIGHT_LAYER_SHADOW_ONLY = 0x40000000;
 
 layout(location = 0) out FragData {
     vec3 position;
@@ -111,4 +114,7 @@ void main()
     frag.normal     = (transform * local_normal).xyz;
     frag.position   = world_pos.xyz;
     gl_Position     = camera * world_pos;
+    if(matrices.data[gl_InstanceID].light_layer == LIGHT_LAYER_SHADOW_ONLY &&
+       (render_flags & RENDER_FLAG_SHADOW_PASS) == 0)
+        gl_Position = vec4(0.0);
 }
