@@ -1776,7 +1776,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     data,
                     font,
                     text,
-                    line.baseline.x,
+                    line.baseline.x - font.measure(text) * line.align,
                     line.baseline.y,
                     line.color,
                     (kFontSource << 24) | font.atlas_layer);
