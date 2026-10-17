@@ -696,7 +696,6 @@ struct H2MapLoader : compo::SubsystemBase
                             map,
                             *scenario_body,
                             cluster,
-                            ref.default_sky.value(),
                             m_scene.sections.back().clusters[cluster_count]);
                     cluster_count++;
                     sections += append_section(
@@ -1113,7 +1112,6 @@ struct H2MapLoader : compo::SubsystemBase
         dim::map_container<V> const& map,
         dim::scn::scenario_t const&  scnr,
         geo::bsp_cluster_t const&    cluster,
-        i16                          default_sky,
         Section::Cluster&            out)
     {
         if(cluster.atmospheric_fog.value() >= 0)
@@ -1130,10 +1128,8 @@ struct H2MapLoader : compo::SubsystemBase
                 out.fog_range = {from_le(f.start_distance), from_le(f.opaque_distance)};
                 return;
             }
-        /* Interior clusters name no sky; the BSP's default sky stands in */
-        i16 sky_index = cluster.sky.value() >= 0           ? cluster.sky.value()
-                        : cluster.visible_sky.value() >= 0 ? cluster.visible_sky.value()
-                                                         : default_sky;
+        /* Interior clusters name no sky (only a visible one): no fog */
+        i16 sky_index = cluster.sky.value();
         if(sky_index < 0)
             return;
         auto skies = scnr.skies.data(map.magic());
