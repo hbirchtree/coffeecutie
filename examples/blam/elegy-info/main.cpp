@@ -13,6 +13,7 @@
 #include <oaf/xma2/xma2_decode.h>
 #endif
 #include <blam/elegy/structure.h>
+#include <blam/elegy/views.h>
 #include <cxxopts.hpp>
 
 #include <cmath>
@@ -238,7 +239,7 @@ bool decode_mesh(
         stats.failed++;
         return false;
     }
-    auto parts = mesh.parts.data(magic).value_or(Span<elegy::part_t const>());
+    auto parts = mesh.parts.span(magic);
     if(parts.empty())
         buffers.triangles(mesh.index_type, 0, buffers.index_count(), triangles);
     for(auto const& part : parts)
@@ -290,14 +291,11 @@ int dump_models(
         if(!model)
             continue;
         auto const& geometry = model->geometry;
-        auto        meshes   = geometry.meshes.data(magic).value_or(
-            Span<elegy::mesh_t const>());
-        auto compression = geometry.compression.data(magic).value_or(
-            Span<elegy::compression_t const>());
-        auto regions = model->regions.data(magic).value_or(
-            Span<elegy::region_t const>());
+        auto        meshes   = geometry.meshes.span(magic);
+        auto compression = geometry.compression.span(magic);
+        auto regions = model->regions.span(magic);
         auto nodes =
-            model->nodes.data(magic).value_or(Span<elegy::node_t const>());
+            model->nodes.span(magic);
 
         auto view = loader.load(geometry.resource);
         if(!view.has_value())
@@ -330,8 +328,7 @@ int dump_models(
             nodes.size(),
             model->materials.count());
         for(auto const& region : regions)
-            for(auto const& perm : region.permutations.data(magic).value_or(
-                    Span<elegy::permutation_t const>()))
+            for(auto const& perm : region.permutations.span(magic))
                 fmt::print(
                     "  {}:{} meshes {}+{}\n",
                     map.string(region.name),
@@ -353,47 +350,31 @@ int dump_bsps(
     obj_writer*                 obj)
 {
     auto magic = map.magic();
-    auto const* scenario_tag = map.find("scnr");
-    auto const* lightmap_tag = map.find("sLdT");
-    if(!scenario_tag || !lightmap_tag)
+    auto const scenario = map.find<elegy::scenario_t>();
+    auto const lightmap = map.find<elegy::scenario_lightmap_t>();
+    if(!scenario || !lightmap)
     {
         fmt::print("no scenario or scenario_lightmap\n");
         return 1;
     }
-    auto const* scenario = map.tag_data<elegy::scenario_t>(*scenario_tag);
-    auto const* lightmap = map.tag_data<elegy::scenario_lightmap_t>(*lightmap_tag);
-    if(!scenario || !lightmap)
-        return 1;
-    auto scenario_bsps = scenario->bsps.data(magic).value_or(
-        Span<elegy::scenario_bsp_t const>());
 
     std::vector<elegy::vertex_t> vertices;
     std::vector<triangle_t>      triangles;
-    for(auto const& lightmap_bsp : lightmap->bsps.data(magic).value_or(
-            Span<elegy::lightmap_bsp_t const>()))
+    for(auto const& lightmap_bsp : lightmap->bsps.span(magic))
     {
-        i16 bsp_index = lightmap_bsp.bsp;
-        if(bsp_index < 0 || static_cast<size_t>(bsp_index) >= scenario_bsps.size())
-            continue;
-        auto const* bsp_tag = map.tag_at(scenario_bsps[bsp_index].bsp.id);
-        if(!bsp_tag)
-            continue;
-        auto name = map.name_of(*bsp_tag);
-        if(name.find(options.name_filter) == std::string_view::npos)
-            continue;
-        auto const* bsp = map.tag_data<elegy::structure_bsp_t>(*bsp_tag);
+        auto const bsp = elegy::structure_bsp(map, *scenario, lightmap_bsp.bsp);
         if(!bsp)
+            continue;
+        auto name = map.name_of(*bsp.tag);
+        if(name.find(options.name_filter) == std::string_view::npos)
             continue;
 
         auto const& geometry = lightmap_bsp.geometry;
-        auto        meshes   = geometry.meshes.data(magic).value_or(
-            Span<elegy::mesh_t const>());
-        auto compression = geometry.compression.data(magic).value_or(
-            Span<elegy::compression_t const>());
+        auto        meshes   = geometry.meshes.span(magic);
+        auto compression = geometry.compression.span(magic);
         auto clusters =
-            bsp->clusters.data(magic).value_or(Span<elegy::cluster_t const>());
-        auto instances = bsp->instances.data(magic).value_or(
-            Span<elegy::instanced_geometry_t const>());
+            bsp->clusters.span(magic);
+        auto instances = bsp->instances.span(magic);
 
         auto view = loader.load(geometry.resource);
         if(!view.has_value())
@@ -454,14 +435,7 @@ int dump_bsps(
             instance_stats.add(vertices, triangles);
             if(obj)
             {
-                glm::mat4 transform(1.f);
-                f32       scale = instance.scale;
-                transform[0]    = glm::vec4(instance.forward.value() * scale, 0.f);
-                transform[1]    = glm::vec4(instance.left.value() * scale, 0.f);
-                transform[2]    = glm::vec4(instance.up.value() * scale, 0.f);
-                transform[3]    = glm::vec4(instance.position.value(), 1.f);
-                obj->add(
-                    map.string(instance.name), vertices, triangles, transform);
+                obj->add(map.string(instance.name), vertices, triangles, instance.transform());
             }
         }
         instance_stats.print("  instances (object space)");
@@ -625,66 +599,51 @@ int dump_shaders(elegy::map_container const& map, options_t const& options)
         if(!options.class_filter.empty() &&
            map.group_of(tag)->group.str() != options.class_filter)
             continue;
-        auto const* method = map.tag_data<elegy::render_method_t>(tag);
+        auto const method = elegy::render_method_view::of(map, tag);
         if(!method)
             continue;
         count++;
         fmt::print("{} [{}]\n", name, map.group_of(tag)->group.str());
 
         /* Options picked per category of the definition */
-        auto options_picked = method->options.data(magic).value_or(Span<elegy::be<i16> const>());
-        if(auto const* def_tag = map.tag_at(method->definition.id))
-            if(auto const* def = map.tag_data<elegy::render_method_definition_t>(*def_tag))
-            {
-                std::string line;
-                auto categories = def->categories.data(magic).value_or(
-                    Span<elegy::render_method_category_t const>());
-                for(size_t i = 0; i < categories.size(); i++)
-                {
-                    auto choices = categories[i].options.data(magic).value_or(
-                        Span<elegy::render_method_option_t const>());
-                    i16 pick = i < options_picked.size() ? options_picked[i].value() : 0;
-                    auto option = pick >= 0 && static_cast<size_t>(pick) < choices.size()
-                                      ? map.string(choices[pick].name)
-                                      : std::string_view("?");
-                    line += fmt::format(
-                        "{}{}={}", line.empty() ? "" : " ", map.string(categories[i].name), option);
-                }
-                fmt::print("  {} ({})\n", map.name_of(*def_tag), line);
-            }
-
-        for(auto const& post : method->postprocess.data(magic).value_or(
-                Span<elegy::render_method_postprocess_t const>()))
+        if(method.definition)
         {
+            std::string line;
+            for(auto const& [category, option] : method.options())
+                line += fmt::format(
+                    "{}{}={}",
+                    line.empty() ? "" : " ",
+                    category,
+                    option.empty() ? std::string_view("?") : option);
+            fmt::print("  {} ({})\n", map.name_of(*method.definition.tag), line);
+        }
+
+        for(size_t index = 0; index < map.span(method.method->postprocess).size(); index++)
+        {
+            auto const  view = elegy::render_method_view::of(map, tag, index);
+            auto const& post = *view.postprocess;
             fmt::print(
                 "  template {} blend {}\n",
                 tag_name(map, post.shader_template),
                 post.blend_mode.value());
-            Span<elegy::string_id const> texture_names, float_names;
-            if(auto const* tmpl_tag = map.tag_at(post.shader_template.id))
-                if(auto const* tmpl = map.tag_data<elegy::render_method_template_t>(*tmpl_tag))
-                {
-                    texture_names = tmpl->textures.data(magic).value_or(Span<elegy::string_id const>());
-                    float_names = tmpl->float_constants.data(magic).value_or(Span<elegy::string_id const>());
-                }
-            auto textures = post.textures.data(magic).value_or(
-                Span<elegy::postprocess_texture_t const>());
-            for(size_t i = 0; i < textures.size(); i++)
+            for(size_t i = 0; i < view.textures.size(); i++)
+            {
+                auto const slot = view.texture_name(i);
                 fmt::print(
                     "    {:<24} {} (address {}, filter {}, transform {})\n",
-                    i < texture_names.size() ? map.string(texture_names[i]) : "?",
-                    tag_name(map, textures[i].bitmap),
-                    textures[i].address_mode,
-                    textures[i].filter_mode,
-                    textures[i].transform);
-            auto floats = post.float_constants.data(magic).value_or(
-                Span<elegy::be<Vecf4> const>());
-            for(size_t i = 0; i < floats.size(); i++)
+                    slot.empty() ? std::string_view("?") : slot,
+                    tag_name(map, view.textures[i].bitmap),
+                    view.textures[i].address_mode,
+                    view.textures[i].filter_mode,
+                    view.textures[i].transform);
+            }
+            for(size_t i = 0; i < view.constants.size(); i++)
             {
-                Vecf4 v = floats[i];
+                auto const name = view.constant_name(i);
+                Vecf4      v    = view.constants[i];
                 fmt::print(
                     "    {:<24} {:g} {:g} {:g} {:g}\n",
-                    i < float_names.size() ? map.string(float_names[i]) : "?",
+                    name.empty() ? std::string_view("?") : name,
                     v.x,
                     v.y,
                     v.z,
@@ -718,9 +677,8 @@ int dump_bitmaps(
         if(!bitmap)
             continue;
         count++;
-        auto images = bitmap->images.data(magic).value_or(Span<elegy::bitmap_image_t const>());
-        auto textures = bitmap->hardware_textures.data(magic).value_or(
-            Span<elegy::hardware_texture_t const>());
+        auto images = bitmap->images.span(magic);
+        auto textures = bitmap->hardware_textures.span(magic);
         fmt::print("{} [{} images, {} textures]\n", name, images.size(), textures.size());
         for(size_t i = 0; i < images.size(); i++)
         {
@@ -736,8 +694,7 @@ int dump_bitmaps(
                 static_cast<u16>(image.type.value()),
                 image.mipmap_count,
                 static_cast<u8>(image.xbox_flags));
-            auto interleaved = bitmap->interleaved_textures.data(magic).value_or(
-                Span<elegy::hardware_texture_t const>());
+            auto interleaved = bitmap->interleaved_textures.span(magic);
             bool const in_pair = textures.empty() && image.interleaved_interop >= 0 &&
                                  static_cast<size_t>(image.interleaved_interop) < interleaved.size();
             if(options.extract_dir.empty() || (i >= textures.size() && !in_pair))
@@ -876,8 +833,7 @@ int dump_sounds(
     options_t const&            options)
 {
     auto        magic       = map.magic();
-    auto const* gestalt_tag = map.find("ugh!");
-    auto const* gestalt = gestalt_tag ? map.tag_data<elegy::sound_gestalt_t>(*gestalt_tag) : nullptr;
+    auto const  gestalt     = map.find<elegy::sound_gestalt_t>();
     if(!gestalt)
     {
         fmt::print("no sound gestalt\n");
@@ -885,8 +841,8 @@ int dump_sounds(
     }
     if(!options.extract_dir.empty())
         std::filesystem::create_directories(options.extract_dir);
-    auto codecs = gestalt->codecs.data(magic).value_or(Span<elegy::sound_codec_t const>());
-    auto names  = gestalt->names.data(magic).value_or(Span<elegy::string_id const>());
+    auto codecs = gestalt->codecs.span(magic);
+    auto names  = gestalt->names.span(magic);
     u32  count = 0, written = 0, missing = 0;
     for(auto const& tag : map.tags())
     {
@@ -1006,26 +962,16 @@ u32 write_collision(
 void print_physics(elegy::map_container const& map, elegy::tag_reference const& object_ref)
 {
     using namespace elegy::phys;
-    auto        magic      = map.magic();
-    auto const* object_tag = map.tag_at(object_ref.id);
-    auto const* object = object_tag ? map.tag_data<elegy::object_t>(*object_tag) : nullptr;
-    auto const* model_tag = object ? map.tag_at(object->model.id) : nullptr;
-    auto const* model = model_tag ? map.tag_data<elegy::model_t>(*model_tag) : nullptr;
-    auto const* phmo_tag = model ? map.tag_at(model->physics_model.id) : nullptr;
-    auto const* phmo = phmo_tag ? map.tag_data<physics_model_t>(*phmo_tag) : nullptr;
+    auto       magic = map.magic();
+    auto const phmo  = elegy::object_view::of(map, object_ref).physics_model;
     if(!phmo)
     {
         fmt::print("    no physics model\n");
         return;
     }
-    auto const* globals_tag = map.find("matg");
-    auto const* globals = globals_tag ? map.tag_data<globals_t>(*globals_tag) : nullptr;
-    auto global_materials = globals ? globals->materials.data(magic).value_or(
-                                          Span<global_material_t const>())
-                                    : Span<global_material_t const>();
-    auto materials = phmo->materials.data(magic).value_or(Span<material_t const>());
-    fmt::print("    {} mass {}\n", map.name_of(*phmo_tag), phmo->mass.value());
-    for(auto const& body : phmo->rigid_bodies.data(magic).value_or(Span<rigid_body_t const>()))
+    auto const globals = map.find<globals_t>();
+    fmt::print("    {} mass {}\n", map.name_of(*phmo.tag), phmo->mass.value());
+    for(auto const& body : phmo->rigid_bodies.span(magic))
     {
         auto hulls  = hulls_of(*phmo, magic, body);
         u32  points = 0;
@@ -1043,17 +989,13 @@ void print_physics(elegy::map_container const& map, elegy::tag_reference const& 
             hulls.size(),
             points);
         if(body.shape_type.value() == static_cast<i16>(shape_type_t::list))
-            for(auto const& child : phmo->list_shapes.data(magic).value_or(Span<list_shape_t const>()))
+            for(auto const& child : phmo->list_shapes.span(magic))
                 fmt::print("        list shape {}:{}\n", child.type.value(), child.index.value());
         for(auto const& hull : hulls)
         {
-            auto const* material = hull.material >= 0 && static_cast<size_t>(hull.material) < materials.size()
-                                       ? &materials[static_cast<size_t>(hull.material)]
-                                       : nullptr;
-            global_material_t const* global = nullptr;
-            for(auto const& g : global_materials)
-                if(material && g.name.raw.value() == material->global_material.raw.value())
-                    global = &g;
+            auto const* material = phmo->material(magic, hull.material);
+            auto const* global =
+                material && globals ? globals->material(magic, material->global_name()) : nullptr;
             Vecf3 lo(1e9f), hi(-1e9f);
             for(auto const& p : hull.points)
                 lo = glm::min(lo, p), hi = glm::max(hi, p);
@@ -1067,7 +1009,7 @@ void print_physics(elegy::map_container const& map, elegy::tag_reference const& 
                 hull.restitution,
                 hull.mass,
                 material ? map.string(material->name) : "?",
-                material ? map.string(material->global_material) : "?",
+                material ? map.string(material->global_name()) : "?",
                 global ? global->friction.value() : -1.f,
                 global ? global->restitution.value() : -1.f,
                 global ? global->density.value() : -1.f);
@@ -1078,19 +1020,16 @@ void print_physics(elegy::map_container const& map, elegy::tag_reference const& 
 /* Objects placed in the scenario, by type, with their physics models */
 int dump_objects(elegy::map_container const& map, options_t const& options)
 {
-    auto        magic        = map.magic();
-    auto const* scenario_tag = map.find("scnr");
-    auto const* scenario = scenario_tag ? map.tag_data<elegy::scenario_t>(*scenario_tag) : nullptr;
+    auto const scenario = map.find<elegy::scenario_t>();
     if(!scenario)
         return 1;
     auto list = [&](std::string_view kind, auto const& placements, auto const& palette_block) {
-        using P      = typename std::decay_t<decltype(placements)>::value_type;
-        auto items   = placements.data(magic).value_or(Span<P const>());
-        auto palette = palette_block.data(magic).value_or(Span<elegy::palette_entry_t const>());
+        auto items   = map.span(placements);
+        auto palette = map.span(palette_block);
         fmt::print("{}: {} placed, {} in the palette\n", kind, items.size(), palette.size());
         for(size_t i = 0; i < palette.size(); i++)
         {
-            auto const* tag = map.tag_at(palette[i].object.id);
+            auto const* tag = map.get<elegy::object_t>(palette[i].object).tag;
             if(!tag || map.name_of(*tag).find(options.name_filter) == std::string_view::npos)
                 continue;
             u32 count = 0;
@@ -1129,15 +1068,14 @@ int dump_collision(
     options_t const&            options,
     obj_writer*                 obj)
 {
-    auto        magic        = map.magic();
-    auto const* scenario_tag = map.find("scnr");
-    auto const* scenario = scenario_tag ? map.tag_data<elegy::scenario_t>(*scenario_tag) : nullptr;
+    auto       magic    = map.magic();
+    auto const scenario = map.find<elegy::scenario_t>();
     if(!scenario)
         return 1;
-    for(auto const& ref : scenario->bsps.data(magic).value_or(Span<elegy::scenario_bsp_t const>()))
+    for(auto const& ref : map.span(scenario->bsps))
     {
-        auto const* bsp_tag = map.tag_at(ref.bsp.id);
-        auto const* bsp = bsp_tag ? map.tag_data<elegy::structure_bsp_t>(*bsp_tag) : nullptr;
+        auto const bsp     = map.get<elegy::structure_bsp_t>(ref.bsp);
+        auto const bsp_tag = bsp.tag;
         if(!bsp || map.name_of(*bsp_tag).find(options.name_filter) == std::string_view::npos)
             continue;
         auto resources = loader.load(bsp->tag_resources);
@@ -1151,10 +1089,9 @@ int dump_collision(
         }
         auto collision_bsps = resources->block(root->collision_bsps);
         auto definitions    = resources->block(root->instanced_geometry);
-        auto leaves  = bsp->leaves.data(magic).value_or(Span<i8 const>());
-        auto clusters = bsp->clusters.data(magic).value_or(Span<elegy::cluster_t const>());
-        auto portals = bsp->cluster_portals.data(magic).value_or(
-            Span<elegy::cluster_portal_t const>());
+        auto leaves  = bsp->leaves.span(magic);
+        auto clusters = bsp->clusters.span(magic);
+        auto portals = bsp->cluster_portals.span(magic);
         fmt::print(
             "{} [{} collision bsps, {} instance definitions, {} clusters, {} portals, {} leaves]\n",
             map.name_of(*bsp_tag),
@@ -1185,11 +1122,9 @@ int dump_collision(
         /* Spawns and scenery should sit in open space, in a cluster whose
          * bounds hold them */
         std::vector<Vecf3> points;
-        for(auto const& start : scenario->starting_locations.data(magic).value_or(
-                Span<elegy::starting_location_t const>()))
+        for(auto const& start : scenario->starting_locations.span(magic))
             points.push_back(start.position.value());
-        for(auto const& placement : scenario->scenery.data(magic).value_or(
-                Span<elegy::scenery_placement_t const>()))
+        for(auto const& placement : scenario->scenery.span(magic))
             points.push_back(placement.object.position.value());
         /* world_bounds is level-wide in campaigns; the clusters bound one BSP */
         Vecf3 low(std::numeric_limits<f32>::max()), high(-std::numeric_limits<f32>::max());
@@ -1209,14 +1144,13 @@ int dump_collision(
             if(!in_world)
                 continue;
             tested++;
-            auto leaf = world.find_leaf(p);
-            i8   c    = leaf && *leaf < leaves.size() ? leaves[*leaf] : i8(-1);
-            if(c < 0 || static_cast<size_t>(c) >= clusters.size())
+            auto const* cluster = elegy::cluster_at(map, *bsp, resources.value(), p);
+            if(!cluster)
             {
                 solid++;
                 continue;
             }
-            auto const& b = clusters[static_cast<size_t>(c)].bounds;
+            auto const& b = cluster->bounds;
             bool in = true;
             for(int k = 0; k < 3; k++)
                 in = in && p[k] >= b[k].min - 0.5f && p[k] <= b[k].max + 0.5f;
@@ -1239,7 +1173,7 @@ int dump_collision(
             if(pi < 0 || static_cast<size_t>(pi) >= world.planes.size())
                 continue;
             auto const& plane = world.planes[static_cast<size_t>(pi)];
-            for(auto const& v : portal.vertices.data(magic).value_or(Span<elegy::be<Vecf3> const>()))
+            for(auto const& v : portal.vertices.span(magic))
             {
                 worst = std::max(
                     worst,
@@ -1253,18 +1187,12 @@ int dump_collision(
             continue;
         u32 polygons = write_collision(*obj, "world", world, glm::mat4(1.f));
         u32 placed   = 0;
-        for(auto const& instance : bsp->instances.data(magic).value_or(
-                Span<elegy::instanced_geometry_t const>()))
+        for(auto const& instance : bsp->instances.span(magic))
         {
             auto const* definition = instance.definition.resolve(definitions);
             if(!definition)
                 continue;
-            glm::mat4 transform(1.f);
-            f32       scale = instance.scale;
-            transform[0]    = glm::vec4(instance.forward.value() * scale, 0.f);
-            transform[1]    = glm::vec4(instance.left.value() * scale, 0.f);
-            transform[2]    = glm::vec4(instance.up.value() * scale, 0.f);
-            transform[3]    = glm::vec4(instance.position.value(), 1.f);
+            auto const transform = instance.transform();
             polygons += write_collision(
                 *obj,
                 map.string(instance.name),

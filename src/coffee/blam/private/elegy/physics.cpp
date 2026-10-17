@@ -206,4 +206,35 @@ std::vector<hull_t> hulls_of(
     return std::move(walker.out);
 }
 
+std::optional<body_t> body_of(physics_model_t const& model, tag_magic const& magic, i16 permutation)
+{
+    body_t out;
+    f32    surface = 0.f;
+    for(auto const& body : model.rigid_bodies.span(magic))
+    {
+        if(body.permutation.value() > 0 && body.permutation.value() != permutation)
+            continue;
+        auto const motion = body.motion_type.value();
+        if(body.node.value() > 0 || motion == motion_type_t::fixed ||
+           motion == motion_type_t::keyframed)
+            return std::nullopt;
+        for(auto& hull : hulls_of(model, magic, body))
+        {
+            f32 const weight = std::max(hull.mass, 1e-3f);
+            out.friction += hull.friction * weight;
+            out.restitution += hull.restitution * weight;
+            surface += weight;
+            out.hulls.push_back(std::move(hull));
+        }
+        out.mass += body.mass;
+        out.center_of_mass += Vecf3(body.center_of_mass.value()) * body.mass.value();
+    }
+    if(out.hulls.empty() || out.mass <= 0.f)
+        return std::nullopt;
+    out.center_of_mass /= out.mass;
+    out.friction /= surface;
+    out.restitution /= surface;
+    return out;
+}
+
 } // namespace blam::elegy::phys

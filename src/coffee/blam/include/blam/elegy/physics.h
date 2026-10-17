@@ -2,6 +2,7 @@
 
 #include "structures.h"
 
+#include <optional>
 #include <vector>
 
 namespace blam::elegy::phys {
@@ -238,6 +239,12 @@ struct material_t
     be<i16>   phantom_type;
     u8        proxy_collision_group;
     u8        collision_group;
+
+    /*! The global material it is made of; its own name when none is given */
+    inline string_id global_name() const
+    {
+        return global_material.valid() ? global_material : name;
+    }
 };
 
 static_assert(sizeof(material_t) == 0xC);
@@ -245,6 +252,8 @@ static_assert(sizeof(material_t) == 0xC);
 /*! physics_model ("phmo"): rigid bodies built from Havok shapes */
 struct physics_model_t
 {
+    static constexpr std::string_view group = "phmo";
+
     be<u32>                        flags;
     be<f32>                        mass;
     be<f32>                        low_frequency_deactivation_scale;
@@ -269,6 +278,15 @@ struct physics_model_t
     tag_block<list_t>              lists;
     tag_block<list_shape_t>        list_shapes;
     tag_block<mopp_t>              mopps;
+
+    /*! A shape's material, by the index the shape stores */
+    inline material_t const* material(tag_magic const& magic, i16 index) const
+    {
+        auto all = materials.span(magic);
+        return index >= 0 && static_cast<size_t>(index) < all.size()
+                   ? &all[static_cast<size_t>(index)]
+                   : nullptr;
+    }
 };
 
 static_assert(offsetof(physics_model_t, rigid_bodies) == 0x58);
@@ -297,8 +315,19 @@ static_assert(sizeof(global_material_t) == 0x170);
 /*! globals ("matg"), as far as physics needs it */
 struct globals_t
 {
+    static constexpr std::string_view group = "matg";
+
     std::array<u8, 0x17C>        unknown_0;
     tag_block<global_material_t> materials;
+
+    /*! A material by name, as physics models name them */
+    inline global_material_t const* material(tag_magic const& magic, string_id name) const
+    {
+        for(auto const& material : materials.span(magic))
+            if(material.name.raw.value() == name.raw.value())
+                return &material;
+        return nullptr;
+    }
 };
 
 static_assert(offsetof(globals_t, materials) == 0x17C);
@@ -318,5 +347,20 @@ struct hull_t
  * pills become sampled points */
 std::vector<hull_t> hulls_of(
     physics_model_t const& model, tag_magic const& magic, rigid_body_t const& body);
+
+/*! A permutation's rigid bodies as one body that moves */
+struct body_t
+{
+    std::vector<hull_t> hulls; /*!< Object space */
+    f32                 mass{0.f};
+    Vecf3               center_of_mass{};
+    f32                 friction{0.f};    /*!< Weighted by each shape's mass */
+    f32                 restitution{0.f};
+};
+
+/*! The rigid bodies of a permutation merged into one, if they can move as
+ * one: on the root node, none fixed or keyframed */
+std::optional<body_t> body_of(
+    physics_model_t const& model, tag_magic const& magic, i16 permutation = 0);
 
 } // namespace blam::elegy::phys

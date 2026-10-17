@@ -14,6 +14,8 @@
 
 namespace blam::elegy {
 
+using typing::vector_types::Matf4;
+
 /*!
  * \brief A field stored big-endian, as everything in an Xbox 360 cache file
  * is. Reads swap on little-endian hosts and are free on big-endian ones.
@@ -223,6 +225,12 @@ struct tag_block
             return stl_types::failure("tag_block pointer out of bounds"sv);
         return Span<T const>(items, static_cast<size_t>(num));
     }
+
+    /*! The elements, none when the block is empty or out of bounds */
+    inline Span<T const> span(tag_magic const& magic) const
+    {
+        return data(magic).value_or(Span<T const>());
+    }
 };
 
 static_assert(sizeof(tag_block<u32>) == 0xC);
@@ -266,6 +274,11 @@ struct tag_reference
     tag_class           group;
     std::array<u32, 2>  runtime;
     datum_index         id;
+
+    inline bool valid() const
+    {
+        return id.valid();
+    }
 };
 
 static_assert(sizeof(tag_reference) == 0x10);

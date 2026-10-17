@@ -186,6 +186,8 @@ static_assert(sizeof(render_method_category_t) == 0x18);
 /*! render_method_definition ("rmdf"): the option categories of a family */
 struct render_method_definition_t
 {
+    static constexpr std::string_view group = "rmdf";
+
     tag_reference                       global_options;
     tag_block<render_method_category_t> categories;
     tag_block<std::array<u8, 0x10>>     entry_points;
@@ -224,6 +226,8 @@ static_assert(sizeof(template_pass_t) == 0x1C);
  */
 struct render_method_template_t
 {
+    static constexpr std::string_view group = "rmt2";
+
     tag_reference              vertex_shader;
     tag_reference              pixel_shader;
     be<u32>                    entry_points_available;
