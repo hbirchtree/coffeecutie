@@ -68,6 +68,13 @@ layout(location=31) uniform float time;
 layout(location=40, binding=8) uniform sampler2D scene_depth;
 layout(location=41) uniform mat4 inverse_camera;
 layout(location=42) uniform vec2 viewport_size;
+/* The sky's light, for the glints off the waves */
+layout(location=43) uniform vec3 sun_direction;
+layout(location=44) uniform vec3 sun_color;
+/* The water definition's sun spot: rgb, specular power */
+layout(location=48) uniform vec4 sun_spot;
+/* The infinite plane: solid out at sea, gone where the shore water starts */
+layout(location=45) uniform int edge_blend;
 #endif
 #if H2_PLASMA
 layout(location=32) uniform vec3 plasma_colors[2]; /* bright, dim */
@@ -156,8 +163,9 @@ void main()
     /* Two wave layers drifting apart, sky seen along the reflection */
     vec2 w0 = texture(diffuse, f_texcoord + time * vec2(0.013, 0.007)).rg;
     vec2 w1 = texture(diffuse, f_texcoord * 1.7 - time * vec2(0.009, 0.011)).rg;
-    vec2 slope = (w0 + w1) - 1.0;
-    vec3 n = normalize(vec3(slope * 0.35, 1.0));
+    vec2 w2 = texture(diffuse, f_texcoord * 4.3 + time * vec2(-0.021, 0.017)).rg;
+    vec2 slope = (w0 + w1 - 1.0) + (w2 - 0.5) * 0.6;
+    vec3 n = normalize(vec3(slope * 1.4, 1.0));
     vec3 v = normalize(camera_position - f_world_pos);
     vec3 r = reflect(-v, n);
     float fresnel = 0.04 + 0.96 * pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 4.0);
@@ -169,6 +177,8 @@ void main()
     float glance = clamp(fresnel * 1.6, 0.0, 1.0);
     vec3 col = mix(deep, refl, clamp(glance + 0.15, 0.0, 1.0));
     float fade = texture(mask, f_mask_uv).r;
+    if(edge_blend != 0)
+        fade = 1.0 - fade;
     /* How deep the ground is under this pixel; the shallows thin out to the
      * sand, and nothing drawn (reversed z clears to 0) is open sea */
     float ground = texelFetch(scene_depth, ivec2(gl_FragCoord.xy), 0).r;
@@ -176,7 +186,14 @@ void main()
                   vec4(gl_FragCoord.xy / viewport_size * 2.0 - 1.0, ground, 1.0);
     float depth  = ground > 0.0 ? f_world_pos.z - under.z / under.w : 100.0;
     float shallow = smoothstep(0.0, 1.5, depth);
-    out_color = vec4(fogged(col), mix(0.25, 0.95, glance) * fade * shallow);
+    /* Sun glints: a tight sparkle on the facets and a broad sheen */
+    float facing = max(dot(r, sun_direction), 0.0);
+    float sparkle = pow(facing, 300.0) * 4.0 + pow(facing, 4.0) * 0.12;
+    vec3  spot    = sun_spot.rgb * pow(facing, max(sun_spot.a, 1.0));
+    float glint   = sparkle + dot(spot, vec3(0.33));
+    col += sun_color * sparkle + spot;
+    float alpha = mix(0.25, 0.95, glance) * shallow;
+    out_color = vec4(fogged(col), clamp(alpha + glint * shallow, 0.0, 1.0) * fade);
 #elif H2_WATER
     vec3 normal = surface_normal();
     /* Bump-perturbed surface normal, sky tint by fresnel, ground through */
