@@ -86,8 +86,14 @@ struct object_placement_t
     /*! Whether it exists in structure BSP `bsp`; no flags means all */
     inline bool in_bsp(i16 bsp) const
     {
+        return bsp >= 0 && bsp < 16 && in_bsps(1u << bsp);
+    }
+
+    /*! Whether it exists in any of the structure BSPs in `mask` */
+    inline bool in_bsps(u32 mask) const
+    {
         u16 const flags = bsp_flags;
-        return !flags || (bsp >= 0 && bsp < 16 && (flags & (1u << bsp)));
+        return !flags || (flags & mask);
     }
 
     /*! Scale, with 0 read as 1 */

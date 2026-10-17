@@ -18,6 +18,17 @@ Matf4 object_placement_t::transform() const
            glm::scale(Matf4(1.f), Vecf3(scale_or_one()));
 }
 
+bool trigger_volume_t::contains(Vecf3 const& point) const
+{
+    Vecf3 const f     = forward.value();
+    Vecf3 const u     = up.value();
+    Vecf3 const l     = glm::cross(u, f);
+    Vecf3 const local = point - position.value();
+    Vecf3 const along = {glm::dot(local, f), glm::dot(local, l), glm::dot(local, u)};
+    Vecf3 const size  = extents.value();
+    return glm::all(glm::greaterThanEqual(along, Vecf3(0.f))) && glm::all(glm::lessThanEqual(along, size));
+}
+
 Matf4 instanced_geometry_t::transform() const
 {
     f32 const s = scale;
