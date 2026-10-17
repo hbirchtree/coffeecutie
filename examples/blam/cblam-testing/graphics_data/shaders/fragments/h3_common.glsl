@@ -91,6 +91,17 @@ layout(location=89, binding=9) uniform sampler2DArray lightprobe;
 layout(location=91) uniform float exposure;
 layout(location=194) uniform vec4 lightprobe_scales[8];
 layout(location=202) uniform vec4 intensity_scales[2];
+/* Cast shadows from moving objects (render/cascaded_shadows.h), towards the sun */
+#define CSM_LOCATION 204
+#if H3_TERRAIN
+#define CSM_BINDING 10
+#else
+#define CSM_BINDING 7
+#endif
+/* Past every material sampler; CSM_BINDING + 2 would land on the lightprobe */
+#define CSM_OCCLUDER_TILES_BINDING 17
+#include "cascaded_shadows.glsl"
+layout(location=232) uniform vec3 sun_direction;
 #include "h3_atmosphere.glsl"
 layout(location=8) in vec4 f_vertex_light;
 
@@ -178,6 +189,7 @@ struct baked_light_t
     vec3 l0, l1, l2, l3; /* Linear SH, D3DX order */
     vec3 dir;            /* Dominant light, towards it */
     vec3 intensity;
+    float shadow;        /* Of the dominant light that gets through */
 };
 
 baked_light_t sample_baked_light()
@@ -193,6 +205,11 @@ baked_light_t sample_baked_light()
     const vec3 lum = vec3(0.212656, 0.715158, 0.0721856);
     vec3 dir = vec3(-dot(light.l3, lum), -dot(light.l1, lum), dot(light.l2, lum));
     light.dir = dot(dir, dir) > 1e-12 ? normalize(dir) : vec3(0.0, 0.0, 1.0);
+    /* A cast shadow takes away the dominant light where that is the sun */
+    float sunlit = smoothstep(0.85, 0.97, dot(light.dir, sun_direction)) *
+                   smoothstep(0.02, 0.1, dot(light.intensity, lum));
+    light.shadow = 1.0 - csm_params.z * sunlit *
+                             cascade_occlusion(f_world_pos, surface_normal(), sun_direction, camera_position);
     return light;
 }
 
@@ -214,7 +231,7 @@ vec3 baked_diffuse(baked_light_t light, vec3 n)
     vec3 dc = light.l0 - 0.2820948 * light.intensity;
     vec3 x1 = sh_linear(light, n) + 0.4886025 * dot(n, light.dir) * light.intensity;
     vec3 e = (0.886227 * dc - 1.023328 * x1) / 3.14159265;
-    return max(e, vec3(0.0)) + max(dot(light.dir, n), 0.0) * light.intensity * 0.281;
+    return max(e, vec3(0.0)) + max(dot(light.dir, n), 0.0) * light.intensity * 0.281 * light.shadow;
 }
 
 /* calculate_simple_light: radiance from light i and the direction to it;
@@ -280,7 +297,7 @@ vec3 material_specular(
         vec3  tint = mix(mix(spec_tint0.rgb, spec_tint1.rgb, blend), albedo, spec_lobe.w);
         float l_dot_r = dot(light.dir, r);
         analytic = l_dot_r > 0.0
-            ? pow(l_dot_r, power) * ((power + 1.0) / 6.2832) * tint * light.intensity
+            ? pow(l_dot_r, power) * ((power + 1.0) / 6.2832) * tint * light.intensity * light.shadow
             : vec3(0.0);
         /* The dynamic lights through the same lobe */
         for(int i = 0; i < simple_light_count; i++)
@@ -304,7 +321,7 @@ vec3 material_specular(
         /* The dominant baked light first, then the dynamic lights */
         for(int i = -1; i < simple_light_count; i++)
         {
-        vec3 l = light.dir, irradiance = light.intensity;
+        vec3 l = light.dir, irradiance = light.intensity * light.shadow;
         if(i >= 0 && !simple_light(i, l, irradiance))
             continue;
         float n_dot_l = dot(n, l), n_dot_v = dot(n, v);

@@ -1,6 +1,7 @@
 #include "h3_scene.h"
 
 #include "data.h"
+#include "render/cascaded_shadows.h"
 #include "resource_creation.h"
 
 #include <coffee/components/proxy.h>
@@ -82,6 +83,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         if(m_start == time_point{})
             m_start = now;
         f32 const seconds = std::chrono::duration<f32>(now - m_start).count();
+        render_shadows(p, scene, *camera);
+        auto const& csm_atlas = m_shadows.valid() ? m_shadows.sampler() : m_white_sampler;
         /* Opaque first, then water over a copy of the scene, then alpha
          * blended, then additive */
         for(int pass = 0; pass < 3; pass++)
@@ -218,6 +221,22 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf4 const>{
                             {"intensity_scales"},
                             semantic::Span<const Vecf4>(scene.intensity_scales.data(), scene.intensity_scales.size())},
+                        gfx::uniform_pair<Matf4 const>{
+                            {"csm_matrices"}, semantic::Span<const Matf4>(m_shadow_sampling.matrices)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_texel"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.texel)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_params"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.params)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_tiles"}, semantic::Span<const Vecf4>(m_shadow_sampling.tiles)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_bias"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.bias)},
+                        gfx::uniform_pair<Matf4 const>{
+                            {"csm_occluder"}, semantic::SpanOne<const Matf4>(m_shadow_sampling.occluder)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_occluder_info"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.occluder_info)},
+                        gfx::uniform_pair<Vecf3 const>{
+                            {"sun_direction"}, semantic::SpanOne<const Vecf3>(scene.sun_direction)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"atmosphere"},
                             semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
@@ -234,7 +253,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail_m2", 6}, or_white(l[2].detail)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail_m3", 7}, or_white(l[3].detail)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"blend_map", 8}, or_white(mat.blend)},
-                        gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe});
+                        gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"csm_atlas", 10}, csm_atlas});
                     res = submit(frag_u, samplers);
                 } else
                 {
@@ -272,6 +292,22 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf4 const>{
                             {"intensity_scales"},
                             semantic::Span<const Vecf4>(scene.intensity_scales.data(), scene.intensity_scales.size())},
+                        gfx::uniform_pair<Matf4 const>{
+                            {"csm_matrices"}, semantic::Span<const Matf4>(m_shadow_sampling.matrices)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_texel"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.texel)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_params"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.params)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_tiles"}, semantic::Span<const Vecf4>(m_shadow_sampling.tiles)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_bias"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.bias)},
+                        gfx::uniform_pair<Matf4 const>{
+                            {"csm_occluder"}, semantic::SpanOne<const Matf4>(m_shadow_sampling.occluder)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"csm_occluder_info"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.occluder_info)},
+                        gfx::uniform_pair<Vecf3 const>{
+                            {"sun_direction"}, semantic::SpanOne<const Vecf3>(scene.sun_direction)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"atmosphere"},
                             semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
@@ -330,6 +366,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{
                             stage_t::Fragment, {"alpha_test_map", 5}, or_white(mat.alpha_test_map)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe},
+                        gfx::sampler_definition_t{stage_t::Fragment, {"csm_atlas", 7}, csm_atlas},
                         gfx::sampler_definition_t{
                             stage_t::Fragment, {"specular_mask_map", 10}, or_white(mat.specular_mask_map)},
                         gfx::sampler_definition_t{
@@ -356,6 +393,59 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     }
 
   private:
+    /* Moving objects cast into the cascades; the level's own shadows, and
+     * those of what never moves, are baked into its lightmaps */
+    void render_shadows(Proxy& p, H3Scene const& scene, PlayerCamera const& camera)
+    {
+        auto casts = [](Material const& mat) {
+            return mat.visible && !mat.additive && !mat.blended && !mat.object_draws.empty();
+        };
+        if(!m_shadow_program || std::none_of(scene.materials.begin(), scene.materials.end(), casts))
+        {
+            m_shadow_sampling = {};
+            return;
+        }
+        if(!m_shadows.valid())
+            m_shadows.alloc(*m_api, {.shared_cascades = 0});
+        m_shadows.update_view(
+            0,
+            blam_render::CascadedShadowMap::frustum_from(glm::inverse(camera.matrix), camera.camera.position),
+            scene.sun_direction);
+        m_shadow_sampling = m_shadows.sampling(0);
+        m_shadows.clear();
+        Matf4 light(1.f), model(1.f);
+        auto  vert_u = gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Vertex,
+            gfx::uniform_pair<Matf4 const>{{"light", 0}, semantic::SpanOne<const Matf4>(light)},
+            gfx::uniform_pair<Matf4 const>{{"model", 4}, semantic::SpanOne<const Matf4>(model)});
+        for(u32 c = 0; c < m_shadows.tiles(); c++)
+        {
+            light = m_shadows.light_matrix(c);
+            for(auto const& mat : scene.materials)
+            {
+                if(!casts(mat))
+                    continue;
+                for(auto const& object : mat.object_draws)
+                {
+                    auto const* placed = p.template get<Model>(object.entity);
+                    if(!placed)
+                        continue;
+                    model = placed->transform;
+                    m_api->submit(
+                        {
+                            .program       = m_shadow_program,
+                            .vertices      = m_vao,
+                            .render_target = m_shadows.target(),
+                            .call          = {.indexed = true, .instanced = true},
+                            .data          = object.draws,
+                        },
+                        vert_u,
+                        gfx::view_state{.view = m_shadows.viewport(c), .depth = gfx::depth_state{}});
+                }
+            }
+        }
+    }
+
     /* The lights nearest the camera, as simple_lights.fx reads them; lights
      * on moving objects follow their Model */
     i32 pack_lights(Proxy& p, H3Scene const& scene, Vecf3 const& eye)
@@ -695,6 +785,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 .fragment_file = "h3_scene_copy",
                 .shader        = m_copy_program,
             });
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "shadow_depth",
+                .fragment_file = "shadow_depth",
+                .shader        = m_shadow_program,
+            });
         for(size_t i = 0; i < m_programs.size(); i++)
             create_program(
                 api,
@@ -718,6 +815,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::sampler_t>             m_no_lightprobe_sampler;
     std::shared_ptr<gfx::texture_cube_t>        m_black_cube;
     std::shared_ptr<gfx::program_t>             m_copy_program;
+    std::shared_ptr<gfx::program_t>             m_shadow_program;
+    blam_render::CascadedShadowMap              m_shadows;
+    blam_render::CascadedShadowMap::sampling_t  m_shadow_sampling{};
     std::shared_ptr<gfx::texture_2d_t>          m_copy;
     std::shared_ptr<gfx::rendertarget_t>        m_copy_rt;
     std::shared_ptr<gfx::sampler_t>             m_copy_sampler;
