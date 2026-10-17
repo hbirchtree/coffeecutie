@@ -108,8 +108,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         {"bump_scale"}, semantic::SpanOne<const Vecf2>(mat.bump_scale)},
                     gfx::uniform_pair<Matf4 const>{
                         {"model"}, semantic::SpanOne<const Matf4>(model_matrix)});
-                i32 alpha_test = mat.alpha_test ? 1 : 0;
-                i32 blended    = pass > 0 ? 1 : 0;
+                i32 alpha_test = !mat.alpha_test ? 0 : mat.alpha_test_map.sampler ? 2 : 1;
+                i32 blended    = pass;
                 auto view = gfx::view_state{
                     .view = typing::vector_types::Veci4{
                         0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
@@ -275,7 +275,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"illum_detail_ratio"},
                             semantic::SpanOne<const Vecf2>(mat.illum_detail_ratio)},
                         gfx::uniform_pair<const f32>{
-                            {"illum_curve"}, semantic::SpanOne<const f32>(mat.illum_curve)});
+                            {"illum_curve"}, semantic::SpanOne<const f32>(mat.illum_curve)},
+                        gfx::uniform_pair<Vecf2 const>{
+                            {"alpha_test_ratio"}, semantic::SpanOne<const Vecf2>(mat.alpha_test_ratio)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"illum_layers"}, semantic::SpanOne<const Vecf4>(mat.illum_layers)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"illum_layer_xform"}, semantic::SpanOne<const Vecf4>(mat.illum_layer_xform)});
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},
@@ -283,6 +289,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{stage_t::Fragment, {"bump_map", 3}, or_white(mat.bump)},
                         gfx::sampler_definition_t{
                             stage_t::Fragment, {"bump_detail_map", 4}, or_white(mat.bump_detail)},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"alpha_test_map", 5}, or_white(mat.alpha_test_map)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe},
                         gfx::sampler_definition_t{
                             stage_t::Fragment, {"specular_mask_map", 10}, or_white(mat.specular_mask_map)},

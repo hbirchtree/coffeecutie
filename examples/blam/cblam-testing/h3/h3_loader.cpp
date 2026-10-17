@@ -1006,7 +1006,8 @@ struct H3MapLoader : compo::SubsystemBase
         if(parts.empty())
             emit(-1, 0, buffers.index_count());
         for(auto const& part : parts)
-            emit(part.material, part.index_start, part.index_count);
+            if(part.drawn())
+                emit(part.material, part.index_start, part.index_count);
         return emitted;
     }
 
@@ -1118,8 +1119,9 @@ struct H3MapLoader : compo::SubsystemBase
                 layer.base       = base->texture;
                 layer.base_curve = base->curve;
                 layer.scale      = Vecf4(base->scale, 1.f, 1.f);
-                layer.detailed =
-                    detail && material.find("disable_detail") == std::string_view::npos;
+                /* "four_material_shaders_disable_detail_bump" drops the detail
+                 * bump only; the detail albedo always applies */
+                layer.detailed = detail != nullptr;
                 if(detail)
                 {
                     layer.detail       = detail->texture;
@@ -1175,9 +1177,19 @@ struct H3MapLoader : compo::SubsystemBase
             if(albedo == "constant_color")
                 mat.variant = Variant::base;
             load_specular(mat, option("material_model"), option("specular_mask"), constants);
+            /* Halograms hardcode material_model none */
+            if(map.is(*tag, "rmhg"))
+                mat.model = MaterialModel::none;
             load_environment(mat, option("environment_mapping"), constants);
             load_self_illum(mat, option("self_illumination"), slot("self_illum_map"),
                             slot("self_illum_detail_map"), constants);
+            if(auto const* test = slot("alpha_test_map"); test && mat.alpha_test)
+            {
+                mat.alpha_test_map   = test->texture;
+                mat.alpha_test_ratio = mat.uv_scale.x != 0.f && mat.uv_scale.y != 0.f
+                                           ? test->scale / mat.uv_scale
+                                           : test->scale;
+            }
             if(auto const* mask = slot("specular_mask_texture"))
                 mat.specular_mask_map = mask->texture;
             if(auto const* material_map = slot("material_texture"))
@@ -1469,6 +1481,16 @@ struct H3MapLoader : compo::SubsystemBase
             mat.self_illum         = 2;
             mat.illum_detail       = detail->texture;
             mat.illum_detail_ratio = detail->scale / map->scale;
+        } else if(option.starts_with("multilayer"))
+        {
+            mat.self_illum   = 4;
+            mat.illum_layers = Vecf4(
+                value("layer_depth", Vecf4(0.f)).x,
+                value("layer_contrast", Vecf4(1.f)).x,
+                std::max(value("layers_of_4", Vecf4(1.f)).x, 1.f) * 4.f,
+                value("depth_darken", Vecf4(1.f)).x);
+            mat.illum_layer_xform =
+                Vecf4(map->scale, value("texcoord_aspect_ratio", Vecf4(1.f)).x, 0.f);
         } else if(option == "3_channel_self_illum")
         {
             mat.self_illum     = 3;
@@ -1775,6 +1797,13 @@ struct H3MapLoader : compo::SubsystemBase
         auto        h1     = h1_format(format);
         auto        rgtc   = rgtc_format(format);
         bool const  ctx1   = format == el::bitmap_format_t::ctx1;
+        /* DXT3A decodes to one 8-bit channel, which goes up as Y8 or A8 */
+        bool const dxt3a = format == el::bitmap_format_t::dxt3a ||
+                           format == el::bitmap_format_t::dxt3a_mono ||
+                           format == el::bitmap_format_t::dxt3a_alpha;
+        if(dxt3a)
+            h1 = format == el::bitmap_format_t::dxt3a_alpha ? blam::bitm::format_t::A8
+                                                             : blam::bitm::format_t::Y8;
         if(image.type.value() != el::bitmap_type_t::texture_2d || (!h1 && !rgtc && !ctx1))
         {
             cDebug(
@@ -1800,6 +1829,12 @@ struct H3MapLoader : compo::SubsystemBase
             return std::nullopt;
         using blam::bitm::format_t;
         using gfx::textures::swizzle_t;
+        if(dxt3a)
+        {
+            std::vector<u8> texels;
+            el::decode_dxt3a(pixels, width, height, texels);
+            pixels = std::move(texels);
+        }
         if(ctx1)
         {
             std::vector<u8> texels;
