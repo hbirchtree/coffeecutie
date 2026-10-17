@@ -81,7 +81,7 @@ struct PlayerController
             auto [cam, input, info, net, model] = player.components();
             if(info.permissions.camera)
             {
-                sample(input, cam, controllers, dt);
+                sample(input, cam, controllers, dt, info.mode.physics);
                 if(!info.is_remote())
                     m_look[player.id()] += input.look_delta;
                 route(
@@ -168,7 +168,8 @@ struct PlayerController
         PlayerInput&                           input,
         PlayerCamera const&                    cam,
         comp_app::interfaces::ControllerInput* controllers,
-        duration const&                        dt)
+        duration const&                        dt,
+        bool                                   physics)
     {
         using namespace Coffee::Input;
         bool const pad      = controllers && cam.controller.index.has_value();
@@ -230,7 +231,7 @@ struct PlayerController
             input.swap |= key(CK_HTab);
             input.reload |= key(CK_r);
             input.grenade_switch |= key(CK_g);
-            /* Grabs in the free camera, throws on foot */
+            /* Grabs in forge, throws in physics mode */
             input.grenade |= (input.mouse_buttons & CIMouseButtonEvent::RightButton) != 0;
             input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
         }
@@ -242,9 +243,10 @@ struct PlayerController
             intent.swap = true;
         if(input.reload)
             intent.reload = true;
-        if(input.grenade)
+        /* Grenades are for bodies; forge keeps these buttons */
+        if(input.grenade && physics)
             intent.grenade = true;
-        if(input.grenade_switch)
+        if(input.grenade_switch && physics)
             intent.grenade_switch = true;
         if(in_menu)
         {
