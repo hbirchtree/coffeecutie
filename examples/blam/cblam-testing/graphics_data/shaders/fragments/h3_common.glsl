@@ -84,11 +84,13 @@ layout(location=87) uniform int bump_mode;
 layout(location=88) uniform vec2 bump_detail_ratio;
 #endif
 
-/* Baked light: SH coefficient pairs in layers 0-7, max luminance of each */
+/* Baked light, ten layers per loaded structure BSP (the vertex's lightmap
+ * z): SH coefficient pairs in 0-7, dominant intensity in 8-9; each BSP's
+ * scales, four intensity scales a vec4 */
 layout(location=89, binding=9) uniform sampler2DArray lightprobe;
-layout(location=90) uniform vec4 lightprobe_scale;
 layout(location=91) uniform float exposure;
-layout(location=92) uniform float intensity_scale;
+layout(location=194) uniform vec4 lightprobe_scales[8];
+layout(location=202) uniform vec4 intensity_scales[2];
 #include "h3_atmosphere.glsl"
 layout(location=8) in vec4 f_vertex_light;
 
@@ -165,6 +167,7 @@ vec3 bumped_normal(vec3 n)
  * alpha, direction from rgb */
 vec3 lightprobe_coefficient(float slice, float scale)
 {
+    slice += floor(f_lightmap.z + 0.5) * 10.0;
     vec4 a = texture(lightprobe, vec3(f_lightmap.xy, slice));
     vec4 b = texture(lightprobe, vec3(f_lightmap.xy, slice + 1.0));
     return ((a.rgb + b.rgb) * 2.0 - 2.0) * (a.a * b.a * scale);
@@ -180,11 +183,13 @@ struct baked_light_t
 baked_light_t sample_baked_light()
 {
     baked_light_t light;
-    light.l0 = lightprobe_coefficient(0.0, lightprobe_scale.x);
-    light.l1 = lightprobe_coefficient(2.0, lightprobe_scale.y);
-    light.l2 = lightprobe_coefficient(4.0, lightprobe_scale.z);
-    light.l3 = lightprobe_coefficient(6.0, lightprobe_scale.w);
-    light.intensity = lightprobe_coefficient(8.0, intensity_scale);
+    int  slot  = int(f_lightmap.z + 0.5);
+    vec4 scale = lightprobe_scales[slot];
+    light.l0 = lightprobe_coefficient(0.0, scale.x);
+    light.l1 = lightprobe_coefficient(2.0, scale.y);
+    light.l2 = lightprobe_coefficient(4.0, scale.z);
+    light.l3 = lightprobe_coefficient(6.0, scale.w);
+    light.intensity = lightprobe_coefficient(8.0, intensity_scales[slot / 4][slot % 4]);
     const vec3 lum = vec3(0.212656, 0.715158, 0.0721856);
     vec3 dir = vec3(-dot(light.l3, lum), -dot(light.l1, lum), dot(light.l2, lum));
     light.dir = dot(dir, dir) > 1e-12 ? normalize(dir) : vec3(0.0, 0.0, 1.0);

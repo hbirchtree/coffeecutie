@@ -13,7 +13,8 @@ layout(location=6) in vec3 f_lightmap;
 
 #include "fragments/h3_atmosphere.glsl"
 
-layout(location=90) uniform vec4 lightprobe_scale;
+/* Per loaded structure BSP (the lightmap z), ten layers each */
+layout(location=194) uniform vec4 lightprobe_scales[8];
 layout(location=91) uniform float exposure;
 layout(location=89, binding=9) uniform sampler2DArray lightprobe;
 
@@ -116,9 +117,11 @@ void main()
     vec3 lightmap_intensity = vec3(1.0);
     if(f_lightmap.z >= 0.0)
     {
-        vec4 a = texture(lightprobe, vec3(f_lightmap.xy, 0.0));
-        vec4 b = texture(lightprobe, vec3(f_lightmap.xy, 1.0));
-        lightmap_intensity = clamp(((a.rgb + b.rgb) * 2.0 - 2.0) * (a.a * b.a * lightprobe_scale.x), 0.0, 1.0);
+        int  slot = int(f_lightmap.z + 0.5);
+        vec4 a = texture(lightprobe, vec3(f_lightmap.xy, float(slot * 10)));
+        vec4 b = texture(lightprobe, vec3(f_lightmap.xy, float(slot * 10 + 1)));
+        lightmap_intensity =
+            clamp(((a.rgb + b.rgb) * 2.0 - 2.0) * (a.a * b.a * lightprobe_scales[slot].x), 0.0, 1.0);
     }
 
     vec3  to_eye   = camera_position - f_world_pos;
