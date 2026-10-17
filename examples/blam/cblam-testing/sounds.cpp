@@ -345,7 +345,8 @@ struct SoundSystem
                     effective_volume);
             meta.queued_bufs.push_back(current_buf.buffer);
 
-            bool looping = item.looping_sound;
+            bool looping = item.looping_sound &&
+                           !(item.looping_sound->flags & blam::sound::looping_sound::not_a_loop);
             bool eos_permutation =
                 current_buf.permutation->next_permutation_idx == -1;
 
@@ -602,13 +603,15 @@ struct SoundSystem
                 continue;
             auto const& cached   = cam.camera_.cached;
             auto&       listener = snd.listener();
-            listener_pos         = cam.camera.position;
-            has_listener         = true;
+            /* Cutscenes are heard from where they are seen */
+            listener_pos = cam.cinematic ? cam.drawn_eye : cam.camera.position;
+            has_listener = true;
             listener.template set_property<oaf::listener_property::position>(
-                cam.camera.position);
+                listener_pos);
             listener.template set_property<oaf::listener_property::orientation>(
-                glm::transpose(
-                    glm::mat3(cached.right, cached.up, -cached.forward)));
+                cam.cinematic ? glm::mat3(cam.rotation)
+                              : glm::transpose(glm::mat3(
+                                    cached.right, cached.up, -cached.forward)));
         }
     }
 
