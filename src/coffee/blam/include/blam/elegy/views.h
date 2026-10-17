@@ -71,6 +71,26 @@ inline std::vector<mesh_t const*> default_meshes(map_container const& map, rende
     return out;
 }
 
+/*! A node's place relative to its parent */
+struct node_pose_t
+{
+    Quatf rotation{1.f, 0.f, 0.f, 0.f};
+    Vecf3 translation{};
+};
+
+/*! A render model's nodes in their default pose */
+std::vector<node_pose_t> default_pose(map_container const& map, render_model_t const& model);
+
+/*! A placement's stored rotations over a pose; its translations are left
+ * as they are */
+void apply_orientations(
+    map_container const& map, node_orientations_t const& stored, std::vector<node_pose_t>& pose);
+
+/*! Per node: object space from the default pose to `pose` (world times the
+ * inverse bind matrix), what skinned vertices are moved by */
+std::vector<Matf4> skinning_matrices(
+    map_container const& map, render_model_t const& model, std::vector<node_pose_t> const& pose);
+
 /*! A scenario's structure BSP by index */
 inline tagged<structure_bsp_t> structure_bsp(
     map_container const& map, scenario_t const& scenario, i16 index)

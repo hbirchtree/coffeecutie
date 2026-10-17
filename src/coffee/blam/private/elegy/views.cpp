@@ -29,6 +29,67 @@ Matf4 instanced_geometry_t::transform() const
     return out;
 }
 
+std::vector<node_pose_t> default_pose(map_container const& map, render_model_t const& model)
+{
+    std::vector<node_pose_t> out;
+    for(auto const& node : map.span(model.nodes))
+    {
+        Vecf4 const r = node.default_rotation.value();
+        out.push_back({.rotation = Quatf(r.w, r.x, r.y, r.z), .translation = node.default_translation});
+    }
+    return out;
+}
+
+void apply_orientations(
+    map_container const& map, node_orientations_t const& stored, std::vector<node_pose_t>& pose)
+{
+    auto const flags  = map.span(stored.node_flags);
+    auto const shorts = map.span(stored.orientations);
+    i16 const  count  = stored.node_count;
+    auto       bit    = [&](i32 index) {
+        return index >= 0 && static_cast<size_t>(index / 8) < flags.size() &&
+               (flags[static_cast<size_t>(index / 8)] & (1u << (index % 8)));
+    };
+    size_t next = 0;
+    for(i16 node = 0; node < count; node++)
+    {
+        if(bit(node))
+        {
+            if(next + 4 > shorts.size())
+                return;
+            auto q = [&](size_t k) { return static_cast<f32>(shorts[next + k].value()) / 32767.f; };
+            if(static_cast<size_t>(node) < pose.size())
+                pose[static_cast<size_t>(node)].rotation = glm::normalize(Quatf(q(3), q(0), q(1), q(2)));
+            next += 4;
+        }
+        if(bit(count + node))
+            next += 3;
+    }
+}
+
+std::vector<Matf4> skinning_matrices(
+    map_container const& map, render_model_t const& model, std::vector<node_pose_t> const& pose)
+{
+    auto const         nodes = map.span(model.nodes);
+    std::vector<Matf4> world(nodes.size(), Matf4(1.f));
+    std::vector<Matf4> out(nodes.size(), Matf4(1.f));
+    for(size_t i = 0; i < nodes.size() && i < pose.size(); i++)
+    {
+        auto const& node  = nodes[i];
+        Matf4 const local = glm::translate(Matf4(1.f), pose[i].translation) * glm::mat4_cast(pose[i].rotation);
+        i16 const   parent = node.parent.value();
+        world[i] = parent >= 0 && static_cast<size_t>(parent) < i ? world[static_cast<size_t>(parent)] * local
+                                                                 : local;
+        Matf4 inverse(1.f);
+        inverse[0] = Vecf4(node.inverse_forward.value(), 0.f);
+        inverse[1] = Vecf4(node.inverse_left.value(), 0.f);
+        inverse[2] = Vecf4(node.inverse_up.value(), 0.f);
+        inverse[3] = Vecf4(node.inverse_position.value(), 1.f);
+        out[i]     = world[i] * inverse;
+    }
+    return out;
+}
+
 render_method_view render_method_view::of(
     map_container const& map, tag_t const& method, size_t postprocess)
 {
