@@ -293,6 +293,7 @@ void create_resources(compo::EntityContainer& e)
                      set_val("gamma", pp.gamma);
                      set_val("scale", pp.scale);
                      set_val("auto_expose", pp.auto_expose);
+                     set_val("tonemap", pp.tonemap);
                      set_val("doom_mode", pp.doom_mode);
                      set_val("forge_overlay", pp.forge_overlay);
                  }
