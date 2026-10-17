@@ -79,10 +79,11 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Matf4 const inverse_camera = glm::inverse(camera->matrix);
         Vecf2 const viewport{resources.offscreen_size};
         /* The water fan goes around the camera at sea level: the section's
-         * planar fog plane when it lies flat */
+         * planar fog plane when it lies flat, lifted a little so sand at the
+         * waterline sinks under it and fades in */
         Vecf2 const water_eye{camera->camera.position};
         f32 const   sea_level = vis.planar_fog.plane.z > .9f && vis.planar_fog.plane.w > -1e8f
-                                    ? vis.planar_fog.plane.w / vis.planar_fog.plane.z
+                                    ? vis.planar_fog.plane.w / vis.planar_fog.plane.z + .05f
                                     : 0.f;
         Vecf3 const sun_direction =
             scene.sky_flares.empty() ? Vecf3{0.f, 0.f, 1.f} : scene.sky_flares[0].direction;
@@ -94,11 +95,14 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         size_t draws_total = 0, draws_visible = 0;
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
-        for(int pass = 0; pass < 3; pass++)
+        for(int pass = 0; pass < 4; pass++)
             for(auto const& [mi, mat] : stl_types::enumerate(scene.materials))
             {
-                int const mat_pass =
-                    mat.sky ? 0 : (mat.water || mat.additive || mat.blended) ? 2 : 1;
+                /* Sky, opaque, the sea, then everything blended over it */
+                int const mat_pass = mat.sky     ? 0
+                                     : mat.ocean ? 2
+                                     : (mat.water || mat.additive || mat.blended) ? 3
+                                                                                  : 1;
                 /* Glass, decals: nothing sensible to draw them with yet */
                 if(mat_pass != pass || mat.section_draws.empty() ||
                    !mat.texture)
@@ -159,7 +163,6 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
                 i32  alpha_test = mat.alpha_test ? 1 : 0;
                 i32  bumped     = mat.bump.sampler ? 1 : 0;
-                i32  edge_blend = mat.edge_blend ? 1 : 0;
                 auto frag_u     = gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Fragment,
                     gfx::uniform_pair<const i32>{
@@ -167,8 +170,6 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const i32>(alpha_test)},
                     gfx::uniform_pair<const i32>{
                         {"bumped"}, semantic::SpanOne<const i32>(bumped)},
-                    gfx::uniform_pair<const i32>{
-                        {"edge_blend"}, semantic::SpanOne<const i32>(edge_blend)},
                     gfx::uniform_pair<const f32>{
                         {"time"}, semantic::SpanOne<const f32>(seconds)},
                     gfx::uniform_pair<Vecf3 const>{
