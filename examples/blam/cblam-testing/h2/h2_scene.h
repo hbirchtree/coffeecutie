@@ -122,6 +122,7 @@ enum class Variant : u8
     water,
     clouds,
     ocean,
+    plasma,
     count,
 };
 
@@ -137,6 +138,7 @@ inline constexpr std::string_view variant_files[] = {
     "h2_water",
     "h2_clouds",
     "h2_ocean",
+    "h2_plasma",
 };
 
 static_assert(
@@ -188,6 +190,10 @@ struct Material
     /*! water_static and its edge blend: bump in `texture`, sky in `detail`,
      * the edge fade in `mask` */
     bool                                   ocean{false};
+    /*! plasma_alpha: noise A in `texture`, noise B in `detail`, shape in
+     * `mask`; the pixel constants ramp it from dim to bright */
+    bool                                   plasma{false};
+    std::array<Vecf3, 2>                   plasma_colors{};
     Vecf2                                  mask_scale{1.f, 1.f};
 };
 

@@ -8,13 +8,18 @@
  *   H2_ILLUM  self-illumination map added, tinted by its pass colour
  *   H2_CLOUDS transparent clouds template: unlit, alpha from map and mask
  *   H2_OCEAN  water_static: scrolling bump in `diffuse`, sky reflection in
- *             `detail`, fresnel-mixed, faded by `mask` */
+ *             `detail`, fresnel-mixed, faded by `mask`
+ *   H2_PLASMA plasma_alpha: bright where noise A meets the drifting noise B,
+ *             shaped by `mask`, ramped between two colours */
 
 #ifndef H2_CLOUDS
 #define H2_CLOUDS 0
 #endif
 #ifndef H2_OCEAN
 #define H2_OCEAN 0
+#endif
+#ifndef H2_PLASMA
+#define H2_PLASMA 0
 #endif
 
 layout(location=0) in vec3 f_world_pos;
@@ -45,14 +50,17 @@ layout(location=14, binding=4) uniform sampler2DArray lightmaps;
 layout(location=29) uniform int bumped;
 layout(location=30, binding=6) uniform sampler2D bump;
 #endif
-#if H2_SKY_MASK || H2_CLOUDS || H2_OCEAN
+#if H2_SKY_MASK || H2_CLOUDS || H2_OCEAN || H2_PLASMA
 layout(location=18, binding=5) uniform sampler2D mask;
 #endif
 #if H2_WATER || H2_OCEAN
 layout(location=21) uniform vec3 camera_position;
 #endif
-#if H2_OCEAN
+#if H2_OCEAN || H2_PLASMA
 layout(location=31) uniform float time;
+#endif
+#if H2_PLASMA
+layout(location=32) uniform vec3 plasma_colors[2]; /* bright, dim */
 #endif
 #if !H2_SKY
 /* Atmospheric fog of the camera's cluster: rgb + max density, start and
@@ -127,7 +135,14 @@ float sun_shade(vec3 n)
 
 void main()
 {
-#if H2_OCEAN
+#if H2_PLASMA
+    float a = texture(diffuse, f_texcoord).r;
+    float b = texture(detail, f_detail_uv + time * vec2(0.03, -0.21)).r;
+    float p = clamp(1.0 - abs(a - b) * 3.0, 0.0, 1.0);
+    p *= p;
+    vec3 col = mix(plasma_colors[1], plasma_colors[0], p * p);
+    out_color = vec4(col * (0.4 + 1.6 * p), texture(mask, f_mask_uv).a * p);
+#elif H2_OCEAN
     /* Two wave layers drifting apart, sky seen along the reflection */
     vec2 w0 = texture(diffuse, f_texcoord + time * vec2(0.013, 0.007)).rg;
     vec2 w1 = texture(diffuse, f_texcoord * 1.7 - time * vec2(0.009, 0.011)).rg;
