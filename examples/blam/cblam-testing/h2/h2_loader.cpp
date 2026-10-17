@@ -9,6 +9,7 @@
 #include "resource_creation.h"
 #include "sounds.h"
 
+#include <blam/dimeter/animation.h>
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/collision.h>
 #include <blam/dimeter/fog.h>
@@ -134,6 +135,7 @@ struct SectionStreams
     geo::resource_t const* lightmap{nullptr}; /*!< i16 x2 secondary uv */
     geo::resource_t const* submeshes{nullptr};
     geo::resource_t const* buffers{nullptr}; /*!< vertex_buffer_t per stream */
+    geo::resource_t const* node_map{nullptr}; /*!< u8 model node per local */
 };
 
 static SectionStreams find_streams(Span<geo::resource_t const> resources)
@@ -155,6 +157,8 @@ static SectionStreams find_streams(Span<geo::resource_t const> resources)
             out.lightmap = &r;
         else if(r.type0() == 56 && r.type1() == 32 && !out.buffers)
             out.buffers = &r;
+        else if(r.type0() == 100 && r.type1() == 1 && !out.node_map)
+            out.node_map = &r;
     }
     return out;
 }
@@ -562,6 +566,9 @@ struct H2MapLoader : compo::SubsystemBase
         m_scene.switches.clear();
         m_scene.materials.clear();
         m_scene.moving_objects.clear();
+        m_scene.animations.clear();
+        m_scene.animated_objects.clear();
+        m_animation_index.clear();
         m_scene.water = {};
         m_scene.lightmap_tex.reset();
         m_scene.lightmap_sampler.reset();
@@ -1354,13 +1361,24 @@ struct H2MapLoader : compo::SubsystemBase
         /* Model streams are compressed against the bounds unless their
          * buffer header says floats */
         bool float_pos = !bounds, float_uv = !bounds;
+        auto pos_type  = geo::vertex_type_t::point_compressed;
         if(in_block(streams.buffers, 2 * sizeof(geo::vertex_buffer_t)))
         {
             auto const* vb = reinterpret_cast<geo::vertex_buffer_t const*>(
                 bytes + base + streams.buffers->offset());
             float_pos = vb[0].type == geo::vertex_type_t::point;
             float_uv  = vb[1].type == geo::vertex_type_t::texcoord;
+            pos_type  = vb[0].type;
         }
+        /* Boned positions name local nodes; the map makes them model nodes
+         * (no map = they are model nodes already) */
+        Span<const u8> node_map;
+        if(in_block(streams.node_map))
+            node_map = Span<const u8>(
+                bytes + base + streams.node_map->offset(), streams.node_map->size());
+        auto model_node = [&](u8 local) {
+            return local < node_map.size() ? node_map[local] : local;
+        };
         if(pstride < (float_pos ? 12u : 6u) || (!float_pos && !bounds))
             return 0;
         /* 4 = packed normal; 12 = packed normal, binormal, tangent; 36 =
@@ -1404,6 +1422,35 @@ struct H2MapLoader : compo::SubsystemBase
                 pos = {from_le(f[0]), from_le(f[1]), from_le(f[2])};
             }
             out.position = Vecf3(transform * Vecf4(pos, 1.f));
+            /* Node and weight bytes follow the i16 position */
+            {
+                auto set = [&](u32 count, u32 nodes_at, u32 weights_at) {
+                    if(std::max(nodes_at, weights_at) + count > pstride)
+                        return;
+                    for(u32 i = 0; i < count && i < 4; i++)
+                    {
+                        out.nodes[i]   = model_node(p[nodes_at + i]);
+                        out.weights[i] = weights_at ? p[weights_at + i] : 255;
+                    }
+                };
+                switch(pos_type)
+                {
+                case geo::vertex_type_t::rigid_boned:
+                    set(1, 6, 0);
+                    break;
+                case geo::vertex_type_t::skinned_2:
+                    set(2, 8, 10);
+                    break;
+                case geo::vertex_type_t::skinned_3:
+                    set(3, 6, 9);
+                    break;
+                case geo::vertex_type_t::skinned_4:
+                    set(4, 8, 12);
+                    break;
+                default:
+                    break;
+                }
+            }
             /* Water has positions only; its maps tile across the world */
             if constexpr(std::is_same_v<Section, WaterSection>)
                 out.texcoord = Vecf2(out.position);
@@ -1904,6 +1951,7 @@ struct H2MapLoader : compo::SubsystemBase
                 if(bucket->rgb.size() >= (vo + count) * 3)
                     external.rgb = Span<u8 const>(bucket->rgb.data() + vo * 3, count * 3);
             }
+            size_t const first = m_vertices.size();
             emitted += append_section(
                 pool,
                 map.magic(),
@@ -1915,6 +1963,13 @@ struct H2MapLoader : compo::SubsystemBase
                 nullptr,
                 tag,
                 external);
+            /* Rigid sections ride their node whole */
+            if(node >= 0 && node < 256)
+                for(size_t v = first; v < m_vertices.size(); v++)
+                {
+                    m_vertices[v].nodes[0]   = static_cast<u8>(node);
+                    m_vertices[v].weights[0] = 255;
+                }
         }
         return emitted;
     }
@@ -2094,6 +2149,120 @@ struct H2MapLoader : compo::SubsystemBase
         m_scene.lightmap_sampler->alloc();
         m_scene.lightmap_sampler->set_filtering(
             typing::Filtering::Linear, typing::Filtering::Linear);
+    }
+
+    /* An object's looping animation (idle, else device:position) baked to
+     * skin matrices per frame; shared by objects of the same tag and model.
+     * None when the graph does not fit the model. */
+    template<typename V>
+    std::optional<u32> object_animation(
+        dim::map_container<V> const& map,
+        dim::raw_pool const&         pool,
+        dim::tag_reference<> const&  object,
+        dim::tag_t const&            mode_tag)
+    {
+        auto const* obje_tag = map.tag_at(object.tag_id);
+        auto const* obje =
+            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic()) : nullptr;
+        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
+        auto const* hlmt =
+            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic()) : nullptr;
+        auto const* jmad_tag = hlmt ? map.tag_at(hlmt->animation.tag_id) : nullptr;
+        auto const* graph =
+            jmad_tag ? jmad_tag->template data<dim::anim::header_t>(map.magic()) : nullptr;
+        auto const* model = mode_tag.template data<geo::model_header_t>(map.magic());
+        if(!graph || !model)
+            return std::nullopt;
+        u64 const key = (static_cast<u64>(obje_tag->tag_id.raw) << 32) |
+                        mode_tag.tag_id.raw;
+        if(auto it = m_animation_index.find(key); it != m_animation_index.end())
+            return it->second;
+        m_animation_index.emplace(key, std::nullopt);
+
+        auto anims  = graph->animations.data(map.magic());
+        auto groups = graph->resource_groups.data(map.magic());
+        auto nodes  = model->nodes.data(map.magic());
+        if(anims.has_error() || groups.has_error() || nodes.has_error())
+            return std::nullopt;
+        dim::anim::animation_t const* chosen = nullptr;
+        for(std::string_view name : {"idle", "device:position"})
+        {
+            for(auto const& a : anims.value())
+                if(map.string(a.name) == name)
+                {
+                    chosen = &a;
+                    break;
+                }
+            if(chosen)
+                break;
+        }
+        constexpr size_t max_nodes = 64;
+        size_t const     node_count = nodes.value().size();
+        if(!chosen || node_count == 0 || node_count > max_nodes ||
+           chosen->node_count != node_count)
+            return std::nullopt;
+        i16 gi = chosen->resource_group();
+        if(gi < 0 || static_cast<size_t>(gi) >= groups.value().size())
+            return std::nullopt;
+        auto const& g   = groups.value()[gi];
+        auto        raw = pool.resolve(
+            map.magic(), &g, g.data, static_cast<u32>(std::max(g.size(), 0)));
+        auto at = static_cast<size_t>(std::max(chosen->resource_group_offset(), 0));
+        if(!raw || at >= raw->size())
+            return std::nullopt;
+
+        /* The model's own pose for nodes the animation leaves alone */
+        std::vector<dim::anim::node_pose_t> defaults;
+        for(auto const& n : nodes.value())
+            defaults.push_back({
+                .rotation = Quatf(
+                    from_le(n.rotation[3]),
+                    from_le(n.rotation[0]),
+                    from_le(n.rotation[1]),
+                    from_le(n.rotation[2])),
+                .translation = Vecf3(
+                    from_le(n.position[0]), from_le(n.position[1]), from_le(n.position[2])),
+            });
+        auto decoded = dim::anim::decode(
+            *chosen,
+            Span<const u8>(reinterpret_cast<u8 const*>(raw->data()), raw->size()).subspan(at),
+            defaults);
+        if(!decoded)
+            return std::nullopt;
+
+        std::vector<Matf4> const bind = model_nodes(map, *model);
+        H2Scene::animation_t     out{.frames = decoded->frames, .nodes = static_cast<u32>(node_count)};
+        /* A device's position runs 0 to 1 over its transition time */
+        if(map.string(chosen->name) == "device:position" &&
+           (obje_tag->matches("mach") || obje_tag->matches("ctrl") || obje_tag->matches("lifi")))
+            if(auto const* device = obje_tag->template data<dim::obj::device_t>(map.magic());
+               device && from_le(device->position_transition_time) > 0.f)
+                out.rate = static_cast<f32>(out.frames) * from_le(device->position_transition_time);
+        out.palette.resize(static_cast<size_t>(out.frames) * node_count);
+        std::vector<Matf4> world(node_count);
+        for(u32 f = 0; f < out.frames; f++)
+            for(size_t n = 0; n < node_count; n++)
+            {
+                auto const& pose  = decoded->at(f, static_cast<u32>(n));
+                Matf4 const local = glm::translate(Matf4(1.f), pose.translation) *
+                                    glm::mat4_cast(pose.rotation) *
+                                    glm::scale(Matf4(1.f), Vecf3(pose.scale));
+                i16 parent = nodes.value()[n].parent.value();
+                world[n]   = parent >= 0 && static_cast<size_t>(parent) < n
+                                 ? world[parent] * local
+                                 : local;
+                out.palette[f * node_count + n] = world[n] * glm::inverse(bind[n]);
+            }
+        cDebug(
+            "H2: {}: animation {} ({} frames, {} nodes)",
+            map.name_of(*jmad_tag),
+            map.string(chosen->name),
+            out.frames,
+            node_count);
+        auto index = static_cast<u32>(m_scene.animations.size());
+        m_scene.animations.push_back(std::move(out));
+        m_animation_index[key] = index;
+        return index;
     }
 
     /* obje -> hlmt -> mode */
@@ -2423,7 +2592,8 @@ struct H2MapLoader : compo::SubsystemBase
                          i32                       origin_bsp,
                          u32                       unique_id,
                          dim::string_id            variant,
-                         bool                      collides = true) {
+                         bool                      collides = true,
+                         bool                      animates = true) {
             Vecf3 pos{from_le(position[0]), from_le(position[1]), from_le(position[2])};
             /* Radians on disk (Assembly's "degree3" is a display unit);
              * same yaw/pitch/roll order as the Halo 1 spawns */
@@ -2459,6 +2629,16 @@ struct H2MapLoader : compo::SubsystemBase
                     collision_triangles += n;
                     collision_objects++;
                 }
+            /* Animated objects too keep their geometry in object space,
+             * skinned by their loop */
+            std::optional<u32> animation;
+            if(object && !physics && animates)
+                animation = object_animation(map, pool, *object, *mode_tag);
+            if(animation)
+            {
+                transform    = Matf4(1.f);
+                tag.animated = static_cast<i32>(m_scene.animated_objects.size());
+            }
             /* The ltmp of the BSP the object was lit in knows it by id */
             SceneryLight const* lighting = nullptr;
             LightBucket const*  bucket   = nullptr;
@@ -2486,6 +2666,12 @@ struct H2MapLoader : compo::SubsystemBase
                                     &permutations) > 0;
             if(placed && !lighting)
                 light_from_below(first, pos);
+            if(placed && animation)
+                m_scene.animated_objects.push_back({
+                    .transform = glm::translate(Matf4(1.f), pos) * glm::mat4_cast(q) *
+                                 glm::scale(Matf4(1.f), Vecf3(scale)),
+                    .animation = *animation,
+                });
             if(placed && physics)
             {
                 auto  ref   = m_container.create_entity(moving_recipe);
@@ -2518,6 +2704,10 @@ struct H2MapLoader : compo::SubsystemBase
                 dim::string_id variant{};
                 if constexpr(requires { p.variant; })
                     variant = p.variant.variant_name;
+                /* Devices a group positions wait for it, closed */
+                bool animates = true;
+                if constexpr(requires { p.position_group; })
+                    animates = p.position_group.value() < 0;
                 if(mode_tag && place(
                                    mode_tag,
                                    &entry->tag.untyped(),
@@ -2527,7 +2717,9 @@ struct H2MapLoader : compo::SubsystemBase
                                    bsp,
                                    p.origin_bsp.value(),
                                    from_le(p.unique_id.raw),
-                                   variant))
+                                   variant,
+                                   true,
+                                   animates))
                     placed++;
                 else
                     skipped++;
@@ -3091,6 +3283,8 @@ struct H2MapLoader : compo::SubsystemBase
     std::vector<Vertex>              m_vertices;
     std::vector<u16>                 m_indices;
     std::unordered_map<u32, i32>     m_material_index; /* shad tag -> slot */
+    /* (jmad, mode) -> H2Scene::animations slot */
+    std::unordered_map<u64, std::optional<u32>> m_animation_index;
     std::unordered_map<u32, Texture> m_textures; /* bitm tag | image << 16 -> gpu */
     std::unordered_map<
         u16,
