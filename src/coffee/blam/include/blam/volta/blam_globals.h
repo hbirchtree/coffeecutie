@@ -29,6 +29,43 @@ struct first_person_interface
     tagref_typed_t<tag_class_t::mod2> hands;
 };
 
+/*! A grenade type players carry and throw */
+struct grenade
+{
+    i16                               maximum_count;
+    i16                               multiplayer_spawn_default;
+    tagref_typed_t<tag_class_t::effe> throwing_effect;
+    tagref_typed_t<tag_class_t::grhi> hud_interface;
+    tagref_typed_t<tag_class_t::eqip> equipment;
+    tagref_typed_t<tag_class_t::proj> projectile;
+};
+
+static_assert(sizeof(grenade) == 68);
+
+/*! Bitmaps and definitions the interface shares */
+struct interface_bitmaps
+{
+    tagref_typed_t<tag_class_t::font> font_system;
+    tagref_typed_t<tag_class_t::font> font_terminal;
+    tagref_t                          screen_color_table;
+    tagref_t                          hud_color_table;
+    tagref_t                          editor_color_table;
+    tagref_t                          dialog_color_table;
+    tagref_typed_t<tag_class_t::hudg> hud_globals;
+    tagref_typed_t<tag_class_t::bitm> motion_sensor_sweep_bitmap;
+    tagref_typed_t<tag_class_t::bitm> motion_sensor_sweep_bitmap_mask;
+    tagref_typed_t<tag_class_t::bitm> multiplayer_hud_bitmap;
+    tagref_t                          localization;
+    tagref_typed_t<tag_class_t::hud> hud_digits_definition;
+    tagref_typed_t<tag_class_t::bitm> motion_sensor_blip_bitmap;
+    tagref_typed_t<tag_class_t::bitm> interface_goo_map1;
+    tagref_typed_t<tag_class_t::bitm> interface_goo_map2;
+    tagref_typed_t<tag_class_t::bitm> interface_goo_map3;
+    u32                               padding[12];
+};
+
+static_assert(sizeof(interface_bitmaps) == 304);
+
 /*! Only the blocks that name the player's unit and hands are decoded; everything
  *  ahead of them is skipped by offset, because the rest of the globals tag has
  *  no description we can check a layout against.
@@ -37,12 +74,19 @@ struct first_person_interface
  *  that is always populated. */
 struct globals
 {
-    u32                                padding[0x164 / 4];
+    u32                                padding[0x128 / 4];
+    reference<grenade>                 grenades;
+    reference<u32>                     rasterizer_data; /* not decoded */
+    reference<interface_bitmaps>       interface;
+    reference<u32>                     weapon_list; /* not decoded */
+    reference<u32>                     cheat_powerups; /* not decoded */
     reference<multiplayer_information> multiplayer;
     reference<player_information>      player;
     reference<first_person_interface>  first_person;
 };
 
+static_assert(offsetof(globals, grenades) == 0x128);
+static_assert(offsetof(globals, interface) == 0x140);
 static_assert(offsetof(globals, multiplayer) == 0x164);
 static_assert(offsetof(globals, player) == 0x170);
 static_assert(offsetof(globals, first_person) == 0x17c);

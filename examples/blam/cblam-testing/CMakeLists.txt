@@ -64,6 +64,7 @@ coffee_application(
         projectiles.cpp
         effects.cpp
         weapons.cpp
+        hud.cpp
         ticks.cpp
         debug_ui/widgets.cpp
         forge_controller.cpp

@@ -73,6 +73,7 @@ struct BlamBspWidget
                 if(ImGui::BeginTabItem("Render"))
                 {
                     ImGui::Checkbox("Render UI", &rendering->render_ui);
+                    ImGui::Checkbox("Render HUD", &rendering->render_hud);
                     ImGui::Text("Debug");
                     ImGui::Checkbox(
                         "Clear before draw", &rendering->debug_clear);

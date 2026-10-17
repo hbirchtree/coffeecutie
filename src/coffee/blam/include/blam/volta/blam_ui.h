@@ -1041,6 +1041,11 @@ static_assert(sizeof(grenade_hud_interface::numbers_t) == 84);
 static_assert(sizeof(grenade_hud_interface::messaging_information_t) == 64);
 static_assert(sizeof(grenade_hud_interface) == 504);
 
+C_FLAGS(grenade_hud_interface::overlay_t::type_t, u16)
+C_FLAGS(grenade_hud_interface::overlay_t::flags_t, u32)
+C_FLAGS(grenade_hud_interface::numbers_t::flags_t, u8)
+C_FLAGS(grenade_hud_interface::messaging_information_t::flags_t, u8)
+
 struct weapon_hud_interface
 {
     enum class attached_to_t : u16
@@ -1261,6 +1266,27 @@ static_assert(sizeof(weapon_hud_interface::overlay_t) == 136);
 static_assert(sizeof(weapon_hud_interface::overlay_element_t) == 104);
 static_assert(sizeof(weapon_hud_interface::screen_effect_t) == 184);
 static_assert(sizeof(weapon_hud_interface) == 380);
+
+C_FLAGS(weapon_hud_interface::number_element_t::number_t::weapon_flags_t, u16)
+C_FLAGS(weapon_hud_interface::crosshair_overlay_t::flags_t, u32)
+C_FLAGS(weapon_hud_interface::overlay_t::type_t, u16)
+C_FLAGS(weapon_hud_interface::overlay_t::flags_t, u32)
+
+/* hud#: the font of digits HUD numbers are drawn in */
+struct hud_number
+{
+    tagref_typed_t<tag_class_t::bitm> digits_bitmap;
+    i8                                bitmap_digit_width;
+    i8                                screen_digit_width;
+    i8                                x_offset;
+    i8                                y_offset;
+    i8                                decimal_point_width;
+    i8                                colon_width;
+    u16                               padding_0;
+    u32                               padding_1[19];
+};
+
+static_assert(sizeof(hud_number) == 100);
 
 /* hudg; only what the shell UI uses so far. Offsets checked against the
  * Xbox ui.map. */

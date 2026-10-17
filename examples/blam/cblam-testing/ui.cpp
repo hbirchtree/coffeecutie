@@ -1,5 +1,6 @@
 #include "ui.h"
 
+#include <bit>
 #include <cctype>
 #include <set>
 
@@ -7,6 +8,7 @@
 #include "components.h"
 #include "data.h"
 #include "graphics_api.h"
+#include "hud.h"
 #include "shader_compiler.h"
 #include "ui_caching.h"
 #include "ui_data.h"
@@ -108,7 +110,8 @@ using UIRendererManifest = compo::SubsystemManifest<
         RenderingParameters,
         ScreenText,
         UIEventBus,
-        UIDataSource>,
+        UIDataSource,
+        const HudScene>,
     type_list_t<
         comp_app::DisplayInfo,
         comp_app::GraphicsFramebuffer,
@@ -131,7 +134,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         Vecf4                        color;
         Vecf4                        tex_scale_offset{};
         typing::vector_types::Vecui4 texture_source{};
-        u32                          padding[4] = {};
+        /* x: draw_flags_t; meters: y the empty color as RGBA8, z the fill */
+        u32 extra[4] = {};
+    };
+
+    enum draw_flags_t : u32
+    {
+        use_alpha = 0x1, /* the color's alpha fades the texel */
+        meter     = 0x2,
     };
 
     struct atlas_intermediate_t
@@ -212,6 +222,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         std::u16string   text; /*!< drawn instead, for text-only entries */
     };
     std::vector<button_icon_t> m_button_icons;
+    /* The shader's instance array */
+    static constexpr size_t kUiInstanceSlots = 512;
+
     /* Tokens become private-use characters until they are drawn */
     static constexpr char16_t first_icon_char = 0xE000;
 
@@ -1181,6 +1194,51 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         data.instance_data.push_back(inst);
     }
 
+    /* Each seat's HUD, mapped onto its viewport; one batch per view */
+    std::vector<std::pair<Matf3, u32>> push_hud(HudScene const& scene, widget_data_t data)
+    {
+        std::vector<std::pair<Matf3, u32>> out;
+        size_t const views = scene.views.size();
+        for(size_t k = 0; k < views; k++)
+        {
+            auto const& view  = scene.views[k];
+            /* The world's split: one, two stacked, or quarters */
+            Vecf2 const size  = views <= 1   ? Vecf2(2.f, 2.f)
+                                : views == 2 ? Vecf2(2.f, 1.f)
+                                             : Vecf2(1.f, 1.f);
+            Vecf2 const top_left =
+                views <= 2 ? Vecf2(-1.f, 1.f - size.y * k)
+                           : Vecf2(-1.f + size.x * (k % 2), 1.f - size.y * (k / 2));
+            Matf3 const matrix = glm::translate(Matf3(1), top_left) *
+                                 glm::scale(Matf3(1), Vecf2(size.x / view.width, -size.y / HudScene::height));
+            u32 const first = static_cast<u32>(data.vertex_data.size());
+            for(auto const& sprite : view.sprites)
+            {
+                if(data.instance_data.size() >= kUiInstanceSlots)
+                    break;
+                auto const image = bitm_cache.resolve(*sprite.bitmap, sprite.image);
+                if(!image.valid())
+                    continue;
+                push_quad(data, sprite.min, sprite.max, image, sprite.uv);
+                auto& inst    = data.instance_data.back();
+                inst.color    = sprite.color;
+                inst.extra[0] = use_alpha;
+                if(sprite.fill >= 0.f)
+                {
+                    auto const channel = [](f32 v) {
+                        return static_cast<u32>(std::clamp(v, 0.f, 1.f) * 255.f + .5f);
+                    };
+                    inst.extra[0] |= meter;
+                    inst.extra[1] = channel(sprite.empty.r) | channel(sprite.empty.g) << 8 |
+                                    channel(sprite.empty.b) << 16 | channel(sprite.empty.a) << 24;
+                    inst.extra[2] = std::bit_cast<u32>(sprite.fill);
+                }
+            }
+            out.emplace_back(matrix, static_cast<u32>(data.vertex_data.size()) - first);
+        }
+        return out;
+    }
+
     void draw_keyboard(widget_data_t data, VirtualKeyboard const& keyboard)
     {
         using layout = VirtualKeyboardLayout;
@@ -1520,6 +1578,19 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         std::vector<vertex_t>          vertex_data;
         std::vector<instance_vertex_t> instance_vertex_data;
 
+        /* The HUD first, under any menu, a batch per viewport */
+        std::vector<std::pair<Matf3, u32>> hud_batches;
+        if(auto const& params = e.subsystem<RenderingParameters>();
+           params.render_hud && !params.render_ui)
+            hud_batches = push_hud(
+                e.subsystem<HudScene>(),
+                widget_data_t{
+                    .vertex_data   = vertex_data,
+                    .instance_data = instance_vertex_data,
+                    .box           = {},
+                });
+        u32 const hud_vert_count = static_cast<u32>(vertex_data.size());
+
         /* Runs with the UI hidden too, open has to reach a closed menu */
         bool const render_ui = e.subsystem<RenderingParameters>().render_ui;
         auto&      ui_bus    = e.subsystem<UIEventBus>();
@@ -1645,7 +1716,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             m_click_pending = false;
         }
 
-        u32 ui_vert_count = static_cast<u32>(vertex_data.size());
+        u32 ui_vert_count = static_cast<u32>(vertex_data.size()) - hud_vert_count;
 
         /* Overlay text, in window pixels like the cursor */
         auto&     screen_text = e.subsystem<ScreenText>();
@@ -1717,7 +1788,6 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(vertex_data.empty())
             return;
 
-        constexpr size_t kUiInstanceSlots = 512;
         if(instance_vertex_data.size() < kUiInstanceSlots)
             instance_vertex_data.resize(kUiInstanceSlots);
 
@@ -1829,8 +1899,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 gfx::blend_state{.additive = false});
         };
 
+        u32 hud_offset = 0;
+        for(auto const& [matrix, count] : hud_batches)
+        {
+            do_submit(matrix, hud_offset, count);
+            hud_offset += count;
+        }
         if(ui_vert_count > 0)
-            do_submit(screen_scale, 0, ui_vert_count);
+            do_submit(screen_scale, hud_vert_count, ui_vert_count);
         if(text_count > 0)
             do_submit(cursor_scale, text_start, text_count);
         if(cursor_visible)

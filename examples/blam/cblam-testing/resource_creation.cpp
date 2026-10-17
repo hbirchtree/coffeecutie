@@ -267,6 +267,7 @@ void create_resources(compo::EntityContainer& e)
                      set_val("only_micro", rp.only_micro);
                      set_val("only_aux_channels", rp.only_aux_channels);
                      set_val("render_ui", rp.render_ui);
+                     set_val("render_hud", rp.render_hud);
                      set_val("debug_clear", rp.debug_clear);
                      set_val("occluder_update", rp.occluder_update);
                      set_val("debug_markers", rp.debug_markers);
