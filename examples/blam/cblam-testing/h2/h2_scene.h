@@ -191,6 +191,7 @@ struct Material
     /*! water_static and its edge blend: bump in `texture`, sky in `detail`,
      * the edge fade in `mask` */
     bool                                   ocean{false};
+    bool                                   water_fan{false};  /*!< laid out around the camera */
     /*! plasma_alpha: noise A in `texture`, noise B in `detail`, shape in
      * `mask`; the pixel constants ramp it from dim to bright */
     bool                                   plasma{false};
@@ -217,6 +218,7 @@ struct SkyFlare
     };
 
     Vecf3               direction{0.f, 0.f, 1.f}; /*!< Towards the light */
+    Vecf3               color{1.f, 1.f, 1.f};     /*!< Its radiosity colour */
     std::vector<Sprite> sprites;
 };
 
@@ -322,6 +324,15 @@ struct H2Scene : compo::SubsystemBase
     f32                                         sky_scale{1.f};
     Vecf3                                       sky_clear{0.f, 0.f, 0.f};
     std::vector<SkyFlare>                       sky_flares;
+    /*! The BSP's water definition: how the sea shades */
+    struct water_t
+    {
+        Vecf3 sun_spot{1.f, 1.f, 1.f};
+        f32   sun_power{0.f};
+        Vecf3 reflection{1.f, 1.f, 1.f};
+        Vecf3 refraction{1.f, 1.f, 1.f};
+        Vecf3 horizon{0.f, 0.f, 0.f};
+    } water;
     /*! Entities of the objects with physics; their geometry is in object
      * space and follows the entity's Model */
     std::vector<u64>                            moving_objects;
