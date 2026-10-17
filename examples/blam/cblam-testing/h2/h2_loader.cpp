@@ -1237,7 +1237,7 @@ struct H2MapLoader : compo::SubsystemBase
      * into the ground sit in solid space, so a point above is tried too. */
     DrawTag object_tag(Vecf3 const& pos, i32 bsp, i32 origin_bsp)
     {
-        DrawTag tag{.section = bsp};
+        DrawTag tag{.section = bsp, .placed = true};
         i32     section = bsp >= 0 ? bsp : origin_bsp;
         if(section < 0 || static_cast<size_t>(section) >= m_scene.sections.size())
         {
