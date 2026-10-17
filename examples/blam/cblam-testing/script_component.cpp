@@ -55,6 +55,16 @@ using BlamScriptManifest = compo::SubsystemManifest<
         const SoundCache<halo_version>>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
+/* Script names are lowercased by the compiler; tag names keep their case */
+std::string lowered(std::string_view name)
+{
+    std::string out(name);
+    std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    return out;
+}
+
 /* Runs the scenario's scripts against the world, a step each tick, where the
  * world is decided: offline, or on the server */
 template<typename Ver>
@@ -184,7 +194,7 @@ struct BlamScript
                 if(name < 0 || static_cast<size_t>(name) >= names.value().size() ||
                    spawn.ref < 0 || static_cast<size_t>(spawn.ref) >= palette.value().size())
                     continue;
-                m_named[std::string(names.value()[name].name.str())] = {
+                m_named[lowered(names.value()[name].name.str())] = {
                     .group    = group_id,
                     .index    = i,
                     .object   = &palette.value()[spawn.ref][0],
@@ -221,7 +231,7 @@ struct BlamScript
 
     u64 named_entity(Proxy& p, std::string const& name) const
     {
-        auto it = m_named.find(name);
+        auto it = m_named.find(lowered(name));
         if(it == m_named.end())
             return 0;
         return entity_by_net_id(
@@ -239,7 +249,7 @@ struct BlamScript
         if(!objects.empty() && v.pending.empty())
             return;
         std::vector<u32> waiting = v.pending;
-        if(auto it = m_named.find(std::string(text_of(v))); it != m_named.end())
+        if(auto it = m_named.find(lowered(text_of(v))); it != m_named.end())
             waiting.push_back(
                 SpawnObjectEvent::scenario_net_id(it->second.group, it->second.index));
         std::function<void(Proxy&, u64)> later(std::forward<Fn>(fn));
@@ -279,7 +289,7 @@ struct BlamScript
         if(!items.has_value())
             return nullptr;
         for(auto const& item : items.value())
-            if(item.name.str() == name)
+            if(lowered(item.name.str()) == lowered(name))
                 return &item;
         return nullptr;
     }
@@ -540,7 +550,7 @@ struct BlamScript
 
     void object_create(Proxy& p, std::string const& name, bool anew)
     {
-        auto it = m_named.find(name);
+        auto it = m_named.find(lowered(name));
         if(it == m_named.end())
             return log(fmt::format("object_create: no object named {}", name));
         auto const& placement = it->second;
@@ -977,7 +987,7 @@ struct BlamScript
         blam::scn::ai::encounter const* encounter = nullptr;
         if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
             for(auto const& e : list.value())
-                if(e.name.str() == name)
+                if(lowered(e.name.str()) == lowered(name))
                     encounter = &e;
         if(!encounter)
             return log(fmt::format("ai_place: no encounter {}", path));
@@ -988,7 +998,7 @@ struct BlamScript
             return;
         for(auto const& squad : squads.value())
         {
-            if(!which.empty() && squad.name.str() != which)
+            if(!which.empty() && lowered(squad.name.str()) != lowered(which))
                 continue;
             i16 const type = squad.actor_type;
             if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
@@ -1019,8 +1029,8 @@ struct BlamScript
                 p.template subsystem<GameEventBus>().inject(ev, &spawn);
                 m_spawning.insert(net_id);
                 /* Both the encounter and its squad name it */
-                m_actors[std::string(name)].push_back(net_id);
-                m_actors[fmt::format("{}/{}", name, squad.name.str())].push_back(net_id);
+                m_actors[lowered(name)].push_back(net_id);
+                m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
             }
         }
     }
@@ -1039,7 +1049,7 @@ struct BlamScript
     std::vector<u32> ai_spawning(std::string_view path) const
     {
         std::vector<u32> out;
-        if(auto it = m_actors.find(std::string(path)); it != m_actors.end())
+        if(auto it = m_actors.find(lowered(path)); it != m_actors.end())
             for(u32 net_id : it->second)
                 if(m_spawning.contains(net_id))
                     out.push_back(net_id);
@@ -1049,7 +1059,7 @@ struct BlamScript
     std::vector<u64> ai_actors(Proxy& p, std::string_view path) const
     {
         std::vector<u64> out;
-        auto             it = m_actors.find(std::string(path));
+        auto             it = m_actors.find(lowered(path));
         if(it == m_actors.end())
             return out;
         for(u32 net_id : it->second)
