@@ -9,6 +9,7 @@
 #include "resource_creation.h"
 #include "sounds.h"
 
+#include <blam/dimeter/animation.h>
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/collision.h>
 #include <blam/dimeter/fog.h>
@@ -80,6 +81,51 @@ struct ExternalLighting
     Span<u8 const>             rgb; /*!< 3 per vertex */
 };
 
+/* A water definition as append_section sees a section: its counts are not
+ * stored, the vertices come from the position stream (f32 x3) */
+struct WaterSection
+{
+    geo::water_definition_t const*          water;
+    dim::raw_ref                            data;
+    dim::bsp_block<geo::resource_t>         resources;
+    u16                                     vertices{0};
+
+    void const* owner() const
+    {
+        return water;
+    }
+
+    u16 vertex_count() const
+    {
+        return vertices;
+    }
+
+    u16 face_count() const
+    {
+        return 0;
+    }
+
+    i32 data_size() const
+    {
+        return water->data_size();
+    }
+
+    i32 base_address() const
+    {
+        return water->base_address();
+    }
+};
+
+/* An object with a physics body: physics moves its Model */
+static const auto moving_recipe = compo::EntityRecipe{
+    .components =
+        {
+            compo::type_hash_v<Model>(),
+            compo::type_hash_v<ObjectPhysics>(),
+        },
+    .tags = ObjectGC,
+};
+
 struct SectionStreams
 {
     geo::resource_t const* index{nullptr};
@@ -88,6 +134,8 @@ struct SectionStreams
     geo::resource_t const* normal{nullptr};
     geo::resource_t const* lightmap{nullptr}; /*!< i16 x2 secondary uv */
     geo::resource_t const* submeshes{nullptr};
+    geo::resource_t const* buffers{nullptr}; /*!< vertex_buffer_t per stream */
+    geo::resource_t const* node_map{nullptr}; /*!< u8 model node per local */
 };
 
 static SectionStreams find_streams(Span<geo::resource_t const> resources)
@@ -107,6 +155,10 @@ static SectionStreams find_streams(Span<geo::resource_t const> resources)
             out.normal = &r;
         else if(r.type0() == 56 && r.type1() == 3 && !out.lightmap)
             out.lightmap = &r;
+        else if(r.type0() == 56 && r.type1() == 32 && !out.buffers)
+            out.buffers = &r;
+        else if(r.type0() == 100 && r.type1() == 1 && !out.node_map)
+            out.node_map = &r;
     }
     return out;
 }
@@ -513,6 +565,11 @@ struct H2MapLoader : compo::SubsystemBase
         m_scene.sections.clear();
         m_scene.switches.clear();
         m_scene.materials.clear();
+        m_scene.moving_objects.clear();
+        m_scene.animations.clear();
+        m_scene.animated_objects.clear();
+        m_animation_index.clear();
+        m_scene.water = {};
         m_scene.lightmap_tex.reset();
         m_scene.lightmap_sampler.reset();
         m_scene.start_section = 0;
@@ -520,11 +577,15 @@ struct H2MapLoader : compo::SubsystemBase
         m_indices.clear();
         m_material_index.clear();
         m_textures.clear();
+        m_cubes.clear();
         m_buckets.clear();
         m_scenery_lights.clear();
         m_objects_total = m_objects_clustered = 0;
         m_lightmaps.clear();
         m_lightmap_atlas = {};
+        m_light_triangles.clear();
+        m_light_grid.clear();
+        m_below_lit_objects = m_unlit_objects = 0;
         m_normal_order_logged = false;
     }
 
@@ -642,7 +703,6 @@ struct H2MapLoader : compo::SubsystemBase
                             map,
                             *scenario_body,
                             cluster,
-                            ref.default_sky.value(),
                             m_scene.sections.back().clusters[cluster_count]);
                     cluster_count++;
                     sections += append_section(
@@ -660,6 +720,9 @@ struct H2MapLoader : compo::SubsystemBase
                             .cluster = static_cast<i32>(cluster_count - 1),
                         });
                 }
+            if(auto waters = bsp->water_definitions.data(bsp_magic); !waters.has_error())
+                for(auto const& water : waters.value())
+                    sections += append_water(map, pool, bsp_magic, water, bsp_idx);
             std::vector<bool> instanced;
             if(!geom.has_error())
                 instanced.assign(geom.value().size(), false);
@@ -704,6 +767,7 @@ struct H2MapLoader : compo::SubsystemBase
                                     Span<u8 const>(bucket.rgb.data() + vo * 3, count * 3);
                         }
                     }
+                    size_t const first = m_vertices.size();
                     sections += append_section(
                         pool,
                         bsp_magic,
@@ -719,6 +783,8 @@ struct H2MapLoader : compo::SubsystemBase
                             .instance        = static_cast<i32>(instance_count),
                         },
                         lighting);
+                    if(!lightmap && lighting.rgb.empty())
+                        light_from_below(first, Vecf3(instance_transform(inst)[3]));
                     instance_count++;
                 }
             if(!geom.has_error())
@@ -830,6 +896,12 @@ struct H2MapLoader : compo::SubsystemBase
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", map.name()));
         m_scene.loaded = true;
+        /* Halo 2's colours want no Halo 1 tonemap: shown as authored */
+        auto& post       = m_container.subsystem_cast<PostProcessParameters>();
+        post.exposure    = 1.f;
+        post.gamma       = 1.f;
+        post.auto_expose = false;
+        post.tonemap     = false;
 
         /* mainmenu.map brings the shell with it */
         std::vector<ShellFontFile> fonts;
@@ -1047,7 +1119,6 @@ struct H2MapLoader : compo::SubsystemBase
         dim::map_container<V> const& map,
         dim::scn::scenario_t const&  scnr,
         geo::bsp_cluster_t const&    cluster,
-        i16                          default_sky,
         Section::Cluster&            out)
     {
         if(cluster.atmospheric_fog.value() >= 0)
@@ -1064,10 +1135,8 @@ struct H2MapLoader : compo::SubsystemBase
                 out.fog_range = {from_le(f.start_distance), from_le(f.opaque_distance)};
                 return;
             }
-        /* Interior clusters name no sky; the BSP's default sky stands in */
-        i16 sky_index = cluster.sky.value() >= 0           ? cluster.sky.value()
-                        : cluster.visible_sky.value() >= 0 ? cluster.visible_sky.value()
-                                                         : default_sky;
+        /* Interior clusters name no sky (only a visible one): no fog */
+        i16 sky_index = cluster.sky.value();
         if(sky_index < 0)
             return;
         auto skies = scnr.skies.data(map.magic());
@@ -1171,7 +1240,7 @@ struct H2MapLoader : compo::SubsystemBase
      * into the ground sit in solid space, so a point above is tried too. */
     DrawTag object_tag(Vecf3 const& pos, i32 bsp, i32 origin_bsp)
     {
-        DrawTag tag{.section = bsp};
+        DrawTag tag{.section = bsp, .placed = true};
         i32     section = bsp >= 0 ? bsp : origin_bsp;
         if(section < 0 || static_cast<size_t>(section) >= m_scene.sections.size())
         {
@@ -1239,8 +1308,11 @@ struct H2MapLoader : compo::SubsystemBase
         i32 data_size    = section.data_size();
         if(!vertex_count || data_size <= 0)
             return 0;
+        void const* owner = &section;
+        if constexpr(requires { section.owner(); })
+            owner = section.owner();
         auto block =
-            pool.resolve(magic, &section, section.data, static_cast<u32>(data_size));
+            pool.resolve(magic, owner, section.data, static_cast<u32>(data_size));
         if(!block)
         {
             if(m_model_fail_logged++ < 3)
@@ -1286,7 +1358,28 @@ struct H2MapLoader : compo::SubsystemBase
         u32  ustride = has_uv ? streams.texcoord->size() / vertex_count : 0;
         bool has_n   = in_block(streams.normal);
         u32  nstride = has_n ? streams.normal->size() / vertex_count : 0;
-        if(pstride < (bounds ? 6u : 12u))
+        /* Model streams are compressed against the bounds unless their
+         * buffer header says floats */
+        bool float_pos = !bounds, float_uv = !bounds;
+        auto pos_type  = geo::vertex_type_t::point_compressed;
+        if(in_block(streams.buffers, 2 * sizeof(geo::vertex_buffer_t)))
+        {
+            auto const* vb = reinterpret_cast<geo::vertex_buffer_t const*>(
+                bytes + base + streams.buffers->offset());
+            float_pos = vb[0].type == geo::vertex_type_t::point;
+            float_uv  = vb[1].type == geo::vertex_type_t::texcoord;
+            pos_type  = vb[0].type;
+        }
+        /* Boned positions name local nodes; the map makes them model nodes
+         * (no map = they are model nodes already) */
+        Span<const u8> node_map;
+        if(in_block(streams.node_map))
+            node_map = Span<const u8>(
+                bytes + base + streams.node_map->offset(), streams.node_map->size());
+        auto model_node = [&](u8 local) {
+            return local < node_map.size() ? node_map[local] : local;
+        };
+        if(pstride < (float_pos ? 12u : 6u) || (!float_pos && !bounds))
             return 0;
         /* 4 = packed normal; 12 = packed normal, binormal, tangent; 36 =
          * the same three as floats (Vista) */
@@ -1314,7 +1407,7 @@ struct H2MapLoader : compo::SubsystemBase
             Vertex      out{};
             auto const* p = bytes + base + streams.position->offset() + v * pstride;
             Vecf3       pos;
-            if(bounds)
+            if(!float_pos)
             {
                 i16 q[3];
                 std::memcpy(q, p, 6);
@@ -1329,23 +1422,59 @@ struct H2MapLoader : compo::SubsystemBase
                 pos = {from_le(f[0]), from_le(f[1]), from_le(f[2])};
             }
             out.position = Vecf3(transform * Vecf4(pos, 1.f));
+            /* Node and weight bytes follow the i16 position */
+            {
+                auto set = [&](u32 count, u32 nodes_at, u32 weights_at) {
+                    if(std::max(nodes_at, weights_at) + count > pstride)
+                        return;
+                    for(u32 i = 0; i < count && i < 4; i++)
+                    {
+                        out.nodes[i]   = model_node(p[nodes_at + i]);
+                        out.weights[i] = weights_at ? p[weights_at + i] : 255;
+                    }
+                };
+                switch(pos_type)
+                {
+                case geo::vertex_type_t::rigid_boned:
+                    set(1, 6, 0);
+                    break;
+                case geo::vertex_type_t::skinned_2:
+                    set(2, 8, 10);
+                    break;
+                case geo::vertex_type_t::skinned_3:
+                    set(3, 6, 9);
+                    break;
+                case geo::vertex_type_t::skinned_4:
+                    set(4, 8, 12);
+                    break;
+                default:
+                    break;
+                }
+            }
+            /* Water has positions only; its maps tile across the world */
+            if constexpr(std::is_same_v<Section, WaterSection>)
+                out.texcoord = Vecf2(out.position);
             if(has_uv)
             {
                 auto const* t = bytes + base + streams.texcoord->offset() + v * ustride;
-                if(bounds && ustride >= 4)
+                if(!float_uv && bounds && ustride >= 4)
                 {
                     i16 q[2];
                     std::memcpy(q, t, 4);
                     out.texcoord = {
                         expand(from_le(q[0]), from_le(bounds->u_min), from_le(bounds->u_max)),
                         expand(from_le(q[1]), from_le(bounds->v_min), from_le(bounds->v_max))};
-                } else if(!bounds && ustride >= 8)
+                } else if(float_uv && ustride >= 8)
                 {
                     f32 uv[2];
                     std::memcpy(uv, t, 8);
                     out.texcoord = {from_le(uv[0]), from_le(uv[1])};
                 }
             }
+            /* Sky domes put their sun-lit side by the sky's light only
+             * with v running the other way */
+            if(sky)
+                out.texcoord.y = 1.f - out.texcoord.y;
             if(has_n && nstride == 36)
             {
                 f32 n[3];
@@ -1453,7 +1582,14 @@ struct H2MapLoader : compo::SubsystemBase
             }
         }
         if(!split)
-            emit(tris[fallback], index_span);
+        {
+            /* Water has one shader and no submesh table */
+            i32 mat = fallback;
+            if constexpr(std::is_same_v<Section, WaterSection>)
+                if(!materials.empty())
+                    mat = materials[0];
+            emit(tris[mat], index_span);
+        }
 
         /* Packed normals: pick the field order that agrees with the faces */
         if(!normals_a.empty())
@@ -1491,6 +1627,20 @@ struct H2MapLoader : compo::SubsystemBase
                 m_vertices[vbase + v].normal = chosen[v];
         }
 
+        if(lightmap && lm_scale.x > 0.f && lm_scale.y > 0.f)
+            for(auto const& [mat, list] : tris)
+                for(size_t i = 0; i + 2 < list.size(); i += 3)
+                {
+                    LightTriangle t{.image = lightmap};
+                    for(size_t c = 0; c < 3; c++)
+                    {
+                        auto const& v = m_vertices[vbase + list[i + c]];
+                        t.position[c] = v.position;
+                        t.uv[c] = (Vecf2(v.lightmap) - lm_offset) / lm_scale;
+                    }
+                    add_light_triangle(std::move(t));
+                }
+
         u32 emitted = 0;
         for(auto& [mat, list] : tris)
         {
@@ -1514,8 +1664,107 @@ struct H2MapLoader : compo::SubsystemBase
             m_indices.insert(m_indices.end(), list.begin(), list.end());
             emitted++;
         }
-        (void)sky;
         return emitted ? 1 : 0;
+    }
+
+    /* A lightmapped BSP triangle: objects without baked light take the
+     * lightmap under them, as the engine does */
+    struct LightTriangle
+    {
+        std::array<Vecf3, 3> position;
+        std::array<Vecf2, 3> uv; /*!< Within the image */
+        LightmapImage const* image{nullptr};
+    };
+
+    static constexpr f32 light_cell = 4.f;
+
+    static u64 light_cell_key(i32 x, i32 y)
+    {
+        return (static_cast<u64>(static_cast<u32>(x)) << 32) | static_cast<u32>(y);
+    }
+
+    void add_light_triangle(LightTriangle&& t)
+    {
+        Vecf2 lo = Vecf2(t.position[0]), hi = lo;
+        for(auto const& p : t.position)
+            lo = glm::min(lo, Vecf2(p)), hi = glm::max(hi, Vecf2(p));
+        auto const idx = static_cast<u32>(m_light_triangles.size());
+        m_light_triangles.push_back(std::move(t));
+        for(i32 x = static_cast<i32>(std::floor(lo.x / light_cell));
+            x <= static_cast<i32>(std::floor(hi.x / light_cell));
+            x++)
+            for(i32 y = static_cast<i32>(std::floor(lo.y / light_cell));
+                y <= static_cast<i32>(std::floor(hi.y / light_cell));
+                y++)
+                m_light_grid[light_cell_key(x, y)].push_back(idx);
+    }
+
+    /* The lightmap colour of the highest surface under a point */
+    std::optional<Vecf3> light_below(Vecf3 const& at) const
+    {
+        auto cell = m_light_grid.find(light_cell_key(
+            static_cast<i32>(std::floor(at.x / light_cell)),
+            static_cast<i32>(std::floor(at.y / light_cell))));
+        if(cell == m_light_grid.end())
+            return std::nullopt;
+        f32 const  top  = at.z + 0.25f;
+        f32        best = -std::numeric_limits<f32>::max();
+        Vecf3      out{};
+        bool       hit = false;
+        for(u32 idx : cell->second)
+        {
+            auto const& t  = m_light_triangles[idx];
+            Vecf2 const a  = Vecf2(t.position[0]);
+            Vecf2 const e1 = Vecf2(t.position[1]) - a, e2 = Vecf2(t.position[2]) - a;
+            f32 const   det = e1.x * e2.y - e2.x * e1.y;
+            if(std::abs(det) < 1e-6f)
+                continue;
+            Vecf2 const d = Vecf2(at) - a;
+            f32 const   u = (d.x * e2.y - e2.x * d.y) / det;
+            f32 const   v = (e1.x * d.y - d.x * e1.y) / det;
+            if(u < 0.f || v < 0.f || u + v > 1.f)
+                continue;
+            f32 const w = 1.f - u - v;
+            f32 const z = w * t.position[0].z + u * t.position[1].z + v * t.position[2].z;
+            if(z > top || z <= best)
+                continue;
+            Vecf2 const uv  = w * t.uv[0] + u * t.uv[1] + v * t.uv[2];
+            auto const& img = *t.image;
+            if(img.rgba.empty())
+                continue;
+            u32 const px = std::min(
+                static_cast<u32>(std::clamp(uv.x, 0.f, 1.f) * img.width), img.width - 1);
+            u32 const py = std::min(
+                static_cast<u32>(std::clamp(uv.y, 0.f, 1.f) * img.height), img.height - 1);
+            u8 const* c = img.rgba.data() + (py * img.width + px) * 4;
+            out  = Vecf3{c[0], c[1], c[2]} / 255.f;
+            best = z;
+            hit  = true;
+        }
+        return hit ? std::optional<Vecf3>(out) : std::nullopt;
+    }
+
+    /* Vertices from `first` on take the lightmap under `at`, shaded by their
+     * normals so the form survives */
+    void light_from_below(size_t first, Vecf3 const& at)
+    {
+        auto light = light_below(at);
+        if(!light)
+        {
+            m_unlit_objects++;
+            return;
+        }
+        m_below_lit_objects++;
+        Vecf3 const key = glm::normalize(Vecf3{0.3f, 0.2f, 1.f});
+        for(size_t i = first; i < m_vertices.size(); i++)
+        {
+            auto&     v     = m_vertices[i];
+            f32 const shade = 0.55f + 0.6f * std::max(glm::dot(v.normal, key), 0.f);
+            for(u32 c = 0; c < 3; c++)
+                v.light[c] = static_cast<u8>(
+                    std::clamp((*light)[c] * shade * 255.f, 0.f, 255.f));
+            v.light[3] = 255;
+        }
     }
 
     /* Index into a region's permutations for a variant map, 0 when unset */
@@ -1702,6 +1951,7 @@ struct H2MapLoader : compo::SubsystemBase
                 if(bucket->rgb.size() >= (vo + count) * 3)
                     external.rgb = Span<u8 const>(bucket->rgb.data() + vo * 3, count * 3);
             }
+            size_t const first = m_vertices.size();
             emitted += append_section(
                 pool,
                 map.magic(),
@@ -1713,6 +1963,13 @@ struct H2MapLoader : compo::SubsystemBase
                 nullptr,
                 tag,
                 external);
+            /* Rigid sections ride their node whole */
+            if(node >= 0 && node < 256)
+                for(size_t v = first; v < m_vertices.size(); v++)
+                {
+                    m_vertices[v].nodes[0]   = static_cast<u8>(node);
+                    m_vertices[v].weights[0] = 255;
+                }
         }
         return emitted;
     }
@@ -1894,6 +2151,120 @@ struct H2MapLoader : compo::SubsystemBase
             typing::Filtering::Linear, typing::Filtering::Linear);
     }
 
+    /* An object's looping animation (idle, else device:position) baked to
+     * skin matrices per frame; shared by objects of the same tag and model.
+     * None when the graph does not fit the model. */
+    template<typename V>
+    std::optional<u32> object_animation(
+        dim::map_container<V> const& map,
+        dim::raw_pool const&         pool,
+        dim::tag_reference<> const&  object,
+        dim::tag_t const&            mode_tag)
+    {
+        auto const* obje_tag = map.tag_at(object.tag_id);
+        auto const* obje =
+            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic()) : nullptr;
+        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
+        auto const* hlmt =
+            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic()) : nullptr;
+        auto const* jmad_tag = hlmt ? map.tag_at(hlmt->animation.tag_id) : nullptr;
+        auto const* graph =
+            jmad_tag ? jmad_tag->template data<dim::anim::header_t>(map.magic()) : nullptr;
+        auto const* model = mode_tag.template data<geo::model_header_t>(map.magic());
+        if(!graph || !model)
+            return std::nullopt;
+        u64 const key = (static_cast<u64>(obje_tag->tag_id.raw) << 32) |
+                        mode_tag.tag_id.raw;
+        if(auto it = m_animation_index.find(key); it != m_animation_index.end())
+            return it->second;
+        m_animation_index.emplace(key, std::nullopt);
+
+        auto anims  = graph->animations.data(map.magic());
+        auto groups = graph->resource_groups.data(map.magic());
+        auto nodes  = model->nodes.data(map.magic());
+        if(anims.has_error() || groups.has_error() || nodes.has_error())
+            return std::nullopt;
+        dim::anim::animation_t const* chosen = nullptr;
+        for(std::string_view name : {"idle", "device:position"})
+        {
+            for(auto const& a : anims.value())
+                if(map.string(a.name) == name)
+                {
+                    chosen = &a;
+                    break;
+                }
+            if(chosen)
+                break;
+        }
+        constexpr size_t max_nodes = 64;
+        size_t const     node_count = nodes.value().size();
+        if(!chosen || node_count == 0 || node_count > max_nodes ||
+           chosen->node_count != node_count)
+            return std::nullopt;
+        i16 gi = chosen->resource_group();
+        if(gi < 0 || static_cast<size_t>(gi) >= groups.value().size())
+            return std::nullopt;
+        auto const& g   = groups.value()[gi];
+        auto        raw = pool.resolve(
+            map.magic(), &g, g.data, static_cast<u32>(std::max(g.size(), 0)));
+        auto at = static_cast<size_t>(std::max(chosen->resource_group_offset(), 0));
+        if(!raw || at >= raw->size())
+            return std::nullopt;
+
+        /* The model's own pose for nodes the animation leaves alone */
+        std::vector<dim::anim::node_pose_t> defaults;
+        for(auto const& n : nodes.value())
+            defaults.push_back({
+                .rotation = Quatf(
+                    from_le(n.rotation[3]),
+                    from_le(n.rotation[0]),
+                    from_le(n.rotation[1]),
+                    from_le(n.rotation[2])),
+                .translation = Vecf3(
+                    from_le(n.position[0]), from_le(n.position[1]), from_le(n.position[2])),
+            });
+        auto decoded = dim::anim::decode(
+            *chosen,
+            Span<const u8>(reinterpret_cast<u8 const*>(raw->data()), raw->size()).subspan(at),
+            defaults);
+        if(!decoded)
+            return std::nullopt;
+
+        std::vector<Matf4> const bind = model_nodes(map, *model);
+        H2Scene::animation_t     out{.frames = decoded->frames, .nodes = static_cast<u32>(node_count)};
+        /* A device's position runs 0 to 1 over its transition time */
+        if(map.string(chosen->name) == "device:position" &&
+           (obje_tag->matches("mach") || obje_tag->matches("ctrl") || obje_tag->matches("lifi")))
+            if(auto const* device = obje_tag->template data<dim::obj::device_t>(map.magic());
+               device && from_le(device->position_transition_time) > 0.f)
+                out.rate = static_cast<f32>(out.frames) * from_le(device->position_transition_time);
+        out.palette.resize(static_cast<size_t>(out.frames) * node_count);
+        std::vector<Matf4> world(node_count);
+        for(u32 f = 0; f < out.frames; f++)
+            for(size_t n = 0; n < node_count; n++)
+            {
+                auto const& pose  = decoded->at(f, static_cast<u32>(n));
+                Matf4 const local = glm::translate(Matf4(1.f), pose.translation) *
+                                    glm::mat4_cast(pose.rotation) *
+                                    glm::scale(Matf4(1.f), Vecf3(pose.scale));
+                i16 parent = nodes.value()[n].parent.value();
+                world[n]   = parent >= 0 && static_cast<size_t>(parent) < n
+                                 ? world[parent] * local
+                                 : local;
+                out.palette[f * node_count + n] = world[n] * glm::inverse(bind[n]);
+            }
+        cDebug(
+            "H2: {}: animation {} ({} frames, {} nodes)",
+            map.name_of(*jmad_tag),
+            map.string(chosen->name),
+            out.frames,
+            node_count);
+        auto index = static_cast<u32>(m_scene.animations.size());
+        m_scene.animations.push_back(std::move(out));
+        m_animation_index[key] = index;
+        return index;
+    }
+
     /* obje -> hlmt -> mode */
     template<typename V>
     dim::tag_t const* render_model_of(
@@ -1970,6 +2341,238 @@ struct H2MapLoader : compo::SubsystemBase
         return out;
     }
 
+    /* A BSP's water: its shader on its own geometry, and the tints the sea
+     * shades with */
+    template<typename V>
+    u32 append_water(
+        dim::map_container<V> const&   map,
+        dim::raw_pool const&           pool,
+        dim::bsp_magic const&          magic,
+        geo::water_definition_t const& water,
+        size_t                         bsp_idx)
+    {
+        auto resources = water.resources.data(magic);
+        if(resources.has_error())
+            return 0;
+        u32 positions = 0;
+        for(auto const& r : resources.value())
+            if(r.type0() == 56 && r.type1() == 0)
+                positions = static_cast<u32>(std::max(r.size(), 0));
+        WaterSection section{
+            .water     = &water,
+            .data      = water.data,
+            .resources = water.resources,
+            .vertices  = static_cast<u16>(positions / 12),
+        };
+        auto rgb = [](Vecf3 const& c) {
+            return Vecf3{from_le(c[0]), from_le(c[1]), from_le(c[2])};
+        };
+        m_scene.water = {
+            .sun_spot   = rgb(water.sun_spot_color),
+            .sun_power  = from_le(water.sun_specular_power),
+            .reflection = rgb(water.reflection_tint),
+            .refraction = rgb(water.refraction_tint),
+            .horizon    = rgb(water.horizon_color),
+        };
+        cDebug(
+            "H2: water {}: {} vertices, sun spot ({}, {}, {}) x{}, horizon ({}, {}, {})",
+            map.name_of(*map.tag_at(water.shader.tag_id)),
+            section.vertices,
+            m_scene.water.sun_spot.x,
+            m_scene.water.sun_spot.y,
+            m_scene.water.sun_spot.z,
+            m_scene.water.sun_power,
+            m_scene.water.horizon.x,
+            m_scene.water.horizon.y,
+            m_scene.water.horizon.z);
+        i32 const        mat = material_for(map, pool, water.shader.tag_id);
+        m_scene.materials[mat].water_fan = true;
+        std::vector<i32> materials(64, mat);
+        return append_section(
+            pool,
+            magic,
+            section,
+            Matf4(1.f),
+            nullptr,
+            materials,
+            false,
+            nullptr,
+            DrawTag{.section = static_cast<i32>(bsp_idx)});
+    }
+
+    /* One convex hull per collision BSP of a collision model, posed by the
+     * render model's nodes */
+    template<typename V>
+    static void append_hulls(
+        dim::map_container<V> const&        map,
+        dim::obj::coll::model_t const&      coll,
+        Matf4 const&                        transform,
+        std::vector<Matf4> const&           node_world,
+        std::unordered_map<u32, i16> const* permutations,
+        CollisionGeometry&                  out)
+    {
+        auto regions = coll.regions.data(map.magic());
+        if(regions.has_error())
+            return;
+        for(auto const& region : regions.value())
+        {
+            auto perms = region.permutations.data(map.magic());
+            if(perms.has_error() || perms.value().empty())
+                continue;
+            auto bsps = perms.value()[permutation_of(
+                                          permutations, region.name, perms.value().size())]
+                            .bsps.data(map.magic());
+            if(bsps.has_error())
+                continue;
+            for(auto const& ref : bsps.value())
+            {
+                Matf4 local = transform;
+                i16   node  = ref.node.value();
+                if(node >= 0 && static_cast<size_t>(node) < node_world.size())
+                    local = transform * node_world[node];
+                auto vertices = ref.bsp.vertices.data(map.magic());
+                if(vertices.has_error())
+                    continue;
+                CollisionGeometry::node_t hull;
+                for(auto const& v : vertices.value())
+                {
+                    Vecf3 point{
+                        from_le(v.point[0]), from_le(v.point[1]), from_le(v.point[2])};
+                    if(std::isfinite(point.x) && std::isfinite(point.y) &&
+                       std::isfinite(point.z))
+                        hull.points.push_back(Vecf3(local * Vecf4(point, 1.f)));
+                }
+                if(hull.points.size() >= 4)
+                    out.nodes.push_back(std::move(hull));
+            }
+        }
+    }
+
+    /* Objects whose physics model has a body that is not fixed, and mass:
+     * hulls from the collision model, the material from the shapes */
+    template<typename V>
+    std::optional<ObjectPhysics> moving_physics(
+        dim::map_container<V> const&        map,
+        dim::tag_reference<> const&         object,
+        f32                                 scale,
+        std::unordered_map<u32, i16> const* permutations)
+    {
+        auto const* obje_tag = map.tag_at(object.tag_id);
+        auto const* obje =
+            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic())
+                     : nullptr;
+        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
+        auto const* hlmt =
+            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
+                     : nullptr;
+        /* Devices move as they are animated, never freely */
+        if(!hlmt || obje_tag->matches("mach") || obje_tag->matches("ctrl") ||
+           obje_tag->matches("lifi"))
+            return std::nullopt;
+        auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id);
+        auto const* model =
+            mode_tag ? mode_tag->template data<geo::model_header_t>(map.magic())
+                     : nullptr;
+        auto const* phmo_tag = map.tag_at(hlmt->physics_model.tag_id);
+        auto const* phmo =
+            phmo_tag ? phmo_tag->template data<dim::obj::phmo::model_t>(map.magic())
+                     : nullptr;
+        bool moves = false;
+        f32  mass  = phmo ? from_le(phmo->mass) : 0.f;
+        f32  sum   = 0.f;
+        if(phmo)
+            if(auto bodies = phmo->rigid_bodies.data(map.magic()); !bodies.has_error())
+                for(auto const& body : bodies.value())
+                {
+                    /* Fixed and keyframed (swaying foliage) bodies stay put */
+                    using motion = dim::obj::phmo::motion_type_t;
+                    auto const m = body.motion_type();
+                    moves |= m != motion::fixed && m != motion::keyframed;
+                    sum += from_le(body.mass);
+                }
+        if(mass <= 0.f)
+            mass = sum;
+        /* Weapons, equipment and debris without a physics model are light
+         * boxes, as in Halo 1 */
+        bool const item = obje_tag->matches("weap") || obje_tag->matches("eqip") ||
+                          obje_tag->matches("garb");
+        if(!(moves && mass > 0.f) && !item)
+            return std::nullopt;
+        if(!(moves && mass > 0.f))
+        {
+            if(!model)
+                return std::nullopt;
+            auto bounds = model->bounds.data(map.magic());
+            if(bounds.has_error() || bounds.value().empty())
+                return std::nullopt;
+            auto const& b  = bounds.value()[0];
+            Vecf3 const lo = Vecf3{from_le(b.x_min), from_le(b.y_min), from_le(b.z_min)} * scale;
+            Vecf3 const hi = Vecf3{from_le(b.x_max), from_le(b.y_max), from_le(b.z_max)} * scale;
+            return ObjectPhysics{
+                .half_extents = glm::max((hi - lo) * .5f, Vecf3(.05f)),
+                .center       = (hi + lo) * .5f,
+                .mass         = 1.f,
+                .item         = true,
+            };
+        }
+
+        ObjectPhysics out{.mass = mass};
+        f32 friction = 0.f, restitution = 0.f;
+        u32 shapes   = 0;
+        auto material = [&](auto const& block) {
+            if(auto data = block.data(map.magic()); !data.has_error())
+                for(auto const& s : data.value())
+                {
+                    friction += from_le(s.friction);
+                    restitution += from_le(s.restitution);
+                    shapes++;
+                }
+        };
+        material(phmo->spheres);
+        material(phmo->pills);
+        material(phmo->boxes);
+        if(shapes)
+        {
+            out.friction    = friction / static_cast<f32>(shapes);
+            out.restitution = restitution / static_cast<f32>(shapes);
+        }
+
+        /* One hull per collision BSP, posed by the render model's nodes */
+        auto const* coll_tag = map.tag_at(hlmt->collision_model.tag_id);
+        auto const* coll =
+            coll_tag ? coll_tag->template data<dim::obj::coll::model_t>(map.magic())
+                     : nullptr;
+        std::vector<Matf4> node_world;
+        if(model)
+            node_world = model_nodes(map, *model);
+        Matf4 const scaled = glm::scale(Matf4(1.f), Vecf3(scale));
+        auto        hulls  = std::make_shared<CollisionGeometry>();
+        if(coll)
+            append_hulls(map, *coll, scaled, node_world, permutations, *hulls);
+        /* Bipeds stand, light enough to carry about, as in Halo 1 */
+        if(obje_tag->matches("bipd"))
+        {
+            out.mass    = 1.f;
+            out.upright = true;
+        }
+        if(!hulls->nodes.empty())
+            out.collision = std::move(hulls);
+        else if(model)
+        {
+            /* No collision model: the render model's bounds */
+            auto bounds = model->bounds.data(map.magic());
+            if(bounds.has_error() || bounds.value().empty())
+                return std::nullopt;
+            auto const& b  = bounds.value()[0];
+            Vecf3 const lo = Vecf3{from_le(b.x_min), from_le(b.y_min), from_le(b.z_min)} * scale;
+            Vecf3 const hi = Vecf3{from_le(b.x_max), from_le(b.y_max), from_le(b.z_max)} * scale;
+            out.half_extents = glm::max((hi - lo) * .5f, Vecf3(.05f));
+            out.center       = (hi + lo) * .5f;
+        } else
+            return std::nullopt;
+        return out;
+    }
+
     /* Every placement block of the scenario, then the multiplayer item and
      * vehicle spawns */
     template<typename V>
@@ -1988,7 +2591,9 @@ struct H2MapLoader : compo::SubsystemBase
                          i32                       bsp,
                          i32                       origin_bsp,
                          u32                       unique_id,
-                         dim::string_id            variant) {
+                         dim::string_id            variant,
+                         bool                      collides = true,
+                         bool                      animates = true) {
             Vecf3 pos{from_le(position[0]), from_le(position[1]), from_le(position[2])};
             /* Radians on disk (Assembly's "degree3" is a display unit);
              * same yaw/pitch/roll order as the Halo 1 spawns */
@@ -2001,17 +2606,38 @@ struct H2MapLoader : compo::SubsystemBase
                               glm::scale(Matf4(1.f), Vecf3(scale));
             DrawTag tag = object_tag(pos, bsp, origin_bsp);
             std::unordered_map<u32, i16> permutations;
+            std::optional<ObjectPhysics> physics;
             if(object)
             {
                 permutations = variant_permutations(map, *object, variant);
                 if(!permutations.empty())
                     varied_objects++;
+                physics = moving_physics(map, *object, scale, &permutations);
+            }
+            /* Moving objects keep their geometry in object space and their
+             * collision on their own body */
+            if(physics)
+            {
+                transform    = glm::scale(Matf4(1.f), Vecf3(scale));
+                tag.object   = static_cast<i32>(m_scene.moving_objects.size());
+                tag.cluster  = -1;
+                tag.instance = -1;
+            } else if(object && collides)
                 if(u32 n = append_object_collision(
                        map, *object, transform, bsp, &permutations))
                 {
                     collision_triangles += n;
                     collision_objects++;
                 }
+            /* Animated objects too keep their geometry in object space,
+             * skinned by their loop */
+            std::optional<u32> animation;
+            if(object && !physics && animates)
+                animation = object_animation(map, pool, *object, *mode_tag);
+            if(animation)
+            {
+                transform    = Matf4(1.f);
+                tag.animated = static_cast<i32>(m_scene.animated_objects.size());
             }
             /* The ltmp of the BSP the object was lit in knows it by id */
             SceneryLight const* lighting = nullptr;
@@ -2027,16 +2653,36 @@ struct H2MapLoader : compo::SubsystemBase
                     lit_objects++;
                     break;
                 }
-            return append_model(
-                       map,
-                       pool,
-                       *mode_tag,
-                       transform,
-                       false,
-                       tag,
-                       lighting,
-                       bucket,
-                       &permutations) > 0;
+            size_t const first  = m_vertices.size();
+            bool const   placed = append_model(
+                                    map,
+                                    pool,
+                                    *mode_tag,
+                                    transform,
+                                    false,
+                                    tag,
+                                    lighting,
+                                    bucket,
+                                    &permutations) > 0;
+            if(placed && !lighting)
+                light_from_below(first, pos);
+            if(placed && animation)
+                m_scene.animated_objects.push_back({
+                    .transform = glm::translate(Matf4(1.f), pos) * glm::mat4_cast(q) *
+                                 glm::scale(Matf4(1.f), Vecf3(scale)),
+                    .animation = *animation,
+                });
+            if(placed && physics)
+            {
+                auto  ref   = m_container.create_entity(moving_recipe);
+                auto& model = ref.template get<Model>();
+                model.position = pos;
+                model.rotation = q;
+                model.update_matrix();
+                ref.template get<ObjectPhysics>() = std::move(*physics);
+                m_scene.moving_objects.push_back(ref.id());
+            }
+            return placed;
         };
 
         auto block = [&](auto const& placements_block,
@@ -2058,6 +2704,10 @@ struct H2MapLoader : compo::SubsystemBase
                 dim::string_id variant{};
                 if constexpr(requires { p.variant; })
                     variant = p.variant.variant_name;
+                /* Devices a group positions wait for it, closed */
+                bool animates = true;
+                if constexpr(requires { p.position_group; })
+                    animates = p.position_group.value() < 0;
                 if(mode_tag && place(
                                    mode_tag,
                                    &entry->tag.untyped(),
@@ -2067,7 +2717,9 @@ struct H2MapLoader : compo::SubsystemBase
                                    bsp,
                                    p.origin_bsp.value(),
                                    from_le(p.unique_id.raw),
-                                   variant))
+                                   variant,
+                                   true,
+                                   animates))
                     placed++;
                 else
                     skipped++;
@@ -2108,17 +2760,19 @@ struct H2MapLoader : compo::SubsystemBase
                         variant  = perms.value()[0].variant_name;
                         mode_tag = render_model_of(map, *item);
                     }
-                /* Pickups: drawn with their variant, never collided with */
+                /* Pickups: drawn with their variant; only those with a
+                 * physics body collide */
                 if(mode_tag && place(
                                    mode_tag,
-                                   nullptr,
+                                   item,
                                    spawn.position,
                                    spawn.orientation,
                                    1.f,
                                    -1,
                                    -1,
                                    0,
-                                   variant))
+                                   variant,
+                                   false))
                     placed++;
                 else
                     skipped++;
@@ -2127,17 +2781,22 @@ struct H2MapLoader : compo::SubsystemBase
         }
         cDebug(
             "H2: {} of {} objects resolved to a cluster; {} contribute {} "
-            "collision triangles; {} lit per vertex; {} with a variant",
+            "collision triangles; {} lit per vertex, {} from the lightmap "
+            "below, {} unlit; {} with a variant; {} move",
             m_objects_clustered,
             m_objects_total,
             collision_objects,
             collision_triangles,
             lit_objects,
-            varied_objects);
+            m_below_lit_objects,
+            m_unlit_objects,
+            varied_objects,
+            m_scene.moving_objects.size());
     }
 
-    /* The first sky's model, kept around the camera; scaled into the far
-     * plane since its radius is in the thousands */
+    /* The first sky's model (empty palette slots skipped: the main menu's
+     * is the seventh), kept around the camera; scaled into the far plane
+     * since its radius is in the thousands */
     template<typename V>
     void load_sky(
         dim::map_container<V> const& map,
@@ -2145,15 +2804,25 @@ struct H2MapLoader : compo::SubsystemBase
         dim::scn::scenario_t const&  scnr)
     {
         m_scene.sky_scale  = 1.f;
+        m_scene.sky_clear  = {};
+        m_scene.sky_flares.clear();
         auto skies   = scnr.skies.data(map.magic());
         if(skies.has_error() || skies.value().empty())
             return;
-        auto const* sky_tag = map.tag_at(skies.value()[0].sky.tag_id);
+        dim::tag_t const* sky_tag = nullptr;
+        for(auto const& ref : skies.value())
+            if((sky_tag = map.tag_at(ref.sky.tag_id)))
+                break;
         auto const* sky =
             sky_tag ? sky_tag->template data<dim::obj::sky_t>(map.magic())
                     : nullptr;
         if(!sky)
             return;
+        m_scene.sky_clear = Vecf3{
+            from_le(sky->clear_color[0]),
+            from_le(sky->clear_color[1]),
+            from_le(sky->clear_color[2])};
+        load_sky_flares(map, pool, *sky);
         auto const* mode_tag = map.tag_at(sky->render_model.tag_id);
         if(!mode_tag || !mode_tag->matches("mode"))
             return;
@@ -2170,6 +2839,70 @@ struct H2MapLoader : compo::SubsystemBase
             map.name_of(*sky_tag),
             sections,
             radius);
+    }
+
+    /* Each sky light with a lens flare; yaw and pitch put the light around
+     * the world's z axis */
+    template<typename V>
+    void load_sky_flares(
+        dim::map_container<V> const& map,
+        dim::raw_pool const&         pool,
+        dim::obj::sky_t const&       sky)
+    {
+        auto lights = sky.lights.data(map.magic());
+        if(lights.has_error())
+            return;
+        for(auto const& light : lights.value())
+        {
+            auto const* lens_tag = map.tag_at(light.lens_flare.tag_id);
+            auto const* lens =
+                lens_tag ? lens_tag->template data<dim::obj::lens_t>(map.magic())
+                         : nullptr;
+            auto const* bitm = lens ? map.tag_at(lens->bitmap.tag_id) : nullptr;
+            if(!bitm)
+                continue;
+            auto reflections = lens->reflections.data(map.magic());
+            if(reflections.has_error())
+                continue;
+            f32 const yaw   = from_le(light.direction[0]);
+            f32 const pitch = from_le(light.direction[1]);
+            SkyFlare  flare{
+                 .direction = Vecf3{
+                    std::cos(pitch) * std::cos(yaw),
+                    std::cos(pitch) * std::sin(yaw),
+                    std::sin(pitch)},
+            };
+            if(auto rad = light.radiosity.data(map.magic());
+               !rad.has_error() && !rad.value().empty())
+                flare.color = Vecf3{
+                    from_le(rad.value()[0].color[0]),
+                    from_le(rad.value()[0].color[1]),
+                    from_le(rad.value()[0].color[2])};
+            for(auto const& r : reflections.value())
+            {
+                auto image = texture_for(
+                    map, pool, bitm, static_cast<size_t>(std::max<i16>(r.image, 0)));
+                if(!image)
+                    continue;
+                flare.sprites.push_back({
+                    .image    = *image,
+                    .position = from_le(r.position),
+                    .radius   = from_le(r.radius[1]),
+                    .color    = Vecf3{
+                        from_le(r.color[0]),
+                        from_le(r.color[1]),
+                        from_le(r.color[2])} *
+                             from_le(r.brightness[1]),
+                });
+            }
+            cDebug(
+                "H2: sky light ({}, {}): flare {}, {} sprites",
+                yaw,
+                pitch,
+                map.name_of(*lens_tag),
+                flare.sprites.size());
+            m_scene.sky_flares.push_back(std::move(flare));
+        }
     }
 
     /* Index into m_scene.materials for a shad tag, created on first use. The last
@@ -2213,9 +2946,19 @@ struct H2MapLoader : compo::SubsystemBase
                    !rt.has_error() && !rt.value().empty())
                     bitm_tag = map.tag_at(rt.value()[0].diffuse.tag_id);
             mat.uv_scale   = {base.scale_u, base.scale_v};
+            /* Texture transforms (<usage>_u / _v rows) carry their scale
+             * in the layer lookup */
+            if(auto own = base.layer(base.usage))
+                mat.uv_scale = {own->scale_u, own->scale_v};
             mat.alpha_test = base.alpha_test;
             mat.water      = base.water;
-            mat.additive   = base.transparent && !base.water;
+            /* Transparent templates name their blend: one_add_*, two_add_*
+             * and the plasmas add, the rest alpha blend */
+            auto const& tmpl = base.template_name;
+            bool const  adds = tmpl.find("_add") != tmpl.npos ||
+                              tmpl.find("plasma") != tmpl.npos;
+            mat.additive = base.transparent && !base.water && adds;
+            mat.blended  = base.transparent && !base.water && !adds;
             if(mat.water)
                 if(auto bump = base.layer("bump_map"))
                     bitm_tag = bump->bitmap, mat.uv_scale = {bump->scale_u, bump->scale_v};
@@ -2254,7 +2997,13 @@ struct H2MapLoader : compo::SubsystemBase
                         mat.bump       = *t;
                         mat.bump_scale = {b->scale_u, b->scale_v};
                     }
-            if(sky)
+            if(tmpl == "water_static" || tmpl == "water_edge_blend")
+                ocean_material(map, pool, base, mat);
+            if(tmpl.starts_with("plasma_alpha"))
+                plasma_material(map, pool, base, mat);
+            if(auto env = base.layer("environment_map"))
+                env_material(map, pool, base, *env, mat);
+            if(sky || tmpl.find("clouds") != tmpl.npos)
                 if(auto m = base.layer("cloud_mask"))
                     if(auto t = texture_for(map, pool, m->bitmap))
                     {
@@ -2276,11 +3025,14 @@ struct H2MapLoader : compo::SubsystemBase
                     }
         }
         mat.variant = mat.sky     ? (mat.mask.sampler ? Variant::sky_mask : Variant::sky)
+                      : mat.ocean ? Variant::ocean
+                      : mat.plasma ? Variant::plasma
                       : mat.water ? Variant::water
+                      : mat.mask.sampler ? Variant::clouds
                       : static_cast<Variant>(
                             mat.detail_mode + (mat.illum.sampler ? 3 : 0));
         cDebug(
-            "H2: shad {}: uv scale {}x{}, {}{}{}{}",
+            "H2: shad {}: uv scale {}x{}, {}{}{}{}{}",
             mat.name,
             mat.uv_scale.x,
             mat.uv_scale.y,
@@ -2289,6 +3041,7 @@ struct H2MapLoader : compo::SubsystemBase
             : mat.detail_mode == 1 ? ", detail"
                                    : "",
             mat.bump.sampler ? ", bump" : "",
+            mat.env_sampler ? ", env" : "",
             resolved ? "" : " (template unresolved)");
 
         m_scene.materials.insert(m_scene.materials.end() - 1, std::move(mat));
@@ -2299,19 +3052,157 @@ struct H2MapLoader : compo::SubsystemBase
         return idx;
     }
 
+    /* water_static's slots by index: wave bump, sky, gradients, fresnel. The
+     * edge blend (the infinite plane fading out) borrows them from the map's
+     * water_static and fades by its own first slot */
+    template<typename V>
+    void ocean_material(
+        dim::map_container<V> const&       map,
+        dim::raw_pool const&               pool,
+        dim::material::resolved_t const&   base,
+        Material&                          mat)
+    {
+        std::optional<dim::material::resolved_t> other;
+        auto const*                              src = &base;
+        if(base.template_name == "water_edge_blend")
+        {
+            if(!base.slot_bitmaps.empty())
+                if(auto t = texture_for(map, pool, base.slot_bitmaps[0]))
+                    mat.mask = *t;
+            for(auto const& tag : map.tags())
+            {
+                if(!tag.valid() || !tag.matches("shad"))
+                    continue;
+                auto const* shad =
+                    tag.template data<geo::shad_header_t>(map.magic());
+                auto const* stem = shad ? map.tag_at(shad->shader_template.tag_id)
+                                        : nullptr;
+                if(stem && map.name_of(*stem).ends_with("\\water_static"))
+                {
+                    other = dim::material::resolve(map, *shad);
+                    src   = &*other;
+                    break;
+                }
+            }
+        }
+        if(src->slot_bitmaps.size() < 2)
+            return;
+        auto bump = texture_for(map, pool, src->slot_bitmaps[0]);
+        auto sky  = texture_for(map, pool, src->slot_bitmaps[1]);
+        if(!bump || !sky)
+            return;
+        mat.ocean    = true;
+        mat.blended  = true;
+        mat.additive = false;
+        mat.texture  = bump->texture;
+        mat.sampler  = bump->sampler;
+        mat.detail   = *sky;
+        if(!src->tilings.empty() && src->tilings[0][0] != 0.f)
+            mat.uv_scale = {src->tilings[0][0], src->tilings[0][1]};
+    }
+
+    /* plasma_alpha and its active camo twin, by slot: noise A, noise B,
+     * shape; pixel constants 0 and 1 are the bright and dim colours */
+    template<typename V>
+    void plasma_material(
+        dim::map_container<V> const&     map,
+        dim::raw_pool const&             pool,
+        dim::material::resolved_t const& base,
+        Material&                        mat)
+    {
+        if(base.slot_bitmaps.size() < 3 || base.pixel_constants.size() < 2)
+            return;
+        auto a     = texture_for(map, pool, base.slot_bitmaps[0]);
+        auto b     = texture_for(map, pool, base.slot_bitmaps[1]);
+        auto shape = texture_for(map, pool, base.slot_bitmaps[2]);
+        if(!a || !b || !shape)
+            return;
+        mat.texture     = a->texture;
+        mat.sampler     = a->sampler;
+        mat.detail      = *b;
+        mat.detail_mode = 0;
+        mat.mask        = *shape;
+        mat.plasma      = true;
+        mat.additive    = true;
+        mat.blended     = false;
+        for(size_t i = 0; i < 2; i++)
+        {
+            auto const& c       = base.pixel_constants[i];
+            mat.plasma_colors[i] = Vecf3{c[0], c[1], c[2]} / 255.f;
+        }
+    }
+
+    /* The lightmap_env pass's constants: facing and glancing tints, then
+     * their brightness in alpha */
+    template<typename V>
+    void env_material(
+        dim::map_container<V> const&              map,
+        dim::raw_pool const&                      pool,
+        dim::material::resolved_t const&          base,
+        dim::material::resolved_t::layer_t const& env,
+        Material&                                 mat)
+    {
+        std::vector<u8> const* slots = nullptr;
+        for(size_t i = 0; i < base.pass_names.size(); i++)
+            if((base.pass_names[i] == "lightmap_env" ||
+                base.pass_names[i] == "lightmap_tex_env") &&
+               i < base.pass_pixel_slots.size() &&
+               base.pass_pixel_slots[i].size() >= 4)
+            {
+                slots = &base.pass_pixel_slots[i];
+                break;
+            }
+        if(!slots || !env.bitmap)
+            return;
+        auto constant = [&](size_t i) {
+            u8 slot = (*slots)[i];
+            return slot < base.pixel_constants.size() ? base.pixel_constants[slot]
+                                                      : std::array<u8, 4>{};
+        };
+        auto key = static_cast<u16>(env.bitmap - map.tags().data());
+        auto it  = m_cubes.find(key);
+        if(it == m_cubes.end())
+        {
+            std::shared_ptr<gfx::texture_cube_t> cube;
+            std::shared_ptr<gfx::sampler_t>      sampler;
+            if(auto tex = upload_cubemap(*m_api, map, pool, *env.bitmap))
+            {
+                cube    = *tex;
+                sampler = cube->sampler();
+                sampler->alloc();
+                sampler->set_filtering(
+                    typing::Filtering::Linear,
+                    typing::Filtering::Linear,
+                    typing::Filtering::Linear);
+            }
+            it = m_cubes.emplace(key, std::make_pair(cube, sampler)).first;
+        }
+        if(!it->second.second)
+            return;
+        auto rgb = [](std::array<u8, 4> const& c) {
+            return Vecf3{c[0], c[1], c[2]} / 255.f;
+        };
+        mat.env_texture  = it->second.first;
+        mat.env_sampler  = it->second.second;
+        mat.env_facing   = Vecf4(rgb(constant(0)), constant(2)[3] / 255.f);
+        mat.env_glancing = Vecf4(rgb(constant(1)), constant(3)[3] / 255.f);
+    }
+
     /* Uploaded once per bitm tag; detail maps are shared by many shaders */
     template<typename V>
     std::optional<Texture> texture_for(
         dim::map_container<V> const& map,
         dim::raw_pool const&         pool,
-        dim::tag_t const*            bitm_tag)
+        dim::tag_t const*            bitm_tag,
+        size_t                       image = 0)
     {
         if(!bitm_tag || !bitm_tag->matches("bitm"))
             return std::nullopt;
-        auto key = static_cast<u16>(bitm_tag - map.tags().data());
+        auto key = static_cast<u32>(bitm_tag - map.tags().data()) |
+                   static_cast<u32>(image << 16);
         if(auto it = m_textures.find(key); it != m_textures.end())
             return it->second;
-        auto shared = shared_key(map, pool, *bitm_tag);
+        auto shared = shared_key(map, pool, *bitm_tag, image);
         if(shared)
             if(auto it = m_shared_textures.find(*shared);
                it != m_shared_textures.end())
@@ -2320,7 +3211,7 @@ struct H2MapLoader : compo::SubsystemBase
                 m_textures.emplace(key, it->second.texture);
                 return it->second.texture;
             }
-        auto tex = upload_bitmap(*m_api, map, pool, *bitm_tag);
+        auto tex = upload_bitmap(*m_api, map, pool, *bitm_tag, image);
         if(!tex)
             return std::nullopt;
         Texture out{.texture = *tex, .sampler = (*tex)->sampler()};
@@ -2392,7 +3283,13 @@ struct H2MapLoader : compo::SubsystemBase
     std::vector<Vertex>              m_vertices;
     std::vector<u16>                 m_indices;
     std::unordered_map<u32, i32>     m_material_index; /* shad tag -> slot */
-    std::unordered_map<u16, Texture> m_textures;       /* bitm tag -> gpu */
+    /* (jmad, mode) -> H2Scene::animations slot */
+    std::unordered_map<u64, std::optional<u32>> m_animation_index;
+    std::unordered_map<u32, Texture> m_textures; /* bitm tag | image << 16 -> gpu */
+    std::unordered_map<
+        u16,
+        std::pair<std::shared_ptr<gfx::texture_cube_t>, std::shared_ptr<gfx::sampler_t>>>
+        m_cubes; /* bitm tag -> cube, unusable ones kept empty */
     struct SharedTexture
     {
         Texture texture;
@@ -2403,6 +3300,9 @@ struct H2MapLoader : compo::SubsystemBase
     std::vector<std::unique_ptr<LightmapImage>>        m_lightmaps;
     std::vector<std::vector<LightBucket>>              m_buckets;        /* per BSP */
     std::vector<std::unordered_map<u32, SceneryLight>> m_scenery_lights; /* per BSP */
+    std::vector<LightTriangle>                         m_light_triangles;
+    u32 m_below_lit_objects{0}, m_unlit_objects{0};
+    std::unordered_map<u64, std::vector<u32>>          m_light_grid;
     LightmapAtlas                                      m_lightmap_atlas;
     std::set<std::string>                              m_unknown_passes;
     u32  m_objects_total{0}, m_objects_clustered{0};

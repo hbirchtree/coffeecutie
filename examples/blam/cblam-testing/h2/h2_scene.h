@@ -33,9 +33,11 @@ struct Vertex
     Vecf3 normal;
     Vecf3 lightmap{0.f, 0.f, -1.f}; /*!< Atlas u, v, layer; -1 = none */
     u8    light[4]{0, 0, 0, 0};     /*!< Baked per-vertex light, a = valid */
+    u8    nodes[4]{0, 0, 0, 0};     /*!< Model nodes skinning the vertex */
+    u8    weights[4]{0, 0, 0, 0};   /*!< Their weights; all 0 = unskinned */
 };
 
-static_assert(sizeof(Vertex) == 48);
+static_assert(sizeof(Vertex) == 56);
 
 /* One ltmp geometry bucket decoded: the streams per-vertex lit instances
  * and scenery index into by vertex */
@@ -120,6 +122,9 @@ enum class Variant : u8
     sky,
     sky_mask,
     water,
+    clouds,
+    ocean,
+    plasma,
     count,
 };
 
@@ -133,6 +138,9 @@ inline constexpr std::string_view variant_files[] = {
     "h2_sky",
     "h2_sky_mask",
     "h2_water",
+    "h2_clouds",
+    "h2_ocean",
+    "h2_plasma",
 };
 
 static_assert(
@@ -147,6 +155,9 @@ struct DrawTag
     i32 cluster_section{-1};
     i32 cluster{-1};
     i32 instance{-1};
+    i32  object{-1}; /*!< Into H2Scene::moving_objects: drawn where it is */
+    i32  animated{-1}; /*!< Into H2Scene::animated_objects */
+    bool placed{false}; /*!< A scenario object, not structure */
 };
 
 /* One shad tag: its diffuse map and every draw range using it */
@@ -180,7 +191,39 @@ struct Material
     bool                                   sky{false}; /*!< follows the camera, unlit */
     bool                                   water{false}; /*!< bump in `texture`, drawn last */
     bool                                   additive{false}; /*!< transparent template: glow pass */
+    bool                                   blended{false};  /*!< transparent template: alpha blend */
+    /*! water_static and its edge blend: bump in `texture`, sky in `detail`,
+     * the edge fade in `mask` */
+    bool                                   ocean{false};
+    bool                                   water_fan{false};  /*!< laid out around the camera */
+    /*! plasma_alpha: noise A in `texture`, noise B in `detail`, shape in
+     * `mask`; the pixel constants ramp it from dim to bright */
+    bool                                   plasma{false};
+    /*! Environment reflection: a cube map, tinted from facing to glancing,
+     * each rgb + brightness */
+    std::shared_ptr<gfx::texture_cube_t>   env_texture;
+    std::shared_ptr<gfx::sampler_t>        env_sampler;
+    Vecf4                                  env_facing{0.f};
+    Vecf4                                  env_glancing{0.f};
+    std::array<Vecf3, 2>                   plasma_colors{};
     Vecf2                                  mask_scale{1.f, 1.f};
+};
+
+/* A sky light's lens flare: sprites along the line from the light through
+ * the screen centre */
+struct SkyFlare
+{
+    struct Sprite
+    {
+        Texture image;
+        f32     position{0.f}; /*!< 0 at the light, 0.5 at the screen centre */
+        f32     radius{0.f};   /*!< Fraction of the screen height */
+        Vecf3   color{1.f, 1.f, 1.f};
+    };
+
+    Vecf3               direction{0.f, 0.f, 1.f}; /*!< Towards the light */
+    Vecf3               color{1.f, 1.f, 1.f};     /*!< Its radiosity colour */
+    std::vector<Sprite> sprites;
 };
 
 /* Triangle soup for Bullet; owned by the physics body once adopted */
@@ -283,6 +326,38 @@ struct H2Scene : compo::SubsystemBase
     std::shared_ptr<gfx::compat::texture_2da_t> lightmap_tex;
     std::shared_ptr<gfx::sampler_t>             lightmap_sampler;
     f32                                         sky_scale{1.f};
+    Vecf3                                       sky_clear{0.f, 0.f, 0.f};
+    std::vector<SkyFlare>                       sky_flares;
+    /*! The BSP's water definition: how the sea shades */
+    struct water_t
+    {
+        Vecf3 sun_spot{1.f, 1.f, 1.f};
+        f32   sun_power{0.f};
+        Vecf3 reflection{1.f, 1.f, 1.f};
+        Vecf3 refraction{1.f, 1.f, 1.f};
+        Vecf3 horizon{0.f, 0.f, 0.f};
+    } water;
+    /*! Entities of the objects with physics; their geometry is in object
+     * space and follows the entity's Model */
+    std::vector<u64>                            moving_objects;
+
+    /*! One looping animation as skin matrices (bind pose model space to
+     * animated model space), frame-major */
+    struct animation_t
+    {
+        u32                frames{0};
+        u32                nodes{0};
+        f32                rate{30.f}; /*!< Frames a second */
+        std::vector<Matf4> palette;
+    };
+    /*! A placed object playing its idle loop; geometry in object space */
+    struct animated_t
+    {
+        Matf4 transform{1.f};
+        u32   animation{0};
+    };
+    std::vector<animation_t> animations;
+    std::vector<animated_t>  animated_objects;
 };
 
 /* What the occluder decided for this frame */

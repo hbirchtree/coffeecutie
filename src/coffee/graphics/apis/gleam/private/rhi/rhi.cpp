@@ -274,10 +274,11 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                 default:
                     break;
                 }
-                signed_size.w >>= 1;
-                signed_size.h >>= 1;
+                /* Non-square chains keep going on the longer side */
+                signed_size.w = std::max(signed_size.w >> 1, 1);
+                signed_size.h = std::max(signed_size.h >> 1, 1);
                 if(m_type == type::d3)
-                    signed_size.d >>= 1;
+                    signed_size.d = std::max(signed_size.d >> 1, 1);
             }
 #if GLEAM_MAX_VERSION >= 0x120 || GLEAM_MAX_VERSION_ES >= 0x300
             if(m_features.max_level)
@@ -421,9 +422,9 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                 u32 mipfactor = std::pow<u32>(2, i);
                 create_level(
                     size_3d<u32>{
-                        size.w / mipfactor,
-                        size.h / mipfactor,
-                        size.d / (mipmapped_depth ? mipfactor : 1)}
+                        std::max(size.w / mipfactor, 1u),
+                        std::max(size.h / mipfactor, 1u),
+                        std::max(size.d / (mipmapped_depth ? mipfactor : 1), 1u)}
                         .convert<i32>(),
                     i);
             }

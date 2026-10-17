@@ -65,16 +65,17 @@ template<typename V>
 inline std::optional<u64> shared_key(
     dim::map_container<V> const& map,
     dim::raw_pool const&         pool,
-    dim::tag_t const&            bitm_tag)
+    dim::tag_t const&            bitm_tag,
+    size_t                       image = 0)
 {
     auto const* bitm =
         bitm_tag.template data<dim::bitm::header_t>(map.magic());
     if(!bitm)
         return std::nullopt;
     auto images = bitm->images.data(map.magic());
-    if(images.has_error() || images.value().empty())
+    if(images.has_error() || image >= images.value().size())
         return std::nullopt;
-    dim::bitm::image_t const& img = images.value()[0];
+    dim::bitm::image_t const& img = images.value()[image];
     for(int lod = 0; lod < 3; lod++)
     {
         if(!from_le(img.lod_size[lod]))
@@ -87,23 +88,24 @@ inline std::optional<u64> shared_key(
     return std::nullopt;
 }
 
-/* First image of a bitm tag with its mip chain, from whichever LOD is
+/* One image of a bitm tag with its mip chain, from whichever LOD is
  * present in the files we have */
 template<typename V>
 inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
     gfx::api&                    api,
     dim::map_container<V> const& map,
     dim::raw_pool const&         pool,
-    dim::tag_t const&            bitm_tag)
+    dim::tag_t const&            bitm_tag,
+    size_t                       image = 0)
 {
     auto const* bitm =
         bitm_tag.template data<dim::bitm::header_t>(map.magic());
     if(!bitm)
         return std::nullopt;
     auto images = bitm->images.data(map.magic());
-    if(images.has_error() || images.value().empty())
+    if(images.has_error() || image >= images.value().size())
         return std::nullopt;
-    dim::bitm::image_t const& img = images.value()[0];
+    dim::bitm::image_t const& img = images.value()[image];
     if(from_le(img.type) != blam::bitm::type_t::tex_2d)
         return std::nullopt;
     auto format = from_le(img.format);
@@ -253,5 +255,95 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
     return std::nullopt;
 }
 
+
+/* A cube map. Xbox stores it face by face, each face with its whole mip
+ * chain and padded to 128 bytes; faces go in the order Halo 1's do */
+template<typename V>
+inline std::optional<std::shared_ptr<gfx::texture_cube_t>> upload_cubemap(
+    gfx::api&                    api,
+    dim::map_container<V> const& map,
+    dim::raw_pool const&         pool,
+    dim::tag_t const&            bitm_tag)
+{
+    auto const* bitm =
+        bitm_tag.template data<dim::bitm::header_t>(map.magic());
+    if(!bitm)
+        return std::nullopt;
+    auto images = bitm->images.data(map.magic());
+    if(images.has_error() || images.value().empty())
+        return std::nullopt;
+    dim::bitm::image_t const& img = images.value()[0];
+    if(from_le(img.type) != blam::bitm::type_t::tex_cube)
+        return std::nullopt;
+    auto format = from_le(img.format);
+    auto fmt    = blam::bitm::to_pixdesc(format);
+    u32  width  = static_cast<u32>(from_le(img.width));
+    u32  height = static_cast<u32>(from_le(img.height));
+    u32  base   = level_bytes(format, width, height);
+    if(fmt.pixfmt == typing::pixels::pix_fmt::None || !base)
+        return std::nullopt;
+    bool compressed = is_compressed(format);
+    u32  bpp        = compressed ? 0 : base / (width * height);
+    u32  mip_count  = static_cast<u32>(std::max<i16>(from_le(img.mipmaps), 0)) + 1;
+
+    u32 face_bytes = 0, levels = 0;
+    for(u32 i = 0, lw = width, lh = height; i < mip_count; i++)
+    {
+        face_bytes += level_bytes(format, lw, lh);
+        if(!compressed || (lw >= 4 && lh >= 4))
+            levels = i + 1;
+        lw = std::max(lw / 2, 1u);
+        lh = std::max(lh / 2, 1u);
+    }
+    u32 const stride = (face_bytes + 127u) & ~127u;
+
+    u32 lod_size = from_le(img.lod_size[0]);
+    auto raw = lod_size ? pool.resolve(map.magic(), &img, img.lod_offset[0], lod_size)
+                        : std::nullopt;
+    if(!raw || dim::vista::is_zlib(*raw) || lod_size < stride * 6)
+        return std::nullopt;
+    auto const* src = reinterpret_cast<u8 const*>(raw->data());
+
+    auto tex = api.alloc_texture(gfx::textures::cube, fmt, levels);
+    tex->alloc(size_3d<u32>{width, height, 1});
+    constexpr std::array<u32, 6> face_order{0, 2, 1, 3, 4, 5};
+    u32                          offset = 0;
+    for(u32 level = 0, lw = width, lh = height; level < levels; level++)
+    {
+        u32 const                       bytes = level_bytes(format, lw, lh);
+        std::array<std::vector<u8>, 6>  faces;
+        std::array<Span<const u8>, 6>   spans;
+        for(u32 f = 0; f < 6; f++)
+        {
+            Span<const u8> in(src + face_order[f] * stride + offset, bytes);
+            faces[f].resize(bytes);
+            if(!compressed && img.swizzled())
+            {
+                if(!blam::swizzle::deswizzle_bytes(
+                       in, Span<u8>(faces[f].data(), bytes), lw, lh, bpp))
+                    std::memcpy(faces[f].data(), in.data(), bytes);
+            } else
+                std::memcpy(faces[f].data(), in.data(), bytes);
+            if(format == blam::bitm::format_t::ARGB8 ||
+               format == blam::bitm::format_t::XRGB8)
+                for(u32 i = 0; i + 3 < bytes; i += 4)
+                {
+                    std::swap(faces[f][i], faces[f][i + 2]);
+                    if(format == blam::bitm::format_t::XRGB8)
+                        faces[f][i + 3] = 0xFF;
+                }
+            spans[f] = Span<const u8>(faces[f].data(), bytes);
+        }
+        tex->upload(
+            spans,
+            Veci2{0, 0},
+            Veci2{static_cast<i32>(lw), static_cast<i32>(lh)},
+            static_cast<i32>(level));
+        offset += bytes;
+        lw = std::max(lw / 2, 1u);
+        lh = std::max(lh / 2, 1u);
+    }
+    return tex;
+}
 
 } // namespace h2

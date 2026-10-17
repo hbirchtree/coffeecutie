@@ -1265,6 +1265,7 @@ C_FLAGS(device_lightmap_flags_t, u16);
 struct alignas(4) device_t : object_t
 {
     device_flags_t                   device_flags;
+    /* Times are stored as their reciprocals (1 / seconds) */
     f32                              power_transition_time;
     f32                              power_acceleration_time;
     f32                              position_transition_time;
@@ -2733,20 +2734,113 @@ struct alignas(4) sky_fog_t
 
 static_assert(sizeof(sky_fog_t) == 0x10);
 
+/*! Radiosity a sky light casts: the sun's colour and disc */
+struct alignas(4) sky_radiosity_t
+{
+    u32                flags; /* TODO: flags */
+    Vecf3              color;
+    f32                power;
+    f32                test_distance;
+    std::array<u32, 3> unknown_0;
+    f32                diameter; /*!< Radians */
+};
+
+static_assert(sizeof(sky_radiosity_t) == 0x28);
+
+struct alignas(4) sky_light_t
+{
+    Vecf3                            direction_vector;
+    Vecf2                            direction; /*!< Yaw, pitch in radians */
+    tag_reference<tag_class_t::lens> lens_flare;
+    tag_block<u8>                    fog;          /*!< elem 0x2C */
+    tag_block<u8>                    fog_opposite; /*!< elem 0x2C */
+    tag_block<sky_radiosity_t>       radiosity;
+};
+
+static_assert(sizeof(sky_light_t) == 0x34);
+
 struct alignas(4) sky_t
 {
     tag_reference<tag_class_t::mode> render_model; /*!< mode */
     tag_reference<tag_class_t::jmad> animation_graph;
-    u8                               unknown_0[0x34 - 0x10];
+    u32                              flags; /* TODO: flags */
+    f32                              render_model_scale;
+    f32                              movement_scale;
+    tag_block<u8>                    cube_map; /*!< elem 0xC */
+    Vecf3                            indoor_ambient;
+    u32                              unknown_0;
     Vecf3                            outdoor_ambient;
     u32                              unknown_1;
     f32                              fog_spread_distance;
     tag_block<fog_t>                 atmospheric_fog;
     tag_block<fog_t>                 secondary_fog;
     tag_block<sky_fog_t>             sky_fog;
+    tag_block<u8>                    patchy_fog; /*!< elem 0x50 */
+    std::array<f32, 4>               bloom_override;
+    tag_block<sky_light_t>           lights;
+    f32                              global_rotation;
+    tag_block<u8>                    shader_functions; /*!< elem 0x24 */
+    tag_block<u8>                    animations;       /*!< elem 0x24 */
+    std::array<u32, 3>               unknown_2;
+    /*! Shown where the sky model leaves gaps, below the horizon; only set
+     * where it shows (zanzibar's open sea) */
+    Vecf3                            clear_color;
 };
 
 static_assert(offsetof(sky_t, outdoor_ambient) == 0x34);
 static_assert(offsetof(sky_t, sky_fog) == 0x58);
+static_assert(offsetof(sky_t, lights) == 0x78);
+static_assert(offsetof(sky_t, clear_color) == 0xA0);
+static_assert(sizeof(sky_t) == 0xAC);
+
+/*! One sprite of a lens flare, placed along the line from the light
+ * through the screen centre */
+struct alignas(4) lens_reflection_t
+{
+    u16   flags; /* TODO: flags */
+    i16   unknown_0;
+    i16   image; /*!< Into the flare bitmap */
+    i16   unknown_1;
+    f32   position; /*!< 0 at the light, 0.5 at the screen centre */
+    f32   rotation_offset;
+    Vecf2 radius;     /*!< Fraction of the screen height */
+    Vecf2 brightness;
+    f32   modulation;
+    Vecf3 color;
+};
+
+static_assert(sizeof(lens_reflection_t) == 0x30);
+
+/*! lens: lens flare */
+struct alignas(4) lens_t
+{
+    f32                                falloff_angle;
+    f32                                cutoff_angle;
+    f32                                cos_falloff_angle;
+    f32                                cos_cutoff_angle;
+    f32                                occlusion_radius;
+    u16                                occlusion_offset;
+    u16                                occlusion_inner_scale;
+    f32                                near_fade_distance;
+    f32                                far_fade_distance;
+    tag_reference<tag_class_t::bitm>   bitmap;
+    u16                                flags; /* TODO: flags */
+    i16                                unknown_0;
+    u16                                rotation_function;
+    i16                                unknown_1;
+    f32                                rotation_scale;
+    Vecf2                              corona_scale;
+    u16                                falloff_function;
+    i16                                unknown_2;
+    tag_block<lens_reflection_t>       reflections;
+    u16                                flags_2; /* TODO: flags */
+    i16                                unknown_3;
+    tag_block<u8>                      brightness; /*!< elem 8 */
+    tag_block<u8>                      color;      /*!< elem 8 */
+    tag_block<u8>                      rotation;   /*!< elem 8 */
+};
+
+static_assert(offsetof(lens_t, reflections) == 0x40);
+static_assert(sizeof(lens_t) == 0x64);
 
 } // namespace blam::dimeter::obj

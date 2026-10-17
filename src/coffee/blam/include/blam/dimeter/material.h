@@ -30,6 +30,7 @@ struct resolved_t
     /*! Template under shader_templates\transparent: never opaque, even
      * when its passes are unknown */
     bool             transparent{false};
+    std::string_view template_name; /*!< Leaf of the stem tag's name */
     std::string_view blend_mode;
 
     std::vector<std::string_view>   usages;
@@ -132,6 +133,13 @@ inline resolved_t resolve(
     if(stem_tag &&
        map.name_of(*stem_tag).find("\\transparent\\") != std::string_view::npos)
         out.transparent = true;
+    if(stem_tag)
+    {
+        out.template_name = map.name_of(*stem_tag);
+        if(auto slash = out.template_name.find_last_of('\\');
+           slash != std::string_view::npos)
+            out.template_name = out.template_name.substr(slash + 1);
+    }
     auto stem_props = stem ? stem->properties.data(map.magic())
                            : result<Span<stem::properties_t const>, error_msg>(
                                  stl_types::failure("no template"sv));

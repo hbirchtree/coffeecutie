@@ -31,7 +31,7 @@ using blam::from_le;
 
 using H2ShellManifest = compo::SubsystemManifest<
     compo::type_list_t<PlayerCamera, PlayerInput, const PlayerInfo>,
-    compo::type_list_t<const H2ShellData, gfx::system, UIEventBus>,
+    compo::type_list_t<const H2ShellData, gfx::system, UIEventBus, RenderingParameters>,
     compo::type_list_t<comp_app::GraphicsFramebuffer>>;
 
 /* The main menu: a stack of screens over the scripted camera flythrough,
@@ -91,7 +91,10 @@ struct H2Shell : compo::RestrictedSubsystem<H2Shell, H2ShellManifest>
             m_stack.clear();
             m_opened = m_time;
             if(data.loaded)
+            {
                 open(data, data.screen(ui::screen_id_t::press_start_intro));
+                p.template subsystem<RenderingParameters>().render_ui = true;
+            }
         }
         if(!data.loaded || m_stack.empty())
             return;
@@ -116,7 +119,9 @@ struct H2Shell : compo::RestrictedSubsystem<H2Shell, H2ShellManifest>
     void end_restricted(Proxy& p, time_point const&)
     {
         auto const& data = p.template subsystem<H2ShellData>();
-        if(!data.loaded || m_stack.empty() || !m_api)
+        /* Hidden, the camera still flies */
+        if(!data.loaded || m_stack.empty() || !m_api ||
+           !p.template subsystem<RenderingParameters>().render_ui)
             return;
         auto* fb = p.template service<comp_app::GraphicsFramebuffer>();
         if(!fb)

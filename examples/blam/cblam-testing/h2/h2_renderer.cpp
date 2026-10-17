@@ -1,6 +1,7 @@
 #include "h2_scene.h"
 
 #include "data.h"
+#include "render/cascaded_shadows.h"
 #include "resource_creation.h"
 
 #include <coffee/components/proxy.h>
@@ -13,16 +14,19 @@
 #include <coffee/graphics/apis/gleam/rhi_vertex.h>
 
 #include <array>
+#include <chrono>
+#include <cmath>
 #include <limits>
 
 namespace h2 {
 
 using H2RendererManifest = compo::SubsystemManifest<
-    compo::type_list_t<const PlayerCamera, const PlayerInfo>,
+    compo::type_list_t<const PlayerCamera, const PlayerInfo, const Model>,
     compo::type_list_t<
         const H2Scene,
         const H2Visibility,
         const BlamResources,
+        const RenderingParameters,
         gfx::system>,
     compo::empty_list_t>;
 
@@ -44,10 +48,13 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         return true;
     }
 
-    void start_restricted(Proxy& p, time_point const&)
+    void start_restricted(Proxy& p, time_point const& now)
     {
+        f32 const seconds = std::fmod(
+            std::chrono::duration<f32>(now.time_since_epoch()).count(), 3600.f);
         auto const& scene = p.template subsystem<H2Scene>();
         auto const& vis   = p.template subsystem<H2Visibility>();
+        auto const& debug = p.template subsystem<RenderingParameters>();
         if(!scene.loaded)
             return;
         ensure_gpu();
@@ -71,26 +78,66 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             return;
 
         auto& resources = p.template subsystem<BlamResources>();
+        ensure_depth_sampler(resources);
+        Matf4 const inverse_camera = glm::inverse(camera->matrix);
+        Vecf2 const viewport{resources.offscreen_size};
+        /* The water fan goes around the camera at sea level: the section's
+         * planar fog plane when it lies flat, lifted a little so sand at the
+         * waterline sinks under it and fades in */
+        Vecf2 const water_eye{camera->camera.position};
+        f32 const   sea_level = vis.planar_fog.plane.z > .9f && vis.planar_fog.plane.w > -1e8f
+                                    ? vis.planar_fog.plane.w / vis.planar_fog.plane.z + .05f
+                                    : 0.f;
+        Vecf3 const sun_direction =
+            scene.sky_flares.empty() ? Vecf3{0.f, 0.f, 1.f} : scene.sky_flares[0].direction;
+        Vecf3 const sun_color =
+            scene.sky_flares.empty() ? Vecf3{0.f} : scene.sky_flares[0].color;
+        Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
+        draw_shadows(p, scene, *camera, sun_direction, debug.render_scenery);
+        auto const& csm          = m_shadows.sampling;
+        i32 const   render_flags = debug.render_flags();
+        /* Below the horizon, where the sky model ends */
+        resources.offscreen->clear(
+            Vecf4(debug.debug_clear ? debug.clear_color : scene.sky_clear, 1.f));
         size_t draws_total = 0, draws_visible = 0;
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
-        for(int pass = 0; pass < 3; pass++)
+        for(int pass = 0; pass < 4; pass++)
+        {
+            if(pass == 1 && debug.render_fog)
+                draw_background_fog(vis, camera->camera.position, inverse_camera, resources);
             for(auto const& [mi, mat] : stl_types::enumerate(scene.materials))
             {
-                int const mat_pass = mat.sky ? 0 : (mat.water || mat.additive) ? 2 : 1;
+                /* Sky, opaque, the sea, then everything blended over it */
+                int const mat_pass = mat.sky     ? 0
+                                     : mat.ocean ? 2
+                                     : (mat.water || mat.additive || mat.blended) ? 3
+                                                                                  : 1;
                 /* Glass, decals: nothing sensible to draw them with yet */
                 if(mat_pass != pass || mat.section_draws.empty() ||
                    !mat.texture)
                     continue;
                 auto& draws = m_draws[mi];
                 draws.clear();
+                m_moving.clear();
+                m_animated.clear();
                 for(auto const& d : mat.section_draws)
-                    if(vis.draw_visible(d.tag, scene.sections))
+                    if(!vis.draw_visible(d.tag, scene.sections) ||
+                       (d.tag.placed && !debug.render_scenery))
+                        continue;
+                    else if(d.tag.object >= 0)
+                        m_moving.push_back(d);
+                    else if(d.tag.animated >= 0)
+                        m_animated.push_back(d);
+                    else
                         draws.push_back(d.cmd);
                 draws_total += mat.section_draws.size();
-                draws_visible += draws.size();
-                if(draws.empty())
+                draws_visible += draws.size() + m_moving.size() + m_animated.size();
+                if(draws.empty() && m_moving.empty() && m_animated.empty())
                     continue;
+                Matf4 model_matrix{1.f};
+                i32   skinned = 0;
+                Vecf2 const water_fan{mat.water_fan ? 1.f : 0.f, sea_level};
                 Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
                 Vecf3 const& eye = camera->camera.position;
                 f32   scale  = mat.sky ? scene.sky_scale : 1.f;
@@ -99,6 +146,16 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Matf4 const>{
                         {"camera"},
                         semantic::SpanOne<const Matf4>(camera->matrix)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"model"}, semantic::SpanOne<const Matf4>(model_matrix)},
+                    gfx::uniform_pair<const i32>{
+                        {"skinned"}, semantic::SpanOne<const i32>(skinned)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"bones"}, semantic::Span<const Matf4>(m_bones)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"water_fan"}, semantic::SpanOne<const Vecf2>(water_fan)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"water_eye"}, semantic::SpanOne<const Vecf2>(water_eye)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"uv_scale"},
                         semantic::SpanOne<const Vecf2>(mat.uv_scale)},
@@ -132,6 +189,30 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const i32>(alpha_test)},
                     gfx::uniform_pair<const i32>{
                         {"bumped"}, semantic::SpanOne<const i32>(bumped)},
+                    gfx::uniform_pair<const i32>{
+                        {"render_flags"}, semantic::SpanOne<const i32>(render_flags)},
+                    gfx::uniform_pair<const f32>{
+                        {"time"}, semantic::SpanOne<const f32>(seconds)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"plasma_colors"},
+                        semantic::Span<const Vecf3>(mat.plasma_colors)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"env_facing"},
+                        semantic::SpanOne<const Vecf4>(mat.env_facing)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"env_glancing"},
+                        semantic::SpanOne<const Vecf4>(mat.env_glancing)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"inverse_camera"},
+                        semantic::SpanOne<const Matf4>(inverse_camera)},
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"viewport_size"}, semantic::SpanOne<const Vecf2>(viewport)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"sun_direction"}, semantic::SpanOne<const Vecf3>(sun_direction)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"sun_color"}, semantic::SpanOne<const Vecf3>(sun_color)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"sun_spot"}, semantic::SpanOne<const Vecf4>(sun_spot)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"illum_color"},
                         semantic::SpanOne<const Vecf3>(mat.illum_color)},
@@ -149,7 +230,13 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Vecf4>(vis.planar_fog.color)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"planar_fog_opaque"},
-                        semantic::SpanOne<const Vecf2>(vis.planar_fog.opaque)});
+                        semantic::SpanOne<const Vecf2>(vis.planar_fog.opaque)},
+                    gfx::uniform_pair<Matf4 const>{
+                        {"csm_matrices"}, semantic::Span<const Matf4>(csm.matrices)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"csm_texel"}, semantic::SpanOne<const Vecf4>(csm.texel)},
+                    gfx::uniform_pair<Vecf4 const>{
+                        {"csm_params"}, semantic::SpanOne<const Vecf4>(csm.params)});
                 auto lm_sampler = scene.lightmap_sampler
                                       ? scene.lightmap_sampler
                                       : m_no_lightmaps_sampler;
@@ -189,35 +276,78 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         typing::graphics::ShaderStage::Fragment,
                         {"bump", 6},
                         mat.bump.sampler ? mat.bump.sampler : m_white_sampler,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"env", 7},
+                        mat.env_sampler ? mat.env_sampler : m_black_cube_sampler,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"scene_depth", 8},
+                        m_depth_sampler,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"csm_atlas", 9},
+                        m_shadows.sampler(),
                     });
-                auto res = m_api->submit(
+                auto submit = [&](std::vector<gfx::draw_command::data_t> const& data) {
+                    auto res = m_api->submit(
+                        {
+                            .program = m_programs[static_cast<size_t>(mat.variant)],
+                            .vertices      = m_vao,
+                            .render_target = resources.offscreen,
+                            .call          = {.indexed = true, .instanced = true},
+                            .data          = data,
+                        },
+                        vert_u,
+                        frag_u,
+                        samplers,
+                        gfx::view_state{
+                            .view = typing::vector_types::Veci4{
+                                0,
+                                0,
+                                resources.offscreen_size.x,
+                                resources.offscreen_size.y},
+                            .depth = gfx::depth_state{.reversed = true},
+                        },
+                        gfx::depth_extended_state{
+                            .depth_write = !mat.sky && !mat.water && !mat.additive &&
+                                           !mat.blended},
+                        gfx::blend_state{.additive = mat.additive});
+                    if(res.has_value() && !m_draw_error_logged)
                     {
-                        .program       = m_programs[static_cast<size_t>(mat.variant)],
-                        .vertices      = m_vao,
-                        .render_target = resources.offscreen,
-                        .call          = {.indexed = true, .instanced = true},
-                        .data          = draws,
-                    },
-                    vert_u,
-                    frag_u,
-                    samplers,
-                    gfx::view_state{
-                        .view = typing::vector_types::Veci4{
-                            0,
-                            0,
-                            resources.offscreen_size.x,
-                            resources.offscreen_size.y},
-                        .depth = gfx::depth_state{.reversed = true},
-                    },
-                    gfx::depth_extended_state{
-                        .depth_write = !mat.sky && !mat.water && !mat.additive},
-                    gfx::blend_state{.additive = mat.additive});
-                if(res.has_value() && !m_draw_error_logged)
+                        cWarning("H2: failed to draw: {}", std::get<1>(*res));
+                        m_draw_error_logged = true;
+                    }
+                };
+                if(!draws.empty())
+                    submit(draws);
+                for(auto const& d : m_moving)
                 {
-                    cWarning("H2: failed to draw: {}", std::get<1>(*res));
-                    m_draw_error_logged = true;
+                    auto idx = static_cast<size_t>(d.tag.object);
+                    if(idx >= scene.moving_objects.size())
+                        continue;
+                    auto const* model = p.template get<Model>(scene.moving_objects[idx]);
+                    if(!model)
+                        continue;
+                    model_matrix = model->transform;
+                    m_single.assign(1, d.cmd);
+                    submit(m_single);
+                }
+                skinned = 1;
+                for(auto const& d : m_animated)
+                {
+                    auto const& object = scene.animated_objects[static_cast<size_t>(d.tag.animated)];
+                    pose(scene.animations[object.animation], seconds);
+                    model_matrix = object.transform;
+                    m_single.assign(1, d.cmd);
+                    submit(m_single);
                 }
             }
+        }
+        draw_flares(scene, *camera, resources);
         if(vis.camera_cluster != m_logged_cluster)
         {
             cDebug("H2: drew {} of {} ranges", draws_visible, draws_total);
@@ -226,6 +356,215 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     }
 
   private:
+    /* An animation's skin matrices at `seconds`, looping, between frames
+     * blended */
+    void pose(H2Scene::animation_t const& animation, f32 seconds)
+    {
+        if(animation.frames == 0)
+            return;
+        f32 const at   = std::fmod(seconds * animation.rate, static_cast<f32>(animation.frames));
+        u32 const f0   = static_cast<u32>(at) % animation.frames;
+        u32 const f1   = (f0 + 1) % animation.frames;
+        f32 const t    = at - std::floor(at);
+        u32 const n    = std::min<u32>(animation.nodes, m_bones.size());
+        for(u32 i = 0; i < n; i++)
+            m_bones[i] = animation.palette[f0 * animation.nodes + i] * (1.f - t) +
+                         animation.palette[f1 * animation.nodes + i] * t;
+    }
+
+    /* Moving objects cast into each cascade; the BSP and static scenery
+     * have theirs baked into the lightmaps */
+    void draw_shadows(
+        Proxy&              p,
+        H2Scene const&      scene,
+        PlayerCamera const& camera,
+        Vecf3 const&        to_light,
+        bool                casters)
+    {
+        m_shadows.update(
+            blam_render::CascadedShadowMap::frustum_from(
+                glm::inverse(camera.matrix), camera.camera.position),
+            to_light);
+        m_shadows.clear();
+        m_casters.clear();
+        for(auto const& mat : scene.materials)
+        {
+            if(!casters || mat.sky || mat.water || mat.ocean || mat.additive ||
+               mat.blended)
+                continue;
+            for(auto const& d : mat.section_draws)
+            {
+                auto idx = static_cast<size_t>(d.tag.object);
+                if(d.tag.object < 0 || idx >= scene.moving_objects.size())
+                    continue;
+                if(auto const* model = p.template get<Model>(scene.moving_objects[idx]))
+                    m_casters.push_back({d.cmd, model->transform});
+            }
+        }
+        for(u32 i = 0; i < m_shadows.cascades(); i++)
+            for(auto const& [cmd, model] : m_casters)
+            {
+                m_single.assign(1, cmd);
+                m_api->submit(
+                    {
+                        .program       = m_shadow_program,
+                        .vertices      = m_vao,
+                        .render_target = m_shadows.target(),
+                        .call          = {.indexed = true, .instanced = true},
+                        .data          = m_single,
+                    },
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Vertex,
+                        gfx::uniform_pair<Matf4 const>{
+                            {"light"},
+                            semantic::SpanOne<const Matf4>(m_shadows.light_matrix(i))},
+                        gfx::uniform_pair<Matf4 const>{
+                            {"model"}, semantic::SpanOne<const Matf4>(model)}),
+                    gfx::view_state{
+                        .view  = m_shadows.viewport(i),
+                        .depth = gfx::depth_state{},
+                    });
+            }
+    }
+
+    /* Background seen through the planar fog volume: nothing drawn there
+     * fogs itself */
+    void draw_background_fog(
+        H2Visibility const&  vis,
+        Vecf3 const&         eye,
+        Matf4 const&         inverse_camera,
+        BlamResources const& resources)
+    {
+        auto const& fog = vis.planar_fog;
+        if(fog.plane.w < -1e8f || fog.color.a <= 0.f)
+            return;
+        m_api->submit(
+            gfx::draw_command{
+                .program       = m_fog_program,
+                .vertices      = m_fog_vao,
+                .render_target = resources.offscreen,
+                .call =
+                    {
+                        .instanced = false,
+                        .mode      = gfx::drawing::primitive::triangle,
+                    },
+                .data = {{.arrays = {.count = 3}}},
+            },
+            gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Fragment,
+                gfx::uniform_pair<Matf4 const>{
+                    {"inverse_camera"}, semantic::SpanOne<const Matf4>(inverse_camera)},
+                gfx::uniform_pair<Vecf3 const>{
+                    {"fog_eye"}, semantic::SpanOne<const Vecf3>(eye)},
+                gfx::uniform_pair<Vecf4 const>{
+                    {"planar_fog_plane"}, semantic::SpanOne<const Vecf4>(fog.plane)},
+                gfx::uniform_pair<Vecf4 const>{
+                    {"planar_fog_color"}, semantic::SpanOne<const Vecf4>(fog.color)},
+                gfx::uniform_pair<Vecf2 const>{
+                    {"planar_fog_opaque"}, semantic::SpanOne<const Vecf2>(fog.opaque)}),
+            gfx::view_state{
+                .view = typing::vector_types::Veci4{
+                    0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
+            },
+            gfx::blend_state{});
+    }
+
+    struct FlareVertex
+    {
+        Vecf2 position;
+        Vecf2 texcoord;
+        Vecf4 color;
+    };
+
+    /* Sky lights' lens flares; the vertex shader dims them by how much of
+     * the light the depth buffer shows covered */
+    void draw_flares(
+        H2Scene const&      scene,
+        PlayerCamera const& camera,
+        BlamResources const& resources)
+    {
+        f32 const aspect = static_cast<f32>(resources.offscreen_size.x) /
+                           static_cast<f32>(std::max(1, resources.offscreen_size.y));
+        for(auto const& flare : scene.sky_flares)
+        {
+            Vecf4 const clip = camera.matrix *
+                               Vecf4(camera.camera.position + flare.direction * 50.f, 1.f);
+            if(clip.w <= 0.f)
+                continue;
+            Vecf2 const ndc = Vecf2(clip) / clip.w;
+            if(std::abs(ndc.x) > 1.f || std::abs(ndc.y) > 1.f)
+                continue;
+            for(auto const& s : flare.sprites)
+            {
+                Vecf2 const at   = ndc * (1.f - 2.f * s.position);
+                Vecf2 const half = Vecf2{s.radius / aspect, s.radius};
+                Vecf4 const tint{s.color, 1.f};
+                FlareVertex tl{at + Vecf2{-half.x, half.y}, {0.f, 0.f}, tint};
+                FlareVertex tr{at + half, {1.f, 0.f}, tint};
+                FlareVertex bl{at - half, {0.f, 1.f}, tint};
+                FlareVertex br{at + Vecf2{half.x, -half.y}, {1.f, 1.f}, tint};
+                m_flare_vertices.insert(m_flare_vertices.end(), {tl, bl, br, tl, br, tr});
+                m_flare_samplers.push_back(s.image.sampler);
+                m_flare_light.push_back(ndc * 0.5f + 0.5f);
+            }
+        }
+        if(m_flare_vertices.empty())
+            return;
+        m_flare_buf->commit(
+            Span<const FlareVertex>(m_flare_vertices.data(), m_flare_vertices.size()));
+        for(size_t i = 0; i < m_flare_samplers.size(); i++)
+            m_api->submit(
+                gfx::draw_command{
+                    .program       = m_flare_program,
+                    .vertices      = m_flare_vao,
+                    .render_target = resources.offscreen,
+                    .call =
+                        {
+                            .instanced = false,
+                            .mode      = gfx::drawing::primitive::triangle,
+                        },
+                    .data = {{.arrays = {
+                                  .count  = 6,
+                                  .offset = static_cast<u32>(i * 6)}}},
+                },
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair<Vecf2 const>{
+                        {"light_uv"},
+                        semantic::SpanOne<const Vecf2>(m_flare_light[i])}),
+                gfx::make_sampler_list(
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"image", 0},
+                        m_flare_samplers[i],
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Vertex,
+                        {"scene_depth", 1},
+                        m_depth_sampler,
+                    }),
+                gfx::view_state{
+                    .view = typing::vector_types::Veci4{
+                        0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
+                },
+                gfx::blend_state{.additive = true});
+        m_flare_vertices.clear();
+        m_flare_samplers.clear();
+        m_flare_light.clear();
+    }
+
+    /* The offscreen depth, read by the flares and the water */
+    void ensure_depth_sampler(BlamResources const& resources)
+    {
+        if(m_depth_source == resources.depth)
+            return;
+        m_depth_source  = resources.depth;
+        m_depth_sampler = resources.depth->sampler();
+        m_depth_sampler->alloc();
+        m_depth_sampler->set_filtering(
+            typing::Filtering::Nearest, typing::Filtering::Nearest);
+    }
+
     void ensure_gpu()
     {
         if(m_api)
@@ -276,12 +615,35 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                      .flags  = gfx::vertex_attribute::attribute_flags::packed |
                               gfx::vertex_attribute::attribute_flags::normalized},
             });
+        m_vao->add(
+            gfx::vertex_attribute{
+                .index = 5,
+                .value =
+                    {.offset = offsetof(Vertex, nodes),
+                     .stride = sizeof(Vertex),
+                     .count  = 4,
+                     .type   = semantic::type_t::u8,
+                     .flags  = gfx::vertex_attribute::attribute_flags::packed},
+            });
+        m_vao->add(
+            gfx::vertex_attribute{
+                .index = 6,
+                .value =
+                    {.offset = offsetof(Vertex, weights),
+                     .stride = sizeof(Vertex),
+                     .count  = 4,
+                     .type   = semantic::type_t::u8,
+                     .flags  = gfx::vertex_attribute::attribute_flags::packed |
+                              gfx::vertex_attribute::attribute_flags::normalized},
+            });
         m_vao->set_attribute_names({
             {"position", 0},
             {"texcoord", 1},
             {"normal", 2},
             {"lightmap", 3},
             {"vertex_light", 4},
+            {"bone_nodes", 5},
+            {"bone_weights", 6},
         });
 
 
@@ -295,6 +657,20 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_white_sampler = m_white->sampler();
         m_white_sampler->alloc();
 
+        m_black_cube = api.alloc_texture(
+            gfx::textures::cube,
+            typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8),
+            1);
+        m_black_cube->alloc(size_3d<u32>{1, 1, 1});
+        {
+            std::array<u8, 4>             black{0, 0, 0, 255};
+            std::array<Span<const u8>, 6> faces;
+            faces.fill(Span<const u8>(black.data(), black.size()));
+            m_black_cube->upload(faces, Veci2{0, 0}, Veci2{1, 1}, 0);
+        }
+        m_black_cube_sampler = m_black_cube->sampler();
+        m_black_cube_sampler->alloc();
+
         m_no_lightmaps = std::make_shared<gfx::compat::texture_2da_t>(
             &api, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
         m_no_lightmaps->alloc(size_3d<u32>{2, 2, 1});
@@ -302,6 +678,64 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             std::vector<u8>(16, 0xFF), Veci3{0, 0, 0}, size_3d<i32>{2, 2, 1});
         m_no_lightmaps_sampler = m_no_lightmaps->sampler();
         m_no_lightmaps_sampler->alloc();
+
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "h2_flare",
+                .fragment_file = "h2_ui",
+                .shader        = m_flare_program,
+            });
+        m_flare_vao = api.alloc_vertex_array();
+        m_flare_vao->alloc();
+        m_flare_vao->add(gfx::vertex_attribute{
+            .index = 0,
+            .value = {.offset = 0, .stride = sizeof(FlareVertex), .count = 2},
+        });
+        m_flare_vao->add(gfx::vertex_attribute{
+            .index = 1,
+            .value = {.offset = offsetof(FlareVertex, texcoord), .stride = sizeof(FlareVertex), .count = 2},
+        });
+        m_flare_vao->add(gfx::vertex_attribute{
+            .index = 2,
+            .value = {.offset = offsetof(FlareVertex, color), .stride = sizeof(FlareVertex), .count = 4},
+        });
+        m_flare_vao->set_attribute_names({{"position", 0}, {"texcoord", 1}, {"color", 2}});
+        m_flare_buf = api.alloc_buffer(
+            gfx::buffers::vertex, semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);
+        m_flare_buf->alloc();
+        m_flare_vao->set_buffer(gfx::buffers::vertex, m_flare_buf, 0);
+
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "shadow_depth",
+                .fragment_file = "shadow_depth",
+                .shader        = m_shadow_program,
+            });
+        m_shadows.alloc(api, {});
+
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "h2_fog",
+                .fragment_file = "h2_fog",
+                .shader        = m_fog_program,
+            });
+        m_fog_vao = api.alloc_vertex_array();
+        m_fog_vao->alloc();
+        m_fog_vao->add(gfx::vertex_attribute{
+            .index = 0,
+            .value = {.offset = 0, .stride = sizeof(Vecf2), .count = 2},
+        });
+        m_fog_vao->set_attribute_names({{"position", 0}});
+        m_fog_buf = api.alloc_buffer(gfx::buffers::vertex, semantic::RSCA::ReadOnly);
+        m_fog_buf->alloc();
+        {
+            std::array<Vecf2, 3> const screen{{{-1.f, -1.f}, {3.f, -1.f}, {-1.f, 3.f}}};
+            m_fog_buf->commit(Span<const Vecf2>(screen.data(), screen.size()));
+        }
+        m_fog_vao->set_buffer(gfx::buffers::vertex, m_fog_buf, 0);
 
         for(size_t i = 0; i < m_programs.size(); i++)
             create_program(
@@ -323,11 +757,34 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_programs;
     std::shared_ptr<gfx::texture_2d_t>          m_white;
     std::shared_ptr<gfx::sampler_t>             m_white_sampler;
+    std::shared_ptr<gfx::texture_cube_t>        m_black_cube;
+    std::shared_ptr<gfx::sampler_t>             m_black_cube_sampler;
     std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightmaps;
     std::shared_ptr<gfx::sampler_t>             m_no_lightmaps_sampler;
     /* Per material: this frame's visible ranges */
     std::vector<std::vector<gfx::draw_command::data_t>> m_draws;
+    std::vector<Material::draw_t>                       m_moving;
+    std::vector<Material::draw_t>                       m_animated;
+    std::array<Matf4, 64>                               m_bones{};
+    std::vector<gfx::draw_command::data_t>              m_single;
     bool m_draw_error_logged{false};
+
+    std::shared_ptr<gfx::program_t>              m_flare_program;
+    std::shared_ptr<gfx::vertex_array_t>         m_flare_vao;
+    std::shared_ptr<gfx::buffer_t>               m_flare_buf;
+    std::vector<FlareVertex>                     m_flare_vertices;
+    std::vector<std::shared_ptr<gfx::sampler_t>> m_flare_samplers;
+    std::vector<Vecf2>                           m_flare_light;
+    std::shared_ptr<gfx::texture_2d_t>           m_depth_source;
+    std::shared_ptr<gfx::sampler_t>              m_depth_sampler;
+
+    std::shared_ptr<gfx::program_t>      m_fog_program;
+    std::shared_ptr<gfx::vertex_array_t> m_fog_vao;
+    std::shared_ptr<gfx::buffer_t>       m_fog_buf;
+
+    blam_render::CascadedShadowMap  m_shadows;
+    std::shared_ptr<gfx::program_t> m_shadow_program;
+    std::vector<std::pair<gfx::draw_command::data_t, Matf4>> m_casters;
 };
 
 void alloc_h2_renderer(compo::EntityContainer& e)

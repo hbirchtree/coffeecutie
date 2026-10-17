@@ -767,12 +767,38 @@ struct alignas(4) transparent_plane_t
 
 static_assert(sizeof(transparent_plane_t) == 0x14);
 
+/*! A body of water: its own geometry (same raw layout as a cluster's, no
+ * counts) and how it shades */
 struct alignas(4) water_definition_t
 {
     tag_reference<tag_class_t::shad> shader;
-    bsp_block<u8> section; /*!< elem 0x44, same shape as a cluster's */
-    u8            unknown_0[0xAC - 0x10];
+    bsp_block<u8>                    section; /*!< elem 0x44, authoring only */
+    raw_ref                          data;
+    i32                              data_size_raw;
+    i32                              header_size_raw;
+    i32                              unknown_0;
+    bsp_block<resource_t>            resources;
+    u8                               unknown_1[0x34 - 0x28];
+    Vecf3                            sun_spot_color;
+    Vecf3                            reflection_tint;
+    Vecf3                            refraction_tint;
+    Vecf3                            horizon_color;
+    f32                              sun_specular_power;
+    u8                               unknown_2[0xAC - 0x68];
+
+    inline i32 data_size() const
+    {
+        return from_le(data_size_raw);
+    }
+
+    inline i32 base_address() const
+    {
+        return from_le(header_size_raw) + 8;
+    }
 };
+
+static_assert(offsetof(water_definition_t, resources) == 0x20);
+static_assert(offsetof(water_definition_t, sun_spot_color) == 0x34);
 
 static_assert(sizeof(water_definition_t) == 0xAC);
 
