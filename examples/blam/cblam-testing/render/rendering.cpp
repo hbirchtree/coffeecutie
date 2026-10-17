@@ -36,6 +36,9 @@
 #include <peripherals/stl/tuple_hash.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
 
+#include <bit>
+#include <unordered_set>
+
 using namespace libc_types::size_literals;
 using namespace std::string_view_literals;
 using namespace Coffee::resource_literals;
@@ -317,7 +320,12 @@ struct Pass
     {
         matrix_staging.assign(matrix_size / sizeof(PerInstanceData), {});
         matrix_mapping = Span<PerInstanceData>(matrix_staging);
+        caster_bounds.assign(matrix_staging.size(), Vecf4(0.f, 0.f, 0.f, -1.f));
     }
+
+    /*! Per instance, the shadow caster's bounding sphere; radius < 0 = no
+     * caster, 0 = size unknown */
+    std::vector<Vecf4> caster_bounds;
 
     std::string name;
 
@@ -1157,6 +1165,15 @@ struct DrawListBuilder
              * that never animates keeps this and skips skinning. */
             auto& pid     = pass.matrix_mapping[instance_id];
             pid.transform = model.transform;
+            /* Scenery's shadows are baked into the lightmaps */
+            bool const scenery = model.origin_object &&
+                                 model.origin_object->matches(blam::tag_class_t::scen);
+            f32 const scale = std::max(
+                {glm::length(Vecf3(model.transform[0])),
+                 glm::length(Vecf3(model.transform[1])),
+                 glm::length(Vecf3(model.transform[2]))});
+            pass.caster_bounds[instance_id] = Vecf4(
+                Vecf3(model.transform[3]), scenery ? -1.f : model.render_radius * scale);
             pid.bone_base = kBoneUnposed;
             auto const& light = object_light(p, smodel.parent, model);
             pid.light_layer   = light.layer;
@@ -1652,6 +1669,8 @@ struct MeshRenderer
     std::vector<cached_player_t> m_players;
 
     blam_render::CascadedShadowMap m_shadows;
+    std::vector<draw_data_t>        m_shadow_draws;
+    std::unordered_set<u64>         m_shadow_seen;
 
     EffectDrawer<Version> m_effects;
 
@@ -1769,19 +1788,46 @@ struct MeshRenderer
         return Vecf3{0.f, 0.f, 1.f};
     }
 
-    /* Objects cast into each cascade; the BSP's own shadows are baked into
-     * its lightmaps. Casters are the seat's visible objects. */
-    void render_shadows(DrawListBuilder<Version> const& builder, u32 idx)
+    /* The world's bounding sphere, from the BSP chunks */
+    std::pair<Vecf3, f32> world_sphere(Proxy& p) const
     {
-        if(!m_resources.shadow_pipeline || idx >= m_players.size())
+        Vecf3  lo(std::numeric_limits<f32>::max()), hi(std::numeric_limits<f32>::lowest());
+        size_t chunks = 0;
+        for(auto e : p.template select<BspReference>())
+        {
+            auto const& ref = e.template get<BspReference>();
+            if(!ref.has_bounds)
+                continue;
+            lo = glm::min(lo, ref.bmin);
+            hi = glm::max(hi, ref.bmax);
+            chunks++;
+        }
+        if(!chunks)
+            return {m_players[0].position, m_shadows.config().max_distance * 2.f};
+        return {(lo + hi) * .5f, glm::length(hi - lo) * .5f};
+    }
+
+    /* Each seat's near cascades and the shared far one. Casters are what
+     * some seat sees, culled to each tile; scenery's shadows are baked into
+     * the lightmaps, and so are the BSP's. */
+    void render_shadows(Proxy& p, DrawListBuilder<Version> const& builder)
+    {
+        using Shadows = blam_render::CascadedShadowMap;
+        if(!m_resources.shadow_pipeline || m_players.empty())
             return;
-        if(!m_shadows.valid())
-            m_shadows.alloc(*m_api, {});
-        auto const& player = m_players[idx];
-        m_shadows.update(
-            blam_render::CascadedShadowMap::frustum_from(
-                glm::inverse(player.matrix), player.position),
-            sun_direction());
+        u32 const views = std::min<u32>(m_players.size(), Shadows::max_views);
+        if(!m_shadows.valid() || m_shadows.config().views != views)
+            m_shadows.alloc(
+                *m_api, {.views = views, .resolution = views > 1 ? 1024u : 1536u});
+        Vecf3 const to_light = sun_direction();
+        for(u32 v = 0; v < views; v++)
+            m_shadows.update_view(
+                v,
+                Shadows::frustum_from(
+                    glm::inverse(m_players[v].matrix), m_players[v].position),
+                to_light);
+        auto const [center, radius] = world_sphere(p);
+        m_shadows.update_shared(center, radius, to_light);
         m_shadows.clear();
 
         auto        _ = m_api->debug().scope("Cascaded shadows");
@@ -1790,14 +1836,51 @@ struct MeshRenderer
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{{"camera"sv, 1}, semantic::SpanOne<const Matf4>(light)},
             get_renderflag_uniform());
-        for(u32 c = 0; c < m_shadows.cascades(); c++)
-        {
-            light = m_shadows.light_matrix(c);
+
+        /* One seat's opaque objects into a tile, split into the runs of
+         * instances that reach it; `once` skips instances already drawn */
+        auto draw = [&](u32 seat, u32 tile, bool once) {
+            light = m_shadows.light_matrix(tile);
             for(i32 pi = Pass_Opaque; pi <= Pass_LastOpaque; ++pi)
             {
-                auto const& pass = builder.model_submit(idx)[static_cast<Passes>(pi)];
+                auto const& pass = builder.model_submit(seat)[static_cast<Passes>(pi)];
                 for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
                 {
+                    m_shadow_draws.clear();
+                    for(auto const& d : pass.draws[bucket_idx])
+                    {
+                        auto casts = [&](u32 instance) {
+                            if(instance >= pass.caster_bounds.size())
+                                return false;
+                            Vecf4 const& b = pass.caster_bounds[instance];
+                            if(b.w < 0.f || !m_shadows.covers(tile, Vecf3(b), b.w))
+                                return false;
+                            if(!once)
+                                return true;
+                            u64 key = d.elements.offset;
+                            for(u32 c = 0; c < 3; c++)
+                                key = key * 0x9E3779B97F4A7C15ull ^ std::bit_cast<u32>(b[c]);
+                            return m_shadow_seen.insert(key).second;
+                        };
+                        u32 const first = d.instances.offset;
+                        for(u32 i = 0; i < d.instances.count;)
+                        {
+                            if(!casts(first + i))
+                            {
+                                i++;
+                                continue;
+                            }
+                            u32 run = 1;
+                            while(i + run < d.instances.count && casts(first + i + run))
+                                run++;
+                            auto& part            = m_shadow_draws.emplace_back(d);
+                            part.instances.offset = first + i;
+                            part.instances.count  = run;
+                            i += run;
+                        }
+                    }
+                    if(m_shadow_draws.empty())
+                        continue;
                     size_t base = bucket_idx < pass.bucket_bone_base.size()
                                       ? pass.bucket_bone_base[bucket_idx] * sizeof(Matf4)
                                       : 0;
@@ -1811,7 +1894,7 @@ struct MeshRenderer
                             .vertices      = pass.command.vertices,
                             .render_target = m_shadows.target(),
                             .call          = pass.command.call,
-                            .data          = pass.draws[bucket_idx],
+                            .data          = m_shadow_draws,
                         },
                         vertex_u,
                         gfx::make_buffer_list(
@@ -1828,14 +1911,21 @@ struct MeshRenderer
                                 0,
                             }),
                         gfx::view_state{
-                            .view  = m_shadows.viewport(c),
+                            .view  = m_shadows.viewport(tile),
                             .depth = gfx::depth_state{},
                         });
                     if(res)
                         cFatal("submit error: {}", std::get<1>(*res));
                 }
             }
-        }
+        };
+        m_shadow_seen.clear();
+        for(u32 tile = 0; tile < m_shadows.config().shared_cascades; tile++)
+            for(u32 v = 0; v < views; v++)
+                draw(v, tile, true);
+        for(u32 v = 0; v < views; v++)
+            for(u32 c = 0; c < m_shadows.config().view_cascades; c++)
+                draw(v, m_shadows.view_tile(v, c), false);
     }
 
     void setup_textures(std::vector<gfx::sampler_definition_t>& samplers)
@@ -2123,11 +2213,16 @@ struct MeshRenderer
             },
             gfx::uniform_pair<Matf4 const>{
                 {"csm_matrices"sv},
-                semantic::Span<const Matf4>(m_shadows.sampling.matrices)},
+                semantic::Span<const Matf4>(m_shadows.sampling(idx).matrices)},
             gfx::uniform_pair<Vecf4 const>{
-                {"csm_texel"sv}, semantic::SpanOne<const Vecf4>(m_shadows.sampling.texel)},
+                {"csm_texel"sv},
+                semantic::SpanOne<const Vecf4>(m_shadows.sampling(idx).texel)},
             gfx::uniform_pair<Vecf4 const>{
-                {"csm_params"sv}, semantic::SpanOne<const Vecf4>(m_shadows.sampling.params)},
+                {"csm_params"sv},
+                semantic::SpanOne<const Vecf4>(m_shadows.sampling(idx).params)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_tiles"sv},
+                semantic::Span<const Vecf4>(m_shadows.sampling(idx).tiles)},
             get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -2255,11 +2350,16 @@ struct MeshRenderer
             },
             gfx::uniform_pair<Matf4 const>{
                 {"csm_matrices"sv},
-                semantic::Span<const Matf4>(m_shadows.sampling.matrices)},
+                semantic::Span<const Matf4>(m_shadows.sampling(idx).matrices)},
             gfx::uniform_pair<Vecf4 const>{
-                {"csm_texel"sv}, semantic::SpanOne<const Vecf4>(m_shadows.sampling.texel)},
+                {"csm_texel"sv},
+                semantic::SpanOne<const Vecf4>(m_shadows.sampling(idx).texel)},
             gfx::uniform_pair<Vecf4 const>{
-                {"csm_params"sv}, semantic::SpanOne<const Vecf4>(m_shadows.sampling.params)},
+                {"csm_params"sv},
+                semantic::SpanOne<const Vecf4>(m_shadows.sampling(idx).params)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_tiles"sv},
+                semantic::Span<const Vecf4>(m_shadows.sampling(idx).tiles)},
             get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -3064,7 +3164,7 @@ struct MeshRenderer
         gfx::cull_state cull_front{
             .front_face = true,
         };
-        render_shadows(builder, primary_player);
+        render_shadows(p, builder);
         for(i32 pi = Pass_Opaque; pi <= Pass_LastOpaque; ++pi)
         {
             auto pass = static_cast<Passes>(pi);
