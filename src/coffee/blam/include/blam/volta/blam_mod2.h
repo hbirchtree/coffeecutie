@@ -76,8 +76,12 @@ struct header
     reference<geometry_header<V>>  geometries;
     reference<shader::shader_desc> shaders;
 
+    /* `permutations`: per region, 4 bits each from region 0 up */
     inline std::optional<model_data_t> model_at(
-        mod2_lod lod, map_ptr const& magic) const;
+        mod2_lod lod, map_ptr const& magic, u32 permutations = 0) const;
+
+    inline u32 pick_permutations(
+        map_ptr const& magic, u16 desired, u32 seed) const;
 };
 
 static_assert(offsetof(header<pc_version_t>, detail_cutoff) == 8);
@@ -157,6 +161,34 @@ struct region_permutation
 
 static_assert(sizeof(region_permutation) == 88);
 static_assert(offsetof(region_permutation, meshindex_lod) == 64);
+
+/* The number its name ends with, "head_rob-13", which placements ask for by
+ * desired permutation; -1 without */
+inline i32 permutation_number(region_permutation const& permutation)
+{
+    auto const name = permutation.name.str();
+    auto const dash = name.rfind('-');
+    if(dash == std::string_view::npos || dash + 1 == name.size())
+        return -1;
+    i32 number = 0;
+    for(char c : name.substr(dash + 1))
+    {
+        if(c < '0' || c > '9')
+            return -1;
+        number = number * 10 + (c - '0');
+    }
+    return number;
+}
+
+/* Left to chance: not flagged against it, not a state like ~damaged, and
+ * numbered below 100, where characters such as sgt_johnson-100 sit */
+inline bool permutation_is_random(region_permutation const& permutation)
+{
+    return (static_cast<u16>(permutation.flags) &
+            static_cast<u16>(permutation_flags_t::cannot_be_chosen_randomly)) == 0 &&
+           !permutation.name.str().starts_with('~') &&
+           permutation_number(permutation) < 100;
+}
 
 enum class submesh_flags_t : u32
 {
@@ -309,8 +341,55 @@ struct geometry_header
 static_assert(sizeof(geometry_header<pc_version_t>) == 48);
 
 template<typename V>
+inline u32 header<V>::pick_permutations(
+    map_ptr const& magic, u16 desired, u32 seed) const
+{
+    auto regions_ptr = regions.data(magic);
+    if(!regions_ptr.has_value())
+        return 0;
+    u32 out = 0;
+    u32 r   = 0;
+    for(region const& reg : regions_ptr.value())
+    {
+        if(r >= 8)
+            break;
+        auto perms = reg.permutations.data(magic);
+        if(!perms.has_value() || perms.value().empty())
+        {
+            r++;
+            continue;
+        }
+        auto const& list   = perms.value();
+        u32         choice = 0;
+        bool        found  = false;
+        for(u32 i = 0; i < list.size() && i < 16 && desired; i++)
+            if(permutation_number(list[i]) == static_cast<i32>(desired))
+            {
+                choice = i;
+                found  = true;
+            }
+        if(!found)
+        {
+            u32 candidates = 0;
+            for(u32 i = 0; i < list.size() && i < 16; i++)
+                candidates += permutation_is_random(list[i]);
+            u32 pick = candidates ? ((seed ^ (r * 0x9E3779B9u)) * 0x85EBCA6Bu >> 16) % candidates : 0;
+            for(u32 i = 0; i < list.size() && i < 16; i++)
+                if(permutation_is_random(list[i]) && pick-- == 0)
+                {
+                    choice = i;
+                    break;
+                }
+        }
+        out |= choice << (4 * r);
+        r++;
+    }
+    return out;
+}
+
+template<typename V>
 inline std::optional<model_data_t> header<V>::model_at(
-    mod2_lod lod, map_ptr const& magic) const
+    mod2_lod lod, map_ptr const& magic, u32 permutations) const
 {
     auto regions_ptr = regions.data(magic);
     if(!regions_ptr.has_value())
@@ -321,10 +400,15 @@ inline std::optional<model_data_t> header<V>::model_at(
     semantic::Span<const geometry_header<V>> geometry = geom_ptr.value();
     semantic::Span<const region>             regions_ = regions_ptr.value();
     std::vector<part const*>                 meshes;
+    u32 r = 0;
     for(region const& reg : regions_)
     {
-        auto permutations = reg.permutations.data(magic).value();
-        for(region_permutation const& per : permutations)
+        auto list   = reg.permutations.data(magic).value();
+        u32  chosen = r < 8 ? (permutations >> (4 * r)) & 0xF : 0;
+        r++;
+        if(chosen >= list.size())
+            chosen = 0;
+        for(region_permutation const& per : list.subspan(chosen))
         {
             auto perm_idx = from_le(per.meshindex_lod.at(4u - lod));
             auto parts    = geometry[perm_idx].meshes(magic);

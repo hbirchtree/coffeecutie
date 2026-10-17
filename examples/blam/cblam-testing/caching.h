@@ -68,9 +68,10 @@ template<typename V>
 struct ModelCache
     : DataCache<
           ModelItem<V>,
-          std::tuple<u32, blam::mod2::mod2_lod>,
+          std::tuple<u32, blam::mod2::mod2_lod, u32>,
           blam::tagref_t const&,
-          blam::mod2::mod2_lod>
+          blam::mod2::mod2_lod,
+          u32>
     , compo::SubsystemBase
 {
     using type    = ModelCache<V>;
@@ -138,8 +139,9 @@ struct ModelCache
         return model.index_segment(*tags).data(vertex_magic);
     }
 
+    /* `permutations` as mod2::header::model_at takes them */
     virtual ModelItem<V> predict_impl(
-        blam::tagref_t const& mod2, blam::mod2::mod2_lod lod) override;
+        blam::tagref_t const& mod2, blam::mod2::mod2_lod lod, u32 permutations) override;
 
     /* Bones the model needs, 0 if it has no skeleton. */
     u32 bone_count(generation_idx_t model_id);
@@ -184,15 +186,16 @@ struct ModelCache
         element_ptr = 0;
     }
 
-    virtual std::tuple<u32, blam::mod2::mod2_lod> get_id(
-        blam::tagref_t const& tag, blam::mod2::mod2_lod lod) override
+    virtual std::tuple<u32, blam::mod2::mod2_lod, u32> get_id(
+        blam::tagref_t const& tag, blam::mod2::mod2_lod lod, u32 permutations) override
     {
-        return std::make_tuple(tag.tag_id, lod);
+        return std::make_tuple(tag.tag_id, lod, permutations);
     }
 
     ModelAssembly predict_regions(
         blam::tagref_t const& tag,
-        blam::mod2::mod2_lod  max_lod = blam::mod2::lod_high_ext)
+        blam::mod2::mod2_lod  max_lod      = blam::mod2::lod_high_ext,
+        u32                   permutations = 0)
     {
         ModelAssembly assem  = {};
         auto          header = get_header(tag);
@@ -201,17 +204,17 @@ struct ModelCache
             return {};
 
         /* Levels that share geometry share the upload */
-        auto const key = std::make_tuple(tag.tag_id, max_lod);
+        auto const key = std::make_tuple(tag.tag_id, max_lod, permutations);
         if(!this->m_cache_key.contains(key))
-            if(auto parts = header->model_at(max_lod, magic))
+            if(auto parts = header->model_at(max_lod, magic, permutations))
                 for(u32 other = 0; other < 5; other++)
                 {
                     auto other_lod = static_cast<blam::mod2::mod2_lod>(other);
                     auto cached    = this->m_cache_key.find(
-                        std::make_tuple(tag.tag_id, other_lod));
+                        std::make_tuple(tag.tag_id, other_lod, permutations));
                     if(other_lod == max_lod || cached == this->m_cache_key.end())
                         continue;
-                    auto other_parts = header->model_at(other_lod, magic);
+                    auto other_parts = header->model_at(other_lod, magic, permutations);
                     if(other_parts && other_parts->parts == parts->parts)
                     {
                         this->m_cache_key.emplace(key, cached->second);
@@ -219,7 +222,7 @@ struct ModelCache
                     }
                 }
 
-        assem.models.push_back(this->predict(tag, max_lod));
+        assem.models.push_back(this->predict(tag, max_lod, permutations));
 
         //        for(auto const& region : header->regions.data(magic).value())
         //        {
