@@ -227,7 +227,8 @@ u32 extract_bitmaps(
     blam::dimeter::map_container<V> const& map,
     blam::dimeter::raw_pool const&         pool,
     std::string const&                     outdir,
-    u32                                    limit)
+    u32                                    limit,
+    std::string_view                       name_filter)
 {
     namespace h2 = blam::dimeter;
     using blam::from_le;
@@ -240,6 +241,9 @@ u32 extract_bitmaps(
         if(limit && extracted >= limit)
             break;
         if(!tag.valid() || !tag.matches("bitm"))
+            continue;
+        if(!name_filter.empty() &&
+           map.name_of(tag).find(name_filter) == std::string_view::npos)
             continue;
         auto const* bitm = tag.template data<h2::bitm::header_t>(magic);
         if(!bitm)
@@ -1201,6 +1205,7 @@ struct options_t
     std::string name_filter;
     bool        list{false};
     bool        dump{false};
+    bool        hex{false};
     bool        scenario{false};
     std::string collision_obj;
     std::string cluster_at;
@@ -1525,6 +1530,16 @@ int run_map(
             if(tag_selected(map, tag, options))
             {
                 dimeter_info::dump_any(map, tag);
+                if(options.hex)
+                    if(auto const* raw = tag.template data<u8>(map.magic()))
+                        for(u32 at = 0; at < tag.size(); at += 16)
+                            fmt::print(
+                                "  {:04x}: {:02x}\n",
+                                at,
+                                fmt::join(
+                                    raw + at,
+                                    raw + std::min<u32>(at + 16, tag.size()),
+                                    " "));
                 if(tag.matches("jmad"))
                     dimeter_info::dump_jmad(map, pool, tag);
             }
@@ -1589,7 +1604,8 @@ int run_map(
     std::filesystem::create_directories(options.extract_dir, mkdir_ec);
 
     cBasicPrint("Extracting bitmaps:");
-    u32 bitmaps = extract_bitmaps(map, pool, options.extract_dir, options.limit);
+    u32 bitmaps = extract_bitmaps(
+        map, pool, options.extract_dir, options.limit, options.name_filter);
     cBasicPrint("Extracting sounds:");
     u32 sounds = extract_sounds(map, pool, options.extract_dir, options.limit);
     cBasicPrint("Extracting BSP meshes:");
@@ -1706,6 +1722,8 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("scripts", "Decompile the scenario's scripts and globals")
         //
+        ("hex", "Hex dump the raw data of matching tags")
+        //
         ("font",
          "Dump a Halo 2 font file (fonts/<name>) instead of a map",
          cxxopts::value<std::string>())
@@ -1751,6 +1769,7 @@ i32 coffee_main(i32, cstring_w*)
         .name_filter  = arguments.as_optional<std::string>("name").value_or(""),
         .list         = arguments.count("list") > 0,
         .dump         = arguments.count("dump") > 0,
+        .hex          = arguments.count("hex") > 0,
         .scenario     = arguments.count("scenario") > 0,
         .collision_obj =
             arguments.as_optional<std::string>("collision-obj").value_or(""),
