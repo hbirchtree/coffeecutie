@@ -16,4 +16,6 @@
 #define USE_BASE_MATERIALS 1
 #define USE_TRANSPARENT 0
 
+#define USE_SHADOWS 0
+
 #include "fragments/shaders_common_uber.glsl"

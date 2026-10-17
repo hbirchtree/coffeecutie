@@ -11,4 +11,6 @@
 #define USE_REFLECTIONS 0
 #define USE_ARRAY_CUBEMAP 0
 
+#define USE_SHADOWS 0
+
 #include "fragments/shaders_common_uber.glsl"

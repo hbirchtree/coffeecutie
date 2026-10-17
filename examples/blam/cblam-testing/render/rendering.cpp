@@ -9,6 +9,7 @@
 #include "loading_screen.h"
 #include "map_marker.h"
 #include "materials.h"
+#include "render/cascaded_shadows.h"
 #include "render/detail_objects.h"
 #include "selected_version.h"
 #include "shader_compiler.h"
@@ -1645,6 +1646,8 @@ struct MeshRenderer
 
     std::vector<cached_player_t> m_players;
 
+    blam_render::CascadedShadowMap m_shadows;
+
     EffectDrawer<Version> m_effects;
 
     std::shared_ptr<gfx::texture_2d_t> meow_tex;
@@ -1744,6 +1747,90 @@ struct MeshRenderer
         u32 unaligned_size = size & mask;
         u32 added_padding  = padding - unaligned_size;
         return size + added_padding;
+    }
+
+    /* The direction to the sky's first light of this kind of space, like
+     * world_key_light() */
+    Vecf3 sun_direction() const
+    {
+        u32 want = m_render_params.interior ? 2u : 1u;
+        for(auto const& light : m_resources.world.lighting)
+        {
+            Vecf3 dir{light.light_direction};
+            if(glm::dot(dir, dir) > 1e-6f &&
+               (static_cast<u32>(light.light_direction.w) & want))
+                return glm::normalize(dir);
+        }
+        return Vecf3{0.f, 0.f, 1.f};
+    }
+
+    /* Objects cast into each cascade; the BSP's own shadows are baked into
+     * its lightmaps. Casters are the seat's visible objects. */
+    void render_shadows(DrawListBuilder<Version> const& builder, u32 idx)
+    {
+        if(!m_resources.shadow_pipeline || idx >= m_players.size())
+            return;
+        if(!m_shadows.valid())
+            m_shadows.alloc(*m_api, {});
+        auto const& player = m_players[idx];
+        m_shadows.update(
+            blam_render::CascadedShadowMap::frustum_from(
+                glm::inverse(player.matrix), player.position),
+            sun_direction());
+        m_shadows.clear();
+
+        auto        _ = m_api->debug().scope("Cascaded shadows");
+        Matf4 light{1.f};
+        auto  vertex_u = gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Vertex,
+            gfx::uniform_pair{{"camera"sv, 1}, semantic::SpanOne<const Matf4>(light)},
+            get_renderflag_uniform());
+        for(u32 c = 0; c < m_shadows.cascades(); c++)
+        {
+            light = m_shadows.light_matrix(c);
+            for(i32 pi = Pass_Opaque; pi <= Pass_LastOpaque; ++pi)
+            {
+                auto const& pass = builder.model_submit(idx)[static_cast<Passes>(pi)];
+                for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
+                {
+                    size_t base = bucket_idx < pass.bucket_bone_base.size()
+                                      ? pass.bucket_bone_base[bucket_idx] * sizeof(Matf4)
+                                      : 0;
+                    size_t span =
+                        DrawListBuilder<Version>::kMaxBoneMatrices * sizeof(Matf4);
+                    if(base + span > m_resources.bone_matrix_buf->size())
+                        base = 0;
+                    auto res = m_api->submit(
+                        {
+                            .program       = m_resources.shadow_pipeline,
+                            .vertices      = pass.command.vertices,
+                            .render_target = m_shadows.target(),
+                            .call          = pass.command.call,
+                            .data          = pass.draws[bucket_idx],
+                        },
+                        vertex_u,
+                        gfx::make_buffer_list(
+                            gfx::buffer_definition_t{
+                                typing::graphics::ShaderStage::Vertex,
+                                {"MatrixStore"sv, 0},
+                                pass.matrix_buffer,
+                                sizeof(PerInstanceData),
+                            },
+                            gfx::buffer_definition_t{
+                                typing::graphics::ShaderStage::Vertex,
+                                {"BoneMatrices"sv, 3},
+                                m_resources.bone_matrix_buf->slice(base, span),
+                                0,
+                            }),
+                        gfx::view_state{
+                            .view  = m_shadows.viewport(c),
+                            .depth = gfx::depth_state{},
+                        });
+                    if(res)
+                        cFatal("submit error: {}", std::get<1>(*res));
+                }
+            }
+        }
     }
 
     void setup_textures(std::vector<gfx::sampler_definition_t>& samplers)
@@ -2029,6 +2116,13 @@ struct MeshRenderer
                 {"time", 22},
                 semantic::SpanOne<const f32>(t),
             },
+            gfx::uniform_pair<Matf4 const>{
+                {"csm_matrices"sv},
+                semantic::Span<const Matf4>(m_shadows.sampling.matrices)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_texel"sv}, semantic::SpanOne<const Vecf4>(m_shadows.sampling.texel)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_params"sv}, semantic::SpanOne<const Vecf4>(m_shadows.sampling.params)},
             get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -2065,6 +2159,11 @@ struct MeshRenderer
 
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
+        if(m_shadows.valid())
+            samplers.push_back(gleam::sampler_definition_t{
+                typing::graphics::ShaderStage::Fragment,
+                {"csm_atlas"sv, 15},
+                m_shadows.sampler()});
 
         auto cube_fallback = reflection_fallback(pass);
 
@@ -2149,6 +2248,13 @@ struct MeshRenderer
                 {"time", 22},
                 semantic::SpanOne<const f32>(t),
             },
+            gfx::uniform_pair<Matf4 const>{
+                {"csm_matrices"sv},
+                semantic::Span<const Matf4>(m_shadows.sampling.matrices)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_texel"sv}, semantic::SpanOne<const Vecf4>(m_shadows.sampling.texel)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_params"sv}, semantic::SpanOne<const Vecf4>(m_shadows.sampling.params)},
             get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -2173,6 +2279,11 @@ struct MeshRenderer
         /* Step 2: Set up all the textures */
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
+        if(m_shadows.valid())
+            samplers.push_back(gleam::sampler_definition_t{
+                typing::graphics::ShaderStage::Fragment,
+                {"csm_atlas"sv, 15},
+                m_shadows.sampler()});
         auto cube_fallback = reflection_fallback(pass);
 
         for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
@@ -2942,6 +3053,7 @@ struct MeshRenderer
         gfx::cull_state cull_front{
             .front_face = true,
         };
+        render_shadows(builder, primary_player);
         for(i32 pi = Pass_Opaque; pi <= Pass_LastOpaque; ++pi)
         {
             auto pass = static_cast<Passes>(pi);

@@ -1163,7 +1163,7 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     const auto frag_sotr    = "uber_sotr"sv;
     const auto frag_chicago = "uber_chicago"sv;
 
-    std::array<shader_pair_t, 9> shaders = {{
+    std::array<shader_pair_t, 10> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
             .fragment_file = "debug_lines"sv,
@@ -1173,6 +1173,13 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
             .vertex_file   = map_vertex,
             .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
+        },
+        {
+            /* The scenery vertex stage with `camera` as a cascade's light
+             * matrix: every vertex format, instancing and skinning cast */
+            .vertex_file   = scenery_vertex,
+            .fragment_file = "shadow_depth"sv,
+            .shader        = resources.shadow_pipeline,
         },
         {
             .vertex_file   = scenery_vertex,
