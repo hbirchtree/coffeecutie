@@ -72,6 +72,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                                                            : 0;
         i32 const debug_off = (params.render_fog ? 0 : 1) | (params.render_reflection ? 0 : 2) |
                               (params.render_lightmaps ? 0 : 4);
+        i32 const light_count = pack_lights(p, scene, camera->camera.position);
         f32 const    exposure  = adapt_exposure(scene, camera->camera.position);
         auto const&  dynamic_cube = nearest_cubemap(scene, camera->camera.position);
         Vecf3 const  offset{};
@@ -188,6 +189,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<const i32>{
                             {"debug_off"}, semantic::SpanOne<const i32>(debug_off)},
                         gfx::uniform_pair<Vecf4 const>{
+                            {"simple_lights"},
+                            semantic::Span<const Vecf4>(m_lights.data(), m_lights.size())},
+                        gfx::uniform_pair<const i32>{
+                            {"simple_light_count"}, semantic::SpanOne<const i32>(light_count)},
+                        gfx::uniform_pair<Vecf4 const>{
                             {"layer_scale"},
                             semantic::Span<const Vecf4>(layer_scale.data(), layer_scale.size())},
                         gfx::uniform_pair<Vecf2 const>{
@@ -233,6 +239,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"debug_view"}, semantic::SpanOne<const i32>(debug_view)},
                         gfx::uniform_pair<const i32>{
                             {"debug_off"}, semantic::SpanOne<const i32>(debug_off)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"simple_lights"},
+                            semantic::Span<const Vecf4>(m_lights.data(), m_lights.size())},
+                        gfx::uniform_pair<const i32>{
+                            {"simple_light_count"}, semantic::SpanOne<const i32>(light_count)},
                         gfx::uniform_pair<const i32>{
                             {"alpha_test"}, semantic::SpanOne<const i32>(alpha_test)},
                         gfx::uniform_pair<Vecf4 const>{
@@ -336,6 +347,48 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     }
 
   private:
+    /* The lights nearest the camera, as simple_lights.fx reads them; lights
+     * on moving objects follow their Model */
+    i32 pack_lights(Proxy& p, H3Scene const& scene, Vecf3 const& eye)
+    {
+        struct candidate_t
+        {
+            DynamicLight const* light;
+            Vecf3               position, direction;
+            f32                 distance;
+        };
+        std::vector<candidate_t> near;
+        for(auto const& light : scene.lights)
+        {
+            Vecf3 position = light.position, direction = light.direction;
+            if(light.entity)
+            {
+                auto const* model = p.template get<Model>(light.entity);
+                if(!model)
+                    continue;
+                position  = Vecf3(model->transform * Vecf4(light.position, 1.f));
+                direction = glm::normalize(Matf3(model->transform) * light.direction);
+            }
+            near.push_back({&light, position, direction, glm::distance(position, eye) - light.radius});
+        }
+        size_t const count = std::min(near.size(), max_lights);
+        std::partial_sort(near.begin(), near.begin() + count, near.end(), [](auto const& a, auto const& b) {
+            return a.distance < b.distance;
+        });
+        m_lights.fill(Vecf4(0.f));
+        for(size_t i = 0; i < count; i++)
+        {
+            auto const& [light, position, direction, _] = near[i];
+            m_lights[i * 5]     = Vecf4(position, light->size);
+            /* Shaded towards the light: the spot faces the other way */
+            m_lights[i * 5 + 1] = Vecf4(-direction, light->sphere);
+            m_lights[i * 5 + 2] = Vecf4(light->color, light->smooth);
+            m_lights[i * 5 + 3] = light->falloff;
+            m_lights[i * 5 + 4] = Vecf4(light->radius * light->radius, 0.f, 0.f, 0.f);
+        }
+        return static_cast<i32>(count);
+    }
+
     /* Water (water_shading.fx) reads the scene behind it: a copy of the
      * colour and of how far away each pixel is, made once per frame */
     void draw_water(
@@ -631,6 +684,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     f32                                         m_stops{0.f};
     u32                                         m_exposure_generation{~0u};
     bool                                        m_draw_error_logged{false};
+    static constexpr size_t                     max_lights = 8;
+    std::array<Vecf4, max_lights * 5>           m_lights{};
 };
 
 void alloc_h3_renderer(compo::EntityContainer& e)

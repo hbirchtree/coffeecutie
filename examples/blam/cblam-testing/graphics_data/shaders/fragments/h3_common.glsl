@@ -24,6 +24,10 @@ layout(location=65) uniform int blended; /* 1 alpha blended, 2 additive */
 layout(location=149) uniform int debug_view;
 /* ... and what they turn off: 1 fog, 2 reflections, 4 baked light */
 layout(location=150) uniform int debug_off;
+/* simple_lights.fx: per light position and size, direction and spherical
+ * share, colour and smoothness, falloff scale and offset, bounding radius² */
+layout(location=151) uniform vec4 simple_lights[40];
+layout(location=191) uniform int simple_light_count;
 /* Decode exponents: base, detail, detail2 (terrain: per layer, below) */
 layout(location=66) uniform vec3 curves;
 
@@ -203,6 +207,29 @@ vec3 baked_diffuse(baked_light_t light, vec3 n)
     vec3 x1 = sh_linear(light, n) + 0.4886025 * dot(n, light.dir) * light.intensity;
     vec3 e = (0.886227 * dc - 1.023328 * x1) / 3.14159265;
     return max(e, vec3(0.0)) + max(dot(light.dir, n), 0.0) * light.intensity * 0.281;
+}
+
+/* calc_simple_lights_analytical's diffuse part */
+vec3 dynamic_diffuse(vec3 n)
+{
+    vec3 sum = vec3(0.0);
+    for(int i = 0; i < simple_light_count; i++)
+    {
+        vec4 position = simple_lights[i * 5];
+        vec4 direction = simple_lights[i * 5 + 1];
+        vec4 color = simple_lights[i * 5 + 2];
+        vec4 falloff = simple_lights[i * 5 + 3];
+        vec3  to = position.xyz - f_world_pos;
+        float d2 = dot(to, to);
+        if(d2 >= simple_lights[i * 5 + 4].x)
+            continue;
+        to *= inversesqrt(max(d2, 1e-8));
+        vec2 f = vec2(1.0 / (position.w + d2), dot(to, direction.xyz));
+        f = max(vec2(0.0001), f * falloff.xy + falloff.zw);
+        f.y = pow(f.y, color.w) + direction.w;
+        sum += color.rgb * clamp(f.x, 0.0, 1.0) * clamp(f.y, 0.0, 1.0) * max(0.05, dot(n, to));
+    }
+    return sum;
 }
 
 #if !H3_TERRAIN
@@ -453,7 +480,8 @@ void main()
     {
         baked_light_t light = sample_baked_light();
 #if H3_TERRAIN
-        color *= baked_diffuse(light, normal) * exposure * (debug_view == 5 ? 0.0 : 1.0);
+        color *= (baked_diffuse(light, normal) + dynamic_diffuse(normal)) * exposure *
+                 (debug_view == 5 ? 0.0 : 1.0);
 #else
         float mask = specular_mask_mode == 1 ? base.a
                    : specular_mask_mode == 2 ? texture(specular_mask_map, f_texcoord).a
@@ -464,15 +492,16 @@ void main()
             specular = vec3(0.0), diffuse_scale = 1.0;
         if(debug_view == 5)
             color = vec3(0.0);
-        color = (color * baked_diffuse(light, normal) * diffuse_scale + specular) * exposure;
+        color = (color * (baked_diffuse(light, normal) + dynamic_diffuse(normal)) * diffuse_scale + specular) *
+                exposure;
 #endif
     }
     else if(f_vertex_light.a > 0.0 && baked)
-        color *= f_vertex_light.rgb * 4.0 * exposure;
+        color *= (f_vertex_light.rgb * 4.0 + dynamic_diffuse(normal)) * exposure;
     else
     {
         vec3 sun = normalize(vec3(0.3, 0.2, 1.0));
-        color *= 0.45 + 0.55 * abs(dot(normal, sun));
+        color *= 0.45 + 0.55 * abs(dot(normal, sun)) + dynamic_diffuse(normal) * exposure;
     }
 #if !H3_TERRAIN
     /* material_model none (halograms): self-illumination alone */
