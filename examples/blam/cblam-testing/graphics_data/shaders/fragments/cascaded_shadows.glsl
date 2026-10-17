@@ -14,14 +14,14 @@ layout(location=CSM_LOCATION + 16) uniform vec4 csm_texel;
 layout(location=CSM_LOCATION + 17) uniform vec4 csm_params;
 layout(binding=CSM_BINDING) uniform sampler2D csm_atlas;
 
-/* How much of the light along `to_light` reaches `world`: 1 = all */
-float cascade_shadow(vec3 world, vec3 n, vec3 to_light, vec3 eye)
+/* How much of the light along `to_light` is blocked at `world`: 0 = none */
+float cascade_occlusion(vec3 world, vec3 n, vec3 to_light, vec3 eye)
 {
     int   count  = int(csm_params.x);
     float facing = dot(n, to_light);
     float dist   = distance(world, eye);
     if(count == 0 || facing <= 0.0 || dist >= csm_params.w)
-        return 1.0;
+        return 0.0;
     float tile   = 1.0 / float(count);
     vec2  texel  = vec2(csm_params.y, csm_params.y * float(count));
     for(int i = 0; i < count; i++)
@@ -39,7 +39,13 @@ float cascade_shadow(vec3 world, vec3 n, vec3 to_light, vec3 eye)
                     texture(csm_atlas, p.xy + vec2(x, y) * texel).r, p.z - 0.0002);
         hidden *= 1.0 / 9.0;
         float fade = 1.0 - smoothstep(csm_params.w * 0.8, csm_params.w, dist);
-        return 1.0 - csm_params.z * hidden * fade * smoothstep(0.0, 0.2, facing);
+        return hidden * fade * smoothstep(0.0, 0.2, facing);
     }
-    return 1.0;
+    return 0.0;
+}
+
+/* Light reaching `world` at the configured strength: 1 = all */
+float cascade_shadow(vec3 world, vec3 n, vec3 to_light, vec3 eye)
+{
+    return 1.0 - csm_params.z * cascade_occlusion(world, n, to_light, eye);
 }
