@@ -1196,6 +1196,9 @@ struct PhysicsSystem
                     auto const& w    = physics.angular_velocity;
                     body.setLinearVelocity(btVector3(v.x, v.y, v.z));
                     body.setAngularVelocity(btVector3(w.x, w.y, w.z));
+                    /* Placed at rest: asleep until something touches it */
+                    if(physics.sleeping)
+                        body.setActivationState(ISLAND_SLEEPING);
                 }
                 continue;
             }
