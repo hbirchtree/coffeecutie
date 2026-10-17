@@ -39,6 +39,16 @@ layout(location=140, binding=0) uniform sampler2D water_color;
 layout(location=141, binding=1) uniform samplerCube water_reflection;
 layout(location=142, binding=2) uniform sampler2DArray water_slopes;
 layout(location=143, binding=3) uniform sampler2D scene_copy;
+layout(location=145, binding=4) uniform sampler2D foam_texture;
+layout(location=146, binding=5) uniform sampler2D foam_detail;
+/* global_shape_texture: painted foam in b */
+layout(location=147, binding=6) uniform sampler2D global_shape;
+layout(location=148, binding=7) uniform sampler2DArray wave_displacement;
+layout(location=149) uniform vec4 foam_xform;
+layout(location=150) uniform vec4 foam_detail_xform;
+/* foam height, foam pow, 1 auto / 2 paint / 3 both, displacement frames */
+layout(location=151) uniform vec4 foam;
+layout(location=152) uniform vec4 displacement_range;
 
 layout(location=0) out vec4 out_color;
 
@@ -51,6 +61,38 @@ vec2 wave_slope(vec2 uv)
     vec2  s1    = texture(water_slopes, vec3(uv, mod(a + 1.0, misc.z))).rg;
     /* restore_slope: [0, 1] to [-range/2, range/2] */
     return (mix(s0, s1, frame - a) - 0.5) * slope.xy;
+}
+
+/* The displacement loop's height channel, [0, 1] */
+float wave_height(vec2 uv)
+{
+    float frame = fract(time * 0.5) * foam.w;
+    float a     = floor(frame);
+    float z0    = texture(wave_displacement, vec3(uv, a)).b;
+    float z1    = texture(wave_displacement, vec3(uv, mod(a + 1.0, foam.w))).b;
+    return mix(z0, z1, frame - a);
+}
+
+/* Foam: auto where the waves crest past foam_height, painted from the
+ * shape texture, or both */
+float foam_factor(vec2 uv_main, vec2 uv_aux)
+{
+    float factor = 0.0;
+    if((int(foam.z) & 1) != 0 && foam.w > 0.0)
+    {
+        /* restore_displacement, both layers, from texture to geometry space */
+        float range      = displacement_range.z;
+        float wave_scale = sqrt(max(shape_xform.x * shape_xform.y, 1e-6));
+        float height     = ((wave_height(uv_main) - 0.5) * range * heights.x +
+                            (wave_height(uv_aux) - 0.5) * range * heights.y) / wave_scale;
+        float highest    = 0.5 * range * (heights.x + heights.y) / wave_scale;
+        float span       = clamp(highest - foam.x, 0.0, 1.0);
+        if(span > 0.0)
+            factor = pow(clamp((height - foam.x) / span, 0.0, 1.0), foam.y);
+    }
+    if((int(foam.z) & 2) != 0)
+        factor = max(factor, texture(global_shape, f_texcoord).b);
+    return factor;
 }
 
 float fog_factor(float murkiness, float depth)
@@ -130,6 +172,18 @@ void main()
     float alpha = clamp(by_depth / max(refraction.w, 1e-3), 0.0, 1.0);
     result      = mix(bed, result, alpha);
     bed_share   = (1.0 - alpha) + bed_share * alpha;
+
+    /* Foam over it all, lit like the diffuse */
+    float covered = foam.z > 0.0 ? foam_factor(uv_main, uv_aux) : 0.0;
+    if(covered > 0.002)
+    {
+        vec4 f = texture(foam_texture, f_texcoord * foam_xform.xy + foam_xform.zw) *
+                 texture(foam_detail, f_texcoord * foam_detail_xform.xy + foam_detail_xform.zw);
+        covered *= f.a;
+        vec3 foam_color = pow(max(f.rgb, vec3(0.0)), vec3(2.0)) * lightmap_intensity * exposure;
+        result    = mix(result, foam_color, covered);
+        bed_share *= 1.0 - covered;
+    }
 
     /* Fog applies to the water's own light, not the bed seen through it */
     vec3 extinction, inscatter;

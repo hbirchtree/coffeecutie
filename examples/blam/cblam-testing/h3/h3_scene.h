@@ -106,7 +106,15 @@ struct WaterParams
     std::shared_ptr<gfx::compat::texture_2da_t> slopes;   /*!< wave_slope_array */
     std::shared_ptr<gfx::sampler_t>           slopes_sampler;
     Texture                                   foam;
+    Texture                                   foam_detail;
+    Texture                                   shape;      /*!< global_shape_texture: painted foam in b */
+    std::shared_ptr<gfx::compat::texture_2da_t> displacement; /*!< wave_displacement_array */
+    std::shared_ptr<gfx::sampler_t>           displacement_sampler;
     Vecf4 slope_xform{1.f, 1.f, 0.f, 0.f};  /*!< wave_slope_array uv scale/offset */
+    Vecf4 foam_detail_xform{1.f, 1.f, 0.f, 0.f};
+    /* foam height, foam pow, 1 auto / 2 paint / 3 both, displacement frames */
+    Vecf4 foam_params{0.5f, 2.f, 0.f, 0.f};
+    Vecf4 displacement_range{0.3f, 0.2f, 0.3f, 0.f};
     Vecf4 shape_xform{1.f, 1.f, 0.f, 0.f};  /*!< wave_displacement_array uv scale/offset */
     Vecf4 foam_xform{1.f, 1.f, 0.f, 0.f};
     /* slope range xy, detail slope scale xy */

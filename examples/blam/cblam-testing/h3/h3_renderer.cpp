@@ -507,6 +507,12 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 gfx::uniform_pair<Vecf4 const>{{"shading"}, semantic::SpanOne<const Vecf4>(w.shading)},
                 gfx::uniform_pair<Vecf4 const>{{"refraction"}, semantic::SpanOne<const Vecf4>(w.refraction)},
                 gfx::uniform_pair<Vecf4 const>{{"misc"}, semantic::SpanOne<const Vecf4>(w.misc)},
+                gfx::uniform_pair<Vecf4 const>{{"foam_xform"}, semantic::SpanOne<const Vecf4>(w.foam_xform)},
+                gfx::uniform_pair<Vecf4 const>{
+                    {"foam_detail_xform"}, semantic::SpanOne<const Vecf4>(w.foam_detail_xform)},
+                gfx::uniform_pair<Vecf4 const>{{"foam"}, semantic::SpanOne<const Vecf4>(w.foam_params)},
+                gfx::uniform_pair<Vecf4 const>{
+                    {"displacement_range"}, semantic::SpanOne<const Vecf4>(w.displacement_range)},
                 gfx::uniform_pair<Vecf4 const>{{"water_diffuse"}, semantic::SpanOne<const Vecf4>(w.diffuse)},
                 gfx::uniform_pair<Vecf2 const>{{"viewport"}, semantic::SpanOne<const Vecf2>(target)},
                 gfx::uniform_pair<Vecf2 const>{{"water_curves"}, semantic::SpanOne<const Vecf2>(w.curves)});
@@ -522,6 +528,18 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     {"water_slopes", 2},
                     w.slopes_sampler ? w.slopes_sampler : m_no_lightprobe_sampler},
                 gfx::sampler_definition_t{stage_t::Fragment, {"scene_copy", 3}, m_copy_sampler},
+                gfx::sampler_definition_t{
+                    stage_t::Fragment, {"foam_texture", 4}, w.foam.sampler ? w.foam.sampler : m_white_sampler},
+                gfx::sampler_definition_t{
+                    stage_t::Fragment,
+                    {"foam_detail", 5},
+                    w.foam_detail.sampler ? w.foam_detail.sampler : m_white_sampler},
+                gfx::sampler_definition_t{
+                    stage_t::Fragment, {"global_shape", 6}, w.shape.sampler ? w.shape.sampler : m_white_sampler},
+                gfx::sampler_definition_t{
+                    stage_t::Fragment,
+                    {"wave_displacement", 7},
+                    w.displacement_sampler ? w.displacement_sampler : m_no_lightprobe_sampler},
                 gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe});
             auto res = m_api->submit(
                 {
