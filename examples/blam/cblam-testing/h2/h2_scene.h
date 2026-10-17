@@ -193,6 +193,12 @@ struct Material
     /*! plasma_alpha: noise A in `texture`, noise B in `detail`, shape in
      * `mask`; the pixel constants ramp it from dim to bright */
     bool                                   plasma{false};
+    /*! Environment reflection: a cube map, tinted from facing to glancing,
+     * each rgb + brightness */
+    std::shared_ptr<gfx::texture_cube_t>   env_texture;
+    std::shared_ptr<gfx::sampler_t>        env_sampler;
+    Vecf4                                  env_facing{0.f};
+    Vecf4                                  env_glancing{0.f};
     std::array<Vecf3, 2>                   plasma_colors{};
     Vecf2                                  mask_scale{1.f, 1.f};
 };

@@ -520,6 +520,7 @@ struct H2MapLoader : compo::SubsystemBase
         m_indices.clear();
         m_material_index.clear();
         m_textures.clear();
+        m_cubes.clear();
         m_buckets.clear();
         m_scenery_lights.clear();
         m_objects_total = m_objects_clustered = 0;
@@ -2456,6 +2457,8 @@ struct H2MapLoader : compo::SubsystemBase
                 ocean_material(map, pool, base, mat);
             if(tmpl.starts_with("plasma_alpha"))
                 plasma_material(map, pool, base, mat);
+            if(auto env = base.layer("environment_map"))
+                env_material(map, pool, base, *env, mat);
             if(sky || tmpl.find("clouds") != tmpl.npos)
                 if(auto m = base.layer("cloud_mask"))
                     if(auto t = texture_for(map, pool, m->bitmap))
@@ -2485,7 +2488,7 @@ struct H2MapLoader : compo::SubsystemBase
                       : static_cast<Variant>(
                             mat.detail_mode + (mat.illum.sampler ? 3 : 0));
         cDebug(
-            "H2: shad {}: uv scale {}x{}, {}{}{}{}",
+            "H2: shad {}: uv scale {}x{}, {}{}{}{}{}",
             mat.name,
             mat.uv_scale.x,
             mat.uv_scale.y,
@@ -2494,6 +2497,7 @@ struct H2MapLoader : compo::SubsystemBase
             : mat.detail_mode == 1 ? ", detail"
                                    : "",
             mat.bump.sampler ? ", bump" : "",
+            mat.env_sampler ? ", env" : "",
             resolved ? "" : " (template unresolved)");
 
         m_scene.materials.insert(m_scene.materials.end() - 1, std::move(mat));
@@ -2582,6 +2586,62 @@ struct H2MapLoader : compo::SubsystemBase
             auto const& c       = base.pixel_constants[i];
             mat.plasma_colors[i] = Vecf3{c[0], c[1], c[2]} / 255.f;
         }
+    }
+
+    /* The lightmap_env pass's constants: facing and glancing tints, then
+     * their brightness in alpha */
+    template<typename V>
+    void env_material(
+        dim::map_container<V> const&              map,
+        dim::raw_pool const&                      pool,
+        dim::material::resolved_t const&          base,
+        dim::material::resolved_t::layer_t const& env,
+        Material&                                 mat)
+    {
+        std::vector<u8> const* slots = nullptr;
+        for(size_t i = 0; i < base.pass_names.size(); i++)
+            if((base.pass_names[i] == "lightmap_env" ||
+                base.pass_names[i] == "lightmap_tex_env") &&
+               i < base.pass_pixel_slots.size() &&
+               base.pass_pixel_slots[i].size() >= 4)
+            {
+                slots = &base.pass_pixel_slots[i];
+                break;
+            }
+        if(!slots || !env.bitmap)
+            return;
+        auto constant = [&](size_t i) {
+            u8 slot = (*slots)[i];
+            return slot < base.pixel_constants.size() ? base.pixel_constants[slot]
+                                                      : std::array<u8, 4>{};
+        };
+        auto key = static_cast<u16>(env.bitmap - map.tags().data());
+        auto it  = m_cubes.find(key);
+        if(it == m_cubes.end())
+        {
+            std::shared_ptr<gfx::texture_cube_t> cube;
+            std::shared_ptr<gfx::sampler_t>      sampler;
+            if(auto tex = upload_cubemap(*m_api, map, pool, *env.bitmap))
+            {
+                cube    = *tex;
+                sampler = cube->sampler();
+                sampler->alloc();
+                sampler->set_filtering(
+                    typing::Filtering::Linear,
+                    typing::Filtering::Linear,
+                    typing::Filtering::Linear);
+            }
+            it = m_cubes.emplace(key, std::make_pair(cube, sampler)).first;
+        }
+        if(!it->second.second)
+            return;
+        auto rgb = [](std::array<u8, 4> const& c) {
+            return Vecf3{c[0], c[1], c[2]} / 255.f;
+        };
+        mat.env_texture  = it->second.first;
+        mat.env_sampler  = it->second.second;
+        mat.env_facing   = Vecf4(rgb(constant(0)), constant(2)[3] / 255.f);
+        mat.env_glancing = Vecf4(rgb(constant(1)), constant(3)[3] / 255.f);
     }
 
     /* Uploaded once per bitm tag; detail maps are shared by many shaders */
@@ -2680,6 +2740,10 @@ struct H2MapLoader : compo::SubsystemBase
     std::vector<u16>                 m_indices;
     std::unordered_map<u32, i32>     m_material_index; /* shad tag -> slot */
     std::unordered_map<u32, Texture> m_textures; /* bitm tag | image << 16 -> gpu */
+    std::unordered_map<
+        u16,
+        std::pair<std::shared_ptr<gfx::texture_cube_t>, std::shared_ptr<gfx::sampler_t>>>
+        m_cubes; /* bitm tag -> cube, unusable ones kept empty */
     struct SharedTexture
     {
         Texture texture;
