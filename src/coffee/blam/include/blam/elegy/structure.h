@@ -49,6 +49,17 @@ static_assert(sizeof(cluster_t) == 0xDC);
 struct instanced_geometry_definition_t;
 
 /*! A placement of an instanced_geometry_definition_t */
+enum class instance_flags_t : u16
+{
+    none                       = 0x0,
+    not_in_lightprobes         = 0x1,
+    render_only                = 0x2, /*!< Seen, never collided with (vistas) */
+    does_not_block_aoe_damage  = 0x4,
+    collidable                 = 0x8,
+    decal_spacing              = 0x10,
+};
+C_FLAGS(instance_flags_t, u16);
+
 struct instanced_geometry_t
 {
     be<f32>                                       scale;
@@ -57,7 +68,7 @@ struct instanced_geometry_t
     be<Vecf3>                                     up;
     be<Vecf3>                                     position;
     block_index<instanced_geometry_definition_t> definition;
-    be<u16>                                       flags;
+    be<instance_flags_t>                          flags;
     be<i16>                                       lightmap_texcoords;
     u16                                           unknown_0;
     be<i16>                                       subcluster_bitvector;
@@ -95,8 +106,13 @@ struct collision_material_t
     tag_reference render_method;
     be<i16>       global_material;
     be<i16>       conveyor_surface;
-    be<i16>       seam_mapping;
+    be<i16>       seam_mapping; /*!< Seals the BSP at this seam, -1 if not a sealer */
     u16           unknown_0;
+
+    inline bool seam_sealer() const
+    {
+        return seam_mapping.value() >= 0;
+    }
 };
 
 static_assert(sizeof(collision_material_t) == 0x18);
