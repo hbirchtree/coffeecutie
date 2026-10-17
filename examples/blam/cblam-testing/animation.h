@@ -2,6 +2,8 @@
 
 #include <array>
 #include <cstring>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include <blam/volta/blam_antr.h>
@@ -77,6 +79,9 @@ struct AnimationPlayback
 
     /* The entity's own graph, which names in play requests refer to */
     blam::antr::header const* graph{nullptr};
+
+    /* The unit (stance) its animations come from, as unit_set_seat picks */
+    std::string stance{"stand"};
 
     /* Faces: how open the mouth is (0-1), and the emotion frame shown */
     libc_types::f32 mouth{0.f};
@@ -247,12 +252,15 @@ struct AnimationPlayback
     }
 };
 
-/* Ground speed of a move clip of the "stand" unit's first weapon, from
- * its root motion; 0 when the graph has none */
+/* Ground speed of a move clip of a unit (stance) holding a weapon, from
+ * its root motion; the stance's first weapon stands in for one it lacks,
+ * 0 when the graph has none */
 inline libc_types::f32 move_speed(
     blam::antr::header const&                 graph,
     blam::antr::unit_weapon::animation_idx_t  slot,
-    blam::map_ptr const&                      magic)
+    blam::map_ptr const&                      magic,
+    std::string_view                          stance = "stand",
+    std::string_view                          weapon = {})
 {
     auto units = graph.units.data(magic);
     auto anims = graph.animations.data(magic);
@@ -260,14 +268,18 @@ inline libc_types::f32 move_speed(
         return 0.f;
     blam::antr::unit const* stand = nullptr;
     for(auto const& unit : units.value())
-        if(unit.label.str() == "stand")
+        if(unit.label.str() == stance)
             stand = &unit;
     if(!stand)
         return 0.f;
     auto weapons = stand->weapons.data(magic);
     if(!weapons.has_value() || weapons.value().empty())
         return 0.f;
-    auto refs = weapons.value()[0].animations.data(magic);
+    auto const* held = &weapons.value()[0];
+    for(auto const& candidate : weapons.value())
+        if(!weapon.empty() && candidate.name.str() == weapon)
+            held = &candidate;
+    auto refs = held->animations.data(magic);
     if(!refs.has_value() || static_cast<size_t>(slot) >= refs.value().size())
         return 0.f;
     libc_types::i16 const index = refs.value()[slot].animation;
