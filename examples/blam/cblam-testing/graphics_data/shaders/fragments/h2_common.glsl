@@ -49,11 +49,15 @@ layout(location=15) uniform vec3 illum_color;
 layout(location=14, binding=4) uniform sampler2DArray lightmaps;
 layout(location=29) uniform int bumped;
 layout(location=30, binding=6) uniform sampler2D bump;
+/* Environment reflection: facing and glancing tint, brightness in alpha */
+layout(location=36, binding=7) uniform samplerCube env;
+layout(location=37) uniform vec4 env_facing;
+layout(location=38) uniform vec4 env_glancing;
 #endif
 #if H2_SKY_MASK || H2_CLOUDS || H2_OCEAN || H2_PLASMA
 layout(location=18, binding=5) uniform sampler2D mask;
 #endif
-#if H2_WATER || H2_OCEAN
+#if !H2_SKY
 layout(location=21) uniform vec3 camera_position;
 #endif
 #if H2_OCEAN || H2_PLASMA
@@ -196,15 +200,22 @@ void main()
     /* Baked lighting where the geometry has it, the sun stand-in elsewhere;
      * baked light has no direction, so the bump shades relative to the sun */
     vec3 normal = surface_normal();
-    float bump_shade = 1.0;
-    if(bumped != 0)
-        bump_shade = sun_shade(bumped_normal(normal)) / sun_shade(normal);
-    if(f_lightmap.z >= 0.0)
-        color *= texture(lightmaps, f_lightmap).rgb * 2.0 * bump_shade;
-    else if(f_vertex_light.a > 0.0)
-        color *= f_vertex_light.rgb * 2.0 * bump_shade;
-    else
-        color *= sun_shade(normal) * bump_shade;
+    vec3 shading_normal = bumped != 0 ? bumped_normal(normal) : normal;
+    float bump_shade = sun_shade(shading_normal) / sun_shade(normal);
+    vec3 light = f_lightmap.z >= 0.0 ? texture(lightmaps, f_lightmap).rgb * 2.0
+               : f_vertex_light.a > 0.0 ? f_vertex_light.rgb * 2.0
+               : vec3(sun_shade(normal));
+    color *= light * bump_shade;
+    /* Reflection masked by the base map's alpha, lit like the surface */
+    if(env_facing.a + env_glancing.a > 0.0)
+    {
+        vec3 v = normalize(camera_position - f_world_pos);
+        vec3 r = reflect(-v, shading_normal);
+        float glance = pow(1.0 - clamp(dot(shading_normal, v), 0.0, 1.0), 2.0);
+        vec4 tint = mix(env_facing, env_glancing, glance);
+        color += texture(env, vec3(-r.y, r.z, r.x)).rgb * tint.rgb * tint.a *
+                 base.a * light;
+    }
 #if H2_ILLUM
     color += texture(illum, f_illum_uv).rgb * illum_color;
 #endif
