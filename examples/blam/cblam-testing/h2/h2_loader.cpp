@@ -1541,11 +1541,19 @@ struct H2MapLoader : compo::SubsystemBase
         /* One triangle list per material of this section */
         i32 fallback = static_cast<i32>(m_scene.materials.size()) - 1;
         std::unordered_map<i32, std::vector<u16>> tris;
+        /* A mirroring transform turns the winding around; keep fronts front */
+        bool const mirrored = glm::determinant(glm::mat3(transform)) < 0.f;
         auto emit = [&](std::vector<u16>& out, Span<const u16> range) {
+            auto tri = [&](u16 a, u16 b, u16 c) {
+                if(mirrored)
+                    out.insert(out.end(), {b, a, c});
+                else
+                    out.insert(out.end(), {a, b, c});
+            };
             if(!strip)
             {
                 for(size_t i = 0; i + 2 < range.size(); i += 3)
-                    out.insert(out.end(), {range[i], range[i + 1], range[i + 2]});
+                    tri(range[i], range[i + 1], range[i + 2]);
                 return;
             }
             for(size_t i = 2; i < range.size(); i++)
@@ -1554,9 +1562,9 @@ struct H2MapLoader : compo::SubsystemBase
                 if(a == b || b == c || a == c)
                     continue;
                 if(i % 2)
-                    out.insert(out.end(), {b, a, c});
+                    tri(b, a, c);
                 else
-                    out.insert(out.end(), {a, b, c});
+                    tri(a, b, c);
             }
         };
         auto index_span = Span<const u16>(indices.data(), indices.size());
