@@ -92,6 +92,7 @@ struct AnimationController
         }
         animate_first_person(p, files);
         animate_faces(p);
+        animate_turrets(p);
         end_actions(p);
 
         auto& cache = p.template subsystem<ModelCache<halo_version>>();
@@ -111,7 +112,8 @@ struct AnimationController
             /* First-person models too, for markers such as the muzzle */
             bool const posed = (info && info->biped.collision) ||
                                (physics && physics->upright) ||
-                               p.template get<Attachment>(ent.id()) != nullptr;
+                               p.template get<Attachment>(ent.id()) != nullptr ||
+                               m_aimed.contains(ent.id());
             if(posed && model && anim.graph)
             {
                 anim.pose.assign(cache.bone_count(model->model), Matf4(1));
@@ -656,7 +658,7 @@ struct AnimationController
             auto suspension = vehicle.suspension_animations.data(magic);
             for(size_t i = 0; suspension.has_value() &&
                               i < suspension.value().size() &&
-                              layer < AnimationPlayback::max_layers;
+                              layer < AnimationPlayback::talk_slot;
                 i++, layer++)
             {
                 auto const& s     = suspension.value()[i];
@@ -687,8 +689,49 @@ struct AnimationController
                         : 0.f;
                 frame_strip(anim.layers[layer], graph, s.animation.animation, travel, magic);
             }
-            for(; layer < AnimationPlayback::max_layers; layer++)
+            for(; layer < AnimationPlayback::talk_slot; layer++)
                 anim.layers[layer] = AnimationLayer{};
+        }
+    }
+
+    /* A gunner's look turns the vehicle's gun: its aim-still grid, in the
+     * vehicle's own frame */
+    void animate_turrets(Proxy& p)
+    {
+        using seat_flags  = blam::scn::unit::seat_t::seat_flags_t;
+        using unit_flags  = blam::scn::unit::unit_flags_t;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        m_aimed.clear();
+        for(auto rider : p.template select<PlayerInfo, PlayerCamera>())
+        {
+            auto [info, cam] = rider.components();
+            u64 const   id   = info.riding.vehicle;
+            auto*       anim = id ? p.template get<AnimationPlayback>(id) : nullptr;
+            auto const* model = id ? p.template get<Model>(id) : nullptr;
+            if(!anim || !anim->graph || !model || !model->origin_object || info.riding.exiting)
+                continue;
+            auto unit = model->origin_object->template data<blam::scn::unit>(magic);
+            if(!unit.has_value())
+                continue;
+            auto seats = unit.value()[0].seats.data(magic);
+            if(!seats.has_value() || info.riding.seat < 0 ||
+               static_cast<size_t>(info.riding.seat) >= seats.value().size() ||
+               (seats.value()[info.riding.seat].flags & seat_flags::gunner) == seat_flags::none)
+                continue;
+            auto const& st = stance(p, anim->graph, "stand", "fixed");
+            Vecf3 const look  = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+            Vecf3 const local = glm::conjugate(model->rotation) * look;
+            auto&       layer = anim->layers[AnimationPlayback::turret_slot];
+            aim(layer,
+                anim->graph,
+                st[Slot::aim_still],
+                st.aim,
+                std::asin(std::clamp(local.z, -1.f, 1.f)),
+                1.f,
+                std::atan2(local.y, local.x));
+            layer.grid_wrap = (unit.value()[0].unit_flags & unit_flags::circular_aiming) !=
+                              unit_flags::none;
+            m_aimed.insert(id);
         }
     }
 
@@ -1197,6 +1240,7 @@ struct AnimationController
     std::map<std::pair<blam::antr::header const*, std::string>, i32> m_names;
     std::map<u64, walker_t>                      m_walkers;
     std::map<u64, custom_t>                      m_custom;
+    std::set<u64>                                m_aimed; /* turrets a gunner turns */
     std::vector<PlayModelAnimationEvent>         m_requests;
     std::vector<WeaponFireEvent>                 m_shots;
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
