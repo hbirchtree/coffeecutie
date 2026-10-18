@@ -100,6 +100,8 @@ struct InstanceData {
     int  light_layer;
     uint light_uv;
     uint light_dir;
+    uvec2 cut_bones; /* clipped away: a player's own body above its legs */
+    uvec2 cut_padding;
 };
 
 layout(binding = 0, std140) uniform MatrixStore

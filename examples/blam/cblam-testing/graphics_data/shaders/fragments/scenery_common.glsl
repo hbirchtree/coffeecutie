@@ -29,6 +29,8 @@ struct InstanceData {
     int  light_layer;
     uint light_uv;
     uint light_dir;
+    uvec2 cut_bones; /* clipped away: a player's own body above its legs */
+    uvec2 cut_padding;
 };
 
 layout(binding = 0, std140) uniform MatrixStore
@@ -61,6 +63,9 @@ layout(location = 0) out FragData {
 
 out gl_PerVertex {
     vec4 gl_Position;
+#ifndef GL_ES
+    float gl_ClipDistance[1];
+#endif
 };
 
 #include "unpack_uvec3.glsl"
@@ -104,6 +109,16 @@ void main()
         local_tan    = skin * local_tan;
         local_bin    = skin * local_bin;
     }
+#endif
+
+#ifndef GL_ES
+    /* Whichever bone a vertex mostly follows decides if it is cut */
+    uvec2 cut      = matrices.data[gl_InstanceID].cut_bones;
+    uint  dominant = node_weights.x >= node_weights.y ? node_indices.x : node_indices.y;
+    bool  hidden   = dominant < 32u ? ((cut.x >> dominant) & 1u) != 0u
+                   : dominant < 64u ? ((cut.y >> (dominant - 32u)) & 1u) != 0u
+                                    : false;
+    gl_ClipDistance[0] = hidden ? -1.0 : 1.0;
 #endif
 
     vec4 world_pos = transform * local_pos;
