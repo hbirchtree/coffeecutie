@@ -5,7 +5,8 @@
  * Casters and static geometry give the light's dynamic and static
  * visibility, d and s; a cast shadow takes away s * (1 - d), the light the
  * static scene lets through and the casters block, as min(s, d) would
- * have it. Shade the static scene already gives is the baked lighting's. */
+ * have it. Shade the static scene already gives is the baked lighting's,
+ * which is soft, so s is softened to match while d stays sharp. */
 #ifndef CSM_LOCATION
 #define CSM_LOCATION 56
 #endif
@@ -30,7 +31,8 @@ layout(location=CSM_LOCATION + 18) uniform vec4 csm_tiles[4];
 /* A texel's world size as depth, per cascade */
 layout(location=CSM_LOCATION + 22) uniform vec4 csm_bias;
 /* The static world from the light: world to uv + depth, and its texel
- * world size, texel depth, whether there is one */
+ * world size, texel depth, whether there is one, and the world radius the
+ * static visibility is softened over */
 layout(location=CSM_LOCATION + 23) uniform mat4 csm_occluder;
 layout(location=CSM_LOCATION + 27) uniform vec4 csm_occluder_info;
 layout(binding=CSM_BINDING) uniform sampler2D csm_atlas;
@@ -38,33 +40,63 @@ layout(binding=CSM_OCCLUDER_BINDING) uniform sampler2D csm_occluder_atlas;
 /* The static world per cascade, in the same tiles as the casters */
 layout(binding=CSM_OCCLUDER_TILES_BINDING) uniform sampler2D csm_occluder_tiles;
 
-/* Depth bias of `texel_depth` scaled by the slope to the light */
-float slope_bias(float texel_depth, float facing)
+/* How steeply a surface facing the light by `facing` tilts away from it */
+float light_slope(float facing)
 {
-    float slope = sqrt(max(1.0 - facing * facing, 0.0)) / max(facing, 0.05);
-    return texel_depth * (1.0 + min(slope, 4.0));
+    return min(sqrt(max(1.0 - facing * facing, 0.0)) / max(facing, 0.05), 4.0);
+}
+
+/* Static visibility over a disc of csm_occluder_info.w world units around
+ * the receiver, so a cast shadow fades where it meets the static scene's
+ * shade about as softly as the baked lighting draws it. Taps further out
+ * allow for the surface sloping away from the light. */
+float soft_visibility(
+    sampler2D map,
+    vec2      uv,
+    float     z,
+    vec4      rect,
+    vec2      uv_per_world,
+    float     depth_per_world,
+    float     bias,
+    float     slope)
+{
+    float radius = csm_occluder_info.w;
+    float lit    = 0.0;
+    for(int y = -2; y <= 2; y++)
+        for(int x = -2; x <= 2; x++)
+        {
+            vec2  o    = vec2(x, y) * 0.5 * radius;
+            vec2  at   = clamp(uv + o * uv_per_world, rect.xy, rect.zw);
+            float tilt = length(o) * slope * depth_per_world;
+            lit += step(z - bias - tilt, texture(map, at).r);
+        }
+    return lit * (1.0 / 25.0);
 }
 
 /* Static visibility from the world occluder map, for cascades without
  * occluder tiles: 1 = the light reaches `world` */
-float world_visibility(vec3 world, vec3 n, float facing)
+float world_visibility(vec3 world, vec3 n, float slope)
 {
     if(csm_occluder_info.z < 0.5)
         return 1.0;
     vec4 p = csm_occluder * vec4(world + n * csm_occluder_info.x, 1.0);
     if(any(lessThan(p.xy, vec2(0.0))) || any(greaterThan(p.xy, vec2(1.0))) || p.z >= 1.0)
         return 1.0;
-    vec2  texel = 1.0 / vec2(textureSize(csm_occluder_atlas, 0));
-    float bias  = slope_bias(csm_occluder_info.y, facing);
-    float lit   = 0.0;
-    for(int y = -1; y <= 1; y++)
-        for(int x = -1; x <= 1; x++)
-            lit += step(p.z - bias, texture(csm_occluder_atlas, p.xy + vec2(x, y) * texel).r);
-    return lit * (1.0 / 9.0);
+    vec2 texel = 1.0 / vec2(textureSize(csm_occluder_atlas, 0));
+    return soft_visibility(
+        csm_occluder_atlas,
+        p.xy,
+        p.z,
+        vec4(0.0, 0.0, 1.0, 1.0),
+        texel / csm_occluder_info.x,
+        csm_occluder_info.y / csm_occluder_info.x,
+        csm_occluder_info.y * (1.0 + slope),
+        slope);
 }
 
 /* How much of the light along `to_light` the casters take from `world`:
- * 0 = none */
+ * 0 = none. The casters' shadow is sharp; the static scene's visibility
+ * that gates it is soft. */
 float cascade_occlusion(vec3 world, vec3 n, vec3 to_light, vec3 eye)
 {
     int   count  = int(csm_params.x);
@@ -72,7 +104,8 @@ float cascade_occlusion(vec3 world, vec3 n, vec3 to_light, vec3 eye)
     float dist   = distance(world, eye);
     if(count == 0 || facing <= 0.0 || dist >= csm_params.z)
         return 0.0;
-    vec2 texel = 1.0 / vec2(textureSize(csm_atlas, 0));
+    vec2  texel = 1.0 / vec2(textureSize(csm_atlas, 0));
+    float slope = light_slope(facing);
     for(int i = 0; i < count; i++)
     {
         /* Normal offset keeps lit faces off their own depth */
@@ -80,21 +113,25 @@ float cascade_occlusion(vec3 world, vec3 n, vec3 to_light, vec3 eye)
         if(any(lessThan(p.xy, csm_tiles[i].xy)) ||
            any(greaterThan(p.xy, csm_tiles[i].zw)) || p.z >= 1.0)
             continue;
-        bool  tiles  = i < int(csm_params.w + 0.5);
-        float bias   = slope_bias(csm_bias[i], facing);
+        float bias   = csm_bias[i] * (1.0 + slope);
         float hidden = 0.0;
         for(int y = -1; y <= 1; y++)
             for(int x = -1; x <= 1; x++)
-            {
-                vec2  uv      = p.xy + vec2(x, y) * texel;
-                float blocked = step(texture(csm_atlas, uv).r, p.z - bias);
-                if(tiles && blocked > 0.0)
-                    blocked *= step(p.z - bias, texture(csm_occluder_tiles, uv).r);
-                hidden += blocked;
-            }
+                hidden += step(texture(csm_atlas, p.xy + vec2(x, y) * texel).r, p.z - bias);
         hidden *= 1.0 / 9.0;
-        if(!tiles && hidden > 0.0)
-            hidden *= world_visibility(world, n, facing);
+        if(hidden <= 0.0)
+            return 0.0;
+        hidden *= i < int(csm_params.w + 0.5)
+                      ? soft_visibility(
+                            csm_occluder_tiles,
+                            p.xy,
+                            p.z,
+                            csm_tiles[i],
+                            texel / csm_texel[i],
+                            csm_bias[i] / csm_texel[i],
+                            bias,
+                            slope)
+                      : world_visibility(world, n, slope);
         float fade = 1.0 - smoothstep(csm_params.z * 0.8, csm_params.z, dist);
         return hidden * fade * smoothstep(0.0, 0.2, facing);
     }
