@@ -85,7 +85,8 @@ std::vector<Matf4> node_matrices(
     std::vector<Matf4> world(nodes.size(), Matf4(1.f));
     for(size_t i = 0; i < nodes.size() && i < pose.size(); i++)
     {
-        Matf4 const local  = glm::translate(Matf4(1.f), pose[i].translation) * glm::mat4_cast(pose[i].rotation);
+        Matf4 const local  = glm::translate(Matf4(1.f), pose[i].translation) * glm::mat4_cast(pose[i].rotation) *
+                            glm::scale(Matf4(1.f), Vecf3(pose[i].scale));
         i16 const   parent = nodes[i].parent.value();
         world[i] = parent >= 0 && static_cast<size_t>(parent) < i ? world[static_cast<size_t>(parent)] * local
                                                                  : local;

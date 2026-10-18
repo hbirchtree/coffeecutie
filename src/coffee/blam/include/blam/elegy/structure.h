@@ -499,7 +499,8 @@ struct scenario_t
     std::array<u8, 0xC>              unknown_5;
     tag_block<machine_placement_t>   machines;
     tag_block<palette_entry_t>       machine_palette;
-    std::array<u8, 0xFC>             unknown_6;
+    std::array<u8, 0xF0>             unknown_6;
+    tag_block<starting_profile_t>    starting_profiles;
     tag_block<starting_location_t>   starting_locations;
     tag_block<trigger_volume_t>      trigger_volumes;
     std::array<u8, 0xC>              unknown_8;
@@ -522,6 +523,7 @@ static_assert(offsetof(scenario_t, vehicles) == 0xEC);
 static_assert(offsetof(scenario_t, weapons) == 0x11C);
 static_assert(offsetof(scenario_t, machines) == 0x140);
 static_assert(offsetof(scenario_t, zone_sets) == 0x54);
+static_assert(offsetof(scenario_t, starting_profiles) == 0x248);
 static_assert(offsetof(scenario_t, starting_locations) == 0x254);
 static_assert(offsetof(scenario_t, trigger_volumes) == 0x260);
 static_assert(offsetof(scenario_t, zone_set_switch_triggers) == 0x278);

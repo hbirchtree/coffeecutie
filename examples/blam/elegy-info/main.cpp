@@ -4,6 +4,7 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_args.h>
 
+#include <blam/elegy/animation.h>
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/collision.h>
 #include <blam/elegy/physics.h>
@@ -51,6 +52,8 @@ struct options_t
     bool        nodes;
     bool        lights;
     bool        zones;
+    bool        player;
+    bool        animations;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -330,6 +333,8 @@ int dump_models(
             regions.size(),
             nodes.size(),
             model->materials.count());
+        for(auto const& material : map.span(model->materials))
+            fmt::print("  material '{}'\n", map.name_of(material.render_method));
         for(auto const& region : regions)
             for(auto const& perm : region.permutations.span(magic))
                 fmt::print(
@@ -999,6 +1004,82 @@ int dump_zones(elegy::map_container const& map)
     return 0;
 }
 
+/* What the player is drawn with: the globals' representations, and the
+ * first-person models of the weapons the starting profiles hand out */
+int dump_player(elegy::map_container const& map)
+{
+    if(auto const globals = map.find<elegy::phys::globals_t>())
+    {
+        auto reps = map.span(globals->player_representations);
+        for(size_t i = 0; i < reps.size(); i++)
+        {
+            fmt::print("representation {}: hands '{}' body '{}' unit '{}' variant '{}'\n", i,
+                       map.name_of(reps[i].first_person_hands), map.name_of(reps[i].first_person_body),
+                       map.name_of(reps[i].third_person_unit), map.string(reps[i].third_person_variant));
+            auto const unit = map.get<elegy::object_t>(reps[i].third_person_unit);
+            if(!unit)
+                continue;
+            auto colors = map.span(unit->change_colors);
+            for(size_t c = 0; c < colors.size(); c++)
+                for(auto const& p : map.span(colors[c].initial_permutations))
+                {
+                    Vecf3 const lo = p.lower_bound, hi = p.upper_bound;
+                    fmt::print("  change color {}: weight {} ({:.3f}, {:.3f}, {:.3f}) - ({:.3f}, {:.3f}, {:.3f}) "
+                               "variant '{}'\n",
+                               c, p.weight.value(), lo.x, lo.y, lo.z, hi.x, hi.y, hi.z, map.string(p.variant));
+                }
+        }
+    }
+    auto print_weapon = [&](std::string_view slot, elegy::tag_reference const& ref) {
+        auto const weapon = map.get<elegy::weapon_t>(ref);
+        if(!weapon)
+            return;
+        Vecf3 const offset = weapon->first_person_offset;
+        fmt::print("  {} '{}' offset ({:.3f}, {:.3f}, {:.3f})\n", slot, map.name_of(*weapon.tag), offset.x, offset.y,
+                   offset.z);
+        auto fps = map.span(weapon->first_person);
+        for(size_t i = 0; i < fps.size(); i++)
+            fmt::print("    first person {}: model '{}' animations '{}'\n", i, map.name_of(fps[i].model),
+                       map.name_of(fps[i].animations));
+    };
+    if(auto const scenario = map.find<elegy::scenario_t>())
+        for(auto const& profile : map.span(scenario->starting_profiles))
+        {
+            fmt::print("starting profile '{}'\n",
+                       std::string_view(profile.name.data(), strnlen(profile.name.data(), profile.name.size())));
+            print_weapon("primary", profile.primary_weapon);
+            print_weapon("secondary", profile.secondary_weapon);
+        }
+    return 0;
+}
+
+/* Animation graphs: their animations, each decoded */
+int dump_animations(elegy::map_container const& map, elegy::resource_loader& loader, options_t const& options)
+{
+    u32 decoded = 0, failed = 0;
+    for(auto const& tag : map.tags())
+    {
+        if(!tag.valid() || !map.is(tag, elegy::animation_graph_t::group) ||
+           map.name_of(tag).find(options.name_filter) == std::string_view::npos)
+            continue;
+        auto const* graph = map.tag_data<elegy::animation_graph_t>(tag);
+        auto        anims = map.span(graph->animations);
+        fmt::print("{}: {} nodes, {} animations, {} resource groups\n", map.name_of(tag),
+                   map.span(graph->nodes).size(), anims.size(), map.span(graph->resource_groups).size());
+        for(auto const& a : anims)
+        {
+            auto const out = elegy::decode_animation(map, loader, *graph, a);
+            (out ? decoded : failed)++;
+            fmt::print("  '{}' frames {} nodes {} group {}:{}: {}\n", map.string(a.name), a.frame_count.value(),
+                       a.node_count, a.resource_group.value(), a.resource_group_member.value(),
+                       out ? "decoded" : "FAILED");
+        }
+        loader.trim();
+    }
+    fmt::print("animations: {} decoded, {} failed\n", decoded, failed);
+    return failed ? 1 : 0;
+}
+
 /* Lights: their shape and the raw functions colour and intensity follow */
 int dump_lights(elegy::map_container const& map, options_t const& options)
 {
@@ -1464,6 +1545,10 @@ int run_map(
         rc |= dump_lights(map, options);
     if(options.zones)
         rc |= dump_zones(map);
+    if(options.player)
+        rc |= dump_player(map);
+    if(options.animations)
+        rc |= dump_animations(map, *loader, options);
     return rc;
 }
 
@@ -1503,6 +1588,10 @@ i32 coffee_main(i32, cstring_w*)
         ("lights", "List lights and the functions their colour and intensity follow")
         //
         ("zones", "List zone sets and the triggers switching between them")
+        //
+        ("player", "List player representations and starting weapons' first-person models")
+        //
+        ("animations", "List animation graphs and their animations")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1552,6 +1641,8 @@ i32 coffee_main(i32, cstring_w*)
         .nodes        = arguments.count("nodes") > 0,
         .lights       = arguments.count("lights") > 0,
         .zones        = arguments.count("zones") > 0,
+        .player       = arguments.count("player") > 0,
+        .animations   = arguments.count("animations") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),

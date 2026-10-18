@@ -1,6 +1,7 @@
 #include "h3_scene.h"
 
 #include "data.h"
+#include "player_controller.h"
 #include "render/cascaded_shadows.h"
 #include "resource_creation.h"
 
@@ -84,6 +85,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             m_start = now;
         f32 const seconds = std::chrono::duration<f32>(now - m_start).count();
         render_shadows(p, scene, *camera);
+        Model first_person{};
+        place_first_person(*camera, camera->camera.position, Attachment{}, first_person);
         auto const& csm_atlas = m_shadows.valid() ? m_shadows.sampler() : m_white_sampler;
         /* Opaque first, then water over a copy of the scene, then alpha
          * blended, then additive */
@@ -128,7 +131,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 auto view = gfx::view_state{
                     .view = typing::vector_types::Veci4{
                         0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
-                    .depth = gfx::depth_state{.reversed = true},
+                    .depth = gfx::depth_state{.range = typing::vector_types::Vecd2{0.0, 1.0}, .reversed = true},
                 };
                 auto submit_draws = [&](auto& frag_u, auto& samplers, auto const& draws) {
                     return m_api->submit(
@@ -157,6 +160,17 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         out = submit_draws(frag_u, samplers, mat.draws);
                     for(auto const& object : params.render_scenery ? mat.object_draws : no_objects)
                     {
+                        /* In front of everything, so it never reaches into walls */
+                        if(object.entity == first_person_entity)
+                        {
+                            model_matrix     = first_person.transform;
+                            light_count      = pack_lights(p, scene, camera->camera.position);
+                            view.depth->range = typing::vector_types::Vecd2{first_person_depth, 1.0};
+                            if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
+                                out = res;
+                            view.depth->range = typing::vector_types::Vecd2{0.0, 1.0};
+                            continue;
+                        }
                         auto const* placed = p.template get<Model>(object.entity);
                         if(!placed)
                             continue;
@@ -836,6 +850,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::program_t>             m_copy_program;
     std::shared_ptr<gfx::program_t>             m_shadow_program;
     blam_render::CascadedShadowMap              m_shadows;
+    /* The near slice of the depth range the first-person models draw into */
+    static constexpr double first_person_depth = 0.98;
     blam_render::CascadedShadowMap::sampling_t  m_shadow_sampling{};
     std::shared_ptr<gfx::texture_2d_t>          m_copy;
     std::shared_ptr<gfx::rendertarget_t>        m_copy_rt;

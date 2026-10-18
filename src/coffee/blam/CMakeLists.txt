@@ -12,6 +12,7 @@ if(NOT (GAMECUBE OR WII))
   list(APPEND BLAM_LIBS Image CoreZ GLTextureFormats)
   if(BUILD_BLAM_ELEGY)
     list(APPEND BLAM_SOURCES
+        private/elegy/animation.cpp
         private/elegy/bitmap.cpp
         private/elegy/collision.cpp
         private/elegy/geometry.cpp
