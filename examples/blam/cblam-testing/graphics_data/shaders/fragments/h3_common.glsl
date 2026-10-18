@@ -102,10 +102,13 @@ layout(location=202) uniform vec4 intensity_scales[2];
 #define CSM_OCCLUDER_TILES_BINDING 17
 #include "cascaded_shadows.glsl"
 layout(location=232) uniform vec3 sun_direction;
-/* An object's baked light from the lightmap under it: l0-l3, then the
- * dominant intensity; taken instead of its vertex light when set */
+/* The first person's baked light from the lightmap under the camera: l0-l3,
+ * then the dominant intensity; taken instead of its vertex light when set */
 layout(location=233) uniform vec4 object_light[5];
 layout(location=238) uniform int object_lit;
+/* Placed objects' baked light, a row of five texels as object_light each;
+ * their vertices carry the row, with lightmap z -2 */
+layout(location=239, binding=18) uniform sampler2D object_lights;
 #include "h3_atmosphere.glsl"
 layout(location=8) in vec4 f_vertex_light;
 
@@ -226,11 +229,21 @@ baked_light_t sample_baked_light()
 baked_light_t object_baked_light()
 {
     baked_light_t light;
-    light.l0        = object_light[0].rgb;
-    light.l1        = object_light[1].rgb;
-    light.l2        = object_light[2].rgb;
-    light.l3        = object_light[3].rgb;
-    light.intensity = object_light[4].rgb;
+    if(object_lit != 0)
+    {
+        light.l0        = object_light[0].rgb;
+        light.l1        = object_light[1].rgb;
+        light.l2        = object_light[2].rgb;
+        light.l3        = object_light[3].rgb;
+        light.intensity = object_light[4].rgb;
+        return finish_baked_light(light);
+    }
+    int row         = int(f_lightmap.x + 0.5);
+    light.l0        = texelFetch(object_lights, ivec2(0, row), 0).rgb;
+    light.l1        = texelFetch(object_lights, ivec2(1, row), 0).rgb;
+    light.l2        = texelFetch(object_lights, ivec2(2, row), 0).rgb;
+    light.l3        = texelFetch(object_lights, ivec2(3, row), 0).rgb;
+    light.intensity = texelFetch(object_lights, ivec2(4, row), 0).rgb;
     return finish_baked_light(light);
 }
 
@@ -546,7 +559,7 @@ void main()
     if(debug_view == 4)
         color = vec3(1.0);
     bool baked  = (debug_off & 4) == 0;
-    bool object = f_lightmap.z < 0.0 && object_lit != 0;
+    bool object = f_lightmap.z < 0.0 && (object_lit != 0 || f_lightmap.z < -1.5);
     if((f_lightmap.z >= 0.0 || object) && baked)
     {
         baked_light_t light = object ? object_baked_light() : sample_baked_light();
