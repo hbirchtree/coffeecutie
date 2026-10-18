@@ -1703,6 +1703,13 @@ struct MeshRenderer
 
     blam_render::CascadedShadowMap m_shadows;
     std::vector<draw_data_t>        m_shadow_draws;
+    struct static_chunk_t
+    {
+        Vecf3       center;
+        f32         radius;
+        draw_data_t draw;
+    };
+    std::vector<static_chunk_t> m_static_chunks;
     std::unordered_set<u64>         m_shadow_seen;
 
     EffectDrawer<Version> m_effects;
@@ -1897,6 +1904,7 @@ struct MeshRenderer
                 256,
                 4096),
             .occluder_resolution = m_resources.shadow_occluder_pipeline ? 4096u : 0u,
+            .occluder_tiles      = m_resources.shadow_occluder_pipeline != nullptr,
         };
         auto const& have = m_shadows.config();
         if(!m_shadows.valid() || have.views != want.views ||
@@ -2016,6 +2024,63 @@ struct MeshRenderer
         for(u32 v = 0; v < views; v++)
             for(u32 c = 0; c < m_shadows.config().view_cascades; c++)
                 draw(v, m_shadows.view_tile(v, c), false);
+        render_occluder_tiles(p, views);
+    }
+
+    /* The opaque BSP around each seat into its cascades' occluder tiles, at
+     * their resolution: thin ledges and roofs the world map misses */
+    void render_occluder_tiles(Proxy& p, u32 views)
+    {
+        if(!m_shadows.occluder_tiles_target())
+            return;
+        m_static_chunks.clear();
+        for(auto ent : p.template select<BspReference, DrawState>())
+        {
+            auto const& [ref, state] = ent.components();
+            if(!ref.has_bounds || state.draw.data.empty() ||
+               state.current_pass < Pass_Opaque || state.current_pass > Pass_LastOpaque)
+                continue;
+            m_static_chunks.push_back({
+                .center = (ref.bmin + ref.bmax) * .5f,
+                .radius = glm::distance(ref.bmin, ref.bmax) * .5f,
+                .draw   = state.draw.data.front(),
+            });
+        }
+        auto _ = m_api->debug().scope("Shadow occluder tiles");
+        for(u32 v = 0; v < views; v++)
+            for(u32 c = 0; c < m_shadows.config().view_cascades; c++)
+            {
+                u32 const tile = m_shadows.view_tile(v, c);
+                m_shadow_draws.clear();
+                for(auto const& chunk : m_static_chunks)
+                    if(m_shadows.covers(tile, chunk.center, chunk.radius))
+                        m_shadow_draws.push_back(chunk.draw);
+                if(m_shadow_draws.empty())
+                    continue;
+                Matf4 const light = m_shadows.light_matrix(tile);
+                auto res = m_api->submit(
+                    {
+                        .program       = m_resources.shadow_occluder_pipeline,
+                        .vertices      = m_resources.bsp_attr,
+                        .render_target = m_shadows.occluder_tiles_target(),
+                        .call =
+                            gfx::draw_command::call_spec_t{
+                                .indexed = true,
+                                .mode    = gfx::drawing::primitive::triangle,
+                            },
+                        .data = m_shadow_draws,
+                    },
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Vertex,
+                        gfx::uniform_pair{
+                            {"camera"sv, 1}, semantic::SpanOne<const Matf4>(light)}),
+                    gfx::view_state{
+                        .view  = m_shadows.viewport(tile),
+                        .depth = gfx::depth_state{},
+                    });
+                if(res)
+                    cFatal("submit error: {}", std::get<1>(*res));
+            }
     }
 
     /* What a seat's receivers sample; nothing with shadows off */
@@ -2376,6 +2441,11 @@ struct MeshRenderer
                     typing::graphics::ShaderStage::Fragment,
                     {"csm_occluder_atlas"sv, 16},
                     m_shadows.occluder_sampler()});
+            if(m_shadows.occluder_tiles_sampler())
+                samplers.push_back(gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"csm_occluder_tiles"sv, 17},
+                    m_shadows.occluder_tiles_sampler()});
         }
 
         auto cube_fallback = reflection_fallback(pass);
@@ -2517,6 +2587,11 @@ struct MeshRenderer
                     typing::graphics::ShaderStage::Fragment,
                     {"csm_occluder_atlas"sv, 16},
                     m_shadows.occluder_sampler()});
+            if(m_shadows.occluder_tiles_sampler())
+                samplers.push_back(gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"csm_occluder_tiles"sv, 17},
+                    m_shadows.occluder_tiles_sampler()});
         }
         auto cube_fallback = reflection_fallback(pass);
 
