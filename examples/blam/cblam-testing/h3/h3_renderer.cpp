@@ -87,6 +87,16 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         render_shadows(p, scene, *camera);
         Model first_person{};
         place_first_person(*camera, camera->camera.position, Attachment{}, first_person);
+        /* The first person's light from the lightmap under the camera, looked
+         * up again once it has moved a metre */
+        if(glm::distance(m_first_person_at, camera->camera.position) > 1.f || m_first_person_generation != scene.generation)
+        {
+            m_first_person_at         = camera->camera.position;
+            m_first_person_generation = scene.generation;
+            auto const below          = scene.light_below(m_first_person_at);
+            m_first_person_light      = below ? std::optional(h3::packed(*below)) : std::nullopt;
+        }
+        auto const& first_person_light = m_first_person_light;
         auto const& csm_atlas = m_shadows.valid() ? m_shadows.sampler() : m_white_sampler;
         /* Opaque first, then water over a copy of the scene, then alpha
          * blended, then additive */
@@ -150,25 +160,42 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::blend_state{.additive = mat.additive});
                 };
                 static std::vector<ObjectDraws> const no_objects;
+                std::array<Vecf4, 5>                  object_light{};
+                i32                                   object_lit = 0;
                 /* The level, then each object where its Model is */
                 auto submit = [&](auto& frag_u, auto& samplers) {
                     std::optional<std::tuple<gfx::error, std::string_view>> out;
                     model_matrix = Matf4(1.f);
+                    object_lit   = 0;
                     /* The level by the lights nearest the camera, objects by theirs */
                     light_count = pack_lights(p, scene, camera->camera.position);
                     if(!mat.draws.empty())
                         out = submit_draws(frag_u, samplers, mat.draws);
                     for(auto const& object : params.render_scenery ? mat.object_draws : no_objects)
                     {
+                        object_lit = object.light ? 1 : 0;
+                        if(object.light)
+                            object_light = *object.light;
                         /* In front of everything, so it never reaches into walls */
                         if(object.entity == first_person_entity)
                         {
+                            object_lit = first_person_light ? 1 : 0;
+                            if(first_person_light)
+                                object_light = *first_person_light;
                             model_matrix     = first_person.transform;
                             light_count      = pack_lights(p, scene, camera->camera.position);
                             view.depth->range = typing::vector_types::Vecd2{first_person_depth, 1.0};
                             if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
                                 out = res;
                             view.depth->range = typing::vector_types::Vecd2{0.0, 1.0};
+                            continue;
+                        }
+                        if(in_place(object.entity))
+                        {
+                            model_matrix = Matf4(1.f);
+                            light_count  = pack_lights(p, scene, object.position);
+                            if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
+                                out = res;
                             continue;
                         }
                         auto const* placed = p.template get<Model>(object.entity);
@@ -252,6 +279,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf3 const>{
                             {"sun_direction"}, semantic::SpanOne<const Vecf3>(scene.sun_direction)},
                         gfx::uniform_pair<Vecf4 const>{
+                            {"object_light"}, semantic::Span<const Vecf4>(object_light.data(), object_light.size())},
+                        gfx::uniform_pair<const i32>{{"object_lit"}, semantic::SpanOne<const i32>(object_lit)},
+                        gfx::uniform_pair<Vecf4 const>{
                             {"atmosphere"},
                             semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
                         gfx::uniform_pair<Vecf3 const>{
@@ -322,6 +352,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"csm_occluder_info"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.occluder_info)},
                         gfx::uniform_pair<Vecf3 const>{
                             {"sun_direction"}, semantic::SpanOne<const Vecf3>(scene.sun_direction)},
+                        gfx::uniform_pair<Vecf4 const>{
+                            {"object_light"}, semantic::Span<const Vecf4>(object_light.data(), object_light.size())},
+                        gfx::uniform_pair<const i32>{{"object_lit"}, semantic::SpanOne<const i32>(object_lit)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"atmosphere"},
                             semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
@@ -850,6 +883,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::program_t>             m_copy_program;
     std::shared_ptr<gfx::program_t>             m_shadow_program;
     blam_render::CascadedShadowMap              m_shadows;
+    Vecf3                               m_first_person_at{1e9f};
+    u32                                 m_first_person_generation{0};
+    std::optional<std::array<Vecf4, 5>> m_first_person_light;
     /* The near slice of the depth range the first-person models draw into */
     static constexpr double first_person_depth = 0.98;
     blam_render::CascadedShadowMap::sampling_t  m_shadow_sampling{};
