@@ -102,6 +102,10 @@ layout(location=202) uniform vec4 intensity_scales[2];
 #define CSM_OCCLUDER_TILES_BINDING 17
 #include "cascaded_shadows.glsl"
 layout(location=232) uniform vec3 sun_direction;
+/* An object's baked light from the lightmap under it: l0-l3, then the
+ * dominant intensity; taken instead of its vertex light when set */
+layout(location=233) uniform vec4 object_light[5];
+layout(location=238) uniform int object_lit;
 #include "h3_atmosphere.glsl"
 layout(location=8) in vec4 f_vertex_light;
 
@@ -192,6 +196,20 @@ struct baked_light_t
     float shadow;        /* Of the dominant light that gets through */
 };
 
+/* The dominant light's direction, and how much of it a cast shadow leaves */
+baked_light_t finish_baked_light(baked_light_t light)
+{
+    const vec3 lum = vec3(0.212656, 0.715158, 0.0721856);
+    vec3 dir = vec3(-dot(light.l3, lum), -dot(light.l1, lum), dot(light.l2, lum));
+    light.dir = dot(dir, dir) > 1e-12 ? normalize(dir) : vec3(0.0, 0.0, 1.0);
+    /* A cast shadow takes away the dominant light where that is the sun */
+    float sunlit = smoothstep(0.85, 0.97, dot(light.dir, sun_direction)) *
+                   smoothstep(0.02, 0.1, dot(light.intensity, lum));
+    light.shadow = 1.0 - csm_params.z * sunlit *
+                             cascade_occlusion(f_world_pos, surface_normal(), sun_direction, camera_position);
+    return light;
+}
+
 baked_light_t sample_baked_light()
 {
     baked_light_t light;
@@ -202,15 +220,18 @@ baked_light_t sample_baked_light()
     light.l2 = lightprobe_coefficient(4.0, scale.z);
     light.l3 = lightprobe_coefficient(6.0, scale.w);
     light.intensity = lightprobe_coefficient(8.0, intensity_scales[slot / 4][slot % 4]);
-    const vec3 lum = vec3(0.212656, 0.715158, 0.0721856);
-    vec3 dir = vec3(-dot(light.l3, lum), -dot(light.l1, lum), dot(light.l2, lum));
-    light.dir = dot(dir, dir) > 1e-12 ? normalize(dir) : vec3(0.0, 0.0, 1.0);
-    /* A cast shadow takes away the dominant light where that is the sun */
-    float sunlit = smoothstep(0.85, 0.97, dot(light.dir, sun_direction)) *
-                   smoothstep(0.02, 0.1, dot(light.intensity, lum));
-    light.shadow = 1.0 - csm_params.z * sunlit *
-                             cascade_occlusion(f_world_pos, surface_normal(), sun_direction, camera_position);
-    return light;
+    return finish_baked_light(light);
+}
+
+baked_light_t object_baked_light()
+{
+    baked_light_t light;
+    light.l0        = object_light[0].rgb;
+    light.l1        = object_light[1].rgb;
+    light.l2        = object_light[2].rgb;
+    light.l3        = object_light[3].rgb;
+    light.intensity = object_light[4].rgb;
+    return finish_baked_light(light);
 }
 
 /* SH linear terms dotted with a direction, per channel, as Halo 3 packs
@@ -524,10 +545,11 @@ void main()
     }
     if(debug_view == 4)
         color = vec3(1.0);
-    bool baked = (debug_off & 4) == 0;
-    if(f_lightmap.z >= 0.0 && baked)
+    bool baked  = (debug_off & 4) == 0;
+    bool object = f_lightmap.z < 0.0 && object_lit != 0;
+    if((f_lightmap.z >= 0.0 || object) && baked)
     {
-        baked_light_t light = sample_baked_light();
+        baked_light_t light = object ? object_baked_light() : sample_baked_light();
 #if H3_TERRAIN
         color *= (baked_diffuse(light, normal) + dynamic_diffuse(normal)) * exposure *
                  (debug_view == 5 ? 0.0 : 1.0);

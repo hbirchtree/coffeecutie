@@ -30,6 +30,13 @@ inline Vecf3 diffuse_radiance(el::vertex_light_t const& light, Vecf3 const& n)
     return glm::max(out, Vecf3(0.f)) + std::max(glm::dot(dir, n), 0.f) * light.intensity * 0.281f;
 }
 
+/*! As h3_common.glsl's object_light: l0-l3, then the dominant intensity */
+inline std::array<Vecf4, 5> packed(el::vertex_light_t const& light)
+{
+    return {Vecf4(light.sh[0], 0.f), Vecf4(light.sh[1], 0.f), Vecf4(light.sh[2], 0.f), Vecf4(light.sh[3], 0.f),
+            Vecf4(light.intensity, 0.f)};
+}
+
 /*! The lightmap kept on the CPU: its texels and the triangles mapped onto it */
 struct BakedLight
 {

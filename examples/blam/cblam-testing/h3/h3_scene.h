@@ -138,10 +138,20 @@ struct ObjectDraws
 {
     u64                                    entity{0};
     std::vector<gfx::draw_command::data_t> draws;
+    /* Baked light from the lightmap under it, shaded per pixel */
+    std::optional<std::array<Vecf4, 5>> light;
+    Vecf3                               position{}; /*!< Where it was placed */
 };
 
 /* Stands in for an entity: the first-person hands and weapon, placed at the camera */
 inline constexpr u64 first_person_entity = 0x4650'0000'0000'0000ull;
+/* Stand in for entities: objects drawn where they were placed, in world space */
+inline constexpr u64 in_place_entities = 0x4950'0000'0000'0000ull;
+
+inline bool in_place(u64 entity)
+{
+    return (entity & 0xFFFF'0000'0000'0000ull) == in_place_entities;
+}
 
 struct Material
 {

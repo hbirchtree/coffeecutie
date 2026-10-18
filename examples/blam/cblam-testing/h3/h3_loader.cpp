@@ -921,7 +921,8 @@ struct H3MapLoader : compo::SubsystemBase
                 if(!physics)
                 {
                     auto const skin = stored_pose(*model, object);
-                    append_model(model, object.transform(), lit, 0, Quatf(1.f, 0.f, 0.f, 0.f), skin);
+                    append_model(model, object.transform(), lit, in_place_entities | ++m_in_place,
+                                 Quatf(1.f, 0.f, 0.f, 0.f), skin);
                     attach_lights(entry->object, *model, object.transform(), 0);
                     fixed++;
                     continue;
@@ -1332,7 +1333,11 @@ struct H3MapLoader : compo::SubsystemBase
             if(entity)
             {
                 if(mat.object_draws.empty() || mat.object_draws.back().entity != entity)
-                    mat.object_draws.push_back({.entity = entity});
+                    mat.object_draws.push_back({
+                        .entity   = entity,
+                        .light    = object_light ? std::optional(h3::packed(*object_light)) : std::nullopt,
+                        .position = Vecf3(transform[3]),
+                    });
                 draws = &mat.object_draws.back().draws;
             }
             draws->push_back({
@@ -2426,6 +2431,7 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<Vertex>                                m_vertices;
     std::vector<u16>                                   m_indices;
     std::vector<el::vertex_t>                          m_decoded;
+    u64                                                m_in_place{0}; /*!< Objects drawn where placed */
     /* The first person's idle, and its meshes as uploaded */
     struct FirstPersonMesh
     {
