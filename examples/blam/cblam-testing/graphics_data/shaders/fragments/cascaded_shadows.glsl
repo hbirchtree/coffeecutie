@@ -1,6 +1,6 @@
 /* Receiver side of render/cascaded_shadows.h. Includers may move the
- * uniforms with CSM_LOCATION (28 locations), CSM_BINDING and
- * CSM_OCCLUDER_BINDING. */
+ * uniforms with CSM_LOCATION (28 locations), CSM_BINDING,
+ * CSM_OCCLUDER_BINDING and CSM_OCCLUDER_TILES_BINDING. */
 #ifndef CSM_LOCATION
 #define CSM_LOCATION 56
 #endif
@@ -10,11 +10,14 @@
 #ifndef CSM_OCCLUDER_BINDING
 #define CSM_OCCLUDER_BINDING (CSM_BINDING + 1)
 #endif
+#ifndef CSM_OCCLUDER_TILES_BINDING
+#define CSM_OCCLUDER_TILES_BINDING (CSM_BINDING + 2)
+#endif
 
 layout(location=CSM_LOCATION) uniform mat4 csm_matrices[4];
 /* World size of a texel, per cascade */
 layout(location=CSM_LOCATION + 16) uniform vec4 csm_texel;
-/* Cascades, strength, fade distance */
+/* Cascades, strength, fade distance, whether there are occluder tiles */
 layout(location=CSM_LOCATION + 17) uniform vec4 csm_params;
 /* Each cascade's rect of the atlas, inset for PCF */
 layout(location=CSM_LOCATION + 18) uniform vec4 csm_tiles[4];
@@ -26,6 +29,8 @@ layout(location=CSM_LOCATION + 23) uniform mat4 csm_occluder;
 layout(location=CSM_LOCATION + 27) uniform vec4 csm_occluder_info;
 layout(binding=CSM_BINDING) uniform sampler2D csm_atlas;
 layout(binding=CSM_OCCLUDER_BINDING) uniform sampler2D csm_occluder_atlas;
+/* The static world per cascade, in the same tiles as the casters */
+layout(binding=CSM_OCCLUDER_TILES_BINDING) uniform sampler2D csm_occluder_tiles;
 
 /* How much of the light reaches `world` past the static geometry: 1 = all */
 float occluder_light(vec3 world, vec3 n)
@@ -67,6 +72,18 @@ float cascade_occlusion(vec3 world, vec3 n, vec3 to_light, vec3 eye)
                 hidden += step(
                     texture(csm_atlas, p.xy + vec2(x, y) * texel).r, p.z - csm_bias[i]);
         hidden *= 1.0 / 9.0;
+        /* Static geometry between here and the light keeps the caster's
+         * shadow off: a ledge over the ground, a roof over a floor */
+        if(csm_params.w > 0.5 && hidden > 0.0)
+        {
+            float lit = 0.0;
+            for(int y = 0; y <= 1; y++)
+                for(int x = 0; x <= 1; x++)
+                    lit += step(
+                        p.z - 2.0 * csm_bias[i],
+                        texture(csm_occluder_tiles, p.xy + (vec2(x, y) - 0.5) * texel).r);
+            hidden *= lit * 0.25;
+        }
         if(hidden <= 0.0)
             return 0.0;
         float fade = 1.0 - smoothstep(csm_params.z * 0.8, csm_params.z, dist);

@@ -28,8 +28,10 @@ using typing::vector_types::Veci4;
  * hold still while the camera turns) and a tile of one depth atlas.
  *
  * Optionally the world's static geometry is drawn once into an occluder
- * map fitted to the world; receivers it hides from the light get no cast
- * shadow (indoors under a roof, shade the lightmaps already hold).
+ * map fitted to the world, and each frame near the views into occluder
+ * tiles matching their cascades; receivers it hides from the light get no
+ * cast shadow (indoors under a roof, below a ledge, shade the lightmaps
+ * already hold).
  *
  * Nothing here knows the game: callers draw their casters per tile with
  * `light_matrix()` and `viewport()`, skipping what `covers()` rejects, draw
@@ -53,7 +55,8 @@ struct CascadedShadowMap
         f32 near_distance{.2f};
         f32 caster_reach{120.f}; /*!< How far towards the light casters count */
         f32 strength{.6f};
-        u32 occluder_resolution{0}; /*!< Static occluder map, 0 = none */
+        u32  occluder_resolution{0}; /*!< Static occluder map, 0 = none */
+        bool occluder_tiles{false};  /*!< Static geometry per view cascade too */
     };
 
     /*! A view frustum as an eye and the directions through its corners */
@@ -69,7 +72,7 @@ struct CascadedShadowMap
     {
         std::array<Matf4, max_cascades> matrices{}; /*!< World to atlas uv + depth */
         Vecf4 texel{0.f};  /*!< World size of a texel, per cascade */
-        Vecf4 params{0.f}; /*!< cascades, strength, fade distance */
+        Vecf4 params{0.f}; /*!< cascades, strength, fade distance, occluder tiles */
         std::array<Vecf4, max_cascades> tiles{}; /*!< Atlas rect, inset for PCF */
         Vecf4 bias{0.f}; /*!< A texel's world size in depth, per cascade */
         Matf4 occluder{1.f}; /*!< World to occluder uv + depth */
@@ -118,6 +121,24 @@ struct CascadedShadowMap
         m_sampler = m_depth->sampler();
         m_sampler->alloc();
         m_sampler->set_filtering(typing::Filtering::Nearest, typing::Filtering::Nearest);
+
+        m_occluder_tiles_target.reset();
+        if(m_config.occluder_tiles)
+        {
+            m_occluder_tiles =
+                api.alloc_texture(gfx::textures::d2, typing::pixels::PixDesc(format), 1);
+            m_occluder_tiles->alloc(size_3d<u32>{
+                static_cast<u32>(width), static_cast<u32>(height), 1});
+            m_occluder_tiles_target = api.alloc_rendertarget();
+            m_occluder_tiles_target->alloc();
+            m_occluder_tiles_target->attach(
+                gfx::render_targets::attachment::depth, *m_occluder_tiles, 0);
+            m_occluder_tiles_target->resize({0, 0, width, height});
+            m_occluder_tiles_sampler = m_occluder_tiles->sampler();
+            m_occluder_tiles_sampler->alloc();
+            m_occluder_tiles_sampler->set_filtering(
+                typing::Filtering::Nearest, typing::Filtering::Nearest);
+        }
 
         m_occluder_target.reset();
         m_occluder_key = {};
@@ -266,7 +287,7 @@ struct CascadedShadowMap
             static_cast<f32>(n),
             m_config.strength,
             m_config.shared_cascades ? 1e9f : far,
-            0.f);
+            m_occluder_tiles_target ? 1.f : 0.f);
     }
 
     /*! A view's receivers; nothing to sample before the first update */
@@ -307,10 +328,23 @@ struct CascadedShadowMap
         return m_sampler;
     }
 
+    /*! Static geometry drawn per view cascade, in the same tiles */
+    std::shared_ptr<gfx::rendertarget_t> const& occluder_tiles_target() const
+    {
+        return m_occluder_tiles_target;
+    }
+
+    std::shared_ptr<gfx::sampler_t> const& occluder_tiles_sampler() const
+    {
+        return m_occluder_tiles_sampler;
+    }
+
     /*! Clears every tile before casters are drawn */
     void clear()
     {
         m_target->clear(1.0);
+        if(m_occluder_tiles_target)
+            m_occluder_tiles_target->clear(1.0);
     }
 
   private:
@@ -390,6 +424,9 @@ struct CascadedShadowMap
     std::vector<f32>                     m_depth_range;
     std::vector<sampling_t>              m_sampling;
 
+    std::shared_ptr<gfx::texture_2d_t>   m_occluder_tiles;
+    std::shared_ptr<gfx::rendertarget_t> m_occluder_tiles_target;
+    std::shared_ptr<gfx::sampler_t>      m_occluder_tiles_sampler;
     std::shared_ptr<gfx::texture_2d_t>   m_occluder_depth;
     std::shared_ptr<gfx::rendertarget_t> m_occluder_target;
     std::shared_ptr<gfx::sampler_t>      m_occluder_sampler;

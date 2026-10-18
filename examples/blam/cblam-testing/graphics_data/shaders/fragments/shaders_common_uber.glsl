@@ -44,6 +44,7 @@ layout(location = 31) uniform int render_flags;
 #if USE_SHADOWS == 1
 #define CSM_BINDING 15
 #define CSM_OCCLUDER_BINDING 16
+#define CSM_OCCLUDER_TILES_BINDING 17
 #include "cascaded_shadows.glsl"
 #endif
 
