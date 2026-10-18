@@ -30,9 +30,9 @@ layout(location=CSM_LOCATION + 17) uniform vec4 csm_params;
 layout(location=CSM_LOCATION + 18) uniform vec4 csm_tiles[4];
 /* A texel's world size as depth, per cascade */
 layout(location=CSM_LOCATION + 22) uniform vec4 csm_bias;
-/* The static world from the light: world to uv + depth, and its texel
- * world size, texel depth, whether there is one, and the world radius the
- * static visibility is softened over */
+/* The static world from the light: world to uv + depth; its texel size
+ * (0 = no world map) and depth per world unit, how far towards the light
+ * static geometry counts and the world radius it is softened over */
 layout(location=CSM_LOCATION + 23) uniform mat4 csm_occluder;
 layout(location=CSM_LOCATION + 27) uniform vec4 csm_occluder_info;
 layout(binding=CSM_BINDING) uniform sampler2D csm_atlas;
@@ -61,14 +61,17 @@ float soft_visibility(
     float     slope)
 {
     float radius = csm_occluder_info.w;
+    float reach  = csm_occluder_info.z * depth_per_world;
     float lit    = 0.0;
     for(int y = -2; y <= 2; y++)
         for(int x = -2; x <= 2; x++)
         {
-            vec2  o    = vec2(x, y) * 0.5 * radius;
-            vec2  at   = clamp(uv + o * uv_per_world, rect.xy, rect.zw);
-            float tilt = length(o) * slope * depth_per_world;
-            lit += step(z - bias - tilt, texture(map, at).r);
+            vec2  o     = vec2(x, y) * 0.5 * radius;
+            vec2  at    = clamp(uv + o * uv_per_world, rect.xy, rect.zw);
+            float tilt  = length(o) * slope * depth_per_world;
+            float wall  = texture(map, at).r;
+            /* Geometry beyond the reach leaves its shade to the baked light */
+            lit += max(step(z - bias - tilt, wall), step(wall, z - reach));
         }
     return lit * (1.0 / 25.0);
 }
@@ -77,7 +80,7 @@ float soft_visibility(
  * occluder tiles: 1 = the light reaches `world` */
 float world_visibility(vec3 world, vec3 n, float slope)
 {
-    if(csm_occluder_info.z < 0.5)
+    if(csm_occluder_info.x <= 0.0)
         return 1.0;
     vec4 p = csm_occluder * vec4(world + n * csm_occluder_info.x, 1.0);
     if(any(lessThan(p.xy, vec2(0.0))) || any(greaterThan(p.xy, vec2(1.0))) || p.z >= 1.0)
@@ -89,8 +92,8 @@ float world_visibility(vec3 world, vec3 n, float slope)
         p.z,
         vec4(0.0, 0.0, 1.0, 1.0),
         texel / csm_occluder_info.x,
-        csm_occluder_info.y / csm_occluder_info.x,
-        csm_occluder_info.y * (1.0 + slope),
+        csm_occluder_info.y,
+        csm_occluder_info.x * csm_occluder_info.y * (1.0 + slope),
         slope);
 }
 
