@@ -1194,7 +1194,10 @@ struct DrawListBuilder
              * that never animates keeps this and skips skinning. */
             auto&      pid  = pass.matrix_mapping[instance_id];
             bool const self = own_body(p, smodel.parent);
-            pid.transform   = self ? setback(p, smodel.parent, model) : model.transform;
+            /* What the body holds moves back with it, into the shadows too */
+            auto const* held_by = p.template get<HeldObject>(smodel.parent);
+            u64 const   body    = held_by ? held_by->holder : smodel.parent;
+            pid.transform = own_body(p, body) ? setback(p, body, model) : model.transform;
             /* Scenery's shadows are baked into the lightmaps */
             bool const scenery = model.origin_object &&
                                  model.origin_object->matches(blam::tag_class_t::scen);
@@ -1324,8 +1327,10 @@ struct DrawListBuilder
             return false;
         auto const* info = p.template get<PlayerInfo>(entity);
         auto const* cam  = p.template get<PlayerCamera>(entity);
+        /* Only a body walking about has feet to look at; forge flies */
         return info && cam && !info->is_remote() && info->seat_idx == m_seat &&
-               !cam->cinematic && (info->riding.vehicle == 0 || !info->riding.chase);
+               info->mode.physics && !cam->cinematic &&
+               (info->riding.vehicle == 0 || !info->riding.chase);
     }
 
     /* The eye sits where the head would, so the legs show set back from
@@ -1345,9 +1350,9 @@ struct DrawListBuilder
 
     static constexpr f32 own_body_setback = .15f; /* wu */
 
-    /* Everything but the legs, which are the bone chains that run from below
-     * the hips down to the feet in the bind pose; hands hang low too, but
-     * reach no feet. Bones past 64 are kept. */
+    /* Everything but the pelvis and legs, which are the bone chains that run
+     * from below the hips down to the feet in the bind pose; hands hang low
+     * too, but reach no feet. Bones past 64 are kept. */
     u64 legs_cut(ModelItem<Version> const& item)
     {
         if(auto it = m_legs_cut.find(item.header); it != m_legs_cut.end())
@@ -1382,6 +1387,14 @@ struct DrawListBuilder
         for(u32 i = 0; i < n && i < 64; i++)
             if(highest[i] >= hips || lowest[i] > feet)
                 cut |= u64(1) << i;
+        /* And the pelvis the legs hang from; the spine above stays cut */
+        u64 const legs = ~cut;
+        for(u32 i = 0; i < n && i < 64; i++)
+        {
+            auto const parent = static_cast<u32>(bones.value()[i].parent);
+            if(((legs >> i) & 1) && parent < 64 && parent < n)
+                cut &= ~(u64(1) << parent);
+        }
         return cut;
     }
 
