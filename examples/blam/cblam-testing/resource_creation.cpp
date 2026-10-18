@@ -278,6 +278,11 @@ void create_resources(compo::EntityContainer& e)
                      set_val("draw_distance", rp.draw_distance);
                      set_val("lod_scale", rp.lod_scale);
                      set_val("lod_cap", rp.lod_cap);
+                     set_val("shadows", rp.shadows);
+                     set_val("shadow_resolution", rp.shadow_resolution);
+                     set_val("shadow_cascades", rp.shadow_cascades);
+                     set_val("shadow_distance", rp.shadow_distance);
+                     set_val("shadow_split", rp.shadow_split);
                      set_val("current_bsp_cluster", rp.current_bsp_cluster);
 
                      if(auto it = d.find("clear_color");

@@ -230,6 +230,13 @@ struct RenderingParameters : compo::SubsystemBase
     f32 lod_scale{1.f};
     libc_types::u32 lod_cap{0};
 
+    /* Cascaded shadows: near cascades per seat, plus one shared */
+    bool            shadows{true};
+    libc_types::u32 shadow_resolution{2048}; /* Per tile, halved in splitscreen */
+    libc_types::u32 shadow_cascades{3};      /* Per seat, 1-3 */
+    f32             shadow_distance{60.f};   /* What the seat's cascades cover */
+    f32             shadow_split{.85f};      /* 0 = even splits, 1 = logarithmic */
+
     libc_types::u32 current_bsp_cluster{
         std::numeric_limits<libc_types::u32>::max()};
     bool interior{false};

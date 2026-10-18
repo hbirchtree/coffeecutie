@@ -40,13 +40,13 @@ struct CascadedShadowMap
     struct config_t
     {
         u32 views{1};
-        u32 view_cascades{2};   /*!< Fitted to each view */
+        u32 view_cascades{3};   /*!< Fitted to each view */
         u32 shared_cascades{1}; /*!< Fitted to the world, 0 or 1 */
-        u32 resolution{1536};   /*!< Per tile */
+        u32 resolution{2048};   /*!< Per tile */
         f32 max_distance{60.f}; /*!< What the view cascades cover */
-        f32 split_lambda{.75f}; /*!< 0 = even splits, 1 = logarithmic */
+        f32 split_lambda{.85f}; /*!< 0 = even splits, 1 = logarithmic */
         f32 near_distance{.2f};
-        f32 caster_reach{250.f}; /*!< How far towards the light casters count */
+        f32 caster_reach{120.f}; /*!< How far towards the light casters count */
         f32 strength{.6f};
     };
 
@@ -65,6 +65,7 @@ struct CascadedShadowMap
         Vecf4 texel{0.f};  /*!< World size of a texel, per cascade */
         Vecf4 params{0.f}; /*!< cascades, strength, fade distance */
         std::array<Vecf4, max_cascades> tiles{}; /*!< Atlas rect, inset for PCF */
+        Vecf4 bias{0.f}; /*!< A texel's world size in depth, per cascade */
     };
 
     /*! The frustum of a camera from its inverse view-projection */
@@ -93,6 +94,7 @@ struct CascadedShadowMap
         m_rows    = (m_tiles + m_columns - 1) / m_columns;
         m_light.assign(m_tiles, Matf4(1.f));
         m_texel.assign(m_tiles, 0.f);
+        m_depth_range.assign(m_tiles, 1.f);
         m_sampling.assign(m_config.views, {});
 
         auto const format = api.feature_info().rendertarget.high_precision_depth_format;
@@ -118,6 +120,13 @@ struct CascadedShadowMap
     config_t const& config() const
     {
         return m_config;
+    }
+
+    /*! Reach and split of the view cascades; no reallocation */
+    void tune(f32 max_distance, f32 split_lambda)
+    {
+        m_config.max_distance = std::max(max_distance, m_config.near_distance * 2.f);
+        m_config.split_lambda = std::clamp(split_lambda, 0.f, 1.f);
     }
 
     u32 tiles() const
@@ -250,6 +259,7 @@ struct CascadedShadowMap
         c.x               = std::floor(c.x / texel) * texel;
         c.y               = std::floor(c.y / texel) * texel;
         m_texel[tile]     = texel;
+        m_depth_range[tile] = radius + m_config.caster_reach;
         m_light[tile]     = glm::ortho(
                             c.x - radius,
                             c.x + radius,
@@ -275,6 +285,7 @@ struct CascadedShadowMap
         f32 const inset_y = 2.f * h / static_cast<f32>(m_config.resolution);
         out.matrices[slot] = to_tile * m_light[tile];
         out.texel[slot]    = m_texel[tile];
+        out.bias[slot]     = m_texel[tile] / m_depth_range[tile];
         out.tiles[slot] = Vecf4(x0 + inset_x, y0 + inset_y, x0 + w - inset_x, y0 + h - inset_y);
     }
 
@@ -287,6 +298,7 @@ struct CascadedShadowMap
     std::shared_ptr<gfx::sampler_t>      m_sampler;
     std::vector<Matf4>                   m_light;
     std::vector<f32>                     m_texel;
+    std::vector<f32>                     m_depth_range;
     std::vector<sampling_t>              m_sampling;
 };
 
