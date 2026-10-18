@@ -1,6 +1,11 @@
 /* Receiver side of render/cascaded_shadows.h. Includers may move the
  * uniforms with CSM_LOCATION (28 locations), CSM_BINDING,
- * CSM_OCCLUDER_BINDING and CSM_OCCLUDER_TILES_BINDING. */
+ * CSM_OCCLUDER_BINDING and CSM_OCCLUDER_TILES_BINDING.
+ *
+ * Casters and static geometry give the light's dynamic and static
+ * visibility, d and s; a cast shadow takes away s * (1 - d), the light the
+ * static scene lets through and the casters block, as min(s, d) would
+ * have it. Shade the static scene already gives is the baked lighting's. */
 #ifndef CSM_LOCATION
 #define CSM_LOCATION 56
 #endif
@@ -17,14 +22,15 @@
 layout(location=CSM_LOCATION) uniform mat4 csm_matrices[4];
 /* World size of a texel, per cascade */
 layout(location=CSM_LOCATION + 16) uniform vec4 csm_texel;
-/* Cascades, strength, fade distance, whether there are occluder tiles */
+/* Cascades, strength, fade distance, how many (the first) have occluder
+ * tiles; the rest use the world occluder map */
 layout(location=CSM_LOCATION + 17) uniform vec4 csm_params;
 /* Each cascade's rect of the atlas, inset for PCF */
 layout(location=CSM_LOCATION + 18) uniform vec4 csm_tiles[4];
 /* A texel's world size as depth, per cascade */
 layout(location=CSM_LOCATION + 22) uniform vec4 csm_bias;
 /* The static world from the light: world to uv + depth, and its texel
- * world size, depth bias and whether there is one */
+ * world size, texel depth, whether there is one */
 layout(location=CSM_LOCATION + 23) uniform mat4 csm_occluder;
 layout(location=CSM_LOCATION + 27) uniform vec4 csm_occluder_info;
 layout(binding=CSM_BINDING) uniform sampler2D csm_atlas;
@@ -32,25 +38,33 @@ layout(binding=CSM_OCCLUDER_BINDING) uniform sampler2D csm_occluder_atlas;
 /* The static world per cascade, in the same tiles as the casters */
 layout(binding=CSM_OCCLUDER_TILES_BINDING) uniform sampler2D csm_occluder_tiles;
 
-/* How much of the light reaches `world` past the static geometry: 1 = all */
-float occluder_light(vec3 world, vec3 n)
+/* Depth bias of `texel_depth` scaled by the slope to the light */
+float slope_bias(float texel_depth, float facing)
+{
+    float slope = sqrt(max(1.0 - facing * facing, 0.0)) / max(facing, 0.05);
+    return texel_depth * (1.0 + min(slope, 4.0));
+}
+
+/* Static visibility from the world occluder map, for cascades without
+ * occluder tiles: 1 = the light reaches `world` */
+float world_visibility(vec3 world, vec3 n, float facing)
 {
     if(csm_occluder_info.z < 0.5)
         return 1.0;
-    vec4 p = csm_occluder * vec4(world + n * csm_occluder_info.x * 2.0, 1.0);
+    vec4 p = csm_occluder * vec4(world + n * csm_occluder_info.x, 1.0);
     if(any(lessThan(p.xy, vec2(0.0))) || any(greaterThan(p.xy, vec2(1.0))) || p.z >= 1.0)
         return 1.0;
     vec2  texel = 1.0 / vec2(textureSize(csm_occluder_atlas, 0));
+    float bias  = slope_bias(csm_occluder_info.y, facing);
     float lit   = 0.0;
-    for(int y = 0; y <= 1; y++)
-        for(int x = 0; x <= 1; x++)
-            lit += step(
-                p.z - csm_occluder_info.y,
-                texture(csm_occluder_atlas, p.xy + (vec2(x, y) - 0.5) * texel).r);
-    return lit * 0.25;
+    for(int y = -1; y <= 1; y++)
+        for(int x = -1; x <= 1; x++)
+            lit += step(p.z - bias, texture(csm_occluder_atlas, p.xy + vec2(x, y) * texel).r);
+    return lit * (1.0 / 9.0);
 }
 
-/* How much of the light along `to_light` is blocked at `world`: 0 = none */
+/* How much of the light along `to_light` the casters take from `world`:
+ * 0 = none */
 float cascade_occlusion(vec3 world, vec3 n, vec3 to_light, vec3 eye)
 {
     int   count  = int(csm_params.x);
@@ -66,28 +80,23 @@ float cascade_occlusion(vec3 world, vec3 n, vec3 to_light, vec3 eye)
         if(any(lessThan(p.xy, csm_tiles[i].xy)) ||
            any(greaterThan(p.xy, csm_tiles[i].zw)) || p.z >= 1.0)
             continue;
+        bool  tiles  = i < int(csm_params.w + 0.5);
+        float bias   = slope_bias(csm_bias[i], facing);
         float hidden = 0.0;
         for(int y = -1; y <= 1; y++)
             for(int x = -1; x <= 1; x++)
-                hidden += step(
-                    texture(csm_atlas, p.xy + vec2(x, y) * texel).r, p.z - csm_bias[i]);
+            {
+                vec2  uv      = p.xy + vec2(x, y) * texel;
+                float blocked = step(texture(csm_atlas, uv).r, p.z - bias);
+                if(tiles && blocked > 0.0)
+                    blocked *= step(p.z - bias, texture(csm_occluder_tiles, uv).r);
+                hidden += blocked;
+            }
         hidden *= 1.0 / 9.0;
-        /* Static geometry between here and the light keeps the caster's
-         * shadow off: a ledge over the ground, a roof over a floor */
-        if(csm_params.w > 0.5 && hidden > 0.0)
-        {
-            float lit = 0.0;
-            for(int y = 0; y <= 1; y++)
-                for(int x = 0; x <= 1; x++)
-                    lit += step(
-                        p.z - 2.0 * csm_bias[i],
-                        texture(csm_occluder_tiles, p.xy + (vec2(x, y) - 0.5) * texel).r);
-            hidden *= lit * 0.25;
-        }
-        if(hidden <= 0.0)
-            return 0.0;
+        if(!tiles && hidden > 0.0)
+            hidden *= world_visibility(world, n, facing);
         float fade = 1.0 - smoothstep(csm_params.z * 0.8, csm_params.z, dist);
-        return hidden * fade * smoothstep(0.0, 0.2, facing) * occluder_light(world, n);
+        return hidden * fade * smoothstep(0.0, 0.2, facing);
     }
     return 0.0;
 }

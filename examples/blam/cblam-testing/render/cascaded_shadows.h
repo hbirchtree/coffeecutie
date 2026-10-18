@@ -72,11 +72,11 @@ struct CascadedShadowMap
     {
         std::array<Matf4, max_cascades> matrices{}; /*!< World to atlas uv + depth */
         Vecf4 texel{0.f};  /*!< World size of a texel, per cascade */
-        Vecf4 params{0.f}; /*!< cascades, strength, fade distance, occluder tiles */
+        Vecf4 params{0.f}; /*!< cascades, strength, fade distance, cascades with occluder tiles */
         std::array<Vecf4, max_cascades> tiles{}; /*!< Atlas rect, inset for PCF */
         Vecf4 bias{0.f}; /*!< A texel's world size in depth, per cascade */
         Matf4 occluder{1.f}; /*!< World to occluder uv + depth */
-        Vecf4 occluder_info{0.f}; /*!< texel world size, depth bias, on */
+        Vecf4 occluder_info{0.f}; /*!< texel world size, texel depth, on */
     };
 
     /*! The frustum of a camera from its inverse view-projection */
@@ -178,7 +178,7 @@ struct CascadedShadowMap
         for(auto& view : m_sampling)
         {
             view.occluder      = to_uv * m_occluder_light;
-            view.occluder_info = Vecf4(texel, 2.f * texel / range, 1.f, 0.f);
+            view.occluder_info = Vecf4(texel, texel / range, 1.f, 0.f);
         }
         m_occluder_target->clear(1.0);
         return true;
@@ -287,7 +287,7 @@ struct CascadedShadowMap
             static_cast<f32>(n),
             m_config.strength,
             m_config.shared_cascades ? 1e9f : far,
-            m_occluder_tiles_target ? 1.f : 0.f);
+            m_occluder_tiles_target ? static_cast<f32>(count) : 0.f);
     }
 
     /*! A view's receivers; nothing to sample before the first update */
