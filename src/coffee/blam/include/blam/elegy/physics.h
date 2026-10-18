@@ -313,12 +313,28 @@ static_assert(offsetof(global_material_t, friction) == 0x18);
 static_assert(sizeof(global_material_t) == 0x170);
 
 /*! globals ("matg"), as far as physics needs it */
+/*! How a kind of player is drawn: first-person hands and body, and the
+ * unit seen from outside */
+struct player_representation_t
+{
+    tag_reference first_person_hands; /*!< mode */
+    tag_reference first_person_body;  /*!< mode */
+    tag_reference third_person_unit;
+    string_id     third_person_variant;
+    tag_reference binoculars_zoom_in;
+    tag_reference binoculars_zoom_out;
+};
+
+static_assert(sizeof(player_representation_t) == 0x54);
+
 struct globals_t
 {
     static constexpr std::string_view group = "matg";
 
-    std::array<u8, 0x17C>        unknown_0;
-    tag_block<global_material_t> materials;
+    std::array<u8, 0x164>                      unknown_0;
+    tag_block<player_representation_t>         player_representations;
+    std::array<u8, 0xC>                        unknown_1;
+    tag_block<global_material_t>               materials;
 
     /*! A material by name, as physics models name them */
     inline global_material_t const* material(tag_magic const& magic, string_id name) const
@@ -330,6 +346,7 @@ struct globals_t
     }
 };
 
+static_assert(offsetof(globals_t, player_representations) == 0x164);
 static_assert(offsetof(globals_t, materials) == 0x17C);
 
 /*! A rigid body's shapes as convex point sets, in the body's node space */

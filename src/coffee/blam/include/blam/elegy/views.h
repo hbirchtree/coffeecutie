@@ -76,6 +76,7 @@ struct node_pose_t
 {
     Quatf rotation{1.f, 0.f, 0.f, 0.f};
     Vecf3 translation{};
+    f32   scale{1.f};
 };
 
 /*! A render model's nodes in their default pose */

@@ -7,6 +7,7 @@
 #include "resource_creation.h"
 #include "sounds.h"
 
+#include <blam/elegy/animation.h>
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/physics.h>
 #include <blam/elegy/shader.h>
@@ -516,8 +517,10 @@ struct H3MapLoader : compo::SubsystemBase
 
     /* Crossing a zone set switch trigger loads that zone set's structure
      * BSPs; the camera stays where it is */
-    void start_frame(compo::ContainerProxy&, time_point const&) override
+    void start_frame(compo::ContainerProxy&, time_point const& now) override
     {
+        if(m_scene.loaded)
+            animate_first_person(now);
         if(!m_scene.loaded || m_switches.empty())
             return;
         std::optional<Vecf3> eye;
@@ -656,6 +659,7 @@ struct H3MapLoader : compo::SubsystemBase
             m_scene.auto_exposure.enabled = false;
         }
         load_objects(scnr, bsps);
+        load_first_person(scnr, eye);
         load_sky(scnr, bsps);
         for(i16 b = 0; b < 32; b++)
             if(bsps & (1u << b))
@@ -954,6 +958,110 @@ struct H3MapLoader : compo::SubsystemBase
             m_scene.lights.size());
     }
 
+    /* The player's first-person hands and the starting weapon's first-person
+     * model, playing the weapon's idle */
+    void load_first_person(el::scenario_t const& scnr, Vecf3 const& eye)
+    {
+        auto const& map = *m_map;
+        auto&       fp  = m_first_person;
+        fp              = {};
+        auto const globals = map.find<el::phys::globals_t>();
+        if(!globals)
+            return;
+        /* The first with hands is the Chief, in campaign and multiplayer */
+        el::phys::player_representation_t const* player = nullptr;
+        for(auto const& representation : map.span(globals->player_representations))
+            if(map.get<el::render_model_t>(representation.first_person_hands))
+            {
+                player = &representation;
+                break;
+            }
+        if(!player)
+            return;
+        auto const profiles = map.span(scnr.starting_profiles);
+        auto const weapon   = profiles.empty() ? el::tagged<el::weapon_t>{}
+                                               : map.get<el::weapon_t>(profiles[0].primary_weapon);
+        auto const views = weapon ? map.span(weapon->first_person) : Span<el::weapon_first_person_t const>();
+        auto const hands = map.get<el::render_model_t>(player->first_person_hands);
+        auto const held  = views.empty() ? el::tagged<el::render_model_t>{} : map.get<el::render_model_t>(views[0].model);
+        fp.models.push_back(hands.data);
+        if(held)
+            fp.models.push_back(held.data);
+        /* The weapon's graph animates hands and weapon as one skeleton,
+         * nodes it leaves alone where the models put them */
+        auto const graph =
+            views.empty() ? el::tagged<el::animation_graph_t>{} : map.get<el::animation_graph_t>(views[0].animations);
+        if(auto const* idle = graph ? graph->find(map, "first_person:idle") : nullptr)
+        {
+            fp.graph = graph.data;
+            fp.idle  = el::decode_animation(map, *m_loader, *graph, *idle, el::default_pose(map, *graph, fp.models));
+            for(auto const& node : map.span(graph->nodes))
+                fp.names.push_back(node.name);
+        }
+        auto const  light = m_scene.light_below(eye);
+        auto const* lit   = light ? &*light : nullptr;
+        u32         drawn = 0;
+        for(size_t i = 0; i < fp.models.size(); i++)
+        {
+            fp.model = static_cast<i32>(i);
+            drawn += append_model(
+                i == 0 ? hands : held, Matf4(1.f), lit, first_person_entity, Quatf(1.f, 0.f, 0.f, 0.f),
+                first_person_skin(0.f)[i]);
+        }
+        fp.model = -1;
+        cDebug("H3: first person: '{}' holding '{}', {} draws, {}", map.name_of(player->first_person_hands),
+               weapon ? map.name_of(*weapon.tag) : std::string_view("nothing"), drawn,
+               fp.idle ? "idle" : "default pose");
+    }
+
+    /* Per first-person model: its skinning matrices `frame` frames into the
+     * idle, between frames blended */
+    std::vector<std::vector<Matf4>> first_person_skin(f32 frame) const
+    {
+        auto const&                     fp = m_first_person;
+        std::vector<std::vector<Matf4>> out(fp.models.size());
+        if(!fp.idle)
+            return out;
+        u32 const frames = fp.idle->frames;
+        f32 const at     = std::fmod(frame, static_cast<f32>(frames));
+        u32 const f0     = static_cast<u32>(at) % frames, f1 = (f0 + 1) % frames;
+        f32 const t      = at - std::floor(at);
+        auto      a = fp.idle->frame(f0), b = fp.idle->frame(f1);
+        std::vector<el::node_pose_t> pose(a.size());
+        for(size_t i = 0; i < pose.size(); i++)
+            pose[i] = {
+                .rotation    = glm::slerp(a[i].rotation, b[i].rotation, t),
+                .translation = glm::mix(a[i].translation, b[i].translation, t),
+                .scale       = a[i].scale + (b[i].scale - a[i].scale) * t,
+            };
+        auto const nodes = fp.graph->node_matrices(*m_map, pose);
+        for(size_t i = 0; i < fp.models.size(); i++)
+            out[i] = el::skinning_matrices(*m_map, *fp.models[i], fp.names, nodes);
+        return out;
+    }
+
+    /* The idle at 30 frames a second: the meshes posed and uploaded again */
+    void animate_first_person(time_point const& now)
+    {
+        auto& fp = m_first_person;
+        if(!fp.idle || fp.meshes.empty())
+            return;
+        if(fp.start == time_point{})
+            fp.start = now;
+        auto const skins = first_person_skin(std::chrono::duration<f32>(now - fp.start).count() * 30.f);
+        for(auto& mesh : fp.meshes)
+        {
+            m_decoded = mesh.bind;
+            pose_vertices(*mesh.mesh, skins[mesh.model], m_decoded);
+            for(size_t i = 0; i < mesh.drawn.size() && i < m_decoded.size(); i++)
+            {
+                mesh.drawn[i].position = m_decoded[i].position;
+                mesh.drawn[i].normal   = m_decoded[i].normal;
+            }
+            m_scene.vertex_buf->update(mesh.first * sizeof(Vertex), Span<const Vertex>(mesh.drawn.data(), mesh.drawn.size()));
+        }
+    }
+
     /* The lights an object carries at its markers (ligh attachments), held
      * still: colour and intensity at their steady value. Falloff constants
      * put the light's edge at its maximum distance. */
@@ -1151,8 +1259,17 @@ struct H3MapLoader : compo::SubsystemBase
         auto normal = glm::mat3(glm::inverseTranspose(transform));
         bool const lit        = lightmap_uvs.size() == m_decoded.size();
         bool const vertex_lit = vertex_lights.size() == m_decoded.size() || object_light;
+        /* The first person's meshes are posed again every frame */
+        bool const first_person = entity == first_person_entity && m_first_person.model >= 0;
+        if(first_person)
+            m_first_person.meshes.push_back({
+                .mesh  = &mesh,
+                .model = static_cast<u32>(m_first_person.model),
+                .first = vbase,
+                .bind  = m_decoded,
+            });
         if(!skin.empty())
-            pose_vertices(mesh, skin);
+            pose_vertices(mesh, skin, m_decoded);
         for(size_t i = 0; i < m_decoded.size(); i++)
         {
             auto const& v = m_decoded[i];
@@ -1182,6 +1299,8 @@ struct H3MapLoader : compo::SubsystemBase
             }
             m_vertices.push_back(out);
         }
+        if(first_person)
+            m_first_person.meshes.back().drawn.assign(m_vertices.begin() + vbase, m_vertices.end());
 
         auto parts = mesh.parts.span(magic);
         u32  emitted = 0;
@@ -1241,7 +1360,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     /* Decoded vertices moved from the default pose by per-node matrices: a
      * rigid mesh by its node's, skinned vertices by their weighted sum */
-    void pose_vertices(el::mesh_t const& mesh, Span<Matf4 const> skin)
+    static void pose_vertices(el::mesh_t const& mesh, Span<Matf4 const> skin, std::vector<el::vertex_t>& vertices)
     {
         using el::vertex_type_t;
         auto const type  = mesh.vertex_type;
@@ -1249,7 +1368,7 @@ struct H3MapLoader : compo::SubsystemBase
         bool const skinned = type == vertex_type_t::skinned || type == vertex_type_t::flat_skinned;
         if(rigid && (mesh.rigid_node < 0 || static_cast<size_t>(mesh.rigid_node) >= skin.size()))
             return;
-        for(auto& v : m_decoded)
+        for(auto& v : vertices)
         {
             Matf4 m(1.f);
             if(rigid)
@@ -2307,6 +2426,25 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<Vertex>                                m_vertices;
     std::vector<u16>                                   m_indices;
     std::vector<el::vertex_t>                          m_decoded;
+    /* The first person's idle, and its meshes as uploaded */
+    struct FirstPersonMesh
+    {
+        el::mesh_t const*         mesh{nullptr};
+        u32                       model{0}; /*!< Into FirstPerson::models */
+        u32                       first{0}; /*!< Its first vertex in the buffer */
+        std::vector<el::vertex_t> bind;
+        std::vector<Vertex>       drawn;
+    };
+    struct FirstPerson
+    {
+        el::animation_graph_t const*           graph{nullptr};
+        std::optional<el::decoded_animation_t> idle;
+        std::vector<el::string_id>             names; /*!< The graph's nodes */
+        std::vector<el::render_model_t const*> models;
+        std::vector<FirstPersonMesh>           meshes;
+        i32                                    model{-1}; /*!< Being drawn, while loading */
+        time_point                             start{};
+    } m_first_person;
     std::vector<std::array<u16, 3>>                    m_triangles;
 
 

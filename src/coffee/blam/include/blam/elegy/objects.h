@@ -150,6 +150,23 @@ struct starting_location_t
 
 static_assert(sizeof(starting_location_t) == 0x18);
 
+/*! What a player spawns with */
+struct starting_profile_t
+{
+    std::array<char, 0x20> name;
+    be<f32>                health_damage;
+    be<f32>                shield_damage;
+    tag_reference          primary_weapon;
+    be<i16>                primary_rounds_loaded;
+    be<i16>                primary_rounds_total;
+    tag_reference          secondary_weapon;
+    be<i16>                secondary_rounds_loaded;
+    be<i16>                secondary_rounds_total;
+    std::array<u8, 4>      grenade_counts; /*!< frag, plasma, spike, firebomb */
+};
+
+static_assert(sizeof(starting_profile_t) == 0x54);
+
 enum class multiplayer_object_flags_t : u16
 {
     none                 = 0x0,
@@ -186,13 +203,35 @@ static_assert(sizeof(object_attachment_t) == 0x20);
 
 /*! object ("obje") head, shared by scen, bloc, mach, ...: the model and
  * how multiplayer treats it */
+/*! A starting colour of a change colour: picked by weight, between the bounds */
+struct change_color_permutation_t
+{
+    be<f32>   weight;
+    be<Vecf3> lower_bound;
+    be<Vecf3> upper_bound;
+    string_id variant; /*!< Empty: any model variant */
+};
+
+static_assert(sizeof(change_color_permutation_t) == 0x20);
+
+/*! One of an object's change colours (primary, secondary, ...) */
+struct change_color_t
+{
+    tag_block<change_color_permutation_t> initial_permutations;
+    tag_block<std::array<u8, 0x28>>       functions;
+};
+
+static_assert(sizeof(change_color_t) == 0x18);
+
 struct object_t
 {
     std::array<u8, 0x34>            unknown_0;
     tag_reference                   model;
     std::array<u8, 0x78>            unknown_1;
     tag_block<object_attachment_t>  attachments;
-    std::array<u8, 0x24>            unknown_2;
+    std::array<u8, 0xC>             unknown_2;
+    tag_block<change_color_t>       change_colors;
+    std::array<u8, 0xC>             unknown_3;
     tag_block<multiplayer_object_t> multiplayer;
 
     inline bool editor_only(tag_magic const& magic) const
@@ -206,9 +245,35 @@ struct object_t
     }
 };
 
+static_assert(sizeof(object_t) == 0xF8);
 static_assert(offsetof(object_t, model) == 0x34);
 static_assert(offsetof(object_t, attachments) == 0xBC);
+static_assert(offsetof(object_t, change_colors) == 0xD4);
 static_assert(offsetof(object_t, multiplayer) == 0xEC);
+
+/*! A weapon's first-person model and animations, per player representation */
+struct weapon_first_person_t
+{
+    tag_reference model;      /*!< mode */
+    tag_reference animations; /*!< jmad */
+};
+
+static_assert(sizeof(weapon_first_person_t) == 0x20);
+
+/*! weapon ("weap") */
+struct weapon_t
+{
+    static constexpr std::string_view group = "weap";
+
+    object_t                         object;
+    std::array<u8, 0x324>            unknown_0;
+    tag_block<weapon_first_person_t> first_person;
+    std::array<u8, 0xB0>             unknown_1;
+    be<Vecf3>                        first_person_offset;
+};
+
+static_assert(offsetof(weapon_t, first_person) == 0x41C);
+static_assert(offsetof(weapon_t, first_person_offset) == 0x4D8);
 
 enum class light_type_t : u16
 {

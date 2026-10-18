@@ -140,6 +140,9 @@ struct ObjectDraws
     std::vector<gfx::draw_command::data_t> draws;
 };
 
+/* Stands in for an entity: the first-person hands and weapon, placed at the camera */
+inline constexpr u64 first_person_entity = 0x4650'0000'0000'0000ull;
+
 struct Material
 {
     std::vector<gfx::draw_command::data_t> draws;

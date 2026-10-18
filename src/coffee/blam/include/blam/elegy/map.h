@@ -200,6 +200,13 @@ struct map_container
         return data ? tagged<T>{tag, data} : tagged<T>{};
     }
 
+    /*! Name of the tag `ref` points at, empty when it is null */
+    inline std::string_view name_of(tag_reference const& ref) const
+    {
+        auto const* tag = tag_at(ref.id);
+        return tag ? name_of(*tag) : std::string_view();
+    }
+
     template<typename T>
     inline tagged<T> get(tag_reference const& ref) const
     {
