@@ -312,30 +312,38 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         {"csm_occluder_tiles", 11},
                         m_shadows.occluder_tiles_sampler(),
                     });
+                /* Solid surfaces only show their front; the sky is seen from
+                 * inside, and cut-outs and transparents from both sides */
+                bool const cull = !mat.sky && !mat.water && !mat.ocean && !mat.additive &&
+                                  !mat.blended && !mat.alpha_test && !mat.plasma;
                 auto submit = [&](std::vector<gfx::draw_command::data_t> const& data) {
-                    auto res = m_api->submit(
-                        {
-                            .program = m_programs[static_cast<size_t>(mat.variant)],
-                            .vertices      = m_vao,
-                            .render_target = resources.offscreen,
-                            .call          = {.indexed = true, .instanced = true},
-                            .data          = data,
-                        },
-                        vert_u,
-                        frag_u,
-                        samplers,
-                        gfx::view_state{
-                            .view = typing::vector_types::Veci4{
-                                0,
-                                0,
-                                resources.offscreen_size.x,
-                                resources.offscreen_size.y},
-                            .depth = gfx::depth_state{.reversed = true},
-                        },
-                        gfx::depth_extended_state{
-                            .depth_write = !mat.sky && !mat.water && !mat.additive &&
-                                           !mat.blended},
-                        gfx::blend_state{.additive = mat.additive});
+                    gfx::draw_command const command{
+                        .program       = m_programs[static_cast<size_t>(mat.variant)],
+                        .vertices      = m_vao,
+                        .render_target = resources.offscreen,
+                        .call          = {.indexed = true, .instanced = true},
+                        .data          = data,
+                    };
+                    gfx::view_state view{
+                        .view = typing::vector_types::Veci4{
+                            0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
+                        .depth = gfx::depth_state{.reversed = true},
+                    };
+                    gfx::depth_extended_state depth{
+                        .depth_write =
+                            !mat.sky && !mat.water && !mat.additive && !mat.blended};
+                    gfx::blend_state blend{.additive = mat.additive};
+                    auto res = cull ? m_api->submit(
+                                          command,
+                                          vert_u,
+                                          frag_u,
+                                          samplers,
+                                          view,
+                                          depth,
+                                          blend,
+                                          gfx::cull_state{.front_face = false})
+                                    : m_api->submit(
+                                          command, vert_u, frag_u, samplers, view, depth, blend);
                     if(res.has_value() && !m_draw_error_logged)
                     {
                         cWarning("H2: failed to draw: {}", std::get<1>(*res));
