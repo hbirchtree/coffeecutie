@@ -576,6 +576,7 @@ struct H2MapLoader : compo::SubsystemBase
         m_vertices.clear();
         m_indices.clear();
         m_material_index.clear();
+        m_placed.clear();
         m_textures.clear();
         m_cubes.clear();
         m_buckets.clear();
@@ -2620,6 +2621,16 @@ struct H2MapLoader : compo::SubsystemBase
             Matf4 transform = glm::translate(Matf4(1.f), pos) * glm::mat4_cast(q) *
                               glm::scale(Matf4(1.f), Vecf3(scale));
             DrawTag tag = object_tag(pos, bsp, origin_bsp);
+            /* Scenarios place some objects more than once in one spot (per
+             * BSP, or twice outright); copies seen together z-fight on
+             * rounding, so only the first is kept */
+            for(auto const& other : m_placed)
+                if(other.model == mode_tag &&
+                   (other.section < 0 || tag.section < 0 || other.section == tag.section) &&
+                   glm::distance(other.position, pos) < .01f &&
+                   std::abs(glm::dot(other.rotation, q)) > .9999f)
+                    return false;
+            m_placed.push_back({mode_tag, pos, q, tag.section});
             std::unordered_map<u32, i16> permutations;
             std::optional<ObjectPhysics> physics;
             if(object)
@@ -2713,9 +2724,15 @@ struct H2MapLoader : compo::SubsystemBase
                 auto const*       entry = p.palette.in(palette.value());
                 dim::tag_t const* mode_tag =
                     entry ? render_model_of(map, entry->tag) : nullptr;
-                /* Manual BSP flags: one bit per structure BSP; none = all */
-                u16 flags = static_cast<u16>(p.bsp_flags);
-                i32 bsp   = flags ? static_cast<i32>(std::countr_zero(flags)) : -1;
+                /* Manual BSP flags: one bit per structure BSP; none = all.
+                 * An object shared by BSPs is placed once per BSP, each copy
+                 * living in its origin BSP, so they never overlap */
+                u16 flags  = static_cast<u16>(p.bsp_flags);
+                i16 origin = p.origin_bsp.value();
+                i32 bsp    = !flags          ? -1
+                             : origin >= 0 && origin < 16 && (flags >> origin) & 1
+                                 ? origin
+                                 : static_cast<i32>(std::countr_zero(flags));
                 dim::string_id variant{};
                 if constexpr(requires { p.variant; })
                     variant = p.variant.variant_name;
@@ -3307,6 +3324,14 @@ struct H2MapLoader : compo::SubsystemBase
     std::vector<Vertex>              m_vertices;
     std::vector<u16>                 m_indices;
     std::unordered_map<u32, i32>     m_material_index; /* shad tag -> slot */
+    struct placed_t
+    {
+        dim::tag_t const* model;
+        Vecf3             position;
+        Quatf             rotation;
+        i32               section;
+    };
+    std::vector<placed_t> m_placed;
     /* (jmad, mode) -> H2Scene::animations slot */
     std::unordered_map<u64, std::optional<u32>> m_animation_index;
     std::unordered_map<u32, Texture> m_textures; /* bitm tag | image << 16 -> gpu */
