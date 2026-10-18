@@ -1459,8 +1459,8 @@ struct BlamScript
                                       : feet.x;
             f32 const   slide = drive ? drive->slide_speed : feet.y;
             f32 const   accel = drive && drive->acceleration > 0.f ? drive->acceleration : default_acceleration;
-            f32 const   climb = plane ? (input.held(control_jump) ? 1.f : 0.f) -
-                                            (input.held(control_crouch) ? 1.f : 0.f)
+            f32 const   climb = plane ? (input.held(control_jump) ? plane_climb : 0.f) -
+                                            (input.held(control_crouch) ? plane_sink : 0.f)
                                       : 0.f;
             Vecf3 const want  = ahead * (input.movement.x * top) +
                                right * (input.movement.y * slide) +
@@ -1754,6 +1754,10 @@ struct BlamScript
     /* Of a plane's top speed at full throttle: b30's dropships land where
      * their marines stand at this, not at the tag's maximum */
     static constexpr f32 plane_cruise = .75f;
+    /* Of its slide speed: c10's and b30's dropships sink onto their landing
+     * zones at this, and b40's climbs onto its ledge at that */
+    static constexpr f32 plane_sink  = .5f;
+    static constexpr f32 plane_climb = .2f;
     /* Where a body is tested against volumes, above its feet */
     static constexpr f32 body_middle = .3f;
     static constexpr f32 eye_height  = .6f;
