@@ -197,6 +197,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_cube_textures.clear();
         m_scene.baked.clear();
         m_vertices.clear();
+        m_object_lights.clear();
         m_indices.clear();
         m_material_index.clear();
         m_textures.clear();
@@ -452,8 +453,11 @@ struct H3MapLoader : compo::SubsystemBase
             api.alloc_buffer(gfx::buffers::vertex, semantic::RSCA::ReadOnly);
         m_scene.element_buf =
             api.alloc_buffer(gfx::buffers::element, semantic::RSCA::ReadOnly);
+        m_scene.first_person_buf =
+            api.alloc_buffer(gfx::buffers::vertex, semantic::RSCA::Persistent | semantic::RSCA::WriteOnly);
         m_scene.vertex_buf->alloc();
         m_scene.element_buf->alloc();
+        m_scene.first_person_buf->alloc();
     }
 
     bool load_world()
@@ -577,6 +581,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.cubemap_probes.clear();
         m_scene.lights.clear();
         m_vertices.clear();
+        m_object_lights.clear();
         m_indices.clear();
         build_zone(*scnr, m_zone_masks[static_cast<size_t>(zone_set)], eye);
         m_loader->trim();
@@ -669,6 +674,8 @@ struct H3MapLoader : compo::SubsystemBase
 
         m_scene.vertex_buf->commit(
             Span<const Vertex>(m_vertices.data(), m_vertices.size()));
+        commit_first_person();
+        upload_object_lights();
         m_scene.element_buf->commit(Span<const u16>(m_indices.data(), m_indices.size()));
         size_t draws = 0;
         for(auto const& mat : m_scene.materials)
@@ -921,8 +928,7 @@ struct H3MapLoader : compo::SubsystemBase
                 if(!physics)
                 {
                     auto const skin = stored_pose(*model, object);
-                    append_model(model, object.transform(), lit, in_place_entities | ++m_in_place,
-                                 Quatf(1.f, 0.f, 0.f, 0.f), skin);
+                    append_model(model, object.transform(), lit, 0, Quatf(1.f, 0.f, 0.f, 0.f), skin);
                     attach_lights(entry->object, *model, object.transform(), 0);
                     fixed++;
                     continue;
@@ -1041,6 +1047,41 @@ struct H3MapLoader : compo::SubsystemBase
         return out;
     }
 
+    void upload_object_lights()
+    {
+        auto const rows = static_cast<u32>(std::max<size_t>(m_object_lights.size(), 1));
+        m_object_lights.resize(rows);
+        auto tex = m_api->alloc_texture(gfx::textures::d2, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA32F), 1);
+        tex->alloc(size_3d<u32>{5, rows, 1});
+        auto const* bytes = reinterpret_cast<u8 const*>(m_object_lights.data());
+        tex->upload(std::vector<u8>(bytes, bytes + m_object_lights.size() * sizeof(m_object_lights[0])), Veci2{0, 0},
+                    Veci2{5, static_cast<i32>(rows)}, 0);
+        m_scene.object_lights         = tex;
+        m_scene.object_lights_sampler = tex->sampler();
+        m_scene.object_lights_sampler->alloc();
+        m_scene.object_lights_sampler->set_filtering(typing::Filtering::Nearest, typing::Filtering::Nearest);
+        m_object_lights.clear();
+    }
+
+    /* The first person's vertices into their own buffer, its draws offset to
+     * match, so posing them never touches the static one */
+    void commit_first_person()
+    {
+        auto& fp = m_first_person;
+        if(fp.meshes.empty())
+            return;
+        fp.first = fp.meshes.front().first;
+        std::vector<Vertex> all;
+        for(auto const& mesh : fp.meshes)
+            all.insert(all.end(), mesh.drawn.begin(), mesh.drawn.end());
+        m_scene.first_person_buf->commit(Span<const Vertex>(all.data(), all.size()));
+        for(auto& mat : m_scene.materials)
+            for(auto& object : mat.object_draws)
+                if(object.entity == first_person_entity)
+                    for(auto& draw : object.draws)
+                        draw.elements.vertex_offset -= fp.first;
+    }
+
     /* The idle at 30 frames a second: the meshes posed and uploaded again */
     void animate_first_person(time_point const& now)
     {
@@ -1059,7 +1100,8 @@ struct H3MapLoader : compo::SubsystemBase
                 mesh.drawn[i].position = m_decoded[i].position;
                 mesh.drawn[i].normal   = m_decoded[i].normal;
             }
-            m_scene.vertex_buf->update(mesh.first * sizeof(Vertex), Span<const Vertex>(mesh.drawn.data(), mesh.drawn.size()));
+            m_scene.first_person_buf->update(
+                (mesh.first - fp.first) * sizeof(Vertex), Span<const Vertex>(mesh.drawn.data(), mesh.drawn.size()));
         }
     }
 
@@ -1271,6 +1313,16 @@ struct H3MapLoader : compo::SubsystemBase
             });
         if(!skin.empty())
             pose_vertices(mesh, skin, m_decoded);
+        /* An object's light is shaded per pixel from its row of the table;
+         * the first person's follows the camera instead */
+        Vecf3 unlit(0.f, 0.f, -1.f);
+        if(object_light && !first_person)
+        {
+            auto const row = h3::packed(*object_light);
+            if(m_object_lights.empty() || m_object_lights.back() != row)
+                m_object_lights.push_back(row);
+            unlit = Vecf3(static_cast<f32>(m_object_lights.size() - 1), 0.f, -2.f);
+        }
         for(size_t i = 0; i < m_decoded.size(); i++)
         {
             auto const& v = m_decoded[i];
@@ -1278,8 +1330,7 @@ struct H3MapLoader : compo::SubsystemBase
                      .position = Vecf3(transform * Vecf4(v.position, 1.f)),
                      .texcoord = v.texcoord,
                      .normal   = glm::normalize(normal * v.normal),
-                     .lightmap = lit ? Vecf3(lightmap_uvs[i] * m_slot_uv, static_cast<f32>(m_slot))
-                                     : Vecf3(0.f, 0.f, -1.f),
+                     .lightmap = lit ? Vecf3(lightmap_uvs[i] * m_slot_uv, static_cast<f32>(m_slot)) : unlit,
             };
             if(vertex_lit)
             {
@@ -1333,12 +1384,12 @@ struct H3MapLoader : compo::SubsystemBase
             if(entity)
             {
                 if(mat.object_draws.empty() || mat.object_draws.back().entity != entity)
-                    mat.object_draws.push_back({
-                        .entity   = entity,
-                        .light    = object_light ? std::optional(h3::packed(*object_light)) : std::nullopt,
-                        .position = Vecf3(transform[3]),
-                    });
-                draws = &mat.object_draws.back().draws;
+                    mat.object_draws.push_back({.entity = entity});
+                auto& object = mat.object_draws.back();
+                for(size_t v = vbase; v < m_vertices.size(); v++)
+                    object.lo = glm::min(object.lo, m_vertices[v].position),
+                    object.hi = glm::max(object.hi, m_vertices[v].position);
+                draws = &object.draws;
             }
             draws->push_back({
                 .elements =
@@ -2431,7 +2482,7 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<Vertex>                                m_vertices;
     std::vector<u16>                                   m_indices;
     std::vector<el::vertex_t>                          m_decoded;
-    u64                                                m_in_place{0}; /*!< Objects drawn where placed */
+    std::vector<std::array<Vecf4, 5>>                  m_object_lights; /*!< Rows of H3Scene::object_lights */
     /* The first person's idle, and its meshes as uploaded */
     struct FirstPersonMesh
     {
@@ -2449,6 +2500,7 @@ struct H3MapLoader : compo::SubsystemBase
         std::vector<el::render_model_t const*> models;
         std::vector<FirstPersonMesh>           meshes;
         i32                                    model{-1}; /*!< Being drawn, while loading */
+        u32                                    first{0};  /*!< Its first vertex in the static buffer */
         time_point                             start{};
     } m_first_person;
     std::vector<std::array<u16, 3>>                    m_triangles;

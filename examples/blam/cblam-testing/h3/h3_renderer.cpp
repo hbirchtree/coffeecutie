@@ -13,6 +13,9 @@
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 #include <coffee/graphics/apis/gleam/rhi_vertex.h>
+#include <glm/gtc/matrix_access.hpp>
+
+#include <unordered_map>
 
 namespace h3 {
 
@@ -49,6 +52,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         {
             m_vao->set_buffer(gfx::buffers::vertex, scene.vertex_buf, 0);
             m_vao->set_buffer(gfx::buffers::element, scene.element_buf);
+            m_first_person_vao->set_buffer(gfx::buffers::vertex, scene.first_person_buf, 0);
+            m_first_person_vao->set_buffer(gfx::buffers::element, scene.element_buf);
             m_generation = scene.generation;
         }
         PlayerCamera const* camera{};
@@ -85,6 +90,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             m_start = now;
         f32 const seconds = std::chrono::duration<f32>(now - m_start).count();
         render_shadows(p, scene, *camera);
+        gather_lights(p, scene);
         Model first_person{};
         place_first_person(*camera, camera->camera.position, Attachment{}, first_person);
         /* The first person's light from the lightmap under the camera, looked
@@ -143,11 +149,12 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
                     .depth = gfx::depth_state{.range = typing::vector_types::Vecd2{0.0, 1.0}, .reversed = true},
                 };
+                auto vertices     = m_vao;
                 auto submit_draws = [&](auto& frag_u, auto& samplers, auto const& draws) {
                     return m_api->submit(
                         {
                             .program       = m_programs[static_cast<size_t>(mat.variant)],
-                            .vertices      = m_vao,
+                            .vertices      = vertices,
                             .render_target = resources.offscreen,
                             .call          = {.indexed = true, .instanced = true},
                             .data          = draws,
@@ -157,7 +164,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         samplers,
                         view,
                         gfx::depth_extended_state{.depth_write = pass == 0},
-                        gfx::blend_state{.additive = mat.additive});
+                        gfx::blend_state{.additive = mat.additive},
+                        gfx::cull_state{.front_face = cull_front});
                 };
                 static std::vector<ObjectDraws> const no_objects;
                 std::array<Vecf4, 5>                  object_light{};
@@ -168,14 +176,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     model_matrix = Matf4(1.f);
                     object_lit   = 0;
                     /* The level by the lights nearest the camera, objects by theirs */
-                    light_count = pack_lights(p, scene, camera->camera.position);
+                    light_count = pack_lights(0, camera->camera.position);
                     if(!mat.draws.empty())
                         out = submit_draws(frag_u, samplers, mat.draws);
                     for(auto const& object : params.render_scenery ? mat.object_draws : no_objects)
                     {
-                        object_lit = object.light ? 1 : 0;
-                        if(object.light)
-                            object_light = *object.light;
                         /* In front of everything, so it never reaches into walls */
                         if(object.entity == first_person_entity)
                         {
@@ -183,26 +188,21 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             if(first_person_light)
                                 object_light = *first_person_light;
                             model_matrix     = first_person.transform;
-                            light_count      = pack_lights(p, scene, camera->camera.position);
+                            light_count      = pack_lights(first_person_entity, camera->camera.position);
                             view.depth->range = typing::vector_types::Vecd2{first_person_depth, 1.0};
+                            vertices          = m_first_person_vao;
                             if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
                                 out = res;
+                            vertices          = m_vao;
+                            object_lit        = 0;
                             view.depth->range = typing::vector_types::Vecd2{0.0, 1.0};
                             continue;
                         }
-                        if(in_place(object.entity))
-                        {
-                            model_matrix = Matf4(1.f);
-                            light_count  = pack_lights(p, scene, object.position);
-                            if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
-                                out = res;
-                            continue;
-                        }
                         auto const* placed = p.template get<Model>(object.entity);
-                        if(!placed)
+                        if(!placed || !in_view(camera->matrix, object.sphere(placed->transform)))
                             continue;
                         model_matrix = placed->transform;
-                        light_count  = pack_lights(p, scene, placed->position);
+                        light_count  = pack_lights(object.entity, placed->position);
                         if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
                             out = res;
                     }
@@ -427,7 +427,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{
                             stage_t::Fragment,
                             {"env_map", 16},
-                            mat.environment_map.sampler ? mat.environment_map.sampler : m_black_cube_sampler});
+                            mat.environment_map.sampler ? mat.environment_map.sampler : m_black_cube_sampler},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment,
+                            {"object_lights", 18},
+                            scene.object_lights_sampler ? scene.object_lights_sampler : m_white_sampler});
                     res = submit(frag_u, samplers);
                 }
                 if(res.has_value() && !m_draw_error_logged)
@@ -477,6 +481,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     auto const* placed = p.template get<Model>(object.entity);
                     if(!placed)
                         continue;
+                    Vecf4 const sphere = object.sphere(placed->transform);
+                    if(!m_shadows.covers(c, Vecf3(sphere), sphere.w))
+                        continue;
                     model = placed->transform;
                     m_api->submit(
                         {
@@ -495,15 +502,28 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
 
     /* The lights nearest the camera, as simple_lights.fx reads them; lights
      * on moving objects follow their Model */
-    i32 pack_lights(Proxy& p, H3Scene const& scene, Vecf3 const& eye)
+    /* Whether a bounding sphere reaches into the view; the projection's far
+     * plane is at infinity, so only its sides and the eye plane count */
+    static bool in_view(Matf4 const& view_projection, Vecf4 const& sphere)
     {
-        struct candidate_t
-        {
-            DynamicLight const* light;
-            Vecf3               position, direction;
-            f32                 distance;
+        Vecf4 const row3 = glm::row(view_projection, 3);
+        auto outside = [&](Vecf4 const& plane) {
+            return glm::dot(Vecf3(plane), Vecf3(sphere)) + plane.w < -sphere.w * glm::length(Vecf3(plane));
         };
-        std::vector<candidate_t> near;
+        for(int i = 0; i < 2; i++)
+        {
+            Vecf4 const row = glm::row(view_projection, i);
+            if(outside(row3 + row) || outside(row3 - row))
+                return false;
+        }
+        return !outside(row3);
+    }
+
+    /* The lights where their objects carry them this frame */
+    void gather_lights(Proxy& p, H3Scene const& scene)
+    {
+        m_frame_lights.clear();
+        m_packed.clear();
         for(auto const& light : scene.lights)
         {
             Vecf3 position = light.position, direction = light.direction;
@@ -515,24 +535,39 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 position  = Vecf3(model->transform * Vecf4(light.position, 1.f));
                 direction = glm::normalize(Matf3(model->transform) * light.direction);
             }
-            near.push_back({&light, position, direction, glm::distance(position, eye) - light.radius});
+            m_frame_lights.push_back({&light, position, direction, 0.f});
         }
-        size_t const count = std::min(near.size(), max_lights);
-        std::partial_sort(near.begin(), near.begin() + count, near.end(), [](auto const& a, auto const& b) {
-            return a.distance < b.distance;
-        });
-        m_lights.fill(Vecf4(0.f));
-        for(size_t i = 0; i < count; i++)
+    }
+
+    /* The lights nearest `eye`, as simple_lights.fx reads them; chosen once a
+     * frame per `key` (an object, or 0 for the level) */
+    i32 pack_lights(u64 key, Vecf3 const& eye)
+    {
+        auto [it, fresh] = m_packed.try_emplace(key);
+        auto& packed     = it->second;
+        if(fresh)
         {
-            auto const& [light, position, direction, _] = near[i];
-            m_lights[i * 5]     = Vecf4(position, light->size);
-            /* Shaded towards the light: the spot faces the other way */
-            m_lights[i * 5 + 1] = Vecf4(-direction, light->sphere);
-            m_lights[i * 5 + 2] = Vecf4(light->color, light->smooth);
-            m_lights[i * 5 + 3] = light->falloff;
-            m_lights[i * 5 + 4] = Vecf4(light->radius * light->radius, 0.f, 0.f, 0.f);
+            for(auto& c : m_frame_lights)
+                c.distance = glm::distance(c.position, eye) - c.light->radius;
+            size_t const count = std::min(m_frame_lights.size(), max_lights);
+            std::partial_sort(
+                m_frame_lights.begin(), m_frame_lights.begin() + count, m_frame_lights.end(),
+                [](auto const& a, auto const& b) { return a.distance < b.distance; });
+            packed.lights.fill(Vecf4(0.f));
+            for(size_t i = 0; i < count; i++)
+            {
+                auto const& [light, position, direction, _] = m_frame_lights[i];
+                packed.lights[i * 5] = Vecf4(position, light->size);
+                /* Shaded towards the light: the spot faces the other way */
+                packed.lights[i * 5 + 1] = Vecf4(-direction, light->sphere);
+                packed.lights[i * 5 + 2] = Vecf4(light->color, light->smooth);
+                packed.lights[i * 5 + 3] = light->falloff;
+                packed.lights[i * 5 + 4] = Vecf4(light->radius * light->radius, 0.f, 0.f, 0.f);
+            }
+            packed.count = static_cast<i32>(count);
         }
-        return static_cast<i32>(count);
+        m_lights = packed.lights;
+        return packed.count;
     }
 
     /* Water (water_shading.fx) reads the scene behind it: a copy of the
@@ -785,41 +820,46 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         m_api     = &m_container.subsystem_cast<gfx::system>();
         auto& api = *m_api;
 
-        m_vao = api.alloc_vertex_array();
-        m_vao->alloc();
-        m_vao->add(gfx::vertex_attribute{
-            .index = 0,
-            .value = {.offset = 0, .stride = sizeof(Vertex), .count = 3},
-        });
-        m_vao->add(gfx::vertex_attribute{
-            .index = 1,
-            .value = {.offset = offsetof(Vertex, texcoord), .stride = sizeof(Vertex), .count = 2},
-        });
-        m_vao->add(gfx::vertex_attribute{
-            .index = 2,
-            .value = {.offset = offsetof(Vertex, normal), .stride = sizeof(Vertex), .count = 3},
-        });
-        m_vao->add(gfx::vertex_attribute{
-            .index = 3,
-            .value = {.offset = offsetof(Vertex, lightmap), .stride = sizeof(Vertex), .count = 3},
-        });
-        m_vao->add(gfx::vertex_attribute{
-            .index = 4,
-            .value =
-                {.offset = offsetof(Vertex, light),
-                 .stride = sizeof(Vertex),
-                 .count  = 4,
-                 .type   = semantic::type_t::u8,
-                 .flags  = gfx::vertex_attribute::attribute_flags::packed |
-                          gfx::vertex_attribute::attribute_flags::normalized},
-        });
-        m_vao->set_attribute_names({
-            {"position", 0},
-            {"texcoord", 1},
-            {"normal", 2},
-            {"lightmap", 3},
-            {"vertex_light", 4},
-        });
+        /* The level and objects, and the first person's own vertices */
+        auto layout = [&](std::shared_ptr<gfx::vertex_array_t>& vao) {
+            vao = api.alloc_vertex_array();
+            vao->alloc();
+            vao->add(gfx::vertex_attribute{
+                .index = 0,
+                .value = {.offset = 0, .stride = sizeof(Vertex), .count = 3},
+            });
+            vao->add(gfx::vertex_attribute{
+                .index = 1,
+                .value = {.offset = offsetof(Vertex, texcoord), .stride = sizeof(Vertex), .count = 2},
+            });
+            vao->add(gfx::vertex_attribute{
+                .index = 2,
+                .value = {.offset = offsetof(Vertex, normal), .stride = sizeof(Vertex), .count = 3},
+            });
+            vao->add(gfx::vertex_attribute{
+                .index = 3,
+                .value = {.offset = offsetof(Vertex, lightmap), .stride = sizeof(Vertex), .count = 3},
+            });
+            vao->add(gfx::vertex_attribute{
+                .index = 4,
+                .value =
+                    {.offset = offsetof(Vertex, light),
+                     .stride = sizeof(Vertex),
+                     .count  = 4,
+                     .type   = semantic::type_t::u8,
+                     .flags  = gfx::vertex_attribute::attribute_flags::packed |
+                              gfx::vertex_attribute::attribute_flags::normalized},
+            });
+            vao->set_attribute_names({
+                {"position", 0},
+                {"texcoord", 1},
+                {"normal", 2},
+                {"lightmap", 3},
+                {"vertex_light", 4},
+            });
+        };
+        layout(m_vao);
+        layout(m_first_person_vao);
 
         /* Stand-in for render methods without a usable base map */
         m_white = api.alloc_texture(
@@ -886,6 +926,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     Vecf3                               m_first_person_at{1e9f};
     u32                                 m_first_person_generation{0};
     std::optional<std::array<Vecf4, 5>> m_first_person_light;
+    /* Halo 3 culls back faces */
+    static constexpr bool cull_front = false;
     /* The near slice of the depth range the first-person models draw into */
     static constexpr double first_person_depth = 0.98;
     blam_render::CascadedShadowMap::sampling_t  m_shadow_sampling{};
@@ -906,6 +948,20 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     bool                                        m_draw_error_logged{false};
     static constexpr size_t                     max_lights = 8;
     std::array<Vecf4, max_lights * 5>           m_lights{};
+    struct FrameLight
+    {
+        DynamicLight const* light;
+        Vecf3               position, direction;
+        f32                 distance;
+    };
+    struct PackedLights
+    {
+        std::array<Vecf4, max_lights * 5> lights{};
+        i32                               count{0};
+    };
+    std::vector<FrameLight>                     m_frame_lights;
+    std::unordered_map<u64, PackedLights>       m_packed;
+    std::shared_ptr<gfx::vertex_array_t>        m_first_person_vao;
 };
 
 void alloc_h3_renderer(compo::EntityContainer& e)

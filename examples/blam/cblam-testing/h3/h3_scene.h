@@ -8,7 +8,9 @@
 #include <coffee/graphics/apis/gleam/rhi_draw_command.h>
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 
+#include <algorithm>
 #include <array>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -138,20 +140,21 @@ struct ObjectDraws
 {
     u64                                    entity{0};
     std::vector<gfx::draw_command::data_t> draws;
-    /* Baked light from the lightmap under it, shaded per pixel */
-    std::optional<std::array<Vecf4, 5>> light;
-    Vecf3                               position{}; /*!< Where it was placed */
+    Vecf3                                  lo{std::numeric_limits<f32>::max()}; /*!< Object-space bounds */
+    Vecf3                                  hi{std::numeric_limits<f32>::lowest()};
+
+    /*! Its bounding sphere where `transform` places it: centre, radius */
+    Vecf4 sphere(Matf4 const& transform) const
+    {
+        f32 const scale = std::max({glm::length(Vecf3(transform[0])), glm::length(Vecf3(transform[1])),
+                                    glm::length(Vecf3(transform[2]))});
+        return Vecf4(Vecf3(transform * Vecf4((lo + hi) * .5f, 1.f)), glm::length(hi - lo) * .5f * scale);
+    }
 };
 
 /* Stands in for an entity: the first-person hands and weapon, placed at the camera */
 inline constexpr u64 first_person_entity = 0x4650'0000'0000'0000ull;
-/* Stand in for entities: objects drawn where they were placed, in world space */
-inline constexpr u64 in_place_entities = 0x4950'0000'0000'0000ull;
 
-inline bool in_place(u64 entity)
-{
-    return (entity & 0xFFFF'0000'0000'0000ull) == in_place_entities;
-}
 
 struct Material
 {
@@ -276,6 +279,12 @@ struct H3Scene : compo::SubsystemBase
         return out;
     }
     std::shared_ptr<gfx::buffer_t> vertex_buf;
+    /* The first person's vertices, posed again every frame */
+    std::shared_ptr<gfx::buffer_t> first_person_buf;
+    /* Each object's baked light from the lightmap under it, a row of five
+     * texels (h3::packed); its vertices carry the row */
+    std::shared_ptr<gfx::texture_2d_t> object_lights;
+    std::shared_ptr<gfx::sampler_t>    object_lights_sampler;
     std::shared_ptr<gfx::buffer_t> element_buf;
 };
 
