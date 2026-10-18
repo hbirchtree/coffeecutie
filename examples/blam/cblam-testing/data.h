@@ -78,6 +78,8 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::program_t> camo;
     /* Depth-only object casters; only with the full uber shaders */
     std::shared_ptr<gfx::program_t> shadow_pipeline;
+    /* Depth-only BSP, hiding receivers from the sun */
+    std::shared_ptr<gfx::program_t> shadow_occluder_pipeline;
 
     /* ES2 shaders */
     std::shared_ptr<gfx::program_t> bsp_pipeline;

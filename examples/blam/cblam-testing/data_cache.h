@@ -91,6 +91,15 @@ struct DataCache
         return find_id(id.i);
     }
 
+    auto find(generation_idx_t id) const
+    {
+        if(id.gen < generation)
+            Throw(data_cache_error("stale reference"));
+        if(id.i == invalid_id || id.i > m_cache.size())
+            return m_cache.end();
+        return m_cache.begin() + static_cast<ptrdiff_t>(id.i - 1);
+    }
+
     auto& get(generation_idx_t id)
     {
         return find(id)->second;

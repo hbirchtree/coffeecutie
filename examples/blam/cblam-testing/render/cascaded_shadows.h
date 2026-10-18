@@ -27,9 +27,14 @@ using typing::vector_types::Veci4;
  * is a texel-snapped orthographic box around a bounding sphere (so shadows
  * hold still while the camera turns) and a tile of one depth atlas.
  *
+ * Optionally the world's static geometry is drawn once into an occluder
+ * map fitted to the world; receivers it hides from the light get no cast
+ * shadow (indoors under a roof, shade the lightmaps already hold).
+ *
  * Nothing here knows the game: callers draw their casters per tile with
- * `light_matrix()` and `viewport()`, skipping what `covers()` rejects, and
- * bind `sampling(view)` and `sampler()` for the receivers
+ * `light_matrix()` and `viewport()`, skipping what `covers()` rejects, draw
+ * the static geometry when `update_occluder()` asks, and bind
+ * `sampling(view)`, `sampler()` and `occluder_sampler()` for the receivers
  * (fragments/cascaded_shadows.glsl).
  */
 struct CascadedShadowMap
@@ -48,6 +53,7 @@ struct CascadedShadowMap
         f32 near_distance{.2f};
         f32 caster_reach{120.f}; /*!< How far towards the light casters count */
         f32 strength{.6f};
+        u32 occluder_resolution{0}; /*!< Static occluder map, 0 = none */
     };
 
     /*! A view frustum as an eye and the directions through its corners */
@@ -66,6 +72,8 @@ struct CascadedShadowMap
         Vecf4 params{0.f}; /*!< cascades, strength, fade distance */
         std::array<Vecf4, max_cascades> tiles{}; /*!< Atlas rect, inset for PCF */
         Vecf4 bias{0.f}; /*!< A texel's world size in depth, per cascade */
+        Matf4 occluder{1.f}; /*!< World to occluder uv + depth */
+        Vecf4 occluder_info{0.f}; /*!< texel world size, depth bias, on */
     };
 
     /*! The frustum of a camera from its inverse view-projection */
@@ -110,6 +118,70 @@ struct CascadedShadowMap
         m_sampler = m_depth->sampler();
         m_sampler->alloc();
         m_sampler->set_filtering(typing::Filtering::Nearest, typing::Filtering::Nearest);
+
+        m_occluder_target.reset();
+        m_occluder_key = {};
+        if(auto const r = m_config.occluder_resolution)
+        {
+            m_occluder_depth =
+                api.alloc_texture(gfx::textures::d2, typing::pixels::PixDesc(format), 1);
+            m_occluder_depth->alloc(size_3d<u32>{r, r, 1});
+            m_occluder_target = api.alloc_rendertarget();
+            m_occluder_target->alloc();
+            m_occluder_target->attach(
+                gfx::render_targets::attachment::depth, *m_occluder_depth, 0);
+            m_occluder_target->resize({0, 0, static_cast<i32>(r), static_cast<i32>(r)});
+            m_occluder_sampler = m_occluder_depth->sampler();
+            m_occluder_sampler->alloc();
+            m_occluder_sampler->set_filtering(
+                typing::Filtering::Nearest, typing::Filtering::Nearest);
+        }
+    }
+
+    /*! Fits the occluder map to the world; true when the static geometry
+     * must be drawn into it again (cleared already) */
+    bool update_occluder(Vecf3 const& center, f32 radius, Vecf3 const& to_light)
+    {
+        if(!m_occluder_target)
+            return false;
+        Vecf4 const key{glm::normalize(to_light), radius};
+        if(m_occluder_key == key && m_occluder_center == center)
+            return false;
+        m_occluder_key    = key;
+        m_occluder_center = center;
+        auto const res    = static_cast<f32>(m_config.occluder_resolution);
+        f32          texel = 0.f, range = 1.f;
+        m_occluder_light = box(center, radius, basis(to_light), res, texel, range);
+        Matf4 const to_uv = glm::translate(Matf4(1.f), Vecf3(.5f)) *
+                            glm::scale(Matf4(1.f), Vecf3(.5f));
+        for(auto& view : m_sampling)
+        {
+            view.occluder      = to_uv * m_occluder_light;
+            view.occluder_info = Vecf4(texel, 2.f * texel / range, 1.f, 0.f);
+        }
+        m_occluder_target->clear(1.0);
+        return true;
+    }
+
+    Matf4 const& occluder_matrix() const
+    {
+        return m_occluder_light;
+    }
+
+    Veci4 occluder_viewport() const
+    {
+        auto const r = static_cast<i32>(m_config.occluder_resolution);
+        return Veci4{0, 0, r, r};
+    }
+
+    std::shared_ptr<gfx::rendertarget_t> const& occluder_target() const
+    {
+        return m_occluder_target;
+    }
+
+    std::shared_ptr<gfx::sampler_t> const& occluder_sampler() const
+    {
+        return m_occluder_sampler;
     }
 
     bool valid() const
@@ -251,23 +323,40 @@ struct CascadedShadowMap
         return glm::lookAt(Vecf3(0.f), -light, up);
     }
 
+    /* A texel-snapped box around a sphere, seen from the light */
+    Matf4 box(
+        Vecf3 const& center,
+        f32          radius,
+        Matf4 const& light,
+        f32          resolution,
+        f32&         texel,
+        f32&         range) const
+    {
+        radius  = std::ceil(radius * 16.f) / 16.f;
+        texel   = 2.f * radius / resolution;
+        range   = radius + m_config.caster_reach;
+        Vecf3 c = Vecf3(light * Vecf4(center, 1.f));
+        c.x     = std::floor(c.x / texel) * texel;
+        c.y     = std::floor(c.y / texel) * texel;
+        return glm::ortho(
+                   c.x - radius,
+                   c.x + radius,
+                   c.y - radius,
+                   c.y + radius,
+                   -(c.z + m_config.caster_reach),
+                   radius - c.z) *
+               light;
+    }
+
     void fit(u32 tile, Vecf3 const& center, f32 radius, Matf4 const& light)
     {
-        radius            = std::ceil(radius * 16.f) / 16.f;
-        f32 const texel   = 2.f * radius / static_cast<f32>(m_config.resolution);
-        Vecf3     c       = Vecf3(light * Vecf4(center, 1.f));
-        c.x               = std::floor(c.x / texel) * texel;
-        c.y               = std::floor(c.y / texel) * texel;
-        m_texel[tile]     = texel;
-        m_depth_range[tile] = radius + m_config.caster_reach;
-        m_light[tile]     = glm::ortho(
-                            c.x - radius,
-                            c.x + radius,
-                            c.y - radius,
-                            c.y + radius,
-                            -(c.z + m_config.caster_reach),
-                            radius - c.z) *
-                        light;
+        m_light[tile] = box(
+            center,
+            radius,
+            light,
+            static_cast<f32>(m_config.resolution),
+            m_texel[tile],
+            m_depth_range[tile]);
     }
 
     /* Receivers land in a tile of the atlas, kept two texels in for PCF */
@@ -300,6 +389,13 @@ struct CascadedShadowMap
     std::vector<f32>                     m_texel;
     std::vector<f32>                     m_depth_range;
     std::vector<sampling_t>              m_sampling;
+
+    std::shared_ptr<gfx::texture_2d_t>   m_occluder_depth;
+    std::shared_ptr<gfx::rendertarget_t> m_occluder_target;
+    std::shared_ptr<gfx::sampler_t>      m_occluder_sampler;
+    Matf4                                m_occluder_light{1.f};
+    Vecf4                                m_occluder_key{0.f};
+    Vecf3                                m_occluder_center{0.f};
 };
 
 } // namespace blam_render

@@ -973,16 +973,27 @@ struct DrawListBuilder
             transparent_ptr += transparent_size;
         }
 
+        auto const& bsp_cache = p.template subsystem<BSPCache<Version>>();
         for(auto ent : p.template select<BspReference, DrawState, Visibility>())
         {
             auto&& [bsp, bsp_draw, vis] = ent.components();
 
             if(!vis.visible_for(m_seat))
                 continue;
+            /* Clusters without a sky are indoors, out of the sun */
+            bool interior = false;
+            if(auto it = bsp_cache.find(bsp.bsp); it != bsp_cache.m_cache.end())
+            {
+                auto const& clusters = it->second.clusters;
+                interior = bsp.cluster_idx < clusters.size() &&
+                           clusters[bsp.cluster_idx].cluster &&
+                           clusters[bsp.cluster_idx].cluster->sky < 0;
+            }
             populate_bsp_material(
                 bsp,
                 bsp_draw.current_pass,
-                bsp_draw.draw.data.front().instances.offset);
+                bsp_draw.draw.data.front().instances.offset,
+                interior);
         }
     }
 
@@ -1570,12 +1581,14 @@ struct DrawListBuilder
     }
 
     void populate_bsp_material(
-        BspReference const& ref, Passes which, size_t i = 0)
+        BspReference const& ref, Passes which, size_t i = 0, bool interior = false)
     {
         Pass&                   pass     = bsp_build()[which];
         materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(material, ref.shader, Vecf2{1, 1});
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
+        if(interior)
+            material.material.flags |= materials::flag_interior;
         if(material.material.material == materials::id::sotr &&
            i < pass.transparent_mapping.size())
             shader_cache.populate_transparent_material(
@@ -1793,16 +1806,15 @@ struct MeshRenderer
         return size + added_padding;
     }
 
-    /* The direction to the sky's first light of this kind of space, like
-     * world_key_light() */
+    /* The direction to the sky's outdoor light, like sun_direction() in
+     * the shaders; it does not move indoors with the camera */
     Vecf3 sun_direction() const
     {
-        u32 want = m_render_params.interior ? 2u : 1u;
         for(auto const& light : m_resources.world.lighting)
         {
             Vecf3 dir{light.light_direction};
             if(glm::dot(dir, dir) > 1e-6f &&
-               (static_cast<u32>(light.light_direction.w) & want))
+               (static_cast<u32>(light.light_direction.w) & 1u))
                 return glm::normalize(dir);
         }
         return Vecf3{0.f, 0.f, 1.f};
@@ -1827,6 +1839,46 @@ struct MeshRenderer
         return {(lo + hi) * .5f, glm::length(hi - lo) * .5f};
     }
 
+    /* The opaque BSP from the light, once per map and sun: the receivers
+     * it hides get no cast shadow, its own shadows being baked */
+    void render_occluders(Proxy& p)
+    {
+        m_shadow_draws.clear();
+        for(auto ent : p.template select<BspReference, DrawState>())
+        {
+            auto const& state = ent.template get<DrawState>();
+            if(state.current_pass < Pass_Opaque || state.current_pass > Pass_LastOpaque ||
+               state.draw.data.empty())
+                continue;
+            m_shadow_draws.push_back(state.draw.data.front());
+        }
+        if(m_shadow_draws.empty())
+            return;
+        auto      _      = m_api->debug().scope("Shadow occluders");
+        Matf4 const light = m_shadows.occluder_matrix();
+        auto res = m_api->submit(
+            {
+                .program       = m_resources.shadow_occluder_pipeline,
+                .vertices      = m_resources.bsp_attr,
+                .render_target = m_shadows.occluder_target(),
+                .call =
+                    gfx::draw_command::call_spec_t{
+                        .indexed = true,
+                        .mode    = gfx::drawing::primitive::triangle,
+                    },
+                .data = m_shadow_draws,
+            },
+            gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Vertex,
+                gfx::uniform_pair{{"camera"sv, 1}, semantic::SpanOne<const Matf4>(light)}),
+            gfx::view_state{
+                .view  = m_shadows.occluder_viewport(),
+                .depth = gfx::depth_state{},
+            });
+        if(res)
+            cFatal("submit error: {}", std::get<1>(*res));
+    }
+
     /* Each seat's near cascades and the shared far one. Casters are what
      * some seat sees, culled to each tile; scenery's shadows are baked into
      * the lightmaps, and so are the BSP's. */
@@ -1844,6 +1896,7 @@ struct MeshRenderer
                           : m_render_params.shadow_resolution,
                 256,
                 4096),
+            .occluder_resolution = m_resources.shadow_occluder_pipeline ? 4096u : 0u,
         };
         auto const& have = m_shadows.config();
         if(!m_shadows.valid() || have.views != want.views ||
@@ -1859,6 +1912,8 @@ struct MeshRenderer
                 to_light);
         auto const [center, radius] = world_sphere(p);
         m_shadows.update_shared(center, radius, to_light);
+        if(m_shadows.update_occluder(center, radius, to_light))
+            render_occluders(p);
         m_shadows.clear();
 
         auto        _ = m_api->debug().scope("Cascaded shadows");
@@ -2268,6 +2323,12 @@ struct MeshRenderer
             gfx::uniform_pair<Vecf4 const>{
                 {"csm_bias"sv},
                 semantic::SpanOne<const Vecf4>(shadow_sampling(idx).bias)},
+            gfx::uniform_pair<Matf4 const>{
+                {"csm_occluder"sv},
+                semantic::SpanOne<const Matf4>(shadow_sampling(idx).occluder)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_occluder_info"sv},
+                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).occluder_info)},
             get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -2305,10 +2366,17 @@ struct MeshRenderer
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
         if(m_shadows.valid() && m_render_params.shadows)
+        {
             samplers.push_back(gleam::sampler_definition_t{
                 typing::graphics::ShaderStage::Fragment,
                 {"csm_atlas"sv, 15},
                 m_shadows.sampler()});
+            if(m_shadows.occluder_sampler())
+                samplers.push_back(gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"csm_occluder_atlas"sv, 16},
+                    m_shadows.occluder_sampler()});
+        }
 
         auto cube_fallback = reflection_fallback(pass);
 
@@ -2408,6 +2476,12 @@ struct MeshRenderer
             gfx::uniform_pair<Vecf4 const>{
                 {"csm_bias"sv},
                 semantic::SpanOne<const Vecf4>(shadow_sampling(idx).bias)},
+            gfx::uniform_pair<Matf4 const>{
+                {"csm_occluder"sv},
+                semantic::SpanOne<const Matf4>(shadow_sampling(idx).occluder)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_occluder_info"sv},
+                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).occluder_info)},
             get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -2433,10 +2507,17 @@ struct MeshRenderer
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
         if(m_shadows.valid() && m_render_params.shadows)
+        {
             samplers.push_back(gleam::sampler_definition_t{
                 typing::graphics::ShaderStage::Fragment,
                 {"csm_atlas"sv, 15},
                 m_shadows.sampler()});
+            if(m_shadows.occluder_sampler())
+                samplers.push_back(gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"csm_occluder_atlas"sv, 16},
+                    m_shadows.occluder_sampler()});
+        }
         auto cube_fallback = reflection_fallback(pass);
 
         for(size_t bucket_idx = 0; bucket_idx < pass.draws.size(); bucket_idx++)
