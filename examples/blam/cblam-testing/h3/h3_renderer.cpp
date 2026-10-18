@@ -92,16 +92,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         render_shadows(p, scene, *camera);
         gather_lights(p, scene);
         Model first_person{};
-        place_first_person(*camera, camera->camera.position, Attachment{}, first_person);
-        /* The first person's light from the lightmap under the camera, looked
-         * up again once it has moved a metre */
-        if(glm::distance(m_first_person_at, camera->camera.position) > 1.f || m_first_person_generation != scene.generation)
-        {
-            m_first_person_at         = camera->camera.position;
-            m_first_person_generation = scene.generation;
-            auto const below          = scene.light_below(m_first_person_at);
-            m_first_person_light      = below ? std::optional(h3::packed(*below)) : std::nullopt;
-        }
+        /* Where the view is drawn from, between ticks when walking */
+        place_first_person(*camera, camera->drawn_eye, Attachment{}, first_person);
+        ease_first_person_light(scene, camera->drawn_eye, now);
         auto const& first_person_light = m_first_person_light;
         auto const& csm_atlas = m_shadows.valid() ? m_shadows.sampler() : m_white_sampler;
         /* Opaque first, then water over a copy of the scene, then alpha
@@ -502,6 +495,47 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
 
     /* The lights nearest the camera, as simple_lights.fx reads them; lights
      * on moving objects follow their Model */
+    /* The first person's light: the lightmap under a few points around the
+     * eye, looked up four times a second and eased towards, so walking in
+     * and out of shade fades rather than steps */
+    void ease_first_person_light(H3Scene const& scene, Vecf3 const& eye, time_point const& now)
+    {
+        bool const reload = m_first_person_generation != scene.generation;
+        if(reload || now - m_first_person_sampled > std::chrono::milliseconds(250))
+        {
+            m_first_person_sampled = now;
+            std::array<Vecf4, 5> sum{};
+            u32                  samples = 0;
+            for(Vecf2 const offset : {Vecf2(0.f), Vecf2(.5f, 0.f), Vecf2(-.5f, 0.f), Vecf2(0.f, .5f), Vecf2(0.f, -.5f)})
+                if(auto light = scene.light_below(eye + Vecf3(offset, 0.f)))
+                {
+                    auto const row = h3::packed(*light);
+                    for(size_t i = 0; i < sum.size(); i++)
+                        sum[i] += row[i];
+                    samples++;
+                }
+            if(samples)
+                for(auto& v : sum)
+                    v /= static_cast<f32>(samples);
+            m_first_person_target = samples ? std::optional(sum) : std::nullopt;
+            if(reload)
+                m_first_person_light.reset();
+            m_first_person_generation = scene.generation;
+        }
+        f32 const dt = std::clamp(std::chrono::duration<f32>(now - m_first_person_time).count(), 0.f, .25f);
+        m_first_person_time = now;
+        if(!m_first_person_target)
+            return;
+        if(!m_first_person_light)
+        {
+            m_first_person_light = m_first_person_target;
+            return;
+        }
+        f32 const t = 1.f - std::exp(-dt / .3f);
+        for(size_t i = 0; i < m_first_person_light->size(); i++)
+            (*m_first_person_light)[i] = glm::mix((*m_first_person_light)[i], (*m_first_person_target)[i], t);
+    }
+
     /* Whether a bounding sphere reaches into the view; the projection's far
      * plane is at infinity, so only its sides and the eye plane count */
     static bool in_view(Matf4 const& view_projection, Vecf4 const& sphere)
@@ -923,9 +957,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::program_t>             m_copy_program;
     std::shared_ptr<gfx::program_t>             m_shadow_program;
     blam_render::CascadedShadowMap              m_shadows;
-    Vecf3                               m_first_person_at{1e9f};
     u32                                 m_first_person_generation{0};
+    time_point                          m_first_person_sampled{};
+    time_point                          m_first_person_time{};
     std::optional<std::array<Vecf4, 5>> m_first_person_light;
+    std::optional<std::array<Vecf4, 5>> m_first_person_target;
     /* Halo 3 culls back faces */
     static constexpr bool cull_front = false;
     /* The near slice of the depth range the first-person models draw into */
