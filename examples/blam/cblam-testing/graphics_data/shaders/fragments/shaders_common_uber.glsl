@@ -43,6 +43,7 @@ layout(location = 31) uniform int render_flags;
 #endif
 #if USE_SHADOWS == 1
 #define CSM_BINDING 15
+#define CSM_OCCLUDER_BINDING 16
 #include "cascaded_shadows.glsl"
 #endif
 
@@ -401,15 +402,30 @@ bool object_lightmap(out vec3 lit)
  * where the camera stands (.w holds them: 1 = exteriors, 2 = interiors) over
  * the matching ambient. Without the flag test a level's sun lights its
  * corridors as brightly as its hillsides. */
-/* Baked light already holds the static shadows: a cast shadow takes
- * little from dim light, most from sunlit */
-vec3 cast_shadow(vec3 light)
+/* The sky's outdoor light, whichever space the camera is in */
+vec3 sun_direction()
+{
+    for(int li = 0; li < MAX_WORLD_LIGHTS; li++)
+    {
+        vec4 dir = world.lighting[li].light_direction;
+        if(dot(dir.xyz, dir.xyz) > 1e-6 && (uint(dir.w) & 1u) != 0u)
+            return dir.xyz;
+    }
+    return world.lighting[0].light_direction.xyz;
+}
+
+/* A cast shadow takes the sun's share out of the baked light: none where
+ * it is dim (shade the lightmap already holds, interiors) and none from
+ * dynamic lights, added after. Indoors the sun never reaches. */
+vec3 cast_shadow(vec3 light, bool interior)
 {
 #if USE_SHADOWS == 1
+    if(interior)
+        return light;
     float sunlit = smoothstep(0.15, 0.45, dot(light, vec3(0.299, 0.587, 0.114)));
     float hidden = cascade_occlusion(
-        frag.position, normalize(frag.normal), normalize(world_key_light()), camera_position);
-    return light * (1.0 - hidden * csm_params.y * mix(0.2, 1.0, sunlit));
+        frag.position, normalize(frag.normal), normalize(sun_direction()), camera_position);
+    return light * (1.0 - hidden * csm_params.y * sunlit);
 #else
     return light;
 #endif
@@ -437,7 +453,7 @@ vec3 object_lighting(in Material mat)
                  * world.lighting[li].light_color.a
                  * max(0.0, dot(frag.normal, normalize(light_dir.xyz)));
         }
-    return cast_shadow(clamp(lit, 0.1, 1.0)) +
+    return cast_shadow(clamp(lit, 0.1, 1.0), interior) +
            point_lighting(frag.position, normalize(frag.normal));
 }
 
@@ -564,7 +580,10 @@ vec4 shader_environment(in Material mat)
     if(has_micro == 1)
         out_color = apply_detail(out_color, micro.rgb, micro_func);
 #if USE_LIGHTMAPS == 1
-    out_color *= cast_shadow(lightmap.rgb) + point_lighting(frag.position, normalize(frag.normal));
+    out_color *= cast_shadow(
+                     lightmap.rgb,
+                     (uint(mat.material.flags) & MATERIAL_FLAG_INTERIOR) != 0u) +
+                 point_lighting(frag.position, normalize(frag.normal));
 #else
     out_color *= object_lighting(mat);
 #endif
