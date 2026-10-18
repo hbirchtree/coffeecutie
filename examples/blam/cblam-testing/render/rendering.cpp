@@ -81,9 +81,13 @@ struct alignas(16) PerInstanceData
     i32 light_layer{-1};
     u32 light_uv{0};
     u32 light_dir{0};
+    /* Bones whose vertices are clipped away: a player's own body shows its
+     * legs below the first-person view */
+    u32 cut_bones[2]{};
+    u32 padding[2]{};
 };
 
-static_assert(sizeof(PerInstanceData) == 80);
+static_assert(sizeof(PerInstanceData) == 96);
 
 using draw_data_t = gfx::draw_command::data_t;
 
@@ -1043,7 +1047,9 @@ struct DrawListBuilder
                     held ? held->holder : model.parent);
                 bool const third_person =
                     rider && rider->riding.vehicle != 0;
-                bool const hidden = !vis.visible_for(m_seat, false, third_person);
+                /* A seat's own legs, where they can be cut out of its body */
+                bool const self   = !held && own_body(p, model.parent);
+                bool const hidden = !vis.visible_for(m_seat, false, third_person || self);
                 if((held && !held->shown) ||
                    (hidden && !shadow_only(vis, third_person, model_draw.current_pass)) ||
                    !((model.lod_mask >> lod) & 1) ||
@@ -1200,16 +1206,21 @@ struct DrawListBuilder
             pid.bone_base = kBoneUnposed;
             auto const& light = object_light(p, smodel.parent, model);
             pid.light_layer   = light.layer;
+            bool const self = own_body(p, smodel.parent);
             {
                 auto const* held  = p.template get<HeldObject>(smodel.parent);
                 auto const* rider = p.template get<PlayerInfo>(
                     held ? held->holder : smodel.parent);
                 bool const third_person = rider && rider->riding.vehicle != 0;
-                if(!parent.template get<Visibility>().visible_for(m_seat, false, third_person))
+                if(!self &&
+                   !parent.template get<Visibility>().visible_for(m_seat, false, third_person))
                     pid.light_layer = kLightShadowOnly;
             }
             pid.light_uv      = light.uv;
             pid.light_dir     = light.dir;
+            u64 const cut     = self ? legs_cut(cache_item) : 0;
+            pid.cut_bones[0]  = static_cast<u32>(cut);
+            pid.cut_bones[1]  = static_cast<u32>(cut >> 32);
             populate_mod2_material(
                 smodel,
                 sm_draw.current_pass,
@@ -1304,6 +1315,63 @@ struct DrawListBuilder
             (static_cast<u32>(glm::clamp(strength, 0.f, 1.f) * 255.f) << 24);
         return light;
     }
+
+    /* A player's own body in its own view, shown from the legs down where
+     * clip distances can cut it; elsewhere it stays hidden */
+    bool own_body(Proxy& p, u64 entity) const
+    {
+        if(m_api->api_type() != gleam::api_type_t::core)
+            return false;
+        auto const* info = p.template get<PlayerInfo>(entity);
+        auto const* cam  = p.template get<PlayerCamera>(entity);
+        return info && cam && !info->is_remote() && info->seat_idx == m_seat &&
+               !cam->cinematic && (info->riding.vehicle == 0 || !info->riding.chase);
+    }
+
+    /* Everything but the legs, which are the bone chains that run from below
+     * the hips down to the feet in the bind pose; hands hang low too, but
+     * reach no feet. Bones past 64 are kept. */
+    u64 legs_cut(ModelItem<Version> const& item)
+    {
+        if(auto it = m_legs_cut.find(item.header); it != m_legs_cut.end())
+            return it->second;
+        u64& cut = m_legs_cut[item.header];
+        cut      = 0;
+        if(!item.header || item.inv_bind.empty())
+            return cut;
+        auto bones = item.header->bones.data(bitm_cache.magic);
+        if(!bones.has_value() || bones.value().size() < item.inv_bind.size())
+            return cut;
+        u32 const        n = static_cast<u32>(item.inv_bind.size());
+        std::vector<f32> highest(n), lowest(n);
+        f32              low = std::numeric_limits<f32>::max(), high = -low;
+        for(u32 i = 0; i < n; i++)
+        {
+            highest[i] = lowest[i] = glm::inverse(item.inv_bind[i])[3].z;
+            low                    = std::min(low, highest[i]);
+            high                   = std::max(high, highest[i]);
+        }
+        /* Children come after their parents */
+        for(u32 i = n; i-- > 0;)
+        {
+            auto const parent = static_cast<u32>(bones.value()[i].parent);
+            if(parent >= i)
+                continue;
+            highest[parent] = std::max(highest[parent], highest[i]);
+            lowest[parent]  = std::min(lowest[parent], lowest[i]);
+        }
+        f32 const hips = low + (high - low) * legs_height;
+        f32 const feet = low + (high - low) * feet_height;
+        for(u32 i = 0; i < n && i < 64; i++)
+            if(highest[i] >= hips || lowest[i] > feet)
+                cut |= u64(1) << i;
+        return cut;
+    }
+
+    /* Of the skeleton, feet up */
+    static constexpr f32 legs_height = .6f;
+    static constexpr f32 feet_height = .15f;
+    std::map<void const*, u64> m_legs_cut;
 
     void allocate_bones(Proxy& p)
     {
@@ -2348,6 +2416,28 @@ struct MeshRenderer
             return;
         if(idx >= m_players.size())
             return;
+
+        /* Own bodies clip their upper half away; the shadow pass leaves this
+         * off and casts all of them */
+        struct clip_scope
+        {
+            bool on;
+            clip_scope(bool enable)
+                : on(enable)
+            {
+#if GLEAM_MAX_VERSION != 0
+                if(on)
+                    gleam::cmd::enable(gleam::group::enable_cap::clip_distance0);
+#endif
+            }
+            ~clip_scope()
+            {
+#if GLEAM_MAX_VERSION != 0
+                if(on)
+                    gleam::cmd::disable(gleam::group::enable_cap::clip_distance0);
+#endif
+            }
+        } clipping{m_api->api_type() == gleam::api_type_t::core};
 
         auto        _ = m_api->debug().scope(pass.name);
         ProfContext __;
