@@ -1192,8 +1192,9 @@ struct DrawListBuilder
 
             /* allocate_bones fills these once buckets are final. An instance
              * that never animates keeps this and skips skinning. */
-            auto& pid     = pass.matrix_mapping[instance_id];
-            pid.transform = model.transform;
+            auto&      pid  = pass.matrix_mapping[instance_id];
+            bool const self = own_body(p, smodel.parent);
+            pid.transform   = self ? setback(p, smodel.parent, model) : model.transform;
             /* Scenery's shadows are baked into the lightmaps */
             bool const scenery = model.origin_object &&
                                  model.origin_object->matches(blam::tag_class_t::scen);
@@ -1206,7 +1207,6 @@ struct DrawListBuilder
             pid.bone_base = kBoneUnposed;
             auto const& light = object_light(p, smodel.parent, model);
             pid.light_layer   = light.layer;
-            bool const self = own_body(p, smodel.parent);
             {
                 auto const* held  = p.template get<HeldObject>(smodel.parent);
                 auto const* rider = p.template get<PlayerInfo>(
@@ -1327,6 +1327,23 @@ struct DrawListBuilder
         return info && cam && !info->is_remote() && info->seat_idx == m_seat &&
                !cam->cinematic && (info->riding.vehicle == 0 || !info->riding.chase);
     }
+
+    /* The eye sits where the head would, so the legs show set back from
+     * under it */
+    static Matf4 setback(Proxy& p, u64 entity, Model const& model)
+    {
+        auto const* cam = p.template get<PlayerCamera>(entity);
+        if(!cam)
+            return model.transform;
+        Vecf3 ahead = glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f};
+        ahead.z     = 0.f;
+        if(glm::dot(ahead, ahead) < 1e-6f)
+            return model.transform;
+        return glm::translate(Matf4(1), -glm::normalize(ahead) * own_body_setback) *
+               model.transform;
+    }
+
+    static constexpr f32 own_body_setback = .15f; /* wu */
 
     /* Everything but the legs, which are the bone chains that run from below
      * the hips down to the feet in the bind pose; hands hang low too, but
