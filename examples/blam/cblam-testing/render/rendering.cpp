@@ -1198,15 +1198,14 @@ struct DrawListBuilder
             auto const* held_by = p.template get<HeldObject>(smodel.parent);
             u64 const   body    = held_by ? held_by->holder : smodel.parent;
             pid.transform = own_body(p, body) ? setback(p, body, model) : model.transform;
-            /* Scenery's shadows are baked into the lightmaps */
-            bool const scenery = model.origin_object &&
-                                 model.origin_object->matches(blam::tag_class_t::scen);
+            /* Scenery casts too: its baked shadows only fall on the BSP, not
+             * on what moves past it */
             f32 const scale = std::max(
                 {glm::length(Vecf3(model.transform[0])),
                  glm::length(Vecf3(model.transform[1])),
                  glm::length(Vecf3(model.transform[2]))});
             pass.caster_bounds[instance_id] = Vecf4(
-                Vecf3(model.transform[3]), scenery ? -1.f : model.render_radius * scale);
+                Vecf3(model.transform[3]), model.render_radius * scale);
             pid.bone_base = kBoneUnposed;
             auto const& light = object_light(p, smodel.parent, model);
             pid.light_layer   = light.layer;
