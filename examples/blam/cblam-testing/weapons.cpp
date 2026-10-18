@@ -296,42 +296,36 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .direction  = forward,
         };
         if(info.riding.vehicle != 0)
-            mount(p, shot, cam, info.riding.vehicle, shot_index);
+            mount(p, shot, info.riding.vehicle, shot_index);
         GameEvent ev{.type = GameEvent::WeaponFire};
         p.template subsystem<GameEventBus>().inject(ev, &shot);
     }
 
-    /* From the gun's marker, towards what the crosshair is on */
-    void mount(
-        Proxy&              p,
-        WeaponFireEvent&    shot,
-        PlayerCamera const& cam,
-        u64                 vehicle,
-        u32                 shot_index)
+    /* From the gun's marker as the vehicle stands, along its barrel; a gun
+     * the gunner turns points where they look */
+    void mount(Proxy& p, WeaponFireEvent& shot, u64 vehicle, u32 shot_index)
     {
         auto const* model = p.template get<Model>(vehicle);
         if(!model || !model->tag)
             return;
-        auto marker = bind_marker(
+        auto marker = bind_marker_node(
             *model->tag,
             gun_marker,
             p.template subsystem<BlamFiles<halo_version>>().container.magic,
             shot_index);
         if(!marker)
             return;
-        Physics::Event   ev{Physics::Event::Raycast};
-        Physics::Raycast aim{
-            .from   = cam.camera.position,
-            .to     = cam.camera.position + shot.direction * aim_reach,
-            .ignore = vehicle,
-        };
-        p.template subsystem<PhysicsBus>().process(ev, &aim);
-        Vecf3 const muzzle = Vecf3(model->transform * (*marker)[3]);
-        Vecf3 const target = aim.hit ? aim.point : aim.to;
+        Matf4       at   = model->transform;
+        auto const* anim = p.template get<AnimationPlayback>(vehicle);
+        auto const  node = static_cast<size_t>(marker->node);
+        if(anim && marker->node >= 0 && node < anim->pose.size())
+            at = at * anim->pose[node];
+        at                 = at * marker->transform;
+        Vecf3 const barrel = Vecf3(at[0]);
         shot.vehicle       = vehicle;
-        shot.position      = muzzle;
-        if(glm::distance(target, muzzle) > 0.f)
-            shot.direction = glm::normalize(target - muzzle);
+        shot.position      = Vecf3(at[3]);
+        if(glm::dot(barrel, barrel) > 1e-6f)
+            shot.direction = glm::normalize(barrel);
     }
 
     /* Projectiles from the shot's origin, the firing effect at the muzzle */
@@ -836,7 +830,6 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr f32 muzzle_distance = .4f;
     /* Vehicle guns: where they fire from, and how far the crosshair looks */
     static constexpr std::string_view gun_marker = "primary trigger";
-    static constexpr f32              aim_reach  = 200.f;
 
     u32                       m_generation{0};
     std::map<u64, state_t>    m_states;

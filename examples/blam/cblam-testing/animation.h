@@ -72,7 +72,8 @@ struct AnimationPlayback
         lean_slot     = 8, /* riders: front-back, left-right, up-down */
         talk_slot     = 11,
         emotion_slot  = 12,
-        max_layers    = 13,
+        turret_slot   = 13, /* vehicles: where the gunner aims */
+        max_layers    = 14,
     };
 
     std::array<AnimationLayer, max_layers> layers{};
