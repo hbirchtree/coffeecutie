@@ -90,6 +90,22 @@ struct BlamBspWidget
                         "Only reflections", &rendering->only_reflections);
                     ImGui::Checkbox(
                         "Only aux channels", &rendering->only_aux_channels);
+                    ImGui::Text("Shadows");
+                    ImGui::Checkbox("Cascaded shadows", &rendering->shadows);
+                    {
+                        int res     = static_cast<int>(rendering->shadow_resolution);
+                        int cascade = static_cast<int>(rendering->shadow_cascades);
+                        if(ImGui::SliderInt("Tile size", &res, 512, 4096))
+                            rendering->shadow_resolution =
+                                static_cast<libc_types::u32>(res / 256 * 256);
+                        if(ImGui::SliderInt("Cascades", &cascade, 1, 3))
+                            rendering->shadow_cascades =
+                                static_cast<libc_types::u32>(cascade);
+                    }
+                    ImGui::SliderFloat(
+                        "Shadow distance", &rendering->shadow_distance, 10.f, 200.f);
+                    ImGui::SliderFloat(
+                        "Cascade split", &rendering->shadow_split, 0.f, 1.f);
                     ImGui::Text("BSP-specific");
                     ImGui::Checkbox(
                         "Render lightmaps", &rendering->render_lightmaps);

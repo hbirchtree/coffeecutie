@@ -1833,12 +1833,23 @@ struct MeshRenderer
     void render_shadows(Proxy& p, DrawListBuilder<Version> const& builder)
     {
         using Shadows = blam_render::CascadedShadowMap;
-        if(!m_resources.shadow_pipeline || m_players.empty())
+        if(!m_resources.shadow_pipeline || m_players.empty() || !m_render_params.shadows)
             return;
         u32 const views = std::min<u32>(m_players.size(), Shadows::max_views);
-        if(!m_shadows.valid() || m_shadows.config().views != views)
-            m_shadows.alloc(
-                *m_api, {.views = views, .resolution = views > 1 ? 1024u : 1536u});
+        Shadows::config_t const want{
+            .views         = views,
+            .view_cascades = std::clamp<u32>(m_render_params.shadow_cascades, 1, 3),
+            .resolution    = std::clamp<u32>(
+                views > 1 ? m_render_params.shadow_resolution / 2
+                          : m_render_params.shadow_resolution,
+                256,
+                4096),
+        };
+        auto const& have = m_shadows.config();
+        if(!m_shadows.valid() || have.views != want.views ||
+           have.view_cascades != want.view_cascades || have.resolution != want.resolution)
+            m_shadows.alloc(*m_api, want);
+        m_shadows.tune(m_render_params.shadow_distance, m_render_params.shadow_split);
         Vecf3 const to_light = sun_direction();
         for(u32 v = 0; v < views; v++)
             m_shadows.update_view(
@@ -1950,6 +1961,13 @@ struct MeshRenderer
         for(u32 v = 0; v < views; v++)
             for(u32 c = 0; c < m_shadows.config().view_cascades; c++)
                 draw(v, m_shadows.view_tile(v, c), false);
+    }
+
+    /* What a seat's receivers sample; nothing with shadows off */
+    blam_render::CascadedShadowMap::sampling_t const& shadow_sampling(u32 idx) const
+    {
+        static blam_render::CascadedShadowMap::sampling_t const none{};
+        return m_render_params.shadows ? m_shadows.sampling(idx) : none;
     }
 
     void setup_textures(std::vector<gfx::sampler_definition_t>& samplers)
@@ -2237,16 +2255,19 @@ struct MeshRenderer
             },
             gfx::uniform_pair<Matf4 const>{
                 {"csm_matrices"sv},
-                semantic::Span<const Matf4>(m_shadows.sampling(idx).matrices)},
+                semantic::Span<const Matf4>(shadow_sampling(idx).matrices)},
             gfx::uniform_pair<Vecf4 const>{
                 {"csm_texel"sv},
-                semantic::SpanOne<const Vecf4>(m_shadows.sampling(idx).texel)},
+                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).texel)},
             gfx::uniform_pair<Vecf4 const>{
                 {"csm_params"sv},
-                semantic::SpanOne<const Vecf4>(m_shadows.sampling(idx).params)},
+                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).params)},
             gfx::uniform_pair<Vecf4 const>{
                 {"csm_tiles"sv},
-                semantic::Span<const Vecf4>(m_shadows.sampling(idx).tiles)},
+                semantic::Span<const Vecf4>(shadow_sampling(idx).tiles)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_bias"sv},
+                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).bias)},
             get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -2283,7 +2304,7 @@ struct MeshRenderer
 
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
-        if(m_shadows.valid())
+        if(m_shadows.valid() && m_render_params.shadows)
             samplers.push_back(gleam::sampler_definition_t{
                 typing::graphics::ShaderStage::Fragment,
                 {"csm_atlas"sv, 15},
@@ -2374,16 +2395,19 @@ struct MeshRenderer
             },
             gfx::uniform_pair<Matf4 const>{
                 {"csm_matrices"sv},
-                semantic::Span<const Matf4>(m_shadows.sampling(idx).matrices)},
+                semantic::Span<const Matf4>(shadow_sampling(idx).matrices)},
             gfx::uniform_pair<Vecf4 const>{
                 {"csm_texel"sv},
-                semantic::SpanOne<const Vecf4>(m_shadows.sampling(idx).texel)},
+                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).texel)},
             gfx::uniform_pair<Vecf4 const>{
                 {"csm_params"sv},
-                semantic::SpanOne<const Vecf4>(m_shadows.sampling(idx).params)},
+                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).params)},
             gfx::uniform_pair<Vecf4 const>{
                 {"csm_tiles"sv},
-                semantic::Span<const Vecf4>(m_shadows.sampling(idx).tiles)},
+                semantic::Span<const Vecf4>(shadow_sampling(idx).tiles)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"csm_bias"sv},
+                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).bias)},
             get_renderflag_uniform());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -2408,7 +2432,7 @@ struct MeshRenderer
         /* Step 2: Set up all the textures */
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
-        if(m_shadows.valid())
+        if(m_shadows.valid() && m_render_params.shadows)
             samplers.push_back(gleam::sampler_definition_t{
                 typing::graphics::ShaderStage::Fragment,
                 {"csm_atlas"sv, 15},
