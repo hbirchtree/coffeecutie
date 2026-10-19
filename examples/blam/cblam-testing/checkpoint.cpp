@@ -6,6 +6,7 @@
 #include "game_events.h"
 #include "network/networking.h"
 #include "selected_version.h"
+#include "spawn_points.h"
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
@@ -41,7 +42,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
 
     CheckpointSystem()
     {
-        this->priority = 906;
+        this->priority = 908;
     }
 
     struct object_t
@@ -124,10 +125,9 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             auto [info, cam, net, status] = entity.components();
             if(!biped_shown(info, cam, net))
                 continue;
-            Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
             player_t player{
                 .feet   = cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height},
-                .facing = std::atan2(forward.y, forward.x),
+                .facing = spawn_points::facing_of(cam),
                 .status = status,
             };
             /* Clients keep their own loadout */
