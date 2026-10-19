@@ -1,0 +1,161 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1280,
+            "height": 720,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Halo 3 010_jungle at the viewpoints of .github/tests/references/h3/jungle_*.png",
+    "events": [
+        {
+            "time": 0,
+            "type": "render_param",
+            "debug_markers": false,
+            "comment": "no debug lines in the comparisons"
+        },
+        {
+            "time": 500,
+            "type": "camera",
+            "fov": 70,
+            "comment": "matches the captures' framing"
+        },
+        {
+            "time": 1500,
+            "type": "camera",
+            "position": [
+                -9.988965,
+                172.97493,
+                5.027874
+            ],
+            "rotation": [
+                -0.94752896,
+                0.1053394,
+                0.29996738,
+                -0.033348307
+            ]
+        },
+        {
+            "time": 5500,
+            "type": "screenshot",
+            "name": "jungle_godrays"
+        },
+        {
+            "time": 6000,
+            "type": "camera",
+            "position": [
+                -11.547936,
+                170.02217,
+                4.5775285
+            ],
+            "rotation": [
+                -0.9106242,
+                -0.41068816,
+                0.04176258,
+                0.018834826
+            ]
+        },
+        {
+            "time": 10000,
+            "type": "screenshot",
+            "name": "jungle_mud"
+        },
+        {
+            "time": 10500,
+            "type": "camera",
+            "position": [
+                -47.144608,
+                180.93193,
+                6.051333
+            ],
+            "rotation": [
+                -0.38322946,
+                0.06804237,
+                0.90695906,
+                -0.16103023
+            ]
+        },
+        {
+            "time": 14500,
+            "type": "screenshot",
+            "name": "jungle_pond"
+        },
+        {
+            "time": 15000,
+            "type": "camera",
+            "position": [
+                -27.375444,
+                148.51547,
+                8.358012
+            ],
+            "rotation": [
+                -0.31503364,
+                0.015379934,
+                0.94782704,
+                -0.046272863
+            ]
+        },
+        {
+            "time": 19000,
+            "type": "screenshot",
+            "name": "jungle_waterfall"
+        },
+        {
+            "time": 19500,
+            "type": "camera",
+            "position": [
+                -34.237362,
+                147.0985,
+                8.567316
+            ],
+            "rotation": [
+                -0.9962621,
+                -0.024786647,
+                0.0827247,
+                0.002057947
+            ]
+        },
+        {
+            "time": 23500,
+            "type": "screenshot",
+            "name": "jungle_downstream"
+        },
+        {
+            "time": 24000,
+            "type": "camera",
+            "position": [
+                -45.897224,
+                145.42114,
+                9.483655
+            ],
+            "rotation": [
+                -0.9408388,
+                -0.0599573,
+                0.3328329,
+                0.021210464
+            ]
+        },
+        {
+            "time": 28000,
+            "type": "screenshot",
+            "name": "jungle_downstream_2"
+        },
+        {}
+    ],
+    "frame_delta": 200.0,
+    "end_time": 29000
+}
