@@ -123,10 +123,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         return out;
     }
 
-    /* Where an element of `size` goes for its anchor and offset */
+    /* Where an element of `size` goes for its anchor and offset; corners
+     * keep to the title-safe frame */
     Vecf2 place(anchor_t anchor, blam::vec2i16 offset, Vecf2 size) const
     {
-        Vecf2 const o(offset.x, offset.y);
+        Vecf2 const o = Vecf2(offset.x, offset.y) + (anchor == anchor_t::center ? Vecf2() : safe_inset);
         switch(anchor)
         {
         case anchor_t::top_right:
@@ -142,12 +143,17 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         }
     }
 
+    /* Bitmaps drawn for high resolutions are twice the size they show at */
     static Vecf2 scale_of(unit_hud_interface::background_base_t const& base)
     {
-        return {
-            base.width_scale > 0.f ? base.width_scale : 1.f,
-            base.height_scale > 0.f ? base.height_scale : 1.f,
-        };
+        using flags_t = unit_hud_interface::background_base_t::scaling_flags_t;
+        bool const high_res =
+            (base.scaling_flags & flags_t::use_high_res_scale) != flags_t::none &&
+            (base.scaling_flags & flags_t::dont_scale_size) == flags_t::none;
+        return Vecf2(
+                   base.width_scale > 0.f ? base.width_scale : 1.f,
+                   base.height_scale > 0.f ? base.height_scale : 1.f) *
+               (high_res ? .5f : 1.f);
     }
 
     void push(
@@ -588,6 +594,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     static constexpr f32 letterbox_seconds = .5f;
     time_point           m_last{};
     static constexpr f32 low_ammo_fraction = .25f;
+    /* 7.5% in from each edge of 640x480 */
+    static inline Vecf2 const safe_inset{48.f, 36.f};
 
     blam::map_ptr const*                 m_magic{nullptr};
     blam::tag_index_view<halo_version>   m_index;
