@@ -116,6 +116,9 @@ struct BlamBspWidget
                     ImGui::Checkbox(
                         "Render scenery", &rendering->render_scenery);
                     ImGui::Checkbox(
+                        "Scripted placements (reloads map)",
+                        &rendering->show_scripted_placements);
+                    ImGui::Checkbox(
                         "Enhanced legacy renderer",
                         &rendering->legacy_enhanced);
                     ImGui::Checkbox("Only detail map", &rendering->only_detail);
