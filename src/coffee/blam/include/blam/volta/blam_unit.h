@@ -784,6 +784,114 @@ struct scenery : unit
 {
 };
 
+/*! Machines, controls and light fixtures: a position and a power that move
+ *  toward where they are told over their transition times */
+struct device : object
+{
+    enum class device_flags_t : u32
+    {
+        none                       = 0x0,
+        position_loops             = 0x1,
+        position_not_interpolated  = 0x2,
+    };
+
+    device_flags_t    device_flags;
+    f32               power_transition_time; /* seconds */
+    f32               power_acceleration_time;
+    f32               position_transition_time;
+    f32               position_acceleration_time;
+    f32               depowered_position_transition_time;
+    f32               depowered_position_acceleration_time;
+    u16               a_in, b_in, c_in, d_in; /* object function inputs */
+    sound_or_effect_t open;
+    sound_or_effect_t close;
+    sound_or_effect_t opened;
+    sound_or_effect_t closed;
+    sound_or_effect_t depowered;
+    sound_or_effect_t repowered;
+    f32               delay_time;
+    u32               padding0[2];
+    sound_or_effect_t delay_effect;
+    f32               automatic_activation_radius;
+    u32               padding1[21];
+    /* Inverse transition times in ticks, filled in when the map was built */
+    u32               padding_cache[7];
+};
+
+C_FLAGS(device::device_flags_t, u32)
+
+static_assert(offsetof(device, power_transition_time) == 0x180);
+static_assert(offsetof(device, open) == 0x1a0);
+static_assert(offsetof(device, automatic_activation_radius) == 0x21c);
+static_assert(sizeof(device) == 0x290);
+
+struct machine : device
+{
+    enum class machine_type_t : u16
+    {
+        door,
+        platform,
+        gear,
+    };
+
+    enum class machine_flags_t : u16
+    {
+        none                                 = 0x0,
+        pathfinding_obstacle                 = 0x1,
+        but_not_when_open                    = 0x2,
+        elevator                             = 0x4,
+    };
+
+    enum class collision_response_t : u16
+    {
+        pause_until_crushed,
+        reverse_directions,
+    };
+
+    machine_type_t       machine_type;
+    machine_flags_t      machine_flags;
+    f32                  door_open_time; /* seconds */
+    u32                  padding2[20];
+    collision_response_t collision_response;
+    i16                  elevator_node;
+    u32                  padding3[13];
+};
+
+C_FLAGS(machine::machine_flags_t, u16)
+
+static_assert(offsetof(machine, door_open_time) == 0x294);
+static_assert(offsetof(machine, collision_response) == 0x2e8);
+static_assert(sizeof(machine) == 0x320);
+
+struct device_control : device
+{
+    enum class control_type_t : u16
+    {
+        toggle_switch,
+        on_button,
+        off_button,
+        call_button,
+    };
+
+    enum class triggers_when_t : u16
+    {
+        touched_by_player,
+        destroyed,
+    };
+
+    control_type_t    control_type;
+    triggers_when_t   triggers_when;
+    f32               call_value;
+    u32               padding2[20];
+    sound_or_effect_t on;
+    sound_or_effect_t off;
+    sound_or_effect_t deny;
+};
+
+static_assert(offsetof(device_control, call_value) == 0x294);
+static_assert(offsetof(device_control, on) == 0x2e8);
+static_assert(sizeof(device_control) == 0x318);
+
 struct weapon : item
 {
     enum class weapon_flags_t : u32
