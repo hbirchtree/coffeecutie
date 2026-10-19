@@ -1,4 +1,5 @@
 #include "hud.h"
+#include "game_mode.h"
 
 #include "blam_files.h"
 #include "cinematic.h"
@@ -22,11 +23,13 @@ using HudManifest = compo::SubsystemManifest<
         const PlayerCamera,
         const NetworkInfo,
         const BipedEquipment,
-        const BipedStatus>,
+        const BipedStatus,
+        const PlayerInput>,
     type_list_t<
         HudScene,
         CinematicState,
         ScreenText,
+        const GameState,
         const BlamFiles<halo_version>,
         const LoadingStatus>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
@@ -426,6 +429,100 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         });
     }
 
+    /* ---- Scoreboard ---- */
+
+    static std::u16string wide(std::string_view text)
+    {
+        return std::u16string(text.begin(), text.end());
+    }
+
+    /* Everyone's score, best first */
+    void scoreboard(Proxy& p, GameState const& game, Vecf2 window)
+    {
+        f32 const scale  = window.y / HudScene::height;
+        f32 const centre = window.x * .5f;
+        auto&     lines  = p.template subsystem<ScreenText>().lines;
+        f32       y      = scoreboard_top;
+        /* A shadow under each line keeps it legible over the world */
+        auto line = [&](std::string const& text, f32 x, Vecf4 color, f32 align) {
+            Vecf2 const at{centre + x * scale, y * scale};
+            lines.push_back({
+                .text     = wide(text),
+                .baseline = at + Vecf2(scale),
+                .color    = shadow,
+                .align    = align,
+            });
+            lines.push_back({.text = wide(text), .baseline = at, .color = color, .align = align});
+        };
+        auto name_of = [&p](u32 player_idx) {
+            for(auto player : p.template select<PlayerInfo>())
+                if(auto const& info = player.template get<PlayerInfo>();
+                   info.player_idx == player_idx && !info.name.empty())
+                    return std::string(info.name);
+            return fmt::format("Player {}", player_idx + 1);
+        };
+        static constexpr std::array<std::string_view, 2> team_names = {"Red", "Blue"};
+
+        line(std::string(GameState::title(game.game_type, game.teams)), 0.f, heading, .5f);
+        y += scoreboard_row;
+        if(game.phase == GameState::phase_t::over)
+        {
+            std::string const who =
+                game.winner < 0 ? std::string("Nobody")
+                : game.teams    ? std::string(team_names[game.winner % 2]) + " team"
+                                : name_of(static_cast<u32>(game.winner));
+            line(who + " wins", 0.f, highlight, .5f);
+            y += scoreboard_row;
+        } else if(game.time_left >= 0.f)
+        {
+            i32 const left = static_cast<i32>(game.time_left);
+            line(fmt::format("{}:{:02} left", left / 60, left % 60), 0.f, plain, .5f);
+            y += scoreboard_row;
+        }
+        if(game.teams)
+        {
+            line(fmt::format("Red {}  -  Blue {}", game.team_scores[0], game.team_scores[1]),
+                 0.f, plain, .5f);
+            y += scoreboard_row;
+        }
+        y += scoreboard_row * .5f;
+        line("Player", -scoreboard_width, heading, 0.f);
+        line("Score", score_column, heading, 1.f);
+        line("Kills", kills_column, heading, 1.f);
+        line("Deaths", deaths_column, heading, 1.f);
+        y += scoreboard_row;
+
+        auto ranked = game.players;
+        std::sort(ranked.begin(), ranked.end(), [](auto const& a, auto const& b) {
+            return a.score != b.score ? a.score > b.score : a.kills > b.kills;
+        });
+        for(auto const& player : ranked)
+        {
+            Vecf4 const color = player.team == 0   ? red
+                                : player.team == 1 ? blue
+                                                   : plain;
+            line(name_of(player.player_idx), -scoreboard_width, color, 0.f);
+            line(std::to_string(player.score), score_column, color, 1.f);
+            line(std::to_string(player.kills), kills_column, color, 1.f);
+            line(std::to_string(player.deaths), deaths_column, color, 1.f);
+            y += scoreboard_row;
+        }
+    }
+
+    /* In 640x480 HUD units */
+    static constexpr f32 scoreboard_top   = 110.f;
+    static constexpr f32 scoreboard_row   = 22.f;
+    static constexpr f32 scoreboard_width = 210.f; /* names, left of centre */
+    static constexpr f32 score_column     = 60.f;  /* right edges */
+    static constexpr f32 kills_column     = 135.f;
+    static constexpr f32 deaths_column    = 220.f;
+    static inline Vecf4 const shadow{0.f, 0.f, 0.f, .8f};
+    static inline Vecf4 const heading{.7f, .85f, 1.f, 1.f};
+    static inline Vecf4 const highlight{1.f, .9f, .4f, 1.f};
+    static inline Vecf4 const plain{1.f, 1.f, 1.f, 1.f};
+    static inline Vecf4 const red{1.f, .45f, .4f, 1.f};
+    static inline Vecf4 const blue{.45f, .65f, 1.f, 1.f};
+
     /* ---- Frame ---- */
 
     void start_restricted(Proxy& p, time_point const& t)
@@ -471,6 +568,14 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         std::sort(seats.begin(), seats.end());
         /* Same split as the world's viewports */
         Vecf2 const screen(fb->size().w, fb->size().h);
+        auto const& game = p.template subsystem<GameState>();
+        bool const  asked = std::any_of(seats.begin(), seats.end(), [&p](auto const& seat) {
+            auto const* input = p.template get<PlayerInput>(seat.second);
+            return input && input->scores;
+        });
+        if(game.kind == GameState::kind_t::multiplayer &&
+           (asked || game.phase == GameState::phase_t::over))
+            scoreboard(p, game, screen);
         Vecf2 const view = seats.size() <= 1   ? screen
                            : seats.size() == 2 ? Vecf2(screen.x, screen.y / 2)
                                                : screen / 2.f;

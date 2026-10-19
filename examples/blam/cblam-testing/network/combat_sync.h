@@ -120,7 +120,14 @@ class CombatSync
         for(auto const& vitality : std::exchange(m_local_vitality, {}))
             if(server)
                 if(auto wire = vitality_of(p, vitality.unit))
+                {
+                    if(vitality.respawn_at)
+                    {
+                        wire->respawned = 1;
+                        wire->respawn   = Vecf4(*vitality.respawn_at, vitality.respawn_facing);
+                    }
                     m_vitality.push_back({.message = *wire, .route = {route_t::clients}});
+                }
         /* Units the server named before they were spawned here */
         for(auto const& [_, wire] : std::exchange(m_unplaced, {}))
             client_receive(p, wire);
@@ -336,6 +343,11 @@ class CombatSync
             .shield = wire.shield,
             .dead   = wire.dead != 0,
         };
+        if(wire.respawned)
+        {
+            vitality.respawn_at     = Vecf3(wire.respawn);
+            vitality.respawn_facing = wire.respawn.w;
+        }
         m_bus.inject(ev, &vitality);
     }
 

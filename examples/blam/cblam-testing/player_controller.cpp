@@ -92,9 +92,12 @@ struct PlayerController
                     if(cam.cinematic)
                         input.look_delta = {};
                 }
-                /* The dead wait to come back */
+                /* The dead wait to come back, and nobody plays on once the
+                 * game is over */
+                bool const over =
+                    p.template subsystem<GameState>().phase == GameState::phase_t::over;
                 if(auto const* status = p.template get<BipedStatus>(player.id());
-                   status && status->dead && info.mode.physics)
+                   ((status && status->dead) || over) && info.mode.physics)
                 {
                     input.movement = {};
                     input.intent   = {};
@@ -253,6 +256,8 @@ struct PlayerController
             input.grenade |= (input.mouse_buttons & CIMouseButtonEvent::RightButton) != 0;
             input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
         }
+
+        input.scores = (pad && b.p_down) || (keyboard && key(CK_F1));
 
         auto& intent = input.intent;
         if(input.jump)

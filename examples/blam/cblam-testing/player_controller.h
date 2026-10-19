@@ -6,6 +6,7 @@
 #include <peripherals/stl/type_list.h>
 #include <peripherals/typing/vectors/matrix_functions.h>
 
+#include "game_mode.h"
 #include "cinematic.h"
 #include "components.h"
 #include "data.h"
@@ -29,7 +30,8 @@ using PlayerControllerManifest = compo::SubsystemManifest<
         UIEventBus,
         RenderingParameters,
         GameEventBus,
-        const CinematicState>,
+        const CinematicState,
+        const GameState>,
     type_list_t<
         comp_app::ControllerInput,
         comp_app::MouseInput

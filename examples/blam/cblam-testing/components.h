@@ -1006,6 +1006,7 @@ struct PlayerInput
     debounced_button_t reload{};
     debounced_button_t grenade{};
     debounced_button_t grenade_switch{};
+    bool               scores{false}; /*!< Held: the scoreboard */
 
     /*! What the player wants, for whatever their input is routed to */
     struct intent_t
