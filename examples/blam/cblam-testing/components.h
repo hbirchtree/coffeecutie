@@ -346,6 +346,48 @@ struct ObjectSpawn
     libc_types::f32                power{-1.f};
 };
 
+/*! A machine or control: how far along its position animation it is and
+ *  how powered, and where it is going. Positions and powers in device
+ *  groups follow their group's value */
+struct DeviceState
+{
+    using value_type = DeviceState;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    blam::scn::device const*         tag{nullptr};
+    blam::scn::machine const*        machine{nullptr}; /*!< Machines only */
+    blam::scn::device_control const* control{nullptr}; /*!< Controls only */
+    i16 power_group{-1};
+    i16 position_group{-1};
+    u16 flags{0};      /*!< Scenario device flags */
+    u16 kind_flags{0}; /*!< Scenario machine or control flags */
+
+    f32 power{1.f};
+    f32 power_target{1.f};
+    f32 position{0.f};
+    f32 position_target{0.f};
+    f32 open_left{0.f};  /*!< Doors: seconds held open after a unit leaves */
+    /*! Group values last taken: a group moves its devices when it changes,
+     *  so a door can open on its own without moving the rest */
+    f32 position_seen{-1.f};
+    f32 power_seen{-1.f};
+    u32 snaps{0}; /*!< Times set without moving there, for replicas */
+    bool used{false};    /*!< Changes once, and has */
+    bool automatic{true}; /*!< Doors: open for units nearby */
+
+    /* Scenario device flags */
+    static constexpr u16 initially_open  = 0x1;
+    static constexpr u16 initially_off   = 0x2;
+    static constexpr u16 changes_once    = 0x4;
+    static constexpr u16 reversed        = 0x8;
+    static constexpr u16 not_usable      = 0x10;
+    /* Scenario machine flags */
+    static constexpr u16 not_automatic = 0x1;
+    static constexpr u16 one_sided     = 0x2;
+    /* Scenario control flags */
+    static constexpr u16 both_sides = 0x1;
+};
+
 struct MultiplayerSpawn
 {
     using value_type = MultiplayerSpawn;
@@ -776,6 +818,7 @@ struct ObjectPhysics
     /*! The physics material; < 0 keeps the default */
     f32   friction{-1.f};
     f32   restitution{-1.f};
+    bool  animated{false}; /*!< Devices: still, but hulls follow the pose */
 
     /*! Who moves a body with mass: this peer's simulation, or someone else
      * (the server) through Model, with the body following kinematically */
