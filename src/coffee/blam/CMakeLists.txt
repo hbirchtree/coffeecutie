@@ -15,6 +15,7 @@ if(NOT (GAMECUBE OR WII))
         private/elegy/animation.cpp
         private/elegy/bitmap.cpp
         private/elegy/collision.cpp
+        private/elegy/decorator.cpp
         private/elegy/geometry.cpp
         private/elegy/map.cpp
         private/elegy/physics.cpp

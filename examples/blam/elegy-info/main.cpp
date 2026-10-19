@@ -7,6 +7,7 @@
 #include <blam/elegy/animation.h>
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/collision.h>
+#include <blam/elegy/decorator.h>
 #include <blam/elegy/physics.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
@@ -55,6 +56,7 @@ struct options_t
     bool        player;
     bool        animations;
     bool        mips;
+    bool        decorators;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -1180,6 +1182,65 @@ int check_mips(elegy::map_container const& map, elegy::resource_loader& loader, 
     return 0;
 }
 
+/* Decorators: each BSP's sets and their meshes, and the clusters' groups
+ * decoded, checked against the groups' bounding spheres */
+int dump_decorators(elegy::map_container const& map, elegy::resource_loader& loader, options_t const& options)
+{
+    auto const magic = map.magic();
+    for(auto const& tag : map.tags())
+    {
+        if(!tag.valid() || !map.is(tag, elegy::structure_bsp_t::group) ||
+           map.name_of(tag).find(options.name_filter) == std::string_view::npos)
+            continue;
+        auto const* bsp = map.tag_data<elegy::structure_bsp_t>(tag);
+        fmt::print("{}\n", map.name_of(tag));
+        for(auto const& ref : bsp->decorator_sets.span(magic))
+        {
+            auto const set = map.get<elegy::decorator_set_t>(ref);
+            if(!set)
+                continue;
+            auto const model = map.get<elegy::render_model_t>(set->render_model);
+            std::string meshes;
+            if(model)
+                for(auto const& mesh : model->geometry.meshes.span(magic))
+                    meshes += fmt::format(" {}", static_cast<int>(mesh.vertex_type));
+            fmt::print("  set '{}': texture '{}', shader {}, flags {:#x}, fade {:.0f}-{:.0f}, {} types, mesh types{}\n",
+                       map.name_of(*set.tag), map.name_of(set->texture), static_cast<int>(set->shader),
+                       static_cast<u8>(set->render_flags), set->start_fade.value(), set->end_fade.value(),
+                       set->types.span(magic).size(), meshes);
+        }
+        auto view = loader.load(bsp->decorator_geometry.resource);
+        if(!view.has_value())
+        {
+            fmt::print("  decorator geometry: error {}\n", static_cast<int>(view.error()));
+            continue;
+        }
+        u32 groups = 0, placed = 0, inside = 0;
+        Vecf3 light_min(1e9f), light_max(0.f);
+        f32 scale_min = 1e9f, scale_max = 0.f;
+        for(auto const& cluster : bsp->clusters.span(magic))
+            for(auto const& group : cluster.decorator_groups.span(magic))
+            {
+                groups++;
+                Vecf3 const center = group.sphere_center;
+                for(auto const& d : elegy::decorator_instances(view.value(), group))
+                {
+                    placed++;
+                    inside += glm::distance(d.position, center) <= group.sphere_radius + 0.01f;
+                    light_min = glm::min(light_min, d.light), light_max = glm::max(light_max, d.light);
+                    f32 const scale = glm::dot(d.rotation, d.rotation);
+                    scale_min = std::min(scale_min, scale), scale_max = std::max(scale_max, scale);
+                }
+            }
+        fmt::print("  {} groups, {} placements, {} inside their sphere; light ({:.4f} {:.4f} {:.4f})-({:.4f} {:.4f} {:.4f}), "
+                   "scale {:.2f}-{:.2f}\n",
+                   groups, placed, inside, light_min.x, light_min.y, light_min.z, light_max.x, light_max.y, light_max.z,
+                   scale_min, scale_max);
+        loader.trim();
+    }
+    return 0;
+}
+
 /* Lights: their shape and the raw functions colour and intensity follow */
 int dump_lights(elegy::map_container const& map, options_t const& options)
 {
@@ -1651,6 +1712,8 @@ int run_map(
         rc |= dump_animations(map, *loader, options);
     if(options.mips)
         rc |= check_mips(map, *loader, options);
+    if(options.decorators)
+        rc |= dump_decorators(map, *loader, options);
     return rc;
 }
 
@@ -1696,6 +1759,8 @@ i32 coffee_main(i32, cstring_w*)
         ("animations", "List animation graphs and their animations")
         //
         ("mips", "Check DXT bitmaps' mip levels against their top level")
+        //
+        ("decorators", "List structure BSPs' decorator sets, instance buffers and groups")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1748,6 +1813,7 @@ i32 coffee_main(i32, cstring_w*)
         .player       = arguments.count("player") > 0,
         .animations   = arguments.count("animations") > 0,
         .mips         = arguments.count("mips") > 0,
+        .decorators   = arguments.count("decorators") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),

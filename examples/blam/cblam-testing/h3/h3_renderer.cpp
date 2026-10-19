@@ -113,6 +113,12 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             "H3Renderer opaque", "H3Renderer blended", "H3Renderer additive"};
         for(int pass = 0; pass < 3; pass++)
         {
+            if(pass == 1 && params.render_scenery)
+            {
+                auto const _     = m_api->debug().scope("H3Renderer decorators");
+                auto const timer = m_system->gpu_timer("H3Renderer decorators");
+                draw_decorators(scene, resources, *camera, exposure);
+            }
             if(pass == 1)
             {
                 auto const _     = m_api->debug().scope("H3Renderer water");
@@ -628,6 +634,58 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
 
     /* Water (water_shading.fx) reads the scene behind it: a copy of the
      * colour and of how far away each pixel is, made once per frame */
+    /* Each decorator set's mesh at all of its instances, after the opaque
+     * pass: alpha tested, lit by the light baked into each instance */
+    void draw_decorators(H3Scene const& scene, BlamResources const& resources, PlayerCamera const& camera, f32 exposure)
+    {
+        if(scene.decorators.empty() || !scene.decorator_instances_sampler || !m_decorator_program)
+            return;
+        using stage_t = typing::graphics::ShaderStage;
+        Vecf3 const eye = camera.camera.position;
+        Vecf2       fade{0.f};
+        i32         first = 0;
+        f32         curve = 2.f;
+        auto vert_u = gfx::make_uniform_list(
+            stage_t::Vertex,
+            gfx::uniform_pair<Matf4 const>{{"camera"}, semantic::SpanOne<const Matf4>(camera.matrix)},
+            gfx::uniform_pair<Vecf3 const>{{"eye"}, semantic::SpanOne<const Vecf3>(eye)},
+            gfx::uniform_pair<Vecf2 const>{{"fade"}, semantic::SpanOne<const Vecf2>(fade)},
+            gfx::uniform_pair<const i32>{{"first_instance"}, semantic::SpanOne<const i32>(first)});
+        auto frag_u = gfx::make_uniform_list(
+            stage_t::Fragment,
+            gfx::uniform_pair<const f32>{{"exposure"}, semantic::SpanOne<const f32>(exposure)},
+            gfx::uniform_pair<const f32>{{"diffuse_curve"}, semantic::SpanOne<const f32>(curve)},
+            gfx::uniform_pair<Vecf3 const>{{"camera_position"}, semantic::SpanOne<const Vecf3>(eye)},
+            gfx::uniform_pair<Vecf4 const>{
+                {"atmosphere"}, semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())});
+        auto view = gfx::view_state{
+            .view  = typing::vector_types::Veci4{0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
+            .depth = gfx::depth_state{.range = typing::vector_types::Vecd2{0.0, 1.0}, .reversed = true},
+        };
+        for(auto const& set : scene.decorators)
+        {
+            fade  = set.fade;
+            first = static_cast<i32>(set.first_instance);
+            curve = set.curve;
+            auto samplers = gfx::make_sampler_list(
+                gfx::sampler_definition_t{stage_t::Vertex, {"instances", 0}, scene.decorator_instances_sampler},
+                gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 1}, set.diffuse.sampler});
+            gfx::draw_command command{
+                .program       = m_decorator_program,
+                .vertices      = m_vao,
+                .render_target = resources.offscreen,
+                .call          = {.indexed = true, .instanced = true},
+                .data          = set.draws,
+            };
+            if(set.two_sided)
+                m_api->submit(command, vert_u, frag_u, samplers, view, gfx::depth_extended_state{.depth_write = true});
+            else
+                m_api->submit(
+                    command, vert_u, frag_u, samplers, view, gfx::depth_extended_state{.depth_write = true},
+                    gfx::cull_state{.front_face = cull_front});
+        }
+    }
+
     void draw_water(
         H3Scene const&       scene,
         BlamResources const& resources,
@@ -951,6 +1009,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         create_program(
             api,
             shader_pair_t{
+                .vertex_file   = "h3_decorator",
+                .fragment_file = "h3_decorator",
+                .shader        = m_decorator_program,
+            });
+        create_program(
+            api,
+            shader_pair_t{
                 .vertex_file   = "shadow_depth",
                 .fragment_file = "shadow_depth",
                 .shader        = m_shadow_program,
@@ -979,6 +1044,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::sampler_t>             m_no_lightprobe_sampler;
     std::shared_ptr<gfx::texture_cube_t>        m_black_cube;
     std::shared_ptr<gfx::program_t>             m_copy_program;
+    std::shared_ptr<gfx::program_t>             m_decorator_program;
     std::shared_ptr<gfx::program_t>             m_shadow_program;
     blam_render::CascadedShadowMap              m_shadows;
     u32                                 m_first_person_generation{0};

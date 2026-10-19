@@ -16,6 +16,21 @@ struct cluster_cubemap_t
 
 static_assert(sizeof(cluster_cubemap_t) == 0x10);
 
+/*! A cluster's decorators of one set, a run of one instance buffer */
+struct decorator_group_t
+{
+    be<i16>   placement_count;
+    i8        set;             /*!< Into structure_bsp_t::decorator_sets */
+    i8        instance_buffer; /*!< Into the decorator geometry's vertex buffers */
+    be<i32>   instance_offset; /*!< Byte offset of the first instance in the buffer */
+    be<Vecf3> bounds_minimum;
+    be<f32>   sphere_radius;
+    be<Vecf3> position_step; /*!< World size of one step of the u16 positions */
+    be<Vecf3> sphere_center;
+};
+
+static_assert(sizeof(decorator_group_t) == 0x30);
+
 struct cluster_t
 {
     std::array<bounds_f, 3>           bounds;
@@ -34,7 +49,7 @@ struct cluster_t
     block_index<mesh_t>               mesh;
     u16                               unknown_1;
     tag_block<i8>                     seam_indices;
-    tag_block<std::array<u8, 0x30>>   decorator_groups;
+    tag_block<decorator_group_t>      decorator_groups;
     tag_block<std::array<u8, 0x1>>    unknown_2;
     tag_block<std::array<u8, 0x4>>    pvs_bound_objects;
     tag_block<cluster_cubemap_t>      cubemaps;
