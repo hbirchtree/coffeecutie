@@ -255,6 +255,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 cmd::bind_attrib_location(
                     program->m_handle, attrib.second, attrib.first);
             cmd::link_program(program->m_handle);
+            program->m_uniform_values.clear();
             program->m_attribute_names = vao->m_attribute_names;
             break;
         }
@@ -272,6 +273,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 cmd::bind_attrib_location(
                     program->m_handle, attrib.second, attrib.first);
             cmd::link_program(program->m_handle);
+            program->m_uniform_values.clear();
             program->m_attribute_names = vao->m_attribute_names;
         }
         for(auto const& attrib : vao->m_attributes)
@@ -306,6 +308,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 cmd::bind_attrib_location(
                     program->m_handle, attrib.second, attrib.first);
             cmd::link_program(program->m_handle);
+            program->m_uniform_values.clear();
             program->m_attribute_names = vao->m_attribute_names;
         }
         if(!vao->m_element_buffer.expired())
@@ -394,15 +397,24 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 debug().message(
                     "uniform 'glw_BaseInstance' not located with emulated BaseInstance enabled"sv);
         }
-        apply_base_instance = [&bookkeeping,
-                               &program](draw_command::data_t const& data) {
-            auto baseUniform = make_uniform_list(
-                typing::graphics::ShaderStage::Vertex,
-                uniform_pair{
-                    {"glw_BaseInstance"sv},
-                    SpanOne<const i32>(bookkeeping.baseInstance),
-                });
-            detail::apply_command_modifier(*program, bookkeeping, baseUniform);
+        /* Looked up once: core GL reads gl_BaseInstance and has no uniform */
+        bool const has_base_uniform =
+            detail::get_program_uniform_location(
+                *program, program_t::stage_t::Vertex, {"glw_BaseInstance"sv}) !=
+            invalid_uniform;
+        apply_base_instance = [&bookkeeping, &program, has_base_uniform](
+                                  draw_command::data_t const& data) {
+            if(has_base_uniform)
+            {
+                auto baseUniform = make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    uniform_pair{
+                        {"glw_BaseInstance"sv},
+                        SpanOne<const i32>(bookkeeping.baseInstance),
+                    });
+                detail::apply_command_modifier(
+                    *program, bookkeeping, baseUniform);
+            }
             auto data_updated             = data;
             data_updated.instances.offset = bookkeeping.baseInstance;
             return data_updated;
@@ -436,19 +448,28 @@ inline optional<tuple<error, std::string_view>> api::submit(
             [&buffer_defs](buffer_list& list) { buffer_defs.push_back(&list); },
             modifiers...);
         apply_ubo_offset =
-            [this, buffer_defs = std::move(buffer_defs), &program, &bookkeeping]
+            [this,
+             buffer_defs = std::move(buffer_defs),
+             bound       = std::vector<std::pair<u32, u32>>(),
+             &program,
+             &bookkeeping]
             //
-            (u32 first_instance, u32 count_instances) {
-                for(auto buffer_def : buffer_defs)
+            (u32 first_instance, u32 count_instances) mutable {
+                bound.resize(buffer_defs.size(), {~0u, ~0u});
+                for(auto i : stl_types::range(buffer_defs.size()))
                 {
                     auto span = std::make_pair(first_instance, count_instances);
                     detail::compute_ubo_instance(
-                        buffer_def,
+                        buffer_defs[i],
                         std::ref(span),
                         std::ref(bookkeeping),
                         m_limits.buffers.ubo_alignment);
+                    /* Draws within one aligned block share the binding */
+                    if(span == bound[i])
+                        continue;
+                    bound[i] = span;
                     detail::apply_command_modifier(
-                        *program, bookkeeping, *buffer_def, span);
+                        *program, bookkeeping, *buffer_defs[i], span);
                 }
             };
     }
@@ -510,7 +531,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
         bookkeeping.draw_index = 0;
         for(auto d : data)
         {
-            auto dbg_id = debug().scope(d.debug_identifier.value_or(""));
+            auto dbg_id = d.debug_identifier
+                              ? debug().scope(*d.debug_identifier)
+                              : decltype(debug().scope()){};
             m_usage.draw.instances += d.instances.count;
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
@@ -532,7 +555,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
         bookkeeping.draw_index = 0;
         for(auto d : data)
         {
-            auto dbg_id = debug().scope(d.debug_identifier.value_or(""));
+            auto dbg_id = d.debug_identifier
+                              ? debug().scope(*d.debug_identifier)
+                              : decltype(debug().scope()){};
             m_usage.draw.instances += d.instances.count;
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);

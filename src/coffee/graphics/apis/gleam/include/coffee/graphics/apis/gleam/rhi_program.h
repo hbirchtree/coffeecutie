@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "rhi_debug.h"
 #include "rhi_features.h"
 #include "rhi_translate.h"
@@ -253,6 +255,7 @@ struct program_t
         m_buffer_locations.clear();
         m_uniform_locations.clear();
         m_explicit_uniform_state.clear();
+        m_uniform_values.clear();
 
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
         warn_adreno_size();
@@ -518,8 +521,21 @@ struct program_t
 
     std::vector<std::pair<std::string_view, u32>> m_attribute_names;
     /*! Buffer location + queried size*/
-    std::map<std::string, std::pair<u32, i32>> m_buffer_locations;
-    std::map<std::string, u32>                 m_uniform_locations;
+    struct name_hash
+    {
+        using is_transparent = void;
+        size_t operator()(std::string_view name) const noexcept
+        {
+            return std::hash<std::string_view>{}(name);
+        }
+    };
+    template<typename T>
+    using by_name = std::unordered_map<std::string, T, name_hash, std::equal_to<>>;
+
+    by_name<std::pair<u32, i32>> m_buffer_locations;
+    by_name<u32>                 m_uniform_locations;
+    /* Last value written per location; linking resets them */
+    std::vector<std::vector<std::byte>> m_uniform_values;
     /*! Per explicit uniform location: 0 unknown, 1 live, 2 compiled out.
      *  Indexed by location so the hot path costs no lookup or allocation. */
     std::vector<libc_types::u8> m_explicit_uniform_state;
