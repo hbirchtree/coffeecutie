@@ -1237,6 +1237,9 @@ struct ResourceLoader
         auto physics = object_physics(p, *instance_tag);
         if(physics)
             recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
+        bool const unit = instance_tag->matches(blam::tag_class_t::bipd);
+        if(unit)
+            recipe.components.push_back(compo::type_hash_v<BipedStatus>());
 
         auto parent_ = p.create_entity(recipe);
         if(graph)
@@ -1248,6 +1251,23 @@ struct ResourceLoader
         }
         if(physics)
             parent_.template get<ObjectPhysics>() = std::move(*physics);
+        if(unit)
+        {
+            auto& status = parent_.template get<BipedStatus>();
+            status       = unit_status(files, instance_obj[0].collider);
+            /* Placed hurt, or already dead */
+            if constexpr(std::is_same_v<T, blam::scn::biped_spawn>)
+            {
+                using flags_t = blam::scn::biped_spawn::biped_flags_t;
+                if(instance.vitality > 0.f)
+                    status.body = std::min(instance.vitality, 1.f);
+                if((instance.biped_flags & flags_t::dead) != flags_t::none)
+                {
+                    status.body = status.shield = 0.f;
+                    status.dead = true;
+                }
+            }
+        }
 
         Model&       model = parent_.template get<Model>();
         ObjectSpawn& spawn = parent_.template get<ObjectSpawn>();
@@ -1809,6 +1829,9 @@ struct ResourceLoader
             recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
         if(projectile)
             recipe.components.push_back(compo::type_hash_v<Projectile>());
+        bool const unit = object_tag.matches(blam::tag_class_t::bipd);
+        if(unit)
+            recipe.components.push_back(compo::type_hash_v<BipedStatus>());
 
         auto ent = p.create_entity(recipe);
         if(graph)
@@ -1825,6 +1848,8 @@ struct ResourceLoader
             body.linear_velocity  = spawn.velocity;
             body.angular_velocity = spawn.angular_velocity;
         }
+        if(unit)
+            ent.template get<BipedStatus>() = unit_status(files, object.collider);
 
         if(projectile)
         {
@@ -2091,6 +2116,20 @@ struct ResourceLoader
 
     /*! A coll tag in bind pose, as one hull per node plus its exact
      * surfaces; coll nodes mirror the mod2 skeleton by name */
+    /* Full health, by the coll tag it takes damage by */
+    BipedStatus unit_status(
+        BlamFiles<Ver> const& files, blam::tagref_t const& collider)
+    {
+        BipedStatus out{};
+        if(auto it = index.find(collider); it != index.end())
+            if(auto coll = (*it).template data<blam::coll::header>(
+                   files.container.magic);
+               coll.has_value())
+                out.coll = coll.value();
+        out.shield = out.maximum_shield() > 0.f ? 1.f : 0.f;
+        return out;
+    }
+
     std::shared_ptr<CollisionGeometry const> object_collision(
         BlamFiles<Ver> const& files,
         blam::tagref_t const& collider,
@@ -2191,7 +2230,7 @@ struct ResourceLoader
             }
             if(hull.points.empty())
                 continue;
-            /* A node is the head if most of its surfaces are */
+            /* A node is the material most of its surfaces are */
             auto most = std::max_element(
                 uses.begin(), uses.end(), [](auto const& a, auto const& b) {
                     return a.second < b.second;
@@ -2199,8 +2238,11 @@ struct ResourceLoader
             if(most != uses.end() && materials.has_value() &&
                most->first >= 0 &&
                static_cast<size_t>(most->first) < materials.value().size())
+            {
                 hull.head = materials.value()[most->first].flags &
                             blam::coll::material::head;
+                hull.material = static_cast<i16>(most->first);
+            }
             geometry->nodes.push_back(std::move(hull));
         }
         /* Corners that fell outside the vertex list break the triples */
@@ -2515,7 +2557,9 @@ struct ResourceLoader
                 };
                 starting_loadout(equip, files);
                 if(auto* status = p.template get<BipedStatus>(player.id()))
-                    *status = {.health = full_status, .shield = full_status};
+                    *status = biped_model.biped
+                                  ? unit_status(files, biped_model.biped->collider)
+                                  : BipedStatus{};
             }
             for(auto const& change : pending_equips)
                 if(change.entity_id == player.id())
@@ -2861,7 +2905,6 @@ struct ResourceLoader
 
     static constexpr std::string_view hand_marker = "right hand";
     /* Health and shield, as fractions of this */
-    static constexpr u16 full_status = 0xFFFF;
 
     /* A model drawn at the player's eye in the first-person pass */
     u64 spawn_first_person(

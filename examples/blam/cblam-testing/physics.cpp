@@ -862,6 +862,7 @@ struct PhysicsSystem
         /* Models show the state after these ticks, for whatever reads them
          * later this frame */
         reconcile_object_bodies(p);
+        report_struck(static_cast<f32>(ticks.size()) * TickClock::tick_seconds);
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
          * contact manifolds for CF_NO_CONTACT_RESPONSE bodies, the solver
@@ -1536,6 +1537,97 @@ struct PhysicsSystem
             hit.m_collisionFilterMask ^= filter::CharacterFilter;
         m_world->rayTest(from, to, hit);
         return hit.hasHit();
+    }
+
+    /* Vehicles running into units, once a frame. Speeds come from how far
+     * each body moved, and contacts are tested pair by pair, so a vehicle
+     * and a unit that are both kinematic here (driven and walked on other
+     * peers) still meet */
+    void report_struck(f32 seconds)
+    {
+        if(!m_bus || seconds <= 0.f)
+            return;
+        std::map<u64, btVector3> moved;
+        for(auto const& [id, body] : m_bodies)
+            if(body.world_body)
+            {
+                btVector3 const at = body.world_body->getCenterOfMassPosition();
+                if(auto last = m_last_at.find(id); last != m_last_at.end())
+                    moved[id] = (at - last->second) / seconds;
+                m_last_at[id] = at;
+            }
+        std::erase_if(m_last_at, [this](auto const& at) {
+            return !m_bodies.contains(at.first);
+        });
+
+        using Shape = Physics::BodyCreationShape;
+        struct touch_t : btCollisionWorld::ContactResultCallback
+        {
+            btVector3 point{};
+            bool      hit{false};
+
+            btScalar addSingleResult(
+                btManifoldPoint& cp,
+                btCollisionObjectWrapper const*,
+                int,
+                int,
+                btCollisionObjectWrapper const*,
+                int,
+                int) override
+            {
+                if(cp.getDistance() <= ground_contact_slop)
+                {
+                    point = cp.getPositionWorldOnA();
+                    hit   = true;
+                }
+                return 0;
+            }
+        };
+        for(auto const& [vehicle_id, vehicle] : m_bodies)
+        {
+            auto const velocity = moved.find(vehicle_id);
+            if(!vehicle.mass_points || velocity == moved.end() ||
+               velocity->second.length() < struck_speed)
+                continue;
+            for(auto const& [unit_id, unit] : m_bodies)
+            {
+                btRigidBody* const body = unit.world_body.get();
+                if(unit.group != Shape::Character || !body ||
+                   (body->getCollisionFlags() &
+                    btCollisionObject::CF_NO_CONTACT_RESPONSE))
+                    continue;
+                btVector3 toward = body->getCenterOfMassPosition() -
+                                   vehicle.world_body->getCenterOfMassPosition();
+                toward.setZ(0.f);
+                if(toward.length2() < 1e-6f)
+                    continue;
+                toward.normalize();
+                btVector3 relative = velocity->second;
+                if(auto own = moved.find(unit_id); own != moved.end())
+                    relative -= own->second;
+                f32 const speed = relative.dot(toward);
+                if(speed < struck_speed)
+                    continue;
+                auto const pair = std::pair{vehicle_id, unit_id};
+                if(auto last = m_last_struck.find(pair);
+                   last != m_last_struck.end() &&
+                   m_steps - last->second < struck_cooldown)
+                    continue;
+                touch_t touch;
+                m_world->contactPairTest(vehicle.world_body.get(), body, touch);
+                if(!touch.hit)
+                    continue;
+                m_last_struck[pair] = m_steps;
+                Physics::Event      event{Physics::Event::UnitStruck};
+                Physics::UnitStruck struck{
+                    .vehicle = vehicle_id,
+                    .unit    = unit_id,
+                    .point   = {touch.point.x(), touch.point.y(), touch.point.z()},
+                    .speed   = speed,
+                };
+                m_bus->process(event, &struck);
+            }
+        }
     }
 
     /* Moves a rider's body onto its seated model */
@@ -2943,6 +3035,11 @@ struct PhysicsSystem
     static constexpr f32 carried_ground_decel = 12.f;
     static constexpr f32 carried_air_decel    = .5f;
     static constexpr f32 impact_speed    = .5f; /* wu/s */
+    /* A vehicle coming at a unit faster than this runs it down */
+    static constexpr f32 struck_speed    = 1.f; /* wu/s */
+    static constexpr u32 struck_cooldown = 60;  /* steps */
+    std::map<u64, btVector3>             m_last_at;
+    std::map<std::pair<u64, u64>, u32>   m_last_struck;
     static constexpr u32 impact_cooldown = 9;
     static constexpr u32 impact_settle   = 60;
     u32                  m_steps{0};

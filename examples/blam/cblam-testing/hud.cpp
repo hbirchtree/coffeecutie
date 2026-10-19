@@ -238,8 +238,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
 
     void unit_hud(unit_hud_interface const& hud, BipedStatus const& status)
     {
-        f32 const shield = status.shield / 65535.f;
-        f32 const health = status.health / 65535.f;
+        f32 const shield = status.shield;
+        f32 const health = status.body;
         background(hud.anchor, hud.unit_hud_background);
         background(hud.anchor, hud.shield_panel_background);
         meter(hud.anchor, hud.shield_panel_meter, shield);

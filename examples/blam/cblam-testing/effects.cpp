@@ -1128,11 +1128,17 @@ struct EffectSystem
                                 break;
                             }
                     break;
+                case tag_class_t::jpt: {
+                    /* The authority decides who it hurts */
+                    GameEvent       ev{.type = GameEvent::AreaDamage};
+                    AreaDamageEvent area{.damage = part.type, .position = at.position};
+                    p.template subsystem<GameEventBus>().inject(ev, &area);
+                    break;
+                }
                 default:
                     if(auto it = m_index.find(part.type);
                        it != m_index.end() && (*it).matches(tag_class_t::obje))
                         spawn_part_object(p, fx, part, at);
-                    /* Damage is not applied yet */
                     break;
                 }
             }
