@@ -122,6 +122,7 @@ using LegacyMeshRendererManifest = compo::SubsystemManifest<
         BitmapCache<V>,
         const BlamFiles<V>,
         const BlamResources,
+        const BSPCache<V>,
         const EffectScene,
         gfx::system,
         LoadingStatus,

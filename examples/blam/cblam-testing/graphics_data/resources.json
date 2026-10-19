@@ -143,7 +143,8 @@
         "shaders/map_legacy_water.frag",
         "shaders/effects_legacy.vert",
         "shaders/effects_legacy.frag",
-        "shaders/scenery_legacy_skinned.vert",
+        "shaders/material_legacy.vert",
+        "shaders/material_legacy.frag",
         "sounds/thefunny.ogg",
         "sounds/thefunny2.ogg",
         "names.txt"

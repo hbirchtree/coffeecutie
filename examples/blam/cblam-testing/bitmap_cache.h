@@ -599,6 +599,115 @@ struct BitmapCache
         return 0x0;
     }
 
+    /* The mean colour of a bitmap's smallest level, decoded to RGBA. BC blocks
+     * count their two endpoints. For shaders that fade a map out where they
+     * cannot sample its mipmaps. */
+    Vecf4 average_color(BitmapItem const& bitm)
+    {
+        using blam::bitm::format_t;
+
+        auto const* img = bitm.image.mip;
+        if(!img)
+            return Vecf4(1.f);
+        /* Compressed levels under a 4x4 block hold no bytes */
+        u16 mip = img->mipmaps > 0 ? img->mipmaps - 1 : 0;
+        if(img->compressed())
+            while(mip > 0 &&
+                  ((img->isize.x >> mip) < 4 || (img->isize.y >> mip) < 4))
+                mip--;
+        auto       bmagic = img->shared() ? bitm_magic : magic.ptr_only();
+        auto const data   = img->data(bmagic, mip);
+        auto       u16_at = [&data](size_t i) {
+            return static_cast<u32>(data[i]) |
+                   (static_cast<u32>(data[i + 1]) << 8);
+        };
+        auto rgb565 = [](u32 c) {
+            return Vecf3((c >> 11) & 31, (c >> 5) & 63, c & 31) /
+                   Vecf3(31.f, 63.f, 31.f);
+        };
+
+        Vecf4  sum{0.f};
+        size_t count = 0;
+        switch(img->format)
+        {
+        case format_t::BC1:
+        case format_t::BC2:
+        case format_t::BC3: {
+            size_t const block = img->format == format_t::BC1 ? 8 : 16;
+            size_t const color = block - 8;
+            for(size_t i = 0; i + block <= data.size(); i += block, count++)
+            {
+                Vecf3 const rgb = (rgb565(u16_at(i + color)) +
+                                   rgb565(u16_at(i + color + 2))) *
+                                  .5f;
+                f32 alpha = 1.f;
+                if(img->format == format_t::BC2)
+                {
+                    alpha = 0.f;
+                    for(size_t j = 0; j < 8; j++)
+                        alpha +=
+                            ((data[i + j] & 0xF) + (data[i + j] >> 4)) / 30.f;
+                    alpha /= 8.f;
+                } else if(img->format == format_t::BC3)
+                    alpha = (data[i] + data[i + 1]) / 510.f;
+                sum += Vecf4(rgb, alpha);
+            }
+            break;
+        }
+        case format_t::R5G6B5:
+            for(size_t i = 0; i + 2 <= data.size(); i += 2, count++)
+                sum += Vecf4(rgb565(u16_at(i)), 1.f);
+            break;
+        case format_t::A1RGB5:
+            for(size_t i = 0; i + 2 <= data.size(); i += 2, count++)
+            {
+                u32 const c = u16_at(i);
+                sum +=
+                    Vecf4(
+                        (c >> 10) & 31, (c >> 5) & 31, c & 31, (c >> 15) * 31) /
+                    31.f;
+            }
+            break;
+        case format_t::ARGB4:
+            for(size_t i = 0; i + 2 <= data.size(); i += 2, count++)
+            {
+                u32 const c = u16_at(i);
+                sum +=
+                    Vecf4((c >> 8) & 15, (c >> 4) & 15, c & 15, c >> 12) / 15.f;
+            }
+            break;
+        case format_t::XRGB8:
+        case format_t::ARGB8:
+            /* Bytes are B, G, R, A */
+            for(size_t i = 0; i + 4 <= data.size(); i += 4, count++)
+                sum += Vecf4(
+                    data[i + 2] / 255.f,
+                    data[i + 1] / 255.f,
+                    data[i] / 255.f,
+                    img->format == format_t::XRGB8 ? 1.f : data[i + 3] / 255.f);
+            break;
+        case format_t::A8:
+            for(size_t i = 0; i < data.size(); i++, count++)
+                sum += Vecf4(1.f, 1.f, 1.f, data[i] / 255.f);
+            break;
+        case format_t::Y8:
+        case format_t::AY8:
+            for(size_t i = 0; i < data.size(); i++, count++)
+            {
+                f32 const l = data[i] / 255.f;
+                sum += Vecf4(l, l, l, img->format == format_t::Y8 ? 1.f : l);
+            }
+            break;
+        case format_t::A8Y8:
+            for(size_t i = 0; i + 2 <= data.size(); i += 2, count++)
+                sum += Vecf4(Vecf3(data[i] / 255.f), data[i + 1] / 255.f);
+            break;
+        default:
+            break;
+        }
+        return count ? sum / static_cast<f32>(count) : Vecf4(.5f);
+    }
+
     u32 get_atlas_layer(generation_idx_t bitm)
     {
         if(!bitm.valid())
