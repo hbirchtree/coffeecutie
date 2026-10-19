@@ -111,11 +111,6 @@ bool segment_near_sphere(vec3 const& a, vec3 const& b, vec3 const& c, float r)
     return glm::dot(p - c, p - c) <= r * r;
 }
 
-float read_f32(std::uint32_t v)
-{
-    return std::bit_cast<float>(v);
-}
-
 } // namespace
 
 mat4 HitModel::root(BipedPose const& pose)
@@ -304,10 +299,8 @@ std::optional<HitModel> build_hit_model(
     HitModel model;
     model.magic = magic;
 
-    /* Model-wide vitality: maximum_body_vitality right after the indirect
-     * damage material, maximum_shield_vitality at header offset 0xCC. */
-    float const body   = read_f32(coll.body_and_shield[0]);
-    float const shield = read_f32(coll.body_and_shield[(0xCC - 8) / 4]);
+    float const body   = coll.maximum_body_vitality;
+    float const shield = coll.maximum_shield_vitality;
     if(body > 0.f && body < 10000.f)
         model.max_body = body;
     if(shield >= 0.f && shield < 10000.f)

@@ -5,6 +5,8 @@
 
 namespace blam::globals {
 
+using typing::vector_types::Vecf2;
+
 /*! The unit a player spawns as, for multiplayer. Fields past `unit` are only
  *  named as far as they have been checked against real maps. */
 struct multiplayer_information
@@ -66,6 +68,26 @@ struct interface_bitmaps
 
 static_assert(sizeof(interface_bitmaps) == 304);
 
+/*! Damage the engine deals itself: falls, and units struck by vehicles */
+struct falling_damage
+{
+    u32                              padding[2];
+    Vecf2                            harmful_falling_distance;
+    tagref_typed_t<tag_class_t::jpt> falling;
+    u32                              padding2[2];
+    f32                              maximum_falling_distance;
+    tagref_typed_t<tag_class_t::jpt> distance;
+    tagref_typed_t<tag_class_t::jpt> vehicle_environment_collision;
+    tagref_typed_t<tag_class_t::jpt> vehicle_killed_unit;
+    tagref_typed_t<tag_class_t::jpt> vehicle_collision;
+    tagref_typed_t<tag_class_t::jpt> flaming_death;
+    u32                              padding3[7];
+};
+
+static_assert(offsetof(falling_damage, falling) == 0x10);
+static_assert(offsetof(falling_damage, vehicle_collision) == 0x5c);
+static_assert(sizeof(falling_damage) == 152);
+
 /*! Only the blocks that name the player's unit and hands are decoded; everything
  *  ahead of them is skipped by offset, because the rest of the globals tag has
  *  no description we can check a layout against.
@@ -83,6 +105,7 @@ struct globals
     reference<multiplayer_information> multiplayer;
     reference<player_information>      player;
     reference<first_person_interface>  first_person;
+    reference<falling_damage>          falling;
 };
 
 static_assert(offsetof(globals, grenades) == 0x128);
@@ -90,5 +113,6 @@ static_assert(offsetof(globals, interface) == 0x140);
 static_assert(offsetof(globals, multiplayer) == 0x164);
 static_assert(offsetof(globals, player) == 0x170);
 static_assert(offsetof(globals, first_person) == 0x17c);
+static_assert(offsetof(globals, falling) == 0x188);
 
 } // namespace blam::globals
