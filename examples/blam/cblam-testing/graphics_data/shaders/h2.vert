@@ -29,17 +29,22 @@ layout(location=12) uniform vec2 illum_scale;
 layout(location=20) uniform vec2 mask_scale;
 layout(location=28) uniform vec2 bump_scale;
 /* Objects that move: object space to world */
-layout(location=39) uniform mat4 model;
 /* Water definitions are a polar fan (x = radius, y = angle) laid around
  * the camera at sea level: water_fan x = on, y = sea level */
 layout(location=46) uniform vec2 water_fan;
 layout(location=47) uniform vec2 water_eye;
+/* Object space to world, per draw (the instance): identity for structure */
+layout(binding=0, std140) uniform H2Instances
+{
+    mat4 data[64];
+} instances;
 /* Animated objects: bind pose to animated pose per model node */
 layout(location=84) uniform int skinned;
 layout(location=96) uniform mat4 bones[64]; /* 96-351 */
 
 void main()
 {
+    mat4 instance_model = instances.data[gl_InstanceID];
     vec4 local = vec4(position, 1.0);
     vec3 ln    = normal;
     float wsum = dot(bone_weights, vec4(1.0));
@@ -52,9 +57,9 @@ void main()
         local = skin * local;
         ln    = mat3(skin) * ln;
     }
-    vec3 world = (model * local).xyz * model_scale + model_offset;
+    vec3 world = (instance_model * local).xyz * model_scale + model_offset;
     vec2 uv    = texcoord;
-    vec3 n     = mat3(model) * ln;
+    vec3 n     = mat3(instance_model) * ln;
     if(water_fan.x > 0.5)
     {
         float angle = position.y / 418.546 * 3.14159265 * 1.03;
