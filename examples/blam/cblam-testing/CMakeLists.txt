@@ -49,6 +49,7 @@ coffee_application(
         projectiles.cpp
         damage.cpp
         game_mode.cpp
+        checkpoint.cpp
         effects.cpp
         weapons.cpp
         hud.cpp

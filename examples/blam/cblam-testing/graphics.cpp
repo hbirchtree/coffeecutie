@@ -21,6 +21,7 @@
 #include "h3/h3_sound.h"
 #endif
 #include "impact_sounds.h"
+#include "checkpoint.h"
 #include "game_mode.h"
 #include "damage.h"
 #include "projectiles.h"
@@ -306,6 +307,7 @@ i32 blam_main()
             alloc_projectiles(e);
             alloc_damage(e);
             alloc_game_mode(e);
+            alloc_checkpoints(e);
             alloc_effects(e);
             alloc_weapons(e);
             alloc_hud(e);

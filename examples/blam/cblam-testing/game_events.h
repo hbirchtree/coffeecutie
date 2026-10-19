@@ -93,6 +93,8 @@ struct GameEvent
         RespawnUnit,
         GameWon,
         Checkpoint,
+        WorldSave,
+        WorldRestore,
     };
 
     EventType type{None};
@@ -489,7 +491,8 @@ struct UnitKilledEvent
     libc_types::u32 killer{ObjectHitEvent::no_player}; /*!< A player, if one did it */
 };
 
-/*! Brings a dead unit back at full health, there */
+/*! Brings a dead unit back at full health, there; or, restoring a
+ *  checkpoint, puts any unit there with the health it had */
 struct RespawnUnitEvent
 {
     static constexpr auto event_type = GameEvent::RespawnUnit;
@@ -497,6 +500,9 @@ struct RespawnUnitEvent
     libc_types::u64 unit{0};
     Vecf3           position{};
     libc_types::f32 facing{0.f};
+    bool            restore{false};
+    libc_types::f32 body{1.f};
+    libc_types::f32 shield{1.f};
 };
 
 /*! A level's script says it is finished */
@@ -509,6 +515,18 @@ struct GameWonEvent
 struct CheckpointEvent
 {
     static constexpr auto event_type = GameEvent::Checkpoint;
+};
+
+/*! The game mode takes a checkpoint: every system keeps what it owns */
+struct WorldSaveEvent
+{
+    static constexpr auto event_type = GameEvent::WorldSave;
+};
+
+/*! ... and goes back to it: every system puts it back */
+struct WorldRestoreEvent
+{
+    static constexpr auto event_type = GameEvent::WorldRestore;
 };
 
 /*! A unit takes a seat in a vehicle, as the unit_enter_vehicle script
