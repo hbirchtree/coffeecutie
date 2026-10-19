@@ -75,4 +75,7 @@ struct GameSetup : compo::SubsystemBase
 
 /* Registers GameSetup and the level, map, game type and difficulty hooks;
  * after alloc_profile_provider */
+/*! The campaign level after `map`, none after the last */
+std::optional<std::string_view> next_campaign_map(std::string_view map);
+
 void alloc_game_setup_provider(compo::EntityContainer& e);

@@ -15,6 +15,7 @@
 #include "h2/h2_scene.h"
 #include "h2/h2_sound.h"
 #include "impact_sounds.h"
+#include "game_mode.h"
 #include "damage.h"
 #include "projectiles.h"
 #include "effects.h"
@@ -301,6 +302,7 @@ i32 blam_main()
             alloc_vehicle_sounds(e);
             alloc_projectiles(e);
             alloc_damage(e);
+            alloc_game_mode(e);
             alloc_effects(e);
             alloc_weapons(e);
             alloc_hud(e);

@@ -59,6 +59,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         auto struck = std::exchange(m_struck, {});
         for(auto const& vitality : std::exchange(m_vitality, {}))
             take(p, vitality);
+        m_respawn_queue->poll();
+        auto respawns = std::exchange(m_respawns, {});
 
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         m_magic           = &files.container.magic;
@@ -67,12 +69,13 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         {
             for(auto const& hit : hits)
                 if(auto const* jpt = damage_of(hit.damage))
-                    hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head);
+                    hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head, player_of(p, hit.shooter));
             for(auto const& area : areas)
                 splash(p, area);
             for(auto const& s : struck)
                 run_down(p, s);
-            respawn(p, dt);
+            for(auto const& respawn : respawns)
+                revive(p, respawn);
         }
         recharge(p, dt);
     }
@@ -104,8 +107,14 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         return geometry->nodes[part].material;
     }
 
+    u32 player_of(Proxy& p, u64 entity) const
+    {
+        auto const* info = entity ? p.template get<PlayerInfo>(entity) : nullptr;
+        return info ? info->player_idx : ObjectHitEvent::no_player;
+    }
+
     /* A jpt! landing on a unit, at `scale` of its full strength */
-    void hurt(Proxy& p, u64 unit, jpt_t const& jpt, f32 scale, i16 part, bool head)
+    void hurt(Proxy& p, u64 unit, jpt_t const& jpt, f32 scale, i16 part, bool head, u32 killer)
     {
         auto* status = p.template get<BipedStatus>(unit);
         if(!status || !status->coll || status->dead || status->invulnerable)
@@ -129,6 +138,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             head && (jpt.damage_flags & flag_t::can_cause_headshots) != flag_t::none;
         apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot);
         tell(p, unit, *status);
+        if(status->dead)
+            killed(p, unit, killer);
     }
 
     /* Shield first, then whatever gets past it into the body. Unshielded,
@@ -188,7 +199,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 flat || d <= inner
                     ? 1.f
                     : 1.f - (d - inner) / std::max(jpt->radius.y - inner, 1e-3f);
-            hurt(p, unit.id(), *jpt, scale, -1, false);
+            hurt(p, unit.id(), *jpt, scale, -1, false, player_of(p, area.shooter));
         }
     }
 
@@ -209,6 +220,15 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         f32 const total = status->maximum_body() + std::max(status->maximum_shield(), 0.f);
         apply(*status, share * total, 1.f, 1.f, flag_t::none, false);
         tell(p, struck.unit, *status);
+        if(!status->dead)
+            return;
+        /* The driver did it */
+        u32 driver = ObjectHitEvent::no_player;
+        for(auto player : p.template select<PlayerInfo>())
+            if(auto const& riding = player.template get<PlayerInfo>().riding;
+               riding.vehicle == struck.vehicle && riding.driver)
+                driver = player.template get<PlayerInfo>().player_idx;
+        killed(p, struck.unit, driver);
     }
 
     std::optional<Vecf3> centre_of(Proxy& p, u64 unit) const
@@ -227,20 +247,29 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
 
     /* ---- What everyone sees ---- */
 
-    void tell(Proxy& p, u64 unit, BipedStatus const& status)
+    void tell(Proxy& p, u64 unit, BipedStatus const& status,
+              std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f)
     {
         auto const*       info = p.template get<PlayerInfo>(unit);
         GameEvent         ev{.type = GameEvent::UnitVitality};
         UnitVitalityEvent vitality{
-            .unit   = unit,
-            .player = info ? info->player_idx : ObjectHitEvent::no_player,
-            .body   = status.body,
-            .shield = status.shield,
-            .dead   = status.dead,
+            .unit           = unit,
+            .player         = info ? info->player_idx : ObjectHitEvent::no_player,
+            .body           = status.body,
+            .shield         = status.shield,
+            .dead           = status.dead,
+            .respawn_at     = respawn_at,
+            .respawn_facing = facing,
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
-        if(status.dead && info)
-            m_respawns.try_emplace(unit, respawn_delay);
+    }
+
+    /* The game mode decides what a death is worth and when it ends */
+    void killed(Proxy& p, u64 unit, u32 killer)
+    {
+        GameEvent       ev{.type = GameEvent::UnitKilled};
+        UnitKilledEvent kill{.unit = unit, .player = player_of(p, unit), .killer = killer};
+        p.template subsystem<GameEventBus>().inject(ev, &kill);
     }
 
     /* What the authority says is left; a player of ours that comes back to
@@ -257,62 +286,40 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(vitality.shield < 1.f)
             status->stunned = status->coll ? status->coll->stun_time : default_stun;
         if(auto const* info = p.template get<PlayerInfo>(vitality.unit);
-           revived && info && !info->is_remote())
-            restart(p, vitality.unit, *info);
+           revived && info && !info->is_remote() && vitality.respawn_at)
+            restart(p, vitality.unit, *info, *vitality.respawn_at, vitality.respawn_facing);
     }
 
-    void restart(Proxy& p, u64 player, PlayerInfo const& info)
+    /* Onto its feet there, facing that way */
+    void restart(Proxy& p, u64 player, PlayerInfo const& info, Vecf3 feet, f32 facing)
     {
-        auto const& files    = p.template subsystem<BlamFiles<halo_version>>();
-        auto const* scenario = files.container.scenario().value_or(nullptr);
-        if(!scenario)
-            return;
-        auto spots = scenario->player_start.locations.data(*m_magic);
-        if(!spots.has_value() || spots.value().empty())
-            return;
-        auto const& spot = spots.value()[std::uniform_int_distribution<size_t>(
-            0, spots.value().size() - 1)(m_random)];
         GameEvent           ev{.type = GameEvent::PlayerTeleport};
         PlayerTeleportEvent move{
             .entity_id = player,
-            .position  = spot.pos + Vecf3{
-                                       0.f,
-                                       0.f,
-                                       info.mode.physics ? info.biped.height / 2 + spawn_lift
-                                                         : info.biped.eye_height},
-            .rotation = glm::angleAxis(
-                glm::pi<f32>() - spot.rot, Vecf3{0.f, 1.f, 0.f}),
+            .position  = feet + Vecf3{
+                                   0.f,
+                                   0.f,
+                                   info.mode.physics ? info.biped.height / 2 + spawn_lift
+                                                     : info.biped.eye_height},
+            .rotation = glm::angleAxis(glm::pi<f32>() - facing, Vecf3{0.f, 1.f, 0.f}),
         };
         p.template subsystem<GameEventBus>().inject(ev, &move);
     }
 
-    /* Players dead long enough come back at full health */
-    void respawn(Proxy& p, f32 dt)
+    /* Back at full health where the game mode put it */
+    void revive(Proxy& p, RespawnUnitEvent const& respawn)
     {
-        for(auto it = m_respawns.begin(); it != m_respawns.end();)
-        {
-            auto* status = p.template get<BipedStatus>(it->first);
-            if(!status || !status->dead)
-            {
-                it = m_respawns.erase(it);
-                continue;
-            }
-            if((it->second -= dt) > 0.f)
-            {
-                ++it;
-                continue;
-            }
-            u64 const player = it->first;
-            it               = m_respawns.erase(it);
-            status->body     = 1.f;
-            status->shield   = status->maximum_shield() > 0.f ? 1.f : 0.f;
-            status->dead     = false;
-            status->stunned  = 0.f;
-            tell(p, player, *status);
-            if(auto const* info = p.template get<PlayerInfo>(player);
-               info && !info->is_remote())
-                restart(p, player, *info);
-        }
+        auto* status = p.template get<BipedStatus>(respawn.unit);
+        if(!status || !status->dead)
+            return;
+        status->body    = 1.f;
+        status->shield  = status->maximum_shield() > 0.f ? 1.f : 0.f;
+        status->dead    = false;
+        status->stunned = 0.f;
+        tell(p, respawn.unit, *status, respawn.position, respawn.facing);
+        if(auto const* info = p.template get<PlayerInfo>(respawn.unit);
+           info && !info->is_remote())
+            restart(p, respawn.unit, *info, respawn.position, respawn.facing);
     }
 
     /* After a while unhurt, a shield fills back up */
@@ -351,7 +358,6 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     static constexpr f32   run_down_least   = .35f;
     static constexpr f32   run_down_most    = .7f;
     static constexpr f32   unit_middle      = .35f; /* wu above the feet */
-    static constexpr f32   respawn_delay    = 3.f;  /* s */
     static constexpr f32   spawn_lift       = .05f; /* wu */
     static constexpr f32   default_stun     = 1.f;  /* s */
     static constexpr f32   default_recharge = 2.f;  /* s */
@@ -366,7 +372,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<AreaDamageEvent>     m_areas;
     std::vector<UnitVitalityEvent>   m_vitality;
     std::vector<Physics::UnitStruck> m_struck;
-    std::map<u64, f32>               m_respawns; /*!< Seconds left */
+    std::shared_ptr<GameEventBus::queue_type<RespawnUnitEvent>> m_respawn_queue;
+    std::vector<RespawnUnitEvent>    m_respawns;
 
     blam::map_ptr const*                              m_magic{nullptr};
     std::optional<blam::tag_index_view<halo_version>> m_index;
@@ -382,6 +389,10 @@ void alloc_damage(compo::EntityContainer& e)
         0, [&damage](GameEvent&, ObjectHitEvent* hit) {
             if(hit->origin == MapLoadEvent::Local)
                 damage.m_hits.push_back(*hit);
+        });
+    damage.m_respawn_queue = game.addQueuedEventFunction<RespawnUnitEvent>(
+        0, [&damage](GameEvent&, RespawnUnitEvent* respawn) {
+            damage.m_respawns.push_back(*respawn);
         });
     damage.m_area_queue = game.addQueuedEventFunction<AreaDamageEvent>(
         0, [&damage](GameEvent&, AreaDamageEvent* area) {
