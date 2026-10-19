@@ -115,6 +115,11 @@ void create_resources(compo::EntityContainer& e)
                         .position  = teleport->position,
                     };
                     pbus.process(ev, &translate);
+                    if(teleport->rotation)
+                    {
+                        cam.camera.rotation  = *teleport->rotation;
+                        net.changes.viewport = net.changes.transform = true;
+                    }
                 } else
                 {
                     auto& input          = player.get<PlayerInput>();
