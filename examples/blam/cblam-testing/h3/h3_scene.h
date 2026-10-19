@@ -267,6 +267,7 @@ struct H3Scene : compo::SubsystemBase
     std::array<Vecf4, max_bsp_slots / 4>        intensity_scales{};
     f32                                         exposure{1.f}; /*!< Linear, at load */
     AutoExposure                                auto_exposure;
+    Bloom                                       bloom;
     /* Halo 3's v_atmosphere_constant_0..5 and _extra for compute_scattering
      * (atmosphere.fx); disabled when constant 1's w is negative */
     std::array<Vecf4, 7>                        atmosphere{Vecf4(0.f), Vecf4(0.f, 0.f, 0.f, -1.f)};

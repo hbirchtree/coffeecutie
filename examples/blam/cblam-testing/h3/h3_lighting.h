@@ -152,4 +152,14 @@ struct AutoExposure
     }
 };
 
+/*! Halo 3's bloom from camera FX: a curve picks what blooms, blurred at
+ * three sizes, each tinted */
+struct Bloom
+{
+    f32                  point{1.2f};    /*!< Intensity over which things bloom fully */
+    f32                  inherent{0.f};  /*!< Share of everything that blooms */
+    f32                  intensity{0.f}; /*!< Bloom against the scene */
+    std::array<Vecf3, 3> colors{Vecf3(1.f), Vecf3(1.f), Vecf3(1.f)}; /*!< Large, medium, small */
+};
+
 } // namespace h3

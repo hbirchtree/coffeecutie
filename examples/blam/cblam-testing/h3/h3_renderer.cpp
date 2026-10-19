@@ -462,9 +462,146 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 }
             }
         }
+        if(scene.bloom.intensity > 0.f)
+        {
+            auto const _     = m_api->debug().scope("H3Renderer bloom");
+            auto const timer = m_system->gpu_timer("H3Renderer bloom");
+            draw_bloom(scene.bloom, resources);
+        }
     }
 
   private:
+    /* Bloom targets: what blooms at a quarter size, halved three times,
+     * then the two sums on the way back up */
+    struct BloomTarget
+    {
+        std::shared_ptr<gfx::texture_2d_t>   texture;
+        std::shared_ptr<gfx::rendertarget_t> target;
+        std::shared_ptr<gfx::sampler_t>      sampler;
+        Veci2                                size{};
+    };
+
+    enum bloom_target_t
+    {
+        bloom_bright,
+        bloom_small,
+        bloom_medium,
+        bloom_large,
+        bloom_sum_medium,
+        bloom_sum_small,
+        bloom_target_count,
+    };
+
+    /* Halo 3's bloom: what is brighter than the bloom point, blurred at three
+     * sizes and tinted per size, added over the exposed scene */
+    void draw_bloom(Bloom const& bloom, BlamResources const& resources)
+    {
+        using stage_t = typing::graphics::ShaderStage;
+        if(!resources.color)
+            return;
+        auto const size = resources.offscreen_size;
+        if(m_bloom_size != size)
+        {
+            m_bloom_size = size;
+            if(!m_scene_color_sampler)
+            {
+                m_scene_color_sampler = resources.color->sampler();
+                m_scene_color_sampler->alloc();
+            }
+            m_scene_color_sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+            static constexpr std::array<i32, bloom_target_count> divisors = {4, 8, 16, 32, 16, 8};
+            for(size_t i = 0; i < m_bloom.size(); i++)
+            {
+                auto& t   = m_bloom[i];
+                t.size    = glm::max(size / divisors[i], Veci2(1));
+                t.texture = m_api->alloc_texture(
+                    gfx::textures::d2, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA16F), 1);
+                t.texture->alloc(size_3d<i32>{t.size.x, t.size.y, 1}.convert<u32>());
+                t.target = m_api->alloc_rendertarget();
+                t.target->alloc();
+                t.target->attach(gfx::render_targets::attachment::color, *t.texture, 0);
+                t.target->resize({0, 0, t.size.x, t.size.y});
+                t.sampler = t.texture->sampler();
+                t.sampler->alloc();
+                t.sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+            }
+        }
+        Vecf4 const quad_rect{1.f, 1.f, 0.f, 0.f};
+        auto        quad_v = gfx::make_uniform_list(
+            stage_t::Vertex,
+            gfx::uniform_pair<Vecf4 const>{{"quad_rect"}, semantic::SpanOne<const Vecf4>(quad_rect)});
+        auto texel = [](Veci2 extent) { return Vecf2(1.f) / Vecf2(extent); };
+        auto pass  = [&](auto const& program, auto& frag_u, auto& samplers, std::shared_ptr<gfx::rendertarget_t> target,
+                        Veci2 extent, bool additive) {
+            auto viewport = gfx::view_state{
+                .view = typing::vector_types::Veci4{0, 0, extent.x, extent.y},
+            };
+            auto res = m_api->submit(
+                {
+                    .program       = program,
+                    .vertices      = m_vao,
+                    .render_target = target,
+                    .call          = {.indexed = false, .mode = gfx::drawing::primitive::triangle},
+                    .data          = {{.arrays = {.count = 3}}},
+                },
+                quad_v,
+                frag_u,
+                samplers,
+                viewport,
+                gfx::depth_extended_state{.depth_write = false},
+                gfx::blend_state{.additive = additive});
+            if(res.has_value() && !m_draw_error_logged)
+            {
+                cWarning("H3: bloom failed: {}", std::get<1>(*res));
+                m_draw_error_logged = true;
+            }
+        };
+
+        Vecf2 const curve{bloom.point, bloom.inherent};
+        Vecf2 const scene_texel = texel(size);
+        auto        bright_u    = gfx::make_uniform_list(
+            stage_t::Fragment,
+            gfx::uniform_pair<Vecf2 const>{{"source_texel"}, semantic::SpanOne<const Vecf2>(scene_texel)},
+            gfx::uniform_pair<Vecf2 const>{{"bloom_curve"}, semantic::SpanOne<const Vecf2>(curve)});
+        auto bright_s = gfx::make_sampler_list(
+            gfx::sampler_definition_t{stage_t::Fragment, {"scene_color", 0}, m_scene_color_sampler});
+        pass(m_bloom_bright_program, bright_u, bright_s, m_bloom[bloom_bright].target,
+             m_bloom[bloom_bright].size, false);
+
+        /* `source` into `target`: halved, or doubled with `scale` plus `tint` times `level` */
+        auto blur = [&](size_t source, std::shared_ptr<gfx::rendertarget_t> target, Veci2 extent, i32 mode,
+                        Vecf3 scale, Vecf3 tint, std::shared_ptr<gfx::sampler_t> level, bool additive) {
+            Vecf2 const source_texel = texel(m_bloom[source].size);
+            auto        frag_u       = gfx::make_uniform_list(
+                stage_t::Fragment,
+                gfx::uniform_pair<Vecf2 const>{{"source_texel"}, semantic::SpanOne<const Vecf2>(source_texel)},
+                gfx::uniform_pair<const i32>{{"mode"}, semantic::SpanOne<const i32>(mode)},
+                gfx::uniform_pair<Vecf3 const>{{"scale"}, semantic::SpanOne<const Vecf3>(scale)},
+                gfx::uniform_pair<Vecf3 const>{{"tint"}, semantic::SpanOne<const Vecf3>(tint)});
+            auto samplers = gfx::make_sampler_list(
+                gfx::sampler_definition_t{stage_t::Fragment, {"source", 0}, m_bloom[source].sampler},
+                gfx::sampler_definition_t{stage_t::Fragment, {"level", 1}, level});
+            pass(m_bloom_program, frag_u, samplers, target, extent, additive);
+        };
+        auto to = [&](size_t i) { return std::make_pair(m_bloom[i].target, m_bloom[i].size); };
+        Vecf3 const none(0.f), one(1.f);
+        for(size_t i = bloom_small; i <= bloom_large; i++)
+        {
+            auto [target, extent] = to(i);
+            blur(i - 1, target, extent, 0, one, none, m_white_sampler, false);
+        }
+        auto const& [large, medium, small] = bloom.colors;
+        {
+            auto [target, extent] = to(bloom_sum_medium);
+            blur(bloom_large, target, extent, 1, large, medium, m_bloom[bloom_medium].sampler, false);
+        }
+        {
+            auto [target, extent] = to(bloom_sum_small);
+            blur(bloom_sum_medium, target, extent, 1, one, small, m_bloom[bloom_small].sampler, false);
+        }
+        blur(bloom_sum_small, resources.offscreen, size, 1, Vecf3(bloom.intensity), none, m_white_sampler, true);
+    }
+
     /* Moving objects cast into the cascades; the level's own shadows, and
      * those of what never moves, are baked into its lightmaps */
     void render_shadows(Proxy& p, H3Scene const& scene, PlayerCamera const& camera)
@@ -1009,6 +1146,20 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         create_program(
             api,
             shader_pair_t{
+                .vertex_file   = "h3_quad",
+                .fragment_file = "h3_bloom_bright",
+                .shader        = m_bloom_bright_program,
+            });
+        create_program(
+            api,
+            shader_pair_t{
+                .vertex_file   = "h3_quad",
+                .fragment_file = "h3_bloom",
+                .shader        = m_bloom_program,
+            });
+        create_program(
+            api,
+            shader_pair_t{
                 .vertex_file   = "h3_decorator",
                 .fragment_file = "h3_decorator",
                 .shader        = m_decorator_program,
@@ -1063,6 +1214,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::sampler_t>             m_scene_color_sampler;
     std::shared_ptr<gfx::sampler_t>             m_scene_depth_sampler;
     Veci2                                       m_copy_size{};
+    std::shared_ptr<gfx::program_t>             m_bloom_bright_program;
+    std::shared_ptr<gfx::program_t>             m_bloom_program;
+    std::array<BloomTarget, bloom_target_count> m_bloom;
+    Veci2                                       m_bloom_size{};
     time_point                                  m_start{};
     std::shared_ptr<gfx::sampler_t>             m_black_cube_sampler;
     f32                                         m_stops{0.f};

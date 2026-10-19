@@ -57,6 +57,7 @@ struct options_t
     bool        animations;
     bool        mips;
     bool        decorators;
+    bool        camera_fx;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -1084,6 +1085,33 @@ int dump_animations(elegy::map_container const& map, elegy::resource_loader& loa
     return failed ? 1 : 0;
 }
 
+/* Camera FX settings: exposure and bloom */
+int dump_camera_fx(elegy::map_container const& map, options_t const& options)
+{
+    auto value = [](auto const& v) {
+        return fmt::format("{}{}", v.value.value(), v.use_default() ? " (default)" : "");
+    };
+    auto color = [](auto const& v) {
+        auto c = v.value.value();
+        return fmt::format("({}, {}, {}){}", c.x, c.y, c.z, v.use_default() ? " (default)" : "");
+    };
+    for(auto const& tag : map.tags())
+    {
+        if(!tag.valid() || !map.is(tag, elegy::camera_fx_settings_t::group) ||
+           map.name_of(tag).find(options.name_filter) == std::string_view::npos)
+            continue;
+        auto const* fx = map.tag_data<elegy::camera_fx_settings_t>(tag);
+        fmt::print("{}: flags {:#x}, exposure {}, range [{}, {}], auto exposure {}\n", map.name_of(tag),
+                   fx->flags.value(), fx->exposure.value(), fx->exposure_range.min.value(),
+                   fx->exposure_range.max.value(), fx->auto_exposure_brightness.value());
+        fmt::print("  bloom point {}, inherent {}, intensity {}, anti-bloom {}\n", value(fx->bloom_point),
+                   value(fx->inherent_bloom), value(fx->bloom_intensity), value(fx->anti_bloom));
+        fmt::print("  colors large {}, medium {}, small {}\n", color(fx->bloom_large_color),
+                   color(fx->bloom_medium_color), color(fx->bloom_small_color));
+    }
+    return 0;
+}
+
 /* Mip levels against the top level: each level's DXT block colours (the
  * mean of the endpoints) against the top level's, box-filtered to match */
 int check_mips(elegy::map_container const& map, elegy::resource_loader& loader, options_t const& options)
@@ -1714,6 +1742,8 @@ int run_map(
         rc |= check_mips(map, *loader, options);
     if(options.decorators)
         rc |= dump_decorators(map, *loader, options);
+    if(options.camera_fx)
+        rc |= dump_camera_fx(map, options);
     return rc;
 }
 
@@ -1761,6 +1791,8 @@ i32 coffee_main(i32, cstring_w*)
         ("mips", "Check DXT bitmaps' mip levels against their top level")
         //
         ("decorators", "List structure BSPs' decorator sets, instance buffers and groups")
+        //
+        ("camera-fx", "List camera FX settings: exposure and bloom")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1814,6 +1846,7 @@ i32 coffee_main(i32, cstring_w*)
         .animations   = arguments.count("animations") > 0,
         .mips         = arguments.count("mips") > 0,
         .decorators   = arguments.count("decorators") > 0,
+        .camera_fx    = arguments.count("camera-fx") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),
