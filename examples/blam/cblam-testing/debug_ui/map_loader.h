@@ -934,6 +934,7 @@ struct BlamMapBrowser
                         }
                         if(auto* model = ec.get<Model>(m_selected_entity))
                         {
+                            ImGui::Checkbox("Camouflaged (Halo 3)", &model->camouflaged);
                             ImGui::Separator();
                             ImGui::Text("Object functions");
                             for(auto i : stl_types::range<size_t>(4))
@@ -983,6 +984,7 @@ struct BlamMapBrowser
                                 "    move: %u", pinfo->permissions.move);
                             ImGui::Text(
                                 "    camera: %u", pinfo->permissions.camera);
+                            ImGui::Checkbox("  camouflaged (Halo 3)", &pinfo->camouflaged);
                         }
                         if(auto* pcam = ec.get<PlayerCamera>(m_selected_entity))
                         {

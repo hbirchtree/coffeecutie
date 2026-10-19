@@ -21,7 +21,12 @@ namespace h3 {
 
 using H3RendererManifest = compo::SubsystemManifest<
     compo::type_list_t<const PlayerCamera, const PlayerInfo, const Model>,
-    compo::type_list_t<const H3Scene, const BlamResources, const RenderingParameters, gfx::system>,
+    compo::type_list_t<
+        const H3Scene,
+        const BlamResources,
+        const RenderingParameters,
+        const PostProcessParameters,
+        gfx::system>,
     compo::empty_list_t>;
 
 /* Submits every material of the scene; no visibility yet */
@@ -59,6 +64,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         PlayerCamera const* camera{};
         /* The free (forge) camera has no body to hold anything */
         bool first_person_shown = false;
+        bool first_person_camo  = false;
         for(auto e : p.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = e.components();
@@ -66,6 +72,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 continue;
             camera             = &cam;
             first_person_shown = info.mode.physics;
+            first_person_camo  = info.camouflaged;
             break;
         }
         if(!camera)
@@ -201,7 +208,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         /* In front of everything, so it never reaches into walls */
                         if(object.entity == first_person_entity)
                         {
-                            if(!first_person_shown)
+                            if(!first_person_shown || first_person_camo)
                                 continue;
                             object_lit = first_person_light ? 1 : 0;
                             if(first_person_light)
@@ -218,7 +225,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             continue;
                         }
                         auto const* placed = p.template get<Model>(object.entity);
-                        if(!placed || !in_view(camera->matrix, object.sphere(placed->transform)))
+                        if(!placed || placed->camouflaged ||
+                           !in_view(camera->matrix, object.sphere(placed->transform)))
                             continue;
                         model_matrix = placed->transform;
                         light_count  = pack_lights(object.entity, placed->position);
@@ -461,6 +469,18 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     m_draw_error_logged = true;
                 }
             }
+        }
+        {
+            auto const _     = m_api->debug().scope("H3Renderer camouflage");
+            auto const timer = m_system->gpu_timer("H3Renderer camouflage");
+            draw_camouflage(
+                p,
+                scene,
+                resources,
+                *camera,
+                first_person,
+                first_person_shown && first_person_camo,
+                p.template subsystem<PostProcessParameters>().camo_scale);
         }
         if(scene.bloom.intensity > 0.f)
         {
@@ -823,19 +843,93 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         }
     }
 
-    void draw_water(
+    /* Camouflaged objects, after everything else: the scene behind them,
+     * refracted along their silhouettes */
+    void draw_camouflage(
+        Proxy&               p,
         H3Scene const&       scene,
         BlamResources const& resources,
         PlayerCamera const&  camera,
-        f32                  exposure,
-        f32                  seconds)
+        Model const&         first_person,
+        bool                 first_person_camo,
+        f32                  camo_scale)
     {
         using stage_t = typing::graphics::ShaderStage;
-        bool any      = false;
+        m_camo_draws.clear();
         for(auto const& mat : scene.materials)
-            any = any || (mat.variant == Variant::water && mat.visible && !mat.draws.empty());
-        if(!any || !resources.color || !resources.depth)
+        {
+            if(!mat.visible || mat.variant == Variant::water)
+                continue;
+            for(auto const& object : mat.object_draws)
+            {
+                if(object.entity == first_person_entity)
+                {
+                    if(first_person_camo)
+                        m_camo_draws.push_back({&object.draws, first_person.transform, true});
+                    continue;
+                }
+                auto const* placed = p.template get<Model>(object.entity);
+                if(placed && placed->camouflaged && in_view(camera.matrix, object.sphere(placed->transform)))
+                    m_camo_draws.push_back({&object.draws, placed->transform, false});
+            }
+        }
+        if(m_camo_draws.empty() || !copy_scene(resources, camera))
             return;
+        Matf3 const rotation(camera.rotation);
+        Vecf3 const offset{};
+        f32 const   scale = 1.f;
+        Vecf2 const unit{1.f, 1.f};
+        Matf4       model_matrix(1.f);
+        auto        vert_u = gfx::make_uniform_list(
+            stage_t::Vertex,
+            gfx::uniform_pair<Matf4 const>{{"camera"}, semantic::SpanOne<const Matf4>(camera.matrix)},
+            gfx::uniform_pair<Vecf2 const>{{"uv_scale"}, semantic::SpanOne<const Vecf2>(unit)},
+            gfx::uniform_pair<Vecf3 const>{{"model_offset"}, semantic::SpanOne<const Vecf3>(offset)},
+            gfx::uniform_pair<const f32>{{"model_scale"}, semantic::SpanOne<const f32>(scale)},
+            gfx::uniform_pair<Matf4 const>{{"model"}, semantic::SpanOne<const Matf4>(model_matrix)});
+        auto frag_u = gfx::make_uniform_list(
+            stage_t::Fragment,
+            gfx::uniform_pair<Matf3 const>{{"camera_rotation"}, semantic::SpanOne<const Matf3>(rotation)},
+            gfx::uniform_pair<const f32>{{"camo_scale"}, semantic::SpanOne<const f32>(camo_scale)});
+        auto samplers = gfx::make_sampler_list(
+            gfx::sampler_definition_t{stage_t::Fragment, {"source_scene", 0}, m_copy_sampler});
+        auto view = gfx::view_state{
+            .view  = typing::vector_types::Veci4{0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
+            .depth = gfx::depth_state{.range = typing::vector_types::Vecd2{0.0, 1.0}, .reversed = true},
+        };
+        for(auto const& draw : m_camo_draws)
+        {
+            model_matrix      = draw.transform;
+            view.depth->range = typing::vector_types::Vecd2{draw.first_person ? first_person_depth : 0.0, 1.0};
+            auto res          = m_api->submit(
+                {
+                    .program       = m_camo_program,
+                    .vertices      = draw.first_person ? m_first_person_vao : m_vao,
+                    .render_target = resources.offscreen,
+                    .call          = {.indexed = true, .instanced = true},
+                    .data          = *draw.draws,
+                },
+                vert_u,
+                frag_u,
+                samplers,
+                view,
+                gfx::depth_extended_state{.depth_write = true},
+                gfx::cull_state{.front_face = cull_front});
+            if(res.has_value() && !m_draw_error_logged)
+            {
+                cWarning("H3: camouflage failed: {}", std::get<1>(*res));
+                m_draw_error_logged = true;
+            }
+        }
+    }
+
+    /* The scene so far into m_copy: colour, and the distance to what each
+     * pixel shows in alpha */
+    bool copy_scene(BlamResources const& resources, PlayerCamera const& camera)
+    {
+        using stage_t = typing::graphics::ShaderStage;
+        if(!resources.color || !resources.depth)
+            return false;
         auto const size = resources.offscreen_size;
         if(!m_copy_rt || m_copy_size != size)
         {
@@ -896,7 +990,24 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             cWarning("H3: scene copy failed: {}", std::get<1>(*copy_res));
             m_draw_error_logged = true;
         }
+        return !copy_res.has_value();
+    }
 
+    void draw_water(
+        H3Scene const&       scene,
+        BlamResources const& resources,
+        PlayerCamera const&  camera,
+        f32                  exposure,
+        f32                  seconds)
+    {
+        using stage_t = typing::graphics::ShaderStage;
+        bool any      = false;
+        for(auto const& mat : scene.materials)
+            any = any || (mat.variant == Variant::water && mat.visible && !mat.draws.empty());
+        if(!any || !copy_scene(resources, camera))
+            return;
+        auto const size = resources.offscreen_size;
+        Vecf3 const eye  = camera.camera.position;
         Vecf3 const offset{};
         f32 const   scale = 1.f;
         Matf4 const identity(1.f);
@@ -1146,6 +1257,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         create_program(
             api,
             shader_pair_t{
+                .vertex_file   = "h3",
+                .fragment_file = "h3_camo",
+                .shader        = m_camo_program,
+            });
+        create_program(
+            api,
+            shader_pair_t{
                 .vertex_file   = "h3_quad",
                 .fragment_file = "h3_bloom_bright",
                 .shader        = m_bloom_bright_program,
@@ -1214,6 +1332,14 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::sampler_t>             m_scene_color_sampler;
     std::shared_ptr<gfx::sampler_t>             m_scene_depth_sampler;
     Veci2                                       m_copy_size{};
+    std::shared_ptr<gfx::program_t>             m_camo_program;
+    struct CamoDraw
+    {
+        std::vector<gfx::draw_command::data_t> const* draws;
+        Matf4                                         transform;
+        bool                                          first_person;
+    };
+    std::vector<CamoDraw>                       m_camo_draws;
     std::shared_ptr<gfx::program_t>             m_bloom_bright_program;
     std::shared_ptr<gfx::program_t>             m_bloom_program;
     std::array<BloomTarget, bloom_target_count> m_bloom;

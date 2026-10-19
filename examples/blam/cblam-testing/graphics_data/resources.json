@@ -70,6 +70,7 @@
             "shaders/h3_decorator.frag",
             "shaders/h3_bloom_bright.frag",
             "shaders/h3_bloom.frag",
+            "shaders/h3_camo.frag",
 
             "shaders/ui.vert",
             "shaders/ui.frag",

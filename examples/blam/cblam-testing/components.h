@@ -290,6 +290,9 @@ struct Model
 
     blam::tag_t const* tag{nullptr};
     blam::tag_t const* origin_object{nullptr};
+
+    /*! Active camouflage: drawn as a refraction of what is behind it */
+    bool camouflaged{false};
     /* Region permutations, as mod2::header::model_at takes them */
     libc_types::u32 permutations{0};
 
@@ -931,6 +934,9 @@ struct PlayerInfo
     {
         bool physics{false};
     } mode;
+
+    /*! Active camouflage, on the body and what it holds */
+    bool camouflaged{false};
 
     bool is_remote() const
     {
