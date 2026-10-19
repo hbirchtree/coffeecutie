@@ -70,8 +70,11 @@ layout(location=148) uniform vec2 alpha_test_ratio;
 #if H3_DETAIL >= 1
 layout(location=9, binding=1) uniform sampler2D detail;
 #endif
-#if H3_DETAIL >= 2
+#if H3_DETAIL >= 1
+/* two_change_color: change_color_map in detail2's place */
 layout(location=10, binding=2) uniform sampler2D detail2;
+layout(location=241) uniform vec3 change_colors[2];
+layout(location=243) uniform int change_color;
 #endif
 #if H3_DETAIL >= 4
 /* detail_map_overlay (4) or detail_map3 (5), at base uv * ratio */
@@ -510,6 +513,12 @@ void main()
 #endif
 #if H3_DETAIL == 1
     color *= d1 * detail_multiplier;
+    if(change_color != 0)
+    {
+        /* calc_albedo_two_change_color_ps */
+        vec2 mask = texture(detail2, f_detail2_uv).xy;
+        color *= (1.0 - mask.x + mask.x * change_colors[0]) * (1.0 - mask.y + mask.y * change_colors[1]);
+    }
 #elif H3_DETAIL == 2
     color *= d1 * d2 * detail_multiplier * detail_multiplier;
 #elif H3_DETAIL == 3

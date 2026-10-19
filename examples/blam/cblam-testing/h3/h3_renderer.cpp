@@ -194,11 +194,18 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 static std::vector<ObjectDraws> const no_objects;
                 std::array<Vecf4, 5>                  object_light{};
                 i32                                   object_lit = 0;
+                static const std::array<Vecf3, 2>     white_colors{Vecf3(1.f), Vecf3(1.f)};
+                std::array<Vecf3, 2>                  change_colors = white_colors;
+                auto colors_of = [&](u64 entity) {
+                    auto it = scene.change_colors.find(entity);
+                    return it == scene.change_colors.end() ? white_colors : it->second;
+                };
                 /* The level, then each object where its Model is */
                 auto submit = [&](auto& frag_u, auto& samplers) {
                     std::optional<std::tuple<gfx::error, std::string_view>> out;
-                    model_matrix = Matf4(1.f);
-                    object_lit   = 0;
+                    model_matrix  = Matf4(1.f);
+                    object_lit    = 0;
+                    change_colors = white_colors;
                     /* The level by the lights nearest the camera, objects by theirs */
                     light_count = pack_lights(0, camera->camera.position);
                     if(!mat.draws.empty())
@@ -214,6 +221,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             if(first_person_light)
                                 object_light = *first_person_light;
                             model_matrix     = first_person.transform;
+                            change_colors    = colors_of(first_person_entity);
                             light_count      = pack_lights(first_person_entity, camera->camera.position);
                             view.depth->range = typing::vector_types::Vecd2{first_person_depth, 1.0};
                             vertices          = m_first_person_vao;
@@ -228,8 +236,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         if(!placed || placed->camouflaged ||
                            !in_view(camera->matrix, object.sphere(placed->transform)))
                             continue;
-                        model_matrix = placed->transform;
-                        light_count  = pack_lights(object.entity, placed->position);
+                        model_matrix  = placed->transform;
+                        light_count   = pack_lights(object.entity, placed->position);
+                        change_colors = colors_of(object.entity);
                         if(auto res = submit_draws(frag_u, samplers, object.draws); !out)
                             out = res;
                     }
@@ -243,6 +252,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 Vecf3 const eye   = camera->camera.position;
                 i32 const   model = static_cast<i32>(mat.model);
                 i32 const   black_point = mat.black_point ? 1 : 0;
+                i32 const   change_color = mat.change_color ? 1 : 0;
                 using stage_t = typing::graphics::ShaderStage;
                 std::optional<std::tuple<gfx::error, std::string_view>> res;
                 if(terrain)
@@ -431,7 +441,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf4 const>{
                             {"illum_layers"}, semantic::SpanOne<const Vecf4>(mat.illum_layers)},
                         gfx::uniform_pair<Vecf4 const>{
-                            {"illum_layer_xform"}, semantic::SpanOne<const Vecf4>(mat.illum_layer_xform)});
+                            {"illum_layer_xform"}, semantic::SpanOne<const Vecf4>(mat.illum_layer_xform)},
+                        gfx::uniform_pair<const i32>{{"change_color"}, semantic::SpanOne<const i32>(change_color)},
+                        gfx::uniform_pair<Vecf3 const>{
+                            {"change_colors"}, semantic::Span<const Vecf3>(change_colors.data(), 2)});
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},
