@@ -97,6 +97,9 @@ struct MessageBase
         /* The game mode: its state, and every player's score */
         GameStateSync,
         GameScoreSync,
+
+        /* Machines, controls and their groups */
+        DeviceSync,
     } type{None};
 
     u32 request{};
@@ -405,6 +408,23 @@ struct alignas(8) GameScoreSync
     i16 deaths{0};
 
     bool operator==(GameScoreSync const&) const = default;
+};
+
+/*! Where the server tells a device (by net id) or a device group to be:
+ *  each change, and all of them to a fresh peer */
+struct alignas(8) DeviceSync
+{
+    static constexpr auto message_type = MessageBase::DeviceSync;
+
+    u32 net_id{0};
+    i16 group{-1}; /*!< A group's value, when not a device */
+    u16 padding{0};
+    f32 value{0.f};
+    f32 position_target{0.f};
+    f32 power_target{1.f};
+    u32 snap{0};
+
+    bool operator==(DeviceSync const&) const = default;
 };
 
 /*! A client's forge grab, carried out on the server: every frame while
