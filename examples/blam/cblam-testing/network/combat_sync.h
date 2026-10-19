@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <functional>
+#include <map>
 #include <optional>
 #include <vector>
 
@@ -24,6 +25,7 @@ using libc_types::f32;
 using libc_types::u32;
 using libc_types::u64;
 using net_messages::ObjectHit;
+using net_messages::UnitVitality;
 using net_messages::WeaponFire;
 
 /*! Who an outgoing message is for */
@@ -81,6 +83,12 @@ class CombatSync
                   if(hit->origin == MapLoadEvent::Local)
                       m_local_hits.push_back(*hit);
               }))
+        , m_vitality_queue(bus.addQueuedEventFunction<UnitVitalityEvent>(
+              0,
+              [this](GameEvent&, UnitVitalityEvent* vitality) {
+                  if(vitality->origin == MapLoadEvent::Local)
+                      m_local_vitality.push_back(*vitality);
+              }))
     {
     }
 
@@ -108,6 +116,14 @@ class CombatSync
     {
         m_fire_queue->poll();
         m_hit_queue->poll();
+        m_vitality_queue->poll();
+        for(auto const& vitality : std::exchange(m_local_vitality, {}))
+            if(server)
+                if(auto wire = vitality_of(p, vitality.unit))
+                    m_vitality.push_back({.message = *wire, .route = {route_t::clients}});
+        /* Units the server named before they were spawned here */
+        for(auto const& [_, wire] : std::exchange(m_unplaced, {}))
+            client_receive(p, wire);
         for(auto const& shot : std::exchange(m_local_shots, {}))
         {
             if(!server && !joined)
@@ -265,6 +281,69 @@ class CombatSync
         m_bus.inject(ev, &hit);
     }
 
+    /*! A unit's body and shield as a message, if it can be named on the
+     *  wire */
+    template<typename Proxy>
+    std::optional<UnitVitality> vitality_of(Proxy& p, u64 unit) const
+    {
+        auto const* status = p.template get<BipedStatus>(unit);
+        if(!status)
+            return std::nullopt;
+        UnitVitality wire{
+            .target_player = ObjectHitEvent::no_player,
+            .body          = status->body,
+            .shield        = status->shield,
+            .dead          = status->dead,
+        };
+        if(auto const* info = p.template get<PlayerInfo>(unit))
+            wire.target_player = info->player_idx;
+        else if(auto const* net = p.template get<NetworkInfo>(unit))
+            wire.target = net->instance_id;
+        if(wire.target == 0 && wire.target_player == ObjectHitEvent::no_player)
+            return std::nullopt;
+        return wire;
+    }
+
+    /*! What the server says a unit has left */
+    template<typename Proxy>
+    void client_receive(Proxy& p, UnitVitality const& wire)
+    {
+        u64 unit = 0;
+        if(wire.target_player != ObjectHitEvent::no_player)
+        {
+            for(auto entity : p.template select<PlayerInfo>())
+                if(entity.template get<PlayerInfo>().player_idx == wire.target_player)
+                    unit = entity.id();
+        } else
+            for(auto object : p.template select<NetworkInfo>())
+                if(object.template get<NetworkInfo>().instance_id == wire.target)
+                {
+                    unit = object.id();
+                    break;
+                }
+        if(unit == 0)
+        {
+            if(wire.target != 0)
+                m_unplaced[wire.target] = wire;
+            return;
+        }
+        GameEvent         ev{.type = GameEvent::UnitVitality};
+        UnitVitalityEvent vitality{
+            .origin = MapLoadEvent::Remote,
+            .unit   = unit,
+            .player = wire.target_player,
+            .body   = wire.body,
+            .shield = wire.shield,
+            .dead   = wire.dead != 0,
+        };
+        m_bus.inject(ev, &vitality);
+    }
+
+    std::vector<outgoing_t<UnitVitality>> take_vitality()
+    {
+        return std::exchange(m_vitality, {});
+    }
+
     std::vector<outgoing_t<WeaponFire>> take_shots()
     {
         return std::exchange(m_shots, {});
@@ -355,6 +434,10 @@ class CombatSync
 
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>>  m_hit_queue;
+    std::shared_ptr<GameEventBus::queue_type<UnitVitalityEvent>> m_vitality_queue;
+    std::vector<UnitVitalityEvent>                               m_local_vitality;
+    std::vector<outgoing_t<UnitVitality>>                        m_vitality;
+    std::map<u32, UnitVitality>                                  m_unplaced;
     std::vector<WeaponFireEvent>                               m_local_shots;
     std::vector<ObjectHitEvent>                                m_local_hits;
     std::vector<outgoing_t<WeaponFire>>                        m_shots;
