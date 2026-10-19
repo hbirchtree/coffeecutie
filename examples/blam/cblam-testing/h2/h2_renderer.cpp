@@ -489,7 +489,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             {0, 1, 0},
         };
         auto const& fp   = scene.first_person;
-        Vecf3 const eye  = camera.camera.position;
+        /* Where the view matrix was built, between physics ticks */
+        Vecf3 const eye  = camera.drawn_eye;
         Matf3 const view = glm::transpose(Matf3(camera.rotation)) * model_to_view;
         Matf4 const hang = glm::translate(Matf4(1.f), eye) * Matf4(view);
         for(i32 index : {fp.hands, fp.weapon})
