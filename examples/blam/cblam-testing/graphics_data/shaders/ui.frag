@@ -43,10 +43,21 @@ const uint TEX_ETC2_RGBA = 14u;
 const uint USE_ALPHA = 1u;
 const uint METER     = 2u;
 const uint SOLID     = 4u;
+const uint PREMULTIPLIED = 8u;
 
 vec4 unpack_rgba8(uint v)
 {
     return vec4(v & 0xFFu, (v >> 8) & 0xFFu, (v >> 16) & 0xFFu, v >> 24) / 255.0;
+}
+
+/* Half a texel inside the sprite's rectangle, so filtering never reaches
+ * whatever is packed next to it */
+vec2 inside(sampler2DArray s, vec2 uv, vec4 scale_offset)
+{
+    vec2 half_texel = 0.5 / vec2(textureSize(s, 0).xy);
+    vec2 a = scale_offset.zw;
+    vec2 b = scale_offset.zw + scale_offset.xy;
+    return clamp(uv, min(a, b) + half_texel, max(a, b) - half_texel);
 }
 
 vec4 sample_color()
@@ -58,33 +69,33 @@ vec4 sample_color()
     uint layer = texture_source & 0xFFFFFF;
     const float bias = -10.0;
     if(source == TEX_BC1)
-        return texture(source_bc1, vec3(sample_coord, layer), bias);
+        return texture(source_bc1, vec3(inside(source_bc1, sample_coord, scale_offset), layer), bias);
     else if(source == TEX_BC2)
-        return texture(source_bc2, vec3(sample_coord, layer), bias);
+        return texture(source_bc2, vec3(inside(source_bc2, sample_coord, scale_offset), layer), bias);
     else if(source == TEX_BC3)
-        return texture(source_bc3, vec3(sample_coord, layer), bias);
+        return texture(source_bc3, vec3(inside(source_bc3, sample_coord, scale_offset), layer), bias);
     /* RGBA4 = D3DFMT_A4R4G4B4: GL reads (A,R,G,B) in bits[15:12..3:0],
      * giving texture.rgba=(Halo.A, Halo.R, Halo.G, Halo.B).
      * .gbar reorders to (Halo.R, Halo.G, Halo.B, Halo.A). */
     else if(source == TEX_RGBA4)
-        return texture(source_rgba4, vec3(sample_coord, layer), bias).gbar;
+        return texture(source_rgba4, vec3(inside(source_rgba4, sample_coord, scale_offset), layer), bias).gbar;
     /* RGBA8 = D3DFMT_A8R8G8B8: bytes in memory are B,G,R,A (little-endian),
      * giving texture.rgba=(B, G, R, A). .bgra reorders to (R, G, B, A). */
     else if(source == TEX_RGBA8)
-        return texture(source_rgba8, vec3(sample_coord, layer), bias).bgra;
+        return texture(source_rgba8, vec3(inside(source_rgba8, sample_coord, scale_offset), layer), bias).bgra;
     /* A8Y8: luminance in r, alpha in g; tinted by the instance colour */
     else if(source == TEX_A8Y8)
     {
-        vec2 la = texture(source_rg8, vec3(sample_coord, layer), bias).rg;
+        vec2 la = texture(source_rg8, vec3(inside(source_rg8, sample_coord, scale_offset), layer), bias).rg;
         return vec4(la.rrr, la.g);
     }
     else if(source == TEX_ETC2_RGB)
-        return texture(source_etc2_rgb, vec3(sample_coord, layer), bias);
+        return texture(source_etc2_rgb, vec3(inside(source_etc2_rgb, sample_coord, scale_offset), layer), bias);
     else if(source == TEX_ETC2_RGBA)
-        return texture(source_etc2_rgba, vec3(sample_coord, layer), bias);
+        return texture(source_etc2_rgba, vec3(inside(source_etc2_rgba, sample_coord, scale_offset), layer), bias);
     else if(source == TEX_FONT)
     {
-        float alpha = texture(source_font, vec3(sample_coord, layer)).r;
+        float alpha = texture(source_font, vec3(inside(source_font, sample_coord, scale_offset), layer)).r;
         vec4 col = elements.instances[frag.element_id].color;
         return vec4(col.rgb, alpha * col.a);
     }
@@ -112,8 +123,12 @@ void main()
         bool lit = background_color.a <= uintBitsToFloat(extra.z);
         vec4 tint = lit ? color : unpack_rgba8(extra.y);
         float shape = max(background_color.r, max(background_color.g, background_color.b));
-        out_color = vec4(tint.rgb, shape * tint.a);
+        out_color = vec4(tint.rgb, tint.a) * shape;
     }
+    /* HUD: bitmaps carry their coverage in the color channels, and a
+     * color's alpha is how much of what is behind it hides; none adds on */
+    else if((extra.x & PREMULTIPLIED) != 0u)
+        out_color = vec4(color.rgb * background_color.rgb, color.a * background_color.a);
     else if((extra.x & USE_ALPHA) != 0u)
         out_color = vec4(color.rgb * background_color.rgb, background_color.a * color.a);
     else

@@ -143,6 +143,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         use_alpha = 0x1, /* the color's alpha fades the texel */
         meter     = 0x2,
         solid     = 0x4, /* the color alone */
+        premultiplied = 0x8, /* the texel's color is its coverage, and the
+                              * color's alpha how much it covers */
     };
 
     struct atlas_intermediate_t
@@ -1197,10 +1199,17 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         data.instance_data.push_back(inst);
     }
 
-    /* Each seat's HUD, mapped onto its viewport; one batch per view */
-    std::vector<std::pair<Matf3, u32>> push_hud(HudScene const& scene, widget_data_t data)
+    struct hud_batch_t
     {
-        std::vector<std::pair<Matf3, u32>> out;
+        Matf3 matrix;
+        u32   count;
+        bool  premultiplied;
+    };
+
+    /* Each seat's HUD, mapped onto its viewport; one batch per view */
+    std::vector<hud_batch_t> push_hud(HudScene const& scene, widget_data_t data)
+    {
+        std::vector<hud_batch_t> out;
         size_t const views = scene.views.size();
         for(size_t k = 0; k < views; k++)
         {
@@ -1225,7 +1234,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 push_quad(data, sprite.min, sprite.max, image, sprite.uv);
                 auto& inst    = data.instance_data.back();
                 inst.color    = sprite.color;
-                inst.extra[0] = use_alpha;
+                inst.extra[0] = premultiplied;
                 if(sprite.fill >= 0.f)
                 {
                     auto const channel = [](f32 v) {
@@ -1237,7 +1246,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     inst.extra[2] = std::bit_cast<u32>(sprite.fill);
                 }
             }
-            out.emplace_back(matrix, static_cast<u32>(data.vertex_data.size()) - first);
+            out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - first, true});
         }
 
         /* Letterbox bars and the fade go over the whole screen */
@@ -1251,7 +1260,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(scene.fade.a > 0.f)
             push_solid(data, {-1.f, -1.f}, {1.f, 1.f}, scene.fade);
         if(data.vertex_data.size() > first)
-            out.emplace_back(Matf3(1), static_cast<u32>(data.vertex_data.size()) - first);
+            out.push_back({Matf3(1), static_cast<u32>(data.vertex_data.size()) - first, false});
         return out;
     }
 
@@ -1613,7 +1622,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         std::vector<instance_vertex_t> instance_vertex_data;
 
         /* The HUD first, under any menu, a batch per viewport */
-        std::vector<std::pair<Matf3, u32>> hud_batches;
+        std::vector<hud_batch_t> hud_batches;
         if(auto const& params = e.subsystem<RenderingParameters>();
            params.render_hud && !params.render_ui)
             hud_batches = push_hud(
@@ -1849,7 +1858,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                              .sampler;
         };
 
-        auto do_submit = [&](Matf3 const& matrix, u32 offset, u32 count) {
+        auto do_submit = [&](Matf3 const& matrix, u32 offset, u32 count, bool premultiplied = false) {
             api.submit(
                 gfx::draw_command{
                     .program  = ui_painter,
@@ -1930,13 +1939,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         .buffer = instance_vertices->slice(0),
                         .stride = 0,
                     }),
-                gfx::blend_state{.additive = false});
+                gfx::blend_state{.premultiplied = premultiplied});
         };
 
         u32 hud_offset = 0;
-        for(auto const& [matrix, count] : hud_batches)
+        for(auto const& [matrix, count, premultiplied] : hud_batches)
         {
-            do_submit(matrix, hud_offset, count);
+            do_submit(matrix, hud_offset, count, premultiplied);
             hud_offset += count;
         }
         if(ui_vert_count > 0)
