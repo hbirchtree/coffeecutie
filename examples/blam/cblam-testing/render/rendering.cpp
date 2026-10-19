@@ -4019,9 +4019,12 @@ struct LegacyMeshRenderer
 
     using legacy_materials = LegacyMaterials<Ver>;
 
+    static constexpr double first_person_depth = 0.98;
+
     static bool pass_is_opaque(Passes pass)
     {
-        return pass == Pass_Opaque || pass == Pass_Alphatest;
+        return pass == Pass_Opaque || pass == Pass_Alphatest ||
+               pass == Pass_FP_Opaque;
     }
 
     static bool pass_is_sky(Passes pass)
@@ -4029,8 +4032,9 @@ struct LegacyMeshRenderer
         return pass >= Pass_SkyOpaque && pass <= Pass_LastSky;
     }
 
-    /* Opaque passes write depth; the sky draws behind everything, the rest
-     * blends like MeshRenderer, GL_MAX being additive on ES2 */
+    /* Opaque passes write depth; the sky draws behind everything and
+     * first-person in front of it, the rest blends like MeshRenderer, GL_MAX
+     * being additive on ES2 */
     template<typename... Lists>
     static void submit_pass(
         gfx::api&                api,
@@ -4040,6 +4044,9 @@ struct LegacyMeshRenderer
         Lists&... lists)
     {
         using typing::vector_types::Vecd2;
+        Vecd2 const range = pass_is_first_person(pass)
+                                ? Vecd2{first_person_depth, 1.0}
+                                : Vecd2{0.0, 1.0};
         if(pass_is_opaque(pass))
         {
             api.submit(
@@ -4049,7 +4056,7 @@ struct LegacyMeshRenderer
                 gfx::view_state{
                     .depth =
                         gfx::depth_state{
-                            .range          = Vecd2{0.0, 1.0},
+                            .range          = range,
                             .reversed       = true,
                             .strict_greater = strict,
                         },
@@ -4062,10 +4069,13 @@ struct LegacyMeshRenderer
         case Pass_SkyAdditive:
         case Pass_Additive:
         case Pass_Max:
+        case Pass_FP_Additive:
+        case Pass_FP_Max:
             blend = {.additive = true};
             break;
         case Pass_SkyMultiply:
         case Pass_Multiply:
+        case Pass_FP_Multiply:
             blend = {.multiply = true};
             break;
         default:
@@ -4079,8 +4089,8 @@ struct LegacyMeshRenderer
             gfx::view_state{
                 .depth =
                     gfx::depth_state{
-                        .range    = sky ? Vecd2{0.0, 0.0} : Vecd2{0.0, 1.0},
-                        .reversed = true,
+                        .range          = sky ? Vecd2{0.0, 0.0} : range,
+                        .reversed       = true,
                         .strict_greater = false,
                     },
             },
@@ -4298,7 +4308,7 @@ struct LegacyMeshRenderer
         for(auto ent : p.template select<SubModel, DrawState>())
         {
             auto const& [sm, sm_draw] = ent.components();
-            if(pass_is_first_person(sm_draw.current_pass) ||
+            if(pass_is_postprocess(sm_draw.current_pass) ||
                sm_draw.draw.data.empty())
                 continue;
             auto const* mod = p.template get<Model>(sm.parent);
@@ -4548,6 +4558,14 @@ struct LegacyMeshRenderer
             else
                 draw_pass(static_cast<Passes>(pi));
         }
+        Coffee::Profiler::PopContext();
+
+        /* The seat's own view models, which Visibility keeps to it */
+        if(cam.cinematic)
+            return;
+        Coffee::Profiler::PushContext("legacy_render: Enhanced first person");
+        for(i32 pi = Pass_FP_Opaque; pi <= Pass_LastFP; ++pi)
+            draw_pass(static_cast<Passes>(pi));
         Coffee::Profiler::PopContext();
     }
 
