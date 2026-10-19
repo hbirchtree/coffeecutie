@@ -240,6 +240,7 @@ struct BlamBspWidget
                         "Blur", &postprocess->blur, 0.00001f, 0.0001f);
                     ImGui::InputFloat(
                         "Camo scale", &postprocess->camo_scale, 0.01f, 0.1f);
+                    ImGui::Checkbox("Bloom (Halo 3)", &postprocess->bloom);
                     ImGui::SliderFloat4(
                         "RGB decomp",
                         reinterpret_cast<f32*>(&postprocess->rgb_comp),
