@@ -108,6 +108,14 @@ bool mesh_buffers::decode(
                 for(int c = 0; c < 4; c++)
                     v.weights[c] = s.weights[c] / 255.f;
             }
+        } else if(format == vertex_format_t::decorator && stride >= sizeof(decorator_vertex_t) && compression)
+        {
+            auto const& d = *reinterpret_cast<decorator_vertex_t const*>(at);
+            for(int c = 0; c < 3; c++)
+                v.position[c] = compression_t::expand(unpack_unorm16(d.position[c]), compression->position[c]);
+            for(int c = 0; c < 2; c++)
+                v.texcoord[c] = compression_t::expand(unpack_unorm16(d.texcoord[c]), compression->texcoord[c]);
+            v.normal = unpack_dhen3n(d.normal);
         } else
             return false;
     }

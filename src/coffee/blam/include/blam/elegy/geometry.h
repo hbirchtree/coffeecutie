@@ -282,6 +282,16 @@ struct rigid_vertex_t
 
 static_assert(sizeof(rigid_vertex_t) == 0x18);
 
+/*! Decorator mesh vertex: the rigid layout without its tangent frame */
+struct decorator_vertex_t
+{
+    std::array<be<u16>, 4> position;
+    std::array<be<u16>, 2> texcoord;
+    be<u32>                normal;
+};
+
+static_assert(sizeof(decorator_vertex_t) == 0x10);
+
 struct skinned_vertex_t
 {
     rigid_vertex_t    base;
@@ -378,13 +388,16 @@ struct mesh_buffers
         return vertices ? static_cast<u32>(vertices->count.value()) : 0;
     }
 
+    /*! Unindexed meshes (decorators) draw their vertices in order */
     inline u32 index_count() const
     {
-        return static_cast<u32>(index_bytes.size() / 2);
+        return indices ? static_cast<u32>(index_bytes.size() / 2) : vertex_count();
     }
 
     inline u16 index(u32 i) const
     {
+        if(!indices)
+            return static_cast<u16>(i);
         u16 out;
         std::memcpy(&out, index_bytes.data() + i * 2, 2);
         return from_be(out);

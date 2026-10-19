@@ -93,6 +93,18 @@ struct CubeTexture
     f32                                  curve{1.f}; /*!< Decode exponent */
 };
 
+/* One decorator set of a loaded BSP: its mesh, drawn at every instance */
+struct DecoratorSet
+{
+    Texture                                diffuse;
+    f32                                    curve{2.f};
+    Vecf2                                  fade{0.f}; /*!< Start and end of fading out */
+    bool                                   two_sided{false};
+    std::vector<gfx::draw_command::data_t> draws;
+    u32                                    first_instance{0}; /*!< In H3Scene::decorator_instances */
+    u32                                    instance_count{0};
+};
+
 /* A cubemap point of the BSP and its image */
 struct CubemapProbe
 {
@@ -285,6 +297,10 @@ struct H3Scene : compo::SubsystemBase
      * texels (h3::packed); its vertices carry the row */
     std::shared_ptr<gfx::texture_2d_t> object_lights;
     std::shared_ptr<gfx::sampler_t>    object_lights_sampler;
+    /* Decorators: three texels an instance (position, rotation, light) */
+    std::vector<DecoratorSet>          decorators;
+    std::shared_ptr<gfx::texture_2d_t> decorator_instances;
+    std::shared_ptr<gfx::sampler_t>    decorator_instances_sampler;
     std::shared_ptr<gfx::buffer_t> element_buf;
 };
 

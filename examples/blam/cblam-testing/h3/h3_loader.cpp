@@ -9,6 +9,7 @@
 
 #include <blam/elegy/animation.h>
 #include <blam/elegy/bitmap.h>
+#include <blam/elegy/decorator.h>
 #include <blam/elegy/physics.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
@@ -198,6 +199,8 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.baked.clear();
         m_vertices.clear();
         m_object_lights.clear();
+        m_decorator_texels.clear();
+        m_scene.decorators.clear();
         m_indices.clear();
         m_material_index.clear();
         m_textures.clear();
@@ -582,6 +585,8 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.lights.clear();
         m_vertices.clear();
         m_object_lights.clear();
+        m_decorator_texels.clear();
+        m_scene.decorators.clear();
         m_indices.clear();
         build_zone(*scnr, m_zone_masks[static_cast<size_t>(zone_set)], eye);
         m_loader->trim();
@@ -676,6 +681,7 @@ struct H3MapLoader : compo::SubsystemBase
             Span<const Vertex>(m_vertices.data(), m_vertices.size()));
         commit_first_person();
         upload_object_lights();
+        upload_decorator_instances();
         m_scene.element_buf->commit(Span<const u16>(m_indices.data(), m_indices.size()));
         size_t draws = 0;
         for(auto const& mat : m_scene.materials)
@@ -830,7 +836,105 @@ struct H3MapLoader : compo::SubsystemBase
             collision->indices.size() / 3 - world_triangles,
             std::ranges::count(open_seams, true));
         submit_collision(std::move(collision), collision_body_id + static_cast<u64>(bsp_index));
+        load_decorators(*bsp);
         return clusters + instances > 0;
+    }
+
+    /* The BSP's decorators: each set's mesh, to be drawn at every instance
+     * its clusters' groups place */
+    void load_decorators(el::structure_bsp_t const& bsp)
+    {
+        auto const& map  = *m_map;
+        auto const  sets = map.span(bsp.decorator_sets);
+        if(sets.empty())
+            return;
+        auto view = m_loader->load(bsp.decorator_geometry.resource);
+        if(!view.has_value())
+            return;
+        std::vector<std::vector<el::decorator_instance_t>> placed(sets.size());
+        for(auto const& cluster : map.span(bsp.clusters))
+            for(auto const& group : map.span(cluster.decorator_groups))
+                if(group.set >= 0 && static_cast<size_t>(group.set) < sets.size())
+                {
+                    auto instances = el::decorator_instances(view.value(), group);
+                    auto& into     = placed[static_cast<size_t>(group.set)];
+                    into.insert(into.end(), instances.begin(), instances.end());
+                }
+        u32 drawn = 0, total = 0;
+        for(size_t s = 0; s < sets.size(); s++)
+        {
+            auto const set   = map.get<el::decorator_set_t>(sets[s]);
+            auto const model = set ? map.get<el::render_model_t>(set->render_model) : el::tagged<el::render_model_t>{};
+            auto const texture_tag = set ? map.tag_at(set->texture.id) : nullptr;
+            auto const meshes = model ? map.span(model->geometry.meshes) : Span<el::mesh_t const>();
+            if(placed[s].empty() || meshes.empty() || !texture_tag)
+                continue;
+            auto mesh_view = m_loader->load(model->geometry.resource);
+            auto texture   = texture_for(*texture_tag);
+            if(!mesh_view.has_value() || !texture)
+                continue;
+            auto buffers = el::mesh_buffers::from(mesh_view.value(), meshes[0]);
+            auto compression = map.span(model->geometry.compression);
+            m_decoded.clear();
+            if(!buffers.decode(compression.empty() ? nullptr : &compression[0], m_decoded) || m_decoded.empty())
+                continue;
+            u32 const vbase = static_cast<u32>(m_vertices.size());
+            for(auto const& v : m_decoded)
+                m_vertices.push_back({.position = v.position, .texcoord = v.texcoord, .normal = v.normal,
+                                      .lightmap = Vecf3(0.f, 0.f, -1.f)});
+            m_triangles.clear();
+            buffers.triangles(meshes[0].index_type, 0, buffers.index_count(), m_triangles);
+            DecoratorSet out{
+                .diffuse        = *texture,
+                .curve          = curve_of(*texture_tag),
+                .fade           = Vecf2(set->start_fade, set->end_fade),
+                .two_sided      = enum_helpers::feval(set->render_flags, el::decorator_render_flags_t::two_sided),
+                .first_instance = static_cast<u32>(m_decorator_texels.size() / 3),
+                .instance_count = static_cast<u32>(placed[s].size()),
+            };
+            out.draws.push_back({
+                .elements =
+                    {
+                        .count         = static_cast<u32>(m_triangles.size() * 3),
+                        .offset        = m_indices.size() * sizeof(u16),
+                        .vertex_offset = vbase,
+                        .type          = semantic::type_t::u16,
+                    },
+                .instances = {.count = out.instance_count, .offset = 0},
+            });
+            for(auto const& t : m_triangles)
+                m_indices.insert(m_indices.end(), t.begin(), t.end());
+            for(auto const& d : placed[s])
+            {
+                m_decorator_texels.push_back(Vecf4(d.position, d.motion));
+                m_decorator_texels.push_back(Vecf4(d.rotation.x, d.rotation.y, d.rotation.z, d.rotation.w));
+                m_decorator_texels.push_back(Vecf4(d.light, static_cast<f32>(d.type)));
+            }
+            m_scene.decorators.push_back(std::move(out));
+            drawn++;
+            total += static_cast<u32>(placed[s].size());
+        }
+        cDebug("H3: decorators: {} of {} sets, {} instances", drawn, sets.size(), total);
+    }
+
+    /* Instances as texels, three each, rows a multiple of three wide */
+    void upload_decorator_instances()
+    {
+        constexpr u32 width = 3 * 1024;
+        if(m_decorator_texels.empty())
+            m_decorator_texels.resize(3);
+        u32 const rows = static_cast<u32>((m_decorator_texels.size() + width - 1) / width);
+        m_decorator_texels.resize(size_t(rows) * width);
+        auto tex = m_api->alloc_texture(gfx::textures::d2, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA32F), 1);
+        tex->alloc(size_3d<u32>{width, rows, 1});
+        auto const* bytes = reinterpret_cast<u8 const*>(m_decorator_texels.data());
+        tex->upload(std::vector<u8>(bytes, bytes + m_decorator_texels.size() * sizeof(Vecf4)), Veci2{0, 0},
+                    Veci2{static_cast<i32>(width), static_cast<i32>(rows)}, 0);
+        m_scene.decorator_instances         = tex;
+        m_scene.decorator_instances_sampler = tex->sampler();
+        m_scene.decorator_instances_sampler->alloc();
+        m_scene.decorator_instances_sampler->set_filtering(typing::Filtering::Nearest, typing::Filtering::Nearest);
+        m_decorator_texels = {};
     }
 
     /* Appends a collision BSP's surfaces as fanned triangles */
@@ -2475,6 +2579,7 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<u16>                                   m_indices;
     std::vector<el::vertex_t>                          m_decoded;
     std::vector<std::array<Vecf4, 5>>                  m_object_lights; /*!< Rows of H3Scene::object_lights */
+    std::vector<Vecf4>                                 m_decorator_texels; /*!< H3Scene::decorator_instances */
     /* The first person's idle, and its meshes as uploaded */
     struct FirstPersonMesh
     {
