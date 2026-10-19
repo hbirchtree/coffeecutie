@@ -90,6 +90,9 @@ struct MessageBase
         EquipmentSync,
         WeaponPickup,
         ObjectDespawn,
+
+        /* Machines, controls and their groups */
+        DeviceSync,
     } type{None};
 
     u32 request{};
@@ -349,6 +352,23 @@ struct alignas(8) ObjectHit
     libc_types::u8 head{0};
     libc_types::u8 hitscan{0};
     u32   padding{0};
+};
+
+/*! Where the server tells a device (by net id) or a device group to be:
+ *  each change, and all of them to a fresh peer */
+struct alignas(8) DeviceSync
+{
+    static constexpr auto message_type = MessageBase::DeviceSync;
+
+    u32 net_id{0};
+    i16 group{-1}; /*!< A group's value, when not a device */
+    u16 padding{0};
+    f32 value{0.f};
+    f32 position_target{0.f};
+    f32 power_target{1.f};
+    u32 snap{0};
+
+    bool operator==(DeviceSync const&) const = default;
 };
 
 /*! A client's forge grab, carried out on the server: every frame while

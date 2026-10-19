@@ -1,3 +1,4 @@
+#include "devices.h"
 #include "network/networking.h"
 #include "network/network_events.h"
 
@@ -66,10 +67,12 @@ using NetworkingManifest = compo::SubsystemManifest<
         ObjectPhysics,
         PhysicsData,
         const PlayerInput,
-        BipedEquipment>,
+        BipedEquipment,
+        const DeviceState>,
     type_list_t<
         NetworkState,
         PhysicsBus,
+        const DeviceGroups,
         const TickClock,
         const BlamFiles<halo_version>>,
     type_list_t<comp_app::ScreenshotProvider>>;
@@ -2412,6 +2415,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             send_impacts(p);
             send_seats(p);
             send_equipment(p);
+            send_devices(p);
             send_pickups();
             measure_pings();
             send_tick_sync(p, t);
@@ -3021,6 +3025,50 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return out;
     }
 
+    /* What devices and groups are told, as it changes, and all of it to a
+     * fresh peer */
+    void send_devices(Proxy& p)
+    {
+        std::vector<DeviceSync> changed, all;
+        auto note = [&](u64 key, DeviceSync const& sync) {
+            all.push_back(sync);
+            if(auto& sent = m_sent_devices[key]; sent != sync)
+            {
+                changed.push_back(sync);
+                sent = sync;
+            }
+        };
+        auto const& groups = p.subsystem<DeviceGroups>();
+        for(i16 i = 0; i < static_cast<i16>(groups.values.size()); i++)
+            note(u64(1) << 32 | static_cast<u16>(i), {.group = i, .value = groups.values[i]});
+        for(auto entity : p.select<DeviceState, NetworkInfo>())
+        {
+            auto [device, net] = entity.components();
+            if(net.instance_id != 0)
+                note(net.instance_id,
+                     {.net_id          = net.instance_id,
+                      .position_target = device.position_target,
+                      .power_target    = device.power_target,
+                      .snap            = device.snaps});
+        }
+        std::set<HSteamNetConnection> fresh, current;
+        for(auto& [connection, state] : m_connections)
+            if(state.verified)
+                (state.objects_synced ? current : fresh).insert(connection);
+        if(!fresh.empty() && !all.empty())
+            send_all<DeviceSync>(
+                MessageBase{MessageBase::DeviceSync},
+                gsl::span<DeviceSync>(all),
+                k_nSteamNetworkingSend_Reliable,
+                fresh);
+        if(!current.empty() && !changed.empty())
+            send_all<DeviceSync>(
+                MessageBase{MessageBase::DeviceSync},
+                gsl::span<DeviceSync>(changed),
+                k_nSteamNetworkingSend_Reliable,
+                current);
+    }
+
     /* Every player's weapon as it changes, and all of them to a fresh peer */
     void send_equipment(Proxy& p)
     {
@@ -3526,6 +3574,27 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_game_bus.inject(ev, &equip);
             break;
         }
+        case MessageBase::DeviceSync: {
+            std::map<u32, u64> devices;
+            for(auto entity : p.select<DeviceState, NetworkInfo>())
+                devices[entity.get<NetworkInfo>().instance_id] = entity.id();
+            for(auto const& sync : payload.values<DeviceSync>())
+            {
+                auto const      device = devices.find(sync.net_id);
+                DeviceSyncEvent event{
+                    .origin          = MapLoadEvent::Remote,
+                    .group           = sync.group,
+                    .value           = sync.value,
+                    .device          = device != devices.end() ? device->second : 0,
+                    .position_target = sync.position_target,
+                    .power_target    = sync.power_target,
+                    .snap            = sync.snap,
+                };
+                GameEvent ev{.type = GameEvent::DeviceSync};
+                m_game_bus.inject(ev, &event);
+            }
+            break;
+        }
         case MessageBase::ObjectDespawn: {
             for(auto const& gone : payload.values<ObjectDespawn>())
             {
@@ -4022,6 +4091,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::optional<SeatSync>                  m_sent_own_seat;
     /* Weapons sent per player index, and those peers reported */
     std::map<u32, EquipmentSync>             m_sent_equipment;
+    std::map<u64, DeviceSync>                m_sent_devices;
     std::optional<EquipmentSync>             m_sent_own_equipment;
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::vector<ObjectDespawn>               m_despawns;
