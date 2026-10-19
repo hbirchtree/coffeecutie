@@ -499,78 +499,56 @@ struct rendertarget_t
 };
 
 inline void detail::rendertarget_copy(
-    [[maybe_unused]] features::rendertargets& /*features*/,
-    rendertarget_t& /*source*/,
-    rendertarget_t& /*dest*/,
-    typing::geometry::rect<u32> /*srcRect*/,
-    Vecui2 /*dstCoord*/,
-    [[maybe_unused]] render_targets::attachment /*srcAttachment*/,
+    [[maybe_unused]] features::rendertargets& features,
+    [[maybe_unused]] rendertarget_t&          source,
+    [[maybe_unused]] rendertarget_t&          dest,
+    [[maybe_unused]] typing::geometry::rect<u32> srcRect,
+    [[maybe_unused]] Vecui2                      dstCoord,
+    [[maybe_unused]] render_targets::attachment  srcAttachment,
     render_targets::attachment /*dstAttachment*/,
     u32 /*level*/,
-    [[maybe_unused]] u32 /*srci*/,
+    u32 /*srci*/,
     u32 /*dsti*/)
 {
-    //    using param = group::framebuffer_attachment_parameter_name;
-
-    //    i32 dstTexture = 0;
-    //    i32 dstTarget  = 0;
-    // #if GLEAM_MAX_VERSION >= 0x450
-    //    if(features.dsa)
-    //    {
-    //        cmd::get_named_framebuffer_attachment_parameter(
-    //            dest.m_handle,
-    //            convert::to(dstAttachment, dsti),
-    //            param::framebuffer_attachment_object_name,
-    //            SpanOne(dstTexture));
-    //        cmd::get_named_framebuffer_attachment_parameter(
-    //            dest.m_handle,
-    //            convert::to(dstAttachment, dsti),
-    //            param::framebuffer_attachment_texture_cube_map_face,
-    //            SpanOne(dstTarget));
-    //        cmd::named_framebuffer_read_buffer(
-    //            source.m_handle,
-    //            convert::to<group::color_buffer>(srcAttachment, srci));
-    //        cmd::copy_texture_sub_image_2d(
-    //            dstTexture,
-    //            level,
-    //            dstCoord,
-    //            srcRect.bottomleft().toVector<i32>(),
-    //            srcRect.size().convert<i32>());
-    //    } else
-    // #endif
-    //    {
-    //        cmd::bind_framebuffer(
-    //            group::framebuffer_target::framebuffer, dest.m_handle);
-    //        cmd::get_framebuffer_attachment_parameter(
-    //            group::framebuffer_target::framebuffer,
-    //            convert::to(dstAttachment, dsti),
-    //            param::framebuffer_attachment_object_name,
-    //            SpanOne(dstTexture));
-    //        cmd::get_framebuffer_attachment_parameter(
-    //            group::framebuffer_target::framebuffer,
-    //            convert::to(dstAttachment, dsti),
-    //            param::framebuffer_attachment_texture_cube_map_face,
-    //            SpanOne(dstTarget));
-    //        cmd::bind_framebuffer(
-    //            group::framebuffer_target::framebuffer, source.m_handle);
-    // #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
-    //        if(features.readdraw_buffers)
-    //            cmd::read_buffer(
-    //                convert::to<group::read_buffer_mode>(srcAttachment,
-    //                srci));
-    // #endif
-    //        group::texture_target texTarget
-    //            = dstTarget == 0 ? group::texture_target::texture_2d
-    //                             :
-    //                             static_cast<group::texture_target>(dstTarget);
-    //        cmd::bind_texture(texTarget, dstTexture);
-    //        cmd::copy_tex_sub_image_2d(
-    //            texTarget,
-    //            level,
-    //            Veci2{dstCoord[0], dstCoord[1]},
-    //            srcRect.bottomleft(),
-    //            srcRect.size().convert<i32>());
-    //    }
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+    /* A blit, unscaled: the attachments must share a format */
+    if(!features.readdraw_buffers)
+        return;
+    using mask_t      = group::clear_buffer_mask;
+    mask_t const mask = [srcAttachment] {
+        switch(srcAttachment)
+        {
+        case render_targets::attachment::depth:
+            return mask_t::depth_buffer_bit;
+        case render_targets::attachment::depth_stencil:
+            return mask_t::depth_buffer_bit | mask_t::stencil_buffer_bit;
+        default:
+            return mask_t::color_buffer_bit;
+        }
+    }();
+    /* Bound outright: not every path keeps the currency up to date */
+    cmd::bind_framebuffer(group::framebuffer_target::read_framebuffer, source.m_handle);
+    cmd::bind_framebuffer(group::framebuffer_target::draw_framebuffer, dest.m_handle);
+    source.m_currency->update(source.m_handle, group::framebuffer_target::read_framebuffer);
+    dest.m_currency->update(dest.m_handle, group::framebuffer_target::draw_framebuffer);
+    auto const x  = static_cast<i32>(srcRect.x);
+    auto const y  = static_cast<i32>(srcRect.y);
+    auto const w  = static_cast<i32>(srcRect.w);
+    auto const h  = static_cast<i32>(srcRect.h);
+    auto const dx = static_cast<i32>(dstCoord.x);
+    auto const dy = static_cast<i32>(dstCoord.y);
+    cmd::blit_framebuffer(
+        x,
+        y,
+        x + w,
+        y + h,
+        dx,
+        dy,
+        dx + w,
+        dy + h,
+        mask,
+        group::blit_framebuffer_filter::nearest);
+#endif
 }
 
 } // namespace gleam
