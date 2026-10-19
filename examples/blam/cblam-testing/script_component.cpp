@@ -51,7 +51,8 @@ using BlamScriptManifest = compo::SubsystemManifest<
         const CameraLerp,
         AnimationPlayback,
         Model,
-        ObjectPhysics>,
+        ObjectPhysics,
+        BipedStatus>,
     type_list_t<
         GameEventBus,
         CinematicState,
@@ -533,6 +534,52 @@ struct BlamScript
                     anim->stance = stance;
             });
             return {};
+        /* Health, as fractions of what a unit can have */
+        case op::unit_get_health:
+        case op::unit_get_shield: {
+            auto const  units  = objects_of(p, arg(0));
+            auto const* status = units.empty() ? nullptr : p.template get<BipedStatus>(units[0]);
+            if(!status)
+                return value_t::number(type_t::real_, -1.f);
+            return value_t::number(
+                type_t::real_, opcode == op::unit_get_health ? status->body : status->shield);
+        }
+        case op::unit_kill:
+        case op::unit_kill_silent:
+            with_objects(p, arg(0), [this](Proxy& p, u64 id) {
+                if(auto* status = p.template get<BipedStatus>(id))
+                    set_vitality(p, id, *status, 0.f, 0.f);
+            });
+            return {};
+        case op::unit_set_current_vitality:
+            with_objects(
+                p, arg(0), [this, body = arg(1).as_real(), shield = arg(2).as_real()](Proxy& p, u64 id) {
+                    if(auto* status = p.template get<BipedStatus>(id))
+                        set_vitality(
+                            p,
+                            id,
+                            *status,
+                            fraction(body, status->maximum_body()),
+                            fraction(shield, status->maximum_shield()));
+                });
+            return {};
+        case op::unit_set_maximum_vitality:
+            with_objects(
+                p, arg(0), [body = arg(1).as_real(), shield = arg(2).as_real()](Proxy& p, u64 id) {
+                    if(auto* status = p.template get<BipedStatus>(id))
+                    {
+                        status->max_body   = body;
+                        status->max_shield = shield;
+                    }
+                });
+            return {};
+        case op::object_cannot_take_damage:
+        case op::object_can_take_damage:
+            with_objects(p, arg(0), [harmless = opcode == op::object_cannot_take_damage](Proxy& p, u64 id) {
+                if(auto* status = p.template get<BipedStatus>(id))
+                    status->invulnerable = harmless;
+            });
+            return {};
         case op::unit_set_emotion:
             with_objects(p, arg(0), [emotion = static_cast<i16>(arg(1).as_real())](Proxy& p, u64 id) {
                 if(auto* anim = p.template get<AnimationPlayback>(id))
@@ -1000,6 +1047,31 @@ struct BlamScript
         std::string seat;
         Matf4       marker{1};
     };
+
+    /* ---- Health ---- */
+
+    static f32 fraction(f32 points, f32 maximum)
+    {
+        return maximum > 0.f ? std::clamp(points / maximum, 0.f, 1.f) : 0.f;
+    }
+
+    /* Told to everyone, as a hit would be */
+    void set_vitality(Proxy& p, u64 id, BipedStatus& status, f32 body, f32 shield)
+    {
+        status.body   = body;
+        status.shield = shield;
+        status.dead   = body <= 0.f;
+        auto const*       info = p.template get<PlayerInfo>(id);
+        GameEvent         ev{.type = GameEvent::UnitVitality};
+        UnitVitalityEvent vitality{
+            .unit   = id,
+            .player = info ? info->player_idx : ObjectHitEvent::no_player,
+            .body   = status.body,
+            .shield = status.shield,
+            .dead   = status.dead,
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &vitality);
+    }
 
     /* Into the seat labelled `seat`, or the first free one whose label holds
      * it when not `exact` */
