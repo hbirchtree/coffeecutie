@@ -7,6 +7,7 @@
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
 #include <coffee/graphics/apis/gleam/rhi.h>
 #include <coffee/graphics/apis/gleam/rhi_program.h>
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
@@ -93,8 +94,14 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Vecf3 const sun_color =
             scene.sky_flares.empty() ? Vecf3{0.f} : scene.sky_flares[0].color;
         Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
-        update_instances(p, scene);
-        draw_shadows(p, scene, vis, debug, *camera, sun_direction);
+        {
+            Coffee::DProfContext _("H2 instances");
+            update_instances(p, scene);
+        }
+        {
+            Coffee::DProfContext _("H2 shadows");
+            draw_shadows(p, scene, vis, debug, *camera, sun_direction);
+        }
         static blam_render::CascadedShadowMap::sampling_t const no_shadows{};
         auto const& csm = debug.shadows ? m_shadows.sampling(0) : no_shadows;
         i32 const   render_flags = debug.render_flags();
@@ -104,6 +111,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         size_t draws_total = 0, draws_visible = 0;
         /* Sky first (never writes depth), opaque, then water blended over
          * everything */
+        std::optional<Coffee::DProfContext> prof{std::in_place, "H2 passes"};
         for(int pass = 0; pass < 4; pass++)
         {
             if(pass == 1 && debug.render_fog)
@@ -372,16 +380,25 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 if(!m_moving_draws.empty())
                     submit(m_moving_draws, m_instance_list);
                 skinned = 1;
-                for(auto const& d : m_animated)
+                std::stable_sort(m_animated.begin(), m_animated.end(), [](auto const& a, auto const& b) {
+                    return a.tag.animated < b.tag.animated;
+                });
+                for(auto it = m_animated.begin(); it != m_animated.end();)
                 {
-                    auto const j = static_cast<size_t>(d.tag.animated);
-                    m_bones      = posed(scene, j);
-                    m_single.assign(1, d.cmd);
-                    m_single.front().instances.offset = animated_slot(scene, j);
+                    auto const j    = static_cast<size_t>(it->tag.animated);
+                    u32 const  slot = animated_slot(scene, j);
+                    m_single.clear();
+                    for(; it != m_animated.end() && it->tag.animated == static_cast<i32>(j); ++it)
+                    {
+                        m_single.push_back(it->cmd);
+                        m_single.back().instances.offset = slot;
+                    }
+                    m_bones = posed(scene, j);
                     submit(m_single, m_instance_list);
                 }
             }
         }
+        prof.emplace("H2 flares");
         draw_flares(scene, *camera, resources);
         if(vis.camera_cluster != m_logged_cluster)
         {
@@ -624,26 +641,36 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 m_casters.push_back(caster);
             }
         }
+        /* Rigid first, then the skinned grouped by object */
+        std::stable_sort(m_casters.begin(), m_casters.end(), [](auto const& a, auto const& b) {
+            return a.animated < b.animated;
+        });
+        m_skinned_from = std::partition_point(
+            m_casters.begin(), m_casters.end(), [](auto const& c) { return c.animated < 0; });
         for(u32 tile = 0; tile < m_shadows.tiles(); tile++)
         {
             light = m_shadows.light_matrix(tile);
             /* Rigid casters in one go, skinned ones with their bones */
             skinned = 0;
             m_draws_scratch.clear();
-            for(auto const& c : m_casters)
-                if(c.animated < 0 &&
-                   (c.bounds.w < 0.f || m_shadows.covers(tile, Vecf3(c.bounds), c.bounds.w)))
-                    m_draws_scratch.push_back(c.cmd);
+            for(auto it = m_casters.begin(); it != m_skinned_from; ++it)
+                if(it->bounds.w < 0.f || m_shadows.covers(tile, Vecf3(it->bounds), it->bounds.w))
+                    m_draws_scratch.push_back(it->cmd);
             depth(m_shadows.target(), m_shadows.viewport(tile), m_draws_scratch);
             skinned = 1;
-            for(auto const& c : m_casters)
-                if(c.animated >= 0 &&
-                   (c.bounds.w < 0.f || m_shadows.covers(tile, Vecf3(c.bounds), c.bounds.w)))
-                {
-                    m_bones = posed(scene, static_cast<size_t>(c.animated));
-                    m_single.assign(1, c.cmd);
-                    depth(m_shadows.target(), m_shadows.viewport(tile), m_single);
-                }
+            /* One submit per object: its parts share the bones */
+            for(auto it = m_skinned_from; it != m_casters.end();)
+            {
+                i32 const animated = it->animated;
+                m_single.clear();
+                for(; it != m_casters.end() && it->animated == animated; ++it)
+                    if(it->bounds.w < 0.f || m_shadows.covers(tile, Vecf3(it->bounds), it->bounds.w))
+                        m_single.push_back(it->cmd);
+                if(m_single.empty())
+                    continue;
+                m_bones = posed(scene, static_cast<size_t>(animated));
+                depth(m_shadows.target(), m_shadows.viewport(tile), m_single);
+            }
         }
     }
 
@@ -1019,6 +1046,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         i32                       animated{-1};
     };
     std::vector<caster_t>                  m_casters;
+    std::vector<caster_t>::iterator        m_skinned_from;
     std::vector<gfx::draw_command::data_t> m_moving_draws;
     std::vector<Matf4>                     m_instances;
     std::vector<u8>                        m_moving_valid;
