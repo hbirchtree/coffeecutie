@@ -93,6 +93,10 @@ struct MessageBase
 
         /* What units have left */
         UnitVitality,
+
+        /* The game mode: its state, and every player's score */
+        GameStateSync,
+        GameScoreSync,
     } type{None};
 
     u32 request{};
@@ -365,7 +369,42 @@ struct alignas(8) UnitVitality
     f32 body{1.f};
     f32 shield{1.f};
     u32 dead{0};
-    u32 padding{0};
+    u32 respawned{0}; /*!< Brought back at `respawn`, facing its w */
+    Vecf4 respawn{};
+};
+
+/*! The game being played, as the server keeps it (GameState) */
+struct alignas(8) GameStateSync
+{
+    static constexpr auto message_type = MessageBase::GameStateSync;
+
+    libc_types::u8 kind{0};
+    libc_types::u8 phase{0};
+    libc_types::u8 game_type{0};
+    libc_types::u8 teams{0};
+    libc_types::i32 winner{-1};
+    f32             time_left{-1.f}; /*!< Whole seconds */
+    i16             team_scores[2]{};
+    u16             difficulty{1};
+    u16             padding{0};
+    u32             saves{0};
+    u32             reverts{0};
+
+    bool operator==(GameStateSync const&) const = default;
+};
+
+/*! One player's score; the whole table goes out when any of it changes */
+struct alignas(8) GameScoreSync
+{
+    static constexpr auto message_type = MessageBase::GameScoreSync;
+
+    u32 player_idx{0};
+    i16 team{-1};
+    i16 score{0};
+    i16 kills{0};
+    i16 deaths{0};
+
+    bool operator==(GameScoreSync const&) const = default;
 };
 
 /*! A client's forge grab, carried out on the server: every frame while
