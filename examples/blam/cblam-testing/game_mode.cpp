@@ -66,7 +66,11 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
             return;
 
         join(p, state);
-        if(saved)
+        /* A level starts with a checkpoint, once someone is in it */
+        bool const first = state.kind == GameState::kind_t::campaign && !m_started &&
+                           !state.players.empty();
+        m_started        = m_started || first;
+        if(saved || first)
             checkpoint(p, state);
         for(auto const& kill : kills)
             count(p, state, kill);
@@ -92,7 +96,7 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
         m_load_generation = files.load_generation;
         m_magic           = &files.container.magic;
         m_waiting.clear();
-        m_checkpoint.clear();
+        m_started = false;
         auto const& setup = p.template subsystem<GameSetup>();
         auto const  type  = files.container.map ? files.container.map->map_type
                                                 : blam::maptype_t::ui;
@@ -257,15 +261,23 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
                 ++it;
                 continue;
             }
-            auto const spot = campaign ? campaign_spot(p, *info, anyone_alive)
+            /* Nobody left standing: the whole world goes back */
+            if(campaign && !anyone_alive)
+            {
+                GameEvent         ev{.type = GameEvent::WorldRestore};
+                WorldRestoreEvent restore{};
+                p.template subsystem<GameEventBus>().inject(ev, &restore);
+                state.reverts++;
+                m_waiting.clear();
+                break;
+            }
+            auto const spot = campaign ? campaign_spot(p, *info)
                                        : multiplayer_spot(p, state, *info);
             if(!spot)
             {
                 ++it;
                 continue;
             }
-            if(campaign && !anyone_alive)
-                state.reverts++;
             GameEvent        ev{.type = GameEvent::RespawnUnit};
             RespawnUnitEvent respawn{.unit = it->first, .position = spot->first, .facing = spot->second};
             p.template subsystem<GameEventBus>().inject(ev, &respawn);
@@ -282,11 +294,10 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
 
     using spot_t = std::optional<std::pair<Vecf3, f32>>;
 
-    /* Next to a partner still standing, or back at the checkpoint */
-    spot_t campaign_spot(Proxy& p, PlayerInfo const& info, bool partner)
+    /* Next to a partner still standing */
+    spot_t campaign_spot(Proxy& p, PlayerInfo const& info)
     {
-        if(partner)
-            for(auto other : p.template select<PlayerInfo, PlayerCamera, NetworkInfo, BipedStatus>())
+        for(auto other : p.template select<PlayerInfo, PlayerCamera, NetworkInfo, BipedStatus>())
             {
                 auto [oinfo, cam, net, status] = other.components();
                 if(status.dead || oinfo.player_idx == info.player_idx ||
@@ -296,8 +307,6 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
                                      Vecf3{partner_offset, 0.f, 0.f},
                                  yaw_of(cam)};
             }
-        if(auto it = m_checkpoint.find(info.player_idx); it != m_checkpoint.end())
-            return it->second;
         return start_spot(p, {});
     }
 
@@ -399,17 +408,12 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
 
     /* ---- Campaign ---- */
 
-    /* Where everyone standing is, to come back to */
+    /* The world as it is now, to come back to */
     void checkpoint(Proxy& p, GameState& state)
     {
-        for(auto player : p.template select<PlayerInfo, PlayerCamera, BipedStatus>())
-        {
-            auto [info, cam, status] = player.components();
-            if(status.dead || info.riding.vehicle != 0)
-                continue;
-            m_checkpoint[info.player_idx] = {
-                cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height}, yaw_of(cam)};
-        }
+        GameEvent      ev{.type = GameEvent::WorldSave};
+        WorldSaveEvent save{};
+        p.template subsystem<GameEventBus>().inject(ev, &save);
         state.saves++;
     }
 
@@ -443,7 +447,7 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
     f32                                         m_respawn_delay{3.f};
     std::map<u64, f32>                          m_waiting; /*!< Seconds left */
     std::map<u64, bool>                         m_alive;
-    std::map<u32, std::pair<Vecf3, f32>>        m_checkpoint;
+    bool                                        m_started{false};
     std::mt19937                                m_random{std::random_device{}()};
 };
 

@@ -279,14 +279,13 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         auto* status = p.template get<BipedStatus>(vitality.unit);
         if(!status || vitality.origin != MapLoadEvent::Remote)
             return;
-        bool const revived = status->dead && !vitality.dead;
         status->body       = vitality.body;
         status->shield     = vitality.shield;
         status->dead       = vitality.dead;
         if(vitality.shield < 1.f)
             status->stunned = status->coll ? status->coll->stun_time : default_stun;
         if(auto const* info = p.template get<PlayerInfo>(vitality.unit);
-           revived && info && !info->is_remote() && vitality.respawn_at)
+           info && !info->is_remote() && vitality.respawn_at)
             restart(p, vitality.unit, *info, *vitality.respawn_at, vitality.respawn_facing);
     }
 
@@ -306,15 +305,17 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         p.template subsystem<GameEventBus>().inject(ev, &move);
     }
 
-    /* Back at full health where the game mode put it */
+    /* Back at full health where the game mode put it, or as it was at a
+     * checkpoint */
     void revive(Proxy& p, RespawnUnitEvent const& respawn)
     {
         auto* status = p.template get<BipedStatus>(respawn.unit);
-        if(!status || !status->dead)
+        if(!status || (!status->dead && !respawn.restore))
             return;
-        status->body    = 1.f;
-        status->shield  = status->maximum_shield() > 0.f ? 1.f : 0.f;
-        status->dead    = false;
+        bool const shielded = status->maximum_shield() > 0.f;
+        status->body        = respawn.restore ? respawn.body : 1.f;
+        status->shield      = shielded ? (respawn.restore ? respawn.shield : 1.f) : 0.f;
+        status->dead        = status->body <= 0.f;
         status->stunned = 0.f;
         tell(p, respawn.unit, *status, respawn.position, respawn.facing);
         if(auto const* info = p.template get<PlayerInfo>(respawn.unit);
