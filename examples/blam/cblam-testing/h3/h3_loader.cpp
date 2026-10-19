@@ -2554,6 +2554,8 @@ struct H3MapLoader : compo::SubsystemBase
             auto& info      = ref.get<PlayerInfo>();
             info.player_idx = 0;
             info.seat_idx   = 0;
+            /* H3_CAMO=1 starts the player camouflaged */
+            info.camouflaged = platform::env::var("H3_CAMO").value_or("0") != "0";
             auto& camera    = ref.get<PlayerCamera>();
             camera.keyboard.enabled = true;
             camera.controller.index = 0;
