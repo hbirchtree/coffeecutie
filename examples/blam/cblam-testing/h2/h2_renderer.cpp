@@ -93,6 +93,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Vecf3 const sun_color =
             scene.sky_flares.empty() ? Vecf3{0.f} : scene.sky_flares[0].color;
         Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
+        update_instances(p, scene);
         draw_shadows(p, scene, vis, debug, *camera, sun_direction);
         static blam_render::CascadedShadowMap::sampling_t const no_shadows{};
         auto const& csm = debug.shadows ? m_shadows.sampling(0) : no_shadows;
@@ -120,23 +121,28 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     continue;
                 auto& draws = m_draws[mi];
                 draws.clear();
-                m_moving.clear();
+                m_moving_draws.clear();
                 m_animated.clear();
                 for(auto const& d : mat.section_draws)
                     if(!vis.draw_visible(d.tag, scene.sections) ||
                        (d.tag.placed && !debug.render_scenery))
                         continue;
                     else if(d.tag.object >= 0)
-                        m_moving.push_back(d);
+                    {
+                        if(auto slot = moving_slot(d.tag.object))
+                        {
+                            m_moving_draws.push_back(d.cmd);
+                            m_moving_draws.back().instances.offset = *slot;
+                        }
+                    }
                     else if(d.tag.animated >= 0)
                         m_animated.push_back(d);
                     else
                         draws.push_back(d.cmd);
                 draws_total += mat.section_draws.size();
-                draws_visible += draws.size() + m_moving.size() + m_animated.size();
-                if(draws.empty() && m_moving.empty() && m_animated.empty())
+                draws_visible += draws.size() + m_moving_draws.size() + m_animated.size();
+                if(draws.empty() && m_moving_draws.empty() && m_animated.empty())
                     continue;
-                Matf4 model_matrix{1.f};
                 i32   skinned = 0;
                 Vecf2 const water_fan{mat.water_fan ? 1.f : 0.f, sea_level};
                 Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
@@ -147,12 +153,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::uniform_pair<Matf4 const>{
                         {"camera"},
                         semantic::SpanOne<const Matf4>(camera->matrix)},
-                    gfx::uniform_pair<Matf4 const>{
-                        {"model"}, semantic::SpanOne<const Matf4>(model_matrix)},
                     gfx::uniform_pair<const i32>{
                         {"skinned"}, semantic::SpanOne<const i32>(skinned)},
-                    gfx::uniform_pair<Matf4 const>{
-                        {"bones"}, semantic::Span<const Matf4>(m_bones)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"water_fan"}, semantic::SpanOne<const Vecf2>(water_fan)},
                     gfx::uniform_pair<Vecf2 const>{
@@ -316,7 +318,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                  * inside, and cut-outs and transparents from both sides */
                 bool const cull = !mat.sky && !mat.water && !mat.ocean && !mat.additive &&
                                   !mat.blended && !mat.alpha_test && !mat.plasma;
-                auto submit = [&](std::vector<gfx::draw_command::data_t> const& data) {
+                auto submit = [&](std::vector<gfx::draw_command::data_t> const& data,
+                                  gfx::buffer_list&                             instances) {
                     gfx::draw_command const command{
                         .program       = m_programs[static_cast<size_t>(mat.variant)],
                         .vertices      = m_vao,
@@ -333,17 +336,31 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         .depth_write =
                             !mat.sky && !mat.water && !mat.additive && !mat.blended};
                     gfx::blend_state blend{.additive = mat.additive};
-                    auto res = cull ? m_api->submit(
+                    /* Only skinned draws pay for the bone palette */
+                    auto send = [&](auto&&... extra) {
+                        return cull ? m_api->submit(
                                           command,
                                           vert_u,
                                           frag_u,
                                           samplers,
+                                          instances,
                                           view,
                                           depth,
                                           blend,
-                                          gfx::cull_state{.front_face = false})
+                                          gfx::cull_state{.front_face = false},
+                                          extra...)
                                     : m_api->submit(
-                                          command, vert_u, frag_u, samplers, view, depth, blend);
+                                          command,
+                                          vert_u,
+                                          frag_u,
+                                          samplers,
+                                          instances,
+                                          view,
+                                          depth,
+                                          blend,
+                                          extra...);
+                    };
+                    auto res = skinned ? send(m_bones_list) : send();
                     if(res.has_value() && !m_draw_error_logged)
                     {
                         cWarning("H2: failed to draw: {}", std::get<1>(*res));
@@ -351,27 +368,17 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     }
                 };
                 if(!draws.empty())
-                    submit(draws);
-                for(auto const& d : m_moving)
-                {
-                    auto idx = static_cast<size_t>(d.tag.object);
-                    if(idx >= scene.moving_objects.size())
-                        continue;
-                    auto const* model = p.template get<Model>(scene.moving_objects[idx]);
-                    if(!model)
-                        continue;
-                    model_matrix = model->transform;
-                    m_single.assign(1, d.cmd);
-                    submit(m_single);
-                }
+                    submit(draws, m_static_list);
+                if(!m_moving_draws.empty())
+                    submit(m_moving_draws, m_instance_list);
                 skinned = 1;
                 for(auto const& d : m_animated)
                 {
-                    auto const& object = scene.animated_objects[static_cast<size_t>(d.tag.animated)];
-                    pose(scene.animations[object.animation], seconds);
-                    model_matrix = object.transform;
+                    auto const j = static_cast<size_t>(d.tag.animated);
+                    m_bones      = posed(scene, j);
                     m_single.assign(1, d.cmd);
-                    submit(m_single);
+                    m_single.front().instances.offset = animated_slot(scene, j);
+                    submit(m_single, m_instance_list);
                 }
             }
         }
@@ -384,6 +391,68 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     }
 
   private:
+    /* Per-draw object transforms, H2Instances in h2.vert indexed by base
+     * instance: 0 = identity, then the moving objects, then the animated */
+    void update_instances(Proxy& p, H2Scene const& scene)
+    {
+        m_instances.assign(1, Matf4(1.f));
+        m_moving_valid.assign(scene.moving_objects.size(), 0);
+        for(auto const& [i, id] : stl_types::enumerate(scene.moving_objects))
+        {
+            auto const* model = p.template get<Model>(id);
+            m_moving_valid[i] = model != nullptr;
+            m_instances.push_back(model ? model->transform : Matf4(1.f));
+        }
+        for(auto const& object : scene.animated_objects)
+            m_instances.push_back(object.transform);
+        /* A bound range never shorter than the block (WebGL insists) */
+        m_instances.resize(m_instances.size() + instance_block, Matf4(1.f));
+        m_instance_buf->commit(
+            Span<const Matf4>(m_instances.data(), m_instances.size()));
+        m_instance_list = gfx::make_buffer_list(gfx::buffer_definition_t{
+            typing::graphics::ShaderStage::Vertex,
+            {"H2Instances", 0},
+            m_instance_buf->slice(0),
+            sizeof(Matf4),
+        });
+        /* Structure reads the identity in slot 0; unstrided, so its batches
+         * keep multi-draw */
+        m_static_list = gfx::make_buffer_list(gfx::buffer_definition_t{
+            typing::graphics::ShaderStage::Vertex,
+            {"H2Instances", 0},
+            m_instance_buf->slice(0),
+            0,
+        });
+        m_posed.assign(scene.animated_objects.size(), 0);
+        m_poses.resize(scene.animated_objects.size());
+    }
+
+    std::optional<u32> moving_slot(i32 object) const
+    {
+        auto const i = static_cast<size_t>(object);
+        if(object < 0 || i >= m_moving_valid.size() || !m_moving_valid[i])
+            return std::nullopt;
+        return static_cast<u32>(1 + i);
+    }
+
+    u32 animated_slot(H2Scene const& scene, size_t j) const
+    {
+        return static_cast<u32>(1 + scene.moving_objects.size() + j);
+    }
+
+    /* An animated object's skin matrices this frame, worked out once */
+    std::array<Matf4, 64> const& posed(H2Scene const& scene, size_t j)
+    {
+        if(!m_posed[j])
+        {
+            auto const& object = scene.animated_objects[j];
+            pose(scene.animations[object.animation], m_seconds);
+            m_poses[j] = m_bones;
+            m_posed[j] = 1;
+        }
+        return m_poses[j];
+    }
+
     /* An animation's skin matrices at `seconds`, looping, between frames
      * blended */
     void pose(H2Scene::animation_t const& animation, f32 seconds)
@@ -460,7 +529,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_shadows.clear();
 
         auto const _ = m_api->debug().scope("H2 shadows");
-        Matf4      light{1.f}, model{1.f};
+        Matf4      light{1.f};
         i32        skinned = 0;
         f32 const  unit    = 1.f;
         Vecf3 const origin{0.f};
@@ -468,33 +537,35 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         auto       vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair<Matf4 const>{{"camera"}, semantic::SpanOne<const Matf4>(light)},
-            gfx::uniform_pair<Matf4 const>{{"model"}, semantic::SpanOne<const Matf4>(model)},
             gfx::uniform_pair<const f32>{{"model_scale"}, semantic::SpanOne<const f32>(unit)},
             gfx::uniform_pair<Vecf3 const>{
                 {"model_offset"}, semantic::SpanOne<const Vecf3>(origin)},
             gfx::uniform_pair<Vecf2 const>{{"water_fan"}, semantic::SpanOne<const Vecf2>(no_fan)},
-            gfx::uniform_pair<const i32>{{"skinned"}, semantic::SpanOne<const i32>(skinned)},
-            gfx::uniform_pair<Matf4 const>{{"bones"}, semantic::Span<const Matf4>(m_bones)});
+            gfx::uniform_pair<const i32>{{"skinned"}, semantic::SpanOne<const i32>(skinned)});
         auto depth = [&](std::shared_ptr<gfx::rendertarget_t> const& target,
                          typing::vector_types::Veci4 const&          view,
                          std::vector<gfx::draw_command::data_t> const& data) {
             if(data.empty())
                 return;
-            m_api->submit(
-                {
-                    .program       = m_shadow_program,
-                    .vertices      = m_vao,
-                    .render_target = target,
-                    .call          = {.indexed = true, .instanced = true},
-                    .data          = data,
-                },
-                vertex_u,
-                gfx::view_state{.view = view, .depth = gfx::depth_state{}});
+            gfx::draw_command const command{
+                .program       = m_shadow_program,
+                .vertices      = m_vao,
+                .render_target = target,
+                .call          = {.indexed = true, .instanced = true},
+                .data          = data,
+            };
+            gfx::view_state state{.view = view, .depth = gfx::depth_state{}};
+            bool const placed = std::any_of(
+                data.begin(), data.end(), [](auto const& d) { return d.instances.offset > 0; });
+            auto& instances = placed ? m_instance_list : m_static_list;
+            if(skinned)
+                m_api->submit(command, vertex_u, instances, m_bones_list, state);
+            else
+                m_api->submit(command, vertex_u, instances, state);
         };
 
         /* Static geometry: the world map when the sun or section changes,
          * the tiles around the camera every frame */
-        model   = Matf4(1.f);
         skinned = 0;
         if(m_shadows.update_occluder(center, radius, to_light))
         {
@@ -518,45 +589,60 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         /* Casters, each where it stands */
         if(!params.render_scenery)
             return;
+        /* The casters this frame, each with its transform and bounds */
+        m_casters.clear();
+        for(auto const& mat : scene.materials)
+        {
+            if(mat.sky || mat.water || mat.ocean || mat.additive || mat.blended)
+                continue;
+            for(auto const& d : mat.section_draws)
+            {
+                Matf4 const* model = nullptr;
+                caster_t     caster{.cmd = d.cmd};
+                if(auto slot = moving_slot(d.tag.object))
+                {
+                    caster.cmd.instances.offset = *slot;
+                    model                        = &m_instances[*slot];
+                } else if(d.tag.animated >= 0 &&
+                          static_cast<size_t>(d.tag.animated) < scene.animated_objects.size())
+                {
+                    caster.animated = d.tag.animated;
+                    caster.cmd.instances.offset =
+                        animated_slot(scene, static_cast<size_t>(d.tag.animated));
+                    model = &scene.animated_objects[d.tag.animated].transform;
+                } else
+                    continue;
+                f32 const scale = std::max(
+                    {glm::length(Vecf3((*model)[0])),
+                     glm::length(Vecf3((*model)[1])),
+                     glm::length(Vecf3((*model)[2]))});
+                caster.bounds = d.bounds.w >= 0.f
+                                    ? Vecf4(Vecf3(*model * Vecf4(Vecf3(d.bounds), 1.f)),
+                                            d.bounds.w * scale)
+                                    : Vecf4(Vecf3((*model)[3]), -1.f);
+                m_casters.push_back(caster);
+            }
+        }
         for(u32 tile = 0; tile < m_shadows.tiles(); tile++)
         {
             light = m_shadows.light_matrix(tile);
-            for(auto const& mat : scene.materials)
-            {
-                if(mat.sky || mat.water || mat.ocean || mat.additive || mat.blended)
-                    continue;
-                for(auto const& d : mat.section_draws)
+            /* Rigid casters in one go, skinned ones with their bones */
+            skinned = 0;
+            m_draws_scratch.clear();
+            for(auto const& c : m_casters)
+                if(c.animated < 0 &&
+                   (c.bounds.w < 0.f || m_shadows.covers(tile, Vecf3(c.bounds), c.bounds.w)))
+                    m_draws_scratch.push_back(c.cmd);
+            depth(m_shadows.target(), m_shadows.viewport(tile), m_draws_scratch);
+            skinned = 1;
+            for(auto const& c : m_casters)
+                if(c.animated >= 0 &&
+                   (c.bounds.w < 0.f || m_shadows.covers(tile, Vecf3(c.bounds), c.bounds.w)))
                 {
-                    if(d.tag.object >= 0 &&
-                       static_cast<size_t>(d.tag.object) < scene.moving_objects.size())
-                    {
-                        auto const* m =
-                            p.template get<Model>(scene.moving_objects[d.tag.object]);
-                        if(!m)
-                            continue;
-                        model   = m->transform;
-                        skinned = 0;
-                    } else if(d.tag.animated >= 0 &&
-                              static_cast<size_t>(d.tag.animated) < scene.animated_objects.size())
-                    {
-                        auto const& object = scene.animated_objects[d.tag.animated];
-                        model              = object.transform;
-                        skinned            = 1;
-                        pose(scene.animations[object.animation], m_seconds);
-                    } else
-                        continue;
-                    f32 const scale = std::max(
-                        {glm::length(Vecf3(model[0])),
-                         glm::length(Vecf3(model[1])),
-                         glm::length(Vecf3(model[2]))});
-                    if(d.bounds.w >= 0.f &&
-                       !m_shadows.covers(
-                           tile, Vecf3(model * Vecf4(Vecf3(d.bounds), 1.f)), d.bounds.w * scale))
-                        continue;
-                    m_single.assign(1, d.cmd);
+                    m_bones = posed(scene, static_cast<size_t>(c.animated));
+                    m_single.assign(1, c.cmd);
                     depth(m_shadows.target(), m_shadows.viewport(tile), m_single);
                 }
-            }
         }
     }
 
@@ -769,6 +855,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                      .flags  = gfx::vertex_attribute::attribute_flags::packed |
                               gfx::vertex_attribute::attribute_flags::normalized},
             });
+        m_instance_buf = api.alloc_buffer(
+            gfx::buffers::constants, semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);
+        m_instance_buf->alloc();
         m_vao->set_attribute_names({
             {"position", 0},
             {"texcoord", 1},
@@ -896,7 +985,6 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     std::shared_ptr<gfx::sampler_t>             m_no_lightmaps_sampler;
     /* Per material: this frame's visible ranges */
     std::vector<std::vector<gfx::draw_command::data_t>> m_draws;
-    std::vector<Material::draw_t>                       m_moving;
     std::vector<Material::draw_t>                       m_animated;
     std::array<Matf4, 64>                               m_bones{};
     std::vector<gfx::draw_command::data_t>              m_single;
@@ -923,6 +1011,29 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Vecf4                     bounds;
     };
     std::vector<static_draw_t>             m_static;
+    struct caster_t
+    {
+        gfx::draw_command::data_t cmd;
+        Vecf4                     bounds{0.f, 0.f, 0.f, -1.f};
+        i32                       animated{-1};
+    };
+    std::vector<caster_t>                  m_casters;
+    std::vector<gfx::draw_command::data_t> m_moving_draws;
+    std::vector<Matf4>                     m_instances;
+    std::vector<u8>                        m_moving_valid;
+    std::vector<u8>                        m_posed;
+    std::vector<std::array<Matf4, 64>>     m_poses;
+    std::shared_ptr<gfx::buffer_t>         m_instance_buf;
+    static constexpr size_t                instance_block = 64; /*!< H2Instances::data */
+    gfx::buffer_list                       m_instance_list;
+    gfx::buffer_list                       m_static_list;
+    decltype(gfx::make_uniform_list(
+        typing::graphics::ShaderStage::Vertex,
+        gfx::uniform_pair<Matf4 const>{{"bones"}, semantic::Span<const Matf4>()})) m_bones_list =
+        gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Vertex,
+            gfx::uniform_pair<Matf4 const>{
+                {"bones"}, semantic::Span<const Matf4>(m_bones.data(), m_bones.size())});
     std::vector<gfx::draw_command::data_t> m_draws_scratch;
     f32                                    m_seconds{0.f};
 };
