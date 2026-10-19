@@ -84,6 +84,14 @@ struct CameraControl
 
     void start_restricted(Proxy& p, time_point const& t)
     {
+        /* The last map's moves and cutscene end with it */
+        if(std::exchange(map_changed, false))
+            for(auto camera : p.select<PlayerCamera, CameraLerp>())
+            {
+                auto [cam, lerp] = camera.components();
+                lerp.lerps.clear();
+                cam.cinematic.reset();
+            }
         for(auto const& control : std::exchange(incoming_controls, {}))
             for(auto camera : p.select<PlayerInfo, PlayerCamera, CameraLerp>())
             {
@@ -243,6 +251,7 @@ struct CameraControl
     time_point                         last_time;
     std::vector<PlayerCameraLerpEvent> incoming_lerps;
     std::vector<CinematicCameraEvent>  incoming_controls;
+    bool                               map_changed{false};
 };
 
 void alloc_camera_control(compo::EntityContainer& e)
@@ -268,6 +277,7 @@ void alloc_camera_control(compo::EntityContainer& e)
                 return;
             camera.incoming_lerps.clear();
             camera.incoming_controls.clear();
+            camera.map_changed = true;
         },
     });
 }
