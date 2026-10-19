@@ -66,7 +66,8 @@ using NetworkingManifest = compo::SubsystemManifest<
         ObjectPhysics,
         PhysicsData,
         const PlayerInput,
-        BipedEquipment>,
+        BipedEquipment,
+        const BipedStatus>,
     type_list_t<
         NetworkState,
         PhysicsBus,
@@ -2412,6 +2413,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             send_impacts(p);
             send_seats(p);
             send_equipment(p);
+            send_vitality(p);
             send_pickups();
             measure_pings();
             send_tick_sync(p, t);
@@ -2585,6 +2587,33 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     Message<ObjectHit>(std::move(message)),
                     k_nSteamNetworkingSend_Reliable,
                     std::move(targets));
+        for(auto& [message, to] : m_combat.take_vitality())
+            if(auto targets = route(to); !targets.empty())
+                send_all(
+                    Message<UnitVitality>(std::move(message)),
+                    k_nSteamNetworkingSend_Reliable,
+                    std::move(targets));
+    }
+
+    /* A fresh peer hears of every unit already hurt or dead */
+    void send_vitality(Proxy& p)
+    {
+        std::set<HSteamNetConnection> fresh;
+        for(auto& [connection, state] : m_connections)
+            if(state.verified && !state.objects_synced)
+                fresh.insert(connection);
+        if(fresh.empty())
+            return;
+        std::vector<UnitVitality> hurt;
+        for(auto unit : p.select<BipedStatus>())
+        {
+            auto const& status = unit.get<BipedStatus>();
+            if(status.dead || status.body < 1.f || status.shield < 1.f)
+                if(auto wire = m_combat.vitality_of(p, unit.id()))
+                    hurt.push_back(*wire);
+        }
+        for(auto& wire : hurt)
+            send_all(Message<UnitVitality>(std::move(wire)), k_nSteamNetworkingSend_Reliable, fresh);
     }
 
     /* Our seat's input, a few ticks of it in each packet */
@@ -3562,6 +3591,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         case MessageBase::ObjectHit: {
             m_combat.client_receive(p, payload.value<ObjectHit>());
+            break;
+        }
+        case MessageBase::UnitVitality: {
+            m_combat.client_receive(p, payload.value<UnitVitality>());
             break;
         }
         case MessageBase::ObjectImpact: {
