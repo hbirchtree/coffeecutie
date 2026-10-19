@@ -55,10 +55,11 @@ struct state_t
     f32 secondary_loaded{0.f};
 };
 
+/* Drawn premultiplied: alpha is how much of what is behind an element it
+ * hides, so at zero it only adds on */
 Vecf4 color_of(blam::argb8_t c)
 {
-    /* Shipped tags leave alpha at zero on colors drawn opaque */
-    return Vecf4(c.r, c.g, c.b, c.a ? c.a : 255) / 255.f;
+    return Vecf4(c.r, c.g, c.b, c.a) / 255.f;
 }
 
 bool blank(blam::argb8_t c)
