@@ -64,6 +64,8 @@ layout(location=147, binding=5) uniform sampler2D alpha_test_map;
 /* The second nearest cubemap, blended in by env_dynamic_blend */
 layout(location=192, binding=6) uniform samplerCube env_dynamic2;
 layout(location=193) uniform float env_dynamic_blend;
+/* The BSP cubemaps' decode exponent; the 360 linearizes them as it samples */
+layout(location=240) uniform float env_dynamic_curve;
 layout(location=148) uniform vec2 alpha_test_ratio;
 #if H3_DETAIL >= 1
 layout(location=9, binding=1) uniform sampler2D detail;
@@ -394,7 +396,9 @@ vec3 material_specular(
         if(env_mode == 1)
         {
             vec4 a     = texture(env_dynamic, dir), b = texture(env_dynamic2, dir);
-            reflection = mix(a.rgb * a.a, b.rgb * b.a, env_dynamic_blend) * 256.0;
+            vec3 ra    = pow(max(a.rgb, vec3(0.0)), vec3(env_dynamic_curve));
+            vec3 rb    = pow(max(b.rgb, vec3(0.0)), vec3(env_dynamic_curve));
+            reflection = mix(ra * a.a, rb * b.a, env_dynamic_blend) * 256.0;
         } else
         {
             vec4 c     = texture(env_map, dir);

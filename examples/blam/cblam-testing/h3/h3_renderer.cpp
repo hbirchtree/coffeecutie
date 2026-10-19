@@ -82,6 +82,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         i32 light_count = 0;
         f32 const    exposure  = adapt_exposure(scene, camera->camera.position, now);
         auto const   cubes        = nearest_cubemaps(scene, camera->camera.position);
+        f32 const    dynamic_curve = scene.cubemaps.empty() ? 2.f : scene.cubemaps.front().curve;
         auto const&  dynamic_cube = cubes.first;
         Vecf3 const  offset{};
         f32 const    scale = 1.f;
@@ -324,6 +325,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"alpha_test"}, semantic::SpanOne<const i32>(alpha_test)},
                         gfx::uniform_pair<const f32>{
                             {"env_dynamic_blend"}, semantic::SpanOne<const f32>(cubes.blend)},
+                        gfx::uniform_pair<const f32>{
+                            {"env_dynamic_curve"}, semantic::SpanOne<const f32>(dynamic_curve)},
                         gfx::uniform_pair<Vecf4 const>{
                             {"albedo_tint"}, semantic::SpanOne<const Vecf4>(mat.tint)},
                         gfx::uniform_pair<const i32>{
