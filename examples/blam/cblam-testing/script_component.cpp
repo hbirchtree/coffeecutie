@@ -1,3 +1,4 @@
+#include "game_mode.h"
 #include "script_component.h"
 
 #include "blam_files.h"
@@ -56,6 +57,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
     type_list_t<
         GameEventBus,
         CinematicState,
+        const GameState,
         const NetworkState,
         const BlamFiles<halo_version>,
         const SoundCache<halo_version>,
@@ -743,10 +745,40 @@ struct BlamScript
             return value_t::number(type_t::short_, left);
         }
 
-        /* Played on normal, alone */
+        /* The game being played: the shell's difficulty, checkpoints, the
+         * level's end; the game mode keeps them */
         case op::game_difficulty_get:
         case op::game_difficulty_get_real:
-            return {.type = type_t::game_difficulty, .integer = 1};
+            return {.type    = type_t::game_difficulty,
+                    .integer = p.template subsystem<GameState>().difficulty};
+        case op::game_is_cooperative: {
+            u32 players = 0;
+            for(auto const& player : p.template subsystem<GameState>().players)
+                players += player.player_idx != ObjectHitEvent::no_player;
+            return value_t::boolean(players > 1);
+        }
+        case op::game_save:
+        case op::game_save_no_timeout:
+        case op::game_save_totally_unsafe: {
+            GameEvent       ev{.type = GameEvent::Checkpoint};
+            CheckpointEvent save{};
+            p.template subsystem<GameEventBus>().inject(ev, &save);
+            return {};
+        }
+        case op::game_saving:
+            return value_t::boolean(false);
+        case op::game_safe_to_save:
+            return value_t::boolean(true);
+        case op::game_reverted:
+            return value_t::boolean(p.template subsystem<GameState>().reverts > 0);
+        case op::game_won: {
+            GameEvent    ev{.type = GameEvent::GameWon};
+            GameWonEvent won{};
+            p.template subsystem<GameEventBus>().inject(ev, &won);
+            return {};
+        }
+        case op::game_time:
+            return value_t::number(type_t::long_, static_cast<f32>(m_vm.now()));
 
         /* Structure BSPs */
         case op::switch_bsp: {
