@@ -878,6 +878,7 @@ struct PlayerInfo
          * from the map loaded as `load_generation` */
         blam::antr::header const* anim_graph{nullptr};
         blam::tag_t const*        footsteps{nullptr};
+        blam::tagref_t const*     respawn_effect{nullptr}; /*!< Played where it respawns */
         u32                       load_generation{0};
 
         f32 eye_offset() const

@@ -248,7 +248,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     /* ---- What everyone sees ---- */
 
     void tell(Proxy& p, u64 unit, BipedStatus const& status,
-              std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f)
+              std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f, bool arrived = false)
     {
         auto const*       info = p.template get<PlayerInfo>(unit);
         GameEvent         ev{.type = GameEvent::UnitVitality};
@@ -260,6 +260,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .dead           = status.dead,
             .respawn_at     = respawn_at,
             .respawn_facing = facing,
+            .arrived        = arrived,
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
     }
@@ -287,6 +288,23 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(auto const* info = p.template get<PlayerInfo>(vitality.unit);
            info && !info->is_remote() && vitality.respawn_at)
             restart(p, vitality.unit, *info, *vitality.respawn_at, vitality.respawn_facing);
+        if(vitality.respawn_at && vitality.arrived)
+            arrive(p, vitality.unit, *vitality.respawn_at, vitality.respawn_facing);
+    }
+
+    /* The players' respawn effect where it comes back */
+    void arrive(Proxy& p, u64 unit, Vecf3 feet, f32 facing)
+    {
+        auto const* info = p.template get<PlayerInfo>(unit);
+        if(!info || !info->biped.respawn_effect)
+            return;
+        GameEvent        ev{.type = GameEvent::SpawnEffect};
+        SpawnEffectEvent play{
+            .effect    = *info->biped.respawn_effect,
+            .position  = feet,
+            .direction = {std::cos(facing), std::sin(facing), 0.f},
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &play);
     }
 
     /* Onto its feet there, facing that way */
@@ -317,10 +335,12 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         status->shield      = shielded ? (respawn.restore ? respawn.shield : 1.f) : 0.f;
         status->dead        = status->body <= 0.f;
         status->stunned = 0.f;
-        tell(p, respawn.unit, *status, respawn.position, respawn.facing);
+        tell(p, respawn.unit, *status, respawn.position, respawn.facing, respawn.arrive);
         if(auto const* info = p.template get<PlayerInfo>(respawn.unit);
            info && !info->is_remote())
             restart(p, respawn.unit, *info, respawn.position, respawn.facing);
+        if(respawn.arrive)
+            arrive(p, respawn.unit, respawn.position, respawn.facing);
     }
 
     /* After a while unhurt, a shield fills back up */

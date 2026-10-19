@@ -1915,6 +1915,17 @@ struct ResourceLoader
                 .parent    = ent.id(),
             };
             game_bus->inject(ev, &play);
+        } else if(auto const* effect = spawn.announce ? respawn_effect(files) : nullptr)
+        {
+            /* Announced without one of its own: the players', left behind
+             * where it appeared */
+            GameEvent        ev{.type = GameEvent::SpawnEffect};
+            SpawnEffectEvent play{
+                .effect    = *effect,
+                .position  = model.position,
+                .direction = model.rotation * Vecf3{1.f, 0.f, 0.f},
+            };
+            game_bus->inject(ev, &play);
         }
     }
 
@@ -1983,6 +1994,23 @@ struct ResourceLoader
                biped.has_value())
                 return biped.value();
         cWarning("Got not biped model :(");
+        return nullptr;
+    }
+
+    /* What players arrive with: the globals' co-op respawn effect, else
+     * their biped's creation effect */
+    blam::tagref_t const* respawn_effect(BlamFiles<Ver> const& files)
+    {
+        auto const& magic = files.container.magic;
+        if(auto globals_ = index.tag_of("globals\\globals"); globals_.has_value())
+            if(auto globals = (*globals_)->template data<blam::globals::globals>(magic);
+               globals.has_value())
+                if(auto sp = globals.value()->player.data(magic);
+                   sp.has_value() && !sp.value().empty() &&
+                   sp.value()[0].coop_respawn_effect.valid())
+                    return &static_cast<blam::tagref_t const&>(sp.value()[0].coop_respawn_effect);
+        if(auto const* biped = player_biped(files); biped && biped->creation_effect.valid())
+            return &static_cast<blam::tagref_t const&>(biped->creation_effect);
         return nullptr;
     }
 
@@ -2517,6 +2545,7 @@ struct ResourceLoader
                 }
                 if(auto foot = index.find(biped->footsteps); foot != index.end())
                     biped_model.shape.footsteps = &(*foot);
+                biped_model.shape.respawn_effect = respawn_effect(files);
                 biped_model.shape.load_generation = files.load_generation;
             }
         }

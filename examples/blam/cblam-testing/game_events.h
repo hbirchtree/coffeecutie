@@ -337,6 +337,8 @@ struct SpawnObjectEvent
     Vecf3           velocity{};         /*!< wu/s, bodies with mass */
     Vecf3           angular_velocity{}; /*!< rad/s */
     libc_types::f32 lifetime{0.f};      /*!< seconds, 0 = until despawned */
+    /*! Plays its creation effect, or the players' respawn effect if it has none */
+    bool announce{false};
 };
 
 struct DespawnObjectEvent
@@ -479,6 +481,7 @@ struct UnitVitalityEvent
     /*! Brought back: its owner moves it here, facing this way */
     std::optional<Vecf3> respawn_at{};
     libc_types::f32      respawn_facing{0.f};
+    bool                 arrived{false}; /*!< With the respawn effect */
 };
 
 /*! A unit died, as the authority decided; who did it, when a player */
@@ -503,6 +506,7 @@ struct RespawnUnitEvent
     bool            restore{false};
     libc_types::f32 body{1.f};
     libc_types::f32 shield{1.f};
+    bool            arrive{false}; /*!< Plays the respawn effect there */
 };
 
 /*! A level's script says it is finished */

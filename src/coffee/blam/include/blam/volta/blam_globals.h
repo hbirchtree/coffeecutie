@@ -19,11 +19,16 @@ struct multiplayer_information
 static_assert(offsetof(multiplayer_information, unit) == 0x10);
 static_assert(offsetof(multiplayer_information, vehicles) == 0x20);
 
-/*! The unit a player spawns as, for singleplayer. */
+/*! The unit a player spawns as, for singleplayer. TODO: Decode the movement
+ *  and stun fields between */
 struct player_information
 {
     tagref_typed_t<tag_class_t::bipd> unit;
+    u32                               padding[(0xB8 - 0x10) / 4];
+    tagref_typed_t<tag_class_t::effe> coop_respawn_effect;
 };
+
+static_assert(offsetof(player_information, coop_respawn_effect) == 0xB8);
 
 /*! What a player sees of themselves in first person. TODO: Decode the rest */
 struct first_person_interface
