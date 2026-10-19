@@ -93,10 +93,40 @@ struct header
     u32 flags;
     u32 indirect_damage_material;
 
-    /* Body/shield damage parameters and effect references. Field-level
-     * decoding is incomplete; the 'effe' tagrefs for body/shield damage
-     * states live in this range. */
-    u32 body_and_shield[139];
+    /* Body: what it takes, and the effects as it is damaged and destroyed */
+    f32      maximum_body_vitality;
+    f32      body_system_shock;
+    u32      padding0[13];
+    f32      friendly_damage_resistance;
+    u32      padding1[10];
+    tagref_t localized_damage_effect;
+    f32      area_damage_effect_threshold;
+    tagref_t area_damage_effect;
+    f32      body_damaged_threshold;
+    tagref_t body_damaged_effect;
+    tagref_t body_depleted_effect;
+    f32      body_destroyed_threshold;
+    tagref_t body_destroyed_effect;
+
+    /* Shield: what it soaks up, and how it comes back after a hit */
+    f32      maximum_shield_vitality;
+    u16      padding2;
+    u16      shield_material_type;
+    u32      padding3[6];
+    u16      shield_failure_function;
+    u16      padding4;
+    f32      shield_failure_threshold;
+    f32      failing_shield_leak_fraction;
+    u32      padding5[4];
+    f32      minimum_stun_damage;
+    f32      stun_time;     /* seconds before it starts to recharge */
+    f32      recharge_time; /* seconds from empty to full */
+    u32      padding6[28];
+    f32      shield_damaged_threshold;
+    tagref_t shield_damaged_effect;
+    tagref_t shield_depleted_effect;
+    tagref_t shield_recharging_effect;
+    u32      padding7[31];
 
     reference<material> materials;
     reference<region>   regions;
@@ -113,6 +143,12 @@ struct header
 };
 
 static_assert(sizeof(header) == 664);
+static_assert(offsetof(header, maximum_body_vitality) == 0x08);
+static_assert(offsetof(header, localized_damage_effect) == 0x70);
+static_assert(offsetof(header, body_destroyed_effect) == 0xbc);
+static_assert(offsetof(header, maximum_shield_vitality) == 0xcc);
+static_assert(offsetof(header, stun_time) == 0x10c);
+static_assert(offsetof(header, shield_damaged_effect) == 0x188);
 static_assert(offsetof(header, materials) == 0x234);
 static_assert(offsetof(header, regions) == 0x240);
 static_assert(offsetof(header, x_min) == 0x268);
