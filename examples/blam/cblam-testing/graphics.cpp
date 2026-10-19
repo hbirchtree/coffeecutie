@@ -15,6 +15,7 @@
 #include "h2/h2_scene.h"
 #include "h2/h2_sound.h"
 #include "impact_sounds.h"
+#include "devices.h"
 #include "projectiles.h"
 #include "effects.h"
 #include "ticks.h"
@@ -239,6 +240,7 @@ i32 blam_main()
             e.register_component_inplace<NetworkInfo>();
             e.register_component_inplace<ObjectPhysics>();
             e.register_component_inplace<ObjectSpawn>();
+            e.register_component_inplace<DeviceState>();
             e.register_component_inplace<PlayerCamera>();
             e.register_component_inplace<PlayerInfo>();
             e.register_component_inplace<PlayerInput>();
@@ -299,6 +301,7 @@ i32 blam_main()
             alloc_impact_sounds(e);
             alloc_vehicle_sounds(e);
             alloc_projectiles(e);
+            alloc_devices(e);
             alloc_effects(e);
             alloc_weapons(e);
             alloc_hud(e);
