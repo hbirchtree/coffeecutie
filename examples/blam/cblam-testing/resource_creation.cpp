@@ -201,6 +201,27 @@ void create_resources(compo::EntityContainer& e)
             }
         });
 #endif
+        /* Debug checkpoints: F5 saves the world, F7 goes back to it */
+        eventhandler->addEventFunction<CIKeyEvent>(1024, [&e](CIEvent&, CIKeyEvent* key) {
+            if(!key->pressed() || (key->key != Input::CK_F5 && key->key != Input::CK_F7))
+                return;
+            if(e.subsystem_cast<NetworkState>().replica)
+                return;
+            auto& game = e.subsystem_cast<GameEventBus>();
+            if(key->key == Input::CK_F5)
+            {
+                cDebug("Debug checkpoint: saving");
+                GameEvent      ev{.type = GameEvent::WorldSave};
+                WorldSaveEvent save{};
+                game.inject(ev, &save);
+            } else
+            {
+                cDebug("Debug checkpoint: restoring");
+                GameEvent         ev{.type = GameEvent::WorldRestore};
+                WorldRestoreEvent restore{};
+                game.inject(ev, &restore);
+            }
+        });
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 
