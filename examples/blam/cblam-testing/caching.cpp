@@ -2070,7 +2070,8 @@ typename BitmapCache<V>::slot_map_t::iterator BitmapCache<V>::assign_slot(
         slot.offset = {0.f, 0.f};
         slot.scale  = {1.f, 1.f};
 
-        if(bucket.type == blam::bitm::type_t::tex_cube)
+        /* GL ES 2 cubes are textures of their own size (see get_bucket) */
+        if(bucket.type == blam::bitm::type_t::tex_cube && supports_tex3d)
         {
             u32 level = 0;
             while(level < 15 && (bucket.max_size.x >> level) > e.size.x &&

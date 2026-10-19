@@ -183,6 +183,11 @@ struct BitmapCache
                 allocator, fmt, max_mipmap);
             surface->set_usage_hint(
                 gfx::compat::texture_usage_hint_t::per_base_instance);
+            /* GL ES 2 samples a cube's base level only: each gets a texture
+             * its own size */
+            if(!supports_tex3d)
+                surface->set_usage_hint(
+                    gfx::compat::texture_usage_hint_t::sparse_atlas);
             bucket.surface = std::move(surface);
         } else
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
