@@ -92,6 +92,7 @@ struct PlayerController
                     if(cam.cinematic)
                         input.look_delta = {};
                 }
+                clamp_pitch(input, cam, info);
                 if(!info.is_remote())
                     m_look[player.id()] += input.look_delta;
                 route(
@@ -290,6 +291,24 @@ struct PlayerController
         intent.fire = (pad && state.axes.e.t_r > trigger_pressed) ||
                       (keyboard &&
                        (input.mouse_buttons & CIMouseButtonEvent::LeftButton));
+    }
+
+    /* Stops short of straight up or down, where turning would spin the
+     * view around; a view already past it may only come back */
+    static void clamp_pitch(
+        PlayerInput& input, PlayerCamera& cam, PlayerInfo const& info)
+    {
+        if(input.look_delta.y == 0.f)
+            return;
+        cam.camera_.refresh_basis(cam.camera, cam.camera_opts);
+        f32 const pitch =
+            std::asin(std::clamp(cam.camera_.cached.forward.z, -1.f, 1.f));
+        auto const& range  = info.biped.pitch_range;
+        input.look_delta.y = std::clamp(
+                                 pitch + input.look_delta.y,
+                                 std::min(range.x, pitch),
+                                 std::max(range.y, pitch)) -
+                             pitch;
     }
 
     static seat_t seat_of(PlayerInfo const& info)

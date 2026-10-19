@@ -870,6 +870,9 @@ struct PlayerInfo
         f32 back_speed{2.25f};
         f32 strafe_speed{2.25f};
         f32 jump_velocity{2.3f}; /*!< wu/s, from the biped tag */
+        /*! How far the camera looks down and up, radians; the cyborg's
+         * tag leaves it empty */
+        Vecf2 pitch_range{-1.5f, 1.5f};
 
         /*! Hit shape for bodies that follow a camera; the capsule above is
          * what a biped moves with */
