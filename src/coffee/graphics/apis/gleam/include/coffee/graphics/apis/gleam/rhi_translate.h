@@ -324,7 +324,8 @@ inline T to(
 {
     using enum_helpers::feval;
     using semantic::RSCA;
-    if(feval(flags, RSCA::Persistent) && features.mapping)
+    /* Hints of how often it changes, whether or not it can be mapped */
+    if(feval(flags, RSCA::Persistent))
     {
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
         if(feval(flags, RSCA::ReadWrite))
@@ -335,7 +336,7 @@ inline T to(
         return T::dynamic_draw;
     }
 
-    if(feval(flags, RSCA::Streaming) && features.mapping)
+    if(feval(flags, RSCA::Streaming))
     {
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
         if(feval(flags, RSCA::ReadWrite | RSCA::Streaming))

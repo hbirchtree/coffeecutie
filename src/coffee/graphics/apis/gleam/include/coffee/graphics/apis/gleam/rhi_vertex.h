@@ -288,6 +288,7 @@ struct vertex_array_t
 
     void dealloc()
     {
+        drop_offset_arrays();
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(m_features.vertex_arrays)
             cmd::delete_vertex_arrays(SpanOne<u32>(m_handle));
@@ -313,6 +314,7 @@ struct vertex_array_t
     void add(attribute_type attribute)
     {
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
+        drop_offset_arrays();
         if(!m_features.dsa)
         {
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -404,6 +406,7 @@ struct vertex_array_t
     void set_buffer(T, std::shared_ptr<buffer_t> buffer, u32 binding)
     {
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
+        drop_offset_arrays();
         if(!m_features.dsa)
         {
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -495,6 +498,7 @@ struct vertex_array_t
     //
     void set_buffer(T, std::shared_ptr<buffer_t> buffer)
     {
+        drop_offset_arrays();
         if(!m_features.dsa)
         {
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -533,6 +537,58 @@ struct vertex_array_t
         }
     }
 
+    /*! A vertex array with every attribute moved `offset` vertices on, made
+     * once, for base vertex draws where the API has none; 0 without VAOs */
+    u32 offset_array(u32 offset)
+    {
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(!m_features.vertex_arrays)
+            return 0;
+        if(auto it = m_offset_arrays.find(offset); it != m_offset_arrays.end())
+            return it->second;
+        u32 handle = 0;
+        cmd::gen_vertex_arrays(SpanOne<u32>(handle));
+        cmd::bind_vertex_array(handle);
+        for(auto const& attrib : m_attributes)
+        {
+            auto it = m_buffers.find(attrib.buffer.id);
+            auto buffer = it == m_buffers.end() ? nullptr : it->second.lock();
+            if(!buffer)
+                continue;
+            cmd::enable_vertex_attrib_array(attrib.index);
+            cmd::vertex_attrib_divisor(
+                attrib.index,
+                static_cast<bool>(
+                    attrib.value.flags &
+                    vertex_attribute::attribute_flags::instanced));
+            cmd::bind_buffer(
+                group::buffer_target_arb::array_buffer, buffer->m_handle);
+            detail::vertex_setup_attribute(
+                m_features, attrib, offset * attrib.value.stride);
+        }
+        if(auto elements = m_element_buffer.lock())
+            cmd::bind_buffer(
+                group::buffer_target_arb::element_array_buffer,
+                elements->m_handle);
+        m_offset_arrays.emplace(offset, handle);
+        return handle;
+#else
+        (void)offset;
+        return 0;
+#endif
+    }
+
+    /* The offset arrays copy the layout, so any change remakes them */
+    void drop_offset_arrays()
+    {
+#if GLEAM_MAX_VERSION_ES != 0x200
+        for(auto& [offset, handle] : m_offset_arrays)
+            cmd::delete_vertex_arrays(SpanOne<u32>(handle));
+#endif
+        m_offset_arrays.clear();
+        m_applied_vertex_offset = 0;
+    }
+
     features::vertices                            m_features;
     debug::api                                    m_debug;
     std::vector<attribute_type>                   m_attributes;
@@ -540,6 +596,7 @@ struct vertex_array_t
     std::map<u32, std::weak_ptr<buffer_t>>        m_buffers;
     std::weak_ptr<buffer_t>                       m_element_buffer;
     hnd                                           m_handle;
+    std::map<u32, u32>                            m_offset_arrays;
     bool m_forced_attribute_names{false};
     u32  m_applied_vertex_offset{0};
 };

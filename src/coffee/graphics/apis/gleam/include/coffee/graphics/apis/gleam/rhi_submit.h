@@ -243,6 +243,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 std::numeric_limits<libc_types::u32>::max();
         }
         cmd::bind_vertex_array(vao->m_handle);
+        vao->m_applied_vertex_offset = 0;
     } else if(m_features.vertex.vertex_arrays)
     {
         while(!m_features.vertex.layout_binding ||
@@ -256,10 +257,12 @@ inline optional<tuple<error, std::string_view>> api::submit(
                     program->m_handle, attrib.second, attrib.first);
             cmd::link_program(program->m_handle);
             program->m_uniform_values.clear();
+            program->m_block_bindings.clear();
             program->m_attribute_names = vao->m_attribute_names;
             break;
         }
         cmd::bind_vertex_array(vao->m_handle);
+        vao->m_applied_vertex_offset = 0;
     } else
 #endif
         if(change_vao)
@@ -274,6 +277,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                     program->m_handle, attrib.second, attrib.first);
             cmd::link_program(program->m_handle);
             program->m_uniform_values.clear();
+            program->m_block_bindings.clear();
             program->m_attribute_names = vao->m_attribute_names;
         }
         for(auto const& attrib : vao->m_attributes)
@@ -309,6 +313,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                     program->m_handle, attrib.second, attrib.first);
             cmd::link_program(program->m_handle);
             program->m_uniform_values.clear();
+            program->m_block_bindings.clear();
             program->m_attribute_names = vao->m_attribute_names;
         }
         if(!vao->m_element_buffer.expired())
@@ -325,7 +330,11 @@ inline optional<tuple<error, std::string_view>> api::submit(
     }
 
     // Don't repeat this work from earlier
-    if((change_program || change_vao) && !m_workarounds.draw.slow_state_changes)
+    /* Only takes effect at the next link; a program already linked with
+     * these names has them */
+    if((change_program || change_vao) && !m_workarounds.draw.slow_state_changes &&
+       (m_features.program.separable_programs ||
+        program->m_attribute_names != vao->m_attribute_names))
     {
         u32 vertex_program =
             m_features.program.separable_programs
@@ -425,6 +434,13 @@ inline optional<tuple<error, std::string_view>> api::submit(
         apply_vertex_offset = [this, &vao](u32 offset) {
             if(vao->m_applied_vertex_offset == offset)
                 return;
+            /* One bind instead of re-pointing every attribute */
+            if(u32 const handle = offset ? vao->offset_array(offset) : u32(vao->m_handle))
+            {
+                cmd::bind_vertex_array(handle);
+                vao->m_applied_vertex_offset = offset;
+                return;
+            }
             for(auto const& attrib : vao->m_attributes)
             {
                 if(vao->m_buffers.at(attrib.buffer.id).expired())
@@ -531,9 +547,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
         bookkeeping.draw_index = 0;
         for(auto d : data)
         {
-            auto dbg_id = d.debug_identifier
-                              ? debug().scope(*d.debug_identifier)
-                              : decltype(debug().scope()){};
+            decltype(debug().scope(std::string_view())) dbg_id{};
+            if(d.debug_identifier)
+                dbg_id = debug().scope(*d.debug_identifier);
             m_usage.draw.instances += d.instances.count;
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
@@ -555,9 +571,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
         bookkeeping.draw_index = 0;
         for(auto d : data)
         {
-            auto dbg_id = d.debug_identifier
-                              ? debug().scope(*d.debug_identifier)
-                              : decltype(debug().scope()){};
+            decltype(debug().scope(std::string_view())) dbg_id{};
+            if(d.debug_identifier)
+                dbg_id = debug().scope(*d.debug_identifier);
             m_usage.draw.instances += d.instances.count;
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);

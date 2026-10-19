@@ -282,7 +282,12 @@ inline bool apply_command_modifier(
                 std::tie(blk_idx, blk_size) = it->second;
             if(blk_idx == std::numeric_limits<u32>::max())
                 continue;
-            cmd::uniform_block_binding(program.m_handle, blk_idx, binding);
+            /* Program state: re-set only when it changes */
+            if(auto& bound = program.m_block_bindings[blk_idx]; bound != u32(binding) + 1)
+            {
+                cmd::uniform_block_binding(program.m_handle, blk_idx, binding);
+                bound = u32(binding) + 1;
+            }
 
             /* For UBOs it is unspecified to use a size smaller than
              * what the shader specifies */

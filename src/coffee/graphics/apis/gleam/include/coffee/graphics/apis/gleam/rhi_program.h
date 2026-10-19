@@ -256,6 +256,7 @@ struct program_t
         m_uniform_locations.clear();
         m_explicit_uniform_state.clear();
         m_uniform_values.clear();
+        m_block_bindings.clear();
 
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
         warn_adreno_size();
@@ -536,6 +537,8 @@ struct program_t
     by_name<u32>                 m_uniform_locations;
     /* Last value written per location; linking resets them */
     std::vector<std::vector<std::byte>> m_uniform_values;
+    /* Binding point + 1 set per uniform block index; linking resets them */
+    std::unordered_map<u32, u32> m_block_bindings;
     /*! Per explicit uniform location: 0 unknown, 1 live, 2 compiled out.
      *  Indexed by location so the hot path costs no lookup or allocation. */
     std::vector<libc_types::u8> m_explicit_uniform_state;
