@@ -28,6 +28,7 @@
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 
 #include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/packing.hpp>
 
 #if defined(FEATURE_ENABLE_BULLET3)
 #include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
@@ -687,6 +688,7 @@ struct H3MapLoader : compo::SubsystemBase
         commit_first_person();
         upload_object_lights();
         upload_decorator_instances();
+        load_area_specular_tables();
         m_scene.element_buf->commit(Span<const u16>(m_indices.data(), m_indices.size()));
         size_t draws = 0;
         for(auto const& mat : m_scene.materials)
@@ -920,6 +922,45 @@ struct H3MapLoader : compo::SubsystemBase
             total += static_cast<u32>(placed[s].size());
         }
         cDebug("H3: decorators: {} of {} sets, {} instances", drawn, sets.size(), total);
+    }
+
+    /* rasterizer\\cc0236 and dd0236: cook_torrance's pre-integrated area
+     * specular, by view angle and roughness; half floats */
+    void load_area_specular_tables()
+    {
+        auto const& map = *m_map;
+        auto        out = m_scene.area_specular.begin();
+        for(auto name : {"rasterizer\\cc0236", "rasterizer\\dd0236"})
+        {
+            auto& table = *out++;
+            table       = {};
+            auto const bitmap   = map.find<el::bitmap_t>(name);
+            auto       images   = bitmap ? map.span(bitmap->images) : Span<el::bitmap_image_t const>();
+            auto       hardware = bitmap ? map.span(bitmap->hardware_textures) : Span<el::hardware_texture_t const>();
+            if(images.empty() || hardware.empty() || images[0].format.value() != el::bitmap_format_t::abgrfp16)
+                continue;
+            auto view = m_loader->load(hardware[0].resource);
+            std::vector<u8> halves;
+            if(!view.has_value() || !el::linearize_level(view.value(), images[0], 0, halves))
+                continue;
+            u32 const          width = static_cast<u32>(images[0].width.value());
+            u32 const          height = static_cast<u32>(images[0].height.value());
+            std::vector<f32>   texels(size_t(width) * height * 4);
+            if(halves.size() < texels.size() * 2)
+                continue;
+            for(size_t i = 0; i < texels.size(); i++)
+                texels[i] = glm::unpackHalf1x16(static_cast<u16>(halves[2 * i] | (halves[2 * i + 1] << 8)));
+            auto tex = m_api->alloc_texture(
+                gfx::textures::d2, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA32F), 1);
+            tex->alloc(size_3d<u32>{width, height, 1});
+            auto const* bytes = reinterpret_cast<u8 const*>(texels.data());
+            tex->upload(std::vector<u8>(bytes, bytes + texels.size() * sizeof(f32)), Veci2{0, 0},
+                        Veci2{static_cast<i32>(width), static_cast<i32>(height)}, 0);
+            table.texture = tex;
+            table.sampler = tex->sampler();
+            table.sampler->alloc();
+            table.sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+        }
     }
 
     /* Instances as texels, three each, rows a multiple of three wide */
