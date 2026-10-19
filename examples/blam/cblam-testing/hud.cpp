@@ -592,7 +592,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto const* equip  = p.template get<BipedEquipment>(id);
             auto const* status = p.template get<BipedStatus>(id);
             if(!info || !cam || !net || !equip || !status || !cinematic.show_hud ||
-               cam->cinematic || !biped_in_play(*info, *cam, *net) || !info->mode.physics)
+               cam->cinematic || !biped_in_play(*info, *cam, *net) || !info->mode.physics ||
+               status->dead)
                 continue;
             m_view  = &out;
             m_width = out.width;
