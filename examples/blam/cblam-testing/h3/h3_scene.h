@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <unordered_map>
 #include <limits>
 #include <memory>
 #include <string>
@@ -178,8 +179,9 @@ struct Material
     Vecf2                                  uv_scale{1.f, 1.f};
     Texture                                detail;
     Vecf2                                  detail_scale{1.f, 1.f};
-    Texture                                detail2;
+    Texture                                detail2; /*!< change_color_map when change_color */
     Vecf2                                  detail2_scale{1.f, 1.f};
+    bool                                   change_color{false}; /*!< two_change_color albedo */
     /* detail_map_overlay or detail_map3, at base uv * ratio */
     Texture                                detail3;
     Vecf2                                  detail3_ratio{1.f, 1.f};
@@ -276,6 +278,8 @@ struct H3Scene : compo::SubsystemBase
     std::vector<CubeTexture>                    cubemaps;
     std::vector<CubemapProbe>                   cubemap_probes;
     std::vector<DynamicLight>                   lights;
+    /* Primary and secondary change colours per object entity */
+    std::unordered_map<u64, std::array<Vecf3, 2>> change_colors;
 
     /*! The baked light under `position`, from whichever loaded BSP's
      * lightmap lies highest below it */

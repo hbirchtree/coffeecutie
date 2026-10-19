@@ -195,6 +195,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.cubemaps.clear();
         m_scene.cubemap_probes.clear();
         m_scene.lights.clear();
+        m_scene.change_colors.clear();
         m_cube_textures.clear();
         m_scene.baked.clear();
         m_vertices.clear();
@@ -583,6 +584,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_scene.cubemaps.clear();
         m_scene.cubemap_probes.clear();
         m_scene.lights.clear();
+        m_scene.change_colors.clear();
         m_vertices.clear();
         m_object_lights.clear();
         m_decorator_texels.clear();
@@ -1051,6 +1053,9 @@ struct H3MapLoader : compo::SubsystemBase
                 placed.tick_rotation = q;
                 placed.update_matrix();
                 *m_container.get<ObjectPhysics>(ref.id()) = std::move(*physics);
+                if(auto const tag = m_map->get<el::object_t>(entry->object);
+                   tag && !m_map->span(tag->change_colors).empty())
+                    m_scene.change_colors[ref.id()] = change_colors_of(*tag, object.variant);
                 append_model(model, glm::scale(Matf4(1.f), Vecf3(scale)), lit, ref.id(), q);
                 attach_lights(entry->object, *model, glm::scale(Matf4(1.f), Vecf3(scale)), ref.id());
                 moving++;
@@ -1092,6 +1097,8 @@ struct H3MapLoader : compo::SubsystemBase
             }
         if(!player)
             return;
+        if(auto const unit = map.get<el::object_t>(player->third_person_unit))
+            m_scene.change_colors[first_person_entity] = change_colors_of(*unit, player->third_person_variant);
         auto const profiles = map.span(scnr.starting_profiles);
         auto const weapon   = profiles.empty() ? el::tagged<el::weapon_t>{}
                                                : map.get<el::weapon_t>(profiles[0].primary_weapon);
@@ -1684,6 +1691,13 @@ struct H3MapLoader : compo::SubsystemBase
                 mat.curves.z      = detail2->curve;
                 mat.variant = albedo == "detail_blend" ? Variant::detail_blend : Variant::two_detail;
             }
+            if(auto const* mask = slot("change_color_map");
+               mask && detail && albedo == "two_change_color")
+            {
+                mat.change_color  = true;
+                mat.detail2       = mask->texture;
+                mat.detail2_scale = mask->scale;
+            }
             if(albedo == "constant_color")
                 mat.variant = Variant::base;
             load_specular(mat, option("material_model"), option("specular_mask"), constants);
@@ -2189,6 +2203,31 @@ struct H3MapLoader : compo::SubsystemBase
             range.max.value(),
             stops);
         return std::exp2(stops);
+    }
+
+    /* An object's starting primary and secondary change colours for a model
+     * variant, else its default; white where it has none */
+    std::array<Vecf3, 2> change_colors_of(el::object_t const& object, el::string_id variant) const
+    {
+        auto const&          map    = *m_map;
+        auto const           wanted = map.string(variant);
+        std::array<Vecf3, 2> out{Vecf3(1.f), Vecf3(1.f)};
+        auto                 colors = map.span(object.change_colors);
+        for(size_t c = 0; c < std::min<size_t>(colors.size(), out.size()); c++)
+        {
+            el::change_color_permutation_t const* pick = nullptr;
+            int                                   rank = -1;
+            for(auto const& p : map.span(colors[c].initial_permutations))
+            {
+                auto const name = map.string(p.variant);
+                int const  r    = name == wanted ? 2 : name == "default" || name.empty() ? 1 : 0;
+                if(r > rank)
+                    pick = &p, rank = r;
+            }
+            if(pick)
+                out[c] = (Vecf3(pick->lower_bound) + Vecf3(pick->upper_bound)) * .5f;
+        }
+        return out;
     }
 
     /* Bloom of camera FX settings, values marked default from globals\default's */
