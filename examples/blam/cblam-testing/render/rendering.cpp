@@ -3420,7 +3420,13 @@ struct MeshRenderer
 
             auto shader_state = m_resources.check_shaders_ready();
             if(shader_state.has_error())
+            {
+                /* Loading waits on these forever, so say why once */
+                if(!std::exchange(m_shader_failed, true))
+                    cWarning("Shader program failed, loading cannot finish: {}",
+                             std::get<0>(shader_state.error()));
                 return;
+            }
             loading_state->set_shader_progress(
                 shader_state.value().ready, shader_state.value().total);
             loading_state->check_all_loaded(true);
@@ -3705,6 +3711,8 @@ struct MeshRenderer
 
         render_debug_lines(p);
     }
+
+    bool m_shader_failed{false};
 };
 
 template<typename Ver = blam::xbox_version_t>
@@ -4023,7 +4031,13 @@ struct LegacyMeshRenderer
 
             auto shader_state = resources.check_shaders_ready();
             if(shader_state.has_error())
+            {
+                /* Loading waits on these forever, so say why once */
+                if(!std::exchange(m_shader_failed, true))
+                    cWarning("Shader program failed, loading cannot finish: {}",
+                             std::get<0>(shader_state.error()));
                 return;
+            }
             loading_state->set_shader_progress(
                 shader_state.value().ready, shader_state.value().total);
             loading_state->check_all_loaded(true);
@@ -4662,6 +4676,8 @@ struct LegacyMeshRenderer
         Coffee::Profiler::PopContext();
         Coffee::Profiler::PopContext();
     }
+
+    bool m_shader_failed{false};
 };
 
 void ScreenClear::start_restricted(Proxy& e, const time_point&)
