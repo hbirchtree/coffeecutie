@@ -789,6 +789,7 @@ struct PhysicsSystem
             m_config.get());
         /* Halo's gravity: 9.81 m/s^2 with a world unit of 10 ft */
         m_world->setGravity(btVector3(0, 0, -halo_gravity));
+        gContactAddedCallback = deck_contact;
         m_world_basis.setIdentity();
         m_world_basis.setRotation(
             btQuaternion(btVector3(1, 0, 0), stl_types::math::pi / 2));
@@ -824,7 +825,7 @@ struct PhysicsSystem
         if(has_ground())
         {
             reconcile_player_bodies(p);
-            reconcile_object_bodies(p);
+            reconcile_object_bodies(p, true);
             pose_hulls(p);
         }
 
@@ -835,13 +836,19 @@ struct PhysicsSystem
         if(!m_world_body && m_bodies.empty() && !m_probe_body)
             return;
 
+        u32 const steps = static_cast<u32>(ticks.size()) * steps_per_tick;
+        u32       step_no = 0;
         if(ticks.empty())
+        {
+            glide(1.f);
             return;
+        }
 
         for(auto const& tick : ticks)
         {
             for(u32 step = 0; step < steps_per_tick; step++)
             {
+                glide(static_cast<f32>(++step_no) / static_cast<f32>(steps));
                 /* The camera moved once this frame: the first step carries
                  * it there, over all the time this frame's ticks cover */
                 bool const first = &tick == &ticks.front() && step == 0;
@@ -859,6 +866,7 @@ struct PhysicsSystem
             }
             record_bipeds(tick.tick);
         }
+        m_glides.clear();
         /* Models show the state after these ticks, for whatever reads them
          * later this frame */
         reconcile_object_bodies(p);
@@ -1106,7 +1114,7 @@ struct PhysicsSystem
 
     /* World objects with an ObjectPhysics get one body each. Simulated
      * ones carry their Model along; followers are carried by it. */
-    void reconcile_object_bodies(Proxy& p)
+    void reconcile_object_bodies(Proxy& p, bool glide = false)
     {
         using Shape = Physics::BodyCreationShape;
         std::set<u64> live, frozen;
@@ -1219,7 +1227,10 @@ struct PhysicsSystem
                     model.rotation.w));
                 Vecf3 const origin = model.position + model.rotation * com;
                 transform.setOrigin(btVector3(origin.x, origin.y, origin.z));
-                body.setWorldTransform(transform);
+                if(glide && !physics.sleeping)
+                    m_glides[id] = {body.getWorldTransform(), transform};
+                else
+                    body.setWorldTransform(transform);
                 /* At rest it needs no contacts worked out every step */
                 int const state =
                     physics.sleeping ? ISLAND_SLEEPING : DISABLE_DEACTIVATION;
@@ -1485,6 +1496,13 @@ struct PhysicsSystem
      * `bipeds_count`: other bipeds count as ground */
     bool on_ground(btRigidBody const& body, bool bipeds_count) const
     {
+        return ground_under(body, bipeds_count) != nullptr;
+    }
+
+    /* What a body stands on */
+    btCollisionObject const* ground_under(
+        btRigidBody const& body, bool bipeds_count) const
+    {
         using filter = btBroadphaseProxy::CollisionFilterGroups;
         auto counts  = [bipeds_count](btCollisionObject const* other) {
             return other->hasContactResponse() &&
@@ -1513,7 +1531,7 @@ struct PhysicsSystem
                 f32 const up = (a == &body ? 1.f : -1.f) *
                                static_cast<f32>(point.m_normalWorldOnB.z());
                 if(up > ground_normal_min)
-                    return true;
+                    return a == &body ? b : a;
             }
         }
 
@@ -1547,7 +1565,61 @@ struct PhysicsSystem
         if(!bipeds_count)
             hit.m_collisionFilterMask ^= filter::CharacterFilter;
         m_world->rayTest(from, to, hit);
-        return hit.hasHit();
+        return hit.hasHit() ? hit.m_collisionObject : nullptr;
+    }
+
+    /* A moving body something stands on; bipeds aren't stood on */
+    btRigidBody const* deck_under(btRigidBody const& body) const
+    {
+        using filter     = btBroadphaseProxy::CollisionFilterGroups;
+        auto const* ground = ground_under(body, false);
+        auto const* deck   = ground ? btRigidBody::upcast(ground) : nullptr;
+        if(!deck || !deck->getUserPointer() ||
+           (deck->isStaticObject() && !deck->isKinematicObject()) ||
+           deck->getActivationState() == ISLAND_SLEEPING ||
+           (deck->getBroadphaseHandle()->m_collisionFilterGroup &
+            filter::CharacterFilter))
+            return nullptr;
+        return deck;
+    }
+
+    /* Vehicle hulls take the grip of what rides on them, but leave the
+     * ground to the mass points */
+    static bool deck_contact(
+        btManifoldPoint&                cp,
+        btCollisionObjectWrapper const* a,
+        int,
+        int,
+        btCollisionObjectWrapper const* b,
+        int,
+        int)
+    {
+        auto const* first = a->getCollisionObject();
+        auto const* other =
+            first->getCollisionFlags() &
+                    btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK
+                ? b->getCollisionObject()
+                : first;
+        if(other->isStaticObject() && !other->isKinematicObject())
+            return false;
+        cp.m_combinedFriction = other->getFriction();
+        return true;
+    }
+
+    /* Kinematic followers move over the frame's steps, so whatever touches
+     * them sees how fast they go */
+    void glide(f32 t)
+    {
+        for(auto const& [id, g] : m_glides)
+        {
+            auto it = m_bodies.find(id);
+            if(it == m_bodies.end())
+                continue;
+            btTransform at;
+            at.setOrigin(g.from.getOrigin().lerp(g.to.getOrigin(), t));
+            at.setRotation(g.from.getRotation().slerp(g.to.getRotation(), t));
+            it->second.world_body->setWorldTransform(at);
+        }
     }
 
     /* Vehicles running into units, once a frame. Speeds come from how far
@@ -2058,10 +2130,16 @@ struct PhysicsSystem
             entity_body.world_body->setFriction(0.f);
             entity_body.world_body->setAngularFactor(btVector3(0, 0, 0));
         } else
+        {
             /* A vehicle's mass points do its friction; its hulls only
              * stop hard landings */
             entity_body.world_body->setFriction(
                 body_create.mass_points ? 0.f : 1.f);
+            if(body_create.mass_points)
+                entity_body.world_body->setCollisionFlags(
+                    entity_body.world_body->getCollisionFlags() |
+                    btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+        }
         btTransform transform = m_world_basis;
         if(body_create.rotation)
             transform.setRotation(btQuaternion(
@@ -2625,6 +2703,10 @@ struct PhysicsSystem
         /* No cDebug here: biped movement sends this every frame */
         btVector3 vel(
             velocity.velocity.x, velocity.velocity.y, velocity.velocity.z);
+        ride_deck(
+            body,
+            velocity.jump == 0.f &&
+                btVector3(vel.x(), vel.y(), 0.f).length2() < 1e-4f);
         vel += body.carried;
         if(velocity.preserve_z)
             vel.setZ(body.world_body->getLinearVelocity().z());
@@ -2885,9 +2967,38 @@ struct PhysicsSystem
         Vecf3                                   child_offset{};
         /* Step it was made in; it settles silently for a while */
         u32 created{0};
-        /* Horizontal momentum kept after exiting a vehicle */
+        /* Horizontal momentum kept after exiting a vehicle, or stepping off
+         * a moving one */
         btVector3 carried{0, 0, 0};
+        /* What it stands on, and where on it, in its space */
+        u64       deck{0};
+        btVector3 deck_spot{0, 0, 0};
     };
+
+    /* Carried along by what it stands on, and still after stepping off;
+     * standing still, it holds its spot on the deck as that turns and
+     * brakes under it */
+    void ride_deck(entity_body& body, bool standing)
+    {
+        auto const* deck = deck_under(*body.world_body);
+        if(!deck)
+        {
+            body.deck = 0;
+            return;
+        }
+        u64 const id = u64(reinterpret_cast<uintptr_t>(deck->getUserPointer()));
+        btVector3 const    at    = body.world_body->getCenterOfMassPosition();
+        btTransform const& frame = deck->getWorldTransform();
+        btVector3          v     = deck->getVelocityInLocalPoint(
+            at - deck->getCenterOfMassPosition());
+        btVector3 const drift = frame * body.deck_spot - at;
+        if(standing && body.deck == id && drift.length2() < deck_reach * deck_reach)
+            v += drift * deck_hold;
+        else
+            body.deck_spot = frame.invXform(at);
+        body.deck    = id;
+        body.carried = btVector3(v.x(), v.y(), 0.f);
+    }
 
     /* Hull children take their bone's skinning matrix from the last pose,
      * so what others hit is where the limbs are drawn */
@@ -3045,6 +3156,10 @@ struct PhysicsSystem
     /* How fast carried momentum is lost, wu/s^2 */
     static constexpr f32 carried_ground_decel = 12.f;
     static constexpr f32 carried_air_decel    = .5f;
+    /* How fast a rider standing on a deck is pulled back to its spot, 1/s */
+    static constexpr f32 deck_hold = 10.f;
+    /* Knocked further than this, it takes a new spot */
+    static constexpr f32 deck_reach = .3f; /* wu */
     static constexpr f32 impact_speed    = .5f; /* wu/s */
     /* A vehicle coming at a unit faster than this runs it down */
     static constexpr f32 struck_speed    = 1.f; /* wu/s */
@@ -3054,6 +3169,11 @@ struct PhysicsSystem
     static constexpr u32 impact_cooldown = 9;
     static constexpr u32 impact_settle   = 60;
     u32                  m_steps{0};
+    struct glide_t
+    {
+        btTransform from, to;
+    };
+    std::map<u64, glide_t> m_glides;
     std::map<u64, u32>   m_last_impact;
     std::map<btRigidBody const*, btVector3> m_before_step;
     static constexpr f32 ground_probe_up   = .2f;
