@@ -327,6 +327,14 @@ struct BitmapItem
     {
         return header;
     }
+
+    /* The base level as uploaded; GL ES 2 cannot be asked */
+    inline Vecf2 texel_count() const
+    {
+        return Vecf2(
+            std::max(image.mip->isize.x >> mipmaps.base, 1),
+            std::max(image.mip->isize.y >> mipmaps.base, 1));
+    }
 };
 
 struct ShaderItem

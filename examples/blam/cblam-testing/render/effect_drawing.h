@@ -81,6 +81,7 @@ struct EffectDrawer
 
     static constexpr u32     rgb5a1_code = 15;
     std::optional<PixDesc>   rgb5a1_fmt;
+    std::map<u32, Vecf2>     rgb5a1_texels; /* by layer, for the ES2 decode */
     std::array<std::optional<PixDesc>, 16> formats; /* by format code */
     u32 image_generation{~0u};
 
@@ -229,6 +230,7 @@ struct EffectDrawer
         {
             out.format  = static_cast<f32>(rgb5a1_code);
             rgb5a1_fmt  = item->image.fmt;
+            rgb5a1_texels[atlas.layer & 0xFFFFFF] = item->texel_count();
         }
         out.layer  = static_cast<f32>(atlas.layer & 0xFFFFFF);
         formats[static_cast<u32>(out.format) % formats.size()] =

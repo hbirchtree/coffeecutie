@@ -4005,8 +4005,10 @@ struct LegacyMeshRenderer
                     continue;
                 sampler = bucket.sampler;
                 sampler->rebind(sub);
-                auto const size = sub->size();
-                texel_count = Vecf2(std::max(size.w, 1u), std::max(size.h, 1u));
+                if(auto it = m_effects.rgb5a1_texels.find(run.layer);
+                   run.format == effect_drawer::rgb5a1_code &&
+                   it != m_effects.rgb5a1_texels.end())
+                    texel_count = it->second;
             } else
             {
                 /* Untextured glow: the shader ignores the sampler */
