@@ -84,7 +84,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_first_person = player->mode.physics && !camera->cinematic;
 
         auto& resources = p.template subsystem<BlamResources>();
-        ensure_depth_sampler(resources);
+        ensure_depth_copy(resources);
         Matf4 const inverse_camera = glm::inverse(camera->matrix);
         Vecf2 const viewport{resources.offscreen_size};
         /* The water fan goes around the camera at sea level: the section's
@@ -118,6 +118,14 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         std::optional<Coffee::DProfContext> prof{std::in_place, "H2 passes"};
         for(int pass = 0; pass < 4; pass++)
         {
+            /* Opaque depth done: what the sea measures its depth against */
+            if(pass == 2)
+                m_depth_target->copy(
+                    *resources.offscreen,
+                    {0, 0, static_cast<u32>(viewport.x), static_cast<u32>(viewport.y)},
+                    {0, 0},
+                    gfx::render_targets::attachment::depth,
+                    gfx::render_targets::attachment::depth);
             if(pass == 1 && debug.render_fog)
                 draw_background_fog(vis, camera->camera.position, inverse_camera, resources);
             for(auto const& [mi, mat] : stl_types::enumerate(scene.materials))
@@ -848,15 +856,29 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     }
 
     /* The offscreen depth, read by the flares and the water */
-    void ensure_depth_sampler(BlamResources const& resources)
+    /* What the sea and flares read of the scene's depth: a copy, since
+     * sampling the attachment being drawn to is a feedback loop (ANGLE
+     * rejects the draw) */
+    void ensure_depth_copy(BlamResources const& resources)
     {
-        if(m_depth_source == resources.depth)
+        Veci2 const size = resources.offscreen_size;
+        if(m_depth_copy && m_depth_copy_size == size)
             return;
-        m_depth_source  = resources.depth;
-        m_depth_sampler = resources.depth->sampler();
+        if(!m_depth_target)
+        {
+            m_depth_target = m_api->alloc_rendertarget();
+            m_depth_target->alloc();
+        }
+        m_depth_copy =
+            m_api->alloc_texture(gfx::textures::d2, resources.depth->m_format, 1);
+        m_depth_copy->alloc(size_3d<i32>{size.x, size.y}.convert<u32>());
+        m_depth_target->attach(gfx::render_targets::attachment::depth, *m_depth_copy, 0);
+        m_depth_target->resize({0, 0, size.x, size.y});
+        m_depth_sampler = m_depth_copy->sampler();
         m_depth_sampler->alloc();
         m_depth_sampler->set_filtering(
             typing::Filtering::Nearest, typing::Filtering::Nearest);
+        m_depth_copy_size = size;
     }
 
     void ensure_gpu()
@@ -1071,7 +1093,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     std::vector<FlareVertex>                     m_flare_vertices;
     std::vector<std::shared_ptr<gfx::sampler_t>> m_flare_samplers;
     std::vector<Vecf2>                           m_flare_light;
-    std::shared_ptr<gfx::texture_2d_t>           m_depth_source;
+    std::shared_ptr<gfx::rendertarget_t>         m_depth_target;
+    std::shared_ptr<gfx::texture_2d_t>           m_depth_copy;
+    Veci2                                        m_depth_copy_size{};
     std::shared_ptr<gfx::sampler_t>              m_depth_sampler;
 
     std::shared_ptr<gfx::program_t>      m_fog_program;
