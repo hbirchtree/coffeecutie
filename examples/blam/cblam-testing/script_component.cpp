@@ -181,6 +181,12 @@ struct BlamScript
                !info.spawned && !info.is_remote())
                 return;
         m_proxy = &p;
+        m_save_queue->poll();
+        m_restore_queue->poll();
+        if(std::exchange(m_save_now, false))
+            save();
+        if(std::exchange(m_restore_now, false))
+            restore(p);
         watch_player(p);
         for(size_t i = 0; i < ticks.size(); i++)
         {
@@ -199,6 +205,70 @@ struct BlamScript
         /* Every frame, so props follow the animated hands holding them */
         place_attached(p);
         m_proxy = nullptr;
+    }
+
+    void save()
+    {
+        m_saved = saved_t{
+            .vm         = m_vm,
+            .actors     = m_actors,
+            .next_actor = m_next_actor,
+            .recordings = m_recordings,
+            .riders     = m_riders,
+            .attached   = m_attached,
+            .hovering   = m_hovering,
+            .custom     = m_custom,
+            .speakers   = m_speakers,
+            .tests      = m_tests,
+            .impulses   = m_impulses,
+            .loops      = m_loops,
+        };
+    }
+
+    /* Back to the checkpoint's threads and globals. What they had going on
+     * objects that have since gone is dropped; sounds looping since stop,
+     * and the checkpoint's start again */
+    void restore(Proxy& p)
+    {
+        if(!m_saved)
+            return;
+        auto const there = [&p](u64 id) { return p.template get<Model>(id) != nullptr; };
+        for(u32 loop : m_loops)
+            if(!m_saved->loops.contains(loop))
+                if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>())
+                {
+                    SoundEvent stop{.type = SoundEvent::stop_sound, .entity_id = loop_id({.integer = static_cast<i32>(loop)})};
+                    sounds->inject(stop, nullptr);
+                }
+        for(u32 loop : m_saved->loops)
+            if(!m_loops.contains(loop))
+                play(p, {.integer = static_cast<i32>(loop)}, {}, true);
+
+        auto saved   = *m_saved;
+        m_vm         = std::move(saved.vm);
+        m_actors     = std::move(saved.actors);
+        m_next_actor = saved.next_actor;
+        m_recordings = std::move(saved.recordings);
+        m_riders     = std::move(saved.riders);
+        m_attached   = std::move(saved.attached);
+        m_hovering   = std::move(saved.hovering);
+        m_custom     = std::move(saved.custom);
+        m_speakers   = std::move(saved.speakers);
+        m_tests      = saved.tests;
+        m_impulses   = std::move(saved.impulses);
+        m_loops      = std::move(saved.loops);
+        std::erase_if(m_recordings, [&](recording_t const& r) { return !there(r.entity); });
+        std::erase_if(m_riders, [&](rider_t const& r) { return !there(r.unit) || !there(r.vehicle); });
+        std::erase_if(m_attached, [&](attached_t const& a) { return !there(a.parent) || !there(a.child); });
+        std::erase_if(m_hovering, [&](u64 id) { return !there(id); });
+        std::erase_if(m_custom, [&](auto const& c) { return !there(c.first); });
+        std::erase_if(m_speakers, [&](auto const& s) { return !there(s.first); });
+        m_walking.clear();
+        m_deferred.clear();
+        m_spawning.clear();
+        m_despawning.clear();
+        m_recreate.clear();
+        log("back to the checkpoint");
     }
 
     /* Every thread ends and the players get their view and controls back */
@@ -1906,6 +1976,29 @@ struct BlamScript
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
     std::set<u32>                           m_loops;
     std::set<u32>                           m_unhandled;
+
+    /* What a checkpoint keeps of the scripts: their threads and globals,
+     * and what they set going */
+    struct saved_t
+    {
+        vm_t                                    vm;
+        std::map<std::string, std::vector<u32>> actors;
+        u32                                     next_actor;
+        std::vector<recording_t>                recordings;
+        std::vector<rider_t>                    riders;
+        std::vector<attached_t>                 attached;
+        std::set<u64>                           hovering;
+        std::map<u64, custom_t>                 custom;
+        std::map<u64, speaker_t>                speakers;
+        action_tests_t                          tests;
+        std::map<u32, libc_types::i64>          impulses;
+        std::set<u32>                           loops;
+    };
+    std::optional<saved_t> m_saved;
+    bool                   m_save_now{false};
+    bool                   m_restore_now{false};
+    std::shared_ptr<GameEventBus::queue_type<WorldSaveEvent>>    m_save_queue;
+    std::shared_ptr<GameEventBus::queue_type<WorldRestoreEvent>> m_restore_queue;
     Proxy*                                  m_proxy{nullptr};
 
     std::vector<std::string>   m_log;
@@ -1921,7 +2014,14 @@ void alloc_scripting(compo::EntityContainer& e)
     auto& gbus     = e.subsystem_cast<GameEventBus>();
     script.m_ticks = std::make_unique<TickQueue>(gbus);
     gbus.addEventFunction<MapLoadEvent>(
-        0, [&script](auto&, auto*) { script.m_scenario = nullptr; });
+        0, [&script](auto&, auto*) {
+            script.m_scenario = nullptr;
+            script.m_saved.reset();
+        });
+    script.m_save_queue = gbus.addQueuedEventFunction<WorldSaveEvent>(
+        0, [&script](GameEvent&, WorldSaveEvent*) { script.m_save_now = true; });
+    script.m_restore_queue = gbus.addQueuedEventFunction<WorldRestoreEvent>(
+        0, [&script](GameEvent&, WorldRestoreEvent*) { script.m_restore_now = true; });
     gbus.addEventFunction<MapChangedEvent<halo_version>>(
         0, [&script](auto&, MapChangedEvent<halo_version>* changed) {
             script.load_from(changed->container, changed->scenario);
