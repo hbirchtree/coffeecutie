@@ -75,7 +75,8 @@ macro(
   elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm")
     set(FLATPAK_ARCH "arm")
   else()
-    message(FATAL_ERROR "Flatpak architecture not defined: ${CMAKE_SYSTEM_PROCESSOR}")
+    message(FATAL_ERROR
+        "Flatpak architecture not defined: ${CMAKE_SYSTEM_PROCESSOR}")
   endif()
 
   set(FLATPAK_BASE_DIR "${FLATPAK_DEPLOY_DIRECTORY}/${FLATPAK_PKG_NAME}")
@@ -88,7 +89,8 @@ macro(
   set(FLATPAK_ICON_REF "${FLATPAK_PKG_NAME}")
 
   set(FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${FLATPAK_TARGET}")
-  set(FLATPAK_BUNDLE_DIR "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak/${FLATPAK_TARGET}.flatpak")
+  set(FLATPAK_BUNDLE_DIR
+      "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak/${FLATPAK_TARGET}.flatpak")
 
   # TODO: Unify this with the in-app information somehow
   set(FLATPAK_CONFIG "${FLATPAK_TARGET}")
@@ -102,10 +104,13 @@ macro(
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_ASSET_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_BINARY_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_LIBRARY_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_EXPORT_DIR}/share/applications"
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_EXPORT_DIR}/share/icons/hicolor/scalable/apps"
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "${FLATPAK_EXPORT_DIR}/share/applications"
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "${FLATPAK_EXPORT_DIR}/share/icons/hicolor/scalable/apps"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_DEPLOY_DIRECTORY}"
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak"
+    COMMAND ${CMAKE_COMMAND} -E make_directory 
+        "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak"
   )
 
   # Configure metadata file
@@ -133,7 +138,9 @@ macro(
 
   # Copy bundled libraries into flatpak
   foreach(LIB ${FLATPAK_BUNDLE_LIBRARIES} ${FLATPAK_EXTRA_LIBRARIES})
-    if(NOT EXISTS ${LIB} AND NOT "${LIB}" MATCHES "\\$<")
+    if(NOT EXISTS ${LIB} AND
+            NOT "${LIB}" MATCHES "\\$<" AND
+            NOT TARGET "${LIB}")
         continue()
     endif()
     add_custom_command(
@@ -147,8 +154,9 @@ macro(
     add_custom_command(
       TARGET ${FLATPAK_TARGET}.flatpak
       PRE_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${LIB}>"
-              "${FLATPAK_LIBRARY_DIR}"
+      COMMAND ${CMAKE_COMMAND} -E copy
+                "$<TARGET_FILE:${LIB}>"
+                "${FLATPAK_LIBRARY_DIR}"
     )
   endforeach()
 
@@ -178,8 +186,11 @@ macro(
   add_custom_command(
     TARGET ${FLATPAK_TARGET}.flatpak
     POST_BUILD
-    COMMAND ${FLATPAK_PROGRAM} build-bundle --arch ${FLATPAK_ARCH} "${FLATPAK_BUNDLE_REPO}"
-            "${FLATPAK_BUNDLE_DIR}" "${FLATPAK_PKG_NAME}"
+    COMMAND ${FLATPAK_PROGRAM} build-bundle
+        --arch ${FLATPAK_ARCH}
+        "${FLATPAK_BUNDLE_REPO}"
+        "${FLATPAK_BUNDLE_DIR}"
+        "${FLATPAK_PKG_NAME}"
   )
 
   if(FLATPAK_DEPLOY_LOCALLY)

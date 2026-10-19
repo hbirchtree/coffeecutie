@@ -77,14 +77,20 @@ function(EMSCRIPTEN_PACKAGE)
         ${BUNDLE_DIR}/../favicon.ico
   )
   foreach(LIB ${EM_BUNDLE_MODULES})
-    add_custom_command(
-        TARGET ${EM_TARGET}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND}
-            -E copy
-            $<TARGET_FILE:${LIB}>
-            ${BUNDLE_DIR}
-    )
+    # Allow specifying a target name, but also just a file
+    if(EXISTS LIB)
+      add_custom_command(
+          TARGET ${EM_TARGET}
+          POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy ${LIB} ${BUNDLE_DIR}
+      )
+    else()
+      add_custom_command(
+          TARGET ${EM_TARGET}
+          POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${LIB}> ${BUNDLE_DIR}
+      )
+    endif()
   endforeach()
 
   install(DIRECTORY ${BUNDLE_DIR} DESTINATION bin)

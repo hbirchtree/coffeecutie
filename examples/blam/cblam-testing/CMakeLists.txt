@@ -16,32 +16,17 @@ include(ResourcePackaging)
 
 set(BUNDLED_LIBS)
 # OpenAL has to have shared linkage
-if(BUILD_OPENAL AND NOT EMSCRIPTEN)
+if(BUILD_OPENAL)
     if(ANDROID)
         find_package(OpenSL REQUIRED)
     endif()
     find_package(OpenAL CONFIG REQUIRED)
-    set(shared_libs OpenAL::OpenAL)
-    if(BUILD_OPENAL_WMA)
-        find_package(libwma CONFIG REQUIRED)
-        list(APPEND shared_libs libwma::wma)
-    endif()
-    # Some triplets (Android) still link OpenAL statically
-    foreach(lib ${shared_libs})
-        get_target_property(lib_type ${lib} TYPE)
-        if(lib_type STREQUAL "SHARED_LIBRARY")
-            list(APPEND BUNDLED_LIBS $<TARGET_SONAME_FILE:${lib}>)
-        endif()
-    endforeach()
-elseif(BUILD_OPENAL AND EMSCRIPTEN)
-    find_package(OpenAL CONFIG REQUIRED)
     set(BUNDLED_LIBS OpenAL::OpenAL)
-    if(BUILD_OPENAL_WMA)
+    if(BUILD_BLAM_DIMETER AND BUILD_OPENAL_WMA)
         find_package(libwma CONFIG REQUIRED)
         list(APPEND BUNDLED_LIBS libwma::wma)
     endif()
-    if(BUILD_OPENAL_XMA2)
-        # Imported targets are per directory; OAF's find_package isn't seen here
+    if(BUILD_BLAM_ELEGY AND BUILD_OPENAL_XMA2)
         find_package(ffmpeg-decoders CONFIG REQUIRED)
         list(APPEND BUNDLED_LIBS ffmpeg-decoders::ffmpeg-decoders)
     endif()
@@ -69,11 +54,6 @@ coffee_application(
         debug_ui/widgets.cpp
         forge_controller.cpp
         graphics.cpp
-        h2/h2_loader.cpp
-        h2/h2_occluder.cpp
-        h2/h2_renderer.cpp
-        h2/h2_shell.cpp
-        h2/h2_sound.cpp
         player_controller.cpp
         loading.cpp
         map_loading.cpp
@@ -205,13 +185,6 @@ if(BUILD_PHYSICS AND BULLET_FOUND)
     target_include_directories(BlamGraphics PRIVATE ${BULLET_INCLUDE_DIR})
 endif()
 
-# coffee_application(
-#   TARGET BlamScripting
-#   TITLE "Blam Scripting"
-#   SOURCES scripting.cpp
-#   LIBRARIES Blam Core
-# )
-
 if(BLAM_CURSED)
     find_package(BZip2 REQUIRED)
     # hash-library: SHA-256 for the RS2 cache content signature
@@ -226,6 +199,15 @@ if(BLAM_CURSED)
     )
     target_compile_definitions(BlamGraphics PRIVATE
       -DBLAM_CURSED_ENABLED
+    )
+endif()
+if(BUILD_BLAM_DIMETER)
+    target_sources(BlamGraphics PRIVATE
+      h2/h2_loader.cpp
+      h2/h2_occluder.cpp
+      h2/h2_renderer.cpp
+      h2/h2_shell.cpp
+      h2/h2_sound.cpp
     )
 endif()
 
