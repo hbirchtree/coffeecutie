@@ -278,6 +278,8 @@ struct H3Scene : compo::SubsystemBase
     std::vector<CubeTexture>                    cubemaps;
     std::vector<CubemapProbe>                   cubemap_probes;
     std::vector<DynamicLight>                   lights;
+    /* cook_torrance area specular tables: cc0236, dd0236 */
+    std::array<Texture, 2>                      area_specular;
     /* Primary and secondary change colours per object entity */
     std::unordered_map<u64, std::array<Vecf3, 2>> change_colors;
 

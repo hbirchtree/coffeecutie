@@ -315,6 +315,32 @@ vec3 area_specular(baked_light_t light, vec3 r, vec3 tint)
     return (light.l0.r * 0.4231425 - 0.3805236 * sh_linear(light, r)) * tint;
 }
 
+/* cook_torrance's pre-integrated area specular, rasterizer\\cc0236 and
+ * dd0236, by view angle off the normal and roughness */
+layout(location=244, binding=19) uniform sampler2D area_specular_c;
+layout(location=245, binding=20) uniform sampler2D area_specular_d;
+
+/* sh_glossy_ct_2, blended by reflectance as calc_material_cook_torrance_base
+ * does, so dark metals keep their Schlick rim */
+vec3 area_specular_ct(baked_light_t light, vec3 n, vec3 v, vec3 r, float roughness, vec3 reflectance)
+{
+    vec3  tangent = v - dot(v, n) * n;
+    float sine    = length(tangent);
+    vec3  x       = sine > 1e-5 ? tangent / sine : vec3(0.0);
+    vec2  lookup  = vec2(sine + 0.5 / 32.0, max(roughness, 0.05));
+    vec4  c = texture(area_specular_c, lookup), d = texture(area_specular_d, lookup);
+    float r_dot_l = max(dot(light.dir, r), 0.0) * 0.65 + 0.35;
+    vec3  specular_part, schlick_part;
+    for(int i = 0; i < 3; i++)
+    {
+        vec3 sh    = vec3(light.l3[i], light.l1[i], -light.l2[i]);
+        vec4 local = vec4(light.l0[i], -dot(n, sh) * r_dot_l, dot(x, sh) * r_dot_l, 0.0);
+        specular_part[i] = dot(c, local);
+        schlick_part[i]  = dot(d, local) * 0.01;
+    }
+    return specular_part * reflectance + (1.0 - reflectance) * schlick_part;
+}
+
 /* Specular radiance of the material model, and the diffuse scale; Halo 3's
  * calc_material_*_ps without dynamic lights, anti-shadow or env maps */
 vec3 material_specular(
@@ -384,8 +410,7 @@ vec3 material_specular(
             analytic += min(lobe, vec3(n_dot_l + 1.0)) * irradiance;
         }
         }
-        /* Stands in for the pre-integrated area lookup tables */
-        area = area_specular(light, r, reflectance);
+        area = area_specular_ct(light, n, v, r, params.a, reflectance);
         analytic *= spec_tint1.rgb;
         area *= spec_tint1.rgb;
     }

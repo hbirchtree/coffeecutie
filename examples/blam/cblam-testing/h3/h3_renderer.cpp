@@ -473,7 +473,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{
                             stage_t::Fragment,
                             {"object_lights", 18},
-                            scene.object_lights_sampler ? scene.object_lights_sampler : m_white_sampler});
+                            scene.object_lights_sampler ? scene.object_lights_sampler : m_white_sampler},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"area_specular_c", 19}, or_white(scene.area_specular[0])},
+                        gfx::sampler_definition_t{
+                            stage_t::Fragment, {"area_specular_d", 20}, or_white(scene.area_specular[1])});
                     res = submit(frag_u, samplers);
                 }
                 if(res.has_value() && !m_draw_error_logged)
