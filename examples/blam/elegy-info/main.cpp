@@ -54,6 +54,7 @@ struct options_t
     bool        zones;
     bool        player;
     bool        animations;
+    bool        mips;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -693,7 +694,7 @@ int dump_bitmaps(
             auto const& image = images[i];
             auto format = image.format.value();
             fmt::print(
-                "  {}: {}x{}x{} {} type {} mips {} xbox flags {:#x}\n",
+                "  {}: {}x{}x{} {} type {} mips {} xbox flags {:#x} curve {}\n",
                 i,
                 image.width.value(),
                 image.height.value(),
@@ -701,7 +702,8 @@ int dump_bitmaps(
                 elegy::to_string(format),
                 static_cast<u16>(image.type.value()),
                 image.mipmap_count,
-                static_cast<u8>(image.xbox_flags));
+                static_cast<u8>(image.xbox_flags),
+                image.curve);
             auto interleaved = bitmap->interleaved_textures.span(magic);
             bool const in_pair = textures.empty() && image.interleaved_interop >= 0 &&
                                  static_cast<size_t>(image.interleaved_interop) < interleaved.size();
@@ -1078,6 +1080,104 @@ int dump_animations(elegy::map_container const& map, elegy::resource_loader& loa
     }
     fmt::print("animations: {} decoded, {} failed\n", decoded, failed);
     return failed ? 1 : 0;
+}
+
+/* Mip levels against the top level: each level's DXT block colours (the
+ * mean of the endpoints) against the top level's, box-filtered to match */
+int check_mips(elegy::map_container const& map, elegy::resource_loader& loader, options_t const& options)
+{
+    using elegy::bitmap_format_t;
+    u32  checked = 0, matching = 0, levels_total = 0;
+    auto grid    = [](std::vector<byte_t> const& blocks, u32 bpb) {
+        std::vector<f32> out;
+        u32 const        colour = bpb == 16 ? 8 : 0;
+        for(size_t at = 0; at + bpb <= blocks.size(); at += bpb)
+        {
+            auto rgb = [&](size_t o) {
+                u16 const c = u16(blocks[at + colour + o] | (blocks[at + colour + o + 1] << 8));
+                return 0.2126f * ((c >> 11) & 31) / 31.f + 0.7152f * ((c >> 5) & 63) / 63.f +
+                       0.0722f * (c & 31) / 31.f;
+            };
+            out.push_back((rgb(0) + rgb(2)) * .5f);
+        }
+        return out;
+    };
+    for(auto const& tag : map.tags())
+    {
+        if(!tag.valid() || !map.is(tag, elegy::bitmap_t::group) ||
+           map.name_of(tag).find(options.name_filter) == std::string_view::npos)
+            continue;
+        auto const* bitmap = map.tag_data<elegy::bitmap_t>(tag);
+        auto        images = map.span(bitmap->images);
+        auto        hw     = map.span(bitmap->hardware_textures);
+        if(images.empty() || hw.empty())
+            continue;
+        auto const& image  = images[0];
+        auto const  format = image.format.value();
+        if(image.type.value() != elegy::bitmap_type_t::texture_2d ||
+           (format != bitmap_format_t::dxt1 && format != bitmap_format_t::dxt3 && format != bitmap_format_t::dxt5))
+            continue;
+        auto view = loader.load(hw[0].resource);
+        if(!view.has_value())
+            continue;
+        u32 const bpb    = format == bitmap_format_t::dxt1 ? 8 : 16;
+        u32 const width  = static_cast<u32>(image.width.value());
+        u32 const height = static_cast<u32>(image.height.value());
+        u32 const count  = elegy::level_count(view.value(), image);
+        std::vector<byte_t> top, level;
+        if(count < 2 || !elegy::linearize_level(view.value(), image, 0, top))
+            continue;
+        auto const g0  = grid(top, bpb);
+        u32 const  bw0 = (width + 3) / 4, bh0 = (height + 3) / 4;
+        std::string line;
+        bool        all = true;
+        for(u32 l = 1; l < count; l++)
+        {
+            levels_total++;
+            if(!elegy::linearize_level(view.value(), image, l, level))
+            {
+                line += " -";
+                all = false;
+                continue;
+            }
+            auto const gl  = grid(level, bpb);
+            u32 const  bw  = (std::max(width >> l, 1u) + 3) / 4, bh = (std::max(height >> l, 1u) + 3) / 4;
+            u32 const  fx  = std::max(bw0 / bw, 1u), fy = std::max(bh0 / bh, 1u);
+            std::vector<f32> ref(gl.size());
+            for(u32 y = 0; y < bh; y++)
+                for(u32 x = 0; x < bw; x++)
+                {
+                    f32 sum = 0.f;
+                    for(u32 v = 0; v < fy; v++)
+                        for(u32 u = 0; u < fx; u++)
+                            sum += g0[std::min((y * fy + v), bh0 - 1) * bw0 + std::min(x * fx + u, bw0 - 1)];
+                    ref[y * bw + x] = sum / f32(fx * fy);
+                }
+            f32 ma = 0, mb = 0;
+            for(size_t i = 0; i < gl.size(); i++)
+                ma += gl[i], mb += ref[i];
+            ma /= f32(gl.size()), mb /= f32(gl.size());
+            f32 sab = 0, saa = 0, sbb = 0;
+            for(size_t i = 0; i < gl.size(); i++)
+                sab += (gl[i] - ma) * (ref[i] - mb), saa += (gl[i] - ma) * (gl[i] - ma), sbb += (ref[i] - mb) * (ref[i] - mb);
+            /* Small or flat levels by their mean, the rest by correlation */
+            bool const flat = gl.size() < 16 || saa < 1e-4f || sbb < 1e-4f;
+            f32 const  score = flat ? 1.f - std::abs(ma - mb) * 4.f : sab / std::sqrt(saa * sbb);
+            bool const good  = score > .8f;
+            all &= good;
+            matching += good;
+            line += fmt::format(" {}{:.2f}", flat ? "~" : "", score);
+        }
+        checked++;
+        if(!all || options.list)
+            fmt::print("{} {}x{} {} flags {:#x} levels {}:{}\n", map.name_of(tag), width, height,
+                       elegy::to_string(format), static_cast<u8>(image.xbox_flags), count, line);
+        loader.trim();
+        if(options.limit && checked >= options.limit)
+            break;
+    }
+    fmt::print("mips: {} bitmaps, {} of {} levels match the top level\n", checked, matching, levels_total);
+    return 0;
 }
 
 /* Lights: their shape and the raw functions colour and intensity follow */
@@ -1549,6 +1649,8 @@ int run_map(
         rc |= dump_player(map);
     if(options.animations)
         rc |= dump_animations(map, *loader, options);
+    if(options.mips)
+        rc |= check_mips(map, *loader, options);
     return rc;
 }
 
@@ -1592,6 +1694,8 @@ i32 coffee_main(i32, cstring_w*)
         ("player", "List player representations and starting weapons' first-person models")
         //
         ("animations", "List animation graphs and their animations")
+        //
+        ("mips", "Check DXT bitmaps' mip levels against their top level")
         //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
@@ -1643,6 +1747,7 @@ i32 coffee_main(i32, cstring_w*)
         .zones        = arguments.count("zones") > 0,
         .player       = arguments.count("player") > 0,
         .animations   = arguments.count("animations") > 0,
+        .mips         = arguments.count("mips") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),

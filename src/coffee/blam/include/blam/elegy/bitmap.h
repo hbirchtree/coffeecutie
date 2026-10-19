@@ -332,4 +332,16 @@ inline Span<byte_t const> top_level(
     return view.bytes(texture->primary);
 }
 
+/*! How many mip levels an image's first hardware texture holds, the top
+ * level counted */
+u32 level_count(resource_view const& view, bitmap_image_t const& image);
+
+/*!
+ * \brief Mip level `level` (0 = top) of an image's first hardware texture,
+ * linearized as linearize() does. Past the top level, levels follow each
+ * other in the primary data at power-of-two sizes; once the short side is
+ * 16 texels or less they share one 32x32-block tile, each at its own offset.
+ */
+bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<byte_t>& out);
+
 } // namespace blam::elegy

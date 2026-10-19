@@ -1,5 +1,7 @@
 #include <blam/elegy/bitmap.h>
 
+#include <bit>
+
 namespace blam::elegy {
 
 std::string_view to_string(bitmap_format_t format)
@@ -255,6 +257,100 @@ bool linearize(
             std::reverse(
                 out.begin() + static_cast<std::ptrdiff_t>(i),
                 out.begin() + static_cast<std::ptrdiff_t>(i + layout.swap_bytes));
+    return true;
+}
+
+namespace {
+
+u32 log2_ceil(u32 v)
+{
+    return static_cast<u32>(std::bit_width(std::max(v, 1u) - 1));
+}
+
+/* A level's storage: blocks padded to 32x32, then to 4 KiB */
+u64 level_bytes(format_layout_t const& layout, u32 width, u32 height)
+{
+    u32 bw = (width + layout.block_edge - 1) / layout.block_edge;
+    u32 bh = (height + layout.block_edge - 1) / layout.block_edge;
+    u64 bytes = u64((bw + 31) & ~31u) * ((bh + 31) & ~31u) * layout.block_bytes;
+    return (bytes + 4095) & ~u64(4095);
+}
+
+/* Where a packed level sits in the mip tail's tile, in texels (Xenia's
+ * GetPackedMipOffset): the first three down the long side's edge, the rest
+ * along the other */
+void packed_offset(u32 width, u32 height, u32 level, u32& x, u32& y)
+{
+    u32 const log2_w = log2_ceil(width), log2_h = log2_ceil(height);
+    u32 const log2_size = std::min(log2_w, log2_h);
+    u32 const base      = log2_size > 4 ? log2_size - 4 : 0;
+    u32 const packed    = level - base;
+    bool const wide     = log2_w > log2_h;
+    x = y = 0;
+    if(packed < 3)
+        (wide ? y : x) = 16u >> packed;
+    else
+        (wide ? x : y) = (1u << ((wide ? log2_w : log2_h) - base)) >> (packed - 2);
+}
+
+} // namespace
+
+u32 level_count(resource_view const& view, bitmap_image_t const& image)
+{
+    auto const* interop = view.root_as<d3d_structure<texture_interop_t>>();
+    auto const* texture = interop ? view.resolve(*interop) : nullptr;
+    return texture ? std::max<u32>(texture->texture.mipmap_count, 1) : 1;
+}
+
+bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<byte_t>& out)
+{
+    auto const format = image.format.value();
+    auto const layout = layout_of(format);
+    u32 const  width  = static_cast<u32>(image.width.value());
+    u32 const  height = static_cast<u32>(image.height.value());
+    if(level == 0)
+        return linearize(top_level(view, image), format, width, height, image.xbox_flags, out);
+    auto const* interop = view.root_as<d3d_structure<texture_interop_t>>();
+    auto const* texture = interop ? view.resolve(*interop) : nullptr;
+    if(!texture || !layout.valid() || level >= level_count(view, image))
+        return false;
+    bool const high_res = enum_helpers::feval(image.xbox_flags, bitmap_xbox_flags_t::high_res_offset);
+    auto const primary  = view.bytes(texture->primary);
+    u32 const w2 = std::bit_ceil(std::max(width, 1u)), h2 = std::bit_ceil(std::max(height, 1u));
+    /* Without the top level split off, the levels follow it, unless it is
+     * small enough to share their tile */
+    u64 at = high_res || std::min(w2, h2) <= 16 ? 0 : level_bytes(layout, width, height);
+    for(u32 i = 1; i < level && std::min(std::max(w2 >> i, 1u), std::max(h2 >> i, 1u)) > 16; i++)
+        at += level_bytes(layout, std::max(w2 >> i, 1u), std::max(h2 >> i, 1u));
+    u32 const lw = std::max(w2 >> level, 1u), lh = std::max(h2 >> level, 1u);
+    u32       ox = 0, oy = 0, pitch = lw;
+    if(std::min(lw, lh) <= 16)
+    {
+        packed_offset(w2, h2, level, ox, oy);
+        pitch = 32 * layout.block_edge;
+    }
+    if(at >= primary.size())
+        return false;
+    auto const stored = primary.subspan(at);
+    /* The level's own texels, not its power-of-two storage */
+    u32 const bw  = (std::max(width >> level, 1u) + layout.block_edge - 1) / layout.block_edge;
+    u32 const bh  = (std::max(height >> level, 1u) + layout.block_edge - 1) / layout.block_edge;
+    u32 const pbw = (pitch + layout.block_edge - 1) / layout.block_edge;
+    u32 const bx = ox / layout.block_edge, by = oy / layout.block_edge, bpb = layout.block_bytes;
+    bool const tiled = enum_helpers::feval(image.xbox_flags, bitmap_xbox_flags_t::tiled);
+    out.assign(size_t(bw) * bh * bpb, 0);
+    for(u32 y = 0; y < bh; y++)
+        for(u32 x = 0; x < bw; x++)
+        {
+            u64 from = u64(tiled ? tiled_offset(x + bx, y + by, pbw, bpb) : (y + by) * ((pbw + 31) & ~31u) + x + bx) * bpb;
+            if(from + bpb > stored.size())
+                continue;
+            std::memcpy(out.data() + (size_t(y) * bw + x) * bpb, stored.data() + from, bpb);
+        }
+    if(enum_helpers::feval(image.xbox_flags, bitmap_xbox_flags_t::byte_order) && layout.swap_bytes > 1)
+        for(size_t i = 0; i + layout.swap_bytes <= out.size(); i += layout.swap_bytes)
+            std::reverse(out.begin() + static_cast<std::ptrdiff_t>(i),
+                         out.begin() + static_cast<std::ptrdiff_t>(i + layout.swap_bytes));
     return true;
 }
 
