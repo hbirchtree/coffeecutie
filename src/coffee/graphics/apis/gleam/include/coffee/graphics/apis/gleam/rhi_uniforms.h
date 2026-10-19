@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstring>
 #include <peripherals/stl/tuple_foreach.h>
 #include <peripherals/stl/tuple_slice.h>
 
@@ -68,7 +69,7 @@ inline i32 get_program_uniform_location(
         return live == 1 ? ulocation : invalid_uniform;
     }
 
-    if(auto it = program.m_uniform_locations.find(std::string(key.name));
+    if(auto it = program.m_uniform_locations.find(key.name);
        it != program.m_uniform_locations.end())
         return it->second;
 
@@ -108,6 +109,24 @@ inline i32 get_program_buffer_location(
         std::string(key.name.begin(), key.name.end())));
 }
 
+/* True if `location` already holds `data`; otherwise records it */
+template<typename Span>
+inline bool uniform_unchanged(program_t& program, i32 location, Span const& data)
+{
+    if(location < 0 || location >= 4096)
+        return false;
+    auto const* bytes = reinterpret_cast<std::byte const*>(data.data());
+    auto const  size  = data.size() * sizeof(*data.data());
+    auto&       cache = program.m_uniform_values;
+    if(cache.size() <= static_cast<size_t>(location))
+        cache.resize(static_cast<size_t>(location) + 1);
+    auto& slot = cache[static_cast<size_t>(location)];
+    if(slot.size() == size && std::memcmp(slot.data(), bytes, size) == 0)
+        return true;
+    slot.assign(bytes, bytes + size);
+    return false;
+}
+
 template<typename T, int Num>
 inline bool apply_single_uniform(
     program_t&                                                  program,
@@ -119,6 +138,9 @@ inline bool apply_single_uniform(
 
     if(ulocation == invalid_uniform)
         return false;
+    if(!program.m_features.separable_programs &&
+       uniform_unchanged(program, ulocation, data))
+        return true;
 
 #if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
@@ -144,6 +166,9 @@ inline bool apply_single_uniform(
 
     if(ulocation == invalid_uniform)
         return false;
+    if(!program.m_features.separable_programs &&
+       uniform_unchanged(program, ulocation, data))
+        return true;
 
 #if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
@@ -168,6 +193,9 @@ inline bool apply_single_uniform(
 
     if(ulocation == invalid_uniform)
         return false;
+    if(!program.m_features.separable_programs &&
+       uniform_unchanged(program, ulocation, data))
+        return true;
 
 #if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
@@ -238,8 +266,7 @@ inline bool apply_command_modifier(
         {
             u32 blk_idx  = 0;
             i32 blk_size = 0;
-            if(auto it = program.m_buffer_locations.find(
-                   std::string(buffer_def.key.name));
+            if(auto it = program.m_buffer_locations.find(buffer_def.key.name);
                it == program.m_buffer_locations.end())
             {
                 blk_idx = cmd::get_uniform_block_index(
