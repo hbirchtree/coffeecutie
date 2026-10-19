@@ -55,6 +55,7 @@ struct blend_state
     bool additive{false};
     bool multiply{false};
     bool maximum{false};
+    bool premultiplied{false}; /*!< src + dst * (1 - src.a) */
 };
 
 struct stencil_state

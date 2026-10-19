@@ -795,6 +795,11 @@ inline bool apply_command_modifier(
     {
         cmd::blend_func(
             group::blending_factor::src_alpha, group::blending_factor::one);
+    } else if(view_info.premultiplied)
+    {
+        cmd::blend_func(
+            group::blending_factor::one,
+            group::blending_factor::one_minus_src_alpha);
     } else if(view_info.multiply)
     {
         cmd::blend_func(
