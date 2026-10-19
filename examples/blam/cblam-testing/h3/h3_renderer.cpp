@@ -57,12 +57,15 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             m_generation = scene.generation;
         }
         PlayerCamera const* camera{};
+        /* The free (forge) camera has no body to hold anything */
+        bool first_person_shown = false;
         for(auto e : p.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = e.components();
             if(info.seat_idx != 0)
                 continue;
-            camera = &cam;
+            camera             = &cam;
+            first_person_shown = info.mode.physics;
             break;
         }
         if(!camera)
@@ -192,6 +195,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         /* In front of everything, so it never reaches into walls */
                         if(object.entity == first_person_entity)
                         {
+                            if(!first_person_shown)
+                                continue;
                             object_lit = first_person_light ? 1 : 0;
                             if(first_person_light)
                                 object_light = *first_person_light;
