@@ -832,13 +832,18 @@ struct BlamScript
         case op::game_save_totally_unsafe: {
             GameEvent       ev{.type = GameEvent::Checkpoint};
             CheckpointEvent save{};
+            if(opcode == op::game_save_no_timeout)
+                save.timeout = std::numeric_limits<f32>::infinity();
+            else if(opcode == op::game_save_totally_unsafe)
+                save.timeout = 0.f;
             p.template subsystem<GameEventBus>().inject(ev, &save);
             return {};
         }
         case op::game_saving:
-            return value_t::boolean(false);
+            return value_t::boolean(p.template subsystem<GameState>().saving);
         case op::game_safe_to_save:
-            return value_t::boolean(true);
+        case op::game_all_quiet:
+            return value_t::boolean(p.template subsystem<GameState>().quiet);
         case op::game_reverted:
             return value_t::boolean(p.template subsystem<GameState>().reverts > 0);
         case op::game_won: {

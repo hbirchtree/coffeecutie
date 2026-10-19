@@ -64,6 +64,8 @@ coffee_application(
         projectiles.cpp
         damage.cpp
         game_mode.cpp
+        campaign_controller.cpp
+        multiplayer_controller.cpp
         checkpoint.cpp
         effects.cpp
         weapons.cpp

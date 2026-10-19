@@ -515,6 +515,9 @@ struct GameWonEvent
 struct CheckpointEvent
 {
     static constexpr auto event_type = GameEvent::Checkpoint;
+
+    /*! Seconds to wait for a quiet moment; 0 saves now, infinity waits */
+    libc_types::f32 timeout{8.f};
 };
 
 /*! The game mode takes a checkpoint: every system keeps what it owns */

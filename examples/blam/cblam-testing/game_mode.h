@@ -53,6 +53,10 @@ struct GameState : compo::SubsystemBase
     f32                    time_left{-1.f}; /*!< Seconds; below 0 without a limit */
     u32                    saves{0};   /*!< Checkpoints taken */
     u32                    reverts{0}; /*!< Times sent back to one */
+    /*! Campaign, on the authority: nobody hurt for a while, so the fallen
+     *  may come back and a checkpoint may be taken */
+    bool quiet{true};
+    bool saving{false}; /*!< A checkpoint waits for quiet */
 
     player_t* player(u32 player_idx)
     {
@@ -86,4 +90,8 @@ struct GameState : compo::SubsystemBase
     }
 };
 
+/*! The game state, with a controller for campaign and one for multiplayer */
 void alloc_game_mode(compo::EntityContainer& e);
+
+void alloc_campaign_controller(compo::EntityContainer& e);
+void alloc_multiplayer_controller(compo::EntityContainer& e);
