@@ -348,6 +348,28 @@ struct alignas(4) shad_header_t
 static_assert(offsetof(shad_header_t, runtime_properties) == 0x0C);
 static_assert(offsetof(shad_header_t, properties) == 0x20);
 
+/*! A point on a node, e.g. where a unit's camera sits */
+struct alignas(4) model_marker_t
+{
+    i8    region;
+    i8    permutation;
+    i8    node;
+    u8    unknown_0;
+    Vecf3 translation; /*!< Node space */
+    Quatf rotation;    /* x, y, z, w */
+    f32   scale;
+};
+
+static_assert(sizeof(model_marker_t) == 0x24);
+
+struct alignas(4) marker_group_t
+{
+    string_id                 name;
+    tag_block<model_marker_t> markers;
+};
+
+static_assert(sizeof(marker_group_t) == 0xC);
+
 /*! render_model (mode) tag body prefix; only the geometry-relevant blocks */
 struct alignas(4) model_header_t
 {
@@ -359,13 +381,15 @@ struct alignas(4) model_header_t
     tag_block<model_section_t> sections;
     u8                         unknown_1[28];
     tag_block<model_node_t>    nodes;
-    u8                         unknown_2[16];
+    u8                         unknown_2[8];
+    tag_block<marker_group_t>  marker_groups;
     tag_block<shader_ref_t>    shaders;
 };
 
 static_assert(offsetof(model_header_t, bounds) == 0x14);
 static_assert(offsetof(model_header_t, sections) == 0x24);
 static_assert(offsetof(model_header_t, nodes) == 0x48);
+static_assert(offsetof(model_header_t, marker_groups) == 0x58);
 static_assert(offsetof(model_header_t, shaders) == 96);
 
 /*! sbsp cluster / section geometry, shared field layout (cluster elem is
