@@ -513,6 +513,7 @@ enum class v4 : libc_types::i16
     seconds,
     sound_looping_set_alternate_,
     thread_sleep,
+    unit_is_playing_custom_animation,
 };
 
 std::string_view to_string(v4 opcode);
