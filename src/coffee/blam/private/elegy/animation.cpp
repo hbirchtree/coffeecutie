@@ -364,7 +364,7 @@ std::optional<decoded_animation_t> decode_animation(
     if(member < 0 || static_cast<size_t>(member) >= members.size())
         return std::nullopt;
     auto const own = defaults.empty() ? graph.default_pose(map) : std::vector<node_pose_t>();
-    return decode_animation(view.value(), members[static_cast<size_t>(member)], defaults.empty() ? Span(own) : defaults);
+    return decode_animation(view.value(), members[static_cast<size_t>(member)], defaults.empty() ? Span<node_pose_t const>(own) : defaults);
 }
 
 std::vector<node_pose_t> default_pose(
