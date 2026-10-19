@@ -89,7 +89,13 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         if(m_start == time_point{})
             m_start = now;
         f32 const seconds = std::chrono::duration<f32>(now - m_start).count();
-        render_shadows(p, scene, *camera);
+        /* Timed per section; the queries cannot nest */
+        auto const frame_scope = m_api->debug().scope("H3Renderer");
+        {
+            auto const _     = m_api->debug().scope("H3Renderer shadows");
+            auto const timer = m_system->gpu_timer("H3Renderer shadows");
+            render_shadows(p, scene, *camera);
+        }
         gather_lights(p, scene);
         Model first_person{};
         /* Where the view is drawn from, between ticks when walking */
@@ -99,10 +105,18 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         auto const& csm_atlas = m_shadows.valid() ? m_shadows.sampler() : m_white_sampler;
         /* Opaque first, then water over a copy of the scene, then alpha
          * blended, then additive */
+        static constexpr std::array<char const*, 3> pass_names = {
+            "H3Renderer opaque", "H3Renderer blended", "H3Renderer additive"};
         for(int pass = 0; pass < 3; pass++)
         {
             if(pass == 1)
+            {
+                auto const _     = m_api->debug().scope("H3Renderer water");
+                auto const timer = m_system->gpu_timer("H3Renderer water");
                 draw_water(scene, resources, *camera, exposure, seconds);
+            }
+            auto const pass_scope = m_api->debug().scope(pass_names[static_cast<size_t>(pass)]);
+            auto const pass_timer = m_system->gpu_timer(pass_names[static_cast<size_t>(pass)]);
             for(auto const& mat : scene.materials)
             {
                 int const mat_pass = mat.additive ? 2 : mat.blended ? 1 : 0;
@@ -851,7 +865,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     {
         if(m_api)
             return;
-        m_api     = &m_container.subsystem_cast<gfx::system>();
+        m_system  = &m_container.subsystem_cast<gfx::system>();
+        m_api     = m_system;
         auto& api = *m_api;
 
         /* The level and objects, and the first person's own vertices */
@@ -944,6 +959,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
 
     compo::EntityContainer& m_container;
     gfx::api*               m_api{nullptr};
+    gfx::system*            m_system{nullptr}; /*!< m_api, for GPU timers */
     u32                     m_generation{0};
 
     std::shared_ptr<gfx::vertex_array_t>        m_vao;
