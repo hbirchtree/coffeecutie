@@ -123,20 +123,21 @@ struct BlamResources : compo::SubsystemBase
     check_shaders_ready() const
     {
         shader_status_t status;
-        for(gfx::program_t* program : {
-                bsp_pipeline.get(),
-                model_pipeline.get(),
-                bsp_pipeline_base.get(),
-                bsp_pipeline_chicago.get(),
-                bsp_pipeline_sotr.get(),
-                model_pipeline_base.get(),
-                model_pipeline_chicago.get(),
-                model_pipeline_sotr.get(),
-                camo.get(),
-                chicago_pipeline.get(),
-                water_pipeline.get(),
-                wireframe_pipeline.get(),
-                debug_lines_pipeline.get(),
+        using named_t = std::pair<std::string_view, gfx::program_t*>;
+        for(auto [name, program] : {
+                named_t{"bsp", bsp_pipeline.get()},
+                named_t{"model", model_pipeline.get()},
+                named_t{"bsp_base", bsp_pipeline_base.get()},
+                named_t{"bsp_chicago", bsp_pipeline_chicago.get()},
+                named_t{"bsp_sotr", bsp_pipeline_sotr.get()},
+                named_t{"model_base", model_pipeline_base.get()},
+                named_t{"model_chicago", model_pipeline_chicago.get()},
+                named_t{"model_sotr", model_pipeline_sotr.get()},
+                named_t{"camo", camo.get()},
+                named_t{"chicago", chicago_pipeline.get()},
+                named_t{"water", water_pipeline.get()},
+                named_t{"wireframe", wireframe_pipeline.get()},
+                named_t{"debug_lines", debug_lines_pipeline.get()},
             })
         {
             if(!program)
@@ -153,7 +154,8 @@ struct BlamResources : compo::SubsystemBase
              * program's state machine, so all of them need a call. */
             auto ready = program->check_async_ready();
             if(ready.has_error())
-                return stl_types::failure(ready.error());
+                return stl_types::failure(gfx::program_t::compile_error_t{
+                    fmt::format("{}: {}", name, std::get<0>(ready.error()))});
             if(ready.value())
                 status.ready++;
         }
