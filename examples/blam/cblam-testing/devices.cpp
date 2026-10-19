@@ -54,6 +54,10 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
             dt += tick.seconds;
         m_input_queue->poll();
         m_sync_queue->poll();
+        m_save_queue->poll();
+        m_restore_queue->poll();
+        bool const save    = std::exchange(m_save, false);
+        bool const restore = std::exchange(m_restore, false);
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
         {
             m_uses.clear();
@@ -64,16 +68,24 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         auto&       groups = p.template subsystem<DeviceGroups>();
         m_magic            = &files.container.magic;
         if(groups.load_generation != files.load_generation)
+        {
             reset_groups(files, groups);
+            m_saved.reset();
+        }
         for(auto const& sync : std::exchange(m_syncs, {}))
             take(p, groups, sync);
+        if(save)
+            keep(p, groups);
+        if(restore && m_saved)
+            put_back(p, groups);
 
         bool const authority = !p.template subsystem<NetworkState>().replica;
         if(authority)
         {
             for(u64 player : std::exchange(m_uses, {}))
                 use(p, groups, player);
-            open_doors(p, dt);
+            if((m_settling -= dt) <= 0.f)
+                open_doors(p, dt);
         }
         m_uses.clear();
         move(p, groups, dt);
@@ -238,6 +250,57 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         }
     }
 
+    /* ---- Checkpoints ---- */
+
+    struct saved_t
+    {
+        std::vector<f32>         values;
+        std::vector<bool>        spent;
+        std::map<u32, DeviceState> devices; /*!< By net id */
+    };
+
+    void keep(Proxy& p, DeviceGroups const& groups)
+    {
+        saved_t out{.values = groups.values, .spent = groups.spent};
+        for(auto entity : p.template select<DeviceState, NetworkInfo>())
+        {
+            auto [device, net] = entity.components();
+            if(net.instance_id != 0)
+                out.devices[net.instance_id] = device;
+        }
+        m_saved = std::move(out);
+    }
+
+    /* Straight to where they were headed, without moving or sounding; replicas
+     * follow through the groups and a snap */
+    void put_back(Proxy& p, DeviceGroups& groups)
+    {
+        if(m_saved->values.size() == groups.values.size())
+        {
+            groups.values = m_saved->values;
+            groups.spent  = m_saved->spent;
+        }
+        for(auto entity : p.template select<DeviceState, NetworkInfo>())
+        {
+            auto [device, net] = entity.components();
+            auto it = m_saved->devices.find(net.instance_id);
+            if(it == m_saved->devices.end())
+                continue;
+            auto const& saved      = it->second;
+            device.power           = saved.power;
+            device.power_target    = saved.power_target;
+            device.position        = saved.position_target;
+            device.position_target = saved.position_target;
+            device.open_left       = saved.open_left;
+            device.position_seen   = saved.position_seen;
+            device.power_seen      = saved.power_seen;
+            device.used            = saved.used;
+            device.automatic       = saved.automatic;
+            device.snaps++;
+        }
+        m_settling = settle_time;
+    }
+
     /* ---- Every peer: moving, posing, sounding ---- */
 
     void move(Proxy& p, DeviceGroups const& groups, f32 dt)
@@ -384,6 +447,15 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
     std::vector<u64>             m_uses;
     std::vector<DeviceSyncEvent> m_syncs;
     blam::map_ptr const*         m_magic{nullptr};
+    std::shared_ptr<GameEventBus::queue_type<WorldSaveEvent>>    m_save_queue;
+    std::shared_ptr<GameEventBus::queue_type<WorldRestoreEvent>> m_restore_queue;
+    bool                         m_save{false};
+    bool                         m_restore{false};
+    std::optional<saved_t>       m_saved;
+    /* Bodies go back a frame or two after the doors; until then, doors
+     * pay them no mind */
+    static constexpr f32         settle_time = .25f; /* s */
+    f32                          m_settling{0.f};
     u64                          m_next_sound{0};
 };
 
@@ -405,4 +477,8 @@ void alloc_devices(compo::EntityContainer& e)
             if(sync->origin == MapLoadEvent::Remote)
                 devices.m_syncs.push_back(*sync);
         });
+    devices.m_save_queue = game.addQueuedEventFunction<WorldSaveEvent>(
+        0, [&devices](GameEvent&, WorldSaveEvent*) { devices.m_save = true; });
+    devices.m_restore_queue = game.addQueuedEventFunction<WorldRestoreEvent>(
+        0, [&devices](GameEvent&, WorldRestoreEvent*) { devices.m_restore = true; });
 }

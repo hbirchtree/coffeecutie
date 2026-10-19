@@ -465,6 +465,21 @@ void create_resources(compo::EntityContainer& e)
                             it != objects.end())
                              it->second["vitality"] =
                                  vitality(entity.template get<BipedStatus>());
+                     for(auto const& entity : e.select<DeviceState, NetworkInfo>())
+                         if(auto it = objects.find(
+                                entity.template get<NetworkInfo>().instance_id);
+                            it != objects.end())
+                         {
+                             auto const& device = entity.template get<DeviceState>();
+                             it->second["device"] = {
+                                 {"position", device.position},
+                                 {"power", device.power},
+                                 {"automatic_door",
+                                  device.automatic && device.machine &&
+                                      device.machine->machine_type ==
+                                          blam::scn::machine::machine_type_t::door},
+                             };
+                         }
                      for(auto& player : players)
                          for(auto const& entity : e.select<PlayerInfo, BipedStatus>())
                              if(entity.template get<PlayerInfo>().player_idx ==
