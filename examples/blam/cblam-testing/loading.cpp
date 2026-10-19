@@ -1080,6 +1080,52 @@ struct ResourceLoader
                 });
     }
 
+    /* Where a placed machine or control starts: its groups' values, or
+     * what its flags say */
+    template<typename T>
+    DeviceState device_state(
+        BlamFiles<Ver>& files, blam::tag_t const& tag, T const& instance)
+    {
+        auto const& magic = files.container.magic;
+        DeviceState out{
+            .power_group    = instance.power_group.index,
+            .position_group = instance.position_group.index,
+            .flags          = static_cast<u16>(instance.device_flags),
+        };
+        if constexpr(std::is_same_v<T, blam::scn::machine_spawn>)
+        {
+            out.kind_flags = static_cast<u16>(instance.machine_flags);
+            if(auto m = tag.template data<blam::scn::machine>(magic); m.has_value())
+                out.machine = m.value();
+        } else
+        {
+            out.kind_flags = static_cast<u16>(instance.control_flags);
+            if(auto c = tag.template data<blam::scn::device_control>(magic); c.has_value())
+                out.control = c.value();
+        }
+        if(auto d = tag.template data<blam::scn::device>(magic); d.has_value())
+            out.tag = d.value();
+        out.automatic = out.machine && (out.kind_flags & DeviceState::not_automatic) == 0;
+        out.position  = (out.flags & DeviceState::initially_open) ? 1.f : 0.f;
+        out.power     = (out.flags & DeviceState::initially_off) ? 0.f : 1.f;
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        auto group = [&](i16 i) -> std::optional<f32> {
+            if(!scenario || i < 0)
+                return std::nullopt;
+            auto groups = scenario->objects.device_groups.data(magic);
+            if(!groups.has_value() || static_cast<size_t>(i) >= groups.value().size())
+                return std::nullopt;
+            return groups.value()[i].initial_value;
+        };
+        if(auto v = group(out.position_group))
+            out.position = (out.flags & DeviceState::reversed) ? 1.f - *v : *v;
+        if(auto v = group(out.power_group))
+            out.power = *v;
+        out.position_target = out.position;
+        out.power_target    = out.power;
+        return out;
+    }
+
     /* A device machine's power comes from the scenario device group it points
      * at. Most machines reference no group (index -1), and objects that are not
      * devices have none at all; both report -1 so the shader falls back rather
@@ -1244,6 +1290,10 @@ struct ResourceLoader
         bool const unit = instance_tag->matches(blam::tag_class_t::bipd);
         if(unit)
             recipe.components.push_back(compo::type_hash_v<BipedStatus>());
+        constexpr bool device =
+            std::is_same_v<T, blam::scn::machine_spawn> || std::is_same_v<T, blam::scn::control>;
+        if constexpr(device)
+            recipe.components.push_back(compo::type_hash_v<DeviceState>());
 
         auto parent_ = p.create_entity(recipe);
         if(graph)
@@ -1280,6 +1330,8 @@ struct ResourceLoader
         spawn.tag           = instance_tag;
         spawn.header        = &instance;
         spawn.power         = device_power(files, instance);
+        if constexpr(device)
+            parent_.template get<DeviceState>() = device_state(files, *instance_tag, instance);
         model.tag           = &(*model_it);
         model.model         = mesh_data.models.at(0);
         model.permutations  = permutations;
@@ -2447,6 +2499,19 @@ struct ResourceLoader
                 .mass        = !moves         ? 0.f
                                : mass_points ? mass_points->mass
                                              : 1000.f,
+            };
+        }
+
+        /* Doors and switches: their hulls follow the position animation */
+        if(tag.matches(tag_class_t::mach) || tag.matches(tag_class_t::ctrl))
+        {
+            auto collision =
+                object_collision(files, object.collider, object.model);
+            if(!collision)
+                return std::nullopt;
+            return ObjectPhysics{
+                .collision = std::move(collision),
+                .animated  = true,
             };
         }
 
