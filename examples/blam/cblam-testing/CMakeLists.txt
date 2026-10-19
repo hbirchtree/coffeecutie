@@ -1,4 +1,4 @@
-set(BLAM_HALO_VERSION "pc_version_t" CACHE STRING "")
+set(BLAM_HALO_VERSION "xbox_version_t" CACHE STRING "")
 set(BLAMG_EMBEDDED_REPORT_URL "" CACHE STRING "")
 set(BLAM_CURSED OFF CACHE STRING "Cursed experiments")
 

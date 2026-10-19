@@ -168,7 +168,7 @@ jobs:
         include:
         - variant: web:wasm32-emscripten:webgl2:rel
           build: web-wasm32-emscripten-webgl2
-          args: ''
+          args: '-DBLAM_HALO_VERSION=pc_version_t'
           artifact: web-wasm32-emscripten-webgl2
         - variant: web:wasm32-emscripten:webgl2:rel
           build: web-wasm32-emscripten-webgl2
