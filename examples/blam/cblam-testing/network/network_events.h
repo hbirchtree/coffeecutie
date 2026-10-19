@@ -90,6 +90,9 @@ struct MessageBase
         EquipmentSync,
         WeaponPickup,
         ObjectDespawn,
+
+        /* What units have left */
+        UnitVitality,
     } type{None};
 
     u32 request{};
@@ -349,6 +352,20 @@ struct alignas(8) ObjectHit
     libc_types::u8 head{0};
     libc_types::u8 hitscan{0};
     u32   padding{0};
+};
+
+/*! A unit's body and shield as the server has them (UnitVitalityEvent):
+ *  each change, and every hurt or dead unit to a fresh peer */
+struct alignas(8) UnitVitality
+{
+    static constexpr auto message_type = MessageBase::UnitVitality;
+
+    u32 target{0}; /*!< Net id, when the unit is not a player */
+    u32 target_player{0};
+    f32 body{1.f};
+    f32 shield{1.f};
+    u32 dead{0};
+    u32 padding{0};
 };
 
 /*! A client's forge grab, carried out on the server: every frame while

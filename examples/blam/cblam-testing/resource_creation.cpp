@@ -448,6 +448,25 @@ void create_resources(compo::EntityContainer& e)
                               }},
                          };
                      }
+                     auto vitality = [](BipedStatus const& status) {
+                         return nlohmann::json{
+                             {"body", status.body},
+                             {"shield", status.shield},
+                             {"dead", status.dead},
+                         };
+                     };
+                     for(auto const& entity : e.select<BipedStatus, NetworkInfo>())
+                         if(auto it = objects.find(
+                                entity.template get<NetworkInfo>().instance_id);
+                            it != objects.end())
+                             it->second["vitality"] =
+                                 vitality(entity.template get<BipedStatus>());
+                     for(auto& player : players)
+                         for(auto const& entity : e.select<PlayerInfo, BipedStatus>())
+                             if(entity.template get<PlayerInfo>().player_idx ==
+                                player["player_idx"].get<u32>())
+                                 player["vitality"] =
+                                     vitality(entity.template get<BipedStatus>());
                      state["objects"] = nlohmann::json::array();
                      for(auto& [_, object] : objects)
                          state["objects"].push_back(std::move(object));
