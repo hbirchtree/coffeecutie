@@ -407,12 +407,13 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             m_instances.push_back(object.transform);
         /* A bound range never shorter than the block (WebGL insists) */
         m_instances.resize(m_instances.size() + instance_block, Matf4(1.f));
+        auto const bytes = m_instances.size() * sizeof(Matf4);
         m_instance_buf->commit(
             Span<const Matf4>(m_instances.data(), m_instances.size()));
         m_instance_list = gfx::make_buffer_list(gfx::buffer_definition_t{
             typing::graphics::ShaderStage::Vertex,
             {"H2Instances", 0},
-            m_instance_buf->slice(0),
+            m_instance_buf->slice(0, bytes),
             sizeof(Matf4),
         });
         /* Structure reads the identity in slot 0; unstrided, so its batches
@@ -420,7 +421,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_static_list = gfx::make_buffer_list(gfx::buffer_definition_t{
             typing::graphics::ShaderStage::Vertex,
             {"H2Instances", 0},
-            m_instance_buf->slice(0),
+            m_instance_buf->slice(0, bytes),
             0,
         });
         m_posed.assign(scene.animated_objects.size(), 0);
