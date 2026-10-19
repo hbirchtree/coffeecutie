@@ -99,11 +99,11 @@ struct texture_format_t
 
         if(compression.has_value())
         {
+            /* Levels smaller than a block still take a whole one */
             auto const& compression = *this->compression;
-            return (size[0] /
-                    static_cast<value_type>(compression.block_width)) *
-                   (size[1] /
-                    static_cast<value_type>(compression.block_height)) *
+            auto const  bw = static_cast<value_type>(compression.block_width);
+            auto const  bh = static_cast<value_type>(compression.block_height);
+            return ((size[0] + bw - 1) / bw) * ((size[1] + bh - 1) / bh) *
                    compression.block_size;
         } else
         {

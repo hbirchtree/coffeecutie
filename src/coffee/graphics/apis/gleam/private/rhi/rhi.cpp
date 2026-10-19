@@ -419,12 +419,13 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             cmd::bind_texture(target, m_handle);
             for(auto i : stl_types::Range<i32>(m_mipmaps))
             {
-                u32 mipfactor = std::pow<u32>(2, i);
+                /* The short side stops at 1 while the long one goes on */
+                auto const shift = static_cast<u32>(i);
                 create_level(
                     size_3d<u32>{
-                        std::max(size.w / mipfactor, 1u),
-                        std::max(size.h / mipfactor, 1u),
-                        std::max(size.d / (mipmapped_depth ? mipfactor : 1), 1u)}
+                        std::max(size.w >> shift, 1u),
+                        std::max(size.h >> shift, 1u),
+                        mipmapped_depth ? std::max(size.d >> shift, 1u) : size.d}
                         .convert<i32>(),
                     i);
             }
