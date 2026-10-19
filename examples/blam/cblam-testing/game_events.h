@@ -95,6 +95,7 @@ struct GameEvent
         Checkpoint,
         WorldSave,
         WorldRestore,
+        DeviceSync,
     };
 
     EventType type{None};
@@ -534,6 +535,21 @@ struct WorldSaveEvent
 struct WorldRestoreEvent
 {
     static constexpr auto event_type = GameEvent::WorldRestore;
+};
+
+/*! Where the server tells a device or a device group to be; replicas take
+ *  it as given */
+struct DeviceSyncEvent
+{
+    static constexpr auto event_type = GameEvent::DeviceSync;
+
+    MapLoadEvent::Origin origin{MapLoadEvent::Local};
+    libc_types::i16      group{-1}; /*!< A group's value, else a device's */
+    libc_types::f32      value{0.f};
+    libc_types::u64      device{0};
+    libc_types::f32      position_target{0.f};
+    libc_types::f32      power_target{1.f};
+    libc_types::u32      snap{0};
 };
 
 /*! A unit takes a seat in a vehicle, as the unit_enter_vehicle script

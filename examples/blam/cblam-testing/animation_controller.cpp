@@ -106,13 +106,13 @@ struct AnimationController
                 hear(p, ent.id(), anim);
             }
             anim.lookahead = lookahead;
-            /* Biped hulls follow the pose */
+            /* Biped and device hulls follow the pose */
             auto const* info    = p.template get<PlayerInfo>(ent.id());
             auto const* physics = p.template get<ObjectPhysics>(ent.id());
             auto const* model   = p.template get<Model>(ent.id());
             /* First-person models too, for markers such as the muzzle */
             bool const posed = (info && info->biped.collision) ||
-                               (physics && physics->upright) ||
+                               (physics && (physics->upright || physics->animated)) ||
                                p.template get<Attachment>(ent.id()) != nullptr ||
                                m_aimed.contains(ent.id());
             if(posed && model && anim.graph)

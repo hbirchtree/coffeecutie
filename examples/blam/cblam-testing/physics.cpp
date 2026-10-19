@@ -1153,7 +1153,7 @@ struct PhysicsSystem
                 m_object_sections[id] = m_built_section;
                 Shape::shape_t shape =
                     /* Vehicles without a phys tag stand still, hulls and all */
-                    physics.collision ? (moves || physics.drive ? Shape::Hulls : Shape::Mesh)
+                    physics.collision ? (moves || physics.drive || physics.animated ? Shape::Hulls : Shape::Mesh)
                     : physics.radius > 0.f ? Shape::Sphere
                                            : Shape::Box;
                 create_body(Shape{
@@ -1176,7 +1176,7 @@ struct PhysicsSystem
                     .rotation  = model.rotation,
                     .mass_points = physics.mass_points,
                     .drive       = physics.drive,
-                    .posed       = physics.upright,
+                    .posed       = physics.upright || physics.animated,
                 });
                 /* Nothing drives it, so it has to stop on its own */
                 if(physics.upright && m_bodies.contains(id))

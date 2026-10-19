@@ -24,6 +24,7 @@
 #include "checkpoint.h"
 #include "game_mode.h"
 #include "damage.h"
+#include "devices.h"
 #include "projectiles.h"
 #include "effects.h"
 #include "ticks.h"
@@ -245,6 +246,7 @@ i32 blam_main()
             e.register_component_inplace<NetworkInfo>();
             e.register_component_inplace<ObjectPhysics>();
             e.register_component_inplace<ObjectSpawn>();
+            e.register_component_inplace<DeviceState>();
             e.register_component_inplace<PlayerCamera>();
             e.register_component_inplace<PlayerInfo>();
             e.register_component_inplace<PlayerInput>();
@@ -308,6 +310,7 @@ i32 blam_main()
             alloc_damage(e);
             alloc_game_mode(e);
             alloc_checkpoints(e);
+            alloc_devices(e);
             alloc_effects(e);
             alloc_weapons(e);
             alloc_hud(e);

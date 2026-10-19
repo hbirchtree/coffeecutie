@@ -52,6 +52,7 @@ coffee_application(
         campaign_controller.cpp
         multiplayer_controller.cpp
         checkpoint.cpp
+        devices.cpp
         effects.cpp
         weapons.cpp
         hud.cpp
