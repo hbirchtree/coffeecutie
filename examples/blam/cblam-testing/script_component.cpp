@@ -1,4 +1,5 @@
 #include "game_mode.h"
+#include "devices.h"
 #include "script_component.h"
 
 #include "blam_files.h"
@@ -53,11 +54,13 @@ using BlamScriptManifest = compo::SubsystemManifest<
         AnimationPlayback,
         Model,
         ObjectPhysics,
-        BipedStatus>,
+        BipedStatus,
+        DeviceState>,
     type_list_t<
         GameEventBus,
         CinematicState,
         const GameState,
+        DeviceGroups,
         const NetworkState,
         const BlamFiles<halo_version>,
         const SoundCache<halo_version>,
@@ -467,6 +470,61 @@ struct BlamScript
                 type_t::short_, static_cast<f32>(objects_of(p, arg(0)).size()));
         case op::unit:
             return {.type = type_t::unit, .objects = objects_of(p, arg(0))};
+
+        /* Devices: positions and powers, alone or by group */
+        case op::device_set_position:
+        case op::device_set_position_immediate:
+        case op::device_set_power: {
+            bool moved = false;
+            for(u64 id : objects_of(p, arg(0)))
+                if(auto* device = p.template get<DeviceState>(id))
+                {
+                    f32 const to = std::clamp(arg(1).as_real(), 0.f, 1.f);
+                    if(opcode == op::device_set_power)
+                        device->power_target = to;
+                    else
+                        device->position_target = to;
+                    if(opcode == op::device_set_position_immediate)
+                    {
+                        device->position = to;
+                        device->snaps++;
+                    }
+                    moved = true;
+                }
+            return value_t::boolean(moved);
+        }
+        case op::device_get_position:
+        case op::device_get_power: {
+            auto const  ids    = objects_of(p, arg(0));
+            auto const* device = ids.empty() ? nullptr : p.template get<DeviceState>(ids.front());
+            if(!device)
+                return value_t::number(type_t::real_, 0.f);
+            return value_t::number(
+                type_t::real_, opcode == op::device_get_power ? device->power : device->position);
+        }
+        case op::device_group_get:
+            return value_t::number(
+                type_t::real_,
+                p.template subsystem<DeviceGroups>().get(static_cast<i16>(arg(0).integer)));
+        case op::device_group_set:
+        case op::device_group_set_immediate:
+            p.template subsystem<DeviceGroups>().set(
+                static_cast<i16>(arg(0).integer), std::clamp(arg(1).as_real(), 0.f, 1.f));
+            return {};
+        case op::device_one_sided_set:
+            for(u64 id : objects_of(p, arg(0)))
+                if(auto* device = p.template get<DeviceState>(id))
+                    device->kind_flags = arg(1).truthy()
+                                             ? device->kind_flags | DeviceState::one_sided
+                                             : device->kind_flags & ~DeviceState::one_sided;
+            return {};
+        case op::device_operates_automatically_set:
+            for(u64 id : objects_of(p, arg(0)))
+                if(auto* device = p.template get<DeviceState>(id))
+                    device->automatic = arg(1).truthy();
+            return {};
+        case op::device_set_never_appears_locked:
+            return {};
 
         case op::object_create:
         case op::object_create_anew:
