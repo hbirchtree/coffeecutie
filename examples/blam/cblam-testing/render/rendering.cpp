@@ -615,7 +615,9 @@ using DrawListBuilderManifest = compo::SubsystemManifest<
         const Visibility,
         const PlayerCamera,
         const PlayerInfo,
-        const HeldObject>,
+        const HeldObject,
+        const Attachment,
+        const BipedStatus>,
     type_list_t<
         BitmapCache<V>,
         ModelCache<V>,
@@ -1063,12 +1065,17 @@ struct DrawListBuilder
                 auto const* held  = p.template get<HeldObject>(model.parent);
                 auto const* rider = p.template get<PlayerInfo>(
                     held ? held->holder : model.parent);
+                /* ... as do the dead, watching their body from behind */
+                u64 const  holder = held ? held->holder : model.parent;
                 bool const third_person =
-                    rider && rider->riding.vehicle != 0;
+                    rider && (rider->riding.vehicle != 0 || dead(p, holder));
                 /* A seat's own legs, where they can be cut out of its body */
                 bool const self   = !held && own_body(p, model.parent);
                 bool const hidden = !vis.visible_for(m_seat, false, third_person || self);
-                if((held && !held->shown) ||
+                /* First-person arms and weapon go with the view */
+                auto const* attached = p.template get<Attachment>(model.parent);
+                if((attached && dead(p, attached->parent)) ||
+                   (held && !held->shown) ||
                    (hidden && !shadow_only(vis, third_person, model_draw.current_pass)) ||
                    !((model.lod_mask >> lod) & 1) ||
                    (!rendering_params->render_scenery &&
@@ -1336,10 +1343,18 @@ struct DrawListBuilder
         return light;
     }
 
+    static bool dead(Proxy& p, u64 entity)
+    {
+        auto const* status = p.template get<BipedStatus>(entity);
+        return status && status->dead;
+    }
+
     /* A player's own body in its own view, shown from the legs down where
      * clip distances can cut it; elsewhere it stays hidden */
     bool own_body(Proxy& p, u64 entity) const
     {
+        if(dead(p, entity))
+            return false;
         if(m_api->api_type() != gleam::api_type_t::core)
             return false;
         auto const* info = p.template get<PlayerInfo>(entity);
