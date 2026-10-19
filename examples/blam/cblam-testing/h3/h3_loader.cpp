@@ -668,6 +668,9 @@ struct H3MapLoader : compo::SubsystemBase
             m_scene.exposure              = std::exp2(std::stof(forced.value()));
             m_scene.auto_exposure.enabled = false;
         }
+        /* H3_BLOOM=<intensity> likewise */
+        if(auto forced = platform::env::var("H3_BLOOM"); forced.has_value())
+            m_scene.bloom.intensity = std::stof(forced.value());
         load_objects(scnr, bsps);
         load_first_person(scnr, eye);
         load_sky(scnr, bsps);
@@ -2152,6 +2155,9 @@ struct H3MapLoader : compo::SubsystemBase
         if(camera_fx >= 0)
         {
             auto const& entry = palette[static_cast<size_t>(camera_fx)];
+            if(auto const own = map.get<el::camera_fx_settings_t>(entry.settings))
+                settings = own;
+            m_scene.bloom = bloom_of(settings ? settings.data : nullptr, &entry);
             if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::force_exposure))
                 return std::exp2(entry.forced_exposure.value());
             if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::force_auto_exposure))
@@ -2160,9 +2166,8 @@ struct H3MapLoader : compo::SubsystemBase
                 forced_target = true;
             if(enum_helpers::feval(entry.flags, el::camera_fx_flags_t::override_exposure_bounds))
                 range = entry.exposure_range, found = true;
-            if(auto const own = map.get<el::camera_fx_settings_t>(entry.settings))
-                settings = own;
-        }
+        } else
+            m_scene.bloom = bloom_of(settings ? settings.data : nullptr, nullptr);
         if(settings && !found)
             range = settings->exposure_range, found = true;
         if(settings && !forced_target)
@@ -2184,6 +2189,34 @@ struct H3MapLoader : compo::SubsystemBase
             range.max.value(),
             stops);
         return std::exp2(stops);
+    }
+
+    /* Bloom of camera FX settings, values marked default from globals\default's */
+    h3::Bloom bloom_of(el::camera_fx_settings_t const* settings, el::camera_fx_palette_t const* entry) const
+    {
+        auto const fallback = m_map->find<el::camera_fx_settings_t>("globals\\default");
+        auto       pick     = [&](auto member) {
+            if(settings && !(settings->*member).use_default())
+                return (settings->*member).value.value();
+            if(fallback)
+                return (fallback.data->*member).value.value();
+            return decltype((settings->*member).value.value()){};
+        };
+        h3::Bloom out{
+            .point     = pick(&el::camera_fx_settings_t::bloom_point),
+            .inherent  = pick(&el::camera_fx_settings_t::inherent_bloom),
+            .intensity = pick(&el::camera_fx_settings_t::bloom_intensity),
+            .colors    = {
+                pick(&el::camera_fx_settings_t::bloom_large_color),
+                pick(&el::camera_fx_settings_t::bloom_medium_color),
+                pick(&el::camera_fx_settings_t::bloom_small_color)},
+        };
+        if(entry && enum_helpers::feval(entry->flags, el::camera_fx_flags_t::override_inherent_bloom))
+            out.inherent = entry->inherent_bloom;
+        if(entry && enum_helpers::feval(entry->flags, el::camera_fx_flags_t::override_bloom_intensity))
+            out.intensity = entry->bloom_intensity;
+        cDebug("H3: bloom point {}, inherent {}, intensity {}", out.point, out.inherent, out.intensity);
+        return out;
     }
 
     /* A lightmap's size: its lightprobe texture's */

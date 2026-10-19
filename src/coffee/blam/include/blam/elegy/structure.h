@@ -386,20 +386,49 @@ struct sky_atmosphere_t
 static_assert(offsetof(sky_atmosphere_t, settings) == 0x34);
 static_assert(sizeof(sky_atmosphere_t) == 0x4C);
 
-/*! camera_fx_settings ("cfxs"), the exposure part; values in stops */
+/*! A camera FX value the game blends towards */
+template<typename T>
+struct camera_fx_value_t
+{
+    be<u16> flags; /*!< 0x1: use the default */
+    u16     unknown_0;
+    be<T>   value;
+
+    inline bool use_default() const
+    {
+        return flags.value() & 0x1;
+    }
+};
+
+/*! camera_fx_settings ("cfxs"); exposures in stops */
 struct camera_fx_settings_t
 {
     static constexpr std::string_view group = "cfxs";
 
-    be<u16>  flags;
-    u16      unknown_0;
-    be<f32>  exposure; /*!< Target when auto exposure is off */
-    be<f32>  maximum_change;
-    be<f32>  blend_speed;
-    bounds_f exposure_range;
-    be<f32>  auto_exposure_brightness;
-    be<f32>  auto_exposure_delay;
+    be<u16>                    flags;
+    u16                        unknown_0;
+    be<f32>                    exposure; /*!< Target when auto exposure is off */
+    be<f32>                    maximum_change;
+    be<f32>                    blend_speed;
+    bounds_f                   exposure_range;
+    be<f32>                    auto_exposure_brightness;
+    be<f32>                    auto_exposure_delay;
+    camera_fx_value_t<f32>     auto_exposure_sensitivity;
+    camera_fx_value_t<f32>     anti_bloom;
+    camera_fx_value_t<f32>     bloom_point; /*!< Relative to the white point */
+    be<f32>                    bloom_point_change[2];
+    camera_fx_value_t<f32>     inherent_bloom;
+    be<f32>                    inherent_bloom_change[2];
+    camera_fx_value_t<f32>     bloom_intensity;
+    be<f32>                    bloom_intensity_change[2];
+    camera_fx_value_t<Vecf3>   bloom_large_color;
+    camera_fx_value_t<Vecf3>   bloom_medium_color;
+    camera_fx_value_t<Vecf3>   bloom_small_color;
 };
+
+static_assert(offsetof(camera_fx_settings_t, bloom_point) == 0x30);
+static_assert(offsetof(camera_fx_settings_t, bloom_intensity) == 0x50);
+static_assert(offsetof(camera_fx_settings_t, bloom_small_color) == 0x80);
 
 enum class camera_fx_flags_t : u8
 {

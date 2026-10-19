@@ -68,6 +68,8 @@
             "shaders/h3_scene_copy.frag",
             "shaders/h3_decorator.vert",
             "shaders/h3_decorator.frag",
+            "shaders/h3_bloom_bright.frag",
+            "shaders/h3_bloom.frag",
 
             "shaders/ui.vert",
             "shaders/ui.frag",
