@@ -110,7 +110,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     requires semantic::concepts::Span<Span>
     inline void commit(Span const& data)
     {
-        m_cached_size = data.size();
+        /* In bytes, like the store: slices default to it */
+        m_cached_size = data.size() * sizeof(typename Span::value_type);
         m_allocation  = {};
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && immutable())
