@@ -482,7 +482,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 first_person_shown && first_person_camo,
                 p.template subsystem<PostProcessParameters>().camo_scale);
         }
-        if(scene.bloom.intensity > 0.f)
+        if(scene.bloom.intensity > 0.f && p.template subsystem<PostProcessParameters>().bloom)
         {
             auto const _     = m_api->debug().scope("H3Renderer bloom");
             auto const timer = m_system->gpu_timer("H3Renderer bloom");
