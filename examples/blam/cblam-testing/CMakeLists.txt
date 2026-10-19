@@ -48,6 +48,7 @@ coffee_application(
         vehicle_sounds.cpp
         projectiles.cpp
         damage.cpp
+        game_mode.cpp
         effects.cpp
         weapons.cpp
         hud.cpp

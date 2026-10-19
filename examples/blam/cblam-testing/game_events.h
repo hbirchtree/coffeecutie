@@ -89,6 +89,10 @@ struct GameEvent
         CinematicCamera,
         AreaDamage,
         UnitVitality,
+        UnitKilled,
+        RespawnUnit,
+        GameWon,
+        Checkpoint,
     };
 
     EventType type{None};
@@ -470,6 +474,41 @@ struct UnitVitalityEvent
     libc_types::f32      body{1.f};
     libc_types::f32      shield{1.f};
     bool                 dead{false};
+    /*! Brought back: its owner moves it here, facing this way */
+    std::optional<Vecf3> respawn_at{};
+    libc_types::f32      respawn_facing{0.f};
+};
+
+/*! A unit died, as the authority decided; who did it, when a player */
+struct UnitKilledEvent
+{
+    static constexpr auto event_type = GameEvent::UnitKilled;
+
+    libc_types::u64 unit{0};
+    libc_types::u32 player{ObjectHitEvent::no_player}; /*!< When a player died */
+    libc_types::u32 killer{ObjectHitEvent::no_player}; /*!< A player, if one did it */
+};
+
+/*! Brings a dead unit back at full health, there */
+struct RespawnUnitEvent
+{
+    static constexpr auto event_type = GameEvent::RespawnUnit;
+
+    libc_types::u64 unit{0};
+    Vecf3           position{};
+    libc_types::f32 facing{0.f};
+};
+
+/*! A level's script says it is finished */
+struct GameWonEvent
+{
+    static constexpr auto event_type = GameEvent::GameWon;
+};
+
+/*! A level's script asks for a checkpoint */
+struct CheckpointEvent
+{
+    static constexpr auto event_type = GameEvent::Checkpoint;
 };
 
 /*! A unit takes a seat in a vehicle, as the unit_enter_vehicle script
