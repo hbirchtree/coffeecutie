@@ -21,7 +21,8 @@ if(NOT (GAMECUBE OR WII))
         private/elegy/physics.cpp
         private/elegy/resources.cpp
         private/elegy/sound.cpp
-        private/elegy/views.cpp)
+        private/elegy/views.cpp
+    )
   endif()
 endif()
 
@@ -33,8 +34,13 @@ coffee_library(
               $<INSTALL_INTERFACE:include>
 )
 
-if(BUILD_BLAM_ELEGY AND NOT (GAMECUBE OR WII))
-  target_compile_definitions(Blam PUBLIC BLAM_ELEGY=1)
+if(NOT (GAMECUBE OR WII))
+  if(BUILD_BLAM_DIMETER)
+    target_compile_definitions(Blam PUBLIC BLAM_DIMETER=1)
+  endif()
+  if(BUILD_BLAM_ELEGY)
+    target_compile_definitions(Blam PUBLIC BLAM_ELEGY=1)
+  endif()
 endif()
 
 target_compile_options(Blam PUBLIC

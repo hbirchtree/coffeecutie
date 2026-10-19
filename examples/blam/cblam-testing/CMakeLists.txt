@@ -176,9 +176,6 @@ endif()
 if(TARGET OAF)
     target_link_libraries(BlamGraphics PUBLIC OAF)
 endif()
-if(BUILD_BLAM_ELEGY)
-    target_sources(BlamGraphics PRIVATE h3/h3_loader.cpp h3/h3_renderer.cpp h3/h3_sound.cpp)
-endif()
 if(BUILD_PHYSICS AND BULLET_FOUND)
     target_compile_definitions(BlamGraphics PRIVATE -DFEATURE_ENABLE_BULLET3=1)
     target_link_libraries(BlamGraphics PRIVATE ${BULLET_LIBRARIES})
@@ -208,6 +205,13 @@ if(BUILD_BLAM_DIMETER)
       h2/h2_renderer.cpp
       h2/h2_shell.cpp
       h2/h2_sound.cpp
+    )
+endif()
+if(BUILD_BLAM_ELEGY)
+    target_sources(BlamGraphics PRIVATE
+      h3/h3_loader.cpp
+      h3/h3_renderer.cpp
+      h3/h3_sound.cpp
     )
 endif()
 

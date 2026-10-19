@@ -12,8 +12,10 @@
 #include "offline_maps.h"
 #include "animation_controller.h"
 #include "gameplay.h"
+#if defined(BLAM_DIMETER)
 #include "h2/h2_scene.h"
 #include "h2/h2_sound.h"
+#endif
 #if defined(BLAM_ELEGY)
 #include "h3/h3_scene.h"
 #include "h3/h3_sound.h"
@@ -307,7 +309,9 @@ i32 blam_main()
             alloc_weapons(e);
             alloc_hud(e);
             alloc_scripting(e);
+#if defined(BLAM_DIMETER)
             h2::alloc_h2(e);
+#endif
 #if defined(BLAM_ELEGY)
             h3::alloc_h3(e);
 #endif
@@ -508,6 +512,7 @@ i32 blam_main()
 #endif
                 );
             alloc_sound_system(e, arguments.count("no-sound") ? false : true);
+#if defined(BLAM_DIMETER)
             h2::alloc_h2_sound(
                 e,
 #if defined(FEATURE_ENABLE_OAF)
@@ -518,6 +523,7 @@ i32 blam_main()
                 nullptr
 #endif
             );
+#endif
 #if defined(BLAM_ELEGY)
             h3::alloc_h3_sound(
                 e,
