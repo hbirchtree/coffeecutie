@@ -3624,26 +3624,32 @@ struct MeshRenderer
 
         render_effects(p, transparent_depth);
 
-        if(!postprocess_tex)
+        /* Only camouflage reads the copy of the scene */
+        auto has_draws = [](Pass const& pass) {
+            return std::any_of(pass.draws.begin(), pass.draws.end(), [](auto const& d) { return !d.empty(); });
+        };
+        bool camouflage = false;
+        for(auto i : stl_types::range<u32>(m_players.size()))
+            camouflage = camouflage || has_draws(builder.model_submit(i)[Pass_Postprocess]) ||
+                         has_draws(builder.model_submit(i)[Pass_FP_Postprocess]);
+        if(camouflage)
         {
-            postprocess_tex = m_api->alloc_texture(
-                gfx::textures::d2,
-                m_resources.color->m_format,
-                1);
-            postprocess_tex->alloc(m_resources.color->size());
-            postprocess_sampler = postprocess_tex->sampler();
-            postprocess_sampler->alloc();
+            if(!postprocess_tex)
+            {
+                postprocess_tex = m_api->alloc_texture(
+                    gfx::textures::d2,
+                    m_resources.color->m_format,
+                    1);
+                postprocess_sampler = postprocess_tex->sampler();
+                postprocess_sampler->alloc();
+            }
+            /* Width and height only: the depths differ */
+            auto const post_size = m_resources.color->size();
+            auto const have      = postprocess_tex->size();
+            if(have.w != post_size.w || have.h != post_size.h)
+                postprocess_tex->alloc({post_size.w, post_size.h, 1});
+            m_api->perform_copy(m_resources.color, postprocess_tex);
         }
-        auto post_size = m_resources.color->size();
-        if(postprocess_tex->size() != m_resources.color->size())
-        {
-            postprocess_tex->alloc({
-                post_size.w,
-                post_size.h,
-                1,
-            });
-        }
-        m_api->perform_copy(m_resources.color, postprocess_tex);
 
         PostProcessParameters const* postproc;
         p.subsystem(postproc);
@@ -3676,7 +3682,8 @@ struct MeshRenderer
             m_first_person = false;
         };
 
-        render_camo(Pass_Postprocess);
+        if(camouflage)
+            render_camo(Pass_Postprocess);
 
         // First-person models, each seat only draws its own
         m_first_person = true;
@@ -3707,7 +3714,8 @@ struct MeshRenderer
         }
         m_first_person = false;
 
-        render_camo(Pass_FP_Postprocess);
+        if(camouflage)
+            render_camo(Pass_FP_Postprocess);
 
         render_debug_lines(p);
     }
