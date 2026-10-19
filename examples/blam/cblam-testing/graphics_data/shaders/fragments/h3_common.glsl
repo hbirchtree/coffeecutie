@@ -489,11 +489,15 @@ vec3 self_illumination()
 
 
 #if H3_TERRAIN
+/* Sampled with the gradients taken outside the weight branches, where
+ * implicit derivatives are undefined */
 vec3 terrain_layer(
-    sampler2D base, sampler2D det, vec4 scale, float detailed, float base_curve, float detail_curve)
+    sampler2D base, sampler2D det, vec4 scale, float detailed, float base_curve, float detail_curve,
+    vec2 uv_dx, vec2 uv_dy)
 {
-    vec3 c = decode(texture(base, f_texcoord * scale.xy).rgb, base_curve);
-    vec3 d = decode(texture(det, f_texcoord * scale.zw).rgb, detail_curve) * detail_multiplier;
+    vec3 c = decode(textureGrad(base, f_texcoord * scale.xy, uv_dx * scale.xy, uv_dy * scale.xy).rgb, base_curve);
+    vec3 d = decode(textureGrad(det, f_texcoord * scale.zw, uv_dx * scale.zw, uv_dy * scale.zw).rgb, detail_curve) *
+             detail_multiplier;
     return c * mix(vec3(1.0), d, detailed);
 }
 #endif
@@ -504,23 +508,24 @@ void main()
     vec4 w = texture(blend_map, f_texcoord * blend_scale) * layer_enabled;
     float total = w.x + w.y + w.z + w.w;
     w = total > 1e-4 ? w / total : vec4(1.0, 0.0, 0.0, 0.0);
+    vec2 uv_dx = dFdx(f_texcoord), uv_dy = dFdy(f_texcoord);
     vec3 color = vec3(0.0);
     if(w.x > 0.0)
         color += w.x * terrain_layer(
             base_m0, detail_m0, layer_scale[0], layer_detailed.x,
-            layer_base_curve.x, layer_detail_curve.x);
+            layer_base_curve.x, layer_detail_curve.x, uv_dx, uv_dy);
     if(w.y > 0.0)
         color += w.y * terrain_layer(
             base_m1, detail_m1, layer_scale[1], layer_detailed.y,
-            layer_base_curve.y, layer_detail_curve.y);
+            layer_base_curve.y, layer_detail_curve.y, uv_dx, uv_dy);
     if(w.z > 0.0)
         color += w.z * terrain_layer(
             base_m2, detail_m2, layer_scale[2], layer_detailed.z,
-            layer_base_curve.z, layer_detail_curve.z);
+            layer_base_curve.z, layer_detail_curve.z, uv_dx, uv_dy);
     if(w.w > 0.0)
         color += w.w * terrain_layer(
             base_m3, detail_m3, layer_scale[3], layer_detailed.w,
-            layer_base_curve.w, layer_detail_curve.w);
+            layer_base_curve.w, layer_detail_curve.w, uv_dx, uv_dy);
     float alpha = 1.0;
 #else
     vec4 base = texture(diffuse, f_texcoord);
