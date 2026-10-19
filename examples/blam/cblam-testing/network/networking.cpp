@@ -1,3 +1,4 @@
+#include "game_mode.h"
 #include "network/networking.h"
 #include "network/network_events.h"
 
@@ -70,6 +71,7 @@ using NetworkingManifest = compo::SubsystemManifest<
         const BipedStatus>,
     type_list_t<
         NetworkState,
+        GameState,
         PhysicsBus,
         const TickClock,
         const BlamFiles<halo_version>>,
@@ -2414,6 +2416,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             send_seats(p);
             send_equipment(p);
             send_vitality(p);
+            send_game_state(p);
             send_pickups();
             measure_pings();
             send_tick_sync(p, t);
@@ -2593,6 +2596,55 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     Message<UnitVitality>(std::move(message)),
                     k_nSteamNetworkingSend_Reliable,
                     std::move(targets));
+    }
+
+    /* The game's state and scores as they change, and all of it to a fresh
+     * peer */
+    void send_game_state(Proxy& p)
+    {
+        auto const&   game = p.subsystem<GameState>();
+        GameStateSync state{
+            .kind       = static_cast<libc_types::u8>(game.kind),
+            .phase      = static_cast<libc_types::u8>(game.phase),
+            .game_type  = static_cast<libc_types::u8>(game.game_type),
+            .teams      = game.teams,
+            .winner     = game.winner,
+            .time_left  = game.time_left < 0.f ? -1.f : std::ceil(game.time_left),
+            .team_scores = {game.team_scores[0], game.team_scores[1]},
+            .difficulty = game.difficulty,
+            .saves      = game.saves,
+            .reverts    = game.reverts,
+        };
+        std::vector<GameScoreSync> scores;
+        for(auto const& player : game.players)
+            scores.push_back({
+                .player_idx = player.player_idx,
+                .team       = player.team,
+                .score      = player.score,
+                .kills      = player.kills,
+                .deaths     = player.deaths,
+            });
+        std::set<HSteamNetConnection> fresh, current;
+        for(auto& [connection, connection_state] : m_connections)
+            if(connection_state.verified)
+                (connection_state.objects_synced ? current : fresh).insert(connection);
+        bool const changed = state != m_sent_game || scores != m_sent_scores;
+        m_sent_game        = state;
+        m_sent_scores      = scores;
+        auto send = [&](std::set<HSteamNetConnection> const& to) {
+            if(to.empty())
+                return;
+            send_all(Message<GameStateSync>(GameStateSync(state)), k_nSteamNetworkingSend_Reliable, to);
+            if(!scores.empty())
+                send_all<GameScoreSync>(
+                    MessageBase{MessageBase::GameScoreSync},
+                    gsl::span<GameScoreSync>(scores),
+                    k_nSteamNetworkingSend_Reliable,
+                    to);
+        };
+        send(fresh);
+        if(changed)
+            send(current);
     }
 
     /* A fresh peer hears of every unit already hurt or dead */
@@ -3593,6 +3645,34 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_combat.client_receive(p, payload.value<ObjectHit>());
             break;
         }
+        case MessageBase::GameStateSync: {
+            auto const& sync = payload.value<GameStateSync>();
+            auto&       game = p.subsystem<GameState>();
+            game.kind        = static_cast<GameState::kind_t>(sync.kind);
+            game.phase       = static_cast<GameState::phase_t>(sync.phase);
+            game.game_type   = static_cast<GameSetup::game_type_t>(sync.game_type);
+            game.teams       = sync.teams != 0;
+            game.winner      = sync.winner;
+            game.time_left   = sync.time_left;
+            game.team_scores = {sync.team_scores[0], sync.team_scores[1]};
+            game.difficulty  = sync.difficulty;
+            game.saves       = sync.saves;
+            game.reverts     = sync.reverts;
+            break;
+        }
+        case MessageBase::GameScoreSync: {
+            auto& game = p.subsystem<GameState>();
+            game.players.clear();
+            for(auto const& score : payload.values<GameScoreSync>())
+                game.players.push_back({
+                    .player_idx = score.player_idx,
+                    .team       = score.team,
+                    .score      = score.score,
+                    .kills      = score.kills,
+                    .deaths     = score.deaths,
+                });
+            break;
+        }
         case MessageBase::UnitVitality: {
             m_combat.client_receive(p, payload.value<UnitVitality>());
             break;
@@ -4055,6 +4135,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::optional<SeatSync>                  m_sent_own_seat;
     /* Weapons sent per player index, and those peers reported */
     std::map<u32, EquipmentSync>             m_sent_equipment;
+    GameStateSync                            m_sent_game{};
+    std::vector<GameScoreSync>               m_sent_scores;
     std::optional<EquipmentSync>             m_sent_own_equipment;
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::vector<ObjectDespawn>               m_despawns;

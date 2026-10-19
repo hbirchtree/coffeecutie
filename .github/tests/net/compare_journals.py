@@ -233,14 +233,17 @@ def check_bipeds(label, players):
                           f"body at {body['position']}, model at "
                           f"{model['position']}")
             continue
+        # Falling (just respawned, say), the model is placed a frame before
+        # the camera moves, so it trails it by that frame's drop
+        airborne = body is not None and not body.get("grounded", True)
+        feet = [p["position"][0], p["position"][1],
+                p["position"][2] - biped.get("eye_height", 0.0)]
         if model is None:
             problems += 1
             print(f"FAIL: {label}: player_idx={idx} is in play without a "
                   f"biped model")
-        elif not close(model["position"],
-                       [p["position"][0], p["position"][1],
-                        p["position"][2] - biped.get("eye_height", 0.0)],
-                       0.05):
+        elif not (close(model["position"][:2], feet[:2], 0.05) and
+                  abs(model["position"][2] - feet[2]) <= (0.3 if airborne else 0.05)):
             problems += 1
             print(f"FAIL: {label}: player_idx={idx} model at "
                   f"{model['position']}, camera at {p['position']}")
