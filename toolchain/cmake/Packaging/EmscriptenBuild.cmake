@@ -78,7 +78,7 @@ function(EMSCRIPTEN_PACKAGE)
   )
   foreach(LIB ${EM_BUNDLE_MODULES})
     # Allow specifying a target name, but also just a file
-    if(EXISTS LIB)
+    if(EXISTS ${LIB})
       add_custom_command(
           TARGET ${EM_TARGET}
           POST_BUILD

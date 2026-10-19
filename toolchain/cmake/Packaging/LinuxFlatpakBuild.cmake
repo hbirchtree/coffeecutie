@@ -143,6 +143,14 @@ macro(
             NOT TARGET "${LIB}")
         continue()
     endif()
+    # Targets: their shared library, static ones are linked in already
+    if(TARGET "${LIB}")
+      get_target_property(LIB_TYPE "${LIB}" TYPE)
+      if(NOT LIB_TYPE STREQUAL "SHARED_LIBRARY")
+        continue()
+      endif()
+      set(LIB "$<TARGET_SONAME_FILE:${LIB}>")
+    endif()
     add_custom_command(
       TARGET ${FLATPAK_TARGET}.flatpak
       PRE_BUILD
