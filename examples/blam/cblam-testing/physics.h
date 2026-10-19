@@ -46,6 +46,7 @@ struct Event
                 * geometry zero-copy (the world BVH reads straight out of
                 * the mapped map file), so everything must be out of the
                 * simulation before the old map's memory goes away. */
+        UnitStruck, /*!< A moving vehicle ran into a unit */
     } type{};
 };
 
@@ -275,6 +276,15 @@ struct Impact
     f32                   speed{0.f}; /*!< Closing speed taken out, wu/s */
     /*! The world surface's collision material, when it hit the world */
     blam::tagref_t const* shader{nullptr};
+};
+
+struct UnitStruck
+{
+    static constexpr auto event_type = Event::UnitStruck;
+    u64                   vehicle{0};
+    u64                   unit{0};
+    Vecf3                 point{};
+    f32                   speed{0.f}; /*!< How fast it came at the unit, wu/s */
 };
 
 struct ProbeHere

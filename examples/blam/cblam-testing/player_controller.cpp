@@ -92,6 +92,13 @@ struct PlayerController
                     if(cam.cinematic)
                         input.look_delta = {};
                 }
+                /* The dead wait to come back */
+                if(auto const* status = p.template get<BipedStatus>(player.id());
+                   status && status->dead && info.mode.physics)
+                {
+                    input.movement = {};
+                    input.intent   = {};
+                }
                 clamp_pitch(input, cam, info);
                 if(!info.is_remote())
                     m_look[player.id()] += input.look_delta;

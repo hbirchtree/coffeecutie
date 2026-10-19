@@ -6,6 +6,7 @@
 #include "types.h"
 
 #include <blam/volta/blam_antr.h>
+#include <blam/volta/blam_collision.h>
 #include <blam/volta/blam_scenario.h>
 #include <chrono>
 #include <memory>
@@ -635,6 +636,7 @@ struct CollisionGeometry
         std::vector<Vecf3> points;
         i32                bone{-1};
         bool               head{false};
+        i16                material{-1}; /*!< Into the coll tag's materials */
     };
 
     std::vector<node_t> nodes;
@@ -1117,13 +1119,34 @@ inline bool biped_in_play(
     return info.riding.vehicle == 0 && biped_shown(info, cam, net);
 }
 
+/*! A unit's body and shield, as fractions of its coll tag's maxima */
 struct BipedStatus
 {
     using value_type = BipedStatus;
     using type = compo::alloc::VectorContainer<BipedStatus>;
 
-    u16 health{};
-    u16 shield{};
+    f32  body{1.f};
+    f32  shield{1.f};
+    bool dead{false};
+    /*! Seconds before the shield starts to come back */
+    f32 stunned{0.f};
+    /*! What it takes damage by; none and it can't be hurt */
+    blam::coll::header const* coll{nullptr};
+    /*! Scripts may change what it can have, in points (below 0, its coll
+     *  tag's), or keep it from harm */
+    f32  max_body{-1.f};
+    f32  max_shield{-1.f};
+    bool invulnerable{false};
+
+    f32 maximum_body() const
+    {
+        return max_body >= 0.f ? max_body : coll ? coll->maximum_body_vitality : 0.f;
+    }
+
+    f32 maximum_shield() const
+    {
+        return max_shield >= 0.f ? max_shield : coll ? coll->maximum_shield_vitality : 0.f;
+    }
 };
 
 struct BipedEquipment

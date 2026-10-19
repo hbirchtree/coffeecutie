@@ -21,6 +21,7 @@
 #include "h3/h3_sound.h"
 #endif
 #include "impact_sounds.h"
+#include "damage.h"
 #include "projectiles.h"
 #include "effects.h"
 #include "ticks.h"
@@ -302,6 +303,7 @@ i32 blam_main()
             alloc_impact_sounds(e);
             alloc_vehicle_sounds(e);
             alloc_projectiles(e);
+            alloc_damage(e);
             alloc_effects(e);
             alloc_weapons(e);
             alloc_hud(e);
