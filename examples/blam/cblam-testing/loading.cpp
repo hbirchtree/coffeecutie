@@ -222,6 +222,10 @@ struct ResourceLoader
             current.skybox_id       = -1;
             current.weather_id      = -1;
             current.section         = -1;
+            /* Bodies that outlive the map hold its coll until they get the
+             * new one */
+            for(auto unit : p.template select<BipedStatus>())
+                unit.template get<BipedStatus>().coll = nullptr;
         }
         BlamResources&    resources  = p.template subsystem<BlamResources>();
         BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();

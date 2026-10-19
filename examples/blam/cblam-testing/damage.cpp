@@ -296,7 +296,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     void arrive(Proxy& p, u64 unit, Vecf3 feet, f32 facing)
     {
         auto const* info = p.template get<PlayerInfo>(unit);
-        if(!info || !info->biped.respawn_effect)
+        if(!info || !info->biped.respawn_effect ||
+           info->biped.load_generation != p.template subsystem<BlamFiles<halo_version>>().load_generation)
             return;
         GameEvent        ev{.type = GameEvent::SpawnEffect};
         SpawnEffectEvent play{
