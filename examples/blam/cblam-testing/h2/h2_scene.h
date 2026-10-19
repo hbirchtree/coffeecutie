@@ -158,6 +158,7 @@ struct DrawTag
     i32  object{-1}; /*!< Into H2Scene::moving_objects: drawn where it is */
     i32  animated{-1}; /*!< Into H2Scene::animated_objects */
     bool placed{false}; /*!< A scenario object, not structure */
+    bool first_person{false}; /*!< Placed on the camera, own view only */
 };
 
 /* One shad tag: its diffuse map and every draw range using it */
@@ -363,6 +364,15 @@ struct H2Scene : compo::SubsystemBase
     };
     std::vector<animation_t> animations;
     std::vector<animated_t>  animated_objects;
+    /*! The player's view models, into animated_objects; hands and weapon
+     * hang from the eye, the body stands with its head there */
+    struct first_person_t
+    {
+        i32   hands{-1};
+        i32   weapon{-1};
+        i32   body{-1};
+        Vecf3 eye{0.f, 0.f, 0.6f}; /*!< Body space, as posed */
+    } first_person;
 };
 
 /* What the occluder decided for this frame */

@@ -586,6 +586,7 @@ struct H2MapLoader : compo::SubsystemBase
         m_scene.moving_objects.clear();
         m_scene.animations.clear();
         m_scene.animated_objects.clear();
+        m_scene.first_person = {};
         m_animation_index.clear();
         m_scene.water = {};
         m_scene.lightmap_tex.reset();
@@ -841,6 +842,7 @@ struct H2MapLoader : compo::SubsystemBase
         {
             load_sky(map, pool, *scenario);
             load_objects(map, pool, *scenario);
+            load_first_person(map, pool, *scenario);
             load_switches(map, *scenario);
             if(auto locs = scenario->player_starting_locations.data(map.magic());
                !locs.has_error() && !locs.value().empty())
@@ -1814,6 +1816,344 @@ struct H2MapLoader : compo::SubsystemBase
            static_cast<size_t>(it->second) >= count)
             return 0;
         return static_cast<size_t>(it->second);
+    }
+
+    /* The globals' player representation (hands, body) and the starting
+     * weapon's view model, idling */
+    template<typename V>
+    void load_first_person(
+        dim::map_container<V> const& map,
+        dim::raw_pool const&         pool,
+        dim::scn::scenario_t const&  scenario)
+    {
+        auto const* globals_tag = map.globals();
+        auto const* globals =
+            globals_tag ? globals_tag->template data<dim::obj::matg::globals_t>(map.magic())
+                        : nullptr;
+        if(!globals)
+            return;
+        auto reps = globals->player_representation.data(map.magic());
+        if(reps.has_error())
+            return;
+        dim::obj::matg::player_representation_t const* rep = nullptr;
+        for(auto const& r : reps.value())
+            if(map.tag_at(r.first_person_hands.tag_id))
+            {
+                rep = &r;
+                break;
+            }
+        if(!rep)
+            return;
+
+        /* The view model and its animations from the starting weapon */
+        dim::tag_t const* weapon_tag = nullptr;
+        if(auto profiles = scenario.player_starting_profiles.data(map.magic());
+           !profiles.has_error() && !profiles.value().empty())
+            weapon_tag = map.tag_at(profiles.value()[0].primary_weapon.tag_id);
+        if(auto palette = scenario.weapon_palette.data(map.magic());
+           !weapon_tag && !palette.has_error() && !palette.value().empty())
+            weapon_tag = map.tag_at(palette.value()[0].tag.tag_id);
+        /* Multiplayer hands out weapons by game type: the battle rifle */
+        for(auto const& tag : map.tags())
+            if(!weapon_tag && tag.matches("weap") &&
+               map.name_of(tag).find("battle_rifle") != std::string_view::npos)
+                weapon_tag = &tag;
+        auto const* weapon =
+            weapon_tag ? weapon_tag->template data<dim::obj::weapon_t>(map.magic()) : nullptr;
+        dim::tag_t const* jmad_tag = nullptr;
+        dim::tag_t const* view_tag = nullptr;
+        if(weapon)
+            if(auto views = weapon->first_person.data(map.magic());
+               !views.has_error() && !views.value().empty())
+            {
+                jmad_tag = map.tag_at(views.value()[0].animations.tag_id);
+                view_tag = map.tag_at(views.value()[0].model.tag_id);
+            }
+
+        auto add = [&](dim::tag_t const* mode_tag, std::optional<u32> animation) {
+            if(!mode_tag || !mode_tag->matches("mode"))
+                return -1;
+            if(!animation)
+                animation = rest_pose(map, *mode_tag);
+            if(!animation)
+                return -1;
+            i32 const index = static_cast<i32>(m_scene.animated_objects.size());
+            DrawTag   tag{.animated = index, .first_person = true};
+            if(append_model(map, pool, *mode_tag, Matf4(1.f), false, tag) == 0)
+                return -1;
+            m_scene.animated_objects.push_back({.animation = *animation});
+            return index;
+        };
+        auto const* hands_tag = map.tag_at(rep->first_person_hands.tag_id);
+        auto const* body_tag  = map.tag_at(rep->first_person_body.tag_id);
+        auto&       fp        = m_scene.first_person;
+        fp.hands  = add(
+            hands_tag,
+            jmad_tag ? view_animation(map, pool, *jmad_tag, *hands_tag, "first_person:idle")
+                     : std::nullopt);
+        if(view_tag && jmad_tag)
+            fp.weapon =
+                add(view_tag, view_animation(map, pool, *jmad_tag, *view_tag, "first_person:idle"));
+
+        /* The body stands as the third-person unit does holding the weapon */
+        std::optional<u32> stance;
+        auto const*        unit_tag = map.tag_at(rep->third_person_unit.tag_id);
+        auto const* unit = unit_tag ? unit_tag->template data<dim::obj::biped_t>(map.magic())
+                                    : nullptr;
+        auto const* hlmt_tag = unit ? map.tag_at(unit->model.tag_id) : nullptr;
+        auto const* hlmt =
+            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic()) : nullptr;
+        auto const* graph_tag = hlmt ? map.tag_at(hlmt->animation.tag_id) : nullptr;
+        std::string weapon_class =
+            weapon ? std::string(map.string(weapon->weapon_class)) : std::string{};
+        if(graph_tag && body_tag)
+            for(auto const& clip : {"combat:" + weapon_class + ":idle", std::string{"combat:rifle:idle"}})
+                if(!stance)
+                    stance = view_animation(map, pool, *graph_tag, *body_tag, clip);
+        if(stance)
+            drop_arms(map, *body_tag, m_scene.animations[*stance]);
+        fp.body = add(body_tag, stance);
+        if(unit && stance)
+            fp.eye = camera_marker(
+                map,
+                *unit,
+                hlmt ? map.tag_at(hlmt->render_model.tag_id) : nullptr,
+                *body_tag,
+                m_scene.animations[*stance]);
+        cDebug(
+            "H2: first person: hands {} weapon {} ({}) body {} eye ({:.3f}, {:.3f}, {:.3f})",
+            hands_tag ? map.name_of(*hands_tag) : "-",
+            view_tag ? map.name_of(*view_tag) : "-",
+            weapon_tag ? map.name_of(*weapon_tag) : "-",
+            body_tag ? map.name_of(*body_tag) : "-",
+            fp.eye.x,
+            fp.eye.y,
+            fp.eye.z);
+    }
+
+    /* One of a graph's clips on a model of another: the graph's skeleton
+     * posed, each model node following the skeleton node of its name */
+    template<typename V>
+    std::optional<u32> view_animation(
+        dim::map_container<V> const& map,
+        dim::raw_pool const&         pool,
+        dim::tag_t const&            jmad_tag,
+        dim::tag_t const&            mode_tag,
+        std::string_view             clip)
+    {
+        auto const* graph = jmad_tag.template data<dim::anim::header_t>(map.magic());
+        auto const* model = mode_tag.template data<geo::model_header_t>(map.magic());
+        if(!graph || !model)
+            return std::nullopt;
+        auto anims    = graph->animations.data(map.magic());
+        auto groups   = graph->resource_groups.data(map.magic());
+        auto skeleton = graph->skeleton.data(map.magic());
+        auto data     = graph->node_data.data(map.magic());
+        auto nodes    = model->nodes.data(map.magic());
+        if(anims.has_error() || groups.has_error() || skeleton.has_error() ||
+           data.has_error() || nodes.has_error() || nodes.value().size() > 64)
+            return std::nullopt;
+        dim::anim::animation_t const* chosen = nullptr;
+        for(auto const& a : anims.value())
+            if(map.string(a.name) == clip)
+                chosen = &a;
+        size_t const joints = skeleton.value().size();
+        if(!chosen || chosen->node_count != joints)
+            return std::nullopt;
+        i16 gi = chosen->resource_group();
+        if(gi < 0 || static_cast<size_t>(gi) >= groups.value().size())
+            return std::nullopt;
+        auto const& g   = groups.value()[gi];
+        auto        raw = pool.resolve(
+            map.magic(), &g, g.data, static_cast<u32>(std::max(g.size(), 0)));
+        auto at = static_cast<size_t>(std::max(chosen->resource_group_offset(), 0));
+        if(!raw || at >= raw->size())
+            return std::nullopt;
+        /* The model's node of that name at rest, else the graph's own */
+        std::vector<dim::anim::node_pose_t> defaults(joints);
+        for(size_t i = 0; i < joints; i++)
+        {
+            bool found = false;
+            for(auto const& n : nodes.value())
+                if(map.string(n.name) == map.string(skeleton.value()[i].name))
+                {
+                    defaults[i] = {
+                        .rotation = Quatf(
+                            from_le(n.rotation[3]),
+                            from_le(n.rotation[0]),
+                            from_le(n.rotation[1]),
+                            from_le(n.rotation[2])),
+                        .translation = Vecf3(
+                            from_le(n.position[0]),
+                            from_le(n.position[1]),
+                            from_le(n.position[2])),
+                    };
+                    found = true;
+                }
+            if(found || i >= data.value().size())
+                continue;
+            auto const& d = data.value()[i];
+            defaults[i]   = {
+                  .rotation = glm::normalize(Quatf(
+                    from_le(d.rotation.w),
+                    from_le(d.rotation.x),
+                    from_le(d.rotation.y),
+                    from_le(d.rotation.z))),
+                  .translation = Vecf3(
+                    from_le(d.translation.x),
+                    from_le(d.translation.y),
+                    from_le(d.translation.z)),
+                  .scale = from_le(d.scale),
+            };
+        }
+        auto decoded = dim::anim::decode(
+            *chosen,
+            Span<const u8>(reinterpret_cast<u8 const*>(raw->data()), raw->size()).subspan(at),
+            defaults);
+        if(!decoded)
+            return std::nullopt;
+
+        /* Model node -> skeleton node by name */
+        size_t const     count = nodes.value().size();
+        std::vector<i32> joint(count, -1);
+        for(size_t n = 0; n < count; n++)
+            for(size_t j = 0; j < joints; j++)
+                if(map.string(nodes.value()[n].name) == map.string(skeleton.value()[j].name))
+                    joint[n] = static_cast<i32>(j);
+        std::vector<Matf4> const bind = model_nodes(map, *model);
+        H2Scene::animation_t out{.frames = decoded->frames, .nodes = static_cast<u32>(count)};
+        out.palette.resize(static_cast<size_t>(out.frames) * count);
+        std::vector<Matf4> world(joints);
+        for(u32 f = 0; f < out.frames; f++)
+        {
+            for(size_t j = 0; j < joints; j++)
+            {
+                auto const& pose  = decoded->at(f, static_cast<u32>(j));
+                Matf4 const local = glm::translate(Matf4(1.f), pose.translation) *
+                                    glm::mat4_cast(pose.rotation) *
+                                    glm::scale(Matf4(1.f), Vecf3(pose.scale));
+                i16 parent = skeleton.value()[j].parent.value();
+                world[j]   = parent >= 0 && static_cast<size_t>(parent) < j
+                                 ? world[parent] * local
+                                 : local;
+            }
+            for(size_t n = 0; n < count; n++)
+                out.palette[f * count + n] =
+                    joint[n] >= 0 ? world[joint[n]] * glm::inverse(bind[n]) : Matf4(1.f);
+        }
+        cDebug(
+            "H2: {} {} on {}: {} frames",
+            map.name_of(jmad_tag),
+            clip,
+            map.name_of(mode_tag),
+            out.frames);
+        auto index = static_cast<u32>(m_scene.animations.size());
+        m_scene.animations.push_back(std::move(out));
+        return index;
+    }
+
+    /* The body's arms reach for the gun under the eye, where the view
+     * model's are: each upper arm and what hangs from it shrinks into its
+     * shoulder */
+    template<typename V>
+    static void drop_arms(
+        dim::map_container<V> const& map, dim::tag_t const& mode_tag, H2Scene::animation_t& anim)
+    {
+        auto const* model = mode_tag.template data<geo::model_header_t>(map.magic());
+        if(!model)
+            return;
+        auto nodes = model->nodes.data(map.magic());
+        if(nodes.has_error() || nodes.value().size() != anim.nodes)
+            return;
+        std::vector<Matf4> const bind = model_nodes(map, *model);
+        /* Each node's upper arm, if it is one or hangs from one */
+        std::vector<i32> arm(anim.nodes, -1);
+        for(size_t n = 0; n < anim.nodes; n++)
+        {
+            auto const name = map.string(nodes.value()[n].name);
+            i16 const  parent = nodes.value()[n].parent.value();
+            if(name == "l_upperarm" || name == "r_upperarm")
+                arm[n] = static_cast<i32>(n);
+            else if(parent >= 0 && static_cast<size_t>(parent) < n)
+                arm[n] = arm[parent];
+        }
+        for(u32 f = 0; f < anim.frames; f++)
+        {
+            Matf4* frame = &anim.palette[static_cast<size_t>(f) * anim.nodes];
+            for(size_t n = 0; n < anim.nodes; n++)
+                if(arm[n] >= 0)
+                {
+                    auto const  a        = static_cast<size_t>(arm[n]);
+                    Vecf3 const shoulder = Vecf3(frame[a] * bind[a][3]);
+                    frame[n] = glm::translate(Matf4(1.f), shoulder) * glm::scale(Matf4(1.f), Vecf3(0.f));
+                }
+        }
+    }
+
+    /* Where the unit's camera marker sits on the posed body, body space;
+     * the marker lives on the unit's own model, matched to the body by node
+     * name */
+    template<typename V>
+    static Vecf3 camera_marker(
+        dim::map_container<V> const& map,
+        dim::obj::biped_t const&     unit,
+        dim::tag_t const*            unit_mode_tag,
+        dim::tag_t const&            body_tag,
+        H2Scene::animation_t const&  anim)
+    {
+        Vecf3 const fallback{0.f, 0.f, from_le(unit.standing_camera_height)};
+        auto const* unit_model =
+            unit_mode_tag ? unit_mode_tag->template data<geo::model_header_t>(map.magic())
+                          : nullptr;
+        auto const* body = body_tag.template data<geo::model_header_t>(map.magic());
+        if(!unit_model || !body)
+            return fallback;
+        auto groups     = unit_model->marker_groups.data(map.magic());
+        auto unit_nodes = unit_model->nodes.data(map.magic());
+        auto body_nodes = body->nodes.data(map.magic());
+        if(groups.has_error() || unit_nodes.has_error() || body_nodes.has_error())
+            return fallback;
+        std::string_view const wanted = map.string(unit.camera_marker_name);
+        for(auto const& group : groups.value())
+        {
+            if(map.string(group.name) != (wanted.empty() ? "head" : wanted))
+                continue;
+            auto markers = group.markers.data(map.magic());
+            if(markers.has_error() || markers.value().empty())
+                return fallback;
+            auto const& marker = markers.value()[0];
+            auto const  node   = static_cast<size_t>(marker.node);
+            if(marker.node < 0 || node >= unit_nodes.value().size())
+                return fallback;
+            std::vector<Matf4> const bind = model_nodes(map, *body);
+            for(size_t n = 0; n < body_nodes.value().size() && n < anim.nodes; n++)
+                if(map.string(body_nodes.value()[n].name) == map.string(unit_nodes.value()[node].name))
+                    return Vecf3(
+                        anim.palette[n] * bind[n] *
+                        Vecf4(
+                            from_le(marker.translation[0]),
+                            from_le(marker.translation[1]),
+                            from_le(marker.translation[2]),
+                            1.f));
+        }
+        return fallback;
+    }
+
+    /* A skinned model standing in its bind pose */
+    template<typename V>
+    std::optional<u32> rest_pose(dim::map_container<V> const& map, dim::tag_t const& mode_tag)
+    {
+        auto const* model = mode_tag.template data<geo::model_header_t>(map.magic());
+        if(!model)
+            return std::nullopt;
+        auto nodes = model->nodes.data(map.magic());
+        if(nodes.has_error() || nodes.value().size() > 64)
+            return std::nullopt;
+        auto const count = static_cast<u32>(nodes.value().size());
+        auto       index = static_cast<u32>(m_scene.animations.size());
+        m_scene.animations.push_back(
+            {.frames = 1, .nodes = count, .palette = std::vector<Matf4>(count, Matf4(1.f))});
+        return index;
     }
 
     /* Model-space transform of every node; parents precede their children

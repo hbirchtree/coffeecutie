@@ -68,16 +68,20 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             m_generation = scene.generation;
         }
         PlayerCamera const* camera{};
+        PlayerInfo const*   player{};
         for(auto e : p.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = e.components();
             if(info.seat_idx != 0)
                 continue;
             camera = &cam;
+            player = &info;
             break;
         }
         if(!camera)
             return;
+        /* View models only with a body: not flying (forge) or in a cutscene */
+        m_first_person = player->mode.physics && !camera->cinematic;
 
         auto& resources = p.template subsystem<BlamResources>();
         ensure_depth_sampler(resources);
@@ -96,7 +100,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Vecf4 const sun_spot{scene.water.sun_spot, scene.water.sun_power};
         {
             Coffee::DProfContext _("H2 instances");
-            update_instances(p, scene);
+            update_instances(p, scene, *camera);
         }
         {
             Coffee::DProfContext _("H2 shadows");
@@ -144,7 +148,10 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         }
                     }
                     else if(d.tag.animated >= 0)
-                        m_animated.push_back(d);
+                    {
+                        if(!d.tag.first_person || m_first_person)
+                            m_animated.push_back(d);
+                    }
                     else
                         draws.push_back(d.cmd);
                 draws_total += mat.section_draws.size();
@@ -326,6 +333,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                  * inside, and cut-outs and transparents from both sides */
                 bool const cull = !mat.sky && !mat.water && !mat.ocean && !mat.additive &&
                                   !mat.blended && !mat.alpha_test && !mat.plasma;
+                bool near   = false;
                 auto submit = [&](std::vector<gfx::draw_command::data_t> const& data,
                                   gfx::buffer_list&                             instances) {
                     gfx::draw_command const command{
@@ -338,7 +346,13 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::view_state view{
                         .view = typing::vector_types::Veci4{
                             0, 0, resources.offscreen_size.x, resources.offscreen_size.y},
-                        .depth = gfx::depth_state{.reversed = true},
+                        /* View models in the nearest slice: never inside walls */
+                        .depth =
+                            gfx::depth_state{
+                                .range    = near ? typing::vector_types::Vecd2{first_person_depth, 1.0}
+                                                : typing::vector_types::Vecd2{0.0, 1.0},
+                                .reversed = true,
+                            },
                     };
                     gfx::depth_extended_state depth{
                         .depth_write =
@@ -387,6 +401,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 {
                     auto const j    = static_cast<size_t>(it->tag.animated);
                     u32 const  slot = animated_slot(scene, j);
+                    near            = it->tag.first_person;
                     m_single.clear();
                     for(; it != m_animated.end() && it->tag.animated == static_cast<i32>(j); ++it)
                     {
@@ -395,6 +410,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     }
                     m_bones = posed(scene, j);
                     submit(m_single, m_instance_list);
+                    near = false;
                 }
             }
         }
@@ -410,7 +426,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
   private:
     /* Per-draw object transforms, H2Instances in h2.vert indexed by base
      * instance: 0 = identity, then the moving objects, then the animated */
-    void update_instances(Proxy& p, H2Scene const& scene)
+    void update_instances(Proxy& p, H2Scene const& scene, PlayerCamera const& camera)
     {
         m_instances.assign(1, Matf4(1.f));
         m_moving_valid.assign(scene.moving_objects.size(), 0);
@@ -422,6 +438,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         }
         for(auto const& object : scene.animated_objects)
             m_instances.push_back(object.transform);
+        place_first_person(scene, camera);
         /* A bound range never shorter than the block (WebGL insists) */
         m_instances.resize(m_instances.size() + instance_block, Matf4(1.f));
         auto const bytes = m_instances.size() * sizeof(Matf4);
@@ -451,6 +468,34 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         if(object < 0 || i >= m_moving_valid.size() || !m_moving_valid[i])
             return std::nullopt;
         return static_cast<u32>(1 + i);
+    }
+
+    /* View models hang from the eye (models +X forward, +Z up; camera -Z
+     * forward, +Y up); the body stands with its camera marker there, turned
+     * with the view */
+    void place_first_person(H2Scene const& scene, PlayerCamera const& camera)
+    {
+        static Matf3 const model_to_view{
+            {0, 0, -1},
+            {-1, 0, 0},
+            {0, 1, 0},
+        };
+        auto const& fp   = scene.first_person;
+        Vecf3 const eye  = camera.camera.position;
+        Matf3 const view = glm::transpose(Matf3(camera.rotation)) * model_to_view;
+        Matf4 const hang = glm::translate(Matf4(1.f), eye) * Matf4(view);
+        for(i32 index : {fp.hands, fp.weapon})
+            if(index >= 0)
+                m_instances[animated_slot(scene, static_cast<size_t>(index))] = hang;
+        if(fp.body < 0)
+            return;
+        Vecf3 forward{view[0].x, view[0].y, 0.f};
+        forward = glm::length(forward) > 1e-4f ? glm::normalize(forward) : Vecf3{1.f, 0.f, 0.f};
+        Vecf3 const up{0.f, 0.f, 1.f};
+        m_instances[animated_slot(scene, static_cast<size_t>(fp.body))] =
+            glm::translate(Matf4(1.f), eye) *
+            Matf4(Matf3(forward, glm::cross(up, forward), up)) *
+            glm::translate(Matf4(1.f), -fp.eye);
     }
 
     u32 animated_slot(H2Scene const& scene, size_t j) const
@@ -615,6 +660,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 continue;
             for(auto const& d : mat.section_draws)
             {
+                if(d.tag.first_person)
+                    continue;
                 Matf4 const* model = nullptr;
                 caster_t     caster{.cmd = d.cmd};
                 if(auto slot = moving_slot(d.tag.object))
@@ -1039,6 +1086,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Vecf4                     bounds;
     };
     std::vector<static_draw_t>             m_static;
+    static constexpr double first_person_depth = 0.98;
+    bool                 m_first_person{false};
+
     struct caster_t
     {
         gfx::draw_command::data_t cmd;
