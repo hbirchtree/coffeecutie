@@ -87,6 +87,8 @@ struct GameEvent
         PlayerTickInput,
         EquipWeapon,
         CinematicCamera,
+        AreaDamage,
+        UnitVitality,
     };
 
     EventType type{None};
@@ -444,6 +446,30 @@ struct ObjectHitEvent
     libc_types::i16      part{-1};    /*!< Collision node, -1 if unknown */
     bool                 head{false};
     bool                 hitscan{false}; /*!< Resolved as the trigger was pulled */
+};
+
+/*! An effect's jpt! part going off: whatever is near takes some of it */
+struct AreaDamageEvent
+{
+    static constexpr auto event_type = GameEvent::AreaDamage;
+
+    blam::tagref_t  damage{}; /*!< jpt! */
+    Vecf3           position{};
+    libc_types::u64 shooter{0}; /*!< Player entity, 0 if unknown */
+};
+
+/*! A unit's body and shield as the authority has them, fractions of its coll
+ *  tag's maxima. Replicas take them as given */
+struct UnitVitalityEvent
+{
+    static constexpr auto event_type = GameEvent::UnitVitality;
+
+    MapLoadEvent::Origin origin{MapLoadEvent::Local};
+    libc_types::u64      unit{0};
+    libc_types::u32      player{ObjectHitEvent::no_player};
+    libc_types::f32      body{1.f};
+    libc_types::f32      shield{1.f};
+    bool                 dead{false};
 };
 
 /*! A unit takes a seat in a vehicle, as the unit_enter_vehicle script

@@ -62,6 +62,7 @@ coffee_application(
         impact_sounds.cpp
         vehicle_sounds.cpp
         projectiles.cpp
+        damage.cpp
         effects.cpp
         weapons.cpp
         hud.cpp

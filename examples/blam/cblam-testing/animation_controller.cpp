@@ -30,6 +30,7 @@ using AnimationControllerManifest = compo::SubsystemManifest<
         const PhysicsData,
         const Attachment,
         const BipedEquipment,
+        const BipedStatus,
         HeldObject,
         AnimationPlayback>,
     type_list_t<
@@ -304,7 +305,9 @@ struct AnimationController
                 weapon,
                 true,
                 grounded,
-                dt);
+                dt,
+                "stand",
+                dead(p, player.id()));
         }
 
         for(auto npc : p.template select<Model, ObjectPhysics, AnimationPlayback>())
@@ -323,7 +326,8 @@ struct AnimationController
                 true,
                 physics.grounded,
                 dt,
-                anim.stance);
+                anim.stance,
+                dead(p, npc.id()));
         }
 
         for(auto it = m_walkers.begin(); it != m_walkers.end();)
@@ -341,9 +345,12 @@ struct AnimationController
         bool               strides,
         bool               grounded,
         f32                dt,
-        std::string const& unit = "stand")
+        std::string const& unit = "stand",
+        bool               dead = false)
     {
         auto& walker = m_walkers[id];
+        if(dead)
+            return die(id, anim, stance(p, anim.graph, unit, weapon), grounded);
         Vecf3 velocity{};
         if(walker.seen && dt > 0.f)
             velocity = (feet - walker.feet) / dt;
@@ -467,6 +474,33 @@ struct AnimationController
 
         /* Feet are probed for once the clocks have moved */
         walker.running = speed > run_threshold;
+    }
+
+    static bool dead(Proxy& p, u64 id)
+    {
+        auto const* status = p.template get<BipedStatus>(id);
+        return status && status->dead;
+    }
+
+    /* Falls while airborne, lands dead, then lies there. One found dead,
+     * such as a body placed by the map, starts out lying down */
+    void die(u64 id, AnimationPlayback& anim, stance_t const& st, bool grounded)
+    {
+        auto&     walker = m_walkers[id];
+        i32 const clip = grounded || st[UnitSlot::airborne_dead] < 0
+                             ? st[UnitSlot::landing_dead]
+                             : st[UnitSlot::airborne_dead];
+        bool const found = !walker.seen;
+        walker.seen      = true;
+        if(clip < 0 || (walker.state == walker_t::dead && walker.land_animation == clip))
+            return;
+        walker.state          = walker_t::dead;
+        walker.land_animation = clip;
+        anim.stop(AnimationPlayback::aim_slot);
+        anim.stop(AnimationPlayback::aim_move_slot);
+        if(auto* layer = anim.crossfade(anim.graph, clip, found ? 0.f : blend_time, false);
+           layer && found)
+            layer->time = std::numeric_limits<f32>::max();
     }
 
     /* A rider plays its seat's animations: the seat's label names a unit in
@@ -1203,6 +1237,7 @@ struct AnimationController
             ground,
             air,
             landing,
+            dead,
         } state{ground};
 
         Vecf3 feet{};
