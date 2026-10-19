@@ -75,8 +75,14 @@ supported.
   Normal maps are stored biased (unsigned).
 - The D3D format word mostly repeats the image entry; its extra content is
   channel swizzle and sign, which the format names already imply.
-- Not done: lower mips and the packed mip tail, cube/array faces, PNG
-  export (other inspectors dump PNG; `-e` currently writes DDS).
+- Mips: past the top level they follow each other in the primary data,
+  sized from the power-of-two base and padded like the top level (32x32
+  blocks, 4 KiB). Once the short side is 16 texels or less, the remaining
+  levels share one 32x32-block tile at Xenia's packed-mip offsets; a top
+  level that small shares that tile too. `--mips` checks each level's DXT
+  block colours against the box-filtered top level.
+- Not done: cube/array face mips, PNG export (other inspectors dump PNG;
+  `-e` currently writes DDS).
 
 ## Shaders
 
@@ -342,7 +348,7 @@ and `h2.vert` + `h3_base.frag` (`H3_TINT` in `h2_common.glsl`).
   `albedo_color` as a tint converted from linear to gamma, alpha test,
   and opaque / alpha blend / additive passes from the rmdf options.
   Helpers without a base map (`z_invis_lightquad`) are not drawn.
-- Textures: top level only, no mips. dxt5a/dxn families go up as BC4/BC5
+- Textures: full mip chains. dxt5a/dxn families go up as BC4/BC5
   with channel swizzles, CTX1 decoded to RG8; dxt3a is not uploaded yet.
 - Lighting as in "Lighting and materials"; scenery still falls back to a
   sun term.

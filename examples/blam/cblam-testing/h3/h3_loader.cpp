@@ -2281,70 +2281,14 @@ struct H3MapLoader : compo::SubsystemBase
         auto view = m_loader->load(hardware[0].resource);
         if(!view.has_value())
             return std::nullopt;
-        u32 width  = static_cast<u32>(image.width.value());
-        u32 height = static_cast<u32>(image.height.value());
-        std::vector<u8> pixels;
-        if(!el::linearize(
-               el::top_level(view.value(), image),
-               format,
-               width,
-               height,
-               image.xbox_flags,
-               pixels))
-            return std::nullopt;
+        u32 const width  = static_cast<u32>(image.width.value());
+        u32 const height = static_cast<u32>(image.height.value());
         using blam::bitm::format_t;
         using gfx::textures::swizzle_t;
-        if(dxt3a)
-        {
-            std::vector<u8> texels;
-            el::decode_dxt3a(pixels, width, height, texels);
-            pixels = std::move(texels);
-        }
-        if(ctx1)
-        {
-            std::vector<u8> texels;
-            el::decode_ctx1(pixels, width, height, texels);
-            auto tex = m_api->alloc_texture(
-                gfx::textures::d2, blam::bitm::to_pixdesc(format_t::V8U8), 1);
-            tex->alloc(size_3d<u32>{width, height, 1});
-            tex->upload(
-                std::move(texels),
-                Veci2{0, 0},
-                Veci2{static_cast<i32>(width), static_cast<i32>(height)},
-                0);
-            return make_texture(tex);
-        }
-        if(rgtc)
-        {
-            if(format == el::bitmap_format_t::dxn)
-                el::dxn_to_bc5(pixels);
-            auto tex = m_api->alloc_texture(gfx::textures::d2, rgtc->desc, 1);
-            /* Before alloc: without texture swizzle (WebGL) it is decoded in */
-            auto const& sw = rgtc->swizzle;
-            tex->set_swizzle(sw[0], sw[1], sw[2], sw[3]);
-            tex->alloc(size_3d<u32>{width, height, 1});
-            tex->upload(
-                std::move(pixels),
-                Veci2{0, 0},
-                Veci2{static_cast<i32>(width), static_cast<i32>(height)},
-                0);
-            return make_texture(tex);
-        }
-        /* Little-endian A8R8G8B8 is B,G,R,A */
-        if(*h1 == format_t::ARGB8 || *h1 == format_t::XRGB8)
-            for(size_t i = 0; i + 3 < pixels.size(); i += 4)
-            {
-                std::swap(pixels[i], pixels[i + 2]);
-                if(*h1 == format_t::XRGB8)
-                    pixels[i + 3] = 0xFF;
-            }
-        if(*h1 == format_t::V8U8)
-            for(auto& b : pixels)
-                b = static_cast<u8>(b + 0x80);
 
         /* One- and two-channel formats and where their channels go */
         std::optional<std::array<swizzle_t, 4>> swizzle;
-        switch(*h1)
+        switch(h1.value_or(format_t::ARGB8))
         {
         case format_t::Y8:
             swizzle = {swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::one};
@@ -2362,38 +2306,86 @@ struct H3MapLoader : compo::SubsystemBase
             break;
         }
         /* Without texture swizzle (WebGL) they go up expanded to RGBA8 */
-        if(swizzle && !m_api->feature_info().texture.swizzle)
-        {
-            u32 const channels = *h1 == format_t::A8Y8 ? 2 : 1;
-            std::vector<u8> rgba(size_t(width) * height * 4);
-            for(size_t i = 0; i < size_t(width) * height; i++)
-                for(size_t c = 0; c < 4; c++)
+        bool const expand = !rgtc && !ctx1 && swizzle && !m_api->feature_info().texture.swizzle;
+
+        /* A level's pixels as the texture takes them */
+        auto prepare = [&](std::vector<u8>& pixels, u32 w, u32 h) {
+            if(dxt3a)
+            {
+                std::vector<u8> texels;
+                el::decode_dxt3a(pixels, w, h, texels);
+                pixels = std::move(texels);
+            }
+            if(ctx1)
+            {
+                std::vector<u8> texels;
+                el::decode_ctx1(pixels, w, h, texels);
+                pixels = std::move(texels);
+                return;
+            }
+            if(rgtc)
+            {
+                if(format == el::bitmap_format_t::dxn)
+                    el::dxn_to_bc5(pixels);
+                return;
+            }
+            /* Little-endian A8R8G8B8 is B,G,R,A */
+            if(*h1 == format_t::ARGB8 || *h1 == format_t::XRGB8)
+                for(size_t i = 0; i + 3 < pixels.size(); i += 4)
                 {
-                    auto sc = (*swizzle)[c];
-                    rgba[i * 4 + c] = sc == swizzle_t::red     ? pixels[i * channels]
-                                      : sc == swizzle_t::green ? pixels[i * channels + 1]
-                                      : sc == swizzle_t::one   ? u8(255)
-                                                               : u8(0);
+                    std::swap(pixels[i], pixels[i + 2]);
+                    if(*h1 == format_t::XRGB8)
+                        pixels[i + 3] = 0xFF;
                 }
-            auto tex = m_api->alloc_texture(
-                gfx::textures::d2, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
-            tex->alloc(size_3d<u32>{width, height, 1});
-            tex->upload(
-                std::move(rgba),
-                Veci2{0, 0},
-                Veci2{static_cast<i32>(width), static_cast<i32>(height)},
-                0);
-            return make_texture(tex);
+            if(*h1 == format_t::V8U8)
+                for(auto& b : pixels)
+                    b = static_cast<u8>(b + 0x80);
+            if(expand)
+            {
+                u32 const       channels = *h1 == format_t::A8Y8 ? 2 : 1;
+                std::vector<u8> rgba(size_t(w) * h * 4);
+                for(size_t i = 0; i < size_t(w) * h; i++)
+                    for(size_t c = 0; c < 4; c++)
+                    {
+                        auto sc         = (*swizzle)[c];
+                        rgba[i * 4 + c] = sc == swizzle_t::red     ? pixels[i * channels]
+                                          : sc == swizzle_t::green ? pixels[i * channels + 1]
+                                          : sc == swizzle_t::one   ? u8(255)
+                                                                   : u8(0);
+                    }
+                pixels = std::move(rgba);
+            }
+        };
+
+        /* Every level the texture keeps, so the far distance filters down */
+        std::vector<std::vector<u8>> levels;
+        for(u32 l = 0; l < el::level_count(view.value(), image); l++)
+        {
+            std::vector<u8> pixels;
+            if(!el::linearize_level(view.value(), image, l, pixels))
+                break;
+            prepare(pixels, std::max(width >> l, 1u), std::max(height >> l, 1u));
+            levels.push_back(std::move(pixels));
         }
-        auto tex = m_api->alloc_texture(gfx::textures::d2, blam::bitm::to_pixdesc(*h1), 1);
+        if(levels.empty())
+            return std::nullopt;
+        auto const desc = ctx1     ? blam::bitm::to_pixdesc(format_t::V8U8)
+                          : rgtc   ? rgtc->desc
+                          : expand ? typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8)
+                                   : blam::bitm::to_pixdesc(*h1);
+        auto tex = m_api->alloc_texture(gfx::textures::d2, desc, static_cast<u32>(levels.size()));
+        /* Before alloc: without texture swizzle (WebGL) RGTC is decoded in */
+        if(rgtc)
+            tex->set_swizzle(rgtc->swizzle[0], rgtc->swizzle[1], rgtc->swizzle[2], rgtc->swizzle[3]);
         tex->alloc(size_3d<u32>{width, height, 1});
-        if(swizzle)
+        if(swizzle && !expand && !rgtc && !ctx1)
             tex->set_swizzle((*swizzle)[0], (*swizzle)[1], (*swizzle)[2], (*swizzle)[3]);
-        tex->upload(
-            std::move(pixels),
-            Veci2{0, 0},
-            Veci2{static_cast<i32>(width), static_cast<i32>(height)},
-            0);
+        for(u32 l = 0; l < levels.size(); l++)
+            tex->upload(
+                std::move(levels[l]),
+                Veci2{0, 0},
+                Veci2{static_cast<i32>(std::max(width >> l, 1u)), static_cast<i32>(std::max(height >> l, 1u))},
+                static_cast<i32>(l));
         return make_texture(tex);
     }
 
