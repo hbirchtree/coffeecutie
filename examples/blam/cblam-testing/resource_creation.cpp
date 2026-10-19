@@ -1,3 +1,4 @@
+#include "game_mode.h"
 #include "resource_creation.h"
 
 #include "blam_files.h"
@@ -465,6 +466,28 @@ void create_resources(compo::EntityContainer& e)
                                 player["player_idx"].get<u32>())
                                  player["vitality"] =
                                      vitality(entity.template get<BipedStatus>());
+                     {
+                         auto const* game = &e.subsystem_cast<GameState>();
+                         nlohmann::json scores = nlohmann::json::array();
+                         for(auto const& player : game->players)
+                             scores.push_back({
+                                 {"player_idx", player.player_idx},
+                                 {"team", player.team},
+                                 {"score", player.score},
+                                 {"kills", player.kills},
+                                 {"deaths", player.deaths},
+                             });
+                         state["game"] = {
+                             {"kind", static_cast<int>(game->kind)},
+                             {"phase", static_cast<int>(game->phase)},
+                             {"winner", game->winner},
+                             {"time_left", game->time_left},
+                             {"team_scores", game->team_scores},
+                             {"saves", game->saves},
+                             {"reverts", game->reverts},
+                             {"scores", std::move(scores)},
+                         };
+                     }
                      state["objects"] = nlohmann::json::array();
                      for(auto& [_, object] : objects)
                          state["objects"].push_back(std::move(object));

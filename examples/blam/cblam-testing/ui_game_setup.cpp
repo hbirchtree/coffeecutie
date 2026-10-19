@@ -121,6 +121,14 @@ std::vector<u16> available_maps(
 
 } // namespace
 
+std::optional<std::string_view> next_campaign_map(std::string_view map)
+{
+    for(size_t i = 0; i + 1 < campaign_maps.size(); i++)
+        if(campaign_maps[i] == map)
+            return campaign_maps[i + 1];
+    return std::nullopt;
+}
+
 namespace {
 
 bool in_menu(compo::EntityContainer& e)
