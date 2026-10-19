@@ -2718,9 +2718,18 @@ struct H2MapLoader : compo::SubsystemBase
             auto palette    = palette_block.data(map.magic());
             if(placements.has_error() || palette.has_error())
                 return;
-            u32 placed = 0, skipped = 0;
+            u32 placed = 0, skipped = 0, scripted = 0;
             for(auto const& p : placements.value())
             {
+                /* Left for scripts to create (cutscene actors and props) */
+                if(static_cast<u32>(p.placement_flags) &
+                   static_cast<u32>(
+                       dim::scn::placement_flags_t::not_automatically |
+                       dim::scn::placement_flags_t::never_placed))
+                {
+                    scripted++;
+                    continue;
+                }
                 auto const*       entry = p.palette.in(palette.value());
                 dim::tag_t const* mode_tag =
                     entry ? render_model_of(map, entry->tag) : nullptr;
@@ -2756,8 +2765,13 @@ struct H2MapLoader : compo::SubsystemBase
                 else
                     skipped++;
             }
-            if(placed || skipped)
-                cDebug("H2: {}: {} placed, {} skipped", what, placed, skipped);
+            if(placed || skipped || scripted)
+                cDebug(
+                    "H2: {}: {} placed, {} skipped, {} left to scripts",
+                    what,
+                    placed,
+                    skipped,
+                    scripted);
         };
         block(scnr.scenery, scnr.scenery_palette, "scenery");
         block(scnr.bipeds, scnr.biped_palette, "bipeds");
