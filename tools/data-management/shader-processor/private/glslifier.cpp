@@ -33,6 +33,26 @@ void add_instance_definition(spirv_cross::CompilerGLSL& /*compiler*/)
     //    compiler.add_header_line("uniform int glw_InstanceID;");
 }
 
+/* ES draws never turn clip planes on, and WebGL and many GLES drivers
+ * reject the extension that declares them */
+std::string remove_clip_distance(std::string const& source)
+{
+    std::string out;
+    out.reserve(source.size());
+    size_t start = 0;
+    while(start < source.size())
+    {
+        size_t end = source.find('\n', start);
+        end        = end == std::string::npos ? source.size() : end + 1;
+        auto line  = std::string_view(source).substr(start, end - start);
+        if(line.find("gl_ClipDistance") == std::string_view::npos &&
+           line.find("GL_EXT_clip_cull_distance") == std::string_view::npos)
+            out.append(line);
+        start = end;
+    }
+    return out;
+}
+
 void remove_decorator_location(spirv_cross::CompilerGLSL& compiler)
 {
     spirv_cross::ShaderResources resources = compiler.get_shader_resources();
@@ -143,6 +163,8 @@ stl_types::result<std::string, glsl_error> generate(
     try
     {
         auto source = compiler.compile();
+        if(is_es)
+            source = remove_clip_distance(source);
         if(output.compact)
             source = std::regex_replace(source, std::regex(" +"), " ");
         return stl_types::success(std::move(source));
