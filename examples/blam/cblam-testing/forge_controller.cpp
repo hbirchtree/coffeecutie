@@ -370,6 +370,7 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
             .position     = camera.camera.position + forward * spawn_distance,
             .rotation     = rotation,
             .server_owned = client,
+            .announce     = true,
         };
         GameEvent ev{.type = GameEvent::SpawnObject};
         p.subsystem<GameEventBus>().inject(ev, &spawn);

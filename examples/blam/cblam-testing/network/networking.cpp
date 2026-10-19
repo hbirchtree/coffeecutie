@@ -637,6 +637,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         .tag_id    = spawn.object.tag_id,
                     },
                 .request_id = request_id,
+                .announce   = spawn.announce,
             }));
     }
 
@@ -679,7 +680,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .instance_id = spawn.net_id,
                 },
         };
+        /* Late joiners see it as already there */
         m_dynamic_spawns.push_back(wire);
+        wire.announce = spawn.announce;
         journal(
             "net_object_spawn",
             {{"net_id", spawn.net_id},
@@ -693,6 +696,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             targets.erase(requester);
             EntitySpawn response = wire;
             response.response_id = request_id;
+            /* Its impostor already played it */
+            response.announce = 0;
             send_single(requester, Message<EntitySpawn>(std::move(response)));
         }
         if(targets.empty())
@@ -3523,6 +3528,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .position = Vecf3(request.position),
                 .rotation = request.direction,
                 .net_id = SpawnObjectEvent::dynamic_net_id_base + m_next_net_id++,
+                .announce = request.announce != 0,
             };
             m_game_bus.inject(ev, &spawn);
             replicate_spawn(spawn, connection, request.request_id);
@@ -3891,6 +3897,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 };
                 local.object.tag_class = spawn.tag.tag_class;
                 local.object.tag_id    = spawn.tag.tag_id;
+                local.announce         = spawn.announce != 0;
                 m_game_bus.inject(ev, &local);
             }
             break;

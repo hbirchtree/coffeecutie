@@ -369,7 +369,7 @@ struct alignas(8) UnitVitality
     f32 body{1.f};
     f32 shield{1.f};
     u32 dead{0};
-    u32 respawned{0}; /*!< Brought back at `respawn`, facing its w */
+    u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect */
     Vecf4 respawn{};
 };
 
@@ -538,6 +538,7 @@ struct alignas(8) EntitySpawn
     EntityTag tag{};
     i32       permutation{-1};
     u32       response_id{no_request};
+    u32       announce{0}; /*!< See SpawnObjectEvent::announce */
 };
 
 struct alignas(8) PlayerSpawn
@@ -560,6 +561,7 @@ struct alignas(8) SpawnRequest
     Quatf     direction{};
     EntityTag tag{};
     u32       request_id{EntitySpawn::no_request};
+    u32       announce{0};
 };
 
 struct alignas(8) PlayerSyncEntry
@@ -609,7 +611,7 @@ static_assert(sizeof(Message<GameJoin>) == 68);
 static_assert(sizeof(Message<MapVerify>) == 32);
 static_assert(sizeof(EntityTag) == 12);
 static_assert(sizeof(EntitySpawn) == 56);
-static_assert(sizeof(SpawnRequest) == 48);
+static_assert(sizeof(SpawnRequest) == 56);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 48);
 static_assert(sizeof(Message<CameraSync>) == 72);

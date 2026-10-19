@@ -123,7 +123,7 @@ class CombatSync
                 {
                     if(vitality.respawn_at)
                     {
-                        wire->respawned = 1;
+                        wire->respawned = vitality.arrived ? 3 : 1;
                         wire->respawn   = Vecf4(*vitality.respawn_at, vitality.respawn_facing);
                     }
                     m_vitality.push_back({.message = *wire, .route = {route_t::clients}});
@@ -347,6 +347,7 @@ class CombatSync
         {
             vitality.respawn_at     = Vecf3(wire.respawn);
             vitality.respawn_facing = wire.respawn.w;
+            vitality.arrived        = (wire.respawned & 2) != 0;
         }
         m_bus.inject(ev, &vitality);
     }

@@ -195,6 +195,7 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
                 .unit     = it->first,
                 .position = spot->first,
                 .facing   = spot->second,
+                .arrive   = true,
             };
             p.template subsystem<GameEventBus>().inject(ev, &respawn);
             it = m_waiting.erase(it);
