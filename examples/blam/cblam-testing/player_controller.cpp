@@ -29,6 +29,11 @@ struct PlayerController
     static constexpr duration jump_buffer = 150ms;
     /* A press this long after stepping off an edge still jumps */
     static constexpr duration coyote_time = 100ms;
+    /* The dead's camera backs this far off over this long, rising a little */
+    static constexpr f32 death_distance  = 2.5f; /* wu */
+    static constexpr f32 death_pull_time = 1.5f; /* s */
+    static constexpr f32 death_rise      = .5f;
+    static constexpr f32 death_wall_gap  = .2f;  /* wu */
     /* Re-arms a jump the ground probe never saw leave the ground */
     static constexpr duration jump_cooldown   = 300ms;
     static constexpr i16      trigger_pressed = 8192;
@@ -118,8 +123,15 @@ struct PlayerController
                     t);
                 input.frame_end();
             }
+            /* The dead lie where they fell, watched from further and further
+             * back as the camera pulls away from them */
+            auto const* status = p.template get<BipedStatus>(player.id());
+            bool const  dead   = status && status->dead && info.mode.physics && !info.is_remote();
+            cam.view_offset    = dead ? death_view(p, player.id(), cam, dt) : Vecf3{};
+            if(!dead)
+                m_dead_for.erase(player.id());
             update_camera(cam);
-            if(info.riding.vehicle == 0)
+            if(info.riding.vehicle == 0 && !dead)
                 place_biped(cam, info, model);
         }
         for(auto ent : p.select<Attachment, Model>())
@@ -580,7 +592,29 @@ struct PlayerController
         /* CameraControl draws cutscenes */
         if(cam.cinematic)
             return;
-        build_camera_matrix(cam, cam.camera.position);
+        build_camera_matrix(cam, cam.camera.position + cam.view_offset);
+    }
+
+    /* Behind and above the body along where the player looks, short of any
+     * wall in the way */
+    Vecf3 death_view(Proxy& p, u64 id, PlayerCamera const& cam, duration const& dt)
+    {
+        f32& since = m_dead_for[id];
+        since += std::chrono::duration<f32>(dt).count();
+        f32 const pull  = glm::smoothstep(0.f, 1.f, std::min(since / death_pull_time, 1.f));
+        Vecf3 const ahead = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+        Vecf3 const back  = glm::normalize(-ahead + Vecf3{0.f, 0.f, death_rise});
+        f32 reach = death_distance * pull;
+        Physics::Event   ev{Physics::Event::Raycast};
+        Physics::Raycast ray{
+            .from   = cam.camera.position,
+            .to     = cam.camera.position + back * reach,
+            .ignore = id,
+        };
+        p.template subsystem<PhysicsBus>().process(ev, &ray);
+        if(ray.hit)
+            reach = std::max(reach * ray.fraction - death_wall_gap, 0.f);
+        return back * reach;
     }
 
     /* Biped under its camera, yaw only; riders are placed by Gameplay */
@@ -654,6 +688,7 @@ struct PlayerController
 
     time_point                m_last_time{};
     std::unique_ptr<TickQueue> m_ticks;
+    std::map<u64, f32>         m_dead_for; /*!< Seconds dead, for the camera */
     std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */
     std::map<u64, jump_t>     m_jumps;
     std::array<menu_pad_t, 4> m_pads{};

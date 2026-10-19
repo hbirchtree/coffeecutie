@@ -265,7 +265,7 @@ struct MotionInterpolator
                glm::distance(*cam.tick_eye, cam.camera.position) <= max_tick_move)
             {
                 cam.drawn_eye = glm::mix(*cam.tick_eye, cam.camera.position, alpha);
-                build_camera_matrix(cam, cam.drawn_eye);
+                build_camera_matrix(cam, cam.drawn_eye + cam.view_offset);
             }
             /* First-person models hang off the eye as drawn, once this
              * frame's ticks have moved the camera */

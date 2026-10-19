@@ -1071,6 +1071,10 @@ struct PlayerCamera
                                * forward = camera forward */
     } inputs;
 
+    /*! Where the view is drawn from, off the eye: the dead look at their
+     *  body from behind it */
+    Vecf3 view_offset{};
+
     Matf4 matrix{};
     Matf4 rotation{};
 
