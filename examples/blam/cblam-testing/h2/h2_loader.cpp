@@ -206,6 +206,19 @@ struct H2MapLoader : compo::SubsystemBase
     {
     }
 
+    /* Scripted placements are picked at load, so a change reloads the map */
+    void start_frame(ContainerProxy&, time_point const&) override
+    {
+        bool const show =
+            m_container.subsystem_cast<RenderingParameters>().show_scripted_placements;
+        if(!m_source || show == m_scripted_shown)
+            return;
+        m_scripted_shown = show;
+        auto      load   = *m_source;
+        GameEvent ev{GameEvent::MapLoadStart};
+        m_container.subsystem_cast<GameEventBus>().process(ev, &load);
+    }
+
     /* True if the file is a Halo 2 cache; it is then loaded (or at least
      * attempted) here and the Halo 1 loader must not see it */
     bool on_map_load(MapLoadEvent const& load)
@@ -528,6 +541,10 @@ struct H2MapLoader : compo::SubsystemBase
             release_shared();
             return false;
         }
+        m_source = MapLoadEvent{
+            .origin = load.origin, .directory = load.directory, .file = load.file};
+        m_scripted_shown =
+            m_container.subsystem_cast<RenderingParameters>().show_scripted_placements;
         /* Shared textures this map did not ask for go away */
         size_t const before = m_shared_textures.size();
         std::erase_if(m_shared_textures, [this](auto const& entry) {
@@ -559,6 +576,7 @@ struct H2MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        m_source.reset();
         m_shell.loaded = false;
         m_bank.loaded  = false;
         m_scene.loaded = false;
@@ -2719,10 +2737,13 @@ struct H2MapLoader : compo::SubsystemBase
             if(placements.has_error() || palette.has_error())
                 return;
             u32 placed = 0, skipped = 0, scripted = 0;
+            bool const show_scripted =
+                m_container.subsystem_cast<RenderingParameters>().show_scripted_placements;
             for(auto const& p : placements.value())
             {
                 /* Left for scripts to create (cutscene actors and props) */
-                if(static_cast<u32>(p.placement_flags) &
+                if(!show_scripted &&
+                   static_cast<u32>(p.placement_flags) &
                    static_cast<u32>(
                        dim::scn::placement_flags_t::not_automatically |
                        dim::scn::placement_flags_t::never_placed))
@@ -3331,6 +3352,8 @@ struct H2MapLoader : compo::SubsystemBase
     H2ShellData&            m_shell;
     H2SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
+    std::optional<MapLoadEvent> m_source;
+    bool                        m_scripted_shown{false};
     std::vector<std::string> m_font_table;
     std::vector<std::pair<std::string, std::shared_ptr<comp_app::FileMapper::Resource>>>
         m_font_files;

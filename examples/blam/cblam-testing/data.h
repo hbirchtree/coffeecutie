@@ -199,6 +199,9 @@ struct RenderingParameters : compo::SubsystemBase
     bool only_multipurpose2{false};
     bool render_model_bones{true};
     bool render_scenery{true};
+    /* Also place what the scenario leaves to scripts (cutscene actors);
+     * changing it reloads a Halo 2 map */
+    bool show_scripted_placements{false};
 
     // ES2 renderer: closer to the main renderer, at a cost
     bool legacy_enhanced{
