@@ -171,6 +171,12 @@ struct BlamScript
             stop_all(p);
         if(!m_running)
             return;
+        /* A networked host holds its players back until everyone has loaded,
+         * and scripts seat them in their opening cutscenes */
+        for(auto player : p.template select<PlayerInfo>())
+            if(auto const& info = player.template get<PlayerInfo>();
+               !info.spawned && !info.is_remote())
+                return;
         m_proxy = &p;
         watch_player(p);
         for(size_t i = 0; i < ticks.size(); i++)
