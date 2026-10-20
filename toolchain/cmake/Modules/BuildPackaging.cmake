@@ -78,6 +78,28 @@ function(COFFEE_APPLICATION)
 
   set(ICON_ASSET "${APP_ICON_ASSET}")
 
+  if(ANDROID OR
+      EMSCRIPTEN OR
+      ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR
+      ${CMAKE_SYSTEM_NAME} MATCHES "(MinGW|Windows)")
+    set(RESOLVED_BUNDLE_LIBRARIES)
+    foreach(LIB ${APP_BUNDLE_LIBRARIES})
+      if(EXISTS ${LIB})
+        list(APPEND RESOLVED_BUNDLE_LIBRARIES ${LIB})
+      elseif(TARGET ${LIB})
+        get_target_property(LIB_TYPE ${LIB} TYPE)
+        if(${LIB_TYPE} STREQUAL "SHARED_LIBRARY")
+          if(${CMAKE_SYSTEM_NAME} MATCHES "(MinGW|Windows)")
+            # list(APPEND RESOLVED_BUNDLE_LIBRARIES $<TARGET_RUNTIME_DLLS:${LIB}>)
+          else()
+            list(APPEND RESOLVED_BUNDLE_LIBRARIES "$<TARGET_SONAME_FILE:${LIB}>")
+          endif()
+        endif()
+      endif()
+    endforeach()
+    set(APP_BUNDLE_LIBRARIES ${RESOLVED_BUNDLE_LIBRARIES})
+  endif()
+
   if(ANDROID)
     androidapk_package(
       TARGET "${APP_TARGET}"
@@ -105,6 +127,7 @@ function(COFFEE_APPLICATION)
       "${SOURCES_MOD}"
       "${APP_RESOURCES}"
       "${ICON_ASSET}"
+      "${APP_BUNDLE_LIBRARIES}"
     )
   elseif(APPLE AND NOT APP_USE_CMD)
     macapp_package(

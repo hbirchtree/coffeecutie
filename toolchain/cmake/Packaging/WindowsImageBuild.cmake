@@ -14,21 +14,8 @@ macro(
   SOURCES
   RESOURCES
   ICON_ASSET
+  BUNDLE_LIBS
 )
-
-  set(INCLUDED_LIBS "")
-  # Locate necessary binary files
-  set(BASE_LIBS)
-  # if(NOT MINGW64)
-  #   foreach(lib_target ${BASE_LIBS})
-  #     get_target_property(lib ${lib_target} IMPORTED_LOCATION)
-  #     get_filename_component(LIB_BASE "${lib}" NAME_WE)
-  #     get_filename_component(LIB_DIR "${lib}" DIRECTORY)
-
-  #     set(INCLUDED_LIBS "${INCLUDED_LIBS};${LIB_DIR}/${LIB_BASE}.dll")
-  #   endforeach()
-  # endif()
-
   set(WINDOWS_DIST_COMPANY "${COMPANY}")
 
   set(WINDOWS_PACKAGE_NAME "${DOM_NAME}.${TARGET}")

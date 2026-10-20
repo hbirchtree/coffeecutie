@@ -4,7 +4,7 @@
   "description": "libavcodec + libavutil reduced to chosen audio decoders, as one shared library (a side module on Emscripten) so the LGPL code stays replaceable",
   "homepage": "https://ffmpeg.org",
   "license": "LGPL-2.1-or-later",
-  "supports": "linux | osx | emscripten",
+  "supports": "linux | osx | emscripten | windows",
   "dependencies": [
     {
       "name": "vcpkg-cmake",

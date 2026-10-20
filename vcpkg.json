@@ -108,7 +108,7 @@
                     "name": "ffmpeg-decoders",
                     "default-features": false,
                     "features": ["xma"],
-                    "platform": "linux | osx | emscripten"
+                    "platform": "linux | osx | emscripten | windows"
                 }
             ]
         },
