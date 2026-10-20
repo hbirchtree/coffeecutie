@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/endian.h"
+#include "../common/tag_class.h"
 #include "../volta/blam_base_types.h"
 #include "../volta/blam_structures.h"
 
@@ -55,28 +56,7 @@ struct datum_index
 static_assert(sizeof(datum_index) == 4);
 
 /*! A tag group fourcc; big-endian, so the bytes read in order */
-struct tag_class
-{
-    std::array<char, 4> raw;
-
-    inline std::string_view str() const
-    {
-        return std::string_view(raw.data(), raw.size());
-    }
-
-    inline bool valid() const
-    {
-        return raw != std::array<char, 4>{'\xFF', '\xFF', '\xFF', '\xFF'} &&
-               raw != std::array<char, 4>{};
-    }
-
-    inline bool operator==(std::string_view name) const
-    {
-        return str() == name;
-    }
-};
-
-static_assert(sizeof(tag_class) == 4);
+using tag_class = basic_tag_class<std::endian::big>;
 
 /*!
  * \brief Halo 3 string IDs pack an index, a namespace and the string's

@@ -92,7 +92,7 @@ static_assert(sizeof(geometry_material_t) == 0x24);
 /*! render_model ("mode") */
 struct render_model_t
 {
-    static constexpr std::string_view group = "mode";
+    static constexpr tag_class_t group = tag_class_t::mode;
 
     string_id                            name;
     be<u16>                              flags;

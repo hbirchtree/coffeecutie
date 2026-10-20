@@ -40,10 +40,10 @@ struct ShellLoader
         return {from_le(c.r), from_le(c.g), from_le(c.b), from_le(c.a)};
     }
 
-    i32 bitmap(dim::tag_reference<dim::tag_class_t::bitm> const& ref)
+    i32 bitmap(dim::tag_reference<blam::tag_class_t::bitm> const& ref)
     {
         auto const* tag = map.tag_at(ref.tag_id);
-        if(!tag || !tag->matches("bitm"))
+        if(!tag || !tag->matches(blam::tag_class_t::bitm))
             return -1;
         auto key = static_cast<u16>(tag - map.tags().data());
         if(auto it = bitmap_index.find(key); it != bitmap_index.end())
@@ -75,10 +75,10 @@ struct ShellLoader
     }
 
     ui::string_list_t const* string_list(
-        dim::tag_reference<dim::tag_class_t::unic> const& ref)
+        dim::tag_reference<blam::tag_class_t::unic> const& ref)
     {
         auto const* tag = map.tag_at(ref.tag_id);
-        return tag && tag->matches("unic")
+        return tag && tag->matches(blam::tag_class_t::unic)
                    ? tag->template data<ui::string_list_t>(map.magic())
                    : nullptr;
     }
@@ -261,7 +261,7 @@ struct ShellLoader
         load_music(g);
         each(g.list_skins, [&](ui::list_skin_ref_t const& r) {
             if(auto const* tag = map.tag_at(r.skin.tag_id);
-               tag && tag->matches("skin"))
+               tag && tag->matches(blam::tag_class_t::skin))
                 load_skin(*tag);
             else
                 out.skins.push_back({});
@@ -393,13 +393,13 @@ struct ShellLoader
      * a WMA file for the "codec" encoding (whatever the compression byte
      * says) */
     bool sound_blocks(
-        dim::tag_reference<dim::tag_class_t::snd> const& ref,
+        dim::tag_reference<blam::tag_class_t::snd> const& ref,
         dim::snd::gestalt const*                          gestalt,
         H2Sound&                                          sound_out)
     {
         auto const* tag = map.tag_at(ref.tag_id);
         auto const* sound =
-            tag && tag->matches("snd!") ? tag->template data<dim::snd::sound>(map.magic())
+            tag && tag->matches(blam::tag_class_t::snd) ? tag->template data<dim::snd::sound>(map.magic())
                                         : nullptr;
         bool const wma = sound && sound->encoding == dim::snd::encoding_t::codec;
         if(!sound || !gestalt ||
@@ -468,7 +468,7 @@ struct ShellLoader
     {
         auto const* lsnd_tag = map.tag_at(g.main_menu_music.tag_id);
         auto const* lsnd =
-            lsnd_tag && lsnd_tag->matches("lsnd")
+            lsnd_tag && lsnd_tag->matches(blam::tag_class_t::lsnd)
                 ? lsnd_tag->template data<dim::snd::looping_sound>(map.magic())
                 : nullptr;
         if(!lsnd)
@@ -478,7 +478,7 @@ struct ShellLoader
         }
         dim::snd::gestalt const* gestalt = nullptr;
         for(auto const& tag : map.tags())
-            if(tag.valid() && tag.matches("ugh!"))
+            if(tag.valid() && tag.matches(blam::tag_class_t::ugh))
             {
                 gestalt = tag.template data<dim::snd::gestalt>(map.magic());
                 break;
@@ -531,7 +531,7 @@ struct ShellLoader
     {
         dim::tag_t const* wgtz = nullptr;
         for(auto const& tag : map.tags())
-            if(tag.valid() && tag.matches("wgtz"))
+            if(tag.valid() && tag.matches(blam::tag_class_t::wgtz))
             {
                 wgtz = &tag;
                 break;
@@ -546,7 +546,7 @@ struct ShellLoader
                 load_globals(*wigl);
         each(globals->screens, [&](ui::screen_widget_ref_t const& r) {
             if(auto const* tag = map.tag_at(r.widget.tag_id);
-               tag && tag->matches("wgit"))
+               tag && tag->matches(blam::tag_class_t::wgit))
                 load_screen(*tag);
         });
         load_fonts(font_table, font_files);

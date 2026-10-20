@@ -830,25 +830,25 @@ inline void dump_tag(
             tag.tag_class.str(),
             tag.size(),
             tag.pointer());
-    if(tag.matches("bitm"))
+    if(tag.matches(blam::tag_class_t::bitm))
         dump_bitm(map, tag);
-    else if(tag.matches("shad"))
+    else if(tag.matches(blam::tag_class_t::shad))
         dump_shad(map, tag);
-    else if(tag.matches("stem"))
+    else if(tag.matches(blam::tag_class_t::stem))
         dump_stem(map, tag);
-    else if(tag.matches("mode"))
+    else if(tag.matches(blam::tag_class_t::mode))
         dump_mode(map, tag);
-    else if(tag.matches("sky "))
+    else if(tag.matches(blam::tag_class_t::sky))
         dump_sky(map, tag);
-    else if(tag.matches("wgit"))
+    else if(tag.matches(blam::tag_class_t::wgit))
         dump_wgit(map, tag);
-    else if(tag.matches("skin"))
+    else if(tag.matches(blam::tag_class_t::skin))
         dump_skin(map, tag);
-    else if(tag.matches("wgtz"))
+    else if(tag.matches(blam::tag_class_t::wgtz))
         dump_wgtz(map, tag);
-    else if(tag.matches("wigl"))
+    else if(tag.matches(blam::tag_class_t::wigl))
         dump_wigl(map, tag);
-    else if(tag.matches("unic"))
+    else if(tag.matches(blam::tag_class_t::unic))
         dump_unic(map, tag);
 }
 

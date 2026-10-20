@@ -299,7 +299,7 @@ struct H3MapLoader : compo::SubsystemBase
         auto looping = map.find<el::looping_sound_t>("main_menu_music");
         if(!looping)
             for(auto const& tag : map.tags())
-                if(tag.valid() && map.is(tag, "lsnd") &&
+                if(tag.valid() && map.is(tag, blam::tag_class_t::lsnd) &&
                    map.name_of(tag).starts_with("sound\\music\\"))
                 {
                     looping = map.get<el::looping_sound_t>(map.id_of(tag));
@@ -1651,10 +1651,10 @@ struct H3MapLoader : compo::SubsystemBase
             return it == slots.end() ? nullptr : &it->second;
         };
 
-        if(map.is(*tag, "rmw "))
+        if(map.is(*tag, blam::tag_class_t::rmw_))
         {
             load_water(mat, constants, texture_tags, option("foam"));
-        } else if(map.is(*tag, "rmtr"))
+        } else if(map.is(*tag, blam::tag_class_t::rmtr))
         {
             /* Terrain: up to four layers weighted by the blend map */
             mat.variant = Variant::terrain;
@@ -1743,7 +1743,7 @@ struct H3MapLoader : compo::SubsystemBase
                 mat.variant = Variant::base;
             load_specular(mat, option("material_model"), option("specular_mask"), constants);
             /* Halograms hardcode material_model none */
-            if(map.is(*tag, "rmhg"))
+            if(map.is(*tag, blam::tag_class_t::rmhg))
                 mat.model = MaterialModel::none;
             load_environment(mat, option("environment_mapping"), constants);
             load_self_illum(mat, option("self_illumination"), slot("self_illum_map"),

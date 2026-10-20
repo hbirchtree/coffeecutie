@@ -148,7 +148,7 @@ struct map_container
         return &table[static_cast<size_t>(idx)];
     }
 
-    inline bool is(tag_t const& tag, std::string_view group) const
+    inline bool is(tag_t const& tag, tag_class_t group) const
     {
         auto const* g = group_of(tag);
         return g && g->group == group;
@@ -170,7 +170,7 @@ struct map_container
 
     /*! First tag of a group whose name contains `name` */
     inline tag_t const* find(
-        std::string_view group, std::string_view name = {}) const
+        tag_class_t group, std::string_view name = {}) const
     {
         for(auto const& tag : tags())
             if(tag.valid() && is(tag, group) &&

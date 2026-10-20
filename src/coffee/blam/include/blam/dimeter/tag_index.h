@@ -55,7 +55,7 @@ static_assert(sizeof(group_t) == 0xC);
  */
 struct alignas(4) tag_t
 {
-    struct tag_class tag_class;
+    dimeter::tag_class tag_class;
     datum_index      tag_id;
     u32              pointer_raw; /*!< Virtual address of the tag data */
     i32              size_raw;
@@ -71,9 +71,9 @@ struct alignas(4) tag_t
     }
 
     /*! Compares against the human-readable class name, e.g. "bitm" */
-    inline bool matches(std::string_view tag_class_name) const
+    inline bool matches(tag_class_t cls) const
     {
-        return tag_class.str() == tag_class_name;
+        return tag_class == cls;
     }
 
     /*!

@@ -1857,7 +1857,7 @@ struct H2MapLoader : compo::SubsystemBase
             weapon_tag = map.tag_at(palette.value()[0].tag.tag_id);
         /* Multiplayer hands out weapons by game type: the battle rifle */
         for(auto const& tag : map.tags())
-            if(!weapon_tag && tag.matches("weap") &&
+            if(!weapon_tag && tag.matches(blam::tag_class_t::weap) &&
                map.name_of(tag).find("battle_rifle") != std::string_view::npos)
                 weapon_tag = &tag;
         auto const* weapon =
@@ -1873,7 +1873,7 @@ struct H2MapLoader : compo::SubsystemBase
             }
 
         auto add = [&](dim::tag_t const* mode_tag, std::optional<u32> animation) {
-            if(!mode_tag || !mode_tag->matches("mode"))
+            if(!mode_tag || !mode_tag->matches(blam::tag_class_t::mode))
                 return -1;
             if(!animation)
                 animation = rest_pose(map, *mode_tag);
@@ -2608,7 +2608,7 @@ struct H2MapLoader : compo::SubsystemBase
         H2Scene::animation_t     out{.frames = decoded->frames, .nodes = static_cast<u32>(node_count)};
         /* A device's position runs 0 to 1 over its transition time */
         if(map.string(chosen->name) == "device:position" &&
-           (obje_tag->matches("mach") || obje_tag->matches("ctrl") || obje_tag->matches("lifi")))
+           (obje_tag->matches(blam::tag_class_t::mach) || obje_tag->matches(blam::tag_class_t::ctrl) || obje_tag->matches(blam::tag_class_t::lifi)))
             if(auto const* device = obje_tag->template data<dim::obj::device_t>(map.magic());
                device && from_le(device->position_transition_time) > 0.f)
                 out.rate = static_cast<f32>(out.frames) * from_le(device->position_transition_time);
@@ -2658,7 +2658,7 @@ struct H2MapLoader : compo::SubsystemBase
         if(!hlmt)
             return nullptr;
         auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id);
-        return mode_tag && mode_tag->matches("mode") ? mode_tag : nullptr;
+        return mode_tag && mode_tag->matches(blam::tag_class_t::mode) ? mode_tag : nullptr;
     }
 
     /* The permutation each region shows for an object's variant, keyed by
@@ -2840,8 +2840,8 @@ struct H2MapLoader : compo::SubsystemBase
             hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
                      : nullptr;
         /* Devices move as they are animated, never freely */
-        if(!hlmt || obje_tag->matches("mach") || obje_tag->matches("ctrl") ||
-           obje_tag->matches("lifi"))
+        if(!hlmt || obje_tag->matches(blam::tag_class_t::mach) || obje_tag->matches(blam::tag_class_t::ctrl) ||
+           obje_tag->matches(blam::tag_class_t::lifi))
             return std::nullopt;
         auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id);
         auto const* model =
@@ -2868,8 +2868,8 @@ struct H2MapLoader : compo::SubsystemBase
             mass = sum;
         /* Weapons, equipment and debris without a physics model are light
          * boxes, as in Halo 1 */
-        bool const item = obje_tag->matches("weap") || obje_tag->matches("eqip") ||
-                          obje_tag->matches("garb");
+        bool const item = obje_tag->matches(blam::tag_class_t::weap) || obje_tag->matches(blam::tag_class_t::eqip) ||
+                          obje_tag->matches(blam::tag_class_t::garb);
         if(!(moves && mass > 0.f) && !item)
             return std::nullopt;
         if(!(moves && mass > 0.f))
@@ -2924,7 +2924,7 @@ struct H2MapLoader : compo::SubsystemBase
         if(coll)
             append_hulls(map, *coll, scaled, node_world, permutations, *hulls);
         /* Bipeds stand, light enough to carry about, as in Halo 1 */
-        if(obje_tag->matches("bipd"))
+        if(obje_tag->matches(blam::tag_class_t::bipd))
         {
             out.mass    = 1.f;
             out.upright = true;
@@ -3500,7 +3500,7 @@ struct H2MapLoader : compo::SubsystemBase
         }
         load_sky_flares(map, pool, *sky);
         auto const* mode_tag = map.tag_at(sky->render_model.tag_id);
-        if(!mode_tag || !mode_tag->matches("mode"))
+        if(!mode_tag || !mode_tag->matches(blam::tag_class_t::mode))
             return;
         size_t first    = m_vertices.size();
         u32    sections = append_model(map, pool, *mode_tag, Matf4(1.f), true);
@@ -3747,7 +3747,7 @@ struct H2MapLoader : compo::SubsystemBase
                     mat.mask = *t;
             for(auto const& tag : map.tags())
             {
-                if(!tag.valid() || !tag.matches("shad"))
+                if(!tag.valid() || !tag.matches(blam::tag_class_t::shad))
                     continue;
                 auto const* shad =
                     tag.template data<geo::shad_header_t>(map.magic());
@@ -3872,7 +3872,7 @@ struct H2MapLoader : compo::SubsystemBase
         dim::tag_t const*            bitm_tag,
         size_t                       image = 0)
     {
-        if(!bitm_tag || !bitm_tag->matches("bitm"))
+        if(!bitm_tag || !bitm_tag->matches(blam::tag_class_t::bitm))
             return std::nullopt;
         auto key = static_cast<u32>(bitm_tag - map.tags().data()) |
                    static_cast<u32>(image << 16);
