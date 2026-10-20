@@ -826,6 +826,154 @@ static_assert(offsetof(water_definition_t, sun_spot_color) == 0x34);
 
 static_assert(sizeof(water_definition_t) == 0xAC);
 
+/*! Decorators: grass, pebbles and the like. The scenario's decorator palette
+ * names the sets (decr); each structure BSP caches its placements in raw
+ * blocks, grouped by cluster and set */
+struct alignas(4) decorator_placement_t
+{
+    u32 internal;            /* TODO: type and motion bits */
+    u32 compressed_position; /* TODO: packing */
+    u8  tint[4];
+    u8  light[4]; /*!< Baked light colour */
+    u32 unknown_0;
+    f32 unknown_1;
+};
+
+static_assert(sizeof(decorator_placement_t) == 24);
+
+/*! A sprite decorator's quad corner: the pivot in world space and the
+ * corner's offset in a frame turned about `axis` to face the viewer */
+struct alignas(4) decorator_sprite_vertex_t
+{
+    Vecf3 position;
+    Vecf3 offset; /*!< x along the view, y across, z up */
+    Vecf3 axis;
+    Vecf2 texcoord;
+    f32   unknown_0;
+};
+
+static_assert(sizeof(decorator_sprite_vertex_t) == 48);
+
+/*! Body of a cache block's raw data: `blkh`, then fields the block's
+ * resources fill (their type0 is the field's offset past the 8-byte
+ * prefix; data lands at header_size + 8 + resource offset) */
+struct alignas(4) decorator_block_t
+{
+    u32                                   magic; /* 'blkh' */
+    u32                                   size;
+    tag_block<decorator_placement_t>      placements;
+    u8                                    unknown_0[0x50 - 0x10];
+    tag_block<decorator_sprite_vertex_t>  sprite_vertices;
+    tag_block<u16>                        sprite_indices;
+    u8                                    unknown_1[0x88 - 0x60];
+};
+
+static_assert(sizeof(decorator_block_t) == 0x88);
+
+struct alignas(4) decorator_cache_block_t
+{
+    raw_ref               data;
+    u32                   size;
+    u32                   header_size;
+    u32                   data_size;
+    bsp_block<resource_t> resources;
+    u32                   owner;
+    u32                   unknown_0;
+    i32                   unknown_1;
+    u32                   unknown_2[2];
+};
+
+static_assert(sizeof(decorator_cache_block_t) == 44);
+
+/*! Placements of one set in one cluster, with their sprite geometry if the
+ * set's class is a sprite */
+struct alignas(4) decorator_group_t
+{
+    u8  set; /*!< Into the scenario's decorator palette */
+    u8  type;
+    u8  shader;
+    u8  compressed_radius;
+    i16 cluster;
+    i16 cache_block;
+    i16 placement_start;
+    i16 placement_count;
+    i16 vertex_start;
+    i16 vertex_count;
+    i16 index_start;
+    i16 index_count;
+    u8  unknown_0[4];
+};
+
+static_assert(sizeof(decorator_group_t) == 24);
+
+struct alignas(4) decorator_cache_t
+{
+    Vecf3                               grid_origin;
+    u32                                 cell_count;
+    bsp_block<decorator_cache_block_t>  cache_blocks;
+    bsp_block<decorator_group_t>        groups;
+    bsp_block<u8>                       cells; /* TODO: layout */
+    u32                                 unknown_0[2];
+};
+
+static_assert(sizeof(decorator_cache_t) == 0x30);
+
+/*! decr: a decorator set's shaders and classes; models carry their own
+ * small meshes inline */
+struct alignas(4) decorator_shader_t
+{
+    tag_reference<tag_class_t::shad> shader;
+};
+
+struct alignas(4) decorator_permutation_t
+{
+    string_id name;
+    u32       unknown_0;
+    u8        shader; /*!< Into the set's shaders */
+    u8        unknown_1[3];
+    f32       scale_min;
+    f32       scale_max;
+    u8        color_min[4];
+    u8        color_max[4];
+    f32       unknown_2[3];
+};
+
+static_assert(sizeof(decorator_permutation_t) == 40);
+
+enum class decorator_type_t : u32
+{
+    model               = 0,
+    floating_decal      = 1,
+    projected_decal     = 2,
+    screen_facing_quad  = 3,
+    axis_rotating_quad  = 4,
+    cross_quad          = 5,
+};
+
+struct alignas(4) decorator_class_t
+{
+    string_id                           name;
+    decorator_type_t                    type;
+    f32                                 unknown_0;
+    tag_block<decorator_permutation_t>  permutations;
+};
+
+static_assert(sizeof(decorator_class_t) == 20);
+
+struct alignas(4) decorator_set_t
+{
+    tag_block<decorator_shader_t> shaders;
+    f32                           unknown_0;
+    f32                           unknown_1;
+    tag_block<decorator_class_t>  classes;
+    tag_block<u8>                 models;   /* elem 8 */
+    tag_block<u8>                 vertices; /* elem 56 */
+    tag_block<u16>                indices;
+};
+
+static_assert(offsetof(decorator_set_t, classes) == 0x10);
+static_assert(sizeof(decorator_set_t) == 0x30);
+
 /*! sbsp tag body (Xbox offsets, Assembly's sbsp.xml); pathfinding,
  * decorator and MOPP data stay opaque */
 struct alignas(4) bsp_header_t
@@ -881,7 +1029,7 @@ struct alignas(4) bsp_header_t
     bsp_block<u8>                 portal_device_mapping;   /* elem 0x10 */
     bsp_block<u8>                 audibility;              /* elem 0x34 */
     bsp_block<u8>                 object_fake_lightprobes; /* elem 0x5C */
-    bsp_block<u8>                 decorator_cache;         /* elem 0x30 */
+    bsp_block<decorator_cache_t>  decorator_cache;
 };
 
 static_assert(offsetof(bsp_header_t, collision) == 0x14);

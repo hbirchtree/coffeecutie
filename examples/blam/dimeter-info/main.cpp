@@ -6,6 +6,7 @@
 #include "dump.h"
 #include "dump_anim.h"
 #include "dump_objects.h"
+#include "dump_decorators.h"
 #include "dump_scenario.h"
 #include "dump_ui.h"
 
@@ -1211,6 +1212,7 @@ struct options_t
     std::string cluster_at;
     bool        scripts{false};
     bool        anim_check{false};
+    bool        decorators{false};
     std::string lightmap_dir;
     std::string extract_dir;
     u32         limit{10};
@@ -1578,6 +1580,8 @@ int run_map(
     if(options.scenario)
         if(auto const* scnr = map.scenario())
             dimeter_info::dump_any(map, *scnr);
+    if(options.decorators)
+        dimeter_info::dump_decorators(map, pool);
     if(options.scripts)
         if(auto const* scnr_tag = map.scenario())
             if(auto const* scnr = scnr_tag->template data<h2::scn::scenario_t>(
@@ -1717,6 +1721,7 @@ i32 coffee_main(i32, cstring_w*)
          "sbsp, sky, hlmt, objects)")
         //
         ("scenario", "Dump the scenario: skies, BSPs, scenery, spawns")
+        ("decorators", "Dump the structure BSPs' decorator caches, raw")
         //
         ("collision-obj",
          "Write the collision BSPs (world + instances) as an OBJ",
@@ -1789,6 +1794,7 @@ i32 coffee_main(i32, cstring_w*)
             arguments.as_optional<std::string>("cluster-at").value_or(""),
         .scripts    = arguments.count("scripts") > 0,
         .anim_check = arguments.count("anim-check") > 0,
+        .decorators = arguments.count("decorators") > 0,
         .lightmap_dir =
             arguments.as_optional<std::string>("dump-lightmaps").value_or(""),
         .extract_dir = arguments.as_optional<std::string>("extract").value_or(""),
