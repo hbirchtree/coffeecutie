@@ -116,34 +116,7 @@ static_assert(sizeof(tag_block<u32>) == 0xC);
 
 /*! Index into a tag block of T as the tags store it, -1 for none */
 template<typename T, typename I = i16>
-struct block_index
-{
-    using value_type = T;
-
-    be<I> raw;
-
-    inline I value() const
-    {
-        return raw;
-    }
-
-    inline bool valid() const
-    {
-        return value() >= 0;
-    }
-
-    inline explicit operator bool() const
-    {
-        return valid();
-    }
-
-    inline T const* resolve(Span<T const> block) const
-    {
-        if(!valid() || static_cast<size_t>(value()) >= block.size())
-            return nullptr;
-        return &block[static_cast<size_t>(value())];
-    }
-};
+using block_index = blam::block_index<T, I, std::endian::big>;
 
 static_assert(sizeof(block_index<u8>) == 2);
 

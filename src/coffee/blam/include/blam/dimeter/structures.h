@@ -186,51 +186,8 @@ static_assert(resolves_with<bsp_block<u32>, bsp_magic>);
 static_assert(!resolves_with<bsp_block<u32>, tag_magic>);
 static_assert(!resolves_with<tag_block<u32>, bsp_magic>);
 
-/*!
- * \brief Index into a tag block of T as the tags store it: a signed slot
- * (16-bit unless the tag packs it smaller), -1 for none. Resolves itself
- * against the block it names.
- */
-template<typename T, typename I = i16>
-struct block_index
-{
-    using value_type = T;
-    using raw_type   = I;
-
-    I raw;
-
-    inline I value() const
-    {
-        return from_le(raw);
-    }
-
-    inline bool valid() const
-    {
-        return value() >= 0;
-    }
-
-    inline explicit operator bool() const
-    {
-        return valid();
-    }
-
-    /*! The element named, null when unset or out of range */
-    inline T const* in(Span<T const> items) const
-    {
-        I i = value();
-        return i >= 0 && static_cast<size_t>(i) < items.size() ? &items[i]
-                                                               : nullptr;
-    }
-
-    template<heap_t Heap>
-    inline T const* in(
-        tag_block<T, Heap> const&   block,
-        magic_ptr_base<Heap> const& magic) const
-    {
-        auto items = block.data(magic);
-        return items.has_error() ? nullptr : in(items.value());
-    }
-};
+/*! Halo 2 stores block indices little-endian, the common default */
+using blam::block_index;
 
 static_assert(sizeof(block_index<u32>) == 2);
 

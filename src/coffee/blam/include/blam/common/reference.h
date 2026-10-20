@@ -3,6 +3,7 @@
 #include "../volta/blam_atlas_type.h"
 #include "../volta/blam_base_types.h"
 #include "../volta/blam_versions.h"
+#include "block_index.h"
 #include "block_layout.h"
 #include "endian.h"
 #include "magic.h"
@@ -177,6 +178,14 @@ struct alignas(4) reference : block_storage<typename V::block_layout>
     inline span_type span(M const& magic) const
     {
         return data(magic).value_or(span_type());
+    }
+
+    /*! The element an index names, null when unset or out of range */
+    template<typename M, typename I, std::endian E>
+    requires(M::heap == Heap)
+    inline T const* at(block_index<T, I, E> index, M const& magic) const
+    {
+        return index.resolve(span(magic));
     }
 
     template<typename T2>

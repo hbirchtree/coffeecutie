@@ -1021,7 +1021,7 @@ struct H2MapLoader : compo::SubsystemBase
         i16 best = std::numeric_limits<i16>::min();
         for(auto const& fp : planes.value())
         {
-            auto const* entry = fp.scenario_planar_fog.in(palette.value());
+            auto const* entry = fp.scenario_planar_fog.resolve(palette.value());
             auto const* tag   = entry ? map.tag_at(entry->planar_fog.tag_id) : nullptr;
             auto const* fog =
                 tag ? tag->template data<dim::fog::header_t>(map.magic()) : nullptr;
@@ -1119,7 +1119,7 @@ struct H2MapLoader : compo::SubsystemBase
             return;
         for(auto const& sw : switches.value())
         {
-            auto const* vp = sw.trigger_volume.in(volumes.value());
+            auto const* vp = sw.trigger_volume.resolve(volumes.value());
             if(!vp)
                 continue;
             auto const& v = *vp;
@@ -3091,7 +3091,7 @@ struct H2MapLoader : compo::SubsystemBase
                     scripted++;
                     continue;
                 }
-                auto const*       entry = p.palette.in(palette.value());
+                auto const*       entry = p.palette.resolve(palette.value());
                 dim::tag_t const* mode_tag =
                     entry ? render_model_of(map, entry->tag) : nullptr;
                 /* Manual BSP flags: one bit per structure BSP; none = all.
