@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_tag_classes.h"
 #include "blam_tag_ref.h"
@@ -316,6 +317,8 @@ struct alignas(4) base
 template<typename V>
 struct alignas(4) shader_chicago : radiosity_properties /* aka schi */
 {
+    static constexpr tag_class_t tag_class = tag_class_t::schi;
+
     chicago::base          transparent;
     chicago::lens_flares_t lens_flares;
 
@@ -347,6 +350,8 @@ struct reflection_properties
 template<typename V>
 struct alignas(4) shader_chicago_extended : radiosity_properties /* aka scex */
 {
+    static constexpr tag_class_t tag_class = tag_class_t::scex;
+
     chicago::base                                transparent;
     chicago::lens_flares_t                       lens_flares;
     reference<tagref_typed_t<tag_class_t::shdr>> layers;
@@ -364,6 +369,8 @@ static_assert(
 
 struct alignas(32) shader_glass : radiosity_properties /* aka sgla */
 {
+    static constexpr tag_class_t tag_class = tag_class_t::sgla;
+
     enum class glass_flags : u32
     {
         none                      = 0x0,
@@ -413,6 +420,8 @@ struct alignas(32) shader_glass : radiosity_properties /* aka sgla */
 
 struct alignas(64) shader_meter : radiosity_properties
 {
+    static constexpr tag_class_t tag_class = tag_class_t::smet;
+
     enum class meter_flags : u32
     {
         none                    = 0x0,
@@ -456,6 +465,8 @@ C_FLAGS(shader_meter::meter_flags, u32);
 
 struct alignas(4) shader_water : radiosity_properties /* aka swat */
 {
+    static constexpr tag_class_t tag_class = tag_class_t::swat;
+
     enum class water_flags : u16
     {
         none                                = 0x0,
@@ -522,6 +533,8 @@ static_assert(sizeof(shader_water) == 320);
 
 struct alignas(4) shader_env : radiosity_properties /* aka senv */
 {
+    static constexpr tag_class_t tag_class = tag_class_t::senv;
+
     enum class flags_t : u16
     {
         none         = 0x0,
@@ -694,6 +707,8 @@ static_assert(
 
 struct alignas(4) shader_model : radiosity_properties /* aka soso */
 {
+    static constexpr tag_class_t tag_class = tag_class_t::soso;
+
     enum class model_flags : u16
     {
         none                      = 0x0,
@@ -790,6 +805,8 @@ static_assert(sizeof(shader_model) == 440);
 
 struct alignas(4) shader_plasma : radiosity_properties /* aka spla */
 {
+    static constexpr tag_class_t tag_class = tag_class_t::spla;
+
     u32 padding_1[2];
 
     struct
@@ -1045,6 +1062,8 @@ struct transparent_stage
 
 struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
 {
+    static constexpr tag_class_t tag_class = tag_class_t::sotr;
+
     chicago::base          transparent;
     chicago::lens_flares_t lens_flares;
 

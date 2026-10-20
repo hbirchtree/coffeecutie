@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_reference.h"
 #include "blam_tag_ref.h"
@@ -12,6 +13,8 @@ namespace blam::scn {
 /*! An actor's unit, weapon and combat tuning, aka actv */
 struct actor_variant
 {
+    static constexpr tag_class_t tag_class = tag_class_t::actv;
+
     enum class flags_t : u32
     {
         none                                        = 0x0,

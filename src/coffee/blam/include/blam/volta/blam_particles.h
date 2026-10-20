@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_effects.h"
 #include "blam_reference.h"
@@ -80,6 +81,8 @@ static_assert(sizeof(particle_shader_t) == 144);
 /*! Mass, drag and gravity of a point, aka pphy */
 struct point_physics
 {
+    static constexpr tag_class_t tag_class = tag_class_t::pphy;
+
     enum class flags_t : u32
     {
         none                            = 0x0,
@@ -112,6 +115,8 @@ static_assert(sizeof(point_physics) == 64);
 /*! A single sprite with its own lifetime, aka part */
 struct particle
 {
+    static constexpr tag_class_t tag_class = tag_class_t::part;
+
     enum class flags_t : u32
     {
         none                            = 0x0,
@@ -172,6 +177,8 @@ static_assert(sizeof(particle) == 356);
 /*! A mark left on the structure, aka deca */
 struct decal_definition
 {
+    static constexpr tag_class_t tag_class = tag_class_t::deca;
+
     u16                               flags;
     u16                               type; /* scratch, splatter, burn, sign */
     u16                               layer;
@@ -208,6 +215,8 @@ static_assert(offsetof(decal_definition, maximum_sprite_extent) == 0xfc);
 /*! Many particles moving as one, e.g. smoke, aka pctl */
 struct particle_system
 {
+    static constexpr tag_class_t tag_class = tag_class_t::pctl;
+
     enum class creation_physics_t : u16
     {
         default_,
@@ -325,6 +334,8 @@ static_assert(sizeof(particle_system) == 104);
 /*! A ribbon left behind a moving marker, aka cont */
 struct contrail
 {
+    static constexpr tag_class_t tag_class = tag_class_t::cont;
+
     enum class flags_t : u16
     {
         none                          = 0x0,
@@ -392,6 +403,8 @@ static_assert(sizeof(contrail) == 324);
 /*! A timeline of sounds, lights, objects and particles, aka effe */
 struct effect
 {
+    static constexpr tag_class_t tag_class = tag_class_t::effe;
+
     enum class create_in_t : u16
     {
         any_environment,
@@ -540,6 +553,8 @@ static_assert(sizeof(effect) == 64);
 /*! A dynamic light, aka ligh */
 struct light
 {
+    static constexpr tag_class_t tag_class = tag_class_t::ligh;
+
     enum class flags_t : u32
     {
         none                     = 0x0,
@@ -604,6 +619,8 @@ static_assert(sizeof(light) == 352);
 /*! A glowing beam of sprites, e.g. a plasma bolt, aka mgs2 */
 struct light_volume
 {
+    static constexpr tag_class_t tag_class = tag_class_t::mgs2;
+
     struct frame_t
     {
         u32   padding[4];
@@ -656,6 +673,8 @@ static_assert(sizeof(light_volume) == 332);
 /*! Screen-space glare from a bright point, aka lens */
 struct lens_flare
 {
+    static constexpr tag_class_t tag_class = tag_class_t::lens;
+
     enum class flags_t : u16
     {
         none                   = 0x0,
@@ -751,6 +770,8 @@ static_assert(sizeof(lens_flare) == 240);
 /*! Rain, snow and the like falling around the camera, aka rain */
 struct weather_particle_system
 {
+    static constexpr tag_class_t tag_class = tag_class_t::rain;
+
     struct particle_type_t
     {
         enum class flags_t : u32
@@ -818,6 +839,8 @@ static_assert(sizeof(weather_particle_system) == 48);
 /*! How air moves things, aka wind */
 struct wind
 {
+    static constexpr tag_class_t tag_class = tag_class_t::wind;
+
     Vecf2 velocity;
     Vecf2 variation_area; /* yaw, pitch */
     f32   local_variation_weight;

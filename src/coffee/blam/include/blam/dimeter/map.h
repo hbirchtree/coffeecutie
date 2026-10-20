@@ -288,6 +288,8 @@ struct map_container
     using tag_type    = tag_t;
     using handle_type = datum_index;
 
+    static constexpr bool checks_class = true;
+
     header_type const* header{nullptr};
     tag_index_t const* index{nullptr};
     u32                index_mask{0};
@@ -557,6 +559,18 @@ template<typename V>
 inline std::string_view name_of(map_container<V> const& map, tag_t const& tag)
 {
     return map.name_of(tag);
+}
+
+template<typename V>
+inline tag_class_t class_of(map_container<V> const&, tag_t const& tag)
+{
+    return tag.tag_class.id();
+}
+
+template<typename T, typename V>
+inline T const* data_of(map_container<V> const& map, tag_t const& tag)
+{
+    return tag.template data<T>(map.magic());
 }
 
 static_assert(tag_map<map_container<xbox_version_t>>);

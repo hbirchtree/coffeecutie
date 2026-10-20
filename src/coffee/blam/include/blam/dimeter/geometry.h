@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "collision.h"
 #include "structures.h"
 
@@ -337,6 +338,8 @@ static_assert(sizeof(shader_properties_t) == 124);
  * stripped; runtime properties + postprocess survive) */
 struct alignas(4) shad_header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::shad;
+
     tag_reference<tag_class_t::stem>   shader_template;
     string_id                          material_name;
     tag_block<shad_runtime_property_t> runtime_properties;
@@ -373,6 +376,8 @@ static_assert(sizeof(marker_group_t) == 0xC);
 /*! render_model (mode) tag body prefix; only the geometry-relevant blocks */
 struct alignas(4) model_header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::mode;
+
     string_id                  name;
     u32                        flags;
     u8                         unknown_0[12];
@@ -1024,6 +1029,8 @@ static_assert(sizeof(decorator_set_t) == 0x30);
  * decorator and MOPP data stay opaque */
 struct alignas(4) bsp_header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::sbsp;
+
     u8                                      unknown_0[12];
     bsp_block<collision_material_t>         collision_materials;
     bsp_block<coll::bsp_t<heap_t::bsp>>     collision; /* world space */

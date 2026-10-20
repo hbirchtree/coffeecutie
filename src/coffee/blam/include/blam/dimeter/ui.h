@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "structures.h"
 
 #include <array>
@@ -382,6 +383,8 @@ static_assert(sizeof(local_bitmap_t) == 8);
 /*! wgit: one screen */
 struct alignas(4) screen_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::wgit;
+
     u32          flags;
     screen_id_t  screen_id;
     button_key_t button_key;
@@ -423,6 +426,8 @@ static_assert(sizeof(item_animation_t) == 0x10);
 /*! skin: how a list draws its items */
 struct alignas(4) list_skin_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::skin;
+
     u32                              flags;
     tag_reference<tag_class_t::bitm> arrows;
     point16_t                        up_arrows_offset;
@@ -444,6 +449,8 @@ struct alignas(4) screen_widget_ref_t
 /*! wgtz: the screens of the shell */
 struct alignas(4) globals_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::wgtz;
+
     tag_reference<tag_class_t::wigl> shared_globals;
     tag_block<screen_widget_ref_t>   screens;
     tag_reference<>                  mp_variant_settings;
@@ -514,6 +521,8 @@ struct alignas(4) list_skin_ref_t
 /*! wigl: everything the screens share */
 struct alignas(4) shared_globals_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::wigl;
+
     i16          unknown_0;
     i16          unknown_1;
     u8           unknown_2[0x40];
@@ -611,6 +620,8 @@ static_assert(sizeof(import_string_ref_t) == 0x28);
 /*! unic: a string list */
 struct alignas(4) string_list_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::unic;
+
     tag_block<import_string_ref_t> import_references;
     data_reference<>               import_data;
     std::array<language_table_t, static_cast<size_t>(language_t::count)>

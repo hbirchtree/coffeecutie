@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_reference.h"
 #include "blam_strings.h"
 
@@ -97,6 +98,8 @@ static_assert(sizeof(inertial_matrix) == 36);
 
 struct header
 {
+    static constexpr tag_class_t tag_class = tag_class_t::phys;
+
     f32   radius;
     f32   moment_scale;
     f32   mass;

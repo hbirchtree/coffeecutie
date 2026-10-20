@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "structures.h"
 
 #include <peripherals/identify/compiler/struct_packing.h>
@@ -50,6 +51,8 @@ inline u32 to_hertz(sample_rate_t rate)
  */
 struct alignas(4) sound
 {
+    static constexpr tag_class_t tag_class = tag_class_t::snd;
+
     u16           flags;
     u8            sound_class;
     sample_rate_t sample_rate;
@@ -172,6 +175,8 @@ struct extra_info_t
  */
 struct alignas(4) gestalt
 {
+    static constexpr tag_class_t tag_class = tag_class_t::ugh;
+
     tag_block<playback_parameters_t>   playbacks;
     tag_block<scale_t>                 scales;
     tag_block<import_name_t>           import_names;
@@ -228,6 +233,8 @@ static_assert(sizeof(detail_sound_t) == 0x34);
 
 struct alignas(4) looping_sound
 {
+    static constexpr tag_class_t tag_class = tag_class_t::lsnd;
+
     u32                       flags;
     Vecf2                     music_time;
     Vecf2                     distance_bounds;

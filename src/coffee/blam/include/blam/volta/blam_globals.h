@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_reference.h"
 #include "blam_tag_ref.h"
 
@@ -101,6 +102,8 @@ static_assert(sizeof(falling_damage) == 152);
  *  that is always populated. */
 struct globals
 {
+    static constexpr tag_class_t tag_class = tag_class_t::matg;
+
     u32                                padding[0x128 / 4];
     reference<grenade>                 grenades;
     reference<u32>                     rasterizer_data; /* not decoded */

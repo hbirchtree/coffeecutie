@@ -186,7 +186,7 @@ static_assert(sizeof(render_method_category_t) == 0x18);
 /*! render_method_definition ("rmdf"): the option categories of a family */
 struct render_method_definition_t
 {
-    static constexpr tag_class_t group = tag_class_t::rmdf;
+    static constexpr tag_class_t tag_class = tag_class_t::rmdf;
 
     tag_reference<>                       global_options;
     tag_block<render_method_category_t> categories;
@@ -226,7 +226,7 @@ static_assert(sizeof(template_pass_t) == 0x1C);
  */
 struct render_method_template_t
 {
-    static constexpr tag_class_t group = tag_class_t::rmt2;
+    static constexpr tag_class_t tag_class = tag_class_t::rmt2;
 
     tag_reference<>              vertex_shader;
     tag_reference<>              pixel_shader;

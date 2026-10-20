@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_bsp_structures.h"
 #include "blam_domain_ptrs.h"
@@ -535,6 +536,8 @@ static_assert(sizeof(unit) == 752);
 
 struct biped : unit
 {
+    static constexpr tag_class_t tag_class = tag_class_t::bipd;
+
     enum class biped_flags_t : u32
     {
         none                              = 0x0,
@@ -645,6 +648,8 @@ static_assert(sizeof(biped) == 1268);
 
 struct vehicle : unit
 {
+    static constexpr tag_class_t tag_class = tag_class_t::vehi;
+
     enum class vehicle_flags_t : u32
     {
         none                                = 0x0,
@@ -782,6 +787,8 @@ static_assert(sizeof(vehicle) == 1008);
 // not a unit
 struct scenery : unit
 {
+    static constexpr tag_class_t tag_class = tag_class_t::scen;
+
 };
 
 /*! Machines, controls and light fixtures: a position and a power that move
@@ -894,6 +901,8 @@ static_assert(sizeof(device_control) == 0x318);
 
 struct weapon : item
 {
+    static constexpr tag_class_t tag_class = tag_class_t::weap;
+
     enum class weapon_flags_t : u32
     {
         none                                 = 0x0,
@@ -1216,6 +1225,8 @@ static_assert(sizeof(weapon) == 1288);
 
 struct equipment : item
 {
+    static constexpr tag_class_t tag_class = tag_class_t::eqip;
+
     enum class powerup_type_t : u16
     {
         none,
@@ -1239,6 +1250,8 @@ static_assert(sizeof(equipment) == 944);
 
 struct projectile : object
 {
+    static constexpr tag_class_t tag_class = tag_class_t::proj;
+
     enum class flags_t : u32
     {
         none                          = 0x0,

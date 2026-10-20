@@ -30,6 +30,9 @@ struct map_container
     using tag_type    = tag_t;
     using handle_type = tag_index<>;
 
+    /*! Custom Edition "protection" scrambles the index classes */
+    static constexpr bool checks_class = !std::is_same_v<Ver, custom_version_t>;
+
     static void null_progress(std::string_view /*label*/, i16 /*progress*/)
     {
     }
@@ -525,6 +528,18 @@ template<typename Ver>
 inline std::string_view name_of(map_container<Ver> const& map, tag_t const& tag)
 {
     return tag.to_name().to_string(map.magic);
+}
+
+template<typename Ver>
+inline tag_class_t class_of(map_container<Ver> const&, tag_t const& tag)
+{
+    return static_cast<tag_class_t>(from_le(static_cast<u32>(tag.tag_class())));
+}
+
+template<typename T, typename Ver>
+inline T const* data_of(map_container<Ver> const& map, tag_t const& tag)
+{
+    return tag.template data<T>(map.magic).value_or(nullptr);
 }
 
 static_assert(tag_map<map_container<pc_version_t>>);

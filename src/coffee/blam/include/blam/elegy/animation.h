@@ -83,7 +83,7 @@ static_assert(sizeof(animation_resource_group_t) == 0xC);
 /*! model_animation_graph ("jmad") */
 struct animation_graph_t
 {
-    static constexpr tag_class_t group = tag_class_t::jmad;
+    static constexpr tag_class_t tag_class = tag_class_t::jmad;
 
     tag_reference<>                         parent;
     u8                                    inheritance_flags;

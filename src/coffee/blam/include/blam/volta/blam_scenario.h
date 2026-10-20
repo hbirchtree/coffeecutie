@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_actor.h"
 #include "blam_base_types.h"
 #include "blam_bsp_structures.h"
@@ -388,6 +389,8 @@ struct item_permutation
 
 struct item_collection
 {
+    static constexpr tag_class_t tag_class = tag_class_t::itmc;
+
     reference<item_permutation> items;
     u32                         spawn_time;
 };
@@ -697,6 +700,8 @@ using actor_variant_ref = tagref_t;
 
 struct antenna
 {
+    static constexpr tag_class_t tag_class = tag_class_t::ant;
+
     struct vertex
     {
         f32   spring_strength_coeff; // larger value = stronger spring
@@ -1087,6 +1092,8 @@ static_assert(sizeof(detail_object_collection_ref) == 48);
 
 struct detail_object_collection
 {
+    static constexpr tag_class_t tag_class = tag_class_t::dobc;
+
     enum class collection_type_t : u16
     {
         screen_facing,
@@ -1135,6 +1142,8 @@ using skybox_ref = tagref_t;
 
 struct skybox
 {
+    static constexpr tag_class_t tag_class = tag_class_t::sky;
+
     struct shader_function
     {
         bl_string global_func; // the global function that controls this shader value
@@ -1290,6 +1299,8 @@ template<typename V>
 requires is_game_version<V>
 struct scenario
 {
+    static constexpr tag_class_t tag_class = tag_class_t::scnr;
+
     enum class scenario_type : u16
     {
         solo,

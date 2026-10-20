@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam/volta/blam_tag_classes.h"
 #include "blam/volta/blam_tag_ref.h"
 #include "../common/data_reference.h"
@@ -454,6 +455,8 @@ enum class header_flags_t : u16
 
 struct header
 {
+    static constexpr tag_class_t tag_class = tag_class_t::antr;
+
     reference<object>              objects;
     reference<unit>                units;
     reference<weapon>              weapons;

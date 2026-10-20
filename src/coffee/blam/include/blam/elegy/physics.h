@@ -252,7 +252,7 @@ static_assert(sizeof(material_t) == 0xC);
 /*! physics_model ("phmo"): rigid bodies built from Havok shapes */
 struct physics_model_t
 {
-    static constexpr tag_class_t group = tag_class_t::phmo;
+    static constexpr tag_class_t tag_class = tag_class_t::phmo;
 
     be<u32>                        flags;
     be<f32>                        mass;
@@ -329,7 +329,7 @@ static_assert(sizeof(player_representation_t) == 0x54);
 
 struct globals_t
 {
-    static constexpr tag_class_t group = tag_class_t::matg;
+    static constexpr tag_class_t tag_class = tag_class_t::matg;
 
     std::array<u8, 0x164>                      unknown_0;
     tag_block<player_representation_t>         player_representations;

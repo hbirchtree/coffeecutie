@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_reference.h"
 #include "blam_shaders.h"
 #include "blam_strings.h"
@@ -713,6 +714,8 @@ static_assert(sizeof(collision_material) == 20);
 
 struct header
 {
+    static constexpr tag_class_t tag_class = tag_class_t::sbsp;
+
     tagref_t                       lightmap_; /* Lightmap texture(s) */
     f32                            vehicle_floor;
     f32                            vehicle_ceiling;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_magic_data.h"
 #include "blam_reference.h"
 #include "blam_structures.h"
@@ -165,6 +166,8 @@ enum class sprite_usage_t : u16
  */
 struct header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::bitm;
+
     bitmap_type_t   type;
     bitmap_format_t format;
     bitmap_usage_t  usage;

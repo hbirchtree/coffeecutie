@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "../volta/blam_swizzle.h"
 #include "bitm.h"
 #include "geometry.h"
@@ -178,6 +179,8 @@ static_assert(sizeof(group_t) == 0x68);
 
 struct alignas(4) header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::ltmp;
+
     u8                 unknown_0[0x80];
     bsp_block<group_t> groups;
 };
