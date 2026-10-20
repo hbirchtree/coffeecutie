@@ -74,6 +74,7 @@ bool          g_dump_player   = false;
 bool          g_dump_scenario = false;
 bool          g_dump_bones    = false;
 bool          g_dump_recanim  = false;
+bool          g_check_lookup  = false;
 bool          g_spawn_hex     = false;
 u32           g_spawn_hex_limit = 3;
 bool          g_channel_stats{false};
@@ -4506,6 +4507,29 @@ void dump_mirrors(
             total);
 }
 
+/* Every index entry must resolve to itself by its own id */
+template<typename Ver>
+void check_lookup(blam::tag_index_view<Ver> const& index)
+{
+    u32 total = 0, missed = 0;
+    for(auto it = index.begin(); it != index.end(); ++it)
+    {
+        if(!it->valid())
+            continue;
+        total++;
+        if(index.find(it->tag_id) == it)
+            continue;
+        missed++;
+        fmt::print(
+            "miss {:5} {} 0x{:08x} {}\n",
+            std::distance(index.begin(), it),
+            it->tagclass[0].str(),
+            it->tag_id,
+            it->to_name().to_string(g_magic));
+    }
+    fmt::print("lookup: {}/{} resolved\n", total - missed, total);
+}
+
 template<typename Ver>
 void open_map(
     std::string const& path,
@@ -4569,6 +4593,12 @@ void open_map(
             blam::map_ptr(semantic::Span<const blam::byte_t>(
                 reinterpret_cast<blam::byte_t const*>(bytes.data()),
                 bytes.size())));
+    }
+
+    if(g_check_lookup)
+    {
+        check_lookup<Ver>(index);
+        return;
     }
 
     if(g_dump_mirrors)
@@ -4696,6 +4726,8 @@ int inspect_main()
         ("dump-recorded-animations",
          "Decode the scenario's recorded animations and their event streams")
         //
+        ("check-lookup", "Check that every tag resolves by its own id")
+        //
         ;
 
     auto& args      = Coffee::GetInitArgs();
@@ -4727,6 +4759,7 @@ int inspect_main()
         arguments.as_optional<int>("spawn-hex-count").value_or(3));
     g_dump_bones    = arguments.count("dump-bones") > 0;
     g_dump_recanim  = arguments.count("dump-recorded-animations") > 0;
+    g_check_lookup  = arguments.count("check-lookup") > 0;
     g_scan_window   = static_cast<size_t>(
         arguments.as_optional<int>("scan-tagrefs").value_or(0));
     g_channel_stats = arguments.count("channel-stats") > 0;

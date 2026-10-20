@@ -58,6 +58,7 @@ struct options_t
     bool        mips;
     bool        decorators;
     bool        camera_fx;
+    bool        check_lookup;
     std::string obj_path;
     std::string extract_dir;
     u32         limit;
@@ -1675,6 +1676,26 @@ int run_map(
     if(options.list)
         return list_tags(map, options);
 
+    /* Every index entry must resolve to itself by its own id */
+    if(options.check_lookup)
+    {
+        u32 total = 0, missed = 0;
+        auto const tags = map.tags();
+        for(u32 i = 0; i < tags.size(); i++)
+        {
+            auto const& tag = tags[i];
+            if(!tag.valid())
+                continue;
+            total++;
+            if(map.tag_at(map.id_of(tag)) == &tag && map.group_of(tag))
+                continue;
+            missed++;
+            fmt::print("miss {:5} {}\n", i, map.name_of(tag));
+        }
+        fmt::print("lookup: {}/{} resolved\n", total - missed, total);
+        return 0;
+    }
+
     auto loader = elegy::resource_loader::create(map);
     if(!loader)
     {
@@ -1794,6 +1815,8 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("camera-fx", "List camera FX settings: exposure and bloom")
         //
+        ("check-lookup", "Check that every tag resolves by its own id")
+        //
         ("sounds",
          "List sounds; with -e, write each permutation as RIFF XMA2 (and WAV "
          "when built with BUILD_OPENAL_XMA2)")
@@ -1847,6 +1870,7 @@ i32 coffee_main(i32, cstring_w*)
         .mips         = arguments.count("mips") > 0,
         .decorators   = arguments.count("decorators") > 0,
         .camera_fx    = arguments.count("camera-fx") > 0,
+        .check_lookup = arguments.count("check-lookup") > 0,
         .obj_path     = arguments.as_optional<std::string>("obj").value_or(""),
         .extract_dir  = arguments.as_optional<std::string>("extract").value_or(""),
         .limit        = static_cast<u32>(arguments["limit"].as<int>()),
