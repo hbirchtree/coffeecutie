@@ -4,6 +4,7 @@
 #include "../common/magic.h"
 #include "../common/reference.h"
 #include "../common/tag_class.h"
+#include "../common/tag_index.h"
 #include "../volta/blam_structures.h"
 
 #include "versions.h"
@@ -24,56 +25,10 @@ enum class cache_type_t : i32
     single_player_shared = 4, /*!< single_player_shared.map */
 };
 
-/*!
- * \brief Handle-style ID used for tags; low 16 bits index into the tag table,
- * high 16 bits are a salt value.
- */
-struct datum_index
-{
-    u32 raw;
-
-    inline u16 index() const
-    {
-        return from_le(raw) & 0xFFFF;
-    }
-
-    inline u16 salt() const
-    {
-        return from_le(raw) >> 16;
-    }
-
-    inline bool valid() const
-    {
-        return raw != 0xFFFFFFFF;
-    }
-};
-
-static_assert(sizeof(datum_index) == 4);
+using datum_index = tag_index<>;
 
 /*! A tag class as a cache file stores it: the fourcc byte-reversed */
 using tag_class = basic_tag_class<std::endian::little>;
-
-/*!
- * \brief A tag's datum index on its own; the classes say which tags the
- * field may name, none admits any.
- */
-template<tag_class_t... Classes>
-struct tag_id
-{
-    datum_index id;
-
-    inline u16 index() const
-    {
-        return id.index();
-    }
-
-    inline bool valid() const
-    {
-        return id.valid();
-    }
-};
-
-static_assert(sizeof(tag_id<>) == 4);
 
 /*!
  * \brief Halo 2 string IDs index into the map's string table (resolved

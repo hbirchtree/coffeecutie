@@ -117,7 +117,7 @@ inline resolved_t resolve(
     out.usages.resize(bitmaps.value().size());
     out.arguments.resize(tiling.value().size());
     for(auto const& b : bitmaps.value())
-        out.slot_bitmaps.push_back(map.tag_at(b.bitmap.id));
+        out.slot_bitmaps.push_back(map.tag_at(b.bitmap));
     for(auto const& t : tiling.value())
         out.tilings.push_back(
             {from_le(t.x), from_le(t.y), from_le(t.z), from_le(t.w)});
@@ -220,7 +220,7 @@ inline resolved_t resolve(
         for(size_t i = 0; i < out.usages.size() && out.usage.empty(); i++)
             if(out.usages[i] == name)
             {
-                out.bitmap   = map.tag_at(bitmaps.value()[i].bitmap.id);
+                out.bitmap   = map.tag_at(bitmaps.value()[i].bitmap);
                 out.usage    = name;
                 out.resolved = true;
             }
@@ -228,7 +228,7 @@ inline resolved_t resolve(
             break;
     }
     if(out.usage.empty() && !bitmaps.value().empty())
-        out.bitmap = map.tag_at(bitmaps.value()[0].bitmap.id);
+        out.bitmap = map.tag_at(bitmaps.value()[0].bitmap);
     for(size_t i = 0; i < out.pass_names.size(); i++)
         if(out.pass_names[i].find("self_illum") != out.pass_names[i].npos &&
            !out.pass_pixel_slots[i].empty() &&

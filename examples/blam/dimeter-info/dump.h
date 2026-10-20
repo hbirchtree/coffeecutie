@@ -229,7 +229,7 @@ inline void dump_shad(h2::map_container<V> const& map, h2::tag_t const& tag)
             fmt::print(
                 "  bitmap {}: {} usage={}\n",
                 i,
-                tag_label(map, b.bitmap.id),
+                tag_label(map, b.bitmap),
                 i < resolved.usages.size() && !resolved.usages[i].empty()
                     ? resolved.usages[i]
                     : "?");
@@ -708,7 +708,7 @@ inline void dump_ltmp(
                     b.data_size(),
                     b.base_address(),
                     from_le(b.resource_data_size_raw),
-                    from_le(b.owner_tag.id.raw),
+                    from_le(b.owner_tag.raw),
                     from_le(b.owner_tag_section_offset_raw));
                 dump_resources(map, magic, b.resources);
             }

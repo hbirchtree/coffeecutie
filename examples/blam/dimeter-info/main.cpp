@@ -685,7 +685,7 @@ struct material_db
                 auto        tiling  = p.tiling.data(map.magic());
                 if(!bitmaps.has_error() && !tiling.has_error())
                     for(size_t s = 0; s < bitmaps.value().size(); s++)
-                        if(from_le(bitmaps.value()[s].bitmap.id.raw) ==
+                        if(from_le(bitmaps.value()[s].bitmap.raw) ==
                                diffuse_datum &&
                            s < tiling.value().size())
                         {

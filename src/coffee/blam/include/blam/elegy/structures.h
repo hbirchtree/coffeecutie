@@ -4,6 +4,7 @@
 #include "../common/magic.h"
 #include "../common/reference.h"
 #include "../common/tag_class.h"
+#include "../common/tag_index.h"
 #include "../volta/blam_base_types.h"
 #include "../volta/blam_structures.h"
 
@@ -31,31 +32,10 @@ enum class cache_type_t : i16
     campaign_shared = 4,
 };
 
-/*!
- * \brief Handle-style ID used for tags and resources; low 16 bits index the
- * table, high 16 bits are a salt value.
- */
-struct datum_index
-{
-    be<u32> raw;
-
-    inline u16 index() const
-    {
-        return raw.value() & 0xFFFF;
-    }
-
-    inline u16 salt() const
-    {
-        return raw.value() >> 16;
-    }
-
-    inline bool valid() const
-    {
-        return raw.value() != 0xFFFFFFFF;
-    }
-};
-
-static_assert(sizeof(datum_index) == 4);
+/*! Halo 3 stores handles big-endian */
+template<tag_class_t... Classes>
+using tag_index = basic_tag_index<std::endian::big, Classes...>;
+using datum_index = tag_index<>;
 
 /*! A tag group fourcc; big-endian, so the bytes read in order */
 using tag_class = basic_tag_class<std::endian::big>;
