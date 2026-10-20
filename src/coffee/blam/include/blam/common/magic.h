@@ -52,4 +52,11 @@ struct address_range
     }
 };
 
+/*! An address range of one heap; blocks only accept the heap they live in */
+template<heap_t Heap>
+struct heap_range : address_range
+{
+    static constexpr heap_t heap = Heap;
+};
+
 } // namespace blam

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/block_layout.h"
 #include "../volta/blam_base_types.h"
 
 #include <peripherals/stl/any_of.h>
@@ -19,6 +20,7 @@ struct xbox360_version_t
 {
     static constexpr i32 version_v = halo3_version;
     static constexpr auto endian   = std::endian::big;
+    using block_layout             = layout::elegy;
 };
 
 template<typename T>

@@ -530,7 +530,7 @@ map_transcode_result transcode(
             {
                 // Pixels sit at a plain file offset, as BitmapCache reads them
                 auto pix =
-                    blam::reference<u8>{.count = img.size, .offset = img.offset}
+                    blam::reference<u8>{img.size, img.offset}
                         .data(c.magic.ptr_only());
                 if(pix.has_error())
                 {

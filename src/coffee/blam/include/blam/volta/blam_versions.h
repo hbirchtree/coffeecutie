@@ -3,6 +3,7 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/any_of.h>
 
+#include "../common/block_layout.h"
 #include "blam_base_types.h"
 
 #include <bit>
@@ -30,6 +31,7 @@ struct xbox_version_t
 
     static constexpr auto version_v = version_t::xbox;
     static constexpr auto endian    = std::endian::little;
+    using block_layout              = layout::volta_xbox;
 };
 
 struct pc_version_t
@@ -39,6 +41,7 @@ struct pc_version_t
 
     static constexpr auto version_v = version_t::pc;
     static constexpr auto endian    = std::endian::little;
+    using block_layout              = layout::volta_pc;
 };
 
 struct custom_version_t
@@ -48,6 +51,7 @@ struct custom_version_t
 
     static constexpr auto version_v = version_t::custom_edition;
     static constexpr auto endian    = std::endian::little;
+    using block_layout              = layout::volta_pc;
 };
 
 struct mcc_version_t
@@ -57,6 +61,7 @@ struct mcc_version_t
 
     static constexpr auto version_v = version_t::mcc;
     static constexpr auto endian    = std::endian::little;
+    using block_layout              = layout::volta_pc;
 };
 
 struct trial_version_t
@@ -66,6 +71,7 @@ struct trial_version_t
 
     static constexpr auto version_v = version_t::trial;
     static constexpr auto endian    = std::endian::little;
+    using block_layout              = layout::volta_pc;
 };
 
 template<typename T>

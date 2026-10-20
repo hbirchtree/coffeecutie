@@ -79,13 +79,13 @@ struct map_container
     inline tag_magic magic() const
     {
         auto const& tag = header->section(section_t::tag);
-        return tag_magic{
+        return tag_magic{{
             .base         = data.data(),
             .max_size     = static_cast<u32>(data.size()),
             .file_offset  = header->section_offset(
                 section_t::tag, tag.virtual_address),
             .virtual_base = header->virtual_base,
-        };
+        }};
     }
 
     /*! File offset of the resource section, which raw pages are relative to */

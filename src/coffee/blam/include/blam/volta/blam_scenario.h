@@ -1421,11 +1421,11 @@ struct scenario
         map_ptr const& magic) const
     {
         reference<hsc::opcode_layout<bytecode_t>> data{
-            .count = static_cast<u32>(
+            static_cast<u32>(
                 (script.script_bytecode_size -
                  sizeof(hsc::script_ref<bytecode_t>)) /
                 sizeof(hsc::opcode_layout<bytecode_t>)),
-            .offset = script.unknown_9.offset + 36,
+            script.unknown_9.offset + 36,
         };
         return data.data(magic).value();
     }
