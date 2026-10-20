@@ -6,6 +6,8 @@
 #include "../common/tag_class.h"
 #include "../common/tag_index.h"
 #include "../common/tag_reference.h"
+#include "../common/data_reference.h"
+#include "../common/string_id.h"
 #include "../volta/blam_structures.h"
 
 #include "versions.h"
@@ -31,19 +33,8 @@ using datum_index = tag_index<>;
 /*! A tag class as a cache file stores it: the fourcc byte-reversed */
 using tag_class = basic_tag_class<std::endian::little>;
 
-/*!
- * \brief Halo 2 string IDs index into the map's string table (resolved
- * through the string index table in the file header).
- */
-struct string_id
-{
-    u32 raw;
-
-    inline u32 index() const
-    {
-        return from_le(raw) & 0xFFFF;
-    }
-};
+/*! Halo 2 string IDs index the map's string table */
+using string_id = basic_string_id<std::endian::little>;
 
 static_assert(sizeof(string_id) == 4);
 
@@ -168,40 +159,9 @@ using object_reference = tag_reference<
     tag_class_t::bloc,
     tag_class_t::crea>;
 
-/*!
- * \brief Sized blob of data in the meta area.
- */
+/*! Sized blob of data in the meta area */
 template<heap_t Heap = heap_t::tag>
-struct data_reference
-{
-    i32 size_raw;
-    u32 pointer_raw;
-
-    inline i32 size() const
-    {
-        return from_le(size_raw);
-    }
-
-    inline u32 pointer() const
-    {
-        return from_le(pointer_raw);
-    }
-
-    inline result<Span<const u8>, error_msg> data(
-        magic_ptr_base<Heap> const& magic) const
-    {
-        i32 num = size();
-        if(num == 0)
-            return Span<const u8>();
-        if(num < 0)
-            return stl_types::failure("negative data_reference size"sv);
-        auto const* bytes =
-            magic.template as<u8>(pointer(), static_cast<u32>(num));
-        if(!bytes)
-            return stl_types::failure("data_reference pointer out of bounds"sv);
-        return Span<const u8>(bytes, static_cast<size_t>(num));
-    }
-};
+using data_reference = blam::data_reference<xbox_version_t, Heap>;
 
 static_assert(sizeof(data_reference<>) == 8);
 

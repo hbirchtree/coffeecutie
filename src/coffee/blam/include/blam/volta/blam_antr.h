@@ -2,33 +2,15 @@
 
 #include "blam/volta/blam_tag_classes.h"
 #include "blam/volta/blam_tag_ref.h"
+#include "../common/data_reference.h"
 #include "blam_base_types.h"
 #include "blam_reference.h"
 #include "blam_structures.h"
 
 namespace blam::antr {
 
-/* 20-byte Halo tag-data block:
- * [0x00] size  [0x04] flags  [0x08] file_offset  [0x0C] pointer  [0x10] unused
- * The in-memory pointer (0x0C) is the magic-relative address of the data. */
-struct data_ref_t
-{
-    u32 count;       /* 0x00: byte count */
-    u32 flags;       /* 0x04 */
-    u32 file_offset; /* 0x08: offset within map file */
-    u32 pointer;     /* 0x0C: in-memory address (use with magic) */
-    u32 unused;      /* 0x10 */
-
-    auto data(map_ptr const& magic) const
-    {
-        return reference<u8>{count, pointer}.data(magic);
-    }
-
-    u32 size() const
-    {
-        return count;
-    }
-};
+/*! 20-byte Halo 1 tag-data block: size, flags, file offset, pointer */
+using data_ref_t = data_reference<pc_version_t, heap_t::map>;
 
 static_assert(sizeof(data_ref_t) == 20);
 

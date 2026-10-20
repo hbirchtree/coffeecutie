@@ -286,8 +286,8 @@ struct resource_view
     /*! The page bytes a data_reference in the definition points to */
     inline Span<u8 const> bytes(data_reference const& ref) const
     {
-        i32  size  = ref.size;
-        auto where = address(&ref.pointer);
+        i32  size  = ref.size();
+        auto where = address(&ref.pointer_raw);
         if(size <= 0 || !where)
             return {};
         Span<u8 const> page;

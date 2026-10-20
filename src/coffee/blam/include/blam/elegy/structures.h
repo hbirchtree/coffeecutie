@@ -6,6 +6,8 @@
 #include "../common/tag_class.h"
 #include "../common/tag_index.h"
 #include "../common/tag_reference.h"
+#include "../common/data_reference.h"
+#include "../common/string_id.h"
 #include "../volta/blam_base_types.h"
 #include "../volta/blam_structures.h"
 
@@ -41,27 +43,12 @@ using datum_index = tag_index<>;
 /*! A tag group fourcc; big-endian, so the bytes read in order */
 using tag_class = basic_tag_class<std::endian::big>;
 
-/*!
- * \brief Halo 3 string IDs pack an index, a namespace and the string's
- * length (16:8:8); namespaces map to offsets in the string table.
- */
-struct string_id
+/*! Halo 3 string IDs: index, namespace and length */
+struct string_id : basic_string_id<std::endian::big>
 {
-    be<u32> raw;
-
-    inline u16 index() const
-    {
-        return raw.value() & 0xFFFF;
-    }
-
     inline u8 name_space() const
     {
-        return (raw.value() >> 16) & 0xFF;
-    }
-
-    inline bool valid() const
-    {
-        return raw.value() != 0;
+        return (value() >> 16) & 0xFF;
     }
 };
 
@@ -106,25 +93,7 @@ using tag_reference = blam::tag_reference<xbox360_version_t, Classes...>;
 
 static_assert(sizeof(tag_reference<>) == 0x10);
 
-/*! An untyped blob of tag data */
-struct data_reference
-{
-    be<i32>            size;
-    std::array<u32, 2> runtime_0;
-    be<u32>            pointer;
-    u32                runtime_1;
-
-    inline Span<u8 const> data(tag_magic const& magic) const
-    {
-        i32 bytes = size;
-        if(bytes <= 0)
-            return {};
-        auto const* out = magic.resolve(pointer, static_cast<u32>(bytes));
-        if(!out)
-            return {};
-        return Span<u8 const>(out, static_cast<size_t>(bytes));
-    }
-};
+using data_reference = blam::data_reference<xbox360_version_t, heap_t::tag>;
 
 static_assert(sizeof(data_reference) == 0x14);
 
