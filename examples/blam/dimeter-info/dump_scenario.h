@@ -88,7 +88,7 @@ inline void dump_placements(
     auto name_of = [&](auto const& p) -> std::string {
         if(names.has_error())
             return "-";
-        auto const* n = p.name.in(names.value());
+        auto const* n = p.name.resolve(names.value());
         return n ? std::string(n->name.str()) : "-";
     };
     auto block = [&](auto const& placements, auto const& palette, const char* what) {
@@ -332,7 +332,7 @@ inline void dump_ai(h2::map_container<V> const& map, scn::scenario_t const& scnr
     auto character  = [&](h2::block_index<ai::character_ref_t> const& idx) {
         if(characters.has_error())
             return std::string("-");
-        auto const* c = idx.in(characters.value());
+        auto const* c = idx.resolve(characters.value());
         return c ? tag_label(map, c->character) : std::string("-");
     };
     each(map, scnr.character_palette, [&](size_t i, ai::character_ref_t const& c) {
