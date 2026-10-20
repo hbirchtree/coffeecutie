@@ -222,14 +222,6 @@ struct alignas(4) tag_index_t : stl_types::non_copy
         return C_RCAST<tag_t const*>(C_RCAST<u8 const*>(this) + offset);
     }
 
-    inline tag_t const* tag_at(const file_header_t* header, u32 tag_id) const
-    {
-        if(tag_id > base_tag + tag_count)
-            return nullptr;
-        else
-            return &(tags(header)[(tag_id - base_tag)]);
-    }
-
     inline optional<blam::scn::scenario<V> const*> scenario(
         file_header_t const* header, map_ptr const& magic) const
     {

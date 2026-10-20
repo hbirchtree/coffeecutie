@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_index.h"
 #include "blam_atlas.h"
 #include "blam_scenario.h"
 #include "blam_sound.h"
@@ -278,7 +279,7 @@ class tag_index_view
     }
 
     template<tag_class_t... Class>
-    /*! Efficient binary search through the tags */
+    /*! The tag a reference names, end() when it names none */
     iterator find(tagref_typed_t<Class...> const& tag) const
     {
         /* TODO: Add tag validation */
@@ -287,7 +288,7 @@ class tag_index_view
         return find(tag_unwrapped);
     }
 
-    /*! Efficient binary search through the tags */
+    /*! The tag a reference names, end() when it names none */
     iterator find(tagref_t const& tag) const
     {
         if(tag.unknown != 0)
@@ -296,39 +297,14 @@ class tag_index_view
         return find(tag.tag_id);
     }
 
-    /*! Efficient binary search through the tags */
+    /*! The tag a handle names, end() for a null, unknown or stale one */
     iterator find(u32 tag_id) const
     {
-        /* Tag index has sequential tag IDs, allowing binary search */
-        i32  size    = m_idx->tag_count;
-        auto end_tag = (*(--end())).tag_id;
-        auto it      = begin();
-
-        if(tag_id > end_tag)
-            return end();
-
-        while(size > 1)
-        {
-            if(size % 2 == 0)
-                size /= 2;
-            else
-                size = size / 2 + 1;
-            auto remaining = std::distance(it, end()) - 1;
-            size           = std::min<i32>(size, remaining);
-
-            auto mid     = it + size;
-            auto mid_tag = (*mid).tag_id;
-
-            if(mid_tag == tag_id)
-                return mid;
-
-            if(tag_id > mid_tag)
-                it = it + size;
-            if(it == end())
-                break;
-        }
-
-        return end();
+        auto table = span();
+        auto const* tag = lookup_tag(table, from_le(tag_id), [](tag_t const& t) {
+            return from_le(t.tag_id) >> 16;
+        });
+        return tag ? begin() + (tag - table.data()) : end();
     }
 
     /*! Sequential search of tags based on tag name */
