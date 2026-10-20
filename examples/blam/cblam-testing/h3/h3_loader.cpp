@@ -1290,8 +1290,8 @@ struct H3MapLoader : compo::SubsystemBase
                 .entity    = entity,
                 .position  = Vecf3(at[3]),
                 .direction = glm::normalize(Vecf3(at[0])),
-                .color     = el::function_color(light->color.function.data(map.magic())) *
-                         el::function_scalar(light->intensity.function.data(map.magic())),
+                .color     = el::function_color(light->color.function.span(map.magic())) *
+                         el::function_scalar(light->intensity.function.span(map.magic())),
                 .size      = size,
                 .radius    = radius,
             };

@@ -65,7 +65,7 @@ result<resource_view, resource_error> resource_loader::load(datum_index id)
            out.data,
            out.keep))
         return failure(*error);
-    auto info = gestalt->info_buffer.data(magic);
+    auto info = gestalt->info_buffer.span(magic);
     i32  info_offset = res->info_offset, info_size = res->info_size;
     if(info_size > 0 && static_cast<u32>(info_offset) <= info.size() &&
        static_cast<u32>(info_size) <= info.size() - info_offset)

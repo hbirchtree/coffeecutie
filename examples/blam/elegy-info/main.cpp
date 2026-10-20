@@ -1296,7 +1296,7 @@ int dump_lights(elegy::map_container const& map, options_t const& options)
             light->flags.value());
         for(auto const* f : {&light->color, &light->intensity})
         {
-            auto bytes = f->function.data(map.magic());
+            auto bytes = f->function.span(map.magic());
             std::string hex;
             for(auto b : bytes)
                 hex += fmt::format("{:02x}", b);
