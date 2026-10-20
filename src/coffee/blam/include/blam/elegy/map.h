@@ -120,14 +120,8 @@ struct map_container
 
     inline tag_t const* tag_at(datum_index id) const
     {
-        auto table = tags();
-        u16  idx   = id.index();
-        if(!id.valid() || idx >= table.size())
-            return nullptr;
-        auto const* tag = &table[idx];
-        if(tag->salt.value() != id.salt())
-            return nullptr;
-        return tag;
+        return lookup_tag(
+            tags(), id.value(), [](tag_t const& t) { return t.salt.value(); });
     }
 
     inline datum_index id_of(tag_t const& tag) const

@@ -405,15 +405,13 @@ struct map_container
 
     inline tag_t const* tag_at(datum_index id) const
     {
-        auto table = tags();
-        u16  idx   = id.index();
-        if(!id.valid() || idx >= table.size())
-            return nullptr;
-        if(!table[idx].valid() && shared)
+        auto const* tag = lookup_tag(
+            tags(), id.value(), [](tag_t const& t) { return t.tag_id.salt(); });
+        if(tag && !tag->valid() && shared)
             if(auto const* borrowed = shared->tag_at(id);
                borrowed && borrowed->valid())
                 return borrowed;
-        return &table[idx];
+        return tag;
     }
 
     inline tag_t const* scenario() const

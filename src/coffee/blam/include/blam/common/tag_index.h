@@ -3,6 +3,8 @@
 #include "endian.h"
 #include "tag_class.h"
 
+#include <peripherals/semantic/chunk.h>
+
 #include <bit>
 #include <type_traits>
 
@@ -56,6 +58,26 @@ struct basic_tag_index
 
 #pragma GCC diagnostic pop
 };
+
+/*!
+ * \brief The tag table entry a handle names: the low half is the position,
+ * and the entry's salt must match the high half. Null for a null handle, a
+ * position past the table or a stale salt.
+ */
+template<typename Entry, typename SaltOf>
+inline Entry const* lookup_tag(
+    semantic::Span<Entry const> table, libc_types::u32 handle, SaltOf&& salt_of)
+{
+    if(handle == 0xFFFFFFFF)
+        return nullptr;
+    libc_types::u32 const position = handle & 0xFFFF;
+    if(position >= table.size())
+        return nullptr;
+    Entry const& entry = table[position];
+    if(static_cast<libc_types::u16>(salt_of(entry)) != (handle >> 16))
+        return nullptr;
+    return &entry;
+}
 
 /*! Halo 1 and 2 store handles little-endian */
 template<tag_class_t... Classes>
