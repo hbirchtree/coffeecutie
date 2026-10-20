@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_map.h"
 #include "tag_index.h"
 
 #include <peripherals/semantic/chunk.h>
@@ -284,6 +285,8 @@ struct map_container
 {
     using header_type = file_header_t<V>;
     using result_type = result<map_container, map_load_error>;
+    using tag_type    = tag_t;
+    using handle_type = datum_index;
 
     header_type const* header{nullptr};
     tag_index_t const* index{nullptr};
@@ -531,5 +534,32 @@ inline std::optional<map_container<V>> load_shared(
         return std::nullopt;
     }
 }
+
+template<typename V>
+inline Span<tag_t const> tags_of(map_container<V> const& map)
+{
+    return map.tags();
+}
+
+template<typename V>
+inline tag_t const* tag_at(map_container<V> const& map, datum_index id)
+{
+    return map.tag_at(id);
+}
+
+template<typename V>
+inline datum_index handle_of(map_container<V> const&, tag_t const& tag)
+{
+    return tag.tag_id;
+}
+
+template<typename V>
+inline std::string_view name_of(map_container<V> const& map, tag_t const& tag)
+{
+    return map.name_of(tag);
+}
+
+static_assert(tag_map<map_container<xbox_version_t>>);
+static_assert(tag_map<map_container<vista_version_t>>);
 
 } // namespace blam::dimeter

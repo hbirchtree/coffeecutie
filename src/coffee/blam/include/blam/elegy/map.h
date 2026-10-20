@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_map.h"
 #include "tag_index.h"
 
 #include <peripherals/semantic/chunk.h>
@@ -43,6 +44,8 @@ struct tagged
 struct map_container
 {
     using result_type = result<map_container, map_load_error>;
+    using tag_type    = tag_t;
+    using handle_type = datum_index;
 
     file_header_t const* header{nullptr};
     tag_index_t const*   index{nullptr};
@@ -272,5 +275,27 @@ struct map_container
         u32 buffer_address,
         u32 buffer_size) const;
 };
+
+inline Span<tag_t const> tags_of(map_container const& map)
+{
+    return map.tags();
+}
+
+inline tag_t const* tag_at(map_container const& map, datum_index id)
+{
+    return map.tag_at(id);
+}
+
+inline datum_index handle_of(map_container const& map, tag_t const& tag)
+{
+    return map.id_of(tag);
+}
+
+inline std::string_view name_of(map_container const& map, tag_t const& tag)
+{
+    return map.name_of(tag);
+}
+
+static_assert(tag_map<map_container>);
 
 } // namespace blam::elegy
