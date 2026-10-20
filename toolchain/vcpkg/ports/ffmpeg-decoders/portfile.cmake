@@ -45,6 +45,12 @@ set(FFMPEG_PREFIX "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-prefix")
 file(REMOVE_RECURSE "${FFMPEG_BUILD}" "${FFMPEG_PREFIX}")
 file(MAKE_DIRECTORY "${FFMPEG_BUILD}")
 
+# Archives end up inside a shared library, so all of ffmpeg is PIC
+set(PIC_FLAGS "")
+if(NOT VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
+    set(PIC_FLAGS "-fPIC")
+endif()
+
 set(OPTIONS
     --prefix=${FFMPEG_PREFIX}
     --enable-static
@@ -70,7 +76,7 @@ set(OPTIONS
     "--ar=${VCPKG_DETECTED_CMAKE_AR}"
     "--ranlib=${VCPKG_DETECTED_CMAKE_RANLIB}"
     "--nm=${VCPKG_DETECTED_CMAKE_NM}"
-    "--extra-cflags=${VCPKG_COMBINED_C_FLAGS_RELEASE}"
+    "--extra-cflags=${VCPKG_COMBINED_C_FLAGS_RELEASE} ${PIC_FLAGS}"
     "--extra-ldflags=${VCPKG_COMBINED_SHARED_LINKER_FLAGS_RELEASE}"
 )
 if(VCPKG_TARGET_IS_EMSCRIPTEN)
@@ -85,7 +91,11 @@ else()
     else()
         list(APPEND OPTIONS --arch=${VCPKG_TARGET_ARCHITECTURE})
     endif()
-    list(APPEND OPTIONS --target-os=linux)
+    if(VCPKG_TARGET_IS_ANDROID)
+        list(APPEND OPTIONS --target-os=android)
+    else()
+        list(APPEND OPTIONS --target-os=linux)
+    endif()
 endif()
 
 vcpkg_execute_required_process(
