@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/tag_index.h"
+#include "../common/tag_map.h"
 #include "blam_atlas.h"
 #include "blam_scenario.h"
 #include "blam_sound.h"
@@ -26,6 +27,8 @@ template<typename Ver>
 struct map_container
 {
     using result_type = result<map_container, map_load_error>;
+    using tag_type    = tag_t;
+    using handle_type = tag_index<>;
 
     static void null_progress(std::string_view /*label*/, i16 /*progress*/)
     {
@@ -495,5 +498,36 @@ class tag_index_view
         return m_ptr;
     }
 };
+
+template<typename Ver>
+inline Span<tag_t const> tags_of(map_container<Ver> const& map)
+{
+    if(!map.tags)
+        return {};
+    return Span<tag_t const>(map.tags->tags(map.map), from_le(map.tags->tag_count));
+}
+
+template<typename Ver>
+inline tag_t const* tag_at(map_container<Ver> const& map, tag_index<> id)
+{
+    return lookup_tag(tags_of(map), id.value(), [](tag_t const& t) {
+        return from_le(t.tag_id) >> 16;
+    });
+}
+
+template<typename Ver>
+inline tag_index<> handle_of(map_container<Ver> const&, tag_t const& tag)
+{
+    return {tag.tag_id};
+}
+
+template<typename Ver>
+inline std::string_view name_of(map_container<Ver> const& map, tag_t const& tag)
+{
+    return tag.to_name().to_string(map.magic);
+}
+
+static_assert(tag_map<map_container<pc_version_t>>);
+static_assert(tag_map<map_container<xbox_version_t>>);
 
 } // namespace blam
