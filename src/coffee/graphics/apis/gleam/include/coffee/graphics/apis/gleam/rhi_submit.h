@@ -434,6 +434,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
         apply_vertex_offset = [this, &vao](u32 offset) {
             if(vao->m_applied_vertex_offset == offset)
                 return;
+#if GLEAM_MAX_VERSION_ES != 0x200
             /* One bind instead of re-pointing every attribute */
             if(u32 const handle = offset ? vao->offset_array(offset) : u32(vao->m_handle))
             {
@@ -441,6 +442,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 vao->m_applied_vertex_offset = offset;
                 return;
             }
+#endif
             for(auto const& attrib : vao->m_attributes)
             {
                 if(vao->m_buffers.at(attrib.buffer.id).expired())
