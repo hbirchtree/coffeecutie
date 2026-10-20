@@ -1679,6 +1679,9 @@ struct PhysicsSystem
                    (body->getCollisionFlags() &
                     btCollisionObject::CF_NO_CONTACT_RESPONSE))
                     continue;
+                /* Riding on top of it is not being run down */
+                if(unit.deck == vehicle_id || deck_under(*body) == vehicle.world_body.get())
+                    continue;
                 btVector3 toward = body->getCenterOfMassPosition() -
                                    vehicle.world_body->getCenterOfMassPosition();
                 toward.setZ(0.f);
