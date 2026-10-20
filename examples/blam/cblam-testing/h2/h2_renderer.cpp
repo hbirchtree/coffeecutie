@@ -168,7 +168,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 draws_visible += draws.size() + m_moving_draws.size() + m_animated.size();
                 if(draws.empty() && m_moving_draws.empty() && m_animated.empty())
                     continue;
-                i32   skinned = 0;
+                i32   skinned   = 0;
+                i32 const billboard = mat.billboard ? 1 : 0;
                 Vecf2 const water_fan{mat.water_fan ? 1.f : 0.f, sea_level};
                 Vecf3 offset = mat.sky ? camera->camera.position : Vecf3{};
                 Vecf3 const& eye = camera->camera.position;
@@ -180,6 +181,10 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Matf4>(camera->matrix)},
                     gfx::uniform_pair<const i32>{
                         {"skinned"}, semantic::SpanOne<const i32>(skinned)},
+                    gfx::uniform_pair<const i32>{
+                        {"billboard"}, semantic::SpanOne<const i32>(billboard)},
+                    gfx::uniform_pair<Vecf3 const>{
+                        {"eye"}, semantic::SpanOne<const Vecf3>(eye)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"water_fan"}, semantic::SpanOne<const Vecf2>(water_fan)},
                     gfx::uniform_pair<Vecf2 const>{

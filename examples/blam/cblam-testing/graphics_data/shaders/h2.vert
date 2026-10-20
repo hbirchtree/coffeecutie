@@ -40,6 +40,10 @@ layout(binding=0, std140) uniform H2Instances
 } instances;
 /* Animated objects: bind pose to animated pose per model node */
 layout(location=84) uniform int skinned;
+/* Sprite decorators: `position` is the quad's pivot and `normal` the
+ * corner's offset (along the view, across, up), turned to face `eye` */
+layout(location=85) uniform int billboard;
+layout(location=86) uniform vec3 eye;
 layout(location=96) uniform mat4 bones[64]; /* 96-351 */
 
 void main()
@@ -67,6 +71,19 @@ void main()
         world        = vec3(xy, water_fan.y);
         uv           = xy;
         n            = vec3(0.0, 0.0, 1.0);
+    }
+    if(billboard != 0)
+    {
+        vec3 axis = vec3(0.0, 0.0, 1.0);
+        vec3 to_eye = eye - position;
+        to_eye -= axis * dot(to_eye, axis);
+        float len = length(to_eye);
+        vec3 fwd = len > 1e-4 ? to_eye / len : vec3(1.0, 0.0, 0.0);
+        vec3 right = cross(axis, fwd);
+        /* Gone by 18 wu: mips of the cut-outs fringe, and so many drew */
+        float fade = 1.0 - smoothstep(12.0, 18.0, length(eye - position));
+        world = position + (fwd * normal.x + right * normal.y + axis * normal.z) * fade;
+        n     = fwd;
     }
     f_world_pos = world;
     f_texcoord = uv * uv_scale;

@@ -203,6 +203,7 @@ struct Material
     /*! plasma_alpha: noise A in `texture`, noise B in `detail`, shape in
      * `mask`; the pixel constants ramp it from dim to bright */
     bool                                   plasma{false};
+    bool                                   billboard{false}; /*!< sprite decorators */
     /*! Environment reflection: a cube map, tinted from facing to glancing,
      * each rgb + brightness */
     std::shared_ptr<gfx::texture_cube_t>   env_texture;

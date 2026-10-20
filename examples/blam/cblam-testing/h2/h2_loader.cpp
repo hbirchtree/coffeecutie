@@ -653,6 +653,8 @@ struct H2MapLoader : compo::SubsystemBase
             auto        bsp_magic = located.magic;
             if(!bsp)
                 continue;
+            if(scenario_body)
+                load_decorators(map, pool, *scenario_body, *bsp, bsp_magic, static_cast<i32>(bsp_idx));
             if(!center)
                 center = Vecf3{
                     (from_le(bsp->x_min) + from_le(bsp->x_max)) / 2.f,
@@ -3197,6 +3199,161 @@ struct H2MapLoader : compo::SubsystemBase
             m_unlit_objects,
             varied_objects,
             m_scene.moving_objects.size());
+    }
+
+    /* A structure BSP's sprite decorators (grass): the cache's prebuilt
+     * quads, per cluster, lit by their placement's baked colour. Model
+     * decorators (rocks) need the placement packing decoded first */
+    template<typename V>
+    void load_decorators(
+        dim::map_container<V> const&           map,
+        dim::raw_pool const&                   pool,
+        dim::scn::scenario_t const&            scnr,
+        geo::bsp_header_t const&               bsp,
+        dim::magic_ptr_base<dim::heap_t::bsp> const& bsp_magic,
+        i32                                    bsp_idx)
+    {
+        auto palette = scnr.decorator_palette.data(map.magic());
+        auto caches  = bsp.decorator_cache.data(bsp_magic);
+        if(palette.has_error() || caches.has_error())
+            return;
+        u32 quads = 0, skipped = 0;
+        for(auto const& cache : caches.value())
+        {
+            auto blocks = cache.cache_blocks.data(bsp_magic);
+            auto groups = cache.groups.data(bsp_magic);
+            if(blocks.has_error() || groups.has_error())
+                continue;
+            for(auto const& group : groups.value())
+            {
+                i16 const vcount = from_le(group.vertex_count);
+                i16 const icount = from_le(group.index_count);
+                if(vcount <= 0 || icount <= 0)
+                {
+                    skipped += std::max<i16>(from_le(group.placement_count), 0);
+                    continue;
+                }
+                if(group.set >= palette.value().size() ||
+                   group.cache_block < 0 ||
+                   static_cast<size_t>(group.cache_block) >= blocks.value().size())
+                    continue;
+                auto const* set_tag = map.tag_at(palette.value()[group.set].tag.tag_id);
+                auto const* set =
+                    set_tag ? set_tag->template data<geo::decorator_set_t>(map.magic())
+                            : nullptr;
+                if(!set)
+                    continue;
+                auto shaders = set->shaders.data(map.magic());
+                if(shaders.has_error() || shaders.value().empty())
+                    continue;
+                size_t shader = std::min<size_t>(group.shader, shaders.value().size() - 1);
+                i32 const mat = material_for(map, pool, shaders.value()[shader].shader.tag_id);
+                if(mat < 0)
+                    continue;
+                m_scene.materials[mat].billboard  = true;
+                m_scene.materials[mat].alpha_test = true;
+
+                auto const& block = blocks.value()[group.cache_block];
+                auto raw = pool.resolve(
+                    bsp_magic, &block, block.data, from_le(block.size));
+                auto resources = block.resources.data(bsp_magic);
+                if(!raw || resources.has_error() ||
+                   raw->size() < sizeof(geo::decorator_block_t))
+                    continue;
+                auto const* bytes = reinterpret_cast<u8 const*>(raw->data());
+                auto const* body  = reinterpret_cast<geo::decorator_block_t const*>(bytes);
+                auto data_of = [&](i16 field) -> u8 const* {
+                    for(auto const& r : resources.value())
+                        if(r.type0() == field)
+                        {
+                            size_t at = from_le(block.header_size) + 8 + from_le(r.offset_raw);
+                            return at + from_le(r.size_raw) <= raw->size() ? bytes + at : nullptr;
+                        }
+                    return nullptr;
+                };
+                auto const* placements = reinterpret_cast<geo::decorator_placement_t const*>(
+                    data_of(offsetof(geo::decorator_block_t, placements) - 8));
+                auto const* verts = reinterpret_cast<geo::decorator_sprite_vertex_t const*>(
+                    data_of(offsetof(geo::decorator_block_t, sprite_vertices) - 8));
+                auto const* indices = reinterpret_cast<u16 const*>(
+                    data_of(offsetof(geo::decorator_block_t, sprite_indices) - 8));
+                i32 const nverts = body->sprite_vertices.count();
+                i32 const nidx   = body->sprite_indices.count();
+                i32 const nplace = body->placements.count();
+                i16 const vstart = from_le(group.vertex_start);
+                i16 const istart = from_le(group.index_start);
+                i16 const pstart = from_le(group.placement_start);
+                if(!placements || !verts || !indices || vstart < 0 || istart < 0 ||
+                   vstart + vcount > nverts || istart + icount > nidx)
+                    continue;
+
+                auto const vbase = static_cast<u32>(m_vertices.size());
+                Vecf3 lo(std::numeric_limits<f32>::max()), hi(std::numeric_limits<f32>::lowest());
+                f32   reach = 0.f;
+                for(i16 i = 0; i < vcount; i++)
+                {
+                    auto const& v = verts[vstart + i];
+                    /* Four corners a placement, in order */
+                    i32 const   p = pstart + i / 4;
+                    Vertex      out{
+                             .position = Vecf3(from_le(v.position[0]), from_le(v.position[1]), from_le(v.position[2])),
+                             .texcoord = Vecf2(from_le(v.texcoord[0]), from_le(v.texcoord[1])),
+                             .normal   = Vecf3(from_le(v.offset[0]), from_le(v.offset[1]), from_le(v.offset[2])),
+                    };
+                    /* Stored at full brightness; the lightmap path doubles */
+                    if(p >= 0 && p < nplace)
+                    {
+                        auto const& l = placements[p].light;
+                        out.light[0]  = l[0] / 2;
+                        out.light[1]  = l[1] / 2;
+                        out.light[2]  = l[2] / 2;
+                        out.light[3]  = 255;
+                    }
+                    lo    = glm::min(lo, out.position);
+                    hi    = glm::max(hi, out.position);
+                    reach = std::max(reach, glm::length(out.normal));
+                    m_vertices.push_back(out);
+                }
+                std::vector<u16> list;
+                list.reserve(static_cast<size_t>(icount));
+                for(i16 i = 0; i < icount; i++)
+                {
+                    i32 const idx = static_cast<i32>(from_le(indices[istart + i])) - vstart;
+                    if(idx < 0 || idx >= vcount)
+                        break;
+                    list.push_back(static_cast<u16>(idx));
+                }
+                if(list.size() != static_cast<size_t>(icount))
+                {
+                    m_vertices.resize(vbase);
+                    continue;
+                }
+                m_scene.materials[mat].section_draws.push_back({
+                    .cmd =
+                        {
+                            .elements =
+                                {
+                                    .count         = static_cast<u32>(list.size()),
+                                    .offset        = m_indices.size() * sizeof(u16),
+                                    .vertex_offset = vbase,
+                                    .type          = semantic::type_t::u16,
+                                },
+                            .instances = {.count = 1, .offset = 0},
+                        },
+                    .tag =
+                        {
+                            .section         = bsp_idx,
+                            .cluster_section = bsp_idx,
+                            .cluster         = from_le(group.cluster),
+                        },
+                    .bounds = Vecf4((lo + hi) * .5f, glm::distance(lo, hi) * .5f + reach),
+                });
+                m_indices.insert(m_indices.end(), list.begin(), list.end());
+                quads += static_cast<u32>(list.size() / 6);
+            }
+        }
+        if(quads || skipped)
+            cDebug("H2: bsp {}: {} decorator sprites, {} model decorators left", bsp_idx, quads, skipped);
     }
 
     /* The first sky's model (empty palette slots skipped: the main menu's
