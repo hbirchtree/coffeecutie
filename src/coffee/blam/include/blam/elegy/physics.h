@@ -317,12 +317,12 @@ static_assert(sizeof(global_material_t) == 0x170);
  * unit seen from outside */
 struct player_representation_t
 {
-    tag_reference first_person_hands; /*!< mode */
-    tag_reference first_person_body;  /*!< mode */
-    tag_reference third_person_unit;
+    tag_reference<> first_person_hands; /*!< mode */
+    tag_reference<> first_person_body;  /*!< mode */
+    tag_reference<> third_person_unit;
     string_id     third_person_variant;
-    tag_reference binoculars_zoom_in;
-    tag_reference binoculars_zoom_out;
+    tag_reference<> binoculars_zoom_in;
+    tag_reference<> binoculars_zoom_out;
 };
 
 static_assert(sizeof(player_representation_t) == 0x54);

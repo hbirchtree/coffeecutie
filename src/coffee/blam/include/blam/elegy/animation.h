@@ -85,7 +85,7 @@ struct animation_graph_t
 {
     static constexpr tag_class_t group = tag_class_t::jmad;
 
-    tag_reference                         parent;
+    tag_reference<>                         parent;
     u8                                    inheritance_flags;
     u8                                    private_flags;
     be<i16>                               codec_pack;

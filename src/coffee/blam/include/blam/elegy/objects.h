@@ -7,7 +7,7 @@ namespace blam::elegy {
 /*! Which object a placement uses, by index into its palette */
 struct palette_entry_t
 {
-    tag_reference         object;
+    tag_reference<>         object;
     std::array<u32, 8>    unknown_0;
 };
 
@@ -156,10 +156,10 @@ struct starting_profile_t
     std::array<char, 0x20> name;
     be<f32>                health_damage;
     be<f32>                shield_damage;
-    tag_reference          primary_weapon;
+    tag_reference<>          primary_weapon;
     be<i16>                primary_rounds_loaded;
     be<i16>                primary_rounds_total;
-    tag_reference          secondary_weapon;
+    tag_reference<>          secondary_weapon;
     be<i16>                secondary_rounds_loaded;
     be<i16>                secondary_rounds_total;
     std::array<u8, 4>      grenade_counts; /*!< frag, plasma, spike, firebomb */
@@ -191,7 +191,7 @@ static_assert(sizeof(multiplayer_object_t) == 0xC4);
  * effect, a looping sound */
 struct object_attachment_t
 {
-    tag_reference type;
+    tag_reference<> type;
     string_id     marker;
     be<i16>       change_color;
     be<i16>       unknown_0;
@@ -226,7 +226,7 @@ static_assert(sizeof(change_color_t) == 0x18);
 struct object_t
 {
     std::array<u8, 0x34>            unknown_0;
-    tag_reference                   model;
+    tag_reference<>                   model;
     std::array<u8, 0x78>            unknown_1;
     tag_block<object_attachment_t>  attachments;
     std::array<u8, 0xC>             unknown_2;
@@ -254,8 +254,8 @@ static_assert(offsetof(object_t, multiplayer) == 0xEC);
 /*! A weapon's first-person model and animations, per player representation */
 struct weapon_first_person_t
 {
-    tag_reference model;      /*!< mode */
-    tag_reference animations; /*!< jmad */
+    tag_reference<> model;      /*!< mode */
+    tag_reference<> animations; /*!< jmad */
 };
 
 static_assert(sizeof(weapon_first_person_t) == 0x20);
@@ -309,13 +309,13 @@ struct light_t
     be<f32>          frustum_field_of_view;
     light_function_t color;
     light_function_t intensity;
-    tag_reference    gel;
+    tag_reference<>    gel;
     be<f32>          distance_diffusion;
     be<f32>          angular_smoothness;
     be<f32>          percent_spherical;
     be<f32>          destroy_after;
     std::array<u8, 4> priority;
-    tag_reference    lens_flare;
+    tag_reference<>    lens_flare;
 };
 
 static_assert(offsetof(light_t, color) == 0x18);
@@ -328,12 +328,12 @@ struct model_t
 {
     static constexpr tag_class_t group = tag_class_t::hlmt;
 
-    tag_reference        render_model;
-    tag_reference        collision_model;
-    tag_reference        animation;
-    tag_reference        physics_model;
+    tag_reference<>        render_model;
+    tag_reference<>        collision_model;
+    tag_reference<>        animation;
+    tag_reference<>        physics_model;
     std::array<u8, 0x14> unknown_0;
-    tag_reference        lod_render_model;
+    tag_reference<>        lod_render_model;
 };
 
 static_assert(offsetof(model_t, lod_render_model) == 0x54);

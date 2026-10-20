@@ -51,7 +51,7 @@ struct render_method_parameter_t
 {
     string_id                       name;
     be<parameter_type_t>            type;
-    tag_reference                   bitmap;
+    tag_reference<>                   bitmap;
     be<f32>                         real;
     be<i32>                         integer;
     be<i16>                         bitmap_flags;
@@ -75,7 +75,7 @@ static_assert(sizeof(render_method_parameter_t) == 0x3C);
  */
 struct postprocess_texture_t
 {
-    tag_reference bitmap;
+    tag_reference<> bitmap;
     be<i16>       bitmap_index;
     u8            address_mode;
     u8            filter_mode;
@@ -112,7 +112,7 @@ static_assert(sizeof(routing_t) == 0x4);
  */
 struct render_method_postprocess_t
 {
-    tag_reference                    shader_template;
+    tag_reference<>                    shader_template;
     tag_block<postprocess_texture_t> textures;
     tag_block<be<Vecf4>>             float_constants;
     tag_block<be<i32>>               integer_constants;
@@ -139,7 +139,7 @@ static_assert(sizeof(render_method_postprocess_t) == 0x84);
  */
 struct render_method_t
 {
-    tag_reference                          definition;
+    tag_reference<>                          definition;
     tag_block<be<i16>>                     options;
     tag_block<render_method_parameter_t>   parameters;
     tag_block<render_method_postprocess_t> postprocess;
@@ -166,7 +166,7 @@ static_assert(sizeof(shader_t) == 0x44);
 struct render_method_option_t
 {
     string_id     name;
-    tag_reference option;
+    tag_reference<> option;
     string_id     vertex_function;
     string_id     pixel_function;
 };
@@ -188,12 +188,12 @@ struct render_method_definition_t
 {
     static constexpr tag_class_t group = tag_class_t::rmdf;
 
-    tag_reference                       global_options;
+    tag_reference<>                       global_options;
     tag_block<render_method_category_t> categories;
     tag_block<std::array<u8, 0x10>>     entry_points;
     tag_block<std::array<u8, 0x10>>     vertex_types;
-    tag_reference                       shared_pixel_shaders;
-    tag_reference                       shared_vertex_shaders;
+    tag_reference<>                       shared_pixel_shaders;
+    tag_reference<>                       shared_vertex_shaders;
     be<u32>                             flags;
     be<i32>                             version;
 };
@@ -228,8 +228,8 @@ struct render_method_template_t
 {
     static constexpr tag_class_t group = tag_class_t::rmt2;
 
-    tag_reference              vertex_shader;
-    tag_reference              pixel_shader;
+    tag_reference<>              vertex_shader;
+    tag_reference<>              pixel_shader;
     be<u32>                    entry_points_available;
     tag_block<packed_range>    entry_points;
     tag_block<template_pass_t> passes;

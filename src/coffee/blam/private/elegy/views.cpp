@@ -154,11 +154,13 @@ Vecf3 function_color(Span<u8 const> function)
 render_method_view render_method_view::of(
     map_container const& map, tag_t const& method, size_t postprocess)
 {
-    return of(map, tag_reference{.id = map.id_of(method)}, postprocess);
+    tag_reference<> ref{};
+    ref.tag_id = map.id_of(method);
+    return of(map, ref, postprocess);
 }
 
 render_method_view render_method_view::of(
-    map_container const& map, tag_reference const& method, size_t postprocess)
+    map_container const& map, tag_reference<> const& method, size_t postprocess)
 {
     render_method_view out{.map = &map, .method = map.get<render_method_t>(method)};
     if(!out.method)

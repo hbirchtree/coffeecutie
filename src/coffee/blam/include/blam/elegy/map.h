@@ -195,16 +195,16 @@ struct map_container
     }
 
     /*! Name of the tag `ref` points at, empty when it is null */
-    inline std::string_view name_of(tag_reference const& ref) const
+    inline std::string_view name_of(tag_reference<> const& ref) const
     {
-        auto const* tag = tag_at(ref.id);
+        auto const* tag = tag_at(ref.tag_id);
         return tag ? name_of(*tag) : std::string_view();
     }
 
     template<typename T>
-    inline tagged<T> get(tag_reference const& ref) const
+    inline tagged<T> get(tag_reference<> const& ref) const
     {
-        return get<T>(ref.id);
+        return get<T>(ref.tag_id);
     }
 
     /*! First tag of T's group whose name contains `name` */
