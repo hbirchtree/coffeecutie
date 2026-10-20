@@ -13,8 +13,11 @@ struct Instance
     uvec4 extra; // x = flags; meters: y = empty color (RGBA8), z = fill
 };
 
+/* Lowered at load where uniform blocks are small (materials::ui_instances) */
+layout(constant_id = 1) const int UI_INSTANCES = 512;
+
 layout(binding = 0, std140) uniform InstanceData {
-    Instance instances[512];
+    Instance instances[UI_INSTANCES];
 } elements;
 
 layout(location = 10, binding = 0) uniform sampler2DArray source_bc1;

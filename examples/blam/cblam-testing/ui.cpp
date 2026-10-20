@@ -166,6 +166,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
         priority = 850;
 
+        m_instance_slots = materials::ui_instances(
+            static_cast<libc_types::u32>(api.limits().buffers.ubo_size));
         create_shaders(
             api,
             std::array<shader_pair_t, 1>{{
@@ -223,8 +225,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         std::u16string   text; /*!< drawn instead, for text-only entries */
     };
     std::vector<button_icon_t> m_button_icons;
-    /* The shader's instance array */
-    static constexpr size_t kUiInstanceSlots = 512;
+    /* The shader's instance array, UI_INSTANCES */
+    size_t m_instance_slots{512};
 
     /* Tokens become private-use characters until they are drawn */
     static constexpr char16_t first_icon_char = 0xE000;
@@ -1215,7 +1217,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             u32 const first = static_cast<u32>(data.vertex_data.size());
             for(auto const& sprite : view.sprites)
             {
-                if(data.instance_data.size() >= kUiInstanceSlots)
+                if(data.instance_data.size() >= m_instance_slots)
                     break;
                 auto const image = bitm_cache.resolve(*sprite.bitmap, sprite.image);
                 if(!image.valid())
@@ -1255,7 +1257,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
     void push_solid(widget_data_t& data, Vecf2 min, Vecf2 max, Vecf4 const& color)
     {
-        if(data.instance_data.size() >= kUiInstanceSlots)
+        if(data.instance_data.size() >= m_instance_slots)
             return;
         std::array<vertex_t, 6> verts = {{
             {.position = {min.x, min.y}},
@@ -1820,8 +1822,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(vertex_data.empty())
             return;
 
-        if(instance_vertex_data.size() < kUiInstanceSlots)
-            instance_vertex_data.resize(kUiInstanceSlots);
+        if(instance_vertex_data.size() < m_instance_slots)
+            instance_vertex_data.resize(m_instance_slots);
 
         vertices->commit(Bytes::ofContainer(vertex_data).view);
         instance_vertices->commit(
