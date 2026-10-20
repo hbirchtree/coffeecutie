@@ -79,7 +79,7 @@ static_assert(sizeof(marker_group_t) == 0x10);
 /*! A render method plus per-material overrides */
 struct geometry_material_t
 {
-    tag_reference                   render_method;
+    tag_reference<>                   render_method;
     tag_block<std::array<u8, 0xC>>  properties;
     be<i32>                         imported_material;
     i8                              breakable_surface;

@@ -32,7 +32,7 @@ struct object_view
     tagged<render_model_t>        render_model;
     tagged<phys::physics_model_t> physics_model;
 
-    static inline object_view of(map_container const& map, tag_reference const& object)
+    static inline object_view of(map_container const& map, tag_reference<> const& object)
     {
         object_view out{.object = map.get<object_t>(object)};
         if(!out.object)
@@ -228,7 +228,7 @@ struct render_method_view
     static render_method_view of(
         map_container const& map, tag_t const& method, size_t postprocess = 0);
     static render_method_view of(
-        map_container const& map, tag_reference const& method, size_t postprocess = 0);
+        map_container const& map, tag_reference<> const& method, size_t postprocess = 0);
 
     inline explicit operator bool() const
     {

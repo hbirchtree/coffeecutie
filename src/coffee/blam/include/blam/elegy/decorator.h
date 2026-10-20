@@ -50,10 +50,10 @@ struct decorator_set_t
 {
     static constexpr tag_class_t group = tag_class_t::dctr;
 
-    tag_reference                    render_model;
+    tag_reference<>                    render_model;
     tag_block<string_id>             instance_names;
     be<i32>                          instance_name_count;
-    tag_reference                    texture;
+    tag_reference<>                    texture;
     decorator_render_flags_t         render_flags;
     decorator_shader_t               shader;
     u8                               light_sampling;

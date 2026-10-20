@@ -327,15 +327,15 @@ struct looping_sound_track_t
     be<f32>       gain; /*!< dB */
     be<f32>       fade_in;
     be<f32>       fade_out;
-    tag_reference in;
-    tag_reference loop;
-    tag_reference out;
-    tag_reference alternate_loop;
-    tag_reference alternate_out;
+    tag_reference<> in;
+    tag_reference<> loop;
+    tag_reference<> out;
+    tag_reference<> alternate_loop;
+    tag_reference<> alternate_out;
     be<i16>       output_effect;
     u16           unknown_0;
-    tag_reference alternate_transition_in;
-    tag_reference alternate_transition_out;
+    tag_reference<> alternate_transition_in;
+    tag_reference<> alternate_transition_out;
     be<f32>       alternate_crossfade;
     be<f32>       alternate_fade_out;
 };
@@ -352,7 +352,7 @@ struct looping_sound_t
     be<u32>                          flags;
     bounds_f                         music_time;
     bounds_f                         distance;
-    tag_reference                    continuous_damage_effect;
+    tag_reference<>                    continuous_damage_effect;
     be<i16>                          sound_class;
     u16                              unknown_0;
     tag_block<looping_sound_track_t> tracks;

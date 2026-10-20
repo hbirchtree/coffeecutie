@@ -593,9 +593,9 @@ bool is_render_method(elegy::map_container const& map, elegy::tag_t const& tag)
     return group && (group->group == tag_class_t::rm__ || group->parent == tag_class_t::rm__);
 }
 
-std::string_view tag_name(elegy::map_container const& map, elegy::tag_reference const& ref)
+std::string_view tag_name(elegy::map_container const& map, elegy::tag_reference<> const& ref)
 {
-    auto const* tag = map.tag_at(ref.id);
+    auto const* tag = map.tag_at(ref.tag_id);
     return tag ? map.name_of(*tag) : std::string_view("(none)");
 }
 
@@ -1037,7 +1037,7 @@ int dump_player(elegy::map_container const& map)
                 }
         }
     }
-    auto print_weapon = [&](std::string_view slot, elegy::tag_reference const& ref) {
+    auto print_weapon = [&](std::string_view slot, elegy::tag_reference<> const& ref) {
         auto const weapon = map.get<elegy::weapon_t>(ref);
         if(!weapon)
             return;
@@ -1411,7 +1411,7 @@ int dump_nodes(elegy::map_container const& map, elegy::resource_loader& loader, 
 }
 
 /* A palette entry's physics model: its rigid bodies and their shapes */
-void print_physics(elegy::map_container const& map, elegy::tag_reference const& object_ref)
+void print_physics(elegy::map_container const& map, elegy::tag_reference<> const& object_ref)
 {
     using namespace elegy::phys;
     auto       magic = map.magic();

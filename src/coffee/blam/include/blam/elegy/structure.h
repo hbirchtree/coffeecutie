@@ -118,7 +118,7 @@ static_assert(sizeof(seam_identifier_t) == 0x28);
 
 struct collision_material_t
 {
-    tag_reference render_method;
+    tag_reference<> render_method;
     be<i16>       global_material;
     be<i16>       conveyor_surface;
     be<i16>       seam_mapping; /*!< Seals the BSP at this seam, -1 if not a sealer */
@@ -186,7 +186,7 @@ struct structure_bsp_t
     tag_block<geometry_material_t>        materials;
     std::array<u8, 0xE4>                  unknown_1;
     tag_block<instanced_geometry_t>       instances;
-    tag_block<tag_reference>              decorator_sets;
+    tag_block<tag_reference<>>              decorator_sets;
     render_geometry_t                     decorator_geometry;
     std::array<u8, 0x94>                  unknown_2;
     render_geometry_t                     geometry;
@@ -283,8 +283,8 @@ struct lightmap_bsp_t
     be<i16>                          bsp; /*!< Into the scenario's structure BSPs */
     be<i32>                          checksum;
     std::array<be<Vecf3>, 18>        compression;
-    tag_reference                    lightprobe_texture;
-    tag_reference                    intensity_texture;
+    tag_reference<>                    lightprobe_texture;
+    tag_reference<>                    intensity_texture;
     tag_block<lightmap_per_vertex_t> per_vertex;
     tag_block<lightmap_target_t>     clusters;
     tag_block<lightmap_instance_t>   instances;
@@ -311,12 +311,12 @@ static_assert(offsetof(scenario_lightmap_t, bsps) == 0x4);
 
 struct scenario_bsp_t
 {
-    tag_reference         bsp;
-    tag_reference         design;
-    tag_reference         lighting;
+    tag_reference<>         bsp;
+    tag_reference<>         design;
+    tag_reference<>         lighting;
     std::array<u8, 0x18>  unknown_0;
-    tag_reference         cubemaps; /*!< One cube image per cubemap point */
-    tag_reference         wind;
+    tag_reference<>         cubemaps; /*!< One cube image per cubemap point */
+    tag_reference<>         wind;
     u32                   unknown_1;
 };
 
@@ -362,7 +362,7 @@ struct atmosphere_setting_t
     be<Vecf3>              beta_m_theta_prefix;
     be<Vecf3>              beta_p_theta_prefix;
     std::array<u8, 0x18>   patchy_fog;
-    tag_reference          weather_effect;
+    tag_reference<>          weather_effect;
     be<f32>                runtime_weight;
     be<f32>                runtime_effect_weight;
 };
@@ -377,7 +377,7 @@ struct sky_atmosphere_t
 
     be<u16>                         flags;
     u16                             unknown_0;
-    tag_reference                   fog_bitmap;
+    tag_reference<>                   fog_bitmap;
     std::array<u8, 0x20>            fog_sheets;
     tag_block<atmosphere_setting_t> settings;
     tag_block<std::array<u8, 0x14>> underwater;
@@ -445,7 +445,7 @@ C_FLAGS(camera_fx_flags_t, u8);
 struct camera_fx_palette_t
 {
     string_id         name;
-    tag_reference     settings; /*!< Empty: globals\default */
+    tag_reference<>     settings; /*!< Empty: globals\default */
     camera_fx_flags_t flags;
     u8                unknown_0;
     u16               unknown_1;
@@ -461,7 +461,7 @@ static_assert(sizeof(camera_fx_palette_t) == 0x30);
 /*! A sky: scenery modelled around the level, and the BSPs it shows in */
 struct scenario_sky_t
 {
-    tag_reference object;
+    tag_reference<> object;
     be<i16>       name;
     be<u16>       active_bsps; /*!< One bit per structure BSP, none = all */
 };
@@ -523,7 +523,7 @@ struct scenario_t
 
     std::array<u8, 0x14>             unknown_0;
     tag_block<scenario_bsp_t>        bsps;
-    tag_reference                    structure_seams;
+    tag_reference<>                    structure_seams;
     tag_block<scenario_sky_t>        skies;
     tag_block<std::array<u8, 0x2C>>  zone_set_pvs;
     tag_block<std::array<u8, 0x64>>  zone_set_audibility;
@@ -555,7 +555,7 @@ struct scenario_t
     tag_block<crate_placement_t>     crates;
     tag_block<palette_entry_t>       crate_palette;
     std::array<u8, 0xB0>             unknown_7;
-    tag_reference                    camera_effects; /*!< cfxs where no cluster names one */
+    tag_reference<>                    camera_effects; /*!< cfxs where no cluster names one */
 };
 
 static_assert(offsetof(scenario_t, bsps) == 0x14);

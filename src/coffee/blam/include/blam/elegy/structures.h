@@ -5,6 +5,7 @@
 #include "../common/reference.h"
 #include "../common/tag_class.h"
 #include "../common/tag_index.h"
+#include "../common/tag_reference.h"
 #include "../volta/blam_base_types.h"
 #include "../volta/blam_structures.h"
 
@@ -100,20 +101,10 @@ using block_index = blam::block_index<T, I, std::endian::big>;
 
 static_assert(sizeof(block_index<u8>) == 2);
 
-/*! A reference to another tag; the group is repeated in front of the id */
-struct tag_reference
-{
-    tag_class           group;
-    std::array<u32, 2>  runtime;
-    datum_index         id;
+template<tag_class_t... Classes>
+using tag_reference = blam::tag_reference<xbox360_version_t, Classes...>;
 
-    inline bool valid() const
-    {
-        return id.valid();
-    }
-};
-
-static_assert(sizeof(tag_reference) == 0x10);
+static_assert(sizeof(tag_reference<>) == 0x10);
 
 /*! An untyped blob of tag data */
 struct data_reference

@@ -314,7 +314,7 @@ struct H3MapLoader : compo::SubsystemBase
         auto codecs = gestalt->codecs.span(magic);
         auto names  = gestalt->names.span(magic);
 
-        auto permutations = [&](el::tag_reference const& ref) {
+        auto permutations = [&](el::tag_reference<> const& ref) {
             std::vector<H3Sound> out;
             auto        sound = map.get<el::sound_t>(ref);
             auto const* codec = sound ? sound->codec.resolve(codecs) : nullptr;
@@ -872,7 +872,7 @@ struct H3MapLoader : compo::SubsystemBase
         {
             auto const set   = map.get<el::decorator_set_t>(sets[s]);
             auto const model = set ? map.get<el::render_model_t>(set->render_model) : el::tagged<el::render_model_t>{};
-            auto const texture_tag = set ? map.tag_at(set->texture.id) : nullptr;
+            auto const texture_tag = set ? map.tag_at(set->texture.tag_id) : nullptr;
             auto const meshes = model ? map.span(model->geometry.meshes) : Span<el::mesh_t const>();
             if(placed[s].empty() || meshes.empty() || !texture_tag)
                 continue;
@@ -1264,7 +1264,7 @@ struct H3MapLoader : compo::SubsystemBase
      * still: colour and intensity at their steady value. Falloff constants
      * put the light's edge at its maximum distance. */
     void attach_lights(
-        el::tag_reference const& object, el::render_model_t const& model, Matf4 const& frame, u64 entity)
+        el::tag_reference<> const& object, el::render_model_t const& model, Matf4 const& frame, u64 entity)
     {
         auto const& map  = *m_map;
         auto const  view = el::object_view::of(map, object);
@@ -1323,7 +1323,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     /* An object's physics model as one body (el::phys::body_of), scaled; flat
      * hulls get their shell's thickness so they have something to rest on */
-    std::optional<ObjectPhysics> physics_of(el::tag_reference const& object, f32 scale) const
+    std::optional<ObjectPhysics> physics_of(el::tag_reference<> const& object, f32 scale) const
     {
         auto const physics = el::object_view::of(*m_map, object).physics_model;
         auto const body    = physics ? el::phys::body_of(*physics, m_map->magic()) : std::nullopt;
@@ -1427,7 +1427,7 @@ struct H3MapLoader : compo::SubsystemBase
     }
 
     /* What draws an object in a game; nothing for editor-only ones */
-    el::tagged<el::render_model_t> drawn_model(el::tag_reference const& object) const
+    el::tagged<el::render_model_t> drawn_model(el::tag_reference<> const& object) const
     {
         auto const view = el::object_view::of(*m_map, object);
         return view.editor_only(*m_map) ? el::tagged<el::render_model_t>{} : view.render_model;
@@ -1598,14 +1598,14 @@ struct H3MapLoader : compo::SubsystemBase
     }
 
     /* Material slot for a render method, built on first use */
-    size_t material_for(el::tag_reference const* method_ref)
+    size_t material_for(el::tag_reference<> const* method_ref)
     {
         auto const& map  = *m_map;
         auto const  view = method_ref ? el::render_method_view::of(map, *method_ref)
                                       : el::render_method_view{};
         if(!view)
             return 0;
-        u32 key = method_ref->id.raw.value();
+        u32 key = method_ref->tag_id.value();
         if(auto it = m_material_index.find(key); it != m_material_index.end())
             return it->second;
 

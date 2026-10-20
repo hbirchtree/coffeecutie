@@ -5,6 +5,7 @@
 #include "../common/reference.h"
 #include "../common/tag_class.h"
 #include "../common/tag_index.h"
+#include "../common/tag_reference.h"
 #include "../volta/blam_structures.h"
 
 #include "versions.h"
@@ -146,59 +147,8 @@ using blam::block_index;
 
 static_assert(sizeof(block_index<u32>) == 2);
 
-/*!
- * \brief Reference to another tag, resolved through the tag table by datum
- * index. The classes say which tags the field may name (volta's
- * tagref_typed_t); none admits any, and a typed reference converts to the
- * untyped one.
- */
 template<tag_class_t... Classes>
-struct alignas(4) tag_reference
-{
-    dimeter::tag_class tag_class;
-    datum_index      tag_id;
-
-    inline tag_class_t class_id() const
-    {
-        return tag_class.id();
-    }
-
-    inline bool valid() const
-    {
-        return tag_id.valid() && class_id() != tag_class_t::none;
-    }
-
-    inline bool matches(tag_class_t cls) const
-    {
-        return class_id() == cls;
-    }
-
-    /*! Whether the tag named is of a class the field admits */
-    inline bool admitted() const
-    {
-        if constexpr(sizeof...(Classes) == 0)
-            return true;
-        else
-            return ((class_id() == Classes) || ...);
-    }
-
-    inline tag_reference<> const& untyped() const
-    {
-        return *reinterpret_cast<tag_reference<> const*>(this);
-    }
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wclass-conversion"
-
-    template<typename Dummy = void>
-    requires(sizeof...(Classes) > 0)
-    inline operator tag_reference<> const&() const
-    {
-        return *reinterpret_cast<tag_reference<> const*>(this);
-    }
-
-#pragma GCC diagnostic pop
-};
+using tag_reference = blam::tag_reference<xbox_version_t, Classes...>;
 
 static_assert(sizeof(tag_reference<>) == 8);
 
