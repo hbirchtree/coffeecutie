@@ -279,7 +279,7 @@ inline void dump_shad(h2::map_container<V> const& map, h2::tag_t const& tag)
         resolved.blend_mode);
 }
 
-template<typename V, h2::heap_t Heap>
+template<typename V, blam::heap_t Heap>
 inline void dump_resources(
     h2::map_container<V> const&,
     h2::magic_ptr_base<Heap> const&            magic,
@@ -376,7 +376,7 @@ inline void dump_mode(h2::map_container<V> const& map, h2::tag_t const& tag)
             fmt::print("  shader {}: {}\n", i, tag_label(map, s.shader));
 }
 
-template<typename V, h2::heap_t Heap>
+template<typename V, blam::heap_t Heap>
 inline void dump_collision(
     h2::map_container<V> const&,
     h2::magic_ptr_base<Heap> const& magic,

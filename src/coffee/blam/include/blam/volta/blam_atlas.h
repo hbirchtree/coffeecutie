@@ -64,7 +64,7 @@ struct tag_atlas_t
         auto        locs = locators();
         auto const& loc  = locs[bitm_idx];
         return map_ptr(
-            {bitm.base_ptr + loc.offset, bitm.max_size - loc.offset}, 0);
+            {bitm.base + loc.offset, bitm.max_size - loc.offset}, 0);
     }
 
     template<typename T>

@@ -204,8 +204,8 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     inline vertex_ptr vertex_magic(map_ptr const& base) const
     {
         u32 const magic =
-            std::is_same_v<V, xbox_version_t> ? base.file_offset : 0;
-        return vertex_ptr{{base.base_ptr, base.max_size}, magic};
+            std::is_same_v<V, xbox_version_t> ? base.virtual_base : 0;
+        return vertex_ptr{{base.base, base.max_size}, magic};
     }
 
     /*!

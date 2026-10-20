@@ -138,7 +138,7 @@ struct alignas(4) string_ref
         if(offset == 0)
             return "[empty string]"sv;
 
-        return C_RCAST<cstring>(magic.base_ptr + offset - magic.file_offset);
+        return C_RCAST<cstring>(magic.base + offset - magic.virtual_base);
     }
 };
 

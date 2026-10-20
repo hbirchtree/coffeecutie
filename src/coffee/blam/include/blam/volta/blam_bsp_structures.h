@@ -100,7 +100,7 @@ struct ray_hit
     i32   plane{-1};
 };
 
-template<ptr_tag Heap>
+template<heap_t Heap>
 struct bsp_t
 {
     template<typename T>
@@ -237,8 +237,8 @@ struct bsp_t
     }
 };
 
-using bsp       = bsp_t<ptr_tag::bsp>; /* structure BSP collision */
-using model_bsp = bsp_t<ptr_tag::map>; /* coll tag node geometry */
+using bsp       = bsp_t<heap_t::bsp>; /* structure BSP collision */
+using model_bsp = bsp_t<heap_t::map>; /* coll tag node geometry */
 
 } // namespace collision
 
@@ -286,12 +286,12 @@ struct info
         u32 const len = from_le(size);
         if(off > map_magic.max_size || len > map_magic.max_size - off)
             return {};
-        return {{map_magic.base_ptr + off, len}, from_le(magic)};
+        return {{map_magic.base + off, len}, from_le(magic)};
     }
 
     inline section const& to_bsp(bsp_ptr const& magic) const
     {
-        return *C_RCAST<section const*>(magic.base_ptr);
+        return *C_RCAST<section const*>(magic.base);
     }
 
     inline std::optional<header const*> to_header(map_ptr const& magic) const

@@ -80,9 +80,9 @@ struct map_container
     {
         auto const& tag = header->section(section_t::tag);
         return tag_magic{
-            .base       = data.data(),
-            .max_size   = static_cast<u32>(data.size()),
-            .tag_offset = header->section_offset(
+            .base         = data.data(),
+            .max_size     = static_cast<u32>(data.size()),
+            .file_offset  = header->section_offset(
                 section_t::tag, tag.virtual_address),
             .virtual_base = header->virtual_base,
         };

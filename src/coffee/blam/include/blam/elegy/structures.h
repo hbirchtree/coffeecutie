@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/endian.h"
+#include "../common/magic.h"
 #include "../common/tag_class.h"
 #include "../volta/blam_base_types.h"
 #include "../volta/blam_structures.h"
@@ -98,36 +99,9 @@ enum class section_t
 
 /*!
  * \brief Tag data pointer translation. Tag pointers are 360 virtual
- * addresses; they translate as tag_offset + (pointer - virtual_base).
+ * addresses; they translate as file_offset + (pointer - virtual_base).
  */
-struct tag_magic
-{
-    u8 const* base{nullptr};
-    u32           max_size{0};
-    u32           tag_offset{0};
-    u32           virtual_base{0};
-
-    inline optional<u32> to_offset(u32 pointer, u32 size = 0) const
-    {
-        u32 offset = tag_offset + (pointer - virtual_base);
-        if(offset >= max_size || size > max_size - offset)
-            return std::nullopt;
-        return offset;
-    }
-
-    inline u8 const* resolve(u32 pointer, u32 size = 0) const
-    {
-        if(auto offset = to_offset(pointer, size); base && offset)
-            return base + *offset;
-        return nullptr;
-    }
-
-    template<typename T>
-    inline T const* as(u32 pointer, u32 count = 1) const
-    {
-        return reinterpret_cast<T const*>(resolve(pointer, count * sizeof(T)));
-    }
-};
+using tag_magic = address_range;
 
 /*!
  * \brief A tag block: count, virtual address and a runtime-only word.

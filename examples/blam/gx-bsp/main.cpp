@@ -936,7 +936,7 @@ static map_fingerprint fingerprint_of(blam::map_container<V> const& c)
         std::string_view const str =
             name ? std::string_view(
                        reinterpret_cast<char const*>(
-                           c.magic.base_ptr + name - c.magic.file_offset))
+                           c.magic.base + name - c.magic.virtual_base))
                  : std::string_view("[empty string]");
         update(str.data(), str.size());
         ++out.tag_count;

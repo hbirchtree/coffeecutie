@@ -74,7 +74,7 @@ struct BitmapCache
         if(map.map->version == blam::version_t::xbox)
         {
             bitm_magic             = map.magic;
-            bitm_magic.file_offset = 0;
+            bitm_magic.virtual_base = 0;
         }
         evict_all();
     }
@@ -85,7 +85,7 @@ struct BitmapCache
         index.add_atlas(blam::atlas_type_t::bitmaps, bitmap_magic.data());
         bitm_header = blam::atlas_view::from_data(bitmap_magic.data());
         bitm_magic  = bitmap_magic;
-        bitm_magic.file_offset = 0;
+        bitm_magic.virtual_base = 0;
     }
 
     blam::tag_index_view<V>    index;
