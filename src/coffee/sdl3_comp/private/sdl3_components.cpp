@@ -17,6 +17,8 @@
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
 #include <emscripten/html5_webgl.h>
+
+#include "web_gamepad_db.h"
 #endif
 
 #include <coffee/core/debug/formatting.h>
@@ -47,6 +49,30 @@ int canvas_width = 0, canvas_height = 0;
 
 /* SDL3 scopes text input to a window, and KeyboardInput has no container */
 SDL_Window* active_window = nullptr;
+
+#if defined(COFFEE_EMSCRIPTEN)
+/* Only "standard" browser pads get a d-pad hat, others need a raw mapping */
+void apply_web_mapping(SDL_Gamepad* gamepad, SDL_JoystickID instance)
+{
+    if(SDL_GetNumJoystickHats(SDL_GetGamepadJoystick(gamepad)) > 0)
+        return;
+    auto vendor  = SDL_GetGamepadVendor(gamepad);
+    auto product = SDL_GetGamepadProduct(gamepad);
+    auto guid    = fmt::format(
+        "00000000{:02x}{:02x}0000{:02x}{:02x}0000",
+        vendor & 0xFF,
+        vendor >> 8,
+        product & 0xFF,
+        product >> 8);
+    for(auto mapping : web_gamepad_db::mappings)
+    {
+        if(!mapping.starts_with(guid))
+            continue;
+        SDL_SetGamepadMapping(instance, std::string(mapping).c_str());
+        return;
+    }
+}
+#endif
 
 } // namespace
 
@@ -849,6 +875,10 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
                     SDL_GetError());
                 continue;
             }
+
+#if defined(COFFEE_EMSCRIPTEN)
+            apply_web_mapping(controller, instanceId);
+#endif
 
             auto playerIdx = SDL_GetGamepadPlayerIndex(controller);
 
