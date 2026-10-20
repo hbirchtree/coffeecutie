@@ -407,14 +407,14 @@ struct H3MapLoader : compo::SubsystemBase
 
     void attach_ranged(std::string const& name, std::shared_ptr<comp_app::FileMapper::RangedFile> file)
     {
-        auto read = [file](u64 offset, Span<byte_t> dst) {
+        auto read = [file](u64 offset, Span<u8> dst) {
             return file->read(
                 offset, gsl::span<char>(reinterpret_cast<char*>(dst.data()), dst.size()));
         };
-        std::vector<byte_t> head(sizeof(el::file_header_t));
-        auto source = file && file->size() && read(0, Span<byte_t>(head.data(), head.size()))
+        std::vector<u8> head(sizeof(el::file_header_t));
+        auto source = file && file->size() && read(0, Span<u8>(head.data(), head.size()))
                           ? el::cache_source::from_header(
-                                Span<byte_t const>(head.data(), head.size()), read)
+                                Span<u8 const>(head.data(), head.size()), read)
                           : std::nullopt;
         if(!source)
         {

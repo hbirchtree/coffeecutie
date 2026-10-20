@@ -46,7 +46,7 @@ struct map_container
 
     file_header_t const* header{nullptr};
     tag_index_t const*   index{nullptr};
-    Span<const byte_t>   data;
+    Span<const u8>   data;
 
     static result_type from_bytes(semantic::BytesConst const& map)
     {
@@ -60,7 +60,7 @@ struct map_container
                 map_load_error::incompatible_map_version_expected_halo3);
         map_container out{
             .header = header,
-            .data   = Span<const byte_t>(map.data, map.size),
+            .data   = Span<const u8>(map.data, map.size),
         };
         /* shared.map and friends are all resources, no tags */
         if(header->section(section_t::tag).size.value() == 0)

@@ -855,9 +855,9 @@ struct ResourceLoader
         using namespace compo;
 
         {
-            bsp_cache.vert_buffer    = gpu.bsp_buf->map<byte_t>(0);
+            bsp_cache.vert_buffer    = gpu.bsp_buf->map<u8>(0);
             bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
-            bsp_cache.light_buffer   = gpu.bsp_light_buf->map<byte_t>(0);
+            bsp_cache.light_buffer   = gpu.bsp_light_buf->map<u8>(0);
         }
 
         /* Start loading up vertex data */
@@ -1025,9 +1025,9 @@ struct ResourceLoader
 
         debug_markers.map();
         bsp_cache.debug_markers  = &debug_markers;
-        bsp_cache.vert_buffer    = gpu.bsp_buf->map<byte_t>(0);
+        bsp_cache.vert_buffer    = gpu.bsp_buf->map<u8>(0);
         bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
-        bsp_cache.light_buffer   = gpu.bsp_light_buf->map<byte_t>(0);
+        bsp_cache.light_buffer   = gpu.bsp_light_buf->map<u8>(0);
         auto mesh_id = bsp_cache.predict(*bsp_cache.sections[section]);
         gpu.bsp_buf->unmap();
         gpu.bsp_index->unmap();

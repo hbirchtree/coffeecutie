@@ -16,7 +16,7 @@ namespace blam::dimeter::vista {
 
 /*! Vista keeps every bitmap lod as a zlib stream (Xbox stores them raw):
  * CMF 0x78 and a check-divisible FLG */
-inline bool is_zlib(Span<const byte_t> bytes)
+inline bool is_zlib(Span<const u8> bytes)
 {
     if(bytes.size() < 2)
         return false;
@@ -25,7 +25,7 @@ inline bool is_zlib(Span<const byte_t> bytes)
 }
 
 /*! Inflates a lod; nullopt without zlib or on a broken stream */
-inline std::optional<std::vector<u8>> inflate(Span<const byte_t> bytes)
+inline std::optional<std::vector<u8>> inflate(Span<const u8> bytes)
 {
 #if defined(DIMETER_HAS_ZLIB)
     std::vector<char> out;

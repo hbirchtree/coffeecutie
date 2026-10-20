@@ -28,14 +28,14 @@ struct tag_atlas_t
     u32 locators_count;
 
     static inline tag_atlas_t const* from_data(
-        semantic::Span<const byte_t> const& data)
+        semantic::Span<const u8> const& data)
     {
         return C_RCAST<tag_atlas_t const*>(data.data());
     }
 
     inline std::string_view get_name(locator_block const& block) const
     {
-        auto base_ptr = C_RCAST<byte_t const*>(this);
+        auto base_ptr = C_RCAST<u8 const*>(this);
 
         return C_RCAST<const char*>(
             base_ptr + name_block_off + block.name_offset);
@@ -43,7 +43,7 @@ struct tag_atlas_t
 
     inline semantic::Span<locator_block const> locators() const
     {
-        auto base_ptr = C_RCAST<byte_t const*>(this);
+        auto base_ptr = C_RCAST<u8 const*>(this);
 
         return semantic::Span<locator_block const>(
             C_RCAST<locator_block const*>(base_ptr + locators_offset),
@@ -81,7 +81,7 @@ struct atlas_view
     map_ptr            magic;
     tag_atlas_t const* header;
 
-    static inline atlas_view from_data(semantic::Span<const byte_t> const& data)
+    static inline atlas_view from_data(semantic::Span<const u8> const& data)
     {
         return {
             .magic  = map_ptr(data),

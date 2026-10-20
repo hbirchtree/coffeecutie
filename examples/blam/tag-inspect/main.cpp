@@ -168,7 +168,7 @@ void print_enum(char const* label, E value)
 
 /* Dumping a range as hex */
 
-void hex_dump(gsl::span<libc_types::byte_t const> data, libc_types::u32 stride = 16)
+void hex_dump(gsl::span<libc_types::u8 const> data, libc_types::u32 stride = 16)
 {
     using libc_types::f32;
     using libc_types::u32;
@@ -2731,7 +2731,7 @@ std::string palette_entry(
 
 /* Raw view of a spawn block: the same bytes decoded three ways so a field can
  * be located by what it looks like rather than by where a struct says it is. */
-void hex_words(blam::byte_t const* p, size_t size, size_t stride_note = 0)
+void hex_words(blam::u8 const* p, size_t size, size_t stride_note = 0)
 {
     (void)stride_note;
     for(size_t off = 0; off + 4 <= size; off += 4)
@@ -2770,7 +2770,7 @@ void hex_instances(
         if(i >= limit)
             return;
         fmt::print("  [{}]\n", i);
-        hex_words(reinterpret_cast<blam::byte_t const*>(&item), sizeof(T));
+        hex_words(reinterpret_cast<blam::u8 const*>(&item), sizeof(T));
     });
 }
 
@@ -3417,8 +3417,8 @@ template<typename T>
 void hex_dump_struct(T const* data, std::string_view label)
 {
     fmt::print("= {} bytes={}\n", label, sizeof(T));
-    hex_dump(gsl::span<libc_types::byte_t const>(
-        reinterpret_cast<libc_types::byte_t const*>(data), sizeof(T)));
+    hex_dump(gsl::span<libc_types::u8 const>(
+        reinterpret_cast<libc_types::u8 const*>(data), sizeof(T)));
 }
 
 /* Dumps every element of a reflexive, then lets `children` descend into it */
@@ -3466,7 +3466,7 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
     auto klass = tag.tagclass[0].str();
     fmt::print("=== [{}] {} id=0x{:x}\n", klass, name, tag.tag_id);
 
-    auto data = tag.data<libc_types::byte_t const>(g_magic);
+    auto data = tag.data<libc_types::u8 const>(g_magic);
 
     if(!data.has_value())
     {
@@ -3479,49 +3479,49 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
     case blam::tag_class_t::DeLa:
     {
         fmt::print("= bytes={}\n", sizeof(blam::ui_element));
-        hex_dump(gsl::span<libc_types::byte_t const>(
+        hex_dump(gsl::span<libc_types::u8 const>(
             data.value(), sizeof(blam::ui_element)));
         break;
     }
     case blam::tag_class_t::Soul:
     {
         fmt::print("= bytes={}\n", sizeof(blam::ui_item_collection));
-        hex_dump(gsl::span<libc_types::byte_t const>(
+        hex_dump(gsl::span<libc_types::u8 const>(
             data.value(), sizeof(blam::ui_item_collection)));
         break;
     }
     case blam::tag_class_t::bipd:
     {
         fmt::print("= bytes={}\n", sizeof(blam::scn::biped));
-        hex_dump(gsl::span<libc_types::byte_t const>(
+        hex_dump(gsl::span<libc_types::u8 const>(
             data.value(), sizeof(blam::scn::biped)));
         break;
     }
     case blam::tag_class_t::vehi:
     {
         fmt::print("= bytes={}\n", sizeof(blam::scn::vehicle));
-        hex_dump(gsl::span<libc_types::byte_t const>(
+        hex_dump(gsl::span<libc_types::u8 const>(
             data.value(), sizeof(blam::scn::vehicle)));
         break;
     }
     case blam::tag_class_t::scen:
     {
         fmt::print("= bytes={}\n", sizeof(blam::scn::scenery));
-        hex_dump(gsl::span<libc_types::byte_t const>(
+        hex_dump(gsl::span<libc_types::u8 const>(
             data.value(), sizeof(blam::scn::scenery)));
         break;
     }
     case blam::tag_class_t::weap:
     {
         fmt::print("= bytes={}\n", sizeof(blam::scn::weapon));
-        hex_dump(gsl::span<libc_types::byte_t const>(
+        hex_dump(gsl::span<libc_types::u8 const>(
             data.value(), sizeof(blam::scn::weapon)));
         break;
     }
     case blam::tag_class_t::ustr:
     {
         fmt::print("= bytes={}\n", 32);
-        hex_dump(gsl::span<libc_types::byte_t const>(
+        hex_dump(gsl::span<libc_types::u8 const>(
             data.value(), 32));
         break;
     }
@@ -4569,8 +4569,8 @@ void open_map(
     {
         auto bitmaps_bytes = bitmaps_file.data();
         auto bitmaps_magic = blam::map_ptr(
-            semantic::Span<const blam::byte_t>(
-                reinterpret_cast<blam::byte_t const*>(bitmaps_bytes.data()),
+            semantic::Span<const blam::u8>(
+                reinterpret_cast<blam::u8 const*>(bitmaps_bytes.data()),
                 bitmaps_bytes.size()));
         index.add_atlas(blam::atlas_type_t::bitmaps, bitmaps_magic);
         g_bitm_magic             = bitmaps_magic;
@@ -4590,8 +4590,8 @@ void open_map(
         auto bytes = sounds_file.data();
         index.add_atlas(
             blam::atlas_type_t::sounds,
-            blam::map_ptr(semantic::Span<const blam::byte_t>(
-                reinterpret_cast<blam::byte_t const*>(bytes.data()),
+            blam::map_ptr(semantic::Span<const blam::u8>(
+                reinterpret_cast<blam::u8 const*>(bytes.data()),
                 bytes.size())));
     }
 

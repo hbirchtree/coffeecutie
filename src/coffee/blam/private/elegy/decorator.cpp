@@ -26,7 +26,7 @@ std::vector<decorator_instance_t> decorator_instances(resource_view const& view,
         size_t const at = first + static_cast<size_t>(i) * 16;
         if(at + 16 > bytes.size())
             break;
-        byte_t const* v = bytes.data() + at;
+        u8 const* v = bytes.data() + at;
         auto u16_at     = [&](size_t o) { return static_cast<u16>((v[o] << 8) | v[o + 1]); };
         /* 32-bit words are byte swapped on fetch: component i is byte 3 - i */
         auto snorm      = [&](size_t o) { return std::max(static_cast<i8>(v[o]) / 127.f, -1.f); };

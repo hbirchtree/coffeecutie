@@ -130,7 +130,7 @@ struct header
 
     reference<material> materials;
     reference<region>   regions;
-    reference<byte_t>   modifiers; /* unused in shipping maps */
+    reference<u8>   modifiers; /* unused in shipping maps */
     u32                 padding[4];
 
     /* Pathfinding bounds (AI obstacle box around the object) */

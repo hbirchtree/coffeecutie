@@ -280,7 +280,7 @@ struct H2MapLoader : compo::SubsystemBase
     static std::vector<std::string> font_table_of(BytesConst const& bytes)
     {
         return blam::dimeter::font::parse_font_table(
-            Span<const byte_t>(reinterpret_cast<byte_t const*>(bytes.data), bytes.size));
+            Span<const u8>(reinterpret_cast<u8 const*>(bytes.data), bytes.size));
     }
 
     /* Each font file once, in table order */
@@ -329,7 +329,7 @@ struct H2MapLoader : compo::SubsystemBase
         if(!bytes.data || !bytes.size)
             return {};
         return std::make_shared<dim::span_source>(
-            Span<const byte_t>(bytes.data, bytes.size), std::move(res));
+            Span<const u8>(bytes.data, bytes.size), std::move(res));
     }
 
     static std::shared_ptr<dim::raw_source> ranged_source(
@@ -338,7 +338,7 @@ struct H2MapLoader : compo::SubsystemBase
         if(!file || !file->size())
             return {};
         return std::make_shared<dim::pread_source>(
-            file->size(), [file](u64 offset, Span<byte_t> dst) {
+            file->size(), [file](u64 offset, Span<u8> dst) {
                 return file->read(
                     offset,
                     gsl::span<char>(
@@ -504,7 +504,7 @@ struct H2MapLoader : compo::SubsystemBase
         }
 
         pool.attach(
-            dim::raw_file_t::local, Span<const byte_t>(bytes.data, bytes.size));
+            dim::raw_file_t::local, Span<const u8>(bytes.data, bytes.size));
 
         ensure_gpu();
         m_scene.generation++;
@@ -933,8 +933,8 @@ struct H2MapLoader : compo::SubsystemBase
             auto bytes = static_cast<BytesConst>(*file);
             fonts.push_back(
                 {name,
-                 Span<const byte_t>(
-                     reinterpret_cast<byte_t const*>(bytes.data), bytes.size)});
+                 Span<const u8>(
+                     reinterpret_cast<u8 const*>(bytes.data), bytes.size)});
         }
         m_shell = {};
         m_bank  = {};

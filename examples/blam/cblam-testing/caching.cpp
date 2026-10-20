@@ -68,7 +68,7 @@ void add_light_probe(
             }
             std::memcpy(
                 &tri.position[k], vertices.data() + i * vsize, sizeof(Vecf3));
-            byte_t const* lv = light_vertices.data() + i * lsize;
+            u8 const* lv = light_vertices.data() + i * lsize;
             if(packed)
             {
                 u32 normal;
@@ -481,7 +481,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 if constexpr(std::is_same_v<V, blam::mcc_version_t>)
                 {
                     using lv = blam::bsp::material::pc_light_vertex;
-                    blam::vertex_reference<libc_types::byte_t, blam::xbox_t>
+                    blam::vertex_reference<libc_types::u8, blam::xbox_t>
                         vref{}, lref{};
                     u32 vsz     = mat.pc.count * mat.vertex_size();
                     u32 vend    = mat.pc.padding2[0];
@@ -863,7 +863,7 @@ blam::antr::animation const* ModelCache<V>::find_animation(
 namespace {
 
 /* 48-bit rotation: x, y, z, w as 12-bit ones' complement, high to low */
-Quatf quat48(byte_t const* at)
+Quatf quat48(u8 const* at)
 {
     u16 words[3];
     std::memcpy(words, at, sizeof(words));
@@ -877,7 +877,7 @@ Quatf quat48(byte_t const* at)
     return length > 0.f ? q / length : Quatf(1, 0, 0, 0);
 }
 
-Vecf3 vec3_at(byte_t const* at)
+Vecf3 vec3_at(u8 const* at)
 {
     Vecf3 out;
     std::memcpy(&out, at, sizeof(out));
@@ -902,7 +902,7 @@ struct compressed_stream_t
  * blended between the keyframes around the frame, held after the last */
 template<typename T, typename Decode, typename Mix>
 T sample_channel(
-    semantic::Span<const byte_t> block,
+    semantic::Span<const u8> block,
     compressed_stream_t const&   stream,
     i32                          track,
     T const&                     fallback,
@@ -942,7 +942,7 @@ T sample_channel(
  * compressed_data_offset, led by the offsets of their streams */
 bool sample_compressed(
     blam::antr::animation const& anim,
-    semantic::Span<const byte_t> frame_bytes,
+    semantic::Span<const u8> frame_bytes,
     u32                          frame,
     u32                          node_count,
     std::vector<Quatf>&          rot,
@@ -1017,7 +1017,7 @@ bool ModelCache<V>::sample_animation(
     auto default_bytes = default_bytes_opt.value();
     auto frame_bytes   = frame_bytes_opt.has_value()
                              ? frame_bytes_opt.value()
-                             : semantic::Span<const byte_t>{};
+                             : semantic::Span<const u8>{};
 
     rot.assign(node_count, Quatf(1, 0, 0, 0));
     trans.assign(node_count, Vecf3(0));
@@ -1025,12 +1025,12 @@ bool ModelCache<V>::sample_animation(
     size_t d = 0;
     size_t f = static_cast<size_t>(frame) * anim.frame_size;
 
-    auto read_quat = [](semantic::Span<const byte_t> buf, size_t off) {
+    auto read_quat = [](semantic::Span<const u8> buf, size_t off) {
         return reinterpret_cast<blam::antr::compressed_quat_t const*>(
                    buf.data() + off)
             ->decompress();
     };
-    auto read_vec3 = [](semantic::Span<const byte_t> buf, size_t off) {
+    auto read_vec3 = [](semantic::Span<const u8> buf, size_t off) {
         return *reinterpret_cast<Vecf3 const*>(buf.data() + off);
     };
 

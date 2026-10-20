@@ -244,12 +244,12 @@ constexpr u32 tiled_offset(u32 x, u32 y, u32 width, u32 block_bytes)
  * the data come out zero.
  */
 bool linearize(
-    Span<byte_t const>  stored,
+    Span<u8 const>  stored,
     bitmap_format_t     format,
     u32                 width,
     u32                 height,
     bitmap_xbox_flags_t flags,
-    std::vector<byte_t>& out);
+    std::vector<u8>& out);
 
 /*!
  * \brief Bytes from one slice of an array (or face of a cube) to the next:
@@ -272,22 +272,22 @@ inline u32 slice_stride(bitmap_format_t format, u32 width, u32 height)
  * channels; the indices pick endpoint 0, 1, or 1/3 and 2/3 between them.
  */
 void decode_ctx1(
-    Span<byte_t const> blocks, u32 width, u32 height, std::vector<byte_t>& out);
+    Span<u8 const> blocks, u32 width, u32 height, std::vector<u8>& out);
 
 /*!
  * \brief DXT3A blocks (DXT3's explicit alpha on its own: 4 bits a texel, two
  * a byte, low nibble first), linearized, to 8-bit texels
  */
-void decode_dxt3a(Span<byte_t const> blocks, u32 width, u32 height, std::vector<byte_t>& out);
+void decode_dxt3a(Span<u8 const> blocks, u32 width, u32 height, std::vector<u8>& out);
 
 /*! One texel of linearized DXT5 (BC3) blocks, RGBA */
-std::array<byte_t, 4> dxt5_texel(Span<byte_t const> blocks, u32 width, u32 x, u32 y);
+std::array<u8, 4> dxt5_texel(Span<u8 const> blocks, u32 width, u32 x, u32 y);
 
 /*!
  * \brief DXN keeps 3Dc's channel order, y in the first half of a block;
  * swapping the halves gives BC5 with x in red.
  */
-inline void dxn_to_bc5(std::vector<byte_t>& blocks)
+inline void dxn_to_bc5(std::vector<u8>& blocks)
 {
     for(auto it = blocks.begin(); blocks.end() - it >= 16; it += 16)
         std::swap_ranges(it, it + 8, it + 8);
@@ -311,14 +311,14 @@ static_assert(sizeof(interleaved_interop_t) == 0x40);
  * resource: the pair's high resolution levels follow each other in the
  * secondary data.
  */
-Span<byte_t const> top_level_interleaved(resource_view const& view, bitmap_image_t const& image);
+Span<u8 const> top_level_interleaved(resource_view const& view, bitmap_image_t const& image);
 
 /*!
  * \brief The top level of an image's first hardware texture: secondary
  * data when the high resolution level was split off, else the start of the
  * primary data.
  */
-inline Span<byte_t const> top_level(
+inline Span<u8 const> top_level(
     resource_view const& view, bitmap_image_t const& image)
 {
     auto const* interop = view.root_as<d3d_structure<texture_interop_t>>();
@@ -342,6 +342,6 @@ u32 level_count(resource_view const& view, bitmap_image_t const& image);
  * other in the primary data at power-of-two sizes; once the short side is
  * 16 texels or less they share one 32x32-block tile, each at its own offset.
  */
-bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<byte_t>& out);
+bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<u8>& out);
 
 } // namespace blam::elegy

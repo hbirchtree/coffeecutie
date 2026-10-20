@@ -38,7 +38,7 @@ struct reflex_group
     reference<std::array<tagref_t, 3>> palette;
 };
 
-using scn_chunk = byte_t[100];
+using scn_chunk = u8[100];
 
 /* Data which is not part of the structures proper */
 
@@ -311,7 +311,7 @@ static_assert(sizeof(light_fixture_spawn) == 88);
 struct palette
 {
     tagref_t tag;
-    byte_t   unk[32];
+    u8   unk[32];
 };
 
 struct weapon_instance
@@ -440,7 +440,7 @@ static_assert(sizeof(player_starting_profile) == 104);
 struct move_positions
 {
     bl_string unk1[32];
-    byte_t    unk2[4];
+    u8    unk2[4];
     u32       offset;
     u32       unk[5];
 };
@@ -828,7 +828,7 @@ struct squad
     u16               normal_diff_count;
     u16               insane_diff_count;
     u32               unk3[20];
-    reference<byte_t> start_locations;
+    reference<u8> start_locations;
     u32               unk4[3];
 };
 
@@ -1217,9 +1217,9 @@ struct starting_equip
 {
     u32                     unknown1; /*!< Sometimes 1? */
     u32                     index;
-    byte_t                  padding2[51];
+    u8                  padding2[51];
     std::array<tagref_t, 6> items;
-    byte_t                  padding3[45];
+    u8                  padding3[45];
 };
 
 struct cutscene_flag

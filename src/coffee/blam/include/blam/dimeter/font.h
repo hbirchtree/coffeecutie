@@ -75,12 +75,12 @@ struct image_t
 
 struct font_t
 {
-    Span<const byte_t> file;
+    Span<const u8> file;
     header_t const*    header{nullptr};
     Span<kerning_t const> kerning;
     Span<glyph_t const>   glyphs;
 
-    static std::optional<font_t> from_bytes(Span<const byte_t> file)
+    static std::optional<font_t> from_bytes(Span<const u8> file)
     {
         if(file.size() < glyph_table_offset)
             return std::nullopt;
@@ -210,7 +210,7 @@ struct font_t
 
 /*! The UI's font slots, as font_table.txt lists them (one file name per
  * line, in slot order) */
-inline std::vector<std::string> parse_font_table(Span<const byte_t> text)
+inline std::vector<std::string> parse_font_table(Span<const u8> text)
 {
     std::vector<std::string> out;
     std::string              line;

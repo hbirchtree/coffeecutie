@@ -4,7 +4,7 @@
 
 namespace blam::elegy {
 
-bool inflate_page(Span<byte_t const> compressed, Span<byte_t> out)
+bool inflate_page(Span<u8 const> compressed, Span<u8> out)
 {
     z_stream strm{};
     /* Raw deflate, no zlib header */
@@ -37,7 +37,7 @@ result<resource_view, resource_error> resource_loader::load(datum_index id)
     auto part = [&](block_index<raw_page_t> index,
                     i32                     at,
                     block_index<raw_size_t> size,
-                    Span<byte_t const>&     out,
+                    Span<u8 const>&     out,
                     std::shared_ptr<void const>& keep)
         -> optional<resource_error> {
         if(!index.valid())
@@ -48,7 +48,7 @@ result<resource_view, resource_error> resource_loader::load(datum_index id)
         auto const& bytes = *page.value();
         if(at < 0 || static_cast<u32>(at) > bytes.size())
             return resource_error::page_out_of_bounds;
-        out = Span<byte_t const>(bytes.data(), bytes.size()).subspan(at);
+        out = Span<u8 const>(bytes.data(), bytes.size()).subspan(at);
         if(auto const* entry = size.resolve(sizes);
            entry && entry->size.value() >= 0 &&
            static_cast<size_t>(entry->size.value()) < out.size())
@@ -83,7 +83,7 @@ result<resource_view, resource_error> resource_loader::load(datum_index id)
     return out;
 }
 
-result<std::shared_ptr<std::vector<byte_t> const>, resource_error>
+result<std::shared_ptr<std::vector<u8> const>, resource_error>
 resource_loader::page(block_index<raw_page_t> index)
 {
     using stl_types::failure;
@@ -96,8 +96,8 @@ resource_loader::page(block_index<raw_page_t> index)
 
     u64 csize = static_cast<u32>(page->compressed_size.value());
     u64 usize = static_cast<u32>(page->size.value());
-    Span<byte_t const> compressed;
-    std::vector<byte_t> read_buffer;
+    Span<u8 const> compressed;
+    std::vector<u8> read_buffer;
     if(page->cache.valid())
     {
         auto const* cache  = page->cache.resolve(external_caches());
@@ -107,9 +107,9 @@ resource_loader::page(block_index<raw_page_t> index)
         read_buffer.resize(csize);
         if(!source->read(
                u64(source->resource_offset) + u32(page->offset.value()),
-               Span<byte_t>(read_buffer.data(), read_buffer.size())))
+               Span<u8>(read_buffer.data(), read_buffer.size())))
             return failure(resource_error::page_out_of_bounds);
-        compressed = Span<byte_t const>(read_buffer.data(), read_buffer.size());
+        compressed = Span<u8 const>(read_buffer.data(), read_buffer.size());
     } else
     {
         u64 start = u64(map->resource_offset()) + u32(page->offset.value());
@@ -117,18 +117,18 @@ resource_loader::page(block_index<raw_page_t> index)
             return failure(resource_error::page_out_of_bounds);
         compressed = map->data.subspan(start, csize);
     }
-    auto out        = std::make_shared<std::vector<byte_t>>();
+    auto out        = std::make_shared<std::vector<u8>>();
     if(page->codec.value() == page_codec_t::none)
         out->assign(compressed.begin(), compressed.end());
     else
     {
         out->resize(usize);
         if(page->codec.value() != page_codec_t::deflate ||
-           !inflate_page(compressed, Span<byte_t>(out->data(), out->size())))
+           !inflate_page(compressed, Span<u8>(out->data(), out->size())))
             return failure(resource_error::decompression_failed);
     }
     m_pages[index.value()] = out;
-    return std::shared_ptr<std::vector<byte_t> const>(out);
+    return std::shared_ptr<std::vector<u8> const>(out);
 }
 
 } // namespace blam::elegy

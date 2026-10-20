@@ -19,10 +19,10 @@ namespace blam::dimeter {
  */
 struct raw_slice
 {
-    Span<const byte_t>          bytes;
+    Span<const u8>          bytes;
     std::shared_ptr<void const> keep;
 
-    inline byte_t const* data() const
+    inline u8 const* data() const
     {
         return bytes.data();
     }
@@ -30,15 +30,15 @@ struct raw_slice
     {
         return bytes.size();
     }
-    inline byte_t const* begin() const
+    inline u8 const* begin() const
     {
         return bytes.data();
     }
-    inline byte_t const* end() const
+    inline u8 const* end() const
     {
         return bytes.data() + bytes.size();
     }
-    inline operator Span<const byte_t>() const
+    inline operator Span<const u8>() const
     {
         return bytes;
     }
@@ -57,10 +57,10 @@ struct raw_source
 /*! A file that is all in memory: slices are views */
 struct span_source final : raw_source
 {
-    Span<const byte_t>          bytes;
+    Span<const u8>          bytes;
     std::shared_ptr<void const> keep;
 
-    span_source(Span<const byte_t> bytes, std::shared_ptr<void const> keep = {})
+    span_source(Span<const u8> bytes, std::shared_ptr<void const> keep = {})
         : bytes(bytes)
         , keep(std::move(keep))
     {
@@ -84,7 +84,7 @@ struct span_source final : raw_source
  */
 struct pread_source final : raw_source
 {
-    using reader_t = std::function<bool(u64 offset, Span<byte_t> dst)>;
+    using reader_t = std::function<bool(u64 offset, Span<u8> dst)>;
 
     pread_source(
         u64      size,
@@ -119,9 +119,9 @@ struct pread_source final : raw_source
             if(at + size > chunk->size())
                 return std::nullopt;
             return raw_slice{
-                Span<const byte_t>(chunk->data() + at, size), chunk};
+                Span<const u8>(chunk->data() + at, size), chunk};
         }
-        auto out = std::make_shared<std::vector<byte_t>>(size);
+        auto out = std::make_shared<std::vector<u8>>(size);
         u64  done = 0;
         for(u64 i = first; i <= last; i++)
         {
@@ -137,7 +137,7 @@ struct pread_source final : raw_source
         }
         if(done != size)
             return std::nullopt;
-        return raw_slice{Span<const byte_t>(out->data(), size), out};
+        return raw_slice{Span<const u8>(out->data(), size), out};
     }
 
     void trim()
@@ -152,7 +152,7 @@ struct pread_source final : raw_source
     }
 
   private:
-    using chunk_ptr = std::shared_ptr<std::vector<byte_t>>;
+    using chunk_ptr = std::shared_ptr<std::vector<u8>>;
     struct chunk_t
     {
         u64       index;
@@ -170,8 +170,8 @@ struct pread_source final : raw_source
             }
         u64 offset = index * m_chunk_size;
         u64 size   = std::min<u64>(m_chunk_size, m_size - offset);
-        auto data  = std::make_shared<std::vector<byte_t>>(size);
-        if(!m_read(offset, Span<byte_t>(data->data(), size)))
+        auto data  = std::make_shared<std::vector<u8>>(size);
+        if(!m_read(offset, Span<u8>(data->data(), size)))
             return {};
         m_bytes_read += size;
         if(m_chunks.size() >= m_chunk_count)
@@ -213,7 +213,7 @@ struct raw_pool
     /*! A file already in memory */
     inline void attach(
         raw_file_t                  slot,
-        Span<const byte_t>          bytes,
+        Span<const u8>          bytes,
         std::shared_ptr<void const> keep = {})
     {
         attach(slot, std::make_shared<span_source>(bytes, std::move(keep)));
@@ -244,7 +244,7 @@ struct raw_pool
     inline raw_ref rebase(
         magic_ptr_base<Heap> const& magic, void const* owner, raw_ref ref) const
     {
-        auto const* at = reinterpret_cast<byte_t const*>(owner);
+        auto const* at = reinterpret_cast<u8 const*>(owner);
         if(ref.valid() && ref.file() == raw_file_t::local &&
            shared_file != raw_file_t::local && magic.shared.base &&
            at >= magic.shared.base &&
@@ -290,7 +290,7 @@ struct map_container
     u32                index_mask{0};
     u32                meta_mask{0};
 
-    Span<const byte_t> data;
+    Span<const u8> data;
 
     /*! Vista: the map every tag this one lists as null is borrowed from
      * (shared.map or single_player_shared.map); same table numbering */
@@ -327,7 +327,7 @@ struct map_container
         map_container out{
             .header = header,
             .index  = index,
-            .data   = Span<const byte_t>(map.data, map.size),
+            .data   = Span<const u8>(map.data, map.size),
         };
 
         if constexpr(std::is_same_v<V, xbox_version_t>)

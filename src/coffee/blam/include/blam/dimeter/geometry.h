@@ -1245,7 +1245,7 @@ static_assert(sizeof(block_header_t) == 112);
 
 /*! Geometry block header: index count for the section's index buffer
  * (u16 strip or list indices) at offset 40 on Xbox */
-inline u16 block_index_count(Span<const byte_t> block)
+inline u16 block_index_count(Span<const u8> block)
 {
     if(block.size() < 42)
         return 0;

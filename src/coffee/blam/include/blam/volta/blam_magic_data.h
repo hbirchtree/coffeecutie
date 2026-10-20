@@ -29,7 +29,7 @@ struct map_ptr_base
         base_ptr = nullptr;
     }
 
-    map_ptr_base(semantic::Span<const byte_t> const& data, u32 magic = 0)
+    map_ptr_base(semantic::Span<const u8> const& data, u32 magic = 0)
         requires(Tag == ptr_tag::map)
         : file_offset(magic)
         , max_size(data.size())
@@ -49,7 +49,7 @@ struct map_ptr_base
 
     auto data() const
     {
-        return semantic::Span<const byte_t>(base_ptr, max_size);
+        return semantic::Span<const u8>(base_ptr, max_size);
     }
 
     inline version_t map_version() const
@@ -66,7 +66,7 @@ struct map_ptr_base
     union
     {
         file_header_t const* header_ptr;
-        byte_t const*        base_ptr{nullptr};
+        u8 const*        base_ptr{nullptr};
     };
 
     u32 file_offset{0};
@@ -77,7 +77,7 @@ struct map_ptr_base
     template<typename V>
     friend struct tag_index_t;
 
-    map_ptr_base(semantic::Span<const byte_t> const& data, u32 magic)
+    map_ptr_base(semantic::Span<const u8> const& data, u32 magic)
         requires(Tag != ptr_tag::map)
         : file_offset(magic)
         , max_size(data.size())

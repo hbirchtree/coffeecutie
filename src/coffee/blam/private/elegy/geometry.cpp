@@ -44,15 +44,15 @@ std::vector<vertex_light_t> vertex_lights(resource_view const& view, i32 vertex_
     u32  count = static_cast<u32>(vb->count.value());
     if(u64(count) * 20 > bytes.size())
         return out;
-    auto snorm = [](byte_t b) { return std::max(static_cast<i8>(b) / 127.f, -1.f); };
+    auto snorm = [](u8 b) { return std::max(static_cast<i8>(b) / 127.f, -1.f); };
     out.resize(count);
     for(u32 i = 0; i < count; i++)
     {
-        byte_t const* v = bytes.data() + i * 20;
+        u8 const* v = bytes.data() + i * 20;
         std::array<Vecf3, 5> values;
         for(u32 k = 0; k < 5; k++)
         {
-            byte_t const* e = v + k * 4;
+            u8 const* e = v + k * 4;
             values[k] = Vecf3(snorm(e[1]), snorm(e[2]), snorm(e[3])) *
                         std::exp2(snorm(e[0]) * 31.75f);
         }

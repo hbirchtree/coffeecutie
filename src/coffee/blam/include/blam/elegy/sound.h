@@ -380,7 +380,7 @@ inline Span<sound_permutation_t const> permutations_of(
  * address the resource's primary bytes followed by its secondary bytes;
  * empty if a chunk falls outside them.
  */
-std::vector<byte_t> permutation_data(
+std::vector<u8> permutation_data(
     sound_permutation_t const& permutation,
     sound_gestalt_t const&     gestalt,
     tag_magic const&           magic,

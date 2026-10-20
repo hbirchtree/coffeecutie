@@ -129,7 +129,7 @@ format_layout_t layout_of(bitmap_format_t format)
 }
 
 void decode_ctx1(
-    Span<byte_t const> blocks, u32 width, u32 height, std::vector<byte_t>& out)
+    Span<u8 const> blocks, u32 width, u32 height, std::vector<u8>& out)
 {
     u32 bw = (width + 3) / 4, bh = (height + 3) / 4;
     out.assign(size_t(width) * height * 2, 0);
@@ -139,15 +139,15 @@ void decode_ctx1(
             size_t at = (size_t(by) * bw + bx) * 8;
             if(at + 8 > blocks.size())
                 return;
-            byte_t const* b = blocks.data() + at;
-            std::array<std::array<byte_t, 2>, 4> palette;
+            u8 const* b = blocks.data() + at;
+            std::array<std::array<u8, 2>, 4> palette;
             for(u32 c = 0; c < 2; c++)
             {
                 u32 e0 = b[1 - c], e1 = b[3 - c];
-                palette[0][c] = static_cast<byte_t>(e0);
-                palette[1][c] = static_cast<byte_t>(e1);
-                palette[2][c] = static_cast<byte_t>((2 * e0 + e1 + 1) / 3);
-                palette[3][c] = static_cast<byte_t>((e0 + 2 * e1 + 1) / 3);
+                palette[0][c] = static_cast<u8>(e0);
+                palette[1][c] = static_cast<u8>(e1);
+                palette[2][c] = static_cast<u8>((2 * e0 + e1 + 1) / 3);
+                palette[3][c] = static_cast<u8>((e0 + 2 * e1 + 1) / 3);
             }
             u32 indices = u32(b[4]) | u32(b[5]) << 8 | u32(b[6]) << 16 | u32(b[7]) << 24;
             for(u32 i = 0; i < 16; i++)
@@ -161,7 +161,7 @@ void decode_ctx1(
         }
 }
 
-void decode_dxt3a(Span<byte_t const> blocks, u32 width, u32 height, std::vector<byte_t>& out)
+void decode_dxt3a(Span<u8 const> blocks, u32 width, u32 height, std::vector<u8>& out)
 {
     u32 bw = (width + 3) / 4, bh = (height + 3) / 4;
     out.assign(size_t(width) * height, 0);
@@ -177,19 +177,19 @@ void decode_dxt3a(Span<byte_t const> blocks, u32 width, u32 height, std::vector<
                 if(x >= width || y >= height)
                     continue;
                 u32 const nibble = (blocks[at + i / 2] >> ((i & 1) * 4)) & 0xF;
-                out[size_t(y) * width + x] = static_cast<byte_t>(nibble * 17);
+                out[size_t(y) * width + x] = static_cast<u8>(nibble * 17);
             }
         }
 }
 
-std::array<byte_t, 4> dxt5_texel(Span<byte_t const> blocks, u32 width, u32 x, u32 y)
+std::array<u8, 4> dxt5_texel(Span<u8 const> blocks, u32 width, u32 x, u32 y)
 {
-    std::array<byte_t, 4> out{};
+    std::array<u8, 4> out{};
     u32    bw = (width + 3) / 4;
     size_t at = (size_t(y / 4) * bw + x / 4) * 16;
     if(at + 16 > blocks.size())
         return out;
-    byte_t const* b = blocks.data() + at;
+    u8 const* b = blocks.data() + at;
     u32           i = (y % 4) * 4 + (x % 4);
     /* Alpha: BC4 */
     u32 a0 = b[0], a1 = b[1];
@@ -212,22 +212,22 @@ std::array<byte_t, 4> dxt5_texel(Span<byte_t const> blocks, u32 width, u32 x, u3
     auto c1 = rgb(u32(b[10]) | u32(b[11]) << 8);
     u32  ci = ((u32(b[12]) | u32(b[13]) << 8 | u32(b[14]) << 16 | u32(b[15]) << 24) >> (2 * i)) & 3;
     for(u32 c = 0; c < 3; c++)
-        out[c] = static_cast<byte_t>(
+        out[c] = static_cast<u8>(
             ci == 0   ? c0[c]
             : ci == 1 ? c1[c]
             : ci == 2 ? (2 * c0[c] + c1[c]) / 3
                       : (c0[c] + 2 * c1[c]) / 3);
-    out[3] = static_cast<byte_t>(alpha);
+    out[3] = static_cast<u8>(alpha);
     return out;
 }
 
 bool linearize(
-    Span<byte_t const>  stored,
+    Span<u8 const>  stored,
     bitmap_format_t     format,
     u32                 width,
     u32                 height,
     bitmap_xbox_flags_t flags,
-    std::vector<byte_t>& out)
+    std::vector<u8>& out)
 {
     auto layout = layout_of(format);
     if(!layout.valid() || width == 0 || height == 0)
@@ -302,7 +302,7 @@ u32 level_count(resource_view const& view, bitmap_image_t const& image)
     return texture ? std::max<u32>(texture->texture.mipmap_count, 1) : 1;
 }
 
-bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<byte_t>& out)
+bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<u8>& out)
 {
     auto const format = image.format.value();
     auto const layout = layout_of(format);
@@ -354,7 +354,7 @@ bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32
     return true;
 }
 
-Span<byte_t const> top_level_interleaved(resource_view const& view, bitmap_image_t const& image)
+Span<u8 const> top_level_interleaved(resource_view const& view, bitmap_image_t const& image)
 {
     auto const* interop = view.root_as<d3d_structure<interleaved_interop_t>>();
     auto const* pair    = interop ? view.resolve(*interop) : nullptr;

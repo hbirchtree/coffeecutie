@@ -2,7 +2,7 @@
 
 namespace blam::elegy {
 
-std::vector<byte_t> permutation_data(
+std::vector<u8> permutation_data(
     sound_permutation_t const& permutation,
     sound_gestalt_t const&     gestalt,
     tag_magic const&           magic,
@@ -11,7 +11,7 @@ std::vector<byte_t> permutation_data(
     auto chunks = gestalt.chunks.data(magic).value_or(Span<sound_chunk_t const>());
     i32  first  = permutation.first_chunk;
     i16  count  = permutation.chunk_count;
-    std::vector<byte_t> out;
+    std::vector<u8> out;
     if(first < 0 || count < 0 ||
        static_cast<size_t>(first) + static_cast<size_t>(count) > chunks.size())
         return out;
@@ -20,7 +20,7 @@ std::vector<byte_t> permutation_data(
     {
         u64 at = chunk.offset, size = chunk.size();
         /* Chunks never straddle the two pages */
-        Span<byte_t const> source = at < primary ? view.data : view.secondary;
+        Span<u8 const> source = at < primary ? view.data : view.secondary;
         u64 local = at < primary ? at : at - primary;
         if(local > source.size() || size > source.size() - local)
             return {};

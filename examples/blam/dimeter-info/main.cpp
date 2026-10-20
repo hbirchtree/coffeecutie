@@ -1487,7 +1487,7 @@ int run_map(
 
     h2::raw_pool pool;
     pool.attach(
-        h2::raw_file_t::local, Span<const byte_t>(map_data.data, map_data.size));
+        h2::raw_file_t::local, Span<const u8>(map_data.data, map_data.size));
     std::vector<std::unique_ptr<Resource>>           side_files;
     constexpr std::pair<h2::raw_file_t, const char*> side_names[3] = {
         {h2::raw_file_t::mainmenu, "mainmenu.map"},
@@ -1500,7 +1500,7 @@ int run_map(
         auto bytes = C_OCAST<BytesConst>(*res);
         if(bytes.data && bytes.size)
         {
-            pool.attach(slot, Span<const byte_t>(bytes.data, bytes.size));
+            pool.attach(slot, Span<const u8>(bytes.data, bytes.size));
             side_files.push_back(std::move(res));
             cBasicPrint("Raw pool: attached {0}", name);
         }
@@ -1669,7 +1669,7 @@ i32 dump_font(std::string const& path)
     Resource file(MkSysUrl(path));
     auto     bytes = C_OCAST<BytesConst>(file);
     auto     font  = blam::dimeter::font::font_t::from_bytes(
-        Span<const byte_t>(bytes.data, bytes.size));
+        Span<const u8>(bytes.data, bytes.size));
     if(!font)
     {
         cBasicPrint("{0}: not a Halo 2 font", path);

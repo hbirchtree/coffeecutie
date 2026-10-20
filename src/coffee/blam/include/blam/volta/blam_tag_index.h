@@ -174,7 +174,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
 
     inline map_ptr get_magic(file_header_t const* base, u32 file_size) const
     {
-        byte_t const* base_ptr   = C_RCAST<byte_t const*>(base);
+        u8 const* base_ptr   = C_RCAST<u8 const*>(base);
         u32           index_size = from_le(base->version) == version_t::xbox
                                        ? sizeof(tag_index_t) - sizeof(u32)
                                        : sizeof(tag_index_t);
@@ -219,7 +219,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
                            ? sizeof(tag_index_t) - sizeof(u32)
                            : sizeof(tag_index_t);
 
-        return C_RCAST<tag_t const*>(C_RCAST<byte_t const*>(this) + offset);
+        return C_RCAST<tag_t const*>(C_RCAST<u8 const*>(this) + offset);
     }
 
     inline tag_t const* tag_at(const file_header_t* header, u32 tag_id) const
@@ -260,7 +260,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
      */
     STATICINLINE tag_index_t const& from_header(file_header_t const* base)
     {
-        byte_t const* base_ptr = C_RCAST<byte_t const*>(base);
+        u8 const* base_ptr = C_RCAST<u8 const*>(base);
         return *C_RCAST<tag_index_t const*>(
             &base_ptr[from_le(base->tag_index_offset)]);
     }

@@ -171,7 +171,7 @@ struct opcode_iterator
 
         if(loc)
         {
-            auto new_op = C_RCAST<byte_t const*>(loc);
+            auto new_op = C_RCAST<u8 const*>(loc);
             auto offset = new_op - code.data;
             m_offset    = offset;
         } else

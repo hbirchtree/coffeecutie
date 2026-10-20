@@ -12,7 +12,7 @@ struct multiplayer_scenario
 {
     struct map_string
     {
-        reference<byte_t, V> unknown_1;
+        reference<u8, V> unknown_1;
         u32                  unknown_2;
         u32                  unknown_3;
         unicode_string_list  unknown_4;

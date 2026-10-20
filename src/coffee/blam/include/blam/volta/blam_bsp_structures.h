@@ -351,9 +351,9 @@ struct material
             u32                       padding2[3];
             u32                       something;
             u32                       padding3;
-            bsp_reference<byte_t, xbox_t> uncompressed_vertices;
+            bsp_reference<u8, xbox_t> uncompressed_vertices;
             u32                       padding4[3];
-            bsp_reference<byte_t, xbox_t> compressed_vertices;
+            bsp_reference<u8, xbox_t> compressed_vertices;
         } pc;
 
         struct
@@ -384,7 +384,7 @@ struct material
         u32 all[22];
     };
 
-    inline bsp_reference<byte_t, xbox_t> vertices() const
+    inline bsp_reference<u8, xbox_t> vertices() const
     {
         //        reflexive_t<pc_vertex, xbox_t> base = pc_vertices_data;
         //        base.offset += pc_vertex_data_offset;
@@ -412,7 +412,7 @@ struct material
             };
     }
 
-    inline bsp_reference<byte_t, xbox_t> light_verts() const
+    inline bsp_reference<u8, xbox_t> light_verts() const
     {
         //        reflexive_t<pc_light_vertex, xbox_t> out;
         //        /* Offset to vertex segment */
@@ -741,8 +741,8 @@ struct header
     bsp_reference<cluster_portal>        cluster_portals;
     u32                                  padding2[3];
     bsp_reference<breakable_surface>     breakables_surfaces;
-    bsp_reference<byte_t>                fog_planes;
-    bsp_reference<byte_t>                fog_regions;
+    bsp_reference<u8>                fog_planes;
+    bsp_reference<u8>                fog_regions;
     u32                                  padding3[9];
     bsp_reference<weather_palette>       weather_palettes;
     bsp_reference<weather_polyhedra>     weather_polyhedras;
