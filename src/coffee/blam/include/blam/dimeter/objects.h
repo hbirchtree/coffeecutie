@@ -327,7 +327,7 @@ struct alignas(4) attachment_t
         tag_class_t::lsnd,
         tag_class_t::effe,
         tag_class_t::cont,
-        tag_class_t::mgs2>
+        tag_class_t::MGS2>
                        type; /*!< ligh, lsnd, effe, ... */
     string_id          marker;
     attachment_color_t change_color;

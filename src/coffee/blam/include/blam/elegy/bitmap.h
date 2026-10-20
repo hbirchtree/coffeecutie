@@ -164,7 +164,7 @@ static_assert(sizeof(hardware_texture_t) == 0x8);
 /*! bitmap ("bitm") */
 struct bitmap_t
 {
-    static constexpr std::string_view group = "bitm";
+    static constexpr tag_class_t group = tag_class_t::bitm;
 
     be<u32>                               usage;
     be<u16>                               flags;

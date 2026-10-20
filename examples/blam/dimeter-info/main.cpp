@@ -241,7 +241,7 @@ u32 extract_bitmaps(
     {
         if(limit && extracted >= limit)
             break;
-        if(!tag.valid() || !tag.matches("bitm"))
+        if(!tag.valid() || !tag.matches(blam::tag_class_t::bitm))
             continue;
         if(!name_filter.empty() &&
            map.name_of(tag).find(name_filter) == std::string_view::npos)
@@ -391,7 +391,7 @@ u32 extract_sounds(
     /* All sample metadata lives in the map's single ugh! gestalt */
     h2::snd::gestalt const* gestalt = nullptr;
     for(auto const& tag : map.tags())
-        if(tag.valid() && tag.matches("ugh!"))
+        if(tag.valid() && tag.matches(blam::tag_class_t::ugh))
         {
             gestalt = tag.template data<h2::snd::gestalt>(magic);
             break;
@@ -420,7 +420,7 @@ u32 extract_sounds(
     {
         if(adpcm_left == 0 && wma_left == 0)
             break;
-        if(!tag.valid() || !tag.matches("snd!"))
+        if(!tag.valid() || !tag.matches(blam::tag_class_t::snd))
             continue;
         auto const* sound = tag.template data<h2::snd::sound>(magic);
         if(!sound)
@@ -694,7 +694,7 @@ struct material_db
                             break;
                         }
             }
-            if(bitm_tag && bitm_tag->matches("bitm"))
+            if(bitm_tag && bitm_tag->matches(blam::tag_class_t::bitm))
                 if(auto dds = write_material_dds(map, pool, outdir, *bitm_tag))
                 {
                     char line[512];
@@ -1079,7 +1079,7 @@ u32 extract_model_meshes(
     {
         if(limit && extracted >= limit)
             break;
-        if(!tag.valid() || !tag.matches("mode"))
+        if(!tag.valid() || !tag.matches(blam::tag_class_t::mode))
             continue;
         auto const* model = tag.template data<geo::model_header_t>(magic);
         if(!model)
@@ -1179,7 +1179,7 @@ int print_map(blam::dimeter::map_container<V> const& map)
             null_tags++;
             continue;
         }
-        auto& [count, bytes] = class_counts[std::string(tag.tag_class.str())];
+        auto& [count, bytes] = class_counts[std::string(tag.tag_class.str().view())];
         count++;
         bytes += static_cast<u64>(tag.size());
     }
@@ -1569,7 +1569,7 @@ int run_map(
                                     raw + at,
                                     raw + std::min<u32>(at + 16, tag.size()),
                                     " "));
-                if(tag.matches("jmad"))
+                if(tag.matches(blam::tag_class_t::jmad))
                     dimeter_info::dump_jmad(map, pool, tag);
             }
         for_each_bsp(
@@ -1598,7 +1598,7 @@ int run_map(
     {
         dimeter_info::anim_check_t check;
         for(auto const& tag : map.tags())
-            if(tag.matches("jmad"))
+            if(tag.matches(blam::tag_class_t::jmad))
                 dimeter_info::check_jmad(map, pool, tag, check);
         dimeter_info::print_anim_check(check);
     }

@@ -1057,19 +1057,19 @@ inline void dump_any(h2::map_container<V> const& map, h2::tag_t const& tag)
         tag.tag_class.str(),
         tag.size(),
         tag.pointer());
-    if(tag.matches("scnr"))
+    if(tag.matches(blam::tag_class_t::scnr))
         dump_scenario(map, tag);
-    else if(tag.matches("hlmt"))
+    else if(tag.matches(blam::tag_class_t::hlmt))
         dump_hlmt(map, tag);
-    else if(tag.matches("coll"))
+    else if(tag.matches(blam::tag_class_t::coll))
         dump_coll(map, tag);
-    else if(tag.matches("phmo"))
+    else if(tag.matches(blam::tag_class_t::phmo))
         dump_phmo(map, tag);
-    else if(tag.matches("char"))
+    else if(tag.matches(blam::tag_class_t::char_))
         dump_char(map, tag);
-    else if(tag.matches("itmc") || tag.matches("vehc"))
+    else if(tag.matches(blam::tag_class_t::itmc) || tag.matches(blam::tag_class_t::vehc))
         dump_itmc(map, tag);
-    else if(tag.matches("matg"))
+    else if(tag.matches(blam::tag_class_t::matg))
         dump_matg(map, tag);
     else if(derives_from(map, tag.tag_class, "obje"))
         dump_object(map, tag);

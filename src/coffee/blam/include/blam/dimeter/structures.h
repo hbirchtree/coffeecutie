@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/endian.h"
+#include "../common/tag_class.h"
 #include "../volta/blam_structures.h"
 
 #include "versions.h"
@@ -47,178 +48,8 @@ struct datum_index
 
 static_assert(sizeof(datum_index) == 4);
 
-consteval u32 tag_fourcc(char const (&s)[5])
-{
-    return (static_cast<u32>(s[0]) << 24) | (static_cast<u32>(s[1]) << 16) |
-           (static_cast<u32>(s[2]) << 8) | static_cast<u32>(s[3]);
-}
-
-/*! Halo 2 tag classes, the same big-endian fourcc numbering as volta's;
- * X(identifier, fourcc) */
-#define BLAM_DIMETER_TAG_CLASSES(X) \
-    X(cen_,    "*cen") \
-    X(eap_,    "*eap") \
-    X(ehi_,    "*ehi") \
-    X(igh_,    "*igh") \
-    X(ipd_,    "*ipd") \
-    X(qip_,    "*qip") \
-    X(rea_,    "*rea") \
-    X(sce_,    "*sce") \
-    X(comment, "/**/") \
-    X(fx,      "<fx>") \
-    X(adlg,    "adlg") \
-    X(ai__,    "ai**") \
-    X(ant,     "ant!") \
-    X(bipd,    "bipd") \
-    X(bitm,    "bitm") \
-    X(bloc,    "bloc") \
-    X(bsdt,    "bsdt") \
-    X(char_,   "char") \
-    X(cin_,    "cin*") \
-    X(clu_,    "clu*") \
-    X(clwd,    "clwd") \
-    X(coll,    "coll") \
-    X(colo,    "colo") \
-    X(cont,    "cont") \
-    X(crea,    "crea") \
-    X(ctrl,    "ctrl") \
-    X(dc_s,    "dc*s") \
-    X(dec_,    "dec*") \
-    X(deca,    "deca") \
-    X(decp,    "DECP") \
-    X(decr,    "DECR") \
-    X(devi,    "devi") \
-    X(dgr_,    "dgr*") \
-    X(effe,    "effe") \
-    X(egor,    "egor") \
-    X(eqip,    "eqip") \
-    X(fog,     "fog ") \
-    X(foot,    "foot") \
-    X(fpch,    "fpch") \
-    X(garb,    "garb") \
-    X(gldf,    "gldf") \
-    X(goof,    "goof") \
-    X(hlmt,    "hlmt") \
-    X(hmt,     "hmt ") \
-    X(hsc_,    "hsc*") \
-    X(hudg,    "hudg") \
-    X(item,    "item") \
-    X(itmc,    "itmc") \
-    X(jmad,    "jmad") \
-    X(jpt,     "jpt!") \
-    X(lens,    "lens") \
-    X(lifi,    "lifi") \
-    X(ligh,    "ligh") \
-    X(lsnd,    "lsnd") \
-    X(ltmp,    "ltmp") \
-    X(mach,    "mach") \
-    X(matg,    "matg") \
-    X(mcsr,    "mcsr") \
-    X(mdlg,    "mdlg") \
-    X(mgs2,    "MGS2") \
-    X(mode,    "mode") \
-    X(mulg,    "mulg") \
-    X(nhdt,    "nhdt") \
-    X(obje,    "obje") \
-    X(phmo,    "phmo") \
-    X(phys,    "phys") \
-    X(pmov,    "pmov") \
-    X(pphy,    "pphy") \
-    X(proj,    "proj") \
-    X(prt3,    "prt3") \
-    X(PRTM,    "PRTM") \
-    X(sbsp,    "sbsp") \
-    X(scen,    "scen") \
-    X(scnr,    "scnr") \
-    X(sfx,     "sfx+") \
-    X(shad,    "shad") \
-    X(sily,    "sily") \
-    X(skin,    "skin") \
-    X(sky,     "sky ") \
-    X(sncl,    "sncl") \
-    X(snd,     "snd!") \
-    X(snde,    "snde") \
-    X(snmx,    "snmx") \
-    X(spas,    "spas") \
-    X(spk,     "spk!") \
-    X(ssce,    "ssce") \
-    X(sslt,    "sslt") \
-    X(stem,    "stem") \
-    X(styl,    "styl") \
-    X(tdtl,    "tdtl") \
-    X(trak,    "trak") \
-    X(trg_,    "trg*") \
-    X(udlg,    "udlg") \
-    X(ugh,     "ugh!") \
-    X(unic,    "unic") \
-    X(unit,    "unit") \
-    X(vehc,    "vehc") \
-    X(vehi,    "vehi") \
-    X(vrtx,    "vrtx") \
-    X(weap,    "weap") \
-    X(weat,    "weat") \
-    X(wgit,    "wgit") \
-    X(wgtz,    "wgtz") \
-    X(wigl,    "wigl") \
-    X(wind,    "wind")
-
-enum class tag_class_t : u32
-{
-    none = 0xFFFFFFFF,
-#define BLAM_DIMETER_TAG_CLASS_ENUM(id, fourcc) id = tag_fourcc(fourcc),
-    BLAM_DIMETER_TAG_CLASSES(BLAM_DIMETER_TAG_CLASS_ENUM)
-#undef BLAM_DIMETER_TAG_CLASS_ENUM
-};
-
-/*! The fourcc as written in tags; "????" for a class not listed */
-constexpr std::string_view to_string(tag_class_t cls)
-{
-    switch(cls)
-    {
-#define BLAM_DIMETER_TAG_CLASS_NAME(id, fourcc) \
-    case tag_class_t::id:                      \
-        return fourcc;
-        BLAM_DIMETER_TAG_CLASSES(BLAM_DIMETER_TAG_CLASS_NAME)
-#undef BLAM_DIMETER_TAG_CLASS_NAME
-    default:
-        return "????";
-    }
-}
-
 /*! A tag class as a cache file stores it: the fourcc byte-reversed */
-struct alignas(4) tag_class
-{
-    bl_tag raw;
-
-    inline tag_class_t id() const
-    {
-        u32 v;
-        std::memcpy(&v, raw.data.data(), sizeof(v));
-        return static_cast<tag_class_t>(from_le(v));
-    }
-
-    inline std::string_view str() const
-    {
-        return to_string(id());
-    }
-
-    inline bool valid() const
-    {
-        return id() != tag_class_t::none;
-    }
-
-    inline bool operator==(tag_class_t cls) const
-    {
-        return id() == cls;
-    }
-
-    inline bool operator==(tag_class const& other) const
-    {
-        return id() == other.id();
-    }
-};
-
-static_assert(sizeof(tag_class) == 4);
+using tag_class = basic_tag_class<std::endian::little>;
 
 /*!
  * \brief A tag's datum index on its own; the classes say which tags the
@@ -475,7 +306,7 @@ static_assert(sizeof(block_index<u32>) == 2);
 template<tag_class_t... Classes>
 struct alignas(4) tag_reference
 {
-    struct tag_class tag_class;
+    dimeter::tag_class tag_class;
     datum_index      tag_id;
 
     inline tag_class_t class_id() const

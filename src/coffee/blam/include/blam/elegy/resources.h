@@ -371,8 +371,8 @@ struct resource_loader
 
     static optional<resource_loader> create(map_container const& map)
     {
-        auto const* zone = map.find("zone");
-        auto const* play = map.find("play");
+        auto const* zone = map.find(tag_class_t::zone);
+        auto const* play = map.find(tag_class_t::play);
         if(!zone || !play)
             return std::nullopt;
         resource_loader out;

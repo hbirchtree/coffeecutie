@@ -35,6 +35,7 @@ using typing::vector_types::Vecf3;
 using typing::vector_types::Vecf4;
 
 namespace elegy = blam::elegy;
+using blam::tag_class_t;
 
 namespace {
 
@@ -275,7 +276,7 @@ int list_tags(elegy::map_container const& map, options_t const& options)
         fmt::print(
             "{:08x} {} {}\n",
             map.id_of(tag).raw.value(),
-            group ? group->group.str() : "????",
+            group ? group->group.str() : blam::fourcc_t{{'?', '?', '?', '?'}},
             name);
     }
     return 0;
@@ -293,7 +294,7 @@ int dump_models(
     std::vector<triangle_t>      triangles;
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, "mode"))
+        if(!tag.valid() || !map.is(tag, tag_class_t::mode))
             continue;
         auto name = map.name_of(tag);
         if(name.find(options.name_filter) == std::string_view::npos)
@@ -589,7 +590,7 @@ std::vector<char> make_dds(
 bool is_render_method(elegy::map_container const& map, elegy::tag_t const& tag)
 {
     auto const* group = map.group_of(tag);
-    return group && (group->group == "rm  " || group->parent == "rm  ");
+    return group && (group->group == tag_class_t::rm__ || group->parent == tag_class_t::rm__);
 }
 
 std::string_view tag_name(elegy::map_container const& map, elegy::tag_reference const& ref)
@@ -681,7 +682,7 @@ int dump_bitmaps(
     std::vector<byte_t> linear;
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, "bitm"))
+        if(!tag.valid() || !map.is(tag, tag_class_t::bitm))
             continue;
         auto name = map.name_of(tag);
         if(name.find(options.name_filter) == std::string_view::npos)
@@ -860,7 +861,7 @@ int dump_sounds(
     u32  count = 0, written = 0, missing = 0;
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, "snd!"))
+        if(!tag.valid() || !map.is(tag, tag_class_t::snd))
             continue;
         auto name = map.name_of(tag);
         if(name.find(options.name_filter) == std::string_view::npos)
@@ -1313,7 +1314,7 @@ int dump_nodes(elegy::map_container const& map, elegy::resource_loader& loader, 
     auto magic = map.magic();
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, "mode") ||
+        if(!tag.valid() || !map.is(tag, tag_class_t::mode) ||
            map.name_of(tag).find(options.name_filter) == std::string_view::npos)
             continue;
         auto const* model = map.tag_data<elegy::render_model_t>(tag);
