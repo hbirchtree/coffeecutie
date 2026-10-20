@@ -1213,6 +1213,7 @@ struct options_t
     bool        scripts{false};
     bool        anim_check{false};
     bool        decorators{false};
+    bool        check_lookup{false};
     std::string lightmap_dir;
     std::string extract_dir;
     u32         limit{10};
@@ -1513,6 +1514,31 @@ int run_map(
         cBasicPrint("Shared tags: attached, {0} tags", map_shared->tags().size());
     }
 
+    /* Every index entry must resolve to itself by its own id */
+    if(options.check_lookup)
+    {
+        u32 total = 0, missed = 0;
+        for(auto const& [i, tag] : stl_types::enumerate(map.tags()))
+        {
+            if(!tag.tag_class.valid())
+                continue;
+            total++;
+            /* Vista entries without data resolve to shared.map's copy */
+            auto const* found = map.tag_at(tag.tag_id);
+            if(found && found->tag_id.raw == tag.tag_id.raw)
+                continue;
+            missed++;
+            fmt::print(
+                "miss {:5} [{}] 0x{:08x} {}\n",
+                i,
+                tag.tag_class.str(),
+                tag.tag_id.raw,
+                map.name_of(tag));
+        }
+        fmt::print("lookup: {}/{} resolved\n", total - missed, total);
+        return 0;
+    }
+
     bool const selecting = options.list || options.dump;
     if(!selecting && !options.scenario)
         print_map(map);
@@ -1741,6 +1767,8 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("anim-check", "Decode every animation and report per codec")
         //
+        ("check-lookup", "Check that every tag resolves by its own id")
+        //
         ("font",
          "Dump a Halo 2 font file (fonts/<name>) instead of a map",
          cxxopts::value<std::string>())
@@ -1795,6 +1823,7 @@ i32 coffee_main(i32, cstring_w*)
         .scripts    = arguments.count("scripts") > 0,
         .anim_check = arguments.count("anim-check") > 0,
         .decorators = arguments.count("decorators") > 0,
+        .check_lookup = arguments.count("check-lookup") > 0,
         .lightmap_dir =
             arguments.as_optional<std::string>("dump-lightmaps").value_or(""),
         .extract_dir = arguments.as_optional<std::string>("extract").value_or(""),
