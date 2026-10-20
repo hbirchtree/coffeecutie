@@ -238,19 +238,29 @@ static std::vector<char> software_decode_bcn(
     std::vector<u64> aligned;
     data = aligned_blocks(data, aligned);
 
-    auto blk_pitch = size.w / 4;
-    for(auto y : stl_types::range<int>(size.h / 4))
+    /* Whole blocks into a padded image, cropped after: levels below 4x4
+     * (and odd sizes) still hold one partial block */
+    auto const blk_pitch  = (size.w + 3) / 4;
+    auto const blk_rows   = (size.h + 3) / 4;
+    auto const pad_pitch  = static_cast<u32>(blk_pitch) * 16u;
+    std::vector<char> padded(static_cast<size_t>(pad_pitch) * blk_rows * 4u, 0);
+    for(auto y : stl_types::range<int>(blk_rows))
         for(auto x : stl_types::range<int>(blk_pitch))
         {
-            auto blk_idx = (y * blk_pitch + x) * blk_size;
-            auto* dst    = &out.at((y * size.w + x) * 16);
+            auto blk_idx = static_cast<size_t>(y * blk_pitch + x) * blk_size;
+            if(blk_idx + blk_size > data.size())
+                continue;
+            auto* dst = &padded.at(static_cast<size_t>(y) * 4u * pad_pitch + static_cast<size_t>(x) * 16u);
             if(m_format.cmpflg == comp_flags::BC4)
-                expand_rgtc(bcdec_bc4, 1, data.subspan(blk_idx, blk_size).data(), dst, out_pitch);
+                expand_rgtc(bcdec_bc4, 1, data.subspan(blk_idx, blk_size).data(), dst, pad_pitch);
             else if(m_format.cmpflg == comp_flags::BC5)
-                expand_rgtc(bcdec_bc5, 2, data.subspan(blk_idx, blk_size).data(), dst, out_pitch);
+                expand_rgtc(bcdec_bc5, 2, data.subspan(blk_idx, blk_size).data(), dst, pad_pitch);
             else
-                transform(data.subspan(blk_idx, blk_size).data(), dst, out_pitch);
+                transform(data.subspan(blk_idx, blk_size).data(), dst, static_cast<int>(pad_pitch));
         }
+    for(auto y : stl_types::range<int>(size.h))
+        std::copy_n(padded.begin() + static_cast<std::ptrdiff_t>(y) * pad_pitch, out_pitch,
+                    out.begin() + static_cast<std::ptrdiff_t>(y) * out_pitch);
     apply_swizzle(out, swizzle);
 
     Coffee::cDebug(
