@@ -198,10 +198,7 @@ i32 blam_main()
                    comp_app::window_flags_t::resizable;
     if constexpr(compile_info::platform::is_emscripten)
         window.flags = comp_app::window_flags_t::resizable;
-    // auto& touch = loader.config<comp_app::TouchConfig>();
-    // touch.options |= comp_app::TouchConfig::TouchToMouse;
     auto& controller   = loader.config<comp_app::ControllerConfig>();
-    controller.options = comp_app::ControllerConfig::BackgroundInput;
 
 #if defined(SELECT_API_OPENGL)
     auto& glConfig        = loader.config<comp_app::GLConfig>();
