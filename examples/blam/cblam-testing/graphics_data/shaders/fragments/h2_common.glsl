@@ -76,6 +76,8 @@ layout(location=31) uniform float time;
 #if H2_OCEAN
 /* The opaque scene's depth, to find the ground under the water */
 layout(location=40, binding=8) uniform sampler2D scene_depth;
+/* 1: stored depth is clip space z; 0: (z + 1) / 2, as without clip control */
+layout(location=41) uniform int depth_zero_to_one;
 layout(location=50) uniform mat4 inverse_camera; /* 50-53 */
 layout(location=54) uniform vec2 viewport_size;
 layout(location=44) uniform vec3 sun_color;
@@ -192,8 +194,9 @@ void main()
     /* How deep the ground is under this pixel; the shallows thin out to the
      * sand, and nothing drawn (reversed z clears to 0) is open sea */
     float ground = texelFetch(scene_depth, ivec2(gl_FragCoord.xy), 0).r;
+    float ndc_z  = depth_zero_to_one != 0 ? ground : ground * 2.0 - 1.0;
     vec4  under  = inverse_camera *
-                  vec4(gl_FragCoord.xy / viewport_size * 2.0 - 1.0, ground, 1.0);
+                  vec4(gl_FragCoord.xy / viewport_size * 2.0 - 1.0, ndc_z, 1.0);
     float depth  = ground > 0.0 ? f_world_pos.z - under.z / under.w : 100.0;
     /* Light crosses depth / cos(view) of water: shallows looked down into
      * stay clear, the same shallows far off turn opaque */

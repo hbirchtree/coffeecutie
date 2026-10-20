@@ -109,6 +109,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         static blam_render::CascadedShadowMap::sampling_t const no_shadows{};
         auto const& csm = debug.shadows ? m_shadows.sampling(0) : no_shadows;
         i32 const   render_flags = debug.render_flags();
+        i32 const   depth_zero_to_one =
+            gleam::detail::depth_zero_to_one(m_api->feature_info().program) ? 1 : 0;
         /* Below the horizon, where the sky model ends */
         resources.offscreen->clear(
             Vecf4(debug.debug_clear ? debug.clear_color : scene.sky_clear, 1.f));
@@ -233,6 +235,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Matf4>(inverse_camera)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"viewport_size"}, semantic::SpanOne<const Vecf2>(viewport)},
+                    gfx::uniform_pair<const i32>{
+                        {"depth_zero_to_one"}, semantic::SpanOne<const i32>(depth_zero_to_one)},
                     gfx::uniform_pair<Vecf3 const>{
                         {"sun_direction"}, semantic::SpanOne<const Vecf3>(sun_direction)},
                     gfx::uniform_pair<Vecf3 const>{

@@ -622,6 +622,17 @@ inline void undo_command_modifier(
         cmd::active_texture(group::texture_unit::texture0);
 }
 
+/*! Whether reversed depth is stored as clip space z (clip control); else it
+ * is the usual (z + 1) / 2 */
+inline bool depth_zero_to_one([[maybe_unused]] features::programs const& features)
+{
+#if GLEAM_MAX_VERSION >= 0x450
+    return features.dsa;
+#else
+    return false;
+#endif
+}
+
 inline bool apply_command_modifier(
     program_t const&      program,
     shader_bookkeeping_t& bookkeeping,
@@ -686,9 +697,8 @@ inline bool apply_command_modifier(
                 cmd::depth_rangef(depth.range->x, depth.range->y);
 #endif
             }
-            bool clip_avail = false;
+            bool const clip_avail = depth_zero_to_one(features);
 #if GLEAM_MAX_VERSION >= 0x450
-            clip_avail = features.dsa;
             if(depth.reversed && clip_avail)
                 cmd::clip_control(
                     group::clip_control_origin::lower_left,
