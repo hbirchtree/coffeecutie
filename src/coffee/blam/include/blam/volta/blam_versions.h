@@ -5,6 +5,8 @@
 
 #include "blam_base_types.h"
 
+#include <bit>
+
 namespace blam {
 namespace hsc::bc {
 
@@ -27,6 +29,7 @@ struct xbox_version_t
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::xbox;
+    static constexpr auto endian    = std::endian::little;
 };
 
 struct pc_version_t
@@ -35,6 +38,7 @@ struct pc_version_t
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::pc;
+    static constexpr auto endian    = std::endian::little;
 };
 
 struct custom_version_t
@@ -43,6 +47,7 @@ struct custom_version_t
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::custom_edition;
+    static constexpr auto endian    = std::endian::little;
 };
 
 struct mcc_version_t
@@ -51,6 +56,7 @@ struct mcc_version_t
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::mcc;
+    static constexpr auto endian    = std::endian::little;
 };
 
 struct trial_version_t
@@ -59,6 +65,7 @@ struct trial_version_t
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::trial;
+    static constexpr auto endian    = std::endian::little;
 };
 
 template<typename T>

@@ -10,7 +10,7 @@
 
 #include <coffee/core/CDebug>
 
-#include <blam/volta/blam_endian.h>
+#include <blam/common/endian.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

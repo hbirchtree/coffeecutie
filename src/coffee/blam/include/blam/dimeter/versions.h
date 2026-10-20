@@ -4,6 +4,8 @@
 
 #include <peripherals/stl/any_of.h>
 
+#include <bit>
+
 namespace blam::dimeter {
 
 /*!
@@ -15,11 +17,13 @@ namespace blam::dimeter {
 struct xbox_version_t
 {
     static constexpr auto version_v = version_t::halo2;
+    static constexpr auto endian    = std::endian::little;
 };
 
 struct vista_version_t
 {
     static constexpr auto version_v = version_t::halo2;
+    static constexpr auto endian    = std::endian::little;
 };
 
 template<typename T>

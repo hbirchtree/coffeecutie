@@ -5,7 +5,7 @@
 #include <type_traits>
 
 #include "blam_atlas_type.h"
-#include "blam_endian.h"
+#include "../common/endian.h"
 #include "blam_magic_data.h"
 #include "blam_versions.h"
 

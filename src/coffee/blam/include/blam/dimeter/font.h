@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../volta/blam_endian.h"
+#include "../common/endian.h"
 #include "../volta/blam_structures.h"
 
 #include <array>

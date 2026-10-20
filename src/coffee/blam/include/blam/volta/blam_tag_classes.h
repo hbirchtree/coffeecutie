@@ -9,7 +9,7 @@
 #include <peripherals/libc/endian_ops.h>
 #endif
 
-#include "blam_endian.h"
+#include "../common/endian.h"
 
 namespace blam {
 

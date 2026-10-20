@@ -4,6 +4,8 @@
 
 #include <peripherals/stl/any_of.h>
 
+#include <bit>
+
 namespace blam::elegy {
 
 /*!
@@ -16,6 +18,7 @@ constexpr i32 halo3_version = 11;
 struct xbox360_version_t
 {
     static constexpr i32 version_v = halo3_version;
+    static constexpr auto endian   = std::endian::big;
 };
 
 template<typename T>

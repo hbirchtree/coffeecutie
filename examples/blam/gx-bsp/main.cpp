@@ -26,7 +26,7 @@
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
-#include <blam/volta/blam_endian.h>
+#include <blam/common/endian.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_scenario.h>

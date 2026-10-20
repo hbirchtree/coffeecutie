@@ -1,6 +1,6 @@
 #include <blam/volta/blam_file_header.h>
 
-#include <blam/volta/blam_endian.h>
+#include <blam/common/endian.h>
 #include <peripherals/error/result.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/semantic/chunk_ops.h>

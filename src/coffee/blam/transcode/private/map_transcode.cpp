@@ -5,7 +5,7 @@
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_shaders.h>
-#include <blam/volta/blam_endian.h>
+#include <blam/common/endian.h>
 #include <blam/volta/blam_file_header.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_swizzle.h>
