@@ -71,7 +71,7 @@ struct alignas(4) predicted_resource_t
 {
     predicted_resource_type_t type;
     i16                       resource_index_raw;
-    tag_id<>                  tag;
+    tag_index<>                  tag;
 };
 
 static_assert(sizeof(predicted_resource_t) == 8);

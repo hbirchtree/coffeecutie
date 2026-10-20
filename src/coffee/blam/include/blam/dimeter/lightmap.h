@@ -76,7 +76,7 @@ struct alignas(4) geometry_bucket_t
     i32                        header_size_raw;
     i32                        resource_data_size_raw;
     bsp_block<geo::resource_t> resources;
-    tag_id<>                   owner_tag;
+    tag_index<>                   owner_tag;
     i16                        owner_tag_section_offset_raw;
     i16                        unknown_1;
     u8                         unknown_2[0x38 - 0x2C];

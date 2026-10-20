@@ -297,7 +297,7 @@ static_assert(sizeof(shad_runtime_property_t) == 0x50);
  * (datum only, no class) */
 struct alignas(4) shader_map_t
 {
-    tag_id<tag_class_t::bitm> bitmap;
+    tag_index<tag_class_t::bitm> bitmap;
     u8                        unknown_0[8];
 };
 
@@ -321,7 +321,7 @@ static_assert(sizeof(pixel_constant_t) == 4);
 
 struct alignas(4) shader_properties_t
 {
-    tag_id<tag_class_t::stem>   shader_template;
+    tag_index<tag_class_t::stem>   shader_template;
     tag_block<shader_map_t>     bitmaps;
     tag_block<pixel_constant_t> pixel_constants;
     tag_block<vec4_t>           tiling; /* vertex constants, xy = uv scale */
