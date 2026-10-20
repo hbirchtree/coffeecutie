@@ -162,14 +162,14 @@ void apply_pose(
                         size_t f =
                             static_cast<size_t>(frame_idx) * anim.frame_size;
 
-                        auto read_quat = [](semantic::Span<const byte_t> buf,
+                        auto read_quat = [](semantic::Span<const u8> buf,
                                             size_t                       off) {
                             return reinterpret_cast<
                                        blam::antr::compressed_quat_t const*>(
                                        buf.data() + off)
                                 ->decompress();
                         };
-                        auto read_vec3 = [](semantic::Span<const byte_t> buf,
+                        auto read_vec3 = [](semantic::Span<const u8> buf,
                                             size_t                       off) {
                             return *reinterpret_cast<Vecf3 const*>(
                                 buf.data() + off);

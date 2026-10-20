@@ -205,9 +205,9 @@ static_assert(sizeof(d3d_structure<u8>) == 0xC);
  */
 struct resource_view
 {
-    Span<byte_t const>           definition;
-    Span<byte_t const>           data;
-    Span<byte_t const>           secondary;
+    Span<u8 const>           definition;
+    Span<u8 const>           data;
+    Span<u8 const>           secondary;
     std::map<u32, u32>           fixups;
     u32                          root{0};
     std::shared_ptr<void const>  keep;
@@ -231,7 +231,7 @@ struct resource_view
     inline u32 offset_of(void const* field) const
     {
         return static_cast<u32>(
-            reinterpret_cast<byte_t const*>(field) - definition.data());
+            reinterpret_cast<u8 const*>(field) - definition.data());
     }
 
     /*! The fixed-up address stored at `field`, which must be in the
@@ -266,7 +266,7 @@ struct resource_view
         }
         auto page = where->first == resource_space_t::data        ? data
                     : where->first == resource_space_t::secondary ? secondary
-                                                                  : Span<byte_t const>();
+                                                                  : Span<u8 const>();
         u64 bytes = u64(count) * sizeof(T);
         if(where->second > page.size() || bytes > page.size() - where->second)
             return {};
@@ -284,13 +284,13 @@ struct resource_view
     }
 
     /*! The page bytes a data_reference in the definition points to */
-    inline Span<byte_t const> bytes(data_reference const& ref) const
+    inline Span<u8 const> bytes(data_reference const& ref) const
     {
         i32  size  = ref.size;
         auto where = address(&ref.pointer);
         if(size <= 0 || !where)
             return {};
-        Span<byte_t const> page;
+        Span<u8 const> page;
         if(where->first == resource_space_t::data)
             page = data;
         else if(where->first == resource_space_t::secondary)
@@ -315,7 +315,7 @@ enum class resource_error
 };
 
 /*! Inflates a raw-deflate page into `out` */
-bool inflate_page(Span<byte_t const> compressed, Span<byte_t> out);
+bool inflate_page(Span<u8 const> compressed, Span<u8> out);
 
 /*!
  * \brief A cache file other maps take pages from (mainmenu, shared,
@@ -323,13 +323,13 @@ bool inflate_page(Span<byte_t const> compressed, Span<byte_t> out);
  */
 struct cache_source
 {
-    using reader_t = std::function<bool(u64 offset, Span<byte_t> dst)>;
+    using reader_t = std::function<bool(u64 offset, Span<u8> dst)>;
 
     u32      resource_offset{0}; /*!< File offset of the resource section */
     reader_t read;
 
     /*! From the start of the file; nullopt if it is not a Halo 3 cache */
-    static optional<cache_source> from_header(Span<byte_t const> head, reader_t read)
+    static optional<cache_source> from_header(Span<u8 const> head, reader_t read)
     {
         if(head.size() < sizeof(file_header_t))
             return std::nullopt;
@@ -349,7 +349,7 @@ struct cache_source
         return cache_source{
             .resource_offset = cache.resource_offset(),
             .read =
-                [data = cache.data](u64 offset, Span<byte_t> dst) {
+                [data = cache.data](u64 offset, Span<u8> dst) {
                     if(offset > data.size() || dst.size() > data.size() - offset)
                         return false;
                     std::memcpy(dst.data(), data.data() + offset, dst.size());
@@ -428,7 +428,7 @@ struct resource_loader
     result<resource_view, resource_error> load(datum_index id);
 
     /*! A page decompressed, cached by index */
-    result<std::shared_ptr<std::vector<byte_t> const>, resource_error>
+    result<std::shared_ptr<std::vector<u8> const>, resource_error>
     page(block_index<raw_page_t> index);
 
     /*! Drop decompressed pages */
@@ -447,7 +447,7 @@ struct resource_loader
     }
 
     std::vector<std::pair<std::string, cache_source>>  m_caches;
-    std::map<i16, std::shared_ptr<std::vector<byte_t>>>       m_pages;
+    std::map<i16, std::shared_ptr<std::vector<u8>>>       m_pages;
 };
 
 } // namespace blam::elegy

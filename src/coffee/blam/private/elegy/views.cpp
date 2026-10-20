@@ -132,7 +132,7 @@ std::optional<Matf4> marker_frame(
     return std::nullopt;
 }
 
-f32 function_scalar(Span<byte_t const> function)
+f32 function_scalar(Span<u8 const> function)
 {
     if(function.size() < 12)
         return 0.f;
@@ -144,7 +144,7 @@ f32 function_scalar(Span<byte_t const> function)
     return (value(4) + value(8)) * .5f;
 }
 
-Vecf3 function_color(Span<byte_t const> function)
+Vecf3 function_color(Span<u8 const> function)
 {
     if(function.size() < 8 || function[2] == 0)
         return Vecf3(1.f);

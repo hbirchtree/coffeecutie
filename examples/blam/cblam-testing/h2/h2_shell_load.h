@@ -20,7 +20,7 @@ namespace h2 {
 struct ShellFontFile
 {
     std::string        name;
-    Span<const byte_t> bytes;
+    Span<const u8> bytes;
 };
 
 namespace detail {

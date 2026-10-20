@@ -153,7 +153,7 @@ enum class heap_t
 template<heap_t Heap>
 struct magic_ptr_base
 {
-    byte_t const* base{nullptr};
+    u8 const* base{nullptr};
     u32           max_size{0};
     u32           meta_offset{0};
     u32           mask{0};
@@ -162,7 +162,7 @@ struct magic_ptr_base
      * shared.map, whose heap sits at its own virtual base */
     struct range_t
     {
-        byte_t const* base{nullptr};
+        u8 const* base{nullptr};
         u32           max_size{0};
         u32           meta_offset{0};
         u32           mask{0};
@@ -178,7 +178,7 @@ struct magic_ptr_base
     }
 
     /*! The bytes a heap pointer names, in whichever heap holds them */
-    inline byte_t const* resolve(u32 pointer, u32 size = 0) const
+    inline u8 const* resolve(u32 pointer, u32 size = 0) const
     {
         /* With two heaps a pointer below this heap's base belongs to the
          * other one; the wrap-around only serves single-heap maps */
@@ -388,19 +388,19 @@ struct data_reference
         return from_le(pointer_raw);
     }
 
-    inline result<Span<const byte_t>, error_msg> data(
+    inline result<Span<const u8>, error_msg> data(
         magic_ptr_base<Heap> const& magic) const
     {
         i32 num = size();
         if(num == 0)
-            return Span<const byte_t>();
+            return Span<const u8>();
         if(num < 0)
             return stl_types::failure("negative data_reference size"sv);
         auto const* bytes =
-            magic.template as<byte_t>(pointer(), static_cast<u32>(num));
+            magic.template as<u8>(pointer(), static_cast<u32>(num));
         if(!bytes)
             return stl_types::failure("data_reference pointer out of bounds"sv);
-        return Span<const byte_t>(bytes, static_cast<size_t>(num));
+        return Span<const u8>(bytes, static_cast<size_t>(num));
     }
 };
 

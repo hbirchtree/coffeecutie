@@ -107,8 +107,8 @@ std::optional<Matf4> marker_frame(
  * of a colour function. The header's first byte is the type, the third the
  * colour count; scalars are a float pair from 4, colours ARGB bytes from 4.
  */
-f32   function_scalar(Span<byte_t const> function);
-Vecf3 function_color(Span<byte_t const> function);
+f32   function_scalar(Span<u8 const> function);
+Vecf3 function_color(Span<u8 const> function);
 
 /*! A scenario's structure BSP by index */
 inline tagged<structure_bsp_t> structure_bsp(

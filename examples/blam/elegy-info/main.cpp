@@ -551,7 +551,7 @@ std::optional<dds_info> dds_format(elegy::bitmap_format_t format)
 }
 
 std::vector<char> make_dds(
-    dds_info const& info, u32 width, u32 height, Span<byte_t const> pixels)
+    dds_info const& info, u32 width, u32 height, Span<u8 const> pixels)
 {
     std::vector<char> out;
     out.reserve(128 + pixels.size());
@@ -679,7 +679,7 @@ int dump_bitmaps(
     if(!options.extract_dir.empty())
         std::filesystem::create_directories(options.extract_dir);
     u32 count = 0, written = 0;
-    std::vector<byte_t> linear;
+    std::vector<u8> linear;
     for(auto const& tag : map.tags())
     {
         if(!tag.valid() || !map.is(tag, tag_class_t::bitm))
@@ -752,7 +752,7 @@ int dump_bitmaps(
                 /* CTX1 has no DDS form; written decoded, x in red */
                 if(format == elegy::bitmap_format_t::ctx1)
                 {
-                    std::vector<byte_t> blocks = std::move(linear);
+                    std::vector<u8> blocks = std::move(linear);
                     elegy::decode_ctx1(blocks, width, height, linear);
                 }
                 auto path = fmt::format(
@@ -802,7 +802,7 @@ const char* compression_name(elegy::sound_compression_t compression)
 }
 
 /* RIFF WAVE around XMA2 data, as ffmpeg and vgmstream read it */
-std::vector<char> make_xma2_riff(elegy::xma2_format_t const& format, Span<byte_t const> data)
+std::vector<char> make_xma2_riff(elegy::xma2_format_t const& format, Span<u8 const> data)
 {
     std::vector<char> out;
     auto u32le = [&](u32 v) { append<u32>(out, blam::to_le(v)); };
@@ -896,7 +896,7 @@ int dump_sounds(
                 u32 samples = perm.sample_count;
                 auto bytes = view.has_value()
                                  ? elegy::permutation_data(perm, *gestalt, magic, view.value())
-                                 : std::vector<byte_t>();
+                                 : std::vector<u8>();
                 fmt::print(
                     "    {:<24} {:7.2f} s, {} chunks, {} bytes\n",
                     perm_name ? map.string(*perm_name) : std::string_view("?"),
@@ -1120,7 +1120,7 @@ int check_mips(elegy::map_container const& map, elegy::resource_loader& loader, 
 {
     using elegy::bitmap_format_t;
     u32  checked = 0, matching = 0, levels_total = 0;
-    auto grid    = [](std::vector<byte_t> const& blocks, u32 bpb) {
+    auto grid    = [](std::vector<u8> const& blocks, u32 bpb) {
         std::vector<f32> out;
         u32 const        colour = bpb == 16 ? 8 : 0;
         for(size_t at = 0; at + bpb <= blocks.size(); at += bpb)
@@ -1156,7 +1156,7 @@ int check_mips(elegy::map_container const& map, elegy::resource_loader& loader, 
         u32 const width  = static_cast<u32>(image.width.value());
         u32 const height = static_cast<u32>(image.height.value());
         u32 const count  = elegy::level_count(view.value(), image);
-        std::vector<byte_t> top, level;
+        std::vector<u8> top, level;
         if(count < 2 || !elegy::linearize_level(view.value(), image, 0, top))
             continue;
         auto const g0  = grid(top, bpb);

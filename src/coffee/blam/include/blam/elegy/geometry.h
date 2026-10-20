@@ -359,9 +359,9 @@ std::vector<vertex_light_t> vertex_lights(resource_view const& view, i32 vertex_
 struct mesh_buffers
 {
     vertex_buffer_definition_t const* vertices{nullptr};
-    Span<byte_t const>                vertex_bytes;
+    Span<u8 const>                vertex_bytes;
     index_buffer_definition_t const*  indices{nullptr};
-    Span<byte_t const>                index_bytes;
+    Span<u8 const>                index_bytes;
 
     static inline mesh_buffers from(
         resource_view const& view, mesh_t const& mesh)

@@ -64,7 +64,7 @@ static_assert(sizeof(keyframe_header_t) == 48);
 
 struct reader_t
 {
-    Span<byte_t const> data;
+    Span<u8 const> data;
     bool               ok{true};
 
     template<typename T>
@@ -151,7 +151,7 @@ void keyframe_track(
     }
 }
 
-std::optional<tracks_t> decode_stream(Span<byte_t const> data, u32 frames)
+std::optional<tracks_t> decode_stream(Span<u8 const> data, u32 frames)
 {
     reader_t in{data};
     tracks_t out;
@@ -239,7 +239,7 @@ std::optional<tracks_t> decode_stream(Span<byte_t const> data, u32 frames)
 
 /* Nodes of the set bits in one third of a flag group, in order; the bits
  * are in big-endian u32 words */
-std::vector<u32> flagged_nodes(Span<byte_t const> group, u32 part)
+std::vector<u32> flagged_nodes(Span<u8 const> group, u32 part)
 {
     std::vector<u32> nodes;
     size_t const     third = group.size() / 3;
@@ -308,7 +308,7 @@ std::optional<decoded_animation_t> decode_animation(
         std::copy(defaults.begin(), defaults.end(), out.poses.begin() + f * nodes);
 
     /* The static stream holds one frame; the animated one every frame */
-    auto apply = [&](Span<byte_t const> stream, Span<byte_t const> flags, bool animated) {
+    auto apply = [&](Span<u8 const> stream, Span<u8 const> flags, bool animated) {
         if(stream.empty())
             return true;
         auto tracks = decode_stream(stream, animated ? frames : 1);

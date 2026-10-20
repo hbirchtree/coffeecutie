@@ -180,7 +180,7 @@ static_assert(sizeof(scripting_data_t) == 0x80);
 struct syntax_t
 {
     Span<expression_t const> nodes;
-    Span<byte_t const>       strings;
+    Span<u8 const>       strings;
     Span<script_t const>     scripts;
     Span<global_t const>     globals;
 

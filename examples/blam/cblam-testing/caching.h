@@ -58,7 +58,7 @@ inline void repack_normals_snorm8(Vertex& v)
     v.tangent = snorm8_from_r11g11b10(v.tangent);
 }
 
-using libc_types::byte_t;
+using libc_types::u8;
 using semantic::Bytes;
 using semantic::BytesConst;
 
@@ -343,8 +343,8 @@ struct BSPCache
         vert_ptr = 0, element_ptr = 0, light_ptr = 0;
     }
 
-    Span<byte_t>           vert_buffer;
-    Span<byte_t>           light_buffer;
+    Span<u8>           vert_buffer;
+    Span<u8>           light_buffer;
     Span<blam::vert::face> element_buffer;
 
     DebugMarkers* debug_markers{nullptr};

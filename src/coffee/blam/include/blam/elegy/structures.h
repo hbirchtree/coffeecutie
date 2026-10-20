@@ -102,7 +102,7 @@ enum class section_t
  */
 struct tag_magic
 {
-    byte_t const* base{nullptr};
+    u8 const* base{nullptr};
     u32           max_size{0};
     u32           tag_offset{0};
     u32           virtual_base{0};
@@ -115,7 +115,7 @@ struct tag_magic
         return offset;
     }
 
-    inline byte_t const* resolve(u32 pointer, u32 size = 0) const
+    inline u8 const* resolve(u32 pointer, u32 size = 0) const
     {
         if(auto offset = to_offset(pointer, size); base && offset)
             return base + *offset;
@@ -231,7 +231,7 @@ struct data_reference
     be<u32>            pointer;
     u32                runtime_1;
 
-    inline Span<byte_t const> data(tag_magic const& magic) const
+    inline Span<u8 const> data(tag_magic const& magic) const
     {
         i32 bytes = size;
         if(bytes <= 0)
@@ -239,7 +239,7 @@ struct data_reference
         auto const* out = magic.resolve(pointer, static_cast<u32>(bytes));
         if(!out)
             return {};
-        return Span<byte_t const>(out, static_cast<size_t>(bytes));
+        return Span<u8 const>(out, static_cast<size_t>(bytes));
     }
 };
 

@@ -85,7 +85,7 @@ struct pitch_range_t
     //             return ptr.value();
     //         return std::nullopt;
     //     }
-    //     auto base_ptr = reinterpret_cast<const byte_t*>(&this[0]);
+    //     auto base_ptr = reinterpret_cast<const u8*>(&this[0]);
     //     return gsl::span(
     //         reinterpret_cast<const pitch_permutation_t*>(
     //             &base_ptr[permutations_.offset]),
