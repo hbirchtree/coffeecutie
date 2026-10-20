@@ -135,7 +135,11 @@ if(TARGET DiscordLatte)
     target_link_libraries(BlamGraphics PUBLIC DiscordLatte)
 endif()
 if(BUILD_GNS AND GameNetworkingSockets_FOUND AND
-        (WIN32 OR (APPLE AND NOT IOS) OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        (WIN32 OR
+         (APPLE AND NOT IOS) OR
+         CMAKE_SYSTEM_NAME STREQUAL "Linux") AND NOT (
+        ANDROID OR EMSCRIPTEN
+     )
 )
     # Joins servers on behalf of consoles that only have UDP (GameCube)
     add_subdirectory(
