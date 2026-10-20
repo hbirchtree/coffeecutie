@@ -1,57 +1,33 @@
 #pragma once
 
+#include "../common/tag_reference.h"
 #include "blam_strings.h"
 #include "blam_tag_classes.h"
+#include "blam_versions.h"
 
 namespace blam {
 
-template<tag_class_t... Tags>
-struct alignas(4) tagref_typed_t
+/*! Halo 1: class, name, a runtime word and the handle; null when unset */
+template<tag_class_t... Classes>
+struct tagref_storage<layout::volta_pc, Classes...>
 {
-    tag_class_t tag_class{tag_class_t::none};
-    string_ref  name;
-    i32         unknown{0};
-    u32         tag_id{std::numeric_limits<u32>::max()};
-
-    inline bool valid() const
-    {
-        return tag_id != std::numeric_limits<u32>::max();
-    }
-
-    inline string_ref to_name() const
-    {
-        return name;
-    }
-
-    inline bool matches(tag_class_t cls) const
-    {
-        return tag_class == cls;
-    }
-
-    inline std::string_view tag_class_name() const
-    {
-        return std::string_view(reinterpret_cast<const char*>(&tag_class), 4);
-    }
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wclass-conversion"
-
-    template<typename Dummy = void>
-    requires(sizeof...(Tags) > 0)
-    inline operator tagref_typed_t<> const&() const
-    {
-        return *C_RCAST<tagref_typed_t<> const*>(this);
-    }
-
-    template<tag_class_t Class>
-    inline operator tagref_typed_t<Class> const&() const
-    {
-        return *C_RCAST<tagref_typed_t<Class> const*>(this);
-    }
-
-#pragma GCC diagnostic pop
+    basic_tag_class<std::endian::little> tag_class{{0xFF, 0xFF, 0xFF, 0xFF}};
+    string_ref                           name;
+    i32                                  unknown{0};
+    tag_index<Classes...>                tag_id{0xFFFFFFFF};
 };
 
+template<tag_class_t... Classes>
+struct tagref_storage<layout::volta_xbox, Classes...>
+    : tagref_storage<layout::volta_pc, Classes...>
+{
+};
+
+template<tag_class_t... Tags>
+using tagref_typed_t = tag_reference<pc_version_t, Tags...>;
+
 using tagref_t = tagref_typed_t<>;
+
+static_assert(sizeof(tagref_t) == 16);
 
 } // namespace blam

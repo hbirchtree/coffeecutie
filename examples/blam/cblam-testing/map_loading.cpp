@@ -316,7 +316,7 @@ static void load_resources(
         for(auto const& tag : tags)
         {
             cDebug(" - tagc: {}", tag.tag_class_name());
-            switch(tag.tag_class)
+            switch(tag.class_id())
             {
             case blam::tag_class_t::Soul:
                 // Put in UI cache

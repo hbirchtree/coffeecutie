@@ -324,7 +324,7 @@ template<typename V>
 static blam::bitm::header_t const* resolve_bitm(
     blam::map_container<V> const& c, blam::tagref_t const& ref)
 {
-    auto const* t = tag_by_id(c, from_le(ref.tag_id));
+    auto const* t = tag_by_id(c, ref.tag_id.value());
     if(!t)
         return nullptr;
     auto hr = t->template data<blam::bitm::header_t>(c.magic);
@@ -357,7 +357,7 @@ static shader_info resolve_shader(
     blam::map_container<V> const& c, blam::tagref_t const& shader_ref)
 {
     shader_info out;
-    auto const* st = tag_by_id(c, from_le(shader_ref.tag_id));
+    auto const* st = tag_by_id(c, shader_ref.tag_id.value());
     if(!st)
         return out;
     if(st->matches(blam::tag_class_t::shader_environment))
@@ -606,7 +606,7 @@ static bool place_object(
     auto obj = t->template data<blam::scn::object>(c.magic);
     if(obj.has_error())
         return false;
-    u32 const mod2_id = from_le(obj.value()->model.tag_id);
+    u32 const mod2_id = obj.value()->model.tag_id.value();
     if(!tag_by_id(c, mod2_id))
         return false;
     if(g_models.find(mod2_id) == g_models.end())
@@ -643,7 +643,7 @@ static void place_group(
         Vecf3 const rot{from_le(s.rot.x), from_le(s.rot.y), from_le(s.rot.z)};
         place_object(
             c,
-            from_le(pal.value()[ref][0].tag_id),
+            pal.value()[ref][0].tag_id.value(),
             spawn_transform(pos, rot),
             kind,
             net_id_of(kind, i));
@@ -662,7 +662,7 @@ static void place_netgame_items(
     for(u32 e = 0; e < equipment.value().size(); e++)
     {
         auto const& entry    = equipment.value()[e];
-        auto const* coll_tag = tag_by_id(c, from_le(entry.item.tag_id));
+        auto const* coll_tag = tag_by_id(c, entry.item.tag_id.value());
         if(!coll_tag || !coll_tag->matches(blam::tag_class_t::itmc))
             continue;
         auto coll =
@@ -676,7 +676,7 @@ static void place_netgame_items(
             from_le(entry.pos.x), from_le(entry.pos.y), from_le(entry.pos.z)};
         place_object(
             c,
-            from_le(items.value()[0].item.tag_id),
+            items.value()[0].item.tag_id.value(),
             spawn_transform(pos, {from_le(entry.facing), 0.f, 0.f}),
             kind_netgame_item,
             net_id_of(kind_netgame_item, e));
@@ -698,10 +698,10 @@ static u32 player_biped_id(blam::map_container<V> const& c)
             return 0xFFFFFFFF;
         if(auto mp = g.value()->multiplayer.data(c.magic);
            !mp.has_error() && !mp.value().empty())
-            return from_le(mp.value()[0].unit.tag_id);
+            return mp.value()[0].unit.tag_id.value();
         if(auto sp = g.value()->player.data(c.magic);
            !sp.has_error() && !sp.value().empty())
-            return from_le(sp.value()[0].unit.tag_id);
+            return sp.value()[0].unit.tag_id.value();
         return 0xFFFFFFFF;
     }
     return 0xFFFFFFFF;
@@ -746,7 +746,7 @@ static void build_objects(
         if(auto unit = t->template data<blam::scn::object>(c.magic);
            !unit.has_error())
         {
-            g_player_model = from_le(unit.value()->model.tag_id);
+            g_player_model = unit.value()->model.tag_id.value();
             if(g_models.find(g_player_model) == g_models.end() &&
                tag_by_id(c, g_player_model))
                 load_model_cpu(c, g_player_model);

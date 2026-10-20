@@ -112,12 +112,10 @@ struct alignas(4) tag_t
 
     inline auto as_ref() const
     {
-        tagref_t out = {
-            .tag_class = tag_class(),
-            .name      = name,
-            .tag_id    = tag_id,
-        };
-        out.tag_class = tag_class();
+        tagref_t out{};
+        out.tag_class = basic_tag_class<std::endian::little>::of(tag_class());
+        out.name      = name;
+        out.tag_id    = {tag_id};
         return out;
     }
 };

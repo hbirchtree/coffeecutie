@@ -1829,12 +1829,12 @@ struct ResourceLoader
         }
         blam::tag_t const& object_tag = *tag_it;
         if(spawn.object.tag_class != blam::tag_class_t::none &&
-           !object_tag.matches(spawn.object.tag_class))
+           !object_tag.matches(spawn.object.class_id()))
         {
             cWarning(
                 "Cannot spawn {}: tag class {} expected, found {}",
                 index.name_of(object_tag),
-                blam::to_string(spawn.object.tag_class),
+                blam::to_string(spawn.object.class_id()),
                 blam::to_string(object_tag.tag_class()));
             return;
         }
@@ -2222,7 +2222,7 @@ struct ResourceLoader
         auto const& magic = files.container.magic;
         if(physics_cache.load_generation != files.load_generation)
             physics_cache = {.load_generation = files.load_generation};
-        auto key = std::pair{collider.tag_id, model.tag_id};
+        auto key = std::pair{collider.tag_id.value(), model.tag_id.value()};
         if(auto it = physics_cache.collision.find(key);
            it != physics_cache.collision.end())
             return it->second;
@@ -2371,10 +2371,10 @@ struct ResourceLoader
     std::shared_ptr<MassPoints const> object_mass_points(
         BlamFiles<Ver> const& files, blam::tagref_t const& physics)
     {
-        if(auto it = physics_cache.mass_points.find(physics.tag_id);
+        if(auto it = physics_cache.mass_points.find(physics.tag_id.value());
            it != physics_cache.mass_points.end())
             return it->second;
-        auto& out = physics_cache.mass_points[physics.tag_id];
+        auto& out = physics_cache.mass_points[physics.tag_id.value()];
 
         auto const& magic = files.container.magic;
         auto        tag   = index.find(physics);
@@ -2438,10 +2438,10 @@ struct ResourceLoader
     std::optional<std::pair<Vecf3, Vecf3>> model_bounds(
         ModelCache<Ver>& model_cache, blam::tagref_t const& model)
     {
-        if(auto it = physics_cache.bounds.find(model.tag_id);
+        if(auto it = physics_cache.bounds.find(model.tag_id.value());
            it != physics_cache.bounds.end())
             return it->second;
-        auto&                                    out = physics_cache.bounds[model.tag_id];
+        auto&                                    out = physics_cache.bounds[model.tag_id.value()];
         blam::mod2::header<Ver> const* header = model_cache.get_header(model);
         if(!header)
             return out;

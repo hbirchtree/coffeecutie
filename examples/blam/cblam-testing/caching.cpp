@@ -475,7 +475,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         {
             auto shader    = shader_cache.predict(mat.shader);
             auto vertex_id = lightmap.lightmap_idx |
-                             (static_cast<u64>(mat.shader.tag_id) << 32);
+                             (static_cast<u64>(mat.shader.tag_id.value()) << 32);
 
             auto [vr, lr] = [&] {
                 if constexpr(std::is_same_v<V, blam::mcc_version_t>)
@@ -1452,10 +1452,10 @@ ShaderItem ShaderCache<V>::predict_impl(const blam::tagref_t& shader)
 
     ShaderItem out = {};
     out.tag        = &(*it);
-    out.tag_class  = shader.tag_class;
+    out.tag_class  = shader.class_id();
     out.header     = extract_shader<blam::shader::radiosity_properties>(it);
 
-    switch(shader.tag_class)
+    switch(shader.class_id())
     {
     case tag_class_t::senv: {
         auto const& shader_model = *extract_shader<shader_env>(it);
@@ -2346,7 +2346,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
 
         /* The slot is cut on first request; an image without one is one the
          * census never saw, so no bucket was ever sized for it. */
-        auto const key     = std::make_tuple(bitmap.tag_id, idx);
+        auto const key     = std::make_tuple(bitmap.tag_id.value(), idx);
         auto       slot_it = m_slots.find(key);
         if(slot_it == m_slots.end())
             slot_it = assign_slot(key);

@@ -45,6 +45,12 @@ struct basic_tag_index
         return value() != 0xFFFFFFFF;
     }
 
+    template<tag_class_t... Other>
+    inline bool operator==(basic_tag_index<E, Other...> const& other) const
+    {
+        return value() == other.value();
+    }
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wclass-conversion"
 
@@ -58,6 +64,12 @@ struct basic_tag_index
 
 #pragma GCC diagnostic pop
 };
+
+template<std::endian E, tag_class_t... Classes>
+inline libc_types::u32 format_as(basic_tag_index<E, Classes...> const& id)
+{
+    return id.value();
+}
 
 /*!
  * \brief The tag table entry a handle names: the low half is the position,

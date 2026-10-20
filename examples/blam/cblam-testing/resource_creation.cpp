@@ -465,9 +465,9 @@ void create_resources(compo::EntityContainer& e)
                              continue;
                          objects[net.instance_id] = {
                              {"net_id", net.instance_id},
-                             {"tag_id", net.object.tag_id},
+                             {"tag_id", net.object.tag_id.value()},
                              {"tag_class",
-                              blam::to_string(net.object.tag_class)},
+                              blam::to_string(net.object.class_id())},
                              {"position",
                               nlohmann::json{
                                   model.position.x,

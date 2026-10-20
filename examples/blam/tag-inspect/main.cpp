@@ -2680,7 +2680,7 @@ void dump_mode(blam::mod2::header<Ver> const* info)
     fmt::print("  shaders={}\n", count_of(g_magic, info->shaders));
     each(g_magic, info->shaders, [](size_t i, auto const& shader) {
         /* tag_class_t holds a fourcc, which magic_enum cannot name. */
-        u32 const  cls       = static_cast<u32>(shader.ref.tag_class);
+        u32 const  cls       = static_cast<u32>(shader.ref.class_id());
         char const fourcc[5] = {
             static_cast<char>((cls >> 24) & 0xFF),
             static_cast<char>((cls >> 16) & 0xFF),
@@ -3398,7 +3398,7 @@ void scan_tagrefs(
         auto const* r = reinterpret_cast<blam::tagref_t const*>(base + off);
         if(!r->valid())
             continue;
-        auto it = by_id.find(r->tag_id);
+        auto it = by_id.find(r->tag_id.value());
         if(it == by_id.end() || it->second->tag_class() != r->tag_class)
             continue;
         auto n = it->second->to_name().to_string(g_magic);
@@ -3646,11 +3646,11 @@ void scan_region_tagrefs(
         auto const* r = reinterpret_cast<blam::tagref_t const*>(base + off);
         if(!r->valid())
             continue;
-        auto it = by_id.find(r->tag_id);
+        auto it = by_id.find(r->tag_id.value());
         if(it == by_id.end() || it->second->tag_class() != r->tag_class)
             continue;
         fmt::print(
-            "    +0x{:06x}  {}\n", off, describe_tag_id(index, r->tag_id));
+            "    +0x{:06x}  {}\n", off, describe_tag_id(index, r->tag_id.value()));
     }
 }
 
@@ -3705,7 +3705,7 @@ void dump_snd(blam::tag_index_view<Ver> const& index, blam::tagref_t const& ref)
     if(snd->promotion_sound.valid())
         fmt::print(
             "    promotion={} count={}\n",
-            describe_tag_id(index, snd->promotion_sound.tag_id),
+            describe_tag_id(index, snd->promotion_sound.tag_id.value()),
             snd->promotion_count);
 
     auto ranges = index.deref(*tag, snd->pitch_ranges_);
@@ -3843,7 +3843,7 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 
     for(info const& bsp : infos.value())
     {
-        if(bsp.tag.tag_id != tag.tag_id)
+        if(bsp.tag.tag_id.value() != tag.tag_id)
             continue;
         auto const magic   = bsp.bsp_magic(index.magic());
         auto       maybe_h = bsp.to_header(index.magic());
@@ -4055,7 +4055,7 @@ void find_tag_id_refs(
             index.magic(),
             scn.value()->bsp_info,
             [&](blam::bsp::info const& bsp) {
-                auto it = tags_by_id(index).find(bsp.tag.tag_id);
+                auto it = tags_by_id(index).find(bsp.tag.tag_id.value());
                 if(it != tags_by_id(index).end())
                     regions.push_back({blam::from_le(bsp.offset), it->second});
             });
@@ -4447,7 +4447,7 @@ void dump_mirrors(
                             auto const* sh =
                                 reinterpret_cast<blam::tagref_t const*>(
                                     e + 16 + pad);
-                            if(!sh->valid() || !is_shader_class(sh->tag_class))
+                            if(!sh->valid() || !is_shader_class(sh->class_id()))
                                 continue;
 
                             auto const* vr =

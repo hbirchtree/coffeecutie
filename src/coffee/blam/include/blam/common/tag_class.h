@@ -289,6 +289,13 @@ struct basic_tag_class
 {
     std::array<libc_types::u8, 4> raw;
 
+    /*! A class stored the way E's files store it */
+    static constexpr basic_tag_class of(tag_class_t cls)
+    {
+        auto v = from_endian<E>(static_cast<libc_types::u32>(cls));
+        return {std::bit_cast<std::array<libc_types::u8, 4>>(v)};
+    }
+
     inline tag_class_t id() const
     {
         libc_types::u32 v;
