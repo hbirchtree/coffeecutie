@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_reference.h"
 #include "blam_tag_ref.h"
@@ -13,6 +14,8 @@ enum class font_flags_t : u16
 
 struct alignas(32) font
 {
+    static constexpr tag_class_t tag_class = tag_class_t::font;
+
     struct character_mapping
     {
         i16 index{}; /* Probably -1 for most?*/

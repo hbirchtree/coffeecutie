@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "structures.h"
 
 #include <glm/gtc/quaternion.hpp>
@@ -246,6 +247,8 @@ static_assert(sizeof(resource_group_t) == 0x14);
 
 struct alignas(4) header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::jmad;
+
     tag_reference<tag_class_t::jmad> parent;
     u8                               inheritance_flags; /* TODO: flags */
     u8                               private_flags;     /* TODO: flags */

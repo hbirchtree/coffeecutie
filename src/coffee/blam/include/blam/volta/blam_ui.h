@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_reference.h"
 #include "blam_tag_ref.h"
@@ -13,6 +14,8 @@ using vec4i16 = typing::vectors::tvector<i16, 4>;
 
 struct ui_element
 {
+    static constexpr tag_class_t tag_class = tag_class_t::DeLa;
+
     enum class widget_type_t : u16
     {
         container,
@@ -560,6 +563,8 @@ static_assert(sizeof(ui_element) == 1004);
 
 struct ui_item_collection
 {
+    static constexpr tag_class_t tag_class = tag_class_t::Soul;
+
     struct widget_definition_t
     {
         tagref_typed_t<tag_class_t::DeLa> definition;
@@ -589,6 +594,8 @@ struct argb8_t
 
 struct unit_hud_interface
 {
+    static constexpr tag_class_t tag_class = tag_class_t::unhi;
+
     struct multitex_effectors_t
     {
         u32 padding_0[16];
@@ -959,6 +966,8 @@ static_assert(offsetof(unit_hud_interface, auxiliary_hud_meters) == 0x3cc);
 
 struct grenade_hud_interface
 {
+    static constexpr tag_class_t tag_class = tag_class_t::grhi;
+
     struct overlay_t : unit_hud_interface::background_base_t
     {
         unit_hud_interface::colors_t colors;
@@ -1048,6 +1057,8 @@ C_FLAGS(grenade_hud_interface::messaging_information_t::flags_t, u8)
 
 struct weapon_hud_interface
 {
+    static constexpr tag_class_t tag_class = tag_class_t::wphi;
+
     enum class attached_to_t : u16
     {
         total_ammo,
@@ -1275,6 +1286,8 @@ C_FLAGS(weapon_hud_interface::overlay_t::flags_t, u32)
 /* hud#: the font of digits HUD numbers are drawn in */
 struct hud_number
 {
+    static constexpr tag_class_t tag_class = tag_class_t::hud;
+
     tagref_typed_t<tag_class_t::bitm> digits_bitmap;
     i8                                bitmap_digit_width;
     i8                                screen_digit_width;
@@ -1292,6 +1305,8 @@ static_assert(sizeof(hud_number) == 100);
  * Xbox ui.map. */
 struct hud_globals
 {
+    static constexpr tag_class_t tag_class = tag_class_t::hudg;
+
     /* What a "%a-button" style token in HUD and menu text draws */
     struct button_icon_t
     {
@@ -1325,6 +1340,8 @@ static_assert(offsetof(hud_globals, button_icons) == 0xc4);
 
 struct virtual_keyboard
 {
+    static constexpr tag_class_t tag_class = tag_class_t::vcky;
+
     struct virtual_key_t
     {
         u16 key;

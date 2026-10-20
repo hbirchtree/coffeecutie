@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "../volta/blam_bitm.h"
 
 #include "structures.h"
@@ -114,6 +115,8 @@ static_assert(sizeof(image_t) == 0x74);
  */
 struct alignas(4) header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::bitm;
+
     u16 type;
     u16 format;
     u16 usage;

@@ -48,7 +48,7 @@ static_assert(sizeof(decorator_type_t) == 0x5C);
  * sharing one texture */
 struct decorator_set_t
 {
-    static constexpr tag_class_t group = tag_class_t::dctr;
+    static constexpr tag_class_t tag_class = tag_class_t::dctr;
 
     tag_reference<>                    render_model;
     tag_block<string_id>             instance_names;

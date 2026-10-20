@@ -263,7 +263,7 @@ static_assert(sizeof(weapon_first_person_t) == 0x20);
 /*! weapon ("weap") */
 struct weapon_t
 {
-    static constexpr tag_class_t group = tag_class_t::weap;
+    static constexpr tag_class_t tag_class = tag_class_t::weap;
 
     object_t                         object;
     std::array<u8, 0x324>            unknown_0;
@@ -298,7 +298,7 @@ static_assert(sizeof(light_function_t) == 0x24);
 /*! light ("ligh"): a dynamic light, sphere or frustum */
 struct light_t
 {
-    static constexpr tag_class_t group = tag_class_t::ligh;
+    static constexpr tag_class_t tag_class = tag_class_t::ligh;
 
     be<u32>          flags;
     be<light_type_t> type;
@@ -326,7 +326,7 @@ static_assert(offsetof(light_t, lens_flare) == 0x84);
 /*! model ("hlmt"): the render model and its LOD */
 struct model_t
 {
-    static constexpr tag_class_t group = tag_class_t::hlmt;
+    static constexpr tag_class_t tag_class = tag_class_t::hlmt;
 
     tag_reference<>        render_model;
     tag_reference<>        collision_model;

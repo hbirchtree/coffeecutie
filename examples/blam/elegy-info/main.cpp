@@ -1066,7 +1066,7 @@ int dump_animations(elegy::map_container const& map, elegy::resource_loader& loa
     u32 decoded = 0, failed = 0;
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, elegy::animation_graph_t::group) ||
+        if(!tag.valid() || !map.is(tag, elegy::animation_graph_t::tag_class) ||
            map.name_of(tag).find(options.name_filter) == std::string_view::npos)
             continue;
         auto const* graph = map.tag_data<elegy::animation_graph_t>(tag);
@@ -1099,7 +1099,7 @@ int dump_camera_fx(elegy::map_container const& map, options_t const& options)
     };
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, elegy::camera_fx_settings_t::group) ||
+        if(!tag.valid() || !map.is(tag, elegy::camera_fx_settings_t::tag_class) ||
            map.name_of(tag).find(options.name_filter) == std::string_view::npos)
             continue;
         auto const* fx = map.tag_data<elegy::camera_fx_settings_t>(tag);
@@ -1136,7 +1136,7 @@ int check_mips(elegy::map_container const& map, elegy::resource_loader& loader, 
     };
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, elegy::bitmap_t::group) ||
+        if(!tag.valid() || !map.is(tag, elegy::bitmap_t::tag_class) ||
            map.name_of(tag).find(options.name_filter) == std::string_view::npos)
             continue;
         auto const* bitmap = map.tag_data<elegy::bitmap_t>(tag);
@@ -1219,7 +1219,7 @@ int dump_decorators(elegy::map_container const& map, elegy::resource_loader& loa
     auto const magic = map.magic();
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, elegy::structure_bsp_t::group) ||
+        if(!tag.valid() || !map.is(tag, elegy::structure_bsp_t::tag_class) ||
            map.name_of(tag).find(options.name_filter) == std::string_view::npos)
             continue;
         auto const* bsp = map.tag_data<elegy::structure_bsp_t>(tag);
@@ -1276,7 +1276,7 @@ int dump_lights(elegy::map_container const& map, options_t const& options)
 {
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, elegy::light_t::group) ||
+        if(!tag.valid() || !map.is(tag, elegy::light_t::tag_class) ||
            map.name_of(tag).find(options.name_filter) == std::string_view::npos)
             continue;
         auto const* light = map.tag_data<elegy::light_t>(tag);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "structures.h"
 
 namespace blam::dimeter::fog {
@@ -23,6 +24,8 @@ static_assert(sizeof(patchy_fog_t) == 0x34);
 
 struct alignas(4) header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::fog;
+
     u16                       flags;
     i16                       priority;
     string_id                 global_material_name;

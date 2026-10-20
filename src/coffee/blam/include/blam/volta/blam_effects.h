@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_reference.h"
 #include "blam_shaders.h"
@@ -29,6 +30,8 @@ constexpr u32 material_type_count = 33;
  *  material, aka foot */
 struct material_effects
 {
+    static constexpr tag_class_t tag_class = tag_class_t::foot;
+
     struct material_t
     {
         tagref_typed_t<tag_class_t::effe> effect;
@@ -53,6 +56,8 @@ static_assert(sizeof(material_effects) == 140);
 /*! Camera path for a seat or unit, aka trak */
 struct camera_track
 {
+    static constexpr tag_class_t tag_class = tag_class_t::trak;
+
     struct control_point_t
     {
         Vecf3 position;
@@ -71,6 +76,8 @@ static_assert(sizeof(camera_track) == 48);
 /*! Damage, screen effects and camera shake, aka jpt! */
 struct damage_effect
 {
+    static constexpr tag_class_t tag_class = tag_class_t::jpt;
+
     enum class flags_t : u32
     {
         none                            = 0x0,

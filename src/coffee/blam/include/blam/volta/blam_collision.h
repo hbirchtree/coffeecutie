@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_bsp_structures.h"
 #include "blam_reference.h"
 #include "blam_strings.h"
@@ -90,6 +91,8 @@ static_assert(offsetof(node, bsps) == 0x34);
 
 struct header
 {
+    static constexpr tag_class_t tag_class = tag_class_t::coll;
+
     u32 flags;
     u32 indirect_damage_material;
 

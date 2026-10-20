@@ -12,26 +12,7 @@ namespace blam::elegy {
  * is of another group. Dereferences to the data.
  */
 template<typename T>
-struct tagged
-{
-    tag_t const* tag{nullptr};
-    T const*     data{nullptr};
-
-    inline explicit operator bool() const
-    {
-        return data != nullptr;
-    }
-
-    inline T const* operator->() const
-    {
-        return data;
-    }
-
-    inline T const& operator*() const
-    {
-        return *data;
-    }
-};
+using tagged = blam::tagged<T, tag_t>;
 
 /*!
  * \brief Read-only view of a Halo 3 cache file, held resident. Wires the
@@ -46,6 +27,8 @@ struct map_container
     using result_type = result<map_container, map_load_error>;
     using tag_type    = tag_t;
     using handle_type = datum_index;
+
+    static constexpr bool checks_class = true;
 
     file_header_t const* header{nullptr};
     tag_index_t const*   index{nullptr};
@@ -182,19 +165,12 @@ struct map_container
         return tag.data<T>(magic());
     }
 
-    /*! The tag `id` names, read as T; checked against T::group when T is
+    /*! The tag `id` names, read as T; checked against T::tag_class when T is
      * one group's (object_t and render_method_t span several) */
     template<typename T>
     inline tagged<T> get(datum_index id) const
     {
-        auto const* tag = tag_at(id);
-        if(!tag)
-            return {};
-        if constexpr(requires { T::group; })
-            if(!is(*tag, T::group))
-                return {};
-        auto const* data = tag_data<T>(*tag);
-        return data ? tagged<T>{tag, data} : tagged<T>{};
+        return blam::get<T>(*this, id);
     }
 
     /*! Name of the tag `ref` points at, empty when it is null */
@@ -214,7 +190,7 @@ struct map_container
     template<typename T>
     inline tagged<T> find(std::string_view name = {}) const
     {
-        auto const* tag = find(T::group, name);
+        auto const* tag = find(T::tag_class, name);
         return tag ? get<T>(id_of(*tag)) : tagged<T>{};
     }
 
@@ -294,6 +270,18 @@ inline datum_index handle_of(map_container const& map, tag_t const& tag)
 inline std::string_view name_of(map_container const& map, tag_t const& tag)
 {
     return map.name_of(tag);
+}
+
+inline tag_class_t class_of(map_container const& map, tag_t const& tag)
+{
+    auto const* group = map.group_of(tag);
+    return group ? group->group.id() : tag_class_t::none;
+}
+
+template<typename T>
+inline T const* data_of(map_container const& map, tag_t const& tag)
+{
+    return map.tag_data<T>(tag);
 }
 
 static_assert(tag_map<map_container>);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_reference.h"
 #include "blam_strings.h"
@@ -122,6 +123,8 @@ struct alignas(4) tag_t
 
 struct tag_collection_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::tagc;
+
     reference<tagref_t> tags;
 };
 

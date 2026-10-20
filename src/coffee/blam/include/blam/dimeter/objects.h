@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "collision.h"
 #include "structures.h"
 
@@ -587,6 +588,8 @@ C_FLAGS(character_physics_flags_t, u32);
 /*! bipd */
 struct alignas(4) biped_t : unit_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::bipd;
+
     f32                             moving_turning_speed; /* degrees */
     biped_flags_t                   biped_flags;
     f32                             stationary_turning_threshold;
@@ -718,6 +721,8 @@ C_FLAGS(vehicle_physics_flags_t, u32);
 /*! vehi (Halo2Xbox layout) */
 struct alignas(4) vehicle_t : unit_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::vehi;
+
     vehicle_flags_t                  vehicle_flags;
     u16                              vehicle_type_raw;
     vehicle_control_t                control;
@@ -1138,6 +1143,8 @@ enum class tracking_type_t : u16
 /*! weap */
 struct alignas(4) weapon_t : item_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::weap;
+
     weapon_flags_t                   weapon_flags;
     string_id                        unknown_3;
     secondary_trigger_mode_t         secondary_trigger_mode;
@@ -1232,6 +1239,8 @@ enum class powerup_type_t : u16
 /*! eqip */
 struct alignas(4) equipment_t : item_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::eqip;
+
     u16                             powerup_type_raw;
     unit_grenade_type_t             grenade_type;
     f32                             powerup_time;
@@ -1321,6 +1330,8 @@ enum class machine_pathfinding_policy_t : u16
 /*! mach */
 struct alignas(4) machine_t : device_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::mach;
+
     u16                            machine_type_raw;
     machine_flags_t                machine_flags;
     f32                            door_open_time;
@@ -1355,6 +1366,8 @@ enum class triggers_when_t : u16
 /*! ctrl */
 struct alignas(4) control_t : device_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::ctrl;
+
     control_type_t                   control_type;
     triggers_when_t                  triggers_when;
     f32                              call_value;
@@ -1376,6 +1389,8 @@ C_FLAGS(crate_flags_t, u16);
 /*! bloc */
 struct alignas(4) crate_t : object_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::bloc;
+
     crate_flags_t crate_flags;
     i16           unknown_2;
 };
@@ -1397,6 +1412,8 @@ C_FLAGS(creature_flags_t, u32);
 /*! crea, the fields before its physics */
 struct alignas(4) creature_t : object_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::crea;
+
     creature_flags_t              creature_flags;
     team_t                        default_team;
     blip_size_t                   motion_sensor_blip_size;
@@ -1537,6 +1554,8 @@ enum class shadow_fade_t : u16
 /*! hlmt */
 struct alignas(4) hlmt_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::hlmt;
+
     tag_reference<tag_class_t::mode> render_model;    /*!< mode */
     tag_reference<tag_class_t::coll> collision_model; /*!< coll */
     tag_reference<tag_class_t::jmad> animation;       /*!< jmad */
@@ -1634,6 +1653,8 @@ C_FLAGS(model_flags_t, u32);
 
 struct alignas(4) model_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::coll;
+
     u8                              unknown_0[0x10];
     model_flags_t                   flags;
     tag_block<material_t>           materials;
@@ -1855,6 +1876,8 @@ static_assert(sizeof(node_t) == 0xC);
 
 struct alignas(4) model_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::phmo;
+
     u32                     flags; /* TODO: bits unknown */
     f32                     mass;
     f32                     low_frequency_deactivation_scale;
@@ -2418,6 +2441,8 @@ static_assert(sizeof(weapons_t) == 0xCC);
 
 struct alignas(4) character_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::char_;
+
     u32                               flags; /* TODO: bits unknown */
     tag_reference<tag_class_t::char_> parent_character;
     tag_reference<tag_class_t::bipd, tag_class_t::vehi>
@@ -2679,6 +2704,8 @@ static_assert(sizeof(material_t) == 0xB4);
 
 struct alignas(4) globals_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::matg;
+
     u8                                   unknown_0[0xAC];
     language_t                           language;
     tag_block<u8>                        havok_cleanup_resources; /* elem 8 */
@@ -2761,6 +2788,8 @@ static_assert(sizeof(sky_light_t) == 0x34);
 
 struct alignas(4) sky_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::sky;
+
     tag_reference<tag_class_t::mode> render_model; /*!< mode */
     tag_reference<tag_class_t::jmad> animation_graph;
     u32                              flags; /* TODO: flags */
@@ -2814,6 +2843,8 @@ static_assert(sizeof(lens_reflection_t) == 0x30);
 /*! lens: lens flare */
 struct alignas(4) lens_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::lens;
+
     f32                                falloff_angle;
     f32                                cutoff_angle;
     f32                                cos_falloff_angle;

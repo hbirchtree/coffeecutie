@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "blam_base_types.h"
 #include "blam_tag_classes.h"
 #include "blam_tag_ref.h"
@@ -95,6 +96,8 @@ struct pitch_range_t
 
 struct sound
 {
+    static constexpr tag_class_t tag_class = tag_class_t::snd;
+
     enum flags_t : u32
     {
         none                               = 0x0,
@@ -245,6 +248,8 @@ static_assert(sizeof(detail_sound_t) == 104);
 
 struct looping_sound
 {
+    static constexpr tag_class_t tag_class = tag_class_t::lsnd;
+
     enum flags_t : u32
     {
         none            = 0x0,
@@ -266,6 +271,8 @@ static_assert(sizeof(looping_sound) == 84);
 /* Reverb parameters, already linear (EFX/EAX reverb units) */
 struct environment
 {
+    static constexpr tag_class_t tag_class = tag_class_t::snde;
+
     u32 flags;
     i16 priority;
     u16 padding;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "ai.h"
 #include "geometry.h"
 #include "objects.h"
@@ -1194,6 +1195,8 @@ static_assert(sizeof(bsp_lighting_t) == 0x10);
 /*! scnr body (Xbox offsets, 0x3E0 bytes) */
 struct alignas(4) scenario_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::scnr;
+
     tag_reference<>                      unused;
     tag_block<sky_ref_t>                 skies;
     u16                                  type_raw;

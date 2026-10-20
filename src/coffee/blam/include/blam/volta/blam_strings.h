@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include <peripherals/error/result.h>
 
 #include <utf8cpp/utf8.h>
@@ -175,6 +176,8 @@ struct unicode_string
 
 struct unicode_string_list
 {
+    static constexpr tag_class_t tag_class = tag_class_t::ustr;
+
     reference<unicode_string> data;
 };
 

@@ -4509,7 +4509,8 @@ void dump_mirrors(
 
 /* Every index entry must resolve to itself by its own id */
 template<typename Ver>
-void check_lookup(blam::tag_index_view<Ver> const& index)
+void check_lookup(
+    blam::map_container<Ver> const& map, blam::tag_index_view<Ver> const& index)
 {
     u32 total = 0, missed = 0;
     for(auto it = index.begin(); it != index.end(); ++it)
@@ -4528,6 +4529,16 @@ void check_lookup(blam::tag_index_view<Ver> const& index)
             it->to_name().to_string(g_magic));
     }
     fmt::print("lookup: {}/{} resolved\n", total - missed, total);
+
+    /* The scenario is tag 0; read as a bitmap it is refused unless the map's
+     * classes cannot be trusted */
+    blam::tag_index<> const scnr{index.begin()->tag_id};
+    bool const as_scenario = static_cast<bool>(blam::get<blam::scn::scenario<Ver>>(map, scnr));
+    bool const as_bitmap   = static_cast<bool>(blam::get<blam::bitm::header_t>(map, scnr));
+    fmt::print(
+        "typed get: scenario {}, as bitmap {}\n",
+        as_scenario ? "read" : "refused",
+        as_bitmap ? "read" : "refused");
 }
 
 template<typename Ver>
@@ -4597,7 +4608,7 @@ void open_map(
 
     if(g_check_lookup)
     {
-        check_lookup<Ver>(index);
+        check_lookup<Ver>(map, index);
         return;
     }
 

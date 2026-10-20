@@ -167,7 +167,7 @@ static_assert(sizeof(cluster_portal_t) == 0x28);
  */
 struct structure_bsp_t
 {
-    static constexpr tag_class_t group = tag_class_t::sbsp;
+    static constexpr tag_class_t tag_class = tag_class_t::sbsp;
 
     be<i32>                               import_checksum;
     be<i32>                               import_version;
@@ -301,7 +301,7 @@ static_assert(sizeof(lightmap_bsp_t) == 0x1B4);
 /*! scenario_lightmap ("sLdT"), one entry per BSP */
 struct scenario_lightmap_t
 {
-    static constexpr tag_class_t group = tag_class_t::sLdT;
+    static constexpr tag_class_t tag_class = tag_class_t::sLdT;
 
     u32                       unknown_0;
     tag_block<lightmap_bsp_t> bsps;
@@ -373,7 +373,7 @@ static_assert(sizeof(atmosphere_setting_t) == 0xA4);
 /*! sky_atm_parameters ("skya"): patchy fog sheets and the atmospheres */
 struct sky_atmosphere_t
 {
-    static constexpr tag_class_t group = tag_class_t::skya;
+    static constexpr tag_class_t tag_class = tag_class_t::skya;
 
     be<u16>                         flags;
     u16                             unknown_0;
@@ -403,7 +403,7 @@ struct camera_fx_value_t
 /*! camera_fx_settings ("cfxs"); exposures in stops */
 struct camera_fx_settings_t
 {
-    static constexpr tag_class_t group = tag_class_t::cfxs;
+    static constexpr tag_class_t tag_class = tag_class_t::cfxs;
 
     be<u16>                    flags;
     u16                        unknown_0;
@@ -519,7 +519,7 @@ static_assert(sizeof(zone_set_switch_trigger_t) == 0x8);
 
 struct scenario_t
 {
-    static constexpr tag_class_t group = tag_class_t::scnr;
+    static constexpr tag_class_t tag_class = tag_class_t::scnr;
 
     std::array<u8, 0x14>             unknown_0;
     tag_block<scenario_bsp_t>        bsps;

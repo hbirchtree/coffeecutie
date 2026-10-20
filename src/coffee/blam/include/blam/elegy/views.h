@@ -126,7 +126,7 @@ inline lightmap_bsp_t const* lightmap_of(map_container const& map, i16 bsp)
 {
     for(auto const& tag : map.tags())
     {
-        if(!tag.valid() || !map.is(tag, scenario_lightmap_t::group))
+        if(!tag.valid() || !map.is(tag, scenario_lightmap_t::tag_class))
             continue;
         if(auto const* lightmap = map.tag_data<scenario_lightmap_t>(tag))
             for(auto const& entry : map.span(lightmap->bsps))

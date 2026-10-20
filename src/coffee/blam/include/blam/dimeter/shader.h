@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/tag_class.h"
 #include "structures.h"
 
 #include <array>
@@ -84,6 +85,8 @@ static_assert(sizeof(properties_t) == 40);
 
 struct alignas(4) header_t
 {
+    static constexpr tag_class_t tag_class = tag_class_t::stem;
+
     u8                      unknown_0[88];
     tag_block<properties_t> properties;
 };
