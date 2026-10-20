@@ -1143,12 +1143,12 @@ struct alignas(4) structure_bsp_ref_t
     {
         if(meta_address() > map_magic.max_size)
             return {};
-        return bsp_magic{
-            .base        = map_magic.base,
-            .max_size    = map_magic.max_size,
-            .meta_offset = meta_address(),
-            .mask        = magic(),
-        };
+        return bsp_magic{{
+            .base         = map_magic.base,
+            .max_size     = map_magic.max_size,
+            .file_offset  = meta_address(),
+            .virtual_base = magic(),
+        }};
     }
 
     inline bsp_region_header_t const* region(tag_magic const& map_magic) const

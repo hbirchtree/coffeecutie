@@ -766,7 +766,7 @@ void emit_triangles(obj_writer& obj, Span<const u16> indices, bool strip)
 /* Shared blob walk for both BSP (f32 verts) and model (i16-normalized
  * verts) sections; bounds != nullptr selects the model decode, instance
  * != nullptr places the section in world space */
-template<typename Section, blam::dimeter::heap_t Heap>
+template<typename Section, blam::heap_t Heap>
 bool append_section(
     obj_writer&                                   obj,
     blam::dimeter::raw_pool const&                pool,
@@ -1269,7 +1269,7 @@ bool write_collision_obj(
 
     obj_writer obj;
     u32        groups = 0;
-    auto       append = [&](h2::coll::bsp_t<h2::heap_t::bsp> const& bsp,
+    auto       append = [&](h2::coll::bsp_t<blam::heap_t::bsp> const& bsp,
                       h2::bsp_magic const&                 magic,
                       f32 const*             m, /* 4x3 row-major or null */
                       f32                    scale,

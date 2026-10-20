@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/magic.h"
 #include "blam_base_types.h"
 #include "blam_file_header.h"
 
@@ -14,63 +15,49 @@ struct info;
 template<typename V>
 struct tag_index_t;
 
-enum class ptr_tag
+/*! Halo 1 pointers are file offsets shifted by the map's magic */
+template<heap_t Heap>
+struct map_ptr_base : address_range
 {
-    map,
-    bsp,
-    vertex,
-};
-
-template<ptr_tag Tag>
-struct map_ptr_base
-{
-    map_ptr_base()
-    {
-        base_ptr = nullptr;
-    }
+    map_ptr_base() = default;
 
     map_ptr_base(semantic::Span<const u8> const& data, u32 magic = 0)
-        requires(Tag == ptr_tag::map)
-        : file_offset(magic)
-        , max_size(data.size())
+        requires(Heap == heap_t::map)
+        : address_range{data.data(), static_cast<u32>(data.size()), 0, magic}
     {
-        base_ptr = data.data();
     }
 
     inline map_ptr_base& operator=(semantic::Bytes const& data)
-        requires(Tag == ptr_tag::map)
+        requires(Heap == heap_t::map)
     {
-        base_ptr    = data.data;
-        file_offset = 0;
-        max_size    = data.size;
+        base         = data.data;
+        max_size     = data.size;
+        file_offset  = 0;
+        virtual_base = 0;
 
         return *this;
     }
 
     auto data() const
     {
-        return semantic::Span<const u8>(base_ptr, max_size);
+        return semantic::Span<const u8>(base, max_size);
+    }
+
+    inline file_header_t const* header() const
+    {
+        return reinterpret_cast<file_header_t const*>(base);
     }
 
     inline version_t map_version() const
     {
-        return header_ptr->version;
+        return header()->version;
     }
 
     inline map_ptr_base ptr_only() const
-        requires(Tag == ptr_tag::map)
+        requires(Heap == heap_t::map)
     {
         return map_ptr_base(data());
     }
-
-    union
-    {
-        file_header_t const* header_ptr;
-        u8 const*        base_ptr{nullptr};
-    };
-
-    u32 file_offset{0};
-    u32 max_size{0};
 
   private:
     friend struct bsp::info;
@@ -78,16 +65,14 @@ struct map_ptr_base
     friend struct tag_index_t;
 
     map_ptr_base(semantic::Span<const u8> const& data, u32 magic)
-        requires(Tag != ptr_tag::map)
-        : file_offset(magic)
-        , max_size(data.size())
+        requires(Heap != heap_t::map)
+        : address_range{data.data(), static_cast<u32>(data.size()), 0, magic}
     {
-        base_ptr = data.data();
     }
 };
 
-using bsp_ptr = map_ptr_base<ptr_tag::bsp>;
-using map_ptr = map_ptr_base<ptr_tag::map>;
-using vertex_ptr = map_ptr_base<ptr_tag::vertex>;
+using bsp_ptr    = map_ptr_base<heap_t::bsp>;
+using map_ptr    = map_ptr_base<heap_t::map>;
+using vertex_ptr = map_ptr_base<heap_t::vertex>;
 
 } // namespace blam

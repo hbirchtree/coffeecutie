@@ -90,7 +90,7 @@ template<
     typename T,
     typename V,
     blam::atlas_type_t A,
-    blam::ptr_tag      P,
+    blam::heap_t       P,
     typename Fn>
 void each(
     blam::map_ptr_base<P> const&       magic,
@@ -107,7 +107,7 @@ void each(
             fn(item);
 }
 
-template<typename T, typename V, blam::atlas_type_t A, blam::ptr_tag P>
+template<typename T, typename V, blam::atlas_type_t A, blam::heap_t P>
 size_t count_of(
     blam::map_ptr_base<P> const&       magic,
     blam::reference<T, V, A, P> const& block)
@@ -3376,13 +3376,13 @@ void scan_tagrefs(
             blam::from_le(*reinterpret_cast<const u32*>(base + off));
         const u32 ptr =
             blam::from_le(*reinterpret_cast<const u32*>(base + off + 4));
-        if(count == 0 || count > 256 || ptr <= g_magic.file_offset)
+        if(count == 0 || count > 256 || ptr <= g_magic.virtual_base)
             continue;
-        const size_t rel = ptr - g_magic.file_offset;
+        const size_t rel = ptr - g_magic.virtual_base;
         if(rel >= g_magic.max_size)
             continue;
         auto const* target =
-            reinterpret_cast<const u8*>(g_magic.base_ptr) + rel;
+            reinterpret_cast<const u8*>(g_magic.base) + rel;
         const ptrdiff_t delta = target - base;
         if(delta < 0 || delta > 0x20000)
             continue;
@@ -4011,7 +4011,7 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         fmt::print("  tagrefs anywhere in the section:\n");
         scan_region_tagrefs(
             index,
-            reinterpret_cast<u8 const*>(index.magic().base_ptr) +
+            reinterpret_cast<u8 const*>(index.magic().base) +
                 blam::from_le(bsp.offset),
             blam::from_le(bsp.size));
         return;
@@ -4027,7 +4027,7 @@ template<typename Ver>
 void find_tag_id_refs(
     blam::tag_index_view<Ver> const& index, blam::tag_t const& target)
 {
-    auto const* file  = reinterpret_cast<u8 const*>(g_raw_magic.base_ptr);
+    auto const* file  = reinterpret_cast<u8 const*>(g_raw_magic.base);
     size_t const size = g_raw_magic.max_size;
 
     struct region
@@ -4420,7 +4420,7 @@ void dump_mirrors(
                     }
                     u32 const   off = blam::from_le(cluster.mirrors.offset);
                     auto const* raw = reinterpret_cast<const u8*>(
-                        bsp_magic.base_ptr + off - bsp_magic.file_offset);
+                        bsp_magic.base + off - bsp_magic.virtual_base);
 
                     fmt::print(
                         "bsp {} cluster {}: {} mirror(s) @ 0x{:x}\n",
@@ -4556,7 +4556,7 @@ void open_map(
      * with the file offset zeroed. Building one from the file start instead
      * lands on unrelated bytes. */
     g_raw_magic             = map.magic;
-    g_raw_magic.file_offset = 0;
+    g_raw_magic.virtual_base = 0;
     g_bitm_magic            = g_raw_magic;
 
     /* PC and Custom Edition put bitmap pixels in bitmaps.map beside the map;
@@ -4574,7 +4574,7 @@ void open_map(
                 bitmaps_bytes.size()));
         index.add_atlas(blam::atlas_type_t::bitmaps, bitmaps_magic);
         g_bitm_magic             = bitmaps_magic;
-        g_bitm_magic.file_offset = 0;
+        g_bitm_magic.virtual_base = 0;
         g_have_bitmaps_file      = true;
     }
 

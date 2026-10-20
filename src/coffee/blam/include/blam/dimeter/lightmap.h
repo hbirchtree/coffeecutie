@@ -299,12 +299,12 @@ inline bsp_location_t locate_bsp(
     }
     if(auto const* bsp_tag = map.tag_at(ref.bsp.tag_id))
         out.body = bsp_tag->template data<geo::bsp_header_t>(tag_magic);
-    out.magic = bsp_magic{
-        .base        = tag_magic.base,
-        .max_size    = tag_magic.max_size,
-        .meta_offset = tag_magic.meta_offset,
-        .mask        = tag_magic.mask,
-    };
+    out.magic = bsp_magic{{
+        .base         = tag_magic.base,
+        .max_size     = tag_magic.max_size,
+        .file_offset  = tag_magic.file_offset,
+        .virtual_base = tag_magic.virtual_base,
+    }};
     if(auto const* ltmp_tag = map.tag_at(ref.lightmap.tag_id))
         out.lightmap = ltmp_tag->template data<ltmp::header_t>(tag_magic);
     return out;

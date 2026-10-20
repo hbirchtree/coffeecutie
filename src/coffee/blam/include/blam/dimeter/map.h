@@ -349,30 +349,30 @@ struct map_container
     /*! Resolves pointers within the tag index (group + tag tables) */
     inline dimeter::index_magic index_magic() const
     {
-        return dimeter::index_magic{
-            .base        = data.data(),
-            .max_size    = static_cast<u32>(data.size()),
-            .meta_offset = from_le(header->meta_offset),
-            .mask        = index_mask,
-        };
+        return dimeter::index_magic{{
+            .base         = data.data(),
+            .max_size     = static_cast<u32>(data.size()),
+            .file_offset  = from_le(header->meta_offset),
+            .virtual_base = index_mask,
+        }};
     }
 
     /*! Resolves pointers within tag data (tag_t::data, tag_block), the
      * shared map's heap included */
     inline tag_magic magic() const
     {
-        tag_magic out{
-            .base        = data.data(),
-            .max_size    = static_cast<u32>(data.size()),
-            .meta_offset = from_le(header->meta_offset),
-            .mask        = meta_mask,
-        };
+        tag_magic out{{
+            .base         = data.data(),
+            .max_size     = static_cast<u32>(data.size()),
+            .file_offset  = from_le(header->meta_offset),
+            .virtual_base = meta_mask,
+        }};
         if(shared)
             out.shared = {
-                .base        = shared->data.data(),
-                .max_size    = static_cast<u32>(shared->data.size()),
-                .meta_offset = from_le(shared->header->meta_offset),
-                .mask        = shared->meta_mask,
+                .base         = shared->data.data(),
+                .max_size     = static_cast<u32>(shared->data.size()),
+                .file_offset  = from_le(shared->header->meta_offset),
+                .virtual_base = shared->meta_mask,
             };
         return out;
     }

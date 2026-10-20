@@ -24,7 +24,7 @@ template<
     typename T,
     typename V        = grbx_t,
     atlas_type_t Type = atlas_type_t::map_file,
-    ptr_tag PtrType   = ptr_tag::map>
+    heap_t PtrType    = heap_t::map>
 /*!
  * \brief Points to a chunk of memory within the file
  */
@@ -72,7 +72,7 @@ struct alignas(4) reference
         if(host_count == 0)
             return stl_types::success(span_type());
 
-        auto computed_offset = host_offset - magic.file_offset;
+        auto computed_offset = host_offset - magic.virtual_base;
         if(computed_offset > magic.max_size ||
            u64(host_count) * sizeof(T) > magic.max_size - computed_offset)
             return stl_types::failure("reflexive pointer out of bounds"sv);
@@ -80,7 +80,7 @@ struct alignas(4) reference
         span_type chunk =
             chunk_type::of(
                 C_RCAST<T const*>(
-                    magic.base_ptr + host_offset - magic.file_offset),
+                    magic.base + host_offset - magic.virtual_base),
                 host_count)
                 .view;
         return stl_types::success(chunk);
@@ -122,10 +122,10 @@ static_assert(
     "reference_t<..., xbox_t> needs to be 8 bytes");
 
 template<typename T, typename V = grbx_t>
-using bsp_reference = reference<T, V, atlas_type_t::map_file, ptr_tag::bsp>;
+using bsp_reference = reference<T, V, atlas_type_t::map_file, heap_t::bsp>;
 
 template<typename T, typename V = grbx_t>
 using vertex_reference =
-    reference<T, V, atlas_type_t::map_file, ptr_tag::vertex>;
+    reference<T, V, atlas_type_t::map_file, heap_t::vertex>;
 
 } // namespace blam

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/endian.h"
+#include "../common/magic.h"
 #include "../common/tag_class.h"
 #include "../volta/blam_structures.h"
 
@@ -129,68 +130,28 @@ struct raw_ref
 static_assert(sizeof(raw_ref) == 4);
 
 /*!
- * \brief Which address space a pointer belongs to. Index pointers resolve
- * with the index mask, tag data with the meta mask, and every structure BSP
- * region has a mask of its own; typing them keeps a BSP-region block from
- * being resolved through the tag-data translation (same idea as volta's
- * ptr_tag).
- */
-enum class heap_t
-{
-    index,
-    tag,
-    bsp,
-};
-
-/*!
- * \brief Pointer translation for one address space. Halo 2 stores virtual
- * addresses of the Xbox/Vista runtime; a pointer translates to a file offset
- * as meta_offset + (pointer - mask). On Xbox the mask is derived from the
- * tag index (see map_container), on Vista it is stored in the file header;
- * BSP regions carry theirs in the scenario. Equivalent to Assembly's
+ * \brief Pointer translation for one heap. Halo 2 stores virtual addresses of
+ * the Xbox/Vista runtime; on Xbox the virtual base is derived from the tag
+ * index (see map_container), on Vista it is stored in the file header; BSP
+ * regions carry theirs in the scenario. Equivalent to Assembly's
  * MetaOffsetConverter.
  */
 template<heap_t Heap>
-struct magic_ptr_base
+struct magic_ptr_base : address_range
 {
-    u8 const* base{nullptr};
-    u32           max_size{0};
-    u32           meta_offset{0};
-    u32           mask{0};
-
     /*! A second heap pointers may land in: Vista maps borrow tags from
      * shared.map, whose heap sits at its own virtual base */
-    struct range_t
-    {
-        u8 const* base{nullptr};
-        u32           max_size{0};
-        u32           meta_offset{0};
-        u32           mask{0};
-    } shared{};
-
-    inline optional<u32> to_offset(u32 pointer, u32 size = 0) const
-    {
-        /* Unsigned wrap-around takes care of pointers below the mask */
-        u32 offset = meta_offset + (pointer - mask);
-        if(offset >= max_size || size > max_size - offset)
-            return std::nullopt;
-        return offset;
-    }
+    address_range shared{};
 
     /*! The bytes a heap pointer names, in whichever heap holds them */
     inline u8 const* resolve(u32 pointer, u32 size = 0) const
     {
         /* With two heaps a pointer below this heap's base belongs to the
          * other one; the wrap-around only serves single-heap maps */
-        bool const below = shared.base && pointer < mask;
-        if(auto offset = to_offset(pointer, size); base && offset && !below)
-            return base + *offset;
-        if(!shared.base)
-            return nullptr;
-        u32 offset = shared.meta_offset + (pointer - shared.mask);
-        if(offset >= shared.max_size || size > shared.max_size - offset)
-            return nullptr;
-        return shared.base + offset;
+        bool const below = shared.base && pointer < virtual_base;
+        if(auto const* own = address_range::resolve(pointer, size); own && !below)
+            return own;
+        return shared.resolve(pointer, size);
     }
 
     template<typename T>

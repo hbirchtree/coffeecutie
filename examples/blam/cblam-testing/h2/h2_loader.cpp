@@ -955,7 +955,7 @@ struct H2MapLoader : compo::SubsystemBase
     }
 
     /* Appends a collision BSP's surfaces as fanned triangles */
-    template<dim::heap_t Heap>
+    template<blam::heap_t Heap>
     static void append_collision(
         dim::coll::bsp_t<Heap> const&    bsp,
         dim::magic_ptr_base<Heap> const& magic,
@@ -1314,7 +1314,7 @@ struct H2MapLoader : compo::SubsystemBase
     /* Appends one section's geometry under `transform`. `bounds` selects
      * the i16-compressed model vertex format, null means BSP f32 vertices.
      * Returns 1 if anything was emitted. */
-    template<typename Section, dim::heap_t Heap>
+    template<typename Section, blam::heap_t Heap>
     u32 append_section(
         dim::raw_pool const&             pool,
         dim::magic_ptr_base<Heap> const& magic,
@@ -2355,7 +2355,7 @@ struct H2MapLoader : compo::SubsystemBase
         dim::map_container<V> const&                            map,
         dim::raw_pool const&                                    pool,
         dim::ltmp::group_t const&                               group,
-        dim::tag_block<dim::ltmp::render_info_t, dim::heap_t::bsp> const& render_info,
+        dim::tag_block<dim::ltmp::render_info_t, blam::heap_t::bsp> const& render_info,
         dim::bsp_magic const&                                   magic)
     {
         std::vector<LightmapImage const*> out;
@@ -2463,7 +2463,7 @@ struct H2MapLoader : compo::SubsystemBase
     }
 
     static std::vector<SceneryLight> load_bucket_refs(
-        dim::tag_block<dim::ltmp::bucket_ref_t, dim::heap_t::bsp> const& refs,
+        dim::tag_block<dim::ltmp::bucket_ref_t, blam::heap_t::bsp> const& refs,
         dim::bsp_magic const&                                           magic)
     {
         std::vector<SceneryLight> out;
@@ -3211,7 +3211,7 @@ struct H2MapLoader : compo::SubsystemBase
         dim::raw_pool const&                          pool,
         dim::scn::scenario_t const&                   scnr,
         geo::bsp_header_t const&                      bsp,
-        dim::magic_ptr_base<dim::heap_t::bsp> const&  bsp_magic,
+        dim::bsp_magic const&                         bsp_magic,
         i32                                           bsp_idx)
     {
         auto palette = scnr.decorator_palette.data(map.magic());
