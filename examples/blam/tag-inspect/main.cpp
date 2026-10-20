@@ -3338,10 +3338,10 @@ void dump_player_biped(
  * Looked up against a prebuilt map because find() throws on a malformed
  * tagref. */
 template<typename Ver>
-std::map<u32, blam::tag_t const*> const& tags_by_id(
+std::map<blam::tag_index<>, blam::tag_t const*> const& tags_by_id(
     blam::tag_index_view<Ver> const& index)
 {
-    static std::map<u32, blam::tag_t const*> by_id;
+    static std::map<blam::tag_index<>, blam::tag_t const*> by_id;
     if(by_id.empty())
         for(blam::tag_t const& t : index)
             if(t.valid())
@@ -3398,7 +3398,7 @@ void scan_tagrefs(
         auto const* r = reinterpret_cast<blam::tagref_t const*>(base + off);
         if(!r->valid())
             continue;
-        auto it = by_id.find(r->tag_id.value());
+        auto it = by_id.find(r->tag_id);
         if(it == by_id.end() || it->second->tag_class() != r->tag_class)
             continue;
         auto n = it->second->to_name().to_string(g_magic);
@@ -3622,7 +3622,8 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
 }
 
 template<typename Ver>
-std::string describe_tag_id(blam::tag_index_view<Ver> const& index, u32 id)
+std::string describe_tag_id(
+    blam::tag_index_view<Ver> const& index, blam::tag_index<> id)
 {
     auto const& by_id = tags_by_id(index);
     auto        it    = by_id.find(id);
@@ -3646,11 +3647,11 @@ void scan_region_tagrefs(
         auto const* r = reinterpret_cast<blam::tagref_t const*>(base + off);
         if(!r->valid())
             continue;
-        auto it = by_id.find(r->tag_id.value());
+        auto it = by_id.find(r->tag_id);
         if(it == by_id.end() || it->second->tag_class() != r->tag_class)
             continue;
         fmt::print(
-            "    +0x{:06x}  {}\n", off, describe_tag_id(index, r->tag_id.value()));
+            "    +0x{:06x}  {}\n", off, describe_tag_id(index, r->tag_id));
     }
 }
 
@@ -3705,7 +3706,7 @@ void dump_snd(blam::tag_index_view<Ver> const& index, blam::tagref_t const& ref)
     if(snd->promotion_sound.valid())
         fmt::print(
             "    promotion={} count={}\n",
-            describe_tag_id(index, snd->promotion_sound.tag_id.value()),
+            describe_tag_id(index, snd->promotion_sound.tag_id),
             snd->promotion_count);
 
     auto ranges = index.deref(*tag, snd->pitch_ranges_);
@@ -3843,7 +3844,7 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 
     for(info const& bsp : infos.value())
     {
-        if(bsp.tag.tag_id.value() != tag.tag_id)
+        if(bsp.tag.tag_id != tag.tag_id)
             continue;
         auto const magic   = bsp.bsp_magic(index.magic());
         auto       maybe_h = bsp.to_header(index.magic());
@@ -4055,7 +4056,7 @@ void find_tag_id_refs(
             index.magic(),
             scn.value()->bsp_info,
             [&](blam::bsp::info const& bsp) {
-                auto it = tags_by_id(index).find(bsp.tag.tag_id.value());
+                auto it = tags_by_id(index).find(bsp.tag.tag_id);
                 if(it != tags_by_id(index).end())
                     regions.push_back({blam::from_le(bsp.offset), it->second});
             });
@@ -4063,7 +4064,7 @@ void find_tag_id_refs(
         return a.start < b.start;
     });
 
-    u32 const id   = target.tag_id;
+    u32 const id   = target.tag_id.raw;
     u32       hits = 0;
     for(size_t off = 0; off + 4 <= size; off += 4)
     {

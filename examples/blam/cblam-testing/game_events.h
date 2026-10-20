@@ -212,10 +212,10 @@ struct EquipWeaponEvent
                         what does not fit */
     };
 
-    u64    entity_id{0};
-    u32    weapon{0};
-    u32    slung{0};
-    how_t  mode{draw};
+    u64               entity_id{0};
+    blam::tag_index<> weapon{};
+    blam::tag_index<> slung{};
+    how_t             mode{draw};
 };
 
 struct SpawnBipedEvent

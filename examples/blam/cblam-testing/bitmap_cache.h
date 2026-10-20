@@ -17,7 +17,11 @@ using libc_types::u8;
 
 template<typename V>
 struct BitmapCache
-    : DataCache<BitmapItem, std::tuple<u32, i16>, blam::tagref_t const&, i16>
+    : DataCache<
+          BitmapItem,
+          std::tuple<blam::tag_index<>, i16>,
+          blam::tagref_t const&,
+          i16>
     , compo::RestrictedSubsystem<BitmapCache<V>, BitmapManifest>
 {
     using type  = BitmapCache<V>;
@@ -112,11 +116,11 @@ struct BitmapCache
         bool             own_layer{false};
     };
 
-    using slot_map_t = std::map<std::tuple<u32, i16>, bitmap_slot_t>;
+    using slot_map_t = std::map<std::tuple<blam::tag_index<>, i16>, bitmap_slot_t>;
 
     std::map<bitm_format_hash, TextureBucket>           tex_buckets;
     std::map<bitm_format_hash, storage_reservation_t>   m_reservations;
-    std::map<std::tuple<u32, i16>, census_entry_t>      m_census;
+    std::map<std::tuple<blam::tag_index<>, i16>, census_entry_t> m_census;
     slot_map_t                                          m_slots;
 
     u32  max_mipmap{3};
@@ -431,7 +435,7 @@ struct BitmapCache
     void reserve_storage();
 
     typename slot_map_t::iterator assign_slot(
-        std::tuple<u32, i16> const& key);
+        std::tuple<blam::tag_index<>, i16> const& key);
 
     /* Storage follows demand: a bucket starts empty and is reallocated the
      * first time a slot lands past its last layer. Immutable storage cannot
@@ -508,10 +512,10 @@ struct BitmapCache
         m_slots.clear();
     }
 
-    virtual std::tuple<u32, i16> get_id(
+    virtual std::tuple<blam::tag_index<>, i16> get_id(
         blam::tagref_t const& tag, i16 idx) override
     {
-        return std::make_tuple(tag.tag_id.value(), idx);
+        return std::make_tuple(tag.tag_id, idx);
     }
 
     generation_idx_t resolve(blam::tagref_t const& array, i16 idx = 0)

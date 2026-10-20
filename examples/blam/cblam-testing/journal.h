@@ -6,6 +6,8 @@
 
 #include <coffee/components/components.h>
 #include <peripherals/stl/json.h>
+
+#include "tag_json.h"
 #include <platforms/environment.h>
 #include <url/url.h>
 

@@ -11,6 +11,7 @@
 #include <coffee/core/CDebug>
 
 #include <blam/common/endian.h>
+#include <blam/common/tag_index.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -72,8 +73,8 @@ struct camera_sync_t
 
 struct entity_spawn_t
 {
-    u32       net_id;
-    u32       tag_id;
+    u32               net_id;
+    blam::tag_index<> tag_id;
     glm::vec3 position;
     glm::quat rotation;
 };
@@ -226,6 +227,14 @@ class client_t
         u32 v;
         std::memcpy(&v, p, 4);
         return from_le(v);
+    }
+
+    /* The handle's bytes as sent: little-endian, as the map stores them */
+    static blam::tag_index<> get_tag(u8 const* p)
+    {
+        blam::tag_index<> t;
+        std::memcpy(&t.raw, p, 4);
+        return t;
     }
 
     static f32 get_f32(u8 const* p)
@@ -394,7 +403,7 @@ class client_t
                 if(on.spawn)
                     on.spawn(
                         {get_u32(e + 40),
-                         get_u32(e + 36),
+                         get_tag(e + 36),
                          get_vec3(e),
                          get_quat(e + 16)});
             }

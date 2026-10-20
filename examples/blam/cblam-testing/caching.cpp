@@ -2236,7 +2236,7 @@ void BitmapCache<V>::reserve_storage()
 
 template<typename V>
 typename BitmapCache<V>::slot_map_t::iterator BitmapCache<V>::assign_slot(
-    std::tuple<u32, i16> const& key)
+    std::tuple<blam::tag_index<>, i16> const& key)
 {
     auto census = m_census.find(key);
     if(census == m_census.end())
@@ -2297,7 +2297,7 @@ template u32 BitmapCache<halo_version>::bias_of(
 template void BitmapCache<halo_version>::calculate_storage();
 template void BitmapCache<halo_version>::reserve_storage();
 template typename BitmapCache<halo_version>::slot_map_t::iterator
-BitmapCache<halo_version>::assign_slot(std::tuple<u32, i16> const& key);
+BitmapCache<halo_version>::assign_slot(std::tuple<blam::tag_index<>, i16> const& key);
 
 template<typename V>
 BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
@@ -2346,7 +2346,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
 
         /* The slot is cut on first request; an image without one is one the
          * census never saw, so no bucket was ever sized for it. */
-        auto const key     = std::make_tuple(bitmap.tag_id.value(), idx);
+        auto const key     = std::make_tuple(bitmap.tag_id, idx);
         auto       slot_it = m_slots.find(key);
         if(slot_it == m_slots.end())
             slot_it = assign_slot(key);

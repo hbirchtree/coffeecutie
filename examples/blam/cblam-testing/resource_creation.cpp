@@ -1,5 +1,6 @@
 #include "game_mode.h"
 #include "resource_creation.h"
+#include "tag_json.h"
 
 #include "blam_files.h"
 #include "network/networking.h"
@@ -465,7 +466,7 @@ void create_resources(compo::EntityContainer& e)
                              continue;
                          objects[net.instance_id] = {
                              {"net_id", net.instance_id},
-                             {"tag_id", net.object.tag_id.value()},
+                             {"tag_id", net.object.tag_id},
                              {"tag_class",
                               blam::to_string(net.object.class_id())},
                              {"position",

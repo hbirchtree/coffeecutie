@@ -73,7 +73,7 @@ struct SoundItem
 
 template<typename V>
 struct SoundCache
-    : DataCache<SoundItem, u32, blam::tagref_t const&>
+    : DataCache<SoundItem, blam::tag_index<>, blam::tagref_t const&>
     , compo::SubsystemBase
 {
     using type = SoundCache<V>;
@@ -257,8 +257,8 @@ struct SoundCache
 #endif
     }
 
-    u32 get_id(blam::tagref_t const& tag)
+    blam::tag_index<> get_id(blam::tagref_t const& tag)
     {
-        return tag.tag_id.value();
+        return tag.tag_id;
     }
 };

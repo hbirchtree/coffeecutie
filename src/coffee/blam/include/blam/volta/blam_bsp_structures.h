@@ -455,8 +455,8 @@ using node = bounding_box;
 
 struct predicted_resource
 {
-    u16 unknown[2];
-    u32 tag_id;
+    u16         unknown[2];
+    tag_index<> tag_id;
 };
 
 struct subcluster

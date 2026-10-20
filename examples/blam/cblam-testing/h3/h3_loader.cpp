@@ -1379,7 +1379,7 @@ struct H3MapLoader : compo::SubsystemBase
         auto const& map = *m_map;
         if(!model)
             return 0;
-        u32  key = map.id_of(*model.tag).raw.value();
+        auto key = map.id_of(*model.tag);
         auto it  = m_model_views.find(key);
         if(it == m_model_views.end())
         {
@@ -1605,7 +1605,7 @@ struct H3MapLoader : compo::SubsystemBase
                                       : el::render_method_view{};
         if(!view)
             return 0;
-        u32 key = method_ref->tag_id.value();
+        el::datum_index const key = method_ref->tag_id;
         if(auto it = m_material_index.find(key); it != m_material_index.end())
             return it->second;
 
@@ -1957,7 +1957,7 @@ struct H3MapLoader : compo::SubsystemBase
     /* A cube bitmap's first image, uploaded once per tag */
     std::optional<CubeTexture> cube_texture_for(el::tag_t const& bitmap_tag)
     {
-        auto key = m_map->id_of(bitmap_tag).raw.value();
+        auto key = m_map->id_of(bitmap_tag);
         if(auto it = m_cube_textures.find(key); it != m_cube_textures.end())
             return it->second;
         auto const* bitmap = m_map->tag_data<el::bitmap_t>(bitmap_tag);
@@ -2455,7 +2455,7 @@ struct H3MapLoader : compo::SubsystemBase
     std::optional<Texture> texture_for(el::tag_t const& bitmap_tag)
     {
         auto const& map = *m_map;
-        auto        key = map.id_of(bitmap_tag).raw.value();
+        auto        key = map.id_of(bitmap_tag);
         if(auto it = m_textures.find(key); it != m_textures.end())
             return it->second;
         auto out = upload_bitmap(bitmap_tag);
@@ -2718,10 +2718,12 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<std::array<u16, 3>>                    m_triangles;
 
 
-    std::unordered_map<u32, size_t>                    m_material_index;
-    std::unordered_map<u32, std::optional<Texture>>    m_textures;
-    std::unordered_map<u32, std::optional<el::resource_view>> m_model_views;
-    std::unordered_map<u32, std::optional<CubeTexture>> m_cube_textures;
+    std::unordered_map<el::datum_index, size_t>                 m_material_index;
+    std::unordered_map<el::datum_index, std::optional<Texture>> m_textures;
+    std::unordered_map<el::datum_index, std::optional<el::resource_view>>
+        m_model_views;
+    std::unordered_map<el::datum_index, std::optional<CubeTexture>>
+        m_cube_textures;
     el::tag_t const*                                     m_pending_environment_map{nullptr};
 };
 

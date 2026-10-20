@@ -275,7 +275,7 @@ int list_tags(elegy::map_container const& map, options_t const& options)
             continue;
         fmt::print(
             "{:08x} {} {}\n",
-            map.id_of(tag).raw.value(),
+            map.id_of(tag),
             group ? group->group.str() : blam::fourcc_t{{'?', '?', '?', '?'}},
             name);
     }
