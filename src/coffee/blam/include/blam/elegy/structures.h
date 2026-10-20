@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../common/endian.h"
 #include "../volta/blam_base_types.h"
-#include "../volta/blam_endian.h"
 #include "../volta/blam_structures.h"
 
 #include "versions.h"
@@ -15,46 +15,6 @@
 namespace blam::elegy {
 
 using typing::vector_types::Matf4;
-
-/*!
- * \brief A field stored big-endian, as everything in an Xbox 360 cache file
- * is. Reads swap on little-endian hosts and are free on big-endian ones.
- * Vectors swap per component.
- */
-template<typename T>
-struct be
-{
-    using value_type = T;
-
-    std::array<u8, sizeof(T)> raw;
-
-    inline T value() const
-    {
-        if constexpr(requires { typename T::value_type; })
-        {
-            using C           = typename T::value_type;
-            constexpr auto Nc = sizeof(T) / sizeof(C);
-            static_assert(Nc * sizeof(C) == sizeof(T));
-            std::array<C, Nc> parts;
-            std::memcpy(parts.data(), raw.data(), sizeof(T));
-            for(auto& part : parts)
-                part = from_be(part);
-            T out;
-            std::memcpy(&out, parts.data(), sizeof(T));
-            return out;
-        } else
-        {
-            T out;
-            std::memcpy(&out, raw.data(), sizeof(T));
-            return from_be(out);
-        }
-    }
-
-    inline operator T() const
-    {
-        return value();
-    }
-};
 
 static_assert(sizeof(be<u32>) == 4 && alignof(be<u32>) == 1);
 static_assert(sizeof(be<Vecf3>) == 12);
