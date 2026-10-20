@@ -511,7 +511,7 @@ struct BitmapCache
     virtual std::tuple<u32, i16> get_id(
         blam::tagref_t const& tag, i16 idx) override
     {
-        return std::make_tuple(tag.tag_id, idx);
+        return std::make_tuple(tag.tag_id.value(), idx);
     }
 
     generation_idx_t resolve(blam::tagref_t const& array, i16 idx = 0)

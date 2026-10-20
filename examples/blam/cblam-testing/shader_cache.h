@@ -495,6 +495,6 @@ struct ShaderCache
 
     u32 get_id(blam::tagref_t const& args)
     {
-        return args.tag_id;
+        return args.tag_id.value();
     }
 };

@@ -627,8 +627,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         journal(
             "net_spawn_request",
             {{"request_id", request_id},
-             {"tag_class", blam::to_string(spawn.object.tag_class)},
-             {"tag_id", spawn.object.tag_id}});
+             {"tag_class", blam::to_string(spawn.object.class_id())},
+             {"tag_id", spawn.object.tag_id.value()}});
         send_single(
             m_connection,
             Message<SpawnRequest>({
@@ -636,8 +636,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .direction = spawn.rotation,
                 .tag =
                     {
-                        .tag_class = spawn.object.tag_class,
-                        .tag_id    = spawn.object.tag_id,
+                        .tag_class = spawn.object.class_id(),
+                        .tag_id    = spawn.object.tag_id.value(),
                     },
                 .request_id = request_id,
                 .announce   = spawn.announce,
@@ -678,8 +678,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .rotation = spawn.rotation,
             .tag =
                 {
-                    .tag_class   = spawn.object.tag_class,
-                    .tag_id      = spawn.object.tag_id,
+                    .tag_class   = spawn.object.class_id(),
+                    .tag_id      = spawn.object.tag_id.value(),
                     .instance_id = spawn.net_id,
                 },
         };
@@ -689,8 +689,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         journal(
             "net_object_spawn",
             {{"net_id", spawn.net_id},
-             {"tag_class", blam::to_string(spawn.object.tag_class)},
-             {"tag_id", spawn.object.tag_id}});
+             {"tag_class", blam::to_string(spawn.object.class_id())},
+             {"tag_id", spawn.object.tag_id.value()}});
 
         /* Unverified peers get the whole backlog once they verify */
         auto targets = verified_connections();
@@ -2774,7 +2774,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .point  = Vecf4(impact.point, 1.f),
                 .object = net->instance_id,
                 .other  = other ? other->instance_id : 0,
-                .shader = impact.shader ? impact.shader->tag_id : 0,
+                .shader = impact.shader ? impact.shader->tag_id.value() : 0,
                 .speed  = impact.speed,
             });
         }
@@ -3964,8 +3964,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .rotation = spawn.rotation,
                     .net_id   = spawn.tag.instance_id,
                 };
-                local.object.tag_class = spawn.tag.tag_class;
-                local.object.tag_id    = spawn.tag.tag_id;
+                local.object.tag_class = blam::basic_tag_class<std::endian::little>::of(spawn.tag.tag_class);
+                local.object.tag_id    = {spawn.tag.tag_id};
                 local.announce         = spawn.announce != 0;
                 m_game_bus.inject(ev, &local);
             }

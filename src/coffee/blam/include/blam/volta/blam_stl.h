@@ -297,6 +297,12 @@ class tag_index_view
         return find(tag.tag_id);
     }
 
+    template<tag_class_t... Class>
+    iterator find(tag_index<Class...> id) const
+    {
+        return find(id.raw);
+    }
+
     /*! The tag a handle names, end() for a null, unknown or stale one */
     iterator find(u32 tag_id) const
     {

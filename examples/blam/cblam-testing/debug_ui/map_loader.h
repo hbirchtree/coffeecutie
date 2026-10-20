@@ -1014,8 +1014,8 @@ struct BlamMapBrowser
                             ImGui::Text(
                                 "  tag: class=%.*s id=%u instance=%u",
                                 4,
-                                neti->object.tag_class_name().data(),
-                                neti->object.tag_id,
+                                neti->object.tag_class_name().chars.data(),
+                                neti->object.tag_id.value(),
                                 neti->instance_id);
                         }
                         if(auto* shader = ec.get<ShaderData>(m_selected_entity))

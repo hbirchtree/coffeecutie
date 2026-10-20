@@ -233,7 +233,7 @@ struct SoundCache
             return {};
         SoundItem out;
 
-        switch(tag.tag_class)
+        switch(tag.class_id())
         {
         case blam::tag_class_t::lsnd:
             parse_loop_sound(out, tag);
@@ -259,6 +259,6 @@ struct SoundCache
 
     u32 get_id(blam::tagref_t const& tag)
     {
-        return tag.tag_id;
+        return tag.tag_id.value();
     }
 };

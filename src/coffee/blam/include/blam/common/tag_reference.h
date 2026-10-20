@@ -61,6 +61,18 @@ struct alignas(4) tag_reference
             return ((class_id() == Classes) || ...);
     }
 
+    /*! Halo 1 references carry the tag's name */
+    inline auto const& to_name() const
+        requires requires(tag_reference const& ref) { ref.name; }
+    {
+        return this->name;
+    }
+
+    inline fourcc_t tag_class_name() const
+    {
+        return this->tag_class.str();
+    }
+
     inline tag_reference<V> const& untyped() const
     {
         return *reinterpret_cast<tag_reference<V> const*>(this);

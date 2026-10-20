@@ -189,7 +189,7 @@ struct ModelCache
     virtual std::tuple<u32, blam::mod2::mod2_lod, u32> get_id(
         blam::tagref_t const& tag, blam::mod2::mod2_lod lod, u32 permutations) override
     {
-        return std::make_tuple(tag.tag_id, lod, permutations);
+        return std::make_tuple(tag.tag_id.value(), lod, permutations);
     }
 
     ModelAssembly predict_regions(
@@ -204,14 +204,14 @@ struct ModelCache
             return {};
 
         /* Levels that share geometry share the upload */
-        auto const key = std::make_tuple(tag.tag_id, max_lod, permutations);
+        auto const key = std::make_tuple(tag.tag_id.value(), max_lod, permutations);
         if(!this->m_cache_key.contains(key))
             if(auto parts = header->model_at(max_lod, magic, permutations))
                 for(u32 other = 0; other < 5; other++)
                 {
                     auto other_lod = static_cast<blam::mod2::mod2_lod>(other);
                     auto cached    = this->m_cache_key.find(
-                        std::make_tuple(tag.tag_id, other_lod, permutations));
+                        std::make_tuple(tag.tag_id.value(), other_lod, permutations));
                     if(other_lod == max_lod || cached == this->m_cache_key.end())
                         continue;
                     auto other_parts = header->model_at(other_lod, magic, permutations);
