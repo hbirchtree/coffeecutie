@@ -1209,7 +1209,7 @@ static bool read_bitmap_pixels(
     }
 #endif
     auto pix =
-        blam::reference<libc_types::u8>{.count = img.size, .offset = img.offset}
+        blam::reference<libc_types::u8>{img.size, img.offset}
             .data(internal_magic);
     if(pix.has_error())
         return false;
