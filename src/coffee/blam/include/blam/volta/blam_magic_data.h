@@ -19,6 +19,8 @@ struct tag_index_t;
 template<heap_t Heap>
 struct map_ptr_base : address_range
 {
+    static constexpr heap_t heap = Heap;
+
     map_ptr_base() = default;
 
     map_ptr_base(semantic::Span<const u8> const& data, u32 magic = 0)

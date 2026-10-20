@@ -54,8 +54,8 @@ struct pitch_permutation_t
     reference<char, xbox_t, atlas_type_t::sounds> sample_data() const
     {
         return {
-            .count  = sample_size,
-            .offset = sample_offset,
+            sample_size,
+            sample_offset,
         };
     }
 };

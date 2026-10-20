@@ -397,18 +397,16 @@ struct material
         auto const count = from_le(pc.count);
         if(type == vert::vertex_type_t::sbsp_uncompressed_vertex)
             return {
-                .count =
-                    to_le<u32>(static_cast<u32>(count * sizeof(pc_vertex))),
-                .offset = to_le(
+                to_le<u32>(static_cast<u32>(count * sizeof(pc_vertex))),
+                to_le(
                     std::max(
                         from_le(pc.uncompressed_vertices.offset),
                         from_le(pc.uncompressed_vertices.count))),
             };
         else
             return {
-                .count =
-                    to_le<u32>(static_cast<u32>(count * sizeof(xbox_vertex))),
-                .offset = to_le(from_le(pc.compressed_vertices.offset)),
+                to_le<u32>(static_cast<u32>(count * sizeof(xbox_vertex))),
+                to_le(from_le(pc.compressed_vertices.offset)),
             };
     }
 
@@ -429,15 +427,15 @@ struct material
         u32 const light_offset = from_le(verts.offset) + from_le(verts.count);
         if(type == vert::vertex_type_t::sbsp_uncompressed_vertex)
             return {
-                .count = to_le<u32>(
+                to_le<u32>(
                     static_cast<u32>(count * sizeof(pc_light_vertex))),
-                .offset = to_le(light_offset),
+                to_le(light_offset),
             };
         else
             return {
-                .count = to_le<u32>(
+                to_le<u32>(
                     static_cast<u32>(count * sizeof(xbox_light_vertex))),
-                .offset = to_le(light_offset),
+                to_le(light_offset),
             };
     }
 
@@ -823,8 +821,8 @@ inline bsp_reference<vert::face> material::indices(header const& head) const
     // head.surfaces). count stays raw LE (reference::data un-swaps it); the
     // computed offset is host-order arithmetic re-encoded little-endian.
     return {
-        .count  = surfaces.offset,
-        .offset = to_le(
+        surfaces.offset,
+        to_le(
             static_cast<u32>(from_le(surfaces.count) * sizeof(vert::face)) +
             from_le(head.surfaces.offset)),
     };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/block_layout.h"
 #include "../volta/blam_base_types.h"
 
 #include <peripherals/stl/any_of.h>
@@ -18,12 +19,14 @@ struct xbox_version_t
 {
     static constexpr auto version_v = version_t::halo2;
     static constexpr auto endian    = std::endian::little;
+    using block_layout              = layout::dimeter;
 };
 
 struct vista_version_t
 {
     static constexpr auto version_v = version_t::halo2;
     static constexpr auto endian    = std::endian::little;
+    using block_layout              = layout::dimeter;
 };
 
 template<typename T>

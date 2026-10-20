@@ -348,7 +348,7 @@ struct image_t
             start = preceding + stored[face] * level;
         }
 
-        return reference<u8>{.count = level, .offset = offset + start}
+        return reference<u8>{level, offset + start}
             .data(magic)
             .value();
     }
@@ -388,7 +388,7 @@ struct image_t
 
             size *= layers;
 
-            return reference<u8>{.count = size, .offset = offset + mip_offset}
+            return reference<u8>{size, offset + mip_offset}
                 .data(magic)
                 .value();
         } else
@@ -412,7 +412,7 @@ struct image_t
 
             size *= layers;
 
-            return reference<u8>{.count = size, .offset = offset + mip_offset}
+            return reference<u8>{size, offset + mip_offset}
                 .data(magic)
                 .value();
         }
@@ -461,7 +461,7 @@ struct image_t
 
         u32 sz = bytes_per_mip(mipmap) * layers;
 
-        return reference<u8>{.count = sz, .offset = offset + mip_offset}
+        return reference<u8>{sz, offset + mip_offset}
             .data(magic)
             .value();
 #else

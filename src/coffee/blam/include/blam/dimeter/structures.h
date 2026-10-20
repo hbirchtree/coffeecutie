@@ -2,6 +2,7 @@
 
 #include "../common/endian.h"
 #include "../common/magic.h"
+#include "../common/reference.h"
 #include "../common/tag_class.h"
 #include "../volta/blam_structures.h"
 
@@ -139,6 +140,8 @@ static_assert(sizeof(raw_ref) == 4);
 template<heap_t Heap>
 struct magic_ptr_base : address_range
 {
+    static constexpr heap_t heap = Heap;
+
     /*! A second heap pointers may land in: Vista maps borrow tags from
      * shared.map, whose heap sits at its own virtual base */
     address_range shared{};
@@ -170,38 +173,7 @@ using bsp_magic   = magic_ptr_base<heap_t::bsp>;
  * address into the heap the block lives in.
  */
 template<typename T, heap_t Heap = heap_t::tag>
-struct tag_block
-{
-    static constexpr heap_t heap_v = Heap;
-
-    i32 count_raw;
-    u32 pointer_raw;
-
-    inline i32 count() const
-    {
-        return from_le(count_raw);
-    }
-
-    inline u32 pointer() const
-    {
-        return from_le(pointer_raw);
-    }
-
-    inline result<Span<T const>, error_msg> data(
-        magic_ptr_base<Heap> const& magic) const
-    {
-        i32 num = count();
-        if(num == 0)
-            return Span<T const>();
-        if(num < 0)
-            return stl_types::failure("negative tag_block count"sv);
-        auto const* items =
-            magic.template as<T>(pointer(), static_cast<u32>(num));
-        if(!items)
-            return stl_types::failure("tag_block pointer out of bounds"sv);
-        return Span<T const>(items, static_cast<size_t>(num));
-    }
-};
+using tag_block = reference<T, xbox_version_t, atlas_type_t::map_file, Heap>;
 
 static_assert(sizeof(tag_block<u32>) == 8);
 
@@ -209,6 +181,10 @@ static_assert(sizeof(tag_block<u32>) == 8);
  * magic (volta's bsp_ptr) */
 template<typename T>
 using bsp_block = tag_block<T, heap_t::bsp>;
+
+static_assert(resolves_with<bsp_block<u32>, bsp_magic>);
+static_assert(!resolves_with<bsp_block<u32>, tag_magic>);
+static_assert(!resolves_with<tag_block<u32>, bsp_magic>);
 
 /*!
  * \brief Index into a tag block of T as the tags store it: a signed slot

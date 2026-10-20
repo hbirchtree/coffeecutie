@@ -2,6 +2,7 @@
 
 #include "../common/endian.h"
 #include "../common/magic.h"
+#include "../common/reference.h"
 #include "../common/tag_class.h"
 #include "../volta/blam_base_types.h"
 #include "../volta/blam_structures.h"
@@ -101,7 +102,7 @@ enum class section_t
  * \brief Tag data pointer translation. Tag pointers are 360 virtual
  * addresses; they translate as file_offset + (pointer - virtual_base).
  */
-using tag_magic = address_range;
+using tag_magic = heap_range<heap_t::tag>;
 
 /*!
  * \brief A tag block: count, virtual address and a runtime-only word.
@@ -109,43 +110,7 @@ using tag_magic = address_range;
  * through the resource's fixups instead (see resource_view).
  */
 template<typename T>
-struct tag_block
-{
-    using value_type = T;
-
-    be<i32> count_raw;
-    be<u32> pointer_raw;
-    u32     runtime;
-
-    inline i32 count() const
-    {
-        return count_raw;
-    }
-
-    inline u32 pointer() const
-    {
-        return pointer_raw;
-    }
-
-    inline result<Span<T const>, error_msg> data(tag_magic const& magic) const
-    {
-        i32 num = count();
-        if(num == 0)
-            return Span<T const>();
-        if(num < 0)
-            return stl_types::failure("negative tag_block count"sv);
-        auto const* items = magic.as<T>(pointer(), static_cast<u32>(num));
-        if(!items)
-            return stl_types::failure("tag_block pointer out of bounds"sv);
-        return Span<T const>(items, static_cast<size_t>(num));
-    }
-
-    /*! The elements, none when the block is empty or out of bounds */
-    inline Span<T const> span(tag_magic const& magic) const
-    {
-        return data(magic).value_or(Span<T const>());
-    }
-};
+using tag_block = reference<T, xbox360_version_t, atlas_type_t::map_file, heap_t::tag>;
 
 static_assert(sizeof(tag_block<u32>) == 0xC);
 
