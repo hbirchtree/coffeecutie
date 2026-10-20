@@ -15,7 +15,7 @@ using ShaderManifest =
 
 template<typename V>
 struct ShaderCache
-    : DataCache<ShaderItem, u32, blam::tagref_t const&>
+    : DataCache<ShaderItem, blam::tag_index<>, blam::tagref_t const&>
     , compo::RestrictedSubsystem<ShaderCache<V>, ShaderManifest>
 {
     using type  = ShaderCache<V>;
@@ -493,8 +493,8 @@ struct ShaderCache
         }
     }
 
-    u32 get_id(blam::tagref_t const& args)
+    blam::tag_index<> get_id(blam::tagref_t const& args)
     {
-        return args.tag_id.value();
+        return args.tag_id;
     }
 };

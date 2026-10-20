@@ -6,7 +6,10 @@
 #include <peripherals/semantic/chunk.h>
 
 #include <bit>
+#include <compare>
+#include <functional>
 #include <type_traits>
+#include <utility>
 
 namespace blam {
 
@@ -45,10 +48,29 @@ struct basic_tag_index
         return value() != 0xFFFFFFFF;
     }
 
+    /*! The null handle */
+    static constexpr basic_tag_index none()
+    {
+        basic_tag_index out{};
+        if constexpr(E == std::endian::little)
+            out.raw = 0xFFFFFFFF;
+        else
+            out.raw.raw.fill(0xFF);
+        return out;
+    }
+
     template<tag_class_t... Other>
     inline bool operator==(basic_tag_index<E, Other...> const& other) const
     {
         return value() == other.value();
+    }
+
+    /*! Ordered by handle, for map keys */
+    template<tag_class_t... Other>
+    inline std::strong_ordering operator<=>(
+        basic_tag_index<E, Other...> const& other) const
+    {
+        return value() <=> other.value();
     }
 
 #pragma GCC diagnostic push
@@ -91,11 +113,31 @@ inline Entry const* lookup_tag(
     return &entry;
 }
 
+template<typename Entry, std::endian E, tag_class_t... Classes, typename SaltOf>
+inline Entry const* lookup_tag(
+    semantic::Span<Entry const>          table,
+    basic_tag_index<E, Classes...> const& handle,
+    SaltOf&&                              salt_of)
+{
+    return lookup_tag(table, handle.value(), std::forward<SaltOf>(salt_of));
+}
+
 /*! Halo 1 and 2 store handles little-endian */
 template<tag_class_t... Classes>
 using tag_index = basic_tag_index<std::endian::little, Classes...>;
 
 static_assert(sizeof(tag_index<>) == 4 && alignof(tag_index<>) == 4);
 static_assert(sizeof(basic_tag_index<std::endian::big>) == 4);
+static_assert(std::is_trivially_copyable_v<tag_index<>>);
+static_assert(tag_index<>::none().raw == 0xFFFFFFFF);
 
 } // namespace blam
+
+template<std::endian E, blam::tag_class_t... Classes>
+struct std::hash<blam::basic_tag_index<E, Classes...>>
+{
+    inline size_t operator()(blam::basic_tag_index<E, Classes...> const& id) const noexcept
+    {
+        return std::hash<libc_types::u32>{}(id.value());
+    }
+};

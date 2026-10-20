@@ -5,6 +5,7 @@
 
 #include "game_events.h"
 
+#include <blam/common/tag_index.h>
 #include <blam/volta/blam_base_types.h>
 #include <blam/volta/blam_tag_classes.h>
 #include <gsl/span>
@@ -284,10 +285,10 @@ struct alignas(8) EquipmentSync
         throwing  = 0x2,
     };
 
-    u32     player_idx{0};
-    u32     weapon{0}; /*!< Tag ids, 0 for none */
-    flags_t flags{none};
-    u32     slung{0};
+    u32               player_idx{0};
+    blam::tag_index<> weapon{}; /*!< Tag ids, 0 for none */
+    flags_t           flags{none};
+    blam::tag_index<> slung{};
 
     bool operator==(EquipmentSync const&) const = default;
 };
@@ -297,8 +298,8 @@ struct alignas(8) WeaponPickup
 {
     static constexpr auto message_type = MessageBase::WeaponPickup;
 
-    u32 player_idx{0};
-    u32 weapon{0};
+    u32               player_idx{0};
+    blam::tag_index<> weapon{};
 };
 
 /*! An object the server removed */
@@ -330,7 +331,7 @@ struct alignas(8) WeaponFire
     u64   view_tick{0}; /*!< Server tick the shooter saw others at */
     Vecf4 position;
     Vecf4 direction;
-    u32   weapon{0}; /*!< weap tag id */
+    blam::tag_index<> weapon{}; /*!< weap tag id */
     u32   player_idx{0};
     u32   vehicle{0}; /*!< The vehicle's net id, 0 = held */
     u32   seed{0};
@@ -351,7 +352,7 @@ struct alignas(8) ObjectHit
     Vecf4 point;
     Vecf4 normal;
     Vecf4 direction;
-    u32   projectile{0}; /*!< proj tag id */
+    blam::tag_index<> projectile{}; /*!< proj tag id */
     u32   target{0};     /*!< Net id, when the target is not a player */
     u32   target_player{0};
     u32   shooter_player{0};
@@ -492,7 +493,7 @@ struct alignas(8) ObjectImpact
     Vecf4 point;
     u32   object{0}; /*!< Net id */
     u32   other{0};  /*!< Net id, 0 = the world or an object not replicated */
-    u32   shader{0}; /*!< The world surface's shader tag id, 0 = none */
+    blam::tag_index<> shader{}; /*!< The world surface's shader tag id, 0 = none */
     f32   speed{0.f};
 };
 
@@ -542,7 +543,7 @@ struct alignas(8) ClockSync
 struct EntityTag
 {
     blam::tag_class_t tag_class{blam::tag_class_t::none};
-    u32               tag_id{std::numeric_limits<u32>::max()};
+    blam::tag_index<> tag_id{blam::tag_index<>::none()};
     u32               instance_id{0}; /*!< Network id, same on all peers */
 };
 

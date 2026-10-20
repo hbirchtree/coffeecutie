@@ -197,17 +197,18 @@ static constexpr u32 net_id_of(object_kind kind, u32 index, u32 sub = 0)
 
 struct object_inst
 {
-    u32   model_id;
+    blam::tag_index<> model_id;
     Matf4 xform;
     Vecf3 center{}; // world-space bounding sphere
     f32   radius{0};
     u32   net_id{0};
 };
 
-static std::map<u32, model_t>   g_models;  // by mod2 tag id
+static std::map<blam::tag_index<>, model_t> g_models; // by mod2 tag id
 static std::vector<object_inst> g_objects; // placed instances
 static u32                      g_kind_count[kind_count] = {};
-static u32 g_player_model = 0xFFFFFFFF; // mod2 of the unit players spawn as
+// mod2 of the unit players spawn as
+static blam::tag_index<> g_player_model = blam::tag_index<>::none();
 
 static std::vector<page_t> g_pages;
 static Vecf3               g_bb_min{1e9f, 1e9f, 1e9f};
@@ -311,11 +312,12 @@ static i8 to_s8_frac6(f32 v)
 /* --- tag/shader/bitmap resolution ----------------------------------------- */
 
 template<typename V>
-static blam::tag_t const* tag_by_id(blam::map_container<V> const& c, u32 tag_id)
+static blam::tag_t const* tag_by_id(
+    blam::map_container<V> const& c, blam::tag_index<> tag_id)
 {
     u32 const cnt = from_le(c.tags->tag_count);
-    u32 const idx = tag_id & 0xFFFF; // salt is the high 16 bits
-    if(tag_id == 0xFFFFFFFF || idx >= cnt)
+    u32 const idx = tag_id.index();
+    if(!tag_id.valid() || idx >= cnt)
         return nullptr;
     return &c.tags->tags(c.map)[idx];
 }
@@ -324,7 +326,7 @@ template<typename V>
 static blam::bitm::header_t const* resolve_bitm(
     blam::map_container<V> const& c, blam::tagref_t const& ref)
 {
-    auto const* t = tag_by_id(c, ref.tag_id.value());
+    auto const* t = tag_by_id(c, ref.tag_id);
     if(!t)
         return nullptr;
     auto hr = t->template data<blam::bitm::header_t>(c.magic);
@@ -357,7 +359,7 @@ static shader_info resolve_shader(
     blam::map_container<V> const& c, blam::tagref_t const& shader_ref)
 {
     shader_info out;
-    auto const* st = tag_by_id(c, shader_ref.tag_id.value());
+    auto const* st = tag_by_id(c, shader_ref.tag_id);
     if(!st)
         return out;
     if(st->matches(blam::tag_class_t::shader_environment))
@@ -469,7 +471,8 @@ static bool in_active_section(Vecf3 const& pos, u16 bsp_flags)
 /* --- objects (mod2 models) ------------------------------------------------ */
 
 template<typename V>
-static void load_model_cpu(blam::map_container<V> const& c, u32 mod2_id)
+static void load_model_cpu(
+    blam::map_container<V> const& c, blam::tag_index<> mod2_id)
 {
     using namespace blam;
     auto const* t = tag_by_id(c, mod2_id);
@@ -595,7 +598,7 @@ static Matf4 spawn_transform(Vecf3 const& pos, Vecf3 const& rot)
 template<typename V>
 static bool place_object(
     blam::map_container<V> const& c,
-    u32                           object_tag_id,
+    blam::tag_index<>             object_tag_id,
     Matf4 const&                  xform,
     object_kind                   kind,
     u32                           net_id = 0)
@@ -606,7 +609,7 @@ static bool place_object(
     auto obj = t->template data<blam::scn::object>(c.magic);
     if(obj.has_error())
         return false;
-    u32 const mod2_id = obj.value()->model.tag_id.value();
+    auto const mod2_id = obj.value()->model.tag_id;
     if(!tag_by_id(c, mod2_id))
         return false;
     if(g_models.find(mod2_id) == g_models.end())
@@ -643,7 +646,7 @@ static void place_group(
         Vecf3 const rot{from_le(s.rot.x), from_le(s.rot.y), from_le(s.rot.z)};
         place_object(
             c,
-            pal.value()[ref][0].tag_id.value(),
+            pal.value()[ref][0].tag_id,
             spawn_transform(pos, rot),
             kind,
             net_id_of(kind, i));
@@ -662,7 +665,7 @@ static void place_netgame_items(
     for(u32 e = 0; e < equipment.value().size(); e++)
     {
         auto const& entry    = equipment.value()[e];
-        auto const* coll_tag = tag_by_id(c, entry.item.tag_id.value());
+        auto const* coll_tag = tag_by_id(c, entry.item.tag_id);
         if(!coll_tag || !coll_tag->matches(blam::tag_class_t::itmc))
             continue;
         auto coll =
@@ -676,7 +679,7 @@ static void place_netgame_items(
             from_le(entry.pos.x), from_le(entry.pos.y), from_le(entry.pos.z)};
         place_object(
             c,
-            items.value()[0].item.tag_id.value(),
+            items.value()[0].item.tag_id,
             spawn_transform(pos, {from_le(entry.facing), 0.f, 0.f}),
             kind_netgame_item,
             net_id_of(kind_netgame_item, e));
@@ -685,7 +688,7 @@ static void place_netgame_items(
 
 /* The unit players spawn as (globals: multiplayer, else singleplayer) */
 template<typename V>
-static u32 player_biped_id(blam::map_container<V> const& c)
+static blam::tag_index<> player_biped_id(blam::map_container<V> const& c)
 {
     u32 const   cnt = from_le(c.tags->tag_count);
     auto const* tg  = c.tags->tags(c.map);
@@ -695,16 +698,16 @@ static u32 player_biped_id(blam::map_container<V> const& c)
             continue;
         auto g = tg[i].template data<blam::globals::globals>(c.magic);
         if(g.has_error())
-            return 0xFFFFFFFF;
+            return blam::tag_index<>::none();
         if(auto mp = g.value()->multiplayer.data(c.magic);
            !mp.has_error() && !mp.value().empty())
-            return mp.value()[0].unit.tag_id.value();
+            return mp.value()[0].unit.tag_id;
         if(auto sp = g.value()->player.data(c.magic);
            !sp.has_error() && !sp.value().empty())
-            return sp.value()[0].unit.tag_id.value();
-        return 0xFFFFFFFF;
+            return sp.value()[0].unit.tag_id;
+        return blam::tag_index<>::none();
     }
-    return 0xFFFFFFFF;
+    return blam::tag_index<>::none();
 }
 
 template<typename V>
@@ -722,7 +725,7 @@ static void build_objects(
     place_group(c, o.light_fixtures, kind_light_fixture);
     place_netgame_items(c, scn);
 
-    if(u32 const biped = player_biped_id(c); biped != 0xFFFFFFFF)
+    if(auto const biped = player_biped_id(c); biped.valid())
         if(auto locs = scn->player_start.locations.data(c.magic);
            !locs.has_error())
         {
@@ -741,12 +744,12 @@ static void build_objects(
                     n++;
             }
         }
-    if(u32 const   biped = player_biped_id(c);
+    if(auto const  biped = player_biped_id(c);
        auto const* t     = tag_by_id(c, biped))
         if(auto unit = t->template data<blam::scn::object>(c.magic);
            !unit.has_error())
         {
-            g_player_model = unit.value()->model.tag_id.value();
+            g_player_model = unit.value()->model.tag_id;
             if(g_models.find(g_player_model) == g_models.end() &&
                tag_by_id(c, g_player_model))
                 load_model_cpu(c, g_player_model);
@@ -1607,7 +1610,7 @@ static void poll_network(u32 frame)
             // The map is unmapped by now, so nothing new can be loaded
             LOG("net: no model for spawned object %08x (tag %08x)",
                 e.net_id,
-                e.tag_id);
+                e.tag_id.value());
             return;
         }
         place_instance(

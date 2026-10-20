@@ -44,7 +44,7 @@ struct alignas(4) tag_t
         std::array<tag_class_t, 3> tagclass_e; /*!< enum-ified tagclass value */
     };
 
-    u32           tag_id;
+    tag_index<>   tag_id;
     string_ref    name;
     u32           offset;  /*!< A byte offset to associated data*/
     tag_storage_t storage; /*!< Only applies to custom_edition */

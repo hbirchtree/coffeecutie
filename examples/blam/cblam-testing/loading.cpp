@@ -124,10 +124,14 @@ struct ResourceLoader
     struct
     {
         u32 load_generation{};
-        std::map<std::pair<u32, u32>, std::shared_ptr<CollisionGeometry const>>
+        std::map<
+            std::pair<blam::tag_index<>, blam::tag_index<>>,
+            std::shared_ptr<CollisionGeometry const>>
             collision;
-        std::map<u32, std::optional<std::pair<Vecf3, Vecf3>>> bounds;
-        std::map<u32, std::shared_ptr<MassPoints const>>      mass_points;
+        std::map<blam::tag_index<>, std::optional<std::pair<Vecf3, Vecf3>>>
+            bounds;
+        std::map<blam::tag_index<>, std::shared_ptr<MassPoints const>>
+            mass_points;
     } physics_cache;
 
     struct
@@ -2222,7 +2226,7 @@ struct ResourceLoader
         auto const& magic = files.container.magic;
         if(physics_cache.load_generation != files.load_generation)
             physics_cache = {.load_generation = files.load_generation};
-        auto key = std::pair{collider.tag_id.value(), model.tag_id.value()};
+        auto key = std::pair{collider.tag_id, model.tag_id};
         if(auto it = physics_cache.collision.find(key);
            it != physics_cache.collision.end())
             return it->second;
@@ -2371,10 +2375,10 @@ struct ResourceLoader
     std::shared_ptr<MassPoints const> object_mass_points(
         BlamFiles<Ver> const& files, blam::tagref_t const& physics)
     {
-        if(auto it = physics_cache.mass_points.find(physics.tag_id.value());
+        if(auto it = physics_cache.mass_points.find(physics.tag_id);
            it != physics_cache.mass_points.end())
             return it->second;
-        auto& out = physics_cache.mass_points[physics.tag_id.value()];
+        auto& out = physics_cache.mass_points[physics.tag_id];
 
         auto const& magic = files.container.magic;
         auto        tag   = index.find(physics);
@@ -2438,10 +2442,10 @@ struct ResourceLoader
     std::optional<std::pair<Vecf3, Vecf3>> model_bounds(
         ModelCache<Ver>& model_cache, blam::tagref_t const& model)
     {
-        if(auto it = physics_cache.bounds.find(model.tag_id.value());
+        if(auto it = physics_cache.bounds.find(model.tag_id);
            it != physics_cache.bounds.end())
             return it->second;
-        auto&                                    out = physics_cache.bounds[model.tag_id.value()];
+        auto&                                    out = physics_cache.bounds[model.tag_id];
         blam::mod2::header<Ver> const* header = model_cache.get_header(model);
         if(!header)
             return out;
@@ -2808,9 +2812,9 @@ struct ResourceLoader
         return out;
     }
 
-    blam::tag_t const* weapon_tag(u32 id)
+    blam::tag_t const* weapon_tag(blam::tag_index<> id)
     {
-        auto tag = id ? index.find(id) : index.end();
+        auto tag = id.value() ? index.find(id) : index.end();
         return tag != index.end() && (*tag).matches(blam::tag_class_t::weap)
                    ? &(*tag)
                    : nullptr;

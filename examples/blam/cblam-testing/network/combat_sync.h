@@ -13,6 +13,8 @@
 #include <blam/volta/blam_tag_index.h>
 #include <nlohmann/json.hpp>
 
+#include "../tag_json.h"
+
 #include <chrono>
 #include <functional>
 #include <map>
@@ -146,7 +148,7 @@ class CombatSync
                         .view_tick  = server ? 0 : m_view_tick,
                         .position   = Vecf4(shot.position, 1.f),
                         .direction  = Vecf4(shot.direction, 0.f),
-                        .weapon     = shot.weapon.tag_id.value(),
+                        .weapon     = shot.weapon.tag_id,
                         .player_idx = shot.player_idx,
                         .vehicle    = vehicle,
                         .seed       = shot.seed,
@@ -165,7 +167,7 @@ class CombatSync
                 .point          = Vecf4(hit.point, 1.f),
                 .normal         = Vecf4(hit.normal, 0.f),
                 .direction      = Vecf4(hit.direction, 0.f),
-                .projectile     = hit.projectile.tag_id.value(),
+                .projectile     = hit.projectile.tag_id,
                 .target         = net ? net->instance_id : 0,
                 .target_player  = hit.target_player,
                 .shooter_player = hit.shooter_player,

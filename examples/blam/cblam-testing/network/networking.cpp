@@ -628,7 +628,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             "net_spawn_request",
             {{"request_id", request_id},
              {"tag_class", blam::to_string(spawn.object.class_id())},
-             {"tag_id", spawn.object.tag_id.value()}});
+             {"tag_id", spawn.object.tag_id}});
         send_single(
             m_connection,
             Message<SpawnRequest>({
@@ -637,7 +637,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .tag =
                     {
                         .tag_class = spawn.object.class_id(),
-                        .tag_id    = spawn.object.tag_id.value(),
+                        .tag_id    = spawn.object.tag_id,
                     },
                 .request_id = request_id,
                 .announce   = spawn.announce,
@@ -679,7 +679,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .tag =
                 {
                     .tag_class   = spawn.object.class_id(),
-                    .tag_id      = spawn.object.tag_id.value(),
+                    .tag_id      = spawn.object.tag_id,
                     .instance_id = spawn.net_id,
                 },
         };
@@ -690,7 +690,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             "net_object_spawn",
             {{"net_id", spawn.net_id},
              {"tag_class", blam::to_string(spawn.object.class_id())},
-             {"tag_id", spawn.object.tag_id.value()}});
+             {"tag_id", spawn.object.tag_id}});
 
         /* Unverified peers get the whole backlog once they verify */
         auto targets = verified_connections();
@@ -2480,7 +2480,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     m_sent_own_seat = seat;
                 }
                 if(EquipmentSync const held = equipment_of(p, m_client_player.id(), info);
-                   held.weapon && m_sent_own_equipment != held)
+                   held.weapon != blam::tag_index<>{} && m_sent_own_equipment != held)
                 {
                     send_single(m_connection, Message<EquipmentSync>(EquipmentSync(held)));
                     m_sent_own_equipment = held;
@@ -2774,7 +2774,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .point  = Vecf4(impact.point, 1.f),
                 .object = net->instance_id,
                 .other  = other ? other->instance_id : 0,
-                .shader = impact.shader ? impact.shader->tag_id.value() : 0,
+                .shader = impact.shader ? impact.shader->tag_id : blam::tag_index<>{},
                 .speed  = impact.speed,
             });
         }
@@ -2811,7 +2811,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 continue;
             /* Sound lookups take the shader by reference, so keep one */
             blam::tagref_t const* shader = nullptr;
-            if(auto tag = wire.shader ? index.find(wire.shader) : index.end();
+            if(auto tag = wire.shader != blam::tag_index<>{} ? index.find(wire.shader)
+                                                             : index.end();
                tag != index.end() && (*tag).valid())
                 shader = &m_impact_shaders.try_emplace(wire.shader, (*tag).as_ref())
                               .first->second;
@@ -3103,8 +3104,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(!equip || !equip->held(p.subsystem<BlamFiles<halo_version>>().load_generation))
             return out;
         auto const& [held, slung] = equip->weapons;
-        out.weapon = held.tag ? held.tag->tag_id : 0;
-        out.slung  = slung.tag ? slung.tag->tag_id : 0;
+        out.weapon = held.tag ? held.tag->tag_id : blam::tag_index<>{};
+        out.slung  = slung.tag ? slung.tag->tag_id : blam::tag_index<>{};
         out.flags  = static_cast<EquipmentSync::flags_t>(
             (equip->reloading ? EquipmentSync::reloading : 0) |
             (equip->throwing ? EquipmentSync::throwing : 0));
@@ -3165,7 +3166,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(!is_networked(player.id(), info))
                 continue;
             EquipmentSync const held = equipment_of(p, player.id(), info);
-            if(held.weapon == 0)
+            if(held.weapon == blam::tag_index<>{})
                 continue;
             all.push_back(held);
             auto& sent = m_sent_equipment[info.player_idx];
@@ -4264,7 +4265,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Physics impacts heard on the server; shaders named by clients' */
     std::shared_ptr<PhysicsBus::queue_type<Physics::Impact>> m_impact_queue;
     std::vector<Physics::Impact>                             m_impacts;
-    std::map<u32, blam::tagref_t>                            m_impact_shaders;
+    std::map<blam::tag_index<>, blam::tagref_t>              m_impact_shaders;
     /* Tick clock sync, to clients */
     static constexpr auto tick_sync_interval = std::chrono::seconds(1);
     time_point            m_next_tick_sync{};

@@ -179,9 +179,8 @@ template<typename Ver>
 f32 detail_scale(blam::map_container<Ver> const& c, blam::tagref_t const& ref)
 {
     using blam::from_le;
-    u32 const id  = ref.tag_id.value();
-    u32 const idx = id & 0xFFFF;
-    if(id == 0xFFFFFFFF || idx >= from_le(c.tags->tag_count))
+    u32 const idx = ref.tag_id.index();
+    if(!ref.tag_id.valid() || idx >= from_le(c.tags->tag_count))
         return 1.f;
     blam::tag_t const& t     = c.tags->tags(c.map)[idx];
     f32                scale = 1.f;

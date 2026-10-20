@@ -303,20 +303,20 @@ class tag_index_view
         return find(tag.tag_id);
     }
 
+    /*! The tag a handle names, end() for a null, unknown or stale one */
     template<tag_class_t... Class>
     iterator find(tag_index<Class...> id) const
     {
-        return find(id.raw);
+        auto        table = span();
+        auto const* tag   = lookup_tag(
+            table, id, [](tag_t const& t) { return t.tag_id.salt(); });
+        return tag ? begin() + (tag - table.data()) : end();
     }
 
-    /*! The tag a handle names, end() for a null, unknown or stale one */
+    /*! A raw little-endian handle, as stored in the map */
     iterator find(u32 tag_id) const
     {
-        auto table = span();
-        auto const* tag = lookup_tag(table, from_le(tag_id), [](tag_t const& t) {
-            return from_le(t.tag_id) >> 16;
-        });
-        return tag ? begin() + (tag - table.data()) : end();
+        return find(tag_index<>{tag_id});
     }
 
     /*! Sequential search of tags based on tag name */
@@ -513,9 +513,8 @@ inline Span<tag_t const> tags_of(map_container<Ver> const& map)
 template<typename Ver>
 inline tag_t const* tag_at(map_container<Ver> const& map, tag_index<> id)
 {
-    return lookup_tag(tags_of(map), id.value(), [](tag_t const& t) {
-        return from_le(t.tag_id) >> 16;
-    });
+    return lookup_tag(
+        tags_of(map), id, [](tag_t const& t) { return t.tag_id.salt(); });
 }
 
 template<typename Ver>
