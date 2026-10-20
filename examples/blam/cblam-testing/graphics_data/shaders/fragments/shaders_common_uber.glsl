@@ -91,7 +91,7 @@ struct InstanceData {
 
 layout(binding = 0, std140) uniform MatrixStore
 {
-    InstanceData data[128];
+    InstanceData data[BLOCK_INSTANCES];
 } matrices;
 #endif
 

@@ -1,3 +1,5 @@
+#include "block_instances.glsl"
+
 struct Map
 {
     vec2 atlas_scale;
@@ -67,12 +69,12 @@ struct TransparentData
 
 layout(binding = 1, std140) uniform MaterialProperties
 {
-    Material instance[128];
+    Material instance[BLOCK_INSTANCES];
 } mats;
 
 layout(binding = 4, std140) uniform TransparentProperties
 {
-    TransparentData instance[128];
+    TransparentData instance[BLOCK_INSTANCES];
 } tr;
 
 float g_min_lod = -1.0;

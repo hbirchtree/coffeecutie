@@ -6,6 +6,7 @@
 
 #include <blam/volta/blam_shaders.h>
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace materials {
@@ -207,6 +208,25 @@ struct alignas(16) transparent_data
 
 static_assert(sizeof(transparent_data::stage_t) == 64);
 static_assert(sizeof(transparent_data) == 464);
+
+/* Instances a uniform block holds (BLOCK_INSTANCES in the shaders): 128, or as
+ * many of the widest kind as the GPU's block size allows */
+inline u32 block_instances(u32 max_block_size)
+{
+    constexpr u32 most = 128;
+    if(max_block_size == 0)
+        return most;
+    return std::clamp<u32>(max_block_size / sizeof(transparent_data), 1, most);
+}
+
+/* UI_INSTANCES in ui.frag: 512 64-byte elements, or as many as fit */
+inline u32 ui_instances(u32 max_block_size)
+{
+    constexpr u32 most = 512;
+    if(max_block_size == 0)
+        return most;
+    return std::clamp<u32>(max_block_size / 64, 1, most);
+}
 
 /* TODO: Fix this on MinGW */
 // static_assert(sizeof(transparent_data::stage_t) == 3 * sizeof(u32));

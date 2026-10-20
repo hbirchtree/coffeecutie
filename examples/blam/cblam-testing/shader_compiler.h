@@ -4,6 +4,7 @@
 #include <coffee/core/files/cfiles.h>
 
 #include "graphics_api.h"
+#include "materials.h"
 #include "resource_creation.h"
 
 template<size_t N>
@@ -41,6 +42,14 @@ static void create_shaders(
     else
         Coffee::cDebug("Selected shader variant {}", variant);
 
+    /* Uniform block arrays shrink to what the GPU's blocks hold */
+    gfx::shader_t::constants_t constants;
+    auto const block_size = static_cast<libc_types::u32>(api.limits().buffers.ubo_size);
+    if(auto n = materials::block_instances(block_size); n < 128)
+        constants["SPIRV_CROSS_CONSTANT_ID_0"] = std::to_string(n);
+    if(auto n = materials::ui_instances(block_size); n < 512)
+        constants["SPIRV_CROSS_CONSTANT_ID_1"] = std::to_string(n);
+
     for(shader_pair_t& shader : shaders)
     {
         using Coffee::Resource;
@@ -59,10 +68,10 @@ static void create_shaders(
         auto pipeline = shader.shader ? shader.shader : api.alloc_program();
         pipeline->add(
             gfx::program_t::stage_t::Vertex,
-            api.alloc_shader(Resource(vertex_url).data()));
+            api.alloc_shader(Resource(vertex_url).data(), constants));
         pipeline->add(
             gfx::program_t::stage_t::Fragment,
-            api.alloc_shader(Resource(fragment_url).data()));
+            api.alloc_shader(Resource(fragment_url).data(), constants));
         if(auto res = pipeline->compile(); res.has_error())
         {
             auto [msg] = res.error();

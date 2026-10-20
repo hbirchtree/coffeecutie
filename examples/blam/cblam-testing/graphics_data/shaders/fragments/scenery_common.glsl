@@ -3,6 +3,7 @@
  * format is used. Both feed the same skinning + transform path. */
 
 #extension GL_GOOGLE_include_directive : enable
+#include "block_instances.glsl"
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 tex;
@@ -35,7 +36,7 @@ struct InstanceData {
 
 layout(binding = 0, std140) uniform MatrixStore
 {
-    InstanceData data[128];
+    InstanceData data[BLOCK_INSTANCES];
 } matrices;
 
 layout(location = 1) uniform mat4 camera;

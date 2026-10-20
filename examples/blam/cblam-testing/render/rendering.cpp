@@ -101,6 +101,19 @@ using draw_data_t = gfx::draw_command::data_t;
  * the smallest GL_MAX_UNIFORM_BLOCK_SIZE ES3 or WebGL2 may report. */
 static constexpr u32 kBonesPerBucket = 256;
 
+/* Instances a bucket may hold: what one uniform block window holds, less
+ * the instances a window can start ahead of the bucket when it is moved to
+ * an aligned offset */
+inline u32 bucket_limit(gfx::api& api)
+{
+    auto const& limits = api.limits().buffers;
+    u32 const   held   = materials::block_instances(static_cast<u32>(limits.ubo_size));
+    if(!api.workarounds().draw.advance_ubos_by_baseinstance)
+        return held;
+    u32 const ahead = limits.ubo_alignment > 16 ? limits.ubo_alignment / 16 - 1 : 0;
+    return held > ahead ? held - ahead : 1;
+}
+
 enum MaterialClass : u8
 {
     MatClass_Base    = 0x1,
@@ -228,6 +241,9 @@ struct Pass
      * A bone_base only means anything within its own bucket. */
     std::vector<u32> bucket_bone_base;
 
+    /* Instances per bucket, from bucket_limit() */
+    u32 bucket_instances{128};
+
     /* Collapse families that the current mode draws with the same program. */
     static u8 split_family(u8 cls)
     {
@@ -263,7 +279,7 @@ struct Pass
         size_t num_draws = 0;
         for(auto const& d : draws.back())
             num_draws += d.instances.count;
-        bool full = num_draws >= 128 || (num_draws + incoming) > 128;
+        bool full = num_draws >= bucket_instances || (num_draws + incoming) > bucket_instances;
         /* Only break where the chosen mode actually needs a different program:
          * in `sotr` mode chicago and base share one, so they share a bucket. */
         u8   effective    = split_family(cls);
@@ -476,7 +492,7 @@ struct Pass
             u32  cost       = bone_cost(skin != 0, par, bn);
             bool bones_full = skin && !draws.back().empty() &&
                               open_bones + cost > kBonesPerBucket;
-            if(draws.back().size() >= 128 || bones_full ||
+            if(draws.back().size() >= bucket_instances || bones_full ||
                (!draws.back().empty() &&
                 (split_family(bucket_classes.back()) != split_family(cls) ||
                  bucket_skinned.back() != skin)))
@@ -646,6 +662,7 @@ struct DrawListBuilder
                                .chicago  = resources.bsp_pipeline_chicago,
                                .sotr     = resources.bsp_pipeline_sotr,
                     };
+                    pass.bucket_instances = bucket_limit(*api);
                     pass.name = fmt::format(
                         "BSP::{}::{}",
                         vp,
@@ -666,6 +683,7 @@ struct DrawListBuilder
                                .sotr     = resources.model_pipeline_sotr,
                                .camo     = resources.camo,
                     };
+                    pass.bucket_instances = bucket_limit(*api);
                     pass.name = fmt::format(
                         "MOD::{}::{}",
                         vp,
