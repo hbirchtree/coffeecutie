@@ -113,6 +113,7 @@ struct Resource
     Url m_resource;
 #if defined(USE_EMSCRIPTEN_HTTP)
     emscripten_fetch_t* m_fetch{nullptr};
+    std::unique_ptr<http::multipart::builder> m_multipart;
 #elif defined(USE_CURL)
     resource_context m_ctxt{};
     curl_request     m_handle{};

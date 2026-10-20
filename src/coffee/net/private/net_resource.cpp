@@ -311,8 +311,15 @@ std::optional<error_code> Resource::push(
     std::string resource, param;
     /* We have to copy the body if it exists, otherwwise it might go out of
      * scope outside */
-    m_request.payload.insert(
-        m_request.payload.begin(), data.begin(), data.end());
+    if(m_multipart)
+    {
+        m_multipart->finalize();
+        auto& multipart = m_multipart->m_data;
+        m_request.payload.insert(
+            m_request.payload.begin(), multipart.begin(), multipart.end());
+    } else
+        m_request.payload.insert(
+            m_request.payload.begin(), data.begin(), data.end());
     if(auto idx = m_request.header.resource.find('?'); idx == std::string::npos)
     {
         resource = m_request.header.resource.substr(0, idx);
@@ -320,7 +327,7 @@ std::optional<error_code> Resource::push(
     } else
         resource = m_request.header.resource;
     auto url = fmt::format(
-        "https://{}:{}/{}", m_request.host, m_request.port, resource);
+        "https://{}:{}{}", m_request.host, m_request.port, resource);
     auto method_s = http::header::to_string::method(method);
 
     std::vector<const char*> headers;
@@ -693,6 +700,15 @@ void Resource::addMimePart(
             curl_mime_filename(part, filename.c_str());
         }
     }
+#elif defined(USE_EMSCRIPTEN_HTTP)
+    if(!m_multipart)
+    {
+        m_multipart = std::make_unique<http::multipart::builder>(
+            "MEOWMEOW"); // TODO: Generate a better separator
+    }
+    m_multipart->add(name, data);
+    m_request.header.standard_fields[http::header_field::content_type] =
+        m_multipart->content_type();
 #endif
 }
 
