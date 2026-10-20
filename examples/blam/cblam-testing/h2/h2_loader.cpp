@@ -2297,8 +2297,6 @@ struct H2MapLoader : compo::SubsystemBase
                 materials.push_back(
                     material_for(map, pool, sref.shader.tag_id, sky));
 
-        std::vector<Matf4> node_world = model_nodes(map, *model);
-
         u32 emitted = 0;
         for(auto const& region : regions.value())
         {
@@ -2310,10 +2308,10 @@ struct H2MapLoader : compo::SubsystemBase
             if(sidx < 0 || static_cast<size_t>(sidx) >= sections.value().size())
                 continue;
             auto const& section = sections.value()[sidx];
-            Matf4       local   = transform;
-            i16         node    = section.rigid_node.value();
-            if(node >= 0 && static_cast<size_t>(node) < node_world.size())
-                local = transform * node_world[node];
+            /* Rigid sections are stored in model space like the rest; their
+             * node only says what moves them */
+            Matf4 const local = transform;
+            i16         node  = section.rigid_node.value();
             /* Baked per-vertex light, one bucket range per model section */
             ExternalLighting external;
             if(lighting && bucket && !lighting->section_offsets.empty())
