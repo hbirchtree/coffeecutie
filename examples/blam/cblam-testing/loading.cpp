@@ -2294,20 +2294,8 @@ struct ResourceLoader
                 {
                     uses[surfs.value()[si].material]++;
                     polygon.clear();
-                    i32 const first = surfs.value()[si].first_edge;
-                    i32       e     = first;
-                    u32       guard = 0;
-                    do
-                    {
-                        if(e < 0 || static_cast<u32>(e) >= es.size())
-                            break;
-                        auto const& edge = es[e];
-                        bool const  left =
-                            edge.left_surface == static_cast<i32>(si);
-                        polygon.push_back(
-                            left ? edge.start_vertex : edge.end_vertex);
-                        e = left ? edge.forward_edge : edge.reverse_edge;
-                    } while(e != first && ++guard < 32);
+                    blam::collision::walk_surface(
+                        surfs.value(), es, si, [&](i32 v) { polygon.push_back(v); }, 32);
                     for(u32 i = 2; i < polygon.size(); i++)
                         for(i32 corner : {polygon[0], polygon[i - 1], polygon[i]})
                             if(corner >= 0 &&

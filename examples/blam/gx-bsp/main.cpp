@@ -391,20 +391,9 @@ static shader_info resolve_shader(
 // Per-object cluster_for_point thrashes the paged map (random collision-tree
 // faults). Copy the small collision arrays into RAM once (sequential read =
 // each page faulted once), then query against RAM with no further paging.
-struct coll_node
-{
-    i32 plane, back, front;
-};
-
-struct coll_plane
-{
-    Vecf3 n;
-    f32   d;
-};
-
-static std::vector<coll_node>  g_coll_nodes;
-static std::vector<coll_plane> g_coll_planes;
-static std::vector<i16>        g_leaf_cluster;
+static std::vector<blam::collision::bsp_3d> g_coll_nodes;
+static std::vector<blam::collision::plane>  g_coll_planes;
+static std::vector<i16>                     g_leaf_cluster;
 
 static void build_cluster_lookup(
     blam::bsp::header const& hdr, blam::bsp_ptr const& bm)
@@ -417,13 +406,8 @@ static void build_cluster_lookup(
     auto leaves = hdr.leaves.data(bm);
     if(nodes.has_error() || planes.has_error() || leaves.has_error())
         return;
-    for(auto const& n : nodes.value())
-        g_coll_nodes.push_back(
-            {from_le(n.plane), from_le(n.back), from_le(n.front)});
-    for(auto const& p : planes.value())
-        g_coll_planes.push_back(
-            {{from_le(p.plane.x), from_le(p.plane.y), from_le(p.plane.z)},
-             from_le(p.d)});
+    g_coll_nodes.assign(nodes.value().begin(), nodes.value().end());
+    g_coll_planes.assign(planes.value().begin(), planes.value().end());
     for(auto const& l : leaves.value())
         g_leaf_cluster.push_back(from_le(l.cluster));
 }
@@ -431,30 +415,12 @@ static void build_cluster_lookup(
 // Cluster index containing point, or nullopt for solid/outside-the-BSP points.
 static std::optional<u32> cluster_at(Vecf3 const& pt)
 {
-    if(g_coll_nodes.empty())
+    auto const leaf = blam::collision_bsp::find_leaf<blam::collision::traits>(
+        g_coll_nodes, g_coll_planes, pt, g_coll_nodes.size());
+    if(!leaf || *leaf >= g_leaf_cluster.size())
         return std::nullopt;
-    i32 node = 0;
-    for(size_t guard = 0; guard <= g_coll_nodes.size(); guard++)
-    {
-        if(node == -1)
-            return std::nullopt;
-        if(node < 0)
-        {
-            u32 const idx = static_cast<u32>(node) & 0x7fffffffu;
-            if(idx >= g_leaf_cluster.size())
-                return std::nullopt;
-            i16 const c = g_leaf_cluster[idx];
-            return c < 0 ? std::nullopt : std::optional<u32>(c);
-        }
-        if(static_cast<u32>(node) >= g_coll_nodes.size())
-            return std::nullopt;
-        coll_node const& n = g_coll_nodes[node];
-        if(n.plane < 0 || static_cast<u32>(n.plane) >= g_coll_planes.size())
-            return std::nullopt;
-        coll_plane const& pl = g_coll_planes[n.plane];
-        node                 = glm::dot(pl.n, pt) >= pl.d ? n.front : n.back;
-    }
-    return std::nullopt;
+    i16 const c = g_leaf_cluster[*leaf];
+    return c < 0 ? std::nullopt : std::optional<u32>(c);
 }
 
 /* Is a placement in the loaded structure BSP. bsp_flags is a section mask

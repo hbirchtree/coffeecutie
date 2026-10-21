@@ -11,36 +11,20 @@
 namespace poc {
 namespace {
 
-/* One surface's vertex loop, walked like load_collision_debug does */
-template<typename Edges, typename Verts>
+/* One surface's vertex loop; a broken one keeps the corners before the break */
+template<typename Surfaces, typename Edges, typename Verts>
 void surface_loop(
+    Surfaces const&    surfs,
     Edges const&       edges,
     Verts const&       verts,
     std::int32_t       si,
-    std::int32_t       first,
     std::vector<vec3>& out)
 {
     out.clear();
-    std::int32_t ed    = first;
-    std::uint32_t guard = 0;
-    do
-    {
-        if(ed < 0 || static_cast<size_t>(ed) >= edges.size())
-            break;
-        auto const&   edge = edges[ed];
-        std::int32_t  vi;
-        if(edge.left_surface == si)
-        {
-            vi = edge.start_vertex;
-            ed = edge.forward_edge;
-        } else
-        {
-            vi = edge.end_vertex;
-            ed = edge.reverse_edge;
-        }
+    blam::collision::walk_surface(surfs, edges, static_cast<std::uint32_t>(si), [&](std::int32_t vi) {
         if(vi >= 0 && static_cast<size_t>(vi) < verts.size())
             out.push_back(verts[vi].point);
-    } while(ed != first && ++guard < 64);
+    });
 }
 
 /* The raycast resolves a BSP plane, not a surface. Surfaces lying on that
@@ -75,7 +59,7 @@ std::int16_t surface_material(
             continue;
         if(on_plane < 0)
             on_plane = s.material;
-        surface_loop(edges, verts, si, s.first_edge, loop);
+        surface_loop(surfs, edges, verts, si, loop);
         if(loop.size() < 3)
             continue;
         vec3 const n    = planes[pi].plane;

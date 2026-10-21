@@ -2754,37 +2754,19 @@ struct PhysicsSystem
         body.world_body->setWorldTransform(transform);
     }
 
-    /* Winged-edge polygon walk: starting at first_edge, follow
-     * forward_edge while this surface is on the edge's left, otherwise
-     * reverse_edge; collect vertices in winding order, then fan. */
+    /* Each surface's corners in winding order, fanned; a broken loop keeps
+     * the corners before the break */
     void triangulate(BSPItem const& item)
     {
         Coffee::ProfContext _("Physics::triangulate()");
         auto const&         surfaces = item.coll_surfaces;
-        auto const&         edges    = item.coll_edges;
 
         std::vector<i32> polygon;
         for(u32 si = 0; si < surfaces.size(); si++)
         {
             polygon.clear();
-            i32 const first = surfaces[si].first_edge;
-            i32       e     = first;
-            u32       guard = 0;
-            do
-            {
-                if(e < 0 || static_cast<u32>(e) >= edges.size())
-                    break;
-                auto const& edge = edges[e];
-                if(edge.left_surface == static_cast<i32>(si))
-                {
-                    polygon.push_back(edge.start_vertex);
-                    e = edge.forward_edge;
-                } else
-                {
-                    polygon.push_back(edge.end_vertex);
-                    e = edge.reverse_edge;
-                }
-            } while(e != first && ++guard < 32);
+            blam::collision::walk_surface(
+                surfaces, item.coll_edges, si, [&](i32 v) { polygon.push_back(v); }, 32);
 
             for(u32 i = 2; i < polygon.size(); i++)
             {
