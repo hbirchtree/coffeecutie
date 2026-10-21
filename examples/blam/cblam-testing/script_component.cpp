@@ -17,6 +17,7 @@
 #include "ticks.h"
 
 #include <blam/volta/blam_actor.h>
+#include <blam/volta/blam_antr_sample.h>
 #include <blam/volta/blam_recorded_animation.h>
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_stl.h>
@@ -1481,19 +1482,10 @@ struct BlamScript
     /* A frame of the clip's root: a move in the unit's space, and a turn */
     std::pair<Vecf3, f32> root_motion(blam::antr::animation const& clip, i32 frame) const
     {
-        using blam::antr::frame_info_type;
-        u32 const stride = clip.frame_info_type_ == frame_info_type::dx_dy           ? 8
-                           : clip.frame_info_type_ == frame_info_type::dx_dy_dyaw    ? 12
-                           : clip.frame_info_type_ == frame_info_type::dx_dy_dz_dyaw ? 16
-                                                                                     : 0;
         auto bytes = clip.frame_info.data(m_magic);
-        if(!stride || !bytes.has_value() || (frame + 1) * stride > bytes.value().size())
+        if(!bytes.has_value())
             return {};
-        f32 delta[4]{};
-        std::memcpy(delta, bytes.value().data() + frame * stride, stride);
-        Vecf3 const move{delta[0], delta[1], stride == 16 ? delta[2] : 0.f};
-        f32 const   yaw = stride == 16 ? delta[3] : stride == 12 ? delta[2] : 0.f;
-        return {move, yaw};
+        return blam::antr::root_motion(clip, bytes.value(), frame);
     }
 
     /* Units on foot keep to the ground: physics walks them */
