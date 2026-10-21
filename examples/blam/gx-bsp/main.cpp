@@ -27,6 +27,7 @@
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
 #include <blam/common/endian.h>
+#include <blam/common/vertex_pack.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_scenario.h>
@@ -293,17 +294,6 @@ static T rd(u8 const* p)
     return from_le(v);
 }
 
-/* Xbox 11:11:10 signed normal (r = low 11 bits) */
-static Vecf3 unpack_normal(u32 v)
-{
-    auto field = [](u32 x, u32 bits) {
-        i32 const s = static_cast<i32>(x << (32 - bits)) >> (32 - bits);
-        return static_cast<f32>(s) / static_cast<f32>((1 << (bits - 1)) - 1);
-    };
-    return {
-        field(v & 0x7FF, 11), field((v >> 11) & 0x7FF, 11), field(v >> 22, 10)};
-}
-
 static i8 to_s8_frac6(f32 v)
 {
     return static_cast<i8>(std::clamp(v * 64.f, -128.f, 127.f));
@@ -505,7 +495,7 @@ static void load_model_cpu(
                     if constexpr(std::is_same_v<V, xbox_version_t>)
                     {
                         // mod2_vertex<compressed>: normal u32 @12, uv i16 @24
-                        n       = unpack_normal(rd<u32>(raw + 12));
+                        n       = blam::vertex_pack::unpack_11_11_10(rd<u32>(raw + 12));
                         v.uv[0] = rd<i16>(raw + 24) / 32767.f * uvscale.x;
                         v.uv[1] = rd<i16>(raw + 26) / 32767.f * uvscale.y;
                     } else

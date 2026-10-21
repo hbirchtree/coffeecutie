@@ -1,5 +1,7 @@
 #include "h2_bitmap.h"
 #include "h2_scene.h"
+
+#include <blam/common/vertex_pack.h>
 #include "h2_shell_load.h"
 #include "h2_sound.h"
 
@@ -161,33 +163,6 @@ static SectionStreams find_streams(Span<geo::resource_t const> resources)
             out.node_map = &r;
     }
     return out;
-}
-
-/* Signed-normalized bitfield */
-static f32 snorm_bits(u32 bits, u32 width)
-{
-    i32 value = static_cast<i32>(bits);
-    if(value & (1 << (width - 1)))
-        value -= 1 << width;
-    return static_cast<f32>(value) / static_cast<f32>((1 << (width - 1)) - 1);
-}
-
-/* Packed normal, both field orders the Xbox formats use; which one a map
- * uses is decided against the face normals at load time */
-static Vecf3 unpack_11_11_10(u32 v)
-{
-    return {
-        snorm_bits(v & 0x7FF, 11),
-        snorm_bits((v >> 11) & 0x7FF, 11),
-        snorm_bits((v >> 22) & 0x3FF, 10)};
-}
-
-static Vecf3 unpack_10_11_11(u32 v)
-{
-    return {
-        snorm_bits(v & 0x3FF, 10),
-        snorm_bits((v >> 10) & 0x7FF, 11),
-        snorm_bits((v >> 21) & 0x7FF, 11)};
 }
 
 /* Parses a Halo 2 cache into H2Scene: geometry, materials, textures,
@@ -1497,8 +1472,10 @@ struct H2MapLoader : compo::SubsystemBase
                     bytes + base + streams.normal->offset() + v * nstride,
                     4);
                 packed = from_le(packed);
-                normals_a.push_back(glm::normalize(rotation * unpack_11_11_10(packed)));
-                normals_b.push_back(glm::normalize(rotation * unpack_10_11_11(packed)));
+                /* Both field orders the Xbox formats use; which one a map
+                 * uses is decided against the face normals */
+                normals_a.push_back(glm::normalize(rotation * blam::vertex_pack::unpack_11_11_10(packed)));
+                normals_b.push_back(glm::normalize(rotation * blam::vertex_pack::unpack_10_11_11(packed)));
             }
             if(external_lm)
             {

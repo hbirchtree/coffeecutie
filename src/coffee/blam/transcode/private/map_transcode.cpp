@@ -6,6 +6,7 @@
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/common/endian.h>
+#include <blam/common/vertex_pack.h>
 #include <blam/volta/blam_file_header.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_swizzle.h>
@@ -159,17 +160,6 @@ i16 to_s16_frac15(f32 v)
     return static_cast<i16>(std::clamp(v * 32768.f, -32768.f, 32767.f));
 }
 
-/* Xbox 11:11:10 signed normal, r in the low bits */
-std::array<f32, 3> unpack_normal(u32 v)
-{
-    auto field = [](u32 x, u32 bits) {
-        i32 const s = static_cast<i32>(x << (32 - bits)) >> (32 - bits);
-        return static_cast<f32>(s) / static_cast<f32>((1 << (bits - 1)) - 1);
-    };
-    return {
-        field(v & 0x7FF, 11), field((v >> 11) & 0x7FF, 11), field(v >> 22, 10)};
-}
-
 i8 to_s8_frac6(f32 v)
 {
     return static_cast<i8>(std::clamp(v * 64.f, -128.f, 127.f));
@@ -264,7 +254,8 @@ u32 transcode_gx_vertices(
                             if(vt ==
                                vert::vertex_type_t::mod2_compressed_vertex)
                             {
-                                n = unpack_normal(read_le<u32>(v + 12));
+                                auto const p = blam::vertex_pack::unpack_11_11_10(read_le<u32>(v + 12));
+                                n            = {p.x, p.y, p.z};
                                 u = read_le<i16>(v + 24) / 32767.f;
                                 w = read_le<i16>(v + 26) / 32767.f;
                             } else

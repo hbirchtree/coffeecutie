@@ -5,6 +5,7 @@
 #include "map_marker.h"
 #include "materials.h"
 #include "selected_version.h"
+#include <blam/common/vertex_pack.h>
 #include <blam/volta/blam_antr_sample.h>
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
@@ -19,18 +20,6 @@
 using Profiler = Coffee::Profiler;
 
 namespace {
-
-/* Signed r11g11b10, as unpack_uvec3.glsl reads it */
-Vecf3 unpack_signed_r11g11b10(u32 v)
-{
-    auto field = [](u32 b, u32 bits) {
-        u32 const sign = 1u << (bits - 1);
-        f32 const x    = b >= sign ? f32(b) - f32(1u << bits) : f32(b);
-        return x / f32(sign - 1);
-    };
-    return {
-        field(v & 0x7FF, 11), field((v >> 11) & 0x7FF, 11), field(v >> 22, 10)};
-}
 
 template<typename Bytes, typename LightBytes, typename Faces>
 void add_light_probe(
@@ -76,7 +65,7 @@ void add_light_probe(
                 i16 uv[2];
                 std::memcpy(&normal, lv, sizeof(normal));
                 std::memcpy(uv, lv + sizeof(normal), sizeof(uv));
-                tri.direction[k] = unpack_signed_r11g11b10(normal);
+                tri.direction[k] = blam::vertex_pack::unpack_11_11_10(normal);
                 tri.uv[k]        = Vecf2(uv[0], uv[1]) / 32767.f;
             } else
             {
