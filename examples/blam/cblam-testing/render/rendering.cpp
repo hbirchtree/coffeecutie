@@ -1236,9 +1236,11 @@ struct DrawListBuilder
             pid.light_layer   = light.layer;
             {
                 auto const* held  = p.template get<HeldObject>(smodel.parent);
-                auto const* rider = p.template get<PlayerInfo>(
-                    held ? held->holder : smodel.parent);
-                bool const third_person = rider && rider->riding.vehicle != 0;
+                u64 const   owner = held ? held->holder : smodel.parent;
+                auto const* rider = p.template get<PlayerInfo>(owner);
+                /* The dead watch their own body from behind */
+                bool const third_person =
+                    rider && (rider->riding.vehicle != 0 || dead(p, owner));
                 if(!self &&
                    !parent.template get<Visibility>().visible_for(m_seat, false, third_person))
                     pid.light_layer = kLightShadowOnly;
