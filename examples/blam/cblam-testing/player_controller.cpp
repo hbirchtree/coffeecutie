@@ -76,6 +76,14 @@ struct PlayerController
         auto&          physics     = p.subsystem<PhysicsBus>();
         auto&          render      = p.subsystem<RenderingParameters>();
 
+        /* A cutscene's single view covers the whole window */
+        auto const cutscene = cutscene_seat(p, p.template subsystem<CinematicState>().playing);
+        for(auto player : p.select<PlayerCamera, PlayerInfo>())
+        {
+            auto [cam, info] = player.components();
+            if(f32 const aspect = cutscene ? cam.screen_aspect : cam.split_aspect; aspect > 0.f)
+                cam.camera.aspect = aspect;
+        }
         for(auto player : p.select<
                           PlayerCamera,
                           PlayerInput,
