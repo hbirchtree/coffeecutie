@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/collision_bsp.h"
 #include "../common/tag_class.h"
 #include "blam_reference.h"
 #include "blam_shaders.h"
@@ -93,13 +94,100 @@ struct vertex
 
 static_assert(sizeof(vertex) == 16);
 
-/* Result of a hitscan through the solid-leaf BSP */
-struct ray_hit
+using collision_bsp::ray_hit;
+
+/*! The encodings collision_bsp walks */
+struct traits
 {
-    f32   t; /* fraction along start→end */
-    Vecf3 normal;
-    i32   plane{-1};
+    using node_t    = bsp_3d;
+    using plane_t   = plane;
+    using surface_t = surface;
+    using edge_t    = edge;
+    using child_t   = collision_bsp::child_t;
+
+    /* Sign bit set = leaf (index = child & 0x7fffffff); -1 = solid */
+    static inline child_t child(i32 c)
+    {
+        if(c == -1)
+            return {child_t::none};
+        if(c < 0)
+            return {child_t::leaf, static_cast<u32>(c) & 0x7fffffffu};
+        return {child_t::node, static_cast<u32>(c)};
+    }
+
+    static inline i32 plane_of(node_t const& n)
+    {
+        return from_le(n.plane);
+    }
+
+    static inline child_t front(node_t const& n)
+    {
+        return child(from_le(n.front));
+    }
+
+    static inline child_t back(node_t const& n)
+    {
+        return child(from_le(n.back));
+    }
+
+    static inline Vecf3 normal(plane_t const& p)
+    {
+        return {from_le(p.plane.x), from_le(p.plane.y), from_le(p.plane.z)};
+    }
+
+    static inline f32 distance(plane_t const& p)
+    {
+        return from_le(p.d);
+    }
+
+    static inline bool in_front(plane_t const& p, Vecf3 const& point)
+    {
+        return glm::dot(normal(p), point) >= distance(p);
+    }
+
+    static inline i32 first_edge(surface_t const& s)
+    {
+        return from_le(s.first_edge);
+    }
+
+    static inline i32 start_vertex(edge_t const& e)
+    {
+        return from_le(e.start_vertex);
+    }
+
+    static inline i32 end_vertex(edge_t const& e)
+    {
+        return from_le(e.end_vertex);
+    }
+
+    static inline i32 forward_edge(edge_t const& e)
+    {
+        return from_le(e.forward_edge);
+    }
+
+    static inline i32 reverse_edge(edge_t const& e)
+    {
+        return from_le(e.reverse_edge);
+    }
+
+    static inline i32 left_surface(edge_t const& e)
+    {
+        return from_le(e.left_surface);
+    }
 };
+
+/*! See collision_bsp::walk_surface() */
+template<typename Visitor>
+inline u32 walk_surface(
+    semantic::Span<surface const> surfaces,
+    semantic::Span<edge const>    edges,
+    u32                           surface_index,
+    Visitor&&                     visit,
+    u32                           max_corners = 64)
+{
+    return collision_bsp::walk_surface<traits>(
+        surfaces, edges, surface_index, std::forward<Visitor>(visit), max_corners);
+}
 
 template<heap_t Heap>
 struct bsp_t
@@ -117,10 +205,8 @@ struct bsp_t
     ref<edge>        edges;
     ref<vertex>      vertices;
 
-    /* Walk the solid-leaf tree from the root down to the leaf containing
-     * point. Children with the sign bit set are leaves
-     * (index = child & 0x7fffffff); -1 means solid space. Returns nullopt
-     * for solid/outside-the-map points and on malformed data. */
+    /* The leaf containing point; nullopt for solid/outside-the-map points
+     * and on malformed data */
     inline std::optional<u32> find_leaf(
         Vecf3 const& point, ptr const& magic) const
     {
@@ -128,39 +214,14 @@ struct bsp_t
         auto planes_ = planes.data(magic);
         if(nodes_.has_error() || planes_.has_error())
             return std::nullopt;
-        auto node_span  = nodes_.value();
-        auto plane_span = planes_.value();
-        if(node_span.empty() || plane_span.empty())
-            return std::nullopt;
-        i32 node = 0;
-        for(size_t guard = 0; guard <= node_span.size(); guard++)
-        {
-            if(node == -1)
-                return std::nullopt; /* solid space */
-            if(node < 0)
-                return static_cast<u32>(node) & 0x7fffffffu;
-            if(static_cast<u32>(node) >= node_span.size())
-                return std::nullopt;
-            auto const& n      = node_span[node];
-            i32 const   nplane = from_le(n.plane);
-            if(nplane < 0 || static_cast<u32>(nplane) >= plane_span.size())
-                return std::nullopt;
-            auto const& pl = plane_span[nplane];
-            // collision node/plane fields are little-endian map data.
-            Vecf3 const pn{
-                from_le(pl.plane.x), from_le(pl.plane.y), from_le(pl.plane.z)};
-            node = glm::dot(pn, point) >= from_le(pl.d) ? from_le(n.front)
-                                                        : from_le(n.back);
-        }
-        return std::nullopt;
+        auto node_span = nodes_.value();
+        return collision_bsp::find_leaf<traits>(
+            node_span, planes_.value(), point, node_span.size());
     }
 
-    /* Native hitscan (Quake-style recursive segment trace through the
-     * solid-leaf tree). Returns the first empty→solid boundary along
-     * start→end in ray order; leading solid space is skipped, since the
-     * sealed-world exterior is solid and rays may legally start there.
-     * Plane-level precision: gives hit point/normal/plane; surface +
-     * material resolution via the leaf's 2D BSPs is a later refinement. */
+    /* See collision_bsp::raycast(). Plane-level precision: gives hit
+     * point/normal/plane; surface + material resolution via the leaf's 2D
+     * BSPs is a later refinement. */
     inline std::optional<ray_hit> raycast(
         Vecf3 const& start, Vecf3 const& end, ptr const& magic) const
     {
@@ -168,73 +229,7 @@ struct bsp_t
         auto planes_ = planes.data(magic);
         if(nodes_.has_error() || planes_.has_error())
             return std::nullopt;
-        auto node_span  = nodes_.value();
-        auto plane_span = planes_.value();
-        if(node_span.empty() || plane_span.empty())
-            return std::nullopt;
-        ray_hit hit{};
-        if(raycast_r(node_span, plane_span, 0, 0.f, 1.f, start, end, hit) &
-           ray_hit_found)
-            return hit;
-        return std::nullopt;
-    }
-
-    /* Subsegment classification, as bits: whether it starts and ends in
-     * solid space, and whether out holds a hit (the first empty→solid
-     * crossing in ray order). A crossing is where the near half ends empty
-     * and the far half starts solid; the far half need not stay solid, or a
-     * ray passing through a thin solid would lose its entry point. */
-    static constexpr int ray_start_solid = 1;
-    static constexpr int ray_end_solid   = 2;
-    static constexpr int ray_hit_found   = 4;
-
-    template<typename NodeSpan, typename PlaneSpan>
-    static int raycast_r(
-        NodeSpan const&  nodes,
-        PlaneSpan const& planes,
-        i32              node,
-        f32              t0,
-        f32              t1,
-        Vecf3 const&     p0,
-        Vecf3 const&     p1,
-        ray_hit&         out)
-    {
-        if(node == -1)
-            return ray_start_solid | ray_end_solid;
-        if(node < 0)
-            return 0; /* empty leaf */
-        if(static_cast<u32>(node) >= nodes.size())
-            return 0;
-        auto const& n = nodes[node];
-        if(n.plane < 0 || static_cast<u32>(n.plane) >= planes.size())
-            return 0;
-        auto const& pl = planes[n.plane];
-        f32         d0 = glm::dot(pl.plane, p0) - pl.d;
-        f32         d1 = glm::dot(pl.plane, p1) - pl.d;
-        if(d0 >= 0.f && d1 >= 0.f)
-            return raycast_r(nodes, planes, n.front, t0, t1, p0, p1, out);
-        if(d0 < 0.f && d1 < 0.f)
-            return raycast_r(nodes, planes, n.back, t0, t1, p0, p1, out);
-        f32   frac   = std::clamp(d0 / (d0 - d1), 0.f, 1.f);
-        f32   tm     = t0 + (t1 - t0) * frac;
-        Vecf3 mid    = p0 + (p1 - p0) * frac;
-        i32   near_c = d0 >= 0.f ? n.front : n.back;
-        i32   far_c  = d0 >= 0.f ? n.back : n.front;
-        int   rn     = raycast_r(nodes, planes, near_c, t0, tm, p0, mid, out);
-        if(rn & ray_hit_found)
-            return rn;
-        int rf = raycast_r(nodes, planes, far_c, tm, t1, mid, p1, out);
-        int const ends = (rn & ray_start_solid) | (rf & ray_end_solid);
-        if(!(rn & ray_end_solid) && (rf & ray_start_solid))
-        {
-            /* Empty right before the plane, solid right after: the surface,
-             * ahead of anything the far half found */
-            out.t      = tm;
-            out.normal = d0 >= 0.f ? pl.plane : -pl.plane;
-            out.plane  = n.plane;
-            return ends | ray_hit_found;
-        }
-        return ends | (rf & ray_hit_found);
+        return collision_bsp::raycast<traits>(nodes_.value(), planes_.value(), start, end);
     }
 };
 
