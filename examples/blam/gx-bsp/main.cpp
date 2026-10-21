@@ -294,21 +294,10 @@ static T rd(u8 const* p)
 /* --- tag/shader/bitmap resolution ----------------------------------------- */
 
 template<typename V>
-static blam::tag_t const* tag_by_id(
-    blam::map_container<V> const& c, blam::tag_index<> tag_id)
-{
-    u32 const cnt = from_le(c.tags->tag_count);
-    u32 const idx = tag_id.index();
-    if(!tag_id.valid() || idx >= cnt)
-        return nullptr;
-    return &c.tags->tags(c.map)[idx];
-}
-
-template<typename V>
 static blam::bitm::header_t const* resolve_bitm(
     blam::map_container<V> const& c, blam::tagref_t const& ref)
 {
-    auto const* t = tag_by_id(c, ref.tag_id);
+    auto const* t = blam::tag_at(c, ref.tag_id);
     if(!t)
         return nullptr;
     auto hr = t->template data<blam::bitm::header_t>(c.magic);
@@ -341,7 +330,7 @@ static shader_info resolve_shader(
     blam::map_container<V> const& c, blam::tagref_t const& shader_ref)
 {
     shader_info out;
-    auto const* st = tag_by_id(c, shader_ref.tag_id);
+    auto const* st = blam::tag_at(c, shader_ref.tag_id);
     if(!st)
         return out;
     if(st->matches(blam::tag_class_t::shader_environment))
@@ -423,7 +412,7 @@ static void load_model_cpu(
     blam::map_container<V> const& c, blam::tag_index<> mod2_id)
 {
     using namespace blam;
-    auto const* t = tag_by_id(c, mod2_id);
+    auto const* t = blam::tag_at(c, mod2_id);
     if(!t)
         return;
     auto hdr = t->template data<mod2::header<V>>(c.magic);
@@ -551,14 +540,14 @@ static bool place_object(
     object_kind                   kind,
     u32                           net_id = 0)
 {
-    auto const* t = tag_by_id(c, object_tag_id);
+    auto const* t = blam::tag_at(c, object_tag_id);
     if(!t)
         return false;
     auto obj = t->template data<blam::scn::object>(c.magic);
     if(obj.has_error())
         return false;
     auto const mod2_id = obj.value()->model.tag_id;
-    if(!tag_by_id(c, mod2_id))
+    if(!blam::tag_at(c, mod2_id))
         return false;
     if(g_models.find(mod2_id) == g_models.end())
         load_model_cpu(c, mod2_id);
@@ -613,7 +602,7 @@ static void place_netgame_items(
     for(u32 e = 0; e < equipment.value().size(); e++)
     {
         auto const& entry    = equipment.value()[e];
-        auto const* coll_tag = tag_by_id(c, entry.item.tag_id);
+        auto const* coll_tag = blam::tag_at(c, entry.item.tag_id);
         if(!coll_tag || !coll_tag->matches(blam::tag_class_t::itmc))
             continue;
         auto coll =
@@ -693,13 +682,13 @@ static void build_objects(
             }
         }
     if(auto const  biped = player_biped_id(c);
-       auto const* t     = tag_by_id(c, biped))
+       auto const* t     = blam::tag_at(c, biped))
         if(auto unit = t->template data<blam::scn::object>(c.magic);
            !unit.has_error())
         {
             g_player_model = unit.value()->model.tag_id;
             if(g_models.find(g_player_model) == g_models.end() &&
-               tag_by_id(c, g_player_model))
+               blam::tag_at(c, g_player_model))
                 load_model_cpu(c, g_player_model);
         }
 
