@@ -9,7 +9,7 @@ layout(location = 2) in vec4 corner; /* x, y in [-1, 1], z radius, w rotation */
 layout(location = 3) in vec2 tex;
 layout(location = 4) in vec4 color;
 layout(location = 5) in vec4 atlas;  /* scale xy, offset zw */
-layout(location = 7) in vec4 shape;  /* pivot xy, aspect */
+layout(location = 7) in vec4 shape;  /* pivot xy, aspect, lies flat across axis */
 layout(location = 6) in vec4 source; /* format, layer, kind (0 sprite, 1 ribbon, 2 flare, 3 decal), opaque */
 
 layout(location = 0) uniform mat4 camera;
@@ -41,7 +41,18 @@ void main()
         /* t.y = 1 is the frame's top row; the pivot is measured from the top */
         vec2  t      = corner.xy * 0.5 + 0.5 - vec2(shape.x, 1.0 - shape.y);
         float stretch = length(axis);
-        if(stretch > 0.0001)
+        if(stretch > 0.0001 && shape.w > 0.5)
+        {
+            /* Lying across its axis, turned by its rotation */
+            vec3  n     = axis / stretch;
+            vec3  right = normalize(cross(n, abs(n.z) < 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0)));
+            vec3  up    = cross(n, right);
+            vec2  at    = t * size;
+            float s     = sin(corner.w);
+            float c     = cos(corner.w);
+            at          = vec2(c * at.x - s * at.y, s * at.x + c * at.y);
+            world       = position + right * at.x + up * at.y;
+        } else if(stretch > 0.0001)
         {
             /* Along its direction: texture u runs outward from the pivot */
             vec3 up    = axis / stretch;
