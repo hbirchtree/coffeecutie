@@ -3,11 +3,12 @@
  * ready to upload with no runtime decode. Multi-byte GX texels are big-endian.
  *
  * These mirror the runtime re-tilers in examples/blam/gx-bsp/main.cpp
- * (tile_rgb565, dxt_to_cmpr) but run on the host so the console never decodes.
+ * (blam/gx/tiling.h) but run on the host so the console never decodes.
  */
 
 #include <blam/transcode/kernels.h>
 
+#include <blam/gx/tiling.h>
 #include <blam/volta/blam_bitm.h>
 #include <peripherals/identify/compiler/unreachable.h>
 #include <peripherals/stl/range.h>
@@ -253,97 +254,6 @@ inline std::optional<blam::bitm::format_t> target_for(format_t src)
     }
 }
 
-/* --- tilers --------------------------------------------------------------- */
-
-/* Linear RGB565 -> GX 4x4 tiles. swap byte-swaps each texel to big-endian. */
-inline void tile_rgb565(
-    gsl::span<u16 const> src, gsl::span<u16> dst, u16 w, u16 h, bool swap)
-{
-    u32 o = 0;
-    for(u16 ty = 0; ty < h; ty += 4)
-        for(u16 tx = 0; tx < w; tx += 4)
-            for(u16 ry = 0; ry < 4; ry++)
-                for(u16 rx = 0; rx < 4; rx++)
-                {
-                    u16 const x = tx + rx, y = ty + ry;
-                    u16 const t = (x < w && y < h) ? src[y * w + x] : 0;
-                    dst[o++]    = swap ? __builtin_bswap16(t) : t;
-                }
-}
-
-/* Linear 8bpp intensity -> GX_TF_I8 8x4 tiles. */
-inline void tile_i8(gsl::span<u8 const> src, gsl::span<u8>& dst, u16 w, u16 h)
-{
-    u32 o = 0;
-    for(u16 ty = 0; ty < h; ty += 4)
-        for(u16 tx = 0; tx < w; tx += 8)
-            for(u16 ry = 0; ry < 4; ry++)
-                for(u16 rx = 0; rx < 8; rx++)
-                {
-                    u16 const x = tx + rx, y = ty + ry;
-                    dst[o++] = (x < w && y < h) ? src[y * w + x] : 0;
-                }
-}
-
-/* Linear intensity+alpha (source byte order [I,A]) -> GX_TF_IA8 4x4 tiles.
- * GX reads the 16-bit texel big-endian as (I<<8)|A, so store [I,A] per texel.
- */
-inline void tile_ia8(gsl::span<u8 const> src, gsl::span<u8>& dst, u16 w, u16 h)
-{
-    u32 o = 0;
-    for(u16 ty = 0; ty < h; ty += 4)
-        for(u16 tx = 0; tx < w; tx += 4)
-            for(u16 ry = 0; ry < 4; ry++)
-                for(u16 rx = 0; rx < 4; rx++)
-                {
-                    u16 const  x = tx + rx, y = ty + ry;
-                    bool const in = (x < w && y < h);
-                    dst[o++]      = in ? src[(y * w + x) * 2 + 0] : 0; // I
-                    dst[o++]      = in ? src[(y * w + x) * 2 + 1] : 0; // A
-                }
-}
-
-/* Re-tile an S3TC colour block into GX_TF_CMPR (same 4bpp size). 4x4 blocks
- * grouped into 8x8 tiles (TL,TR,BL,BR); 16-bit endpoints byte-swapped to
- * big-endian; 2-bit index groups reversed per byte. BC1: block 8, colour@0.
- * BC2/BC3: block 16, colour@8 (alpha dropped). Mirrors gx-bsp dxt_to_cmpr. */
-inline void dxt_to_cmpr(
-    gsl::span<u8 const> src,
-    gsl::span<u8>&      dst,
-    u16                 w,
-    u16                 h,
-    u32                 block_size,
-    u32                 color_off)
-{
-    u32 const bw = (w + 3) / 4, bh = (h + 3) / 4;
-    u32       o   = 0;
-    auto      rev = [](u8 v) -> u8 {
-        return ((v & 0x03) << 6) | ((v & 0x0C) << 2) | ((v & 0x30) >> 2) |
-               ((v & 0xC0) >> 6);
-    };
-    for(u32 ty = 0; ty < bh; ty += 2)
-        for(u32 tx = 0; tx < bw; tx += 2)
-            for(u32 sy = 0; sy < 2; sy++)
-                for(u32 sx = 0; sx < 2; sx++)
-                {
-                    u32 const bx = tx + sx, by = ty + sy;
-                    u8        b[8] = {0};
-                    if(bx < bw && by < bh)
-                        std::memcpy(
-                            b,
-                            &src[(by * bw + bx) * block_size + color_off],
-                            8);
-                    dst[o++] = b[1];
-                    dst[o++] = b[0];
-                    dst[o++] = b[3];
-                    dst[o++] = b[2];
-                    dst[o++] = rev(b[4]);
-                    dst[o++] = rev(b[5]);
-                    dst[o++] = rev(b[6]);
-                    dst[o++] = rev(b[7]);
-                }
-}
-
 /* --- BC1 encode (for uncompressed sources targeting CMPR, e.g. lightmaps) ---
  */
 
@@ -442,7 +352,7 @@ inline void rgba_to_cmpr(
     u32 const       nblocks = ((w + 3u) / 4u) * ((h + 3u) / 4u);
     std::vector<u8> bc1(static_cast<size_t>(nblocks) * 8);
     encode_bc1(rgba, bc1, w, h);
-    dxt_to_cmpr(gsl::span<u8 const>(bc1.data(), bc1.size()), dst, w, h, 8, 0);
+    blam::gx::dxt_to_cmpr(bc1.data(), dst.data(), w, h, 8, 0);
 }
 
 /* --- dispatch ------------------------------------------------------------- */
@@ -467,11 +377,11 @@ inline bool transcode_level(
         switch(src)
         {
         case format_t::BC1:
-            dxt_to_cmpr(px, dst, w, h, 8, 0);
+            blam::gx::dxt_to_cmpr(px.data(), dst.data(), w, h, 8, 0);
             return true;
         case format_t::BC2:
         case format_t::BC3:
-            dxt_to_cmpr(px, dst, w, h, 16, 8);
+            blam::gx::dxt_to_cmpr(px.data(), dst.data(), w, h, 16, 8);
             return true;
         case format_t::R5G6B5: {
             // Encode 565 -> BC1 -> CMPR (e.g. lightmaps at 4bpp vs 16bpp).
@@ -510,14 +420,8 @@ inline bool transcode_level(
         // already 4x4-tile-padded by the caller) -- NOT w*h, which
         // undershoots whenever w or h isn't a multiple of 4 (tile_rgb565's
         // write loop is unconditional and always writes the padded count).
-        tile_rgb565(
-            gsl::span<u16 const>(
-                reinterpret_cast<u16 const*>(px.data()), w * h),
-            gsl::span<u16>(
-                reinterpret_cast<u16*>(dst.data()), dst.size() / sizeof(u16)),
-            w,
-            h,
-            true);
+        blam::gx::tile_rgb565(
+            reinterpret_cast<u16 const*>(px.data()), reinterpret_cast<u16*>(dst.data()), w, h, true);
         return true;
     case format_t::XRGB8: {
         // Downconvert RGBX8 (bytes R,G,B,X) -> linear 565, then tile+swap.
@@ -529,23 +433,17 @@ inline bool transcode_level(
                 static_cast<u16>(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
         }
         // See the R5G6B5 case above: dst sized from dst.size(), not w*h.
-        tile_rgb565(
-            gsl::span(tmp.data(), tmp.size()),
-            gsl::span<u16>(
-                reinterpret_cast<u16*>(dst.data()), dst.size() / sizeof(u16)),
-            w,
-            h,
-            true);
+        blam::gx::tile_rgb565(tmp.data(), reinterpret_cast<u16*>(dst.data()), w, h, true);
         return true;
     }
     case format_t::Y8:
     case format_t::A8:
     case format_t::AY8:
     case format_t::P8:
-        tile_i8(px, dst, w, h);
+        blam::gx::tile_i8(px.data(), dst.data(), w, h);
         return true;
     case format_t::A8Y8:
-        tile_ia8(px, dst, w, h);
+        blam::gx::tile_ia8(px.data(), dst.data(), w, h);
         return true;
     default:
         return false;

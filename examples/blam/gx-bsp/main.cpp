@@ -28,6 +28,8 @@
 #include <blam/volta/blam_bsp_structures.h>
 #include <blam/common/endian.h>
 #include <blam/common/vertex_pack.h>
+#include <blam/gx/quantize.h>
+#include <blam/gx/tiling.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_scenario.h>
@@ -93,11 +95,6 @@ struct gx_vertex
 };
 
 static_assert(sizeof(gx_vertex) == 32);
-
-static i16 to_s16_frac15(f32 v)
-{
-    return static_cast<i16>(std::clamp(v * 32768.f, -32768.f, 32767.f));
-}
 
 /* A run of triangles in a page sharing one diffuse texture. */
 struct submesh_t
@@ -292,11 +289,6 @@ static T rd(u8 const* p)
     T v;
     std::memcpy(&v, p, sizeof(T));
     return from_le(v);
-}
-
-static i8 to_s8_frac6(f32 v)
-{
-    return static_cast<i8>(std::clamp(v * 64.f, -128.f, 127.f));
 }
 
 /* --- tag/shader/bitmap resolution ----------------------------------------- */
@@ -509,7 +501,7 @@ static void load_model_cpu(
                         v.uv[1] = rd<f32>(raw + 52) * uvscale.y;
                     }
                     for(u32 k = 0; k < 3; k++)
-                        v.nrm[k] = to_s8_frac6(n[k]);
+                        v.nrm[k] = blam::gx::to_s8_frac6(n[k]);
                     v.pad = 0;
                     part.verts.push_back(v);
                     Vecf3 const p3{v.pos[0], v.pos[1], v.pos[2]};
@@ -832,8 +824,8 @@ static void append_material(
             gv.luv[1] = rd<i16>(lv + 6);
         } else // normal f32x3, then f32x2
         {
-            gv.luv[0] = to_s16_frac15(rd<f32>(lv + 12));
-            gv.luv[1] = to_s16_frac15(rd<f32>(lv + 16));
+            gv.luv[0] = blam::gx::to_s16_frac15(rd<f32>(lv + 12));
+            gv.luv[1] = blam::gx::to_s16_frac15(rd<f32>(lv + 16));
         }
         gv.detuv[0] = du * si.detail_scale; // detail tiles at a higher rate
         gv.detuv[1] = dv * si.detail_scale;
@@ -1089,60 +1081,6 @@ static u32 gx_level_bytes(u8 gxfmt, u16 w, u16 h)
 static std::map<blam::bitm::image_t const*, std::shared_ptr<gexxo::texture_t>>
     g_diffuse_cache;
 
-/* Tile a linear RGB565 image into the GX 4x4 layout. swap=true byte-swaps each
- * texel (for little-endian map data); swap=false stores host order (for values
- * computed on the big-endian CPU). */
-static void tile_rgb565(u16 const* src, u16* dst, u16 w, u16 h, bool swap)
-{
-    u32 o = 0;
-    for(u16 ty = 0; ty < h; ty += 4)
-        for(u16 tx = 0; tx < w; tx += 4)
-            for(u16 ry = 0; ry < 4; ry++)
-                for(u16 rx = 0; rx < 4; rx++)
-                {
-                    u16 const x = tx + rx, y = ty + ry;
-                    u16 const t = (x < w && y < h) ? src[y * w + x] : 0;
-                    dst[o++]    = swap ? __builtin_bswap16(t) : t;
-                }
-}
-
-/* Re-tile a linear S3TC image's DXT1 colour block into GX_TF_CMPR (same 0.5
- * B/px size, 4x smaller than expanding to RGB565): 4x4 blocks grouped into 8x8
- * tiles (TL,TR,BL,BR), 16-bit endpoints byte-swapped to big-endian, 2-bit index
- * groups reversed per byte. Handles BC1 (block 8, colour@0) and BC2/BC3 (block
- * 16, colour@8; alpha dropped). */
-static void dxt_to_cmpr(
-    u8 const* src, u8* dst, u16 w, u16 h, u32 block_size, u32 color_off)
-{
-    u32 const bw = (w + 3) / 4, bh = (h + 3) / 4;
-    u32       o   = 0;
-    auto      rev = [](u8 v) -> u8 {
-        return ((v & 0x03) << 6) | ((v & 0x0C) << 2) | ((v & 0x30) >> 2) |
-               ((v & 0xC0) >> 6);
-    };
-    for(u32 ty = 0; ty < bh; ty += 2)
-        for(u32 tx = 0; tx < bw; tx += 2)
-            for(u32 sy = 0; sy < 2; sy++)
-                for(u32 sx = 0; sx < 2; sx++)
-                {
-                    u32 const bx = tx + sx, by = ty + sy;
-                    u8        b[8] = {0};
-                    if(bx < bw && by < bh)
-                        std::memcpy(
-                            b,
-                            src + (by * bw + bx) * block_size + color_off,
-                            8);
-                    dst[o++] = b[1]; // endpoint0 -> BE
-                    dst[o++] = b[0];
-                    dst[o++] = b[3]; // endpoint1 -> BE
-                    dst[o++] = b[2];
-                    dst[o++] = rev(b[4]); // index rows, columns reversed
-                    dst[o++] = rev(b[5]);
-                    dst[o++] = rev(b[6]);
-                    dst[o++] = rev(b[7]);
-                }
-}
-
 static bool read_bitmap_pixels(
     blam::bitm::image_t const&   img,
     blam::map_ptr const&         internal_magic,
@@ -1335,7 +1273,7 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
     if(is_565)
     {
         // Map RGB565 is little-endian -> swap to big-endian for GX.
-        tile_rgb565(
+        blam::gx::tile_rgb565(
             reinterpret_cast<u16 const*>(pixels.data()),
             reinterpret_cast<u16*>(tiled),
             w,
@@ -1344,7 +1282,7 @@ static std::shared_ptr<gexxo::texture_t> load_texture(
     } else // BC1/BC2/BC3 -> GX_TF_CMPR (re-tile the DXT1 colour block)
     {
         bool const bc1 = fmt == fmt_t::BC1;
-        dxt_to_cmpr(
+        blam::gx::dxt_to_cmpr(
             pixels.data(),
             reinterpret_cast<u8*>(tiled),
             w,
