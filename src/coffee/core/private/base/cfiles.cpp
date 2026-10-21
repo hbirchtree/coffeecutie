@@ -19,6 +19,7 @@ struct Resource::ResourceData
     platform::file::map_handle                   m_mapping;
     std::unique_ptr<platform::file::file_handle> m_handle;
     semantic::Bytes                              m_resourceBuffer;
+    semantic::mem_chunk<char>                    m_readBuffer; /* FilePull() */
     Url                                          m_url;
 };
 
@@ -218,6 +219,7 @@ void FileFree(Resource& resc)
     semantic::Bytes local = std::move(resc.m_platform_data->m_resourceBuffer);
 
     resc.m_platform_data->m_resourceBuffer = {};
+    resc.m_platform_data->m_readBuffer     = {};
 
     Profiler::DeepProfile(CFILES_TAG "File buffer free'd");
 }
@@ -226,7 +228,7 @@ bool FilePull(Resource& resc)
 {
     DProfContext a(CFILES_TAG "File reading");
 
-    auto& data = resc.m_platform_data->m_resourceBuffer;
+    auto& data = resc.m_platform_data->m_readBuffer;
 
     if(auto fd = platform::file::open_file(
            resc.m_platform_data->m_url, RSCA::ReadOnly);
@@ -239,7 +241,7 @@ bool FilePull(Resource& resc)
         Profiler::DeepProfile(CFILES_TAG "File read failed");
         return false;
     } else
-        data = rd.value().as<libc_types::u8>();
+        data = std::move(rd.value());
 
     resc.data_rw = data;
     resc.data_ro = data;

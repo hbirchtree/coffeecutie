@@ -5,7 +5,7 @@
  * headers, which know nothing of JSON. */
 
 #include <blam/common/tag_index.h>
-#include <nlohmann/json.hpp>
+#include <peripherals/stl/json.h>
 
 namespace nlohmann {
 

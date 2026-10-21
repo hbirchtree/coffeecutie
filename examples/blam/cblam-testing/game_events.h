@@ -142,6 +142,7 @@ struct MapListingEvent
     std::vector<platform::url::Url> maps;
     platform::url::Url              bitmap_file;
     platform::url::Url              sound_file;
+    bool                            remember{false};
 };
 
 struct MapDataLoadEvent

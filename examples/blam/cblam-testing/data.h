@@ -269,6 +269,12 @@ struct RenderingParameters : compo::SubsystemBase
     }
 };
 
+struct NetworkConfig : compo::SubsystemBase
+{
+    std::string        gateway_url;
+    platform::url::Url key_location;
+};
+
 struct LoadingStatus : compo::SubsystemBase
 {
     using type = LoadingStatus;

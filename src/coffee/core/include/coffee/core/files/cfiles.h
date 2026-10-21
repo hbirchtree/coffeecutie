@@ -153,10 +153,14 @@ C_DEPRECATED FORCEDINLINE bool FilePull(Resource& resc, bool, bool)
  * \brief Save data to file
  * \return
  */
-extern bool FileCommit(Resource& resc, RSCA acc = RSCA::Discard);
+extern bool FileCommit(
+    Resource& resc,
+    RSCA acc = RSCA::Discard | RSCA::NewFile | RSCA::WriteOnly);
 
 C_DEPRECATED FORCEDINLINE bool FileCommit(
-    Resource& resc, bool append, RSCA acc = RSCA::Discard)
+    Resource& resc,
+    bool append,
+    RSCA acc = RSCA::Discard | RSCA::NewFile | RSCA::WriteOnly)
 {
     return FileCommit(
         resc,
