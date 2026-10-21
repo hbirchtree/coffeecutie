@@ -7,6 +7,7 @@
 #include <blam/volta/blam_shaders.h>
 #include <blam/common/endian.h>
 #include <blam/common/vertex_pack.h>
+#include <blam/gx/quantize.h>
 #include <blam/volta/blam_file_header.h>
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_swizzle.h>
@@ -155,16 +156,6 @@ void put_be16(u8* p, u16 v)
     std::memcpy(p, &v, 2);
 }
 
-i16 to_s16_frac15(f32 v)
-{
-    return static_cast<i16>(std::clamp(v * 32768.f, -32768.f, 32767.f));
-}
-
-i8 to_s8_frac6(f32 v)
-{
-    return static_cast<i8>(std::clamp(v * 64.f, -128.f, 127.f));
-}
-
 template<typename Ver>
 f32 detail_scale(blam::map_container<Ver> const& c, blam::tagref_t const& ref)
 {
@@ -271,7 +262,7 @@ u32 transcode_gx_vertices(
                             {
                                 put_bef(dst + k * 4, read_le<f32>(v + k * 4));
                                 dst[12 + k] =
-                                    static_cast<u8>(to_s8_frac6(n[k]));
+                                    static_cast<u8>(blam::gx::to_s8_frac6(n[k]));
                             }
                             dst[15] = 0;
                             put_bef(dst + 16, u * us);
@@ -357,7 +348,7 @@ u32 transcode_gx_vertices(
                             static_cast<u16>(
                                 compressed
                                     ? read_le<i16>(l + 4 + k * 2)
-                                    : to_s16_frac15(
+                                    : blam::gx::to_s16_frac15(
                                           read_le<f32>(l + 12 + k * 4))));
                     put_bef(dst + 24, du * scale);
                     put_bef(dst + 28, dv * scale);
