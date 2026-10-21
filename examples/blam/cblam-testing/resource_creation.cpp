@@ -53,6 +53,7 @@ void update_camera_aspect(compo::EntityContainer& e)
     for(const auto& player : e.select<PlayerCamera>())
     {
         auto& cam = player.get<PlayerCamera>();
+        cam.screen_aspect = window->size().aspect();
         if(count != 2)
             cam.camera.aspect = window->size().aspect();
         else
@@ -61,6 +62,7 @@ void update_camera_aspect(compo::EntityContainer& e)
             cam.camera.aspect = static_cast<f32>(size.w) / (size.h / 2.f);
             cDebug("Assigning aspect ratio {}", cam.camera.aspect);
         }
+        cam.split_aspect = cam.camera.aspect;
     }
 }
 

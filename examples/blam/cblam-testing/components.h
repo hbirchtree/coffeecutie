@@ -1143,12 +1143,34 @@ struct PlayerCamera
         u64   relative_to{0}; /*!< position and rotation in its space */
     };
     std::optional<cinematic_t> cinematic;
+    /*! The whole window's aspect, which a cutscene is drawn at, and this
+     *  seat's share of it in split screen */
+    f32 screen_aspect{0.f};
+    f32 split_aspect{0.f};
 
     bool is_active() const
     {
         return keyboard.enabled || controller.index.has_value();
     }
 };
+
+/*! The local seat a cutscene plays on, alone and full screen in place of
+ *  the split: while one plays the first seat, else the first whose camera a
+ *  cutscene holds */
+template<typename Proxy>
+std::optional<u32> cutscene_seat(Proxy& p, bool playing)
+{
+    std::optional<u32> seat;
+    for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
+    {
+        auto const& cam  = ent.template get<PlayerCamera>();
+        auto const& info = ent.template get<PlayerInfo>();
+        if(!info.is_remote() && cam.is_active() && (playing || cam.cinematic) &&
+           (!seat || info.seat_idx < *seat))
+            seat = info.seat_idx;
+    }
+    return seat;
+}
 
 /*! Whether a player's biped is drawn and animated, riders included */
 inline bool biped_shown(

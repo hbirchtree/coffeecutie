@@ -295,6 +295,7 @@ struct BlamScript
         state.fade      = {};
         state.title.reset();
         state.letterbox = false;
+        state.playing   = false;
         state.show_hud  = true;
         state.input     = true;
         log("stopped every script");
@@ -635,6 +636,7 @@ struct BlamScript
             auto& state     = p.template subsystem<CinematicState>();
             bool const on   = opcode == op::cinematic_start;
             state.letterbox = on;
+            state.playing   = on;
             state.input     = !on;
             return {};
         }

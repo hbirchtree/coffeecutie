@@ -3,6 +3,7 @@
 
 #include "caching.h"
 #include "caching_item.h"
+#include "cinematic.h"
 #include "components.h"
 #include "crunched/loading_screen.h"
 #include "data.h"
@@ -624,6 +625,7 @@ using DrawListBuilderManifest = compo::SubsystemManifest<
         ShaderCache<V>,
         RenderingParameters,
         LoadingStatus,
+        const CinematicState,
         const BSPCache<V>>,
     empty_list_t>;
 
@@ -740,10 +742,13 @@ struct DrawListBuilder
         /* Same filter and ordering as MeshRenderer::m_players, so viewport i
          * here is viewport i there. */
         m_views.clear();
+        m_cutscene = cutscene_seat(p, p.template subsystem<CinematicState>().playing);
+        auto const cutscene = m_cutscene;
         for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = ent.components();
-            if(info.is_remote() || !cam.is_active())
+            if(info.is_remote() || !cam.is_active() ||
+               (cutscene && info.seat_idx != *cutscene))
                 continue;
             if(m_views.size() >= kMaxViewports)
                 break;
@@ -860,6 +865,7 @@ struct DrawListBuilder
     /* Active local viewports, sorted by seat -- MeshRenderer sorts its own
      * copy the same way, so index i means the same viewport in both. */
     std::vector<view_t> m_views;
+    std::optional<u32>  m_cutscene;
     u32                 m_vp{0};   /* viewport currently being built */
     u32                 m_seat{0}; /* its seat, for visibility queries */
 
@@ -871,6 +877,12 @@ struct DrawListBuilder
     u32 view_count() const
     {
         return static_cast<u32>(m_views.size());
+    }
+
+    /* The seat drawn alone this frame for a cutscene, if any */
+    std::optional<u32> cutscene() const
+    {
+        return m_cutscene;
     }
 
     /* The set the builder writes; the renderer must never see it. */
@@ -3362,10 +3374,12 @@ struct MeshRenderer
 
         /* Collect active local players sorted by seat_idx */
         m_players.clear();
+        auto const cutscene = p.template subsystem<DrawListBuilder<Version>>().cutscene();
         for(auto const entity : p.template select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = entity.components();
-            if(info.is_remote() || !cam.is_active())
+            if(info.is_remote() || !cam.is_active() ||
+               (cutscene && info.seat_idx != *cutscene))
                 continue;
             m_players.push_back({
                 .seat_idx = info.seat_idx,

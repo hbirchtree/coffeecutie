@@ -55,6 +55,9 @@ struct CinematicState : compo::SubsystemBase
     std::optional<title_t> title;
 
     bool letterbox{false};
+    /*! Between cinematic_start and cinematic_stop: split screen gives way to
+     *  one view of the whole window */
+    bool playing{false};
     bool show_hud{true};
     bool input{true};
 };

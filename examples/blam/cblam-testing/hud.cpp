@@ -566,10 +566,12 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return;
 
         std::vector<std::pair<u32, u64>> seats;
+        auto const cutscene = cutscene_seat(p, cinematic.playing);
         for(auto player : p.template select<PlayerInfo, PlayerCamera>())
         {
             auto [info, cam] = player.components();
-            if(!info.is_remote() && cam.is_active())
+            if(!info.is_remote() && cam.is_active() &&
+               (!cutscene || info.seat_idx == *cutscene))
                 seats.emplace_back(info.seat_idx, player.id());
         }
         std::sort(seats.begin(), seats.end());
