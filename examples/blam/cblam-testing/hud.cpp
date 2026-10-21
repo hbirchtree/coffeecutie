@@ -607,8 +607,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             m_view  = &out;
             m_width = out.width;
 
-            if(m_unit_hud)
-                if(auto hud = m_unit_hud->template data<unit_hud_interface>(*m_magic);
+            if(auto const* unit = m_unit_huds[seats.size() > 1 ? 1 : 0])
+                if(auto hud = unit->template data<unit_hud_interface>(*m_magic);
                    hud.has_value())
                     unit_hud(*hud.value(), *status);
             if(auto const* held = equip->held(files.load_generation))
@@ -637,7 +637,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         m_magic       = &files.container.magic;
         m_index       = blam::tag_index_view<halo_version>(files.container);
         m_multiplayer = files.container.map->map_type == blam::maptype_t::multiplayer;
-        m_unit_hud    = nullptr;
+        m_unit_huds   = {};
         m_digits      = nullptr;
         m_grenades.clear();
 
@@ -675,7 +675,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                     grenade.hud_interface.valid() && hud != m_index.end() ? &(*hud) : nullptr);
             }
 
-        /* Multiplayer maps carry the unit's multiplayer HUD last */
+        /* The player's unit: the multiplayer one on multiplayer maps */
         blam::tagref_t unit_ref{};
         if(auto mp = g.multiplayer.data(*m_magic);
            m_multiplayer && mp.has_value() && !mp.value().empty())
@@ -691,9 +691,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         auto huds = unit.value()->hud_interfaces.data(*m_magic);
         if(!huds.has_value() || huds.value().empty())
             return;
-        auto const& hud = m_multiplayer ? huds.value().back().hud : huds.value().front().hud;
-        if(auto tag = m_index.find(hud.tag_id); hud.valid() && tag != m_index.end())
-            m_unit_hud = &(*tag);
+        /* The first is drawn full screen, the second in split screen */
+        for(size_t i = 0; i < m_unit_huds.size(); i++)
+        {
+            auto const& hud = huds.value()[std::min(i, huds.value().size() - 1)].hud;
+            if(auto tag = m_index.find(hud.tag_id); hud.valid() && tag != m_index.end())
+                m_unit_huds[i] = &(*tag);
+        }
     }
 
     static constexpr u32 max_child_depth  = 4;
@@ -708,7 +712,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     blam::map_ptr const*                 m_magic{nullptr};
     blam::tag_index_view<halo_version>   m_index;
     bool                                 m_multiplayer{false};
-    blam::tag_t const*                   m_unit_hud{nullptr};
+    std::array<blam::tag_t const*, 2>    m_unit_huds{}; /*!< Full, split screen */
     blam::hud_number const*              m_digits{nullptr};
     bool                                 m_digit_sprites{false};
     /* Each grenade type's equipment, and the HUD that counts it */
