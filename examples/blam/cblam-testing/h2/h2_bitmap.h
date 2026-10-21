@@ -306,6 +306,8 @@ inline std::optional<std::shared_ptr<gfx::texture_cube_t>> upload_cubemap(
 
     auto tex = api.alloc_texture(gfx::textures::cube, fmt, levels);
     tex->alloc(size_3d<u32>{width, height, 1});
+    /* TODO: unverified. Halo 1 swaps faces 1/2 only on PC (bitm cube_face),
+     * this swaps them on Xbox data; check against a reference capture */
     constexpr std::array<u32, 6> face_order{0, 2, 1, 3, 4, 5};
     u32                          offset = 0;
     for(u32 level = 0, lw = width, lh = height; level < levels; level++)
