@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/collision_bsp.h"
 #include "resources.h"
 
 #include <optional>
@@ -196,6 +197,86 @@ struct surface_triangle_t
 
 static_assert(sizeof(surface_triangle_t) == 4);
 
+/*! The encodings collision_bsp walks */
+struct traits
+{
+    using node_t    = bsp3d_node_t;
+    using plane_t   = coll::plane_t;
+    using surface_t = coll::surface_t;
+    using edge_t    = coll::edge_t;
+    using child_t   = collision_bsp::child_t;
+
+    static inline child_t child(u32 c)
+    {
+        if(bsp3d_node_t::is_none(c))
+            return {child_t::none};
+        if(bsp3d_node_t::is_leaf(c))
+            return {child_t::leaf, bsp3d_node_t::leaf_index(c)};
+        return {child_t::node, c};
+    }
+
+    static inline i32 plane_of(node_t const& n)
+    {
+        return n.plane();
+    }
+
+    static inline child_t front(node_t const& n)
+    {
+        return child(n.front_child());
+    }
+
+    static inline child_t back(node_t const& n)
+    {
+        return child(n.back_child());
+    }
+
+    static inline Vecf3 normal(plane_t const& p)
+    {
+        return p.normal.value();
+    }
+
+    static inline f32 distance(plane_t const& p)
+    {
+        return p.distance.value();
+    }
+
+    static inline bool in_front(plane_t const& plane, Vecf3 const& p)
+    {
+        f32 side = glm::dot(plane.normal.value(), p) - plane.distance.value();
+        return side >= 0.f;
+    }
+
+    static inline i32 first_edge(surface_t const& s)
+    {
+        return s.first_edge.value();
+    }
+
+    static inline i32 start_vertex(edge_t const& e)
+    {
+        return e.start_vertex.value();
+    }
+
+    static inline i32 end_vertex(edge_t const& e)
+    {
+        return e.end_vertex.value();
+    }
+
+    static inline i32 forward_edge(edge_t const& e)
+    {
+        return e.forward_edge.value();
+    }
+
+    static inline i32 reverse_edge(edge_t const& e)
+    {
+        return e.reverse_edge.value();
+    }
+
+    static inline i32 left_surface(edge_t const& e)
+    {
+        return e.left_surface.value();
+    }
+};
+
 /*! A collision bsp resolved from its resource */
 struct bsp_view_t
 {
@@ -225,33 +306,11 @@ struct bsp_view_t
     /*! The leaf holding a point, nullopt in solid space or on bad data */
     std::optional<u32> find_leaf(Vecf3 const& p) const;
 
-    /*! Calls `visit(vertex_index)` for each corner of a surface in order;
-     * returns the corner count, 0 on a broken loop */
+    /*! See collision_bsp::walk_surface() */
     template<typename Visitor>
     inline u32 walk_surface(u32 surface, Visitor&& visit) const
     {
-        if(surface >= surfaces.size())
-            return 0;
-        u32 const first = surfaces[surface].first_edge;
-        u32       e     = first;
-        u32       count = 0;
-        do
-        {
-            if(e >= edges.size())
-                return 0;
-            auto const& edge = edges[e];
-            if(edge.left_surface.value() == surface)
-            {
-                visit(edge.start_vertex.value());
-                e = edge.forward_edge;
-            } else
-            {
-                visit(edge.end_vertex.value());
-                e = edge.reverse_edge;
-            }
-            count++;
-        } while(e != first && count < 64);
-        return e == first ? count : 0;
+        return collision_bsp::walk_surface<traits>(surfaces, edges, surface, std::forward<Visitor>(visit));
     }
 };
 
