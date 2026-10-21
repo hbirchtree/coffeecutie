@@ -1329,10 +1329,7 @@ struct H2MapLoader : compo::SubsystemBase
         auto const* bytes = reinterpret_cast<u8 const*>(block->data());
 
         glm::mat3 const rotation = glm::mat3(transform);
-        auto expand = [](i16 value, f32 min, f32 max) {
-            f32 n = (static_cast<f32>(value) + 32768.f) / 65535.f;
-            return min + n * (max - min);
-        };
+        constexpr auto expand = &geo::dequantize;
 
         u32  vbase   = static_cast<u32>(m_vertices.size());
         u32  pstride = streams.position->size() / vertex_count;

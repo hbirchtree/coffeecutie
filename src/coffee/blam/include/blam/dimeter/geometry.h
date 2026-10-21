@@ -219,6 +219,13 @@ struct alignas(4) model_bounds_t
 
 static_assert(sizeof(model_bounds_t) == 56);
 
+/*! A compressed stream value inside its model_bounds_t range */
+inline f32 dequantize(i16 value, f32 min, f32 max)
+{
+    f32 n = (static_cast<f32>(value) + 32768.f) / 65535.f;
+    return min + n * (max - min);
+}
+
 /*! Section index per LOD, L1 (lowest) .. L6 (highest); -1 = absent */
 struct alignas(4) model_permutation_t
 {

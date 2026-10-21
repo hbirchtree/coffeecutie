@@ -788,10 +788,7 @@ bool append_section(
         {
             i16 q[3];
             std::memcpy(q, p, 6);
-            auto expand = [](i16 value, f32 min, f32 max) {
-                f32 n = (static_cast<f32>(value) + 32768.f) / 65535.f;
-                return min + n * (max - min);
-            };
+            constexpr auto expand = &blam::dimeter::geo::dequantize;
             place(
                 expand(
                     from_le(q[0]),
@@ -825,10 +822,7 @@ bool append_section(
         {
             i16 q[2];
             std::memcpy(q, p, 4);
-            auto expand = [](i16 value, f32 min, f32 max) {
-                f32 n = (static_cast<f32>(value) + 32768.f) / 65535.f;
-                return min + n * (max - min);
-            };
+            constexpr auto expand = &blam::dimeter::geo::dequantize;
             obj.texcoord(
                 expand(
                     from_le(q[0]),
