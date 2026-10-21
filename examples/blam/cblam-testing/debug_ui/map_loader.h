@@ -47,7 +47,7 @@ using BlamMapBrowserManifest = compo::SubsystemManifest<
         comp_app::PerformanceMonitor,
         comp_app::FrameCounter
         >,
-    type_list_t<comp_app::ControllerInput>>;
+    type_list_t<comp_app::ControllerInput, comp_app::FilePicker>>;
 
 struct BlamMapBrowser
     : compo::RestrictedSubsystem<BlamMapBrowser, BlamMapBrowserManifest>
@@ -476,6 +476,15 @@ struct BlamMapBrowser
 
     void start_restricted(Proxy& e, time_point const&)
     {
+        auto* picker = e.service<comp_app::FilePicker>();
+        if(auto dir = picker ? picker->poll() : std::nullopt)
+        {
+            using platform::url::constructors::MkSysUrl;
+            GameEvent              ev{GameEvent::MapRequestListing};
+            MapRequestListingEvent request{.directory = MkSysUrl(*dir)};
+            e.subsystem<GameEventBus>().inject(ev, &request);
+        }
+
         comp_app::FrameCounter* fps;
         comp_app::PerformanceMonitor* perf;
         e.subsystem(fps);
@@ -521,6 +530,13 @@ struct BlamMapBrowser
             {
                 if(ImGui::BeginTabItem("Local"))
                 {
+                    if constexpr(
+                        (compile_info::platform::is_linux &&
+                         !compile_info::platform::is_android) ||
+                        compile_info::platform::is_windows ||
+                        compile_info::platform::is_macos)
+                        if(picker && ImGui::Button("Browse folder..."))
+                            picker->open_directory();
                     if(ImGui::BeginListBox("Maps"))
                     {
                         for(auto const& map : m_maps)

@@ -701,8 +701,10 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
         });
 
     gbus.addEventFunction<MapRequestListingEvent>(
-        0, [&e](GameEvent&, MapRequestListingEvent*) {
+        0, [&e](GameEvent&, MapRequestListingEvent* request) {
             auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+            if(request->directory)
+                files.map_directory = *request->directory;
             list_maps(
                 e,
                 MapLoadEvent{

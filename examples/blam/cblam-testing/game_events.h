@@ -129,6 +129,9 @@ struct MapLoadByNameEvent
 struct MapRequestListingEvent
 {
     static constexpr auto event_type = GameEvent::MapRequestListing;
+
+    /* Switches the map directory before listing */
+    std::optional<platform::url::Url> directory{};
 };
 
 struct MapListingEvent
