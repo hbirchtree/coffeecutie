@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/anim_codec.h"
 #include "map.h"
 #include "physics.h"
 #include "shader.h"
@@ -72,12 +73,7 @@ inline std::vector<mesh_t const*> default_meshes(map_container const& map, rende
 }
 
 /*! A node's place relative to its parent */
-struct node_pose_t
-{
-    Quatf rotation{1.f, 0.f, 0.f, 0.f};
-    Vecf3 translation{};
-    f32   scale{1.f};
-};
+using node_pose_t = ::blam::anim::node_pose_t;
 
 /*! A render model's nodes in their default pose */
 std::vector<node_pose_t> default_pose(map_container const& map, render_model_t const& model);

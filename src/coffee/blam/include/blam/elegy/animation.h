@@ -147,17 +147,7 @@ struct animation_resource_t
 };
 
 /*! Every frame of an animation, frame-major */
-struct decoded_animation_t
-{
-    u32                      frames{0};
-    u32                      nodes{0};
-    std::vector<node_pose_t> poses;
-
-    inline Span<node_pose_t const> frame(u32 index) const
-    {
-        return Span<node_pose_t const>(poses).subspan(std::min(index, frames - 1) * nodes, nodes);
-    }
-};
+using decoded_animation_t = ::blam::anim::decoded_t;
 
 /*! Decodes a member's codec streams over `defaults` (one per node); nodes no
  * track names keep theirs */
