@@ -483,6 +483,7 @@ struct UnitVitalityEvent
     std::optional<Vecf3> respawn_at{};
     libc_types::f32      respawn_facing{0.f};
     bool                 arrived{false}; /*!< With the respawn effect */
+    bool                 fresh{false};   /*!< A respawn, not a checkpoint: starts over equipped */
 };
 
 /*! A unit died, as the authority decided; who did it, when a player */

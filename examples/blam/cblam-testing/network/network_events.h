@@ -373,7 +373,7 @@ struct alignas(8) UnitVitality
     f32 body{1.f};
     f32 shield{1.f};
     u32 dead{0};
-    u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect */
+    u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect, 4: re-equipped */
     Vecf4 respawn{};
 };
 
