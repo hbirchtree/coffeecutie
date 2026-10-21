@@ -35,7 +35,7 @@ struct EffectDrawer
         Vecf4 color;
         Vecf4 atlas;  /* scale xy, offset zw */
         Vecf4 source; /* format, layer, kind */
-        Vecf4 shape;  /* pivot xy, aspect */
+        Vecf4 shape;  /* pivot xy, aspect, lies flat across axis */
     };
 
     struct batch_t
@@ -397,7 +397,7 @@ struct EffectDrawer
                 .color    = s.color,
                 .atlas    = img.atlas,
                 .source   = Vecf4(img.format, img.layer, 0.f, img.opaque),
-                .shape    = Vecf4(img.pivot, img.aspect, 0.f),
+                .shape    = Vecf4(img.pivot, img.aspect, s.flat ? 1.f : 0.f),
             });
         }
     }

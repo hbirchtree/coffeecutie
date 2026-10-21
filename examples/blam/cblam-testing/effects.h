@@ -43,6 +43,7 @@ struct EffectScene : compo::SubsystemBase
         Vecf3 position{};
         f32   radius{0.f};
         Vecf3 axis{};    /* parallel_to_direction: stretched along this */
+        bool  flat{false}; /* perpendicular_to_direction: lies across axis */
         f32   rotation{0.f};
         Vecf4 color{1.f};
         blam::tagref_t const* bitmap{nullptr}; /* none: a soft round glow */

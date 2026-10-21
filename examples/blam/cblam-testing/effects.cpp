@@ -120,6 +120,8 @@ struct EffectSystem
         f32                   frame_rate{0.f};
         f32                   spin{0.f};
         bool                  along_velocity{false};
+        /* Lies across the way it moves, or its emitter's while still */
+        std::optional<Vecf3>  across;
         bool                  dies_on_contact{false};
 
         /* Held to a marker on its parent, in the marker's forward/right/up */
@@ -1257,6 +1259,8 @@ struct EffectSystem
                      (uniform(0.f, 1.f) < .5f ? -1.f : 1.f);
             s.along_velocity = part->orientation ==
                                blam::scn::particle_orientation_t::parallel_to_direction;
+            if(part->orientation == blam::scn::particle_orientation_t::perpendicular_to_direction)
+                s.across = dir;
             s.dies_on_contact = has(pflags::dies_on_contact_with_structure);
             /* A muzzle flash rides the barrel it came out of */
             if((burst.flags & effect::particle_t::flags_t::stay_attached_to_marker) !=
@@ -1622,6 +1626,11 @@ struct EffectSystem
             look.axis  = s.along_velocity
                              ? s.velocity * TickClock::tick_seconds
                              : Vecf3{};
+            if(s.across)
+            {
+                look.flat = true;
+                look.axis = glm::length(s.velocity) > 1e-4f ? glm::normalize(s.velocity) : *s.across;
+            }
             scene.sprites.push_back(look);
             ++i;
         }

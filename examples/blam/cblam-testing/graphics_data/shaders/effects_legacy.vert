@@ -34,7 +34,18 @@ void main()
         vec2  size   = 2.0 * corner.z * vec2(min(aspect, 1.0), min(1.0 / aspect, 1.0));
         vec2  t      = corner.xy * 0.5 + 0.5 - vec2(shape.x, 1.0 - shape.y);
         float stretch = length(axis);
-        if(stretch > 0.0001)
+        if(stretch > 0.0001 && shape.w > 0.5)
+        {
+            /* Lying across its axis, turned by its rotation */
+            vec3  n     = axis / stretch;
+            vec3  right = normalize(cross(n, abs(n.z) < 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0)));
+            vec3  up    = cross(n, right);
+            vec2  at    = t * size;
+            float s     = sin(corner.w);
+            float c     = cos(corner.w);
+            at          = vec2(c * at.x - s * at.y, s * at.x + c * at.y);
+            world       = position + right * at.x + up * at.y;
+        } else if(stretch > 0.0001)
         {
             vec3 up    = axis / stretch;
             vec3 right = cross(up, eye - position);
