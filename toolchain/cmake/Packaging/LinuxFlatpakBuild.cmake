@@ -27,6 +27,10 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
       FALSE
       CACHE BOOL "Deploy with local, user-only repository"
   )
+  set(FLATPAK_PLATFORM_VER
+      "26.08"
+      CACHE STRING "Flatpak platform version to use"
+  )
 
   set(FLATPAK_EXTRA_LIBRARIES CACHE STRING "")
 endif()
@@ -163,7 +167,7 @@ macro(
             "${FLATPAK_BINARY_DIR}"
   )
 
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  if("${CMAKE_BUILD_TYPE}" MATCHES "(Release|RelWithDebInfo)")
     add_custom_command(
       TARGET ${FLATPAK_TARGET}.flatpak
       POST_BUILD

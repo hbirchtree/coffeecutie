@@ -1,12 +1,12 @@
 [Application]
 name=@FLATPAK_PKG_NAME@
-runtime=org.freedesktop.Platform/@FLATPAK_ARCH@/23.08
-sdk=org.freedesktop.Sdk/@FLATPAK_ARCH@/23.08
+runtime=org.freedesktop.Platform/@FLATPAK_ARCH@/@FLATPAK_PLATFORM_VER@
+sdk=org.freedesktop.Sdk/@FLATPAK_ARCH@/@FLATPAK_PLATFORM_VER@
 command=@FLATPAK_EXEC@
 
 [Environment]
 COFFEE_NO_PROFILER_EXPORT=1
-APPIMAGE_DATA_DIR=/app/assets
+FLATPAK_DATA_DIR=/app/assets
 LD_LIBRARY_PATH=/app/lib
 
 [Context]
@@ -16,7 +16,7 @@ devices=dri;input;
 filesystems=~/.local/share/@FLATPAK_CONFIG@:create;~/.cache/@FLATPAK_CONFIG@:create;host-etc:ro
 
 [Extension org.freedesktop.Platform.GL]
-version=23.08
+version=@FLATPAK_PLATFORM_VER@
 directory=lib/GL
 
 [Extension org.freedesktop.Platform.Timezones]
