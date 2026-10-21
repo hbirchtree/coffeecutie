@@ -141,28 +141,15 @@ void load_collision_debug(EntityContainer& e, MapChangedEvent<Version>& data)
                 for(u32 si = 0; si < surfs.size(); si++)
                 {
                     loop.clear();
-                    i32 const first = surfs[si].first_edge;
-                    i32       ed    = first;
-                    u32       guard = 0;
-                    do
-                    {
-                        if(ed < 0 || static_cast<u32>(ed) >= edges.size())
-                            break;
-                        auto const& edge = edges[ed];
-                        u32         vi;
-                        if(edge.left_surface == static_cast<i32>(si))
-                        {
-                            vi = static_cast<u32>(edge.start_vertex);
-                            ed = edge.forward_edge;
-                        } else
-                        {
-                            vi = static_cast<u32>(edge.end_vertex);
-                            ed = edge.reverse_edge;
-                        }
-                        if(vi < verts.size())
-                            loop.push_back(
-                                Vecf3(world * Vecf4(verts[vi].point, 1.f)));
-                    } while(ed != first && ++guard < 32);
+                    blam::collision::walk_surface(
+                        surfs,
+                        edges,
+                        si,
+                        [&](i32 v) {
+                            if(auto vi = static_cast<u32>(v); vi < verts.size())
+                                loop.push_back(Vecf3(world * Vecf4(verts[vi].point, 1.f)));
+                        },
+                        32);
 
                     if(loop.size() >= 2)
                     {
