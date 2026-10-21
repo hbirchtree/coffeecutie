@@ -2667,6 +2667,10 @@ struct PhysicsSystem
     {
         if(!m_world)
             return;
+        /* Bullet asserts on a ray it cannot normalize, e.g. a resting particle */
+        Vecf3 const span = ray.to - ray.from;
+        if(glm::dot(span, span) < SIMD_EPSILON * SIMD_EPSILON)
+            return;
         struct closest_t : btCollisionWorld::ClosestRayResultCallback
         {
             using ClosestRayResultCallback::ClosestRayResultCallback;
