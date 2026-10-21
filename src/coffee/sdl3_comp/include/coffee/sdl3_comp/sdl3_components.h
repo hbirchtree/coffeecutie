@@ -286,6 +286,18 @@ struct Clipboard
     virtual void push(std::string_view const& text) final;
 };
 
+struct FilePicker
+    : comp_app::interfaces::FilePicker
+    , comp_app::AppService<FilePicker, comp_app::FilePicker>
+{
+    virtual void                       open_directory() final;
+    virtual std::optional<std::string> poll() final;
+
+    /* Dialog callbacks may come from another thread */
+    std::mutex                 m_lock;
+    std::optional<std::string> m_picked;
+};
+
 using Services = comp_app::subsystem_list<
     Context,
     Windowing,
@@ -294,6 +306,7 @@ using Services = comp_app::subsystem_list<
     comp_app::PtrNativeWindowInfoService,
     KeyboardInput,
     Clipboard,
+    FilePicker,
     MouseInput>;
 
 using GLServices =

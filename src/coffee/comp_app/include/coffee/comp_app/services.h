@@ -165,6 +165,13 @@ struct Clipboard
     virtual void push(std::string_view const&) = 0;
 };
 
+struct FilePicker
+{
+    /* Asks for a directory, the pick arrives through poll() */
+    virtual void                       open_directory() = 0;
+    virtual std::optional<std::string> poll()           = 0;
+};
+
 struct DisplayInfo
 {
     virtual size_2d_t       virtualSize() const                         = 0;
@@ -978,6 +985,7 @@ using CPUClockProvider    = detail::tag_t<interfaces::CPUClockProvider>;
 using CPUTempProvider     = detail::tag_t<interfaces::CPUTempProvider>;
 using Dialogs             = detail::tag_t<interfaces::Dialogs>;
 using DisplayInfo         = detail::tag_t<interfaces::DisplayInfo>;
+using FilePicker          = detail::tag_t<interfaces::FilePicker>;
 using SensorStatProvider  = detail::tag_t<interfaces::SensorStatProvider>;
 using GPUTempProvider     = detail::tag_t<interfaces::GPUTempProvider>;
 using GPUStatProvider     = detail::tag_t<interfaces::GPUStatProvider>;

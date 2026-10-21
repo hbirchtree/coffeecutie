@@ -1374,4 +1374,28 @@ void Clipboard::push(std::string_view const& text)
     SDL_SetClipboardText(copy.c_str());
 }
 
+void FilePicker::open_directory()
+{
+    SDL_ShowOpenFolderDialog(
+        [](void* userdata, char const* const* files, int) {
+            if(!files)
+                cDebug("Folder dialog failed: {}", SDL_GetError());
+            if(!files || !files[0])
+                return;
+            auto&            self = *static_cast<FilePicker*>(userdata);
+            std::lock_guard _(self.m_lock);
+            self.m_picked = files[0];
+        },
+        this,
+        SDL_GetKeyboardFocus(),
+        nullptr,
+        false);
+}
+
+std::optional<std::string> FilePicker::poll()
+{
+    std::lock_guard _(m_lock);
+    return std::exchange(m_picked, std::nullopt);
+}
+
 } // namespace sdl3

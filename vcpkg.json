@@ -158,19 +158,19 @@
                     "name": "sdl3",
                     "platform": "linux & x64",
                     "default-features": false,
-                    "features": ["wayland", "x11"]
+                    "features": ["dialog", "wayland", "x11"]
                 },
                 {
                     "name": "sdl3",
                     "platform": "linux & arm & wayland & !x11",
                     "default-features": false,
-                    "features": ["wayland"]
+                    "features": ["dialog", "wayland"]
                 },
                 {
                     "name": "sdl3",
                     "platform": "linux & arm & wayland & x11",
                     "default-features": false,
-                    "features": ["wayland", "x11"]
+                    "features": ["dialog", "wayland", "x11"]
                 },
                 {
                     "name": "sdl3",
@@ -178,7 +178,7 @@
                     "default-features": false,
                     "features": []
                 },
-                { "name": "sdl3", "platform": "osx | windows | mingw"}
+                { "name": "sdl3", "platform": "osx | windows | mingw", "features": ["dialog"] }
             ]
         },
         "tests": {

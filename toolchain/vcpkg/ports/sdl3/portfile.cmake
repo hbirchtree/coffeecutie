@@ -16,6 +16,7 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         alsa     SDL_ALSA
         dbus     SDL_DBUS
+        dialog   SDL_DIALOG
         ibus     SDL_IBUS
         vulkan   SDL_VULKAN
         wayland  SDL_WAYLAND
@@ -50,6 +51,11 @@ if ("libusb" IN_LIST FEATURES)
     endif()
 endif()
 
+# Portal dialogs need D-Bus, taken from the sysroot rather than the dbus port
+if ("dialog" IN_LIST FEATURES AND VCPKG_TARGET_IS_LINUX)
+    vcpkg_list(APPEND FEATURE_OPTIONS "-DSDL_DBUS=ON")
+endif()
+
 # option for not need to show windows
 list(APPEND FEATURE_OPTIONS -DSDL_UNIX_CONSOLE_BUILD=ON)
 if (VCPKG_TARGET_IS_LINUX AND NOT "x11" IN_LIST FEATURES AND NOT "wayland" IN_LIST FEATURES)
@@ -72,7 +78,6 @@ vcpkg_cmake_configure(
         -DSDL_GPU=OFF
         -DSDL_CAMERA=OFF
         -DSDL_SENSOR=OFF
-        -DSDL_DIALOG=OFF
         -DSDL_TRAY=OFF
         # Headless capture depends on this one
         -DSDL_OFFSCREEN=ON
