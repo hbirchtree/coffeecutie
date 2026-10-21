@@ -50,7 +50,9 @@ struct MultiplayerController
         for(auto const& tick : m_ticks->take())
             dt += tick.seconds;
         m_kill_queue->poll();
-        auto kills = std::exchange(m_kills, {});
+        m_rejoin_queue->poll();
+        auto kills   = std::exchange(m_kills, {});
+        auto rejoins = std::exchange(m_rejoins, {});
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
            p.template subsystem<NetworkState>().replica)
             return;
@@ -63,6 +65,8 @@ struct MultiplayerController
             return;
         for(auto const& kill : kills)
             killed(state, kill);
+        for(u64 unit : rejoins)
+            m_waiting[unit] = m_respawn_delay;
         if(m_vm && state.phase == GameState::phase_t::playing && dt > 0.f)
             m_vm->tick();
         if(state.time_left > 0.f && (state.time_left -= dt) <= 0.f)
@@ -240,6 +244,8 @@ struct MultiplayerController
     std::unique_ptr<TickQueue>                                 m_ticks;
     std::shared_ptr<GameEventBus::queue_type<UnitKilledEvent>> m_kill_queue;
     std::vector<UnitKilledEvent>                               m_kills;
+    std::shared_ptr<GameEventBus::queue_type<UnitRejoinedEvent>> m_rejoin_queue;
+    std::vector<u64>                                           m_rejoins;
 
     GameState*                 m_state{nullptr};
     u32                        m_load_generation{0};
@@ -257,4 +263,6 @@ void alloc_multiplayer_controller(compo::EntityContainer& e)
     mode.m_ticks = std::make_unique<TickQueue>(game);
     mode.m_kill_queue = game.addQueuedEventFunction<UnitKilledEvent>(
         0, [&mode](GameEvent&, UnitKilledEvent* kill) { mode.m_kills.push_back(*kill); });
+    mode.m_rejoin_queue = game.addQueuedEventFunction<UnitRejoinedEvent>(
+        0, [&mode](GameEvent&, UnitRejoinedEvent* back) { mode.m_rejoins.push_back(back->unit); });
 }
