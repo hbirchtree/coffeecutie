@@ -274,7 +274,8 @@ void alloc_camera_control(compo::EntityContainer& e)
         });
     game_bus.addEventData({
         1024, [&camera](GameEvent& e, void*) {
-            if(e.type != GameEvent::MapAllLoaded)
+            /* Before the new map's scripts move the camera */
+            if(e.type != GameEvent::MapChanged)
                 return;
             camera.incoming_lerps.clear();
             camera.incoming_controls.clear();
