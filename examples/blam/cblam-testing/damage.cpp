@@ -289,11 +289,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
            info && !info->is_remote() && vitality.respawn_at)
             restart(p, vitality.unit, *info, *vitality.respawn_at, vitality.respawn_facing);
         if(vitality.respawn_at && vitality.arrived)
-            arrive(p, vitality.unit, *vitality.respawn_at, vitality.respawn_facing);
+            arrive(p, vitality.unit, *vitality.respawn_at);
     }
 
-    /* The players' respawn effect where it comes back */
-    void arrive(Proxy& p, u64 unit, Vecf3 feet, f32 facing)
+    /* The players' respawn effect where it comes back, standing up */
+    void arrive(Proxy& p, u64 unit, Vecf3 feet)
     {
         auto const* info = p.template get<PlayerInfo>(unit);
         if(!info || !info->biped.respawn_effect ||
@@ -303,7 +303,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         SpawnEffectEvent play{
             .effect    = *info->biped.respawn_effect,
             .position  = feet,
-            .direction = {std::cos(facing), std::sin(facing), 0.f},
+            .direction = {0.f, 0.f, 1.f},
         };
         p.template subsystem<GameEventBus>().inject(ev, &play);
     }
@@ -341,7 +341,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
            info && !info->is_remote())
             restart(p, respawn.unit, *info, respawn.position, respawn.facing);
         if(respawn.arrive)
-            arrive(p, respawn.unit, respawn.position, respawn.facing);
+            arrive(p, respawn.unit, respawn.position);
     }
 
     /* After a while unhurt, a shield fills back up */
