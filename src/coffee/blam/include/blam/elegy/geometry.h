@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/vertex_pack.h"
 #include "resources.h"
 
 #include <vector>
@@ -305,14 +306,7 @@ static_assert(sizeof(skinned_vertex_t) == 0x20);
  * bits */
 inline Vecf3 unpack_dhen3n(u32 v)
 {
-    auto field = [](u32 bits, u32 width) {
-        i32 value = static_cast<i32>(bits);
-        if(bits >> (width - 1))
-            value -= 1 << width;
-        return static_cast<f32>(value) / static_cast<f32>((1 << (width - 1)) - 1);
-    };
-    return Vecf3(
-        field(v & 0x3FF, 10), field((v >> 10) & 0x7FF, 11), field(v >> 21, 11));
+    return vertex_pack::unpack_10_11_11(v);
 }
 
 inline f32 unpack_unorm16(u16 v)
