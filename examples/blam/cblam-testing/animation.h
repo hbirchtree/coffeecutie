@@ -287,21 +287,9 @@ inline libc_types::f32 move_speed(
     if(index < 0 || static_cast<size_t>(index) >= anims.value().size())
         return 0.f;
     auto const& clip   = anims.value()[index];
-    libc_types::u32 stride = 0;
-    switch(clip.frame_info_type_)
-    {
-    case blam::antr::frame_info_type::dx_dy:
-        stride = 8;
-        break;
-    case blam::antr::frame_info_type::dx_dy_dyaw:
-        stride = 12;
-        break;
-    case blam::antr::frame_info_type::dx_dy_dz_dyaw:
-        stride = 16;
-        break;
-    default:
+    libc_types::u32 const stride = clip.frame_info_stride();
+    if(!stride)
         return 0.f;
-    }
     auto bytes = clip.frame_info.data(magic);
     if(!bytes.has_value())
         return 0.f;
@@ -315,9 +303,5 @@ inline libc_types::f32 move_speed(
         std::memcpy(&delta, bytes.value().data() + i * stride, sizeof(delta));
         moved += glm::length(delta);
     }
-    libc_types::f32 const rate = (static_cast<libc_types::u16>(clip.flags) &
-                      static_cast<libc_types::u16>(blam::antr::anim_flags::pal_25hz))
-                         ? 25.f
-                         : 30.f;
-    return moved * rate / static_cast<libc_types::f32>(frames);
+    return moved * clip.frame_rate() / static_cast<libc_types::f32>(frames);
 }

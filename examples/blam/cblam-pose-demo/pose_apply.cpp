@@ -9,6 +9,7 @@
 #include <utility>
 
 #include <blam/volta/blam_antr.h>
+#include <blam/volta/blam_antr_sample.h>
 #include <blam/volta/blam_mod2.h>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -158,57 +159,14 @@ void apply_pose(
                                           static_cast<u32>(anim.frame_count)
                                     : 0;
 
-                        size_t d = 0;
-                        size_t f =
-                            static_cast<size_t>(frame_idx) * anim.frame_size;
-
-                        auto read_quat = [](semantic::Span<const u8> buf,
-                                            size_t                       off) {
-                            return reinterpret_cast<
-                                       blam::antr::compressed_quat_t const*>(
-                                       buf.data() + off)
-                                ->decompress();
-                        };
-                        auto read_vec3 = [](semantic::Span<const u8> buf,
-                                            size_t                       off) {
-                            return *reinterpret_cast<Vecf3 const*>(
-                                buf.data() + off);
-                        };
-
-                        rotations.assign(n, Quatf(1, 0, 0, 0));
-                        translations.assign(n, Vecf3(0));
-                        for(u32 i = 0; i < n; i++)
-                        {
-                            if(anim.has_rotation(i))
-                            {
-                                if(f + 8 <= frame_bytes.size())
-                                    rotations[i] = read_quat(frame_bytes, f);
-                                f += 8;
-                            } else
-                            {
-                                if(d + 8 <= default_bytes.size())
-                                    rotations[i] = read_quat(default_bytes, d);
-                                d += 8;
-                            }
-                            if(anim.has_translation(i))
-                            {
-                                if(f + 12 <= frame_bytes.size())
-                                    translations[i] = read_vec3(frame_bytes, f);
-                                f += 12;
-                            } else
-                            {
-                                if(d + 12 <= default_bytes.size())
-                                    translations[i] =
-                                        read_vec3(default_bytes, d);
-                                d += 12;
-                            }
-                            if(anim.has_scale(i))
-                                f += 4;
-                            else
-                                d += 4;
-                        }
-                        for(u32 i = 0; i < n; i++)
-                            rotations[i] = glm::conjugate(rotations[i]);
+                        blam::antr::sample_uncompressed(
+                            anim,
+                            default_bytes,
+                            frame_bytes,
+                            frame_idx,
+                            n,
+                            rotations,
+                            translations);
                         seeded_from_anim = true;
                     }
                 }

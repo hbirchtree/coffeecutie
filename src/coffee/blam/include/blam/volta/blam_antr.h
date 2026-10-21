@@ -8,6 +8,8 @@
 #include "blam_reference.h"
 #include "blam_structures.h"
 
+#include <algorithm>
+
 namespace blam::antr {
 
 /*! 20-byte Halo 1 tag-data block: size, flags, file offset, pointer */
@@ -436,6 +438,35 @@ struct animation
     {
         return static_cast<u16>(flags) &
                static_cast<u16>(anim_flags::compressed_data);
+    }
+
+    /*! Authored at 30Hz; PAL tags flag themselves as 25Hz */
+    f32 frame_rate() const
+    {
+        return (static_cast<u16>(flags) & static_cast<u16>(anim_flags::pal_25hz))
+                   ? 25.f
+                   : 30.f;
+    }
+
+    u32 loop_start_frame() const
+    {
+        return static_cast<u32>(std::clamp<i32>(loop_frame, 0, frame_count - 1));
+    }
+
+    /*! Bytes per frame of frame_info, 0 when it has none */
+    u32 frame_info_stride() const
+    {
+        switch(frame_info_type_)
+        {
+        case frame_info_type::dx_dy:
+            return 8;
+        case frame_info_type::dx_dy_dyaw:
+            return 12;
+        case frame_info_type::dx_dy_dz_dyaw:
+            return 16;
+        default:
+            return 0;
+        }
     }
 };
 

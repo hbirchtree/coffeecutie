@@ -7,6 +7,7 @@
 #include "blam/volta/blam_tag_ref.h"
 #include "peripherals/stl/enumerate.h"
 #include <blam/volta/blam_actor.h>
+#include <blam/volta/blam_antr_sample.h>
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>
 #include <blam/volta/blam_collision.h>
@@ -2518,50 +2519,34 @@ void dump_overlay_frames(blam::antr::animation const& anim)
     auto frames = anim.frame_data.data(g_magic);
     if(anim.is_compressed() || !frames.has_value() || anim.frame_size <= 0)
         return;
-    auto       bytes = frames.value();
-    auto quat_at = [&](i32 frame, u32 node) {
-        size_t off = static_cast<size_t>(frame) * anim.frame_size;
-        for(u32 i = 0; i < node; i++)
-            off += (anim.has_rotation(i) ? 8 : 0) +
-                   (anim.has_translation(i) ? 12 : 0) +
-                   (anim.has_scale(i) ? 4 : 0);
-        if(off + 8 > bytes.size())
-            return Quatf(1, 0, 0, 0);
-        return glm::conjugate(
-            reinterpret_cast<blam::antr::compressed_quat_t const*>(
-                bytes.data() + off)
-                ->decompress());
-    };
-    for(u32 node = 0; node < static_cast<u32>(anim.node_count); node++)
+    auto const nodes = static_cast<u32>(anim.node_count);
+    std::vector<std::vector<Quatf>> rot(std::max<i32>(anim.frame_count, 0));
+    std::vector<std::vector<Vecf3>> trans(rot.size());
+    for(size_t frame = 0; frame < rot.size(); frame++)
+        blam::antr::sample_uncompressed(
+            anim, {}, frames.value(), static_cast<u32>(frame), nodes, rot[frame], trans[frame]);
+    for(u32 node = 0; node < nodes; node++)
     {
         if(!anim.has_rotation(node))
             continue;
         fmt::print("      node {}:", node);
         for(i32 frame = 0; frame < anim.frame_count; frame++)
         {
-            Quatf const d     = quat_at(frame, node);
+            Quatf const d     = rot[frame][node];
             f32 const   angle = glm::degrees(glm::angle(d));
             Vecf3 const axis  = angle > .5f ? glm::axis(d) * angle : Vecf3(0);
             fmt::print(" [{:.0f} {:.0f} {:.0f}]", axis.x, axis.y, axis.z);
         }
         fmt::print("\n");
     }
-    for(u32 node = 0; node < static_cast<u32>(anim.node_count); node++)
+    for(u32 node = 0; node < nodes; node++)
     {
         if(!anim.has_translation(node))
             continue;
         fmt::print("      node {} translation:", node);
         for(i32 frame = 0; frame < anim.frame_count; frame++)
         {
-            size_t off = static_cast<size_t>(frame) * anim.frame_size;
-            for(u32 i = 0; i < node; i++)
-                off += (anim.has_rotation(i) ? 8 : 0) +
-                       (anim.has_translation(i) ? 12 : 0) +
-                       (anim.has_scale(i) ? 4 : 0);
-            off += anim.has_rotation(node) ? 8 : 0;
-            if(off + 12 > bytes.size())
-                break;
-            auto t = *reinterpret_cast<Vecf3 const*>(bytes.data() + off);
+            auto const& t = trans[frame][node];
             fmt::print(" [{:.3f} {:.3f} {:.3f}]", t.x, t.y, t.z);
         }
         fmt::print("\n");

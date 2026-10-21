@@ -5,6 +5,7 @@
 #include "map_marker.h"
 #include "materials.h"
 #include "selected_version.h"
+#include <blam/volta/blam_antr_sample.h>
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
 #include <algorithm>
@@ -809,21 +810,6 @@ ModelItem<V> ModelCache<V>::predict_impl(
 template ModelItem<halo_version> ModelCache<halo_version>::predict_impl(
     const blam::tagref_t& mod2, blam::mod2::mod2_lod lod, u32 permutations);
 
-/* Halo animations are authored at 30Hz; PAL tags flag themselves as 25Hz. */
-static f32 frame_rate_of(blam::antr::animation const& anim)
-{
-    return (static_cast<u16>(anim.flags) &
-            static_cast<u16>(blam::antr::anim_flags::pal_25hz))
-               ? 25.f
-               : 30.f;
-}
-
-static u32 loop_start_frame(blam::antr::animation const& anim)
-{
-    i32 frame = std::clamp<i32>(anim.loop_frame, 0, anim.frame_count - 1);
-    return static_cast<u32>(frame);
-}
-
 template<typename V>
 u32 ModelCache<V>::bone_count(generation_idx_t model_id)
 {
@@ -860,143 +846,7 @@ blam::antr::animation const* ModelCache<V>::find_animation(
     return &anim;
 }
 
-namespace {
-
-/* 48-bit rotation: x, y, z, w as 12-bit ones' complement, high to low */
-Quatf quat48(u8 const* at)
-{
-    u16 words[3];
-    std::memcpy(words, at, sizeof(words));
-    u64 const bits = u64(words[2]) | (u64(words[1]) << 16) | (u64(words[0]) << 32);
-    auto part = [bits](u32 shift) {
-        i32 const v = static_cast<i32>((bits >> shift) & 0xfff);
-        return static_cast<f32>(v & 0x800 ? v - 4095 : v);
-    };
-    Quatf const q(part(0), part(36), part(24), part(12));
-    f32 const   length = glm::length(q);
-    return length > 0.f ? q / length : Quatf(1, 0, 0, 0);
-}
-
-Vecf3 vec3_at(u8 const* at)
-{
-    Vecf3 out;
-    std::memcpy(&out, at, sizeof(out));
-    return out;
-}
-
-Quatf nlerp(Quatf const& a, Quatf b, f32 t)
-{
-    if(glm::dot(a, b) < 0.f)
-        b = -b;
-    return glm::normalize(a * (1.f - t) + b * t);
-}
-
-/* One channel of a compressed clip: per-node keyframe heads (count:12,
- * first:20), the frame of each keyframe, a default per node, and values */
-struct compressed_stream_t
-{
-    u32 heads, frames, defaults, values, end;
-};
-
-/* A node's channel at `frame`: its default before keyframes take over,
- * blended between the keyframes around the frame, held after the last */
-template<typename T, typename Decode, typename Mix>
-T sample_channel(
-    semantic::Span<const u8> block,
-    compressed_stream_t const&   stream,
-    i32                          track,
-    T const&                     fallback,
-    u32                          frame,
-    u32                          size,
-    Decode&&                     decode,
-    Mix&&                        mix)
-{
-    auto fits = [&block](size_t at, size_t bytes) { return at + bytes <= block.size(); };
-    size_t const head_at = stream.heads + 4u * static_cast<u32>(track);
-    if(track < 0 || frame == 0 || !fits(head_at, 4))
-        return fallback;
-    u32 head;
-    std::memcpy(&head, block.data() + head_at, 4);
-    u32 const count = head & 0xfff, first = head >> 12;
-    if(count == 0 || !fits(stream.frames + 2u * (first + count), 0) ||
-       !fits(stream.values + size * (first + count), 0))
-        return fallback;
-    auto key = [&](u32 i) {
-        u16 v;
-        std::memcpy(&v, block.data() + stream.frames + 2u * (first + i), 2);
-        return static_cast<u32>(v);
-    };
-    auto value = [&](u32 i) { return decode(block.data() + stream.values + size * (first + i)); };
-    if(frame < key(0))
-        return mix(fallback, value(0), static_cast<f32>(frame) / static_cast<f32>(key(0)));
-    if(frame >= key(count - 1))
-        return value(count - 1);
-    u32 i = 0;
-    while(i + 2 < count && key(i + 1) <= frame)
-        i++;
-    u32 const a = key(i), b = key(i + 1);
-    return mix(value(i), value(i + 1), static_cast<f32>(frame - a) / static_cast<f32>(b - a));
-}
-
-/* Cutscene clips: keyframed channels in a block of frame_data at
- * compressed_data_offset, led by the offsets of their streams */
-bool sample_compressed(
-    blam::antr::animation const& anim,
-    semantic::Span<const u8> frame_bytes,
-    u32                          frame,
-    u32                          node_count,
-    std::vector<Quatf>&          rot,
-    std::vector<Vecf3>&          trans)
-{
-    constexpr u32 header_size = 44;
-    auto const    offset      = static_cast<size_t>(anim.compressed_data_offset);
-    if(anim.compressed_data_offset < 0 || offset + header_size > frame_bytes.size())
-        return false;
-    auto const block = frame_bytes.subspan(offset);
-    u32        h[11];
-    std::memcpy(h, block.data(), sizeof(h));
-    auto const size = static_cast<u32>(block.size());
-    compressed_stream_t const rotation{header_size, h[0], h[1], h[2], h[3]};
-    compressed_stream_t const translation{h[3], h[4], h[5], h[6], h[7]};
-    if(rotation.defaults + 6u * node_count > size || translation.defaults + 12u * node_count > size)
-        return false;
-
-    rot.assign(node_count, Quatf(1, 0, 0, 0));
-    trans.assign(node_count, Vecf3(0));
-    i32 rotated = 0, moved = 0;
-    for(u32 i = 0; i < node_count; i++)
-    {
-        rot[i] = sample_channel(
-            block,
-            rotation,
-            anim.has_rotation(i) ? rotated++ : -1,
-            quat48(block.data() + rotation.defaults + 6u * i),
-            frame,
-            6,
-            quat48,
-            nlerp);
-        trans[i] = sample_channel(
-            block,
-            translation,
-            anim.has_translation(i) ? moved++ : -1,
-            vec3_at(block.data() + translation.defaults + 12u * i),
-            frame,
-            12,
-            vec3_at,
-            [](Vecf3 const& a, Vecf3 const& b, f32 t) { return glm::mix(a, b, t); });
-    }
-    for(auto& q : rot)
-        q = glm::conjugate(q);
-    return true;
-}
-
-} // namespace
-
-/* Decodes one animation's node channels at `frame` into node-local TRS.
- * Interleaved BY NODE: each emits [rotation 8B][translation 12B][scale 4B],
- * animated channels from frame_data and the rest from default_data.
- * frame_info (root motion) is a separate block. Scale is unused but its
- * bytes must still be stepped over. */
+/* One animation's node channels at `frame`, as node-local TRS */
 template<typename V>
 bool ModelCache<V>::sample_animation(
     blam::antr::animation const& anim,
@@ -1009,66 +859,19 @@ bool ModelCache<V>::sample_animation(
     auto frame_bytes_opt   = anim.frame_data.data(magic);
     if(anim.is_compressed())
         return frame_bytes_opt.has_value() &&
-               sample_compressed(anim, frame_bytes_opt.value(), frame, node_count, rot, trans);
+               blam::antr::sample_compressed(anim, frame_bytes_opt.value(), frame, node_count, rot, trans);
     if(!default_bytes_opt.has_value() ||
        (!frame_bytes_opt.has_value() && anim.frame_size > 0))
         return false;
 
-    auto default_bytes = default_bytes_opt.value();
-    auto frame_bytes   = frame_bytes_opt.has_value()
-                             ? frame_bytes_opt.value()
-                             : semantic::Span<const u8>{};
-
-    rot.assign(node_count, Quatf(1, 0, 0, 0));
-    trans.assign(node_count, Vecf3(0));
-
-    size_t d = 0;
-    size_t f = static_cast<size_t>(frame) * anim.frame_size;
-
-    auto read_quat = [](semantic::Span<const u8> buf, size_t off) {
-        return reinterpret_cast<blam::antr::compressed_quat_t const*>(
-                   buf.data() + off)
-            ->decompress();
-    };
-    auto read_vec3 = [](semantic::Span<const u8> buf, size_t off) {
-        return *reinterpret_cast<Vecf3 const*>(buf.data() + off);
-    };
-
-    for(u32 i = 0; i < node_count; i++)
-    {
-        if(anim.has_rotation(i))
-        {
-            if(f + 8 <= frame_bytes.size())
-                rot[i] = read_quat(frame_bytes, f);
-            f += 8;
-        } else
-        {
-            if(d + 8 <= default_bytes.size())
-                rot[i] = read_quat(default_bytes, d);
-            d += 8;
-        }
-        if(anim.has_translation(i))
-        {
-            if(f + 12 <= frame_bytes.size())
-                trans[i] = read_vec3(frame_bytes, f);
-            f += 12;
-        } else
-        {
-            if(d + 12 <= default_bytes.size())
-                trans[i] = read_vec3(default_bytes, d);
-            d += 12;
-        }
-        if(anim.has_scale(i))
-            f += 4;
-        else
-            d += 4;
-    }
-
-    /* antr quats use the same conjugate convention as the mod2 bind quats. */
-    for(u32 i = 0; i < node_count; i++)
-        rot[i] = glm::conjugate(rot[i]);
-
-    return true;
+    return blam::antr::sample_uncompressed(
+        anim,
+        default_bytes_opt.value(),
+        frame_bytes_opt.has_value() ? frame_bytes_opt.value() : semantic::Span<const u8>{},
+        frame,
+        node_count,
+        rot,
+        trans);
 }
 
 /* Whether the foot frame came up between two frame positions, wrapping
@@ -1146,7 +949,7 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
         if(!clip)
             continue;
 
-        f32 const rate   = frame_rate_of(*clip);
+        f32 const rate   = clip->frame_rate();
         f32 const length = static_cast<f32>(clip->frame_count) / rate;
         f32 const before = layer.time * rate;
         bool const follower = layer.sync && lead && &layer != lead &&
@@ -1159,7 +962,7 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
         if(layer.time >= length && layer.loop)
         {
             /* A looping animation restarts at loop_frame, not at zero. */
-            f32 const start = static_cast<f32>(loop_start_frame(*clip)) / rate;
+            f32 const start = static_cast<f32>(clip->loop_start_frame()) / rate;
             f32 const span  = length - start;
             layer.time      = span > 0.f
                                   ? start + std::fmod(layer.time - start, span)
@@ -1169,7 +972,7 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
             lead_phase = length > 0.f ? layer.time / length : 0.f;
 
         f32 const after = layer.time * rate;
-        f32 const start = static_cast<f32>(loop_start_frame(*clip));
+        f32 const start = static_cast<f32>(clip->loop_start_frame());
         /* A blend's feet are the lead's, or they would double up */
         if(!follower)
         {
@@ -1324,7 +1127,7 @@ void ModelCache<V>::evaluate_pose(
         if(!clip)
             continue;
 
-        f32 const rate  = frame_rate_of(*clip);
+        f32 const rate  = clip->frame_rate();
         u32 const count = static_cast<u32>(clip->frame_count);
 
         if(layer.grid_columns > 0)
@@ -1341,7 +1144,7 @@ void ModelCache<V>::evaluate_pose(
                 if(time >= length)
                 {
                     f32 const start =
-                        static_cast<f32>(loop_start_frame(*clip)) / rate;
+                        static_cast<f32>(clip->loop_start_frame()) / rate;
                     time = layer.loop && length > start
                                ? start + std::fmod(time - start, length - start)
                                : length - 1.f / rate;
@@ -1352,7 +1155,7 @@ void ModelCache<V>::evaluate_pose(
             if(f0 >= count)
                 f0 = count - 1;
             u32 const f1    = f0 + 1 < count ? f0 + 1
-                              : layer.loop   ? loop_start_frame(*clip)
+                              : layer.loop   ? clip->loop_start_frame()
                                              : f0;
             f32 const blend = position - std::floor(position);
 

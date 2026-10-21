@@ -377,10 +377,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         if(!clips.has_value())
             return;
         auto const& animation = clips.value()[*clip];
-        f32 const   rate      = (static_cast<u16>(animation.flags) &
-                            static_cast<u16>(blam::antr::anim_flags::pal_25hz))
-                                    ? 25.f
-                                    : 30.f;
+        f32 const   rate      = animation.frame_rate();
         layer.graph     = anim.graph;
         layer.animation = static_cast<u32>(*clip);
         layer.loop      = false;

@@ -392,12 +392,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             if(index < 0 || static_cast<size_t>(index) >= anims.value().size())
                 return 0.f;
             auto const& clip = anims.value()[index];
-            f32 const   rate =
-                (static_cast<u16>(clip.flags) &
-                 static_cast<u16>(blam::antr::anim_flags::pal_25hz))
-                      ? 25.f
-                      : 30.f;
-            return static_cast<f32>(clip.frame_count) / rate;
+            return static_cast<f32>(clip.frame_count) / clip.frame_rate();
         }
         return 0.f;
     }
