@@ -1304,26 +1304,14 @@ bool write_collision_obj(
                 obj.vertex(x, y, z);
             obj.texcoord(0.f, 0.f);
         }
-        std::vector<u32> polygon;
-        for(u32 si = 0; si < surfaces.value().size(); si++)
-        {
-            if(surfaces.value()[si].has(h2::coll::surface_flags_t::invalid))
-                continue;
-            polygon.clear();
-            bool usable = true;
-            h2::coll::walk_surface(
-                surfaces.value(), edges.value(), si, [&](i16 vertex) {
-                    if(vertex >= 0 && static_cast<size_t>(vertex) < finite.size() &&
-                       finite[vertex])
-                        polygon.push_back(static_cast<u32>(vertex));
-                    else
-                        usable = false;
-                });
-            if(!usable)
-                continue;
-            for(size_t i = 2; i < polygon.size(); i++)
-                obj.triangle(polygon[0], polygon[i - 1], polygon[i]);
-        }
+        blam::collision_bsp::fan_surfaces<h2::coll::traits>(
+            surfaces.value(),
+            edges.value(),
+            finite,
+            [&](u32 s) { return surfaces.value()[s].has(h2::coll::surface_flags_t::invalid); },
+            [&](i32 a, i32 b, i32 c) {
+                obj.triangle(static_cast<u32>(a), static_cast<u32>(b), static_cast<u32>(c));
+            });
         obj.end_group(static_cast<u32>(vertices.value().size()));
         groups++;
     };

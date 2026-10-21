@@ -1001,28 +1001,17 @@ struct H3MapLoader : compo::SubsystemBase
             finite.push_back(std::isfinite(point.x) && std::isfinite(point.y) && std::isfinite(point.z));
             out.vertices.push_back(finite.back() ? Vecf3(transform * Vecf4(point, 1.f)) : Vecf3{});
         }
-        std::vector<i32> polygon;
-        for(u32 s = 0; s < bsp.surfaces.size(); s++)
-        {
+        auto skip = [&](u32 s) {
             if(stl_types::any_flag_of(bsp.surfaces[s].flags, el::coll::surface_flags_t::invalid))
-                continue;
-            if(auto material = bsp.surfaces[s].material.value();
-               material >= 0 && static_cast<size_t>(material) < skipped_materials.size() &&
-               skipped_materials[static_cast<size_t>(material)])
-                continue;
-            polygon.clear();
-            bool usable = true;
-            bsp.walk_surface(s, [&](u32 vertex) {
-                if(vertex < finite.size() && finite[vertex])
-                    polygon.push_back(vbase + static_cast<i32>(vertex));
-                else
-                    usable = false;
+                return true;
+            auto const material = bsp.surfaces[s].material.value();
+            return material >= 0 && static_cast<size_t>(material) < skipped_materials.size() &&
+                   skipped_materials[static_cast<size_t>(material)];
+        };
+        blam::collision_bsp::fan_surfaces<el::coll::traits>(
+            bsp.surfaces, bsp.edges, finite, skip, [&](i32 a, i32 b, i32 c) {
+                out.indices.insert(out.indices.end(), {vbase + a, vbase + b, vbase + c});
             });
-            if(!usable)
-                continue;
-            for(size_t i = 2; i < polygon.size(); i++)
-                out.indices.insert(out.indices.end(), {polygon[0], polygon[i - 1], polygon[i]});
-        }
     }
 
     /* One static body for the loaded structure BSP */
