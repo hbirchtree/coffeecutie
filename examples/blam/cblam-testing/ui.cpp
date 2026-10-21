@@ -1018,7 +1018,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         f32                 baseline_y,
         Vecf4 const&        color)
     {
-        constexpr u32 kFontSource = 9u;
+        constexpr u32 kFontSource = 15u; /* TEX_FONT */
         u32 const     tex_source  = (kFontSource << 24) | font.atlas_layer;
 
         /* Runs of glyphs between inline button icons */
@@ -1775,7 +1775,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                   .instance_data = instance_vertex_data,
                   .box           = {},
             };
-            constexpr u32 kFontSource = 9u;
+            constexpr u32 kFontSource = 15u; /* TEX_FONT */
             for(auto const& line : screen_text.lines)
             {
                 std::u16string_view text = line.text;
@@ -1931,7 +1931,21 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     gleam::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
                         {"source_etc2_rgba"sv, 8},
-                        etc2_sampler(typing::pixels::pix_flags::RGBA)}),
+                        etc2_sampler(typing::pixels::pix_flags::RGBA)},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_r8"sv, 9},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                PixDesc(pix_fmt::R8))
+                            .sampler},
+                    gleam::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source_rgb565"sv, 10},
+                        bitm_cache
+                            .template get_bucket<gfx::compat::texture_2da_t>(
+                                PixDesc(pix_fmt::RGB565))
+                            .sampler}),
                 gfx::make_buffer_list(
                     gfx::buffer_definition_t{
                         .stage  = typing::graphics::ShaderStage::Fragment,

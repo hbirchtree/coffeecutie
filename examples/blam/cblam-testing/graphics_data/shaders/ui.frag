@@ -29,13 +29,23 @@ layout(location = 15, binding = 5) uniform sampler2DArray source_font;
 layout(location = 16, binding = 6) uniform sampler2DArray source_rg8;
 layout(location = 17, binding = 7) uniform sampler2DArray source_etc2_rgb;
 layout(location = 18, binding = 8) uniform sampler2DArray source_etc2_rgba;
+layout(location = 19, binding = 9) uniform sampler2DArray source_r8;
+layout(location = 20, binding = 10) uniform sampler2DArray source_rgb565;
 
 const uint TEX_BC1    = 1u;
 const uint TEX_BC2    = 2u;
 const uint TEX_BC3    = 3u;
+const uint TEX_RGB565 = 4u;
+const uint TEX_R8     = 5u;
+const uint TEX_RG8    = 6u;
 const uint TEX_RGBA4  = 7u;
 const uint TEX_RGBA8  = 8u;
-const uint TEX_FONT   = 9u;
+/* Xbox luminance/alpha formats, kept in the R8 bucket */
+const uint TEX_A8     = 9u;  /* 111A */
+const uint TEX_Y8     = 10u; /* LLL1 */
+const uint TEX_AY8    = 11u; /* LLLL */
+/* Past the bitmap cache's codes */
+const uint TEX_FONT   = 15u;
 const uint TEX_A8Y8   = 12u;
 const uint TEX_ETC2_RGB  = 13u;
 const uint TEX_ETC2_RGBA = 14u;
@@ -83,6 +93,18 @@ vec4 sample_color()
      * giving texture.rgba=(B, G, R, A). .bgra reorders to (R, G, B, A). */
     else if(source == TEX_RGBA8)
         return texture(source_rgba8, vec3(inside(source_rgba8, sample_coord, scale_offset), layer), bias).bgra;
+    else if(source == TEX_RGB565)
+        return texture(source_rgb565, vec3(inside(source_rgb565, sample_coord, scale_offset), layer), bias).bgra;
+    else if(source == TEX_R8)
+        return texture(source_r8, vec3(inside(source_r8, sample_coord, scale_offset), layer), bias);
+    else if(source == TEX_RG8)
+        return texture(source_rg8, vec3(inside(source_rg8, sample_coord, scale_offset), layer), bias);
+    else if(source == TEX_A8)
+        return vec4(1.0, 1.0, 1.0, texture(source_r8, vec3(inside(source_r8, sample_coord, scale_offset), layer), bias).r);
+    else if(source == TEX_Y8)
+        return vec4(vec3(texture(source_r8, vec3(inside(source_r8, sample_coord, scale_offset), layer), bias).r), 1.0);
+    else if(source == TEX_AY8)
+        return vec4(texture(source_r8, vec3(inside(source_r8, sample_coord, scale_offset), layer), bias).rrrr);
     /* A8Y8: luminance in r, alpha in g; tinted by the instance colour */
     else if(source == TEX_A8Y8)
     {
@@ -128,7 +150,11 @@ void main()
     /* HUD: bitmaps carry their coverage in the color channels, and a
      * color's alpha is how much of what is behind it hides; none adds on */
     else if((extra.x & PREMULTIPLIED) != 0u)
-        out_color = vec4(color.rgb * background_color.rgb, color.a * background_color.a);
+    {
+        /* A8 keeps its coverage in alpha alone */
+        vec3 cover = source == TEX_A8 ? vec3(background_color.a) : background_color.rgb;
+        out_color = vec4(color.rgb * cover, color.a * background_color.a);
+    }
     else if((extra.x & USE_ALPHA) != 0u)
         out_color = vec4(color.rgb * background_color.rgb, background_color.a * color.a);
     else
