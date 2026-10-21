@@ -133,8 +133,8 @@ STATICINLINE SystemPaths& GetSystemPaths()
     /* TODO: Add the case for Flatpak */
     if(auto appimg = env::var("APPIMAGE_DATA_DIR"); appimg.has_value())
         paths.assetDir = MkSysUrl(appimg.value());
-    else if(auto snappy = env::var("SNAP"); snappy.has_value())
-        paths.assetDir = MkSysUrl(snappy.value()) / "assets";
+    else if(auto flatpak = env::var("FLATPAK_DATA_DIR"); flatpak.has_value())
+        paths.assetDir = MkSysUrl(flatpak.value());
     else if(_coffee_resource_prefix.size() > 0)
         paths.assetDir = MkSysUrl(_coffee_resource_prefix);
     else
@@ -156,6 +156,10 @@ STATICINLINE SystemPaths& GetSystemPaths()
 
     if(auto snappy = env::var("SNAP_USER_COMMON"); snappy.has_value())
         paths.configDir = MkSysUrl(snappy.value());
+    else if(auto xdg = env::var("XDG_CONFIG_HOME");
+            xdg.has_value() && env::var("FLATPAK_ID").has_value())
+        /* Flatpak points this at ~/.var/app/<id>/config */
+        paths.configDir = MkSysUrl(xdg.value());
     else
     {
         auto& orgname = appData.organization_name;
