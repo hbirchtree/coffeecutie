@@ -631,7 +631,8 @@ elseif(CMAKE_GENERATOR MATCHES "Xcode")
   endif()
 endif()
 
-# If the user did not specify the SDK root to use, then query xcodebuild for it.
+# If the user did not specify the SDK root to use, then query xcrun for it.
+# xcrun works with only the command line tools installed, xcodebuild does not.
 if(DEFINED CMAKE_OSX_SYSROOT_INT)
   # Environment variables are always preserved.
   set(ENV{_CMAKE_OSX_SYSROOT_INT} "${CMAKE_OSX_SYSROOT_INT}")
@@ -639,7 +640,7 @@ elseif(DEFINED ENV{_CMAKE_OSX_SYSROOT_INT})
   set(CMAKE_OSX_SYSROOT_INT "$ENV{_CMAKE_OSX_SYSROOT_INT}")
 elseif(NOT DEFINED CMAKE_OSX_SYSROOT_INT)
   execute_process(
-    COMMAND ${XCODEBUILD_EXECUTABLE} -version -sdk ${SDK_NAME} Path
+    COMMAND xcrun --sdk ${SDK_NAME} --show-sdk-path
     OUTPUT_VARIABLE CMAKE_OSX_SYSROOT_INT
     ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
   )
@@ -738,8 +739,7 @@ elseif(DEFINED ENV{_SDK_VERSION})
   set(SDK_VERSION "$ENV{_SDK_VERSION}")
 elseif(NOT DEFINED SDK_VERSION)
   execute_process(
-    COMMAND ${XCODEBUILD_EXECUTABLE} -sdk ${CMAKE_OSX_SYSROOT_INT} -version
-            SDKVersion
+    COMMAND xcrun --sdk ${CMAKE_OSX_SYSROOT_INT} --show-sdk-version
     OUTPUT_VARIABLE SDK_VERSION
     ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
   )
