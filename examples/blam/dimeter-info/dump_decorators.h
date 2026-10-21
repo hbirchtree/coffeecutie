@@ -61,11 +61,11 @@ inline void dump_decorators(h2::map_container<V> const& map, h2::raw_pool const&
             auto blocks = cache.cache_blocks.data(magic);
             auto groups = cache.groups.data(magic);
             fmt::print(
-                "bsp {}: grid origin ({}, {}, {}) cells {} cache blocks {} groups {}\n",
+                "bsp {}: grid center ({}, {}, {}) cells {} cache blocks {} groups {}\n",
                 b,
-                from_le(cache.grid_origin[0]),
-                from_le(cache.grid_origin[1]),
-                from_le(cache.grid_origin[2]),
+                from_le(cache.grid_center[0]),
+                from_le(cache.grid_center[1]),
+                from_le(cache.grid_center[2]),
                 from_le(cache.cell_count),
                 cache.cache_blocks.count(),
                 cache.groups.count());
@@ -80,10 +80,10 @@ inline void dump_decorators(h2::map_container<V> const& map, h2::raw_pool const&
             for(auto const& g : groups.value())
             {
                 auto key = fmt::format(
-                    "set {} class {} shader {} {}",
+                    "set {} class {} permutation {} {}",
                     g.set,
                     g.type,
-                    g.shader,
+                    g.permutation,
                     from_le(g.vertex_count) > 0 ? "sprites" : "no geometry");
                 kinds[key].first++;
                 kinds[key].second += static_cast<u32>(std::max<i16>(from_le(g.placement_count), 0));

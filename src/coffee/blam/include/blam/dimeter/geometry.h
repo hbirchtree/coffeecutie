@@ -831,12 +831,23 @@ static_assert(sizeof(water_definition_t) == 0xAC);
  * blocks, grouped by cluster and set */
 struct alignas(4) decorator_placement_t
 {
-    u32 internal;            /* TODO: type and motion bits */
-    u32 compressed_position; /* TODO: packing */
+    u32 internal; /* TODO: type and motion bits */
+    /*! Within the placement's 8 wu cell: x and y 10 bits, z 12 */
+    u32 compressed_position;
     u8  tint[4];
     u8  light[4]; /*!< Baked light colour */
-    u32 unknown_0;
+    u32 unknown_0; /* TODO: orientation, with unknown_1 */
     f32 unknown_1;
+
+    /*! Offset into its cell, world units */
+    inline Vecf3 offset() const
+    {
+        u32 const p = from_le(compressed_position);
+        return Vecf3(
+            static_cast<f32>(p & 0x3FF) * (8.f / 1023.f),
+            static_cast<f32>((p >> 10) & 0x3FF) * (8.f / 1023.f),
+            static_cast<f32>((p >> 20) & 0xFFF) * (8.f / 4095.f));
+    }
 };
 
 static_assert(sizeof(decorator_placement_t) == 24);
@@ -889,9 +900,9 @@ static_assert(sizeof(decorator_cache_block_t) == 44);
  * set's class is a sprite */
 struct alignas(4) decorator_group_t
 {
-    u8  set; /*!< Into the scenario's decorator palette */
-    u8  type;
-    u8  shader;
+    u8  set;         /*!< Into the scenario's decorator palette */
+    u8  type;        /*!< Class of the set */
+    u8  permutation; /*!< Of the class */
     u8  compressed_radius;
     i16 cluster;
     i16 cache_block;
@@ -906,13 +917,26 @@ struct alignas(4) decorator_group_t
 
 static_assert(sizeof(decorator_group_t) == 24);
 
+/*! Octree node over the decorators: children by octant (x = 4, y = 2,
+ * z = 1); a leaf is one 8 wu cell, holding one cache block */
+struct alignas(4) decorator_cell_t
+{
+    i16 children[8];
+    i16 cache_block;
+    i16 group_count;
+    i16 first_group;
+    i16 unknown_0;
+};
+
+static_assert(sizeof(decorator_cell_t) == 24);
+
 struct alignas(4) decorator_cache_t
 {
-    Vecf3                               grid_origin;
-    u32                                 cell_count;
+    Vecf3                               grid_center; /*!< Of the root cell */
+    u32                                 cell_count;  /*!< 8 wu cells per root side */
     bsp_block<decorator_cache_block_t>  cache_blocks;
     bsp_block<decorator_group_t>        groups;
-    bsp_block<u8>                       cells; /* TODO: layout */
+    bsp_block<decorator_cell_t>         cells;
     u32                                 unknown_0[2];
 };
 
@@ -960,15 +984,37 @@ struct alignas(4) decorator_class_t
 
 static_assert(sizeof(decorator_class_t) == 20);
 
+/*! A model decorator's mesh, a range of the set's indices; permutations
+ * pick theirs by name */
+struct alignas(4) decorator_model_t
+{
+    string_id name;
+    i16       index_start;
+    i16       index_count;
+};
+
+static_assert(sizeof(decorator_model_t) == 8);
+
+struct alignas(4) decorator_model_vertex_t
+{
+    Vecf3 position;
+    Vecf3 normal;
+    Vecf3 tangent;
+    Vecf3 binormal;
+    Vecf2 texcoord;
+};
+
+static_assert(sizeof(decorator_model_vertex_t) == 56);
+
 struct alignas(4) decorator_set_t
 {
-    tag_block<decorator_shader_t> shaders;
-    f32                           unknown_0;
-    f32                           unknown_1;
-    tag_block<decorator_class_t>  classes;
-    tag_block<u8>                 models;   /* elem 8 */
-    tag_block<u8>                 vertices; /* elem 56 */
-    tag_block<u16>                indices;
+    tag_block<decorator_shader_t>       shaders;
+    f32                                 unknown_0;
+    f32                                 unknown_1;
+    tag_block<decorator_class_t>        classes;
+    tag_block<decorator_model_t>        models;
+    tag_block<decorator_model_vertex_t> vertices;
+    tag_block<u16>                      indices;
 };
 
 static_assert(offsetof(decorator_set_t, classes) == 0x10);
