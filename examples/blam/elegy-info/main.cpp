@@ -20,6 +20,7 @@
 
 #include <cmath>
 #include <limits>
+#include <span>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -56,6 +57,7 @@ struct options_t
     bool        zones;
     bool        player;
     bool        animations;
+    bool        anim_hashes;
     bool        mips;
     bool        decorators;
     bool        camera_fx;
@@ -1060,6 +1062,17 @@ int dump_player(elegy::map_container const& map)
     return 0;
 }
 
+/* FNV-1a over the poses' bytes: bit-exact, for before/after comparisons */
+template<typename Pose>
+inline u64 pose_hash(std::vector<Pose> const& poses)
+{
+    u64 h = 0xcbf29ce484222325ull;
+    auto bytes = std::as_bytes(std::span(poses));
+    for(auto b : bytes)
+        h = (h ^ static_cast<u8>(b)) * 0x100000001b3ull;
+    return h;
+}
+
 /* Animation graphs: their animations, each decoded */
 int dump_animations(elegy::map_container const& map, elegy::resource_loader& loader, options_t const& options)
 {
@@ -1080,6 +1093,8 @@ int dump_animations(elegy::map_container const& map, elegy::resource_loader& loa
             fmt::print("  '{}' frames {} nodes {} group {}:{}: {}\n", map.string(a.name), a.frame_count.value(),
                        a.node_count, a.resource_group.value(), a.resource_group_member.value(),
                        out ? "decoded" : "FAILED");
+            if(out && options.anim_hashes)
+                fmt::print("  hash {:016x}\n", pose_hash(out->poses));
         }
         loader.trim();
     }
@@ -1810,6 +1825,8 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("animations", "List animation graphs and their animations")
         //
+        ("anim-hashes", "With --animations, print a hash of each animation's poses")
+        //
         ("mips", "Check DXT bitmaps' mip levels against their top level")
         //
         ("decorators", "List structure BSPs' decorator sets, instance buffers and groups")
@@ -1868,6 +1885,7 @@ i32 coffee_main(i32, cstring_w*)
         .zones        = arguments.count("zones") > 0,
         .player       = arguments.count("player") > 0,
         .animations   = arguments.count("animations") > 0,
+        .anim_hashes  = arguments.count("anim-hashes") > 0,
         .mips         = arguments.count("mips") > 0,
         .decorators   = arguments.count("decorators") > 0,
         .camera_fx    = arguments.count("camera-fx") > 0,

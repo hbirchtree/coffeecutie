@@ -5,6 +5,7 @@
 #include <blam/dimeter/animation.h>
 
 #include <algorithm>
+#include <span>
 
 namespace dimeter_info {
 
@@ -102,7 +103,19 @@ struct anim_check_t
     };
     std::array<codec_stats_t, 9> codecs{};
     std::vector<std::string>     failures;
+    bool                         hashes{false};
 };
+
+/* FNV-1a over the poses' bytes: bit-exact, for before/after comparisons */
+template<typename Pose>
+inline libc_types::u64 pose_hash(std::vector<Pose> const& poses)
+{
+    libc_types::u64 h = 0xcbf29ce484222325ull;
+    auto bytes = std::as_bytes(std::span(poses));
+    for(auto b : bytes)
+        h = (h ^ static_cast<libc_types::u8>(b)) * 0x100000001b3ull;
+    return h;
+}
 
 /* jmad's own default pose, one per skeleton node */
 inline std::vector<anim::node_pose_t> jmad_defaults(
@@ -171,6 +184,9 @@ inline void check_jmad(
             continue;
         }
         c.decoded++;
+        if(out.hashes)
+            fmt::print(
+                "hash {} / {} {:016x}\n", map.name_of(tag), map.string(a.name), pose_hash(dec->poses));
         f32 step = 0.f;
         for(u32 n = 0; n < dec->nodes; n++)
         {
