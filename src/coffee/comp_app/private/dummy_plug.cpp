@@ -257,16 +257,18 @@ void queue_input_event(
     }
     case type_t::controller_connect: {
         const auto controller = event.value("index", 0u);
+        /* "connected": false unplugs it again */
+        const bool connected = event.value("connected", true);
         /* Seat assignment listens for ControllerConnect (what the SDL3
          * layer emits), not the atomic update event */
         ievent.type                      = CIEvent::ControllerConnect;
         CIControllerConnectEvent connect = {
             .index        = static_cast<libc_types::u16>(controller),
             .player_index = static_cast<i16>(controller),
-            .connected    = true,
+            .connected    = connected,
         };
         emit_future_event(start_time, ievent, connect);
-        if(controllers)
+        if(controllers && connected)
             mutate_future(start_time, [controllers, controller] {
                 controllers->ensure(controller);
             });
