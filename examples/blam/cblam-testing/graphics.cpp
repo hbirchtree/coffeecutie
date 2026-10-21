@@ -753,6 +753,8 @@ i32 blam_main()
                 }
             }
 
+            setup_config(e);
+
 #if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_Net)
             platform::env::set_var("COFFEE_REPORT_URL", EMBEDDED_REPORT_URL);
             Net::ProfilingExport();

@@ -66,6 +66,109 @@ void update_camera_aspect(compo::EntityContainer& e)
     }
 }
 
+void setup_config(compo::EntityContainer& e)
+{
+    // Config file creation/updating/restore
+    struct updates_t
+    {
+        std::optional<std::string> directory;
+        std::optional<std::string> gateway;
+    };
+    using nlohmann::json;
+    auto get_config = [] {
+        return "config.json"_config;
+    };
+    auto read_config = [get_config] {
+        auto config = get_config();
+        if(!FilePull(config))
+        {
+            cDebug("Failed to restore config");
+            return json();
+        }
+        return json::parse(config.data());
+    };
+    auto update_config = [&e, read_config, get_config](updates_t&& updates) {
+        auto const& render_params = e.subsystem_cast<RenderingParameters>();
+
+        auto disk_config = read_config();
+        std::string previous_dir = ".";
+        std::string previous_gw = "";
+        if(!disk_config.is_null())
+        {
+            if(disk_config.contains("userPreferences"))
+            {
+                if(disk_config["userPreferences"].contains("directory"))
+                    previous_dir = disk_config["userPreferences"]["directory"];
+                if(disk_config["network"].contains("gateway"))
+                    previous_gw = disk_config["network"]["gateway"];
+            }
+        }
+        auto current_dir = updates.directory.value_or(previous_dir);
+        auto current_gateway = updates.gateway.value_or(previous_gw);
+        // TODO: Find a solution for stashing H2, H3 directories
+        json prefs{
+            {"directory", current_dir},
+        };
+        json config;
+        config["userPreferences"] = prefs;
+        config["graphics"] = {
+            {"debugMeshes", render_params.debug_markers},
+        };
+        config["network"] = {
+            {"gateway", current_gateway},
+            {"key", *platform::url::constructors::MkUrl("server.pem", RSCA::ConfigFile)},
+        };
+        auto config_serialized = config.dump(2);
+        auto config_out = get_config();
+        config_out.data_ro = semantic::SpanOver(config_serialized);
+        if(!Coffee::FileCommit(config_out))
+            cWarning("Failed to stash config to {}", config_out.resource());
+    };
+
+    auto& game_bus = e.subsystem_cast<GameEventBus>();
+
+    do{
+        auto config = read_config();
+        if(config.is_null())
+            break;
+        if(config.contains("graphics") && !config["graphics"].is_null())
+        {
+            auto& render_params = e.subsystem_cast<RenderingParameters>();
+            auto graphics = config["graphics"];
+            if(graphics.contains("debugMeshes"))
+            {
+                render_params.debug_markers = graphics["debugMeshes"];
+            }
+        }
+        if(config.contains("userPreferences"))
+        {
+            auto prefs = config["userPreferences"];
+            if(prefs.contains("directory"))
+            {
+                using namespace platform::url::constructors;
+                GameEvent ev{.type = GameEvent::MapRequestListing};
+                MapRequestListingEvent list{
+                    .directory = MkUrl(prefs["directory"]),
+                };
+                game_bus.inject(ev, &list);
+                ev.type = GameEvent::MapLoadStart;
+                MapLoadEvent load{
+                    .directory = list.directory,
+                    .file = list.directory.value() / "ui.map",
+                };
+                game_bus.inject(ev, &load);
+            }
+        }
+    } while(false);
+
+    game_bus.addEventFunction<MapListingEvent>(
+            0, [update_config](GameEvent&, MapListingEvent* list){
+        update_config({
+            .directory = *list->directory,
+        });
+    });
+}
+
 void create_resources(compo::EntityContainer& e)
 {
     ProfContext _(__FUNCTION__);
@@ -812,79 +915,6 @@ void create_resources(compo::EntityContainer& e)
              }});
     }
 #endif
-
-    // Config file creation/updating/restore
-    {
-        struct updates_t
-        {
-            std::optional<std::string> directory;
-            std::optional<std::string> gateway;
-        };
-        using nlohmann::json;
-        auto get_config = [] {
-            return "config.json"_config;
-        };
-        auto read_config = [get_config] {
-            auto config = get_config();
-            if(!FilePull(config))
-            {
-                cDebug("Failed to restore config");
-                return json();
-            }
-            cDebug("Loading config: {}",
-                std::string_view(config.data_ro.begin(), config.data_ro.end()));
-            return json::parse(config.data());
-        };
-        auto update_config = [&e, read_config, get_config](updates_t&& updates) {
-            auto const& render_params = e.subsystem_cast<RenderingParameters>();
-
-            auto disk_config = read_config();
-            auto current_dir = updates.directory.value_or(disk_config["userPreferences"]["directory"]);
-            auto current_gateway = updates.gateway.value_or(disk_config["network"]["gateway"]);
-            // TODO: Find a solution for stashing H2, H3 directories
-            json prefs{
-                {"directory", current_dir},
-            };
-            json config;
-            config["userPreferences"] = prefs;
-            config["graphics"] = {
-                {"debugMeshes", render_params.debug_markers},
-            };
-            config["network"] = {
-                {"gateway", current_gateway},
-                {"key", *platform::url::constructors::MkUrl("server.pem", RSCA::ConfigFile)},
-            };
-            auto config_serialized = config.dump(2);
-            auto config_out = get_config();
-            config_out.data_ro = semantic::SpanOver(config_serialized);
-            if(!Coffee::FileCommit(config_out))
-                cWarning("Failed to stash config to {}", config_out.resource());
-        };
-
-        do{
-            auto config = read_config();
-            cDebug("Loading config: {}", config.dump());
-            if(config.is_null())
-                break;
-            if(config.contains("graphics") && !config["graphics"].is_null())
-            {
-                auto& render_params = e.subsystem_cast<RenderingParameters>();
-                auto graphics = config["graphics"];
-                if(graphics.contains("debugMeshes"))
-                {
-                    render_params.debug_markers = graphics["debugMeshes"];
-                }
-            }
-        } while(false);
-
-        auto& game_bus = e.subsystem_cast<GameEventBus>();
-        game_bus.addEventFunction<MapListingEvent>(
-                0, [update_config](GameEvent&, MapListingEvent* list){
-            update_config({
-                .directory = *list->directory,
-            });
-        });
-    }
 
     gfx::api&      api       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.register_subsystem_inplace<BlamResources>();

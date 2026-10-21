@@ -64,3 +64,5 @@ void create_camera(
     compo::EntityContainer&                                          e,
     const semantic::Span<const blam::scn::player_starting_location>& spawns);
 void create_program(gfx::api& api, shader_pair_t&& shader_info);
+
+void setup_config(compo::EntityContainer& e);
