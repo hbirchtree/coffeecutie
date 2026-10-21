@@ -4,6 +4,7 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_args.h>
 
+#include <blam/common/dds.h>
 #include <blam/elegy/animation.h>
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/collision.h>
@@ -476,16 +477,7 @@ void append(std::vector<char>& out, T const& value)
     out.insert(out.end(), bytes, bytes + sizeof(T));
 }
 
-struct dds_info
-{
-    u32 fourcc{0}; /* 0 = uncompressed, described by the mask fields */
-    u32 bpp{0};
-    u32 pf_flags{0};
-    u32 mask_r{0};
-    u32 mask_g{0};
-    u32 mask_b{0};
-    u32 mask_a{0};
-};
+using dds_info = blam::dds::info_t;
 
 /* DDS can carry the PC-compatible formats once linearized, and CTX1
  * decoded to two channels; the DXT3a family has no DDS equivalent */
@@ -550,43 +542,6 @@ std::optional<dds_info> dds_format(elegy::bitmap_format_t format)
     default:
         return std::nullopt;
     }
-}
-
-std::vector<char> make_dds(
-    dds_info const& info, u32 width, u32 height, Span<u8 const> pixels)
-{
-    std::vector<char> out;
-    out.reserve(128 + pixels.size());
-    append<u32>(out, 0x20534444); /* 'DDS ' */
-    append<u32>(out, 124);
-    append<u32>(out, 0x1007); /* CAPS|HEIGHT|WIDTH|PIXELFORMAT */
-    append<u32>(out, height);
-    append<u32>(out, width);
-    append<u32>(out, static_cast<u32>(pixels.size()));
-    for(int i = 0; i < 13; i++)
-        append<u32>(out, 0);
-    append<u32>(out, 32);
-    if(info.fourcc)
-    {
-        append<u32>(out, 0x4);
-        append<u32>(out, info.fourcc);
-        for(int i = 0; i < 5; i++)
-            append<u32>(out, 0);
-    } else
-    {
-        append<u32>(out, info.pf_flags);
-        append<u32>(out, 0);
-        append<u32>(out, info.bpp);
-        append<u32>(out, info.mask_r);
-        append<u32>(out, info.mask_g);
-        append<u32>(out, info.mask_b);
-        append<u32>(out, info.mask_a);
-    }
-    append<u32>(out, 0x1000);
-    for(int i = 0; i < 4; i++)
-        append<u32>(out, 0);
-    out.insert(out.end(), pixels.begin(), pixels.end());
-    return out;
 }
 
 bool is_render_method(elegy::map_container const& map, elegy::tag_t const& tag)
@@ -763,7 +718,7 @@ int dump_bitmaps(
                     sanitize(name),
                     images.size() > 1 ? fmt::format("_{}", i) : std::string(),
                     slices > 1 ? fmt::format("_z{}", z) : std::string());
-                auto file = make_dds(*dds, width, height, linear);
+                auto file = blam::dds::make(*dds, width, height, linear);
                 std::ofstream(path, std::ios::binary)
                     .write(file.data(), static_cast<std::streamsize>(file.size()));
                 written++;

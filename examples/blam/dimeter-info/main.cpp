@@ -10,6 +10,7 @@
 #include "dump_scenario.h"
 #include "dump_ui.h"
 
+#include <blam/common/dds.h>
 #include <blam/dimeter/font.h>
 
 #include <blam/dimeter/bitm.h>
@@ -85,17 +86,7 @@ void append(std::vector<char>& out, T const& value)
 
 /* --- bitmap extraction ----------------------------------------------- */
 
-struct dds_info
-{
-    u32 fourcc{0}; /* 0 = uncompressed, described by the mask fields */
-    u32 block_bytes{0};
-    u32 bpp{0};
-    u32 pf_flags{0}; /* DDS pixel format flags for the uncompressed case */
-    u32 mask_r{0};
-    u32 mask_g{0};
-    u32 mask_b{0};
-    u32 mask_a{0};
-};
+using dds_info = blam::dds::info_t;
 
 std::optional<dds_info> dds_format(blam::bitm::format_t fmt)
 {
@@ -175,52 +166,6 @@ u32 base_level_size(dds_info const& info, u32 width, u32 height)
         return std::max(width / 4u, 1u) * std::max(height / 4u, 1u) *
                info.block_bytes;
     return width * height * (info.bpp / 8);
-}
-
-/* Minimal base-level DDS wrapper (optionally 6-face cube map), enough for
- * image viewers/texconv */
-std::vector<char> make_dds(
-    dds_info const& info,
-    u32             width,
-    u32             height,
-    Span<const u8>  pixels,
-    bool            cube_map = false)
-{
-    std::vector<char> out;
-    out.reserve(128 + pixels.size());
-    append<u32>(out, 0x20534444); /* 'DDS ' */
-    append<u32>(out, 124);
-    append<u32>(out, 0x1007); /* CAPS|HEIGHT|WIDTH|PIXELFORMAT */
-    append<u32>(out, height);
-    append<u32>(out, width);
-    append<u32>(out, static_cast<u32>(pixels.size()) / (cube_map ? 6 : 1));
-    /* depth, mipmap count, reserved[11] */
-    for(int i = 0; i < 13; i++)
-        append<u32>(out, 0);
-    append<u32>(out, 32); /* pixel format size */
-    if(info.fourcc)
-    {
-        append<u32>(out, 0x4); /* FOURCC */
-        append<u32>(out, info.fourcc);
-        for(int i = 0; i < 5; i++)
-            append<u32>(out, 0);
-    } else
-    {
-        append<u32>(out, info.pf_flags);
-        append<u32>(out, 0);
-        append<u32>(out, info.bpp);
-        append<u32>(out, info.mask_r);
-        append<u32>(out, info.mask_g);
-        append<u32>(out, info.mask_b);
-        append<u32>(out, info.mask_a);
-    }
-    /* CAPS_TEXTURE, plus COMPLEX + all cube faces for cube maps */
-    append<u32>(out, cube_map ? 0x1008 : 0x1000);
-    append<u32>(out, cube_map ? 0xFE00 : 0);
-    for(int i = 0; i < 3; i++)
-        append<u32>(out, 0);
-    out.insert(out.end(), pixels.begin(), pixels.end());
-    return out;
 }
 
 template<typename V>
@@ -319,7 +264,7 @@ u32 extract_bitmaps(
                     ".dds";
                 if(write_file(
                        path,
-                       make_dds(
+                       blam::dds::make(
                            *fmt,
                            width,
                            height,
@@ -623,7 +568,7 @@ std::optional<std::string> write_material_dds(
         auto filename = sanitize(map.name_of(bitm_tag)) + ".dds";
         if(write_file(
                outdir + "/" + filename,
-               make_dds(
+               blam::dds::make(
                    *fmt,
                    width,
                    height,
