@@ -1212,6 +1212,7 @@ struct options_t
     std::string cluster_at;
     bool        scripts{false};
     bool        anim_check{false};
+    bool        anim_hashes{false};
     bool        decorators{false};
     bool        check_lookup{false};
     std::string lightmap_dir;
@@ -1596,7 +1597,7 @@ int run_map(
 
     if(options.anim_check)
     {
-        dimeter_info::anim_check_t check;
+        dimeter_info::anim_check_t check{.hashes = options.anim_hashes};
         for(auto const& tag : map.tags())
             if(tag.matches(blam::tag_class_t::jmad))
                 dimeter_info::check_jmad(map, pool, tag, check);
@@ -1767,6 +1768,8 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("anim-check", "Decode every animation and report per codec")
         //
+        ("anim-hashes", "With --anim-check, print a hash of each animation's poses")
+        //
         ("check-lookup", "Check that every tag resolves by its own id")
         //
         ("font",
@@ -1822,6 +1825,7 @@ i32 coffee_main(i32, cstring_w*)
             arguments.as_optional<std::string>("cluster-at").value_or(""),
         .scripts    = arguments.count("scripts") > 0,
         .anim_check = arguments.count("anim-check") > 0,
+        .anim_hashes = arguments.count("anim-hashes") > 0,
         .decorators = arguments.count("decorators") > 0,
         .check_lookup = arguments.count("check-lookup") > 0,
         .lightmap_dir =
