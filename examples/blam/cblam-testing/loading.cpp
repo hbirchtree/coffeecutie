@@ -1978,12 +1978,12 @@ struct ResourceLoader
         } else if(auto const* effect = spawn.announce ? respawn_effect(files) : nullptr)
         {
             /* Announced without one of its own: the players', left behind
-             * where it appeared */
+             * where it appeared, standing up */
             GameEvent        ev{.type = GameEvent::SpawnEffect};
             SpawnEffectEvent play{
                 .effect    = *effect,
                 .position  = model.position,
-                .direction = model.rotation * Vecf3{1.f, 0.f, 0.f},
+                .direction = {0.f, 0.f, 1.f},
             };
             game_bus->inject(ev, &play);
         }
