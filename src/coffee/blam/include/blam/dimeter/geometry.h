@@ -836,13 +836,27 @@ static_assert(sizeof(water_definition_t) == 0xAC);
  * blocks, grouped by cluster and set */
 struct alignas(4) decorator_placement_t
 {
-    u32 internal; /* TODO: type and motion bits */
+    /*! Bits 9-15 a turn in 112ths (unverified), 16-19 the scale between the
+     * permutation's bounds; TODO: bits 20-31 */
+    u32 internal;
     /*! Within the placement's 8 wu cell: x and y 10 bits, z 12 */
     u32 compressed_position;
     u8  tint[4];
     u8  light[4]; /*!< Baked light colour */
-    u32 unknown_0; /* TODO: orientation, with unknown_1 */
-    f32 unknown_1;
+    /*! Baked light's direction, unit: 11:11:10 bits over -1 to 1 */
+    u32 compressed_light_direction;
+    f32 unknown_0; /* TODO: 0.4 to 1.1, likely the light's weight */
+
+    /*! How far between the permutation's scale bounds, 0 to 1 */
+    inline f32 scale() const
+    {
+        return static_cast<f32>((from_le(internal) >> 16) & 0xF) / 15.f;
+    }
+
+    inline f32 yaw() const
+    {
+        return static_cast<f32>((from_le(internal) >> 9) & 0x7F) * (6.2831853f / 112.f);
+    }
 
     /*! Offset into its cell, world units */
     inline Vecf3 offset() const

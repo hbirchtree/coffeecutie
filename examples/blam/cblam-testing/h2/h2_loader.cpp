@@ -3403,17 +3403,17 @@ struct H2MapLoader : compo::SubsystemBase
                     if(vmax >= set_verts.value().size())
                         continue;
                     u32 const span = vmax - vmin + 1u;
-                    /* TODO: orientation is in the placement's unknown words:
-                     * upright, turned by a hash of where it stands */
-                    f32 const scale = (from_le(perm.scale_min) + from_le(perm.scale_max)) * .5f;
+                    f32 const smin = from_le(perm.scale_min);
+                    f32 const smax = from_le(perm.scale_max);
                     for(i32 p = pstart; p < pstart + pcount; p++)
                     {
                         if((m_vertices.size() - vbase) + span > 0xFFFF)
                             break;
-                        Vecf3 const at  = *corner[group.cache_block] + placements[p].offset();
-                        f32 const   yaw = glm::fract(std::sin(at.x * 12.9898f + at.y * 78.233f) * 43758.5453f) *
-                                        glm::two_pi<f32>();
-                        Matf3 const turn = Matf3(glm::rotate(Matf4(1.f), yaw, Vecf3(0.f, 0.f, 1.f))) * scale;
+                        auto const& place = placements[p];
+                        Vecf3 const at    = *corner[group.cache_block] + place.offset();
+                        Matf3 const turn =
+                            Matf3(glm::rotate(Matf4(1.f), place.yaw(), Vecf3(0.f, 0.f, 1.f))) *
+                            glm::mix(smin, smax, place.scale());
                         auto const  base = static_cast<u32>(m_vertices.size() - vbase);
                         for(u32 v = vmin; v <= vmax; v++)
                         {
