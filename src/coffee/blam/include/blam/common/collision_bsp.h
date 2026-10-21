@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <vector>
 
 /*!
  * The collision BSP every game shares: a solid-leaf 3D tree over planes,
@@ -203,6 +204,40 @@ inline u32 walk_surface(
         count++;
     } while(e != first && count < max_corners);
     return e == first ? count : 0;
+}
+
+/*!
+ * Fans every surface into triangles, `emit(a, b, c)` with vertex indices.
+ * A surface is left out when `skip(surface_index)` says so, or when a
+ * corner is not in `usable` (vertices at infinity bound the BSP). A broken
+ * loop still fans the corners before the break.
+ */
+template<typename Tr, typename Skip, typename Emit>
+inline void fan_surfaces(
+    Span<typename Tr::surface_t const> surfaces,
+    Span<typename Tr::edge_t const>    edges,
+    std::vector<bool> const&           usable,
+    Skip&&                             skip,
+    Emit&&                             emit)
+{
+    std::vector<i32> polygon;
+    for(u32 s = 0; s < surfaces.size(); s++)
+    {
+        if(skip(s))
+            continue;
+        polygon.clear();
+        bool ok = true;
+        walk_surface<Tr>(surfaces, edges, s, [&](i32 vertex) {
+            if(vertex >= 0 && static_cast<size_t>(vertex) < usable.size() && usable[vertex])
+                polygon.push_back(vertex);
+            else
+                ok = false;
+        });
+        if(!ok)
+            continue;
+        for(size_t i = 2; i < polygon.size(); i++)
+            emit(polygon[0], polygon[i - 1], polygon[i]);
+    }
 }
 
 } // namespace blam::collision_bsp

@@ -980,28 +980,12 @@ struct H2MapLoader : compo::SubsystemBase
             out.vertices.push_back(
                 finite.back() ? Vecf3(transform * Vecf4(point, 1.f)) : Vecf3{});
         }
-        std::vector<i32> polygon;
-        for(u32 si = 0; si < surfaces.value().size(); si++)
-        {
-            if(surfaces.value()[si].has(dim::coll::surface_flags_t::invalid))
-                continue;
-            polygon.clear();
-            bool usable = true;
-            dim::coll::walk_surface(
-                surfaces.value(), edges.value(), si, [&](i16 vertex) {
-                    if(vertex >= 0 &&
-                       static_cast<size_t>(vertex) < vertices.value().size() &&
-                       finite[vertex])
-                        polygon.push_back(vbase + vertex);
-                    else
-                        usable = false;
-                });
-            if(!usable)
-                continue;
-            for(size_t i = 2; i < polygon.size(); i++)
-                out.indices.insert(
-                    out.indices.end(), {polygon[0], polygon[i - 1], polygon[i]});
-        }
+        blam::collision_bsp::fan_surfaces<dim::coll::traits>(
+            surfaces.value(),
+            edges.value(),
+            finite,
+            [&](u32 s) { return surfaces.value()[s].has(dim::coll::surface_flags_t::invalid); },
+            [&](i32 a, i32 b, i32 c) { out.indices.insert(out.indices.end(), {vbase + a, vbase + b, vbase + c}); });
     }
 
     /* The highest-priority fog plane with a fog tag: fills the space
