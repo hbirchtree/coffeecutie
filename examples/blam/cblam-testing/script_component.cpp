@@ -61,6 +61,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
         GameEventBus,
         CinematicState,
         const GameState,
+        const TickClock,
         DeviceGroups,
         const NetworkState,
         const BlamFiles<halo_version>,
@@ -204,9 +205,10 @@ struct BlamScript
             play_custom(p);
             send_walks(p);
             move_mouths(p);
-            place_riders(p);
         }
-        /* Every frame, so props follow the animated hands holding them */
+        /* Every frame, so riders and props follow what carries them as drawn */
+        draw_recordings(p);
+        place_riders(p);
         place_attached(p);
         m_proxy = nullptr;
     }
@@ -1604,6 +1606,8 @@ struct BlamScript
         i32                             length;
         end_t                           end;
         Vecf3                           velocity{};
+        /*! Flying: the pose before the last tick, to draw between */
+        std::optional<std::pair<Vecf3, Quatf>> from;
     };
 
     void start_recording(Proxy& p, u64 id, std::string_view name, end_t end)
@@ -1706,6 +1710,7 @@ struct BlamScript
 
             /* Bipeds stay upright and on the ground */
             bool const upright = physics && physics->upright;
+            it->from = upright ? std::nullopt : std::optional(std::pair{model->position, model->rotation});
             if(upright)
                 walk(p, it->entity, it->velocity);
             else
@@ -1726,6 +1731,18 @@ struct BlamScript
                 m_hovering.insert(id);
             stop_recording(p, id, end);
         }
+    }
+
+    /* Recordings step a tick at a time; flying ones are drawn between their
+     * last two poses, so they glide at any frame rate */
+    void draw_recordings(Proxy& p)
+    {
+        f32 const alpha = p.template subsystem<TickClock>().alpha();
+        for(auto const& r : m_recordings)
+            if(auto* model = r.from ? p.template get<Model>(r.entity) : nullptr)
+                model->transform =
+                    glm::translate(Matf4(1), glm::mix(r.from->first, model->position, alpha)) *
+                    glm::mat4_cast(glm::slerp(r.from->second, model->rotation, alpha));
     }
 
     /* A unit on foot covers the ground its move clips do */

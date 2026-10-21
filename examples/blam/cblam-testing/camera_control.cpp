@@ -74,11 +74,12 @@ struct CameraControl
         this->priority = 3070;
     }
 
-    /* The cinematic view in its own space, and the transform out of it */
+    /* The cinematic view in its own space, and the transform out of it: the
+     * object as drawn, so the view moves with it between ticks */
     static Matf4 space_of(Proxy& p, u64 relative_to)
     {
         if(auto const* model = relative_to ? p.get<Model>(relative_to) : nullptr)
-            return glm::translate(Matf4(1), model->position) * glm::mat4_cast(model->rotation);
+            return model->transform;
         return Matf4(1);
     }
 
