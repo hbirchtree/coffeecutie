@@ -551,7 +551,7 @@ def download_mold_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
     ) -> None:
         install_dir = bd.parent  # multi_build/compilers/
         tarball = install_dir / f"mold-{ver}-{arch}-linux.tar.gz"
-        subprocess.run(["wget", url, "-q", "-O", str(tarball)], check=True)
+        subprocess.run(["curl", "-fsSL", url, "-o", str(tarball)], check=True)
         # Extract bin/, lib/, and libexec/ — skip share/ (docs only).
         # --strip-components=1 drops the top-level "mold-X.Y.Z-arch-linux/"
         # prefix so bin/mold lands at multi_build/compilers/bin/mold and
@@ -623,7 +623,7 @@ def download_host_tools_plan(host: HostInfo, base_dir: Path) -> BuildPlan:
 
         plan.add(Step(
             name=f"download-clang-{tool}",
-            cmd=["wget", url, "-q", "-O", str(tool_path)],
+            cmd=["curl", "-fsSL", url, "-o", str(tool_path)],
             description=f"Download clang-{tool} v{clang_ver} ({tool_suffix})",
             skip_if=_up_to_date,
             skip_reason=f"clang-{tool} already at {stamp_id}",
@@ -1201,7 +1201,7 @@ def android_plan(
             (sdktools_url, "android-sdk-tools.zip"),
             (ptools_url, "android-platform-tools.zip"),
         ):
-            subprocess.run(["wget", url, "-O", name], cwd=str(parent), check=True)
+            subprocess.run(["curl", "-fL", url, "-o", name], cwd=str(parent), check=True)
 
         for archive in ("android-sdk-tools.zip", "android-platform-tools.zip"):
             subprocess.run(["unzip", archive], cwd=str(parent), check=True)
@@ -1926,8 +1926,8 @@ def main() -> None:
             # git: emsdk clone; node/nodejs supplied by emsdk itself
             check_programs("git")
         elif target.platform == "android":
-            # wget + unzip: SDK download; java: sdkmanager requires a JRE
-            check_programs("wget", "unzip", "java")
+            # curl + unzip: SDK download; java: sdkmanager requires a JRE
+            check_programs("curl", "unzip", "java")
         elif target.platform in ("xcode", "ios"):
             # xcodebuild: cmake toolchain issues SEND_ERROR if missing
             check_programs("xcodebuild")
@@ -1989,7 +1989,7 @@ def main() -> None:
     # --- code tool commands ----------------------------------------------
 
     elif cmd == "format":
-        check_programs("wget")
+        check_programs("curl")
         if not dry_run:
             download_host_tools_plan(host, base_dir).execute()
         clang_format = os.environ.get(
@@ -2004,7 +2004,7 @@ def main() -> None:
                 subprocess.run([clang_format, "-i", "-style=file", str(f)], check=True)
 
     elif cmd == "tidy":
-        check_programs("wget")
+        check_programs("curl")
         if not dry_run:
             download_host_tools_plan(host, base_dir).execute()
         clang_tidy = os.environ.get(
