@@ -19,6 +19,7 @@
 using DamageManifest = compo::SubsystemManifest<
     type_list_t<
         BipedStatus,
+        BipedEquipment,
         const PlayerInfo,
         const PlayerCamera,
         const Model,
@@ -248,7 +249,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     /* ---- What everyone sees ---- */
 
     void tell(Proxy& p, u64 unit, BipedStatus const& status,
-              std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f, bool arrived = false)
+              std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f, bool arrived = false,
+              bool fresh = false)
     {
         auto const*       info = p.template get<PlayerInfo>(unit);
         GameEvent         ev{.type = GameEvent::UnitVitality};
@@ -261,6 +263,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .respawn_at     = respawn_at,
             .respawn_facing = facing,
             .arrived        = arrived,
+            .fresh          = fresh,
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
     }
@@ -287,7 +290,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             status->stunned = status->coll ? status->coll->stun_time : default_stun;
         if(auto const* info = p.template get<PlayerInfo>(vitality.unit);
            info && !info->is_remote() && vitality.respawn_at)
+        {
             restart(p, vitality.unit, *info, *vitality.respawn_at, vitality.respawn_facing);
+            if(vitality.fresh)
+                reequip(p, vitality.unit);
+        }
         if(vitality.respawn_at && vitality.arrived)
             arrive(p, vitality.unit, *vitality.respawn_at);
     }
@@ -324,6 +331,14 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         p.template subsystem<GameEventBus>().inject(ev, &move);
     }
 
+    /* A respawn starts with the map's loadout again, as the loader hands it
+     * out to a new player; a client's own players are its to equip */
+    void reequip(Proxy& p, u64 player)
+    {
+        if(auto* equip = p.template get<BipedEquipment>(player))
+            equip->load_generation = 0;
+    }
+
     /* Back at full health where the game mode put it, or as it was at a
      * checkpoint */
     void revive(Proxy& p, RespawnUnitEvent const& respawn)
@@ -336,10 +351,15 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         status->shield      = shielded ? (respawn.restore ? respawn.shield : 1.f) : 0.f;
         status->dead        = status->body <= 0.f;
         status->stunned = 0.f;
-        tell(p, respawn.unit, *status, respawn.position, respawn.facing, respawn.arrive);
+        tell(p, respawn.unit, *status, respawn.position, respawn.facing, respawn.arrive,
+             !respawn.restore);
         if(auto const* info = p.template get<PlayerInfo>(respawn.unit);
            info && !info->is_remote())
+        {
             restart(p, respawn.unit, *info, respawn.position, respawn.facing);
+            if(!respawn.restore)
+                reequip(p, respawn.unit);
+        }
         if(respawn.arrive)
             arrive(p, respawn.unit, respawn.position);
     }
