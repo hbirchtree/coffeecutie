@@ -44,10 +44,12 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
         for(auto const& tick : m_ticks->take())
             dt += tick.seconds;
         m_kill_queue->poll();
+        m_rejoin_queue->poll();
         m_won_queue->poll();
         m_checkpoint_queue->poll();
-        auto       kills = std::exchange(m_kills, {});
-        bool const won   = std::exchange(m_won, false);
+        auto       kills   = std::exchange(m_kills, {});
+        auto       rejoins = std::exchange(m_rejoins, {});
+        bool const won     = std::exchange(m_won, false);
         auto const save  = std::exchange(m_asked, {});
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
            p.template subsystem<NetworkState>().replica)
@@ -62,6 +64,8 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
         for(auto const& kill : kills)
             if(kill.player != ObjectHitEvent::no_player)
                 m_waiting[kill.unit] = respawn_delay;
+        for(u64 unit : rejoins)
+            m_waiting[unit] = respawn_delay;
         listen(p, state, dt);
         /* A level starts with a checkpoint, once someone is in it */
         if(!m_started && !state.players.empty())
@@ -227,6 +231,8 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
     std::shared_ptr<GameEventBus::queue_type<GameWonEvent>>    m_won_queue;
     std::shared_ptr<GameEventBus::queue_type<CheckpointEvent>> m_checkpoint_queue;
     std::vector<UnitKilledEvent>                               m_kills;
+    std::shared_ptr<GameEventBus::queue_type<UnitRejoinedEvent>> m_rejoin_queue;
+    std::vector<u64>                                           m_rejoins;
     bool                                                       m_won{false};
     std::optional<f32>                                         m_asked; /*!< Longest timeout asked */
 
@@ -247,6 +253,8 @@ void alloc_campaign_controller(compo::EntityContainer& e)
     mode.m_ticks = std::make_unique<TickQueue>(game);
     mode.m_kill_queue = game.addQueuedEventFunction<UnitKilledEvent>(
         0, [&mode](GameEvent&, UnitKilledEvent* kill) { mode.m_kills.push_back(*kill); });
+    mode.m_rejoin_queue = game.addQueuedEventFunction<UnitRejoinedEvent>(
+        0, [&mode](GameEvent&, UnitRejoinedEvent* back) { mode.m_rejoins.push_back(back->unit); });
     mode.m_won_queue = game.addQueuedEventFunction<GameWonEvent>(
         0, [&mode](GameEvent&, GameWonEvent*) { mode.m_won = true; });
     mode.m_checkpoint_queue = game.addQueuedEventFunction<CheckpointEvent>(

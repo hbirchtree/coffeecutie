@@ -10,8 +10,10 @@
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 
+#include <map>
+
 using GameModeManifest = compo::SubsystemManifest<
-    type_list_t<const PlayerInfo, const PlayerCamera, const NetworkInfo>,
+    type_list_t<const PlayerInfo, const PlayerCamera, const NetworkInfo, BipedStatus>,
     type_list_t<
         GameState,
         const GameSetup,
@@ -47,6 +49,7 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
         if(p.template subsystem<NetworkState>().replica)
             return;
         join(p, state);
+        rejoin(p);
         for(auto const& kill : kills)
             count(state, kill);
     }
@@ -55,6 +58,7 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
     void begin(Proxy& p, GameState& state, BlamFiles<halo_version> const& files)
     {
         m_load_generation = files.load_generation;
+        m_in_play.clear();
         auto const& setup = p.template subsystem<GameSetup>();
         auto const  type  = files.container.map ? files.container.map->map_type
                                                 : blam::maptype_t::ui;
@@ -89,6 +93,53 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
         }
     }
 
+    /* A seat that left and came back starts over the way the game respawns
+     * anyone: down until its turn, then at a spawn with a fresh loadout */
+    void rejoin(Proxy& p)
+    {
+        for(auto player : p.template select<PlayerInfo, PlayerCamera, NetworkInfo, BipedStatus>())
+        {
+            auto [info, cam, net, status] = player.components();
+            if(info.is_remote())
+                continue;
+            /* Leaving is losing its controller, not being held out of play
+             * (a host waiting on clients); only a seat that has played can
+             * come back, once it is shown again */
+            bool const shown = biped_shown(info, cam, net);
+            auto       it    = m_in_play.find(player.id());
+            if(it == m_in_play.end())
+            {
+                if(shown)
+                    m_in_play[player.id()] = true;
+                continue;
+            }
+            if(!cam.is_active())
+            {
+                it->second = false;
+                continue;
+            }
+            if(it->second || !shown)
+                continue;
+            it->second = true;
+            if(status.dead)
+                continue;
+            status.dead = true;
+            auto& game  = p.template subsystem<GameEventBus>();
+            GameEvent         vitality_ev{.type = GameEvent::UnitVitality};
+            UnitVitalityEvent vitality{
+                .unit   = player.id(),
+                .player = info.player_idx,
+                .body   = status.body,
+                .shield = status.shield,
+                .dead   = true,
+            };
+            game.inject(vitality_ev, &vitality);
+            GameEvent         ev{.type = GameEvent::UnitRejoined};
+            UnitRejoinedEvent rejoined{.unit = player.id()};
+            game.inject(ev, &rejoined);
+        }
+    }
+
     void count(GameState& state, UnitKilledEvent const& kill)
     {
         if(kill.player == ObjectHitEvent::no_player)
@@ -102,6 +153,7 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
     std::shared_ptr<GameEventBus::queue_type<UnitKilledEvent>> m_kill_queue;
     std::vector<UnitKilledEvent>                               m_kills;
     u32                                                        m_load_generation{0};
+    std::map<u64, bool>                                        m_in_play; /*!< Local seats that have played, and whether still seated */
 };
 
 void alloc_game_mode(compo::EntityContainer& e)

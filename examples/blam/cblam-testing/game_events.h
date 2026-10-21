@@ -90,6 +90,7 @@ struct GameEvent
         AreaDamage,
         UnitVitality,
         UnitKilled,
+        UnitRejoined,
         RespawnUnit,
         GameWon,
         Checkpoint,
@@ -484,6 +485,15 @@ struct UnitVitalityEvent
     libc_types::f32      respawn_facing{0.f};
     bool                 arrived{false}; /*!< With the respawn effect */
     bool                 fresh{false};   /*!< A respawn, not a checkpoint: starts over equipped */
+};
+
+/*! A player's seat came back into the game after leaving it; it waits to
+ *  respawn like the dead do, without counting a death */
+struct UnitRejoinedEvent
+{
+    static constexpr auto event_type = GameEvent::UnitRejoined;
+
+    libc_types::u64 unit{0};
 };
 
 /*! A unit died, as the authority decided; who did it, when a player */
