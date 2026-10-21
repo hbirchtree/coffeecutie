@@ -534,7 +534,10 @@ struct revolving_buffer_t
             buffer->commit(size);
     }
 
+    /* Constrained: on macOS u64 is not size_t, so commit(8_MB) would
+     * otherwise pick this and leave the other buffers without storage */
     template<typename Span>
+    requires semantic::concepts::Span<Span>
     void commit(Span const& data)
     {
         current().commit(data);
