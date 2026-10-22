@@ -2,8 +2,10 @@
 
 #include "animation.h"
 #include "geometry.h"
+#include "lightmap.h"
 #include "map.h"
 #include "objects.h"
+#include "scenario.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -52,6 +54,46 @@ struct object_view
         return is(tag_class_t::mach) || is(tag_class_t::ctrl) || is(tag_class_t::lifi);
     }
 };
+
+/*! A structure BSP as the scenario lists it, located: its tag, its body and
+ * the magic of the region it lives in, and its lightmap */
+struct bsp_view
+{
+    u32                             index{0}; /*!< In the scenario's list */
+    geo::structure_bsp_ref_t const* ref{nullptr};
+    tag_t const*                    tag{nullptr};
+    geo::bsp_header_t const*        body{nullptr};
+    bsp_magic                       magic{};
+    ltmp::header_t const*           lightmap{nullptr};
+};
+
+/*! The scenario's structure BSPs that locate, in order; each keeps its
+ * scenario index, so one that does not leaves a gap */
+template<typename V>
+inline std::vector<bsp_view> structure_bsps(map_container<V> const& map)
+{
+    std::vector<bsp_view> out;
+    auto const*           scnr_tag = map.scenario();
+    auto const* scnr = scnr_tag ? scnr_tag->template data<scn::scenario_t>(map.magic()) : nullptr;
+    if(!scnr)
+        return out;
+    auto const refs = map.span(scnr->structure_bsps);
+    for(size_t i = 0; i < refs.size(); i++)
+    {
+        auto const located = locate_bsp(map, refs[i]);
+        if(!located.body)
+            continue;
+        out.push_back({
+            .index    = static_cast<u32>(i),
+            .ref      = &refs[i],
+            .tag      = map.tag_at(refs[i].bsp.tag_id),
+            .body     = located.body,
+            .magic    = located.magic,
+            .lightmap = located.lightmap,
+        });
+    }
+    return out;
+}
 
 /*! A graph's first animation of that name */
 template<typename V>

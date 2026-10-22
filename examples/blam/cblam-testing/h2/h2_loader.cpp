@@ -608,27 +608,19 @@ struct H2MapLoader : compo::SubsystemBase
         auto const* scnr_tag = map.scenario();
         if(!scnr_tag)
             return false;
-        auto const* scnr =
-            scnr_tag->template data<geo::scnr_bsps_t>(map.magic());
-        if(!scnr)
-            return false;
-        auto bsp_refs = scnr->structure_bsps.data(map.magic());
-        if(bsp_refs.has_error())
-            return false;
-
         auto const* scenario_body =
             scnr_tag->template data<dim::scn::scenario_t>(map.magic());
+        if(!scenario_body)
+            return false;
         std::optional<Vecf3> center;
-        u32                  bsp_idx = 0;
-        for(auto const& ref : bsp_refs.value())
+        /* The scene section each located BSP becomes */
+        u32 bsp_idx = 0;
+        for(auto const& located : dim::structure_bsps(map))
         {
             auto collision = std::make_shared<CollisionMesh>();
             /* The BSP region has its own virtual base */
-            auto        located   = dim::locate_bsp(map, ref);
             auto const* bsp       = located.body;
             auto        bsp_magic = located.magic;
-            if(!bsp)
-                continue;
             if(scenario_body)
                 load_decorators(map, pool, *scenario_body, *bsp, bsp_magic, static_cast<i32>(bsp_idx));
             if(!center)
@@ -646,7 +638,7 @@ struct H2MapLoader : compo::SubsystemBase
                         material_for(map, pool, sref.shader.tag_id));
 
             gather_collision(*bsp, bsp_magic, *collision);
-            auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
+            auto const* bsp_tag = located.tag;
             m_scene.sections.push_back(Section{
                 .name      = bsp_tag ? std::string(map.name_of(*bsp_tag)) : "",
                 .lo        = {from_le(bsp->x_min), from_le(bsp->y_min), from_le(bsp->z_min)},

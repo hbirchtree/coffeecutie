@@ -43,16 +43,11 @@ inline void dump_decorators(h2::map_container<V> const& map, h2::raw_pool const&
                 set->vertices.count(),
                 set->indices.count());
         }
-    auto bsp_refs = scnr->structure_bsps.data(map.magic());
-    if(bsp_refs.has_error())
-        return;
-    for(auto const& [b, ref] : stl_types::enumerate(bsp_refs.value()))
+    for(auto const& located : h2::structure_bsps(map))
     {
-        auto        located = h2::locate_bsp(map, ref);
-        auto const* bsp     = located.body;
-        auto        magic   = located.magic;
-        if(!bsp)
-            continue;
+        auto const  b     = located.index;
+        auto const* bsp   = located.body;
+        auto        magic = located.magic;
         auto caches = bsp->decorator_cache.data(magic);
         if(caches.has_error())
             continue;

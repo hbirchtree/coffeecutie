@@ -905,26 +905,12 @@ u32 extract_bsp_meshes(
 
     /* BSP tag meta lives in its own region with its own virtual base;
      * the region list comes from the scenario */
-    auto const* scnr_tag = map.scenario();
-    if(!scnr_tag)
-        return 0;
-    auto const* scnr = scnr_tag->template data<geo::scnr_bsps_t>(map.magic());
-    if(!scnr)
-        return 0;
-    auto bsp_refs = scnr->structure_bsps.data(map.magic());
-    if(bsp_refs.has_error())
-        return 0;
-
     u32 extracted = 0;
-    for(auto const& ref : bsp_refs.value())
+    for(auto const& located : h2::structure_bsps(map))
     {
-        auto        located   = h2::locate_bsp(map, ref);
         auto const* bsp       = located.body;
         auto        bsp_magic = located.magic;
-        if(!bsp)
-            continue;
-
-        auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
+        auto const* bsp_tag   = located.tag;
         if(!bsp_tag || !selected(*bsp_tag, false))
             continue;
         auto        name    = bsp_tag ? std::string(map.name_of(*bsp_tag))
@@ -1201,19 +1187,8 @@ bool tag_selected(
 template<typename V, typename Fn>
 void for_each_bsp(blam::dimeter::map_container<V> const& map, Fn&& fn)
 {
-    namespace geo        = blam::dimeter::geo;
-    auto const* scnr_tag = map.scenario();
-    auto const* scnr =
-        scnr_tag ? scnr_tag->template data<geo::scnr_bsps_t>(map.magic())
-                 : nullptr;
-    if(!scnr)
-        return;
-    auto refs = scnr->structure_bsps.data(map.magic());
-    if(refs.has_error())
-        return;
-    for(auto const& ref : refs.value())
-        if(auto located = blam::dimeter::locate_bsp(map, ref); located.body)
-            fn(ref, *located.body, located.magic);
+    for(auto const& located : blam::dimeter::structure_bsps(map))
+        fn(*located.ref, *located.body, located.magic);
 }
 
 /* World + placed instance collision as one OBJ, surfaces on vertices at
@@ -1365,54 +1340,52 @@ void write_lightmaps(
     std::string const&                     dir)
 {
     namespace h2 = blam::dimeter;
-    u32 bsp_idx = 0, written = 0;
-    for_each_bsp(
-        map,
-        [&](h2::geo::structure_bsp_ref_t const& ref,
-            h2::geo::bsp_header_t const&,
-            h2::bsp_magic const& magic) {
-            u32         bi   = bsp_idx++;
-            auto const* ltmp = h2::locate_bsp(map, ref).lightmap;
-            if(!ltmp)
-                return;
-            auto groups = ltmp->groups.data(magic);
-            if(groups.has_error() || groups.value().empty())
-                return;
-            auto const& group    = groups.value()[0];
-            auto        infos    = group.cluster_render_info.data(magic);
-            auto        palettes = group.section_palette.data(magic);
-            auto const bitm = map.template get<h2::bitm::header_t>(group.bitmap_group);
-            if(infos.has_error() || palettes.has_error() || !bitm)
-                return;
-            auto images = bitm->images.data(map.magic());
-            if(images.has_error())
-                return;
-            for(auto const& [ci, info] : stl_types::enumerate(infos.value()))
-            {
-                i16 ii = info.bitmap.value();
-                i8  pi = info.palette.value();
-                if(ii < 0 || static_cast<size_t>(ii) >= images.value().size() ||
-                   pi < 0 || static_cast<size_t>(pi) >= palettes.value().size())
-                    continue;
-                auto image = h2::ltmp::decode(
-                    pool, images.value()[ii], palettes.value()[pi]);
-                if(!image)
-                    continue;
-                std::vector<char> ppm;
-                auto header = fmt::format("P6\n{} {}\n255\n", image->width, image->height);
-                ppm.insert(ppm.end(), header.begin(), header.end());
-                for(size_t p = 0; p < image->rgba.size(); p += 4)
-                    ppm.insert(
-                        ppm.end(),
-                        {static_cast<char>(image->rgba[p]),
-                         static_cast<char>(image->rgba[p + 1]),
-                         static_cast<char>(image->rgba[p + 2])});
-                if(write_file(
-                       fmt::format("{}/bsp{}_cluster{:03}_img{}_pal{}.ppm", dir, bi, ci, ii, pi),
-                       ppm))
-                    written++;
-            }
-        });
+    u32 written = 0;
+    for(auto const& located : h2::structure_bsps(map))
+    {
+        u32 const   bi    = located.index;
+        auto const& magic = located.magic;
+        auto const* ltmp  = located.lightmap;
+        if(!ltmp)
+            continue;
+        auto groups = ltmp->groups.data(magic);
+        if(groups.has_error() || groups.value().empty())
+            continue;
+        auto const& group    = groups.value()[0];
+        auto        infos    = group.cluster_render_info.data(magic);
+        auto        palettes = group.section_palette.data(magic);
+        auto const bitm = map.template get<h2::bitm::header_t>(group.bitmap_group);
+        if(infos.has_error() || palettes.has_error() || !bitm)
+            continue;
+        auto images = bitm->images.data(map.magic());
+        if(images.has_error())
+            continue;
+        for(auto const& [ci, info] : stl_types::enumerate(infos.value()))
+        {
+            i16 ii = info.bitmap.value();
+            i8  pi = info.palette.value();
+            if(ii < 0 || static_cast<size_t>(ii) >= images.value().size() ||
+               pi < 0 || static_cast<size_t>(pi) >= palettes.value().size())
+                continue;
+            auto image = h2::ltmp::decode(
+                pool, images.value()[ii], palettes.value()[pi]);
+            if(!image)
+                continue;
+            std::vector<char> ppm;
+            auto header = fmt::format("P6\n{} {}\n255\n", image->width, image->height);
+            ppm.insert(ppm.end(), header.begin(), header.end());
+            for(size_t p = 0; p < image->rgba.size(); p += 4)
+                ppm.insert(
+                    ppm.end(),
+                    {static_cast<char>(image->rgba[p]),
+                     static_cast<char>(image->rgba[p + 1]),
+                     static_cast<char>(image->rgba[p + 2])});
+            if(write_file(
+                   fmt::format("{}/bsp{}_cluster{:03}_img{}_pal{}.ppm", dir, bi, ci, ii, pi),
+                   ppm))
+                written++;
+        }
+    }
     cBasicPrint("Lightmaps: {0} written to {1}", written, dir);
 }
 
