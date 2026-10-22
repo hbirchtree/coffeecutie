@@ -1913,21 +1913,12 @@ struct H2MapLoader : compo::SubsystemBase
         if(!chosen || chosen->node_count != joints)
             return std::nullopt;
         /* The model's node of that name at rest, else the graph's own */
-        auto defaults = dim::graph_pose(map, *graph, joints);
+        auto       defaults = dim::graph_pose(map, *graph, joints);
+        auto const rest     = dim::model_pose(map, *model);
         for(size_t i = 0; i < joints; i++)
-            for(auto const& n : nodes.value())
-                if(map.string(n.name) == map.string(skeleton.value()[i].name))
-                    defaults[i] = {
-                        .rotation = Quatf(
-                            from_le(n.rotation[3]),
-                            from_le(n.rotation[0]),
-                            from_le(n.rotation[1]),
-                            from_le(n.rotation[2])),
-                        .translation = Vecf3(
-                            from_le(n.position[0]),
-                            from_le(n.position[1]),
-                            from_le(n.position[2])),
-                    };
+            for(size_t n = 0; n < nodes.value().size(); n++)
+                if(map.string(nodes.value()[n].name) == map.string(skeleton.value()[i].name))
+                    defaults[i] = rest[n];
         auto decoded = dim::decode_animation(map, pool, *graph, *chosen, defaults);
         if(!decoded)
             return std::nullopt;
@@ -1939,7 +1930,7 @@ struct H2MapLoader : compo::SubsystemBase
             for(size_t j = 0; j < joints; j++)
                 if(map.string(nodes.value()[n].name) == map.string(skeleton.value()[j].name))
                     joint[n] = static_cast<i32>(j);
-        std::vector<Matf4> const bind = model_nodes(map, *model);
+        auto const           inverse = dim::inverse_bind(map, *model);
         H2Scene::animation_t out{.frames = decoded->frames, .nodes = static_cast<u32>(count)};
         out.palette.resize(static_cast<size_t>(out.frames) * count);
         std::vector<Matf4> world(joints);
@@ -1958,7 +1949,7 @@ struct H2MapLoader : compo::SubsystemBase
             }
             for(size_t n = 0; n < count; n++)
                 out.palette[f * count + n] =
-                    joint[n] >= 0 ? world[joint[n]] * glm::inverse(bind[n]) : Matf4(1.f);
+                    joint[n] >= 0 ? world[joint[n]] * inverse[n] : Matf4(1.f);
         }
         cDebug(
             "H2: {} {} on {}: {} frames",
@@ -1984,7 +1975,7 @@ struct H2MapLoader : compo::SubsystemBase
         auto nodes = model->nodes.data(map.magic());
         if(nodes.has_error() || nodes.value().size() != anim.nodes)
             return;
-        std::vector<Matf4> const bind = model_nodes(map, *model);
+        std::vector<Matf4> const bind = dim::rest_frames(map, *model);
         /* Each node's upper arm, if it is one or hangs from one */
         std::vector<i32> arm(anim.nodes, -1);
         for(size_t n = 0; n < anim.nodes; n++)
@@ -2044,7 +2035,7 @@ struct H2MapLoader : compo::SubsystemBase
             auto const  node   = static_cast<size_t>(marker.node);
             if(marker.node < 0 || node >= unit_nodes.value().size())
                 return fallback;
-            std::vector<Matf4> const bind = model_nodes(map, *body);
+            std::vector<Matf4> const bind = dim::rest_frames(map, *body);
             for(size_t n = 0; n < body_nodes.value().size() && n < anim.nodes; n++)
                 if(map.string(body_nodes.value()[n].name) == map.string(unit_nodes.value()[node].name))
                     return Vecf3(
@@ -2075,36 +2066,6 @@ struct H2MapLoader : compo::SubsystemBase
         return index;
     }
 
-    /* Model-space transform of every node; parents precede their children
-     * in the list */
-    template<typename V>
-    static std::vector<Matf4> model_nodes(
-        dim::map_container<V> const& map, geo::model_header_t const& model)
-    {
-        std::vector<Matf4> node_world;
-        if(auto nodes = model.nodes.data(map.magic()); !nodes.has_error())
-            for(auto const& node : nodes.value())
-            {
-                Vecf3 position{
-                    from_le(node.position[0]),
-                    from_le(node.position[1]),
-                    from_le(node.position[2])};
-                Quatf rotation{
-                    from_le(node.rotation[3]),
-                    from_le(node.rotation[0]),
-                    from_le(node.rotation[1]),
-                    from_le(node.rotation[2])};
-                Matf4 local = glm::translate(Matf4(1.f), position) *
-                              glm::mat4_cast(rotation);
-                i16 parent = node.parent.value();
-                node_world.push_back(
-                    parent >= 0 && static_cast<size_t>(parent) < node_world.size()
-                        ? node_world[parent] * local
-                        : local);
-            }
-        return node_world;
-    }
-
     /* An object's collision model (hlmt -> coll), permutation 0 of every
      * region, into the collision mesh of the section(s) it is placed in.
      * The coll nodes mirror the render model's, which carry the transforms. */
@@ -2122,7 +2083,7 @@ struct H2MapLoader : compo::SubsystemBase
             return 0;
         std::vector<Matf4> node_world;
         if(view.render_model)
-            node_world = model_nodes(map, *view.render_model);
+            node_world = dim::rest_frames(map, *view.render_model);
         auto regions = coll->regions.data(map.magic());
         if(regions.has_error())
             return 0;
@@ -2463,23 +2424,13 @@ struct H2MapLoader : compo::SubsystemBase
             return std::nullopt;
 
         /* The model's own pose for nodes the animation leaves alone */
-        std::vector<dim::anim::node_pose_t> defaults;
-        for(auto const& n : nodes.value())
-            defaults.push_back({
-                .rotation = Quatf(
-                    from_le(n.rotation[3]),
-                    from_le(n.rotation[0]),
-                    from_le(n.rotation[1]),
-                    from_le(n.rotation[2])),
-                .translation = Vecf3(
-                    from_le(n.position[0]), from_le(n.position[1]), from_le(n.position[2])),
-            });
+        auto const defaults = dim::model_pose(map, *model);
         auto decoded = dim::decode_animation(map, pool, *graph, *chosen, defaults);
         if(!decoded)
             return std::nullopt;
 
-        std::vector<Matf4> const bind = model_nodes(map, *model);
-        H2Scene::animation_t     out{.frames = decoded->frames, .nodes = static_cast<u32>(node_count)};
+        auto const           inverse = dim::inverse_bind(map, *model);
+        H2Scene::animation_t out{.frames = decoded->frames, .nodes = static_cast<u32>(node_count)};
         /* A device's position runs 0 to 1 over its transition time */
         if(map.string(chosen->name) == "device:position" && view.is_device())
             if(auto const* device = view.object.tag->template data<dim::obj::device_t>(map.magic());
@@ -2498,7 +2449,7 @@ struct H2MapLoader : compo::SubsystemBase
                 world[n]   = parent >= 0 && static_cast<size_t>(parent) < n
                                  ? world[parent] * local
                                  : local;
-                out.palette[f * node_count + n] = world[n] * glm::inverse(bind[n]);
+                out.palette[f * node_count + n] = world[n] * inverse[n];
             }
         cDebug(
             "H2: {}: animation {} ({} frames, {} nodes)",
@@ -2754,7 +2705,7 @@ struct H2MapLoader : compo::SubsystemBase
         auto const& coll = view.collision_model;
         std::vector<Matf4> node_world;
         if(model)
-            node_world = model_nodes(map, *model);
+            node_world = dim::rest_frames(map, *model);
         Matf4 const scaled = glm::scale(Matf4(1.f), Vecf3(scale));
         auto        hulls  = std::make_shared<CollisionGeometry>();
         if(coll)
