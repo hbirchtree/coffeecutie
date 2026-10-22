@@ -267,6 +267,10 @@ struct raw_pool
     }
 };
 
+/*! A tag and its data read as T, empty when either is missing */
+template<typename T>
+using tagged = blam::tagged<T, tag_t>;
+
 /*!
  * \brief Read-only view of a Halo 2 cache file. Wires together the file
  * header, the tag index and the pointer masks needed to resolve virtual
@@ -427,6 +431,51 @@ struct map_container
     inline tag_t const* globals() const
     {
         return tag_at(index->globals_id);
+    }
+
+    /*! The tag `id` names, read as T; checked against T::tag_class when T
+     * is one class's (object_t spans several) */
+    template<typename T>
+    inline blam::tagged<T, tag_t> get(datum_index id) const
+    {
+        return blam::get<T>(*this, id);
+    }
+
+    template<typename T>
+    inline blam::tagged<T, tag_t> get(tag_reference<> const& ref) const
+    {
+        return get<T>(ref.tag_id);
+    }
+
+    /*! A block's elements in this map, none when it is out of bounds */
+    template<typename T>
+    inline Span<T const> span(tag_block<T> const& block) const
+    {
+        return block.span(magic());
+    }
+
+    /*! First tag of a class whose name contains `name` */
+    inline tag_t const* find(tag_class_t cls, std::string_view name = {}) const
+    {
+        for(auto const& tag : tags())
+            if(tag.valid() && tag.matches(cls) && name_of(tag).find(name) != std::string_view::npos)
+                return &tag;
+        return nullptr;
+    }
+
+    /*! First tag of T's class whose name contains `name` */
+    template<typename T>
+    inline blam::tagged<T, tag_t> find(std::string_view name = {}) const
+    {
+        auto const* tag = find(T::tag_class, name);
+        return tag ? get<T>(tag->tag_id) : blam::tagged<T, tag_t>{};
+    }
+
+    /*! Name of the tag `ref` points at, empty when it is null */
+    inline std::string_view name_of(tag_reference<> const& ref) const
+    {
+        auto const* tag = tag_at(ref.tag_id);
+        return tag ? name_of(*tag) : std::string_view();
     }
 
     /*!
