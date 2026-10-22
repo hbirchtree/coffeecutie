@@ -89,6 +89,44 @@ struct alignas(4) resource_t
 
 static_assert(sizeof(resource_t) == 16);
 
+/*! A section's resources by what they hold; the first of each kind */
+struct section_streams_t
+{
+    resource_t const* index{nullptr};
+    resource_t const* position{nullptr};
+    resource_t const* texcoord{nullptr};
+    resource_t const* normal{nullptr};
+    resource_t const* lightmap{nullptr}; /*!< i16 x2 secondary uv */
+    resource_t const* submeshes{nullptr};
+    resource_t const* buffers{nullptr};  /*!< vertex_buffer_t per stream */
+    resource_t const* node_map{nullptr}; /*!< u8 model node per local */
+};
+
+inline section_streams_t find_streams(Span<resource_t const> resources)
+{
+    section_streams_t out;
+    for(auto const& r : resources)
+    {
+        if(r.type0() == 0 && r.type1() == 72 && !out.submeshes)
+            out.submeshes = &r;
+        else if(r.type0() == 32 && !out.index)
+            out.index = &r;
+        else if(r.type0() == 56 && r.type1() == 0 && !out.position)
+            out.position = &r;
+        else if(r.type0() == 56 && r.type1() == 1 && !out.texcoord)
+            out.texcoord = &r;
+        else if(r.type0() == 56 && r.type1() == 2 && !out.normal)
+            out.normal = &r;
+        else if(r.type0() == 56 && r.type1() == 3 && !out.lightmap)
+            out.lightmap = &r;
+        else if(r.type0() == 56 && r.type1() == 32 && !out.buffers)
+            out.buffers = &r;
+        else if(r.type0() == 100 && r.type1() == 1 && !out.node_map)
+            out.node_map = &r;
+    }
+    return out;
+}
+
 /*!
  * Vertex buffer formats, from the buffer headers of every Xbox map. Compressed
  * positions are i16 x3 against the model bounds; node indices go through the
