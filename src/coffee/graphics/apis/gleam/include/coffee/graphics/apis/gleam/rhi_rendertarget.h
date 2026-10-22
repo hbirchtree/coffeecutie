@@ -215,7 +215,7 @@ struct rendertarget_t
         );
 
         internal_bind(target);
-        if(m_handle == 0)
+        if(m_handle == 0 || m_external)
         {
             cmd::viewport(Veci2{size.x, size.y}, Veci2{size.w, size.h});
             return;
@@ -472,6 +472,7 @@ struct rendertarget_t
     features::textures      m_texture_features;
     rendertarget_currency*  m_currency;
     hnd                     m_handle;
+    bool m_external{false}; /*!< Owned by the platform, like framebuffer 0 */
 
     struct renderbuf_t
     {
