@@ -226,16 +226,17 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         p.template subsystem<PhysicsBus>().inject(ev, &blast);
     }
 
-    /* A vehicle hurts what it runs into by how fast it came, but never kills
-     * a unit in full health outright */
+    /* A vehicle hurts what it runs into by how fast it came. A player in full
+     * health is never killed outright; the AI's are run over */
     void run_down(Proxy& p, Physics::UnitStruck const& struck)
     {
         auto* status = p.template get<BipedStatus>(struck.unit);
         if(!status || !status->coll || status->dead || status->invulnerable)
             return;
+        bool const  player = p.template get<PlayerInfo>(struck.unit) != nullptr;
         f32 const   share = glm::mix(
-            run_down_least,
-            run_down_most,
+            player ? run_down_least : run_down_npc_least,
+            player ? run_down_most : run_down_npc_most,
             std::clamp(
                 (struck.speed - run_down_slow) / (run_down_fast - run_down_slow),
                 0.f,
@@ -421,6 +422,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     static constexpr f32   run_down_fast    = 3.f; /* wu/s */
     static constexpr f32   run_down_least   = .35f;
     static constexpr f32   run_down_most    = .7f;
+    static constexpr f32   run_down_npc_least = .5f;
+    static constexpr f32   run_down_npc_most  = 1.5f;
     static constexpr f32   unit_middle      = .35f; /* wu above the feet */
     static constexpr f32   spawn_lift       = .05f; /* wu */
     static constexpr f32   default_stun     = 1.f;  /* s */
