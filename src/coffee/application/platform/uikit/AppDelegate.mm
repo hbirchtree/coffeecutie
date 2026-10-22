@@ -16,7 +16,6 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/libc_types.h>
 #include <coffee/core/types/application_main.h>
-#include <coffee/foreign/foreign.h>
 #include <peripherals/stl/types.h>
 #include <peripherals/libc/signals.h>
 
@@ -54,7 +53,7 @@ extern int MainSetup(MainNoArgs mainfun, int argc, char** argv, u32 flags);
 
 namespace libc::signal {
 
-extern stl_types::Vector<exit_handler> global_exit_handlers;
+extern std::vector<exit_handler> global_exit_handlers;
 
 } // namespace libc
 
@@ -81,12 +80,22 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     
     NSLog(@"View controller");
     
+    /* Real process arguments: argument parsing needs argv[0] */
+    static std::vector<std::string> arg_strings;
+    static std::vector<char*>       arg_ptrs;
+    for(NSString* arg in NSProcessInfo.processInfo.arguments)
+        arg_strings.emplace_back(arg.UTF8String);
+    for(auto& arg : arg_strings)
+        arg_ptrs.push_back(arg.data());
+    arg_ptrs.push_back(nullptr);
+    int const argc = static_cast<int>(arg_strings.size());
+
     Coffee::SetPrintingVerbosity(10);
     // Call the Coffee entrypoint, it will set up a bunch of things
     if(Coffee::main_functions.is_no_args)
-        Coffee::MainSetup(Coffee::main_functions.no_args, 0, nullptr, 0);
+        Coffee::MainSetup(Coffee::main_functions.no_args, argc, arg_ptrs.data(), 0);
     else
-        Coffee::MainSetup(Coffee::main_functions.with_args, 0, nullptr, 0);
+        Coffee::MainSetup(Coffee::main_functions.with_args, argc, arg_ptrs.data(), 0);
     Coffee::SetPrintingVerbosity(10);
     
     self.hasInitialized = FALSE;
@@ -191,15 +200,16 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 #if defined(COFFEE_APP_USE_GLKIT)
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-}
-
-- (void)glkViewControllerUpdate:(GLKViewController *)controller
-{
+    /* GLKit has its framebuffer bound here and presents it afterwards */
     if(!self.hasInitialized)
         return;
     LifecycleEvent event;
     event.lifecycle_type = LifecycleEvent::FrameRequested;
     DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
+}
+
+- (void)glkViewControllerUpdate:(GLKViewController *)controller
+{
 }
 #endif
 

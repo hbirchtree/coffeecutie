@@ -700,7 +700,7 @@ int PerformDefaults(cxxopts::Options& parser, std::vector<const char*>& args)
     /* For Windows, assume we can use embedded resources */
     if constexpr(
         !compile_info::platform::is_windows &&
-        !compile_info::platform::is_macos)
+        !compile_info::platform::is_macos && !compile_info::platform::is_ios)
         if(results.unmatched().size() >= 1)
             file::ResourcePrefix(results.unmatched().front());
 
