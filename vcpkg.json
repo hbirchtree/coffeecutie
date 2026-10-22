@@ -3,7 +3,7 @@
     "license": "MIT",
     "version-string": "4.0",
     "dependencies": [
-        { "name": "boost-stacktrace", "platform": "osx | ios" },
+        { "name": "boost-stacktrace", "platform": "osx | ios", "default-features": false },
         { "name": "boost-stacktrace", "platform": "android", "default-features": false },
         { "name": "cppcodec", "platform": "!bare" },
         "cxxopts",
@@ -28,7 +28,7 @@
         "audio": {
             "description": "Audio output support",
             "dependencies": [
-                { "name": "openal-soft", "platform": "linux | osx | windows | android | emscripten" },
+                { "name": "openal-soft", "platform": "linux | osx | ios | windows | android | emscripten" },
                 { "name": "libvorbis" }
             ]
         },
@@ -72,7 +72,7 @@
             "description": "GameNetworkingSockets",
             "dependencies": [
                 { "name": "gamenetworkingsockets", "platform": "!emscripten" },
-                { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "!emscripten & !android" },
+                { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "!emscripten & !android & !ios" },
                 { "name": "gamenetworkingsockets", "features": ["webrtc-datachannel"], "platform": "emscripten" }
             ]
         },
