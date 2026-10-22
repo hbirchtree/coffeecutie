@@ -138,6 +138,17 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         u32 extra[4] = {};
     };
 
+    /* GL ES 2: the quad's instance data repeated on its vertices */
+    struct legacy_vertex_t
+    {
+        Vecf2 position;
+        Vecf2 tex_coord;
+        Vecf4 color;
+        Vecf4 tex_scale_offset;
+        Vecf4 params; /* flags, meter fill */
+        Vecf4 empty;
+    };
+
     enum draw_flags_t : u32
     {
         use_alpha = 0x1, /* the color's alpha fades the texel */
@@ -167,6 +178,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         using namespace std::string_view_literals;
 
         priority = 850;
+
+        /* GL ES 2 draws through load_legacy() instead */
+        m_legacy = std::get<0>(api.api_version()) == 2;
+        if(m_legacy)
+            return;
 
         m_instance_slots = materials::ui_instances(
             static_cast<libc_types::u32>(api.limits().buffers.ubo_size));
@@ -204,6 +220,16 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     std::shared_ptr<gfx::buffer_t>       vertices;
     std::shared_ptr<gfx::buffer_t>       instance_vertices;
     std::shared_ptr<gfx::vertex_array_t> array;
+
+    /* GL ES 2, only with legacy_enhanced */
+    bool                                 m_legacy{false};
+    bool                                 m_legacy_failed{false};
+    std::shared_ptr<gfx::program_t>      m_legacy_program;
+    std::shared_ptr<gfx::buffer_t>       m_legacy_vertices;
+    std::shared_ptr<gfx::vertex_array_t> m_legacy_array;
+    std::shared_ptr<gfx::sampler_t>      m_legacy_sampler;
+    std::shared_ptr<gfx::texture_2d_t>   m_legacy_white;
+    std::vector<legacy_vertex_t>         m_legacy_data;
 
     Vecf2                           screen_size;
     Vecf2                           mouse_pos;
@@ -1553,10 +1579,224 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     {
     }
 
+    bool load_legacy()
+    {
+        using namespace Coffee::resource_literals;
+        if(m_legacy_program)
+            return true;
+        if(m_legacy_failed)
+            return false;
+        m_legacy_failed  = true;
+        m_legacy_program = api.alloc_program();
+        m_legacy_program->add(
+            gfx::program_t::stage_t::Vertex,
+            api.alloc_shader("shaders/ui_legacy.vert"_rsc.data()));
+        m_legacy_program->add(
+            gfx::program_t::stage_t::Fragment,
+            api.alloc_shader("shaders/ui_legacy.frag"_rsc.data()));
+        if(auto res = m_legacy_program->compile(); res.has_error())
+        {
+            cWarning(
+                "Failed to compile UI shader: {}", std::get<0>(res.error()));
+            m_legacy_program.reset();
+            return false;
+        }
+        m_legacy_vertices = api.alloc_buffer(
+            gfx::buffers::vertex, RSCA::WriteOnly | RSCA::Streaming);
+        m_legacy_vertices->alloc();
+        m_legacy_array = api.alloc_vertex_array();
+        m_legacy_array->alloc();
+        using v = legacy_vertex_t;
+        m_legacy_array->add(gfx::vertex_attribute::from_member(&v::position));
+        m_legacy_array->add(
+            gfx::vertex_attribute::from_member(&v::tex_coord).at(1));
+        m_legacy_array->add(
+            gfx::vertex_attribute::from_member(&v::color).at(2));
+        m_legacy_array->add(
+            gfx::vertex_attribute::from_member(&v::tex_scale_offset).at(3));
+        m_legacy_array->add(
+            gfx::vertex_attribute::from_member(&v::params).at(4));
+        m_legacy_array->add(
+            gfx::vertex_attribute::from_member(&v::empty).at(5));
+        m_legacy_array->set_buffer(gfx::buffers::vertex, m_legacy_vertices, 0);
+        m_legacy_array->set_attribute_names({
+            {"position", 0},
+            {"tex_coord", 1},
+            {"color", 2},
+            {"tex_scale_offset", 3},
+            {"params", 4},
+            {"empty", 5},
+        });
+        /* What solid quads bind, they never sample it */
+        m_legacy_white =
+            api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::RGBA8), 1);
+        m_legacy_white->alloc(size_3d<u32>{1, 1, 1});
+        std::array<u8, 4> const white{{255, 255, 255, 255}};
+        m_legacy_white->upload(
+            semantic::Span<const u8>(white.data(), white.size()),
+            Veci2{},
+            Veci2{1, 1});
+        m_legacy_failed = false;
+        return true;
+    }
+
+    /* A texture_source's layer, and the sampler it filters like */
+    std::shared_ptr<gfx::texture_t> legacy_texture(
+        u32 source, std::shared_ptr<gfx::sampler_t>& filtering)
+    {
+        using typing::pixels::CompFmt;
+        u32 const              code  = source >> 24;
+        u32 const              layer = source & 0xFFFFFF;
+        std::optional<PixDesc> fmt;
+        switch(code)
+        {
+        case 1:
+            fmt = CompFmt(pix_fmt::BCn, comp_flags::BC1);
+            break;
+        case 2:
+            fmt = CompFmt(pix_fmt::BCn, comp_flags::BC2);
+            break;
+        case 3:
+            fmt = CompFmt(pix_fmt::BCn, comp_flags::BC3);
+            break;
+        case 7:
+            fmt = PixDesc(pix_fmt::RGBA4);
+            break;
+        case 8:
+            fmt = PixDesc(pix_fmt::RGBA8);
+            break;
+        case 9:
+            filtering = font_cache.font_sampler;
+            return font_cache.font_textures->subtexture(layer);
+        case 12:
+            fmt = PixDesc(pix_fmt::RG8);
+            break;
+        case 13:
+            fmt = CompFmt(pix_fmt::ETC2, typing::pixels::pix_flags::RGB);
+            break;
+        case 14:
+            fmt = CompFmt(pix_fmt::ETC2, typing::pixels::pix_flags::RGBA);
+            break;
+        default:
+            return nullptr;
+        }
+        auto& bucket =
+            bitm_cache.template get_bucket<gfx::compat::texture_2da_t>(*fmt);
+        filtering = bucket.sampler;
+        return bucket.template texture_as<gfx::compat::texture_2da_t>()
+            .subtexture(layer);
+    }
+
+    /* GL ES 2 has no instance buffer or texture arrays: each quad carries
+     * its instance data, and a draw is a run of quads on one texture */
+    void draw_legacy(
+        std::vector<vertex_t> const&                    verts,
+        std::vector<instance_vertex_t> const&           instances,
+        std::vector<std::tuple<Matf3, u32, u32>> const& ranges)
+    {
+        using namespace std::string_view_literals;
+        if(!load_legacy())
+            return;
+
+        m_legacy_data.clear();
+        m_legacy_data.reserve(verts.size());
+        for(size_t i = 0; i < verts.size(); i++)
+        {
+            auto const& inst  = instances.at(i / 6);
+            u32 const   empty = inst.extra[1];
+            m_legacy_data.push_back({
+                .position         = verts[i].position,
+                .tex_coord        = verts[i].tex_coord,
+                .color            = inst.color,
+                .tex_scale_offset = inst.tex_scale_offset,
+                .params           = Vecf4(
+                    static_cast<f32>(inst.extra[0]),
+                    std::bit_cast<f32>(inst.extra[2]),
+                    0.f,
+                    0.f),
+                .empty = Vecf4(
+                             empty & 0xFF,
+                             (empty >> 8) & 0xFF,
+                             (empty >> 16) & 0xFF,
+                             empty >> 24) /
+                         255.f,
+            });
+        }
+        m_legacy_vertices->commit(Bytes::ofContainer(m_legacy_data).view);
+
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+        f32 const la_textures = 0.f;
+#else
+        f32 const la_textures =
+            api.feature_info().texture.tex.ext.rg8 ? 0.f : 1.f;
+#endif
+        for(auto const& [matrix, offset, count] : ranges)
+            for(u32 first = offset; first < offset + count;)
+            {
+                u32 const source = instances.at(first / 6).texture_source.x;
+                u32       last   = first;
+                while(last < offset + count &&
+                      instances.at(last / 6).texture_source.x == source)
+                    last += 6;
+
+                std::shared_ptr<gfx::sampler_t> filtering;
+                auto texture = legacy_texture(source, filtering);
+                f32  format  = static_cast<f32>(source >> 24);
+                if(!texture)
+                    texture = m_legacy_white, format = 0.f;
+                if(!m_legacy_sampler)
+                {
+                    m_legacy_sampler = texture->sampler();
+                    m_legacy_sampler->alloc();
+                }
+                m_legacy_sampler->rebind(texture);
+                if(filtering)
+                    m_legacy_sampler->set_filtering(
+                        filtering->m_mag, filtering->m_min, filtering->m_mip);
+
+                api.submit(
+                    gfx::draw_command{
+                        .program  = m_legacy_program,
+                        .vertices = m_legacy_array,
+                        .call =
+                            {
+                                .instanced = false,
+                                .mode      = gfx::drawing::primitive::triangle,
+                            },
+                        .data =
+                            {
+                                {.arrays =
+                                     {.count = last - first, .offset = first}},
+                            },
+                    },
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Vertex,
+                        gfx::uniform_pair{
+                            {"screen_scale"sv}, semantic::SpanOne(matrix)}),
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Fragment,
+                        gfx::uniform_pair{
+                            {"format"sv}, semantic::SpanOne(format)},
+                        gfx::uniform_pair{
+                            {"la_textures"sv}, semantic::SpanOne(la_textures)}),
+                    gfx::make_sampler_list(
+                        gleam::sampler_definition_t{
+                            typing::graphics::ShaderStage::Fragment,
+                            {"source"sv, 0},
+                            m_legacy_sampler}),
+                    gfx::blend_state{.additive = false});
+                first = last;
+            }
+    }
+
     void end_restricted(Proxy& e, time_point const&)
     {
         using namespace std::string_view_literals;
         using typing::pixels::CompFmt;
+
+        /* The legacy renderer has no UI unless enhanced */
+        if(m_legacy && !e.subsystem<RenderingParameters>().legacy_enhanced)
+            return;
 
         auto* fb    = e.service<comp_app::GraphicsFramebuffer>();
         screen_size = Vecf2(fb->size().w, fb->size().h);
@@ -1831,18 +2071,35 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(vertex_data.empty())
             return;
 
+        auto cursor_scale =
+            glm::scale(
+                Matf3(1), Vecf2{2.f / screen_size.x, -2.f / screen_size.y}) *
+            glm::translate(
+                Matf3(1), Vecf2{-screen_size.x / 2.f, -screen_size.y / 2.f});
+
+        if(m_legacy)
+        {
+            std::vector<std::tuple<Matf3, u32, u32>> ranges;
+            u32                                      hud_offset = 0;
+            for(auto const& [matrix, count] : hud_batches)
+            {
+                ranges.emplace_back(matrix, hud_offset, count);
+                hud_offset += count;
+            }
+            ranges.emplace_back(screen_scale, hud_vert_count, ui_vert_count);
+            ranges.emplace_back(cursor_scale, text_start, text_count);
+            if(cursor_visible)
+                ranges.emplace_back(cursor_scale, cursor_start, 6);
+            draw_legacy(vertex_data, instance_vertex_data, ranges);
+            return;
+        }
+
         if(instance_vertex_data.size() < m_instance_slots)
             instance_vertex_data.resize(m_instance_slots);
 
         vertices->commit(Bytes::ofContainer(vertex_data).view);
         instance_vertices->commit(
             Bytes::ofContainer(instance_vertex_data).view);
-
-        auto cursor_scale =
-            glm::scale(
-                Matf3(1), Vecf2{2.f / screen_size.x, -2.f / screen_size.y}) *
-            glm::translate(
-                Matf3(1), Vecf2{-screen_size.x / 2.f, -screen_size.y / 2.f});
 
         auto etc2_sampler = [&](typing::pixels::pix_flags flags) {
             if(!api.feature_info().texture.tex.gl.etc2)
@@ -1975,8 +2232,8 @@ void alloc_ui_system(compo::EntityContainer& e)
 {
     ProfContext _;
     auto&       gfx = e.subsystem_cast<gfx::system>();
-    if(!gfx.workarounds().bugs.adreno_3xx &&
-       std::get<0>(gfx.api_version()) != 2)
+    /* On GL ES 2 it draws only with legacy_enhanced */
+    if(!gfx.workarounds().bugs.adreno_3xx)
         e.register_subsystem_inplace<UIRenderer>(
             std::ref(e.subsystem_cast<gfx::system>()),
             std::ref(e.subsystem_cast<UIElementCache<halo_version>>()),

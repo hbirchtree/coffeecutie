@@ -145,6 +145,8 @@
         "shaders/effects_legacy.frag",
         "shaders/material_legacy.vert",
         "shaders/material_legacy.frag",
+        "shaders/ui_legacy.vert",
+        "shaders/ui_legacy.frag",
         "sounds/thefunny.ogg",
         "sounds/thefunny2.ogg",
         "names.txt"
