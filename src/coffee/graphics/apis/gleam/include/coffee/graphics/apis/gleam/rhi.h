@@ -252,6 +252,14 @@ struct api
         {
             m_framebuffer = std::make_shared<rendertarget_type>(
                 m_features, std::ref(m_rendertargetCurrency));
+            if(m_workarounds.rendertarget.adopt_bound_default)
+            {
+                i32 bound = 0;
+                cmd::get_integerv(
+                    group::get_prop::framebuffer_binding, SpanOne(bound));
+                m_framebuffer->m_handle = hnd(static_cast<u32>(bound));
+                m_framebuffer->m_external = true;
+            }
 
             if constexpr(compile_info::debug_mode)
             {

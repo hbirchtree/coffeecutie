@@ -1595,6 +1595,9 @@ optional<error> api::load(load_options_t options)
         m_workarounds.tex.requires_aligned = true;
     }
 
+    if(compile_info::platform::is_ios)
+        m_workarounds.rendertarget.adopt_bound_default = true;
+
     /* Let's skip ES 2.0 implementations that don't fulfill a minimum */
     if(m_api_type == api_type_t::es)
     {

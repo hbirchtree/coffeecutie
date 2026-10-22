@@ -568,6 +568,12 @@ struct workarounds
 
     struct
     {
+        /*! No framebuffer 0 (GLKit): the default target is whatever is bound */
+        bool adopt_bound_default{false};
+    } rendertarget;
+
+    struct
+    {
         bool adreno_3xx{false}; /*!< Adreno 3xx drivers seemingly
                                  *   can't handle complex shaders */
         bool adreno{false};
@@ -598,6 +604,9 @@ struct workarounds
                     "\"slow_mapbuffer\":{},"
                     "\"disable_immutable_buffers\":{}"
                 "}},"
+                "\"rendertarget\":{{"
+                    "\"adopt_bound_default\":{}"
+                "}},"
                 "\"bugs\":{{"
                     "\"adreno_3xx\":{},"
                     "\"adreno\":{},"
@@ -614,6 +623,7 @@ struct workarounds
             buffer.emulated_mapbuffer,
             buffer.slow_mapbuffer,
             buffer.disable_immutable_buffers,
+            rendertarget.adopt_bound_default,
             bugs.adreno_3xx,
             bugs.adreno,
             bugs.freedreno,
