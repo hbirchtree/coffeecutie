@@ -351,6 +351,9 @@ struct AnimationController
         auto& walker = m_walkers[id];
         if(dead)
             return die(id, anim, stance(p, anim.graph, unit, weapon), grounded);
+        /* Revived: back on its feet, the death clip fading as idle takes over */
+        if(walker.state == walker_t::dead)
+            walker.state = walker_t::ground;
         Vecf3 velocity{};
         if(walker.seen && dt > 0.f)
             velocity = (feet - walker.feet) / dt;
