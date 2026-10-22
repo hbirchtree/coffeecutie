@@ -783,6 +783,7 @@ struct Projectile
     libc_types::u64              owner{0};    /* passes through its body */
     libc_types::u64              shooter{0};  /* credited with its hits */
     libc_types::u32              bounces{0};
+    bool                         attached{false}; /* stuck where it hit */
 
     /*! Bullets fast enough to resolve as the trigger is pulled, along a
      *  ray of `reach` */

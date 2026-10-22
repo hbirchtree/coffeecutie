@@ -43,6 +43,9 @@ struct ProjectileSystem
 
     void start_restricted(Proxy& p, time_point const&)
     {
+        m_blast_queue->poll();
+        for(auto const& blast : std::exchange(m_blasts, {}))
+            thrown(p, blast);
         std::set<u64> spent;
         for(auto const& tick : m_ticks->take())
             for(auto ent : p.template select<Projectile, Model>())
@@ -158,6 +161,7 @@ struct ProjectileSystem
         }
         case response_t::attach:
             flight.velocity = {};
+            flight.attached = true;
             place(flight, model, ray.point + ray.normal * surface_gap);
             start_timer(flight);
             return true;
@@ -231,6 +235,26 @@ struct ProjectileSystem
         if(effect && effect->tag_id != own.tag_id)
             play(p, *effect, at, normal, {});
         return false;
+    }
+
+    /* What falls is thrown by a blast, as on every peer; what flies straight
+     * or is stuck somewhere stays its course */
+    void thrown(Proxy& p, Physics::Blast const& blast)
+    {
+        f32 const inner = std::min(blast.radius.x, blast.radius.y);
+        for(auto ent : p.template select<Projectile, Model>())
+        {
+            auto [flight, model] = ent.components();
+            if(!flight.tag || flight.attached || flight.tag->air_gravity_scale <= 0.f)
+                continue;
+            Vecf3 const away = model.position - blast.position;
+            f32 const   d    = glm::length(away);
+            if(d > blast.radius.y)
+                continue;
+            f32 const scale =
+                d <= inner ? 1.f : 1.f - (d - inner) / std::max(blast.radius.y - inner, 1e-3f);
+            flight.velocity += (d > 1e-3f ? away / d : Vecf3{0, 0, 1}) * (blast.speed * scale);
+        }
     }
 
     /* Once; a zero timer means it never goes off by itself */
@@ -322,6 +346,8 @@ struct ProjectileSystem
 
     std::minstd_rand           m_rng{std::random_device{}()};
     std::unique_ptr<TickQueue> m_ticks;
+    std::shared_ptr<PhysicsBus::queue_type<Physics::Blast>> m_blast_queue;
+    std::vector<Physics::Blast>                             m_blasts;
 
     friend void alloc_projectiles(compo::EntityContainer& e);
 };
@@ -331,4 +357,9 @@ void alloc_projectiles(compo::EntityContainer& e)
     auto& projectiles = e.register_subsystem_inplace<ProjectileSystem>();
     projectiles.m_ticks =
         std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
+    projectiles.m_blast_queue =
+        e.subsystem_cast<PhysicsBus>().addQueuedEventFunction<Physics::Blast>(
+            0, [&projectiles](Physics::Event&, Physics::Blast* blast) {
+                projectiles.m_blasts.push_back(*blast);
+            });
 }
