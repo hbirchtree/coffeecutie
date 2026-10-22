@@ -1203,16 +1203,6 @@ static_assert(offsetof(structure_bsp_ref_t, bsp) == 16);
 static_assert(offsetof(structure_bsp_ref_t, lightmap) == 24);
 static_assert(sizeof(structure_bsp_ref_t) == 68);
 
-/*! The one piece of scnr needed for geometry: the structure bsps block at
- * offset 528 (Xbox) */
-struct alignas(4) scnr_bsps_t
-{
-    u8                             unknown_0[528];
-    tag_block<structure_bsp_ref_t> structure_bsps;
-};
-
-static_assert(offsetof(scnr_bsps_t, structure_bsps) == 528);
-
 /*! Draw range within a section, one per shader ("part" in the section
  * data); streamed as resource (0,72) */
 struct alignas(4) part_t
