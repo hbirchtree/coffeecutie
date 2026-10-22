@@ -142,11 +142,13 @@
             "displayName": "iOS Simulator x86_64 + UIKit + OpenGL ES",
             "inherits": ["vcpkg-base-mac"],
             "cacheVariables": {
-                "BUILD_DISCORD_RPC": "ON",
+                "BUILD_EGL": "ON",
+                "BUILD_GLKIT": "ON",
+                "BUILD_SDL3": "OFF",
                 "PLATFORM": "SIMULATOR64"
             },
             "environment": {
-                "ARCHITECTURE": "x64-osx"
+                "ARCHITECTURE": "x64-ios"
             }
         }
     ],
