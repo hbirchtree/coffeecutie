@@ -93,6 +93,7 @@ DEFAULT_TEX_MATRIX = {
         'etc2',
     ],
     'iOS': [
+        'etc2', # Baseline OpenGL ES 3.0
         'pvrtc1',
         'raw',
     ],
