@@ -1170,6 +1170,157 @@ void insert_dummy_plug(
     }
 }
 
+namespace {
+/* Writes what the controllers did as dummy plug events, coarsely: a stick
+ * is noted when it crosses a step, a button with how long it was held */
+struct InputRecorder : compo::SubsystemBase
+{
+    using type = InputRecorder;
+    using f32  = libc_types::f32;
+    using u32  = libc_types::u32;
+    using u8   = libc_types::u8;
+
+    InputRecorder(std::string path, f32 step)
+        : m_path(std::move(path))
+        , m_step(step)
+    {
+        priority = 31;
+    }
+
+    ~InputRecorder()
+    {
+        write();
+    }
+
+    virtual void start_frame(ContainerProxy& p, time_point const& t) final
+    {
+        auto* controllers = p.service<comp_app::ControllerInput>();
+        if(!controllers)
+            return;
+        if(!m_start)
+            m_start = t;
+        u32 const now = static_cast<u32>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(t - *m_start).count());
+        m_end = now;
+        if(m_seen.size() < controllers->count())
+            m_seen.resize(controllers->count());
+        for(u32 i = 0; i < controllers->count(); i++)
+        {
+            auto const state = controllers->state(i);
+            auto&      seen  = m_seen[i];
+            if(!seen.connected)
+            {
+                seen.connected = true;
+                m_events.push_back({{"time", now}, {"type", "controller_connect"}, {"index", i}});
+            }
+            for(u8 a = 0; a < 6; a++)
+            {
+                f32 const value = quantise(state.axes.d[a] / 32767.f);
+                if(value == seen.axes[a])
+                    continue;
+                seen.axes[a] = value;
+                m_events.push_back({
+                    {"time", now},
+                    {"type", "controller_axis"},
+                    {"axis", name_of<CIControllerAxisMapping>(Coffee::Input::CK_AXIS_BASE + a, "CK_AXIS_")},
+                    {"value", value},
+                    {"index", i},
+                });
+            }
+            for(u8 b = 0; b < 16; b++)
+            {
+                bool const down = (state.buttons.d >> b) & 1;
+                if(down && !seen.pressed[b])
+                    seen.pressed[b] = now;
+                else if(!down && seen.pressed[b])
+                {
+                    u32 const at = *std::exchange(seen.pressed[b], std::nullopt);
+                    m_events.push_back({
+                        {"time", at},
+                        {"type", "controller_button"},
+                        {"button", name_of<CIControllerButtonMapping>(Coffee::Input::CK_BUTTON_BASE + b, "CK_BUTTON_")},
+                        {"duration", std::max(now - at, 1u)},
+                        {"index", i},
+                    });
+                }
+            }
+        }
+    }
+
+  private:
+    using CIControllerAxisMapping   = Coffee::Input::CIControllerAxisMapping;
+    using CIControllerButtonMapping = Coffee::Input::CIControllerButtonMapping;
+
+    struct controller_t
+    {
+        bool                                 connected{false};
+        std::array<f32, 6>                   axes{};
+        std::array<std::optional<u32>, 16>   pressed{};
+    };
+
+    f32 quantise(f32 value) const
+    {
+        return std::clamp(std::round(value / m_step) * m_step, -1.f, 1.f);
+    }
+
+    template<typename E>
+    static std::string name_of(int value, std::string_view prefix)
+    {
+        auto const name = magic_enum::enum_name(static_cast<E>(value));
+        return std::string(name.starts_with(prefix) ? name.substr(prefix.size()) : name);
+    }
+
+    void write()
+    {
+        /* Buttons still held at the end are let go there */
+        for(u32 i = 0; i < m_seen.size(); i++)
+            for(u8 b = 0; b < 16; b++)
+                if(auto const at = m_seen[i].pressed[b])
+                    m_events.push_back({
+                        {"time", *at},
+                        {"type", "controller_button"},
+                        {"button", name_of<CIControllerButtonMapping>(Coffee::Input::CK_BUTTON_BASE + b, "CK_BUTTON_")},
+                        {"duration", std::max(m_end - *at, 1u)},
+                        {"index", i},
+                    });
+        std::stable_sort(m_events.begin(), m_events.end(), [](auto const& a, auto const& b) {
+            return a["time"].template get<u32>() < b["time"].template get<u32>();
+        });
+        nlohmann::json out = {
+            {"comment", "Recorded with DUMMY_PLUG_RECORD"},
+            {"end_time", m_end + 1000},
+            {"events", m_events},
+        };
+        auto file = Coffee::Resource(
+            platform::url::constructors::MkUrl(m_path, semantic::RSCA::SystemFile));
+        auto const text = out.dump(4);
+        file = semantic::BytesConst::ofString(std::string_view(text));
+        Coffee::FileCommit(
+            file, semantic::RSCA::NewFile | semantic::RSCA::Discard | semantic::RSCA::WriteOnly);
+        cDebug("Recorded {} input events to {}", m_events.size(), m_path);
+    }
+
+    std::string                 m_path;
+    f32                         m_step;
+    std::optional<time_point>   m_start;
+    u32                         m_end{0};
+    std::vector<controller_t>   m_seen;
+    std::vector<nlohmann::json> m_events;
+};
+} // namespace
+
+void insert_input_recorder(AppLoadableService::entity_container& container)
+{
+    auto const path = platform::env::var("DUMMY_PLUG_RECORD");
+    if(!path)
+        return;
+    libc_types::f32 step = .25f;
+    if(auto const s = platform::env::var("DUMMY_PLUG_RECORD_STEP"))
+        step = std::max(std::stof(*s), .01f);
+    container.register_subsystem_inplace<InputRecorder>(*path, step);
+    cDebug("Recording input to {}", *path);
+}
+
 #if defined(COFFEE_EMSCRIPTEN)
 extern "C" EMSCRIPTEN_KEEPALIVE int coffee_app_loaded()
 {
