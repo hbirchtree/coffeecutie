@@ -10,6 +10,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <type_traits>
+#include <unordered_map>
+
 namespace blam::dimeter {
 
 /*!
@@ -54,6 +57,65 @@ struct object_view
         return is(tag_class_t::mach) || is(tag_class_t::ctrl) || is(tag_class_t::lifi);
     }
 };
+
+/*! The permutation each region of a model shows, keyed by region name */
+using region_picks = std::unordered_map<u32, i16>;
+
+/*!
+ * \brief The permutation each region shows for an object's variant: the
+ * given one, else the object's default; empty when it has neither. Of
+ * several permutations the first with a chance stands in for the engine's
+ * weighted pick.
+ */
+template<typename V>
+inline region_picks variant_picks(map_container<V> const& map, object_view const& object, string_id variant)
+{
+    region_picks out;
+    if(!object.model)
+        return out;
+    if(from_le(variant.raw) == 0)
+        variant = object.object->default_model_variant;
+    if(from_le(variant.raw) == 0)
+        return out;
+    for(auto const& v : map.span(object.model->variants))
+    {
+        if(from_le(v.name.raw) != from_le(variant.raw))
+            continue;
+        for(auto const& region : map.span(v.regions))
+        {
+            auto const perms = map.span(region.permutations);
+            if(perms.empty())
+                continue;
+            auto const* pick = &perms[0];
+            for(auto const& perm : perms)
+                if(from_le(perm.probability) > 0.f)
+                {
+                    pick = &perm;
+                    break;
+                }
+            out[from_le(region.name.raw)] = pick->runtime_permutation;
+        }
+        break;
+    }
+    return out;
+}
+
+/*! A render or collision model region's permutation under `picks`: the
+ * picked one, else the first; null when the region has none */
+template<typename V, typename Region>
+inline auto picked_permutation(map_container<V> const& map, Region const& region, region_picks const* picks)
+{
+    auto const perms = map.span(region.permutations);
+    using permutation_t = std::remove_cvref_t<decltype(perms[0])>;
+    if(perms.empty())
+        return static_cast<permutation_t const*>(nullptr);
+    size_t at = 0;
+    if(picks)
+        if(auto it = picks->find(from_le(region.name.raw));
+           it != picks->end() && it->second >= 0 && static_cast<size_t>(it->second) < perms.size())
+            at = static_cast<size_t>(it->second);
+    return &perms[at];
+}
 
 /*! A structure BSP as the scenario lists it, located: its tag, its body and
  * the magic of the region it lives in, and its lightmap */

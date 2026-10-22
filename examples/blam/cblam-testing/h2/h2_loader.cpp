@@ -1754,21 +1754,6 @@ struct H2MapLoader : compo::SubsystemBase
         }
     }
 
-    /* Index into a region's permutations for a variant map, 0 when unset */
-    static size_t permutation_of(
-        std::unordered_map<u32, i16> const* permutations,
-        dim::string_id                      region,
-        size_t                              count)
-    {
-        if(!permutations)
-            return 0;
-        auto it = permutations->find(from_le(region.raw));
-        if(it == permutations->end() || it->second < 0 ||
-           static_cast<size_t>(it->second) >= count)
-            return 0;
-        return static_cast<size_t>(it->second);
-    }
-
     /* The globals' player representation (hands, body) and the starting
      * weapon's view model, idling */
     template<typename V>
@@ -2082,11 +2067,10 @@ struct H2MapLoader : compo::SubsystemBase
         u32 triangles = 0;
         for(auto const& region : regions.value())
         {
-            auto perms = region.permutations.data(map.magic());
-            if(perms.has_error() || perms.value().empty())
+            auto const* perm = dim::picked_permutation(map, region, permutations);
+            if(!perm)
                 continue;
-            auto bsps = perms.value()[permutation_of(permutations, region.name, perms.value().size())]
-                            .bsps.data(map.magic());
+            auto bsps = perm->bsps.data(map.magic());
             if(bsps.has_error())
                 continue;
             for(auto const& ref : bsps.value())
@@ -2159,11 +2143,10 @@ struct H2MapLoader : compo::SubsystemBase
         u32 emitted = 0;
         for(auto const& region : regions.value())
         {
-            auto perms = region.permutations.data(map.magic());
-            if(perms.has_error() || perms.value().empty())
+            auto const* perm = dim::picked_permutation(map, region, permutations);
+            if(!perm)
                 continue;
-            i16 sidx = perms.value()[permutation_of(permutations, region.name, perms.value().size())]
-                           .best_section();
+            i16 sidx = perm->best_section();
             if(sidx < 0 || static_cast<size_t>(sidx) >= sections.value().size())
                 continue;
             auto const& section = sections.value()[sidx];
@@ -2463,54 +2446,6 @@ struct H2MapLoader : compo::SubsystemBase
         return dim::object_view::of(map, object).render_model.tag;
     }
 
-    /* The permutation each region shows for an object's variant, keyed by
-     * region name; the placement's variant, else the object's default.
-     * Empty = permutation 0 everywhere. Of several permutations the first
-     * with a chance stands in for the engine's weighted pick. */
-    template<typename V>
-    std::unordered_map<u32, i16> variant_permutations(
-        dim::map_container<V> const& map,
-        dim::tag_reference<> const&    object,
-        dim::string_id               variant)
-    {
-        std::unordered_map<u32, i16> out;
-        auto const  view = dim::object_view::of(map, object);
-        auto const& hlmt = view.model;
-        if(!hlmt)
-            return out;
-        if(from_le(variant.raw) == 0)
-            variant = view.object->default_model_variant;
-        if(from_le(variant.raw) == 0)
-            return out;
-        auto variants = hlmt->variants.data(map.magic());
-        if(variants.has_error())
-            return out;
-        for(auto const& v : variants.value())
-        {
-            if(from_le(v.name.raw) != from_le(variant.raw))
-                continue;
-            auto regions = v.regions.data(map.magic());
-            if(regions.has_error())
-                break;
-            for(auto const& region : regions.value())
-            {
-                auto perms = region.permutations.data(map.magic());
-                if(perms.has_error() || perms.value().empty())
-                    continue;
-                auto const* pick = &perms.value()[0];
-                for(auto const& perm : perms.value())
-                    if(from_le(perm.probability) > 0.f)
-                    {
-                        pick = &perm;
-                        break;
-                    }
-                out[from_le(region.name.raw)] = pick->runtime_permutation;
-            }
-            break;
-        }
-        return out;
-    }
-
     /* A BSP's water: its shader on its own geometry, and the tints the sea
      * shades with */
     template<typename V>
@@ -2586,12 +2521,10 @@ struct H2MapLoader : compo::SubsystemBase
             return;
         for(auto const& region : regions.value())
         {
-            auto perms = region.permutations.data(map.magic());
-            if(perms.has_error() || perms.value().empty())
+            auto const* perm = dim::picked_permutation(map, region, permutations);
+            if(!perm)
                 continue;
-            auto bsps = perms.value()[permutation_of(
-                                          permutations, region.name, perms.value().size())]
-                            .bsps.data(map.magic());
+            auto bsps = perm->bsps.data(map.magic());
             if(bsps.has_error())
                 continue;
             for(auto const& ref : bsps.value())
@@ -2772,7 +2705,7 @@ struct H2MapLoader : compo::SubsystemBase
             std::optional<ObjectPhysics> physics;
             if(object)
             {
-                permutations = variant_permutations(map, *object, variant);
+                permutations = dim::variant_picks(map, dim::object_view::of(map, *object), variant);
                 if(!permutations.empty())
                     varied_objects++;
                 physics = moving_physics(map, *object, scale, &permutations);
