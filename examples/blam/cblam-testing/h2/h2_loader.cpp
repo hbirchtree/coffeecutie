@@ -1124,9 +1124,7 @@ struct H2MapLoader : compo::SubsystemBase
         auto skies = scnr.skies.data(map.magic());
         if(skies.has_error() || static_cast<size_t>(sky_index) >= skies.value().size())
             return;
-        auto const* sky_tag = map.tag_at(skies.value()[sky_index].sky.tag_id);
-        auto const* sky =
-            sky_tag ? sky_tag->template data<dim::obj::sky_t>(map.magic()) : nullptr;
+        auto const sky = map.template get<dim::obj::sky_t>(skies.value()[sky_index].sky);
         if(!sky)
             return;
         if(auto fogs = sky->atmospheric_fog.data(map.magic());
@@ -2157,10 +2155,7 @@ struct H2MapLoader : compo::SubsystemBase
         i32                                 section,
         std::unordered_map<u32, i16> const* permutations = nullptr)
     {
-        auto const* obje_tag = map.tag_at(object.tag_id);
-        auto const* obje =
-            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic())
-                     : nullptr;
+        auto const obje = map.template get<dim::obj::object_t>(object);
         auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
         auto const* hlmt =
             hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
@@ -2321,10 +2316,7 @@ struct H2MapLoader : compo::SubsystemBase
         auto palettes = group.section_palette.data(magic);
         if(infos.has_error() || palettes.has_error())
             return out;
-        auto const* bitm_tag = map.tag_at(group.bitmap_group.tag_id);
-        auto const* bitm =
-            bitm_tag ? bitm_tag->template data<dim::bitm::header_t>(map.magic())
-                     : nullptr;
+        auto const bitm = map.template get<dim::bitm::header_t>(group.bitmap_group);
         if(!bitm)
             return out;
         auto images = bitm->images.data(map.magic());
@@ -2602,17 +2594,10 @@ struct H2MapLoader : compo::SubsystemBase
     dim::tag_t const* render_model_of(
         dim::map_container<V> const& map, dim::tag_reference<> const& object)
     {
-        auto const* obje_tag = map.tag_at(object.tag_id);
-        auto const* obje =
-            obje_tag
-                ? obje_tag->template data<dim::obj::object_t>(map.magic())
-                : nullptr;
+        auto const obje = map.template get<dim::obj::object_t>(object);
         if(!obje)
             return nullptr;
-        auto const* hlmt_tag = map.tag_at(obje->model.tag_id);
-        auto const* hlmt =
-            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
-                     : nullptr;
+        auto const hlmt = map.template get<dim::obj::hlmt_t>(obje->model);
         if(!hlmt)
             return nullptr;
         auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id);
@@ -2630,10 +2615,7 @@ struct H2MapLoader : compo::SubsystemBase
         dim::string_id               variant)
     {
         std::unordered_map<u32, i16> out;
-        auto const* obje_tag = map.tag_at(object.tag_id);
-        auto const* obje =
-            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic())
-                     : nullptr;
+        auto const obje = map.template get<dim::obj::object_t>(object);
         auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
         auto const* hlmt =
             hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
@@ -2801,14 +2783,8 @@ struct H2MapLoader : compo::SubsystemBase
         if(!hlmt || obje_tag->matches(blam::tag_class_t::mach) || obje_tag->matches(blam::tag_class_t::ctrl) ||
            obje_tag->matches(blam::tag_class_t::lifi))
             return std::nullopt;
-        auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id);
-        auto const* model =
-            mode_tag ? mode_tag->template data<geo::model_header_t>(map.magic())
-                     : nullptr;
-        auto const* phmo_tag = map.tag_at(hlmt->physics_model.tag_id);
-        auto const* phmo =
-            phmo_tag ? phmo_tag->template data<dim::obj::phmo::model_t>(map.magic())
-                     : nullptr;
+        auto const model = map.template get<geo::model_header_t>(hlmt->render_model);
+        auto const phmo = map.template get<dim::obj::phmo::model_t>(hlmt->physics_model);
         bool moves = false;
         f32  mass  = phmo ? from_le(phmo->mass) : 0.f;
         f32  sum   = 0.f;
@@ -2870,10 +2846,7 @@ struct H2MapLoader : compo::SubsystemBase
         }
 
         /* One hull per collision BSP, posed by the render model's nodes */
-        auto const* coll_tag = map.tag_at(hlmt->collision_model.tag_id);
-        auto const* coll =
-            coll_tag ? coll_tag->template data<dim::obj::coll::model_t>(map.magic())
-                     : nullptr;
+        auto const coll = map.template get<dim::obj::coll::model_t>(hlmt->collision_model);
         std::vector<Matf4> node_world;
         if(model)
             node_world = model_nodes(map, *model);
@@ -3109,11 +3082,7 @@ struct H2MapLoader : compo::SubsystemBase
             u32 placed = 0, skipped = 0;
             for(auto const& spawn : spawns.value())
             {
-                auto const* coll_tag = map.tag_at(spawn.collection.tag_id);
-                auto const* coll =
-                    coll_tag ? coll_tag->template data<dim::scn::item_collection_t>(
-                                   map.magic())
-                             : nullptr;
+                auto const coll = map.template get<dim::scn::item_collection_t>(spawn.collection);
                 dim::tag_t const*         mode_tag = nullptr;
                 dim::tag_reference<> const* item     = nullptr;
                 dim::string_id            variant{};
@@ -3215,10 +3184,7 @@ struct H2MapLoader : compo::SubsystemBase
                 if(group.set >= palette.value().size() || group.cache_block < 0 ||
                    static_cast<size_t>(group.cache_block) >= blocks.value().size())
                     continue;
-                auto const* set_tag = map.tag_at(palette.value()[group.set].tag.tag_id);
-                auto const* set =
-                    set_tag ? set_tag->template data<geo::decorator_set_t>(map.magic())
-                            : nullptr;
+                auto const set = map.template get<geo::decorator_set_t>(palette.value()[group.set].tag);
                 if(!set)
                     continue;
                 auto classes = set->classes.data(map.magic());

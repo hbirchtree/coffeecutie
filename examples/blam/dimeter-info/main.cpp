@@ -1381,11 +1381,7 @@ void write_lightmaps(
             auto const& group    = groups.value()[0];
             auto        infos    = group.cluster_render_info.data(magic);
             auto        palettes = group.section_palette.data(magic);
-            auto const* bitm_tag = map.tag_at(group.bitmap_group.tag_id);
-            auto const* bitm =
-                bitm_tag
-                    ? bitm_tag->template data<h2::bitm::header_t>(map.magic())
-                    : nullptr;
+            auto const bitm = map.template get<h2::bitm::header_t>(group.bitmap_group);
             if(infos.has_error() || palettes.has_error() || !bitm)
                 return;
             auto images = bitm->images.data(map.magic());
