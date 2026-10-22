@@ -1889,7 +1889,9 @@ u32 BitmapCache<V>::bias_of(blam::bitm::image_t const& img) const
 
 static u32 cube_mip_levels(PixDesc const& fmt, Veci2 const& max_size)
 {
-    i32 smallest = fmt.pixfmt == pix_fmt::BCn ? 4 : 1;
+    /* Block-compressed levels stop at one 4x4 block */
+    bool const blocks = fmt.pixfmt == pix_fmt::BCn || fmt.pixfmt == pix_fmt::ETC2;
+    i32 smallest = blocks ? 4 : 1;
     u32 levels   = 1;
     while((max_size.x >> levels) >= smallest &&
           (max_size.y >> levels) >= smallest)

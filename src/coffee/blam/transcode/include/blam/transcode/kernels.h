@@ -66,6 +66,10 @@ namespace es3 {
 kernel_fn make_kernel(float effort = default_etc_effort);
 } // namespace es3
 
+/* Whether the target's output keeps each level's size, so cube faces can be
+ * re-encoded where they are: true for ES2 and ES3 */
+bool encodes_cube_faces(std::string_view target);
+
 /* Kernel by target name: Gekko, PowerVR, ES2, ES3. nullopt if unknown. */
 std::optional<kernel_fn> make_kernel(
     std::string_view                  target,
