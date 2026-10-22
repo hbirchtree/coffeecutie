@@ -218,7 +218,7 @@ struct ProjectileSystem
         p.template subsystem<GameEventBus>().inject(ev, &hit);
     }
 
-    /* Plays the detonation, by the material's override or its own */
+    /* Plays its own detonation, and what the material adds to it */
     bool detonate(
         Proxy&                p,
         Projectile const&     flight,
@@ -227,7 +227,9 @@ struct ProjectileSystem
         blam::tagref_t const* effect)
     {
         blam::tagref_t const& own = flight.tag->detonation_effect;
-        play(p, effect ? *effect : own, at, normal, {});
+        play(p, own, at, normal, {});
+        if(effect && effect->tag_id != own.tag_id)
+            play(p, *effect, at, normal, {});
         return false;
     }
 
