@@ -5,6 +5,7 @@
 #include <coffee/components/types.h>
 
 #include <atomic>
+#include <map>
 #include <optional>
 #include <vector>
 
@@ -35,7 +36,9 @@ struct NetworkState : compo::SubsystemBase
      *  server's public key so the join is authenticated */
     std::optional<std::string> join_string;
 
-    std::optional<libc_types::u32> remote_player_idx;
+    std::optional<libc_types::u32> remote_player_idx; /*!< Seat 0's */
+    /*! Each joined local seat's player index on the server */
+    std::map<libc_types::u32, libc_types::u32> remote_seats;
 
     /* Server time is the server's steady_clock, so it never steps. On the
      * server the offset is zero, so both sides can use the same calls. */
