@@ -45,6 +45,9 @@ struct transcode_options
     /* Rewrite model and BSP vertices as GX vertex arrays for gx-bsp,
      * flagged by their vertex type. Other readers can't use the map then. */
     bool gx_vertices{false};
+    /* Encode cube maps too, a face and level at a time in place. Only for
+     * kernels that keep each level's size, see encodes_cube_faces() */
+    bool cube_faces{false};
     /* Kept for the same out_bitmaps, see shared_cache */
     shared_cache* cache{nullptr};
     progress_fn   progress;
@@ -74,8 +77,9 @@ struct map_transcode_result
  * with their swizzled flag cleared, before the kernel sees them (volume
  * textures excepted), so the runtime never deswizzles them. `kernel` may be
  * empty to only do that. Without it, swizzled images are left alone. Kernels
- * only get 2D images; cube maps and volume textures are not laid out as one
- * mip chain.
+ * get 2D images, and with options.cube_faces each cube face level as its own
+ * 2D image; a cube map is only rewritten if every piece keeps its size.
+ * Volume textures are left as they are.
  */
 map_transcode_result transcode_map(
     gsl::span<u8 const> map,

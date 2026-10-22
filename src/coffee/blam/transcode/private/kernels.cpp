@@ -1008,6 +1008,12 @@ kernel_fn make_kernel(float effort)
 
 } // namespace es3
 
+bool encodes_cube_faces(std::string_view target)
+{
+    /* PVRTC drops levels under 4px and GX pads to its tiles */
+    return target == "ES2" || target == "ES3";
+}
+
 std::optional<kernel_fn> make_kernel(
     std::string_view                  target,
     std::optional<std::string> const& lightmap_format,

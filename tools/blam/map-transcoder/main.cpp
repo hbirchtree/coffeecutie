@@ -243,7 +243,8 @@ i32 coffee_main(i32, cstring_w*)
             out_bitmaps,
             kernel,
             {.threads     = arguments["jobs"].as<unsigned>(),
-             .gx_vertices = arguments["gx-vertices"].as<bool>()});
+             .gx_vertices = arguments["gx-vertices"].as<bool>(),
+             .cube_faces  = mtx::encodes_cube_faces(target)});
     if(!res.ok)
     {
         cWarning("map parse failed: {0}", res.error);

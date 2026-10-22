@@ -317,6 +317,34 @@ struct image_t
     }
 
     /*!
+     * \brief Where one cubemap face at one mip level starts, from the start
+     * of the image's pixels.
+     * \param face Cube face in API order (+X, -X, +Y, -Y, +Z, -Z).
+     * \param mipmap
+     */
+    template<typename V>
+    inline u32 cube_face_offset(u32 face, u16 mipmap = 0) const
+    {
+        if constexpr(std::is_same_v<V, xbox_version_t>)
+        {
+            u32 const stride = (layer_chain_bytes() + 127u) & ~127u;
+            u32       within = 0;
+            for(u16 i = 0; i < mipmap; i++)
+                within += layer_mip_bytes(i);
+            return face * stride + within;
+        } else
+        {
+            /* Swapping 1 and 2 is its own inverse, so this reads the same
+             * either direction. */
+            constexpr u32 stored[6] = {0, 2, 1, 3, 4, 5};
+            u32           preceding = 0;
+            for(u16 i = 0; i < mipmap; i++)
+                preceding += layer_mip_bytes(i) * 6u;
+            return preceding + stored[face] * layer_mip_bytes(mipmap);
+        }
+    }
+
+    /*!
      * \brief Data for one cubemap face at one mip level.
      * \param face Cube face in API order (+X, -X, +Y, -Y, +Z, -Z).
      * \param mipmap
@@ -330,28 +358,8 @@ struct image_t
         if(face >= 6)
             Throw(undefined_behavior("cube face out of range"));
 
-        u32 const level = layer_mip_bytes(mipmap);
-        u32       start = 0;
-
-        if constexpr(std::is_same_v<V, xbox_version_t>)
-        {
-            u32 const stride = (layer_chain_bytes() + 127u) & ~127u;
-            u32       within = 0;
-            for(u16 i = 0; i < mipmap; i++)
-                within += layer_mip_bytes(i);
-            start = face * stride + within;
-        } else
-        {
-            /* Swapping 1 and 2 is its own inverse, so this reads the same
-             * either direction. */
-            constexpr u32 stored[6] = {0, 2, 1, 3, 4, 5};
-            u32           preceding = 0;
-            for(u16 i = 0; i < mipmap; i++)
-                preceding += layer_mip_bytes(i) * 6u;
-            start = preceding + stored[face] * level;
-        }
-
-        return reference<u8>{level, offset + start}
+        return reference<u8>{
+            layer_mip_bytes(mipmap), offset + cube_face_offset<V>(face, mipmap)}
             .data(magic)
             .value();
     }

@@ -56,8 +56,9 @@ ETC2 (`WEBGL_compressed_texture_etc`) and, when only ETC2 is there, picks
 ETC2 as the transcode target. It can be changed in the drop-down.
 
 Transcoding uses the same kernels as `MapTranscode` (the `BlamTranscode`
-library, `src/coffee/blam/transcode`), on a thread per core. Only 2D
-textures are encoded; cube maps and volume textures are kept as they are.
+library, `src/coffee/blam/transcode`), on a thread per core. 2D textures
+are encoded, and for ES2/ES3 cube maps too; volume textures are kept as they
+are.
 
 Xbox maps carry their own textures and are transcoded one by one, after
 they are decompressed. On PC and Custom Edition most textures live in `bitmaps.map`

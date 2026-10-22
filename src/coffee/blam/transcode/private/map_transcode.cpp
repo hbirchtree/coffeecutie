@@ -373,6 +373,53 @@ u32 transcode_gx_vertices(
     return meshes;
 }
 
+/* Each face of each level goes through the kernel as a 2D image and back to
+ * where it was read, so the faces stay where the runtime looks for them */
+template<typename Ver>
+std::optional<transcode_result> encode_cube(
+    kernel_fn const&             kernel,
+    blam::bitm::image_t const&   img,
+    gsl::span<u8 const>          src_px)
+{
+    using blam::from_le;
+    using blam::bitm::format_t;
+
+    u16 const levels = std::max<u16>(from_le(img.mipmaps), 1);
+    i16 const w      = from_le(img.isize.x);
+    i16 const h      = from_le(img.isize.y);
+
+    transcode_result out{
+        .format  = from_le(img.format),
+        .mipmaps = from_le(img.mipmaps),
+        .data    = {src_px.begin(), src_px.end()},
+    };
+    std::optional<format_t> format;
+    for(u16 level = 0; level < levels; level++)
+    {
+        u32 const size = img.layer_mip_bytes(level);
+        for(u32 face = 0; face < 6; face++)
+        {
+            u32 const off = img.template cube_face_offset<Ver>(face, level);
+            if(!size || off + size > src_px.size())
+                return std::nullopt;
+            auto piece = kernel(
+                from_le(img.format),
+                src_px.subspan(off, size),
+                size,
+                static_cast<u16>(std::max(w >> level, 1)),
+                static_cast<u16>(std::max(h >> level, 1)),
+                1);
+            if(!piece || piece->data.size() != size ||
+               (format && piece->format != *format))
+                return std::nullopt;
+            format = piece->format;
+            std::memcpy(out.data.data() + off, piece->data.data(), size);
+        }
+    }
+    out.format = *format;
+    return out;
+}
+
 template<typename Ver>
 map_transcode_result transcode(
     gsl::span<u8 const> map_span,
@@ -447,6 +494,7 @@ map_transcode_result transcode(
         std::optional<transcode_result> result;
         /* Deswizzled pixels src_px points into */
         std::vector<u8>                 linear;
+        bool                            cube{false};
     };
     /* A shared image listed again in this map, patched from its job */
     struct repeat_t
@@ -559,18 +607,20 @@ map_transcode_result transcode(
                 }
             }
 
-            // Kernels encode one 2D mip chain; cube faces and volume slices
-            // are laid out differently
+            // Kernels encode one 2D mip chain; cube faces go one at a time,
+            // volume slices are left alone
             auto const type = from_le(img.type);
-            if(!kernel || type == blam::bitm::type_t::tex_cube ||
-               type == blam::bitm::type_t::tex_3d)
+            bool const cube = type == blam::bitm::type_t::tex_cube;
+            if(!kernel || type == blam::bitm::type_t::tex_3d ||
+               (cube && !options.cube_faces))
             {
                 st.skipped++;
                 continue;
             }
             if(img.shared())
                 shared_jobs[from_le(img.offset)] = jobs.size();
-            jobs.push_back({&img, src_px, dst, std::nullopt, std::move(linear)});
+            jobs.push_back(
+                {&img, src_px, dst, std::nullopt, std::move(linear), cube});
         }
     }
 
@@ -585,13 +635,16 @@ map_transcode_result transcode(
             auto& job = jobs[i];
             try
             {
-                job.result = kernel(
-                    from_le(job.img->format),
-                    job.src_px,
-                    static_cast<u32>(job.src_px.size()),
-                    static_cast<u16>(from_le(job.img->isize.x)),
-                    static_cast<u16>(from_le(job.img->isize.y)),
-                    from_le(job.img->mipmaps));
+                if(job.cube)
+                    job.result = encode_cube<Ver>(kernel, *job.img, job.src_px);
+                else
+                    job.result = kernel(
+                        from_le(job.img->format),
+                        job.src_px,
+                        static_cast<u32>(job.src_px.size()),
+                        static_cast<u16>(from_le(job.img->isize.x)),
+                        static_cast<u16>(from_le(job.img->isize.y)),
+                        from_le(job.img->mipmaps));
             } catch(...)
             {
                 std::lock_guard _(failure_lock);

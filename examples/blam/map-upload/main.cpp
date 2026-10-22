@@ -94,6 +94,7 @@ struct transcode_session_t
 {
     std::optional<mtx::kernel_fn> kernel;
     bool                          deswizzle{true};
+    bool                          cube_faces{false};
     /* Original bitmaps.map, malloc()ed by the page and owned from here */
     libc_types::u8*    bitmaps{nullptr};
     u32                bitmaps_size{0};
@@ -449,7 +450,8 @@ EMSCRIPTEN_KEEPALIVE i32 blam_upload_transcode_target(
         transcode.kernel = mtx::kernel_fn{};
         return 1;
     }
-    transcode.kernel = mtx::make_kernel(target);
+    transcode.kernel     = mtx::make_kernel(target);
+    transcode.cube_faces = mtx::encodes_cube_faces(target);
     if(!transcode.kernel)
         last_error = "unknown transcode target";
     return transcode.kernel.has_value();
@@ -511,8 +513,9 @@ EMSCRIPTEN_KEEPALIVE i32 blam_upload_transcode_map(char* data, u32 size)
                 {
                     .threads =
                         std::max(1u, std::thread::hardware_concurrency()),
-                    .deswizzle = t.deswizzle,
-                    .cache     = &t.cache,
+                    .deswizzle  = t.deswizzle,
+                    .cube_faces = t.cube_faces,
+                    .cache      = &t.cache,
                     .progress =
                         [](u32 done, u32 total) {
                             transcode.progress[0] = done;
