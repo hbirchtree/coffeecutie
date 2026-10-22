@@ -1,6 +1,7 @@
 #pragma once
 
 #include "animation.h"
+#include "bitm.h"
 #include "geometry.h"
 #include "lightmap.h"
 #include "map.h"
@@ -57,6 +58,17 @@ struct object_view
         return is(tag_class_t::mach) || is(tag_class_t::ctrl) || is(tag_class_t::lifi);
     }
 };
+
+/*! A bitmap tag's image by index, null past its list */
+template<typename V>
+inline bitm::image_t const* image_of(map_container<V> const& map, tag_t const& bitmap, size_t index = 0)
+{
+    auto const* header = bitmap.template data<bitm::header_t>(map.magic());
+    if(!header)
+        return nullptr;
+    auto const images = map.span(header->images);
+    return index < images.size() ? &images[index] : nullptr;
+}
 
 /*! The permutation each region of a model shows, keyed by region name */
 using region_picks = std::unordered_map<u32, i16>;

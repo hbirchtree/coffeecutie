@@ -530,13 +530,10 @@ std::optional<std::string> write_material_dds(
     namespace h2 = blam::dimeter;
     using blam::from_le;
 
-    auto const* bitm = bitm_tag.template data<h2::bitm::header_t>(map.magic());
-    if(!bitm)
+    auto const* image = h2::image_of(map, bitm_tag);
+    if(!image)
         return std::nullopt;
-    auto images = bitm->images.data(map.magic());
-    if(images.has_error() || images.value().empty())
-        return std::nullopt;
-    h2::bitm::image_t const& img = images.value()[0];
+    h2::bitm::image_t const& img = *image;
     if(from_le(img.type) != blam::bitm::type_t::tex_2d)
         return std::nullopt;
     auto fmt = dds_format(from_le(img.format));

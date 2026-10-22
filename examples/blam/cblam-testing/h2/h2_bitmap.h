@@ -5,6 +5,7 @@
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/bump_palette.h>
 #include <blam/dimeter/map.h>
+#include <blam/dimeter/views.h>
 #include <blam/dimeter/vista.h>
 #include <blam/volta/blam_swizzle.h>
 #include <coffee/core/CDebug>
@@ -68,14 +69,10 @@ inline std::optional<u64> shared_key(
     dim::tag_t const&            bitm_tag,
     size_t                       image = 0)
 {
-    auto const* bitm =
-        bitm_tag.template data<dim::bitm::header_t>(map.magic());
-    if(!bitm)
+    auto const* image_at = dim::image_of(map, bitm_tag, image);
+    if(!image_at)
         return std::nullopt;
-    auto images = bitm->images.data(map.magic());
-    if(images.has_error() || image >= images.value().size())
-        return std::nullopt;
-    dim::bitm::image_t const& img = images.value()[image];
+    dim::bitm::image_t const& img = *image_at;
     for(int lod = 0; lod < 3; lod++)
     {
         if(!from_le(img.lod_size[lod]))
@@ -98,14 +95,10 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
     dim::tag_t const&            bitm_tag,
     size_t                       image = 0)
 {
-    auto const* bitm =
-        bitm_tag.template data<dim::bitm::header_t>(map.magic());
-    if(!bitm)
+    auto const* image_at = dim::image_of(map, bitm_tag, image);
+    if(!image_at)
         return std::nullopt;
-    auto images = bitm->images.data(map.magic());
-    if(images.has_error() || image >= images.value().size())
-        return std::nullopt;
-    dim::bitm::image_t const& img = images.value()[image];
+    dim::bitm::image_t const& img = *image_at;
     if(from_le(img.type) != blam::bitm::type_t::tex_2d)
         return std::nullopt;
     auto format = from_le(img.format);
@@ -272,14 +265,10 @@ inline std::optional<std::shared_ptr<gfx::texture_cube_t>> upload_cubemap(
     dim::raw_pool const&         pool,
     dim::tag_t const&            bitm_tag)
 {
-    auto const* bitm =
-        bitm_tag.template data<dim::bitm::header_t>(map.magic());
-    if(!bitm)
+    auto const* image_at = dim::image_of(map, bitm_tag);
+    if(!image_at)
         return std::nullopt;
-    auto images = bitm->images.data(map.magic());
-    if(images.has_error() || images.value().empty())
-        return std::nullopt;
-    dim::bitm::image_t const& img = images.value()[0];
+    dim::bitm::image_t const& img = *image_at;
     if(from_le(img.type) != blam::bitm::type_t::tex_cube)
         return std::nullopt;
     auto format = from_le(img.format);
