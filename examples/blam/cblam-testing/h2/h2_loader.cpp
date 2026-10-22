@@ -1908,30 +1908,15 @@ struct H2MapLoader : compo::SubsystemBase
         if(anims.has_error() || groups.has_error() || skeleton.has_error() ||
            data.has_error() || nodes.has_error() || nodes.value().size() > 64)
             return std::nullopt;
-        dim::anim::animation_t const* chosen = nullptr;
-        for(auto const& a : anims.value())
-            if(map.string(a.name) == clip)
-                chosen = &a;
+        auto const*  chosen = dim::find_animation(map, *graph, clip);
         size_t const joints = skeleton.value().size();
         if(!chosen || chosen->node_count != joints)
             return std::nullopt;
-        i16 gi = chosen->resource_group();
-        if(gi < 0 || static_cast<size_t>(gi) >= groups.value().size())
-            return std::nullopt;
-        auto const& g   = groups.value()[gi];
-        auto        raw = pool.resolve(
-            map.magic(), &g, g.data, static_cast<u32>(std::max(g.size(), 0)));
-        auto at = static_cast<size_t>(std::max(chosen->resource_group_offset(), 0));
-        if(!raw || at >= raw->size())
-            return std::nullopt;
         /* The model's node of that name at rest, else the graph's own */
-        std::vector<dim::anim::node_pose_t> defaults(joints);
+        auto defaults = dim::graph_pose(map, *graph, joints);
         for(size_t i = 0; i < joints; i++)
-        {
-            bool found = false;
             for(auto const& n : nodes.value())
                 if(map.string(n.name) == map.string(skeleton.value()[i].name))
-                {
                     defaults[i] = {
                         .rotation = Quatf(
                             from_le(n.rotation[3]),
@@ -1943,28 +1928,7 @@ struct H2MapLoader : compo::SubsystemBase
                             from_le(n.position[1]),
                             from_le(n.position[2])),
                     };
-                    found = true;
-                }
-            if(found || i >= data.value().size())
-                continue;
-            auto const& d = data.value()[i];
-            defaults[i]   = {
-                  .rotation = glm::normalize(Quatf(
-                    from_le(d.rotation.w),
-                    from_le(d.rotation.x),
-                    from_le(d.rotation.y),
-                    from_le(d.rotation.z))),
-                  .translation = Vecf3(
-                    from_le(d.translation.x),
-                    from_le(d.translation.y),
-                    from_le(d.translation.z)),
-                  .scale = from_le(d.scale),
-            };
-        }
-        auto decoded = dim::anim::decode(
-            *chosen,
-            Span<const u8>(reinterpret_cast<u8 const*>(raw->data()), raw->size()).subspan(at),
-            defaults);
+        auto decoded = dim::decode_animation(map, pool, *graph, *chosen, defaults);
         if(!decoded)
             return std::nullopt;
 
@@ -2490,29 +2454,12 @@ struct H2MapLoader : compo::SubsystemBase
             return std::nullopt;
         dim::anim::animation_t const* chosen = nullptr;
         for(std::string_view name : {"idle", "device:position"})
-        {
-            for(auto const& a : anims.value())
-                if(map.string(a.name) == name)
-                {
-                    chosen = &a;
-                    break;
-                }
-            if(chosen)
-                break;
-        }
+            if(!chosen)
+                chosen = dim::find_animation(map, *graph, name);
         constexpr size_t max_nodes = 64;
         size_t const     node_count = nodes.value().size();
         if(!chosen || node_count == 0 || node_count > max_nodes ||
            chosen->node_count != node_count)
-            return std::nullopt;
-        i16 gi = chosen->resource_group();
-        if(gi < 0 || static_cast<size_t>(gi) >= groups.value().size())
-            return std::nullopt;
-        auto const& g   = groups.value()[gi];
-        auto        raw = pool.resolve(
-            map.magic(), &g, g.data, static_cast<u32>(std::max(g.size(), 0)));
-        auto at = static_cast<size_t>(std::max(chosen->resource_group_offset(), 0));
-        if(!raw || at >= raw->size())
             return std::nullopt;
 
         /* The model's own pose for nodes the animation leaves alone */
@@ -2527,10 +2474,7 @@ struct H2MapLoader : compo::SubsystemBase
                 .translation = Vecf3(
                     from_le(n.position[0]), from_le(n.position[1]), from_le(n.position[2])),
             });
-        auto decoded = dim::anim::decode(
-            *chosen,
-            Span<const u8>(reinterpret_cast<u8 const*>(raw->data()), raw->size()).subspan(at),
-            defaults);
+        auto decoded = dim::decode_animation(map, pool, *graph, *chosen, defaults);
         if(!decoded)
             return std::nullopt;
 

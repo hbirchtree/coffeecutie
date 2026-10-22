@@ -3,6 +3,7 @@
 #include "dump.h"
 
 #include <blam/dimeter/animation.h>
+#include <blam/dimeter/views.h>
 
 #include <algorithm>
 #include <span>
@@ -71,21 +72,10 @@ inline void dump_jmad(
             from_le(a.data_sizes.default_data),
             from_le(a.data_sizes.uncompressed),
             from_le(a.data_sizes.compressed));
-        i16 gi = a.resource_group();
-        if(groups.has_error() || gi < 0 ||
-           static_cast<size_t>(gi) >= groups.value().size())
+        auto const data = h2::animation_bytes(map, pool, *graph, a);
+        if(!data)
             continue;
-        auto const& g = groups.value()[gi];
-        auto raw = pool.resolve(
-            map.magic(), &g, g.data, static_cast<u32>(std::max(g.size(), 0)));
-        if(!raw)
-            continue;
-        auto at = static_cast<size_t>(std::max(a.resource_group_offset(), 0));
-        if(at >= raw->size())
-            continue;
-        auto bytes = semantic::Span<const u8>(
-            reinterpret_cast<u8 const*>(raw->data()), raw->size()).subspan(at);
-        bytes      = bytes.subspan(0, std::min<size_t>(bytes.size(), 64));
+        auto bytes = data->bytes.subspan(0, std::min<size_t>(data->bytes.size(), 64));
         fmt::print("    data {:02x}\n", fmt::join(bytes, " "));
     }
 }
@@ -117,31 +107,6 @@ inline libc_types::u64 pose_hash(std::vector<Pose> const& poses)
     return h;
 }
 
-/* jmad's own default pose, one per skeleton node */
-inline std::vector<anim::node_pose_t> jmad_defaults(
-    auto const& map, anim::header_t const& graph, size_t nodes)
-{
-    std::vector<anim::node_pose_t> out(nodes);
-    if(auto data = graph.node_data.data(map.magic()); !data.has_error())
-        for(size_t i = 0; i < nodes && i < data.value().size(); i++)
-        {
-            auto const& d = data.value()[i];
-            out[i]        = {
-                       .rotation = glm::normalize(typing::vector_types::Quatf(
-                    from_le(d.rotation.w),
-                    from_le(d.rotation.x),
-                    from_le(d.rotation.y),
-                    from_le(d.rotation.z))),
-                       .translation = typing::vector_types::Vecf3(
-                    from_le(d.translation.x),
-                    from_le(d.translation.y),
-                    from_le(d.translation.z)),
-                       .scale = from_le(d.scale),
-            };
-        }
-    return out;
-}
-
 template<typename V>
 inline void check_jmad(
     h2::map_container<V> const& map,
@@ -157,20 +122,13 @@ inline void check_jmad(
     auto anims    = graph->animations.data(map.magic());
     if(skeleton.has_error() || groups.has_error() || anims.has_error())
         return;
-    auto const defaults = jmad_defaults(map, *graph, skeleton.value().size());
+    auto const defaults = h2::graph_pose(map, *graph, skeleton.value().size());
     for(auto const& a : anims.value())
     {
-        i16 gi = a.resource_group();
-        if(gi < 0 || static_cast<size_t>(gi) >= groups.value().size())
+        auto const data = h2::animation_bytes(map, pool, *graph, a);
+        if(!data)
             continue;
-        auto const& g   = groups.value()[gi];
-        auto        raw = pool.resolve(
-            map.magic(), &g, g.data, static_cast<u32>(std::max(g.size(), 0)));
-        auto at = static_cast<size_t>(std::max(a.resource_group_offset(), 0));
-        if(!raw || at >= raw->size())
-            continue;
-        auto bytes = semantic::Span<const u8>(
-            reinterpret_cast<u8 const*>(raw->data()), raw->size()).subspan(at);
+        auto const bytes = data->bytes;
         auto stat  = static_cast<size_t>(std::max<i16>(from_le(a.data_sizes.default_data), 0));
         u8   codec = stat < bytes.size() ? bytes[stat] : 0;
         auto& c    = out.codecs[std::min<size_t>(codec, 8)];

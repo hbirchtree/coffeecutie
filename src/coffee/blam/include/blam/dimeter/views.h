@@ -50,4 +50,71 @@ struct object_view
     }
 };
 
+/*! A graph's first animation of that name */
+template<typename V>
+inline anim::animation_t const* find_animation(
+    map_container<V> const& map, anim::header_t const& graph, std::string_view name)
+{
+    for(auto const& a : map.span(graph.animations))
+        if(map.string(a.name) == name)
+            return &a;
+    return nullptr;
+}
+
+/*! A graph's own default pose, one per skeleton node, from its node data */
+template<typename V>
+inline std::vector<anim::node_pose_t> graph_pose(
+    map_container<V> const& map, anim::header_t const& graph, size_t nodes)
+{
+    std::vector<anim::node_pose_t> out(nodes);
+    auto const                     data = map.span(graph.node_data);
+    for(size_t i = 0; i < nodes && i < data.size(); i++)
+    {
+        auto const& d = data[i];
+        out[i]        = {
+            .rotation = glm::normalize(Quatf(
+                from_le(d.rotation.w), from_le(d.rotation.x), from_le(d.rotation.y), from_le(d.rotation.z))),
+            .translation = Vecf3(from_le(d.translation.x), from_le(d.translation.y), from_le(d.translation.z)),
+            .scale       = from_le(d.scale),
+        };
+    }
+    return out;
+}
+
+/*! An animation's data: its resource group from the animation's offset on,
+ * nullopt when the group or offset is out of range */
+template<typename V>
+inline std::optional<raw_slice> animation_bytes(
+    map_container<V> const& map,
+    raw_pool const&         pool,
+    anim::header_t const&   graph,
+    anim::animation_t const& animation)
+{
+    auto const groups = map.span(graph.resource_groups);
+    i16 const  group  = animation.resource_group();
+    if(group < 0 || static_cast<size_t>(group) >= groups.size())
+        return std::nullopt;
+    auto const& g   = groups[static_cast<size_t>(group)];
+    auto        raw = pool.resolve(map.magic(), &g, g.data, static_cast<u32>(std::max(g.size(), 0)));
+    auto const  at  = static_cast<size_t>(std::max(animation.resource_group_offset(), 0));
+    if(!raw || at >= raw->size())
+        return std::nullopt;
+    return raw_slice{raw->bytes.subspan(at), raw->keep};
+}
+
+/*! Decodes an animation over `defaults` (one per skeleton node) */
+template<typename V>
+inline std::optional<anim::decoded_t> decode_animation(
+    map_container<V> const&       map,
+    raw_pool const&               pool,
+    anim::header_t const&         graph,
+    anim::animation_t const&      animation,
+    Span<anim::node_pose_t const> defaults)
+{
+    auto const bytes = animation_bytes(map, pool, graph, animation);
+    if(!bytes)
+        return std::nullopt;
+    return anim::decode(animation, bytes->bytes, defaults);
+}
+
 } // namespace blam::dimeter
