@@ -2255,8 +2255,18 @@ struct PhysicsSystem
         }
     }
 
+    struct corpse_t
+    {
+        btRigidBody const* body{nullptr};
+        f32                mass{0.f}; /*!< To be thrown with, while frozen */
+        bool               frozen{false};
+        btVector3          anchor{0, 0, 0}; /*!< Where it has stayed near */
+        u32                still{0};        /*!< Frames it has stayed there */
+    };
+
     /* The dead lie where they fell: on the ground still, but in no one's
-     * way, not pushed about, and out of the line of fire */
+     * way, not pushed about, and out of the line of fire. Once settled they
+     * are still until a blast throws them */
     void lay_down_corpses(Proxy& p)
     {
         for(auto& [id, body] : m_bodies)
@@ -2268,17 +2278,58 @@ struct PhysicsSystem
             bool const  dead   = status && status->dead;
             auto const  laid   = m_corpses.find(id);
             /* A body made again since was added standing */
-            bool const lying = laid != m_corpses.end() && laid->second == rigid;
+            bool const lying = laid != m_corpses.end() && laid->second.body == rigid;
+            if(dead && lying && !laid->second.frozen && rigid->getInvMass() > 0.f &&
+               settled(laid->second, rigid->getWorldTransform().getOrigin()) &&
+               on_ground(*rigid, true))
+                freeze(id, laid->second);
             if(dead == lying)
                 continue;
+            if(lying && laid->second.frozen)
+                thaw(id, laid->second);
             m_world->removeRigidBody(rigid);
             if(dead)
-                m_corpses[id] = rigid;
+                m_corpses[id] = {.body = rigid};
             else
                 m_corpses.erase(id);
             add_to_world(*rigid, body.group);
         }
         std::erase_if(m_corpses, [this](auto const& c) { return !m_bodies.contains(c.first); });
+    }
+
+    /* Barely moved for a while; resting contacts jitter, so not by speed */
+    static bool settled(corpse_t& corpse, btVector3 const& at)
+    {
+        if((at - corpse.anchor).length2() > settled_drift * settled_drift)
+        {
+            corpse.anchor = at;
+            corpse.still  = 0;
+            return false;
+        }
+        return ++corpse.still >= settled_frames;
+    }
+
+    void freeze(u64 id, corpse_t& corpse)
+    {
+        corpse.mass   = 1.f / m_bodies.at(id).world_body->getInvMass();
+        corpse.frozen = true;
+        set_carried(id, true, 0.f);
+    }
+
+    /* Thrown, it flies in the bind shape: posed, it meets the ground badly */
+    void thaw(u64 id, corpse_t& corpse)
+    {
+        corpse.frozen = false;
+        corpse.still  = 0;
+        auto& body = m_bodies.at(id);
+        if(!body.child_bones.empty())
+        {
+            auto* compound = static_cast<btCompoundShape*>(body.world_shape.get());
+            for(int i = 0; i < compound->getNumChildShapes(); i++)
+                compound->updateChildTransform(i, btTransform::getIdentity(), false);
+            compound->recalculateLocalAabb();
+        }
+        set_carried(id, false, corpse.mass);
     }
 
     void add_to_world(btRigidBody& body, Physics::BodyCreationShape::group_t group)
@@ -2287,7 +2338,7 @@ struct PhysicsSystem
         int constexpr all = filter::AllFilter;
         /* Only the level holds a corpse up, however it comes back */
         if(std::any_of(m_corpses.begin(), m_corpses.end(), [&body](auto const& c) {
-               return c.second == &body;
+               return c.second.body == &body;
            }))
         {
             m_world->addRigidBody(&body, filter::DebrisFilter, filter::StaticFilter);
@@ -2440,7 +2491,9 @@ struct PhysicsSystem
         for(auto& [id, body] : m_bodies)
         {
             btRigidBody* const rigid = body.world_body.get();
-            if(!rigid || rigid->getInvMass() <= 0.f || rigid->isKinematicObject())
+            auto const         corpse = m_corpses.find(id);
+            bool const frozen = corpse != m_corpses.end() && corpse->second.frozen;
+            if(!rigid || (!frozen && (rigid->getInvMass() <= 0.f || rigid->isKinematicObject())))
                 continue;
             btVector3 lo, hi;
             rigid->getAabb(lo, hi);
@@ -2450,11 +2503,20 @@ struct PhysicsSystem
             f32 const d = (nearest - at).length();
             if(d > blast.radius.y)
                 continue;
+            if(frozen)
+                thaw(id, corpse->second);
             f32 const scale =
                 d <= inner ? 1.f : 1.f - (d - inner) / std::max(blast.radius.y - inner, 1e-3f);
             btVector3 const centre = rigid->getCenterOfMassPosition();
             btVector3       away   = centre - at;
             away = away.length2() > 1e-6f ? away.normalized() : btVector3(0, 0, 1);
+            /* The dead are thrown up off the ground, not slid along it */
+            if(corpse != m_corpses.end() && away.z() < corpse_lean)
+            {
+                btVector3 flat(away.x(), away.y(), 0.f);
+                flat  = flat.length2() > 1e-6f ? flat.normalized() : btVector3(1, 0, 0);
+                away  = (flat + btVector3(0, 0, 1)).normalized();
+            }
             btVector3 const change = away * (blast.speed * scale);
             rigid->activate(true);
             if(m_player_bodies.contains(id) && !m_corpses.contains(id))
@@ -3042,6 +3104,8 @@ struct PhysicsSystem
         /* What it stands on, and where on it, in its space */
         u64       deck{0};
         btVector3 deck_spot{0, 0, 0};
+        /* Lowest point of its hulls in the bind pose, body space */
+        std::optional<f32> bind_floor;
     };
 
     /* Carried along by what it stands on, and still after stepping off;
@@ -3070,20 +3134,28 @@ struct PhysicsSystem
     }
 
     /* Hull children take their bone's skinning matrix from the last pose,
-     * so what others hit is where the limbs are drawn */
+     * so what others hit is where the limbs are drawn. A simulated body, or
+     * a corpse that may be thrown, keeps its lowest point where its feet
+     * were, so a pose never digs it into the ground */
     void pose_hulls(Proxy& p)
     {
+        std::vector<btTransform> posed;
         for(auto& [entity, body] : m_bodies)
         {
-            /* Kinematic only; idle anims would shove simulated bodies */
-            if(body.child_bones.empty() ||
-               !body.world_body->isStaticOrKinematicObject())
+            if(body.child_bones.empty())
                 continue;
             auto* compound =
                 static_cast<btCompoundShape*>(body.world_shape.get());
             auto const* anim = p.template get<AnimationPlayback>(entity);
             Matf4 const to   = glm::translate(Matf4(1), body.child_offset);
             Matf4 const from = glm::translate(Matf4(1), -body.child_offset);
+            bool const  simulated = !body.world_body->isStaticOrKinematicObject();
+            bool const  corpse    = m_corpses.contains(entity);
+            if(simulated && corpse)
+                continue;
+            bool const  lifted    = simulated || corpse;
+            f32         floor     = std::numeric_limits<f32>::max();
+            posed.clear();
             for(size_t i = 0; i < body.child_bones.size(); i++)
             {
                 i32 const bone = body.child_bones[i];
@@ -3095,10 +3167,33 @@ struct PhysicsSystem
                 Matf4 const m = to * skin * from;
                 btTransform t;
                 t.setFromOpenGLMatrix(glm::value_ptr(m));
-                compound->updateChildTransform(static_cast<int>(i), t, false);
+                posed.push_back(t);
+                if(lifted)
+                    floor = std::min(floor, lowest(*compound->getChildShape(static_cast<int>(i)), t));
+            }
+            if(lifted && !body.bind_floor)
+            {
+                body.bind_floor = std::numeric_limits<f32>::max();
+                for(int i = 0; i < compound->getNumChildShapes(); i++)
+                    *body.bind_floor = std::min(
+                        *body.bind_floor,
+                        lowest(*compound->getChildShape(i), btTransform::getIdentity()));
+            }
+            btVector3 const lift(0, 0, lifted ? *body.bind_floor - floor : 0.f);
+            for(size_t i = 0; i < posed.size(); i++)
+            {
+                posed[i].setOrigin(posed[i].getOrigin() + lift);
+                compound->updateChildTransform(static_cast<int>(i), posed[i], false);
             }
             compound->recalculateLocalAabb();
         }
+    }
+
+    static f32 lowest(btCollisionShape const& shape, btTransform const& t)
+    {
+        btVector3 lo, hi;
+        shape.getAabb(t, lo, hi);
+        return lo.z();
     }
 
     /* A box around each posed hull piece, red for the head */
@@ -3192,7 +3287,7 @@ struct PhysicsSystem
 
     std::map<u64, entity_body> m_bodies;
     /* Bodies of the dead, as laid down */
-    std::map<u64, btRigidBody const*> m_corpses;
+    std::map<u64, corpse_t> m_corpses;
 
     struct player_body_t
     {
@@ -3228,6 +3323,10 @@ struct PhysicsSystem
     static constexpr f32 hull_contact_stiffness = 10.f;
     /* Up to this mass a blast moves a body fully, a ghost's */
     static constexpr f32 blast_full_mass = 2000.f;
+    /* A corpse that stays this near one spot this many frames lies still */
+    static constexpr f32 settled_drift  = .05f; /* wu */
+    static constexpr u32 settled_frames = 15;
+    static constexpr f32 corpse_lean    = .7071f; /* sin 45 */
     /* How fast carried momentum is lost, wu/s^2 */
     static constexpr f32 carried_ground_decel = 12.f;
     static constexpr f32 carried_air_decel    = .5f;
