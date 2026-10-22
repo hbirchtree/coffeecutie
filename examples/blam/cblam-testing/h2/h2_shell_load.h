@@ -59,14 +59,11 @@ struct ShellLoader
                 typing::Filtering::Linear,
                 typing::Filtering::Linear,
                 typing::Filtering::Linear);
-            if(auto const* bitm =
-                   tag->template data<dim::bitm::header_t>(map.magic()))
-                if(auto images = bitm->images.data(map.magic());
-                   !images.has_error() && !images.value().empty())
-                {
-                    bm.width  = static_cast<u32>(from_le(images.value()[0].width));
-                    bm.height = static_cast<u32>(from_le(images.value()[0].height));
-                }
+            if(auto const* image = dim::image_of(map, *tag))
+            {
+                bm.width  = static_cast<u32>(from_le(image->width));
+                bm.height = static_cast<u32>(from_le(image->height));
+            }
             idx = static_cast<i32>(out.bitmaps.size());
             out.bitmaps.push_back(std::move(bm));
         }
