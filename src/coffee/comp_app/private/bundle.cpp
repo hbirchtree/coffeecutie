@@ -587,6 +587,7 @@ void addDefaults(
         loader.loadAll<subsystem_list<dummy_plug::DummyEventBus>>(
             container, ec);
     }
+    dummy_plug::insert_input_recorder(createContainer());
 #endif
 
     /* Selection of window/event manager */

@@ -85,4 +85,8 @@ void fork_dummy_plugs(
 void insert_dummy_plug(
     AppLoadableService::entity_container& container, Config& dummy_plug);
 
+/*! With DUMMY_PLUG_RECORD=<path>, what the controllers do is written there
+ *  as a dummy plug on exit; DUMMY_PLUG_RECORD_STEP sets the stick step */
+void insert_input_recorder(AppLoadableService::entity_container& container);
+
 } // namespace comp_app::dummy_plug
