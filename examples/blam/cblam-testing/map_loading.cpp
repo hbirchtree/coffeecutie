@@ -239,18 +239,21 @@ static void load_resources(
             auto& info      = ref.get<PlayerInfo>();
             info.player_idx = i;
             info.seat_idx   = i;
-            /* On a client, only seat 0 is known to the server */
-            if(i != 0 && e.subsystem_cast<NetworkState>().remote_player_idx)
-                info.player_idx = PlayerInfo::local_only_idx_base + i;
+            /* On a client, seats not yet joined stay out of the server's
+             * index space */
+            if(auto const& net = e.subsystem_cast<NetworkState>(); net.remote_player_idx)
+            {
+                auto const joined = net.remote_seats.find(i);
+                info.player_idx   = joined != net.remote_seats.end()
+                                        ? joined->second
+                                        : PlayerInfo::local_only_idx_base + i;
+            }
             auto& camera    = ref.get<PlayerCamera>();
             if(i == 0)
             {
                 cDebug("Keyboard seat assigned");
                 main_biped_id           = ref.id();
                 camera.keyboard.enabled = true;
-                if(auto assigned =
-                       e.subsystem_cast<NetworkState>().remote_player_idx)
-                    info.player_idx = *assigned;
                 if(auto const& name =
                        e.subsystem_cast<NetworkState>().local_player_name)
                     info.name = *name;

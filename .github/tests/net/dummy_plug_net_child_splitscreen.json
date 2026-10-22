@@ -16,7 +16,7 @@
         "screenshot_quality": 60
     },
     "frame_delta": 66.667,
-    "comment": "Client child for dummy_plug_net_host_splitscreen.json. Same as dummy_plug_net_child_scenario.json, with a second local seat on controller 1 that flies around in freecam. That seat is never announced to the server, so it must leave the server's index space when the join is confirmed; before that fix, it shared index 1 with the server's own second seat and was moved by that player's camera updates.",
+    "comment": "Client child for dummy_plug_net_host_splitscreen.json. Same as dummy_plug_net_child_scenario.json, with a second local seat on controller 1 that flies around in freecam. That seat joins the server as a player of its own once seat 0 is confirmed, and until then stays out of the server's index space, so it never shares index 1 with the server's own second seat.",
     "time_base": "session",
     "events": [
         {"time": 500, "type": "net_connect", "clock": "local", "address": "127.0.0.1:27106"},

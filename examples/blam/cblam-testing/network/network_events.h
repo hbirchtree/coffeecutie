@@ -215,6 +215,7 @@ struct PlayerJoin
     static constexpr auto message_type = MessageBase::PlayerJoin;
 
     blam::bl_string player_name;
+    u32             seat{0}; /*!< Which of the client's own seats */
 };
 
 struct PlayerJoinConfirm
@@ -222,6 +223,7 @@ struct PlayerJoinConfirm
     static constexpr auto message_type = MessageBase::PlayerJoinConfirm;
 
     u32 player_idx{0};
+    u32 seat{0};
 };
 
 template<typename T>
@@ -437,7 +439,7 @@ struct alignas(8) GrabInput
     Vecf4 origin;
     Quatf to_world; /*!< Camera to world; the view is its -Z */
     u32   held{0};
-    u32   padding{0};
+    u32   player_idx{0}; /*!< One of the sender's own */
 };
 
 /*! What the server has a client carrying, as it changes */
@@ -446,7 +448,7 @@ struct alignas(8) GrabState
     static constexpr auto message_type = MessageBase::GrabState;
 
     u32 object{0}; /*!< Net id, 0 = nothing */
-    u32 padding{0};
+    u32 player_idx{0};
 };
 
 /*! The server's tick clock, which clients follow: tick `tick` began at
@@ -480,6 +482,8 @@ struct alignas(8) TickInput
         none   = 0x0,
         resync = 0x1, /*!< Skipped ahead to here, the gap was never played */
     } flags{flags_t::none};
+    u32 player_idx{0}; /*!< One of the sender's own */
+    u32 padding{0};
 };
 
 C_FLAGS(TickInput::flags_t, u32)
@@ -634,7 +638,7 @@ static_assert(sizeof(EntityTag) == 12);
 static_assert(sizeof(EntitySpawn) == 56);
 static_assert(sizeof(SpawnRequest) == 56);
 static_assert(sizeof(Message<ClockSync>) == 48);
-static_assert(sizeof(Message<PlayerJoin>) == 48);
+static_assert(sizeof(Message<PlayerJoin>) == 52);
 static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
@@ -647,7 +651,7 @@ static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);
 static_assert(sizeof(TickSync) == 40);
-static_assert(sizeof(TickInput) == 48);
+static_assert(sizeof(TickInput) == 56);
 static_assert(sizeof(ObjectImpact) == 32);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);

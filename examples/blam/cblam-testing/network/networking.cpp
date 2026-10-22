@@ -368,7 +368,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         GameEvent         update{.type = GameEvent::ServerStateUpdate};
         ServerStateUpdate data = {
             .type      = ServerStateUpdate::PlayerCount,
-            .num_field = static_cast<i32>(m_connections.size() + 1),
+            .num_field = static_cast<i32>(remote_player_count() + std::max<size_t>(m_local_player_info.size(), 1)),
         };
         m_game_bus.inject(update, &data);
         data = {
@@ -379,6 +379,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 #if defined(USE_WEBRTC_TRANSPORT)
         publish_server_metadata();
 #endif
+    }
+
+    size_t remote_player_count() const
+    {
+        size_t count = 0;
+        for(auto const& [_, state] : m_connections)
+            count += state.players.size();
+        return count;
     }
 
     void apply_simulation()
@@ -729,19 +737,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             });
         }
         for(auto const& [_, state] : m_connections)
-        {
-            if(!state.player_info.exists())
-                continue;
-            auto const& info = (*state.player_info);
-            entries.push_back({
-                .name             = *blam::bl_string::from(info.name),
-                .player_idx       = state.idx,
-                .loading_progress = state.loading_progress,
-                .connected =
-                    state.biped.get<NetworkInfo>().connected ? 0xFFFFu : 0x0u,
-                .spawned = info.spawned ? 0xFFFFu : 0x0u,
-            });
-        }
+            for(auto const& [seat, player] : state.players)
+            {
+                if(!player.player_info.exists())
+                    continue;
+                auto const& info = (*player.player_info);
+                entries.push_back({
+                    .name             = *blam::bl_string::from(info.name),
+                    .player_idx       = player.idx,
+                    .loading_progress = state.loading_progress,
+                    .connected =
+                        player.biped.get<NetworkInfo>().connected ? 0xFFFFu : 0x0u,
+                    .spawned = info.spawned ? 0xFFFFu : 0x0u,
+                });
+            }
         MessageBase header{.type = MessageBase::PlayerSync};
         send_all(std::move(header), gsl::make_span(entries));
     }
@@ -749,11 +758,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /*! For a peer that has just joined or loaded */
     void send_positions(Proxy& p, HSteamNetConnection connection)
     {
-        u32 const own_idx = m_connections[connection].idx;
+        auto& state = m_connections[connection];
         for(auto entity : p.select<PlayerInfo, PlayerCamera>())
         {
             auto [info, cam] = entity.components();
-            if(info.player_idx == own_idx || !is_networked(entity.id(), info))
+            if(state.own(info.player_idx) || !is_networked(entity.id(), info))
                 continue;
             send_single(
                 connection,
@@ -1264,8 +1273,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 for(auto& [_, state] : m_connections)
                 {
                     state.loading_progress = 0;
-                    if(state.player_info.exists())
-                        (*state.player_info).loading_progress = 0;
+                    for(auto& [_, player] : state.players)
+                        if(player.player_info.exists())
+                            (*player.player_info).loading_progress = 0;
                 }
             });
         /* Ahead of ResourceLoader's queue (prio 100), so the copy it spawns
@@ -1998,12 +2008,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cDebug(
                 "Problem detected with connection to {}",
                 client_name(info->m_hConn));
-            if(auto& player = m_connections[info->m_hConn].biped;
-               player.exists())
-            {
-                player.get<NetworkInfo>().connected = false;
-                send_player_roster();
-            }
             server_close_peer_connection(info->m_hConn, 0, false);
             break;
         }
@@ -2368,7 +2372,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         return;
                     for(auto& [conn, state] : m_connections)
                     {
-                        if(state.idx != info.player_idx)
+                        if(!state.own(info.player_idx))
                             continue;
                         send_permission(
                             conn,
@@ -2437,77 +2441,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             leave_server(p);
         if(m_connection)
         {
-            if(!m_client_player.exists())
+            if(m_join_confirmed)
             {
-                for(auto player : p.select<PlayerInfo>())
+                join_seats(p);
+                for(auto player : p.select<PlayerInfo, PlayerCamera, NetworkInfo>())
                 {
-                    auto& pinfo = player.get<PlayerInfo>();
-                    if(pinfo.is_remote() || pinfo.seat_idx != 0)
-                        continue;
-                    m_client_player = player;
-                    break;
+                    auto [info, cam, net] = player.components();
+                    if(joined(info))
+                        send_own(p, player.id(), info, cam, net);
                 }
-            }
-
-            // Need to guard here during loading
-            if(m_client_player.exists() && m_join_confirmed)
-            {
-                // Push our camera updates to server on change
-                auto& net  = m_client_player.get<NetworkInfo>();
-                auto& info = m_client_player.get<PlayerInfo>();
-                if(info.mode.physics != net.sent_physics ||
-                   ((net.changes.viewport || net.changes.transform) &&
-                    camera_moved(
-                        m_client_player.id(),
-                        m_client_player.get<PlayerCamera>())))
-                {
-                    auto& camera = m_client_player.get<PlayerCamera>();
-                    send_single(
-                        m_connection,
-                        Message<CameraSync>({
-                            .position      = Vecf4{camera.camera.position, 0},
-                            .rotation      = camera.camera.rotation,
-                            .target_player = info.player_idx,
-                            .flags         = camera_flags_of(info),
-                        }));
-                    net.changes.viewport = net.changes.transform = false;
-                    net.sent_physics     = info.mode.physics;
-                }
-                if(SeatSync const seat = seat_of(p, info);
-                   !m_sent_own_seat || *m_sent_own_seat != seat)
-                {
-                    send_single(m_connection, Message<SeatSync>(SeatSync(seat)));
-                    m_sent_own_seat = seat;
-                }
-                if(EquipmentSync const held = equipment_of(p, m_client_player.id(), info);
-                   held.weapon != blam::tag_index<>{} && m_sent_own_equipment != held)
-                {
-                    send_single(m_connection, Message<EquipmentSync>(EquipmentSync(held)));
-                    m_sent_own_equipment = held;
-                }
-                send_grab(p, info);
-                send_inputs();
-                send_driven(p, info);
-                /* The server simulates the vehicle while nobody here drives
-                 * it; the driver's input still reaches it */
-                if(auto const* input = p.get<PlayerInput>(m_client_player.id());
-                   input && info.riding.driver && !info.riding.exiting)
-                    if(auto const* net =
-                           p.get<NetworkInfo>(info.riding.vehicle);
-                       net && net->instance_id != 0)
-                    {
-                        auto const& camera = m_client_player.get<PlayerCamera>();
-                        send_all(
-                            Message<DriveInput>({
-                                .aim = Vecf4(camera.camera_.cached.forward, 0),
-                                .vehicle  = net->instance_id,
-                                .throttle = input->intent.throttle,
-                                .steer    = input->intent.steer,
-                            }),
-                            k_nSteamNetworkingSend_UnreliableNoNagle,
-                            {m_connection},
-                            FRAME_UPDATE_LANE);
-                    }
+                send_inputs(p);
             }
 
             int                       num_msgs = -1;
@@ -2545,6 +2488,105 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return p.subsystem<TickClock>().tick();
     }
 
+    /*! A local seat the server has given a player */
+    bool joined(PlayerInfo const& info) const
+    {
+        if(info.is_remote())
+            return false;
+        auto const seat = m_net_state.remote_seats.find(info.seat_idx);
+        return seat != m_net_state.remote_seats.end() && seat->second == info.player_idx;
+    }
+
+    /*! Whether `player_idx` is one of this client's joined seats */
+    bool own_idx(u32 player_idx) const
+    {
+        return std::any_of(
+            m_net_state.remote_seats.begin(),
+            m_net_state.remote_seats.end(),
+            [player_idx](auto const& seat) { return seat.second == player_idx; });
+    }
+
+    /*! The joined local seat playing `player_idx`, 0 if none */
+    u64 own_player(Proxy& p, u32 player_idx) const
+    {
+        for(auto entity : p.select<PlayerInfo>())
+            if(auto const& info = entity.get<PlayerInfo>();
+               joined(info) && info.player_idx == player_idx)
+                return entity.id();
+        return 0;
+    }
+
+    /* Seats that become active join as players of their own */
+    void join_seats(Proxy& p)
+    {
+        for(auto player : p.select<PlayerInfo, PlayerCamera>())
+        {
+            auto [info, cam] = player.components();
+            if(info.is_remote() || !cam.is_active() || info.seat_idx >= max_client_seats ||
+               m_net_state.remote_seats.contains(info.seat_idx) ||
+               !m_pending_seats.insert(info.seat_idx).second)
+                continue;
+            if(info.name.empty())
+                info.name = get_random_name();
+            send_single(
+                m_connection,
+                Message<PlayerJoin>({
+                    .player_name = *blam::bl_string::from(info.name),
+                    .seat        = info.seat_idx,
+                }));
+        }
+    }
+
+    /* What the server hears of one of our seats, as it changes */
+    void send_own(
+        Proxy& p, u64 entity, PlayerInfo const& info, PlayerCamera const& camera, NetworkInfo& net)
+    {
+        auto& sent = m_own_seats[entity];
+        if(info.mode.physics != net.sent_physics ||
+           ((net.changes.viewport || net.changes.transform) && camera_moved(entity, camera)))
+        {
+            send_single(
+                m_connection,
+                Message<CameraSync>({
+                    .position      = Vecf4{camera.camera.position, 0},
+                    .rotation      = camera.camera.rotation,
+                    .target_player = info.player_idx,
+                    .flags         = camera_flags_of(info),
+                }));
+            net.changes.viewport = net.changes.transform = false;
+            net.sent_physics     = info.mode.physics;
+        }
+        if(SeatSync const seat = seat_of(p, info); sent.seat != seat)
+        {
+            send_single(m_connection, Message<SeatSync>(SeatSync(seat)));
+            sent.seat = seat;
+        }
+        if(EquipmentSync const held = equipment_of(p, entity, info);
+           held.weapon != blam::tag_index<>{} && sent.equipment != held)
+        {
+            send_single(m_connection, Message<EquipmentSync>(EquipmentSync(held)));
+            sent.equipment = held;
+        }
+        send_grab(p, entity, info, camera, sent.grab);
+        send_driven(p, info);
+        /* The server simulates the vehicle while nobody here drives it; the
+         * driver's input still reaches it */
+        if(auto const* input = p.get<PlayerInput>(entity);
+           input && info.riding.driver && !info.riding.exiting)
+            if(auto const* vehicle = p.get<NetworkInfo>(info.riding.vehicle);
+               vehicle && vehicle->instance_id != 0)
+                send_all(
+                    Message<DriveInput>({
+                        .aim      = Vecf4(camera.camera_.cached.forward, 0),
+                        .vehicle  = vehicle->instance_id,
+                        .throttle = input->intent.throttle,
+                        .steer    = input->intent.steer,
+                    }),
+                    k_nSteamNetworkingSend_UnreliableNoNagle,
+                    {m_connection},
+                    FRAME_UPDATE_LANE);
+    }
+
     /* The vehicle this client drives is simulated here, so it answers the
      * stick at once; the server follows the state it sends, each tick */
     void send_driven(Proxy& p, PlayerInfo const& info)
@@ -2557,7 +2599,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         u64 const   tick    = tick_now(p);
         if(!net || net->instance_id == 0 || !model || !physics ||
            physics->authority != ObjectPhysics::Simulated ||
-           std::exchange(m_driven_tick, tick) == tick)
+           std::exchange(m_driven_ticks[info.riding.vehicle], tick) == tick)
             return;
         send_all(
             Message<ObjectSync>({
@@ -2678,33 +2720,38 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     }
 
     /* Our seat's input, a few ticks of it in each packet */
-    void send_inputs()
+    void send_inputs(Proxy& p)
     {
         if(!m_input_queue)
             return;
         m_input_queue->poll();
         /* Every new tick goes out, with the last few before it again */
-        while(m_sent_inputs.size() > input_redundancy)
-            m_sent_inputs.pop_front();
+        for(auto& [_, sent] : m_own_seats)
+            while(sent.inputs.size() > input_redundancy)
+                sent.inputs.pop_front();
         bool fresh = false;
         for(auto const& input : std::exchange(m_local_inputs, {}))
         {
-            if(!m_client_player.exists() || input.player != m_client_player.id())
+            auto const* info = p.get<PlayerInfo>(input.player);
+            if(!info || !joined(*info))
                 continue;
-            m_sent_inputs.push_back({
-                .tick    = input.tick,
-                .view    = input.view,
-                .move    = input.move,
-                .look    = input.look,
-                .intents = input.intents,
-                .flags   = input.resync ? TickInput::flags_t::resync
-                                        : TickInput::flags_t::none,
+            m_own_seats[input.player].inputs.push_back({
+                .tick       = input.tick,
+                .view       = input.view,
+                .move       = input.move,
+                .look       = input.look,
+                .intents    = input.intents,
+                .flags      = input.resync ? TickInput::flags_t::resync
+                                           : TickInput::flags_t::none,
+                .player_idx = info->player_idx,
             });
             fresh = true;
         }
         if(!fresh)
             return;
-        std::vector<TickInput> batch(m_sent_inputs.begin(), m_sent_inputs.end());
+        std::vector<TickInput> batch;
+        for(auto const& [_, sent] : m_own_seats)
+            batch.insert(batch.end(), sent.inputs.begin(), sent.inputs.end());
         send_all<TickInput>(
             MessageBase{MessageBase::TickInput},
             gsl::span<TickInput>(batch),
@@ -2720,19 +2767,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         auto& state = m_connections[connection];
         for(auto const& input : inputs)
         {
-            if(input.tick <= state.last_input)
+            auto* player = state.own(input.player_idx);
+            if(!player || input.tick <= player->last_input)
                 continue;
             /* A client that skipped ahead had no ticks to send */
-            if(state.last_input != 0 &&
+            if(player->last_input != 0 &&
                (input.flags & TickInput::flags_t::resync) == TickInput::flags_t::none)
-                state.inputs_lost += input.tick - state.last_input - 1;
-            state.last_input = input.tick;
+                state.inputs_lost += input.tick - player->last_input - 1;
+            player->last_input = input.tick;
             state.inputs++;
             GameEvent            ev{.type = GameEvent::PlayerTickInput};
             PlayerTickInputEvent data{
                 .origin     = MapLoadEvent::Remote,
-                .player     = state.biped.exists() ? state.biped.id() : 0,
-                .player_idx = state.idx,
+                .player     = player->biped.id(),
+                .player_idx = player->idx,
                 .tick       = input.tick,
                 .move       = input.move,
                 .look       = input.look,
@@ -2874,27 +2922,28 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     }
 
     /* Objects are simulated on the server, so forge grabs happen there */
-    void send_grab(Proxy& p, PlayerInfo const& info)
+    void send_grab(
+        Proxy& p, u64 entity, PlayerInfo const& info, PlayerCamera const& cam, bool& sent)
     {
-        auto const* input = p.get<PlayerInput>(m_client_player.id());
+        auto const* input = p.get<PlayerInput>(entity);
         bool const  held  = input &&
                           input->input_mode == PlayerInput::input_mode_t::game &&
                           input->intent.grab && info.permissions.camera &&
                           !info.mode.physics && info.riding.vehicle == 0;
-        if(!held && !m_sent_grab)
+        if(!held && !sent)
             return;
-        auto const& cam = m_client_player.get<PlayerCamera>();
         send_all(
             Message<GrabInput>({
-                .origin   = Vecf4(cam.camera.position, 1.f),
-                .to_world = Quatf(glm::transpose(Matf3(cam.rotation))),
-                .held     = held,
+                .origin     = Vecf4(cam.camera.position, 1.f),
+                .to_world   = Quatf(glm::transpose(Matf3(cam.rotation))),
+                .held       = held,
+                .player_idx = info.player_idx,
             }),
             held ? k_nSteamNetworkingSend_UnreliableNoNagle
                  : k_nSteamNetworkingSend_Reliable,
             {m_connection},
             FRAME_UPDATE_LANE);
-        m_sent_grab = held;
+        sent = held;
     }
 
     /* Tells each client what it carries; lets go for those who left */
@@ -2902,21 +2951,24 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         std::set<u64> holders;
         for(auto& [connection, state] : m_connections)
-        {
-            if(!state.biped.exists())
-                continue;
-            u64 const id = state.biped.id();
-            holders.insert(id);
-            auto const* data = p.get<PhysicsData>(id);
-            auto const* net  = data && data->grabbed
-                                   ? p.get<NetworkInfo>(data->grabbed)
-                                   : nullptr;
-            u32 const object = net ? net->instance_id : 0;
-            if(object == state.grabbed)
-                continue;
-            state.grabbed = object;
-            send_single(connection, Message<GrabState>({.object = object}));
-        }
+            for(auto& [_, player] : state.players)
+            {
+                if(!player.biped.exists())
+                    continue;
+                u64 const id = player.biped.id();
+                holders.insert(id);
+                auto const* data = p.get<PhysicsData>(id);
+                auto const* net  = data && data->grabbed
+                                       ? p.get<NetworkInfo>(data->grabbed)
+                                       : nullptr;
+                u32 const object = net ? net->instance_id : 0;
+                if(object == player.grabbed)
+                    continue;
+                player.grabbed = object;
+                send_single(
+                    connection,
+                    Message<GrabState>({.object = object, .player_idx = player.idx}));
+            }
         for(u64 holder : std::exchange(m_remote_holders, {}))
             if(!holders.contains(holder))
                 remote_grab(p, holder, {}, false);
@@ -3209,13 +3261,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_despawns.clear();
         for(auto const& pickup : std::exchange(m_pickups, {}))
             for(auto& [connection, state] : m_connections)
-                if(state.biped.exists() && state.biped.id() == pickup.entity_id)
-                    send_single(
-                        connection,
-                        Message<WeaponPickup>({
-                            .player_idx = state.idx,
-                            .weapon     = pickup.weapon,
-                        }));
+                for(auto const& [_, player] : state.players)
+                    if(player.biped.exists() && player.biped.id() == pickup.entity_id)
+                        send_single(
+                            connection,
+                            Message<WeaponPickup>({
+                                .player_idx = player.idx,
+                                .weapon     = pickup.weapon,
+                            }));
     }
 
     /* Remote players hold what their peer last reported, through a map load
@@ -3293,21 +3346,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         bool                linger,
         char const*         reason = nullptr)
     {
-        if(auto& player = m_connections[connection].biped; player.exists())
-            player.get<NetworkInfo>().connected = false;
         cDebug(
             "peer={} disconnected ({})", connection, client_name(connection));
         if(auto it = m_connections.find(connection); it != m_connections.end())
-        {
-            auto& player = it->second.player_info;
-            if(player.exists())
+            for(auto& [_, seat] : it->second.players)
             {
-                player.m_ref->remove_entity_if(
-                    [&player](compo::Entity const& e) {
-                        return player.m_id == e.id;
-                    });
+                if(seat.biped.exists())
+                    seat.biped.get<NetworkInfo>().connected = false;
+                auto& player = seat.player_info;
+                if(player.exists())
+                    player.m_ref->remove_entity_if(
+                        [&player](compo::Entity const& e) {
+                            return player.m_id == e.id;
+                        });
             }
-        }
         m_connections.erase(connection);
 #if defined(USE_WEBRTC_TRANSPORT)
         if(m_webrtcServer)
@@ -3330,12 +3382,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_combat.reset();
         m_session_start_us = 0;
         m_net_state.tick_base.reset();
-        m_sent_grab      = false;
-        if(m_client_player.exists())
-            if(auto* data = p.get<PhysicsData>(m_client_player.id()))
-                data->grabbed = 0;
+        m_own_seats.clear();
+        m_pending_seats.clear();
+        for(auto holder : p.select<PlayerInfo, PhysicsData>())
+            if(!holder.get<PlayerInfo>().is_remote())
+                holder.get<PhysicsData>().grabbed = 0;
         p.subsystem<NetworkState>().client_state = NetworkState::ClientState::None;
         p.subsystem<NetworkState>().remote_player_idx.reset();
+        p.subsystem<NetworkState>().remote_seats.clear();
         p.remove_entity_if([&p](compo::Entity const& e) {
             auto* info = p.get<PlayerInfo>(e.id);
             return info && info->is_remote();
@@ -3349,6 +3403,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
+    /*! The vehicle `net_id`, if one of the sender's players drives it */
+    u64 driven_by(Proxy& p, auto& state, u32 net_id)
+    {
+        for(auto& [_, player] : state.players)
+        {
+            if(!player.biped.exists())
+                continue;
+            auto const& riding = player.biped.template get<PlayerInfo>().riding;
+            auto const* net =
+                riding.vehicle != 0 ? p.get<NetworkInfo>(riding.vehicle) : nullptr;
+            if(riding.driver && !riding.exiting && net && net->instance_id == net_id)
+                return riding.vehicle;
+        }
+        return 0;
+    }
+
     void server_receive_payload(
         Proxy& p, HSteamNetConnection connection, MessageBase const& payload)
     {
@@ -3356,14 +3426,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         switch(payload.type)
         {
         case MessageBase::CameraSync: {
-            /* Only ever the sender's own player, whatever index it names */
-            if(!player_info.biped.exists())
+            /* Only ever the sender's own players */
+            auto const& sync   = payload.value<CameraSync>();
+            auto*       player = player_info.own(sync.target_player);
+            if(!player)
                 break;
-            auto const& sync = payload.value<CameraSync>();
-            auto&       info = player_info.biped.get<PlayerInfo>();
+            auto& info = player->biped.get<PlayerInfo>();
             if(!info.permissions.camera)
                 break;
-            auto& cam           = player_info.biped.get<PlayerCamera>();
+            auto& cam           = player->biped.get<PlayerCamera>();
             cam.camera.position = Vecf3(sync.position);
             cam.camera.rotation = sync.rotation;
             info.mode.physics   = sync.flags & CameraSync::physics;
@@ -3376,7 +3447,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 Message<CameraSync>({
                     .position      = sync.position,
                     .rotation      = sync.rotation,
-                    .target_player = player_info.idx,
+                    .target_player = player->idx,
                     .flags         = sync.flags,
                     /* Its body moves there on the next tick here */
                     .tick = tick_now(p) + 1,
@@ -3390,34 +3461,27 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::GrabInput: {
-            /* Only the sender's own player, from its free camera */
-            if(!player_info.biped.exists())
+            /* Only the sender's own players, from their free cameras */
+            auto const& grab   = payload.value<GrabInput>();
+            auto*       player = player_info.own(grab.player_idx);
+            if(!player)
                 break;
-            auto const& grab = payload.value<GrabInput>();
-            auto const& info = player_info.biped.get<PlayerInfo>();
-            auto const& eye =
-                player_info.biped.get<PlayerCamera>().camera.position;
+            auto const& info = player->biped.get<PlayerInfo>();
+            auto const& eye  = player->biped.get<PlayerCamera>().camera.position;
             bool const held =
                 grab.held && info.permissions.camera && !info.mode.physics &&
                 info.riding.vehicle == 0 &&
                 glm::distance(Vecf3(grab.origin), eye) <= max_grab_offset;
-            if(held || m_remote_holders.contains(player_info.biped.id()))
-                remote_grab(p, player_info.biped.id(), grab, held);
+            if(held || m_remote_holders.contains(player->biped.id()))
+                remote_grab(p, player->biped.id(), grab, held);
             break;
         }
         case MessageBase::ObjectSync: {
-            /* Only the vehicle the sender's own player drives */
-            if(!player_info.biped.exists())
-                break;
-            auto const& riding = player_info.biped.get<PlayerInfo>().riding;
-            auto const* net    = riding.vehicle != 0
-                                     ? p.get<NetworkInfo>(riding.vehicle)
-                                     : nullptr;
-            u64 const   now    = tick_now(p);
+            /* Only vehicles the sender's own players drive */
+            u64 const now = tick_now(p);
             for(auto const& sync : payload.values<ObjectSync>())
             {
-                if(!riding.driver || riding.exiting || !net ||
-                   net->instance_id != sync.net_id)
+                if(!driven_by(p, player_info, sync.net_id))
                     continue;
                 auto& driven = m_driven[sync.net_id];
                 if(!driven.history.empty() && driven.history.back().tick >= sync.tick)
@@ -3435,20 +3499,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::DriveInput: {
-            /* Only the vehicle the sender's own player drives */
-            if(!player_info.biped.exists())
-                break;
-            auto const& drive  = payload.value<DriveInput>();
-            auto const& riding = player_info.biped.get<PlayerInfo>().riding;
-            auto const* net    = riding.vehicle != 0
-                                     ? p.get<NetworkInfo>(riding.vehicle)
-                                     : nullptr;
-            if(!riding.driver || riding.exiting || !net ||
-               net->instance_id != drive.vehicle)
+            /* Only vehicles the sender's own players drive */
+            auto const& drive   = payload.value<DriveInput>();
+            u64 const   vehicle = driven_by(p, player_info, drive.vehicle);
+            if(!vehicle)
                 break;
             Physics::Event ev{Physics::Event::Drive};
             Physics::Drive input{
-                .vehicle  = riding.vehicle,
+                .vehicle  = vehicle,
                 .throttle = drive.throttle,
                 .steer    = drive.steer,
                 .aim      = Vecf3(drive.aim),
@@ -3457,7 +3515,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::WeaponFire: {
-            if(!player_info.biped.exists() || !player_info.verified)
+            auto const& fire   = payload.value<WeaponFire>();
+            auto*       player = player_info.own(fire.player_idx);
+            if(!player || !player_info.verified)
                 break;
             SteamNetConnectionRealTimeStatus_t status{};
             bool const measured = m_impl->GetConnectionRealTimeStatus(
@@ -3467,61 +3527,72 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 p,
                 net_combat::sender_t{
                     .connection = connection,
-                    .player     = player_info.biped.id(),
-                    .player_idx = player_info.idx,
+                    .player     = player->biped.id(),
+                    .player_idx = player->idx,
                     .ping_ms =
                         measured ? static_cast<u32>(std::max(status.m_nPing, 0)) : 0,
                 },
-                payload.value<WeaponFire>());
+                fire);
             break;
         }
         case MessageBase::SeatSync: {
-            /* Only ever the sender's own player, whatever index it names */
-            if(!player_info.biped.exists())
-                break;
+            /* Only ever the sender's own players */
             for(auto const& seat : payload.values<SeatSync>())
-                apply_seat(p, player_info.biped.get<PlayerInfo>(), seat);
+                if(auto* player = player_info.own(seat.player_idx))
+                    apply_seat(p, player->biped.get<PlayerInfo>(), seat);
             break;
         }
         case MessageBase::EquipmentSync: {
             /* Likewise only the sender's own */
             for(auto const& held : payload.values<EquipmentSync>())
-                m_remote_weapons[player_info.idx] = held;
+                if(player_info.own(held.player_idx))
+                    m_remote_weapons[held.player_idx] = held;
             break;
         }
         case MessageBase::PlayerJoin: {
             auto const& player_join = payload.value<PlayerJoin>();
+            if(player_join.seat >= max_client_seats)
+                break;
+            auto&      player = player_info.players[player_join.seat];
+            bool const rejoin = player.player_info.exists();
+            if(!rejoin)
+                player.idx = player_join.seat == 0 ? player_info.idx : m_next_remote_idx++;
             cDebug("Player joined: {}", player_join.player_name.str());
             journal(
                 "net_player_join",
                 {{"name", player_join.player_name.str()},
-                 {"player_idx", player_info.idx},
-                 {"rejoin", player_info.player_info.exists()}});
-            if(!player_info.player_info.exists())
+                 {"player_idx", player.idx},
+                 {"seat", player_join.seat},
+                 {"rejoin", rejoin}});
+            if(!rejoin)
             {
                 auto ref = p.create_entity(shared_recipes::player_recipe);
-                player_info.player_info = ref.ref<PlayerInfo>();
-                player_info.biped       = ref;
+                player.player_info = ref.ref<PlayerInfo>();
+                player.biped       = ref;
 
                 auto& net_info     = ref.get<NetworkInfo>();
                 net_info.connected = true;
 
-                auto& info      = (*player_info.player_info);
+                auto& info      = (*player.player_info);
                 info.remote     = client_name(connection);
-                info.player_idx = player_info.idx;
+                info.player_idx = player.idx;
                 info.seat_idx   = 0xFFFF; /* Not one of our local seats */
             }
 
-            (*player_info.player_info).name = player_join.player_name.str();
+            (*player.player_info).name = player_join.player_name.str();
 
             send_single(
                 connection,
                 Message<PlayerJoinConfirm>({
-                    .player_idx = player_info.idx,
+                    .player_idx = player.idx,
+                    .seat       = player_join.seat,
                 }));
             update_player_counts();
             send_player_roster();
             send_positions(p, connection);
+            /* A seat joining after the map loaded spawns as the rest did */
+            if(!rejoin && player_info.loading_progress == 100)
+                player_init(p.unconstrained_container(), *player.player_info);
             break;
         }
         case MessageBase::GameLoadState: {
@@ -3531,13 +3602,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_connections[connection].idx,
                 event.progress);
             m_connections[connection].loading_progress = event.progress;
-            if(auto& pi = m_connections[connection].player_info; pi.exists())
-                (*pi).loading_progress = event.progress;
-            if(event.progress != 100)
-                break;
-            if(player_info.player_info.exists())
-                player_init(
-                    p.unconstrained_container(), *player_info.player_info);
+            for(auto& [_, player] : player_info.players)
+            {
+                if(!player.player_info.exists())
+                    continue;
+                (*player.player_info).loading_progress = event.progress;
+                if(event.progress == 100)
+                    player_init(p.unconstrained_container(), *player.player_info);
+            }
             break;
         }
         case MessageBase::SpawnRequest: {
@@ -3642,19 +3714,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         switch(payload.type)
         {
         case MessageBase::EquipmentSync: {
-            auto const self_idx = p.subsystem<NetworkState>().remote_player_idx;
             for(auto const& held : payload.values<EquipmentSync>())
-                if(held.player_idx != self_idx)
+                if(!own_idx(held.player_idx))
                     m_remote_weapons[held.player_idx] = held;
             break;
         }
         case MessageBase::WeaponPickup: {
             auto const& pickup = payload.value<WeaponPickup>();
-            if(!m_client_player.exists() ||
-               pickup.player_idx != p.subsystem<NetworkState>().remote_player_idx)
+            u64 const   holder = own_player(p, pickup.player_idx);
+            if(!holder)
                 break;
             EquipWeaponEvent equip{
-                .entity_id = m_client_player.id(),
+                .entity_id = holder,
                 .weapon    = pickup.weapon,
                 .mode      = EquipWeaponEvent::pick_up,
             };
@@ -3693,10 +3764,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::SeatSync: {
-            auto const self_idx = p.subsystem<NetworkState>().remote_player_idx;
             for(auto const& seat : payload.values<SeatSync>())
             {
-                if(seat.player_idx == self_idx)
+                if(own_idx(seat.player_idx))
                     continue;
                 for(auto entity : p.select<PlayerInfo>())
                 {
@@ -3770,9 +3840,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::GrabState: {
-            if(!m_client_player.exists())
+            auto const& grab   = payload.value<GrabState>();
+            u64 const   holder = own_player(p, grab.player_idx);
+            if(!holder)
                 break;
-            u32 const object  = payload.value<GrabState>().object;
+            u32 const object  = grab.object;
             u64       carried = 0;
             if(object != 0)
                 for(auto entity : p.select<NetworkInfo>())
@@ -3781,7 +3853,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         carried = entity.id();
                         break;
                     }
-            if(auto* data = p.get<PhysicsData>(m_client_player.id()))
+            if(auto* data = p.get<PhysicsData>(holder))
                 data->grabbed = carried;
             journal("net_grab", {{"object", object}});
             break;
@@ -3800,22 +3872,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::CameraSync: {
-            auto const& sync    = payload.value<CameraSync>();
-            auto const self_idx = p.subsystem<NetworkState>().remote_player_idx;
-            bool const to_self  = sync.target_player == CameraSync::self_id ||
-                                 sync.target_player == self_idx;
+            auto const& sync = payload.value<CameraSync>();
             for(auto entity : p.select<PlayerInfo, PlayerCamera>())
             {
                 auto [info, cam] = entity.components();
-                if(to_self)
+                if(!info.is_remote())
                 {
-                    if(info.is_remote() || info.seat_idx != 0)
+                    bool const to_this = sync.target_player == CameraSync::self_id
+                                             ? info.seat_idx == 0
+                                             : joined(info) && info.player_idx == sync.target_player;
+                    if(!to_this)
                         continue;
                     place_local_player(
                         p, entity.id(), Vecf3(sync.position), sync.rotation);
                     break;
                 }
-                if(!info.is_remote() || info.player_idx != sync.target_player)
+                if(info.player_idx != sync.target_player)
                     continue;
                 /* Shown a few ticks behind, between the syncs around then */
                 auto& history = m_player_history[sync.target_player];
@@ -3881,30 +3953,40 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 Message<PlayerJoin>({
                     .player_name = *blam::bl_string::from(player_name),
                 }));
+            m_pending_seats = {0};
             break;
         }
         case MessageBase::PlayerJoinConfirm: {
             auto const& confirm   = payload.value<PlayerJoinConfirm>();
             auto&       net_state = p.subsystem<NetworkState>();
 
-            net_state.remote_player_idx = confirm.player_idx;
-            m_join_confirmed            = true;
+            net_state.remote_seats[confirm.seat] = confirm.player_idx;
+            m_pending_seats.erase(confirm.seat);
+            if(confirm.seat == 0)
+            {
+                net_state.remote_player_idx = confirm.player_idx;
+                m_join_confirmed            = true;
+            }
 
-            /* Other seats leave the server's index space */
+            /* Seats not yet joined stay out of the server's index space */
             for(auto player : p.select<PlayerInfo>())
             {
                 auto* info = p.get<PlayerInfo>(player.id());
                 if(!info || info->is_remote())
                     continue;
-                info->player_idx =
-                    info->seat_idx == 0
-                        ? confirm.player_idx
-                        : PlayerInfo::local_only_idx_base + info->seat_idx;
+                auto const seat  = net_state.remote_seats.find(info->seat_idx);
+                info->player_idx = seat != net_state.remote_seats.end()
+                                       ? seat->second
+                                       : PlayerInfo::local_only_idx_base + info->seat_idx;
             }
 
             cDebug(
-                "Received join confirmation, player_id={}", confirm.player_idx);
-            journal("net_join_confirm", {{"player_idx", confirm.player_idx}});
+                "Received join confirmation, player_id={} seat={}",
+                confirm.player_idx,
+                confirm.seat);
+            journal(
+                "net_join_confirm",
+                {{"player_idx", confirm.player_idx}, {"seat", confirm.seat}});
             break;
         }
         case MessageBase::GameEvent: {
@@ -4032,7 +4114,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
             for(auto const& player : players)
             {
-                bool is_self = (player.player_idx == self_idx);
+                bool is_self = own_idx(player.player_idx);
 
                 if(auto it = existing.find(player.player_idx);
                    it != existing.end())
@@ -4152,7 +4234,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     HSteamNetPollGroup                m_poll_group{};
     HSteamNetConnection               m_connection{};
     std::optional<time_point>         m_connection_last_seen{};
-    compo::EntityRef<EntityContainer> m_client_player{};
     bool                              m_join_confirmed{false};
     bool                              m_left_server{false};
 #if defined(USE_WEBRTC_TRANSPORT)
@@ -4163,25 +4244,43 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_fleetRegistration;
 #endif
 
-    struct connection_state_t
+    /*! One of a client's seats, as a player here */
+    struct remote_player_t
     {
         /*! Player info, not attached to the biped */
         ComponentRef<EntityContainer, PlayerInfo> player_info{};
         /*! Controlled by the associated player */
         compo::EntityRef<EntityContainer> biped{};
         u32                               idx{0};
+        u32 grabbed{0};    /*!< Net id it was last told it carries */
+        u64 last_input{0}; /*!< Newest tick of its input stream */
+    };
+
+    struct connection_state_t
+    {
+        std::map<u32, remote_player_t>    players; /*!< By the client's seat */
+        u32                               idx{0};  /*!< Its seat 0's */
         u32                               loading_progress{};
         std::optional<time_point>         last_seen{};
         bool                              invited{false};
         bool verified{false}; /*!< Map fingerprint matched ours */
-        u32  grabbed{0};      /*!< Net id it was last told it carries */
         bool tick_synced{false}; /*!< Has had the server's tick clock */
-        /* Its input stream: newest tick, and counts since last journaled */
-        u64 last_input{0};
+        /* Its input streams, counted since last journaled */
         u64 inputs{0};
         u64 inputs_lost{0};
         bool objects_synced{false}; /*!< Has had every moving object */
+
+        /*! Its own player that `player_idx` names; messages about anyone
+         *  else are ignored */
+        remote_player_t* own(u32 player_idx)
+        {
+            for(auto& [_, player] : players)
+                if(player.idx == player_idx && player.biped.exists())
+                    return &player;
+            return nullptr;
+        }
     };
+    static constexpr u32 max_client_seats = 4;
 
     std::map<HSteamNetConnection, connection_state_t>      m_connections{};
     std::vector<ComponentRef<EntityContainer, PlayerInfo>> m_local_player_info;
@@ -4209,13 +4308,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u64, std::pair<Vecf3, Quatf>>   m_sent_cameras;
     static constexpr f32                     camera_epsilon   = .002f;
     static constexpr f32                     rotation_epsilon = 1e-6f;
-    std::optional<SeatSync>                  m_sent_own_seat;
     /* Weapons sent per player index, and those peers reported */
     std::map<u32, EquipmentSync>             m_sent_equipment;
     GameStateSync                            m_sent_game{};
     std::vector<GameScoreSync>               m_sent_scores;
     std::map<u64, DeviceSync>                m_sent_devices;
-    std::optional<EquipmentSync>             m_sent_own_equipment;
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::vector<ObjectDespawn>               m_despawns;
     std::vector<EquipWeaponEvent>            m_pickups;
@@ -4231,7 +4328,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         u64                    seen{0};
     };
     std::map<u32, driven_t>                  m_driven;
-    u64                                      m_driven_tick{0};
+    std::map<u64, u64>                       m_driven_ticks; /*!< Last sent, by vehicle */
     static constexpr f32                     lag_smoothing = .1f;
     /* Ticks without word before the server takes a vehicle back */
     static constexpr u64                     driven_timeout = 30;
@@ -4256,12 +4353,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* How far from its eye a client may grab */
     static constexpr f32 max_grab_offset = 4.f;
     /* Forge grabs: ours sent to the server, clients' carried here */
-    bool          m_sent_grab{false};
+    /* What we last sent about each of our joined seats, by entity */
+    struct own_seat_t
+    {
+        std::optional<SeatSync>      seat;
+        std::optional<EquipmentSync> equipment;
+        bool                         grab{false};
+        std::deque<TickInput>        inputs;
+    };
+    std::map<u64, own_seat_t> m_own_seats;
+    std::set<u32>             m_pending_seats; /*!< Asked to join, unconfirmed */
     /* Our seat's input stream, the last few ticks of it resent */
     static constexpr size_t input_redundancy = 4;
     std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>> m_input_queue;
     std::vector<PlayerTickInputEvent> m_local_inputs;
-    std::deque<TickInput>             m_sent_inputs;
     /* Physics impacts heard on the server; shaders named by clients' */
     std::shared_ptr<PhysicsBus::queue_type<Physics::Impact>> m_impact_queue;
     std::vector<Physics::Impact>                             m_impacts;

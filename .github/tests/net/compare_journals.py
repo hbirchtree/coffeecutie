@@ -266,20 +266,21 @@ def check_bipeds(label, players):
     return problems, in_play
 
 
-def check_local_seats(label, players):
-    """Once a client has joined, its split screen seats leave the server's
-    index space, so the server's players can never land on them."""
+def check_local_seats(label, players, authority):
+    """Once a client has joined, each of its split screen seats is either a
+    player the server knows as remote, or out of the server's index space,
+    so the server's own players can never land on them."""
     if not any(p["remote"] for p in players):
         return 0
+    joined = {p["player_idx"] for p in authority if p["remote"]}
     problems = 0
     for p in players:
         if p["remote"] or p["seat_idx"] == 0:
             continue
-        if p["player_idx"] < LOCAL_ONLY_IDX_BASE:
+        if p["player_idx"] < LOCAL_ONLY_IDX_BASE and p["player_idx"] not in joined:
             problems += 1
             print(f"FAIL: {label}: local seat {p['seat_idx']} has "
-                  f"player_idx={p['player_idx']}, inside the server's "
-                  f"index space")
+                  f"player_idx={p['player_idx']}, one of the server's own")
     return problems
 
 
@@ -475,7 +476,8 @@ def main():
         biped_problems, in_play = check_bipeds(label, players)
         problems += biped_problems
         if i > 0:  # the authority's seats are the server's index space
-            problems += check_local_seats(label, players)
+            problems += check_local_seats(
+                label, players, authority.get("players", []))
         print(f"{label}: {in_play} player(s) in play")
         if in_play < min_in_play:
             problems += 1

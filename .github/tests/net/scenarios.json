@@ -113,7 +113,7 @@
             "description": "As net_multiplayer, with a second split screen seat on each side",
             "host": "dummy_plug_net_host_splitscreen.json",
             "expect": {
-                "in_play": 3
+                "in_play": 4
             }
         }
     }
