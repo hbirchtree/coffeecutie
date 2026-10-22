@@ -129,43 +129,6 @@ static const auto moving_recipe = compo::EntityRecipe{
     .tags = ObjectGC,
 };
 
-struct SectionStreams
-{
-    geo::resource_t const* index{nullptr};
-    geo::resource_t const* position{nullptr};
-    geo::resource_t const* texcoord{nullptr};
-    geo::resource_t const* normal{nullptr};
-    geo::resource_t const* lightmap{nullptr}; /*!< i16 x2 secondary uv */
-    geo::resource_t const* submeshes{nullptr};
-    geo::resource_t const* buffers{nullptr}; /*!< vertex_buffer_t per stream */
-    geo::resource_t const* node_map{nullptr}; /*!< u8 model node per local */
-};
-
-static SectionStreams find_streams(Span<geo::resource_t const> resources)
-{
-    SectionStreams out;
-    for(auto const& r : resources)
-    {
-        if(r.type0() == 0 && r.type1() == 72 && !out.submeshes)
-            out.submeshes = &r;
-        else if(r.type0() == 32 && !out.index)
-            out.index = &r;
-        else if(r.type0() == 56 && r.type1() == 0 && !out.position)
-            out.position = &r;
-        else if(r.type0() == 56 && r.type1() == 1 && !out.texcoord)
-            out.texcoord = &r;
-        else if(r.type0() == 56 && r.type1() == 2 && !out.normal)
-            out.normal = &r;
-        else if(r.type0() == 56 && r.type1() == 3 && !out.lightmap)
-            out.lightmap = &r;
-        else if(r.type0() == 56 && r.type1() == 32 && !out.buffers)
-            out.buffers = &r;
-        else if(r.type0() == 100 && r.type1() == 1 && !out.node_map)
-            out.node_map = &r;
-    }
-    return out;
-}
-
 /* Parses a Halo 2 cache into H2Scene: geometry, materials, textures,
  * lightmaps, placed objects, collision and visibility data. Event driven,
  * no frame work */
@@ -1299,7 +1262,7 @@ struct H2MapLoader : compo::SubsystemBase
         auto resources = section.resources.data(magic);
         if(resources.has_error())
             return 0;
-        auto streams = find_streams(resources.value());
+        auto streams = geo::find_streams(resources.value());
         if(!streams.index || !streams.position)
             return 0;
 

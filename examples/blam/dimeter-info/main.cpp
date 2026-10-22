@@ -671,29 +671,12 @@ struct material_db
 
 /* --- section geometry --------------------------------------------------- */
 
-struct section_streams
-{
-    blam::dimeter::geo::resource_t const* index{nullptr};
-    blam::dimeter::geo::resource_t const* position{nullptr};
-    blam::dimeter::geo::resource_t const* texcoord{nullptr};
-    blam::dimeter::geo::resource_t const* submeshes{nullptr};
-};
-
-section_streams find_streams(
+/* The first resource holds the submeshes, whatever its type says */
+blam::dimeter::geo::section_streams_t dump_streams(
     semantic::Span<blam::dimeter::geo::resource_t const> resources)
 {
-    section_streams out;
-    if(!resources.empty())
-        out.submeshes = &resources[0];
-    for(auto const& r : resources)
-    {
-        if(r.type0() == 32 && !out.index)
-            out.index = &r;
-        else if(r.type0() == 56 && r.type1() == 0 && !out.position)
-            out.position = &r;
-        else if(r.type0() == 56 && r.type1() == 1 && !out.texcoord)
-            out.texcoord = &r;
-    }
+    auto out      = blam::dimeter::geo::find_streams(resources);
+    out.submeshes = resources.empty() ? nullptr : &resources[0];
     return out;
 }
 
@@ -748,7 +731,7 @@ bool append_section(
     if(resources.has_error())
         return false;
 
-    auto streams = find_streams(resources.value());
+    auto streams = dump_streams(resources.value());
     if(!streams.index || !streams.position)
         return false;
 
