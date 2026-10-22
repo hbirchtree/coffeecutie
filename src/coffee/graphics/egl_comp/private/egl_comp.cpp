@@ -309,7 +309,12 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
 
     // clang-format off
     std::vector<std::pair<EGLint, EGLint>> surfaceConfig = {
+#if defined(EGL_USE_CEAGL)
+        /* CEAGL only does window surfaces */
+        {EGL_SURFACE_TYPE, EGL_WINDOW_BIT},
+#else
         {EGL_SURFACE_TYPE, surfaceless ? EGL_PBUFFER_BIT : EGL_WINDOW_BIT},
+#endif
 
         {EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER},
         {EGL_RENDERABLE_TYPE, render_type},
@@ -519,8 +524,11 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
        res.has_error())
     {
         std::vector<EGLConfig> configs(100);
-        EGLint                 num_configs;
+        EGLint                 num_configs = 0;
+#if !defined(EGL_USE_CEAGL)
+        /* CEAGL cannot enumerate configs */
         eglGetConfigs(display, configs.data(), configs.size(), &num_configs);
+#endif
         configs.resize(num_configs);
         cWarning("No config selected, enumerating:");
         for(auto const& config : configs)
@@ -635,7 +643,9 @@ void GraphicsFramebuffer::swapBuffers(comp_app::app_error& ec)
     if(m_container->service<comp_app::PtrNativeWindowInfo>()->window_system ==
        ws_t::surfaceless)
     {
+#if !defined(EGL_USE_CEAGL)
         glFinish();
+#endif
     } else
     {
         auto display = m_container->service<DisplayHandle>()->context().display;
@@ -705,6 +715,7 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
     using ws_t = comp_app::interfaces::PtrNativeWindowInfo::window_system_t;
     if(ptr_info->window_system == ws_t::surfaceless)
     {
+#if !defined(EGL_USE_CEAGL)
         auto const& windowConfig =
             comp_app::AppLoader::config<comp_app::WindowConfig>(e);
         std::array<EGLint, 5> pbufattrs = {{
@@ -718,6 +729,7 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
             display,
             e.service<egl::GraphicsContext>()->m_config,
             pbufattrs.data());
+#endif
     } else
     {
 #if defined(EGL_VERSION_1_5) && SUPPORTS_PLATFORM_DISPLAY_API
