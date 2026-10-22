@@ -763,7 +763,8 @@ using PhysicsManifest = compo::SubsystemManifest<
         PlayerCamera,
         const PlayerInfo,
         const NetworkInfo,
-        const AnimationPlayback>,
+        const AnimationPlayback,
+        const BipedStatus>,
     type_list_t<const BSPCache<V>, DebugMarkers, const LoadingStatus>,
     empty_list_t>;
 
@@ -826,6 +827,7 @@ struct PhysicsSystem
         {
             reconcile_player_bodies(p);
             reconcile_object_bodies(p, true);
+            lay_down_corpses(p);
             pose_hulls(p);
         }
 
@@ -2249,10 +2251,44 @@ struct PhysicsSystem
         }
     }
 
+    /* The dead lie where they fell: on the ground still, but in no one's
+     * way, not pushed about, and out of the line of fire */
+    void lay_down_corpses(Proxy& p)
+    {
+        for(auto& [id, body] : m_bodies)
+        {
+            btRigidBody* const rigid = body.world_body.get();
+            if(body.group != Physics::BodyCreationShape::Character || !rigid)
+                continue;
+            auto const* status = p.template get<BipedStatus>(id);
+            bool const  dead   = status && status->dead;
+            auto const  laid   = m_corpses.find(id);
+            /* A body made again since was added standing */
+            bool const lying = laid != m_corpses.end() && laid->second == rigid;
+            if(dead == lying)
+                continue;
+            m_world->removeRigidBody(rigid);
+            if(dead)
+                m_corpses[id] = rigid;
+            else
+                m_corpses.erase(id);
+            add_to_world(*rigid, body.group);
+        }
+        std::erase_if(m_corpses, [this](auto const& c) { return !m_bodies.contains(c.first); });
+    }
+
     void add_to_world(btRigidBody& body, Physics::BodyCreationShape::group_t group)
     {
         using filter = btBroadphaseProxy::CollisionFilterGroups;
         int constexpr all = filter::AllFilter;
+        /* Only the level holds a corpse up, however it comes back */
+        if(std::any_of(m_corpses.begin(), m_corpses.end(), [&body](auto const& c) {
+               return c.second == &body;
+           }))
+        {
+            m_world->addRigidBody(&body, filter::DebrisFilter, filter::StaticFilter);
+            return;
+        }
         switch(group)
         {
         case Physics::BodyCreationShape::AnyGroup:
@@ -3107,6 +3143,8 @@ struct PhysicsSystem
     }
 
     std::map<u64, entity_body> m_bodies;
+    /* Bodies of the dead, as laid down */
+    std::map<u64, btRigidBody const*> m_corpses;
 
     struct player_body_t
     {
