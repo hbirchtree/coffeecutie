@@ -244,6 +244,8 @@ u32 extract_bitmaps(
                     auto*       dst = pixels.data() + face * base;
                     /* NV2A stores uncompressed textures Morton-swizzled;
                      * DXT is always linear */
+                    u32 const row   = width * fmt->bpp / 8;
+                    u32 const pitch = fmt->fourcc ? row : img.row_pitch(row);
                     if(!fmt->fourcc && img.swizzled())
                     {
                         if(!blam::swizzle::deswizzle_bytes(
@@ -253,7 +255,10 @@ u32 extract_bitmaps(
                                height,
                                fmt->bpp / 8))
                             std::memcpy(dst, src, base);
-                    } else
+                    } else if(pitch != row && pitch * height <= face_stride)
+                        for(u32 y = 0; y < height; y++)
+                            std::memcpy(dst + y * row, src + y * pitch, row);
+                    else
                         std::memcpy(dst, src, base);
                 }
 
@@ -548,7 +553,12 @@ std::optional<std::string> write_material_dds(
     {
         if(from_le(img.lod_size[lod]) < base)
             continue;
-        auto raw = pool.resolve(img.lod_offset[lod], base);
+        u32 const row    = width * fmt->bpp / 8;
+        u32 const pitch  = fmt->fourcc ? row : img.row_pitch(row);
+        u32 const stored = pitch != row ? pitch * height : base;
+        if(from_le(img.lod_size[lod]) < stored)
+            continue;
+        auto raw = pool.resolve(img.lod_offset[lod], stored);
         if(!raw)
             continue;
         auto const*     src = reinterpret_cast<u8 const*>(raw->data());
@@ -562,7 +572,10 @@ std::optional<std::string> write_material_dds(
                    height,
                    fmt->bpp / 8))
                 std::memcpy(pixels.data(), src, base);
-        } else
+        } else if(pitch != row)
+            for(u32 y = 0; y < height; y++)
+                std::memcpy(pixels.data() + y * row, src + y * pitch, row);
+        else
             std::memcpy(pixels.data(), src, base);
 
         auto filename = sanitize(map.name_of(bitm_tag)) + ".dds";

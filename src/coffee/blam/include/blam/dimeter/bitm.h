@@ -101,6 +101,16 @@ struct alignas(4) image_t
         u16 f = from_le(static_cast<u16>(flags));
         return f & static_cast<u16>(flags_t::swizzled);
     }
+
+    /*! Bytes from one row to the next as stored: linear uncompressed
+     * images pad each row to 64 bytes */
+    inline u32 row_pitch(u32 row_bytes) const
+    {
+        u16 f = from_le(static_cast<u16>(flags));
+        return (f & static_cast<u16>(flags_t::linear)) && !swizzled() && !compressed()
+                   ? (row_bytes + 63u) & ~63u
+                   : row_bytes;
+    }
 };
 
 static_assert(offsetof(image_t, pixels) == 0x18);

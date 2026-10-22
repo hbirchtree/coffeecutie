@@ -157,7 +157,11 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
         while(levels.size() < mip_count)
         {
             u32 bytes = level_bytes(format, lw, lh);
-            if(!bytes || offset + bytes > lod_size)
+            /* Linear rows are padded as stored */
+            u32 const row    = compressed ? 0 : lw * bpp;
+            u32 const pitch  = compressed ? 0 : img.row_pitch(row);
+            u32 const stored = pitch != row ? pitch * lh : bytes;
+            if(!bytes || offset + stored > lod_size)
                 break;
             if(compressed && (lw < 4 || lh < 4))
                 break;
@@ -169,7 +173,10 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
             {
                 if(!blam::swizzle::deswizzle_bytes(in, out, lw, lh, bpp))
                     std::memcpy(out.data(), in.data(), bytes);
-            } else
+            } else if(pitch != row)
+                for(u32 y = 0; y < lh; y++)
+                    std::memcpy(out.data() + y * row, src + offset + y * pitch, row);
+            else
                 std::memcpy(out.data(), in.data(), bytes);
             if(p8)
             {
@@ -193,7 +200,7 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
                         level.pixels[i + 3] = 0xFF;
                 }
             levels.push_back(std::move(level));
-            offset += bytes;
+            offset += stored;
             if(lw == 1 && lh == 1)
                 break;
             lw = std::max(lw / 2, 1u);
