@@ -175,7 +175,12 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     event.lifecycle_type = LifecycleEvent::Foreground;
     DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
     
-    CGSize screenRes = [[UIScreen mainScreen] nativeBounds].size;
+    /* nativeBounds stays portrait, bounds follows the interface orientation */
+    UIScreen* screen    = UIScreen.mainScreen;
+    CGFloat   scale     = screen.scale;
+    CGSize    screenRes = screen.bounds.size;
+    screenRes.width *= scale;
+    screenRes.height *= scale;
     
     using namespace Coffee::Display;
     
