@@ -2175,9 +2175,11 @@ void dump_biped(blam::scn::biped const* biped)
 void dump_collision(blam::coll::header const* coll)
 {
     fmt::print(
-        "  [coll]\n    flags=0x{:x} pathfinding x={:g}..{:g} y={:g}..{:g} "
-        "z={:g}..{:g}\n",
+        "  [coll]\n    flags=0x{:x} body={:g} shield={:g} pathfinding x={:g}..{:g} "
+        "y={:g}..{:g} z={:g}..{:g}\n",
         coll->flags,
+        coll->maximum_body_vitality,
+        coll->maximum_shield_vitality,
         coll->x_min, coll->x_max,
         coll->y_min, coll->y_max,
         coll->z_min, coll->z_max);
