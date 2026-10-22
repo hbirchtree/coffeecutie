@@ -5,6 +5,9 @@
 #include "map.h"
 #include "objects.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 namespace blam::dimeter {
 
 /*!
@@ -115,6 +118,67 @@ inline std::optional<anim::decoded_t> decode_animation(
     if(!bytes)
         return std::nullopt;
     return anim::decode(animation, bytes->bytes, defaults);
+}
+
+/*! A render model's nodes at rest, from each node's own place */
+template<typename V>
+inline std::vector<anim::node_pose_t> model_pose(map_container<V> const& map, geo::model_header_t const& model)
+{
+    std::vector<anim::node_pose_t> out;
+    for(auto const& n : map.span(model.nodes))
+        out.push_back({
+            .rotation = Quatf(from_le(n.rotation[3]), from_le(n.rotation[0]), from_le(n.rotation[1]), from_le(n.rotation[2])),
+            .translation = Vecf3(from_le(n.position[0]), from_le(n.position[1]), from_le(n.position[2])),
+        });
+    return out;
+}
+
+/*! Per node: its frame in model space under `pose`; parents precede their
+ * children. Model nodes carry no scale, so the pose's is left out. */
+template<typename V>
+inline std::vector<typing::vector_types::Matf4> node_matrices(
+    map_container<V> const&               map,
+    geo::model_header_t const&            model,
+    std::vector<anim::node_pose_t> const& pose)
+{
+    using typing::vector_types::Matf4;
+    auto const         nodes = map.span(model.nodes);
+    std::vector<Matf4> out;
+    for(size_t i = 0; i < nodes.size() && i < pose.size(); i++)
+    {
+        Matf4 const local  = glm::translate(Matf4(1.f), pose[i].translation) * glm::mat4_cast(pose[i].rotation);
+        i16 const   parent = nodes[i].parent.value();
+        out.push_back(parent >= 0 && static_cast<size_t>(parent) < out.size() ? out[parent] * local : local);
+    }
+    return out;
+}
+
+/*! Per node: its frame in model space at rest */
+template<typename V>
+inline std::vector<typing::vector_types::Matf4> rest_frames(
+    map_container<V> const& map, geo::model_header_t const& model)
+{
+    return node_matrices(map, model, model_pose(map, model));
+}
+
+/*! Per node: the inverse of its rest frame, as the model stores it */
+template<typename V>
+inline std::vector<typing::vector_types::Matf4> inverse_bind(
+    map_container<V> const& map, geo::model_header_t const& model)
+{
+    using typing::vector_types::Matf4;
+    std::vector<Matf4> out;
+    for(auto const& n : map.span(model.nodes))
+    {
+        auto const& m = n.inverse_transform;
+        Matf4       inverse(1.f);
+        inverse[0] = Vecf4(from_le(m[0]), from_le(m[1]), from_le(m[2]), 0.f);
+        inverse[1] = Vecf4(from_le(m[3]), from_le(m[4]), from_le(m[5]), 0.f);
+        inverse[2] = Vecf4(from_le(m[6]), from_le(m[7]), from_le(m[8]), 0.f);
+        inverse[3] = Vecf4(from_le(m[9]), from_le(m[10]), from_le(m[11]), 1.f);
+        out.push_back(inverse);
+    }
+    return out;
 }
 
 } // namespace blam::dimeter
