@@ -3218,6 +3218,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         }));
     }
 
+    static bool is_weapon(BlamFiles<halo_version> const& files, blam::tag_index<> weapon)
+    {
+        blam::tag_index_view<halo_version> index(files.container);
+        auto const tag = index.find(weapon);
+        return tag != index.end() && (*tag).valid() && (*tag).matches(blam::tag_class_t::weap);
+    }
+
     /* Remote players hold what their peer last reported, through a map load
      * and before their body exists */
     void equip_remote_players(Proxy& p)
@@ -3236,6 +3243,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto const known = equipment_of(p, player.id(), info);
             if(known.weapon == it->second.weapon && known.slung == it->second.slung)
                 continue;
+            /* Tag ids are the map's own: a report from the last map waits for
+             * the next */
+            auto const& files = p.subsystem<BlamFiles<halo_version>>();
+            if(!is_weapon(files, it->second.weapon) ||
+               (it->second.slung != blam::tag_index<>{} && !is_weapon(files, it->second.slung)))
+                continue;
+            /* A body not shown yet takes it when it is; once is enough */
+            u32 const generation = files.load_generation;
+            auto*     equipped   = p.get<BipedEquipment>(player.id());
+            auto&     asked      = m_equip_asked[player.id()];
+            if(!(equipped && equipped->held(generation)) && asked.first == generation &&
+               asked.second == it->second)
+                continue;
+            asked = {generation, it->second};
             EquipWeaponEvent equip{
                 .entity_id = player.id(),
                 .weapon    = it->second.weapon,
@@ -4217,6 +4238,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u64, DeviceSync>                m_sent_devices;
     std::optional<EquipmentSync>             m_sent_own_equipment;
     std::map<u32, EquipmentSync>             m_remote_weapons;
+    /* What was last asked of each remote body not shown yet, and in which load */
+    std::map<u64, std::pair<u32, EquipmentSync>> m_equip_asked;
     std::vector<ObjectDespawn>               m_despawns;
     std::vector<EquipWeaponEvent>            m_pickups;
     std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>> m_despawn_queue;
