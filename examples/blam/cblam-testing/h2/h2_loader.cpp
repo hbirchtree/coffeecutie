@@ -19,6 +19,7 @@
 #include <blam/dimeter/lightmap.h>
 #include <blam/dimeter/vista.h>
 #include <blam/dimeter/map.h>
+#include <blam/dimeter/views.h>
 #include <blam/dimeter/material.h>
 #include <blam/dimeter/scenario.h>
 #include <blam/dimeter/shader.h>
@@ -1855,13 +1856,9 @@ struct H2MapLoader : compo::SubsystemBase
 
         /* The body stands as the third-person unit does holding the weapon */
         std::optional<u32> stance;
-        auto const*        unit_tag = map.tag_at(rep->third_person_unit.tag_id);
-        auto const* unit = unit_tag ? unit_tag->template data<dim::obj::biped_t>(map.magic())
-                                    : nullptr;
-        auto const* hlmt_tag = unit ? map.tag_at(unit->model.tag_id) : nullptr;
-        auto const* hlmt =
-            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic()) : nullptr;
-        auto const* graph_tag = hlmt ? map.tag_at(hlmt->animation.tag_id) : nullptr;
+        auto const         unit = map.template get<dim::obj::biped_t>(rep->third_person_unit);
+        auto const         unit_view = dim::object_view::of(map, rep->third_person_unit);
+        auto const*        graph_tag = unit_view.animation.tag;
         std::string weapon_class =
             weapon ? std::string(map.string(weapon->weapon_class)) : std::string{};
         if(graph_tag && body_tag)
@@ -1875,7 +1872,7 @@ struct H2MapLoader : compo::SubsystemBase
             fp.eye = camera_marker(
                 map,
                 *unit,
-                hlmt ? map.tag_at(hlmt->render_model.tag_id) : nullptr,
+                unit_view.render_model.tag,
                 *body_tag,
                 m_scene.animations[*stance]);
         cDebug(
@@ -2155,23 +2152,13 @@ struct H2MapLoader : compo::SubsystemBase
         i32                                 section,
         std::unordered_map<u32, i16> const* permutations = nullptr)
     {
-        auto const obje = map.template get<dim::obj::object_t>(object);
-        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
-        auto const* hlmt =
-            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
-                     : nullptr;
-        auto const* coll_tag = hlmt ? map.tag_at(hlmt->collision_model.tag_id)
-                                    : nullptr;
-        auto const* coll =
-            coll_tag ? coll_tag->template data<dim::obj::coll::model_t>(map.magic())
-                     : nullptr;
+        auto const view = dim::object_view::of(map, object);
+        auto const& coll = view.collision_model;
         if(!coll)
             return 0;
         std::vector<Matf4> node_world;
-        if(auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id))
-            if(auto const* model =
-                   mode_tag->template data<geo::model_header_t>(map.magic()))
-                node_world = model_nodes(map, *model);
+        if(view.render_model)
+            node_world = model_nodes(map, *view.render_model);
         auto regions = coll->regions.data(map.magic());
         if(regions.has_error())
             return 0;
@@ -2485,19 +2472,12 @@ struct H2MapLoader : compo::SubsystemBase
         dim::tag_reference<> const&  object,
         dim::tag_t const&            mode_tag)
     {
-        auto const* obje_tag = map.tag_at(object.tag_id);
-        auto const* obje =
-            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic()) : nullptr;
-        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
-        auto const* hlmt =
-            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic()) : nullptr;
-        auto const* jmad_tag = hlmt ? map.tag_at(hlmt->animation.tag_id) : nullptr;
-        auto const* graph =
-            jmad_tag ? jmad_tag->template data<dim::anim::header_t>(map.magic()) : nullptr;
+        auto const  view  = dim::object_view::of(map, object);
+        auto const& graph = view.animation;
         auto const* model = mode_tag.template data<geo::model_header_t>(map.magic());
         if(!graph || !model)
             return std::nullopt;
-        u64 const key = (static_cast<u64>(obje_tag->tag_id.raw) << 32) |
+        u64 const key = (static_cast<u64>(view.object.tag->tag_id.raw) << 32) |
                         mode_tag.tag_id.raw;
         if(auto it = m_animation_index.find(key); it != m_animation_index.end())
             return it->second;
@@ -2557,9 +2537,8 @@ struct H2MapLoader : compo::SubsystemBase
         std::vector<Matf4> const bind = model_nodes(map, *model);
         H2Scene::animation_t     out{.frames = decoded->frames, .nodes = static_cast<u32>(node_count)};
         /* A device's position runs 0 to 1 over its transition time */
-        if(map.string(chosen->name) == "device:position" &&
-           (obje_tag->matches(blam::tag_class_t::mach) || obje_tag->matches(blam::tag_class_t::ctrl) || obje_tag->matches(blam::tag_class_t::lifi)))
-            if(auto const* device = obje_tag->template data<dim::obj::device_t>(map.magic());
+        if(map.string(chosen->name) == "device:position" && view.is_device())
+            if(auto const* device = view.object.tag->template data<dim::obj::device_t>(map.magic());
                device && from_le(device->position_transition_time) > 0.f)
                 out.rate = static_cast<f32>(out.frames) * from_le(device->position_transition_time);
         out.palette.resize(static_cast<size_t>(out.frames) * node_count);
@@ -2579,7 +2558,7 @@ struct H2MapLoader : compo::SubsystemBase
             }
         cDebug(
             "H2: {}: animation {} ({} frames, {} nodes)",
-            map.name_of(*jmad_tag),
+            map.name_of(*graph.tag),
             map.string(chosen->name),
             out.frames,
             node_count);
@@ -2594,14 +2573,7 @@ struct H2MapLoader : compo::SubsystemBase
     dim::tag_t const* render_model_of(
         dim::map_container<V> const& map, dim::tag_reference<> const& object)
     {
-        auto const obje = map.template get<dim::obj::object_t>(object);
-        if(!obje)
-            return nullptr;
-        auto const hlmt = map.template get<dim::obj::hlmt_t>(obje->model);
-        if(!hlmt)
-            return nullptr;
-        auto const* mode_tag = map.tag_at(hlmt->render_model.tag_id);
-        return mode_tag && mode_tag->matches(blam::tag_class_t::mode) ? mode_tag : nullptr;
+        return dim::object_view::of(map, object).render_model.tag;
     }
 
     /* The permutation each region shows for an object's variant, keyed by
@@ -2615,15 +2587,12 @@ struct H2MapLoader : compo::SubsystemBase
         dim::string_id               variant)
     {
         std::unordered_map<u32, i16> out;
-        auto const obje = map.template get<dim::obj::object_t>(object);
-        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
-        auto const* hlmt =
-            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
-                     : nullptr;
+        auto const  view = dim::object_view::of(map, object);
+        auto const& hlmt = view.model;
         if(!hlmt)
             return out;
         if(from_le(variant.raw) == 0)
-            variant = obje->default_model_variant;
+            variant = view.object->default_model_variant;
         if(from_le(variant.raw) == 0)
             return out;
         auto variants = hlmt->variants.data(map.magic());
@@ -2771,20 +2740,12 @@ struct H2MapLoader : compo::SubsystemBase
         f32                                 scale,
         std::unordered_map<u32, i16> const* permutations)
     {
-        auto const* obje_tag = map.tag_at(object.tag_id);
-        auto const* obje =
-            obje_tag ? obje_tag->template data<dim::obj::object_t>(map.magic())
-                     : nullptr;
-        auto const* hlmt_tag = obje ? map.tag_at(obje->model.tag_id) : nullptr;
-        auto const* hlmt =
-            hlmt_tag ? hlmt_tag->template data<dim::obj::hlmt_t>(map.magic())
-                     : nullptr;
+        auto const view = dim::object_view::of(map, object);
         /* Devices move as they are animated, never freely */
-        if(!hlmt || obje_tag->matches(blam::tag_class_t::mach) || obje_tag->matches(blam::tag_class_t::ctrl) ||
-           obje_tag->matches(blam::tag_class_t::lifi))
+        if(!view.model || view.is_device())
             return std::nullopt;
-        auto const model = map.template get<geo::model_header_t>(hlmt->render_model);
-        auto const phmo = map.template get<dim::obj::phmo::model_t>(hlmt->physics_model);
+        auto const& model = view.render_model;
+        auto const& phmo  = view.physics_model;
         bool moves = false;
         f32  mass  = phmo ? from_le(phmo->mass) : 0.f;
         f32  sum   = 0.f;
@@ -2802,8 +2763,8 @@ struct H2MapLoader : compo::SubsystemBase
             mass = sum;
         /* Weapons, equipment and debris without a physics model are light
          * boxes, as in Halo 1 */
-        bool const item = obje_tag->matches(blam::tag_class_t::weap) || obje_tag->matches(blam::tag_class_t::eqip) ||
-                          obje_tag->matches(blam::tag_class_t::garb);
+        bool const item = view.is(blam::tag_class_t::weap) || view.is(blam::tag_class_t::eqip) ||
+                          view.is(blam::tag_class_t::garb);
         if(!(moves && mass > 0.f) && !item)
             return std::nullopt;
         if(!(moves && mass > 0.f))
@@ -2846,7 +2807,7 @@ struct H2MapLoader : compo::SubsystemBase
         }
 
         /* One hull per collision BSP, posed by the render model's nodes */
-        auto const coll = map.template get<dim::obj::coll::model_t>(hlmt->collision_model);
+        auto const& coll = view.collision_model;
         std::vector<Matf4> node_world;
         if(model)
             node_world = model_nodes(map, *model);
@@ -2855,7 +2816,7 @@ struct H2MapLoader : compo::SubsystemBase
         if(coll)
             append_hulls(map, *coll, scaled, node_world, permutations, *hulls);
         /* Bipeds stand, light enough to carry about, as in Halo 1 */
-        if(obje_tag->matches(blam::tag_class_t::bipd))
+        if(view.is(blam::tag_class_t::bipd))
         {
             out.mass    = 1.f;
             out.upright = true;

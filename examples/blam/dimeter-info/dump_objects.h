@@ -155,9 +155,8 @@ inline void dump_object(h2::map_container<V> const& map, h2::tag_t const& tag)
         tag_label(map, o->modifier_shader),
         tag_label(map, o->creation_effect),
         tag_label(map, o->material_effects));
-    if(auto const* hlmt_tag = map.tag_at(o->model.tag_id))
-        if(auto const* hlmt = hlmt_tag->template data<obj::hlmt_t>(map.magic()))
-            dump_hlmt_body(map, *hlmt, "    ");
+    if(auto const hlmt = map.template get<obj::hlmt_t>(o->model))
+        dump_hlmt_body(map, *hlmt, "    ");
     each(map, o->ai_properties, [&](size_t, obj::ai_properties_t const& p) {
         fmt::print(
             "  ai: type='{}' size={} leap={} flags={:#x}\n",
