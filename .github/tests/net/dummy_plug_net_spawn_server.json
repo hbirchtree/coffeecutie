@@ -69,14 +69,14 @@
             ]
         },
         {
-            "time": 9000,
+            "time": 13000,
             "type": "dump_state"
         },
         {
-            "time": 9500,
+            "time": 13500,
             "type": "screenshot",
             "name": "server_view"
         }
     ],
-    "end_time": 11000
+    "end_time": 15000
 }

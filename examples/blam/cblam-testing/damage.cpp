@@ -65,6 +65,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         m_magic           = &files.container.magic;
         m_index.emplace(files.container);
+        for(auto const& area : areas)
+            blast(p, area);
         if(!p.template subsystem<NetworkState>().replica)
         {
             for(auto const& hit : hits)
@@ -201,6 +203,26 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                     : 1.f - (d - inner) / std::max(jpt->radius.y - inner, 1e-3f);
             hurt(p, unit.id(), *jpt, scale, -1, false, player_of(p, area.shooter));
         }
+    }
+
+    /* Every peer throws what it moves itself, so this is not left to the
+     * authority */
+    void blast(Proxy& p, AreaDamageEvent const& area)
+    {
+        auto const* jpt = damage_of(area.damage);
+        /* TODO: use_3d_instantaneous_acceleration, unused in stock maps */
+        if(!jpt || jpt->instantaneous_acceleration.x <= 0.f || jpt->radius.y <= 0.f)
+            return;
+        bool const flat =
+            (jpt->flags & jpt_t::flags_t::do_not_scale_damage_by_distance) !=
+            jpt_t::flags_t::none;
+        Physics::Event ev{Physics::Event::Blast};
+        Physics::Blast blast{
+            .position = area.position,
+            .radius   = {flat ? jpt->radius.y : jpt->radius.x, jpt->radius.y},
+            .speed    = jpt->instantaneous_acceleration.x,
+        };
+        p.template subsystem<PhysicsBus>().inject(ev, &blast);
     }
 
     /* A vehicle hurts what it runs into by how fast it came, but never kills

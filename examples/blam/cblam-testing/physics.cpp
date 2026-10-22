@@ -806,6 +806,8 @@ struct PhysicsSystem
         p.subsystem(loading);
 
         auto const ticks = m_ticks->take();
+        m_blast_queue->poll();
+        auto const blasts = std::exchange(m_blasts, {});
         if(loading->loading)
             return;
 
@@ -829,6 +831,8 @@ struct PhysicsSystem
             reconcile_object_bodies(p, true);
             lay_down_corpses(p);
             pose_hulls(p);
+            for(auto const& blast : blasts)
+                push(blast);
         }
 
         // Simulate when there is anything in the world: the Halo BSP body,
@@ -2427,6 +2431,44 @@ struct PhysicsSystem
             btVector3(impulse.impulse.x, impulse.impulse.y, impulse.impulse.z));
     }
 
+    /* Only bodies simulated here are thrown; whoever simulates the rest
+     * throws them. A walking player keeps the push as carried momentum */
+    void push(Physics::Blast const& blast)
+    {
+        btVector3 const at(blast.position.x, blast.position.y, blast.position.z);
+        f32 const       inner = std::min(blast.radius.x, blast.radius.y);
+        for(auto& [id, body] : m_bodies)
+        {
+            btRigidBody* const rigid = body.world_body.get();
+            if(!rigid || rigid->getInvMass() <= 0.f || rigid->isKinematicObject())
+                continue;
+            btVector3 lo, hi;
+            rigid->getAabb(lo, hi);
+            btVector3 nearest = at;
+            nearest.setMax(lo);
+            nearest.setMin(hi);
+            f32 const d = (nearest - at).length();
+            if(d > blast.radius.y)
+                continue;
+            f32 const scale =
+                d <= inner ? 1.f : 1.f - (d - inner) / std::max(blast.radius.y - inner, 1e-3f);
+            btVector3 const centre = rigid->getCenterOfMassPosition();
+            btVector3       away   = centre - at;
+            away = away.length2() > 1e-6f ? away.normalized() : btVector3(0, 0, 1);
+            btVector3 const change = away * (blast.speed * scale);
+            rigid->activate(true);
+            if(m_player_bodies.contains(id) && !m_corpses.contains(id))
+            {
+                body.carried += btVector3(change.x(), change.y(), 0.f);
+                rigid->setLinearVelocity(
+                    rigid->getLinearVelocity() + btVector3(0.f, 0.f, change.z()));
+                continue;
+            }
+            /* Struck on the near side, so it tumbles away */
+            rigid->applyImpulse(change / rigid->getInvMass(), nearest - centre);
+        }
+    }
+
     void steer(Physics::Drive const& drive)
     {
         auto it = m_bodies.find(drive.vehicle);
@@ -3154,6 +3196,8 @@ struct PhysicsSystem
     };
 
     std::map<u64, player_body_t> m_player_bodies;
+    std::shared_ptr<PhysicsBus::queue_type<Physics::Blast>> m_blast_queue;
+    std::vector<Physics::Blast>                             m_blasts;
     /* Biped bodies by tick, oldest first */
     using biped_sample_t = std::pair<u64, btTransform>;
     std::map<u64, std::deque<biped_sample_t>> m_biped_history;
@@ -3259,6 +3303,10 @@ void alloc_physics(compo::EntityContainer& container)
     phys_bus.addEventFunction<Physics::Reset>(
         0, [&physics](Physics::Event&, Physics::Reset*) {
             physics.reset_world();
+        });
+    physics.m_blast_queue = phys_bus.addQueuedEventFunction<Physics::Blast>(
+        0, [&physics](Physics::Event&, Physics::Blast* blast) {
+            physics.m_blasts.push_back(*blast);
         });
     phys_bus.addEventFunction<Physics::Impulse>(
         0, [&physics](Physics::Event&, Physics::Impulse* impulse) {
