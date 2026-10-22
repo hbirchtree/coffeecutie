@@ -889,12 +889,12 @@ std::set<string> api::query_native_extensions()
     {
         auto edisplay = eglGetCurrentDisplay();
         /* Get display extensions */
-        auto extensions = eglQuerystring(edisplay, EGL_EXTENSIONS);
+        auto extensions = eglQueryString(edisplay, EGL_EXTENSIONS);
         for(auto ext : stl_types::str::split::str<char>(extensions, ' '))
             out.insert(string(ext.begin(), ext.end()));
 #if defined(EGL_VERSION_1_5)
         /* Get client API extensions */
-        extensions = eglQuerystring(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+        extensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
         for(auto ext : stl_types::str::split::str<char>(extensions, ' '))
             out.insert(string(ext.begin(), ext.end()));
 #endif
