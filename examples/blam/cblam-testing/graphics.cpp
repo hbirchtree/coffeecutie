@@ -666,9 +666,14 @@ i32 blam_main()
              * ?map=, boot this game version's uploaded ui.map if there is
              * one, instead of fetching the bundled one. */
             offline_maps::register_storage();
+
+            bool map_was_selected{false};
             if(!compile_info::supports_command_line && !arguments.count("map"))
                 if(auto offline = offline_maps::default_map())
+                {
                     map_filename = MkUrl(*offline, RSCA::AssetFile);
+                    map_was_selected = true;
+                }
             if(auto info = platform::file::file_info(map_filename);
                info.has_value())
             {
@@ -723,8 +728,10 @@ i32 blam_main()
                     .directory = map_dir,
                 };
                 if(map_filename.valid())
+                {
                     load.file = map_filename;
-                else
+                    map_was_selected = true;
+                } else
                     load.file = MkUrl("ui.map", RSCA::AssetFile);
                 gbus.inject(event, &load);
 
@@ -753,7 +760,7 @@ i32 blam_main()
                 }
             }
 
-            setup_config(e);
+            setup_config(e, map_was_selected);
 
 #if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_Net)
             platform::env::set_var("COFFEE_REPORT_URL", EMBEDDED_REPORT_URL);

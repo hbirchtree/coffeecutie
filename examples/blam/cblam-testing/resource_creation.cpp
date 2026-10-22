@@ -66,7 +66,7 @@ void update_camera_aspect(compo::EntityContainer& e)
     }
 }
 
-void setup_config(compo::EntityContainer& e)
+void setup_config(compo::EntityContainer& e, bool map_selected)
 {
     // Config file creation/updating/restore
     struct updates_t
@@ -143,7 +143,7 @@ void setup_config(compo::EntityContainer& e)
         if(config.contains("userPreferences"))
         {
             auto prefs = config["userPreferences"];
-            if(prefs.contains("directory"))
+            if(prefs.contains("directory") && !map_selected)
             {
                 using namespace platform::url::constructors;
                 GameEvent ev{.type = GameEvent::MapRequestListing};
