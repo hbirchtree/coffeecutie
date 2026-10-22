@@ -4316,7 +4316,21 @@ struct LegacyMeshRenderer
                 continue;
             auto              parent = p.template ref<Proxy>(sm.parent);
             Visibility const& vis    = parent.template get<Visibility>();
-            if(!vis.visible_for(0) ||
+            /* A rider's chase camera sees its own biped, and its weapon, as
+             * does the death camera; first-person arms go with the view */
+            auto dead = [&p](u64 entity) {
+                auto const* status = p.template get<BipedStatus>(entity);
+                return status && status->dead;
+            };
+            auto const* held  = p.template get<HeldObject>(sm.parent);
+            u64 const   owner = held ? held->holder : sm.parent;
+            auto const* rider = p.template get<PlayerInfo>(owner);
+            bool const  third_person =
+                rider && (rider->riding.vehicle != 0 || dead(owner));
+            auto const* attached = p.template get<Attachment>(sm.parent);
+            if((attached && dead(attached->parent)) ||
+               (held && !held->shown) ||
+               !vis.visible_for(0, false, third_person) ||
                !((sm.lod_mask >> mod->lod_resolve(vis.lod_for(0))) & 1))
                 continue;
             bool const sky = (parent.tags() & ObjectSkybox) != 0;

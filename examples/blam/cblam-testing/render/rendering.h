@@ -117,7 +117,9 @@ using LegacyMeshRendererManifest = compo::SubsystemManifest<
         const PlayerInfo,
         const PlayerCamera,
         const DrawState,
-        const HeldObject>,
+        const HeldObject,
+        const BipedStatus,
+        const Attachment>,
     type_list_t<
         BitmapCache<V>,
         const BlamFiles<V>,
