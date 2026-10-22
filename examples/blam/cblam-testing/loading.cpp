@@ -2656,6 +2656,9 @@ struct ResourceLoader
             for(auto const& change : pending_equips)
                 if(change.entity_id == player.id())
                     equip_weapon(equip, info, cam, change, files);
+            if(auto const* status = p.template get<BipedStatus>(player.id());
+               status && status->dead)
+                let_go(equip, cam, info);
             auto& weapon = equip.weapons[0];
             if(weapon.tag != biped.held_tag)
             {
@@ -2869,15 +2872,42 @@ struct ResourceLoader
             carried.rounds_total + found.rounds_loaded, 0, std::max(cap, 0)));
     }
 
+    /* The dead drop what they carried; only their own peer spawns it, as
+     * everyone else is told */
+    void let_go(BipedEquipment& equip, PlayerCamera const& cam, PlayerInfo const& info)
+    {
+        f32 turn = 0.f;
+        if(!info.is_remote())
+        {
+            for(auto const& weapon : equip.weapons)
+                if(weapon.tag)
+                    drop(weapon.tag, cam, info.biped.eye_height, turn++);
+            for(auto const& carried : equip.equipment)
+                for(u16 i = 0; carried.tag && i < carried.left; i++)
+                    drop(carried.tag, cam, info.biped.eye_height, turn++);
+        }
+        equip.weapons = {};
+        for(auto& carried : equip.equipment)
+            carried.left = 0;
+        equip.reloading = equip.throwing = false;
+    }
+
     /* Thrown down ahead of the feet, through the usual spawn path */
     void drop(BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height)
     {
+        drop(weapon.tag, cam, eye_height);
+    }
+
+    /* Tossed ahead, each `turn` a little further round */
+    void drop(blam::tag_t const* tag, PlayerCamera const& cam, f32 eye_height, f32 turn = 0.f)
+    {
         Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
-        Vecf3 const flat    = glm::length(Vecf2(forward)) > 1e-3f
+        Vecf3 const ahead   = glm::length(Vecf2(forward)) > 1e-3f
                                   ? glm::normalize(Vecf3(forward.x, forward.y, 0.f))
                                   : Vecf3{1.f, 0.f, 0.f};
+        Vecf3 const flat = glm::angleAxis(turn * drop_spread, Vecf3{0.f, 0.f, 1.f}) * ahead;
         SpawnObjectEvent spawn{
-            .object   = weapon.tag->as_ref(),
+            .object   = tag->as_ref(),
             .position = cam.camera.position - Vecf3{0.f, 0.f, eye_height * .5f} + flat * .5f,
             .server_owned = true,
             .velocity     = flat + Vecf3{0.f, 0.f, 1.f},
@@ -2948,6 +2978,7 @@ struct ResourceLoader
             if(eqip.has_value())
                 equip.equipment.push_back({
                     .equip = eqip.value(),
+                    .tag   = &(*tag),
                     .left  = multiplayer ? static_cast<u16>(std::max<i16>(
                                                grenades.value()[i].multiplayer_spawn_default, 0))
                                          : counts[i],
@@ -2996,6 +3027,7 @@ struct ResourceLoader
     }
 
     static constexpr std::string_view hand_marker = "right hand";
+    static constexpr f32              drop_spread = 1.1f; /* rad between drops */
     /* Health and shield, as fractions of this */
 
     /* A model drawn at the player's eye in the first-person pass */

@@ -3288,6 +3288,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto        it   = m_remote_weapons.find(info.player_idx);
             if(!info.is_remote() || it == m_remote_weapons.end())
                 continue;
+            /* The dead hold nothing, whatever was last reported */
+            if(auto const* status = p.get<BipedStatus>(player.id()); status && status->dead)
+                continue;
             if(auto* equip = p.get<BipedEquipment>(player.id()))
             {
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
