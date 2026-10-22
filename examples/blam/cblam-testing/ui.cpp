@@ -1659,13 +1659,25 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         case 3:
             fmt = CompFmt(pix_fmt::BCn, comp_flags::BC3);
             break;
+        case 4:
+            fmt = PixDesc(pix_fmt::RGB565);
+            break;
+        case 5:
+        case 9:
+        case 10:
+        case 11:
+            fmt = PixDesc(pix_fmt::R8);
+            break;
+        case 6:
+            fmt = PixDesc(pix_fmt::RG8);
+            break;
         case 7:
             fmt = PixDesc(pix_fmt::RGBA4);
             break;
         case 8:
             fmt = PixDesc(pix_fmt::RGBA8);
             break;
-        case 9:
+        case 15:
             filtering = font_cache.font_sampler;
             return font_cache.font_textures->subtexture(layer);
         case 12:
@@ -1690,9 +1702,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     /* GL ES 2 has no instance buffer or texture arrays: each quad carries
      * its instance data, and a draw is a run of quads on one texture */
     void draw_legacy(
-        std::vector<vertex_t> const&                    verts,
-        std::vector<instance_vertex_t> const&           instances,
-        std::vector<std::tuple<Matf3, u32, u32>> const& ranges)
+        std::vector<vertex_t> const&                          verts,
+        std::vector<instance_vertex_t> const&                 instances,
+        std::vector<std::tuple<Matf3, u32, u32, bool>> const& ranges)
     {
         using namespace std::string_view_literals;
         if(!load_legacy())
@@ -1730,7 +1742,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         f32 const la_textures =
             api.feature_info().texture.tex.ext.rg8 ? 0.f : 1.f;
 #endif
-        for(auto const& [matrix, offset, count] : ranges)
+        for(auto const& [matrix, offset, count, premultiplied] : ranges)
             for(u32 first = offset; first < offset + count;)
             {
                 u32 const source = instances.at(first / 6).texture_source.x;
@@ -1784,7 +1796,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             typing::graphics::ShaderStage::Fragment,
                             {"source"sv, 0},
                             m_legacy_sampler}),
-                    gfx::blend_state{.additive = false});
+                    gfx::blend_state{.premultiplied = premultiplied});
                 first = last;
             }
     }
@@ -2079,17 +2091,18 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
         if(m_legacy)
         {
-            std::vector<std::tuple<Matf3, u32, u32>> ranges;
-            u32                                      hud_offset = 0;
-            for(auto const& [matrix, count] : hud_batches)
+            std::vector<std::tuple<Matf3, u32, u32, bool>> ranges;
+            u32                                            hud_offset = 0;
+            for(auto const& [matrix, count, premultiplied] : hud_batches)
             {
-                ranges.emplace_back(matrix, hud_offset, count);
+                ranges.emplace_back(matrix, hud_offset, count, premultiplied);
                 hud_offset += count;
             }
-            ranges.emplace_back(screen_scale, hud_vert_count, ui_vert_count);
-            ranges.emplace_back(cursor_scale, text_start, text_count);
+            ranges.emplace_back(
+                screen_scale, hud_vert_count, ui_vert_count, false);
+            ranges.emplace_back(cursor_scale, text_start, text_count, false);
             if(cursor_visible)
-                ranges.emplace_back(cursor_scale, cursor_start, 6);
+                ranges.emplace_back(cursor_scale, cursor_start, 6, false);
             draw_legacy(vertex_data, instance_vertex_data, ranges);
             return;
         }
