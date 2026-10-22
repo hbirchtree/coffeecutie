@@ -2464,8 +2464,10 @@ struct PhysicsSystem
                     rigid->getLinearVelocity() + btVector3(0.f, 0.f, change.z()));
                 continue;
             }
-            /* Struck on the near side, so it tumbles away */
-            rigid->applyImpulse(change / rigid->getInvMass(), nearest - centre);
+            /* Struck on the near side, so it tumbles away; heavier than a
+             * ghost, it moves less */
+            f32 const heavy = std::min(1.f, blast_full_mass * rigid->getInvMass());
+            rigid->applyImpulse(change * heavy / rigid->getInvMass(), nearest - centre);
         }
     }
 
@@ -3220,6 +3222,8 @@ struct PhysicsSystem
     static constexpr f32 standing_friction    = 1.f;
     /* A vehicle hull's ground contact, as a multiple of its suspension */
     static constexpr f32 hull_contact_stiffness = 10.f;
+    /* Up to this mass a blast moves a body fully, a ghost's */
+    static constexpr f32 blast_full_mass = 2000.f;
     /* How fast carried momentum is lost, wu/s^2 */
     static constexpr f32 carried_ground_decel = 12.f;
     static constexpr f32 carried_air_decel    = .5f;
