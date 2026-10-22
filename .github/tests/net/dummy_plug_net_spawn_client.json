@@ -58,7 +58,7 @@
             ]
         },
         {
-            "time": 9000,
+            "time": 13000,
             "type": "dump_state"
         },
         {
@@ -74,13 +74,13 @@
                 0.20222986,
                 0.034714244
             ],
-            "time": 9200
+            "time": 13200
         },
         {
-            "time": 9500,
+            "time": 13500,
             "type": "screenshot",
             "name": "client_view"
         }
     ],
-    "end_time": 11000
+    "end_time": 15000
 }

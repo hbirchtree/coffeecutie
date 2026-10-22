@@ -47,6 +47,7 @@ struct Event
                 * the mapped map file), so everything must be out of the
                 * simulation before the old map's memory goes away. */
         UnitStruck, /*!< A moving vehicle ran into a unit */
+        Blast,      /*!< An explosion throws what is near */
     } type{};
 };
 
@@ -285,6 +286,15 @@ struct UnitStruck
     u64                   unit{0};
     Vecf3                 point{};
     f32                   speed{0.f}; /*!< How fast it came at the unit, wu/s */
+};
+
+/*! What it reaches is thrown away from it, whatever its mass */
+struct Blast
+{
+    static constexpr auto event_type = Event::Blast;
+    Vecf3                 position{};
+    Vecf2                 radius{};   /*!< Full strength inside x, none past y, wu */
+    f32                   speed{0.f}; /*!< Change in speed at full strength, wu/s */
 };
 
 struct ProbeHere
