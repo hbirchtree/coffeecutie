@@ -28,6 +28,7 @@ using WeaponManifest = compo::SubsystemManifest<
         const NetworkInfo,
         const Attachment,
         const AnimationPlayback,
+        const BipedStatus,
         BipedEquipment,
         Model>,
     type_list_t<
@@ -210,6 +211,15 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         {
             auto [info, cam, net, equip] = ent.components();
             bool const pressed           = std::exchange(m_use_pressed[ent.id()], false);
+            /* Back from the dead, it is still where it fell for a moment:
+             * what it dropped there is not its own again */
+            auto& grace = m_revived[ent.id()];
+            if(auto const* status = p.template get<BipedStatus>(ent.id()); status && status->dead)
+                grace = revive_grace;
+            else if(grace > 0)
+                grace--;
+            if(grace > 0)
+                continue;
             if(info.riding.vehicle || !info.mode.physics || !biped_in_play(info, cam, net) ||
                !equip.held(files.load_generation))
                 continue;
@@ -841,6 +851,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     /* Use presses per player, from every seat's and client's tick input */
     std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>> m_use_queue;
     std::map<u64, bool> m_using, m_use_pressed;
+    std::map<u64, u32>  m_revived; /*!< Frames until it may pick things up */
+    static constexpr u32 revive_grace = 30;
     std::unique_ptr<TickQueue>                                 m_ticks;
     std::vector<WeaponFireEvent>                               m_shots;
 
