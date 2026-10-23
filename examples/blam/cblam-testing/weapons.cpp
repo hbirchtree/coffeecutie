@@ -54,6 +54,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         bool firing{false};     /* held last frame */
         bool fired{false};      /* shot this frame */
         f32  reloading{0.f};    /* seconds left */
+        f32  striking{0.f};     /* melee, seconds left */
         blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
 
@@ -91,6 +92,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             bool       reload = std::exchange(input.intent.reload, false);
             bool const toss   = std::exchange(input.intent.grenade, false);
             bool const cycle  = std::exchange(input.intent.grenade_switch, false);
+            bool const strike = std::exchange(input.intent.melee, false);
             /* A gunner fires the vehicle's weapon, a body its own; the free
              * camera has nothing to shoot with */
             u64 const vehicle = info.riding.vehicle;
@@ -120,7 +122,16 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* Grenades are thrown on foot, whatever is held */
             bool const throwing =
                 !vehicle && grenade(p, ent.id(), info, cam, *equip, ticks, toss, cycle);
-            bool const held = input.intent.fire && !throwing;
+            /* A strike on foot stops the gun until it is done */
+            for(auto const& tick : ticks)
+                state.striking = std::max(state.striking - tick.seconds, 0.f);
+            if(strike && !vehicle && !throwing && state.striking <= 0.f)
+            {
+                state.striking  = melee_time;
+                state.reloading = 0.f;
+                pull(p, ent.id(), info, cam, *weapon_tag, 0, true);
+            }
+            bool const held = input.intent.fire && !throwing && state.striking <= 0.f;
 
             /* Bodies switch, reload and run dry; vehicle guns don't */
             auto* ammo = vehicle ? nullptr : &equip->weapons[0];
@@ -283,7 +294,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerInfo const&   info,
         PlayerCamera const& cam,
         blam::tag_t const&  weapon,
-        u32                 shot_index)
+        u32                 shot_index,
+        bool                melee = false)
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
@@ -292,7 +304,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .shooter    = player,
             .player_idx = info.player_idx,
             .seed       = static_cast<u32>(m_rng()),
-            .position   = cam.camera.position + forward * muzzle_distance,
+            .melee      = melee,
+            .position   = melee ? cam.camera.position
+                                : cam.camera.position + forward * muzzle_distance,
             .direction  = forward,
         };
         if(info.riding.vehicle != 0)
@@ -338,6 +352,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         auto const& magic = files.container.magic;
         if(shot.thrown)
             return thrown(p, shot, files);
+        if(shot.melee)
+            return struck(p, shot, files);
 
         blam::tag_index_view<halo_version> index(files.container);
         auto tag = index.find(shot.weapon.tag_id);
@@ -440,6 +456,81 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         }
     }
 
+    /* Its seat sees the hands swing; the authority finds what is in reach,
+     * a little either side of the aim, and lands the weapon's melee jpt! */
+    void struck(Proxy& p, WeaponFireEvent const& shot, BlamFiles<halo_version> const& files)
+    {
+        auto const& magic = files.container.magic;
+        auto&       game  = p.template subsystem<GameEventBus>();
+        for(auto ent : p.template select<Attachment, AnimationPlayback>())
+        {
+            if(ent.template get<Attachment>().parent != shot.shooter)
+                continue;
+            i32 const clip =
+                fp_clip(ent.template get<AnimationPlayback>(), magic, fp_slot::melee);
+            if(clip < 0)
+                continue;
+            PlayModelAnimationEvent play{.entity = ent.id(), .animation = clip, .fade = 0.f};
+            GameEvent ev{.type = GameEvent::PlayModelAnimation};
+            game.inject(ev, &play);
+        }
+        if(p.template subsystem<NetworkState>().replica)
+            return;
+        blam::tag_index_view<halo_version> index(files.container);
+        auto tag = index.find(shot.weapon.tag_id);
+        if(tag == index.end() || !(*tag).matches(blam::tag_class_t::weap))
+            return;
+        auto weapon = (*tag).template data<weapon_t>(magic);
+        if(!weapon.has_value() || !weapon.value()[0].player_melee_damage.valid())
+            return;
+        for(f32 const turn : {0.f, melee_spread, -melee_spread})
+        {
+            Vecf3 const dir = glm::angleAxis(turn, Vecf3{0.f, 0.f, 1.f}) * shot.direction;
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{
+                .from   = shot.position,
+                .to     = shot.position + dir * melee_reach,
+                .ignore = shot.shooter,
+                .rewind = shot.view_tick,
+            };
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            if(!ray.hit || ray.entity_id == 0)
+                continue;
+            auto const* target = p.template get<PlayerInfo>(ray.entity_id);
+            ObjectHitEvent hit{
+                .damage         = weapon.value()[0].player_melee_damage,
+                .target         = ray.entity_id,
+                .shooter        = shot.shooter,
+                .target_player  = target ? target->player_idx : ObjectHitEvent::no_player,
+                .shooter_player = shot.player_idx,
+                .point          = ray.point,
+                .normal         = ray.normal,
+                .direction      = dir,
+                .part           = ray.part,
+                .head           = ray.head,
+                .hitscan        = true,
+                .behind         = from_behind(p, ray.entity_id, dir),
+            };
+            GameEvent hit_ev{.type = GameEvent::ObjectHit};
+            game.inject(hit_ev, &hit);
+            return;
+        }
+    }
+
+    /* Struck along where it faces, i.e. in the back */
+    bool from_behind(Proxy& p, u64 target, Vecf3 const& direction)
+    {
+        Vecf3 facing{};
+        if(auto const* cam = p.template get<PlayerCamera>(target))
+            facing = glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f};
+        else if(auto const* model = p.template get<Model>(target))
+            facing = model->rotation * Vecf3{1.f, 0.f, 0.f};
+        Vecf2 const a{facing}, b{direction};
+        if(glm::length(a) < 1e-3f || glm::length(b) < 1e-3f)
+            return false;
+        return glm::dot(glm::normalize(a), glm::normalize(b)) > behind_cos;
+    }
+
     /* A bullet's flight as one ray, against bipeds as the shooter saw them */
     void trace(
         Proxy&                       p,
@@ -477,7 +568,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         p.template subsystem<GameEventBus>().inject(hit_ev, &hit);
     }
 
-    static i32 fire_clip(AnimationPlayback const& anim, blam::map_ptr const& magic)
+    using fp_slot = blam::antr::first_person_weapon;
+
+    static i32 fp_clip(AnimationPlayback const& anim, blam::map_ptr const& magic, size_t slot)
     {
         if(!anim.graph)
             return -1;
@@ -485,10 +578,14 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         if(!fp.has_value() || fp.value().empty())
             return -1;
         auto slots = fp.value()[0].animations.data(magic);
-        using fp_slot = blam::antr::first_person_weapon;
-        if(!slots.has_value() || slots.value().size() <= fp_slot::fire_1)
+        if(!slots.has_value() || slots.value().size() <= slot)
             return -1;
-        return slots.value()[fp_slot::fire_1].animation;
+        return slots.value()[slot].animation;
+    }
+
+    static i32 fire_clip(AnimationPlayback const& anim, blam::map_ptr const& magic)
+    {
+        return fp_clip(anim, magic, fp_slot::fire_1);
     }
 
     /* The player's first-person weapon model, or its hands */
@@ -828,6 +925,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     /* Ahead of the eye, clear of the body that fires */
     static constexpr f32 muzzle_distance = .4f;
+    static constexpr f32 melee_time      = .8f;  /* s, a strike to the next */
+    static constexpr f32 melee_reach     = 1.2f; /* wu, from the eye */
+    static constexpr f32 melee_spread    = .15f; /* rad, the side rays */
+    static constexpr f32 behind_cos      = .5f;  /* within 60 deg of its facing */
     /* Vehicle guns: where they fire from, and how far the crosshair looks */
     static constexpr std::string_view gun_marker = "primary trigger";
 
