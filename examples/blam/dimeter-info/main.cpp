@@ -168,13 +168,13 @@ u32 base_level_size(dds_info const& info, u32 width, u32 height)
     return width * height * (info.bpp / 8);
 }
 
-template<typename V>
+template<typename V, typename Selected>
 u32 extract_bitmaps(
     blam::dimeter::map_container<V> const& map,
     blam::dimeter::raw_pool const&         pool,
     std::string const&                     outdir,
     u32                                    limit,
-    std::string_view                       name_filter)
+    Selected const&                        selected)
 {
     namespace h2 = blam::dimeter;
     using blam::from_le;
@@ -186,10 +186,7 @@ u32 extract_bitmaps(
     {
         if(limit && extracted >= limit)
             break;
-        if(!tag.valid() || !tag.matches(blam::tag_class_t::bitm))
-            continue;
-        if(!name_filter.empty() &&
-           map.name_of(tag).find(name_filter) == std::string_view::npos)
+        if(!tag.valid() || !tag.matches(blam::tag_class_t::bitm) || !selected(tag))
             continue;
         auto const* bitm = tag.template data<h2::bitm::header_t>(magic);
         if(!bitm)
@@ -326,12 +323,13 @@ std::vector<char> make_xadpcm_wav(
     return out;
 }
 
-template<typename V>
+template<typename V, typename Selected>
 u32 extract_sounds(
     blam::dimeter::map_container<V> const& map,
     blam::dimeter::raw_pool const&         pool,
     std::string const&                     outdir,
-    u32                                    limit)
+    u32                                    limit,
+    Selected const&                        selected)
 {
     namespace h2 = blam::dimeter;
     using blam::from_le;
@@ -370,7 +368,7 @@ u32 extract_sounds(
     {
         if(adpcm_left == 0 && wma_left == 0)
             break;
-        if(!tag.valid() || !tag.matches(blam::tag_class_t::snd))
+        if(!tag.valid() || !tag.matches(blam::tag_class_t::snd) || !selected(tag))
             continue;
         auto const* sound = tag.template data<h2::snd::sound>(magic);
         if(!sound)
@@ -894,11 +892,12 @@ bool append_section(
     return true;
 }
 
-template<typename V>
+template<typename V, typename Selected>
 u32 extract_bsp_meshes(
     blam::dimeter::map_container<V> const& map,
     blam::dimeter::raw_pool const&         pool,
-    std::string const&                     outdir)
+    std::string const&                     outdir,
+    Selected const&                        selected)
 {
     namespace h2  = blam::dimeter;
     namespace geo = h2::geo;
@@ -926,6 +925,8 @@ u32 extract_bsp_meshes(
             continue;
 
         auto const* bsp_tag = map.tag_at(ref.bsp.tag_id);
+        if(!bsp_tag || !selected(*bsp_tag, false))
+            continue;
         auto        name    = bsp_tag ? std::string(map.name_of(*bsp_tag))
                                       : "bsp_" + std::to_string(extracted);
 
@@ -1016,12 +1017,13 @@ u32 extract_bsp_meshes(
     return extracted;
 }
 
-template<typename V>
+template<typename V, typename Selected>
 u32 extract_model_meshes(
     blam::dimeter::map_container<V> const& map,
     blam::dimeter::raw_pool const&         pool,
     std::string const&                     outdir,
-    u32                                    limit)
+    u32                                    limit,
+    Selected const&                        selected)
 {
     namespace geo = blam::dimeter::geo;
 
@@ -1031,7 +1033,7 @@ u32 extract_model_meshes(
     {
         if(limit && extracted >= limit)
             break;
-        if(!tag.valid() || !tag.matches(blam::tag_class_t::mode))
+        if(!tag.valid() || !tag.matches(blam::tag_class_t::mode) || !selected(tag))
             continue;
         auto const* model = tag.template data<geo::model_header_t>(magic);
         if(!model)
@@ -1170,6 +1172,9 @@ struct options_t
     std::string lightmap_dir;
     std::string extract_dir;
     u32         limit{10};
+    /*! A tag is named exactly this: only it matches, not every name
+     * containing it */
+    bool name_exact{false};
 };
 
 template<typename V>
@@ -1186,7 +1191,8 @@ bool tag_selected(
        tag.tag_class.str() != options.class_filter)
         return false;
     if(!options.name_filter.empty() &&
-       map.name_of(tag).find(options.name_filter) == std::string_view::npos)
+       (options.name_exact ? map.name_of(tag) != options.name_filter
+                           : map.name_of(tag).find(options.name_filter) == std::string_view::npos))
         return false;
     return true;
 }
@@ -1421,7 +1427,7 @@ int run_map(
     blam::dimeter::map_container<V> const& map_in,
     BytesConst const&                      map_data,
     std::string const&                     map_dir,
-    options_t const&                       options)
+    options_t const&                       options_in)
 {
     namespace h2 = blam::dimeter;
     using namespace platform::url::constructors;
@@ -1454,6 +1460,14 @@ int run_map(
         map.shared = &*map_shared;
         cBasicPrint("Shared tags: attached, {0} tags", map_shared->tags().size());
     }
+
+    options_t options = options_in;
+    for(auto const& tag : map.tags())
+        if(!options.name_filter.empty() && map.name_of(tag) == options.name_filter)
+            options.name_exact = true;
+    auto selected = [&](h2::tag_t const& tag, bool needs_data = true) {
+        return tag_selected(map, tag, options, needs_data);
+    };
 
     /* Every index entry must resolve to itself by its own id */
     if(options.check_lookup)
@@ -1586,14 +1600,14 @@ int run_map(
 
     cBasicPrint("Extracting bitmaps:");
     u32 bitmaps = extract_bitmaps(
-        map, pool, options.extract_dir, options.limit, options.name_filter);
+        map, pool, options.extract_dir, options.limit, selected);
     cBasicPrint("Extracting sounds:");
-    u32 sounds = extract_sounds(map, pool, options.extract_dir, options.limit);
+    u32 sounds = extract_sounds(map, pool, options.extract_dir, options.limit, selected);
     cBasicPrint("Extracting BSP meshes:");
-    u32 bsps = extract_bsp_meshes(map, pool, options.extract_dir);
+    u32 bsps = extract_bsp_meshes(map, pool, options.extract_dir, selected);
     cBasicPrint("Extracting model meshes:");
     u32 models =
-        extract_model_meshes(map, pool, options.extract_dir, options.limit);
+        extract_model_meshes(map, pool, options.extract_dir, options.limit, selected);
     cBasicPrint(
         "Extracted {0} bitmaps, {1} sounds, {2} BSPs, {3} models",
         bitmaps,
@@ -1679,7 +1693,7 @@ i32 coffee_main(i32, cstring_w*)
         //
         ("c,class", "Only tags of this class, e.g. shad", cxxopts::value<std::string>())
         //
-        ("n,name", "Only tags whose name contains this", cxxopts::value<std::string>())
+        ("n,name", "Only the tag of this name, else tags whose name contains it", cxxopts::value<std::string>())
         //
         ("l,list", "List matching tags")
         //
@@ -1724,7 +1738,8 @@ i32 coffee_main(i32, cstring_w*)
          cxxopts::value<std::string>())
         //
         ("limit",
-         "Per-category cap on extracted assets, 0 = everything",
+         "Per-category cap on extracted assets, 0 = everything; "
+         "uncapped when -c or -n is given",
          cxxopts::value<int>()->default_value("10"))
         //
         ;
@@ -1771,7 +1786,10 @@ i32 coffee_main(i32, cstring_w*)
         .lightmap_dir =
             arguments.as_optional<std::string>("dump-lightmaps").value_or(""),
         .extract_dir = arguments.as_optional<std::string>("extract").value_or(""),
-        .limit       = static_cast<u32>(arguments["limit"].as<int>()),
+        /* A filter picks what to extract; the cap only tames a whole map */
+        .limit = arguments.count("limit") || (!arguments.count("class") && !arguments.count("name"))
+                     ? static_cast<u32>(arguments["limit"].as<int>())
+                     : 0u,
     };
 
     auto        slash   = map_path.find_last_of('/');
