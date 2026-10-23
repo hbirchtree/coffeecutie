@@ -69,7 +69,7 @@ OUT_DIR="$(realpath "$OUT_DIR")"
 
 TARGET="${TARGET:-desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics}"
 RESOURCE_DIR="${RESOURCE_DIR:-multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/}"
-MAP="${MAP:-/mnt/blam/pc/bloodgulch.map}"
+MAP="${MAP:-/mnt/blam/xbox_ex/bloodgulch.map}"
 SERVER_UDP_PORT="${SERVER_UDP_PORT:-19601}"
 # The gateway is shared, so the ID has to be unique per concurrent run.
 SERVER_ID="${SERVER_ID:-nat-${GITHUB_RUN_ID:-local$$}-${GITHUB_RUN_ATTEMPT:-1}}"

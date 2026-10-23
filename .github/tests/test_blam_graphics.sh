@@ -97,11 +97,17 @@ fi
 
 echo "===================================="
 echo "::group::Downloading test assets"
-mkdir -p maps/pc/
-wget -q -O maps/pc/beavercreek.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/beavercreek.map
-wget -q -O maps/pc/bloodgulch.map  --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bloodgulch.map
-wget -q -O maps/pc/bitmaps.map     --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/bitmaps.map
-wget -q -O maps/pc/sounds.map      --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/pc/sounds.map
+# MAP_DIR: map server directory matching the build's BLAM_HALO_VERSION
+MAP_DIR=${MAP_DIR:-xbox_ex}
+MAPS="beavercreek.map bloodgulch.map"
+# Xbox maps are self-contained, PC/CE ones share bitmaps and sounds
+case $MAP_DIR in
+pc | custom) MAPS="$MAPS bitmaps.map sounds.map" ;;
+esac
+mkdir -p maps/$MAP_DIR/
+for map in $MAPS; do
+    wget -q -O maps/$MAP_DIR/$map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/$MAP_DIR/$map
+done
 echo "::endgroup::"
 echo "===================================="
 
@@ -125,7 +131,7 @@ fi
 BOOT_MAP=${BOOT_MAP:-beavercreek.map}
 
 if [[ $BOOT_MAP != /* ]]; then
-    BOOT_MAP=$TESTDIR/maps/pc/$BOOT_MAP
+    BOOT_MAP=$TESTDIR/maps/$MAP_DIR/$BOOT_MAP
 fi
 
 echo "::group::Runtime environment"

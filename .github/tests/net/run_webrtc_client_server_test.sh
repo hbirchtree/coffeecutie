@@ -24,7 +24,7 @@
 # Env overrides:
 #   TARGET        cb build/run target        (default: desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics)
 #   RESOURCE_DIR  asset dir passed to both    (default: multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/)
-#   MAP           map file passed to both     (default: /mnt/blam/pc/bloodgulch.map)
+#   MAP           map file passed to both     (default: /mnt/blam/xbox_ex/bloodgulch.map)
 #   SERVER_TRANSPORT   how the server is reachable (default: udp)
 #                        udp    -- real GNS listen socket, gateway relays
 #                                  DataChannel <-> UDP through a NAT punch
@@ -62,7 +62,7 @@ cd "$SRCDIR"
 OUT_DIR="${1:-/tmp/webrtc_net_test}"
 TARGET="${TARGET:-desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics}"
 RESOURCE_DIR="${RESOURCE_DIR:-multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/}"
-MAP="${MAP:-/mnt/blam/pc/bloodgulch.map}"
+MAP="${MAP:-/mnt/blam/xbox_ex/bloodgulch.map}"
 GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-8098}"
 SERVER_UDP_PORT="${SERVER_UDP_PORT:-19601}"
 SERVER_ID="${SERVER_ID:-test}"

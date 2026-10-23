@@ -14,7 +14,8 @@
 #   SCREENSHOT_NAME, SCREENSHOT_QUALITY, DUMMY_PLUG.
 #
 # MAPS: space-separated map paths fetched from the map server into BUNDLE_DIR
-#   (default: the PC beavercreek set). Skipped when MAP_ACCESS_TOKEN is unset.
+#   (default: Xbox beavercreek, matching the default build). Skipped when
+#   MAP_ACCESS_TOKEN is unset.
 
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -61,7 +62,7 @@ else
 fi
 echo "::endgroup::"
 
-MAPS="${MAPS:-pc/beavercreek.map pc/bitmaps.map pc/sounds.map}"
+MAPS="${MAPS:-xbox_ex/beavercreek.map}"
 if [ -n "${MAP_ACCESS_TOKEN:-}" ]; then
     echo "::group::Downloading test assets"
     for map in $MAPS; do

@@ -33,7 +33,7 @@ OUT_DIR="$(realpath "$OUT_DIR")"
 
 TARGET="${TARGET:-desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics}"
 RESOURCE_DIR="${RESOURCE_DIR:-multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/}"
-MAP="${MAP:-/mnt/blam/pc/bloodgulch.map}"
+MAP="${MAP:-/mnt/blam/xbox_ex/bloodgulch.map}"
 PORT="${PORT:-19701}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-60}"
 RUN_TIMEOUT="${RUN_TIMEOUT:-90}"

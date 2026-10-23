@@ -32,7 +32,7 @@
 # Env overrides:
 #   TARGET        native server cb build/run target (default: desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics)
 #   RESOURCE_DIR  asset dir passed to the server     (default: multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/)
-#   MAP           map file passed to the server      (default: /mnt/blam/pc/bloodgulch.map)
+#   MAP           map file passed to the server      (default: /mnt/blam/xbox_ex/bloodgulch.map)
 #   SERVER_BINARY path to a pre-built BlamGraphics binary to run DIRECTLY,
 #                 bypassing `./cb run $TARGET` entirely. For CI: a fresh
 #                 checkout has no local multi_build/<preset>/ build tree
@@ -116,7 +116,7 @@ OUT_DIR="$(realpath "$OUT_DIR")"
 
 TARGET="${TARGET:-desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics}"
 RESOURCE_DIR="${RESOURCE_DIR:-multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/}"
-MAP="${MAP:-/mnt/blam/pc/bloodgulch.map}"
+MAP="${MAP:-/mnt/blam/xbox_ex/bloodgulch.map}"
 GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-8098}"
 SERVER_UDP_PORT="${SERVER_UDP_PORT:-19601}"
 SERVER_ID="${SERVER_ID:-test}"

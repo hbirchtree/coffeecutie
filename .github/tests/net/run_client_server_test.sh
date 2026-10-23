@@ -22,7 +22,7 @@
 # Env overrides:
 #   TARGET        cb build/run target        (default: desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics)
 #   RESOURCE_DIR  asset dir passed to both    (default: multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/)
-#   MAP           map file passed to both     (default: /mnt/blam/pc/bloodgulch.map)
+#   MAP           map file passed to both     (default: /mnt/blam/xbox_ex/bloodgulch.map)
 #   PORT          loopback port               (default: 27105)
 #   BOOT_TIMEOUT  seconds to wait for the server's listen socket (default: 30)
 #   RUN_TIMEOUT   hard cap per process, via `timeout`, before it's killed (default: 40)
@@ -60,7 +60,7 @@ cd "$SRCDIR"
 OUT_DIR="${1:-/tmp/net_test}"
 TARGET="${TARGET:-desktop:x86_64-buildroot-linux-gnu:multi/BlamGraphics}"
 RESOURCE_DIR="${RESOURCE_DIR:-multi_build/desktop-x86_64-buildroot-linux-gnu-multi/examples/blam/cblam-testing/assets/}"
-MAP="${MAP:-/mnt/blam/pc/bloodgulch.map}"
+MAP="${MAP:-/mnt/blam/xbox_ex/bloodgulch.map}"
 PORT="${PORT:-27105}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-60}"
 RUN_TIMEOUT="${RUN_TIMEOUT:-180}"
