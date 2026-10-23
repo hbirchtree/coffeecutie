@@ -33,6 +33,7 @@
 #include "vehicle_sounds.h"
 #include "physics.h"
 #include "player_controller.h"
+#include "view_kick.h"
 #if defined(POC_COMBAT)
 #include "poc/app_combat.h"
 #endif
@@ -630,6 +631,7 @@ i32 blam_main()
 #endif
             alloc_forge_controller(e);
             alloc_player_controller(e);
+            alloc_view_kick(e);
 
             {
                 auto& postproc = e.subsystem_cast<PostProcessParameters>();
