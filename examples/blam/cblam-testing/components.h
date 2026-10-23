@@ -1051,6 +1051,7 @@ struct PlayerInput
     debounced_button_t reload{};
     debounced_button_t grenade{};
     debounced_button_t grenade_switch{};
+    debounced_button_t melee{};
     bool               scores{false}; /*!< Held: the scoreboard */
 
     /*! What the player wants, for whatever their input is routed to */
@@ -1067,6 +1068,7 @@ struct PlayerInput
         bool  reload{false}; /*!< Pressed; cleared once taken */
         bool  grenade{false};        /*!< Pressed: throw; cleared once taken */
         bool  grenade_switch{false}; /*!< Pressed; cleared once taken */
+        bool  melee{false};          /*!< Pressed; cleared once taken */
     } intent;
 
     std::optional<Vecf3> position; /*!< teleport target */
@@ -1090,6 +1092,7 @@ struct PlayerInput
         reload.frame_end();
         grenade.frame_end();
         grenade_switch.frame_end();
+        melee.frame_end();
     }
 };
 

@@ -1081,7 +1081,8 @@ struct AnimationController
             files);
     }
 
-    /* A body on foot kicks with each shot it fires */
+    /* A body on foot kicks with each shot it fires, and swings its weapon's
+     * own way with each strike */
     void recoil(Proxy& p, WeaponFireEvent const& shot, BlamFiles<halo_version> const& files)
     {
         auto const* info = p.template get<PlayerInfo>(shot.shooter);
@@ -1090,7 +1091,7 @@ struct AnimationController
            !anim->graph)
             return;
         i32 const clip = stance(p, anim->graph, "stand", held_label(p, shot.shooter, files))
-            [WeaponSlot::fire_1];
+            [shot.melee ? WeaponSlot::melee : WeaponSlot::fire_1];
         auto anims = anim->graph->animations.data(files.container.magic);
         /* A base clip would stop it walking */
         if(clip < 0 || !anims.has_value() ||

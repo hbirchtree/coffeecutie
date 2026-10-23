@@ -72,7 +72,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         {
             for(auto const& hit : hits)
                 if(auto const* jpt = damage_of(hit.damage))
+                {
+                    if(hit.behind && assassinate(p, hit.target, player_of(p, hit.shooter)))
+                        continue;
                     hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head, player_of(p, hit.shooter));
+                }
             for(auto const& area : areas)
                 splash(p, area);
             for(auto const& s : struck)
@@ -114,6 +118,27 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     {
         auto const* info = entity ? p.template get<PlayerInfo>(entity) : nullptr;
         return info ? info->player_idx : ObjectHitEvent::no_player;
+    }
+
+    /* A strike in the back kills, unless the unit's tag says it shrugs
+     * such off (hunters) */
+    bool assassinate(Proxy& p, u64 unit, u32 killer)
+    {
+        auto* status = p.template get<BipedStatus>(unit);
+        if(!status || !status->coll || status->dead || status->invulnerable)
+            return false;
+        using flags_t = blam::scn::unit::unit_flags_t;
+        if(auto const* model = p.template get<Model>(unit); model && model->origin_object)
+            if(auto u = model->origin_object->template data<blam::scn::unit>(*m_magic);
+               u.has_value() && (u.value()[0].unit_flags & flags_t::not_instantly_killed_by_melee) !=
+                                    flags_t::none)
+                return false;
+        status->shield = 0.f;
+        status->body   = 0.f;
+        status->dead   = true;
+        tell(p, unit, *status);
+        killed(p, unit, killer);
+        return true;
     }
 
     /* A jpt! landing on a unit, at `scale` of its full strength */

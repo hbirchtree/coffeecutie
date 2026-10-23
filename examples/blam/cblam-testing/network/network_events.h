@@ -355,6 +355,7 @@ struct alignas(8) WeaponFire
     {
         none   = 0x0,
         thrown = 0x1, /*!< A grenade, `weapon` its proj */
+        melee  = 0x2, /*!< A strike with `weapon` */
     } flags{none};
     u32 padding{0};
 };
@@ -367,7 +368,7 @@ struct alignas(8) ObjectHit
     Vecf4 point;
     Vecf4 normal;
     Vecf4 direction;
-    blam::tag_index<> projectile{}; /*!< proj tag id */
+    blam::tag_index<> projectile{}; /*!< proj tag id, or the jpt! of a strike */
     u32   target{0};     /*!< Net id, when the target is not a player */
     u32   target_player{0};
     u32   shooter_player{0};

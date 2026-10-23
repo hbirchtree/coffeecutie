@@ -153,7 +153,9 @@ class CombatSync
                         .vehicle    = vehicle,
                         .seed       = shot.seed,
                         .trigger    = shot.trigger,
-                        .flags      = shot.thrown ? WeaponFire::thrown : WeaponFire::none,
+                        .flags      = shot.thrown  ? WeaponFire::thrown
+                                      : shot.melee ? WeaponFire::melee
+                                                   : WeaponFire::none,
                     },
                 .route = {server ? route_t::clients : route_t::server},
             });
@@ -167,7 +169,8 @@ class CombatSync
                 .point          = Vecf4(hit.point, 1.f),
                 .normal         = Vecf4(hit.normal, 0.f),
                 .direction      = Vecf4(hit.direction, 0.f),
-                .projectile     = hit.projectile.tag_id,
+                .projectile     = hit.projectile.valid() ? hit.projectile.tag_id
+                                                         : hit.damage.tag_id,
                 .target         = net ? net->instance_id : 0,
                 .target_player  = hit.target_player,
                 .shooter_player = hit.shooter_player,
@@ -245,8 +248,11 @@ class CombatSync
             return;
         blam::tag_index_view<halo_version> index(*m_map);
         auto projectile = index.find(wire.projectile);
-        if(projectile == index.end() || !(*projectile).valid() ||
-           !(*projectile).matches(blam::tag_class_t::proj))
+        if(projectile == index.end() || !(*projectile).valid())
+            return;
+        /* A strike names its jpt! */
+        bool const strike = (*projectile).matches(blam::tag_class_t::jpt);
+        if(!strike && !(*projectile).matches(blam::tag_class_t::proj))
             return;
         u64 target = 0, shooter = 0;
         for(auto entity : p.template select<PlayerInfo>())
@@ -266,15 +272,16 @@ class CombatSync
                 }
         if(target == 0)
             return;
-        auto const proj =
-            (*projectile).template data<blam::scn::projectile>(m_map->magic);
+        blam::tagref_t damage = strike ? (*projectile).as_ref() : blam::tagref_t{};
+        if(!strike)
+            if(auto proj = (*projectile).template data<blam::scn::projectile>(m_map->magic);
+               proj.has_value())
+                damage = proj.value()->impact_damage;
         GameEvent      ev{.type = GameEvent::ObjectHit};
         ObjectHitEvent hit{
             .origin     = MapLoadEvent::Remote,
-            .projectile = (*projectile).as_ref(),
-            .damage     = proj.has_value()
-                              ? blam::tagref_t(proj.value()->impact_damage)
-                              : blam::tagref_t{},
+            .projectile = strike ? blam::tagref_t{} : (*projectile).as_ref(),
+            .damage     = damage,
             .target         = target,
             .shooter        = shooter,
             .target_player  = wire.target_player,
@@ -423,6 +430,7 @@ class CombatSync
             .seed       = wire.seed,
             .trigger    = wire.trigger,
             .thrown     = thrown,
+            .melee      = (wire.flags & WeaponFire::melee) != 0,
             .position   = Vecf3(wire.position),
             .direction  = glm::normalize(direction),
             .view_tick  = view_tick,
