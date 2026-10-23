@@ -80,7 +80,7 @@ struct alignas(4) object_spawn
         none = 0x0,
     };
 
-    palette_ptr<tagref_t>     ref;
+    block_index<std::array<tagref_t, 3>> ref; /*!< Into the group's palette */
     scenario_ptr<object_name> name;
     spawn_flags               flags;
     u16                       desired_permutation; // model permutation

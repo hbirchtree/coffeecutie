@@ -638,12 +638,12 @@ struct ResourceLoader
         for(auto const& [i, instance] :
             stl_types::const_enumerate(instances_.value()))
         {
-            if(instance.ref.index < 0 ||
-               static_cast<size_t>(instance.ref.index) >= palette.size())
+            auto const* entry = instance.ref.resolve(palette);
+            if(!entry)
                 continue;
             /* Palette entries are a tagref to the ssce object (+ padding),
              * the sound itself is an lsnd attachment on that object */
-            auto object_tag = index.tag_of(palette[instance.ref.index][0]);
+            auto object_tag = index.tag_of((*entry)[0]);
             if(!object_tag)
                 continue;
             auto object =
@@ -1205,11 +1205,10 @@ struct ResourceLoader
             auto const& instance = instances[i];
             using spawn_flags    = blam::scn::object_spawn::spawn_flags;
             /* "Not placed automatically": a script creates it */
-            if(instance.ref < 0 ||
-               static_cast<size_t>(instance.ref) >= palette.size() ||
-               (instance.flags & spawn_flags::automatic) != spawn_flags::none)
+            auto const* entry = instance.ref.resolve(palette);
+            if(!entry || (instance.flags & spawn_flags::automatic) != spawn_flags::none)
                 continue;
-            raise_spawn(palette[instance.ref][0], instance.pos, net_id);
+            raise_spawn((*entry)[0], instance.pos, net_id);
         }
     }
 
@@ -1249,12 +1248,11 @@ struct ResourceLoader
         EntityRecipe submodel = shared_recipes::submodel;
         submodel.tags         = submodel.tags | (tags & SubObjectMask);
 
-        if(instance.ref == -1 ||
-           static_cast<size_t>(instance.ref) >= palette.size() ||
-           !palette[instance.ref][0].valid())
+        auto const* entry = instance.ref.resolve(palette);
+        if(!entry || !(*entry)[0].valid())
             return;
 
-        blam::tagref_t const& tagref = palette[instance.ref][0];
+        blam::tagref_t const& tagref = (*entry)[0];
 
         auto instance_it = index.tag_of(tagref);
 
