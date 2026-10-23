@@ -250,6 +250,8 @@ struct Raycast
     /*! The collision node of a hull body, and whether it is a head */
     i16  part{-1};
     bool head{false};
+    /*! The struck triangle's material kind, on an exact-surface body */
+    libc_types::u16 material_type{0xFFFF};
 };
 
 struct Grabbed
