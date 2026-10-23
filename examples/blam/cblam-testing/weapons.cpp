@@ -624,7 +624,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         if(trigger.magazine < 0 || !magazines.has_value() ||
            static_cast<size_t>(trigger.magazine) >= magazines.value().size())
             return nullptr;
-        return &magazines.value()[trigger.magazine];
+        /* Energy weapons name one that loads no rounds: they fire on charge */
+        auto const& magazine = magazines.value()[trigger.magazine];
+        return magazine.rounds_loaded_maximum > 0 ? &magazine : nullptr;
     }
 
     /* Tops the magazine up from what is carried */
