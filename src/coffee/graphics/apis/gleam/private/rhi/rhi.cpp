@@ -800,6 +800,11 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
     out.texture.bindless_handles =
         supports_extension(extensions, arb::bindless_texture::name);
 
+#if !defined(GL_KHR_parallel_shader_compile)
+    /* The async compile path is left out without the extension's header */
+    out.program.khr.parallel_shader_compile = false;
+#endif
+
     return {out, api_type, api_version};
 }
 
