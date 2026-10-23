@@ -568,7 +568,8 @@ struct workarounds
 
     struct
     {
-        /*! No framebuffer 0 (GLKit): the default target is whatever is bound */
+        /*! No framebuffer 0 (GLKit): the default target is the FBO bound at
+         *  load */
         bool adopt_bound_default{false};
     } rendertarget;
 
