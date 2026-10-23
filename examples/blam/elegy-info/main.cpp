@@ -6,6 +6,7 @@
 
 #include <blam/common/dds.h>
 #include <blam/elegy/animation.h>
+#include <blam/elegy/blf.h>
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/collision.h>
 #include <blam/elegy/decorator.h>
@@ -1627,6 +1628,43 @@ int dump_collision(
     return 0;
 }
 
+/* A BLF file (images/*.blf, info/*.mapinfo): its chunks, the menu image of
+ * a mapi (written out with -e) and the menu entry of a levl */
+int run_blf(Span<u8 const> file, std::string const& path, options_t const& options)
+{
+    auto const chunks = elegy::blf_chunks(file);
+    if(chunks.empty() || chunks.front().tag() != "_blf")
+    {
+        cBasicPrint("{0} is not a BLF file", path);
+        return 1;
+    }
+    auto const stem = std::filesystem::path(path).stem().string();
+    for(auto const& chunk : chunks)
+    {
+        fmt::print("{} v{}.{}, {} bytes\n", chunk.tag(), chunk.header->major_version.value(),
+                   chunk.header->minor_version.value(), chunk.body.size());
+        if(auto image = elegy::map_image(chunk))
+        {
+            auto const& [type, bytes] = *image;
+            bool const  png           = type == elegy::blf_image_type_t::png;
+            fmt::print("  image: {}, {} bytes\n", png ? "png" : "jpeg", bytes.size());
+            if(!options.extract_dir.empty())
+            {
+                std::filesystem::create_directories(options.extract_dir);
+                auto const out = std::filesystem::path(options.extract_dir) / (stem + (png ? ".png" : ".jpg"));
+                std::ofstream(out, std::ios::binary)
+                    .write(reinterpret_cast<char const*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+                fmt::print("  wrote {}\n", out.string());
+            }
+        }
+        if(auto const* info = elegy::map_info(chunk))
+            fmt::print("  map {} '{}' (image '{}', map '{}'), flags {:#x}\n  {}\n", info->map_id.value(),
+                       elegy::utf8(info->names[0]), info->image_name.str(), info->map_name.str(),
+                       info->flags.value(), elegy::utf8(info->descriptions[0]));
+    }
+    return 0;
+}
+
 int run_map(
     elegy::map_container const& map,
     std::string const&          map_dir,
@@ -1748,7 +1786,7 @@ i32 coffee_main(i32, cstring_w*)
     cxxopts::Options opts(
         "Halo 3 Map Info", "Inspect a Halo 3 (Xbox 360) cache file");
     opts.add_options("Help")("h,help", "Show this help info");
-    opts.positional_help("<map file>");
+    opts.positional_help("<map file, or .blf/.mapinfo menu file>");
     opts.add_options("Tag selection")
         //
         ("c,class", "Only tags of this group, e.g. mode", cxxopts::value<std::string>())
@@ -1797,7 +1835,7 @@ i32 coffee_main(i32, cstring_w*)
         ("obj", "Write decoded geometry to this OBJ", cxxopts::value<std::string>())
         //
         ("e,extract",
-         "Extraction directory: --bitmaps writes DDS, --sounds XMA2",
+         "Extraction directory: --bitmaps writes DDS, --sounds XMA2, a .blf its image",
          cxxopts::value<std::string>())
         //
         ("limit",
@@ -1861,6 +1899,15 @@ i32 coffee_main(i32, cstring_w*)
     {
         cBasicPrint("failed to read {0}", map_path);
         return 1;
+    }
+
+    auto const extension = std::filesystem::path(map_path).extension().string();
+    if(extension == ".blf" || extension == ".mapinfo")
+    {
+        int const rc = run_blf(Span<u8 const>(reinterpret_cast<u8 const*>(map_data.data), map_data.size),
+                               map_path, options);
+        fflush(stdout);
+        std::quick_exit(rc);
     }
 
     int rc = 1;
