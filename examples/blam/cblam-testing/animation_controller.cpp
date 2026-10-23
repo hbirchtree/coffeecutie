@@ -322,7 +322,7 @@ struct AnimationController
                 anim,
                 model.position,
                 model.rotation * Vecf3{1.f, 0.f, 0.f},
-                unarmed,
+                held_label(p, npc.id(), files),
                 true,
                 physics.grounded,
                 dt,

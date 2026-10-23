@@ -692,7 +692,8 @@ void create_resources(compo::EntityContainer& e)
                  if(ev.event == "spawn_object")
                  {
                      /* {"tag": "<name>", "class": "bipd", "position": [x,y,z],
-                      *  "yaw": deg, "server": bool} -- class is optional, but
+                      *  "yaw": deg, "server": bool, "held": "<weap name>"} --
+                      * class is optional, but
                       * names repeat across classes. On a server the spawn is
                       * replicated; on a client, "server" requests it from the
                       * server behind a local impostor. */
@@ -710,17 +711,16 @@ void create_resources(compo::EntityContainer& e)
 
                      auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
                      blam::tag_index_view<halo_version> index(files.container);
-                     blam::tag_t const*                 found = nullptr;
-                     for(auto const& tag : index)
-                     {
-                         if(!tag.matches(blam::tag_class_t::obje) ||
-                            (cls != blam::tag_class_t::none &&
-                             !tag.matches(cls)) ||
-                            index.name_of(tag) != name)
-                             continue;
-                         found = &tag;
-                         break;
-                     }
+                     auto const named = [&index](std::string const& want, blam::tag_class_t of)
+                         -> blam::tag_t const* {
+                         for(auto const& tag : index)
+                             if(tag.matches(blam::tag_class_t::obje) &&
+                                (of == blam::tag_class_t::none || tag.matches(of)) &&
+                                index.name_of(tag) == want)
+                                 return &tag;
+                         return nullptr;
+                     };
+                     blam::tag_t const* found = named(name, cls);
                      if(!found)
                      {
                          cWarning("spawn_object: no object tag named {}", name);
@@ -731,6 +731,9 @@ void create_resources(compo::EntityContainer& e)
                          .object       = found->as_ref(),
                          .server_owned = ev.data.value("server", false),
                      };
+                     if(auto const* held = named(
+                            ev.data.value("held", std::string{}), blam::tag_class_t::weap))
+                         spawn.held = held->as_ref();
                      if(auto pos = ev.data.find("position");
                         pos != ev.data.end() && pos->size() == 3)
                          spawn.position = Vecf3{

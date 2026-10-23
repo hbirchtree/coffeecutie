@@ -1874,6 +1874,7 @@ struct BlamScript
             auto const* unit = unit_of(palette.value()[type]);
             if(!unit)
                 continue;
+            blam::tagref_t const held = weapon_of(palette.value()[type]);
             /* Squad starting locations, 28 bytes like the encounter's */
             auto const& block = reinterpret_cast<
                 blam::reference<blam::scn::ai::squad_spawn> const&>(
@@ -1893,6 +1894,7 @@ struct BlamScript
                     .rotation     = glm::angleAxis(start.yaw, Vecf3{0.f, 0.f, 1.f}),
                     .net_id       = net_id,
                     .server_owned = true,
+                    .held         = held,
                 };
                 p.template subsystem<GameEventBus>().inject(ev, &spawn);
                 m_spawning.insert(net_id);
@@ -1912,6 +1914,18 @@ struct BlamScript
         if(!variant.has_value() || !variant.value()->unit.valid())
             return nullptr;
         return &static_cast<blam::tagref_t const&>(variant.value()->unit);
+    }
+
+    /* What the variant fights with, if anything */
+    blam::tagref_t weapon_of(blam::tagref_t const& variant_ref) const
+    {
+        auto tag = m_tags.find(variant_ref.tag_id);
+        if(tag == m_tags.end())
+            return {};
+        auto variant = (*tag).template data<blam::scn::actor_variant>(m_magic);
+        if(!variant.has_value() || !variant.value()->weapon.valid())
+            return {};
+        return variant.value()->weapon;
     }
 
     std::vector<u32> ai_spawning(std::string_view path) const

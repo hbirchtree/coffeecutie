@@ -344,6 +344,7 @@ struct SpawnObjectEvent
     Vecf3           velocity{};         /*!< wu/s, bodies with mass */
     Vecf3           angular_velocity{}; /*!< rad/s */
     libc_types::f32 lifetime{0.f};      /*!< seconds, 0 = until despawned */
+    blam::tagref_t  held{};             /*!< A unit's weapon in hand */
     /*! Plays its creation effect, or the players' respawn effect if it has none */
     bool announce{false};
 };
