@@ -104,6 +104,36 @@ wait "$LAUNCHER" || true
 # Simulator app crashes are reported on the host
 find "$HOME/Library/Logs/DiagnosticReports" -name "BlamGraphics*" -newer "$OUT/boot.log" \
     -exec cp {} "$OUT/" \; 2>/dev/null || true
+# The app's own stacktrace.json and friends
+CONTAINER=$(xcrun simctl get_app_container "$DEVICE" "$BUNDLE_ID" data 2>/dev/null || true)
+if [ -n "$CONTAINER" ]; then
+    find "$CONTAINER/tmp" -maxdepth 1 -name "*.json" -exec cp {} "$OUT/" \; 2>/dev/null || true
+fi
+# Why the system ended the process, if it did
+xcrun simctl spawn "$DEVICE" log show --style compact --last 30m \
+    --predicate 'process == "BlamGraphics" OR eventMessage CONTAINS "BlamGraphics"' \
+    > "$OUT/system.log" 2>&1 || true
+
+if [ "$STATUS" -ne 0 ]; then
+    for report in "$OUT"/BlamGraphics*.ips; do
+        [ -f "$report" ] || continue
+        echo "== $(basename "$report")"
+        python3 - "$report" <<'EOF' || true
+import json, sys
+text = open(sys.argv[1]).read()
+report = json.loads(text.split("\n", 1)[1])
+print("exception:", report.get("exception"), report.get("termination", {}).get("indicator", ""))
+images = report.get("usedImages", [])
+thread = next((t for t in report.get("threads", []) if t.get("triggered")), None)
+for frame in (thread or {}).get("frames", [])[:30]:
+    image = images[frame["imageIndex"]].get("name", "?") if "imageIndex" in frame else "?"
+    print(f"  {image} {frame.get('symbol', hex(frame.get('imageOffset', 0)))} +{frame.get('symbolLocation', 0)}")
+EOF
+    done
+    grep -iE "termin|crash|signal|jetsam|watchdog|exit" "$OUT/system.log" | tail -n 20 || true
+fi
 
 grep -E "GL version|FPS:|FTAL|ERRO" "$LOG" | tail -n 20 || true
+# Coffee's signal handler prints the stack before it kills the process
+grep -A 40 "signal encountered" "$LOG" || true
 exit "$STATUS"
