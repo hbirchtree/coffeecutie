@@ -51,6 +51,7 @@ coffee_application(
         game_mode.cpp
         campaign_controller.cpp
         multiplayer_controller.cpp
+        object_respawn.cpp
         checkpoint.cpp
         devices.cpp
         effects.cpp
