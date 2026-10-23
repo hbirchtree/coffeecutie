@@ -14,6 +14,7 @@
 #include "map_marker.h"
 #include "materials.h"
 #include "model_markers.h"
+#include "network/networking.h"
 #include "selected_version.h"
 #include "shader_cache.h"
 #include "types.h"
@@ -55,7 +56,8 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         DebugMarkers,
         ModelCache<Ver>,
         ShaderCache<Ver>,
-        const LoadingStatus>,
+        const LoadingStatus,
+        const NetworkState>,
     type_list_t<
         comp_app::EventBus<SoundEvent>
     >>;
@@ -77,6 +79,7 @@ struct ResourceLoader
     std::vector<SpawnModelEvent>       pending_models;
     std::vector<MountModelEvent>       pending_mounts;
     std::vector<EquipWeaponEvent>      pending_equips;
+    std::map<u64, u64>                 armed_npcs; /*!< NPC, its weapon model */
     std::vector<SpawnObjectEvent>      pending_objects;
 
     struct expiry_t
@@ -251,6 +254,7 @@ struct ResourceLoader
         despawn_object_queue->poll();
 
         reconcile_player_bipeds(p, files);
+        disarm_npcs(p);
         reconcile_first_person(p, files);
 
         now = t;
@@ -1892,6 +1896,9 @@ struct ResourceLoader
         bool const unit = object_tag.matches(blam::tag_class_t::bipd);
         if(unit)
             recipe.components.push_back(compo::type_hash_v<BipedStatus>());
+        auto const* held = unit ? weapon_tag(spawn.held.tag_id) : nullptr;
+        if(held)
+            recipe.components.push_back(compo::type_hash_v<BipedEquipment>());
 
         auto ent = p.create_entity(recipe);
         if(graph)
@@ -1957,6 +1964,9 @@ struct ResourceLoader
         for(auto const& model_id : mesh_data.models)
             build_submodels(
                 p, ent, model, model_id, submodel, render_layer::world, 1);
+
+        if(held)
+            arm(p, ent.id(), *held, model, files);
 
         if(spawn.lifetime > 0.f)
             expiring.push_back(
@@ -2892,6 +2902,54 @@ struct ResourceLoader
         equip.reloading = equip.throwing = false;
     }
 
+    /* An NPC's weapon, in its own hand */
+    void arm(Proxy& p, u64 unit, blam::tag_t const& weapon, Model const& model, BlamFiles<Ver> const& files)
+    {
+        auto& equip = *p.template get<BipedEquipment>(unit);
+        equip       = {.load_generation = files.load_generation};
+        equip.weapons[0] = armed(&weapon, files);
+        auto const hand  = model.tag ? bind_marker_node(*model.tag, hand_marker, files.container.magic)
+                                     : std::nullopt;
+        equip.weapons[0].held = respawn_held(p, unit, 0, &weapon, files, hand);
+        armed_npcs[unit]      = equip.weapons[0].held;
+    }
+
+    /* The dead let go, and a gone NPC takes its weapon model with it; the
+     * authority drops what was held */
+    void disarm_npcs(Proxy& p)
+    {
+        bool const replica = p.template subsystem<NetworkState>().replica;
+        std::vector<u64> doomed;
+        for(auto it = armed_npcs.begin(); it != armed_npcs.end();)
+        {
+            auto const* model  = p.template get<Model>(it->first);
+            auto const* status = p.template get<BipedStatus>(it->first);
+            auto*       equip  = p.template get<BipedEquipment>(it->first);
+            if(model && status && !status->dead)
+            {
+                ++it;
+                continue;
+            }
+            if(model && equip && equip->weapons[0].tag && !replica)
+            {
+                SpawnObjectEvent spawn{
+                    .object       = equip->weapons[0].tag->as_ref(),
+                    .position     = model->position + Vecf3{0.f, 0.f, drop_lift},
+                    .server_owned = true,
+                    .velocity     = model->rotation * Vecf3{1.f, 0.f, 1.f},
+                };
+                GameEvent ev{.type = GameEvent::SpawnObject};
+                game_bus->inject(ev, &spawn);
+            }
+            if(equip)
+                equip->weapons = {};
+            if(it->second)
+                doomed.push_back(it->second);
+            it = armed_npcs.erase(it);
+        }
+        despawn_first_person(p, doomed);
+    }
+
     /* Thrown down ahead of the feet, through the usual spawn path */
     void drop(BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height)
     {
@@ -2994,12 +3052,23 @@ struct ResourceLoader
         blam::tag_t const*    tag,
         BlamFiles<Ver> const& files)
     {
+        return respawn_held(p, player, old, tag, files, biped_model.hand);
+    }
+
+    u64 respawn_held(
+        Proxy&                               p,
+        u64                                  player,
+        u64                                  old,
+        blam::tag_t const*                   tag,
+        BlamFiles<Ver> const&                files,
+        std::optional<bound_marker_t> const& hand)
+    {
         if(old)
         {
             std::vector<u64> models{old};
             despawn_first_person(p, models);
         }
-        if(!tag || !biped_model.hand)
+        if(!tag || !hand)
             return 0;
         auto weapon = tag->template data<blam::scn::weapon>(files.container.magic);
         if(!weapon.has_value() || !weapon.value()[0].model.valid())
@@ -3007,8 +3076,8 @@ struct ResourceLoader
         auto ent = p.create_entity(shared_recipes::held_model);
         *p.template get<HeldObject>(ent.id()) = {
             .holder = player,
-            .node   = biped_model.hand->node,
-            .offset = biped_model.hand->transform,
+            .node   = hand->node,
+            .offset = hand->transform,
         };
         p.template get<Model>(ent.id())->origin_object = tag;
         /* Hidden from its holder's own view, like the body */
@@ -3028,6 +3097,7 @@ struct ResourceLoader
 
     static constexpr std::string_view hand_marker = "right hand";
     static constexpr f32              drop_spread = 1.1f; /* rad between drops */
+    static constexpr f32              drop_lift   = .5f;  /* wu above an NPC's origin */
     /* Health and shield, as fractions of this */
 
     /* A model drawn at the player's eye in the first-person pass */

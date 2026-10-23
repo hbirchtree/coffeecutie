@@ -682,6 +682,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .tag_id      = spawn.object.tag_id,
                     .instance_id = spawn.net_id,
                 },
+            .held = spawn.held.valid() ? spawn.held.tag_id : blam::tag_index<>{},
         };
         /* Late joiners see it as already there */
         m_dynamic_spawns.push_back(wire);
@@ -3971,6 +3972,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 local.object.tag_class = blam::basic_tag_class<std::endian::little>::of(spawn.tag.tag_class);
                 local.object.tag_id    = {spawn.tag.tag_id};
                 local.announce         = spawn.announce != 0;
+                if(spawn.held.value() != 0)
+                {
+                    local.held.tag_class =
+                        blam::basic_tag_class<std::endian::little>::of(blam::tag_class_t::weap);
+                    local.held.tag_id = spawn.held;
+                }
                 m_game_bus.inject(ev, &local);
             }
             break;
