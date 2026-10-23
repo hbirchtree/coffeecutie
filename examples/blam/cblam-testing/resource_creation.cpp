@@ -143,7 +143,7 @@ void setup_config(compo::EntityContainer& e, bool map_selected)
         if(config.contains("userPreferences"))
         {
             auto prefs = config["userPreferences"];
-            if(prefs.contains("directory") && !map_selected)
+            while(prefs.contains("directory") && !map_selected)
             {
                 using namespace platform::url::constructors;
                 GameEvent ev{.type = GameEvent::MapRequestListing};
@@ -151,12 +151,16 @@ void setup_config(compo::EntityContainer& e, bool map_selected)
                     .directory = MkUrl(prefs["directory"]),
                 };
                 game_bus.inject(ev, &list);
+                auto& net_state = e.subsystem_cast<NetworkState>();
+                if(net_state.client_state != NetworkState::ClientState::None)
+                    break;
                 ev.type = GameEvent::MapLoadStart;
                 MapLoadEvent load{
                     .directory = list.directory,
                     .file = list.directory.value() / "ui.map",
                 };
                 game_bus.inject(ev, &load);
+                break;
             }
         }
     } while(false);
