@@ -246,6 +246,9 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
     SDL_WindowFlags extraFlags = 0 /*SDL_WINDOW_HIGH_PIXEL_DENSITY*/;
 
     extraFlags |= SDL_WINDOW_OPENGL;
+    /* Cocoa picks the EGL config and surface at window creation */
+    if(auto glContext = c.service<GLContext>())
+        glContext->setupAttributes(c);
     // if([[maybe_unused]] auto glContext = c.service<GLContext>())
     // else
     //     extraFlags |= SDL_WINDOW_VULKAN;
@@ -265,9 +268,6 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
     }
 
     active_window = m_window;
-
-    if(auto glContext = c.service<GLContext>())
-        glContext->setupAttributes(c);
 
     SDL_SetWindowTitle(m_window, config.title.c_str());
 
@@ -615,7 +615,8 @@ void GLContext::setupAttributes(entity_container& c)
     {
         Sint32 contextFlags = 0;
 
-        if constexpr(compile_info::platform::is_macos)
+        if(compile_info::platform::is_macos &&
+           !(glConfig.profile & GLConfig::Embedded))
             contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
 
         if(glConfig.profile & GLConfig::Robust)
