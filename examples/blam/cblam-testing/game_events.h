@@ -433,6 +433,7 @@ struct WeaponFireEvent
     libc_types::u32      seed{0}; /*!< Spread, the same on every peer */
     libc_types::u16      trigger{0};
     bool                 thrown{false}; /*!< By hand: `weapon` is the grenade's proj */
+    bool                 melee{false};  /*!< A strike with `weapon`, nothing fired */
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
     /*! The tick the shooter saw others at; the authority traces bipeds
@@ -461,6 +462,7 @@ struct ObjectHitEvent
     libc_types::i16      part{-1};    /*!< Collision node, -1 if unknown */
     bool                 head{false};
     bool                 hitscan{false}; /*!< Resolved as the trigger was pulled */
+    bool                 behind{false};  /*!< A melee strike on its back */
 };
 
 /*! An effect's jpt! part going off: whatever is near takes some of it */

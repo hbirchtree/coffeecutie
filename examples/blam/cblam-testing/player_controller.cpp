@@ -257,8 +257,10 @@ struct PlayerController
             input.reload |= b.x;
             input.grenade |= state.axes.e.t_l > trigger_pressed;
             input.grenade_switch |= b.b_l;
-            /* B backs out of menus only; back also toggles freecam */
+            /* B strikes in play and backs out of menus; back also toggles
+             * freecam */
             input.back |= b.back || (in_menu && b.b);
+            input.melee |= !in_menu && b.b;
         }
         if(keyboard)
         {
@@ -272,6 +274,7 @@ struct PlayerController
             input.swap |= key(CK_HTab);
             input.reload |= key(CK_r);
             input.grenade_switch |= key(CK_g);
+            input.melee |= key(CK_q);
             /* Grabs in forge, throws in physics mode */
             input.grenade |= (input.mouse_buttons & CIMouseButtonEvent::RightButton) != 0;
             input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
@@ -291,6 +294,8 @@ struct PlayerController
             intent.grenade = true;
         if(input.grenade_switch && physics)
             intent.grenade_switch = true;
+        if(input.melee && physics)
+            intent.melee = true;
         if(in_menu)
         {
             input.movement  = {};
@@ -298,7 +303,7 @@ struct PlayerController
             intent.throttle = intent.steer = 0.f;
             intent.use = intent.grab = intent.jump = intent.fire = false;
             intent.swap = intent.reload = false;
-            intent.grenade = intent.grenade_switch = false;
+            intent.grenade = intent.grenade_switch = intent.melee = false;
             return;
         }
 
