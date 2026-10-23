@@ -164,12 +164,15 @@ using MotionManifest = compo::SubsystemManifest<
 
 using MotionProxy = compo::proxy_of<MotionManifest>;
 
-/* Moved by the simulation, a tick at a time */
+/* Moved by the simulation, a tick at a time. A script flies what it
+ * records and draws it between ticks itself; drawing that again off a tick
+ * snapshot, or a rider's eye off it, lags and snaps between frames */
 bool simulated(MotionProxy& p, u64 id)
 {
     auto const* physics = p.get<ObjectPhysics>(id);
     return physics && physics->mass > 0.f &&
-           physics->authority == ObjectPhysics::Simulated;
+           physics->authority == ObjectPhysics::Simulated &&
+           !(physics->scripted && !physics->upright);
 }
 
 /* A camera that follows a body, or a seat in a vehicle simulated here; a

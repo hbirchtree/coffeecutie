@@ -232,7 +232,9 @@ struct EffectSystem
 
     EffectSystem()
     {
-        this->priority = 905;
+        /* After scripts draw what they fly, so attachments sit where it is
+         * drawn, not where it was a frame ago */
+        this->priority = 2049;
     }
 
     void start_restricted(Proxy& p, time_point const&)
