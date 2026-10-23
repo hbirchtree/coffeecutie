@@ -3,15 +3,16 @@
 #
 # Usage: run_simulator_smoke.sh <BlamGraphics.app> <output dir> [map path]
 #
-# Passes once a frame is logged, after the map has loaded when one is given.
-# Fails if the app exits first or RUN_TIMEOUT (seconds) runs out.
-# The console log and a screenshot land in the output dir either way.
+# Frames must show up within RUN_TIMEOUT seconds (after the map has loaded,
+# when one is given), and the app must keep rendering for SETTLE_SECONDS.
+# The console log, a screenshot and any crash reports land in the output dir.
 set -euo pipefail
 
 APP="$1"
 OUT="$2"
 MAP="${3:-}"
 TIMEOUT="${RUN_TIMEOUT:-600}"
+SETTLE="${SETTLE_SECONDS:-20}"
 
 mkdir -p "$OUT"
 LOG="$OUT/console.log"
@@ -47,25 +48,31 @@ xcrun simctl launch --console-pty --terminate-running-process \
     "$DEVICE" "$BUNDLE_ID" ${MAP:+"$MAP"} > "$LOG" 2>&1 &
 LAUNCHER=$!
 
-# With a map, only frames after it finished loading count
-rendered() {
+# Frame reports so far; with a map, only those after it finished loading
+frames() {
     if [ -n "$MAP" ]; then
         awk '/Starting MapFinished handler/ { loaded = 1 }
-             loaded && /ComponentApp: FPS: [0-9]/ { found = 1 }
-             END { exit !found }' "$LOG"
+             loaded && /ComponentApp: FPS: [0-9]/ { n++ }
+             END { print n + 0 }' "$LOG"
     else
-        grep -q "ComponentApp: FPS: [0-9]" "$LOG"
+        grep -c "ComponentApp: FPS: [0-9]" "$LOG" || true
     fi
 }
 
+alive() {
+    kill -0 "$LAUNCHER" 2>/dev/null
+}
+
 STATUS=1
+FIRST=0
 for ((i = 0; i < TIMEOUT; i++)); do
-    if rendered; then
-        STATUS=0
+    if ! alive; then
+        echo "::error::BlamGraphics exited before rendering"
         break
     fi
-    if ! kill -0 "$LAUNCHER" 2>/dev/null; then
-        echo "::error::BlamGraphics exited before rendering"
+    FIRST=$(frames)
+    if [ "$FIRST" -gt 0 ]; then
+        STATUS=0
         break
     fi
     sleep 1
@@ -74,9 +81,29 @@ if [ "$STATUS" -ne 0 ] && [ "$i" -ge "$TIMEOUT" ]; then
     echo "::error::No frames within ${TIMEOUT}s"
 fi
 
+# The first frame report can come out of the loading frame, so keep watching
+if [ "$STATUS" -eq 0 ]; then
+    for ((i = 0; i < SETTLE; i++)); do
+        sleep 1
+        if ! alive; then
+            echo "::error::BlamGraphics exited after its first frames"
+            STATUS=1
+            break
+        fi
+    done
+    if [ "$STATUS" -eq 0 ] && [ "$(frames)" -le "$FIRST" ]; then
+        echo "::error::BlamGraphics stopped rendering after its first frames"
+        STATUS=1
+    fi
+fi
+
 xcrun simctl io "$DEVICE" screenshot "$OUT/screenshot.png" || true
 xcrun simctl terminate "$DEVICE" "$BUNDLE_ID" >/dev/null 2>&1 || true
 wait "$LAUNCHER" || true
+
+# Simulator app crashes are reported on the host
+find "$HOME/Library/Logs/DiagnosticReports" -name "BlamGraphics*" -newer "$OUT/boot.log" \
+    -exec cp {} "$OUT/" \; 2>/dev/null || true
 
 grep -E "GL version|FPS:|FTAL|ERRO" "$LOG" | tail -n 20 || true
 exit "$STATUS"
