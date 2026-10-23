@@ -441,6 +441,7 @@ struct program_t
             }
             if(m_async_state == async_compile_state::shaders_compiling)
             {
+                // Attach only once every stage is done, polls repeat
                 for(auto const& [stage, stage_info] : m_stages)
                 {
                     i32 status{};
@@ -450,6 +451,9 @@ struct program_t
                         SpanOne(status));
                     if(status == GL_FALSE)
                         return false;
+                }
+                for(auto const& [stage, stage_info] : m_stages)
+                {
                     if(auto res = validate_shader(stage_info.get());
                        res.has_error())
                     {
