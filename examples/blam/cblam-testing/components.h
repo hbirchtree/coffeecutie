@@ -727,6 +727,7 @@ struct MassPoints
     };
 
     f32   mass{0.f};
+    f32   radius{0.f}; /*!< How far its torques reach */
     Vecf3 center_of_mass{};
     Vecf3 moments{}; /*!< Principal inertia, xx yy zz */
     f32   gravity_scale{1.f};

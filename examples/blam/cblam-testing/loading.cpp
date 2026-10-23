@@ -2406,6 +2406,7 @@ struct ResourceLoader
         using blam::phys::powered_mass_point;
         auto data = std::make_shared<MassPoints>(MassPoints{
             .mass                 = header.mass,
+            .radius               = header.radius,
             .center_of_mass       = header.center_of_mass,
             .moments              = header.moments,
             .gravity_scale        = header.gravity_scale,
