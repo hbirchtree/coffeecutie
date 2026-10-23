@@ -101,6 +101,9 @@ struct MessageBase
 
         /* Machines, controls and their groups */
         DeviceSync,
+
+        /* Scripted scenarios: a point every peer waits at */
+        SyncPoint,
     } type{None};
 
     u32 request{};
@@ -302,6 +305,15 @@ struct alignas(8) WeaponPickup
 
     u32               player_idx{0};
     blam::tag_index<> weapon{};
+};
+
+/*! A client reached a sync point, or the server released it for all */
+struct SyncPoint
+{
+    static constexpr auto message_type = MessageBase::SyncPoint;
+
+    std::array<char, 60> name{};
+    u32                  released{0};
 };
 
 /*! An object the server removed */
@@ -645,6 +657,7 @@ static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(EquipmentSync) == 16);
 static_assert(sizeof(WeaponPickup) == 8);
 static_assert(sizeof(ObjectDespawn) == 4);
+static_assert(sizeof(SyncPoint) == 64);
 static_assert(sizeof(DriveInput) == 32);
 static_assert(sizeof(WeaponFire) == 64);
 static_assert(sizeof(ObjectHit) == 72);
