@@ -62,6 +62,7 @@ coffee_application(
         forge_controller.cpp
         graphics.cpp
         player_controller.cpp
+        view_kick.cpp
         loading.cpp
         map_loading.cpp
         network/gateway_fleet_registration.cpp
