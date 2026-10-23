@@ -153,9 +153,16 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
     target_compile_definitions(
       GLeamCommon_${SUFFIX} PUBLIC -DGLES_SILENCE_DEPRECATION=1
     )
-    target_link_libraries(
-      GLeamCommon_${SUFFIX} PUBLIC CEAGL "-framework OpenGLES"
-    )
+    if(BUILD_EGL_ANGLE)
+      find_package(unofficial-angle CONFIG REQUIRED)
+      target_link_libraries(
+        GLeamCommon_${SUFFIX} PUBLIC unofficial::angle::libGLESv2
+      )
+    else()
+      target_link_libraries(
+        GLeamCommon_${SUFFIX} PUBLIC CEAGL "-framework OpenGLES"
+      )
+    endif()
     target_include_directories(
       GLeamCommon_${SUFFIX}
       PRIVATE

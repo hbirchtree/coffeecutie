@@ -12,6 +12,10 @@ target_compile_definitions(CEAGL PRIVATE -DGLES_SILENCE_DEPRECATION)
 coffee_library(
   TARGET GLKitComponent
   SOURCES private/glk_comp.mm
-  LIBRARIES ComponentApp CEAGL GLeamCommon_ES
+  LIBRARIES ComponentApp GLeamCommon_ES
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
+# ANGLE brings its own EGL, CEAGL's would collide
+if(NOT BUILD_EGL_ANGLE)
+  target_link_libraries(GLKitComponent PUBLIC CEAGL)
+endif()

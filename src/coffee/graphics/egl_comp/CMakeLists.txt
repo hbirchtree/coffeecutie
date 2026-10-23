@@ -14,9 +14,16 @@ coffee_library(
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-if(BUILD_GLKIT)
-  target_link_libraries(EGLComponent PUBLIC CEAGL)
-  target_compile_definitions(EGLComponent PUBLIC -DEGL_USE_CEAGL)
+# The vcpkg port first, then a prebuilt EGL_angle
+if(BUILD_EGL_ANGLE)
+  find_package(unofficial-angle CONFIG QUIET)
+endif()
+if(BUILD_EGL_ANGLE AND TARGET unofficial::angle::libEGL)
+  target_link_libraries(EGLComponent PUBLIC unofficial::angle::libEGL)
+  target_compile_definitions(EGLComponent PUBLIC
+    -DEGL_USE_LINKED
+    -DEGL_USE_ANGLE
+  )
 elseif(BUILD_EGL_ANGLE)
   find_library(EGL_ANGLE_LIB EGL_angle)
   find_library(ANGLE_LIB ANGLE)
@@ -25,6 +32,9 @@ elseif(BUILD_EGL_ANGLE)
     -DEGL_USE_STATIC
     -DEGL_USE_ANGLE
   )
+elseif(BUILD_GLKIT)
+  target_link_libraries(EGLComponent PUBLIC CEAGL)
+  target_compile_definitions(EGLComponent PUBLIC -DEGL_USE_CEAGL)
 elseif(BUILD_EGL_DYNAMIC)
   target_link_libraries(EGLComponent PUBLIC GLAD)
   target_compile_definitions(EGLComponent PUBLIC -DEGL_USE_DYNAMIC)

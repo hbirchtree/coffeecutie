@@ -2,6 +2,8 @@
 
 #import <UIKit/UIKit.h>
 
+extern void* uikit_window;
+
 namespace glkit {
 namespace {
 
@@ -16,6 +18,15 @@ comp_app::size_2d_t screen_pixels()
 }
 
 } // namespace
+
+void Windowing::load(comp_app::detail::EntityContainer& e, comp_app::app_error&)
+{
+    /* EGL surfaces go on the root view's layer, CEAGL makes its own view */
+    UIWindow* window = (__bridge UIWindow*)uikit_window;
+    if(window && window.rootViewController)
+        e.service<comp_app::PtrNativeWindowInfo>()->window =
+            (__bridge void*)window.rootViewController.view.layer;
+}
 
 comp_app::size_2d_t Windowing::size() const
 {

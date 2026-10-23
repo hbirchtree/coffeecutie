@@ -37,6 +37,25 @@ using Coffee::DProfContext;
 using Coffee::Profiler;
 using stl_types::str::fmt::hexify;
 
+/* EGLNativeDisplayType is an int on some platforms, eg. ANGLE on Apple */
+template<typename D = EGLNativeDisplayType>
+inline void* native_display_ptr(D display)
+{
+    if constexpr(std::is_pointer_v<D>)
+        return (void*)display;
+    else
+        return reinterpret_cast<void*>(static_cast<std::intptr_t>(display));
+}
+
+template<typename D = EGLNativeDisplayType>
+inline D native_display(void* display)
+{
+    if constexpr(std::is_pointer_v<D>)
+        return static_cast<D>(display);
+    else
+        return static_cast<D>(reinterpret_cast<std::intptr_t>(display));
+}
+
 namespace detail {
 
 struct EGLData
@@ -134,7 +153,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
                 if(!supportsExtension("EGL_KHR_platform_android"))
                     throw std::runtime_error(
                         "EGL_KHR_platform_android not supported");
-                windowInfo.display = EGL_DEFAULT_DISPLAY;
+                windowInfo.display = native_display_ptr(EGL_DEFAULT_DISPLAY);
                 cDebug("Selecting ANDROID_KHR as EGL backend");
                 return EGL_PLATFORM_ANDROID_KHR;
             case ws_t::wayland:
@@ -159,7 +178,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
                     return EGL_NONE;
                 }
                 cDebug("Selecting SURFACELESS_MESA as EGL backend");
-                windowInfo.display = EGL_DEFAULT_DISPLAY;
+                windowInfo.display = native_display_ptr(EGL_DEFAULT_DISPLAY);
                 return EGL_PLATFORM_SURFACELESS_MESA;
             default:
                 throw std::out_of_range("no window system defined");
@@ -173,7 +192,8 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
             m_data->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     } else
         m_data->display = eglGetDisplay(
-            windowInfo.display ? windowInfo.display : EGL_DEFAULT_DISPLAY);
+            windowInfo.display ? native_display(windowInfo.display)
+                               : EGL_DEFAULT_DISPLAY);
 
     if(m_data->display == EGL_NO_DISPLAY)
     {
@@ -643,7 +663,8 @@ void GraphicsFramebuffer::swapBuffers(comp_app::app_error& ec)
     if(m_container->service<comp_app::PtrNativeWindowInfo>()->window_system ==
        ws_t::surfaceless)
     {
-#if !defined(EGL_USE_CEAGL)
+#if !defined(COFFEE_IOS)
+        /* iOS never has a surfaceless window */
         glFinish();
 #endif
     } else
