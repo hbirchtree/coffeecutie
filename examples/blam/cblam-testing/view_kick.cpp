@@ -98,7 +98,7 @@ struct ViewKick : compo::RestrictedSubsystem<ViewKick, ViewKickManifest>
         std::optional<f32>  eye_z;
     };
 
-    /* The trigger's first firing effect's jpt! */
+    /* The trigger's first firing effect's jpt!, or a strike's response */
     jpt_t const* firing_damage(WeaponFireEvent const& shot, BlamFiles<halo_version> const& files)
     {
         auto const& magic  = files.container.magic;
@@ -108,13 +108,20 @@ struct ViewKick : compo::RestrictedSubsystem<ViewKick, ViewKickManifest>
         auto data = (*weapon).template data<blam::scn::weapon>(magic);
         if(!data.has_value())
             return nullptr;
+        if(shot.melee)
+            return damage_of(data.value()[0].player_melee_response, magic);
         auto triggers = data.value()[0].triggers.data(magic);
         if(!triggers.has_value() || shot.trigger >= triggers.value().size())
             return nullptr;
         auto effects = triggers.value()[shot.trigger].firing_effects.data(magic);
         if(!effects.has_value() || effects.value().empty())
             return nullptr;
-        auto jpt = m_index->find(effects.value()[0].firing_damage);
+        return damage_of(effects.value()[0].firing_damage, magic);
+    }
+
+    jpt_t const* damage_of(blam::tagref_t const& ref, blam::map_ptr const& magic)
+    {
+        auto jpt = ref.valid() ? m_index->find(ref) : m_index->end();
         if(jpt == m_index->end() || !(*jpt).matches(blam::tag_class_t::jpt))
             return nullptr;
         auto out = (*jpt).template data<jpt_t>(magic);
