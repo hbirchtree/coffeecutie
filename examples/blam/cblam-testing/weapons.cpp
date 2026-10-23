@@ -230,17 +230,23 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 auto [model, item_net] = item.components();
                 auto const* tag        = model.origin_object;
                 if(item_net.instance_id == 0 ||
-                   SpawnObjectEvent::is_impostor(item_net.instance_id) ||
-                   !tag || !tag->matches(blam::tag_class_t::weap) ||
+                   SpawnObjectEvent::is_impostor(item_net.instance_id) || !tag ||
                    taken.contains(item.id()) || p.template get<PlayerInfo>(item.id()))
+                    continue;
+                /* A grenade of a kind carried, while there is room for it */
+                bool const grenade = std::any_of(
+                    equip.equipment.begin(), equip.equipment.end(), [tag](auto const& kind) {
+                        return kind.tag == tag && kind.left < kind.most;
+                    });
+                if(!grenade && !tag->matches(blam::tag_class_t::weap))
                     continue;
                 /* Items rest against the body, below its middle */
                 Vecf3 const to = model.position - body;
                 if(glm::length(Vecf2(to)) > pickup_reach ||
                    std::abs(to.z) > info.biped.height)
                     continue;
-                bool const carried =
-                    equip.weapons[0].tag == tag || equip.weapons[1].tag == tag;
+                bool const carried = grenade || equip.weapons[0].tag == tag ||
+                                     equip.weapons[1].tag == tag;
                 if(!carried && equip.weapons[1].weapon && !pressed)
                     continue;
                 taken.insert(item.id());

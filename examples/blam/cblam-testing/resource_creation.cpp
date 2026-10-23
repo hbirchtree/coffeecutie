@@ -623,6 +623,17 @@ void create_resources(compo::EntityContainer& e)
                                 player["player_idx"].get<u32>())
                                  player["vitality"] =
                                      vitality(entity.template get<BipedStatus>());
+                     for(auto& player : players)
+                         for(auto const& entity : e.select<PlayerInfo, BipedEquipment>())
+                             if(entity.template get<PlayerInfo>().player_idx ==
+                                player["player_idx"].get<u32>())
+                             {
+                                 nlohmann::json grenades = nlohmann::json::array();
+                                 for(auto const& kind :
+                                     entity.template get<BipedEquipment>().equipment)
+                                     grenades.push_back(kind.left);
+                                 player["grenades"] = std::move(grenades);
+                             }
                      {
                          auto const* game = &e.subsystem_cast<GameState>();
                          nlohmann::json scores = nlohmann::json::array();
