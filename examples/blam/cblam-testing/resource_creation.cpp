@@ -356,6 +356,11 @@ void create_resources(compo::EntityContainer& e)
     if(dummyConfig.enabled)
     {
         auto& dummy = e.subsystem_cast<comp_app::dummy_plug::DummyEventBus>();
+        e.subsystem_cast<GameEventBus>().addEventFunction<SyncPointEvent>(
+            0, [&dummyConfig](GameEvent&, SyncPointEvent* sync) {
+                if(sync->released)
+                    dummyConfig.release_sync(sync->name);
+            });
         dummy.addEventData(
             {.prio    = 0,
              .handler = [&e](
@@ -891,6 +896,15 @@ void create_resources(compo::EntityContainer& e)
                          .file      = map_filename,
                      };
                      gbus.process(event, &load);
+                 }
+                 if(ev.event == "sync")
+                 {
+                     GameEvent      event{GameEvent::SyncPoint};
+                     SyncPointEvent sync{
+                         .name  = ev.data.value("name", std::string()),
+                         .peers = ev.data.value("peers", 0u),
+                     };
+                     e.subsystem_cast<GameEventBus>().inject(event, &sync);
                  }
                  if(ev.event == "net_listen" || ev.event == "net_connect")
                  {
