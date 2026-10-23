@@ -220,7 +220,10 @@ endif()
 # Assuming that xcode 12.0 is installed you most probably have ios sdk 14.0 or
 # later installed (tested on Big Sur) if you don't set a deployment target it
 # will be set the way you only get 64-bit builds
-if(NOT DEFINED DEPLOYMENT_TARGET AND XCODE_VERSION_INT VERSION_GREATER 12.0)
+if(NOT DEFINED DEPLOYMENT_TARGET
+   AND XCODE_VERSION_INT VERSION_GREATER 12.0
+   AND NOT "${PLATFORM}$ENV{_PLATFORM}" MATCHES "SIMULATORARM64"
+)
   # Temporarily fix the arm64 issues in CMake install-combined by excluding
   # arm64 for simulator builds (needed for Apple Silicon...)
   set(CMAKE_XCODE_ATTRIBUTE_EXCLUDED_ARCHS[sdk=iphonesimulator*] "arm64")
