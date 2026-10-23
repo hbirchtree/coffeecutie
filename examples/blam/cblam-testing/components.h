@@ -679,10 +679,14 @@ struct CollisionGeometry
         i32                bone{-1};
         bool               head{false};
         i16                material{-1}; /*!< Into the coll tag's materials */
+        /*! Its material's kind, what projectiles respond to; none if unset */
+        libc_types::u16 material_type{0xFFFF};
     };
 
     std::vector<node_t> nodes;
     std::vector<Vecf3>  triangles; /*!< Exact surfaces, 3 per triangle */
+    /*! Each triangle's material kind, as node_t::material_type */
+    std::vector<libc_types::u16> triangle_materials;
 };
 
 /*! A phys tag: the body's mass and the spheres (mass points) it meets the

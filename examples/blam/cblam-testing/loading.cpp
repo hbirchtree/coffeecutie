@@ -2306,12 +2306,24 @@ struct ResourceLoader
                     polygon.clear();
                     blam::collision::walk_surface(
                         surfs.value(), es, si, [&](i32 v) { polygon.push_back(v); }, 32);
+                    i16 const kind = surfs.value()[si].material;
+                    u16 const material_type =
+                        materials.has_value() && kind >= 0 &&
+                                static_cast<size_t>(kind) < materials.value().size()
+                            ? materials.value()[kind].material_type
+                            : u16(0xFFFF);
                     for(u32 i = 2; i < polygon.size(); i++)
+                    {
+                        bool whole = true;
                         for(i32 corner : {polygon[0], polygon[i - 1], polygon[i]})
-                            if(corner >= 0 &&
-                               static_cast<u32>(corner) < vs.size())
-                                geometry->triangles.push_back(
-                                    Vecf3(bind * Vecf4(vs[corner].point, 1.f)));
+                            whole = whole && corner >= 0 && static_cast<u32>(corner) < vs.size();
+                        if(!whole)
+                            continue;
+                        for(i32 corner : {polygon[0], polygon[i - 1], polygon[i]})
+                            geometry->triangles.push_back(
+                                Vecf3(bind * Vecf4(vs[corner].point, 1.f)));
+                        geometry->triangle_materials.push_back(material_type);
+                    }
                 }
             }
             if(hull.points.empty())
@@ -2327,7 +2339,8 @@ struct ResourceLoader
             {
                 hull.head = materials.value()[most->first].flags &
                             blam::coll::material::head;
-                hull.material = static_cast<i16>(most->first);
+                hull.material      = static_cast<i16>(most->first);
+                hull.material_type = materials.value()[most->first].material_type;
             }
             geometry->nodes.push_back(std::move(hull));
         }

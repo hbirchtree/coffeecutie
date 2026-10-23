@@ -162,6 +162,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                    jpt.material_modifiers[m.material_type] > 0.f)
                     amount *= jpt.material_modifiers[m.material_type];
             }
+        /* A spent arm shield is down: what struck it reaches the body */
+        if(body_mult <= 0.f && status->shield <= 0.f)
+            body_mult = 1.f;
         bool const headshot =
             head && (jpt.damage_flags & flag_t::can_cause_headshots) != flag_t::none;
         apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot);
@@ -183,9 +186,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         auto const& coll       = *status.coll;
         f32 const   max_shield = status.maximum_shield();
         f32 const   max_body   = std::max(status.maximum_body(), 1.f);
-        shield_mult = shield_mult > 0.f ? shield_mult : 1.f;
-        body_mult   = body_mult > 0.f ? body_mult : 1.f;
-        bool const shielded = status.shield > 0.f && max_shield > 0.f;
+        /* A part the shield does not cover is struck straight in the body;
+         * one the body is not behind (a jackal's arm shield) only drains
+         * the shield */
+        bool const shielded =
+            status.shield > 0.f && max_shield > 0.f && shield_mult > 0.f;
         if(amount <= 0.f)
             return;
         status.stunned = coll.stun_time > 0.f ? coll.stun_time : default_stun;
@@ -195,7 +200,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             status.shield  = std::max(status.shield - amount * shield_mult / max_shield, 0.f);
             amount         = std::max(amount - soak, 0.f);
         }
-        if(amount <= 0.f || (flags & flag_t::only_hurts_shields) != flag_t::none)
+        if(amount <= 0.f || body_mult <= 0.f ||
+           (flags & flag_t::only_hurts_shields) != flag_t::none)
             return;
         status.body = headshot && !shielded
                           ? 0.f

@@ -2082,7 +2082,8 @@ struct PhysicsSystem
             }
             entity_body.world_shape =
                 std::make_unique<btBvhTriangleMeshShape>(mesh.get(), true);
-            entity_body.mesh_iface = std::move(mesh);
+            entity_body.mesh_iface         = std::move(mesh);
+            entity_body.triangle_materials = body_create.hulls->triangle_materials;
             break;
         }
         }
@@ -2820,7 +2821,9 @@ struct PhysicsSystem
             ray.part = static_cast<i16>(closest.triangle);
             auto const& heads = it->second.child_heads;
             ray.head = ray.part < static_cast<i16>(heads.size()) && heads[ray.part];
-        }
+        } else if(it != m_bodies.end() && !structure && closest.triangle >= 0 &&
+                  static_cast<size_t>(closest.triangle) < it->second.triangle_materials.size())
+            ray.material_type = it->second.triangle_materials[closest.triangle];
     }
 
     /* Carried momentum fades: fast against the ground, slowly in the air */
@@ -3078,6 +3081,7 @@ struct PhysicsSystem
     struct entity_body
     {
         std::unique_ptr<btTriangleIndexVertexArray> mesh_iface;
+        std::vector<u16> triangle_materials; /*!< An exact surface's, per triangle */
         /* Children of a compound world_shape */
         std::vector<std::unique_ptr<btCollisionShape>> child_shapes;
         std::unique_ptr<btCollisionShape>               world_shape;

@@ -307,6 +307,17 @@ struct ProjectileSystem
             return surface.has_value() ? surface.value()[0].physics
                                        : material_t::stone;
         }
+        /* The struck part's own, an energy shield's included */
+        if(ray.material_type < blam::scn::material_type_count)
+            return static_cast<material_t>(ray.material_type);
+        std::shared_ptr<CollisionGeometry const> geometry;
+        if(auto const* info = p.template get<PlayerInfo>(ray.entity_id))
+            geometry = info->biped.collision;
+        else if(auto const* physics = p.template get<ObjectPhysics>(ray.entity_id))
+            geometry = physics->collision;
+        if(geometry && ray.part >= 0 && static_cast<size_t>(ray.part) < geometry->nodes.size() &&
+           geometry->nodes[ray.part].material_type < blam::scn::material_type_count)
+            return static_cast<material_t>(geometry->nodes[ray.part].material_type);
         if(p.template get<PlayerInfo>(ray.entity_id))
             return material_t::cyborg_armor;
         if(auto const* physics = p.template get<ObjectPhysics>(ray.entity_id);
