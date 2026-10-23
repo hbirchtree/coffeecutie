@@ -97,6 +97,7 @@ struct GameEvent
         WorldSave,
         WorldRestore,
         DeviceSync,
+        SyncPoint,
     };
 
     EventType type{None};
@@ -550,6 +551,17 @@ struct WorldSaveEvent
 struct WorldRestoreEvent
 {
     static constexpr auto event_type = GameEvent::WorldRestore;
+};
+
+/*! A scripted scenario reached a named point (`released` false), or every
+ *  peer has and it may go on (`released` true) */
+struct SyncPointEvent
+{
+    static constexpr auto event_type = GameEvent::SyncPoint;
+
+    std::string     name;
+    libc_types::u32 peers{0}; /*!< Clients the server waits for at least */
+    bool            released{false};
 };
 
 /*! Where the server tells a device or a device group to be; replicas take

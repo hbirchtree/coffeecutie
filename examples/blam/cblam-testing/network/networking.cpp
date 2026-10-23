@@ -1351,6 +1351,28 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                          magic_enum::enum_name(event.type));
                  }
              }});
+        m_game_bus.addEventFunction<SyncPointEvent>(
+            0, [this](GameEvent&, SyncPointEvent* sync) {
+                if(sync->released)
+                    return;
+                if(is_server())
+                {
+                    auto& point = m_syncs[sync->name];
+                    point.self  = true;
+                    point.peers = std::max(point.peers, sync->peers);
+                    release_sync(sync->name);
+                } else if(m_connection != k_HSteamNetConnection_Invalid)
+                {
+                    SyncPoint reached{};
+                    sync->name.copy(reached.name.data(), reached.name.size() - 1);
+                    send_single(m_connection, Message<SyncPoint>(std::move(reached)));
+                } else
+                {
+                    GameEvent      ev{.type = GameEvent::SyncPoint};
+                    SyncPointEvent done{.name = sync->name, .released = true};
+                    m_game_bus.inject(ev, &done);
+                }
+            });
         m_game_bus.addEventFunction<MapDataLoadEvent>(
             0, [this](GameEvent&, MapDataLoadEvent*) {
                 if(!is_server())
@@ -2203,6 +2225,33 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             flags,
             connections,
             lane);
+    }
+
+    /* Once the server and every client it has (and at least as many as
+     * asked) have reached it, everyone goes on */
+    void release_sync(std::string const& name)
+    {
+        auto point = m_syncs.find(name);
+        if(point == m_syncs.end() || !point->second.self)
+            return;
+        std::set<HSteamNetConnection> verified;
+        for(auto const& [connection, state] : m_connections)
+            if(state.verified)
+                verified.insert(connection);
+        if(verified.size() < point->second.peers)
+            return;
+        for(auto connection : verified)
+            if(!point->second.reached.contains(connection))
+                return;
+        SyncPoint released{.released = 1};
+        name.copy(released.name.data(), released.name.size() - 1);
+        for(auto connection : verified)
+            send_single(connection, Message<SyncPoint>(SyncPoint(released)));
+        m_syncs.erase(point);
+        cDebug("Sync point \"{}\" released for {} client(s)", name, verified.size());
+        GameEvent      ev{.type = GameEvent::SyncPoint};
+        SyncPointEvent done{.name = name, .released = true};
+        m_game_bus.inject(ev, &done);
     }
 
     template<typename T>
@@ -3389,6 +3438,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             receive_inputs(connection, payload.values<TickInput>());
             break;
         }
+        case MessageBase::SyncPoint: {
+            auto const& reached = payload.value<SyncPoint>();
+            std::string name(reached.name.data(), strnlen(reached.name.data(), reached.name.size()));
+            m_syncs[name].reached.insert(connection);
+            release_sync(name);
+            break;
+        }
         case MessageBase::GrabInput: {
             /* Only the sender's own player, from its free camera */
             if(!player_info.biped.exists())
@@ -3681,6 +3737,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 GameEvent ev{.type = GameEvent::DeviceSync};
                 m_game_bus.inject(ev, &event);
             }
+            break;
+        }
+        case MessageBase::SyncPoint: {
+            auto const& released = payload.value<SyncPoint>();
+            if(!released.released)
+                break;
+            GameEvent      ev{.type = GameEvent::SyncPoint};
+            SyncPointEvent done{
+                .name = std::string(
+                    released.name.data(), strnlen(released.name.data(), released.name.size())),
+                .released = true,
+            };
+            m_game_bus.inject(ev, &done);
             break;
         }
         case MessageBase::ObjectDespawn: {
@@ -4218,6 +4287,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::optional<EquipmentSync>             m_sent_own_equipment;
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::vector<ObjectDespawn>               m_despawns;
+
+    struct sync_point_t
+    {
+        bool                          self{false};
+        u32                           peers{0};
+        std::set<HSteamNetConnection> reached;
+    };
+    std::map<std::string, sync_point_t> m_syncs;
     std::vector<EquipWeaponEvent>            m_pickups;
     std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>> m_despawn_queue;
     std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>   m_pickup_queue;
