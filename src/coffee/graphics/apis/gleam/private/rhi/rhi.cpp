@@ -1604,8 +1604,15 @@ optional<error> api::load(load_options_t options)
         m_workarounds.tex.requires_aligned = true;
     }
 
+    /* GLKit draws into its own FBO, bound when the context became current.
+     * Read now, before anything else is bound; ANGLE leaves framebuffer 0 */
     if(compile_info::platform::is_ios)
-        m_workarounds.rendertarget.adopt_bound_default = true;
+    {
+        i32 bound = 0;
+        cmd::get_integerv(group::get_prop::framebuffer_binding, SpanOne(bound));
+        m_bound_default = static_cast<u32>(bound);
+        m_workarounds.rendertarget.adopt_bound_default = bound != 0;
+    }
 
     /* Let's skip ES 2.0 implementations that don't fulfill a minimum */
     if(m_api_type == api_type_t::es)

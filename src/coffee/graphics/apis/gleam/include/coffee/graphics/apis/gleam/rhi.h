@@ -254,10 +254,7 @@ struct api
                 m_features, std::ref(m_rendertargetCurrency));
             if(m_workarounds.rendertarget.adopt_bound_default)
             {
-                i32 bound = 0;
-                cmd::get_integerv(
-                    group::get_prop::framebuffer_binding, SpanOne(bound));
-                m_framebuffer->m_handle = hnd(static_cast<u32>(bound));
+                m_framebuffer->m_handle   = hnd(m_bound_default);
                 m_framebuffer->m_external = true;
             }
 
@@ -454,6 +451,7 @@ struct api
     features              m_features;
     api_limits            m_limits;
     gleam::workarounds    m_workarounds;
+    u32                   m_bound_default{0}; /*!< see adopt_bound_default */
     extensions_set        m_extensions;
     api_type_t            m_api_type{api_type_t::none};
     u32                   m_api_version{0};
