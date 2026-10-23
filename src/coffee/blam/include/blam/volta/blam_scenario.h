@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../common/placements.h"
 #include "../common/tag_class.h"
 #include "blam_actor.h"
 #include "blam_base_types.h"
@@ -38,6 +39,23 @@ struct reflex_group
     reference<T>                       instances;
     reference<std::array<tagref_t, 3>> palette;
 };
+
+/*! A group's placements with the objects its palette names, each binding
+ * as [placement, object] */
+template<typename T>
+inline auto placements(reflex_group<T> const& group, map_ptr const& magic)
+{
+    using entry_t      = std::array<tagref_t, 3>;
+    auto const instances = group.instances.data(magic);
+    auto const palette   = group.palette.data(magic);
+    bool const ok        = !instances.has_error() && !palette.has_error();
+    auto const block     = ok ? semantic::Span<T const>(instances.value()) : semantic::Span<T const>();
+    auto const entries   = ok ? semantic::Span<entry_t const>(palette.value()) : semantic::Span<entry_t const>();
+    return blam::placements(block, [entries](T const& placement) -> tagref_t const* {
+        auto const* entry = placement.ref.resolve(entries);
+        return entry ? &(*entry)[0] : nullptr;
+    });
+}
 
 using scn_chunk = u8[100];
 

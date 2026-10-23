@@ -651,13 +651,12 @@ struct H3MapLoader : compo::SubsystemBase
             return;
         auto const& map = *m_map;
         m_scenery_loops.clear();
-        for(auto const& [i, placed] : stl_types::enumerate(
-                el::placements(map, m_scenario->sound_scenery, m_scenario->sound_scenery_palette)))
+        for(auto const& placed : el::placements(map, m_scenario->sound_scenery, m_scenario->sound_scenery_palette))
         {
-            auto const& object = placed.object();
-            if(!placed.entry || !object.placed_at_load() || !object.in_bsps(m_sound_bsps))
+            auto const& object = placed.placement.object;
+            if(!placed.object || !object.placed_at_load() || !object.in_bsps(m_sound_bsps))
                 continue;
-            auto const tag = map.get<el::object_t>(placed.entry->object);
+            auto const tag = map.get<el::object_t>(*placed.object);
             if(!tag)
                 continue;
             for(auto const& [j, attachment] : stl_types::enumerate(map.span(tag->attachments)))
@@ -667,7 +666,7 @@ struct H3MapLoader : compo::SubsystemBase
                     m_scenery_loops.push_back({
                         .sound    = &attachment.type,
                         .position = object.position,
-                        .entity   = SoundEvent::sound_scenery_base | (u64(i) << 8) | u64(j),
+                        .entity   = SoundEvent::sound_scenery_base | (u64(placed.index) << 8) | u64(j),
                         .reach    = reach > 0.f ? reach : 30.f,
                     });
                 }
@@ -1519,11 +1518,11 @@ struct H3MapLoader : compo::SubsystemBase
     {
         u32  moving = 0, fixed = 0, hidden = 0;
         auto place  = [&](auto const& placements, auto const& palette, bool item) {
-            for(auto const& [placement, entry] :
+            for(auto const& [placement, object_ref] :
                 el::placements_at_load(*m_map, placements, palette, bsps))
             {
                 auto const& object = placement.object;
-                auto const  model  = entry ? drawn_model(entry->object) : el::tagged<el::render_model_t>{};
+                auto const  model  = object_ref ? drawn_model(*object_ref) : el::tagged<el::render_model_t>{};
                 if(!model)
                 {
                     hidden++;
@@ -1534,12 +1533,12 @@ struct H3MapLoader : compo::SubsystemBase
                 Vecf3 const position = object.position;
                 auto const  light    = m_scene.light_below(position);
                 auto const* lit      = light ? &*light : nullptr;
-                auto        physics  = physics_of(entry->object, scale);
+                auto        physics  = physics_of(*object_ref, scale);
                 if(!physics)
                 {
                     auto const skin = stored_pose(*model, object);
                     append_model(model, object.transform(), lit, 0, Quatf(1.f, 0.f, 0.f, 0.f), skin);
-                    attach_lights(entry->object, *model, object.transform(), 0);
+                    attach_lights(*object_ref, *model, object.transform(), 0);
                     fixed++;
                     continue;
                 }
@@ -1553,14 +1552,14 @@ struct H3MapLoader : compo::SubsystemBase
                 placed.tick_position = position;
                 placed.tick_rotation = q;
                 placed.update_matrix();
-                if(auto sweeteners = impact_sweeteners(entry->object))
+                if(auto sweeteners = impact_sweeteners(*object_ref))
                     m_impact_sounds[ref.id()] = {.sweeteners = *sweeteners, .mass = physics->mass};
                 *m_container.get<ObjectPhysics>(ref.id()) = std::move(*physics);
-                if(auto const tag = m_map->get<el::object_t>(entry->object);
+                if(auto const tag = m_map->get<el::object_t>(*object_ref);
                    tag && !m_map->span(tag->change_colors).empty())
                     m_scene.change_colors[ref.id()] = change_colors_of(*tag, object.variant);
                 append_model(model, glm::scale(Matf4(1.f), Vecf3(scale)), lit, ref.id(), q);
-                attach_lights(entry->object, *model, glm::scale(Matf4(1.f), Vecf3(scale)), ref.id());
+                attach_lights(*object_ref, *model, glm::scale(Matf4(1.f), Vecf3(scale)), ref.id());
                 moving++;
             }
         };

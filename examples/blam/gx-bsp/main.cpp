@@ -567,26 +567,21 @@ static void place_group(
     blam::scn::reflex_group<Spawn> const& group,
     object_kind                           kind)
 {
-    auto insts = group.instances.data(c.magic);
-    auto pal   = group.palette.data(c.magic);
-    if(insts.has_error() || pal.has_error())
-        return;
-    for(u32 i = 0; i < insts.value().size(); i++)
+    for(auto const& placed : blam::scn::placements(group, c.magic))
     {
-        Spawn const& s = insts.value()[i];
+        Spawn const& s = placed.placement;
         Vecf3 const  pos{from_le(s.pos.x), from_le(s.pos.y), from_le(s.pos.z)};
         if(!in_active_section(pos, static_cast<u16>(from_le(s.bsp_flags))))
             continue;
-        auto const* entry = s.ref.resolve(pal.value());
-        if(!entry)
+        if(!placed.object)
             continue;
         Vecf3 const rot{from_le(s.rot.x), from_le(s.rot.y), from_le(s.rot.z)};
         place_object(
             c,
-            (*entry)[0].tag_id,
+            placed.object->tag_id,
             spawn_transform(pos, rot),
             kind,
-            net_id_of(kind, i));
+            net_id_of(kind, static_cast<u32>(placed.index)));
     }
 }
 

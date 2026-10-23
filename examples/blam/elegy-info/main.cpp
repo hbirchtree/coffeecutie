@@ -1368,9 +1368,9 @@ int dump_nodes(elegy::map_container const& map, elegy::resource_loader& loader, 
         loader.trim();
     }
     if(auto const scenario = map.find<elegy::scenario_t>())
-        for(auto const& [placement, entry] : elegy::placements(map, scenario->bipeds, scenario->biped_palette))
+        for(auto const& [placement, object] : elegy::placements(map, scenario->bipeds, scenario->biped_palette))
         {
-            auto const* tag = entry ? map.get<elegy::object_t>(entry->object).tag : nullptr;
+            auto const* tag = object ? map.get<elegy::object_t>(*object).tag : nullptr;
             if(!tag || map.name_of(*tag).find(options.name_filter) == std::string_view::npos)
                 continue;
             for(auto const& pose : map.span(placement.object.node_orientations))

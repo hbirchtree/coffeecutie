@@ -2747,14 +2747,10 @@ struct H2MapLoader : compo::SubsystemBase
         auto block = [&](auto const& placements_block,
                          auto const& palette_block,
                          const char* what) {
-            auto placements = placements_block.data(map.magic());
-            auto palette    = palette_block.data(map.magic());
-            if(placements.has_error() || palette.has_error())
-                return;
             u32 placed = 0, skipped = 0, scripted = 0;
             bool const show_scripted =
                 m_container.subsystem_cast<RenderingParameters>().show_scripted_placements;
-            for(auto const& p : placements.value())
+            for(auto [p, object] : dim::placements(map, placements_block, palette_block))
             {
                 /* Left for scripts to create (cutscene actors and props) */
                 if(!show_scripted &&
@@ -2766,9 +2762,7 @@ struct H2MapLoader : compo::SubsystemBase
                     scripted++;
                     continue;
                 }
-                auto const*       entry = p.palette.resolve(palette.value());
-                dim::tag_t const* mode_tag =
-                    entry ? render_model_of(map, entry->tag) : nullptr;
+                dim::tag_t const* mode_tag = object ? render_model_of(map, *object) : nullptr;
                 /* Manual BSP flags: one bit per structure BSP; none = all.
                  * An object shared by BSPs is placed once per BSP, each copy
                  * living in its origin BSP, so they never overlap */
@@ -2787,7 +2781,7 @@ struct H2MapLoader : compo::SubsystemBase
                     animates = p.position_group.value() < 0;
                 if(mode_tag && place(
                                    mode_tag,
-                                   &entry->tag.untyped(),
+                                   &object->untyped(),
                                    p.position,
                                    p.rotation,
                                    from_le(p.scale),
