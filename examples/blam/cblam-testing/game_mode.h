@@ -51,6 +51,10 @@ struct GameState : compo::SubsystemBase
     std::array<i16, 2>     team_scores{};
     i32                    winner{-1}; /*!< A player index, or a team with teams */
     f32                    time_left{-1.f}; /*!< Seconds; below 0 without a limit */
+    /*! Seconds a vehicle sits unused away from its spot before it is put
+     *  back; below 0, never */
+    f32 vehicle_respawn{default_vehicle_respawn};
+    static constexpr f32 default_vehicle_respawn = 60.f;
     u32                    saves{0};   /*!< Checkpoints taken */
     u32                    reverts{0}; /*!< Times sent back to one */
     /*! Campaign, on the authority: nobody hurt for a while, so the fallen
@@ -95,3 +99,5 @@ void alloc_game_mode(compo::EntityContainer& e);
 
 void alloc_campaign_controller(compo::EntityContainer& e);
 void alloc_multiplayer_controller(compo::EntityContainer& e);
+/*! Multiplayer items and vehicles of the map, put back on their timers */
+void alloc_object_respawn(compo::EntityContainer& e);

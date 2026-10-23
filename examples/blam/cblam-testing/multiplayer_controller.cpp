@@ -77,12 +77,13 @@ struct MultiplayerController
         respawn(p, state, files, dt);
     }
 
-    void begin(GameState const& state, BlamFiles<halo_version> const& files)
+    void begin(GameState& state, BlamFiles<halo_version> const& files)
     {
         m_load_generation = files.load_generation;
         m_waiting.clear();
         m_vm.reset();
-        m_respawn_delay = default_delay;
+        m_respawn_delay       = default_delay;
+        state.vehicle_respawn = GameState::default_vehicle_respawn;
         if(state.kind != GameState::kind_t::multiplayer)
             return;
         m_program = game_modes::rules_for<BC>(state.game_type);
@@ -133,6 +134,9 @@ struct MultiplayerController
             return {};
         case mode_op::time_limit_set:
             state.time_left = arg(0) > 0.f ? arg(0) : -1.f;
+            return {};
+        case mode_op::vehicle_respawn_set:
+            state.vehicle_respawn = arg(0);
             return {};
         default:
             return {};
