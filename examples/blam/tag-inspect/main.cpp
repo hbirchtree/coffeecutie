@@ -2705,13 +2705,15 @@ void dump_mode(blam::mod2::header<Ver> const* info)
  * in b40), so every palette lookup goes through here rather than indexing. */
 template<typename P>
 std::string palette_entry(
-    P const& palette_block, i16 idx, blam::map_ptr const& magic)
+    P const&                                              palette_block,
+    blam::block_index<std::array<blam::tagref_t, 3>> const& index,
+    blam::map_ptr const&                                  magic)
 {
-    auto palette = palette_block.data(magic);
-    if(palette.has_error() || idx < 0 ||
-       static_cast<size_t>(idx) >= palette.value().size())
-        return fmt::format("[{}]", idx);
-    auto const& ref = palette.value()[idx][0];
+    auto        palette = palette_block.data(magic);
+    auto const* entry   = palette.has_error() ? nullptr : index.resolve(palette.value());
+    if(!entry)
+        return fmt::format("[{}]", index.value());
+    auto const& ref = (*entry)[0];
     return fmt::format(
         "[{}] \"{}\"", ref.tag_class_name(), ref.name.to_string(magic));
 }

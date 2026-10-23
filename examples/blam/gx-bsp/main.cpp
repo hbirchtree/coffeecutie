@@ -577,13 +577,13 @@ static void place_group(
         Vecf3 const  pos{from_le(s.pos.x), from_le(s.pos.y), from_le(s.pos.z)};
         if(!in_active_section(pos, static_cast<u16>(from_le(s.bsp_flags))))
             continue;
-        i16 const ref = from_le(s.ref.index);
-        if(ref < 0 || static_cast<size_t>(ref) >= pal.value().size())
+        auto const* entry = s.ref.resolve(pal.value());
+        if(!entry)
             continue;
         Vecf3 const rot{from_le(s.rot.x), from_le(s.rot.y), from_le(s.rot.z)};
         place_object(
             c,
-            pal.value()[ref][0].tag_id,
+            (*entry)[0].tag_id,
             spawn_transform(pos, rot),
             kind,
             net_id_of(kind, i));

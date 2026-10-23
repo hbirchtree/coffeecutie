@@ -327,13 +327,13 @@ struct BlamScript
             {
                 auto const& spawn = instances.value()[i];
                 i16 const   name  = spawn.name;
-                if(name < 0 || static_cast<size_t>(name) >= names.value().size() ||
-                   spawn.ref < 0 || static_cast<size_t>(spawn.ref) >= palette.value().size())
+                auto const* entry = spawn.ref.resolve(palette.value());
+                if(name < 0 || static_cast<size_t>(name) >= names.value().size() || !entry)
                     continue;
                 m_named[lowered(names.value()[name].name.str())] = {
                     .group    = group_id,
                     .index    = i,
-                    .object   = &palette.value()[spawn.ref][0],
+                    .object   = &(*entry)[0],
                     .position = spawn.pos,
                     .rotation = spawn.rot,
                 };
