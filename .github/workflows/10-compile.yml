@@ -381,6 +381,7 @@ jobs:
         if-no-files-found: error
   Test_unit_x86_64:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     needs: Linux_HostTools
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -418,6 +419,7 @@ jobs:
     name: "llvmpipe ${{ matrix.variant }}"
     needs: Linux
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -512,6 +514,7 @@ jobs:
     name: "llvmpipe ${{ matrix.variant }}"
     needs: Linux_GLES
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -567,6 +570,7 @@ jobs:
     name: "Software render test (SwiftShader, ${{ matrix.variant }}-emscripten, WebGL2)"
     needs: WebAssembly
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -632,6 +636,7 @@ jobs:
     - WebAssembly
     - WebRTCGateway
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -741,6 +746,7 @@ jobs:
     - WebAssembly
     - WebRTCGateway
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -817,6 +823,7 @@ jobs:
     - Linux
     - WebAssembly
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -920,6 +927,7 @@ jobs:
     name: x86_64 <-🔒-> x86_64
     needs: Linux
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -996,6 +1004,7 @@ jobs:
     name: "${{ matrix.title }}"
     needs: Linux
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -1113,6 +1122,7 @@ jobs:
     name: "Software render test (Dolphin, SW render)"
     needs: Gekko
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
@@ -1164,6 +1174,7 @@ jobs:
     - Test_webrtc_wasm_client
     - Test_webrtc_wasm_pair
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       actions: read
     env:
