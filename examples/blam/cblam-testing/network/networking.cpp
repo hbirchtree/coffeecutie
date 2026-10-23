@@ -1284,7 +1284,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     else
                         spawn->net_id = SpawnObjectEvent::impostor_net_id_base |
                                         (++m_next_request_id & 0x0FFFFFFF);
-                } else if(spawn->net_id == 0 && is_server())
+                } else if(spawn->net_id == 0 && !replica)
+                    /* Offline too: what can be picked up goes by its id */
                     spawn->net_id =
                         SpawnObjectEvent::dynamic_net_id_base + m_next_net_id++;
             });
