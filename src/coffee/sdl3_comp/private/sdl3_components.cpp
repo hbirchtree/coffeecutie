@@ -1376,6 +1376,10 @@ void Clipboard::push(std::string_view const& text)
 
 void FilePicker::open_directory()
 {
+#if defined(COFFEE_EMSCRIPTEN)
+    /* Emscripten's SDL3 port has no dialog backend */
+    cDebug("Folder dialogs are not supported on web");
+#else
     SDL_ShowOpenFolderDialog(
         [](void* userdata, char const* const* files, int) {
             if(!files)
@@ -1390,6 +1394,7 @@ void FilePicker::open_directory()
         SDL_GetKeyboardFocus(),
         nullptr,
         false);
+#endif
 }
 
 std::optional<std::string> FilePicker::poll()
