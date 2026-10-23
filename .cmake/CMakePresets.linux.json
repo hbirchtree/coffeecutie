@@ -83,8 +83,7 @@
                 "CMAKE_C_FLAGS": "-march=native",
                 "CMAKE_CXX_FLAGS": "-march=native",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
-                "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3"
+                "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}"
             },
             "environment": {
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquash",
@@ -121,13 +120,11 @@
                 "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/x86_64v3-buildroot-linux-gnu.toolchain.cmake",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64-buildroot-linux-gnu"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
-                "PLATFORM": "desktop",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3"
+                "PLATFORM": "desktop"
             }
         },
         {
@@ -149,8 +146,7 @@
                 "CMAKE_C_FLAGS": "-march=native",
                 "CMAKE_CXX_FLAGS": "-march=native",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
-                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3"
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64"
             },
             "environment": {
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
@@ -159,7 +155,6 @@
                 "NINJA": "$penv{NINJA}",
                 "TOOLCHAIN_REQUIRED": "1",
                 "PATH": "$penv{PATH}:$env{TOOLCHAIN_ROOT}/bin",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_INSTALL_DIR": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{ARCHITECTURE}"
             }
         },
@@ -177,13 +172,11 @@
                 "GENERATE_RWIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/x86_64v2-buildroot-linux-gnu.toolchain.cmake",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3",
                 "VCPKG_TARGET_TRIPLET": "desktop-x86-64v2-buildroot-linux-gnu"
             },
             "environment": {
                 "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
-                "PLATFORM": "desktop",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports/sdl3"
+                "PLATFORM": "desktop"
             }
         },
         {
