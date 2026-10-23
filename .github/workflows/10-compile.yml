@@ -379,6 +379,61 @@ jobs:
         name: ${{matrix.artifact}}
         path: apps.tar
         if-no-files-found: error
+  iOS_Simulator:
+    # Smoke test only: builds BlamGraphics for the arm64 simulator and checks
+    # that it renders frames. Without a map token it runs without a map.
+    runs-on: macos-latest
+    needs: macOS_HostTools
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
+    name: ios:arm64-darwin:simulator smoke test
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+        path: source
+    - uses: ./source/.github/actions/cmake-setup
+    - name: Installing Inkscape + other stuff
+      run: |
+        brew install --cask inkscape
+        brew install automake autoconf autoconf-archive libtool
+    - name: Host tools cache
+      uses: actions/cache@v5
+      with:
+        path: source/multi_build/host-arm64-osx
+        key: host-tools-${{ runner.os }}-${{ hashFiles('source/toolchain/building.py','source/.cmake/CMakePresets.linux.json','source/.cmake/CMakePresets.apple.json') }}
+        fail-on-cache-miss: true
+    # Xbox maps are self-contained, so the smoke test only needs one download
+    - uses: ./source/.github/actions/build-project
+      with:
+        variant: ios:arm64-darwin:simulator:rel
+        artifact: ios-arm64-darwin-simulator
+        target: BlamGraphics
+        args: -DBLAM_HALO_VERSION=xbox_version_t
+    - name: Downloading test map
+      if: env.MAP_ACCESS_TOKEN != ''
+      run: |
+        mkdir -p maps/xbox_ex
+        curl -fsS -o maps/xbox_ex/beavercreek.map -H "Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/xbox_ex/beavercreek.map
+    - name: Run simulator smoke test
+      env:
+        # Runner VMs have no GPU, so loading and rendering crawl
+        RUN_TIMEOUT: "600"
+      run: |
+        APP=$(find source/multi_build/ios-arm64-darwin-simulator/bin -maxdepth 2 -type d -name BlamGraphics.app | head -n 1)
+        MAP=""
+        if [ -f maps/xbox_ex/beavercreek.map ]; then
+          MAP="$PWD/maps/xbox_ex/beavercreek.map"
+        fi
+        source/.github/tests/ios/run_simulator_smoke.sh "$APP" /tmp/ios_simulator_smoke "$MAP"
+    - name: Uploading test artifacts
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: ios_simulator_smoke_test
+        path: /tmp/ios_simulator_smoke
+        if-no-files-found: ignore
   Test_unit_x86_64:
     runs-on: ubuntu-latest
     needs: Linux_HostTools
