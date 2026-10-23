@@ -290,10 +290,11 @@ struct alignas(8) EquipmentSync
         throwing  = 0x2,
     };
 
-    u32               player_idx{0};
-    blam::tag_index<> weapon{}; /*!< Tag ids, 0 for none */
-    flags_t           flags{none};
-    blam::tag_index<> slung{};
+    u32                player_idx{0};
+    blam::tag_index<>  weapon{}; /*!< Tag ids, 0 for none */
+    flags_t            flags{none};
+    blam::tag_index<>  slung{};
+    std::array<libc_types::u8, 4> grenades{}; /*!< Of each kind the globals list */
 
     bool operator==(EquipmentSync const&) const = default;
 };
@@ -654,7 +655,7 @@ static_assert(sizeof(Message<PlayerJoin>) == 52);
 static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
-static_assert(sizeof(EquipmentSync) == 16);
+static_assert(sizeof(EquipmentSync) == 24);
 static_assert(sizeof(WeaponPickup) == 8);
 static_assert(sizeof(ObjectDespawn) == 4);
 static_assert(sizeof(SyncPoint) == 64);

@@ -1242,6 +1242,7 @@ struct BipedEquipment
     {
         blam::scn::equipment const* equip{nullptr};
         blam::tag_t const*          tag{nullptr};
+        u16                         most{0}; /*!< What can be carried */
         u16                         left{0};
         std::chrono::seconds        time_left{};
     };
