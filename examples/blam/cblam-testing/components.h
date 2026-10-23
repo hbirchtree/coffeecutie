@@ -1126,6 +1126,15 @@ struct PlayerCamera
      *  body from behind it */
     Vecf3 view_offset{};
 
+    /*! A shot's kick and shake, and the first-person model's sway; off the
+     *  look, so aim is untouched */
+    struct
+    {
+        Vecf3 turn{};   /*!< Pitch, yaw, roll; radians */
+        Vecf3 shift{};  /*!< Eye, in view space: right, up, back */
+        Vecf3 weapon{}; /*!< First-person models, in their space */
+    } kick;
+
     Matf4 matrix{};
     Matf4 rotation{};
 

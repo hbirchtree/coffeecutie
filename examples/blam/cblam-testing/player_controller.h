@@ -47,11 +47,15 @@ inline void place_first_person(
         {-1, 0, 0},
         {0, 1, 0},
     };
-    Matf3 const world = glm::transpose(Matf3(cam.rotation)) * model_to_view;
-    model.position    = eye;
+    /* They ride the view as kicked */
+    Matf3 const view_to_world = glm::transpose(
+        Matf3(glm::mat4_cast(glm::inverse(Quatf(cam.kick.turn)))) * Matf3(cam.rotation));
+    Vecf3 const at    = eye + view_to_world * cam.kick.shift;
+    Matf3 const world = view_to_world * model_to_view;
+    model.position    = at;
     model.rotation    = glm::normalize(Quatf(world));
-    model.transform =
-        glm::translate(Matf4(1), eye) * Matf4(world) * attachment.offset;
+    model.transform   = glm::translate(Matf4(1), at) * Matf4(world) *
+                      glm::translate(Matf4(1), cam.kick.weapon) * attachment.offset;
 }
 
 /*! A camera's projection and view, from `eye` and its rotation */
@@ -71,8 +75,11 @@ inline void build_camera_matrix(PlayerCamera& cam, Vecf3 const& eye)
         {0, 0, 0, 1},
     };
 
+    /* The kick turns and moves the view about the eye, after the look */
+    Matf4 const kick = glm::translate(Matf4(1), -cam.kick.shift) *
+                       glm::mat4_cast(glm::inverse(Quatf(cam.kick.turn)));
     Matf4 const view_matrix =
-        glm::translate(glm::mat4_cast(cam.camera.rotation) * bsp_basis, -eye);
+        glm::translate(kick * glm::mat4_cast(cam.camera.rotation) * bsp_basis, -eye);
 
     cam.matrix       = GenPerspective(cam.camera);
     cam.matrix[2][2] = 0.f;
