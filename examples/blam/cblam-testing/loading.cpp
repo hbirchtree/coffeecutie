@@ -1427,6 +1427,8 @@ struct ResourceLoader
 
         auto const* antr_hdr = &antr_data.value()[0];
         u32         anim_idx = 0;
+        /* A unit with no idle, a cryotube, waits on its first frame */
+        bool        held     = false;
 
         auto all_anims_opt = antr_hdr->animations.data(magic);
         if(auto units_opt = antr_hdr->units.data(magic);
@@ -1473,12 +1475,14 @@ struct ResourceLoader
             }
             if(!found_stand && found_fallback)
                 anim_idx = fallback;
+            held = !found_fallback;
         }
 
         return AnimationLayer{
             .graph     = antr_hdr,
             .animation = anim_idx,
-            .loop      = true,
+            .loop      = !held,
+            .paused    = held,
         };
     }
 
