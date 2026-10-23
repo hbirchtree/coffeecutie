@@ -2818,6 +2818,14 @@ struct ResourceLoader
         EquipWeaponEvent const& change,
         BlamFiles<Ver> const&   files)
     {
+        /* A grenade off the ground adds to its kind */
+        if(change.mode == EquipWeaponEvent::pick_up)
+            for(auto& carried : equip.equipment)
+                if(carried.tag && carried.tag->tag_id == change.weapon)
+                {
+                    carried.left = std::min<u16>(carried.left + 1, carried.most);
+                    return;
+                }
         auto&       [held, slung] = equip.weapons;
         auto const* tag           = weapon_tag(change.weapon);
         if(!tag)
@@ -2979,6 +2987,7 @@ struct ResourceLoader
                 equip.equipment.push_back({
                     .equip = eqip.value(),
                     .tag   = &(*tag),
+                    .most  = static_cast<u16>(std::max<i16>(grenades.value()[i].maximum_count, 0)),
                     .left  = multiplayer ? static_cast<u16>(std::max<i16>(
                                                grenades.value()[i].multiplayer_spawn_default, 0))
                                          : counts[i],

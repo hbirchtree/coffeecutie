@@ -3109,6 +3109,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         out.flags  = static_cast<EquipmentSync::flags_t>(
             (equip->reloading ? EquipmentSync::reloading : 0) |
             (equip->throwing ? EquipmentSync::throwing : 0));
+        for(size_t i = 0; i < out.grenades.size() && i < equip->equipment.size(); i++)
+            out.grenades[i] = static_cast<u8>(std::min<u16>(equip->equipment[i].left, 255));
         return out;
     }
 
@@ -3235,6 +3237,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             {
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
                 equip->throwing  = it->second.flags & EquipmentSync::throwing;
+                /* Thrown where it is played, so counted there */
+                for(size_t i = 0; i < it->second.grenades.size() && i < equip->equipment.size(); i++)
+                    equip->equipment[i].left = it->second.grenades[i];
             }
             auto const known = equipment_of(p, player.id(), info);
             if(known.weapon == it->second.weapon && known.slung == it->second.slung)
