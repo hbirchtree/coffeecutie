@@ -883,6 +883,9 @@ void insert_dummy_plug(
                             ready_marked = false,
                             setup_done   = false,
                             local_queued = false,
+                            segment      = size_t{0},
+                            segment_due  = std::optional<
+                                std::chrono::steady_clock::time_point>{},
                             session_wait_start =
                                 std::optional<std::chrono::steady_clock::
                                                   time_point>{},
@@ -951,8 +954,48 @@ void insert_dummy_plug(
             }
 #endif
 
+            /* Sync points cut the timeline: what follows one is queued once
+             * the app releases it, timed from then */
+            std::vector<std::pair<libc_types::u32, std::string>> syncs;
+            for(auto const& event : config["events"])
+                if(event.value("type", std::string()) == "sync")
+                    syncs.emplace_back(
+                        event.value("time", 0u), event.value("name", std::string()));
+            std::stable_sort(syncs.begin(), syncs.end(), [](auto const& a, auto const& b) {
+                return a.first < b.first;
+            });
+            auto const window = [&syncs](size_t seg) {
+                return std::pair{
+                    seg == 0 ? 0u : syncs[seg - 1].first,
+                    seg < syncs.size() ? syncs[seg].first : UINT_MAX};
+            };
+            /* An event belongs to the segment its sync point closes, or that
+             * its time falls in */
+            auto const in_segment = [&window](nlohmann::json const& event, size_t seg) {
+                auto const [lo, hi] = window(seg);
+                libc_types::u32 const at = event.value("time", 0u);
+                if(event.value("type", std::string()) == "sync")
+                    return at == hi && (seg == 0 || at > lo);
+                return at >= lo && at < hi;
+            };
+
             if(flag)
-                return;
+            {
+                if(segment >= syncs.size())
+                    return;
+                auto const& [at, name] = syncs[segment];
+                using namespace std::chrono;
+                bool const timed_out =
+                    segment_due &&
+                    steady_clock::now() - *segment_due >
+                        milliseconds(config.value("sync_timeout_ms", 120000u));
+                if(!dummy_plug.sync_released(name) && !timed_out)
+                    return;
+                if(timed_out)
+                    cWarning("Sync point \"{}\" was not released in time, going on", name);
+                cDebug("Sync point \"{}\" passed", name);
+                segment++;
+            }
 
             const auto type_to_enum = [](nlohmann::json const&   event,
                                          std::string_view const& key) {
@@ -1007,6 +1050,8 @@ void insert_dummy_plug(
                     if(!event.contains("type"))
                         continue;
                     if((event.value("clock", std::string()) == "local") != local)
+                        continue;
+                    if(!in_segment(event, segment))
                         continue;
                     const auto type = type_to_enum(event, "type");
 
@@ -1076,6 +1121,54 @@ void insert_dummy_plug(
                 }
             };
 
+            auto const queue_end = [&](auto const& start_of) {
+                if(!config.contains("end_time"))
+                    return;
+                auto const [lo, hi] = window(segment);
+                libc_types::u32 const end = config.value("end_time", 0u);
+                if(end < lo || end >= hi)
+                    return;
+                auto& counter = container.register_subsystem_inplace<FrameCounter>();
+                rq::runtime_queue::QueueShot(
+                    rq::runtime_queue::GetCurrentQueue().value(),
+                    start_of(config, "end_time"),
+                    [&container, &counter]() {
+                        auto  window  = container.service<Windowing>();
+                        auto* appInfo = container.service<comp_app::AppInfo>();
+                        appInfo->add(
+                            "run:totalFrames",
+                            std::to_string(counter.frame_counter));
+                        appInfo->add(
+                            "run:dummyPlug",
+                            platform::url::constructors::MkUrl(
+                                platform::env::var("DUMMY_PLUG_CONFIG").value())
+                                .path()
+                                .fileBasename()
+                                .internUrl);
+                        window->close();
+                    })
+                    .assume_value();
+            };
+            /* Past a sync point, both clocks start over at its release */
+            auto const mark_due = [&](auto const& start_of) {
+                if(segment < syncs.size())
+                    segment_due = std::chrono::steady_clock::now() +
+                                  start_of(nlohmann::json{{"time", syncs[segment].first}});
+            };
+            if(flag)
+            {
+                libc_types::u32 const base = window(segment).first;
+                auto const start_of = [base](nlohmann::json const& event,
+                                             std::string_view key = "time") {
+                    return std::chrono::milliseconds(event.value(key, base) - base);
+                };
+                queue_events(false, start_of);
+                queue_events(true, start_of);
+                queue_end(start_of);
+                mark_due(start_of);
+                return;
+            }
+
             /* Local events go out at once; they may be what starts the
              * session */
             if(dummy_plug.session && !local_queued)
@@ -1118,34 +1211,8 @@ void insert_dummy_plug(
             queue_events(false, start_of);
             if(!local_queued)
                 queue_events(true, start_of);
-
-
-            auto end_time = start_of(config, "end_time");
-
-            if(config.contains("end_time"))
-            {
-                auto& counter =
-                    container.register_subsystem_inplace<FrameCounter>();
-                rq::runtime_queue::QueueShot(
-                    rq::runtime_queue::GetCurrentQueue().value(),
-                    end_time,
-                    [&container, &counter]() {
-                        auto  window  = container.service<Windowing>();
-                        auto* appInfo = container.service<comp_app::AppInfo>();
-                        appInfo->add(
-                            "run:totalFrames",
-                            std::to_string(counter.frame_counter));
-                        appInfo->add(
-                            "run:dummyPlug",
-                            platform::url::constructors::MkUrl(
-                                platform::env::var("DUMMY_PLUG_CONFIG").value())
-                                .path()
-                                .fileBasename()
-                                .internUrl);
-                        window->close();
-                    })
-                    .assume_value();
-            }
+            queue_end(start_of);
+            mark_due(start_of);
             flag = true;
         };
 

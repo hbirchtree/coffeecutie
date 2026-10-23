@@ -2,7 +2,9 @@
 
 #include <atomic>
 #include <functional>
+#include <mutex>
 #include <optional>
+#include <set>
 
 #include <coffee/comp_app/subsystems.h>
 #include <nlohmann/json.hpp>
@@ -50,6 +52,21 @@ struct Config : comp_app::Config<Config>
     std::function<std::optional<compo::clock::duration>()> session_clock{};
     bool                                                   session{false};
 
+    /*! A "sync" event reaches the app as a dummy event named "sync"; what
+     *  follows it waits until the app releases its name here, e.g. once
+     *  every peer has reached it. Called from any thread. */
+    void release_sync(std::string const& name)
+    {
+        std::lock_guard lock(m_sync_lock);
+        m_released_syncs.insert(name);
+    }
+
+    bool sync_released(std::string const& name)
+    {
+        std::lock_guard lock(m_sync_lock);
+        return m_released_syncs.contains(name);
+    }
+
     /*! The plug's clock: frames x frame_delta, or session time once known.
      *  Never runs backwards. */
     compo::clock::duration now()
@@ -67,6 +84,8 @@ struct Config : comp_app::Config<Config>
 
   private:
     std::atomic<compo::clock::duration> m_last_now{};
+    std::mutex                          m_sync_lock;
+    std::set<std::string>               m_released_syncs;
 };
 
 /* Free-form dummy events we can insert and interpret per-application */
