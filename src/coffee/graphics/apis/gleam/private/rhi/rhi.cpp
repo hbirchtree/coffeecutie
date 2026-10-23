@@ -779,6 +779,10 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
     out.texture.tex.ext.s3tc =
         supports_extension(extensions, ext::texture_compression_s3tc::name) ||
         supports_extension(extensions, "WEBGL_compressed_texture_s3tc");
+    out.texture.tex.angle.s3tc =
+        supports_extension(extensions, "GL_EXT_texture_compression_dxt1") &&
+        supports_extension(extensions, "GL_ANGLE_texture_compression_dxt3") &&
+        supports_extension(extensions, "GL_ANGLE_texture_compression_dxt5");
 
     out.texture.tex.oes.etc1 =
         supports_extension(
