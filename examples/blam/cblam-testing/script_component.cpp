@@ -10,6 +10,7 @@
 #include "model_markers.h"
 #include "network/networking.h"
 #include "physics.h"
+#include "player_controller.h"
 #include "script_vm.h"
 #include "selected_version.h"
 #include "sound_cache.h"
@@ -47,7 +48,8 @@ using Coffee::cWarning;
 
 using BlamScriptManifest = compo::SubsystemManifest<
     type_list_t<
-        const PlayerCamera,
+        PlayerCamera,
+        const Attachment,
         const PlayerInfo,
         const PlayerInput,
         const NetworkInfo,
@@ -130,6 +132,7 @@ struct BlamScript
         m_impulses.clear();
         m_speakers.clear();
         m_riders.clear();
+        m_seat_markers.clear();
         m_attached.clear();
         m_hovering.clear();
         m_spawning.clear();
@@ -1322,6 +1325,52 @@ struct BlamScript
             unit->rotation = glm::normalize(Quatf(Matf3(at)));
             unit->update_matrix();
         }
+        /* Players the game seated ride a recording as it was drawn too, not
+         * as it stood a frame ago */
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const& info = ent.template get<PlayerInfo>();
+            auto const* flight  = flown(info.riding.vehicle);
+            auto const* vehicle = flight ? p.template get<Model>(info.riding.vehicle) : nullptr;
+            /* Its view too, which the game set off the same stale pose */
+            if(auto* cam = vehicle ? p.template get<PlayerCamera>(ent.id()) : nullptr;
+               cam && !cam->cinematic)
+            {
+                Vecf3 const eye = Vecf3(flight->moved * Vecf4(cam->drawn_eye, 1.f));
+                cam->camera.position += eye - cam->drawn_eye;
+                cam->drawn_eye = eye;
+                build_camera_matrix(*cam, eye + cam->view_offset);
+                /* And the arms and weapon hanging off it */
+                for(auto held : p.template select<Attachment, Model>())
+                {
+                    auto [attachment, model] = held.components();
+                    if(attachment.parent == ent.id())
+                        place_first_person(*cam, eye, attachment, model);
+                }
+            }
+            if(auto const* marker = vehicle ? seat_marker(*vehicle, info.riding.seat) : nullptr)
+            {
+                auto&       body = ent.template get<Model>();
+                Matf4 const at   = vehicle->transform * *marker;
+                body.position    = Vecf3(at[3]);
+                body.rotation    = glm::normalize(Quatf(Matf3(at)));
+                body.update_matrix();
+            }
+        }
+    }
+
+    /* A seat's marker on its vehicle, in the bind pose */
+    Matf4 const* seat_marker(Model const& vehicle, i16 seat)
+    {
+        if(!vehicle.tag || !vehicle.origin_object || seat < 0)
+            return nullptr;
+        auto [it, fresh] = m_seat_markers.try_emplace({vehicle.tag, seat});
+        if(fresh)
+            if(auto unit = vehicle.origin_object->template data<blam::scn::unit>(m_magic); unit.has_value())
+                if(auto seats = unit.value()[0].seats.data(m_magic);
+                   seats.has_value() && static_cast<size_t>(seat) < seats.value().size())
+                    it->second = bind_marker(*vehicle.tag, seats.value()[seat].marker_name.str(), m_magic);
+        return it->second ? &*it->second : nullptr;
     }
 
     /* ---- The player, as the tutorial watches them ---- */
@@ -1641,9 +1690,34 @@ struct BlamScript
         i32                             length;
         end_t                           end;
         Vecf3                           velocity{};
+        /*! A dropship's own flight, in Halo's per-tick units */
+        struct flight_t
+        {
+            Vecf3 velocity{}; /*!< wu/tick */
+            f32   speed{0.f}; /*!< What the throttle asks for, wu/tick */
+            f32   hover{0.f};
+            Vecf2 facing{};   /*!< Yaw, pitch the body points */
+            Vecf2 turning{};  /*!< rad/tick */
+            f32   roll{0.f};
+            f32   rolling{0.f};
+            f32   power{0.f}; /*!< The pilot's seat, powering up */
+        };
+        std::optional<flight_t> flight;
         /*! Flying: the pose before the last tick, to draw between */
         std::optional<std::pair<Vecf3, Quatf>> from;
+        /*! As drawn last frame, which the game seated its riders off */
+        std::optional<Matf4> drawn;
+        /*! From last frame's drawing to this one's */
+        Matf4 moved{1.f};
     };
+
+    recording_t const* flown(u64 vehicle) const
+    {
+        auto it = std::find_if(m_recordings.begin(), m_recordings.end(), [vehicle](auto const& r) {
+            return vehicle && r.entity == vehicle && r.drawn;
+        });
+        return it != m_recordings.end() ? &*it : nullptr;
+    }
 
     void start_recording(Proxy& p, u64 id, std::string_view name, end_t end)
     {
@@ -1725,20 +1799,31 @@ struct BlamScript
             Vecf3 const ahead{std::cos(yaw), std::sin(yaw), 0.f};
             Vecf3 const right{std::sin(yaw), -std::cos(yaw), 0.f};
             auto const* drive = physics && physics->drive ? &*physics->drive : nullptr;
-            /* Dropships climb on jump and sink on crouch; pitch is only
-             * where they look */
-            bool const  plane = drive && drive->type == VehicleDrive::human_plane;
+            bool const plane = drive && drive->type == VehicleDrive::human_plane &&
+                               physics->mass_points;
+            if(plane)
+            {
+                it->from = std::pair{model->position, model->rotation};
+                fly(p, it->entity, *it, *model, *drive, *physics->mass_points, input);
+                if(it->play.advance())
+                {
+                    ++it;
+                    continue;
+                }
+                u64 const   id  = it->entity;
+                end_t const end = it->end;
+                it              = m_recordings.erase(it);
+                if(end == end_t::hover)
+                    m_hovering.insert(id);
+                stop_recording(p, id, end);
+                continue;
+            }
             auto const  feet  = drive ? Vecf2{} : walk_speeds(p, it->entity);
-            f32 const   top   = drive ? drive->forward_speed * (plane ? plane_cruise : 1.f)
-                                      : feet.x;
+            f32 const   top   = drive ? drive->forward_speed : feet.x;
             f32 const   slide = drive ? drive->slide_speed : feet.y;
             f32 const   accel = drive && drive->acceleration > 0.f ? drive->acceleration : default_acceleration;
-            f32 const   climb = plane ? (input.held(control_jump) ? plane_climb : 0.f) -
-                                            (input.held(control_crouch) ? plane_sink : 0.f)
-                                      : 0.f;
             Vecf3 const want  = ahead * (input.movement.x * top) +
-                               right * (input.movement.y * slide) +
-                               Vecf3{0.f, 0.f, climb * slide};
+                               right * (input.movement.y * slide);
             Vecf3 const delta = want - it->velocity;
             f32 const   step  = accel * dt;
             it->velocity += glm::length(delta) > step ? glm::normalize(delta) * step : delta;
@@ -1768,16 +1853,184 @@ struct BlamScript
         }
     }
 
+    /* A human plane as Halo flies one: the throttle sets a speed the nose
+     * thrusts toward, lift comes from airspeed and a hover that fades as the
+     * thrust rises (crouch lowers it, jump raises it and brakes), drag is
+     * the mass points' air friction along each body axis, and the body is
+     * torqued toward the pilot's facing, so it lags it. Per tick throughout */
+    void fly(
+        Proxy&                                    p,
+        u64                                       id,
+        recording_t&                              r,
+        Model&                                    model,
+        VehicleDrive const&                       drive,
+        MassPoints const&                         body,
+        blam::scn::recorded::input_state const&   input)
+    {
+        using namespace blam::scn::recorded;
+        auto const& facing = input.facing();
+        Vecf2 const want{facing.yaw_radians(), facing.pitch_radians()};
+        if(!r.flight)
+            r.flight = typename recording_t::flight_t{.facing = want};
+        auto& f = *r.flight;
+        /* Lift and thrust come up with the pilot's seat; gravity is there
+         * from the start */
+        f32 const powerup = seat_powerup(model);
+        f.power           = powerup > 0.f ? std::min(f.power + 1.f / (powerup * tick_rate), 1.f) : 1.f;
+
+        f32 const top   = drive.forward_speed / tick_rate;
+        f32 const back  = drive.reverse_speed / tick_rate;
+        f32 const accel = drive.acceleration / (tick_rate * tick_rate);
+        f32 const brake = drive.deceleration_or_accel() / (tick_rate * tick_rate);
+        bool const jump   = input.held(control_jump);
+        bool const crouch = input.held(control_crouch);
+        f.speed = seek(f.speed, jump ? 0.f : input.movement.x, top, back, accel, brake);
+
+        f32 const thrust =
+            (top > 0.f ? glm::pow(std::clamp(f.speed, 0.f, top) / top, 2.f) : 0.f) * f.power;
+        f32 const hold = (crouch ? hover_low : jump ? hover_high : hover_cruise) *
+                         (1.f - thrust / std::max(f.power, 1e-3f)) * f.power;
+        f.hover += std::clamp(hold - f.hover, -hover_rate, hover_rate);
+
+        /* Turned toward the facing: aiming to close the gap over
+         * turn_ticks, as fast as the torque lets the inertia follow */
+        f32 const reach = body.radius * body.radius * body.mass * torque_scale;
+        Vecf2 const gain{
+            body.moments.z > 0.f ? std::min(reach / body.moments.z, 1.f) : 1.f,
+            body.moments.y > 0.f ? std::min(reach / body.moments.y, 1.f) : 1.f};
+        Vecf2 const gap{
+            glm::mod(want.x - f.facing.x + glm::pi<f32>(), glm::two_pi<f32>()) - glm::pi<f32>(),
+            want.y - f.facing.y};
+        f.turning += (gap / turn_ticks - f.turning) * gain;
+        f.facing += f.turning;
+
+        Vecf3 const nose{
+            std::cos(f.facing.y) * std::cos(f.facing.x),
+            std::cos(f.facing.y) * std::sin(f.facing.x),
+            std::sin(f.facing.y)};
+        Vecf3 up = Vecf3{-nose.z * nose.x, -nose.z * nose.y, 1.f - nose.z * nose.z};
+        up       = glm::length(up) > 1e-4f ? glm::normalize(up) : Vecf3{1.f, 0.f, 0.f};
+        /* Banked into a sideways slip, which turns its lift into the turn */
+        f32 const slip = top > 0.f ? (f.velocity.y * std::cos(want.x) - f.velocity.x * std::sin(want.x)) *
+                                         glm::half_pi<f32>() / top
+                                   : 0.f;
+        f32 const roll_gain = body.moments.x > 0.f ? std::min(reach / body.moments.x, 1.f) : 1.f;
+        f.rolling += ((slip - f.roll) / turn_ticks - f.rolling) * roll_gain;
+        f.roll += f.rolling;
+        up = up * std::cos(f.roll) + glm::cross(nose, up) * std::sin(f.roll);
+        Vecf3 const left = glm::cross(up, nose);
+
+        f32 const airspeed = glm::dot(f.velocity, nose);
+        f32 const gravity  = halo_gravity * body.gravity_scale;
+        f32 const lift = ((top > 0.f ? std::abs(airspeed / top) : 0.f) * speed_lift +
+                          f.hover * hover_lift) *
+                         gravity * f.power;
+        Vecf3 const drag = air_drag(body);
+        f.velocity += nose * ((f.speed - airspeed) * thrust * drive_rate) + up * lift -
+                      Vecf3{0.f, 0.f, gravity} -
+                      body.air_friction *
+                          (nose * (drag.x * airspeed) + left * (drag.y * glm::dot(f.velocity, left)) +
+                           up * (drag.z * glm::dot(f.velocity, up)));
+
+        model.position += f.velocity;
+        /* Its mass points rest on what is below */
+        Physics::Event   ev{Physics::Event::Raycast};
+        Physics::Raycast ray{
+            .from   = model.position + Vecf3{0.f, 0.f, ground_probe},
+            .to     = model.position - Vecf3{0.f, 0.f, ground_probe},
+            .ignore = id,
+        };
+        p.template subsystem<PhysicsBus>().process(ev, &ray);
+        if(f32 const floor = ray.point.z + resting_height(body); ray.hit && model.position.z < floor)
+        {
+            model.position.z = floor;
+            f.velocity.z     = std::max(f.velocity.z, 0.f);
+        }
+        model.rotation = glm::angleAxis(f.facing.x, Vecf3{0.f, 0.f, 1.f}) *
+                         glm::angleAxis(-f.facing.y, Vecf3{0.f, 1.f, 0.f}) *
+                         glm::angleAxis(f.roll, Vecf3{1.f, 0.f, 0.f});
+        model.update_matrix();
+        r.velocity = f.velocity * tick_rate;
+    }
+
+    /* Seconds the driver's seat takes to power up, 0 if it has none */
+    f32 seat_powerup(Model const& model) const
+    {
+        if(!model.origin_object)
+            return 0.f;
+        auto unit = model.origin_object->template data<blam::scn::unit>(m_magic);
+        if(!unit.has_value())
+            return 0.f;
+        auto seats = unit.value()[0].powered_seats.data(m_magic);
+        return seats.has_value() && !seats.value().empty() ? seats.value()[0].driver_powerup_time : 0.f;
+    }
+
+    /* How far its origin sits above the ground its lowest mass point
+     * touches */
+    static f32 resting_height(MassPoints const& body)
+    {
+        f32 lowest = 0.f;
+        for(auto const& point : body.points)
+            lowest = std::min(lowest, point.position.z - point.radius);
+        return -lowest;
+    }
+
+    /* Toward the target speed, as fast as the tag accelerates or brakes,
+     * never past the top speed either way */
+    static f32 seek(f32 speed, f32 target, f32 top, f32 back, f32 accel, f32 brake)
+    {
+        if(speed < target)
+        {
+            speed = speed < -brake ? speed + brake : speed >= 0.f ? speed + accel : (speed / brake + 1.f) * accel;
+            return std::min({speed, target, top});
+        }
+        if(speed > target)
+        {
+            speed = speed > brake ? speed - brake : speed <= 0.f ? speed - accel : (speed / brake - 1.f) * accel;
+            return std::max({speed, target, -back});
+        }
+        return speed;
+    }
+
+    /* Each body axis's share of air friction: point masses drag every way
+     * alike, the others scale along and across their own axis */
+    static Vecf3 air_drag(MassPoints const& body)
+    {
+        Matf3 sum(0.f);
+        f32   mass = 0.f;
+        for(auto const& point : body.points)
+        {
+            using friction_t = MassPoints::point_t::friction_t;
+            Matf3 scale(1.f);
+            if(point.friction != friction_t::point)
+            {
+                Vecf3 axis = point.friction == friction_t::forward ? point.forward
+                             : point.friction == friction_t::up   ? point.up
+                                                                  : glm::cross(point.up, point.forward);
+                axis              = glm::normalize(axis);
+                Matf3 const along = glm::outerProduct(axis, axis);
+                scale = along * point.parallel + (Matf3(1.f) - along) * point.perpendicular;
+            }
+            sum += scale * point.mass;
+            mass += point.mass;
+        }
+        return mass > 0.f ? Vecf3{sum[0][0], sum[1][1], sum[2][2]} / mass : Vecf3{1.f};
+    }
+
     /* Recordings step a tick at a time; flying ones are drawn between their
      * last two poses, so they glide at any frame rate */
     void draw_recordings(Proxy& p)
     {
         f32 const alpha = p.template subsystem<TickClock>().alpha();
-        for(auto const& r : m_recordings)
+        for(auto& r : m_recordings)
             if(auto* model = r.from ? p.template get<Model>(r.entity) : nullptr)
+            {
                 model->transform =
                     glm::translate(Matf4(1), glm::mix(r.from->first, model->position, alpha)) *
                     glm::mat4_cast(glm::slerp(r.from->second, model->rotation, alpha));
+                r.moved = r.drawn ? model->transform * glm::inverse(*r.drawn) : Matf4(1.f);
+                r.drawn = model->transform;
+            }
     }
 
     /* A unit on foot covers the ground its move clips do */
@@ -2069,13 +2322,20 @@ struct BlamScript
     /* Recordings on something without a drive of its own */
     static constexpr f32 default_speed        = 2.f;  /* wu/s */
     static constexpr f32 default_acceleration = 4.f; /* wu/s^2 */
-    /* Of a plane's top speed at full throttle: b30's dropships land where
-     * their marines stand at this, not at the tag's maximum */
-    static constexpr f32 plane_cruise = .75f;
-    /* Of its slide speed: c10's and b30's dropships sink onto their landing
-     * zones at this, and b40's climbs onto its ledge at that */
-    static constexpr f32 plane_sink  = .5f;
-    static constexpr f32 plane_climb = .2f;
+    /* Human planes: hover lift with crouch, at rest and with jump, its
+     * rate, the lift scales, how hard the drive closes on the speed, and
+     * the torque toward the facing */
+    static constexpr f32 hover_low    = .25f;
+    static constexpr f32 hover_cruise = .75f;
+    static constexpr f32 hover_high   = 1.f;
+    static constexpr f32 hover_rate   = .05f; /* per tick */
+    static constexpr f32 hover_lift   = 1.3f;
+    static constexpr f32 speed_lift   = 1.05f;
+    static constexpr f32 drive_rate   = .05f;
+    static constexpr f32 turn_ticks   = 30.f;
+    static constexpr f32 torque_scale = .05f;
+    static constexpr f32 ground_probe = 2.f; /* wu, either way of the origin */
+    static constexpr f32 halo_gravity = .0035651792f; /* wu/tick^2 */
     /* Where a body is tested against volumes, above its feet */
     static constexpr f32 body_middle = .3f;
     static constexpr f32 eye_height  = .6f;
@@ -2095,6 +2355,7 @@ struct BlamScript
     u64                                     m_next_impulse{1};
     std::vector<recording_t>                m_recordings;
     std::vector<rider_t>                    m_riders;
+    std::map<std::pair<blam::tag_t const*, i16>, std::optional<Matf4>> m_seat_markers;
     std::vector<attached_t>                 m_attached;
     std::set<u32>                           m_spawning;
     std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> m_deferred;
