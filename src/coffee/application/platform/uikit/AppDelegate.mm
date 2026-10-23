@@ -9,6 +9,7 @@
 #import "AppDelegate.h"
 
 #import <CoreMotion/CoreMotion.h>
+#import <QuartzCore/CAMetalLayer.h>
 
 // This is where all the foreign stuff comes from
 #include <coffee/comp_app/app_events.h>
@@ -72,6 +73,19 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 
 @end
 
+#if !defined(COFFEE_APP_USE_GLKIT)
+/* EGL (ANGLE) renders straight into this view's layer, which keeps its size */
+@interface MetalView : UIView
+@end
+
+@implementation MetalView
++ (Class)layerClass
+{
+    return [CAMetalLayer class];
+}
+@end
+#endif
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -90,6 +104,17 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     arg_ptrs.push_back(nullptr);
     int const argc = static_cast<int>(arg_strings.size());
 
+#if !defined(COFFEE_APP_USE_GLKIT)
+    /* EGL puts its surface on this view's layer during setup */
+    self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
+    self.window.rootViewController = [[UIViewController alloc] init];
+    self.window.rootViewController.view =
+        [[MetalView alloc] initWithFrame:UIScreen.mainScreen.bounds];
+    self.window.rootViewController.view.contentScaleFactor =
+        UIScreen.mainScreen.scale;
+    uikit_window = (__bridge void*)self.window;
+#endif
+
     Coffee::SetPrintingVerbosity(10);
     // Call the Coffee entrypoint, it will set up a bunch of things
     if(Coffee::main_functions.is_no_args)
@@ -99,7 +124,9 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     Coffee::SetPrintingVerbosity(10);
     
     self.hasInitialized = FALSE;
+#if defined(COFFEE_APP_USE_GLKIT)
     self.window = [[UIWindow alloc] init];
+#endif
     self.window.backgroundColor = [UIColor yellowColor];
 
     NSLog(@"AppDelegate::init");
@@ -166,6 +193,16 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
         self.window.backgroundColor = [UIColor blackColor];
         uikit_window = (__bridge void*)self.window;
         [self.window makeKeyAndVisible];
+#if !defined(COFFEE_APP_USE_GLKIT)
+        if(!self.displayLink)
+        {
+            self.displayLink = [CADisplayLink
+                displayLinkWithTarget:self
+                             selector:@selector(drawFrame:)];
+            [self.displayLink addToRunLoop:NSRunLoop.mainRunLoop
+                                   forMode:NSRunLoopCommonModes];
+        }
+#endif
 
 //        CoffeeEventHandleCall(CoffeeHandle_Setup);
         self.hasInitialized = TRUE;
@@ -215,6 +252,15 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 
 - (void)glkViewControllerUpdate:(GLKViewController *)controller
 {
+}
+#else
+- (void)drawFrame:(CADisplayLink*)link
+{
+    if(!self.hasInitialized)
+        return;
+    LifecycleEvent event;
+    event.lifecycle_type = LifecycleEvent::FrameRequested;
+    DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
 }
 #endif
 

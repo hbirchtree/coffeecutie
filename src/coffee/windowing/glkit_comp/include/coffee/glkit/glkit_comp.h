@@ -7,7 +7,10 @@ namespace glkit {
 struct Windowing
     : comp_app::interfaces::StaticWindowing
     , comp_app::AppService<Windowing, comp_app::Windowing>
+    , comp_app::AppLoadableService
 {
+    void load(comp_app::detail::EntityContainer& e, comp_app::app_error& ec);
+
     virtual comp_app::size_2d_t      size() const final;
     virtual comp_app::window_flags_t state() const final;
     virtual void setState(comp_app::window_flags_t) final;
@@ -23,6 +26,7 @@ struct DisplayInfo
     virtual libc_types::f32     diagonal(libc_types::u32) const final;
 };
 
-using Services = comp_app::detail::TypeList<Windowing, DisplayInfo>;
+using Services = comp_app::detail::
+    TypeList<comp_app::PtrNativeWindowInfoService, Windowing, DisplayInfo>;
 
 } // namespace glkit

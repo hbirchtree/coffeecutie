@@ -25,6 +25,13 @@
                 { "name": "assimp", "platform": "(linux & x64) | osx | windows" }
             ]
         },
+        "angle": {
+            "description": "OpenGL ES through ANGLE",
+            "dependencies": [
+                { "name": "angle", "features": ["metal"], "platform": "osx | ios" },
+                { "name": "angle", "platform": "!osx & !ios" }
+            ]
+        },
         "audio": {
             "description": "Audio output support",
             "dependencies": [

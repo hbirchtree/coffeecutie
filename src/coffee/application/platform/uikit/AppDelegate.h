@@ -16,5 +16,6 @@
 @property (strong, nonatomic) UIViewController* defaultController;
 @property (strong, nonatomic) UIWindow*         window;
 @property BOOL                                  hasInitialized;
+@property (strong, nonatomic) CADisplayLink*    displayLink;
 
 @end
