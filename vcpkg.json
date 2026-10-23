@@ -41,6 +41,7 @@
         "blam": {
             "description": "Blam! data support",
             "dependencies": [
+                { "name": "bcdec", "platform": "!android & !osx & !ios & !emscripten" }
             ]
         },
         "cursed": {
@@ -80,7 +81,6 @@
             "description": "Desktop OpenGL + Mobile OpenGL ES rendering library",
             "dependencies": [
                 { "name": "angle", "platform": "windows & uwp" },
-                "bcdec",
                 { "name": "imgui", "features": ["docking-experimental"]},
                 { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },
                 { "name": "pvrtcdec", "platform": "linux & x64" },
@@ -179,6 +179,12 @@
                     "features": []
                 },
                 { "name": "sdl3", "platform": "osx | windows | mingw", "features": ["dialog"] }
+            ]
+        },
+        "software-bcn": {
+            "description": "Software BCn decode in gleam",
+            "dependencies": [
+                "bcdec"
             ]
         },
         "tests": {
