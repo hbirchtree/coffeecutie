@@ -189,7 +189,6 @@
         }
     },
     "default-features": [
-        "image",
         "openssl",
         "physics"
     ],
