@@ -6,6 +6,7 @@
 #include "lightmap.h"
 #include "map.h"
 #include "objects.h"
+#include "../common/placements.h"
 #include "scenario.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -58,6 +59,19 @@ struct object_view
         return is(tag_class_t::mach) || is(tag_class_t::ctrl) || is(tag_class_t::lifi);
     }
 };
+
+/*! A placement block's placements with the objects their palette names,
+ * each binding as [placement, object] */
+template<typename V, typename P>
+inline auto placements(
+    map_container<V> const& map, tag_block<P> const& block, tag_block<scn::palette_entry_t> const& palette)
+{
+    auto const entries = map.span(palette);
+    return blam::placements(map.span(block), [entries](P const& placement) -> object_reference const* {
+        auto const* entry = placement.palette.resolve(entries);
+        return entry ? &entry->tag : nullptr;
+    });
+}
 
 /*! A bitmap tag's image by index, null past its list */
 template<typename V>

@@ -319,21 +319,16 @@ struct BlamScript
         if(!names.has_value())
             return;
         auto add = [&](auto const& group, ScenarioGroup group_id) {
-            auto palette   = group.palette.data(m_magic);
-            auto instances = group.instances.data(m_magic);
-            if(!palette.has_value() || !instances.has_value())
-                return;
-            for(u32 i = 0; i < instances.value().size(); i++)
+            for(auto const& placed : blam::scn::placements(group, m_magic))
             {
-                auto const& spawn = instances.value()[i];
+                auto const& spawn = placed.placement;
                 i16 const   name  = spawn.name;
-                auto const* entry = spawn.ref.resolve(palette.value());
-                if(name < 0 || static_cast<size_t>(name) >= names.value().size() || !entry)
+                if(name < 0 || static_cast<size_t>(name) >= names.value().size() || !placed.object)
                     continue;
                 m_named[lowered(names.value()[name].name.str())] = {
                     .group    = group_id,
-                    .index    = i,
-                    .object   = &(*entry)[0],
+                    .index    = static_cast<u32>(placed.index),
+                    .object   = placed.object,
                     .position = spawn.pos,
                     .rotation = spawn.rot,
                 };

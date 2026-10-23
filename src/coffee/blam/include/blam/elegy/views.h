@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/anim_codec.h"
+#include "../common/placements.h"
 #include "map.h"
 #include "physics.h"
 #include "shader.h"
@@ -154,28 +155,17 @@ inline cluster_t const* cluster_at(
                : nullptr;
 }
 
-/*! A placement with its palette entry, null when the index is out of range */
-template<typename P>
-struct placed_t
-{
-    P const&               placement;
-    palette_entry_t const* entry;
-
-    inline object_placement_t const& object() const
-    {
-        return placement.object;
-    }
-};
-
-/*! A placement block with each placement's palette entry */
+/*! A placement block's placements with the objects their palette names,
+ * each binding as [placement, object] */
 template<typename P>
 inline auto placements(
     map_container const& map, tag_block<P> const& block, tag_block<palette_entry_t> const& palette)
 {
-    auto entries = map.span(palette);
-    return map.span(block) | std::views::transform([entries](P const& placement) {
-               return placed_t<P>{placement, placement.object.palette.resolve(entries)};
-           });
+    auto const entries = map.span(palette);
+    return blam::placements(map.span(block), [entries](P const& placement) -> tag_reference<> const* {
+        auto const* entry = placement.object.palette.resolve(entries);
+        return entry ? &entry->object : nullptr;
+    });
 }
 
 /*! The placements the level creates in the structure BSPs of `bsps` (one
@@ -187,8 +177,9 @@ inline auto placements_at_load(
     tag_block<palette_entry_t> const& palette,
     u32                               bsps)
 {
-    return placements(map, block, palette) | std::views::filter([bsps](placed_t<P> const& placed) {
-               return placed.object().placed_at_load() && placed.object().in_bsps(bsps);
+    return placements(map, block, palette) | std::views::filter([bsps](auto const& placed) {
+               auto const& object = placed.placement.object;
+               return object.placed_at_load() && object.in_bsps(bsps);
            });
 }
 
