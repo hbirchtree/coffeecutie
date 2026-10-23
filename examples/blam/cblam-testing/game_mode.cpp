@@ -165,4 +165,5 @@ void alloc_game_mode(compo::EntityContainer& e)
         0, [&mode](GameEvent&, UnitKilledEvent* kill) { mode.m_kills.push_back(*kill); });
     alloc_campaign_controller(e);
     alloc_multiplayer_controller(e);
+    alloc_object_respawn(e);
 }

@@ -19,6 +19,7 @@ enum class mode_op : libc_types::u16
     game_over,          /*!< (game_over): the leader wins */
     respawn_delay_set,  /*!< (respawn_delay_set <real seconds>) */
     time_limit_set,     /*!< (time_limit_set <real seconds>), 0 = none */
+    vehicle_respawn_set, /*!< (vehicle_respawn_set <real seconds>), below 0 = never */
 };
 
 template<typename BC>
