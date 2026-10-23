@@ -30,6 +30,7 @@ using ForgeControllerManifest = compo::SubsystemManifest<
         ScreenText,
         GameEventBus,
         const BlamFiles<halo_version>,
+        const LoadingStatus,
         const NetworkState
     >,
     type_list_t<
@@ -255,10 +256,12 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
         return {static_cast<u32>(titles.size()), code};
     }
 
-    /* Spawnable object tags of the loaded map, grouped by class */
-    void refresh_catalog(BlamFiles<halo_version> const& files)
+    /* Spawnable object tags of the loaded map, grouped by class. The
+     * generation moves as a load starts: wait for the map itself */
+    void refresh_catalog(BlamFiles<halo_version> const& files, LoadingStatus const& loading)
     {
-        if(files.load_generation == m_catalog_generation)
+        if(files.load_generation == m_catalog_generation ||
+           loading.loaded_map != LoadingStatus::loaded)
             return;
         m_catalog_generation = files.load_generation;
         m_groups.clear();
@@ -384,7 +387,7 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
         Vecf4 const&        bounds,
         f32                 fb_height)
     {
-        refresh_catalog(p.subsystem<BlamFiles<halo_version>>());
+        refresh_catalog(p.subsystem<BlamFiles<halo_version>>(), p.subsystem<LoadingStatus>());
         auto& menu = m_menus[player];
         navigate(p, menu, pressed, camera);
 
