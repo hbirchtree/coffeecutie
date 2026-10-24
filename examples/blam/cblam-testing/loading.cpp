@@ -1939,6 +1939,7 @@ struct ResourceLoader
         }
 
         Model& model = ent.template get<Model>();
+        model.item_age = spawn.age;
         if(model_it != index.end())
         {
             model.tag          = &(*model_it);
@@ -2899,7 +2900,8 @@ struct ResourceLoader
                 slung = held;
             else if(change.mode == EquipWeaponEvent::pick_up && !info.is_remote())
                 drop(held, cam, info.biped.eye_height);
-            held = armed(tag, files);
+            held     = armed(tag, files);
+            held.age = change.age;
         }
         equip.reloading = false;
     }
@@ -2955,7 +2957,7 @@ struct ResourceLoader
         {
             for(auto const& weapon : equip.weapons)
                 if(weapon.tag)
-                    drop(weapon.tag, cam, info.biped.eye_height, turn++);
+                    drop(weapon.tag, cam, info.biped.eye_height, turn++, weapon.age);
             for(auto const& carried : equip.equipment)
                 for(u16 i = 0; carried.tag && i < carried.left; i++)
                     drop(carried.tag, cam, info.biped.eye_height, turn++);
@@ -3017,11 +3019,13 @@ struct ResourceLoader
     /* Thrown down ahead of the feet, through the usual spawn path */
     void drop(BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height)
     {
-        drop(weapon.tag, cam, eye_height);
+        drop(weapon.tag, cam, eye_height, 0.f, weapon.age);
     }
 
     /* Tossed ahead, each `turn` a little further round */
-    void drop(blam::tag_t const* tag, PlayerCamera const& cam, f32 eye_height, f32 turn = 0.f)
+    void drop(
+        blam::tag_t const* tag, PlayerCamera const& cam, f32 eye_height, f32 turn = 0.f,
+        f32 age = 0.f)
     {
         Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
         Vecf3 const ahead   = glm::length(Vecf2(forward)) > 1e-3f
@@ -3033,6 +3037,7 @@ struct ResourceLoader
             .position = cam.camera.position - Vecf3{0.f, 0.f, eye_height * .5f} + flat * .5f,
             .server_owned = true,
             .velocity     = flat + Vecf3{0.f, 0.f, 1.f},
+            .age          = age,
         };
         GameEvent ev{.type = GameEvent::SpawnObject};
         game_bus->inject(ev, &spawn);

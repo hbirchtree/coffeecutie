@@ -921,17 +921,40 @@ struct AnimationController
         for(auto ent : p.template select<Attachment, AnimationPlayback>())
         {
             auto& anim = ent.template get<AnimationPlayback>();
-            if(!anim.graph || custom_playing(ent.id(), anim))
+            if(!anim.graph)
                 continue;
             auto fp = anim.graph->first_person_weapons.data(magic);
             if(!fp.has_value() || fp.value().empty())
                 continue;
             auto slots = fp.value()[0].animations.data(magic);
-            if(!slots.has_value() || slots.value().size() <= fp_slot::idle)
+            if(!slots.has_value())
                 continue;
-            i32 const idle = slots.value()[fp_slot::idle].animation;
-            if(idle >= 0)
-                anim.crossfade(anim.graph, static_cast<u32>(idle), blend_time);
+            auto const clip = [&slots](size_t slot) {
+                return slot < slots.value().size() ? slots.value()[slot].animation : i16{-1};
+            };
+            /* The weapon's state picks what the hands hold: vents open while
+             * it cools, the charge while it is full, else idle */
+            auto const* equip =
+                p.template get<BipedEquipment>(ent.template get<Attachment>().parent);
+            auto const* gun     = equip ? equip->held(files.load_generation) : nullptr;
+            bool const  venting = gun && gun->overheated;
+            if(bool& was = m_fp_venting[ent.id()]; venting != was)
+            {
+                was = venting;
+                if(i32 const once = clip(venting ? fp_slot::overheating : fp_slot::o_h_exit);
+                   once >= 0)
+                {
+                    apply(p, {.entity = ent.id(), .animation = once, .fade = blend_time});
+                    continue;
+                }
+            }
+            if(custom_playing(ent.id(), anim))
+                continue;
+            i32 const hold = venting                 ? clip(fp_slot::overheated)
+                             : gun && gun->charged ? clip(fp_slot::overcharged)
+                                                   : -1;
+            if(i32 const pose = hold >= 0 ? hold : clip(fp_slot::idle); pose >= 0)
+                anim.crossfade(anim.graph, static_cast<u32>(pose), blend_time);
         }
     }
 
@@ -1292,6 +1315,7 @@ struct AnimationController
     std::map<u64, custom_t>                      m_custom;
     std::set<u64>                                m_aimed; /* turrets a gunner turns */
     std::vector<PlayModelAnimationEvent>         m_requests;
+    std::map<u64, bool>                          m_fp_venting; /*!< By fp model */
     std::vector<WeaponFireEvent>                 m_shots;
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     std::map<u64, f32>                           m_wheel_turn;

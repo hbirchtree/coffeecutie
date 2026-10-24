@@ -54,6 +54,8 @@ struct state_t
     f32 loaded_max{1.f};
     f32 secondary_total{0.f};
     f32 secondary_loaded{0.f};
+    f32 heat{0.f};
+    f32 battery{1.f}; /*!< What is left of it */
 };
 
 /* Drawn premultiplied: alpha is how much of what is behind an element it
@@ -275,6 +277,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return s.secondary_total;
         case attached_t::secondary_weapon_loaded_ammo:
             return s.secondary_loaded;
+        case attached_t::heat:
+            return fraction ? s.heat : s.heat * 100.f;
+        case attached_t::age:
+            return fraction ? s.battery : std::round(s.battery * 100.f);
         default:
             return 0.f;
         }
@@ -380,6 +386,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             .loaded           = static_cast<f32>(held.rounds_loaded),
             .secondary_total  = static_cast<f32>(slung.rounds_total),
             .secondary_loaded = static_cast<f32>(slung.rounds_loaded),
+            .heat             = std::min(held.heat, 1.f),
+            .battery          = 1.f - held.age,
         };
         auto triggers  = held.weapon->triggers.data(magic);
         auto magazines = held.weapon->magazines.data(magic);

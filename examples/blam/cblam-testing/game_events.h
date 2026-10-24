@@ -236,6 +236,7 @@ struct EquipWeaponEvent
     blam::tag_index<> weapon{};
     blam::tag_index<> slung{};
     how_t             mode{draw};
+    libc_types::f32   age{0.f}; /*!< pick_up: the battery it was left with */
 };
 
 struct SpawnBipedEvent
@@ -359,6 +360,7 @@ struct SpawnObjectEvent
     Vecf3           angular_velocity{}; /*!< rad/s */
     libc_types::f32 lifetime{0.f};      /*!< seconds, 0 = until despawned */
     blam::tagref_t  held{};             /*!< A unit's weapon in hand */
+    libc_types::f32 age{0.f};           /*!< A weapon's battery spent, 0 to 1 */
     /*! Plays its creation effect, or the players' respawn effect if it has none */
     bool announce{false};
 };
