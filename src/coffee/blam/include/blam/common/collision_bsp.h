@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <type_traits>
 #include <vector>
 
 /*!
@@ -207,7 +208,8 @@ inline u32 walk_surface(
 }
 
 /*!
- * Fans every surface into triangles, `emit(a, b, c)` with vertex indices.
+ * Fans every surface into triangles, `emit(a, b, c)` with vertex indices
+ * (or `emit(a, b, c, surface)`).
  * A surface is left out when `skip(surface_index)` says so, or when a
  * corner is not in `usable` (vertices at infinity bound the BSP). A broken
  * loop still fans the corners before the break.
@@ -236,7 +238,10 @@ inline void fan_surfaces(
         if(!ok)
             continue;
         for(size_t i = 2; i < polygon.size(); i++)
-            emit(polygon[0], polygon[i - 1], polygon[i]);
+            if constexpr(std::is_invocable_v<Emit, i32, i32, i32, u32>)
+                emit(polygon[0], polygon[i - 1], polygon[i], s);
+            else
+                emit(polygon[0], polygon[i - 1], polygon[i]);
     }
 }
 

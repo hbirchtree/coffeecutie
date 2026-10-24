@@ -84,6 +84,8 @@ struct BodyCreationPrebuilt
     std::unique_ptr<btBvhTriangleMeshShape>     shape;
     std::shared_ptr<void>                       keep_alive;
     bool                                        static_body{true};
+    /*! A game's own material per triangle, handed back by Raycast */
+    std::vector<libc_types::u16>                triangle_materials;
 };
 #endif
 

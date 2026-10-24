@@ -2393,6 +2393,7 @@ struct PhysicsSystem
         body.mesh_iface   = std::move(body_create.mesh_iface);
         body.world_shape  = std::move(body_create.shape);
         body.keep_alive   = std::move(body_create.keep_alive);
+        body.triangle_materials = std::move(body_create.triangle_materials);
 
         btRigidBody::btRigidBodyConstructionInfo info{
             0.f,
