@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../world/placement.h"
 #include "../world/types.h"
 #include "h3_lighting.h"
 
@@ -159,9 +160,7 @@ struct ObjectDraws
     /*! Its bounding sphere where `transform` places it: centre, radius */
     Vecf4 sphere(Matf4 const& transform) const
     {
-        f32 const scale = std::max({glm::length(Vecf3(transform[0])), glm::length(Vecf3(transform[1])),
-                                    glm::length(Vecf3(transform[2]))});
-        return Vecf4(Vecf3(transform * Vecf4((lo + hi) * .5f, 1.f)), glm::length(hi - lo) * .5f * scale);
+        return world::place_sphere(transform, Vecf4((lo + hi) * .5f, glm::length(hi - lo) * .5f));
     }
 };
 

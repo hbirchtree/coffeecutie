@@ -1,7 +1,9 @@
 #include "h2_scene.h"
 
 #include "data.h"
+#include "player_controller.h"
 #include "render/cascaded_shadows.h"
+#include "world/placement.h"
 #include "world/world_gpu.h"
 #include "resource_creation.h"
 
@@ -479,22 +481,18 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
      * with the view */
     void place_first_person(H2Scene const& scene, PlayerCamera const& camera)
     {
-        static Matf3 const model_to_view{
-            {0, 0, -1},
-            {-1, 0, 0},
-            {0, 1, 0},
-        };
-        auto const& fp   = scene.first_person;
+        auto const& fp = scene.first_person;
         /* Where the view matrix was built, between physics ticks */
-        Vecf3 const eye  = camera.drawn_eye;
-        Matf3 const view = glm::transpose(Matf3(camera.rotation)) * model_to_view;
-        Matf4 const hang = glm::translate(Matf4(1.f), eye) * Matf4(view);
+        Vecf3 const eye = camera.drawn_eye;
+        Model       hands{};
+        ::place_first_person(camera, eye, Attachment{}, hands);
         for(i32 index : {fp.hands, fp.weapon})
             if(index >= 0)
-                m_instances[animated_slot(scene, static_cast<size_t>(index))] = hang;
+                m_instances[animated_slot(scene, static_cast<size_t>(index))] = hands.transform;
         if(fp.body < 0)
             return;
-        Vecf3 forward{view[0].x, view[0].y, 0.f};
+        Vecf3 const view = glm::transpose(Matf3(camera.rotation)) * Vecf3(0.f, 0.f, -1.f);
+        Vecf3 forward{view.x, view.y, 0.f};
         forward = glm::length(forward) > 1e-4f ? glm::normalize(forward) : Vecf3{1.f, 0.f, 0.f};
         Vecf3 const up{0.f, 0.f, 1.f};
         m_instances[animated_slot(scene, static_cast<size_t>(fp.body))] =
@@ -527,11 +525,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     {
         if(animation.frames == 0)
             return;
-        f32 const at   = std::fmod(seconds * animation.rate, static_cast<f32>(animation.frames));
-        u32 const f0   = static_cast<u32>(at) % animation.frames;
-        u32 const f1   = (f0 + 1) % animation.frames;
-        f32 const t    = at - std::floor(at);
-        u32 const n    = std::min<u32>(animation.nodes, m_bones.size());
+        auto const [f0, f1, t] = world::loop_frame(seconds * animation.rate, animation.frames);
+        u32 const n            = std::min<u32>(animation.nodes, m_bones.size());
         for(u32 i = 0; i < n; i++)
             m_bones[i] = animation.palette[f0 * animation.nodes + i] * (1.f - t) +
                          animation.palette[f1 * animation.nodes + i] * t;
@@ -682,14 +677,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     model = &scene.animated_objects[d.tag.animated].transform;
                 } else
                     continue;
-                f32 const scale = std::max(
-                    {glm::length(Vecf3((*model)[0])),
-                     glm::length(Vecf3((*model)[1])),
-                     glm::length(Vecf3((*model)[2]))});
-                caster.bounds = d.bounds.w >= 0.f
-                                    ? Vecf4(Vecf3(*model * Vecf4(Vecf3(d.bounds), 1.f)),
-                                            d.bounds.w * scale)
-                                    : Vecf4(Vecf3((*model)[3]), -1.f);
+                caster.bounds = d.bounds.w >= 0.f ? world::place_sphere(*model, d.bounds)
+                                                  : Vecf4(Vecf3((*model)[3]), -1.f);
                 m_casters.push_back(caster);
             }
         }

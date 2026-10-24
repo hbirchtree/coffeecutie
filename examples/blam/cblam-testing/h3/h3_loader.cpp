@@ -1,5 +1,6 @@
 #include "h3_scene.h"
 #include "../world/column_grid.h"
+#include "../world/placement.h"
 #include "../world/texels.h"
 #include "../world/map_lifecycle.h"
 #include "../world/player_spawn.h"
@@ -1553,9 +1554,7 @@ struct H3MapLoader : compo::SubsystemBase
         if(!fp.idle)
             return out;
         u32 const frames = fp.idle->frames;
-        f32 const at     = std::fmod(frame, static_cast<f32>(frames));
-        u32 const f0     = static_cast<u32>(at) % frames, f1 = (f0 + 1) % frames;
-        f32 const t      = at - std::floor(at);
+        auto const [f0, f1, t] = world::loop_frame(frame, frames);
         auto      a = fp.idle->frame(f0), b = fp.idle->frame(f1);
         std::vector<el::node_pose_t> pose(a.size());
         for(size_t i = 0; i < pose.size(); i++)
