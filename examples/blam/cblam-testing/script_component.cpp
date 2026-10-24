@@ -863,6 +863,11 @@ struct BlamScript
                     custom_animation(p, id, graph, name, blend);
                 });
             return value_t::boolean(true);
+        case op::unit_open:
+        case op::unit_close:
+            for(u64 id : objects_of(p, arg(0)))
+                unit_door(p, id, opcode == op::unit_open);
+            return {};
         case op::unit_stop_custom_animation:
             for(u64 id : objects_of(p, arg(0)))
                 stop_custom(p, id);
@@ -1431,6 +1436,36 @@ struct BlamScript
             return;
         }
         log(fmt::format("custom_animation: no animation {}", name));
+    }
+
+    /* A unit's opening plays out and holds; closing too, or without one,
+     * the opening's first frame */
+    void unit_door(Proxy& p, u64 id, bool open)
+    {
+        auto const* anim = p.template get<AnimationPlayback>(id);
+        if(!anim || !anim->graph)
+            return;
+        auto units = anim->graph->units.data(m_magic);
+        if(!units.has_value() || units.value().empty())
+            return;
+        auto slots = units.value()[0].animations.data(m_magic);
+        auto clip  = [&](u32 slot) -> i32 {
+            return slots.has_value() && slot < slots.value().size() ? slots.value()[slot].animation
+                                                                     : -1;
+        };
+        using Slot     = blam::antr::unit::animation_idx_t;
+        i32 const shut = clip(Slot::closing);
+        i32 const play = open ? clip(Slot::opening) : shut >= 0 ? shut : clip(Slot::opening);
+        if(play < 0)
+            return;
+        GameEvent               ev{.type = GameEvent::PlayModelAnimation};
+        PlayModelAnimationEvent door{
+            .entity    = id,
+            .animation = play,
+            .fade      = 0.f,
+            .rate      = open || shut >= 0 ? 1.f : 0.f,
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &door);
     }
 
     void stop_custom(Proxy& p, u64 id)
