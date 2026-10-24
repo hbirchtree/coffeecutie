@@ -1,0 +1,3988 @@
+{
+    "comment": "Walks into the first opening area in 010_jungle. Walks through mud, puddles, a stream and atop rocks. Stops to look at a waterfall too and an open terrain. Exercises auto exposure",
+    "end_time": 93402,
+    "frame_delta": 16.6,
+    "events": [
+        {
+            "index": 0,
+            "time": 268,
+            "type": "controller_connect"
+        },
+        {
+            "button": "BACK",
+            "duration": 194,
+            "index": 0,
+            "time": 5463,
+            "type": "controller_button"
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 6291,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 6312,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 6322,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7300,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7314,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7326,
+            "type": "controller_axis",
+            "value": 0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7338,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7351,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7363,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7376,
+            "type": "controller_axis",
+            "value": 0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7416,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7430,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7446,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7457,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9177,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9189,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9200,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9210,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9221,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9290,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9301,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9313,
+            "type": "controller_axis",
+            "value": 0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9322,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9333,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14498,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14508,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14519,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14532,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14540,
+            "type": "controller_axis",
+            "value": 0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14551,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14561,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14659,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14671,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14682,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14693,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14705,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 14716,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15093,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15105,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15116,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15126,
+            "type": "controller_axis",
+            "value": 0.800000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15138,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15261,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15273,
+            "type": "controller_axis",
+            "value": 0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15284,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15295,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 152,
+            "index": 0,
+            "time": 15901,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18016,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18025,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18036,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18046,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18057,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18071,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18083,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18175,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18189,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18201,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18797,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18809,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18820,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18831,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18843,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18852,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18863,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18920,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18931,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18941,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 18952,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19403,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19414,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19424,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19436,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19446,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19457,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19491,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19501,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19511,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19521,
+            "type": "controller_axis",
+            "value": 0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19531,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19815,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19826,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19838,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19853,
+            "type": "controller_axis",
+            "value": 0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19863,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19873,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19955,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19964,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19975,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19986,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 19996,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20007,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20811,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20822,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20833,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20844,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20923,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20933,
+            "type": "controller_axis",
+            "value": 0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20944,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20955,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20965,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21146,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21158,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21175,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21186,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21196,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21207,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21218,
+            "type": "controller_axis",
+            "value": 0.800000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21287,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21300,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21313,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21331,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21959,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21970,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21990,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 22089,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 22294,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 22316,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 22326,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 22337,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 22390,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 22401,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 22411,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23046,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23056,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23064,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23074,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23083,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23092,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23143,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23154,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23164,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23175,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23451,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23461,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23472,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23481,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23491,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23500,
+            "type": "controller_axis",
+            "value": -0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23510,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23520,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23560,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23579,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23590,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23598,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23608,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23618,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23950,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23959,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23972,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23981,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 23991,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24000,
+            "type": "controller_axis",
+            "value": 0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24032,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24042,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24052,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24063,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24306,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24316,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24326,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24336,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24345,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24394,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24404,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24414,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 24424,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25068,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25076,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25086,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25095,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25163,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25173,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25182,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25191,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 25200,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26269,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26277,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26284,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26292,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26300,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26413,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26421,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26430,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26442,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26448,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26458,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26467,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26785,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26793,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26801,
+            "type": "controller_axis",
+            "value": -0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26811,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26941,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26950,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26959,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26967,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26976,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 26984,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 27078,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 27086,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 27095,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 27104,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 27224,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 27237,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 27244,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 27253,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 29983,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 29995,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30002,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30009,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30017,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30022,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30196,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30203,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30212,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 119,
+            "index": 0,
+            "time": 30293,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30610,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30616,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30622,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30630,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30636,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30818,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30825,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30833,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 30840,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 111,
+            "index": 0,
+            "time": 31430,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 31684,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 31697,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 31705,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 31710,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 31717,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 31730,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 31771,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32149,
+            "type": "controller_axis",
+            "value": -0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32158,
+            "type": "controller_axis",
+            "value": -0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 32158,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32170,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 32170,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32223,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 32223,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32236,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 32236,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32250,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 32250,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32258,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32842,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32853,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32862,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32872,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32981,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 32992,
+            "type": "controller_axis",
+            "value": -0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33004,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33015,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33025,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33314,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33325,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33337,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33348,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33370,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33381,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33392,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33403,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33486,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33499,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33514,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33523,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 33536,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 34101,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 34113,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 34124,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 34155,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 34165,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 35411,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 35424,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 35438,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 125,
+            "index": 0,
+            "time": 35966,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36449,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36463,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36479,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36494,
+            "type": "controller_axis",
+            "value": 0.800000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36510,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36525,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36894,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36905,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36915,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 36925,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37329,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37337,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37425,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37711,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37720,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37730,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37742,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37803,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37809,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37819,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37829,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 37839,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 38049,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 38058,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 38128,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 38139,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 224,
+            "index": 0,
+            "time": 38494,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39359,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39370,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39379,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39389,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39399,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39419,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39480,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39490,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39501,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 39511,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 160,
+            "index": 0,
+            "time": 40112,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45482,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45499,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45515,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45532,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45553,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45572,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45586,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45597,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45661,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45677,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45694,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45710,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45833,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45851,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45867,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45884,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45901,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45918,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 45987,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46004,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46023,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46044,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46062,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46076,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46795,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46823,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46841,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46852,
+            "type": "controller_axis",
+            "value": -0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46868,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46917,
+            "type": "controller_axis",
+            "value": -0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46934,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46950,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46966,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46983,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 46999,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47016,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47213,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47517,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47533,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47551,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47565,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47581,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47651,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47662,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47679,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47695,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47712,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47728,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47743,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 47759,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 57421,
+            "type": "controller_axis",
+            "value": -0.949999988079071
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 57434,
+            "type": "controller_axis",
+            "value": -0.8500000238418579
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 57442,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 57453,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59553,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59562,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59572,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59582,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59593,
+            "type": "controller_axis",
+            "value": 0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59604,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59614,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59627,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59635,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59655,
+            "type": "controller_axis",
+            "value": 0.800000011920929
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59665,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59909,
+            "type": "controller_axis",
+            "value": 0.800000011920929
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59920,
+            "type": "controller_axis",
+            "value": 0.699999988079071
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59934,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59943,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 59955,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 64955,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 64966,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 64977,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 64977,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 64989,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 64989,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 65002,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65002,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 65013,
+            "type": "controller_axis",
+            "value": 0.800000011920929
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65013,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65026,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65062,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 65077,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 65090,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65090,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65114,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 65126,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65126,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 65152,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65152,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65164,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65177,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65191,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65203,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65217,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65231,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65244,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65661,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65733,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65761,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65933,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 65976,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 66334,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 66417,
+            "type": "controller_axis",
+            "value": 0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 66437,
+            "type": "controller_axis",
+            "value": 0.800000011920929
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 66437,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 66454,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 66454,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 66470,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67626,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67644,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67661,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 67661,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67677,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67693,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 67710,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 67758,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67774,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67791,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67813,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67835,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 67853,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 69943,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 69960,
+            "type": "controller_axis",
+            "value": -0.949999988079071
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 69976,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 235,
+            "index": 0,
+            "time": 71779,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 248,
+            "index": 0,
+            "time": 73108,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74614,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74630,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74660,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74675,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74691,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74706,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74721,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74842,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74855,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74869,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 74881,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75070,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75081,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75091,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75103,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75152,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75164,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75175,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75188,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75199,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75911,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75923,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75936,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75955,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 75972,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 76009,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 76022,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 76034,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 146,
+            "index": 0,
+            "time": 77456,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 188,
+            "index": 0,
+            "time": 78924,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81020,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81032,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81044,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81057,
+            "type": "controller_axis",
+            "value": 0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81072,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81082,
+            "type": "controller_axis",
+            "value": 0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81094,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81119,
+            "type": "controller_axis",
+            "value": 0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81170,
+            "type": "controller_axis",
+            "value": 0.8500000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81182,
+            "type": "controller_axis",
+            "value": 0.550000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81195,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 81215,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82000,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82013,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82025,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82037,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82049,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82061,
+            "type": "controller_axis",
+            "value": -0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82075,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82114,
+            "type": "controller_axis",
+            "value": -0.9000000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82137,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82150,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82160,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82183,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82195,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 82207,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 119,
+            "index": 0,
+            "time": 82528,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 83905,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 83962,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84135,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84149,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84159,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84171,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84181,
+            "type": "controller_axis",
+            "value": -0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84193,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84248,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84260,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 84276,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86213,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86225,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86237,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86237,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86261,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86261,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86276,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86286,
+            "type": "controller_axis",
+            "value": 0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86312,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86326,
+            "type": "controller_axis",
+            "value": 0.3499999940395355
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86375,
+            "type": "controller_axis",
+            "value": -0.30000001192092896
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86415,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86426,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86426,
+            "type": "controller_axis",
+            "value": 0.20000000298023224
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 86447,
+            "type": "controller_axis",
+            "value": -0.949999988079071
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86447,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86447,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 86460,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 86460,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 86460,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 86474,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 86486,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 86499,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 86511,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87349,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87361,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87374,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87388,
+            "type": "controller_axis",
+            "value": -0.550000011920929
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87399,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87412,
+            "type": "controller_axis",
+            "value": -0.699999988079071
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87425,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87437,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87451,
+            "type": "controller_axis",
+            "value": -0.8500000238418579
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87618,
+            "type": "controller_axis",
+            "value": -0.800000011920929
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87627,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87653,
+            "type": "controller_axis",
+            "value": -0.6500000357627869
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87668,
+            "type": "controller_axis",
+            "value": -0.6000000238418579
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87683,
+            "type": "controller_axis",
+            "value": -0.45000001788139343
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87693,
+            "type": "controller_axis",
+            "value": -0.3499999940395355
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87708,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87721,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 87734,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 89073,
+            "type": "controller_axis",
+            "value": -0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 89086,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 89113,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89125,
+            "type": "controller_axis",
+            "value": 0.05000000074505806
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89138,
+            "type": "controller_axis",
+            "value": 0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 89138,
+            "type": "controller_axis",
+            "value": -0.20000000298023224
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89152,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89164,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 89164,
+            "type": "controller_axis",
+            "value": -0.15000000596046448
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89193,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 89193,
+            "type": "controller_axis",
+            "value": -0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89212,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 89212,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89220,
+            "type": "controller_axis",
+            "value": 0.6500000357627869
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89277,
+            "type": "controller_axis",
+            "value": 0.6000000238418579
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89289,
+            "type": "controller_axis",
+            "value": 0.4000000059604645
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89303,
+            "type": "controller_axis",
+            "value": 0.10000000149011612
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 89317,
+            "type": "controller_axis",
+            "value": 0.0
+        }
+    ]
+}
