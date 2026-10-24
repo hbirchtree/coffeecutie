@@ -2694,7 +2694,14 @@ struct ResourceLoader
             }
             for(auto const& change : pending_equips)
                 if(change.entity_id == player.id())
+                {
                     equip_weapon(equip, info, cam, change, files);
+                    if(change.mode == EquipWeaponEvent::pick_up)
+                        pickup_sound(
+                            p,
+                            change.weapon,
+                            cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f});
+                }
             if(auto const* status = p.template get<BipedStatus>(player.id());
                status && status->dead)
                 let_go(equip, cam, info);
@@ -2899,6 +2906,29 @@ struct ResourceLoader
             held = armed(tag, files);
         }
         equip.reloading = false;
+    }
+
+    /* What a weapon or grenade sounds like taken off the ground */
+    void pickup_sound(Proxy& p, blam::tag_index<> item, Vecf3 const& at)
+    {
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        auto  tag    = index.find(item);
+        if(!sounds || tag == index.end())
+            return;
+        auto const&    magic = p.template subsystem<BlamFiles<Ver>>().container.magic;
+        blam::tagref_t ref{};
+        if((*tag).matches(blam::tag_class_t::weap))
+        {
+            if(auto weapon = (*tag).template data<blam::scn::weapon>(magic); weapon.has_value())
+                ref = weapon.value()[0].pickup_sound;
+        } else if(auto equip = (*tag).template data<blam::scn::equipment>(magic); equip.has_value())
+            ref = equip.value()[0].pickup_sound;
+        auto sound = ref.valid() ? index.find(ref) : index.end();
+        if(sound == index.end())
+            return;
+        SoundEvent     ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{.sound_tag = &(*sound), .position = at};
+        sounds->inject(ev, &play);
     }
 
     /* A full magazine's worth, up to what can be carried */
