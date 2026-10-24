@@ -344,19 +344,45 @@ static_assert(offsetof(looping_sound_track_t, loop) == 0x24);
 static_assert(offsetof(looping_sound_track_t, alternate_transition_in) == 0x68);
 static_assert(sizeof(looping_sound_track_t) == 0x90);
 
+/*! A sound a looping sound plays at random, somewhere around it */
+struct looping_sound_detail_t
+{
+    string_id       name;
+    tag_reference<> sound;
+    bounds_f        period; /*!< Seconds between playings */
+    be<f32>         gain;   /*!< dB */
+    be<u32>         flags;  /* TODO: flags */
+    bounds_f        yaw;    /*!< Radians, along the horizon */
+    bounds_f        pitch;  /*!< Radians, above the horizon */
+    bounds_f        distance;
+};
+
+static_assert(sizeof(looping_sound_detail_t) == 0x3C);
+
+enum class looping_sound_flags_t : u32
+{
+    none                 = 0x0,
+    deafening_to_ais     = 0x1,
+    not_a_loop           = 0x2,
+    stops_music          = 0x4,
+    always_spatialize    = 0x8,
+    synchronize_playback = 0x10,
+};
+C_FLAGS(looping_sound_flags_t, u32);
+
 /*! sound_looping ("lsnd"): tracks in parallel plus random details */
 struct looping_sound_t
 {
     static constexpr tag_class_t tag_class = tag_class_t::lsnd;
 
-    be<u32>                          flags;
+    be<looping_sound_flags_t>        flags;
     bounds_f                         music_time;
     bounds_f                         distance;
     tag_reference<>                    continuous_damage_effect;
     be<i16>                          sound_class;
     u16                              unknown_0;
     tag_block<looping_sound_track_t> tracks;
-    tag_block<std::array<u8, 0x3C>>  details;
+    tag_block<looping_sound_detail_t> details;
 };
 
 static_assert(offsetof(looping_sound_t, tracks) == 0x28);
