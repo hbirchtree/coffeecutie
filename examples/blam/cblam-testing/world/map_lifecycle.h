@@ -31,6 +31,14 @@ inline auto pread_reader(std::shared_ptr<comp_app::FileMapper::RangedFile> file)
     };
 }
 
+/*! Tells the game's map is starting to load, before any of it is */
+inline void announce_game(compo::EntityContainer& container, MapGameEvent::game_t game)
+{
+    GameEvent    ev{GameEvent::MapGame};
+    MapGameEvent map{.game = game};
+    container.subsystem_cast<GameEventBus>().process(ev, &map);
+}
+
 /*! Hands map loads to `loader`, consuming those it takes so the Halo 1
  * loader never sees them */
 template<typename Loader>

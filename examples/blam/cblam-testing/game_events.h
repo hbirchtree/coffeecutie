@@ -98,6 +98,7 @@ struct GameEvent
         WorldRestore,
         DeviceSync,
         SyncPoint,
+        MapGame,
     };
 
     EventType type{None};
@@ -145,6 +146,20 @@ struct MapListingEvent
     platform::url::Url              bitmap_file;
     platform::url::Url              sound_file;
     bool                            remember{false};
+};
+
+/*! The game a map being loaded comes from: sent once its loader takes it,
+ * before anything of it is loaded */
+struct MapGameEvent
+{
+    static constexpr auto event_type = GameEvent::MapGame;
+
+    enum game_t : libc_types::u8
+    {
+        halo1,
+        halo2,
+        halo3,
+    } game{halo1};
 };
 
 struct MapDataLoadEvent
