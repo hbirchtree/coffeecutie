@@ -1,5 +1,6 @@
 #include "h3_scene.h"
 #include "../world/column_grid.h"
+#include "../world/texels.h"
 #include "../world/map_lifecycle.h"
 #include "../world/player_spawn.h"
 #include "../world/static_collision.h"
@@ -2877,24 +2878,7 @@ struct H3MapLoader : compo::SubsystemBase
         using gfx::textures::swizzle_t;
 
         /* One- and two-channel formats and where their channels go */
-        std::optional<std::array<swizzle_t, 4>> swizzle;
-        switch(h1.value_or(format_t::ARGB8))
-        {
-        case format_t::Y8:
-            swizzle = {swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::one};
-            break;
-        case format_t::AY8:
-            swizzle = {swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::red};
-            break;
-        case format_t::A8:
-            swizzle = {swizzle_t::one, swizzle_t::one, swizzle_t::one, swizzle_t::red};
-            break;
-        case format_t::A8Y8:
-            swizzle = {swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::green};
-            break;
-        default:
-            break;
-        }
+        auto const swizzle = world::channel_swizzle(h1.value_or(format_t::ARGB8));
         /* Without texture swizzle (WebGL) they go up expanded to RGBA8 */
         bool const expand = !rgtc && !ctx1 && swizzle && !m_api->feature_info().texture.swizzle;
 
@@ -2919,17 +2903,7 @@ struct H3MapLoader : compo::SubsystemBase
                     el::dxn_to_bc5(pixels);
                 return;
             }
-            /* Little-endian A8R8G8B8 is B,G,R,A */
-            if(*h1 == format_t::ARGB8 || *h1 == format_t::XRGB8)
-                for(size_t i = 0; i + 3 < pixels.size(); i += 4)
-                {
-                    std::swap(pixels[i], pixels[i + 2]);
-                    if(*h1 == format_t::XRGB8)
-                        pixels[i + 3] = 0xFF;
-                }
-            if(*h1 == format_t::V8U8)
-                for(auto& b : pixels)
-                    b = static_cast<u8>(b + 0x80);
+            world::fix_channels(*h1, pixels);
             if(expand)
             {
                 u32 const       channels = *h1 == format_t::A8Y8 ? 2 : 1;
@@ -2976,17 +2950,7 @@ struct H3MapLoader : compo::SubsystemBase
                 Veci2{0, 0},
                 Veci2{static_cast<i32>(std::max(width >> l, 1u)), static_cast<i32>(std::max(height >> l, 1u))},
                 static_cast<i32>(l));
-        return make_texture(tex);
-    }
-
-    static Texture make_texture(std::shared_ptr<gfx::texture_2d_t> const& tex)
-    {
-        Texture out{.texture = tex, .sampler = tex->sampler()};
-        out.sampler->alloc();
-        out.sampler->set_filtering(
-            typing::Filtering::Linear, typing::Filtering::Linear, typing::Filtering::Linear);
-        out.sampler->set_anisotropic(4);
-        return out;
+        return world::sampled(tex);
     }
 
     void place_camera(Vecf3 const& position, f32 yaw)

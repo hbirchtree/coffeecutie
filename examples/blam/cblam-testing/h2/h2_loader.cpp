@@ -1,6 +1,7 @@
 #include "h2_bitmap.h"
 #include "h2_scene.h"
 #include "../world/column_grid.h"
+#include "../world/texels.h"
 #include "../world/map_lifecycle.h"
 #include "../world/player_spawn.h"
 #include "../world/static_collision.h"
@@ -3479,13 +3480,7 @@ struct H2MapLoader : compo::SubsystemBase
         auto tex = upload_bitmap(*m_api, map, pool, *bitm_tag, image);
         if(!tex)
             return std::nullopt;
-        Texture out{.texture = *tex, .sampler = (*tex)->sampler()};
-        out.sampler->alloc();
-        out.sampler->set_filtering(
-            typing::Filtering::Linear,
-            typing::Filtering::Linear,
-            typing::Filtering::Linear);
-        out.sampler->set_anisotropic(4);
+        Texture out = world::sampled(*tex);
         m_textures.emplace(key, out);
         if(shared)
             m_shared_textures[*shared] = {out, m_scene.generation};
