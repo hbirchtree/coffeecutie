@@ -63,6 +63,25 @@ inline std::optional<bound_marker_t> bind_marker_node(
     return std::nullopt;
 }
 
+/* How many instances a named marker has, 0 if none */
+inline libc_types::u32 marker_instances(
+    blam::tag_t const& model, std::string_view name, blam::map_ptr const& magic)
+{
+    auto mod2 = model.data<blam::mod2::header<halo_version>>(magic);
+    if(!mod2.has_value())
+        return 0;
+    auto markers = mod2.value()[0].markers.data(magic);
+    if(!markers.has_value())
+        return 0;
+    for(auto const& marker : markers.value())
+        if(marker.name.str() == name)
+        {
+            auto instances = marker.instances.data(magic);
+            return instances.has_value() ? static_cast<libc_types::u32>(instances.value().size()) : 0;
+        }
+    return 0;
+}
+
 inline std::optional<typing::vector_types::Matf4> bind_marker(
     blam::tag_t const&   model,
     std::string_view     name,
