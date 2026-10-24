@@ -110,8 +110,9 @@ struct AnimationController
             auto const* info    = p.template get<PlayerInfo>(ent.id());
             auto const* physics = p.template get<ObjectPhysics>(ent.id());
             auto const* model   = p.template get<Model>(ent.id());
-            /* First-person models too, for markers such as the muzzle */
-            bool const posed = (info && info->biped.collision) ||
+            /* First-person models too, for markers such as the muzzle, and
+             * riders, whose view is at their camera marker */
+            bool const posed = (info && (info->biped.collision || info->riding.vehicle)) ||
                                (physics && (physics->upright || physics->animated)) ||
                                p.template get<Attachment>(ent.id()) != nullptr ||
                                m_aimed.contains(ent.id());
