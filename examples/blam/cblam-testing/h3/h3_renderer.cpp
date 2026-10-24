@@ -3,6 +3,7 @@
 #include "data.h"
 #include "player_controller.h"
 #include "render/cascaded_shadows.h"
+#include "world/world_gpu.h"
 #include "resource_creation.h"
 
 #include <coffee/components/proxy.h>
@@ -113,7 +114,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         place_first_person(*camera, camera->drawn_eye, Attachment{}, first_person);
         ease_first_person_light(scene, camera->drawn_eye, now);
         auto const& first_person_light = m_first_person_light;
-        auto const& csm_atlas = m_shadows.valid() ? m_shadows.sampler() : m_white_sampler;
+        auto const& csm_atlas = m_shadows.valid() ? m_shadows.sampler() : m_fallback.white_sampler;
         /* Opaque first, then water over a copy of the scene, then alpha
          * blended, then additive */
         static constexpr std::array<char const*, 3> pass_names = {
@@ -245,10 +246,10 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     return out;
                 };
                 auto or_white = [&](Texture const& t) {
-                    return t.sampler ? t.sampler : m_white_sampler;
+                    return t.sampler ? t.sampler : m_fallback.white_sampler;
                 };
                 auto const& lightprobe = scene.lightprobe_sampler ? scene.lightprobe_sampler
-                                                                  : m_no_lightprobe_sampler;
+                                                                  : m_fallback.white_array_sampler;
                 Vecf3 const eye   = camera->camera.position;
                 i32 const   model = static_cast<i32>(mat.model);
                 i32 const   black_point = mat.black_point ? 1 : 0;
@@ -443,11 +444,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::sampler_definition_t{
                             stage_t::Fragment,
                             {"env_map", 16},
-                            mat.environment_map.sampler ? mat.environment_map.sampler : m_black_cube_sampler},
+                            mat.environment_map.sampler ? mat.environment_map.sampler : m_fallback.black_cube_sampler},
                         gfx::sampler_definition_t{
                             stage_t::Fragment,
                             {"object_lights", 18},
-                            scene.object_lights_sampler ? scene.object_lights_sampler : m_white_sampler},
+                            scene.object_lights_sampler ? scene.object_lights_sampler : m_fallback.white_sampler},
                         gfx::sampler_definition_t{
                             stage_t::Fragment, {"area_specular_c", 19}, or_white(scene.area_specular[0])},
                         gfx::sampler_definition_t{
@@ -599,7 +600,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         for(size_t i = bloom_small; i <= bloom_large; i++)
         {
             auto [target, extent] = to(i);
-            blur(i - 1, target, extent, 0, one, none, m_white_sampler, false);
+            blur(i - 1, target, extent, 0, one, none, m_fallback.white_sampler, false);
         }
         auto const& [large, medium, small] = bloom.colors;
         {
@@ -610,7 +611,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             auto [target, extent] = to(bloom_sum_small);
             blur(bloom_sum_medium, target, extent, 1, one, small, m_bloom[bloom_small].sampler, false);
         }
-        blur(bloom_sum_small, resources.offscreen, size, 1, Vecf3(bloom.intensity), none, m_white_sampler, true);
+        blur(bloom_sum_small, resources.offscreen, size, 1, Vecf3(bloom.intensity), none, m_fallback.white_sampler, true);
     }
 
     /* Moving objects cast into the cascades; the level's own shadows, and
@@ -1004,7 +1005,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         Matf4 const identity(1.f);
         Vecf2 const unit{1.f, 1.f};
         Vecf2 const target{static_cast<f32>(size.x), static_cast<f32>(size.y)};
-        auto lightprobe = scene.lightprobe_sampler ? scene.lightprobe_sampler : m_no_lightprobe_sampler;
+        auto lightprobe = scene.lightprobe_sampler ? scene.lightprobe_sampler : m_fallback.white_array_sampler;
         for(auto const& mat : scene.materials)
         {
             if(mat.variant != Variant::water || !mat.visible || mat.draws.empty())
@@ -1046,28 +1047,28 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 gfx::uniform_pair<Vecf2 const>{{"water_curves"}, semantic::SpanOne<const Vecf2>(w.curves)});
             auto samplers = gfx::make_sampler_list(
                 gfx::sampler_definition_t{
-                    stage_t::Fragment, {"water_color", 0}, w.color.sampler ? w.color.sampler : m_white_sampler},
+                    stage_t::Fragment, {"water_color", 0}, w.color.sampler ? w.color.sampler : m_fallback.white_sampler},
                 gfx::sampler_definition_t{
                     stage_t::Fragment,
                     {"water_reflection", 1},
-                    w.reflection.sampler ? w.reflection.sampler : m_black_cube_sampler},
+                    w.reflection.sampler ? w.reflection.sampler : m_fallback.black_cube_sampler},
                 gfx::sampler_definition_t{
                     stage_t::Fragment,
                     {"water_slopes", 2},
-                    w.slopes_sampler ? w.slopes_sampler : m_no_lightprobe_sampler},
+                    w.slopes_sampler ? w.slopes_sampler : m_fallback.white_array_sampler},
                 gfx::sampler_definition_t{stage_t::Fragment, {"scene_copy", 3}, m_copy_sampler},
                 gfx::sampler_definition_t{
-                    stage_t::Fragment, {"foam_texture", 4}, w.foam.sampler ? w.foam.sampler : m_white_sampler},
+                    stage_t::Fragment, {"foam_texture", 4}, w.foam.sampler ? w.foam.sampler : m_fallback.white_sampler},
                 gfx::sampler_definition_t{
                     stage_t::Fragment,
                     {"foam_detail", 5},
-                    w.foam_detail.sampler ? w.foam_detail.sampler : m_white_sampler},
+                    w.foam_detail.sampler ? w.foam_detail.sampler : m_fallback.white_sampler},
                 gfx::sampler_definition_t{
-                    stage_t::Fragment, {"global_shape", 6}, w.shape.sampler ? w.shape.sampler : m_white_sampler},
+                    stage_t::Fragment, {"global_shape", 6}, w.shape.sampler ? w.shape.sampler : m_fallback.white_sampler},
                 gfx::sampler_definition_t{
                     stage_t::Fragment,
                     {"wave_displacement", 7},
-                    w.displacement_sampler ? w.displacement_sampler : m_no_lightprobe_sampler},
+                    w.displacement_sampler ? w.displacement_sampler : m_fallback.white_array_sampler},
                 gfx::sampler_definition_t{stage_t::Fragment, {"lightprobe", 9}, lightprobe});
             auto res = m_api->submit(
                 {
@@ -1121,7 +1122,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                 best[1] = d, found[1] = probe.cubemap;
         }
         if(found[0] == ~0u)
-            return {m_black_cube_sampler, m_black_cube_sampler, 0.f};
+            return {m_fallback.black_cube_sampler, m_fallback.black_cube_sampler, 0.f};
         auto const& first = scene.cubemaps[found[0]].sampler;
         if(found[1] == ~0u)
             return {first, first, 0.f};
@@ -1175,68 +1176,11 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         auto& api = *m_api;
 
         /* The level and objects, and the first person's own vertices */
-        auto layout = [&](std::shared_ptr<gfx::vertex_array_t>& vao) {
-            vao = api.alloc_vertex_array();
-            vao->alloc();
-            vao->add(gfx::vertex_attribute{
-                .index = 0,
-                .value = {.offset = 0, .stride = sizeof(Vertex), .count = 3},
-            });
-            vao->add(gfx::vertex_attribute{
-                .index = 1,
-                .value = {.offset = offsetof(Vertex, texcoord), .stride = sizeof(Vertex), .count = 2},
-            });
-            vao->add(gfx::vertex_attribute{
-                .index = 2,
-                .value = {.offset = offsetof(Vertex, normal), .stride = sizeof(Vertex), .count = 3},
-            });
-            vao->add(gfx::vertex_attribute{
-                .index = 3,
-                .value = {.offset = offsetof(Vertex, lightmap), .stride = sizeof(Vertex), .count = 3},
-            });
-            vao->add(gfx::vertex_attribute{
-                .index = 4,
-                .value =
-                    {.offset = offsetof(Vertex, light),
-                     .stride = sizeof(Vertex),
-                     .count  = 4,
-                     .type   = semantic::type_t::u8,
-                     .flags  = gfx::vertex_attribute::attribute_flags::packed |
-                              gfx::vertex_attribute::attribute_flags::normalized},
-            });
-            vao->set_attribute_names({
-                {"position", 0},
-                {"texcoord", 1},
-                {"normal", 2},
-                {"lightmap", 3},
-                {"vertex_light", 4},
-            });
-        };
-        layout(m_vao);
-        layout(m_first_person_vao);
+        m_vao              = world::alloc_vertex_layout(api, false);
+        m_first_person_vao = world::alloc_vertex_layout(api, false);
 
-        /* Stand-in for render methods without a usable base map */
-        m_white = api.alloc_texture(
-            gfx::textures::d2, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
-        m_white->alloc(size_3d<u32>{2, 2, 1});
-        m_white->upload(std::vector<u8>(16, 0xFF), Veci2{0, 0}, Veci2{2, 2}, 0);
-        m_white_sampler = m_white->sampler();
-        m_white_sampler->alloc();
-        m_no_lightprobe = std::make_shared<gfx::compat::texture_2da_t>(
-            &api, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
-        m_no_lightprobe->alloc(size_3d<u32>{2, 2, 1});
-        m_no_lightprobe->upload(std::vector<u8>(16, 0xFF), Veci3{0, 0, 0}, size_3d<i32>{2, 2, 1});
-        m_no_lightprobe_sampler = m_no_lightprobe->sampler();
-        m_no_lightprobe_sampler->alloc();
-        m_black_cube = api.alloc_texture(
-            gfx::textures::cube, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
-        m_black_cube->alloc(size_3d<u32>{1, 1, 1});
-        std::array<u8, 4>                        black{0, 0, 0, 0};
-        std::array<semantic::Span<const u8>, 6> faces;
-        faces.fill(semantic::Span<const u8>(black.data(), black.size()));
-        m_black_cube->upload(faces, Veci2{0, 0}, Veci2{1, 1}, 0);
-        m_black_cube_sampler = m_black_cube->sampler();
-        m_black_cube_sampler->alloc();
+        /* Stand-ins for render methods without a usable texture */
+        m_fallback.alloc(api, 0);
 
         create_program(
             api,
@@ -1298,11 +1242,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::shared_ptr<gfx::vertex_array_t>        m_vao;
     std::array<std::shared_ptr<gfx::program_t>, static_cast<size_t>(Variant::count)>
         m_programs;
-    std::shared_ptr<gfx::texture_2d_t>          m_white;
-    std::shared_ptr<gfx::sampler_t>             m_white_sampler;
-    std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightprobe;
-    std::shared_ptr<gfx::sampler_t>             m_no_lightprobe_sampler;
-    std::shared_ptr<gfx::texture_cube_t>        m_black_cube;
+    world::FallbackTextures                     m_fallback;
     std::shared_ptr<gfx::program_t>             m_copy_program;
     std::shared_ptr<gfx::program_t>             m_decorator_program;
     std::shared_ptr<gfx::program_t>             m_shadow_program;
@@ -1336,7 +1276,6 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     std::array<BloomTarget, bloom_target_count> m_bloom;
     Veci2                                       m_bloom_size{};
     time_point                                  m_start{};
-    std::shared_ptr<gfx::sampler_t>             m_black_cube_sampler;
     f32                                         m_stops{0.f};
     std::optional<f32>                          m_target_stops;
     time_point                                  m_exposure_time{};

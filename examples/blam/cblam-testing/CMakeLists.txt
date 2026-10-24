@@ -230,6 +230,7 @@ if(BUILD_BLAM_DIMETER OR BUILD_BLAM_ELEGY)
     target_sources(BlamGraphics PRIVATE
       world/map_lifecycle.cpp
       world/player_spawn.cpp
+      world/world_gpu.cpp
     )
 endif()
 
