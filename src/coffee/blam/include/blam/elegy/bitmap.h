@@ -344,4 +344,11 @@ u32 level_count(resource_view const& view, bitmap_image_t const& image);
  */
 bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<u8>& out);
 
+/*!
+ * \brief Mip level `level` of cube face `face`, as linearize_level(): each
+ * level holds the six faces in turn, and the mip tail has one tile a face.
+ */
+bool linearize_cube_level(
+    resource_view const& view, bitmap_image_t const& image, u32 level, u32 face, std::vector<u8>& out);
+
 } // namespace blam::elegy

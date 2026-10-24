@@ -2364,36 +2364,54 @@ struct H3MapLoader : compo::SubsystemBase
                     : hardware[index].resource);
         if(!view.has_value())
             return std::nullopt;
-        auto stored = in_pair ? el::top_level_interleaved(view.value(), image)
-                              : el::top_level(view.value(), image);
-        u32 width  = static_cast<u32>(image.width.value());
-        u32 height = static_cast<u32>(image.height.value());
-        u32 stride = el::slice_stride(image.format.value(), width, height);
-        std::array<std::vector<u8>, 6> faces;
-        for(u32 f = 0; f < 6; f++)
-            if(size_t(f) * stride >= stored.size() ||
-               !el::linearize(
-                   stored.subspan(size_t(f) * stride),
-                   image.format.value(),
-                   width,
-                   height,
-                   image.xbox_flags,
-                   faces[f]))
-                return std::nullopt;
-        /* Little-endian A8R8G8B8 is B,G,R,A */
-        if(*h1 == blam::bitm::format_t::ARGB8)
-            for(auto& face : faces)
-                for(size_t i = 0; i + 3 < face.size(); i += 4)
-                    std::swap(face[i], face[i + 2]);
-        auto tex = m_api->alloc_texture(gfx::textures::cube, blam::bitm::to_pixdesc(*h1), 1);
+        u32 const width  = static_cast<u32>(image.width.value());
+        u32 const height = static_cast<u32>(image.height.value());
+        /* A face of a level; an interleaved pair keeps only its top level */
+        auto face_of = [&](u32 level, u32 f, std::vector<u8>& pixels) {
+            if(!in_pair)
+                return el::linearize_cube_level(view.value(), image, level, f, pixels);
+            auto const stored = el::top_level_interleaved(view.value(), image);
+            u32 const  stride = el::slice_stride(image.format.value(), width, height);
+            return size_t(f) * stride < stored.size() &&
+                   el::linearize(
+                       stored.subspan(size_t(f) * stride), image.format.value(), width, height, image.xbox_flags, pixels);
+        };
+        u32 const levels = in_pair ? 1 : el::level_count(view.value(), image);
+        std::vector<std::array<std::vector<u8>, 6>> mips;
+        for(u32 l = 0; l < levels; l++)
+        {
+            std::array<std::vector<u8>, 6> faces;
+            bool                           ok = true;
+            for(u32 f = 0; f < 6 && ok; f++)
+                ok = face_of(l, f, faces[f]);
+            if(!ok)
+                break;
+            /* Little-endian A8R8G8B8 is B,G,R,A */
+            if(*h1 == blam::bitm::format_t::ARGB8)
+                for(auto& face : faces)
+                    for(size_t i = 0; i + 3 < face.size(); i += 4)
+                        std::swap(face[i], face[i + 2]);
+            mips.push_back(std::move(faces));
+        }
+        if(mips.empty())
+            return std::nullopt;
+        auto tex = m_api->alloc_texture(
+            gfx::textures::cube, blam::bitm::to_pixdesc(*h1), static_cast<u32>(mips.size()));
         tex->alloc(size_3d<u32>{width, height, 1});
-        std::array<semantic::Span<const u8>, 6> spans;
-        for(u32 f = 0; f < 6; f++)
-            spans[f] = semantic::Span<const u8>(faces[f].data(), faces[f].size());
-        tex->upload(spans, Veci2{0, 0}, Veci2{static_cast<i32>(width), static_cast<i32>(height)}, 0);
+        for(u32 l = 0; l < mips.size(); l++)
+        {
+            std::array<semantic::Span<const u8>, 6> spans;
+            for(u32 f = 0; f < 6; f++)
+                spans[f] = semantic::Span<const u8>(mips[l][f].data(), mips[l][f].size());
+            tex->upload(
+                spans,
+                Veci2{0, 0},
+                Veci2{static_cast<i32>(std::max(width >> l, 1u)), static_cast<i32>(std::max(height >> l, 1u))},
+                static_cast<i32>(l));
+        }
         CubeTexture out{.texture = tex, .sampler = tex->sampler(), .curve = curve_of(image.curve)};
         out.sampler->alloc();
-        out.sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+        out.sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear, typing::Filtering::Linear);
         return out;
     }
 
