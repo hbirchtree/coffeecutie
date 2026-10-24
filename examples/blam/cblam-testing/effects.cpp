@@ -56,6 +56,8 @@ using blam::scn::point_physics;
 using blend_t = EffectScene::blend_t;
 
 constexpr f32 halo_gravity = 9.81f / 3.048f; /* wu/s^2 */
+/* Air's density over a pphy's mass scale: 0.0011 at 118613.34 per unit */
+constexpr f32 air_mass_over_radius_cubed = .0011f * 118613.34f;
 
 /* Tag colors are a, r, g, b */
 Vecf4 rgba(Vecf4 const& argb)
@@ -73,10 +75,20 @@ struct place_t
 /* How a point_physics moves things */
 struct motion_t
 {
-    f32  gravity{0.f}; /* wu/s^2, up is positive */
-    f32  drag{0.f};    /* per second */
+    f32  gravity{0.f};  /* wu/s^2, up is positive */
+    f32  drag{0.f};     /* per second, for weather */
+    f32  friction{0.f}; /* drag per second at a radius of 1 wu */
     f32  elasticity{0.f};
     bool collides{false};
+
+    /* The air brakes a sprite by its cross-section over its mass, which
+     * along with the air it carries grows with its volume */
+    f32 slowing(f32 radius, f32 dt) const
+    {
+        if(friction <= 0.f)
+            return 0.f;
+        return radius > 0.f ? std::min(friction * dt / radius, 1.f) : 1.f;
+    }
 
     static motion_t from(point_physics const* pphy)
     {
@@ -90,6 +102,7 @@ struct motion_t
             .drag       = pphy->mass_scale > 0.f
                               ? pphy->air_friction / pphy->mass_scale
                               : 0.f,
+            .friction   = pphy->air_friction / (pphy->mass_scale + air_mass_over_radius_cubed),
             .elasticity = pphy->elasticity,
             .collides   = (pphy->flags & flags_t::collides_with_structures) !=
                         flags_t::none,
@@ -1617,7 +1630,7 @@ struct EffectSystem
             } else
             {
                 s.velocity.z += s.motion.gravity * dt;
-                s.velocity *= std::exp(-s.motion.drag * dt);
+                s.velocity -= s.velocity * s.motion.slowing(s.look.radius, dt);
                 Vecf3 const to = s.look.position + s.velocity * dt;
                 if(s.motion.collides || s.dies_on_contact)
                 {
