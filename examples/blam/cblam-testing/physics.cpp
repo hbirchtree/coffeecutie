@@ -983,7 +983,8 @@ struct PhysicsSystem
             auto          player = player_;
             PlayerCamera& camera = player.template get<PlayerCamera>();
             auto          info   = p.template get<PlayerInfo>(player.id());
-            if(!info || !info->mode.physics || info->is_remote())
+            if(!info || !info->mode.physics ||
+               (info->is_remote() && !info->mode.simulated))
                 continue;
             auto phys_it = m_bodies.find(player.id());
             if(phys_it == m_bodies.end())
@@ -1051,8 +1052,9 @@ struct PhysicsSystem
             u64 const  id     = player.id();
             /* Riders: hittable in the seat, but don't collide */
             bool const riding = info.riding.vehicle != 0;
-            bool const kinematic =
-                riding || info.is_remote() || !info.mode.physics;
+            bool const kinematic = riding ||
+                                   (info.is_remote() && !info.mode.simulated) ||
+                                   !info.mode.physics;
             auto const shape = info.biped;
             live.insert(id);
 

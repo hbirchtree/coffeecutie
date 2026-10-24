@@ -1011,6 +1011,9 @@ struct PlayerInfo
     struct
     {
         bool physics{false};
+        /*! Walked by the server from its TickInput, for clients without
+         *  physics of their own */
+        bool simulated{false};
     } mode;
 
     /*! Active camouflage, on the body and what it holds */

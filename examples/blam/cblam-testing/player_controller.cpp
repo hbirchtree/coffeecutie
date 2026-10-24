@@ -75,6 +75,7 @@ struct PlayerController
         auto&          ui          = p.subsystem<UIEventBus>();
         auto&          physics     = p.subsystem<PhysicsBus>();
         auto&          render      = p.subsystem<RenderingParameters>();
+        m_remote_queue->poll();
 
         /* A cutscene's single view covers the whole window */
         auto const cutscene = cutscene_seat(p, p.template subsystem<CinematicState>().playing);
@@ -95,6 +96,8 @@ struct PlayerController
             if(info.permissions.camera)
             {
                 sample(input, cam, controllers, dt, info.mode.physics);
+                if(info.is_remote() && info.mode.simulated)
+                    take_remote_input(player.id(), input, cam);
                 /* Scripts take the controls away; looking around stays
                  * unless a cutscene has the camera */
                 if(!p.template subsystem<CinematicState>().input && !info.is_remote() &&
@@ -387,9 +390,14 @@ struct PlayerController
         }
         cam.camera_.refresh_basis(cam.camera, cam.camera_opts);
 
-        /* Remote seats are moved by what the network says of them */
+        /* Remote seats are moved by what the network says of them, or
+         * walked here when they have no physics */
         if(info.is_remote())
+        {
+            if(info.mode.simulated && seat_of(info) == seat_t::body)
+                route_body(p, id, input, cam, info, net, physics, false, t);
             return;
+        }
 
         bool const in_menu =
             input.input_mode == PlayerInput::input_mode_t::menu;
@@ -491,6 +499,20 @@ struct PlayerController
         }
         if(playing && input.back)
             info.mode.physics = true;
+    }
+
+    /* A remote seat's newest input, as if sampled here */
+    void take_remote_input(u64 id, PlayerInput& input, PlayerCamera& cam)
+    {
+        auto it = m_remote_inputs.find(id);
+        if(it == m_remote_inputs.end())
+            return;
+        auto const& in      = it->second;
+        cam.camera.rotation = in.view;
+        cam.camera_.refresh_basis(cam.camera, cam.camera_opts);
+        input.intent.move = in.move;
+        input.intent.jump =
+            (in.intents & InputIntent::jump) != InputIntent::none;
     }
 
     /* Walking the biped; physics moves the camera after its body */
@@ -702,6 +724,9 @@ struct PlayerController
 
     time_point                m_last_time{};
     std::unique_ptr<TickQueue> m_ticks;
+    std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>>
+                                        m_remote_queue;
+    std::map<u64, PlayerTickInputEvent> m_remote_inputs; /*!< Newest per body */
     std::map<u64, f32>         m_dead_for; /*!< Seconds dead, for the camera */
     std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */
     std::map<u64, jump_t>     m_jumps;
@@ -714,6 +739,13 @@ void alloc_player_controller(compo::EntityContainer& e)
 
     auto& controller   = e.register_subsystem_inplace<PlayerController>();
     controller.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
+    controller.m_remote_queue =
+        e.subsystem_cast<GameEventBus>()
+            .addQueuedEventFunction<PlayerTickInputEvent>(
+                0, [&controller](GameEvent&, PlayerTickInputEvent* input) {
+                    if(input->origin == MapLoadEvent::Remote)
+                        controller.m_remote_inputs[input->player] = *input;
+                });
 
     enum class input_mode_t
     {

@@ -245,8 +245,9 @@ struct alignas(8) CameraSync
 
     enum flags_t : u32
     {
-        none    = 0x0,
-        physics = 0x1, /*!< PlayerInfo::mode.physics */
+        none      = 0x0,
+        physics   = 0x1, /*!< PlayerInfo::mode.physics */
+        simulated = 0x2, /*!< PlayerInfo::mode.simulated */
     };
 
     Vecf4   position; /*!< In the deck's frame when standing on one */
