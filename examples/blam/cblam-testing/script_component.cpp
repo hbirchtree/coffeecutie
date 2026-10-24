@@ -1050,8 +1050,11 @@ struct BlamScript
         if(p.template get<PlayerInfo>(id))
         {
             GameEvent           ev{.type = GameEvent::PlayerTeleport};
+            /* A player's turn is its camera's */
             PlayerTeleportEvent move{
-                .entity_id = id, .position = flag->position, .rotation = facing};
+                .entity_id = id,
+                .position  = flag->position,
+                .rotation  = camera_look(flag->facing.x, 0.f, 0.f)};
             p.template subsystem<GameEventBus>().inject(ev, &move);
             return;
         }
