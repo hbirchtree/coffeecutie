@@ -1014,6 +1014,7 @@ struct AnimationController
         layer->finished = false;
         layer->loop     = play.loop;
         layer->rate     = play.rate;
+        layer->paused   = false;
         layer->target   = play.weight;
         layer->fade     = fade;
         if(layer->weight <= 0.f && fade <= 0.f)
