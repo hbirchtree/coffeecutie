@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components.h"
+#include "world/types.h"
 
 #include <blam/dimeter/collision.h>
 #include <blam/dimeter/geometry.h>
@@ -26,18 +27,7 @@ namespace geo  = blam::dimeter::geo;
 namespace coll = blam::dimeter::coll;
 using semantic::Span;
 
-struct Vertex
-{
-    Vecf3 position;
-    Vecf2 texcoord;
-    Vecf3 normal;
-    Vecf3 lightmap{0.f, 0.f, -1.f}; /*!< Atlas u, v, layer; -1 = none */
-    u8    light[4]{0, 0, 0, 0};     /*!< Baked per-vertex light, a = valid */
-    u8    nodes[4]{0, 0, 0, 0};     /*!< Model nodes skinning the vertex */
-    u8    weights[4]{0, 0, 0, 0};   /*!< Their weights; all 0 = unskinned */
-};
-
-static_assert(sizeof(Vertex) == 56);
+using world::Vertex;
 
 /* One ltmp geometry bucket decoded: the streams per-vertex lit instances
  * and scenery index into by vertex */
@@ -103,11 +93,7 @@ struct LightmapAtlas
     }
 };
 
-struct Texture
-{
-    std::shared_ptr<gfx::texture_2d_t> texture;
-    std::shared_ptr<gfx::sampler_t>    sampler;
-};
+using world::Texture;
 
 /* Fragment program per material family; see fragments/h2_common.glsl */
 enum class Variant : u8
@@ -232,11 +218,7 @@ struct SkyFlare
 };
 
 /* Triangle soup for Bullet; owned by the physics body once adopted */
-struct CollisionMesh
-{
-    std::vector<Vecf3> vertices;
-    std::vector<i32>   indices;
-};
+using world::CollisionMesh;
 
 /* One structure BSP of the scenario: only the active one draws and
  * collides, each carries its own far-off stand-ins for the others */

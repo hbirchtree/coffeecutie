@@ -1120,7 +1120,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         Vecf4                     bounds;
     };
     std::vector<static_draw_t>             m_static;
-    static constexpr double first_person_depth = 0.98;
+    static constexpr double first_person_depth = world::first_person_depth;
     bool                 m_first_person{false};
 
     struct caster_t

@@ -1341,7 +1341,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     /* Halo 3 culls back faces */
     static constexpr bool cull_front = false;
     /* The near slice of the depth range the first-person models draw into */
-    static constexpr double first_person_depth = 0.98;
+    static constexpr double first_person_depth = world::first_person_depth;
     blam_render::CascadedShadowMap::sampling_t  m_shadow_sampling{};
     std::shared_ptr<gfx::texture_2d_t>          m_copy;
     std::shared_ptr<gfx::rendertarget_t>        m_copy_rt;

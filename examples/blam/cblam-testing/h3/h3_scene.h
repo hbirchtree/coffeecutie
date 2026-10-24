@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../h2/h2_scene.h"
+#include "../world/types.h"
 #include "h3_lighting.h"
 
 #include <coffee/components/subsystem.h>
@@ -20,8 +20,8 @@
  * Halo 2 vertex layout and programs for now */
 namespace h3 {
 
-using h2::Texture;
-using h2::Vertex;
+using world::Texture;
+using world::Vertex;
 
 /* Fragment program per material family; see fragments/h3_common.glsl */
 enum class Variant : u8
