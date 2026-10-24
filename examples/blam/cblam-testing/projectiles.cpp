@@ -307,7 +307,15 @@ struct ProjectileSystem
                 continue;
             f32 const scale =
                 d <= inner ? 1.f : 1.f - (d - inner) / std::max(blast.radius.y - inner, 1e-3f);
-            flight.velocity += (d > 1e-3f ? away / d : Vecf3{0, 0, 1}) * (blast.speed * scale);
+            Vecf3 dir = d > 1e-3f ? away / d : Vecf3{0, 0, 1};
+            /* Thrown up off the ground, not slid along it */
+            if(dir.z < blast_lean)
+            {
+                Vecf2 const flat = Vecf2(dir);
+                dir = glm::normalize(
+                    Vecf3(glm::length(flat) > 1e-3f ? glm::normalize(flat) : Vecf2{1, 0}, 1.f));
+            }
+            flight.velocity += dir * (blast.speed * scale);
             flight.resting = false;
         }
     }
@@ -410,6 +418,7 @@ struct ProjectileSystem
     static constexpr f32 surface_gap      = .01f;
     static constexpr f32 rest_speed       = .3f; /* wu/s */
     static constexpr f32 flyby_reach      = 1.5f; /* wu, from the ear */
+    static constexpr f32 blast_lean       = .7071f; /* sin 45 */
 
     std::minstd_rand           m_rng{std::random_device{}()};
     std::unique_ptr<TickQueue> m_ticks;
