@@ -56,6 +56,7 @@
 #include <platforms/gekko/dvd.h>
 #include <platforms/gekko/paged_mmap.h>
 
+#include "loading_screen.h"
 #include "net_client.h"
 #endif
 
@@ -279,6 +280,44 @@ static void load_phase(char const* name)
     last = now;
 #else
     (void)name;
+#endif
+}
+
+#if defined(COFFEE_GEKKO)
+static gx_loading::screen_t g_loading;
+
+/* The loading still, made from loading.png by the resource build */
+static void start_loading_screen()
+{
+    namespace dvd = platform::file::gekko::dvd;
+    auto const* e = dvd::detail::find("loading.tpl");
+    if(!e)
+        return;
+    std::vector<u8> tpl(e->size);
+    if(!dvd::detail::read_at(tpl.data(), e->size, e->off))
+        return;
+    g_loading.begin(tpl);
+    platform::file::gekko::vmem::set_stage_progress(
+        [](u32 done, u32 total) { g_loading.step(done, total); });
+}
+#endif
+
+/* Share [from, to] of the load bar between `total` steps */
+static void loading_phase(f32 from, f32 to)
+{
+#if defined(COFFEE_GEKKO)
+    g_loading.phase(from, to);
+#else
+    (void)from, (void)to;
+#endif
+}
+
+static void loading_step(u32 done, u32 total)
+{
+#if defined(COFFEE_GEKKO)
+    g_loading.step(done, total);
+#else
+    (void)done, (void)total;
 #endif
 }
 
@@ -945,6 +984,7 @@ static int extract_map(semantic::BytesConst const& bytes)
     {
         if(bsp_idx++ != static_cast<u32>(g_spawn_bsp))
             continue;
+        loading_phase(0.3f, 0.4f);
         stage_hot_range("bsp", from_le(bi.offset), from_le(bi.size));
         auto const bm = bi.bsp_magic(container.magic);
         auto hdr_r    = bi.to_bsp(bm).to_header().data(bm, blam::single_value);
@@ -960,8 +1000,12 @@ static int extract_map(semantic::BytesConst const& bytes)
         auto lms = hdr->lightmaps.data(bm);
         if(lms.has_error())
             continue;
+        loading_phase(0.4f, 0.6f);
         for(auto const& lm : lms.value())
         {
+            loading_step(
+                static_cast<u32>(&lm - lms.value().data()),
+                static_cast<u32>(lms.value().size()));
             auto mats = lm.materials.data(bm);
             if(mats.has_error())
                 continue;
@@ -990,6 +1034,7 @@ static int extract_map(semantic::BytesConst const& bytes)
     LOG("pages=%u", static_cast<unsigned>(g_pages.size()));
     load_phase("bsp");
 
+    loading_phase(0.6f, 0.7f);
     build_objects(container, *scn);
     load_phase("objects");
 
@@ -1000,6 +1045,7 @@ static int extract_bsp()
 {
     LOG("loading map bytes...");
     load_phase("start");
+    loading_phase(0.f, 0.3f);
     auto bytes = load_map_bytes();
     LOG("map bytes = %u", static_cast<unsigned>(bytes.size));
     if(bytes.size < sizeof(blam::file_header_t))
@@ -1559,6 +1605,9 @@ i32 coffee_main(i32, cstring_w*)
 #if defined(FEATURE_ENABLE_Gexxo)
     u64 const load_start = gettime();
 #endif
+#if defined(COFFEE_GEKKO)
+    start_loading_screen();
+#endif
     int stage = 6;
     try
     {
@@ -1601,8 +1650,13 @@ i32 coffee_main(i32, cstring_w*)
     u32 mdl_parts     = 0;
     try
     {
+        loading_phase(0.7f, 1.f);
+        u32 const gpu_steps =
+            static_cast<u32>(g_pages.size() + g_models.size());
+        u32 gpu_step = 0;
         for(u32 pi = 0; pi < g_pages.size(); pi++)
         {
+            loading_step(gpu_step++, gpu_steps);
             auto& page = g_pages[pi];
             if(page.verts.empty() || page.indices.empty())
                 continue;
@@ -1673,6 +1727,8 @@ i32 coffee_main(i32, cstring_w*)
 
         // Model parts -> GPU (position + normal + diffuse UV; strip indices).
         for(auto& [id, model] : g_models)
+        {
+            loading_step(gpu_step++, gpu_steps);
             for(auto& part : model.parts)
             {
                 if(part.verts.empty() || part.indices.size() < 3)
@@ -1721,6 +1777,7 @@ i32 coffee_main(i32, cstring_w*)
                 part.diffuse = load_diffuse(part.diffuse_img);
                 mdl_parts++;
             }
+        }
     } catch(std::bad_alloc const&)
     {
         // Out of MEM1: render whatever resources were built (the rest stay
@@ -1728,6 +1785,10 @@ i32 coffee_main(i32, cstring_w*)
         LOG("gpu: out of memory, rendering partial scene");
     }
     load_phase("gpu");
+#if defined(COFFEE_GEKKO)
+    g_loading.finish();
+    platform::file::gekko::vmem::set_stage_progress(nullptr);
+#endif
     LOG("gpu: %u object instances, %u model parts",
         static_cast<unsigned>(g_objects.size()),
         mdl_parts);

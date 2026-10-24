@@ -1,0 +1,7 @@
+{
+    "textures": {
+        "files": [
+            { "source": "loading.png", "formats": ["rgb"], "mipmap_range": [640, 640] }
+        ]
+    }
+}
