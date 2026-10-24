@@ -226,6 +226,11 @@ if(BUILD_BLAM_ELEGY)
       h3/h3_sound.cpp
     )
 endif()
+if(BUILD_BLAM_DIMETER OR BUILD_BLAM_ELEGY)
+    target_sources(BlamGraphics PRIVATE
+      world/player_spawn.cpp
+    )
+endif()
 
 # Combat/netcode proof-of-concept (headless BlamPoc)
 add_subdirectory(poc)

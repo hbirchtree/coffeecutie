@@ -1,5 +1,6 @@
 #include "h3_scene.h"
 #include "../world/column_grid.h"
+#include "../world/player_spawn.h"
 #include "../world/static_collision.h"
 #include "h3_sound.h"
 
@@ -41,8 +42,6 @@
 #include <cmath>
 #include <limits>
 #include <unordered_map>
-
-void update_camera_aspect(compo::EntityContainer& e);
 
 namespace h3 {
 
@@ -3026,48 +3025,12 @@ struct H3MapLoader : compo::SubsystemBase
         return out;
     }
 
-    /* The Halo 1 loader creates the seats from the scenario; a Halo 3 map
-     * has to do the same before anything can look at it */
     void place_camera(Vecf3 const& position, f32 yaw)
     {
-        bool have_player = false;
-        for([[maybe_unused]] auto const& p : m_container.select<PlayerInfo>())
-        {
-            have_player = true;
-            break;
-        }
-        if(!have_player)
-        {
-            auto ref = m_container.create_entity(shared_recipes::player_recipe);
-            for(size_t frame = 0; frame < Visibility::type::frame_count_v; frame++)
-                m_container.get_at<Visibility>(ref.id(), frame)->skip_render_for = 0;
-            auto& info      = ref.get<PlayerInfo>();
-            info.player_idx = 0;
-            info.seat_idx   = 0;
-            /* H3_CAMO=1 starts the player camouflaged */
-            info.camouflaged = platform::env::var("H3_CAMO").value_or("0") != "0";
-            auto& camera    = ref.get<PlayerCamera>();
-            camera.keyboard.enabled = true;
-            camera.controller.index = 0;
-        }
-        static const glm::mat3 bsp_basis_inv{{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
-        for(auto entity : m_container.select<PlayerCamera, PlayerInfo, PlayerInput>())
-        {
-            auto [cam, info, input] = entity.components();
-            if(info.is_remote())
-                continue;
-            cam.controller.opts.sens.move = {.1f, .1f};
-            cam.controller.opts.curve     = 200.f;
-            cam.camera_opts.accel.alt     = 50.f;
-            cam.camera_opts.world_basis   = bsp_basis_inv;
-            cam.camera.position           = position;
-            cam.camera.rotation =
-                glm::angleAxis(glm::pi<f32>() - yaw, Vecf3{0.f, 1.f, 0.f});
-            /* No collision mesh to stand on: fly */
-            info.mode.physics = false;
-            input.input_mode  = PlayerInput::input_mode_t::game;
-        }
-        update_camera_aspect(m_container);
+        /* H3_CAMO=1 starts the player camouflaged */
+        if(auto* info = world::ensure_local_player(m_container))
+            info->camouflaged = platform::env::var("H3_CAMO").value_or("0") != "0";
+        world::place_local_cameras(m_container, position, yaw);
     }
 
     compo::EntityContainer& m_container;
