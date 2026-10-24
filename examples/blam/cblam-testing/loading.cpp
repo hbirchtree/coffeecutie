@@ -2764,8 +2764,10 @@ struct ResourceLoader
             p.template select<PlayerCamera, PlayerInfo, NetworkInfo>())
         {
             auto [cam, info, net] = player.components();
+            /* Riders too, where their seat lets them shoot */
+            bool const armed = info.riding.vehicle && info.riding.armed && biped_shown(info, cam, net);
             if(menu || !biped_model.hands.valid() || info.is_remote() ||
-               !info.mode.physics || !biped_in_play(info, cam, net))
+               !info.mode.physics || !(biped_in_play(info, cam, net) || armed))
                 continue;
             live.insert(player.id());
             /* What it holds, else bare hands */
