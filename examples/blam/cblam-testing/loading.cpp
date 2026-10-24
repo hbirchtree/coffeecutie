@@ -2602,6 +2602,17 @@ struct ResourceLoader
                     biped_model.shape.jump_velocity = biped->jump_velocity * 30.f;
                 if(biped->pitch_range.x < biped->pitch_range.y)
                     biped_model.shape.pitch_range = biped->pitch_range;
+                if(auto mod2 = index.find(biped->model); mod2 != index.end())
+                {
+                    /* The cyborg names none; its head stands in */
+                    std::string_view name = biped->camera_marker_name.str();
+                    if(auto camera = bind_marker_node(
+                           *mod2, name.empty() ? camera_marker : name, files.container.magic))
+                    {
+                        biped_model.shape.camera_marker = camera->transform;
+                        biped_model.shape.camera_node   = camera->node;
+                    }
+                }
                 biped_model.shape.collision = object_collision(
                     files, biped->collider, biped->model);
                 auto const& magic = files.container.magic;
@@ -2739,8 +2750,10 @@ struct ResourceLoader
             p.template select<PlayerCamera, PlayerInfo, NetworkInfo>())
         {
             auto [cam, info, net] = player.components();
+            /* Riders too, where their seat lets them shoot */
+            bool const armed = info.riding.vehicle && info.riding.armed && biped_shown(info, cam, net);
             if(menu || !biped_model.hands.valid() || info.is_remote() ||
-               !info.mode.physics || !biped_in_play(info, cam, net))
+               !info.mode.physics || !(biped_in_play(info, cam, net) || armed))
                 continue;
             live.insert(player.id());
             /* What it holds, else bare hands */
@@ -3116,6 +3129,7 @@ struct ResourceLoader
     }
 
     static constexpr std::string_view hand_marker = "right hand";
+    static constexpr std::string_view camera_marker = "head";
     static constexpr f32              drop_spread = 1.1f; /* rad between drops */
     static constexpr f32              drop_lift   = .5f;  /* wu above an NPC's origin */
     /* Health and shield, as fractions of this */

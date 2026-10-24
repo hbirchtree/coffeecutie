@@ -340,7 +340,8 @@ struct PlayerController
         cam.camera_.refresh_basis(cam.camera, cam.camera_opts);
         f32 const pitch =
             std::asin(std::clamp(cam.camera_.cached.forward.z, -1.f, 1.f));
-        auto const& range  = info.biped.pitch_range;
+        auto const& range =
+            info.riding.vehicle ? info.riding.pitch_range : info.biped.pitch_range;
         input.look_delta.y = std::clamp(
                                  pitch + input.look_delta.y,
                                  std::min(range.x, pitch),

@@ -23,7 +23,8 @@ using GameplayManifest = compo::SubsystemManifest<
         NetworkInfo,
         Model,
         const ObjectPhysics,
-        PhysicsData>,
+        PhysicsData,
+        const AnimationPlayback>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
@@ -63,6 +64,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
            generation != m_markers_generation)
         {
             m_markers.clear();
+            m_tracks.clear();
             m_leaving.clear();
             m_markers_generation = generation;
         }
@@ -97,7 +99,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             was_using = input.intent.use;
 
             if(info.riding.vehicle != 0)
-                ride(p, info, cam, net);
+                ride(p, player.id(), info, cam, net);
         }
 
         for(auto const& enter : std::exchange(m_enters, {}))
@@ -270,7 +272,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
 
     /* Seats flagged for it get the chase camera behind the vehicle along
      * the view; the rest see from the rider's eyes */
-    void ride(Proxy& p, PlayerInfo& info, PlayerCamera& cam, NetworkInfo& net)
+    void ride(Proxy& p, u64 rider, PlayerInfo& info, PlayerCamera& cam, NetworkInfo& net)
     {
         using seat_flags = blam::scn::unit::seat_t::seat_flags_t;
         auto const* vehicle = p.template get<Model>(info.riding.vehicle);
@@ -286,18 +288,91 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         info.riding.chase  = !known || !marker ||
                             (static_cast<u32>((*seats)[seat].flags) &
                              static_cast<u32>(seat_flags::third_person_camera));
-        if(!info.riding.chase)
-            cam.camera.position = Vecf3(vehicle->transform * (*marker)[3]) +
-                                  Vecf3{0.f, 0.f, info.biped.eye_height};
+        info.riding.armed = known && (static_cast<u32>((*seats)[seat].flags) &
+                                      static_cast<u32>(seat_flags::allows_weapons));
+        info.riding.pitch_range = known && (*seats)[seat].pitch_range.x < (*seats)[seat].pitch_range.y
+                                      ? (*seats)[seat].pitch_range
+                                      : Vecf2{-1.5f, 1.5f};
+        /* The seat's own camera marker, else the rider's head */
+        auto const* eye = known ? &marker_transform(
+                                      p, *vehicle, std::string((*seats)[seat].camera_marker_name.str()))
+                                : nullptr;
+        if(!info.riding.chase && eye && *eye)
+            cam.camera.position = Vecf3(vehicle->transform * (**eye)[3]);
+        else if(!info.riding.chase)
+            cam.camera.position = rider_eye(p, rider, info).value_or(
+                Vecf3(vehicle->transform * (*marker)[3]) +
+                Vecf3{0.f, 0.f, info.biped.eye_height});
         else
         {
             Vecf3 const view =
                 glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
-            cam.camera.position =
-                vehicle->position + Vecf3{0.f, 0.f, chase_height} -
-                view * chase_distance;
+            Vecf2 const flat  = Vecf2(view);
+            f32 const   yaw   = glm::dot(flat, flat) > 1e-6f ? std::atan2(flat.y, flat.x) : 0.f;
+            f32 const   pitch = std::asin(std::clamp(view.z, -1.f, 1.f));
+            if(auto behind = known ? track_point(p, *vehicle, (*seats)[seat], pitch) : std::nullopt)
+                cam.camera.position =
+                    vehicle->position + glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) * *behind;
+            else
+                cam.camera.position =
+                    vehicle->position + Vecf3{0.f, 0.f, chase_height} -
+                    view * chase_distance;
         }
         net.changes.transform = net.changes.viewport = true;
+    }
+
+    /* Where the seat's camera track puts the eye for a pitch, about the
+     * vehicle in the look's frame: its points run from looking straight
+     * down to straight up */
+    std::optional<Vecf3> track_point(
+        Proxy& p, Model const& vehicle, blam::scn::unit::seat_t const& seat, f32 pitch)
+    {
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto const& magic = files.container.magic;
+        auto [it, fresh]  = m_tracks.try_emplace(&seat);
+        if(fresh)
+        {
+            blam::tag_index_view<halo_version> index(files.container);
+            auto tracks = seat.camera_tracks.data(magic);
+            if(tracks.has_value() && !tracks.value().empty())
+                if(auto track = index.template data<blam::scn::camera_track>(tracks.value()[0].track);
+                   track.has_value())
+                    if(auto points = track.value()->control_points.data(magic); points.has_value())
+                        for(auto const& point : points.value())
+                            it->second.push_back(point.position);
+        }
+        auto const& points = it->second;
+        if(points.size() < 2)
+            return std::nullopt;
+        f32 const at = (pitch / glm::pi<f32>() + .5f) * static_cast<f32>(points.size() - 1);
+        auto const i = static_cast<size_t>(std::clamp(at, 0.f, static_cast<f32>(points.size() - 2)));
+        return glm::mix(points[i], points[i + 1], std::clamp(at - static_cast<f32>(i), 0.f, 1.f));
+    }
+
+    /* A rider sees out along its seat to begin with; a remote one's view
+     * is its own to send */
+    void face_seat(Proxy& p, u64 rider, Model const& vehicle, i16 seat)
+    {
+        auto*       cam    = p.template get<PlayerCamera>(rider);
+        auto const& marker = seat_marker(p, vehicle, seat);
+        if(!cam || !marker)
+            return;
+        Vecf3 const forward = Matf3(vehicle.transform * *marker) * Vecf3{1.f, 0.f, 0.f};
+        f32 const   yaw     = std::atan2(forward.y, forward.x);
+        cam->camera.rotation = glm::angleAxis(glm::pi<f32>() - yaw, Vecf3{0.f, 1.f, 0.f});
+        if(auto* net = p.template get<NetworkInfo>(rider))
+            net->changes.viewport = true;
+    }
+
+    /* The rider's camera marker, where its seated pose holds it */
+    std::optional<Vecf3> rider_eye(Proxy& p, u64 rider, PlayerInfo const& info)
+    {
+        auto const* body = p.template get<Model>(rider);
+        auto const* anim = p.template get<AnimationPlayback>(rider);
+        i32 const   node = info.biped.camera_node;
+        if(!body || !anim || node < 0 || static_cast<size_t>(node) >= anim->pose.size())
+            return std::nullopt;
+        return Vecf3((body->transform * anim->pose[node] * info.biped.camera_marker)[3]);
     }
 
     /* Seats come from the vehicle's unit tag; a seat is taken while another
@@ -337,6 +412,8 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
                 .seat    = i,
                 .driver  = driver,
             };
+            if(!info->is_remote())
+                face_seat(p, enter.unit, *vehicle, i);
             cDebug(
                 "Player {} takes seat {} of {}",
                 info->player_idx,
@@ -454,6 +531,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
     std::map<u64, bool>                m_using;
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<Matf4>>
         m_markers;
+    std::map<blam::scn::unit::seat_t const*, std::vector<Vecf3>> m_tracks;
     /* Riders playing their exit, and when they stand up */
     std::map<u64, time_point> m_leaving;
     time_point                m_now{};
