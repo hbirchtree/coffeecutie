@@ -41,6 +41,7 @@ using msg    = nm::MessageBase;
 constexpr u32 message_base_size = sizeof(nm::MessageBase);
 
 using typing::vector_types::Quatf;
+using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf4;
 
 /* Same as BlamGraphics' MapFingerprint, which the server checks */
@@ -243,7 +244,9 @@ class client_t
     }
 
     /* Our eye position and view direction, Halo world space */
-    void send_camera(glm::vec3 const& eye, glm::vec3 const& forward)
+    /* walk: the server simulates our body from send_input() */
+    void send_camera(
+        glm::vec3 const& eye, glm::vec3 const& forward, bool walk = false)
     {
         // The server only moves the players a connection owns, by index
         if(m_state != state_t::joined || m_player_idx == no_player)
@@ -255,6 +258,27 @@ class client_t
                 .rotation      = le(Quatf(q.w, q.x, q.y, q.z)),
                 .target_player = le(m_player_idx),
                 .fade          = le(1.f),
+                .flags         = walk ? le(nm::CameraSync::flags_t(
+                                    nm::CameraSync::physics |
+                                    nm::CameraSync::simulated))
+                                      : nm::CameraSync::none,
+            },
+            walk);
+    }
+
+    /* Held controls while walking; move is forward and right, -1..1 */
+    void send_input(glm::vec2 const& move, glm::vec3 const& forward, bool jump)
+    {
+        if(m_state != state_t::joined || m_player_idx == no_player)
+            return;
+        glm::quat const q = camera_rotation(forward);
+        send_message(
+            nm::TickInput{
+                .tick       = le(++m_input_tick),
+                .view       = le(Quatf(q.w, q.x, q.y, q.z)),
+                .move       = le(Vecf2(move.x, move.y)),
+                .intents    = jump ? le(InputIntent::jump) : InputIntent::none,
+                .player_idx = le(m_player_idx),
             },
             false);
     }
@@ -276,6 +300,11 @@ class client_t
         for(u32 i = 0; i < 4; i++)
             v[i] = from_le(v[i]);
         return v;
+    }
+
+    static Vecf2 le(Vecf2 v)
+    {
+        return Vecf2(from_le(v.x), from_le(v.y));
     }
 
     static Quatf le(Quatf q)
@@ -559,6 +588,7 @@ class client_t
     state_t     m_state{state_t::offline};
     static constexpr u32 no_player = nm::CameraSync::self_id;
     u32                  m_player_idx{no_player};
+    u64                  m_input_tick{0};
 
     /* At 50 FPS: 5s without hearing from the gateway, stats every minute */
     static constexpr u32 silence_frames = 250;
