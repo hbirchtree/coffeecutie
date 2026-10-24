@@ -621,29 +621,24 @@ struct ResourceLoader
         auto const&                     magic     = container.magic;
         blam::scn::scenario<Ver> const* scenario = container.scenario().value();
 
-        auto sound_scenery_ = scenario->objects.sound_scenery;
-        auto instances_ = sound_scenery_.instances.data(magic);
-        auto palette_ = sound_scenery_.palette.data(magic);
-        if(!instances_.has_value() || !palette_.has_value())
+        auto const& sound_scenery = scenario->objects.sound_scenery;
+        if(!sound_scenery.instances.data(magic).has_value() || !sound_scenery.palette.data(magic).has_value())
         {
             cWarning("No sound scenery data located");
             return;
         }
-        auto palette = palette_.value();
         blam::tag_index_view index(container);
         SoundEvent ev{.type = SoundEvent::play_sound};
         PlaySoundEvent play{
             .looping = true,
         };
-        for(auto const& [i, instance] :
-            stl_types::const_enumerate(instances_.value()))
+        for(auto const& placed : blam::scn::placements(sound_scenery, magic))
         {
-            auto const* entry = instance.ref.resolve(palette);
-            if(!entry)
+            if(!placed.object)
                 continue;
-            /* Palette entries are a tagref to the ssce object (+ padding),
-             * the sound itself is an lsnd attachment on that object */
-            auto object_tag = index.tag_of((*entry)[0]);
+            /* The palette names the ssce object; the sound itself is an lsnd
+             * attachment on that object */
+            auto object_tag = index.tag_of(*placed.object);
             if(!object_tag)
                 continue;
             auto object =
@@ -663,9 +658,9 @@ struct ResourceLoader
                 /* Stable per instance, so reloading a BSP section replaces
                  * instead of stacking */
                 ev.entity_id =
-                    SoundEvent::sound_scenery_base | (i << 8) | j;
+                    SoundEvent::sound_scenery_base | (placed.index << 8) | j;
                 play.sound    = &sound;
-                play.position = instance.pos;
+                play.position = placed.placement.pos;
                 sound_bus->inject(ev, &play);
             }
         }
