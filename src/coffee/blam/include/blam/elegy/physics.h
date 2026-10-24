@@ -326,18 +326,43 @@ struct global_material_t
     tag_reference<>       material_effects; /*!< foot */
     tag_block<underwater_proxy_t> underwater_proxies;
 
+    /*! How deep parent walks go; the tags never nest further */
+    static constexpr u32 max_lineage = 8;
+
+    /*! The material this one inherits from, null at the root */
+    template<typename Globals>
+    inline global_material_t const* parent_in(Globals const& globals, tag_magic const& magic) const
+    {
+        return parent.valid() ? globals.material(magic, parent) : nullptr;
+    }
+
     /*! A sound sweetener, from the parent material when blank and inherited */
     template<typename Globals>
     inline tag_reference<> const* sound_sweetener(Globals const& globals, tag_magic const& magic, u32 index) const
     {
         auto const* material = this;
-        for(u32 depth = 0; material && depth < 8; depth++)
+        for(u32 depth = 0; material && depth < max_lineage; depth++)
         {
             if(material->sound_sweeteners[index].valid() || (material->sweetener_inheritance.value() & (1u << index)))
                 return material->sound_sweeteners[index].valid() ? &material->sound_sweeteners[index] : nullptr;
-            material = material->parent.valid() ? globals.material(magic, material->parent) : nullptr;
+            material = material->parent_in(globals, magic);
         }
         return nullptr;
+    }
+
+    /*! What the material counts as under water: the first proxy along its
+     * lineage (null when that names no material), else itself */
+    template<typename Globals>
+    inline global_material_t const* underwater(Globals const& globals, tag_magic const& magic) const
+    {
+        auto const* material = this;
+        for(u32 depth = 0; material && depth < max_lineage; depth++)
+        {
+            if(auto const proxies = material->underwater_proxies.span(magic); !proxies.empty())
+                return globals.material(magic, proxies[0].proxy);
+            material = material->parent_in(globals, magic);
+        }
+        return this;
     }
 };
 
