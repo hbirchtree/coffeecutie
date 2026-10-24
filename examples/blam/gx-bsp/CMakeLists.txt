@@ -3,6 +3,7 @@ coffee_application(
   TITLE "Blam BSP (GX)"
   SOURCES main.cpp
   LIBRARIES Core EntComp ComponentBundleSetup Blam
+  RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources
 )
 
 # GX (Gexxo) backend on Gekko for video bring-up + OSReport logging + the paged
