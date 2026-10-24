@@ -1971,6 +1971,12 @@ static Vecf3 g_cam_pos{};
 static f32   g_cam_yaw   = 0.f; // around +Z
 static f32   g_cam_pitch = 0.f; // up/down
 
+/* Walking: the server moves the camera with its biped, from our controls */
+static bool  g_walking     = false;
+static bool  g_walk_toggle = false;
+static Vecf2 g_walk_move{}; // forward, right
+static bool  g_walk_jump = false;
+
 /* View-frustum culling: 6 planes from the view-projection matrix (normalized),
  * sphere-vs-frustum test. Matches the gexxo-fixed 90deg/4:3/0.1-100 projection.
  */
@@ -2015,8 +2021,9 @@ static Vecf3 cam_forward()
 }
 
 /* Update the fly-cam from the controller: left stick = move/strafe, C-stick =
- * look, A/B = up/down, R = speed boost. dt in seconds. No-op without a pad
- * (headless), so the camera just sits at the spawn. */
+ * look, A/B = up/down, R = speed boost, Z = walk/fly when joined. Walking, A
+ * jumps. dt in seconds. No-op without a pad (headless), so the camera just
+ * sits at the spawn. */
 static void update_camera(f32 dt)
 {
     if(!g_cam_ready)
@@ -2039,7 +2046,15 @@ static void update_camera(f32 dt)
     g_cam_pitch -= cy * 2.0f * dt;
     g_cam_pitch = std::clamp(g_cam_pitch, -1.45f, 1.45f);
 
-    u16 const btn   = PAD_ButtonsHeld(0);
+    u16 const btn = PAD_ButtonsHeld(0);
+    if(PAD_ButtonsDown(0) & PAD_TRIGGER_Z)
+        g_walk_toggle = true;
+    if(g_walking)
+    {
+        g_walk_move = {ly, lx};
+        g_walk_jump = btn & PAD_BUTTON_A;
+        return;
+    }
     f32 const boost = 1.f + (PAD_TriggerR(0) / 255.f) * 4.f;
     f32 const speed = 8.f * dt * boost; // world units/sec
 
@@ -2440,6 +2455,11 @@ static void poll_network(u32 frame)
                 Vecf3{0.f, 0.f, 1.f}));
     };
     on.teleport = [](gx_net::camera_sync_t const& c) {
+        if(g_walking)
+        {
+            g_cam_pos = c.position; // where our body took us; the look is ours
+            return;
+        }
         LOG("net: server put us at %d,%d,%d",
             (int)c.position.x,
             (int)c.position.y,
@@ -2454,8 +2474,18 @@ static void poll_network(u32 frame)
         g_cam_yaw   = facing;
         g_cam_pitch = 0.f;
     };
+    bool const joined = g_net.state() == gx_net::client_t::state_t::joined;
+    if(std::exchange(g_walk_toggle, false) && joined)
+    {
+        g_walking = !g_walking;
+        LOG("net: %s", g_walking ? "walking" : "flying");
+        g_net.send_camera(g_cam_pos, cam_forward(), g_walking);
+    }
+    g_walking &= joined;
     g_net.poll(fp, on, frame);
-    if(frame % 2 == 0)
+    if(g_walking)
+        g_net.send_input(g_walk_move, cam_forward(), g_walk_jump);
+    else if(frame % 2 == 0)
         g_net.send_camera(g_cam_pos, cam_forward());
 }
 #endif

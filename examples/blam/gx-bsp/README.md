@@ -87,6 +87,9 @@ the gateway reaches it:
 Without a server, the gateway's `--server` is used. Without `gateway.txt`, the
 viewer stays offline.
 
+Once joined, Z switches between flying and walking. Walking, the server moves
+the body: the left stick walks, the C-stick looks and A jumps.
+
 The console gets its address over DHCP. In Dolphin, use the HLE broadband
 adapter, and point `gateway.txt` at the PC's LAN address rather than
 `127.0.0.1`:
