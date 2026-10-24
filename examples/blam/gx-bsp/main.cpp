@@ -150,6 +150,15 @@ struct mdl_vertex
 
 struct reflection_t;
 
+/* One map of a shader_transparent_chicago; its colour and alpha functions
+ * combine the result so far with the next map */
+struct chicago_layer
+{
+    blam::bitm::image_t const* image{nullptr};
+    Vecf2                      scale{1.f}, offset{0.f};
+    u16                        color_function{0}, alpha_function{0};
+};
+
 /* How a part or material goes onto the framebuffer */
 enum class blend_t
 {
@@ -168,12 +177,16 @@ struct mdl_part
     blam::bitm::image_t const* reflection_img{nullptr};
     blam::bitm::image_t const* multipurpose_img{nullptr};
     Vecf3                      reflection_tint{0.f};
+    std::vector<chicago_layer> chicago;
 #if defined(FEATURE_ENABLE_Gexxo)
     std::shared_ptr<gexxo::vertex_array_t> vao;
     std::shared_ptr<gexxo::buffer_t>       vbo, ebo;
     std::shared_ptr<gexxo::texture_t>      diffuse;
     std::shared_ptr<reflection_t>          reflection;
     std::shared_ptr<gexxo::texture_t>      multipurpose;
+    std::shared_ptr<gexxo::program_t>      chicago_program;
+    std::vector<gexxo::texture_binding_t>  chicago_maps;
+    std::vector<Matf4>                     chicago_uv;
 #endif
 };
 
@@ -403,6 +416,8 @@ struct shader_info
     };
 
     std::optional<water_info> water;
+
+    std::vector<chicago_layer> chicago; // up to four
 };
 
 /* Material shader -> base diffuse + (primary) detail map. shader_environment
@@ -469,8 +484,28 @@ static shader_info resolve_shader(
             return out;
         if(auto maps = sh.value()->maps.data(c.magic);
            !maps.has_error() && !maps.value().empty())
+        {
             out.diffuse =
                 first_image(c, resolve_bitm(c, maps.value()[0].map.map));
+            for(auto const& m : maps.value())
+            {
+                if(out.chicago.size() == 4)
+                    break;
+                Vecf2 const scale{
+                    from_le(m.map.uv_scale.x), from_le(m.map.uv_scale.y)};
+                out.chicago.push_back({
+                    .image = first_image(c, resolve_bitm(c, m.map.map)),
+                    .scale =
+                        {scale.x == 0.f ? 1.f : scale.x,
+                         scale.y == 0.f ? 1.f : scale.y},
+                    .offset =
+                        {from_le(m.map.uv_offset.x),
+                         from_le(m.map.uv_offset.y)},
+                    .color_function = static_cast<u16>(from_le(m.color_func)),
+                    .alpha_function = static_cast<u16>(from_le(m.alpha_func)),
+                });
+            }
+        }
         using fb = blam::shader::chicago::framebuffer_blending;
         switch(from_le(sh.value()->transparent.blend_function))
         {
@@ -665,6 +700,7 @@ static void load_model_cpu(
                 part.reflection_img   = shader.reflection;
                 part.multipurpose_img = shader.multipurpose;
                 part.reflection_tint  = shader.reflection_tint;
+                part.chicago          = shader.chicago;
             }
         }
         if(!part.verts.empty() && part.indices.size() >= 3)
@@ -1658,6 +1694,117 @@ static void bake_reflections(Matf4 const& view)
     GX_InvalidateTexAll();
 }
 
+/* A chicago colour or alpha function as a TEV combiner, which works out
+ * d op ((1 - c) * a + c * b): "current" is the result so far, "next map"
+ * this stage's texture */
+static gexxo::program_t::stage_t::combiner_t chicago_combiner(
+    u16 function, bool alpha)
+{
+    using fn            = blam::shader::chicago::color_function;
+    u8 const cur        = alpha ? GX_CA_APREV : GX_CC_CPREV;
+    u8 const next       = alpha ? GX_CA_TEXA : GX_CC_TEXC;
+    u8 const zero       = alpha ? GX_CA_ZERO : GX_CC_ZERO;
+    u8 const cur_alpha  = alpha ? GX_CA_APREV : GX_CC_APREV;
+    u8 const next_alpha = alpha ? GX_CA_TEXA : GX_CC_TEXA;
+    gexxo::program_t::stage_t::combiner_t c{zero, zero, zero, cur};
+    switch(static_cast<fn>(function))
+    {
+    case fn::current:
+        break;
+    case fn::next_map:
+        c.d = next;
+        break;
+    case fn::double_multiply:
+        c.scale = GX_CS_SCALE_2;
+        [[fallthrough]];
+    case fn::multiply:
+        c.b = cur;
+        c.c = next;
+        c.d = zero;
+        break;
+    case fn::add_signed_current:
+    case fn::add_signed_next_map:
+        c.bias = GX_TB_SUBHALF;
+        [[fallthrough]];
+    case fn::add:
+        c.a = next;
+        break;
+    case fn::subtract_current:
+        c.a  = next;
+        c.op = GX_TEV_SUB;
+        break;
+    case fn::subtract_next_map:
+        c.a  = cur;
+        c.d  = next;
+        c.op = GX_TEV_SUB;
+        break;
+    case fn::blend_current_alpha:
+        c = {next, cur, cur_alpha, zero};
+        break;
+    case fn::blend_current_alpha_inverse:
+        c = {cur, next, cur_alpha, zero};
+        break;
+    case fn::blend_next_map_alpha:
+        c = {cur, next, next_alpha, zero};
+        break;
+    case fn::blend_next_map_alpha_inverse:
+        c = {next, cur, next_alpha, zero};
+        break;
+    }
+    return c;
+}
+
+/* A stage per map: the first is taken as is, the rest combined into it */
+static void build_chicago(gexxo::api& gfx, mdl_part& part)
+{
+    using stage_t   = gexxo::program_t::stage_t;
+    using channel_t = gexxo::program_t::channel_t;
+    using bind_t    = gexxo::texture_binding_t;
+    auto prog       = gfx.alloc_program();
+    prog->channels  = {channel_t{.channel = channel_t::color0a0}};
+    for(u32 i = 0; i < part.chicago.size(); i++)
+    {
+        auto const& layer = part.chicago[i];
+        auto        tex   = load_diffuse(layer.image);
+        if(!tex)
+            return;
+        auto const tc =
+            static_cast<stage_t::texcoord_t>(stage_t::texcoord0 + i);
+        auto const tm = static_cast<stage_t::texmap_t>(stage_t::texmap0 + i);
+        part.chicago_maps.push_back(
+            bind_t{
+                .texture  = tex,
+                .texmap   = tm,
+                .texcoord = tc,
+                .gen_mtx  = static_cast<u32>(GX_TEXMTX0 + i * 3)});
+        part.chicago_uv.push_back(
+            glm::scale(
+                glm::translate(Matf4{1.f}, Vecf3{layer.offset, 0.f}),
+                Vecf3{layer.scale, 1.f}));
+        stage_t stage{
+            .stage    = static_cast<stage_t::id_t>(stage_t::stage0 + i),
+            .op       = stage_t::custom,
+            .texcoord = tc,
+            .texmap   = tm,
+            .color    = channel_t::color_null};
+        if(i == 0)
+        {
+            stage.color_combiner = {
+                GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC};
+            stage.alpha_combiner = {
+                GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA};
+        } else
+        {
+            // A map's functions say how it combines with the map after it
+            auto const& prev     = part.chicago[i - 1];
+            stage.color_combiner = chicago_combiner(prev.color_function, false);
+            stage.alpha_combiner = chicago_combiner(prev.alpha_function, true);
+        }
+        prog->stages.push_back(stage);
+    }
+    part.chicago_program = std::move(prog);
+}
+
 // Fly-cam state (Halo world space, Z up), driven by the GameCube pad.
 static bool  g_cam_ready = false;
 static Vecf3 g_cam_pos{};
@@ -2140,6 +2287,8 @@ i32 coffee_main(i32, cstring_w*)
                 part.reflection = load_reflection(part.reflection_img);
                 if(part.reflection)
                     part.multipurpose = load_diffuse(part.multipurpose_img);
+                if(part.chicago.size() > 1)
+                    build_chicago(gfx, part);
                 mdl_parts++;
             }
         }
@@ -2416,6 +2565,12 @@ i32 coffee_main(i32, cstring_w*)
                 };
                 if(part.diffuse)
                     cmd.textures = {bind_t{.texture = part.diffuse}};
+                if(part.chicago_program)
+                {
+                    cmd.program            = part.chicago_program;
+                    cmd.textures           = part.chicago_maps;
+                    cmd.texture_transforms = part.chicago_uv;
+                }
                 Matf4 const reflect_mtx[1] = {gx_reflection::texgen(smv)};
                 if(lit && part.diffuse && part.reflection)
                 {
