@@ -31,6 +31,8 @@ struct decorator_group_t
 
 static_assert(sizeof(decorator_group_t) == 0x30);
 
+struct acoustics_t;
+
 struct cluster_t
 {
     std::array<bounds_f, 3>           bounds;
@@ -38,7 +40,7 @@ struct cluster_t
     i8                                atmosphere;
     i8                                camera_fx;
     u8                                unknown_0;
-    be<i16>                           acoustics; /*!< Into structure_bsp_t::acoustics */
+    block_index<acoustics_t>          acoustics; /*!< Into structure_bsp_t::acoustics */
     be<i16>                           acoustics_sound_cluster;
     be<i16>                           background_sound;
     be<i16>                           sound_environment;
