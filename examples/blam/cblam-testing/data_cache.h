@@ -76,6 +76,16 @@ struct DataCache
         return {out, generation};
     }
 
+    /*! An item made elsewhere, under no key */
+    inline generation_idx_t insert(T item)
+    {
+        if(!item.valid())
+            return {invalid_id, 0};
+        cache_id_t out = ++counter;
+        m_cache.push_back({out, std::move(item)});
+        return {out, generation};
+    }
+
     auto find_id(cache_id_t id)
     {
         if(id == invalid_id || id > m_cache.size())

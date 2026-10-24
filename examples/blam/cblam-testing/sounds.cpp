@@ -78,6 +78,7 @@ struct sound_unit_t
     };
 
     blam::tagref_t          source{};
+    u64                     external{0}; /*!< SoundCache::external key, 0 = a tag */
     generation_idx_t        index{};
     std::vector<track_t>    tracks;
     LoopSoundEvent::usage_t usage{LoopSoundEvent::usage_t::general};
@@ -122,6 +123,9 @@ struct sound_unit_t
 
     // Not used for audio tracks, more for standalone sounds
     std::optional<compo::time_point> time{};
+
+    /* Seconds until each of the item's details plays again */
+    std::vector<f32> detail_timers{};
 };
 
 template<typename Ver>
@@ -263,25 +267,25 @@ struct SoundSystem
             auto const& track = item.tracks.at(i);
             auto&       meta  = sound.tracks.at(i);
 
-            auto sounds_it = track.sounds.find(meta.active.role);
-            if(sounds_it == track.sounds.end())
+            auto props_it = track.props.find(meta.active.role);
+            if(props_it == track.props.end())
                 continue;
-            auto const [tag, props, heap] = sounds_it->second;
+            auto const& props = props_it->second;
 
             auto bufs_it = track.buffers.find(meta.active.role);
-            if(bufs_it == track.buffers.end())
+            if(bufs_it == track.buffers.end() ||
+               meta.active.pitch >= bufs_it->second.size())
                 continue;
             auto const& pitch = bufs_it->second.at(meta.active.pitch);
             if(pitch.permutations.empty() ||
                meta.active.permutation >= pitch.permutations.size())
                 continue;
 
-            f32 perm_gain =
-                pitch.permutations[meta.active.permutation].permutation->gain;
+            f32 perm_gain = pitch.permutations[meta.active.permutation].gain;
             set_gain(
                 sound,
                 meta,
-                props->gain_modifier * perm_gain * sound.volume *
+                props.gain_modifier * perm_gain * sound.volume *
                     sound.gain_scale);
         }
     }
@@ -310,13 +314,13 @@ struct SoundSystem
                 }
             }
 
-            auto sounds_it = track.sounds.find(meta.active.role);
-            auto bufs_it   = track.buffers.find(meta.active.role);
-            if(sounds_it == track.sounds.end() ||
+            auto props_it = track.props.find(meta.active.role);
+            auto bufs_it  = track.buffers.find(meta.active.role);
+            if(props_it == track.props.end() ||
                bufs_it == track.buffers.end())
                 continue;
-            auto const [tag, props, heap] = sounds_it->second;
-            auto const& bufs              = bufs_it->second;
+            auto const& props = props_it->second;
+            auto const& bufs  = bufs_it->second;
 
             // TODO: Figure out pitch variation
             // Just use natural for now
@@ -341,14 +345,11 @@ struct SoundSystem
             set_gain(
                 sound,
                 meta,
-                props->gain_modifier * current_buf.permutation->gain *
-                    effective_volume);
+                props.gain_modifier * current_buf.gain * effective_volume);
             meta.queued_bufs.push_back(current_buf.buffer);
 
-            bool looping = item.looping_sound &&
-                           !(item.looping_sound->flags & blam::sound::looping_sound::not_a_loop);
-            bool eos_permutation =
-                current_buf.permutation->next_permutation_idx == -1;
+            bool looping         = item.looping;
+            bool eos_permutation = current_buf.next == -1;
 
             if(looping && eos_permutation)
             {
@@ -362,7 +363,7 @@ struct SoundSystem
                     // Check first which permutation group it's at
                     // In title theme this has three groups, so switch between them
                     meta.active.permutation_group ++;
-                    if(meta.active.permutation_group < pitch.range->actual_permutation_count)
+                    if(meta.active.permutation_group < pitch.count)
                     {
                         // For now be dumb and simply advance
                         meta.active.permutation = meta.active.permutation_group;
@@ -387,8 +388,7 @@ struct SoundSystem
                 any_done = true;
             } else
             {
-                meta.active.permutation =
-                    current_buf.permutation->next_permutation_idx;
+                meta.active.permutation = static_cast<u32>(current_buf.next);
             }
         }
         return any_done;
@@ -417,13 +417,13 @@ struct SoundSystem
             auto const& track = item.tracks.at(i);
             auto&       meta  = sound.tracks.at(i);
 
-            auto sounds_it = track.sounds.find(meta.active.role);
-            auto bufs_it   = track.buffers.find(meta.active.role);
-            if(!meta.source || sounds_it == track.sounds.end() ||
+            auto props_it = track.props.find(meta.active.role);
+            auto bufs_it  = track.buffers.find(meta.active.role);
+            if(!meta.source || props_it == track.props.end() ||
                bufs_it == track.buffers.end())
                 continue;
-            auto const [tag, props, heap] = sounds_it->second;
-            auto const& bufs              = bufs_it->second;
+            auto const& props = props_it->second;
+            auto const& bufs  = bufs_it->second;
 
             if(meta.active.pitch >= bufs.size())
                 continue;
@@ -434,9 +434,8 @@ struct SoundSystem
             set_gain(
                 sound,
                 meta,
-                props->gain_modifier *
-                    pitch.permutations.at(meta.active.permutation)
-                        .permutation->gain);
+                props.gain_modifier *
+                    pitch.permutations.at(meta.active.permutation).gain * sound.gain_scale);
 
             /* The whole chain goes in at once, bounded in case it is cyclic */
             u32 perm = meta.active.permutation;
@@ -448,7 +447,7 @@ struct SoundSystem
                 meta.source->queue(*buf.buffer);
                 meta.queued_bufs.push_back(buf.buffer);
 
-                i16 next = buf.permutation->next_permutation_idx;
+                i16 next = buf.next;
                 if(next < 0 ||
                    static_cast<u32>(next) >= pitch.permutations.size())
                     break;
@@ -572,6 +571,8 @@ struct SoundSystem
         }
         for(auto id : finished)
             active_sounds.erase(id);
+        for(auto& [id, sound] : active_sounds)
+            play_details(sound, dt);
 
         std::vector<u64> fading_finished;
         for(auto& [id, sound] : fading_sounds)
@@ -640,12 +641,30 @@ struct SoundSystem
             cWarning("Tried to load sound, failed: {}", index.name_of(tagref));
             return {};
         }
+        auto unit   = make_unit(sound, usage);
+        unit.source = tagref;
+        return unit;
+    }
+
+    /*! A sound another game's loader registered under `key` */
+    sound_unit_t make_external_unit(u64 key, LoopSoundEvent::usage_t usage)
+    {
+        auto sound = sound_cache.external(key);
+        if(!sound.valid())
+            return {};
+        auto unit     = make_unit(sound, usage);
+        unit.external = key;
+        return unit;
+    }
+
+    sound_unit_t make_unit(generation_idx_t sound, LoopSoundEvent::usage_t usage)
+    {
         SoundItem const& item  = (*sound_cache.find(sound)).second;
         auto select_first_role = [](SoundItem::track_t const& track) {
-            if(track.sounds.contains(SoundItem::role_t::start))
+            if(track.buffers.contains(SoundItem::role_t::start))
                 return SoundItem::role_t::start;
             /* Plain snd! tags only have a main track */
-            if(track.sounds.contains(SoundItem::role_t::main))
+            if(track.buffers.contains(SoundItem::role_t::main))
                 return SoundItem::role_t::main;
             return SoundItem::role_t::loop;
         };
@@ -659,13 +678,12 @@ struct SoundSystem
                 });
             /* A one-shot plays one of its permutations, picked at random;
              * each chains through its own pieces to the end */
-            if(!item.looping_sound)
+            if(!item.looping_sound && !item.looping)
                 if(auto bufs = track.buffers.find(meta.active.role);
-                   bufs != track.buffers.end() && !bufs->second.empty() &&
-                   bufs->second.front().range)
+                   bufs != track.buffers.end() && !bufs->second.empty())
                 {
                     u32 const count = std::min<u32>(
-                        bufs->second.front().range->actual_permutation_count,
+                        bufs->second.front().count,
                         bufs->second.front().permutations.size());
                     if(count > 1)
                     {
@@ -676,21 +694,15 @@ struct SoundSystem
                         meta.active.permutation       = pick;
                     }
                 }
-            auto sounds_it = track.sounds.find(meta.active.role);
-            if(sounds_it == track.sounds.end())
+            auto props_it = track.props.find(meta.active.role);
+            if(props_it == track.props.end())
                 continue;
-            auto const props = std::get<1>(sounds_it->second);
+            auto const& props = props_it->second;
             /* Music is mixed already, panning and HRTF only colour it */
-            if(props && props->type == blam::sound::sound::music)
+            if(props.music)
                 meta.source->set_direct_channels(true);
-            if(!props)
-                continue;
-            /* Distances of 0 take the sound class's own, as tool fills in */
-            auto const defaults = default_distances(props->type);
-            f32 const  min_distance =
-                props->min_distance > 0.f ? props->min_distance : defaults.x;
-            f32 const max_distance =
-                props->max_distance > 0.f ? props->max_distance : defaults.y;
+            f32 const min_distance = props.min_distance;
+            f32 const max_distance = props.max_distance;
             if(min_distance <= 0.f)
                 continue;
             /* DirectSound 3D: full volume inside min distance, inverse
@@ -703,66 +715,66 @@ struct SoundSystem
         }
         cDebug("Created sound unit tracks={}", tracks.size());
         return sound_unit_t{
-            .source = tagref,
             .index  = sound,
             .tracks = std::move(tracks),
             .usage  = usage,
         };
     }
 
-    /* Minimum and maximum distance by sound class, for tags that leave
-     * them 0 (the defaults tool and Invader compile in) */
-    static Vecf2 default_distances(blam::sound::sound::type_t type)
+    std::minstd_rand m_permutation_rng{std::random_device{}()};
+
+    f32 random_in(Vecf2 bounds)
     {
-        using sound_t = blam::sound::sound;
-        switch(type)
-        {
-        case sound_t::device_machinery:
-        case sound_t::device_force_field:
-        case sound_t::ambient_machinery:
-        case sound_t::ambient_nature:
-        case sound_t::device_door:
-        case sound_t::music:
-        case sound_t::device_nature:
-            return {.9f, 5.f};
-        case sound_t::weapon_empty:
-        case sound_t::weapon_idle:
-        case sound_t::weapon_ready:
-        case sound_t::weapon_reload:
-        case sound_t::weapon_charge:
-        case sound_t::weapon_overheat:
-            return {1.f, 9.f};
-        case sound_t::scripted_dialog_other:
-        case sound_t::scripted_dialog_player:
-        case sound_t::game_event:
-        case sound_t::unit_dialog:
-        case sound_t::scripted_dialog_force_unspatialized:
-            return {3.f, 20.f};
-        case sound_t::first_person_damage:
-        case sound_t::object_impacts:
-        case sound_t::ambient_computers:
-        case sound_t::particle_impacts:
-        case sound_t::device_computers:
-        case sound_t::slow_particle_impacts:
-            return {.5f, 3.f};
-        case sound_t::vehicle_engine:
-        case sound_t::projectile_impact:
-        case sound_t::vehicle_collision:
-            return {1.4f, 8.f};
-        case sound_t::weapon_fire:
-            return {4.f, 70.f};
-        case sound_t::scripted_effect:
-            return {2.f, 5.f};
-        case sound_t::projectile_detonation:
-            return {8.f, 120.f};
-        case sound_t::unit_footsteps:
-            return {.9f, 10.f};
-        default:
-            return {};
-        }
+        if(bounds.y <= bounds.x)
+            return bounds.x;
+        return std::uniform_real_distribution<f32>(bounds.x, bounds.y)(m_permutation_rng);
     }
 
-    std::minstd_rand m_permutation_rng{std::random_device{}()};
+    /* A loop's details, each at its own random period, somewhere around the
+     * loop, or around the listener for one heard everywhere */
+    void play_details(sound_unit_t& sound, f32 dt)
+    {
+        SoundItem const& item = (*sound_cache.find(sound.index)).second;
+        if(item.details.empty() || sound.fading_out)
+            return;
+        if(sound.detail_timers.size() != item.details.size())
+        {
+            sound.detail_timers.resize(item.details.size());
+            for(auto i : stl_types::range<size_t>(item.details.size()))
+                sound.detail_timers[i] = random_in(item.details[i].period);
+        }
+        for(auto i : stl_types::range<size_t>(item.details.size()))
+        {
+            auto const& detail = item.details[i];
+            if((sound.detail_timers[i] -= dt) > 0.f)
+                continue;
+            sound.detail_timers[i] = std::max(random_in(detail.period), 0.5f);
+            auto unit = make_external_unit(detail.external, LoopSoundEvent::usage_t::general);
+            if(!unit.index.valid())
+                continue;
+            f32 const   yaw = random_in(detail.yaw), pitch = random_in(detail.pitch);
+            Vecf3 const offset = random_in(detail.distance) *
+                                 Vecf3(std::cos(pitch) * std::cos(yaw), std::cos(pitch) * std::sin(yaw),
+                                       std::sin(pitch));
+            bool const relative = !sound.position;
+            /* Listener space faces -Z with +Y up */
+            Vecf3 const at = relative ? Vecf3(offset.y, offset.z, -offset.x) : *sound.position + offset;
+            unit.gain_scale = detail.gain * sound.volume * sound.gain_scale;
+            for(auto& track : unit.tracks)
+            {
+                track.source->template set_property<oaf::source_property::relative>(relative);
+                track.source->template set_property<oaf::source_property::position>(at);
+                track.source->spatialize_as(oaf::source_t::always);
+            }
+            if(!relative)
+            {
+                unit.position         = at;
+                unit.position_applied = at;
+                attach_environment(unit);
+            }
+            singleshot_sounds.push_back(std::move(unit));
+        }
+    }
 
     static constexpr u64 background_entity = 0;
     /* Menu music has no cluster, so cluster changes must not replace it */
@@ -784,7 +796,8 @@ struct SoundSystem
 
     void transition_background(
         blam::tagref_t const* sound,
-        blam::tag_t const* sound_tag = nullptr)
+        blam::tag_t const* sound_tag = nullptr,
+        u64                external  = 0)
     {
         blam::tagref_t tmp{};
         u64            slot = background_entity;
@@ -798,6 +811,8 @@ struct SoundSystem
         }
         if(sound)
             cDebug("Background music transition: {}", index.name_of(*sound));
+        else if(external)
+            cDebug("Background sound transition: {:#x}", external);
         else
             cDebug("Clearing background music");
         auto it = active_sounds.find(slot);
@@ -805,16 +820,18 @@ struct SoundSystem
         {
             if(sound && it->second.source.tag_id == sound->tag_id)
                 return;
+            if(external && it->second.external == external)
+                return;
             // TODO: If the sound has an end part, play that instead
             it->second.fade_rate          = -1.f / 2.f; /* 2s fade out */
             it->second.fading_out         = true;
             fading_sounds[next_fade_id++] = std::move(it->second);
             active_sounds.erase(it);
         }
-        if(sound)
+        if(sound || external)
         {
-            auto unit = make_sound_unit(
-                *sound, LoopSoundEvent::usage_t::background_track);
+            auto unit = sound ? make_sound_unit(*sound, LoopSoundEvent::usage_t::background_track)
+                              : make_external_unit(external, LoopSoundEvent::usage_t::background_track);
             unit.fade_rate = 1.f / 2.f;
             unit.fading_in = true;
             unit.volume    = 0.f;
@@ -1452,14 +1469,15 @@ struct SoundSystem
         {
             auto const& trans =
                 *reinterpret_cast<BackgroundSoundTransitionEvent const*>(data);
-            transition_background(trans.sound, trans.sound_tag);
+            transition_background(trans.sound, trans.sound_tag, trans.external);
             return;
         }
 
         if(ev.type == SoundEvent::loop_sound)
         {
             auto const& loop = reinterpret_cast<LoopSoundEvent const*>(data);
-            auto        unit = make_sound_unit(*loop->sound, loop->usage);
+            auto        unit = loop->external ? make_external_unit(loop->external, loop->usage)
+                                              : make_sound_unit(*loop->sound, loop->usage);
             if(loop->usage == LoopSoundEvent::usage_t::background_track)
             {
                 unit.fade_rate = 1.f / 2.f;
@@ -1497,7 +1515,7 @@ struct SoundSystem
                 ref_ = play->sound_tag->as_ref();
                 ref = &ref_;
             }
-            if(!ref)
+            if(!ref && !play->external)
             {
                 cWarning("No ref for PlaySoundEvent");
                 return;
@@ -1507,12 +1525,13 @@ struct SoundSystem
                 /* Same entity again (BSP section reload) keeps it running */
                 auto it = active_sounds.find(ev.entity_id);
                 if(it != active_sounds.end() &&
-                   it->second.source.tag_id == ref->tag_id)
+                   (play->external ? it->second.external == play->external
+                                   : it->second.source.tag_id == ref->tag_id))
                     return;
             }
-            auto unit = make_sound_unit(*ref, LoopSoundEvent::usage_t::general);
-            if(unit.index.valid())
-                cDebug("Queueing PlaySoundEvent for {}", index.name_of(unit.source));
+            auto unit = play->external
+                            ? make_external_unit(play->external, LoopSoundEvent::usage_t::general)
+                            : make_sound_unit(*ref, LoopSoundEvent::usage_t::general);
             if(!unit.index.valid())
                 return;
             for(auto& track : unit.tracks)

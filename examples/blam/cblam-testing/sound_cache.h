@@ -35,16 +35,30 @@ struct SoundItem
         main,
     };
 
+    /* The game-neutral fields are what SoundSystem plays from; the Halo 1
+     * pointers are kept for the debug UI */
     struct permutation_t
     {
         blam::sound::pitch_permutation_t const* permutation{nullptr};
         std::shared_ptr<oaf::buffer_t>          buffer;
+        f32                                     gain{1.f};
+        i16                                     next{-1}; /*!< -1 ends the chain */
     };
 
     struct pitch_range_t
     {
         blam::sound::pitch_range_t const* range{nullptr};
         std::vector<permutation_t>        permutations;
+        u32                               count{0}; /*!< Chains that start a playback */
+    };
+
+    /*! How a sound plays: its gain and distances (0 = unspatialized) */
+    struct props_t
+    {
+        f32  gain_modifier{1.f};
+        f32  min_distance{0.f};
+        f32  max_distance{0.f};
+        bool music{false};
     };
 
     struct track_t
@@ -52,11 +66,27 @@ struct SoundItem
         blam::sound::track_t const*                  track{nullptr};
         std::map<role_t, sound_ptr>                  sounds;
         std::map<role_t, std::vector<pitch_range_t>> buffers;
+        std::map<role_t, props_t>                    props;
     };
 
     blam::sound::looping_sound const* looping_sound{nullptr};
     std::vector<track_t>              tracks;
     std::vector<track_t>              detail_sounds;
+    std::string                       name;
+    bool                              looping{false}; /*!< Loops until stopped */
+
+    /*! A sound played now and then around a loop */
+    struct detail_t
+    {
+        u64   external{0}; /*!< SoundCache::external key */
+        Vecf2 period{};    /*!< Seconds between playings */
+        f32   gain{1.f};
+        Vecf2 yaw{};       /*!< Radians around the loop */
+        Vecf2 pitch{};     /*!< Radians above the horizon */
+        Vecf2 distance{};
+    };
+
+    std::vector<detail_t> details;
 
     bool single() const
     {
@@ -70,6 +100,58 @@ struct SoundItem
         return !tracks.empty();
     }
 };
+
+/* Minimum and maximum distance by sound class, for tags that leave
+ * them 0 (the defaults tool and Invader compile in) */
+inline Vecf2 default_distances(blam::sound::sound::type_t type)
+{
+    using sound_t = blam::sound::sound;
+    switch(type)
+    {
+    case sound_t::device_machinery:
+    case sound_t::device_force_field:
+    case sound_t::ambient_machinery:
+    case sound_t::ambient_nature:
+    case sound_t::device_door:
+    case sound_t::music:
+    case sound_t::device_nature:
+        return {.9f, 5.f};
+    case sound_t::weapon_empty:
+    case sound_t::weapon_idle:
+    case sound_t::weapon_ready:
+    case sound_t::weapon_reload:
+    case sound_t::weapon_charge:
+    case sound_t::weapon_overheat:
+        return {1.f, 9.f};
+    case sound_t::scripted_dialog_other:
+    case sound_t::scripted_dialog_player:
+    case sound_t::game_event:
+    case sound_t::unit_dialog:
+    case sound_t::scripted_dialog_force_unspatialized:
+        return {3.f, 20.f};
+    case sound_t::first_person_damage:
+    case sound_t::object_impacts:
+    case sound_t::ambient_computers:
+    case sound_t::particle_impacts:
+    case sound_t::device_computers:
+    case sound_t::slow_particle_impacts:
+        return {.5f, 3.f};
+    case sound_t::vehicle_engine:
+    case sound_t::projectile_impact:
+    case sound_t::vehicle_collision:
+        return {1.4f, 8.f};
+    case sound_t::weapon_fire:
+        return {4.f, 70.f};
+    case sound_t::scripted_effect:
+        return {2.f, 5.f};
+    case sound_t::projectile_detonation:
+        return {8.f, 120.f};
+    case sound_t::unit_footsteps:
+        return {.9f, 10.f};
+    default:
+        return {};
+    }
+}
 
 template<typename V>
 struct SoundCache
@@ -89,6 +171,7 @@ struct SoundCache
         if(map.map->version == blam::version_t::xbox)
             index.add_atlas(blam::atlas_type_t::sounds, map.magic);
         evict_all();
+        m_external.clear();
     }
 
     inline void load_sounds_from(blam::map_ptr const& sound_ptr)
@@ -98,6 +181,30 @@ struct SoundCache
 
     oaf::api*               api{nullptr};
     blam::tag_index_view<V> index;
+
+    /*! A sound another game's loader decoded itself, under its own key */
+    inline generation_idx_t add_external(u64 key, SoundItem item)
+    {
+        auto id = this->insert(std::move(item));
+        if(id.valid())
+            m_external[key] = id;
+        return id;
+    }
+
+    inline generation_idx_t external(u64 key) const
+    {
+        auto it = m_external.find(key);
+        return it == m_external.end() ? generation_idx_t{} : it->second;
+    }
+
+    /*! Drops every sound, for a map whose sounds all come from outside */
+    inline void clear_external()
+    {
+        this->evict_all();
+        m_external.clear();
+    }
+
+    std::map<u64, generation_idx_t> m_external;
 
 #if defined(FEATURE_ENABLE_OAF)
     void upload_singular_samples(
@@ -112,6 +219,7 @@ struct SoundCache
             ranges.emplace_back(
                 SoundItem::pitch_range_t{
                     .range = &range,
+                    .count = static_cast<u32>(range.actual_permutation_count),
                 });
             auto perms_ = index.deref(*tag, range.permutations_);
             if(!perms_.has_value())
@@ -122,6 +230,8 @@ struct SoundCache
                 out.permutations.emplace_back(
                     SoundItem::permutation_t{
                         .permutation = &perm,
+                        .gain        = perm.gain,
+                        .next        = perm.next_permutation_idx,
                     });
                 auto data_ = index.deref(*tag, perm.sample_data());
                 if(!data_.has_value())
@@ -177,6 +287,17 @@ struct SoundCache
                 auto it = track.buffers.emplace(
                     role, std::vector<SoundItem::pitch_range_t>{});
                 upload_singular_samples(it.first->second, sound);
+                if(auto const* props = std::get<1>(sound))
+                {
+                    /* Distances of 0 take the sound class's own, as tool fills in */
+                    auto const defaults = default_distances(props->type);
+                    track.props[role]   = {
+                          .gain_modifier = props->gain_modifier,
+                          .min_distance  = props->min_distance > 0.f ? props->min_distance : defaults.x,
+                          .max_distance  = props->max_distance > 0.f ? props->max_distance : defaults.y,
+                          .music         = props->type == blam::sound::sound::music,
+                    };
+                }
             }
     }
 
@@ -196,6 +317,7 @@ struct SoundCache
 
         auto const* lsnd   = it.value();
         item.looping_sound = lsnd;
+        item.looping       = !(lsnd->flags & blam::sound::looping_sound::not_a_loop);
 
         auto tracks = index.deref(lsnd->tracks).value();
         for(blam::sound::track_t const& track : tracks)
@@ -250,6 +372,7 @@ struct SoundCache
 
         // TODO: Make smartness about discarding unplayed buffers
         upload_samples(out);
+        out.name = std::string(index.name_of(tag));
 
         return out;
 #else

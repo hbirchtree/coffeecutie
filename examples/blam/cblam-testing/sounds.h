@@ -33,6 +33,7 @@ struct LoopSoundEvent
 
     blam::tagref_t const* sound{};
     usage_t               usage{usage_t::general};
+    libc_types::u64       external{0}; /*!< SoundCache::external key, instead of sound */
 };
 
 /*! Moves a looping sound for `entity_id`, scales its gain and pitch */
@@ -51,6 +52,7 @@ struct PlaySoundEvent
 
     blam::tagref_t const* sound{};
     blam::tag_t const*    sound_tag{};
+    libc_types::u64       external{0}; /*!< SoundCache::external key, instead of sound */
     compo::time_point     time{};
 
     /* relative = position is an offset from the listener, {0,0,0} = at the ear
@@ -67,6 +69,7 @@ struct BackgroundSoundTransitionEvent
     /* nullptr = fade out only, no new track */
     blam::tagref_t const* sound{nullptr};
     blam::tag_t const*    sound_tag{nullptr}; // special-case for title track for now
+    libc_types::u64       external{0}; /*!< SoundCache::external key, instead of sound */
 };
 
 struct SoundPreferences : compo::SubsystemBase
