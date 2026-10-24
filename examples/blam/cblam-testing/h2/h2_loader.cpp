@@ -1,5 +1,6 @@
 #include "h2_bitmap.h"
 #include "h2_scene.h"
+#include "../world/column_grid.h"
 #include "../world/static_collision.h"
 
 #include <blam/common/vertex_pack.h>
@@ -539,7 +540,6 @@ struct H2MapLoader : compo::SubsystemBase
         m_lightmaps.clear();
         m_lightmap_atlas = {};
         m_light_triangles.clear();
-        m_light_grid.clear();
         m_below_lit_objects = m_unlit_objects = 0;
         m_normal_order_logged = false;
     }
@@ -1566,7 +1566,7 @@ struct H2MapLoader : compo::SubsystemBase
                         t.position[c] = v.position;
                         t.uv[c] = (Vecf2(v.lightmap) - lm_offset) / lm_scale;
                     }
-                    add_light_triangle(std::move(t));
+                    m_light_triangles.add(t, t.position);
                 }
 
         u32 emitted = 0;
@@ -1611,62 +1611,32 @@ struct H2MapLoader : compo::SubsystemBase
         LightmapImage const* image{nullptr};
     };
 
-    static constexpr f32 light_cell = 4.f;
-
-    static u64 light_cell_key(i32 x, i32 y)
-    {
-        return (static_cast<u64>(static_cast<u32>(x)) << 32) | static_cast<u32>(y);
-    }
-
-    void add_light_triangle(LightTriangle&& t)
-    {
-        Vecf2 lo = Vecf2(t.position[0]), hi = lo;
-        for(auto const& p : t.position)
-            lo = glm::min(lo, Vecf2(p)), hi = glm::max(hi, Vecf2(p));
-        auto const idx = static_cast<u32>(m_light_triangles.size());
-        m_light_triangles.push_back(std::move(t));
-        for(i32 x = static_cast<i32>(std::floor(lo.x / light_cell));
-            x <= static_cast<i32>(std::floor(hi.x / light_cell));
-            x++)
-            for(i32 y = static_cast<i32>(std::floor(lo.y / light_cell));
-                y <= static_cast<i32>(std::floor(hi.y / light_cell));
-                y++)
-                m_light_grid[light_cell_key(x, y)].push_back(idx);
-    }
-
     /* The lightmap colour of the highest surface under a point */
     std::optional<Vecf3> light_below(Vecf3 const& at) const
     {
-        auto cell = m_light_grid.find(light_cell_key(
-            static_cast<i32>(std::floor(at.x / light_cell)),
-            static_cast<i32>(std::floor(at.y / light_cell))));
-        if(cell == m_light_grid.end())
-            return std::nullopt;
         f32 const  top  = at.z + 0.25f;
         f32        best = -std::numeric_limits<f32>::max();
         Vecf3      out{};
         bool       hit = false;
-        for(u32 idx : cell->second)
-        {
-            auto const& t  = m_light_triangles[idx];
+        m_light_triangles.for_each_at(at, [&](LightTriangle const& t) {
             Vecf2 const a  = Vecf2(t.position[0]);
             Vecf2 const e1 = Vecf2(t.position[1]) - a, e2 = Vecf2(t.position[2]) - a;
             f32 const   det = e1.x * e2.y - e2.x * e1.y;
             if(std::abs(det) < 1e-6f)
-                continue;
+                return;
             Vecf2 const d = Vecf2(at) - a;
             f32 const   u = (d.x * e2.y - e2.x * d.y) / det;
             f32 const   v = (e1.x * d.y - d.x * e1.y) / det;
             if(u < 0.f || v < 0.f || u + v > 1.f)
-                continue;
+                return;
             f32 const w = 1.f - u - v;
             f32 const z = w * t.position[0].z + u * t.position[1].z + v * t.position[2].z;
             if(z > top || z <= best)
-                continue;
+                return;
             Vecf2 const uv  = w * t.uv[0] + u * t.uv[1] + v * t.uv[2];
             auto const& img = *t.image;
             if(img.rgba.empty())
-                continue;
+                return;
             u32 const px = std::min(
                 static_cast<u32>(std::clamp(uv.x, 0.f, 1.f) * img.width), img.width - 1);
             u32 const py = std::min(
@@ -1675,7 +1645,7 @@ struct H2MapLoader : compo::SubsystemBase
             out  = Vecf3{c[0], c[1], c[2]} / 255.f;
             best = z;
             hit  = true;
-        }
+        });
         return hit ? std::optional<Vecf3>(out) : std::nullopt;
     }
 
@@ -3633,9 +3603,8 @@ struct H2MapLoader : compo::SubsystemBase
     std::vector<std::unique_ptr<LightmapImage>>        m_lightmaps;
     std::vector<std::vector<LightBucket>>              m_buckets;        /* per BSP */
     std::vector<std::unordered_map<u32, SceneryLight>> m_scenery_lights; /* per BSP */
-    std::vector<LightTriangle>                         m_light_triangles;
+    world::ColumnGrid<LightTriangle>                   m_light_triangles;
     u32 m_below_lit_objects{0}, m_unlit_objects{0};
-    std::unordered_map<u64, std::vector<u32>>          m_light_grid;
     LightmapAtlas                                      m_lightmap_atlas;
     std::set<std::string>                              m_unknown_passes;
     u32  m_objects_total{0}, m_objects_clustered{0};
