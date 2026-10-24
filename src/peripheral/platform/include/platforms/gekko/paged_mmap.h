@@ -388,6 +388,11 @@ inline void ensure_init()
 
 /* Stage a disc file into ARAM at aram_off (caller-reserved). DVD -> RAM bounce
  * -> ARAM via polled DMA, at map time (normal context). */
+/* Told how far staging has come, from map()/stage(), never from the fault
+ * handler: e.g. to draw a loading screen */
+using progress_fn                   = void (*)(u32 done, u32 total);
+inline progress_fn g_stage_progress = nullptr;
+
 inline bool stage_to_aram(u32 disc_off, u32 size, u32 aram_off)
 {
     u32 const need = (size + 31) & ~31u;
@@ -404,6 +409,8 @@ inline bool stage_to_aram(u32 disc_off, u32 size, u32 aram_off)
         AR_StartDMA(AR_MRAMTOARAM, virt_to_phys(bounce), aram_off + pos, n);
         while(AR_GetDMAStatus())
             ;
+        if(g_stage_progress)
+            g_stage_progress(pos + n, need);
     }
     free(bounce);
     return true;
@@ -579,6 +586,11 @@ inline bool stage(mapping const& m, u32 off, u32 size)
 }
 
 /* ARAM bytes still free for stage()/map() */
+inline void set_stage_progress(detail::progress_fn fn)
+{
+    detail::g_stage_progress = fn;
+}
+
 inline u32 aram_free()
 {
     return detail::g_aram.free_bytes();
