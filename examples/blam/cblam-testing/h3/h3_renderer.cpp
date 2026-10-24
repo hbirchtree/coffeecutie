@@ -6,6 +6,7 @@
 #include "world/world_gpu.h"
 #include "resource_creation.h"
 
+#include <blam/common/frustum.h>
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 #include <coffee/core/CDebug>
@@ -78,6 +79,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         }
         if(!camera)
             return;
+        auto const frustum = blam::Frustum::from_mvp(camera->matrix);
 
         auto&        resources = p.template subsystem<BlamResources>();
         /* The debug views and switches of the rendering panel */
@@ -235,7 +237,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         }
                         auto const* placed = p.template get<Model>(object.entity);
                         if(!placed || placed->camouflaged ||
-                           !in_view(camera->matrix, object.sphere(placed->transform)))
+                           !in_view(frustum, object.sphere(placed->transform)))
                             continue;
                         model_matrix  = placed->transform;
                         light_count   = pack_lights(object.entity, placed->position);
@@ -713,21 +715,9 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
             (*m_first_person_light)[i] = glm::mix((*m_first_person_light)[i], (*m_first_person_target)[i], t);
     }
 
-    /* Whether a bounding sphere reaches into the view; the projection's far
-     * plane is at infinity, so only its sides and the eye plane count */
-    static bool in_view(Matf4 const& view_projection, Vecf4 const& sphere)
+    static bool in_view(blam::Frustum const& frustum, Vecf4 const& sphere)
     {
-        Vecf4 const row3 = glm::row(view_projection, 3);
-        auto outside = [&](Vecf4 const& plane) {
-            return glm::dot(Vecf3(plane), Vecf3(sphere)) + plane.w < -sphere.w * glm::length(Vecf3(plane));
-        };
-        for(int i = 0; i < 2; i++)
-        {
-            Vecf4 const row = glm::row(view_projection, i);
-            if(outside(row3 + row) || outside(row3 - row))
-                return false;
-        }
-        return !outside(row3);
+        return frustum.sphere_visible(Vecf3(sphere), sphere.w);
     }
 
     /* The lights where their objects carry them this frame */
@@ -848,6 +838,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
     {
         using stage_t = typing::graphics::ShaderStage;
         m_camo_draws.clear();
+        auto const frustum = blam::Frustum::from_mvp(camera.matrix);
         for(auto const& mat : scene.materials)
         {
             if(!mat.visible || mat.variant == Variant::water)
@@ -861,7 +852,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     continue;
                 }
                 auto const* placed = p.template get<Model>(object.entity);
-                if(placed && placed->camouflaged && in_view(camera.matrix, object.sphere(placed->transform)))
+                if(placed && placed->camouflaged && in_view(frustum, object.sphere(placed->transform)))
                     m_camo_draws.push_back({&object.draws, placed->transform, false});
             }
         }
