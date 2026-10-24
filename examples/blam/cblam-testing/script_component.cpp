@@ -1996,6 +1996,16 @@ struct BlamScript
                 fn(player.template get<PlayerInfo>().seat_idx);
     }
 
+    /* A view along yaw and pitch, rolled about its line of sight, built as
+     * the player camera's rotation is */
+    static Quatf camera_look(f32 yaw, f32 pitch, f32 roll)
+    {
+        return glm::normalize(
+            glm::angleAxis(roll, Vecf3{0.f, 0.f, -1.f}) *
+            glm::angleAxis(pitch, Vecf3{-1.f, 0.f, 0.f}) *
+            glm::angleAxis(glm::pi<f32>() - yaw, Vecf3{0.f, 1.f, 0.f}));
+    }
+
     /* To a cutscene camera point over `ticks`, in an object's space if
      * given */
     void camera_set(Proxy& p, std::string_view point_name, f32 ticks, u64 relative_to)
@@ -2003,8 +2013,15 @@ struct BlamScript
         auto const* point = named(m_scenario->cutscene.camera_points, point_name);
         if(!point)
             return log(fmt::format("camera_set: no camera point {}", point_name));
-        auto [position, rotation] = point->to_camera(
-            Matf3(Vecf3{0, -1, 0}, Vecf3{-1, 0, 0}, Vecf3{0, 0, -1}));
+        Vecf3 const position = point->position;
+        /* After the yaw, a tilt about the world's horizontal axes: along
+         * the view it is pitch, across it roll */
+        f32 const   yaw   = point->rotation.x;
+        Vecf2 const tilt{point->rotation.y, point->rotation.z};
+        Quatf const rotation = camera_look(
+            yaw,
+            tilt.x * std::cos(yaw) + tilt.y * std::sin(yaw),
+            tilt.y * std::cos(yaw) - tilt.x * std::sin(yaw));
         for_local_seats(p, [&](u32 seat) {
             GameEvent             ev{.type = GameEvent::PlayerCameraLerp};
             PlayerCameraLerpEvent lerp{
