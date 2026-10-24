@@ -70,8 +70,9 @@ using typing::vector_types::Vecf4;
 
 static constexpr char const* MAP_NAME = "bloodgulch.map";
 
-// Highest-detail model LOD; GC memory may want lod_high or lod_medium
-static constexpr auto kModelLod = blam::mod2::lod_high_ext;
+// One below the highest model LOD, as textures skip a mip
+static constexpr auto kModelLod        = blam::mod2::lod_high;
+static u32            g_models_lowered = 0;
 
 // Player bipeds stood on the first spawn points, MP maps place none
 static constexpr u32 kSpawnBipeds = 4;
@@ -606,6 +607,48 @@ static bool in_active_section(Vecf3 const& pos, u16 bsp_flags)
 
 /* --- objects (mod2 models) ------------------------------------------------ */
 
+/* kModelLod, or the highest where a permutation has no such level, or where
+ * it is a stand-in (powerups' lower levels are a pyramid or a cube) */
+template<typename V, typename Magic>
+static blam::mod2::mod2_lod model_lod(
+    blam::mod2::header<V> const& hdr, Magic const& magic)
+{
+    auto regions = hdr.regions.data(magic);
+    auto geoms   = hdr.geometries.data(magic);
+    if(!regions.has_value() || !geoms.has_value())
+        return blam::mod2::lod_high_ext;
+    auto verts = [&](u16 geometry) {
+        u32  n     = 0;
+        auto parts = geoms.value()[geometry].meshes(magic);
+        for(auto const& p : parts)
+            n += from_le(p.data.vert_count);
+        return n;
+    };
+    u32 lower = 0, highest = 0;
+    for(auto const& reg : regions.value())
+    {
+        auto perms = reg.permutations.data(magic);
+        if(!perms.has_value())
+            return blam::mod2::lod_high_ext;
+        // Indices run from the lowest level up
+        for(auto const& per : perms.value())
+        {
+            u16 const want = from_le(per.meshindex_lod.at(4u - kModelLod));
+            u16 const top  = from_le(per.meshindex_lod.at(4u));
+            if(want >= geoms.value().size() || top >= geoms.value().size())
+                return blam::mod2::lod_high_ext;
+            lower += verts(want);
+            highest += verts(top);
+        }
+    }
+    if(lower == highest)
+        return blam::mod2::lod_high_ext;
+    if(lower * 5 < highest * 2)
+        return blam::mod2::lod_high_ext;
+    g_models_lowered++;
+    return kModelLod;
+}
+
 template<typename V>
 static void load_model_cpu(
     blam::map_container<V> const& c, blam::tag_index<> mod2_id)
@@ -620,7 +663,7 @@ static void load_model_cpu(
     std::optional<mod2::model_data_t> md;
     try
     {
-        md = hdr.value()->model_at(kModelLod, c.magic);
+        md = hdr.value()->model_at(model_lod(*hdr.value(), c.magic), c.magic);
     } catch(std::exception const&)
     {
     }
@@ -1001,9 +1044,11 @@ static void build_objects(
     for(u32 k = 0; k < kind_count; k++)
         if(g_kind_count[k])
             LOG("objects: %u %s", g_kind_count[k], g_kind_names[k]);
-    LOG("objects: %u placed, %u models, %u verts (%u KiB as GX vertices)",
+    LOG("objects: %u placed, %u models (%u a LOD down), %u verts (%u KiB as "
+        "GX vertices)",
         static_cast<unsigned>(g_objects.size()),
         static_cast<unsigned>(g_models.size()),
+        g_models_lowered,
         verts,
         static_cast<unsigned>(verts * sizeof(mdl_vertex) / 1024));
 }
