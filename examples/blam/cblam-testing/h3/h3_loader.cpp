@@ -2874,7 +2874,6 @@ struct H3MapLoader : compo::SubsystemBase
         u32 const width  = static_cast<u32>(image.width.value());
         u32 const height = static_cast<u32>(image.height.value());
         using blam::bitm::format_t;
-        using gfx::textures::swizzle_t;
 
         /* One- and two-channel formats and where their channels go */
         auto const swizzle = world::channel_swizzle(h1.value_or(format_t::ARGB8));
@@ -2904,20 +2903,7 @@ struct H3MapLoader : compo::SubsystemBase
             }
             world::fix_channels(*h1, pixels);
             if(expand)
-            {
-                u32 const       channels = *h1 == format_t::A8Y8 ? 2 : 1;
-                std::vector<u8> rgba(size_t(w) * h * 4);
-                for(size_t i = 0; i < size_t(w) * h; i++)
-                    for(size_t c = 0; c < 4; c++)
-                    {
-                        auto sc         = (*swizzle)[c];
-                        rgba[i * 4 + c] = sc == swizzle_t::red     ? pixels[i * channels]
-                                          : sc == swizzle_t::green ? pixels[i * channels + 1]
-                                          : sc == swizzle_t::one   ? u8(255)
-                                                                   : u8(0);
-                    }
-                pixels = std::move(rgba);
-            }
+                pixels = world::expand_rgba8(*h1, *swizzle, pixels, w, h);
         };
 
         /* Every level the texture keeps, so the far distance filters down */
@@ -2942,7 +2928,7 @@ struct H3MapLoader : compo::SubsystemBase
             tex->set_swizzle(rgtc->swizzle[0], rgtc->swizzle[1], rgtc->swizzle[2], rgtc->swizzle[3]);
         tex->alloc(size_3d<u32>{width, height, 1});
         if(swizzle && !expand && !rgtc && !ctx1)
-            tex->set_swizzle((*swizzle)[0], (*swizzle)[1], (*swizzle)[2], (*swizzle)[3]);
+            world::set_swizzle(*tex, *swizzle);
         for(u32 l = 0; l < levels.size(); l++)
             tex->upload(
                 std::move(levels[l]),

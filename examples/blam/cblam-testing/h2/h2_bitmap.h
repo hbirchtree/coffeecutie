@@ -115,6 +115,12 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
     if(!width || !height || !base)
         return std::nullopt;
     bool compressed = is_compressed(format);
+    /* Without texture swizzle (WebGL) one- and two-channel formats go up
+     * expanded to RGBA8 */
+    auto const swizzle = world::channel_swizzle(format);
+    bool const expand  = swizzle && !api.feature_info().texture.swizzle;
+    if(expand)
+        fmt = typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8);
     u32  bpp        = compressed ? 0 : base / (width * height);
     u32  mip_count  = static_cast<u32>(std::max<i16>(from_le(img.mipmaps), 0)) + 1;
 
@@ -182,6 +188,8 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
                 level.pixels = std::move(rgba);
             }
             world::fix_channels(format, level.pixels);
+            if(expand)
+                level.pixels = world::expand_rgba8(format, *swizzle, level.pixels, lw, lh);
             levels.push_back(std::move(level));
             offset += stored;
             if(lw == 1 && lh == 1)
@@ -207,8 +215,8 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
         auto tex = api.alloc_texture(
             gfx::textures::d2, fmt, static_cast<u32>(levels.size()));
         tex->alloc(size_3d<u32>{width, height, 1});
-        if(auto swizzle = world::channel_swizzle(format))
-            tex->set_swizzle((*swizzle)[0], (*swizzle)[1], (*swizzle)[2], (*swizzle)[3]);
+        if(swizzle && !expand)
+            world::set_swizzle(*tex, *swizzle);
         for(size_t i = 0; i < levels.size(); i++)
         {
             auto& level = levels[i];
