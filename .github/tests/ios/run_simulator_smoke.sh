@@ -5,6 +5,7 @@
 #
 # Frames must show up within RUN_TIMEOUT seconds (after the map has loaded,
 # when one is given), and the app must keep rendering for SETTLE_SECONDS.
+# Losing SimMetalHost after loaded frames only warns, the runner has no GPU.
 # The console log, a screenshot and any crash reports land in the output dir.
 set -euo pipefail
 
@@ -101,8 +102,9 @@ xcrun simctl io "$DEVICE" screenshot "$OUT/screenshot.png" || true
 xcrun simctl terminate "$DEVICE" "$BUNDLE_ID" >/dev/null 2>&1 || true
 wait "$LAUNCHER" || true
 
-# Simulator app crashes are reported on the host
-find "$HOME/Library/Logs/DiagnosticReports" -name "BlamGraphics*" -newer "$OUT/boot.log" \
+# Simulator app crashes are reported on the host, as are the Metal host's
+find "$HOME/Library/Logs/DiagnosticReports" -newer "$OUT/boot.log" \
+    \( -name "BlamGraphics*" -o -name "*Metal*" \) \
     -exec cp {} "$OUT/" \; 2>/dev/null || true
 # The app's own stacktrace.json and friends
 CONTAINER=$(xcrun simctl get_app_container "$DEVICE" "$BUNDLE_ID" data 2>/dev/null || true)
@@ -115,7 +117,7 @@ xcrun simctl spawn "$DEVICE" log show --style compact --last 30m \
     > "$OUT/system.log" 2>&1 || true
 
 if [ "$STATUS" -ne 0 ]; then
-    for report in "$OUT"/BlamGraphics*.ips; do
+    for report in "$OUT"/*.ips; do
         [ -f "$report" ] || continue
         echo "== $(basename "$report")"
         python3 - "$report" <<'EOF' || true
@@ -131,6 +133,15 @@ for frame in (thread or {}).get("frames", [])[:30]:
 EOF
     done
     grep -iE "termin|crash|signal|jetsam|watchdog|exit" "$OUT/system.log" | tail -n 20 || true
+
+    # GPU-less runners lose SimMetalHost while compiling shaders, which ends
+    # the app; past loaded frames, that is the runner's failure, not ours
+    if [ "$FIRST" -gt 0 ] &&
+        grep -q "Connection to SimMetalHost.*was lost" "$OUT/system.log" &&
+        grep -q "domain:metal(21)" "$OUT/system.log"; then
+        echo "::warning::SimMetalHost was lost after BlamGraphics rendered; treating as a runner failure"
+        STATUS=0
+    fi
 fi
 
 grep -E "GL version|FPS:|FTAL|ERRO" "$LOG" | tail -n 20 || true
