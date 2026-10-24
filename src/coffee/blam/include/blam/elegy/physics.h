@@ -293,6 +293,17 @@ static_assert(offsetof(physics_model_t, rigid_bodies) == 0x58);
 static_assert(offsetof(physics_model_t, polyhedra) == 0xAC);
 static_assert(offsetof(physics_model_t, mopps) == 0xF4);
 
+/*! A material found under another material, reported as a third */
+struct underwater_proxy_t
+{
+    string_id underwater; /*!< The material it is under, e.g. liquid_thin_water */
+    string_id proxy;      /*!< What it then counts as */
+    be<i16>   underwater_index;
+    u16       unknown_0;
+};
+
+static_assert(sizeof(underwater_proxy_t) == 0xC);
+
 /*! A global material (matg): what it is made of, physically */
 struct global_material_t
 {
@@ -313,7 +324,7 @@ struct global_material_t
     std::array<tag_reference<>, 3> water_ripples;
     be<u32>               sweetener_inheritance; /*!< Set bits: blank sweeteners stay blank */
     tag_reference<>       material_effects; /*!< foot */
-    tag_block<std::array<u8, 0xC>> underwater_proxies;
+    tag_block<underwater_proxy_t> underwater_proxies;
 
     /*! A sound sweetener, from the parent material when blank and inherited */
     template<typename Globals>
