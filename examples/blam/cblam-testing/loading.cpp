@@ -2700,7 +2700,8 @@ struct ResourceLoader
                         pickup_sound(
                             p,
                             change.weapon,
-                            cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f});
+                            cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f},
+                            !info.is_remote());
                 }
             if(auto const* status = p.template get<BipedStatus>(player.id());
                status && status->dead)
@@ -2910,8 +2911,9 @@ struct ResourceLoader
         equip.reloading = false;
     }
 
-    /* What a weapon or grenade sounds like taken off the ground */
-    void pickup_sound(Proxy& p, blam::tag_index<> item, Vecf3 const& at)
+    /* What a weapon or grenade sounds like taken off the ground; at the ear
+     * of the one who took it */
+    void pickup_sound(Proxy& p, blam::tag_index<> item, Vecf3 const& at, bool own)
     {
         auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
         auto  tag    = index.find(item);
@@ -2929,7 +2931,7 @@ struct ResourceLoader
         if(sound == index.end())
             return;
         SoundEvent     ev{.type = SoundEvent::play_sound};
-        PlaySoundEvent play{.sound_tag = &(*sound), .position = at};
+        PlaySoundEvent play{.sound_tag = &(*sound), .position = own ? PlaySoundEvent::in_hand : at, .relative = own};
         sounds->inject(ev, &play);
     }
 
