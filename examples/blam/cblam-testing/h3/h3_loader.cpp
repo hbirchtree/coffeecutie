@@ -1929,7 +1929,7 @@ struct H3MapLoader : compo::SubsystemBase
                     out.position[c] = m_vertices[vbase + t[c]].position;
                     out.uv[c]       = lightmap_uvs[t[c]];
                 }
-                m_scene.baked[m_slot].triangles.push_back(out);
+                m_scene.baked[m_slot].triangles.add(out, out.position);
             }
         };
         auto emit = [&](i16 material, u32 start, u32 count) {

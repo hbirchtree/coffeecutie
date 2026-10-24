@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../world/column_grid.h"
+
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/geometry.h>
 
@@ -46,7 +48,7 @@ struct BakedLight
         std::array<Vecf2, 3> uv;
     };
 
-    std::vector<Triangle>        triangles;
+    world::ColumnGrid<Triangle>  triangles;
     std::vector<std::vector<u8>> layers; /*!< Linearized DXT5, 8 SH + 2 intensity */
     Vecui2                       size{};
     Vecf4                        scale{1.f};
@@ -62,29 +64,28 @@ struct BakedLight
      * objects in Halo 3 take it from the lightmap below them */
     std::optional<el::vertex_light_t> below(Vecf3 const& position, f32* height = nullptr) const
     {
-        if(layers.size() != 10 || triangles.empty())
+        if(layers.size() != 10 || triangles.items.empty())
             return std::nullopt;
         f32 const top  = position.z + 0.5f;
         f32       best = -std::numeric_limits<f32>::max();
         Vecf2     uv{};
-        for(auto const& t : triangles)
-        {
+        triangles.for_each_at(position, [&](Triangle const& t) {
             auto const& p = t.position;
             Vecf2 a{p[0].x, p[0].y}, b{p[1].x, p[1].y}, c{p[2].x, p[2].y};
             f32   d = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
             if(std::abs(d) < 1e-8f)
-                continue;
+                return;
             f32 w0 = ((b.y - c.y) * (position.x - c.x) + (c.x - b.x) * (position.y - c.y)) / d;
             f32 w1 = ((c.y - a.y) * (position.x - c.x) + (a.x - c.x) * (position.y - c.y)) / d;
             f32 w2 = 1.f - w0 - w1;
             if(w0 < 0.f || w1 < 0.f || w2 < 0.f)
-                continue;
+                return;
             f32 z = w0 * p[0].z + w1 * p[1].z + w2 * p[2].z;
             if(z > top || z <= best)
-                continue;
+                return;
             best = z;
             uv   = w0 * t.uv[0] + w1 * t.uv[1] + w2 * t.uv[2];
-        }
+        });
         if(best == -std::numeric_limits<f32>::max())
             return std::nullopt;
         if(height)
