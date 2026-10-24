@@ -4,6 +4,7 @@
 #include "player_controller.h"
 #include "render/cascaded_shadows.h"
 #include "world/placement.h"
+#include "world/player_spawn.h"
 #include "world/world_gpu.h"
 #include "resource_creation.h"
 
@@ -75,7 +76,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         for(auto e : p.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = e.components();
-            if(info.seat_idx != 0)
+            if(!world::is_local_seat(info))
                 continue;
             camera = &cam;
             player = &info;

@@ -564,7 +564,7 @@ struct H3MapLoader : compo::SubsystemBase
         for(auto entity : m_container.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [camera, info] = entity.components();
-            if(info.seat_idx == 0 && !info.is_remote() && info.mode.physics)
+            if(world::is_local_seat(info) && info.mode.physics)
                 body = std::make_tuple(camera.camera.position, info.biped.eye_height, entity.id());
         }
         if(!body)
@@ -672,7 +672,7 @@ struct H3MapLoader : compo::SubsystemBase
         for(auto entity : m_container.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [camera, info] = entity.components();
-            if(info.seat_idx == 0 && !info.is_remote())
+            if(world::is_local_seat(info))
                 eye = camera.camera.position;
         }
         if(!eye)
@@ -937,7 +937,7 @@ struct H3MapLoader : compo::SubsystemBase
         for(auto entity : m_container.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [camera, info] = entity.components();
-            if(info.seat_idx == 0 && !info.is_remote())
+            if(world::is_local_seat(info))
                 eye = camera.camera.position;
         }
         if(!eye)

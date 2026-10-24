@@ -1,4 +1,5 @@
 #include "h2_shell_data.h"
+#include "../world/player_spawn.h"
 
 #include "components.h"
 #include "data.h"
@@ -104,7 +105,7 @@ struct H2Shell : compo::RestrictedSubsystem<H2Shell, H2ShellManifest>
         for(auto e : p.select<PlayerCamera, PlayerInput, PlayerInfo>())
         {
             auto [cam, input, info] = e.components();
-            if(info.seat_idx != 0)
+            if(!world::is_local_seat(info))
                 continue;
             input.input_mode = PlayerInput::input_mode_t::menu;
             fly_camera(data, cam);
