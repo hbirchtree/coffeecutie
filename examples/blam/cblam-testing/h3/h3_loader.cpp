@@ -1,4 +1,5 @@
 #include "h3_scene.h"
+#include "../world/column_grid.h"
 #include "../world/static_collision.h"
 #include "h3_sound.h"
 
@@ -64,52 +65,33 @@ static const auto object_recipe = compo::EntityRecipe{
 /* Collision polygons fanned into triangles, decoded out of the big-endian map */
 using world::CollisionMesh;
 
-/* The level's water surfaces, binned on a coarse grid: water is drawn, not
- * collided with, so what stands in it is found by height */
+/* The level's water surfaces: water is drawn, not collided with, so what
+ * stands in it is found by height */
 struct WaterSurfaces
 {
-    static constexpr f32 cell = 4.f;
-
-    std::vector<std::array<Vecf3, 3>>        triangles;
-    std::unordered_map<u64, std::vector<u32>> cells;
-
-    static u64 key(i32 x, i32 y)
-    {
-        return (u64(u32(x)) << 32) | u32(y);
-    }
+    world::ColumnGrid<std::array<Vecf3, 3>> triangles;
 
     void add(std::array<Vecf3, 3> const& t)
     {
-        auto const index = static_cast<u32>(triangles.size());
-        triangles.push_back(t);
-        Vecf2 const lo = glm::min(glm::min(Vecf2(t[0]), Vecf2(t[1])), Vecf2(t[2]));
-        Vecf2 const hi = glm::max(glm::max(Vecf2(t[0]), Vecf2(t[1])), Vecf2(t[2]));
-        for(i32 x = i32(std::floor(lo.x / cell)); x <= i32(std::floor(hi.x / cell)); x++)
-            for(i32 y = i32(std::floor(lo.y / cell)); y <= i32(std::floor(hi.y / cell)); y++)
-                cells[key(x, y)].push_back(index);
+        triangles.add(t, t);
     }
 
     /*! The highest water surface above `point` that is below `ceiling` */
     std::optional<f32> surface_above(Vecf3 const& point, f32 ceiling) const
     {
-        auto it = cells.find(key(i32(std::floor(point.x / cell)), i32(std::floor(point.y / cell))));
-        if(it == cells.end())
-            return std::nullopt;
         std::optional<f32> out;
-        for(u32 index : it->second)
-        {
-            auto const& t = triangles[index];
+        triangles.for_each_at(point, [&](std::array<Vecf3, 3> const& t) {
             Vecf2 const a = Vecf2(t[1] - t[0]), b = Vecf2(t[2] - t[0]), p = Vecf2(point - t[0]);
             f32 const   d = a.x * b.y - a.y * b.x;
             if(std::abs(d) < 1e-8f)
-                continue;
+                return;
             f32 const u = (p.x * b.y - p.y * b.x) / d, v = (a.x * p.y - a.y * p.x) / d;
             if(u < 0.f || v < 0.f || u + v > 1.f)
-                continue;
+                return;
             f32 const z = t[0].z + u * (t[1].z - t[0].z) + v * (t[2].z - t[0].z);
             if(z > point.z && z < ceiling && (!out || z > *out))
                 out = z;
-        }
+        });
         return out;
     }
 };
