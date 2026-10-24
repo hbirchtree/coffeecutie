@@ -107,9 +107,17 @@ struct submesh_t
     f32                        radius{0}; // for frustum culling
     blam::bitm::image_t const* diffuse_img{nullptr};
     blam::bitm::image_t const* detail_img{nullptr};
+
+    /* shader_water: drawn after everything opaque, see water_info */
+    bool                       water{false};
+    blam::bitm::image_t const* ripple_img{nullptr};
+    f32                        ripple_scale{1.f};
+    Vecf2                      ripple_flow{0.f};
+    Vecf3                      water_tint{1.f};
 #if defined(FEATURE_ENABLE_Gexxo)
     std::shared_ptr<gexxo::texture_t> diffuse;
     std::shared_ptr<gexxo::texture_t> detail;
+    std::shared_ptr<gexxo::texture_t> ripple;
 #endif
 };
 
@@ -384,6 +392,17 @@ struct shader_info
     blam::bitm::image_t const* reflection{nullptr};
     blam::bitm::image_t const* multipurpose{nullptr};
     Vecf3                      reflection_tint{0.f};
+
+    /* shader_water: its ripple map, how it tiles and flows, its colour */
+    struct water_info
+    {
+        blam::bitm::image_t const* ripple{nullptr};
+        f32                        scale{1.f};
+        Vecf2                      flow{0.f}; // per second
+        Vecf3                      tint{1.f};
+    };
+
+    std::optional<water_info> water;
 };
 
 /* Material shader -> base diffuse + (primary) detail map. shader_environment
@@ -425,6 +444,24 @@ static shader_info resolve_shader(
                 from_le(r.perpendicular_tint.y),
                 from_le(r.perpendicular_tint.z)} *
             from_le(r.perpendicular_brightness);
+    } else if(st->matches(blam::tag_class_t::swat))
+    {
+        auto sh = st->template data<blam::shader::shader_water>(c.magic);
+        if(sh.has_error())
+            return out;
+        auto const& w     = *sh.value();
+        auto const& tint  = w.perpendicular.tint_color;
+        f32 const   angle = from_le(w.ripple.anim_angle);
+        f32 const   speed = from_le(w.ripple.anim_velocity);
+        out.water         = shader_info::water_info{
+                    .ripple = first_image(c, resolve_bitm(c, w.ripple.map)),
+                    .scale  = from_le(w.ripple.scale),
+                    .flow   = Vecf2{std::cos(angle), std::sin(angle)} * speed,
+                    .tint   = Vecf3{from_le(tint.x), from_le(tint.y), from_le(tint.z)} *
+                    from_le(w.perpendicular.brightness),
+        };
+        if(out.water->scale == 0.f)
+            out.water->scale = 1.f;
     } else if(st->matches(blam::tag_class_t::schi))
     {
         auto sh = st->template data<blam::shader::shader_chicago<V>>(c.magic);
@@ -822,6 +859,17 @@ static void build_objects(
 
 /* --- geometry ------------------------------------------------------------- */
 
+static void set_water(submesh_t& sm, shader_info const& si)
+{
+    if(!si.water)
+        return;
+    sm.water        = true;
+    sm.ripple_img   = si.water->ripple;
+    sm.ripple_scale = si.water->scale;
+    sm.ripple_flow  = si.water->flow;
+    sm.water_tint   = si.water->tint;
+}
+
 /* Transcoded offline: the material's vertices are GX arrays already and its
  * indices big-endian */
 static void append_gx_material(
@@ -870,6 +918,7 @@ static void append_gx_material(
          glm::length(mx - center),
          si.diffuse,
          si.detail});
+    set_water(page.submeshes.back(), si);
 }
 
 template<typename V>
@@ -956,6 +1005,7 @@ static void append_material(
         f32 const   radius = glm::length(mx - center);
         page.submeshes.push_back(
             {idx_start, idx_count, center, radius, si.diffuse, si.detail});
+        set_water(page.submeshes.back(), si);
     }
 }
 
@@ -2028,6 +2078,7 @@ i32 coffee_main(i32, cstring_w*)
             {
                 sm.diffuse = load_diffuse(sm.diffuse_img);
                 sm.detail  = load_diffuse(sm.detail_img);
+                sm.ripple  = load_diffuse(sm.ripple_img);
                 if(sm.diffuse)
                     diffuse_count++;
             }
@@ -2254,6 +2305,51 @@ i32 coffee_main(i32, cstring_w*)
                   .c = GX_CC_ONE,
                   .d = GX_CC_CPREV}}};
 
+    /* Water: two ripple layers flowing apart, averaged, tinted, with the
+     * sky's colour on top; alpha from the material colour */
+    combiner_t const keep_alpha{
+        GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV};
+    auto prog_water      = gfx.alloc_program();
+    prog_water->channels = {channel_t{.channel = channel_t::color0a0}};
+    prog_water->stages   = {
+        stage_t{
+              .stage          = stage_t::stage0,
+              .op             = stage_t::custom,
+              .texcoord       = stage_t::texcoord0,
+              .texmap         = stage_t::texmap0,
+              .color_combiner = {GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC},
+              .alpha_combiner = {GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA}},
+        stage_t{
+              .stage          = stage_t::stage1,
+              .op             = stage_t::custom,
+              .texcoord       = stage_t::texcoord1,
+              .texmap         = stage_t::texmap0,
+              .color          = channel_t::color_null,
+              .color_combiner = {GX_CC_CPREV, GX_CC_TEXC, GX_CC_HALF, GX_CC_ZERO},
+              .alpha_combiner = keep_alpha},
+        stage_t{
+              .stage = stage_t::stage2,
+              .op    = stage_t::custom,
+              .color = channel_t::color_null,
+              .color_combiner =
+                  {.a     = GX_CC_ZERO,
+                   .b     = GX_CC_CPREV,
+                   .c     = GX_CC_KONST,
+                   .d     = GX_CC_ZERO,
+                   .scale = GX_CS_SCALE_2},
+              .alpha_combiner = keep_alpha,
+              .konst_color    = GX_TEV_KCSEL_K0},
+        stage_t{
+              .stage = stage_t::stage3,
+              .op    = stage_t::custom,
+              .color = channel_t::color_null,
+              .color_combiner =
+                  {GX_CC_ZERO, GX_CC_KONST, GX_CC_HALF, GX_CC_CPREV},
+              .alpha_combiner = keep_alpha,
+              .konst_color    = GX_TEV_KCSEL_K1},
+    };
+    u64 const water_epoch = gettime();
+
     using bind_t = gexxo::texture_binding_t;
 
     GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
@@ -2377,6 +2473,7 @@ i32 coffee_main(i32, cstring_w*)
             GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
         }
         set_fog(sky);
+        std::vector<std::pair<page_t*, submesh_t*>> water;
 
         for(auto& page : g_pages)
         {
@@ -2390,6 +2487,11 @@ i32 coffee_main(i32, cstring_w*)
                     continue;
                 }
                 drawn++;
+                if(sm.water)
+                {
+                    water.push_back({&page, &sm});
+                    continue;
+                }
                 gexxo::draw_command cmd{
                     .call =
                         {.indexed   = true,
@@ -2477,6 +2579,64 @@ i32 coffee_main(i32, cstring_w*)
             drawn++;
             draw_model(it->second, mv * inst.xform, true);
         }
+        // Water last, over what's beneath it, without writing depth
+        f32 const   secs = ticks_to_microsecs(gettime() - water_epoch) / 1e6f;
+        Vecf3 const sky_tint =
+            sky ? glm::mix(sky->fog_color, Vecf3{1.f}, 0.4f) : Vecf3{0.5f};
+        GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+        for(auto [page, sm] : water)
+        {
+            if(!sm->ripple)
+                continue;
+            Vecf2 const flow  = sm->ripple_flow * secs;
+            auto        layer = [&](Vecf2 const& offset, f32 scale) {
+                return glm::scale(
+                    glm::translate(Matf4{1.f}, Vecf3{offset, 0.f}),
+                    Vecf3{scale, scale, 1.f});
+            };
+            Matf4 const ripples[2] = {
+                layer(flow, sm->ripple_scale),
+                layer(Vecf2{-flow.y, flow.x} * 0.7f, sm->ripple_scale * 0.83f)};
+            gexxo::draw_command cmd{
+                .call =
+                    {.indexed   = true,
+                     .instanced = true,
+                     .mode      = gexxo::drawing::primitive::triangle},
+                .data =
+                    {
+                        .elements =
+                            {.count  = sm->index_count,
+                             .offset = sm->index_offset,
+                             .type   = semantic::type_t::u16},
+                        .arrays =
+                            {.count = static_cast<u32>(page->verts.size())},
+                        .instances = {.count = 1},
+                    },
+                .program  = prog_water,
+                .vertices = page->vao,
+                .textures =
+                    {bind_t{
+                         .texture  = sm->ripple,
+                         .texmap   = stage_t::texmap0,
+                         .texcoord = stage_t::texcoord0,
+                         .gen_mtx  = GX_TEXMTX0},
+                     bind_t{
+                         .texture  = sm->ripple,
+                         .texmap   = stage_t::texmap0,
+                         .texcoord = stage_t::texcoord1,
+                         .gen_mtx  = GX_TEXMTX1}},
+                .instance_transforms = gsl::span<Matf4 const>(mvs, 1),
+                .material_color      = Vecf4{1.f, 1.f, 1.f, 0.7f},
+                .konst_colors =
+                    {Vecf4(sm->water_tint, 1.f), Vecf4(sky_tint, 1.f)},
+                .texture_transforms = gsl::span<Matf4 const>(ripples, 2),
+            };
+            gfx.submit(
+                cmd,
+                gexxo::cull_state{.front_face = false},
+                gexxo::blend_state{});
+        }
+        GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
         gexxo::swapBuffers();
 
         if((i % 60) == 59)
