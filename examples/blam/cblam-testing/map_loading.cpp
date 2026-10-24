@@ -693,6 +693,9 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
                net_state.client_state == NetworkState::ClientState::Connected)
                 return;
             cDebug("Starting MapLoad handler");
+            GameEvent    ev{GameEvent::MapGame};
+            MapGameEvent game{.game = MapGameEvent::halo1};
+            e.subsystem_cast<GameEventBus>().process(ev, &game);
             open_map(e, *load);
         });
 

@@ -643,6 +643,42 @@ i32 blam_main()
 #else
                 postproc.forge_overlay = true;
 #endif
+                /* Each game's colour handling, set as its map starts loading;
+                 * Halo 1's own settings are kept while another game's map is up */
+                struct colour_t
+                {
+                    f32  exposure, gamma;
+                    bool auto_expose, tonemap;
+                };
+                struct state_t
+                {
+                    colour_t            halo1;
+                    MapGameEvent::game_t last{MapGameEvent::halo1};
+                };
+                auto state = std::make_shared<state_t>();
+                e.subsystem_cast<GameEventBus>().addEventFunction<MapGameEvent>(
+                    0, [&e, state](GameEvent&, MapGameEvent* map) {
+                        auto& post = e.subsystem_cast<PostProcessParameters>();
+                        if(state->last == MapGameEvent::halo1)
+                            state->halo1 = {post.exposure, post.gamma, post.auto_expose, post.tonemap};
+                        state->last = map->game;
+                        if(map->game == MapGameEvent::halo2)
+                        {
+                            /* Halo 2's colours want no Halo 1 tonemap: shown as authored */
+                            post.exposure    = 1.f;
+                            post.gamma       = 1.f;
+                            post.auto_expose = false;
+                            post.tonemap     = false;
+                        } else
+                        {
+                            post.exposure    = state->halo1.exposure;
+                            post.gamma       = state->halo1.gamma;
+                            post.auto_expose = state->halo1.auto_expose;
+                            post.tonemap     = state->halo1.tonemap;
+                        }
+                        /* Halo 3 renders linear HDR for its own tone curve */
+                        post.tone_curve = map->game == MapGameEvent::halo3 ? 1 : 0;
+                    });
             }
 
             using namespace ::platform::url::constructors;

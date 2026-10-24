@@ -226,8 +226,6 @@ struct H3MapLoader : compo::SubsystemBase
             m_bank.music  = {};
             m_bank.generation++;
         }
-        if(m_scene.loaded)
-            m_container.subsystem_cast<PostProcessParameters>().tone_curve = 0;
         m_scene.loaded = false;
         m_scene.materials.clear();
         m_scene.lightprobe.reset();
@@ -269,6 +267,7 @@ struct H3MapLoader : compo::SubsystemBase
         BytesConst const&                               bytes,
         std::shared_ptr<comp_app::FileMapper::Resource> file)
     {
+        world::announce_game(m_container, MapGameEvent::halo3);
         unload();
         /* The map stays mapped for as long as it is loaded */
         m_file = std::move(file);
@@ -317,8 +316,6 @@ struct H3MapLoader : compo::SubsystemBase
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", m_map->name()));
         m_scene.loaded = true;
-        /* Linear HDR out; the composite applies Halo 3's tone curve */
-        m_container.subsystem_cast<PostProcessParameters>().tone_curve = 1;
         /* The Halo 1 systems key off LoadingStatus; only the app state says
          * "loaded" (which is what the dummy plug waits for) */
         if(auto* app_info = m_container.service<comp_app::AppInfo>())
