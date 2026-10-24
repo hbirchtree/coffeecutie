@@ -2,6 +2,7 @@
 
 #include "data.h"
 #include "render/cascaded_shadows.h"
+#include "world/world_gpu.h"
 #include "resource_creation.h"
 
 #include <coffee/components/proxy.h>
@@ -269,7 +270,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         csm.uniforms());
                 auto lm_sampler = scene.lightmap_sampler
                                       ? scene.lightmap_sampler
-                                      : m_no_lightmaps_sampler;
+                                      : m_fallback.white_array_sampler;
                 auto samplers = gfx::make_sampler_list(
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
@@ -279,18 +280,18 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
                         {"detail", 1},
-                        mat.detail.sampler ? mat.detail.sampler : m_white_sampler,
+                        mat.detail.sampler ? mat.detail.sampler : m_fallback.white_sampler,
                     },
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
                         {"detail2", 2},
                         mat.detail2.sampler ? mat.detail2.sampler
-                                            : m_white_sampler,
+                                            : m_fallback.white_sampler,
                     },
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
                         {"illum", 3},
-                        mat.illum.sampler ? mat.illum.sampler : m_white_sampler,
+                        mat.illum.sampler ? mat.illum.sampler : m_fallback.white_sampler,
                     },
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
@@ -300,17 +301,17 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
                         {"mask", 5},
-                        mat.mask.sampler ? mat.mask.sampler : m_white_sampler,
+                        mat.mask.sampler ? mat.mask.sampler : m_fallback.white_sampler,
                     },
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
                         {"bump", 6},
-                        mat.bump.sampler ? mat.bump.sampler : m_white_sampler,
+                        mat.bump.sampler ? mat.bump.sampler : m_fallback.white_sampler,
                     },
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
                         {"env", 7},
-                        mat.env_sampler ? mat.env_sampler : m_black_cube_sampler,
+                        mat.env_sampler ? mat.env_sampler : m_fallback.black_cube_sampler,
                     },
                     gfx::sampler_definition_t{
                         typing::graphics::ShaderStage::Fragment,
@@ -884,115 +885,13 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         m_api = &m_container.subsystem_cast<gfx::system>();
         auto& api = *m_api;
 
-        m_vao = api.alloc_vertex_array();
-        m_vao->alloc();
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 0,
-                .value = {.offset = 0, .stride = sizeof(Vertex), .count = 3},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 1,
-                .value =
-                    {.offset = offsetof(Vertex, texcoord),
-                     .stride = sizeof(Vertex),
-                     .count  = 2},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 2,
-                .value =
-                    {.offset = offsetof(Vertex, normal),
-                     .stride = sizeof(Vertex),
-                     .count  = 3},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 3,
-                .value =
-                    {.offset = offsetof(Vertex, lightmap),
-                     .stride = sizeof(Vertex),
-                     .count  = 3},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 4,
-                .value =
-                    {.offset = offsetof(Vertex, light),
-                     .stride = sizeof(Vertex),
-                     .count  = 4,
-                     .type   = semantic::type_t::u8,
-                     /* packed: a float input, never an integer attribute */
-                     .flags  = gfx::vertex_attribute::attribute_flags::packed |
-                              gfx::vertex_attribute::attribute_flags::normalized},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 5,
-                .value =
-                    {.offset = offsetof(Vertex, nodes),
-                     .stride = sizeof(Vertex),
-                     .count  = 4,
-                     .type   = semantic::type_t::u8,
-                     .flags  = gfx::vertex_attribute::attribute_flags::packed},
-            });
-        m_vao->add(
-            gfx::vertex_attribute{
-                .index = 6,
-                .value =
-                    {.offset = offsetof(Vertex, weights),
-                     .stride = sizeof(Vertex),
-                     .count  = 4,
-                     .type   = semantic::type_t::u8,
-                     .flags  = gfx::vertex_attribute::attribute_flags::packed |
-                              gfx::vertex_attribute::attribute_flags::normalized},
-            });
+        m_vao = world::alloc_vertex_layout(api, true);
         m_instance_buf = api.alloc_buffer(
             gfx::buffers::constants, semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);
         m_instance_buf->alloc();
-        m_vao->set_attribute_names({
-            {"position", 0},
-            {"texcoord", 1},
-            {"normal", 2},
-            {"lightmap", 3},
-            {"vertex_light", 4},
-            {"bone_nodes", 5},
-            {"bone_weights", 6},
-        });
 
-
-        /* Stand-in for materials without a usable diffuse map */
-        m_white = api.alloc_texture(
-            gfx::textures::d2,
-            typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8),
-            1);
-        m_white->alloc(size_3d<u32>{2, 2, 1});
-        m_white->upload(std::vector<u8>(16, 0xFF), Veci2{0, 0}, Veci2{2, 2}, 0);
-        m_white_sampler = m_white->sampler();
-        m_white_sampler->alloc();
-
-        m_black_cube = api.alloc_texture(
-            gfx::textures::cube,
-            typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8),
-            1);
-        m_black_cube->alloc(size_3d<u32>{1, 1, 1});
-        {
-            std::array<u8, 4>             black{0, 0, 0, 255};
-            std::array<Span<const u8>, 6> faces;
-            faces.fill(Span<const u8>(black.data(), black.size()));
-            m_black_cube->upload(faces, Veci2{0, 0}, Veci2{1, 1}, 0);
-        }
-        m_black_cube_sampler = m_black_cube->sampler();
-        m_black_cube_sampler->alloc();
-
-        m_no_lightmaps = std::make_shared<gfx::compat::texture_2da_t>(
-            &api, typing::pixels::PixDesc(typing::pixels::pix_fmt::RGBA8), 1);
-        m_no_lightmaps->alloc(size_3d<u32>{2, 2, 1});
-        m_no_lightmaps->upload(
-            std::vector<u8>(16, 0xFF), Veci3{0, 0, 0}, size_3d<i32>{2, 2, 1});
-        m_no_lightmaps_sampler = m_no_lightmaps->sampler();
-        m_no_lightmaps_sampler->alloc();
+        /* Stand-ins for materials without a usable texture */
+        m_fallback.alloc(api, 255);
 
         create_program(
             api,
@@ -1070,12 +969,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
     std::shared_ptr<gfx::vertex_array_t> m_vao;
     std::array<std::shared_ptr<gfx::program_t>, static_cast<size_t>(Variant::count)>
         m_programs;
-    std::shared_ptr<gfx::texture_2d_t>          m_white;
-    std::shared_ptr<gfx::sampler_t>             m_white_sampler;
-    std::shared_ptr<gfx::texture_cube_t>        m_black_cube;
-    std::shared_ptr<gfx::sampler_t>             m_black_cube_sampler;
-    std::shared_ptr<gfx::compat::texture_2da_t> m_no_lightmaps;
-    std::shared_ptr<gfx::sampler_t>             m_no_lightmaps_sampler;
+    world::FallbackTextures                     m_fallback;
     /* Per material: this frame's visible ranges */
     std::vector<std::vector<gfx::draw_command::data_t>> m_draws;
     std::vector<Material::draw_t>                       m_animated;
