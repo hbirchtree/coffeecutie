@@ -53,8 +53,11 @@ namespace el = blam::elegy;
 using semantic::BytesConst;
 using semantic::Span;
 
+/* 'H3' in the high bytes of ids this loader makes, apart from other games' */
+inline constexpr u64 h3_ids = 0x4833'0000'0000'0000ull;
+
 /* The structure BSP's static body in the physics world */
-inline constexpr u64 collision_body_id = 0x4833'0000'0000'0000ull;
+inline constexpr u64 collision_body_id = h3_ids;
 
 /* A placed object that moves: drawn where its Model is, simulated by physics */
 static const auto object_recipe = compo::EntityRecipe{
@@ -364,7 +367,7 @@ struct H3MapLoader : compo::SubsystemBase
      * SoundItems, registered under their tag */
     static u64 sound_key(el::tag_reference<> const& ref)
     {
-        return 0x4833'0000'0000'0000ull | ref.tag_id.value();
+        return h3_ids | ref.tag_id.value();
     }
 
     static f32 db_gain(f32 db)
@@ -431,6 +434,16 @@ struct H3MapLoader : compo::SubsystemBase
 #endif
     }
 
+    /* Hands a decoded sound to the SoundCache under `key`; the key, 0 if it
+     * does not play */
+    u64 register_sound(u64 key, SoundItem&& item)
+    {
+        bool const ok = item.valid() &&
+                        m_container.subsystem_cast<SoundCache<halo_version>>().add_external(key, std::move(item)).valid();
+        m_sound_keys[key] = ok;
+        return ok ? key : 0;
+    }
+
     /* A snd! as a one-shot; its key, 0 if it does not play */
     u64 ensure_sound(el::tag_reference<> const& ref)
     {
@@ -443,10 +456,7 @@ struct H3MapLoader : compo::SubsystemBase
         SoundItem::track_t track;
         if(decode_sound(ref, track.buffers[SoundItem::main], track.props[SoundItem::main]))
             item.tracks.push_back(std::move(track));
-        bool const ok = item.valid() &&
-                        m_container.subsystem_cast<SoundCache<halo_version>>().add_external(key, std::move(item)).valid();
-        m_sound_keys[key] = ok;
-        return ok ? key : 0;
+        return register_sound(key, std::move(item));
     }
 
     /* A looping sound: its tracks' intro, loop and outro, and its details
@@ -495,10 +505,7 @@ struct H3MapLoader : compo::SubsystemBase
                     .pitch    = {detail.pitch.min, detail.pitch.max},
                     .distance = {detail.distance.min, detail.distance.max},
                 });
-        bool const ok = item.valid() &&
-                        m_container.subsystem_cast<SoundCache<halo_version>>().add_external(key, std::move(item)).valid();
-        m_sound_keys[key] = ok;
-        return ok ? key : 0;
+        return register_sound(key, std::move(item));
     }
 
     void inject_sound(SoundEvent ev, void const* payload)
@@ -793,7 +800,7 @@ struct H3MapLoader : compo::SubsystemBase
                  .name  = std::string(map.name_of(*looping.tag)),
                  .in    = in.empty() ? H3Sound{} : std::move(in.front()),
                  .loops = permutations(track.loop),
-                 .gain  = std::pow(10.f, track.gain.value() / 20.f),
+                 .gain  = db_gain(track.gain.value()),
         };
         m_bank.loaded     = !m_bank.music.loops.empty();
         m_bank.generation = m_scene.generation;
