@@ -103,6 +103,12 @@ using draw_data_t = gfx::draw_command::data_t;
  * the smallest GL_MAX_UNIFORM_BLOCK_SIZE ES3 or WebGL2 may report. */
 static constexpr u32 kBonesPerBucket = 256;
 
+/* A rider sees its own body only from a chase camera's seat */
+static bool watches_from_behind(PlayerInfo const& rider)
+{
+    return rider.riding.vehicle != 0 && rider.riding.chase;
+}
+
 /* Instances a bucket may hold: what one uniform block window holds, less
  * the instances a window can start ahead of the bucket when it is moved to
  * an aligned offset */
@@ -1081,7 +1087,7 @@ struct DrawListBuilder
                 /* ... as do the dead, watching their body from behind */
                 u64 const  holder = held ? held->holder : model.parent;
                 bool const third_person =
-                    rider && (rider->riding.vehicle != 0 || dead(p, holder));
+                    rider && (watches_from_behind(*rider) || dead(p, holder));
                 /* A seat's own legs, where they can be cut out of its body */
                 bool const self   = !held && own_body(p, model.parent);
                 bool const hidden = !vis.visible_for(m_seat, false, third_person || self);
@@ -1253,7 +1259,7 @@ struct DrawListBuilder
                 auto const* rider = p.template get<PlayerInfo>(owner);
                 /* The dead watch their own body from behind */
                 bool const third_person =
-                    rider && (rider->riding.vehicle != 0 || dead(p, owner));
+                    rider && (watches_from_behind(*rider) || dead(p, owner));
                 if(!self &&
                    !parent.template get<Visibility>().visible_for(m_seat, false, third_person))
                     pid.light_layer = kLightShadowOnly;
@@ -4326,7 +4332,7 @@ struct LegacyMeshRenderer
             u64 const   owner = held ? held->holder : sm.parent;
             auto const* rider = p.template get<PlayerInfo>(owner);
             bool const  third_person =
-                rider && (rider->riding.vehicle != 0 || dead(owner));
+                rider && (watches_from_behind(*rider) || dead(owner));
             auto const* attached = p.template get<Attachment>(sm.parent);
             if((attached && dead(attached->parent)) ||
                (held && !held->shown) ||

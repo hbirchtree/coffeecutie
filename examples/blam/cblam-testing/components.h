@@ -928,6 +928,9 @@ struct PlayerInfo
         /*! How far the camera looks down and up, radians; the cyborg's
          * tag leaves it empty */
         Vecf2 pitch_range{-1.5f, 1.5f};
+        /*! The unit's camera marker in the bind pose, and its node */
+        Matf4 camera_marker{1.f};
+        i32   camera_node{-1};
 
         /*! Hit shape for bodies that follow a camera; the capsule above is
          * what a biped moves with */
