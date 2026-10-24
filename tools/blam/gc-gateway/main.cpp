@@ -25,6 +25,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <deque>
 #include <map>
 #include <string>
 #include <thread>
@@ -47,6 +48,20 @@ struct session_t
     HSteamNetConnection    conn{k_HSteamNetConnection_Invalid};
     gw::status_t::state_t  state{gw::status_t::closed};
     clock_type::time_point last_seen{};
+    u64                    rx{0};
+    mutable u64            tx{0};
+
+    /* Reliable messages to the console, the oldest unacknowledged first */
+    struct pending_t
+    {
+        u32                    seq;
+        std::vector<u8>        datagram;
+        clock_type::time_point sent{};
+    };
+
+    std::deque<pending_t> out;
+    u32                   next_out{0}; // sequence the next one gets
+    u32                   next_in{0};  // sequence expected from the console
 };
 
 #if defined(COFFEE_WINDOWS)
@@ -85,6 +100,7 @@ void send_datagram(
     std::memcpy(buf.data(), &hdr, sizeof(hdr));
     if(size)
         std::memcpy(buf.data() + sizeof(hdr), data, size);
+    s.tx++;
     sendto(
         g_socket,
         reinterpret_cast<char const*>(buf.data()),
@@ -102,11 +118,51 @@ void send_status(session_t const& s)
 
 /* Batched server messages can be far larger than a datagram; split them into
  * smaller batches of the same type, which the receiver handles the same */
-void forward_to_console(session_t const& s, u8 const* data, u32 size)
+/* Reliable ones queue up for pump_reliable(), with room for their sequence */
+void emit(session_t& s, u8 const* data, u32 size, bool reliable)
 {
-    constexpr u32 room = gw::max_datagram - sizeof(gw::header_t);
-    if(size <= room)
+    if(!reliable)
         return send_datagram(s, gw::message, gw::none, data, size);
+    std::vector<u8> datagram(
+        sizeof(gw::header_t) + sizeof(gw::reliable_t) + size);
+    gw::header_t const   hdr{gw::magic, gw::reliable_message, gw::none};
+    gw::reliable_t const rel{s.next_out};
+    std::memcpy(datagram.data(), &hdr, sizeof(hdr));
+    std::memcpy(datagram.data() + sizeof(hdr), &rel, sizeof(rel));
+    std::memcpy(datagram.data() + sizeof(hdr) + sizeof(rel), data, size);
+    s.out.push_back({s.next_out++, std::move(datagram)});
+}
+
+/* Send what the window allows, resend what went unacknowledged too long */
+void pump_reliable(session_t& s)
+{
+    auto const now = clock_type::now();
+    u32        n   = 0;
+    for(auto& p : s.out)
+    {
+        if(n++ == gw::reliable_window)
+            break;
+        if(p.sent != clock_type::time_point{} &&
+           now - p.sent < std::chrono::milliseconds(gw::resend_ms))
+            continue;
+        s.tx++;
+        sendto(
+            g_socket,
+            reinterpret_cast<char const*>(p.datagram.data()),
+            p.datagram.size(),
+            0,
+            reinterpret_cast<sockaddr const*>(&s.addr),
+            sizeof(s.addr));
+        p.sent = now;
+    }
+}
+
+void forward_to_console(session_t& s, u8 const* data, u32 size, bool reliable)
+{
+    constexpr u32 room =
+        gw::max_datagram - sizeof(gw::header_t) - sizeof(gw::reliable_t);
+    if(size <= room)
+        return emit(s, data, size, reliable);
 
     u32 num_values = 0;
     u32 flags      = 0;
@@ -137,12 +193,7 @@ void forward_to_console(session_t const& s, u8 const* data, u32 size)
             chunk.data() + message_base_size,
             data + message_base_size + first * value_size,
             count * value_size);
-        send_datagram(
-            s,
-            gw::message,
-            gw::none,
-            chunk.data(),
-            message_base_size + count * value_size);
+        emit(s, chunk.data(), message_base_size + count * value_size, reliable);
     }
 }
 
@@ -190,6 +241,8 @@ void on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
 void connect_session(session_t& s, std::string const& server)
 {
     close_session(s);
+    s.out.clear();
+    s.next_out = s.next_in = 0;
     SteamNetworkingIPAddr addr;
     if(!addr.ParseString(server.c_str()))
     {
@@ -224,6 +277,7 @@ void handle_datagram(sockaddr_in const& from, u8 const* data, u32 size)
     session_t& s = g_sessions[key_of(from)];
     s.addr       = from;
     s.last_seen  = clock_type::now();
+    s.rx++;
 
     switch(hdr.kind)
     {
@@ -239,6 +293,9 @@ void handle_datagram(sockaddr_in const& from, u8 const* data, u32 size)
         send_status(s);
         break;
     case gw::message:
+        // A console we've no session for: have it say hello again
+        if(s.state == gw::status_t::closed)
+            send_status(s);
         if(s.state != gw::status_t::connected)
             break;
         g_gns->SendMessageToConnection(
@@ -250,6 +307,36 @@ void handle_datagram(sockaddr_in const& from, u8 const* data, u32 size)
                 : k_nSteamNetworkingSend_UnreliableNoNagle,
             nullptr);
         break;
+    case gw::reliable_message: {
+        gw::reliable_t rel;
+        if(payload_size < sizeof(rel))
+            break;
+        std::memcpy(&rel, payload, sizeof(rel));
+        // Only the next one goes through; repeats and early ones get the
+        // same answer, which has the console resend from there
+        if(rel.seq == s.next_in && s.state == gw::status_t::connected)
+        {
+            s.next_in++;
+            g_gns->SendMessageToConnection(
+                s.conn,
+                payload + sizeof(rel),
+                payload_size - sizeof(rel),
+                k_nSteamNetworkingSend_Reliable,
+                nullptr);
+        }
+        gw::ack_t const ack{s.next_in};
+        send_datagram(s, gw::ack, gw::none, &ack, sizeof(ack));
+        break;
+    }
+    case gw::ack: {
+        gw::ack_t ack;
+        if(payload_size < sizeof(ack))
+            break;
+        std::memcpy(&ack, payload, sizeof(ack));
+        while(!s.out.empty() && s.out.front().seq < ack.next)
+            s.out.pop_front();
+        break;
+    }
     default:
         break;
     }
@@ -329,8 +416,10 @@ i32 coffee_main(i32, cstring_w*)
             session_t& s = it->second;
             if(now - s.last_seen > std::chrono::seconds(15))
             {
-                cDebug("{} timed out", name_of(s.addr));
+                cDebug(
+                    "{} timed out (rx={} tx={})", name_of(s.addr), s.rx, s.tx);
                 close_session(s);
+                send_status(s);
                 it = g_sessions.erase(it);
                 continue;
             }
@@ -344,10 +433,12 @@ i32 coffee_main(i32, cstring_w*)
                     forward_to_console(
                         s,
                         static_cast<u8 const*>(msgs[i]->m_pData),
-                        static_cast<u32>(msgs[i]->m_cbSize));
+                        static_cast<u32>(msgs[i]->m_cbSize),
+                        msgs[i]->m_nFlags & k_nSteamNetworkingSend_Reliable);
                     msgs[i]->Release();
                 }
             }
+            pump_reliable(s);
             ++it;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(2));

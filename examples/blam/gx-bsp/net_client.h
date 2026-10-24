@@ -7,6 +7,7 @@
  * little-endian structs, (de)coded field by field. */
 
 #include <gc_gateway/protocol.h>
+#include <network/network_events.h>
 
 #include <coffee/core/CDebug>
 
@@ -20,8 +21,11 @@
 #include <network.h>
 
 #include <cstring>
+#include <deque>
+
 #include <functional>
 #include <string>
+#include <utility>
 
 namespace gx_net {
 
@@ -29,25 +33,15 @@ using blam::from_le;
 using blam::to_le;
 using Coffee::cDebug;
 
-/* MessageBase::Type in BlamGraphics' networking.cpp */
-enum message_type : u32
-{
-    msg_game_join           = 1,
-    msg_game_load_state     = 2,
-    msg_player_join         = 3,
-    msg_player_join_confirm = 4,
-    msg_game_leave          = 6,
-    msg_camera_sync         = 8,
-    msg_entity_spawn        = 9,
-    msg_player_spawn        = 10,
-    msg_object_sync         = 11,
-    msg_map_verify          = 16,
-};
+/* BlamGraphics' own message layouts; they're little-endian, so fields are
+ * read and written one by one at their offsets */
+namespace nm = net_messages;
+using msg    = nm::MessageBase;
 
-constexpr u32 message_base_size = 16;
-constexpr u32 camera_sync_size  = 48;
-constexpr u32 object_sync_size  = 80;
-constexpr u32 entity_spawn_size = 56;
+constexpr u32 message_base_size = sizeof(nm::MessageBase);
+
+using typing::vector_types::Quatf;
+using typing::vector_types::Vecf4;
 
 /* Same as BlamGraphics' MapFingerprint, which the server checks */
 struct fingerprint_t
@@ -160,11 +154,14 @@ class client_t
         return m_state;
     }
 
-    /* Drain received datagrams; every ~second, (re)greet the gateway */
+    /* Drain received datagrams; every ~second, (re)greet the gateway. The
+     * gateway answers every keepalive, so a quiet gateway means our session
+     * is gone: start over rather than wait */
     void poll(fingerprint_t const& fingerprint, handlers_t const& on, u32 frame)
     {
         if(m_state == state_t::offline)
             return;
+        m_frame = frame;
         u8 buf[gc_gateway::max_datagram + 64];
         for(;;)
         {
@@ -179,8 +176,36 @@ class client_t
                 &from_len);
             if(got <= 0)
                 break;
+            m_rx++;
+            m_last_rx = frame;
             handle(buf, static_cast<u32>(got), fingerprint, on);
         }
+        if(m_ack_due)
+        {
+            gc_gateway::ack_t const ack{le(m_rx_seq)};
+            send_frame(gc_gateway::ack, 0, &ack, sizeof(ack));
+            m_ack_due = false;
+        }
+        if(frame % resend_frames == 0)
+            for(auto const& p : m_pending)
+                send_frame(
+                    gc_gateway::reliable_message,
+                    0,
+                    p.payload.data(),
+                    static_cast<u32>(p.payload.size()));
+        if(m_state != state_t::waiting_gateway &&
+           frame - m_last_rx > silence_frames)
+        {
+            cDebug("net: gateway silent, joining again");
+            m_state = state_t::waiting_gateway;
+        }
+        if(frame % stats_frames == 0)
+            cDebug(
+                "net: rx={} tx={} tx_failed={} (last error {})",
+                m_rx,
+                m_tx,
+                m_tx_failed,
+                m_tx_error);
         if(frame % 50 == 0)
         {
             if(m_state == state_t::waiting_gateway)
@@ -193,78 +218,76 @@ class client_t
     /* Our eye position and view direction, Halo world space */
     void send_camera(glm::vec3 const& eye, glm::vec3 const& forward)
     {
-        if(m_state != state_t::joined)
+        // The server only moves the players a connection owns, by index
+        if(m_state != state_t::joined || m_player_idx == no_player)
             return;
-        u8              msg[message_base_size + camera_sync_size] = {};
         glm::quat const q = camera_rotation(forward);
-        put_header(msg, msg_camera_sync);
-        put_f32(msg + 16, eye.x);
-        put_f32(msg + 20, eye.y);
-        put_f32(msg + 24, eye.z);
-        put_f32(msg + 32, q.x);
-        put_f32(msg + 36, q.y);
-        put_f32(msg + 40, q.z);
-        put_f32(msg + 44, q.w);
-        put_u32(msg + 48, 0xFFFF); /* the server fills in our index */
-        put_f32(msg + 52, 1.f);
-        send_frame(gc_gateway::message, 0, msg, sizeof(msg));
+        send_message(
+            nm::CameraSync{
+                .position      = le(Vecf4(eye, 0.f)),
+                .rotation      = le(Quatf(q.w, q.x, q.y, q.z)),
+                .target_player = le(m_player_idx),
+                .fade          = le(1.f),
+            },
+            false);
     }
 
   private:
-    static void put_u32(u8* p, u32 v)
+    /* Messages are little-endian on the wire: swap the fields used here,
+     * in place, after copying a message out or before copying one in */
+    template<typename T>
+    static T le(T v)
     {
-        v = to_le(v);
-        std::memcpy(p, &v, 4);
+        if constexpr(std::is_enum_v<T>)
+            return static_cast<T>(from_le(std::to_underlying(v)));
+        else
+            return from_le(v);
     }
 
-    static void put_f32(u8* p, f32 v)
+    static Vecf4 le(Vecf4 v)
     {
-        put_u32(p, std::bit_cast<u32>(v));
+        for(u32 i = 0; i < 4; i++)
+            v[i] = from_le(v[i]);
+        return v;
     }
 
-    static u32 get_u32(u8 const* p)
+    static Quatf le(Quatf q)
     {
-        u32 v;
-        std::memcpy(&v, p, 4);
-        return from_le(v);
+        return Quatf(from_le(q.w), from_le(q.x), from_le(q.y), from_le(q.z));
     }
 
-    /* The handle's bytes as sent: little-endian, as the map stores them */
-    static blam::tag_index<> get_tag(u8 const* p)
+    template<typename T>
+    static T read(u8 const* p)
     {
-        blam::tag_index<> t;
-        std::memcpy(&t.raw, p, 4);
-        return t;
+        T v;
+        std::memcpy(&v, p, sizeof(T));
+        return v;
     }
 
-    static f32 get_f32(u8 const* p)
+    static std::string_view text(char const* c, size_t max)
     {
-        return std::bit_cast<f32>(get_u32(p));
-    }
-
-    static std::string_view text(u8 const* p, size_t max)
-    {
-        auto const* c = reinterpret_cast<char const*>(p);
         return {c, strnlen(c, max)};
     }
 
-    static glm::vec3 get_vec3(u8 const* p)
+    template<typename T>
+    void send_message(T&& value, bool reliable)
     {
-        return {get_f32(p), get_f32(p + 4), get_f32(p + 8)};
-    }
-
-    static glm::quat get_quat(u8 const* p) /* glm stores x, y, z, w */
-    {
-        return glm::quat::wxyz(
-            get_f32(p + 12), get_f32(p), get_f32(p + 4), get_f32(p + 8));
-    }
-
-    static void put_header(u8* msg, u32 type, u32 num_values = 1)
-    {
-        put_u32(msg, type);
-        put_u32(msg + 4, 0);
-        put_u32(msg + 8, 0);
-        put_u32(msg + 12, num_values);
+        nm::Message<T> m(std::move(value));
+        m.type       = le(m.type);
+        m.num_values = le(m.num_values);
+        if(!reliable)
+            return send_frame(gc_gateway::message, 0, &m, sizeof(m));
+        pending_t p{m_tx_seq++, {}};
+        p.payload.resize(sizeof(gc_gateway::reliable_t) + sizeof(m));
+        gc_gateway::reliable_t const rel{le(p.seq)};
+        std::memcpy(p.payload.data(), &rel, sizeof(rel));
+        std::memcpy(p.payload.data() + sizeof(rel), &m, sizeof(m));
+        send_frame(
+            gc_gateway::reliable_message,
+            0,
+            p.payload.data(),
+            static_cast<u32>(p.payload.size()));
+        m_pending.push_back(std::move(p));
     }
 
     void send_frame(u16 kind, u16 flags, void const* data, u32 size)
@@ -275,22 +298,28 @@ class client_t
         std::memcpy(buf, &hdr, sizeof(hdr));
         if(size)
             std::memcpy(buf + sizeof(hdr), data, size);
-        net_sendto(
+        s32 const sent = net_sendto(
             m_socket,
             buf,
             sizeof(hdr) + size,
             0,
             reinterpret_cast<sockaddr*>(&m_gateway),
             sizeof(m_gateway));
-    }
-
-    void send_reliable(u8 const* msg, u32 size)
-    {
-        send_frame(gc_gateway::message, gc_gateway::reliable, msg, size);
+        m_tx++;
+        if(sent < 0)
+        {
+            m_tx_failed++;
+            m_tx_error = sent;
+        }
     }
 
     void send_hello()
     {
+        m_last_rx = m_frame; // give the gateway time to answer
+        // A hello starts the gateway's sequences over, and ours with it
+        m_rx_seq = m_tx_seq = 0;
+        m_pending.clear();
+        m_player_idx = no_player;
         gc_gateway::hello_t hello{};
         std::strncpy(hello.server, m_server.c_str(), sizeof(hello.server) - 1);
         send_frame(gc_gateway::hello, 0, &hello, sizeof(hello));
@@ -299,30 +328,30 @@ class client_t
     /* The same handshake BlamGraphics clients do once their map is loaded */
     void join(fingerprint_t const& fp)
     {
-        u8 join[message_base_size + 32] = {};
-        put_header(join, msg_player_join);
-        std::strncpy(reinterpret_cast<char*>(join + 16), "GameCube", 31);
-        send_reliable(join, sizeof(join));
+        nm::PlayerJoin join{};
+        std::strncpy(
+            join.player_name.data.data(),
+            "GameCube",
+            sizeof(join.player_name) - 1);
+        send_message(std::move(join), true);
 
-        u8 verify[message_base_size + 16] = {};
-        put_header(verify, msg_map_verify);
-        put_u32(verify + 16, fp.tag_hash[0]);
-        put_u32(verify + 20, fp.tag_hash[1]);
-        put_u32(verify + 24, fp.tag_count);
-        put_u32(verify + 28, fp.base_tag);
-        send_reliable(verify, sizeof(verify));
+        send_message(
+            nm::MapVerify{
+                .fingerprint =
+                    {.tag_hash  = {le(fp.tag_hash[0]), le(fp.tag_hash[1])},
+                     .tag_count = le(fp.tag_count),
+                     .base_tag  = le(fp.base_tag)},
+            },
+            true);
 
-        u8 loaded[message_base_size + 4] = {};
-        put_header(loaded, msg_game_load_state);
-        put_u32(loaded + 16, 100);
-        send_reliable(loaded, sizeof(loaded));
+        send_message(nm::GameLoadState{.progress = le(100u)}, true);
     }
 
     void handle(
         u8 const* data, u32 size, fingerprint_t const& fp, handlers_t const& on)
     {
         if(size < sizeof(gc_gateway::header_t) ||
-           get_u32(data) != gc_gateway::magic)
+           le(read<u32>(data)) != gc_gateway::magic)
             return;
         u16 kind;
         std::memcpy(&kind, data + 4, 2);
@@ -332,7 +361,7 @@ class client_t
 
         if(kind == gc_gateway::status && psize >= 4)
         {
-            auto const st = get_u32(payload);
+            auto const st = le(read<u32>(payload));
             if(st == gc_gateway::status_t::connected &&
                m_state != state_t::joined)
             {
@@ -349,70 +378,112 @@ class client_t
             }
             return;
         }
-        if(kind != gc_gateway::message || psize < message_base_size)
-            return;
-
-        u32 const type  = get_u32(payload);
-        u32 const count = get_u32(payload + 12);
-        u8 const* v     = payload + message_base_size;
-        u32 const vsize = psize - message_base_size;
-        switch(type)
+        if(kind == gc_gateway::ack && psize >= sizeof(gc_gateway::ack_t))
         {
-        case msg_game_join:
-            cDebug("net: server runs {}", text(v, 32));
+            u32 const next = le(read<gc_gateway::ack_t>(payload).next);
+            while(!m_pending.empty() && m_pending.front().seq < next)
+                m_pending.pop_front();
+            return;
+        }
+        if(kind == gc_gateway::reliable_message &&
+           psize >= sizeof(gc_gateway::reliable_t))
+        {
+            // Only the next one; anything else is answered with where we are
+            m_ack_due     = true;
+            u32 const seq = le(read<gc_gateway::reliable_t>(payload).seq);
+            if(seq != m_rx_seq)
+                return;
+            m_rx_seq++;
+            return handle_message(
+                payload + sizeof(gc_gateway::reliable_t),
+                psize - sizeof(gc_gateway::reliable_t),
+                on);
+        }
+        if(kind == gc_gateway::message)
+            handle_message(payload, psize, on);
+    }
+
+    void handle_message(u8 const* payload, u32 psize, handlers_t const& on)
+    {
+        if(psize < message_base_size)
+            return;
+        auto const header = read<nm::MessageBase>(payload);
+        u32 const  count  = le(header.num_values);
+        u8 const*  v      = payload + message_base_size;
+        u32 const  vsize  = psize - message_base_size;
+        auto       values = [&]<typename T>(auto&& fn) {
+            for(u32 i = 0; i < count && (i + 1) * sizeof(T) <= vsize; i++)
+                fn(read<T>(v + i * sizeof(T)));
+        };
+        switch(le(header.type))
+        {
+        case msg::GameJoin: {
+            auto const m = read<nm::GameJoin>(v);
+            cDebug(
+                "net: server runs {}",
+                text(m.map_name.data.data(), sizeof(m.map_name)));
             break;
-        case msg_game_leave:
-            cDebug("net: server says {}", text(v, 128));
+        }
+        case msg::GameLeave: {
+            auto const m = read<nm::GameLeave>(v);
+            cDebug(
+                "net: server says {}",
+                text(m.reason.data.data(), sizeof(m.reason)));
+            // Kicked: joining again would only be kicked again
+            m_state = state_t::offline;
             break;
-        case msg_player_join_confirm:
-            m_player_idx = get_u32(v);
+        }
+        case msg::PlayerJoinConfirm:
+            m_player_idx = le(read<nm::PlayerJoinConfirm>(v).player_idx);
             cDebug("net: we are player {}", m_player_idx);
             if(on.joined)
                 on.joined(m_player_idx);
             break;
-        case msg_object_sync:
-            for(u32 i = 0; i < count && (i + 1) * object_sync_size <= vsize;
-                i++)
-            {
-                u8 const* o = v + i * object_sync_size;
-                if(on.object)
-                    on.object(
-                        {get_u32(o + 72), get_vec3(o + 24), get_quat(o + 8)});
-            }
+        case msg::ObjectSync:
+            values.template operator()<nm::ObjectSync>(
+                [&](nm::ObjectSync const& m) {
+                    if(on.object)
+                        on.object(
+                            {le(m.net_id),
+                             glm::vec3(le(m.position)),
+                             le(m.rotation)});
+                });
             break;
-        case msg_camera_sync:
-            for(u32 i = 0; i < count && (i + 1) * camera_sync_size <= vsize;
-                i++)
-            {
-                u8 const*           c = v + i * camera_sync_size;
-                camera_sync_t const sync{
-                    get_u32(c + 32),
-                    get_vec3(c),
-                    camera_forward(get_quat(c + 16))};
-                auto const& handler =
-                    sync.player_idx == m_player_idx ? on.teleport : on.camera;
-                if(handler)
-                    handler(sync);
-            }
+        case msg::CameraSync:
+            values.template operator()<nm::CameraSync>(
+                [&](nm::CameraSync const& m) {
+                    camera_sync_t const sync{
+                        le(m.target_player),
+                        glm::vec3(le(m.position)),
+                        camera_forward(le(m.rotation))};
+                    auto const& handler = sync.player_idx == m_player_idx
+                                              ? on.teleport
+                                              : on.camera;
+                    if(handler)
+                        handler(sync);
+                });
             break;
-        case msg_entity_spawn:
-            for(u32 i = 0; i < count && (i + 1) * entity_spawn_size <= vsize;
-                i++)
-            {
-                u8 const* e = v + i * entity_spawn_size;
-                if(on.spawn)
-                    on.spawn(
-                        {get_u32(e + 40),
-                         get_tag(e + 36),
-                         get_vec3(e),
-                         get_quat(e + 16)});
-            }
+        case msg::EntitySpawn:
+            values.template operator()<nm::EntitySpawn>(
+                [&](nm::EntitySpawn const& m) {
+                    /* the tag handle stays as sent, little-endian like the
+                     * map's own */
+                    if(on.spawn)
+                        on.spawn(
+                            {le(m.tag.instance_id),
+                             m.tag.tag_id,
+                             glm::vec3(le(m.position)),
+                             le(m.rotation)});
+                });
             break;
-        case msg_player_spawn:
-            if(vsize >= 24 && on.player_spawn &&
-               (get_u32(v + 16) == m_player_idx || get_u32(v + 16) == 0xFFFF))
-                on.player_spawn(get_vec3(v), get_f32(v + 20));
+        case msg::PlayerSpawn: {
+            auto const m      = read<nm::PlayerSpawn>(v);
+            u32 const  target = le(m.target_player);
+            if(vsize >= sizeof(m) && on.player_spawn &&
+               (target == m_player_idx || target == nm::CameraSync::self_id))
+                on.player_spawn(glm::vec3(le(m.position)), le(m.facing));
             break;
+        }
         default:
             break;
         }
@@ -422,7 +493,27 @@ class client_t
     sockaddr_in m_gateway{};
     std::string m_server;
     state_t     m_state{state_t::offline};
-    u32         m_player_idx{0xFFFF};
+    static constexpr u32 no_player = nm::CameraSync::self_id;
+    u32                  m_player_idx{no_player};
+
+    /* At 50 FPS: 5s without hearing from the gateway, stats every minute */
+    static constexpr u32 silence_frames = 250;
+    static constexpr u32 stats_frames   = 3000;
+    static constexpr u32 resend_frames  = gc_gateway::resend_ms / 20;
+
+    struct pending_t
+    {
+        u32             seq;
+        std::vector<u8> payload; // reliable_t + message
+    };
+
+    std::deque<pending_t> m_pending; // reliable, not yet acknowledged
+    u32                   m_tx_seq{0}, m_rx_seq{0};
+    bool                  m_ack_due{false};
+
+    u32 m_frame{0}, m_last_rx{0};
+    u32 m_rx{0}, m_tx{0}, m_tx_failed{0};
+    s32 m_tx_error{0};
 };
 
 } // namespace gx_net
