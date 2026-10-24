@@ -1,4 +1,5 @@
 #include "h3_scene.h"
+#include "../world/static_collision.h"
 #include "h3_sound.h"
 
 #include "components.h"
@@ -30,11 +31,6 @@
 
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/packing.hpp>
-
-#if defined(FEATURE_ENABLE_BULLET3)
-#include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
-#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
-#endif
 
 #if defined(OAF_XMA2_DECODER_ENABLED)
 #include <oaf/xma2/xma2_decode.h>
@@ -1479,29 +1475,7 @@ struct H3MapLoader : compo::SubsystemBase
     /* One static body for the loaded structure BSP */
     void submit_collision(std::shared_ptr<CollisionMesh> mesh, u64 id)
     {
-#if defined(FEATURE_ENABLE_BULLET3)
-        if(!mesh || mesh->indices.empty())
-            return;
-        auto body        = std::make_shared<Physics::BodyCreationPrebuilt>();
-        body->entity_id  = id;
-        body->mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
-        btIndexedMesh part;
-        part.m_numTriangles        = static_cast<int>(mesh->indices.size() / 3);
-        part.m_triangleIndexBase   = reinterpret_cast<unsigned char const*>(mesh->indices.data());
-        part.m_triangleIndexStride = 3 * sizeof(i32);
-        part.m_numVertices         = static_cast<int>(mesh->vertices.size());
-        part.m_vertexBase   = reinterpret_cast<unsigned char const*>(mesh->vertices.data());
-        part.m_vertexStride = sizeof(Vecf3);
-        part.m_vertexType   = PHY_FLOAT;
-        body->mesh_iface->addIndexedMesh(part, PHY_INTEGER);
-        body->shape      = std::make_unique<btBvhTriangleMeshShape>(body->mesh_iface.get(), true);
-        body->triangle_materials = mesh->materials;
-        body->keep_alive = std::move(mesh);
-        Physics::Event event{.type = Physics::Event::BodyCreationPrebuilt};
-        m_container.subsystem_cast<PhysicsBus>().process(event, body.get());
-#else
-        (void)mesh;
-#endif
+        world::submit_static_collision(m_container.subsystem_cast<PhysicsBus>(), std::move(mesh), id);
     }
 
     /* Scenery, bipeds, vehicles, crates, weapons and equipment placed in this BSP. Those whose physics
