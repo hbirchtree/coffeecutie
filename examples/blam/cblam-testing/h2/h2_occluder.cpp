@@ -2,16 +2,12 @@
 
 #include "data.h"
 #include "physics.h"
+#include "world/static_collision.h"
 
 #include <blam/common/portal_walk.h>
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 #include <coffee/core/CDebug>
-
-#if defined(FEATURE_ENABLE_BULLET3)
-#include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
-#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
-#endif
 
 #include <cstdlib>
 #include <limits>
@@ -194,31 +190,7 @@ struct H2Occluder : compo::RestrictedSubsystem<H2Occluder, H2OccluderManifest>
     /* One static body for the active section, like the Halo 1 world mesh */
     void submit_collision(std::shared_ptr<CollisionMesh> mesh)
     {
-#if defined(FEATURE_ENABLE_BULLET3)
-        if(!mesh || mesh->indices.empty())
-            return;
-        auto body       = std::make_shared<Physics::BodyCreationPrebuilt>();
-        body->entity_id = collision_body_id;
-        body->mesh_iface = std::make_unique<btTriangleIndexVertexArray>();
-        btIndexedMesh part;
-        part.m_numTriangles        = static_cast<int>(mesh->indices.size() / 3);
-        part.m_triangleIndexBase   = reinterpret_cast<unsigned char const*>(
-            mesh->indices.data());
-        part.m_triangleIndexStride = 3 * sizeof(i32);
-        part.m_numVertices = static_cast<int>(mesh->vertices.size());
-        part.m_vertexBase =
-            reinterpret_cast<unsigned char const*>(mesh->vertices.data());
-        part.m_vertexStride = sizeof(Vecf3);
-        part.m_vertexType   = PHY_FLOAT;
-        body->mesh_iface->addIndexedMesh(part, PHY_INTEGER);
-        body->shape = std::make_unique<btBvhTriangleMeshShape>(
-            body->mesh_iface.get(), true);
-        body->keep_alive = mesh;
-        Physics::Event event{.type = Physics::Event::BodyCreationPrebuilt};
-        m_container.subsystem_cast<PhysicsBus>().process(event, body.get());
-#else
-        (void)mesh;
-#endif
+        world::submit_static_collision(m_container.subsystem_cast<PhysicsBus>(), std::move(mesh), collision_body_id);
     }
 
     void remove_collision()
