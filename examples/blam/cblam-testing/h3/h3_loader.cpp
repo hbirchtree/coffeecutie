@@ -5,6 +5,7 @@
 #include "data.h"
 #include "physics.h"
 #include "resource_creation.h"
+#include "sound_cache.h"
 #include "sounds.h"
 
 #include <blam/elegy/animation.h>
@@ -35,6 +36,10 @@
 #include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
 #endif
 
+#if defined(OAF_XMA2_DECODER_ENABLED)
+#include <oaf/xma2/xma2_decode.h>
+#endif
+
 #include <bit>
 #include <cmath>
 #include <limits>
@@ -62,6 +67,7 @@ struct CollisionMesh
 {
     std::vector<Vecf3> vertices;
     std::vector<i32>   indices;
+    std::vector<u16>   materials; /*!< Per triangle: matg material index, 0xFFFF none */
 };
 
 /* The pixel formats Halo 1/2 already upload, by Halo 3 format */
@@ -181,6 +187,10 @@ struct H3MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        m_footsteps = nullptr;
+        m_step_from.reset();
+        m_impact_sounds.clear();
+        m_impacts.clear();
         if(m_bank.loaded)
         {
             m_bank.loaded = false;
@@ -215,6 +225,13 @@ struct H3MapLoader : compo::SubsystemBase
         m_loader.reset();
         m_map.reset();
         m_file.reset();
+    }
+
+    /* From the physics bus; heard in start_frame */
+    void on_impact(Physics::Impact const& impact)
+    {
+        if(m_impact_sounds.contains(impact.entity_id))
+            m_impacts.push_back(impact);
     }
 
   private:
@@ -272,6 +289,8 @@ struct H3MapLoader : compo::SubsystemBase
         bool ok = load_world();
         if(ok)
             load_music();
+        if(ok)
+            load_world_sounds();
         m_loader->trim();
         if(!ok)
         {
@@ -288,6 +307,378 @@ struct H3MapLoader : compo::SubsystemBase
         if(auto* app_info = m_container.service<comp_app::AppInfo>())
             app_info->setState(comp_app::interfaces::AppInfo::loaded);
         return true;
+    }
+
+    /* Halo 3 sounds play through the shared SoundSystem: decoded here into
+     * SoundItems, registered under their tag */
+    static u64 sound_key(el::tag_reference<> const& ref)
+    {
+        return 0x4833'0000'0000'0000ull | ref.tag_id.value();
+    }
+
+    static f32 db_gain(f32 db)
+    {
+        return std::pow(10.f, db / 20.f);
+    }
+
+    /* Each pitch range's permutations decoded on their own; how loud and how
+     * far it carries from the gestalt's playback */
+    bool decode_sound(
+        el::tag_reference<> const& ref, std::vector<SoundItem::pitch_range_t>& ranges, SoundItem::props_t& props)
+    {
+#if defined(FEATURE_ENABLE_OAF) && defined(OAF_XMA2_DECODER_ENABLED)
+        auto&       cache   = m_container.subsystem_cast<SoundCache<halo_version>>();
+        auto const& map     = *m_map;
+        auto        magic   = map.magic();
+        auto        gestalt = map.find<el::sound_gestalt_t>();
+        auto        sound   = map.get<el::sound_t>(ref);
+        if(!cache.api || !gestalt || !sound)
+            return false;
+        auto const* codec = sound->codec.resolve(gestalt->codecs.span(magic));
+        if(!codec || codec->compression != el::sound_compression_t::xma2)
+            return false;
+        auto view = m_loader->load(sound->resource);
+        if(!view.has_value())
+            return false;
+        for(auto const& range : sound->pitch_ranges(*gestalt, magic))
+        {
+            SoundItem::pitch_range_t out;
+            for(auto const& perm : el::permutations_of(range, *gestalt, magic))
+            {
+                auto bytes = el::permutation_data(perm, *gestalt, magic, view.value());
+                if(bytes.empty())
+                    continue;
+                auto                       buffer = cache.api->alloc_buffer();
+                oaf::decode::xma2::decoder xma2;
+                if(!xma2.decode(
+                       gsl::span<const char>(reinterpret_cast<char const*>(bytes.data()), bytes.size()),
+                       {.channels = codec->channels(), .rate = codec->rate(), .samples = perm.sample_count},
+                       *buffer))
+                    continue;
+                m_sound_bytes += size_t(perm.sample_count) * codec->channels() * 2;
+                out.permutations.push_back({.buffer = std::move(buffer)});
+            }
+            out.count = static_cast<u32>(out.permutations.size());
+            if(!out.permutations.empty())
+                ranges.push_back(std::move(out));
+        }
+        if(auto const* playback = sound->playback.resolve(gestalt->playbacks.span(magic)))
+        {
+            props.gain_modifier = db_gain(playback->gain_base);
+            props.min_distance  = playback->minimum_distance;
+            props.max_distance  = playback->maximum_distance;
+        }
+        /* Unset distances: audible across a room, gone across the level */
+        if(props.min_distance <= 0.f)
+            props.min_distance = 1.f;
+        if(props.max_distance <= props.min_distance)
+            props.max_distance = std::max(props.min_distance * 10.f, 20.f);
+        return !ranges.empty();
+#else
+        (void)ref, (void)ranges, (void)props;
+        return false;
+#endif
+    }
+
+    /* A snd! as a one-shot; its key, 0 if it does not play */
+    u64 ensure_sound(el::tag_reference<> const& ref)
+    {
+        if(!m_map->get<el::sound_t>(ref))
+            return 0;
+        u64 const key = sound_key(ref);
+        if(auto it = m_sound_keys.find(key); it != m_sound_keys.end())
+            return it->second ? key : 0;
+        SoundItem          item{.name = std::string(m_map->name_of(ref))};
+        SoundItem::track_t track;
+        if(decode_sound(ref, track.buffers[SoundItem::main], track.props[SoundItem::main]))
+            item.tracks.push_back(std::move(track));
+        bool const ok = item.valid() &&
+                        m_container.subsystem_cast<SoundCache<halo_version>>().add_external(key, std::move(item)).valid();
+        m_sound_keys[key] = ok;
+        return ok ? key : 0;
+    }
+
+    /* A looping sound: its tracks' intro, loop and outro, and its details
+     * as one-shots; its key, 0 if it does not play */
+    u64 ensure_looping(el::tag_reference<> const& ref)
+    {
+        auto const looping = m_map->get<el::looping_sound_t>(ref);
+        if(!looping)
+            return 0;
+        u64 const key = sound_key(ref);
+        if(auto it = m_sound_keys.find(key); it != m_sound_keys.end())
+            return it->second ? key : 0;
+        auto const magic = m_map->magic();
+        SoundItem  item{
+             .name    = std::string(m_map->name_of(ref)),
+             .looping = !enum_helpers::feval(looping->flags.value(), el::looping_sound_flags_t::not_a_loop),
+        };
+        for(auto const& source : looping->tracks.span(magic))
+        {
+            SoundItem::track_t track;
+            for(auto [role, part] : {std::pair{SoundItem::start, &source.in},
+                                     std::pair{SoundItem::loop, &source.loop},
+                                     std::pair{SoundItem::end, &source.out}})
+            {
+                if(!m_map->get<el::sound_t>(*part))
+                    continue;
+                auto& props = track.props[role];
+                if(!decode_sound(*part, track.buffers[role], props))
+                {
+                    track.buffers.erase(role);
+                    track.props.erase(role);
+                    continue;
+                }
+                props.gain_modifier *= db_gain(source.gain);
+            }
+            if(track.buffers.contains(SoundItem::loop) || track.buffers.contains(SoundItem::start))
+                item.tracks.push_back(std::move(track));
+        }
+        for(auto const& detail : looping->details.span(magic))
+            if(u64 const sound = ensure_sound(detail.sound))
+                item.details.push_back({
+                    .external = sound,
+                    .period   = {detail.period.min, detail.period.max},
+                    .gain     = db_gain(detail.gain),
+                    .yaw      = {detail.yaw.min, detail.yaw.max},
+                    .pitch    = {detail.pitch.min, detail.pitch.max},
+                    .distance = {detail.distance.min, detail.distance.max},
+                });
+        bool const ok = item.valid() &&
+                        m_container.subsystem_cast<SoundCache<halo_version>>().add_external(key, std::move(item)).valid();
+        m_sound_keys[key] = ok;
+        return ok ? key : 0;
+    }
+
+    void inject_sound(SoundEvent ev, void const* payload)
+    {
+        if(auto* bus = m_container.service<comp_app::EventBus<SoundEvent>>())
+            bus->inject(ev, const_cast<void*>(payload));
+    }
+
+    /* The small, medium and large impact sounds of the global material
+     * making up most of an object's physics model */
+    std::optional<std::array<el::tag_reference<> const*, 3>> impact_sweeteners(el::tag_reference<> const& object)
+    {
+        auto const& map     = *m_map;
+        auto const  magic   = map.magic();
+        auto const  physics = el::object_view::of(map, object).physics_model;
+        auto const  globals = map.find<el::phys::globals_t>();
+        auto const  body    = physics ? el::phys::body_of(*physics, magic) : std::nullopt;
+        if(!body || !globals || body->hulls.empty())
+            return std::nullopt;
+        auto const& heaviest = *std::ranges::max_element(body->hulls, {}, &el::phys::hull_t::mass);
+        auto const* shape    = physics->material(magic, heaviest.material);
+        auto const* material = shape ? globals->material(magic, shape->global_name()) : nullptr;
+        if(!material)
+            return std::nullopt;
+        std::array<el::tag_reference<> const*, 3> out{};
+        for(u32 size = 0; size < out.size(); size++)
+            out[size] = material->sound_sweetener(*globals, magic, size);
+        if(std::ranges::none_of(out, [](auto const* ref) { return ref != nullptr; }))
+            return std::nullopt;
+        return out;
+    }
+
+    /* Each object hit sounds by how hard: its momentum lost picks the size.
+     * Only after a quiet spell, so a body grinding against another is heard
+     * once */
+    void play_impacts(time_point const& now)
+    {
+        for(auto const& impact : std::exchange(m_impacts, {}))
+        {
+            auto it = m_impact_sounds.find(impact.entity_id);
+            if(it == m_impact_sounds.end())
+                continue;
+            bool const quiet = now - it->second.last_contact > std::chrono::milliseconds(300);
+            it->second.last_contact = now;
+            if(!quiet)
+                continue;
+            f32 const force = impact.speed * std::max(it->second.mass, 1.f);
+            u32       size  = force < 40.f ? 0 : force < 400.f ? 1 : 2;
+            while(size > 0 && !it->second.sweeteners[size])
+                size--;
+            auto const* sound = it->second.sweeteners[size];
+            u64 const   key   = sound ? ensure_sound(*sound) : 0;
+            if(!key)
+                continue;
+            PlaySoundEvent play{.external = key, .position = impact.point};
+            inject_sound({.type = SoundEvent::play_sound, .entity_id = impact.entity_id}, &play);
+        }
+    }
+
+    /* The player unit's footstep for the ground's global material: walking
+     * or running, the material's own else its parents' */
+    el::tag_reference<> const* footstep_sound(u16 material_index, bool running)
+    {
+        auto const& map     = *m_map;
+        auto const  magic   = map.magic();
+        auto const  globals = map.find<el::phys::globals_t>();
+        auto const  effects = m_footsteps ? map.span(m_footsteps->effects) : Span<el::material_effect_t const>();
+        if(!globals || effects.empty())
+            return nullptr;
+        auto const  materials = map.span(globals->materials);
+        auto const& effect    = effects[running && effects.size() > 1 ? 1 : 0];
+        auto const* material  = material_index < materials.size() ? &materials[material_index] : nullptr;
+        for(u32 depth = 0; material && depth < 8; depth++)
+        {
+            for(auto const& sound : map.span(effect.sounds))
+                if(sound.material.raw.value() == material->name.raw.value() && sound.tag.valid())
+                    return &sound.tag;
+            material = material->parent.valid() ? globals->material(magic, material->parent) : nullptr;
+        }
+        return nullptr;
+    }
+
+    /* The player in a body steps every stride it walks: a ray down finds the
+     * ground's material, its footstep plays where it lands */
+    void play_footsteps(time_point const& now)
+    {
+        if(!m_footsteps)
+            return;
+        std::optional<std::tuple<Vecf3, f32, u64>> body;
+        for(auto entity : m_container.select<PlayerCamera, PlayerInfo>())
+        {
+            auto const& [camera, info] = entity.components();
+            if(info.seat_idx == 0 && !info.is_remote() && info.mode.physics)
+                body = std::make_tuple(camera.camera.position, info.biped.eye_height, entity.id());
+        }
+        if(!body)
+        {
+            m_step_from.reset();
+            return;
+        }
+        auto const [eye, eye_height, id] = *body;
+        if(!m_step_from)
+        {
+            m_step_from = eye;
+            m_step_time = now;
+            return;
+        }
+        f32 const moved = glm::length(Vecf2(eye) - Vecf2(*m_step_from));
+        if(moved < (m_running ? run_stride : walk_stride))
+            return;
+        f32 const seconds = std::max(std::chrono::duration<f32>(now - m_step_time).count(), 1e-3f);
+        m_step_from       = eye;
+        m_step_time       = now;
+        m_running         = moved / seconds > run_speed;
+        Physics::Raycast ray{.from = eye, .to = eye - Vecf3(0.f, 0.f, eye_height + 0.3f), .ignore = id};
+        Physics::Event   event{Physics::Event::Raycast};
+        m_container.subsystem_cast<PhysicsBus>().process(event, &ray);
+        if(!ray.hit)
+            return;
+        auto const* sound = footstep_sound(ray.material_type, m_running);
+        u64 const   key   = sound ? ensure_sound(*sound) : 0;
+        if(!key)
+            return;
+        PlaySoundEvent play{.external = key, .position = ray.point};
+        inject_sound({.type = SoundEvent::play_sound, .entity_id = id}, &play);
+    }
+
+    /* After the world: the shared SoundSystem drops the last map's sounds,
+     * the sound scenery starts, and events stop queueing */
+    void load_world_sounds()
+    {
+        m_sound_keys.clear();
+        m_background = 0;
+        m_sound_bytes = 0;
+        m_container.subsystem_cast<SoundCache<halo_version>>().clear_external();
+        auto& loading         = m_container.subsystem_cast<LoadingStatus>();
+        loading.loaded_sounds = LoadingStatus::loaded;
+        if(!m_scenario)
+            return;
+        auto const& map = *m_map;
+        m_scenery_loops.clear();
+        for(auto const& [i, placed] : stl_types::enumerate(
+                el::placements(map, m_scenario->sound_scenery, m_scenario->sound_scenery_palette)))
+        {
+            auto const& object = placed.object();
+            if(!placed.entry || !object.placed_at_load() || !object.in_bsps(m_sound_bsps))
+                continue;
+            auto const tag = map.get<el::object_t>(placed.entry->object);
+            if(!tag)
+                continue;
+            for(auto const& [j, attachment] : stl_types::enumerate(map.span(tag->attachments)))
+                if(auto const looping = map.get<el::looping_sound_t>(attachment.type))
+                {
+                    f32 const reach = looping->distance.max;
+                    m_scenery_loops.push_back({
+                        .sound    = &attachment.type,
+                        .position = object.position,
+                        .entity   = SoundEvent::sound_scenery_base | (u64(i) << 8) | u64(j),
+                        .reach    = reach > 0.f ? reach : 30.f,
+                    });
+                }
+        }
+        cDebug("H3: sound: {} sound scenery loops, {} objects with impact sounds", m_scenery_loops.size(),
+               m_impact_sounds.size());
+    }
+
+    /* Sound scenery plays while the listener is in reach, so only what is
+     * near is decoded */
+    void update_scenery_loops(Vecf3 const& eye)
+    {
+        for(auto& loop : m_scenery_loops)
+        {
+            f32 const distance = glm::distance(eye, loop.position);
+            if(!loop.playing && distance < loop.reach)
+            {
+                u64 const key = ensure_looping(*loop.sound);
+                if(!key)
+                    continue;
+                PlaySoundEvent play{.external = key, .position = loop.position, .looping = true};
+                inject_sound({.type = SoundEvent::play_sound, .entity_id = loop.entity}, &play);
+                loop.playing = true;
+            } else if(loop.playing && distance > loop.reach * 1.25f)
+            {
+                inject_sound({.type = SoundEvent::stop_sound, .entity_id = loop.entity}, nullptr);
+                loop.playing = false;
+            }
+        }
+    }
+
+    /* The background of the cluster the listener is in, crossfaded as it
+     * changes; a few times a second */
+    void update_background(time_point const& now)
+    {
+        if(now - m_background_checked < std::chrono::milliseconds(250) || !m_scenario)
+            return;
+        m_background_checked = now;
+        std::optional<Vecf3> eye;
+        for(auto entity : m_container.select<PlayerCamera, PlayerInfo>())
+        {
+            auto const& [camera, info] = entity.components();
+            if(info.seat_idx == 0 && !info.is_remote())
+                eye = camera.camera.position;
+        }
+        if(!eye)
+            return;
+        update_scenery_loops(*eye);
+        auto const& map = *m_map;
+        u64         key = 0;
+        for(i16 b = 0; b < 32 && !key; b++)
+        {
+            if(!(m_sound_bsps & (1u << b)))
+                continue;
+            auto const bsp = el::structure_bsp(map, *m_scenario, b);
+            if(!bsp)
+                continue;
+            auto resources = m_loader->load(bsp->tag_resources);
+            auto const* cluster = resources.has_value() ? el::cluster_at(map, *bsp, resources.value(), *eye) : nullptr;
+            if(!cluster)
+                continue;
+            auto const acoustics = map.span(bsp->acoustics);
+            i16 const  index     = cluster->acoustics;
+            if(index >= 0 && static_cast<size_t>(index) < acoustics.size())
+                key = ensure_looping(acoustics[static_cast<size_t>(index)].background_sound);
+            break;
+        }
+        if(key == m_background)
+            return;
+        m_background = key;
+        cDebug("H3: sound: {} sounds, {} MB decoded", m_sound_keys.size(), m_sound_bytes >> 20);
+        BackgroundSoundTransitionEvent transition{.external = key};
+        inject_sound({.type = SoundEvent::background_sound_transition}, &transition);
     }
 
     /* The menu's looping music: its first track's intro and every loop
@@ -530,6 +921,12 @@ struct H3MapLoader : compo::SubsystemBase
     {
         if(m_scene.loaded)
             animate_first_person(now);
+        if(m_scene.loaded)
+            update_background(now);
+        if(m_scene.loaded)
+            play_impacts(now);
+        if(m_scene.loaded)
+            play_footsteps(now);
         if(!m_scene.loaded || m_switches.empty())
             return;
         std::optional<Vecf3> eye;
@@ -675,6 +1072,8 @@ struct H3MapLoader : compo::SubsystemBase
         if(auto forced = platform::env::var("H3_BLOOM"); forced.has_value())
             m_scene.bloom.intensity = std::stof(forced.value());
         load_objects(scnr, bsps);
+        m_scenario   = &scnr;
+        m_sound_bsps = bsps;
         load_first_person(scnr, eye);
         load_sky(scnr, bsps);
         for(i16 b = 0; b < 32; b++)
@@ -792,6 +1191,7 @@ struct H3MapLoader : compo::SubsystemBase
                 el::coll::bsp_view_t::from(resources.value(), collision_bsps[0]),
                 Matf4(1.f),
                 *collision,
+                collision_materials,
                 open_seams);
         size_t const world_triangles = collision->indices.size() / 3;
         auto instance_list = bsp->instances.span(magic);
@@ -808,7 +1208,8 @@ struct H3MapLoader : compo::SubsystemBase
             append_collision(
                 el::coll::bsp_view_t::from(resources.value(), definition->collision),
                 transform,
-                *collision);
+                *collision,
+                collision_materials);
             /* An instance's texcoords are its own buffer, through the
              * lightmap's per-instance list */
             std::vector<Vecf2>              uvs;
@@ -985,10 +1386,11 @@ struct H3MapLoader : compo::SubsystemBase
 
     /* Appends a collision BSP's surfaces as fanned triangles */
     static void append_collision(
-        el::coll::bsp_view_t const& bsp,
-        Matf4 const&                transform,
-        CollisionMesh&              out,
-        std::vector<bool> const&    skipped_materials = {})
+        el::coll::bsp_view_t const&             bsp,
+        Matf4 const&                            transform,
+        CollisionMesh&                          out,
+        Span<el::collision_material_t const>    materials,
+        std::vector<bool> const&                skipped_materials = {})
     {
         i32 const vbase = static_cast<i32>(out.vertices.size());
         /* Bounding surfaces sit on vertices at infinity, which a quantized
@@ -1009,8 +1411,13 @@ struct H3MapLoader : compo::SubsystemBase
                    skipped_materials[static_cast<size_t>(material)];
         };
         blam::collision_bsp::fan_surfaces<el::coll::traits>(
-            bsp.surfaces, bsp.edges, finite, skip, [&](i32 a, i32 b, i32 c) {
+            bsp.surfaces, bsp.edges, finite, skip, [&](i32 a, i32 b, i32 c, u32 s) {
                 out.indices.insert(out.indices.end(), {vbase + a, vbase + b, vbase + c});
+                i16 const material = bsp.surfaces[s].material.value();
+                i16 const global   = material >= 0 && static_cast<size_t>(material) < materials.size()
+                                         ? materials[static_cast<size_t>(material)].global_material.value()
+                                         : i16(-1);
+                out.materials.push_back(global >= 0 ? static_cast<u16>(global) : u16(0xFFFF));
             });
     }
 
@@ -1033,6 +1440,7 @@ struct H3MapLoader : compo::SubsystemBase
         part.m_vertexType   = PHY_FLOAT;
         body->mesh_iface->addIndexedMesh(part, PHY_INTEGER);
         body->shape      = std::make_unique<btBvhTriangleMeshShape>(body->mesh_iface.get(), true);
+        body->triangle_materials = mesh->materials;
         body->keep_alive = std::move(mesh);
         Physics::Event event{.type = Physics::Event::BodyCreationPrebuilt};
         m_container.subsystem_cast<PhysicsBus>().process(event, body.get());
@@ -1082,6 +1490,8 @@ struct H3MapLoader : compo::SubsystemBase
                 placed.tick_position = position;
                 placed.tick_rotation = q;
                 placed.update_matrix();
+                if(auto sweeteners = impact_sweeteners(entry->object))
+                    m_impact_sounds[ref.id()] = {.sweeteners = *sweeteners, .mass = physics->mass};
                 *m_container.get<ObjectPhysics>(ref.id()) = std::move(*physics);
                 if(auto const tag = m_map->get<el::object_t>(entry->object);
                    tag && !m_map->span(tag->change_colors).empty())
@@ -1128,7 +1538,10 @@ struct H3MapLoader : compo::SubsystemBase
         if(!player)
             return;
         if(auto const unit = map.get<el::object_t>(player->third_person_unit))
+        {
             m_scene.change_colors[first_person_entity] = change_colors_of(*unit, player->third_person_variant);
+            m_footsteps = map.get<el::material_effects_t>(unit->material_effects).data;
+        }
         auto const profiles = map.span(scnr.starting_profiles);
         auto const weapon   = profiles.empty() ? el::tagged<el::weapon_t>{}
                                                : map.get<el::weapon_t>(profiles[0].primary_weapon);
@@ -2671,6 +3084,42 @@ struct H3MapLoader : compo::SubsystemBase
     /* Loaded BSPs sealed at each seam */
     std::vector<u8>         m_seam_users;
     std::vector<ZoneSwitch> m_switches;
+
+    /* Sounds handed to the SoundSystem, by key: true once registered */
+    std::unordered_map<u64, bool> m_sound_keys;
+    el::scenario_t const*         m_scenario{nullptr};
+    u32                           m_sound_bsps{0};
+    u64                           m_background{0};
+    size_t                        m_sound_bytes{0};
+
+    struct SceneryLoop
+    {
+        el::tag_reference<> const* sound{nullptr};
+        Vecf3                      position{};
+        u64                        entity{0};
+        f32                        reach{0.f}; /*!< lsnd distance bounds */
+        bool                       playing{false};
+    };
+    std::vector<SceneryLoop> m_scenery_loops;
+
+    struct ImpactSounds
+    {
+        std::array<el::tag_reference<> const*, 3> sweeteners{}; /*!< Small, medium, large */
+        f32                                       mass{0.f};
+        time_point                                last_contact{};
+    };
+    std::unordered_map<u64, ImpactSounds> m_impact_sounds;
+    std::vector<Physics::Impact>          m_impacts;
+
+    el::material_effects_t const* m_footsteps{nullptr}; /*!< The player unit's */
+    std::optional<Vecf3>          m_step_from;
+    time_point                    m_step_time{};
+    bool                          m_running{false};
+    /* World units per footstep, about three a second at a run */
+    static constexpr f32 walk_stride = 0.45f;
+    static constexpr f32 run_stride  = 0.72f;
+    static constexpr f32 run_speed   = 1.2f; /*!< World units per second */
+    time_point                    m_background_checked{};
     i32                     m_zone_set{-1};
     /* The BSP being loaded: its lightprobe slot and corner of the array */
     u32                     m_slot{0};
@@ -2728,6 +3177,8 @@ void alloc_h3(compo::EntityContainer& e)
             if(loader.on_map_load(*load))
                 ev.type = GameEvent::None;
         });
+    e.subsystem_cast<PhysicsBus>().addEventFunction<Physics::Impact>(
+        0, [&loader](Physics::Event&, Physics::Impact* impact) { loader.on_impact(*impact); });
     alloc_h3_renderer(e);
 }
 
