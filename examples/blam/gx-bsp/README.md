@@ -35,33 +35,29 @@ $T /mnt/blam/pc/b30.map /mnt/blam/pc/bitmaps.map \
 
 ## 2. Put it on a disc
 
-The build leaves a disc folder at
-`multi_build/console-powerpc-eabi-cube/packaged/gamecube/BlamBSP_GX/`. Copy the
-map (and `bitmaps.map` for PC) into its `files/`. Every build empties `files/`,
-so copy after building.
+Put the map (and `bitmaps.map` for PC) in the build's assets folder, then
+build. Everything in it goes onto the disc folder and the `.gcm`, and changes
+to it are picked up by the next build:
 
 ```sh
-P=multi_build/console-powerpc-eabi-cube/packaged/gamecube/BlamBSP_GX
-cp out/bloodgulch.map $P/files/
+A=multi_build/console-powerpc-eabi-cube/examples/blam/gx-bsp/BlamBSP_GX_assets
+mkdir -p $A && cp out/bloodgulch.map $A/
+./cb build console:powerpc-eabi:cube/BlamBSP_GX
 ```
+
+The disc ends up in `multi_build/console-powerpc-eabi-cube/packaged/gamecube/`:
+`BlamBSP_GX.gcm` to boot directly, and the `BlamBSP_GX/` folder for Dolphin.
 
 Run it in Dolphin. MMU emulation is required:
 
 ```sh
+P=multi_build/console-powerpc-eabi-cube/packaged/gamecube/BlamBSP_GX
 DVD_DIR=$P/sys/main.dol .github/tests/dolphin/dolphin.sh \
     multi_build/console-powerpc-eabi-cube/bin/BlamBSP_GX.elf \
     -C Dolphin.Core.MMU=True
 ```
 
-For a disc image to burn or boot directly, rebuild the `.gcm` with the maps
-included:
-
-```sh
-toolchain/desktop/make_gcm.py \
-    --dol $P/sys/main.dol --files $P/files \
-    --apploader $P/sys/apploader.img \
-    --out BlamBSP_GX.gcm
-```
+In Dolphin's GUI, tick **Config > Advanced > Enable MMU** and open the `.gcm`.
 
 ## 3. Join a server
 
@@ -80,8 +76,9 @@ D=desktop:x86_64-buildroot-linux-gnu:multi
 ./cb run $D/BlamGCGateway -- --port 27790 --server 127.0.0.1:27105
 ```
 
-Add `gateway.txt` to `files/` next to the map. It names the gateway, as the
-console reaches it, and optionally the server, as the gateway reaches it:
+Add `gateway.txt` to the assets folder next to the map, and build again. It
+names the gateway, as the console reaches it, and optionally the server, as
+the gateway reaches it:
 
 ```
 192.168.1.20:27790 127.0.0.1:27105
@@ -90,8 +87,12 @@ console reaches it, and optionally the server, as the gateway reaches it:
 Without a server, the gateway's `--server` is used. Without `gateway.txt`, the
 viewer stays offline.
 
-The console gets its address over DHCP. In Dolphin, use the built-in adapter,
-and point `gateway.txt` at the PC's LAN address rather than `127.0.0.1`:
+The console gets its address over DHCP. In Dolphin, use the HLE broadband
+adapter, and point `gateway.txt` at the PC's LAN address rather than
+`127.0.0.1`:
+
+- GUI: **Config > GameCube > Device Settings > SP1: Broadband Adapter (HLE)**
+- Command line:
 
 ```sh
 DVD_DIR=$P/sys/main.dol .github/tests/dolphin/dolphin.sh \
