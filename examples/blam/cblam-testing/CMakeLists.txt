@@ -228,6 +228,7 @@ if(BUILD_BLAM_ELEGY)
 endif()
 if(BUILD_BLAM_DIMETER OR BUILD_BLAM_ELEGY)
     target_sources(BlamGraphics PRIVATE
+      world/looping_music.cpp
       world/map_lifecycle.cpp
       world/player_spawn.cpp
       world/texels.cpp
