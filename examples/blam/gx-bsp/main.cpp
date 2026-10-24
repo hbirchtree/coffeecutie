@@ -58,6 +58,7 @@
 
 #include "loading_screen.h"
 #include "net_client.h"
+#include "reflection.h"
 #endif
 
 using namespace Coffee;
@@ -139,15 +140,32 @@ struct mdl_vertex
     f32 uv[2];
 };
 
+struct reflection_t;
+
+/* How a part or material goes onto the framebuffer */
+enum class blend_t
+{
+    opaque,
+    alpha,
+    add,
+    multiply,
+};
+
 struct mdl_part
 {
     std::vector<mdl_vertex>    verts;
     std::vector<u16>           indices; // triangle strip
     blam::bitm::image_t const* diffuse_img{nullptr};
+    blend_t                    blend{blend_t::opaque};
+    blam::bitm::image_t const* reflection_img{nullptr};
+    blam::bitm::image_t const* multipurpose_img{nullptr};
+    Vecf3                      reflection_tint{0.f};
 #if defined(FEATURE_ENABLE_Gexxo)
     std::shared_ptr<gexxo::vertex_array_t> vao;
     std::shared_ptr<gexxo::buffer_t>       vbo, ebo;
     std::shared_ptr<gexxo::texture_t>      diffuse;
+    std::shared_ptr<reflection_t>          reflection;
+    std::shared_ptr<gexxo::texture_t>      multipurpose;
 #endif
 };
 
@@ -360,10 +378,17 @@ struct shader_info
     blam::bitm::image_t const* diffuse{nullptr};
     blam::bitm::image_t const* detail{nullptr};
     f32                        detail_scale{1.f};
+    blend_t                    blend{blend_t::opaque};
+
+    /* shader_model: reflection cube, its mask (multipurpose map), tint */
+    blam::bitm::image_t const* reflection{nullptr};
+    blam::bitm::image_t const* multipurpose{nullptr};
+    Vecf3                      reflection_tint{0.f};
 };
 
 /* Material shader -> base diffuse + (primary) detail map. shader_environment
- * (BSP) + shader_model (objects) are handled; other classes are untextured. */
+ * (BSP) + shader_model (objects) are handled, chicago shaders (skies, glows)
+ * by their first map and framebuffer blend; other classes are untextured. */
 template<typename V>
 static shader_info resolve_shader(
     blam::map_container<V> const& c, blam::tagref_t const& shader_ref)
@@ -390,6 +415,39 @@ static shader_info resolve_shader(
         out.detail =
             first_image(c, resolve_bitm(c, sh.value()->maps.detail.map));
         out.detail_scale = from_le(sh.value()->maps.detail.scale);
+        auto const& r    = sh.value()->reflection;
+        out.reflection   = first_image(c, resolve_bitm(c, r.reflection));
+        out.multipurpose =
+            first_image(c, resolve_bitm(c, sh.value()->maps.multipurpose));
+        out.reflection_tint =
+            Vecf3{
+                from_le(r.perpendicular_tint.x),
+                from_le(r.perpendicular_tint.y),
+                from_le(r.perpendicular_tint.z)} *
+            from_le(r.perpendicular_brightness);
+    } else if(st->matches(blam::tag_class_t::schi))
+    {
+        auto sh = st->template data<blam::shader::shader_chicago<V>>(c.magic);
+        if(sh.has_error())
+            return out;
+        if(auto maps = sh.value()->maps.data(c.magic);
+           !maps.has_error() && !maps.value().empty())
+            out.diffuse =
+                first_image(c, resolve_bitm(c, maps.value()[0].map.map));
+        using fb = blam::shader::chicago::framebuffer_blending;
+        switch(from_le(sh.value()->transparent.blend_function))
+        {
+        case fb::add:
+            out.blend = blend_t::add;
+            break;
+        case fb::multiply:
+        case fb::double_multiply:
+            out.blend = blend_t::multiply;
+            break;
+        default:
+            out.blend = blend_t::alpha;
+            break;
+        }
     }
     if(out.detail_scale == 0.f)
         out.detail_scale = 1.f;
@@ -404,6 +462,22 @@ static shader_info resolve_shader(
 static std::vector<blam::collision::bsp_3d> g_coll_nodes;
 static std::vector<blam::collision::plane>  g_coll_planes;
 static std::vector<i16>                     g_leaf_cluster;
+
+/* The scenario's skies: drawn around the camera, with their fog and light.
+ * Which one shows is the camera's cluster's choice. */
+struct sky_t
+{
+    blam::tag_index<> model{blam::tag_index<>::none()};
+    Vecf3             fog_color{};
+    f32               fog_density{0.f};
+    f32               fog_start{0.f}, fog_opaque{0.f};
+    Vecf3             ambient{0.35f};
+    Vecf3             sun_color{0.8f};
+    Vecf3             sun_dir{-0.4f, -0.3f, -0.85f}; // the way the light goes
+};
+
+static std::vector<sky_t> g_skies;
+static std::vector<i16>   g_cluster_sky; // of the loaded BSP's clusters
 
 static void build_cluster_lookup(
     blam::bsp::header const& hdr, blam::bsp_ptr const& bm)
@@ -547,8 +621,14 @@ static void load_model_cpu(
         {
             u16 const si = from_le(p->shader_idx);
             if(si < shaders.value().size())
-                part.diffuse_img =
-                    resolve_shader(c, shaders.value()[si].ref).diffuse;
+            {
+                auto const shader = resolve_shader(c, shaders.value()[si].ref);
+                part.diffuse_img  = shader.diffuse;
+                part.blend        = shader.blend;
+                part.reflection_img   = shader.reflection;
+                part.multipurpose_img = shader.multipurpose;
+                part.reflection_tint  = shader.reflection_tint;
+            }
         }
         if(!part.verts.empty() && part.indices.size() >= 3)
             model.parts.push_back(std::move(part));
@@ -879,6 +959,54 @@ static void append_material(
     }
 }
 
+template<typename V>
+static void load_skies(
+    blam::map_container<V> const& c, blam::scn::scenario<V> const* scn)
+{
+    auto skies = scn->info.skyboxes.data(c.magic);
+    if(skies.has_error())
+        return;
+    auto v3 = [](Vecf3 const& v) {
+        return Vecf3{from_le(v.x), from_le(v.y), from_le(v.z)};
+    };
+    for(auto const& ref : skies.value())
+    {
+        sky_t       sky;
+        auto const* t = blam::tag_at(c, ref.tag_id);
+        auto        sb =
+            t ? std::optional(t->template data<blam::scn::skybox>(c.magic))
+                     : std::nullopt;
+        if(sb && !sb->has_error())
+        {
+            auto const& s   = *sb->value();
+            sky.model       = s.model.tag_id;
+            sky.fog_color   = v3(s.outdoor_fog.color);
+            sky.fog_density = from_le(s.outdoor_fog.density);
+            sky.fog_start   = from_le(s.outdoor_fog.start_distance);
+            sky.fog_opaque  = from_le(s.outdoor_fog.opaque_distance);
+            sky.ambient =
+                v3(s.outdoor_ambient.color) * from_le(s.outdoor_ambient.power);
+            if(auto lights = s.lights.data(c.magic);
+               !lights.has_error() && !lights.value().empty())
+            {
+                auto const& r     = lights.value()[0].radiosity;
+                f32 const   yaw   = from_le(r.direction.x);
+                f32 const   pitch = from_le(r.direction.y);
+                sky.sun_color     = v3(r.color) * from_le(r.power);
+                sky.sun_dir       = -Vecf3{
+                    std::cos(pitch) * std::cos(yaw),
+                    std::cos(pitch) * std::sin(yaw),
+                    std::sin(pitch)};
+            }
+            if(blam::tag_at(c, sky.model) &&
+               g_models.find(sky.model) == g_models.end())
+                load_model_cpu(c, sky.model);
+        }
+        g_skies.push_back(sky);
+    }
+    LOG("skies: %u", static_cast<unsigned>(g_skies.size()));
+}
+
 /* BlamGraphics' MapFingerprint: FNV-1a 64 over every tag's classes, id and
  * name as stored, which a server checks before trusting our tag ids */
 struct map_fingerprint
@@ -992,6 +1120,9 @@ static int extract_map(semantic::BytesConst const& bytes)
             continue;
         auto const* hdr = hdr_r.value();
         build_cluster_lookup(*hdr, bm);
+        if(auto cls = hdr->clusters.data(bm); !cls.has_error())
+            for(auto const& cl : cls.value())
+                g_cluster_sky.push_back(from_le(cl.sky));
         LOG("cluster lookup: %u nodes, %u leaves",
             static_cast<unsigned>(g_coll_nodes.size()),
             static_cast<unsigned>(g_leaf_cluster.size()));
@@ -1035,6 +1166,7 @@ static int extract_map(semantic::BytesConst const& bytes)
     load_phase("bsp");
 
     loading_phase(0.6f, 0.7f);
+    load_skies(container, *scn);
     build_objects(container, *scn);
     load_phase("objects");
 
@@ -1342,6 +1474,140 @@ static std::shared_ptr<gexxo::texture_t> load_diffuse(
     return tex;
 }
 
+/* A reflection cube's sphere map, baked again every frame */
+struct reflection_t
+{
+    gx_reflection::cube_t             cube;
+    u16*                              texels{nullptr};
+    std::shared_ptr<gexxo::texture_t> sphere;
+};
+
+static constexpr u32 kSphereSize = 32;
+static std::map<blam::bitm::image_t const*, std::shared_ptr<reflection_t>>
+    g_reflections;
+
+static std::shared_ptr<reflection_t> load_reflection(
+    blam::bitm::image_t const* img)
+{
+    if(!img)
+        return nullptr;
+    if(auto it = g_reflections.find(img); it != g_reflections.end())
+        return it->second;
+    auto& slot = g_reflections[img];
+
+    using fmt_t = blam::bitm::format_t;
+    using sf    = gx_reflection::source_format;
+    if(from_le(img->type) != blam::bitm::type_t::tex_cube)
+        return nullptr;
+    u32 const w     = static_cast<u32>(from_le(img->isize.x));
+    sf        fmt   = sf::bc1;
+    u32       block = 0, bpp = 0;
+    switch(from_le(img->format))
+    {
+    case fmt_t::BC1:
+        block = 8;
+        break;
+    case fmt_t::BC2:
+    case fmt_t::BC3:
+        fmt   = sf::bc2_bc3;
+        block = 16;
+        break;
+    case fmt_t::R5G6B5:
+        fmt = sf::rgb565;
+        bpp = 2;
+        break;
+    case fmt_t::ARGB8:
+    case fmt_t::XRGB8:
+        fmt = sf::bgra8;
+        bpp = 4;
+        break;
+    default:
+        return nullptr;
+    }
+    auto level_bytes = [&](u32 lw) {
+        lw = std::max(lw, 1u);
+        return block ? ((lw + 3) / 4) * ((lw + 3) / 4) * block : lw * lw * bpp;
+    };
+    std::vector<libc_types::u8> px;
+    if(!w || !read_bitmap_pixels(*img, g_internal_magic, px))
+        return nullptr;
+    u32 const levels = std::max<u32>(from_le(img->mipmaps), 1);
+    // Faces follow blam's bitm::image_t::cube_face_offset()
+    auto face_offset = [&](u32 face) -> u32 {
+        if(g_xbox)
+        {
+            u32 chain = 0;
+            for(u32 i = 0; i < levels; i++)
+                chain += level_bytes(w >> i);
+            return face * ((chain + 127) & ~127u);
+        }
+        constexpr u32 stored[6] = {0, 2, 1, 3, 4, 5};
+        return stored[face] * level_bytes(w);
+    };
+    bool const swizzled =
+        !block && (static_cast<u16>(from_le(img->flags)) &
+                   static_cast<u16>(blam::bitm::flags_t::swizzled));
+
+    auto r       = std::make_shared<reflection_t>();
+    r->cube.size = std::min(w, 16u);
+    for(u32 f = 0; f < 6; f++)
+    {
+        u32 const off = face_offset(f), n = level_bytes(w);
+        if(off + n > px.size())
+            return nullptr;
+        u8 const*                   src = px.data() + off;
+        std::vector<libc_types::u8> linear;
+        if(swizzled)
+        {
+            linear.resize(n);
+            blam::swizzle::deswizzle_bytes(
+                semantic::Span<const u8>(src, n),
+                semantic::Span<u8>(linear.data(), n),
+                w,
+                w,
+                bpp);
+            src = linear.data();
+        }
+        r->cube.faces[f] =
+            gx_reflection::decode_face(src, fmt, w, r->cube.size);
+    }
+    r->texels = static_cast<u16*>(memalign(32, kSphereSize * kSphereSize * 2));
+    if(!r->texels)
+        return nullptr;
+    r->sphere = std::make_shared<gexxo::texture_t>(
+        gexxo::textures::type::d2, typing::pixels::PixDesc{}, 1);
+    r->sphere->init_raw(
+        r->texels, kSphereSize, kSphereSize, GX_TF_RGB565, GX_CLAMP, GX_CLAMP);
+    slot = r;
+    return r;
+}
+
+/* A few sphere maps per frame, in turn, for this frame's camera: at this
+ * size a few frames of lag don't show */
+static void bake_reflections(Matf4 const& view)
+{
+    static auto const dirs      = gx_reflection::eye_directions(kSphereSize);
+    static u32        cursor    = 0;
+    constexpr u32     per_frame = 1;
+    if(g_reflections.empty())
+        return;
+    u32 const count = static_cast<u32>(g_reflections.size());
+    auto      it    = g_reflections.begin();
+    std::advance(it, cursor % count);
+    for(u32 n = 0; n < std::min(per_frame, count); n++)
+    {
+        if(auto& r = it->second)
+        {
+            gx_reflection::bake(r->cube, glm::mat3(view), dirs, r->texels);
+            DCFlushRange(r->texels, kSphereSize * kSphereSize * 2);
+        }
+        if(++it == g_reflections.end())
+            it = g_reflections.begin();
+    }
+    cursor += per_frame;
+    GX_InvalidateTexAll();
+}
+
 // Fly-cam state (Halo world space, Z up), driven by the GameCube pad.
 static bool  g_cam_ready = false;
 static Vecf3 g_cam_pos{};
@@ -1457,17 +1723,62 @@ static Matf4 make_modelview(f32 spin)
     return m;
 }
 
-/* One directional sun for the objects, in eye space (GX lights are) */
-static void load_sun(Matf4 const& view)
+static GXColor to_gx(Vecf3 const& c, f32 scale = 255.f)
 {
-    Vecf3 const dir = glm::normalize(Vecf3{-0.4f, -0.3f, -0.85f});
-    Vecf3 const eye = glm::mat3(view) * dir;
+    auto ch = [scale](f32 v) {
+        return static_cast<u8>(std::clamp(v * scale, 0.f, 255.f));
+    };
+    return {ch(c.r), ch(c.g), ch(c.b), 0xFF};
+}
+
+/* The sky's sun for the objects, in eye space (GX lights are) */
+static void load_sun(Matf4 const& view, sky_t const& sky)
+{
+    Vecf3 const eye = glm::mat3(view) * glm::normalize(sky.sun_dir);
     GXLightObj  sun;
     // A far point light is how GX does a directional one
     GX_InitLightPos(&sun, -eye.x * 1e5f, -eye.y * 1e5f, -eye.z * 1e5f);
-    GX_InitLightColor(&sun, GXColor{0xC8, 0xC4, 0xB8, 0xFF});
+    GX_InitLightColor(&sun, to_gx(sky.sun_color));
     GX_LoadLightObj(&sun, GX_LIGHT0);
-    GX_SetChanAmbColor(GX_COLOR0A0, GXColor{0x58, 0x58, 0x60, 0xFF});
+    GX_SetChanAmbColor(GX_COLOR0A0, to_gx(sky.ambient));
+}
+
+/* The sky of the camera's cluster; indoors (no sky) gets none */
+static sky_t const* active_sky()
+{
+    static sky_t const fallback{};
+    if(g_skies.empty())
+        return &fallback;
+    auto const cluster = cluster_at(g_cam_pos);
+    if(!cluster)
+        return &g_skies[0]; // outside the BSP: keep it simple
+    if(*cluster >= g_cluster_sky.size())
+        return &g_skies[0];
+    i16 const idx = g_cluster_sky[*cluster];
+    return idx >= 0 && static_cast<u32>(idx) < g_skies.size() ? &g_skies[idx]
+                                                              : nullptr;
+}
+
+/* Halo fog thickens to `density` at the opaque distance; GX fog is linear
+ * to full colour at its end, so the end moves out for thin fog. The clip
+ * plane is at 100 units, which the fog hides */
+static void set_fog(sky_t const* sky)
+{
+    if(!sky || sky->fog_density <= 0.f || sky->fog_opaque <= sky->fog_start)
+    {
+        GX_SetFog(GX_FOG_NONE, 0, 1, 0.1f, 100.f, GXColor{0, 0, 0, 0xFF});
+        return;
+    }
+    f32 const density = std::min(sky->fog_density, 1.f);
+    f32 const end =
+        sky->fog_start + (sky->fog_opaque - sky->fog_start) / density;
+    GX_SetFog(
+        GX_FOG_LIN,
+        sky->fog_start,
+        std::min(end, 100.f),
+        0.1f,
+        100.f,
+        to_gx(sky->fog_color));
 }
 #endif
 
@@ -1774,7 +2085,10 @@ i32 coffee_main(i32, cstring_w*)
                 });
                 part.vao->set_buffer(gexxo::buffers::vertex, part.vbo, 0);
                 part.vao->set_buffer(gexxo::buffers::element, part.ebo);
-                part.diffuse = load_diffuse(part.diffuse_img);
+                part.diffuse    = load_diffuse(part.diffuse_img);
+                part.reflection = load_reflection(part.reflection_img);
+                if(part.reflection)
+                    part.multipurpose = load_diffuse(part.multipurpose_img);
                 mdl_parts++;
             }
         }
@@ -1789,6 +2103,7 @@ i32 coffee_main(i32, cstring_w*)
     g_loading.finish();
     platform::file::gekko::vmem::set_stage_progress(nullptr);
 #endif
+    LOG("reflections: %u cubes", static_cast<unsigned>(g_reflections.size()));
     LOG("gpu: %u object instances, %u model parts",
         static_cast<unsigned>(g_objects.size()),
         mdl_parts);
@@ -1881,6 +2196,64 @@ i32 coffee_main(i32, cstring_w*)
     prog_obj_flat->stages   = {
         stage_t{.stage = stage_t::stage0, .op = stage_t::pass}};
 
+    /* Reflective models: base * light + sphere * tint * mask. The mask is
+     * the multipurpose map's red on Xbox; PC keeps it in alpha, which the
+     * GX formats drop, so PC parts go unmasked */
+    using combiner_t = stage_t::combiner_t;
+    GX_SetTevSwapModeTable(
+        GX_TEV_SWAP1, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
+    stage_t const reflect_base{
+        .stage    = stage_t::stage0,
+        .op       = stage_t::modulate,
+        .texcoord = stage_t::texcoord0,
+        .texmap   = stage_t::texmap0};
+    stage_t const reflect_sphere{
+        .stage    = stage_t::stage1,
+        .op       = stage_t::custom,
+        .texcoord = stage_t::texcoord1,
+        .texmap   = stage_t::texmap2,
+        .color    = channel_t::color_null,
+        .color_combiner =
+            combiner_t{
+                .a   = GX_CC_ZERO,
+                .b   = GX_CC_TEXC,
+                .c   = GX_CC_KONST,
+                .d   = GX_CC_ZERO,
+                .out = GX_TEVREG0},
+        .konst_color = GX_TEV_KCSEL_K0};
+    auto prog_reflect      = gfx.alloc_program();
+    prog_reflect->channels = {lit};
+    prog_reflect->stages   = {
+        reflect_base,
+        reflect_sphere,
+        stage_t{
+              .stage    = stage_t::stage2,
+              .op       = stage_t::custom,
+              .texcoord = stage_t::texcoord0,
+              .texmap   = stage_t::texmap1,
+              .color    = channel_t::color_null,
+              .color_combiner =
+                combiner_t{
+                      .a = GX_CC_ZERO,
+                      .b = GX_CC_C0,
+                      .c = GX_CC_TEXC,
+                      .d = GX_CC_CPREV},
+              .tex_swap = GX_TEV_SWAP1}};
+    auto prog_reflect_unmasked      = gfx.alloc_program();
+    prog_reflect_unmasked->channels = {lit};
+    prog_reflect_unmasked->stages   = {
+        reflect_base,
+        reflect_sphere,
+        stage_t{
+              .stage          = stage_t::stage2,
+              .op             = stage_t::custom,
+              .color          = channel_t::color_null,
+              .color_combiner = combiner_t{
+                  .a = GX_CC_ZERO,
+                  .b = GX_CC_C0,
+                  .c = GX_CC_ONE,
+                  .d = GX_CC_CPREV}}};
+
     using bind_t = gexxo::texture_binding_t;
 
     GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
@@ -1904,11 +2277,106 @@ i32 coffee_main(i32, cstring_w*)
         poll_network(static_cast<u32>(i));
 #endif
 
-        rt->clear(Vecf4{0.06f, 0.06f, 0.09f, 1.f}, 1.f, 0);
+        sky_t const* sky = active_sky();
+        rt->clear(
+            sky ? Vecf4(sky->fog_color, 1.f) : Vecf4{0.06f, 0.06f, 0.09f, 1.f},
+            1.f,
+            0);
         Matf4 const     mv     = make_modelview(0.f);
         Matf4 const     mvs[1] = {mv};
         frustum_t const fr     = make_frustum(g_proj * mv);
         u32             drawn = 0, culled = 0;
+
+        /* A model's parts at a modelview; lit models take the sun, chicago
+         * parts their own blend */
+        auto draw_model = [&](model_t& model, Matf4 const& smv, bool lit) {
+            Matf4 const smvs[1] = {smv};
+            for(auto& part : model.parts)
+            {
+                if(!part.vao || !part.vao->m_element_buffer)
+                    continue;
+                if(!lit && !part.diffuse)
+                    continue;
+                gexxo::draw_command cmd{
+                    .call =
+                        {.indexed   = true,
+                         .instanced = true,
+                         .mode = gexxo::drawing::primitive::triangle_strip},
+                    .data =
+                        {
+                            .elements =
+                                {.count = static_cast<u32>(part.indices.size()),
+                                 .type  = semantic::type_t::u16},
+                            .arrays =
+                                {.count = static_cast<u32>(part.verts.size())},
+                            .instances = {.count = 1},
+                        },
+                    .program             = !lit           ? prog_diff
+                                           : part.diffuse ? prog_obj
+                                                          : prog_obj_flat,
+                    .vertices            = part.vao,
+                    .instance_transforms = gsl::span<Matf4 const>(smvs, 1),
+                    .material_color      = Vecf4{1.f},
+                };
+                if(part.diffuse)
+                    cmd.textures = {bind_t{.texture = part.diffuse}};
+                Matf4 const reflect_mtx[1] = {gx_reflection::texgen(smv)};
+                if(lit && part.diffuse && part.reflection)
+                {
+                    bool const masked = g_xbox && part.multipurpose;
+                    cmd.program = masked ? prog_reflect : prog_reflect_unmasked;
+                    cmd.textures.push_back(
+                        bind_t{
+                            .texture  = part.reflection->sphere,
+                            .texmap   = stage_t::texmap2,
+                            .texcoord = stage_t::texcoord1,
+                            .gen_src  = bind_t::src_normal,
+                            .gen_mtx  = GX_TEXMTX0});
+                    if(masked)
+                        cmd.textures.push_back(
+                            bind_t{
+                                .texture  = part.multipurpose,
+                                .texmap   = stage_t::texmap1,
+                                .texcoord = stage_t::texcoord0});
+                    cmd.texture_transforms =
+                        gsl::span<Matf4 const>(reflect_mtx, 1);
+                    cmd.konst_colors[0] = Vecf4(part.reflection_tint, 1.f);
+                }
+                gexxo::cull_state const cull{.front_face = false};
+                switch(part.blend)
+                {
+                case blend_t::opaque:
+                    // Model base map alpha is a mask (change colour,
+                    // specular), not coverage
+                    gfx.submit(cmd, cull, gexxo::blend_state{.opaque = true});
+                    break;
+                case blend_t::add:
+                    gfx.submit(cmd, cull, gexxo::blend_state{.additive = true});
+                    break;
+                case blend_t::multiply:
+                    gfx.submit(cmd, cull, gexxo::blend_state{.multiply = true});
+                    break;
+                case blend_t::alpha:
+                    gfx.submit(cmd, cull, gexxo::blend_state{});
+                    break;
+                }
+            }
+        };
+
+        /* The sky: around the camera, behind everything, out of the fog */
+        set_fog(nullptr);
+        if(sky && g_models.contains(sky->model))
+        {
+            auto& model = g_models[sky->model];
+            Matf4 view  = mv;
+            view[3]     = Vecf4{0.f, 0.f, 0.f, 1.f};
+            f32 const extent =
+                glm::length(model.center) + std::max(model.radius, 1.f);
+            GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+            draw_model(model, glm::scale(view, Vecf3{50.f / extent}), false);
+            GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+        }
+        set_fog(sky);
 
         for(auto& page : g_pages)
         {
@@ -1994,7 +2462,8 @@ i32 coffee_main(i32, cstring_w*)
         }
 
         // Objects: each instance's model parts at camera * model transform.
-        load_sun(mv);
+        load_sun(mv, sky ? *sky : sky_t{});
+        bake_reflections(mv);
         for(auto const& inst : g_objects)
         {
             if(!sphere_visible(fr, inst.center, inst.radius))
@@ -2006,40 +2475,7 @@ i32 coffee_main(i32, cstring_w*)
             if(it == g_models.end())
                 continue;
             drawn++;
-            Matf4 const smv     = mv * inst.xform;
-            Matf4 const smvs[1] = {smv};
-            for(auto& part : it->second.parts)
-            {
-                if(!part.vao || !part.vao->m_element_buffer)
-                    continue;
-                gexxo::draw_command cmd{
-                    .call =
-                        {.indexed   = true,
-                         .instanced = true,
-                         .mode = gexxo::drawing::primitive::triangle_strip},
-                    .data =
-                        {
-                            .elements =
-                                {.count = static_cast<u32>(part.indices.size()),
-                                 .type  = semantic::type_t::u16},
-                            .arrays =
-                                {.count = static_cast<u32>(part.verts.size())},
-                            .instances = {.count = 1},
-                        },
-                    .program  = part.diffuse ? prog_obj : prog_obj_flat,
-                    .vertices = part.vao,
-                    .instance_transforms = gsl::span<Matf4 const>(smvs, 1),
-                    .material_color      = Vecf4{1.f},
-                };
-                if(part.diffuse)
-                    cmd.textures = {bind_t{.texture = part.diffuse}};
-                // Model base map alpha is a mask (change colour, specular),
-                // not coverage
-                gfx.submit(
-                    cmd,
-                    gexxo::cull_state{.front_face = false},
-                    gexxo::blend_state{.opaque = true});
-            }
+            draw_model(it->second, mv * inst.xform, true);
         }
         gexxo::swapBuffers();
 
