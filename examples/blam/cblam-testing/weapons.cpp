@@ -7,6 +7,7 @@
 #include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "sounds.h"
 #include "ticks.h"
 
 #include <blam/volta/blam_antr.h>
@@ -36,7 +37,7 @@ using WeaponManifest = compo::SubsystemManifest<
         PhysicsBus,
         const NetworkState,
         const BlamFiles<halo_version>>,
-    empty_list_t>;
+    type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 {
@@ -472,8 +473,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         }
     }
 
-    /* Its seat sees the hands swing; the authority finds what is in reach,
-     * a little either side of the aim, and lands the weapon's melee jpt! */
+    /* Its seat sees the hands swing and every peer hears the blow land; the
+     * authority finds what is in reach, a little either side of the aim,
+     * and lands the weapon's melee jpt! */
     void struck(Proxy& p, WeaponFireEvent const& shot, BlamFiles<halo_version> const& files)
     {
         auto const& magic = files.container.magic;
@@ -490,8 +492,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             GameEvent ev{.type = GameEvent::PlayModelAnimation};
             game.inject(ev, &play);
         }
-        if(p.template subsystem<NetworkState>().replica)
-            return;
+        bool const replica = p.template subsystem<NetworkState>().replica;
         blam::tag_index_view<halo_version> index(files.container);
         auto tag = index.find(shot.weapon.tag_id);
         if(tag == index.end() || !(*tag).matches(blam::tag_class_t::weap))
@@ -499,6 +500,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         auto weapon = (*tag).template data<weapon_t>(magic);
         if(!weapon.has_value() || !weapon.value()[0].player_melee_damage.valid())
             return;
+        auto jpt = index.template data<blam::scn::damage_effect>(weapon.value()[0].player_melee_damage);
         for(f32 const turn : {0.f, melee_spread, -melee_spread})
         {
             Vecf3 const dir = glm::angleAxis(turn, Vecf3{0.f, 0.f, 1.f}) * shot.direction;
@@ -507,11 +509,23 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 .from   = shot.position,
                 .to     = shot.position + dir * melee_reach,
                 .ignore = shot.shooter,
-                .rewind = shot.view_tick,
+                .rewind = replica ? std::nullopt : shot.view_tick,
             };
             p.template subsystem<PhysicsBus>().process(ev, &ray);
             if(!ray.hit || ray.entity_id == 0)
                 continue;
+            if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+               sounds && jpt.has_value() && jpt.value()->sound.valid())
+            {
+                SoundEvent     sound_ev{.type = SoundEvent::play_sound};
+                PlaySoundEvent play{
+                    .sound    = &static_cast<blam::tagref_t const&>(jpt.value()->sound),
+                    .position = ray.point,
+                };
+                sounds->inject(sound_ev, &play);
+            }
+            if(replica)
+                return;
             auto const* target = p.template get<PlayerInfo>(ray.entity_id);
             ObjectHitEvent hit{
                 .damage         = weapon.value()[0].player_melee_damage,
