@@ -721,10 +721,8 @@ struct H3MapLoader : compo::SubsystemBase
             auto const* cluster = resources.has_value() ? el::cluster_at(map, *bsp, resources.value(), *eye) : nullptr;
             if(!cluster)
                 continue;
-            auto const acoustics = map.span(bsp->acoustics);
-            i16 const  index     = cluster->acoustics;
-            if(index >= 0 && static_cast<size_t>(index) < acoustics.size())
-                key = ensure_looping(acoustics[static_cast<size_t>(index)].background_sound);
+            if(auto const* acoustics = cluster->acoustics.resolve(map.span(bsp->acoustics)))
+                key = ensure_looping(acoustics->background_sound);
             break;
         }
         if(key == m_background)
