@@ -572,21 +572,14 @@ struct H3MapLoader : compo::SubsystemBase
         auto const& effect    = effects[running && effects.size() > 1 ? 1 : 0];
         auto const* material  = material_index < materials.size() ? &materials[material_index] : nullptr;
         /* Under water a material counts as its proxy, as the game reports it */
-        if(submerged)
-            for(auto const* under = material; under; under = under->parent.valid()
-                                                             ? globals->material(magic, under->parent)
-                                                             : nullptr)
-                if(auto proxies = map.span(under->underwater_proxies); !proxies.empty())
-                {
-                    material = globals->material(magic, proxies[0].proxy);
-                    break;
-                }
-        for(u32 depth = 0; material && depth < 8; depth++)
+        if(submerged && material)
+            material = material->underwater(*globals, magic);
+        for(u32 depth = 0; material && depth < el::phys::global_material_t::max_lineage; depth++)
         {
             for(auto const& sound : map.span(effect.sounds))
                 if(sound.material.raw.value() == material->name.raw.value() && sound.tag.valid())
                     return &sound.tag;
-            material = material->parent.valid() ? globals->material(magic, material->parent) : nullptr;
+            material = material->parent_in(*globals, magic);
         }
         return nullptr;
     }
