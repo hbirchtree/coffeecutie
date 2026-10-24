@@ -38,7 +38,13 @@ struct cluster_t
     i8                                atmosphere;
     i8                                camera_fx;
     u8                                unknown_0;
-    std::array<be<i16>, 7>            sound;
+    be<i16>                           acoustics; /*!< Into structure_bsp_t::acoustics */
+    be<i16>                           acoustics_sound_cluster;
+    be<i16>                           background_sound;
+    be<i16>                           sound_environment;
+    be<i16>                           weather;
+    be<i16>                           background_sound_cluster;
+    be<i16>                           reverb_sound_cluster;
     be<i16>                           first_decal;
     be<i16>                           decal_count;
     be<u16>                           flags;
@@ -165,6 +171,26 @@ static_assert(sizeof(cluster_portal_t) == 0x28);
  * scenario_lightmap (sLdT) tag, which also has the meshes clusters and
  * instances index.
  */
+/*! A cluster's sound: its looping background and reverb */
+struct acoustics_t
+{
+    string_id       name;
+    tag_reference<> sound_environment;
+    be<f32>         cutoff_distance;
+    be<f32>         interpolation_speed;
+    tag_reference<> background_sound;     /*!< lsnd */
+    tag_reference<> inside_cluster_sound; /*!< lsnd, only heard inside the cluster */
+    be<f32>         background_cutoff_distance;
+    be<u32>         scale_flags; /* TODO: flags */
+    be<f32>         interior_scale;
+    be<f32>         portal_scale;
+    be<f32>         exterior_scale;
+    be<f32>         interpolation_time;
+};
+
+static_assert(offsetof(acoustics_t, background_sound) == 0x1C);
+static_assert(sizeof(acoustics_t) == 0x54);
+
 struct structure_bsp_t
 {
     static constexpr tag_class_t tag_class = tag_class_t::sbsp;
@@ -184,7 +210,9 @@ struct structure_bsp_t
     std::array<u8, 0x3C>                  unknown_0;
     tag_block<cluster_t>                  clusters;
     tag_block<geometry_material_t>        materials;
-    std::array<u8, 0xE4>                  unknown_1;
+    std::array<u8, 0x3C>                  unknown_1;
+    tag_block<acoustics_t>                acoustics;
+    std::array<u8, 0x9C>                  unknown_4;
     tag_block<instanced_geometry_t>       instances;
     tag_block<tag_reference<>>              decorator_sets;
     render_geometry_t                     decorator_geometry;
@@ -202,6 +230,7 @@ static_assert(offsetof(structure_bsp_t, structure_surfaces) == 0x54);
 static_assert(offsetof(structure_bsp_t, cluster_portals) == 0x6C);
 static_assert(offsetof(structure_bsp_t, clusters) == 0xB4);
 static_assert(offsetof(structure_bsp_t, materials) == 0xC0);
+static_assert(offsetof(structure_bsp_t, acoustics) == 0x108);
 static_assert(offsetof(structure_bsp_t, instances) == 0x1B0);
 static_assert(offsetof(structure_bsp_t, decorator_geometry) == 0x1C8);
 static_assert(offsetof(structure_bsp_t, geometry) == 0x2E0);
@@ -543,7 +572,10 @@ struct scenario_t
     std::array<u8, 0xC>              unknown_5;
     tag_block<machine_placement_t>   machines;
     tag_block<palette_entry_t>       machine_palette;
-    std::array<u8, 0xF0>             unknown_6;
+    std::array<u8, 0x30>             unknown_6;
+    tag_block<sound_scenery_placement_t> sound_scenery;
+    tag_block<palette_entry_t>           sound_scenery_palette;
+    std::array<u8, 0xA8>             unknown_9;
     tag_block<starting_profile_t>    starting_profiles;
     tag_block<starting_location_t>   starting_locations;
     tag_block<trigger_volume_t>      trigger_volumes;
@@ -563,6 +595,7 @@ static_assert(offsetof(scenario_t, skies) == 0x30);
 static_assert(offsetof(scenario_t, scenery) == 0xBC);
 static_assert(offsetof(scenario_t, scenery_palette) == 0xC8);
 static_assert(offsetof(scenario_t, bipeds) == 0xD4);
+static_assert(offsetof(scenario_t, sound_scenery) == 0x188);
 static_assert(offsetof(scenario_t, vehicles) == 0xEC);
 static_assert(offsetof(scenario_t, weapons) == 0x11C);
 static_assert(offsetof(scenario_t, machines) == 0x140);

@@ -133,6 +133,10 @@ struct placement_t
     std::array<u8, Size - sizeof(object_placement_t)> unknown_0;
 };
 
+/*! Sound scenery: the head up to 0x54 holds, its own volume type, height,
+ * distance and cone overrides take the place of the variant */
+using sound_scenery_placement_t = placement_t<0x70>;
+
 using biped_placement_t     = placement_t<0x74>;
 using vehicle_placement_t   = placement_t<0xA8>;
 using equipment_placement_t = placement_t<0x8C>;
@@ -223,11 +227,45 @@ struct change_color_t
 
 static_assert(sizeof(change_color_t) == 0x18);
 
+/*! What a material sounds or looks like for one kind of effect */
+struct material_response_t
+{
+    tag_reference<> tag;
+    tag_reference<> secondary;
+    string_id       material; /*!< Global material name */
+    be<i16>         material_index;
+    u8              sweetener_mode;
+    u8              unknown_0;
+};
+
+static_assert(sizeof(material_response_t) == 0x28);
+
+/*! One kind of effect (a footstep, ...), per material */
+struct material_effect_t
+{
+    tag_block<std::array<u8, 0x2C>> old_materials;
+    tag_block<material_response_t>  sounds;
+    tag_block<material_response_t>  effects;
+};
+
+static_assert(sizeof(material_effect_t) == 0x24);
+
+/*! material_effects ("foot"): an object's footsteps and impacts by the
+ * material they land on; animation events index the effects */
+struct material_effects_t
+{
+    static constexpr tag_class_t tag_class = tag_class_t::foot;
+
+    tag_block<material_effect_t> effects;
+};
+
 struct object_t
 {
     std::array<u8, 0x34>            unknown_0;
     tag_reference<>                   model;
-    std::array<u8, 0x78>            unknown_1;
+    std::array<u8, 0x3C>            unknown_1;
+    tag_reference<>                 material_effects; /*!< foot */
+    std::array<u8, 0x2C>            unknown_6;
     tag_block<object_attachment_t>  attachments;
     std::array<u8, 0xC>             unknown_2;
     tag_block<change_color_t>       change_colors;
@@ -247,6 +285,7 @@ struct object_t
 
 static_assert(sizeof(object_t) == 0xF8);
 static_assert(offsetof(object_t, model) == 0x34);
+static_assert(offsetof(object_t, material_effects) == 0x80);
 static_assert(offsetof(object_t, attachments) == 0xBC);
 static_assert(offsetof(object_t, change_colors) == 0xD4);
 static_assert(offsetof(object_t, multiplayer) == 0xEC);

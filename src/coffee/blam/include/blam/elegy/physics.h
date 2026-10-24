@@ -306,10 +306,34 @@ struct global_material_t
     be<f32>               friction;
     be<f32>               restitution;
     be<f32>               density;
-    std::array<u8, 0x14C> unknown_0;
+    std::array<u8, 0x1C>  unknown_0;
+    /*! Small, medium, large, rolling, grinding, melee small, medium, large */
+    std::array<tag_reference<>, 8> sound_sweeteners;
+    std::array<tag_reference<>, 6> effect_sweeteners;
+    std::array<tag_reference<>, 3> water_ripples;
+    be<u32>               sweetener_inheritance; /*!< Set bits: blank sweeteners stay blank */
+    tag_reference<>       material_effects; /*!< foot */
+    tag_block<std::array<u8, 0xC>> underwater_proxies;
+
+    /*! A sound sweetener, from the parent material when blank and inherited */
+    template<typename Globals>
+    inline tag_reference<> const* sound_sweetener(Globals const& globals, tag_magic const& magic, u32 index) const
+    {
+        auto const* material = this;
+        for(u32 depth = 0; material && depth < 8; depth++)
+        {
+            if(material->sound_sweeteners[index].valid() || (material->sweetener_inheritance.value() & (1u << index)))
+                return material->sound_sweeteners[index].valid() ? &material->sound_sweeteners[index] : nullptr;
+            material = material->parent.valid() ? globals.material(magic, material->parent) : nullptr;
+        }
+        return nullptr;
+    }
 };
 
 static_assert(offsetof(global_material_t, friction) == 0x18);
+static_assert(offsetof(global_material_t, sound_sweeteners) == 0x40);
+static_assert(offsetof(global_material_t, sweetener_inheritance) == 0x150);
+static_assert(offsetof(global_material_t, material_effects) == 0x154);
 static_assert(sizeof(global_material_t) == 0x170);
 
 /*! globals ("matg"), as far as physics needs it */

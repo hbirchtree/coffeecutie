@@ -27,6 +27,7 @@
 #include <fstream>
 #include <map>
 #include <optional>
+#include <ranges>
 #include <memory>
 #include <string>
 #include <vector>
@@ -984,6 +985,15 @@ int dump_player(elegy::map_container const& map)
             auto const unit = map.get<elegy::object_t>(reps[i].third_person_unit);
             if(!unit)
                 continue;
+            if(auto const effects = map.get<elegy::material_effects_t>(unit->material_effects))
+                for(auto const& [e, effect] : std::views::enumerate(map.span(effects->effects)))
+                {
+                    auto sounds = map.span(effect.sounds);
+                    fmt::print("  material effect {} ('{}'): {} sounds\n", e, map.name_of(unit->material_effects),
+                               sounds.size());
+                    for(auto const& sound : sounds)
+                        fmt::print("    {} -> {}\n", map.string(sound.material), map.name_of(sound.tag));
+                }
             auto colors = map.span(unit->change_colors);
             for(size_t c = 0; c < colors.size(); c++)
                 for(auto const& p : map.span(colors[c].initial_permutations))
