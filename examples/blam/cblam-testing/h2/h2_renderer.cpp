@@ -215,7 +215,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
                 i32  alpha_test = mat.alpha_test ? 1 : 0;
                 i32  bumped     = mat.bump.sampler ? 1 : 0;
-                auto frag_u     = gfx::make_uniform_list(
+                auto frag_u     = std::tuple_cat(gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Fragment,
                     gfx::uniform_pair<const i32>{
                         {"alpha_test"},
@@ -265,22 +265,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                         semantic::SpanOne<const Vecf4>(vis.planar_fog.color)},
                     gfx::uniform_pair<Vecf2 const>{
                         {"planar_fog_opaque"},
-                        semantic::SpanOne<const Vecf2>(vis.planar_fog.opaque)},
-                    gfx::uniform_pair<Matf4 const>{
-                        {"csm_matrices"}, semantic::Span<const Matf4>(csm.matrices)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"csm_texel"}, semantic::SpanOne<const Vecf4>(csm.texel)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"csm_params"}, semantic::SpanOne<const Vecf4>(csm.params)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"csm_tiles"}, semantic::Span<const Vecf4>(csm.tiles)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"csm_bias"}, semantic::SpanOne<const Vecf4>(csm.bias)},
-                    gfx::uniform_pair<Matf4 const>{
-                        {"csm_occluder"}, semantic::SpanOne<const Matf4>(csm.occluder)},
-                    gfx::uniform_pair<Vecf4 const>{
-                        {"csm_occluder_info"},
-                        semantic::SpanOne<const Vecf4>(csm.occluder_info)});
+                        semantic::SpanOne<const Vecf2>(vis.planar_fog.opaque)}),
+                        csm.uniforms());
                 auto lm_sampler = scene.lightmap_sampler
                                       ? scene.lightmap_sampler
                                       : m_no_lightmaps_sampler;
