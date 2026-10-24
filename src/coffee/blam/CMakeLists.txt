@@ -3,6 +3,7 @@
 # uncompressed PC maps + read raw (e.g. RGB565) pixels. Drop them there.
 set(BLAM_SOURCES
   private/common/dds.cpp
+  private/common/texels.cpp
   private/gx/tiling.cpp
   private/volta/blam_antr_sample.cpp
   private/volta/blam_map.cpp
