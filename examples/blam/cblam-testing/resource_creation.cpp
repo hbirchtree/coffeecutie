@@ -717,12 +717,8 @@ void create_resources(compo::EntityContainer& e)
                      blam::tag_index_view<halo_version> index(files.container);
                      auto const named = [&index](std::string const& want, blam::tag_class_t of)
                          -> blam::tag_t const* {
-                         for(auto const& tag : index)
-                             if(tag.matches(blam::tag_class_t::obje) &&
-                                (of == blam::tag_class_t::none || tag.matches(of)) &&
-                                index.name_of(tag) == want)
-                                 return &tag;
-                         return nullptr;
+                         auto it = index.find(want, of == blam::tag_class_t::none ? blam::tag_class_t::obje : of);
+                         return it != index.end() && (*it).matches(blam::tag_class_t::obje) ? &*it : nullptr;
                      };
                      blam::tag_t const* found = named(name, cls);
                      if(!found)

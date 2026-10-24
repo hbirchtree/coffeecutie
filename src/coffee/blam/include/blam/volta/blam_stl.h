@@ -332,6 +332,15 @@ class tag_index_view
         return end();
     }
 
+    /*! The first tag of a class with exactly this name */
+    iterator find(std::string_view name, tag_class_t cls) const
+    {
+        for(iterator it = begin(); it != end(); ++it)
+            if((*it).matches(cls) && (*it).to_name().to_string(m_ptr) == name)
+                return it;
+        return end();
+    }
+
     template<typename T, typename Key>
     std::optional<T const*> data(Key const& key) const
     {
