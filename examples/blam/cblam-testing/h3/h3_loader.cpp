@@ -70,6 +70,56 @@ struct CollisionMesh
     std::vector<u16>   materials; /*!< Per triangle: matg material index, 0xFFFF none */
 };
 
+/* The level's water surfaces, binned on a coarse grid: water is drawn, not
+ * collided with, so what stands in it is found by height */
+struct WaterSurfaces
+{
+    static constexpr f32 cell = 4.f;
+
+    std::vector<std::array<Vecf3, 3>>        triangles;
+    std::unordered_map<u64, std::vector<u32>> cells;
+
+    static u64 key(i32 x, i32 y)
+    {
+        return (u64(u32(x)) << 32) | u32(y);
+    }
+
+    void add(std::array<Vecf3, 3> const& t)
+    {
+        auto const index = static_cast<u32>(triangles.size());
+        triangles.push_back(t);
+        Vecf2 const lo = glm::min(glm::min(Vecf2(t[0]), Vecf2(t[1])), Vecf2(t[2]));
+        Vecf2 const hi = glm::max(glm::max(Vecf2(t[0]), Vecf2(t[1])), Vecf2(t[2]));
+        for(i32 x = i32(std::floor(lo.x / cell)); x <= i32(std::floor(hi.x / cell)); x++)
+            for(i32 y = i32(std::floor(lo.y / cell)); y <= i32(std::floor(hi.y / cell)); y++)
+                cells[key(x, y)].push_back(index);
+    }
+
+    /*! The highest water surface above `point` that is below `ceiling` */
+    std::optional<f32> surface_above(Vecf3 const& point, f32 ceiling) const
+    {
+        auto it = cells.find(key(i32(std::floor(point.x / cell)), i32(std::floor(point.y / cell))));
+        if(it == cells.end())
+            return std::nullopt;
+        std::optional<f32> out;
+        for(u32 index : it->second)
+        {
+            auto const& t = triangles[index];
+            Vecf2 const a = Vecf2(t[1] - t[0]), b = Vecf2(t[2] - t[0]), p = Vecf2(point - t[0]);
+            f32 const   d = a.x * b.y - a.y * b.x;
+            if(std::abs(d) < 1e-8f)
+                continue;
+            f32 const u = (p.x * b.y - p.y * b.x) / d, v = (a.x * p.y - a.y * p.x) / d;
+            if(u < 0.f || v < 0.f || u + v > 1.f)
+                continue;
+            f32 const z = t[0].z + u * (t[1].z - t[0].z) + v * (t[2].z - t[0].z);
+            if(z > point.z && z < ceiling && (!out || z > *out))
+                out = z;
+        }
+        return out;
+    }
+};
+
 /* The pixel formats Halo 1/2 already upload, by Halo 3 format */
 static std::optional<blam::bitm::format_t> h1_format(el::bitmap_format_t format)
 {
@@ -187,6 +237,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        m_water = {};
         m_footsteps = nullptr;
         m_step_from.reset();
         m_impact_sounds.clear();
@@ -509,7 +560,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     /* The player unit's footstep for the ground's global material: walking
      * or running, the material's own else its parents' */
-    el::tag_reference<> const* footstep_sound(u16 material_index, bool running)
+    el::tag_reference<> const* footstep_sound(u16 material_index, bool submerged, bool running)
     {
         auto const& map     = *m_map;
         auto const  magic   = map.magic();
@@ -520,6 +571,16 @@ struct H3MapLoader : compo::SubsystemBase
         auto const  materials = map.span(globals->materials);
         auto const& effect    = effects[running && effects.size() > 1 ? 1 : 0];
         auto const* material  = material_index < materials.size() ? &materials[material_index] : nullptr;
+        /* Under water a material counts as its proxy, as the game reports it */
+        if(submerged)
+            for(auto const* under = material; under; under = under->parent.valid()
+                                                             ? globals->material(magic, under->parent)
+                                                             : nullptr)
+                if(auto proxies = map.span(under->underwater_proxies); !proxies.empty())
+                {
+                    material = globals->material(magic, proxies[0].proxy);
+                    break;
+                }
         for(u32 depth = 0; material && depth < 8; depth++)
         {
             for(auto const& sound : map.span(effect.sounds))
@@ -567,7 +628,8 @@ struct H3MapLoader : compo::SubsystemBase
         m_container.subsystem_cast<PhysicsBus>().process(event, &ray);
         if(!ray.hit)
             return;
-        auto const* sound = footstep_sound(ray.material_type, m_running);
+        bool const  submerged = m_water.surface_above(ray.point, eye.z).has_value();
+        auto const* sound     = footstep_sound(ray.material_type, submerged, m_running);
         u64 const   key   = sound ? ensure_sound(*sound) : 0;
         if(!key)
             return;
@@ -998,6 +1060,7 @@ struct H3MapLoader : compo::SubsystemBase
     bool build_zone(el::scenario_t const& scnr, u32 bsps, Vecf3 const& eye)
     {
         auto const& map = *m_map;
+        m_water         = {};
         /* Fallback slot for parts whose render method is not usable */
         m_scene.materials.push_back(Material{.name = "(fallback)"});
         /* One lightprobe array for all of them: the largest lightmap's size,
@@ -1938,6 +2001,10 @@ struct H3MapLoader : compo::SubsystemBase
                                      : nullptr;
             auto& mat   = m_scene.materials[material_for(method)];
             auto* draws = &mat.draws;
+            if(mat.variant == Variant::water && !entity)
+                for(auto const& t : m_triangles)
+                    m_water.add({m_vertices[vbase + t[0]].position, m_vertices[vbase + t[1]].position,
+                                 m_vertices[vbase + t[2]].position});
             if(entity)
             {
                 if(mat.object_draws.empty() || mat.object_draws.back().entity != entity)
@@ -3112,6 +3179,7 @@ struct H3MapLoader : compo::SubsystemBase
     std::vector<Physics::Impact>          m_impacts;
 
     el::material_effects_t const* m_footsteps{nullptr}; /*!< The player unit's */
+    WaterSurfaces                 m_water;
     std::optional<Vecf3>          m_step_from;
     time_point                    m_step_time{};
     bool                          m_running{false};
