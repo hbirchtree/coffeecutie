@@ -302,14 +302,25 @@ u32 level_count(resource_view const& view, bitmap_image_t const& image)
     return texture ? std::max<u32>(texture->texture.mipmap_count, 1) : 1;
 }
 
-bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<u8>& out)
+namespace {
+
+/* Level `level` of slice `slice` out of `slices`: each level holds every
+ * slice in turn, the mip tail too */
+bool linearize_slice(
+    resource_view const& view, bitmap_image_t const& image, u32 level, u32 slice, u32 slices, std::vector<u8>& out)
 {
     auto const format = image.format.value();
     auto const layout = layout_of(format);
     u32 const  width  = static_cast<u32>(image.width.value());
     u32 const  height = static_cast<u32>(image.height.value());
     if(level == 0)
-        return linearize(top_level(view, image), format, width, height, image.xbox_flags, out);
+    {
+        auto const top  = top_level(view, image);
+        u64 const  skip = u64(slice) * slice_stride(format, width, height);
+        if(slice && skip >= top.size())
+            return false;
+        return linearize(slice ? top.subspan(skip) : top, format, width, height, image.xbox_flags, out);
+    }
     auto const* interop = view.root_as<d3d_structure<texture_interop_t>>();
     auto const* texture = interop ? view.resolve(*interop) : nullptr;
     if(!texture || !layout.valid() || level >= level_count(view, image))
@@ -319,10 +330,11 @@ bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32
     u32 const w2 = std::bit_ceil(std::max(width, 1u)), h2 = std::bit_ceil(std::max(height, 1u));
     /* Without the top level split off, the levels follow it, unless it is
      * small enough to share their tile */
-    u64 at = high_res || std::min(w2, h2) <= 16 ? 0 : level_bytes(layout, width, height);
+    u64 at = high_res || std::min(w2, h2) <= 16 ? 0 : level_bytes(layout, width, height) * slices;
     for(u32 i = 1; i < level && std::min(std::max(w2 >> i, 1u), std::max(h2 >> i, 1u)) > 16; i++)
-        at += level_bytes(layout, std::max(w2 >> i, 1u), std::max(h2 >> i, 1u));
+        at += level_bytes(layout, std::max(w2 >> i, 1u), std::max(h2 >> i, 1u)) * slices;
     u32 const lw = std::max(w2 >> level, 1u), lh = std::max(h2 >> level, 1u);
+    at += u64(slice) * level_bytes(layout, lw, lh);
     u32       ox = 0, oy = 0, pitch = lw;
     if(std::min(lw, lh) <= 16)
     {
@@ -352,6 +364,19 @@ bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32
             std::reverse(out.begin() + static_cast<std::ptrdiff_t>(i),
                          out.begin() + static_cast<std::ptrdiff_t>(i + layout.swap_bytes));
     return true;
+}
+
+} // namespace
+
+bool linearize_level(resource_view const& view, bitmap_image_t const& image, u32 level, std::vector<u8>& out)
+{
+    return linearize_slice(view, image, level, 0, 1, out);
+}
+
+bool linearize_cube_level(
+    resource_view const& view, bitmap_image_t const& image, u32 level, u32 face, std::vector<u8>& out)
+{
+    return linearize_slice(view, image, level, face, 6, out);
 }
 
 Span<u8 const> top_level_interleaved(resource_view const& view, bitmap_image_t const& image)
