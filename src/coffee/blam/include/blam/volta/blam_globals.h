@@ -94,6 +94,15 @@ static_assert(offsetof(falling_damage, falling) == 0x10);
 static_assert(offsetof(falling_damage, vehicle_collision) == 0x5c);
 static_assert(sizeof(falling_damage) == 152);
 
+/*! Per material type, in its order; only the melee sound is decoded */
+struct material
+{
+    u32                              padding[868 / 4];
+    tagref_typed_t<tag_class_t::snd> melee_hit_sound;
+};
+
+static_assert(sizeof(material) == 884);
+
 /*! Only the blocks that name the player's unit and hands are decoded; everything
  *  ahead of them is skipped by offset, because the rest of the globals tag has
  *  no description we can check a layout against.
@@ -114,6 +123,7 @@ struct globals
     reference<player_information>      player;
     reference<first_person_interface>  first_person;
     reference<falling_damage>          falling;
+    reference<material>                materials;
 };
 
 static_assert(offsetof(globals, grenades) == 0x128);
@@ -122,5 +132,6 @@ static_assert(offsetof(globals, multiplayer) == 0x164);
 static_assert(offsetof(globals, player) == 0x170);
 static_assert(offsetof(globals, first_person) == 0x17c);
 static_assert(offsetof(globals, falling) == 0x188);
+static_assert(offsetof(globals, materials) == 0x194);
 
 } // namespace blam::globals
