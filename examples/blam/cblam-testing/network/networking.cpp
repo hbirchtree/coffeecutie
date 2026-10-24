@@ -857,12 +857,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         player.permissions.camera = false;
         player.spawned            = false;
 
+        /* create_camera() set the map's basis before this player came */
+        std::optional<glm::mat3> basis;
+        for(auto entity : e.select<PlayerInfo, PlayerCamera>())
+            if(!entity.get<PlayerInfo>().is_remote())
+                basis = entity.get<PlayerCamera>().camera_opts.world_basis;
+
         /* Write birds-eye position to PlayerCamera + mark dirty */
         for(auto entity : e.select<PlayerInfo, PlayerCamera>())
         {
             auto [info, cam] = entity.components();
             if(&info != &player)
                 continue;
+            if(basis)
+                cam.camera_opts.world_basis = *basis;
             std::tie(cam.camera.position, cam.camera.rotation) =
                 birds_eye_for_map(m_map->internal_name());
             if(auto* net = e.get<NetworkInfo>(entity.id()))
@@ -3514,10 +3522,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto& info = player->biped.get<PlayerInfo>();
             if(!info.permissions.camera)
                 break;
+            /* A body walked here goes where its inputs take it, once in */
+            bool const simulated = sync.flags & CameraSync::simulated;
+            bool const walked    = info.mode.simulated && info.mode.physics;
+            info.mode.physics    = sync.flags & CameraSync::physics;
+            info.mode.simulated  = simulated;
+            if(simulated && walked)
+                break;
             auto& cam           = player->biped.get<PlayerCamera>();
             cam.camera.position = Vecf3(sync.position);
             cam.camera.rotation = sync.rotation;
-            info.mode.physics   = sync.flags & CameraSync::physics;
 
             auto targets = verified_connections();
             targets.erase(connection);
