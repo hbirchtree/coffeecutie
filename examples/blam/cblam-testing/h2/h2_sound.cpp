@@ -11,6 +11,8 @@
 #include <coffee/components/restricted_subsystem.h>
 #include <coffee/core/CDebug>
 
+#include "../world/looping_music.h"
+
 namespace h2 {
 
 using H2SoundManifest = compo::SubsystemManifest<
@@ -101,22 +103,10 @@ struct DimeterSoundSystem
             cWarning("H2: sound: music needs IMA4 buffers, none here");
             return;
         }
-        m_music.source = api->alloc_source();
-        m_music.source->template set_property<oaf::source_property::relative>(true);
-        m_music.source->template set_property<oaf::source_property::gain>(music.gain);
-        m_music.source->spatialize_as(oaf::source_t::never);
-        m_music.intro = upload(*api, music.in);
-        m_music.loop  = upload(*api, music.loop);
-        if(!m_music.loop)
-        {
-            m_music = {};
+        auto intro = upload(*api, music.in);
+        auto loop  = upload(*api, music.loop);
+        if(!loop || !m_music.play(*api, music.gain, std::move(intro), {std::move(loop)}))
             return;
-        }
-        if(m_music.intro)
-            m_music.source->queue(*m_music.intro);
-        else
-            m_music.source->template set_property<oaf::source_property::looping>(true);
-        m_music.source->queue(*m_music.loop);
         cDebug(
             "H2: sound: {} playing, intro {} + loop {} bytes, {} Hz {}ch",
             music.name,
@@ -129,36 +119,24 @@ struct DimeterSoundSystem
 #endif
     }
 
-    /* Once the intro has played the source loops on the rest */
     void update_music()
     {
 #if defined(FEATURE_ENABLE_OAF)
-        if(!m_music.source || !m_music.intro)
-            return;
-        auto [queued, processed] = m_music.source->buffer_queue();
-        if(processed < 1)
-            return;
-        m_music.source->unqueue(*m_music.intro);
-        m_music.intro.reset();
-        m_music.source->template set_property<oaf::source_property::looping>(true);
+        m_music.update();
 #endif
     }
 
     void stop_music()
     {
 #if defined(FEATURE_ENABLE_OAF)
-        m_music = {};
+        m_music.stop();
 #endif
     }
 
     u32 m_generation{0};
 #if defined(FEATURE_ENABLE_OAF)
     oaf::api* m_audio{nullptr};
-    struct
-    {
-        std::shared_ptr<oaf::source_t> source;
-        std::shared_ptr<oaf::buffer_t> intro, loop;
-    } m_music;
+    world::LoopingMusic m_music;
 #endif
 };
 
