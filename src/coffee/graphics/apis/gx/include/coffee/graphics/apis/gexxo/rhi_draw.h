@@ -358,9 +358,28 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
                 s.stage, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO);
             GX_SetTevAlphaOp(
                 s.stage, GX_TEV_ADD, GX_TB_ZERO, scale, GX_TRUE, GX_TEVPREV);
+        } else if(s.op == program_t::stage_t::custom)
+        {
+            auto const& c = s.color_combiner;
+            auto const& a = s.alpha_combiner;
+            GX_SetTevColorIn(s.stage, c.a, c.b, c.c, c.d);
+            GX_SetTevColorOp(s.stage, c.op, c.bias, c.scale, c.clamp, c.out);
+            GX_SetTevAlphaIn(s.stage, a.a, a.b, a.c, a.d);
+            GX_SetTevAlphaOp(s.stage, a.op, a.bias, a.scale, a.clamp, a.out);
+            GX_SetTevKColorSel(s.stage, s.konst_color);
+            GX_SetTevSwapMode(s.stage, GX_TEV_SWAP0, s.tex_swap);
         } else
             GX_SetTevOp(s.stage, s.op);
     }
+    for(u32 i = 0; i < cmd.konst_colors.size(); i++)
+        if(auto const& k = cmd.konst_colors[i])
+            GX_SetTevKColor(
+                GX_KCOLOR0 + i,
+                GXColor{
+                    static_cast<u8>(k->r * 255.f),
+                    static_cast<u8>(k->g * 255.f),
+                    static_cast<u8>(k->b * 255.f),
+                    static_cast<u8>(k->a * 255.f)});
 
     // Default to alpha blending; a blend_state in the state changes overrides
     // it.
@@ -457,6 +476,12 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         {0xE0, 0xE0, 0x40}, /* yellow*/
     };
 
+    for(u32 i = 0; i < cmd.texture_transforms.size(); i++)
+    {
+        Mtx tm;
+        detail::glm_to_mtx(cmd.texture_transforms[i], tm);
+        GX_LoadTexMtxImm(tm, GX_TEXMTX0 + i * 3, GX_MTX3x4);
+    }
     bool const has_normals = std::any_of(
         vao.m_attributes.begin(), vao.m_attributes.end(), [](auto const& a) {
             return a.role == vertex_attribute::normal;
