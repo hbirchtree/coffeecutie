@@ -73,6 +73,29 @@ struct entity_spawn_t
     glm::quat rotation;
 };
 
+/* Combat, as the server reports it: tag handles stay as sent (little-endian
+ * like the map's own), so they compare with the map's directly */
+struct equipment_t
+{
+    u32               player_idx;
+    blam::tag_index<> held, slung;
+};
+
+struct shot_t
+{
+    u32               player_idx;
+    glm::vec3         position, direction;
+    blam::tag_index<> weapon; // the grenade's proj when thrown
+    bool              thrown;
+};
+
+struct hit_t
+{
+    u32               shooter_player;
+    blam::tag_index<> projectile;
+    glm::vec3         point;
+};
+
 struct handlers_t
 {
     std::function<void(u32 player_idx)>          joined;
@@ -82,6 +105,10 @@ struct handlers_t
     std::function<void(glm::vec3 const&, float)> player_spawn;
     /* The server moving our own camera, e.g. onto a spawn point */
     std::function<void(camera_sync_t const&)> teleport;
+    std::function<void(equipment_t const&)>   equipment;
+    std::function<void(shot_t const&)>        shot;
+    std::function<void(hit_t const&)>         hit;
+    std::function<void(u32 net_id)>           despawn;
 };
 
 /* BlamGraphics cameras rotate a Y-up basis; this maps it onto Halo's world */
@@ -474,6 +501,43 @@ class client_t
                              m.tag.tag_id,
                              glm::vec3(le(m.position)),
                              le(m.rotation)});
+                });
+            break;
+        case msg::EquipmentSync:
+            values.template operator()<nm::EquipmentSync>(
+                [&](nm::EquipmentSync const& m) {
+                    if(on.equipment)
+                        on.equipment({le(m.player_idx), m.weapon, m.slung});
+                });
+            break;
+        case msg::WeaponFire:
+            values.template operator()<nm::WeaponFire>(
+                [&](nm::WeaponFire const& m) {
+                    if(on.shot)
+                        on.shot(
+                            {le(m.player_idx),
+                             glm::vec3(le(m.position)),
+                             glm::vec3(le(m.direction)),
+                             m.weapon,
+                             (le(std::to_underlying(m.flags)) &
+                              nm::WeaponFire::thrown) != 0});
+                });
+            break;
+        case msg::ObjectHit:
+            values.template operator()<nm::ObjectHit>(
+                [&](nm::ObjectHit const& m) {
+                    if(on.hit)
+                        on.hit(
+                            {le(m.shooter_player),
+                             m.projectile,
+                             glm::vec3(le(m.point))});
+                });
+            break;
+        case msg::ObjectDespawn:
+            values.template operator()<nm::ObjectDespawn>(
+                [&](nm::ObjectDespawn const& m) {
+                    if(on.despawn)
+                        on.despawn(le(m.net_id));
                 });
             break;
         case msg::PlayerSpawn: {

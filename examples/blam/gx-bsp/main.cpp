@@ -240,6 +240,7 @@ struct object_inst
     Vecf3 center{}; // world-space bounding sphere
     f32   radius{0};
     u32   net_id{0};
+    bool              hidden{false}; // despawned by the server
 };
 
 static std::map<blam::tag_index<>, model_t> g_models; // by mod2 tag id
@@ -247,6 +248,19 @@ static std::vector<object_inst> g_objects; // placed instances
 static u32                      g_kind_count[kind_count] = {};
 // mod2 of the unit players spawn as
 static blam::tag_index<> g_player_model = blam::tag_index<>::none();
+
+/* What the server can name at run time, prepared while the map is mapped:
+ * the map is let go after loading */
+struct catalog_entry
+{
+    blam::tag_index<> model{blam::tag_index<>::none()};
+    blam::tag_index<> projectile{blam::tag_index<>::none()}; // weap: trigger 0
+    f32               speed{0.f};                            // proj: wu/s
+    f32               gravity{0.f}; // proj: air gravity scale
+};
+
+static std::map<blam::tag_index<>, catalog_entry> g_catalog;
+static Matf4 g_hand{1.f}; // the player biped's "right hand", model space
 
 static std::vector<page_t> g_pages;
 static Vecf3               g_bb_min{1e9f, 1e9f, 1e9f};
@@ -835,6 +849,105 @@ static blam::tag_index<> player_biped_id(blam::map_container<V> const& c)
 }
 
 template<typename V>
+static void build_catalog(blam::map_container<V> const& c)
+{
+    u32 const   cnt = from_le(c.tags->tag_count);
+    auto const* tg  = c.tags->tags(c.map);
+    for(u32 i = 0; i < cnt; i++)
+    {
+        auto const& t    = tg[i];
+        bool const  weap = t.matches(blam::tag_class_t::weap);
+        bool const  proj = t.matches(blam::tag_class_t::proj);
+        if(!weap && !proj && !t.matches(blam::tag_class_t::eqip) &&
+           !t.matches(blam::tag_class_t::garb))
+            continue;
+        auto obj = t.template data<blam::scn::object>(c.magic);
+        if(obj.has_error())
+            continue;
+        catalog_entry e;
+        e.model = obj.value()->model.tag_id;
+        if(blam::tag_at(c, e.model) && !g_models.contains(e.model))
+            load_model_cpu(c, e.model);
+        if(weap)
+            if(auto w = t.template data<blam::scn::weapon>(c.magic);
+               !w.has_error())
+                if(auto tr = w.value()->triggers.data(c.magic);
+                   !tr.has_error() && !tr.value().empty())
+                    e.projectile = tr.value()[0].projectile.tag_id;
+        if(proj)
+            if(auto pr = t.template data<blam::scn::projectile>(c.magic);
+               !pr.has_error())
+            {
+                e.speed   = from_le(pr.value()->initial_velocity) * 30.f;
+                e.gravity = from_le(pr.value()->air_gravity_scale);
+            }
+        g_catalog[t.tag_id] = e;
+    }
+    LOG("catalog: %u weapons, equipment and projectiles",
+        static_cast<unsigned>(g_catalog.size()));
+}
+
+/* Where a biped's "right hand" marker sits in its bind pose: the marker in
+ * its node, up the node's parents */
+template<typename V>
+static void load_hand_marker(
+    blam::map_container<V> const& c, blam::tag_index<> mod2_id)
+{
+    auto const* t = blam::tag_at(c, mod2_id);
+    if(!t)
+        return;
+    auto hdr = t->template data<blam::mod2::header<V>>(c.magic);
+    if(hdr.has_error())
+        return;
+    auto markers = hdr.value()->markers.data(c.magic);
+    auto bones   = hdr.value()->bones.data(c.magic);
+    if(markers.has_error() || bones.has_error())
+        return;
+    auto v3 = [](Vecf3 const& v) {
+        return Vecf3{from_le(v.x), from_le(v.y), from_le(v.z)};
+    };
+    // mod2 rotations are stored conjugated
+    auto rotation = [](f32 x, f32 y, f32 z, f32 w) {
+        return glm::mat4_cast(
+            glm::conjugate(
+                Quatf(from_le(w), from_le(x), from_le(y), from_le(z))));
+    };
+    for(auto const& m : markers.value())
+    {
+        std::string_view const name(
+            m.name.data.data(),
+            strnlen(m.name.data.data(), m.name.data.size()));
+        if(name != "right hand")
+            continue;
+        auto inst = m.instances.data(c.magic);
+        if(inst.has_error() || inst.value().empty())
+            return;
+        auto const& in = inst.value()[0];
+        Matf4       xf =
+            glm::translate(Matf4{1.f}, v3(in.position)) *
+            rotation(
+                in.rotation.x, in.rotation.y, in.rotation.z, in.rotation.w);
+        for(i32 node = in.node_idx;
+            node >= 0 && static_cast<u32>(node) < bones.value().size();)
+        {
+            auto const& b = bones.value()[node];
+            xf            = glm::translate(Matf4{1.f}, v3(b.translation)) *
+                 rotation(
+                     b.rotation.x, b.rotation.y, b.rotation.z, b.rotation.w) *
+                 xf;
+            u16 const parent = from_le(b.parent);
+            node = parent == blam::mod2::bone::invalid_bone ? -1 : parent;
+        }
+        g_hand = xf;
+        LOG("hand marker at %d,%d,%d cm",
+            int(xf[3].x * 100),
+            int(xf[3].y * 100),
+            int(xf[3].z * 100));
+        return;
+    }
+}
+
+template<typename V>
 static void build_objects(
     blam::map_container<V> const& c, blam::scn::scenario<V> const* scn)
 {
@@ -877,7 +990,9 @@ static void build_objects(
             if(g_models.find(g_player_model) == g_models.end() &&
                blam::tag_at(c, g_player_model))
                 load_model_cpu(c, g_player_model);
+            load_hand_marker(c, g_player_model);
         }
+    build_catalog(c);
 
     u32 verts = 0;
     for(auto const& [id, m] : g_models)
@@ -1985,7 +2100,27 @@ static void set_fog(sky_t const* sky)
 static gx_net::client_t      g_net;
 static std::map<u32, size_t> g_net_objects;    // net id -> g_objects
 static std::map<u32, size_t> g_remote_players; // player idx -> g_objects
+
+/* Weapons in players' hands, and shots in flight, as the server reports */
+static std::map<u32, blam::tag_index<>> g_held; // player idx -> weap
+static std::map<u32, Vecf3>             g_aim;  // player idx -> look direction
+
+struct projectile_t
+{
+    Vecf3             pos, vel;
+    Vecf3             prev; // last frame's position, the streak's tail
+    f32               gravity{0.f};
+    blam::tag_index<> tag, model;
+    u32               shooter{0};
+    f32               age{0.f};
+};
+
+static std::vector<projectile_t> g_projectiles;
+static constexpr f32             kGravity        = 3.27f; // wu/s^2, 9.8 m/s^2
+static constexpr f32             kProjectileLife = 3.f;   // s, if nothing hits
 static constexpr f32         kEyeHeight = 0.62f;
+/* From the bind pose's hanging hand up to where an aiming one is */
+static Vecf4 const kAimingHand{0.1f, 0.f, 0.15f, 0.f};
 
 /* gateway.txt on the disc: "gateway-ip[:port] [server-ip:port]", no file =
  * no networking */
@@ -2019,6 +2154,140 @@ static void place_instance(object_inst& inst, Matf4 const& xform)
         xform * Vecf4(it != g_models.end() ? it->second.center : Vecf3{}, 1.f));
 }
 
+/* Bullets without a model: a streak over the last frame's flight, as a quad
+ * facing the eye. Built in eye space and cut at the near plane, as muzzles
+ * sit by the camera */
+static void draw_tracers(Matf4 const& mv)
+{
+    constexpr f32 near = 0.2f, half_width = 0.02f;
+
+    struct streak_t
+    {
+        Vecf3 head, tail;
+    };
+
+    std::vector<streak_t> streaks;
+    for(auto const& p : g_projectiles)
+    {
+        if(g_models.contains(p.model))
+            continue;
+        Vecf3 head = Vecf3(mv * Vecf4(p.pos, 1.f));
+        Vecf3 tail = Vecf3(mv * Vecf4(p.prev, 1.f));
+        if(head.z > -near && tail.z > -near)
+            continue;
+        if(head.z > -near)
+            head = glm::mix(tail, head, (-near - tail.z) / (head.z - tail.z));
+        else if(tail.z > -near)
+            tail = glm::mix(head, tail, (-near - head.z) / (tail.z - head.z));
+        streaks.push_back({head, tail});
+    }
+    if(streaks.empty())
+        return;
+    Mtx id;
+    guMtxIdentity(id);
+    GX_LoadPosMtxImm(id, GX_PNMTX0);
+    GX_SetCurrentMtx(GX_PNMTX0);
+    GX_ClearVtxDesc();
+    GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GX_SetNumChans(1);
+    GX_SetChanCtrl(
+        GX_COLOR0A0,
+        GX_DISABLE,
+        GX_SRC_VTX,
+        GX_SRC_VTX,
+        0,
+        GX_DF_NONE,
+        GX_AF_NONE);
+    GX_SetNumTexGens(0);
+    GX_SetNumTevStages(1);
+    GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+    GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+    GX_SetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
+    GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_CLEAR);
+    GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+    GX_SetCullMode(GX_CULL_NONE);
+    GX_Begin(GX_QUADS, GX_VTXFMT0, static_cast<u16>(streaks.size() * 4));
+    for(auto const& s : streaks)
+    {
+        // Widen across the streak, as seen from the eye
+        Vecf3 side = glm::cross(s.head - s.tail, s.head);
+        side = glm::length(side) > 1e-6f ? glm::normalize(side) * half_width
+                                         : Vecf3{half_width, 0, 0};
+        Vecf3 const v[4] = {
+            s.head - side, s.head + side, s.tail + side, s.tail - side};
+        for(u32 i = 0; i < 4; i++)
+        {
+            GX_Position3f32(v[i].x, v[i].y, v[i].z);
+            if(i < 2)
+                GX_Color4u8(0xFF, 0xE8, 0x90, 0xFF);
+            else
+                GX_Color4u8(0xFF, 0xA0, 0x40, 0x00);
+        }
+    }
+    GX_End();
+    GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    GX_SetCullMode(GX_CULL_BACK);
+}
+
+/* Held weapons on remote bipeds, then shots in flight */
+template<typename DrawModel>
+static void draw_combat(Matf4 const& mv, f32 dt, DrawModel&& draw_model)
+{
+    for(auto const& [player, weapon] : g_held)
+    {
+        auto biped = g_remote_players.find(player);
+        auto entry = g_catalog.find(weapon);
+        if(biped == g_remote_players.end() || entry == g_catalog.end() ||
+           !g_models.contains(entry->second.model))
+            continue;
+        // Until bipeds are posed, the weapon sits at the hand, along the aim
+        Matf4 const& body = g_objects[biped->second].xform;
+        auto const   aim  = g_aim.find(player);
+        Vecf3 const  x    = aim != g_aim.end() ? aim->second : Vecf3(body[0]);
+        Vecf3 const  y    = glm::normalize(glm::cross(Vecf3{0, 0, 1}, x));
+        Vecf3 const  hand = Vecf3(body * (g_hand[3] + kAimingHand));
+        draw_model(
+            g_models[entry->second.model],
+            mv *
+                Matf4{
+                    Vecf4(x, 0),
+                    Vecf4(y, 0),
+                    Vecf4(glm::cross(x, y), 0),
+                    Vecf4(hand, 1)},
+            true);
+    }
+
+    for(auto& p : g_projectiles)
+    {
+        p.prev = p.pos;
+        p.vel.z -= kGravity * p.gravity * dt;
+        p.pos += p.vel * dt;
+        p.age += dt;
+    }
+    std::erase_if(
+        g_projectiles, [](auto const& p) { return p.age > kProjectileLife; });
+    for(auto const& p : g_projectiles)
+    {
+        if(!g_models.contains(p.model))
+            continue;
+        // Models face +X; point that along the flight
+        Vecf3 const x = glm::normalize(p.vel);
+        Vecf3 const up =
+            std::abs(x.z) > 0.99f ? Vecf3{1, 0, 0} : Vecf3{0, 0, 1};
+        Vecf3 const y = glm::normalize(glm::cross(up, x));
+        Matf4       m{
+            Vecf4(x, 0.f),
+            Vecf4(y, 0.f),
+            Vecf4(glm::cross(x, y), 0.f),
+            Vecf4(p.pos, 1.f)};
+        draw_model(g_models[p.model], mv * m, true);
+    }
+    draw_tracers(mv);
+}
+
 static void poll_network(u32 frame)
 {
     gx_net::fingerprint_t const fp{
@@ -2039,16 +2308,65 @@ static void poll_network(u32 frame)
         auto it = g_net_objects.find(e.net_id);
         if(it == g_net_objects.end())
         {
-            // The map is unmapped by now, so nothing new can be loaded
-            LOG("net: no model for spawned object %08x (tag %08x)",
-                e.net_id,
-                e.tag_id.value());
-            return;
+            // Only what the catalogue has: the map is let go by now
+            auto entry = g_catalog.find(e.tag_id);
+            if(entry == g_catalog.end() ||
+               !g_models.contains(entry->second.model))
+            {
+                LOG("net: no model for spawned object %08x (tag %08x)",
+                    e.net_id,
+                    e.tag_id.value());
+                return;
+            }
+            g_objects.push_back(
+                {entry->second.model,
+                 Matf4{1.f},
+                 {},
+                 g_models[entry->second.model].radius,
+                 e.net_id});
+            it = g_net_objects.emplace(e.net_id, g_objects.size() - 1).first;
         }
+        g_objects[it->second].hidden = false;
         place_instance(
             g_objects[it->second],
             glm::translate(Matf4{1.f}, e.position) *
                 glm::mat4_cast(e.rotation));
+    };
+    on.equipment = [](gx_net::equipment_t const& e) {
+        g_held[e.player_idx] = e.held;
+    };
+    on.shot = [](gx_net::shot_t const& s) {
+        auto weapon = g_catalog.find(s.weapon);
+        if(weapon == g_catalog.end())
+            return;
+        // A throw names its projectile, a shot its weapon
+        blam::tag_index<> const proj =
+            s.thrown ? s.weapon : weapon->second.projectile;
+        auto p = g_catalog.find(proj);
+        if(p == g_catalog.end())
+            return;
+        f32 const speed = std::max(p->second.speed, 1.f);
+        g_projectiles.push_back({
+            .pos     = s.position,
+            .vel     = glm::normalize(s.direction) * speed,
+            .prev    = s.position,
+            .gravity = p->second.gravity,
+            .tag     = proj,
+            .model   = p->second.model,
+            .shooter = s.player_idx,
+        });
+    };
+    on.hit = [](gx_net::hit_t const& h) {
+        auto it = std::find_if(
+            g_projectiles.begin(), g_projectiles.end(), [&](auto const& p) {
+                return p.shooter == h.shooter_player && p.tag == h.projectile;
+            });
+        if(it != g_projectiles.end())
+            g_projectiles.erase(it);
+    };
+    on.despawn = [](u32 net_id) {
+        if(auto it = g_net_objects.find(net_id); it != g_net_objects.end())
+            g_objects[it->second].hidden = true;
     };
     on.camera = [](gx_net::camera_sync_t const& c) {
         if(g_models.find(g_player_model) == g_models.end())
@@ -2066,6 +2384,8 @@ static void poll_network(u32 frame)
                      .first;
         }
         f32 const yaw = std::atan2(c.forward.y, c.forward.x);
+        if(glm::length(c.forward) > 0.f)
+            g_aim[c.player_idx] = glm::normalize(c.forward);
         place_instance(
             g_objects[it->second],
             glm::rotate(
@@ -2723,6 +3043,8 @@ i32 coffee_main(i32, cstring_w*)
         bake_reflections(mv);
         for(auto const& inst : g_objects)
         {
+            if(inst.hidden)
+                continue;
             if(!sphere_visible(fr, inst.center, inst.radius))
             {
                 culled++;
@@ -2734,6 +3056,9 @@ i32 coffee_main(i32, cstring_w*)
             drawn++;
             draw_model(it->second, mv * inst.xform, true);
         }
+#if defined(COFFEE_GEKKO)
+        draw_combat(mv, dt, draw_model);
+#endif
         // Water last, over what's beneath it, without writing depth
         f32 const   secs = ticks_to_microsecs(gettime() - water_epoch) / 1e6f;
         Vecf3 const sky_tint =
