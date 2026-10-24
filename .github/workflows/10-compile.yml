@@ -415,7 +415,7 @@ jobs:
       if: env.MAP_ACCESS_TOKEN != ''
       run: |
         mkdir -p maps/xbox_ex
-        curl -fsS -o maps/xbox_ex/beavercreek.map -H "Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/xbox_ex/beavercreek.map
+        curl -fsS --retry 5 --retry-all-errors --retry-delay 15 -o maps/xbox_ex/beavercreek.map -H "Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/xbox_ex/beavercreek.map
     - name: Run simulator smoke test
       env:
         # Runner VMs have no GPU, so loading and rendering crawl
