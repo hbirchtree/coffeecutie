@@ -124,7 +124,7 @@ struct ProjectileSystem
     {
         proj_t const&              tag      = *flight.tag;
         auto const&                magic    = files(p).container.magic;
-        auto const                 material = material_of(p, ray);
+        auto const                 material = struck_material(p, ray, files(p));
         proj_t::material_response_t const* response = nullptr;
         if(auto responses = tag.material_responses.data(magic);
            responses.has_value() &&
@@ -354,41 +354,6 @@ struct ProjectileSystem
     }
 
     /* The structure's shader says; bodies go by what they are */
-    material_t material_of(Proxy& p, Physics::Raycast const& ray)
-    {
-        if(ray.entity_id == 0)
-        {
-            if(!ray.shader || !ray.shader->valid())
-                return material_t::stone;
-            auto const& f = files(p);
-            blam::tag_index_view<halo_version> index(f.container);
-            auto shader = index.find(*ray.shader);
-            if(shader == index.end())
-                return material_t::stone;
-            auto surface = (*shader).template data<
-                blam::shader::radiosity_properties>(f.container.magic);
-            return surface.has_value() ? surface.value()[0].physics
-                                       : material_t::stone;
-        }
-        /* The struck part's own, an energy shield's included */
-        if(ray.material_type < blam::scn::material_type_count)
-            return static_cast<material_t>(ray.material_type);
-        std::shared_ptr<CollisionGeometry const> geometry;
-        if(auto const* info = p.template get<PlayerInfo>(ray.entity_id))
-            geometry = info->biped.collision;
-        else if(auto const* physics = p.template get<ObjectPhysics>(ray.entity_id))
-            geometry = physics->collision;
-        if(geometry && ray.part >= 0 && static_cast<size_t>(ray.part) < geometry->nodes.size() &&
-           geometry->nodes[ray.part].material_type < blam::scn::material_type_count)
-            return static_cast<material_t>(geometry->nodes[ray.part].material_type);
-        if(p.template get<PlayerInfo>(ray.entity_id))
-            return material_t::cyborg_armor;
-        if(auto const* physics = p.template get<ObjectPhysics>(ray.entity_id);
-           physics && physics->drive)
-            return material_t::metal_thicc;
-        return material_t::metal_thin;
-    }
-
     void play(
         Proxy&                p,
         blam::tagref_t const& effect,
