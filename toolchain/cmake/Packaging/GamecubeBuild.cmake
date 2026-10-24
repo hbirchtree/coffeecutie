@@ -62,6 +62,26 @@ macro(GAMECUBE_PACKAGE)
     add_dependencies(${GC_TARGET} ${GC_TARGET}_resources_${_gc_res_idx})
     math(EXPR _gc_res_idx "${_gc_res_idx} + 1")
   endforeach()
+  # Files dropped into the assets folder (maps, configs) relink, and so repack
+  # the disc, without a code change
+  set(_gc_assets_stamp "${CMAKE_CURRENT_BINARY_DIR}/${GC_TARGET}_assets.stamp")
+  add_custom_target(${GC_TARGET}_assets_stamp
+    COMMAND
+      "${CMAKE_SOURCE_DIR}/toolchain/desktop/gc_assets_stamp.py"
+        "${CMAKE_CURRENT_BINARY_DIR}/${GC_TARGET}_assets"
+        "${_gc_assets_stamp}"
+    BYPRODUCTS "${_gc_assets_stamp}"
+  )
+  math(EXPR _gc_res_last "${_gc_res_idx} - 1")
+  if(_gc_res_idx GREATER 0)
+    foreach(_gc_res RANGE ${_gc_res_last})
+      add_dependencies(${GC_TARGET}_assets_stamp ${GC_TARGET}_resources_${_gc_res})
+    endforeach()
+  endif()
+  add_dependencies(${GC_TARGET} ${GC_TARGET}_assets_stamp)
+  set_property(
+    TARGET ${GC_TARGET} APPEND PROPERTY LINK_DEPENDS "${_gc_assets_stamp}"
+  )
   add_custom_command(
     TARGET "${GC_TARGET}"
     POST_BUILD
