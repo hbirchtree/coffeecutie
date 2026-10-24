@@ -1,5 +1,6 @@
 #include "h2_bitmap.h"
 #include "h2_scene.h"
+#include "../world/static_collision.h"
 
 #include <blam/common/vertex_pack.h>
 #include "h2_shell_load.h"
@@ -893,25 +894,14 @@ struct H2MapLoader : compo::SubsystemBase
         auto vertices = bsp.vertices.data(magic);
         if(surfaces.has_error() || edges.has_error() || vertices.has_error())
             return;
-        i32 const vbase = static_cast<i32>(out.vertices.size());
-        /* The BSP's bounding surfaces sit on vertices at infinity, which a
-         * quantized BVH cannot hold */
-        std::vector<bool> finite;
-        for(auto const& v : vertices.value())
-        {
-            Vecf3 point{from_le(v.point[0]), from_le(v.point[1]), from_le(v.point[2])};
-            finite.push_back(
-                std::isfinite(point.x) && std::isfinite(point.y) &&
-                std::isfinite(point.z));
-            out.vertices.push_back(
-                finite.back() ? Vecf3(transform * Vecf4(point, 1.f)) : Vecf3{});
-        }
-        blam::collision_bsp::fan_surfaces<dim::coll::traits>(
+        world::append_fanned<dim::coll::traits>(
+            out,
+            transform,
+            vertices.value(),
+            [](auto const& v) { return Vecf3{from_le(v.point[0]), from_le(v.point[1]), from_le(v.point[2])}; },
             surfaces.value(),
             edges.value(),
-            finite,
-            [&](u32 s) { return surfaces.value()[s].has(dim::coll::surface_flags_t::invalid); },
-            [&](i32 a, i32 b, i32 c) { out.indices.insert(out.indices.end(), {vbase + a, vbase + b, vbase + c}); });
+            [&](u32 s) { return surfaces.value()[s].has(dim::coll::surface_flags_t::invalid); });
     }
 
     /* The highest-priority fog plane with a fog tag: fills the space
