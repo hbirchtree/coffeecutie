@@ -49,11 +49,6 @@
 #include <malloc.h>
 #endif
 
-#if defined(FEATURE_ENABLE_BULLET3)
-#include <BulletCollision/CollisionShapes/btBvhTriangleMeshShape.h>
-#include <BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h>
-#endif
-
 #include <array>
 #include <functional>
 #include <bit>

@@ -66,12 +66,7 @@ static const auto object_recipe = compo::EntityRecipe{
 };
 
 /* Collision polygons fanned into triangles, decoded out of the big-endian map */
-struct CollisionMesh
-{
-    std::vector<Vecf3> vertices;
-    std::vector<i32>   indices;
-    std::vector<u16>   materials; /*!< Per triangle: matg material index, 0xFFFF none */
-};
+using world::CollisionMesh;
 
 /* The level's water surfaces, binned on a coarse grid: water is drawn, not
  * collided with, so what stands in it is found by height */
