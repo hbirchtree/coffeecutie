@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <malloc.h>
 #include <memory>
 #include <ogc/gx.h>
@@ -722,6 +723,20 @@ struct program_t
              * double-biased-multiply detail blend (detail grey 0.5 = neutral).
              */
             modulate_prev_2x = 0xFE,
+            /* The stage's combiner below, as GX_SetTevColorIn/Op and
+             * GX_SetTevAlphaIn/Op take it */
+            custom = 0xFD,
+        };
+
+        /* out = d op ((1 - c) * a + c * b), biased and scaled, into `out` */
+        struct combiner_t
+        {
+            u8 a, b, c, d;
+            u8 op{GX_TEV_ADD};
+            u8 bias{GX_TB_ZERO};
+            u8 scale{GX_CS_SCALE_1};
+            u8 clamp{GX_TRUE};
+            u8 out{GX_TEVPREV};
         };
 
         enum texcoord_t
@@ -756,6 +771,14 @@ struct program_t
         texmap_t            texmap{texmap_null};
         channel_t::output_t color{
             channel_t::color0a0}; // rasterised colour input
+
+        /* For op = custom; alpha defaults to passing APREV through */
+        combiner_t color_combiner{
+            GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV};
+        combiner_t alpha_combiner{
+            GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV};
+        u8 konst_color{GX_TEV_KCSEL_1}; // what GX_CC_KONST reads
+        u8 tex_swap{GX_TEV_SWAP0};      // texture channel swap table
     };
 
     std::vector<stage_t> stages;
@@ -848,6 +871,13 @@ struct draw_command
     /* Material register colour for channels sourcing GX_SRC_REG, else a
      * per-instance debug palette */
     std::optional<Vecf4> material_color{};
+
+    /* GX_KCOLOR0..3, for stages reading GX_CC_KONST */
+    std::array<std::optional<Vecf4>, 4> konst_colors{};
+
+    /* Loaded as GX_TEXMTX0, GX_TEXMTX1, ... (3x4; a 2x4 texgen uses the
+     * first two rows), for texture coordinates generated through them */
+    gsl::span<Matf4 const> texture_transforms{};
 };
 
 /* A recorded GX display list: the GX_Begin..vertices..GX_End command stream for
