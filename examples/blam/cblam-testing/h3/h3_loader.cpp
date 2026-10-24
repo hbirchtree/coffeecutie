@@ -1443,17 +1443,6 @@ struct H3MapLoader : compo::SubsystemBase
         Span<el::collision_material_t const>    materials,
         std::vector<bool> const&                skipped_materials = {})
     {
-        i32 const vbase = static_cast<i32>(out.vertices.size());
-        /* Bounding surfaces sit on vertices at infinity, which a quantized
-         * BVH cannot hold */
-        std::vector<bool> finite;
-        finite.reserve(bsp.vertices.size());
-        for(auto const& v : bsp.vertices)
-        {
-            Vecf3 const point = v.point.value();
-            finite.push_back(std::isfinite(point.x) && std::isfinite(point.y) && std::isfinite(point.z));
-            out.vertices.push_back(finite.back() ? Vecf3(transform * Vecf4(point, 1.f)) : Vecf3{});
-        }
         auto skip = [&](u32 s) {
             if(stl_types::any_flag_of(bsp.surfaces[s].flags, el::coll::surface_flags_t::invalid))
                 return true;
@@ -1461,15 +1450,16 @@ struct H3MapLoader : compo::SubsystemBase
             return material >= 0 && static_cast<size_t>(material) < skipped_materials.size() &&
                    skipped_materials[static_cast<size_t>(material)];
         };
-        blam::collision_bsp::fan_surfaces<el::coll::traits>(
-            bsp.surfaces, bsp.edges, finite, skip, [&](i32 a, i32 b, i32 c, u32 s) {
-                out.indices.insert(out.indices.end(), {vbase + a, vbase + b, vbase + c});
-                i16 const material = bsp.surfaces[s].material.value();
-                i16 const global   = material >= 0 && static_cast<size_t>(material) < materials.size()
-                                         ? materials[static_cast<size_t>(material)].global_material.value()
-                                         : i16(-1);
-                out.materials.push_back(global >= 0 ? static_cast<u16>(global) : u16(0xFFFF));
-            });
+        auto material_of = [&](u32 s) {
+            i16 const material = bsp.surfaces[s].material.value();
+            i16 const global   = material >= 0 && static_cast<size_t>(material) < materials.size()
+                                     ? materials[static_cast<size_t>(material)].global_material.value()
+                                     : i16(-1);
+            return global >= 0 ? static_cast<u16>(global) : u16(0xFFFF);
+        };
+        world::append_fanned<el::coll::traits>(
+            out, transform, bsp.vertices, [](auto const& v) { return v.point.value(); }, bsp.surfaces, bsp.edges, skip,
+            material_of);
     }
 
     /* One static body for the loaded structure BSP */
