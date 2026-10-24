@@ -565,6 +565,12 @@ void create_resources(compo::EntityContainer& e)
                              {"connected", net.connected},
                              {"physics", info.mode.physics},
                              {"position", vec(cam.camera.position)},
+                             {"rotation",
+                              {cam.camera.rotation.w,
+                               cam.camera.rotation.x,
+                               cam.camera.rotation.y,
+                               cam.camera.rotation.z}},
+                             {"seat", info.riding.seat},
                              {"biped", std::move(biped)},
                          });
                      }
@@ -586,6 +592,13 @@ void create_resources(compo::EntityContainer& e)
                                   model.position.x,
                                   model.position.y,
                                   model.position.z,
+                              }},
+                             {"rotation",
+                              nlohmann::json{
+                                  model.rotation.w,
+                                  model.rotation.x,
+                                  model.rotation.y,
+                                  model.rotation.z,
                               }},
                          };
                      }
