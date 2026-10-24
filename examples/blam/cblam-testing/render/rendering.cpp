@@ -2513,7 +2513,7 @@ struct MeshRenderer
             gfx::uniform_pair{
                 {"camera"sv, 1}, semantic::SpanOne<const Matf4>(player.matrix)},
             get_renderflag_uniform());
-        auto fragment_u = gfx::make_uniform_list(
+        auto fragment_u = std::tuple_cat(gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"cameraRotation", 2},
@@ -2527,28 +2527,8 @@ struct MeshRenderer
                 {"time", 22},
                 semantic::SpanOne<const f32>(t),
             },
-            gfx::uniform_pair<Matf4 const>{
-                {"csm_matrices"sv},
-                semantic::Span<const Matf4>(shadow_sampling(idx).matrices)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_texel"sv},
-                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).texel)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_params"sv},
-                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).params)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_tiles"sv},
-                semantic::Span<const Vecf4>(shadow_sampling(idx).tiles)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_bias"sv},
-                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).bias)},
-            gfx::uniform_pair<Matf4 const>{
-                {"csm_occluder"sv},
-                semantic::SpanOne<const Matf4>(shadow_sampling(idx).occluder)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_occluder_info"sv},
-                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).occluder_info)},
-            get_renderflag_uniform());
+            get_renderflag_uniform()),
+            shadow_sampling(idx).uniforms());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
@@ -2675,7 +2655,7 @@ struct MeshRenderer
             gfx::uniform_pair{
                 {"camera"sv, 1}, semantic::SpanOne(player.matrix)},
             get_renderflag_uniform());
-        auto fragment_u = gfx::make_uniform_list(
+        auto fragment_u = std::tuple_cat(gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"camera_position", 21},
@@ -2685,28 +2665,8 @@ struct MeshRenderer
                 {"time", 22},
                 semantic::SpanOne<const f32>(t),
             },
-            gfx::uniform_pair<Matf4 const>{
-                {"csm_matrices"sv},
-                semantic::Span<const Matf4>(shadow_sampling(idx).matrices)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_texel"sv},
-                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).texel)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_params"sv},
-                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).params)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_tiles"sv},
-                semantic::Span<const Vecf4>(shadow_sampling(idx).tiles)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_bias"sv},
-                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).bias)},
-            gfx::uniform_pair<Matf4 const>{
-                {"csm_occluder"sv},
-                semantic::SpanOne<const Matf4>(shadow_sampling(idx).occluder)},
-            gfx::uniform_pair<Vecf4 const>{
-                {"csm_occluder_info"sv},
-                semantic::SpanOne<const Vecf4>(shadow_sampling(idx).occluder_info)},
-            get_renderflag_uniform());
+            get_renderflag_uniform()),
+            shadow_sampling(idx).uniforms());
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Fragment,

@@ -10,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <memory>
+#include <tuple>
 #include <vector>
 
 namespace blam_render {
@@ -80,6 +81,20 @@ struct CascadedShadowMap
         Matf4 occluder{1.f}; /*!< World to occluder uv + depth */
         Vecf4 occluder_info{0.f}; /*!< world map texel size (0 = none), its depth per world
                                        unit, reach, softness */
+
+        /*! As fragment uniforms, to std::tuple_cat onto a gfx::make_uniform_list */
+        auto uniforms() const&
+        {
+            return std::make_tuple(
+                gfx::uniform_pair<Matf4 const>{{"csm_matrices"}, semantic::Span<const Matf4>(matrices)},
+                gfx::uniform_pair<Vecf4 const>{{"csm_texel"}, semantic::SpanOne<const Vecf4>(texel)},
+                gfx::uniform_pair<Vecf4 const>{{"csm_params"}, semantic::SpanOne<const Vecf4>(params)},
+                gfx::uniform_pair<Vecf4 const>{{"csm_tiles"}, semantic::Span<const Vecf4>(tiles)},
+                gfx::uniform_pair<Vecf4 const>{{"csm_bias"}, semantic::SpanOne<const Vecf4>(bias)},
+                gfx::uniform_pair<Matf4 const>{{"csm_occluder"}, semantic::SpanOne<const Matf4>(occluder)},
+                gfx::uniform_pair<Vecf4 const>{{"csm_occluder_info"}, semantic::SpanOne<const Vecf4>(occluder_info)});
+        }
+        void uniforms() && = delete;
     };
 
     /*! The frustum of a camera from its inverse view-projection */

@@ -267,7 +267,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         base_curve[k]   = mat.layers[k].base_curve;
                         detail_curve[k] = mat.layers[k].detail_curve;
                     }
-                    auto frag_u = gfx::make_uniform_list(
+                    auto frag_u = std::tuple_cat(gfx::make_uniform_list(
                         stage_t::Fragment,
                         gfx::uniform_pair<const i32>{
                             {"debug_view"}, semantic::SpanOne<const i32>(debug_view)},
@@ -299,20 +299,6 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf4 const>{
                             {"intensity_scales"},
                             semantic::Span<const Vecf4>(scene.intensity_scales.data(), scene.intensity_scales.size())},
-                        gfx::uniform_pair<Matf4 const>{
-                            {"csm_matrices"}, semantic::Span<const Matf4>(m_shadow_sampling.matrices)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_texel"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.texel)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_params"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.params)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_tiles"}, semantic::Span<const Vecf4>(m_shadow_sampling.tiles)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_bias"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.bias)},
-                        gfx::uniform_pair<Matf4 const>{
-                            {"csm_occluder"}, semantic::SpanOne<const Matf4>(m_shadow_sampling.occluder)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_occluder_info"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.occluder_info)},
                         gfx::uniform_pair<Vecf3 const>{
                             {"sun_direction"}, semantic::SpanOne<const Vecf3>(scene.sun_direction)},
                         gfx::uniform_pair<Vecf4 const>{
@@ -322,7 +308,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"atmosphere"},
                             semantic::Span<const Vecf4>(scene.atmosphere.data(), scene.atmosphere.size())},
                         gfx::uniform_pair<Vecf3 const>{
-                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)});
+                            {"camera_position"}, semantic::SpanOne<const Vecf3>(eye)}),
+                            m_shadow_sampling.uniforms());
                     auto const& l = mat.layers;
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"base_m0", 0}, or_white(l[0].base)},
@@ -339,7 +326,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                     res = submit(frag_u, samplers);
                 } else
                 {
-                    auto frag_u = gfx::make_uniform_list(
+                    auto frag_u = std::tuple_cat(gfx::make_uniform_list(
                         stage_t::Fragment,
                         gfx::uniform_pair<const i32>{
                             {"debug_view"}, semantic::SpanOne<const i32>(debug_view)},
@@ -375,20 +362,6 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                         gfx::uniform_pair<Vecf4 const>{
                             {"intensity_scales"},
                             semantic::Span<const Vecf4>(scene.intensity_scales.data(), scene.intensity_scales.size())},
-                        gfx::uniform_pair<Matf4 const>{
-                            {"csm_matrices"}, semantic::Span<const Matf4>(m_shadow_sampling.matrices)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_texel"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.texel)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_params"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.params)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_tiles"}, semantic::Span<const Vecf4>(m_shadow_sampling.tiles)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_bias"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.bias)},
-                        gfx::uniform_pair<Matf4 const>{
-                            {"csm_occluder"}, semantic::SpanOne<const Matf4>(m_shadow_sampling.occluder)},
-                        gfx::uniform_pair<Vecf4 const>{
-                            {"csm_occluder_info"}, semantic::SpanOne<const Vecf4>(m_shadow_sampling.occluder_info)},
                         gfx::uniform_pair<Vecf3 const>{
                             {"sun_direction"}, semantic::SpanOne<const Vecf3>(scene.sun_direction)},
                         gfx::uniform_pair<Vecf4 const>{
@@ -444,7 +417,8 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
                             {"illum_layer_xform"}, semantic::SpanOne<const Vecf4>(mat.illum_layer_xform)},
                         gfx::uniform_pair<const i32>{{"change_color"}, semantic::SpanOne<const i32>(change_color)},
                         gfx::uniform_pair<Vecf3 const>{
-                            {"change_colors"}, semantic::Span<const Vecf3>(change_colors.data(), 2)});
+                            {"change_colors"}, semantic::Span<const Vecf3>(change_colors.data(), 2)}),
+                            m_shadow_sampling.uniforms());
                     auto samplers = gfx::make_sampler_list(
                         gfx::sampler_definition_t{stage_t::Fragment, {"diffuse", 0}, or_white(mat.diffuse)},
                         gfx::sampler_definition_t{stage_t::Fragment, {"detail", 1}, or_white(mat.detail)},
