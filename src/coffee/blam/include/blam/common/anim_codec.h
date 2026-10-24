@@ -423,4 +423,14 @@ inline std::optional<decoded_t> decode_clip(
     return out;
 }
 
+/*! FNV-1a over the poses' bytes: bit-exact, for before/after comparisons */
+inline libc_types::u64 pose_hash(Span<node_pose_t const> poses)
+{
+    libc_types::u64 h     = 0xcbf29ce484222325ull;
+    auto const*     bytes = reinterpret_cast<u8 const*>(poses.data());
+    for(size_t i = 0; i < poses.size() * sizeof(node_pose_t); i++)
+        h = (h ^ bytes[i]) * 0x100000001b3ull;
+    return h;
+}
+
 } // namespace blam::anim
