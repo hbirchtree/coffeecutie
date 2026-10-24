@@ -4,7 +4,8 @@
  * BlamGraphics server over GameNetworkingSockets on the console's behalf.
  * Every datagram is a header and a payload; all fields are little-endian, as
  * are the BlamGraphics messages carried inside. GNS does the reliability on
- * the server side of the gateway, the console side is plain UDP. */
+ * the server side of the gateway; on the console side, reliable messages
+ * carry a sequence number and are resent until acknowledged, in order. */
 
 #include <cstdint>
 
@@ -28,6 +29,11 @@ enum kind_t : std::uint16_t
     message = 3,
     /* console -> gateway: no payload, keeps the session alive */
     keepalive = 4,
+    /* both ways: reliable_t, then one BlamGraphics message. Delivered once
+     * and in order: the receiver takes only the next sequence number */
+    reliable_message = 5,
+    /* both ways: ack_t, the next sequence number the sender of it expects */
+    ack = 6,
 };
 
 enum flags_t : std::uint16_t
@@ -35,6 +41,10 @@ enum flags_t : std::uint16_t
     none     = 0x0,
     reliable = 0x1, /* message: send it reliably on the GNS side */
 };
+
+/* Reliable messages in flight at once, and how often they're resent */
+constexpr std::uint32_t reliable_window = 32;
+constexpr std::uint32_t resend_ms       = 200;
 
 struct header_t
 {
@@ -58,6 +68,16 @@ struct status_t
     };
 
     std::uint32_t state;
+};
+
+struct reliable_t
+{
+    std::uint32_t seq;
+};
+
+struct ack_t
+{
+    std::uint32_t next;
 };
 
 static_assert(sizeof(header_t) == 8);

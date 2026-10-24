@@ -18,5 +18,7 @@ if(GAMECUBE)
   target_link_libraries(BlamBSP_GX PRIVATE libogc::bba)
   target_include_directories(BlamBSP_GX PRIVATE
       ${PROJECT_SOURCE_DIR}/tools/blam/gc-gateway/include
+      # BlamGraphics' message layouts, network/network_events.h
+      ${PROJECT_SOURCE_DIR}/examples/blam/cblam-testing
   )
 endif()
