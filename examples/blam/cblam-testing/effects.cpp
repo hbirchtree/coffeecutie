@@ -56,6 +56,8 @@ using blam::scn::point_physics;
 using blend_t = EffectScene::blend_t;
 
 constexpr f32 halo_gravity = 9.81f / 3.048f; /* wu/s^2 */
+/* Air's density over a pphy's mass scale: 0.0011 at 118613.34 per unit */
+constexpr f32 air_mass_over_radius_cubed = .0011f * 118613.34f;
 
 /* Tag colors are a, r, g, b */
 Vecf4 rgba(Vecf4 const& argb)
@@ -73,10 +75,20 @@ struct place_t
 /* How a point_physics moves things */
 struct motion_t
 {
-    f32  gravity{0.f}; /* wu/s^2, up is positive */
-    f32  drag{0.f};    /* per second */
+    f32  gravity{0.f};  /* wu/s^2, up is positive */
+    f32  drag{0.f};     /* per second, for weather */
+    f32  friction{0.f}; /* drag per second at a radius of 1 wu */
     f32  elasticity{0.f};
     bool collides{false};
+
+    /* The air brakes a sprite by its cross-section over its mass, which
+     * along with the air it carries grows with its volume */
+    f32 slowing(f32 radius, f32 dt) const
+    {
+        if(friction <= 0.f)
+            return 0.f;
+        return radius > 0.f ? std::min(friction * dt / radius, 1.f) : 1.f;
+    }
 
     static motion_t from(point_physics const* pphy)
     {
@@ -90,6 +102,7 @@ struct motion_t
             .drag       = pphy->mass_scale > 0.f
                               ? pphy->air_friction / pphy->mass_scale
                               : 0.f,
+            .friction   = pphy->air_friction / (pphy->mass_scale + air_mass_over_radius_cubed),
             .elasticity = pphy->elasticity,
             .collides   = (pphy->flags & flags_t::collides_with_structures) !=
                         flags_t::none,
@@ -106,6 +119,42 @@ struct EffectSystem
     using Proxy = compo::proxy_of<EffectManifest>;
 
     /* A sprite with a life of its own, from a part tag or a pctl state */
+    /* A part's sprite animation: its initial sequences play once, the
+     * looping ones repeat and the final ones lead into death */
+    struct animation_t
+    {
+        i16              first{0};
+        std::vector<i16> frames; /* sprites per sequence, from first */
+        i32              initial{0}, looping{0}, final{0}; /* frames each */
+
+        i32 total() const { return initial + looping + final; }
+
+        /* The sequence and frame within it at a point in the animation */
+        std::pair<i16, i16> at(f32 frame, f32 left) const
+        {
+            i32 g = static_cast<i32>(frame);
+            if(g >= initial)
+            {
+                if(final > 0 && left < final)
+                    g = initial + looping + (final - static_cast<i32>(left)) - 1;
+                else if(looping > 0)
+                    g = initial + (g - initial) % looping;
+                else
+                    g = std::min(g, initial + final - 1);
+            }
+            g = std::clamp(g, 0, std::max(total() - 1, 0));
+            i16 seq = first;
+            for(i16 n : frames)
+            {
+                if(g < n)
+                    return {seq, static_cast<i16>(g)};
+                g -= n;
+                ++seq;
+            }
+            return {first, 0};
+        }
+    };
+
     struct sprite_particle_t
     {
         EffectScene::sprite_t look{};
@@ -117,12 +166,14 @@ struct EffectSystem
         f32                   fade_in{0.f};
         f32                   fade_out{0.f};
         f32                   frame{0.f};
+        f32                   pixels{128.f}; /* its sprites' width, a pctl scale's unit */
         f32                   frame_rate{0.f};
         f32                   spin{0.f};
         bool                  along_velocity{false};
         /* Lies across the way it moves, or its emitter's while still */
         std::optional<Vecf3>  across;
         bool                  dies_on_contact{false};
+        struct animation_t const* anim{nullptr};
 
         /* Held to a marker on its parent, in the marker's forward/right/up */
         u64         parent{0};
@@ -264,6 +315,8 @@ struct EffectSystem
             m_placed_decals.clear();
             m_effect_decals.clear();
             m_antennas.clear();
+            m_sprite_pixels.clear();
+            m_animations.clear();
         }
         m_magic = &files.container.magic;
         m_index = blam::tag_index_view<halo_version>(files.container);
@@ -1232,11 +1285,9 @@ struct EffectSystem
                 origin + in_sphere(uniform(burst.distribution_radius));
             s.look.radius   = uniform(burst.radius);
             s.look.bitmap   = &static_cast<blam::tagref_t const&>(part->bitmap);
-            s.look.sequence = part->first_sequence_index;
-            if(part->initial_sequence_count > 1)
-                s.look.sequence += static_cast<i16>(
-                    uniform(0.f, static_cast<f32>(part->initial_sequence_count) - .001f));
-            s.look.blend = part->shader.blend_function;
+            s.anim          = &animation_of(*part);
+            s.look.sequence = s.anim->first;
+            s.look.blend    = part->shader.blend_function;
             s.look.rotation =
                 (burst.flags & effect::particle_t::flags_t::random_initial_angle) !=
                         effect::particle_t::flags_t::none
@@ -1254,9 +1305,16 @@ struct EffectSystem
             s.fade_in  = part->fade_in_time;
             s.fade_out = part->fade_out_time;
             s.frame    = has(pflags::animation_starts_on_random_frame)
-                             ? uniform(0.f, 64.f)
+                             ? uniform(0.f, static_cast<f32>(s.anim->total()))
                              : 0.f;
-            s.frame_rate = uniform(part->animation_rate);
+            /* Once per frame is per the original's 30 fps */
+            s.frame_rate = has(pflags::animate_once_per_frame)
+                               ? 30.f
+                               : uniform(part->animation_rate);
+            /* Without a loop the animation's end is the particle's */
+            if(s.anim->looping == 0 && s.anim->total() > 0 && s.frame_rate > 0.f)
+                s.life = std::min(
+                    s.life, (static_cast<f32>(s.anim->total()) - s.frame) / s.frame_rate);
             s.spin       = uniform(burst.angular_velocity) *
                      (uniform(0.f, 1.f) < .5f ? -1.f : 1.f);
             s.along_velocity = part->orientation ==
@@ -1524,6 +1582,75 @@ struct EffectSystem
         s.look.bitmap   = &static_cast<blam::tagref_t const&>(ps.bitmaps);
         s.look.sequence = ps.sequence_index;
         s.look.blend    = ps.shader.blend_function;
+        s.pixels        = sprite_pixels(*s.look.bitmap, ps.sequence_index);
+    }
+
+    animation_t const& animation_of(particle const& part)
+    {
+        auto [it, fresh] = m_animations.try_emplace(&part);
+        animation_t& anim = it->second;
+        if(!fresh)
+            return anim;
+        anim.first = part.first_sequence_index;
+        auto const* header =
+            tag_data<blam::bitm::header_t>(part.bitmap, blam::tag_class_t::bitm);
+        std::remove_cvref_t<decltype(header->sequences.data(*m_magic))> sequences;
+        if(header)
+            sequences = header->sequences.data(*m_magic);
+        i32 const counts[3] = {
+            part.initial_sequence_count,
+            part.looping_sequence_count,
+            part.final_sequence_count};
+        i32* const totals[3] = {&anim.initial, &anim.looping, &anim.final};
+        i16        seq       = anim.first;
+        for(i32 phase = 0; phase < 3; phase++)
+            for(i32 i = 0; i < counts[phase]; i++, seq++)
+            {
+                i16 n = 1;
+                if(sequences.has_value() && seq >= 0 &&
+                   static_cast<size_t>(seq) < sequences.value().size())
+                {
+                    auto const& sq      = sequences.value()[seq];
+                    auto        sprites = sq.sprites.data(*m_magic);
+                    n = sprites.has_value() && !sprites.value().empty()
+                            ? static_cast<i16>(sprites.value().size())
+                            : static_cast<i16>(std::max<u16>(sq.bitmap_count, 1));
+                }
+                anim.frames.push_back(n);
+                *totals[phase] += n;
+            }
+        return anim;
+    }
+
+    /* How wide a sequence's sprites are in their bitmap, which a pctl
+     * state's scale is per pixel of */
+    f32 sprite_pixels(blam::tagref_t const& ref, i16 sequence)
+    {
+        auto it = m_index.find(ref);
+        if(!ref.valid() || it == m_index.end())
+            return default_sprite_pixels;
+        auto const key       = std::pair{&(*it), sequence};
+        auto [cached, fresh] = m_sprite_pixels.try_emplace(key, default_sprite_pixels);
+        if(!fresh)
+            return cached->second;
+        auto const* header = tag_data<blam::bitm::header_t>(ref, blam::tag_class_t::bitm);
+        if(!header)
+            return cached->second;
+        auto sequences = header->sequences.data(*m_magic);
+        auto images    = header->images.data(*m_magic);
+        if(!sequences.has_value() || !images.has_value() || sequences.value().empty())
+            return cached->second;
+        auto const& seq = sequences.value()[std::clamp<i32>(sequence, 0, sequences.value().size() - 1)];
+        auto        sprites = seq.sprites.data(*m_magic);
+        if(!sprites.has_value() || sprites.value().empty())
+            return cached->second;
+        auto const& sprite = sprites.value()[0];
+        if(sprite.bitmap_index >= images.value().size())
+            return cached->second;
+        f32 const width = (sprite.right - sprite.left) * images.value()[sprite.bitmap_index].isize.x;
+        if(width > 0.f)
+            cached->second = width;
+        return cached->second;
     }
 
     /* The look of a pctl particle, blended into its next state */
@@ -1535,7 +1662,7 @@ struct EffectSystem
         auto look_of = [&s](u32 i) {
             auto const& ps     = s.states[i];
             f32 const   radius = glm::mix(ps.scale.x, ps.scale.y, s.size_pick) *
-                               pctl_scale_to_radius * ps.radius_multiplier;
+                               s.pixels * .5f * ps.radius_multiplier;
             Vecf4 const color  = glm::mix(rgba(ps.color_1), rgba(ps.color_2), s.color_pick);
             return std::pair{radius, color};
         };
@@ -1585,7 +1712,7 @@ struct EffectSystem
             } else
             {
                 s.velocity.z += s.motion.gravity * dt;
-                s.velocity *= std::exp(-s.motion.drag * dt);
+                s.velocity -= s.velocity * s.motion.slowing(s.look.radius, dt);
                 Vecf3 const to = s.look.position + s.velocity * dt;
                 if(s.motion.collides || s.dies_on_contact)
                 {
@@ -1625,6 +1752,10 @@ struct EffectSystem
             look.rotation += s.spin * m_lookahead;
             look.color = s.tint * Vecf4(1.f, 1.f, 1.f, alpha);
             look.frame = static_cast<i16>(s.frame + s.frame_rate * m_lookahead);
+            if(s.anim && s.anim->total() > 0)
+                std::tie(look.sequence, look.frame) = s.anim->at(
+                    s.frame + s.frame_rate * m_lookahead,
+                    (s.life - s.age) * s.frame_rate);
             look.axis  = s.along_velocity
                              ? s.velocity * TickClock::tick_seconds
                              : Vecf3{};
@@ -2327,7 +2458,7 @@ struct EffectSystem
     static constexpr f32    decal_reach          = 2.f;  /* wu to a face */
     static constexpr size_t max_effect_decals    = 256;
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
-    static constexpr f32    pctl_scale_to_radius = 64.f; /* scale is per bitmap pixel */
+    static constexpr f32    default_sprite_pixels = 128.f; /* when its bitmap can't say */
 
     u32        m_generation{0};
 
@@ -2363,6 +2494,8 @@ struct EffectSystem
 
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>>
         m_markers;
+    std::map<std::pair<blam::tag_t const*, i16>, f32> m_sprite_pixels;
+    std::map<particle const*, animation_t>            m_animations;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnEffectEvent>> m_spawn_queue;
     std::unique_ptr<TickQueue>                                  m_ticks;
