@@ -75,11 +75,12 @@ struct CameraControl
     }
 
     /* The cinematic view in its own space, and the transform out of it: the
-     * object as drawn, so the view moves with it between ticks */
+     * object's place as drawn, so the view moves with it between ticks.
+     * Halo's relative cameras follow where the object is, not how it turns */
     static Matf4 space_of(Proxy& p, u64 relative_to)
     {
         if(auto const* model = relative_to ? p.get<Model>(relative_to) : nullptr)
-            return model->transform;
+            return glm::translate(Matf4(1), Vecf3(model->transform[3]));
         return Matf4(1);
     }
 
