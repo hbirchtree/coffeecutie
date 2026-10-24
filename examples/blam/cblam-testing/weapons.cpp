@@ -57,6 +57,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         bool fired{false};      /* shot this frame */
         f32  reloading{0.f};    /* seconds left */
         f32  striking{0.f};     /* melee, seconds left */
+        f32  charge{-1.f};      /* held while charging, s; <0 when not */
         blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
 
@@ -151,9 +152,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 ammo ? magazine_of(weapon.value()[0], trigger, magic) : nullptr;
             i16 const per_shot = std::max<i16>(trigger.rounds_per_shot, 1);
 
+            /* A rate of zero fires once a pull */
+            f32 const rate = trigger.maximum_rate_of_fire.y > 0.f ? trigger.maximum_rate_of_fire.y
+                                                                  : trigger.maximum_rate_of_fire.x;
             bool const repeats =
+                rate > 0.f &&
                 (trigger.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
-                trigger_t::flags_t::none;
+                    trigger_t::flags_t::none;
+            /* A trigger that charges fires as it is let go: its partner's
+             * shot once charged */
+            bool const charges = trigger.charging_time > 0.f && triggers.value().size() > 1;
+            auto const& gun_tag = weapon.value()[0];
             /* The trigger is looked at once a tick */
             for(auto const& tick : ticks)
             {
@@ -172,20 +181,37 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     state.reloading = std::max(magazine->reload_time, dt);
                     reload          = false;
                 }
-                if(held && loaded && state.reloading <= 0.f &&
-                   state.cooldown <= 0.f && (repeats || !state.firing))
+                if(ammo)
+                    cool(*ammo, gun_tag, dt);
+                bool const able = loaded && state.reloading <= 0.f && state.cooldown <= 0.f &&
+                                  (!ammo || !spent(*ammo, gun_tag));
+                i32 fires = -1;
+                if(charges)
                 {
-                    f32 const rate = std::max(
-                        trigger.maximum_rate_of_fire.y > 0.f
-                            ? trigger.maximum_rate_of_fire.y
-                            : trigger.maximum_rate_of_fire.x,
-                        .5f);
-                    state.cooldown += 1.f / rate;
+                    if(held && !state.firing && able)
+                        state.charge = 0.f;
+                    else if(held && state.charge >= 0.f)
+                        state.charge += dt;
+                    else if(!held && state.charge >= 0.f)
+                    {
+                        fires        = state.charge >= trigger.charging_time ? 1 : 0;
+                        state.charge = -1.f;
+                    }
+                } else if(held && (repeats || !state.firing))
+                    fires = 0;
+                if(fires >= 0 && able)
+                {
+                    trigger_t const& pulled = triggers.value()[fires];
+                    if(rate > 0.f)
+                        state.cooldown += 1.f / rate;
                     state.fired        = true;
                     state.illumination = 1.f;
                     if(magazine)
                         ammo->rounds_loaded -= per_shot;
-                    pull(p, ent.id(), info, cam, *weapon_tag, state.shots++);
+                    if(ammo)
+                        heat_up(p, ent.id(), *ammo, gun_tag, pulled);
+                    pull(p, ent.id(), info, cam, *weapon_tag, state.shots++, false,
+                         static_cast<u16>(fires));
                 }
                 state.firing = held;
                 if(trigger.illumination_recovery_time > 0.f)
@@ -201,7 +227,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             {
                 equip->reloading = state.reloading > 0.f;
                 drive_functions(
-                    p, ent.id(), weapon.value()[0], state, held, magic);
+                    p, ent.id(), weapon.value()[0], state, held, magic, ammo,
+                    charges ? trigger.charging_time : 0.f);
             }
         }
         std::erase_if(m_states, [&live](auto const& e) {
@@ -321,7 +348,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerCamera const& cam,
         blam::tag_t const&  weapon,
         u32                 shot_index,
-        bool                melee = false)
+        bool                melee   = false,
+        u16                 trigger = 0)
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
@@ -330,6 +358,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .shooter    = player,
             .player_idx = info.player_idx,
             .seed       = static_cast<u32>(m_rng()),
+            .trigger    = trigger,
             .melee      = melee,
             .position   = melee ? cam.camera.position
                                 : cam.camera.position + forward * muzzle_distance,
@@ -652,6 +681,60 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return magazine.rounds_loaded_maximum > 0 ? &magazine : nullptr;
     }
 
+    /* Heat bleeds off; a vented weapon fires again once cool enough */
+    static void cool(BipedEquipment::weapon_t& gun, weapon_t const& tag, f32 dt)
+    {
+        gun.heat = std::max(gun.heat - tag.heat_loss_rate * dt, 0.f);
+        if(gun.overheated && gun.heat <= tag.heat_recovery_threshold)
+            gun.overheated = false;
+    }
+
+    /* Venting, or a battery run flat where that stops it */
+    static bool spent(BipedEquipment::weapon_t const& gun, weapon_t const& tag)
+    {
+        using flags_t = weapon_t::weapon_flags_t;
+        return gun.overheated ||
+               ((tag.weapon_flags & flags_t::cannot_fire_at_maximum_age) != flags_t::none &&
+                gun.age >= 1.f);
+    }
+
+    /* A shot warms the weapon and drains its battery; too hot, it vents */
+    void heat_up(
+        Proxy& p, u64 player, BipedEquipment::weapon_t& gun, weapon_t const& tag,
+        trigger_t const& pulled)
+    {
+        gun.heat += pulled.heat_generated_per_round;
+        gun.age = std::min(gun.age + pulled.age_generated_per_round, 1.f);
+        if(tag.overheated_threshold <= 0.f || gun.heat < tag.overheated_threshold ||
+           gun.overheated)
+            return;
+        gun.overheated = true;
+        /* The hands open its vents */
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        for(auto ent : p.template select<Attachment, AnimationPlayback>())
+            if(ent.template get<Attachment>().parent == player)
+                if(i32 const clip =
+                       fp_clip(ent.template get<AnimationPlayback>(), magic, fp_slot::overheated);
+                   clip >= 0)
+                {
+                    PlayModelAnimationEvent play{.entity = ent.id(), .animation = clip, .fade = .1f};
+                    GameEvent ev{.type = GameEvent::PlayModelAnimation};
+                    p.template subsystem<GameEventBus>().inject(ev, &play);
+                }
+        if(!tag.overheated.valid())
+            return;
+        auto const* cam = p.template get<PlayerCamera>(player);
+        SpawnEffectEvent vent{
+            .effect    = tag.overheated,
+            .position  = cam ? cam->camera.position : Vecf3{},
+            .direction = cam ? glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f}
+                             : Vecf3{1.f, 0.f, 0.f},
+            .parent    = first_person(p, player, true),
+        };
+        GameEvent ev{.type = GameEvent::SpawnEffect};
+        p.template subsystem<GameEventBus>().inject(ev, &vent);
+    }
+
     /* Tops the magazine up from what is carried */
     static void refill(BipedEquipment::weapon_t& ammo, weapon_t::magazine_t const& magazine)
     {
@@ -875,16 +958,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         weapon_t const&      weapon,
         state_t const&       state,
         bool                 held,
-        blam::map_ptr const& magic)
+        blam::map_ptr const& magic,
+        BipedEquipment::weapon_t const* gun,
+        f32                  charging_time)
     {
         u64 const id = first_person(p, player, true);
         if(id == 0)
             return;
         auto* model = p.template get<Model>(id);
 
+        f32 const charged =
+            charging_time > 0.f && state.charge >= 0.f ? std::min(state.charge / charging_time, 1.f) : 0.f;
         std::array<f32, 4> in{};
         for(size_t i = 0; i < in.size(); i++)
-            in[i] = input_value(weapon.weapon_inputs[i], state, held);
+            in[i] = input_value(weapon.weapon_inputs[i], state, held, gun, charged);
 
         std::array<f32, 4> out = in;
         auto functions         = weapon.functions.data(magic);
@@ -894,10 +981,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         model->object_function = out;
     }
 
-    static f32 input_value(input_t input, state_t const& state, bool held)
+    static f32 input_value(
+        input_t input, state_t const& state, bool held, BipedEquipment::weapon_t const* gun,
+        f32 charged)
     {
         switch(input)
         {
+        case input_t::heat:
+            return gun ? std::min(gun->heat, 1.f) : 0.f;
+        case input_t::overheated:
+            return gun && gun->overheated ? 1.f : 0.f;
+        case input_t::age:
+            return gun ? gun->age : 0.f;
+        case input_t::primary_charged:
+            return charged;
         case input_t::illumination:
         case input_t::primary_ejection_port:
             return state.illumination;
