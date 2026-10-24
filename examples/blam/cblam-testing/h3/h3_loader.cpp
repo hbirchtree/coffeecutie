@@ -509,12 +509,12 @@ struct H3MapLoader : compo::SubsystemBase
 
     /* The small, medium and large impact sounds of the global material
      * making up most of an object's physics model */
-    std::optional<std::array<el::tag_reference<> const*, 3>> impact_sweeteners(el::tag_reference<> const& object)
+    std::optional<std::array<el::tag_reference<> const*, 3>> impact_sweeteners(
+        el::object_view const& view, el::tagged<el::phys::globals_t> const& globals)
     {
         auto const& map     = *m_map;
         auto const  magic   = map.magic();
-        auto const  physics = el::object_view::of(map, object).physics_model;
-        auto const  globals = map.find<el::phys::globals_t>();
+        auto const& physics = view.physics_model;
         auto const  body    = physics ? el::phys::body_of(*physics, magic) : std::nullopt;
         if(!body || !globals || body->hulls.empty())
             return std::nullopt;
@@ -1507,13 +1507,15 @@ struct H3MapLoader : compo::SubsystemBase
      * in place. */
     void load_objects(el::scenario_t const& scnr, u32 bsps)
     {
-        u32  moving = 0, fixed = 0, hidden = 0;
-        auto place  = [&](auto const& placements, auto const& palette, bool item) {
+        u32        moving = 0, fixed = 0, hidden = 0;
+        auto const globals = m_map->find<el::phys::globals_t>();
+        auto       place   = [&](auto const& placements, auto const& palette, bool item) {
             for(auto const& [placement, object_ref] :
                 el::placements_at_load(*m_map, placements, palette, bsps))
             {
                 auto const& object = placement.object;
-                auto const  model  = object_ref ? drawn_model(*object_ref) : el::tagged<el::render_model_t>{};
+                auto const  view   = object_ref ? el::object_view::of(*m_map, *object_ref) : el::object_view{};
+                auto const  model  = view.object ? drawn_model(view) : el::tagged<el::render_model_t>{};
                 if(!model)
                 {
                     hidden++;
@@ -1524,12 +1526,12 @@ struct H3MapLoader : compo::SubsystemBase
                 Vecf3 const position = object.position;
                 auto const  light    = m_scene.light_below(position);
                 auto const* lit      = light ? &*light : nullptr;
-                auto        physics  = physics_of(*object_ref, scale);
+                auto        physics  = physics_of(view, scale);
                 if(!physics)
                 {
                     auto const skin = stored_pose(*model, object);
                     append_model(model, object.transform(), lit, 0, Quatf(1.f, 0.f, 0.f, 0.f), skin);
-                    attach_lights(*object_ref, *model, object.transform(), 0);
+                    attach_lights(view, *model, object.transform(), 0);
                     fixed++;
                     continue;
                 }
@@ -1543,14 +1545,13 @@ struct H3MapLoader : compo::SubsystemBase
                 placed.tick_position = position;
                 placed.tick_rotation = q;
                 placed.update_matrix();
-                if(auto sweeteners = impact_sweeteners(*object_ref))
+                if(auto sweeteners = impact_sweeteners(view, globals))
                     m_impact_sounds[ref.id()] = {.sweeteners = *sweeteners, .mass = physics->mass};
                 *m_container.get<ObjectPhysics>(ref.id()) = std::move(*physics);
-                if(auto const tag = m_map->get<el::object_t>(*object_ref);
-                   tag && !m_map->span(tag->change_colors).empty())
-                    m_scene.change_colors[ref.id()] = change_colors_of(*tag, object.variant);
+                if(view.object && !m_map->span(view.object->change_colors).empty())
+                    m_scene.change_colors[ref.id()] = change_colors_of(*view.object, object.variant);
                 append_model(model, glm::scale(Matf4(1.f), Vecf3(scale)), lit, ref.id(), q);
-                attach_lights(*object_ref, *model, glm::scale(Matf4(1.f), Vecf3(scale)), ref.id());
+                attach_lights(view, *model, glm::scale(Matf4(1.f), Vecf3(scale)), ref.id());
                 moving++;
             }
         };
@@ -1718,11 +1719,9 @@ struct H3MapLoader : compo::SubsystemBase
     /* The lights an object carries at its markers (ligh attachments), held
      * still: colour and intensity at their steady value. Falloff constants
      * put the light's edge at its maximum distance. */
-    void attach_lights(
-        el::tag_reference<> const& object, el::render_model_t const& model, Matf4 const& frame, u64 entity)
+    void attach_lights(el::object_view const& view, el::render_model_t const& model, Matf4 const& frame, u64 entity)
     {
-        auto const& map  = *m_map;
-        auto const  view = el::object_view::of(map, object);
+        auto const& map = *m_map;
         if(!view.object)
             return;
         std::vector<Matf4> nodes;
@@ -1778,9 +1777,9 @@ struct H3MapLoader : compo::SubsystemBase
 
     /* An object's physics model as one body (el::phys::body_of), scaled; flat
      * hulls get their shell's thickness so they have something to rest on */
-    std::optional<ObjectPhysics> physics_of(el::tag_reference<> const& object, f32 scale) const
+    std::optional<ObjectPhysics> physics_of(el::object_view const& view, f32 scale) const
     {
-        auto const physics = el::object_view::of(*m_map, object).physics_model;
+        auto const& physics = view.physics_model;
         auto const body    = physics ? el::phys::body_of(*physics, m_map->magic()) : std::nullopt;
         if(!body)
             return std::nullopt;
@@ -1882,10 +1881,14 @@ struct H3MapLoader : compo::SubsystemBase
     }
 
     /* What draws an object in a game; nothing for editor-only ones */
+    el::tagged<el::render_model_t> drawn_model(el::object_view const& view) const
+    {
+        return view.editor_only(*m_map) ? el::tagged<el::render_model_t>{} : view.render_model;
+    }
+
     el::tagged<el::render_model_t> drawn_model(el::tag_reference<> const& object) const
     {
-        auto const view = el::object_view::of(*m_map, object);
-        return view.editor_only(*m_map) ? el::tagged<el::render_model_t>{} : view.render_model;
+        return drawn_model(el::object_view::of(*m_map, object));
     }
 
     /* A mesh's triangles, one draw per part, vertices moved by `transform` */
