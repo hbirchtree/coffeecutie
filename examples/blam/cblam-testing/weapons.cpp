@@ -54,7 +54,6 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     {
         f32  cooldown{0.f};
         f32  illumination{0.f}; /* the flash, 1 as it fires */
-        u32  shots{0};          /* alternates twin barrels */
         bool firing{false};     /* held last frame */
         bool fired{false};      /* shot this frame */
         f32  reloading{0.f};    /* seconds left */
@@ -138,7 +137,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             {
                 state.striking  = melee_time;
                 state.reloading = 0.f;
-                pull(p, ent.id(), info, cam, *weapon_tag, 0, true);
+                pull(p, ent.id(), info, cam, *weapon_tag, true);
             }
             bool const held = input.intent.fire && !throwing && state.striking <= 0.f;
 
@@ -212,7 +211,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                         ammo->rounds_loaded -= per_shot;
                     if(ammo)
                         heat_up(p, ent.id(), *ammo, gun_tag, pulled);
-                    pull(p, ent.id(), info, cam, *weapon_tag, state.shots++, false,
+                    pull(p, ent.id(), info, cam, *weapon_tag, false,
                          static_cast<u16>(fires));
                 }
                 state.firing = held;
@@ -353,7 +352,6 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerInfo const&   info,
         PlayerCamera const& cam,
         blam::tag_t const&  weapon,
-        u32                 shot_index,
         bool                melee   = false,
         u16                 trigger = 0)
     {
@@ -370,15 +368,42 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                                 : cam.camera.position + forward * muzzle_distance,
             .direction  = forward,
         };
-        if(info.riding.vehicle != 0 && &weapon == mounted_weapon(p, info, files_of(p)))
-            mount(p, shot, info.riding.vehicle, shot_index);
         GameEvent ev{.type = GameEvent::WeaponFire};
+        if(info.riding.vehicle != 0 && &weapon == mounted_weapon(p, info, files_of(p)))
+        {
+            /* Every barrel fires at once, each at what the reticle rests
+             * on, however the gun itself is posed */
+            Vecf3 target = cam.camera.position + forward * aim_reach;
+            {
+                Physics::Event   ray_ev{Physics::Event::Raycast};
+                Physics::Raycast ray{
+                    .from = cam.camera.position, .to = target, .ignore = info.riding.vehicle};
+                p.template subsystem<PhysicsBus>().process(ray_ev, &ray);
+                if(ray.hit && ray.entity_id != player)
+                    target = ray.point;
+            }
+            auto const* model = p.template get<Model>(info.riding.vehicle);
+            u32 const   barrels =
+                model && model->tag
+                    ? std::max(marker_instances(*model->tag, gun_marker, files_of(p).container.magic), 1u)
+                    : 1u;
+            for(u32 i = 0; i < barrels; i++)
+            {
+                WeaponFireEvent barrel = shot;
+                mount(p, barrel, info.riding.vehicle, i);
+                Vecf3 const to = target - barrel.position;
+                if(glm::dot(to, forward) > 0.f)
+                    barrel.direction = glm::normalize(to);
+                p.template subsystem<GameEventBus>().inject(ev, &barrel);
+            }
+            return;
+        }
         p.template subsystem<GameEventBus>().inject(ev, &shot);
     }
 
     /* From the gun's marker as the vehicle stands, along its barrel; a gun
      * the gunner turns points where they look */
-    void mount(Proxy& p, WeaponFireEvent& shot, u64 vehicle, u32 shot_index)
+    void mount(Proxy& p, WeaponFireEvent& shot, u64 vehicle, u32 instance)
     {
         auto const* model = p.template get<Model>(vehicle);
         if(!model || !model->tag)
@@ -387,7 +412,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             *model->tag,
             gun_marker,
             p.template subsystem<BlamFiles<halo_version>>().container.magic,
-            shot_index);
+            instance);
         if(!marker)
             return;
         Matf4       at   = model->transform;
@@ -1159,6 +1184,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr f32 melee_reach     = 1.2f; /* wu, from the eye */
     static constexpr f32 melee_spread    = .15f; /* rad, the side rays */
     static constexpr f32 melee_dip       = .35f; /* rad, the low rays */
+    static constexpr f32 aim_reach       = 100.f; /* wu, a reticle on nothing */
     static constexpr f32 behind_cos      = .5f;  /* within 60 deg of its facing */
     /* Vehicle guns: where they fire from, and how far the crosshair looks */
     static constexpr std::string_view gun_marker = "primary trigger";
