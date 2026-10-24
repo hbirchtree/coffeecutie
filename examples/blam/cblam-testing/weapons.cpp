@@ -95,18 +95,22 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             bool const toss   = std::exchange(input.intent.grenade, false);
             bool const cycle  = std::exchange(input.intent.grenade_switch, false);
             bool const strike = std::exchange(input.intent.melee, false);
-            /* A gunner fires the vehicle's weapon, a body its own; the free
-             * camera has nothing to shoot with */
-            u64 const vehicle = info.riding.vehicle;
-            auto*     equip   = p.template get<BipedEquipment>(ent.id());
+            /* A gunner fires the vehicle's weapon, a body its own, and so
+             * does a passenger whose seat allows it; the free camera has
+             * nothing to shoot with */
+            u64 const   riding  = info.riding.vehicle;
+            auto const* mounted = riding ? mounted_weapon(p, info, files) : nullptr;
+            bool const  armed   = riding && !mounted && info.riding.armed;
+            u64 const   vehicle = mounted ? riding : 0;
+            auto*       equip   = p.template get<BipedEquipment>(ent.id());
             auto const* carried =
                 equip ? equip->held(files.load_generation) : nullptr;
-            auto const* weapon_tag = vehicle   ? mounted_weapon(p, info, files)
-                                     : carried ? carried->tag
-                                               : nullptr;
+            auto const* weapon_tag = mounted                       ? mounted
+                                     : (!riding || armed) && carried ? carried->tag
+                                                                     : nullptr;
             if(info.is_remote() || !weapon_tag ||
-               (vehicle ? info.riding.exiting
-                        : !info.mode.physics || !biped_in_play(info, cam, net)))
+               (riding ? info.riding.exiting
+                       : !info.mode.physics || !biped_in_play(info, cam, net)))
                 continue;
             auto weapon = weapon_tag->template data<weapon_t>(magic);
             if(!weapon.has_value())
@@ -123,11 +127,11 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
             /* Grenades are thrown on foot, whatever is held */
             bool const throwing =
-                !vehicle && grenade(p, ent.id(), info, cam, *equip, ticks, toss, cycle);
+                !riding && grenade(p, ent.id(), info, cam, *equip, ticks, toss, cycle);
             /* A strike on foot stops the gun until it is done */
             for(auto const& tick : ticks)
                 state.striking = std::max(state.striking - tick.seconds, 0.f);
-            if(strike && !vehicle && !throwing && state.striking <= 0.f)
+            if(strike && !riding && !throwing && state.striking <= 0.f)
             {
                 state.striking  = melee_time;
                 state.reloading = 0.f;
@@ -278,6 +282,11 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         }
     }
 
+    static BlamFiles<halo_version> const& files_of(Proxy& p)
+    {
+        return p.template subsystem<BlamFiles<halo_version>>();
+    }
+
     /* The weapon of the vehicle seat a gunner sits in */
     blam::tag_t const* mounted_weapon(
         Proxy& p, PlayerInfo const& info, BlamFiles<halo_version> const& files)
@@ -326,7 +335,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                                 : cam.camera.position + forward * muzzle_distance,
             .direction  = forward,
         };
-        if(info.riding.vehicle != 0)
+        if(info.riding.vehicle != 0 && &weapon == mounted_weapon(p, info, files_of(p)))
             mount(p, shot, info.riding.vehicle, shot_index);
         GameEvent ev{.type = GameEvent::WeaponFire};
         p.template subsystem<GameEventBus>().inject(ev, &shot);

@@ -287,7 +287,15 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         info.riding.chase  = !known || !marker ||
                             (static_cast<u32>((*seats)[seat].flags) &
                              static_cast<u32>(seat_flags::third_person_camera));
-        if(!info.riding.chase)
+        info.riding.armed = known && (static_cast<u32>((*seats)[seat].flags) &
+                                      static_cast<u32>(seat_flags::allows_weapons));
+        /* The seat's own camera marker, else the rider's head */
+        auto const* eye = known ? &marker_transform(
+                                      p, *vehicle, std::string((*seats)[seat].camera_marker_name.str()))
+                                : nullptr;
+        if(!info.riding.chase && eye && *eye)
+            cam.camera.position = Vecf3(vehicle->transform * (**eye)[3]);
+        else if(!info.riding.chase)
             cam.camera.position = rider_eye(p, rider, info).value_or(
                 Vecf3(vehicle->transform * (*marker)[3]) +
                 Vecf3{0.f, 0.f, info.biped.eye_height});

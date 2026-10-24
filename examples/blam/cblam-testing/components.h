@@ -985,6 +985,7 @@ struct PlayerInfo
         bool driver{false};
         bool exiting{false};
         bool chase{false}; /*!< Seen from behind the vehicle, not the seat */
+        bool armed{false}; /*!< The seat lets it fire what it holds */
     } riding;
 
     struct
