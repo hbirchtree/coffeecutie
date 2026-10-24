@@ -1,0 +1,661 @@
+{
+    "comment": "Recorded with DUMMY_PLUG_RECORD; frame_delta fixes the timestep so the walk replays the same",
+    "frame_delta": 16.0,
+    "end_time": 31750,
+    "events": [
+        {
+            "index": 0,
+            "time": 326,
+            "type": "controller_connect"
+        },
+        {
+            "index": 1,
+            "time": 326,
+            "type": "controller_connect"
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1101,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1110,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1131,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1131,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1168,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1178,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1218,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1230,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1293,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1302,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1310,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1320,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1338,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1338,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1589,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1598,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1607,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1616,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1700,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1732,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1732,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1738,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1748,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1757,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1796,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1826,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1886,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 1896,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1916,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 1938,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "button": "BACK",
+            "duration": 185,
+            "index": 0,
+            "time": 2215,
+            "type": "controller_button"
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 3548,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 3820,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 4161,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 4161,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 4161,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 4198,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 4220,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 4220,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 4507,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 4824,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 4855,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 4902,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 4912,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 5006,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 5141,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 5152,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 5418,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 5451,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 5585,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 5606,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 6234,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 6243,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 6260,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 6276,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 6301,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 6430,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 6438,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 127,
+            "index": 0,
+            "time": 6516,
+            "type": "controller_button"
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 6983,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7434,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7484,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7570,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7609,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 7956,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 7983,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8028,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 8033,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8099,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8143,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 8524,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 8595,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8826,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8885,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8980,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 9084,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 13818,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 15953,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 17745,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 17797,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 17834,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 17893,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 17915,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 17929,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 18202,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 18235,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 18264,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 20548,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 20646,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 21405,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "RIGHT_Y",
+            "index": 0,
+            "time": 21548,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "Y",
+            "duration": 139,
+            "index": 0,
+            "time": 22193,
+            "type": "controller_button"
+        }
+    ]
+}
