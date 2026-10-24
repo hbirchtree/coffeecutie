@@ -1142,6 +1142,14 @@ struct AnimationController
         auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
         auto const& magic =
             p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        /* A seat hears its first-person model at its ear, and not its own
+         * body making the same sound */
+        auto const* held   = p.template get<Attachment>(entity);
+        auto const* owner  = held ? p.template get<PlayerInfo>(held->parent) : nullptr;
+        auto const* self   = p.template get<PlayerInfo>(entity);
+        bool const  at_ear = owner && !owner->is_remote();
+        if(self && !self->is_remote() && !self->riding.vehicle && !dead(p, entity))
+            anim.cue_count = 0;
         for(u32 i = 0; i < anim.cue_count && sounds; i++)
         {
             auto const& cue  = anim.cues[i];
@@ -1155,7 +1163,8 @@ struct AnimationController
             SoundEvent     ev{.type = SoundEvent::play_sound};
             PlaySoundEvent play{
                 .sound    = &sound,
-                .position = position_of(p, entity),
+                .position = at_ear ? PlaySoundEvent::in_hand : position_of(p, entity),
+                .relative = at_ear,
             };
             sounds->inject(ev, &play);
         }

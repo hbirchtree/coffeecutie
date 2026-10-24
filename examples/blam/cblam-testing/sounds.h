@@ -57,6 +57,8 @@ struct PlaySoundEvent
 
     /* relative = position is an offset from the listener, {0,0,0} = at the ear
      * Positioning only affects mono sounds */
+    /*! What a seat's own hands make, relative: right, up, back */
+    static inline Vecf3 const in_hand{0.f, -.15f, -.3f};
     Vecf3                 position{};
     bool                  relative{false};
     bool                  looping{false};
