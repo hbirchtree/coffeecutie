@@ -243,7 +243,11 @@ StartupWMClass=${APP_TARGET}
       )
     endif()
   elseif(GAMECUBE OR WII)
-    gamecube_package(TARGET "${APP_TARGET}" SOURCES ${SOURCES_MOD})
+    gamecube_package(
+      TARGET "${APP_TARGET}"
+      SOURCES ${SOURCES_MOD}
+      RESOURCES ${APP_RESOURCES}
+    )
   else()
     add_executable(${APP_TARGET} ${SOURCES_MOD})
     install(TARGETS ${APP_TARGET}
