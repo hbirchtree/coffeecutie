@@ -22,7 +22,6 @@
 
 #include <cmath>
 #include <limits>
-#include <span>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -1028,17 +1027,6 @@ int dump_player(elegy::map_container const& map)
     return 0;
 }
 
-/* FNV-1a over the poses' bytes: bit-exact, for before/after comparisons */
-template<typename Pose>
-inline u64 pose_hash(std::vector<Pose> const& poses)
-{
-    u64 h = 0xcbf29ce484222325ull;
-    auto bytes = std::as_bytes(std::span(poses));
-    for(auto b : bytes)
-        h = (h ^ static_cast<u8>(b)) * 0x100000001b3ull;
-    return h;
-}
-
 /* Animation graphs: their animations, each decoded */
 int dump_animations(elegy::map_container const& map, elegy::resource_loader& loader, options_t const& options)
 {
@@ -1060,7 +1048,7 @@ int dump_animations(elegy::map_container const& map, elegy::resource_loader& loa
                        a.node_count, a.resource_group.value(), a.resource_group_member.value(),
                        out ? "decoded" : "FAILED");
             if(out && options.anim_hashes)
-                fmt::print("  hash {:016x}\n", pose_hash(out->poses));
+                fmt::print("  hash {:016x}\n", blam::anim::pose_hash(out->poses));
         }
         loader.trim();
     }
