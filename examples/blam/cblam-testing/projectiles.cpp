@@ -94,6 +94,8 @@ struct ProjectileSystem
                 glm::mix(tag.initial_velocity, tag.final_velocity, along) *
                 ticks_per_second / speed;
         }
+        if(flight.resting)
+            return true;
         flight.velocity.z -= halo_gravity * tag.air_gravity_scale * dt;
 
         Vecf3 const from = model.position;
@@ -129,6 +131,22 @@ struct ProjectileSystem
 
         response_t const what =
             response ? response->default_response : response_t::detonate;
+        /* Along what it fell onto: it slides, without a clatter each
+         * step, and settles once slow */
+        if(what == response_t::reflect && ray.entity_id == 0 &&
+           -glm::dot(flight.velocity, ray.normal) < rest_speed)
+        {
+            Vecf3 const along = flight.velocity - ray.normal * glm::dot(flight.velocity, ray.normal);
+            flight.velocity   = along * (1.f - (response ? response->parallel_friction : 0.f));
+            place(flight, model, ray.point + ray.normal * surface_gap);
+            if(glm::length(flight.velocity) < rest_speed)
+            {
+                flight.velocity = {};
+                flight.resting  = true;
+                start_timer(flight);
+            }
+            return true;
+        }
         if(ray.entity_id != 0)
             struck(p, flight, model, ray);
         if(response)
@@ -254,6 +272,7 @@ struct ProjectileSystem
             f32 const scale =
                 d <= inner ? 1.f : 1.f - (d - inner) / std::max(blast.radius.y - inner, 1e-3f);
             flight.velocity += (d > 1e-3f ? away / d : Vecf3{0, 0, 1}) * (blast.speed * scale);
+            flight.resting = false;
         }
     }
 
