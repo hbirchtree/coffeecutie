@@ -3,6 +3,7 @@
 #include "data.h"
 #include "player_controller.h"
 #include "render/cascaded_shadows.h"
+#include "world/player_spawn.h"
 #include "world/world_gpu.h"
 #include "resource_creation.h"
 
@@ -70,7 +71,7 @@ struct H3Renderer : compo::RestrictedSubsystem<H3Renderer, H3RendererManifest>
         for(auto e : p.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = e.components();
-            if(info.seat_idx != 0)
+            if(!world::is_local_seat(info))
                 continue;
             camera             = &cam;
             first_person_shown = info.mode.physics;

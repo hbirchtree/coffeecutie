@@ -1,4 +1,5 @@
 #include "h2_scene.h"
+#include "../world/player_spawn.h"
 
 #include "data.h"
 #include "physics.h"
@@ -63,7 +64,7 @@ struct H2Occluder : compo::RestrictedSubsystem<H2Occluder, H2OccluderManifest>
         for(auto e : p.select<PlayerCamera, PlayerInfo>())
         {
             auto const& [cam, info] = e.components();
-            if(info.seat_idx != 0)
+            if(!world::is_local_seat(info))
                 continue;
             camera = &cam;
             break;
