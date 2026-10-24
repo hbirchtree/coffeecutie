@@ -24,7 +24,8 @@ using HudManifest = compo::SubsystemManifest<
         const NetworkInfo,
         const BipedEquipment,
         const BipedStatus,
-        const PlayerInput>,
+        const PlayerInput,
+        const Model>,
     type_list_t<
         HudScene,
         CinematicState,
@@ -53,6 +54,8 @@ struct state_t
     f32 loaded_max{1.f};
     f32 secondary_total{0.f};
     f32 secondary_loaded{0.f};
+    f32 heat{0.f};
+    f32 battery{1.f}; /*!< What is left of it */
 };
 
 /* Drawn premultiplied: alpha is how much of what is behind an element it
@@ -274,6 +277,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return s.secondary_total;
         case attached_t::secondary_weapon_loaded_ammo:
             return s.secondary_loaded;
+        case attached_t::heat:
+            return fraction ? s.heat : s.heat * 100.f;
+        case attached_t::age:
+            return fraction ? s.battery : std::round(s.battery * 100.f);
         default:
             return 0.f;
         }
@@ -379,6 +386,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             .loaded           = static_cast<f32>(held.rounds_loaded),
             .secondary_total  = static_cast<f32>(slung.rounds_total),
             .secondary_loaded = static_cast<f32>(slung.rounds_loaded),
+            .heat             = std::min(held.heat, 1.f),
+            .battery          = 1.f - held.age,
         };
         auto triggers  = held.weapon->triggers.data(magic);
         auto magazines = held.weapon->magazines.data(magic);
@@ -391,6 +400,60 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 s.total_max  = std::max<f32>(magazine.rounds_reserved_maximum, 1.f);
             }
         return s;
+    }
+
+    /* ---- Vehicles ---- */
+
+    struct riding_t
+    {
+        bool                     armed{true}; /*!< Its own weapon in hand */
+        blam::tag_t const*       hud{nullptr}; /*!< The seat's, over the biped's */
+        BipedEquipment::weapon_t mounted{};    /*!< A gunner's, full */
+    };
+
+    /* A rider's seat: its HUD, and the vehicle's gun for its gunner */
+    riding_t rider_of(Proxy& p, PlayerInfo const& info)
+    {
+        using flags_t       = blam::scn::unit::seat_t::seat_flags_t;
+        auto const* vehicle = info.riding.vehicle ? p.template get<Model>(info.riding.vehicle) : nullptr;
+        if(!vehicle || !vehicle->origin_object)
+            return {};
+        auto unit = vehicle->origin_object->template data<blam::scn::unit>(*m_magic);
+        if(!unit.has_value())
+            return {};
+        auto seats = unit.value()[0].seats.data(*m_magic);
+        if(!seats.has_value() || info.riding.seat < 0 ||
+           static_cast<size_t>(info.riding.seat) >= seats.value().size())
+            return {};
+        auto const& seat = seats.value()[info.riding.seat];
+        riding_t    out{.armed = (seat.flags & flags_t::allows_weapons) != flags_t::none};
+        if(auto huds = seat.hud_interfaces.data(*m_magic); huds.has_value() && !huds.value().empty())
+            if(auto tag = m_index.find(huds.value()[0].hud.tag_id);
+               huds.value()[0].hud.valid() && tag != m_index.end())
+                out.hud = &(*tag);
+        auto weapons = unit.value()[0].weapons.data(*m_magic);
+        if((seat.flags & flags_t::gunner) == flags_t::none || !weapons.has_value() ||
+           weapons.value().empty())
+            return out;
+        auto tag = m_index.find(weapons.value()[0].weapon.tag_id);
+        if(!weapons.value()[0].weapon.valid() || tag == m_index.end())
+            return out;
+        auto weapon = (*tag).template data<blam::scn::weapon>(*m_magic);
+        if(!weapon.has_value())
+            return out;
+        out.mounted = {.weapon = weapon.value(), .tag = &(*tag)};
+        auto triggers  = weapon.value()->triggers.data(*m_magic);
+        auto magazines = weapon.value()->magazines.data(*m_magic);
+        if(triggers.has_value() && !triggers.value().empty() && magazines.has_value())
+            if(auto const i = triggers.value()[0].magazine;
+               i >= 0 && static_cast<size_t>(i) < magazines.value().size())
+            {
+                out.mounted.rounds_loaded = static_cast<u16>(
+                    std::max<i16>(magazines.value()[i].rounds_loaded_maximum, 0));
+                out.mounted.rounds_total = static_cast<u16>(
+                    std::max<i16>(magazines.value()[i].rounds_reserved_maximum, 0));
+            }
+        return out;
     }
 
     /* ---- Grenades ---- */
@@ -601,17 +664,26 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto const* equip  = p.template get<BipedEquipment>(id);
             auto const* status = p.template get<BipedStatus>(id);
             if(!info || !cam || !net || !equip || !status || !cinematic.show_hud ||
-               cam->cinematic || !biped_in_play(*info, *cam, *net) || !info->mode.physics ||
+               cam->cinematic || !biped_shown(*info, *cam, *net) || !info->mode.physics ||
                status->dead)
                 continue;
             m_view  = &out;
             m_width = out.width;
 
-            if(auto const* unit = m_unit_huds[seats.size() > 1 ? 1 : 0])
+            size_t const split  = seats.size() > 1 ? 1 : 0;
+            auto const   riding = rider_of(p, *info);
+            if(auto const* unit = riding.hud ? riding.hud : m_unit_huds[split])
                 if(auto hud = unit->template data<unit_hud_interface>(*m_magic);
                    hud.has_value())
                     unit_hud(*hud.value(), *status);
-            if(auto const* held = equip->held(files.load_generation))
+            if(riding.mounted.weapon)
+            {
+                auto hud = m_index.find(riding.mounted.weapon->hud_interface.tag_id);
+                weapon_hud(
+                    riding.mounted.weapon->hud_interface.valid() && hud != m_index.end() ? &(*hud)
+                                                                                        : nullptr,
+                    state_of(riding.mounted, {}, *m_magic));
+            } else if(auto const* held = riding.armed ? equip->held(files.load_generation) : nullptr)
             {
                 auto hud = m_index.find(held->weapon->hud_interface.tag_id);
                 weapon_hud(

@@ -110,8 +110,9 @@ struct AnimationController
             auto const* info    = p.template get<PlayerInfo>(ent.id());
             auto const* physics = p.template get<ObjectPhysics>(ent.id());
             auto const* model   = p.template get<Model>(ent.id());
-            /* First-person models too, for markers such as the muzzle */
-            bool const posed = (info && info->biped.collision) ||
+            /* First-person models too, for markers such as the muzzle, and
+             * riders, whose view is at their camera marker */
+            bool const posed = (info && (info->biped.collision || info->riding.vehicle)) ||
                                (physics && (physics->upright || physics->animated)) ||
                                p.template get<Attachment>(ent.id()) != nullptr ||
                                m_aimed.contains(ent.id());
@@ -1013,6 +1014,7 @@ struct AnimationController
         layer->finished = false;
         layer->loop     = play.loop;
         layer->rate     = play.rate;
+        layer->paused   = false;
         layer->target   = play.weight;
         layer->fade     = fade;
         if(layer->weight <= 0.f && fade <= 0.f)
@@ -1140,6 +1142,14 @@ struct AnimationController
         auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
         auto const& magic =
             p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        /* A seat hears its first-person model at its ear, and not its own
+         * body making the same sound */
+        auto const* held   = p.template get<Attachment>(entity);
+        auto const* owner  = held ? p.template get<PlayerInfo>(held->parent) : nullptr;
+        auto const* self   = p.template get<PlayerInfo>(entity);
+        bool const  at_ear = owner && !owner->is_remote();
+        if(self && !self->is_remote() && !self->riding.vehicle && !dead(p, entity))
+            anim.cue_count = 0;
         for(u32 i = 0; i < anim.cue_count && sounds; i++)
         {
             auto const& cue  = anim.cues[i];
@@ -1153,7 +1163,8 @@ struct AnimationController
             SoundEvent     ev{.type = SoundEvent::play_sound};
             PlaySoundEvent play{
                 .sound    = &sound,
-                .position = position_of(p, entity),
+                .position = at_ear ? PlaySoundEvent::in_hand : position_of(p, entity),
+                .relative = at_ear,
             };
             sounds->inject(ev, &play);
         }

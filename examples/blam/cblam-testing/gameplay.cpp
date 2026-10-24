@@ -23,7 +23,8 @@ using GameplayManifest = compo::SubsystemManifest<
         NetworkInfo,
         Model,
         const ObjectPhysics,
-        PhysicsData>,
+        PhysicsData,
+        const AnimationPlayback>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
@@ -97,7 +98,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             was_using = input.intent.use;
 
             if(info.riding.vehicle != 0)
-                ride(p, info, cam, net);
+                ride(p, player.id(), info, cam, net);
         }
 
         for(auto const& enter : std::exchange(m_enters, {}))
@@ -270,7 +271,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
 
     /* Seats flagged for it get the chase camera behind the vehicle along
      * the view; the rest see from the rider's eyes */
-    void ride(Proxy& p, PlayerInfo& info, PlayerCamera& cam, NetworkInfo& net)
+    void ride(Proxy& p, u64 rider, PlayerInfo& info, PlayerCamera& cam, NetworkInfo& net)
     {
         using seat_flags = blam::scn::unit::seat_t::seat_flags_t;
         auto const* vehicle = p.template get<Model>(info.riding.vehicle);
@@ -286,9 +287,18 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         info.riding.chase  = !known || !marker ||
                             (static_cast<u32>((*seats)[seat].flags) &
                              static_cast<u32>(seat_flags::third_person_camera));
-        if(!info.riding.chase)
-            cam.camera.position = Vecf3(vehicle->transform * (*marker)[3]) +
-                                  Vecf3{0.f, 0.f, info.biped.eye_height};
+        info.riding.armed = known && (static_cast<u32>((*seats)[seat].flags) &
+                                      static_cast<u32>(seat_flags::allows_weapons));
+        /* The seat's own camera marker, else the rider's head */
+        auto const* eye = known ? &marker_transform(
+                                      p, *vehicle, std::string((*seats)[seat].camera_marker_name.str()))
+                                : nullptr;
+        if(!info.riding.chase && eye && *eye)
+            cam.camera.position = Vecf3(vehicle->transform * (**eye)[3]);
+        else if(!info.riding.chase)
+            cam.camera.position = rider_eye(p, rider, info).value_or(
+                Vecf3(vehicle->transform * (*marker)[3]) +
+                Vecf3{0.f, 0.f, info.biped.eye_height});
         else
         {
             Vecf3 const view =
@@ -298,6 +308,32 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
                 view * chase_distance;
         }
         net.changes.transform = net.changes.viewport = true;
+    }
+
+    /* A rider sees out along its seat to begin with; a remote one's view
+     * is its own to send */
+    void face_seat(Proxy& p, u64 rider, Model const& vehicle, i16 seat)
+    {
+        auto*       cam    = p.template get<PlayerCamera>(rider);
+        auto const& marker = seat_marker(p, vehicle, seat);
+        if(!cam || !marker)
+            return;
+        Vecf3 const forward = Matf3(vehicle.transform * *marker) * Vecf3{1.f, 0.f, 0.f};
+        f32 const   yaw     = std::atan2(forward.y, forward.x);
+        cam->camera.rotation = glm::angleAxis(glm::pi<f32>() - yaw, Vecf3{0.f, 1.f, 0.f});
+        if(auto* net = p.template get<NetworkInfo>(rider))
+            net->changes.viewport = true;
+    }
+
+    /* The rider's camera marker, where its seated pose holds it */
+    std::optional<Vecf3> rider_eye(Proxy& p, u64 rider, PlayerInfo const& info)
+    {
+        auto const* body = p.template get<Model>(rider);
+        auto const* anim = p.template get<AnimationPlayback>(rider);
+        i32 const   node = info.biped.camera_node;
+        if(!body || !anim || node < 0 || static_cast<size_t>(node) >= anim->pose.size())
+            return std::nullopt;
+        return Vecf3((body->transform * anim->pose[node] * info.biped.camera_marker)[3]);
     }
 
     /* Seats come from the vehicle's unit tag; a seat is taken while another
@@ -337,6 +373,8 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
                 .seat    = i,
                 .driver  = driver,
             };
+            if(!info->is_remote())
+                face_seat(p, enter.unit, *vehicle, i);
             cDebug(
                 "Player {} takes seat {} of {}",
                 info->player_idx,

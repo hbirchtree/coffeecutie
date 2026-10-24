@@ -1432,6 +1432,8 @@ struct ResourceLoader
 
         auto const* antr_hdr = &antr_data.value()[0];
         u32         anim_idx = 0;
+        /* A unit with no idle, a cryotube, waits on its first frame */
+        bool        held     = false;
 
         auto all_anims_opt = antr_hdr->animations.data(magic);
         if(auto units_opt = antr_hdr->units.data(magic);
@@ -1478,12 +1480,14 @@ struct ResourceLoader
             }
             if(!found_stand && found_fallback)
                 anim_idx = fallback;
+            held = !found_fallback;
         }
 
         return AnimationLayer{
             .graph     = antr_hdr,
             .animation = anim_idx,
-            .loop      = true,
+            .loop      = !held,
+            .paused    = held,
         };
     }
 
@@ -2404,6 +2408,7 @@ struct ResourceLoader
         using blam::phys::powered_mass_point;
         auto data = std::make_shared<MassPoints>(MassPoints{
             .mass                 = header.mass,
+            .radius               = header.radius,
             .center_of_mass       = header.center_of_mass,
             .moments              = header.moments,
             .gravity_scale        = header.gravity_scale,
@@ -2602,6 +2607,17 @@ struct ResourceLoader
                     biped_model.shape.jump_velocity = biped->jump_velocity * 30.f;
                 if(biped->pitch_range.x < biped->pitch_range.y)
                     biped_model.shape.pitch_range = biped->pitch_range;
+                if(auto mod2 = index.find(biped->model); mod2 != index.end())
+                {
+                    /* The cyborg names none; its head stands in */
+                    std::string_view name = biped->camera_marker_name.str();
+                    if(auto camera = bind_marker_node(
+                           *mod2, name.empty() ? camera_marker : name, files.container.magic))
+                    {
+                        biped_model.shape.camera_marker = camera->transform;
+                        biped_model.shape.camera_node   = camera->node;
+                    }
+                }
                 biped_model.shape.collision = object_collision(
                     files, biped->collider, biped->model);
                 auto const& magic = files.container.magic;
@@ -2676,7 +2692,15 @@ struct ResourceLoader
             }
             for(auto const& change : pending_equips)
                 if(change.entity_id == player.id())
+                {
                     equip_weapon(equip, info, cam, change, files);
+                    if(change.mode == EquipWeaponEvent::pick_up)
+                        pickup_sound(
+                            p,
+                            change.weapon,
+                            cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f},
+                            !info.is_remote());
+                }
             if(auto const* status = p.template get<BipedStatus>(player.id());
                status && status->dead)
                 let_go(equip, cam, info);
@@ -2739,8 +2763,10 @@ struct ResourceLoader
             p.template select<PlayerCamera, PlayerInfo, NetworkInfo>())
         {
             auto [cam, info, net] = player.components();
+            /* Riders too, where their seat lets them shoot */
+            bool const armed = info.riding.vehicle && info.riding.armed && biped_shown(info, cam, net);
             if(menu || !biped_model.hands.valid() || info.is_remote() ||
-               !info.mode.physics || !biped_in_play(info, cam, net))
+               !info.mode.physics || !(biped_in_play(info, cam, net) || armed))
                 continue;
             live.insert(player.id());
             /* What it holds, else bare hands */
@@ -2881,6 +2907,30 @@ struct ResourceLoader
             held = armed(tag, files);
         }
         equip.reloading = false;
+    }
+
+    /* What a weapon or grenade sounds like taken off the ground; at the ear
+     * of the one who took it */
+    void pickup_sound(Proxy& p, blam::tag_index<> item, Vecf3 const& at, bool own)
+    {
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        auto  tag    = index.find(item);
+        if(!sounds || tag == index.end())
+            return;
+        auto const&    magic = p.template subsystem<BlamFiles<Ver>>().container.magic;
+        blam::tagref_t ref{};
+        if((*tag).matches(blam::tag_class_t::weap))
+        {
+            if(auto weapon = (*tag).template data<blam::scn::weapon>(magic); weapon.has_value())
+                ref = weapon.value()[0].pickup_sound;
+        } else if(auto equip = (*tag).template data<blam::scn::equipment>(magic); equip.has_value())
+            ref = equip.value()[0].pickup_sound;
+        auto sound = ref.valid() ? index.find(ref) : index.end();
+        if(sound == index.end())
+            return;
+        SoundEvent     ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{.sound_tag = &(*sound), .position = own ? PlaySoundEvent::in_hand : at, .relative = own};
+        sounds->inject(ev, &play);
     }
 
     /* A full magazine's worth, up to what can be carried */
@@ -3116,6 +3166,7 @@ struct ResourceLoader
     }
 
     static constexpr std::string_view hand_marker = "right hand";
+    static constexpr std::string_view camera_marker = "head";
     static constexpr f32              drop_spread = 1.1f; /* rad between drops */
     static constexpr f32              drop_lift   = .5f;  /* wu above an NPC's origin */
     /* Health and shield, as fractions of this */

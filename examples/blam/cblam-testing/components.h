@@ -727,6 +727,7 @@ struct MassPoints
     };
 
     f32   mass{0.f};
+    f32   radius{0.f}; /*!< How far its torques reach */
     Vecf3 center_of_mass{};
     Vecf3 moments{}; /*!< Principal inertia, xx yy zz */
     f32   gravity_scale{1.f};
@@ -788,6 +789,8 @@ struct Projectile
     libc_types::u64              shooter{0};  /* credited with its hits */
     libc_types::u32              bounces{0};
     bool                         attached{false}; /* stuck where it hit */
+    bool                         resting{false};  /* settled where it fell */
+    bool                         flew_by{false};  /* past a local ear, heard */
 
     /*! Bullets fast enough to resolve as the trigger is pulled, along a
      *  ray of `reach` */
@@ -927,6 +930,9 @@ struct PlayerInfo
         /*! How far the camera looks down and up, radians; the cyborg's
          * tag leaves it empty */
         Vecf2 pitch_range{-1.5f, 1.5f};
+        /*! The unit's camera marker in the bind pose, and its node */
+        Matf4 camera_marker{1.f};
+        i32   camera_node{-1};
 
         /*! Hit shape for bodies that follow a camera; the capsule above is
          * what a biped moves with */
@@ -979,6 +985,7 @@ struct PlayerInfo
         bool driver{false};
         bool exiting{false};
         bool chase{false}; /*!< Seen from behind the vehicle, not the seat */
+        bool armed{false}; /*!< The seat lets it fire what it holds */
     } riding;
 
     struct
@@ -1253,6 +1260,9 @@ struct BipedEquipment
         u64 held{0};
         u16 rounds_loaded{0};
         u16 rounds_total{0};
+        f32  heat{0.f};        /*!< 1 is the tag's overheat threshold's scale */
+        f32  age{0.f};         /*!< Battery spent, 0 to 1 */
+        bool overheated{false}; /*!< Venting until it cools to recovery */
     };
     struct equipment_t
     {

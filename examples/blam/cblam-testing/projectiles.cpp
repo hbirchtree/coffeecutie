@@ -6,6 +6,7 @@
 #include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "sounds.h"
 #include "ticks.h"
 
 #include <blam/volta/blam_shaders.h>
@@ -18,13 +19,13 @@
 #include <set>
 
 using ProjectileManifest = compo::SubsystemManifest<
-    type_list_t<Projectile, Model, const ObjectPhysics, const PlayerInfo>,
+    type_list_t<Projectile, Model, const ObjectPhysics, const PlayerInfo, const PlayerCamera>,
     type_list_t<
         PhysicsBus,
         GameEventBus,
         const NetworkState,
         const BlamFiles<halo_version>>,
-    empty_list_t>;
+    type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 struct ProjectileSystem
     : compo::RestrictedSubsystem<ProjectileSystem, ProjectileManifest>
@@ -94,6 +95,8 @@ struct ProjectileSystem
                 glm::mix(tag.initial_velocity, tag.final_velocity, along) *
                 ticks_per_second / speed;
         }
+        if(flight.resting)
+            return true;
         flight.velocity.z -= halo_gravity * tag.air_gravity_scale * dt;
 
         Vecf3 const from = model.position;
@@ -102,6 +105,7 @@ struct ProjectileSystem
         Physics::Raycast ray{.from = from, .to = to, .ignore = flight.owner};
         p.template subsystem<PhysicsBus>().process(ev, &ray);
 
+        fly_by(p, flight, from, ray.hit ? ray.point : to);
         if(!ray.hit)
         {
             flight.travelled += glm::distance(from, to);
@@ -129,6 +133,22 @@ struct ProjectileSystem
 
         response_t const what =
             response ? response->default_response : response_t::detonate;
+        /* Along what it fell onto: it slides, without a clatter each
+         * step, and settles once slow */
+        if(what == response_t::reflect && ray.entity_id == 0 &&
+           -glm::dot(flight.velocity, ray.normal) < rest_speed)
+        {
+            Vecf3 const along = flight.velocity - ray.normal * glm::dot(flight.velocity, ray.normal);
+            flight.velocity   = along * (1.f - (response ? response->parallel_friction : 0.f));
+            place(flight, model, ray.point + ray.normal * surface_gap);
+            if(glm::length(flight.velocity) < rest_speed)
+            {
+                flight.velocity = {};
+                flight.resting  = true;
+                start_timer(flight);
+            }
+            return true;
+        }
         if(ray.entity_id != 0)
             struck(p, flight, model, ray);
         if(response)
@@ -186,6 +206,40 @@ struct ProjectileSystem
         case response_t::disappear:
         default:
             return false;
+        }
+    }
+
+    /* Its whizz, once, where it passes nearest a local player it was not
+     * fired by */
+    void fly_by(Proxy& p, Projectile& flight, Vecf3 const& from, Vecf3 const& to)
+    {
+        if(flight.flew_by || !flight.tag->flyby_sound.valid())
+            return;
+        Vecf3 const step   = to - from;
+        f32 const   length = glm::dot(step, step);
+        for(auto ent : p.template select<PlayerInfo, PlayerCamera>())
+        {
+            auto [info, cam] = ent.components();
+            if(info.is_remote() || !cam.is_active() || ent.id() == flight.shooter ||
+               ent.id() == flight.owner)
+                continue;
+            Vecf3 const ear = cam.camera.position;
+            f32 const   t =
+                length > 0.f ? std::clamp(glm::dot(ear - from, step) / length, 0.f, 1.f) : 0.f;
+            Vecf3 const nearest = from + step * t;
+            if(glm::distance(nearest, ear) > flyby_reach)
+                continue;
+            flight.flew_by = true;
+            if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>())
+            {
+                SoundEvent     ev{.type = SoundEvent::play_sound};
+                PlaySoundEvent play{
+                    .sound    = &static_cast<blam::tagref_t const&>(flight.tag->flyby_sound),
+                    .position = nearest,
+                };
+                sounds->inject(ev, &play);
+            }
+            return;
         }
     }
 
@@ -253,7 +307,16 @@ struct ProjectileSystem
                 continue;
             f32 const scale =
                 d <= inner ? 1.f : 1.f - (d - inner) / std::max(blast.radius.y - inner, 1e-3f);
-            flight.velocity += (d > 1e-3f ? away / d : Vecf3{0, 0, 1}) * (blast.speed * scale);
+            Vecf3 dir = d > 1e-3f ? away / d : Vecf3{0, 0, 1};
+            /* Thrown up off the ground, not slid along it */
+            if(dir.z < blast_lean)
+            {
+                Vecf2 const flat = Vecf2(dir);
+                dir = glm::normalize(
+                    Vecf3(glm::length(flat) > 1e-3f ? glm::normalize(flat) : Vecf2{1, 0}, 1.f));
+            }
+            flight.velocity += dir * (blast.speed * scale);
+            flight.resting = false;
         }
     }
 
@@ -354,6 +417,8 @@ struct ProjectileSystem
     static constexpr f32 halo_gravity     = 9.81f / 3.048f; /* wu/s^2 */
     static constexpr f32 surface_gap      = .01f;
     static constexpr f32 rest_speed       = .3f; /* wu/s */
+    static constexpr f32 flyby_reach      = 1.5f; /* wu, from the ear */
+    static constexpr f32 blast_lean       = .7071f; /* sin 45 */
 
     std::minstd_rand           m_rng{std::random_device{}()};
     std::unique_ptr<TickQueue> m_ticks;

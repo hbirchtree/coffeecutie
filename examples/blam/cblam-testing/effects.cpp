@@ -56,6 +56,8 @@ using blam::scn::point_physics;
 using blend_t = EffectScene::blend_t;
 
 constexpr f32 halo_gravity = 9.81f / 3.048f; /* wu/s^2 */
+/* Air's density over a pphy's mass scale: 0.0011 at 118613.34 per unit */
+constexpr f32 air_mass_over_radius_cubed = .0011f * 118613.34f;
 
 /* Tag colors are a, r, g, b */
 Vecf4 rgba(Vecf4 const& argb)
@@ -73,10 +75,20 @@ struct place_t
 /* How a point_physics moves things */
 struct motion_t
 {
-    f32  gravity{0.f}; /* wu/s^2, up is positive */
-    f32  drag{0.f};    /* per second */
+    f32  gravity{0.f};  /* wu/s^2, up is positive */
+    f32  drag{0.f};     /* per second, for weather */
+    f32  friction{0.f}; /* drag per second at a radius of 1 wu */
     f32  elasticity{0.f};
     bool collides{false};
+
+    /* The air brakes a sprite by its cross-section over its mass, which
+     * along with the air it carries grows with its volume */
+    f32 slowing(f32 radius, f32 dt) const
+    {
+        if(friction <= 0.f)
+            return 0.f;
+        return radius > 0.f ? std::min(friction * dt / radius, 1.f) : 1.f;
+    }
 
     static motion_t from(point_physics const* pphy)
     {
@@ -90,6 +102,7 @@ struct motion_t
             .drag       = pphy->mass_scale > 0.f
                               ? pphy->air_friction / pphy->mass_scale
                               : 0.f,
+            .friction   = pphy->air_friction / (pphy->mass_scale + air_mass_over_radius_cubed),
             .elasticity = pphy->elasticity,
             .collides   = (pphy->flags & flags_t::collides_with_structures) !=
                         flags_t::none,
@@ -117,6 +130,7 @@ struct EffectSystem
         f32                   fade_in{0.f};
         f32                   fade_out{0.f};
         f32                   frame{0.f};
+        f32                   pixels{128.f}; /* its sprites' width, a pctl scale's unit */
         f32                   frame_rate{0.f};
         f32                   spin{0.f};
         bool                  along_velocity{false};
@@ -262,6 +276,7 @@ struct EffectSystem
             m_placed_decals.clear();
             m_effect_decals.clear();
             m_antennas.clear();
+            m_sprite_pixels.clear();
         }
         m_magic = &files.container.magic;
         m_index = blam::tag_index_view<halo_version>(files.container);
@@ -1522,6 +1537,38 @@ struct EffectSystem
         s.look.bitmap   = &static_cast<blam::tagref_t const&>(ps.bitmaps);
         s.look.sequence = ps.sequence_index;
         s.look.blend    = ps.shader.blend_function;
+        s.pixels        = sprite_pixels(*s.look.bitmap, ps.sequence_index);
+    }
+
+    /* How wide a sequence's sprites are in their bitmap, which a pctl
+     * state's scale is per pixel of */
+    f32 sprite_pixels(blam::tagref_t const& ref, i16 sequence)
+    {
+        auto it = m_index.find(ref);
+        if(!ref.valid() || it == m_index.end())
+            return default_sprite_pixels;
+        auto const key       = std::pair{&(*it), sequence};
+        auto [cached, fresh] = m_sprite_pixels.try_emplace(key, default_sprite_pixels);
+        if(!fresh)
+            return cached->second;
+        auto const* header = tag_data<blam::bitm::header_t>(ref, blam::tag_class_t::bitm);
+        if(!header)
+            return cached->second;
+        auto sequences = header->sequences.data(*m_magic);
+        auto images    = header->images.data(*m_magic);
+        if(!sequences.has_value() || !images.has_value() || sequences.value().empty())
+            return cached->second;
+        auto const& seq = sequences.value()[std::clamp<i32>(sequence, 0, sequences.value().size() - 1)];
+        auto        sprites = seq.sprites.data(*m_magic);
+        if(!sprites.has_value() || sprites.value().empty())
+            return cached->second;
+        auto const& sprite = sprites.value()[0];
+        if(sprite.bitmap_index >= images.value().size())
+            return cached->second;
+        f32 const width = (sprite.right - sprite.left) * images.value()[sprite.bitmap_index].isize.x;
+        if(width > 0.f)
+            cached->second = width;
+        return cached->second;
     }
 
     /* The look of a pctl particle, blended into its next state */
@@ -1533,7 +1580,7 @@ struct EffectSystem
         auto look_of = [&s](u32 i) {
             auto const& ps     = s.states[i];
             f32 const   radius = glm::mix(ps.scale.x, ps.scale.y, s.size_pick) *
-                               pctl_scale_to_radius * ps.radius_multiplier;
+                               s.pixels * .5f * ps.radius_multiplier;
             Vecf4 const color  = glm::mix(rgba(ps.color_1), rgba(ps.color_2), s.color_pick);
             return std::pair{radius, color};
         };
@@ -1583,7 +1630,7 @@ struct EffectSystem
             } else
             {
                 s.velocity.z += s.motion.gravity * dt;
-                s.velocity *= std::exp(-s.motion.drag * dt);
+                s.velocity -= s.velocity * s.motion.slowing(s.look.radius, dt);
                 Vecf3 const to = s.look.position + s.velocity * dt;
                 if(s.motion.collides || s.dies_on_contact)
                 {
@@ -2325,7 +2372,7 @@ struct EffectSystem
     static constexpr f32    decal_reach          = 2.f;  /* wu to a face */
     static constexpr size_t max_effect_decals    = 256;
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
-    static constexpr f32    pctl_scale_to_radius = 64.f; /* scale is per bitmap pixel */
+    static constexpr f32    default_sprite_pixels = 128.f; /* when its bitmap can't say */
 
     u32        m_generation{0};
 
@@ -2361,6 +2408,7 @@ struct EffectSystem
 
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>>
         m_markers;
+    std::map<std::pair<blam::tag_t const*, i16>, f32> m_sprite_pixels;
 
     std::shared_ptr<GameEventBus::queue_type<SpawnEffectEvent>> m_spawn_queue;
     std::unique_ptr<TickQueue>                                  m_ticks;

@@ -1301,9 +1301,9 @@ struct cutscene_title
 
     bl_rgba_t text_color;
     bl_rgba_t shadow_color;
-    u32       fade_time;
-    u32       up_time;
-    u32       fade_out_time;
+    f32       fade_time;     /* ticks */
+    f32       up_time;       /* ticks */
+    f32       fade_out_time; /* ticks */
 
     u32 padding_[5];
 };
