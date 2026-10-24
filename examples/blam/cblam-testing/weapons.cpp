@@ -59,6 +59,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         bool fired{false};      /* shot this frame */
         f32  reloading{0.f};    /* seconds left */
         f32  striking{0.f};     /* melee, seconds left */
+        f32  charge{-1.f};      /* held while charging, s; <0 when not */
         blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
 
@@ -153,9 +154,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 ammo ? magazine_of(weapon.value()[0], trigger, magic) : nullptr;
             i16 const per_shot = std::max<i16>(trigger.rounds_per_shot, 1);
 
+            /* A rate of zero fires once a pull */
+            f32 const rate = trigger.maximum_rate_of_fire.y > 0.f ? trigger.maximum_rate_of_fire.y
+                                                                  : trigger.maximum_rate_of_fire.x;
             bool const repeats =
+                rate > 0.f &&
                 (trigger.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
-                trigger_t::flags_t::none;
+                    trigger_t::flags_t::none;
+            /* A trigger that charges fires as it is let go: its partner's
+             * shot once charged */
+            bool const charges = trigger.charging_time > 0.f && triggers.value().size() > 1;
+            auto const& gun_tag = weapon.value()[0];
             /* The trigger is looked at once a tick */
             for(auto const& tick : ticks)
             {
@@ -174,22 +183,41 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     state.reloading = std::max(magazine->reload_time, dt);
                     reload          = false;
                 }
-                if(held && loaded && state.reloading <= 0.f &&
-                   state.cooldown <= 0.f && (repeats || !state.firing))
+                if(ammo)
+                    cool(*ammo, gun_tag, dt);
+                bool const able = loaded && state.reloading <= 0.f && state.cooldown <= 0.f &&
+                                  (!ammo || !spent(*ammo, gun_tag));
+                i32 fires = -1;
+                if(charges)
                 {
-                    f32 const rate = std::max(
-                        trigger.maximum_rate_of_fire.y > 0.f
-                            ? trigger.maximum_rate_of_fire.y
-                            : trigger.maximum_rate_of_fire.x,
-                        .5f);
-                    state.cooldown += 1.f / rate;
+                    if(held && !state.firing && able)
+                        state.charge = 0.f;
+                    else if(held && state.charge >= 0.f)
+                        state.charge += dt;
+                    else if(!held && state.charge >= 0.f)
+                    {
+                        fires        = state.charge >= trigger.charging_time ? 1 : 0;
+                        state.charge = -1.f;
+                    }
+                } else if(held && (repeats || !state.firing))
+                    fires = 0;
+                if(fires >= 0 && able)
+                {
+                    trigger_t const& pulled = triggers.value()[fires];
+                    if(rate > 0.f)
+                        state.cooldown += 1.f / rate;
                     state.fired        = true;
                     state.illumination = 1.f;
                     if(magazine)
                         ammo->rounds_loaded -= per_shot;
-                    pull(p, ent.id(), info, cam, *weapon_tag, state.shots++);
+                    if(ammo)
+                        heat_up(p, ent.id(), *ammo, gun_tag, pulled);
+                    pull(p, ent.id(), info, cam, *weapon_tag, state.shots++, false,
+                         static_cast<u16>(fires));
                 }
                 state.firing = held;
+                if(ammo)
+                    ammo->charged = charges && state.charge >= trigger.charging_time;
                 if(trigger.illumination_recovery_time > 0.f)
                     state.illumination = std::max(
                         state.illumination -
@@ -203,13 +231,15 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             {
                 equip->reloading = state.reloading > 0.f;
                 drive_functions(
-                    p, ent.id(), weapon.value()[0], state, held, magic);
+                    p, ent.id(), weapon.value()[0], state, held, magic, ammo,
+                    charges ? trigger.charging_time : 0.f);
             }
         }
         std::erase_if(m_states, [&live](auto const& e) {
             return !live.contains(e.first);
         });
 
+        hush(p);
         m_fire_queue->poll();
         for(auto const& shot : std::exchange(m_shots, {}))
             fire(p, shot, files);
@@ -276,6 +306,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     .entity_id = ent.id(),
                     .weapon    = tag->tag_id,
                     .mode      = EquipWeaponEvent::pick_up,
+                    .age       = model.item_age,
                 };
                 GameEvent ev{.type = GameEvent::EquipWeapon};
                 game.inject(ev, &equip_ev);
@@ -323,7 +354,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerCamera const& cam,
         blam::tag_t const&  weapon,
         u32                 shot_index,
-        bool                melee = false)
+        bool                melee   = false,
+        u16                 trigger = 0)
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
@@ -332,6 +364,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .shooter    = player,
             .player_idx = info.player_idx,
             .seed       = static_cast<u32>(m_rng()),
+            .trigger    = trigger,
             .melee      = melee,
             .position   = melee ? cam.camera.position
                                 : cam.camera.position + forward * muzzle_distance,
@@ -693,6 +726,48 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return magazine.rounds_loaded_maximum > 0 ? &magazine : nullptr;
     }
 
+    /* Heat bleeds off; a vented weapon fires again once cool enough */
+    static void cool(BipedEquipment::weapon_t& gun, weapon_t const& tag, f32 dt)
+    {
+        gun.heat = std::max(gun.heat - tag.heat_loss_rate * dt, 0.f);
+        if(gun.overheated && gun.heat <= tag.heat_recovery_threshold)
+            gun.overheated = false;
+    }
+
+    /* Venting, or a battery run flat where that stops it */
+    static bool spent(BipedEquipment::weapon_t const& gun, weapon_t const& tag)
+    {
+        using flags_t = weapon_t::weapon_flags_t;
+        return gun.overheated ||
+               ((tag.weapon_flags & flags_t::cannot_fire_at_maximum_age) != flags_t::none &&
+                gun.age >= 1.f);
+    }
+
+    /* A shot warms the weapon and drains its battery; too hot, it vents */
+    void heat_up(
+        Proxy& p, u64 player, BipedEquipment::weapon_t& gun, weapon_t const& tag,
+        trigger_t const& pulled)
+    {
+        gun.heat += pulled.heat_generated_per_round;
+        gun.age = std::min(gun.age + pulled.age_generated_per_round, 1.f);
+        if(tag.overheated_threshold <= 0.f || gun.heat < tag.overheated_threshold ||
+           gun.overheated)
+            return;
+        gun.overheated = true;
+        if(!tag.overheated.valid())
+            return;
+        auto const* cam = p.template get<PlayerCamera>(player);
+        SpawnEffectEvent vent{
+            .effect    = tag.overheated,
+            .position  = cam ? cam->camera.position : Vecf3{},
+            .direction = cam ? glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f}
+                             : Vecf3{1.f, 0.f, 0.f},
+            .parent    = first_person(p, player, true),
+        };
+        GameEvent ev{.type = GameEvent::SpawnEffect};
+        p.template subsystem<GameEventBus>().inject(ev, &vent);
+    }
+
     /* Tops the magazine up from what is carried */
     static void refill(BipedEquipment::weapon_t& ammo, weapon_t::magazine_t const& magazine)
     {
@@ -916,16 +991,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         weapon_t const&      weapon,
         state_t const&       state,
         bool                 held,
-        blam::map_ptr const& magic)
+        blam::map_ptr const& magic,
+        BipedEquipment::weapon_t const* gun,
+        f32                  charging_time)
     {
         u64 const id = first_person(p, player, true);
         if(id == 0)
             return;
         auto* model = p.template get<Model>(id);
 
+        f32 const charged =
+            charging_time > 0.f && state.charge >= 0.f ? std::min(state.charge / charging_time, 1.f) : 0.f;
         std::array<f32, 4> in{};
         for(size_t i = 0; i < in.size(); i++)
-            in[i] = input_value(weapon.weapon_inputs[i], state, held);
+            in[i] = input_value(weapon.weapon_inputs[i], state, held, gun, charged);
 
         std::array<f32, 4> out = in;
         auto functions         = weapon.functions.data(magic);
@@ -933,12 +1012,81 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             for(size_t i = 0; i < out.size() && i < functions.value().size(); i++)
                 out[i] = evaluate(functions.value()[i], in, out);
         model->object_function = out;
+        hum(p, player, id, *model, out, magic);
     }
 
-    static f32 input_value(input_t input, state_t const& state, bool held)
+    /* Looping sounds on the weapon in hand, each as loud as its function,
+     * such as a charging hum */
+    void hum(
+        Proxy& p, u64 player, u64 fp_model, Model const& model, std::array<f32, 4> const& out,
+        blam::map_ptr const& magic)
+    {
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        auto const* cam = p.template get<PlayerCamera>(player);
+        if(!sounds || !cam || !model.origin_object)
+            return;
+        auto object = model.origin_object->template data<blam::scn::object>(magic);
+        if(!object.has_value())
+            return;
+        auto attachments = object.value()[0].attachments.data(magic);
+        auto& loops       = m_hums[fp_model];
+        for(size_t j = 0; attachments.has_value() && j < attachments.value().size() && j < 16; j++)
+        {
+            auto const& a     = attachments.value()[j];
+            auto const& sound = static_cast<blam::tagref_t const&>(a.type);
+            if(!sound.matches(blam::tag_class_t::lsnd))
+                continue;
+            u64 const loop  = hum_base | (fp_model << 4) | j;
+            auto const scale = static_cast<size_t>(a.primary_scale);
+            f32 const gain  = scale == 0 ? 1.f : scale <= out.size() ? out[scale - 1] : 0.f;
+            if(!loops.contains(loop))
+            {
+                SoundEvent     ev{.type = SoundEvent::play_sound, .entity_id = loop};
+                PlaySoundEvent play{.sound = &sound, .position = cam->camera.position, .looping = true};
+                sounds->inject(ev, &play);
+                loops.insert(loop);
+            }
+            SoundEvent       ev{.type = SoundEvent::update_sound, .entity_id = loop};
+            UpdateSoundEvent update{.position = cam->camera.position, .gain = std::clamp(gain, 0.f, 1.f)};
+            sounds->inject(ev, &update);
+        }
+    }
+
+    /* A weapon put away or dropped takes its hum with it */
+    void hush(Proxy& p)
+    {
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        for(auto it = m_hums.begin(); it != m_hums.end();)
+        {
+            if(p.template get<Model>(it->first))
+            {
+                ++it;
+                continue;
+            }
+            for(u64 loop : it->second)
+                if(sounds)
+                {
+                    SoundEvent stop{.type = SoundEvent::stop_sound, .entity_id = loop};
+                    sounds->inject(stop, nullptr);
+                }
+            it = m_hums.erase(it);
+        }
+    }
+
+    static f32 input_value(
+        input_t input, state_t const& state, bool held, BipedEquipment::weapon_t const* gun,
+        f32 charged)
     {
         switch(input)
         {
+        case input_t::heat:
+            return gun ? std::min(gun->heat, 1.f) : 0.f;
+        case input_t::overheated:
+            return gun && gun->overheated ? 1.f : 0.f;
+        case input_t::age:
+            return gun ? gun->age : 0.f;
+        case input_t::primary_charged:
+            return charged;
         case input_t::illumination:
         case input_t::primary_ejection_port:
             return state.illumination;
@@ -1029,6 +1177,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr u32 revive_grace = 30;
     std::unique_ptr<TickQueue>                                 m_ticks;
     std::vector<WeaponFireEvent>                               m_shots;
+    std::map<u64, std::set<u64>>                               m_hums; /*!< By fp model */
+    static constexpr u64 hum_base = 0x48554d0000000000ULL; /* 'HUM' */
 
     friend void alloc_weapons(compo::EntityContainer& e);
 };

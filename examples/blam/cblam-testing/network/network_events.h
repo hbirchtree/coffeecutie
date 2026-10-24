@@ -306,6 +306,7 @@ struct alignas(8) WeaponPickup
 
     u32               player_idx{0};
     blam::tag_index<> weapon{};
+    f32               age{0.f}; /*!< Its battery, as it lay */
 };
 
 /*! A client reached a sync point, or the server released it for all */
@@ -602,6 +603,7 @@ struct alignas(8) SpawnRequest
     EntityTag tag{};
     u32       request_id{EntitySpawn::no_request};
     u32       announce{0};
+    f32       age{0.f}; /*!< See SpawnObjectEvent::age */
 };
 
 struct alignas(8) PlayerSyncEntry
@@ -658,7 +660,7 @@ static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(EquipmentSync) == 24);
-static_assert(sizeof(WeaponPickup) == 8);
+static_assert(sizeof(WeaponPickup) == 16);
 static_assert(sizeof(ObjectDespawn) == 4);
 static_assert(sizeof(SyncPoint) == 64);
 static_assert(sizeof(DriveInput) == 32);

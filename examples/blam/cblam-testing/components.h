@@ -291,6 +291,8 @@ struct Model
 
     blam::tag_t const* tag{nullptr};
     blam::tag_t const* origin_object{nullptr};
+    /*! A weapon on the ground: the battery it was dropped with */
+    libc_types::f32 item_age{0.f};
 
     /*! Active camouflage: drawn as a refraction of what is behind it */
     bool camouflaged{false};
@@ -1261,6 +1263,10 @@ struct BipedEquipment
         u64 held{0};
         u16 rounds_loaded{0};
         u16 rounds_total{0};
+        f32  heat{0.f};        /*!< 1 is the tag's overheat threshold's scale */
+        f32  age{0.f};         /*!< Battery spent, 0 to 1 */
+        bool overheated{false}; /*!< Venting until it cools to recovery */
+        bool charged{false};    /*!< Its trigger held to a full charge */
     };
     struct equipment_t
     {

@@ -649,6 +649,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     },
                 .request_id = request_id,
                 .announce   = spawn.announce,
+                .age        = spawn.age,
             }));
     }
 
@@ -3321,6 +3322,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             Message<WeaponPickup>({
                                 .player_idx = player.idx,
                                 .weapon     = pickup.weapon,
+                                .age        = pickup.age,
                             }));
     }
 
@@ -3736,6 +3738,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .position = Vecf3(request.position),
                 .rotation = request.direction,
                 .net_id = SpawnObjectEvent::dynamic_net_id_base + m_next_net_id++,
+                .age      = request.age,
                 .announce = request.announce != 0,
             };
             m_game_bus.inject(ev, &spawn);
@@ -3815,6 +3818,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .entity_id = holder,
                 .weapon    = pickup.weapon,
                 .mode      = EquipWeaponEvent::pick_up,
+                .age       = pickup.age,
             };
             GameEvent ev{.type = GameEvent::EquipWeapon};
             m_game_bus.inject(ev, &equip);
