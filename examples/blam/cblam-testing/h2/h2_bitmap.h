@@ -1,6 +1,7 @@
 #pragma once
 
 #include "h2_scene.h"
+#include "../world/texels.h"
 
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/bump_palette.h>
@@ -180,18 +181,7 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
                         reinterpret_cast<dim::bitm::vecb4*>(rgba.data()), bytes));
                 level.pixels = std::move(rgba);
             }
-            if(format == blam::bitm::format_t::V8U8)
-                for(auto& b : level.pixels)
-                    b = static_cast<u8>(b + 0x80);
-            /* A8R8G8B8 is stored B,G,R,A */
-            if(format == blam::bitm::format_t::ARGB8 ||
-               format == blam::bitm::format_t::XRGB8)
-                for(u32 i = 0; i + 3 < bytes; i += 4)
-                {
-                    std::swap(level.pixels[i], level.pixels[i + 2]);
-                    if(format == blam::bitm::format_t::XRGB8)
-                        level.pixels[i + 3] = 0xFF;
-                }
+            world::fix_channels(format, level.pixels);
             levels.push_back(std::move(level));
             offset += stored;
             if(lw == 1 && lh == 1)
@@ -217,29 +207,8 @@ inline std::optional<std::shared_ptr<gfx::texture_2d_t>> upload_bitmap(
         auto tex = api.alloc_texture(
             gfx::textures::d2, fmt, static_cast<u32>(levels.size()));
         tex->alloc(size_3d<u32>{width, height, 1});
-        /* One- and two-channel formats land in R/RG; spread them */
-        using gfx::textures::swizzle_t;
-        switch(format)
-        {
-        case blam::bitm::format_t::Y8:
-            tex->set_swizzle(
-                swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::one);
-            break;
-        case blam::bitm::format_t::AY8:
-            tex->set_swizzle(
-                swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::red);
-            break;
-        case blam::bitm::format_t::A8:
-            tex->set_swizzle(
-                swizzle_t::one, swizzle_t::one, swizzle_t::one, swizzle_t::red);
-            break;
-        case blam::bitm::format_t::A8Y8:
-            tex->set_swizzle(
-                swizzle_t::red, swizzle_t::red, swizzle_t::red, swizzle_t::green);
-            break;
-        default:
-            break;
-        }
+        if(auto swizzle = world::channel_swizzle(format))
+            tex->set_swizzle((*swizzle)[0], (*swizzle)[1], (*swizzle)[2], (*swizzle)[3]);
         for(size_t i = 0; i < levels.size(); i++)
         {
             auto& level = levels[i];
