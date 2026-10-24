@@ -6,6 +6,7 @@
 #include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "sounds.h"
 #include "ticks.h"
 
 #include <blam/volta/blam_shaders.h>
@@ -18,13 +19,13 @@
 #include <set>
 
 using ProjectileManifest = compo::SubsystemManifest<
-    type_list_t<Projectile, Model, const ObjectPhysics, const PlayerInfo>,
+    type_list_t<Projectile, Model, const ObjectPhysics, const PlayerInfo, const PlayerCamera>,
     type_list_t<
         PhysicsBus,
         GameEventBus,
         const NetworkState,
         const BlamFiles<halo_version>>,
-    empty_list_t>;
+    type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 struct ProjectileSystem
     : compo::RestrictedSubsystem<ProjectileSystem, ProjectileManifest>
@@ -104,6 +105,7 @@ struct ProjectileSystem
         Physics::Raycast ray{.from = from, .to = to, .ignore = flight.owner};
         p.template subsystem<PhysicsBus>().process(ev, &ray);
 
+        fly_by(p, flight, from, ray.hit ? ray.point : to);
         if(!ray.hit)
         {
             flight.travelled += glm::distance(from, to);
@@ -204,6 +206,40 @@ struct ProjectileSystem
         case response_t::disappear:
         default:
             return false;
+        }
+    }
+
+    /* Its whizz, once, where it passes nearest a local player it was not
+     * fired by */
+    void fly_by(Proxy& p, Projectile& flight, Vecf3 const& from, Vecf3 const& to)
+    {
+        if(flight.flew_by || !flight.tag->flyby_sound.valid())
+            return;
+        Vecf3 const step   = to - from;
+        f32 const   length = glm::dot(step, step);
+        for(auto ent : p.template select<PlayerInfo, PlayerCamera>())
+        {
+            auto [info, cam] = ent.components();
+            if(info.is_remote() || !cam.is_active() || ent.id() == flight.shooter ||
+               ent.id() == flight.owner)
+                continue;
+            Vecf3 const ear = cam.camera.position;
+            f32 const   t =
+                length > 0.f ? std::clamp(glm::dot(ear - from, step) / length, 0.f, 1.f) : 0.f;
+            Vecf3 const nearest = from + step * t;
+            if(glm::distance(nearest, ear) > flyby_reach)
+                continue;
+            flight.flew_by = true;
+            if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>())
+            {
+                SoundEvent     ev{.type = SoundEvent::play_sound};
+                PlaySoundEvent play{
+                    .sound    = &static_cast<blam::tagref_t const&>(flight.tag->flyby_sound),
+                    .position = nearest,
+                };
+                sounds->inject(ev, &play);
+            }
+            return;
         }
     }
 
@@ -373,6 +409,7 @@ struct ProjectileSystem
     static constexpr f32 halo_gravity     = 9.81f / 3.048f; /* wu/s^2 */
     static constexpr f32 surface_gap      = .01f;
     static constexpr f32 rest_speed       = .3f; /* wu/s */
+    static constexpr f32 flyby_reach      = 1.5f; /* wu, from the ear */
 
     std::minstd_rand           m_rng{std::random_device{}()};
     std::unique_ptr<TickQueue> m_ticks;
