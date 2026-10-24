@@ -1,6 +1,7 @@
 #include "h2_bitmap.h"
 #include "h2_scene.h"
 #include "../world/column_grid.h"
+#include "../world/map_lifecycle.h"
 #include "../world/player_spawn.h"
 #include "../world/static_collision.h"
 
@@ -186,7 +187,8 @@ struct H2MapLoader : compo::SubsystemBase
         }
         for(size_t i = 0; i < side_cache_names.size(); i++)
             m_side_sources[i] =
-                side_pread() ? ranged_source(mapper.open_ranged(
+                /* H2_SIDE_PREAD=1 reads them by range on desktop too */
+                world::side_pread("H2_SIDE_PREAD") ? ranged_source(mapper.open_ranged(
                                    side_cache_url(load, i)).get())
                              : mapped_source(
                                    mapper.fetch(side_cache_url(load, i)).get());
@@ -247,16 +249,6 @@ struct H2MapLoader : compo::SubsystemBase
         return false;
     }
 
-    /* H2_SIDE_PREAD=1 takes the side caches through range reads on desktop
-     * too, the path the web always uses */
-    static bool side_pread()
-    {
-        if(compile_info::platform::is_emscripten)
-            return true;
-        auto v = platform::env::var("H2_SIDE_PREAD");
-        return v.has_value() && v.value() == "1";
-    }
-
     static std::shared_ptr<dim::raw_source> mapped_source(
         std::shared_ptr<comp_app::FileMapper::Resource> res)
     {
@@ -272,19 +264,13 @@ struct H2MapLoader : compo::SubsystemBase
     {
         if(!file || !file->size())
             return {};
-        return std::make_shared<dim::pread_source>(
-            file->size(), [file](u64 offset, Span<u8> dst) {
-                return file->read(
-                    offset,
-                    gsl::span<char>(
-                        reinterpret_cast<char*>(dst.data()), dst.size()));
-            });
+        auto const size = file->size();
+        return std::make_shared<dim::pread_source>(size, world::pread_reader(std::move(file)));
     }
 
     platform::url::Url side_cache_url(MapLoadEvent const& load, size_t i) const
     {
-        return (load.file->path().dirname() / side_cache_names[i].second)
-            .url(load.file->flags);
+        return world::sibling_url(load, side_cache_names[i].second);
     }
 
     /* The side caches found */
@@ -423,20 +409,7 @@ struct H2MapLoader : compo::SubsystemBase
         MapLoadEvent const& load, BytesConst const& bytes, dim::raw_pool& pool)
     {
         unload();
-        /* Same teardown as open_map(): the Halo 1 world goes away */
-        m_container.remove_entity_if([](compo::Entity const& en) {
-            return stl_types::any_flag_of(en.tags, ObjectGC);
-        });
-        if(auto* sound_bus = m_container.service<comp_app::EventBus<SoundEvent>>())
-        {
-            SoundEvent ev{.type = SoundEvent::clear_all};
-            sound_bus->inject(ev, nullptr);
-        }
-        {
-            Physics::Event reset_ev{Physics::Event::Reset};
-            Physics::Reset reset{};
-            m_container.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
-        }
+        world::clear_world(m_container);
 
         pool.attach(
             dim::raw_file_t::local, Span<const u8>(bytes.data, bytes.size));
@@ -3581,12 +3554,7 @@ void alloc_h2(compo::EntityContainer& e)
     auto& bank   = e.register_subsystem_inplace<H2SoundBank>();
     auto& loader = e.register_subsystem_inplace<H2MapLoader>(
         std::ref(e), std::ref(scene), std::ref(shell), std::ref(bank));
-    e.subsystem_cast<GameEventBus>().addEventFunction<MapLoadEvent>(
-        0, [&loader](GameEvent& ev, MapLoadEvent* load) {
-            /* Consumed here: the Halo 1 loader never sees a Halo 2 map */
-            if(loader.on_map_load(*load))
-                ev.type = GameEvent::None;
-        });
+    world::consume_map_loads(e, loader);
     alloc_h2_occluder(e);
     alloc_h2_renderer(e);
     alloc_h2_shell(e);

@@ -1,5 +1,6 @@
 #include "h3_scene.h"
 #include "../world/column_grid.h"
+#include "../world/map_lifecycle.h"
 #include "../world/player_spawn.h"
 #include "../world/static_collision.h"
 #include "h3_sound.h"
@@ -269,20 +270,7 @@ struct H3MapLoader : compo::SubsystemBase
         unload();
         /* The map stays mapped for as long as it is loaded */
         m_file = std::move(file);
-        /* Same teardown as the other loaders: the previous world goes away */
-        m_container.remove_entity_if([](compo::Entity const& en) {
-            return stl_types::any_flag_of(en.tags, ObjectGC);
-        });
-        if(auto* sound_bus = m_container.service<comp_app::EventBus<SoundEvent>>())
-        {
-            SoundEvent ev{.type = SoundEvent::clear_all};
-            sound_bus->inject(ev, nullptr);
-        }
-        {
-            Physics::Event reset_ev{Physics::Event::Reset};
-            Physics::Reset reset{};
-            m_container.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
-        }
+        world::clear_world(m_container);
         ensure_gpu();
         m_scene.generation++;
 
@@ -300,7 +288,8 @@ struct H3MapLoader : compo::SubsystemBase
             return false;
         }
         m_loader = std::make_unique<el::resource_loader>(*res);
-        if(side_pread())
+        /* H3_SIDE_PREAD=1 reads the side caches by range on desktop too */
+        if(world::side_pread("H3_SIDE_PREAD"))
         {
             open_side_caches(load, m_scene.generation, 0);
             return true;
@@ -784,21 +773,6 @@ struct H3MapLoader : compo::SubsystemBase
             m_bank.music.gain);
     }
 
-    /* H3_SIDE_PREAD=1 reads the side caches by range on desktop too, the
-     * path the web always takes */
-    static bool side_pread()
-    {
-        if(compile_info::platform::is_emscripten)
-            return true;
-        auto v = platform::env::var("H3_SIDE_PREAD");
-        return v.has_value() && v.value() == "1";
-    }
-
-    platform::url::Url side_cache_url(MapLoadEvent const& load, std::string_view name) const
-    {
-        return (load.file->path().dirname() / std::string(name)).url(load.file->flags);
-    }
-
     /* Web: the side caches opened one after another through FileMapper's
      * store, read by range; the load finishes on the main queue after. A
      * newer load abandons the chain */
@@ -817,7 +791,7 @@ struct H3MapLoader : compo::SubsystemBase
         auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
         rq::runtime_queue::Queue(
             rq::dependent_task<std::shared_ptr<RangedFile>, void>::CreateSink(
-                mapper.open_ranged(side_cache_url(load, name)),
+                mapper.open_ranged(world::sibling_url(load, name)),
                 [this, load, generation, i, name](std::shared_ptr<RangedFile>* file) {
                     if(generation != m_scene.generation || !m_loader)
                         return;
@@ -829,10 +803,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     void attach_ranged(std::string const& name, std::shared_ptr<comp_app::FileMapper::RangedFile> file)
     {
-        auto read = [file](u64 offset, Span<u8> dst) {
-            return file->read(
-                offset, gsl::span<char>(reinterpret_cast<char*>(dst.data()), dst.size()));
-        };
+        auto read = world::pread_reader(file);
         std::vector<u8> head(sizeof(el::file_header_t));
         auto source = file && file->size() && read(0, Span<u8>(head.data(), head.size()))
                           ? el::cache_source::from_header(
@@ -853,7 +824,7 @@ struct H3MapLoader : compo::SubsystemBase
         for(auto const& cache : m_loader->external_caches())
         {
             auto name = std::string(cache.file_name());
-            auto url  = (load.file->path().dirname() / name).url(load.file->flags);
+            auto url  = world::sibling_url(load, name);
             auto file = mapper.fetch(url).get();
             auto bytes = file ? static_cast<BytesConst>(*file) : BytesConst{};
             if(!bytes.data || !bytes.size)
@@ -999,14 +970,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_zone_set = zone_set;
         /* The world placed in the old BSPs goes; textures, cubes and model
          * geometry views are kept */
-        m_container.remove_entity_if([](compo::Entity const& en) {
-            return stl_types::any_flag_of(en.tags, ObjectGC);
-        });
-        {
-            Physics::Event reset_ev{Physics::Event::Reset};
-            Physics::Reset reset{};
-            m_container.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
-        }
+        world::clear_objects(m_container);
         m_scene.generation++;
         m_scene.materials.clear();
         m_material_index.clear();
@@ -3143,12 +3107,7 @@ void alloc_h3(compo::EntityContainer& e)
     auto& bank   = e.register_subsystem_inplace<H3SoundBank>();
     auto& loader = e.register_subsystem_inplace<H3MapLoader>(
         std::ref(e), std::ref(scene), std::ref(bank));
-    e.subsystem_cast<GameEventBus>().addEventFunction<MapLoadEvent>(
-        0, [&loader](GameEvent& ev, MapLoadEvent* load) {
-            /* Consumed here: the Halo 1 loader never sees a Halo 3 map */
-            if(loader.on_map_load(*load))
-                ev.type = GameEvent::None;
-        });
+    world::consume_map_loads(e, loader);
     e.subsystem_cast<PhysicsBus>().addEventFunction<Physics::Impact>(
         0, [&loader](Physics::Event&, Physics::Impact* impact) { loader.on_impact(*impact); });
     alloc_h3_renderer(e);
