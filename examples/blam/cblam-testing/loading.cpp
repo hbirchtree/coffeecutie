@@ -2363,6 +2363,10 @@ struct ResourceLoader
         auto angle = [](f32 a) {
             return std::abs(a) > glm::two_pi<f32>() ? glm::radians(a) : a;
         };
+        auto  seats = vehicle.powered_seats.data(magic);
+        Vecf2 power{};
+        if(seats.has_value() && !seats.value().empty())
+            power = {seats.value()[0].driver_powerup_time, seats.value()[0].driver_powerdown_time};
         return VehicleDrive{
             .type          = static_cast<VehicleDrive::type_t>(vehicle.vehicle_type),
             .forward_speed = vehicle.maximum_forward_speed * tick,
@@ -2377,6 +2381,8 @@ struct ResourceLoader
                                vehicle.maximum_right_slide) *
                            tick,
             .slide_acceleration = vehicle.slide_acceleration * tick * tick,
+            .powerup            = power.x,
+            .powerdown          = power.y,
         };
     }
 

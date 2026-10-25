@@ -768,6 +768,9 @@ struct VehicleDrive
     f32    wheel_circumference{0.f};
     f32    slide_speed{0.f}; /*!< Sideways, either way */
     f32    slide_acceleration{0.f};
+    /*! Seconds the driver's seat takes to power the engine up and down */
+    f32 powerup{0.f};
+    f32 powerdown{0.f};
 
     /*! Braking; tags without one slow down as fast as they speed up */
     f32 deceleration_or_accel() const
