@@ -1096,7 +1096,7 @@ struct DrawListBuilder
                 if((attached && dead(p, attached->parent)) ||
                    (held && !held->shown) ||
                    (hidden && !shadow_only(vis, third_person, model_draw.current_pass)) ||
-                   !((model.lod_mask >> lod) & 1) ||
+                   !((model.lod_mask >> lod) & 1) || !model.shown(*mod_ptr) ||
                    (!rendering_params->render_scenery &&
                     (ent.tags() & ObjectSkybox) == 0))
                 {
@@ -4296,7 +4296,7 @@ struct LegacyMeshRenderer
             auto const* attached = p.template get<Attachment>(sm.parent);
             if((attached && dead(attached->parent)) ||
                (held && !held->shown) ||
-               !vis.visible_for(0, false, third_person) ||
+               !vis.visible_for(0, false, third_person) || !sm.shown(*mod) ||
                !((sm.lod_mask >> mod->lod_resolve(vis.lod_for(0))) & 1))
                 continue;
             bool const sky = (parent.tags() & ObjectSkybox) != 0;
@@ -4929,6 +4929,7 @@ struct LegacyMeshRenderer
             Visibility const& vis = parent.template get<Visibility>();
             auto const*       held = p.template get<HeldObject>(sm.parent);
             if((held && !held->shown) || !vis.visible_for(0) || !sm.shader.valid() ||
+               !sm.shown(mod) ||
                !((sm.lod_mask >> mod.lod_resolve(vis.lod_for(0))) & 1))
                 continue;
 

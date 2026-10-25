@@ -4,6 +4,7 @@
 #include "components.h"
 #include "data.h"
 #include "model_markers.h"
+#include "object_functions.h"
 #include "network/networking.h"
 #include "physics.h"
 #include "projectiles.h"
@@ -1035,7 +1036,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         auto functions         = weapon.functions.data(magic);
         if(functions.has_value())
             for(size_t i = 0; i < out.size() && i < functions.value().size(); i++)
-                out[i] = evaluate(functions.value()[i], in, out);
+                out[i] = blam_functions::evaluate(functions.value()[i], in, out);
         model->object_function = out;
         hum(p, player, id, *model, out, magic);
     }
@@ -1127,31 +1128,6 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         default:
             return 0.f;
         }
-    }
-
-    /* Constant base, scaled and offset by the inputs it names */
-    static f32 evaluate(
-        blam::scn::object::function_t const& fn,
-        std::array<f32, 4> const&            in,
-        std::array<f32, 4> const&            out)
-    {
-        using src = blam::shader::param_src;
-        auto value_of = [&](src s) -> std::optional<f32> {
-            auto const i = static_cast<u32>(s);
-            if(i >= 1 && i <= 4)
-                return in[i - 1];
-            if(i >= 5 && i <= 8)
-                return out[i - 5];
-            return std::nullopt;
-        };
-        f32 v = fn.function == blam::shader::animation_function::zero ? 0.f : 1.f;
-        if(auto s = value_of(fn.scale_function_by))
-            v *= *s;
-        if(auto s = value_of(fn.add))
-            v += *s;
-        if(auto s = value_of(fn.scale_result_by))
-            v *= *s;
-        return std::clamp(v, 0.f, 1.f);
     }
 
     static Vecf3 cone(std::minstd_rand& rng, Vecf3 const& dir, f32 angle)
