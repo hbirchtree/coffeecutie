@@ -75,6 +75,8 @@ coffee_application(
         network/webrtc_signaling.cpp
         offline_maps.cpp
         physics.cpp
+        render/gravity_storm.cpp
+        render/monitors.cpp
         render/occluder.cpp
         render/rendering.cpp
         resource_creation.cpp

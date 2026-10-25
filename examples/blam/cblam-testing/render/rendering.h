@@ -77,8 +77,49 @@ struct ScreenClear
 template<typename V>
 struct DrawListBuilder;
 
-template<typename V>
-struct GravityStorm;
+/* Something MeshRenderer draws at a point in its frame, once per viewport.
+ * Hooks are called on the main thread, so their subsystem must stay there */
+struct RenderHook
+{
+    enum stage_t : libc_types::u8
+    {
+        AfterOpaque,      /*!< Opaque world and grass in, depth written */
+        AfterSky,         /*!< Behind the transparent world */
+        AfterTransparent, /*!< Before effects */
+    };
+
+    struct view_t
+    {
+        libc_types::u32                      seat; /*!< Local seat it is for */
+        Matf4                                camera;
+        Vecf3                                position;
+        std::shared_ptr<gfx::rendertarget_t> target;
+        gfx::view_state                      state;
+        gfx::stencil_state                   stencil; /*!< The stage's own */
+    };
+
+    virtual ~RenderHook() = default;
+    virtual void draw(stage_t stage, view_t const& view) = 0;
+};
+
+/* The hooks MeshRenderer calls; their subsystems add them when allocated */
+struct RenderHooks : compo::SubsystemBase
+{
+    using type = RenderHooks;
+
+    struct entry_t
+    {
+        RenderHook::stage_t stage;
+        RenderHook*         hook;
+    };
+
+    std::vector<entry_t> hooks;
+
+    void add(RenderHook::stage_t stage, RenderHook* hook)
+    {
+        hooks.push_back({stage, hook});
+    }
+};
 
 template<typename V>
 using MeshRendererManifest = compo::SubsystemManifest<
@@ -95,7 +136,7 @@ using MeshRendererManifest = compo::SubsystemManifest<
         const WorldInfo>,
     type_list_t<
         const DrawListBuilder<V>,
-        GravityStorm<V>,
+        const RenderHooks,
         const PostProcessParameters,
         BlamFiles<V>,
         BitmapCache<V>,
