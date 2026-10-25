@@ -45,32 +45,35 @@ inline u32 type_size(semantic::type_t t)
  * Buffer identity (pointer + size) stands in for content: rebinding or resizing
  * a buffer changes the key; mutating a buffer in place without changing its
  * pointer would not (acceptable for the static geometry this caches). */
-inline u64 hash_draw(draw_command const& cmd)
+inline u64 hash_draw(
+    draw_command::call_t const& call,
+    draw_command::data_t const& data,
+    vertex_array_t const&       vao)
 {
     u64  h   = 1469598103934665603ull; /* FNV-1a */
     auto mix = [&h](u64 v) { h = (h ^ v) * 1099511628211ull; };
 
-    mix(static_cast<u64>(reinterpret_cast<uintptr_t>(cmd.vertices.get())));
-    mix(cmd.call.indexed ? 1u : 0u);
-    mix(static_cast<u64>(cmd.call.mode));
+    mix(static_cast<u64>(reinterpret_cast<uintptr_t>(&vao)));
+    mix(call.indexed ? 1u : 0u);
+    mix(static_cast<u64>(call.mode));
 
-    if(cmd.call.indexed)
+    if(call.indexed)
     {
-        mix(cmd.data.elements.count);
-        mix(cmd.data.elements.offset);
-        mix(static_cast<u64>(cmd.data.elements.type));
-        if(auto const& eb = cmd.vertices->m_element_buffer; eb)
+        mix(data.elements.count);
+        mix(data.elements.offset);
+        mix(static_cast<u64>(data.elements.type));
+        if(auto const& eb = vao.m_element_buffer; eb)
         {
             mix(reinterpret_cast<uintptr_t>(eb.get()));
             mix(eb->size());
         }
     } else
     {
-        mix(cmd.data.arrays.count);
-        mix(cmd.data.arrays.offset);
+        mix(data.arrays.count);
+        mix(data.arrays.offset);
     }
 
-    for(vertex_attribute const& a : cmd.vertices->m_attributes)
+    for(vertex_attribute const& a : vao.m_attributes)
     {
         mix(static_cast<u64>(a.role));
         mix(a.value.offset);
@@ -80,7 +83,7 @@ inline u64 hash_draw(draw_command const& cmd)
         mix(a.buffer.id);
         mix(a.buffer.offset);
     }
-    for(auto const& [id, buf] : cmd.vertices->m_vertex_buffers)
+    for(auto const& [id, buf] : vao.m_vertex_buffers)
     {
         mix(id);
         mix(buf ? reinterpret_cast<uintptr_t>(buf.get()) : 0);
@@ -112,6 +115,17 @@ inline u8 prim_to_gx(drawing::primitive prim)
     }
 }
 
+/* A direct matrix index, out of the vertex it belongs to */
+inline libc_types::u8 matrix_index_of(
+    vertex_array_t const& array, vertex_attribute const& attr, size_t vertex)
+{
+    auto buffer = array.m_vertex_buffers.find(attr.buffer.id);
+    if(buffer == array.m_vertex_buffers.end() || !buffer->second)
+        return 0;
+    return buffer->second->map<libc_types::u8>()
+        [attr.buffer.offset + attr.value.offset + vertex * attr.value.stride];
+}
+
 inline void iterate_indices(
     draw_command::data_t const& data, vertex_array_t const& array)
 {
@@ -125,14 +139,19 @@ inline void iterate_indices(
             data.elements.count * sizeof(u16));
         for(u16 idx : indices)
             for(vertex_attribute const& attr : array.m_attributes)
-                ::wgPipe->U16 = idx;
+                if(attr.role == vertex_attribute::matrix_index)
+                    ::wgPipe->U8 = matrix_index_of(array, attr, idx);
+                else
+                    ::wgPipe->U16 = idx;
     } else
     {
         gsl::span<u8> indices = array.m_element_buffer->map<u8>(
             data.elements.offset, data.elements.count);
         for(u8 idx : indices)
             for(vertex_attribute const& attr : array.m_attributes)
-                ::wgPipe->U8 = idx;
+                ::wgPipe->U8 = attr.role == vertex_attribute::matrix_index
+                                   ? matrix_index_of(array, attr, idx)
+                                   : idx;
     }
 }
 
@@ -299,13 +318,8 @@ template<typename... StateList>
 inline std::optional<std::tuple<error, std::string_view>> api::submit(
     draw_command const& cmd, StateList&&... state_changes)
 {
-    if(!cmd.vertices || cmd.vertices->m_attributes.empty())
-        return std::nullopt;
-    auto& vao = *cmd.vertices;
-
-    u32 const count =
-        cmd.call.indexed ? cmd.data.elements.count : cmd.data.arrays.count;
-    if(count == 0)
+    if(cmd.batches.empty() &&
+       (!cmd.vertices || cmd.vertices->m_attributes.empty()))
         return std::nullopt;
 
     auto const& xforms        = cmd.instance_transforms;
@@ -425,6 +439,43 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
     GX_SetBlendMode(
         GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 
+    (detail::apply_state(state_changes), ...);
+    for(u32 i = 0; i < cmd.texture_transforms.size(); i++)
+    {
+        Mtx tm;
+        detail::glm_to_mtx(cmd.texture_transforms[i], tm);
+        GX_LoadTexMtxImm(tm, GX_TEXMTX0 + i * 3, GX_MTX3x4);
+    }
+    std::optional<std::tuple<error, std::string_view>> out;
+    if(cmd.batches.empty())
+        out = draw_geometry(cmd, *cmd.vertices, cmd.data, cmd.palette);
+    for(auto const& b : cmd.batches)
+    {
+        if(!b.vertices || b.vertices->m_attributes.empty())
+            continue;
+        auto data           = cmd.data;
+        data.elements.count = b.count;
+        data.arrays.count   = b.count;
+        if(auto err = draw_geometry(cmd, *b.vertices, data, b.palette))
+            out = err;
+    }
+    (detail::undo_state(state_changes), ...);
+    return out;
+}
+
+inline std::optional<std::tuple<error, std::string_view>> api::draw_geometry(
+    draw_command const&         cmd,
+    vertex_array_t const&       vao,
+    draw_command::data_t const& data,
+    gsl::span<Matf4 const>      palette)
+{
+    u32 const count =
+        cmd.call.indexed ? data.elements.count : data.arrays.count;
+    if(count == 0)
+        return std::nullopt;
+    auto const& xforms        = cmd.instance_transforms;
+    bool const  has_transform = !xforms.empty();
+
     /* Describe + format ONLY the configured attributes. Iterating the full
      * m_attr_desc/m_attr_fmt arrays would emit zero-filled entries (attr 0 =
      * GX_VA_PNMTXIDX) and GX_SetVtxAttrFmtv would run past the unterminated
@@ -434,11 +485,16 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
     for(vertex_attribute const& attr : vao.m_attributes)
     {
         u8 const gxattr = detail::role_to_attr(attr);
+        if(attr.role == vertex_attribute::matrix_index)
+        {
+            GX_SetVtxDesc(gxattr, GX_DIRECT);
+            continue;
+        }
         GX_SetVtxDesc(
             gxattr,
             cmd.call.indexed
-                ? (cmd.data.elements.type == semantic::type_t::u16 ? GX_INDEX16
-                                                                   : GX_INDEX8)
+                ? (data.elements.type == semantic::type_t::u16 ? GX_INDEX16
+                                                               : GX_INDEX8)
                 : GX_DIRECT);
         GX_SetVtxAttrFmt(
             GX_VTXFMT0,
@@ -462,14 +518,12 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         }
     }
 
-    (detail::apply_state(state_changes), ...);
-
     /* Record the geometry (GX_Begin..vertices..GX_End) into a display list the
      * first time we see this draw, then replay the cached FIFO every frame so
      * only the matrix/material colour are re-issued per instance. The vertex
      * descriptor/format/array set above stay outside the list (they are state,
      * re-applied each submit). */
-    u64 const dl_key = detail::hash_draw(cmd);
+    u64 const dl_key = detail::hash_draw(cmd.call, data, vao);
     auto      dl_it  = m_display_lists.find(dl_key);
     if(dl_it == m_display_lists.end())
     {
@@ -477,7 +531,7 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         if(cmd.call.indexed)
         {
             u32 const idxsz =
-                cmd.data.elements.type == semantic::type_t::u16 ? 2u : 1u;
+                data.elements.type == semantic::type_t::u16 ? 2u : 1u;
             per_vert = static_cast<u32>(vao.m_attributes.size()) * idxsz;
         } else
             for(vertex_attribute const& a : vao.m_attributes)
@@ -496,9 +550,9 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         GX_BeginDispList(buf, cap);
         GX_Begin(detail::prim_to_gx(cmd.call.mode), GX_VTXFMT0, count);
         if(cmd.call.indexed)
-            detail::iterate_indices(cmd.data, vao);
+            detail::iterate_indices(data, vao);
         else
-            detail::iterate_arrays(cmd.data, vao);
+            detail::iterate_arrays(data, vao);
         GX_End();
         u32 const used = GX_EndDispList();
         DCFlushRange(buf, used); /* make the recorded list visible to the GP */
@@ -508,28 +562,29 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
     }
     display_list_t const& dl = dl_it->second;
 
-    static const u8 palette[4][3] = {
+    static const u8 debug_colors[4][3] = {
         {0x40, 0xE0, 0x40}, /* green */
         {0xE0, 0x40, 0x40}, /* red   */
         {0x40, 0x80, 0xE0}, /* blue  */
         {0xE0, 0xE0, 0x40}, /* yellow*/
     };
 
-    for(u32 i = 0; i < cmd.texture_transforms.size(); i++)
+    for(u32 i = 0; i < palette.size(); i++)
     {
-        Mtx tm;
-        detail::glm_to_mtx(cmd.texture_transforms[i], tm);
-        GX_LoadTexMtxImm(tm, GX_TEXMTX0 + i * 3, GX_MTX3x4);
+        Mtx m;
+        detail::glm_to_mtx(palette[i], m);
+        GX_LoadPosMtxImm(m, GX_PNMTX0 + i * 3);
+        GX_LoadNrmMtxImm(m, GX_PNMTX0 + i * 3);
     }
     bool const has_normals = std::any_of(
         vao.m_attributes.begin(), vao.m_attributes.end(), [](auto const& a) {
             return a.role == vertex_attribute::normal;
         });
-    for(u32 inst = cmd.data.instances.offset;
-        inst < (cmd.call.instanced ? cmd.data.instances.count : 0);
+    for(u32 inst = data.instances.offset;
+        inst < (cmd.call.instanced ? data.instances.count : 0);
         inst++)
     {
-        if(has_transform)
+        if(has_transform && palette.empty())
         {
             Mtx mv;
             detail::glm_to_mtx(
@@ -541,7 +596,7 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
 
         /* Per-instance material colour (used when a channel sources GX_SRC_REG;
          * ignored when it sources the vertex colour). Kept outside the list. */
-        auto const& col    = palette[inst % 4];
+        auto const& col    = debug_colors[inst % 4];
         GXColor     matcol = {col[0], col[1], col[2], 0xFF};
         if(cmd.material_color)
         {
@@ -556,7 +611,6 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
 
         GX_CallDispList(dl.buffer, dl.size);
     }
-    (detail::undo_state(state_changes), ...);
     return std::nullopt;
 }
 

@@ -115,6 +115,13 @@ struct api
         draw_command const& command, StateList&&... state_changes);
 
   private:
+    /* One vertex array's geometry, with the command's state already set */
+    std::optional<std::tuple<error, std::string_view>> draw_geometry(
+        draw_command const&         cmd,
+        vertex_array_t const&       vao,
+        draw_command::data_t const& data,
+        gsl::span<Matf4 const>      palette);
+
     std::shared_ptr<rendertarget_t> m_framebuffer;
 
     /* Cache of recorded display lists, keyed by a hash of the (static) draw
