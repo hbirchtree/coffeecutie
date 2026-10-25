@@ -123,6 +123,8 @@ class CombatSync
             if(server)
                 if(auto wire = vitality_of(p, vitality.unit))
                 {
+                    if(vitality.violent)
+                        wire->dead |= 2u;
                     if(vitality.respawn_at)
                     {
                         wire->respawned = 1u | (vitality.arrived ? 2u : 0u) | (vitality.fresh ? 4u : 0u);
@@ -350,7 +352,8 @@ class CombatSync
             .player = wire.target_player,
             .body   = wire.body,
             .shield = wire.shield,
-            .dead   = wire.dead != 0,
+            .dead    = (wire.dead & 1) != 0,
+            .violent = (wire.dead & 2) != 0,
         };
         if(wire.respawned)
         {

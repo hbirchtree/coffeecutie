@@ -7,6 +7,7 @@
 #include "object_functions.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "sounds.h"
 #include "ticks.h"
 
 #include <blam/volta/blam_effects.h>
@@ -30,7 +31,7 @@ using DamageManifest = compo::SubsystemManifest<
         PhysicsBus,
         const NetworkState,
         const BlamFiles<halo_version>>,
-    empty_list_t>;
+    type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 /* Units lose shield and body to what strikes them. The authority (the
  * server, or a peer on its own) decides each blow and tells everyone what
@@ -102,6 +103,18 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         return data.has_value() ? data.value() : nullptr;
     }
 
+    template<typename T>
+    T const* tag_data(blam::tagref_t const& ref, blam::tag_class_t cls) const
+    {
+        if(!ref.valid())
+            return nullptr;
+        auto it = m_index->find(ref);
+        if(it == m_index->end() || !(*it).matches(cls))
+            return nullptr;
+        auto data = (*it).template data<T>(*m_magic);
+        return data.has_value() ? data.value() : nullptr;
+    }
+
     /* The coll material a collision node is made of, -1 if unknown */
     i16 material_of(Proxy& p, u64 unit, i16 part) const
     {
@@ -138,7 +151,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         status->shield = 0.f;
         status->body   = 0.f;
         status->dead   = true;
-        tell(p, unit, *status);
+        last_words(p, unit, true);
+        tell(p, unit, *status, {}, 0.f, false, false, true);
         killed(p, unit, killer);
         return true;
     }
@@ -169,8 +183,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             body_mult = 1.f;
         bool const headshot =
             head && (jpt.damage_flags & flag_t::can_cause_headshots) != flag_t::none;
+        bool const violent = amount >= status->maximum_body();
         apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot);
-        tell(p, unit, *status);
+        if(status->dead)
+            last_words(p, unit, violent);
+        tell(p, unit, *status, {}, 0.f, false, false, violent);
         if(status->dead)
             killed(p, unit, killer);
     }
@@ -277,7 +294,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 1.f));
         f32 const total = status->maximum_body() + std::max(status->maximum_shield(), 0.f);
         apply(*status, share * total, 1.f, 1.f, flag_t::none, false);
-        tell(p, struck.unit, *status);
+        if(status->dead)
+            last_words(p, struck.unit, true);
+        tell(p, struck.unit, *status, {}, 0.f, false, false, true);
         if(!status->dead)
             return;
         /* The driver did it */
@@ -307,7 +326,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
 
     void tell(Proxy& p, u64 unit, BipedStatus const& status,
               std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f, bool arrived = false,
-              bool fresh = false)
+              bool fresh = false, bool violent = false)
     {
         auto const*       info = p.template get<PlayerInfo>(unit);
         GameEvent         ev{.type = GameEvent::UnitVitality};
@@ -317,12 +336,43 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .body           = status.body,
             .shield         = status.shield,
             .dead           = status.dead,
+            .violent        = violent,
             .respawn_at     = respawn_at,
             .respawn_facing = facing,
             .arrived        = arrived,
             .fresh          = fresh,
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
+    }
+
+    /* Its dialogue's death line, loud or quiet by how it went */
+    void last_words(Proxy& p, u64 unit, bool violent)
+    {
+        auto const* model  = p.template get<Model>(unit);
+        auto*       sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        if(!model || !model->origin_object || !sounds)
+            return;
+        auto u = model->origin_object->template data<blam::scn::unit>(*m_magic);
+        if(!u.has_value())
+            return;
+        auto variants = u.value()[0].dialogue_variants.data(*m_magic);
+        if(!variants.has_value() || variants.value().empty())
+            return;
+        auto const* dialogue = tag_data<blam::scn::unit_dialogue>(
+            variants.value()[0].dialogue, blam::tag_class_t::udlg);
+        if(!dialogue)
+            return;
+        auto const& line = violent && dialogue->death_violent.valid()
+                               ? dialogue->death_violent
+                               : dialogue->death_quiet;
+        if(!line.valid())
+            return;
+        SoundEvent     ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{
+            .sound    = &static_cast<blam::tagref_t const&>(line),
+            .position = model->position + Vecf3{0.f, 0.f, .5f},
+        };
+        sounds->inject(ev, &play);
     }
 
     /* The game mode decides what a death is worth and when it ends */
@@ -344,6 +394,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(vitality.shield < status->shield)
             status->recent_shield = 1.f;
         status->shield     = vitality.shield;
+        if(vitality.dead && !status->dead)
+            last_words(p, vitality.unit, vitality.violent);
         status->dead       = vitality.dead;
         if(vitality.shield < 1.f)
             status->stunned = status->coll ? status->coll->stun_time : default_stun;

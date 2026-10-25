@@ -315,6 +315,33 @@ static_assert(offsetof(item, material_effect) == 0x248);
 static_assert(offsetof(item, detonation_delay) == 0x2e0);
 static_assert(sizeof(item) == 776);
 
+/* A unit's voice: the lines it has for what happens to it */
+struct unit_dialogue
+{
+    static constexpr tag_class_t tag_class = tag_class_t::udlg;
+
+    u32                              padding1[4];
+    tagref_typed_t<tag_class_t::snd> idle_noncombat;
+    tagref_typed_t<tag_class_t::snd> idle_combat;
+    tagref_typed_t<tag_class_t::snd> idle_flee;
+    u32                              padding2[12];
+    tagref_typed_t<tag_class_t::snd> pain_body_minor;
+    tagref_typed_t<tag_class_t::snd> pain_body_major;
+    tagref_typed_t<tag_class_t::snd> pain_shield;
+    tagref_typed_t<tag_class_t::snd> pain_falling;
+    tagref_typed_t<tag_class_t::snd> scream;
+    tagref_typed_t<tag_class_t::snd> pain_unknown[3];
+    tagref_typed_t<tag_class_t::snd> death_quiet;
+    tagref_typed_t<tag_class_t::snd> death_violent;
+    tagref_typed_t<tag_class_t::snd> death_falling;
+    tagref_typed_t<tag_class_t::snd> death_agonizing;
+    tagref_typed_t<tag_class_t::snd> death_instant;
+    tagref_typed_t<tag_class_t::snd> death_flying;
+};
+static_assert(offsetof(unit_dialogue, pain_body_minor) == 0x70);
+static_assert(offsetof(unit_dialogue, death_quiet) == 0xf0);
+static_assert(offsetof(unit_dialogue, death_flying) == 0x140);
+
 struct unit : object
 {
     enum class unit_flags_t : u32
