@@ -29,6 +29,16 @@ rq::runtime_queue* FileMapper::io_queue()
     return m_io_queue;
 }
 
+void FileMapper::set_download_queue(rq::runtime_queue* queue)
+{
+    m_download_queue = queue;
+}
+
+rq::runtime_queue* FileMapper::download_queue()
+{
+    return m_download_queue ? m_download_queue : io_queue();
+}
+
 /* Runs fn on the IO queue and hands back its result */
 template<typename T>
 static std::future<T> run_on(rq::runtime_queue* queue, std::function<T()>&& fn)
@@ -68,11 +78,62 @@ static std::uint64_t store_size(std::string const& path)
                                           : 0;
 }
 
+/* Where a download stands, for fetch_set(); all optional */
+struct download_state_t
+{
+    std::atomic<std::uint64_t>* received{nullptr};
+    std::atomic<std::uint64_t>* expected{nullptr};
+    std::atomic<bool> const*    cancelled{nullptr};
+
+    void sizes(std::uint64_t in, std::uint64_t total) const
+    {
+        if(expected)
+            expected->store(total);
+        if(received)
+            received->store(in);
+    }
+    bool stopped() const
+    {
+        return cancelled && cancelled->load();
+    }
+};
+
+/* Downloads [0, size) of url by range in chunks: each lands in
+ * buffer_for(offset, size) and is handed to commit() */
+static bool download_chunks(
+    platform::url::Url const&                                               url,
+    std::uint64_t                                                           size,
+    download_state_t const&                                                 state,
+    std::function<gsl::span<char>(std::uint64_t, std::uint64_t)> const&    buffer_for,
+    std::function<bool(std::uint64_t, gsl::span<char>)> const&             commit)
+{
+    using namespace platform::file::emscripten;
+    constexpr std::uint64_t chunk    = 16u << 20;
+    std::uint64_t           done     = 0;
+    int                     last_pct = 0;
+    while(done < size)
+    {
+        if(state.stopped())
+            return false;
+        auto take   = std::min<std::uint64_t>(chunk, size - done);
+        auto buffer = buffer_for(done, take);
+        if(!fetch_range(url.internUrl, done, buffer) || !commit(done, buffer))
+            return false;
+        done += take;
+        state.sizes(done, size);
+        int pct = static_cast<int>(done * 100 / size);
+        if(pct / 25 != last_pct / 25)
+            fmt::print(stderr, "FileMapper: {} {}%\n", url.internUrl, pct);
+        last_pct = pct;
+    }
+    return true;
+}
+
 /* Brings url into the store unless the copy there has the server's size.
  * Downloads by range in chunks so the heap only ever holds one; a server
  * without Range support handed the whole file back with the probe. Returns
  * the file's size, 0 if it is not to be had */
-static std::uint64_t store_sync(platform::url::Url const& url)
+static std::uint64_t store_sync(platform::url::Url const& url, download_state_t const& state = {})
 {
     using namespace platform::file::emscripten;
     if(!store_ready())
@@ -80,7 +141,10 @@ static std::uint64_t store_sync(platform::url::Url const& url)
     auto path  = store_path(url);
     auto local = store_size(path);
     if(is_offline_url(url.internUrl))
+    {
+        state.sizes(local, local);
         return local;
+    }
     auto probe = fetch_probe(url.internUrl);
     if(probe.status != 200 && probe.status != 206)
     {
@@ -91,14 +155,17 @@ static std::uint64_t store_sync(platform::url::Url const& url)
                 "FileMapper: {} not reachable (status {}), using the cached copy\n",
                 url.internUrl,
                 probe.status);
+        state.sizes(local, local);
         return local;
     }
     if(local == probe.size && probe.size)
     {
         if(probe.whole)
             platform::file::emscripten::unmap(std::move(*probe.whole));
+        state.sizes(local, local);
         return local;
     }
+    state.sizes(0, probe.size);
     fmt::print(
         stderr, "FileMapper: caching {} ({} MiB)\n", url.internUrl, probe.size >> 20);
     int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -111,25 +178,21 @@ static std::uint64_t store_sync(platform::url::Url const& url)
         if(::pwrite(fd, view.data(), view.size(), 0) == static_cast<ssize_t>(view.size()))
             done = view.size();
         platform::file::emscripten::unmap(std::move(*probe.whole));
+        state.sizes(done, probe.size);
     } else
     {
-        constexpr std::uint64_t chunk = 16u << 20;
-        std::vector<char>       buffer;
-        int                     last_pct = 0;
-        while(done < probe.size)
-        {
-            auto take = std::min<std::uint64_t>(chunk, probe.size - done);
-            buffer.resize(take);
-            if(!fetch_range(url.internUrl, done, gsl::span<char>(buffer)))
-                break;
-            if(::pwrite(fd, buffer.data(), take, done) != static_cast<ssize_t>(take))
-                break;
-            done += take;
-            int pct = static_cast<int>(done * 100 / probe.size);
-            if(pct / 25 != last_pct / 25)
-                fmt::print(stderr, "FileMapper: {} {}%\n", url.internUrl, pct);
-            last_pct = pct;
-        }
+        std::vector<char> buffer;
+        auto              buffer_for = [&buffer](std::uint64_t, std::uint64_t size) {
+            buffer.resize(size);
+            return gsl::span<char>(buffer);
+        };
+        auto commit = [fd, &done](std::uint64_t offset, gsl::span<char> chunk) {
+            if(::pwrite(fd, chunk.data(), chunk.size(), offset) != static_cast<ssize_t>(chunk.size()))
+                return false;
+            done = offset + chunk.size();
+            return true;
+        };
+        download_chunks(url, probe.size, state, buffer_for, commit);
     }
     ::close(fd);
     if(done != probe.size)
@@ -310,23 +373,271 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
     {
         std::promise<std::shared_ptr<Resource>> out;
         auto                                    fut = out.get_future();
-        if(auto size = platform::file::size(src); size.has_value())
-        {
-            if(auto mapping = platform::file::map(src, {.size = size.value()});
-               mapping.has_value())
-            {
-                res->m_mapping = std::move(mapping.value());
-                res->m_url     = src;
-                m_resources[src.internUrl] = res;
-                out.set_value(std::move(res));
-            } else
-                /* mapping failed despite a valid size: return empty rather
-                 * than letting the promise break */
-                out.set_value({});
-        } else
+        if(auto mapped = map_local(src))
+            m_resources[src.internUrl] = mapped, out.set_value(std::move(mapped));
+        else
             out.set_value({});
         return fut;
     }
+}
+
+/* A local file mapped, outside fetch()'s cache so any thread may do it */
+std::shared_ptr<FileMapper::Resource> FileMapper::map_local(platform::url::Url const& src)
+{
+    auto size = platform::file::size(src);
+    if(!size.has_value())
+        return nullptr;
+    auto mapping = platform::file::map(src, {.size = size.value()});
+    if(!mapping.has_value())
+        return nullptr;
+    auto res       = std::make_shared<FileMapper::Resource>();
+    res->m_mapping = std::move(mapping.value());
+    res->m_url     = src;
+    return res;
+}
+
+float FileMapper::FetchSet::progress() const
+{
+    std::uint64_t in = 0, total = 0;
+    for(std::size_t i = 0; i < m_entries.size(); i++)
+    {
+        in += m_slots[i].received.load();
+        total += m_slots[i].expected.load();
+    }
+    if(total)
+        return static_cast<float>(static_cast<double>(in) / static_cast<double>(total));
+    return done() ? 1.f : 0.f;
+}
+
+bool FileMapper::FetchSet::done() const
+{
+    for(std::size_t i = 0; i < m_entries.size(); i++)
+        if(!m_slots[i].settled.load(std::memory_order_acquire))
+            return false;
+    return true;
+}
+
+bool FileMapper::FetchSet::failed() const
+{
+    return m_failed.load();
+}
+
+void FileMapper::FetchSet::cancel()
+{
+    m_cancelled.store(true);
+}
+
+bool FileMapper::FetchSet::cancelled() const
+{
+    return m_cancelled.load();
+}
+
+std::shared_ptr<FileMapper::Resource> FileMapper::FetchSet::resource(std::size_t i) const
+{
+    return m_slots[i].settled.load(std::memory_order_acquire) ? m_slots[i].resource : nullptr;
+}
+
+std::shared_ptr<FileMapper::RangedFile> FileMapper::FetchSet::ranged(std::size_t i) const
+{
+    return m_slots[i].settled.load(std::memory_order_acquire) ? m_slots[i].ranged : nullptr;
+}
+
+#if defined(COFFEE_EMSCRIPTEN)
+static bool is_remote_url(platform::url::Url const& src)
+{
+    return platform::file::emscripten::is_offline_url(src.internUrl) ||
+           (!platform::file::exists(src).has_value() &&
+            enum_helpers::feval(src.flags, semantic::RSCA::AssetFile));
+}
+
+#endif
+
+void FileMapper::fetch_one(FetchSet& set, std::size_t i)
+{
+    auto const&            entry = set.m_entries[i];
+    auto&                  slot  = set.m_slots[i];
+    if(!set.cancelled())
+    {
+#if defined(COFFEE_EMSCRIPTEN)
+        if(is_remote_url(entry.url))
+        {
+            download_state_t const state{&slot.received, &slot.expected, &set.m_cancelled};
+            if(entry.mode == fetch_mode::memory && !entry.cache)
+            {
+                /* The whole file into the heap by range, without the local store */
+                using namespace platform::file::emscripten;
+                auto probe = fetch_probe(entry.url.internUrl);
+                auto res   = std::make_shared<Resource>();
+                res->m_url = entry.url;
+                if(probe.whole)
+                {
+                    auto view = probe.whole->view;
+                    res->m_alloc.assign(view.begin(), view.end());
+                    platform::file::emscripten::unmap(std::move(*probe.whole));
+                    state.sizes(res->m_alloc.size(), res->m_alloc.size());
+                    slot.resource = std::move(res);
+                } else if(probe.status == 206)
+                {
+                    state.sizes(0, probe.size);
+                    res->m_alloc.resize(probe.size);
+                    auto buffer_for = [&res](std::uint64_t offset, std::uint64_t size) {
+                        return gsl::span<char>(res->m_alloc.data() + offset, size);
+                    };
+                    auto commit = [](std::uint64_t, gsl::span<char>) { return true; };
+                    if(download_chunks(entry.url, probe.size, state, buffer_for, commit))
+                        slot.resource = std::move(res);
+                }
+            } else if(auto size = store_sync(entry.url, state); size && !set.cancelled())
+            {
+                int fd = ::open(store_path(entry.url).c_str(), O_RDONLY);
+                if(fd >= 0 && entry.mode == fetch_mode::ranged)
+                {
+                    auto file     = std::make_shared<RangedFile>();
+                    file->m_url   = entry.url;
+                    file->m_owner = this;
+                    file->m_size  = size;
+                    file->m_fd    = fd;
+                    slot.ranged   = std::move(file);
+                } else if(fd >= 0)
+                {
+                    auto res   = std::make_shared<Resource>();
+                    res->m_url = entry.url;
+                    res->m_alloc.resize(size);
+                    if(::pread(fd, res->m_alloc.data(), size, 0) == static_cast<ssize_t>(size))
+                        slot.resource = std::move(res);
+                    ::close(fd);
+                }
+            }
+        } else
+#endif
+            if(auto mapping = map_local(entry.url))
+        {
+            auto size = static_cast<semantic::BytesConst>(*mapping).size;
+            slot.expected.store(size);
+            slot.received.store(size);
+            if(entry.mode == fetch_mode::ranged)
+            {
+                auto file       = std::make_shared<RangedFile>();
+                file->m_url     = entry.url;
+                file->m_owner   = this;
+                file->m_mapping = std::move(mapping);
+                file->m_size    = size;
+                slot.ranged     = std::move(file);
+            } else
+                slot.resource = std::move(mapping);
+        }
+    }
+    if(!slot.resource && !slot.ranged && !entry.optional)
+        set.m_failed.store(true);
+    /* A file that never came counts as done, so progress still reaches the end */
+    if(!slot.resource && !slot.ranged)
+        slot.received.store(slot.expected.load());
+    slot.settled.store(true, std::memory_order_release);
+}
+
+std::shared_ptr<FileMapper::FetchSet> FileMapper::fetch_set(
+    std::vector<fetch_entry> entries, rq::runtime_queue* deliver_on, ready_fn on_ready)
+{
+    auto set       = std::make_shared<FetchSet>();
+    set->m_entries = std::move(entries);
+    set->m_slots   = std::make_unique<FetchSet::slot_t[]>(set->m_entries.size());
+    auto* queue    = download_queue();
+
+    /* Sizes first, so progress is over the whole set from the start */
+    auto sizes = [set] {
+        for(std::size_t i = 0; i < set->m_entries.size(); i++)
+        {
+            auto const&   url  = set->m_entries[i].url;
+            std::uint64_t size = 0;
+#if defined(COFFEE_EMSCRIPTEN)
+            if(is_remote_url(url))
+            {
+                using namespace platform::file::emscripten;
+                auto local = store_size(store_path(url));
+                if(is_offline_url(url.internUrl))
+                    size = local;
+                else
+                {
+                    auto probe = fetch_probe(url.internUrl);
+                    if(probe.whole)
+                        platform::file::emscripten::unmap(std::move(*probe.whole));
+                    size = probe.size ? probe.size : local;
+                }
+            } else
+#endif
+                size = platform::file::size(url).value_or(0);
+            set->m_slots[i].expected.store(size);
+        }
+    };
+    auto each = [this, set, deliver_on, on_ready](std::size_t i) {
+        fetch_one(*set, i);
+        auto deliver = [set, i, on_ready] {
+            if(!set->cancelled() && on_ready)
+                on_ready(*set, i);
+        };
+        if(deliver_on)
+            rq::runtime_queue::QueueImmediate(deliver_on, {}, std::move(deliver)).assume_value();
+        else
+            deliver();
+    };
+    /* One task for the set keeps its files in order */
+    auto all = [set, sizes, each] {
+        sizes();
+        for(std::size_t i = 0; i < set->m_entries.size(); i++)
+            each(i);
+    };
+    if(!queue)
+        all();
+    else
+        rq::runtime_queue::QueueImmediate(queue, {}, std::move(all)).assume_value();
+    return set;
+}
+
+std::future<std::vector<char>> FileMapper::read_head(platform::url::Url const& src, std::size_t bytes)
+{
+    using head_t = std::vector<char>;
+#if defined(COFFEE_EMSCRIPTEN)
+    if(is_remote_url(src))
+        return run_on<head_t>(download_queue(), [src, bytes]() -> head_t {
+            using namespace platform::file::emscripten;
+            auto probe = is_offline_url(src.internUrl) ? range_probe_t{} : fetch_probe(src.internUrl);
+            auto path  = store_path(src);
+            auto local = store_size(path);
+            /* A complete copy in the store is read from disk */
+            if(local && (is_offline_url(src.internUrl) || probe.size == local))
+            {
+                if(probe.whole)
+                    platform::file::emscripten::unmap(std::move(*probe.whole));
+                head_t out(std::min<std::uint64_t>(bytes, local));
+                int    fd = ::open(path.c_str(), O_RDONLY);
+                bool   ok = fd >= 0 && ::pread(fd, out.data(), out.size(), 0) == static_cast<ssize_t>(out.size());
+                if(fd >= 0)
+                    ::close(fd);
+                return ok ? out : head_t{};
+            }
+            if(probe.whole)
+            {
+                auto   view = probe.whole->view;
+                head_t out(view.begin(), view.begin() + std::min<std::size_t>(bytes, view.size()));
+                platform::file::emscripten::unmap(std::move(*probe.whole));
+                return out;
+            }
+            if(probe.status != 206)
+                return {};
+            head_t out(std::min<std::uint64_t>(bytes, probe.size));
+            return fetch_range(src.internUrl, 0, gsl::span<char>(out)) ? out : head_t{};
+        });
+#endif
+    std::promise<head_t> out;
+    auto                 fut = out.get_future();
+    head_t               head;
+    if(auto mapping = map_local(src))
+    {
+        auto view = static_cast<semantic::BytesConst>(*mapping);
+        head.assign(view.data, view.data + std::min<std::size_t>(bytes, view.size));
+    }
+    out.set_value(std::move(head));
+    return fut;
 }
 
 #endif
