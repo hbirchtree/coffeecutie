@@ -2598,6 +2598,11 @@ struct ResourceLoader
             .center       = (bounds->first + bounds->second) * .5f,
             .mass         = 1.f,
             .item         = true,
+            .tip_up       = tag.matches(tag_class_t::weap) &&
+                                    tag.to_name().to_string(magic) ==
+                                        gravity_rifle_tag
+                                ? tip_up_frequency
+                                : 0.f,
         };
         if(tag.matches(tag_class_t::eqip))
             if(auto equip = tag.template data<blam::scn::equipment>(magic);
@@ -3210,6 +3215,8 @@ struct ResourceLoader
     static constexpr std::string_view camera_marker = "head";
     static constexpr f32              drop_spread = 1.1f; /* rad between drops */
     static constexpr f32              drop_lift   = .5f;  /* wu above an NPC's origin */
+    /* Hz; stiff enough to stand the gravity rifle on its butt */
+    static constexpr f32              tip_up_frequency = 2.f;
     /* Health and shield, as fractions of this */
 
     /* A model drawn at the player's eye in the first-person pass */
