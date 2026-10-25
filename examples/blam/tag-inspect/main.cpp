@@ -1357,6 +1357,15 @@ void dump_projectile(blam::scn::projectile const* proj)
         print_enum("default", r.default_response);
         print_enum("potential", r.potential_response);
         fmt::print(
+            "flags={:#x} potential_flags={:#x} skip={} between={}..{} and={}..{} ",
+            r.flags,
+            r.potential_flags,
+            r.potential_skip_fraction,
+            r.potential_between.x,
+            r.potential_between.y,
+            r.potential_and.x,
+            r.potential_and.y);
+        fmt::print(
             "effect={} detonation={} potential_effect={}\n",
             name_of(r.default_effect),
             name_of(r.detonation_effect),

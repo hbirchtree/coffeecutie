@@ -794,6 +794,8 @@ struct Projectile
     libc_types::u64              shooter{0};  /* credited with its hits */
     libc_types::u32              bounces{0};
     bool                         attached{false}; /* stuck where it hit */
+    libc_types::u64              attached_to{0};  /* the unit it stuck to, if one */
+    Vecf3                        attach_offset{}; /* in that unit's model space */
     bool                         resting{false};  /* settled where it fell */
     bool                         flew_by{false};  /* past a local ear, heard */
 
