@@ -36,6 +36,8 @@ struct ExecLoop
             ;
 
         comp_app::cleanup_container(container);
+        /* Workers are joined before exit handlers tear down what they use */
+        rq::runtime_queue::TerminateThreads();
 #endif
         return 0;
     }
