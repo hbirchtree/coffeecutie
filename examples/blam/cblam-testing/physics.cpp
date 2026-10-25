@@ -109,11 +109,23 @@ class MassPointAction : public btActionInterface
             m_input_left--;
         else
             m_throttle = m_strafe = 0.f;
-        /* Wheels hold when parked or crawling, so no creeping down slopes */
+        /* The driver's seat powers the engine up and down over the tag's
+         * times: a hovercraft lifts off as it is boarded, settles when left */
+        if(m_drive && m_lifting > 0)
+        {
+            f32 const seconds = driven ? m_drive->powerup : m_drive->powerdown;
+            f32 const step    = seconds > 0.f ? dt / seconds : 1.f;
+            m_power = std::clamp(m_power + (driven ? step : -step), 0.f, 1.f);
+        } else
+            m_power = 1.f;
+        /* Wheels hold when parked or crawling, so no creeping down slopes;
+         * a hovercraft has none to hold with */
+        bool const wheeled = m_drive && (m_drive->type == VehicleDrive::human_jeep ||
+                                         m_drive->type == VehicleDrive::human_tank);
         bool const idling =
             std::abs(m_throttle) <= stick_deadzone &&
             m_body.getLinearVelocity().length() < handbrake_speed;
-        bool const rolling = driven && !m_braking && !idling;
+        bool const rolling = driven && (!wheeled || (!m_braking && !idling));
         MassPoints const& data  = *m_data;
         btTransform const body  = m_body.getWorldTransform();
         btVector3 const   com   = to_bt(data.center_of_mass);
@@ -710,8 +722,10 @@ class MassPointAction : public btActionInterface
         auto const& point   = m_data->points[i];
         auto const& powered = m_data->powered[point.powered];
         btVector3 const at  = body * (to_bt(point.position) - com);
+        /* The height is the sphere's clearance, from its underside: a
+         * Wraith's hull would be in the ground were it from the centre */
         btVector3 const from =
-            at + btVector3(0, 0, -powered.offset);
+            at + btVector3(0, 0, -(point.radius + powered.offset));
         btVector3 const to = from - btVector3(0, 0, powered.height);
         btCollisionWorld::ClosestRayResultCallback ground(from, to);
         ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
@@ -724,7 +738,7 @@ class MassPointAction : public btActionInterface
                               powered.height;
         btVector3 const rel = at - body.getOrigin();
         f32 const       vz  = m_body.getVelocityInLocalPoint(rel).z();
-        f32 lift = stiffness * (powered.height - height) -
+        f32 lift = m_power * stiffness * (powered.height - height) -
                    2.f * antigrav_damping_ratio *
                        std::sqrt(stiffness * share) * vz;
         lift *= slope(
@@ -745,6 +759,7 @@ class MassPointAction : public btActionInterface
     u32                                             m_driver_left{0};
     f32                                             m_steering{0.f};
     f32                                             m_strafe{0.f};
+    f32                                             m_power{0.f}; /* The engine's, 0..1 */
     bool                                            m_braking{false};
     bool                                            m_reversing{false};
     std::vector<f32>                                m_depths;
