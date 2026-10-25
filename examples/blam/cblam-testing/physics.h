@@ -143,6 +143,8 @@ struct BodyCreationShape
     bool posed{false};
     /*! Upright bodies: steepest ground they walk up, radians; 0 = any */
     f32 max_slope{0.f};
+    /*! Hz of a spring turning the body's +X up, 0 = none */
+    f32 tip_up{0.f};
     /*! Overrides the defaults below when set */
 };
 
