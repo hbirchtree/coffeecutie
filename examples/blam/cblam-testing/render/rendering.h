@@ -78,6 +78,9 @@ template<typename V>
 struct DrawListBuilder;
 
 template<typename V>
+struct GravityStorm;
+
+template<typename V>
 using MeshRendererManifest = compo::SubsystemManifest<
     type_list_t<
         const BspReference,
@@ -89,12 +92,10 @@ using MeshRendererManifest = compo::SubsystemManifest<
         const PlayerCamera,
         const PlayerInfo,
         const Visibility,
-        const WorldInfo,
-        const HeldObject,
-        const Attachment,
-        const BipedEquipment>,
+        const WorldInfo>,
     type_list_t<
         const DrawListBuilder<V>,
+        GravityStorm<V>,
         const PostProcessParameters,
         BlamFiles<V>,
         BitmapCache<V>,
