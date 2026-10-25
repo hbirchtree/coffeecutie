@@ -831,9 +831,21 @@ struct program_t
             GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV};
         u8 konst_color{GX_TEV_KCSEL_1}; // what GX_CC_KONST reads
         u8 tex_swap{GX_TEV_SWAP0};      // texture channel swap table
+        /* An indirect stage offsetting this stage's lookup, through
+         * draw_command::indirect_matrix */
+        std::optional<u8> warp_by{};
     };
 
     std::vector<stage_t> stages;
+
+    /* Indirect stages: textures whose texels offset other stages' lookups */
+    struct indirect_t
+    {
+        stage_t::texcoord_t texcoord{stage_t::texcoord0};
+        stage_t::texmap_t   texmap{stage_t::texmap0};
+    };
+
+    std::vector<indirect_t> indirect;
 };
 
 /* Binds a texture to a GX texture map and describes how its coordinates are
@@ -930,6 +942,16 @@ struct draw_command
     /* Loaded as GX_TEXMTX0, GX_TEXMTX1, ... (3x4; a 2x4 texgen uses the
      * first two rows), for texture coordinates generated through them */
     gsl::span<Matf4 const> texture_transforms{};
+
+    /* GX_ITM_0, for warped stages: offset = rows * signed texel * 2^scale,
+     * in texels of the warped stage's texture */
+    struct indirect_matrix_t
+    {
+        std::array<std::array<f32, 3>, 2> rows{};
+        libc_types::i8                    scale{0};
+    };
+
+    std::optional<indirect_matrix_t> indirect_matrix{};
 };
 
 /* A recorded GX display list: the GX_Begin..vertices..GX_End command stream for
