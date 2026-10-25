@@ -349,11 +349,36 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
         GX_SetTexCoordGen(tex.texcoord, tex.gen_type, tex.gen_src, tex.gen_mtx);
     }
 
+    GX_SetNumIndStages(cmd.program->indirect.size());
+    for(u32 i = 0; i < cmd.program->indirect.size(); i++)
+    {
+        auto const& ind = cmd.program->indirect[i];
+        GX_SetIndTexOrder(GX_INDTEXSTAGE0 + i, ind.texcoord, ind.texmap);
+        GX_SetIndTexCoordScale(GX_INDTEXSTAGE0 + i, GX_ITS_1, GX_ITS_1);
+    }
+    if(auto const& m = cmd.indirect_matrix)
+    {
+        f32 rows[2][3];
+        for(u32 r = 0; r < 2; r++)
+            for(u32 c = 0; c < 3; c++)
+                rows[r][c] = m->rows[r][c];
+        GX_SetIndTexMatrix(GX_ITM_0, rows, m->scale);
+    }
+
     // TEV stages, configured by the program.
     GX_SetNumTevStages(cmd.program->stages.size());
     for(program_t::stage_t const& s : cmd.program->stages)
     {
         GX_SetTevOrder(s.stage, s.texcoord, s.texmap, s.color);
+        if(s.warp_by)
+            GX_SetTevIndWarp(
+                s.stage,
+                GX_INDTEXSTAGE0 + *s.warp_by,
+                GX_TRUE,
+                GX_FALSE,
+                GX_ITM_0);
+        else
+            GX_SetTevDirect(s.stage);
         if(s.op == program_t::stage_t::modulate_prev ||
            s.op == program_t::stage_t::modulate_prev_2x)
         {
