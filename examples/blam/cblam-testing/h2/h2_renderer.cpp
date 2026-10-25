@@ -892,18 +892,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             });
         m_flare_vao = api.alloc_vertex_array();
         m_flare_vao->alloc();
-        m_flare_vao->add(gfx::vertex_attribute{
-            .index = 0,
-            .value = {.offset = 0, .stride = sizeof(FlareVertex), .count = 2},
-        });
-        m_flare_vao->add(gfx::vertex_attribute{
-            .index = 1,
-            .value = {.offset = offsetof(FlareVertex, texcoord), .stride = sizeof(FlareVertex), .count = 2},
-        });
-        m_flare_vao->add(gfx::vertex_attribute{
-            .index = 2,
-            .value = {.offset = offsetof(FlareVertex, color), .stride = sizeof(FlareVertex), .count = 4},
-        });
+        m_flare_vao->add(gfx::vertex_attribute::from_member(&FlareVertex::position).at(0));
+        m_flare_vao->add(gfx::vertex_attribute::from_member(&FlareVertex::texcoord).at(1));
+        m_flare_vao->add(gfx::vertex_attribute::from_member(&FlareVertex::color).at(2));
         m_flare_vao->set_attribute_names({{"position", 0}, {"texcoord", 1}, {"color", 2}});
         m_flare_buf = api.alloc_buffer(
             gfx::buffers::vertex, semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);

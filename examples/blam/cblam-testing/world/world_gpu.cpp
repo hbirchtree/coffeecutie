@@ -3,42 +3,20 @@
 #include <coffee/graphics/apis/gleam/rhi_vertex.h>
 
 #include <array>
-#include <cstddef>
 #include <vector>
 
 namespace world {
 
 std::shared_ptr<gfx::vertex_array_t> alloc_vertex_layout(gfx::api& api, bool skinned)
 {
-    using flags = gfx::vertex_attribute::attribute_flags;
-    auto vao    = api.alloc_vertex_array();
+    using gfx::vertex_attribute;
+    auto vao = api.alloc_vertex_array();
     vao->alloc();
-    vao->add(gfx::vertex_attribute{
-        .index = 0,
-        .value = {.offset = 0, .stride = sizeof(Vertex), .count = 3},
-    });
-    vao->add(gfx::vertex_attribute{
-        .index = 1,
-        .value = {.offset = offsetof(Vertex, texcoord), .stride = sizeof(Vertex), .count = 2},
-    });
-    vao->add(gfx::vertex_attribute{
-        .index = 2,
-        .value = {.offset = offsetof(Vertex, normal), .stride = sizeof(Vertex), .count = 3},
-    });
-    vao->add(gfx::vertex_attribute{
-        .index = 3,
-        .value = {.offset = offsetof(Vertex, lightmap), .stride = sizeof(Vertex), .count = 3},
-    });
-    vao->add(gfx::vertex_attribute{
-        .index = 4,
-        .value =
-            {.offset = offsetof(Vertex, light),
-             .stride = sizeof(Vertex),
-             .count  = 4,
-             .type   = semantic::type_t::u8,
-             /* packed: a float input, never an integer attribute */
-             .flags = flags::packed | flags::normalized},
-    });
+    vao->add(vertex_attribute::from_member(&Vertex::position).at(0));
+    vao->add(vertex_attribute::from_member(&Vertex::texcoord).at(1));
+    vao->add(vertex_attribute::from_member(&Vertex::normal).at(2));
+    vao->add(vertex_attribute::from_member(&Vertex::lightmap).at(3));
+    vao->add(vertex_attribute::from_member(&Vertex::light, gfx::vertex_float_type).at(4));
     if(!skinned)
     {
         vao->set_attribute_names({
@@ -50,24 +28,11 @@ std::shared_ptr<gfx::vertex_array_t> alloc_vertex_layout(gfx::api& api, bool ski
         });
         return vao;
     }
-    vao->add(gfx::vertex_attribute{
-        .index = 5,
-        .value =
-            {.offset = offsetof(Vertex, nodes),
-             .stride = sizeof(Vertex),
-             .count  = 4,
-             .type   = semantic::type_t::u8,
-             .flags  = flags::packed},
-    });
-    vao->add(gfx::vertex_attribute{
-        .index = 6,
-        .value =
-            {.offset = offsetof(Vertex, weights),
-             .stride = sizeof(Vertex),
-             .count  = 4,
-             .type   = semantic::type_t::u8,
-             .flags  = flags::packed | flags::normalized},
-    });
+    /* packed: bone indices are a float input, never an integer attribute */
+    vao->add(vertex_attribute::from_member(&Vertex::nodes)
+                 .with_flags(vertex_attribute::attribute_flags::packed)
+                 .at(5));
+    vao->add(vertex_attribute::from_member(&Vertex::weights, gfx::vertex_float_type).at(6));
     vao->set_attribute_names({
         {"position", 0},
         {"texcoord", 1},
