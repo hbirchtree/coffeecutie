@@ -303,6 +303,7 @@ struct object_inst
     f32   radius{0};
     u32   net_id{0};
     bool              hidden{false}; // despawned by the server
+    bool              offline{false}; // only shown without a server
 };
 
 static std::map<blam::tag_index<>, model_t> g_models; // by mod2 tag id
@@ -1137,8 +1138,11 @@ static void build_catalog(blam::map_container<V> const& c)
         auto const& t    = tg[i];
         bool const  weap = t.matches(blam::tag_class_t::weap);
         bool const  proj = t.matches(blam::tag_class_t::proj);
+        // What a server may spawn; scenery stays the map's
         if(!weap && !proj && !t.matches(blam::tag_class_t::eqip) &&
-           !t.matches(blam::tag_class_t::garb))
+           !t.matches(blam::tag_class_t::garb) &&
+           !t.matches(blam::tag_class_t::vehi) &&
+           !t.matches(blam::tag_class_t::bipd))
             continue;
         auto obj = t.template data<blam::scn::object>(c.magic);
         if(obj.has_error())
@@ -1165,7 +1169,7 @@ static void build_catalog(blam::map_container<V> const& c)
             }
         g_catalog[t.tag_id] = e;
     }
-    LOG("catalog: %u weapons, equipment and projectiles",
+    LOG("catalog: %u vehicles, bipeds, weapons, equipment and projectiles",
         static_cast<unsigned>(g_catalog.size()));
 }
 
@@ -1408,7 +1412,10 @@ static void build_objects(
                 Matf4 const m =
                     spawn_transform(pos, {from_le(l.rot), 0.f, 0.f});
                 if(place_object(c, biped, m, kind_biped))
+                {
+                    g_objects.back().offline = true;
                     n++;
+                }
             }
         }
     if(auto const  biped = player_biped_id(c);
@@ -3113,6 +3120,22 @@ static void poll_network(u32 frame)
         g_fingerprint.tag_count,
         g_fingerprint.base_tag};
     gx_net::handlers_t on;
+    /* Joined, the server places what is networked; scenery, lights and
+     * devices stay as the map has them. Its spawns show them again */
+    on.game_join = [] {
+        u32 hidden = 0;
+        for(auto& obj : g_objects)
+        {
+            u32 const group = obj.net_id >> 24;
+            if(obj.offline || (group >= g_kind_net_group[kind_vehicle] &&
+                               group <= g_kind_net_group[kind_netgame_item]))
+            {
+                obj.hidden = true;
+                hidden++;
+            }
+        }
+        LOG("net: %u objects wait for the server", hidden);
+    };
     on.object = [](gx_net::object_sync_t const& o) {
         static std::set<u32> unknown_ids;
         auto                 it = g_net_objects.find(o.net_id);
