@@ -1007,13 +1007,17 @@ struct PhysicsSystem
                 it->second.world_body->getWorldTransform().getOrigin();
             data->position = {origin.x(), origin.y(), origin.z()};
             data->grounded = on_ground(*it->second.world_body, true);
+            data->walking  = walking_of(it->second);
         }
         for(auto const& [entity, _] : m_object_bodies)
         {
             auto* physics = p.template get<ObjectPhysics>(entity);
             auto  it      = m_bodies.find(entity);
             if(physics && physics->upright && it != m_bodies.end())
+            {
                 physics->grounded = on_ground(*it->second.world_body, false);
+                physics->walking  = walking_of(it->second);
+            }
         }
 
         m_frame++;
@@ -2527,8 +2531,10 @@ struct PhysicsSystem
             btVector3 const centre = rigid->getCenterOfMassPosition();
             btVector3       away   = centre - at;
             away = away.length2() > 1e-6f ? away.normalized() : btVector3(0, 0, 1);
-            /* The dead are thrown up off the ground, not slid along it */
-            if(corpse != m_corpses.end() && away.z() < corpse_lean)
+            /* The dead, and bipeds on their feet, are thrown up off the
+             * ground, not slid along it */
+            bool const upright = rigid->getAngularFactor().length2() == 0.f;
+            if((corpse != m_corpses.end() || upright) && away.z() < corpse_lean)
             {
                 btVector3 flat(away.x(), away.y(), 0.f);
                 flat  = flat.length2() > 1e-6f ? flat.normalized() : btVector3(1, 0, 0);
@@ -2842,6 +2848,16 @@ struct PhysicsSystem
             ray.material_type = it->second.triangle_materials[closest.triangle];
     }
 
+    /* A stride told to it this step or the one before; otherwise it is
+     * standing, whatever moves it */
+    template<typename Body>
+    Vecf3 walking_of(Body const& body) const
+    {
+        if(m_frame - body.walked_at > 1)
+            return {};
+        return {body.walked.x(), body.walked.y(), body.walked.z()};
+    }
+
     /* Carried momentum fades: fast against the ground, slowly in the air */
     void bleed_carried()
     {
@@ -2875,6 +2891,8 @@ struct PhysicsSystem
             body,
             velocity.jump == 0.f &&
                 btVector3(vel.x(), vel.y(), 0.f).length2() < 1e-4f);
+        body.walked    = btVector3(vel.x(), vel.y(), 0.f);
+        body.walked_at = m_frame;
         vel += body.carried;
         if(velocity.preserve_z)
             vel.setZ(body.world_body->getLinearVelocity().z());
@@ -3121,6 +3139,9 @@ struct PhysicsSystem
         /* Horizontal momentum kept after exiting a vehicle, or stepping off
          * a moving one */
         btVector3 carried{0, 0, 0};
+        /* The stride it was last told to take, and the step it came in */
+        btVector3 walked{0, 0, 0};
+        u32       walked_at{0};
         /* What it stands on, and where on it, in its space */
         u64       deck{0};
         btVector3 deck_spot{0, 0, 0};

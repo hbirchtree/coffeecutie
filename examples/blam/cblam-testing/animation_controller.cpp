@@ -304,7 +304,9 @@ struct AnimationController
                 cam.camera.position - Vecf3{0.f, 0.f, biped.eye_height},
                 look,
                 weapon,
-                true,
+                info.mode.physics && !info.is_remote() && data
+                    ? std::optional(data->walking)
+                    : std::nullopt,
                 grounded,
                 dt,
                 "stand",
@@ -324,7 +326,9 @@ struct AnimationController
                 model.position,
                 model.rotation * Vecf3{1.f, 0.f, 0.f},
                 held_label(p, npc.id(), files),
-                true,
+                physics.authority == ObjectPhysics::Simulated
+                    ? std::optional(physics.walking)
+                    : std::nullopt,
                 physics.grounded,
                 dt,
                 anim.stance,
@@ -343,7 +347,7 @@ struct AnimationController
         Vecf3 const&       feet,
         Vecf3 const&       look,
         std::string const& weapon,
-        bool               strides,
+        std::optional<Vecf3> const& walking, /* its own stride, when simulated here */
         bool               grounded,
         f32                dt,
         std::string const& unit = "stand",
@@ -360,10 +364,12 @@ struct AnimationController
             velocity = (feet - walker.feet) / dt;
         walker.feet = feet;
         walker.seen = true;
-        /* Smoothed: remote cameras arrive in steps */
+        /* Smoothed: remote cameras arrive in steps. A body walked here
+         * strides by what it was told, so a push slides it instead */
         walker.velocity = glm::mix(walker.velocity, velocity, .3f);
-        Vecf3 const flat{walker.velocity.x, walker.velocity.y, 0.f};
-        f32 const   speed = strides ? glm::length(flat) : 0.f;
+        Vecf3 const flat = walking ? Vecf3{walking->x, walking->y, 0.f}
+                                   : Vecf3{walker.velocity.x, walker.velocity.y, 0.f};
+        f32 const speed = glm::length(flat);
 
         Vecf3 forward{look.x, look.y, 0.f};
         forward = glm::dot(forward, forward) > 1e-6f ? glm::normalize(forward)
@@ -424,8 +430,8 @@ struct AnimationController
 
         if(walker.state == walker_t::ground && !custom_playing(id, anim))
         {
-            f32 const ahead = glm::dot(walker.velocity, forward);
-            f32 const side  = glm::dot(walker.velocity, left);
+            f32 const ahead = glm::dot(flat, forward);
+            f32 const side  = glm::dot(flat, left);
             f32 const sum   = std::abs(ahead) + std::abs(side);
             f32 const share[4] = {
                 sum > 0.f ? std::max(ahead, 0.f) / sum : 0.f,

@@ -860,6 +860,7 @@ struct ObjectPhysics
     Vecf3 angular_velocity{};
     bool  sleeping{false};
     bool  grounded{false}; /*!< Upright bodies: world geometry just under it */
+    Vecf3 walking{};       /*!< Upright bodies: its own stride, pushes left out */
     bool  teleported{false}; /*!< Moved by hand: the body starts over there */
     bool  scripted{false};   /*!< Moved by a script: carried, not simulated */
 
@@ -889,6 +890,7 @@ struct PhysicsData
     bool enabled{false};
     bool kinematic{false};
     bool grounded{false};
+    Vecf3 walking{}; /*!< Its own stride, pushes left out */
 
     u64 grabbed{0}; /*!< Entity this player carries (forge), 0 = none */
 
