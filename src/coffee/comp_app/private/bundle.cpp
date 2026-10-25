@@ -276,7 +276,7 @@ void cleanup_container(detail::EntityContainer& container)
         container.services_with<AppLoadableService>(Components::reverse_query);
     for(auto& service : services)
     {
-        if(service->is_loaded())
+        if(!service->is_loaded())
             continue;
         service->do_unload(container, appec);
     }
@@ -1234,6 +1234,10 @@ void PerformanceMonitor::load(
 void PerformanceMonitor::unload(
     AppLoadableService::entity_container&, app_error&)
 {
+    /* Joined before exit, as its tasks write into profiler state */
+    if(m_worker_queue)
+        rq::runtime_queue::TerminateThread(m_worker_queue);
+    m_worker_queue = nullptr;
 }
 
 } // namespace comp_app
