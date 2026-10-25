@@ -1240,12 +1240,15 @@ void insert_dummy_plug(
 namespace {
 /* Writes what the controllers did as dummy plug events, coarsely: a stick
  * is noted when it crosses a step, a button with how long it was held */
-struct InputRecorder : compo::SubsystemBase
+struct InputRecorder
+    : compo::SubsystemBase
+    , AppLoadableService
 {
-    using type = InputRecorder;
-    using f32  = libc_types::f32;
-    using u32  = libc_types::u32;
-    using u8   = libc_types::u8;
+    using type     = InputRecorder;
+    using services = detail::subsystem_list<InputRecorder>;
+    using f32      = libc_types::f32;
+    using u32      = libc_types::u32;
+    using u8       = libc_types::u8;
 
     InputRecorder(std::string path, f32 step)
         : m_path(std::move(path))
@@ -1254,7 +1257,7 @@ struct InputRecorder : compo::SubsystemBase
         priority = 31;
     }
 
-    ~InputRecorder()
+    void unload(entity_container&, app_error&) final
     {
         write();
     }
@@ -1384,7 +1387,8 @@ void insert_input_recorder(AppLoadableService::entity_container& container)
     libc_types::f32 step = .25f;
     if(auto const s = platform::env::var("DUMMY_PLUG_RECORD_STEP"))
         step = std::max(std::stof(*s), .01f);
-    container.register_subsystem_inplace<InputRecorder>(*path, step);
+    auto& recorder = container.register_subsystem_inplace<InputRecorder>(*path, step);
+    container.register_subsystem_services<InputRecorder>(&recorder);
     cDebug("Recording input to {}", *path);
 }
 
