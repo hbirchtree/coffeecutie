@@ -1895,12 +1895,15 @@ struct MeshRenderer
     std::shared_ptr<gfx::program_t>      monitor_program;
     bool                                 monitor_failed{false};
 
-    /* A gravity rifle placed in the world calls down a storm: a funnel of
-     * cloud in the sky over it and red wind around it, crunched meshes */
+    /* A gravity rifle, on the ground or carried, calls down a storm: a funnel
+     * of cloud in the sky over it and red wind around it, crunched meshes */
     struct gravity_storm_t
     {
-        Vecf3      position;
+        Vecf3      rifle;    /*!< On the ground, or its carrier */
+        Vecf3      position; /*!< Trails the rifle: the sky and wide winds */
         time_point start;
+        f32        strength{0.f};
+        bool       found{false}; /*!< Its rifle is still about this frame */
     };
 
     struct storm_wind_t
@@ -1908,7 +1911,7 @@ struct MeshRenderer
         f32 width;  /*!< Scale across, the cone is ~1 unit in radius */
         f32 height; /*!< Scale up, the cone is ~1.7 units tall */
         f32 spin;   /*!< rad/s about the vertical */
-        f32 delay;  /*!< s after the spawn before it rises */
+        f32 delay;  /*!< s after the storm starts before it rises */
         f32 bands;  /*!< Streak bands up the cone */
     };
 
@@ -1919,15 +1922,17 @@ struct MeshRenderer
         {32.f, 6.f, .35f, 1.2f, 3.f},
         {50.f, 8.f, -.25f, 1.8f, 2.f},
     }};
-    static constexpr f32 storm_duration = 12.f; /* s */
     static constexpr f32 storm_fade_in  = 1.5f; /* s */
-    static constexpr f32 storm_fade_out = 4.f;  /* s */
+    static constexpr f32 storm_fade_out = 4.f;  /* s, once the rifle is gone */
+    /* A rifle this close keeps its storm: picked up, dropped, carried */
+    static constexpr f32 storm_reach = 4.f; /* wu */
+    static constexpr f32 storm_trail = 1.5f; /* 1/s */
     /* Cloud rim ~370 wu across, 45 wu over the rifle, trumpet 40 above that */
     static constexpr f32 storm_cloud_scale  = 40.f;
     static constexpr f32 storm_cloud_height = 45.f;
 
     std::vector<gravity_storm_t>         m_storms;
-    std::vector<u64>                     m_storm_rifles; /*!< Seen last frame */
+    time_point                           m_storm_time{};
     blam::tag_t const*                   m_gravity_rifle{nullptr};
     u32                                  m_gravity_rifle_generation{~0u};
     gfx::draw_command::data_t            storm_cloud_draw;
@@ -3241,7 +3246,37 @@ struct MeshRenderer
         return true;
     }
 
-    /* A storm for each gravity rifle that turned up at rest since last frame */
+    /* Every gravity rifle on the ground, or carried by a biped */
+    std::vector<Vecf3> find_gravity_rifles(Proxy& p)
+    {
+        std::vector<Vecf3> rifles;
+        for(auto const& entity : p.template select<Model>())
+        {
+            Model const& model = entity.template get<Model>();
+            /* The held and first-person copies count through their carrier */
+            if(model.origin_object == m_gravity_rifle &&
+               !p.template get<HeldObject>(entity.id()) &&
+               !p.template get<Attachment>(entity.id()))
+                rifles.push_back(model.position);
+        }
+        for(auto const& entity : p.template select<BipedEquipment>())
+        {
+            auto const& weapons =
+                entity.template get<BipedEquipment>().weapons;
+            if(std::none_of(
+                   weapons.begin(), weapons.end(), [this](auto const& w) {
+                       return w.tag == m_gravity_rifle;
+                   }))
+                continue;
+            if(auto const* model = p.template get<Model>(entity.id()))
+                rifles.push_back(model->position);
+            else if(auto const* cam = p.template get<PlayerCamera>(entity.id()))
+                rifles.push_back(cam->camera.position);
+        }
+        return rifles;
+    }
+
+    /* A storm follows each gravity rifle, and fades once it is gone */
     void track_gravity_storms(Proxy& p, time_point const& time)
     {
         auto const& files = p.template subsystem<BlamFiles<Version>>();
@@ -3250,7 +3285,6 @@ struct MeshRenderer
             m_gravity_rifle_generation = files.load_generation;
             m_gravity_rifle            = nullptr;
             m_storms.clear();
-            m_storm_rifles.clear();
             if(files.container.map && files.container.tags)
                 for(blam::tag_t const& tag :
                     blam::tag_index_view(files.container))
@@ -3263,39 +3297,50 @@ struct MeshRenderer
                     }
         }
 
-        std::erase_if(m_storms, [&time](gravity_storm_t const& storm) {
-            return std::chrono::duration<f32>(time - storm.start).count() >
-                   storm_duration;
-        });
-        if(!m_gravity_rifle)
-            return;
+        f32 const dt = std::clamp(
+            std::chrono::duration<f32>(time - m_storm_time).count(), 0.f, .1f);
+        m_storm_time = time;
 
-        std::vector<u64> rifles;
-        for(auto const& entity : p.template select<Model>())
+        for(auto& storm : m_storms)
+            storm.found = false;
+        if(m_gravity_rifle)
+            for(Vecf3 const& rifle : find_gravity_rifles(p))
+            {
+                gravity_storm_t* nearest = nullptr;
+                f32              best    = storm_reach;
+                for(auto& storm : m_storms)
+                    if(f32 const d = glm::distance(storm.rifle, rifle);
+                       !storm.found && d < best)
+                    {
+                        best    = d;
+                        nearest = &storm;
+                    }
+                if(!nearest)
+                    nearest = &m_storms.emplace_back(gravity_storm_t{
+                        .rifle = rifle, .position = rifle, .start = time});
+                nearest->rifle = rifle;
+                nearest->found = true;
+            }
+
+        for(auto& storm : m_storms)
         {
-            Model const& model = entity.template get<Model>();
-            if(model.origin_object != m_gravity_rifle)
-                continue;
-            rifles.push_back(entity.id());
-            if(std::find(m_storm_rifles.begin(), m_storm_rifles.end(),
-                         entity.id()) != m_storm_rifles.end())
-                continue;
-            /* Dropped by a player, not a spawn */
-            if(auto const* spawn = p.template get<ObjectSpawn>(entity.id());
-               spawn && spawn->thrown)
-                continue;
-            m_storms.push_back({.position = model.position, .start = time});
+            f32 const rate =
+                storm.found ? 1.f / storm_fade_in : -1.f / storm_fade_out;
+            storm.strength = std::clamp(storm.strength + rate * dt, 0.f, 1.f);
+            storm.position +=
+                (storm.rifle - storm.position) * std::min(1.f, storm_trail * dt);
         }
-        m_storm_rifles = std::move(rifles);
+        std::erase_if(m_storms, [](gravity_storm_t const& storm) {
+            return !storm.found && storm.strength <= 0.f;
+        });
     }
 
-    /* Rises over storm_fade_in after `delay`, gone by storm_duration */
-    static f32 storm_envelope(f32 age, f32 delay)
+    /* The storm's strength, each wind tier rising `delay` after the first */
+    static f32 storm_envelope(gravity_storm_t const& storm, f32 age, f32 delay)
     {
         f32 const rise = std::clamp((age - delay) / storm_fade_in, 0.f, 1.f);
-        f32 const fall =
-            std::clamp((storm_duration - age) / storm_fade_out, 0.f, 1.f);
-        return rise * rise * (3.f - 2.f * rise) * fall;
+        f32 const s    = storm.strength;
+        return rise * rise * (3.f - 2.f * rise) * s * s * (3.f - 2.f * s);
     }
 
     template<typename... Args>
@@ -3381,15 +3426,18 @@ struct MeshRenderer
                 storm_cloud_draw,
                 cloud,
                 age,
-                storm_envelope(age, 0.f),
+                storm_envelope(storm, age, 0.f),
                 0.f);
             for(auto const& wind : storm_winds)
             {
-                f32 const strength = storm_envelope(age, wind.delay);
+                f32 const strength = storm_envelope(storm, age, wind.delay);
                 if(strength <= 0.f)
                     continue;
+                /* The tight cone hugs the rifle, the wide ones trail it */
+                Vecf3 const centre =
+                    &wind == &storm_winds[0] ? storm.rifle : storm.position;
                 Matf4 const model =
-                    glm::translate(Matf4(1), storm.position) *
+                    glm::translate(Matf4(1), centre) *
                     glm::rotate(Matf4(1), age * wind.spin, Vecf3{0, 0, 1}) *
                     glm::scale(
                         Matf4(1), Vecf3{wind.width, wind.width, wind.height}) *

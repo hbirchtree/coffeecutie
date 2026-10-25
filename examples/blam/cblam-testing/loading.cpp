@@ -1988,7 +1988,6 @@ struct ResourceLoader
         model.update_matrix();
 
         ent.template get<ObjectSpawn>().tag    = &object_tag;
-        ent.template get<ObjectSpawn>().thrown = glm::length(spawn.velocity) > 0.f;
         ent.template get<DepthInfo>().position = model.position;
 
         NetworkInfo& netinfo = ent.template get<NetworkInfo>();

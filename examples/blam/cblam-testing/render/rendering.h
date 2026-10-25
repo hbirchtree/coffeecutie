@@ -90,7 +90,9 @@ using MeshRendererManifest = compo::SubsystemManifest<
         const PlayerInfo,
         const Visibility,
         const WorldInfo,
-        const ObjectSpawn>,
+        const HeldObject,
+        const Attachment,
+        const BipedEquipment>,
     type_list_t<
         const DrawListBuilder<V>,
         const PostProcessParameters,
