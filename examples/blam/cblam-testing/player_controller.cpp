@@ -425,9 +425,9 @@ struct PlayerController
                 to_menu ? UINavigation::open : UINavigation::close);
         }
 
-        if(cam.keyboard.enabled)
+        /* Headless there is no mouse to grab */
+        if(auto* mouse = cam.keyboard.enabled ? p.service<comp_app::MouseInput>() : nullptr)
         {
-            auto* mouse = p.service<comp_app::MouseInput>();
             if(was_in_menu != (input.input_mode == PlayerInput::input_mode_t::menu) ||
                     (was_physics != info.mode.physics))
             {
