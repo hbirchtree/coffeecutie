@@ -28,6 +28,8 @@ enum class vertex_type_t : u16
      * them), indices byte-swapped with them. Only gx-bsp reads these */
     sbsp_gx_vertex = 0x100,
     mod2_gx_vertex = 0x101,
+    /* mod2_gx_vertex plus the two nodes it hangs off and the first's weight */
+    mod2_gx_skinned_vertex = 0x102,
 };
 
 template<typename T>

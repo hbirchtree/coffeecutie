@@ -212,6 +212,9 @@ u32 transcode_gx_vertices(
             continue;
         f32 const us    = from_le(hdr.value()->uvscale.x);
         f32 const vs    = from_le(hdr.value()->uvscale.y);
+        bool const local_nodes =
+            static_cast<u16>(from_le(hdr.value()->flags)) &
+            static_cast<u16>(blam::mod2::model_flags_t::local_nodes);
         auto      geoms = hdr.value()->geometries.data(c.magic);
         if(geoms.has_error())
             continue;
@@ -235,13 +238,21 @@ u32 transcode_gx_vertices(
                     size_t const voff = foff_of(src);
                     size_t const vsize =
                         vspan.value().size_bytes() / vspan.value().size();
+                    /* PC parts may index a table of the model's nodes */
+                    auto global = [&](u32 node) -> u8 {
+                        if constexpr(!std::is_same_v<Ver, blam::xbox_version_t>)
+                            if(local_nodes && node < wrap.unknown_2[3])
+                                return wrap.unknown_2[4 + node];
+                        return node < 0xFF ? static_cast<u8>(node) : 0xFF;
+                    };
                     if(done.insert(voff).second)
                         for(size_t i = 0; i < vspan.value().size(); i++)
                         {
                             u8 const* v   = src + i * vsize;
-                            u8*       dst = out_map.data() + voff + i * 24;
+                            u8*       dst = out_map.data() + voff + i * 28;
                             std::array<f32, 3> n;
-                            f32                u, w;
+                            f32                u, w, weight;
+                            u32                node0, node1;
                             if(vt ==
                                vert::vertex_type_t::mod2_compressed_vertex)
                             {
@@ -249,24 +260,35 @@ u32 transcode_gx_vertices(
                                 n            = {p.x, p.y, p.z};
                                 u = read_le<i16>(v + 24) / 32767.f;
                                 w = read_le<i16>(v + 26) / 32767.f;
+                                // Stored times three, a matrix row each
+                                node0  = v[28] / 3u;
+                                node1  = v[29] / 3u;
+                                weight = read_le<u16>(v + 30) / 32767.f;
                             } else
                             {
                                 n = {
                                     read_le<f32>(v + 12),
                                     read_le<f32>(v + 16),
                                     read_le<f32>(v + 20)};
-                                u = read_le<f32>(v + 48);
-                                w = read_le<f32>(v + 52);
+                                u      = read_le<f32>(v + 48);
+                                w      = read_le<f32>(v + 52);
+                                node0  = read_le<u16>(v + 56);
+                                node1  = read_le<u16>(v + 58);
+                                weight = read_le<f32>(v + 60);
                             }
+                            weight = std::clamp(weight, 0.f, 1.f);
                             for(u32 k = 0; k < 3; k++)
                             {
                                 put_bef(dst + k * 4, read_le<f32>(v + k * 4));
                                 dst[12 + k] =
                                     static_cast<u8>(blam::gx::to_s8_frac6(n[k]));
                             }
-                            dst[15] = 0;
+                            dst[15] = global(node0);
                             put_bef(dst + 16, u * us);
                             put_bef(dst + 20, w * vs);
+                            dst[24] = weight < 1.f ? global(node1) : 0xFF;
+                            dst[25] = static_cast<u8>(weight * 255.f + 0.5f);
+                            dst[26] = dst[27] = 0;
                         }
                     size_t const ioff = foff_of(ispan.value().data());
                     if(done.insert(ioff).second)
@@ -278,7 +300,8 @@ u32 transcode_gx_vertices(
                 patch_u16(
                     out_map,
                     foff_of(&p.vertex_type),
-                    static_cast<u16>(vert::vertex_type_t::mod2_gx_vertex));
+                    static_cast<u16>(
+                        vert::vertex_type_t::mod2_gx_skinned_vertex));
                 meshes++;
             }
     }

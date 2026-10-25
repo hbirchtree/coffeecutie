@@ -418,7 +418,8 @@ inline std::optional<model_data_t> header<V>::model_at(
                        from_le(part.data.vertex_type),
                        vert::vertex_type_t::mod2_compressed_vertex,
                        vert::vertex_type_t::mod2_uncompressed_vertex,
-                       vert::vertex_type_t::mod2_gx_vertex))
+                       vert::vertex_type_t::mod2_gx_vertex,
+                       vert::vertex_type_t::mod2_gx_skinned_vertex))
                     continue;
                 meshes.push_back(&part.data);
             }
