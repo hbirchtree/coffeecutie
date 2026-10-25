@@ -645,8 +645,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     std::vector<FileMapper::fetch_entry> entries;
     constexpr std::size_t                none = ~std::size_t(0);
     std::size_t                          map_i = none, bitmaps_i = none, sounds_i = none;
-    if(!load.file_data)
-        map_i = entries.size(), entries.push_back({.url = *load.file});
+    map_i = entries.size(), entries.push_back({.url = *load.file});
     if(separate_files)
     {
         bitmaps_i = entries.size(), entries.push_back({.url = listing.bitmap_file});
@@ -676,10 +675,6 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         files.fetch->cancel();
     files.fetch      = file_mapper.fetch_set(std::move(entries), main, std::move(on_ready));
     loading.download = files.fetch;
-    if(load.file_data)
-        rq::runtime_queue::QueueImmediate(worker, {}, [read_map, data = load.file_data]() mutable {
-            read_map(std::move(data));
-        }).assume_value();
 }
 
 void setup_load_eventhandlers(compo::EntityContainer& e)

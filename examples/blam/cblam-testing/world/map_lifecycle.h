@@ -39,6 +39,14 @@ inline void announce_game(compo::EntityContainer& container, MapGameEvent::game_
     container.subsystem_cast<GameEventBus>().process(ev, &map);
 }
 
+/*! The game a map's header (its first 0x3000 bytes) says it is from;
+ * anything not Halo 2 or 3 is left to the Halo 1 loader */
+MapGameEvent::game_t detect_game(semantic::BytesConst const& head);
+
+/*! Reads the header of every map load and sends it again tagged with its
+ * game, before any loader sees it; registered ahead of the loaders */
+void dispatch_map_loads(compo::EntityContainer& container);
+
 /*! Hands map loads to `loader`, consuming those it takes so the Halo 1
  * loader never sees them */
 template<typename Loader>

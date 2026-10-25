@@ -20,6 +20,9 @@
 #include "h3/h3_scene.h"
 #include "h3/h3_sound.h"
 #endif
+#if defined(BLAM_DIMETER) || defined(BLAM_ELEGY)
+#include "world/map_lifecycle.h"
+#endif
 #include "impact_sounds.h"
 #include "checkpoint.h"
 #include "game_mode.h"
@@ -318,6 +321,9 @@ i32 blam_main()
             alloc_weapons(e);
             alloc_hud(e);
             alloc_scripting(e);
+#if defined(BLAM_DIMETER) || defined(BLAM_ELEGY)
+            world::dispatch_map_loads(e);
+#endif
 #if defined(BLAM_DIMETER)
             h2::alloc_h2(e);
 #endif
