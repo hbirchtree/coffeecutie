@@ -3615,6 +3615,8 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
         break;
     }
     default:
+        /* Undecoded: the first 2 KiB, enough to find a layout */
+        hex_dump(gsl::span<libc_types::u8 const>(data.value(), 2048));
         break;
     }
 }
