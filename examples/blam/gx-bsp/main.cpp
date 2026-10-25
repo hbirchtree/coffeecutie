@@ -3150,12 +3150,28 @@ static void poll_network(u32 frame)
             glm::translate(Matf4{1.f}, e.position) *
                 glm::mat4_cast(e.rotation));
     };
-    on.equipment = [](gx_net::equipment_t const& e) {
+    // What the server names that the catalogue lacks, said once each
+    static std::set<u32> unknown;
+    auto                 known = [](blam::tag_index<> tag, char const* what) {
+        auto it = g_catalog.find(tag);
+        if(it != g_catalog.end() && g_models.contains(it->second.model))
+            return true;
+        if(unknown.insert(tag.value()).second)
+            LOG("net: no model for %s %08x", what, tag.value());
+        return it != g_catalog.end();
+    };
+    on.equipment = [known](gx_net::equipment_t const& e) {
+        if(g_held[e.player_idx] != e.held && e.held.valid())
+        {
+            LOG("net: player %u holds %08x", e.player_idx, e.held.value());
+            known(e.held, "held weapon");
+        }
         g_held[e.player_idx] = e.held;
     };
-    on.shot = [](gx_net::shot_t const& s) {
+    on.shot = [known](gx_net::shot_t const& s) {
         auto weapon = g_catalog.find(s.weapon);
-        if(weapon == g_catalog.end())
+        if(!known(s.weapon, s.thrown ? "thrown projectile" : "fired weapon") ||
+           weapon == g_catalog.end())
             return;
         // A throw names its projectile, a shot its weapon
         blam::tag_index<> const proj =
