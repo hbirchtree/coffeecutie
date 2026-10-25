@@ -557,35 +557,6 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                     std::move(resource);
             }));
 
-    auto map_file = [&load, &file_mapper]() {
-        if(!load.file_data)
-            return file_mapper.fetch_cached(*load.file);
-        std::promise<std::shared_ptr<AsyncResource>> ready;
-        ready.set_value(load.file_data);
-        return ready.get_future();
-    }();
-
-    auto map_read_task =
-        rq::dependent_task<std::shared_ptr<AsyncResource>, result_type>::
-            CreateProcessor(
-                std::move(map_file),
-                [progress_cb,
-                 store_map_file](std::shared_ptr<AsyncResource>* data) mutable
-                    -> result_type {
-                    if(!data || !(*data))
-                    {
-                        rq::runtime_queue::CancelTask(
-                            rq::runtime_queue::GetSelfId().value());
-                        return stl_types::failure(blam::map_load_error::map_file_too_small);
-                    }
-                    auto map = blam::map_container<halo_version>::from_bytes(
-                        **data, halo_version_v, std::move(progress_cb));
-                    if(map.has_error())
-                        return stl_types::failure(map.error());
-                    store_map_file(std::move(*data));
-                    return stl_types::success(std::move(map.value()));
-                });
-
     auto map_load_fun = [&e, load_is_stale](
                             result_type                    map,
                             std::shared_ptr<AsyncResource> bitmap_data) -> int {
@@ -621,51 +592,94 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         return 0;
     };
 
-    if(!std::is_same_v<halo_version, blam::xbox_version_t>)
-    {
-        auto bitmaps_file = file_mapper.fetch_cached(listing.bitmap_file).share();
-        auto sounds_file  = file_mapper.fetch_cached(listing.sound_file);
+    constexpr bool separate_files = !std::is_same_v<halo_version, blam::xbox_version_t>;
 
-        auto map_load_task = rq::CreateMultiTask<int>(
-            std::move(map_load_fun), map_read_task->get_future(), bitmaps_file);
-        auto map_load = map_load_task->get_future().share();
-        if(sounds_file.valid())
-            rq::runtime_queue::Queue(
-                rq::CreateMultiTask<void>(
-                    [&e, load_is_stale](
-                        int, std::shared_ptr<AsyncResource> data) mutable {
-                        if(!data || load_is_stale())
-                        {
-                            rq::runtime_queue::CancelTask(
-                                rq::runtime_queue::GetSelfId().value());
-                            return;
-                        }
-                        auto& files =
-                            e.subsystem_cast<BlamFiles<halo_version>>();
-                        files.sound_file = std::move(data);
-                        load_sounds(
-                            e,
-                            blam::map_ptr(
-                                static_cast<BytesConst>(*files.sound_file)));
-                    },
-                    map_load,
-                    std::move(sounds_file)))
-                .assume_value();
-        rq::runtime_queue::Queue(std::move(map_load_task)).assume_value();
-    } else
+    /* What has landed so far, only touched on this (the main) queue */
+    struct pending_t
     {
-        auto map_load_task = rq::CreateMultiTask<int>(
-            [loader = std::move(map_load_fun)](result_type map) -> int {
-                loader(std::move(map), {});
-                return 0;
-            },
-            map_read_task->get_future());
-        rq::runtime_queue::Queue(std::move(map_load_task)).assume_value();
-    }
+        std::shared_ptr<result_type>   map;
+        std::shared_ptr<AsyncResource> bitmaps, sounds;
+        bool                           bitmaps_in{false}, finished{false};
+    };
+    auto  pending = std::make_shared<pending_t>();
+    auto* main    = rq::runtime_queue::GetCurrentQueue().value();
+
+    /* MapLoadFinished once the map is read and, beside a PC map, bitmaps.map
+     * is in; the sounds follow it */
+    auto finish = std::make_shared<std::function<void()>>(
+        [&e, pending, map_load_fun, load_is_stale]() mutable {
+            if(load_is_stale())
+                return;
+            if(!pending->finished && pending->map && (!separate_files || pending->bitmaps_in))
+            {
+                pending->finished = true;
+                map_load_fun(std::move(*pending->map), std::move(pending->bitmaps));
+            }
+            if(pending->finished && pending->sounds)
+            {
+                auto& files      = e.subsystem_cast<BlamFiles<halo_version>>();
+                files.sound_file = std::move(pending->sounds);
+                load_sounds(e, blam::map_ptr(static_cast<BytesConst>(*files.sound_file)));
+            }
+        });
+
+    /* Parsed on the background worker, handed back to the main queue */
+    auto read_map = [progress_cb, store_map_file, pending, finish, main](
+                        std::shared_ptr<AsyncResource> data) mutable {
+        auto map = std::make_shared<result_type>(
+            data ? blam::map_container<halo_version>::from_bytes(
+                       *data, halo_version_v, std::move(progress_cb))
+                 : stl_types::failure(blam::map_load_error::map_file_too_small));
+        if(map->has_value())
+            store_map_file(std::move(data));
+        rq::runtime_queue::QueueImmediate(main, {}, [pending, finish, map] {
+            pending->map = map;
+            (*finish)();
+        }).assume_value();
+    };
+
     BlamResources& resources = e.subsystem_cast<BlamResources>();
-    rq::runtime_queue::Queue(
-        resources.background_worker, std::move(map_read_task))
-        .assume_value();
+    auto*          worker    = resources.background_worker;
+
+    using comp_app::FileMapper;
+    std::vector<FileMapper::fetch_entry> entries;
+    constexpr std::size_t                none = ~std::size_t(0);
+    std::size_t                          map_i = none, bitmaps_i = none, sounds_i = none;
+    if(!load.file_data)
+        map_i = entries.size(), entries.push_back({.url = *load.file});
+    if(separate_files)
+    {
+        bitmaps_i = entries.size(), entries.push_back({.url = listing.bitmap_file});
+        sounds_i  = entries.size(), entries.push_back({.url = listing.sound_file, .optional = true});
+    }
+    auto on_ready = [pending, finish, read_map, load_is_stale, worker, map_i, bitmaps_i, sounds_i](
+                        FileMapper::FetchSet& set, std::size_t i) {
+        if(load_is_stale())
+            return;
+        if(i == map_i)
+            rq::runtime_queue::QueueImmediate(worker, {}, [read_map, data = set.resource(i)]() mutable {
+                read_map(std::move(data));
+            }).assume_value();
+        else if(i == bitmaps_i)
+        {
+            pending->bitmaps    = set.resource(i);
+            pending->bitmaps_in = true;
+            (*finish)();
+        } else if(i == sounds_i)
+        {
+            pending->sounds = set.resource(i);
+            (*finish)();
+        }
+    };
+
+    if(files.fetch)
+        files.fetch->cancel();
+    files.fetch      = file_mapper.fetch_set(std::move(entries), main, std::move(on_ready));
+    loading.download = files.fetch;
+    if(load.file_data)
+        rq::runtime_queue::QueueImmediate(worker, {}, [read_map, data = load.file_data]() mutable {
+            read_map(std::move(data));
+        }).assume_value();
 }
 
 void setup_load_eventhandlers(compo::EntityContainer& e)

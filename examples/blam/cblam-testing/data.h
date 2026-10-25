@@ -11,6 +11,7 @@
 #include <blam/volta/blam_stl.h>
 #include <blam/volta/blam_tag_classes.h>
 #include <blam/volta/blam_tag_ref.h>
+#include <coffee/comp_app/file_mapper.h>
 #include <coffee/comp_app/services.h>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/input/standard_input_handlers.h>
@@ -296,6 +297,21 @@ struct LoadingStatus : compo::SubsystemBase
     loading_t                      loaded_shaders{none};
     bool                           init_started{false};
     std::promise<void>             finished{};
+    /* The files being downloaded for the map, if any */
+    std::shared_ptr<comp_app::FileMapper::FetchSet> download;
+
+    /*! How far along the load is, 0 to 1: the download fills the first part,
+     * the map and shaders (progress) the rest */
+    float fraction() const
+    {
+        constexpr float download_share = .6f;
+        float const     rest           = std::max<float>(progress, 0) / 100.f;
+        if(!download)
+            return rest;
+        if(!download->done())
+            return download_share * download->progress();
+        return download_share + (1.f - download_share) * rest;
+    }
 
     void set_shader_progress(libc_types::u32 ready, libc_types::u32 total)
     {

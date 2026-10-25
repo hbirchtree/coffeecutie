@@ -103,10 +103,11 @@ target_sources(BlamGraphics PRIVATE ${BLAMG_CRUNCHED_SOURCES})
 #  # $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/caching.h>
 #  # $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/components.h>
 #)
-# Two of the pool go to openal-soft: its mixer and its event thread
+# Two of the pool go to openal-soft: its mixer and its event thread; one to
+# FileMapper downloads
 set_target_properties(
   BlamGraphics
-  PROPERTIES EMSCRIPTEN_THREADPOOL_SIZE 6
+  PROPERTIES EMSCRIPTEN_THREADPOOL_SIZE 7
              EMSCRIPTEN_GROWABLE_MEMORY OFF
              EMSCRIPTEN_HEAP_SIZE 1024
              APP_PRIMARY_COLOR "#081F49"

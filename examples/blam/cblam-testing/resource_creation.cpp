@@ -952,8 +952,13 @@ void create_resources(compo::EntityContainer& e)
     resources.background_worker =
         rq::runtime_queue::CreateNewThreadQueue("Background Worker").value();
     /* Range reads of the Halo 2 side caches share it */
-    e.subsystem_cast<comp_app::FileMapper>().set_io_queue(
-        resources.background_worker);
+    auto& file_mapper = e.subsystem_cast<comp_app::FileMapper>();
+    file_mapper.set_io_queue(resources.background_worker);
+    /* Web downloads get their own, so a map is read while the next file
+     * comes in; elsewhere files are mapped */
+    if constexpr(compile_info::platform::is_emscripten)
+        file_mapper.set_download_queue(
+            rq::runtime_queue::CreateNewThreadQueue("Map Download").value());
 
     e.register_subsystem_inplace<PostProcessParameters>();
 

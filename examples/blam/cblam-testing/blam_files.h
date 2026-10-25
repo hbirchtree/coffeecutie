@@ -16,6 +16,8 @@ struct BlamFiles : compo::SubsystemBase
     std::shared_ptr<comp_app::FileMapper::Resource> map_file;
     std::shared_ptr<comp_app::FileMapper::Resource> bitmap_file;
     std::shared_ptr<comp_app::FileMapper::Resource> sound_file;
+    /* The map and its companions on their way in */
+    std::shared_ptr<comp_app::FileMapper::FetchSet> fetch;
 
     /* Stash this here, so others can reference it */
     blam::map_container<V> container;
