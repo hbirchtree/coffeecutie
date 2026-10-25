@@ -31,17 +31,30 @@ float noise(vec2 p, float period)
         f.y);
 }
 
+/* `shear` seconds of the inner cloud outrunning the outer */
+float clouds(float r, float turn, float shear, float seed)
+{
+    /* Winds up toward the trumpet, turning faster there */
+    float swirl = turn + time * 0.01 + 0.4 / (r + 0.3) + shear * 0.02 / (r + 0.5);
+    float depth = log(r + 0.1) * 2.5 - time * 0.05 + seed;
+    return 0.5 * noise(vec2(swirl * 8.0, depth), 8.0) +
+           0.3 * noise(vec2(swirl * 16.0, depth * 2.0), 16.0) +
+           0.2 * noise(vec2(swirl * 32.0, depth * 4.0), 32.0);
+}
+
 void main()
 {
-    float r     = length(in_local.xz);
-    float turn  = atan(in_local.z, in_local.x) / 6.2831853 + 0.5;
-    /* Winds up toward the trumpet, turning faster there */
-    float swirl = turn + time * 0.01 + 0.4 / (r + 0.3) + time * 0.02 / (r + 0.5);
-    float depth = log(r + 0.1) * 2.5 - time * 0.05;
+    float r    = length(in_local.xz);
+    float turn = atan(in_local.z, in_local.x) / 6.2831853 + 0.5;
 
-    float cloud = 0.5 * noise(vec2(swirl * 8.0, depth), 8.0) +
-                  0.3 * noise(vec2(swirl * 16.0, depth * 2.0), 16.0) +
-                  0.2 * noise(vec2(swirl * 32.0, depth * 4.0), 32.0);
+    /* Shear left to run would wind the cloud into one tight spiral: two
+     * copies restart it half a period apart, each unseen as it does */
+    float period = 20.0;
+    float a      = fract(time / period);
+    float b      = fract(time / period + 0.5);
+    float cloud  = mix(clouds(r, turn, b * period, 17.0),
+                       clouds(r, turn, a * period, 0.0),
+                       1.0 - abs(2.0 * a - 1.0));
 
     /* Squared, so the slopes either side of the ring stay heavy */
     float dense = 1.0 - in_shade * in_shade;
