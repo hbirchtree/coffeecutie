@@ -3,6 +3,7 @@
 #include <array>
 #include <malloc.h>
 #include <memory>
+#include <ogc/cache.h>
 #include <ogc/gx.h>
 #include <ogc/tpl.h>
 #include <optional>
@@ -109,10 +110,10 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     {
         auto bytes = reinterpret_cast<libc_types::u8 const*>(data.data());
         m_data.assign(bytes, bytes + data.size_bytes());
+        flush();
     }
 
-    /* offset is in BYTES; size is the element COUNT of the returned span (0 =
-     * the rest of the buffer). */
+    /* offset and size are in bytes (size 0 = the rest of the buffer) */
     template<typename T = libc_types::u8>
     inline gsl::span<T> map(size_t offset = 0, size_t size = 0)
     {
@@ -122,8 +123,16 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             reinterpret_cast<T*>(m_data.data() + offset), size / sizeof(T));
     }
 
+    /* What was written through map() reaches the GP */
     inline void unmap(void* = nullptr)
     {
+        flush();
+    }
+
+    inline void flush()
+    {
+        if(!m_data.empty())
+            DCFlushRange(m_data.data(), m_data.size());
     }
 
     inline void setState(buffers::property, int)
@@ -188,11 +197,36 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     {
     }
 
-    virtual ~texture_t() = default;
+    virtual ~texture_t()
+    {
+        free(m_storage);
+    }
 
-    virtual void alloc(size_type const& size, bool /*create_storage*/ = true)
+    /* Storage only for formats GX can copy the framebuffer into */
+    virtual void alloc(size_type const& size, bool create_storage = true)
     {
         m_size = size;
+        u8 gxfmt;
+        switch(m_format.pixfmt)
+        {
+        case typing::pixels::pix_fmt::RGB565:
+            gxfmt = GX_TF_RGB565;
+            break;
+        case typing::pixels::pix_fmt::RGBA8:
+            gxfmt = GX_TF_RGBA8;
+            break;
+        default:
+            return;
+        }
+        if(!create_storage || m_storage)
+            return;
+        u16 const w = static_cast<u16>(size.w);
+        u16 const h = static_cast<u16>(size.h);
+        m_storage = memalign(32, GX_GetTexBufferSize(w, h, gxfmt, GX_FALSE, 0));
+        if(!m_storage)
+            return;
+        m_gxfmt = gxfmt;
+        init_raw(m_storage, w, h, gxfmt);
     }
 
     inline void dealloc()
@@ -308,6 +342,9 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     TPLFile                     m_tpl{};
     GXTexObj                    m_obj{};
     bool                        m_loaded{false};
+    /* From alloc(), for render targets */
+    void* m_storage{nullptr};
+    u8    m_gxfmt{0};
 
     filtering m_filter{filtering::Linear};
 };
@@ -589,25 +626,39 @@ struct rendertarget_t
     {
     }
 
+    /* A texture with storage from alloc(), to copy() into */
     inline void attach(
         render_targets::attachment,
-        texture_t&,
+        texture_t& texture,
         u32 /*level*/,
         u32 /*i*/     = 0,
         u32 /*layer*/ = 0)
     {
+        m_color = &texture;
     }
 
+    /* The framebuffer (GX copies from nothing else) into the attached
+     * texture, box-filtered down when it's half of srcRect */
     inline void copy(
-        rendertarget_t&,
-        rect<u32> /*srcRect*/,
+        rendertarget_t& /*source*/,
+        rect<u32> srcRect,
         typing::vector_types::tvec2<u32> /*dstCoord*/,
         render_targets::attachment /*srcAttachment*/,
         render_targets::attachment /*dstAttachment*/,
-        u32 /*level*/,
-        u32 /*srci*/,
-        u32 /*dsti*/)
+        u32 /*level*/ = 0,
+        u32 /*srci*/  = 0,
+        u32 /*dsti*/  = 0)
     {
+        if(!m_color || !m_color->m_storage)
+            return;
+        auto const& size = m_color->m_size;
+        bool const  half = size.w * 2 == srcRect.w && size.h * 2 == srcRect.h;
+        GX_SetTexCopySrc(srcRect.x, srcRect.y, srcRect.w, srcRect.h);
+        GX_SetTexCopyDst(
+            size.w, size.h, m_color->m_gxfmt, half ? GX_TRUE : GX_FALSE);
+        GX_CopyTex(m_color->m_storage, GX_FALSE);
+        GX_PixModeSync();
+        GX_InvalidateTexAll();
     }
 
     void         resize(rect<i32> const& size, u32 = 0);
@@ -619,9 +670,10 @@ struct rendertarget_t
     void clear(i32 stencil);
     void clear(Vecf4 const& color, f64 depth, i32 stencil, u32 i = 0);
 
-    rect<i32> m_size{};
-    Vecf4     m_clear_color{};
-    f64       m_clear_depth{1.0};
+    rect<i32>  m_size{};
+    Vecf4      m_clear_color{};
+    f64        m_clear_depth{1.0};
+    texture_t* m_color{nullptr};
 };
 
 /* --- Program definition --- */
@@ -953,6 +1005,8 @@ struct depth_state
     depth_range range{};
     bool        reversed{false};
     bool        strict_greater{false};
+    bool        test{true};
+    bool        write{true};
 };
 
 struct view_state

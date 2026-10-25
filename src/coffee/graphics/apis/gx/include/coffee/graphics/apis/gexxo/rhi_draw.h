@@ -267,6 +267,19 @@ inline void apply_state(view_state const& state)
     //     state.scissor.z, state.scissor.w);
 }
 
+inline void apply_state(depth_state const& state)
+{
+    GX_SetZMode(
+        state.test ? GX_TRUE : GX_FALSE,
+        state.strict_greater ? GX_GREATER : GX_LEQUAL,
+        state.write ? GX_TRUE : GX_FALSE);
+}
+
+inline void undo_state(depth_state const&)
+{
+    GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+}
+
 inline void undo_state(cull_state const& state)
 {
     GX_SetCullMode(GX_CULL_BACK);
