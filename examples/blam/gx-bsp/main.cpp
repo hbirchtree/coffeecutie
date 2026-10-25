@@ -214,6 +214,7 @@ struct mdl_part
     Vecf3                      reflection_tint{0.f};
     std::vector<chicago_layer> chicago;
     std::shared_ptr<sotr_info const> sotr;
+    bool                             hidden{false}; // see shader_info::hidden
 #if defined(FEATURE_ENABLE_Gexxo)
     std::shared_ptr<gexxo::vertex_array_t> vao;
     std::shared_ptr<gexxo::buffer_t>       vbo, ebo;
@@ -476,6 +477,10 @@ struct shader_info
     std::vector<chicago_layer> chicago; // up to four
 
     std::shared_ptr<sotr_info const> sotr;
+
+    /* Plasma, glass and meter shaders: transparent effects not drawn yet,
+     * better left out than drawn as an opaque shape */
+    bool hidden{false};
 };
 
 static blend_t framebuffer_blend(blam::shader::chicago::framebuffer_blending f)
@@ -588,6 +593,12 @@ static shader_info resolve_shader(
         }
         out.blend =
             framebuffer_blend(from_le(sh.value()->transparent.blend_function));
+    } else if(
+        st->matches(blam::tag_class_t::spla) ||
+        st->matches(blam::tag_class_t::sgla) ||
+        st->matches(blam::tag_class_t::smet))
+    {
+        out.hidden = true;
     } else if(st->matches(blam::tag_class_t::sotr))
     {
         using sotr_t = blam::shader::shader_transparent;
@@ -912,6 +923,7 @@ static void load_model_cpu(
                 part.reflection_tint  = shader.reflection_tint;
                 part.chicago          = shader.chicago;
                 part.sotr             = shader.sotr;
+                part.hidden           = shader.hidden;
             }
         }
         if(!part.verts.empty() && part.indices.size() >= 3)
@@ -3291,7 +3303,7 @@ i32 coffee_main(i32, cstring_w*)
             Matf4 const smvs[1] = {smv};
             for(auto& part : model.parts)
             {
-                if(!part.vao || !part.vao->m_element_buffer)
+                if(!part.vao || !part.vao->m_element_buffer || part.hidden)
                     continue;
                 if(!lit && !part.diffuse)
                     continue;
