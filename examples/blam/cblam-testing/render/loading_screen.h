@@ -97,7 +97,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     else
     {
         // Never backwards: shader compilation restarts progress from 0
-        f32 target = std::max(current_progress, status->progress / 100.f);
+        f32 target = std::max(current_progress, status->fraction());
         current_progress += (target - current_progress) *
                             (1.f - std::exp(-sweep_lerp_rate * dt));
     }
