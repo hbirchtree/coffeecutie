@@ -459,6 +459,9 @@ struct vertex_attribute
         color0,
         color1,
         nbt,
+        /* GX_VA_PTNMTXIDX: the u8 GX_PNMTXn of draw_command::palette a vertex
+         * is transformed by. Direct, and first in the vertex */
+        matrix_index,
     } role{position};
 
     struct
@@ -500,6 +503,8 @@ inline u8 role_to_attr(vertex_attribute const& attr)
         return GX_VA_CLR1;
     case vertex_attribute::nbt:
         return GX_VA_NBT;
+    case vertex_attribute::matrix_index:
+        return GX_VA_PTNMTXIDX;
     }
     unreachable();
 }
@@ -586,6 +591,9 @@ struct vertex_array_t
             .attr = detail::role_to_attr(attribute),
             .type = GX_DIRECT, // not used
         };
+        // A matrix index is a plain u8, with no format
+        if(attribute.role == vertex_attribute::matrix_index)
+            return;
         m_attr_fmt[attribute.index] = {
             .vtxattr  = detail::role_to_attr(attribute),
             .comptype = detail::attr_to_type(attribute),
@@ -953,6 +961,22 @@ struct draw_command
     };
 
     std::optional<indirect_matrix_t> indirect_matrix{};
+
+    /* Modelviews loaded as GX_PNMTX0, GX_PNMTX1, ... (and their normal
+     * matrices), picked per vertex by a matrix_index attribute; up to 10 */
+    gsl::span<Matf4 const> palette{};
+
+    /* Instead of `vertices`: several vertex arrays drawn with the rest of
+     * this command, each with its element count and palette. The state is
+     * applied once for all of them */
+    struct batch_t
+    {
+        vertex_array_t const*  vertices{nullptr};
+        u32                    count{0};
+        gsl::span<Matf4 const> palette{};
+    };
+
+    gsl::span<batch_t const> batches{};
 };
 
 /* A recorded GX display list: the GX_Begin..vertices..GX_End command stream for
