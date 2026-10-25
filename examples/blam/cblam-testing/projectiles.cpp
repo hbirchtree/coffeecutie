@@ -97,6 +97,13 @@ struct ProjectileSystem
         }
         if(flight.resting)
             return true;
+        if(flight.attached)
+        {
+            /* Stuck to a unit, it goes where the unit goes */
+            if(auto const* host = flight.attached_to ? p.template get<Model>(flight.attached_to) : nullptr)
+                place(flight, model, Vecf3(host->transform * Vecf4(flight.attach_offset, 1.f)));
+            return true;
+        }
         flight.velocity.z -= halo_gravity * tag.air_gravity_scale * dt;
 
         Vecf3 const from = model.position;
@@ -131,8 +138,33 @@ struct ProjectileSystem
            static_cast<size_t>(material) < responses.value().size())
             response = &responses.value()[static_cast<size_t>(material)];
 
-        response_t const what =
-            response ? response->default_response : response_t::detonate;
+        response_t what = response ? response->default_response : response_t::detonate;
+        /* The potential response takes over where the tag conditions it:
+         * against (or away from) units, within a speed or an angle to the
+         * surface, or a fraction of the time */
+        if(response && (response->potential_flags != 0 || response->potential_and.y > 0.f ||
+                        response->potential_between.y > 0.f ||
+                        response->potential_skip_fraction > 0.f))
+        {
+            bool const unit        = ray.entity_id != 0 && is_unit(p, ray.entity_id);
+            bool const only_units  = (response->potential_flags & 0x1) != 0;
+            bool const never_units = (response->potential_flags & 0x2) != 0;
+            f32 const  speed       = glm::length(flight.velocity) / ticks_per_second;
+            f32 const  incidence =
+                std::acos(std::clamp(-glm::dot(direction(flight), ray.normal), -1.f, 1.f));
+            bool apply = (!only_units || unit) && (!never_units || !unit);
+            if(response->potential_and.y > 0.f)
+                apply = apply && speed >= response->potential_and.x &&
+                        speed <= response->potential_and.y;
+            if(response->potential_between.y > 0.f)
+                apply = apply && incidence >= response->potential_between.x &&
+                        incidence <= response->potential_between.y;
+            if(response->potential_skip_fraction > 0.f)
+                apply = apply && std::uniform_real_distribution<f32>(0.f, 1.f)(m_rng) >=
+                                     response->potential_skip_fraction;
+            if(apply)
+                what = response->potential_response;
+        }
         /* Along what it fell onto: it slides, without a clatter each
          * step, and settles once slow */
         if(what == response_t::reflect && ray.entity_id == 0 &&
@@ -183,6 +215,11 @@ struct ProjectileSystem
             flight.velocity = {};
             flight.attached = true;
             place(flight, model, ray.point + ray.normal * surface_gap);
+            if(auto const* host = ray.entity_id ? p.template get<Model>(ray.entity_id) : nullptr)
+            {
+                flight.attached_to   = ray.entity_id;
+                flight.attach_offset = Vecf3(glm::inverse(host->transform) * Vecf4(model.position, 1.f));
+            }
             start_timer(flight);
             return true;
         case response_t::overpenetrate:
@@ -241,6 +278,15 @@ struct ProjectileSystem
             }
             return;
         }
+    }
+
+    /* A biped or a vehicle: what a grenade sticks to */
+    bool is_unit(Proxy& p, u64 id)
+    {
+        if(p.template get<PlayerInfo>(id))
+            return true;
+        auto const* physics = p.template get<ObjectPhysics>(id);
+        return physics && (physics->upright || physics->drive);
     }
 
     /* Hits on bodies, from the authority's copy; bullets fired as hitscan
