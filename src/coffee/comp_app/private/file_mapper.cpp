@@ -329,13 +329,12 @@ FileMapper::Resource::operator semantic::BytesConst() const
 std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
     const platform::url::Url& src)
 {
-    if(auto it = m_resources.find(src.internUrl); it != m_resources.end())
-        if(auto live = it->second.lock())
-        {
-            std::promise<std::shared_ptr<Resource>> out;
-            out.set_value(std::move(live));
-            return out.get_future();
-        }
+    if(auto live = live_resource(src))
+    {
+        std::promise<std::shared_ptr<Resource>> out;
+        out.set_value(std::move(live));
+        return out.get_future();
+    }
 
     auto res = std::make_shared<Resource>();
 
@@ -363,7 +362,7 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
                         .fetch_fd = data->fetch_fd,
                     };
                     if(data->view.data())
-                        m_resources[res->m_url.internUrl] = res;
+                        remember(res);
                     prom->set_value(std::move(res));
                 }))
             .assume_value();
@@ -374,7 +373,7 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
         std::promise<std::shared_ptr<Resource>> out;
         auto                                    fut = out.get_future();
         if(auto mapped = map_local(src))
-            m_resources[src.internUrl] = mapped, out.set_value(std::move(mapped));
+            remember(mapped), out.set_value(std::move(mapped));
         else
             out.set_value({});
         return fut;
@@ -394,6 +393,32 @@ std::shared_ptr<FileMapper::Resource> FileMapper::map_local(platform::url::Url c
     res->m_mapping = std::move(mapping.value());
     res->m_url     = src;
     return res;
+}
+
+std::shared_ptr<FileMapper::Resource> FileMapper::live_resource(platform::url::Url const& src)
+{
+    std::lock_guard _(m_lock);
+    auto            it = m_resources.find(src.internUrl);
+    return it != m_resources.end() ? it->second.lock() : nullptr;
+}
+
+std::shared_ptr<FileMapper::RangedFile> FileMapper::live_ranged(platform::url::Url const& src)
+{
+    std::lock_guard _(m_lock);
+    auto            it = m_ranged.find(src.internUrl);
+    return it != m_ranged.end() ? it->second.lock() : nullptr;
+}
+
+void FileMapper::remember(std::shared_ptr<Resource> const& res)
+{
+    std::lock_guard _(m_lock);
+    m_resources[res->m_url.internUrl] = res;
+}
+
+void FileMapper::remember(std::shared_ptr<RangedFile> const& file)
+{
+    std::lock_guard _(m_lock);
+    m_ranged[file->m_url.internUrl] = file;
 }
 
 float FileMapper::FetchSet::progress() const
@@ -456,7 +481,17 @@ void FileMapper::fetch_one(FetchSet& set, std::size_t i)
 {
     auto const&            entry = set.m_entries[i];
     auto&                  slot  = set.m_slots[i];
-    if(!set.cancelled())
+    if(entry.mode == fetch_mode::memory)
+        slot.resource = live_resource(entry.url);
+    else
+        slot.ranged = live_ranged(entry.url);
+    if(slot.resource || slot.ranged)
+    {
+        auto size = slot.resource ? static_cast<semantic::BytesConst>(*slot.resource).size : slot.ranged->size();
+        fmt::print(stderr, "FileMapper: {} still held, reused\n", entry.url.internUrl);
+        slot.expected.store(size);
+        slot.received.store(size);
+    } else if(!set.cancelled())
     {
 #if defined(COFFEE_EMSCRIPTEN)
         if(is_remote_url(entry.url))
@@ -527,6 +562,10 @@ void FileMapper::fetch_one(FetchSet& set, std::size_t i)
                 slot.resource = std::move(mapping);
         }
     }
+    if(slot.resource)
+        remember(slot.resource);
+    if(slot.ranged)
+        remember(slot.ranged);
     if(!slot.resource && !slot.ranged && !entry.optional)
         set.m_failed.store(true);
     /* A file that never came counts as done, so progress still reaches the end */
@@ -544,11 +583,21 @@ std::shared_ptr<FileMapper::FetchSet> FileMapper::fetch_set(
     auto* queue    = download_queue();
 
     /* Sizes first, so progress is over the whole set from the start */
-    auto sizes = [set] {
+    auto sizes = [this, set] {
         for(std::size_t i = 0; i < set->m_entries.size(); i++)
         {
             auto const&   url  = set->m_entries[i].url;
             std::uint64_t size = 0;
+            bool const    memory = set->m_entries[i].mode == fetch_mode::memory;
+            if(auto live = memory ? live_resource(url) : nullptr)
+                size = static_cast<semantic::BytesConst>(*live).size;
+            else if(auto file = memory ? nullptr : live_ranged(url))
+                size = file->size();
+            if(size)
+            {
+                set->m_slots[i].expected.store(size);
+                continue;
+            }
 #if defined(COFFEE_EMSCRIPTEN)
             if(is_remote_url(url))
             {

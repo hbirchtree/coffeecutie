@@ -194,6 +194,7 @@ struct H3MapLoader : compo::SubsystemBase
             if(m_fetch)
                 m_fetch->cancel();
             m_fetch.reset();
+            m_sides.reset();
             unload();
             return false;
         }
@@ -824,7 +825,8 @@ struct H3MapLoader : compo::SubsystemBase
                     attach_mapped(names[i], set.resource(i));
                 if(i + 1 < set.size())
                     return;
-                m_fetch.reset();
+                /* Held until the next map's are in, so shared ones carry over */
+                m_sides = std::move(m_fetch);
                 finish_load(load);
             });
         m_container.subsystem_cast<LoadingStatus>().download = m_fetch;
@@ -2990,6 +2992,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     std::shared_ptr<comp_app::FileMapper::Resource>              m_file;
     std::shared_ptr<comp_app::FileMapper::FetchSet>              m_fetch; /*!< The files on their way in */
+    std::shared_ptr<comp_app::FileMapper::FetchSet>              m_sides; /*!< The side caches in use */
     std::vector<std::shared_ptr<comp_app::FileMapper::Resource>> m_side_files;
     std::vector<std::unique_ptr<el::map_container>>              m_side_maps;
     std::unique_ptr<el::map_container>                           m_map;

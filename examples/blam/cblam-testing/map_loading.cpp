@@ -514,10 +514,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         e.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
     }
 
+    /* bitmaps.map and sounds.map stay held until replaced: the next map
+     * beside them gets the same files without reading them again */
     auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
-
-    files.bitmap_file.reset();
-    files.sound_file.reset();
 
     loading.progress       = 0;
     loading.loaded_map     = LoadingStatus::none;

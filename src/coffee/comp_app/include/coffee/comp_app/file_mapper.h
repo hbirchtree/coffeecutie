@@ -7,6 +7,7 @@
 #include <functional>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <url/url.h>
 
@@ -158,7 +159,9 @@ class FileMapper : public compo::SubsystemBase
     /*!
      * \brief Fetches `entries` in order on the download queue, one at a time.
      * `on_ready` runs on `deliver_on` for each file as it lands, in order;
-     * without a queue, on the download queue itself
+     * without a queue, on the download queue itself. A file still held from
+     * an earlier fetch of the same URL and mode is handed out again, neither
+     * downloaded nor read again
      */
     std::shared_ptr<FetchSet> fetch_set(
         std::vector<fetch_entry> entries, rq::runtime_queue* deliver_on, ready_fn on_ready);
@@ -179,6 +182,11 @@ class FileMapper : public compo::SubsystemBase
     rq::runtime_queue* download_queue();
     void               fetch_one(FetchSet& set, std::size_t i);
     static std::shared_ptr<Resource> map_local(platform::url::Url const& src);
+    /* A file of this URL some earlier fetch handed out and that is still held */
+    std::shared_ptr<Resource>   live_resource(platform::url::Url const& src);
+    std::shared_ptr<RangedFile> live_ranged(platform::url::Url const& src);
+    void                        remember(std::shared_ptr<Resource> const& res);
+    void                        remember(std::shared_ptr<RangedFile> const& file);
 
     struct ResourceCleanupData
     {
@@ -194,7 +202,9 @@ class FileMapper : public compo::SubsystemBase
         } posix;
     };
 
-    std::map<std::string, std::weak_ptr<Resource>> m_resources;
+    std::mutex                                       m_lock; /*!< m_resources, m_ranged */
+    std::map<std::string, std::weak_ptr<Resource>>   m_resources;
+    std::map<std::string, std::weak_ptr<RangedFile>> m_ranged;
     std::map<platform::url::Url, ResourceCleanupData>     m_resource_cleaners;
     rq::runtime_queue*                                    m_io_queue{nullptr};
     rq::runtime_queue*                                    m_download_queue{nullptr};
