@@ -405,6 +405,7 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
             GX_SetTevAlphaIn(s.stage, a.a, a.b, a.c, a.d);
             GX_SetTevAlphaOp(s.stage, a.op, a.bias, a.scale, a.clamp, a.out);
             GX_SetTevKColorSel(s.stage, s.konst_color);
+            GX_SetTevKAlphaSel(s.stage, s.konst_alpha);
             GX_SetTevSwapMode(s.stage, GX_TEV_SWAP0, s.tex_swap);
         } else
             GX_SetTevOp(s.stage, s.op);

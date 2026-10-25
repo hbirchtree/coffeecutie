@@ -830,6 +830,7 @@ struct program_t
         combiner_t alpha_combiner{
             GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV};
         u8 konst_color{GX_TEV_KCSEL_1}; // what GX_CC_KONST reads
+        u8 konst_alpha{GX_TEV_KASEL_1}; // what GX_CA_KONST reads
         u8 tex_swap{GX_TEV_SWAP0};      // texture channel swap table
         /* An indirect stage offsetting this stage's lookup, through
          * draw_command::indirect_matrix */
