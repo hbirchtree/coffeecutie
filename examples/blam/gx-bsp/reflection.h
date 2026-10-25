@@ -187,6 +187,63 @@ inline void bake(
     }
 }
 
+/* Flat water's view of the sky: texel (s, t) holds the world direction r with
+ * (r.x, r.y) / r.z over [-extent, extent], weighted from `steep` (looking
+ * down) to `grazing` (along the surface). Fixed, so baked once. GX tiled
+ * RGB565, big-endian. */
+inline void bake_hemisphere(
+    cube_t const&    cube,
+    u32              size,
+    f32              extent,
+    glm::vec3 const& steep,
+    glm::vec3 const& grazing,
+    u16*             dst)
+{
+    u32 i = 0;
+    for(u32 ty = 0; ty < size; ty += 4)
+        for(u32 tx = 0; tx < size; tx += 4)
+            for(u32 ry = 0; ry < 4; ry++)
+                for(u32 rx = 0; rx < 4; rx++)
+                {
+                    f32 const a =
+                        ((tx + rx + 0.5f) / size * 2.f - 1.f) * extent;
+                    f32 const b =
+                        ((ty + ry + 0.5f) / size * 2.f - 1.f) * extent;
+                    glm::vec3 const r = glm::normalize(glm::vec3{a, b, 1.f});
+                    u8              rgb[3];
+                    sample(cube, r, rgb);
+                    f32 const       g  = (1.f - r.z) * (1.f - r.z);
+                    glm::vec3 const w  = glm::mix(steep, grazing, g);
+                    auto            ch = [&](u32 c) {
+                        return static_cast<u32>(
+                            std::clamp(rgb[c] * w[c], 0.f, 255.f));
+                    };
+                    dst[i++] = static_cast<u16>(
+                        ((ch(0) >> 3) << 11) | ((ch(1) >> 2) << 5) |
+                        (ch(2) >> 3));
+                }
+}
+
+/* Texture matrix for bake_hemisphere(), from world positions below `eye`: the
+ * reflected view direction r = (p.x - e.x, p.y - e.y, e.z - p.z) divided
+ * through by r.z, which GX does with q */
+inline glm::mat4 hemisphere_texgen(glm::vec3 const& eye, f32 extent)
+{
+    f32 const k = 0.5f / extent;
+    glm::mat4 m{0.f};
+    // Column-major: m[column][row]
+    m[0][0] = k;
+    m[1][1] = k;
+    m[2][0] = -0.5f;
+    m[2][1] = -0.5f;
+    m[2][2] = -1.f;
+    m[3][0] = 0.5f * eye.z - k * eye.x;
+    m[3][1] = 0.5f * eye.z - k * eye.y;
+    m[3][2] = eye.z;
+    m[3][3] = 1.f;
+    return m;
+}
+
 /* Texture matrix taking object normals to sphere map coordinates */
 inline glm::mat4 texgen(glm::mat4 const& modelview)
 {

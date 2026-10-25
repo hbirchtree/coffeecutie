@@ -115,10 +115,13 @@ struct submesh_t
     f32                        ripple_scale{1.f};
     Vecf2                      ripple_flow{0.f};
     Vecf3                      water_tint{1.f};
+    blam::bitm::image_t const* water_reflection_img{nullptr};
+    Vecf3                      water_steep{0.f}, water_grazing{0.f};
 #if defined(FEATURE_ENABLE_Gexxo)
     std::shared_ptr<gexxo::texture_t> diffuse;
     std::shared_ptr<gexxo::texture_t> detail;
     std::shared_ptr<gexxo::texture_t> ripple;
+    std::shared_ptr<gexxo::texture_t> water_sky; // see bake_hemisphere()
 #endif
 };
 
@@ -428,6 +431,9 @@ struct shader_info
         f32                        scale{1.f};
         Vecf2                      flow{0.f}; // per second
         Vecf3                      tint{1.f};
+        /* Its reflection cube, from looking down to along the surface */
+        blam::bitm::image_t const* reflection{nullptr};
+        Vecf3                      steep{0.f}, grazing{0.f};
     };
 
     std::optional<water_info> water;
@@ -480,15 +486,21 @@ static shader_info resolve_shader(
         if(sh.has_error())
             return out;
         auto const& w     = *sh.value();
-        auto const& tint  = w.perpendicular.tint_color;
         f32 const   angle = from_le(w.ripple.anim_angle);
         f32 const   speed = from_le(w.ripple.anim_velocity);
-        out.water         = shader_info::water_info{
-                    .ripple = first_image(c, resolve_bitm(c, w.ripple.map)),
-                    .scale  = from_le(w.ripple.scale),
-                    .flow   = Vecf2{std::cos(angle), std::sin(angle)} * speed,
-                    .tint   = Vecf3{from_le(tint.x), from_le(tint.y), from_le(tint.z)} *
-                    from_le(w.perpendicular.brightness),
+        auto        view  = [](auto const& props) {
+            auto const& t = props.tint_color;
+            return Vecf3{from_le(t.x), from_le(t.y), from_le(t.z)} *
+                   from_le(props.brightness);
+        };
+        out.water = shader_info::water_info{
+            .ripple     = first_image(c, resolve_bitm(c, w.ripple.map)),
+            .scale      = from_le(w.ripple.scale),
+            .flow       = Vecf2{std::cos(angle), std::sin(angle)} * speed,
+            .tint       = view(w.perpendicular),
+            .reflection = first_image(c, resolve_bitm(c, w.reflection_map)),
+            .steep      = view(w.perpendicular),
+            .grazing    = view(w.parallel),
         };
         if(out.water->scale == 0.f)
             out.water->scale = 1.f;
@@ -1064,6 +1076,9 @@ static void set_water(submesh_t& sm, shader_info const& si)
     sm.ripple_scale = si.water->scale;
     sm.ripple_flow  = si.water->flow;
     sm.water_tint   = si.water->tint;
+    sm.water_reflection_img = si.water->reflection;
+    sm.water_steep          = si.water->steep;
+    sm.water_grazing        = si.water->grazing;
 }
 
 /* Transcoded offline: the material's vertices are GX arrays already and its
@@ -1732,19 +1747,14 @@ static constexpr u32 kSphereSize = 32;
 static std::map<blam::bitm::image_t const*, std::shared_ptr<reflection_t>>
     g_reflections;
 
-static std::shared_ptr<reflection_t> load_reflection(
+/* A cube bitmap's faces, shrunk to sample on the CPU */
+static std::optional<gx_reflection::cube_t> load_cube(
     blam::bitm::image_t const* img)
 {
-    if(!img)
-        return nullptr;
-    if(auto it = g_reflections.find(img); it != g_reflections.end())
-        return it->second;
-    auto& slot = g_reflections[img];
-
     using fmt_t = blam::bitm::format_t;
     using sf    = gx_reflection::source_format;
-    if(from_le(img->type) != blam::bitm::type_t::tex_cube)
-        return nullptr;
+    if(!img || from_le(img->type) != blam::bitm::type_t::tex_cube)
+        return std::nullopt;
     u32 const w     = static_cast<u32>(from_le(img->isize.x));
     sf        fmt   = sf::bc1;
     u32       block = 0, bpp = 0;
@@ -1768,7 +1778,7 @@ static std::shared_ptr<reflection_t> load_reflection(
         bpp = 4;
         break;
     default:
-        return nullptr;
+        return std::nullopt;
     }
     auto level_bytes = [&](u32 lw) {
         lw = std::max(lw, 1u);
@@ -1776,7 +1786,7 @@ static std::shared_ptr<reflection_t> load_reflection(
     };
     std::vector<libc_types::u8> px;
     if(!w || !read_bitmap_pixels(*img, g_internal_magic, px))
-        return nullptr;
+        return std::nullopt;
     u32 const levels = std::max<u32>(from_le(img->mipmaps), 1);
     // Faces follow blam's bitm::image_t::cube_face_offset()
     auto face_offset = [&](u32 face) -> u32 {
@@ -1794,13 +1804,13 @@ static std::shared_ptr<reflection_t> load_reflection(
         !block && (static_cast<u16>(from_le(img->flags)) &
                    static_cast<u16>(blam::bitm::flags_t::swizzled));
 
-    auto r       = std::make_shared<reflection_t>();
-    r->cube.size = std::min(w, 16u);
+    gx_reflection::cube_t cube;
+    cube.size = std::min(w, 16u);
     for(u32 f = 0; f < 6; f++)
     {
         u32 const off = face_offset(f), n = level_bytes(w);
         if(off + n > px.size())
-            return nullptr;
+            return std::nullopt;
         u8 const*                   src = px.data() + off;
         std::vector<libc_types::u8> linear;
         if(swizzled)
@@ -1814,9 +1824,24 @@ static std::shared_ptr<reflection_t> load_reflection(
                 bpp);
             src = linear.data();
         }
-        r->cube.faces[f] =
-            gx_reflection::decode_face(src, fmt, w, r->cube.size);
+        cube.faces[f] = gx_reflection::decode_face(src, fmt, w, cube.size);
     }
+    return cube;
+}
+
+static std::shared_ptr<reflection_t> load_reflection(
+    blam::bitm::image_t const* img)
+{
+    if(!img)
+        return nullptr;
+    if(auto it = g_reflections.find(img); it != g_reflections.end())
+        return it->second;
+    auto& slot = g_reflections[img];
+    auto  cube = load_cube(img);
+    if(!cube)
+        return nullptr;
+    auto r    = std::make_shared<reflection_t>();
+    r->cube   = std::move(*cube);
     r->texels = static_cast<u16*>(memalign(32, kSphereSize * kSphereSize * 2));
     if(!r->texels)
         return nullptr;
@@ -1826,6 +1851,45 @@ static std::shared_ptr<reflection_t> load_reflection(
         r->texels, kSphereSize, kSphereSize, GX_TF_RGB565, GX_CLAMP, GX_CLAMP);
     slot = r;
     return r;
+}
+
+/* Water's sky, see gx_reflection::bake_hemisphere(); one per water shader */
+static constexpr u32 kWaterSkySize = 64;
+static constexpr f32 kWaterSkyExtent =
+    4.f; // tan of 76 degrees from straight up
+
+static std::shared_ptr<gexxo::texture_t> load_water_sky(submesh_t const& sm)
+{
+    static std::map<
+        std::tuple<blam::bitm::image_t const*, f32, f32>,
+        std::shared_ptr<gexxo::texture_t>>
+          skies;
+    auto& slot = skies[{
+        sm.water_reflection_img,
+        glm::length(sm.water_steep),
+        glm::length(sm.water_grazing)}];
+    if(slot)
+        return slot;
+    auto cube = load_cube(sm.water_reflection_img);
+    if(!cube)
+        return nullptr;
+    auto tex = std::make_shared<gexxo::texture_t>(
+        gexxo::textures::type::d2,
+        typing::pixels::PixDesc{typing::pixels::pix_fmt::RGB565},
+        1);
+    tex->alloc({kWaterSkySize, kWaterSkySize, 1});
+    if(!tex->m_storage)
+        return nullptr;
+    gx_reflection::bake_hemisphere(
+        *cube,
+        kWaterSkySize,
+        kWaterSkyExtent,
+        sm.water_steep,
+        sm.water_grazing,
+        static_cast<u16*>(tex->m_storage));
+    DCFlushRange(tex->m_storage, kWaterSkySize * kWaterSkySize * 2);
+    slot = tex;
+    return tex;
 }
 
 /* A few sphere maps per frame, in turn, for this frame's camera: at this
@@ -2621,6 +2685,8 @@ i32 coffee_main(i32, cstring_w*)
                 sm.diffuse = load_diffuse(sm.diffuse_img);
                 sm.detail  = load_diffuse(sm.detail_img);
                 sm.ripple  = load_diffuse(sm.ripple_img);
+                if(sm.water)
+                    sm.water_sky = load_water_sky(sm);
                 if(sm.diffuse)
                     diffuse_count++;
             }
@@ -2892,6 +2958,23 @@ i32 coffee_main(i32, cstring_w*)
               .alpha_combiner = keep_alpha,
               .konst_color    = GX_TEV_KCSEL_K1},
     };
+
+    /* With its reflection: the sky above added on top instead, its lookup
+     * thrown about by the first ripple layer */
+    auto prog_water_shiny       = gfx.alloc_program();
+    prog_water_shiny->channels  = prog_water->channels;
+    prog_water_shiny->stages    = prog_water->stages;
+    prog_water_shiny->stages[3] = stage_t{
+        .stage          = stage_t::stage3,
+        .op             = stage_t::custom,
+        .texcoord       = stage_t::texcoord2,
+        .texmap         = stage_t::texmap1,
+        .color          = channel_t::color_null,
+        .color_combiner = {GX_CC_TEXC, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV},
+        .alpha_combiner = keep_alpha,
+        .warp_by        = 0};
+    prog_water_shiny->indirect = {
+        {.texcoord = stage_t::texcoord0, .texmap = stage_t::texmap0}};
     u64 const water_epoch = gettime();
 
     using bind_t = gexxo::texture_binding_t;
@@ -3138,7 +3221,6 @@ i32 coffee_main(i32, cstring_w*)
         f32 const   secs = ticks_to_microsecs(gettime() - water_epoch) / 1e6f;
         Vecf3 const sky_tint =
             sky ? glm::mix(sky->fog_color, Vecf3{1.f}, 0.4f) : Vecf3{0.5f};
-        GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
         for(auto [page, sm] : water)
         {
             if(!sm->ripple)
@@ -3149,9 +3231,10 @@ i32 coffee_main(i32, cstring_w*)
                     glm::translate(Matf4{1.f}, Vecf3{offset, 0.f}),
                     Vecf3{scale, scale, 1.f});
             };
-            Matf4 const ripples[2] = {
+            Matf4 const ripples[3] = {
                 layer(flow, sm->ripple_scale),
-                layer(Vecf2{-flow.y, flow.x} * 0.7f, sm->ripple_scale * 0.83f)};
+                layer(Vecf2{-flow.y, flow.x} * 0.7f, sm->ripple_scale * 0.83f),
+                gx_reflection::hemisphere_texgen(g_cam_pos, kWaterSkyExtent)};
             gexxo::draw_command cmd{
                 .call =
                     {.indexed   = true,
@@ -3186,12 +3269,31 @@ i32 coffee_main(i32, cstring_w*)
                     {Vecf4(sm->water_tint, 1.f), Vecf4(sky_tint, 1.f)},
                 .texture_transforms = gsl::span<Matf4 const>(ripples, 2),
             };
+            if(sm->water_sky)
+            {
+                // Ripple normals' green and blue push the lookup a few texels
+                constexpr f32 warp = 0.75f;
+                cmd.program        = prog_water_shiny;
+                cmd.textures.push_back(
+                    bind_t{
+                        .texture  = sm->water_sky,
+                        .texmap   = stage_t::texmap1,
+                        .texcoord = stage_t::texcoord2,
+                        .gen_type = bind_t::mtx3x4,
+                        .gen_src  = bind_t::src_position,
+                        .gen_mtx  = GX_TEXMTX0 + 2 * 3});
+                cmd.texture_transforms = gsl::span<Matf4 const>(ripples, 3);
+                cmd.indirect_matrix    = gexxo::draw_command::indirect_matrix_t{
+                       .rows  = {{{0.f, 0.f, warp}, {0.f, warp, 0.f}}},
+                       .scale = -5};
+            }
+            // Over what's beneath it, without writing depth
             gfx.submit(
                 cmd,
                 gexxo::cull_state{.front_face = false},
-                gexxo::blend_state{});
+                gexxo::blend_state{},
+                gexxo::depth_state{.write = false});
         }
-        GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
         gexxo::swapBuffers();
 
         if((i % 60) == 59)
