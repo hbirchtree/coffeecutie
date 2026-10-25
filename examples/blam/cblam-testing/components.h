@@ -800,6 +800,7 @@ struct Projectile
     libc_types::f32              timer{-1.f}; /* seconds to detonation, <0 = not started */
     libc_types::u64              owner{0};    /* passes through its body */
     libc_types::u64              shooter{0};  /* credited with its hits */
+    libc_types::u64              target{0};   /* the unit a guided one seeks */
     libc_types::u32              bounces{0};
     bool                         attached{false}; /* stuck where it hit */
     libc_types::u64              attached_to{0};  /* the unit it stuck to, if one */

@@ -370,19 +370,29 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .direction  = forward,
         };
         GameEvent ev{.type = GameEvent::WeaponFire};
+        /* What the reticle rests on: a unit there is what guided shots seek */
+        Vecf3 target = cam.camera.position + forward * aim_reach;
+        if(!melee)
+        {
+            Physics::Event   ray_ev{Physics::Event::Raycast};
+            Physics::Raycast ray{
+                .from   = cam.camera.position,
+                .to     = target,
+                .ignore = info.riding.vehicle ? info.riding.vehicle : player};
+            p.template subsystem<PhysicsBus>().process(ray_ev, &ray);
+            if(ray.hit && ray.entity_id != player)
+            {
+                target = ray.point;
+                if(ray.entity_id && is_unit(p, ray.entity_id))
+                    shot.target = ray.entity_id;
+            }
+            if(!shot.target)
+                shot.target = autoaimed(p, player, info, cam.camera.position, forward, weapon);
+        }
         if(info.riding.vehicle != 0 && &weapon == mounted_weapon(p, info, files_of(p)))
         {
             /* Every barrel fires at once, each at what the reticle rests
              * on, however the gun itself is posed */
-            Vecf3 target = cam.camera.position + forward * aim_reach;
-            {
-                Physics::Event   ray_ev{Physics::Event::Raycast};
-                Physics::Raycast ray{
-                    .from = cam.camera.position, .to = target, .ignore = info.riding.vehicle};
-                p.template subsystem<PhysicsBus>().process(ray_ev, &ray);
-                if(ray.hit && ray.entity_id != player)
-                    target = ray.point;
-            }
             auto const* model = p.template get<Model>(info.riding.vehicle);
             u32 const   barrels =
                 model && model->tag
@@ -483,6 +493,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     .local_only = true,
                     .owner      = shot.vehicle ? shot.vehicle : shot.shooter,
                     .shooter    = shot.shooter,
+                    .target     = shot.target,
                 };
                 GameEvent ev{.type = GameEvent::SpawnObject};
                 game.inject(ev, &spawn);
@@ -1001,6 +1012,57 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         p.template subsystem<GameEventBus>().inject(ev, &shot);
     }
 
+    /* The living unit nearest the reticle within the weapon's autoaim
+     * cone and range, and in sight */
+    u64 autoaimed(
+        Proxy&             p,
+        u64                player,
+        PlayerInfo const&  info,
+        Vecf3 const&       eye,
+        Vecf3 const&       forward,
+        blam::tag_t const& weapon)
+    {
+        auto data = weapon.template data<weapon_t>(files_of(p).container.magic);
+        if(!data.has_value())
+            return 0;
+        f32 const angle = data.value()[0].autoaim_angle;
+        f32 const range = data.value()[0].autoaim_range;
+        if(angle <= 0.f || range <= 0.f)
+            return 0;
+        u64 best      = 0;
+        f32 best_cos  = std::cos(angle);
+        for(auto unit : p.template select<Model, BipedStatus>())
+        {
+            u64 const id = unit.id();
+            if(id == player || id == info.riding.vehicle ||
+               unit.template get<BipedStatus>().dead)
+                continue;
+            Vecf3 const to = unit.template get<Model>().position + Vecf3{0.f, 0.f, autoaim_height} - eye;
+            f32 const   d  = glm::length(to);
+            if(d < 1e-3f || d > range)
+                continue;
+            f32 const c = glm::dot(to / d, forward);
+            if(c <= best_cos)
+                continue;
+            Physics::Event   ray_ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = eye, .to = eye + to, .ignore = player};
+            p.template subsystem<PhysicsBus>().process(ray_ev, &ray);
+            if(ray.hit && ray.entity_id != id)
+                continue;
+            best     = id;
+            best_cos = c;
+        }
+        return best;
+    }
+
+    static bool is_unit(Proxy& p, u64 id)
+    {
+        if(p.template get<PlayerInfo>(id))
+            return true;
+        auto const* physics = p.template get<ObjectPhysics>(id);
+        return physics && (physics->upright || physics->drive);
+    }
+
     /* The shooter's weapon as others see it */
     u64 in_hand(Proxy& p, u64 shooter, BlamFiles<halo_version> const& files)
     {
@@ -1161,6 +1223,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr f32 melee_spread    = .15f; /* rad, the side rays */
     static constexpr f32 melee_dip       = .35f; /* rad, the low rays */
     static constexpr f32 aim_reach       = 100.f; /* wu, a reticle on nothing */
+    static constexpr f32 autoaim_height  = .6f;   /* wu above a unit's origin */
     static constexpr f32 behind_cos      = .5f;  /* within 60 deg of its facing */
     /* Vehicle guns: where they fire from, and how far the crosshair looks */
     static constexpr std::string_view gun_marker = "primary trigger";

@@ -143,6 +143,11 @@ class CombatSync
             if(auto const* net = shot.vehicle ? p.template get<NetworkInfo>(shot.vehicle)
                                               : nullptr)
                 vehicle = net->instance_id;
+            u32 target = 0, target_player = ObjectHitEvent::no_player;
+            if(auto const* info = shot.target ? p.template get<PlayerInfo>(shot.target) : nullptr)
+                target_player = info->player_idx;
+            else if(auto const* net = shot.target ? p.template get<NetworkInfo>(shot.target) : nullptr)
+                target = net->instance_id;
             m_shots.push_back({
                 .message =
                     {
@@ -158,6 +163,8 @@ class CombatSync
                         .flags      = shot.thrown  ? WeaponFire::thrown
                                       : shot.melee ? WeaponFire::melee
                                                    : WeaponFire::none,
+                        .target        = target,
+                        .target_player = target_player,
                     },
                 .route = {server ? route_t::clients : route_t::server},
             });
@@ -415,14 +422,20 @@ class CombatSync
            !std::isfinite(glm::dot(direction, Vecf3(wire.position))) ||
            glm::length(direction) < .5f)
             return false;
-        u64 vehicle = 0;
-        if(wire.vehicle != 0)
+        u64 vehicle = 0, target = 0;
+        if(wire.vehicle != 0 || wire.target != 0)
             for(auto object : p.template select<NetworkInfo>())
-                if(object.template get<NetworkInfo>().instance_id == wire.vehicle)
-                {
+            {
+                u32 const id = object.template get<NetworkInfo>().instance_id;
+                if(wire.vehicle != 0 && id == wire.vehicle)
                     vehicle = object.id();
-                    break;
-                }
+                if(wire.target != 0 && id == wire.target)
+                    target = object.id();
+            }
+        if(wire.target_player != ObjectHitEvent::no_player)
+            for(auto entity : p.template select<PlayerInfo>())
+                if(entity.template get<PlayerInfo>().player_idx == wire.target_player)
+                    target = entity.id();
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
             .origin     = MapLoadEvent::Remote,
@@ -436,6 +449,7 @@ class CombatSync
             .melee      = (wire.flags & WeaponFire::melee) != 0,
             .position   = Vecf3(wire.position),
             .direction  = glm::normalize(direction),
+            .target     = target,
             .view_tick  = view_tick,
         };
         m_bus.inject(ev, &shot);

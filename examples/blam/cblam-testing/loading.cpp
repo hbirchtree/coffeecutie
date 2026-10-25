@@ -1960,6 +1960,7 @@ struct ResourceLoader
             flight.tag                = proj;
             flight.owner              = spawn.owner;
             flight.shooter            = spawn.shooter;
+            flight.target             = spawn.target;
             flight.velocity =
                 glm::length(spawn.velocity) > 0.f
                     ? spawn.velocity

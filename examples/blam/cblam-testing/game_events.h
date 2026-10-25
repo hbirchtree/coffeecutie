@@ -356,6 +356,7 @@ struct SpawnObjectEvent
     bool            local_only{false};
     libc_types::u64 owner{0};   /*!< Projectiles: the body they leave through */
     libc_types::u64 shooter{0}; /*!< Projectiles: the player who fired them */
+    libc_types::u64 target{0};  /*!< Projectiles: the unit guided ones seek */
     Vecf3           velocity{};         /*!< wu/s, bodies with mass */
     Vecf3           angular_velocity{}; /*!< rad/s */
     libc_types::f32 lifetime{0.f};      /*!< seconds, 0 = until despawned */
@@ -453,6 +454,7 @@ struct WeaponFireEvent
     bool                 melee{false};  /*!< A strike with `weapon`, nothing fired */
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
+    libc_types::u64      target{0}; /*!< The unit the reticle rested on, which guided shots seek */
     /*! The tick the shooter saw others at; the authority traces bipeds
      *  back there */
     std::optional<libc_types::u64> view_tick{};
