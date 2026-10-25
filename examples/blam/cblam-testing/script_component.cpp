@@ -1933,14 +1933,20 @@ struct BlamScript
                            up * (drag.z * glm::dot(f.velocity, up)));
 
         model.position += f.velocity;
-        /* Its mass points rest on what is below */
+        /* Its mass points rest on what is below, not on its own riders */
         Physics::Event   ev{Physics::Event::Raycast};
         Physics::Raycast ray{
             .from   = model.position + Vecf3{0.f, 0.f, ground_probe},
             .to     = model.position - Vecf3{0.f, 0.f, ground_probe},
             .ignore = id,
         };
-        p.template subsystem<PhysicsBus>().process(ev, &ray);
+        for(u32 pass = 0; pass < max_rider_passes; pass++)
+        {
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            if(!ray.hit || !rides(p, ray.entity_id, id))
+                break;
+            ray = {.from = ray.point - Vecf3{0.f, 0.f, rider_skip}, .to = ray.to, .ignore = id};
+        }
         if(f32 const floor = ray.point.z + resting_height(body); ray.hit && model.position.z < floor)
         {
             model.position.z = floor;
@@ -1951,6 +1957,18 @@ struct BlamScript
                          glm::angleAxis(f.roll, Vecf3{1.f, 0.f, 0.f});
         model.update_matrix();
         r.velocity = f.velocity * tick_rate;
+    }
+
+    /* Seated in `vehicle`, by the script or the game */
+    bool rides(Proxy& p, u64 unit, u64 vehicle) const
+    {
+        if(unit == 0)
+            return false;
+        for(auto const& r : m_riders)
+            if(r.unit == unit && r.vehicle == vehicle)
+                return true;
+        auto const* info = p.template get<PlayerInfo>(unit);
+        return info && info->riding.vehicle == vehicle;
     }
 
     /* Seconds the driver's seat takes to power up, 0 if it has none */
@@ -2335,6 +2353,8 @@ struct BlamScript
     static constexpr f32 turn_ticks   = 30.f;
     static constexpr f32 torque_scale = .05f;
     static constexpr f32 ground_probe = 2.f; /* wu, either way of the origin */
+    static constexpr u32 max_rider_passes = 8;
+    static constexpr f32 rider_skip       = .01f; /* wu past a rider to look again */
     static constexpr f32 halo_gravity = .0035651792f; /* wu/tick^2 */
     /* Where a body is tested against volumes, above its feet */
     static constexpr f32 body_middle = .3f;

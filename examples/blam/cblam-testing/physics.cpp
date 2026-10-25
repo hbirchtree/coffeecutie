@@ -857,6 +857,7 @@ struct PhysicsSystem
         if(!m_world_body && m_bodies.empty() && !m_probe_body)
             return;
 
+        separate_released();
         u32 const steps = static_cast<u32>(ticks.size()) * steps_per_tick;
         u32       step_no = 0;
         if(ticks.empty())
@@ -1164,6 +1165,10 @@ struct PhysicsSystem
             bool const moves      = physics.mass > 0.f;
             bool const follower =
                 moves && (physics.authority == ObjectPhysics::Follower || physics.scripted);
+            if(physics.scripted)
+                m_scripted.insert(id);
+            else if(m_scripted.erase(id))
+                m_released.push_back(id);
             auto const section = m_object_sections.find(id);
             bool const simulated =
                 section != m_object_sections.end() &&
@@ -1724,8 +1729,10 @@ struct PhysicsSystem
                    (body->getCollisionFlags() &
                     btCollisionObject::CF_NO_CONTACT_RESPONSE))
                     continue;
-                /* Riding on top of it is not being run down */
-                if(unit.deck == vehicle_id || deck_under(*body) == vehicle.world_body.get())
+                /* Riding on top of it is not being run down, nor is being
+                 * carried by a script, as riders in its seats are */
+                if(unit.deck == vehicle_id || deck_under(*body) == vehicle.world_body.get() ||
+                   m_scripted.contains(unit_id))
                     continue;
                 btVector3 toward = body->getCenterOfMassPosition() -
                                    vehicle.world_body->getCenterOfMassPosition();
@@ -2523,6 +2530,14 @@ struct PhysicsSystem
         if(it == m_bodies.end())
             return;
         m_passing.erase(entity_id);
+        m_scripted.erase(entity_id);
+        if(auto* gone = it->second.world_body.get())
+            std::erase_if(m_apart, [gone](auto const& pair) {
+                if(pair.first != gone && pair.second != gone)
+                    return false;
+                (pair.first == gone ? pair.second : pair.first)->setIgnoreCollisionCheck(gone, false);
+                return true;
+            });
         detach(it->second);
         /* Give the debug-marker slot back so repeated join/leave (netcode
          * testing) or body rebuilds don't permanently eat buffer space. */
@@ -3488,6 +3503,84 @@ struct PhysicsSystem
     static constexpr f32 standing_normal = .7f;
     static constexpr f32 resting_overlap = .1f; /* wu, sunk into what it stands on */
     std::set<u64>        m_passing; /* remote bodies inside another, not pushing */
+    std::set<u64>        m_scripted; /* placed by a script, as its riders are */
+    std::vector<u64>     m_released; /* let go by a script this frame */
+    /* Bodies let go inside another (a rider in its seat): neither touches
+     * the other until they are apart */
+    std::vector<std::pair<btCollisionObject*, btCollisionObject*>> m_apart;
+
+    /* The objects a body overlaps, not the level */
+    std::vector<btCollisionObject*> overlapping(btRigidBody& body)
+    {
+        struct found_t : btCollisionWorld::ContactResultCallback
+        {
+            btCollisionObject const*        self{};
+            std::vector<btCollisionObject*> out;
+
+            btScalar addSingleResult(
+                btManifoldPoint&                cp,
+                btCollisionObjectWrapper const* a,
+                int,
+                int,
+                btCollisionObjectWrapper const* b,
+                int,
+                int) override
+            {
+                auto* other = const_cast<btCollisionObject*>(
+                    a->getCollisionObject() == self ? b->getCollisionObject()
+                                                    : a->getCollisionObject());
+                if(cp.getDistance() < 0.f && other->getUserPointer() &&
+                   std::find(out.begin(), out.end(), other) == out.end())
+                    out.push_back(other);
+                return 0;
+            }
+        };
+        found_t found;
+        found.self                   = &body;
+        found.m_collisionFilterGroup = body.getBroadphaseHandle()->m_collisionFilterGroup;
+        found.m_collisionFilterMask  = body.getBroadphaseHandle()->m_collisionFilterMask;
+        m_world->contactTest(&body, found);
+        return found.out;
+    }
+
+    /* Released inside something, it leaves it rather than being thrown out */
+    void separate_released()
+    {
+        for(u64 id : std::exchange(m_released, {}))
+        {
+            auto it = m_bodies.find(id);
+            if(it == m_bodies.end() || !it->second.world_body)
+                continue;
+            btRigidBody& body = *it->second.world_body;
+            for(auto* other : overlapping(body))
+            {
+                body.setIgnoreCollisionCheck(other, true);
+                other->setIgnoreCollisionCheck(&body, true);
+                m_apart.emplace_back(&body, other);
+            }
+        }
+        std::erase_if(m_apart, [this](auto const& pair) {
+            auto [a, b] = pair;
+            struct touch_t : btCollisionWorld::ContactResultCallback
+            {
+                bool hit{false};
+                btScalar addSingleResult(
+                    btManifoldPoint& cp, btCollisionObjectWrapper const*, int, int,
+                    btCollisionObjectWrapper const*, int, int) override
+                {
+                    hit = hit || cp.getDistance() < 0.f;
+                    return 0;
+                }
+            } touch;
+            /* The ignore hides the pair from the test too */
+            a->setIgnoreCollisionCheck(b, false);
+            m_world->contactPairTest(a, b, touch);
+            a->setIgnoreCollisionCheck(b, touch.hit);
+            if(!touch.hit)
+                b->setIgnoreCollisionCheck(a, false);
+            return !touch.hit;
+        });
+    }
     /* How far a deck may leap in a frame and still be stood on */
     static constexpr f32 deck_leap = 4.f; /* wu */
     static constexpr f32 impact_speed    = .5f; /* wu/s */
