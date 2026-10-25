@@ -1917,10 +1917,10 @@ struct MeshRenderer
 
     /* One tight cone over the rifle, then flat ones sweeping the level */
     static constexpr std::array<storm_wind_t, 4> storm_winds = {{
-        {3.f, 3.f, 1.2f, 0.f, 5.f},
-        {18.f, 4.f, -.5f, .6f, 3.f},
-        {32.f, 6.f, .35f, 1.2f, 3.f},
-        {50.f, 8.f, -.25f, 1.8f, 2.f},
+        {3.f, 3.f, 2.6f, 0.f, 5.f},
+        {18.f, 4.f, -1.1f, .6f, 3.f},
+        {32.f, 6.f, .8f, 1.2f, 3.f},
+        {50.f, 8.f, -.55f, 1.8f, 2.f},
     }};
     static constexpr f32 storm_fade_in  = 1.5f; /* s */
     static constexpr f32 storm_fade_out = 4.f;  /* s, once the rifle is gone */
