@@ -1913,11 +1913,14 @@ struct MeshRenderer
         f32 spin;   /*!< rad/s about the vertical */
         f32 delay;  /*!< s after the storm starts before it rises */
         f32 bands;  /*!< Streak bands up the cone */
+        f32 density{1.f}; /*!< More, fuller wisps per band */
+        bool hugs{false}; /*!< On the rifle itself, not trailing it */
     };
 
-    /* One tight cone over the rifle, then flat ones sweeping the level */
-    static constexpr std::array<storm_wind_t, 4> storm_winds = {{
-        {3.f, 3.f, 2.6f, 0.f, 5.f},
+    /* Two tight cones over the rifle, then flat ones sweeping the level */
+    static constexpr std::array<storm_wind_t, 5> storm_winds = {{
+        {3.f, 3.f, 2.6f, 0.f, 5.f, 1.f, true},
+        {4.2f, 3.4f, 1.f, .3f, 8.f, 2.f, true},
         {18.f, 4.f, -1.1f, .6f, 3.f},
         {32.f, 6.f, .8f, 1.2f, 3.f},
         {50.f, 8.f, -.55f, 1.8f, 2.f},
@@ -3352,6 +3355,7 @@ struct MeshRenderer
         f32                                    time,
         f32                                    strength,
         f32                                    bands,
+        f32                                    density,
         Args&&... extra)
     {
         auto const& player = m_players[idx];
@@ -3379,7 +3383,9 @@ struct MeshRenderer
                 gfx::uniform_pair{
                     {"strength"sv}, semantic::SpanOne<const f32>(strength)},
                 gfx::uniform_pair{
-                    {"bands"sv}, semantic::SpanOne<const f32>(bands)}),
+                    {"bands"sv}, semantic::SpanOne<const f32>(bands)},
+                gfx::uniform_pair{
+                    {"density"sv}, semantic::SpanOne<const f32>(density)}),
             gfx::blend_state{.premultiplied = true},
             gfx::depth_extended_state{.depth_write = false},
             get_view_state(idx),
@@ -3427,15 +3433,14 @@ struct MeshRenderer
                 cloud,
                 age,
                 storm_envelope(storm, age, 0.f),
-                0.f);
+                0.f,
+                1.f);
             for(auto const& wind : storm_winds)
             {
                 f32 const strength = storm_envelope(storm, age, wind.delay);
                 if(strength <= 0.f)
                     continue;
-                /* The tight cone hugs the rifle, the wide ones trail it */
-                Vecf3 const centre =
-                    &wind == &storm_winds[0] ? storm.rifle : storm.position;
+                Vecf3 const centre = wind.hugs ? storm.rifle : storm.position;
                 Matf4 const model =
                     glm::translate(Matf4(1), centre) *
                     glm::rotate(Matf4(1), age * wind.spin, Vecf3{0, 0, 1}) *
@@ -3449,7 +3454,8 @@ struct MeshRenderer
                     model,
                     age,
                     strength,
-                    wind.bands);
+                    wind.bands,
+                    wind.density);
             }
         }
     }
