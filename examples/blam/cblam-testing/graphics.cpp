@@ -129,44 +129,12 @@ i32 blam_main()
              cxxopts::value<int>())
             //
             ;
-        options.add_options("Networking")
-            //
-            ("server",
-             "Server to connect to on startup. Pass the join string the "
-             "server prints, which carries its key so the connection is "
-             "authenticated: ip:port#auth=ed25519:<key>, or "
-             "ws://gateway#<id>;auth=ed25519:<key>",
-             cxxopts::value<std::string>())
-            //
-            ("listen",
-             "Interface to start a server on",
-             cxxopts::value<std::string>())
+        options.add_options("Networking (shared)")
             //
             ("gateway-register",
              "webrtc-gateway /server-signal URL to register this --listen "
              "server with, so browser clients can be routed to it",
              cxxopts::value<std::string>())
-            //
-            ("gateway-server-id",
-             "Server ID to register under with --gateway-register",
-             cxxopts::value<std::string>())
-            //
-            ("gateway-auth-key",
-             "Path to the server's Ed25519 private key PEM, which signs its "
-             "certificate and WebRTC metadata. Generated if the file does not "
-             "exist. Without it, a server generates a key in memory each run",
-             cxxopts::value<std::string>())
-            //
-            ("server-key",
-             "Ed25519 public key (base64) of the server named by --server. "
-             "The connection then requires a certificate signed by that key, "
-             "so nothing on the path can present its own. Not needed with a "
-             "join string, which carries the key",
-             cxxopts::value<std::string>())
-            //
-            ("relay-only",
-             "Always relay traffic, no peer-to-peer",
-             cxxopts::value<bool>()->default_value("false"))
             //
             ("net-lag",
              "Simulated round-trip latency added to this process's packets, ms",
@@ -179,6 +147,40 @@ i32 blam_main()
             ("net-loss",
              "Simulated packet loss in each direction, percent",
              cxxopts::value<libc_types::f32>());
+        options.add_options("Networking (server)")
+            //
+            ("listen",
+             "Interface to start a server on",
+             cxxopts::value<std::string>())
+            //
+            ("gateway-server-id",
+             "Server ID to register under with --gateway-register",
+             cxxopts::value<std::string>())
+            //
+            ("gateway-auth-key",
+             "Path to the server's Ed25519 private key PEM, which signs its "
+             "certificate and WebRTC metadata. Generated if the file does not "
+             "exist. Without it, a server generates a key in memory each run",
+             cxxopts::value<std::string>())
+            //
+            ("relay-only",
+             "Always relay traffic, no peer-to-peer",
+             cxxopts::value<bool>()->default_value("false"));
+        options.add_options("Networking (client)")
+            //
+            ("server",
+             "Server to connect to on startup. Pass the join string the "
+             "server prints, which carries its key so the connection is "
+             "authenticated: ip:port#auth=ed25519:<key>, or "
+             "ws://gateway#<id>;auth=ed25519:<key>",
+             cxxopts::value<std::string>())
+            //
+            ("server-key",
+             "Ed25519 public key (base64) of the server named by --server. "
+             "The connection then requires a certificate signed by that key, "
+             "so nothing on the path can present its own. Not needed with a "
+             "join string, which carries the key",
+             cxxopts::value<std::string>());
         if constexpr(!compile_info::supports_command_line)
             options.add_options("Game")(
                 "map", "Which map file to load", cxxopts::value<std::string>());

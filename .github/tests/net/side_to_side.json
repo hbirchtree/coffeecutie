@@ -1,0 +1,2454 @@
+{
+    "comment": "Recorded with DUMMY_PLUG_RECORD",
+    "end_time": 159464,
+    "events": [
+        {
+            "index": 0,
+            "time": 51,
+            "type": "controller_connect"
+        },
+        {
+            "button": "BACK",
+            "duration": 135,
+            "index": 0,
+            "time": 6959,
+            "type": "controller_button"
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8426,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8450,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8465,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8476,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 8536,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 8550,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 8567,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 8580,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8611,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8619,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8631,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "RIGHT_X",
+            "index": 0,
+            "time": 8639,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 191,
+            "index": 0,
+            "time": 9516,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 152,
+            "index": 0,
+            "time": 10852,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 160,
+            "index": 0,
+            "time": 12125,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 125,
+            "index": 0,
+            "time": 12758,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 128,
+            "index": 0,
+            "time": 14497,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 114,
+            "index": 0,
+            "time": 15755,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 158,
+            "index": 0,
+            "time": 17113,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 159,
+            "index": 0,
+            "time": 18440,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 155,
+            "index": 0,
+            "time": 19689,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 19882,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 19889,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 19896,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 19906,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 19936,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 19941,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 19949,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 19956,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 19964,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 19994,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 128,
+            "index": 0,
+            "time": 21194,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 157,
+            "index": 0,
+            "time": 22551,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 157,
+            "index": 0,
+            "time": 23842,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 128,
+            "index": 0,
+            "time": 25168,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 25401,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 25415,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 25425,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 25476,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 25479,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 25484,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 25491,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 150,
+            "index": 0,
+            "time": 26564,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 128,
+            "index": 0,
+            "time": 27898,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 142,
+            "index": 0,
+            "time": 29225,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 151,
+            "index": 0,
+            "time": 30441,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 148,
+            "index": 0,
+            "time": 31372,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 31482,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 31498,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 31506,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 31529,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 31534,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 31542,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 31551,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 140,
+            "index": 0,
+            "time": 32910,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 157,
+            "index": 0,
+            "time": 34237,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 149,
+            "index": 0,
+            "time": 35608,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 141,
+            "index": 0,
+            "time": 36862,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 37021,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 37026,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 37036,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 37056,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 37079,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 129,
+            "index": 0,
+            "time": 38211,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 145,
+            "index": 0,
+            "time": 39508,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 144,
+            "index": 0,
+            "time": 40814,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 154,
+            "index": 0,
+            "time": 41859,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 42082,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 42093,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 42096,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 42148,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 42166,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 42175,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 42177,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 42241,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 124,
+            "index": 0,
+            "time": 43375,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 120,
+            "index": 0,
+            "time": 44564,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 165,
+            "index": 0,
+            "time": 45898,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 46049,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 46063,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 46119,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 46126,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 46131,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 46146,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 95,
+            "index": 0,
+            "time": 47176,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 158,
+            "index": 0,
+            "time": 48463,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 139,
+            "index": 0,
+            "time": 49644,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 49973,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 49990,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 50048,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 50055,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 50071,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 128,
+            "index": 0,
+            "time": 51104,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 175,
+            "index": 0,
+            "time": 52288,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 181,
+            "index": 0,
+            "time": 53645,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 53927,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 53940,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 53949,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 53954,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 54017,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 54028,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 54037,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 54043,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 136,
+            "index": 0,
+            "time": 54807,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 160,
+            "index": 0,
+            "time": 56181,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 157,
+            "index": 0,
+            "time": 57391,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 149,
+            "index": 0,
+            "time": 58282,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 58403,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 58421,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 58424,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 58455,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 58473,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 58478,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 58485,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 58498,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 184,
+            "index": 0,
+            "time": 59893,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 149,
+            "index": 0,
+            "time": 61147,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 181,
+            "index": 0,
+            "time": 62512,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 62969,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 62978,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 62984,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 63028,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 63040,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 63043,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 154,
+            "index": 0,
+            "time": 63775,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 156,
+            "index": 0,
+            "time": 65092,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 143,
+            "index": 0,
+            "time": 66255,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 159,
+            "index": 0,
+            "time": 67304,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 67388,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 67394,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 67402,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 67411,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 67478,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 67484,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 67495,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 67499,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 150,
+            "index": 0,
+            "time": 68789,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 185,
+            "index": 0,
+            "time": 70031,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 134,
+            "index": 0,
+            "time": 70806,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 72030,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 72038,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 72047,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 72052,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 72098,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 72105,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 72122,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 169,
+            "index": 0,
+            "time": 72122,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 185,
+            "index": 0,
+            "time": 73441,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 127,
+            "index": 0,
+            "time": 74752,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 144,
+            "index": 0,
+            "time": 75991,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 150,
+            "index": 0,
+            "time": 76859,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 77154,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 77160,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 77168,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 77174,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 77204,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 77212,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 77221,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 136,
+            "index": 0,
+            "time": 79673,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 71,
+            "index": 0,
+            "time": 80875,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 163,
+            "index": 0,
+            "time": 82223,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 82334,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 82343,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 82350,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 82381,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 82386,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 82395,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 82407,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 140,
+            "index": 0,
+            "time": 83467,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 133,
+            "index": 0,
+            "time": 84727,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 123,
+            "index": 0,
+            "time": 86002,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 152,
+            "index": 0,
+            "time": 87096,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 87242,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 87248,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 87256,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 87284,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 87294,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 87299,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 137,
+            "index": 0,
+            "time": 88746,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 134,
+            "index": 0,
+            "time": 90048,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 159,
+            "index": 0,
+            "time": 91393,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 91538,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 91543,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 91552,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 91560,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 91613,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 91627,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 91630,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 91636,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 165,
+            "index": 0,
+            "time": 92670,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 167,
+            "index": 0,
+            "time": 93885,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 189,
+            "index": 0,
+            "time": 95054,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 145,
+            "index": 0,
+            "time": 95885,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 96022,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 96030,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 96038,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 96061,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 96070,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 140,
+            "index": 0,
+            "time": 97472,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 121,
+            "index": 0,
+            "time": 98841,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 141,
+            "index": 0,
+            "time": 100207,
+            "type": "controller_button"
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 100365,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 100375,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 100380,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 100380,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 100394,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 100442,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 100447,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 100458,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 100461,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 149,
+            "index": 0,
+            "time": 101550,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 166,
+            "index": 0,
+            "time": 102750,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 161,
+            "index": 0,
+            "time": 103880,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 104219,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 104224,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 104227,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 104235,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 104271,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 104280,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 104285,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 104301,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 186,
+            "index": 0,
+            "time": 105392,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 155,
+            "index": 0,
+            "time": 106779,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 107258,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 107265,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 107272,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 107280,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 107311,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 107327,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 107332,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 155,
+            "index": 0,
+            "time": 108077,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 173,
+            "index": 0,
+            "time": 109380,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 175,
+            "index": 0,
+            "time": 110466,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 110650,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 110658,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 110665,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 110699,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 110716,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 110724,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 110739,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 141,
+            "index": 0,
+            "time": 112068,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 150,
+            "index": 0,
+            "time": 113543,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 151,
+            "index": 0,
+            "time": 114824,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 115012,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 115020,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 115028,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 115036,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 115074,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 115080,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 115087,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 162,
+            "index": 0,
+            "time": 116062,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 143,
+            "index": 0,
+            "time": 117329,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 170,
+            "index": 0,
+            "time": 118509,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 141,
+            "index": 0,
+            "time": 119507,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 119538,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 119544,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 119549,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 119603,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 119616,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 119624,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 162,
+            "index": 0,
+            "time": 121012,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 147,
+            "index": 0,
+            "time": 122360,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 159,
+            "index": 0,
+            "time": 123652,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 171,
+            "index": 0,
+            "time": 125066,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 125141,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 125237,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 125242,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 157,
+            "index": 0,
+            "time": 126346,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 150,
+            "index": 0,
+            "time": 127718,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 158,
+            "index": 0,
+            "time": 129134,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 155,
+            "index": 0,
+            "time": 130270,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 130425,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 130432,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 130443,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 130494,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 130500,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 130508,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 155,
+            "index": 0,
+            "time": 131800,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 158,
+            "index": 0,
+            "time": 133140,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 135,
+            "index": 0,
+            "time": 134484,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 134608,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 134619,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 134625,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 134636,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 134692,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 134700,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 134703,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 134713,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 144,
+            "index": 0,
+            "time": 135854,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 146,
+            "index": 0,
+            "time": 137116,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 109,
+            "index": 0,
+            "time": 138266,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 138571,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 138577,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 138587,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 138623,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 138631,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 138641,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 118,
+            "index": 0,
+            "time": 139741,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 129,
+            "index": 0,
+            "time": 141098,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 118,
+            "index": 0,
+            "time": 142494,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 142833,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 142841,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 142843,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 142851,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 142897,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 142908,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 142921,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 116,
+            "index": 0,
+            "time": 143935,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 149,
+            "index": 0,
+            "time": 145246,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 132,
+            "index": 0,
+            "time": 146469,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 128,
+            "index": 0,
+            "time": 147399,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 147488,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 147497,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 147504,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 147512,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 147571,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 147583,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 147591,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 147600,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 134,
+            "index": 0,
+            "time": 148982,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 142,
+            "index": 0,
+            "time": 150288,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 136,
+            "index": 0,
+            "time": 151658,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 151794,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 151809,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 151817,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 151823,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 151867,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 151876,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 151890,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "button": "BASE",
+            "duration": 141,
+            "index": 0,
+            "time": 152927,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 144,
+            "index": 0,
+            "time": 154172,
+            "type": "controller_button"
+        },
+        {
+            "button": "BASE",
+            "duration": 182,
+            "index": 0,
+            "time": 155296,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 155812,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 155827,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 155956,
+            "type": "controller_axis",
+            "value": 0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 155972,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 155977,
+            "type": "controller_axis",
+            "value": 0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 155987,
+            "type": "controller_axis",
+            "value": 1.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 156288,
+            "type": "controller_axis",
+            "value": 0.5
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 156295,
+            "type": "controller_axis",
+            "value": 0.0
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 156324,
+            "type": "controller_axis",
+            "value": -0.5
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 156331,
+            "type": "controller_axis",
+            "value": -0.25
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 156338,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 156346,
+            "type": "controller_axis",
+            "value": -1.0
+        },
+        {
+            "axis": "LEFT_Y",
+            "index": 0,
+            "time": 156391,
+            "type": "controller_axis",
+            "value": -0.0
+        },
+        {
+            "button": "BASE",
+            "duration": 156,
+            "index": 0,
+            "time": 156391,
+            "type": "controller_button"
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 157456,
+            "type": "controller_axis",
+            "value": -0.75
+        },
+        {
+            "axis": "BASE",
+            "index": 0,
+            "time": 157462,
+            "type": "controller_axis",
+            "value": 0.0
+        }
+    ]
+}
