@@ -1,5 +1,7 @@
 #include "projectiles.h"
 
+#include <glm/gtx/rotate_vector.hpp>
+
 #include "blam_files.h"
 #include "components.h"
 #include "data.h"
@@ -19,7 +21,7 @@
 #include <set>
 
 using ProjectileManifest = compo::SubsystemManifest<
-    type_list_t<Projectile, Model, const ObjectPhysics, const PlayerInfo, const PlayerCamera>,
+    type_list_t<Projectile, Model, const ObjectPhysics, const PlayerInfo, const PlayerCamera, const BipedStatus>,
     type_list_t<
         PhysicsBus,
         GameEventBus,
@@ -105,6 +107,7 @@ struct ProjectileSystem
             return true;
         }
         flight.velocity.z -= halo_gravity * tag.air_gravity_scale * dt;
+        seek(p, flight, model.position, dt);
 
         Vecf3 const from = model.position;
         Vecf3 const to   = from + flight.velocity * dt;
@@ -281,6 +284,35 @@ struct ProjectileSystem
     }
 
     /* A biped or a vehicle: what a grenade sticks to */
+    /* A guided projectile turns toward the unit it was fired at, as fast
+     * as its tag lets it */
+    void seek(Proxy& p, Projectile& flight, Vecf3 const& from, f32 dt)
+    {
+        f32 const rate = flight.tag->guided_angular_velocity;
+        if(!flight.target || rate <= 0.f)
+            return;
+        auto const* target = p.template get<Model>(flight.target);
+        auto const* status = p.template get<BipedStatus>(flight.target);
+        if(!target || (status && status->dead))
+        {
+            flight.target = 0;
+            return;
+        }
+        f32 const speed = glm::length(flight.velocity);
+        Vecf3 const to  = target->position + Vecf3{0.f, 0.f, seek_height} - from;
+        if(speed < 1e-4f || glm::dot(to, to) < 1e-6f)
+            return;
+        Vecf3 const have  = flight.velocity / speed;
+        Vecf3 const want  = glm::normalize(to);
+        f32 const   angle = std::acos(std::clamp(glm::dot(have, want), -1.f, 1.f));
+        f32 const   turn  = rate * dt;
+        Vecf3 const axis  = glm::cross(have, want);
+        if(angle <= turn || glm::dot(axis, axis) < 1e-8f)
+            flight.velocity = (angle <= turn ? want : have) * speed;
+        else
+            flight.velocity = glm::rotate(have, turn, glm::normalize(axis)) * speed;
+    }
+
     bool is_unit(Proxy& p, u64 id)
     {
         if(p.template get<PlayerInfo>(id))
@@ -427,6 +459,7 @@ struct ProjectileSystem
     static constexpr f32 ticks_per_second = 30.f;
     static constexpr f32 halo_gravity     = 9.81f / 3.048f; /* wu/s^2 */
     static constexpr f32 surface_gap      = .01f;
+    static constexpr f32 seek_height      = .6f; /* wu above a unit's origin aimed for */
     static constexpr f32 rest_speed       = .3f; /* wu/s */
     static constexpr f32 flyby_reach      = 1.5f; /* wu, from the ear */
     static constexpr f32 blast_lean       = .7071f; /* sin 45 */

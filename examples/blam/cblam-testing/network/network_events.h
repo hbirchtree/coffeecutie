@@ -359,6 +359,8 @@ struct alignas(8) WeaponFire
         thrown = 0x1, /*!< A grenade, `weapon` its proj */
         melee  = 0x2, /*!< A strike with `weapon` */
     } flags{none};
+    u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
+    u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */
     u32 padding{0};
 };
 
@@ -665,7 +667,7 @@ static_assert(sizeof(WeaponPickup) == 16);
 static_assert(sizeof(ObjectDespawn) == 4);
 static_assert(sizeof(SyncPoint) == 64);
 static_assert(sizeof(DriveInput) == 32);
-static_assert(sizeof(WeaponFire) == 64);
+static_assert(sizeof(WeaponFire) == 72);
 static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);
