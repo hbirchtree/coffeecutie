@@ -210,10 +210,13 @@ struct H3MapLoader : compo::SubsystemBase
                 if(!is_halo3_cache(bytes))
                 {
                     cWarning("H3: {} could not be read", load.file->internUrl);
+                    m_container.subsystem_cast<LoadingStatus>().end();
                     return;
                 }
-                load_cache(load, bytes, std::move(file));
+                if(!load_cache(load, bytes, std::move(file)))
+                    m_container.subsystem_cast<LoadingStatus>().end();
             });
+        m_container.subsystem_cast<LoadingStatus>().begin(m_fetch);
         return true;
     }
 
@@ -308,6 +311,14 @@ struct H3MapLoader : compo::SubsystemBase
     /* The rest of a load, once the side caches are attached */
     bool finish_load(MapLoadEvent const& load)
     {
+        struct end_loading_t
+        {
+            LoadingStatus& status;
+            ~end_loading_t()
+            {
+                status.end();
+            }
+        } end_loading{m_container.subsystem_cast<LoadingStatus>()};
         bool ok = load_world();
         if(ok)
             load_music();
@@ -816,6 +827,7 @@ struct H3MapLoader : compo::SubsystemBase
                 m_fetch.reset();
                 finish_load(load);
             });
+        m_container.subsystem_cast<LoadingStatus>().download = m_fetch;
     }
 
     void attach_ranged(std::string const& name, std::shared_ptr<comp_app::FileMapper::RangedFile> file)

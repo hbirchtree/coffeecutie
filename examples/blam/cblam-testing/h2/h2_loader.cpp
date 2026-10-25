@@ -200,6 +200,7 @@ struct H2MapLoader : compo::SubsystemBase
                 if(!is_halo2_cache(bytes))
                 {
                     cWarning("H2: {} could not be read", load.file->internUrl);
+                    m_container.subsystem_cast<LoadingStatus>().end();
                     return;
                 }
                 for(size_t s = 0; s < side_cache_names.size(); s++)
@@ -213,6 +214,7 @@ struct H2MapLoader : compo::SubsystemBase
                 else
                     finish_fetch(load, std::move(file));
             });
+        m_container.subsystem_cast<LoadingStatus>().begin(m_fetch);
     }
 
     /* font_table.txt, then the fonts it names */
@@ -247,7 +249,9 @@ struct H2MapLoader : compo::SubsystemBase
                                 m_font_files.push_back({names[f], font});
                         finish_fetch(load, file);
                     });
+                m_container.subsystem_cast<LoadingStatus>().download = m_fetch;
             });
+        m_container.subsystem_cast<LoadingStatus>().download = m_fetch;
     }
 
     void finish_fetch(MapLoadEvent const& load, std::shared_ptr<comp_app::FileMapper::Resource> file)
@@ -257,6 +261,7 @@ struct H2MapLoader : compo::SubsystemBase
         dim::raw_pool pool;
         side_pool(pool);
         load_cache(load, static_cast<BytesConst>(*file), pool);
+        m_container.subsystem_cast<LoadingStatus>().end();
     }
 
     /* The shell's fonts live next to the map, in fonts/ */

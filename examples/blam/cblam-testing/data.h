@@ -300,6 +300,25 @@ struct LoadingStatus : compo::SubsystemBase
     /* The files being downloaded for the map, if any */
     std::shared_ptr<comp_app::FileMapper::FetchSet> download;
 
+    /*! A load outside the Halo 1 steps (Halo 2 and 3): the loading screen
+     * shows until end(), following `files` */
+    void begin(std::shared_ptr<comp_app::FileMapper::FetchSet> files)
+    {
+        status   = {};
+        progress = 0;
+        download = std::move(files);
+        finished = std::promise<void>();
+        loading  = true;
+    }
+    void end()
+    {
+        download.reset();
+        progress         = -1;
+        bool was_loading = true;
+        if(loading.compare_exchange_strong(was_loading, false))
+            finished.set_value();
+    }
+
     /*! How far along the load is, 0 to 1: the download fills the first part,
      * the map and shaders (progress) the rest */
     float fraction() const
