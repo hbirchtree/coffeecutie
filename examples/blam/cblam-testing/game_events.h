@@ -504,6 +504,7 @@ struct UnitVitalityEvent
     libc_types::f32      body{1.f};
     libc_types::f32      shield{1.f};
     bool                 dead{false};
+    bool                 violent{false}; /*!< Killed hard: a loud last cry */
     /*! Brought back: its owner moves it here, facing this way */
     std::optional<Vecf3> respawn_at{};
     libc_types::f32      respawn_facing{0.f};
