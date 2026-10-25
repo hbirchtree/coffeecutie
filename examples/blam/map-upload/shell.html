@@ -26,7 +26,7 @@
 
     :root {
       --accent: #23b0ff;
-      --background: #040d2c40;
+      --background: transparent;
       --background-solid: #040d2c;
       --color: #ffffff;
       --muted: #8fb4cf;
@@ -37,7 +37,7 @@
       --ok: #7cf0b0;
       --warn: #ffa200;
       --bad: #ff5a5a;
-      color-scheme: dark;
+      // color-scheme: dark;
     }
 
     html {
@@ -54,11 +54,7 @@
       line-height: 1.54;
       letter-spacing: -0.02em;
       color: var(--color);
-      background-color: black;
-      /* Stands in for the blog's blurred background video */
-      background-image:
-        radial-gradient(ellipse 80% 50% at 50% 0%, #0a3867 0%, transparent 70%),
-        radial-gradient(ellipse 60% 40% at 85% 100%, #04224a 0%, transparent 70%);
+      background-color: transparent;
       background-attachment: fixed;
       text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
