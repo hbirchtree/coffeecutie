@@ -3114,9 +3114,14 @@ static void poll_network(u32 frame)
         g_fingerprint.base_tag};
     gx_net::handlers_t on;
     on.object = [](gx_net::object_sync_t const& o) {
-        auto it = g_net_objects.find(o.net_id);
+        static std::set<u32> unknown_ids;
+        auto                 it = g_net_objects.find(o.net_id);
         if(it == g_net_objects.end())
+        {
+            if(unknown_ids.insert(o.net_id).second)
+                LOG("net: no object %08x to move", o.net_id);
             return;
+        }
         place_instance(
             g_objects[it->second],
             glm::translate(Matf4{1.f}, o.position) *
