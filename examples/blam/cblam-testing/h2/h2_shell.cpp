@@ -583,18 +583,9 @@ struct H2Shell : compo::RestrictedSubsystem<H2Shell, H2ShellManifest>
             });
         m_vao = api.alloc_vertex_array();
         m_vao->alloc();
-        m_vao->add(gfx::vertex_attribute{
-            .index = 0,
-            .value = {.offset = 0, .stride = sizeof(Vertex), .count = 2},
-        });
-        m_vao->add(gfx::vertex_attribute{
-            .index = 1,
-            .value = {.offset = offsetof(Vertex, texcoord), .stride = sizeof(Vertex), .count = 2},
-        });
-        m_vao->add(gfx::vertex_attribute{
-            .index = 2,
-            .value = {.offset = offsetof(Vertex, color), .stride = sizeof(Vertex), .count = 4},
-        });
+        m_vao->add(gfx::vertex_attribute::from_member(&Vertex::position).at(0));
+        m_vao->add(gfx::vertex_attribute::from_member(&Vertex::texcoord).at(1));
+        m_vao->add(gfx::vertex_attribute::from_member(&Vertex::color).at(2));
         m_vao->set_attribute_names({{"position", 0}, {"texcoord", 1}, {"color", 2}});
         m_vertex_buf = api.alloc_buffer(
             gfx::buffers::vertex, semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);

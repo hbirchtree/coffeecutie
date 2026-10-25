@@ -88,6 +88,15 @@ inline std::tuple<semantic::type_t, vattribute_flags, u32> vector_info_of()
     return {type, flags, 1};
 }
 
+/* Fixed arrays of scalars, `u8 light[4]`, as vectors of their extent */
+template<typename T>
+requires(std::is_bounded_array_v<T> && std::extent_v<T> >= 1 && std::extent_v<T> <= 4)
+inline std::tuple<semantic::type_t, vattribute_flags, u32> vector_info_of()
+{
+    auto [type, flags] = type_of<std::remove_extent_t<T>>();
+    return {type, flags, static_cast<u32>(std::extent_v<T>)};
+}
+
 static_assert(std::is_floating_point_v<i32> || std::is_integral_v<i32>);
 static_assert(std::is_floating_point_v<u32> || std::is_integral_v<u32>);
 static_assert(std::is_floating_point_v<f32> || std::is_integral_v<f32>);
