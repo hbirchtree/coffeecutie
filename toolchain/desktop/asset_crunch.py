@@ -68,6 +68,7 @@ using libc_types::u32;
 using libc_types::u8;
 using typing::vector_types::tvec2;
 using typing::vector_types::tvec3;
+using typing::vector_types::tvec4;
 using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf3;
 
@@ -88,19 +89,21 @@ struct texture_desc
 /*!
  * \\brief A crunched vertex.
  *
- * Position and texcoord are plain f32 and upload as-is. The normal is snorm
- * u16 over [-1, 1] -- it is bounded by definition, so it costs nothing to
- * pack -- and decode_normal() unpacks it. Attribute offsets are 0, 12 and 20;
- * the trailing two bytes are padding, so the stride is 28.
+ * Position and texcoord are plain f32 and upload as-is. Color is the OBJ
+ * vertex color as unorm u8 (white when absent). The normal is snorm u16 over
+ * [-1, 1] -- it is bounded by definition, so it costs nothing to pack -- and
+ * decode_normal() unpacks it. Attribute offsets are 0, 12, 20 and 24; the
+ * trailing two bytes are padding, so the stride is 32.
  */
 struct vertex
 {
     Vecf3      position;
     Vecf2      texcoord;
+    tvec4<u8>  color;
     tvec3<u16> normal;
 };
 
-static_assert(sizeof(vertex) == 28, "crunch::vertex layout changed");
+static_assert(sizeof(vertex) == 32, "crunch::vertex layout changed");
 
 /*!
  * \\brief Bounding box of a crunched mesh, over every object in the source
@@ -252,8 +255,8 @@ def quantize_texture(pixels: bytes, channels: int, fmt: str, source_channel: str
 # -- OBJ --------------------------------------------------------------------
 
 def read_obj(path: str):
-    """Parse an OBJ into [(object name, [(pos, normal, uv)], [indices])]."""
-    positions, texcoords, normals = [], [], []
+    """Parse an OBJ into [(object name, [(pos, normal, uv, color)], [indices])]."""
+    positions, colors, texcoords, normals = [], [], [], []
     objects = []
     current = None
 
@@ -268,6 +271,9 @@ def read_obj(path: str):
         tag = parts[0]
         if tag == 'v':
             positions.append(tuple(float(v) for v in parts[1:4]))
+            # Blender's "v x y z r g b" vertex colors
+            colors.append(tuple(float(v) for v in parts[4:7])
+                          if len(parts) >= 7 else (1.0, 1.0, 1.0))
         elif tag == 'vt':
             texcoords.append(tuple(float(v) for v in parts[1:3]))
         elif tag == 'vn':
@@ -293,7 +299,8 @@ def read_obj(path: str):
                     verts.append((
                         pick(positions, fields[0], (0.0, 0.0, 0.0)),
                         pick(normals, fields[2], (0.0, 0.0, 1.0)),
-                        pick(texcoords, fields[1], (0.0, 0.0))))
+                        pick(texcoords, fields[1], (0.0, 0.0)),
+                        pick(colors, fields[0], (1.0, 1.0, 1.0))))
                 corners.append(lookup[corner])
             # Fan-triangulate; Blender emits triangles, others may not.
             for i in range(1, len(corners) - 1):
@@ -308,7 +315,7 @@ def _bounds(values, count):
 
 
 def quantize_mesh(objects: list):
-    """Keep positions and texcoords as f32; pack normals to snorm u16."""
+    """Keep positions and texcoords as f32; pack colors to u8, normals to snorm u16."""
     every_vertex = [v for _, verts, _ in objects for v in verts]
     if not every_vertex:
         raise CrunchError('mesh has no vertices')
@@ -318,12 +325,16 @@ def quantize_mesh(objects: list):
     def snorm(value):
         return max(0, min(65535, int(round((value * 0.5 + 0.5) * 65535.0))))
 
+    def unorm8(value):
+        return max(0, min(255, int(round(value * 255.0))))
+
     crunched = []
     for name, verts, indices in objects:
         if len(verts) > 65536:
             raise CrunchError(f'{name}: {len(verts)} vertices exceeds u16 indices')
-        out = [(pos, [snorm(normal[i]) for i in range(3)], uv)
-               for pos, normal, uv in verts]
+        out = [(pos, [snorm(normal[i]) for i in range(3)], uv,
+                [unorm8(c) for c in color] + [255])
+               for pos, normal, uv, color in verts]
         crunched.append((name, out, indices))
     return (pos_min, pos_max, uv_min, uv_max), crunched
 
@@ -441,11 +452,12 @@ def emit_mesh(entry: dict, root_directory: str):
             f'extern const std::array<crunch::vertex, {len(verts)}> '
             f'{full}_vertices = {{{{',
         ]
-        for pos, normal, uv in verts:
+        for pos, normal, uv, color in verts:
             defs.append(
-                '    {{%s}, {%s}, {%s}},' % (
+                '    {{%s}, {%s}, {%s}, {%s}},' % (
                     ', '.join(_float(v) for v in pos),
                     ', '.join(_float(v) for v in uv),
+                    ', '.join(f'0x{v:02x}' for v in color),
                     ', '.join(f'0x{v:04x}' for v in normal)))
         defs += [
             '}};',
