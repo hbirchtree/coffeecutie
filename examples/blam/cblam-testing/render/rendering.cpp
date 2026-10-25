@@ -1895,11 +1895,12 @@ struct MeshRenderer
     std::shared_ptr<gfx::program_t>      monitor_program;
     bool                                 monitor_failed{false};
 
-    /* A gravity rifle, on the ground or carried, calls down a storm: a funnel
-     * of cloud in the sky over it and red wind around it, crunched meshes */
+    /* A gravity rifle on the ground or in a player's hand calls down a storm:
+     * a funnel of cloud in the sky over it and red wind around it, crunched
+     * meshes. Holstered, it calms. */
     struct gravity_storm_t
     {
-        Vecf3      rifle;    /*!< On the ground, or its carrier */
+        Vecf3      rifle;    /*!< On the ground, or its wielder */
         Vecf3      position; /*!< Trails the rifle: the sky and wide winds */
         time_point start;
         f32        strength{0.f};
@@ -1927,7 +1928,7 @@ struct MeshRenderer
     }};
     static constexpr f32 storm_fade_in  = 1.5f; /* s */
     static constexpr f32 storm_fade_out = 4.f;  /* s, once the rifle is gone */
-    /* A rifle this close keeps its storm: picked up, dropped, carried */
+    /* A rifle this close keeps its storm: picked up, dropped, switched back */
     static constexpr f32 storm_reach = 4.f; /* wu */
     static constexpr f32 storm_trail = 1.5f; /* 1/s */
     /* Cloud rim ~370 wu across, 45 wu over the rifle, trumpet 40 above that */
@@ -3249,27 +3250,24 @@ struct MeshRenderer
         return true;
     }
 
-    /* Every gravity rifle on the ground, or carried by a biped */
-    std::vector<Vecf3> find_gravity_rifles(Proxy& p)
+    /* Every gravity rifle on the ground or in a player's hand */
+    std::vector<Vecf3> find_gravity_rifles(Proxy& p, u32 generation)
     {
         std::vector<Vecf3> rifles;
         for(auto const& entity : p.template select<Model>())
         {
             Model const& model = entity.template get<Model>();
-            /* The held and first-person copies count through their carrier */
+            /* The held and first-person copies count through their wielder */
             if(model.origin_object == m_gravity_rifle &&
                !p.template get<HeldObject>(entity.id()) &&
                !p.template get<Attachment>(entity.id()))
                 rifles.push_back(model.position);
         }
-        for(auto const& entity : p.template select<BipedEquipment>())
+        for(auto const& entity : p.template select<BipedEquipment, PlayerInfo>())
         {
-            auto const& weapons =
-                entity.template get<BipedEquipment>().weapons;
-            if(std::none_of(
-                   weapons.begin(), weapons.end(), [this](auto const& w) {
-                       return w.tag == m_gravity_rifle;
-                   }))
+            auto const* held =
+                entity.template get<BipedEquipment>().held(generation);
+            if(!held || held->tag != m_gravity_rifle)
                 continue;
             if(auto const* model = p.template get<Model>(entity.id()))
                 rifles.push_back(model->position);
@@ -3307,7 +3305,8 @@ struct MeshRenderer
         for(auto& storm : m_storms)
             storm.found = false;
         if(m_gravity_rifle)
-            for(Vecf3 const& rifle : find_gravity_rifles(p))
+            for(Vecf3 const& rifle :
+                find_gravity_rifles(p, files.load_generation))
             {
                 gravity_storm_t* nearest = nullptr;
                 f32              best    = storm_reach;
