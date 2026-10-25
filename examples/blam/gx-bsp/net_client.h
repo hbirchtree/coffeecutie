@@ -100,6 +100,8 @@ struct hit_t
 struct handlers_t
 {
     std::function<void(u32 player_idx)>          joined;
+    /* A server is there: its spawns are about to follow */
+    std::function<void()>                        game_join;
     std::function<void(object_sync_t const&)>    object;
     std::function<void(camera_sync_t const&)>    camera;
     std::function<void(entity_spawn_t const&)>   spawn;
@@ -478,6 +480,8 @@ class client_t
             cDebug(
                 "net: server runs {}",
                 text(m.map_name.data.data(), sizeof(m.map_name)));
+            if(on.game_join)
+                on.game_join();
             break;
         }
         case msg::GameLeave: {
