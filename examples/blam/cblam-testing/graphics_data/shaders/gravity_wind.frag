@@ -12,6 +12,7 @@ varying float in_shade;
 uniform float time;
 uniform float strength;
 uniform float bands;
+uniform float density;
 
 float hash(vec2 p)
 {
@@ -43,18 +44,23 @@ float wisps(vec2 uv, float rows, float cells, float speed)
     float wobble = (noise(vec2(x * 0.5, row * 5.0), cells * 0.5) - 0.5) * 0.7;
     float across = abs(fract(v + wobble) - 0.5) * 2.0;
     float body   = noise(vec2(x, row * 7.0 + 1.0), cells);
-    float grow   = smoothstep(0.55, 0.9, body);
+    /* Denser cones leave fewer gaps between wisps */
+    float grow   = smoothstep(0.55 - 0.15 * (density - 1.0), 0.9, body);
     float width  = 0.22 * grow;
-    /* A firm core with a soft falloff and a faint halo, ends fading out */
-    float core = 1.0 - smoothstep(width * 0.3, width, across);
-    float halo = 1.0 - smoothstep(0.0, width * 2.5, across);
-    return max(core, halo * 0.3) * smoothstep(0.0, 0.6, grow);
+    /* A firm core with a soft falloff and a faint halo, ends fading out;
+     * denser cones blur theirs out and keep them fainter */
+    float blur = density - 1.0;
+    float core = 1.0 - smoothstep(width * 0.3 * (1.0 - blur),
+                                  width * (1.0 + 1.5 * blur), across);
+    float halo = 1.0 - smoothstep(0.0, width * (2.5 + 2.0 * blur), across);
+    return max(core, halo * 0.3) * smoothstep(0.0, 0.6, grow) /
+           (1.0 + 1.2 * blur);
 }
 
 void main()
 {
-    float coarse = wisps(in_tex, bands, 6.0, 4.0);
-    float fine   = wisps(in_tex + vec2(0.37, 0.0), bands * 2.3, 16.0, 9.0);
+    float coarse = wisps(in_tex, bands, 6.0 * density, 4.0);
+    float fine   = wisps(in_tex + vec2(0.37, 0.0), bands * 2.3, 16.0 * density, 9.0);
     float wind   = max(coarse, fine * 0.6);
 
     /* The painted fade thins the cone near the rifle, not out entirely */
