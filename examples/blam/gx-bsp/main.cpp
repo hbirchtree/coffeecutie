@@ -59,6 +59,7 @@
 #include "loading_screen.h"
 #include "net_client.h"
 #include "reflection.h"
+#include "sotr.h"
 #endif
 
 using namespace Coffee;
@@ -172,6 +173,36 @@ enum class blend_t
     multiply,
 };
 
+/* shader_transparent_generic, for gx_sotr: its maps and how they scroll, its
+ * combiner stages and their constants (RGBA) */
+struct sotr_info
+{
+    struct uv_anim_t
+    {
+        u16 function{0};
+        f32 period{0.f}, scale{1.f};
+    };
+
+    struct map_t
+    {
+        blam::bitm::image_t const* image{nullptr};
+        Vecf2                      scale{1.f}, offset{0.f};
+        uv_anim_t                  u, v;
+    };
+
+    struct constants_t
+    {
+        Vecf4 lower{0.f}, upper{0.f}, color1{0.f};
+        u16   function{0};
+        f32   period{0.f};
+        bool  object_driven{false}; // by an object function we don't have
+    };
+
+    std::vector<map_t>                 maps;
+    std::vector<gx_sotr::stage_desc_t> stages;
+    std::vector<constants_t>           constants;
+};
+
 struct mdl_part
 {
     std::vector<mdl_vertex>    verts;
@@ -182,6 +213,7 @@ struct mdl_part
     blam::bitm::image_t const* multipurpose_img{nullptr};
     Vecf3                      reflection_tint{0.f};
     std::vector<chicago_layer> chicago;
+    std::shared_ptr<sotr_info const> sotr;
 #if defined(FEATURE_ENABLE_Gexxo)
     std::shared_ptr<gexxo::vertex_array_t> vao;
     std::shared_ptr<gexxo::buffer_t>       vbo, ebo;
@@ -191,6 +223,9 @@ struct mdl_part
     std::shared_ptr<gexxo::program_t>      chicago_program;
     std::vector<gexxo::texture_binding_t>  chicago_maps;
     std::vector<Matf4>                     chicago_uv;
+    std::shared_ptr<gexxo::program_t>      sotr_program;
+    std::vector<gexxo::texture_binding_t>  sotr_maps;
+    std::vector<gx_sotr::konst_recipe_t>   sotr_konst;
 #endif
 };
 
@@ -439,7 +474,25 @@ struct shader_info
     std::optional<water_info> water;
 
     std::vector<chicago_layer> chicago; // up to four
+
+    std::shared_ptr<sotr_info const> sotr;
 };
+
+static blend_t framebuffer_blend(blam::shader::chicago::framebuffer_blending f)
+{
+    using fb = blam::shader::chicago::framebuffer_blending;
+    switch(f)
+    {
+    case fb::add:
+    case fb::component_max: // no max on GX; brightens like it
+        return blend_t::add;
+    case fb::multiply:
+    case fb::double_multiply:
+        return blend_t::multiply;
+    default:
+        return blend_t::alpha;
+    }
+}
 
 /* Material shader -> base diffuse + (primary) detail map. shader_environment
  * (BSP) + shader_model (objects) are handled, chicago shaders (skies, glows)
@@ -533,20 +586,108 @@ static shader_info resolve_shader(
                 });
             }
         }
-        using fb = blam::shader::chicago::framebuffer_blending;
-        switch(from_le(sh.value()->transparent.blend_function))
-        {
-        case fb::add:
-            out.blend = blend_t::add;
-            break;
-        case fb::multiply:
-        case fb::double_multiply:
-            out.blend = blend_t::multiply;
-            break;
-        default:
-            out.blend = blend_t::alpha;
-            break;
-        }
+        out.blend =
+            framebuffer_blend(from_le(sh.value()->transparent.blend_function));
+    } else if(st->matches(blam::tag_class_t::sotr))
+    {
+        using sotr_t = blam::shader::shader_transparent;
+        auto sh      = st->template data<sotr_t>(c.magic);
+        if(sh.has_error())
+            return out;
+        auto info = std::make_shared<sotr_info>();
+        auto anim = [](blam::shader::texture_property_anim const& a) {
+            return sotr_info::uv_anim_t{
+                static_cast<u16>(from_le(a.function)),
+                from_le(a.period),
+                from_le(a.scale)};
+        };
+        if(auto maps = sh.value()->maps.data(c.magic); !maps.has_error())
+            for(auto const& m : maps.value())
+            {
+                if(info->maps.size() == 4)
+                    break;
+                Vecf2 const scale{
+                    from_le(m.map.uv_scale.x), from_le(m.map.uv_scale.y)};
+                info->maps.push_back({
+                    .image = first_image(c, resolve_bitm(c, m.map.map)),
+                    .scale =
+                        {scale.x == 0.f ? 1.f : scale.x,
+                         scale.y == 0.f ? 1.f : scale.y},
+                    .offset =
+                        {from_le(m.map.uv_offset.x),
+                         from_le(m.map.uv_offset.y)},
+                    .u = anim(m.animation.u),
+                    .v = anim(m.animation.v),
+                });
+            }
+        // Tag colours are ARGB
+        auto rgba = [](Vecf4 const& argb) {
+            return Vecf4{
+                from_le(argb.y),
+                from_le(argb.z),
+                from_le(argb.w),
+                from_le(argb.x)};
+        };
+        if(auto stages = sh.value()->stages.data(c.magic); !stages.has_error())
+            for(auto const& st_ : stages.value())
+            {
+                auto half = [](auto const& m,
+                               auto        ab,
+                               auto        cd,
+                               auto        sum,
+                               auto        map,
+                               bool        mux) {
+                    gx_sotr::half_t h;
+                    h.input = {
+                        static_cast<u16>(from_le(m.a_input)),
+                        static_cast<u16>(from_le(m.b_input)),
+                        static_cast<u16>(from_le(m.c_input)),
+                        static_cast<u16>(from_le(m.d_input))};
+                    h.mapping = {
+                        static_cast<u16>(from_le(m.a_mapping)),
+                        static_cast<u16>(from_le(m.b_mapping)),
+                        static_cast<u16>(from_le(m.c_mapping)),
+                        static_cast<u16>(from_le(m.d_mapping))};
+                    h.ab             = static_cast<u16>(from_le(ab));
+                    h.cd             = static_cast<u16>(from_le(cd));
+                    h.sum            = static_cast<u16>(from_le(sum));
+                    h.output_mapping = static_cast<u16>(from_le(map));
+                    h.mux            = mux;
+                    return h;
+                };
+                u16 const flags = static_cast<u16>(from_le(st_.flags));
+                info->stages.push_back({
+                    .color = half(
+                        st_.color,
+                        st_.color.ab_output,
+                        st_.color.cd_output,
+                        st_.color.ab_cd_mux_sum,
+                        st_.color.output_map,
+                        flags & 0x1),
+                    .alpha = half(
+                        st_.alpha,
+                        st_.alpha.ab_output,
+                        st_.alpha.cd_output,
+                        st_.alpha.ab_cd_mux_sum,
+                        st_.alpha.output_map,
+                        flags & 0x2),
+                });
+                info->constants.push_back({
+                    .lower    = rgba(st_.color0_lower),
+                    .upper    = rgba(st_.color0_upper),
+                    .color1   = rgba(st_.color1),
+                    .function = static_cast<u16>(from_le(st_.color0_func)),
+                    .period   = from_le(st_.color0_period),
+                    .object_driven =
+                        (flags & 0x4) || from_le(st_.color0_source) !=
+                                             blam::shader::animation_src::none,
+                });
+            }
+        if(!info->maps.empty())
+            out.diffuse = info->maps[0].image; // without stages, or the TEV
+        out.blend =
+            framebuffer_blend(from_le(sh.value()->transparent.blend_function));
+        out.sotr = std::move(info);
     }
     if(out.detail_scale == 0.f)
         out.detail_scale = 1.f;
@@ -770,6 +911,7 @@ static void load_model_cpu(
                 part.multipurpose_img = shader.multipurpose;
                 part.reflection_tint  = shader.reflection_tint;
                 part.chicago          = shader.chicago;
+                part.sotr             = shader.sotr;
             }
         }
         if(!part.verts.empty() && part.indices.size() >= 3)
@@ -2029,8 +2171,134 @@ static void build_chicago(gexxo::api& gfx, mdl_part& part)
     part.chicago_program = std::move(prog);
 }
 
+/* sotr parts compiled for the TEV; the rest keep their first map */
+static u32 g_sotr_built = 0, g_sotr_failed = 0;
+
+static void build_sotr(gexxo::api& gfx, mdl_part& part)
+{
+    using stage_t    = gexxo::program_t::stage_t;
+    using bind_t     = gexxo::texture_binding_t;
+    auto const& info = *part.sotr;
+    if(info.stages.empty())
+        return;
+    auto compiled = gx_sotr::compile(info.stages);
+    for(auto const& st : compiled.stages)
+        if(st.texmap != stage_t::texmap_null &&
+           st.texmap - stage_t::texmap0 >= static_cast<i32>(info.maps.size()))
+            compiled.ok = false;
+    if(!compiled.ok)
+    {
+        g_sotr_failed++;
+        return;
+    }
+    std::vector<bind_t> maps;
+    for(u32 i = 0; i < info.maps.size(); i++)
+    {
+        auto tex = load_diffuse(info.maps[i].image);
+        if(!tex)
+        {
+            g_sotr_failed++;
+            return;
+        }
+        maps.push_back(
+            bind_t{
+                .texture = tex,
+                .texmap  = static_cast<stage_t::texmap_t>(stage_t::texmap0 + i),
+                .texcoord =
+                    static_cast<stage_t::texcoord_t>(stage_t::texcoord0 + i),
+                .gen_mtx = static_cast<u32>(GX_TEXMTX0 + i * 3)});
+    }
+    auto prog         = gfx.alloc_program();
+    prog->channels    = {gexxo::program_t::channel_t{}};
+    prog->stages      = std::move(compiled.stages);
+    part.sotr_program = std::move(prog);
+    part.sotr_maps    = std::move(maps);
+    part.sotr_konst   = std::move(compiled.konst);
+    g_sotr_built++;
+}
+
+/* An animation function over its period, 0..1 */
+static f32 sotr_wave(u16 function, f32 period, f32 t)
+{
+    using fn = blam::shader::animation_function;
+    switch(static_cast<fn>(function))
+    {
+    case fn::one:
+        return 1.f;
+    case fn::zero:
+        return 0.f;
+    default:
+        break;
+    }
+    if(period == 0.f)
+        return 0.5f;
+    f32 const phase = glm::fract(t / period);
+    switch(static_cast<fn>(function))
+    {
+    case fn::slide:
+    case fn::slide_variable:
+        return 1.f - std::abs(2.f * phase - 1.f);
+    case fn::cosine:
+    case fn::cosine_variable:
+        return std::cos(phase * glm::two_pi<f32>()) * 0.5f + 0.5f;
+    default:
+        return 0.5f;
+    }
+}
+
+/* Constant 0's colour is stage 0's, its alpha each stage's own; unset
+ * constants are white, so they multiply to nothing */
+static Vecf4 sotr_konst(
+    sotr_info const& info, gx_sotr::konst_recipe_t const& r, f32 t)
+{
+    auto unset = [](Vecf4 const& a, Vecf4 const& b) {
+        return a == Vecf4{0.f} && b == Vecf4{0.f};
+    };
+    auto const& own = info.constants[r.stage];
+    if(r.which == 1)
+        return unset(own.color1, own.color1) ? Vecf4{1.f} : own.color1;
+    auto value = [&](sotr_info::constants_t const& k) {
+        if(unset(k.lower, k.upper))
+            return Vecf4{1.f};
+        f32 const f =
+            k.object_driven ? 0.f : sotr_wave(k.function, k.period, t);
+        return glm::mix(k.lower, k.upper, f);
+    };
+    auto const& s0  = info.constants[0];
+    Vecf3       rgb = Vecf3(value(s0));
+    if(s0.object_driven && !unset(s0.lower, s0.upper))
+        rgb = glm::mix(rgb, Vecf3{1.f}, 0.35f); // pale, not fully saturated
+    return Vecf4(rgb, value(own).a);
+}
+
+static Matf4 sotr_uv(sotr_info::map_t const& m, f32 t)
+{
+    using fn    = blam::shader::animation_function;
+    auto offset = [t](sotr_info::uv_anim_t const& a) {
+        if(a.period == 0.f)
+            return 0.f;
+        f32 const phase = glm::fract(t / a.period);
+        switch(static_cast<fn>(a.function))
+        {
+        case fn::slide:
+        case fn::slide_variable:
+            return phase * a.scale;
+        case fn::cosine:
+        case fn::cosine_variable:
+            return std::cos(phase * glm::two_pi<f32>()) * a.scale;
+        default:
+            return 0.f;
+        }
+    };
+    Vecf2 const scroll{offset(m.u), offset(m.v)};
+    return glm::scale(
+        glm::translate(Matf4{1.f}, Vecf3{m.offset + scroll, 0.f}),
+        Vecf3{m.scale, 1.f});
+}
+
 // Fly-cam state (Halo world space, Z up), driven by the GameCube pad.
 static bool  g_cam_ready = false;
+static f32   g_secs      = 0.f; // since the first frame, for animated shaders
 static Vecf3 g_cam_pos{};
 static f32   g_cam_yaw   = 0.f; // around +Z
 static f32   g_cam_pitch = 0.f; // up/down
@@ -2750,6 +3018,8 @@ i32 coffee_main(i32, cstring_w*)
                     part.multipurpose = load_diffuse(part.multipurpose_img);
                 if(part.chicago.size() > 1)
                     build_chicago(gfx, part);
+                if(part.sotr)
+                    build_sotr(gfx, part);
                 mdl_parts++;
             }
         }
@@ -2765,6 +3035,9 @@ i32 coffee_main(i32, cstring_w*)
     platform::file::gekko::vmem::set_stage_progress(nullptr);
 #endif
     LOG("reflections: %u cubes", static_cast<unsigned>(g_reflections.size()));
+    LOG("sotr: %u compiled for the TEV, %u kept their first map",
+        g_sotr_built,
+        g_sotr_failed);
     LOG("gpu: %u object instances, %u model parts",
         static_cast<unsigned>(g_objects.size()),
         mdl_parts);
@@ -2863,6 +3136,7 @@ i32 coffee_main(i32, cstring_w*)
     using combiner_t = stage_t::combiner_t;
     GX_SetTevSwapModeTable(
         GX_TEV_SWAP1, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
+    gx_sotr::load_swap_table();
     stage_t const reflect_base{
         .stage    = stage_t::stage0,
         .op       = stage_t::modulate,
@@ -2992,6 +3266,7 @@ i32 coffee_main(i32, cstring_w*)
     {
         u64 const now_t = gettime();
         f32       dt    = ticks_to_microsecs(now_t - last_t) / 1e6f;
+        g_secs += std::clamp(dt, 0.f, 0.2f);
         last_t          = now_t;
         if(dt <= 0.f || dt > 0.2f)
             dt = 1.f / 50.f; // clamp first/stalled frames
@@ -3048,6 +3323,21 @@ i32 coffee_main(i32, cstring_w*)
                     cmd.program            = part.chicago_program;
                     cmd.textures           = part.chicago_maps;
                     cmd.texture_transforms = part.chicago_uv;
+                }
+                Matf4 sotr_uvs[4];
+                if(part.sotr_program)
+                {
+                    auto const& info   = *part.sotr;
+                    cmd.program        = part.sotr_program;
+                    cmd.textures       = part.sotr_maps;
+                    cmd.material_color = gx_sotr::material_color();
+                    for(u32 i = 0; i < info.maps.size(); i++)
+                        sotr_uvs[i] = sotr_uv(info.maps[i], g_secs);
+                    cmd.texture_transforms =
+                        gsl::span<Matf4 const>(sotr_uvs, info.maps.size());
+                    for(u32 k = 0; k < part.sotr_konst.size(); k++)
+                        cmd.konst_colors[k] =
+                            sotr_konst(info, part.sotr_konst[k], g_secs);
                 }
                 Matf4 const reflect_mtx[1] = {gx_reflection::texgen(smv)};
                 if(lit && part.diffuse && part.reflection)
