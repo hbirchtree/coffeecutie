@@ -104,6 +104,20 @@ struct GameEvent
     EventType type{None};
 };
 
+/*! The game a map being loaded comes from: sent once its loader takes it,
+ * before anything of it is loaded */
+struct MapGameEvent
+{
+    static constexpr auto event_type = GameEvent::MapGame;
+
+    enum game_t : libc_types::u8
+    {
+        halo1,
+        halo2,
+        halo3,
+    } game{halo1};
+};
+
 struct MapLoadEvent
 {
     static constexpr auto event_type = GameEvent::MapLoadStart;
@@ -116,9 +130,8 @@ struct MapLoadEvent
 
     std::optional<platform::url::Url> directory{};
     std::optional<platform::url::Url> file{};
-    /*! The file as already fetched by a loader that only sniffed it; the
-     * next loader takes it instead of fetching again */
-    std::shared_ptr<comp_app::FileMapper::Resource> file_data{};
+    /*! Which game the file is from, once its header has been read */
+    std::optional<MapGameEvent::game_t> game{};
 };
 
 struct MapLoadByNameEvent
@@ -146,20 +159,6 @@ struct MapListingEvent
     platform::url::Url              bitmap_file;
     platform::url::Url              sound_file;
     bool                            remember{false};
-};
-
-/*! The game a map being loaded comes from: sent once its loader takes it,
- * before anything of it is loaded */
-struct MapGameEvent
-{
-    static constexpr auto event_type = GameEvent::MapGame;
-
-    enum game_t : libc_types::u8
-    {
-        halo1,
-        halo2,
-        halo3,
-    } game{halo1};
 };
 
 struct MapDataLoadEvent

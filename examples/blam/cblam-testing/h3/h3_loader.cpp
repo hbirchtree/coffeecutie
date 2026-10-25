@@ -183,26 +183,38 @@ struct H3MapLoader : compo::SubsystemBase
     {
     }
 
-    /* True if the file is a Halo 3 cache; it is then loaded (or at least
+    /* True if the load is a Halo 3 map's; it is then loaded (or at least
      * attempted) here and no other loader must see it */
     bool on_map_load(MapLoadEvent const& load)
     {
         if(!load.file)
             return false;
-        /* Outside the virtual filesystem (web) the Halo 2 loader fetches the
-         * file and hands it back with file_data */
-        if(compile_info::platform::is_emscripten && !load.file_data &&
-           !platform::file::exists(*load.file).has_value())
-            return false;
-        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
-        auto  file   = load.file_data ? load.file_data : mapper.fetch(*load.file).get();
-        auto  bytes  = file ? static_cast<BytesConst>(*file) : BytesConst{};
-        if(!is_halo3_cache(bytes))
+        if(load.game != MapGameEvent::halo3)
         {
+            if(m_fetch)
+                m_fetch->cancel();
+            m_fetch.reset();
             unload();
             return false;
         }
-        return load_cache(load, bytes, std::move(file));
+        using comp_app::FileMapper;
+        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
+        if(m_fetch)
+            m_fetch->cancel();
+        m_fetch = mapper.fetch_set(
+            {{.url = *load.file}},
+            rq::runtime_queue::GetCurrentQueue().value(),
+            [this, load](FileMapper::FetchSet& set, size_t) {
+                auto file  = set.resource(0);
+                auto bytes = file ? static_cast<BytesConst>(*file) : BytesConst{};
+                if(!is_halo3_cache(bytes))
+                {
+                    cWarning("H3: {} could not be read", load.file->internUrl);
+                    return;
+                }
+                load_cache(load, bytes, std::move(file));
+            });
+        return true;
     }
 
     static bool is_halo3_cache(BytesConst const& bytes)
@@ -289,14 +301,8 @@ struct H3MapLoader : compo::SubsystemBase
             return false;
         }
         m_loader = std::make_unique<el::resource_loader>(*res);
-        /* H3_SIDE_PREAD=1 reads the side caches by range on desktop too */
-        if(world::side_pread("H3_SIDE_PREAD"))
-        {
-            open_side_caches(load, m_scene.generation, 0);
-            return true;
-        }
-        attach_side_caches(load);
-        return finish_load(load);
+        fetch_side_caches(load);
+        return true;
     }
 
     /* The rest of a load, once the side caches are attached */
@@ -772,32 +778,44 @@ struct H3MapLoader : compo::SubsystemBase
             m_bank.music.gain);
     }
 
-    /* Web: the side caches opened one after another through FileMapper's
-     * store, read by range; the load finishes on the main queue after. A
-     * newer load abandons the chain */
-    void open_side_caches(MapLoadEvent const& load, u32 generation, size_t i)
+    /* Pages may live in mainmenu/shared/campaign.map next to the map: each
+     * is attached as it lands, and the load finishes after the last */
+    void fetch_side_caches(MapLoadEvent const& load)
     {
-        using RangedFile = comp_app::FileMapper::RangedFile;
-        if(generation != m_scene.generation || !m_loader)
-            return;
+        using comp_app::FileMapper;
         auto caches = m_loader->external_caches();
-        if(i >= caches.size())
+        if(caches.empty())
         {
+            m_fetch.reset();
             finish_load(load);
             return;
         }
-        auto  name   = std::string(caches[i].file_name());
+        /* H3_SIDE_PREAD=1 reads them by range on desktop too */
+        auto const mode = world::side_pread("H3_SIDE_PREAD") ? FileMapper::fetch_mode::ranged
+                                                              : FileMapper::fetch_mode::memory;
+        std::vector<FileMapper::fetch_entry> entries;
+        std::vector<std::string>             names;
+        for(auto const& cache : caches)
+        {
+            names.emplace_back(cache.file_name());
+            entries.push_back({.url = world::sibling_url(load, names.back()), .mode = mode, .optional = true});
+        }
         auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
-        rq::runtime_queue::Queue(
-            rq::dependent_task<std::shared_ptr<RangedFile>, void>::CreateSink(
-                mapper.open_ranged(world::sibling_url(load, name)),
-                [this, load, generation, i, name](std::shared_ptr<RangedFile>* file) {
-                    if(generation != m_scene.generation || !m_loader)
-                        return;
-                    attach_ranged(name, file ? *file : nullptr);
-                    open_side_caches(load, generation, i + 1);
-                }))
-            .assume_value();
+        m_fetch      = mapper.fetch_set(
+            std::move(entries),
+            rq::runtime_queue::GetCurrentQueue().value(),
+            [this, load, names](FileMapper::FetchSet& set, size_t i) {
+                if(!m_loader)
+                    return;
+                if(set.entry(i).mode == FileMapper::fetch_mode::ranged)
+                    attach_ranged(names[i], set.ranged(i));
+                else
+                    attach_mapped(names[i], set.resource(i));
+                if(i + 1 < set.size())
+                    return;
+                m_fetch.reset();
+                finish_load(load);
+            });
     }
 
     void attach_ranged(std::string const& name, std::shared_ptr<comp_app::FileMapper::RangedFile> file)
@@ -816,28 +834,20 @@ struct H3MapLoader : compo::SubsystemBase
         m_loader->attach(name, std::move(*source));
     }
 
-    /* Pages may live in mainmenu/shared/campaign.map next to the map */
-    void attach_side_caches(MapLoadEvent const& load)
+    void attach_mapped(std::string const& name, std::shared_ptr<comp_app::FileMapper::Resource> file)
     {
-        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
-        for(auto const& cache : m_loader->external_caches())
+        auto bytes = file ? static_cast<BytesConst>(*file) : BytesConst{};
+        if(!bytes.data || !bytes.size)
         {
-            auto name = std::string(cache.file_name());
-            auto url  = world::sibling_url(load, name);
-            auto file = mapper.fetch(url).get();
-            auto bytes = file ? static_cast<BytesConst>(*file) : BytesConst{};
-            if(!bytes.data || !bytes.size)
-            {
-                cWarning("H3: {} not found, its pages are skipped", name);
-                continue;
-            }
-            auto side = el::map_container::from_bytes(bytes);
-            if(!side.has_value())
-                continue;
-            m_side_maps.push_back(std::make_unique<el::map_container>(side.value()));
-            m_side_files.push_back(file);
-            m_loader->attach(name, *m_side_maps.back());
+            cWarning("H3: {} not found, its pages are skipped", name);
+            return;
         }
+        auto side = el::map_container::from_bytes(bytes);
+        if(!side.has_value())
+            return;
+        m_side_maps.push_back(std::make_unique<el::map_container>(side.value()));
+        m_side_files.push_back(std::move(file));
+        m_loader->attach(name, *m_side_maps.back());
     }
 
     void ensure_gpu()
@@ -2967,6 +2977,7 @@ struct H3MapLoader : compo::SubsystemBase
     gfx::system*            m_api{nullptr};
 
     std::shared_ptr<comp_app::FileMapper::Resource>              m_file;
+    std::shared_ptr<comp_app::FileMapper::FetchSet>              m_fetch; /*!< The files on their way in */
     std::vector<std::shared_ptr<comp_app::FileMapper::Resource>> m_side_files;
     std::vector<std::unique_ptr<el::map_container>>              m_side_maps;
     std::unique_ptr<el::map_container>                           m_map;

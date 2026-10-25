@@ -156,57 +156,107 @@ struct H2MapLoader : compo::SubsystemBase
         m_container.subsystem_cast<GameEventBus>().process(ev, &load);
     }
 
-    /* True if the file is a Halo 2 cache; it is then loaded (or at least
+    /* True if the load is a Halo 2 map's; it is then loaded (or at least
      * attempted) here and the Halo 1 loader must not see it */
     bool on_map_load(MapLoadEvent const& load)
     {
         if(!load.file)
             return false;
-        /* Fetched and sniffed below already, and found not to be ours */
-        if(load.file_data)
+        if(load.game != MapGameEvent::halo2)
         {
+            if(m_fetch)
+                m_fetch->cancel();
+            m_fetch.reset();
             unload();
             release_shared();
             return false;
         }
-        /* Outside the virtual filesystem (web) a file only arrives
-         * asynchronously: take the load and hand it back if it is Halo 1 */
-        if(compile_info::platform::is_emscripten &&
-           !platform::file::exists(*load.file).has_value())
-        {
-            fetch_and_load(load);
-            return true;
-        }
+        fetch_map(load);
+        return true;
+    }
+
+    /* The map and the side caches next to it, then for mainmenu.map the
+     * shell's fonts; loaded on the main queue once all are in */
+    void fetch_map(MapLoadEvent const& load)
+    {
+        using comp_app::FileMapper;
         auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
-        auto  file   = mapper.fetch(*load.file).get();
-        auto  bytes  = file ? static_cast<BytesConst>(*file) : BytesConst{};
-        if(!is_halo2_cache(bytes))
-        {
-            unload();
-            release_shared();
-            return false;
-        }
+        /* H2_SIDE_PREAD=1 reads them by range on desktop too */
+        auto const side_mode = world::side_pread("H2_SIDE_PREAD") ? FileMapper::fetch_mode::ranged
+                                                                   : FileMapper::fetch_mode::memory;
+        std::vector<FileMapper::fetch_entry> entries{{.url = *load.file}};
         for(size_t i = 0; i < side_cache_names.size(); i++)
-            m_side_sources[i] =
-                /* H2_SIDE_PREAD=1 reads them by range on desktop too */
-                world::side_pread("H2_SIDE_PREAD") ? ranged_source(mapper.open_ranged(
-                                   side_cache_url(load, i)).get())
-                             : mapped_source(
-                                   mapper.fetch(side_cache_url(load, i)).get());
-        m_font_table.clear();
-        m_font_files.clear();
-        if(is_mainmenu(bytes))
-        {
-            auto table = mapper.fetch(font_url(load, "font_table.txt")).get();
-            if(table)
-                m_font_table = font_table_of(static_cast<BytesConst>(*table));
-            for(auto const& name : font_names())
-                if(auto file = mapper.fetch(font_url(load, name)).get())
-                    m_font_files.push_back({name, file});
-        }
+            entries.push_back({.url = side_cache_url(load, i), .mode = side_mode, .optional = true});
+        if(m_fetch)
+            m_fetch->cancel();
+        m_fetch = mapper.fetch_set(
+            std::move(entries),
+            rq::runtime_queue::GetCurrentQueue().value(),
+            [this, load](FileMapper::FetchSet& set, size_t i) {
+                if(i + 1 < set.size())
+                    return;
+                auto file  = set.resource(0);
+                auto bytes = file ? static_cast<BytesConst>(*file) : BytesConst{};
+                if(!is_halo2_cache(bytes))
+                {
+                    cWarning("H2: {} could not be read", load.file->internUrl);
+                    return;
+                }
+                for(size_t s = 0; s < side_cache_names.size(); s++)
+                    m_side_sources[s] = set.entry(s + 1).mode == FileMapper::fetch_mode::ranged
+                                            ? ranged_source(set.ranged(s + 1))
+                                            : mapped_source(set.resource(s + 1));
+                m_font_table.clear();
+                m_font_files.clear();
+                if(is_mainmenu(bytes))
+                    fetch_fonts(load, std::move(file));
+                else
+                    finish_fetch(load, std::move(file));
+            });
+    }
+
+    /* font_table.txt, then the fonts it names */
+    void fetch_fonts(MapLoadEvent const& load, std::shared_ptr<comp_app::FileMapper::Resource> file)
+    {
+        using comp_app::FileMapper;
+        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
+        auto* main   = rq::runtime_queue::GetCurrentQueue().value();
+        m_fetch      = mapper.fetch_set(
+            {{.url = font_url(load, "font_table.txt"), .optional = true}},
+            main,
+            [this, load, file, main, &mapper](FileMapper::FetchSet& set, size_t) {
+                if(auto table = set.resource(0))
+                    m_font_table = font_table_of(static_cast<BytesConst>(*table));
+                auto names = font_names();
+                if(names.empty())
+                {
+                    finish_fetch(load, file);
+                    return;
+                }
+                std::vector<FileMapper::fetch_entry> fonts;
+                for(auto const& name : names)
+                    fonts.push_back({.url = font_url(load, name), .optional = true});
+                m_fetch = mapper.fetch_set(
+                    std::move(fonts),
+                    main,
+                    [this, load, file, names](FileMapper::FetchSet& set, size_t i) {
+                        if(i + 1 < set.size())
+                            return;
+                        for(size_t f = 0; f < names.size(); f++)
+                            if(auto font = set.resource(f))
+                                m_font_files.push_back({names[f], font});
+                        finish_fetch(load, file);
+                    });
+            });
+    }
+
+    void finish_fetch(MapLoadEvent const& load, std::shared_ptr<comp_app::FileMapper::Resource> file)
+    {
+        /* Everything worth keeping is copied out by the load */
+        m_fetch.reset();
         dim::raw_pool pool;
         side_pool(pool);
-        return load_cache(load, bytes, pool);
+        load_cache(load, static_cast<BytesConst>(*file), pool);
     }
 
     /* The shell's fonts live next to the map, in fonts/ */
@@ -306,105 +356,6 @@ struct H2MapLoader : compo::SubsystemBase
             {dim::raw_file_t::single_player_shared, "single_player_shared.map"},
         }};
 
-    /* Web: the map, then the side caches, each brought into the local
-     * store by FileMapper off the main thread; the load itself runs on the
-     * main queue once everything is in. The side caches are read by range
-     * so the heap never holds them whole */
-    void fetch_and_load(MapLoadEvent const& load)
-    {
-        using AsyncResource = comp_app::FileMapper::Resource;
-        using RangedFile    = comp_app::FileMapper::RangedFile;
-        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
-        auto  task   = rq::CreateMultiTask<void>(
-            [this, load = MapLoadEvent(load)](
-                std::shared_ptr<AsyncResource> file) mutable {
-                auto bytes =
-                    file ? static_cast<BytesConst>(*file) : BytesConst{};
-                if(!is_halo2_cache(bytes))
-                {
-                    /* Not ours: the Halo 1 loader gets the fetched file */
-                    load.file_data =
-                        file ? file : std::make_shared<AsyncResource>();
-                    GameEvent ev{GameEvent::MapLoadStart};
-                    m_container.subsystem_cast<GameEventBus>().inject(
-                        ev, &load);
-                    return;
-                }
-                auto& mapper =
-                    m_container.subsystem_cast<comp_app::FileMapper>();
-                auto sides = rq::CreateMultiTask<void>(
-                    [this, load, file](
-                        std::shared_ptr<RangedFile> mainmenu,
-                        std::shared_ptr<RangedFile> shared,
-                        std::shared_ptr<RangedFile> sp_shared) {
-                        m_side_sources = {
-                            ranged_source(mainmenu),
-                            ranged_source(shared),
-                            ranged_source(sp_shared)};
-                        auto finish = [this, load, file] {
-                            dim::raw_pool pool;
-                            side_pool(pool);
-                            load_cache(load, static_cast<BytesConst>(*file), pool);
-                        };
-                        m_font_table.clear();
-                        m_font_files.clear();
-                        if(is_mainmenu(static_cast<BytesConst>(*file)))
-                            fetch_fonts(load, std::move(finish));
-                        else
-                            finish();
-                    },
-                    mapper.open_ranged(side_cache_url(load, 0)),
-                    mapper.open_ranged(side_cache_url(load, 1)),
-                    mapper.open_ranged(side_cache_url(load, 2)));
-                rq::runtime_queue::Queue(std::move(sides)).assume_value();
-            },
-            mapper.fetch_cached(*load.file));
-        rq::runtime_queue::Queue(std::move(task)).assume_value();
-    }
-
-    /* Web: font_table.txt, then the fonts it names one after the other,
-     * each through the store; `done` runs on the main queue after */
-    void fetch_fonts(MapLoadEvent const& load, std::function<void()> done)
-    {
-        using AsyncResource = comp_app::FileMapper::Resource;
-        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
-        rq::runtime_queue::Queue(
-            rq::dependent_task<std::shared_ptr<AsyncResource>, void>::CreateSink(
-                mapper.fetch_cached(font_url(load, "font_table.txt")),
-                [this, load, done = std::move(done)](
-                    std::shared_ptr<AsyncResource>* table) mutable {
-                    if(*table)
-                        m_font_table = font_table_of(static_cast<BytesConst>(**table));
-                    fetch_font(load, font_names(), 0, std::move(done));
-                }))
-            .assume_value();
-    }
-
-    void fetch_font(
-        MapLoadEvent const&      load,
-        std::vector<std::string> names,
-        size_t                   i,
-        std::function<void()>    done)
-    {
-        using AsyncResource = comp_app::FileMapper::Resource;
-        if(i >= names.size())
-        {
-            done();
-            return;
-        }
-        auto& mapper = m_container.subsystem_cast<comp_app::FileMapper>();
-        auto  url    = font_url(load, names[i]);
-        rq::runtime_queue::Queue(
-            rq::dependent_task<std::shared_ptr<AsyncResource>, void>::CreateSink(
-                mapper.fetch_cached(url),
-                [this, load, names = std::move(names), i, done = std::move(done)](
-                    std::shared_ptr<AsyncResource>* file) mutable {
-                    if(*file)
-                        m_font_files.push_back({names[i], *file});
-                    fetch_font(load, std::move(names), i + 1, std::move(done));
-                }))
-            .assume_value();
-    }
 
     bool load_cache(
         MapLoadEvent const& load, BytesConst const& bytes, dim::raw_pool& pool)
@@ -3494,6 +3445,7 @@ struct H2MapLoader : compo::SubsystemBase
     H2SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
     std::optional<MapLoadEvent> m_source;
+    std::shared_ptr<comp_app::FileMapper::FetchSet> m_fetch; /* The files on their way in */
     bool                        m_scripted_shown{false};
     std::vector<std::string> m_font_table;
     std::vector<std::pair<std::string, std::shared_ptr<comp_app::FileMapper::Resource>>>
