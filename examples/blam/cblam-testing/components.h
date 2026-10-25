@@ -357,6 +357,7 @@ struct ObjectSpawn
     blam::scn::object_spawn const* header = nullptr;
     blam::tag_t const*             tag    = nullptr;
     libc_types::f32                power{-1.f};
+    bool thrown{false}; /*!< Spawned moving: dropped or tossed, not placed */
 };
 
 /*! A machine or control: how far along its position animation it is and

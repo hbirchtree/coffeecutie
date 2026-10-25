@@ -1895,6 +1895,50 @@ struct MeshRenderer
     std::shared_ptr<gfx::program_t>      monitor_program;
     bool                                 monitor_failed{false};
 
+    /* A gravity rifle placed in the world calls down a storm: a funnel of
+     * cloud in the sky over it and red wind around it, crunched meshes */
+    struct gravity_storm_t
+    {
+        Vecf3      position;
+        time_point start;
+    };
+
+    struct storm_wind_t
+    {
+        f32 width;  /*!< Scale across, the cone is ~1 unit in radius */
+        f32 height; /*!< Scale up, the cone is ~1.7 units tall */
+        f32 spin;   /*!< rad/s about the vertical */
+        f32 delay;  /*!< s after the spawn before it rises */
+        f32 bands;  /*!< Streak bands up the cone */
+    };
+
+    /* One tight cone over the rifle, then flat ones sweeping the level */
+    static constexpr std::array<storm_wind_t, 4> storm_winds = {{
+        {3.f, 3.f, 1.2f, 0.f, 5.f},
+        {18.f, 4.f, -.5f, .6f, 3.f},
+        {32.f, 6.f, .35f, 1.2f, 3.f},
+        {50.f, 8.f, -.25f, 1.8f, 2.f},
+    }};
+    static constexpr f32 storm_duration = 12.f; /* s */
+    static constexpr f32 storm_fade_in  = 1.5f; /* s */
+    static constexpr f32 storm_fade_out = 4.f;  /* s */
+    /* Cloud rim ~370 wu across, 45 wu over the rifle, trumpet 40 above that */
+    static constexpr f32 storm_cloud_scale  = 40.f;
+    static constexpr f32 storm_cloud_height = 45.f;
+
+    std::vector<gravity_storm_t>         m_storms;
+    std::vector<u64>                     m_storm_rifles; /*!< Seen last frame */
+    blam::tag_t const*                   m_gravity_rifle{nullptr};
+    u32                                  m_gravity_rifle_generation{~0u};
+    gfx::draw_command::data_t            storm_cloud_draw;
+    gfx::draw_command::data_t            storm_wind_draw;
+    std::shared_ptr<gfx::buffer_t>       storm_ebo;
+    std::shared_ptr<gfx::buffer_t>       storm_vbo;
+    std::shared_ptr<gfx::vertex_array_t> storm_vao;
+    std::shared_ptr<gfx::program_t>      storm_cloud_program;
+    std::shared_ptr<gfx::program_t>      storm_wind_program;
+    bool                                 storm_failed{false};
+
     DetailObjects<Version>                                 m_detail_objects;
     std::shared_ptr<gfx::buffer_t>                         detail_vbo;
     std::shared_ptr<gfx::vertex_array_t>                   detail_vao;
@@ -3103,6 +3147,265 @@ struct MeshRenderer
         return true;
     }
 
+    std::shared_ptr<gfx::program_t> storm_program(
+        std::string_view frag, std::string_view name)
+    {
+        auto program = m_api->alloc_program();
+        program->add(
+            gfx::program_t::stage_t::Vertex,
+            m_api->alloc_shader(semantic::mem_chunk<const char>::ofContainer(
+                blam::loading::gravity_storm_vert)));
+        program->add(
+            gfx::program_t::stage_t::Fragment,
+            m_api->alloc_shader(
+                semantic::mem_chunk<const char>::ofContainer(frag)));
+        if(auto res = program->compile(); res.has_error())
+        {
+            cWarning("Failed to compile {} program: {}", name, res.error());
+            return nullptr;
+        }
+        return program;
+    }
+
+    bool load_storm()
+    {
+        if(storm_vao)
+            return true;
+        if(storm_failed)
+            return false;
+
+        auto _ = m_api->debug().scope("MeshRenderer::load_storm");
+
+        storm_cloud_program =
+            storm_program(blam::loading::gravity_cloud_frag, "storm cloud");
+        storm_wind_program =
+            storm_program(blam::loading::gravity_wind_frag, "storm wind");
+        if(!storm_cloud_program || !storm_wind_program)
+        {
+            storm_failed = true;
+            return false;
+        }
+
+        auto const& cloud_i = blam::loading::cloudy_cone_indices;
+        auto const& cloud_v = blam::loading::cloudy_cone_vertices;
+        auto const& wind_i  = blam::loading::cone_cone_indices;
+        auto const& wind_v  = blam::loading::cone_cone_vertices;
+
+        storm_ebo = m_api->alloc_buffer(gfx::buffers::element, RSCA::ReadOnly);
+        storm_vbo = m_api->alloc_buffer(gfx::buffers::vertex, RSCA::ReadOnly);
+        storm_ebo->alloc();
+        storm_vbo->alloc();
+        storm_ebo->commit(
+            gsl::span(cloud_i).size_bytes() + gsl::span(wind_i).size_bytes());
+        storm_vbo->commit(
+            gsl::span(cloud_v).size_bytes() + gsl::span(wind_v).size_bytes());
+        storm_ebo->update(0, gsl::span(cloud_i));
+        storm_ebo->update(gsl::span(cloud_i).size_bytes(), gsl::span(wind_i));
+        storm_vbo->update(0, gsl::span(cloud_v));
+        storm_vbo->update(gsl::span(cloud_v).size_bytes(), gsl::span(wind_v));
+
+        storm_cloud_draw.elements = {
+            .count = static_cast<u32>(cloud_i.size()),
+            .type  = semantic::type_t::u16,
+        };
+        storm_wind_draw.elements = {
+            .count         = static_cast<u32>(wind_i.size()),
+            .offset        = gsl::span(cloud_i).size_bytes(),
+            .vertex_offset = static_cast<u32>(cloud_v.size()),
+            .type          = semantic::type_t::u16,
+        };
+
+        storm_vao = m_api->alloc_vertex_array();
+        storm_vao->alloc();
+        storm_vao->add(
+            gfx::vertex_attribute::from_member(&crunch::vertex::position)
+                .at(0));
+        storm_vao->add(
+            gfx::vertex_attribute::from_member(&crunch::vertex::texcoord)
+                .at(1));
+        storm_vao->add(gfx::vertex_attribute::from_member(
+                           &crunch::vertex::color, gfx::vertex_float_type)
+                           .at(2));
+        storm_vao->set_attribute_names({
+            {"pos", 0},
+            {"tex", 1},
+            {"color", 2},
+        });
+        storm_vao->force_attribute_names();
+        storm_vao->set_buffer(gfx::buffers::element, storm_ebo);
+        storm_vao->set_buffer(gfx::buffers::vertex, storm_vbo, 0);
+
+        m_api->debug().annotate(*storm_ebo, "storm_ebo");
+        m_api->debug().annotate(*storm_vbo, "storm_vbo");
+        m_api->debug().annotate(*storm_vao, "storm_vao");
+        return true;
+    }
+
+    /* A storm for each gravity rifle that turned up at rest since last frame */
+    void track_gravity_storms(Proxy& p, time_point const& time)
+    {
+        auto const& files = p.template subsystem<BlamFiles<Version>>();
+        if(m_gravity_rifle_generation != files.load_generation)
+        {
+            m_gravity_rifle_generation = files.load_generation;
+            m_gravity_rifle            = nullptr;
+            m_storms.clear();
+            m_storm_rifles.clear();
+            if(files.container.map && files.container.tags)
+                for(blam::tag_t const& tag :
+                    blam::tag_index_view(files.container))
+                    if(tag.matches(blam::tag_class_t::weap) &&
+                       tag.to_name().to_string(files.container.magic) ==
+                           gravity_rifle_tag)
+                    {
+                        m_gravity_rifle = &tag;
+                        break;
+                    }
+        }
+
+        std::erase_if(m_storms, [&time](gravity_storm_t const& storm) {
+            return std::chrono::duration<f32>(time - storm.start).count() >
+                   storm_duration;
+        });
+        if(!m_gravity_rifle)
+            return;
+
+        std::vector<u64> rifles;
+        for(auto const& entity : p.template select<Model>())
+        {
+            Model const& model = entity.template get<Model>();
+            if(model.origin_object != m_gravity_rifle)
+                continue;
+            rifles.push_back(entity.id());
+            if(std::find(m_storm_rifles.begin(), m_storm_rifles.end(),
+                         entity.id()) != m_storm_rifles.end())
+                continue;
+            /* Dropped by a player, not a spawn */
+            if(auto const* spawn = p.template get<ObjectSpawn>(entity.id());
+               spawn && spawn->thrown)
+                continue;
+            m_storms.push_back({.position = model.position, .start = time});
+        }
+        m_storm_rifles = std::move(rifles);
+    }
+
+    /* Rises over storm_fade_in after `delay`, gone by storm_duration */
+    static f32 storm_envelope(f32 age, f32 delay)
+    {
+        f32 const rise = std::clamp((age - delay) / storm_fade_in, 0.f, 1.f);
+        f32 const fall =
+            std::clamp((storm_duration - age) / storm_fade_out, 0.f, 1.f);
+        return rise * rise * (3.f - 2.f * rise) * fall;
+    }
+
+    template<typename... Args>
+    void storm_draw(
+        u32                                    idx,
+        std::shared_ptr<gfx::program_t> const& program,
+        gfx::draw_command::data_t const&       draw,
+        Matf4 const&                           model,
+        f32                                    time,
+        f32                                    strength,
+        f32                                    bands,
+        Args&&... extra)
+    {
+        auto const& player = m_players[idx];
+        auto        res    = m_api->submit(
+            {
+                .program       = program,
+                .vertices      = storm_vao,
+                .render_target = m_resources.offscreen,
+                .call =
+                    {
+                        .indexed = true,
+                        .mode    = gfx::drawing::primitive::triangle,
+                    },
+                .data = {draw},
+            },
+            gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Vertex,
+                gfx::uniform_pair{
+                    {"camera"sv}, semantic::SpanOne(player.matrix)},
+                gfx::uniform_pair{{"model"sv}, semantic::SpanOne(model)}),
+            gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Fragment,
+                gfx::uniform_pair{
+                    {"time"sv}, semantic::SpanOne<const f32>(time)},
+                gfx::uniform_pair{
+                    {"strength"sv}, semantic::SpanOne<const f32>(strength)},
+                gfx::uniform_pair{
+                    {"bands"sv}, semantic::SpanOne<const f32>(bands)}),
+            gfx::blend_state{.premultiplied = true},
+            gfx::depth_extended_state{.depth_write = false},
+            get_view_state(idx),
+            std::forward<Args&&>(extra)...);
+        if(res)
+        {
+            auto [err, msg] = *res;
+            cWarning(
+                "Failed to draw storm: {}: {}",
+                gleam::detail::draw_error_to_string(err),
+                msg);
+        }
+    }
+
+    void render_gravity_storms(u32 idx, time_point const& time)
+    {
+        if(!const_config::supports_splitscreen && idx != 0)
+            return;
+        if(idx >= m_players.size() || m_storms.empty())
+            return;
+        if(!load_storm())
+            return;
+
+        auto        _ = m_api->debug().scope("Gravity storms");
+        ProfContext __;
+
+        /* The OBJs are Y-up */
+        Matf4 const z_up =
+            glm::rotate(Matf4(1), glm::half_pi<f32>(), Vecf3{1, 0, 0});
+        for(auto const& storm : m_storms)
+        {
+            f32 const age =
+                std::chrono::duration<f32>(time - storm.start).count();
+            /* Its rim sits at y = -1 */
+            Matf4 const cloud =
+                glm::translate(
+                    Matf4(1),
+                    storm.position +
+                        Vecf3{0, 0, storm_cloud_height + storm_cloud_scale}) *
+                z_up * glm::scale(Matf4(1), Vecf3(storm_cloud_scale));
+            storm_draw(
+                idx,
+                storm_cloud_program,
+                storm_cloud_draw,
+                cloud,
+                age,
+                storm_envelope(age, 0.f),
+                0.f);
+            for(auto const& wind : storm_winds)
+            {
+                f32 const strength = storm_envelope(age, wind.delay);
+                if(strength <= 0.f)
+                    continue;
+                Matf4 const model =
+                    glm::translate(Matf4(1), storm.position) *
+                    glm::rotate(Matf4(1), age * wind.spin, Vecf3{0, 0, 1}) *
+                    glm::scale(
+                        Matf4(1), Vecf3{wind.width, wind.width, wind.height}) *
+                    z_up;
+                storm_draw(
+                    idx,
+                    storm_wind_program,
+                    storm_wind_draw,
+                    model,
+                    age,
+                    strength,
+                    wind.bands);
+            }
+        }
+    }
+
     template<typename... Args>
     void render_monitors(u32 idx, Args&&... extra)
     {
@@ -3593,6 +3896,10 @@ struct MeshRenderer
                         sky_depth);
             }
         }
+
+        track_gravity_storms(p, time);
+        for(auto i : stl_types::range<u32>(m_players.size()))
+            render_gravity_storms(i, time);
 
         // Transparent world geometry — primary player, no depth write.
         gfx::depth_extended_state transparent_depth{.depth_write = false};
