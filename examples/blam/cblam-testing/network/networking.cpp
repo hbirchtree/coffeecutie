@@ -768,13 +768,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 continue;
             send_single(
                 connection,
-                Message<CameraSync>({
-                    .position      = Vecf4(cam.camera.position, 0),
-                    .rotation      = cam.camera.rotation,
-                    .target_player = info.player_idx,
-                    .flags         = camera_flags_of(info),
-                    .tick = tick_now(p),
-                }));
+                Message<CameraSync>(
+                    camera_sync_of(p, entity.id(), info, cam, tick_now(p))));
         }
     }
 
@@ -790,6 +785,51 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     }
 
     /*! In physics mode the body drives the camera, so it has to move too */
+    u64 entity_of(Proxy& p, u32 net_id)
+    {
+        if(net_id == 0)
+            return 0;
+        for(auto object : p.select<NetworkInfo>())
+            if(object.get<NetworkInfo>().instance_id == net_id)
+                return object.id();
+        return 0;
+    }
+
+    /* A camera as sent: on a deck, where it is on that deck, so a peer puts
+     * it on the deck as it has it rather than where the deck was */
+    CameraSync camera_sync_of(
+        Proxy& p, u64 entity, PlayerInfo const& info, PlayerCamera const& cam, u64 tick)
+    {
+        CameraSync sync{
+            .position      = Vecf4(cam.camera.position, 0),
+            .rotation      = cam.camera.rotation,
+            .target_player = info.player_idx,
+            .flags         = camera_flags_of(info),
+            .tick          = tick,
+        };
+        auto const* data = info.mode.physics && !info.riding.vehicle
+                               ? p.get<PhysicsData>(entity)
+                               : nullptr;
+        auto const* net   = data && data->deck ? p.get<NetworkInfo>(data->deck) : nullptr;
+        auto const* model = net && net->instance_id ? p.get<Model>(data->deck) : nullptr;
+        if(model)
+        {
+            sync.deck     = net->instance_id;
+            sync.position = glm::inverse(model->transform) * Vecf4(cam.camera.position, 1.f);
+            sync.position.w = 0.f;
+        }
+        return sync;
+    }
+
+    /* Where a sent camera is in the world, off the deck as it is here */
+    Vecf3 world_of(Proxy& p, CameraSync const& sync)
+    {
+        if(sync.deck)
+            if(auto const* model = p.get<Model>(entity_of(p, sync.deck)))
+                return Vecf3(model->transform * Vecf4(Vecf3(sync.position), 1.f));
+        return Vecf3(sync.position);
+    }
+
     void place_local_player(
         Proxy& p, u64 entity, Vecf3 const& position, Quatf const& rotation)
     {
@@ -2449,14 +2489,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         net.changes.viewport = net.changes.transform = false;
                         return;
                     }
-                    send_all(
-                        Message<CameraSync>({
-                            .position      = Vecf4(cam.camera.position, 0),
-                            .rotation      = cam.camera.rotation,
-                            .target_player = info.player_idx,
-                            .flags         = camera_flags_of(info),
-                            .tick = tick_now(p),
-                        }));
+                    send_all(Message<CameraSync>(
+                        camera_sync_of(p, entity.id(), info, cam, tick_now(p))));
                     net.changes.viewport = net.changes.transform = false;
                     net.sent_physics     = info.mode.physics;
                 };
@@ -2599,12 +2633,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             send_single(
                 m_connection,
-                Message<CameraSync>({
-                    .position      = Vecf4{camera.camera.position, 0},
-                    .rotation      = camera.camera.rotation,
-                    .target_player = info.player_idx,
-                    .flags         = camera_flags_of(info),
-                }));
+                Message<CameraSync>(camera_sync_of(p, entity, info, camera, 0)));
             net.changes.viewport = net.changes.transform = false;
             net.sent_physics     = info.mode.physics;
         }
@@ -2894,19 +2923,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         if(!m_map)
             return;
-        auto entity_of = [&p](u32 net_id) -> u64 {
-            if(net_id == 0)
-                return 0;
-            for(auto object : p.select<NetworkInfo>())
-                if(object.get<NetworkInfo>().instance_id == net_id)
-                    return object.id();
-            return 0;
-        };
         blam::tag_index_view<halo_version> index(*m_map);
         journal("net_impacts", {{"count", impacts.size()}});
         for(auto const& wire : impacts)
         {
-            u64 const object = entity_of(wire.object);
+            u64 const object = entity_of(p, wire.object);
             if(object == 0)
                 continue;
             /* Sound lookups take the shader by reference, so keep one */
@@ -2919,7 +2940,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             Physics::Event  ev{Physics::Event::Impact};
             Physics::Impact impact{
                 .entity_id = object,
-                .other     = entity_of(wire.other),
+                .other     = entity_of(p, wire.other),
                 .point     = Vecf3(wire.point),
                 .speed     = wire.speed,
                 .shader    = shader,
@@ -3404,6 +3425,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_net_state.client_state = NetworkState::ClientState::Disconnecting;
         journal("net_disconnected", {{"server", remote_name()}});
         m_clock                         = {};
+        m_sync_lag                      = 0.f;
+        m_sync_newest                   = 0;
         m_net_state.server_clock_offset = std::nullopt;
         m_impl->CloseConnection(connection, 0, nullptr, linger);
         m_connections.erase(connection);
@@ -3517,7 +3540,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(!info.permissions.camera)
                 break;
             auto& cam           = player->biped.get<PlayerCamera>();
-            cam.camera.position = Vecf3(sync.position);
+            cam.camera.position = world_of(p, sync);
             cam.camera.rotation = sync.rotation;
             info.mode.physics   = sync.flags & CameraSync::physics;
 
@@ -3531,6 +3554,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .rotation      = sync.rotation,
                     .target_player = player->idx,
                     .flags         = sync.flags,
+                    .deck          = sync.deck,
                     /* Its body moves there on the next tick here */
                     .tick = tick_now(p) + 1,
                 }),
@@ -3963,12 +3987,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::ObjectSync: {
+            u64 const now = tick_now(p);
             for(auto const& sync : payload.values<ObjectSync>())
             {
                 auto& history = m_object_history[sync.net_id];
                 /* Unreliable: late arrivals are dropped, not reordered */
                 if(!history.empty() && history.back().tick >= sync.tick)
                     continue;
+                note_lag(now, sync.tick);
                 history.push_back(sync);
                 while(history.size() > object_history_size)
                     history.pop_front();
@@ -3987,8 +4013,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                              : joined(info) && info.player_idx == sync.target_player;
                     if(!to_this)
                         continue;
-                    place_local_player(
-                        p, entity.id(), Vecf3(sync.position), sync.rotation);
+                    place_local_player(p, entity.id(), world_of(p, sync), sync.rotation);
                     break;
                 }
                 if(info.player_idx != sync.target_player)
@@ -3996,7 +4021,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 /* Shown a few ticks behind, between the syncs around then */
                 auto& history = m_player_history[sync.target_player];
                 if(history.empty() || history.back().tick < sync.tick)
+                {
+                    note_lag(tick_now(p), sync.tick);
                     history.push_back(sync);
+                }
                 while(history.size() > object_history_size)
                     history.pop_front();
                 // TODO: With a fresh viewport, we should compute relevance of
@@ -4454,6 +4482,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr u64                     driven_timeout = 30;
     /* Remote players' cameras by player index, newest last */
     std::map<u32, std::deque<CameraSync>>    m_player_history;
+    /* Ticks a server state is old on arrival: raised at once, lowered
+     * slowly, so interpolation stays behind what has come. Only the
+     * newest state yet says, a sleeping object's is sent as it was */
+    f32 m_sync_lag{0.f};
+    u64 m_sync_newest{0};
+
+    void note_lag(u64 now, u64 tick)
+    {
+        if(tick <= m_sync_newest)
+            return;
+        m_sync_newest = tick;
+        f32 const lag = static_cast<f32>(now > tick ? now - tick : 0);
+        m_sync_lag    = lag > m_sync_lag ? lag : glm::mix(m_sync_lag, lag, lag_smoothing);
+    }
     friend struct ObjectFollower;
     struct held_player_t
     {
@@ -4552,6 +4594,16 @@ struct ObjectFollower
         this->priority = 790;
     }
 
+    static Vecf3 world_of(Proxy& p, Networking const& net, CameraSync const& sync)
+    {
+        if(sync.deck)
+            for(auto object : p.select<Model, NetworkInfo>())
+                if(object.get<NetworkInfo>().instance_id == sync.deck)
+                    return Vecf3(
+                        object.get<Model>().transform * Vecf4(Vecf3(sync.position), 1.f));
+        return Vecf3(sync.position);
+    }
+
     /* The two snapshots around `at`, and how far between them */
     template<typename T>
     static std::optional<std::tuple<T const&, T const&, f32>> around(
@@ -4627,7 +4679,7 @@ struct ObjectFollower
         if(!net.m_join_confirmed)
             return;
         f64 const at = static_cast<f64>(clock.tick()) + clock.alpha() -
-                       static_cast<f64>(Networking::interp_ticks);
+                       static_cast<f64>(Networking::interp_ticks) - net.m_sync_lag;
 
         /* What this client drives, it simulates */
         auto const mine = driven_here(p, false);
@@ -4663,8 +4715,9 @@ struct ObjectFollower
             if(auto pose = around(it->second, at))
             {
                 auto const& [from, to, alpha] = *pose;
+                /* Each off its deck as the deck stands this frame */
                 cam.camera.position =
-                    glm::mix(Vecf3(from.position), Vecf3(to.position), alpha);
+                    glm::mix(world_of(p, net, from), world_of(p, net, to), alpha);
                 cam.camera.rotation = glm::slerp(from.rotation, to.rotation, alpha);
                 info.mode.physics   = to.flags & CameraSync::physics;
             }

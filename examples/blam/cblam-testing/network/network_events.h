@@ -249,11 +249,12 @@ struct alignas(8) CameraSync
         physics = 0x1, /*!< PlayerInfo::mode.physics */
     };
 
-    Vecf4   position;
+    Vecf4   position; /*!< In the deck's frame when standing on one */
     Quatf   rotation;
     u32     target_player{0xFFFF};
     f32     fade{1.f};
     flags_t flags{none};
+    u32     deck{0}; /*!< Net id of the vehicle stood on, 0 on the ground */
     u64     tick{0}; /*!< Server tick it was there at, 0 from clients */
 };
 
