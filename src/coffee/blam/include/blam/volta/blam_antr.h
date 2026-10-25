@@ -1,9 +1,10 @@
 #pragma once
 
+#include "../common/data_reference.h"
+#include "../common/endian.h"
 #include "../common/tag_class.h"
 #include "blam/volta/blam_tag_classes.h"
 #include "blam/volta/blam_tag_ref.h"
-#include "../common/data_reference.h"
 #include "blam_base_types.h"
 #include "blam_reference.h"
 #include "blam_structures.h"
@@ -90,8 +91,11 @@ struct compressed_quat_t
     Quatf decompress() const
     {
         constexpr f32 scale = 1.0f / 32767.0f;
-        return glm::normalize(
-            Quatf(w * scale, x * scale, y * scale, z * scale));
+        return glm::normalize(Quatf(
+            from_le(w) * scale,
+            from_le(x) * scale,
+            from_le(y) * scale,
+            from_le(z) * scale));
     }
 };
 
@@ -417,46 +421,48 @@ struct animation
     {
         if(node >= 64)
             return false;
-        return (node_trans_flags[node >> 5] >> (node & 31)) & 1;
+        return (from_le(node_trans_flags[node >> 5]) >> (node & 31)) & 1;
     }
 
     bool has_rotation(u32 node) const
     {
         if(node >= 64)
             return false;
-        return (node_rot_flags[node >> 5] >> (node & 31)) & 1;
+        return (from_le(node_rot_flags[node >> 5]) >> (node & 31)) & 1;
     }
 
     bool has_scale(u32 node) const
     {
         if(node >= 64)
             return false;
-        return (node_scale_flags[node >> 5] >> (node & 31)) & 1;
+        return (from_le(node_scale_flags[node >> 5]) >> (node & 31)) & 1;
     }
 
     bool is_compressed() const
     {
-        return static_cast<u16>(flags) &
+        return static_cast<u16>(from_le(flags)) &
                static_cast<u16>(anim_flags::compressed_data);
     }
 
     /*! Authored at 30Hz; PAL tags flag themselves as 25Hz */
     f32 frame_rate() const
     {
-        return (static_cast<u16>(flags) & static_cast<u16>(anim_flags::pal_25hz))
+        return (static_cast<u16>(from_le(flags)) &
+                static_cast<u16>(anim_flags::pal_25hz))
                    ? 25.f
                    : 30.f;
     }
 
     u32 loop_start_frame() const
     {
-        return static_cast<u32>(std::clamp<i32>(loop_frame, 0, frame_count - 1));
+        return static_cast<u32>(
+            std::clamp<i32>(from_le(loop_frame), 0, from_le(frame_count) - 1));
     }
 
     /*! Bytes per frame of frame_info, 0 when it has none */
     u32 frame_info_stride() const
     {
-        switch(frame_info_type_)
+        switch(from_le(frame_info_type_))
         {
         case frame_info_type::dx_dy:
             return 8;
