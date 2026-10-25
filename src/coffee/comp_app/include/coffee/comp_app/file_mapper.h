@@ -2,8 +2,12 @@
 
 #include <coffee/components/subsystem.h>
 
+#include <atomic>
 #include <cstdint>
+#include <functional>
 #include <future>
+#include <memory>
+#include <vector>
 #include <url/url.h>
 
 namespace rq {
@@ -87,12 +91,94 @@ class FileMapper : public compo::SubsystemBase
     std::future<std::shared_ptr<Resource>> fetch_cached(
         platform::url::Url const& src);
 
+    enum class fetch_mode
+    {
+        memory, /*!< The whole file in the heap */
+        ranged, /*!< Read by range; on the web from the local store */
+    };
+
+    struct fetch_entry
+    {
+        platform::url::Url url;
+        fetch_mode         mode{fetch_mode::memory};
+        bool               optional{false}; /*!< Missing is not a failure */
+        bool               cache{true};     /*!< Web: kept in the local store for the next run */
+    };
+
+    /*!
+     * \brief Files fetched one after another, with progress over their
+     * bytes. Results are handed out once each file has landed.
+     */
+    class FetchSet
+    {
+        friend class FileMapper;
+
+      public:
+        /*! Bytes in over bytes expected, 0 to 1 */
+        float progress() const;
+        /*! Every file has landed or failed */
+        bool done() const;
+        /*! A file that is not optional could not be had */
+        bool failed() const;
+        /*! Stops after the file in flight; nothing more is handed out */
+        void cancel();
+        bool cancelled() const;
+
+        std::size_t size() const
+        {
+            return m_entries.size();
+        }
+        fetch_entry const& entry(std::size_t i) const
+        {
+            return m_entries[i];
+        }
+        std::shared_ptr<Resource>   resource(std::size_t i) const;
+        std::shared_ptr<RangedFile> ranged(std::size_t i) const;
+
+      private:
+        struct slot_t
+        {
+            std::atomic<std::uint64_t>  received{0};
+            std::atomic<std::uint64_t>  expected{0};
+            std::atomic<bool>           settled{false};
+            std::shared_ptr<Resource>   resource;
+            std::shared_ptr<RangedFile> ranged;
+        };
+
+        std::vector<fetch_entry>           m_entries;
+        std::unique_ptr<slot_t[]>          m_slots;
+        std::atomic<bool>                  m_cancelled{false};
+        std::atomic<bool>                  m_failed{false};
+    };
+
+    /*! Called on the delivery queue as file `i` lands; its result is null if
+     * it could not be had */
+    using ready_fn = std::function<void(FetchSet&, std::size_t i)>;
+
+    /*!
+     * \brief Fetches `entries` in order on the download queue, one at a time.
+     * `on_ready` runs on `deliver_on` for each file as it lands, in order;
+     * without a queue, on the download queue itself
+     */
+    std::shared_ptr<FetchSet> fetch_set(
+        std::vector<fetch_entry> entries, rq::runtime_queue* deliver_on, ready_fn on_ready);
+
+    /*! The first `bytes` of a file, enough to tell what it is; fewer if it is
+     * shorter. Read by range on the web, out of the mapping elsewhere */
+    std::future<std::vector<char>> read_head(platform::url::Url const& src, std::size_t bytes);
+
     /*! The queue range reads run on; they block the caller, so it must
      * never wait on the caller's thread. Without one, range reads fail */
     void set_io_queue(rq::runtime_queue* queue);
 
+    /*! The queue fetch_set() downloads on; without one, the IO queue */
+    void set_download_queue(rq::runtime_queue* queue);
+
   private:
     rq::runtime_queue* io_queue();
+    rq::runtime_queue* download_queue();
+    void               fetch_one(FetchSet& set, std::size_t i);
+    static std::shared_ptr<Resource> map_local(platform::url::Url const& src);
 
     struct ResourceCleanupData
     {
@@ -111,6 +197,7 @@ class FileMapper : public compo::SubsystemBase
     std::map<std::string, std::weak_ptr<Resource>> m_resources;
     std::map<platform::url::Url, ResourceCleanupData>     m_resource_cleaners;
     rq::runtime_queue*                                    m_io_queue{nullptr};
+    rq::runtime_queue*                                    m_download_queue{nullptr};
 };
 
 } // namespace comp_app
