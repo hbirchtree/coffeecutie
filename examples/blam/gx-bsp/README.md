@@ -6,8 +6,10 @@ Halo map viewer for the GameCube. It loads `bloodgulch.map` from the disc
 Build it with:
 
 ```sh
-./cb build console:powerpc-eabi:cube/BlamBSP_GX
+./cb build console:powerpc-eabi:cube:rel/BlamBSP_GX
 ```
+
+Without `:rel` it is a debug build, at about half the frame rate.
 
 ## 1. Prepare the map
 
@@ -29,7 +31,8 @@ $T /mnt/blam/pc/b30.map /mnt/blam/pc/bitmaps.map \
 
 - The output files must not exist yet.
 - `--gx-vertices` makes loading faster; a map written with it can only be read
-  by BlamBSP_GX.
+  by BlamBSP_GX. Maps written by an older MapTranscode still load, but their
+  bipeds stand unposed: transcode them again.
 - Use one PC map per disc: its `bitmaps.map` only has that map's images
   converted.
 

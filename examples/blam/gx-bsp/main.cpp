@@ -22,14 +22,17 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <set>
 #include <vector>
 
-#include <blam/volta/blam_bitm.h>
-#include <blam/volta/blam_bsp_structures.h>
 #include <blam/common/endian.h>
 #include <blam/common/vertex_pack.h>
 #include <blam/gx/quantize.h>
 #include <blam/gx/tiling.h>
+#include <blam/volta/blam_antr.h>
+#include <blam/volta/blam_antr_sample.h>
+#include <blam/volta/blam_bitm.h>
+#include <blam/volta/blam_bsp_structures.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_mod2.h>
 #include <blam/volta/blam_scenario.h>
@@ -59,6 +62,7 @@
 #include "loading_screen.h"
 #include "net_client.h"
 #include "reflection.h"
+#include "skinning.h"
 #include "sotr.h"
 #endif
 
@@ -145,13 +149,19 @@ struct page_t
 /* Objects: placed mod2 model instances. Geometry is per unique model (deduped
  * by mod2 tag id); each instance just carries a world transform. Normals are
  * S8 with 6 fraction bits, which is what GX lighting reads natively. */
+/* As MapTranscode writes them (mod2_gx_skinned_vertex) */
 struct mdl_vertex
 {
     f32 pos[3];
     i8  nrm[3];
-    i8  pad;
+    u8  node0; // the nodes it hangs off; node1 0xFF = none
     f32 uv[2];
+    u8  node1;
+    u8  weight; // node0's, of 255
+    u8  pad[2];
 };
+
+static_assert(sizeof(mdl_vertex) == 28);
 
 struct reflection_t;
 
@@ -227,6 +237,17 @@ struct mdl_part
     std::shared_ptr<gexxo::program_t>      sotr_program;
     std::vector<gexxo::texture_binding_t>  sotr_maps;
     std::vector<gx_sotr::konst_recipe_t>   sotr_konst;
+
+    /* Posed: the part's triangles in batches of a palette each */
+    struct batch_t
+    {
+        std::shared_ptr<gexxo::vertex_array_t> vao;
+        std::shared_ptr<gexxo::buffer_t>       vbo, ebo;
+        u32                                    index_count{0};
+        std::vector<gx_skin::key_t>            keys;
+    };
+
+    std::vector<batch_t> batches;
 #endif
 };
 
@@ -235,6 +256,7 @@ struct model_t
     std::vector<mdl_part> parts;
     Vecf3                 center{}; // local-space bounding sphere (for culling)
     f32                   radius{0};
+    gx_skin::skeleton_t   skeleton; // bipeds', for posing them
 };
 
 enum object_kind
@@ -297,10 +319,12 @@ struct catalog_entry
     blam::tag_index<> projectile{blam::tag_index<>::none()}; // weap: trigger 0
     f32               speed{0.f};                            // proj: wu/s
     f32               gravity{0.f}; // proj: air gravity scale
+    std::string       label;        // weap: picks the holder's animations
 };
 
 static std::map<blam::tag_index<>, catalog_entry> g_catalog;
 static Matf4 g_hand{1.f}; // the player biped's "right hand", model space
+static i32   g_hand_node = -1; // the node it hangs off
 
 static std::vector<page_t> g_pages;
 static Vecf3               g_bb_min{1e9f, 1e9f, 1e9f};
@@ -838,31 +862,57 @@ static void load_model_cpu(
     auto shaders = hdr.value()->shaders.data(c.magic);
     auto vmag    = c.tags->vertex_magic(c.magic);
 
-    model_t model;
-    Vecf3   mn{1e9f, 1e9f, 1e9f}, mx{-1e9f, -1e9f, -1e9f};
+    model_t    model;
+    Vecf3      mn{1e9f, 1e9f, 1e9f}, mx{-1e9f, -1e9f, -1e9f};
+    bool const local_nodes = static_cast<u16>(from_le(hdr.value()->flags)) &
+                             static_cast<u16>(mod2::model_flags_t::local_nodes);
     for(mod2::part const* p : md->parts)
     {
         mdl_part part;
         try
         {
             auto const vref = p->vertex_segment(*c.tags, c.magic);
+            // PC parts may index a table of the model's nodes
+            auto local_node = [&](u32 node) -> u32 {
+                if constexpr(!std::is_same_v<V, xbox_version_t>)
+                {
+                    auto const* wrap =
+                        reinterpret_cast<mod2::part_wrap_header<V> const*>(p);
+                    if(local_nodes && node < wrap->unknown_2[3])
+                        return wrap->unknown_2[4 + node];
+                }
+                return node;
+            };
             auto       iseg = p->index_segment(*c.tags).data(vmag);
             if(iseg.has_error())
                 continue;
-            if(from_le(p->vertex_type) == vert::vertex_type_t::mod2_gx_vertex)
+            auto const vtype = from_le(p->vertex_type);
+            if(vtype == vert::vertex_type_t::mod2_gx_skinned_vertex ||
+               vtype == vert::vertex_type_t::mod2_gx_vertex)
             {
-                // Transcoded offline: already GX arrays, big-endian
-                u32 const n   = from_le(vref.count);
-                auto      raw = *vref.template as<u8>();
-                raw.count     = to_le<u32>(n * sizeof(mdl_vertex));
-                auto bytes    = raw.data(vmag);
+                // Transcoded offline: already GX arrays, big-endian. The
+                // older ones lack the nodes, so they stay unposed
+                bool const nodes =
+                    vtype == vert::vertex_type_t::mod2_gx_skinned_vertex;
+                u32 const stride = nodes ? sizeof(mdl_vertex) : 24;
+                u32 const n      = from_le(vref.count);
+                auto      raw    = *vref.template as<u8>();
+                raw.count        = to_le<u32>(n * stride);
+                auto bytes       = raw.data(vmag);
                 if(bytes.has_error())
                     continue;
                 part.verts.resize(n);
-                std::memcpy(
-                    part.verts.data(),
-                    bytes.value().data(),
-                    n * sizeof(mdl_vertex));
+                for(u32 i = 0; i < n; i++)
+                {
+                    auto& v = part.verts[i];
+                    std::memcpy(&v, bytes.value().data() + i * stride, stride);
+                    if(!nodes)
+                    {
+                        v.node0  = 0;
+                        v.node1  = 0xFF;
+                        v.weight = 255;
+                    }
+                }
                 for(auto const& v : part.verts)
                 {
                     Vecf3 const p3{v.pos[0], v.pos[1], v.pos[2]};
@@ -897,7 +947,27 @@ static void load_model_cpu(
                     }
                     for(u32 k = 0; k < 3; k++)
                         v.nrm[k] = blam::gx::to_s8_frac6(n[k]);
-                    v.pad = 0;
+                    f32 weight;
+                    u32 node0, node1;
+                    if constexpr(std::is_same_v<V, xbox_version_t>)
+                    {
+                        // Stored times three, a matrix row each
+                        node0  = raw[28] / 3u;
+                        node1  = raw[29] / 3u;
+                        weight = rd<u16>(raw + 30) / 32767.f;
+                    } else
+                    {
+                        node0  = local_node(rd<u16>(raw + 56));
+                        node1  = local_node(rd<u16>(raw + 58));
+                        weight = rd<f32>(raw + 60);
+                    }
+                    weight   = std::clamp(weight, 0.f, 1.f);
+                    v.node0  = static_cast<u8>(std::min(node0, 0xFEu));
+                    v.node1  = weight < 1.f
+                                   ? static_cast<u8>(std::min(node1, 0xFEu))
+                                   : u8(0xFF);
+                    v.weight = static_cast<u8>(weight * 255.f + 0.5f);
+                    v.pad[0] = v.pad[1] = 0;
                     part.verts.push_back(v);
                     Vecf3 const p3{v.pos[0], v.pos[1], v.pos[2]};
                     mn = glm::min(mn, p3);
@@ -1080,9 +1150,12 @@ static void build_catalog(blam::map_container<V> const& c)
         if(weap)
             if(auto w = t.template data<blam::scn::weapon>(c.magic);
                !w.has_error())
+            {
                 if(auto tr = w.value()->triggers.data(c.magic);
                    !tr.has_error() && !tr.value().empty())
                     e.projectile = tr.value()[0].projectile.tag_id;
+                e.label = std::string(w.value()->label.str());
+            }
         if(proj)
             if(auto pr = t.template data<blam::scn::projectile>(c.magic);
                !pr.has_error())
@@ -1147,13 +1220,161 @@ static void load_hand_marker(
             u16 const parent = from_le(b.parent);
             node = parent == blam::mod2::bone::invalid_bone ? -1 : parent;
         }
-        g_hand = xf;
+        g_hand      = xf;
+        g_hand_node = in.node_idx;
         LOG("hand marker at %d,%d,%d cm",
             int(xf[3].x * 100),
             int(xf[3].y * 100),
             int(xf[3].z * 100));
         return;
     }
+}
+
+/* A model's nodes in their bind pose, for posing it */
+template<typename V>
+static void load_skeleton(
+    blam::map_container<V> const& c, blam::tag_index<> mod2_id)
+{
+    auto const* t  = blam::tag_at(c, mod2_id);
+    auto        it = g_models.find(mod2_id);
+    if(!t || it == g_models.end())
+        return;
+    auto hdr = t->template data<blam::mod2::header<V>>(c.magic);
+    if(hdr.has_error())
+        return;
+    auto bones = hdr.value()->bones.data(c.magic);
+    if(bones.has_error())
+        return;
+    auto& skeleton = it->second.skeleton;
+    for(auto const& b : bones.value())
+    {
+        u16 const parent = from_le(b.parent);
+        skeleton.bones.push_back({
+            .parent = parent == blam::mod2::bone::invalid_bone
+                          ? i16(-1)
+                          : static_cast<i16>(parent),
+            .translation =
+                {from_le(b.translation.x),
+                 from_le(b.translation.y),
+                 from_le(b.translation.z)},
+            // mod2 rotations are stored conjugated
+            .rotation = glm::conjugate(Quatf(
+                from_le(b.rotation.w),
+                from_le(b.rotation.x),
+                from_le(b.rotation.y),
+                from_le(b.rotation.z))),
+        });
+    }
+    gx_skin::bind(skeleton);
+}
+
+/* The player biped's clips, copied out while the map is still here */
+struct clip_t
+{
+    blam::antr::animation header; // as stored, little-endian
+    std::vector<u8>       defaults, frames;
+};
+
+/* A stance's clips by unit_weapon::animation_idx_t slot, -1 = none */
+struct stance_t
+{
+    i32 idle{-1}, front{-1}, back{-1}, left{-1}, right{-1}, airborne{-1};
+};
+
+static std::vector<clip_t>             g_clips;
+static std::map<std::string, stance_t> g_stances; // by weapon label
+
+static constexpr char const* kUnarmed = "unarmed";
+
+/* Standing, with each weapon the catalogue has: like BlamGraphics, a weapon
+ * picks its unit_weapon by name or by one of its types' labels */
+template<typename V>
+static void load_biped_clips(
+    blam::map_container<V> const& c, blam::tag_index<> biped)
+{
+    using blam::antr::unit_weapon;
+    auto const* t = blam::tag_at(c, biped);
+    if(!t)
+        return;
+    auto obj = t->template data<blam::scn::object>(c.magic);
+    if(obj.has_error())
+        return;
+    auto const* gt = blam::tag_at(c, obj.value()->anim_graph.tag_id);
+    if(!gt)
+        return;
+    auto graph = gt->template data<blam::antr::header>(c.magic);
+    if(graph.has_error())
+        return;
+    auto units = graph.value()->units.data(c.magic);
+    auto anims = graph.value()->animations.data(c.magic);
+    if(!units.has_value() || !anims.has_value())
+        return;
+    blam::antr::unit const* stand = nullptr;
+    for(auto const& u : units.value())
+        if(u.label.str() == "stand")
+            stand = &u;
+    if(!stand)
+        return;
+    auto weapons = stand->weapons.data(c.magic);
+    if(!weapons.has_value() || weapons.value().empty())
+        return;
+
+    std::map<i16, i32> copied; // animation index -> g_clips
+    auto               clip = [&](i16 index) -> i32 {
+        if(index < 0 || static_cast<size_t>(index) >= anims.value().size())
+            return -1;
+        if(auto it = copied.find(index); it != copied.end())
+            return it->second;
+        auto const& a = anims.value()[index];
+        clip_t      out{.header = a};
+        if(auto d = a.default_data.data(c.magic); d.has_value())
+            out.defaults.assign(d.value().begin(), d.value().end());
+        if(auto f = a.frame_data.data(c.magic); f.has_value())
+            out.frames.assign(f.value().begin(), f.value().end());
+        g_clips.push_back(std::move(out));
+        return copied[index] = static_cast<i32>(g_clips.size() - 1);
+    };
+
+    std::set<std::string> labels{kUnarmed};
+    for(auto const& [_, entry] : g_catalog)
+        if(!entry.label.empty())
+            labels.insert(entry.label);
+    for(auto const& label : labels)
+    {
+        unit_weapon const* held = &weapons.value()[0];
+        for(auto const& w : weapons.value())
+        {
+            if(w.name.str() == label)
+                held = &w;
+            if(auto types = w.weapon_types.data(c.magic); types.has_value())
+                for(auto const& type : types.value())
+                    if(type.label.str() == label)
+                        held = &w;
+        }
+        auto refs = held->animations.data(c.magic);
+        if(!refs.has_value())
+            continue;
+        auto slot = [&](unit_weapon::animation_idx_t i) {
+            return i < refs.value().size()
+                       ? clip(from_le(refs.value()[i].animation))
+                       : -1;
+        };
+        g_stances[label] = {
+            .idle     = slot(unit_weapon::idle),
+            .front    = slot(unit_weapon::move_front),
+            .back     = slot(unit_weapon::move_back),
+            .left     = slot(unit_weapon::move_left),
+            .right    = slot(unit_weapon::move_right),
+            .airborne = slot(unit_weapon::airborne),
+        };
+    }
+    size_t bytes = 0;
+    for(auto const& cl : g_clips)
+        bytes += cl.defaults.size() + cl.frames.size();
+    LOG("biped: %u stances, %u clips, %u KiB",
+        static_cast<unsigned>(g_stances.size()),
+        static_cast<unsigned>(g_clips.size()),
+        static_cast<unsigned>(bytes / 1024));
 }
 
 template<typename V>
@@ -1200,8 +1421,10 @@ static void build_objects(
                blam::tag_at(c, g_player_model))
                 load_model_cpu(c, g_player_model);
             load_hand_marker(c, g_player_model);
+            load_skeleton(c, g_player_model);
         }
     build_catalog(c);
+    load_biped_clips(c, player_biped_id(c));
 
     u32 verts = 0;
     for(auto const& [id, m] : g_models)
@@ -2229,6 +2452,66 @@ static void build_sotr(gexxo::api& gfx, mdl_part& part)
     g_sotr_built++;
 }
 
+/* A posable part's batches, see gx_skin::split() */
+static u32 g_batches = 0;
+
+static void build_batches(gexxo::api& gfx, mdl_part& part)
+{
+    using vertex_t   = gx_skin::batch_vertex<mdl_vertex>;
+    using attr_t     = gexxo::vertex_attribute;
+    constexpr u64 at = offsetof(vertex_t, v);
+    for(auto& b : gx_skin::split(part.verts, part.indices))
+    {
+        mdl_part::batch_t out;
+        out.vao = gfx.alloc_vertex_array();
+        out.vbo = gfx.alloc_buffer(gexxo::buffers::vertex, RSCA::ReadOnly);
+        out.ebo = gfx.alloc_buffer(gexxo::buffers::element, RSCA::ReadOnly);
+        out.index_count = static_cast<u32>(b.triangles.size());
+        out.keys        = std::move(b.keys);
+        out.vbo->commit(
+            gsl::span<vertex_t const>(b.verts.data(), b.verts.size()));
+        out.ebo->commit(
+            gsl::span<u16 const>(b.triangles.data(), b.triangles.size()));
+        // GX order: matrix index, POS, NRM, TEX0
+        out.vao->add({
+            .index = 0,
+            .role  = attr_t::matrix_index,
+            .value =
+                {.offset = 0,
+                 .stride = sizeof(vertex_t),
+                 .count  = 1,
+                 .type   = semantic::type_t::u8},
+        });
+        out.vao->add({
+            .index = 1,
+            .role  = attr_t::position,
+            .value = {.offset = at, .stride = sizeof(vertex_t), .count = 3},
+        });
+        out.vao->add({
+            .index = 2,
+            .role  = attr_t::normal,
+            .value =
+                {.offset = at + offsetof(mdl_vertex, nrm),
+                 .stride = sizeof(vertex_t),
+                 .count  = 3,
+                 .type   = semantic::type_t::i8,
+                 .frac   = 6},
+        });
+        out.vao->add({
+            .index = 3,
+            .role  = attr_t::texcoord0,
+            .value =
+                {.offset = at + offsetof(mdl_vertex, uv),
+                 .stride = sizeof(vertex_t),
+                 .count  = 2},
+        });
+        out.vao->set_buffer(gexxo::buffers::vertex, out.vbo, 0);
+        out.vao->set_buffer(gexxo::buffers::element, out.ebo);
+        part.batches.push_back(std::move(out));
+        g_batches++;
+    }
+}
+
 /* An animation function over its period, 0..1 */
 static f32 sotr_wave(u16 function, f32 period, f32 t)
 {
@@ -2505,6 +2788,22 @@ static gx_net::client_t      g_net;
 static std::map<u32, size_t> g_net_objects;    // net id -> g_objects
 static std::map<u32, size_t> g_remote_players; // player idx -> g_objects
 
+/* What a remote player's biped is doing, from where the server puts it */
+struct posed_t
+{
+    Vecf3              last{0.f}; // feet
+    f32                last_time{-1.f};
+    Vecf3              velocity{0.f};
+    Vecf3              facing{1.f, 0.f, 0.f};
+    i32                clip{-1};
+    f32                frame{0.f};
+    std::vector<Matf4> skin;
+    i32                skinned_clip{-1}; // what `skin` is a pose of
+    u32                skinned_frame{0};
+};
+
+static std::map<size_t, posed_t> g_posed; // by g_objects index
+
 /* Weapons in players' hands, and shots in flight, as the server reports */
 static std::map<u32, blam::tag_index<>> g_held; // player idx -> weap
 static std::map<u32, Vecf3>             g_aim;  // player idx -> look direction
@@ -2647,8 +2946,19 @@ static void draw_combat(Matf4 const& mv, f32 dt, DrawModel&& draw_model)
         if(biped == g_remote_players.end() || entry == g_catalog.end() ||
            !g_models.contains(entry->second.model))
             continue;
-        // Until bipeds are posed, the weapon sits at the hand, along the aim
         Matf4 const& body = g_objects[biped->second].xform;
+        // In the posed hand
+        if(auto pose = g_posed.find(biped->second);
+           pose != g_posed.end() && g_hand_node >= 0 &&
+           static_cast<size_t>(g_hand_node) < pose->second.skin.size())
+        {
+            draw_model(
+                g_models[entry->second.model],
+                mv * body * pose->second.skin[g_hand_node] * g_hand,
+                true);
+            continue;
+        }
+        // Unposed: at the hand, along the aim
         auto const   aim  = g_aim.find(player);
         Vecf3 const  x    = aim != g_aim.end() ? aim->second : Vecf3(body[0]);
         Vecf3 const  y    = glm::normalize(glm::cross(Vecf3{0, 0, 1}, x));
@@ -2690,6 +3000,110 @@ static void draw_combat(Matf4 const& mv, f32 dt, DrawModel&& draw_model)
         draw_model(g_models[p.model], mv * m, true);
     }
     draw_tracers(mv);
+}
+
+/* Remote bipeds walk the way they move, holding what they hold */
+static void update_poses(f32 dt, frustum_t const& view_frustum)
+{
+    auto model = g_models.find(g_player_model);
+    if(model == g_models.end() || model->second.skeleton.bones.empty() ||
+       g_stances.empty())
+        return;
+    auto const&               skeleton = model->second.skeleton;
+    static std::vector<Quatf> rot;
+    static std::vector<Vecf3> trans;
+    // Players by their object, and the bipeds placed on the spawns
+    constexpr u32 placed = ~0u;
+    // Bipeds on the same frame of a clip share its pose
+    std::map<std::pair<i32, u32>, std::vector<Matf4> const*> shared;
+    std::map<size_t, u32>                                    bipeds;
+    for(size_t i = 0; i < g_objects.size(); i++)
+        if(g_objects[i].model_id == g_player_model)
+            bipeds[i] = placed;
+    for(auto const& [player, index] : g_remote_players)
+        bipeds[index] = player;
+    for(auto const& [index, player] : bipeds)
+    {
+        auto& pose = g_posed[index];
+        // The server only says when it moves
+        if(g_secs - pose.last_time > 0.25f)
+            pose.velocity = Vecf3{0.f};
+        std::string label = kUnarmed;
+        if(auto held = g_held.find(player); held != g_held.end())
+            if(auto e = g_catalog.find(held->second);
+               e != g_catalog.end() && !e->second.label.empty())
+                label = e->second.label;
+        auto st = g_stances.find(label);
+        if(st == g_stances.end())
+            st = g_stances.find(kUnarmed);
+        if(st == g_stances.end())
+            st = g_stances.begin();
+        stance_t const& s = st->second;
+
+        // Its move in its own frame: facing +X, right -Y
+        Vecf2 const v{pose.velocity.x, pose.velocity.y};
+        Vecf2 const f{pose.facing.x, pose.facing.y};
+        Vecf2 const r{f.y, -f.x};
+        f32 const   along = glm::dot(v, f), across = glm::dot(v, r);
+        i32         clip = s.idle;
+        if(glm::length(v) > 0.4f)
+        {
+            if(std::abs(along) >= std::abs(across))
+                clip = along > 0.f ? s.front : s.back;
+            else
+                clip = across > 0.f ? s.right : s.left;
+        }
+        if(clip < 0)
+            clip = s.idle;
+        if(clip < 0)
+            continue;
+        if(clip != pose.clip)
+        {
+            pose.clip  = clip;
+            pose.frame = 0.f;
+        }
+        auto const& cl     = g_clips[clip];
+        auto const& h      = cl.header;
+        i32 const   frames = from_le(h.frame_count);
+        if(frames <= 0)
+            continue;
+        pose.frame += dt * h.frame_rate();
+        f32 const looped =
+            std::max(static_cast<f32>(frames - h.loop_start_frame()), 1.f);
+        while(pose.frame >= frames)
+            pose.frame -= looped;
+        u32 const frame = static_cast<u32>(pose.frame);
+        // Clips run at 30 Hz: most frames, the pose is still the last one
+        if(pose.skinned_clip == clip && pose.skinned_frame == frame &&
+           !pose.skin.empty())
+            continue;
+        // Out of view, it can catch up when it's back
+        auto const& obj = g_objects[index];
+        if(!sphere_visible(view_frustum, obj.center, obj.radius))
+            continue;
+        pose.skinned_clip  = clip;
+        pose.skinned_frame = frame;
+        if(auto same = shared.find({clip, frame}); same != shared.end())
+        {
+            pose.skin = *same->second;
+            continue;
+        }
+        u32 const nodes = static_cast<u32>(from_le(h.node_count));
+        semantic::Span<const u8> const bytes(
+            cl.frames.data(), cl.frames.size());
+        semantic::Span<const u8> const defaults(
+            cl.defaults.data(), cl.defaults.size());
+        bool const ok = h.is_compressed()
+                            ? blam::antr::sample_compressed(
+                                  h, bytes, frame, nodes, rot, trans)
+                            : blam::antr::sample_uncompressed(
+                                  h, defaults, bytes, frame, nodes, rot, trans);
+        if(ok)
+        {
+            pose.skin             = gx_skin::skin(skeleton, rot, trans);
+            shared[{clip, frame}] = &pose.skin;
+        }
+    }
 }
 
 static void poll_network(u32 frame)
@@ -2790,6 +3204,22 @@ static void poll_network(u32 frame)
         f32 const yaw = std::atan2(c.forward.y, c.forward.x);
         if(glm::length(c.forward) > 0.f)
             g_aim[c.player_idx] = glm::normalize(c.forward);
+        // Its speed, from successive positions
+        auto&       pose = g_posed[it->second];
+        Vecf3 const feet = c.position - Vecf3{0.f, 0.f, kEyeHeight};
+        f32 const   gap  = g_secs - pose.last_time;
+        if(pose.last_time < 0.f || gap > 0.5f)
+        {
+            pose.last      = feet;
+            pose.last_time = g_secs;
+        } else if(gap > 0.03f)
+        {
+            pose.velocity =
+                glm::mix(pose.velocity, (feet - pose.last) / gap, 0.5f);
+            pose.last      = feet;
+            pose.last_time = g_secs;
+        }
+        pose.facing = {std::cos(yaw), std::sin(yaw), 0.f};
         place_instance(
             g_objects[it->second],
             glm::rotate(
@@ -3032,6 +3462,8 @@ i32 coffee_main(i32, cstring_w*)
                     build_chicago(gfx, part);
                 if(part.sotr)
                     build_sotr(gfx, part);
+                if(!model.skeleton.bones.empty())
+                    build_batches(gfx, part);
                 mdl_parts++;
             }
         }
@@ -3047,6 +3479,7 @@ i32 coffee_main(i32, cstring_w*)
     platform::file::gekko::vmem::set_stage_progress(nullptr);
 #endif
     LOG("reflections: %u cubes", static_cast<unsigned>(g_reflections.size()));
+    LOG("posable: %u batches", g_batches);
     LOG("sotr: %u compiled for the TEV, %u kept their first map",
         g_sotr_built,
         g_sotr_failed);
@@ -3296,10 +3729,16 @@ i32 coffee_main(i32, cstring_w*)
         Matf4 const     mvs[1] = {mv};
         frustum_t const fr     = make_frustum(g_proj * mv);
         u32             drawn = 0, culled = 0;
+#if defined(COFFEE_GEKKO)
+        update_poses(dt, fr);
+#endif
 
         /* A model's parts at a modelview; lit models take the sun, chicago
          * parts their own blend */
-        auto draw_model = [&](model_t& model, Matf4 const& smv, bool lit) {
+        auto draw_model = [&](model_t&                  model,
+                              Matf4 const&              smv,
+                              bool                      lit,
+                              std::vector<Matf4> const* skin = nullptr) {
             Matf4 const smvs[1] = {smv};
             for(auto& part : model.parts)
             {
@@ -3374,23 +3813,52 @@ i32 coffee_main(i32, cstring_w*)
                     cmd.konst_colors[0] = Vecf4(part.reflection_tint, 1.f);
                 }
                 gexxo::cull_state const cull{.front_face = false};
-                switch(part.blend)
+                auto submit = [&](gexxo::draw_command const& c) {
+                    switch(part.blend)
+                    {
+                    case blend_t::opaque:
+                        // Model base map alpha is a mask (change colour,
+                        // specular), not coverage
+                        gfx.submit(c, cull, gexxo::blend_state{.opaque = true});
+                        break;
+                    case blend_t::add:
+                        gfx.submit(
+                            c, cull, gexxo::blend_state{.additive = true});
+                        break;
+                    case blend_t::multiply:
+                        gfx.submit(
+                            c, cull, gexxo::blend_state{.multiply = true});
+                        break;
+                    case blend_t::alpha:
+                        gfx.submit(c, cull, gexxo::blend_state{});
+                        break;
+                    }
+                };
+                if(!skin || part.batches.empty())
                 {
-                case blend_t::opaque:
-                    // Model base map alpha is a mask (change colour,
-                    // specular), not coverage
-                    gfx.submit(cmd, cull, gexxo::blend_state{.opaque = true});
-                    break;
-                case blend_t::add:
-                    gfx.submit(cmd, cull, gexxo::blend_state{.additive = true});
-                    break;
-                case blend_t::multiply:
-                    gfx.submit(cmd, cull, gexxo::blend_state{.multiply = true});
-                    break;
-                case blend_t::alpha:
-                    gfx.submit(cmd, cull, gexxo::blend_state{});
-                    break;
+                    submit(cmd);
+                    continue;
                 }
+                // Posed: each batch through its palette, in one submit
+                static std::vector<Matf4>                        palettes;
+                static std::vector<gexxo::draw_command::batch_t> batches;
+                palettes.resize(part.batches.size() * gx_skin::palette_size);
+                batches.clear();
+                for(u32 i = 0; i < part.batches.size(); i++)
+                {
+                    auto const& b       = part.batches[i];
+                    Matf4*      palette = &palettes[i * gx_skin::palette_size];
+                    for(u32 k = 0; k < b.keys.size(); k++)
+                        palette[k] = smv * gx_skin::matrix(b.keys[k], *skin);
+                    batches.push_back(
+                        {b.vao.get(),
+                         b.index_count,
+                         gsl::span<Matf4 const>(palette, b.keys.size())});
+                }
+                cmd.call.mode          = gexxo::drawing::primitive::triangle;
+                cmd.data.elements.type = semantic::type_t::u16;
+                cmd.batches            = batches;
+                submit(cmd);
             }
         };
 
@@ -3514,7 +3982,13 @@ i32 coffee_main(i32, cstring_w*)
             if(it == g_models.end())
                 continue;
             drawn++;
-            draw_model(it->second, mv * inst.xform, true);
+            std::vector<Matf4> const* skin = nullptr;
+#if defined(COFFEE_GEKKO)
+            if(auto pose = g_posed.find(&inst - g_objects.data());
+               pose != g_posed.end() && !pose->second.skin.empty())
+                skin = &pose->second.skin;
+#endif
+            draw_model(it->second, mv * inst.xform, true, skin);
         }
 #if defined(COFFEE_GEKKO)
         draw_combat(mv, dt, draw_model);
