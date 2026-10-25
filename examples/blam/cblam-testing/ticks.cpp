@@ -190,7 +190,12 @@ bool ticked(MotionProxy& p, u64 id)
     if(p.get<Projectile>(id))
         return true;
     if(auto const* info = p.get<PlayerInfo>(id))
+    {
+        /* Any rider's body sits in its seat, drawn as the vehicle is */
+        if(info->riding.vehicle)
+            return simulated(p, info->riding.vehicle);
         return ticked_eye(p, *info);
+    }
     return simulated(p, id);
 }
 

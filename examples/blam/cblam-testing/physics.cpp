@@ -1008,6 +1008,7 @@ struct PhysicsSystem
             data->position = {origin.x(), origin.y(), origin.z()};
             data->grounded = on_ground(*it->second.world_body, true);
             data->walking  = walking_of(it->second);
+            data->deck     = it->second.deck;
         }
         for(auto const& [entity, _] : m_object_bodies)
         {
@@ -1096,6 +1097,18 @@ struct PhysicsSystem
                     rider.setCollisionFlags(
                         rider.getCollisionFlags() |
                         btCollisionObject::CF_NO_CONTACT_RESPONSE);
+                } else if(info.is_remote() && m_bodies.contains(id))
+                {
+                    /* Where its owner was a round trip ago: what it touches
+                     * there has moved on. Its owner pushes objects, this
+                     * copy only meets other players */
+                    using filter = btBroadphaseProxy::CollisionFilterGroups;
+                    auto& lagged = *m_bodies.at(id).world_body;
+                    m_world->removeRigidBody(&lagged);
+                    m_world->addRigidBody(
+                        &lagged,
+                        filter::CharacterFilter,
+                        filter::AllFilter ^ filter::DebrisFilter ^ filter::DefaultFilter);
                 }
                 data.physics_id     = id;
                 data.enabled        = true;
@@ -1118,7 +1131,8 @@ struct PhysicsSystem
                     id,
                     camera.camera.position - Vecf3{0, 0, shape.eye_offset()},
                     shape.collision ? std::optional(camera_yaw(camera))
-                                    : std::nullopt);
+                                    : std::nullopt,
+                    info.is_remote());
             else if(shape.collision)
                 face(id, camera_yaw(camera));
         }
@@ -1256,6 +1270,12 @@ struct PhysicsSystem
                     m_glides[id] = {body.getWorldTransform(), transform};
                 else
                     body.setWorldTransform(transform);
+                /* Moving as its simulator says, so a deck carries what
+                 * stands on it */
+                auto const& lin = physics.linear_velocity;
+                auto const& ang = physics.angular_velocity;
+                body.setLinearVelocity(btVector3(lin.x, lin.y, lin.z));
+                body.setAngularVelocity(btVector3(ang.x, ang.y, ang.z));
                 /* At rest it needs no contacts worked out every step */
                 int const state =
                     physics.sleeping ? ISLAND_SLEEPING : DISABLE_DEACTIVATION;
@@ -1767,15 +1787,84 @@ struct PhysicsSystem
         transform.setRotation(btQuaternion(btVector3(0, 0, 1), yaw));
     }
 
+    /* A remote player's body is where its owner was a round trip ago: put
+     * there, it would shove what has since moved into that spot. It holds
+     * back instead, and one already inside something (spawned on another
+     * player) passes through until it is clear */
     void move_kinematic(
-        u64 entity_id, Vecf3 const& position, std::optional<f32> yaw = {})
+        u64 entity_id, Vecf3 const& position, std::optional<f32> yaw = {}, bool lagged = false)
     {
         auto it = m_bodies.find(entity_id);
         if(it == m_bodies.end())
             return;
-        btTransform transform = yaw ? yaw_basis(*yaw) : m_world_basis;
+        btRigidBody& body      = *it->second.world_body;
+        btTransform  transform = yaw ? yaw_basis(*yaw) : m_world_basis;
         transform.setOrigin(btVector3(position.x, position.y, position.z));
-        it->second.world_body->setWorldTransform(transform);
+        if(lagged && m_passing.contains(entity_id))
+        {
+            /* Solid again only once clear of everything */
+            if(!sinks_into_bodies(body, transform, false))
+            {
+                m_passing.erase(entity_id);
+                body.setCollisionFlags(
+                    body.getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
+            }
+        } else if(lagged && sinks_into_bodies(body, transform, true))
+        {
+            if(sinks_into_bodies(body, body.getWorldTransform(), false))
+            {
+                m_passing.insert(entity_id);
+                body.setCollisionFlags(
+                    body.getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+            } else
+                transform.setOrigin(body.getWorldTransform().getOrigin());
+        }
+        body.setWorldTransform(transform);
+    }
+
+    /* Placed at `at`, it would sink into a body that moves; `standing`
+     * lets it rest lightly on one, as on a deck */
+    bool sinks_into_bodies(btRigidBody& body, btTransform const& at, bool standing)
+    {
+        struct sink_t : btCollisionWorld::ContactResultCallback
+        {
+            btCollisionObject const* self{};
+            bool                     standing{false};
+            bool                     hit{false};
+
+            btScalar addSingleResult(
+                btManifoldPoint&                cp,
+                btCollisionObjectWrapper const* a,
+                int,
+                int,
+                btCollisionObjectWrapper const* b,
+                int,
+                int) override
+            {
+                auto const* other = a->getCollisionObject() == self ? b->getCollisionObject()
+                                                                    : a->getCollisionObject();
+                if(other->isStaticOrKinematicObject() ||
+                   (other->getCollisionFlags() & btCollisionObject::CF_NO_CONTACT_RESPONSE))
+                    return 0;
+                f32 const depth = -cp.getDistance();
+                bool const rests = standing &&
+                                   std::abs(cp.m_normalWorldOnB.z()) >= standing_normal &&
+                                   depth < resting_overlap;
+                if(depth > lagged_overlap && !rests)
+                    hit = true;
+                return 0;
+            }
+        };
+        btTransform const was = body.getWorldTransform();
+        body.setWorldTransform(at);
+        sink_t sink;
+        sink.self                    = &body;
+        sink.standing                = standing;
+        sink.m_collisionFilterGroup  = body.getBroadphaseHandle()->m_collisionFilterGroup;
+        sink.m_collisionFilterMask   = body.getBroadphaseHandle()->m_collisionFilterMask;
+        m_world->contactTest(&body, sink);
+        body.setWorldTransform(was);
+        return sink.hit;
     }
 
     /* Wire box following the probe sphere, drawn through the existing
@@ -2433,6 +2522,7 @@ struct PhysicsSystem
         auto it = m_bodies.find(entity_id);
         if(it == m_bodies.end())
             return;
+        m_passing.erase(entity_id);
         detach(it->second);
         /* Give the debug-marker slot back so repeated join/leave (netcode
          * testing) or body rebuilds don't permanently eat buffer space. */
@@ -3154,21 +3244,38 @@ struct PhysicsSystem
      * brakes under it */
     void ride_deck(entity_body& body, bool standing)
     {
-        auto const* deck = deck_under(*body.world_body);
+        auto const*     deck = deck_under(*body.world_body);
+        btVector3 const at   = body.world_body->getCenterOfMassPosition();
+        /* Standing still, a deck that leapt out from under it (a slow
+         * frame, a follower's snap) is still its deck */
+        if(!deck && standing && body.deck)
+            if(auto it = m_bodies.find(body.deck);
+               it != m_bodies.end() && it->second.world_body)
+            {
+                btVector3 const spot =
+                    it->second.world_body->getWorldTransform() * body.deck_spot;
+                if((spot - at).length2() < deck_leap * deck_leap)
+                    deck = it->second.world_body.get();
+            }
         if(!deck)
         {
             body.deck = 0;
             return;
         }
         u64 const id = u64(reinterpret_cast<uintptr_t>(deck->getUserPointer()));
-        btVector3 const    at    = body.world_body->getCenterOfMassPosition();
         btTransform const& frame = deck->getWorldTransform();
         btVector3          v     = deck->getVelocityInLocalPoint(
             at - deck->getCenterOfMassPosition());
         btVector3 const drift = frame * body.deck_spot - at;
         if(standing && body.deck == id && drift.length2() < deck_reach * deck_reach)
             v += drift * deck_hold;
-        else
+        else if(standing && body.deck == id)
+        {
+            /* Too far to be pulled back: put back on its spot */
+            btTransform transform = body.world_body->getWorldTransform();
+            transform.setOrigin(frame * body.deck_spot);
+            body.world_body->setWorldTransform(transform);
+        } else
             body.deck_spot = frame.invXform(at);
         body.deck    = id;
         body.carried = btVector3(v.x(), v.y(), 0.f);
@@ -3375,6 +3482,14 @@ struct PhysicsSystem
     static constexpr f32 deck_hold = 10.f;
     /* Knocked further than this, it takes a new spot */
     static constexpr f32 deck_reach = .3f; /* wu */
+    /* How deep a lagged body may sink into another before it holds back,
+     * and how upright a contact is that it stands on instead */
+    static constexpr f32 lagged_overlap  = .01f; /* wu */
+    static constexpr f32 standing_normal = .7f;
+    static constexpr f32 resting_overlap = .1f; /* wu, sunk into what it stands on */
+    std::set<u64>        m_passing; /* remote bodies inside another, not pushing */
+    /* How far a deck may leap in a frame and still be stood on */
+    static constexpr f32 deck_leap = 4.f; /* wu */
     static constexpr f32 impact_speed    = .5f; /* wu/s */
     /* A vehicle coming at a unit faster than this runs it down */
     static constexpr f32 struck_speed    = 1.f; /* wu/s */
