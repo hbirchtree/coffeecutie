@@ -7,6 +7,7 @@
             "time": 51,
             "type": "controller_connect"
         },
+        {"time": 6000, "type": "camera", "position" :[53.641872, -125.14387, 1.1096652], "rotation":[0.8574276, -0.012794744, 0.5143884, -0.007675528]},
         {
             "button": "BACK",
             "duration": 135,
