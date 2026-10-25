@@ -341,7 +341,7 @@ static void load_phase(char const* name)
 static gx_loading::screen_t g_loading;
 
 /* The loading still, made from loading.png by the resource build */
-static void start_loading_screen()
+static void start_loading_screen(gexxo::api& gfx)
 {
     namespace dvd = platform::file::gekko::dvd;
     auto const* e = dvd::detail::find("loading.tpl");
@@ -350,7 +350,7 @@ static void start_loading_screen()
     std::vector<u8> tpl(e->size);
     if(!dvd::detail::read_at(tpl.data(), e->size, e->off))
         return;
-    g_loading.begin(tpl);
+    g_loading.begin(gfx, tpl);
     platform::file::gekko::vmem::set_stage_progress(
         [](u32 done, u32 total) { g_loading.step(done, total); });
 }
@@ -2509,7 +2509,7 @@ i32 coffee_main(i32, cstring_w*)
     u64 const load_start = gettime();
 #endif
 #if defined(COFFEE_GEKKO)
-    start_loading_screen();
+    start_loading_screen(gfx);
 #endif
     int stage = 6;
     try
