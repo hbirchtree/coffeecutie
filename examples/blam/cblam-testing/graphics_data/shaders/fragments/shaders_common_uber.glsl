@@ -1229,6 +1229,7 @@ vec4 shader_plasma(in Material mat)
     const uint secondary_map_id = 1u;
 
     float intensity_exp = mat.material.input1.x;
+    float intensity     = mat.material.input1.y; // its source function
     vec4  perp          = mat.material.input2; // tint.rgb + brightness.a
     vec4  para          = mat.material.input3;
     vec4  pdir          = mat.material.input4; // anim_dir.xyz + inv_period
@@ -1249,7 +1250,7 @@ vec4 shader_plasma(in Material mat)
     float str  = mix(para.a, perp.a, fresnel);
 
     float noise  = clamp(primary.r + secondary.r, 0.0, 1.0);
-    float plasma = pow(noise, max(intensity_exp, 0.01));
+    float plasma = pow(noise, max(intensity_exp, 0.01)) * intensity;
     vec3  color  = tint * plasma * str;
 
     return vec4(color, plasma);

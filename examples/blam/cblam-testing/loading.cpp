@@ -1347,7 +1347,8 @@ struct ResourceLoader
 
         for(auto const& model_ : mesh_data.models)
             build_submodels(
-                p, parent_, model, model_, submodel, render_layer::world, 1);
+                p, parent_, model, model_, submodel, render_layer::world, 1,
+                &instance_obj[0]);
     }
 
     /* Calls fn(group, tags) with the scenario palette group_id names */
@@ -1494,7 +1495,8 @@ struct ResourceLoader
         generation_idx_t const&                   model_id,
         compo::EntityRecipe const&                submodel,
         render_layer                              layer    = render_layer::world,
-        u8                                        lod_mask = 0x1F)
+        u8                                        lod_mask = 0x1F,
+        blam::scn::object const*                  object   = nullptr)
     {
         ShaderCache<Ver>& shader_cache =
             p.template subsystem<ShaderCache<Ver>>();
@@ -1535,6 +1537,38 @@ struct ResourceLoader
                     "{} {}",
                     shader_.shader_tag->tagclass[0].str(),
                     shader_name);
+        }
+        /* The object's modifier shader (a shield hit) is a second coat over
+         * every part, lit by the function its intensity names */
+        if(!object || !object->shader.valid())
+            return;
+        auto const overlay = shader_cache.predict(object->shader);
+        if(!overlay.valid())
+            return;
+        ShaderItem const& overlay_it = shader_cache.get(overlay);
+        libc_types::i8    gate       = -1;
+        if(overlay_it.tag_class == blam::tag_class_t::spla)
+        {
+            auto const src = static_cast<u32>(
+                overlay_it.header->as<blam::shader::shader_plasma>()->intensity.source);
+            gate = src >= 1 && src <= 4 ? static_cast<libc_types::i8>(src - 1) : -1;
+        }
+        for(auto const& sub : modelit.mesh.sub)
+        {
+            if(!sub.shader.valid())
+                continue;
+            auto submod = p.create_entity(submodel);
+            model.parts.push_back(submod);
+            SubModel& submod_ = submod.template get<SubModel>();
+            submod_.parent    = parent_.id();
+            submod_.lod_mask  = lod_mask;
+            submod_.gate      = gate;
+            DrawState& sub_draw = submod.template get<DrawState>();
+            submod_.template initialize<Ver>(model_id, sub, sub_draw);
+            submod_.shader = overlay;
+            ShaderData& shader_ = submod.template get<ShaderData>();
+            shader_.initialize(overlay_it, submod_);
+            sub_draw.current_pass = shader_.get_render_pass(shader_cache, layer);
         }
     }
 
@@ -1961,7 +1995,7 @@ struct ResourceLoader
 
         for(auto const& model_id : mesh_data.models)
             build_submodels(
-                p, ent, model, model_id, submodel, render_layer::world, 1);
+                p, ent, model, model_id, submodel, render_layer::world, 1, &object);
 
         if(held)
             arm(p, ent.id(), *held, model, files);

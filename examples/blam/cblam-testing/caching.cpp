@@ -1719,7 +1719,12 @@ void ShaderCache<V>::populate_material(
             mat.maps[1].uv_scale = Vecf2(info->secondary_noise.noise.scale);
             mat.maps[1].bias     = 0;
         }
-        mat.material.inputs1   = Vecf2{info->intensity.exponent, 0.f};
+        /* Lit by the function its intensity names, fully without one */
+        mat.material.inputs1 = Vecf2{
+            info->intensity.exponent,
+            info->intensity.source == animation_src::none
+                ? 1.f
+                : meter_value_of(info->intensity.source, context)};
         mat.material.inputs[0] = Vecf4(
             info->color.perpendicular_tint,
             info->color.perpendicular_brightness);

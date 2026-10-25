@@ -232,6 +232,14 @@ struct SubModel
     generation_idx_t model;
     /* Detail levels this part is drawn for, bit per mod2_lod */
     u8 lod_mask{0x1F};
+    /* An overlay drawn only while this object function output is on */
+    libc_types::i8 gate{-1};
+
+    template<typename ModelT>
+    bool shown(ModelT const& model) const
+    {
+        return gate < 0 || model.object_function[gate] > .01f;
+    }
 
     template<typename V>
     void initialize(
@@ -1233,6 +1241,8 @@ struct BipedStatus
     bool dead{false};
     /*! Seconds before the shield starts to come back */
     f32 stunned{0.f};
+    /*! The "recent shield damage" export, 1 at a blow and fading */
+    f32 recent_shield{0.f};
     /*! What it takes damage by; none and it can't be hurt */
     blam::coll::header const* coll{nullptr};
     /*! Scripts may change what it can have, in points (below 0, its coll

@@ -4,6 +4,7 @@
 #include "components.h"
 #include "game_events.h"
 #include "network/networking.h"
+#include "object_functions.h"
 #include "physics.h"
 #include "selected_version.h"
 #include "ticks.h"
@@ -22,7 +23,7 @@ using DamageManifest = compo::SubsystemManifest<
         BipedEquipment,
         const PlayerInfo,
         const PlayerCamera,
-        const Model,
+        Model,
         const ObjectPhysics>,
     type_list_t<
         GameEventBus,
@@ -85,6 +86,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 revive(p, respawn);
         }
         recharge(p, dt);
+        export_functions(p);
     }
 
     /* ---- Blows ---- */
@@ -196,6 +198,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         status.stunned = coll.stun_time > 0.f ? coll.stun_time : default_stun;
         if(shielded && (flags & flag_t::skips_shields) == flag_t::none)
         {
+            status.recent_shield = 1.f;
             f32 const soak = status.shield * max_shield / shield_mult;
             status.shield  = std::max(status.shield - amount * shield_mult / max_shield, 0.f);
             amount         = std::max(amount - soak, 0.f);
@@ -338,6 +341,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(!status || vitality.origin != MapLoadEvent::Remote)
             return;
         status->body       = vitality.body;
+        if(vitality.shield < status->shield)
+            status->recent_shield = 1.f;
         status->shield     = vitality.shield;
         status->dead       = vitality.dead;
         if(vitality.shield < 1.f)
@@ -426,6 +431,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         for(auto unit : p.template select<BipedStatus>())
         {
             auto& status = unit.template get<BipedStatus>();
+            status.recent_shield = std::max(status.recent_shield - dt / recent_fade, 0.f);
             if(status.dead || !status.coll || status.maximum_shield() <= 0.f ||
                status.shield >= 1.f)
                 continue;
@@ -436,6 +442,49 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                                  ? status.coll->recharge_time
                                  : default_recharge;
             status.shield = std::min(status.shield + dt / full, 1.f);
+        }
+    }
+
+    /* The unit's vitality, through its object functions, onto its model:
+     * what lights the shield hit overlay */
+    void export_functions(Proxy& p)
+    {
+        using object = blam::scn::object;
+        using input  = object::export_functions_t::input_t;
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto [status, model] = ent.components();
+            if(!model.origin_object)
+                continue;
+            auto obj = model.origin_object->template data<object>(*m_magic);
+            if(!obj.has_value())
+                continue;
+            auto functions = obj.value()[0].functions.data(*m_magic);
+            if(!functions.has_value() || functions.value().empty())
+                continue;
+            std::array<f32, 4> in{};
+            for(size_t i = 0; i < in.size(); i++)
+                switch(obj.value()[0].export_.inputs[i])
+                {
+                case input::body_vitality:
+                    in[i] = status.body;
+                    break;
+                case input::shield_vitality:
+                    in[i] = status.shield;
+                    break;
+                case input::recent_shield_damage:
+                    in[i] = status.recent_shield;
+                    break;
+                case input::alive:
+                    in[i] = status.dead ? 0.f : 1.f;
+                    break;
+                default:
+                    break;
+                }
+            std::array<f32, 4> out = in;
+            for(size_t i = 0; i < out.size() && i < functions.value().size(); i++)
+                out[i] = blam_functions::evaluate(functions.value()[i], in, out);
+            model.object_function = out;
         }
     }
 
@@ -458,6 +507,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     static constexpr f32   unit_middle      = .35f; /* wu above the feet */
     static constexpr f32   spawn_lift       = .05f; /* wu */
     static constexpr f32   default_stun     = 1.f;  /* s */
+    static constexpr f32 recent_fade = .75f; /* seconds a shield hit glows */
     static constexpr f32   default_recharge = 2.f;  /* s */
     static constexpr f32   dead_below       = 1e-4f;
 
