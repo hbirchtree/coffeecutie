@@ -1,8 +1,8 @@
 {
     "graphics": {
         "window": {
-            "width": 1280,
-            "height": 720,
+            "width": 160,
+            "height": 120,
             "depth": 24
         },
         "software_renderer": "llvmpipe",
