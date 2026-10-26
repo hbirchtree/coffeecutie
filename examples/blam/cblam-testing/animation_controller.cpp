@@ -1046,7 +1046,7 @@ struct AnimationController
                 .animation = animation,
                 .weight    = fade > 0.f ? 0.f : play.weight,
             };
-        layer->time     = 0.f;
+        layer->time     = play.time;
         layer->finished = false;
         layer->loop     = play.loop;
         layer->rate     = play.rate;

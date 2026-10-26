@@ -260,7 +260,8 @@ struct MotionInterpolator
             model.transform =
                 glm::translate(
                     Matf4(1), glm::mix(model.tick_position, model.position, alpha)) *
-                glm::mat4_cast(glm::slerp(model.tick_rotation, model.rotation, alpha));
+                glm::mat4_cast(glm::slerp(model.tick_rotation, model.rotation, alpha)) *
+                glm::scale(Matf4(1), Vecf3(model.scale));
         }
         for(auto ent : p.select<PlayerInfo, PlayerCamera>())
         {

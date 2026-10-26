@@ -287,6 +287,7 @@ struct Model
     Matf4 transform; /*!< As drawn, between the last two ticks if it moves */
     Vecf3 position;
     Quatf rotation;
+    f32   scale{1.f}; /*!< A script's, applied after rotation */
 
     /*! The pose a tick ago, for drawing between ticks */
     Vecf3 tick_position{};
@@ -344,8 +345,8 @@ struct Model
 
     void update_matrix()
     {
-        transform =
-            glm::translate(Matf4(1), position) * glm::mat4_cast(rotation);
+        transform = glm::translate(Matf4(1), position) * glm::mat4_cast(rotation) *
+                    glm::scale(Matf4(1), Vecf3(scale));
     }
 };
 
