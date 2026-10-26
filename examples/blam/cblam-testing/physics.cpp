@@ -1154,6 +1154,15 @@ struct PhysicsSystem
         }
     }
 
+    /* A script's rider sits inside its vehicle's hull, and would shove it */
+    static void seat_contact(btRigidBody& body, bool seated)
+    {
+        int const flags = seated ? body.getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE
+                                 : body.getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE;
+        if(flags != body.getCollisionFlags())
+            body.setCollisionFlags(flags);
+    }
+
     /* World objects with an ObjectPhysics get one body each. Simulated
      * ones carry their Model along; followers are carried by it. */
     void reconcile_object_bodies(Proxy& p, bool glide = false)
@@ -1238,6 +1247,7 @@ struct PhysicsSystem
                 if(m_bodies.contains(id))
                 {
                     auto& body = *m_bodies.at(id).world_body;
+                    seat_contact(body, physics.seated);
                     if(physics.friction >= 0.f)
                         body.setFriction(physics.friction);
                     if(physics.restitution >= 0.f)
@@ -1263,6 +1273,7 @@ struct PhysicsSystem
             if(it == m_bodies.end())
                 continue;
             btRigidBody& body = *it->second.world_body;
+            seat_contact(body, physics.seated);
             if(follower)
             {
                 btTransform transform;
