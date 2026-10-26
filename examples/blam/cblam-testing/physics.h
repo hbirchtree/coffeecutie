@@ -208,7 +208,7 @@ struct Drive
     Vecf3                 aim{1, 0, 0}; /*!< Where the driver looks */
     bool                  brake{false}; /*!< Handbrake: the wheels lock */
     /*! A recording's input, applied as Halo does: wheels turn by the look's
-     *  own angle, and with the throttle let go they brake to a stop */
+     *  own angle */
     bool recorded{false};
 };
 
