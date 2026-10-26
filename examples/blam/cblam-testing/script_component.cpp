@@ -1222,6 +1222,8 @@ struct BlamScript
         u64         vehicle;
         std::string seat;
         Matf4       marker{1};
+        i32         node{-1}; /*!< The vehicle node the marker hangs off */
+        std::string stance;   /*!< Its own, before it sat */
     };
 
     /* ---- Health ---- */
@@ -1283,13 +1285,21 @@ struct BlamScript
             });
             if(!fits || taken)
                 continue;
-            auto marker = bind_marker(*model->tag, candidate.marker_name.str(), m_magic);
+            auto marker = bind_marker_node(*model->tag, candidate.marker_name.str(), m_magic);
             unseat(p, unit);
+            /* It animates as the seat's stance, its idle when a custom
+             * animation ends */
+            auto*       anim = p.template get<AnimationPlayback>(unit);
+            std::string own  = anim ? anim->stance : std::string("stand");
+            if(anim)
+                anim->stance = std::string(candidate.label.str());
             m_riders.push_back({
                 .unit    = unit,
                 .vehicle = vehicle,
                 .seat    = label,
-                .marker  = marker.value_or(Matf4(1)),
+                .marker  = marker ? marker->transform : Matf4(1),
+                .node    = marker ? marker->node : -1,
+                .stance  = std::move(own),
             });
             carry(p, unit, true);
             return;
@@ -1306,6 +1316,10 @@ struct BlamScript
             return;
         }
         auto const before = m_riders.size();
+        for(auto const& r : m_riders)
+            if(r.unit == unit)
+                if(auto* anim = p.template get<AnimationPlayback>(unit))
+                    anim->stance = r.stance;
         std::erase_if(m_riders, [unit](rider_t const& r) { return r.unit == unit; });
         if(m_riders.size() != before)
             carry(p, unit, false);
@@ -1320,7 +1334,12 @@ struct BlamScript
             auto*       unit    = p.template get<Model>(rider.unit);
             if(!vehicle || !unit)
                 continue;
-            Matf4 const at = vehicle->transform * rider.marker;
+            /* Off the marker's node as the vehicle is posed */
+            Matf4       at   = vehicle->transform;
+            auto const* anim = p.template get<AnimationPlayback>(rider.vehicle);
+            if(anim && rider.node >= 0 && static_cast<size_t>(rider.node) < anim->pose.size())
+                at = at * anim->pose[rider.node];
+            at = at * rider.marker;
             unit->position = Vecf3(at[3]);
             unit->rotation = glm::normalize(Quatf(Matf3(at)));
             unit->update_matrix();

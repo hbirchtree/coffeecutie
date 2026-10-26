@@ -64,6 +64,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
            generation != m_markers_generation)
         {
             m_markers.clear();
+            m_seat_nodes.clear();
             m_tracks.clear();
             m_leaving.clear();
             m_markers_generation = generation;
@@ -125,16 +126,30 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         }
     }
 
-    /* A rider sits at its seat's marker, moving with the vehicle */
+    /* A rider sits at its seat's marker, moving with the vehicle and with
+     * the node the marker hangs off as it is posed (a cryotube tilts) */
     void seat(Proxy& p, PlayerInfo const& info, Model& model)
     {
         auto const* vehicle = p.template get<Model>(info.riding.vehicle);
-        if(!vehicle)
+        if(!vehicle || !vehicle->tag)
             return;
-        auto const& marker = seat_marker(p, *vehicle, info.riding.seat);
-        if(!marker)
+        auto const seats = seats_of(p, *vehicle);
+        i16 const  index = info.riding.seat;
+        if(!seats || index < 0 || static_cast<size_t>(index) >= seats->size())
             return;
-        Matf4 const world = vehicle->transform * *marker;
+        std::string name((*seats)[index].marker_name.str());
+        auto [it, fresh] = m_seat_nodes.try_emplace(std::pair{vehicle->tag, name});
+        if(fresh)
+            it->second = bind_marker_node(
+                *vehicle->tag, name, p.template subsystem<BlamFiles<halo_version>>().container.magic);
+        if(!it->second)
+            return;
+        Matf4       world = vehicle->transform;
+        auto const* anim  = p.template get<AnimationPlayback>(info.riding.vehicle);
+        auto const  node  = static_cast<size_t>(it->second->node);
+        if(anim && it->second->node >= 0 && node < anim->pose.size())
+            world = world * anim->pose[node];
+        world = world * it->second->transform;
         model.position    = Vecf3(world[3]);
         model.rotation    = glm::normalize(Quatf(Matf3(world)));
         model.update_matrix();
@@ -531,6 +546,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
     std::map<u64, bool>                m_using;
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<Matf4>>
         m_markers;
+    std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>> m_seat_nodes;
     std::map<blam::scn::unit::seat_t const*, std::vector<Vecf3>> m_tracks;
     /* Riders playing their exit, and when they stand up */
     std::map<u64, time_point> m_leaving;

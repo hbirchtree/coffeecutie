@@ -187,9 +187,15 @@ struct AnimationController
         auto units = graph->units.data(magic);
         if(!units.has_value())
             return out;
+        /* Seat labels and the graph's units differ in case: ct-driver, CT-driver */
         blam::antr::unit const* found = nullptr;
+        auto const same = [](std::string_view a, std::string_view b) {
+            return std::ranges::equal(a, b, [](unsigned char x, unsigned char y) {
+                return std::tolower(x) == std::tolower(y);
+            });
+        };
         for(auto const& candidate : units.value())
-            if(candidate.label.str() == unit)
+            if(same(candidate.label.str(), unit))
                 found = &candidate;
         /* A stance the graph lacks falls back to standing */
         if(!found)
@@ -329,7 +335,8 @@ struct AnimationController
                 physics.authority == ObjectPhysics::Simulated
                     ? std::optional(physics.walking)
                     : std::nullopt,
-                physics.grounded,
+                /* Carried by a script, seated or acting, it isn't falling */
+                physics.grounded || physics.scripted,
                 dt,
                 anim.stance,
                 dead(p, npc.id()));
