@@ -637,6 +637,7 @@ struct PlayModelAnimationEvent
 
     bool            loop{false};
     libc_types::f32 fade{.2f}; /*!< Seconds to blend in, 0 = cut */
+    libc_types::f32 time{0.f}; /*!< Seconds into the clip it starts at */
     libc_types::f32 rate{1.f};
     libc_types::f32 weight{1.f};
 };

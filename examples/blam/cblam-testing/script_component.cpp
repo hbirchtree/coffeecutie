@@ -129,6 +129,7 @@ struct BlamScript
         m_custom.clear();
         m_held.clear();
         m_commands.clear();
+        m_scaling.clear();
         m_walk_speeds.clear();
         m_tests = {};
         m_loops.clear();
@@ -211,6 +212,7 @@ struct BlamScript
             play_recordings(p);
             play_custom(p);
             run_commands(p);
+            scale_objects(p);
             send_walks(p);
             move_mouths(p);
         }
@@ -268,6 +270,7 @@ struct BlamScript
         m_hovering   = std::move(saved.hovering);
         m_custom     = std::move(saved.custom);
         m_commands.clear();
+        m_scaling.clear();
         m_speakers   = std::move(saved.speakers);
         m_tests      = saved.tests;
         m_impulses   = std::move(saved.impulses);
@@ -894,6 +897,48 @@ struct BlamScript
                     custom_animation(p, id, graph, name, blend);
                 });
             return value_t::boolean(true);
+        case op::unit_custom_animation_at_frame:
+            with_objects(
+                p,
+                arg(0),
+                [this,
+                 graph = graph_of(arg(1)),
+                 name  = std::string(text_of(arg(2))),
+                 blend = arg(3).truthy(),
+                 frame = static_cast<i32>(arg(4).as_real())](Proxy& p, u64 id) {
+                    custom_animation(p, id, graph, name, blend, frame);
+                });
+            return value_t::boolean(true);
+        case op::object_set_scale:
+            with_objects(
+                p,
+                arg(0),
+                [this, to = static_cast<f32>(arg(1).as_real()), ticks = static_cast<i32>(arg(2).as_real())](
+                    Proxy& p, u64 id) {
+                    auto const* model = p.template get<Model>(id);
+                    m_scaling[id]     = {.from = model ? model->scale : 1.f, .to = to, .ticks = std::max(ticks, 0)};
+                });
+            return {};
+        case op::effect_new:
+            if(auto const* flag = named(m_scenario->cutscene.flags, text_of(arg(1))))
+                spawn_effect(p, arg(0), flag->position, Vecf3{std::cos(flag->facing.x), std::sin(flag->facing.x), 0.f});
+            return {};
+        case op::effect_new_on_object_marker:
+            for(u64 id : objects_of(p, arg(1)))
+                if(auto const* model = p.template get<Model>(id))
+                {
+                    Matf4 at = model->transform;
+                    if(auto const marker = model->tag ? bind_marker_node(*model->tag, text_of(arg(2)), m_magic) : std::nullopt)
+                    {
+                        auto const* anim = p.template get<AnimationPlayback>(id);
+                        auto const  node = static_cast<size_t>(marker->node);
+                        if(anim && marker->node >= 0 && node < anim->pose.size())
+                            at = at * anim->pose[node];
+                        at = at * marker->transform;
+                    }
+                    spawn_effect(p, arg(0), Vecf3(at[3]), glm::normalize(Vecf3(at[0])));
+                }
+            return {};
         case op::unit_open:
         case op::unit_close:
             for(u64 id : objects_of(p, arg(0)))
@@ -1549,7 +1594,7 @@ struct BlamScript
     }
 
     void custom_animation(
-        Proxy& p, u64 id, blam::antr::header const* graph, std::string const& name, bool blend)
+        Proxy& p, u64 id, blam::antr::header const* graph, std::string const& name, bool blend, i32 frame = 0)
     {
         if(!graph)
             return log(fmt::format("custom_animation: no graph for {}", name));
@@ -1570,6 +1615,7 @@ struct BlamScript
                 .graph     = graph,
                 .loop      = held,
                 .fade      = blend ? .2f : 0.f,
+                .time      = static_cast<f32>(frame) / tick_rate,
             };
             if(held)
                 m_held.insert(id);
@@ -1577,7 +1623,7 @@ struct BlamScript
                 m_held.erase(id);
             p.template subsystem<GameEventBus>().inject(ev, &play);
             bool const moves = clip.frame_info_type_ != blam::antr::frame_info_type::none;
-            m_custom[id]     = {.clip = &clip, .moves = moves};
+            m_custom[id]     = {.clip = &clip, .frame = frame, .moves = moves};
             if(moves && !walks(p, id))
                 carry(p, id, true);
             return;
@@ -1780,9 +1826,42 @@ struct BlamScript
             if(anim && a.marker.node >= 0 && node < anim->pose.size())
                 at = at * anim->pose[node];
             at              = at * a.marker.transform * a.at;
+            /* Scaled with its parent, turned as the marker is */
+            Matf3 const turn(glm::normalize(Vecf3(at[0])), glm::normalize(Vecf3(at[1])), glm::normalize(Vecf3(at[2])));
             child->position = Vecf3(at[3]);
-            child->rotation = glm::normalize(Quatf(Matf3(at)));
+            child->rotation = glm::normalize(Quatf(turn));
+            child->scale    = parent->scale;
             child->update_matrix();
+        }
+    }
+
+    /* An effe (or snd!) tag the script names, played at a point */
+    void spawn_effect(Proxy& p, value_t const& effect, Vecf3 const& at, Vecf3 const& forward)
+    {
+        auto tag = m_tags.find(static_cast<u32>(effect.integer));
+        if(tag == m_tags.end() || !((*tag).matches(blam::tag_class_t::effe) || (*tag).matches(blam::tag_class_t::snd)))
+            return log("effect_new: not an effect");
+        GameEvent        ev{.type = GameEvent::SpawnEffect};
+        SpawnEffectEvent spawn{.effect = (*tag).as_ref(), .position = at, .direction = forward};
+        p.template subsystem<GameEventBus>().inject(ev, &spawn);
+    }
+
+    /* Scales eased toward what the script set, a tick at a time */
+    void scale_objects(Proxy& p)
+    {
+        for(auto it = m_scaling.begin(); it != m_scaling.end();)
+        {
+            auto* model = p.template get<Model>(it->first);
+            auto& s     = it->second;
+            if(!model)
+            {
+                it = m_scaling.erase(it);
+                continue;
+            }
+            s.at++;
+            model->scale = s.at >= s.ticks ? s.to : glm::mix(s.from, s.to, static_cast<f32>(s.at) / static_cast<f32>(s.ticks));
+            model->update_matrix();
+            it = s.at >= s.ticks ? m_scaling.erase(it) : std::next(it);
         }
     }
 
@@ -2688,6 +2767,14 @@ struct BlamScript
     std::set<u64>                           m_hovering;
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, commands_t>               m_commands;
+    struct scaling_t
+    {
+        f32 from{1.f};
+        f32 to{1.f};
+        i32 ticks{0};
+        i32 at{0};
+    };
+    std::map<u64, scaling_t> m_scaling;
     std::set<u64>                           m_held; /* attached, looping their custom clip */
     std::map<u64, Vecf3>                    m_walking;
     struct speaker_t
