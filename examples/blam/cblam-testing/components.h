@@ -866,6 +866,7 @@ struct ObjectPhysics
     bool  teleported{false}; /*!< Moved by hand: the body starts over there */
     bool  scripted{false};   /*!< Moved by a script: carried, not simulated */
     bool  seated{false};     /*!< A script's rider: inside its vehicle, touching nothing */
+    bool  recorded{false};   /*!< Driven by a script's recording: runs nobody down */
 
     /*! Vehicles, as of the last physics step */
     struct vehicle_t

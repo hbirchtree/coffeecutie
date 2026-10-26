@@ -2101,6 +2101,9 @@ struct BlamScript
         });
         if(!walks(p, id) && !rolls(p, id))
             carry(p, id, true);
+        /* Choreographed: where it meets someone, it does not run them down */
+        if(auto* physics = p.template get<ObjectPhysics>(id); physics && rolls(p, id))
+            physics->recorded = true;
     }
 
     /* Wheels and treads, which physics drives along the ground */
@@ -2115,6 +2118,8 @@ struct BlamScript
     void stop_recording(Proxy& p, u64 id, end_t end)
     {
         std::erase_if(m_recordings, [id](recording_t const& r) { return r.entity == id; });
+        if(auto* physics = p.template get<ObjectPhysics>(id))
+            physics->recorded = false;
         switch(end)
         {
         case end_t::destroy:

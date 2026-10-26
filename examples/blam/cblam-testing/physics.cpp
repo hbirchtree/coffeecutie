@@ -1188,6 +1188,10 @@ struct PhysicsSystem
             bool const moves      = physics.mass > 0.f;
             bool const follower =
                 moves && (physics.authority == ObjectPhysics::Follower || physics.scripted);
+            if(physics.recorded)
+                m_recorded.insert(id);
+            else
+                m_recorded.erase(id);
             if(physics.scripted)
                 m_scripted.insert(id);
             else if(m_scripted.erase(id))
@@ -1745,7 +1749,7 @@ struct PhysicsSystem
         {
             auto const velocity = moved.find(vehicle_id);
             if(!vehicle.mass_points || velocity == moved.end() ||
-               velocity->second.length() < struck_speed)
+               velocity->second.length() < struck_speed || m_recorded.contains(vehicle_id))
                 continue;
             for(auto const& [unit_id, unit] : m_bodies)
             {
@@ -2567,6 +2571,7 @@ struct PhysicsSystem
             return;
         m_passing.erase(entity_id);
         m_scripted.erase(entity_id);
+        m_recorded.erase(entity_id);
         if(auto* gone = it->second.world_body.get())
             std::erase_if(m_apart, [gone](auto const& pair) {
                 if(pair.first != gone && pair.second != gone)
@@ -3550,6 +3555,7 @@ struct PhysicsSystem
     static constexpr f32 resting_overlap = .1f; /* wu, sunk into what it stands on */
     std::set<u64>        m_passing; /* remote bodies inside another, not pushing */
     std::set<u64>        m_scripted; /* placed by a script, as its riders are */
+    std::set<u64>        m_recorded; /* vehicles a recording drives */
     std::vector<u64>     m_released; /* let go by a script this frame */
     /* Bodies let go inside another (a rider in its seat): neither touches
      * the other until they are apart */
