@@ -221,6 +221,7 @@ struct BlamScript
         draw_recordings(p);
         place_riders(p);
         place_attached(p);
+        look_first_person(p);
         m_proxy = nullptr;
     }
 
@@ -314,6 +315,7 @@ struct BlamScript
         auto& state     = p.template subsystem<CinematicState>();
         state.fade      = {};
         state.title.reset();
+        m_first_person = 0;
         state.letterbox = false;
         state.playing   = false;
         state.show_hud  = true;
@@ -669,6 +671,8 @@ struct BlamScript
 
         /* Cutscenes */
         case op::camera_control:
+            m_first_person = 0;
+            m_camera_gen++;
             for_local_seats(p, [&](u32 seat) {
                 GameEvent            ev{.type = GameEvent::CinematicCamera};
                 CinematicCameraEvent control{.seat_idx = seat, .control = arg(0).truthy()};
@@ -676,9 +680,22 @@ struct BlamScript
             });
             return {};
         case op::camera_set:
+            m_first_person = 0;
+            m_camera_gen++;
             camera_set(p, text_of(arg(0)), arg(1).as_real(), 0);
             return {};
+        case op::camera_set_first_person: {
+            /* Often of a unit created the line before */
+            m_first_person = 0;
+            with_objects(p, arg(0), [this, gen = ++m_camera_gen](Proxy&, u64 id) {
+                if(gen == m_camera_gen && !m_first_person)
+                    m_first_person = id;
+            });
+            return {};
+        }
         case op::camera_set_relative: {
+            m_first_person     = 0;
+            m_camera_gen++;
             auto const objects = objects_of(p, arg(2));
             camera_set(p, text_of(arg(0)), arg(1).as_real(), objects.empty() ? 0 : objects.front());
             return {};
@@ -2603,6 +2620,32 @@ struct BlamScript
         });
     }
 
+    /* The cutscene camera through a unit's eyes, looking where its
+     * recording has it look */
+    void look_first_person(Proxy& p)
+    {
+        auto const* model = m_first_person ? p.template get<Model>(m_first_person) : nullptr;
+        if(!model)
+            return;
+        Vecf2 facing{std::atan2(model->transform[0].y, model->transform[0].x), 0.f};
+        for(auto const& r : m_recordings)
+            if(r.entity == m_first_person)
+                facing = {r.play.state().facing().yaw_radians(), r.play.state().facing().pitch_radians()};
+        Vecf3 const eye = Vecf3(model->transform * Vecf4(0.f, 0.f, eye_height, 1.f));
+        for_local_seats(p, [&](u32 seat) {
+            GameEvent             ev{.type = GameEvent::PlayerCameraLerp};
+            PlayerCameraLerpEvent lerp{
+                .seat_idx  = seat,
+                .position  = eye,
+                .rotation  = camera_look(facing.x, facing.y, 0.f),
+                .duration  = std::chrono::milliseconds(0),
+                .cinematic = true,
+                .fov       = first_person_fov,
+            };
+            p.template subsystem<GameEventBus>().inject(ev, &lerp);
+        });
+    }
+
     /* Ticks left of the cutscene camera's move */
     f32 camera_time(Proxy& p) const
     {
@@ -2809,6 +2852,7 @@ struct BlamScript
     /* Where a body is tested against volumes, above its feet */
     static constexpr f32 body_middle = .3f;
     static constexpr f32 eye_height  = .6f;
+    static constexpr f32 first_person_fov = 70.f;
     /* How far a look test wants the view turned, radians */
     static constexpr f32 look_test = .25f;
 
@@ -2830,6 +2874,8 @@ struct BlamScript
     std::set<u32>                           m_spawning;
     std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> m_deferred;
     std::set<u64>                           m_hovering;
+    u64                                     m_first_person{0};
+    u32                                     m_camera_gen{0}; /*!< Bumped as the camera is set */
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, commands_t>               m_commands;
     struct scaling_t
