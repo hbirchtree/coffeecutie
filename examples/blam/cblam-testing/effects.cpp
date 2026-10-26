@@ -170,6 +170,7 @@ struct EffectSystem
         f32                   frame_rate{0.f};
         f32                   spin{0.f};
         bool                  along_velocity{false};
+        Vecf3                 heading{}; /* the way it was sent, for along_velocity at rest */
         /* Lies across the way it moves, or its emitter's while still */
         std::optional<Vecf3>  across;
         bool                  dies_on_contact{false};
@@ -1319,6 +1320,7 @@ struct EffectSystem
                      (uniform(0.f, 1.f) < .5f ? -1.f : 1.f);
             s.along_velocity = part->orientation ==
                                blam::scn::particle_orientation_t::parallel_to_direction;
+            s.heading = dir;
             if(part->orientation == blam::scn::particle_orientation_t::perpendicular_to_direction)
                 s.across = dir;
             s.dies_on_contact = has(pflags::dies_on_contact_with_structure);
@@ -1756,9 +1758,10 @@ struct EffectSystem
                 std::tie(look.sequence, look.frame) = s.anim->at(
                     s.frame + s.frame_rate * m_lookahead,
                     (s.life - s.age) * s.frame_rate);
-            look.axis  = s.along_velocity
-                             ? s.velocity * TickClock::tick_seconds
-                             : Vecf3{};
+            /* Along its direction: its velocity, or at rest the way it was sent */
+            look.axis = !s.along_velocity                ? Vecf3{}
+                        : glm::length(s.velocity) > 1e-4f ? s.velocity * TickClock::tick_seconds
+                                                          : s.heading * 1e-3f;
             if(s.across)
             {
                 look.flat = true;
