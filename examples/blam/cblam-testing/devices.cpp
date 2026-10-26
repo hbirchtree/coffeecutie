@@ -11,6 +11,8 @@
 
 #include <blam/volta/blam_tag_index.h>
 
+#include <set>
+
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 
@@ -303,13 +305,16 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
 
     /* ---- Every peer: moving, posing, sounding ---- */
 
-    void move(Proxy& p, DeviceGroups const& groups, f32 dt)
+    void move(Proxy& p, DeviceGroups& groups, f32 dt)
     {
         for(auto entity : p.template select<DeviceState, Model>())
         {
             auto [device, model] = entity.components();
             if(!device.tag)
                 continue;
+            auto const* net = p.template get<NetworkInfo>(entity.id());
+            if(net && net->instance_id != 0 && m_known.insert(entity.id()).second)
+                recall(device, groups.remembered[net->instance_id]);
             bool const reversed = device.flags & DeviceState::reversed;
             if(f32 const v = groups.get(device.position_group);
                groups.valid(device.position_group) && v != device.position_seen)
@@ -353,7 +358,33 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
                 spawn->power = device.power;
             if(auto* anim = p.template get<AnimationPlayback>(entity.id()))
                 pose(*anim, device);
+            if(net && net->instance_id != 0)
+                groups.remembered[net->instance_id] = {
+                    .position        = device.position,
+                    .position_target = device.position_target,
+                    .power           = device.power,
+                    .power_target    = device.power_target,
+                    .automatic       = device.automatic,
+                    .one_sided       = (device.kind_flags & DeviceState::one_sided) != 0,
+                    .used            = device.used,
+                };
         }
+        std::erase_if(m_known, [&p](u64 id) { return !p.template get<DeviceState>(id); });
+    }
+
+    /* Built again as its section loads, it is as it was left */
+    static void recall(DeviceState& device, DeviceGroups::remembered_t const& r)
+    {
+        device.position        = r.position.value_or(device.position);
+        device.position_target = r.position_target.value_or(device.position_target);
+        device.power           = r.power.value_or(device.power);
+        device.power_target    = r.power_target.value_or(device.power_target);
+        device.automatic       = r.automatic.value_or(device.automatic);
+        device.used            = r.used.value_or(device.used);
+        if(r.one_sided)
+            device.kind_flags = *r.one_sided ? device.kind_flags | DeviceState::one_sided
+                                             : device.kind_flags & ~DeviceState::one_sided;
+        device.snaps++;
     }
 
     static f32 approach(f32 from, f32 to, f32 seconds, f32 dt)
@@ -460,6 +491,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
      * pay them no mind */
     static constexpr f32         settle_time = .25f; /* s */
     f32                          m_settling{0.f};
+    std::set<u64>                m_known; /* devices recalled since they were built */
     u64                          m_next_sound{0};
 };
 
