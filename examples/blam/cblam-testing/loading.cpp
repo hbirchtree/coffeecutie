@@ -1291,6 +1291,9 @@ struct ResourceLoader
         bool const unit = instance_tag->matches(blam::tag_class_t::bipd);
         if(unit)
             recipe.components.push_back(compo::type_hash_v<BipedStatus>());
+        auto const* held = unit ? default_weapon(files, *instance_tag) : nullptr;
+        if(held)
+            recipe.components.push_back(compo::type_hash_v<BipedEquipment>());
         constexpr bool device =
             std::is_same_v<T, blam::scn::machine_spawn> || std::is_same_v<T, blam::scn::control>;
         if constexpr(device)
@@ -1349,6 +1352,8 @@ struct ResourceLoader
             build_submodels(
                 p, parent_, model, model_, submodel, render_layer::world, 1,
                 &instance_obj[0]);
+        if(held)
+            arm(p, parent_.id(), *held, model, files);
     }
 
     /* Calls fn(group, tags) with the scenario palette group_id names */
@@ -2885,6 +2890,18 @@ struct ResourceLoader
         out.rounds_loaded    = static_cast<u16>(std::max<i16>(magazine.rounds_loaded_maximum, 0));
         out.rounds_total     = static_cast<u16>(std::max<i16>(magazine.rounds_total_initial, 0));
         return out;
+    }
+
+    /* The weapon a unit's tag creates it holding */
+    blam::tag_t const* default_weapon(BlamFiles<Ver> const& files, blam::tag_t const& unit)
+    {
+        auto data = unit.template data<blam::scn::unit>(files.container.magic);
+        if(!data.has_value())
+            return nullptr;
+        auto weapons = data.value()[0].weapons.data(files.container.magic);
+        if(!weapons.has_value() || weapons.value().empty())
+            return nullptr;
+        return weapon_tag(weapons.value()[0].weapon.tag_id);
     }
 
     blam::tag_t const* weapon_tag(blam::tag_index<> id)
