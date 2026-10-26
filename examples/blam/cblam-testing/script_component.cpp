@@ -424,6 +424,22 @@ struct BlamScript
         }
     }
 
+    /* A named device whose section is not loaded: what a script tells it
+     * waits for it there */
+    DeviceGroups::remembered_t* absent_device(Proxy& p, value_t const& v)
+    {
+        if(!v.objects.empty() || v.name == 0)
+            return nullptr;
+        auto it = m_named.find(lowered(text_of(v)));
+        if(it == m_named.end() ||
+           (it->second.group != ScenarioGroup::Machine && it->second.group != ScenarioGroup::Control))
+            return nullptr;
+        u32 const net_id = SpawnObjectEvent::scenario_net_id(it->second.group, it->second.index);
+        if(live_entity(p, net_id))
+            return nullptr;
+        return &p.template subsystem<DeviceGroups>().remembered[net_id];
+    }
+
     /* Net ids of the objects a value names that are still being spawned */
     std::vector<u32> spawning_of(value_t const& v) const
     {
@@ -524,6 +540,17 @@ struct BlamScript
                     }
                     moved = true;
                 }
+            if(auto* r = absent_device(p, arg(0)))
+            {
+                f32 const to = std::clamp(arg(1).as_real(), 0.f, 1.f);
+                if(opcode == op::device_set_power)
+                    r->power = r->power_target = to;
+                else
+                    r->position_target = to;
+                if(opcode == op::device_set_position_immediate)
+                    r->position = to;
+                moved = true;
+            }
             return value_t::boolean(moved);
         }
         case op::device_get_position:
@@ -531,7 +558,13 @@ struct BlamScript
             auto const  ids    = objects_of(p, arg(0));
             auto const* device = ids.empty() ? nullptr : p.template get<DeviceState>(ids.front());
             if(!device)
-                return value_t::number(type_t::real_, 0.f);
+            {
+                auto const* r = absent_device(p, arg(0));
+                auto const  v = !r                               ? std::optional<f32>{}
+                                : opcode == op::device_get_power ? r->power
+                                                                 : r->position;
+                return value_t::number(type_t::real_, v.value_or(0.f));
+            }
             return value_t::number(
                 type_t::real_, opcode == op::device_get_power ? device->power : device->position);
         }
@@ -545,6 +578,8 @@ struct BlamScript
                 static_cast<i16>(arg(0).integer), std::clamp(arg(1).as_real(), 0.f, 1.f));
             return {};
         case op::device_one_sided_set:
+            if(auto* r = absent_device(p, arg(0)))
+                r->one_sided = arg(1).truthy();
             for(u64 id : objects_of(p, arg(0)))
                 if(auto* device = p.template get<DeviceState>(id))
                     device->kind_flags = arg(1).truthy()
@@ -552,6 +587,8 @@ struct BlamScript
                                              : device->kind_flags & ~DeviceState::one_sided;
             return {};
         case op::device_operates_automatically_set:
+            if(auto* r = absent_device(p, arg(0)))
+                r->automatic = arg(1).truthy();
             for(u64 id : objects_of(p, arg(0)))
                 if(auto* device = p.template get<DeviceState>(id))
                     device->automatic = arg(1).truthy();
