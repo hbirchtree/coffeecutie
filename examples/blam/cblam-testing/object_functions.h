@@ -29,11 +29,29 @@ inline f32 evaluate(
     f32 v = fn.function == blam::shader::animation_function::zero ? 0.f : 1.f;
     if(auto s = value_of(fn.scale_function_by))
         v *= *s;
+    using flags_t = blam::scn::object::function_t::flags_t;
+    if((fn.flags & flags_t::invert) != flags_t::none)
+        v = 1.f - std::clamp(v, 0.f, 1.f);
     if(auto s = value_of(fn.add))
         v += *s;
     if(auto s = value_of(fn.scale_result_by))
         v *= *s;
     return std::clamp(v, 0.f, 1.f);
+}
+
+/* Every function in turn, then off where the one it turns off with is */
+template<typename Functions>
+inline std::array<f32, 4> evaluate_all(Functions const& functions, std::array<f32, 4> const& in)
+{
+    std::array<f32, 4> out = in;
+    for(size_t i = 0; i < out.size() && i < functions.size(); i++)
+        out[i] = evaluate(functions[i], in, out);
+    auto const done = out;
+    for(size_t i = 0; i < out.size() && i < functions.size(); i++)
+        if(auto const off = functions[i].turn_off_with;
+           off >= 0 && static_cast<size_t>(off) < done.size() && done[off] <= 0.f)
+            out[i] = 0.f;
+    return out;
 }
 
 } // namespace blam_functions
