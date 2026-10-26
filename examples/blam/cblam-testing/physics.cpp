@@ -86,11 +86,13 @@ class MassPointAction : public btActionInterface
 
     /* Held for a few substeps, so a frame rate under the step rate doesn't
      * make the throttle stutter */
-    void steer(f32 throttle, f32 strafe, btVector3 const& aim)
+    void steer(f32 throttle, f32 strafe, btVector3 const& aim, bool brake, bool recorded)
     {
         m_throttle   = std::clamp(throttle, -1.f, 1.f);
         m_strafe     = std::clamp(strafe, -1.f, 1.f);
         m_aim        = aim;
+        m_handbrake  = brake;
+        m_recorded   = recorded;
         m_input_left  = input_hold_steps;
         m_driver_left = driver_hold_steps;
     }
@@ -108,7 +110,10 @@ class MassPointAction : public btActionInterface
         if(m_input_left > 0)
             m_input_left--;
         else
+        {
             m_throttle = m_strafe = 0.f;
+            m_handbrake = false;
+        }
         /* The driver's seat powers the engine up and down over the tag's
          * times: a hovercraft lifts off as it is boarded, settles when left */
         if(m_drive && m_lifting > 0)
@@ -318,7 +323,7 @@ class MassPointAction : public btActionInterface
         f32 const look =
             std::atan2(forward.cross(aim).z(), forward.dot(aim));
         f32 heading =
-            look * steer_gain *
+            look * (m_recorded ? 1.f : steer_gain) *
             (m_body.getLinearVelocity().dot(forward) < -.1f || target < 0.f
                  ? -1.f
                  : 1.f);
@@ -351,7 +356,15 @@ class MassPointAction : public btActionInterface
         }
 
         btVector3 const velocity = m_body.getLinearVelocity();
-        f32 const       accel    = accelerate(velocity.dot(forward), target, dt);
+        f32 const       speed    = velocity.dot(forward);
+        f32             accel    = accelerate(speed, m_handbrake ? 0.f : target, dt);
+        /* Let go, the wheels slow to a stop as hard as the tag brakes;
+         * the handbrake locks them */
+        if(m_handbrake || (m_recorded && target == 0.f))
+        {
+            accel = std::clamp(-speed / dt, -d.deceleration_or_accel(), d.deceleration_or_accel());
+            m_braking = m_handbrake && std::abs(speed) > .1f;
+        }
         size_t          pushing  = 0;
         for(auto const& touch : touches)
             pushing += traction(m_data->points[touch.point]);
@@ -761,6 +774,8 @@ class MassPointAction : public btActionInterface
     f32                                             m_strafe{0.f};
     f32                                             m_power{0.f}; /* The engine's, 0..1 */
     bool                                            m_braking{false};
+    bool                                            m_handbrake{false};
+    bool                                            m_recorded{false};
     bool                                            m_reversing{false};
     std::vector<f32>                                m_depths;
     size_t                                          m_supporting{0};
@@ -2681,7 +2696,9 @@ struct PhysicsSystem
         it->second.action->steer(
             drive.throttle,
             drive.steer,
-            btVector3(drive.aim.x, drive.aim.y, drive.aim.z));
+            btVector3(drive.aim.x, drive.aim.y, drive.aim.z),
+            drive.brake,
+            drive.recorded);
     }
 
     /* The structure BSP surface along a ray, and its collision material */
