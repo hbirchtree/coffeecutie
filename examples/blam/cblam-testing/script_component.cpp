@@ -128,6 +128,7 @@ struct BlamScript
         m_recordings.clear();
         m_custom.clear();
         m_held.clear();
+        m_commands.clear();
         m_walk_speeds.clear();
         m_tests = {};
         m_loops.clear();
@@ -209,6 +210,7 @@ struct BlamScript
             m_vm.tick();
             play_recordings(p);
             play_custom(p);
+            run_commands(p);
             send_walks(p);
             move_mouths(p);
         }
@@ -265,6 +267,7 @@ struct BlamScript
         m_attached   = std::move(saved.attached);
         m_hovering   = std::move(saved.hovering);
         m_custom     = std::move(saved.custom);
+        m_commands.clear();
         m_speakers   = std::move(saved.speakers);
         m_tests      = saved.tests;
         m_impulses   = std::move(saved.impulses);
@@ -975,6 +978,40 @@ struct BlamScript
         case op::ai_living_count:
             return value_t::number(
                 type_t::short_, static_cast<f32>(ai_actors(p, text_of(arg(0))).size()));
+        /* Command lists: units walking, flying and looking as a list says */
+        case op::ai_attach_free:
+            return {};
+        case op::ai_detach:
+            for(u64 id : objects_of(p, arg(0)))
+                stop_commands(p, id);
+            return {};
+        case op::ai_command_list:
+        case op::ai_command_list_by_unit: {
+            auto const* list = command_list(arg(1));
+            if(!list)
+                return log(fmt::format("ai_command_list: no list {}", text_of(arg(1)))), value_t{};
+            auto const units = opcode == op::ai_command_list ? ai_actors(p, text_of(arg(0))) : objects_of(p, arg(0));
+            for(u64 id : units)
+                start_commands(p, id, *list);
+            return {};
+        }
+        case op::ai_command_list_advance:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto it = m_commands.find(id); it != m_commands.end() && it->second.waiting)
+                {
+                    it->second.waiting = false;
+                    it->second.at++;
+                }
+            return {};
+        case op::ai_command_list_status: {
+            /* 0 none, 1 finished, 2 at its loop or waiting, 3 running */
+            i32 status = 0;
+            for(u64 id : objects_of(p, arg(0)))
+                if(auto it = m_commands.find(id); it != m_commands.end())
+                    status = std::max(status, it->second.done ? 1 : it->second.looped || it->second.waiting ? 2 : 3);
+            return value_t::number(type_t::short_, static_cast<f32>(status));
+        }
+
         case op::ai_kill:
         case op::ai_erase:
             for(u64 id : ai_actors(p, text_of(arg(0))))
@@ -1749,6 +1786,157 @@ struct BlamScript
         }
     }
 
+    /* ---- Command lists ---- */
+
+    struct commands_t
+    {
+        blam::scn::ai::command_list const* list{nullptr};
+        i32  at{0};       /* the atom it is on */
+        i32  ticks{0};    /* spent on it */
+        f32  radius{.5f}; /* near enough a point */
+        bool looped{false};
+        bool waiting{false};
+        bool done{false};
+    };
+
+    blam::scn::ai::command_list const* command_list(value_t const& v) const
+    {
+        if(auto const* list = named(m_scenario->ai.command_lists, text_of(v)))
+            return list;
+        auto lists = m_scenario->ai.command_lists.data(m_magic);
+        if(!lists.has_value() || v.integer < 0 || static_cast<size_t>(v.integer) >= lists.value().size())
+            return nullptr;
+        return &lists.value()[static_cast<size_t>(v.integer)];
+    }
+
+    void start_commands(Proxy& p, u64 id, blam::scn::ai::command_list const& list)
+    {
+        m_commands[id] = {.list = &list};
+        carry(p, id, true);
+    }
+
+    void stop_commands(Proxy& p, u64 id)
+    {
+        if(m_commands.erase(id) && !playing_recording(id) && !m_hovering.contains(id))
+            stand(p, id);
+    }
+
+    /* A tick of each list: instant atoms run through, moving and looking
+     * ones take their time */
+    void run_commands(Proxy& p)
+    {
+        using atom   = blam::scn::ai::command_list_command::atom_type_t;
+        constexpr f32 dt = 1.f / tick_rate;
+        for(auto it = m_commands.begin(); it != m_commands.end();)
+        {
+            auto* model = p.template get<Model>(it->first);
+            auto  cmds  = it->second.list->commands.data(m_magic);
+            auto  pts   = it->second.list->points.data(m_magic);
+            if(!model || !cmds.has_value())
+            {
+                it = m_commands.erase(it);
+                continue;
+            }
+            auto& run   = it->second;
+            auto point  = [&](i16 i) -> std::optional<Vecf3> {
+                if(!pts.has_value() || i < 0 || static_cast<size_t>(i) >= pts.value().size())
+                    return std::nullopt;
+                return pts.value()[static_cast<size_t>(i)].position;
+            };
+            auto object = [&](i16 i) -> std::optional<Vecf3> {
+                auto names = m_scenario->objects.object_names.data(m_magic);
+                if(!names.has_value() || i < 0 || static_cast<size_t>(i) >= names.value().size())
+                    return std::nullopt;
+                auto const* target = p.template get<Model>(named_entity(p, lowered(names.value()[static_cast<size_t>(i)].name.str())));
+                return target ? std::optional(target->position) : std::nullopt;
+            };
+            auto face = [&](Vecf3 const& at) {
+                Vecf3 const d = at - model->position;
+                if(d.x * d.x + d.y * d.y > 1e-4f)
+                    model->rotation = glm::angleAxis(std::atan2(d.y, d.x), Vecf3{0.f, 0.f, 1.f});
+            };
+            auto next = [&run] {
+                run.at++;
+                run.ticks = 0;
+            };
+            /* Instant atoms run on; a bound keeps a loop of them from spinning */
+            for(u32 step = 0; step < 16 && !run.done; step++)
+            {
+                if(run.at < 0 || static_cast<size_t>(run.at) >= cmds.value().size())
+                {
+                    run.done = true;
+                    break;
+                }
+                auto const& c = cmds.value()[static_cast<size_t>(run.at)];
+                bool waits = false;
+                switch(c.atom_type)
+                {
+                case atom::set_radius:
+                    run.radius = c.param1 > 0.f ? c.param1 : run.radius;
+                    next();
+                    break;
+                case atom::pause:
+                    if(run.ticks++ >= static_cast<i32>(c.param1 * tick_rate))
+                        next();
+                    else
+                        waits = true;
+                    break;
+                case atom::go_to:
+                case atom::goto_and_face: {
+                    auto const to = point(c.point_1);
+                    Vecf3 const d = to ? *to - model->position : Vecf3{};
+                    f32 const   left = glm::length(d);
+                    if(!to || left <= run.radius)
+                    {
+                        next();
+                        break;
+                    }
+                    f32 const step = std::min(left, walk_speeds(p, it->first).x * dt);
+                    face(*to);
+                    model->position += d / left * step;
+                    waits = true;
+                    break;
+                }
+                case atom::move_immediate:
+                case atom::teleport:
+                    if(auto const to = point(c.point_1))
+                        model->position = *to;
+                    next();
+                    break;
+                case atom::look:
+                case atom::look_object:
+                case atom::look_player: {
+                    auto const at = c.atom_type == atom::look_object ? object(c.object_name) : point(c.point_1);
+                    if(at)
+                        face(*at);
+                    if(run.ticks++ >= static_cast<i32>(c.param1 * tick_rate))
+                        next();
+                    else
+                        waits = true;
+                    break;
+                }
+                case atom::wait:
+                    run.waiting = true;
+                    waits       = true;
+                    break;
+                case atom::loop:
+                    run.looped = true;
+                    run.at     = c.command >= 0 ? c.command : 0;
+                    run.ticks  = 0;
+                    waits      = true;
+                    break;
+                default:
+                    next();
+                    break;
+                }
+                if(waits)
+                    break;
+            }
+            model->update_matrix();
+            ++it;
+        }
+    }
+
     /* ---- Recordings ---- */
 
     enum class end_t
@@ -2499,6 +2687,7 @@ struct BlamScript
     std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> m_deferred;
     std::set<u64>                           m_hovering;
     std::map<u64, custom_t>                 m_custom;
+    std::map<u64, commands_t>               m_commands;
     std::set<u64>                           m_held; /* attached, looping their custom clip */
     std::map<u64, Vecf3>                    m_walking;
     struct speaker_t
