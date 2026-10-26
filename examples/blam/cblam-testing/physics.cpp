@@ -2206,6 +2206,17 @@ struct PhysicsSystem
                     entity_body.child_heads.push_back(node.head);
                 }
             }
+            /* An upright biped stands on its feet, as on Halo's pill, even
+             * where its collision model stops short of them (Cortana) */
+            if(body_create.posed && body_create.lock.rotation)
+            {
+                entity_body.foot = std::make_unique<btSphereShape>(foot_radius);
+                btTransform at;
+                at.setIdentity();
+                at.setOrigin(btVector3(
+                    body_create.offset.x, body_create.offset.y, body_create.offset.z + foot_radius));
+                compound->addChildShape(at, entity_body.foot.get());
+            }
             entity_body.world_shape = std::move(compound);
             entity_body.child_offset = body_create.offset;
             break;
@@ -3253,6 +3264,7 @@ struct PhysicsSystem
         std::vector<u16> triangle_materials; /*!< An exact surface's, per triangle */
         /* Children of a compound world_shape */
         std::vector<std::unique_ptr<btCollisionShape>> child_shapes;
+        std::unique_ptr<btCollisionShape>              foot; /* past the hull children */
         std::unique_ptr<btCollisionShape>               world_shape;
         std::unique_ptr<btRigidBody>                world_body;
         std::shared_ptr<void>                       keep_alive;
@@ -3364,15 +3376,21 @@ struct PhysicsSystem
                 if(lifted)
                     floor = std::min(floor, lowest(*compound->getChildShape(static_cast<int>(i)), t));
             }
+            /* The foot, past the hull pieces, stays put */
+            for(int i = static_cast<int>(posed.size()); lifted && i < compound->getNumChildShapes(); i++)
+                floor = std::min(floor, lowest(*compound->getChildShape(i), compound->getChildTransform(i)));
             if(lifted && !body.bind_floor)
             {
                 body.bind_floor = std::numeric_limits<f32>::max();
                 for(int i = 0; i < compound->getNumChildShapes(); i++)
                     *body.bind_floor = std::min(
                         *body.bind_floor,
-                        lowest(*compound->getChildShape(i), btTransform::getIdentity()));
+                        lowest(*compound->getChildShape(i),
+                               i < static_cast<int>(posed.size()) ? btTransform::getIdentity()
+                                                                  : compound->getChildTransform(i)));
             }
             btVector3 const lift(0, 0, lifted ? *body.bind_floor - floor : 0.f);
+            /* Only the hull pieces move; the foot keeps its place */
             for(size_t i = 0; i < posed.size(); i++)
             {
                 posed[i].setOrigin(posed[i].getOrigin() + lift);
@@ -3510,6 +3528,7 @@ struct PhysicsSystem
         btVector3   velocity{0, 0, 0}; /*!< Over the last step */
     };
     static constexpr f32           hull_margin  = .005f;
+    static constexpr f32           foot_radius  = .02f; /* wu */
     /* Friction of a biped standing still */
     static constexpr f32 standing_friction    = 1.f;
     /* A vehicle hull's ground contact, as a multiple of its suspension */
