@@ -5,6 +5,7 @@
 #include "data.h"
 #include "game_events.h"
 #include "network/networking.h"
+#include "object_functions.h"
 #include "selected_version.h"
 #include "sounds.h"
 #include "ticks.h"
@@ -23,7 +24,7 @@ using DevicesManifest = compo::SubsystemManifest<
         DeviceState,
         AnimationPlayback,
         ObjectSpawn,
-        const Model,
+        Model,
         const ObjectPhysics,
         const PlayerInfo,
         const PlayerCamera,
@@ -329,6 +330,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
                 device.power_seen   = v;
             }
 
+            f32 const was_power = device.power;
             device.power = approach(device.power, device.power_target, device.tag->power_transition_time, dt);
             /* Unpowered, it moves at its depowered pace, if at all */
             f32 const was     = device.position;
@@ -358,6 +360,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
                 spawn->power = device.power;
             if(auto* anim = p.template get<AnimationPlayback>(entity.id()))
                 pose(*anim, device);
+            export_functions(p, device, model, was_power, was, dt);
             if(net && net->instance_id != 0)
                 groups.remembered[net->instance_id] = {
                     .position        = device.position,
@@ -371,6 +374,51 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         }
         std::erase_if(m_known, [&p](u64 id) { return !p.template get<DeviceState>(id); });
     }
+
+    /* Its power and position, through its object functions, onto its
+     * model: what starts and scales its attachments */
+    void export_functions(
+        Proxy& p, DeviceState const& device, Model& model, f32 was_power, f32 was_position, f32 dt)
+    {
+        auto const& magic     = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        functions = device.tag->functions.data(magic);
+        if(!functions.has_value() || functions.value().empty())
+            return;
+        auto change = [dt](f32 from, f32 to, f32 seconds) {
+            return dt > 0.f ? std::clamp(std::abs(to - from) / dt * std::max(seconds, dt), 0.f, 1.f) : 0.f;
+        };
+        auto const&        tag = *device.tag;
+        std::array<f32, 4> in{};
+        std::array<u16, 4> const sources{tag.a_in, tag.b_in, tag.c_in, tag.d_in};
+        for(size_t i = 0; i < in.size(); i++)
+            switch(sources[i])
+            {
+            case device_in::power:
+                in[i] = device.power;
+                break;
+            case device_in::change_in_power:
+                in[i] = change(was_power, device.power, tag.power_transition_time);
+                break;
+            case device_in::position:
+                in[i] = device.position;
+                break;
+            case device_in::change_in_position:
+                in[i] = change(was_position, device.position, tag.position_transition_time);
+                break;
+            default:
+                break;
+            }
+        model.object_function = blam_functions::evaluate_all(functions.value(), in);
+    }
+
+    /* What a device's A..D in read */
+    struct device_in
+    {
+        static constexpr u16 power              = 1;
+        static constexpr u16 change_in_power    = 2;
+        static constexpr u16 position           = 3;
+        static constexpr u16 change_in_position = 4;
+    };
 
     /* Built again as its section loads, it is as it was left */
     static void recall(DeviceState& device, DeviceGroups::remembered_t const& r)
