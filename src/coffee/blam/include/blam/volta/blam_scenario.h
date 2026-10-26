@@ -948,9 +948,9 @@ struct command_list_command
         teleport,
     } atom_type;
 
-    u16 atom_modifier;
-    u16 param1;
-    u16 param2;
+    i16 atom_modifier;
+    f32 param1;
+    f32 param2;
     i16 point_1;     // pointing to points list
     i16 point_2;     // pointing to points list
     i16 animation;   // pointing to ai animation ref list
@@ -958,12 +958,18 @@ struct command_list_command
     i16 recording;   // pointing to ai recording ref list
     i16 command;     // pointing into commands list
     i16 object_name; // points to object name list
+    u16 padding[3];
 };
+
+static_assert(sizeof(command_list_command) == 32);
 
 struct command_list_point
 {
     Vecf3 position;
+    u32   padding[2];
 };
+
+static_assert(sizeof(command_list_point) == 20);
 
 struct command_list
 {
@@ -980,10 +986,16 @@ struct command_list
         manual_bsp_index_   = 0x20,
     } flags;
 
+    u16                             padding1;
+    u32                             padding2[2];
     i16                             manual_bsp_index;
+    u16                             padding3;
     reference<command_list_command> commands;
     reference<command_list_point>   points;
+    u32                             padding4[6];
 };
+
+static_assert(sizeof(command_list) == 96);
 
 struct conversation_participant
 {
