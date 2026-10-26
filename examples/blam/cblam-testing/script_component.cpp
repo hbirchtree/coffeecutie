@@ -58,7 +58,8 @@ using BlamScriptManifest = compo::SubsystemManifest<
         Model,
         ObjectPhysics,
         BipedStatus,
-        DeviceState>,
+        DeviceState,
+        const BipedEquipment>,
     type_list_t<
         GameEventBus,
         CinematicState,
@@ -2120,15 +2121,19 @@ struct BlamScript
         auto const* graph = anim ? anim->graph : nullptr;
         if(!graph)
             return Vecf2(default_speed);
-        auto [it, fresh] = m_walk_speeds.try_emplace(std::pair{graph, anim->stance});
+        /* It strides as it holds its weapon */
+        auto const* equip  = p.template get<BipedEquipment>(id);
+        auto const* gun    = equip ? equip->held(p.template subsystem<BlamFiles<halo_version>>().load_generation) : nullptr;
+        std::string weapon = gun ? std::string(gun->weapon->label.str()) : std::string("unarmed");
+        auto [it, fresh]   = m_walk_speeds.try_emplace(std::tuple{graph, anim->stance, weapon});
         if(fresh)
         {
-            f32 front = move_speed(*graph, Slot::move_front, m_magic, anim->stance, "unarmed");
-            f32 side  = move_speed(*graph, Slot::move_left, m_magic, anim->stance, "unarmed");
+            f32 front = move_speed(*graph, Slot::move_front, m_magic, anim->stance, weapon);
+            f32 side  = move_speed(*graph, Slot::move_left, m_magic, anim->stance, weapon);
             if(front <= 0.f)
-                front = move_speed(*graph, Slot::move_front, m_magic, "stand", "unarmed");
+                front = move_speed(*graph, Slot::move_front, m_magic, "stand", weapon);
             if(side <= 0.f)
-                side = move_speed(*graph, Slot::move_left, m_magic, "stand", "unarmed");
+                side = move_speed(*graph, Slot::move_left, m_magic, "stand", weapon);
             it->second      = {front > 0.f ? front : default_speed, side > 0.f ? side : default_speed};
         }
         return it->second;
@@ -2453,7 +2458,7 @@ struct BlamScript
     std::set<u32>                           m_despawning;
     std::set<u32>                           m_recreate;
     std::map<u32, i32>                      m_queued_recordings; /* spawning net id: its recording's length */
-    std::map<std::pair<blam::antr::header const*, std::string>, Vecf2> m_walk_speeds;
+    std::map<std::tuple<blam::antr::header const*, std::string, std::string>, Vecf2> m_walk_speeds;
     action_tests_t                          m_tests;
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
     std::set<u32>                           m_loops;
