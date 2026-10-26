@@ -323,10 +323,11 @@ struct device
         power,
     };
 
+    u32                      padding[21];
     reference<animation_ref> animations;
 };
 
-static_assert(sizeof(device) == 12);
+static_assert(sizeof(device) == 96);
 
 struct first_person_weapon
 {
