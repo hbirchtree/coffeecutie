@@ -1811,8 +1811,17 @@ struct BlamScript
             .length = recording->length_of_animation,
             .end    = end,
         });
-        if(!walks(p, id))
+        if(!walks(p, id) && !rolls(p, id))
             carry(p, id, true);
+    }
+
+    /* Wheels and treads, which physics drives along the ground */
+    static bool rolls(Proxy& p, u64 id)
+    {
+        auto const* physics = p.template get<ObjectPhysics>(id);
+        return physics && physics->drive && physics->mass_points &&
+               (physics->drive->type == VehicleDrive::human_jeep ||
+                physics->drive->type == VehicleDrive::human_tank);
     }
 
     void stop_recording(Proxy& p, u64 id, end_t end)
@@ -1843,7 +1852,7 @@ struct BlamScript
             m_recordings.begin(), m_recordings.end(), [id](recording_t const& r) {
                 return r.entity == id;
             });
-        carry(p, id, on || playing);
+        carry(p, id, on || (playing && !rolls(p, id)));
     }
 
     void carry(Proxy& p, u64 id, bool scripted)
@@ -1882,6 +1891,32 @@ struct BlamScript
             {
                 it->from = std::pair{model->position, model->rotation};
                 fly(p, it->entity, *it, *model, *drive, *physics->mass_points, input);
+                if(it->play.advance())
+                {
+                    ++it;
+                    continue;
+                }
+                u64 const   id  = it->entity;
+                end_t const end = it->end;
+                it              = m_recordings.erase(it);
+                if(end == end_t::hover)
+                    m_hovering.insert(id);
+                stop_recording(p, id, end);
+                continue;
+            }
+            if(drive && rolls(p, it->entity))
+            {
+                /* Driven as a player drives it: throttle against the motion
+                 * brakes, the wheels steer toward the facing */
+                it->from = std::nullopt;
+                Physics::Event ev{Physics::Event::Drive};
+                Physics::Drive steer{
+                    .vehicle  = it->entity,
+                    .throttle = input.movement.x,
+                    .steer    = input.movement.y,
+                    .aim      = facing.direction(),
+                };
+                p.template subsystem<PhysicsBus>().inject(ev, &steer);
                 if(it->play.advance())
                 {
                     ++it;
