@@ -358,9 +358,8 @@ class MassPointAction : public btActionInterface
         btVector3 const velocity = m_body.getLinearVelocity();
         f32 const       speed    = velocity.dot(forward);
         f32             accel    = accelerate(speed, m_handbrake ? 0.f : target, dt);
-        /* Let go, the wheels slow to a stop as hard as the tag brakes;
-         * the handbrake locks them */
-        if(m_handbrake || (m_recorded && target == 0.f))
+        /* The handbrake locks the wheels */
+        if(m_handbrake)
         {
             accel = std::clamp(-speed / dt, -d.deceleration_or_accel(), d.deceleration_or_accel());
             m_braking = m_handbrake && std::abs(speed) > .1f;
