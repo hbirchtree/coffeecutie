@@ -934,7 +934,15 @@ struct BlamScript
             return {};
         case op::effect_new:
             if(auto const* flag = named(m_scenario->cutscene.flags, text_of(arg(1))))
-                spawn_effect(p, arg(0), flag->position, Vecf3{std::cos(flag->facing.x), std::sin(flag->facing.x), 0.f});
+            {
+                /* A flag faces by yaw and pitch: x10's projector points up */
+                f32 const cp = std::cos(flag->facing.y);
+                spawn_effect(
+                    p,
+                    arg(0),
+                    flag->position,
+                    Vecf3{cp * std::cos(flag->facing.x), cp * std::sin(flag->facing.x), std::sin(flag->facing.y)});
+            }
             return {};
         case op::effect_new_on_object_marker:
             for(u64 id : objects_of(p, arg(1)))
