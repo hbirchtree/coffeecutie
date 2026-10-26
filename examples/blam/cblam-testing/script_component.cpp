@@ -2547,9 +2547,10 @@ struct BlamScript
                         : title->justification == blam::scn::cutscene_title::right ? 1.f
                                                                                    : 0.f,
             .color    = (c.r | c.g | c.b) ? Vecf4(c.r, c.g, c.b, 255.f) / 255.f : Vecf4(1.f),
-            .fade_in  = title->fade_time / tick_rate,
-            .hold     = title->up_time / tick_rate,
-            .fade_out = title->fade_out_time / tick_rate,
+            /* Some tags leave a time at -FLT_MAX */
+            .fade_in  = std::max(title->fade_time, 0.f) / tick_rate,
+            .hold     = std::max(title->up_time, 0.f) / tick_rate,
+            .fade_out = std::max(title->fade_out_time, 0.f) / tick_rate,
         };
     }
 
