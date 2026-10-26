@@ -808,6 +808,7 @@ struct Projectile
     Vecf3                        attach_offset{}; /* in that unit's model space */
     bool                         resting{false};  /* settled where it fell */
     bool                         flew_by{false};  /* past a local ear, heard */
+    bool                         combined{false}; /* gone into a super detonation */
 
     /*! Bullets fast enough to resolve as the trigger is pulled, along a
      *  ray of `reach` */
