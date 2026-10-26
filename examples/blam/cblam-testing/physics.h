@@ -206,6 +206,10 @@ struct Drive
     f32                   throttle{0.f};
     f32                   steer{0.f}; /*!< Stick right, -1..1 */
     Vecf3                 aim{1, 0, 0}; /*!< Where the driver looks */
+    bool                  brake{false}; /*!< Handbrake: the wheels lock */
+    /*! A recording's input, applied as Halo does: wheels turn by the look's
+     *  own angle, and with the throttle let go they brake to a stop */
+    bool recorded{false};
 };
 
 /*! Asks what the world is made of along from -> to; answered at once with

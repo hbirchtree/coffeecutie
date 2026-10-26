@@ -1915,6 +1915,8 @@ struct BlamScript
                     .throttle = input.movement.x,
                     .steer    = input.movement.y,
                     .aim      = facing.direction(),
+                    .brake    = input.held(blam::scn::recorded::control_jump),
+                    .recorded = true,
                 };
                 p.template subsystem<PhysicsBus>().inject(ev, &steer);
                 if(it->play.advance())
