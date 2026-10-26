@@ -75,6 +75,8 @@ struct ProjectileSystem
     {
         proj_t const& tag = *flight.tag;
         flight.age += dt;
+        if(flight.combined)
+            return false;
 
         if(flight.timer >= 0.f)
         {
@@ -222,6 +224,8 @@ struct ProjectileSystem
             {
                 flight.attached_to   = ray.entity_id;
                 flight.attach_offset = Vecf3(glm::inverse(host->transform) * Vecf4(model.position, 1.f));
+                if(super_combine(p, flight, *host))
+                    return false;
             }
             start_timer(flight);
             return true;
@@ -299,7 +303,7 @@ struct ProjectileSystem
             return;
         }
         f32 const speed = glm::length(flight.velocity);
-        Vecf3 const to  = target->position + Vecf3{0.f, 0.f, seek_height} - from;
+        Vecf3 const to  = target->position + Vecf3{0.f, 0.f, aim_height(p, *target)} - from;
         if(speed < 1e-4f || glm::dot(to, to) < 1e-6f)
             return;
         Vecf3 const have  = flight.velocity / speed;
@@ -311,6 +315,18 @@ struct ProjectileSystem
             flight.velocity = (angle <= turn ? want : have) * speed;
         else
             flight.velocity = glm::rotate(have, turn, glm::normalize(axis)) * speed;
+    }
+
+    /* The middle of a biped's standing pill, so a grunt is not overshot;
+     * other targets by a fixed height */
+    f32 aim_height(Proxy& p, Model const& target)
+    {
+        if(!target.origin_object || !target.origin_object->matches(blam::tag_class_t::bipd))
+            return seek_height;
+        auto biped = target.origin_object->template data<blam::scn::biped>(files(p).container.magic);
+        if(!biped.has_value() || biped.value()[0].standing_collision_height <= 0.f)
+            return seek_height;
+        return biped.value()[0].standing_collision_height * .5f;
     }
 
     bool is_unit(Proxy& p, u64 id)
@@ -352,6 +368,30 @@ struct ProjectileSystem
         };
         GameEvent ev{.type = GameEvent::ObjectHit};
         p.template subsystem<GameEventBus>().inject(ev, &hit);
+    }
+
+    /* Enough of a super-combining kind stuck in one unit go off together,
+     * as one super detonation in its middle */
+    bool super_combine(Proxy& p, Projectile const& flight, Model const& host)
+    {
+        if((flight.tag->projectile_flags & proj_t::flags_t::has_super_combining_explosion) ==
+               proj_t::flags_t::none ||
+           !flight.tag->super_detonation.valid())
+            return false;
+        std::vector<Projectile*> stuck;
+        for(auto ent : p.template select<Projectile>())
+        {
+            auto& other = ent.template get<Projectile>();
+            if(&other != &flight && other.attached && !other.combined &&
+               other.attached_to == flight.attached_to && other.tag == flight.tag)
+                stuck.push_back(&other);
+        }
+        if(stuck.size() + 1 < super_combine_count)
+            return false;
+        for(auto* other : stuck)
+            other->combined = true;
+        play(p, flight.tag->super_detonation, host.position + Vecf3{0.f, 0.f, aim_height(p, host)}, {0, 0, 1}, {});
+        return true;
     }
 
     /* Plays its own detonation, and what the material adds to it */
@@ -459,7 +499,8 @@ struct ProjectileSystem
     static constexpr f32 ticks_per_second = 30.f;
     static constexpr f32 halo_gravity     = 9.81f / 3.048f; /* wu/s^2 */
     static constexpr f32 surface_gap      = .01f;
-    static constexpr f32 seek_height      = .6f; /* wu above a unit's origin aimed for */
+    static constexpr f32 seek_height      = .6f; /* wu above a non-biped's origin aimed for */
+    static constexpr size_t super_combine_count = 7; /* stuck in one unit */
     static constexpr f32 rest_speed       = .3f; /* wu/s */
     static constexpr f32 flyby_reach      = 1.5f; /* wu, from the ear */
     static constexpr f32 blast_lean       = .7071f; /* sin 45 */
