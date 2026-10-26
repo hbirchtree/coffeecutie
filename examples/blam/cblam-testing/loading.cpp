@@ -1041,15 +1041,15 @@ struct ResourceLoader
         if(mesh_id.valid())
             spawn_bsp_chunks(p, mesh_id);
 
-        /* Static objects: drop the ones not placed here, spawn the ones that
-         * are and were skipped so far */
+        /* Static objects and devices: drop the ones not placed here, spawn
+         * the ones that are and were skipped so far */
         std::set<u32> present, doomed;
         for(auto ent : p.template select<ObjectSpawn, NetworkInfo>())
         {
             auto [spawn, net] = ent.components();
             auto const group  = SpawnObjectEvent::scenario_group(net.instance_id);
-            if(group != ScenarioGroup::Scenery &&
-               group != ScenarioGroup::LightFixture)
+            if(group != ScenarioGroup::Scenery && group != ScenarioGroup::LightFixture &&
+               group != ScenarioGroup::Machine && group != ScenarioGroup::Control)
                 continue;
             if(spawn.header && !placed_in_section(*spawn.header, section))
                 doomed.insert(net.instance_id);
@@ -1063,7 +1063,9 @@ struct ResourceLoader
         if(!scenario)
             return;
         auto const& magic = files.container.magic;
-        for(auto group_id : {ScenarioGroup::Scenery, ScenarioGroup::LightFixture})
+        /* Devices too: they recall their state by net id (DeviceGroups) */
+        for(auto group_id : {ScenarioGroup::Scenery, ScenarioGroup::LightFixture,
+                             ScenarioGroup::Machine, ScenarioGroup::Control})
             with_scenario_group(
                 *scenario, group_id, [&](auto const& group_data, u32 tags) {
                     auto palette   = group_data.palette.data(magic);

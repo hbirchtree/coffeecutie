@@ -3,6 +3,8 @@
 #include <coffee/components/entity_container.h>
 #include <coffee/components/subsystem.h>
 
+#include <map>
+#include <optional>
 #include <vector>
 
 /*! The scenario's device groups: one value each that the positions or powers
@@ -19,6 +21,20 @@ struct DeviceGroups : compo::SubsystemBase
     std::vector<bool> changes_once; /*!< Spent once changed */
     std::vector<bool> spent;
     u32               load_generation{0};
+
+    /*! A device's state while its section is not loaded, by net id: what it
+     *  was left at, or what a script told it since */
+    struct remembered_t
+    {
+        std::optional<f32>  position;
+        std::optional<f32>  position_target;
+        std::optional<f32>  power;
+        std::optional<f32>  power_target;
+        std::optional<bool> automatic;
+        std::optional<bool> one_sided;
+        std::optional<bool> used;
+    };
+    std::map<u32, remembered_t> remembered;
 
     bool valid(i16 group) const
     {
