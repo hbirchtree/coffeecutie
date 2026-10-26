@@ -128,18 +128,6 @@ struct ShaderCache
         for(u32 i = 0; i < mat.num_stages; i++)
             mat.stages[i] =
                 materials::transparent_data::stage_t::from_blam(stages[i]);
-        /* constant_color0's RGB is GLOBAL: every stage's constant_color0
-         * input references stage 0's animated constant color (the shield's
-         * blue), while the ALPHA stays per-stage (each stage's own animated
-         * weight — the shield's stage 3 idles at 0, leaving v1 pure blue).
-         * constant_color1 is fully per-stage. */
-        for(u32 i = 1; i < mat.num_stages; i++)
-        {
-            mat.stages[i].color0 =
-                Vecf4(Vecf3(mat.stages[0].color0), mat.stages[i].color0.w);
-            mat.stages[i].color0_up = Vecf4(
-                Vecf3(mat.stages[0].color0_up), mat.stages[i].color0_up.w);
-        }
     }
 
     /* Periodic factor for a sotr stage's constant_color0 animation
@@ -208,18 +196,11 @@ struct ShaderCache
                          .count();
         f32 t = static_cast<f32>(std::fmod(t64, 3600.0));
 
-        /* constant_color0 is global, defined by stage 0 (see
-         * populate_transparent_material). */
         if(mat.num_stages == 0 || stages.empty())
             return;
-        auto const& s0      = stages[0];
-        auto        is_zero = [](Vecf4 const& c) {
+        auto is_zero = [](Vecf4 const& c) {
             return c.x == 0.f && c.y == 0.f && c.z == 0.f && c.w == 0.f;
         };
-        /* All-zero bounds = unset constant; from_blam substituted identity
-         * white, keep it. */
-        if(is_zero(s0.color0_lower) && is_zero(s0.color0_upper))
-            return;
         auto factor_of = [&](shader_transparent::stage_t const& s) {
             auto src = s.color0_source;
             if(src == animation_src::none && (static_cast<u32>(s.flags) & 0x4u))
@@ -231,26 +212,24 @@ struct ShaderCache
                 i < functions.size() ? functions[i] : 0.f, 0.f, 1.f);
         };
 
-        f32   f = factor_of(s0);
-        Vecf4 c = glm::mix(s0.color0_lower, s0.color0_upper, f);
-        /* tag colors are ARGB → RGBA; RGB is global (stage 0), alpha is each
-         * stage's own animated weight. */
-        Vecf3 global_rgb(c.y, c.z, c.w);
-        if(static_cast<u32>(s0.flags) & 0x4u)
-            /* Softens the constant toward white so areas lit purely by it read
-             * pale rather than fully saturated. */
-            global_rgb = glm::mix(global_rgb, Vecf3(1.f), 0.35f);
-        /* mat lives in the mapped GPU buffer and may not be populated yet
-         * on the first frame an instance appears (update runs before
+        /* Each combiner stage has its own constant_color0 (tag colors are
+         * ARGB). mat lives in the mapped GPU buffer and may not be populated
+         * yet on the first frame an instance appears (update runs before
          * populate) — clamp instead of trusting num_stages. */
         u32 n = std::min(mat.num_stages, 7u);
         for(u32 i = 0; i < n && i < stages.size(); i++)
         {
-            Vecf4 own = glm::mix(
-                stages[i].color0_lower,
-                stages[i].color0_upper,
-                factor_of(stages[i]));
-            mat.stages[i].color0 = Vecf4(global_rgb, own.x);
+            auto const& s = stages[i];
+            /* All-zero bounds = unset; from_blam substituted identity white */
+            if(is_zero(s.color0_lower) && is_zero(s.color0_upper))
+                continue;
+            Vecf4 const c = glm::mix(s.color0_lower, s.color0_upper, factor_of(s));
+            Vecf3       rgb(c.y, c.z, c.w);
+            if(static_cast<u32>(s.flags) & 0x4u)
+                /* Softens the constant toward white so areas lit purely by it
+                 * read pale rather than fully saturated. */
+                rgb = glm::mix(rgb, Vecf3(1.f), 0.35f);
+            mat.stages[i].color0 = Vecf4(rgb, c.x);
         }
     }
 
