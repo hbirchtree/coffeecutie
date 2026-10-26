@@ -917,9 +917,24 @@ struct NetworkInfo
     } changes;
     bool sent_physics{false};
 
-    f32                       priority{0.f};
-    f32                       relevance{0.f};
-    std::chrono::milliseconds update_period{300};
+    /*! How much this object matters to each player who sees it, from
+     *  NetworkRelevance on the server; Networking sends it to each by this */
+    struct relevance_t
+    {
+        u32 viewer{0};      /*!< The viewing player's index */
+        f32 relevance{0.f}; /*!< 0 out of sight and far, 1 close or in view */
+        f32 priority{0.f};  /*!< Relevance weighed by what it is */
+        std::chrono::milliseconds update_period{1000};
+    };
+    std::vector<relevance_t> relevance;
+
+    relevance_t const* relevance_for(u32 viewer) const
+    {
+        for(auto const& r : relevance)
+            if(r.viewer == viewer)
+                return &r;
+        return nullptr;
+    }
 };
 
 struct PlayerInfo
