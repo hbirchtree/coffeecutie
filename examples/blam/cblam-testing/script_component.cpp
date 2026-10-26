@@ -130,6 +130,7 @@ struct BlamScript
         m_held.clear();
         m_commands.clear();
         m_scaling.clear();
+        m_suspended.clear();
         m_walk_speeds.clear();
         m_tests = {};
         m_loops.clear();
@@ -271,6 +272,7 @@ struct BlamScript
         m_custom     = std::move(saved.custom);
         m_commands.clear();
         m_scaling.clear();
+        m_suspended.clear();
         m_speakers   = std::move(saved.speakers);
         m_tests      = saved.tests;
         m_impulses   = std::move(saved.impulses);
@@ -909,6 +911,17 @@ struct BlamScript
                     custom_animation(p, id, graph, name, blend, frame);
                 });
             return value_t::boolean(true);
+        /* Suspended, a unit hangs where it is: no physics moves it */
+        case op::unit_suspended:
+            for(u64 id : objects_of(p, arg(0)))
+            {
+                if(arg(1).truthy())
+                    m_suspended.insert(id);
+                else
+                    m_suspended.erase(id);
+                carry(p, id, arg(1).truthy() || playing_recording(id) || m_hovering.contains(id));
+            }
+            return {};
         case op::object_set_scale:
             with_objects(
                 p,
@@ -2124,6 +2137,7 @@ struct BlamScript
 
     void carry(Proxy& p, u64 id, bool scripted)
     {
+        scripted      = scripted || m_suspended.contains(id);
         auto* physics = p.template get<ObjectPhysics>(id);
         if(!physics || physics->scripted == scripted)
             return;
@@ -2775,6 +2789,7 @@ struct BlamScript
         i32 at{0};
     };
     std::map<u64, scaling_t> m_scaling;
+    std::set<u64>            m_suspended;
     std::set<u64>                           m_held; /* attached, looping their custom clip */
     std::map<u64, Vecf3>                    m_walking;
     struct speaker_t
