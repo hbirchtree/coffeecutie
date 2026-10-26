@@ -126,6 +126,7 @@ struct BlamScript
         m_actors.clear();
         m_recordings.clear();
         m_custom.clear();
+        m_held.clear();
         m_walk_speeds.clear();
         m_tests = {};
         m_loops.clear();
@@ -1484,13 +1485,20 @@ struct BlamScript
             auto const& clip = anims.value()[i];
             if(lowered(clip.name.str()) != lowered(name))
                 continue;
+            /* Riding a marker, it keeps the clip until told otherwise */
+            bool const held = std::ranges::any_of(m_attached, [id](attached_t const& a) { return a.child == id; });
             GameEvent               ev{.type = GameEvent::PlayModelAnimation};
             PlayModelAnimationEvent play{
                 .entity    = id,
                 .animation = i,
                 .graph     = graph,
+                .loop      = held,
                 .fade      = blend ? .2f : 0.f,
             };
+            if(held)
+                m_held.insert(id);
+            else
+                m_held.erase(id);
             p.template subsystem<GameEventBus>().inject(ev, &play);
             bool const moves = clip.frame_info_type_ != blam::antr::frame_info_type::none;
             m_custom[id]     = {.clip = &clip, .moves = moves};
@@ -1538,6 +1546,7 @@ struct BlamScript
             return;
         bool const moves = it->second.moves;
         m_custom.erase(it);
+        m_held.erase(id);
         GameEvent               ev{.type = GameEvent::PlayModelAnimation};
         PlayModelAnimationEvent stop{.entity = id};
         p.template subsystem<GameEventBus>().inject(ev, &stop);
@@ -1562,7 +1571,9 @@ struct BlamScript
             if(!model || state.frame >= state.clip->frame_count)
             {
                 u64 const id = (it++)->first;
-                if(model)
+                if(model && m_held.contains(id))
+                    m_custom.erase(id);
+                else if(model)
                     stop_custom(p, id);
                 else
                     m_custom.erase(id);
@@ -1671,6 +1682,12 @@ struct BlamScript
         });
         if(gone && !playing_recording(child) && !m_hovering.contains(child))
             carry(p, child, false);
+        if(gone && m_held.erase(child))
+        {
+            GameEvent               ev{.type = GameEvent::PlayModelAnimation};
+            PlayModelAnimationEvent stop{.entity = child};
+            p.template subsystem<GameEventBus>().inject(ev, &stop);
+        }
     }
 
     void place_attached(Proxy& p)
@@ -2400,6 +2417,7 @@ struct BlamScript
     std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> m_deferred;
     std::set<u64>                           m_hovering;
     std::map<u64, custom_t>                 m_custom;
+    std::set<u64>                           m_held; /* attached, looping their custom clip */
     std::map<u64, Vecf3>                    m_walking;
     struct speaker_t
     {
