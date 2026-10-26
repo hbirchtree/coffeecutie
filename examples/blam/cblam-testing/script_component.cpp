@@ -270,7 +270,12 @@ struct BlamScript
         m_impulses   = std::move(saved.impulses);
         m_loops      = std::move(saved.loops);
         std::erase_if(m_recordings, [&](recording_t const& r) { return !there(r.entity); });
-        std::erase_if(m_riders, [&](rider_t const& r) { return !there(r.unit) || !there(r.vehicle); });
+        std::erase_if(m_riders, [&](rider_t const& r) {
+            bool const gone = !there(r.unit) || !there(r.vehicle);
+            if(gone)
+                seated(p, r.unit, false);
+            return gone;
+        });
         std::erase_if(m_attached, [&](attached_t const& a) { return !there(a.parent) || !there(a.child); });
         std::erase_if(m_hovering, [&](u64 id) { return !there(id); });
         std::erase_if(m_custom, [&](auto const& c) { return !there(c.first); });
@@ -1327,6 +1332,7 @@ struct BlamScript
                 .stance  = std::move(own),
             });
             carry(p, unit, true);
+            seated(p, unit, true);
             return;
         }
     }
@@ -1347,7 +1353,16 @@ struct BlamScript
                     anim->stance = r.stance;
         std::erase_if(m_riders, [unit](rider_t const& r) { return r.unit == unit; });
         if(m_riders.size() != before)
+        {
             carry(p, unit, false);
+            seated(p, unit, false);
+        }
+    }
+
+    static void seated(Proxy& p, u64 unit, bool on)
+    {
+        if(auto* physics = p.template get<ObjectPhysics>(unit))
+            physics->seated = on;
     }
 
     /* Riders sit where their seats are as the vehicle moves */
