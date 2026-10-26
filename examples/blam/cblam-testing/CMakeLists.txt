@@ -67,6 +67,7 @@ coffee_application(
         map_loading.cpp
         network/gateway_fleet_registration.cpp
         network/networking.cpp
+        network/relevance.cpp
         network/webrtc_identity.cpp
         network/webrtc_signaling.cpp
         offline_maps.cpp

@@ -1,6 +1,7 @@
 #include "game_mode.h"
 #include "devices.h"
 #include "network/networking.h"
+#include "network/relevance.h"
 #include "network/network_events.h"
 
 #include <magic_enum/magic_enum.hpp>
@@ -1460,8 +1461,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_dynamic_spawns.clear();
                 m_held_players.clear();
                 m_release_at.reset();
+                m_latest_cameras.clear();
                 for(auto& [_, state] : m_connections)
+                {
                     state.verified = false;
+                    state.cameras_sent.clear();
+                    state.objects_sent.clear();
+                }
                 for(auto& [connection, state] : m_connections)
                 {
                     if(state.invited)
@@ -2497,8 +2503,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         net.changes.viewport = net.changes.transform = false;
                         return;
                     }
-                    send_all(Message<CameraSync>(
-                        camera_sync_of(p, entity.id(), info, cam, tick_now(p))));
+                    auto const sync = camera_sync_of(p, entity.id(), info, cam, tick_now(p));
+                    /* Our own seats go out as send_streams schedules them;
+                     * a remote player we moved is told, and everyone, at once */
+                    if(info.is_remote())
+                        send_all(Message<CameraSync>(CameraSync(sync)));
+                    else
+                        m_latest_cameras[info.player_idx] = sync;
                     net.changes.viewport = net.changes.transform = false;
                     net.sent_physics     = info.mode.physics;
                 };
@@ -2545,6 +2556,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         send_own(p, player.id(), info, cam, net);
                 }
                 send_inputs(p);
+                if(auto now = std::chrono::steady_clock::now();
+                   now - m_stats_journaled >= stats_period)
+                {
+                    m_stats_journaled = now;
+                    SteamNetConnectionRealTimeStatus_t status{};
+                    if(m_impl->GetConnectionRealTimeStatus(m_connection, &status, 0, nullptr) ==
+                       k_EResultOK)
+                        journal_stats(status, CameraSync::self_id);
+                }
             }
 
             int                       num_msgs = -1;
@@ -2636,12 +2656,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         Proxy& p, u64 entity, PlayerInfo const& info, PlayerCamera const& camera, NetworkInfo& net)
     {
         auto& sent = m_own_seats[entity];
-        if(info.mode.physics != net.sent_physics ||
-           ((net.changes.viewport || net.changes.transform) && camera_moved(entity, camera)))
+        bool const mode  = info.mode.physics != net.sent_physics;
+        bool const moved = (net.changes.viewport || net.changes.transform) && camera_moved(entity, camera);
+        /* Every frame it moves, so one lost is soon replaced; where it comes
+         * to rest, or a change of mode, is not */
+        bool const settled = !moved && std::exchange(sent.moving, moved);
+        sent.moving        = moved;
+        if(mode || moved || settled)
         {
             send_single(
                 m_connection,
-                Message<CameraSync>(camera_sync_of(p, entity, info, camera, 0)));
+                Message<CameraSync>(camera_sync_of(p, entity, info, camera, tick_now(p))),
+                mode || settled ? k_nSteamNetworkingSend_Reliable
+                                : k_nSteamNetworkingSend_UnreliableNoNagle);
             net.changes.viewport = net.changes.transform = false;
             net.sent_physics     = info.mode.physics;
         }
@@ -2882,15 +2909,46 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     void measure_pings()
     {
-        u32 worst = 0;
-        for(auto const& [connection, _] : m_connections)
+        u32  worst  = 0;
+        auto now    = std::chrono::steady_clock::now();
+        bool report = now - m_stats_journaled >= stats_period;
+        if(report)
+            m_stats_journaled = now;
+        for(auto& [connection, state] : m_connections)
         {
             SteamNetConnectionRealTimeStatus_t status{};
-            if(m_impl->GetConnectionRealTimeStatus(connection, &status, 0, nullptr) ==
+            if(m_impl->GetConnectionRealTimeStatus(connection, &status, 0, nullptr) !=
                k_EResultOK)
-                worst = std::max(worst, static_cast<u32>(std::max(status.m_nPing, 0)));
+                continue;
+            worst = std::max(worst, static_cast<u32>(std::max(status.m_nPing, 0)));
+            if(report)
+            {
+                journal_stats(status, state.idx);
+                journal(
+                    "net_streams",
+                    {{"player_idx", state.idx},
+                     {"sent", std::exchange(state.streams_sent, 0)},
+                     {"held", std::exchange(state.streams_held, 0)},
+                     {"over_budget", std::exchange(state.streams_over_budget, 0)}});
+            }
         }
         m_net_state.worst_ping_ms = worst;
+    }
+
+    /* What a connection carries, for tests to compare traffic by */
+    void journal_stats(SteamNetConnectionRealTimeStatus_t const& status, u32 player_idx)
+    {
+        journal(
+            "net_stats",
+            {{"player_idx", player_idx},
+             {"ping_ms", status.m_nPing},
+             {"out_bytes_per_sec", status.m_flOutBytesPerSec},
+             {"in_bytes_per_sec", status.m_flInBytesPerSec},
+             {"out_packets_per_sec", status.m_flOutPacketsPerSec},
+             {"pending_reliable", status.m_cbPendingReliable},
+             {"pending_unreliable", status.m_cbPendingUnreliable},
+             {"sent_unacked_reliable", status.m_cbSentUnackedReliable},
+             {"queue_time_us", status.m_usecQueueTime}});
     }
 
     /* Impacts the server heard, for clients to hear too */
@@ -3087,6 +3145,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         });
 
         std::vector<ObjectSync> changed, settled, all;
+        std::vector<NetworkInfo const*> changed_nets;
         for(auto object : p.select<Model, ObjectPhysics, NetworkInfo>())
         {
             auto [model, physics, net] = object.components();
@@ -3105,7 +3164,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             all.push_back(sync);
             auto& was_asleep = m_object_asleep[net.instance_id];
             if(!physics.sleeping)
+            {
                 changed.push_back(sync);
+                changed_nets.push_back(&net);
+            }
             else if(!was_asleep)
                 settled.push_back(sync);
             was_asleep = physics.sleeping;
@@ -3125,13 +3187,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 gsl::span<ObjectSync>(all),
                 k_nSteamNetworkingSend_Reliable,
                 fresh);
-        if(!current.empty() && !changed.empty())
-            send_all<ObjectSync>(
-                MessageBase{MessageBase::ObjectSync},
-                gsl::span<ObjectSync>(changed),
-                k_nSteamNetworkingSend_UnreliableNoNagle,
-                current,
-                FRAME_UPDATE_LANE);
+        send_streams(p, changed, changed_nets);
         /* The last sync until it wakes, losing it leaves clients mid-motion */
         if(!current.empty() && !settled.empty())
             send_all<ObjectSync>(
@@ -3139,6 +3195,124 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 gsl::span<ObjectSync>(settled),
                 k_nSteamNetworkingSend_Reliable,
                 current);
+    }
+
+    /* How much a connection's players care about a stream, and how many
+     * ticks may pass between its states; unrated, it goes every tick */
+    template<typename State>
+    static std::pair<f32, u64> rating_of(NetworkInfo const& net, State const& state)
+    {
+        f32  priority = 0.f;
+        u64  period   = max_period;
+        bool rated    = false;
+        for(auto const& [_, player] : state.players)
+            if(auto const* r = net.relevance_for(player.idx))
+            {
+                rated    = true;
+                priority = std::max(priority, r->priority);
+                period   = std::min(period, static_cast<u64>(std::max<libc_types::i64>(
+                    1, std::lround(r->update_period.count() / (TickClock::tick_seconds * 1000.f)))));
+            }
+        return rated ? std::pair{priority, period} : std::pair{1.f, u64(1)};
+    }
+
+    /* Each connection gets the players and moving objects due to it by
+     * their rating, the most overdue for their worth first, within a byte
+     * budget a tick. A player switching mode or deck is told reliably */
+    void send_streams(
+        Proxy& p, std::vector<ObjectSync> const& moving, std::vector<NetworkInfo const*> const& nets)
+    {
+        u64 const tick = tick_now(p);
+        std::map<u32, NetworkInfo const*> player_nets;
+        for(auto player : p.select<PlayerInfo, NetworkInfo>())
+            player_nets[player.get<PlayerInfo>().player_idx] = &player.get<NetworkInfo>();
+
+        struct due_t
+        {
+            f32    score;
+            bool   camera;
+            size_t index; /* into moving, or the camera's player index */
+        };
+        for(auto& [connection, state] : m_connections)
+        {
+            if(!state.verified)
+                continue;
+            std::vector<due_t> due;
+            for(auto const& [idx, latest] : m_latest_cameras)
+            {
+                auto net = player_nets.find(idx);
+                if(state.own(idx) || net == player_nets.end())
+                    continue;
+                auto const sent = state.cameras_sent.find(idx);
+                if(sent != state.cameras_sent.end() && sent->second.tick >= latest.tick)
+                    continue;
+                /* New to it, changed mode or deck, or come to rest: reliably */
+                bool const quiet = latest.tick + settle_ticks <= tick;
+                if(sent == state.cameras_sent.end() || sent->second.flags != latest.flags ||
+                   sent->second.deck != latest.deck || quiet)
+                {
+                    send_single(connection, Message<CameraSync>(CameraSync(latest)));
+                    state.cameras_sent[idx] = latest;
+                    continue;
+                }
+                auto const [priority, period] = rating_of(*net->second, state);
+                u64 const age = tick - std::min(tick, sent->second.tick);
+                if(age >= period)
+                    due.push_back({priority * age / period, true, idx});
+                else
+                    state.streams_held++;
+            }
+            if(state.objects_synced)
+                for(size_t i = 0; i < moving.size(); i++)
+                {
+                    if(driven_by(p, state, moving[i].net_id))
+                        continue;
+                    auto const [priority, period] = rating_of(*nets[i], state);
+                    auto const sent = state.objects_sent.find(moving[i].net_id);
+                    u64 const  age  = sent == state.objects_sent.end() ? period : tick - std::min(tick, sent->second);
+                    if(age >= period)
+                        due.push_back({priority * age / period, false, i});
+                    else
+                        state.streams_held++;
+                }
+            std::sort(due.begin(), due.end(), [](due_t const& a, due_t const& b) {
+                return a.score > b.score;
+            });
+
+            size_t                  budget = tick_budget;
+            std::vector<ObjectSync> objects;
+            for(auto const& d : due)
+            {
+                size_t const bytes = d.camera ? sizeof(CameraSync) : sizeof(ObjectSync);
+                if(bytes > budget)
+                {
+                    state.streams_over_budget++;
+                    continue;
+                }
+                budget -= bytes;
+                state.streams_sent++;
+                if(d.camera)
+                {
+                    auto const& latest = m_latest_cameras.at(static_cast<u32>(d.index));
+                    send_single(
+                        connection,
+                        Message<CameraSync>(CameraSync(latest)),
+                        k_nSteamNetworkingSend_UnreliableNoNagle);
+                    state.cameras_sent[static_cast<u32>(d.index)] = latest;
+                } else
+                {
+                    objects.push_back(moving[d.index]);
+                    state.objects_sent[moving[d.index].net_id] = tick;
+                }
+            }
+            if(!objects.empty())
+                send_all<ObjectSync>(
+                    MessageBase{MessageBase::ObjectSync},
+                    gsl::span<ObjectSync>(objects),
+                    k_nSteamNetworkingSend_UnreliableNoNagle,
+                    {connection},
+                    FRAME_UPDATE_LANE);
+        }
     }
 
     /* Whether a camera moved since last sent; records it if so */
@@ -3486,6 +3660,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     void leave_server(Proxy& p)
     {
         m_object_history.clear();
+        m_object_spacing.clear();
         m_player_history.clear();
         m_driven.clear();
         for(auto object : p.select<ObjectPhysics>())
@@ -3547,6 +3722,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto& info = player->biped.get<PlayerInfo>();
             if(!info.permissions.camera)
                 break;
+            /* Sent unreliably: one older than what has come is stale */
+            auto& newest = m_camera_ticks[player->idx];
+            if(sync.tick != 0 && sync.tick <= newest)
+                break;
+            newest = sync.tick;
             /* A body walked here goes where its inputs take it, once in */
             bool const simulated = sync.flags & CameraSync::simulated;
             bool const walked    = info.mode.simulated && info.mode.physics;
@@ -3558,22 +3738,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cam.camera.position = world_of(p, sync);
             cam.camera.rotation = sync.rotation;
 
-            auto targets = verified_connections();
-            targets.erase(connection);
-            if(targets.empty())
-                break;
-            send_all(
-                Message<CameraSync>({
-                    .position      = sync.position,
-                    .rotation      = sync.rotation,
-                    .target_player = player->idx,
-                    .flags         = sync.flags,
-                    .deck          = sync.deck,
-                    /* Its body moves there on the next tick here */
-                    .tick = tick_now(p) + 1,
-                }),
-                k_nSteamNetworkingSend_Reliable,
-                std::move(targets));
+            /* Passed on to the others as send_streams schedules it */
+            m_latest_cameras[player->idx] = {
+                .position      = sync.position,
+                .rotation      = sync.rotation,
+                .target_player = player->idx,
+                .flags         = sync.flags,
+                .deck          = sync.deck,
+                /* Its body moves there on the next tick here */
+                .tick = tick_now(p) + 1,
+            };
             break;
         }
         case MessageBase::TickInput: {
@@ -4009,6 +4183,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 if(!history.empty() && history.back().tick >= sync.tick)
                     continue;
                 note_lag(now, sync.tick);
+                if(!history.empty())
+                    note_spacing(m_object_spacing[sync.net_id], sync.tick - history.back().tick);
                 history.push_back(sync);
                 while(history.size() > object_history_size)
                     history.pop_front();
@@ -4037,6 +4213,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 if(history.empty() || history.back().tick < sync.tick)
                 {
                     note_lag(tick_now(p), sync.tick);
+                    if(!history.empty())
+                        note_spacing(m_player_spacing[sync.target_player], sync.tick - history.back().tick);
                     history.push_back(sync);
                 }
                 while(history.size() > object_history_size)
@@ -4421,6 +4599,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         u64 inputs{0};
         u64 inputs_lost{0};
         bool objects_synced{false}; /*!< Has had every moving object */
+        /* What it was last sent of each stream, by the tick of that state:
+         * moving objects by net id, players' cameras by index */
+        std::map<u32, u64>        objects_sent;
+        std::map<u32, CameraSync> cameras_sent;
+        /* Stream states sent, held back as not yet due, and over budget,
+         * since last journaled */
+        u64 streams_sent{0};
+        u64 streams_held{0};
+        u64 streams_over_budget{0};
 
         /*! Its own player that `player_idx` names; messages about anyone
          *  else are ignored */
@@ -4451,7 +4638,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Moving objects */
     /* How many ticks behind the server a replica shows what moves */
     static constexpr u64    interp_ticks        = 3;
-    static constexpr size_t object_history_size = 8;
+    /* Bytes of players and moving objects a connection is sent a tick, ~60 KB/s */
+    static constexpr size_t tick_budget = 2048;
+    /* The longest a stream waits for its next state, in ticks */
+    static constexpr u64    max_period  = 30;
+    /* Ticks without a new state before a player counts as come to rest */
+    static constexpr u64    settle_ticks = 15;
+    /* Players' newest cameras, which send_streams passes on, and the
+     * client tick of the newest each sender sent */
+    std::map<u32, CameraSync> m_latest_cameras;
+    std::map<u32, u64>        m_camera_ticks;
+    /* How often each connection's traffic is journaled */
+    static constexpr auto                 stats_period = std::chrono::seconds(2);
+    std::chrono::steady_clock::time_point m_stats_journaled{};
+    static constexpr size_t object_history_size = 32;
     u64                     m_synced_tick{0};
     std::map<u32, bool>                      m_object_asleep;
     /* Last seat sent per player index; the client's own, to the server */
@@ -4501,6 +4701,32 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
      * newest state yet says, a sleeping object's is sent as it was */
     f32 m_sync_lag{0.f};
     u64 m_sync_newest{0};
+    /* Ticks between the states of each object and player, see note_spacing */
+    std::map<u32, f32>           m_object_spacing;
+    std::map<u32, f32>           m_player_spacing;
+    static constexpr f32         spacing_smoothing = .1f;
+    static constexpr f32         spacing_margin    = 1.5f;
+    static constexpr u64         max_spacing       = 15;
+    /* Past its newest state, a stream carries on along its velocity this long */
+    static constexpr libc_types::f64 max_extrapolation = 10.;
+
+    /* Ticks between a stream's states, smoothed: a slow sender, or one
+     * sent to rarely, is shown further behind so there is always a next
+     * state to move toward. A pause (nothing moved) counts only as a slow
+     * one */
+    static void note_spacing(f32& spacing, u64 gap)
+    {
+        f32 const g = static_cast<f32>(std::min<u64>(gap, max_spacing));
+        spacing     = spacing <= 0.f ? g : glm::mix(spacing, g, spacing_smoothing);
+    }
+
+    /* How far behind its newest state a stream is drawn */
+    static libc_types::f64 stream_delay(std::map<u32, f32> const& spacing, u32 key)
+    {
+        auto it = spacing.find(key);
+        f32 const gap = it == spacing.end() ? 0.f : it->second;
+        return std::max(static_cast<libc_types::f64>(interp_ticks), static_cast<libc_types::f64>(gap) * spacing_margin);
+    }
 
     void note_lag(u64 now, u64 tick)
     {
@@ -4535,6 +4761,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         std::optional<SeatSync>      seat;
         std::optional<EquipmentSync> equipment;
         bool                         grab{false};
+        bool                         moving{false}; /*!< Its camera, last frame */
         std::deque<TickInput>        inputs;
     };
     std::map<u64, own_seat_t> m_own_seats;
@@ -4692,8 +4919,7 @@ struct ObjectFollower
             return follow_drivers(p, net, clock);
         if(!net.m_join_confirmed)
             return;
-        f64 const at = static_cast<f64>(clock.tick()) + clock.alpha() -
-                       static_cast<f64>(Networking::interp_ticks) - net.m_sync_lag;
+        f64 const now = static_cast<f64>(clock.tick()) + clock.alpha() - net.m_sync_lag;
 
         /* What this client drives, it simulates */
         auto const mine = driven_here(p, false);
@@ -4711,10 +4937,18 @@ struct ObjectFollower
             auto it = net.m_object_history.find(info.instance_id);
             if(info.instance_id == 0 || it == net.m_object_history.end())
                 continue;
+            f64 const at = now - Networking::stream_delay(net.m_object_spacing, info.instance_id);
             if(auto pose = around(it->second, at))
             {
                 auto const& [from, to, alpha] = *pose;
                 Networking::follow(model, physics, from, to, alpha);
+                /* Run dry: carry on as it was going, a little way */
+                if(f64 const past = at - static_cast<f64>(to.tick); past > 0. && !(to.flags & ObjectSync::sleeping))
+                {
+                    model.position += Vecf3(to.linear_velocity) * static_cast<f32>(
+                        std::min(past, Networking::max_extrapolation) * TickClock::tick_seconds);
+                    model.update_matrix();
+                }
             }
         }
 
@@ -4726,12 +4960,23 @@ struct ObjectFollower
             auto it = net.m_player_history.find(info.player_idx);
             if(it == net.m_player_history.end())
                 continue;
+            f64 const at = now - Networking::stream_delay(net.m_player_spacing, info.player_idx);
             if(auto pose = around(it->second, at))
             {
                 auto const& [from, to, alpha] = *pose;
                 /* Each off its deck as the deck stands this frame */
                 cam.camera.position =
                     glm::mix(world_of(p, net, from), world_of(p, net, to), alpha);
+                /* Run dry: carry on along its last step, a little way */
+                if(f64 const past = at - static_cast<f64>(to.tick);
+                   past > 0. && it->second.size() >= 2 && to.deck == 0)
+                {
+                    auto const& prev = it->second[it->second.size() - 2];
+                    f64 const   span = static_cast<f64>(to.tick - prev.tick);
+                    if(span > 0. && span <= static_cast<f64>(Networking::max_spacing))
+                        cam.camera.position += (Vecf3(to.position) - Vecf3(prev.position)) *
+                                               static_cast<f32>(std::min(past, Networking::max_extrapolation) / span);
+                }
                 cam.camera.rotation = glm::slerp(from.rotation, to.rotation, alpha);
                 info.mode.physics   = to.flags & CameraSync::physics;
             }
@@ -4785,6 +5030,7 @@ void alloc_networking(
         gateway_auth_key);
     networking.m_journal = &e.subsystem_cast<Journal>();
     e.register_subsystem_inplace<ObjectFollower>();
+    alloc_network_relevance(e);
     networking.m_impact_queue =
         e.subsystem_cast<PhysicsBus>().addQueuedEventFunction<Physics::Impact>(
             0, [&networking](Physics::Event&, Physics::Impact* impact) {
