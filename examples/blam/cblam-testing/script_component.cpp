@@ -140,6 +140,7 @@ struct BlamScript
         m_despawning.clear();
         m_recreate.clear();
         m_deferred.clear();
+        m_queued_recordings.clear();
         m_log.clear();
 
         auto strings = scenario->string_segment(map.magic);
@@ -278,6 +279,7 @@ struct BlamScript
         m_spawning.clear();
         m_despawning.clear();
         m_recreate.clear();
+        m_queued_recordings.clear();
         log("back to the checkpoint");
     }
 
@@ -406,6 +408,20 @@ struct BlamScript
             } else
                 m_deferred.emplace_back(net_id, std::move(fn));
         }
+    }
+
+    /* Net ids of the objects a value names that are still being spawned */
+    std::vector<u32> spawning_of(value_t const& v) const
+    {
+        std::vector<u32> out;
+        for(u32 net_id : v.pending)
+            if(m_spawning.contains(net_id))
+                out.push_back(net_id);
+        if(auto it = m_named.find(lowered(text_of(v))); it != m_named.end())
+            if(u32 const net_id = SpawnObjectEvent::scenario_net_id(it->second.group, it->second.index);
+               m_spawning.contains(net_id))
+                out.push_back(net_id);
+        return out;
     }
 
     /* An object value: a named scenario object, or what a list holds */
@@ -781,6 +797,10 @@ struct BlamScript
         case op::recording_play:
         case op::recording_play_and_hover:
         case op::recording_play_and_delete:
+            /* Waiting on its object, a recording still has all of its time */
+            if(auto const* recording = named(m_scenario->recorded_animations, text_of(arg(1))))
+                for(u32 net_id : spawning_of(arg(0)))
+                    m_queued_recordings[net_id] = recording->length_of_animation;
             with_objects(
                 p,
                 arg(0),
@@ -802,6 +822,9 @@ struct BlamScript
                 for(auto const& r : m_recordings)
                     if(r.entity == id)
                         left = std::max(left, static_cast<f32>(r.length - static_cast<i32>(r.play.tick())));
+            for(u32 net_id : spawning_of(arg(0)))
+                if(auto it = m_queued_recordings.find(net_id); it != m_queued_recordings.end())
+                    left = std::max(left, static_cast<f32>(it->second));
             return value_t::number(type_t::short_, left);
         }
         case op::vehicle_hover:
@@ -1764,6 +1787,8 @@ struct BlamScript
         if(stream.has_error())
             return log(fmt::format("recording_play: {} unreadable", name));
         stop_recording(p, id, end_t::stop);
+        if(auto const* net = p.template get<NetworkInfo>(id))
+            m_queued_recordings.erase(net->instance_id);
         m_recordings.push_back({
             .entity = id,
             .play   = blam::scn::recorded::playback(stream.value()),
@@ -2427,6 +2452,7 @@ struct BlamScript
     std::map<u64, speaker_t> m_speakers;
     std::set<u32>                           m_despawning;
     std::set<u32>                           m_recreate;
+    std::map<u32, i32>                      m_queued_recordings; /* spawning net id: its recording's length */
     std::map<std::pair<blam::antr::header const*, std::string>, Vecf2> m_walk_speeds;
     action_tests_t                          m_tests;
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
