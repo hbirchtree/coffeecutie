@@ -330,7 +330,12 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
             bool const powered = device.power > 0.f;
             f32 const pace     = powered ? device.tag->position_transition_time
                                          : device.tag->depowered_position_transition_time;
-            if(powered || pace > 0.f)
+            using flags_t    = blam::scn::device::device_flags_t;
+            bool const loops = (device.tag->device_flags & flags_t::position_loops) != flags_t::none;
+            /* A looping one turns round and round while powered */
+            if(loops && powered && pace > 0.f)
+                device.position = std::fmod(device.position + device.power * dt / pace, 1.f);
+            else if(!loops && (powered || pace > 0.f))
                 device.position = approach(device.position, device.position_target, pace, dt);
             if(device.position != was)
             {
@@ -367,8 +372,9 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         if(!anim.graph)
             return;
         using flags_t   = blam::scn::device::device_flags_t;
-        auto const clip = position_clip(anim.graph);
-        if((device.tag->device_flags & flags_t::position_loops) != flags_t::none || !clip)
+        auto const clip  = position_clip(anim.graph);
+        bool const loops = (device.tag->device_flags & flags_t::position_loops) != flags_t::none;
+        if(!clip)
         {
             layer.paused = device.power <= 0.f;
             return;
@@ -380,11 +386,12 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         f32 const   rate      = animation.frame_rate();
         layer.graph     = anim.graph;
         layer.animation = static_cast<u32>(*clip);
-        layer.loop      = false;
+        layer.loop      = loops;
         layer.paused    = true;
         layer.finished  = false;
         layer.weight    = 1.f;
-        layer.time      = device.position * std::max(animation.frame_count - 1, 0) / rate;
+        /* Round and round, the last frame blends into the first */
+        layer.time = device.position * std::max(animation.frame_count - (loops ? 0 : 1), 0) / rate;
     }
 
     std::optional<i16> position_clip(blam::antr::header const* graph) const
