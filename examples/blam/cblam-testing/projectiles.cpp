@@ -82,7 +82,13 @@ struct ProjectileSystem
         {
             flight.timer -= dt;
             if(flight.timer <= 0.f)
+            {
+                /* Stuck in something, it hurts that, not what is near */
+                if(flight.attached && flight.attached_to)
+                    hit(p, flight, model, flight.attached_to, tag.attached_detonation_damage,
+                        model.position, {0, 0, 1}, -1, false);
                 return detonate(p, flight, model.position, {0, 0, 1}, nullptr);
+            }
         }
         if(tag.maximum_range > 0.f && flight.travelled >= tag.maximum_range)
             return detonate(
@@ -345,26 +351,42 @@ struct ProjectileSystem
         Model const&            model,
         Physics::Raycast const& ray)
     {
-        if(Projectile::hitscan(*flight.tag) ||
-           p.template subsystem<NetworkState>().replica)
+        if(Projectile::hitscan(*flight.tag))
             return;
-        auto const* target  = p.template get<PlayerInfo>(ray.entity_id);
+        hit(p, flight, model, ray.entity_id, flight.tag->impact_damage,
+            ray.point, ray.normal, ray.part, ray.head);
+    }
+
+    void hit(
+        Proxy&                p,
+        Projectile const&     flight,
+        Model const&          model,
+        u64                   entity,
+        blam::tagref_t const& damage,
+        Vecf3 const&          point,
+        Vecf3 const&          normal,
+        i16                   part,
+        bool                  head)
+    {
+        if(!damage.valid() || p.template subsystem<NetworkState>().replica)
+            return;
+        auto const* target  = p.template get<PlayerInfo>(entity);
         auto const* shooter = p.template get<PlayerInfo>(flight.shooter);
         ObjectHitEvent hit{
             .projectile = model.origin_object ? model.origin_object->as_ref()
                                               : blam::tagref_t{},
-            .damage     = flight.tag->impact_damage,
-            .target     = ray.entity_id,
+            .damage     = damage,
+            .target     = entity,
             .shooter    = flight.shooter,
             .target_player =
                 target ? target->player_idx : ObjectHitEvent::no_player,
             .shooter_player =
                 shooter ? shooter->player_idx : ObjectHitEvent::no_player,
-            .point     = ray.point,
-            .normal    = ray.normal,
+            .point     = point,
+            .normal    = normal,
             .direction = direction(flight),
-            .part      = ray.part,
-            .head      = ray.head,
+            .part      = part,
+            .head      = head,
         };
         GameEvent ev{.type = GameEvent::ObjectHit};
         p.template subsystem<GameEventBus>().inject(ev, &hit);
