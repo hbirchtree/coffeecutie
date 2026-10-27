@@ -43,6 +43,21 @@ xcrun simctl bootstatus "$DEVICE" -b > "$OUT/boot.log"
 trap 'xcrun simctl shutdown "$DEVICE" >/dev/null 2>&1 || true' EXIT
 xcrun simctl install "$DEVICE" "$APP"
 
+# Opt-in: Release builds install no crash handler, so let lldb catch it
+DEBUGGER=""
+if [ -n "${LLDB_ATTACH:-}" ]; then
+    EXE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP/Info.plist")
+    lldb --batch \
+        -o "process attach --name $EXE --waitfor" \
+        -o "process handle SIGPIPE SIGUSR1 SIGUSR2 SIGALRM -n true -p true -s false" \
+        -o "continue" \
+        -k "thread backtrace all" \
+        -k "process kill" \
+        > "$OUT/lldb.log" 2>&1 &
+    DEBUGGER=$!
+    sleep 2
+fi
+
 # --console-pty keeps the app's stdout line-buffered
 xcrun simctl launch --console-pty --terminate-running-process \
     "$DEVICE" "$BUNDLE_ID" ${MAP:+"$MAP"} > "$LOG" 2>&1 &
@@ -100,6 +115,10 @@ fi
 xcrun simctl io "$DEVICE" screenshot "$OUT/screenshot.png" || true
 xcrun simctl terminate "$DEVICE" "$BUNDLE_ID" >/dev/null 2>&1 || true
 wait "$LAUNCHER" || true
+if [ -n "$DEBUGGER" ]; then
+    kill "$DEBUGGER" 2>/dev/null || true
+    wait "$DEBUGGER" 2>/dev/null || true
+fi
 
 # Simulator app crashes are reported on the host, as are the Metal host's
 for reports in "$HOME/Library/Logs/DiagnosticReports" /Library/Logs/DiagnosticReports; do
@@ -144,6 +163,10 @@ EOF
     echo "== SimMetalHost"
     grep -E " (E|F) +SimMetalHost|exited due to|crashed: SimMetalHost" "$OUT/metalhost.log" \
         | head -n 20 || true
+    if [ -f "$OUT/lldb.log" ]; then
+        echo "== lldb"
+        grep -E -A 45 "stop reason = (signal|EXC_)" "$OUT/lldb.log" | head -n 60 || true
+    fi
 fi
 
 grep -E "GL version|FPS:|FTAL|ERRO" "$LOG" | tail -n 20 || true
