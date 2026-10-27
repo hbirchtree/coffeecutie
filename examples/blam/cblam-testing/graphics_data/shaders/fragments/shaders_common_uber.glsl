@@ -319,17 +319,17 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
     return vec4(vec3(1), 1);
 }
 
-/* A volume sampled at a depth too; a flat map falls back to its plane */
-vec4 get_color_volume(in uint map_id, in vec3 offset, in Material mat)
+/* A volume sampled through space by `at`; a flat map falls back to its
+ * plane, scrolled the same way */
+vec4 get_color_volume(in uint map_id, in vec3 at, in vec3 offset, in Material mat)
 {
     int tex_id = mat.maps[map_id].layer;
 #if USE_TEXTURE_3D == 1
     if(tex_id != -1 && (uint(tex_id) >> 24) == TEX_A8Y8_3D)
     {
         /* A volume is its own texture, not an atlas tile: plain repeat */
-        vec2 uvscale = mat.maps[map_id].uv_scale;
-        vec2 uv      = frag.tex * uvscale + offset.xy;
-        vec2 la      = texture(source_rg8_3d, vec3(uv, offset.z)).rg;
+        vec3 st = at * mat.maps[map_id].uv_scale.x + offset;
+        vec2 la = texture(source_rg8_3d, st).rg;
         return vec4(vec3(la.r), la.g);
     }
 #endif
@@ -1313,18 +1313,24 @@ vec4 shader_plasma(in Material mat)
     // the moving plasma pattern. anim_dir.xy * inv_period gives tiles/sec.
     vec3  p_off = pdir.xyz * pdir.w * time;
     vec3  s_off = sdir.xyz * sdir.w * time;
-    vec4  primary   = get_color_volume(base_map_id, p_off, mat);
-    vec4  secondary = get_color_volume(secondary_map_id, s_off, mat);
+    vec4  primary   = get_color_volume(base_map_id, frag.position, p_off, mat);
+    vec4  secondary = get_color_volume(secondary_map_id, frag.position, s_off, mat);
 
+    /* Each triangle a plate of its own: the view angle is taken against the
+     * face, not the smoothed normal */
+    vec3  face       = normalize(cross(dFdx(frag.position), dFdy(frag.position)));
     vec3  view_world = normalize(camera_position - frag.position);
-    float NdotV      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
+    float NdotV      = abs(dot(face, view_world));
     float fresnel    = 1.0 - NdotV;
 
     vec3  tint = mix(para.rgb, perp.rgb, fresnel);
     float str  = mix(para.a, perp.a, fresnel);
 
-    float noise  = clamp(primary.r + secondary.r, 0.0, 1.0);
-    float plasma = pow(noise, max(intensity_exp, 0.01)) * intensity;
+    /* Two clouds of noise scroll through each other; the plasma is the
+     * veins where they cross, over a faint fill of the whole shell */
+    float ridge  = 1.0 - abs(primary.r - secondary.r);
+    float veins  = pow(ridge, 6.0 * max(intensity_exp, 1.0));
+    float plasma = mix(0.35, 1.0, veins) * intensity;
     vec3  color  = tint * plasma * str;
 
     return vec4(color, plasma);
