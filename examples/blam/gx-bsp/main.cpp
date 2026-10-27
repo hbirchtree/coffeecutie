@@ -59,6 +59,7 @@
 #include <platforms/gekko/dvd.h>
 #include <platforms/gekko/paged_mmap.h>
 
+#include "effects.h"
 #include "loading_screen.h"
 #include "net_client.h"
 #include "reflection.h"
@@ -321,9 +322,13 @@ struct catalog_entry
     f32               speed{0.f};                            // proj: wu/s
     f32               gravity{0.f}; // proj: air gravity scale
     std::string       label;        // weap: picks the holder's animations
+    std::optional<u32> volume;       // proj: the glow it flies in, mgs2
+    std::optional<u32> detonation;   // proj: effe where it ends
+    f32                fuse{0.f}; // proj: seconds to detonation, 0 = on impact
 };
 
 static std::map<blam::tag_index<>, catalog_entry> g_catalog;
+static gx_effects::library_t                      g_fx_lib;
 static Matf4 g_hand{1.f}; // the player biped's "right hand", model space
 static i32   g_hand_node = -1; // the node it hangs off
 
@@ -1164,13 +1169,35 @@ static void build_catalog(blam::map_container<V> const& c)
             if(auto pr = t.template data<blam::scn::projectile>(c.magic);
                !pr.has_error())
             {
-                e.speed   = from_le(pr.value()->initial_velocity) * 30.f;
-                e.gravity = from_le(pr.value()->air_gravity_scale);
+                auto const& p = *pr.value();
+                e.speed       = from_le(p.initial_velocity) * 30.f;
+                e.gravity     = from_le(p.air_gravity_scale);
+                e.fuse        = from_le(p.timer.x);
+                if(auto as = p.attachments.data(c.magic); !as.has_error())
+                    for(auto const& a : as.value())
+                        if(!e.volume)
+                            e.volume = g_fx_lib.volume(c, a.type);
+                if(auto ws = p.widgets.data(c.magic); !ws.has_error())
+                    for(auto const& w : ws.value())
+                        if(!e.volume)
+                            e.volume = g_fx_lib.volume(c, w.widget);
+                e.detonation = g_fx_lib.effect(c, p.detonation_effect);
+                // Else what it does to the ground
+                if(auto rs = p.material_responses.data(c.magic);
+                   !e.detonation && !rs.has_error())
+                    for(auto const& r : rs.value())
+                        if(!e.detonation)
+                            e.detonation = g_fx_lib.effect(c, r.default_effect);
             }
         g_catalog[t.tag_id] = e;
     }
     LOG("catalog: %u vehicles, bipeds, weapons, equipment and projectiles",
         static_cast<unsigned>(g_catalog.size()));
+    LOG("effects: %u effects, %u particles, %u light volumes, %u frames",
+        static_cast<unsigned>(g_fx_lib.effects.size()),
+        static_cast<unsigned>(g_fx_lib.particles.size()),
+        static_cast<unsigned>(g_fx_lib.volumes.size()),
+        static_cast<unsigned>(g_fx_lib.frames.size()));
 }
 
 /* Where a biped's "right hand" marker sits in its bind pose: the marker in
@@ -2823,11 +2850,14 @@ struct projectile_t
     blam::tag_index<> tag, model;
     u32               shooter{0};
     f32               age{0.f};
+    bool              resting{false}; // stopped by the structure
 };
 
 static std::vector<projectile_t> g_projectiles;
 static constexpr f32             kGravity        = 3.27f; // wu/s^2, 9.8 m/s^2
 static constexpr f32             kProjectileLife = 3.f;   // s, if nothing hits
+static gx_effects::system_t      g_fx{g_fx_lib};
+static gx_sprites::batcher_t     g_sprites;
 static constexpr f32         kEyeHeight = 0.62f;
 /* From the bind pose's hanging hand up to where an aiming one is */
 static Vecf4 const kAimingHand{0.1f, 0.f, 0.15f, 0.f};
@@ -2879,7 +2909,9 @@ static void draw_tracers(Matf4 const& mv)
     std::vector<streak_t> streaks;
     for(auto const& p : g_projectiles)
     {
-        if(g_models.contains(p.model))
+        auto const entry = g_catalog.find(p.tag);
+        if(g_models.contains(p.model) || p.resting ||
+           (entry != g_catalog.end() && entry->second.volume))
             continue;
         Vecf3 head = Vecf3(mv * Vecf4(p.pos, 1.f));
         Vecf3 tail = Vecf3(mv * Vecf4(p.prev, 1.f));
@@ -2942,6 +2974,24 @@ static void draw_tracers(Matf4 const& mv)
     GX_SetCullMode(GX_CULL_BACK);
 }
 
+/* Where a flight from a to b first meets the structure, if it does */
+static std::optional<Vecf3> structure_hit(Vecf3 const& a, Vecf3 const& b)
+{
+    if(g_coll_nodes.empty())
+        return std::nullopt;
+    u32 const steps =
+        std::clamp<u32>(static_cast<u32>(glm::distance(a, b) / 0.5f), 1, 16);
+    Vecf3 last = a;
+    for(u32 i = 1; i <= steps; i++)
+    {
+        Vecf3 const at = glm::mix(a, b, static_cast<f32>(i) / steps);
+        if(!cluster_at(at))
+            return last;
+        last = at;
+    }
+    return std::nullopt;
+}
+
 /* Held weapons on remote bipeds, then shots in flight */
 template<typename DrawModel>
 static void draw_combat(Matf4 const& mv, f32 dt, DrawModel&& draw_model)
@@ -2983,15 +3033,39 @@ static void draw_combat(Matf4 const& mv, f32 dt, DrawModel&& draw_model)
 
     for(auto& p : g_projectiles)
     {
-        p.prev = p.pos;
-        p.vel.z -= kGravity * p.gravity * dt;
-        p.pos += p.vel * dt;
         p.age += dt;
+        p.prev = p.pos;
+        if(p.resting)
+            continue;
+        p.vel.z -= kGravity * p.gravity * dt;
+        Vecf3 const next = p.pos + p.vel * dt;
+        auto const  hit  = structure_hit(p.pos, next);
+        p.pos            = hit.value_or(next);
+        p.resting        = hit.has_value();
     }
-    std::erase_if(
-        g_projectiles, [](auto const& p) { return p.age > kProjectileLife; });
+    // Shots end on the structure, grenades when their fuse runs out
+    std::erase_if(g_projectiles, [](projectile_t const& p) {
+        auto const entry = g_catalog.find(p.tag);
+        f32 const  fuse  = entry != g_catalog.end() ? entry->second.fuse : 0.f;
+        bool const done =
+            fuse > 0.f ? p.age >= fuse : p.resting || p.age > kProjectileLife;
+        if(done && entry != g_catalog.end() && entry->second.detonation &&
+           (p.resting || fuse > 0.f))
+            g_fx.spawn(
+                *entry->second.detonation,
+                p.pos,
+                glm::length(p.vel) > 1e-3f ? -p.vel : Vecf3{0, 0, 1});
+        return done;
+    });
+    g_fx.step(dt);
+    g_fx.draw(g_sprites);
     for(auto const& p : g_projectiles)
     {
+        auto const entry = g_catalog.find(p.tag);
+        if(entry != g_catalog.end() && entry->second.volume && !p.resting &&
+           glm::length(p.vel) > 1e-3f)
+            g_fx.volume(
+                g_sprites, *entry->second.volume, p.pos, glm::normalize(p.vel));
         if(!g_models.contains(p.model))
             continue;
         // Models face +X; point that along the flight
@@ -3223,8 +3297,12 @@ static void poll_network(u32 frame)
             g_projectiles.begin(), g_projectiles.end(), [&](auto const& p) {
                 return p.shooter == h.shooter_player && p.tag == h.projectile;
             });
-        if(it != g_projectiles.end())
-            g_projectiles.erase(it);
+        if(it == g_projectiles.end())
+            return;
+        if(auto e = g_catalog.find(it->tag);
+           e != g_catalog.end() && e->second.detonation)
+            g_fx.spawn(*e->second.detonation, h.point, -it->vel);
+        g_projectiles.erase(it);
     };
     on.despawn = [](u32 net_id) {
         if(auto it = g_net_objects.find(net_id); it != g_net_objects.end())
@@ -3511,6 +3589,11 @@ i32 coffee_main(i32, cstring_w*)
                 mdl_parts++;
             }
         }
+        for(u32 i = 0; i < g_fx_lib.images.size(); i++)
+            g_fx_lib.frames[i].texture = g_fx_lib.images[i]
+                                             ? load_diffuse(g_fx_lib.images[i])
+                                             : g_sprites.glow();
+        g_fx_lib.images.clear();
     } catch(std::bad_alloc const&)
     {
         // Out of MEM1: render whatever resources were built (the rest stay
@@ -3744,6 +3827,7 @@ i32 coffee_main(i32, cstring_w*)
 
     GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
 
+    g_sprites.begin(gfx);
 #if defined(COFFEE_GEKKO)
     PAD_Init();
     start_network();
@@ -4114,6 +4198,7 @@ i32 coffee_main(i32, cstring_w*)
                 gexxo::blend_state{},
                 gexxo::depth_state{.write = false});
         }
+        g_sprites.flush(mv);
         gexxo::swapBuffers();
 
         if((i % 60) == 59)
