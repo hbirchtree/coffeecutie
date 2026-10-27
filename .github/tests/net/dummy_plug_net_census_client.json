@@ -1,0 +1,40 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Client side of the object census test. net_sim's fault counters make it drop the first EntitySpawn message to arrive once it is in (the warthog's, or the join backlog if that is still to come) and the first ObjectDespawn (the warthog's). The journal shows the census asking for the lot (net_census_request, answered by net_census_answer) and later dropping the warthog (net_census_drop), and dump_state must then agree with the server's.",
+    "time_base": "session",
+    "frame_delta": 33.3,
+    "events": [
+        {
+            "time": 0,
+            "type": "net_sim",
+            "clock": "local",
+            "drop_spawns": 1,
+            "drop_despawns": 1
+        },
+        {
+            "time": 1000,
+            "type": "render_param",
+            "debug_markers": true
+        },
+        {
+            "time": 17000,
+            "type": "dump_state"
+        }
+    ],
+    "end_time": 19000
+}
