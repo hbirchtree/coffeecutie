@@ -116,3 +116,17 @@ DVD_DIR=$P/sys/main.dol .github/tests/dolphin/dolphin.sh \
     multi_build/console-powerpc-eabi-cube/bin/BlamGX.elf \
     -C Dolphin.Core.MMU=True -C Dolphin.Core.SerialPort1=12
 ```
+
+## Scripted input
+
+`plug_to_dtm.py` turns a dummy plug's `controller_button` and
+`controller_axis` events into a Dolphin input movie, played with `-m`. Plug
+times become pad polls at `--polls-per-second`, an estimate, so allow some
+slack around them:
+
+```sh
+examples/blam/gx-bsp/plug_to_dtm.py --game-id ID-BlamGX plug.json walk.dtm
+```
+
+Dolphin's GUI build plays movies; `dolphin-emu-nogui` ignores `-m` unless
+patched to start playback before booting.
