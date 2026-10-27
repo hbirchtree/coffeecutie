@@ -2915,17 +2915,19 @@ struct PhysicsSystem
             btCollisionObject const* ignore{nullptr};
             /* Traced separately, where they were */
             std::set<btCollisionObject const*> rewound;
-            /* Riders collide with nothing, but are there to be hit */
+            /* Riders collide with nothing, and a remote player's body keeps
+             * off what its owner pushes, but both are there to be hit */
             std::set<btCollisionObject const*> bipeds;
 
             bool needsCollision(btBroadphaseProxy* proxy) const override
             {
                 auto const* object =
                     static_cast<btCollisionObject const*>(proxy->m_clientObject);
-                return object != ignore &&
-                       (object->hasContactResponse() || bipeds.contains(object)) &&
-                       !rewound.contains(object) &&
-                       ClosestRayResultCallback::needsCollision(proxy);
+                if(object == ignore || rewound.contains(object))
+                    return false;
+                return bipeds.contains(object) ||
+                       (object->hasContactResponse() &&
+                        ClosestRayResultCallback::needsCollision(proxy));
             }
 
             btScalar addSingleResult(
