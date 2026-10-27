@@ -101,9 +101,17 @@ xcrun simctl io "$DEVICE" screenshot "$OUT/screenshot.png" || true
 xcrun simctl terminate "$DEVICE" "$BUNDLE_ID" >/dev/null 2>&1 || true
 wait "$LAUNCHER" || true
 
-# Simulator app crashes are reported on the host
-find "$HOME/Library/Logs/DiagnosticReports" -name "BlamGraphics*" -newer "$OUT/boot.log" \
-    -exec cp {} "$OUT/" \; 2>/dev/null || true
+# Simulator app crashes are reported on the host, as are the Metal host's
+for reports in "$HOME/Library/Logs/DiagnosticReports" /Library/Logs/DiagnosticReports; do
+    find "$reports" -newer "$OUT/boot.log" -type f 2>/dev/null >> "$OUT/new_reports.txt" || true
+    find "$reports" -newer "$OUT/boot.log" \
+        \( -name "BlamGraphics*" -o -name "*Metal*" \) \
+        -exec cp {} "$OUT/" \; 2>/dev/null || true
+done
+# SimMetalHost runs on the host, its side of the story is in the host log
+log show --style compact --last 30m \
+    --predicate 'process CONTAINS "SimMetalHost" OR eventMessage CONTAINS "SimMetalHost"' \
+    > "$OUT/metalhost.log" 2>&1 || true
 # The app's own stacktrace.json and friends
 CONTAINER=$(xcrun simctl get_app_container "$DEVICE" "$BUNDLE_ID" data 2>/dev/null || true)
 if [ -n "$CONTAINER" ]; then
@@ -115,7 +123,7 @@ xcrun simctl spawn "$DEVICE" log show --style compact --last 30m \
     > "$OUT/system.log" 2>&1 || true
 
 if [ "$STATUS" -ne 0 ]; then
-    for report in "$OUT"/BlamGraphics*.ips; do
+    for report in "$OUT"/*.ips; do
         [ -f "$report" ] || continue
         echo "== $(basename "$report")"
         python3 - "$report" <<'EOF' || true
@@ -131,6 +139,11 @@ for frame in (thread or {}).get("frames", [])[:30]:
 EOF
     done
     grep -iE "termin|crash|signal|jetsam|watchdog|exit" "$OUT/system.log" | tail -n 20 || true
+    echo "== New crash reports"
+    cat "$OUT/new_reports.txt" || true
+    echo "== SimMetalHost"
+    grep -E " (E|F) +SimMetalHost|exited due to|crashed: SimMetalHost" "$OUT/metalhost.log" \
+        | head -n 20 || true
 fi
 
 grep -E "GL version|FPS:|FTAL|ERRO" "$LOG" | tail -n 20 || true
