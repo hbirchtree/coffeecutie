@@ -4129,6 +4129,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
+    /* A test fault: the next `left` messages of this kind never arrived */
+    bool drop_for_test(u32& left, MessageBase const& payload)
+    {
+        if(left == 0)
+            return false;
+        left--;
+        journal(
+            "net_fault_drop",
+            {{"type", std::string(magic_enum::enum_name(payload.type))},
+             {"count", payload.num_values}});
+        return true;
+    }
+
     /* One bucket of the server's objects: drop what it does not list, ask
      * for what it lists and we lack. What arrived within the last period
      * may still be crossing the census, and is left alone */
@@ -4270,6 +4283,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::ObjectDespawn: {
+            if(drop_for_test(m_net_state.faults.drop_despawns, payload))
+                break;
             for(auto const& gone : payload.values<ObjectDespawn>())
             {
                 DespawnObjectEvent despawn{.net_id = gone.net_id};
@@ -4527,6 +4542,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 cWarning("Ignoring spawns, map data differs from server");
                 break;
             }
+            if(drop_for_test(m_net_state.faults.drop_spawns, payload))
+                break;
             for(auto const& spawn : payload.values<EntitySpawn>())
             {
                 m_recent_spawns[spawn.tag.instance_id] = std::chrono::steady_clock::now();

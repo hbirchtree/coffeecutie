@@ -705,6 +705,18 @@ void create_resources(compo::EntityContainer& e)
                      sim.lag_ms    = ev.data.value("lag_ms", sim.lag_ms);
                      sim.jitter_ms = ev.data.value("jitter_ms", sim.jitter_ms);
                      sim.loss_pct  = ev.data.value("loss_pct", sim.loss_pct);
+                     auto& faults  = e.subsystem_cast<NetworkState>().faults;
+                     faults.drop_spawns =
+                         ev.data.value("drop_spawns", faults.drop_spawns);
+                     faults.drop_despawns =
+                         ev.data.value("drop_despawns", faults.drop_despawns);
+                 }
+                 if(ev.event == "despawn_object")
+                 {
+                     /* {"net_id": n}, as a spawn's journal line gives it */
+                     DespawnObjectEvent gone{.net_id = ev.data.value("net_id", 0u)};
+                     GameEvent          gone_ev{.type = GameEvent::DespawnObject};
+                     e.subsystem_cast<GameEventBus>().inject(gone_ev, &gone);
                  }
                  if(ev.event == "spawn_object")
                  {
