@@ -24,7 +24,8 @@ using PlayerControllerManifest = compo::SubsystemManifest<
         Model,
         const Attachment,
         const PhysicsData,
-        const BipedStatus>,
+        const BipedStatus,
+        BipedEquipment>,
     type_list_t<
         PhysicsBus,
         UIEventBus,

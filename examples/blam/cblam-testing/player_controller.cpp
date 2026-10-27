@@ -9,6 +9,8 @@
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/types/input/keymap_latin1.h>
 
+#include <blam/volta/blam_unit.h>
+
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -53,6 +55,12 @@ struct PlayerController
         time_point jumped_at{};
         bool       pending{false}; /*!< intent.jump seen, deadline set */
         bool airborne_seen{true};  /*!< Off the ground since the last jump */
+    };
+
+    struct zoom_t
+    {
+        f32                fov{0.f}; /*!< Unzoomed, while zoomed */
+        blam::tag_t const* weapon{nullptr};
     };
 
     struct menu_pad_t
@@ -118,6 +126,8 @@ struct PlayerController
                     input.movement = {};
                     input.intent   = {};
                 }
+                if(!info.is_remote())
+                    zoom(p, player.id(), input, cam, info);
                 clamp_pitch(input, cam, info);
                 if(!info.is_remote())
                     m_look[player.id()] += input.look_delta;
@@ -262,6 +272,7 @@ struct PlayerController
             input.reload |= b.x;
             input.grenade |= state.axes.e.t_l > trigger_pressed;
             input.grenade_switch |= b.b_l;
+            input.zoom |= b.s_r;
             /* B strikes in play and backs out of menus; back also toggles
              * freecam */
             input.back |= b.back || (in_menu && b.b);
@@ -280,6 +291,7 @@ struct PlayerController
             input.reload |= key(CK_r);
             input.grenade_switch |= key(CK_g);
             input.melee |= key(CK_q);
+            input.zoom |= key(CK_z);
             /* Grabs in forge, throws in physics mode */
             input.grenade |= (input.mouse_buttons & CIMouseButtonEvent::RightButton) != 0;
             input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
@@ -302,6 +314,8 @@ struct PlayerController
             intent.grenade_switch = true;
         if(input.melee && physics)
             intent.melee = true;
+        if(input.zoom && physics)
+            intent.zoom = true;
         if(in_menu)
         {
             input.movement  = {};
@@ -310,7 +324,7 @@ struct PlayerController
             intent.use = intent.grab = intent.jump = intent.fire = false;
             intent.swap = intent.reload = false;
             intent.grenade = intent.grenade_switch = intent.melee = false;
-            intent.crouch = false;
+            intent.zoom = intent.crouch = false;
             return;
         }
 
@@ -629,6 +643,44 @@ struct PlayerController
         cam.camera.position.z += info.eye_height() - eye;
     }
 
+    /* Each press steps through the held weapon's zoom levels and back out;
+     * another weapon, or the hands doing anything else, drops it */
+    void zoom(Proxy& p, u64 id, PlayerInput& input, PlayerCamera& cam, PlayerInfo const& info)
+    {
+        auto* equip = p.template get<BipedEquipment>(id);
+        if(!equip)
+            return;
+        auto const* held    = equip->held(info.biped.load_generation);
+        auto const* status  = p.template get<BipedStatus>(id);
+        auto const& intent  = input.intent;
+        auto&       state   = m_zooms[id];
+        i16 const   levels  = held ? held->weapon->zoom_levels : 0;
+        bool const  pressed = std::exchange(input.intent.zoom, false);
+        if(!held || held->tag != state.weapon || seat_of(info) != seat_t::body ||
+           cam.cinematic || (status && status->dead) || equip->reloading || intent.swap ||
+           intent.melee || intent.grenade)
+            equip->zoom = 0;
+        else if(pressed && levels > 0)
+            equip->zoom = static_cast<u8>((equip->zoom + 1) % (levels + 1));
+        state.weapon = held ? held->tag : nullptr;
+        if(equip->zoom == 0)
+        {
+            if(state.fov > 0.f)
+                cam.camera.fieldOfView = std::exchange(state.fov, 0.f);
+            return;
+        }
+        if(state.fov <= 0.f)
+            state.fov = cam.camera.fieldOfView;
+        Vecf2 const range = held->weapon->zoom_magnification_range;
+        f32 const   magnification = std::max(
+            levels > 1 ? glm::mix(range.x, range.y, (equip->zoom - 1.f) / (levels - 1.f))
+                       : range.x,
+            1.f);
+        cam.camera.fieldOfView = glm::degrees(
+            2.f * std::atan(std::tan(glm::radians(state.fov) * .5f) / magnification));
+        input.look_delta /= magnification;
+    }
+
     /* A driver steers where they look; the chase camera is Gameplay's */
     static void route_vehicle(
         PlayerInput const&  input,
@@ -755,6 +807,7 @@ struct PlayerController
     std::map<u64, f32>         m_dead_for; /*!< Seconds dead, for the camera */
     std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */
     std::map<u64, jump_t>     m_jumps;
+    std::map<u64, zoom_t>     m_zooms;
     std::array<menu_pad_t, 4> m_pads{};
 };
 
