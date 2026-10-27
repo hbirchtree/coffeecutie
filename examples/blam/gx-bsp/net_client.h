@@ -269,7 +269,8 @@ class client_t
     }
 
     /* Held controls while walking; move is forward and right, -1..1 */
-    void send_input(glm::vec2 const& move, glm::vec3 const& forward, bool jump)
+    void send_input(
+        glm::vec2 const& move, glm::vec3 const& forward, InputIntent intents)
     {
         if(m_state != state_t::joined || m_player_idx == no_player)
             return;
@@ -279,7 +280,7 @@ class client_t
                 .tick       = le(++m_input_tick),
                 .view       = le(Quatf(q.w, q.x, q.y, q.z)),
                 .move       = le(Vecf2(move.x, move.y)),
-                .intents    = jump ? le(InputIntent::jump) : InputIntent::none,
+                .intents    = le(intents),
                 .player_idx = le(m_player_idx),
             },
             false);

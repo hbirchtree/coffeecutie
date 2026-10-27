@@ -2636,7 +2636,7 @@ static f32   g_cam_pitch = 0.f; // up/down
 static bool  g_walking     = false;
 static bool  g_walk_toggle = false;
 static Vecf2 g_walk_move{}; // forward, right
-static bool  g_walk_jump = false;
+static u32   g_walk_intents = 0; // InputIntent
 
 /* View-frustum culling: 6 planes from the view-projection matrix (normalized),
  * sphere-vs-frustum test. Matches the gexxo-fixed 90deg/4:3/0.1-100 projection.
@@ -2713,7 +2713,21 @@ static void update_camera(f32 dt)
     if(g_walking)
     {
         g_walk_move = {ly, lx};
-        g_walk_jump = btn & PAD_BUTTON_A;
+        // A reloads and picks up alike
+        // Triggers by how far they're pulled, before the click
+        g_walk_intents =
+            (PAD_TriggerR(0) > 100 ? std::to_underlying(InputIntent::fire)
+                                   : 0u) |
+            (PAD_TriggerL(0) > 100 ? std::to_underlying(InputIntent::grenade)
+                                   : 0u);
+        for(auto [button, intent] : {
+                std::pair{PAD_BUTTON_X, InputIntent::jump},
+                std::pair{PAD_BUTTON_B, InputIntent::melee},
+                std::pair{PAD_BUTTON_A, InputIntent::use | InputIntent::reload},
+                std::pair{PAD_BUTTON_Y, InputIntent::swap},
+            })
+            if(btn & button)
+                g_walk_intents |= std::to_underlying(intent);
         return;
     }
     f32 const boost = 1.f + (PAD_TriggerR(0) / 255.f) * 4.f;
@@ -3380,7 +3394,10 @@ static void poll_network(u32 frame)
     g_walking &= joined;
     g_net.poll(fp, on, frame);
     if(g_walking)
-        g_net.send_input(g_walk_move, cam_forward(), g_walk_jump);
+        g_net.send_input(
+            g_walk_move,
+            cam_forward(),
+            static_cast<InputIntent>(g_walk_intents));
     else if(frame % 2 == 0)
         g_net.send_camera(g_cam_pos, cam_forward());
 }
