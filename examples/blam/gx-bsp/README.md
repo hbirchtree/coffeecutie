@@ -1,4 +1,4 @@
-# BlamBSP_GX
+# BlamGX
 
 Halo map viewer for the GameCube. It loads `bloodgulch.map` from the disc
 (`MAP_NAME` in `main.cpp`), whichever map that file actually is.
@@ -6,7 +6,7 @@ Halo map viewer for the GameCube. It loads `bloodgulch.map` from the disc
 Build it with:
 
 ```sh
-./cb build console:powerpc-eabi:cube:rel/BlamBSP_GX
+./cb build console:powerpc-eabi:cube:rel/BlamGX
 ```
 
 Without `:rel` it is a debug build, at about half the frame rate.
@@ -31,7 +31,7 @@ $T /mnt/blam/pc/b30.map /mnt/blam/pc/bitmaps.map \
 
 - The output files must not exist yet.
 - `--gx-vertices` makes loading faster; a map written with it can only be read
-  by BlamBSP_GX. Maps written by an older MapTranscode still load, but their
+  by BlamGX. Maps written by an older MapTranscode still load, but their
   bipeds stand unposed: transcode them again.
 - Use one PC map per disc: its `bitmaps.map` only has that map's images
   converted.
@@ -43,20 +43,20 @@ build. Everything in it goes onto the disc folder and the `.gcm`, and changes
 to it are picked up by the next build:
 
 ```sh
-A=multi_build/console-powerpc-eabi-cube/examples/blam/gx-bsp/BlamBSP_GX_assets
+A=multi_build/console-powerpc-eabi-cube/examples/blam/gx-bsp/BlamGX_assets
 mkdir -p $A && cp out/bloodgulch.map $A/
-./cb build console:powerpc-eabi:cube/BlamBSP_GX
+./cb build console:powerpc-eabi:cube/BlamGX
 ```
 
 The disc ends up in `multi_build/console-powerpc-eabi-cube/packaged/gamecube/`:
-`BlamBSP_GX.gcm` to boot directly, and the `BlamBSP_GX/` folder for Dolphin.
+`BlamGX.gcm` to boot directly, and the `BlamGX/` folder for Dolphin.
 
 Run it in Dolphin. MMU emulation is required:
 
 ```sh
-P=multi_build/console-powerpc-eabi-cube/packaged/gamecube/BlamBSP_GX
+P=multi_build/console-powerpc-eabi-cube/packaged/gamecube/BlamGX
 DVD_DIR=$P/sys/main.dol .github/tests/dolphin/dolphin.sh \
-    multi_build/console-powerpc-eabi-cube/bin/BlamBSP_GX.elf \
+    multi_build/console-powerpc-eabi-cube/bin/BlamGX.elf \
     -C Dolphin.Core.MMU=True
 ```
 
@@ -102,6 +102,6 @@ adapter, and point `gateway.txt` at the PC's LAN address rather than
 
 ```sh
 DVD_DIR=$P/sys/main.dol .github/tests/dolphin/dolphin.sh \
-    multi_build/console-powerpc-eabi-cube/bin/BlamBSP_GX.elf \
+    multi_build/console-powerpc-eabi-cube/bin/BlamGX.elf \
     -C Dolphin.Core.MMU=True -C Dolphin.Core.SerialPort1=12
 ```

@@ -267,7 +267,7 @@ jobs:
       with:
         variant: ${{ matrix.variant }}
         artifact: ${{ matrix.artifact }}
-        target: BlamBSP_GX
+        target: BlamGX
     - name: Uploading artifacts
       uses: actions/upload-artifact@v7
       with:
@@ -1212,7 +1212,7 @@ jobs:
         find artifacts/ -type f
         mkdir /tmp/dolphin_run
         source/.github/tests/dolphin/build.sh
-        source/.github/tests/dolphin/dolphin.sh artifacts/BlamBSP_GX.elf 2>&1 | tee /tmp/dolphin_run/output.log
+        source/.github/tests/dolphin/dolphin.sh artifacts/BlamGX.elf 2>&1 | tee /tmp/dolphin_run/output.log
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v7
       with:
