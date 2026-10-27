@@ -2660,6 +2660,15 @@ void dump_antr(blam::antr::header const* animation)
             joint);
     });
     fmt::print("  animations={}\n", animation->animations.count);
+    /* Function-driven overlays on plain objects (projectiles, scenery) */
+    if(auto objects = animation->objects.data(g_magic); objects.has_value())
+        for(auto const& [i, o] : stl_types::enumerate(objects.value()))
+            fmt::print(
+                "  object[{}] animation={} function={} controls={}\n",
+                i,
+                o.animation.animation,
+                static_cast<u16>(o.function),
+                static_cast<u16>(o.function_controls));
     each(g_magic, animation->animations, [](size_t i, auto const& anim) {
         auto anim_type = magic_enum::enum_name(anim.type);
         fmt::print(
