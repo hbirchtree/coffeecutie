@@ -189,7 +189,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         bool const headshot =
             head && (jpt.damage_flags & flag_t::can_cause_headshots) != flag_t::none;
         bool const violent = amount >= status->maximum_body();
+        f32 const  before  = status->shield;
         apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot, leak);
+        if(before > 0.f && status->shield <= 0.f)
+            shield_down(p, unit, true);
         if(status->dead)
             last_words(p, unit, violent);
         tell(p, unit, *status, {}, 0.f, false, false, violent);
@@ -414,7 +417,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         status->body       = vitality.body;
         if(vitality.shield < status->shield)
             status->recent_shield = 1.f;
+        bool const was_up = status->shield > 0.f;
         status->shield     = vitality.shield;
+        if(was_up != (status->shield > 0.f))
+            shield_down(p, vitality.unit, was_up);
         if(vitality.dead && !status->dead)
             last_words(p, vitality.unit, vitality.violent);
         status->dead       = vitality.dead;
@@ -429,6 +435,27 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         }
         if(vitality.respawn_at && vitality.arrived)
             arrive(p, vitality.unit, *vitality.respawn_at);
+    }
+
+    /* Its shield gone, with the coll's depletion effect, or back: the
+     * loader turns off and on what the tags tie to it */
+    void shield_down(Proxy& p, u64 unit, bool down)
+    {
+        auto const* status = p.template get<BipedStatus>(unit);
+        if(down && status && status->coll && status->coll->shield_depleted_effect.valid())
+            if(auto centre = centre_of(p, unit))
+            {
+                GameEvent        ev{.type = GameEvent::SpawnEffect};
+                SpawnEffectEvent play{
+                    .effect    = status->coll->shield_depleted_effect,
+                    .position  = *centre,
+                    .direction = {0.f, 0.f, 1.f},
+                };
+                p.template subsystem<GameEventBus>().inject(ev, &play);
+            }
+        GameEvent           ev{.type = GameEvent::ShieldDepleted};
+        ShieldDepletedEvent state{.unit = unit, .depleted = down};
+        p.template subsystem<GameEventBus>().inject(ev, &state);
     }
 
     /* The players' respawn effect where it comes back, standing up */
@@ -514,7 +541,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             f32 const full = status.coll->recharge_time > 0.f
                                  ? status.coll->recharge_time
                                  : default_recharge;
-            status.shield = std::min(status.shield + dt / full, 1.f);
+            bool const was_down = status.shield <= 0.f;
+            status.shield       = std::min(status.shield + dt / full, 1.f);
+            if(was_down && status.shield > 0.f)
+                shield_down(p, unit.id(), false);
         }
     }
 

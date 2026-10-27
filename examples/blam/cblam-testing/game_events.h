@@ -89,6 +89,7 @@ struct GameEvent
         CinematicCamera,
         AreaDamage,
         UnitVitality,
+        ShieldDepleted,
         UnitKilled,
         UnitRejoined,
         RespawnUnit,
@@ -496,6 +497,15 @@ struct AreaDamageEvent
 
 /*! A unit's body and shield as the authority has them, fractions of its coll
  *  tag's maxima. Replicas take them as given */
+/*! A unit's shield gone, or back: what its tags turn off and on for that */
+struct ShieldDepletedEvent
+{
+    static constexpr auto event_type = GameEvent::ShieldDepleted;
+
+    libc_types::u64 unit{0};
+    bool            depleted{true};
+};
+
 struct UnitVitalityEvent
 {
     static constexpr auto event_type = GameEvent::UnitVitality;
