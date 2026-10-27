@@ -339,7 +339,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             auto const* cam = p.template get<PlayerCamera>(unit);
             if(!cam || info->riding.vehicle != 0)
                 return std::nullopt;
-            return cam->camera.position - Vecf3{0.f, 0.f, info->biped.eye_offset()};
+            return cam->camera.position - Vecf3{0.f, 0.f, info->eye_offset()};
         }
         if(auto const* model = p.template get<Model>(unit))
             return model->position + Vecf3{0.f, 0.f, unit_middle};

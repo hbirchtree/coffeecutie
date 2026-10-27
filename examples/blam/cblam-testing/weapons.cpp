@@ -299,7 +299,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                !equip.held(files.load_generation))
                 continue;
             Vecf3 const body =
-                cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f};
+                cam.camera.position - Vecf3{0.f, 0.f, info.eye_height() * .5f};
             for(auto item : p.template select<Model, NetworkInfo>())
             {
                 auto [model, item_net] = item.components();

@@ -965,6 +965,9 @@ struct PlayerInfo
         f32 back_speed{2.25f};
         f32 strafe_speed{2.25f};
         f32 jump_velocity{2.3f}; /*!< wu/s, from the biped tag */
+        f32 crouch_eye_height{0.35f};
+        f32 crouch_time{0.2f};  /*!< Seconds to crouch or stand up */
+        f32 crouch_speed{0.5f}; /*!< Ground speeds scale by this crouched */
         /*! How far the camera looks down and up, radians; the cyborg's
          * tag leaves it empty */
         Vecf2 pitch_range{-1.5f, 1.5f};
@@ -1038,6 +1041,20 @@ struct PlayerInfo
     /*! Active camouflage, on the body and what it holds */
     bool camouflaged{false};
 
+    bool crouched{false};
+    f32  crouch{0.f}; /*!< Eased toward crouched, 1 all the way down */
+
+    /*! The camera above the feet, as low as the crouch has gone */
+    f32 eye_height() const
+    {
+        return glm::mix(biped.eye_height, biped.crouch_eye_height, crouch);
+    }
+
+    f32 eye_offset() const
+    {
+        return eye_height() - biped.height / 2;
+    }
+
     bool is_remote() const
     {
         return !remote.empty();
@@ -1105,6 +1122,7 @@ struct PlayerInput
     debounced_button_t grenade{};
     debounced_button_t grenade_switch{};
     debounced_button_t melee{};
+    bool               crouch{false}; /*!< Held */
     bool               scores{false}; /*!< Held: the scoreboard */
 
     /*! What the player wants, for whatever their input is routed to */
@@ -1123,6 +1141,7 @@ struct PlayerInput
         bool  grenade{false};        /*!< Pressed: throw; cleared once taken */
         bool  grenade_switch{false}; /*!< Pressed; cleared once taken */
         bool  melee{false};          /*!< Pressed; cleared once taken */
+        bool  crouch{false};         /*!< Held */
     } intent;
 
     std::optional<Vecf3> position; /*!< teleport target */

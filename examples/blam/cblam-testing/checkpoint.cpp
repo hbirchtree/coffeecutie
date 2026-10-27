@@ -126,7 +126,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             if(!biped_shown(info, cam, net))
                 continue;
             player_t player{
-                .feet   = cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height},
+                .feet   = cam.camera.position - Vecf3{0.f, 0.f, info.eye_height()},
                 .facing = spawn_points::facing_of(cam),
                 .status = status,
             };

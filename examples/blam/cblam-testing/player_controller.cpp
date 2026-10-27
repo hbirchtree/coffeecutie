@@ -141,6 +141,7 @@ struct PlayerController
             cam.view_offset    = dead ? death_view(p, player.id(), cam, dt) : Vecf3{};
             if(!dead)
                 m_dead_for.erase(player.id());
+            ease_crouch(cam, info, info.crouched && seat_of(info) == seat_t::body, dt);
             update_camera(cam);
             if(info.riding.vehicle == 0 && !dead)
                 place_biped(cam, info, model);
@@ -173,7 +174,8 @@ struct PlayerController
             for(auto [held, what] : {std::pair{intent.fire, InputIntent::fire},
                                      std::pair{intent.grab, InputIntent::grab},
                                      std::pair{intent.use, InputIntent::use},
-                                     std::pair{intent.jump, InputIntent::jump}})
+                                     std::pair{intent.jump, InputIntent::jump},
+                                     std::pair{intent.crouch, InputIntent::crouch}})
                 if(held)
                     intents |= what;
             Vecf2 const look = std::exchange(m_look[player.id()], Vecf2{}) /
@@ -284,6 +286,7 @@ struct PlayerController
         }
 
         input.scores = (pad && b.p_down) || (keyboard && key(CK_F1));
+        input.crouch = (pad && b.s_l) || (keyboard && key(CK_LCtrl));
 
         auto& intent = input.intent;
         if(input.jump)
@@ -307,6 +310,7 @@ struct PlayerController
             intent.use = intent.grab = intent.jump = intent.fire = false;
             intent.swap = intent.reload = false;
             intent.grenade = intent.grenade_switch = intent.melee = false;
+            intent.crouch = false;
             return;
         }
 
@@ -325,6 +329,7 @@ struct PlayerController
             move /= std::sqrt(len2);
         intent.move = move;
         intent.use  = (pad && b.x) || (keyboard && key(CK_f));
+        intent.crouch = input.crouch && physics;
         intent.grab = (pad && state.axes.e.t_r > trigger_pressed) ||
                       (keyboard &&
                        (input.mouse_buttons & CIMouseButtonEvent::RightButton));
@@ -516,6 +521,8 @@ struct PlayerController
         input.intent.move = in.move;
         input.intent.jump =
             (in.intents & InputIntent::jump) != InputIntent::none;
+        input.intent.crouch =
+            (in.intents & InputIntent::crouch) != InputIntent::none;
     }
 
     /* Walking the biped; physics moves the camera after its body */
@@ -546,9 +553,13 @@ struct PlayerController
         auto const&  basis = cam.camera_.cached;
         auto const&  biped = info.biped;
         Vecf2 const& move  = input.intent.move;
+        info.crouched      = input.intent.crouch;
+        /* Crouch shares LCtrl with the boost, which it overrides */
+        f32 const    pace  = info.crouched ? biped.crouch_speed : input.accel;
         f32 const    along = move.x >= 0.f ? biped.run_speed : biped.back_speed;
-        Vecf3 const  dir   = planar(basis.forward) * move.x * along +
-                          planar(basis.right) * move.y * biped.strafe_speed;
+        Vecf3 const  dir   = (planar(basis.forward) * move.x * along +
+                           planar(basis.right) * move.y * biped.strafe_speed) *
+                          pace;
 
         auto const* data     = p.get<PhysicsData>(id);
         bool const  grounded = data && data->enabled && data->grounded;
@@ -559,7 +570,7 @@ struct PlayerController
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity velocity{
             .entity_id  = id,
-            .velocity   = dir * input.accel,
+            .velocity   = dir,
             .preserve_z = true,
             .jump       = jump,
         };
@@ -605,6 +616,17 @@ struct PlayerController
         jump.airborne_seen = false;
         jump.jumped_at     = t;
         return true;
+    }
+
+    /* The eye sinks or rises over the biped's transition, feet kept */
+    static void ease_crouch(PlayerCamera& cam, PlayerInfo& info, bool down, duration const& dt)
+    {
+        f32 const eye  = info.eye_height();
+        f32 const step = std::chrono::duration<f32>(dt).count() /
+                         std::max(info.biped.crouch_time, 1e-3f);
+        info.crouched = down;
+        info.crouch   = std::clamp(info.crouch + (down ? step : -step), 0.f, 1.f);
+        cam.camera.position.z += info.eye_height() - eye;
     }
 
     /* A driver steers where they look; the chase camera is Gameplay's */
@@ -663,7 +685,7 @@ struct PlayerController
         Vecf3 const forward =
             glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
         model.position =
-            cam.camera.position - Vecf3{0, 0, info.biped.eye_height};
+            cam.camera.position - Vecf3{0, 0, info.eye_height()};
         model.rotation  = Quatf(Vecf3(0, 0, std::atan2(forward.y, forward.x)));
         model.transform = glm::translate(Matf4(1), model.position) *
                           glm::mat4_cast(model.rotation);

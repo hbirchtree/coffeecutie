@@ -2742,6 +2742,12 @@ struct ResourceLoader
                     biped_model.shape.jump_velocity = biped->jump_velocity * 30.f;
                 if(biped->pitch_range.x < biped->pitch_range.y)
                     biped_model.shape.pitch_range = biped->pitch_range;
+                if(biped->crouching_camera_height > 0.f)
+                    biped_model.shape.crouch_eye_height = biped->crouching_camera_height;
+                if(biped->crouch_transition_time > 0.f)
+                    biped_model.shape.crouch_time = biped->crouch_transition_time;
+                if(biped->crouch_velocity_modifier > 0.f)
+                    biped_model.shape.crouch_speed = biped->crouch_velocity_modifier;
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
                 {
                     /* The cyborg names none; its head stands in */

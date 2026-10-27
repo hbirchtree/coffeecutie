@@ -307,7 +307,7 @@ struct AnimationController
                 p,
                 player.id(),
                 anim,
-                cam.camera.position - Vecf3{0.f, 0.f, biped.eye_height},
+                cam.camera.position - Vecf3{0.f, 0.f, info.eye_height()},
                 look,
                 weapon,
                 info.mode.physics && !info.is_remote() && data
@@ -315,7 +315,7 @@ struct AnimationController
                     : std::nullopt,
                 grounded,
                 dt,
-                "stand",
+                info.crouched ? "crouch" : "stand",
                 dead(p, player.id()));
         }
 
@@ -1204,7 +1204,7 @@ struct AnimationController
         auto const* cam  = p.template get<PlayerCamera>(entity);
         if(info && cam)
             return cam->camera.position -
-                   Vecf3{0.f, 0.f, info->biped.eye_height};
+                   Vecf3{0.f, 0.f, info->eye_height()};
         if(auto const* model = p.template get<Model>(entity))
             return model->position;
         return {};
