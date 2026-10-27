@@ -111,7 +111,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             auto const* weapon_tag = mounted                       ? mounted
                                      : (!riding || armed) && carried ? carried->tag
                                                                      : nullptr;
-            if(info.is_remote() || !weapon_tag ||
+            /* A remote body the server simulates fires here too */
+            if((info.is_remote() && !info.mode.simulated) || !weapon_tag ||
                (riding ? info.riding.exiting
                        : !info.mode.physics || !biped_in_play(info, cam, net)))
                 continue;

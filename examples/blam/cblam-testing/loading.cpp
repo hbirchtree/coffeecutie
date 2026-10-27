@@ -2939,7 +2939,9 @@ struct ResourceLoader
         {
             if(!slung.weapon)
                 slung = held;
-            else if(change.mode == EquipWeaponEvent::pick_up && !info.is_remote())
+            else if(
+                change.mode == EquipWeaponEvent::pick_up &&
+                (!info.is_remote() || info.mode.simulated))
                 drop(held, cam, info.biped.eye_height);
             held     = armed(tag, files);
             held.age = change.age;

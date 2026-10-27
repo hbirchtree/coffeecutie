@@ -408,6 +408,11 @@ enum class InputIntent : libc_types::u32
     grab = 0x2,
     use  = 0x4,
     jump = 0x8,
+    /* Presses, acted on once each */
+    swap    = 0x10,
+    reload  = 0x20,
+    grenade = 0x40,
+    melee   = 0x80,
 };
 
 C_FLAGS(InputIntent, libc_types::u32)
