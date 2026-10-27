@@ -462,8 +462,9 @@ vec4 shader_dummy(in Material mat)
     return get_color(base_map_id, mat);
 }
 
-/* The lightmap texel under the object, brighter on the side facing the
- * radiosity's incident direction by how directional it is */
+/* The lightmap texel under the object as its ambient, and brighter on the
+ * side facing the radiosity's incident direction by how directional it is;
+ * never darker than the floor it stands on */
 bool object_lightmap(out vec3 lit)
 {
     lit = vec3(0);
@@ -480,7 +481,7 @@ bool object_lightmap(out vec3 lit)
     uvec4 packed = (uvec4(inst.light_dir) >> uvec4(0, 8, 16, 24)) & 0xFFu;
     vec3  dir    = vec3(packed.xyz) / 127.5 - 1.0;
     float facing = max(0.0, dot(normalize(frag.normal), normalize(dir)));
-    lit = lm * mix(1.0, 2.0 * facing, float(packed.w) / 255.0);
+    lit = lm * (1.0 + facing * float(packed.w) / 255.0);
     return true;
 #else
     return false;
