@@ -511,8 +511,20 @@ struct PlayerController
         cam.camera.rotation = in.view;
         cam.camera_.refresh_basis(cam.camera, cam.camera_opts);
         input.intent.move = in.move;
-        input.intent.jump =
-            (in.intents & InputIntent::jump) != InputIntent::none;
+        auto const held   = [&in](InputIntent i) {
+            return (in.intents & i) != InputIntent::none;
+        };
+        input.intent.jump = held(InputIntent::jump);
+        input.intent.fire = held(InputIntent::fire);
+        auto const pressed =
+            std::exchange(m_remote_presses[id], InputIntent::none);
+        auto const press = [pressed](bool& intent, InputIntent i) {
+            intent = intent || (pressed & i) != InputIntent::none;
+        };
+        press(input.intent.swap, InputIntent::swap);
+        press(input.intent.reload, InputIntent::reload);
+        press(input.intent.grenade, InputIntent::grenade);
+        press(input.intent.melee, InputIntent::melee);
     }
 
     /* Walking the biped; physics moves the camera after its body */
@@ -727,6 +739,7 @@ struct PlayerController
     std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>>
                                         m_remote_queue;
     std::map<u64, PlayerTickInputEvent> m_remote_inputs; /*!< Newest per body */
+    std::map<u64, InputIntent> m_remote_presses; /*!< Not yet acted on */
     std::map<u64, f32>         m_dead_for; /*!< Seconds dead, for the camera */
     std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */
     std::map<u64, jump_t>     m_jumps;
@@ -743,8 +756,13 @@ void alloc_player_controller(compo::EntityContainer& e)
         e.subsystem_cast<GameEventBus>()
             .addQueuedEventFunction<PlayerTickInputEvent>(
                 0, [&controller](GameEvent&, PlayerTickInputEvent* input) {
-                    if(input->origin == MapLoadEvent::Remote)
-                        controller.m_remote_inputs[input->player] = *input;
+                    if(input->origin != MapLoadEvent::Remote)
+                        return;
+                    /* Presses between the ticks taken here count too */
+                    auto& last = controller.m_remote_inputs[input->player];
+                    controller.m_remote_presses[input->player] |=
+                        input->intents & ~last.intents;
+                    last = *input;
                 });
 
     enum class input_mode_t
