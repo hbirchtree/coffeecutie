@@ -2200,8 +2200,34 @@ void dump_collision(blam::coll::header const* coll)
             m.shield_damage_multiplier,
             m.body_damage_multiplier);
     });
+    fmt::print(
+        "    shield material={} failure fn={} threshold={:g} failing_leak={:g} "
+        "min_stun={:g} stun={:g}s recharge={:g}s damaged_threshold={:g}\n",
+        coll->shield_material_type,
+        coll->shield_failure_function,
+        coll->shield_failure_threshold,
+        coll->failing_shield_leak_fraction,
+        coll->minimum_stun_damage,
+        coll->stun_time,
+        coll->recharge_time,
+        coll->shield_damaged_threshold);
+    fmt::print(
+        "    body effects: damaged={} depleted={} destroyed={}\n",
+        name_of(coll->body_damaged_effect),
+        name_of(coll->body_depleted_effect),
+        name_of(coll->body_destroyed_effect));
+    fmt::print(
+        "    shield effects: damaged={} depleted={} recharging={}\n",
+        name_of(coll->shield_damaged_effect),
+        name_of(coll->shield_depleted_effect),
+        name_of(coll->shield_recharging_effect));
     dump_block("regions", coll->regions, [](blam::coll::region const& r) {
-        fmt::print("{} damage_threshold={:g}\n", r.name.str(), r.damage_threshold);
+        fmt::print(
+            "{} flags={:#x} damage_threshold={:g} destroyed={}\n",
+            r.name.str(),
+            r.flags,
+            r.damage_threshold,
+            name_of(r.destroyed_effect));
     });
     /* Vertices are in node space; bounds help tell which node is what */
     dump_block("nodes", coll->nodes, [](blam::coll::node const& n) {
@@ -2670,6 +2696,18 @@ void dump_mode(blam::mod2::header<Ver> const* info)
     fmt::print("  regions={}\n", count_of(g_magic, info->regions));
     each(g_magic, info->regions, [](size_t i, auto const& region) {
         fmt::print("    region {}: name={}\n", i, region.name.str());
+        each(g_magic, region.permutations, [](size_t j, auto const& perm) {
+            fmt::print(
+                "      permutation {}: name={} flags={:#x} lods={},{},{},{},{}\n",
+                j,
+                perm.name.str(),
+                static_cast<u16>(perm.flags),
+                perm.meshindex_lod[0],
+                perm.meshindex_lod[1],
+                perm.meshindex_lod[2],
+                perm.meshindex_lod[3],
+                perm.meshindex_lod[4]);
+        });
     });
     /* shader_idx on a part indexes this list, so it is what names the shader
      * a piece of the model actually draws with. */
