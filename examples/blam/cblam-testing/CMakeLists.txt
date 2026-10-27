@@ -47,6 +47,7 @@ coffee_application(
         impact_sounds.cpp
         vehicle_sounds.cpp
         projectiles.cpp
+        actors.cpp
         damage.cpp
         game_mode.cpp
         campaign_controller.cpp
