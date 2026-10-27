@@ -63,7 +63,21 @@ struct ShaderCache
         std::array<libc_types::f32, 4> object_function{
             {-1.f, -1.f, -1.f, -1.f}};
         libc_types::f32 meter_value{-1.f};
+        libc_types::u8  numeric_place{0}; /*!< Digit of a numeric counter, 0 = ones */
     };
+
+    /* A chicago shader that shows a digit of its first function */
+    bool numeric(generation_idx_t const& shader_id)
+    {
+        auto it = find(shader_id);
+        if(it == end() || it->second.tag_class != blam::tag_class_t::schi)
+            return false;
+        auto const* info = it->second.header->template as<
+            blam::shader::shader_chicago<blam::pc_version_t>>();
+        using flags_t = blam::shader::chicago::flags_t;
+        return (static_cast<u8>(info->transparent.flags) &
+                static_cast<u8>(flags_t::numeric)) != 0;
+    }
 
     void populate_material(
         materials::shader_data&         mat,
