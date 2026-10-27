@@ -326,6 +326,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
                 GX_ANISO_1);
         else
             GX_InitTexObjFilterMode(&m_obj, GX_LINEAR, GX_LINEAR);
+        m_gxfmt  = gxfmt;
         m_loaded = true;
     }
 
@@ -906,6 +907,9 @@ struct draw_command
         bool               indexed{false};
         bool               instanced{false};
         drawing::primitive mode{drawing::primitive::triangle};
+        /* Vertices that change every frame: sent straight to the FIFO each
+         * submit instead of recorded into a display list */
+        bool streamed{false};
     } call;
 
     struct data_t
@@ -937,6 +941,15 @@ struct draw_command
     std::vector<texture_binding_t> textures;
 
     gsl::span<Matf4 const> instance_transforms{};
+
+    /* In place of the default 90 degree, 4:3, 0.1..100 projection */
+    struct perspective_t
+    {
+        f32 fov_y{90.f}, aspect{4.f / 3.f}, z_near{0.1f}, z_far{100.f};
+    };
+
+    std::optional<perspective_t> perspective{};
+
     int                    uniforms{};
     int                    buffers{};
     int                    samplers{};

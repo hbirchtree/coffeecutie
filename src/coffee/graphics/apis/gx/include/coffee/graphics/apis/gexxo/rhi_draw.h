@@ -2,6 +2,7 @@
 
 #include "peripherals/enum/helpers.h"
 #include "rhi_resources.h"
+#include <coffee/gexxo/gexxo_api.h>
 
 #include <algorithm>
 #include <array>
@@ -286,16 +287,26 @@ inline void apply_state(view_state const& state)
     //     state.scissor.z, state.scissor.w);
 }
 
+inline void depth_range(f32 z_near, f32 z_far)
+{
+    auto const fb = framebufferSize();
+    GX_SetViewport(0, 0, fb.w, fb.h, z_near, z_far);
+}
+
 inline void apply_state(depth_state const& state)
 {
+    if(state.range)
+        depth_range(state.range->x, state.range->y);
     GX_SetZMode(
         state.test ? GX_TRUE : GX_FALSE,
         state.strict_greater ? GX_GREATER : GX_LEQUAL,
         state.write ? GX_TRUE : GX_FALSE);
 }
 
-inline void undo_state(depth_state const&)
+inline void undo_state(depth_state const& state)
 {
+    if(state.range)
+        depth_range(0.f, 1.f);
     GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
 }
 
@@ -328,8 +339,8 @@ inline std::optional<std::tuple<error, std::string_view>> api::submit(
     Mtx44 proj;
     if(has_transform)
     {
-        // TODO: Make perspective params configurable
-        guPerspective(proj, 90.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+        auto const p = cmd.perspective.value_or(draw_command::perspective_t{});
+        guPerspective(proj, p.fov_y, p.aspect, p.z_near, p.z_far);
         GX_LoadProjectionMtx(proj, GX_PERSPECTIVE);
     } else
     {
@@ -525,7 +536,7 @@ inline std::optional<std::tuple<error, std::string_view>> api::draw_geometry(
      * re-applied each submit). */
     u64 const dl_key = detail::hash_draw(cmd.call, data, vao);
     auto      dl_it  = m_display_lists.find(dl_key);
-    if(dl_it == m_display_lists.end())
+    if(!cmd.call.streamed && dl_it == m_display_lists.end())
     {
         u32 per_vert = 0;
         if(cmd.call.indexed)
@@ -560,7 +571,7 @@ inline std::optional<std::tuple<error, std::string_view>> api::draw_geometry(
         dl_it =
             m_display_lists.emplace(dl_key, display_list_t{buf, used}).first;
     }
-    display_list_t const& dl = dl_it->second;
+    display_list_t const* dl = cmd.call.streamed ? nullptr : &dl_it->second;
 
     static const u8 debug_colors[4][3] = {
         {0x40, 0xE0, 0x40}, /* green */
@@ -609,7 +620,17 @@ inline std::optional<std::tuple<error, std::string_view>> api::draw_geometry(
         }
         GX_SetChanMatColor(GX_COLOR0A0, matcol);
 
-        GX_CallDispList(dl.buffer, dl.size);
+        if(dl)
+            GX_CallDispList(dl->buffer, dl->size);
+        else
+        {
+            GX_Begin(detail::prim_to_gx(cmd.call.mode), GX_VTXFMT0, count);
+            if(cmd.call.indexed)
+                detail::iterate_indices(data, vao);
+            else
+                detail::iterate_arrays(data, vao);
+            GX_End();
+        }
     }
     return std::nullopt;
 }
