@@ -968,7 +968,45 @@ struct AnimationController
                                                    : -1;
             if(i32 const pose = hold >= 0 ? hold : clip(fp_slot::idle); pose >= 0)
                 anim.crossfade(anim.graph, static_cast<u32>(pose), blend_time);
+            /* The ammunition overlay holds the frame of what is loaded: the
+             * needler's needles leave as it fires */
+            if(i32 const ammo = clip(fp_slot::ammunition); ammo >= 0 && gun)
+                hold_ammunition(anim, static_cast<u32>(ammo), *gun, magic);
         }
+    }
+
+    void hold_ammunition(
+        AnimationPlayback&                    anim,
+        u32                                   clip,
+        BipedEquipment::weapon_t const&       gun,
+        blam::map_ptr const&                  magic)
+    {
+        auto clips = anim.graph->animations.data(magic);
+        if(!clips.has_value() || clip >= clips.value().size() || !gun.tag)
+            return;
+        auto weapon = gun.tag->template data<blam::scn::weapon>(magic);
+        if(!weapon.has_value())
+            return;
+        auto triggers  = weapon.value()[0].triggers.data(magic);
+        auto magazines = weapon.value()[0].magazines.data(magic);
+        if(!triggers.has_value() || triggers.value().empty() || !magazines.has_value() ||
+           triggers.value()[0].magazine < 0 ||
+           static_cast<size_t>(triggers.value()[0].magazine) >= magazines.value().size())
+            return;
+        auto const& magazine = magazines.value()[triggers.value()[0].magazine];
+        if(magazine.rounds_loaded_maximum <= 0)
+            return;
+        f32 const loaded =
+            std::min(static_cast<f32>(gun.rounds_loaded) / magazine.rounds_loaded_maximum, 1.f);
+        auto const& animation = clips.value()[clip];
+        auto&       layer     = anim.layers[AnimationPlayback::state_slot];
+        layer.graph     = anim.graph;
+        layer.animation = clip;
+        layer.loop      = false;
+        layer.paused    = true;
+        layer.finished  = false;
+        layer.weight    = 1.f;
+        layer.time = loaded * std::max(animation.frame_count - 1, 0) / animation.frame_rate();
     }
 
     /* One-shot actions and overlays fade once they have played out */
