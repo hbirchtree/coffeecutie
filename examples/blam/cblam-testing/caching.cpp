@@ -1512,11 +1512,31 @@ void ShaderCache<V>::populate_material(
                 ->as<blam::shader::shader_chicago<blam::pc_version_t>>();
 
         auto maps = info->maps.data(magic).value();
+        /* A numeric counter: the first map's frames are digits, and the
+         * part shows one digit of the first function times the limit */
+        bool const numeric =
+            (static_cast<u8>(info->transparent.flags) &
+             static_cast<u8>(chicago::flags_t::numeric)) != 0 &&
+            context && context->object_function[0] >= 0.f && !maps.empty();
         for(auto i : range<>(4))
         {
             auto id = shader.schi.maps.at(i);
             if(!shader.schi.maps.at(i).valid())
                 continue;
+            if(numeric && i == 0)
+            {
+                u32 const limit = std::max<u32>(info->transparent.numeric_counter_limit, 1);
+                u32       n     = static_cast<u32>(std::lround(
+                    std::clamp(context->object_function[0], 0.f, 1.f) * limit));
+                if(static_cast<u32>(info->ex_flags) &
+                   static_cast<u32>(chicago::extra_flags::numeric_countdown_timer))
+                    n = limit - n;
+                for(u8 place = 0; place < context->numeric_place; place++)
+                    n /= 10;
+                if(auto digit = bitm_cache.resolve(maps[0].map.map, static_cast<i16>(n % 10));
+                   digit.valid())
+                    id = digit;
+            }
             BitmapItem const& bitm =
                 *bitm_cache.assign_atlas_data(mat.maps[i], id);
             chicago::map_t const& map = maps[i];
