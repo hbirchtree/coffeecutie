@@ -1136,6 +1136,7 @@ struct PlayerInput
     debounced_button_t grenade{};
     debounced_button_t grenade_switch{};
     debounced_button_t melee{};
+    debounced_button_t zoom{};
     bool               crouch{false}; /*!< Held */
     bool               scores{false}; /*!< Held: the scoreboard */
 
@@ -1155,6 +1156,7 @@ struct PlayerInput
         bool  grenade{false};        /*!< Pressed: throw; cleared once taken */
         bool  grenade_switch{false}; /*!< Pressed; cleared once taken */
         bool  melee{false};          /*!< Pressed; cleared once taken */
+        bool  zoom{false};           /*!< Pressed; cleared once taken */
         bool  crouch{false};         /*!< Held */
     } intent;
 
@@ -1180,6 +1182,7 @@ struct PlayerInput
         grenade.frame_end();
         grenade_switch.frame_end();
         melee.frame_end();
+        zoom.frame_end();
     }
 };
 
@@ -1363,6 +1366,7 @@ struct BipedEquipment
     u32  load_generation{0};
     bool reloading{false}; /*!< The held weapon, as everyone sees it */
     bool throwing{false};  /*!< A grenade, from wind-up to recovery */
+    u8   zoom{0};          /*!< The held weapon's zoom level, 0 = none */
 
     weapon_t const* held(u32 generation) const
     {
