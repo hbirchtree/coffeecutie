@@ -58,8 +58,6 @@ layout(location = 31) uniform int render_flags;
 #include "render_flags.glsl"
 
 const uint MATERIAL_FLAG_INTERIOR        = 0x10000u;
-const uint MATERIAL_FLAG_FOG_VOLUME      = 0x20000u;
-const uint MATERIAL_FOG_VOLUME_SHIFT     = 18u;
 
 struct LightProperties
 {
@@ -1528,13 +1526,8 @@ void main()
             : vec4(color.rgb, color.a * fog_distance);
         return;
     }
-    /* The eye's own fog lies over everything it sees; otherwise what is
-     * drawn may lie in one */
-    uint mflags  = uint(material.material.flags);
-    int  eye_fog = int(world.point_count.y);
-    int  own_fog = (mflags & MATERIAL_FLAG_FOG_VOLUME) != 0u
-        ? int((mflags >> MATERIAL_FOG_VOLUME_SHIFT) & 3u) : -1;
-    int  which   = eye_fog >= 0 ? eye_fog : own_fog;
+    /* The eye's cluster names the fog plane everything is drawn with */
+    int which = int(world.point_count.y);
     if(which < 0)
     {
         final_color = mix(color, fog_color, 1 - fog_distance);
