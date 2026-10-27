@@ -16,6 +16,7 @@
 #include <coffee/components/restricted_subsystem.h>
 
 #include <string>
+#include "sounds.h"
 
 using HudManifest = compo::SubsystemManifest<
     type_list_t<
@@ -33,7 +34,7 @@ using HudManifest = compo::SubsystemManifest<
         const GameState,
         const BlamFiles<halo_version>,
         const LoadingStatus>,
-    type_list_t<comp_app::GraphicsFramebuffer>>;
+    type_list_t<comp_app::GraphicsFramebuffer, comp_app::EventBus<SoundEvent>>>;
 
 namespace {
 
@@ -249,10 +250,52 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
 
     /* ---- Unit ---- */
 
-    void unit_hud(unit_hud_interface const& hud, BipedStatus const& status)
+    /* The HUD's warning sounds latch to what the shield and health enter */
+    void warning_sounds(
+        Proxy& p, u64 id, unit_hud_interface const& hud, BipedStatus const& status)
+    {
+        using latch_t = unit_hud_interface::sound_t::latched_to_t;
+        auto sounds   = hud.hud_warning_sounds.data(*m_magic);
+        if(!sounds.has_value() || sounds.value().empty())
+            return;
+        auto& watch = m_warnings[id];
+        u32   now   = 0;
+        if(status.shield > watch.shield + 1e-4f && watch.shield < 1.f)
+            now |= static_cast<u32>(latch_t::shield_recharging);
+        if(status.shield < watch.shield - 1e-4f)
+            now |= static_cast<u32>(latch_t::shield_damaged);
+        if(status.shield <= 0.f)
+            now |= static_cast<u32>(latch_t::shield_empty) |
+                   static_cast<u32>(latch_t::shield_low);
+        if(status.body < hud.min_color_health_fraction_cutoff)
+            now |= static_cast<u32>(latch_t::health_low);
+        if(status.body <= 0.f)
+            now |= static_cast<u32>(latch_t::health_empty);
+        u32 const entered = now & ~watch.latched;
+        watch.latched     = now;
+        watch.shield      = status.shield;
+        if(!entered)
+            return;
+        auto* bus = p.template service<comp_app::EventBus<SoundEvent>>();
+        for(auto const& entry : sounds.value())
+        {
+            if(!(static_cast<u32>(entry.latched_to) & entered) || !entry.sound.valid())
+                continue;
+            SoundEvent     ev{.type = SoundEvent::play_sound};
+            PlaySoundEvent play{
+                .sound    = &static_cast<blam::tagref_t const&>(entry.sound),
+                .relative = true,
+            };
+            bus->inject(ev, &play);
+        }
+    }
+
+    void unit_hud(
+        Proxy& p, u64 id, unit_hud_interface const& hud, BipedStatus const& status)
     {
         f32 const shield = status.shield;
         f32 const health = status.body;
+        warning_sounds(p, id, hud, status);
         background(hud.anchor, hud.unit_hud_background);
         background(hud.anchor, hud.shield_panel_background);
         meter(hud.anchor, hud.shield_panel_meter, shield);
@@ -675,7 +718,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             if(auto const* unit = riding.hud ? riding.hud : m_unit_huds[split])
                 if(auto hud = unit->template data<unit_hud_interface>(*m_magic);
                    hud.has_value())
-                    unit_hud(*hud.value(), *status);
+                    unit_hud(p, id, *hud.value(), *status);
             if(riding.mounted.weapon)
             {
                 auto hud = m_index.find(riding.mounted.weapon->hud_interface.tag_id);
@@ -785,6 +828,12 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     blam::tag_index_view<halo_version>   m_index;
     bool                                 m_multiplayer{false};
     std::array<blam::tag_t const*, 2>    m_unit_huds{}; /*!< Full, split screen */
+    struct warning_t
+    {
+        f32 shield{1.f};
+        u32 latched{0}; /*!< sound_t::latched_to_t bits in effect */
+    };
+    std::map<u64, warning_t> m_warnings; /*!< Per seat */
     blam::hud_number const*              m_digits{nullptr};
     bool                                 m_digit_sprites{false};
     /* Each grenade type's equipment, and the HUD that counts it */
