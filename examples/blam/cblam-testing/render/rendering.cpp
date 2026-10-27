@@ -1271,11 +1271,14 @@ struct DrawListBuilder
             u64 const cut     = self ? legs_cut(cache_item) : 0;
             pid.cut_bones[0]  = static_cast<u32>(cut);
             pid.cut_bones[1]  = static_cast<u32>(cut >> 32);
+            auto context = model_context(model);
+            if(context && shader_cache.numeric(smodel.shader))
+                context->numeric_place = numeric_place(p, smodel, model);
             populate_mod2_material(
                 smodel,
                 sm_draw.current_pass,
                 cache_item,
-                model_context(model),
+                context,
                 instance_id,
                 parent.template get<Visibility>().interior);
         }
@@ -1795,6 +1798,25 @@ struct DrawListBuilder
 
     /* Always built: the object's own function values travel with it even
      * when change colours are off or its tag is not a unit. */
+    /* Of the parts sharing a counter's shader, the later ones show the
+     * lower digits */
+    u8 numeric_place(Proxy& p, SubModel const& sub, Model const& model)
+    {
+        u8   place = 0;
+        bool after = false;
+        for(auto const& part : model.parts)
+        {
+            auto const* other = p.template get<SubModel>(part.id());
+            if(!other)
+                continue;
+            if(other == &sub)
+                after = true;
+            else if(after && other->shader == sub.shader)
+                place++;
+        }
+        return place;
+    }
+
     std::optional<ShaderCache<halo_version>::material_context> model_context(
         Model const& model)
     {
