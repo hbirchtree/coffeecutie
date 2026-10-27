@@ -1098,8 +1098,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return held && p.template get<Model>(held->held) ? held->held : 0;
     }
 
-    /* The weapon's export inputs, through its object functions, onto the
-     * first-person model: what turns its muzzle flash on */
+    /* The weapon's export inputs, through its object functions, onto its
+     * models: what turns its muzzle flash on, the needles it has left */
     void drive_functions(
         Proxy&               p,
         u64                  player,
@@ -1138,6 +1138,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             for(size_t i = 0; i < out.size() && i < functions.value().size(); i++)
                 out[i] = blam_functions::evaluate(functions.value()[i], in, out);
         model->object_function = out;
+        if(auto* held = gun && gun->held ? p.template get<Model>(gun->held) : nullptr)
+            held->object_function = out;
         hum(p, player, id, *model, out, magic);
     }
 
