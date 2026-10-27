@@ -215,7 +215,7 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
             if(status.dead || oinfo.player_idx == info.player_idx || !biped_in_play(oinfo, cam, net))
                 continue;
             return std::pair{
-                cam.camera.position - Vecf3{0.f, 0.f, oinfo.biped.eye_height} +
+                cam.camera.position - Vecf3{0.f, 0.f, oinfo.eye_height()} +
                     Vecf3{partner_offset, 0.f, 0.f},
                 spawn_points::facing_of(cam)};
         }

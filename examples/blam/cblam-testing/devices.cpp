@@ -124,7 +124,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         {
             auto [info, cam, net] = player.components();
             if(biped_in_play(info, cam, net))
-                units.push_back(cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_offset()});
+                units.push_back(cam.camera.position - Vecf3{0.f, 0.f, info.eye_offset()});
         }
         for(auto object : p.template select<Model, ObjectPhysics>())
         {

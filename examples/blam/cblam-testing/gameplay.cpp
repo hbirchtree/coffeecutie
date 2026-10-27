@@ -202,7 +202,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             return;
         }
         Vecf3 const feet =
-            cam.camera.position - Vecf3{0, 0, info.biped.eye_height};
+            cam.camera.position - Vecf3{0, 0, info.eye_height()};
         u64 nearest  = 0;
         f32 distance = vehicle_reach;
         for(auto object : p.template select<Model, ObjectPhysics>())
