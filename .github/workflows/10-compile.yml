@@ -420,6 +420,8 @@ jobs:
       env:
         # Runner VMs have no GPU, so loading and rendering crawl
         RUN_TIMEOUT: "600"
+        # SimMetalHost hides its errors; the app-side debug layer names them
+        SIMCTL_CHILD_MTL_DEBUG_LAYER: "1"
       run: |
         APP=$(find source/multi_build/ios-arm64-darwin-simulator/bin -maxdepth 2 -type d -name BlamGraphics.app | head -n 1)
         MAP=""

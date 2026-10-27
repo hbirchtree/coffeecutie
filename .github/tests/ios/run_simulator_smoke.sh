@@ -147,6 +147,8 @@ EOF
 fi
 
 grep -E "GL version|FPS:|FTAL|ERRO" "$LOG" | tail -n 20 || true
+# Metal's debug layer, when enabled, reports the call that broke
+grep -iE -A 8 "failed assertion|MTLDebug|validation" "$LOG" | head -n 60 || true
 # Coffee's signal handler prints the stack before it kills the process
 grep -A 40 "signal encountered" "$LOG" || true
 exit "$STATUS"
