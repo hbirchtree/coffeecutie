@@ -1326,11 +1326,10 @@ vec4 shader_plasma(in Material mat)
     vec3  tint = mix(para.rgb, perp.rgb, fresnel);
     float str  = mix(para.a, perp.a, fresnel);
 
-    /* Two clouds of noise scroll through each other; the plasma is the
-     * veins where they cross, over a faint fill of the whole shell */
-    float ridge  = 1.0 - abs(primary.r - secondary.r);
-    float veins  = pow(ridge, 6.0 * max(intensity_exp, 1.0));
-    float plasma = mix(0.35, 1.0, veins) * intensity;
+    /* Two clouds of noise scroll through each other and multiply: bright
+     * where both are, scaled up as the combiner did */
+    float noise  = clamp(primary.r * secondary.r * 4.0, 0.0, 1.0);
+    float plasma = pow(noise, max(intensity_exp, 0.01)) * intensity;
     vec3  color  = tint * plasma * str;
 
     return vec4(color, plasma);
