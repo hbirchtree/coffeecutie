@@ -301,16 +301,46 @@ struct BitmapCache
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
             if(bucket.type == blam::bitm::type_t::tex_3d)
         {
+            /* A volume is a texture of its own in the bucket, every level
+             * uploaded whole; Xbox swizzles it in three dimensions */
             gfx::texture_3d_t& texture =
                 bucket.template texture_as<gfx::texture_3d_t>();
-            auto img_data = img.image.mip->data(magic, mipmap);
-            cDebug(
-                "3D texture data: {}x{}x{} {}+{}",
-                img.image.mip->isize.x,
-                img.image.mip->isize.y,
-                img.image.mip->depth,
-                static_cast<const void*>(img_data.data()),
-                img_data.size_bytes());
+            u32 const depth = std::max<u32>(
+                static_cast<u32>(std::max<i16>(img.image.mip->depth, 1)) >> mipmap, 1);
+            if(bucket.layers == 0)
+            {
+                texture.alloc(size_3d<u32>{
+                    static_cast<u32>(img.image.mip->isize.x),
+                    static_cast<u32>(img.image.mip->isize.y),
+                    static_cast<u32>(std::max<i16>(img.image.mip->depth, 1))});
+                bucket.layers = 1;
+            }
+            auto            mip_data = img.image.mip->data(magic, mipmap);
+            std::vector<u8> linear;
+            size_t const    pixels = static_cast<size_t>(size.x) * size.y * depth;
+            u32 const       bpp    = pixels ? static_cast<u32>(mip_data.size_bytes() / pixels) : 0;
+            if((static_cast<u16>(img.image.mip->flags) &
+                static_cast<u16>(blam::bitm::flags_t::swizzled)) &&
+               bpp != 0)
+            {
+                linear.resize(mip_data.size_bytes());
+                if(!blam::swizzle::deswizzle_bytes(
+                       semantic::Span<const u8>(mip_data.data(), mip_data.size_bytes()),
+                       semantic::Span<u8>(linear.data(), linear.size()),
+                       static_cast<u32>(size.x),
+                       static_cast<u32>(size.y),
+                       bpp,
+                       depth))
+                    linear.clear();
+            }
+            Veci3 const dst_size{size.x, size.y, static_cast<i32>(depth)};
+            texture.upload(
+                linear.empty()
+                    ? semantic::Span<const u8>(mip_data.data(), mip_data.size_bytes())
+                    : semantic::Span<const u8>(linear.data(), linear.size()),
+                Veci3{0, 0, 0},
+                dst_size,
+                static_cast<i32>(dst_level));
         } else
 #endif
         {
@@ -408,7 +438,9 @@ struct BitmapCache
 
         auto& bucket =
             get_bucket<BucketType>(img.image.fmt, img.image.mip->type);
-        ensure_layers<BucketType>(bucket, img.image.layer + 1);
+        /* A volume sizes itself as it uploads */
+        if(img.image.mip->type != blam::bitm::type_t::tex_3d)
+            ensure_layers<BucketType>(bucket, img.image.layer + 1);
 
         C_UNUSED(auto name) = img.tag->to_name().to_string(magic);
 
@@ -585,7 +617,9 @@ struct BitmapCache
                 return 0x05000000;
             }
         case pix_fmt::RG8:
-            /* A8Y8 = luminance + alpha in r/g */
+            /* A8Y8 = luminance + alpha in r/g; volumes have their own sampler */
+            if(bitm.image.mip->type == blam::bitm::type_t::tex_3d)
+                return 0x0F000000;
             return bitm.image.mip->format == blam::bitm::format_t::A8Y8
                        ? 0x0C000000
                        : 0x06000000;
