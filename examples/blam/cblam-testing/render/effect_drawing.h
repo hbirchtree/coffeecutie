@@ -220,9 +220,12 @@ struct EffectDrawer
         auto const* item = cache.assign_atlas_data(atlas, cache.resolve(*bitmap, index));
         if(!item)
             return out;
-        out.opaque = item->image.mip && item->image.mip->format == blam::bitm::format_t::XRGB8
-                         ? 1.f
-                         : 0.f;
+        /* Levels the image never filled are kept off by a lod bias, packed
+         * above the opaque bit */
+        out.opaque = (item->image.mip && item->image.mip->format == blam::bitm::format_t::XRGB8
+                          ? 1.f
+                          : 0.f) +
+                     16.f * std::max(-item->image.bias, 0.f);
         out.atlas  = Vecf4(atlas.atlas_scale, atlas.atlas_offset);
         out.format = static_cast<f32>(atlas.layer >> 24);
         /* A1R5G5B5 has its own bucket but no code of its own in the atlas */
