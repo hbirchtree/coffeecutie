@@ -1702,7 +1702,8 @@ struct DrawListBuilder
                     pass.transparent_of(instance_id),
                     smodel.shader,
                     time,
-                    functions);
+                    functions,
+                    shader_cache.change_colors(unit_of(*model), functions));
             }
         }
 
@@ -1754,6 +1755,26 @@ struct DrawListBuilder
         f32 const value = std::clamp(model.object_function[src - 1], 0.f, 1.f);
         f32 const out = offset.amount * std::pow(value, std::max(offset.exponent, 0.f));
         return out;
+    }
+
+    /* The unit tag whose change colours a model carries, if its kind has
+     * any */
+    blam::scn::unit const* unit_of(Model const& model) const
+    {
+        blam::tag_t const* tag = model.origin_object;
+        if(!tag)
+            return nullptr;
+        switch(tag->tag_class())
+        {
+        case blam::tag_class_t::bipd:
+        case blam::tag_class_t::vehi:
+        case blam::tag_class_t::scen:
+            if(auto unit = tag->template data<blam::scn::unit>(shader_cache.magic); unit.has_value())
+                return unit.value();
+            return nullptr;
+        default:
+            return nullptr;
+        }
     }
 
     static u32 fog_flags(i16 fog)
@@ -1848,7 +1869,7 @@ struct DrawListBuilder
         materials::shader_data&   material,
         generation_idx_t const&   shader,
         time_point const&         time,
-        std::array<f32, 4> const& functions = {{0.f, 0.f, 0.f, 0.f}})
+        std::array<f32, 4> const& functions = {{-1.f, -1.f, -1.f, -1.f}})
     {
         shader_cache.update_uv_animations(material, shader, time, functions);
     }
