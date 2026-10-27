@@ -2601,40 +2601,68 @@ struct BlamScript
         {
             if(!which.empty() && lowered(squad.name.str()) != lowered(which))
                 continue;
-            i16 const type = squad.actor_type;
-            if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
-                continue;
-            auto const* unit = unit_of(palette.value()[type]);
-            if(!unit)
-                continue;
-            blam::tagref_t const held = weapon_of(palette.value()[type]);
-            /* Squad starting locations, 28 bytes like the encounter's */
-            auto const& block = reinterpret_cast<
-                blam::reference<blam::scn::ai::squad_spawn> const&>(
-                squad.start_locations);
-            auto starts = block.data(m_magic);
+            auto starts = squad.start_locations.data(m_magic);
             if(!starts.has_value() || starts.value().empty())
                 continue;
+            auto      lists = m_scenario->ai.command_lists.data(m_magic);
             u32 const count = std::max<u32>(squad.normal_diff_count, 1);
             for(u32 i = 0; i < count && i < starts.value().size(); i++)
             {
-                auto const&      start  = starts.value()[i];
+                auto const& start = starts.value()[i];
+                /* A location's own actor type beats the squad's */
+                i16 const type = start.actor_type >= 0 ? start.actor_type : squad.actor_type;
+                if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
+                    continue;
+                auto const* unit = unit_of(palette.value()[type]);
+                if(!unit)
+                    continue;
                 u32 const        net_id = script_net_id_base | m_next_actor++;
                 GameEvent        ev{.type = GameEvent::SpawnObject};
                 SpawnObjectEvent spawn{
                     .object       = *unit,
                     .position     = start.position,
-                    .rotation     = glm::angleAxis(start.yaw, Vecf3{0.f, 0.f, 1.f}),
+                    .rotation     = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
                     .net_id       = net_id,
                     .server_owned = true,
-                    .held         = held,
+                    .held         = weapon_of(palette.value()[type]),
                 };
                 p.template subsystem<GameEventBus>().inject(ev, &spawn);
                 m_spawning.insert(net_id);
                 /* Both the encounter and its squad name it */
                 m_actors[lowered(name)].push_back(net_id);
                 m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
+                /* Once it is there: its state's stance, and the location's
+                 * command list */
+                using state_t = blam::scn::ai::state_t;
+                auto const  state = start.initial_state != state_t::none ? start.initial_state : squad.initial_state;
+                auto const* list  = lists.has_value() && start.command_list >= 0 &&
+                                           static_cast<size_t>(start.command_list) < lists.value().size()
+                                        ? &lists.value()[static_cast<size_t>(start.command_list)]
+                                        : nullptr;
+                m_deferred.push_back({net_id, [this, state, list](Proxy& p, u64 id) {
+                                          if(auto* anim = p.template get<AnimationPlayback>(id))
+                                              anim->stance = stance_of(state);
+                                          if(list)
+                                              start_commands(p, id, *list);
+                                      }});
             }
+        }
+    }
+
+    /* The unit (stance) an actor animates from in a state */
+    static char const* stance_of(blam::scn::ai::state_t state)
+    {
+        using state_t = blam::scn::ai::state_t;
+        switch(state)
+        {
+        case state_t::sleeping:
+            return "asleep";
+        case state_t::alert:
+            return "alert";
+        case state_t::fleeing:
+            return "flee";
+        default:
+            return "stand";
         }
     }
 
