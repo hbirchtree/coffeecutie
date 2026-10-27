@@ -194,11 +194,45 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     //            portal_color_ptr++;
     //        }
 
+    /* Fog volumes by region: the palette entry's tag, and the planes the
+     * region lies behind */
+    if(auto regions = section.fog_regions.data(bsp_magic); regions.has_value())
+    {
+        auto palette = section.fog_palettes.data(bsp_magic);
+        auto planes  = section.fog_planes.data(bsp_magic);
+        for(auto const& [ri, region] : stl_types::const_enumerate(regions.value()))
+        {
+            BSPItem::FogVolume volume;
+            if(palette.has_value() && region.fog_palette >= 0 &&
+               static_cast<size_t>(region.fog_palette) < palette.value().size())
+            {
+                auto const& ref = palette.value()[region.fog_palette].fog;
+                if(auto it = index.find(ref); ref.valid() && it != index.end())
+                    if(auto data = (*it).template data<blam::scn::fog>(magic); data.has_value())
+                        volume.tag = data.value();
+            }
+            if(planes.has_value())
+                for(auto const& plane : planes.value())
+                    if(plane.front_region == static_cast<i16>(ri))
+                        volume.planes.push_back(Vecf4(plane.normal, plane.offset));
+            out.fogs.push_back(std::move(volume));
+        }
+    }
+
+    /* A cluster names its fog region with the top bit set */
+    auto fog_of = [&out](i16 fog) -> i16 {
+        if(fog == -1)
+            return -1;
+        auto const region = static_cast<size_t>(fog & 0x7fff);
+        return region < out.fogs.size() && out.fogs[region].tag ? static_cast<i16>(region) : -1;
+    };
+
     auto bclusters = section.clusters.data(bsp_magic).value();
     for(blam::bsp::cluster const& cluster : bclusters)
     {
         out.clusters.push_back({
             .cluster = &cluster,
+            .fog     = fog_of(cluster.fog),
         });
         BSPItem::Cluster& it          = out.clusters.back();
         auto              portal_idxs = cluster.portals.data(bsp_magic).value();
