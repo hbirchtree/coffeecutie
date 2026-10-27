@@ -184,6 +184,11 @@ class client_t
         return m_state;
     }
 
+    u32 player_idx() const
+    {
+        return m_player_idx;
+    }
+
     /* Drain received datagrams; every ~second, (re)greet the gateway. The
      * gateway answers every keepalive, so a quiet gateway means our session
      * is gone: start over rather than wait */
