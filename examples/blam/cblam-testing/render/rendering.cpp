@@ -86,7 +86,9 @@ struct alignas(16) PerInstanceData
     /* Bones whose vertices are clipped away: a player's own body shows its
      * legs below the first-person view */
     u32 cut_bones[2]{};
-    u32 padding[2]{};
+    /* Pushed out along the normals, wu: a shield's shell */
+    f32 inflate{0.f};
+    u32 padding{0};
 };
 
 static_assert(sizeof(PerInstanceData) == 96);
@@ -1255,6 +1257,7 @@ struct DrawListBuilder
             pass.caster_bounds[instance_id] = Vecf4(
                 Vecf3(model.transform[3]), model.render_radius * scale);
             pid.bone_base = kBoneUnposed;
+            pid.inflate   = inflation(smodel, model);
             auto const& light = object_light(p, smodel.parent, model);
             pid.light_layer   = light.layer;
             {
@@ -1734,6 +1737,23 @@ struct DrawListBuilder
     materials::shader_data& bsp_material_of(Passes which, size_t i)
     {
         return bsp_build()[which].material_of(i);
+    }
+
+    /* A plasma overlay stands off its model as its offset function says */
+    f32 inflation(SubModel const& sub, Model const& model)
+    {
+        if(!sub.shader.valid())
+            return 0.f;
+        ShaderItem const& item = shader_cache.get(sub.shader);
+        if(item.tag_class != blam::tag_class_t::spla || !item.header)
+            return 0.f;
+        auto const& offset = item.header->as<blam::shader::shader_plasma>()->offset;
+        auto const  src    = static_cast<u32>(offset.source);
+        if(offset.amount == 0.f || src < 1 || src > 4)
+            return 0.f;
+        f32 const value = std::clamp(model.object_function[src - 1], 0.f, 1.f);
+        f32 const out = offset.amount * std::pow(value, std::max(offset.exponent, 0.f));
+        return out;
     }
 
     static u32 fog_flags(i16 fog)
@@ -2341,6 +2361,19 @@ struct MeshRenderer
                     .template get_bucket<gfx::compat::texture_2da_t>(
                         PixDesc(pix_fmt::RGBA8))
                     .sampler});
+#if GLEAM_MAX_VERSION >= 0x301 || GLEAM_MAX_VERSION_ES >= 0x300
+        /* Plasma noise volumes */
+        if(m_api->feature_info().texture.texture_3d &&
+           m_api->limits().textures.texture_units > 18)
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_rg8_3d"sv, 18},
+                    bitm_cache
+                        .template get_bucket<gfx::texture_3d_t>(
+                            PixDesc(pix_fmt::RG8), blam::bitm::type_t::tex_3d)
+                        .sampler});
+#endif
         if(m_api->feature_info().texture.tex.gl.etc2 &&
            m_api->limits().textures.texture_units > 14)
         {
