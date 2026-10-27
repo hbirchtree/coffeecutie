@@ -1,4 +1,4 @@
-package dev.birchy
+package dev.speen
 
 import android.annotation.SuppressLint
 import android.app.NativeActivity

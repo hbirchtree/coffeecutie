@@ -218,7 +218,7 @@ function(ANDROIDAPK_PACKAGE)
       ANDROID_DATA_EXTRACTION_TEMPLATE "${ANDROID_PROJECT_INPUT}/data_extraction_rules.xml.in"
       ANDROID_LIB "${AAPK_TARGET}"
       ANDROID_START "ANativeActivity_onCreate"
-      ANDROID_ACTIVITY "dev.birchy.CoffeeNativeActivity"
+      ANDROID_ACTIVITY "dev.speen.CoffeeNativeActivity"
       # "${ANDROID_PACKAGE_NAME}.NativeActivity"
       ANDROID_ORIENTATION "sensorLandscape"
       # http://developer.android.com/guide/topics/manifest/activity-element.html

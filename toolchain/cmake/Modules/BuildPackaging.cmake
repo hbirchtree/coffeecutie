@@ -56,7 +56,7 @@ function(COFFEE_APPLICATION)
 
   cmake_parse_arguments(APP "${switches}" "${oneOpts}" "${multiOpts}" ${ARGN})
 
-  set_default(APP_PACKAGE_PREFIX "dev.birchy")
+  set_default(APP_PACKAGE_PREFIX "dev.speen")
   set_default(APP_COMPANY "Birchtrees")
   set_default(APP_VERSION_CODE "1")
   set_default(APP_INFO_STRING "This is a Coffee application")
