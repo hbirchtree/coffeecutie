@@ -229,7 +229,7 @@ struct MultiplayerController
             auto const* them = state.player(oinfo.player_idx);
             if(status.dead || oinfo.player_idx == info.player_idx)
                 continue;
-            Vecf3 const feet = cam.camera.position - Vecf3{0.f, 0.f, oinfo.biped.eye_height};
+            Vecf3 const feet = cam.camera.position - Vecf3{0.f, 0.f, oinfo.eye_height()};
             standing.push_back(feet);
             if(!(me && them && me->team >= 0 && me->team == them->team))
                 enemies.push_back(feet);

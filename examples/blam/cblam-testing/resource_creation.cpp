@@ -542,8 +542,8 @@ void create_resources(compo::EntityContainer& e)
                              {"in_play", biped_shown(info, cam, net)},
                              {"riding", info.riding.vehicle != 0},
                              {"spawned", info.spawned},
-                             {"eye_offset", info.biped.eye_offset()},
-                             {"eye_height", info.biped.eye_height},
+                             {"eye_offset", info.eye_offset()},
+                             {"eye_height", info.eye_height()},
                              {"model", nullptr},
                              {"body", nullptr},
                          };
