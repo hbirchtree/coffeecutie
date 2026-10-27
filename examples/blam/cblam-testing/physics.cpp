@@ -1012,7 +1012,7 @@ struct PhysicsSystem
             camera.camera.position = {
                 origin.x(),
                 origin.y(),
-                origin.z() + info->biped.eye_offset(),
+                origin.z() + info->eye_offset(),
             };
         }
 
@@ -1083,7 +1083,7 @@ struct PhysicsSystem
             {
                 Vecf3 const origin = kinematic
                                          ? camera.camera.position -
-                                               Vecf3{0, 0, shape.eye_offset()}
+                                               Vecf3{0, 0, info.eye_offset()}
                                          : camera.camera.position +
                                                Vecf3{0, 0, shape.spawn_lift()};
                 /* The coll model, posed by the animation; the capsule is
@@ -1149,7 +1149,7 @@ struct PhysicsSystem
             } else if(kinematic)
                 move_kinematic(
                     id,
-                    camera.camera.position - Vecf3{0, 0, shape.eye_offset()},
+                    camera.camera.position - Vecf3{0, 0, info.eye_offset()},
                     shape.collision ? std::optional(camera_yaw(camera))
                                     : std::nullopt,
                     info.is_remote());

@@ -414,6 +414,8 @@ enum class InputIntent : libc_types::u32
     reload  = 0x20,
     grenade = 0x40,
     melee   = 0x80,
+    /* Held */
+    crouch = 0x100,
 };
 
 C_FLAGS(InputIntent, libc_types::u32)
