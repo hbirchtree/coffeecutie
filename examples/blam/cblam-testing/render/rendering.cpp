@@ -1884,6 +1884,7 @@ struct MeshRenderer
     BlamResources&       m_resources;
     RenderingParameters& m_render_params;
     int                  m_render_flags{0x0};
+    bool                 m_sky_pass{false}; /* the sky's draws lie beyond any fog */
     bool                 m_water_modulate{false};
     bool                 m_first_person{false};
 
@@ -2497,7 +2498,7 @@ struct MeshRenderer
             m_render_params.render_flags() |
             (std::is_same_v<halo_version, blam::xbox_version_t> ? 0x800 : 0) |
             (m_render_params.interior ? 0x8000 : 0) |
-            (m_water_modulate ? 0x10000 : 0);
+            (m_water_modulate ? 0x10000 : 0) | (m_sky_pass ? 0x40000 : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),
@@ -3713,6 +3714,7 @@ struct MeshRenderer
 
         {
             gfx::depth_extended_state sky_depth{.depth_write = false};
+            m_sky_pass = true;
             for(i32 pi = Pass_SkyOpaque; pi <= Pass_LastSky; ++pi)
             {
                 auto pass  = static_cast<Passes>(pi);
@@ -3726,6 +3728,7 @@ struct MeshRenderer
                         blend,
                         sky_depth);
             }
+            m_sky_pass = false;
         }
 
         // Transparent world geometry — primary player, no depth write.

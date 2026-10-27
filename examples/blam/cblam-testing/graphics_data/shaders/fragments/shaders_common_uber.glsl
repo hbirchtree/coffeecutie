@@ -157,6 +157,36 @@ float planar_fog(in FogVolume v, vec3 eye, vec3 p)
            clamp(path / max(v.params.x, 1e-3), 0.0, 1.0);
 }
 
+/* Fog on the sky: the eye's ray through the volume, out to infinity */
+float planar_fog_sky(in FogVolume v, vec3 eye, vec3 dir)
+{
+    float t0    = 0.0;
+    float t1    = 1e5;
+    int   count = int(v.params.z);
+    for(int i = 0; i < MAX_FOG_PLANES; i++)
+        if(i < count)
+        {
+            float d0 = v.planes[i].w - dot(v.planes[i].xyz, eye);
+            float dd = -dot(v.planes[i].xyz, dir);
+            if(abs(dd) < 1e-6)
+            {
+                if(d0 <= 0.0)
+                    return 0.0;
+            }
+            else if(dd > 0.0)
+                t0 = max(t0, -d0 / dd);
+            else
+                t1 = min(t1, -d0 / dd);
+        }
+    if(t1 <= t0)
+        return 0.0;
+    float deepest = max(
+        fog_depth(v, eye + dir * t0),
+        max(fog_depth(v, eye + dir * t1), fog_depth(v, eye + dir * (t0 + t1) * 0.5)));
+    return v.color.w * min(deepest / max(v.params.y, 1e-3), 1.0) *
+           clamp((t1 - t0) / max(v.params.x, 1e-3), 0.0, 1.0);
+}
+
 /* Dynamic lights: explosions, muzzle flashes, plasma */
 vec3 point_lighting(vec3 position, vec3 normal)
 {
@@ -1534,7 +1564,9 @@ void main()
         return;
     }
     FogVolume volume = world.fogs[which];
-    float planar     = planar_fog(volume, camera_position, frag.position);
+    float planar     = (render_flags & RENDER_FLAG_SKY) != 0
+        ? planar_fog_sky(volume, camera_position, normalize(frag.position - camera_position))
+        : planar_fog(volume, camera_position, frag.position);
     vec4  planar_col = vec4(volume.color.rgb, 1);
     /* The atmosphere is laid over the volume where it dominates */
     if((uint(volume.params.w) & 0x2u) != 0u)
