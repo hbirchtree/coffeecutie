@@ -91,7 +91,18 @@ Without a server, the gateway's `--server` is used. Without `gateway.txt`, the
 viewer stays offline.
 
 Once joined, Z switches between flying and walking. Walking, the server moves
-the body: the left stick walks, the C-stick looks and A jumps.
+the body and fires its weapons:
+
+| Control | Walking |
+|---------|---------|
+| Left stick | walk |
+| C-stick | look |
+| R | fire |
+| L | throw a grenade |
+| A | reload, pick up, use |
+| B | melee |
+| X | jump |
+| Y | swap weapons |
 
 The console gets its address over DHCP. In Dolphin, use the HLE broadband
 adapter, and point `gateway.txt` at the PC's LAN address rather than
