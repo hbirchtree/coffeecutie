@@ -1222,6 +1222,8 @@ struct EffectSystem
                 glm::angleAxis(
                     -std::asin(std::clamp(dir.z, -1.f, 1.f)), Vecf3{0, 1, 0}),
             .local_only = true,
+            /* Born inside the object the effect hangs off, it must not strike it */
+            .owner      = fx.parent,
             /* Debris barely moves on its own; Halo flings it with the same
              * event's jpt! instantaneous acceleration, not applied yet */
             .velocity = dir * uniform(part.velocity_bounds) + fx.velocity,
