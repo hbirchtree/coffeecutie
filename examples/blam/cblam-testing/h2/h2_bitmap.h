@@ -8,7 +8,7 @@
 #include <blam/dimeter/map.h>
 #include <blam/dimeter/views.h>
 #include <blam/dimeter/vista.h>
-#include <blam/volta/blam_swizzle.h>
+#include <blam/common/swizzle.h>
 #include <coffee/core/CDebug>
 #include <coffee/graphics/apis/gleam/rhi.h>
 #include <coffee/graphics/apis/gleam/rhi_texture.h>

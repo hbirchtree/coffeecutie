@@ -21,7 +21,7 @@
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_sound.h>
 #include <blam/volta/blam_stl.h>
-#include <blam/volta/blam_swizzle.h>
+#include <blam/common/swizzle.h>
 #include <blam/volta/blam_ui.h>
 #include <blam/volta/blam_versions.h>
 #include <cmath>
