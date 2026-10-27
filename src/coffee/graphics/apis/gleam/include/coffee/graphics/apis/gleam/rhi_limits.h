@@ -115,6 +115,12 @@ struct api_limits
                 .ubo_alignment =
                     get_limit(prop::uniform_buffer_offset_alignment),
             };
+#if defined(COFFEE_IOS) && TARGET_OS_SIMULATOR
+            /* The simulator's GPU reports iOS alignment, but its Metal host
+             * runs on macOS, which aborts on offsets below 256 */
+            if(buffers.ubo_alignment < 256)
+                buffers.ubo_alignment = 256;
+#endif
         }
         if(m_features.buffer.ssbo)
         {
