@@ -826,6 +826,10 @@ struct Projectile
 
 /*! Collision for a world object: static ones use the exact coll surfaces,
  * moving ones its hulls, or a box/sphere when there is no coll tag */
+/* Stands tip-up, and calls a storm down where it spawns */
+inline constexpr std::string_view gravity_rifle_tag =
+    "weapons\\gravity rifle\\gravity rifle";
+
 struct ObjectPhysics
 {
     using value_type = ObjectPhysics;
@@ -843,6 +847,8 @@ struct ObjectPhysics
     f32   mass{0.f};      /*!< 0 = static */
     bool  item{false};    /*!< Only collides with the world and other items */
     bool  upright{false}; /*!< Bipeds: never tip, hulls follow the pose */
+    /*! Items: Hz of a spring turning the model's +X (its tip) up, 0 = none */
+    f32   tip_up{0.f};
     /*! The physics material; < 0 keeps the default */
     f32   friction{-1.f};
     f32   restitution{-1.f};

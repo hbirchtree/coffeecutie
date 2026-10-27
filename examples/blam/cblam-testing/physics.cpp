@@ -768,6 +768,41 @@ class MassPointAction : public btActionInterface
     f32                                             m_slip{0.f};
 };
 
+/* Damped spring turning an item's +X (its tip) toward world up */
+class TipUpAction : public btActionInterface
+{
+  public:
+    TipUpAction(btRigidBody& body, f32 frequency)
+        : m_body(body)
+        , m_frequency(frequency)
+    {
+    }
+
+    void updateAction(btCollisionWorld*, btScalar dt) override
+    {
+        btVector3 const up(0, 0, 1);
+        btVector3 const tip =
+            m_body.getWorldTransform().getBasis().getColumn(0);
+        btVector3 spin = m_body.getAngularVelocity();
+        spin -= up * spin.dot(up);
+        f32 const       w0   = glm::two_pi<f32>() * m_frequency;
+        btVector3 const want = tip.cross(up) * (w0 * w0) -
+                               spin * (2.f * damping * w0);
+        m_body.applyTorqueImpulse(
+            m_body.getInvInertiaTensorWorld().inverse() * want * dt);
+    }
+
+    void debugDraw(btIDebugDraw*) override
+    {
+    }
+
+  private:
+    static constexpr f32 damping = .7f;
+
+    btRigidBody& m_body;
+    f32          m_frequency;
+};
+
 template<typename V>
 using PhysicsManifest = compo::SubsystemManifest<
     type_list_t<
@@ -1231,6 +1266,7 @@ struct PhysicsSystem
                     .mass_points = physics.mass_points,
                     .drive       = physics.drive,
                     .posed       = physics.upright || physics.animated,
+                    .tip_up      = physics.tip_up,
                 });
                 /* Nothing drives it, so it has to stop on its own */
                 if(physics.upright && m_bodies.contains(id))
@@ -2346,6 +2382,15 @@ struct PhysicsSystem
         entity_body.group       = body_create.group;
         entity_body.mass_points = body_create.mass_points;
         add_to_world(*entity_body.world_body, body_create.group);
+        if(body_create.tip_up > 0.f && !body_create.kinematic &&
+           body_create.mass > 0.f)
+        {
+            /* Awake at rest too, or it stays wherever it fell */
+            entity_body.world_body->setActivationState(DISABLE_DEACTIVATION);
+            entity_body.tip_up = std::make_unique<TipUpAction>(
+                *entity_body.world_body, body_create.tip_up);
+            m_world->addAction(entity_body.tip_up.get());
+        }
         if(auto const& points = body_create.mass_points;
            points && !body_create.kinematic && body_create.mass > 0.f)
         {
@@ -3234,6 +3279,7 @@ struct PhysicsSystem
             Physics::BodyCreationShape::AnyGroup};
         std::shared_ptr<MassPoints const> mass_points;
         std::unique_ptr<MassPointAction>  action;
+        std::unique_ptr<TipUpAction>      tip_up;
         /* Hull children that follow the animation: their bone, their bind
          * bounds (body space) for the debug boxes, and the shift that put
          * the hull points into body space */
@@ -3446,6 +3492,9 @@ struct PhysicsSystem
         if(body.action)
             m_world->removeAction(body.action.get());
         body.action.reset();
+        if(body.tip_up)
+            m_world->removeAction(body.tip_up.get());
+        body.tip_up.reset();
         if(body.world_body)
             m_world->removeRigidBody(body.world_body.get());
     }

@@ -141,6 +141,8 @@ struct BodyCreationShape
     std::optional<VehicleDrive>       drive;
     /*! Hull children follow the entity's AnimationPlayback::pose */
     bool posed{false};
+    /*! Hz of a spring turning the body's +X up, 0 = none */
+    f32 tip_up{0.f};
     /*! Overrides the defaults below when set */
 };
 
