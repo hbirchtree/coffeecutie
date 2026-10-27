@@ -1339,7 +1339,11 @@ struct DrawListBuilder
         for(auto const& [id, item] : bsp_cache.m_cache)
             if(item.valid() && item.section_idx == bsp_cache.active_section)
                 bsp = &item;
-        auto sample = bsp ? bsp->light_below(at) : std::nullopt;
+        /* From the origin first: the bound's centre can sit over a surface
+         * hidden inside a wall, as a door's does */
+        auto sample = bsp ? bsp->light_below(model.position) : std::nullopt;
+        if(!sample && bsp && at != model.position)
+            sample = bsp->light_below(at);
 
         struct
         {
