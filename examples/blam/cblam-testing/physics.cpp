@@ -104,7 +104,10 @@ class MassPointAction : public btActionInterface
         /* A driver stays aboard through slow or late frames; their stick
          * only counts while fresh. Lift and handbrake need the driver, not
          * the input, or a banshee drops between frames. */
-        bool const driven = m_drive && m_driver_left > 0;
+        /* A turret's gunner only turns it: nothing drives or lifts it, and
+         * it holds its ground like a parked jeep */
+        bool const driven = m_drive && m_driver_left > 0 &&
+                            m_drive->type != VehicleDrive::turret;
         if(m_driver_left > 0)
             m_driver_left--;
         if(m_input_left > 0)
