@@ -2,8 +2,6 @@
 
 #include <array>
 #include <cstring>
-#include <set>
-#include <string>
 #include <peripherals/stl/tuple_foreach.h>
 #include <peripherals/stl/tuple_slice.h>
 
@@ -311,21 +309,6 @@ inline bool apply_command_modifier(
          */
         if(slow_map_opt)
             offset = 0;
-
-        /* Nothing to read there, and Metal (ANGLE) aborts on the empty range */
-        if(buffer.m_type == buffers::type::constants && !slow_map_opt &&
-           offset >= buffer.m_offset + buffer.m_size)
-        {
-            static std::set<std::string> warned;
-            if(warned.emplace(buffer_def.key.name).second)
-                Coffee::cWarning(
-                    "Uniform block '{}' bound at {} past the end of its {} "
-                    "byte buffer, skipping",
-                    buffer_def.key.name,
-                    offset,
-                    buffer.m_size);
-            continue;
-        }
 
         if constexpr(compile_info::debug_mode)
         {
