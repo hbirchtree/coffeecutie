@@ -4097,6 +4097,24 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                 blam::from_le(c.portals.count),
                 blam::from_le(c.predicted_resources.count));
             print_nonzero("unknown1", c.unknown1);
+            /* The cluster's extent, to set against the fog planes */
+            auto subs = c.sub_clusters.data(magic);
+            if(subs.has_value() && !subs.value().empty())
+            {
+                auto lo = subs.value()[0].bounds, hi = lo;
+                for(auto const& sc : subs.value())
+                {
+                    lo.x_min = std::min(lo.x_min, sc.bounds.x_min);
+                    lo.y_min = std::min(lo.y_min, sc.bounds.y_min);
+                    lo.z_min = std::min(lo.z_min, sc.bounds.z_min);
+                    hi.x_max = std::max(hi.x_max, sc.bounds.x_max);
+                    hi.y_max = std::max(hi.y_max, sc.bounds.y_max);
+                    hi.z_max = std::max(hi.z_max, sc.bounds.z_max);
+                }
+                fmt::print(
+                    "    bounds x={}..{} y={}..{} z={}..{}\n",
+                    lo.x_min, hi.x_max, lo.y_min, hi.y_max, lo.z_min, hi.z_max);
+            }
             each(
                 magic, c.predicted_resources, [&](predicted_resource const& r) {
                     fmt::print(
