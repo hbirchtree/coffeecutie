@@ -44,24 +44,37 @@ trap 'xcrun simctl shutdown "$DEVICE" >/dev/null 2>&1 || true' EXIT
 xcrun simctl install "$DEVICE" "$APP"
 
 # Opt-in: Release builds install no crash handler, so let lldb catch it
+WAIT_FOR_DEBUGGER=""
+if [ -n "${LLDB_ATTACH:-}" ]; then
+    WAIT_FOR_DEBUGGER="--wait-for-debugger"
+fi
+
+# --console-pty keeps the app's stdout line-buffered
+xcrun simctl launch --console-pty --terminate-running-process $WAIT_FOR_DEBUGGER \
+    "$DEVICE" "$BUNDLE_ID" ${MAP:+"$MAP"} > "$LOG" 2>&1 &
+LAUNCHER=$!
+
 DEBUGGER=""
 if [ -n "${LLDB_ATTACH:-}" ]; then
+    # Simulator apps are host processes, waiting at launch for the debugger
     EXE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP/Info.plist")
+    PID=""
+    i=0
+    while [ -z "$PID" ] && [ "$i" -lt 60 ]; do
+        PID=$(pgrep -nx "$EXE" || true)
+        [ -n "$PID" ] || sleep 1
+        i=$((i + 1))
+    done
+    echo "Attaching lldb to $EXE (pid '${PID:-none}')"
     lldb --batch \
-        -o "process attach --name $EXE --waitfor" \
+        -o "process attach --pid ${PID:-0}" \
         -o "process handle SIGPIPE SIGUSR1 SIGUSR2 SIGALRM -n true -p true -s false" \
         -o "continue" \
         -k "thread backtrace all" \
         -k "process kill" \
         > "$OUT/lldb.log" 2>&1 &
     DEBUGGER=$!
-    sleep 2
 fi
-
-# --console-pty keeps the app's stdout line-buffered
-xcrun simctl launch --console-pty --terminate-running-process \
-    "$DEVICE" "$BUNDLE_ID" ${MAP:+"$MAP"} > "$LOG" 2>&1 &
-LAUNCHER=$!
 
 # Frame reports so far; with a map, only those after it finished loading
 frames() {
