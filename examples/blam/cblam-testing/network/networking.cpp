@@ -1362,9 +1362,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             });
         m_despawn_queue = m_game_bus.addQueuedEventFunction<DespawnObjectEvent>(
             0, [this](GameEvent&, DespawnObjectEvent* gone) {
-                if(is_server() && gone->net_id != 0 &&
-                   !SpawnObjectEvent::is_impostor(gone->net_id))
-                    m_despawns.push_back({.net_id = gone->net_id});
+                if(!is_server() || gone->net_id == 0 ||
+                   SpawnObjectEvent::is_impostor(gone->net_id))
+                    return;
+                m_despawns.push_back({.net_id = gone->net_id});
+                /* Late joiners must not get it back with the backlog */
+                std::erase_if(m_dynamic_spawns, [gone](EntitySpawn const& s) {
+                    return s.tag.instance_id == gone->net_id;
+                });
             });
         m_pickup_queue = m_game_bus.addQueuedEventFunction<EquipWeaponEvent>(
             0, [this](GameEvent&, EquipWeaponEvent* equip) {
