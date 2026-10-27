@@ -165,7 +165,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             return;
         auto const& coll   = *status->coll;
         f32         amount = uniform(jpt.upper_bound) * scale;
-        f32         shield_mult = 1.f, body_mult = 1.f;
+        f32         shield_mult = 1.f, body_mult = 1.f, leak = 0.f;
+        u16         struck      = blam::scn::material_type_count;
         if(i16 const material = material_of(p, unit, part); material >= 0)
             if(auto materials = coll.materials.data(*m_magic);
                materials.has_value() &&
@@ -174,17 +175,21 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 auto const& m = materials.value()[material];
                 shield_mult   = m.shield_damage_multiplier;
                 body_mult     = m.body_damage_multiplier;
-                if(m.material_type < blam::scn::material_type_count &&
-                   jpt.material_modifiers[m.material_type] > 0.f)
-                    amount *= jpt.material_modifiers[m.material_type];
+                leak          = m.shield_leak_percentage;
+                struck        = m.material_type;
             }
+        /* Up, the shield is what is struck: the damage is modified for its
+         * material, not the part's behind it */
+        bool const shielded = status->shield > 0.f && status->maximum_shield() > 0.f &&
+                              shield_mult > 0.f;
+        amount *= modifier_of(jpt, shielded ? coll.shield_material_type : struck);
         /* A spent arm shield is down: what struck it reaches the body */
         if(body_mult <= 0.f && status->shield <= 0.f)
             body_mult = 1.f;
         bool const headshot =
             head && (jpt.damage_flags & flag_t::can_cause_headshots) != flag_t::none;
         bool const violent = amount >= status->maximum_body();
-        apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot);
+        apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot, leak);
         if(status->dead)
             last_words(p, unit, violent);
         tell(p, unit, *status, {}, 0.f, false, false, violent);
@@ -192,15 +197,30 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             killed(p, unit, killer);
     }
 
-    /* Shield first, then whatever gets past it into the body. Unshielded,
-     * a headshot from a weapon that can make one kills */
+    /* A jpt!'s modifier for a material type. A list with any entry set is
+     * authored, and a zero in it means nothing gets through; a blank list
+     * leaves the damage alone */
+    static f32 modifier_of(jpt_t const& jpt, u16 material)
+    {
+        if(material >= blam::scn::material_type_count)
+            return 1.f;
+        bool authored = false;
+        for(u32 i = 0; i < blam::scn::material_type_count; i++)
+            authored = authored || jpt.material_modifiers[i] != 0.f;
+        return authored ? jpt.material_modifiers[material] : 1.f;
+    }
+
+    /* Shield first, with `leak` of the blow passing through it, then
+     * whatever gets past it into the body. Unshielded, a headshot from a
+     * weapon that can make one kills */
     void apply(
         BipedStatus& status,
         f32          amount,
         f32          shield_mult,
         f32          body_mult,
         flag_t       flags,
-        bool         headshot)
+        bool         headshot,
+        f32          leak = 0.f)
     {
         auto const& coll       = *status.coll;
         f32 const   max_shield = status.maximum_shield();
@@ -216,9 +236,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(shielded && (flags & flag_t::skips_shields) == flag_t::none)
         {
             status.recent_shield = 1.f;
-            f32 const soak = status.shield * max_shield / shield_mult;
-            status.shield  = std::max(status.shield - amount * shield_mult / max_shield, 0.f);
-            amount         = std::max(amount - soak, 0.f);
+            f32 const leaked = amount * std::clamp(leak, 0.f, 1.f);
+            f32 const soak   = status.shield * max_shield / shield_mult;
+            status.shield    = std::max(status.shield - amount * shield_mult / max_shield, 0.f);
+            amount           = std::max(amount - soak, 0.f) + leaked;
         }
         if(amount <= 0.f || body_mult <= 0.f ||
            (flags & flag_t::only_hurts_shields) != flag_t::none)
