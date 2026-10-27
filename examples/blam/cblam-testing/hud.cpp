@@ -57,6 +57,7 @@ struct state_t
     f32 secondary_loaded{0.f};
     f32 heat{0.f};
     f32 battery{1.f}; /*!< What is left of it */
+    u8  zoom{0};      /*!< Zoom level, 0 = none */
 };
 
 /* Drawn premultiplied: alpha is how much of what is behind an element it
@@ -382,6 +383,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             {
                 if(!on_this_map(el.can_use_on_map_type))
                     continue;
+                using nflags_t = grenade_hud_interface::numbers_t::flags_t;
+                if((el.number.flags & nflags_t::only_show_when_zoomed) != nflags_t::none &&
+                   s.zoom == 0)
+                    continue;
                 using wflags_t = decltype(el.number.weapon_flags);
                 f32 value      = value_of(el.state_attached_to, s, false);
                 if((el.number.weapon_flags & wflags_t::divide_number_by_clip_size) !=
@@ -399,6 +404,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             {
             case type_t::aim:
                 return true;
+            case type_t::zoom:
+                return s.zoom > 0;
             case type_t::should_reload:
                 return empty && !none_spare;
             case type_t::low_ammo_and_none_left_to_reload:
@@ -418,9 +425,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 if(!overlays.has_value())
                     continue;
                 using flags_t = weapon_hud_interface::crosshair_overlay_t::flags_t;
+                auto const hidden = s.zoom > 0 ? flags_t::dont_show_when_zoomed
+                                                : flags_t::show_only_when_zoomed;
                 for(auto const& ov : overlays.value())
-                    if((ov.flags & flags_t::show_only_when_zoomed) == flags_t::none &&
-                       !blank(ov.colors.default_color))
+                    if((ov.flags & hidden) == flags_t::none && !blank(ov.colors.default_color))
                         push(anchor_t::center, ov, ch.crosshair_bitmap, ov.sequence_index,
                              color_of(ov.colors.default_color));
             }
@@ -444,7 +452,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         weapon_hud(child != m_index.end() ? &(*child) : nullptr, s, depth + 1);
     }
 
-    static state_t state_of(BipedEquipment::weapon_t const& held, BipedEquipment::weapon_t const& slung, blam::map_ptr const& magic)
+    static state_t state_of(
+        BipedEquipment::weapon_t const& held,
+        BipedEquipment::weapon_t const& slung,
+        blam::map_ptr const&            magic,
+        u8                              zoom = 0)
     {
         state_t s{
             .total            = static_cast<f32>(held.rounds_total),
@@ -453,6 +465,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             .secondary_loaded = static_cast<f32>(slung.rounds_loaded),
             .heat             = std::min(held.heat, 1.f),
             .battery          = 1.f - held.age,
+            .zoom             = zoom,
         };
         auto triggers  = held.weapon->triggers.data(magic);
         auto magazines = held.weapon->magazines.data(magic);
@@ -757,7 +770,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 weapon_hud(
                     held->weapon->hud_interface.valid() && hud != m_index.end() ? &(*hud)
                                                                                 : nullptr,
-                    state_of(*held, equip->weapons[1], *m_magic));
+                    state_of(*held, equip->weapons[1], *m_magic, equip->zoom));
             }
             /* The grenades it would throw */
             if(equip->grenade < equip->equipment.size())
