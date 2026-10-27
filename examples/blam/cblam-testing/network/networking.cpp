@@ -796,6 +796,21 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return 0;
     }
 
+    /* What the census covers: the server-spawned objects. Static scenario
+     * objects every peer loads itself, by BSP section */
+    static bool census_covers(u32 net_id)
+    {
+        if(net_id == 0 || SpawnObjectEvent::is_impostor(net_id))
+            return false;
+        return net_id >= SpawnObjectEvent::dynamic_net_id_base ||
+               SpawnObjectEvent::scenario_group(net_id) >= ScenarioGroup::Vehicle;
+    }
+
+    static u32 census_bucket(u32 net_id, u32 buckets)
+    {
+        return ((net_id * 2654435761u) >> 16) % buckets;
+    }
+
     /* A camera as sent: on a deck, where it is on that deck, so a peer puts
      * it on the deck as it has it rather than where the deck was */
     CameraSync camera_sync_of(
@@ -1469,7 +1484,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_latest_cameras.clear();
                 for(auto& [_, state] : m_connections)
                 {
-                    state.verified = false;
+                    state.verified   = false;
+                    state.census_due = {};
                     state.cameras_sent.clear();
                     state.objects_sent.clear();
                 }
@@ -2541,6 +2557,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             send_game_state(p);
             send_devices(p);
             send_pickups();
+            send_census(p);
             measure_pings();
             send_tick_sync(p, t);
             send_grab_states(p);
@@ -3534,6 +3551,63 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             }));
     }
 
+    /* Every census_period a peer hears which replicated objects live here,
+     * so a spawn or despawn it missed gets put right (ObjectCensus) */
+    void send_census(Proxy& p)
+    {
+        auto const now = std::chrono::steady_clock::now();
+        std::set<HSteamNetConnection> due;
+        for(auto& [connection, state] : m_connections)
+        {
+            if(!state.verified || !state.objects_synced)
+                continue;
+            /* The backlog goes first, and gets a period to land */
+            if(state.census_due == std::chrono::steady_clock::time_point{})
+                state.census_due = now + census_period;
+            if(now < state.census_due)
+                continue;
+            state.census_due = now + census_period;
+            due.insert(connection);
+        }
+        if(due.empty())
+            return;
+        std::vector<ObjectCensus> live;
+        for(auto object : p.select<NetworkInfo>())
+        {
+            auto const& net = object.get<NetworkInfo>();
+            if(census_covers(net.instance_id) && !p.get<PlayerInfo>(object.id()))
+                live.push_back({.net_id = net.instance_id, .tag_id = net.object.tag_id});
+        }
+        u32 const buckets =
+            std::max<u32>(1, (live.size() + census_batch - 1) / census_batch);
+        size_t bytes = 0;
+        for(u32 bucket = 0; bucket < buckets; bucket++)
+        {
+            std::vector<ObjectCensus> part;
+            for(auto const& entry : live)
+                if(census_bucket(entry.net_id, buckets) == bucket)
+                    part.push_back(entry);
+            /* An empty bucket still has to say so */
+            if(part.empty())
+                part.push_back({});
+            bytes += sizeof(MessageBase) + part.size() * sizeof(ObjectCensus);
+            send_all<ObjectCensus>(
+                MessageBase{
+                    .type    = MessageBase::ObjectCensus,
+                    .request = bucket | buckets << 16,
+                },
+                gsl::span<ObjectCensus>(part),
+                k_nSteamNetworkingSend_UnreliableNoNagle,
+                due);
+        }
+        journal(
+            "net_census",
+            {{"objects", live.size()},
+             {"buckets", buckets},
+             {"bytes", bytes},
+             {"peers", due.size()}});
+    }
+
     static bool is_weapon(BlamFiles<halo_version> const& files, blam::tag_index<> weapon)
     {
         blam::tag_index_view<halo_version> index(files.container);
@@ -3962,6 +4036,45 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             replicate_spawn(spawn, connection, request.request_id);
             break;
         }
+        case MessageBase::ObjectRequest: {
+            if(!player_info.verified)
+                break;
+            std::vector<EntitySpawn> answer;
+            std::vector<u32>         unknown;
+            for(auto const& request : payload.values<ObjectRequest>())
+            {
+                auto it = std::find_if(
+                    m_dynamic_spawns.begin(),
+                    m_dynamic_spawns.end(),
+                    [&request](EntitySpawn const& s) {
+                        return s.tag.instance_id == request.net_id;
+                    });
+                if(it == m_dynamic_spawns.end())
+                {
+                    unknown.push_back(request.net_id);
+                    continue;
+                }
+                answer.push_back(*it);
+                /* Where it is now, not where it was spawned */
+                if(auto const* model = p.get<Model>(entity_of(p, request.net_id)))
+                {
+                    answer.back().position = Vecf4(model->position, 1.f);
+                    answer.back().rotation = model->rotation;
+                }
+            }
+            journal(
+                "net_census_answer",
+                {{"player_idx", player_info.idx},
+                 {"sent", answer.size()},
+                 {"unknown", unknown}});
+            if(!answer.empty())
+                send_all<EntitySpawn>(
+                    MessageBase{MessageBase::EntitySpawn},
+                    gsl::span<EntitySpawn>(answer),
+                    k_nSteamNetworkingSend_Reliable,
+                    {connection});
+            break;
+        }
         case MessageBase::MapVerify: {
             auto const& theirs = payload.value<MapVerify>().fingerprint;
             bool const  match  = theirs == m_fingerprint;
@@ -4014,6 +4127,81 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         default:
             break;
         }
+    }
+
+    /* One bucket of the server's objects: drop what it does not list, ask
+     * for what it lists and we lack. What arrived within the last period
+     * may still be crossing the census, and is left alone */
+    void receive_census(Proxy& p, MessageBase const& payload)
+    {
+        u32 const  bucket  = payload.request & 0xFFFF;
+        u32 const  buckets = std::max<u32>(1, payload.request >> 16);
+        auto const now     = std::chrono::steady_clock::now();
+        std::erase_if(m_recent_spawns, [now](auto const& e) {
+            return now - e.second > census_period;
+        });
+        std::erase_if(m_requested, [now](auto const& e) {
+            return now - e.second > census_period;
+        });
+        std::map<u32, blam::tag_index<>> listed;
+        for(auto const& entry : payload.values<ObjectCensus>())
+            if(entry.net_id != 0)
+                listed[entry.net_id] = entry.tag_id;
+        for(auto object : p.select<NetworkInfo>())
+        {
+            auto const& net = object.get<NetworkInfo>();
+            if(!census_covers(net.instance_id) ||
+               census_bucket(net.instance_id, buckets) != bucket ||
+               p.get<PlayerInfo>(object.id()))
+                continue;
+            auto const it       = listed.find(net.instance_id);
+            bool const mismatch = it != listed.end() && it->second != net.object.tag_id;
+            if(it != listed.end() && !mismatch)
+            {
+                listed.erase(it);
+                continue;
+            }
+            if(m_recent_spawns.contains(net.instance_id))
+            {
+                if(it != listed.end())
+                    listed.erase(it);
+                continue;
+            }
+            cDebug(
+                "Census: dropping {:#x} ({}:{}), {}",
+                net.instance_id,
+                blam::to_string(net.object.class_id()),
+                net.object.tag_id,
+                mismatch ? "the server has another object there" : "the server has not got it");
+            journal(
+                "net_census_drop",
+                {{"net_id", net.instance_id},
+                 {"tag_id", net.object.tag_id},
+                 {"mismatch", mismatch}});
+            DespawnObjectEvent gone{.net_id = net.instance_id};
+            GameEvent          ev{.type = GameEvent::DespawnObject};
+            m_game_bus.inject(ev, &gone);
+        }
+        std::vector<ObjectRequest> missing;
+        for(auto const& [net_id, _] : listed)
+        {
+            if(m_requested.contains(net_id))
+                continue;
+            m_requested[net_id] = now;
+            missing.push_back({.net_id = net_id});
+            cDebug("Census: asking for {:#x}", net_id);
+        }
+        if(missing.empty())
+            return;
+        std::vector<u32> ids;
+        for(auto const& request : missing)
+            ids.push_back(request.net_id);
+        journal("net_census_request", {{"count", missing.size()}, {"net_ids", ids}});
+        send_all<ObjectRequest>(
+            MessageBase{MessageBase::ObjectRequest},
+            gsl::span<ObjectRequest>(missing),
+            k_nSteamNetworkingSend_Reliable,
+            {m_connection});
     }
 
     void client_receive_payload(Proxy& p, MessageBase const& payload)
@@ -4073,6 +4261,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .released = true,
             };
             m_game_bus.inject(ev, &done);
+            break;
+        }
+        case MessageBase::ObjectCensus: {
+            if(m_expected_fingerprint != m_fingerprint)
+                break;
+            receive_census(p, payload);
             break;
         }
         case MessageBase::ObjectDespawn: {
@@ -4335,6 +4529,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             for(auto const& spawn : payload.values<EntitySpawn>())
             {
+                m_recent_spawns[spawn.tag.instance_id] = std::chrono::steady_clock::now();
                 if(spawn.response_id != EntitySpawn::no_request)
                 {
                     journal(
@@ -4604,6 +4799,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         u64 inputs{0};
         u64 inputs_lost{0};
         bool objects_synced{false}; /*!< Has had every moving object */
+        std::chrono::steady_clock::time_point census_due{}; /*!< Unset until synced */
         /* What it was last sent of each stream, by the tick of that state:
          * moving objects by net id, players' cameras by index */
         std::map<u32, u64>        objects_sent;
@@ -4674,6 +4870,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* What was last asked of each remote body not shown yet, and in which load */
     std::map<u64, std::pair<u32, EquipmentSync>> m_equip_asked;
     std::vector<ObjectDespawn>               m_despawns;
+    /* The object census: how often, and at most how many objects a message */
+    static constexpr auto   census_period = std::chrono::seconds(2);
+    static constexpr size_t census_batch  = 128;
+    /* On a client: when each object arrived, and what was asked for */
+    std::map<u32, std::chrono::steady_clock::time_point> m_recent_spawns;
+    std::map<u32, std::chrono::steady_clock::time_point> m_requested;
 
     struct sync_point_t
     {

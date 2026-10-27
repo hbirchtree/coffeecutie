@@ -104,6 +104,10 @@ struct MessageBase
 
         /* Scripted scenarios: a point every peer waits at */
         SyncPoint,
+
+        /* The server's live objects, and what a client lacks of them */
+        ObjectCensus,
+        ObjectRequest,
     } type{None};
 
     u32 request{};
@@ -324,6 +328,26 @@ struct SyncPoint
 struct ObjectDespawn
 {
     static constexpr auto message_type = MessageBase::ObjectDespawn;
+
+    u32 net_id{0};
+};
+
+/*! One of the server's live replicated objects. The census lists them all
+ *  every census_period, a message per bucket of hash(net_id) % buckets
+ *  (request = bucket | buckets << 16); a client drops what its bucket does
+ *  not list and asks for what it lacks with ObjectRequest */
+struct ObjectCensus
+{
+    static constexpr auto message_type = MessageBase::ObjectCensus;
+
+    u32               net_id{0};
+    blam::tag_index<> tag_id{}; /*!< What it is, so a wrong object is caught too */
+};
+
+/*! Net ids a client lacks; the server answers with their EntitySpawns */
+struct ObjectRequest
+{
+    static constexpr auto message_type = MessageBase::ObjectRequest;
 
     u32 net_id{0};
 };
@@ -666,6 +690,8 @@ static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(EquipmentSync) == 24);
 static_assert(sizeof(WeaponPickup) == 16);
 static_assert(sizeof(ObjectDespawn) == 4);
+static_assert(sizeof(ObjectCensus) == 8);
+static_assert(sizeof(ObjectRequest) == 4);
 static_assert(sizeof(SyncPoint) == 64);
 static_assert(sizeof(DriveInput) == 32);
 static_assert(sizeof(WeaponFire) == 72);
