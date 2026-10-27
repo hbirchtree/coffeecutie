@@ -1317,6 +1317,20 @@ static std::map<std::string, stance_t> g_stances; // by weapon label
 
 static constexpr char const* kUnarmed = "unarmed";
 
+/* A clip's bytes into g_clips, as the map is let go after loading */
+template<typename V>
+static i32 copy_clip(
+    blam::map_container<V> const& c, blam::antr::animation const& a)
+{
+    clip_t out{.header = a};
+    if(auto d = a.default_data.data(c.magic); d.has_value())
+        out.defaults.assign(d.value().begin(), d.value().end());
+    if(auto f = a.frame_data.data(c.magic); f.has_value())
+        out.frames.assign(f.value().begin(), f.value().end());
+    g_clips.push_back(std::move(out));
+    return static_cast<i32>(g_clips.size() - 1);
+}
+
 /* Standing, with each weapon the catalogue has: like BlamGraphics, a weapon
  * picks its unit_weapon by name or by one of its types' labels */
 template<typename V>
@@ -1356,14 +1370,7 @@ static void load_biped_clips(
             return -1;
         if(auto it = copied.find(index); it != copied.end())
             return it->second;
-        auto const& a = anims.value()[index];
-        clip_t      out{.header = a};
-        if(auto d = a.default_data.data(c.magic); d.has_value())
-            out.defaults.assign(d.value().begin(), d.value().end());
-        if(auto f = a.frame_data.data(c.magic); f.has_value())
-            out.frames.assign(f.value().begin(), f.value().end());
-        g_clips.push_back(std::move(out));
-        return copied[index] = static_cast<i32>(g_clips.size() - 1);
+        return copied[index] = copy_clip(c, anims.value()[index]);
     };
 
     std::set<std::string> labels{kUnarmed};
@@ -1406,6 +1413,125 @@ static void load_biped_clips(
         static_cast<unsigned>(g_stances.size()),
         static_cast<unsigned>(g_clips.size()),
         static_cast<unsigned>(bytes / 1024));
+}
+
+/* First person: the hands, and each weapon's view model, both posed by the
+ * weapon's first-person graph, whose nodes they name */
+struct first_person_t
+{
+    blam::tag_index<>            model{blam::tag_index<>::none()};
+    std::vector<gx_skin::bone_t> nodes;         // the graph's, for parents
+    std::vector<i16>             hands, weapon; // model bone -> graph node
+    i32                          idle{-1}, fire{-1};
+};
+
+static blam::tag_index<> g_hands = blam::tag_index<>::none();
+static std::map<blam::tag_index<>, first_person_t> g_first_person; // by weap
+
+template<typename V>
+static void load_first_person(blam::map_container<V> const& c)
+{
+    u32 const   cnt = from_le(c.tags->tag_count);
+    auto const* tg  = c.tags->tags(c.map);
+    for(u32 i = 0; i < cnt && !g_hands.valid(); i++)
+        if(tg[i].matches(blam::tag_class_t::matg))
+            if(auto g = tg[i].template data<blam::globals::globals>(c.magic);
+               !g.has_error())
+                if(auto fp = g.value()->first_person.data(c.magic);
+                   !fp.has_error() && !fp.value().empty())
+                    g_hands = fp.value()[0].hands.tag_id;
+    auto const* hands_tag = blam::tag_at(c, g_hands);
+    if(!hands_tag)
+        return;
+    auto load = [&c](blam::tag_index<> id) {
+        if(!g_models.contains(id) && blam::tag_at(c, id))
+        {
+            load_model_cpu(c, id);
+            load_skeleton(c, id);
+        }
+    };
+    load(g_hands);
+
+    // Each of a model's bones as one of the graph's nodes, by name
+    auto map_bones =
+        [&c](blam::tag_index<> id, std::vector<std::string> const& names) {
+            std::vector<i16> out;
+            auto const*      t = blam::tag_at(c, id);
+            if(!t)
+                return out;
+            auto hdr = t->template data<blam::mod2::header<V>>(c.magic);
+            if(hdr.has_error())
+                return out;
+            auto bones = hdr.value()->bones.data(c.magic);
+            if(bones.has_error())
+                return out;
+            for(auto const& b : bones.value())
+            {
+                auto it = std::find(names.begin(), names.end(), b.name.str());
+                if(it == names.end())
+                    return std::vector<i16>{};
+                out.push_back(static_cast<i16>(it - names.begin()));
+            }
+            return out;
+        };
+
+    using blam::antr::first_person_weapon;
+    for(auto const& [id, entry] : g_catalog)
+    {
+        auto const* t = blam::tag_at(c, id);
+        if(!t || !t->matches(blam::tag_class_t::weap))
+            continue;
+        auto w = t->template data<blam::scn::weapon>(c.magic);
+        if(w.has_error())
+            continue;
+        auto const* gt =
+            blam::tag_at(c, w.value()->first_person_animations.tag_id);
+        if(!gt)
+            continue;
+        auto graph = gt->template data<blam::antr::header>(c.magic);
+        if(graph.has_error())
+            continue;
+        auto nodes = graph.value()->nodes.data(c.magic);
+        auto anims = graph.value()->animations.data(c.magic);
+        auto fpw   = graph.value()->first_person_weapons.data(c.magic);
+        if(!nodes.has_value() || !anims.has_value() || !fpw.has_value() ||
+           fpw.value().empty())
+            continue;
+        auto refs = fpw.value()[0].animations.data(c.magic);
+        if(!refs.has_value())
+            continue;
+        auto slot = [&](first_person_weapon::animation_idx_t s) -> i32 {
+            if(s >= refs.value().size())
+                return -1;
+            i16 const a = from_le(refs.value()[s].animation);
+            return a >= 0 && static_cast<size_t>(a) < anims.value().size() ? a
+                                                                           : -1;
+        };
+        i32 const idle = slot(first_person_weapon::idle);
+        if(idle < 0)
+            continue;
+
+        first_person_t           fp;
+        std::vector<std::string> names;
+        for(auto const& n : nodes.value())
+        {
+            names.emplace_back(n.name.str());
+            fp.nodes.push_back({.parent = from_le(n.parent)});
+        }
+        fp.hands = map_bones(g_hands, names);
+        if(fp.hands.empty())
+            continue;
+        fp.model  = w.value()->first_person_model.tag_id;
+        fp.weapon = map_bones(fp.model, names);
+        if(!fp.weapon.empty())
+            load(fp.model);
+        fp.idle = copy_clip(c, anims.value()[idle]);
+        if(i32 const fire = slot(first_person_weapon::fire_1); fire >= 0)
+            fp.fire = copy_clip(c, anims.value()[fire]);
+        g_first_person[id] = std::move(fp);
+    }
+    LOG("first person: %u weapons",
+        static_cast<unsigned>(g_first_person.size()));
 }
 
 template<typename V>
@@ -1459,6 +1585,7 @@ static void build_objects(
         }
     build_catalog(c);
     load_biped_clips(c, player_biped_id(c));
+    load_first_person(c);
 
     u32 verts = 0;
     for(auto const& [id, m] : g_models)
@@ -3097,6 +3224,46 @@ static void draw_combat(Matf4 const& mv, f32 dt, DrawModel&& draw_model)
     draw_tracers(mv);
 }
 
+static bool sample_clip(
+    clip_t const&       cl,
+    u32                 frame,
+    std::vector<Quatf>& rot,
+    std::vector<Vecf3>& trans)
+{
+    auto const& h     = cl.header;
+    u32 const   nodes = static_cast<u32>(from_le(h.node_count));
+    semantic::Span<const u8> const bytes(cl.frames.data(), cl.frames.size());
+    semantic::Span<const u8> const defaults(
+        cl.defaults.data(), cl.defaults.size());
+    return h.is_compressed()
+               ? blam::antr::sample_compressed(
+                     h, bytes, frame, nodes, rot, trans)
+               : blam::antr::sample_uncompressed(
+                     h, defaults, bytes, frame, nodes, rot, trans);
+}
+
+/* Advance a clip's playhead; false once a clip that doesn't loop is over */
+static bool advance_clip(clip_t const& cl, f32& frame, f32 dt, bool loop)
+{
+    auto const& h      = cl.header;
+    i32 const   frames = from_le(h.frame_count);
+    if(frames <= 0)
+        return false;
+    frame += dt * h.frame_rate();
+    if(frame < frames)
+        return true;
+    if(!loop)
+    {
+        frame = static_cast<f32>(frames - 1);
+        return false;
+    }
+    f32 const looped =
+        std::max(static_cast<f32>(frames - h.loop_start_frame()), 1.f);
+    while(frame >= frames)
+        frame -= looped;
+    return true;
+}
+
 /* Remote bipeds walk the way they move, holding what they hold */
 static void update_poses(f32 dt, frustum_t const& view_frustum)
 {
@@ -3157,16 +3324,8 @@ static void update_poses(f32 dt, frustum_t const& view_frustum)
             pose.clip  = clip;
             pose.frame = 0.f;
         }
-        auto const& cl     = g_clips[clip];
-        auto const& h      = cl.header;
-        i32 const   frames = from_le(h.frame_count);
-        if(frames <= 0)
+        if(!advance_clip(g_clips[clip], pose.frame, dt, true))
             continue;
-        pose.frame += dt * h.frame_rate();
-        f32 const looped =
-            std::max(static_cast<f32>(frames - h.loop_start_frame()), 1.f);
-        while(pose.frame >= frames)
-            pose.frame -= looped;
         u32 const frame = static_cast<u32>(pose.frame);
         // Clips run at 30 Hz: most frames, the pose is still the last one
         if(pose.skinned_clip == clip && pose.skinned_frame == frame &&
@@ -3183,22 +3342,81 @@ static void update_poses(f32 dt, frustum_t const& view_frustum)
             pose.skin = *same->second;
             continue;
         }
-        u32 const nodes = static_cast<u32>(from_le(h.node_count));
-        semantic::Span<const u8> const bytes(
-            cl.frames.data(), cl.frames.size());
-        semantic::Span<const u8> const defaults(
-            cl.defaults.data(), cl.defaults.size());
-        bool const ok = h.is_compressed()
-                            ? blam::antr::sample_compressed(
-                                  h, bytes, frame, nodes, rot, trans)
-                            : blam::antr::sample_uncompressed(
-                                  h, defaults, bytes, frame, nodes, rot, trans);
-        if(ok)
+        if(sample_clip(g_clips[clip], frame, rot, trans))
         {
             pose.skin             = gx_skin::skin(skeleton, rot, trans);
             shared[{clip, frame}] = &pose.skin;
         }
     }
+}
+
+/* Our own arms and weapon, while walking */
+struct first_person_pose_t
+{
+    blam::tag_index<>  weapon{blam::tag_index<>::none()};
+    i32                clip{-1};
+    f32                frame{0.f};
+    bool               fired{false}; // a shot of ours since the last frame
+    std::vector<Matf4> hands, held;  // skin matrices
+};
+
+static first_person_pose_t g_fp_pose;
+
+/* First-person models are eye space with +X ahead, +Y left, +Z up */
+static Matf4 const kViewFromFirstPerson{
+    Vecf4{0.f, 0.f, -1.f, 0.f},
+    Vecf4{-1.f, 0.f, 0.f, 0.f},
+    Vecf4{0.f, 1.f, 0.f, 0.f},
+    Vecf4{0.f, 0.f, 0.f, 1.f}};
+
+using lens_t = gexxo::draw_command::perspective_t;
+
+/* Halo's 70 degrees across, and a near plane the hands are behind */
+static lens_t const kFirstPersonLens{
+    .fov_y = 55.f, .aspect = 4.f / 3.f, .z_near = 0.01f, .z_far = 10.f};
+
+static first_person_t const* update_first_person(f32 dt)
+{
+    auto held  = g_held.find(g_net.player_idx());
+    auto fp    = held != g_held.end() ? g_first_person.find(held->second)
+                                      : g_first_person.end();
+    auto hands = g_models.find(g_hands);
+    if(fp == g_first_person.end() || hands == g_models.end())
+        return nullptr;
+    auto& pose = g_fp_pose;
+    if(pose.weapon != fp->first)
+        pose = {.weapon = fp->first, .clip = fp->second.idle};
+    if(std::exchange(pose.fired, false) && fp->second.fire >= 0)
+    {
+        pose.clip  = fp->second.fire;
+        pose.frame = 0.f;
+    }
+    bool const idle = pose.clip == fp->second.idle;
+    if(!advance_clip(g_clips[pose.clip], pose.frame, dt, idle) && !idle)
+    {
+        pose.clip  = fp->second.idle;
+        pose.frame = 0.f;
+    }
+    static std::vector<Quatf> rot;
+    static std::vector<Vecf3> trans;
+    if(!sample_clip(
+           g_clips[pose.clip], static_cast<u32>(pose.frame), rot, trans))
+        return nullptr;
+    auto const world = gx_skin::model_space(fp->second.nodes, &rot, &trans);
+    auto       skin  = [&world](
+                    gx_skin::skeleton_t const& s,
+                    std::vector<i16> const&    nodes,
+                    std::vector<Matf4>&        out) {
+        out.resize(nodes.size());
+        for(size_t b = 0; b < nodes.size() && b < s.bind_inverse.size(); b++)
+            out[b] = static_cast<size_t>(nodes[b]) < world.size()
+                         ? world[nodes[b]] * s.bind_inverse[b]
+                         : Matf4{1.f};
+    };
+    skin(hands->second.skeleton, fp->second.hands, pose.hands);
+    if(auto m = g_models.find(fp->second.model); m != g_models.end())
+        skin(m->second.skeleton, fp->second.weapon, pose.held);
+    return &fp->second;
 }
 
 static void poll_network(u32 frame)
@@ -3292,6 +3510,8 @@ static void poll_network(u32 frame)
         // A throw names its projectile, a shot its weapon
         blam::tag_index<> const proj =
             s.thrown ? s.weapon : weapon->second.projectile;
+        if(s.player_idx == g_net.player_idx() && !s.thrown)
+            g_fp_pose.fired = true;
         auto p = g_catalog.find(proj);
         if(p == g_catalog.end())
             return;
@@ -3883,7 +4103,8 @@ i32 coffee_main(i32, cstring_w*)
         auto draw_model = [&](model_t&                  model,
                               Matf4 const&              smv,
                               bool                      lit,
-                              std::vector<Matf4> const* skin = nullptr) {
+                              std::vector<Matf4> const* skin = nullptr,
+                              lens_t const*             lens = nullptr) {
             Matf4 const smvs[1] = {smv};
             for(auto& part : model.parts)
             {
@@ -3912,6 +4133,8 @@ i32 coffee_main(i32, cstring_w*)
                     .instance_transforms = gsl::span<Matf4 const>(smvs, 1),
                     .material_color      = Vecf4{1.f},
                 };
+                if(lens)
+                    cmd.perspective = *lens;
                 if(part.diffuse)
                     cmd.textures = {bind_t{.texture = part.diffuse}};
                 if(part.chicago_program)
@@ -4216,6 +4439,30 @@ i32 coffee_main(i32, cstring_w*)
                 gexxo::depth_state{.write = false});
         }
         g_sprites.flush(mv);
+#if defined(COFFEE_GEKKO)
+        if(g_walking)
+            if(auto const* fp = update_first_person(dt))
+            {
+                // Over everything, in the nearest sliver of depth
+                set_fog(nullptr);
+                gexxo::detail::depth_range(0.f, 0.05f);
+                draw_model(
+                    g_models[g_hands],
+                    kViewFromFirstPerson,
+                    true,
+                    &g_fp_pose.hands,
+                    &kFirstPersonLens);
+                if(auto m = g_models.find(fp->model);
+                   m != g_models.end() && !fp->weapon.empty())
+                    draw_model(
+                        m->second,
+                        kViewFromFirstPerson,
+                        true,
+                        &g_fp_pose.held,
+                        &kFirstPersonLens);
+                gexxo::detail::depth_range(0.f, 1.f);
+            }
+#endif
         gexxo::swapBuffers();
 
         if((i % 60) == 59)
