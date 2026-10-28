@@ -17,7 +17,9 @@ using libc_types::u32;
 using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf4;
 
-constexpr u32 flag_interior = 0x10000;
+constexpr u32 flag_interior   = 0x10000;
+constexpr u32 flag_fog_volume = 0x20000; /* bits 18-19 pick the volume */
+constexpr u32 fog_volume_shift = 18;
 
 template<typename... Values>
 Vecf4 partitioned_vec4(Values... values)
@@ -249,6 +251,18 @@ struct alignas(16) fog_properties
 
 constexpr size_t max_world_lights = 8;
 constexpr size_t max_point_lights = 8;
+constexpr size_t max_fog_volumes  = 4;
+constexpr size_t max_fog_planes   = 4;
+
+/* Planar fog: behind every plane, denser with depth and distance seen */
+struct alignas(16) fog_volume
+{
+    Vecf4 color;  /* rgb, max density */
+    Vecf4 params; /* opaque distance, opaque depth, plane count, flags */
+    Vecf4 planes[max_fog_planes]; /* normal, distance */
+
+    bool operator==(fog_volume const&) const = default;
+};
 
 /* A dynamic light: xyz + radius, rgb + cos of the falloff angle, the way it
  * shines + cos of the cutoff angle (-1 = all ways) */
@@ -264,9 +278,10 @@ struct alignas(16) world_data
     light_properties lighting[max_world_lights];
     fog_properties   fog;
     point_light      points[max_point_lights];
-    Vecf4            point_count; /* x */
+    Vecf4            point_count; /* x; y = the eye's fog volume, -1 for none */
+    fog_volume       fogs[max_fog_volumes];
 };
 
-static_assert(sizeof(world_data) == 736);
+static_assert(sizeof(world_data) == 1120);
 
 } // namespace materials

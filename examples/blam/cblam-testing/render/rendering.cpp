@@ -1025,18 +1025,22 @@ struct DrawListBuilder
                 continue;
             /* Clusters without a sky are indoors, out of the sun */
             bool interior = false;
+            i16  fog      = -1;
             if(auto it = bsp_cache.find(bsp.bsp); it != bsp_cache.m_cache.end())
             {
                 auto const& clusters = it->second.clusters;
-                interior = bsp.cluster_idx < clusters.size() &&
-                           clusters[bsp.cluster_idx].cluster &&
-                           clusters[bsp.cluster_idx].cluster->sky < 0;
+                if(bsp.cluster_idx < clusters.size() && clusters[bsp.cluster_idx].cluster)
+                {
+                    interior = clusters[bsp.cluster_idx].cluster->sky < 0;
+                    fog      = clusters[bsp.cluster_idx].fog;
+                }
             }
             populate_bsp_material(
                 bsp,
                 bsp_draw.current_pass,
                 bsp_draw.draw.data.front().instances.offset,
-                interior);
+                interior,
+                fog);
         }
     }
 
@@ -1275,7 +1279,8 @@ struct DrawListBuilder
                 cache_item,
                 model_context(model),
                 instance_id,
-                parent.template get<Visibility>().interior);
+                parent.template get<Visibility>().interior,
+                parent.template get<Visibility>().fog);
         }
         std::erase_if(m_object_light, [this](auto const& entry) {
             return entry.second.frame != m_light_frame;
@@ -1731,8 +1736,20 @@ struct DrawListBuilder
         return bsp_build()[which].material_of(i);
     }
 
+    static u32 fog_flags(i16 fog)
+    {
+        if(fog < 0 || static_cast<size_t>(fog) >= materials::max_fog_volumes)
+            return 0;
+        return materials::flag_fog_volume |
+               (static_cast<u32>(fog) << materials::fog_volume_shift);
+    }
+
     void populate_bsp_material(
-        BspReference const& ref, Passes which, size_t i = 0, bool interior = false)
+        BspReference const& ref,
+        Passes              which,
+        size_t              i        = 0,
+        bool                interior = false,
+        i16                 fog      = -1)
     {
         Pass&                   pass     = bsp_build()[which];
         materials::shader_data& material = pass.material_of(i);
@@ -1740,6 +1757,7 @@ struct DrawListBuilder
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
         if(interior)
             material.material.flags |= materials::flag_interior;
+        material.material.flags |= fog_flags(fog);
         if(material.material.material == materials::id::sotr &&
            i < pass.transparent_mapping.size())
             shader_cache.populate_transparent_material(
@@ -1790,7 +1808,8 @@ struct DrawListBuilder
         ModelItem<Version> const&                                  model,
         std::optional<ShaderCache<halo_version>::material_context> context,
         size_t                                                     i = 0,
-        bool interior                                                = false)
+        bool interior                                                = false,
+        i16  fog                                                     = -1)
     {
         Pass&                   pass     = model_build()[which];
         materials::shader_data& material = pass.material_of(i);
@@ -1798,6 +1817,7 @@ struct DrawListBuilder
             material, sub.shader, model.header->uvscale, context);
         if(interior)
             material.material.flags |= materials::flag_interior;
+        material.material.flags |= fog_flags(fog);
         if(material.material.material == materials::id::sotr &&
            i < pass.transparent_mapping.size())
             shader_cache.populate_transparent_material(
@@ -2863,7 +2883,11 @@ struct MeshRenderer
         }
         bool const had = world.point_count.x > 0.f;
         world.point_count.x = static_cast<f32>(count);
-        if(count == 0 && !had)
+        bool const fogged = refresh_fog_volumes(p, world);
+        f32 const  in_fog = eye_fog(p) ? static_cast<f32>(m_eye_fog) : -1.f;
+        bool const moved  = in_fog != world.point_count.y;
+        world.point_count.y = in_fog;
+        if(count == 0 && !had && !fogged && !moved)
             return;
         auto mapped = m_resources.world_store->template map<materials::world_data>(0);
         if(!mapped.empty())
@@ -2872,6 +2896,74 @@ struct MeshRenderer
     }
 
     static constexpr f32 point_light_range = 60.f; /* wu past a light's radius */
+    i16                  m_eye_fog{-1}; /* The primary eye's fog region */
+
+    /* The planar fog over what is far from the primary eye: its colour and
+     * how much, by the eye's depth in its cluster's fog */
+    std::optional<std::pair<Vecf3, f32>> eye_fog(Proxy& p)
+    {
+        m_eye_fog = -1;
+        if(m_players.empty())
+            return std::nullopt;
+        auto const&    cache = p.template subsystem<BSPCache<Version>>();
+        BSPItem const* bsp   = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        if(!bsp)
+            return std::nullopt;
+        Vecf3 const eye     = m_players[0].position;
+        auto const  cluster = bsp->find_cluster_tree(eye);
+        if(!cluster || *cluster >= bsp->clusters.size())
+            return std::nullopt;
+        i16 const region = bsp->clusters[*cluster].fog;
+        m_eye_fog        = region;
+        if(region < 0 || static_cast<size_t>(region) >= bsp->fogs.size() ||
+           !bsp->fogs[region].tag)
+            return std::nullopt;
+        auto const& volume = bsp->fogs[region];
+        f32         depth  = std::numeric_limits<f32>::max();
+        for(auto const& plane : volume.planes)
+            depth = std::min(depth, plane.w - glm::dot(Vecf3(plane), eye));
+        if(volume.planes.empty() || depth <= 0.f)
+            return std::nullopt;
+        f32 const amount = volume.tag->maximum_density *
+                           std::min(depth / std::max(volume.tag->opaque_depth, 1e-3f), 1.f);
+        return std::pair{volume.tag->color, amount};
+    }
+
+    /* The active BSP's fog volumes into the world UBO; true when changed */
+    bool refresh_fog_volumes(Proxy& p, materials::world_data& world)
+    {
+        auto const&    cache = p.template subsystem<BSPCache<Version>>();
+        BSPItem const* bsp   = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        std::array<materials::fog_volume, materials::max_fog_volumes> fogs{};
+        for(size_t i = 0; bsp && i < bsp->fogs.size() && i < fogs.size(); i++)
+        {
+            auto const& volume = bsp->fogs[i];
+            if(!volume.tag || volume.planes.empty())
+                continue;
+            fogs[i].color  = Vecf4(volume.tag->color, volume.tag->maximum_density);
+            fogs[i].params = Vecf4(
+                volume.tag->opaque_distance,
+                volume.tag->opaque_depth,
+                static_cast<f32>(std::min(volume.planes.size(), materials::max_fog_planes)),
+                static_cast<f32>(static_cast<u32>(volume.tag->flags)));
+            for(size_t j = 0; j < volume.planes.size() && j < materials::max_fog_planes; j++)
+                fogs[i].planes[j] = volume.planes[j];
+        }
+        bool changed = false;
+        for(size_t i = 0; i < fogs.size(); i++)
+            if(!(world.fogs[i] == fogs[i]))
+            {
+                world.fogs[i] = fogs[i];
+                changed       = true;
+            }
+        return changed;
+    }
 
     /* Particles, contrails and light volumes, over the world's transparents */
     void render_effects(Proxy& p, gfx::depth_extended_state const& depth)
@@ -3421,8 +3513,11 @@ struct MeshRenderer
                 WorldInfo const& world = skybox.template get<WorldInfo>();
                 if(!world.skybox)
                     continue;
-                m_resources.offscreen->clear(
-                    Vecf4(world.skybox->outdoor_fog.color, 1));
+                /* The background lies beyond any fog the eye is in */
+                Vecf3 clear = world.skybox->outdoor_fog.color;
+                if(auto fog = eye_fog(p))
+                    clear = glm::mix(clear, fog->first, fog->second);
+                m_resources.offscreen->clear(Vecf4(clear, 1));
             }
             if(!skybox_found)
                 m_resources.offscreen->clear(Vecf4{0, 0, 0, 1});
