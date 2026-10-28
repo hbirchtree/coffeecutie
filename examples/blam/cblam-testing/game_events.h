@@ -527,6 +527,7 @@ struct UnitVitalityEvent
     libc_types::f32      respawn_facing{0.f};
     bool                 arrived{false}; /*!< With the respawn effect */
     bool                 fresh{false};   /*!< A respawn, not a checkpoint: starts over equipped */
+    libc_types::f32      overcharge_decay{0.f}; /*!< BipedStatus' */
 };
 
 /*! A player's seat came back into the game after leaving it; it waits to

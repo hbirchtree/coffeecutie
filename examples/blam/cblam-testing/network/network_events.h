@@ -288,8 +288,9 @@ struct alignas(8) EquipmentSync
     enum flags_t : u32
     {
         none      = 0x0,
-        reloading = 0x1,
-        throwing  = 0x2,
+        reloading   = 0x1,
+        throwing    = 0x2,
+        camouflaged = 0x4,
     };
 
     u32                player_idx{0};
@@ -396,6 +397,8 @@ struct alignas(8) UnitVitality
     u32 dead{0};
     u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect, 4: re-equipped */
     Vecf4 respawn{};
+    f32   overcharge_decay{0.f}; /*!< Over shield lost per second */
+    u32   padding{0};
 };
 
 /*! The game being played, as the server keeps it (GameState) */
