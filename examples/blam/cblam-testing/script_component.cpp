@@ -1050,6 +1050,133 @@ struct BlamScript
         case op::ai_living_count:
             return value_t::number(
                 type_t::short_, static_cast<f32>(ai_actors(p, text_of(arg(0))).size()));
+        case op::ai_living_fraction:
+        case op::ai_strength: {
+            auto const it    = m_actors.find(lowered(text_of(arg(0))));
+            f32 const  total = it == m_actors.end() ? 0.f : static_cast<f32>(it->second.size());
+            f32 const  alive = static_cast<f32>(ai_actors(p, text_of(arg(0))).size());
+            return value_t::number(type_t::real_, total > 0.f ? alive / total : 0.f);
+        }
+        /* Orders to the actors: what the actor system follows */
+        case op::ai_attack:
+        case op::ai_defend:
+        case op::ai_retreat:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->order = opcode == op::ai_attack   ? Actor::order_t::attack
+                                   : opcode == op::ai_defend ? Actor::order_t::defend
+                                                             : Actor::order_t::retreat;
+            return {};
+        case op::ai_braindead:
+        case op::ai_set_blind:
+        case op::ai_set_deaf:
+        case op::ai_follow_target_players:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                {
+                    bool const on = opcode == op::ai_follow_target_players || arg(1).truthy();
+                    if(opcode == op::ai_braindead)
+                        actor->braindead = on;
+                    else if(opcode == op::ai_set_blind)
+                        actor->blind = on;
+                    else if(opcode == op::ai_set_deaf)
+                        actor->deaf = on;
+                    else
+                        actor->follow_players = true;
+                }
+            return {};
+        case op::ai_disregard:
+            /* The named objects are left alone; today only the target drops */
+            for(u64 id : objects_of(p, arg(0)))
+                for(auto ent : p.template select<Actor>())
+                    if(auto& actor = ent.template get<Actor>(); actor.target == id)
+                        actor.target = 0;
+            return {};
+        case op::ai_magically_see_players:
+        case op::ai_magically_see_encounter: {
+            std::vector<u64> seen;
+            if(opcode == op::ai_magically_see_players)
+            {
+                for(auto player : p.template select<PlayerInfo, PlayerCamera, NetworkInfo>())
+                {
+                    auto [info, cam, net] = player.components();
+                    if(biped_shown(info, cam, net))
+                        seen.push_back(player.id());
+                }
+            } else
+                seen = ai_actors(p, text_of(arg(1)));
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+            {
+                auto* actor = p.template get<Actor>(id);
+                auto const* model = p.template get<Model>(id);
+                if(!actor || !model || seen.empty())
+                    continue;
+                u64   nearest = 0;
+                f32   best    = std::numeric_limits<f32>::max();
+                for(u64 other : seen)
+                    if(auto const* target = p.template get<Model>(other))
+                        if(f32 const d = glm::distance(target->position, model->position); d < best)
+                        {
+                            best    = d;
+                            nearest = other;
+                        }
+                if(nearest && nearest != id)
+                {
+                    actor->target    = nearest;
+                    actor->last_seen = p.template get<Model>(nearest)->position;
+                    actor->seen_ago  = 0.f;
+                    if(actor->state == Actor::state_t::idle)
+                        actor->state = Actor::state_t::combat;
+                }
+            }
+            return {};
+        }
+        case op::ai_migrate: {
+            /* The actors join another encounter's squad, named like ai_place */
+            auto const path  = std::string(text_of(arg(1)));
+            auto const slash = path.find('/');
+            auto const ename = lowered(path.substr(0, slash));
+            auto const sname = slash == std::string::npos ? std::string{} : lowered(path.substr(slash + 1));
+            i16        enc = -1, sq = -1;
+            if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
+                for(size_t i = 0; i < list.value().size() && enc < 0; i++)
+                    if(lowered(list.value()[i].name.str()) == ename)
+                    {
+                        enc = static_cast<i16>(i);
+                        if(auto squads = list.value()[i].squads.data(m_magic); squads.has_value())
+                            for(size_t j = 0; j < squads.value().size(); j++)
+                                if(sname.empty() || lowered(squads.value()[j].name.str()) == sname)
+                                {
+                                    sq = static_cast<i16>(j);
+                                    break;
+                                }
+                    }
+            if(enc < 0 || sq < 0)
+                return log(fmt::format("ai_migrate: no squad {}", path)), value_t{};
+            auto const from = lowered(text_of(arg(0)));
+            for(u64 id : ai_actors(p, from))
+                if(auto* actor = p.template get<Actor>(id))
+                {
+                    actor->encounter = enc;
+                    actor->squad     = sq;
+                    actor->position  = -1;
+                    actor->order     = Actor::order_t::none;
+                }
+            /* The names follow them */
+            if(auto it = m_actors.find(from); it != m_actors.end())
+            {
+                auto const moved = it->second;
+                m_actors[ename].insert(m_actors[ename].end(), moved.begin(), moved.end());
+                if(!sname.empty())
+                    m_actors[ename + "/" + sname].insert(
+                        m_actors[ename + "/" + sname].end(), moved.begin(), moved.end());
+            }
+            return {};
+        }
+        case op::ai_maneuver_enable:
+        case op::ai_free_units:
+        case op::ai_playfight:
+            return {};
         /* Command lists: units walking, flying and looking as a list says */
         case op::ai_attach_free:
             return {};
