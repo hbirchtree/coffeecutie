@@ -449,11 +449,11 @@ struct player_starting_profile
     tagref_t  secondary_weapon;
     u16       rounds2_loaded;
     u16       rounds2_total;
-    u16       frag_grenades;
-    u16       plasma_nades;
-    u16       c_nades;
-    u16       d_nades;
-    u32       padding2[4];
+    u8        frag_grenades;
+    u8        plasma_nades;
+    u8        c_nades;
+    u8        d_nades;
+    u32       padding2[5];
 };
 
 static_assert(sizeof(player_starting_profile) == 104);
