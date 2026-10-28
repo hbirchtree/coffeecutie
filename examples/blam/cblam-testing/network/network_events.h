@@ -362,7 +362,7 @@ struct alignas(8) WeaponFire
     } flags{none};
     u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
     u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */
-    u32 padding{0};
+    u32 shooter{0};                /*!< Net id of a shooter that is no player: an actor */
 };
 
 /*! A hit the server decided (ObjectHitEvent), to every peer */

@@ -148,6 +148,15 @@ class CombatSync
                 target_player = info->player_idx;
             else if(auto const* net = shot.target ? p.template get<NetworkInfo>(shot.target) : nullptr)
                 target = net->instance_id;
+            /* An actor's shot goes out under its net id, from the server alone */
+            u32 shooter = 0;
+            if(shot.player_idx == ObjectHitEvent::no_player)
+            {
+                auto const* net = p.template get<NetworkInfo>(shot.shooter);
+                if(!server || !net || net->instance_id == 0)
+                    continue;
+                shooter = net->instance_id;
+            }
             m_shots.push_back({
                 .message =
                     {
@@ -165,6 +174,7 @@ class CombatSync
                                                    : WeaponFire::none,
                         .target        = target,
                         .target_player = target_player,
+                        .shooter       = shooter,
                     },
                 .route = {server ? route_t::clients : route_t::server},
             });
@@ -236,6 +246,19 @@ class CombatSync
     {
         if(wire.player_idx == self_idx)
             return;
+        /* An actor's: whichever unit the server named */
+        if(wire.player_idx == ObjectHitEvent::no_player)
+        {
+            for(auto object : p.template select<NetworkInfo>())
+                if(object.template get<NetworkInfo>().instance_id == wire.shooter &&
+                   wire.shooter != 0)
+                {
+                    if(fire(p, object.id(), wire))
+                        m_journal("net_actor_fire", {{"shooter", wire.shooter}, {"weapon", wire.weapon}});
+                    return;
+                }
+            return;
+        }
         for(auto entity : p.template select<PlayerInfo>())
         {
             auto const& info = entity.template get<PlayerInfo>();
