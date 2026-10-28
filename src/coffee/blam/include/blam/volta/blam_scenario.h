@@ -1170,6 +1170,69 @@ struct shader_index
 
 using skybox_ref = tagref_t;
 
+/*! Planar fog: a volume under a BSP fog plane, denser with depth below it
+ *  and with the distance seen through it */
+struct fog
+{
+    static constexpr tag_class_t tag_class = tag_class_t::fog;
+
+    enum class flags_t : u32
+    {
+        none                = 0x0,
+        is_water            = 0x1,
+        atmosphere_dominant = 0x2,
+        fog_screen_only     = 0x4,
+    };
+
+    flags_t flags;
+    u32     padding[21];
+    f32     maximum_density;
+    u32     padding2;
+    f32     opaque_distance; /*!< wu seen through it, fully fogged */
+    u32     padding3;
+    f32     opaque_depth; /*!< wu below the plane, fully fogged */
+    u32     padding4[2];
+    f32     distance_to_water_plane;
+    Vecf3   color;
+
+    struct screen_layers_t
+    {
+        u16   flags;
+        i16   layer_count;
+        Vecf2 distance_gradient;
+        Vecf2 density_gradient;
+        f32   start_distance_from_plane;
+        u32   padding;
+        u32   color_argb;
+        f32   rotation_multiplier;
+        f32   strafing_multiplier;
+        f32   zoom_multiplier;
+        u32   padding2[2];
+        f32   map_scale;
+        tagref_typed_t<tag_class_t::bitm> map;
+        f32   animation_period;
+        u32   padding3;
+        Vecf2 wind_velocity;
+        Vecf2 wind_period;
+        f32   wind_acceleration_weight;
+        f32   wind_perpendicular_weight;
+        u32   padding4[2];
+    } screen;
+
+    tagref_typed_t<tag_class_t::lsnd> background_sound;
+    tagref_typed_t<tag_class_t::snde> sound_environment;
+    u32                               padding5[30];
+};
+
+C_FLAGS(fog::flags_t, u32)
+
+static_assert(offsetof(fog, maximum_density) == 88);
+static_assert(offsetof(fog, color) == 120);
+static_assert(offsetof(fog, screen) == 132);
+static_assert(offsetof(fog, screen.map) == 188);
+static_assert(offsetof(fog, background_sound) == 244);
+static_assert(sizeof(fog) == 396);
+
 struct skybox
 {
     static constexpr tag_class_t tag_class = tag_class_t::sky;

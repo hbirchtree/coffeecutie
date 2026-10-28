@@ -5,6 +5,7 @@
 #include <blam/volta/blam_bsp_structures.h>
 #include <blam/volta/blam_font.h>
 #include <blam/volta/blam_mod2.h>
+#include <blam/volta/blam_scenario.h>
 #include <blam/common/frustum.h>
 #include <blam/common/portal_walk.h>
 #include <blam/volta/blam_ui.h>
@@ -113,6 +114,7 @@ struct BSPItem
         blam::bsp::cluster const* cluster{nullptr};
         std::vector<Subcluster>   sub{};
         std::vector<Portal>       portals{};
+        libc_types::i16           fog{-1}; /*!< Its fog region, into fogs */
     };
 
     /* Flat entry for fast position-to-cluster lookup.
@@ -163,7 +165,15 @@ struct BSPItem
      * match against bsp_switch_trigger source/destination. */
     libc_types::i16                                         section_idx{-1};
     std::vector<Group>                                      groups;
+    /* A fog region: its palette entry's tag and the planes it lies behind */
+    struct FogVolume
+    {
+        blam::scn::fog const* tag{nullptr};
+        std::vector<Vecf4>    planes; /*!< normal, distance */
+    };
+
     std::vector<Cluster>                                    clusters;
+    std::vector<FogVolume>                                  fogs; /*!< By fog region */
     std::vector<FlatSubcluster>                             sorted_subclusters;
     std::vector<gfx::draw_command::data_t>                  portals;
     std::vector<u32>                                        portal_color_ptrs;

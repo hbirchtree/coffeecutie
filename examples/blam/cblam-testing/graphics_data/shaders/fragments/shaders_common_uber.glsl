@@ -51,6 +51,8 @@ layout(location = 31) uniform int render_flags;
 #include "render_flags.glsl"
 
 const uint MATERIAL_FLAG_INTERIOR        = 0x10000u;
+const uint MATERIAL_FLAG_FOG_VOLUME      = 0x20000u;
+const uint MATERIAL_FOG_VOLUME_SHIFT     = 18u;
 
 struct LightProperties
 {
@@ -69,6 +71,16 @@ struct FogProperties
 
 const int MAX_WORLD_LIGHTS = 8;
 const int MAX_POINT_LIGHTS = 8;
+const int MAX_FOG_VOLUMES  = 4;
+const int MAX_FOG_PLANES   = 4;
+
+/* Planar fog: behind every plane, denser with depth and distance seen */
+struct FogVolume
+{
+    vec4 color;  /* rgb, max density */
+    vec4 params; /* opaque distance, opaque depth, plane count, flags */
+    vec4 planes[MAX_FOG_PLANES]; /* normal, distance */
+};
 
 struct PointLight
 {
@@ -101,7 +113,43 @@ layout(binding = 2, std140) uniform WorldProperties
     FogProperties fog;
     PointLight points[MAX_POINT_LIGHTS];
     vec4 point_count;
+    FogVolume fogs[MAX_FOG_VOLUMES];
 } world;
+
+/* How far behind every plane of the volume: inside where positive */
+float fog_depth(in FogVolume v, vec3 p)
+{
+    float depth = 1e9;
+    int   count = int(v.params.z);
+    for(int i = 0; i < MAX_FOG_PLANES; i++)
+        if(i < count)
+            depth = min(depth, v.planes[i].w - dot(v.planes[i].xyz, p));
+    return depth;
+}
+
+/* Fog along the eye's line to a point, sampled along the part inside: the
+ * deepest point sets the density, the distance seen through it how much of
+ * that density is reached */
+float planar_fog(in FogVolume v, vec3 eye, vec3 p)
+{
+    const int N = 5; /* both ends and between them */
+    float deepest = 0.0;
+    float inside  = 0.0;
+    for(int i = 0; i < N; i++)
+    {
+        float d = fog_depth(v, mix(eye, p, float(i) / float(N - 1)));
+        if(d > 0.0)
+        {
+            deepest = max(deepest, d);
+            inside += 1.0;
+        }
+    }
+    if(inside == 0.0)
+        return 0.0;
+    float path = length(p - eye) * inside / float(N);
+    return v.color.w * min(deepest / max(v.params.y, 1e-3), 1.0) *
+           clamp(path / max(v.params.x, 1e-3), 0.0, 1.0);
+}
 
 /* Dynamic lights: explosions, muzzle flashes, plasma */
 vec3 point_lighting(vec3 position, vec3 normal)
@@ -1448,8 +1496,24 @@ void main()
             : vec4(color.rgb, color.a * fog_distance);
         return;
     }
-    final_color = mix(
-        color,
-        fog_color,
-        1 - fog_distance);
+    /* The eye's own fog lies over everything it sees; otherwise what is
+     * drawn may lie in one */
+    uint mflags  = uint(material.material.flags);
+    int  eye_fog = int(world.point_count.y);
+    int  own_fog = (mflags & MATERIAL_FLAG_FOG_VOLUME) != 0u
+        ? int((mflags >> MATERIAL_FOG_VOLUME_SHIFT) & 3u) : -1;
+    int  which   = eye_fog >= 0 ? eye_fog : own_fog;
+    if(which < 0)
+    {
+        final_color = mix(color, fog_color, 1 - fog_distance);
+        return;
+    }
+    FogVolume volume = world.fogs[which];
+    float planar     = planar_fog(volume, camera_position, frag.position);
+    vec4  planar_col = vec4(volume.color.rgb, 1);
+    /* The atmosphere is laid over the volume where it dominates */
+    if((uint(volume.params.w) & 0x2u) != 0u)
+        final_color = mix(mix(color, planar_col, planar), fog_color, 1 - fog_distance);
+    else
+        final_color = mix(mix(color, fog_color, 1 - fog_distance), planar_col, planar);
 }

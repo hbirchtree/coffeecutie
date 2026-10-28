@@ -3824,6 +3824,37 @@ void dump_lsnd(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 
 /* sbsp tag data is not behind the tag index entry; it is a separate region
  * that the scenario's bsp_info block points at, with its own magic. */
+void dump_fog(blam::scn::fog const* fog)
+{
+    fmt::print(
+        "    flags={:#x} max_density={} opaque_distance={} opaque_depth={} "
+        "water_plane={} color={}\n",
+        static_cast<u32>(fog->flags),
+        fog->maximum_density,
+        fog->opaque_distance,
+        fog->opaque_depth,
+        fog->distance_to_water_plane,
+        fog->color);
+    auto const& s = fog->screen;
+    fmt::print(
+        "    screen flags={:#x} layers={} distance={}..{} density={}..{} "
+        "start={} map={} scale={} period={}\n",
+        s.flags,
+        s.layer_count,
+        s.distance_gradient.x,
+        s.distance_gradient.y,
+        s.density_gradient.x,
+        s.density_gradient.y,
+        s.start_distance_from_plane,
+        name_of(s.map),
+        s.map_scale,
+        s.animation_period);
+    fmt::print(
+        "    background_sound={} sound_environment={}\n",
+        name_of(fog->background_sound),
+        name_of(fog->sound_environment));
+}
+
 template<typename Ver>
 void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 {
@@ -3924,6 +3955,33 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 
         each(magic, h.lens_flares, [&](size_t i, auto const& flare) {
             fmt::print("  lens_flare[{}] {}\n", i, name_of(flare));
+        });
+
+        each(magic, h.fog_palettes, [&](size_t i, auto const& p) {
+            fmt::print(
+                "  fog_palette[{}] '{}' fog={} scale_function='{}'\n",
+                i,
+                p.name.str(),
+                name_of(p.fog),
+                p.fog_scale_function.str());
+        });
+        each(magic, h.fog_regions, [&](size_t i, auto const& r) {
+            fmt::print(
+                "  fog_region[{}] fog_palette={} weather_palette={}\n",
+                i,
+                r.fog_palette,
+                r.weather_palette);
+            print_nonzero("padding", r.padding);
+        });
+        each(magic, h.fog_planes, [&](size_t i, auto const& p) {
+            fmt::print(
+                "  fog_plane[{}] front_region={} material={} normal={} offset={}\n",
+                i,
+                p.front_region,
+                p.material_type,
+                p.normal,
+                p.offset);
+            print_nonzero("padding2", p.padding2);
         });
 
         each(magic, h.weather_palettes, [&](size_t i, auto const& w) {
@@ -4324,6 +4382,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         break;
     case blam::tag_class_t::sbsp:
         dump_sbsp(index, tag);
+        break;
+    case blam::tag_class_t::fog:
+        if(auto* info = header_of((blam::scn::fog*)nullptr))
+            dump_fog(info);
         break;
     case blam::tag_class_t::lsnd:
         dump_lsnd(index, tag);
