@@ -450,6 +450,8 @@ struct SimulationPauseEvent
 struct WeaponFireEvent
 {
     static constexpr auto event_type = GameEvent::WeaponFire;
+    /*! How far ahead of the eye a shot leaves, without a muzzle to leave from */
+    static constexpr libc_types::f32 muzzle_distance = .4f;
 
     MapLoadEvent::Origin origin{MapLoadEvent::Local};
     blam::tagref_t       weapon{};  /*!< weap */
