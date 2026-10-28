@@ -58,8 +58,6 @@ layout(location = 31) uniform int render_flags;
 #include "render_flags.glsl"
 
 const uint MATERIAL_FLAG_INTERIOR        = 0x10000u;
-const uint MATERIAL_FLAG_FOG_VOLUME      = 0x20000u;
-const uint MATERIAL_FOG_VOLUME_SHIFT     = 18u;
 
 struct LightProperties
 {
@@ -157,6 +155,36 @@ float planar_fog(in FogVolume v, vec3 eye, vec3 p)
     float path = length(p - eye) * inside / float(N);
     return v.color.w * min(deepest / max(v.params.y, 1e-3), 1.0) *
            clamp(path / max(v.params.x, 1e-3), 0.0, 1.0);
+}
+
+/* Fog on the sky: the eye's ray through the volume, out to infinity */
+float planar_fog_sky(in FogVolume v, vec3 eye, vec3 dir)
+{
+    float t0    = 0.0;
+    float t1    = 1e5;
+    int   count = int(v.params.z);
+    for(int i = 0; i < MAX_FOG_PLANES; i++)
+        if(i < count)
+        {
+            float d0 = v.planes[i].w - dot(v.planes[i].xyz, eye);
+            float dd = -dot(v.planes[i].xyz, dir);
+            if(abs(dd) < 1e-6)
+            {
+                if(d0 <= 0.0)
+                    return 0.0;
+            }
+            else if(dd > 0.0)
+                t0 = max(t0, -d0 / dd);
+            else
+                t1 = min(t1, -d0 / dd);
+        }
+    if(t1 <= t0)
+        return 0.0;
+    float deepest = max(
+        fog_depth(v, eye + dir * t0),
+        max(fog_depth(v, eye + dir * t1), fog_depth(v, eye + dir * (t0 + t1) * 0.5)));
+    return v.color.w * min(deepest / max(v.params.y, 1e-3), 1.0) *
+           clamp((t1 - t0) / max(v.params.x, 1e-3), 0.0, 1.0);
 }
 
 /* Dynamic lights: explosions, muzzle flashes, plasma */
@@ -1528,20 +1556,17 @@ void main()
             : vec4(color.rgb, color.a * fog_distance);
         return;
     }
-    /* The eye's own fog lies over everything it sees; otherwise what is
-     * drawn may lie in one */
-    uint mflags  = uint(material.material.flags);
-    int  eye_fog = int(world.point_count.y);
-    int  own_fog = (mflags & MATERIAL_FLAG_FOG_VOLUME) != 0u
-        ? int((mflags >> MATERIAL_FOG_VOLUME_SHIFT) & 3u) : -1;
-    int  which   = eye_fog >= 0 ? eye_fog : own_fog;
+    /* The eye's cluster names the fog plane everything is drawn with */
+    int which = int(world.point_count.y);
     if(which < 0)
     {
         final_color = mix(color, fog_color, 1 - fog_distance);
         return;
     }
     FogVolume volume = world.fogs[which];
-    float planar     = planar_fog(volume, camera_position, frag.position);
+    float planar     = (render_flags & RENDER_FLAG_SKY) != 0
+        ? planar_fog_sky(volume, camera_position, normalize(frag.position - camera_position))
+        : planar_fog(volume, camera_position, frag.position);
     vec4  planar_col = vec4(volume.color.rgb, 1);
     /* The atmosphere is laid over the volume where it dominates */
     if((uint(volume.params.w) & 0x2u) != 0u)

@@ -17,9 +17,7 @@ using libc_types::u32;
 using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf4;
 
-constexpr u32 flag_interior   = 0x10000;
-constexpr u32 flag_fog_volume = 0x20000; /* bits 18-19 pick the volume */
-constexpr u32 fog_volume_shift = 18;
+constexpr u32 flag_interior = 0x10000;
 
 template<typename... Values>
 Vecf4 partitioned_vec4(Values... values)
@@ -278,7 +276,7 @@ struct alignas(16) world_data
     light_properties lighting[max_world_lights];
     fog_properties   fog;
     point_light      points[max_point_lights];
-    Vecf4            point_count; /* x; y = the eye's fog volume, -1 for none */
+    Vecf4            point_count; /* x; y = the eye's cluster's fog volume, -1 for none */
     fog_volume       fogs[max_fog_volumes];
 };
 

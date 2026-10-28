@@ -1027,22 +1027,17 @@ struct DrawListBuilder
                 continue;
             /* Clusters without a sky are indoors, out of the sun */
             bool interior = false;
-            i16  fog      = -1;
             if(auto it = bsp_cache.find(bsp.bsp); it != bsp_cache.m_cache.end())
             {
                 auto const& clusters = it->second.clusters;
                 if(bsp.cluster_idx < clusters.size() && clusters[bsp.cluster_idx].cluster)
-                {
                     interior = clusters[bsp.cluster_idx].cluster->sky < 0;
-                    fog      = clusters[bsp.cluster_idx].fog;
-                }
             }
             populate_bsp_material(
                 bsp,
                 bsp_draw.current_pass,
                 bsp_draw.draw.data.front().instances.offset,
-                interior,
-                fog);
+                interior);
         }
     }
 
@@ -1282,8 +1277,7 @@ struct DrawListBuilder
                 cache_item,
                 model_context(model),
                 instance_id,
-                parent.template get<Visibility>().interior,
-                parent.template get<Visibility>().fog);
+                parent.template get<Visibility>().interior);
         }
         std::erase_if(m_object_light, [this](auto const& entry) {
             return entry.second.frame != m_light_frame;
@@ -1777,20 +1771,11 @@ struct DrawListBuilder
         }
     }
 
-    static u32 fog_flags(i16 fog)
-    {
-        if(fog < 0 || static_cast<size_t>(fog) >= materials::max_fog_volumes)
-            return 0;
-        return materials::flag_fog_volume |
-               (static_cast<u32>(fog) << materials::fog_volume_shift);
-    }
-
     void populate_bsp_material(
         BspReference const& ref,
         Passes              which,
         size_t              i        = 0,
-        bool                interior = false,
-        i16                 fog      = -1)
+        bool                interior = false)
     {
         Pass&                   pass     = bsp_build()[which];
         materials::shader_data& material = pass.material_of(i);
@@ -1798,7 +1783,6 @@ struct DrawListBuilder
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
         if(interior)
             material.material.flags |= materials::flag_interior;
-        material.material.flags |= fog_flags(fog);
         if(material.material.material == materials::id::sotr &&
            i < pass.transparent_mapping.size())
             shader_cache.populate_transparent_material(
@@ -1849,8 +1833,7 @@ struct DrawListBuilder
         ModelItem<Version> const&                                  model,
         std::optional<ShaderCache<halo_version>::material_context> context,
         size_t                                                     i = 0,
-        bool interior                                                = false,
-        i16  fog                                                     = -1)
+        bool interior                                                = false)
     {
         Pass&                   pass     = model_build()[which];
         materials::shader_data& material = pass.material_of(i);
@@ -1858,7 +1841,6 @@ struct DrawListBuilder
             material, sub.shader, model.header->uvscale, context);
         if(interior)
             material.material.flags |= materials::flag_interior;
-        material.material.flags |= fog_flags(fog);
         if(material.material.material == materials::id::sotr &&
            i < pass.transparent_mapping.size())
             shader_cache.populate_transparent_material(
@@ -1902,6 +1884,7 @@ struct MeshRenderer
     BlamResources&       m_resources;
     RenderingParameters& m_render_params;
     int                  m_render_flags{0x0};
+    bool                 m_sky_pass{false}; /* the sky's draws lie beyond any fog */
     bool                 m_water_modulate{false};
     bool                 m_first_person{false};
 
@@ -2515,7 +2498,7 @@ struct MeshRenderer
             m_render_params.render_flags() |
             (std::is_same_v<halo_version, blam::xbox_version_t> ? 0x800 : 0) |
             (m_render_params.interior ? 0x8000 : 0) |
-            (m_water_modulate ? 0x10000 : 0);
+            (m_water_modulate ? 0x10000 : 0) | (m_sky_pass ? 0x40000 : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),
@@ -2938,7 +2921,8 @@ struct MeshRenderer
         bool const had = world.point_count.x > 0.f;
         world.point_count.x = static_cast<f32>(count);
         bool const fogged = refresh_fog_volumes(p, world);
-        f32 const  in_fog = eye_fog(p) ? static_cast<f32>(m_eye_fog) : -1.f;
+        eye_fog(p);
+        f32 const  in_fog = static_cast<f32>(m_eye_fog);
         bool const moved  = in_fog != world.point_count.y;
         world.point_count.y = in_fog;
         if(count == 0 && !had && !fogged && !moved)
@@ -2950,10 +2934,12 @@ struct MeshRenderer
     }
 
     static constexpr f32 point_light_range = 60.f; /* wu past a light's radius */
-    i16                  m_eye_fog{-1}; /* The primary eye's fog region */
+    i16                  m_eye_fog{-1}; /* The primary eye's cluster's fog region */
 
-    /* The planar fog over what is far from the primary eye: its colour and
-     * how much, by the eye's depth in its cluster's fog */
+    /* The eye's cluster names the one fog plane the frame is drawn with, as
+     * Halo's does: clusters are not split by the planes, so fogging each by
+     * its own region seams where they meet. Returns the colour laid over
+     * what is far from the eye and how much, by the eye's depth in it */
     std::optional<std::pair<Vecf3, f32>> eye_fog(Proxy& p)
     {
         m_eye_fog = -1;
@@ -2971,15 +2957,15 @@ struct MeshRenderer
         if(!cluster || *cluster >= bsp->clusters.size())
             return std::nullopt;
         i16 const region = bsp->clusters[*cluster].fog;
-        m_eye_fog        = region;
         if(region < 0 || static_cast<size_t>(region) >= bsp->fogs.size() ||
-           !bsp->fogs[region].tag)
+           !bsp->fogs[region].tag || bsp->fogs[region].planes.empty())
             return std::nullopt;
+        m_eye_fog          = region;
         auto const& volume = bsp->fogs[region];
         f32         depth  = std::numeric_limits<f32>::max();
         for(auto const& plane : volume.planes)
             depth = std::min(depth, plane.w - glm::dot(Vecf3(plane), eye));
-        if(volume.planes.empty() || depth <= 0.f)
+        if(depth <= 0.f)
             return std::nullopt;
         f32 const amount = volume.tag->maximum_density *
                            std::min(depth / std::max(volume.tag->opaque_depth, 1e-3f), 1.f);
@@ -3728,6 +3714,7 @@ struct MeshRenderer
 
         {
             gfx::depth_extended_state sky_depth{.depth_write = false};
+            m_sky_pass = true;
             for(i32 pi = Pass_SkyOpaque; pi <= Pass_LastSky; ++pi)
             {
                 auto pass  = static_cast<Passes>(pi);
@@ -3741,6 +3728,7 @@ struct MeshRenderer
                         blend,
                         sky_depth);
             }
+            m_sky_pass = false;
         }
 
         // Transparent world geometry — primary player, no depth write.
