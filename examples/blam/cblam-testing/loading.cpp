@@ -2585,10 +2585,12 @@ struct ResourceLoader
                 object_collision(files, object.collider, object.model);
             if(!collision)
                 return std::nullopt;
+            auto biped = tag.template data<blam::scn::biped>(magic);
             return ObjectPhysics{
                 .collision = std::move(collision),
                 .mass      = 1.f,
                 .upright   = true,
+                .max_slope = biped.has_value() ? biped.value()->maximum_slope_angle : 0.f,
             };
         }
 
@@ -2650,6 +2652,7 @@ struct ResourceLoader
                 /* The tag has it per tick, at 30 Hz */
                 if(biped->jump_velocity > 0.f)
                     biped_model.shape.jump_velocity = biped->jump_velocity * 30.f;
+                biped_model.shape.max_slope = biped->maximum_slope_angle;
                 if(biped->pitch_range.x < biped->pitch_range.y)
                     biped_model.shape.pitch_range = biped->pitch_range;
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
