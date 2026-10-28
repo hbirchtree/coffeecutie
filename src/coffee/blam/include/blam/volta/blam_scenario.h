@@ -1033,6 +1033,8 @@ static_assert(sizeof(command_list) == 96);
 
 struct conversation_participant
 {
+    u16 padding0;
+
     enum flags_t : u16
     {
         none           = 0x0,
@@ -1053,14 +1055,16 @@ struct conversation_participant
         radio_sergeant,
     } selection_type;
 
-    actor_type_t actor_type;
-    i16          use_this_object; // references object_names list
-    i16          set_new_name;    // references object_names list
-    u32          padding[10];
-    bl_string    encounter_name;
+    u16       actor_type;      // actor_type_t
+    i16       use_this_object; // references object_names list
+    i16       set_new_name;    // references object_names list
+    u32       padding[6];
+    bl_string encounter_name;
+    u32       padding1[4];
 };
 
 static_assert(sizeof(conversation_participant) == 84);
+static_assert(offsetof(conversation_participant, encounter_name) == 36);
 
 struct conversation_line
 {
@@ -1075,15 +1079,16 @@ struct conversation_line
     } flags;
 
     i16                              participant;
-    i16                              addressee;
+    i16                              addressee; /* 0 none, 1 player, 2 participant */
     i16                              addressee_participant;
+    u32                              padding0;
     f32                              line_delay_time;
+    u32                              padding1[3];
     tagref_typed_t<tag_class_t::snd> variants[6];
-
-    u32 padding[4];
 };
 
 static_assert(sizeof(conversation_line) == 124);
+static_assert(offsetof(conversation_line, variants) == 28);
 
 struct conversation
 {
