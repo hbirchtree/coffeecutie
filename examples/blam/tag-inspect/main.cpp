@@ -59,11 +59,14 @@ using libc_types::u16;
 using libc_types::u32;
 using libc_types::u8;
 using typing::vector_types::Quatf;
+using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf3;
 
 namespace {
 
 blam::map_ptr g_magic;
+blam::vertex_ptr g_vertex_magic; /* model vertices, by version */
+void const*      g_tags{nullptr}; /* the map's tag index, for vertex segments */
 /* Pixel data is addressed by absolute file offset, unlike tag data */
 blam::map_ptr g_raw_magic;
 bool          g_dump_hex = false;
@@ -890,6 +893,7 @@ void dump_chicago_base(T const* info)
     print_enum("fade_mode", info->transparent.fade_mode);
     print_enum("fade_src", info->transparent.fade_src);
     print_enum("first_map_type", info->transparent.first_map_type);
+    fmt::print(" numeric_limit={}", info->transparent.numeric_counter_limit);
     print_enum("flags", info->transparent.flags);
     fmt::print("\n");
 }
@@ -2200,8 +2204,34 @@ void dump_collision(blam::coll::header const* coll)
             m.shield_damage_multiplier,
             m.body_damage_multiplier);
     });
+    fmt::print(
+        "    shield material={} failure fn={} threshold={:g} failing_leak={:g} "
+        "min_stun={:g} stun={:g}s recharge={:g}s damaged_threshold={:g}\n",
+        coll->shield_material_type,
+        coll->shield_failure_function,
+        coll->shield_failure_threshold,
+        coll->failing_shield_leak_fraction,
+        coll->minimum_stun_damage,
+        coll->stun_time,
+        coll->recharge_time,
+        coll->shield_damaged_threshold);
+    fmt::print(
+        "    body effects: damaged={} depleted={} destroyed={}\n",
+        name_of(coll->body_damaged_effect),
+        name_of(coll->body_depleted_effect),
+        name_of(coll->body_destroyed_effect));
+    fmt::print(
+        "    shield effects: damaged={} depleted={} recharging={}\n",
+        name_of(coll->shield_damaged_effect),
+        name_of(coll->shield_depleted_effect),
+        name_of(coll->shield_recharging_effect));
     dump_block("regions", coll->regions, [](blam::coll::region const& r) {
-        fmt::print("{} damage_threshold={:g}\n", r.name.str(), r.damage_threshold);
+        fmt::print(
+            "{} flags={:#x} damage_threshold={:g} destroyed={}\n",
+            r.name.str(),
+            r.flags,
+            r.damage_threshold,
+            name_of(r.destroyed_effect));
     });
     /* Vertices are in node space; bounds help tell which node is what */
     dump_block("nodes", coll->nodes, [](blam::coll::node const& n) {
@@ -2634,6 +2664,15 @@ void dump_antr(blam::antr::header const* animation)
             joint);
     });
     fmt::print("  animations={}\n", animation->animations.count);
+    /* Function-driven overlays on plain objects (projectiles, scenery) */
+    if(auto objects = animation->objects.data(g_magic); objects.has_value())
+        for(auto const& [i, o] : stl_types::enumerate(objects.value()))
+            fmt::print(
+                "  object[{}] animation={} function={} controls={}\n",
+                i,
+                o.animation.animation,
+                static_cast<u16>(o.function),
+                static_cast<u16>(o.function_controls));
     each(g_magic, animation->animations, [](size_t i, auto const& anim) {
         auto anim_type = magic_enum::enum_name(anim.type);
         fmt::print(
@@ -2670,6 +2709,18 @@ void dump_mode(blam::mod2::header<Ver> const* info)
     fmt::print("  regions={}\n", count_of(g_magic, info->regions));
     each(g_magic, info->regions, [](size_t i, auto const& region) {
         fmt::print("    region {}: name={}\n", i, region.name.str());
+        each(g_magic, region.permutations, [](size_t j, auto const& perm) {
+            fmt::print(
+                "      permutation {}: name={} flags={:#x} lods={},{},{},{},{}\n",
+                j,
+                perm.name.str(),
+                static_cast<u16>(perm.flags),
+                perm.meshindex_lod[0],
+                perm.meshindex_lod[1],
+                perm.meshindex_lod[2],
+                perm.meshindex_lod[3],
+                perm.meshindex_lod[4]);
+        });
     });
     /* shader_idx on a part indexes this list, so it is what names the shader
      * a piece of the model actually draws with. */
@@ -2704,6 +2755,23 @@ void dump_mode(blam::mod2::header<Ver> const* info)
                     ? ""
                     : "  <-- DROPPED by model_at",
                 static_cast<unsigned>(blam::from_le(part.data.shader_idx)));
+            /* The texcoord range tells a numeric counter's digit parts apart */
+            if constexpr(std::is_same_v<Ver, blam::xbox_version_t>)
+            {
+                auto const* tags = static_cast<blam::tag_index_t<Ver> const*>(g_tags);
+                auto verts = part.data.vertex_segment(*tags, g_magic).data(g_vertex_magic);
+                if(tags && verts.has_value() && !verts.value().empty())
+                {
+                    Vecf2 lo{1e9f, 1e9f}, hi{-1e9f, -1e9f};
+                    for(auto const& v : verts.value())
+                    {
+                        Vecf2 const uv(v.texcoord.x / 32767.f, v.texcoord.y / 32767.f);
+                        lo = glm::min(lo, uv);
+                        hi = glm::max(hi, uv);
+                    }
+                    fmt::print("        uv u={:.3f}..{:.3f} v={:.3f}..{:.3f} verts={}\n", lo.x, hi.x, lo.y, hi.y, verts.value().size());
+                }
+            }
         }
     });
 }
@@ -3077,6 +3145,12 @@ void dump_scenario(blam::map_container<Ver> const& map)
             prof.rounds2_total,
             prof.frag_grenades,
             prof.plasma_nades);
+    });
+
+    fmt::print("trigger_volumes: {}\n", count_of(g_magic, s->trigger_volumes));
+    each(g_magic, s->trigger_volumes, [](size_t, auto const& volume) {
+        fmt::print(
+            "  {} pos={:.2f} extents={:.2f}\n", volume.name.str(), volume.position, volume.extents);
     });
 
     fmt::print(
@@ -4059,6 +4133,24 @@ void dump_sbsp(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
                 blam::from_le(c.portals.count),
                 blam::from_le(c.predicted_resources.count));
             print_nonzero("unknown1", c.unknown1);
+            /* The cluster's extent, to set against the fog planes */
+            auto subs = c.sub_clusters.data(magic);
+            if(subs.has_value() && !subs.value().empty())
+            {
+                auto lo = subs.value()[0].bounds, hi = lo;
+                for(auto const& sc : subs.value())
+                {
+                    lo.x_min = std::min(lo.x_min, sc.bounds.x_min);
+                    lo.y_min = std::min(lo.y_min, sc.bounds.y_min);
+                    lo.z_min = std::min(lo.z_min, sc.bounds.z_min);
+                    hi.x_max = std::max(hi.x_max, sc.bounds.x_max);
+                    hi.y_max = std::max(hi.y_max, sc.bounds.y_max);
+                    hi.z_max = std::max(hi.z_max, sc.bounds.z_max);
+                }
+                fmt::print(
+                    "    bounds x={}..{} y={}..{} z={}..{}\n",
+                    lo.x_min, hi.x_max, lo.y_min, hi.y_max, lo.z_min, hi.z_max);
+            }
             each(
                 magic, c.predicted_resources, [&](predicted_resource const& r) {
                     fmt::print(
@@ -4626,6 +4718,8 @@ void open_map(
     blam::map_container<Ver>  map = std::move(map_.value());
     blam::tag_index_view<Ver> index(map);
     g_magic = map.magic;
+    g_vertex_magic = map.tags->vertex_magic(map.magic);
+    g_tags         = map.tags;
     /* Exactly how BitmapCache builds bitm_magic for Xbox: the map's own magic
      * with the file offset zeroed. Building one from the file start instead
      * lands on unrelated bytes. */
