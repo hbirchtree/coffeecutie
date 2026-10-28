@@ -13,6 +13,10 @@ layout(location = 0) in FragData {
     flat int instanceId;
 } frag;
 
+#ifndef USE_TEXTURE_3D
+#define USE_TEXTURE_3D 1
+#endif
+
 layout(location = 10, binding = 0) uniform sampler2DArray source_bc1;
 layout(location = 11, binding = 1) uniform sampler2DArray source_bc2;
 layout(location = 12, binding = 2) uniform sampler2DArray source_bc3;
@@ -24,6 +28,9 @@ layout(location = 17, binding = 7) uniform sampler2DArray source_rgba4;
 layout(location = 18, binding = 8) uniform sampler2DArray source_rgba8;
 layout(location = 32, binding = 13) uniform sampler2DArray source_etc2_rgb;
 layout(location = 33, binding = 14) uniform sampler2DArray source_etc2_rgba;
+#if USE_TEXTURE_3D == 1
+layout(location = 34, binding = 18) uniform sampler3D source_rg8_3d;
+#endif
 
 #if USE_REFLECTIONS == 1 && USE_ARRAY_CUBEMAP == 1
 layout(location = 19, binding = 9) uniform samplerCubeArray source_cube_bc1;
@@ -98,7 +105,8 @@ struct InstanceData {
     uint light_uv;
     uint light_dir;
     uvec2 cut_bones; /* clipped away: a player's own body above its legs */
-    uvec2 cut_padding;
+    float inflate;
+    uint  cut_padding;
 };
 
 layout(binding = 0, std140) uniform MatrixStore
@@ -263,6 +271,7 @@ const uint TEX_AY8    = 11u; /* LLLL */
 const uint TEX_A8Y8   = 12u; /* LLLA (r=L, g=A) */
 const uint TEX_ETC2_RGB  = 13u;
 const uint TEX_ETC2_RGBA = 14u;
+const uint TEX_A8Y8_3D   = 15u; /* LLLA volume */
 
 vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset, in Material mat)
 {
@@ -308,6 +317,23 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
     else if(source == TEX_ETC2_RGBA)
         return fetch_map(source_etc2_rgba, c);
     return vec4(vec3(1), 1);
+}
+
+/* A volume sampled through space by `at`; a flat map falls back to its
+ * plane, scrolled the same way */
+vec4 get_color_volume(in uint map_id, in vec3 at, in vec3 offset, in Material mat)
+{
+    int tex_id = mat.maps[map_id].layer;
+#if USE_TEXTURE_3D == 1
+    if(tex_id != -1 && (uint(tex_id) >> 24) == TEX_A8Y8_3D)
+    {
+        /* A volume is its own texture, not an atlas tile: plain repeat */
+        vec3 st = at * mat.maps[map_id].uv_scale.x + offset;
+        vec2 la = texture(source_rg8_3d, st).rg;
+        return vec4(vec3(la.r), la.g);
+    }
+#endif
+    return get_color_explicit_with_offset(map_id, tex_id, offset.xy, mat);
 }
 
 vec4 get_color_with_offset(in uint map_id, in vec2 offset, in Material mat)
@@ -1285,19 +1311,24 @@ vec4 shader_plasma(in Material mat)
 
     // Two noise maps scroll in opposite directions; their interference is
     // the moving plasma pattern. anim_dir.xy * inv_period gives tiles/sec.
-    vec2  p_off = pdir.xy * pdir.w * time;
-    vec2  s_off = sdir.xy * sdir.w * time;
-    vec4  primary   = get_color_with_offset(base_map_id, p_off, mat);
-    vec4  secondary = get_color_with_offset(secondary_map_id, s_off, mat);
+    vec3  p_off = pdir.xyz * pdir.w * time;
+    vec3  s_off = sdir.xyz * sdir.w * time;
+    vec4  primary   = get_color_volume(base_map_id, frag.position, p_off, mat);
+    vec4  secondary = get_color_volume(secondary_map_id, frag.position, s_off, mat);
 
+    /* Each triangle a plate of its own: the view angle is taken against the
+     * face, not the smoothed normal */
+    vec3  face       = normalize(cross(dFdx(frag.position), dFdy(frag.position)));
     vec3  view_world = normalize(camera_position - frag.position);
-    float NdotV      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
+    float NdotV      = abs(dot(face, view_world));
     float fresnel    = 1.0 - NdotV;
 
     vec3  tint = mix(para.rgb, perp.rgb, fresnel);
     float str  = mix(para.a, perp.a, fresnel);
 
-    float noise  = clamp(primary.r + secondary.r, 0.0, 1.0);
+    /* Two clouds of noise scroll through each other and multiply: bright
+     * where both are, scaled up as the combiner did */
+    float noise  = clamp(primary.r * secondary.r * 4.0, 0.0, 1.0);
     float plasma = pow(noise, max(intensity_exp, 0.01)) * intensity;
     vec3  color  = tint * plasma * str;
 
@@ -1419,6 +1450,7 @@ layout(location = 0) out vec4 final_color;
 #ifndef USE_BASE_MATERIALS
 #define USE_BASE_MATERIALS 1
 #endif
+
 #ifndef USE_TRANSPARENT
 #define USE_TRANSPARENT 1
 #endif
