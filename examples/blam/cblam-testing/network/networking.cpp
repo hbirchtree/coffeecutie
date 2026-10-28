@@ -71,7 +71,8 @@ using NetworkingManifest = compo::SubsystemManifest<
         const PlayerInput,
         BipedEquipment,
         const BipedStatus,
-        const DeviceState>,
+        const DeviceState,
+        const AnimationPlayback>,
     type_list_t<
         NetworkState,
         GameState,
@@ -3151,6 +3152,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto [model, physics, net] = object.components();
             if(physics.mass <= 0.f || net.instance_id == 0)
                 continue;
+            auto const* anim = p.get<AnimationPlayback>(object.id());
             ObjectSync const sync{
                 .tick             = tick,
                 .rotation         = model.rotation,
@@ -3158,8 +3160,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .linear_velocity  = Vecf4(physics.linear_velocity, 0),
                 .angular_velocity = Vecf4(physics.angular_velocity, 0),
                 .net_id           = net.instance_id,
-                .flags = physics.sleeping ? ObjectSync::sleeping
-                                          : ObjectSync::none,
+                .flags            = static_cast<ObjectSync::flags_t>(
+                    (physics.sleeping ? ObjectSync::sleeping : ObjectSync::none) |
+                    (anim && anim->stance == "crouch" ? ObjectSync::crouched : ObjectSync::none)),
             };
             all.push_back(sync);
             auto& was_asleep = m_object_asleep[net.instance_id];
@@ -4817,6 +4820,7 @@ using FollowerManifest = compo::SubsystemManifest<
         ObjectPhysics,
         PlayerCamera,
         PlayerInfo,
+        AnimationPlayback,
         const NetworkInfo>,
     type_list_t<const TickClock, const Networking>,
     empty_list_t>;
@@ -4942,6 +4946,11 @@ struct ObjectFollower
             {
                 auto const& [from, to, alpha] = *pose;
                 Networking::follow(model, physics, from, to, alpha);
+                /* A unit's stance, between standing and crouching only */
+                if(auto* anim = p.get<AnimationPlayback>(object.id());
+                   anim && !p.get<PlayerInfo>(object.id()) &&
+                   (anim->stance == "stand" || anim->stance == "crouch"))
+                    anim->stance = (to.flags & ObjectSync::crouched) ? "crouch" : "stand";
                 /* Run dry: carry on as it was going, a little way */
                 if(f64 const past = at - static_cast<f64>(to.tick); past > 0. && !(to.flags & ObjectSync::sleeping))
                 {
