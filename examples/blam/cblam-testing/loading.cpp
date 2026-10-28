@@ -2850,6 +2850,14 @@ struct ResourceLoader
                 biped.held     = respawn_held(p, player.id(), biped.held, weapon.tag, files);
             }
             weapon.held = biped.held;
+            /* Camouflage covers the body, what it holds and its own view of them */
+            camouflage(p, model, info.camouflaged);
+            if(auto const* held = p.template get<Model>(biped.held))
+                camouflage(p, *held, info.camouflaged);
+            if(auto fp = first_person_models.find(player.id()); fp != first_person_models.end())
+                for(u64 id : fp->second.models)
+                    if(auto const* view = p.template get<Model>(id))
+                        camouflage(p, *view, info.camouflaged);
         }
         /* Changes for bodies not shown yet wait for them */
         std::erase_if(pending_equips, [&](EquipWeaponEvent const& e) {
@@ -2884,6 +2892,24 @@ struct ResourceLoader
             p.remove_entity_if([&doomed](compo::Entity const& e) {
                 return doomed.contains(e.id);
             });
+    }
+
+    /* A camouflaged model's parts are drawn as a refraction of the scene */
+    void camouflage(Proxy& p, Model const& model, bool on)
+    {
+        auto& shaders = p.template subsystem<ShaderCache<Ver>>();
+        for(auto const& part : model.parts)
+        {
+            auto* shader = p.template get<ShaderData>(part.id());
+            auto* draw   = p.template get<DrawState>(part.id());
+            if(!shader || !draw || shader->camouflaged == on)
+                continue;
+            shader->camouflaged = on;
+            draw->current_pass  = shader->get_render_pass(
+                shaders,
+                pass_is_first_person(draw->current_pass) ? render_layer::first_person
+                                                          : render_layer::world);
+        }
     }
 
     /* Hands for local seats on foot; not in freecam or vehicles */

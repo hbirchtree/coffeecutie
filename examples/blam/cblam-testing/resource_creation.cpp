@@ -576,6 +576,13 @@ void create_resources(compo::EntityContainer& e)
                                cam.camera.rotation.z}},
                              {"seat", info.riding.seat},
                              {"biped", std::move(biped)},
+                             {"powerups",
+                              {
+                                  {"camouflaged", info.camouflaged},
+                                  {"camouflage", info.powerups.camouflage},
+                                  {"speed", info.powerups.speed},
+                                  {"vision", info.powerups.vision},
+                              }},
                          });
                      }
 
