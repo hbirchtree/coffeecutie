@@ -2693,6 +2693,15 @@ struct BlamScript
                 it              = m_commands.erase(it);
                 continue;
             }
+            /* The dead follow no list */
+            if(auto const* status = p.template get<BipedStatus>(it->first); status && status->dead)
+            {
+                if(auto* actor = p.template get<Actor>(it->first))
+                    actor->scripted = false;
+                walk(p, it->first, {});
+                it = m_commands.erase(it);
+                continue;
+            }
             /* On its way to a vehicle: the list waits */
             if(auto const* actor = p.template get<Actor>(it->first); actor && actor->board)
             {
