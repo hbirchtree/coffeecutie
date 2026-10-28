@@ -174,11 +174,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* The trigger is looked at once a tick */
             for(auto const& tick : ticks)
             {
-                f32 const dt   = tick.seconds;
-                state.fired    = false;
-                state.cooldown = std::max(state.cooldown - dt, 0.f);
+                f32 const dt    = tick.seconds;
+                f32 const hurry = dt * info.speed_scale();
+                state.fired     = false;
+                state.cooldown  = std::max(state.cooldown - hurry, 0.f);
                 if(state.reloading > 0.f &&
-                   (state.reloading -= dt) <= 0.f && magazine)
+                   (state.reloading -= hurry) <= 0.f && magazine)
                     refill(*ammo, *magazine);
                 bool const loaded =
                     !magazine || ammo->rounds_loaded >= per_shot;
