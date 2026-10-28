@@ -11,6 +11,7 @@
 #include "animation.h"
 
 #include <blam/volta/blam_actor.h>
+#include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_scenario.h>
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
@@ -280,7 +281,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(actor.seen_ago < look_period * 2.f && !(actor.covering && there))
             {
                 face(model, actor.last_seen);
-                fire(p, id, actor, model, kind, dt);
+                if(!strike(p, id, actor, model, kind))
+                    fire(p, id, actor, model, kind, dt);
+                throw_grenade(p, id, actor, model, kind);
             }
             break;
         }
@@ -865,6 +868,104 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = uniform(actv.burst_separation, 1.f);
     }
 
+    /* Within arm's reach of its target it strikes with what it holds */
+    bool strike(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind)
+    {
+        actv_t const& actv = *kind.variant;
+        actor.melee_in -= look_period / 8.f;
+        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > actv.melee_range)
+            return false;
+        if(actor.melee_in > 0.f)
+            return true;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto const* equip = p.template get<BipedEquipment>(id);
+        auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
+        if(!gun || !gun->tag)
+            return false;
+        actor.melee_in = 1.5f;
+        Vecf3 const eye = model.position + Vecf3{0, 0, eye_height};
+        GameEvent       ev{.type = GameEvent::WeaponFire};
+        WeaponFireEvent shot{
+            .weapon     = gun->tag->as_ref(),
+            .shooter    = id,
+            .player_idx = ObjectHitEvent::no_player,
+            .melee      = true,
+            .position   = eye,
+            .direction  = glm::normalize(actor.last_seen + Vecf3{0, 0, eye_height * .7f} - eye),
+            .target     = actor.target,
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &shot);
+        if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug("ai: {} strikes {}", id, actor.target);
+        return true;
+    }
+
+    /* Now and then, in range, a grenade lobbed at the target */
+    void throw_grenade(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind)
+    {
+        actv_t const& actv = *kind.variant;
+        if(actor.grenades < 0)
+            actor.grenades = static_cast<i16>(
+                actv.grenade_count[1] > actv.grenade_count[0]
+                    ? actv.grenade_count[0] + m_random() % (actv.grenade_count[1] - actv.grenade_count[0] + 1)
+                    : std::max<i16>(actv.grenade_count[0], 0));
+        if(actor.grenades == 0 || actv.grenade_chance <= 0.f)
+            return;
+        actor.grenade_in -= look_period / 8.f;
+        if(actor.grenade_in > 0.f)
+            return;
+        actor.grenade_in = actv.grenade_check_time > 0.f ? actv.grenade_check_time : 2.f;
+        f32 const d = glm::distance(model.position, actor.last_seen);
+        if(d < actv.grenade_ranges.x || d > actv.grenade_ranges.y || !chance(actv.grenade_chance))
+            return;
+        blam::tagref_t const* projectile = grenade_projectile(p, actv.grenade_type);
+        if(!projectile)
+            return;
+        actor.grenades--;
+        Vecf3 const eye  = model.position + Vecf3{0, 0, eye_height};
+        Vecf3       flat = actor.last_seen - eye;
+        f32 const   len  = glm::length(flat);
+        if(len < 1e-3f)
+            return;
+        /* Lofted a little, more the farther it goes */
+        Vecf3 const dir = glm::normalize(flat / len + Vecf3{0, 0, std::clamp(len / 20.f, .15f, .5f)});
+        GameEvent       ev{.type = GameEvent::WeaponFire};
+        WeaponFireEvent shot{
+            .weapon     = *projectile,
+            .shooter    = id,
+            .player_idx = ObjectHitEvent::no_player,
+            .seed       = static_cast<u32>(m_random()),
+            .thrown     = true,
+            .position   = eye,
+            .direction  = dir,
+            .target     = actor.target,
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &shot);
+        if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug("ai: {} throws a grenade at {} ({} left)", id, actor.target, actor.grenades);
+    }
+
+    /* The globals' grenade of a type, by its projectile */
+    blam::tagref_t const* grenade_projectile(Proxy& p, blam::scn::grenade_type_t type)
+    {
+        if(m_grenades.empty())
+        {
+            auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+            blam::tag_index_view<halo_version> index(files.container);
+            auto globals_tag = index.tag_of("globals\\globals");
+            if(!globals_tag.has_value())
+                return nullptr;
+            auto globals = (*globals_tag)->template data<blam::globals::globals>(*s_magic);
+            if(!globals.has_value())
+                return nullptr;
+            if(auto grenades = globals.value()->grenades.data(*s_magic); grenades.has_value())
+                for(auto const& grenade : grenades.value())
+                    m_grenades.push_back(&static_cast<blam::tagref_t const&>(grenade.projectile));
+        }
+        size_t const i = static_cast<size_t>(type);
+        return i < m_grenades.size() && m_grenades[i]->valid() ? m_grenades[i] : nullptr;
+    }
+
     /* ---- Tags ---- */
 
     kind_t const* kind_of(Proxy& p, Actor const& actor)
@@ -934,6 +1035,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     f32                                                              m_debug_top{0.f};
     std::map<std::pair<blam::antr::header const*, std::string>, f32> m_strides;
     std::minstd_rand                                                 m_random{12345};
+    std::vector<blam::tagref_t const*>                               m_grenades;
 };
 
 void alloc_actors(compo::EntityContainer& e)
@@ -945,6 +1047,7 @@ void alloc_actors(compo::EntityContainer& e)
         actors.m_scenario = nullptr;
         actors.m_heard.clear();
         actors.m_platoons.clear();
+        actors.m_grenades.clear();
     });
     gbus.addEventFunction<MapChangedEvent<halo_version>>(
         0, [&actors](auto&, MapChangedEvent<halo_version>* changed) {
