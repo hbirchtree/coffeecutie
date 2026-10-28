@@ -219,6 +219,7 @@ struct BlamScript
             play_recordings(p);
             play_custom(p);
             run_commands(p);
+            offer_vehicles(p);
             board_vehicles(p);
             run_conversations(p);
             scale_objects(p);
@@ -419,6 +420,11 @@ struct BlamScript
         for(u32 net_id : waiting)
             if(m_spawning.contains(net_id))
                 m_deferred.push_back({net_id, later});
+            /* Spawned since the value was made, e.g. while a deferred call
+             * waited on something else */
+            else if(u64 const id = live_entity(p, net_id);
+                    id && std::find(objects.begin(), objects.end(), id) == objects.end())
+                later(p, id);
     }
 
     /* What waited on objects now spawned */
@@ -849,6 +855,14 @@ struct BlamScript
                 });
             return {};
         case op::vehicle_load_magic:
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format(
+                    "vehicle_load_magic: {} {} units {} pending {} vehicle pending {}",
+                    text_of(arg(0)),
+                    text_of(arg(1)),
+                    arg(2).objects.size(),
+                    arg(2).pending.size(),
+                    arg(0).pending.size()));
             with_objects(
                 p,
                 arg(0),
@@ -1658,6 +1672,8 @@ struct BlamScript
             if(auto label = blam::bl_string::from(seat))
                 enter.seat = *label;
             p.template subsystem<GameEventBus>().inject(ev, &enter);
+            /* Held for it until the game has seated it */
+            m_player_claims[{vehicle, lowered(seat)}] = m_vm.now();
             return;
         }
         auto const* model = p.template get<Model>(vehicle);
@@ -1677,9 +1693,17 @@ struct BlamScript
                 return static_cast<char>(std::tolower(c));
             });
             bool const fits = exact ? label == seat : label.find(seat) != std::string::npos;
-            bool const taken = std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
+            bool taken = std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
                 return r.vehicle == vehicle && r.seat == label;
             });
+            /* A player's seat too, or one a player was just sent to */
+            if(auto claim = m_player_claims.find({vehicle, label});
+               claim != m_player_claims.end() && m_vm.now() - claim->second < player_claim_ticks)
+                taken = true;
+            for(auto player : p.template select<PlayerInfo>())
+                if(auto const& riding = player.template get<PlayerInfo>().riding;
+                   riding.vehicle == vehicle && riding.seat == static_cast<i16>(seat_idx))
+                    taken = true;
             if(!fits || taken)
                 continue;
             auto marker = bind_marker_node(*model->tag, candidate.marker_name.str(), m_magic);
@@ -1700,8 +1724,11 @@ struct BlamScript
             });
             carry(p, unit, true);
             seated(p, unit, vehicle, static_cast<i16>(seat_idx));
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format("seat: {} in {} seat {}", unit, vehicle, label));
             return;
         }
+        log(fmt::format("seat: no free {} seat for {} in {}", seat, unit, vehicle));
     }
 
     void unseat(Proxy& p, u64 unit)
@@ -2205,8 +2232,9 @@ struct BlamScript
     /* Each free seat whose label holds `seat` is claimed by the nearest
      * of them not already on its way to a vehicle, who runs there and,
      * within its boarding radius, sits */
-    void board(Proxy& p, std::vector<u64> const& units, u64 vehicle, std::string const& seat)
+    void board(Proxy& p, std::vector<u64> const& units, u64 vehicle, std::string const& seat, bool passengers = false)
     {
+        using seat_flags_t = blam::scn::unit::seat_t::seat_flags_t;
         auto const* model = p.template get<Model>(vehicle);
         if(!model || !model->origin_object)
             return;
@@ -2221,7 +2249,9 @@ struct BlamScript
         std::vector<std::pair<f32, Actor*>> idle;
         for(u64 id : units)
             if(auto* actor = p.template get<Actor>(id); actor && !actor->board)
-                if(auto const* at = p.template get<Model>(id);
+                if(auto const* status = p.template get<BipedStatus>(id); status && status->dead)
+                    continue;
+                else if(auto const* at = p.template get<Model>(id);
                    at && std::none_of(m_riders.begin(), m_riders.end(), [id](rider_t const& r) { return r.unit == id; }))
                     idle.emplace_back(glm::distance(at->position, model->position), actor);
         std::sort(idle.begin(), idle.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
@@ -2229,14 +2259,22 @@ struct BlamScript
         for(auto ent : p.template select<Actor>())
             if(auto const& other = ent.template get<Actor>(); other.board == vehicle)
                 claimed.insert(std::string(other.board_seat.str()));
+        /* Seats players sit in */
+        std::set<i16> held;
+        for(auto ent : p.template select<PlayerInfo>())
+            if(auto const& info = ent.template get<PlayerInfo>(); info.riding.vehicle == vehicle)
+                held.insert(info.riding.seat);
         auto next = idle.begin();
-        for(auto const& candidate : seats.value())
+        for(size_t seat_idx = 0; seat_idx < seats.value().size(); seat_idx++)
         {
+            auto const& candidate = seats.value()[seat_idx];
             if(next == idle.end())
                 break;
             std::string const label = lowered(candidate.label.str());
             bool const        taken =
                 label.find(lowered(seat)) == std::string::npos ||
+                held.contains(static_cast<i16>(seat_idx)) ||
+                (passengers && static_cast<u32>(candidate.flags) & static_cast<u32>(seat_flags_t::driver)) ||
                 claimed.contains(label) ||
                 std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
                     return r.vehicle == vehicle && r.seat == label;
@@ -2248,9 +2286,45 @@ struct BlamScript
             next->second->board_seat   = blam::bl_string::from(label).value_or(blam::bl_string{});
             ++next;
         }
-        if(std::getenv("BLAM_DEBUG_AI"))
+        if(std::getenv("BLAM_DEBUG_AI") && (!passengers || next != idle.begin()))
             log(fmt::format(
-                "ai_go_to_vehicle: {} of {} sent to {} seats '{}'", next - idle.begin(), units.size(), vehicle, seat));
+                "ai_go_to_vehicle: {} of {} ({} free) sent to {} seats '{}' held {}",
+                next - idle.begin(),
+                units.size(),
+                idle.size(),
+                vehicle,
+                seat,
+                held.size()));
+    }
+
+    /* Allies near a vehicle a player drives and has stopped climb into its
+     * free seats */
+    void offer_vehicles(Proxy& p)
+    {
+        using team_t = blam::scn::unit::team_t;
+        if(++m_offer_ticks < static_cast<u32>(tick_rate))
+            return;
+        m_offer_ticks = 0;
+        for(auto ent : p.template select<PlayerInfo>())
+        {
+            auto const& info    = ent.template get<PlayerInfo>();
+            auto const* vehicle = info.riding.driver ? p.template get<Model>(info.riding.vehicle) : nullptr;
+            auto const* moving  = vehicle ? p.template get<ObjectPhysics>(info.riding.vehicle) : nullptr;
+            if(!vehicle || !moving || glm::length(moving->linear_velocity) > offer_speed)
+                continue;
+            std::vector<u64> near;
+            for(auto other : p.template select<Actor, Model>())
+            {
+                auto const& actor = other.template get<Actor>();
+                auto const  team  = static_cast<team_t>(actor.team);
+                if(!actor.active() || actor.board || actor.scripted || (team != team_t::player && team != team_t::human))
+                    continue;
+                if(glm::distance(other.template get<Model>().position, vehicle->position) <= offer_radius)
+                    near.push_back(other.id());
+            }
+            if(!near.empty())
+                board(p, near, info.riding.vehicle, {}, true);
+        }
     }
 
     /* Those sent to a vehicle sit once they are at it; a seat already
@@ -3610,6 +3684,11 @@ struct BlamScript
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, commands_t>               m_commands;
     std::map<blam::scn::ai::conversation const*, conversation_t> m_conversations;
+    static constexpr f32 offer_radius = 6.f; /* wu from a stopped vehicle allies climb in from */
+    static constexpr f32 offer_speed  = 1.f; /* wu/s a vehicle counts as stopped below */
+    u32                  m_offer_ticks{0};
+    static constexpr libc_types::i64 player_claim_ticks = 60;
+    std::map<std::pair<u64, std::string>, libc_types::i64> m_player_claims; /* vehicle, seat: tick asked */
     mutable std::set<std::string> m_unnamed; /* ai paths that named nobody, logged once */
     struct scaling_t
     {
