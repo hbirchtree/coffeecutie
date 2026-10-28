@@ -100,6 +100,7 @@ struct ResourceLoader
         std::vector<u64>   parts;
         u64                held{0}; /*!< Its weapon */
         blam::tag_t const* held_tag{nullptr};
+        bool               fallen{false}; /*!< Has let go of what it carried */
     };
 
     std::map<u64, player_biped_t> player_bipeds;
@@ -2746,9 +2747,13 @@ struct ResourceLoader
                             cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f},
                             !info.is_remote());
                 }
-            if(auto const* status = p.template get<BipedStatus>(player.id());
-               status && status->dead)
+            /* Once per death: a checkpoint hands its loadout back before the
+             * body is up again */
+            auto const* status = p.template get<BipedStatus>(player.id());
+            bool const  dead   = status && status->dead;
+            if(dead && !biped.fallen)
                 let_go(equip, cam, info);
+            biped.fallen = dead;
             auto& weapon = equip.weapons[0];
             if(weapon.tag != biped.held_tag)
             {
