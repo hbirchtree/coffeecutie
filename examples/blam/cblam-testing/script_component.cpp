@@ -417,6 +417,11 @@ struct BlamScript
         for(u32 net_id : waiting)
             if(m_spawning.contains(net_id))
                 m_deferred.push_back({net_id, later});
+            /* Spawned since the value was made, e.g. while a deferred call
+             * waited on something else */
+            else if(u64 const id = live_entity(p, net_id);
+                    id && std::find(objects.begin(), objects.end(), id) == objects.end())
+                later(p, id);
     }
 
     /* What waited on objects now spawned */
@@ -795,6 +800,14 @@ struct BlamScript
                 });
             return {};
         case op::vehicle_load_magic:
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format(
+                    "vehicle_load_magic: {} {} units {} pending {} vehicle pending {}",
+                    text_of(arg(0)),
+                    text_of(arg(1)),
+                    arg(2).objects.size(),
+                    arg(2).pending.size(),
+                    arg(0).pending.size()));
             with_objects(
                 p,
                 arg(0),
@@ -1589,6 +1602,8 @@ struct BlamScript
             if(auto label = blam::bl_string::from(seat))
                 enter.seat = *label;
             p.template subsystem<GameEventBus>().inject(ev, &enter);
+            /* Held for it until the game has seated it */
+            m_player_claims[{vehicle, lowered(seat)}] = m_vm.now();
             return;
         }
         auto const* model = p.template get<Model>(vehicle);
@@ -1608,9 +1623,17 @@ struct BlamScript
                 return static_cast<char>(std::tolower(c));
             });
             bool const fits = exact ? label == seat : label.find(seat) != std::string::npos;
-            bool const taken = std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
+            bool taken = std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
                 return r.vehicle == vehicle && r.seat == label;
             });
+            /* A player's seat too, or one a player was just sent to */
+            if(auto claim = m_player_claims.find({vehicle, label});
+               claim != m_player_claims.end() && m_vm.now() - claim->second < player_claim_ticks)
+                taken = true;
+            for(auto player : p.template select<PlayerInfo>())
+                if(auto const& riding = player.template get<PlayerInfo>().riding;
+                   riding.vehicle == vehicle && riding.seat == static_cast<i16>(seat_idx))
+                    taken = true;
             if(!fits || taken)
                 continue;
             auto marker = bind_marker_node(*model->tag, candidate.marker_name.str(), m_magic);
@@ -1631,8 +1654,11 @@ struct BlamScript
             });
             carry(p, unit, true);
             seated(p, unit, vehicle, static_cast<i16>(seat_idx));
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format("seat: {} in {} seat {}", unit, vehicle, label));
             return;
         }
+        log(fmt::format("seat: no free {} seat for {} in {}", seat, unit, vehicle));
     }
 
     void unseat(Proxy& p, u64 unit)
@@ -3511,6 +3537,8 @@ struct BlamScript
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, commands_t>               m_commands;
     std::map<blam::scn::ai::conversation const*, conversation_t> m_conversations;
+    static constexpr libc_types::i64 player_claim_ticks = 60;
+    std::map<std::pair<u64, std::string>, libc_types::i64> m_player_claims; /* vehicle, seat: tick asked */
     mutable std::set<std::string> m_unnamed; /* ai paths that named nobody, logged once */
     struct scaling_t
     {
