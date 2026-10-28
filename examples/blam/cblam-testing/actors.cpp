@@ -970,7 +970,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
     kind_t const* kind_of(Proxy& p, Actor const& actor)
     {
-        auto const key = std::pair{actor.encounter, actor.squad};
+        auto const key = std::tuple{actor.encounter, actor.squad, actor.variant};
         if(auto it = m_kinds.find(key); it != m_kinds.end())
             return &it->second;
         kind_t kind;
@@ -984,7 +984,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(!squads.has_value() || actor.squad < 0 || static_cast<size_t>(actor.squad) >= squads.value().size())
             return nullptr;
         kind.squad     = &squads.value()[actor.squad];
-        i16 const type = kind.squad->actor_type;
+        /* Its own type, from where it was placed, outlasts a migration */
+        i16 const type = actor.variant >= 0 ? actor.variant : kind.squad->actor_type;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         blam::tag_index_view<halo_version> index(files.container);
         if(type >= 0 && static_cast<size_t>(type) < palette.value().size())
@@ -1028,7 +1029,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     blam::scn::scenario<halo_version> const*                         m_scenario{nullptr};
     static inline blam::map_ptr const*                               s_magic{nullptr};
     u32                                                              m_generation{0};
-    std::map<std::pair<i16, i16>, kind_t>                            m_kinds;
+    std::map<std::tuple<i16, i16, i16>, kind_t>                      m_kinds;
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
     f32                                                              m_debug_in{0.f};

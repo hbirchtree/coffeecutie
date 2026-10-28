@@ -1162,10 +1162,13 @@ struct BlamScript
                     actor->position  = -1;
                     actor->order     = Actor::order_t::none;
                 }
-            /* The names follow them */
+            /* The names follow them: out of their old encounter and squad,
+             * into the new */
             if(auto it = m_actors.find(from); it != m_actors.end())
             {
-                auto const moved = it->second;
+                std::set<u32> const moved(it->second.begin(), it->second.end());
+                for(auto& [name, ids] : m_actors)
+                    std::erase_if(ids, [&moved](u32 id) { return moved.contains(id); });
                 m_actors[ename].insert(m_actors[ename].end(), moved.begin(), moved.end());
                 if(!sname.empty())
                     m_actors[ename + "/" + sname].insert(
@@ -2789,6 +2792,7 @@ struct BlamScript
                 m_actor_slots[net_id] = {
                     .encounter = encounter_idx,
                     .squad     = static_cast<i16>(si),
+                    .variant   = type,
                     .team      = static_cast<u16>(encounter->team_index),
                     .post      = start.position};
                 /* Both the encounter and its squad name it */
@@ -2840,6 +2844,7 @@ struct BlamScript
             using team_t = blam::scn::unit::team_t;
             actor->encounter = slot->second.encounter;
             actor->squad     = slot->second.squad;
+            actor->variant   = slot->second.variant;
             actor->post      = slot->second.post;
             actor->team      = slot->second.team;
             /* The encounter's default is the unit tag's own team */
@@ -3043,6 +3048,7 @@ struct BlamScript
     {
         i16   encounter{-1};
         i16   squad{-1};
+        i16   variant{-1};
         u16   team{0};
         Vecf3 post{};
     };
