@@ -3169,15 +3169,18 @@ struct ResourceLoader
             if(!grenades.value()[i].equipment.valid() || tag == index.end())
                 continue;
             auto eqip = (*tag).template data<blam::scn::equipment>(magic);
-            if(eqip.has_value())
-                equip.equipment.push_back({
-                    .equip = eqip.value(),
-                    .tag   = &(*tag),
-                    .most  = static_cast<u16>(std::max<i16>(grenades.value()[i].maximum_count, 0)),
-                    .left  = multiplayer ? static_cast<u16>(std::max<i16>(
+            if(!eqip.has_value())
+                continue;
+            u16 const most = static_cast<u16>(std::max<i16>(grenades.value()[i].maximum_count, 0));
+            u16 const left = multiplayer ? static_cast<u16>(std::max<i16>(
                                                grenades.value()[i].multiplayer_spawn_default, 0))
-                                         : counts[i],
-                });
+                                         : counts[i];
+            equip.equipment.push_back({
+                .equip = eqip.value(),
+                .tag   = &(*tag),
+                .most  = most,
+                .left  = std::min(left, most),
+            });
         }
     }
 
