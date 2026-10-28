@@ -108,6 +108,9 @@ struct MessageBase
         /* The server's live objects, and what a client lacks of them */
         ObjectCensus,
         ObjectRequest,
+
+        /* Units a script sat in vehicles */
+        RiderSync,
     } type{None};
 
     u32 request{};
@@ -284,6 +287,21 @@ struct alignas(8) SeatSync
     bool operator==(SeatSync const&) const = default;
 };
 
+/*! A unit that is not a player, in a vehicle's seat or out of it; sent on
+ *  change and to newly verified peers */
+struct alignas(8) RiderSync
+{
+    static constexpr auto message_type = MessageBase::RiderSync;
+
+    u32 unit{0};    /*!< Net id */
+    u32 vehicle{0}; /*!< Net id, 0 = out of it */
+    i16 seat{-1};
+    u16 padding{0};
+    u32 padding2{0};
+
+    bool operator==(RiderSync const&) const = default;
+};
+
 /*! What a player holds; sent on change and to newly verified peers */
 struct alignas(8) EquipmentSync
 {
@@ -387,7 +405,7 @@ struct alignas(8) WeaponFire
     } flags{none};
     u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
     u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */
-    u32 padding{0};
+    u32 shooter{0};                /*!< Net id of a shooter that is no player: an actor */
 };
 
 /*! A hit the server decided (ObjectHitEvent), to every peer */
@@ -557,6 +575,7 @@ struct alignas(8) ObjectSync
     {
         none     = 0x0,
         sleeping = 0x1,
+        crouched = 0x2, /*!< A unit down on its knees: its stance */
     };
 
     u64     tick{0}; /*!< Server tick this is the state after */
@@ -690,6 +709,7 @@ static_assert(sizeof(Message<PlayerJoin>) == 52);
 static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
+static_assert(sizeof(RiderSync) == 16);
 static_assert(sizeof(EquipmentSync) == 24);
 static_assert(sizeof(WeaponPickup) == 16);
 static_assert(sizeof(ObjectDespawn) == 4);
