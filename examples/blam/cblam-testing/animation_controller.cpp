@@ -94,6 +94,7 @@ struct AnimationController
         animate_first_person(p, files);
         animate_faces(p);
         animate_turrets(p);
+        animate_objects(p, files);
         end_actions(p);
 
         auto& cache = p.template subsystem<ModelCache<halo_version>>();
@@ -903,6 +904,48 @@ struct AnimationController
                 st[UnitSlot::emotions],
                 std::max<f32>(anim.emotion, 0.f) / 30.f,
                 anim.emotion >= 0 ? 1.f : 0.f);
+        }
+    }
+
+    /* The graph's object animation follows an object function: its frame,
+     * or its weight */
+    void animate_objects(Proxy& p, BlamFiles<halo_version> const& files)
+    {
+        using controls_t  = blam::antr::object::function_controls_t;
+        auto const& magic = files.container.magic;
+        for(auto ent : p.template select<Model, AnimationPlayback>())
+        {
+            auto& anim = ent.template get<AnimationPlayback>();
+            if(!anim.graph || anim.graph->objects.count == 0)
+                continue;
+            auto objects = anim.graph->objects.data(magic);
+            auto clips   = anim.graph->animations.data(magic);
+            if(!objects.has_value() || objects.value().empty() || !clips.has_value())
+                continue;
+            auto const& object = objects.value()[0];
+            auto const  fn     = static_cast<u32>(object.function);
+            i32 const   clip   = object.animation.animation;
+            f32 const   value =
+                fn < 4 ? ent.template get<Model>().object_function[fn] : -1.f;
+            if(value < 0.f || clip < 0 || static_cast<size_t>(clip) >= clips.value().size())
+                continue;
+            /* Without units the idle picked is this same clip, running free */
+            auto& idle = anim.layers[AnimationPlayback::base_slot];
+            if(idle.graph == anim.graph && idle.animation == static_cast<u32>(clip) && !idle.paused)
+                anim.stop(AnimationPlayback::base_slot);
+            auto& layer = anim.layers[AnimationPlayback::object_slot];
+            bool const by_frame = object.function_controls == controls_t::frame;
+            if(layer.graph != anim.graph || layer.animation != static_cast<u32>(clip))
+                layer = AnimationLayer{
+                    .graph     = anim.graph,
+                    .animation = static_cast<u32>(clip),
+                    .loop      = !by_frame,
+                    .paused    = by_frame,
+                };
+            auto const& animation = clips.value()[clip];
+            if(by_frame)
+                layer.time = value * std::max(animation.frame_count - 1, 0) / animation.frame_rate();
+            layer.weight = by_frame ? 1.f : value;
         }
     }
 
