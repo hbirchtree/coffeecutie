@@ -42,6 +42,8 @@ struct HudScene : compo::SubsystemBase
         u32                   seat{0};
         f32                   width{640.f};
         std::vector<sprite_t> sprites;
+        /* Over the whole view, under its HUD; premultiplied */
+        Vecf4 tint{0.f};
     };
 
     std::vector<view_t> views;
