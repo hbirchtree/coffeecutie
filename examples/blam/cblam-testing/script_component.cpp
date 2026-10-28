@@ -1196,39 +1196,68 @@ struct BlamScript
             auto const slash = path.find('/');
             auto const ename = lowered(path.substr(0, slash));
             auto const sname = slash == std::string::npos ? std::string{} : lowered(path.substr(slash + 1));
-            i16        enc = -1, sq = -1;
+            i16         enc = -1, sq = -1;
+            std::string toon;
             if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
                 for(size_t i = 0; i < list.value().size() && enc < 0; i++)
                     if(lowered(list.value()[i].name.str()) == ename)
                     {
                         enc = static_cast<i16>(i);
                         if(auto squads = list.value()[i].squads.data(m_magic); squads.has_value())
-                            for(size_t j = 0; j < squads.value().size(); j++)
+                        {
+                            for(size_t j = 0; j < squads.value().size() && sq < 0; j++)
                                 if(sname.empty() || lowered(squads.value()[j].name.str()) == sname)
-                                {
                                     sq = static_cast<i16>(j);
-                                    break;
-                                }
+                            /* A platoon: its first squad */
+                            for(size_t j = 0; j < squads.value().size() && sq < 0; j++)
+                                if(platoon_name(list.value()[i], squads.value()[j]) == sname)
+                                    sq = static_cast<i16>(j);
+                            if(sq >= 0)
+                                toon = platoon_name(list.value()[i], squads.value()[sq]);
+                        }
                     }
             if(enc < 0 || sq < 0)
                 return log(fmt::format("ai_migrate: no squad {}", path)), value_t{};
             auto const from = lowered(text_of(arg(0)));
+            if(std::getenv("BLAM_DEBUG_AI"))
+            {
+                log(fmt::format("ai_migrate: {} from {} to {}", ai_actors(p, from).size(), from, path));
+                auto const& e  = m_scenario->ai.encounters.data(m_magic).value()[enc];
+                auto const& s  = e.squads.data(m_magic).value()[sq];
+                auto        fp = e.firing_positions.data(m_magic);
+                std::map<u32, u32> per_group;
+                if(fp.has_value())
+                    for(auto const& f : fp.value())
+                        per_group[f.group]++;
+                log(fmt::format(
+                    "  squad {:x} {:x} {:x} / {:x} {:x} {:x} positions by group {}",
+                    s.attacking, s.attacking_search, s.attacking_guard,
+                    s.defending, s.defending_search, s.defending_guard,
+                    per_group));
+            }
             for(u64 id : ai_actors(p, from))
                 if(auto* actor = p.template get<Actor>(id))
                 {
                     actor->encounter = enc;
                     actor->squad     = sq;
+                    actor->migrated  = true;
                     actor->position  = -1;
                     actor->order     = Actor::order_t::none;
                 }
-            /* The names follow them */
+            /* The names follow them: out of their old encounter and squad,
+             * into the new */
             if(auto it = m_actors.find(from); it != m_actors.end())
             {
-                auto const moved = it->second;
+                std::set<u32> const moved(it->second.begin(), it->second.end());
+                for(auto& [name, ids] : m_actors)
+                    std::erase_if(ids, [&moved](u32 id) { return moved.contains(id); });
                 m_actors[ename].insert(m_actors[ename].end(), moved.begin(), moved.end());
                 if(!sname.empty())
                     m_actors[ename + "/" + sname].insert(
                         m_actors[ename + "/" + sname].end(), moved.begin(), moved.end());
+                if(!toon.empty() && toon != sname)
+                    m_actors[ename + "/" + toon].insert(
+                        m_actors[ename + "/" + toon].end(), moved.begin(), moved.end());
             }
             return {};
         }
@@ -3332,11 +3361,14 @@ struct BlamScript
                 m_actor_slots[net_id] = {
                     .encounter = encounter_idx,
                     .squad     = static_cast<i16>(si),
+                    .variant   = type,
                     .team      = static_cast<u16>(encounter->team_index),
                     .post      = start.position};
-                /* Both the encounter and its squad name it */
+                /* The encounter, its squad and its platoon name it */
                 m_actors[lowered(name)].push_back(net_id);
                 m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
+                if(auto toon = platoon_name(*encounter, squad); !toon.empty())
+                    m_actors[fmt::format("{}/{}", lowered(name), toon)].push_back(net_id);
                 /* Once it is there: its state's stance, and the location's
                  * command list */
                 using state_t = blam::scn::ai::state_t;
@@ -3383,6 +3415,7 @@ struct BlamScript
             using team_t = blam::scn::unit::team_t;
             actor->encounter = slot->second.encounter;
             actor->squad     = slot->second.squad;
+            actor->variant   = slot->second.variant;
             actor->post      = slot->second.post;
             actor->team      = slot->second.team;
             /* The encounter's default is the unit tag's own team */
@@ -3427,6 +3460,15 @@ struct BlamScript
         return variant.value()->weapon;
     }
 
+    /* The lowered name of a squad's platoon, empty without one */
+    std::string platoon_name(blam::scn::ai::encounter const& encounter, blam::scn::ai::squad const& squad) const
+    {
+        auto platoons = encounter.platoons.data(m_magic);
+        if(!platoons.has_value() || squad.platoon >= platoons.value().size())
+            return {};
+        return lowered(platoons.value()[squad.platoon].name.str());
+    }
+
     std::vector<u32> ai_spawning(std::string_view path) const
     {
         std::vector<u32> out;
@@ -3442,7 +3484,11 @@ struct BlamScript
         std::vector<u64> out;
         auto             it = m_actors.find(lowered(path));
         if(it == m_actors.end())
+        {
+            if(std::getenv("BLAM_DEBUG_AI") && m_unnamed.insert(lowered(path)).second)
+                cDebug("script: no actors named {}", path);
             return out;
+        }
         for(u32 net_id : it->second)
             if(u64 const id = live_entity(p, net_id))
                 out.push_back(id);
@@ -3564,6 +3610,7 @@ struct BlamScript
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, commands_t>               m_commands;
     std::map<blam::scn::ai::conversation const*, conversation_t> m_conversations;
+    mutable std::set<std::string> m_unnamed; /* ai paths that named nobody, logged once */
     struct scaling_t
     {
         f32 from{1.f};
@@ -3590,6 +3637,7 @@ struct BlamScript
     {
         i16   encounter{-1};
         i16   squad{-1};
+        i16   variant{-1};
         u16   team{0};
         Vecf3 post{};
     };

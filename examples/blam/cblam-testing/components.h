@@ -1102,6 +1102,8 @@ struct Actor
 
     libc_types::i16 encounter{-1};
     libc_types::i16 squad{-1};
+    libc_types::i16 variant{-1}; /*!< Its actor palette entry, kept across migrations */
+    bool            migrated{false}; /*!< ai_migrate moved it: it guards its squad's positions, not its post */
     libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
     bool            scripted{false}; /*!< A command list or recording has it */
     bool            may_fight{false}; /*!< Its command list lets it break off for an enemy */
