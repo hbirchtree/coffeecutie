@@ -32,6 +32,13 @@ Vecf3 vec3_at(u8 const* at)
     return {from_le(out.x), from_le(out.y), from_le(out.z)};
 }
 
+f32 f32_at(u8 const* at)
+{
+    f32 out;
+    std::memcpy(&out, at, sizeof(out));
+    return from_le(out);
+}
+
 Quatf nlerp(Quatf const& a, Quatf b, f32 t)
 {
     if(glm::dot(a, b) < 0.f)
@@ -95,7 +102,8 @@ bool sample_compressed(
     u32                 frame,
     u32                 node_count,
     std::vector<Quatf>& rot,
-    std::vector<Vecf3>& trans)
+    std::vector<Vecf3>& trans,
+    std::vector<f32>*   scale)
 {
     constexpr u32 header_size = 44;
     i32 const     at          = from_le(anim.compressed_data_offset);
@@ -110,12 +118,16 @@ bool sample_compressed(
     auto const size = static_cast<u32>(block.size());
     compressed_stream_t const rotation{header_size, h[0], h[1], h[2], h[3]};
     compressed_stream_t const translation{h[3], h[4], h[5], h[6], h[7]};
+    compressed_stream_t const scaling{h[7], h[8], h[9], h[10], size};
     if(rotation.defaults + 6u * node_count > size || translation.defaults + 12u * node_count > size)
         return false;
 
     rot.assign(node_count, Quatf(1, 0, 0, 0));
     trans.assign(node_count, Vecf3(0));
-    i32 rotated = 0, moved = 0;
+    if(scale)
+        scale->assign(node_count, 1.f);
+    bool const scaled = scale && scaling.defaults + 4u * node_count <= size;
+    i32 rotated = 0, moved = 0, grown = 0;
     for(u32 i = 0; i < node_count; i++)
     {
         rot[i] = sample_channel(
@@ -136,6 +148,16 @@ bool sample_compressed(
             12,
             vec3_at,
             [](Vecf3 const& a, Vecf3 const& b, f32 t) { return glm::mix(a, b, t); });
+        if(scaled)
+            (*scale)[i] = sample_channel(
+                block,
+                scaling,
+                anim.has_scale(i) ? grown++ : -1,
+                f32_at(block.data() + scaling.defaults + 4u * i),
+                frame,
+                4,
+                f32_at,
+                [](f32 a, f32 b, f32 t) { return a == b ? a : glm::mix(a, b, t); });
     }
     for(auto& q : rot)
         q = glm::conjugate(q);
@@ -149,10 +171,13 @@ bool sample_uncompressed(
     u32                 frame,
     u32                 node_count,
     std::vector<Quatf>& rot,
-    std::vector<Vecf3>& trans)
+    std::vector<Vecf3>& trans,
+    std::vector<f32>*   scale)
 {
     rot.assign(node_count, Quatf(1, 0, 0, 0));
     trans.assign(node_count, Vecf3(0));
+    if(scale)
+        scale->assign(node_count, 1.f);
 
     size_t d = 0;
     size_t f = static_cast<size_t>(frame) * from_le(anim.frame_size);
@@ -188,10 +213,11 @@ bool sample_uncompressed(
                 trans[i] = read_vec3(default_bytes, d);
             d += 12;
         }
-        if(anim.has_scale(i))
-            f += 4;
-        else
-            d += 4;
+        auto const& bytes = anim.has_scale(i) ? frame_bytes : default_bytes;
+        size_t&     at    = anim.has_scale(i) ? f : d;
+        if(scale && at + 4 <= bytes.size())
+            (*scale)[i] = f32_at(bytes.data() + at);
+        at += 4;
     }
 
     /* antr quats use the same conjugate convention as the mod2 bind quats. */

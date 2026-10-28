@@ -876,13 +876,15 @@ bool ModelCache<V>::sample_animation(
     u32                          frame,
     u32                          node_count,
     std::vector<Quatf>&          rot,
-    std::vector<Vecf3>&          trans)
+    std::vector<Vecf3>&          trans,
+    std::vector<f32>&            scale)
 {
     auto default_bytes_opt = anim.default_data.data(magic);
     auto frame_bytes_opt   = anim.frame_data.data(magic);
     if(anim.is_compressed())
         return frame_bytes_opt.has_value() &&
-               blam::antr::sample_compressed(anim, frame_bytes_opt.value(), frame, node_count, rot, trans);
+               blam::antr::sample_compressed(
+                   anim, frame_bytes_opt.value(), frame, node_count, rot, trans, &scale);
     if(!default_bytes_opt.has_value() ||
        (!frame_bytes_opt.has_value() && anim.frame_size > 0))
         return false;
@@ -894,7 +896,8 @@ bool ModelCache<V>::sample_animation(
         frame,
         node_count,
         rot,
-        trans);
+        trans,
+        &scale);
 }
 
 /* Whether the foot frame came up between two frame positions, wrapping
@@ -1037,18 +1040,27 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
 template void ModelCache<halo_version>::advance_playback(
     AnimationPlayback&, f32);
 
+/* Exact where both agree, so unscaled nodes stay at 1 */
+static f32 mix_scale(f32 a, f32 b, f32 t)
+{
+    return a == b ? a : glm::mix(a, b, t);
+}
+
 /* Blends `from` toward `to` by t, node by node */
 static void mix_into(
     std::vector<Quatf>&       rot,
     std::vector<Vecf3>&       trans,
+    std::vector<f32>&         scale,
     std::vector<Quatf> const& to_rot,
     std::vector<Vecf3> const& to_trans,
+    std::vector<f32> const&   to_scale,
     f32                       t)
 {
     for(size_t i = 0; i < rot.size(); i++)
     {
         rot[i]   = glm::slerp(rot[i], to_rot[i], t);
         trans[i] = glm::mix(trans[i], to_trans[i], t);
+        scale[i] = mix_scale(scale[i], to_scale[i], t);
     }
 }
 
@@ -1074,16 +1086,16 @@ bool ModelCache<V>::sample_grid(
     auto frame = [&](i32 c, i32 r) {
         return static_cast<u32>(std::min(r * cols + c, clip.frame_count - 1));
     };
-    if(!sample_animation(clip, frame(c0, r0), n, m_layer_rot, m_layer_trans))
+    if(!sample_animation(clip, frame(c0, r0), n, m_layer_rot, m_layer_trans, m_layer_scale))
         return false;
-    if(fx > 0.f && sample_animation(clip, frame(c1, r0), n, m_ref_rot, m_ref_trans))
-        mix_into(m_layer_rot, m_layer_trans, m_ref_rot, m_ref_trans, fx);
+    if(fx > 0.f && sample_animation(clip, frame(c1, r0), n, m_ref_rot, m_ref_trans, m_ref_scale))
+        mix_into(m_layer_rot, m_layer_trans, m_layer_scale, m_ref_rot, m_ref_trans, m_ref_scale, fx);
     if(fy <= 0.f ||
-       !sample_animation(clip, frame(c0, r1), n, m_row_rot, m_row_trans))
+       !sample_animation(clip, frame(c0, r1), n, m_row_rot, m_row_trans, m_row_scale))
         return true;
-    if(fx > 0.f && sample_animation(clip, frame(c1, r1), n, m_ref_rot, m_ref_trans))
-        mix_into(m_row_rot, m_row_trans, m_ref_rot, m_ref_trans, fx);
-    mix_into(m_layer_rot, m_layer_trans, m_row_rot, m_row_trans, fy);
+    if(fx > 0.f && sample_animation(clip, frame(c1, r1), n, m_ref_rot, m_ref_trans, m_ref_scale))
+        mix_into(m_row_rot, m_row_trans, m_row_scale, m_ref_rot, m_ref_trans, m_ref_scale, fx);
+    mix_into(m_layer_rot, m_layer_trans, m_layer_scale, m_row_rot, m_row_trans, m_row_scale, fy);
     return true;
 }
 
@@ -1132,6 +1144,7 @@ void ModelCache<V>::evaluate_pose(
      * the model as its vertices already stand. */
     m_rot.assign(k, Quatf(1, 0, 0, 0));
     m_trans.assign(k, Vecf3(0));
+    m_scale.assign(k, 1.f);
     for(u32 i = 0; i < n; i++)
     {
         if(node_of(i) >= k)
@@ -1182,14 +1195,15 @@ void ModelCache<V>::evaluate_pose(
                                              : f0;
             f32 const blend = position - std::floor(position);
 
-            if(!sample_animation(*clip, f0, k, m_layer_rot, m_layer_trans))
+            if(!sample_animation(*clip, f0, k, m_layer_rot, m_layer_trans, m_layer_scale))
                 continue;
 
             /* Source runs at 30Hz, we do not, so ride between the two
              * frames. */
             if(f1 != f0 && blend > 0.f &&
-               sample_animation(*clip, f1, k, m_ref_rot, m_ref_trans))
-                mix_into(m_layer_rot, m_layer_trans, m_ref_rot, m_ref_trans, blend);
+               sample_animation(*clip, f1, k, m_ref_rot, m_ref_trans, m_ref_scale))
+                mix_into(
+                    m_layer_rot, m_layer_trans, m_layer_scale, m_ref_rot, m_ref_trans, m_ref_scale, blend);
         }
 
 
@@ -1208,7 +1222,8 @@ void ModelCache<V>::evaluate_pose(
             if(w <= 0.f)
                 break;
             base_weight += w;
-            mix_into(m_rot, m_trans, m_layer_rot, m_layer_trans, w / base_weight);
+            mix_into(
+                m_rot, m_trans, m_scale, m_layer_rot, m_layer_trans, m_layer_scale, w / base_weight);
             break;
         }
         case blam::antr::anim_type::replacement:
@@ -1219,6 +1234,8 @@ void ModelCache<V>::evaluate_pose(
                     m_rot[i] = glm::slerp(m_rot[i], m_layer_rot[i], w);
                 if(clip->has_translation(i))
                     m_trans[i] = glm::mix(m_trans[i], m_layer_trans[i], w);
+                if(clip->has_scale(i))
+                    m_scale[i] = mix_scale(m_scale[i], m_layer_scale[i], w);
             }
             break;
         case blam::antr::anim_type::overlay:
@@ -1231,6 +1248,8 @@ void ModelCache<V>::evaluate_pose(
                                glm::slerp(Quatf(1, 0, 0, 0), m_layer_rot[i], w);
                 if(clip->has_translation(i))
                     m_trans[i] += m_layer_trans[i] * w;
+                if(clip->has_scale(i))
+                    m_scale[i] *= mix_scale(1.f, m_layer_scale[i], w);
             }
             break;
         }
@@ -1242,6 +1261,8 @@ void ModelCache<V>::evaluate_pose(
     for(u32 i = 0; i < k; i++)
     {
         Matf4a local(glm::mat4_cast(m_rot[i]));
+        for(u32 axis = 0; axis < 3; axis++)
+            local[axis] *= m_scale[i];
         local[3] = Vecf4a(m_trans[i], 1.f);
         /* Graph roots name themselves or -1, neither below i */
         u32 parent = remap ? static_cast<u32>(m_node_parents[i])

@@ -2553,7 +2553,7 @@ void dump_bitm(blam::bitm::header_t const* header, std::string_view name)
     });
 }
 
-/* Each animated node's rotation (axis*angle, degrees) and translation per
+/* Each animated node's rotation (axis*angle, degrees), translation and scale per
  * frame. Overlay frames are deltas, so an aim/look grid's centre is zero */
 void dump_overlay_frames(blam::antr::animation const& anim)
 {
@@ -2563,9 +2563,10 @@ void dump_overlay_frames(blam::antr::animation const& anim)
     auto const nodes = static_cast<u32>(anim.node_count);
     std::vector<std::vector<Quatf>> rot(std::max<i32>(anim.frame_count, 0));
     std::vector<std::vector<Vecf3>> trans(rot.size());
+    std::vector<std::vector<f32>>   scale(rot.size());
     for(size_t frame = 0; frame < rot.size(); frame++)
         blam::antr::sample_uncompressed(
-            anim, {}, frames.value(), static_cast<u32>(frame), nodes, rot[frame], trans[frame]);
+            anim, {}, frames.value(), static_cast<u32>(frame), nodes, rot[frame], trans[frame], &scale[frame]);
     for(u32 node = 0; node < nodes; node++)
     {
         if(!anim.has_rotation(node))
@@ -2590,6 +2591,15 @@ void dump_overlay_frames(blam::antr::animation const& anim)
             auto const& t = trans[frame][node];
             fmt::print(" [{:.3f} {:.3f} {:.3f}]", t.x, t.y, t.z);
         }
+        fmt::print("\n");
+    }
+    for(u32 node = 0; node < nodes; node++)
+    {
+        if(!anim.has_scale(node))
+            continue;
+        fmt::print("      node {} scale:", node);
+        for(i32 frame = 0; frame < anim.frame_count; frame++)
+            fmt::print(" {:.3f}", scale[frame][node]);
         fmt::print("\n");
     }
 }
