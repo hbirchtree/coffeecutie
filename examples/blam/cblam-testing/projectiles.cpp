@@ -6,6 +6,7 @@
 #include "components.h"
 #include "data.h"
 #include "network/networking.h"
+#include "object_functions.h"
 #include "physics.h"
 #include "selected_version.h"
 #include "sounds.h"
@@ -75,6 +76,10 @@ struct ProjectileSystem
     {
         proj_t const& tag = *flight.tag;
         flight.age += dt;
+        /* Its functions drive its animation and change colours, by its age */
+        if(tag.anim_graph.valid() || tag.change_colors.count > 0)
+            if(auto functions = tag.functions.data(files(p).container.magic); functions.has_value())
+                model.object_function = blam_functions::evaluate_all(functions.value(), {}, flight.age);
         if(flight.combined)
             return false;
 
