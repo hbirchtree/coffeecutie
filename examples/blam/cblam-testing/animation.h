@@ -73,7 +73,8 @@ struct AnimationPlayback
         talk_slot     = 11,
         emotion_slot  = 12,
         turret_slot   = 13, /* vehicles: where the gunner aims */
-        max_layers    = 14,
+        state_slot    = 14, /* a held pose of the object's state: its ammunition */
+        max_layers    = 15,
     };
 
     std::array<AnimationLayer, max_layers> layers{};

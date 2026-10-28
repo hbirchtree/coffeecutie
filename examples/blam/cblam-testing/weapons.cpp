@@ -1099,8 +1099,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return held && p.template get<Model>(held->held) ? held->held : 0;
     }
 
-    /* The weapon's export inputs, through its object functions, onto the
-     * first-person model: what turns its muzzle flash on */
+    /* The weapon's export inputs, through its object functions, onto its
+     * models: what turns its muzzle flash on, the needles it has left */
     void drive_functions(
         Proxy&               p,
         u64                  player,
@@ -1118,9 +1118,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
         f32 const charged =
             charging_time > 0.f && state.charge >= 0.f ? std::min(state.charge / charging_time, 1.f) : 0.f;
+        /* What is loaded, as a share of the magazine */
+        auto        triggers = weapon.triggers.data(magic);
+        auto const* magazine = gun && triggers.has_value() && !triggers.value().empty()
+                                   ? magazine_of(weapon, triggers.value()[0], magic)
+                                   : nullptr;
+        f32 const loaded = magazine && magazine->rounds_loaded_maximum > 0
+                               ? std::min(
+                                     static_cast<f32>(gun->rounds_loaded) /
+                                         magazine->rounds_loaded_maximum,
+                                     1.f)
+                               : 1.f;
         std::array<f32, 4> in{};
         for(size_t i = 0; i < in.size(); i++)
-            in[i] = input_value(weapon.weapon_inputs[i], state, held, gun, charged);
+            in[i] = input_value(weapon.weapon_inputs[i], state, held, gun, charged, loaded);
 
         std::array<f32, 4> out = in;
         auto functions         = weapon.functions.data(magic);
@@ -1128,6 +1139,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             for(size_t i = 0; i < out.size() && i < functions.value().size(); i++)
                 out[i] = blam_functions::evaluate(functions.value()[i], in, out);
         model->object_function = out;
+        if(auto* held = gun && gun->held ? p.template get<Model>(gun->held) : nullptr)
+            held->object_function = out;
         hum(p, player, id, *model, out, magic);
     }
 
@@ -1191,7 +1204,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     static f32 input_value(
         input_t input, state_t const& state, bool held, BipedEquipment::weapon_t const* gun,
-        f32 charged)
+        f32 charged, f32 loaded)
     {
         switch(input)
         {
@@ -1213,6 +1226,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             return held ? 1.f : 0.f;
         case input_t::primary_ammunition:
         case input_t::secondary_ammunition:
+            return loaded;
         case input_t::ready:
             return 1.f;
         default:
