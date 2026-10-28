@@ -16,3 +16,5 @@ const int RENDER_FLAG_ONLY_MICRO         = 0x2000;
 const int RENDER_FLAG_ONLY_AUX           = 0x4000;
 const int RENDER_FLAG_INTERIOR           = 0x8000;
 const int RENDER_FLAG_WATER_MODULATE     = 0x10000;
+// 0x20000 marks a shadow pass
+const int RENDER_FLAG_SKY                = 0x40000;

@@ -531,7 +531,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 if(cidx)
                 {
                     vis.interior = cull_bsp->clusters.at(*cidx).cluster->sky < 0;
-                    vis.fog      = cull_bsp->clusters.at(*cidx).fog;
                 }
                 const bool in_section =
                     cidx.has_value() ||
