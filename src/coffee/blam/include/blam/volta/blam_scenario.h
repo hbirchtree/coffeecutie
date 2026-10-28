@@ -755,13 +755,18 @@ namespace ai {
 
 enum class state_t : i16
 {
-    unknown_1 = 0,
-    unknown_2 = 2,
-    unknown_3 = 6,
-    unknown_4 = 7,
-    unknown_5 = 9,
-    unknown_6 = 10,
-    unknown_7 = 11,
+    none,
+    sleeping,
+    alert,
+    moving_repeat_same_position,
+    moving_loop,
+    moving_loop_back_and_forth,
+    moving_loop_randomly,
+    moving_randomly,
+    guarding,
+    guarding_at_guard_position,
+    searching,
+    fleeing,
 };
 
 struct animation_ref
@@ -832,6 +837,28 @@ struct firing_position
     u32   unknown[2];
 };
 
+/* Where an actor of a squad starts, and what it does from there */
+struct squad_location
+{
+    enum flags_t : u8
+    {
+        none     = 0x0,
+        required = 0x1,
+    };
+
+    Vecf3   position;
+    f32     facing; /* radians */
+    u16     unknown;
+    u8      sequence_id;
+    flags_t flags;
+    state_t return_state;
+    state_t initial_state;
+    i16     actor_type;   /* into the actor palette, -1 = the squad's */
+    i16     command_list; /* into the scenario's command lists, -1 = none */
+};
+
+static_assert(sizeof(squad_location) == 28);
+
 struct squad
 {
     bl_string         name;
@@ -850,10 +877,14 @@ struct squad
     u32               unk2[3];
     u16               normal_diff_count;
     u16               insane_diff_count;
-    u32               unk3[20];
-    reference<u8> start_locations;
-    u32               unk4[3];
+    u32                       unk3[17];
+    reference<u8>             move_positions;
+    reference<squad_location> start_locations;
+    u32                       unk4[3];
 };
+
+static_assert(offsetof(squad, start_locations) == 0xd0);
+static_assert(sizeof(squad) == 232);
 
 struct squad_spawn
 {
@@ -868,9 +899,9 @@ static_assert(sizeof(squad_spawn) == 28);
 
 struct encounter
 {
-    bl_string_var<16> name;
+    bl_string name;
 
-    enum flags_t : u16
+    enum flags_t : u32
     {
         none                       = 0x0,
         not_initially_created      = 0x1,
@@ -896,6 +927,8 @@ struct encounter
         unused_9,
     } team_index;
 
+    u16 padding;
+
     enum search_behavior_t : u16
     {
         search_normal,
@@ -905,13 +938,14 @@ struct encounter
 
     i16                        manual_bsp_index;
     Vecf2                      respawn_delay;
-    u32                        unk[24];
+    u32                        unk[19];
     reference<squad>           squads;
     reference<platoon>         platoons;
     reference<firing_position> firing_positions;
     reference<squad_spawn>     start_locations;
 };
 
+static_assert(offsetof(encounter, squads) == 0x80);
 static_assert(sizeof(encounter) == 176);
 
 struct command_list_command
