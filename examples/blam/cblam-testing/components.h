@@ -1038,6 +1038,14 @@ struct PlayerInfo
     /*! Active camouflage, on the body and what it holds */
     bool camouflaged{false};
 
+    /*! Seconds left of each timed powerup */
+    struct
+    {
+        f32 camouflage{0.f};
+        f32 speed{0.f};
+        f32 vision{0.f};
+    } powerups;
+
     bool is_remote() const
     {
         return !remote.empty();
@@ -1277,6 +1285,11 @@ struct BipedStatus
     f32  max_body{-1.f};
     f32  max_shield{-1.f};
     bool invulnerable{false};
+    /*! An over shield: shield above 1 lost per second */
+    f32 overcharge_decay{0.f};
+
+    /*! What an over shield charges the shield to */
+    static constexpr f32 over_shield = 3.f;
 
     f32 maximum_body() const
     {

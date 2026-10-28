@@ -2827,7 +2827,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         for(auto unit : p.select<BipedStatus>())
         {
             auto const& status = unit.get<BipedStatus>();
-            if(status.dead || status.body < 1.f || status.shield < 1.f)
+            if(status.dead || status.body < 1.f || status.shield != 1.f)
                 if(auto wire = m_combat.vitality_of(p, unit.id()))
                     hurt.push_back(*wire);
         }
@@ -3415,7 +3415,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         out.slung  = slung.tag ? slung.tag->tag_id : blam::tag_index<>{};
         out.flags  = static_cast<EquipmentSync::flags_t>(
             (equip->reloading ? EquipmentSync::reloading : 0) |
-            (equip->throwing ? EquipmentSync::throwing : 0));
+            (equip->throwing ? EquipmentSync::throwing : 0) |
+            (info.camouflaged ? EquipmentSync::camouflaged : 0));
         for(size_t i = 0; i < out.grenades.size() && i < equip->equipment.size(); i++)
             out.grenades[i] = static_cast<u8>(std::min<u16>(equip->equipment[i].left, 255));
         return out;
@@ -3553,6 +3554,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             {
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
                 equip->throwing  = it->second.flags & EquipmentSync::throwing;
+                /* Its own peer runs its camouflage */
+                p.get<PlayerInfo>(player.id())->camouflaged =
+                    it->second.flags & EquipmentSync::camouflaged;
                 /* Thrown where it is played, so counted there */
                 for(size_t i = 0; i < it->second.grenades.size() && i < equip->equipment.size(); i++)
                     equip->equipment[i].left = it->second.grenades[i];

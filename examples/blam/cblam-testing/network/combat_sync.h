@@ -317,8 +317,9 @@ class CombatSync
         UnitVitality wire{
             .target_player = ObjectHitEvent::no_player,
             .body          = status->body,
-            .shield        = status->shield,
-            .dead          = status->dead,
+            .shield           = status->shield,
+            .dead             = status->dead,
+            .overcharge_decay = status->overcharge_decay,
         };
         if(auto const* info = p.template get<PlayerInfo>(unit))
             wire.target_player = info->player_idx;
@@ -361,6 +362,7 @@ class CombatSync
             .shield = wire.shield,
             .dead    = (wire.dead & 1) != 0,
             .violent = (wire.dead & 2) != 0,
+            .overcharge_decay = wire.overcharge_decay,
         };
         if(wire.respawned)
         {

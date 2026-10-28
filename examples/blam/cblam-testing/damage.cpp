@@ -22,7 +22,7 @@ using DamageManifest = compo::SubsystemManifest<
     type_list_t<
         BipedStatus,
         BipedEquipment,
-        const PlayerInfo,
+        PlayerInfo,
         const PlayerCamera,
         Model,
         const ObjectPhysics>,
@@ -64,13 +64,18 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             take(p, vitality);
         m_respawn_queue->poll();
         auto respawns = std::exchange(m_respawns, {});
+        m_pickup_queue->poll();
+        auto pickups = std::exchange(m_pickups, {});
 
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         m_magic           = &files.container.magic;
         m_index.emplace(files.container);
         for(auto const& area : areas)
             blast(p, area);
-        if(!p.template subsystem<NetworkState>().replica)
+        bool const authority = !p.template subsystem<NetworkState>().replica;
+        for(auto const& pickup : pickups)
+            power_up(p, pickup, authority);
+        if(authority)
         {
             for(auto const& hit : hits)
                 if(auto const* jpt = damage_of(hit.damage))
@@ -87,7 +92,73 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 revive(p, respawn);
         }
         recharge(p, dt);
+        wear_off(p, dt);
         export_functions(p);
+    }
+
+    /* ---- Powerups ---- */
+
+    /* Shield and health are the authority's to give; the timed ones run on
+     * every peer that hears of the pickup */
+    void power_up(Proxy& p, EquipWeaponEvent const& pickup, bool authority)
+    {
+        using powerup_t = blam::scn::equipment::powerup_type_t;
+        auto it         = m_index->find(pickup.weapon);
+        if(it == m_index->end() || !(*it).matches(blam::tag_class_t::eqip))
+            return;
+        auto eqip = (*it).template data<blam::scn::equipment>(*m_magic);
+        auto* info   = p.template get<PlayerInfo>(pickup.entity_id);
+        auto* status = p.template get<BipedStatus>(pickup.entity_id);
+        if(!eqip.has_value() || !info || !status || status->dead)
+            return;
+        f32 const time = eqip.value()[0].powerup_time;
+        switch(eqip.value()[0].powerup_type)
+        {
+        case powerup_t::over_shield:
+            if(!authority || status->maximum_shield() <= 0.f)
+                return;
+            if(status->shield <= 0.f)
+                shield_down(p, pickup.entity_id, false);
+            status->shield           = BipedStatus::over_shield;
+            status->overcharge_decay = time > 0.f ? (BipedStatus::over_shield - 1.f) / time : 0.f;
+            status->stunned          = 0.f;
+            break;
+        case powerup_t::health:
+            if(!authority)
+                return;
+            status->body = 1.f;
+            break;
+        case powerup_t::active_camouflage:
+            info->powerups.camouflage = time;
+            return;
+        case powerup_t::double_speed:
+            info->powerups.speed = time;
+            return;
+        case powerup_t::full_spectrum_vision:
+            info->powerups.vision = time;
+            return;
+        default:
+            return;
+        }
+        tell(p, pickup.entity_id, *status);
+    }
+
+    /* Timed powerups run out, and are lost with the body; a player's own
+     * peer says whether it is camouflaged */
+    void wear_off(Proxy& p, f32 dt)
+    {
+        for(auto ent : p.template select<PlayerInfo>())
+        {
+            auto& info   = ent.template get<PlayerInfo>();
+            auto& left   = info.powerups;
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            if(status && status->dead)
+                left = {};
+            for(f32* t : {&left.camouflage, &left.speed, &left.vision})
+                *t = std::max(*t - dt, 0.f);
+            if(!info.is_remote())
+                info.camouflaged = left.camouflage > 0.f;
+        }
     }
 
     /* ---- Blows ---- */
@@ -415,6 +486,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(!status || vitality.origin != MapLoadEvent::Remote)
             return;
         status->body       = vitality.body;
+        status->overcharge_decay = vitality.overcharge_decay;
         if(vitality.shield < status->shield)
             status->recent_shield = 1.f;
         bool const was_up = status->shield > 0.f;
@@ -532,6 +604,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         {
             auto& status = unit.template get<BipedStatus>();
             status.recent_shield = std::max(status.recent_shield - dt / recent_fade, 0.f);
+            /* An over shield runs down to a full one */
+            if(status.shield > 1.f)
+                status.shield = std::max(status.shield - status.overcharge_decay * dt, 1.f);
+            if(status.shield <= 1.f)
+                status.overcharge_decay = 0.f;
             if(status.dead || !status.coll || status.maximum_shield() <= 0.f ||
                status.shield >= 1.f)
                 continue;
@@ -625,6 +702,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<Physics::UnitStruck> m_struck;
     std::shared_ptr<GameEventBus::queue_type<RespawnUnitEvent>> m_respawn_queue;
     std::vector<RespawnUnitEvent>    m_respawns;
+    std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>> m_pickup_queue;
+    std::vector<EquipWeaponEvent>    m_pickups;
 
     blam::map_ptr const*                              m_magic{nullptr};
     std::optional<blam::tag_index_view<halo_version>> m_index;
@@ -644,6 +723,11 @@ void alloc_damage(compo::EntityContainer& e)
     damage.m_respawn_queue = game.addQueuedEventFunction<RespawnUnitEvent>(
         0, [&damage](GameEvent&, RespawnUnitEvent* respawn) {
             damage.m_respawns.push_back(*respawn);
+        });
+    damage.m_pickup_queue = game.addQueuedEventFunction<EquipWeaponEvent>(
+        0, [&damage](GameEvent&, EquipWeaponEvent* equip) {
+            if(equip->mode == EquipWeaponEvent::pick_up)
+                damage.m_pickups.push_back(*equip);
         });
     damage.m_area_queue = game.addQueuedEventFunction<AreaDamageEvent>(
         0, [&damage](GameEvent&, AreaDamageEvent* area) {
