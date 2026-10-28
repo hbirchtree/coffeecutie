@@ -112,7 +112,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         {
             auto [actor, model, anim, status, physics] = ent.components();
             if(!actor.active() || actor.braindead || status.dead || !physics.upright || physics.seated)
+            {
+                /* What it last walked at, it would keep walking at */
+                stop(p, ent.id(), actor);
+                actor.board = 0;
                 continue;
+            }
             auto const* kind = kind_of(p, actor);
             if(std::getenv("BLAM_DEBUG_AI") && (m_debug_in -= dt) <= 0.f)
             {
@@ -319,16 +324,22 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 enter(actor, state_t::combat);
                 break;
             }
-            if(glm::distance(model.position, actor.last_seen) > arrive_radius * 2.f)
-                move_toward(p, id, actor, model, anim, kind, actor.last_seen, dt, true);
-            else
+            /* It searches from its squad's positions nearest where the target
+             * was, never off them: not into water under a hovering dropship */
+            if(actor.position < 0)
             {
+                actor.position = pick_position(p, actor, model, kind, actor.last_seen, false);
+                if(actor.position >= 0)
+                    actor.goal = position_of(kind, actor.position);
+            }
+            if(actor.position >= 0 && glm::distance(model.position, actor.goal) > arrive_radius)
+                move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
+            else
                 stop(p, id, actor);
-                if(actor.state_in <= 0.f)
-                {
-                    actor.target = 0;
-                    enter(actor, state_t::idle);
-                }
+            if(actor.state_in <= 0.f)
+            {
+                actor.target = 0;
+                enter(actor, state_t::idle);
             }
             break;
         case state_t::retreat:
