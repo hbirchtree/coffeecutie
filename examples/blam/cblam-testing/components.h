@@ -105,6 +105,7 @@ struct Visibility
     std::map<viewport_id, u8> lod{};
     // Interior is invariant to viewports
     bool interior{false};
+    libc_types::i16 fog{-1}; /* The cluster's fog palette entry */
 
     u8 lod_for(u32 player_id = 0, bool mirror = false) const
     {
