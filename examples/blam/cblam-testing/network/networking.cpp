@@ -3167,7 +3167,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .net_id           = net.instance_id,
                 .flags            = static_cast<ObjectSync::flags_t>(
                     (physics.sleeping ? ObjectSync::sleeping : ObjectSync::none) |
-                    (anim && anim->stance == "crouch" ? ObjectSync::crouched : ObjectSync::none)),
+                    (anim && anim->stance == "crouch" ? ObjectSync::crouched : ObjectSync::none) |
+                    (anim && anim->stance == "asleep" ? ObjectSync::asleep : ObjectSync::none)),
             };
             all.push_back(sync);
             auto& was_asleep = m_object_asleep[net.instance_id];
@@ -5054,11 +5055,13 @@ struct ObjectFollower
             {
                 auto const& [from, to, alpha] = *pose;
                 Networking::follow(model, physics, from, to, alpha);
-                /* A unit's stance, between standing and crouching only */
+                /* A unit's stance, between standing, crouching and asleep only */
                 if(auto* anim = p.get<AnimationPlayback>(object.id());
                    anim && !p.get<PlayerInfo>(object.id()) &&
-                   (anim->stance == "stand" || anim->stance == "crouch"))
-                    anim->stance = (to.flags & ObjectSync::crouched) ? "crouch" : "stand";
+                   (anim->stance == "stand" || anim->stance == "crouch" || anim->stance == "asleep"))
+                    anim->stance = (to.flags & ObjectSync::asleep)     ? "asleep"
+                                   : (to.flags & ObjectSync::crouched) ? "crouch"
+                                                                       : "stand";
                 /* Run dry: carry on as it was going, a little way */
                 if(f64 const past = at - static_cast<f64>(to.tick); past > 0. && !(to.flags & ObjectSync::sleeping))
                 {

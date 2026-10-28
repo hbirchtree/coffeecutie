@@ -549,6 +549,7 @@ struct alignas(8) ObjectSync
         none     = 0x0,
         sleeping = 0x1,
         crouched = 0x2, /*!< A unit down on its knees: its stance */
+        asleep   = 0x4, /*!< A unit lying asleep: its stance */
     };
 
     u64     tick{0}; /*!< Server tick this is the state after */

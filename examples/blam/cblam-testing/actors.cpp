@@ -195,6 +195,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 reposition_time = 4.f;  /* s between picking positions */
     static constexpr f32 default_speed   = 2.f;  /* wu/s, a graph without a stride */
     static constexpr f32 eye_height      = .6f;  /* wu above the feet */
+    static constexpr f32 wake_distance   = 4.f;  /* wu an enemy seen wakes a sleeper from */
 
     void think(
         Proxy&               p,
@@ -208,6 +209,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actr_t const& actr = *kind.actor;
         actv_t const& actv = *kind.variant;
+        if(asleep(p, id, actor, model, anim, status, actr, dt))
+            return;
         actor.seen_ago += dt;
         actor.look_in -= dt;
         actor.fire_in -= dt;
@@ -372,6 +375,65 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 enter(actor, alive(p, actor.target) ? state_t::combat : state_t::idle);
             break;
         }
+    }
+
+    /* Placed asleep, it lies still and holds fire until it is hurt, roused
+     * by gunfire or its squad, or sees an enemy right beside it */
+    bool asleep(
+        Proxy&             p,
+        u64                id,
+        Actor&             actor,
+        Model const&       model,
+        AnimationPlayback& anim,
+        BipedStatus const& status,
+        actr_t const&      actr,
+        f32                dt)
+    {
+        if(anim.stance != "asleep")
+        {
+            actor.rest = -1.f;
+            return false;
+        }
+        f32 const health = status.body + status.shield;
+        if(actor.rest < 0.f)
+        {
+            actor.rest = health;
+            if(std::getenv("BLAM_DEBUG_AI"))
+                cDebug("ai: {} asleep", id);
+        }
+        bool woken = actor.target != 0 || actor.state != state_t::idle || health < actor.rest;
+        if(!woken && !actor.blind && (actor.look_in -= dt) <= 0.f)
+        {
+            actor.look_in = look_period;
+            if(u64 const seen = look(p, id, actor, model, actr); seen)
+                if(auto const* there = p.template get<Model>(seen);
+                   there && glm::distance(there->position, model.position) < wake_distance)
+                {
+                    actor.target    = seen;
+                    actor.last_seen = there->position;
+                    actor.seen_ago  = 0.f;
+                    enter(actor, state_t::combat);
+                    woken = true;
+                }
+        }
+        if(!woken)
+        {
+            stop(p, id, actor);
+            return true;
+        }
+        if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug(
+                "ai: {} wakes: target {} state {} hurt {}",
+                id,
+                actor.target,
+                static_cast<int>(actor.state),
+                health < actor.rest);
+        anim.stance = "stand";
+        actor.rest  = -1.f;
+        actor.fire_in = std::max(actor.fire_in, 1.f); /* getting up */
+        if(actor.target)
+            alert_squad(p, id, actor, actr);
+        return false;
     }
 
     void enter(Actor& actor, state_t state)
