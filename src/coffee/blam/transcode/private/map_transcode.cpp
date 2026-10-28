@@ -10,7 +10,7 @@
 #include <blam/gx/quantize.h>
 #include <blam/volta/blam_file_header.h>
 #include <blam/volta/blam_stl.h>
-#include <blam/volta/blam_swizzle.h>
+#include <blam/common/swizzle.h>
 #include <blam/volta/blam_tag_classes.h>
 
 #include <magic_enum/magic_enum.hpp>
@@ -68,7 +68,7 @@ u32 swizzled_bpp(blam::bitm::format_t format)
  * image_t::data() and cube_face<xbox_version_t>() read it: each level after
  * the last, and for cube maps each face's chain padded to 128 bytes. Levels
  * that go below one pixel on an axis are left as they are, a swizzle of a
- * single row or column is the identity. Volume textures are not handled. */
+ * single row or column is the identity. Volumes swizzle in three. */
 std::optional<std::vector<u8>> deswizzle_image(
     blam::bitm::image_t const& img, gsl::span<u8 const> px)
 {
@@ -77,13 +77,18 @@ std::optional<std::vector<u8>> deswizzle_image(
 
     auto const type = from_le(img.type);
     u32 const  bpp  = swizzled_bpp(from_le(img.format));
-    if(bpp == 0 || type == type_t::tex_3d)
+    if(bpp == 0)
         return std::nullopt;
 
     u32 const w      = static_cast<u32>(from_le(img.isize.x));
     u32 const h      = static_cast<u32>(from_le(img.isize.y));
+    u32 const d      = type == type_t::tex_3d
+                           ? std::max<u32>(static_cast<u32>(from_le(img.depth)), 1)
+                           : 1;
     u16 const levels = std::max<u16>(from_le(img.mipmaps), 1);
-    auto level_bytes = [&](u16 i) { return (w >> i) * (h >> i) * bpp; };
+    auto level_bytes = [&](u16 i) {
+        return (w >> i) * (h >> i) * std::max<u32>(d >> i, 1) * bpp;
+    };
 
     u32 chain = 0;
     for(u16 i = 0; i < levels; i++)
@@ -102,12 +107,14 @@ std::optional<std::vector<u8>> deswizzle_image(
                 break;
             if(static_cast<size_t>(offset) + size > px.size())
                 return std::nullopt;
-            if(!blam::swizzle::deswizzle_bytes(
+            if(!blam::swizzle::deswizzle_level(
                    semantic::Span<u8 const>(px.data() + offset, size),
                    semantic::Span<u8>(out.data() + offset, size),
-                   wl,
-                   hl,
-                   bpp))
+                   w,
+                   h,
+                   d,
+                   bpp,
+                   i))
                 return std::nullopt;
             offset += size;
         }

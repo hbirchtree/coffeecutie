@@ -1,6 +1,8 @@
 #pragma once
 
-#include "blam_base_types.h"
+#include <algorithm>
+#include <peripherals/libc/types.h>
+#include <peripherals/semantic/chunk.h>
 
 /* Original Xbox (NV2A) stores uncompressed/linear textures in a Morton/Z-order
  * swizzle (the bitm flag flags_t::swizzled marks these). Compressed (DXT)
@@ -12,6 +14,9 @@
  * format (u8 for 8-bit, u16 for 16-bit, u32 for 32-bit). */
 
 namespace blam::swizzle {
+
+using namespace libc_types;
+using semantic::Span;
 
 namespace detail {
 
@@ -143,6 +148,22 @@ inline bool deswizzle_bytes(
     default:
         return false;
     }
+}
+
+/* One mip level of an image, by the level-0 size: every axis halves per
+ * level and stops at one, volumes along their depth too */
+inline bool deswizzle_level(
+    Span<const u8> src,
+    Span<u8>       dst,
+    u32            width,
+    u32            height,
+    u32            depth,
+    u32            bytes_per_pixel,
+    u32            level)
+{
+    auto at = [level](u32 extent) { return std::max<u32>(extent >> level, 1); };
+    return deswizzle_bytes(
+        src, dst, at(width), at(height), bytes_per_pixel, at(depth));
 }
 
 } // namespace blam::swizzle

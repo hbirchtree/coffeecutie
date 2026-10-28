@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../common/tag_class.h"
-#include "../volta/blam_swizzle.h"
+#include "../common/swizzle.h"
 #include "bitm.h"
 #include "geometry.h"
 #include "map.h"
