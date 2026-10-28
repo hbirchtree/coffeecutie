@@ -117,9 +117,10 @@ struct object
     {
         frame,
         scale,
-    };
+    } function_controls;
 
-    u32 padding[4];
+    u16 padding_0;
+    u32 padding[3];
 };
 
 static_assert(sizeof(object) == 20);
