@@ -118,7 +118,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             {
                 m_debug_in = 3.f;
                 cDebug(
-                    "ai: {} state {} scripted {} may_fight {} target {} kind {}/{}/{} team {}",
+                    "ai: {} state {} scripted {} may_fight {} target {} kind {}/{}/{} team {} at {:.1f} {:.1f} squad {} pos {}",
                     ent.id(),
                     static_cast<int>(actor.state),
                     actor.scripted,
@@ -127,7 +127,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     kind != nullptr,
                     kind && kind->variant,
                     kind && kind->actor,
-                    actor.team);
+                    actor.team,
+                    model.position.x,
+                    model.position.y,
+                    actor.squad,
+                    actor.position);
             }
             if(!kind || !kind->variant || !kind->actor)
                 continue;
@@ -260,7 +264,17 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         switch(actor.state)
         {
         case state_t::idle:
-            move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
+            /* Migrated: to its new squad's guard positions, running */
+            if(actor.migrated && actor.position < 0)
+            {
+                actor.position = guard_position(p, actor, model, kind);
+                if(actor.position >= 0)
+                    actor.goal = position_of(kind, actor.position);
+            }
+            if(actor.migrated && actor.position >= 0)
+                move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
+            else
+                move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
             break;
         case state_t::combat: {
             if(!alive(p, actor.target))
@@ -717,7 +731,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         for(size_t i = 0; i < positions.value().size(); i++)
         {
             auto const& fp = positions.value()[i];
-            if(groups != 0 && fp.unknown_idx < 32 && ((groups >> fp.unknown_idx) & 1u) == 0)
+            if(groups != 0 && fp.group < 32 && ((groups >> fp.group) & 1u) == 0)
                 continue;
             if(taken(p, actor, kind, static_cast<i32>(i)))
                 continue;
@@ -742,14 +756,42 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return best;
     }
 
+    /* Out of a fight: the nearest free position of its squad's guard
+     * groups, or of its fighting groups when it has none */
+    i32 guard_position(Proxy& p, Actor const& actor, Model const& model, kind_t const& kind)
+    {
+        auto positions = kind.encounter->firing_positions.data(*s_magic);
+        if(!positions.has_value())
+            return -1;
+        bool const hold   = defending(p, actor, kind);
+        u32        groups = hold ? kind.squad->defending_guard : kind.squad->attacking_guard;
+        if(groups == 0)
+            groups = hold ? kind.squad->defending : kind.squad->attacking;
+        i32 best    = -1;
+        f32 nearest = std::numeric_limits<f32>::max();
+        for(size_t i = 0; i < positions.value().size(); i++)
+        {
+            auto const& fp = positions.value()[i];
+            if(groups != 0 && fp.group < 32 && ((groups >> fp.group) & 1u) == 0)
+                continue;
+            if(taken(p, actor, kind, static_cast<i32>(i)))
+                continue;
+            if(f32 const d = glm::distance(fp.position, model.position); d < nearest)
+            {
+                nearest = d;
+                best    = static_cast<i32>(i);
+            }
+        }
+        return best;
+    }
+
     /* A squad mate already heading there */
     bool taken(Proxy& p, Actor const& actor, kind_t const&, i32 index)
     {
         for(auto other : p.template select<Actor>())
         {
             auto const& theirs = other.template get<Actor>();
-            if(&theirs != &actor && theirs.encounter == actor.encounter && theirs.position == index &&
-               theirs.state != state_t::idle)
+            if(&theirs != &actor && theirs.encounter == actor.encounter && theirs.position == index)
                 return true;
         }
         return false;
@@ -996,7 +1038,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
     kind_t const* kind_of(Proxy& p, Actor const& actor)
     {
-        auto const key = std::pair{actor.encounter, actor.squad};
+        auto const key = std::tuple{actor.encounter, actor.squad, actor.variant};
         if(auto it = m_kinds.find(key); it != m_kinds.end())
             return &it->second;
         kind_t kind;
@@ -1010,7 +1052,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(!squads.has_value() || actor.squad < 0 || static_cast<size_t>(actor.squad) >= squads.value().size())
             return nullptr;
         kind.squad     = &squads.value()[actor.squad];
-        i16 const type = kind.squad->actor_type;
+        /* Its own type, from where it was placed, outlasts a migration */
+        i16 const type = actor.variant >= 0 ? actor.variant : kind.squad->actor_type;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         blam::tag_index_view<halo_version> index(files.container);
         if(type >= 0 && static_cast<size_t>(type) < palette.value().size())
@@ -1054,7 +1097,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     blam::scn::scenario<halo_version> const*                         m_scenario{nullptr};
     static inline blam::map_ptr const*                               s_magic{nullptr};
     u32                                                              m_generation{0};
-    std::map<std::pair<i16, i16>, kind_t>                            m_kinds;
+    std::map<std::tuple<i16, i16, i16>, kind_t>                      m_kinds;
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
     f32                                                              m_debug_in{0.f};
