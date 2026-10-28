@@ -1075,6 +1075,10 @@ struct Actor
     libc_types::i16 variant{-1}; /*!< Its actor palette entry, kept across migrations */
     bool            migrated{false}; /*!< ai_migrate moved it: it guards its squad's positions, not its post */
     libc_types::f32 rest{-1.f};      /*!< Body and shield as it fell asleep, -1 awake */
+    std::vector<libc_types::i32> route; /*!< Firing positions to walk through to its goal */
+    Vecf3           route_goal{};
+    Vecf3           stuck_at{};      /*!< Where it was when progress was last checked */
+    libc_types::f32 stuck_in{0.f};
     libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
     bool            scripted{false}; /*!< A command list or recording has it */
     bool            may_fight{false}; /*!< Its command list lets it break off for an enemy */
