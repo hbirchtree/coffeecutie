@@ -133,6 +133,7 @@ struct BlamScript
         m_scaling.clear();
         m_suspended.clear();
         m_walk_speeds.clear();
+        m_conversations.clear();
         m_tests = {};
         m_loops.clear();
         m_impulses.clear();
@@ -218,6 +219,8 @@ struct BlamScript
             play_recordings(p);
             play_custom(p);
             run_commands(p);
+            board_vehicles(p);
+            run_conversations(p);
             scale_objects(p);
             send_walks(p);
             move_mouths(p);
@@ -277,6 +280,8 @@ struct BlamScript
         m_hovering   = std::move(saved.hovering);
         m_custom     = std::move(saved.custom);
         m_commands.clear();
+        for(auto& [conv, c] : m_conversations)
+            finish_conversation(p, c);
         m_scaling.clear();
         m_suspended.clear();
         m_speakers   = std::move(saved.speakers);
@@ -1270,6 +1275,48 @@ struct BlamScript
             for(u64 id : ai_actors(p, text_of(arg(0))))
                 despawn(p, id);
             return {};
+        /* Vehicles: they run to it and take the seat */
+        case op::ai_go_to_vehicle: {
+            auto const vehicles = objects_of(p, arg(1));
+            if(!vehicles.empty())
+                board(p, ai_actors(p, text_of(arg(0))), vehicles.front(), std::string(text_of(arg(2))));
+            return {};
+        }
+        case op::ai_going_to_vehicle: {
+            /* How many are still on their way to it */
+            auto const vehicles = objects_of(p, arg(0));
+            i32        going    = 0;
+            for(auto ent : p.template select<Actor>())
+                if(auto const& actor = ent.template get<Actor>();
+                   actor.board && !vehicles.empty() && actor.board == vehicles.front())
+                    going++;
+            return value_t::number(type_t::short_, static_cast<f32>(going));
+        }
+        /* Conversations: lines played in turn by actors of their encounters */
+        case op::ai_conversation:
+            start_conversation(p, arg(0));
+            return {};
+        case op::ai_conversation_stop:
+            if(auto* c = running_conversation(arg(0)))
+                finish_conversation(p, *c);
+            return {};
+        case op::ai_conversation_advance:
+            if(auto* c = running_conversation(arg(0)))
+            {
+                c->advanced = true;
+                c->waiting  = false;
+            }
+            return {};
+        case op::ai_conversation_status: {
+            /* 0 none, 2 waiting to be advanced, 3 playing, 5 over */
+            auto const* c = running_conversation(arg(0));
+            i32 const   status = !c ? 0 : c->done ? 5 : c->waiting ? 2 : 3;
+            return value_t::number(type_t::short_, static_cast<f32>(status));
+        }
+        case op::ai_conversation_line: {
+            auto const* c = running_conversation(arg(0));
+            return value_t::number(type_t::short_, static_cast<f32>(c ? c->line : -1));
+        }
 
         default:
             if(m_unhandled.insert(static_cast<u32>(opcode)).second)
@@ -2124,6 +2171,409 @@ struct BlamScript
             stand(p, id);
     }
 
+    /* ---- Vehicles ---- */
+
+    /* Each free seat whose label holds `seat` is claimed by the nearest
+     * of them not already on its way to a vehicle, who runs there and,
+     * within its boarding radius, sits */
+    void board(Proxy& p, std::vector<u64> const& units, u64 vehicle, std::string const& seat)
+    {
+        auto const* model = p.template get<Model>(vehicle);
+        if(!model || !model->origin_object)
+            return;
+        auto vehi = model->origin_object->template data<blam::scn::unit>(m_magic);
+        if(!vehi.has_value())
+            return;
+        auto seats = vehi.value()[0].seats.data(m_magic);
+        if(!seats.has_value())
+            return;
+        /* Its hull keeps them off its centre: near enough is its bound */
+        f32 const radius = std::max(vehi.value()[0].ai_vehicle_radius, vehi.value()[0].bound_radius) + .5f;
+        std::vector<std::pair<f32, Actor*>> idle;
+        for(u64 id : units)
+            if(auto* actor = p.template get<Actor>(id); actor && !actor->board)
+                if(auto const* at = p.template get<Model>(id);
+                   at && std::none_of(m_riders.begin(), m_riders.end(), [id](rider_t const& r) { return r.unit == id; }))
+                    idle.emplace_back(glm::distance(at->position, model->position), actor);
+        std::sort(idle.begin(), idle.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+        std::set<std::string> claimed; /* seats others are on their way to */
+        for(auto ent : p.template select<Actor>())
+            if(auto const& other = ent.template get<Actor>(); other.board == vehicle)
+                claimed.insert(std::string(other.board_seat.str()));
+        auto next = idle.begin();
+        for(auto const& candidate : seats.value())
+        {
+            if(next == idle.end())
+                break;
+            std::string const label = lowered(candidate.label.str());
+            bool const        taken =
+                label.find(lowered(seat)) == std::string::npos ||
+                claimed.contains(label) ||
+                std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
+                    return r.vehicle == vehicle && r.seat == label;
+                });
+            if(taken)
+                continue;
+            next->second->board        = vehicle;
+            next->second->board_radius = radius;
+            next->second->board_seat   = blam::bl_string::from(label).value_or(blam::bl_string{});
+            ++next;
+        }
+        if(std::getenv("BLAM_DEBUG_AI"))
+            log(fmt::format(
+                "ai_go_to_vehicle: {} of {} sent to {} seats '{}'", next - idle.begin(), units.size(), vehicle, seat));
+    }
+
+    /* Those sent to a vehicle sit once they are at it; a seat already
+     * taken is given up on */
+    void board_vehicles(Proxy& p)
+    {
+        for(auto ent : p.template select<Actor, Model>())
+        {
+            auto [actor, model] = ent.components();
+            if(!actor.board)
+                continue;
+            u64 const   id      = ent.id();
+            auto const* vehicle = p.template get<Model>(actor.board);
+            bool const  riding  = std::any_of(
+                m_riders.begin(), m_riders.end(), [id](rider_t const& r) { return r.unit == id; });
+            if(vehicle && !riding &&
+               glm::distance(Vecf2(model.position), Vecf2(vehicle->position)) > actor.board_radius)
+                continue;
+            if(vehicle && !riding)
+                seat_unit(p, id, actor.board, std::string(actor.board_seat.str()), true);
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format(
+                    "ai_go_to_vehicle: {} at {} seat {} seated {}",
+                    id,
+                    actor.board,
+                    actor.board_seat.str(),
+                    std::any_of(m_riders.begin(), m_riders.end(), [id](rider_t const& r) { return r.unit == id; })));
+            actor.board = 0;
+        }
+    }
+
+    /* ---- Conversations ---- */
+
+    struct conversation_t
+    {
+        blam::scn::ai::conversation const* conv{nullptr};
+        std::vector<u64> participants; /* by index, 0 = nobody: radio, disembodied */
+        std::vector<u64> held;         /* actors standing still for it */
+        i32              line{-1};
+        libc_types::i64  until{0};     /* the tick its line is over */
+        bool             waiting{false};
+        bool             advanced{false};
+        bool             done{false};
+    };
+
+    blam::scn::ai::conversation const* conversation_of(value_t const& v) const
+    {
+        if(auto const* conv = named(m_scenario->ai.conversations, text_of(v)))
+            return conv;
+        auto list = m_scenario->ai.conversations.data(m_magic);
+        if(!list.has_value() || v.integer < 0 || static_cast<size_t>(v.integer) >= list.value().size())
+            return nullptr;
+        return &list.value()[static_cast<size_t>(v.integer)];
+    }
+
+    conversation_t* running_conversation(value_t const& v)
+    {
+        auto const* conv = conversation_of(v);
+        auto        it   = conv ? m_conversations.find(conv) : m_conversations.end();
+        return it == m_conversations.end() ? nullptr : &it->second;
+    }
+
+    /* The actr type of an actor, by its squad's palette entry */
+    std::optional<blam::scn::actor_type_t> actor_type_of(Proxy& p, u64 id) const
+    {
+        auto const* actor      = p.template get<Actor>(id);
+        auto        encounters = m_scenario->ai.encounters.data(m_magic);
+        auto        palette    = m_scenario->ai.actor_palette.data(m_magic);
+        if(!actor || !actor->active() || !encounters.has_value() || !palette.has_value() ||
+           static_cast<size_t>(actor->encounter) >= encounters.value().size())
+            return std::nullopt;
+        auto squads = encounters.value()[actor->encounter].squads.data(m_magic);
+        if(!squads.has_value() || actor->squad < 0 ||
+           static_cast<size_t>(actor->squad) >= squads.value().size())
+            return std::nullopt;
+        i16 const type = actor->variant >= 0 ? actor->variant : squads.value()[actor->squad].actor_type;
+        if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
+            return std::nullopt;
+        auto variant = m_tags.find(palette.value()[type].tag_id);
+        if(variant == m_tags.end())
+            return std::nullopt;
+        auto actv = (*variant).template data<blam::scn::actor_variant>(m_magic);
+        if(!actv.has_value())
+            return std::nullopt;
+        auto definition = m_tags.find(actv.value()->actor_definition);
+        if(definition == m_tags.end())
+            return std::nullopt;
+        auto actr = (*definition).template data<blam::scn::actor>(m_magic);
+        if(!actr.has_value())
+            return std::nullopt;
+        return actr.value()->type;
+    }
+
+    /* Who may speak a part: its encounter's actors, or without one the
+     * player's allies nearest the player, in or out of their vehicle as
+     * the part asks */
+    std::vector<u64> speakers_for(Proxy& p, blam::scn::ai::conversation_participant const& part)
+    {
+        using part_t = blam::scn::ai::conversation_participant;
+        using team_t = blam::scn::unit::team_t;
+        if(!part.encounter_name.str().empty())
+            return ai_actors(p, lowered(part.encounter_name.str()));
+        auto const player  = player_near(p, 0);
+        u64        vehicle = 0;
+        for(auto ent : p.template select<PlayerInfo>())
+            if(!vehicle)
+                vehicle = ent.template get<PlayerInfo>().riding.vehicle;
+        auto riding = [this](u64 id) -> u64 {
+            for(auto const& r : m_riders)
+                if(r.unit == id)
+                    return r.vehicle;
+            return 0;
+        };
+        std::vector<std::pair<f32, u64>> found;
+        for(auto ent : p.template select<Actor, Model>())
+        {
+            auto const& actor = ent.template get<Actor>();
+            auto const  team  = static_cast<team_t>(actor.team);
+            if(!actor.active())
+                continue;
+            if(part.selection_type != part_t::any_actor && team != team_t::player && team != team_t::human)
+                continue;
+            if(part.selection_type == part_t::in_players_vehicle && (!vehicle || riding(ent.id()) != vehicle))
+                continue;
+            if(part.selection_type == part_t::not_in_a_vehicle && riding(ent.id()))
+                continue;
+            f32 const d = player ? glm::distance(*player, ent.template get<Model>().position) : 0.f;
+            found.emplace_back(d, ent.id());
+        }
+        std::sort(found.begin(), found.end());
+        std::vector<u64> out;
+        for(auto const& [d, id] : found)
+            out.push_back(id);
+        return out;
+    }
+
+    /* Its participants are gathered from their encounters, and its lines
+     * then play one after another, each for its sound and delay */
+    void start_conversation(Proxy& p, value_t const& v)
+    {
+        using part_t = blam::scn::ai::conversation_participant;
+        using conv_t = blam::scn::ai::conversation;
+        auto const* conv = conversation_of(v);
+        if(!conv)
+            return log(fmt::format("ai_conversation: no conversation {}", text_of(v)));
+        if(auto it = m_conversations.find(conv); it != m_conversations.end())
+            finish_conversation(p, it->second);
+        conversation_t c{.conv = conv};
+        auto           parts = conv->participants.data(m_magic);
+        auto           names = m_scenario->objects.object_names.data(m_magic);
+        std::set<u64>  taken;
+        if(std::getenv("BLAM_DEBUG_AI") && parts.has_value())
+        {
+            for(auto const& part : parts.value())
+                log(fmt::format(
+                    "  part flags {} selection {} type {} object {} encounter '{}'",
+                    static_cast<int>(part.flags),
+                    static_cast<int>(part.selection_type),
+                    static_cast<int>(part.actor_type),
+                    part.use_this_object,
+                    part.encounter_name.str()));
+            if(auto lines = conv->lines.data(m_magic); lines.has_value())
+                for(auto const& line : lines.value())
+                    log(fmt::format(
+                        "  line flags {} participant {} addressee {}/{} delay {}",
+                        static_cast<int>(line.flags),
+                        line.participant,
+                        line.addressee,
+                        line.addressee_participant,
+                        line.line_delay_time));
+        }
+        if(parts.has_value())
+            for(auto const& part : parts.value())
+            {
+                u64        unit     = 0;
+                bool const bodiless = part.selection_type == part_t::disembodied ||
+                                      part.selection_type == part_t::radio_unit ||
+                                      part.selection_type == part_t::radio_sergeant;
+                if(part.use_this_object >= 0 && names.has_value() &&
+                   static_cast<size_t>(part.use_this_object) < names.value().size())
+                    unit = named_entity(
+                        p, lowered(names.value()[static_cast<size_t>(part.use_this_object)].name.str()));
+                else if(!bodiless)
+                    for(u64 id : speakers_for(p, part))
+                    {
+                        auto const* status = p.template get<BipedStatus>(id);
+                        if(taken.contains(id) || !status || status->dead)
+                            continue;
+                        auto const type = static_cast<blam::scn::actor_type_t>(part.actor_type);
+                        if(type != blam::scn::actor_type_t::none && actor_type_of(p, id) != type)
+                            continue;
+                        unit = id;
+                        break;
+                    }
+                bool const optional = (part.flags & (part_t::is_optional | part_t::is_alternative)) != 0;
+                if(!unit && !bodiless && !optional)
+                {
+                    log(fmt::format(
+                        "ai_conversation: {} has nobody for {} (selection {})",
+                        conv->name.str(),
+                        part.encounter_name.str(),
+                        static_cast<int>(part.selection_type)));
+                    c.done = true;
+                }
+                taken.insert(unit);
+                c.participants.push_back(unit);
+            }
+        log(fmt::format("ai_conversation: {}{}", conv->name.str(), c.done ? " (nobody)" : ""));
+        /* They hold still for it when it says so, unless a list has them */
+        if(!c.done && (conv->flags & conv_t::stop_other_actions))
+            for(u64 id : c.participants)
+                if(auto* actor = id ? p.template get<Actor>(id) : nullptr;
+                   actor && !actor->scripted && !m_commands.contains(id))
+                {
+                    actor->scripted = true;
+                    actor->moving   = false;
+                    walk(p, id, {});
+                    c.held.push_back(id);
+                }
+        m_conversations[conv] = std::move(c);
+    }
+
+    void finish_conversation(Proxy& p, conversation_t& c)
+    {
+        c.done = true;
+        for(u64 id : c.held)
+            if(auto* actor = p.template get<Actor>(id); actor && !m_commands.contains(id))
+                actor->scripted = false;
+        c.held.clear();
+    }
+
+    /* A tick of each conversation: the next line once the last is over,
+     * cut short by a death or a fight when its flags say so */
+    void run_conversations(Proxy& p)
+    {
+        using conv_t = blam::scn::ai::conversation;
+        using line_t = blam::scn::ai::conversation_line;
+        for(auto& [conv, c] : m_conversations)
+        {
+            if(c.done)
+                continue;
+            auto lines = conv->lines.data(m_magic);
+            if(!lines.has_value())
+            {
+                finish_conversation(p, c);
+                continue;
+            }
+            for(u64 id : c.participants)
+            {
+                auto const* status = id ? p.template get<BipedStatus>(id) : nullptr;
+                auto const* actor  = id ? p.template get<Actor>(id) : nullptr;
+                if((conv->flags & conv_t::stop_if_death) && status && status->dead)
+                    c.done = true;
+                if((conv->flags & (conv_t::stop_if_visible_enemy | conv_t::stop_if_alerted_to_enemy)) &&
+                   actor && actor->state == Actor::state_t::combat && actor->seen_ago < 1.f)
+                    c.done = true;
+            }
+            if(c.done)
+            {
+                finish_conversation(p, c);
+                continue;
+            }
+            if(c.waiting || m_vm.now() < c.until)
+                continue;
+            if(c.line >= 0 && (lines.value()[c.line].flags & line_t::wait_after_until_told_to_advance) &&
+               !c.advanced)
+            {
+                c.waiting = true;
+                continue;
+            }
+            c.advanced = false;
+            if(++c.line >= static_cast<i32>(lines.value().size()))
+            {
+                finish_conversation(p, c);
+                continue;
+            }
+            auto const& line = lines.value()[c.line];
+            auto        who  = [&c](i16 i) -> u64 {
+                return i >= 0 && static_cast<size_t>(i) < c.participants.size() ? c.participants[i] : 0;
+            };
+            u64 const speaker = who(line.participant);
+            /* Addressed to the player (1) or a participant (2) */
+            std::optional<Vecf3> at;
+            if(line.addressee == 1)
+                at = player_near(p, speaker);
+            else if(line.addressee == 2)
+                if(auto const* model = p.template get<Model>(who(line.addressee_participant)))
+                    at = model->position;
+            auto const* mouth = speaker ? p.template get<Model>(speaker) : nullptr;
+            if(speaker && at)
+                turn(p, speaker, *at);
+            if((line.flags & line_t::addressee_looking_at_speaker) && mouth && line.addressee == 2)
+                turn(p, who(line.addressee_participant), mouth->position);
+            for(u64 id : c.participants)
+                if(id && id != speaker)
+                {
+                    if((line.flags & line_t::everyone_look_at_speaker) && mouth)
+                        turn(p, id, mouth->position);
+                    else if((line.flags & line_t::everyone_look_at_addressee) && at)
+                        turn(p, id, *at);
+                }
+            f32 seconds = line.line_delay_time;
+            for(auto const& variant : line.variants)
+            {
+                if(!variant.valid())
+                    continue;
+                value_t sound;
+                sound.integer = static_cast<i32>(variant.tag_id.value());
+                if(!sound_tag(sound))
+                    continue;
+                play(p, sound, speaker ? std::vector<u64>{speaker} : std::vector<u64>{}, false);
+                seconds += length_of(p, sound);
+                if(speaker && p.template get<AnimationPlayback>(speaker))
+                    m_speakers[speaker] = {.mouth = mouth_of(p, sound), .from = m_vm.now()};
+                break;
+            }
+            c.until = m_vm.now() + static_cast<libc_types::i64>(seconds * tick_rate);
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format("ai_conversation: {} line {} by {} for {}s", conv->name.str(), c.line, speaker, seconds));
+        }
+    }
+
+    /* The player nearest a unit */
+    std::optional<Vecf3> player_near(Proxy& p, u64 from)
+    {
+        auto const*          origin  = from ? p.template get<Model>(from) : nullptr;
+        std::optional<Vecf3> best;
+        f32                  nearest = 1e30f;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const& model = ent.template get<Model>();
+            f32 const   d     = origin ? glm::distance(origin->position, model.position) : 0.f;
+            if(d < nearest)
+            {
+                nearest = d;
+                best    = model.position;
+            }
+        }
+        return best;
+    }
+
+    /* A unit faces a point; players look where they please */
+    void turn(Proxy& p, u64 who, Vecf3 const& at)
+    {
+        auto* model = p.template get<Model>(who);
+        if(!model || p.template get<PlayerInfo>(who))
+            return;
+        Vecf3 const d = at - model->position;
+        if(d.x * d.x + d.y * d.y > 1e-4f)
+            model->rotation = glm::angleAxis(std::atan2(d.y, d.x), Vecf3{0.f, 0.f, 1.f});
+    }
+
     /* A tick of each list: instant atoms run through, moving and looking
      * ones take their time */
     void run_commands(Proxy& p)
@@ -2138,6 +2588,12 @@ struct BlamScript
                 actor->scripted = false;
                 actor->release  = false;
                 it              = m_commands.erase(it);
+                continue;
+            }
+            /* On its way to a vehicle: the list waits */
+            if(auto const* actor = p.template get<Actor>(it->first); actor && actor->board)
+            {
+                ++it;
                 continue;
             }
             auto* model = p.template get<Model>(it->first);
@@ -3107,6 +3563,7 @@ struct BlamScript
     u32                                     m_camera_gen{0}; /*!< Bumped as the camera is set */
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, commands_t>               m_commands;
+    std::map<blam::scn::ai::conversation const*, conversation_t> m_conversations;
     struct scaling_t
     {
         f32 from{1.f};

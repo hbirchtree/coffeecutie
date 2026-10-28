@@ -652,6 +652,8 @@ signatures::sig_t opcode_signature(opcode_layout<Bytecode> const& op)
         return sig_t(t::void_, t::unit_name);
     case o::ai_go_to_vehicle:
         return sig_t(t::void_, t::ai, t::unit, t::string_);
+    case o::ai_going_to_vehicle:
+        return sig_t(t::short_, t::unit);
     case o::ai_command_list:
         return sig_t(t::void_, t::ai, t::ai_cmd_list);
     case o::ai_command_list_by_unit:
@@ -662,6 +664,7 @@ signatures::sig_t opcode_signature(opcode_layout<Bytecode> const& op)
     case o::ai_allegiance_remove:
         return sig_t(t::void_, t::team, t::team);
     case o::ai_conversation_status:
+    case o::ai_conversation_line:
         return sig_t(t::short_, t::conversation);
     case o::ai_conversation:
         return sig_t(t::void_, t::conversation);

@@ -111,7 +111,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         for(auto ent : p.template select<Actor, Model, AnimationPlayback, BipedStatus, ObjectPhysics>())
         {
             auto [actor, model, anim, status, physics] = ent.components();
-            if(!actor.active() || actor.braindead || status.dead || !physics.upright)
+            if(!actor.active() || actor.braindead || status.dead || !physics.upright || physics.seated)
                 continue;
             auto const* kind = kind_of(p, actor);
             if(std::getenv("BLAM_DEBUG_AI") && (m_debug_in -= dt) <= 0.f)
@@ -131,6 +131,32 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             if(!kind || !kind->variant || !kind->actor)
                 continue;
+            /* Sent to a vehicle: it runs there, whatever else it was doing,
+             * and waits to be seated */
+            if(actor.board)
+            {
+                auto const* vehicle = p.template get<Model>(actor.board);
+                if(std::getenv("BLAM_DEBUG_AI") && vehicle && (actor.look_in -= dt) <= 0.f)
+                {
+                    actor.look_in = 2.f;
+                    cDebug(
+                        "ai: {} boarding {} distance {} at {} {} {} moving {}",
+                        ent.id(),
+                        actor.board,
+                        glm::distance(Vecf2(model.position), Vecf2(vehicle->position)),
+                        model.position.x,
+                        model.position.y,
+                        model.position.z,
+                        actor.moving);
+                }
+                if(!vehicle)
+                    actor.board = 0;
+                else if(glm::distance(Vecf2(model.position), Vecf2(vehicle->position)) > actor.board_radius)
+                    move_toward(p, ent.id(), actor, model, anim, *kind, vehicle->position, dt, true);
+                else
+                    stop(p, ent.id(), actor);
+                continue;
+            }
             /* Under a command list it only watches, and asks to be let go
              * when the list allows a fight */
             if(actor.scripted)
