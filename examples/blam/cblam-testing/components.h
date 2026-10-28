@@ -1116,6 +1116,7 @@ struct PlayerInput
         bool  use{false};    /*!< Held: enter or leave a vehicle */
         bool  grab{false};   /*!< Held: forge grab */
         bool  fire{false};   /*!< Held: pull the trigger */
+        bool  fire2{false};  /*!< Held: a mounted gun's second trigger */
         bool  jump{false};   /*!< Wanted; cleared once taken or stale */
         bool  swap{false};   /*!< Pressed: switch weapons; cleared once taken */
         bool  reload{false}; /*!< Pressed; cleared once taken */

@@ -54,8 +54,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     struct state_t
     {
         f32  cooldown{0.f};
+        f32  cooldown2{0.f};    /* a mounted gun's second trigger */
         f32  illumination{0.f}; /* the flash, 1 as it fires */
         bool firing{false};     /* held last frame */
+        bool firing2{false};
         bool fired{false};      /* shot this frame */
         f32  reloading{0.f};    /* seconds left */
         f32  striking{0.f};     /* melee, seconds left */
@@ -165,6 +167,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* A trigger that charges fires as it is let go: its partner's
              * shot once charged */
             bool const charges = trigger.charging_time > 0.f && triggers.value().size() > 1;
+            /* A mounted gun's second trigger fires alongside its first:
+             * the tank's gun, the banshee's fuel rod */
+            bool const held2 = mounted && triggers.value().size() > 1 && !charges &&
+                               input.intent.fire2 && state.striking <= 0.f;
             auto const& gun_tag = weapon.value()[0];
             /* The trigger is looked at once a tick */
             for(auto const& tick : ticks)
@@ -217,6 +223,27 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                          static_cast<u16>(fires));
                 }
                 state.firing = held;
+                state.cooldown2 = std::max(state.cooldown2 - dt, 0.f);
+                if(held2)
+                {
+                    trigger_t const& second = triggers.value()[1];
+                    f32 const        rate2  = second.maximum_rate_of_fire.y > 0.f
+                                                  ? second.maximum_rate_of_fire.y
+                                                  : second.maximum_rate_of_fire.x;
+                    bool const repeats2 =
+                        rate2 > 0.f &&
+                        (second.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
+                            trigger_t::flags_t::none;
+                    if((repeats2 || !state.firing2) && state.cooldown2 <= 0.f)
+                    {
+                        if(rate2 > 0.f)
+                            state.cooldown2 += 1.f / rate2;
+                        state.fired        = true;
+                        state.illumination = 1.f;
+                        pull(p, ent.id(), info, cam, *weapon_tag, false, 1);
+                    }
+                }
+                state.firing2 = held2;
                 if(ammo)
                     ammo->charged = charges && state.charge >= trigger.charging_time;
                 if(trigger.illumination_recovery_time > 0.f)
