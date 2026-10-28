@@ -75,6 +75,22 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 dt = 0.f;
         for(auto const& tick : m_ticks->take())
             dt += tick.seconds;
+        if(std::getenv("BLAM_DEBUG_AI") && (m_debug_top -= .033f) <= 0.f)
+        {
+            m_debug_top = 3.f;
+            cDebug(
+                "ai: tick dt {} scenario {} loaded {} replica {} actors {}",
+                dt,
+                m_scenario != nullptr,
+                p.template subsystem<LoadingStatus>().loaded_map == LoadingStatus::loaded,
+                p.template subsystem<NetworkState>().replica,
+                [&] {
+                    size_t n = 0;
+                    for(auto ent : p.template select<Actor>())
+                        n += ent.template get<Actor>().active() ? 1 : 0;
+                    return n;
+                }());
+        }
         if(dt <= 0.f || !m_scenario ||
            p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
            p.template subsystem<NetworkState>().replica)
@@ -94,11 +110,45 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         for(auto ent : p.template select<Actor, Model, AnimationPlayback, BipedStatus, ObjectPhysics>())
         {
             auto [actor, model, anim, status, physics] = ent.components();
-            if(!actor.active() || actor.scripted || actor.braindead || status.dead || !physics.upright)
+            if(!actor.active() || actor.braindead || status.dead || !physics.upright)
                 continue;
             auto const* kind = kind_of(p, actor);
+            if(std::getenv("BLAM_DEBUG_AI") && (m_debug_in -= dt) <= 0.f)
+            {
+                m_debug_in = 3.f;
+                cDebug(
+                    "ai: {} state {} scripted {} may_fight {} target {} kind {}/{}/{} team {}",
+                    ent.id(),
+                    static_cast<int>(actor.state),
+                    actor.scripted,
+                    actor.may_fight,
+                    actor.target,
+                    kind != nullptr,
+                    kind && kind->variant,
+                    kind && kind->actor,
+                    actor.team);
+            }
             if(!kind || !kind->variant || !kind->actor)
                 continue;
+            /* Under a command list it only watches, and asks to be let go
+             * when the list allows a fight */
+            if(actor.scripted)
+            {
+                if(actor.may_fight && !actor.blind && (actor.look_in -= dt) <= 0.f)
+                {
+                    actor.look_in = look_period;
+                    if(u64 const seen = look(p, ent.id(), actor, model, *kind->actor); seen)
+                    {
+                        actor.target    = seen;
+                        actor.seen_ago  = 0.f;
+                        actor.release   = true;
+                        if(auto const* target = p.template get<Model>(seen))
+                            actor.last_seen = target->position;
+                        enter(actor, state_t::combat);
+                    }
+                }
+                continue;
+            }
             think(p, ent.id(), actor, model, anim, status, *kind, dt);
         }
     }
@@ -880,6 +930,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     std::map<std::pair<i16, i16>, kind_t>                            m_kinds;
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
+    f32                                                              m_debug_in{0.f};
+    f32                                                              m_debug_top{0.f};
     std::map<std::pair<blam::antr::header const*, std::string>, f32> m_strides;
     std::minstd_rand                                                 m_random{12345};
 };

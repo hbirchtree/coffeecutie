@@ -1070,6 +1070,8 @@ struct Actor
     libc_types::i16 squad{-1};
     libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
     bool            scripted{false}; /*!< A command list or recording has it */
+    bool            may_fight{false}; /*!< Its command list lets it break off for an enemy */
+    bool            release{false};   /*!< It saw one: the list is to let it go */
     bool            braindead{false}; /*!< ai_braindead: stands and does nothing */
     bool            blind{false};
     bool            deaf{false};

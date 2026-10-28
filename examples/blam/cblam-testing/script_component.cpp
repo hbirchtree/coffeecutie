@@ -296,7 +296,6 @@ struct BlamScript
         m_walking.clear();
         m_deferred.clear();
         m_spawning.clear();
-        m_actor_slots.clear();
         m_despawning.clear();
         m_recreate.clear();
         m_queued_recordings.clear();
@@ -424,6 +423,7 @@ struct BlamScript
             if(u64 const id = live_entity(p, net_id))
             {
                 m_spawning.erase(net_id);
+                enlist(p, id, net_id);
                 fn(p, id);
             } else
                 m_deferred.emplace_back(net_id, std::move(fn));
@@ -2046,7 +2046,13 @@ struct BlamScript
     {
         m_commands[id] = {.list = &list};
         if(auto* actor = p.template get<Actor>(id))
+        {
+            using flags_t   = blam::scn::ai::command_list::flags_t;
             actor->scripted = true;
+            actor->release  = false;
+            actor->may_fight =
+                (list.flags & (flags_t::allow_initiative | flags_t::allow_targeting)) != 0;
+        }
         carry(p, id, true);
     }
 
@@ -2066,6 +2072,14 @@ struct BlamScript
         constexpr f32 dt = 1.f / tick_rate;
         for(auto it = m_commands.begin(); it != m_commands.end();)
         {
+            /* An enemy in sight and a list that allows it: the actors fight */
+            if(auto* actor = p.template get<Actor>(it->first); actor && actor->release)
+            {
+                actor->scripted = false;
+                actor->release  = false;
+                it              = m_commands.erase(it);
+                continue;
+            }
             auto* model = p.template get<Model>(it->first);
             auto  cmds  = it->second.list->commands.data(m_magic);
             auto  pts   = it->second.list->points.data(m_magic);
@@ -2834,7 +2848,16 @@ struct BlamScript
                     if(auto unit = model->origin_object->template data<blam::scn::unit>(m_magic);
                        unit.has_value())
                         actor->team = static_cast<u16>(unit.value()[0].default_team);
-        }
+            if(std::getenv("BLAM_DEBUG_AI"))
+                cDebug(
+                    "ai: enlist {} encounter {} squad {} team {} scripted {}",
+                    id,
+                    actor->encounter,
+                    actor->squad,
+                    actor->team,
+                    actor->scripted);
+        } else if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug("ai: enlist {}: no Actor component", id);
         m_actor_slots.erase(slot);
     }
 
