@@ -162,6 +162,9 @@ struct ResourceLoader
         spawn_equip_queue;
     std::shared_ptr<GameEventBus::queue_type<SpawnModelEvent>>
         spawn_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<ShieldDepletedEvent>>
+        shield_queue;
+    std::vector<ShieldDepletedEvent> pending_shields;
     std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>
         mount_model_queue;
     std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>
@@ -253,6 +256,7 @@ struct ResourceLoader
         spawn_model_queue->poll();
         spawn_object_queue->poll();
         despawn_object_queue->poll();
+        shield_queue->poll();
 
         reconcile_player_bipeds(p, files);
         disarm_npcs(p);
@@ -271,7 +275,8 @@ struct ResourceLoader
         if(!section_changed && lod_requests.empty() &&
            !pending_cluster_change && pending_bsps.empty() &&
            pending_models.empty() && pending_mounts.empty() &&
-           pending_objects.empty() && pending_despawns.empty())
+           pending_objects.empty() && pending_despawns.empty() &&
+           pending_shields.empty())
             return;
 
         /* Everything below can reach ModelCache::predict(), so the model
@@ -280,6 +285,9 @@ struct ResourceLoader
 
         if(section_changed)
             switch_section(p, bsp_cache.active_section);
+
+        for(auto const& shield : std::exchange(pending_shields, {}))
+            reshield(p, shield);
 
         // Pending cluster first so we can use the shared model loading after
         if(pending_cluster_change)
@@ -2049,6 +2057,80 @@ struct ResourceLoader
     }
 
     /* Local debris whose time is up, with its submodels */
+    /* A unit's shield gone or back: the coll regions it takes down (flag
+     * 0x10, a jackal's gate) show their "~" permutation, or their first,
+     * which means the parts are built again */
+    void reshield(Proxy& p, ShieldDepletedEvent const& ev)
+    {
+        auto* model = p.template get<Model>(ev.unit);
+        if(!model || !model->origin_object)
+            return;
+        auto const& files = p.template subsystem<BlamFiles<Ver>>();
+        auto const& magic = files.container.magic;
+        auto        object_data =
+            model->origin_object->template data<blam::scn::object>(magic);
+        if(object_data.has_error())
+            return;
+        blam::scn::object const& object = object_data.value()[0];
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        auto const*      mod2        = model_cache.get_header(object.model);
+        auto             regions     = mod2 ? mod2->regions.data(magic) : decltype(mod2->regions.data(magic)){};
+        blam::coll::header const* coll = nullptr;
+        if(auto it = index.find(object.collider); it != index.end())
+            if(auto data = (*it).template data<blam::coll::header>(magic); data.has_value())
+                coll = data.value();
+        auto coll_regions = coll ? coll->regions.data(magic) : decltype(coll->regions.data(magic)){};
+        if(!regions.has_value() || !coll_regions.has_value())
+            return;
+        u32  permutations = model->permutations;
+        bool changed      = false;
+        for(auto const& region : coll_regions.value())
+        {
+            if(!(region.flags & 0x10))
+                continue;
+            for(auto const& [r, mod2_region] : stl_types::const_enumerate(regions.value()))
+            {
+                if(r >= 8 || mod2_region.name.str() != region.name.str())
+                    continue;
+                auto perms = mod2_region.permutations.data(magic);
+                if(!perms.has_value())
+                    continue;
+                for(auto const& [k, perm] : stl_types::const_enumerate(perms.value()))
+                {
+                    bool const off = !perm.name.str().empty() && perm.name.str()[0] == '~';
+                    if(k >= 16 || off != ev.depleted)
+                        continue;
+                    permutations = (permutations & ~(0xFu << (4 * r))) |
+                                   (static_cast<u32>(k) << (4 * r));
+                    changed = true;
+                    break;
+                }
+            }
+        }
+        if(!changed || permutations == model->permutations)
+            return;
+
+        ModelAssembly mesh = model_cache.predict_regions(object.model, model_lod, permutations);
+        if(mesh.models.empty())
+            return;
+        std::set<u64> doomed;
+        for(auto const& part : model->parts)
+            doomed.insert(part.id());
+        p.remove_entity_if([&doomed](compo::Entity const& e) {
+            return doomed.contains(e.id);
+        });
+        model->parts.clear();
+        model->permutations = permutations;
+        model->model        = mesh.models.at(0);
+        init_lods(p, *model, object);
+
+        auto                ent      = p.ref(ev.unit);
+        compo::EntityRecipe submodel = shared_recipes::submodel;
+        submodel.tags                = submodel.tags | (ent.tags() & SubObjectMask);
+        for(auto const& model_id : mesh.models)
+            build_submodels(p, ent, *model, model_id, submodel, render_layer::world, 1, &object);
+    }
+
     void expire_objects(Proxy& p)
     {
         std::set<u64> doomed;
@@ -3374,6 +3456,10 @@ void alloc_resource_loader(compo::EntityContainer& e)
     loader.spawn_model_queue = game_bus.addQueuedEventFunction<SpawnModelEvent>(
         0, [&loader](GameEvent&, SpawnModelEvent* spawn) {
             loader.pending_models.push_back(*spawn);
+        });
+    loader.shield_queue = game_bus.addQueuedEventFunction<ShieldDepletedEvent>(
+        0, [&loader](GameEvent&, ShieldDepletedEvent* shield) {
+            loader.pending_shields.push_back(*shield);
         });
     loader.mount_model_queue = game_bus.addQueuedEventFunction<MountModelEvent>(
         0, [&loader](GameEvent&, MountModelEvent* spawn) {
