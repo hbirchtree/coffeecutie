@@ -18,6 +18,9 @@
 #include <coffee/components/restricted_subsystem.h>
 
 #include <map>
+#include <optional>
+#include <queue>
+#include <set>
 #include <random>
 
 using ActorManifest = compo::SubsystemManifest<
@@ -102,6 +105,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         {
             m_generation = files.load_generation;
             m_kinds.clear();
+            m_links.clear();
         }
         hear(p);
         if((m_platoon_in -= dt) <= 0.f)
@@ -196,6 +200,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 reposition_time = 4.f;  /* s between picking positions */
     static constexpr f32 default_speed   = 2.f;  /* wu/s, a graph without a stride */
     static constexpr f32 eye_height      = .6f;  /* wu above the feet, a biped without a camera height */
+    static constexpr f32 route_height    = .5f;  /* wu above the feet a walk is checked at */
+    static constexpr f32 link_reach      = 10.f; /* wu between positions a route steps */
+    static constexpr u32 max_expansions  = 2000;
+    static constexpr f32 stuck_time      = 2.f;  /* s between progress checks */
+    static constexpr f32 stuck_distance  = .5f;  /* wu less than which is no progress */
     static constexpr std::string_view trigger_marker = "primary trigger";
 
     void think(
@@ -914,14 +923,17 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32                 dt,
         bool                running)
     {
-        Vecf3 to = goal - model.position;
-        to.z     = 0.f;
-        f32 const left = glm::length(to);
-        if(left <= arrive_radius)
+        Vecf3 rest = goal - model.position;
+        rest.z     = 0.f;
+        if(glm::length(rest) <= arrive_radius)
         {
             stop(p, id, actor);
             return;
         }
+        /* Around what is in the way, by its encounter's positions */
+        Vecf3 to = waypoint(p, id, actor, model, kind, goal, dt) - model.position;
+        to.z     = 0.f;
+        f32 const left = std::max(glm::length(to), 1e-3f);
         if(anim.stance != "stand")
             anim.stance = "stand";
         f32 const speed = stride(p, id, anim, kind) * (running ? 1.f : .6f);
@@ -933,6 +945,120 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .entity_id = id, .velocity = dir * std::min(speed, left / std::max(dt, 1e-3f)), .preserve_z = true};
         p.template subsystem<PhysicsBus>().process(ev, &walking);
         actor.moving = true;
+    }
+
+    /* ---- Routes ---- */
+
+    /* Nothing solid at waist height between two points; units in the way
+     * move on */
+    bool walkable(Proxy& p, u64 self, Vecf3 const& a, Vecf3 const& b)
+    {
+        Physics::Event   ev{Physics::Event::Raycast};
+        Physics::Raycast ray{
+            .from = a + Vecf3{0, 0, route_height}, .to = b + Vecf3{0, 0, route_height}, .ignore = self};
+        p.template subsystem<PhysicsBus>().process(ev, &ray);
+        return !ray.hit ||
+               (ray.entity_id != 0 &&
+                (p.template get<Actor>(ray.entity_id) || p.template get<PlayerInfo>(ray.entity_id)));
+    }
+
+    /* The positions a position has a clear walk to, found once each */
+    std::vector<i32> const& links(Proxy& p, kind_t const& kind, i16 encounter, i32 node)
+    {
+        auto positions = kind.encounter->firing_positions.data(*s_magic);
+        auto& table    = m_links[encounter];
+        if(table.size() != positions.value().size())
+            table.assign(positions.value().size(), std::nullopt);
+        auto& out = table[static_cast<size_t>(node)];
+        if(!out)
+        {
+            out.emplace();
+            Vecf3 const at = positions.value()[static_cast<size_t>(node)].position;
+            for(size_t j = 0; j < positions.value().size(); j++)
+                if(static_cast<i32>(j) != node &&
+                   glm::distance(at, positions.value()[j].position) <= link_reach &&
+                   walkable(p, 0, at, positions.value()[j].position))
+                    out->push_back(static_cast<i32>(j));
+        }
+        return *out;
+    }
+
+    /* The shortest chain of positions from near `from` to near `to` */
+    std::vector<i32> plan(Proxy& p, u64 id, kind_t const& kind, i16 encounter, Vecf3 const& from, Vecf3 const& to)
+    {
+        auto positions = kind.encounter->firing_positions.data(*s_magic);
+        if(!positions.has_value() || positions.value().empty())
+            return {};
+        auto const& all = positions.value();
+        auto near = [&](Vecf3 const& at) {
+            std::set<i32> out;
+            for(size_t i = 0; i < all.size(); i++)
+                if(glm::distance(all[i].position, at) <= link_reach && walkable(p, id, at, all[i].position))
+                    out.insert(static_cast<i32>(i));
+            return out;
+        };
+        std::set<i32> const ends = near(to);
+        if(ends.empty())
+            return {};
+        using entry_t = std::pair<f32, i32>;
+        std::priority_queue<entry_t, std::vector<entry_t>, std::greater<>> open;
+        std::map<i32, f32> cost;
+        std::map<i32, i32> came;
+        for(i32 start : near(from))
+        {
+            f32 const g = glm::distance(from, all[start].position);
+            cost[start] = g;
+            came[start] = -1;
+            open.push({g + glm::distance(all[start].position, to), start});
+        }
+        for(u32 expanded = 0; !open.empty() && expanded < max_expansions; expanded++)
+        {
+            auto const [f, node] = open.top();
+            open.pop();
+            if(ends.contains(node))
+            {
+                std::vector<i32> route;
+                for(i32 at = node; at >= 0; at = came[at])
+                    route.insert(route.begin(), at);
+                return route;
+            }
+            for(i32 next : links(p, kind, encounter, node))
+            {
+                f32 const g = cost[node] + glm::distance(all[node].position, all[next].position);
+                if(auto it = cost.find(next); it != cost.end() && it->second <= g)
+                    continue;
+                cost[next] = g;
+                came[next] = node;
+                open.push({g + glm::distance(all[next].position, to), next});
+            }
+        }
+        return {};
+    }
+
+    /* Where to head now: the goal itself, or the next position of a route
+     * around what blocks the way; a walk that stalls is planned again */
+    Vecf3 waypoint(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind, Vecf3 const& goal, f32 dt)
+    {
+        if(glm::distance(goal, actor.route_goal) > 1.f)
+        {
+            actor.route_goal = goal;
+            actor.route.clear();
+            if(!walkable(p, id, model.position, goal))
+                actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+            actor.stuck_at = model.position;
+            actor.stuck_in = stuck_time;
+        }
+        if((actor.stuck_in -= dt) <= 0.f)
+        {
+            if(glm::distance(model.position, actor.stuck_at) < stuck_distance)
+                actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+            actor.stuck_at = model.position;
+            actor.stuck_in = stuck_time;
+        }
+        while(!actor.route.empty() &&
+              glm::distance(Vecf2(model.position), Vecf2(position_of(kind, actor.route.front()))) < arrive_radius * 2.f)
+            actor.route.erase(actor.route.begin());
+        return actor.route.empty() ? goal : position_of(kind, actor.route.front());
     }
 
     void stop(Proxy& p, u64 id, Actor& actor)
@@ -1203,6 +1329,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static inline blam::map_ptr const*                               s_magic{nullptr};
     u32                                                              m_generation{0};
     std::map<std::tuple<i16, i16, i16>, kind_t>                      m_kinds;
+    std::map<i16, std::vector<std::optional<std::vector<i32>>>>      m_links; /* encounter: per position */
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
     f32                                                              m_debug_in{0.f};

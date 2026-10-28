@@ -1239,10 +1239,21 @@ struct BlamScript
                 auto const& e  = m_scenario->ai.encounters.data(m_magic).value()[enc];
                 auto const& s  = e.squads.data(m_magic).value()[sq];
                 auto        fp = e.firing_positions.data(m_magic);
-                std::map<u32, u32> per_group;
+                std::map<u32, std::string> per_group;
                 if(fp.has_value())
+                {
+                    std::map<u32, std::pair<Vecf3, u32>> sum;
                     for(auto const& f : fp.value())
-                        per_group[f.group]++;
+                    {
+                        sum[f.group].first += f.position;
+                        sum[f.group].second++;
+                    }
+                    for(auto const& [g, s] : sum)
+                    {
+                        Vecf3 const c = s.first / static_cast<f32>(s.second);
+                        per_group[g] = fmt::format("{}@({:.0f},{:.0f})", s.second, c.x, c.y);
+                    }
+                }
                 log(fmt::format(
                     "  squad {:x} {:x} {:x} / {:x} {:x} {:x} positions by group {}",
                     s.attacking, s.attacking_search, s.attacking_guard,
