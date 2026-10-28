@@ -3079,6 +3079,12 @@ void dump_scenario(blam::map_container<Ver> const& map)
             prof.plasma_nades);
     });
 
+    fmt::print("trigger_volumes: {}\n", count_of(g_magic, s->trigger_volumes));
+    each(g_magic, s->trigger_volumes, [](size_t, auto const& volume) {
+        fmt::print(
+            "  {} pos={:.2f} extents={:.2f}\n", volume.name.str(), volume.position, volume.extents);
+    });
+
     fmt::print(
         "player_starting_locations: {}\n",
         count_of(g_magic, s->player_start.locations));
