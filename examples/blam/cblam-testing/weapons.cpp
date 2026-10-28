@@ -270,7 +270,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(grace > 0)
                 continue;
             if(info.riding.vehicle || !info.mode.physics || !biped_in_play(info, cam, net) ||
-               !equip.held(files.load_generation))
+               equip.load_generation != files.load_generation)
                 continue;
             Vecf3 const body =
                 cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f};
