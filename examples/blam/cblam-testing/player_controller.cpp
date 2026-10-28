@@ -331,6 +331,9 @@ struct PlayerController
         intent.fire = (pad && state.axes.e.t_r > trigger_pressed) ||
                       (keyboard &&
                        (input.mouse_buttons & CIMouseButtonEvent::LeftButton));
+        intent.fire2 = (pad && state.axes.e.t_l > trigger_pressed) ||
+                       (keyboard &&
+                        (input.mouse_buttons & CIMouseButtonEvent::RightButton));
     }
 
     /* Stops short of straight up or down, where turning would spin the

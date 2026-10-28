@@ -224,9 +224,19 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         auto const            taken   = taken_seats(p, nearest);
         f32                   closest = std::numeric_limits<f32>::max();
         auto const            seats   = seats_of(p, vehicle);
+        using seat_flags = blam::scn::unit::seat_t::seat_flags_t;
+        bool driven      = false;
+        for(i16 i = 0; seats && i < static_cast<i16>(seats->size()); i++)
+            if(taken.contains(i) &&
+               ((*seats)[i].flags & seat_flags::driver) != seat_flags::none)
+                driven = true;
         for(i16 i = 0; seats && i < static_cast<i16>(seats->size()); i++)
         {
             if(taken.contains(i))
+                continue;
+            /* A tank's side seats wait for its driver */
+            if(!driven && ((*seats)[i].flags & seat_flags::not_valid_without_driver) !=
+                              seat_flags::none)
                 continue;
             auto const& at = entry_point(p, vehicle, i);
             if(!at)
