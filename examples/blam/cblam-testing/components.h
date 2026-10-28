@@ -848,6 +848,7 @@ struct ObjectPhysics
     f32   friction{-1.f};
     f32   restitution{-1.f};
     bool  animated{false}; /*!< Devices: still, but hulls follow the pose */
+    f32   max_slope{0.f};  /*!< Bipeds: steepest ground walked up, radians; 0 = any */
 
     /*! Who moves a body with mass: this peer's simulation, or someone else
      * (the server) through Model, with the body following kinematically */
@@ -966,6 +967,7 @@ struct PlayerInfo
         f32 back_speed{2.25f};
         f32 strafe_speed{2.25f};
         f32 jump_velocity{2.3f}; /*!< wu/s, from the biped tag */
+        f32 max_slope{0.785398f}; /*!< Steepest ground walked up, radians, from the biped tag */
         /*! How far the camera looks down and up, radians; the cyborg's
          * tag leaves it empty */
         Vecf2 pitch_range{-1.5f, 1.5f};
