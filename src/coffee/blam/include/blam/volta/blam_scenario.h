@@ -832,8 +832,8 @@ struct platoon
 struct firing_position
 {
     Vecf3 position;
-    u16   unknown1;
-    u16   unknown_idx;
+    u16   group;   /* A = 0; squads select positions by these bits */
+    u16   cluster; /* BSP cluster, cache only */
     u32   unknown[2];
 };
 
