@@ -104,6 +104,9 @@ struct MessageBase
 
         /* Scripted scenarios: a point every peer waits at */
         SyncPoint,
+
+        /* Units a script sat in vehicles */
+        RiderSync,
     } type{None};
 
     u32 request{};
@@ -278,6 +281,21 @@ struct alignas(8) SeatSync
     flags_t flags{none};
 
     bool operator==(SeatSync const&) const = default;
+};
+
+/*! A unit that is not a player, in a vehicle's seat or out of it; sent on
+ *  change and to newly verified peers */
+struct alignas(8) RiderSync
+{
+    static constexpr auto message_type = MessageBase::RiderSync;
+
+    u32 unit{0};    /*!< Net id */
+    u32 vehicle{0}; /*!< Net id, 0 = out of it */
+    i16 seat{-1};
+    u16 padding{0};
+    u32 padding2{0};
+
+    bool operator==(RiderSync const&) const = default;
 };
 
 /*! What a player holds; sent on change and to newly verified peers */
@@ -664,6 +682,7 @@ static_assert(sizeof(Message<PlayerJoin>) == 52);
 static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 80);
 static_assert(sizeof(SeatSync) == 16);
+static_assert(sizeof(RiderSync) == 16);
 static_assert(sizeof(EquipmentSync) == 24);
 static_assert(sizeof(WeaponPickup) == 16);
 static_assert(sizeof(ObjectDespawn) == 4);

@@ -291,7 +291,7 @@ struct BlamScript
         std::erase_if(m_riders, [&](rider_t const& r) {
             bool const gone = !there(r.unit) || !there(r.vehicle);
             if(gone)
-                seated(p, r.unit, false);
+                seated(p, r.unit, 0, -1);
             return gone;
         });
         std::erase_if(m_attached, [&](attached_t const& a) { return !there(a.parent) || !there(a.child); });
@@ -1589,8 +1589,9 @@ struct BlamScript
         auto seats = vehi.value()[0].seats.data(m_magic);
         if(!seats.has_value())
             return;
-        for(auto const& candidate : seats.value())
+        for(size_t seat_idx = 0; seat_idx < seats.value().size(); seat_idx++)
         {
+            auto const& candidate = seats.value()[seat_idx];
             std::string label(candidate.label.str());
             std::transform(label.begin(), label.end(), label.begin(), [](unsigned char c) {
                 return static_cast<char>(std::tolower(c));
@@ -1618,7 +1619,7 @@ struct BlamScript
                 .stance  = std::move(own),
             });
             carry(p, unit, true);
-            seated(p, unit, true);
+            seated(p, unit, vehicle, static_cast<i16>(seat_idx));
             return;
         }
     }
@@ -1641,14 +1642,19 @@ struct BlamScript
         if(m_riders.size() != before)
         {
             carry(p, unit, false);
-            seated(p, unit, false);
+            seated(p, unit, 0, -1);
         }
     }
 
-    static void seated(Proxy& p, u64 unit, bool on)
+    /* In a vehicle's seat, or out of it with no vehicle */
+    static void seated(Proxy& p, u64 unit, u64 vehicle, i16 seat)
     {
         if(auto* physics = p.template get<ObjectPhysics>(unit))
-            physics->seated = on;
+        {
+            physics->seated    = vehicle != 0;
+            physics->seated_in = vehicle;
+            physics->seat      = seat;
+        }
     }
 
     /* Riders sit where their seats are as the vehicle moves */

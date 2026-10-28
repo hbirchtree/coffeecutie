@@ -72,7 +72,7 @@ using NetworkingManifest = compo::SubsystemManifest<
         BipedEquipment,
         const BipedStatus,
         const DeviceState,
-        const AnimationPlayback>,
+        AnimationPlayback>,
     type_list_t<
         NetworkState,
         GameState,
@@ -2532,6 +2532,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             send_impacts(p);
             send_seats(p);
+            send_riders(p);
             send_equipment(p);
             send_vitality(p);
             send_game_state(p);
@@ -2543,6 +2544,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             send_object_sync(p, t);
         }
         equip_remote_players(p);
+        /* Riders whose units had not arrived yet */
+        std::erase_if(m_waiting_riders, [&](auto& waiting) {
+            return seat_rider(p, waiting.first) || ++waiting.second > max_rider_wait;
+        });
         if(m_left_server)
             leave_server(p);
         if(m_connection)
@@ -3406,6 +3411,97 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 current);
     }
 
+    /* Units scripts sat in vehicles as they change, and all of them to a
+     * fresh peer */
+    void send_riders(Proxy& p)
+    {
+        std::vector<RiderSync> changed, riders;
+        for(auto object : p.select<ObjectPhysics, NetworkInfo>())
+        {
+            auto [physics, net] = object.components();
+            if(net.instance_id == 0 || p.get<PlayerInfo>(object.id()))
+                continue;
+            RiderSync rider{.unit = net.instance_id};
+            if(physics.seated && physics.seated_in)
+                if(auto const* vehicle = p.get<NetworkInfo>(physics.seated_in); vehicle && vehicle->instance_id)
+                {
+                    rider.vehicle = vehicle->instance_id;
+                    rider.seat    = physics.seat;
+                }
+            auto const sent = m_sent_riders.find(net.instance_id);
+            if(rider.vehicle == 0 && sent == m_sent_riders.end())
+                continue;
+            if(rider.vehicle != 0)
+                riders.push_back(rider);
+            if(sent == m_sent_riders.end() || sent->second != rider)
+                changed.push_back(rider);
+            if(rider.vehicle != 0)
+                m_sent_riders[net.instance_id] = rider;
+            else
+                m_sent_riders.erase(sent);
+        }
+        std::set<HSteamNetConnection> fresh, current;
+        for(auto& [connection, state] : m_connections)
+            if(state.verified)
+                (state.objects_synced ? current : fresh).insert(connection);
+        if(!fresh.empty() && !riders.empty())
+            send_all<RiderSync>(
+                MessageBase{MessageBase::RiderSync},
+                gsl::span<RiderSync>(riders),
+                k_nSteamNetworkingSend_Reliable,
+                fresh);
+        if(!current.empty() && !changed.empty())
+            send_all<RiderSync>(
+                MessageBase{MessageBase::RiderSync},
+                gsl::span<RiderSync>(changed),
+                k_nSteamNetworkingSend_Reliable,
+                current);
+    }
+
+    /* Seats a unit as the server has it: touching nothing, in the seat's
+     * stance, or back in its own. False until the unit is here */
+    bool seat_rider(Proxy& p, RiderSync const& rider)
+    {
+        u64 unit = 0, vehicle = 0;
+        for(auto object : p.select<NetworkInfo>())
+        {
+            u32 const id = object.get<NetworkInfo>().instance_id;
+            if(id == rider.unit)
+                unit = object.id();
+            else if(rider.vehicle != 0 && id == rider.vehicle)
+                vehicle = object.id();
+        }
+        auto* physics = unit ? p.get<ObjectPhysics>(unit) : nullptr;
+        if(!physics || (rider.vehicle != 0 && !vehicle))
+            return false;
+        physics->seated    = vehicle != 0;
+        physics->seated_in = vehicle;
+        physics->seat      = vehicle ? rider.seat : -1;
+        auto* anim = p.get<AnimationPlayback>(unit);
+        if(!anim)
+            return true;
+        /* Its own stance comes back when it gets out */
+        auto own = m_rider_stances.find(rider.unit);
+        if(!vehicle)
+        {
+            if(own != m_rider_stances.end())
+            {
+                anim->stance = own->second;
+                m_rider_stances.erase(own);
+            }
+        } else if(auto const* model = p.get<Model>(vehicle); model && model->origin_object)
+            if(auto vehi = model->origin_object->template data<blam::scn::unit>(m_map->magic); vehi.has_value())
+                if(auto seats = vehi.value()[0].seats.data(m_map->magic);
+                   seats.has_value() && rider.seat >= 0 && static_cast<size_t>(rider.seat) < seats.value().size())
+                {
+                    if(own == m_rider_stances.end())
+                        m_rider_stances[rider.unit] = anim->stance;
+                    anim->stance = std::string(seats.value()[rider.seat].label.str());
+                }
+        journal("net_rider", {{"unit", rider.unit}, {"vehicle", rider.vehicle}, {"stance", anim->stance}});
+        return true;
+    }
+
     /* What a player carries, by tag ids; nothing before the map gives it any */
     static EquipmentSync equipment_of(Proxy& p, u64 entity, PlayerInfo const& info)
     {
@@ -4082,6 +4178,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             break;
         }
+        case MessageBase::RiderSync:
+            for(auto const& rider : payload.values<RiderSync>())
+            {
+                std::erase_if(m_waiting_riders, [&](auto const& r) { return r.first.unit == rider.unit; });
+                if(!seat_rider(p, rider))
+                    m_waiting_riders.emplace_back(rider, 0);
+            }
+            break;
         case MessageBase::SeatSync: {
             for(auto const& seat : payload.values<SeatSync>())
             {
@@ -4659,6 +4763,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u32, bool>                      m_object_asleep;
     /* Last seat sent per player index; the client's own, to the server */
     std::map<u32, SeatSync>                  m_sent_seats;
+    std::map<u32, RiderSync>                 m_sent_riders; /* unit net id */
+    static constexpr u32                     max_rider_wait = 600; /* frames */
+    std::vector<std::pair<RiderSync, u32>>   m_waiting_riders;
+    std::map<u32, std::string>               m_rider_stances; /* unit net id: its stance on foot */
     /* Camera last sent per player entity, and what counts as moving */
     std::map<u64, std::pair<Vecf3, Quatf>>   m_sent_cameras;
     static constexpr f32                     camera_epsilon   = .002f;
