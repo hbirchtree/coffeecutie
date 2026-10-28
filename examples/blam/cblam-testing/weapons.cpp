@@ -1288,7 +1288,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr f32 pickup_reach = .8f;
 
     /* Ahead of the eye, clear of the body that fires */
-    static constexpr f32 muzzle_distance = .4f;
+    static constexpr f32 muzzle_distance = WeaponFireEvent::muzzle_distance;
     static constexpr f32 melee_time      = .8f;  /* s, a strike to the next */
     static constexpr f32 melee_reach     = 1.2f; /* wu, from the eye */
     static constexpr f32 melee_spread    = .15f; /* rad, the side rays */
