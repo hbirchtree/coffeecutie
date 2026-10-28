@@ -141,6 +141,8 @@ struct BodyCreationShape
     std::optional<VehicleDrive>       drive;
     /*! Hull children follow the entity's AnimationPlayback::pose */
     bool posed{false};
+    /*! Upright bodies: steepest ground they walk up, radians; 0 = any */
+    f32 max_slope{0.f};
     /*! Overrides the defaults below when set */
 };
 
