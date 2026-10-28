@@ -1,0 +1,61 @@
+{
+    "graphics": {
+        "window": {
+            "width": 640,
+            "height": 480,
+            "depth": 24
+        },
+        "software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 60
+    },
+    "comment": "Server side of the object census test, on session time. It spawns a warthog (the first dynamic net id, 2147483648) and a bush, then despawns the warthog; the client drops the spawn backlog and that despawn, so only the census can bring its objects back in line with the server's by dump_state.",
+    "time_base": "session",
+    "frame_delta": 33.3,
+    "events": [
+        {
+            "time": 1000,
+            "type": "render_param",
+            "debug_markers": true
+        },
+        {
+            "time": 1500,
+            "type": "spawn_object",
+            "tag": "vehicles\\warthog\\warthog",
+            "class": "vehi",
+            "position": [
+                99.0,
+                -141.0,
+                1.5
+            ],
+            "yaw": 45
+        },
+        {
+            "time": 2000,
+            "type": "spawn_object",
+            "tag": "scenery\\plants\\plant_broadleaf_short\\plant_broadleaf_short",
+            "class": "scen",
+            "position": [
+                95.5,
+                -141.5,
+                1.0
+            ]
+        },
+        {
+            "time": 11000,
+            "type": "despawn_object",
+            "net_id": 2147483648
+        },
+        {
+            "time": 17000,
+            "type": "dump_state"
+        }
+    ],
+    "end_time": 19000
+}
