@@ -288,8 +288,9 @@ struct alignas(8) EquipmentSync
     enum flags_t : u32
     {
         none      = 0x0,
-        reloading = 0x1,
-        throwing  = 0x2,
+        reloading   = 0x1,
+        throwing    = 0x2,
+        camouflaged = 0x4,
     };
 
     u32                player_idx{0};
