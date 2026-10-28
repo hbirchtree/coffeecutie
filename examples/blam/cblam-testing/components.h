@@ -1075,6 +1075,48 @@ struct PlayerInfo
     }
 };
 
+/*! A unit the scenario's encounters fight with: its squad, and what it is
+ *  up to. Inactive on units nobody placed through an encounter */
+struct Actor
+{
+    using value_type = Actor;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    enum class state_t : libc_types::u8
+    {
+        idle,     /*!< At its post, watching */
+        combat,   /*!< A target in mind: a firing position, bursts */
+        pursuit,  /*!< Lost its target: looks where it was last */
+        retreat,  /*!< Beaten back: a far position, no shooting */
+    };
+
+    libc_types::i16 encounter{-1};
+    libc_types::i16 squad{-1};
+    libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
+    bool            scripted{false}; /*!< A command list or recording has it */
+    state_t         state{state_t::idle};
+
+    libc_types::u64 target{0};
+    Vecf3           last_seen{};       /*!< Where the target was last in view */
+    libc_types::f32 seen_ago{1e9f};    /*!< Seconds since the target was in view */
+    Vecf3           post{};            /*!< Its starting location */
+    libc_types::i32 position{-1};      /*!< Firing position it goes for */
+    Vecf3           goal{};
+    bool            moving{false};
+    bool            covering{false};   /*!< Down behind a position the target cannot see */
+    libc_types::f32 look_in{0.f};      /*!< Until the next perception */
+    libc_types::f32 fire_in{0.f};      /*!< Until the next shot or burst */
+    libc_types::i32 burst_left{0};     /*!< Shots left in the burst */
+    libc_types::f32 stance_in{0.f};    /*!< Until the crouch or stand ends */
+    libc_types::f32 state_in{0.f};     /*!< Until a timed state ends */
+    libc_types::f32 reposition_in{0.f};
+
+    bool active() const
+    {
+        return encounter >= 0;
+    }
+};
+
 struct debounced_button_t
 {
     bool current{false};

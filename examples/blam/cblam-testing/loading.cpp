@@ -1950,7 +1950,10 @@ struct ResourceLoader
             recipe.components.push_back(compo::type_hash_v<Projectile>());
         bool const unit = object_tag.matches(blam::tag_class_t::bipd);
         if(unit)
+        {
             recipe.components.push_back(compo::type_hash_v<BipedStatus>());
+            recipe.components.push_back(compo::type_hash_v<Actor>());
+        }
         auto const* held = unit ? weapon_tag(spawn.held.tag_id) : nullptr;
         if(held)
             recipe.components.push_back(compo::type_hash_v<BipedEquipment>());
