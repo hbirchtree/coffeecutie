@@ -123,7 +123,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             {
                 m_debug_in = 3.f;
                 cDebug(
-                    "ai: {} state {} scripted {} may_fight {} target {} kind {}/{}/{} team {}",
+                    "ai: {} state {} scripted {} may_fight {} target {} kind {}/{}/{} team {} at {:.1f} {:.1f} squad {} pos {}",
                     ent.id(),
                     static_cast<int>(actor.state),
                     actor.scripted,
@@ -132,7 +132,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     kind != nullptr,
                     kind && kind->variant,
                     kind && kind->actor,
-                    actor.team);
+                    actor.team,
+                    model.position.x,
+                    model.position.y,
+                    actor.squad,
+                    actor.position);
             }
             if(!kind || !kind->variant || !kind->actor)
                 continue;
@@ -265,7 +269,17 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         switch(actor.state)
         {
         case state_t::idle:
-            move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
+            /* Migrated: to its new squad's guard positions, running */
+            if(actor.migrated && actor.position < 0)
+            {
+                actor.position = guard_position(p, actor, model, kind);
+                if(actor.position >= 0)
+                    actor.goal = position_of(kind, actor.position);
+            }
+            if(actor.migrated && actor.position >= 0)
+                move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
+            else
+                move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
             break;
         case state_t::combat: {
             if(!alive(p, actor.target))
@@ -753,14 +767,42 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return best;
     }
 
+    /* Out of a fight: the nearest free position of its squad's guard
+     * groups, or of its fighting groups when it has none */
+    i32 guard_position(Proxy& p, Actor const& actor, Model const& model, kind_t const& kind)
+    {
+        auto positions = kind.encounter->firing_positions.data(*s_magic);
+        if(!positions.has_value())
+            return -1;
+        bool const hold   = defending(p, actor, kind);
+        u32        groups = hold ? kind.squad->defending_guard : kind.squad->attacking_guard;
+        if(groups == 0)
+            groups = hold ? kind.squad->defending : kind.squad->attacking;
+        i32 best    = -1;
+        f32 nearest = std::numeric_limits<f32>::max();
+        for(size_t i = 0; i < positions.value().size(); i++)
+        {
+            auto const& fp = positions.value()[i];
+            if(groups != 0 && fp.group < 32 && ((groups >> fp.group) & 1u) == 0)
+                continue;
+            if(taken(p, actor, kind, static_cast<i32>(i)))
+                continue;
+            if(f32 const d = glm::distance(fp.position, model.position); d < nearest)
+            {
+                nearest = d;
+                best    = static_cast<i32>(i);
+            }
+        }
+        return best;
+    }
+
     /* A squad mate already heading there */
     bool taken(Proxy& p, Actor const& actor, kind_t const&, i32 index)
     {
         for(auto other : p.template select<Actor>())
         {
             auto const& theirs = other.template get<Actor>();
-            if(&theirs != &actor && theirs.encounter == actor.encounter && theirs.position == index &&
-               theirs.state != state_t::idle)
+            if(&theirs != &actor && theirs.encounter == actor.encounter && theirs.position == index)
                 return true;
         }
         return false;

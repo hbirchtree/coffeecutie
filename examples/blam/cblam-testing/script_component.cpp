@@ -1180,12 +1180,27 @@ struct BlamScript
                 return log(fmt::format("ai_migrate: no squad {}", path)), value_t{};
             auto const from = lowered(text_of(arg(0)));
             if(std::getenv("BLAM_DEBUG_AI"))
+            {
                 log(fmt::format("ai_migrate: {} from {} to {}", ai_actors(p, from).size(), from, path));
+                auto const& e  = m_scenario->ai.encounters.data(m_magic).value()[enc];
+                auto const& s  = e.squads.data(m_magic).value()[sq];
+                auto        fp = e.firing_positions.data(m_magic);
+                std::map<u32, u32> per_group;
+                if(fp.has_value())
+                    for(auto const& f : fp.value())
+                        per_group[f.group]++;
+                log(fmt::format(
+                    "  squad {:x} {:x} {:x} / {:x} {:x} {:x} positions by group {}",
+                    s.attacking, s.attacking_search, s.attacking_guard,
+                    s.defending, s.defending_search, s.defending_guard,
+                    per_group));
+            }
             for(u64 id : ai_actors(p, from))
                 if(auto* actor = p.template get<Actor>(id))
                 {
                     actor->encounter = enc;
                     actor->squad     = sq;
+                    actor->migrated  = true;
                     actor->position  = -1;
                     actor->order     = Actor::order_t::none;
                 }
