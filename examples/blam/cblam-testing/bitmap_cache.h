@@ -6,7 +6,7 @@
 #include "graphics_api.h"
 
 #include <blam/volta/blam_p8_palette.h>
-#include <blam/volta/blam_swizzle.h>
+#include <blam/common/swizzle.h>
 #include <coffee/graphics/apis/gleam/rhi_texture_atlas.h>
 
 using BitmapManifest =
@@ -324,13 +324,14 @@ struct BitmapCache
                bpp != 0)
             {
                 linear.resize(mip_data.size_bytes());
-                if(!blam::swizzle::deswizzle_bytes(
+                if(!blam::swizzle::deswizzle_level(
                        semantic::Span<const u8>(mip_data.data(), mip_data.size_bytes()),
                        semantic::Span<u8>(linear.data(), linear.size()),
-                       static_cast<u32>(size.x),
-                       static_cast<u32>(size.y),
+                       static_cast<u32>(img.image.mip->isize.x),
+                       static_cast<u32>(img.image.mip->isize.y),
+                       static_cast<u32>(std::max<i16>(img.image.mip->depth, 1)),
                        bpp,
-                       depth))
+                       mipmap))
                     linear.clear();
             }
             Veci3 const dst_size{size.x, size.y, static_cast<i32>(depth)};

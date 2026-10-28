@@ -17,7 +17,7 @@
 #include <blam/dimeter/geometry.h>
 #include <blam/dimeter/map.h>
 #include <blam/dimeter/sound.h>
-#include <blam/volta/blam_swizzle.h>
+#include <blam/common/swizzle.h>
 #include <coffee/core/coffee_args.h>
 #include <cxxopts.hpp>
 
