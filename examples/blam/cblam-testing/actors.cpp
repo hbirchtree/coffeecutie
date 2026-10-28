@@ -728,7 +728,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         for(size_t i = 0; i < positions.value().size(); i++)
         {
             auto const& fp = positions.value()[i];
-            if(groups != 0 && fp.unknown_idx < 32 && ((groups >> fp.unknown_idx) & 1u) == 0)
+            if(groups != 0 && fp.group < 32 && ((groups >> fp.group) & 1u) == 0)
                 continue;
             if(taken(p, actor, kind, static_cast<i32>(i)))
                 continue;
