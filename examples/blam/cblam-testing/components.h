@@ -1046,6 +1046,12 @@ struct PlayerInfo
         f32 vision{0.f};
     } powerups;
 
+    /*! Double speed scales walking, firing and reloading */
+    f32 speed_scale() const
+    {
+        return powerups.speed > 0.f ? 2.f : 1.f;
+    }
+
     bool is_remote() const
     {
         return !remote.empty();
