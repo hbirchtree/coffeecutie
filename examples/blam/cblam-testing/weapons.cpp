@@ -313,14 +313,15 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     equip.equipment.begin(), equip.equipment.end(), [tag](auto const& kind) {
                         return kind.tag == tag && kind.left < kind.most;
                     });
-                if(!grenade && !tag->matches(blam::tag_class_t::weap))
+                bool const powerup = !grenade && wanted_powerup(p, ent.id(), *tag, files);
+                if(!grenade && !powerup && !tag->matches(blam::tag_class_t::weap))
                     continue;
                 /* Items rest against the body, below its middle */
                 Vecf3 const to = model.position - body;
                 if(glm::length(Vecf2(to)) > pickup_reach ||
                    std::abs(to.z) > info.biped.height)
                     continue;
-                bool const carried = grenade || equip.weapons[0].tag == tag ||
+                bool const carried = grenade || powerup || equip.weapons[0].tag == tag ||
                                      equip.weapons[1].tag == tag;
                 if(!carried && equip.weapons[1].weapon && !pressed)
                     continue;
@@ -339,6 +340,33 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 game.inject(ev, &equip_ev);
                 break;
             }
+        }
+    }
+
+    /* A powerup is taken unless it would do nothing: health at full health,
+     * an over shield already full */
+    static bool wanted_powerup(
+        Proxy& p, u64 player, blam::tag_t const& tag, BlamFiles<halo_version> const& files)
+    {
+        using powerup_t = blam::scn::equipment::powerup_type_t;
+        if(!tag.matches(blam::tag_class_t::eqip))
+            return false;
+        auto eqip = tag.template data<blam::scn::equipment>(files.container.magic);
+        if(!eqip.has_value())
+            return false;
+        auto const* status = p.template get<BipedStatus>(player);
+        switch(eqip.value()[0].powerup_type)
+        {
+        case powerup_t::health:
+            return status && status->body < 1.f;
+        case powerup_t::over_shield:
+            return status && status->maximum_shield() > 0.f && status->shield < BipedStatus::over_shield;
+        case powerup_t::double_speed:
+        case powerup_t::active_camouflage:
+        case powerup_t::full_spectrum_vision:
+            return true;
+        default:
+            return false;
         }
     }
 

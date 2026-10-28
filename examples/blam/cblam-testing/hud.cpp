@@ -262,7 +262,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         u32   now   = 0;
         if(status.shield > watch.shield + 1e-4f && watch.shield < 1.f)
             now |= static_cast<u32>(latch_t::shield_recharging);
-        if(status.shield < watch.shield - 1e-4f)
+        /* Struck, not an over shield running down */
+        if(status.shield < watch.shield - 1e-4f && status.recent_shield > 0.f)
             now |= static_cast<u32>(latch_t::shield_damaged);
         if(status.shield <= 0.f)
             now |= static_cast<u32>(latch_t::shield_empty) |
@@ -290,6 +291,24 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         }
     }
 
+    /* An over shield fills the shield meter again in the overcharge colours,
+     * over a full one; the stock HUDs leave those blank, so the meter's
+     * full and flash colours stand in */
+    void overcharge(unit_hud_interface const& hud, f32 value)
+    {
+        auto const& m        = hud.shield_panel_meter;
+        bool const  authored = !blank(hud.overcharge_minimum_color) ||
+                              !blank(hud.overcharge_maximum_color);
+        Vecf4 const low  = color_of(authored ? hud.overcharge_minimum_color : m.color_at_maximum);
+        Vecf4 const high = color_of(authored ? hud.overcharge_maximum_color : m.flash_color);
+        Vecf4 const below = color_of(
+            blank(hud.overcharge_empty_color) ? m.color_at_maximum : hud.overcharge_empty_color);
+        value          = std::clamp(value, 0.f, 1.f);
+        f32 const low_fill = m.minimum_meter_value / 255.f;
+        push(hud.anchor, m, m.meter_bitmap, m.sequence_index, glm::mix(low, high, value),
+             low_fill + (1.f - low_fill) * value, below);
+    }
+
     void unit_hud(
         Proxy& p, u64 id, unit_hud_interface const& hud, BipedStatus const& status)
     {
@@ -298,7 +317,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         warning_sounds(p, id, hud, status);
         background(hud.anchor, hud.unit_hud_background);
         background(hud.anchor, hud.shield_panel_background);
-        meter(hud.anchor, hud.shield_panel_meter, shield);
+        if(shield > 1.f)
+            overcharge(hud, (shield - 1.f) / (BipedStatus::over_shield - 1.f));
+        else
+            meter(hud.anchor, hud.shield_panel_meter, shield);
         background(hud.anchor, hud.health_panel_background);
         meter(hud.anchor, hud.health_panel_meter, health);
         /* The motion sensor keeps to the bottom left */

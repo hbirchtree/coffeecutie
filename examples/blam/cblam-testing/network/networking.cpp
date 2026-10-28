@@ -2827,7 +2827,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         for(auto unit : p.select<BipedStatus>())
         {
             auto const& status = unit.get<BipedStatus>();
-            if(status.dead || status.body < 1.f || status.shield < 1.f)
+            if(status.dead || status.body < 1.f || status.shield != 1.f)
                 if(auto wire = m_combat.vitality_of(p, unit.id()))
                     hurt.push_back(*wire);
         }
