@@ -410,6 +410,13 @@ struct ResourceLoader
 
             compo::EntityRecipe submodel = shared_recipes::submodel;
             submodel.tags = submodel.tags | (ent.tags() & SubObjectMask);
+            /* The object's overlay coats this level too */
+            blam::scn::object const* object = nullptr;
+            if(model.origin_object)
+                if(auto data = model.origin_object->template data<blam::scn::object>(
+                       p.template subsystem<BlamFiles<Ver>>().container.magic);
+                   data.has_value())
+                    object = &data.value()[0];
             build_submodels(
                 p,
                 ent,
@@ -417,7 +424,8 @@ struct ResourceLoader
                 item,
                 submodel,
                 render_layer::world,
-                static_cast<u8>(1 << lod));
+                static_cast<u8>(1 << lod),
+                object);
         }
     }
 
