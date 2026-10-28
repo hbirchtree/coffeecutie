@@ -26,6 +26,7 @@
 #include "impact_sounds.h"
 #include "checkpoint.h"
 #include "game_mode.h"
+#include "actors.h"
 #include "damage.h"
 #include "devices.h"
 #include "projectiles.h"
@@ -235,6 +236,7 @@ i32 blam_main()
 
             e.register_subsystem_inplace<net::CurlNetStats>(
                 net::create_curl_context());
+            e.register_component_inplace<Actor>();
             e.register_component_inplace<AnimationPlayback>();
             e.register_component_inplace<Attachment>();
             e.register_component_inplace<BipedEquipment>();
@@ -321,6 +323,7 @@ i32 blam_main()
             alloc_weapons(e);
             alloc_hud(e);
             alloc_scripting(e);
+            alloc_actors(e);
 #if defined(BLAM_DIMETER) || defined(BLAM_ELEGY)
             world::dispatch_map_loads(e);
 #endif

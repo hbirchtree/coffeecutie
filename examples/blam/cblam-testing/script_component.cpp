@@ -59,6 +59,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
         ObjectPhysics,
         BipedStatus,
         DeviceState,
+        Actor,
         const BipedEquipment>,
     type_list_t<
         GameEventBus,
@@ -141,6 +142,7 @@ struct BlamScript
         m_attached.clear();
         m_hovering.clear();
         m_spawning.clear();
+        m_actor_slots.clear();
         m_despawning.clear();
         m_recreate.clear();
         m_deferred.clear();
@@ -207,7 +209,10 @@ struct BlamScript
             settle_despawns(p);
             run_deferred(p);
             std::erase_if(m_spawning, [this, &p](u32 net_id) {
-                return live_entity(p, net_id) != 0;
+                u64 const id = live_entity(p, net_id);
+                if(id)
+                    enlist(p, id, net_id);
+                return id != 0;
             });
             m_vm.tick();
             play_recordings(p);
@@ -292,6 +297,7 @@ struct BlamScript
         m_walking.clear();
         m_deferred.clear();
         m_spawning.clear();
+        m_actor_slots.clear();
         m_despawning.clear();
         m_recreate.clear();
         m_queued_recordings.clear();
@@ -1966,11 +1972,15 @@ struct BlamScript
     void start_commands(Proxy& p, u64 id, blam::scn::ai::command_list const& list)
     {
         m_commands[id] = {.list = &list};
+        if(auto* actor = p.template get<Actor>(id))
+            actor->scripted = true;
         carry(p, id, true);
     }
 
     void stop_commands(Proxy& p, u64 id)
     {
+        if(auto* actor = p.template get<Actor>(id))
+            actor->scripted = false;
         if(m_commands.erase(id) && !playing_recording(id) && !m_hovering.contains(id))
             stand(p, id);
     }
@@ -1988,6 +1998,8 @@ struct BlamScript
             auto  pts   = it->second.list->points.data(m_magic);
             if(!model || !cmds.has_value())
             {
+                if(auto* actor = p.template get<Actor>(it->first))
+                    actor->scripted = false;
                 it = m_commands.erase(it);
                 continue;
             }
@@ -2667,10 +2679,14 @@ struct BlamScript
                                ? std::string_view{}
                                : std::string_view(path).substr(slash + 1);
         blam::scn::ai::encounter const* encounter = nullptr;
+        i16                             encounter_idx = -1;
         if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
-            for(auto const& e : list.value())
-                if(lowered(e.name.str()) == lowered(name))
-                    encounter = &e;
+            for(size_t i = 0; i < list.value().size(); i++)
+                if(lowered(list.value()[i].name.str()) == lowered(name))
+                {
+                    encounter     = &list.value()[i];
+                    encounter_idx = static_cast<i16>(i);
+                }
         if(!encounter)
             return log(fmt::format("ai_place: no encounter {}", path));
         log(fmt::format("ai_place: {}", path));
@@ -2678,8 +2694,9 @@ struct BlamScript
         auto palette = m_scenario->ai.actor_palette.data(m_magic);
         if(!squads.has_value() || !palette.has_value())
             return;
-        for(auto const& squad : squads.value())
+        for(size_t si = 0; si < squads.value().size(); si++)
         {
+            auto const& squad = squads.value()[si];
             if(!which.empty() && lowered(squad.name.str()) != lowered(which))
                 continue;
             auto starts = squad.start_locations.data(m_magic);
@@ -2709,6 +2726,11 @@ struct BlamScript
                 };
                 p.template subsystem<GameEventBus>().inject(ev, &spawn);
                 m_spawning.insert(net_id);
+                m_actor_slots[net_id] = {
+                    .encounter = encounter_idx,
+                    .squad     = static_cast<i16>(si),
+                    .team      = static_cast<u16>(encounter->team_index),
+                    .post      = start.position};
                 /* Both the encounter and its squad name it */
                 m_actors[lowered(name)].push_back(net_id);
                 m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
@@ -2745,6 +2767,29 @@ struct BlamScript
         default:
             return "stand";
         }
+    }
+
+    /* A placed unit is told its squad once it exists, and fights by it */
+    void enlist(Proxy& p, u64 id, u32 net_id)
+    {
+        auto slot = m_actor_slots.find(net_id);
+        if(slot == m_actor_slots.end())
+            return;
+        if(auto* actor = p.template get<Actor>(id))
+        {
+            using team_t = blam::scn::unit::team_t;
+            actor->encounter = slot->second.encounter;
+            actor->squad     = slot->second.squad;
+            actor->post      = slot->second.post;
+            actor->team      = slot->second.team;
+            /* The encounter's default is the unit tag's own team */
+            if(actor->team == 0)
+                if(auto const* model = p.template get<Model>(id); model && model->origin_object)
+                    if(auto unit = model->origin_object->template data<blam::scn::unit>(m_magic);
+                       unit.has_value())
+                        actor->team = static_cast<u16>(unit.value()[0].default_team);
+        }
+        m_actor_slots.erase(slot);
     }
 
     blam::tagref_t const* unit_of(blam::tagref_t const& variant_ref) const
@@ -2927,6 +2972,15 @@ struct BlamScript
     std::set<u32>                           m_recreate;
     std::map<u32, i32>                      m_queued_recordings; /* spawning net id: its recording's length */
     std::map<std::tuple<blam::antr::header const*, std::string, std::string>, Vecf2> m_walk_speeds;
+    /* Squads of the units ai_place is spawning, by net id */
+    struct actor_slot_t
+    {
+        i16   encounter{-1};
+        i16   squad{-1};
+        u16   team{0};
+        Vecf3 post{};
+    };
+    std::map<u32, actor_slot_t> m_actor_slots;
     action_tests_t                          m_tests;
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
     std::set<u32>                           m_loops;
