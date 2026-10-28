@@ -83,6 +83,14 @@ struct NetworkState : compo::SubsystemBase
         bool operator==(Simulation const&) const = default;
     } simulation;
 
+    /*! Test fault injection: server messages a client drops on arrival,
+     *  leaving the object census something to put right */
+    struct Faults
+    {
+        libc_types::u32 drop_spawns{0};
+        libc_types::u32 drop_despawns{0};
+    } faults;
+
     std::optional<std::chrono::steady_clock::duration> server_clock_offset;
     std::chrono::microseconds server_clock_rtt{};      /*!< Best in window */
     std::chrono::microseconds server_clock_rtt_last{}; /*!< Latest sample */
