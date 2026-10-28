@@ -559,8 +559,9 @@ struct PlayerController
         auto const&  biped = info.biped;
         Vecf2 const& move  = input.intent.move;
         f32 const    along = move.x >= 0.f ? biped.run_speed : biped.back_speed;
-        Vecf3 const  dir   = planar(basis.forward) * move.x * along +
-                          planar(basis.right) * move.y * biped.strafe_speed;
+        Vecf3 const  dir   = (planar(basis.forward) * move.x * along +
+                           planar(basis.right) * move.y * biped.strafe_speed) *
+                          info.speed_scale();
 
         auto const* data     = p.get<PhysicsData>(id);
         bool const  grounded = data && data->enabled && data->grounded;

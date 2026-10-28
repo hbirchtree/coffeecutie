@@ -1250,6 +1250,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             Matf3 const matrix = glm::translate(Matf3(1), top_left) *
                                  glm::scale(Matf3(1), Vecf2(size.x / view.width, -size.y / HudScene::height));
             u32 const first = static_cast<u32>(data.vertex_data.size());
+            if(view.tint.a > 0.f)
+                push_solid(data, {0.f, 0.f}, {view.width, HudScene::height}, view.tint);
             for(auto const& sprite : view.sprites)
             {
                 if(data.instance_data.size() >= m_instance_slots)

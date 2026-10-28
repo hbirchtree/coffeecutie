@@ -728,6 +728,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto const* net    = p.template get<NetworkInfo>(id);
             auto const* equip  = p.template get<BipedEquipment>(id);
             auto const* status = p.template get<BipedStatus>(id);
+            /* Full spectrum vision, fading out over its last second */
+            if(info && info->powerups.vision > 0.f)
+                out.tint = vision_tint * std::min(info->powerups.vision, 1.f);
             if(!info || !cam || !net || !equip || !status || !cinematic.show_hud ||
                cam->cinematic || !biped_shown(*info, *cam, *net) || !info->mode.physics ||
                status->dead)
@@ -850,6 +853,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     blam::tag_index_view<halo_version>   m_index;
     bool                                 m_multiplayer{false};
     std::array<blam::tag_t const*, 2>    m_unit_huds{}; /*!< Full, split screen */
+    /* Dims the view and lifts it green */
+    static inline Vecf4 const vision_tint{.04f, .22f, .06f, .4f};
     struct warning_t
     {
         f32 shield{1.f};
