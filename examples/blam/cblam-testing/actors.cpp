@@ -208,6 +208,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actr_t const& actr = *kind.actor;
         actv_t const& actv = *kind.variant;
+        if(asleep(p, id, actor, anim, status, actr))
+            return;
         actor.seen_ago += dt;
         actor.look_in -= dt;
         actor.fire_in -= dt;
@@ -372,6 +374,49 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 enter(actor, alive(p, actor.target) ? state_t::combat : state_t::idle);
             break;
         }
+    }
+
+    /* Placed asleep, it lies still and holds fire until it is hurt or roused
+     * by gunfire or its squad; a sleeper hears but does not see */
+    bool asleep(
+        Proxy&             p,
+        u64                id,
+        Actor&             actor,
+        AnimationPlayback& anim,
+        BipedStatus const& status,
+        actr_t const&      actr)
+    {
+        if(anim.stance != "asleep")
+        {
+            actor.rest = -1.f;
+            return false;
+        }
+        f32 const health = status.body + status.shield;
+        if(actor.rest < 0.f)
+        {
+            actor.rest = health;
+            if(std::getenv("BLAM_DEBUG_AI"))
+                cDebug("ai: {} asleep", id);
+        }
+        bool const woken = actor.target != 0 || actor.state != state_t::idle || health < actor.rest;
+        if(!woken)
+        {
+            stop(p, id, actor);
+            return true;
+        }
+        if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug(
+                "ai: {} wakes: target {} state {} hurt {}",
+                id,
+                actor.target,
+                static_cast<int>(actor.state),
+                health < actor.rest);
+        anim.stance = "stand";
+        actor.rest  = -1.f;
+        actor.fire_in = std::max(actor.fire_in, 1.f); /* getting up */
+        if(actor.target)
+            alert_squad(p, id, actor, actr);
+        return false;
     }
 
     void enter(Actor& actor, state_t state)
