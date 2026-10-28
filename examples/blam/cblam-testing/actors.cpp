@@ -2,6 +2,7 @@
 #include "blam_files.h"
 #include "components.h"
 #include "game_events.h"
+#include "model_markers.h"
 #include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
@@ -194,7 +195,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 arrive_radius   = .35f; /* wu */
     static constexpr f32 reposition_time = 4.f;  /* s between picking positions */
     static constexpr f32 default_speed   = 2.f;  /* wu/s, a graph without a stride */
-    static constexpr f32 eye_height      = .6f;  /* wu above the feet */
+    static constexpr f32 eye_height      = .6f;  /* wu above the feet, a biped without a camera height */
+    static constexpr std::string_view trigger_marker = "primary trigger";
 
     void think(
         Proxy&               p,
@@ -444,8 +446,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             forward = glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f};
         else
             forward = target->rotation * Vecf3{1, 0, 0};
-        Vecf3 const eye = target->position + Vecf3{0, 0, eye_height};
-        Vecf3 const to  = model.position + Vecf3{0, 0, eye_height * .8f} - eye;
+        Vecf3 const eye = eye_of(p, actor.target);
+        Vecf3 const to  = model.position + chest_of(p, self) - eye;
         f32 const   d   = glm::length(to);
         if(d < 1e-3f || glm::dot(to / d, glm::normalize(forward)) < std::cos(glm::radians(6.f)))
             return false;
@@ -627,17 +629,63 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
     /* ---- Perception ---- */
 
+    /* Where a unit looks from, as a player's camera sits: its biped's
+     * camera height above its feet, lower when crouched */
+    Vecf3 eye_of(Proxy& p, u64 id)
+    {
+        auto const* model = p.template get<Model>(id);
+        if(!model)
+            return {};
+        if(auto const* cam = p.template get<PlayerCamera>(id); cam && p.template get<PlayerInfo>(id))
+            return cam->camera.position;
+        f32 height = eye_height;
+        if(model->origin_object)
+            if(auto biped = model->origin_object->template data<blam::scn::biped>(*s_magic); biped.has_value())
+            {
+                auto const* anim     = p.template get<AnimationPlayback>(id);
+                bool const  crouched = anim && anim->stance == "crouch";
+                f32 const   tag = crouched ? biped.value()[0].crouching_camera_height
+                                           : biped.value()[0].standing_camera_height;
+                if(tag > 0.f)
+                    height = tag;
+            }
+        return model->position + Vecf3{0, 0, height};
+    }
+
+    /* What is aimed at on a unit, above its feet: its chest */
+    Vecf3 chest_of(Proxy& p, u64 id)
+    {
+        auto const* model = p.template get<Model>(id);
+        return model ? (eye_of(p, id) - model->position) * .8f : Vecf3{0, 0, eye_height * .8f};
+    }
+
+    /* The held gun's muzzle as drawn in its hand */
+    std::optional<Vecf3> trigger_of(Proxy& p, BipedEquipment::weapon_t const& gun)
+    {
+        auto const* model = gun.held ? p.template get<Model>(gun.held) : nullptr;
+        if(!model || !model->tag)
+            return std::nullopt;
+        auto marker = bind_marker_node(*model->tag, trigger_marker, *s_magic);
+        if(!marker)
+            return std::nullopt;
+        Matf4       at   = model->transform;
+        auto const* anim = p.template get<AnimationPlayback>(gun.held);
+        if(anim && marker->node >= 0 && static_cast<size_t>(marker->node) < anim->pose.size())
+            at = at * anim->pose[static_cast<size_t>(marker->node)];
+        return Vecf3((at * marker->transform)[3]);
+    }
+
     /* The nearest enemy in the actor's vision, with a clear line to it */
     u64 look(Proxy& p, u64 id, Actor const& actor, Model const& model, actr_t const& actr)
     {
-        Vecf3 const eye     = model.position + Vecf3{0, 0, eye_height};
+        Vecf3 const eye     = eye_of(p, id);
         Vecf3 const forward = model.rotation * Vecf3{1, 0, 0};
         f32 const   reach   = actr.perception.max_vision_dist > 0.f ? actr.perception.max_vision_dist : 30.f;
         f32 const   half    = actr.perception.max_vision > 0.f ? actr.perception.max_vision * .5f : glm::radians(90.f);
         u64   best     = 0;
         f32   best_d   = reach;
         auto  consider = [&](u64 other, Model const& target) {
-            Vecf3 const to = target.position + Vecf3{0, 0, eye_height * .8f} - eye;
+            Vecf3 const to = target.position + chest_of(p, other) - eye;
             f32 const   d  = glm::length(to);
             if(d >= best_d || d < 1e-3f)
                 return;
@@ -961,11 +1009,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             f32 const seconds = uniform(actv.burst_duration, 1.f);
             actor.burst_left  = std::max(1, static_cast<i32>(seconds * rate));
         }
-        Vecf3 const offset = kind.actor->perception.stand_gun_offset;
-        Vecf3 const muzzle = model.position + model.rotation * offset +
-                             (glm::length(offset) < 1e-3f ? Vecf3{0, 0, eye_height} : Vecf3{});
-        Vecf3 const aim = actor.last_seen + Vecf3{0, 0, eye_height * .7f};
-        Vecf3       dir = glm::normalize(aim - muzzle);
+        /* As a player's: from the gun's muzzle in its hand, at what it looks at */
+        Vecf3 const eye    = eye_of(p, id);
+        Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
+        Vecf3 const muzzle = trigger_of(p, *gun).value_or(
+            eye + glm::normalize(aim - eye) * WeaponFireEvent::muzzle_distance);
+        Vecf3       dir    = glm::normalize(aim - muzzle);
         /* Its aim wanders by the variant's error */
         if(actv.projectile_error > 0.f)
         {
@@ -1007,7 +1056,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(!gun || !gun->tag)
             return false;
         actor.melee_in = 1.5f;
-        Vecf3 const eye = model.position + Vecf3{0, 0, eye_height};
+        Vecf3 const eye = eye_of(p, id);
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
             .weapon     = gun->tag->as_ref(),
@@ -1015,7 +1064,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .player_idx = ObjectHitEvent::no_player,
             .melee      = true,
             .position   = eye,
-            .direction  = glm::normalize(actor.last_seen + Vecf3{0, 0, eye_height * .7f} - eye),
+            .direction  = glm::normalize(actor.last_seen + chest_of(p, actor.target) - eye),
             .target     = actor.target,
         };
         p.template subsystem<GameEventBus>().inject(ev, &shot);
@@ -1046,7 +1095,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(!projectile)
             return;
         actor.grenades--;
-        Vecf3 const eye  = model.position + Vecf3{0, 0, eye_height};
+        Vecf3 const eye  = eye_of(p, id);
         Vecf3       flat = actor.last_seen - eye;
         f32 const   len  = glm::length(flat);
         if(len < 1e-3f)
@@ -1060,7 +1109,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .player_idx = ObjectHitEvent::no_player,
             .seed       = static_cast<u32>(m_random()),
             .thrown     = true,
-            .position   = eye,
+            .position   = eye + dir * WeaponFireEvent::muzzle_distance,
             .direction  = dir,
             .target     = actor.target,
         };
