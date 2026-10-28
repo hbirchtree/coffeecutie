@@ -1090,10 +1090,25 @@ struct Actor
         retreat,  /*!< Beaten back: a far position, no shooting */
     };
 
+    enum class order_t : libc_types::u8
+    {
+        none,    /*!< Its platoon decides */
+        attack,  /*!< ai_attack: the attacking positions */
+        defend,  /*!< ai_defend: the defending positions */
+        retreat, /*!< ai_retreat: away from its target, no shooting */
+    };
+
     libc_types::i16 encounter{-1};
     libc_types::i16 squad{-1};
     libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
     bool            scripted{false}; /*!< A command list or recording has it */
+    bool            may_fight{false}; /*!< Its command list lets it break off for an enemy */
+    bool            release{false};   /*!< It saw one: the list is to let it go */
+    bool            braindead{false}; /*!< ai_braindead: stands and does nothing */
+    bool            blind{false};
+    bool            deaf{false};
+    bool            follow_players{false}; /*!< ai_follow_target_players: always knows where they are */
+    order_t         order{order_t::none};
     state_t         state{state_t::idle};
 
     libc_types::u64 target{0};
