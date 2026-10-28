@@ -256,6 +256,7 @@ struct ResourceLoader
 
         reconcile_player_bipeds(p, files);
         disarm_npcs(p);
+        rearm_npcs(p, files);
         reconcile_first_person(p, files);
 
         now = t;
@@ -3082,6 +3083,24 @@ struct ResourceLoader
             it = armed_npcs.erase(it);
         }
         despawn_first_person(p, doomed);
+    }
+
+    /* An NPC handed back a weapon tag alone, as a checkpoint does, takes it
+     * in hand */
+    void rearm_npcs(Proxy& p, BlamFiles<Ver> const& files)
+    {
+        std::vector<std::pair<u64, blam::tag_t const*>> unarmed;
+        for(auto unit : p.template select<BipedEquipment, BipedStatus>())
+        {
+            auto const& [equip, status] = unit.components();
+            auto const& weapon          = equip.weapons[0];
+            if(weapon.tag && !weapon.weapon && !status.dead &&
+               !p.template get<PlayerInfo>(unit.id()))
+                unarmed.emplace_back(unit.id(), weapon.tag);
+        }
+        for(auto const& [unit, tag] : unarmed)
+            if(auto const* model = p.template get<Model>(unit))
+                arm(p, unit, *tag, *model, files);
     }
 
     /* Thrown down ahead of the feet, through the usual spawn path */

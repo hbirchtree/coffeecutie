@@ -53,6 +53,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
         Vecf3          linear_velocity{};
         Vecf3          angular_velocity{};
         std::optional<BipedStatus> status;
+        blam::tagref_t             held{}; /*!< A unit's weapon in hand */
     };
 
     struct player_t
@@ -128,6 +129,9 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             }
             if(auto const* status = p.template get<BipedStatus>(entity.id()))
                 object.status = *status;
+            if(auto const* equip = p.template get<BipedEquipment>(entity.id());
+               equip && equip->weapons[0].tag)
+                object.held = equip->weapons[0].tag->as_ref();
             out.objects[net.instance_id] = object;
         }
         for(auto entity : p.template select<PlayerInfo, PlayerCamera, NetworkInfo, BipedStatus>())
@@ -205,6 +209,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 .rotation     = object.rotation,
                 .net_id       = net_id,
                 .server_owned = true,
+                .held         = object.held,
             };
             game.inject(ev, &spawn);
             m_pending[net_id] = pending_frames;
@@ -323,6 +328,15 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 .dead   = status->dead,
             };
             p.template subsystem<GameEventBus>().inject(ev, &vitality);
+        }
+        /* The dead let go of their weapon; the loader arms it again */
+        if(auto* equip = p.template get<BipedEquipment>(entity);
+           equip && object.held.valid() && !equip->weapons[0].tag)
+        {
+            blam::tag_index_view<halo_version> index(
+                p.template subsystem<BlamFiles<halo_version>>().container);
+            if(auto tag = index.find(object.held.tag_id); tag != index.end())
+                equip->weapons[0] = {.tag = &(*tag)};
         }
     }
 
