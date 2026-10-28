@@ -53,6 +53,11 @@ struct transcode_options
     progress_fn   progress;
 };
 
+/* Linear copy of an Xbox Morton-swizzled image, every mip level, cube faces
+ * and volume slices included; nothing for formats the Xbox leaves linear */
+std::optional<std::vector<libc_types::u8>> deswizzle_image(
+    blam::bitm::image_t const& img, gsl::span<libc_types::u8 const> px);
+
 struct map_transcode_result
 {
     bool        ok{false};

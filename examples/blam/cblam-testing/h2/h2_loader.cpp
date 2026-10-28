@@ -29,7 +29,7 @@
 #include <blam/dimeter/scenario.h>
 #include <blam/dimeter/shader.h>
 #include <blam/common/portal_walk.h>
-#include <blam/volta/blam_swizzle.h>
+#include <blam/common/swizzle.h>
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>

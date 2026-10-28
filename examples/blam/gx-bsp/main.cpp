@@ -38,7 +38,7 @@
 #include <blam/volta/blam_scenario.h>
 #include <blam/volta/blam_shaders.h>
 #include <blam/volta/blam_stl.h>
-#include <blam/volta/blam_swizzle.h>
+#include <blam/common/swizzle.h>
 #include <blam/volta/blam_unit.h>
 
 #include <glm/glm.hpp>
