@@ -524,6 +524,8 @@ struct UnitVitalityEvent
     libc_types::u32      player{ObjectHitEvent::no_player};
     libc_types::f32      body{1.f};
     libc_types::f32      shield{1.f};
+    /*! Raised Local by another than the damage system (a script, a carrier
+     *  at its target), a death the authority carries out */
     bool                 dead{false};
     bool                 violent{false}; /*!< Killed hard: a loud last cry */
     /*! Brought back: its owner moves it here, facing this way */
@@ -532,6 +534,7 @@ struct UnitVitalityEvent
     bool                 arrived{false}; /*!< With the respawn effect */
     bool                 fresh{false};   /*!< A respawn, not a checkpoint: starts over equipped */
     libc_types::f32      overcharge_decay{0.f}; /*!< BipedStatus' */
+    bool destroyed{false}; /*!< Dead and gone: its coll's destroyed effect plays */
 };
 
 /*! A player's seat came back into the game after leaving it; it waits to
