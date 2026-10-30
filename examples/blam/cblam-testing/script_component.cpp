@@ -418,6 +418,7 @@ struct BlamScript
         auto& state     = p.template subsystem<CinematicState>();
         state.fade      = {};
         state.title.reset();
+        state.help     = {};
         m_first_person = 0;
         state.letterbox = false;
         state.playing   = false;
@@ -840,6 +841,19 @@ struct BlamScript
             return {};
         case op::show_hud:
             p.template subsystem<CinematicState>().show_hud = arg(0).truthy();
+            return {};
+        case op::show_hud_help_text:
+            p.template subsystem<CinematicState>().help.shown = arg(0).truthy();
+            return {};
+        case op::hud_set_help_text: {
+            auto& help   = p.template subsystem<CinematicState>().help;
+            help.message = std::string(text_of(arg(0)));
+            help.elapsed = 0.f;
+            log(fmt::format("help text: {}", help.message));
+            return {};
+        }
+        case op::enable_hud_help_flash:
+            p.template subsystem<CinematicState>().help.flash = arg(0).truthy();
             return {};
         case op::player_enable_input:
             p.template subsystem<CinematicState>().input = arg(0).truthy();
