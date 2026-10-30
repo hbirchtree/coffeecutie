@@ -628,12 +628,18 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         bool const replica = p.template subsystem<NetworkState>().replica;
         blam::tag_index_view<halo_version> index(files.container);
         auto tag = index.find(shot.weapon.tag_id);
-        if(tag == index.end() || !(*tag).matches(blam::tag_class_t::weap))
+        if(tag == index.end())
             return;
-        auto weapon = (*tag).template data<weapon_t>(magic);
-        if(!weapon.has_value() || !weapon.value()[0].player_melee_damage.valid())
+        /* A weapon's melee, or a unit's own (claws, the Flood's lunge) */
+        blam::tagref_t melee{};
+        if((*tag).matches(blam::tag_class_t::jpt))
+            melee = shot.weapon;
+        else if(auto weapon = (*tag).template data<weapon_t>(magic);
+                (*tag).matches(blam::tag_class_t::weap) && weapon.has_value())
+            melee = weapon.value()[0].player_melee_damage;
+        if(!melee.valid())
             return;
-        auto jpt = index.template data<blam::scn::damage_effect>(weapon.value()[0].player_melee_damage);
+        auto jpt = index.template data<blam::scn::damage_effect>(melee);
         /* A body in reach before a wall, else the wall */
         std::optional<std::pair<Physics::Raycast, Vecf3>> struck_at;
         /* Level and a little low, for the short: grunts and jackals */
@@ -659,12 +665,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         if(!struck_at)
             return;
         auto const& [ray, dir] = *struck_at;
-        landed(p, weapon.value()[0], jpt.has_value() ? jpt.value() : nullptr, ray, files);
+        landed(p, jpt.has_value() ? jpt.value() : nullptr, ray, files);
         if(replica || ray.entity_id == 0)
             return;
         auto const* target = p.template get<PlayerInfo>(ray.entity_id);
         ObjectHitEvent hit{
-            .damage         = weapon.value()[0].player_melee_damage,
+            .damage         = melee,
             .target         = ray.entity_id,
             .shooter        = shot.shooter,
             .target_player  = target ? target->player_idx : ObjectHitEvent::no_player,
@@ -684,7 +690,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     /* A blow is heard twice: the weapon's thump, and the globals' melee
      * sound for the material struck */
     void landed(
-        Proxy& p, weapon_t const& weapon, blam::scn::damage_effect const* jpt,
+        Proxy& p, blam::scn::damage_effect const* jpt,
         Physics::Raycast const& ray, BlamFiles<halo_version> const& files)
     {
         auto const& magic = files.container.magic;
