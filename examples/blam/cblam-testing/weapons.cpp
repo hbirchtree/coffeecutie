@@ -300,8 +300,6 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(info.riding.vehicle || !info.mode.physics || !biped_in_play(info, cam, net) ||
                equip.load_generation != files.load_generation)
                 continue;
-            Vecf3 const body =
-                cam.camera.position - Vecf3{0.f, 0.f, info.eye_height() * .5f};
             for(auto item : p.template select<Model, NetworkInfo>())
             {
                 auto [model, item_net] = item.components();
@@ -318,10 +316,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 bool const powerup = !grenade && wanted_powerup(p, ent.id(), *tag, files);
                 if(!grenade && !powerup && !tag->matches(blam::tag_class_t::weap))
                     continue;
-                /* Items rest against the body, below its middle */
-                Vecf3 const to = model.position - body;
-                if(glm::length(Vecf2(to)) > pickup_reach ||
-                   std::abs(to.z) > info.biped.height)
+                if(!within_pickup_reach(info, cam, model.position))
                     continue;
                 bool const carried = grenade || powerup || equip.weapons[0].tag == tag ||
                                      equip.weapons[1].tag == tag;
@@ -1283,9 +1278,6 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr f32 default_throw_speed = 6.f; /* wu/s */
     /* Hand busy after letting go */
     static constexpr f32 throw_recovery = .4f;
-
-    /* Across the ground from the middle of the body */
-    static constexpr f32 pickup_reach = .8f;
 
     /* Ahead of the eye, clear of the body that fires */
     static constexpr f32 muzzle_distance = WeaponFireEvent::muzzle_distance;
