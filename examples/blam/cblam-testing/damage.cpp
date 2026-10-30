@@ -219,9 +219,12 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                u.has_value() && (u.value()[0].unit_flags & flags_t::not_instantly_killed_by_melee) !=
                                     flags_t::none)
                 return false;
+        bool const shielded = status->shield > 0.f;
         status->shield = 0.f;
         status->body   = 0.f;
         status->dead   = true;
+        if(shielded)
+            shield_down(p, unit, true);
         last_words(p, unit, true);
         tell(p, unit, *status, {}, 0.f, false, false, true);
         killed(p, unit, killer);
@@ -324,6 +327,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(status.body < dead_below)
             status.body = 0.f;
         status.dead = status.body <= 0.f;
+        /* The dead keep no shield up, a jackal's gate included */
+        if(status.dead)
+            status.shield = 0.f;
     }
 
     /* Everything near enough takes some, less further out */
@@ -388,7 +394,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 0.f,
                 1.f));
         f32 const total = status->maximum_body() + std::max(status->maximum_shield(), 0.f);
+        f32 const before = status->shield;
         apply(*status, share * total, 1.f, 1.f, flag_t::none, false);
+        if(before > 0.f && status->shield <= 0.f)
+            shield_down(p, struck.unit, true);
         if(status->dead)
             last_words(p, struck.unit, true);
         tell(p, struck.unit, *status, {}, 0.f, false, false, true);
@@ -578,8 +587,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(!status || (!status->dead && !respawn.restore))
             return;
         bool const shielded = status->maximum_shield() > 0.f;
+        bool const was_down = status->shield <= 0.f;
         status->body        = respawn.restore ? respawn.body : 1.f;
         status->shield      = shielded ? (respawn.restore ? respawn.shield : 1.f) : 0.f;
+        if(was_down && status->shield > 0.f)
+            shield_down(p, respawn.unit, false);
         status->dead        = status->body <= 0.f;
         status->stunned = 0.f;
         tell(p, respawn.unit, *status, respawn.position, respawn.facing, respawn.arrive,
