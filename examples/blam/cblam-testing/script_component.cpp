@@ -1121,13 +1121,12 @@ struct BlamScript
             return out;
         }
         case op::ai_living_count:
-            return value_t::number(
-                type_t::short_, static_cast<f32>(ai_actors(p, text_of(arg(0))).size()));
+            return value_t::number(type_t::short_, static_cast<f32>(ai_living(p, text_of(arg(0)))));
         case op::ai_living_fraction:
         case op::ai_strength: {
             auto const it    = m_actors.find(lowered(text_of(arg(0))));
             f32 const  total = it == m_actors.end() ? 0.f : static_cast<f32>(it->second.size());
-            f32 const  alive = static_cast<f32>(ai_actors(p, text_of(arg(0))).size());
+            f32 const  alive = static_cast<f32>(ai_living(p, text_of(arg(0))));
             return value_t::number(type_t::real_, total > 0.f ? alive / total : 0.f);
         }
         /* Orders to the actors: what the actor system follows */
@@ -3574,6 +3573,16 @@ struct BlamScript
                 if(m_spawning.contains(net_id))
                     out.push_back(net_id);
         return out;
+    }
+
+    /* Those of them still alive; their bodies stay on as objects */
+    size_t ai_living(Proxy& p, std::string_view path) const
+    {
+        auto const units = ai_actors(p, path);
+        return static_cast<size_t>(std::count_if(units.begin(), units.end(), [&p](u64 id) {
+            auto const* status = p.template get<BipedStatus>(id);
+            return !status || !status->dead;
+        }));
     }
 
     std::vector<u64> ai_actors(Proxy& p, std::string_view path) const
