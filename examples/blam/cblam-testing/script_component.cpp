@@ -31,6 +31,7 @@
 #include <peripherals/stl/string/split.h>
 
 #include <map>
+#include <random>
 #include <set>
 
 #if defined(FEATURE_ENABLE_ImGui)
@@ -1224,6 +1225,59 @@ struct BlamScript
         case op::ai_place:
             ai_place(p, std::string(text_of(arg(0))));
             return {};
+        case op::ai_spawn_actor:
+            ai_spawn_actor(p, std::string(text_of(arg(0))));
+            return {};
+        /* Those alive that are not infection forms, which swarm */
+        case op::ai_nonswarm_count: {
+            auto const units = ai_actors(p, text_of(arg(0)));
+            i32        count = 0;
+            for(u64 id : units)
+                if(auto const* status = p.template get<BipedStatus>(id);
+                   (!status || !status->dead) && actor_type_of(p, id) != blam::scn::actor_type_t::infection_form)
+                    count++;
+            return value_t::number(type_t::short_, static_cast<f32>(count));
+        }
+        /* Told whom to fight: the nearest player, or the nearest of a group */
+        case op::ai_try_to_fight_player:
+        case op::ai_try_to_fight: {
+            std::vector<u64> const foes =
+                opcode == op::ai_try_to_fight ? ai_actors(p, text_of(arg(1))) : std::vector<u64>{};
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+            {
+                auto* actor = p.template get<Actor>(id);
+                auto const* at = p.template get<Model>(id);
+                if(!actor || !at)
+                    continue;
+                u64 best = 0;
+                f32 near = std::numeric_limits<f32>::max();
+                auto consider = [&](u64 foe) {
+                    auto const* model  = p.template get<Model>(foe);
+                    auto const* status = p.template get<BipedStatus>(foe);
+                    if(!model || (status && status->dead))
+                        return;
+                    if(f32 const d = glm::distance(model->position, at->position); d < near)
+                    {
+                        near = d;
+                        best = foe;
+                    }
+                };
+                if(opcode == op::ai_try_to_fight_player)
+                    for(auto player : p.template select<PlayerInfo>())
+                        consider(player.id());
+                else
+                    for(u64 foe : foes)
+                        consider(foe);
+                if(!best)
+                    continue;
+                actor->target    = best;
+                actor->last_seen = p.template get<Model>(best)->position;
+                actor->seen_ago  = 0.f;
+                actor->state     = Actor::state_t::combat;
+                actor->position  = -1;
+            }
+            return {};
+        }
         case op::ai_actors: {
             auto out    = list(ai_actors(p, text_of(arg(0))));
             out.pending = ai_spawning(text_of(arg(0)));
@@ -3533,6 +3587,16 @@ struct BlamScript
 
     /* `encounter` or `encounter/squad`: each squad's actors at its own
      * starting locations */
+    /* The encounter a path names, and its index */
+    std::pair<blam::scn::ai::encounter const*, i16> encounter_named(std::string_view name) const
+    {
+        if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
+            for(size_t i = 0; i < list.value().size(); i++)
+                if(lowered(list.value()[i].name.str()) == lowered(name))
+                    return {&list.value()[i], static_cast<i16>(i)};
+        return {nullptr, -1};
+    }
+
     void ai_place(Proxy& p, std::string const& path)
     {
         auto const slash = path.find('/');
@@ -3540,21 +3604,12 @@ struct BlamScript
         auto const which = slash == std::string::npos
                                ? std::string_view{}
                                : std::string_view(path).substr(slash + 1);
-        blam::scn::ai::encounter const* encounter = nullptr;
-        i16                             encounter_idx = -1;
-        if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
-            for(size_t i = 0; i < list.value().size(); i++)
-                if(lowered(list.value()[i].name.str()) == lowered(name))
-                {
-                    encounter     = &list.value()[i];
-                    encounter_idx = static_cast<i16>(i);
-                }
+        auto const [encounter, encounter_idx] = encounter_named(name);
         if(!encounter)
             return log(fmt::format("ai_place: no encounter {}", path));
         log(fmt::format("ai_place: {}", path));
-        auto squads  = encounter->squads.data(m_magic);
-        auto palette = m_scenario->ai.actor_palette.data(m_magic);
-        if(!squads.has_value() || !palette.has_value())
+        auto squads = encounter->squads.data(m_magic);
+        if(!squads.has_value())
             return;
         for(size_t si = 0; si < squads.value().size(); si++)
         {
@@ -3564,59 +3619,99 @@ struct BlamScript
             auto starts = squad.start_locations.data(m_magic);
             if(!starts.has_value() || starts.value().empty())
                 continue;
-            auto      lists = m_scenario->ai.command_lists.data(m_magic);
             u32 const count = std::max<u32>(squad.normal_diff_count, 1);
             for(u32 i = 0; i < count && i < starts.value().size(); i++)
-            {
-                auto const& start = starts.value()[i];
-                /* A location's own actor type beats the squad's */
-                i16 const type = start.actor_type >= 0 ? start.actor_type : squad.actor_type;
-                if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
-                    continue;
-                auto const* unit = unit_of(palette.value()[type]);
-                if(!unit)
-                    continue;
-                u32 const        net_id = script_net_id_base | m_next_actor++;
-                GameEvent        ev{.type = GameEvent::SpawnObject};
-                SpawnObjectEvent spawn{
-                    .object       = *unit,
-                    .position     = start.position,
-                    .rotation     = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
-                    .net_id       = net_id,
-                    .server_owned = true,
-                    .held         = weapon_of(palette.value()[type]),
-                };
-                p.template subsystem<GameEventBus>().inject(ev, &spawn);
-                m_spawning.insert(net_id);
-                m_actor_slots[net_id] = {
-                    .encounter = encounter_idx,
-                    .squad     = static_cast<i16>(si),
-                    .variant   = type,
-                    .team      = static_cast<u16>(encounter->team_index),
-                    .post      = start.position,
-                    .idle_state = static_cast<i16>(
-                        start.initial_state != blam::scn::ai::state_t::none ? start.initial_state : squad.initial_state)};
-                /* The encounter, its squad and its platoon name it */
-                m_actors[lowered(name)].push_back(net_id);
-                m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
-                if(auto toon = platoon_name(*encounter, squad); !toon.empty())
-                    m_actors[fmt::format("{}/{}", lowered(name), toon)].push_back(net_id);
-                /* Once it is there: its state's stance, and the location's
-                 * command list */
-                using state_t = blam::scn::ai::state_t;
-                auto const  state = start.initial_state != state_t::none ? start.initial_state : squad.initial_state;
-                auto const* list  = lists.has_value() && start.command_list >= 0 &&
-                                           static_cast<size_t>(start.command_list) < lists.value().size()
-                                        ? &lists.value()[static_cast<size_t>(start.command_list)]
-                                        : nullptr;
-                m_deferred.push_back({net_id, [this, state, list](Proxy& p, u64 id) {
-                                          if(auto* anim = p.template get<AnimationPlayback>(id))
-                                              anim->stance = stance_of(state);
-                                          if(list)
-                                              start_commands(p, id, *list);
-                                      }});
-            }
+                place_actor(p, name, *encounter, encounter_idx, si, starts.value()[i]);
         }
+    }
+
+    /* One more actor of a squad, or of any of the encounter's squads, at
+     * one of its starting locations: the Flood pouring out of vents */
+    void ai_spawn_actor(Proxy& p, std::string const& path)
+    {
+        auto const slash = path.find('/');
+        auto const name  = std::string_view(path).substr(0, slash);
+        auto const which = slash == std::string::npos
+                               ? std::string_view{}
+                               : std::string_view(path).substr(slash + 1);
+        auto const [encounter, encounter_idx] = encounter_named(name);
+        auto squads = encounter ? encounter->squads.data(m_magic) : decltype(encounter->squads.data(m_magic)){};
+        if(!encounter || !squads.has_value())
+            return log(fmt::format("ai_spawn_actor: no encounter {}", path));
+        std::vector<size_t> fits;
+        for(size_t si = 0; si < squads.value().size(); si++)
+            if(auto starts = squads.value()[si].start_locations.data(m_magic);
+               starts.has_value() && !starts.value().empty() &&
+               (which.empty() || lowered(squads.value()[si].name.str()) == lowered(which)))
+                fits.push_back(si);
+        if(fits.empty())
+            return log(fmt::format("ai_spawn_actor: no squad {}", path));
+        size_t const si     = fits[m_spawn_random() % fits.size()];
+        if(std::getenv("BLAM_DEBUG_AI"))
+            log(fmt::format("ai_spawn_actor: {} squad {}", path, squads.value()[si].name.str()));
+        auto         starts = squads.value()[si].start_locations.data(m_magic);
+        place_actor(p, name, *encounter, encounter_idx, si, starts.value()[m_spawn_random() % starts.value().size()]);
+    }
+
+    /* An actor of the squad at a starting location, its names, its slot,
+     * and once it is there its state's stance and the location's list */
+    void place_actor(
+        Proxy&                              p,
+        std::string_view                    name,
+        blam::scn::ai::encounter const&     encounter,
+        i16                                 encounter_idx,
+        size_t                              si,
+        blam::scn::ai::squad_location const& start)
+    {
+        auto squads  = encounter.squads.data(m_magic);
+        auto palette = m_scenario->ai.actor_palette.data(m_magic);
+        auto lists   = m_scenario->ai.command_lists.data(m_magic);
+        if(!squads.has_value() || !palette.has_value())
+            return;
+        auto const& squad = squads.value()[si];
+        /* A location's own actor type beats the squad's */
+        i16 const type = start.actor_type >= 0 ? start.actor_type : squad.actor_type;
+        if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
+            return;
+        auto const* unit = unit_of(palette.value()[type]);
+        if(!unit)
+            return;
+        u32 const        net_id = script_net_id_base | m_next_actor++;
+        GameEvent        ev{.type = GameEvent::SpawnObject};
+        SpawnObjectEvent spawn{
+            .object       = *unit,
+            .position     = start.position,
+            .rotation     = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
+            .net_id       = net_id,
+            .server_owned = true,
+            .held         = weapon_of(palette.value()[type]),
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &spawn);
+        m_spawning.insert(net_id);
+        using state_t     = blam::scn::ai::state_t;
+        auto const  state = start.initial_state != state_t::none ? start.initial_state : squad.initial_state;
+        m_actor_slots[net_id] = {
+            .encounter  = encounter_idx,
+            .squad      = static_cast<i16>(si),
+            .variant    = type,
+            .team       = static_cast<u16>(encounter.team_index),
+            .post       = start.position,
+            .idle_state = static_cast<i16>(state)};
+        /* The encounter, its squad and its platoon name it */
+        m_actors[lowered(name)].push_back(net_id);
+        m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
+        if(auto toon = platoon_name(encounter, squad); !toon.empty())
+            m_actors[fmt::format("{}/{}", lowered(name), toon)].push_back(net_id);
+        auto const* list = lists.has_value() && start.command_list >= 0 &&
+                                   static_cast<size_t>(start.command_list) < lists.value().size()
+                               ? &lists.value()[static_cast<size_t>(start.command_list)]
+                               : nullptr;
+        m_deferred.push_back({net_id, [this, state, list](Proxy& p, u64 id) {
+                                  if(auto* anim = p.template get<AnimationPlayback>(id))
+                                      anim->stance = stance_of(state);
+                                  if(list)
+                                      start_commands(p, id, *list);
+                              }});
     }
 
     /* The unit (stance) an actor animates from in a state */
@@ -3879,6 +3974,7 @@ struct BlamScript
     static constexpr libc_types::i64 player_claim_ticks = 60;
     std::map<std::pair<u64, std::string>, libc_types::i64> m_player_claims; /* vehicle, seat: tick asked */
     mutable std::set<std::string> m_unnamed; /* ai paths that named nobody, logged once */
+    std::minstd_rand              m_spawn_random{4321};
     struct scaling_t
     {
         f32 from{1.f};
