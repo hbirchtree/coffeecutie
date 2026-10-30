@@ -607,34 +607,41 @@ struct actor
     actor_flags_t    flags;
     actor_ex_flags_t extra_flags;
     u32              padding[3];
-    actor_type_t     type;
+    actor_type_t     type; /* u16 and its pad */
 
     struct perception_t /* perception */
     {
         f32     max_vision_dist;
         angle_t central_vision;
         angle_t max_vision;
+        u32     padding0;
         angle_t peripheral_vision;
         f32     peripheral_dist;
+        u32     padding1;
         Vecf3   stand_gun_offset;
         Vecf3   crouch_gun_offset;
         f32     hearing_dist;
-        f32     projectile_awareness; /* [0,1] */
-        f32     vehicle_awareness;    /* [0,1] */
+        f32     projectile_awareness; /* notice projectile chance, [0,1] */
+        f32     vehicle_awareness;    /* notice vehicle chance, [0,1] */
+        u32     padding2[2];
         f32     combat_perception_time;
         f32     guard_perception_time;
+        f32     noncombat_perception_time;
+        f32     inverse_perception_times[3]; /* cache, per tick */
+        u32     padding3[2];
     } perception;
 
     struct movement_t
     {
-        f32 dive_into_cover_change;
-        f32 emerge_from_cover_chance;
-        f32 dive_from_grenade_chance;
-        f32 pathfinding_radius;
-        f32 glass_ignorance_chance;
-        f32 stationary_movement_dist;
-        f32 free_flying_sidestep;
-        f32 begin_moving_angle;
+        f32     dive_into_cover_change;
+        f32     emerge_from_cover_chance;
+        f32     dive_from_grenade_chance;
+        f32     pathfinding_radius;
+        f32     glass_ignorance_chance;
+        f32     stationary_movement_dist;
+        f32     free_flying_sidestep;
+        angle_t begin_moving_angle;
+        u32     padding;
     } movement;
 
     struct looking_t
@@ -657,7 +664,10 @@ struct actor
         Vecf2       combat_idle_facing;
         Vecf2       combat_idle_aiming;
         Vecf2       combat_idle_looking;
+        u32         padding0[2];
+        u32         cache[4];
         tagref_t    do_not_use_1;
+        u32         padding1[67];
         tagref_t    do_not_use_2;
     } looking;
 
@@ -666,24 +676,52 @@ struct actor
         danger_trigger_t unreachable_danger_trigger;
         danger_trigger_t vehicle_danger_trigger;
         danger_trigger_t player_danger_trigger;
+        u16              padding0;
         Vecf2            danger_trigger_time;
-        f32              friends_killed_trigger;
-        f32              friends_retreating_trigger;
+        i16              friends_killed_trigger;
+        i16              friends_retreating_trigger;
+        u32              padding1[3];
         Vecf2            retreat_time;
+        u32              padding2[2];
     } unopposable;
 
     struct panic_t
     {
         Vecf2        cowering_time;
         f32          friend_killed_panic_change;
-        actor_type_t leader_type;
+        actor_type_t leader_type; /* u16 and its pad */
         f32          leader_killed_panic_change;
         f32          panic_damage_threshold;
         f32          surprise_distance;
+        u32          padding[7];
     } panic;
 
     struct defensive_t
     {
+        Vecf2 hide_behind_cover_time;
+        f32   hide_target_not_visible_time;
+        f32   hide_shield_fraction;
+        f32   attack_shield_fraction;
+        f32   pursue_shield_fraction;
+        u32   padding0[4];
+        u16   defensive_crouch_type;
+        u16   padding1;
+        f32   attacking_crouch_threshold;
+        f32   defending_crouch_threshold;
+        f32   min_stand_time;
+        f32   min_crouch_time;
+        f32   defending_hide_time_modifier;
+        f32   attacking_evasion_threshold;
+        f32   defending_evasion_threshold;
+        f32   evasion_seek_cover_chance;
+        f32   evasion_delay_time;
+        f32   max_seek_cover_distance;
+        f32   cover_damage_threshold;
+        f32   stalking_discovery_time;
+        f32   stalking_max_distance;
+        angle_t stationary_facing_angle;
+        f32   change_facing_stand_time;
+        u32   padding2;
     } defensive;
 
     struct pursuit_t
@@ -691,12 +729,26 @@ struct actor
         Vecf2 uncover_delay_time;
         Vecf2 target_search_time;
         Vecf2 pursuit_position_time;
-        f32   num_positions_coord;
-        f32   num_positions_normal;
+        i16   num_positions_coord;
+        i16   num_positions_normal;
+        u32   padding[8];
     } pursuit;
 
     struct berserk_t
     {
+        f32   melee_attack_delay;
+        f32   melee_fudge_distance;
+        f32   melee_charge_time;
+        Vecf2 melee_leap_range;
+        f32   melee_leap_velocity;
+        f32   melee_leap_chance;
+        f32   melee_leap_ballistic;
+        f32   berserk_damage_amount;
+        f32   berserk_damage_threshold;
+        f32   berserk_proximity;
+        f32   suicide_sensing_dist;
+        f32   berserk_grenade_chance;
+        u32   padding[3];
     } berserk;
 
     struct firing_positions_t
@@ -705,6 +757,7 @@ struct actor
         Vecf2 combat_position_time;
         f32   old_position_avoid_dist;
         f32   friend_avoid_dist;
+        u32   padding[10];
     } firing_positions;
 
     struct communication_t
@@ -713,6 +766,18 @@ struct actor
         Vecf2 combat_idle_speech_time;
     } communication;
 };
+
+static_assert(offsetof(actor, perception) == 24);
+static_assert(offsetof(actor, perception) + offsetof(actor::perception_t, hearing_dist) == 76);
+static_assert(offsetof(actor, movement) == 128);
+static_assert(offsetof(actor, looking) == 164);
+static_assert(offsetof(actor, unopposable) == 616);
+static_assert(offsetof(actor, panic) == 664);
+static_assert(offsetof(actor, defensive) == 720);
+static_assert(offsetof(actor, pursuit) == 828);
+static_assert(offsetof(actor, berserk) == 888);
+static_assert(offsetof(actor, firing_positions) == 952);
+static_assert(offsetof(actor, communication) == 1016);
 
 using actor_variant_ref = tagref_t;
 
