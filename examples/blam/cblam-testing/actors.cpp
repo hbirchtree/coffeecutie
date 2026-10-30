@@ -201,6 +201,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 default_speed   = 2.f;  /* wu/s, a graph without a stride */
     static constexpr f32 eye_height      = .6f;  /* wu above the feet, a biped without a camera height */
     static constexpr f32 route_height    = .5f;  /* wu above the feet a walk is checked at */
+    static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
+    static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
+    static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
+    static constexpr f32 flyby_reach     = 60.f; /* wu out a passing shot is followed */
     static constexpr f32 link_reach      = 10.f; /* wu between positions a route steps */
     static constexpr u32 max_expansions  = 2000;
     static constexpr f32 stuck_time      = 2.f;  /* s between progress checks */
@@ -685,52 +689,84 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     }
 
     /* The nearest enemy in the actor's vision, with a clear line to it */
-    u64 look(Proxy& p, u64 id, Actor const& actor, Model const& model, actr_t const& actr)
+    u64 look(Proxy& p, u64 id, Actor const& actor, Model const& model, actr_t const& actr, bool all_round = false)
     {
+        auto const& seen    = actr.perception;
         Vecf3 const eye     = eye_of(p, id);
         Vecf3 const forward = model.rotation * Vecf3{1, 0, 0};
-        f32 const   reach   = actr.perception.max_vision_dist > 0.f ? actr.perception.max_vision_dist : 30.f;
-        f32 const   half    = actr.perception.max_vision > 0.f ? actr.perception.max_vision * .5f : glm::radians(90.f);
+        f32 const   reach   = seen.max_vision_dist > 0.f ? seen.max_vision_dist : 30.f;
+        f32 const   central = seen.central_vision > 0.f ? seen.central_vision : glm::radians(45.f);
+        f32 const   widest  = std::max(seen.max_vision, central);
+        f32 const   corner  = std::max(seen.peripheral_vision, widest);
+        f32 const   heard   = (seen.hearing_dist > 0.f ? seen.hearing_dist : 15.f) * footstep_share;
         u64   best     = 0;
-        f32   best_d   = reach;
-        auto  consider = [&](u64 other, Model const& target) {
+        f32   best_d   = std::numeric_limits<f32>::max();
+        auto  consider = [&](u64 other, Model const& target, u64 vehicle, bool quiet) {
             Vecf3 const to = target.position + chest_of(p, other) - eye;
             f32 const   d  = glm::length(to);
             if(d >= best_d || d < 1e-3f)
                 return;
-            /* A known target is kept in the whole field; a new one must be
-             * within the central cone */
-            f32 const angle = std::acos(std::clamp(glm::dot(to / d, forward), -1.f, 1.f));
-            if(angle > (other == actor.target ? half * 1.5f : half))
+            /* Out to full range ahead, less toward the edge of its sight,
+             * a short way out of the corner of its eye; a known target is
+             * kept a little wider */
+            f32 const angle = all_round ? 0.f
+                                        : std::acos(std::clamp(glm::dot(to / d, forward), -1.f, 1.f)) /
+                                              (other == actor.target ? 1.5f : 1.f);
+            f32 range = 0.f;
+            if(angle <= central)
+                range = reach;
+            else if(angle <= widest)
+                range = glm::mix(reach, reach * .5f, (angle - central) / std::max(widest - central, 1e-3f));
+            else if(angle <= corner)
+                range = seen.peripheral_dist;
+            bool const sighted = d <= range;
+            /* Footsteps close by give away who does not creep */
+            bool const footsteps = !quiet && !vehicle && d <= heard;
+            if(!sighted && !footsteps)
                 return;
-            if(!clear(p, id, eye, eye + to, other))
-                return;
+            /* Inside a vehicle it is the vehicle the eye meets, and a
+             * vehicle is noticed by the actor's chance for it */
+            if(sighted && !footsteps)
+            {
+                if(!clear(p, id, eye, eye + to, other, vehicle))
+                    return;
+                if(vehicle && other != actor.target && !chance(seen.vehicle_awareness > 0.f ? seen.vehicle_awareness : 1.f))
+                    return;
+            }
             best   = other;
             best_d = d;
+        };
+        auto moving = [&p](u64 other) {
+            auto const* physics = p.template get<ObjectPhysics>(other);
+            Vecf3 const v       = physics ? physics->linear_velocity : Vecf3{};
+            return v.x * v.x + v.y * v.y > footstep_speed * footstep_speed;
         };
         for(auto player : p.template select<PlayerInfo, Model, BipedStatus>())
         {
             auto [info, target, status] = player.components();
             if(!info.mode.physics || status.dead || !enemies(actor.team, team_t::player))
                 continue;
-            consider(player.id(), target);
+            consider(player.id(), target, info.riding.vehicle, info.crouched || !moving(player.id()));
         }
         for(auto other : p.template select<Actor, Model, BipedStatus>())
         {
             auto [theirs, target, status] = other.components();
             if(other.id() == id || !theirs.active() || status.dead || !enemies(actor.team, static_cast<team_t>(theirs.team)))
                 continue;
-            consider(other.id(), target);
+            auto const* physics = p.template get<ObjectPhysics>(other.id());
+            auto const* anim    = p.template get<AnimationPlayback>(other.id());
+            u64 const   vehicle = physics && physics->seated ? physics->seated_in : 0;
+            consider(other.id(), target, vehicle, (anim && anim->stance == "crouch") || !moving(other.id()));
         }
         return best;
     }
 
-    bool clear(Proxy& p, u64 self, Vecf3 const& from, Vecf3 const& to, u64 target)
+    bool clear(Proxy& p, u64 self, Vecf3 const& from, Vecf3 const& to, u64 target, u64 vehicle = 0)
     {
         Physics::Event   ev{Physics::Event::Raycast};
         Physics::Raycast ray{.from = from, .to = to, .ignore = self};
         p.template subsystem<PhysicsBus>().process(ev, &ray);
-        return !ray.hit || ray.entity_id == target;
+        return !ray.hit || ray.entity_id == target || (vehicle && ray.entity_id == vehicle);
     }
 
     /* Squad mates within earshot take the target too */
@@ -766,21 +802,33 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             {
                 auto [actor, model, status] = ent.components();
                 if(!actor.active() || actor.scripted || actor.deaf || actor.braindead || status.dead ||
-                   actor.state != state_t::idle)
+                   ent.id() == shot.shooter)
+                    continue;
+                /* Busy with a target in view already */
+                if(actor.target && actor.seen_ago < look_period * 4.f)
                     continue;
                 auto const* kind = kind_of(p, actor);
-                f32 const reach  = kind && kind->actor && kind->actor->perception.hearing_dist > 0.f
-                                       ? kind->actor->perception.hearing_dist
-                                       : 15.f;
-                if(glm::distance(model.position, shot.position) > reach)
+                auto const* actr = kind ? kind->actor : nullptr;
+                f32 const   reach = actr && actr->perception.hearing_dist > 0.f ? actr->perception.hearing_dist : 15.f;
+                bool const  near  = glm::distance(model.position, shot.position) <= reach;
+                /* A shot past its head, by its chance to notice one */
+                Vecf3 const head  = model.position + Vecf3{0, 0, eye_height};
+                f32 const   along = glm::dot(head - shot.position, shot.direction);
+                bool const  past  = along > 0.f && along < flyby_reach &&
+                                   glm::distance(shot.position + shot.direction * along, head) < flyby_radius &&
+                                   chance(actr && actr->perception.projectile_awareness > 0.f
+                                              ? actr->perception.projectile_awareness
+                                              : .5f);
+                if(!near && !past)
                     continue;
                 actor.last_seen = shot.position;
                 actor.seen_ago  = 1e9f;
-                if(shot.shooter != ent.id() && enemy_unit(p, actor, shot.shooter))
+                if(enemy_unit(p, actor, shot.shooter))
                 {
                     actor.target = shot.shooter;
-                    enter(actor, state_t::combat);
-                } else
+                    if(actor.state != state_t::combat)
+                        enter(actor, state_t::combat);
+                } else if(actor.state == state_t::idle)
                 {
                     enter(actor, state_t::pursuit);
                     actor.state_in = 6.f;
@@ -1297,7 +1345,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     if(auto actor_tag = index.find(kind.variant->actor_definition.tag_id);
                        actor_tag != index.end())
                         if(auto actr = (*actor_tag).template data<actr_t>(*s_magic); actr.has_value())
+                        {
                             kind.actor = actr.value();
+                        }
                 }
         }
         return &m_kinds.emplace(key, kind).first->second;
@@ -1321,6 +1371,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         u64   shooter{0};
         Vecf3 position{};
+        Vecf3 direction{};
     };
     std::unique_ptr<TickQueue>                                       m_ticks;
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>>       m_fire_queue;
@@ -1358,6 +1409,7 @@ void alloc_actors(compo::EntityContainer& e)
     actors.m_fire_queue = gbus.addQueuedEventFunction<WeaponFireEvent>(
         0, [&actors](GameEvent&, WeaponFireEvent* shot) {
             if(!shot->melee)
-                actors.m_heard.push_back({.shooter = shot->shooter, .position = shot->position});
+                actors.m_heard.push_back(
+                    {.shooter = shot->shooter, .position = shot->position, .direction = shot->direction});
         });
 }
