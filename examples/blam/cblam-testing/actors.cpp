@@ -116,6 +116,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         for(auto ent : p.template select<Actor, Model, AnimationPlayback, BipedStatus, ObjectPhysics>())
         {
             auto [actor, model, anim, status, physics] = ent.components();
+            /* Seated: it fights from where it sits */
+            if(physics.seated && actor.active() && !actor.braindead && !status.dead)
+            {
+                if(auto const* kind = kind_of(p, actor); kind && kind->variant && kind->actor)
+                    ride(p, ent.id(), actor, model, *kind, physics, dt);
+                continue;
+            }
             if(!actor.active() || actor.braindead || status.dead || !physics.upright || physics.seated)
             {
                 /* What it last walked at, it would keep walking at */
@@ -1274,6 +1281,107 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         WeaponFireEvent shot{
             .weapon     = gun->tag->as_ref(),
             .shooter    = id,
+            .player_idx = ObjectHitEvent::no_player,
+            .seed       = static_cast<u32>(m_random()),
+            .position   = muzzle,
+            .direction  = dir,
+            .target     = actor.target,
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &shot);
+        if(--actor.burst_left > 0)
+            actor.fire_in = 1.f / rate;
+        else
+            actor.fire_in = uniform(actv.burst_separation, 1.f);
+    }
+
+    /* ---- Riding ---- */
+
+    /* From its seat it looks all round, and fights with the vehicle's gun
+     * where it is the gunner, its own where the seat lets it */
+    void ride(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind, ObjectPhysics const& physics, f32 dt)
+    {
+        using flags_t = blam::scn::unit::seat_t::seat_flags_t;
+        actor.look_in -= dt;
+        actor.fire_in -= dt;
+        actor.seen_ago += dt;
+        if(actor.look_in <= 0.f)
+        {
+            actor.look_in = look_period;
+            if(u64 const seen = actor.blind ? 0 : look(p, id, actor, model, *kind.actor, true))
+            {
+                if(seen != actor.target)
+                {
+                    actor.target     = seen;
+                    actor.fire_in    = uniform(kind.variant->first_burst_delay_time);
+                    actor.burst_left = 0;
+                }
+                if(auto const* target = p.template get<Model>(seen))
+                    actor.last_seen = target->position;
+                actor.seen_ago = 0.f;
+            }
+        }
+        if(!actor.target || actor.seen_ago > look_period * 2.f || !alive(p, actor.target))
+            return;
+        auto const* vehicle = p.template get<Model>(physics.seated_in);
+        if(!vehicle || !vehicle->origin_object)
+            return;
+        auto unit = vehicle->origin_object->template data<blam::scn::unit>(*s_magic);
+        if(!unit.has_value())
+            return;
+        auto seats = unit.value()[0].seats.data(*s_magic);
+        if(!seats.has_value() || physics.seat < 0 || static_cast<size_t>(physics.seat) >= seats.value().size())
+            return;
+        auto const flags = seats.value()[static_cast<size_t>(physics.seat)].flags;
+        if((flags & flags_t::gunner) != flags_t::none)
+            fire_mounted(p, id, actor, physics.seated_in, *vehicle, unit.value()[0], kind);
+        else if((flags & flags_t::allows_weapons) != flags_t::none)
+            fire(p, id, actor, model, kind, dt);
+    }
+
+    /* The vehicle's gun, from its trigger marker as the vehicle is posed */
+    void fire_mounted(
+        Proxy& p, u64 id, Actor& actor, u64 vehicle, Model const& body, blam::scn::unit const& unit, kind_t const& kind)
+    {
+        actv_t const& actv = *kind.variant;
+        if(actor.fire_in > 0.f)
+            return;
+        auto weapons = unit.weapons.data(*s_magic);
+        if(!weapons.has_value() || weapons.value().empty() || !body.tag)
+            return;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        blam::tag_index_view<halo_version> index(files.container);
+        auto weapon = index.find(weapons.value()[0].weapon.tag_id);
+        auto marker = bind_marker_node(*body.tag, trigger_marker, *s_magic);
+        if(weapon == index.end() || !marker)
+            return;
+        Matf4       at   = body.transform;
+        auto const* anim = p.template get<AnimationPlayback>(vehicle);
+        if(anim && marker->node >= 0 && static_cast<size_t>(marker->node) < anim->pose.size())
+            at = at * anim->pose[static_cast<size_t>(marker->node)];
+        Vecf3 const muzzle = Vecf3((at * marker->transform)[3]);
+        Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
+        Vecf3       dir    = glm::normalize(aim - muzzle);
+        if(actv.projectile_error > 0.f)
+        {
+            std::uniform_real_distribution<f32> unit_spread(-1.f, 1.f);
+            Vecf3 const side = glm::normalize(glm::cross(dir, Vecf3{0, 0, 1}));
+            Vecf3 const up   = glm::cross(side, dir);
+            dir = glm::normalize(
+                dir + side * (unit_spread(m_random) * actv.projectile_error) +
+                up * (unit_spread(m_random) * actv.projectile_error));
+        }
+        f32 const rate = actv.rate_of_fire > 0.f ? actv.rate_of_fire : 3.f;
+        if(actor.burst_left <= 0)
+        {
+            actor.burst_left = std::max(1, static_cast<i32>(uniform(actv.burst_duration, 1.f) * rate));
+            if(std::getenv("BLAM_DEBUG_AI"))
+                cDebug("ai: {} fires {}'s gun at {}", id, vehicle, actor.target);
+        }
+        GameEvent       ev{.type = GameEvent::WeaponFire};
+        WeaponFireEvent shot{
+            .weapon     = (*weapon).as_ref(),
+            .shooter    = id,
+            .vehicle    = vehicle,
             .player_idx = ObjectHitEvent::no_player,
             .seed       = static_cast<u32>(m_random()),
             .position   = muzzle,
