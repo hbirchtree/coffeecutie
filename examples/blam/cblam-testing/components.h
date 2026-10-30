@@ -1106,6 +1106,11 @@ struct Actor
     libc_types::i16 squad{-1};
     libc_types::i16 variant{-1}; /*!< Its actor palette entry, kept across migrations */
     bool            migrated{false}; /*!< ai_migrate moved it: it guards its squad's positions, not its post */
+    libc_types::i16 idle_state{0};   /*!< blam::scn::ai::state_t it was placed in: patrols, guarding */
+    libc_types::i32 move_at{-1};     /*!< The squad move position it patrols toward */
+    libc_types::f32 move_wait{0.f};  /*!< Until it walks on from there */
+    bool            move_back{false}; /*!< Walking a back-and-forth patrol in reverse */
+    libc_types::f32 glance_in{0.f};  /*!< Until it looks somewhere else, idle */
     libc_types::f32 rest{-1.f};      /*!< Body and shield as it fell asleep, -1 awake */
     std::vector<libc_types::i32> route; /*!< Firing positions to walk through to its goal */
     Vecf3           route_goal{};

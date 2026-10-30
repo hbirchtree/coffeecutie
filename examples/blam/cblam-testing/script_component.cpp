@@ -3457,7 +3457,9 @@ struct BlamScript
                     .squad     = static_cast<i16>(si),
                     .variant   = type,
                     .team      = static_cast<u16>(encounter->team_index),
-                    .post      = start.position};
+                    .post      = start.position,
+                    .idle_state = static_cast<i16>(
+                        start.initial_state != blam::scn::ai::state_t::none ? start.initial_state : squad.initial_state)};
                 /* The encounter, its squad and its platoon name it */
                 m_actors[lowered(name)].push_back(net_id);
                 m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
@@ -3510,6 +3512,7 @@ struct BlamScript
             actor->encounter = slot->second.encounter;
             actor->squad     = slot->second.squad;
             actor->variant   = slot->second.variant;
+            actor->idle_state = slot->second.idle_state;
             actor->post      = slot->second.post;
             actor->team      = slot->second.team;
             /* The encounter's default is the unit tag's own team */
@@ -3739,6 +3742,7 @@ struct BlamScript
         i16   variant{-1};
         u16   team{0};
         Vecf3 post{};
+        i16   idle_state{0};
     };
     std::map<u32, actor_slot_t> m_actor_slots;
     action_tests_t                          m_tests;
