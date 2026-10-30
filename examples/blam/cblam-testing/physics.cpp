@@ -2756,6 +2756,11 @@ struct PhysicsSystem
         if(!m_world_item || triangle < 0 ||
            static_cast<size_t>(triangle) * 3 + 2 >= m_triangles.size())
             return std::nullopt;
+        /* While a section switch is under way the item can be emptied
+         * before the mesh built from it is torn down */
+        for(int i = 0; i < 3; i++)
+            if(static_cast<size_t>(m_triangles[triangle * 3 + i]) >= m_world_item->coll_vertices.size())
+                return std::nullopt;
         auto corner = [this, triangle](int i) {
             auto const& p = m_world_item->coll_vertices[m_triangles[triangle * 3 + i]].point;
             return btVector3(p.x, p.y, p.z);
