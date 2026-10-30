@@ -200,6 +200,9 @@ struct BlamScript
         m_proxy = &p;
         m_save_queue->poll();
         m_restore_queue->poll();
+        m_enlist_queue->poll();
+        for(auto const& recruit : std::exchange(m_recruits, {}))
+            recruit_spawned(recruit);
         if(std::exchange(m_save_now, false))
             save();
         if(std::exchange(m_restore_now, false))
@@ -3498,6 +3501,26 @@ struct BlamScript
         }
     }
 
+    /* One spawned elsewhere joins as ai_place's do, by the names of `like` */
+    void recruit_spawned(EnlistActorEvent const& recruit)
+    {
+        i16 variant = -1;
+        if(auto palette = m_scenario->ai.actor_palette.data(m_magic); palette.has_value())
+            for(size_t i = 0; i < palette.value().size() && variant < 0; i++)
+                if(palette.value()[i].tag_id == recruit.variant.tag_id)
+                    variant = static_cast<i16>(i);
+        m_actor_slots[recruit.net_id] = {
+            .encounter = recruit.encounter,
+            .squad     = recruit.squad,
+            .variant   = variant,
+            .team      = recruit.team,
+            .post      = recruit.post};
+        m_spawning.insert(recruit.net_id);
+        for(auto& [_, ids] : m_actors)
+            if(std::find(ids.begin(), ids.end(), recruit.like) != ids.end())
+                ids.push_back(recruit.net_id);
+    }
+
     /* A placed unit is told its squad once it exists, and fights by it */
     void enlist(Proxy& p, u64 id, u32 net_id)
     {
@@ -3768,6 +3791,8 @@ struct BlamScript
     bool                   m_restore_now{false};
     std::shared_ptr<GameEventBus::queue_type<WorldSaveEvent>>    m_save_queue;
     std::shared_ptr<GameEventBus::queue_type<WorldRestoreEvent>> m_restore_queue;
+    std::shared_ptr<GameEventBus::queue_type<EnlistActorEvent>>  m_enlist_queue;
+    std::vector<EnlistActorEvent>                                m_recruits;
     Proxy*                                  m_proxy{nullptr};
 
     std::vector<std::string>   m_log;
@@ -3791,6 +3816,8 @@ void alloc_scripting(compo::EntityContainer& e)
         0, [&script](GameEvent&, WorldSaveEvent*) { script.m_save_now = true; });
     script.m_restore_queue = gbus.addQueuedEventFunction<WorldRestoreEvent>(
         0, [&script](GameEvent&, WorldRestoreEvent*) { script.m_restore_now = true; });
+    script.m_enlist_queue = gbus.addQueuedEventFunction<EnlistActorEvent>(
+        0, [&script](GameEvent&, EnlistActorEvent* recruit) { script.m_recruits.push_back(*recruit); });
     gbus.addEventFunction<MapChangedEvent<halo_version>>(
         0, [&script](auto&, MapChangedEvent<halo_version>* changed) {
             script.load_from(changed->container, changed->scenario);
