@@ -1051,7 +1051,7 @@ struct BlamScript
             auto const  targets = objects_of(p, arg(1));
             auto const* target  = targets.empty() ? nullptr : p.template get<Model>(targets.front());
             return value_t::boolean(
-                target && can_see(p, objects_of(p, arg(0)), target->position + Vecf3{0.f, 0.f, body_middle}, arg(2).as_real()));
+                target && can_see(p, objects_of(p, arg(0)), center_of(*target), arg(2).as_real()));
         }
         case op::objects_can_see_flag: {
             auto const* flag = named(m_scenario->cutscene.flags, text_of(arg(1)));
@@ -1952,6 +1952,15 @@ struct BlamScript
             return std::pair{
                 model->position + Vecf3{0.f, 0.f, eye_height}, model->rotation * Vecf3{1.f, 0.f, 0.f}};
         return std::nullopt;
+    }
+
+    /* The middle of an object's bounding sphere, where it is looked at */
+    Vecf3 center_of(Model const& model) const
+    {
+        if(model.origin_object)
+            if(auto obj = model.origin_object->template data<blam::scn::object>(m_magic); obj.has_value())
+                return model.position + model.rotation * obj.value()[0].bound_offset;
+        return model.position + Vecf3{0.f, 0.f, body_middle};
     }
 
     bool can_see(Proxy& p, std::vector<u64> const& viewers, Vecf3 const& target, f32 degrees) const
