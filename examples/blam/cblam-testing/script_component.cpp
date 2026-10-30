@@ -249,6 +249,10 @@ struct BlamScript
             .tests      = m_tests,
             .impulses   = m_impulses,
             .loops      = m_loops,
+            .deferred   = m_deferred,
+            .spawning   = m_spawning,
+            .queued     = m_queued_recordings,
+            .slots      = m_actor_slots,
         };
     }
 
@@ -301,11 +305,13 @@ struct BlamScript
         std::erase_if(m_custom, [&](auto const& c) { return !there(c.first); });
         std::erase_if(m_speakers, [&](auto const& s) { return !there(s.first); });
         m_walking.clear();
-        m_deferred.clear();
-        m_spawning.clear();
+        /* What waited on objects still spawning at the save waits again */
+        m_deferred          = std::move(saved.deferred);
+        m_spawning          = std::move(saved.spawning);
+        m_queued_recordings = std::move(saved.queued);
+        m_actor_slots       = std::move(saved.slots);
         m_despawning.clear();
         m_recreate.clear();
-        m_queued_recordings.clear();
         log("back to the checkpoint");
     }
 
@@ -3775,6 +3781,10 @@ struct BlamScript
         action_tests_t                          tests;
         std::map<u32, libc_types::i64>          impulses;
         std::set<u32>                           loops;
+        std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> deferred;
+        std::set<u32>                           spawning;
+        std::map<u32, i32>                      queued;
+        std::map<u32, actor_slot_t>             slots;
     };
     std::optional<saved_t> m_saved;
     bool                   m_save_now{false};
