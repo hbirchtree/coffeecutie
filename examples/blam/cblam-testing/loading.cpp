@@ -2731,7 +2731,7 @@ struct ResourceLoader
                 biped_model.biped = biped;
                 biped_model.model = biped->model;
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
-                    biped_model.hand = bind_marker_node(
+                    biped_model.hand = bind_marker_prefix(
                         *mod2, hand_marker, files.container.magic);
                 if(biped->collision_radius > 0.f &&
                    biped->standing_collision_height > 0.f &&
@@ -3170,7 +3170,7 @@ struct ResourceLoader
         auto& equip = *p.template get<BipedEquipment>(unit);
         equip       = {.load_generation = files.load_generation};
         equip.weapons[0] = armed(&weapon, files);
-        auto const hand  = model.tag ? bind_marker_node(*model.tag, hand_marker, files.container.magic)
+        auto const hand  = model.tag ? bind_marker_prefix(*model.tag, hand_marker, files.container.magic)
                                      : std::nullopt;
         equip.weapons[0].held = respawn_held(p, unit, 0, &weapon, files, hand);
         armed_npcs[unit]      = equip.weapons[0].held;
