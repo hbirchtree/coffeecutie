@@ -201,9 +201,20 @@ struct BlamScript
         m_save_queue->poll();
         m_restore_queue->poll();
         if(std::exchange(m_save_now, false))
-            save();
+            save(p);
         if(std::exchange(m_restore_now, false))
+            m_restore_wait = restore_frames;
+        /* The checkpoint's objects come back before the scripts go on with them */
+        if(m_restore_wait && (respawned(p) || --m_restore_wait == 0))
+        {
+            m_restore_wait = 0;
             restore(p);
+        }
+        if(m_restore_wait)
+        {
+            m_proxy = nullptr;
+            return;
+        }
         watch_player(p);
         for(size_t i = 0; i < ticks.size(); i++)
         {
@@ -234,7 +245,7 @@ struct BlamScript
         m_proxy = nullptr;
     }
 
-    void save()
+    void save(Proxy& p)
     {
         m_saved = saved_t{
             .vm         = m_vm,
@@ -254,11 +265,42 @@ struct BlamScript
             .queued     = m_queued_recordings,
             .slots      = m_actor_slots,
         };
+        auto const name = [&](u64 id) {
+            if(auto const* net = p.template get<NetworkInfo>(id); net && net->instance_id)
+                m_saved->nets[id] = net->instance_id;
+        };
+        for(auto const& r : m_recordings)
+            name(r.entity);
+        for(auto const& r : m_riders)
+        {
+            name(r.unit);
+            name(r.vehicle);
+        }
+        for(auto const& a : m_attached)
+        {
+            name(a.parent);
+            name(a.child);
+        }
+        for(u64 id : m_hovering)
+            name(id);
+        for(auto const& [id, _] : m_custom)
+            name(id);
+        for(auto const& [id, _] : m_speakers)
+            name(id);
+    }
+
+    /* Whether what the checkpoint names is there again */
+    bool respawned(Proxy& p) const
+    {
+        return !m_saved || std::all_of(m_saved->nets.begin(), m_saved->nets.end(), [&](auto const& n) {
+            return entity_by_net_id(p, n.second) != 0;
+        });
     }
 
     /* Back to the checkpoint's threads and globals. What they had going on
-     * objects that have since gone is dropped; sounds looping since stop,
-     * and the checkpoint's start again */
+     * objects the checkpoint respawned carries over by net id, on objects
+     * gone for good it is dropped; sounds looping since stop, and the
+     * checkpoint's start again */
     void restore(Proxy& p)
     {
         if(!m_saved)
@@ -275,31 +317,72 @@ struct BlamScript
             if(!m_loops.contains(loop))
                 play(p, {.integer = static_cast<i32>(loop)}, {}, true);
 
-        auto saved   = *m_saved;
+        auto saved = *m_saved;
+        /* Objects respawned since are new entities under the same net id */
+        auto const now = [&](u64 id) {
+            auto it = saved.nets.find(id);
+            return there(id) || it == saved.nets.end() ? id : entity_by_net_id(p, it->second);
+        };
+        for(auto& r : saved.recordings)
+            r.entity = now(r.entity);
+        for(auto& r : saved.riders)
+        {
+            r.unit    = now(r.unit);
+            r.vehicle = now(r.vehicle);
+        }
+        for(auto& a : saved.attached)
+        {
+            a.parent = now(a.parent);
+            a.child  = now(a.child);
+        }
+        std::set<u64> hovering;
+        for(u64 id : saved.hovering)
+            hovering.insert(now(id));
+        std::map<u64, custom_t> custom;
+        for(auto const& [id, c] : saved.custom)
+            custom[now(id)] = c;
+        std::map<u64, speaker_t> speakers;
+        for(auto& [id, s] : saved.speakers)
+            speakers[now(id)] = std::move(s);
+
+        /* What the scripts hold, now and at the checkpoint, physics takes
+         * back unless it is held still */
+        std::set<u64> held;
+        auto const    hold = [&] {
+            for(auto const& r : m_recordings)
+                held.insert(r.entity);
+            for(auto const& a : m_attached)
+                held.insert(a.child);
+            held.insert(m_hovering.begin(), m_hovering.end());
+            for(auto const& [id, _] : m_custom)
+                held.insert(id);
+            for(auto const& [id, _] : m_commands)
+                held.insert(id);
+        };
+        hold();
+        for(auto const& r : std::vector(m_riders))
+            unseat(p, r.unit);
+
         m_vm         = std::move(saved.vm);
         m_actors     = std::move(saved.actors);
         m_next_actor = saved.next_actor;
         m_recordings = std::move(saved.recordings);
-        m_riders     = std::move(saved.riders);
         m_attached   = std::move(saved.attached);
-        m_hovering   = std::move(saved.hovering);
-        m_custom     = std::move(saved.custom);
+        m_hovering   = std::move(hovering);
+        m_custom     = std::move(custom);
         m_commands.clear();
         for(auto& [conv, c] : m_conversations)
             finish_conversation(p, c);
         m_scaling.clear();
         m_suspended.clear();
-        m_speakers   = std::move(saved.speakers);
+        m_speakers   = std::move(speakers);
         m_tests      = saved.tests;
         m_impulses   = std::move(saved.impulses);
         m_loops      = std::move(saved.loops);
         std::erase_if(m_recordings, [&](recording_t const& r) { return !there(r.entity); });
-        std::erase_if(m_riders, [&](rider_t const& r) {
-            bool const gone = !there(r.unit) || !there(r.vehicle);
-            if(gone)
-                seated(p, r.unit, 0, -1);
-            return gone;
-        });
+        for(auto const& r : saved.riders)
+            if(there(r.unit) && there(r.vehicle))
+                seat_unit(p, r.unit, r.vehicle, r.seat, true);
         std::erase_if(m_attached, [&](attached_t const& a) { return !there(a.parent) || !there(a.child); });
         std::erase_if(m_hovering, [&](u64 id) { return !there(id); });
         std::erase_if(m_custom, [&](auto const& c) { return !there(c.first); });
@@ -312,6 +395,9 @@ struct BlamScript
         m_actor_slots       = std::move(saved.slots);
         m_despawning.clear();
         m_recreate.clear();
+        hold();
+        for(u64 id : held)
+            carry(p, id, carried(p, id));
         log("back to the checkpoint");
     }
 
@@ -2014,6 +2100,17 @@ struct BlamScript
         return std::any_of(m_recordings.begin(), m_recordings.end(), [id](recording_t const& r) {
             return r.entity == id;
         });
+    }
+
+    /* Held where the scripts put it, out of physics' hands */
+    bool carried(Proxy& p, u64 id) const
+    {
+        auto const custom = m_custom.find(id);
+        bool const moved  = (playing_recording(id) && !rolls(p, id)) ||
+                           (custom != m_custom.end() && custom->second.moves);
+        return m_hovering.contains(id) || riding(id) || m_commands.contains(id) ||
+               std::any_of(m_attached.begin(), m_attached.end(), [id](attached_t const& a) { return a.child == id; }) ||
+               (moved && !walks(p, id));
     }
 
     /* A tick of each: the unit moves as the clip's root does */
@@ -3785,10 +3882,14 @@ struct BlamScript
         std::set<u32>                           spawning;
         std::map<u32, i32>                      queued;
         std::map<u32, actor_slot_t>             slots;
+        std::map<u64, u32>                      nets; /*!< Entities it names, by net id */
     };
     std::optional<saved_t> m_saved;
     bool                   m_save_now{false};
     bool                   m_restore_now{false};
+    u32                    m_restore_wait{0}; /*!< Frames left to wait for respawns */
+    /* How long a revert waits for the checkpoint's objects */
+    static constexpr u32 restore_frames = 30;
     std::shared_ptr<GameEventBus::queue_type<WorldSaveEvent>>    m_save_queue;
     std::shared_ptr<GameEventBus::queue_type<WorldRestoreEvent>> m_restore_queue;
     Proxy*                                  m_proxy{nullptr};
