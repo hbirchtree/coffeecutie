@@ -31,6 +31,7 @@ using AnimationControllerManifest = compo::SubsystemManifest<
         const Attachment,
         const BipedEquipment,
         const BipedStatus,
+        const Actor,
         HeldObject,
         AnimationPlayback>,
     type_list_t<
@@ -326,12 +327,24 @@ struct AnimationController
             if(!loaded || !physics.upright || !anim.graph)
                 continue;
             seen.insert(npc.id());
+            /* An actor aims at its target wherever its body faces, as a
+             * player's aim follows the camera */
+            auto const* actor = p.template get<Actor>(npc.id());
+            Vecf3       look  = model.rotation * Vecf3{1.f, 0.f, 0.f};
+            f32         yaw   = 0.f;
+            if(Vecf3 const to = actor && actor->target ? actor->last_seen - model.position : Vecf3{};
+               glm::length(Vecf2(to)) > 1e-3f)
+            {
+                f32 const pitch = std::atan2(to.z, glm::length(Vecf2(to)));
+                yaw  = std::atan2(look.x * to.y - look.y * to.x, look.x * to.x + look.y * to.y);
+                look = Vecf3{Vecf2(look) * std::cos(pitch), std::sin(pitch)};
+            }
             animate_unit(
                 p,
                 npc.id(),
                 anim,
                 model.position,
-                model.rotation * Vecf3{1.f, 0.f, 0.f},
+                look,
                 held_label(p, npc.id(), files),
                 physics.authority == ObjectPhysics::Simulated
                     ? std::optional(physics.walking)
@@ -340,7 +353,8 @@ struct AnimationController
                 physics.grounded || physics.scripted,
                 dt,
                 anim.stance,
-                dead(p, npc.id()));
+                dead(p, npc.id()),
+                yaw);
         }
 
         for(auto it = m_walkers.begin(); it != m_walkers.end();)
@@ -359,7 +373,8 @@ struct AnimationController
         bool               grounded,
         f32                dt,
         std::string const& unit = "stand",
-        bool               dead = false)
+        bool               dead = false,
+        f32                yaw  = 0.f) /* aim, counter-clockwise from `look` */
     {
         auto& walker = m_walkers[id];
         if(dead)
@@ -482,13 +497,15 @@ struct AnimationController
             st[Slot::aim_still],
             st.aim,
             pitch,
-            1.f - moving);
+            1.f - moving,
+            yaw);
         aim(anim.layers[AnimationPlayback::aim_move_slot],
             graph,
             st[Slot::aim_move],
             st.aim,
             pitch,
-            moving);
+            moving,
+            yaw);
 
         /* Feet are probed for once the clocks have moved */
         walker.running = speed > run_threshold;
