@@ -2308,8 +2308,8 @@ struct BlamScript
                 held.size()));
     }
 
-    /* Allies near a vehicle a player drives and has stopped climb into its
-     * free seats */
+    /* Allies near a stopped vehicle a player sits in climb into its free
+     * seats */
     void offer_vehicles(Proxy& p)
     {
         using team_t = blam::scn::unit::team_t;
@@ -2319,7 +2319,7 @@ struct BlamScript
         for(auto ent : p.template select<PlayerInfo>())
         {
             auto const& info    = ent.template get<PlayerInfo>();
-            auto const* vehicle = info.riding.driver ? p.template get<Model>(info.riding.vehicle) : nullptr;
+            auto const* vehicle = info.riding.vehicle ? p.template get<Model>(info.riding.vehicle) : nullptr;
             auto const* moving  = vehicle ? p.template get<ObjectPhysics>(info.riding.vehicle) : nullptr;
             if(!vehicle || !moving || glm::length(moving->linear_velocity) > offer_speed)
                 continue;
