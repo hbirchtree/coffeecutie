@@ -924,6 +924,22 @@ struct squad_location
 
 static_assert(sizeof(squad_location) == 28);
 
+/* A point a squad's actors walk between while nothing is happening */
+struct squad_move_position
+{
+    Vecf3   position;
+    angle_t facing;
+    f32     weight;
+    Vecf2   time; /* seconds to stay */
+    i16     animation;
+    u8      sequence_id;
+    u8      padding0;
+    u32     padding1[11];
+    u32     surface_index; /* cache */
+};
+
+static_assert(sizeof(squad_move_position) == 80);
+
 struct squad
 {
     bl_string         name;
@@ -943,7 +959,7 @@ struct squad
     u16               normal_diff_count;
     u16               insane_diff_count;
     u32                       unk3[17];
-    reference<u8>             move_positions;
+    reference<squad_move_position> move_positions;
     reference<squad_location> start_locations;
     u32                       unk4[3];
 };
