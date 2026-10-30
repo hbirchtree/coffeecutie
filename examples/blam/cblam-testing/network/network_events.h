@@ -436,7 +436,7 @@ struct alignas(8) UnitVitality
     u32 target_player{0};
     f32 body{1.f};
     f32 shield{1.f};
-    u32 dead{0};
+    u32 dead{0}; /*!< 1: dead, 2: violently, 4: destroyed */
     u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect, 4: re-equipped */
     Vecf4 respawn{};
     f32   overcharge_decay{0.f}; /*!< Over shield lost per second */

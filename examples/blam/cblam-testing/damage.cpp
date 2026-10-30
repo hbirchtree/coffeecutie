@@ -10,12 +10,14 @@
 #include "sounds.h"
 #include "ticks.h"
 
+#include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_effects.h>
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 
 #include <map>
+#include <set>
 #include <random>
 
 using DamageManifest = compo::SubsystemManifest<
@@ -25,7 +27,8 @@ using DamageManifest = compo::SubsystemManifest<
         PlayerInfo,
         const PlayerCamera,
         Model,
-        const ObjectPhysics>,
+        const ObjectPhysics,
+        const NetworkInfo>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
@@ -60,7 +63,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         auto hits   = std::exchange(m_hits, {});
         auto areas  = std::exchange(m_areas, {});
         auto struck = std::exchange(m_struck, {});
-        for(auto const& vitality : std::exchange(m_vitality, {}))
+        auto vitalities = std::exchange(m_vitality, {});
+        for(auto const& vitality : vitalities)
             take(p, vitality);
         m_respawn_queue->poll();
         auto respawns = std::exchange(m_respawns, {});
@@ -70,6 +74,13 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         m_magic           = &files.container.magic;
         m_index.emplace(files.container);
+        /* What was dying goes with the map it was on */
+        if(std::exchange(m_generation, files.load_generation) != files.load_generation)
+        {
+            m_dying.clear();
+            m_gone.clear();
+            m_destroyed.clear();
+        }
         for(auto const& area : areas)
             blast(p, area);
         bool const authority = !p.template subsystem<NetworkState>().replica;
@@ -90,6 +101,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 run_down(p, s);
             for(auto const& respawn : respawns)
                 revive(p, respawn);
+            for(auto const& vitality : vitalities)
+                put_down(p, vitality);
+            fall_apart(p, dt);
         }
         recharge(p, dt);
         wear_off(p, dt);
@@ -426,11 +440,116 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         return std::nullopt;
     }
 
+    /* ---- Destroyed after dying ---- */
+
+    blam::scn::unit const* unit_of(Proxy& p, u64 unit) const
+    {
+        auto const* model = p.template get<Model>(unit);
+        if(!model || !model->origin_object)
+            return nullptr;
+        auto u = model->origin_object->template data<blam::scn::unit>(*m_magic);
+        return u.has_value() ? &u.value()[0] : nullptr;
+    }
+
+    /* A unit its tag destroys after dying (flood carriers and infection
+     * forms) goes once its kill animation has played */
+    void doom(Proxy& p, u64 unit)
+    {
+        using flags_t = blam::scn::unit::unit_flags_t;
+        auto const* u = unit_of(p, unit);
+        if(u && (u->unit_flags & flags_t::destroyed_after_dying) != flags_t::none &&
+           !m_destroyed.contains(unit))
+            m_dying.emplace(unit, kill_time(*u));
+    }
+
+    f32 kill_time(blam::scn::unit const& u) const
+    {
+        auto const* graph = tag_data<blam::antr::header>(u.anim_graph, blam::tag_class_t::antr);
+        if(!graph)
+            return 0.f;
+        auto animations = graph->animations.data(*m_magic);
+        if(!animations.has_value())
+            return 0.f;
+        for(auto const& animation : animations.value())
+            if(animation.name.str().find("kill") != std::string_view::npos)
+                return animation.frame_count / animation.frame_rate();
+        return 0.f;
+    }
+
+    /* A death raised elsewhere: a script's, done already, or one asked for
+     * (a carrier at its target) */
+    void put_down(Proxy& p, UnitVitalityEvent const& vitality)
+    {
+        auto* status = p.template get<BipedStatus>(vitality.unit);
+        if(!status || vitality.origin != MapLoadEvent::Local || !vitality.dead ||
+           vitality.destroyed)
+            return;
+        if(status->dead)
+            return doom(p, vitality.unit);
+        status->shield = status->body = 0.f;
+        status->dead   = true;
+        last_words(p, vitality.unit, false);
+        tell(p, vitality.unit, *status);
+        killed(p, vitality.unit, ObjectHitEvent::no_player);
+    }
+
+    /* Its time up, a dead unit bursts and is taken away the frame after,
+     * once everyone has been told */
+    void fall_apart(Proxy& p, f32 dt)
+    {
+        for(u32 net_id : std::exchange(m_gone, {}))
+        {
+            GameEvent          ev{.type = GameEvent::DespawnObject};
+            DespawnObjectEvent gone{.net_id = net_id};
+            p.template subsystem<GameEventBus>().inject(ev, &gone);
+        }
+        std::erase_if(m_destroyed, [&p](u64 unit) { return !p.template get<BipedStatus>(unit); });
+        for(auto it = m_dying.begin(); it != m_dying.end();)
+        {
+            auto const* status = p.template get<BipedStatus>(it->first);
+            if(status && status->dead && (it->second -= dt) > 0.f)
+            {
+                ++it;
+                continue;
+            }
+            if(status && status->dead)
+            {
+                burst(p, it->first);
+                tell(p, it->first, *status, {}, 0.f, false, false, false, true);
+                if(auto const* net = p.template get<NetworkInfo>(it->first); net && net->instance_id)
+                    m_gone.push_back(net->instance_id);
+                m_destroyed.insert(it->first);
+            }
+            it = m_dying.erase(it);
+        }
+    }
+
+    /* Its coll's body destroyed effect, where it lies */
+    void burst(Proxy& p, u64 unit)
+    {
+        if(auto const* status = p.template get<BipedStatus>(unit); status && status->coll)
+            play_at(p, unit, status->coll->body_destroyed_effect);
+    }
+
+    void play_at(Proxy& p, u64 unit, blam::tagref_t const& effect)
+    {
+        auto centre = centre_of(p, unit);
+        if(!effect.valid() || !centre)
+            return;
+        GameEvent        ev{.type = GameEvent::SpawnEffect};
+        SpawnEffectEvent play{
+            .effect    = effect,
+            .position  = *centre,
+            .direction = {0.f, 0.f, 1.f},
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &play);
+    }
+
     /* ---- What everyone sees ---- */
 
     void tell(Proxy& p, u64 unit, BipedStatus const& status,
               std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f, bool arrived = false,
-              bool fresh = false, bool violent = false)
+              bool fresh = false, bool violent = false, bool destroyed = false)
     {
         auto const*       info = p.template get<PlayerInfo>(unit);
         GameEvent         ev{.type = GameEvent::UnitVitality};
@@ -445,13 +564,17 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .respawn_facing = facing,
             .arrived        = arrived,
             .fresh          = fresh,
+            .destroyed      = destroyed,
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
     }
 
-    /* Its dialogue's death line, loud or quiet by how it went */
+    /* Its coll's body depleted effect, and its dialogue's death line, loud
+     * or quiet by how it went */
     void last_words(Proxy& p, u64 unit, bool violent)
     {
+        if(auto const* status = p.template get<BipedStatus>(unit); status && status->coll)
+            play_at(p, unit, status->coll->body_depleted_effect);
         auto const* model  = p.template get<Model>(unit);
         auto*       sounds = p.template service<comp_app::EventBus<SoundEvent>>();
         if(!model || !model->origin_object || !sounds)
@@ -485,6 +608,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         GameEvent       ev{.type = GameEvent::UnitKilled};
         UnitKilledEvent kill{.unit = unit, .player = player_of(p, unit), .killer = killer};
         p.template subsystem<GameEventBus>().inject(ev, &kill);
+        doom(p, unit);
     }
 
     /* What the authority says is left; a player of ours that comes back to
@@ -505,6 +629,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(vitality.dead && !status->dead)
             last_words(p, vitality.unit, vitality.violent);
         status->dead       = vitality.dead;
+        if(vitality.destroyed)
+            burst(p, vitality.unit);
         if(vitality.shield < 1.f)
             status->stunned = status->coll ? status->coll->stun_time : default_stun;
         if(auto const* info = p.template get<PlayerInfo>(vitality.unit);
@@ -716,6 +842,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<RespawnUnitEvent>    m_respawns;
     std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>> m_pickup_queue;
     std::vector<EquipWeaponEvent>    m_pickups;
+    std::map<u64, f32>               m_dying; /* unit: seconds until destroyed */
+    std::vector<u32>                 m_gone;  /* net ids, despawned next frame */
+    std::set<u64>                    m_destroyed;
+    u32                              m_generation{0};
 
     blam::map_ptr const*                              m_magic{nullptr};
     std::optional<blam::tag_index_view<halo_version>> m_index;
