@@ -1941,6 +1941,8 @@ struct BlamScript
         f32  left{0.f}, right{0.f}, up{0.f}, down{0.f}; /* furthest turned */
         bool action{false}, accept{false}, back{false}, primary{false}, grenade{false};
     };
+    /* Kept across resets, so a button already down does not answer a test */
+    debounced_button_t m_accept_button{}, m_back_button{};
 
     /* Where a unit looks from, and which way */
     std::optional<std::pair<Vecf3, Vecf3>> eye_of(Proxy& p, u64 id) const
@@ -1996,8 +1998,14 @@ struct BlamScript
             m_tests.up      = std::max(m_tests.up, pitch);
             m_tests.down    = std::max(m_tests.down, -pitch);
             m_tests.action |= input.intent.use;
-            m_tests.accept |= input.accept.current;
-            m_tests.back |= input.back.current;
+            /* Presses; the controller has ended its frame, leaving what was
+             * held in `previous`. B melees in play, and backs out too. */
+            m_accept_button = input.accept.previous;
+            m_back_button   = input.back.previous || input.melee.previous;
+            m_tests.accept |= static_cast<bool>(m_accept_button);
+            m_tests.back |= static_cast<bool>(m_back_button);
+            m_accept_button.frame_end();
+            m_back_button.frame_end();
             m_tests.primary |= input.intent.fire;
             m_tests.grenade |= input.intent.grenade || input.grenade.current;
         }
