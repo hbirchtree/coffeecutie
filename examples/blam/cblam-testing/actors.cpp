@@ -324,7 +324,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
             else if(!patrol(p, id, actor, model, anim, kind, dt))
                 move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
-            glance(actor, model, actr, dt);
+            glance(actor, model, anim, actr, dt);
             break;
         case state_t::combat: {
             if(!alive(p, actor.target))
@@ -1017,8 +1017,30 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     }
 
     /* Idle, it looks somewhere else now and then */
-    void glance(Actor& actor, Model& model, actr_t const& actr, f32 dt)
+    void glance(
+        Actor&             actor,
+        Model&             model,
+        AnimationPlayback& anim,
+        actr_t const&      actr,
+        f32                dt)
     {
+        /* The head wanders within its idle range more often than the body turns */
+        if((actor.gaze_in -= dt) <= 0.f)
+        {
+            actor.gaze_in = uniform(actr.looking.noncombat_idle_looking, 2.f);
+            auto const range = actr.looking.idle_looking_range;
+            auto       pick  = [this](f32 r) {
+                return r > 0.f ? std::uniform_real_distribution<f32>(-r, r)(
+                                     m_random)
+                                      : 0.f;
+            };
+            f32 const   yaw   = pick(std::min(range.yaw, glm::radians(70.f)));
+            f32 const   pitch = pick(std::min(range.pitch, glm::radians(30.f)));
+            Vecf3 const dir   = glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) *
+                              model.rotation *
+                              Vecf3{std::cos(pitch), 0.f, std::sin(pitch)};
+            anim.gaze(anim.aiming, dir, actor.gaze_in);
+        }
         if(actor.moving || (actor.glance_in -= dt) > 0.f)
             return;
         actor.glance_in = uniform(actr.looking.noncombat_idle_facing, 4.f);

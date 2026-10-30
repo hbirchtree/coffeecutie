@@ -75,7 +75,8 @@ struct AnimationPlayback
         turret_slot   = 13, /* vehicles: where the gunner aims */
         state_slot    = 14, /* a held pose of the object's state: its ammunition */
         object_slot   = 15, /* the graph's object animation, by an object function */
-        max_layers    = 16,
+        look_slot     = 16, /* units: the head turned toward `looking` */
+        max_layers    = 17,
     };
 
     std::array<AnimationLayer, max_layers> layers{};
@@ -89,6 +90,22 @@ struct AnimationPlayback
     /* Faces: how open the mouth is (0-1), and the emotion frame shown */
     libc_types::f32 mouth{0.f};
     libc_types::i16 emotion{-1};
+
+    /* A unit's aim and gaze as world directions, zero = along its body;
+     * both lapse once `gaze_hold` seconds run out */
+    typing::vector_types::Vecf3 aiming{};
+    typing::vector_types::Vecf3 looking{};
+    libc_types::f32             gaze_hold{0.f};
+
+    void gaze(
+        typing::vector_types::Vecf3 const& aim,
+        typing::vector_types::Vecf3 const& look,
+        libc_types::f32                    hold)
+    {
+        aiming    = aim;
+        looking   = look;
+        gaze_hold = hold;
+    }
 
     /* Feet that came down during the last advance (the antr foot frames) */
     enum footstep_t : libc_types::u8
