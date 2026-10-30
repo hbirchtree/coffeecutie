@@ -295,8 +295,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             if(actor.migrated && actor.position >= 0)
                 move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
-            else
+            else if(!patrol(p, id, actor, model, anim, kind, dt))
                 move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
+            glance(actor, model, actr, dt);
             break;
         case state_t::combat: {
             if(!alive(p, actor.target))
@@ -915,6 +916,77 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
         }
         return best;
+    }
+
+    /* Placed to patrol: it walks its squad's move positions, in order, back
+     * and forth or at random by their weights, staying at each its time.
+     * False when it has no patrol */
+    bool patrol(Proxy& p, u64 id, Actor& actor, Model& model, AnimationPlayback& anim, kind_t const& kind, f32 dt)
+    {
+        using ai_state_t = blam::scn::ai::state_t;
+        auto const mode  = static_cast<ai_state_t>(actor.idle_state);
+        if(mode < ai_state_t::moving_repeat_same_position || mode > ai_state_t::moving_randomly)
+            return false;
+        auto moves = kind.squad->move_positions.data(*s_magic);
+        if(!moves.has_value() || moves.value().empty())
+            return false;
+        auto const& all = moves.value();
+        i32 const   n   = static_cast<i32>(all.size());
+        auto pick = [&]() -> i32 {
+            switch(mode)
+            {
+            case ai_state_t::moving_repeat_same_position:
+                return actor.move_at < 0 ? static_cast<i32>(m_random() % n) : actor.move_at;
+            case ai_state_t::moving_loop:
+                return (actor.move_at + 1) % n;
+            case ai_state_t::moving_loop_back_and_forth: {
+                if(n == 1)
+                    return 0;
+                if(actor.move_at < 0)
+                    return 0;
+                if(actor.move_at + (actor.move_back ? -1 : 1) < 0 || actor.move_at + (actor.move_back ? -1 : 1) >= n)
+                    actor.move_back = !actor.move_back;
+                return actor.move_at + (actor.move_back ? -1 : 1);
+            }
+            default: {
+                f32 total = 0.f;
+                for(auto const& m : all)
+                    total += std::max(m.weight, 1e-3f);
+                f32 roll = std::uniform_real_distribution<f32>(0.f, total)(m_random);
+                for(i32 i = 0; i < n; i++)
+                    if((roll -= std::max(all[i].weight, 1e-3f)) <= 0.f)
+                        return i;
+                return n - 1;
+            }
+            }
+        };
+        if(actor.move_at < 0)
+            actor.move_at = pick();
+        auto const& at = all[static_cast<size_t>(actor.move_at)];
+        if(glm::distance(Vecf2(model.position), Vecf2(at.position)) > arrive_radius * 2.f)
+        {
+            move_toward(p, id, actor, model, anim, kind, at.position, dt, false);
+            actor.move_wait = uniform(at.time, 2.f);
+            return true;
+        }
+        stop(p, id, actor);
+        if((actor.move_wait -= dt) <= 0.f && mode != ai_state_t::moving_repeat_same_position)
+        {
+            actor.move_at   = pick();
+            actor.move_wait = 0.f;
+        } else if(actor.move_wait > 0.f && actor.glance_in > 1.f)
+            model.rotation = glm::angleAxis(at.facing, Vecf3{0.f, 0.f, 1.f});
+        return true;
+    }
+
+    /* Idle, it looks somewhere else now and then */
+    void glance(Actor& actor, Model& model, actr_t const& actr, f32 dt)
+    {
+        if(actor.moving || (actor.glance_in -= dt) > 0.f)
+            return;
+        actor.glance_in = uniform(actr.looking.noncombat_idle_facing, 4.f);
+        f32 const turn  = std::uniform_real_distribution<f32>(-1.f, 1.f)(m_random) * glm::radians(60.f);
+        model.rotation  = glm::normalize(glm::angleAxis(turn, Vecf3{0.f, 0.f, 1.f}) * model.rotation);
     }
 
     /* Out of a fight: the nearest free position of its squad's guard
