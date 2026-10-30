@@ -1402,6 +1402,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.melee_in -= look_period / 8.f;
         if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > actv.melee_range)
             return false;
+        /* A carrier form at its target falls over and bursts */
+        if(kind.actor->type == blam::scn::actor_type_t::carrier_form)
+        {
+            GameEvent         ev{.type = GameEvent::UnitVitality};
+            UnitVitalityEvent death{.unit = id, .body = 0.f, .shield = 0.f, .dead = true};
+            p.template subsystem<GameEventBus>().inject(ev, &death);
+            return true;
+        }
         if(actor.melee_in > 0.f)
             return true;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();

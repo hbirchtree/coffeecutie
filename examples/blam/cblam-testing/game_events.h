@@ -100,6 +100,7 @@ struct GameEvent
         DeviceSync,
         SyncPoint,
         MapGame,
+        EnlistActor,
     };
 
     EventType type{None};
@@ -554,6 +555,21 @@ struct UnitKilledEvent
     libc_types::u64 unit{0};
     libc_types::u32 player{ObjectHitEvent::no_player}; /*!< When a player died */
     libc_types::u32 killer{ObjectHitEvent::no_player}; /*!< A player, if one did it */
+};
+
+/*! A unit spawned outside the scripts (a carrier's infection forms) joins
+ *  a squad as an actor, answering to the names `like` does. Local only */
+struct EnlistActorEvent
+{
+    static constexpr auto event_type = GameEvent::EnlistActor;
+
+    libc_types::u32 net_id{0};
+    blam::tagref_t  variant{}; /*!< actv */
+    libc_types::u32 like{0};   /*!< Net id of the actor whose squad it joins */
+    libc_types::i16 encounter{-1};
+    libc_types::i16 squad{-1};
+    libc_types::u16 team{0};
+    Vecf3           post{};
 };
 
 /*! Brings a dead unit back at full health, there; or, restoring a
