@@ -9,12 +9,15 @@
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_globals.h>
+#include <blam/volta/blam_strings.h>
 #include <blam/volta/blam_ui.h>
 #include <blam/volta/blam_unit.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 
+#include <array>
+#include <span>
 #include <string>
 #include "sounds.h"
 
@@ -577,6 +580,200 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         });
     }
 
+    /* ---- Messages ---- */
+
+    using run_t = HudScene::text_t::run_t;
+
+    /* Icons past the hudg's buttons are game actions, then values the
+     * message is given */
+    static constexpr i32 first_action = 18;
+    static constexpr i32 first_value  = 32;
+    /* Each action's button on the Xbox's default layout; -1 for unknown */
+    static constexpr auto action_buttons = std::to_array<libc_types::i8>({
+        2,  /* action: X */
+        6,  /* throw grenade: left trigger */
+        7,  /* fire: right trigger */
+        5,  /* flashlight: white */
+        0,  /* jump: A */
+        1,  /* melee: B */
+        3,  /* switch weapons: Y */
+        -1, -1,
+        14, /* crouch: left thumb */
+        -1, -1,
+        16, /* move: left stick */
+        17, /* look: right stick */
+    });
+
+    /* The fields of a hudg button icon or a messaging_information */
+    struct icon_t
+    {
+        i16           sequence_index;
+        i16           width_offset;
+        blam::vec2i16 offset;
+        blam::argb8_t color;
+        u8            flags;
+    };
+
+    /* A sprite of the hudg's message icons, placed and spaced as the icon
+     * says */
+    std::optional<run_t> icon_run(icon_t const& icon, Vecf4 const& color)
+    {
+        using flags_t = blam::hud_globals::button_icon_t::flags_t;
+        auto const bitmap = m_hudg ? m_index.find(m_hudg->icon_bitmap.tag_id) : m_index.end();
+        if(bitmap == m_index.end())
+            return std::nullopt;
+        auto header = (*bitmap).template data<blam::bitm::header_t>(*m_magic);
+        if(!header.has_value())
+            return std::nullopt;
+        /* Some shipped tags point past the sheet */
+        auto seqs = header.value()->sequences.data(*m_magic);
+        if(!seqs.has_value() || icon.sequence_index < 0 ||
+           static_cast<size_t>(icon.sequence_index) >= seqs.value().size())
+            return std::nullopt;
+        auto frame = frame_of(m_hudg->icon_bitmap, icon.sequence_index, 0);
+        if(!frame)
+            return std::nullopt;
+        auto const  has    = [&icon](flags_t f) { return (icon.flags & static_cast<u8>(f)) != 0; };
+        Vecf2 const offset = Vecf2(icon.offset.x, icon.offset.y);
+        frame->sprite.min   = offset;
+        frame->sprite.max   = offset + frame->size;
+        frame->sprite.color = has(flags_t::override_default_color) ? color_of(icon.color) : color;
+        return run_t{
+            .icon    = frame->sprite,
+            .advance = has(flags_t::width_offset_is_absolute_icon_width) ? static_cast<f32>(icon.width_offset)
+                                                                         : frame->size.x + icon.width_offset,
+        };
+    }
+
+    /* A button icon of the hudg, or its stand-in text */
+    std::optional<run_t> button_run(i32 button)
+    {
+        using flags_t = blam::hud_globals::button_icon_t::flags_t;
+        if(!m_hudg)
+            return std::nullopt;
+        auto buttons = m_hudg->button_icons.data(*m_magic);
+        if(!buttons.has_value() || button < 0 || static_cast<size_t>(button) >= buttons.value().size())
+            return std::nullopt;
+        auto const& b = buttons.value()[button];
+        if((static_cast<u8>(b.flags) & static_cast<u8>(flags_t::use_text_from_string_list)) == 0)
+            return icon_run({b.sequence_index, b.width_offset, b.offset, b.color, static_cast<u8>(b.flags)}, icon_color());
+        auto const* list = data_of<blam::ui::unicode_string_list>(m_hudg->alternate_icon_text);
+        if(!list)
+            return std::nullopt;
+        auto subs = list->data.data(*m_magic);
+        if(!subs.has_value() || b.text_index < 0 || static_cast<size_t>(b.text_index) >= subs.value().size())
+            return std::nullopt;
+        auto text = subs.value()[b.text_index].str(*m_magic);
+        if(!text.has_value())
+            return std::nullopt;
+        return run_t{.text = std::u16string(text.value())};
+    }
+
+    Vecf4 icon_color() const
+    {
+        /* Stored a, r, g, b */
+        return m_hudg ? Vecf4(m_hudg->icon_color.y, m_hudg->icon_color.z, m_hudg->icon_color.w, m_hudg->icon_color.x)
+                      : Vecf4(1.f);
+    }
+
+    /* A message as runs of text and icons; `values` stand in for the icons
+     * past the actions */
+    std::vector<run_t> message_of(
+        blam::hud_message_text const* hmt, std::string_view name, std::span<run_t const> values = {})
+    {
+        std::vector<run_t> out;
+        if(!hmt)
+            return out;
+        auto messages = hmt->messages.data(*m_magic);
+        auto elements = hmt->elements.data(*m_magic);
+        auto text     = hmt->text(*m_magic);
+        if(!messages.has_value() || !elements.has_value() || !text.has_value())
+            return out;
+        auto const message = std::find_if(messages.value().begin(), messages.value().end(), [name](auto const& m) {
+            return m.name.str() == name;
+        });
+        if(message == messages.value().end())
+            return out;
+        using type_t = blam::hud_message_text::element_t::type_t;
+        auto append  = [&out](run_t run) {
+            if(out.empty() || out.back().icon)
+                out.emplace_back();
+            out.back().text += run.text;
+            out.back().icon    = run.icon;
+            out.back().advance = run.advance;
+        };
+        size_t at = static_cast<size_t>(std::max<i16>(message->text_start, 0));
+        for(i32 i = 0; i < message->element_count; i++)
+        {
+            size_t const e = static_cast<size_t>(message->element_start) + i;
+            if(e >= elements.value().size())
+                break;
+            auto const& element = elements.value()[e];
+            if(element.type == type_t::text)
+            {
+                auto const     chars = text.value().subspan(std::min(at, text.value().size()));
+                std::u16string run(chars.begin(), chars.begin() + std::min<size_t>(std::max<libc_types::i8>(element.data, 0), chars.size()));
+                run.erase(std::find(run.begin(), run.end(), u'\0'), run.end());
+                /* "|n" breaks the line */
+                for(size_t n; (n = run.find(u"|n")) != std::u16string::npos;)
+                    run.replace(n, 2, u"\n");
+                append({.text = run});
+                at += static_cast<size_t>(std::max<libc_types::i8>(element.data, 0));
+                continue;
+            }
+            i32 const icon = element.data;
+            std::optional<run_t> run;
+            if(icon >= first_value)
+            {
+                if(static_cast<size_t>(icon - first_value) < values.size())
+                    run = values[icon - first_value];
+            } else if(icon >= first_action)
+            {
+                if(static_cast<size_t>(icon - first_action) < action_buttons.size())
+                    run = button_run(action_buttons[icon - first_action]);
+            } else
+                run = button_run(icon);
+            if(run)
+                append(*run);
+        }
+        return out;
+    }
+
+    /* Flashing for its first few beats of each period, as hudg's help text
+     * colors say */
+    static Vecf4 flashing(unit_hud_interface::colors_t const& c, bool flash, f32 t)
+    {
+        using flags_t = unit_hud_interface::colors_t::flash_flags_t;
+        bool lit      = false;
+        if(flash && c.flash_period > 0.f)
+        {
+            f32 const in   = std::fmod(t, c.flash_period);
+            f32 const beat = c.flash_length + c.flash_delay;
+            i32 const n    = beat > 0.f ? static_cast<i32>(in / beat) : 0;
+            lit            = n < c.num_flashes && in - n * beat < c.flash_length;
+        }
+        if((c.flash_flags & flags_t::reverse_default_flashing_colors) != flags_t::none)
+            lit = !lit;
+        Vecf4 const color = color_of(lit ? c.flashing_color : c.default_color);
+        /* Glyphs are drawn over the world, not added to it */
+        return Vecf4(Vecf3(color), 1.f);
+    }
+
+    /* The scripts' help text */
+    void messages(CinematicState const& cinematic)
+    {
+        if(!m_hudg)
+            return;
+        Vecf2 const at = place(m_hudg->anchor, m_hudg->placement.anchor_offset, Vecf2());
+        if(cinematic.help.shown && !cinematic.help.message.empty())
+            if(auto runs = message_of(m_messages, cinematic.help.message); !runs.empty())
+                m_view->texts.push_back({
+                    .runs  = std::move(runs),
+                    .at    = at,
+                    .color = flashing(m_hudg->help_text_colors, cinematic.help.flash, cinematic.help.elapsed),
+                });
+    }
+
     /* ---- Scoreboard ---- */
 
     static std::u16string wide(std::string_view text)
@@ -683,6 +880,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         f32 const dt    = m_last != time_point{} ? std::chrono::duration<f32>(t - m_last).count() : 0.f;
         m_last          = t;
         cinematic.fade.elapsed += dt;
+        cinematic.help.elapsed += dt;
         scene.fade = Vecf4(cinematic.fade.color, cinematic.fade.opacity());
         scene.letterbox = glm::clamp(
             scene.letterbox + (cinematic.letterbox ? dt : -dt) / letterbox_seconds * letterbox_height,
@@ -780,8 +978,20 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                     if(carried.equip == equipment)
                         grenade_hud(hud, carried.left);
             }
+            messages(cinematic);
         }
         m_view = nullptr;
+    }
+
+    /* A tag's data, if it is in the map and of T's class */
+    template<typename T>
+    T const* data_of(blam::tagref_t const& ref) const
+    {
+        auto tag = ref.valid() ? m_index.find(ref.tag_id) : m_index.end();
+        if(tag == m_index.end() || !(*tag).matches(T::tag_class))
+            return nullptr;
+        auto data = (*tag).template data<T>(*m_magic);
+        return data.has_value() ? data.value() : nullptr;
     }
 
     /* What this map's HUD is drawn from */
@@ -793,6 +1003,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         m_unit_huds   = {};
         m_digits      = nullptr;
         m_grenades.clear();
+        m_hudg            = nullptr;
+        m_messages        = nullptr;
+        m_global_messages = nullptr;
+        if(auto const* scenario = files.container.scenario().value_or(nullptr))
+            m_messages = data_of<blam::hud_message_text>(scenario->ui_text.hud_text);
 
         auto globals_tag = m_index.tag_of("globals\\globals");
         if(!globals_tag.has_value())
@@ -802,6 +1017,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return;
         auto const& g = *globals.value();
 
+        if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
+            if((m_hudg = data_of<blam::hud_globals>(bitmaps.value()[0].hud_globals)))
+                m_global_messages = data_of<blam::hud_message_text>(m_hudg->hud_messages);
         if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
             if(auto digits = m_index.find(bitmaps.value()[0].hud_digits_definition.tag_id);
                bitmaps.value()[0].hud_digits_definition.valid() && digits != m_index.end())
@@ -875,6 +1093,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     };
     std::map<u64, warning_t> m_warnings; /*!< Per seat */
     blam::hud_number const*              m_digits{nullptr};
+    blam::hud_globals const*             m_hudg{nullptr};
+    blam::hud_message_text const*        m_messages{nullptr};        /*!< The scenario's */
+    blam::hud_message_text const*        m_global_messages{nullptr}; /*!< The hudg's */
     bool                                 m_digit_sprites{false};
     /* Each grenade type's equipment, and the HUD that counts it */
     std::vector<std::pair<blam::scn::equipment const*, blam::tag_t const*>> m_grenades;
