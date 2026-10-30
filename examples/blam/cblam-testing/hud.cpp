@@ -6,6 +6,7 @@
 #include "components.h"
 #include "selected_version.h"
 #include "ui.h"
+#include "weapons.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_globals.h>
@@ -759,8 +760,28 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         return Vecf4(Vecf3(color), 1.f);
     }
 
-    /* The scripts' help text */
-    void messages(CinematicState const& cinematic)
+    /* A weapon at its feet it would swap the one in hand for */
+    blam::scn::weapon const* offered(Proxy& p, PlayerInfo const& info, PlayerCamera const& cam, BipedEquipment const& equip)
+    {
+        if(info.riding.vehicle || !equip.weapons[1].weapon)
+            return nullptr;
+        for(auto item : p.template select<Model, NetworkInfo>())
+        {
+            auto [model, net] = item.components();
+            auto const* tag   = model.origin_object;
+            if(!tag || !tag->matches(blam::tag_class_t::weap) || net.instance_id == 0 ||
+               SpawnObjectEvent::is_impostor(net.instance_id) || p.template get<PlayerInfo>(item.id()) ||
+               equip.weapons[0].tag == tag || equip.weapons[1].tag == tag ||
+               !within_pickup_reach(info, cam, model.position))
+                continue;
+            if(auto weapon = tag->template data<blam::scn::weapon>(*m_magic); weapon.has_value())
+                return weapon.value();
+        }
+        return nullptr;
+    }
+
+    /* The scripts' help text, and what the player could pick up */
+    void messages(Proxy& p, CinematicState const& cinematic, PlayerInfo const& info, PlayerCamera const& cam, BipedEquipment const& equip)
     {
         if(!m_hudg)
             return;
@@ -772,6 +793,31 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                     .at    = at,
                     .color = flashing(m_hudg->help_text_colors, cinematic.help.flash, cinematic.help.elapsed),
                 });
+        auto const* weapon = offered(p, info, cam, equip);
+        auto hud = weapon && weapon->hud_interface.valid() ? m_index.find(weapon->hud_interface.tag_id) : m_index.end();
+        if(hud == m_index.end())
+            return;
+        auto wphi = (*hud).template data<weapon_hud_interface>(*m_magic);
+        if(!wphi.has_value())
+            return;
+        auto const& info_ = wphi.value()->messaging_information;
+        auto const  icon  = icon_run(
+            {info_.sequence_index,
+             info_.width_offset,
+             info_.offset_from_reference_corner,
+             info_.override_icon_color,
+             static_cast<u8>(info_.flags)},
+            icon_color());
+        if(!icon)
+            return;
+        Vecf4 const text = m_hudg->text_color;
+        if(auto runs = message_of(m_global_messages, "swap_weapon", std::span(&*icon, 1)); !runs.empty())
+            m_view->texts.push_back({
+                .runs  = std::move(runs),
+                .at    = at,
+                .color = Vecf4(text.y, text.z, text.w, 1.f),
+                .below = !m_view->texts.empty(),
+            });
     }
 
     /* ---- Scoreboard ---- */
@@ -978,7 +1024,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                     if(carried.equip == equipment)
                         grenade_hud(hud, carried.left);
             }
-            messages(cinematic);
+            messages(p, cinematic, *info, *cam, *equip);
         }
         m_view = nullptr;
     }
