@@ -319,17 +319,23 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 actor.state_in = uniform_max(actr.pursuit.pursuit_position_time);
                 break;
             }
-            if(actor.reposition_in <= 0.f || actor.position < 0)
+            bool const armed = holds_gun(p, id);
+            if(armed && actor.reposition_in <= 0.f)
             {
                 actor.reposition_in = reposition_time;
                 actor.position      = pick_position(p, actor, model, kind, actor.last_seen, false);
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
-            bool const there = actor.position < 0 ||
-                               glm::distance(model.position, actor.goal) <= arrive_radius;
+            /* Unarmed, or with nowhere to fight from: it closes in, to arm's
+             * reach or the near edge of the range it fights at */
+            bool const charge = !armed || actor.position < 0;
+            f32 const  close  = !armed ? std::max(actv.melee_range * .8f, .5f)
+                                       : std::max(actv.desired_combat_range.x, 2.f);
+            bool const there  = charge ? glm::distance(model.position, actor.last_seen) <= close
+                                       : glm::distance(model.position, actor.goal) <= arrive_radius;
             if(!there)
-                move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
+                move_toward(p, id, actor, model, anim, kind, charge ? actor.last_seen : actor.goal, dt, true);
             else
             {
                 stop(p, id, actor);
@@ -1294,6 +1300,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = uniform(actv.burst_separation, 1.f);
     }
 
+    bool holds_gun(Proxy& p, u64 id)
+    {
+        auto const* equip = p.template get<BipedEquipment>(id);
+        auto const* gun   = equip ? equip->held(p.template subsystem<BlamFiles<halo_version>>().load_generation) : nullptr;
+        return gun && gun->tag;
+    }
+
     /* ---- Riding ---- */
 
     /* From its seat it looks all round, and fights with the vehicle's gun
@@ -1415,13 +1428,19 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         auto const* equip = p.template get<BipedEquipment>(id);
         auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
-        if(!gun || !gun->tag)
+        /* Unarmed, it strikes with its own melee damage */
+        blam::tagref_t with = gun && gun->tag ? gun->tag->as_ref() : blam::tagref_t{};
+        if(!with.valid())
+            if(auto const* body = p.template get<Model>(id); body && body->origin_object)
+                if(auto unit = body->origin_object->template data<blam::scn::unit>(*s_magic); unit.has_value())
+                    with = unit.value()[0].melee_damage;
+        if(!with.valid())
             return false;
         actor.melee_in = 1.5f;
         Vecf3 const eye = eye_of(p, id);
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
-            .weapon     = gun->tag->as_ref(),
+            .weapon     = with,
             .shooter    = id,
             .player_idx = ObjectHitEvent::no_player,
             .melee      = true,
