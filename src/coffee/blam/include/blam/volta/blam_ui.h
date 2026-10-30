@@ -1301,8 +1301,54 @@ struct hud_number
 
 static_assert(sizeof(hud_number) == 100);
 
-/* hudg; only what the shell UI uses so far. Offsets checked against the
- * Xbox ui.map. */
+/* hmt : HUD message text. A message is a run of text and icon elements;
+ * the text is one blob, each run ending in a terminator. */
+struct hud_message_text
+{
+    static constexpr tag_class_t tag_class = tag_class_t::hmt;
+
+    struct element_t
+    {
+        enum class type_t : i8
+        {
+            text,
+            icon,
+        };
+
+        type_t type;
+        /*! text: characters including the terminator; icon: a hudg button
+         *  icon, a game action past those, or a value filled in */
+        i8 data;
+    };
+
+    struct message_t
+    {
+        bl_string name;
+        i16       text_start; /*!< characters into the text */
+        i16       element_start;
+        i8        element_count;
+        u8        padding_0[27];
+    };
+
+    u32                  text_size; /*!< in bytes */
+    u32                  padding_0[2];
+    u32                  text_offset; /*!< map address of the text */
+    u32                  padding_1;
+    reference<element_t> elements;
+    reference<message_t> messages;
+    u8                   padding_2[84];
+
+    inline auto text(map_ptr const& magic) const
+    {
+        return reference<char16_t>(text_size / sizeof(char16_t), text_offset).data(magic);
+    }
+};
+
+static_assert(sizeof(hud_message_text::element_t) == 2);
+static_assert(sizeof(hud_message_text::message_t) == 64);
+static_assert(sizeof(hud_message_text) == 128);
+
+/* hudg; offsets checked against the Xbox ui.map and a10.map */
 struct hud_globals
 {
     static constexpr tag_class_t tag_class = tag_class_t::hudg;
@@ -1324,19 +1370,33 @@ struct hud_globals
         i16 text_index; /*!< in alternate_icon_text */
     };
 
-    u8                                unknown_0[0x48];
-    tagref_typed_t<tag_class_t::font> single_player_font;
-    tagref_typed_t<tag_class_t::font> multi_player_font;
-    u8                                unknown_1[0x94 - 0x68];
-    tagref_typed_t<tag_class_t::ustr> item_message_text;
-    tagref_typed_t<tag_class_t::bitm> icon_bitmap;
-    tagref_typed_t<tag_class_t::ustr> alternate_icon_text;
-    reference<button_icon_t>          button_icons; /*!< A, B, X, Y, ... */
+    /* Where messages and help text are drawn */
+    unit_hud_interface::anchor_t          anchor;
+    u16                                   padding_0;
+    u32                                   padding_1[8];
+    unit_hud_interface::background_base_t placement;
+    tagref_typed_t<tag_class_t::font>     single_player_font;
+    tagref_typed_t<tag_class_t::font>     multi_player_font;
+    f32                                   up_time;   /*!< seconds */
+    f32                                   fade_time; /*!< seconds */
+    Vecf4                                 icon_color; /*!< a, r, g, b */
+    Vecf4                                 text_color; /*!< a, r, g, b */
+    f32                                   text_spacing;
+    tagref_typed_t<tag_class_t::ustr>     item_message_text;
+    tagref_typed_t<tag_class_t::bitm>     icon_bitmap;
+    tagref_typed_t<tag_class_t::ustr>     alternate_icon_text;
+    reference<button_icon_t>              button_icons; /*!< A, B, X, Y, ... */
+    unit_hud_interface::colors_t          help_text_colors;
+    tagref_typed_t<tag_class_t::hmt>      hud_messages;
 };
 
 static_assert(sizeof(hud_globals::button_icon_t) == 16);
+static_assert(offsetof(hud_globals, placement) == 0x24);
+static_assert(offsetof(hud_globals, single_player_font) == 0x48);
 static_assert(offsetof(hud_globals, icon_bitmap) == 0xa4);
 static_assert(offsetof(hud_globals, button_icons) == 0xc4);
+static_assert(offsetof(hud_globals, help_text_colors) == 0xd0);
+static_assert(offsetof(hud_globals, hud_messages) == 0xf0);
 
 struct virtual_keyboard
 {

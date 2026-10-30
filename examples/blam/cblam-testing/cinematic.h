@@ -54,6 +54,16 @@ struct CinematicState : compo::SubsystemBase
     };
     std::optional<title_t> title;
 
+    /* Help text a script shows on every local HUD: a message of the
+     * scenario's hud messages */
+    struct help_t
+    {
+        std::string message;
+        bool        shown{false};
+        bool        flash{false};
+        f32         elapsed{0.f}; /* since it was set */
+    } help;
+
     bool letterbox{false};
     /*! Between cinematic_start and cinematic_stop: split screen gives way to
      *  one view of the whole window */
