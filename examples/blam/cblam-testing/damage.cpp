@@ -10,6 +10,7 @@
 #include "sounds.h"
 #include "ticks.h"
 
+#include <blam/volta/blam_actor.h>
 #include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_effects.h>
 
@@ -28,6 +29,7 @@ using DamageManifest = compo::SubsystemManifest<
         const PlayerCamera,
         Model,
         const ObjectPhysics,
+        const Actor,
         const NetworkInfo>,
     type_list_t<
         GameEventBus,
@@ -80,6 +82,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             m_dying.clear();
             m_gone.clear();
             m_destroyed.clear();
+            m_broods.clear();
         }
         for(auto const& area : areas)
             blast(p, area);
@@ -104,6 +107,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             for(auto const& vitality : vitalities)
                 put_down(p, vitality);
             fall_apart(p, dt);
+            let_out(p, areas, dt);
         }
         recharge(p, dt);
         wear_off(p, dt);
@@ -515,6 +519,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             if(status && status->dead)
             {
                 burst(p, it->first);
+                hatch(p, it->first);
                 tell(p, it->first, *status, {}, 0.f, false, false, false, true);
                 if(auto const* net = p.template get<NetworkInfo>(it->first); net && net->instance_id)
                     m_gone.push_back(net->instance_id);
@@ -543,6 +548,91 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .direction = {0.f, 0.f, 1.f},
         };
         p.template subsystem<GameEventBus>().inject(ev, &play);
+    }
+
+    /* What a unit carries, its tag's spawned actors, kept in until its
+     * burst has gone off so that it does not kill them */
+    void hatch(Proxy& p, u64 unit)
+    {
+        auto const* u     = unit_of(p, unit);
+        auto const* model = p.template get<Model>(unit);
+        if(!u || !model)
+            return;
+        auto const* actv =
+            tag_data<blam::scn::actor_variant>(u->spawned_actor, blam::tag_class_t::actv);
+        if(!actv || !actv->unit.valid())
+            return;
+        i32 const least = std::max<i32>(u->spawned_actor_count[0], 0);
+        i32 const most  = std::max<i32>(u->spawned_actor_count[1], least);
+        brood_t   brood{
+              .at      = model->position,
+              .burst   = centre_of(p, unit).value_or(model->position),
+              .variant = u->spawned_actor,
+              .unit    = actv->unit,
+              .weapon  = actv->weapon,
+              .count   = std::uniform_int_distribution<i32>(least, most)(m_random),
+              .speed   = u->spawned_velocity,
+              .wait    = hatch_wait,
+        };
+        if(auto const* actor = p.template get<Actor>(unit))
+        {
+            brood.encounter = actor->encounter;
+            brood.squad     = actor->squad;
+            brood.team      = actor->team;
+        }
+        if(auto const* net = p.template get<NetworkInfo>(unit))
+            brood.like = net->instance_id;
+        if(brood.count > 0)
+            m_broods.push_back(brood);
+    }
+
+    /* Thrown out at the unit tag's spawned velocity, they join its squad */
+    void let_out(Proxy& p, std::vector<AreaDamageEvent> const& areas, f32 dt)
+    {
+        auto& bus = p.template subsystem<GameEventBus>();
+        for(auto it = m_broods.begin(); it != m_broods.end();)
+        {
+            /* Out the frame after the burst, once its blast has thrown what it will */
+            bool const went_off = std::any_of(areas.begin(), areas.end(), [&it](AreaDamageEvent const& a) {
+                return glm::distance(a.position, it->burst) < 1e-2f;
+            });
+            if(went_off)
+                it->wait = 0.f;
+            if(went_off || (it->wait -= dt) > 0.f)
+            {
+                ++it;
+                continue;
+            }
+            for(i32 i = 0; i < it->count; i++)
+            {
+                f32 const   turn = std::uniform_real_distribution<f32>(0.f, glm::two_pi<f32>())(m_random);
+                Vecf3 const out{std::cos(turn), std::sin(turn), 0.f};
+                SpawnObjectEvent spawn{
+                    .object       = it->unit,
+                    .position     = it->at + out * hatch_spread + Vecf3{0.f, 0.f, spawn_lift},
+                    .rotation     = glm::angleAxis(turn, Vecf3{0.f, 0.f, 1.f}),
+                    .server_owned = true,
+                    .velocity     = glm::normalize(out + Vecf3{0.f, 0.f, 1.f}) * it->speed,
+                    .held         = it->weapon,
+                };
+                GameEvent ev{.type = GameEvent::SpawnObject};
+                bus.inject(ev, &spawn);
+                if(spawn.net_id == 0 || it->encounter < 0)
+                    continue;
+                GameEvent        enlist_ev{.type = GameEvent::EnlistActor};
+                EnlistActorEvent enlist{
+                    .net_id    = spawn.net_id,
+                    .variant   = it->variant,
+                    .like      = it->like,
+                    .encounter = it->encounter,
+                    .squad     = it->squad,
+                    .team      = it->team,
+                    .post      = spawn.position,
+                };
+                bus.inject(enlist_ev, &enlist);
+            }
+            it = m_broods.erase(it);
+        }
     }
 
     /* ---- What everyone sees ---- */
@@ -828,6 +918,24 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     static constexpr f32 recent_fade = .75f; /* seconds a shield hit glows */
     static constexpr f32   default_recharge = 2.f;  /* s */
     static constexpr f32   dead_below       = 1e-4f;
+    static constexpr f32   hatch_wait       = .5f;  /* s, at most, for the burst */
+    static constexpr f32   hatch_spread     = .3f;  /* wu */
+
+    struct brood_t
+    {
+        Vecf3          at{};
+        Vecf3          burst{};
+        blam::tagref_t variant{};
+        blam::tagref_t unit{};
+        blam::tagref_t weapon{};
+        i32            count{0};
+        f32            speed{0.f};
+        f32            wait{0.f};
+        i16            encounter{-1};
+        i16            squad{-1};
+        u16            team{0};
+        u32            like{0};
+    };
 
     std::unique_ptr<TickQueue> m_ticks;
     std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>>    m_hit_queue;
@@ -846,6 +954,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<u32>                 m_gone;  /* net ids, despawned next frame */
     std::set<u64>                    m_destroyed;
     u32                              m_generation{0};
+    std::vector<brood_t>             m_broods;
 
     blam::map_ptr const*                              m_magic{nullptr};
     std::optional<blam::tag_index_view<halo_version>> m_index;
