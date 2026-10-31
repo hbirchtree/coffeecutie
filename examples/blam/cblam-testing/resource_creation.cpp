@@ -542,8 +542,8 @@ void create_resources(compo::EntityContainer& e)
                              {"in_play", biped_shown(info, cam, net)},
                              {"riding", info.riding.vehicle != 0},
                              {"spawned", info.spawned},
-                             {"eye_offset", info.biped.eye_offset()},
-                             {"eye_height", info.biped.eye_height},
+                             {"eye_offset", info.eye_offset()},
+                             {"eye_height", info.eye_height()},
                              {"model", nullptr},
                              {"body", nullptr},
                          };
@@ -576,6 +576,13 @@ void create_resources(compo::EntityContainer& e)
                                cam.camera.rotation.z}},
                              {"seat", info.riding.seat},
                              {"biped", std::move(biped)},
+                             {"powerups",
+                              {
+                                  {"camouflaged", info.camouflaged},
+                                  {"camouflage", info.powerups.camouflage},
+                                  {"speed", info.powerups.speed},
+                                  {"vision", info.powerups.vision},
+                              }},
                          });
                      }
 
@@ -650,6 +657,15 @@ void create_resources(compo::EntityContainer& e)
                                      entity.template get<BipedEquipment>().equipment)
                                      grenades.push_back(kind.left);
                                  player["grenades"] = std::move(grenades);
+                                 nlohmann::json weapons = nlohmann::json::array();
+                                 for(auto const& weapon :
+                                     entity.template get<BipedEquipment>().weapons)
+                                     weapons.push_back({
+                                         {"tag_id", weapon.tag ? weapon.tag->tag_id.value() : 0},
+                                         {"loaded", weapon.rounds_loaded},
+                                         {"reserve", weapon.rounds_total},
+                                     });
+                                 player["weapons"] = std::move(weapons);
                              }
                      {
                          auto const* game = &e.subsystem_cast<GameState>();
@@ -705,6 +721,18 @@ void create_resources(compo::EntityContainer& e)
                      sim.lag_ms    = ev.data.value("lag_ms", sim.lag_ms);
                      sim.jitter_ms = ev.data.value("jitter_ms", sim.jitter_ms);
                      sim.loss_pct  = ev.data.value("loss_pct", sim.loss_pct);
+                     auto& faults  = e.subsystem_cast<NetworkState>().faults;
+                     faults.drop_spawns =
+                         ev.data.value("drop_spawns", faults.drop_spawns);
+                     faults.drop_despawns =
+                         ev.data.value("drop_despawns", faults.drop_despawns);
+                 }
+                 if(ev.event == "despawn_object")
+                 {
+                     /* {"net_id": n}, as a spawn's journal line gives it */
+                     DespawnObjectEvent gone{.net_id = ev.data.value("net_id", 0u)};
+                     GameEvent          gone_ev{.type = GameEvent::DespawnObject};
+                     e.subsystem_cast<GameEventBus>().inject(gone_ev, &gone);
                  }
                  if(ev.event == "spawn_object")
                  {

@@ -20,7 +20,7 @@ using CheckpointManifest = compo::SubsystemManifest<
         BipedStatus,
         BipedEquipment,
         const NetworkInfo,
-        const PlayerInfo,
+        PlayerInfo,
         const PlayerCamera>,
     type_list_t<
         GameEventBus,
@@ -53,6 +53,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
         Vecf3          linear_velocity{};
         Vecf3          angular_velocity{};
         std::optional<BipedStatus> status;
+        blam::tagref_t             held{}; /*!< A unit's weapon in hand */
     };
 
     struct player_t
@@ -61,6 +62,15 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
         f32         facing{0.f};
         BipedStatus status;
         std::optional<BipedEquipment> equipment; /*!< Our own players' only */
+        /*! The vehicle it sat in, by net id, and the seat's label */
+        std::optional<std::pair<u32, blam::bl_string>> seat;
+    };
+
+    struct seating_t
+    {
+        u32             vehicle{0}; /*!< Net id */
+        blam::bl_string seat{};
+        u32             frames{0}; /*!< Left to wait for the vehicle and the revival */
     };
 
     struct snapshot_t
@@ -85,6 +95,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
         {
             m_snapshot.reset();
             m_pending.clear();
+            m_seating.clear();
         }
         if(save)
             take(p, generation);
@@ -118,6 +129,9 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             }
             if(auto const* status = p.template get<BipedStatus>(entity.id()))
                 object.status = *status;
+            if(auto const* equip = p.template get<BipedEquipment>(entity.id());
+               equip && equip->weapons[0].tag)
+                object.held = equip->weapons[0].tag->as_ref();
             out.objects[net.instance_id] = object;
         }
         for(auto entity : p.template select<PlayerInfo, PlayerCamera, NetworkInfo, BipedStatus>())
@@ -126,7 +140,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             if(!biped_shown(info, cam, net))
                 continue;
             player_t player{
-                .feet   = cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height},
+                .feet   = cam.camera.position - Vecf3{0.f, 0.f, info.eye_height()},
                 .facing = spawn_points::facing_of(cam),
                 .status = status,
             };
@@ -134,9 +148,28 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             if(auto const* equip = p.template get<BipedEquipment>(entity.id());
                equip && !info.is_remote())
                 player.equipment = *equip;
+            if(!info.is_remote())
+                player.seat = seat_of(p, info);
             out.players[info.player_idx] = std::move(player);
         }
         m_snapshot = std::move(out);
+    }
+
+    std::optional<std::pair<u32, blam::bl_string>> seat_of(Proxy& p, PlayerInfo const& info)
+    {
+        auto const* net     = p.template get<NetworkInfo>(info.riding.vehicle);
+        auto const* vehicle = p.template get<Model>(info.riding.vehicle);
+        if(!info.riding.vehicle || !net || net->instance_id == 0 || !vehicle ||
+           !vehicle->origin_object || info.riding.seat < 0)
+            return std::nullopt;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        unit  = vehicle->origin_object->template data<blam::scn::unit>(magic);
+        if(!unit.has_value())
+            return std::nullopt;
+        auto seats = unit.value()[0].seats.data(magic);
+        if(!seats.has_value() || static_cast<size_t>(info.riding.seat) >= seats.value().size())
+            return std::nullopt;
+        return std::pair{net->instance_id, seats.value()[info.riding.seat].label};
     }
 
     /* ---- Going back ---- */
@@ -176,11 +209,13 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 .rotation     = object.rotation,
                 .net_id       = net_id,
                 .server_owned = true,
+                .held         = object.held,
             };
             game.inject(ev, &spawn);
             m_pending[net_id] = pending_frames;
         }
 
+        m_seating.clear();
         for(auto entity : p.template select<PlayerInfo, BipedEquipment>())
         {
             auto [info, equip] = entity.components();
@@ -205,12 +240,23 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 /* The hand's model is whatever it holds now */
                 equip.weapons[0].held = held;
             }
+            /* Out of whatever it sits in now; back in its seat once up */
+            if(info.is_remote())
+                continue;
+            info.riding = {};
+            if(saved.seat)
+                m_seating[entity.id()] = {
+                    .vehicle = saved.seat->first,
+                    .seat    = saved.seat->second,
+                    .frames  = pending_frames,
+                };
         }
     }
 
     /* Objects spawned again take their saved state once they exist */
     void settle(Proxy& p)
     {
+        seat(p);
         if(m_pending.empty() || !m_snapshot)
             return;
         std::map<u32, u64> live;
@@ -225,6 +271,33 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 it = m_pending.erase(it);
             } else if(--it->second == 0)
                 it = m_pending.erase(it);
+            else
+                ++it;
+        }
+    }
+
+    /* Riders get back in once revived and their vehicle is there */
+    void seat(Proxy& p)
+    {
+        for(auto it = m_seating.begin(); it != m_seating.end();)
+        {
+            auto const* status  = p.template get<BipedStatus>(it->first);
+            u64         vehicle = 0;
+            for(auto entity : p.template select<Model, NetworkInfo>())
+                if(entity.template get<NetworkInfo>().instance_id == it->second.vehicle)
+                    vehicle = entity.id();
+            if(status && !status->dead && vehicle)
+            {
+                GameEvent             ev{.type = GameEvent::UnitEnterVehicle};
+                UnitEnterVehicleEvent enter{
+                    .unit    = it->first,
+                    .vehicle = vehicle,
+                    .seat    = it->second.seat,
+                };
+                p.template subsystem<GameEventBus>().inject(ev, &enter);
+                it = m_seating.erase(it);
+            } else if(!status || --it->second.frames == 0)
+                it = m_seating.erase(it);
             else
                 ++it;
         }
@@ -256,6 +329,15 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             };
             p.template subsystem<GameEventBus>().inject(ev, &vitality);
         }
+        /* The dead let go of their weapon; the loader arms it again */
+        if(auto* equip = p.template get<BipedEquipment>(entity);
+           equip && object.held.valid() && !equip->weapons[0].tag)
+        {
+            blam::tag_index_view<halo_version> index(
+                p.template subsystem<BlamFiles<halo_version>>().container);
+            if(auto tag = index.find(object.held.tag_id); tag != index.end())
+                equip->weapons[0] = {.tag = &(*tag)};
+        }
     }
 
     /* How long a respawned object may take to turn up */
@@ -267,6 +349,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
     bool                       m_restore{false};
     std::optional<snapshot_t>  m_snapshot;
     std::map<u32, u32>         m_pending; /*!< Net id, frames left */
+    std::map<u64, seating_t>   m_seating; /*!< By player entity */
 };
 
 void alloc_checkpoints(compo::EntityContainer& e)

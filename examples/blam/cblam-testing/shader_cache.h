@@ -63,7 +63,21 @@ struct ShaderCache
         std::array<libc_types::f32, 4> object_function{
             {-1.f, -1.f, -1.f, -1.f}};
         libc_types::f32 meter_value{-1.f};
+        libc_types::u8  numeric_place{0}; /*!< Digit of a numeric counter, 0 = ones */
     };
+
+    /* A chicago shader that shows a digit of its first function */
+    bool numeric(generation_idx_t const& shader_id)
+    {
+        auto it = find(shader_id);
+        if(it == end() || it->second.tag_class != blam::tag_class_t::schi)
+            return false;
+        auto const* info = it->second.header->template as<
+            blam::shader::shader_chicago<blam::pc_version_t>>();
+        using flags_t = blam::shader::chicago::flags_t;
+        return (static_cast<u8>(info->transparent.flags) &
+                static_cast<u8>(flags_t::numeric)) != 0;
+    }
 
     void populate_material(
         materials::shader_data&         mat,
@@ -165,14 +179,55 @@ struct ShaderCache
         }
     }
 
+    /* What an object's change colours A..D are now: a permutation's colour
+     * where it has one, else its bounds scaled by the function named. None
+     * where the object has no such colour */
+    std::array<std::optional<Vecf3>, 4> change_colors(
+        blam::scn::unit const* unit, std::array<f32, 4> const& functions) const
+    {
+        using blam::shader::param_src;
+        std::array<std::optional<Vecf3>, 4> out{};
+        auto colors = unit ? unit->change_colors.data(magic)
+                           : decltype(unit->change_colors.data(magic)){};
+        if(!colors.has_value())
+            return out;
+        auto function_of = [&functions](param_src src) -> std::optional<f32> {
+            auto const i = static_cast<u32>(src);
+            if(i < static_cast<u32>(param_src::A_out) || i > static_cast<u32>(param_src::D_out))
+                return std::nullopt;
+            f32 const v = functions[i - static_cast<u32>(param_src::A_out)];
+            return v >= 0.f ? std::optional(glm::clamp(v, 0.f, 1.f)) : std::nullopt;
+        };
+        for(size_t i = 0; i < out.size() && i < colors.value().size(); i++)
+        {
+            auto const& color = colors.value()[i];
+            auto        perms = color.permutations.data(magic);
+            if(perms.has_value() && !perms.value().empty())
+            {
+                out[i] = perms.value()[0].upper_bound;
+                continue;
+            }
+            Vecf3 c = color.upper_bound;
+            if(auto scale = function_of(color.scale_by))
+                c = glm::mix(color.lower_bound, color.upper_bound, *scale);
+            if(auto darken = function_of(color.darken_by))
+                c *= 1.f - *darken;
+            out[i] = c;
+        }
+        return out;
+    }
+
     /* Per-frame: animate each stage's constant_color0 between its
      * lower/upper bounds (the generator shield's shimmer lives here —
-     * a static midpoint saturates its alpha chain to a white blob). */
+     * a static midpoint saturates its alpha chain to a white blob). A
+     * source names the object's change colour that tints the constant;
+     * an object without it falls back to the function as the ramp */
     void update_transparent_animations(
-        materials::transparent_data& mat,
-        generation_idx_t const&      shader_id,
-        time_point const&            time,
-        std::array<f32, 4> const&    functions = {{0.f, 0.f, 0.f, 0.f}})
+        materials::transparent_data&               mat,
+        generation_idx_t const&                    shader_id,
+        time_point const&                          time,
+        std::array<f32, 4> const&                  functions = {{-1.f, -1.f, -1.f, -1.f}},
+        std::array<std::optional<Vecf3>, 4> const& colors    = {})
     {
         using namespace blam::shader;
 
@@ -201,15 +256,25 @@ struct ShaderCache
         auto is_zero = [](Vecf4 const& c) {
             return c.x == 0.f && c.y == 0.f && c.z == 0.f && c.w == 0.f;
         };
+        /* The ramp's factor, and whether an object function it names was
+         * there to give it: a_out_controls_color0_anim rides A_out; a source
+         * rides time while it tints, and the function where it cannot */
         auto factor_of = [&](shader_transparent::stage_t const& s) {
-            auto src = s.color0_source;
-            if(src == animation_src::none && (static_cast<u32>(s.flags) & 0x4u))
-                src = animation_src::A_out;
-            if(src == animation_src::none)
-                return transparent_color0_factor(s, t);
-            auto const i = static_cast<size_t>(src) - 1u;
-            return glm::clamp(
-                i < functions.size() ? functions[i] : 0.f, 0.f, 1.f);
+            auto const src = s.color0_source;
+            bool const a_out = static_cast<u32>(s.flags) & 0x4u;
+            auto const i     = static_cast<size_t>(src) - 1u;
+            bool const tinted = src != animation_src::none && i < colors.size() && colors[i];
+            if(!a_out && (src == animation_src::none || tinted))
+                return std::pair{transparent_color0_factor(s, t), false};
+            auto const fi    = a_out ? 0u : i;
+            bool const given = fi < functions.size() && functions[fi] >= 0.f;
+            return std::pair{given ? glm::clamp(functions[fi], 0.f, 1.f) : 0.f, given};
+        };
+        auto tint_of = [&](shader_transparent::stage_t const& s) {
+            auto const i = static_cast<size_t>(s.color0_source) - 1u;
+            return s.color0_source != animation_src::none && i < colors.size() && colors[i]
+                       ? *colors[i]
+                       : Vecf3(1.f);
         };
 
         /* Each combiner stage has its own constant_color0 (tag colors are
@@ -223,12 +288,21 @@ struct ShaderCache
             /* All-zero bounds = unset; from_blam substituted identity white */
             if(is_zero(s.color0_lower) && is_zero(s.color0_upper))
                 continue;
-            Vecf4 const c = glm::mix(s.color0_lower, s.color0_upper, factor_of(s));
-            Vecf3       rgb(c.y, c.z, c.w);
-            if(static_cast<u32>(s.flags) & 0x4u)
-                /* Softens the constant toward white so areas lit purely by it
-                 * read pale rather than fully saturated. */
-                rgb = glm::mix(rgb, Vecf3(1.f), 0.35f);
+            auto const [factor, given] = factor_of(s);
+            Vecf4 const c   = glm::mix(s.color0_lower, s.color0_upper, factor);
+            Vecf3       rgb = Vecf3(c.y, c.z, c.w) * tint_of(s);
+            u32         flags = static_cast<u32>(s.flags);
+            if(flags & 0x4u)
+            {
+                /* Given its function, the ramp is settled here; without one
+                 * the shader rides its own alpha instead, softened toward
+                 * white so areas lit purely by it read pale */
+                if(given)
+                    flags &= ~0x4u;
+                else
+                    rgb = glm::mix(rgb, Vecf3(1.f), 0.35f);
+            }
+            mat.stages[i].flags  = flags;
             mat.stages[i].color0 = Vecf4(rgb, c.x);
         }
     }

@@ -125,6 +125,8 @@ class CombatSync
                 {
                     if(vitality.violent)
                         wire->dead |= 2u;
+                    if(vitality.destroyed)
+                        wire->dead |= 4u;
                     if(vitality.respawn_at)
                     {
                         wire->respawned = 1u | (vitality.arrived ? 2u : 0u) | (vitality.fresh ? 4u : 0u);
@@ -148,6 +150,15 @@ class CombatSync
                 target_player = info->player_idx;
             else if(auto const* net = shot.target ? p.template get<NetworkInfo>(shot.target) : nullptr)
                 target = net->instance_id;
+            /* An actor's shot goes out under its net id, from the server alone */
+            u32 shooter = 0;
+            if(shot.player_idx == ObjectHitEvent::no_player)
+            {
+                auto const* net = p.template get<NetworkInfo>(shot.shooter);
+                if(!server || !net || net->instance_id == 0)
+                    continue;
+                shooter = net->instance_id;
+            }
             m_shots.push_back({
                 .message =
                     {
@@ -160,11 +171,14 @@ class CombatSync
                         .vehicle    = vehicle,
                         .seed       = shot.seed,
                         .trigger    = shot.trigger,
-                        .flags      = shot.thrown  ? WeaponFire::thrown
-                                      : shot.melee ? WeaponFire::melee
-                                                   : WeaponFire::none,
+                        .flags      = static_cast<WeaponFire::flags_t>(
+                            (shot.thrown  ? WeaponFire::thrown
+                             : shot.melee ? WeaponFire::melee
+                                          : WeaponFire::none) |
+                            (shot.windup ? WeaponFire::windup : WeaponFire::none)),
                         .target        = target,
                         .target_player = target_player,
+                        .shooter       = shooter,
                     },
                 .route = {server ? route_t::clients : route_t::server},
             });
@@ -236,6 +250,19 @@ class CombatSync
     {
         if(wire.player_idx == self_idx)
             return;
+        /* An actor's: whichever unit the server named */
+        if(wire.player_idx == ObjectHitEvent::no_player)
+        {
+            for(auto object : p.template select<NetworkInfo>())
+                if(object.template get<NetworkInfo>().instance_id == wire.shooter &&
+                   wire.shooter != 0)
+                {
+                    if(fire(p, object.id(), wire))
+                        m_journal("net_actor_fire", {{"shooter", wire.shooter}, {"weapon", wire.weapon}});
+                    return;
+                }
+            return;
+        }
         for(auto entity : p.template select<PlayerInfo>())
         {
             auto const& info = entity.template get<PlayerInfo>();
@@ -317,8 +344,9 @@ class CombatSync
         UnitVitality wire{
             .target_player = ObjectHitEvent::no_player,
             .body          = status->body,
-            .shield        = status->shield,
-            .dead          = status->dead,
+            .shield           = status->shield,
+            .dead             = status->dead,
+            .overcharge_decay = status->overcharge_decay,
         };
         if(auto const* info = p.template get<PlayerInfo>(unit))
             wire.target_player = info->player_idx;
@@ -361,6 +389,8 @@ class CombatSync
             .shield = wire.shield,
             .dead    = (wire.dead & 1) != 0,
             .violent = (wire.dead & 2) != 0,
+            .overcharge_decay = wire.overcharge_decay,
+            .destroyed        = (wire.dead & 4) != 0,
         };
         if(wire.respawned)
         {
@@ -447,6 +477,7 @@ class CombatSync
             .trigger    = wire.trigger,
             .thrown     = thrown,
             .melee      = (wire.flags & WeaponFire::melee) != 0,
+            .windup     = (wire.flags & WeaponFire::windup) != 0,
             .position   = Vecf3(wire.position),
             .direction  = glm::normalize(direction),
             .target     = target,

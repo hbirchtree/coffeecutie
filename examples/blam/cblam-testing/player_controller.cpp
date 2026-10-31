@@ -9,6 +9,8 @@
 #include <coffee/core/input/standard_input_handlers.h>
 #include <coffee/core/types/input/keymap_latin1.h>
 
+#include <blam/volta/blam_unit.h>
+
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -53,6 +55,12 @@ struct PlayerController
         time_point jumped_at{};
         bool       pending{false}; /*!< intent.jump seen, deadline set */
         bool airborne_seen{true};  /*!< Off the ground since the last jump */
+    };
+
+    struct zoom_t
+    {
+        f32                fov{0.f}; /*!< Unzoomed, while zoomed */
+        blam::tag_t const* weapon{nullptr};
     };
 
     struct menu_pad_t
@@ -118,6 +126,8 @@ struct PlayerController
                     input.movement = {};
                     input.intent   = {};
                 }
+                if(!info.is_remote())
+                    zoom(p, player.id(), input, cam, info);
                 clamp_pitch(input, cam, info);
                 if(!info.is_remote())
                     m_look[player.id()] += input.look_delta;
@@ -141,6 +151,7 @@ struct PlayerController
             cam.view_offset    = dead ? death_view(p, player.id(), cam, dt) : Vecf3{};
             if(!dead)
                 m_dead_for.erase(player.id());
+            ease_crouch(cam, info, info.crouched && seat_of(info) == seat_t::body, dt);
             update_camera(cam);
             if(info.riding.vehicle == 0 && !dead)
                 place_biped(cam, info, model);
@@ -173,7 +184,8 @@ struct PlayerController
             for(auto [held, what] : {std::pair{intent.fire, InputIntent::fire},
                                      std::pair{intent.grab, InputIntent::grab},
                                      std::pair{intent.use, InputIntent::use},
-                                     std::pair{intent.jump, InputIntent::jump}})
+                                     std::pair{intent.jump, InputIntent::jump},
+                                     std::pair{intent.crouch, InputIntent::crouch}})
                 if(held)
                     intents |= what;
             Vecf2 const look = std::exchange(m_look[player.id()], Vecf2{}) /
@@ -260,6 +272,7 @@ struct PlayerController
             input.reload |= b.x;
             input.grenade |= state.axes.e.t_l > trigger_pressed;
             input.grenade_switch |= b.b_l;
+            input.zoom |= b.s_r;
             /* B strikes in play and backs out of menus; back also toggles
              * freecam */
             input.back |= b.back || (in_menu && b.b);
@@ -278,12 +291,14 @@ struct PlayerController
             input.reload |= key(CK_r);
             input.grenade_switch |= key(CK_g);
             input.melee |= key(CK_q);
+            input.zoom |= key(CK_z);
             /* Grabs in forge, throws in physics mode */
             input.grenade |= (input.mouse_buttons & CIMouseButtonEvent::RightButton) != 0;
             input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
         }
 
         input.scores = (pad && b.p_down) || (keyboard && key(CK_F1));
+        input.crouch = (pad && b.s_l) || (keyboard && key(CK_LCtrl));
 
         auto& intent = input.intent;
         if(input.jump)
@@ -299,6 +314,8 @@ struct PlayerController
             intent.grenade_switch = true;
         if(input.melee && physics)
             intent.melee = true;
+        if(input.zoom && physics)
+            intent.zoom = true;
         if(in_menu)
         {
             input.movement  = {};
@@ -307,6 +324,7 @@ struct PlayerController
             intent.use = intent.grab = intent.jump = intent.fire = false;
             intent.swap = intent.reload = false;
             intent.grenade = intent.grenade_switch = intent.melee = false;
+            intent.zoom = intent.crouch = false;
             return;
         }
 
@@ -325,12 +343,16 @@ struct PlayerController
             move /= std::sqrt(len2);
         intent.move = move;
         intent.use  = (pad && b.x) || (keyboard && key(CK_f));
+        intent.crouch = input.crouch && physics;
         intent.grab = (pad && state.axes.e.t_r > trigger_pressed) ||
                       (keyboard &&
                        (input.mouse_buttons & CIMouseButtonEvent::RightButton));
         intent.fire = (pad && state.axes.e.t_r > trigger_pressed) ||
                       (keyboard &&
                        (input.mouse_buttons & CIMouseButtonEvent::LeftButton));
+        intent.fire2 = (pad && state.axes.e.t_l > trigger_pressed) ||
+                       (keyboard &&
+                        (input.mouse_buttons & CIMouseButtonEvent::RightButton));
     }
 
     /* Stops short of straight up or down, where turning would spin the
@@ -525,6 +547,7 @@ struct PlayerController
         press(input.intent.reload, InputIntent::reload);
         press(input.intent.grenade, InputIntent::grenade);
         press(input.intent.melee, InputIntent::melee);
+        input.intent.crouch = held(InputIntent::crouch);
     }
 
     /* Walking the biped; physics moves the camera after its body */
@@ -555,9 +578,13 @@ struct PlayerController
         auto const&  basis = cam.camera_.cached;
         auto const&  biped = info.biped;
         Vecf2 const& move  = input.intent.move;
+        info.crouched      = input.intent.crouch;
+        /* Crouch shares LCtrl with the boost, which it overrides */
+        f32 const    pace  = info.crouched ? biped.crouch_speed : input.accel;
         f32 const    along = move.x >= 0.f ? biped.run_speed : biped.back_speed;
-        Vecf3 const  dir   = planar(basis.forward) * move.x * along +
-                          planar(basis.right) * move.y * biped.strafe_speed;
+        Vecf3 const  dir   = (planar(basis.forward) * move.x * along +
+                           planar(basis.right) * move.y * biped.strafe_speed) *
+                          pace * info.speed_scale();
 
         auto const* data     = p.get<PhysicsData>(id);
         bool const  grounded = data && data->enabled && data->grounded;
@@ -568,7 +595,7 @@ struct PlayerController
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity velocity{
             .entity_id  = id,
-            .velocity   = dir * input.accel,
+            .velocity   = dir,
             .preserve_z = true,
             .jump       = jump,
         };
@@ -614,6 +641,55 @@ struct PlayerController
         jump.airborne_seen = false;
         jump.jumped_at     = t;
         return true;
+    }
+
+    /* The eye sinks or rises over the biped's transition, feet kept */
+    static void ease_crouch(PlayerCamera& cam, PlayerInfo& info, bool down, duration const& dt)
+    {
+        f32 const eye  = info.eye_height();
+        f32 const step = std::chrono::duration<f32>(dt).count() /
+                         std::max(info.biped.crouch_time, 1e-3f);
+        info.crouched = down;
+        info.crouch   = std::clamp(info.crouch + (down ? step : -step), 0.f, 1.f);
+        cam.camera.position.z += info.eye_height() - eye;
+    }
+
+    /* Each press steps through the held weapon's zoom levels and back out;
+     * another weapon, or the hands doing anything else, drops it */
+    void zoom(Proxy& p, u64 id, PlayerInput& input, PlayerCamera& cam, PlayerInfo const& info)
+    {
+        auto* equip = p.template get<BipedEquipment>(id);
+        if(!equip)
+            return;
+        auto const* held    = equip->held(info.biped.load_generation);
+        auto const* status  = p.template get<BipedStatus>(id);
+        auto const& intent  = input.intent;
+        auto&       state   = m_zooms[id];
+        i16 const   levels  = held ? held->weapon->zoom_levels : 0;
+        bool const  pressed = std::exchange(input.intent.zoom, false);
+        if(!held || held->tag != state.weapon || seat_of(info) != seat_t::body ||
+           cam.cinematic || (status && status->dead) || equip->reloading || intent.swap ||
+           intent.melee || intent.grenade)
+            equip->zoom = 0;
+        else if(pressed && levels > 0)
+            equip->zoom = static_cast<u8>((equip->zoom + 1) % (levels + 1));
+        state.weapon = held ? held->tag : nullptr;
+        if(equip->zoom == 0)
+        {
+            if(state.fov > 0.f)
+                cam.camera.fieldOfView = std::exchange(state.fov, 0.f);
+            return;
+        }
+        if(state.fov <= 0.f)
+            state.fov = cam.camera.fieldOfView;
+        Vecf2 const range = held->weapon->zoom_magnification_range;
+        f32 const   magnification = std::max(
+            levels > 1 ? glm::mix(range.x, range.y, (equip->zoom - 1.f) / (levels - 1.f))
+                       : range.x,
+            1.f);
+        cam.camera.fieldOfView = glm::degrees(
+            2.f * std::atan(std::tan(glm::radians(state.fov) * .5f) / magnification));
+        input.look_delta /= magnification;
     }
 
     /* A driver steers where they look; the chase camera is Gameplay's */
@@ -672,7 +748,7 @@ struct PlayerController
         Vecf3 const forward =
             glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
         model.position =
-            cam.camera.position - Vecf3{0, 0, info.biped.eye_height};
+            cam.camera.position - Vecf3{0, 0, info.eye_height()};
         model.rotation  = Quatf(Vecf3(0, 0, std::atan2(forward.y, forward.x)));
         model.transform = glm::translate(Matf4(1), model.position) *
                           glm::mat4_cast(model.rotation);
@@ -743,6 +819,7 @@ struct PlayerController
     std::map<u64, f32>         m_dead_for; /*!< Seconds dead, for the camera */
     std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */
     std::map<u64, jump_t>     m_jumps;
+    std::map<u64, zoom_t>     m_zooms;
     std::array<menu_pad_t, 4> m_pads{};
 };
 

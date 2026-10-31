@@ -501,6 +501,38 @@ struct cluster_portal
     bsp_reference<Vecf3> vertices;
 };
 
+/*! A surface where a fog volume meets the air; the fog is on its back side */
+struct fog_plane
+{
+    i16   front_region; /*!< Into fog_regions */
+    i16   material_type;
+    Vecf3 normal;
+    f32   offset;
+    u32   padding2[3];
+};
+
+static_assert(sizeof(fog_plane) == 32);
+
+struct fog_region
+{
+    u32 padding[9];
+    i16 fog_palette;
+    i16 weather_palette;
+};
+
+static_assert(sizeof(fog_region) == 40);
+
+struct fog_palette
+{
+    bl_string                        name;
+    tagref_typed_t<tag_class_t::fog> fog;
+    u32                              padding;
+    bl_string                        fog_scale_function;
+    u32                              padding2[13];
+};
+
+static_assert(sizeof(fog_palette) == 136);
+
 struct breakable_surface
 {
     u32 _1;
@@ -737,9 +769,10 @@ struct header
     bsp_reference<cluster_portal>        cluster_portals;
     u32                                  padding2[3];
     bsp_reference<breakable_surface>     breakables_surfaces;
-    bsp_reference<u8>                fog_planes;
-    bsp_reference<u8>                fog_regions;
-    u32                                  padding3[9];
+    bsp_reference<fog_plane>         fog_planes;
+    bsp_reference<fog_region>        fog_regions;
+    bsp_reference<fog_palette>       fog_palettes;
+    u32                                  padding3[6];
     bsp_reference<weather_palette>       weather_palettes;
     bsp_reference<weather_polyhedra>     weather_polyhedras;
     u32                                  padding4[6];

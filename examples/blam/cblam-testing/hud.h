@@ -5,6 +5,8 @@
 #include <coffee/components/subsystem.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
+#include <optional>
+#include <string>
 #include <vector>
 
 /* The HUD of every local seat this frame, rebuilt by HudSystem and drawn by
@@ -37,11 +39,30 @@ struct HudScene : compo::SubsystemBase
         Vecf4 empty{0.f};
     };
 
+    /* Messages and help text: runs of glyphs with icons between them,
+     * laid out by the renderer in the HUD font */
+    struct text_t
+    {
+        struct run_t
+        {
+            std::u16string          text; /*!< '\n' starts a line */
+            std::optional<sprite_t> icon; /*!< after the text, from the line's top */
+            f32                     advance{0.f};
+        };
+        std::vector<run_t> runs;
+        Vecf2              at{}; /*!< top-left of the first line */
+        Vecf4              color{1.f};
+        bool               below{false}; /*!< under the text before it instead */
+    };
+
     struct view_t
     {
         u32                   seat{0};
         f32                   width{640.f};
         std::vector<sprite_t> sprites;
+        std::vector<text_t>   texts;
+        /* Over the whole view, under its HUD; premultiplied */
+        Vecf4 tint{0.f};
     };
 
     std::vector<view_t> views;

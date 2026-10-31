@@ -31,6 +31,8 @@ vec4 sample_texture()
     /* Ribbons repeat along their length within the atlas tile */
     vec2 uv     = frag.source.z > 0.5 && frag.source.z < 1.5 ? fract(frag.tex) : frag.tex;
     vec3 coord  = vec3(uv * frag.atlas.xy + frag.atlas.zw, layer);
+    /* The atlas holds more levels than the image filled */
+    float lod_bias = -floor(frag.source.w / 16.0 + 0.001);
     if(format == 0u)
     {
         /* No bitmap: a soft round glow */
@@ -39,37 +41,37 @@ vec4 sample_texture()
         return vec4(1.0, 1.0, 1.0, a * a);
     }
     if(format == 1u)
-        return texture(source_bc1, coord);
+        return texture(source_bc1, coord, lod_bias);
     if(format == 2u)
-        return texture(source_bc2, coord);
+        return texture(source_bc2, coord, lod_bias);
     if(format == 3u)
-        return texture(source_bc3, coord);
+        return texture(source_bc3, coord, lod_bias);
     if(format == 4u)
-        return vec4(texture(source_rgb565, coord).rgb, 1.0);
+        return vec4(texture(source_rgb565, coord, lod_bias).rgb, 1.0);
     /* Luminance/alpha formats upload as one channel */
     if(format == 9u)
-        return vec4(1.0, 1.0, 1.0, texture(source_r8, coord).r);
+        return vec4(1.0, 1.0, 1.0, texture(source_r8, coord, lod_bias).r);
     if(format == 10u)
-        return vec4(texture(source_r8, coord).rrr, 1.0);
+        return vec4(texture(source_r8, coord, lod_bias).rrr, 1.0);
     if(format == 11u || format == 5u)
-        return texture(source_r8, coord).rrrr;
+        return texture(source_r8, coord, lod_bias).rrrr;
     if(format == 12u)
     {
-        vec2 la = texture(source_rg8, coord).rg;
+        vec2 la = texture(source_rg8, coord, lod_bias).rg;
         return vec4(la.rrr, la.g);
     }
     if(format == 6u)
-        return texture(source_rg8, coord).rrrg;
+        return texture(source_rg8, coord, lod_bias).rrrg;
     /* A4R4G4B4 reads as (A, R, G, B) */
     if(format == 7u)
-        return texture(source_rgba4, coord).gbar;
+        return texture(source_rgba4, coord, lod_bias).gbar;
     /* A8R8G8B8 bytes are B, G, R, A */
     if(format == 8u)
-        return texture(source_rgba8, coord).bgra;
+        return texture(source_rgba8, coord, lod_bias).bgra;
     if(format == 13u)
-        return texture(source_etc2_rgb, coord);
+        return texture(source_etc2_rgb, coord, lod_bias);
     if(format == 14u)
-        return texture(source_etc2_rgba, coord);
+        return texture(source_etc2_rgba, coord, lod_bias);
     if(format == 15u)
     {
         /* D3D A1R5G5B5 words, uploaded as GL 5_5_5_1: rebuild the word */
@@ -90,7 +92,7 @@ vec4 sample_texture()
 void main()
 {
     vec4 c = sample_texture();
-    if(frag.source.w > 0.5)
+    if(mod(frag.source.w, 16.0) > 0.5)
         c.a = 1.0;
     c *= frag.color;
     if(blend_mode > 2.5)

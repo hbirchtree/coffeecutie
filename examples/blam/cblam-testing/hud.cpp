@@ -6,16 +6,21 @@
 #include "components.h"
 #include "selected_version.h"
 #include "ui.h"
+#include "weapons.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_globals.h>
+#include <blam/volta/blam_strings.h>
 #include <blam/volta/blam_ui.h>
 #include <blam/volta/blam_unit.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 
+#include <array>
+#include <span>
 #include <string>
+#include "sounds.h"
 
 using HudManifest = compo::SubsystemManifest<
     type_list_t<
@@ -33,7 +38,7 @@ using HudManifest = compo::SubsystemManifest<
         const GameState,
         const BlamFiles<halo_version>,
         const LoadingStatus>,
-    type_list_t<comp_app::GraphicsFramebuffer>>;
+    type_list_t<comp_app::GraphicsFramebuffer, comp_app::EventBus<SoundEvent>>>;
 
 namespace {
 
@@ -56,6 +61,7 @@ struct state_t
     f32 secondary_loaded{0.f};
     f32 heat{0.f};
     f32 battery{1.f}; /*!< What is left of it */
+    u8  zoom{0};      /*!< Zoom level, 0 = none */
 };
 
 /* Drawn premultiplied: alpha is how much of what is behind an element it
@@ -249,13 +255,77 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
 
     /* ---- Unit ---- */
 
-    void unit_hud(unit_hud_interface const& hud, BipedStatus const& status)
+    /* The HUD's warning sounds latch to what the shield and health enter */
+    void warning_sounds(
+        Proxy& p, u64 id, unit_hud_interface const& hud, BipedStatus const& status)
+    {
+        using latch_t = unit_hud_interface::sound_t::latched_to_t;
+        auto sounds   = hud.hud_warning_sounds.data(*m_magic);
+        if(!sounds.has_value() || sounds.value().empty())
+            return;
+        auto& watch = m_warnings[id];
+        u32   now   = 0;
+        if(status.shield > watch.shield + 1e-4f && watch.shield < 1.f)
+            now |= static_cast<u32>(latch_t::shield_recharging);
+        /* Struck, not an over shield running down */
+        if(status.shield < watch.shield - 1e-4f && status.recent_shield > 0.f)
+            now |= static_cast<u32>(latch_t::shield_damaged);
+        if(status.shield <= 0.f)
+            now |= static_cast<u32>(latch_t::shield_empty) |
+                   static_cast<u32>(latch_t::shield_low);
+        if(status.body < hud.min_color_health_fraction_cutoff)
+            now |= static_cast<u32>(latch_t::health_low);
+        if(status.body <= 0.f)
+            now |= static_cast<u32>(latch_t::health_empty);
+        u32 const entered = now & ~watch.latched;
+        watch.latched     = now;
+        watch.shield      = status.shield;
+        if(!entered)
+            return;
+        auto* bus = p.template service<comp_app::EventBus<SoundEvent>>();
+        for(auto const& entry : sounds.value())
+        {
+            if(!(static_cast<u32>(entry.latched_to) & entered) || !entry.sound.valid())
+                continue;
+            SoundEvent     ev{.type = SoundEvent::play_sound};
+            PlaySoundEvent play{
+                .sound    = &static_cast<blam::tagref_t const&>(entry.sound),
+                .relative = true,
+            };
+            bus->inject(ev, &play);
+        }
+    }
+
+    /* An over shield fills the shield meter again in the overcharge colours,
+     * over a full one; the stock HUDs leave those blank, so the meter's
+     * full and flash colours stand in */
+    void overcharge(unit_hud_interface const& hud, f32 value)
+    {
+        auto const& m        = hud.shield_panel_meter;
+        bool const  authored = !blank(hud.overcharge_minimum_color) ||
+                              !blank(hud.overcharge_maximum_color);
+        Vecf4 const low  = color_of(authored ? hud.overcharge_minimum_color : m.color_at_maximum);
+        Vecf4 const high = color_of(authored ? hud.overcharge_maximum_color : m.flash_color);
+        Vecf4 const below = color_of(
+            blank(hud.overcharge_empty_color) ? m.color_at_maximum : hud.overcharge_empty_color);
+        value          = std::clamp(value, 0.f, 1.f);
+        f32 const low_fill = m.minimum_meter_value / 255.f;
+        push(hud.anchor, m, m.meter_bitmap, m.sequence_index, glm::mix(low, high, value),
+             low_fill + (1.f - low_fill) * value, below);
+    }
+
+    void unit_hud(
+        Proxy& p, u64 id, unit_hud_interface const& hud, BipedStatus const& status)
     {
         f32 const shield = status.shield;
         f32 const health = status.body;
+        warning_sounds(p, id, hud, status);
         background(hud.anchor, hud.unit_hud_background);
         background(hud.anchor, hud.shield_panel_background);
-        meter(hud.anchor, hud.shield_panel_meter, shield);
+        if(shield > 1.f)
+            overcharge(hud, (shield - 1.f) / (BipedStatus::over_shield - 1.f));
+        else
+            meter(hud.anchor, hud.shield_panel_meter, shield);
         background(hud.anchor, hud.health_panel_background);
         meter(hud.anchor, hud.health_panel_meter, health);
         /* The motion sensor keeps to the bottom left */
@@ -317,6 +387,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             {
                 if(!on_this_map(el.can_use_on_map_type))
                     continue;
+                using nflags_t = grenade_hud_interface::numbers_t::flags_t;
+                if((el.number.flags & nflags_t::only_show_when_zoomed) != nflags_t::none &&
+                   s.zoom == 0)
+                    continue;
                 using wflags_t = decltype(el.number.weapon_flags);
                 f32 value      = value_of(el.state_attached_to, s, false);
                 if((el.number.weapon_flags & wflags_t::divide_number_by_clip_size) !=
@@ -334,6 +408,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             {
             case type_t::aim:
                 return true;
+            case type_t::zoom:
+                return s.zoom > 0;
             case type_t::should_reload:
                 return empty && !none_spare;
             case type_t::low_ammo_and_none_left_to_reload:
@@ -353,9 +429,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 if(!overlays.has_value())
                     continue;
                 using flags_t = weapon_hud_interface::crosshair_overlay_t::flags_t;
+                auto const hidden = s.zoom > 0 ? flags_t::dont_show_when_zoomed
+                                                : flags_t::show_only_when_zoomed;
                 for(auto const& ov : overlays.value())
-                    if((ov.flags & flags_t::show_only_when_zoomed) == flags_t::none &&
-                       !blank(ov.colors.default_color))
+                    if((ov.flags & hidden) == flags_t::none && !blank(ov.colors.default_color))
                         push(anchor_t::center, ov, ch.crosshair_bitmap, ov.sequence_index,
                              color_of(ov.colors.default_color));
             }
@@ -379,7 +456,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         weapon_hud(child != m_index.end() ? &(*child) : nullptr, s, depth + 1);
     }
 
-    static state_t state_of(BipedEquipment::weapon_t const& held, BipedEquipment::weapon_t const& slung, blam::map_ptr const& magic)
+    static state_t state_of(
+        BipedEquipment::weapon_t const& held,
+        BipedEquipment::weapon_t const& slung,
+        blam::map_ptr const&            magic,
+        u8                              zoom = 0)
     {
         state_t s{
             .total            = static_cast<f32>(held.rounds_total),
@@ -388,6 +469,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             .secondary_loaded = static_cast<f32>(slung.rounds_loaded),
             .heat             = std::min(held.heat, 1.f),
             .battery          = 1.f - held.age,
+            .zoom             = zoom,
         };
         auto triggers  = held.weapon->triggers.data(magic);
         auto magazines = held.weapon->magazines.data(magic);
@@ -499,6 +581,245 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         });
     }
 
+    /* ---- Messages ---- */
+
+    using run_t = HudScene::text_t::run_t;
+
+    /* Icons past the hudg's buttons are game actions, then values the
+     * message is given */
+    static constexpr i32 first_action = 18;
+    static constexpr i32 first_value  = 32;
+    /* Each action's button on the Xbox's default layout; -1 for unknown */
+    static constexpr auto action_buttons = std::to_array<libc_types::i8>({
+        2,  /* action: X */
+        6,  /* throw grenade: left trigger */
+        7,  /* fire: right trigger */
+        5,  /* flashlight: white */
+        0,  /* jump: A */
+        1,  /* melee: B */
+        3,  /* switch weapons: Y */
+        -1, -1,
+        14, /* crouch: left thumb */
+        -1, -1,
+        16, /* move: left stick */
+        17, /* look: right stick */
+    });
+
+    /* The fields of a hudg button icon or a messaging_information */
+    struct icon_t
+    {
+        i16           sequence_index;
+        i16           width_offset;
+        blam::vec2i16 offset;
+        blam::argb8_t color;
+        u8            flags;
+    };
+
+    /* A sprite of the hudg's message icons, placed and spaced as the icon
+     * says */
+    std::optional<run_t> icon_run(icon_t const& icon, Vecf4 const& color)
+    {
+        using flags_t = blam::hud_globals::button_icon_t::flags_t;
+        auto const bitmap = m_hudg ? m_index.find(m_hudg->icon_bitmap.tag_id) : m_index.end();
+        if(bitmap == m_index.end())
+            return std::nullopt;
+        auto header = (*bitmap).template data<blam::bitm::header_t>(*m_magic);
+        if(!header.has_value())
+            return std::nullopt;
+        /* Some shipped tags point past the sheet */
+        auto seqs = header.value()->sequences.data(*m_magic);
+        if(!seqs.has_value() || icon.sequence_index < 0 ||
+           static_cast<size_t>(icon.sequence_index) >= seqs.value().size())
+            return std::nullopt;
+        auto frame = frame_of(m_hudg->icon_bitmap, icon.sequence_index, 0);
+        if(!frame)
+            return std::nullopt;
+        auto const  has    = [&icon](flags_t f) { return (icon.flags & static_cast<u8>(f)) != 0; };
+        Vecf2 const offset = Vecf2(icon.offset.x, icon.offset.y);
+        frame->sprite.min   = offset;
+        frame->sprite.max   = offset + frame->size;
+        frame->sprite.color = has(flags_t::override_default_color) ? color_of(icon.color) : color;
+        return run_t{
+            .icon    = frame->sprite,
+            .advance = has(flags_t::width_offset_is_absolute_icon_width) ? static_cast<f32>(icon.width_offset)
+                                                                         : frame->size.x + icon.width_offset,
+        };
+    }
+
+    /* A button icon of the hudg, or its stand-in text */
+    std::optional<run_t> button_run(i32 button)
+    {
+        using flags_t = blam::hud_globals::button_icon_t::flags_t;
+        if(!m_hudg)
+            return std::nullopt;
+        auto buttons = m_hudg->button_icons.data(*m_magic);
+        if(!buttons.has_value() || button < 0 || static_cast<size_t>(button) >= buttons.value().size())
+            return std::nullopt;
+        auto const& b = buttons.value()[button];
+        if((static_cast<u8>(b.flags) & static_cast<u8>(flags_t::use_text_from_string_list)) == 0)
+            return icon_run({b.sequence_index, b.width_offset, b.offset, b.color, static_cast<u8>(b.flags)}, icon_color());
+        auto const* list = data_of<blam::ui::unicode_string_list>(m_hudg->alternate_icon_text);
+        if(!list)
+            return std::nullopt;
+        auto subs = list->data.data(*m_magic);
+        if(!subs.has_value() || b.text_index < 0 || static_cast<size_t>(b.text_index) >= subs.value().size())
+            return std::nullopt;
+        auto text = subs.value()[b.text_index].str(*m_magic);
+        if(!text.has_value())
+            return std::nullopt;
+        return run_t{.text = std::u16string(text.value())};
+    }
+
+    Vecf4 icon_color() const
+    {
+        /* Stored a, r, g, b */
+        return m_hudg ? Vecf4(m_hudg->icon_color.y, m_hudg->icon_color.z, m_hudg->icon_color.w, m_hudg->icon_color.x)
+                      : Vecf4(1.f);
+    }
+
+    /* A message as runs of text and icons; `values` stand in for the icons
+     * past the actions */
+    std::vector<run_t> message_of(
+        blam::hud_message_text const* hmt, std::string_view name, std::span<run_t const> values = {})
+    {
+        std::vector<run_t> out;
+        if(!hmt)
+            return out;
+        auto messages = hmt->messages.data(*m_magic);
+        auto elements = hmt->elements.data(*m_magic);
+        auto text     = hmt->text(*m_magic);
+        if(!messages.has_value() || !elements.has_value() || !text.has_value())
+            return out;
+        auto const message = std::find_if(messages.value().begin(), messages.value().end(), [name](auto const& m) {
+            return m.name.str() == name;
+        });
+        if(message == messages.value().end())
+            return out;
+        using type_t = blam::hud_message_text::element_t::type_t;
+        auto append  = [&out](run_t run) {
+            if(out.empty() || out.back().icon)
+                out.emplace_back();
+            out.back().text += run.text;
+            out.back().icon    = run.icon;
+            out.back().advance = run.advance;
+        };
+        size_t at = static_cast<size_t>(std::max<i16>(message->text_start, 0));
+        for(i32 i = 0; i < message->element_count; i++)
+        {
+            size_t const e = static_cast<size_t>(message->element_start) + i;
+            if(e >= elements.value().size())
+                break;
+            auto const& element = elements.value()[e];
+            if(element.type == type_t::text)
+            {
+                auto const     chars = text.value().subspan(std::min(at, text.value().size()));
+                std::u16string run(chars.begin(), chars.begin() + std::min<size_t>(std::max<libc_types::i8>(element.data, 0), chars.size()));
+                run.erase(std::find(run.begin(), run.end(), u'\0'), run.end());
+                /* "|n" breaks the line */
+                for(size_t n; (n = run.find(u"|n")) != std::u16string::npos;)
+                    run.replace(n, 2, u"\n");
+                append({.text = run});
+                at += static_cast<size_t>(std::max<libc_types::i8>(element.data, 0));
+                continue;
+            }
+            i32 const icon = element.data;
+            std::optional<run_t> run;
+            if(icon >= first_value)
+            {
+                if(static_cast<size_t>(icon - first_value) < values.size())
+                    run = values[icon - first_value];
+            } else if(icon >= first_action)
+            {
+                if(static_cast<size_t>(icon - first_action) < action_buttons.size())
+                    run = button_run(action_buttons[icon - first_action]);
+            } else
+                run = button_run(icon);
+            if(run)
+                append(*run);
+        }
+        return out;
+    }
+
+    /* Flashing for its first few beats of each period, as hudg's help text
+     * colors say */
+    static Vecf4 flashing(unit_hud_interface::colors_t const& c, bool flash, f32 t)
+    {
+        using flags_t = unit_hud_interface::colors_t::flash_flags_t;
+        bool lit      = false;
+        if(flash && c.flash_period > 0.f)
+        {
+            f32 const in   = std::fmod(t, c.flash_period);
+            f32 const beat = c.flash_length + c.flash_delay;
+            i32 const n    = beat > 0.f ? static_cast<i32>(in / beat) : 0;
+            lit            = n < c.num_flashes && in - n * beat < c.flash_length;
+        }
+        if((c.flash_flags & flags_t::reverse_default_flashing_colors) != flags_t::none)
+            lit = !lit;
+        Vecf4 const color = color_of(lit ? c.flashing_color : c.default_color);
+        /* Glyphs are drawn over the world, not added to it */
+        return Vecf4(Vecf3(color), 1.f);
+    }
+
+    /* A weapon at its feet it would swap the one in hand for */
+    blam::scn::weapon const* offered(Proxy& p, PlayerInfo const& info, PlayerCamera const& cam, BipedEquipment const& equip)
+    {
+        if(info.riding.vehicle || !equip.weapons[1].weapon)
+            return nullptr;
+        for(auto item : p.template select<Model, NetworkInfo>())
+        {
+            auto [model, net] = item.components();
+            auto const* tag   = model.origin_object;
+            if(!tag || !tag->matches(blam::tag_class_t::weap) || net.instance_id == 0 ||
+               SpawnObjectEvent::is_impostor(net.instance_id) || p.template get<PlayerInfo>(item.id()) ||
+               equip.weapons[0].tag == tag || equip.weapons[1].tag == tag ||
+               !within_pickup_reach(info, cam, model.position))
+                continue;
+            if(auto weapon = tag->template data<blam::scn::weapon>(*m_magic); weapon.has_value())
+                return weapon.value();
+        }
+        return nullptr;
+    }
+
+    /* The scripts' help text, and what the player could pick up */
+    void messages(Proxy& p, CinematicState const& cinematic, PlayerInfo const& info, PlayerCamera const& cam, BipedEquipment const& equip)
+    {
+        if(!m_hudg)
+            return;
+        Vecf2 const at = place(m_hudg->anchor, m_hudg->placement.anchor_offset, Vecf2());
+        if(cinematic.help.shown && !cinematic.help.message.empty())
+            if(auto runs = message_of(m_messages, cinematic.help.message); !runs.empty())
+                m_view->texts.push_back({
+                    .runs  = std::move(runs),
+                    .at    = at,
+                    .color = flashing(m_hudg->help_text_colors, cinematic.help.flash, cinematic.help.elapsed),
+                });
+        auto const* weapon = offered(p, info, cam, equip);
+        auto hud = weapon && weapon->hud_interface.valid() ? m_index.find(weapon->hud_interface.tag_id) : m_index.end();
+        if(hud == m_index.end())
+            return;
+        auto wphi = (*hud).template data<weapon_hud_interface>(*m_magic);
+        if(!wphi.has_value())
+            return;
+        auto const& info_ = wphi.value()->messaging_information;
+        auto const  icon  = icon_run(
+            {info_.sequence_index,
+             info_.width_offset,
+             info_.offset_from_reference_corner,
+             info_.override_icon_color,
+             static_cast<u8>(info_.flags)},
+            icon_color());
+        if(!icon)
+            return;
+        Vecf4 const text = m_hudg->text_color;
+        if(auto runs = message_of(m_global_messages, "swap_weapon", std::span(&*icon, 1)); !runs.empty())
+            m_view->texts.push_back({
+                .runs  = std::move(runs),
+                .at    = at,
+                .color = Vecf4(text.y, text.z, text.w, 1.f),
+                .below = !m_view->texts.empty(),
+            });
+    }
+
     /* ---- Scoreboard ---- */
 
     static std::u16string wide(std::string_view text)
@@ -605,6 +926,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         f32 const dt    = m_last != time_point{} ? std::chrono::duration<f32>(t - m_last).count() : 0.f;
         m_last          = t;
         cinematic.fade.elapsed += dt;
+        cinematic.help.elapsed += dt;
         scene.fade = Vecf4(cinematic.fade.color, cinematic.fade.opacity());
         scene.letterbox = glm::clamp(
             scene.letterbox + (cinematic.letterbox ? dt : -dt) / letterbox_seconds * letterbox_height,
@@ -663,6 +985,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto const* net    = p.template get<NetworkInfo>(id);
             auto const* equip  = p.template get<BipedEquipment>(id);
             auto const* status = p.template get<BipedStatus>(id);
+            /* Full spectrum vision, fading out over its last second */
+            if(info && info->powerups.vision > 0.f)
+                out.tint = vision_tint * std::min(info->powerups.vision, 1.f);
             if(!info || !cam || !net || !equip || !status || !cinematic.show_hud ||
                cam->cinematic || !biped_shown(*info, *cam, *net) || !info->mode.physics ||
                status->dead)
@@ -675,7 +1000,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             if(auto const* unit = riding.hud ? riding.hud : m_unit_huds[split])
                 if(auto hud = unit->template data<unit_hud_interface>(*m_magic);
                    hud.has_value())
-                    unit_hud(*hud.value(), *status);
+                    unit_hud(p, id, *hud.value(), *status);
             if(riding.mounted.weapon)
             {
                 auto hud = m_index.find(riding.mounted.weapon->hud_interface.tag_id);
@@ -689,7 +1014,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 weapon_hud(
                     held->weapon->hud_interface.valid() && hud != m_index.end() ? &(*hud)
                                                                                 : nullptr,
-                    state_of(*held, equip->weapons[1], *m_magic));
+                    state_of(*held, equip->weapons[1], *m_magic, equip->zoom));
             }
             /* The grenades it would throw */
             if(equip->grenade < equip->equipment.size())
@@ -699,8 +1024,20 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                     if(carried.equip == equipment)
                         grenade_hud(hud, carried.left);
             }
+            messages(p, cinematic, *info, *cam, *equip);
         }
         m_view = nullptr;
+    }
+
+    /* A tag's data, if it is in the map and of T's class */
+    template<typename T>
+    T const* data_of(blam::tagref_t const& ref) const
+    {
+        auto tag = ref.valid() ? m_index.find(ref.tag_id) : m_index.end();
+        if(tag == m_index.end() || !(*tag).matches(T::tag_class))
+            return nullptr;
+        auto data = (*tag).template data<T>(*m_magic);
+        return data.has_value() ? data.value() : nullptr;
     }
 
     /* What this map's HUD is drawn from */
@@ -712,6 +1049,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         m_unit_huds   = {};
         m_digits      = nullptr;
         m_grenades.clear();
+        m_hudg            = nullptr;
+        m_messages        = nullptr;
+        m_global_messages = nullptr;
+        if(auto const* scenario = files.container.scenario().value_or(nullptr))
+            m_messages = data_of<blam::hud_message_text>(scenario->ui_text.hud_text);
 
         auto globals_tag = m_index.tag_of("globals\\globals");
         if(!globals_tag.has_value())
@@ -721,6 +1063,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return;
         auto const& g = *globals.value();
 
+        if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
+            if((m_hudg = data_of<blam::hud_globals>(bitmaps.value()[0].hud_globals)))
+                m_global_messages = data_of<blam::hud_message_text>(m_hudg->hud_messages);
         if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
             if(auto digits = m_index.find(bitmaps.value()[0].hud_digits_definition.tag_id);
                bitmaps.value()[0].hud_digits_definition.valid() && digits != m_index.end())
@@ -785,7 +1130,18 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     blam::tag_index_view<halo_version>   m_index;
     bool                                 m_multiplayer{false};
     std::array<blam::tag_t const*, 2>    m_unit_huds{}; /*!< Full, split screen */
+    /* Dims the view and lifts it green */
+    static inline Vecf4 const vision_tint{.04f, .22f, .06f, .4f};
+    struct warning_t
+    {
+        f32 shield{1.f};
+        u32 latched{0}; /*!< sound_t::latched_to_t bits in effect */
+    };
+    std::map<u64, warning_t> m_warnings; /*!< Per seat */
     blam::hud_number const*              m_digits{nullptr};
+    blam::hud_globals const*             m_hudg{nullptr};
+    blam::hud_message_text const*        m_messages{nullptr};        /*!< The scenario's */
+    blam::hud_message_text const*        m_global_messages{nullptr}; /*!< The hudg's */
     bool                                 m_digit_sprites{false};
     /* Each grenade type's equipment, and the HUD that counts it */
     std::vector<std::pair<blam::scn::equipment const*, blam::tag_t const*>> m_grenades;

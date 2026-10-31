@@ -91,6 +91,19 @@
                 "lossy"
             ]
         },
+        "census": {
+            "description": "The client drops the spawn backlog and a despawn; the object census repairs both",
+            "server": "dummy_plug_net_census_server.json",
+            "client": "dummy_plug_net_census_client.json",
+            "expect": {
+                "objects": 60
+            },
+            "networks": [
+                "lan",
+                "lag500",
+                "lossy"
+            ]
+        },
         "pause": {
             "description": "The server pauses; the client stops on the same tick",
             "server": "dummy_plug_net_pause_server.json",

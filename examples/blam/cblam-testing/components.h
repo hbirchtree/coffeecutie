@@ -302,6 +302,8 @@ struct Model
     blam::tag_t const* origin_object{nullptr};
     /*! A weapon on the ground: the battery it was dropped with */
     libc_types::f32 item_age{0.f};
+    /*! And the rounds left in it; see SpawnObjectEvent::rounds */
+    std::optional<std::array<libc_types::u16, 2>> item_rounds;
 
     /*! Active camouflage: drawn as a refraction of what is behind it */
     bool camouflaged{false};
@@ -808,6 +810,7 @@ struct Projectile
     Vecf3                        attach_offset{}; /* in that unit's model space */
     bool                         resting{false};  /* settled where it fell */
     bool                         flew_by{false};  /* past a local ear, heard */
+    bool                         combined{false}; /* gone into a super detonation */
 
     /*! Bullets fast enough to resolve as the trigger is pulled, along a
      *  ray of `reach` */
@@ -848,6 +851,7 @@ struct ObjectPhysics
     f32   friction{-1.f};
     f32   restitution{-1.f};
     bool  animated{false}; /*!< Devices: still, but hulls follow the pose */
+    f32   max_slope{0.f};  /*!< Bipeds: steepest ground walked up, radians; 0 = any */
 
     /*! Who moves a body with mass: this peer's simulation, or someone else
      * (the server) through Model, with the body following kinematically */
@@ -866,6 +870,8 @@ struct ObjectPhysics
     bool  teleported{false}; /*!< Moved by hand: the body starts over there */
     bool  scripted{false};   /*!< Moved by a script: carried, not simulated */
     bool  seated{false};     /*!< A script's rider: inside its vehicle, touching nothing */
+    libc_types::u64 seated_in{0}; /*!< A script's rider: the vehicle */
+    libc_types::i16 seat{-1};     /*!< A script's rider: the vehicle's seat */
     bool  recorded{false};   /*!< Driven by a script's recording: runs nobody down */
 
     /*! Vehicles, as of the last physics step */
@@ -964,6 +970,10 @@ struct PlayerInfo
         f32 back_speed{2.25f};
         f32 strafe_speed{2.25f};
         f32 jump_velocity{2.3f}; /*!< wu/s, from the biped tag */
+        f32 crouch_eye_height{0.35f};
+        f32 crouch_time{0.2f};  /*!< Seconds to crouch or stand up */
+        f32 crouch_speed{0.5f}; /*!< Ground speeds scale by this crouched */
+        f32 max_slope{0.785398f}; /*!< Steepest ground walked up, radians, from the biped tag */
         /*! How far the camera looks down and up, radians; the cyborg's
          * tag leaves it empty */
         Vecf2 pitch_range{-1.5f, 1.5f};
@@ -1037,9 +1047,118 @@ struct PlayerInfo
     /*! Active camouflage, on the body and what it holds */
     bool camouflaged{false};
 
+    /*! Seconds left of each timed powerup */
+    struct
+    {
+        f32 camouflage{0.f};
+        f32 speed{0.f};
+        f32 vision{0.f};
+    } powerups;
+
+    /*! Double speed scales walking, firing and reloading */
+    f32 speed_scale() const
+    {
+        return powerups.speed > 0.f ? 2.f : 1.f;
+    }
+
+    bool crouched{false};
+    f32  crouch{0.f}; /*!< Eased toward crouched, 1 all the way down */
+
+    /*! The camera above the feet, as low as the crouch has gone */
+    f32 eye_height() const
+    {
+        return glm::mix(biped.eye_height, biped.crouch_eye_height, crouch);
+    }
+
+    f32 eye_offset() const
+    {
+        return eye_height() - biped.height / 2;
+    }
+
     bool is_remote() const
     {
         return !remote.empty();
+    }
+};
+
+/*! A unit the scenario's encounters fight with: its squad, and what it is
+ *  up to. Inactive on units nobody placed through an encounter */
+struct Actor
+{
+    using value_type = Actor;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    enum class state_t : libc_types::u8
+    {
+        idle,     /*!< At its post, watching */
+        combat,   /*!< A target in mind: a firing position, bursts */
+        pursuit,  /*!< Lost its target: looks where it was last */
+        retreat,  /*!< Beaten back: a far position, no shooting */
+    };
+
+    enum class order_t : libc_types::u8
+    {
+        none,    /*!< Its platoon decides */
+        attack,  /*!< ai_attack: the attacking positions */
+        defend,  /*!< ai_defend: the defending positions */
+        retreat, /*!< ai_retreat: away from its target, no shooting */
+    };
+
+    libc_types::i16 encounter{-1};
+    libc_types::i16 squad{-1};
+    libc_types::i16 variant{-1}; /*!< Its actor palette entry, kept across migrations */
+    bool            migrated{false}; /*!< ai_migrate moved it: it guards its squad's positions, not its post */
+    libc_types::i16 idle_state{0};   /*!< blam::scn::ai::state_t it was placed in: patrols, guarding */
+    libc_types::i32 move_at{-1};     /*!< The squad move position it patrols toward */
+    libc_types::f32 move_wait{0.f};  /*!< Until it walks on from there */
+    bool            move_back{false}; /*!< Walking a back-and-forth patrol in reverse */
+    libc_types::f32 glance_in{0.f};  /*!< Until it looks somewhere else, idle */
+    libc_types::f32 gaze_in{0.f};    /*!< Until its head turns elsewhere, idle */
+    libc_types::f32 rest{-1.f};      /*!< Body and shield as it fell asleep, -1 awake */
+    std::vector<libc_types::i32> route; /*!< Firing positions to walk through to its goal */
+    Vecf3           route_goal{};
+    Vecf3           stuck_at{};      /*!< Where it was when progress was last checked */
+    libc_types::f32 stuck_in{0.f};
+    bool            steer_other{false}; /*!< Round obstacles the other way, after stalling */
+    libc_types::f32 strike_in{0.f};     /*!< Until a swing's blow lands */
+    bool            swinging{false};    /*!< A swing is under way */
+    libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
+    bool            scripted{false}; /*!< A command list or recording has it */
+    bool            may_fight{false}; /*!< Its command list lets it break off for an enemy */
+    bool            release{false};   /*!< It saw one: the list is to let it go */
+    bool            braindead{false}; /*!< ai_braindead: stands and does nothing */
+    bool            blind{false};
+    bool            deaf{false};
+    bool            follow_players{false}; /*!< ai_follow_target_players: always knows where they are */
+    order_t         order{order_t::none};
+    state_t         state{state_t::idle};
+
+    libc_types::u64 target{0};
+    Vecf3           last_seen{};       /*!< Where the target was last in view */
+    libc_types::f32 seen_ago{1e9f};    /*!< Seconds since the target was in view */
+    Vecf3           post{};            /*!< Its starting location */
+    libc_types::i32 position{-1};      /*!< Firing position it goes for */
+    Vecf3           goal{};
+    bool            moving{false};
+    bool            covering{false};   /*!< Down behind a position the target cannot see */
+    libc_types::f32 look_in{0.f};      /*!< Until the next perception */
+    libc_types::f32 fire_in{0.f};      /*!< Until the next shot or burst */
+    libc_types::i32 burst_left{0};     /*!< Shots left in the burst */
+    libc_types::f32 stance_in{0.f};    /*!< Until the crouch or stand ends */
+    libc_types::f32 state_in{0.f};     /*!< Until a timed state ends */
+    libc_types::f32 reposition_in{0.f};
+    libc_types::i16 grenades{-1};      /*!< Left to throw, -1 = not yet dealt */
+    libc_types::f32 grenade_in{0.f};   /*!< Until the next throw is considered */
+    bool            dropped{true};     /*!< Dead and its belongings let go; found dead, it has none */
+    libc_types::u64 stocked{0};        /*!< The held weapon given its drop ammunition */
+    libc_types::f32 melee_in{0.f};
+    libc_types::u64 board{0};           /*!< ai_go_to_vehicle: the vehicle it runs to */
+    libc_types::f32 board_radius{1.5f}; /*!< Near enough to be seated */
+    blam::bl_string board_seat{};       /*!< The seat it takes there */
+
+    bool active() const
+    {
+        return encounter >= 0;
     }
 };
 
@@ -1104,6 +1223,8 @@ struct PlayerInput
     debounced_button_t grenade{};
     debounced_button_t grenade_switch{};
     debounced_button_t melee{};
+    debounced_button_t zoom{};
+    bool               crouch{false}; /*!< Held */
     bool               scores{false}; /*!< Held: the scoreboard */
 
     /*! What the player wants, for whatever their input is routed to */
@@ -1115,12 +1236,15 @@ struct PlayerInput
         bool  use{false};    /*!< Held: enter or leave a vehicle */
         bool  grab{false};   /*!< Held: forge grab */
         bool  fire{false};   /*!< Held: pull the trigger */
+        bool  fire2{false};  /*!< Held: a mounted gun's second trigger */
         bool  jump{false};   /*!< Wanted; cleared once taken or stale */
         bool  swap{false};   /*!< Pressed: switch weapons; cleared once taken */
         bool  reload{false}; /*!< Pressed; cleared once taken */
         bool  grenade{false};        /*!< Pressed: throw; cleared once taken */
         bool  grenade_switch{false}; /*!< Pressed; cleared once taken */
         bool  melee{false};          /*!< Pressed; cleared once taken */
+        bool  zoom{false};           /*!< Pressed; cleared once taken */
+        bool  crouch{false};         /*!< Held */
     } intent;
 
     std::optional<Vecf3> position; /*!< teleport target */
@@ -1145,6 +1269,7 @@ struct PlayerInput
         grenade.frame_end();
         grenade_switch.frame_end();
         melee.frame_end();
+        zoom.frame_end();
     }
 };
 
@@ -1275,6 +1400,11 @@ struct BipedStatus
     f32  max_body{-1.f};
     f32  max_shield{-1.f};
     bool invulnerable{false};
+    /*! An over shield: shield above 1 lost per second */
+    f32 overcharge_decay{0.f};
+
+    /*! What an over shield charges the shield to */
+    static constexpr f32 over_shield = 3.f;
 
     f32 maximum_body() const
     {
@@ -1323,6 +1453,7 @@ struct BipedEquipment
     u32  load_generation{0};
     bool reloading{false}; /*!< The held weapon, as everyone sees it */
     bool throwing{false};  /*!< A grenade, from wind-up to recovery */
+    u8   zoom{0};          /*!< The held weapon's zoom level, 0 = none */
 
     weapon_t const* held(u32 generation) const
     {

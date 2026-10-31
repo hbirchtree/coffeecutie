@@ -71,7 +71,8 @@ using NetworkingManifest = compo::SubsystemManifest<
         const PlayerInput,
         BipedEquipment,
         const BipedStatus,
-        const DeviceState>,
+        const DeviceState,
+        AnimationPlayback>,
     type_list_t<
         NetworkState,
         GameState,
@@ -651,6 +652,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .request_id = request_id,
                 .announce   = spawn.announce,
                 .age        = spawn.age,
+                .rounds     = spawn.rounds.value_or(std::array<u16, 2>{
+                    SpawnRequest::no_rounds, SpawnRequest::no_rounds}),
             }));
     }
 
@@ -794,6 +797,21 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(object.get<NetworkInfo>().instance_id == net_id)
                 return object.id();
         return 0;
+    }
+
+    /* What the census covers: the server-spawned objects. Static scenario
+     * objects every peer loads itself, by BSP section */
+    static bool census_covers(u32 net_id)
+    {
+        if(net_id == 0 || SpawnObjectEvent::is_impostor(net_id))
+            return false;
+        return net_id >= SpawnObjectEvent::dynamic_net_id_base ||
+               SpawnObjectEvent::scenario_group(net_id) >= ScenarioGroup::Vehicle;
+    }
+
+    static u32 census_bucket(u32 net_id, u32 buckets)
+    {
+        return ((net_id * 2654435761u) >> 16) % buckets;
     }
 
     /* A camera as sent: on a deck, where it is on that deck, so a peer puts
@@ -1362,9 +1380,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             });
         m_despawn_queue = m_game_bus.addQueuedEventFunction<DespawnObjectEvent>(
             0, [this](GameEvent&, DespawnObjectEvent* gone) {
-                if(is_server() && gone->net_id != 0 &&
-                   !SpawnObjectEvent::is_impostor(gone->net_id))
-                    m_despawns.push_back({.net_id = gone->net_id});
+                if(!is_server() || gone->net_id == 0 ||
+                   SpawnObjectEvent::is_impostor(gone->net_id))
+                    return;
+                m_despawns.push_back({.net_id = gone->net_id});
+                /* Late joiners must not get it back with the backlog */
+                std::erase_if(m_dynamic_spawns, [gone](EntitySpawn const& s) {
+                    return s.tag.instance_id == gone->net_id;
+                });
             });
         m_pickup_queue = m_game_bus.addQueuedEventFunction<EquipWeaponEvent>(
             0, [this](GameEvent&, EquipWeaponEvent* equip) {
@@ -1464,7 +1487,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_latest_cameras.clear();
                 for(auto& [_, state] : m_connections)
                 {
-                    state.verified = false;
+                    state.verified   = false;
+                    state.census_due = {};
                     state.cameras_sent.clear();
                     state.objects_sent.clear();
                 }
@@ -2531,17 +2555,23 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             send_impacts(p);
             send_seats(p);
+            send_riders(p);
             send_equipment(p);
             send_vitality(p);
             send_game_state(p);
             send_devices(p);
             send_pickups();
+            send_census(p);
             measure_pings();
             send_tick_sync(p, t);
             send_grab_states(p);
             send_object_sync(p, t);
         }
         equip_remote_players(p);
+        /* Riders whose units had not arrived yet */
+        std::erase_if(m_waiting_riders, [&](auto& waiting) {
+            return seat_rider(p, waiting.first) || ++waiting.second > max_rider_wait;
+        });
         if(m_left_server)
             leave_server(p);
         if(m_connection)
@@ -2827,7 +2857,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         for(auto unit : p.select<BipedStatus>())
         {
             auto const& status = unit.get<BipedStatus>();
-            if(status.dead || status.body < 1.f || status.shield < 1.f)
+            if(status.dead || status.body < 1.f || status.shield != 1.f)
                 if(auto wire = m_combat.vitality_of(p, unit.id()))
                     hurt.push_back(*wire);
         }
@@ -3151,19 +3181,37 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto [model, physics, net] = object.components();
             if(physics.mass <= 0.f || net.instance_id == 0)
                 continue;
-            ObjectSync const sync{
+            auto const* anim = p.get<AnimationPlayback>(object.id());
+            ObjectSync sync{
                 .tick             = tick,
                 .rotation         = model.rotation,
                 .position         = Vecf4(model.position, 0),
                 .linear_velocity  = Vecf4(physics.linear_velocity, 0),
                 .angular_velocity = Vecf4(physics.angular_velocity, 0),
                 .net_id           = net.instance_id,
-                .flags = physics.sleeping ? ObjectSync::sleeping
-                                          : ObjectSync::none,
+                .flags            = static_cast<ObjectSync::flags_t>(
+                    (physics.sleeping ? ObjectSync::sleeping : ObjectSync::none) |
+                    (anim && anim->stance == "crouch" ? ObjectSync::crouched : ObjectSync::none) |
+                    (anim && anim->stance == "asleep" ? ObjectSync::asleep : ObjectSync::none)),
             };
+            /* Where a unit aims and looks; one doing either is kept current */
+            bool const aims  = anim && glm::dot(anim->aiming, anim->aiming) > 1e-6f;
+            bool const looks = anim && glm::dot(anim->looking, anim->looking) > 1e-6f;
+            bool const gazing = (aims || looks) && !p.get<PlayerInfo>(object.id());
+            if(gazing && aims)
+            {
+                ObjectSync::pack(sync.aim, anim->aiming);
+                sync.flags = static_cast<ObjectSync::flags_t>(sync.flags | ObjectSync::aiming);
+            }
+            if(gazing && looks)
+            {
+                ObjectSync::pack(sync.look, anim->looking);
+                sync.flags = static_cast<ObjectSync::flags_t>(sync.flags | ObjectSync::looking);
+            }
             all.push_back(sync);
             auto& was_asleep = m_object_asleep[net.instance_id];
-            if(!physics.sleeping)
+            auto& was_gazing = m_object_gazing[net.instance_id];
+            if(!physics.sleeping || gazing || was_gazing)
             {
                 changed.push_back(sync);
                 changed_nets.push_back(&net);
@@ -3171,6 +3219,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             else if(!was_asleep)
                 settled.push_back(sync);
             was_asleep = physics.sleeping;
+            was_gazing = gazing;
         }
 
         std::set<HSteamNetConnection> fresh, current;
@@ -3403,6 +3452,97 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 current);
     }
 
+    /* Units scripts sat in vehicles as they change, and all of them to a
+     * fresh peer */
+    void send_riders(Proxy& p)
+    {
+        std::vector<RiderSync> changed, riders;
+        for(auto object : p.select<ObjectPhysics, NetworkInfo>())
+        {
+            auto [physics, net] = object.components();
+            if(net.instance_id == 0 || p.get<PlayerInfo>(object.id()))
+                continue;
+            RiderSync rider{.unit = net.instance_id};
+            if(physics.seated && physics.seated_in)
+                if(auto const* vehicle = p.get<NetworkInfo>(physics.seated_in); vehicle && vehicle->instance_id)
+                {
+                    rider.vehicle = vehicle->instance_id;
+                    rider.seat    = physics.seat;
+                }
+            auto const sent = m_sent_riders.find(net.instance_id);
+            if(rider.vehicle == 0 && sent == m_sent_riders.end())
+                continue;
+            if(rider.vehicle != 0)
+                riders.push_back(rider);
+            if(sent == m_sent_riders.end() || sent->second != rider)
+                changed.push_back(rider);
+            if(rider.vehicle != 0)
+                m_sent_riders[net.instance_id] = rider;
+            else
+                m_sent_riders.erase(sent);
+        }
+        std::set<HSteamNetConnection> fresh, current;
+        for(auto& [connection, state] : m_connections)
+            if(state.verified)
+                (state.objects_synced ? current : fresh).insert(connection);
+        if(!fresh.empty() && !riders.empty())
+            send_all<RiderSync>(
+                MessageBase{MessageBase::RiderSync},
+                gsl::span<RiderSync>(riders),
+                k_nSteamNetworkingSend_Reliable,
+                fresh);
+        if(!current.empty() && !changed.empty())
+            send_all<RiderSync>(
+                MessageBase{MessageBase::RiderSync},
+                gsl::span<RiderSync>(changed),
+                k_nSteamNetworkingSend_Reliable,
+                current);
+    }
+
+    /* Seats a unit as the server has it: touching nothing, in the seat's
+     * stance, or back in its own. False until the unit is here */
+    bool seat_rider(Proxy& p, RiderSync const& rider)
+    {
+        u64 unit = 0, vehicle = 0;
+        for(auto object : p.select<NetworkInfo>())
+        {
+            u32 const id = object.get<NetworkInfo>().instance_id;
+            if(id == rider.unit)
+                unit = object.id();
+            else if(rider.vehicle != 0 && id == rider.vehicle)
+                vehicle = object.id();
+        }
+        auto* physics = unit ? p.get<ObjectPhysics>(unit) : nullptr;
+        if(!physics || (rider.vehicle != 0 && !vehicle))
+            return false;
+        physics->seated    = vehicle != 0;
+        physics->seated_in = vehicle;
+        physics->seat      = vehicle ? rider.seat : -1;
+        auto* anim = p.get<AnimationPlayback>(unit);
+        if(!anim)
+            return true;
+        /* Its own stance comes back when it gets out */
+        auto own = m_rider_stances.find(rider.unit);
+        if(!vehicle)
+        {
+            if(own != m_rider_stances.end())
+            {
+                anim->stance = own->second;
+                m_rider_stances.erase(own);
+            }
+        } else if(auto const* model = p.get<Model>(vehicle); model && model->origin_object)
+            if(auto vehi = model->origin_object->template data<blam::scn::unit>(m_map->magic); vehi.has_value())
+                if(auto seats = vehi.value()[0].seats.data(m_map->magic);
+                   seats.has_value() && rider.seat >= 0 && static_cast<size_t>(rider.seat) < seats.value().size())
+                {
+                    if(own == m_rider_stances.end())
+                        m_rider_stances[rider.unit] = anim->stance;
+                    anim->stance = std::string(seats.value()[rider.seat].label.str());
+                }
+        journal("net_rider", {{"unit", rider.unit}, {"vehicle", rider.vehicle}, {"stance", anim->stance}});
+        return true;
+    }
+
     /* What a player carries, by tag ids; nothing before the map gives it any */
     static EquipmentSync equipment_of(Proxy& p, u64 entity, PlayerInfo const& info)
     {
@@ -3415,9 +3555,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         out.slung  = slung.tag ? slung.tag->tag_id : blam::tag_index<>{};
         out.flags  = static_cast<EquipmentSync::flags_t>(
             (equip->reloading ? EquipmentSync::reloading : 0) |
-            (equip->throwing ? EquipmentSync::throwing : 0));
+            (equip->throwing ? EquipmentSync::throwing : 0) |
+            (info.camouflaged ? EquipmentSync::camouflaged : 0));
         for(size_t i = 0; i < out.grenades.size() && i < equip->equipment.size(); i++)
             out.grenades[i] = static_cast<u8>(std::min<u16>(equip->equipment[i].left, 255));
+        out.reserve = {held.rounds_total, slung.rounds_total};
         return out;
     }
 
@@ -3520,13 +3662,77 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             for(auto& [connection, state] : m_connections)
                 for(auto const& [_, player] : state.players)
                     if(player.biped.exists() && player.biped.id() == pickup.entity_id)
+                    {
+                        auto const report = m_remote_weapons.find(player.idx);
+                        m_handouts[player.idx] = {
+                            report != m_remote_weapons.end() ? report->second : EquipmentSync{},
+                            std::chrono::steady_clock::now()};
                         send_single(
                             connection,
                             Message<WeaponPickup>({
                                 .player_idx = player.idx,
                                 .weapon     = pickup.weapon,
                                 .age        = pickup.age,
+                                .rounds     = pickup.rounds,
                             }));
+                    }
+    }
+
+    /* Every census_period a peer hears which replicated objects live here,
+     * so a spawn or despawn it missed gets put right (ObjectCensus) */
+    void send_census(Proxy& p)
+    {
+        auto const now = std::chrono::steady_clock::now();
+        std::set<HSteamNetConnection> due;
+        for(auto& [connection, state] : m_connections)
+        {
+            if(!state.verified || !state.objects_synced)
+                continue;
+            /* The backlog goes first, and gets a period to land */
+            if(state.census_due == std::chrono::steady_clock::time_point{})
+                state.census_due = now + census_period;
+            if(now < state.census_due)
+                continue;
+            state.census_due = now + census_period;
+            due.insert(connection);
+        }
+        if(due.empty())
+            return;
+        std::vector<ObjectCensus> live;
+        for(auto object : p.select<NetworkInfo>())
+        {
+            auto const& net = object.get<NetworkInfo>();
+            if(census_covers(net.instance_id) && !p.get<PlayerInfo>(object.id()))
+                live.push_back({.net_id = net.instance_id, .tag_id = net.object.tag_id});
+        }
+        u32 const buckets =
+            std::max<u32>(1, (live.size() + census_batch - 1) / census_batch);
+        size_t bytes = 0;
+        for(u32 bucket = 0; bucket < buckets; bucket++)
+        {
+            std::vector<ObjectCensus> part;
+            for(auto const& entry : live)
+                if(census_bucket(entry.net_id, buckets) == bucket)
+                    part.push_back(entry);
+            /* An empty bucket still has to say so */
+            if(part.empty())
+                part.push_back({});
+            bytes += sizeof(MessageBase) + part.size() * sizeof(ObjectCensus);
+            send_all<ObjectCensus>(
+                MessageBase{
+                    .type    = MessageBase::ObjectCensus,
+                    .request = bucket | buckets << 16,
+                },
+                gsl::span<ObjectCensus>(part),
+                k_nSteamNetworkingSend_UnreliableNoNagle,
+                due);
+        }
+        journal(
+            "net_census",
+            {{"objects", live.size()},
+             {"buckets", buckets},
+             {"bytes", bytes},
+             {"peers", due.size()}});
     }
 
     static bool is_weapon(BlamFiles<halo_version> const& files, blam::tag_index<> weapon)
@@ -3549,13 +3755,30 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             /* The dead hold nothing, whatever was last reported */
             if(auto const* status = p.get<BipedStatus>(player.id()); status && status->dead)
                 continue;
+            /* What the server just handed out is not undone by a report from
+             * before it */
+            if(auto held = m_handouts.find(info.player_idx); held != m_handouts.end())
+            {
+                if(held->second.first == it->second &&
+                   std::chrono::steady_clock::now() - held->second.second < handout_hold)
+                    continue;
+                m_handouts.erase(held);
+            }
             if(auto* equip = p.get<BipedEquipment>(player.id()))
             {
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
                 equip->throwing  = it->second.flags & EquipmentSync::throwing;
+                /* Its own peer runs its camouflage */
+                p.get<PlayerInfo>(player.id())->camouflaged =
+                    it->second.flags & EquipmentSync::camouflaged;
                 /* Thrown where it is played, so counted there */
                 for(size_t i = 0; i < it->second.grenades.size() && i < equip->equipment.size(); i++)
                     equip->equipment[i].left = it->second.grenades[i];
+                /* Likewise reserves, which the authority's ammo pickups go by */
+                for(size_t i = 0; i < equip->weapons.size(); i++)
+                    if(auto& weapon = equip->weapons[i];
+                       weapon.tag && weapon.tag->tag_id == (i ? it->second.slung : it->second.weapon))
+                        weapon.rounds_total = it->second.reserve[i];
             }
             auto const known = equipment_of(p, player.id(), info);
             if(known.weapon == it->second.weapon && known.slung == it->second.slung)
@@ -3951,10 +4174,52 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .rotation = request.direction,
                 .net_id = SpawnObjectEvent::dynamic_net_id_base + m_next_net_id++,
                 .age      = request.age,
+                .rounds   = request.rounds[0] == SpawnRequest::no_rounds
+                                ? std::nullopt
+                                : std::optional(request.rounds),
                 .announce = request.announce != 0,
             };
             m_game_bus.inject(ev, &spawn);
             replicate_spawn(spawn, connection, request.request_id);
+            break;
+        }
+        case MessageBase::ObjectRequest: {
+            if(!player_info.verified)
+                break;
+            std::vector<EntitySpawn> answer;
+            std::vector<u32>         unknown;
+            for(auto const& request : payload.values<ObjectRequest>())
+            {
+                auto it = std::find_if(
+                    m_dynamic_spawns.begin(),
+                    m_dynamic_spawns.end(),
+                    [&request](EntitySpawn const& s) {
+                        return s.tag.instance_id == request.net_id;
+                    });
+                if(it == m_dynamic_spawns.end())
+                {
+                    unknown.push_back(request.net_id);
+                    continue;
+                }
+                answer.push_back(*it);
+                /* Where it is now, not where it was spawned */
+                if(auto const* model = p.get<Model>(entity_of(p, request.net_id)))
+                {
+                    answer.back().position = Vecf4(model->position, 1.f);
+                    answer.back().rotation = model->rotation;
+                }
+            }
+            journal(
+                "net_census_answer",
+                {{"player_idx", player_info.idx},
+                 {"sent", answer.size()},
+                 {"unknown", unknown}});
+            if(!answer.empty())
+                send_all<EntitySpawn>(
+                    MessageBase{MessageBase::EntitySpawn},
+                    gsl::span<EntitySpawn>(answer),
+                    k_nSteamNetworkingSend_Reliable,
+                    {connection});
             break;
         }
         case MessageBase::MapVerify: {
@@ -4011,6 +4276,94 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
+    /* A test fault: the next `left` messages of this kind never arrived */
+    bool drop_for_test(u32& left, MessageBase const& payload)
+    {
+        if(left == 0)
+            return false;
+        left--;
+        journal(
+            "net_fault_drop",
+            {{"type", std::string(magic_enum::enum_name(payload.type))},
+             {"count", payload.num_values}});
+        return true;
+    }
+
+    /* One bucket of the server's objects: drop what it does not list, ask
+     * for what it lists and we lack. What arrived within the last period
+     * may still be crossing the census, and is left alone */
+    void receive_census(Proxy& p, MessageBase const& payload)
+    {
+        u32 const  bucket  = payload.request & 0xFFFF;
+        u32 const  buckets = std::max<u32>(1, payload.request >> 16);
+        auto const now     = std::chrono::steady_clock::now();
+        std::erase_if(m_recent_spawns, [now](auto const& e) {
+            return now - e.second > census_period;
+        });
+        std::erase_if(m_requested, [now](auto const& e) {
+            return now - e.second > census_period;
+        });
+        std::map<u32, blam::tag_index<>> listed;
+        for(auto const& entry : payload.values<ObjectCensus>())
+            if(entry.net_id != 0)
+                listed[entry.net_id] = entry.tag_id;
+        for(auto object : p.select<NetworkInfo>())
+        {
+            auto const& net = object.get<NetworkInfo>();
+            if(!census_covers(net.instance_id) ||
+               census_bucket(net.instance_id, buckets) != bucket ||
+               p.get<PlayerInfo>(object.id()))
+                continue;
+            auto const it       = listed.find(net.instance_id);
+            bool const mismatch = it != listed.end() && it->second != net.object.tag_id;
+            if(it != listed.end() && !mismatch)
+            {
+                listed.erase(it);
+                continue;
+            }
+            if(m_recent_spawns.contains(net.instance_id))
+            {
+                if(it != listed.end())
+                    listed.erase(it);
+                continue;
+            }
+            cDebug(
+                "Census: dropping {:#x} ({}:{}), {}",
+                net.instance_id,
+                blam::to_string(net.object.class_id()),
+                net.object.tag_id,
+                mismatch ? "the server has another object there" : "the server has not got it");
+            journal(
+                "net_census_drop",
+                {{"net_id", net.instance_id},
+                 {"tag_id", net.object.tag_id},
+                 {"mismatch", mismatch}});
+            DespawnObjectEvent gone{.net_id = net.instance_id};
+            GameEvent          ev{.type = GameEvent::DespawnObject};
+            m_game_bus.inject(ev, &gone);
+        }
+        std::vector<ObjectRequest> missing;
+        for(auto const& [net_id, _] : listed)
+        {
+            if(m_requested.contains(net_id))
+                continue;
+            m_requested[net_id] = now;
+            missing.push_back({.net_id = net_id});
+            cDebug("Census: asking for {:#x}", net_id);
+        }
+        if(missing.empty())
+            return;
+        std::vector<u32> ids;
+        for(auto const& request : missing)
+            ids.push_back(request.net_id);
+        journal("net_census_request", {{"count", missing.size()}, {"net_ids", ids}});
+        send_all<ObjectRequest>(
+            MessageBase{MessageBase::ObjectRequest},
+            gsl::span<ObjectRequest>(missing),
+            k_nSteamNetworkingSend_Reliable,
+            {m_connection});
+    }
+
     void client_receive_payload(Proxy& p, MessageBase const& payload)
     {
         switch(payload.type)
@@ -4031,6 +4384,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .weapon    = pickup.weapon,
                 .mode      = EquipWeaponEvent::pick_up,
                 .age       = pickup.age,
+                .rounds    = pickup.rounds,
             };
             GameEvent ev{.type = GameEvent::EquipWeapon};
             m_game_bus.inject(ev, &equip);
@@ -4070,7 +4424,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_game_bus.inject(ev, &done);
             break;
         }
+        case MessageBase::ObjectCensus: {
+            if(m_expected_fingerprint != m_fingerprint)
+                break;
+            receive_census(p, payload);
+            break;
+        }
         case MessageBase::ObjectDespawn: {
+            if(drop_for_test(m_net_state.faults.drop_despawns, payload))
+                break;
             for(auto const& gone : payload.values<ObjectDespawn>())
             {
                 DespawnObjectEvent despawn{.net_id = gone.net_id};
@@ -4079,6 +4441,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             break;
         }
+        case MessageBase::RiderSync:
+            for(auto const& rider : payload.values<RiderSync>())
+            {
+                std::erase_if(m_waiting_riders, [&](auto const& r) { return r.first.unit == rider.unit; });
+                if(!seat_rider(p, rider))
+                    m_waiting_riders.emplace_back(rider, 0);
+            }
+            break;
         case MessageBase::SeatSync: {
             for(auto const& seat : payload.values<SeatSync>())
             {
@@ -4328,8 +4698,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 cWarning("Ignoring spawns, map data differs from server");
                 break;
             }
+            if(drop_for_test(m_net_state.faults.drop_spawns, payload))
+                break;
             for(auto const& spawn : payload.values<EntitySpawn>())
             {
+                m_recent_spawns[spawn.tag.instance_id] = std::chrono::steady_clock::now();
                 if(spawn.response_id != EntitySpawn::no_request)
                 {
                     journal(
@@ -4599,6 +4972,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         u64 inputs{0};
         u64 inputs_lost{0};
         bool objects_synced{false}; /*!< Has had every moving object */
+        std::chrono::steady_clock::time_point census_due{}; /*!< Unset until synced */
         /* What it was last sent of each stream, by the tick of that state:
          * moving objects by net id, players' cameras by index */
         std::map<u32, u64>        objects_sent;
@@ -4654,8 +5028,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr size_t object_history_size = 32;
     u64                     m_synced_tick{0};
     std::map<u32, bool>                      m_object_asleep;
+    std::map<u32, bool>                      m_object_gazing;
     /* Last seat sent per player index; the client's own, to the server */
     std::map<u32, SeatSync>                  m_sent_seats;
+    std::map<u32, RiderSync>                 m_sent_riders; /* unit net id */
+    static constexpr u32                     max_rider_wait = 600; /* frames */
+    std::vector<std::pair<RiderSync, u32>>   m_waiting_riders;
+    std::map<u32, std::string>               m_rider_stances; /* unit net id: its stance on foot */
     /* Camera last sent per player entity, and what counts as moving */
     std::map<u64, std::pair<Vecf3, Quatf>>   m_sent_cameras;
     static constexpr f32                     camera_epsilon   = .002f;
@@ -4666,9 +5045,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::vector<GameScoreSync>               m_sent_scores;
     std::map<u64, DeviceSync>                m_sent_devices;
     std::map<u32, EquipmentSync>             m_remote_weapons;
+    /* A remote player's report as it was when the server handed it
+     * something, and when: held off until the peer answers */
+    std::map<u32, std::pair<EquipmentSync, std::chrono::steady_clock::time_point>> m_handouts;
+    static constexpr auto handout_hold = std::chrono::seconds(2);
     /* What was last asked of each remote body not shown yet, and in which load */
     std::map<u64, std::pair<u32, EquipmentSync>> m_equip_asked;
     std::vector<ObjectDespawn>               m_despawns;
+    /* The object census: how often, and at most how many objects a message */
+    static constexpr auto   census_period = std::chrono::seconds(2);
+    static constexpr size_t census_batch  = 128;
+    /* On a client: when each object arrived, and what was asked for */
+    std::map<u32, std::chrono::steady_clock::time_point> m_recent_spawns;
+    std::map<u32, std::chrono::steady_clock::time_point> m_requested;
 
     struct sync_point_t
     {
@@ -4709,6 +5098,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr u64         max_spacing       = 15;
     /* Past its newest state, a stream carries on along its velocity this long */
     static constexpr libc_types::f64 max_extrapolation = 10.;
+    /* A unit's gaze outlasts its last sync this long, s */
+    static constexpr libc_types::f32 gaze_hold = .3f;
 
     /* Ticks between a stream's states, smoothed: a slow sender, or one
      * sent to rarely, is shown further behind so there is always a next
@@ -4817,6 +5208,7 @@ using FollowerManifest = compo::SubsystemManifest<
         ObjectPhysics,
         PlayerCamera,
         PlayerInfo,
+        AnimationPlayback,
         const NetworkInfo>,
     type_list_t<const TickClock, const Networking>,
     empty_list_t>;
@@ -4942,6 +5334,31 @@ struct ObjectFollower
             {
                 auto const& [from, to, alpha] = *pose;
                 Networking::follow(model, physics, from, to, alpha);
+                /* A unit's stance, between standing, crouching and asleep only */
+                if(auto* anim = p.get<AnimationPlayback>(object.id());
+                   anim && !p.get<PlayerInfo>(object.id()) &&
+                   (anim->stance == "stand" || anim->stance == "crouch" || anim->stance == "asleep"))
+                    anim->stance = (to.flags & ObjectSync::asleep)     ? "asleep"
+                                   : (to.flags & ObjectSync::crouched) ? "crouch"
+                                                                       : "stand";
+                /* And its gaze, which lapses unless the server keeps it up */
+                if(auto* anim = p.get<AnimationPlayback>(object.id());
+                   anim && !p.get<PlayerInfo>(object.id()) &&
+                   (to.flags & (ObjectSync::aiming | ObjectSync::looking)))
+                {
+                    auto const gaze = [&](ObjectSync::flags_t flag, i16 const(&a)[2], i16 const(&b)[2]) {
+                        if(!(to.flags & flag))
+                            return Vecf3{};
+                        Vecf3 const v = (from.flags & flag)
+                                            ? glm::mix(ObjectSync::unpack(a), ObjectSync::unpack(b), alpha)
+                                            : ObjectSync::unpack(b);
+                        return glm::dot(v, v) > 1e-6f ? glm::normalize(v) : ObjectSync::unpack(b);
+                    };
+                    anim->gaze(
+                        gaze(ObjectSync::aiming, from.aim, to.aim),
+                        gaze(ObjectSync::looking, from.look, to.look),
+                        Networking::gaze_hold);
+                }
                 /* Run dry: carry on as it was going, a little way */
                 if(f64 const past = at - static_cast<f64>(to.tick); past > 0. && !(to.flags & ObjectSync::sleeping))
                 {

@@ -104,7 +104,10 @@ class MassPointAction : public btActionInterface
         /* A driver stays aboard through slow or late frames; their stick
          * only counts while fresh. Lift and handbrake need the driver, not
          * the input, or a banshee drops between frames. */
-        bool const driven = m_drive && m_driver_left > 0;
+        /* A turret's gunner only turns it: nothing drives or lifts it, and
+         * it holds its ground like a parked jeep */
+        bool const driven = m_drive && m_driver_left > 0 &&
+                            m_drive->type != VehicleDrive::turret;
         if(m_driver_left > 0)
             m_driver_left--;
         if(m_input_left > 0)
@@ -899,6 +902,7 @@ struct PhysicsSystem
                 m_steps++;
                 report_impacts();
                 bleed_carried();
+                hold_walkers_off_steep();
             }
             record_bipeds(tick.tick);
         }
@@ -1009,7 +1013,7 @@ struct PhysicsSystem
             camera.camera.position = {
                 origin.x(),
                 origin.y(),
-                origin.z() + info->biped.eye_offset(),
+                origin.z() + info->eye_offset(),
             };
         }
 
@@ -1080,7 +1084,7 @@ struct PhysicsSystem
             {
                 Vecf3 const origin = kinematic
                                          ? camera.camera.position -
-                                               Vecf3{0, 0, shape.eye_offset()}
+                                               Vecf3{0, 0, info.eye_offset()}
                                          : camera.camera.position +
                                                Vecf3{0, 0, shape.spawn_lift()};
                 /* The coll model, posed by the animation; the capsule is
@@ -1105,6 +1109,7 @@ struct PhysicsSystem
                     .offset    = {0, 0, -shape.height / 2},
                     .yaw       = camera_yaw(camera),
                     .posed     = hulls,
+                    .max_slope = shape.max_slope,
                 });
                 m_player_bodies[id] = {
                     .kinematic = kinematic, .riding = riding, .shape = shape};
@@ -1146,7 +1151,7 @@ struct PhysicsSystem
             } else if(kinematic)
                 move_kinematic(
                     id,
-                    camera.camera.position - Vecf3{0, 0, shape.eye_offset()},
+                    camera.camera.position - Vecf3{0, 0, info.eye_offset()},
                     shape.collision ? std::optional(camera_yaw(camera))
                                     : std::nullopt,
                     info.is_remote());
@@ -1258,6 +1263,7 @@ struct PhysicsSystem
                     .mass_points = physics.mass_points,
                     .drive       = physics.drive,
                     .posed       = physics.upright || physics.animated,
+                    .max_slope   = physics.upright ? physics.max_slope : 0.f,
                 });
                 /* Nothing drives it, so it has to stop on its own */
                 if(physics.upright && m_bodies.contains(id))
@@ -2157,6 +2163,8 @@ struct PhysicsSystem
         entity_body.child_bounds.clear();
         entity_body.child_heads.clear();
         entity_body.created = m_steps;
+        entity_body.slope_up =
+            body_create.max_slope > 0.f ? std::cos(body_create.max_slope) : 0.f;
 
         switch(body_create.shape)
         {
@@ -2731,6 +2739,120 @@ struct PhysicsSystem
                 blam::collision::surface::invisible);
     }
 
+    bool surface_climbable(int triangle) const
+    {
+        if(!m_world_item || triangle < 0 ||
+           static_cast<size_t>(triangle) >= m_tri_surface.size())
+            return false;
+        u32 const surface = m_tri_surface[triangle];
+        return surface < m_world_item->coll_surfaces.size() &&
+               (m_world_item->coll_surfaces[surface].flags &
+                blam::collision::surface::climbable);
+    }
+
+    /* A world mesh triangle's unit normal, either way up */
+    std::optional<btVector3> face_normal(int triangle) const
+    {
+        if(!m_world_item || triangle < 0 ||
+           static_cast<size_t>(triangle) * 3 + 2 >= m_triangles.size())
+            return std::nullopt;
+        /* While a section switch is under way the item can be emptied
+         * before the mesh built from it is torn down */
+        for(int i = 0; i < 3; i++)
+            if(static_cast<size_t>(m_triangles[triangle * 3 + i]) >= m_world_item->coll_vertices.size())
+                return std::nullopt;
+        auto corner = [this, triangle](int i) {
+            auto const& p = m_world_item->coll_vertices[m_triangles[triangle * 3 + i]].point;
+            return btVector3(p.x, p.y, p.z);
+        };
+        btVector3 const n = (corner(1) - corner(0)).cross(corner(2) - corner(0));
+        if(n.length2() < 1e-12f)
+            return std::nullopt;
+        return n.normalized();
+    }
+
+    struct footing_t
+    {
+        bool steep{false};    /*!< On ground too steep for it */
+        bool walkable{false}; /*!< On ground it may stand on */
+
+        bool sliding() const
+        {
+            return steep && !walkable;
+        }
+    };
+
+    /* Takes from `vel` what walks it into world ground steeper than it may
+     * climb, keeping what slides it off */
+    template<typename Body>
+    footing_t hold_off_steep(Body const& body, btVector3& vel) const
+    {
+        footing_t out;
+        if(body.slope_up <= 0.f || !m_world_body)
+            return out;
+        btRigidBody const* self    = body.world_body.get();
+        btVector3 const    current = self->getLinearVelocity();
+        auto*              dispatcher = m_world->getDispatcher();
+        for(int i = 0; i < dispatcher->getNumManifolds(); ++i)
+        {
+            btPersistentManifold const* manifold =
+                dispatcher->getManifoldByIndexInternal(i);
+            bool const first = manifold->getBody0() == self;
+            if(!first && manifold->getBody1() != self)
+                continue;
+            auto const* other = first ? manifold->getBody1() : manifold->getBody0();
+            if(!other->hasContactResponse())
+                continue;
+            for(int j = 0; j < manifold->getNumContacts(); j++)
+            {
+                auto const& point = manifold->getContactPoint(j);
+                if(point.getDistance() > ground_contact_slop)
+                    continue;
+                btVector3 n = (first ? 1.f : -1.f) * point.m_normalWorldOnB;
+                /* A step's edge pushes at a slant; its faces are flat */
+                if(other == m_world_body.get())
+                {
+                    int const tri = first ? point.m_index1 : point.m_index0;
+                    if(surface_climbable(tri))
+                        continue;
+                    if(auto face = face_normal(tri))
+                        n = face->dot(n) < 0.f ? -*face : *face;
+                }
+                if(n.z() >= body.slope_up)
+                    out.walkable = true;
+                else if(n.z() > steep_wall_up)
+                {
+                    out.steep            = true;
+                    btVector3 const away = btVector3(n.x(), n.y(), 0.f).normalized();
+                    f32 const       keep = std::max(0.f, f32(current.dot(away)));
+                    if(f32 const along = vel.dot(away); along < keep)
+                        vel += (keep - along) * away;
+                }
+            }
+        }
+        return out;
+    }
+
+    /* The solver turns a walk into steep ground into a climb; after each
+     * step that is taken back, along with any lift it gave */
+    void hold_walkers_off_steep()
+    {
+        for(auto& [_, body] : m_bodies)
+        {
+            if(body.slope_up <= 0.f || !body.world_body ||
+               m_frame - body.walked_at > 1 || !body.world_body->isActive() ||
+               (body.walked.isZero() && body.carried.isZero()))
+                continue;
+            btRigidBody& rigid = *body.world_body;
+            btVector3    vel   = rigid.getLinearVelocity();
+            if(!hold_off_steep(body, vel).steep)
+                continue;
+            if(auto before = m_before_step.find(&rigid); before != m_before_step.end())
+                vel.setZ(std::min(vel.z(), std::max(f32(before->second.z()), 0.f)));
+            rigid.setLinearVelocity(vel);
+        }
+    }
+
     blam::tagref_t const* surface_shader(int triangle) const
     {
         if(!m_world_item || triangle < 0 ||
@@ -2915,17 +3037,19 @@ struct PhysicsSystem
             btCollisionObject const* ignore{nullptr};
             /* Traced separately, where they were */
             std::set<btCollisionObject const*> rewound;
-            /* Riders collide with nothing, but are there to be hit */
+            /* Riders collide with nothing, and a remote player's body keeps
+             * off what its owner pushes, but both are there to be hit */
             std::set<btCollisionObject const*> bipeds;
 
             bool needsCollision(btBroadphaseProxy* proxy) const override
             {
                 auto const* object =
                     static_cast<btCollisionObject const*>(proxy->m_clientObject);
-                return object != ignore &&
-                       (object->hasContactResponse() || bipeds.contains(object)) &&
-                       !rewound.contains(object) &&
-                       ClosestRayResultCallback::needsCollision(proxy);
+                if(object == ignore || rewound.contains(object))
+                    return false;
+                return bipeds.contains(object) ||
+                       (object->hasContactResponse() &&
+                        ClosestRayResultCallback::needsCollision(proxy));
             }
 
             btScalar addSingleResult(
@@ -3047,9 +3171,10 @@ struct PhysicsSystem
         if(velocity.preserve_z)
             vel.setZ(body.world_body->getLinearVelocity().z());
         bool const grounded = on_ground(*body.world_body, true);
+        bool const sliding  = velocity.preserve_z && hold_off_steep(body, vel).sliding();
         /* Grip while standing still, or slopes slide it; a body on its way
          * up has just jumped and is left alone */
-        bool const idle = velocity.jump == 0.f && grounded && vel.z() < .1f &&
+        bool const idle = !sliding && velocity.jump == 0.f && grounded && vel.z() < .1f &&
                           btVector3(vel.x(), vel.y(), 0.f).length2() < 1e-4f;
         body.world_body->setFriction(idle ? standing_friction : 0.f);
         if(idle)
@@ -3060,7 +3185,7 @@ struct PhysicsSystem
             return;
         }
         /* Jump needs ground, not zero Z velocity (slopes break that) */
-        if(velocity.jump != 0.f && grounded)
+        if(velocity.jump != 0.f && grounded && !sliding)
             vel.setZ(velocity.jump);
         body.world_body->activate(true); /* sleeping bodies ignore velocity */
         body.world_body->setLinearVelocity(vel);
@@ -3298,6 +3423,8 @@ struct PhysicsSystem
         btVector3 deck_spot{0, 0, 0};
         /* Lowest point of its hulls in the bind pose, body space */
         std::optional<f32> bind_floor;
+        /* Ground less upright than this it can't walk up; 0 = any */
+        f32 slope_up{0.f};
     };
 
     /* Carried along by what it stands on, and still after stepping off;
@@ -3657,6 +3784,7 @@ struct PhysicsSystem
     static constexpr f32 ground_probe_down = .15f;
     static constexpr f32 ground_contact_slop = .05f; /* wu */
     static constexpr f32 ground_normal_min   = .5f;  /* cos 60 deg */
+    static constexpr f32 steep_wall_up       = .1f;  /* cos 84 deg: steeper is a wall */
     static constexpr f32           halo_gravity = 9.81f / 3.048f;
     static constexpr f32           grab_range   = 40.f;
     static constexpr f32           ground_reach = 30.f; /* wu below */

@@ -18,6 +18,7 @@
 #include "selected_version.h"
 #include "shader_cache.h"
 #include "types.h"
+#include "weapons.h"
 #include <algorithm>
 #include <map>
 #include <optional>
@@ -100,6 +101,7 @@ struct ResourceLoader
         std::vector<u64>   parts;
         u64                held{0}; /*!< Its weapon */
         blam::tag_t const* held_tag{nullptr};
+        bool               dropped{false}; /*!< Let go of its things on dying */
     };
 
     std::map<u64, player_biped_t> player_bipeds;
@@ -161,6 +163,9 @@ struct ResourceLoader
         spawn_equip_queue;
     std::shared_ptr<GameEventBus::queue_type<SpawnModelEvent>>
         spawn_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<ShieldDepletedEvent>>
+        shield_queue;
+    std::vector<ShieldDepletedEvent> pending_shields;
     std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>
         mount_model_queue;
     std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>
@@ -252,9 +257,11 @@ struct ResourceLoader
         spawn_model_queue->poll();
         spawn_object_queue->poll();
         despawn_object_queue->poll();
+        shield_queue->poll();
 
         reconcile_player_bipeds(p, files);
         disarm_npcs(p);
+        rearm_npcs(p, files);
         reconcile_first_person(p, files);
 
         now = t;
@@ -270,7 +277,8 @@ struct ResourceLoader
         if(!section_changed && lod_requests.empty() &&
            !pending_cluster_change && pending_bsps.empty() &&
            pending_models.empty() && pending_mounts.empty() &&
-           pending_objects.empty() && pending_despawns.empty())
+           pending_objects.empty() && pending_despawns.empty() &&
+           pending_shields.empty())
             return;
 
         /* Everything below can reach ModelCache::predict(), so the model
@@ -279,6 +287,9 @@ struct ResourceLoader
 
         if(section_changed)
             switch_section(p, bsp_cache.active_section);
+
+        for(auto const& shield : std::exchange(pending_shields, {}))
+            reshield(p, shield);
 
         // Pending cluster first so we can use the shared model loading after
         if(pending_cluster_change)
@@ -409,6 +420,13 @@ struct ResourceLoader
 
             compo::EntityRecipe submodel = shared_recipes::submodel;
             submodel.tags = submodel.tags | (ent.tags() & SubObjectMask);
+            /* The object's overlay coats this level too */
+            blam::scn::object const* object = nullptr;
+            if(model.origin_object)
+                if(auto data = model.origin_object->template data<blam::scn::object>(
+                       p.template subsystem<BlamFiles<Ver>>().container.magic);
+                   data.has_value())
+                    object = &data.value()[0];
             build_submodels(
                 p,
                 ent,
@@ -416,7 +434,8 @@ struct ResourceLoader
                 item,
                 submodel,
                 render_layer::world,
-                static_cast<u8>(1 << lod));
+                static_cast<u8>(1 << lod),
+                object);
         }
     }
 
@@ -1040,15 +1059,15 @@ struct ResourceLoader
         if(mesh_id.valid())
             spawn_bsp_chunks(p, mesh_id);
 
-        /* Static objects: drop the ones not placed here, spawn the ones that
-         * are and were skipped so far */
+        /* Static objects and devices: drop the ones not placed here, spawn
+         * the ones that are and were skipped so far */
         std::set<u32> present, doomed;
         for(auto ent : p.template select<ObjectSpawn, NetworkInfo>())
         {
             auto [spawn, net] = ent.components();
             auto const group  = SpawnObjectEvent::scenario_group(net.instance_id);
-            if(group != ScenarioGroup::Scenery &&
-               group != ScenarioGroup::LightFixture)
+            if(group != ScenarioGroup::Scenery && group != ScenarioGroup::LightFixture &&
+               group != ScenarioGroup::Machine && group != ScenarioGroup::Control)
                 continue;
             if(spawn.header && !placed_in_section(*spawn.header, section))
                 doomed.insert(net.instance_id);
@@ -1062,7 +1081,9 @@ struct ResourceLoader
         if(!scenario)
             return;
         auto const& magic = files.container.magic;
-        for(auto group_id : {ScenarioGroup::Scenery, ScenarioGroup::LightFixture})
+        /* Devices too: they recall their state by net id (DeviceGroups) */
+        for(auto group_id : {ScenarioGroup::Scenery, ScenarioGroup::LightFixture,
+                             ScenarioGroup::Machine, ScenarioGroup::Control})
             with_scenario_group(
                 *scenario, group_id, [&](auto const& group_data, u32 tags) {
                     auto palette   = group_data.palette.data(magic);
@@ -1931,7 +1952,10 @@ struct ResourceLoader
             recipe.components.push_back(compo::type_hash_v<Projectile>());
         bool const unit = object_tag.matches(blam::tag_class_t::bipd);
         if(unit)
+        {
             recipe.components.push_back(compo::type_hash_v<BipedStatus>());
+            recipe.components.push_back(compo::type_hash_v<Actor>());
+        }
         auto const* held = unit ? weapon_tag(spawn.held.tag_id) : nullptr;
         if(held)
             recipe.components.push_back(compo::type_hash_v<BipedEquipment>());
@@ -1979,7 +2003,8 @@ struct ResourceLoader
         }
 
         Model& model = ent.template get<Model>();
-        model.item_age = spawn.age;
+        model.item_age    = spawn.age;
+        model.item_rounds = spawn.rounds;
         if(model_it != index.end())
         {
             model.tag          = &(*model_it);
@@ -2038,6 +2063,80 @@ struct ResourceLoader
     }
 
     /* Local debris whose time is up, with its submodels */
+    /* A unit's shield gone or back: the coll regions it takes down (flag
+     * 0x10, a jackal's gate) show their "~" permutation, or their first,
+     * which means the parts are built again */
+    void reshield(Proxy& p, ShieldDepletedEvent const& ev)
+    {
+        auto* model = p.template get<Model>(ev.unit);
+        if(!model || !model->origin_object)
+            return;
+        auto const& files = p.template subsystem<BlamFiles<Ver>>();
+        auto const& magic = files.container.magic;
+        auto        object_data =
+            model->origin_object->template data<blam::scn::object>(magic);
+        if(object_data.has_error())
+            return;
+        blam::scn::object const& object = object_data.value()[0];
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        auto const*      mod2        = model_cache.get_header(object.model);
+        auto             regions     = mod2 ? mod2->regions.data(magic) : decltype(mod2->regions.data(magic)){};
+        blam::coll::header const* coll = nullptr;
+        if(auto it = index.find(object.collider); it != index.end())
+            if(auto data = (*it).template data<blam::coll::header>(magic); data.has_value())
+                coll = data.value();
+        auto coll_regions = coll ? coll->regions.data(magic) : decltype(coll->regions.data(magic)){};
+        if(!regions.has_value() || !coll_regions.has_value())
+            return;
+        u32  permutations = model->permutations;
+        bool changed      = false;
+        for(auto const& region : coll_regions.value())
+        {
+            if(!(region.flags & 0x10))
+                continue;
+            for(auto const& [r, mod2_region] : stl_types::const_enumerate(regions.value()))
+            {
+                if(r >= 8 || mod2_region.name.str() != region.name.str())
+                    continue;
+                auto perms = mod2_region.permutations.data(magic);
+                if(!perms.has_value())
+                    continue;
+                for(auto const& [k, perm] : stl_types::const_enumerate(perms.value()))
+                {
+                    bool const off = !perm.name.str().empty() && perm.name.str()[0] == '~';
+                    if(k >= 16 || off != ev.depleted)
+                        continue;
+                    permutations = (permutations & ~(0xFu << (4 * r))) |
+                                   (static_cast<u32>(k) << (4 * r));
+                    changed = true;
+                    break;
+                }
+            }
+        }
+        if(!changed || permutations == model->permutations)
+            return;
+
+        ModelAssembly mesh = model_cache.predict_regions(object.model, model_lod, permutations);
+        if(mesh.models.empty())
+            return;
+        std::set<u64> doomed;
+        for(auto const& part : model->parts)
+            doomed.insert(part.id());
+        p.remove_entity_if([&doomed](compo::Entity const& e) {
+            return doomed.contains(e.id);
+        });
+        model->parts.clear();
+        model->permutations = permutations;
+        model->model        = mesh.models.at(0);
+        init_lods(p, *model, object);
+
+        auto                ent      = p.ref(ev.unit);
+        compo::EntityRecipe submodel = shared_recipes::submodel;
+        submodel.tags                = submodel.tags | (ent.tags() & SubObjectMask);
+        for(auto const& model_id : mesh.models)
+            build_submodels(p, ent, *model, model_id, submodel, render_layer::world, 1, &object);
+    }
+
     void expire_objects(Proxy& p)
     {
         std::set<u64> doomed;
@@ -2582,10 +2681,12 @@ struct ResourceLoader
                 object_collision(files, object.collider, object.model);
             if(!collision)
                 return std::nullopt;
+            auto biped = tag.template data<blam::scn::biped>(magic);
             return ObjectPhysics{
                 .collision = std::move(collision),
                 .mass      = 1.f,
                 .upright   = true,
+                .max_slope = biped.has_value() ? biped.value()->maximum_slope_angle : 0.f,
             };
         }
 
@@ -2632,7 +2733,7 @@ struct ResourceLoader
                 biped_model.biped = biped;
                 biped_model.model = biped->model;
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
-                    biped_model.hand = bind_marker_node(
+                    biped_model.hand = bind_marker_prefix(
                         *mod2, hand_marker, files.container.magic);
                 if(biped->collision_radius > 0.f &&
                    biped->standing_collision_height > 0.f &&
@@ -2647,8 +2748,15 @@ struct ResourceLoader
                 /* The tag has it per tick, at 30 Hz */
                 if(biped->jump_velocity > 0.f)
                     biped_model.shape.jump_velocity = biped->jump_velocity * 30.f;
+                biped_model.shape.max_slope = biped->maximum_slope_angle;
                 if(biped->pitch_range.x < biped->pitch_range.y)
                     biped_model.shape.pitch_range = biped->pitch_range;
+                if(biped->crouching_camera_height > 0.f)
+                    biped_model.shape.crouch_eye_height = biped->crouching_camera_height;
+                if(biped->crouch_transition_time > 0.f)
+                    biped_model.shape.crouch_time = biped->crouch_transition_time;
+                if(biped->crouch_velocity_modifier > 0.f)
+                    biped_model.shape.crouch_speed = biped->crouch_velocity_modifier;
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
                 {
                     /* The cyborg names none; its head stands in */
@@ -2743,9 +2851,13 @@ struct ResourceLoader
                             cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f},
                             !info.is_remote());
                 }
-            if(auto const* status = p.template get<BipedStatus>(player.id());
-               status && status->dead)
+            /* Once, as it dies: a checkpoint may hand its things back
+             * before it stands up again */
+            bool const dead = p.template get<BipedStatus>(player.id()) &&
+                              p.template get<BipedStatus>(player.id())->dead;
+            if(dead && !biped.dropped)
                 let_go(equip, cam, info);
+            biped.dropped = dead;
             auto& weapon = equip.weapons[0];
             if(weapon.tag != biped.held_tag)
             {
@@ -2753,6 +2865,14 @@ struct ResourceLoader
                 biped.held     = respawn_held(p, player.id(), biped.held, weapon.tag, files);
             }
             weapon.held = biped.held;
+            /* Camouflage covers the body, what it holds and its own view of them */
+            camouflage(p, model, info.camouflaged);
+            if(auto const* held = p.template get<Model>(biped.held))
+                camouflage(p, *held, info.camouflaged);
+            if(auto fp = first_person_models.find(player.id()); fp != first_person_models.end())
+                for(u64 id : fp->second.models)
+                    if(auto const* view = p.template get<Model>(id))
+                        camouflage(p, *view, info.camouflaged);
         }
         /* Changes for bodies not shown yet wait for them */
         std::erase_if(pending_equips, [&](EquipWeaponEvent const& e) {
@@ -2787,6 +2907,24 @@ struct ResourceLoader
             p.remove_entity_if([&doomed](compo::Entity const& e) {
                 return doomed.contains(e.id);
             });
+    }
+
+    /* A camouflaged model's parts are drawn as a refraction of the scene */
+    void camouflage(Proxy& p, Model const& model, bool on)
+    {
+        auto& shaders = p.template subsystem<ShaderCache<Ver>>();
+        for(auto const& part : model.parts)
+        {
+            auto* shader = p.template get<ShaderData>(part.id());
+            auto* draw   = p.template get<DrawState>(part.id());
+            if(!shader || !draw || shader->camouflaged == on)
+                continue;
+            shader->camouflaged = on;
+            draw->current_pass  = shader->get_render_pass(
+                shaders,
+                pass_is_first_person(draw->current_pass) ? render_layer::first_person
+                                                          : render_layer::world);
+        }
     }
 
     /* Hands for local seats on foot; not in freecam or vehicles */
@@ -2879,16 +3017,9 @@ struct ResourceLoader
         if(!weapon.has_value())
             return {};
         BipedEquipment::weapon_t out{.weapon = weapon.value(), .tag = tag};
-        auto triggers  = weapon.value()->triggers.data(magic);
-        auto magazines = weapon.value()->magazines.data(magic);
-        if(!triggers.has_value() || triggers.value().empty() || !magazines.has_value())
-            return out;
-        auto const index = triggers.value()[0].magazine;
-        if(index < 0 || static_cast<size_t>(index) >= magazines.value().size())
-            return out;
-        auto const& magazine = magazines.value()[index];
-        out.rounds_loaded    = static_cast<u16>(std::max<i16>(magazine.rounds_loaded_maximum, 0));
-        out.rounds_total     = static_cast<u16>(std::max<i16>(magazine.rounds_total_initial, 0));
+        auto const rounds = initial_rounds(out.weapon, magic);
+        out.rounds_loaded = rounds[0];
+        out.rounds_total  = rounds[1];
         return out;
     }
 
@@ -2930,7 +3061,15 @@ struct ResourceLoader
         auto&       [held, slung] = equip.weapons;
         auto const* tag           = weapon_tag(change.weapon);
         if(!tag)
+        {
+            /* An ammo pack, into the weapons it is for */
+            if(change.mode == EquipWeaponEvent::pick_up)
+                for(auto* carried : {&held, &slung})
+                    carried->rounds_total = static_cast<u16>(
+                        carried->rounds_total +
+                        ammo_pack_rounds(*carried, change.weapon, files.container.magic));
             return;
+        }
         if(change.mode == EquipWeaponEvent::replicate)
         {
             if(held.tag != tag)
@@ -2943,7 +3082,12 @@ struct ResourceLoader
             for(auto* carried : {&held, &slung})
                 if(carried->tag == tag)
                 {
-                    take_ammo(*carried, armed(tag, files), files);
+                    /* Into the reserve, as much as fits */
+                    carried->rounds_total = static_cast<u16>(
+                        carried->rounds_total +
+                        std::min<i32>(
+                            change.rounds[0] + change.rounds[1],
+                            reserve_room(*carried, files.container.magic)));
                     return;
                 }
         /* The other weapon is drawn, or a new one taken; the one in hand is
@@ -2962,6 +3106,11 @@ struct ResourceLoader
                 drop(held, cam, info.biped.eye_height);
             held     = armed(tag, files);
             held.age = change.age;
+            if(change.mode == EquipWeaponEvent::pick_up)
+            {
+                held.rounds_loaded = change.rounds[0];
+                held.rounds_total  = change.rounds[1];
+            }
         }
         equip.reloading = false;
     }
@@ -2990,24 +3139,6 @@ struct ResourceLoader
         sounds->inject(ev, &play);
     }
 
-    /* A full magazine's worth, up to what can be carried */
-    static void take_ammo(
-        BipedEquipment::weapon_t&       carried,
-        BipedEquipment::weapon_t const& found,
-        BlamFiles<Ver> const&           files)
-    {
-        auto const& magic     = files.container.magic;
-        auto        triggers  = carried.weapon->triggers.data(magic);
-        auto        magazines = carried.weapon->magazines.data(magic);
-        i32         cap       = std::numeric_limits<u16>::max();
-        if(triggers.has_value() && !triggers.value().empty() && magazines.has_value())
-            if(auto const i = triggers.value()[0].magazine;
-               i >= 0 && static_cast<size_t>(i) < magazines.value().size())
-                cap = magazines.value()[i].rounds_reserved_maximum;
-        carried.rounds_total = static_cast<u16>(std::clamp<i32>(
-            carried.rounds_total + found.rounds_loaded, 0, std::max(cap, 0)));
-    }
-
     /* The dead drop what they carried; only their own peer spawns it, as
      * everyone else is told */
     void let_go(BipedEquipment& equip, PlayerCamera const& cam, PlayerInfo const& info)
@@ -3017,7 +3148,7 @@ struct ResourceLoader
         {
             for(auto const& weapon : equip.weapons)
                 if(weapon.tag)
-                    drop(weapon.tag, cam, info.biped.eye_height, turn++, weapon.age);
+                    drop(weapon, cam, info.biped.eye_height, turn++);
             for(auto const& carried : equip.equipment)
                 for(u16 i = 0; carried.tag && i < carried.left; i++)
                     drop(carried.tag, cam, info.biped.eye_height, turn++);
@@ -3034,10 +3165,36 @@ struct ResourceLoader
         auto& equip = *p.template get<BipedEquipment>(unit);
         equip       = {.load_generation = files.load_generation};
         equip.weapons[0] = armed(&weapon, files);
-        auto const hand  = model.tag ? bind_marker_node(*model.tag, hand_marker, files.container.magic)
-                                     : std::nullopt;
-        equip.weapons[0].held = respawn_held(p, unit, 0, &weapon, files, hand);
+        equip.weapons[0].held = respawn_held(
+            p, unit, 0, &weapon, files, npc_hand(p, unit, equip.weapons[0].weapon, model, files));
         armed_npcs[unit]      = equip.weapons[0].held;
+    }
+
+    /* The hand its graph's standing stance holds the weapon in: jackals
+     * hold theirs in the left, the shield on the right */
+    std::optional<bound_marker_t> npc_hand(
+        Proxy& p, u64 unit, blam::scn::weapon const* weapon, Model const& model, BlamFiles<Ver> const& files)
+    {
+        if(!model.tag)
+            return std::nullopt;
+        auto const& magic = files.container.magic;
+        auto const* anim  = p.template get<AnimationPlayback>(unit);
+        if(!anim || !anim->graph)
+            return bind_marker_prefix(*model.tag, hand_marker, magic);
+        if(auto units = anim->graph->units.data(magic); units.has_value())
+            for(auto const& stance : units.value())
+            {
+                auto weapons = stance.weapons.data(magic);
+                if(stance.label.str() != "stand" || !weapons.has_value() || weapons.value().empty())
+                    continue;
+                auto const* held = &weapons.value()[0];
+                for(auto const& candidate : weapons.value())
+                    if(weapon && candidate.name.str() == weapon->label.str())
+                        held = &candidate;
+                if(auto hand = bind_marker_node(*model.tag, held->hand_marker.str(), magic))
+                    return hand;
+            }
+        return bind_marker_prefix(*model.tag, hand_marker, magic);
     }
 
     /* The dead let go, and a gone NPC takes its weapon model with it; the
@@ -3058,11 +3215,14 @@ struct ResourceLoader
             }
             if(model && equip && equip->weapons[0].tag && !replica)
             {
+                auto const& gun = equip->weapons[0];
                 SpawnObjectEvent spawn{
-                    .object       = equip->weapons[0].tag->as_ref(),
+                    .object       = gun.tag->as_ref(),
                     .position     = model->position + Vecf3{0.f, 0.f, drop_lift},
                     .server_owned = true,
                     .velocity     = model->rotation * Vecf3{1.f, 0.f, 1.f},
+                    .age          = gun.age,
+                    .rounds       = std::array<u16, 2>{gun.rounds_loaded, gun.rounds_total},
                 };
                 GameEvent ev{.type = GameEvent::SpawnObject};
                 game_bus->inject(ev, &spawn);
@@ -3076,16 +3236,38 @@ struct ResourceLoader
         despawn_first_person(p, doomed);
     }
 
-    /* Thrown down ahead of the feet, through the usual spawn path */
-    void drop(BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height)
+    /* An NPC handed back a weapon tag alone, as a checkpoint does, takes it
+     * in hand */
+    void rearm_npcs(Proxy& p, BlamFiles<Ver> const& files)
     {
-        drop(weapon.tag, cam, eye_height, 0.f, weapon.age);
+        std::vector<std::pair<u64, blam::tag_t const*>> unarmed;
+        for(auto unit : p.template select<BipedEquipment, BipedStatus>())
+        {
+            auto const& [equip, status] = unit.components();
+            auto const& weapon          = equip.weapons[0];
+            if(weapon.tag && !weapon.weapon && !status.dead &&
+               !p.template get<PlayerInfo>(unit.id()))
+                unarmed.emplace_back(unit.id(), weapon.tag);
+        }
+        for(auto const& [unit, tag] : unarmed)
+            if(auto const* model = p.template get<Model>(unit))
+                arm(p, unit, *tag, *model, files);
+    }
+
+    /* Thrown down ahead of the feet, through the usual spawn path, with
+     * the battery and rounds it had */
+    void drop(
+        BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height,
+        f32 turn = 0.f)
+    {
+        drop(weapon.tag, cam, eye_height, turn, weapon.age,
+             std::array<u16, 2>{weapon.rounds_loaded, weapon.rounds_total});
     }
 
     /* Tossed ahead, each `turn` a little further round */
     void drop(
         blam::tag_t const* tag, PlayerCamera const& cam, f32 eye_height, f32 turn = 0.f,
-        f32 age = 0.f)
+        f32 age = 0.f, std::optional<std::array<u16, 2>> rounds = std::nullopt)
     {
         Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
         Vecf3 const ahead   = glm::length(Vecf2(forward)) > 1e-3f
@@ -3098,6 +3280,7 @@ struct ResourceLoader
             .server_owned = true,
             .velocity     = flat + Vecf3{0.f, 0.f, 1.f},
             .age          = age,
+            .rounds       = rounds,
         };
         GameEvent ev{.type = GameEvent::SpawnObject};
         game_bus->inject(ev, &spawn);
@@ -3162,15 +3345,18 @@ struct ResourceLoader
             if(!grenades.value()[i].equipment.valid() || tag == index.end())
                 continue;
             auto eqip = (*tag).template data<blam::scn::equipment>(magic);
-            if(eqip.has_value())
-                equip.equipment.push_back({
-                    .equip = eqip.value(),
-                    .tag   = &(*tag),
-                    .most  = static_cast<u16>(std::max<i16>(grenades.value()[i].maximum_count, 0)),
-                    .left  = multiplayer ? static_cast<u16>(std::max<i16>(
+            if(!eqip.has_value())
+                continue;
+            u16 const most = static_cast<u16>(std::max<i16>(grenades.value()[i].maximum_count, 0));
+            u16 const left = multiplayer ? static_cast<u16>(std::max<i16>(
                                                grenades.value()[i].multiplayer_spawn_default, 0))
-                                         : counts[i],
-                });
+                                         : counts[i];
+            equip.equipment.push_back({
+                .equip = eqip.value(),
+                .tag   = &(*tag),
+                .most  = most,
+                .left  = std::min(left, most),
+            });
         }
     }
 
@@ -3356,6 +3542,10 @@ void alloc_resource_loader(compo::EntityContainer& e)
     loader.spawn_model_queue = game_bus.addQueuedEventFunction<SpawnModelEvent>(
         0, [&loader](GameEvent&, SpawnModelEvent* spawn) {
             loader.pending_models.push_back(*spawn);
+        });
+    loader.shield_queue = game_bus.addQueuedEventFunction<ShieldDepletedEvent>(
+        0, [&loader](GameEvent&, ShieldDepletedEvent* shield) {
+            loader.pending_shields.push_back(*shield);
         });
     loader.mount_model_queue = game_bus.addQueuedEventFunction<MountModelEvent>(
         0, [&loader](GameEvent&, MountModelEvent* spawn) {

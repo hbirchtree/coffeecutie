@@ -13,6 +13,10 @@ layout(location = 0) in FragData {
     flat int instanceId;
 } frag;
 
+#ifndef USE_TEXTURE_3D
+#define USE_TEXTURE_3D 1
+#endif
+
 layout(location = 10, binding = 0) uniform sampler2DArray source_bc1;
 layout(location = 11, binding = 1) uniform sampler2DArray source_bc2;
 layout(location = 12, binding = 2) uniform sampler2DArray source_bc3;
@@ -24,6 +28,9 @@ layout(location = 17, binding = 7) uniform sampler2DArray source_rgba4;
 layout(location = 18, binding = 8) uniform sampler2DArray source_rgba8;
 layout(location = 32, binding = 13) uniform sampler2DArray source_etc2_rgb;
 layout(location = 33, binding = 14) uniform sampler2DArray source_etc2_rgba;
+#if USE_TEXTURE_3D == 1
+layout(location = 34, binding = 18) uniform sampler3D source_rg8_3d;
+#endif
 
 #if USE_REFLECTIONS == 1 && USE_ARRAY_CUBEMAP == 1
 layout(location = 19, binding = 9) uniform samplerCubeArray source_cube_bc1;
@@ -69,6 +76,16 @@ struct FogProperties
 
 const int MAX_WORLD_LIGHTS = 8;
 const int MAX_POINT_LIGHTS = 8;
+const int MAX_FOG_VOLUMES  = 4;
+const int MAX_FOG_PLANES   = 4;
+
+/* Planar fog: behind every plane, denser with depth and distance seen */
+struct FogVolume
+{
+    vec4 color;  /* rgb, max density */
+    vec4 params; /* opaque distance, opaque depth, plane count, flags */
+    vec4 planes[MAX_FOG_PLANES]; /* normal, distance */
+};
 
 struct PointLight
 {
@@ -86,7 +103,8 @@ struct InstanceData {
     uint light_uv;
     uint light_dir;
     uvec2 cut_bones; /* clipped away: a player's own body above its legs */
-    uvec2 cut_padding;
+    float inflate;
+    uint  cut_padding;
 };
 
 layout(binding = 0, std140) uniform MatrixStore
@@ -101,7 +119,73 @@ layout(binding = 2, std140) uniform WorldProperties
     FogProperties fog;
     PointLight points[MAX_POINT_LIGHTS];
     vec4 point_count;
+    FogVolume fogs[MAX_FOG_VOLUMES];
 } world;
+
+/* How far behind every plane of the volume: inside where positive */
+float fog_depth(in FogVolume v, vec3 p)
+{
+    float depth = 1e9;
+    int   count = int(v.params.z);
+    for(int i = 0; i < MAX_FOG_PLANES; i++)
+        if(i < count)
+            depth = min(depth, v.planes[i].w - dot(v.planes[i].xyz, p));
+    return depth;
+}
+
+/* Fog along the eye's line to a point, sampled along the part inside: the
+ * deepest point sets the density, the distance seen through it how much of
+ * that density is reached */
+float planar_fog(in FogVolume v, vec3 eye, vec3 p)
+{
+    const int N = 5; /* both ends and between them */
+    float deepest = 0.0;
+    float inside  = 0.0;
+    for(int i = 0; i < N; i++)
+    {
+        float d = fog_depth(v, mix(eye, p, float(i) / float(N - 1)));
+        if(d > 0.0)
+        {
+            deepest = max(deepest, d);
+            inside += 1.0;
+        }
+    }
+    if(inside == 0.0)
+        return 0.0;
+    float path = length(p - eye) * inside / float(N);
+    return v.color.w * min(deepest / max(v.params.y, 1e-3), 1.0) *
+           clamp(path / max(v.params.x, 1e-3), 0.0, 1.0);
+}
+
+/* Fog on the sky: the eye's ray through the volume, out to infinity */
+float planar_fog_sky(in FogVolume v, vec3 eye, vec3 dir)
+{
+    float t0    = 0.0;
+    float t1    = 1e5;
+    int   count = int(v.params.z);
+    for(int i = 0; i < MAX_FOG_PLANES; i++)
+        if(i < count)
+        {
+            float d0 = v.planes[i].w - dot(v.planes[i].xyz, eye);
+            float dd = -dot(v.planes[i].xyz, dir);
+            if(abs(dd) < 1e-6)
+            {
+                if(d0 <= 0.0)
+                    return 0.0;
+            }
+            else if(dd > 0.0)
+                t0 = max(t0, -d0 / dd);
+            else
+                t1 = min(t1, -d0 / dd);
+        }
+    if(t1 <= t0)
+        return 0.0;
+    float deepest = max(
+        fog_depth(v, eye + dir * t0),
+        max(fog_depth(v, eye + dir * t1), fog_depth(v, eye + dir * (t0 + t1) * 0.5)));
+    return v.color.w * min(deepest / max(v.params.y, 1e-3), 1.0) *
+           clamp((t1 - t0) / max(v.params.x, 1e-3), 0.0, 1.0);
+}
 
 /* Dynamic lights: explosions, muzzle flashes, plasma */
 vec3 point_lighting(vec3 position, vec3 normal)
@@ -215,6 +299,7 @@ const uint TEX_AY8    = 11u; /* LLLL */
 const uint TEX_A8Y8   = 12u; /* LLLA (r=L, g=A) */
 const uint TEX_ETC2_RGB  = 13u;
 const uint TEX_ETC2_RGBA = 14u;
+const uint TEX_A8Y8_3D   = 15u; /* LLLA volume */
 
 vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset, in Material mat)
 {
@@ -260,6 +345,23 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
     else if(source == TEX_ETC2_RGBA)
         return fetch_map(source_etc2_rgba, c);
     return vec4(vec3(1), 1);
+}
+
+/* A volume sampled through space by `at`; a flat map falls back to its
+ * plane, scrolled the same way */
+vec4 get_color_volume(in uint map_id, in vec3 at, in vec3 offset, in Material mat)
+{
+    int tex_id = mat.maps[map_id].layer;
+#if USE_TEXTURE_3D == 1
+    if(tex_id != -1 && (uint(tex_id) >> 24) == TEX_A8Y8_3D)
+    {
+        /* A volume is its own texture, not an atlas tile: plain repeat */
+        vec3 st = at * mat.maps[map_id].uv_scale.x + offset;
+        vec2 la = texture(source_rg8_3d, st).rg;
+        return vec4(vec3(la.r), la.g);
+    }
+#endif
+    return get_color_explicit_with_offset(map_id, tex_id, offset.xy, mat);
 }
 
 vec4 get_color_with_offset(in uint map_id, in vec2 offset, in Material mat)
@@ -360,8 +462,9 @@ vec4 shader_dummy(in Material mat)
     return get_color(base_map_id, mat);
 }
 
-/* The lightmap texel under the object, brighter on the side facing the
- * radiosity's incident direction by how directional it is */
+/* The lightmap texel under the object as its ambient, and brighter on the
+ * side facing the radiosity's incident direction by how directional it is;
+ * never darker than the floor it stands on */
 bool object_lightmap(out vec3 lit)
 {
     lit = vec3(0);
@@ -378,7 +481,7 @@ bool object_lightmap(out vec3 lit)
     uvec4 packed = (uvec4(inst.light_dir) >> uvec4(0, 8, 16, 24)) & 0xFFu;
     vec3  dir    = vec3(packed.xyz) / 127.5 - 1.0;
     float facing = max(0.0, dot(normalize(frag.normal), normalize(dir)));
-    lit = lm * mix(1.0, 2.0 * facing, float(packed.w) / 255.0);
+    lit = lm * (1.0 + facing * float(packed.w) / 255.0);
     return true;
 #else
     return false;
@@ -1237,19 +1340,24 @@ vec4 shader_plasma(in Material mat)
 
     // Two noise maps scroll in opposite directions; their interference is
     // the moving plasma pattern. anim_dir.xy * inv_period gives tiles/sec.
-    vec2  p_off = pdir.xy * pdir.w * time;
-    vec2  s_off = sdir.xy * sdir.w * time;
-    vec4  primary   = get_color_with_offset(base_map_id, p_off, mat);
-    vec4  secondary = get_color_with_offset(secondary_map_id, s_off, mat);
+    vec3  p_off = pdir.xyz * pdir.w * time;
+    vec3  s_off = sdir.xyz * sdir.w * time;
+    vec4  primary   = get_color_volume(base_map_id, frag.position, p_off, mat);
+    vec4  secondary = get_color_volume(secondary_map_id, frag.position, s_off, mat);
 
+    /* Each triangle a plate of its own: the view angle is taken against the
+     * face, not the smoothed normal */
+    vec3  face       = normalize(cross(dFdx(frag.position), dFdy(frag.position)));
     vec3  view_world = normalize(camera_position - frag.position);
-    float NdotV      = clamp(dot(frag.normal, view_world), 0.0, 1.0);
+    float NdotV      = abs(dot(face, view_world));
     float fresnel    = 1.0 - NdotV;
 
     vec3  tint = mix(para.rgb, perp.rgb, fresnel);
     float str  = mix(para.a, perp.a, fresnel);
 
-    float noise  = clamp(primary.r + secondary.r, 0.0, 1.0);
+    /* Two clouds of noise scroll through each other and multiply: bright
+     * where both are, scaled up as the combiner did */
+    float noise  = clamp(primary.r * secondary.r * 4.0, 0.0, 1.0);
     float plasma = pow(noise, max(intensity_exp, 0.01)) * intensity;
     vec3  color  = tint * plasma * str;
 
@@ -1371,6 +1479,7 @@ layout(location = 0) out vec4 final_color;
 #ifndef USE_BASE_MATERIALS
 #define USE_BASE_MATERIALS 1
 #endif
+
 #ifndef USE_TRANSPARENT
 #define USE_TRANSPARENT 1
 #endif
@@ -1448,8 +1557,21 @@ void main()
             : vec4(color.rgb, color.a * fog_distance);
         return;
     }
-    final_color = mix(
-        color,
-        fog_color,
-        1 - fog_distance);
+    /* The eye's cluster names the fog plane everything is drawn with */
+    int which = int(world.point_count.y);
+    if(which < 0)
+    {
+        final_color = mix(color, fog_color, 1 - fog_distance);
+        return;
+    }
+    FogVolume volume = world.fogs[which];
+    float planar     = (render_flags & RENDER_FLAG_SKY) != 0
+        ? planar_fog_sky(volume, camera_position, normalize(frag.position - camera_position))
+        : planar_fog(volume, camera_position, frag.position);
+    vec4  planar_col = vec4(volume.color.rgb, 1);
+    /* The atmosphere is laid over the volume where it dominates */
+    if((uint(volume.params.w) & 0x2u) != 0u)
+        final_color = mix(mix(color, planar_col, planar), fog_color, 1 - fog_distance);
+    else
+        final_color = mix(mix(color, fog_color, 1 - fog_distance), planar_col, planar);
 }

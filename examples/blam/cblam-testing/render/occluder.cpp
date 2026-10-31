@@ -529,8 +529,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
                 auto cidx = resolve_cluster(cull_bsp, model.position);
                 if(cidx)
-                    vis.interior =
-                        cull_bsp->clusters.at(*cidx).cluster->sky < 0;
+                {
+                    vis.interior = cull_bsp->clusters.at(*cidx).cluster->sky < 0;
+                }
                 const bool in_section =
                     cidx.has_value() ||
                     within_section(cull_bsp, model.position);

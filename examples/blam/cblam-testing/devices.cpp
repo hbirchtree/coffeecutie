@@ -5,11 +5,14 @@
 #include "data.h"
 #include "game_events.h"
 #include "network/networking.h"
+#include "object_functions.h"
 #include "selected_version.h"
 #include "sounds.h"
 #include "ticks.h"
 
 #include <blam/volta/blam_tag_index.h>
+
+#include <set>
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
@@ -21,7 +24,7 @@ using DevicesManifest = compo::SubsystemManifest<
         DeviceState,
         AnimationPlayback,
         ObjectSpawn,
-        const Model,
+        Model,
         const ObjectPhysics,
         const PlayerInfo,
         const PlayerCamera,
@@ -121,7 +124,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         {
             auto [info, cam, net] = player.components();
             if(biped_in_play(info, cam, net))
-                units.push_back(cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_offset()});
+                units.push_back(cam.camera.position - Vecf3{0.f, 0.f, info.eye_offset()});
         }
         for(auto object : p.template select<Model, ObjectPhysics>())
         {
@@ -303,13 +306,16 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
 
     /* ---- Every peer: moving, posing, sounding ---- */
 
-    void move(Proxy& p, DeviceGroups const& groups, f32 dt)
+    void move(Proxy& p, DeviceGroups& groups, f32 dt)
     {
         for(auto entity : p.template select<DeviceState, Model>())
         {
             auto [device, model] = entity.components();
             if(!device.tag)
                 continue;
+            auto const* net = p.template get<NetworkInfo>(entity.id());
+            if(net && net->instance_id != 0 && m_known.insert(entity.id()).second)
+                recall(device, groups.remembered[net->instance_id]);
             bool const reversed = device.flags & DeviceState::reversed;
             if(f32 const v = groups.get(device.position_group);
                groups.valid(device.position_group) && v != device.position_seen)
@@ -324,6 +330,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
                 device.power_seen   = v;
             }
 
+            f32 const was_power = device.power;
             device.power = approach(device.power, device.power_target, device.tag->power_transition_time, dt);
             /* Unpowered, it moves at its depowered pace, if at all */
             f32 const was     = device.position;
@@ -353,7 +360,79 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
                 spawn->power = device.power;
             if(auto* anim = p.template get<AnimationPlayback>(entity.id()))
                 pose(*anim, device);
+            export_functions(p, device, model, was_power, was, dt);
+            if(net && net->instance_id != 0)
+                groups.remembered[net->instance_id] = {
+                    .position        = device.position,
+                    .position_target = device.position_target,
+                    .power           = device.power,
+                    .power_target    = device.power_target,
+                    .automatic       = device.automatic,
+                    .one_sided       = (device.kind_flags & DeviceState::one_sided) != 0,
+                    .used            = device.used,
+                };
         }
+        std::erase_if(m_known, [&p](u64 id) { return !p.template get<DeviceState>(id); });
+    }
+
+    /* Its power and position, through its object functions, onto its
+     * model: what starts and scales its attachments */
+    void export_functions(
+        Proxy& p, DeviceState const& device, Model& model, f32 was_power, f32 was_position, f32 dt)
+    {
+        auto const& magic     = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        functions = device.tag->functions.data(magic);
+        if(!functions.has_value() || functions.value().empty())
+            return;
+        auto change = [dt](f32 from, f32 to, f32 seconds) {
+            return dt > 0.f ? std::clamp(std::abs(to - from) / dt * std::max(seconds, dt), 0.f, 1.f) : 0.f;
+        };
+        auto const&        tag = *device.tag;
+        std::array<f32, 4> in{};
+        std::array<u16, 4> const sources{tag.a_in, tag.b_in, tag.c_in, tag.d_in};
+        for(size_t i = 0; i < in.size(); i++)
+            switch(sources[i])
+            {
+            case device_in::power:
+                in[i] = device.power;
+                break;
+            case device_in::change_in_power:
+                in[i] = change(was_power, device.power, tag.power_transition_time);
+                break;
+            case device_in::position:
+                in[i] = device.position;
+                break;
+            case device_in::change_in_position:
+                in[i] = change(was_position, device.position, tag.position_transition_time);
+                break;
+            default:
+                break;
+            }
+        model.object_function = blam_functions::evaluate_all(functions.value(), in);
+    }
+
+    /* What a device's A..D in read */
+    struct device_in
+    {
+        static constexpr u16 power              = 1;
+        static constexpr u16 change_in_power    = 2;
+        static constexpr u16 position           = 3;
+        static constexpr u16 change_in_position = 4;
+    };
+
+    /* Built again as its section loads, it is as it was left */
+    static void recall(DeviceState& device, DeviceGroups::remembered_t const& r)
+    {
+        device.position        = r.position.value_or(device.position);
+        device.position_target = r.position_target.value_or(device.position_target);
+        device.power           = r.power.value_or(device.power);
+        device.power_target    = r.power_target.value_or(device.power_target);
+        device.automatic       = r.automatic.value_or(device.automatic);
+        device.used            = r.used.value_or(device.used);
+        if(r.one_sided)
+            device.kind_flags = *r.one_sided ? device.kind_flags | DeviceState::one_sided
+                                             : device.kind_flags & ~DeviceState::one_sided;
+        device.snaps++;
     }
 
     static f32 approach(f32 from, f32 to, f32 seconds, f32 dt)
@@ -460,6 +539,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
      * pay them no mind */
     static constexpr f32         settle_time = .25f; /* s */
     f32                          m_settling{0.f};
+    std::set<u64>                m_known; /* devices recalled since they were built */
     u64                          m_next_sound{0};
 };
 

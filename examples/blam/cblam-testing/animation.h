@@ -73,7 +73,10 @@ struct AnimationPlayback
         talk_slot     = 11,
         emotion_slot  = 12,
         turret_slot   = 13, /* vehicles: where the gunner aims */
-        max_layers    = 14,
+        state_slot    = 14, /* a held pose of the object's state: its ammunition */
+        object_slot   = 15, /* the graph's object animation, by an object function */
+        look_slot     = 16, /* units: the head turned toward `looking` */
+        max_layers    = 17,
     };
 
     std::array<AnimationLayer, max_layers> layers{};
@@ -87,6 +90,22 @@ struct AnimationPlayback
     /* Faces: how open the mouth is (0-1), and the emotion frame shown */
     libc_types::f32 mouth{0.f};
     libc_types::i16 emotion{-1};
+
+    /* A unit's aim and gaze as world directions, zero = along its body;
+     * both lapse once `gaze_hold` seconds run out */
+    typing::vector_types::Vecf3 aiming{};
+    typing::vector_types::Vecf3 looking{};
+    libc_types::f32             gaze_hold{0.f};
+
+    void gaze(
+        typing::vector_types::Vecf3 const& aim,
+        typing::vector_types::Vecf3 const& look,
+        libc_types::f32                    hold)
+    {
+        aiming    = aim;
+        looking   = look;
+        gaze_hold = hold;
+    }
 
     /* Feet that came down during the last advance (the antr foot frames) */
     enum footstep_t : libc_types::u8
@@ -252,6 +271,43 @@ struct AnimationPlayback
         return best;
     }
 };
+
+/* Seconds into a unit's melee swing (holding `weapon`) that the blow lands:
+ * its clip's key frame; 0 without one */
+inline libc_types::f32 melee_key_time(
+    blam::antr::header const& graph, blam::map_ptr const& magic, std::string_view weapon)
+{
+    using Slot   = blam::antr::unit_weapon::animation_idx_t;
+    auto units   = graph.units.data(magic);
+    auto anims   = graph.animations.data(magic);
+    if(!units.has_value() || !anims.has_value())
+        return 0.f;
+    for(auto const& unit : units.value())
+    {
+        if(unit.label.str() != "stand")
+            continue;
+        auto weapons = unit.weapons.data(magic);
+        if(!weapons.has_value() || weapons.value().empty())
+            return 0.f;
+        auto const* held = &weapons.value()[0];
+        for(auto const& candidate : weapons.value())
+            if(candidate.name.str() == weapon)
+                held = &candidate;
+        libc_types::i16 clip = -1;
+        if(auto types = held->weapon_types.data(magic); types.has_value())
+            for(auto const& type : types.value())
+                if(auto refs = type.animations.data(magic);
+                   type.label.str() == weapon && refs.has_value() &&
+                   refs.value().size() > static_cast<size_t>(blam::antr::weapon_animation_idx_t::melee))
+                    clip = refs.value()[static_cast<size_t>(blam::antr::weapon_animation_idx_t::melee)].animation;
+        if(auto refs = held->animations.data(magic); clip < 0 && refs.has_value() && refs.value().size() > Slot::melee)
+            clip = refs.value()[Slot::melee].animation;
+        if(clip < 0 || static_cast<size_t>(clip) >= anims.value().size())
+            return 0.f;
+        return std::max<libc_types::i16>(anims.value()[clip].key_frame, 0) / 30.f;
+    }
+    return 0.f;
+}
 
 /* Ground speed of a move clip of a unit (stance) holding a weapon, from
  * its root motion; the stance's first weapon stands in for one it lacks,

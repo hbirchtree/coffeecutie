@@ -164,6 +164,7 @@ struct ModelCache
      * Main-thread only, like the subsystem that drives it. */
     std::vector<Quatf> m_rot, m_layer_rot, m_ref_rot, m_row_rot;
     std::vector<Vecf3> m_trans, m_layer_trans, m_ref_trans, m_row_trans;
+    std::vector<f32>   m_scale, m_layer_scale, m_ref_scale, m_row_scale;
     std::vector<Matf4a> m_world;
     std::vector<i16>   m_node_parents;
 
@@ -177,7 +178,8 @@ struct ModelCache
                                 u32                          frame,
                                 u32                          node_count,
                                 std::vector<Quatf>&          rot,
-                                std::vector<Vecf3>&          trans);
+                                std::vector<Vecf3>&          trans,
+                                std::vector<f32>&            scale);
 
   public:
     virtual void evict_impl() override

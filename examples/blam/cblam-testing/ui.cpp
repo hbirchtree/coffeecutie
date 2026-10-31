@@ -240,6 +240,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
     generation_idx_t                m_cursor_bitmap;
     generation_idx_t                m_default_font; /*!< for text with none */
+    generation_idx_t                m_hud_font;     /*!< hudg's, for messages */
     VirtualKeyboardData             m_keyboard;
 
     /* hudg's button icons, drawn for "%a-button" style tokens in text */
@@ -1250,6 +1251,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             Matf3 const matrix = glm::translate(Matf3(1), top_left) *
                                  glm::scale(Matf3(1), Vecf2(size.x / view.width, -size.y / HudScene::height));
             u32 const first = static_cast<u32>(data.vertex_data.size());
+            if(view.tint.a > 0.f)
+                push_solid(data, {0.f, 0.f}, {view.width, HudScene::height}, view.tint);
             for(auto const& sprite : view.sprites)
             {
                 if(data.instance_data.size() >= m_instance_slots)
@@ -1272,7 +1275,27 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     inst.extra[2] = std::bit_cast<u32>(sprite.fill);
                 }
             }
+            /* Text: its icons with the sprites, its glyphs after them */
+            std::vector<glyph_line_t> lines;
+            auto const font = m_hud_font.valid() && !view.texts.empty() ? font_cache.find(m_hud_font)
+                                                                         : font_cache.end();
+            if(font != font_cache.end() && font->second.font)
+                lay_out_hud_text(view, font->second, data, lines);
             out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - first, true});
+            if(lines.empty())
+                continue;
+            u32 const text_first = static_cast<u32>(data.vertex_data.size());
+            constexpr u32 font_source = 15u; /* TEX_FONT */
+            for(auto const& line : lines)
+                push_glyphs(
+                    data,
+                    font->second,
+                    line.text,
+                    line.pen.x,
+                    line.pen.y,
+                    line.color,
+                    (font_source << 24) | font->second.atlas_layer);
+            out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - text_first, false});
         }
 
         /* Letterbox bars and the fade go over the whole screen */
@@ -1288,6 +1311,60 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(data.vertex_data.size() > first)
             out.push_back({Matf3(1), static_cast<u32>(data.vertex_data.size()) - first, false});
         return out;
+    }
+
+    /* A line's glyphs, drawn after the HUD's premultiplied sprites */
+    struct glyph_line_t
+    {
+        std::u16string_view text;
+        Vecf2               pen; /*!< start of the baseline */
+        Vecf4               color;
+    };
+
+    /* Runs flow left to right, '\n' back to the left edge a line down;
+     * icons hang from the top of their line */
+    void lay_out_hud_text(
+        HudScene::view_t const& view, FontItem const& font, widget_data_t& data, std::vector<glyph_line_t>& lines)
+    {
+        f32 const ascend = font.font->ascend_height;
+        f32 const height = font.line_height() + font.font->leadin_height;
+        f32       bottom = 0.f; /* of the text before */
+        for(auto const& text : view.texts)
+        {
+            Vecf2 pen = text.at + Vecf2(0.f, ascend);
+            if(text.below)
+                pen.y = std::max(pen.y, bottom + ascend);
+            for(auto const& run : text.runs)
+            {
+                std::u16string_view rest = run.text;
+                while(!rest.empty())
+                {
+                    auto const          end  = rest.find(u'\n');
+                    std::u16string_view line = rest.substr(0, end);
+                    if(!line.empty())
+                        lines.push_back({line, pen, text.color});
+                    pen.x += font.measure(line);
+                    if(end == std::u16string_view::npos)
+                        break;
+                    pen = Vecf2(text.at.x, pen.y + height);
+                    rest.remove_prefix(end + 1);
+                }
+                if(auto const& icon = run.icon; icon && data.instance_data.size() < m_instance_slots)
+                {
+                    auto const image = bitm_cache.resolve(*icon->bitmap, icon->image);
+                    if(image.valid())
+                    {
+                        Vecf2 const top = Vecf2(pen.x, pen.y - ascend);
+                        push_quad(data, top + icon->min, top + icon->max, image, icon->uv);
+                        auto& inst    = data.instance_data.back();
+                        inst.color    = icon->color;
+                        inst.extra[0] = premultiplied;
+                    }
+                }
+                pen.x += run.advance;
+            }
+            bottom = pen.y - ascend + height;
+        }
     }
 
     void push_solid(widget_data_t& data, Vecf2 min, Vecf2 max, Vecf4 const& color)
@@ -2529,6 +2606,7 @@ void load_ui_items(
 
     /* Button icons from the HUD globals, for "%a-button" in menu text */
     std::vector<UIRenderer::button_icon_t> button_icons;
+    generation_idx_t                       hud_font;
     for(blam::tag_t const& tag : tag_view)
     {
         if(!tag.matches(blam::tag_class_t::hudg))
@@ -2539,6 +2617,10 @@ void load_ui_items(
         auto const* hg    = hg_opt.value();
         auto const  magic = data.container.magic;
         using flags_t     = blam::hud_globals::button_icon_t::flags_t;
+
+        hud_font = fonts.predict(
+            data.container.map->map_type == blam::maptype_t::multiplayer ? hg->multi_player_font
+                                                                          : hg->single_player_font);
 
         std::vector<std::u16string> texts;
         if(auto list = tag_view.template data<blam::ui::unicode_string_list>(
@@ -2645,6 +2727,7 @@ void load_ui_items(
         e.subsystem_cast<UIRenderer>().m_default_font = large_ui_font;
         e.subsystem_cast<UIRenderer>().m_keyboard     = std::move(keyboard);
         e.subsystem_cast<UIRenderer>().m_button_icons = std::move(button_icons);
+        e.subsystem_cast<UIRenderer>().m_hud_font     = hud_font;
     } catch(...)
     {
     }

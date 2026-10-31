@@ -13,6 +13,8 @@
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/vectors/glm_vector_types.h>
 
+#include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace net_messages {
@@ -104,6 +106,13 @@ struct MessageBase
 
         /* Scripted scenarios: a point every peer waits at */
         SyncPoint,
+
+        /* The server's live objects, and what a client lacks of them */
+        ObjectCensus,
+        ObjectRequest,
+
+        /* Units a script sat in vehicles */
+        RiderSync,
     } type{None};
 
     u32 request{};
@@ -280,6 +289,21 @@ struct alignas(8) SeatSync
     bool operator==(SeatSync const&) const = default;
 };
 
+/*! A unit that is not a player, in a vehicle's seat or out of it; sent on
+ *  change and to newly verified peers */
+struct alignas(8) RiderSync
+{
+    static constexpr auto message_type = MessageBase::RiderSync;
+
+    u32 unit{0};    /*!< Net id */
+    u32 vehicle{0}; /*!< Net id, 0 = out of it */
+    i16 seat{-1};
+    u16 padding{0};
+    u32 padding2{0};
+
+    bool operator==(RiderSync const&) const = default;
+};
+
 /*! What a player holds; sent on change and to newly verified peers */
 struct alignas(8) EquipmentSync
 {
@@ -288,8 +312,9 @@ struct alignas(8) EquipmentSync
     enum flags_t : u32
     {
         none      = 0x0,
-        reloading = 0x1,
-        throwing  = 0x2,
+        reloading   = 0x1,
+        throwing    = 0x2,
+        camouflaged = 0x4,
     };
 
     u32                player_idx{0};
@@ -297,6 +322,7 @@ struct alignas(8) EquipmentSync
     flags_t            flags{none};
     blam::tag_index<>  slung{};
     std::array<libc_types::u8, 4> grenades{}; /*!< Of each kind the globals list */
+    std::array<libc_types::u16, 2> reserve{}; /*!< Rounds in reserve, held then slung */
 
     bool operator==(EquipmentSync const&) const = default;
 };
@@ -309,6 +335,7 @@ struct alignas(8) WeaponPickup
     u32               player_idx{0};
     blam::tag_index<> weapon{};
     f32               age{0.f}; /*!< Its battery, as it lay */
+    std::array<u16, 2> rounds{}; /*!< See EquipWeaponEvent::rounds */
 };
 
 /*! A client reached a sync point, or the server released it for all */
@@ -324,6 +351,26 @@ struct SyncPoint
 struct ObjectDespawn
 {
     static constexpr auto message_type = MessageBase::ObjectDespawn;
+
+    u32 net_id{0};
+};
+
+/*! One of the server's live replicated objects. The census lists them all
+ *  every census_period, a message per bucket of hash(net_id) % buckets
+ *  (request = bucket | buckets << 16); a client drops what its bucket does
+ *  not list and asks for what it lacks with ObjectRequest */
+struct ObjectCensus
+{
+    static constexpr auto message_type = MessageBase::ObjectCensus;
+
+    u32               net_id{0};
+    blam::tag_index<> tag_id{}; /*!< What it is, so a wrong object is caught too */
+};
+
+/*! Net ids a client lacks; the server answers with their EntitySpawns */
+struct ObjectRequest
+{
+    static constexpr auto message_type = MessageBase::ObjectRequest;
 
     u32 net_id{0};
 };
@@ -359,10 +406,11 @@ struct alignas(8) WeaponFire
         none   = 0x0,
         thrown = 0x1, /*!< A grenade, `weapon` its proj */
         melee  = 0x2, /*!< A strike with `weapon` */
+        windup = 0x4, /*!< Its swing only, the blow follows */
     } flags{none};
     u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
     u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */
-    u32 padding{0};
+    u32 shooter{0};                /*!< Net id of a shooter that is no player: an actor */
 };
 
 /*! A hit the server decided (ObjectHitEvent), to every peer */
@@ -393,9 +441,11 @@ struct alignas(8) UnitVitality
     u32 target_player{0};
     f32 body{1.f};
     f32 shield{1.f};
-    u32 dead{0};
+    u32 dead{0}; /*!< 1: dead, 2: violently, 4: destroyed */
     u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect, 4: re-equipped */
     Vecf4 respawn{};
+    f32   overcharge_decay{0.f}; /*!< Over shield lost per second */
+    u32   padding{0};
 };
 
 /*! The game being played, as the server keeps it (GameState) */
@@ -530,6 +580,10 @@ struct alignas(8) ObjectSync
     {
         none     = 0x0,
         sleeping = 0x1,
+        crouched = 0x2,  /*!< A unit down on its knees: its stance */
+        asleep   = 0x4,  /*!< A unit lying asleep: its stance */
+        aiming   = 0x8,  /*!< A unit aiming off its body: `aim` */
+        looking  = 0x10, /*!< A unit looking off its aim: `look` */
     };
 
     u64     tick{0}; /*!< Server tick this is the state after */
@@ -539,6 +593,30 @@ struct alignas(8) ObjectSync
     Vecf4   angular_velocity;
     u32     net_id{0};
     flags_t flags{none};
+    i16     aim[2]{}; /*!< World yaw, pitch in pi/32768 */
+    i16     look[2]{};
+
+    static constexpr f32 angle_unit = 3.14159265f / 32768.f;
+
+    static void pack(i16 (&out)[2], Vecf3 const& dir)
+    {
+        auto const unit = [](f32 a) {
+            return static_cast<i16>(
+                std::clamp<long>(std::lround(a / angle_unit), -32767, 32767));
+        };
+        out[0] = unit(std::atan2(dir.y, dir.x));
+        out[1] =
+            unit(std::atan2(dir.z, std::sqrt(dir.x * dir.x + dir.y * dir.y)));
+    }
+
+    static Vecf3 unpack(i16 const (&in)[2])
+    {
+        f32 const yaw = in[0] * angle_unit, pitch = in[1] * angle_unit;
+        return Vecf3{
+            std::cos(pitch) * std::cos(yaw),
+            std::cos(pitch) * std::sin(yaw),
+            std::sin(pitch)};
+    }
 };
 
 struct alignas(8) Screenshot
@@ -601,6 +679,7 @@ struct alignas(8) PlayerSpawn
 struct alignas(8) SpawnRequest
 {
     static constexpr auto message_type = MessageBase::SpawnRequest;
+    static constexpr u16  no_rounds    = 0xFFFF;
 
     Vecf4     position{};
     Quatf     direction{};
@@ -608,6 +687,8 @@ struct alignas(8) SpawnRequest
     u32       request_id{EntitySpawn::no_request};
     u32       announce{0};
     f32       age{0.f}; /*!< See SpawnObjectEvent::age */
+    /*! See SpawnObjectEvent::rounds; no_rounds for none */
+    std::array<u16, 2> rounds{no_rounds, no_rounds};
 };
 
 struct alignas(8) PlayerSyncEntry
@@ -657,15 +738,18 @@ static_assert(sizeof(Message<GameJoin>) == 68);
 static_assert(sizeof(Message<MapVerify>) == 32);
 static_assert(sizeof(EntityTag) == 12);
 static_assert(sizeof(EntitySpawn) == 64);
-static_assert(sizeof(SpawnRequest) == 56);
+static_assert(sizeof(SpawnRequest) == 64);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 52);
 static_assert(sizeof(Message<CameraSync>) == 72);
-static_assert(sizeof(ObjectSync) == 80);
+static_assert(sizeof(ObjectSync) == 88);
 static_assert(sizeof(SeatSync) == 16);
+static_assert(sizeof(RiderSync) == 16);
 static_assert(sizeof(EquipmentSync) == 24);
 static_assert(sizeof(WeaponPickup) == 16);
 static_assert(sizeof(ObjectDespawn) == 4);
+static_assert(sizeof(ObjectCensus) == 8);
+static_assert(sizeof(ObjectRequest) == 4);
 static_assert(sizeof(SyncPoint) == 64);
 static_assert(sizeof(DriveInput) == 32);
 static_assert(sizeof(WeaponFire) == 72);

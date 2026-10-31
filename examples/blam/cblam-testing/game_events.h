@@ -89,6 +89,7 @@ struct GameEvent
         CinematicCamera,
         AreaDamage,
         UnitVitality,
+        ShieldDepleted,
         UnitKilled,
         UnitRejoined,
         RespawnUnit,
@@ -99,6 +100,7 @@ struct GameEvent
         DeviceSync,
         SyncPoint,
         MapGame,
+        EnlistActor,
     };
 
     EventType type{None};
@@ -237,6 +239,8 @@ struct EquipWeaponEvent
     blam::tag_index<> slung{};
     how_t             mode{draw};
     libc_types::f32   age{0.f}; /*!< pick_up: the battery it was left with */
+    /*! pick_up: the rounds it hands over, loaded then reserve */
+    std::array<libc_types::u16, 2> rounds{};
 };
 
 struct SpawnBipedEvent
@@ -362,6 +366,8 @@ struct SpawnObjectEvent
     libc_types::f32 lifetime{0.f};      /*!< seconds, 0 = until despawned */
     blam::tagref_t  held{};             /*!< A unit's weapon in hand */
     libc_types::f32 age{0.f};           /*!< A weapon's battery spent, 0 to 1 */
+    /*! A weapon's rounds, loaded then reserve; none for what its magazine starts with */
+    std::optional<std::array<libc_types::u16, 2>> rounds;
     /*! Plays its creation effect, or the players' respawn effect if it has none */
     bool announce{false};
 };
@@ -413,6 +419,8 @@ enum class InputIntent : libc_types::u32
     reload  = 0x20,
     grenade = 0x40,
     melee   = 0x80,
+    /* Held */
+    crouch = 0x100,
 };
 
 C_FLAGS(InputIntent, libc_types::u32)
@@ -447,6 +455,8 @@ struct SimulationPauseEvent
 struct WeaponFireEvent
 {
     static constexpr auto event_type = GameEvent::WeaponFire;
+    /*! How far ahead of the eye a shot leaves, without a muzzle to leave from */
+    static constexpr libc_types::f32 muzzle_distance = .4f;
 
     MapLoadEvent::Origin origin{MapLoadEvent::Local};
     blam::tagref_t       weapon{};  /*!< weap */
@@ -457,6 +467,7 @@ struct WeaponFireEvent
     libc_types::u16      trigger{0};
     bool                 thrown{false}; /*!< By hand: `weapon` is the grenade's proj */
     bool                 melee{false};  /*!< A strike with `weapon`, nothing fired */
+    bool                 windup{false}; /*!< A strike begun: its swing plays, nothing lands yet */
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
     libc_types::u64      target{0}; /*!< The unit the reticle rested on, which guided shots seek */
@@ -501,6 +512,15 @@ struct AreaDamageEvent
 
 /*! A unit's body and shield as the authority has them, fractions of its coll
  *  tag's maxima. Replicas take them as given */
+/*! A unit's shield gone, or back: what its tags turn off and on for that */
+struct ShieldDepletedEvent
+{
+    static constexpr auto event_type = GameEvent::ShieldDepleted;
+
+    libc_types::u64 unit{0};
+    bool            depleted{true};
+};
+
 struct UnitVitalityEvent
 {
     static constexpr auto event_type = GameEvent::UnitVitality;
@@ -510,6 +530,8 @@ struct UnitVitalityEvent
     libc_types::u32      player{ObjectHitEvent::no_player};
     libc_types::f32      body{1.f};
     libc_types::f32      shield{1.f};
+    /*! Raised Local by another than the damage system (a script, a carrier
+     *  at its target), a death the authority carries out */
     bool                 dead{false};
     bool                 violent{false}; /*!< Killed hard: a loud last cry */
     /*! Brought back: its owner moves it here, facing this way */
@@ -517,6 +539,8 @@ struct UnitVitalityEvent
     libc_types::f32      respawn_facing{0.f};
     bool                 arrived{false}; /*!< With the respawn effect */
     bool                 fresh{false};   /*!< A respawn, not a checkpoint: starts over equipped */
+    libc_types::f32      overcharge_decay{0.f}; /*!< BipedStatus' */
+    bool destroyed{false}; /*!< Dead and gone: its coll's destroyed effect plays */
 };
 
 /*! A player's seat came back into the game after leaving it; it waits to
@@ -536,6 +560,21 @@ struct UnitKilledEvent
     libc_types::u64 unit{0};
     libc_types::u32 player{ObjectHitEvent::no_player}; /*!< When a player died */
     libc_types::u32 killer{ObjectHitEvent::no_player}; /*!< A player, if one did it */
+};
+
+/*! A unit spawned outside the scripts (a carrier's infection forms) joins
+ *  a squad as an actor, answering to the names `like` does. Local only */
+struct EnlistActorEvent
+{
+    static constexpr auto event_type = GameEvent::EnlistActor;
+
+    libc_types::u32 net_id{0};
+    blam::tagref_t  variant{}; /*!< actv */
+    libc_types::u32 like{0};   /*!< Net id of the actor whose squad it joins */
+    libc_types::i16 encounter{-1};
+    libc_types::i16 squad{-1};
+    libc_types::u16 team{0};
+    Vecf3           post{};
 };
 
 /*! Brings a dead unit back at full health, there; or, restoring a

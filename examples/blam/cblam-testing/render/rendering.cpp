@@ -86,7 +86,9 @@ struct alignas(16) PerInstanceData
     /* Bones whose vertices are clipped away: a player's own body shows its
      * legs below the first-person view */
     u32 cut_bones[2]{};
-    u32 padding[2]{};
+    /* Pushed out along the normals, wu: a shield's shell */
+    f32 inflate{0.f};
+    u32 padding{0};
 };
 
 static_assert(sizeof(PerInstanceData) == 96);
@@ -1028,9 +1030,8 @@ struct DrawListBuilder
             if(auto it = bsp_cache.find(bsp.bsp); it != bsp_cache.m_cache.end())
             {
                 auto const& clusters = it->second.clusters;
-                interior = bsp.cluster_idx < clusters.size() &&
-                           clusters[bsp.cluster_idx].cluster &&
-                           clusters[bsp.cluster_idx].cluster->sky < 0;
+                if(bsp.cluster_idx < clusters.size() && clusters[bsp.cluster_idx].cluster)
+                    interior = clusters[bsp.cluster_idx].cluster->sky < 0;
             }
             populate_bsp_material(
                 bsp,
@@ -1251,6 +1252,7 @@ struct DrawListBuilder
             pass.caster_bounds[instance_id] = Vecf4(
                 Vecf3(model.transform[3]), model.render_radius * scale);
             pid.bone_base = kBoneUnposed;
+            pid.inflate   = inflation(smodel, model);
             auto const& light = object_light(p, smodel.parent, model);
             pid.light_layer   = light.layer;
             {
@@ -1269,11 +1271,14 @@ struct DrawListBuilder
             u64 const cut     = self ? legs_cut(cache_item) : 0;
             pid.cut_bones[0]  = static_cast<u32>(cut);
             pid.cut_bones[1]  = static_cast<u32>(cut >> 32);
+            auto context = model_context(model);
+            if(context && shader_cache.numeric(smodel.shader))
+                context->numeric_place = numeric_place(p, smodel, model);
             populate_mod2_material(
                 smodel,
                 sm_draw.current_pass,
                 cache_item,
-                model_context(model),
+                context,
                 instance_id,
                 parent.template get<Visibility>().interior);
         }
@@ -1337,7 +1342,11 @@ struct DrawListBuilder
         for(auto const& [id, item] : bsp_cache.m_cache)
             if(item.valid() && item.section_idx == bsp_cache.active_section)
                 bsp = &item;
-        auto sample = bsp ? bsp->light_below(at) : std::nullopt;
+        /* From the origin first: the bound's centre can sit over a surface
+         * hidden inside a wall, as a door's does */
+        auto sample = bsp ? bsp->light_below(model.position) : std::nullopt;
+        if(!sample && bsp && at != model.position)
+            sample = bsp->light_below(at);
 
         struct
         {
@@ -1694,7 +1703,8 @@ struct DrawListBuilder
                     pass.transparent_of(instance_id),
                     smodel.shader,
                     time,
-                    functions);
+                    functions,
+                    shader_cache.change_colors(unit_of(*model), functions));
             }
         }
 
@@ -1731,8 +1741,48 @@ struct DrawListBuilder
         return bsp_build()[which].material_of(i);
     }
 
+    /* A plasma overlay stands off its model as its offset function says */
+    f32 inflation(SubModel const& sub, Model const& model)
+    {
+        if(!sub.shader.valid())
+            return 0.f;
+        ShaderItem const& item = shader_cache.get(sub.shader);
+        if(item.tag_class != blam::tag_class_t::spla || !item.header)
+            return 0.f;
+        auto const& offset = item.header->as<blam::shader::shader_plasma>()->offset;
+        auto const  src    = static_cast<u32>(offset.source);
+        if(offset.amount == 0.f || src < 1 || src > 4)
+            return 0.f;
+        f32 const value = std::clamp(model.object_function[src - 1], 0.f, 1.f);
+        f32 const out = offset.amount * std::pow(value, std::max(offset.exponent, 0.f));
+        return out;
+    }
+
+    /* The unit tag whose change colours a model carries, if its kind has
+     * any */
+    blam::scn::unit const* unit_of(Model const& model) const
+    {
+        blam::tag_t const* tag = model.origin_object;
+        if(!tag)
+            return nullptr;
+        switch(tag->tag_class())
+        {
+        case blam::tag_class_t::bipd:
+        case blam::tag_class_t::vehi:
+        case blam::tag_class_t::scen:
+            if(auto unit = tag->template data<blam::scn::unit>(shader_cache.magic); unit.has_value())
+                return unit.value();
+            return nullptr;
+        default:
+            return nullptr;
+        }
+    }
+
     void populate_bsp_material(
-        BspReference const& ref, Passes which, size_t i = 0, bool interior = false)
+        BspReference const& ref,
+        Passes              which,
+        size_t              i        = 0,
+        bool                interior = false)
     {
         Pass&                   pass     = bsp_build()[which];
         materials::shader_data& material = pass.material_of(i);
@@ -1748,6 +1798,25 @@ struct DrawListBuilder
 
     /* Always built: the object's own function values travel with it even
      * when change colours are off or its tag is not a unit. */
+    /* Of the parts sharing a counter's shader, the later ones show the
+     * lower digits */
+    u8 numeric_place(Proxy& p, SubModel const& sub, Model const& model)
+    {
+        u8   place = 0;
+        bool after = false;
+        for(auto const& part : model.parts)
+        {
+            auto const* other = p.template get<SubModel>(part.id());
+            if(!other)
+                continue;
+            if(other == &sub)
+                after = true;
+            else if(after && other->shader == sub.shader)
+                place++;
+        }
+        return place;
+    }
+
     std::optional<ShaderCache<halo_version>::material_context> model_context(
         Model const& model)
     {
@@ -1808,7 +1877,7 @@ struct DrawListBuilder
         materials::shader_data&   material,
         generation_idx_t const&   shader,
         time_point const&         time,
-        std::array<f32, 4> const& functions = {{0.f, 0.f, 0.f, 0.f}})
+        std::array<f32, 4> const& functions = {{-1.f, -1.f, -1.f, -1.f}})
     {
         shader_cache.update_uv_animations(material, shader, time, functions);
     }
@@ -1841,6 +1910,7 @@ struct MeshRenderer
     BlamResources&       m_resources;
     RenderingParameters& m_render_params;
     int                  m_render_flags{0x0};
+    bool                 m_sky_pass{false}; /* the sky's draws lie beyond any fog */
     bool                 m_water_modulate{false};
     bool                 m_first_person{false};
 
@@ -2321,6 +2391,19 @@ struct MeshRenderer
                     .template get_bucket<gfx::compat::texture_2da_t>(
                         PixDesc(pix_fmt::RGBA8))
                     .sampler});
+#if GLEAM_MAX_VERSION >= 0x301 || GLEAM_MAX_VERSION_ES >= 0x300
+        /* Plasma noise volumes */
+        if(m_api->feature_info().texture.texture_3d &&
+           m_api->limits().textures.texture_units > 18)
+            samplers.push_back(
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_rg8_3d"sv, 18},
+                    bitm_cache
+                        .template get_bucket<gfx::texture_3d_t>(
+                            PixDesc(pix_fmt::RG8), blam::bitm::type_t::tex_3d)
+                        .sampler});
+#endif
         if(m_api->feature_info().texture.tex.gl.etc2 &&
            m_api->limits().textures.texture_units > 14)
         {
@@ -2441,7 +2524,7 @@ struct MeshRenderer
             m_render_params.render_flags() |
             (std::is_same_v<halo_version, blam::xbox_version_t> ? 0x800 : 0) |
             (m_render_params.interior ? 0x8000 : 0) |
-            (m_water_modulate ? 0x10000 : 0);
+            (m_water_modulate ? 0x10000 : 0) | (m_sky_pass ? 0x40000 : 0);
         return gfx::uniform_pair{
             {"render_flags"sv, 31},
             semantic::SpanOne<const int>(m_render_flags),
@@ -2863,7 +2946,12 @@ struct MeshRenderer
         }
         bool const had = world.point_count.x > 0.f;
         world.point_count.x = static_cast<f32>(count);
-        if(count == 0 && !had)
+        bool const fogged = refresh_fog_volumes(p, world);
+        eye_fog(p);
+        f32 const  in_fog = static_cast<f32>(m_eye_fog);
+        bool const moved  = in_fog != world.point_count.y;
+        world.point_count.y = in_fog;
+        if(count == 0 && !had && !fogged && !moved)
             return;
         auto mapped = m_resources.world_store->template map<materials::world_data>(0);
         if(!mapped.empty())
@@ -2872,6 +2960,76 @@ struct MeshRenderer
     }
 
     static constexpr f32 point_light_range = 60.f; /* wu past a light's radius */
+    i16                  m_eye_fog{-1}; /* The primary eye's cluster's fog region */
+
+    /* The eye's cluster names the one fog plane the frame is drawn with, as
+     * Halo's does: clusters are not split by the planes, so fogging each by
+     * its own region seams where they meet. Returns the colour laid over
+     * what is far from the eye and how much, by the eye's depth in it */
+    std::optional<std::pair<Vecf3, f32>> eye_fog(Proxy& p)
+    {
+        m_eye_fog = -1;
+        if(m_players.empty())
+            return std::nullopt;
+        auto const&    cache = p.template subsystem<BSPCache<Version>>();
+        BSPItem const* bsp   = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        if(!bsp)
+            return std::nullopt;
+        Vecf3 const eye     = m_players[0].position;
+        auto const  cluster = bsp->find_cluster_tree(eye);
+        if(!cluster || *cluster >= bsp->clusters.size())
+            return std::nullopt;
+        i16 const region = bsp->clusters[*cluster].fog;
+        if(region < 0 || static_cast<size_t>(region) >= bsp->fogs.size() ||
+           !bsp->fogs[region].tag || bsp->fogs[region].planes.empty())
+            return std::nullopt;
+        m_eye_fog          = region;
+        auto const& volume = bsp->fogs[region];
+        f32         depth  = std::numeric_limits<f32>::max();
+        for(auto const& plane : volume.planes)
+            depth = std::min(depth, plane.w - glm::dot(Vecf3(plane), eye));
+        if(depth <= 0.f)
+            return std::nullopt;
+        f32 const amount = volume.tag->maximum_density *
+                           std::min(depth / std::max(volume.tag->opaque_depth, 1e-3f), 1.f);
+        return std::pair{volume.tag->color, amount};
+    }
+
+    /* The active BSP's fog volumes into the world UBO; true when changed */
+    bool refresh_fog_volumes(Proxy& p, materials::world_data& world)
+    {
+        auto const&    cache = p.template subsystem<BSPCache<Version>>();
+        BSPItem const* bsp   = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        std::array<materials::fog_volume, materials::max_fog_volumes> fogs{};
+        for(size_t i = 0; bsp && i < bsp->fogs.size() && i < fogs.size(); i++)
+        {
+            auto const& volume = bsp->fogs[i];
+            if(!volume.tag || volume.planes.empty())
+                continue;
+            fogs[i].color  = Vecf4(volume.tag->color, volume.tag->maximum_density);
+            fogs[i].params = Vecf4(
+                volume.tag->opaque_distance,
+                volume.tag->opaque_depth,
+                static_cast<f32>(std::min(volume.planes.size(), materials::max_fog_planes)),
+                static_cast<f32>(static_cast<u32>(volume.tag->flags)));
+            for(size_t j = 0; j < volume.planes.size() && j < materials::max_fog_planes; j++)
+                fogs[i].planes[j] = volume.planes[j];
+        }
+        bool changed = false;
+        for(size_t i = 0; i < fogs.size(); i++)
+            if(!(world.fogs[i] == fogs[i]))
+            {
+                world.fogs[i] = fogs[i];
+                changed       = true;
+            }
+        return changed;
+    }
 
     /* Particles, contrails and light volumes, over the world's transparents */
     void render_effects(Proxy& p, gfx::depth_extended_state const& depth)
@@ -3421,8 +3579,11 @@ struct MeshRenderer
                 WorldInfo const& world = skybox.template get<WorldInfo>();
                 if(!world.skybox)
                     continue;
-                m_resources.offscreen->clear(
-                    Vecf4(world.skybox->outdoor_fog.color, 1));
+                /* The background lies beyond any fog the eye is in */
+                Vecf3 clear = world.skybox->outdoor_fog.color;
+                if(auto fog = eye_fog(p))
+                    clear = glm::mix(clear, fog->first, fog->second);
+                m_resources.offscreen->clear(Vecf4(clear, 1));
             }
             if(!skybox_found)
                 m_resources.offscreen->clear(Vecf4{0, 0, 0, 1});
@@ -3579,6 +3740,7 @@ struct MeshRenderer
 
         {
             gfx::depth_extended_state sky_depth{.depth_write = false};
+            m_sky_pass = true;
             for(i32 pi = Pass_SkyOpaque; pi <= Pass_LastSky; ++pi)
             {
                 auto pass  = static_cast<Passes>(pi);
@@ -3592,6 +3754,7 @@ struct MeshRenderer
                         blend,
                         sky_depth);
             }
+            m_sky_pass = false;
         }
 
         // Transparent world geometry — primary player, no depth write.

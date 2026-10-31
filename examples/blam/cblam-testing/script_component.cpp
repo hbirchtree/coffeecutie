@@ -31,6 +31,7 @@
 #include <peripherals/stl/string/split.h>
 
 #include <map>
+#include <random>
 #include <set>
 
 #if defined(FEATURE_ENABLE_ImGui)
@@ -59,6 +60,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
         ObjectPhysics,
         BipedStatus,
         DeviceState,
+        Actor,
         const BipedEquipment>,
     type_list_t<
         GameEventBus,
@@ -132,6 +134,7 @@ struct BlamScript
         m_scaling.clear();
         m_suspended.clear();
         m_walk_speeds.clear();
+        m_conversations.clear();
         m_tests = {};
         m_loops.clear();
         m_impulses.clear();
@@ -141,6 +144,7 @@ struct BlamScript
         m_attached.clear();
         m_hovering.clear();
         m_spawning.clear();
+        m_actor_slots.clear();
         m_despawning.clear();
         m_recreate.clear();
         m_deferred.clear();
@@ -197,22 +201,42 @@ struct BlamScript
         m_proxy = &p;
         m_save_queue->poll();
         m_restore_queue->poll();
+        m_enlist_queue->poll();
+        for(auto const& recruit : std::exchange(m_recruits, {}))
+            recruit_spawned(recruit);
         if(std::exchange(m_save_now, false))
-            save();
+            save(p);
         if(std::exchange(m_restore_now, false))
+            m_restore_wait = restore_frames;
+        /* The checkpoint's objects come back before the scripts go on with them */
+        if(m_restore_wait && (respawned(p) || --m_restore_wait == 0))
+        {
+            m_restore_wait = 0;
             restore(p);
+        }
+        if(m_restore_wait)
+        {
+            m_proxy = nullptr;
+            return;
+        }
         watch_player(p);
         for(size_t i = 0; i < ticks.size(); i++)
         {
             settle_despawns(p);
             run_deferred(p);
             std::erase_if(m_spawning, [this, &p](u32 net_id) {
-                return live_entity(p, net_id) != 0;
+                u64 const id = live_entity(p, net_id);
+                if(id)
+                    enlist(p, id, net_id);
+                return id != 0;
             });
             m_vm.tick();
             play_recordings(p);
             play_custom(p);
             run_commands(p);
+            offer_vehicles(p);
+            board_vehicles(p);
+            run_conversations(p);
             scale_objects(p);
             send_walks(p);
             move_mouths(p);
@@ -221,10 +245,11 @@ struct BlamScript
         draw_recordings(p);
         place_riders(p);
         place_attached(p);
+        look_first_person(p);
         m_proxy = nullptr;
     }
 
-    void save()
+    void save(Proxy& p)
     {
         m_saved = saved_t{
             .vm         = m_vm,
@@ -239,12 +264,47 @@ struct BlamScript
             .tests      = m_tests,
             .impulses   = m_impulses,
             .loops      = m_loops,
+            .deferred   = m_deferred,
+            .spawning   = m_spawning,
+            .queued     = m_queued_recordings,
+            .slots      = m_actor_slots,
         };
+        auto const name = [&](u64 id) {
+            if(auto const* net = p.template get<NetworkInfo>(id); net && net->instance_id)
+                m_saved->nets[id] = net->instance_id;
+        };
+        for(auto const& r : m_recordings)
+            name(r.entity);
+        for(auto const& r : m_riders)
+        {
+            name(r.unit);
+            name(r.vehicle);
+        }
+        for(auto const& a : m_attached)
+        {
+            name(a.parent);
+            name(a.child);
+        }
+        for(u64 id : m_hovering)
+            name(id);
+        for(auto const& [id, _] : m_custom)
+            name(id);
+        for(auto const& [id, _] : m_speakers)
+            name(id);
+    }
+
+    /* Whether what the checkpoint names is there again */
+    bool respawned(Proxy& p) const
+    {
+        return !m_saved || std::all_of(m_saved->nets.begin(), m_saved->nets.end(), [&](auto const& n) {
+            return entity_by_net_id(p, n.second) != 0;
+        });
     }
 
     /* Back to the checkpoint's threads and globals. What they had going on
-     * objects that have since gone is dropped; sounds looping since stop,
-     * and the checkpoint's start again */
+     * objects the checkpoint respawned carries over by net id, on objects
+     * gone for good it is dropped; sounds looping since stop, and the
+     * checkpoint's start again */
     void restore(Proxy& p)
     {
         if(!m_saved)
@@ -261,39 +321,87 @@ struct BlamScript
             if(!m_loops.contains(loop))
                 play(p, {.integer = static_cast<i32>(loop)}, {}, true);
 
-        auto saved   = *m_saved;
+        auto saved = *m_saved;
+        /* Objects respawned since are new entities under the same net id */
+        auto const now = [&](u64 id) {
+            auto it = saved.nets.find(id);
+            return there(id) || it == saved.nets.end() ? id : entity_by_net_id(p, it->second);
+        };
+        for(auto& r : saved.recordings)
+            r.entity = now(r.entity);
+        for(auto& r : saved.riders)
+        {
+            r.unit    = now(r.unit);
+            r.vehicle = now(r.vehicle);
+        }
+        for(auto& a : saved.attached)
+        {
+            a.parent = now(a.parent);
+            a.child  = now(a.child);
+        }
+        std::set<u64> hovering;
+        for(u64 id : saved.hovering)
+            hovering.insert(now(id));
+        std::map<u64, custom_t> custom;
+        for(auto const& [id, c] : saved.custom)
+            custom[now(id)] = c;
+        std::map<u64, speaker_t> speakers;
+        for(auto& [id, s] : saved.speakers)
+            speakers[now(id)] = std::move(s);
+
+        /* What the scripts hold, now and at the checkpoint, physics takes
+         * back unless it is held still */
+        std::set<u64> held;
+        auto const    hold = [&] {
+            for(auto const& r : m_recordings)
+                held.insert(r.entity);
+            for(auto const& a : m_attached)
+                held.insert(a.child);
+            held.insert(m_hovering.begin(), m_hovering.end());
+            for(auto const& [id, _] : m_custom)
+                held.insert(id);
+            for(auto const& [id, _] : m_commands)
+                held.insert(id);
+        };
+        hold();
+        for(auto const& r : std::vector(m_riders))
+            unseat(p, r.unit);
+
         m_vm         = std::move(saved.vm);
         m_actors     = std::move(saved.actors);
         m_next_actor = saved.next_actor;
         m_recordings = std::move(saved.recordings);
-        m_riders     = std::move(saved.riders);
         m_attached   = std::move(saved.attached);
-        m_hovering   = std::move(saved.hovering);
-        m_custom     = std::move(saved.custom);
+        m_hovering   = std::move(hovering);
+        m_custom     = std::move(custom);
         m_commands.clear();
+        for(auto& [conv, c] : m_conversations)
+            finish_conversation(p, c);
         m_scaling.clear();
         m_suspended.clear();
-        m_speakers   = std::move(saved.speakers);
+        m_speakers   = std::move(speakers);
         m_tests      = saved.tests;
         m_impulses   = std::move(saved.impulses);
         m_loops      = std::move(saved.loops);
         std::erase_if(m_recordings, [&](recording_t const& r) { return !there(r.entity); });
-        std::erase_if(m_riders, [&](rider_t const& r) {
-            bool const gone = !there(r.unit) || !there(r.vehicle);
-            if(gone)
-                seated(p, r.unit, false);
-            return gone;
-        });
+        for(auto const& r : saved.riders)
+            if(there(r.unit) && there(r.vehicle))
+                seat_unit(p, r.unit, r.vehicle, r.seat, true);
         std::erase_if(m_attached, [&](attached_t const& a) { return !there(a.parent) || !there(a.child); });
         std::erase_if(m_hovering, [&](u64 id) { return !there(id); });
         std::erase_if(m_custom, [&](auto const& c) { return !there(c.first); });
         std::erase_if(m_speakers, [&](auto const& s) { return !there(s.first); });
         m_walking.clear();
-        m_deferred.clear();
-        m_spawning.clear();
+        /* What waited on objects still spawning at the save waits again */
+        m_deferred          = std::move(saved.deferred);
+        m_spawning          = std::move(saved.spawning);
+        m_queued_recordings = std::move(saved.queued);
+        m_actor_slots       = std::move(saved.slots);
         m_despawning.clear();
         m_recreate.clear();
-        m_queued_recordings.clear();
+        hold();
+        for(u64 id : held)
+            carry(p, id, carried(p, id));
         log("back to the checkpoint");
     }
 
@@ -314,6 +422,8 @@ struct BlamScript
         auto& state     = p.template subsystem<CinematicState>();
         state.fade      = {};
         state.title.reset();
+        state.help     = {};
+        m_first_person = 0;
         state.letterbox = false;
         state.playing   = false;
         state.show_hud  = true;
@@ -407,6 +517,11 @@ struct BlamScript
         for(u32 net_id : waiting)
             if(m_spawning.contains(net_id))
                 m_deferred.push_back({net_id, later});
+            /* Spawned since the value was made, e.g. while a deferred call
+             * waited on something else */
+            else if(u64 const id = live_entity(p, net_id);
+                    id && std::find(objects.begin(), objects.end(), id) == objects.end())
+                later(p, id);
     }
 
     /* What waited on objects now spawned */
@@ -418,10 +533,27 @@ struct BlamScript
             if(u64 const id = live_entity(p, net_id))
             {
                 m_spawning.erase(net_id);
+                enlist(p, id, net_id);
                 fn(p, id);
             } else
                 m_deferred.emplace_back(net_id, std::move(fn));
         }
+    }
+
+    /* A named device whose section is not loaded: what a script tells it
+     * waits for it there */
+    DeviceGroups::remembered_t* absent_device(Proxy& p, value_t const& v)
+    {
+        if(!v.objects.empty() || v.name == 0)
+            return nullptr;
+        auto it = m_named.find(lowered(text_of(v)));
+        if(it == m_named.end() ||
+           (it->second.group != ScenarioGroup::Machine && it->second.group != ScenarioGroup::Control))
+            return nullptr;
+        u32 const net_id = SpawnObjectEvent::scenario_net_id(it->second.group, it->second.index);
+        if(live_entity(p, net_id))
+            return nullptr;
+        return &p.template subsystem<DeviceGroups>().remembered[net_id];
     }
 
     /* Net ids of the objects a value names that are still being spawned */
@@ -524,6 +656,17 @@ struct BlamScript
                     }
                     moved = true;
                 }
+            if(auto* r = absent_device(p, arg(0)))
+            {
+                f32 const to = std::clamp(arg(1).as_real(), 0.f, 1.f);
+                if(opcode == op::device_set_power)
+                    r->power = r->power_target = to;
+                else
+                    r->position_target = to;
+                if(opcode == op::device_set_position_immediate)
+                    r->position = to;
+                moved = true;
+            }
             return value_t::boolean(moved);
         }
         case op::device_get_position:
@@ -531,7 +674,13 @@ struct BlamScript
             auto const  ids    = objects_of(p, arg(0));
             auto const* device = ids.empty() ? nullptr : p.template get<DeviceState>(ids.front());
             if(!device)
-                return value_t::number(type_t::real_, 0.f);
+            {
+                auto const* r = absent_device(p, arg(0));
+                auto const  v = !r                               ? std::optional<f32>{}
+                                : opcode == op::device_get_power ? r->power
+                                                                 : r->position;
+                return value_t::number(type_t::real_, v.value_or(0.f));
+            }
             return value_t::number(
                 type_t::real_, opcode == op::device_get_power ? device->power : device->position);
         }
@@ -545,6 +694,8 @@ struct BlamScript
                 static_cast<i16>(arg(0).integer), std::clamp(arg(1).as_real(), 0.f, 1.f));
             return {};
         case op::device_one_sided_set:
+            if(auto* r = absent_device(p, arg(0)))
+                r->one_sided = arg(1).truthy();
             for(u64 id : objects_of(p, arg(0)))
                 if(auto* device = p.template get<DeviceState>(id))
                     device->kind_flags = arg(1).truthy()
@@ -552,6 +703,8 @@ struct BlamScript
                                              : device->kind_flags & ~DeviceState::one_sided;
             return {};
         case op::device_operates_automatically_set:
+            if(auto* r = absent_device(p, arg(0)))
+                r->automatic = arg(1).truthy();
             for(u64 id : objects_of(p, arg(0)))
                 if(auto* device = p.template get<DeviceState>(id))
                     device->automatic = arg(1).truthy();
@@ -632,6 +785,8 @@ struct BlamScript
 
         /* Cutscenes */
         case op::camera_control:
+            m_first_person = 0;
+            m_camera_gen++;
             for_local_seats(p, [&](u32 seat) {
                 GameEvent            ev{.type = GameEvent::CinematicCamera};
                 CinematicCameraEvent control{.seat_idx = seat, .control = arg(0).truthy()};
@@ -639,9 +794,22 @@ struct BlamScript
             });
             return {};
         case op::camera_set:
+            m_first_person = 0;
+            m_camera_gen++;
             camera_set(p, text_of(arg(0)), arg(1).as_real(), 0);
             return {};
+        case op::camera_set_first_person: {
+            /* Often of a unit created the line before */
+            m_first_person = 0;
+            with_objects(p, arg(0), [this, gen = ++m_camera_gen](Proxy&, u64 id) {
+                if(gen == m_camera_gen && !m_first_person)
+                    m_first_person = id;
+            });
+            return {};
+        }
         case op::camera_set_relative: {
+            m_first_person     = 0;
+            m_camera_gen++;
             auto const objects = objects_of(p, arg(2));
             camera_set(p, text_of(arg(0)), arg(1).as_real(), objects.empty() ? 0 : objects.front());
             return {};
@@ -677,6 +845,19 @@ struct BlamScript
             return {};
         case op::show_hud:
             p.template subsystem<CinematicState>().show_hud = arg(0).truthy();
+            return {};
+        case op::show_hud_help_text:
+            p.template subsystem<CinematicState>().help.shown = arg(0).truthy();
+            return {};
+        case op::hud_set_help_text: {
+            auto& help   = p.template subsystem<CinematicState>().help;
+            help.message = std::string(text_of(arg(0)));
+            help.elapsed = 0.f;
+            log(fmt::format("help text: {}", help.message));
+            return {};
+        }
+        case op::enable_hud_help_flash:
+            p.template subsystem<CinematicState>().help.flash = arg(0).truthy();
             return {};
         case op::player_enable_input:
             p.template subsystem<CinematicState>().input = arg(0).truthy();
@@ -784,6 +965,14 @@ struct BlamScript
                 });
             return {};
         case op::vehicle_load_magic:
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format(
+                    "vehicle_load_magic: {} {} units {} pending {} vehicle pending {}",
+                    text_of(arg(0)),
+                    text_of(arg(1)),
+                    arg(2).objects.size(),
+                    arg(2).pending.size(),
+                    arg(0).pending.size()));
             with_objects(
                 p,
                 arg(0),
@@ -880,7 +1069,7 @@ struct BlamScript
             auto const  targets = objects_of(p, arg(1));
             auto const* target  = targets.empty() ? nullptr : p.template get<Model>(targets.front());
             return value_t::boolean(
-                target && can_see(p, objects_of(p, arg(0)), target->position + Vecf3{0.f, 0.f, body_middle}, arg(2).as_real()));
+                target && can_see(p, objects_of(p, arg(0)), center_of(*target), arg(2).as_real()));
         }
         case op::objects_can_see_flag: {
             auto const* flag = named(m_scenario->cutscene.flags, text_of(arg(1)));
@@ -1036,14 +1225,233 @@ struct BlamScript
         case op::ai_place:
             ai_place(p, std::string(text_of(arg(0))));
             return {};
+        case op::ai_spawn_actor:
+            ai_spawn_actor(p, std::string(text_of(arg(0))));
+            return {};
+        /* Those alive that are not infection forms, which swarm */
+        case op::ai_nonswarm_count: {
+            auto const units = ai_actors(p, text_of(arg(0)));
+            i32        count = 0;
+            for(u64 id : units)
+                if(auto const* status = p.template get<BipedStatus>(id);
+                   (!status || !status->dead) && actor_type_of(p, id) != blam::scn::actor_type_t::infection_form)
+                    count++;
+            return value_t::number(type_t::short_, static_cast<f32>(count));
+        }
+        /* Told whom to fight: the nearest player, or the nearest of a group */
+        case op::ai_try_to_fight_player:
+        case op::ai_try_to_fight: {
+            std::vector<u64> const foes =
+                opcode == op::ai_try_to_fight ? ai_actors(p, text_of(arg(1))) : std::vector<u64>{};
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+            {
+                auto* actor = p.template get<Actor>(id);
+                auto const* at = p.template get<Model>(id);
+                if(!actor || !at)
+                    continue;
+                u64 best = 0;
+                f32 near = std::numeric_limits<f32>::max();
+                auto consider = [&](u64 foe) {
+                    auto const* model  = p.template get<Model>(foe);
+                    auto const* status = p.template get<BipedStatus>(foe);
+                    if(!model || (status && status->dead))
+                        return;
+                    if(f32 const d = glm::distance(model->position, at->position); d < near)
+                    {
+                        near = d;
+                        best = foe;
+                    }
+                };
+                if(opcode == op::ai_try_to_fight_player)
+                    for(auto player : p.template select<PlayerInfo>())
+                        consider(player.id());
+                else
+                    for(u64 foe : foes)
+                        consider(foe);
+                if(!best)
+                    continue;
+                actor->target    = best;
+                actor->last_seen = p.template get<Model>(best)->position;
+                actor->seen_ago  = 0.f;
+                actor->state     = Actor::state_t::combat;
+                actor->position  = -1;
+            }
+            return {};
+        }
         case op::ai_actors: {
             auto out    = list(ai_actors(p, text_of(arg(0))));
             out.pending = ai_spawning(text_of(arg(0)));
             return out;
         }
         case op::ai_living_count:
-            return value_t::number(
-                type_t::short_, static_cast<f32>(ai_actors(p, text_of(arg(0))).size()));
+            return value_t::number(type_t::short_, static_cast<f32>(ai_living(p, text_of(arg(0)))));
+        case op::ai_living_fraction:
+        case op::ai_strength: {
+            auto const it    = m_actors.find(lowered(text_of(arg(0))));
+            f32 const  total = it == m_actors.end() ? 0.f : static_cast<f32>(it->second.size());
+            f32 const  alive = static_cast<f32>(ai_living(p, text_of(arg(0))));
+            return value_t::number(type_t::real_, total > 0.f ? alive / total : 0.f);
+        }
+        /* Orders to the actors: what the actor system follows */
+        case op::ai_attack:
+        case op::ai_defend:
+        case op::ai_retreat:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->order = opcode == op::ai_attack   ? Actor::order_t::attack
+                                   : opcode == op::ai_defend ? Actor::order_t::defend
+                                                             : Actor::order_t::retreat;
+            return {};
+        case op::ai_braindead:
+        case op::ai_set_blind:
+        case op::ai_set_deaf:
+        case op::ai_follow_target_players:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                {
+                    bool const on = opcode == op::ai_follow_target_players || arg(1).truthy();
+                    if(opcode == op::ai_braindead)
+                        actor->braindead = on;
+                    else if(opcode == op::ai_set_blind)
+                        actor->blind = on;
+                    else if(opcode == op::ai_set_deaf)
+                        actor->deaf = on;
+                    else
+                        actor->follow_players = true;
+                }
+            return {};
+        case op::ai_disregard:
+            /* The named objects are left alone; today only the target drops */
+            for(u64 id : objects_of(p, arg(0)))
+                for(auto ent : p.template select<Actor>())
+                    if(auto& actor = ent.template get<Actor>(); actor.target == id)
+                        actor.target = 0;
+            return {};
+        case op::ai_magically_see_players:
+        case op::ai_magically_see_encounter: {
+            std::vector<u64> seen;
+            if(opcode == op::ai_magically_see_players)
+            {
+                for(auto player : p.template select<PlayerInfo, PlayerCamera, NetworkInfo>())
+                {
+                    auto [info, cam, net] = player.components();
+                    if(biped_shown(info, cam, net))
+                        seen.push_back(player.id());
+                }
+            } else
+                seen = ai_actors(p, text_of(arg(1)));
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+            {
+                auto* actor = p.template get<Actor>(id);
+                auto const* model = p.template get<Model>(id);
+                if(!actor || !model || seen.empty())
+                    continue;
+                u64   nearest = 0;
+                f32   best    = std::numeric_limits<f32>::max();
+                for(u64 other : seen)
+                    if(auto const* target = p.template get<Model>(other))
+                        if(f32 const d = glm::distance(target->position, model->position); d < best)
+                        {
+                            best    = d;
+                            nearest = other;
+                        }
+                if(nearest && nearest != id)
+                {
+                    actor->target    = nearest;
+                    actor->last_seen = p.template get<Model>(nearest)->position;
+                    actor->seen_ago  = 0.f;
+                    if(actor->state == Actor::state_t::idle)
+                        actor->state = Actor::state_t::combat;
+                }
+            }
+            return {};
+        }
+        case op::ai_migrate: {
+            /* The actors join another encounter's squad, named like ai_place */
+            auto const path  = std::string(text_of(arg(1)));
+            auto const slash = path.find('/');
+            auto const ename = lowered(path.substr(0, slash));
+            auto const sname = slash == std::string::npos ? std::string{} : lowered(path.substr(slash + 1));
+            i16         enc = -1, sq = -1;
+            std::string toon;
+            if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
+                for(size_t i = 0; i < list.value().size() && enc < 0; i++)
+                    if(lowered(list.value()[i].name.str()) == ename)
+                    {
+                        enc = static_cast<i16>(i);
+                        if(auto squads = list.value()[i].squads.data(m_magic); squads.has_value())
+                        {
+                            for(size_t j = 0; j < squads.value().size() && sq < 0; j++)
+                                if(sname.empty() || lowered(squads.value()[j].name.str()) == sname)
+                                    sq = static_cast<i16>(j);
+                            /* A platoon: its first squad */
+                            for(size_t j = 0; j < squads.value().size() && sq < 0; j++)
+                                if(platoon_name(list.value()[i], squads.value()[j]) == sname)
+                                    sq = static_cast<i16>(j);
+                            if(sq >= 0)
+                                toon = platoon_name(list.value()[i], squads.value()[sq]);
+                        }
+                    }
+            if(enc < 0 || sq < 0)
+                return log(fmt::format("ai_migrate: no squad {}", path)), value_t{};
+            auto const from = lowered(text_of(arg(0)));
+            if(std::getenv("BLAM_DEBUG_AI"))
+            {
+                log(fmt::format("ai_migrate: {} from {} to {}", ai_actors(p, from).size(), from, path));
+                auto const& e  = m_scenario->ai.encounters.data(m_magic).value()[enc];
+                auto const& s  = e.squads.data(m_magic).value()[sq];
+                auto        fp = e.firing_positions.data(m_magic);
+                std::map<u32, std::string> per_group;
+                if(fp.has_value())
+                {
+                    std::map<u32, std::pair<Vecf3, u32>> sum;
+                    for(auto const& f : fp.value())
+                    {
+                        sum[f.group].first += f.position;
+                        sum[f.group].second++;
+                    }
+                    for(auto const& [g, s] : sum)
+                    {
+                        Vecf3 const c = s.first / static_cast<f32>(s.second);
+                        per_group[g] = fmt::format("{}@({:.0f},{:.0f})", s.second, c.x, c.y);
+                    }
+                }
+                log(fmt::format(
+                    "  squad {:x} {:x} {:x} / {:x} {:x} {:x} positions by group {}",
+                    s.attacking, s.attacking_search, s.attacking_guard,
+                    s.defending, s.defending_search, s.defending_guard,
+                    per_group));
+            }
+            for(u64 id : ai_actors(p, from))
+                if(auto* actor = p.template get<Actor>(id))
+                {
+                    actor->encounter = enc;
+                    actor->squad     = sq;
+                    actor->migrated  = true;
+                    actor->position  = -1;
+                    actor->order     = Actor::order_t::none;
+                }
+            /* The names follow them: out of their old encounter and squad,
+             * into the new */
+            if(auto it = m_actors.find(from); it != m_actors.end())
+            {
+                std::set<u32> const moved(it->second.begin(), it->second.end());
+                for(auto& [name, ids] : m_actors)
+                    std::erase_if(ids, [&moved](u32 id) { return moved.contains(id); });
+                m_actors[ename].insert(m_actors[ename].end(), moved.begin(), moved.end());
+                if(!sname.empty())
+                    m_actors[ename + "/" + sname].insert(
+                        m_actors[ename + "/" + sname].end(), moved.begin(), moved.end());
+                if(!toon.empty() && toon != sname)
+                    m_actors[ename + "/" + toon].insert(
+                        m_actors[ename + "/" + toon].end(), moved.begin(), moved.end());
+            }
+            return {};
+        }
+        case op::ai_maneuver_enable:
+        case op::ai_free_units:
+        case op::ai_playfight:
+            return {};
         /* Command lists: units walking, flying and looking as a list says */
         case op::ai_attach_free:
             return {};
@@ -1083,6 +1491,48 @@ struct BlamScript
             for(u64 id : ai_actors(p, text_of(arg(0))))
                 despawn(p, id);
             return {};
+        /* Vehicles: they run to it and take the seat */
+        case op::ai_go_to_vehicle: {
+            auto const vehicles = objects_of(p, arg(1));
+            if(!vehicles.empty())
+                board(p, ai_actors(p, text_of(arg(0))), vehicles.front(), std::string(text_of(arg(2))));
+            return {};
+        }
+        case op::ai_going_to_vehicle: {
+            /* How many are still on their way to it */
+            auto const vehicles = objects_of(p, arg(0));
+            i32        going    = 0;
+            for(auto ent : p.template select<Actor>())
+                if(auto const& actor = ent.template get<Actor>();
+                   actor.board && !vehicles.empty() && actor.board == vehicles.front())
+                    going++;
+            return value_t::number(type_t::short_, static_cast<f32>(going));
+        }
+        /* Conversations: lines played in turn by actors of their encounters */
+        case op::ai_conversation:
+            start_conversation(p, arg(0));
+            return {};
+        case op::ai_conversation_stop:
+            if(auto* c = running_conversation(arg(0)))
+                finish_conversation(p, *c);
+            return {};
+        case op::ai_conversation_advance:
+            if(auto* c = running_conversation(arg(0)))
+            {
+                c->advanced = true;
+                c->waiting  = false;
+            }
+            return {};
+        case op::ai_conversation_status: {
+            /* 0 none, 2 waiting to be advanced, 3 playing, 5 over */
+            auto const* c = running_conversation(arg(0));
+            i32 const   status = !c ? 0 : c->done ? 5 : c->waiting ? 2 : 3;
+            return value_t::number(type_t::short_, static_cast<f32>(status));
+        }
+        case op::ai_conversation_line: {
+            auto const* c = running_conversation(arg(0));
+            return value_t::number(type_t::short_, static_cast<f32>(c ? c->line : -1));
+        }
 
         default:
             if(m_unhandled.insert(static_cast<u32>(opcode)).second)
@@ -1395,6 +1845,8 @@ struct BlamScript
             if(auto label = blam::bl_string::from(seat))
                 enter.seat = *label;
             p.template subsystem<GameEventBus>().inject(ev, &enter);
+            /* Held for it until the game has seated it */
+            m_player_claims[{vehicle, lowered(seat)}] = m_vm.now();
             return;
         }
         auto const* model = p.template get<Model>(vehicle);
@@ -1406,16 +1858,25 @@ struct BlamScript
         auto seats = vehi.value()[0].seats.data(m_magic);
         if(!seats.has_value())
             return;
-        for(auto const& candidate : seats.value())
+        for(size_t seat_idx = 0; seat_idx < seats.value().size(); seat_idx++)
         {
+            auto const& candidate = seats.value()[seat_idx];
             std::string label(candidate.label.str());
             std::transform(label.begin(), label.end(), label.begin(), [](unsigned char c) {
                 return static_cast<char>(std::tolower(c));
             });
             bool const fits = exact ? label == seat : label.find(seat) != std::string::npos;
-            bool const taken = std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
+            bool taken = std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
                 return r.vehicle == vehicle && r.seat == label;
             });
+            /* A player's seat too, or one a player was just sent to */
+            if(auto claim = m_player_claims.find({vehicle, label});
+               claim != m_player_claims.end() && m_vm.now() - claim->second < player_claim_ticks)
+                taken = true;
+            for(auto player : p.template select<PlayerInfo>())
+                if(auto const& riding = player.template get<PlayerInfo>().riding;
+                   riding.vehicle == vehicle && riding.seat == static_cast<i16>(seat_idx))
+                    taken = true;
             if(!fits || taken)
                 continue;
             auto marker = bind_marker_node(*model->tag, candidate.marker_name.str(), m_magic);
@@ -1435,9 +1896,12 @@ struct BlamScript
                 .stance  = std::move(own),
             });
             carry(p, unit, true);
-            seated(p, unit, true);
+            seated(p, unit, vehicle, static_cast<i16>(seat_idx));
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format("seat: {} in {} seat {}", unit, vehicle, label));
             return;
         }
+        log(fmt::format("seat: no free {} seat for {} in {}", seat, unit, vehicle));
     }
 
     void unseat(Proxy& p, u64 unit)
@@ -1458,14 +1922,19 @@ struct BlamScript
         if(m_riders.size() != before)
         {
             carry(p, unit, false);
-            seated(p, unit, false);
+            seated(p, unit, 0, -1);
         }
     }
 
-    static void seated(Proxy& p, u64 unit, bool on)
+    /* In a vehicle's seat, or out of it with no vehicle */
+    static void seated(Proxy& p, u64 unit, u64 vehicle, i16 seat)
     {
         if(auto* physics = p.template get<ObjectPhysics>(unit))
-            physics->seated = on;
+        {
+            physics->seated    = vehicle != 0;
+            physics->seated_in = vehicle;
+            physics->seat      = seat;
+        }
     }
 
     /* Riders sit where their seats are as the vehicle moves */
@@ -1543,6 +2012,8 @@ struct BlamScript
         f32  left{0.f}, right{0.f}, up{0.f}, down{0.f}; /* furthest turned */
         bool action{false}, accept{false}, back{false}, primary{false}, grenade{false};
     };
+    /* Kept across resets, so a button already down does not answer a test */
+    debounced_button_t m_accept_button{}, m_back_button{};
 
     /* Where a unit looks from, and which way */
     std::optional<std::pair<Vecf3, Vecf3>> eye_of(Proxy& p, u64 id) const
@@ -1554,6 +2025,15 @@ struct BlamScript
             return std::pair{
                 model->position + Vecf3{0.f, 0.f, eye_height}, model->rotation * Vecf3{1.f, 0.f, 0.f}};
         return std::nullopt;
+    }
+
+    /* The middle of an object's bounding sphere, where it is looked at */
+    Vecf3 center_of(Model const& model) const
+    {
+        if(model.origin_object)
+            if(auto obj = model.origin_object->template data<blam::scn::object>(m_magic); obj.has_value())
+                return model.position + model.rotation * obj.value()[0].bound_offset;
+        return model.position + Vecf3{0.f, 0.f, body_middle};
     }
 
     bool can_see(Proxy& p, std::vector<u64> const& viewers, Vecf3 const& target, f32 degrees) const
@@ -1589,8 +2069,14 @@ struct BlamScript
             m_tests.up      = std::max(m_tests.up, pitch);
             m_tests.down    = std::max(m_tests.down, -pitch);
             m_tests.action |= input.intent.use;
-            m_tests.accept |= input.accept.current;
-            m_tests.back |= input.back.current;
+            /* Presses; the controller has ended its frame, leaving what was
+             * held in `previous`. B melees in play, and backs out too. */
+            m_accept_button = input.accept.previous;
+            m_back_button   = input.back.previous || input.melee.previous;
+            m_tests.accept |= static_cast<bool>(m_accept_button);
+            m_tests.back |= static_cast<bool>(m_back_button);
+            m_accept_button.frame_end();
+            m_back_button.frame_end();
             m_tests.primary |= input.intent.fire;
             m_tests.grenade |= input.intent.grenade || input.grenade.current;
         }
@@ -1702,6 +2188,17 @@ struct BlamScript
         return std::any_of(m_recordings.begin(), m_recordings.end(), [id](recording_t const& r) {
             return r.entity == id;
         });
+    }
+
+    /* Held where the scripts put it, out of physics' hands */
+    bool carried(Proxy& p, u64 id) const
+    {
+        auto const custom = m_custom.find(id);
+        bool const moved  = (playing_recording(id) && !rolls(p, id)) ||
+                           (custom != m_custom.end() && custom->second.moves);
+        return m_hovering.contains(id) || riding(id) || m_commands.contains(id) ||
+               std::any_of(m_attached.begin(), m_attached.end(), [id](attached_t const& a) { return a.child == id; }) ||
+               (moved && !walks(p, id));
     }
 
     /* A tick of each: the unit moves as the clip's root does */
@@ -1912,13 +2409,502 @@ struct BlamScript
     void start_commands(Proxy& p, u64 id, blam::scn::ai::command_list const& list)
     {
         m_commands[id] = {.list = &list};
+        if(auto* actor = p.template get<Actor>(id))
+        {
+            using flags_t   = blam::scn::ai::command_list::flags_t;
+            actor->scripted = true;
+            actor->release  = false;
+            actor->may_fight =
+                (list.flags & (flags_t::allow_initiative | flags_t::allow_targeting)) != 0;
+        }
         carry(p, id, true);
     }
 
     void stop_commands(Proxy& p, u64 id)
     {
+        if(auto* actor = p.template get<Actor>(id))
+            actor->scripted = false;
         if(m_commands.erase(id) && !playing_recording(id) && !m_hovering.contains(id))
             stand(p, id);
+    }
+
+    /* ---- Vehicles ---- */
+
+    /* Each free seat whose label holds `seat` is claimed by the nearest
+     * of them not already on its way to a vehicle, who runs there and,
+     * within its boarding radius, sits */
+    void board(Proxy& p, std::vector<u64> const& units, u64 vehicle, std::string const& seat, bool passengers = false)
+    {
+        using seat_flags_t = blam::scn::unit::seat_t::seat_flags_t;
+        auto const* model = p.template get<Model>(vehicle);
+        if(!model || !model->origin_object)
+            return;
+        auto vehi = model->origin_object->template data<blam::scn::unit>(m_magic);
+        if(!vehi.has_value())
+            return;
+        auto seats = vehi.value()[0].seats.data(m_magic);
+        if(!seats.has_value())
+            return;
+        /* Its hull keeps them off its centre: near enough is its bound */
+        f32 const radius = std::max(vehi.value()[0].ai_vehicle_radius, vehi.value()[0].bound_radius) + .5f;
+        std::vector<std::pair<f32, Actor*>> idle;
+        for(u64 id : units)
+            if(auto* actor = p.template get<Actor>(id); actor && !actor->board)
+                if(auto const* status = p.template get<BipedStatus>(id); status && status->dead)
+                    continue;
+                else if(auto const* at = p.template get<Model>(id);
+                   at && std::none_of(m_riders.begin(), m_riders.end(), [id](rider_t const& r) { return r.unit == id; }))
+                    idle.emplace_back(glm::distance(at->position, model->position), actor);
+        std::sort(idle.begin(), idle.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+        std::set<std::string> claimed; /* seats others are on their way to */
+        for(auto ent : p.template select<Actor>())
+            if(auto const& other = ent.template get<Actor>(); other.board == vehicle)
+                claimed.insert(std::string(other.board_seat.str()));
+        /* Seats players sit in */
+        std::set<i16> held;
+        for(auto ent : p.template select<PlayerInfo>())
+            if(auto const& info = ent.template get<PlayerInfo>(); info.riding.vehicle == vehicle)
+                held.insert(info.riding.seat);
+        auto next = idle.begin();
+        for(size_t seat_idx = 0; seat_idx < seats.value().size(); seat_idx++)
+        {
+            auto const& candidate = seats.value()[seat_idx];
+            if(next == idle.end())
+                break;
+            std::string const label = lowered(candidate.label.str());
+            bool const        taken =
+                label.find(lowered(seat)) == std::string::npos ||
+                held.contains(static_cast<i16>(seat_idx)) ||
+                (passengers && static_cast<u32>(candidate.flags) & static_cast<u32>(seat_flags_t::driver)) ||
+                claimed.contains(label) ||
+                std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
+                    return r.vehicle == vehicle && r.seat == label;
+                });
+            if(taken)
+                continue;
+            next->second->board        = vehicle;
+            next->second->board_radius = radius;
+            next->second->board_seat   = blam::bl_string::from(label).value_or(blam::bl_string{});
+            ++next;
+        }
+        if(std::getenv("BLAM_DEBUG_AI") && (!passengers || next != idle.begin()))
+            log(fmt::format(
+                "ai_go_to_vehicle: {} of {} ({} free) sent to {} seats '{}' held {}",
+                next - idle.begin(),
+                units.size(),
+                idle.size(),
+                vehicle,
+                seat,
+                held.size()));
+    }
+
+    /* Allies near a stopped vehicle a player sits in climb into its free
+     * seats */
+    void offer_vehicles(Proxy& p)
+    {
+        using team_t = blam::scn::unit::team_t;
+        if(++m_offer_ticks < static_cast<u32>(tick_rate))
+            return;
+        m_offer_ticks = 0;
+        for(auto ent : p.template select<PlayerInfo>())
+        {
+            auto const& info    = ent.template get<PlayerInfo>();
+            auto const* vehicle = info.riding.vehicle ? p.template get<Model>(info.riding.vehicle) : nullptr;
+            auto const* moving  = vehicle ? p.template get<ObjectPhysics>(info.riding.vehicle) : nullptr;
+            if(!vehicle || !moving || glm::length(moving->linear_velocity) > offer_speed)
+                continue;
+            std::vector<u64> near;
+            for(auto other : p.template select<Actor, Model>())
+            {
+                auto const& actor = other.template get<Actor>();
+                auto const  team  = static_cast<team_t>(actor.team);
+                if(!actor.active() || actor.board || actor.scripted || (team != team_t::player && team != team_t::human))
+                    continue;
+                if(glm::distance(other.template get<Model>().position, vehicle->position) <= offer_radius)
+                    near.push_back(other.id());
+            }
+            if(!near.empty())
+                board(p, near, info.riding.vehicle, {}, true);
+        }
+    }
+
+    /* Those sent to a vehicle sit once they are at it; a seat already
+     * taken is given up on */
+    void board_vehicles(Proxy& p)
+    {
+        for(auto ent : p.template select<Actor, Model>())
+        {
+            auto [actor, model] = ent.components();
+            if(!actor.board)
+                continue;
+            u64 const   id      = ent.id();
+            auto const* vehicle = p.template get<Model>(actor.board);
+            bool const  riding  = std::any_of(
+                m_riders.begin(), m_riders.end(), [id](rider_t const& r) { return r.unit == id; });
+            if(vehicle && !riding &&
+               glm::distance(Vecf2(model.position), Vecf2(vehicle->position)) > actor.board_radius)
+                continue;
+            if(vehicle && !riding)
+                seat_unit(p, id, actor.board, std::string(actor.board_seat.str()), true);
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format(
+                    "ai_go_to_vehicle: {} at {} seat {} seated {}",
+                    id,
+                    actor.board,
+                    actor.board_seat.str(),
+                    std::any_of(m_riders.begin(), m_riders.end(), [id](rider_t const& r) { return r.unit == id; })));
+            actor.board = 0;
+        }
+    }
+
+    /* ---- Conversations ---- */
+
+    struct conversation_t
+    {
+        blam::scn::ai::conversation const* conv{nullptr};
+        std::vector<u64> participants; /* by index, 0 = nobody: radio, disembodied */
+        std::vector<u64> held;         /* actors standing still for it */
+        i32              line{-1};
+        libc_types::i64  until{0};     /* the tick its line is over */
+        bool             waiting{false};
+        bool             advanced{false};
+        bool             done{false};
+    };
+
+    blam::scn::ai::conversation const* conversation_of(value_t const& v) const
+    {
+        if(auto const* conv = named(m_scenario->ai.conversations, text_of(v)))
+            return conv;
+        auto list = m_scenario->ai.conversations.data(m_magic);
+        if(!list.has_value() || v.integer < 0 || static_cast<size_t>(v.integer) >= list.value().size())
+            return nullptr;
+        return &list.value()[static_cast<size_t>(v.integer)];
+    }
+
+    conversation_t* running_conversation(value_t const& v)
+    {
+        auto const* conv = conversation_of(v);
+        auto        it   = conv ? m_conversations.find(conv) : m_conversations.end();
+        return it == m_conversations.end() ? nullptr : &it->second;
+    }
+
+    /* The actr type of an actor, by its squad's palette entry */
+    std::optional<blam::scn::actor_type_t> actor_type_of(Proxy& p, u64 id) const
+    {
+        auto const* actor      = p.template get<Actor>(id);
+        auto        encounters = m_scenario->ai.encounters.data(m_magic);
+        auto        palette    = m_scenario->ai.actor_palette.data(m_magic);
+        if(!actor || !actor->active() || !encounters.has_value() || !palette.has_value() ||
+           static_cast<size_t>(actor->encounter) >= encounters.value().size())
+            return std::nullopt;
+        auto squads = encounters.value()[actor->encounter].squads.data(m_magic);
+        if(!squads.has_value() || actor->squad < 0 ||
+           static_cast<size_t>(actor->squad) >= squads.value().size())
+            return std::nullopt;
+        i16 const type = actor->variant >= 0 ? actor->variant : squads.value()[actor->squad].actor_type;
+        if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
+            return std::nullopt;
+        auto variant = m_tags.find(palette.value()[type].tag_id);
+        if(variant == m_tags.end())
+            return std::nullopt;
+        auto actv = (*variant).template data<blam::scn::actor_variant>(m_magic);
+        if(!actv.has_value())
+            return std::nullopt;
+        auto definition = m_tags.find(actv.value()->actor_definition);
+        if(definition == m_tags.end())
+            return std::nullopt;
+        auto actr = (*definition).template data<blam::scn::actor>(m_magic);
+        if(!actr.has_value())
+            return std::nullopt;
+        return actr.value()->type;
+    }
+
+    /* Who may speak a part: its encounter's actors, or without one the
+     * player's allies nearest the player, in or out of their vehicle as
+     * the part asks */
+    std::vector<u64> speakers_for(Proxy& p, blam::scn::ai::conversation_participant const& part)
+    {
+        using part_t = blam::scn::ai::conversation_participant;
+        using team_t = blam::scn::unit::team_t;
+        if(!part.encounter_name.str().empty())
+            return ai_actors(p, lowered(part.encounter_name.str()));
+        auto const player  = player_near(p, 0);
+        u64        vehicle = 0;
+        for(auto ent : p.template select<PlayerInfo>())
+            if(!vehicle)
+                vehicle = ent.template get<PlayerInfo>().riding.vehicle;
+        auto riding = [this](u64 id) -> u64 {
+            for(auto const& r : m_riders)
+                if(r.unit == id)
+                    return r.vehicle;
+            return 0;
+        };
+        std::vector<std::pair<f32, u64>> found;
+        for(auto ent : p.template select<Actor, Model>())
+        {
+            auto const& actor = ent.template get<Actor>();
+            auto const  team  = static_cast<team_t>(actor.team);
+            if(!actor.active())
+                continue;
+            if(part.selection_type != part_t::any_actor && team != team_t::player && team != team_t::human)
+                continue;
+            if(part.selection_type == part_t::in_players_vehicle && (!vehicle || riding(ent.id()) != vehicle))
+                continue;
+            if(part.selection_type == part_t::not_in_a_vehicle && riding(ent.id()))
+                continue;
+            f32 const d = player ? glm::distance(*player, ent.template get<Model>().position) : 0.f;
+            found.emplace_back(d, ent.id());
+        }
+        std::sort(found.begin(), found.end());
+        std::vector<u64> out;
+        for(auto const& [d, id] : found)
+            out.push_back(id);
+        return out;
+    }
+
+    /* Its participants are gathered from their encounters, and its lines
+     * then play one after another, each for its sound and delay */
+    void start_conversation(Proxy& p, value_t const& v)
+    {
+        using part_t = blam::scn::ai::conversation_participant;
+        using conv_t = blam::scn::ai::conversation;
+        auto const* conv = conversation_of(v);
+        if(!conv)
+            return log(fmt::format("ai_conversation: no conversation {}", text_of(v)));
+        if(auto it = m_conversations.find(conv); it != m_conversations.end())
+            finish_conversation(p, it->second);
+        conversation_t c{.conv = conv};
+        auto           parts = conv->participants.data(m_magic);
+        auto           names = m_scenario->objects.object_names.data(m_magic);
+        std::set<u64>  taken;
+        if(std::getenv("BLAM_DEBUG_AI") && parts.has_value())
+        {
+            for(auto const& part : parts.value())
+                log(fmt::format(
+                    "  part flags {} selection {} type {} object {} encounter '{}'",
+                    static_cast<int>(part.flags),
+                    static_cast<int>(part.selection_type),
+                    static_cast<int>(part.actor_type),
+                    part.use_this_object,
+                    part.encounter_name.str()));
+            if(auto lines = conv->lines.data(m_magic); lines.has_value())
+                for(auto const& line : lines.value())
+                    log(fmt::format(
+                        "  line flags {} participant {} addressee {}/{} delay {}",
+                        static_cast<int>(line.flags),
+                        line.participant,
+                        line.addressee,
+                        line.addressee_participant,
+                        line.line_delay_time));
+        }
+        if(parts.has_value())
+            for(auto const& part : parts.value())
+            {
+                u64        unit     = 0;
+                bool const bodiless = part.selection_type == part_t::disembodied ||
+                                      part.selection_type == part_t::radio_unit ||
+                                      part.selection_type == part_t::radio_sergeant;
+                if(part.use_this_object >= 0 && names.has_value() &&
+                   static_cast<size_t>(part.use_this_object) < names.value().size())
+                    unit = named_entity(
+                        p, lowered(names.value()[static_cast<size_t>(part.use_this_object)].name.str()));
+                else if(!bodiless)
+                    for(u64 id : speakers_for(p, part))
+                    {
+                        auto const* status = p.template get<BipedStatus>(id);
+                        if(taken.contains(id) || !status || status->dead)
+                            continue;
+                        auto const type = static_cast<blam::scn::actor_type_t>(part.actor_type);
+                        if(type != blam::scn::actor_type_t::none && actor_type_of(p, id) != type)
+                            continue;
+                        unit = id;
+                        break;
+                    }
+                bool const optional = (part.flags & (part_t::is_optional | part_t::is_alternative)) != 0;
+                if(!unit && !bodiless && !optional)
+                {
+                    log(fmt::format(
+                        "ai_conversation: {} has nobody for {} (selection {})",
+                        conv->name.str(),
+                        part.encounter_name.str(),
+                        static_cast<int>(part.selection_type)));
+                    c.done = true;
+                }
+                taken.insert(unit);
+                c.participants.push_back(unit);
+            }
+        log(fmt::format("ai_conversation: {}{}", conv->name.str(), c.done ? " (nobody)" : ""));
+        /* They hold still for it when it says so, unless a list has them */
+        if(!c.done && (conv->flags & conv_t::stop_other_actions))
+            for(u64 id : c.participants)
+                if(auto* actor = id ? p.template get<Actor>(id) : nullptr;
+                   actor && !actor->scripted && !m_commands.contains(id))
+                {
+                    actor->scripted = true;
+                    actor->moving   = false;
+                    walk(p, id, {});
+                    c.held.push_back(id);
+                }
+        m_conversations[conv] = std::move(c);
+    }
+
+    void finish_conversation(Proxy& p, conversation_t& c)
+    {
+        c.done = true;
+        for(u64 id : c.held)
+            if(auto* actor = p.template get<Actor>(id); actor && !m_commands.contains(id))
+                actor->scripted = false;
+        c.held.clear();
+    }
+
+    /* A tick of each conversation: the next line once the last is over,
+     * cut short by a death or a fight when its flags say so */
+    void run_conversations(Proxy& p)
+    {
+        using conv_t = blam::scn::ai::conversation;
+        using line_t = blam::scn::ai::conversation_line;
+        for(auto& [conv, c] : m_conversations)
+        {
+            if(c.done)
+                continue;
+            auto lines = conv->lines.data(m_magic);
+            if(!lines.has_value())
+            {
+                finish_conversation(p, c);
+                continue;
+            }
+            for(u64 id : c.participants)
+            {
+                auto const* status = id ? p.template get<BipedStatus>(id) : nullptr;
+                auto const* actor  = id ? p.template get<Actor>(id) : nullptr;
+                if((conv->flags & conv_t::stop_if_death) && status && status->dead)
+                    c.done = true;
+                if((conv->flags & (conv_t::stop_if_visible_enemy | conv_t::stop_if_alerted_to_enemy)) &&
+                   actor && actor->state == Actor::state_t::combat && actor->seen_ago < 1.f)
+                    c.done = true;
+            }
+            if(c.done)
+            {
+                finish_conversation(p, c);
+                continue;
+            }
+            if(c.waiting || m_vm.now() < c.until)
+                continue;
+            if(c.line >= 0 && (lines.value()[c.line].flags & line_t::wait_after_until_told_to_advance) &&
+               !c.advanced)
+            {
+                c.waiting = true;
+                continue;
+            }
+            c.advanced = false;
+            if(++c.line >= static_cast<i32>(lines.value().size()))
+            {
+                finish_conversation(p, c);
+                continue;
+            }
+            auto const& line = lines.value()[c.line];
+            auto        who  = [&c](i16 i) -> u64 {
+                return i >= 0 && static_cast<size_t>(i) < c.participants.size() ? c.participants[i] : 0;
+            };
+            u64 const speaker = who(line.participant);
+            /* Addressed to the player (1) or a participant (2) */
+            std::optional<Vecf3> at;
+            if(line.addressee == 1)
+                at = player_near(p, speaker);
+            else if(line.addressee == 2)
+                if(auto const* model = p.template get<Model>(who(line.addressee_participant)))
+                    at = model->position;
+            auto const* mouth = speaker ? p.template get<Model>(speaker) : nullptr;
+            Vecf3 const eye{0.f, 0.f, eye_height};
+            if(speaker && at)
+                look_at(p, speaker, *at + eye, conversation_gaze);
+            if((line.flags & line_t::addressee_looking_at_speaker) && mouth &&
+               line.addressee == 2)
+                look_at(
+                    p,
+                    who(line.addressee_participant),
+                    mouth->position + eye,
+                    conversation_gaze);
+            for(u64 id : c.participants)
+                if(id && id != speaker)
+                {
+                    if((line.flags & line_t::everyone_look_at_speaker) && mouth)
+                        look_at(
+                            p, id, mouth->position + eye, conversation_gaze);
+                    else if(
+                        (line.flags & line_t::everyone_look_at_addressee) && at)
+                        look_at(p, id, *at + eye, conversation_gaze);
+                }
+            f32 seconds = line.line_delay_time;
+            for(auto const& variant : line.variants)
+            {
+                if(!variant.valid())
+                    continue;
+                value_t sound;
+                sound.integer = static_cast<i32>(variant.tag_id.value());
+                if(!sound_tag(sound))
+                    continue;
+                play(p, sound, speaker ? std::vector<u64>{speaker} : std::vector<u64>{}, false);
+                seconds += length_of(p, sound);
+                if(speaker && p.template get<AnimationPlayback>(speaker))
+                    m_speakers[speaker] = {.mouth = mouth_of(p, sound), .from = m_vm.now()};
+                break;
+            }
+            c.until = m_vm.now() + static_cast<libc_types::i64>(seconds * tick_rate);
+            if(std::getenv("BLAM_DEBUG_AI"))
+                log(fmt::format("ai_conversation: {} line {} by {} for {}s", conv->name.str(), c.line, speaker, seconds));
+        }
+    }
+
+    /* The player nearest a unit */
+    std::optional<Vecf3> player_near(Proxy& p, u64 from)
+    {
+        auto const*          origin  = from ? p.template get<Model>(from) : nullptr;
+        std::optional<Vecf3> best;
+        f32                  nearest = 1e30f;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const& model = ent.template get<Model>();
+            f32 const   d     = origin ? glm::distance(origin->position, model.position) : 0.f;
+            if(d < nearest)
+            {
+                nearest = d;
+                best    = model.position;
+            }
+        }
+        return best;
+    }
+
+    /* A unit looks at a point for `hold` seconds, turning its body only
+     * when its head and aim can't reach; players look where they please */
+    void look_at(Proxy& p, u64 who, Vecf3 const& at, f32 hold)
+    {
+        auto* model = p.template get<Model>(who);
+        auto* anim  = p.template get<AnimationPlayback>(who);
+        if(!model || p.template get<PlayerInfo>(who))
+            return;
+        Vecf3 const d = at - (model->position + Vecf3{0.f, 0.f, eye_height});
+        if(d.x * d.x + d.y * d.y <= 1e-4f)
+            return;
+        Vecf3 const body = model->rotation * Vecf3{1.f, 0.f, 0.f};
+        f32 const   off  = std::abs(
+            std::atan2(
+                body.x * d.y - body.y * d.x, body.x * d.x + body.y * d.y));
+        if(!anim || off > look_reach)
+            turn(p, who, at);
+        if(anim)
+            anim->gaze(glm::normalize(d), glm::normalize(d), hold);
+    }
+
+    /* A unit faces a point; players look where they please */
+    void turn(Proxy& p, u64 who, Vecf3 const& at)
+    {
+        auto* model = p.template get<Model>(who);
+        if(!model || p.template get<PlayerInfo>(who))
+            return;
+        Vecf3 const d = at - model->position;
+        if(d.x * d.x + d.y * d.y > 1e-4f)
+            model->rotation = glm::angleAxis(std::atan2(d.y, d.x), Vecf3{0.f, 0.f, 1.f});
     }
 
     /* A tick of each list: instant atoms run through, moving and looking
@@ -1929,11 +2915,36 @@ struct BlamScript
         constexpr f32 dt = 1.f / tick_rate;
         for(auto it = m_commands.begin(); it != m_commands.end();)
         {
+            /* An enemy in sight and a list that allows it: the actors fight */
+            if(auto* actor = p.template get<Actor>(it->first); actor && actor->release)
+            {
+                actor->scripted = false;
+                actor->release  = false;
+                it              = m_commands.erase(it);
+                continue;
+            }
+            /* The dead follow no list */
+            if(auto const* status = p.template get<BipedStatus>(it->first); status && status->dead)
+            {
+                if(auto* actor = p.template get<Actor>(it->first))
+                    actor->scripted = false;
+                walk(p, it->first, {});
+                it = m_commands.erase(it);
+                continue;
+            }
+            /* On its way to a vehicle: the list waits */
+            if(auto const* actor = p.template get<Actor>(it->first); actor && actor->board)
+            {
+                ++it;
+                continue;
+            }
             auto* model = p.template get<Model>(it->first);
             auto  cmds  = it->second.list->commands.data(m_magic);
             auto  pts   = it->second.list->points.data(m_magic);
             if(!model || !cmds.has_value())
             {
+                if(auto* actor = p.template get<Actor>(it->first))
+                    actor->scripted = false;
                 it = m_commands.erase(it);
                 continue;
             }
@@ -2006,9 +3017,15 @@ struct BlamScript
                 case atom::look:
                 case atom::look_object:
                 case atom::look_player: {
-                    auto const at = c.atom_type == atom::look_object ? object(c.object_name) : point(c.point_1);
+                    auto const at =
+                        c.atom_type == atom::look_object ? object(c.object_name)
+                        : c.atom_type == atom::look_player
+                            ? player_near(p, it->first).transform([](Vecf3 v) {
+                                  return v + Vecf3{0.f, 0.f, eye_height};
+                              })
+                            : point(c.point_1);
                     if(at)
-                        face(*at);
+                        look_at(p, it->first, *at, gaze_ticks / tick_rate);
                     if(run.ticks++ >= static_cast<i32>(c.param1 * tick_rate))
                         next();
                     else
@@ -2068,6 +3085,9 @@ struct BlamScript
         std::optional<flight_t> flight;
         /*! Flying: the pose before the last tick, to draw between */
         std::optional<std::pair<Vecf3, Quatf>> from;
+        /*! A biped's body yaw, which lags the recorded facing */
+        std::optional<f32> body;
+        bool               turning{false};
         /*! As drawn last frame, which the game seated its riders off */
         std::optional<Matf4> drawn;
         /*! From last frame's drawing to this one's */
@@ -2243,9 +3263,20 @@ struct BlamScript
                 walk(p, it->entity, it->velocity);
             else
                 model->position += it->velocity * dt;
-            model->rotation    = glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) *
-                              glm::angleAxis(upright ? 0.f : -facing.pitch_radians(), Vecf3{0.f, 1.f, 0.f});
+            auto* anim = upright ? p.template get<AnimationPlayback>(it->entity)
+                                 : nullptr;
+            f32 const body  = anim ? body_yaw(*it, *model, yaw, input) : yaw;
+            model->rotation = glm::angleAxis(body, Vecf3{0.f, 0.f, 1.f}) *
+                              glm::angleAxis(
+                                  upright ? 0.f : -facing.pitch_radians(),
+                                  Vecf3{0.f, 1.f, 0.f});
             model->update_matrix();
+            /* The head and aim follow the recording; the body lags it */
+            if(anim)
+                anim->gaze(
+                    input.aiming().direction(),
+                    input.looking().direction(),
+                    gaze_ticks / tick_rate);
 
             if(it->play.advance())
             {
@@ -2259,6 +3290,46 @@ struct BlamScript
                 m_hovering.insert(id);
             stop_recording(p, id, end);
         }
+    }
+
+    /* A biped turns its body toward where it faces at its moving turning
+     * speed while it walks; standing, only once the facing strays past its
+     * stationary turning threshold, and then all the way round */
+    f32 body_yaw(
+        recording_t&                            r,
+        Model const&                            model,
+        f32                                     facing,
+        blam::scn::recorded::input_state const& input)
+    {
+        using namespace blam::scn::recorded;
+        auto const exact = [&] {
+            r.body    = facing;
+            r.turning = false;
+            return facing;
+        };
+        if(!model.origin_object || input.held(control_exact_facing) || !r.body)
+            return exact();
+        auto biped =
+            model.origin_object->template data<blam::scn::biped>(m_magic);
+        if(!biped.has_value())
+            return exact();
+        auto const& tag = biped.value()[0];
+        f32 const   off =
+            glm::mod(facing - *r.body + glm::pi<f32>(), glm::two_pi<f32>()) -
+            glm::pi<f32>();
+        bool const moving = input.movement.x != 0.f || input.movement.y != 0.f;
+        if(moving || std::abs(off) > tag.stationary_turning_threshold)
+            r.turning = true;
+        if(r.turning)
+        {
+            f32 const speed = tag.moving_turning_speed > 0.f
+                                  ? tag.moving_turning_speed
+                                  : glm::two_pi<f32>();
+            f32 const step  = speed / tick_rate;
+            *r.body += std::clamp(off, -step, step);
+            r.turning = moving || std::abs(off) > step;
+        }
+        return *r.body;
     }
 
     /* A human plane as Halo flies one: the throttle sets a speed the nose
@@ -2510,9 +3581,10 @@ struct BlamScript
                         : title->justification == blam::scn::cutscene_title::right ? 1.f
                                                                                    : 0.f,
             .color    = (c.r | c.g | c.b) ? Vecf4(c.r, c.g, c.b, 255.f) / 255.f : Vecf4(1.f),
-            .fade_in  = title->fade_time / tick_rate,
-            .hold     = title->up_time / tick_rate,
-            .fade_out = title->fade_out_time / tick_rate,
+            /* Some tags leave a time at -FLT_MAX */
+            .fade_in  = std::max(title->fade_time, 0.f) / tick_rate,
+            .hold     = std::max(title->up_time, 0.f) / tick_rate,
+            .fade_out = std::max(title->fade_out_time, 0.f) / tick_rate,
         };
     }
 
@@ -2565,6 +3637,32 @@ struct BlamScript
         });
     }
 
+    /* The cutscene camera through a unit's eyes, looking where its
+     * recording has it look */
+    void look_first_person(Proxy& p)
+    {
+        auto const* model = m_first_person ? p.template get<Model>(m_first_person) : nullptr;
+        if(!model)
+            return;
+        Vecf2 facing{std::atan2(model->transform[0].y, model->transform[0].x), 0.f};
+        for(auto const& r : m_recordings)
+            if(r.entity == m_first_person)
+                facing = {r.play.state().facing().yaw_radians(), r.play.state().facing().pitch_radians()};
+        Vecf3 const eye = Vecf3(model->transform * Vecf4(0.f, 0.f, eye_height, 1.f));
+        for_local_seats(p, [&](u32 seat) {
+            GameEvent             ev{.type = GameEvent::PlayerCameraLerp};
+            PlayerCameraLerpEvent lerp{
+                .seat_idx  = seat,
+                .position  = eye,
+                .rotation  = camera_look(facing.x, facing.y, 0.f),
+                .duration  = std::chrono::milliseconds(0),
+                .cinematic = true,
+                .fov       = first_person_fov,
+            };
+            p.template subsystem<GameEventBus>().inject(ev, &lerp);
+        });
+    }
+
     /* Ticks left of the cutscene camera's move */
     f32 camera_time(Proxy& p) const
     {
@@ -2578,6 +3676,16 @@ struct BlamScript
 
     /* `encounter` or `encounter/squad`: each squad's actors at its own
      * starting locations */
+    /* The encounter a path names, and its index */
+    std::pair<blam::scn::ai::encounter const*, i16> encounter_named(std::string_view name) const
+    {
+        if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
+            for(size_t i = 0; i < list.value().size(); i++)
+                if(lowered(list.value()[i].name.str()) == lowered(name))
+                    return {&list.value()[i], static_cast<i16>(i)};
+        return {nullptr, -1};
+    }
+
     void ai_place(Proxy& p, std::string const& path)
     {
         auto const slash = path.find('/');
@@ -2585,57 +3693,191 @@ struct BlamScript
         auto const which = slash == std::string::npos
                                ? std::string_view{}
                                : std::string_view(path).substr(slash + 1);
-        blam::scn::ai::encounter const* encounter = nullptr;
-        if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
-            for(auto const& e : list.value())
-                if(lowered(e.name.str()) == lowered(name))
-                    encounter = &e;
+        auto const [encounter, encounter_idx] = encounter_named(name);
         if(!encounter)
             return log(fmt::format("ai_place: no encounter {}", path));
         log(fmt::format("ai_place: {}", path));
-        auto squads  = encounter->squads.data(m_magic);
-        auto palette = m_scenario->ai.actor_palette.data(m_magic);
-        if(!squads.has_value() || !palette.has_value())
+        auto squads = encounter->squads.data(m_magic);
+        if(!squads.has_value())
             return;
-        for(auto const& squad : squads.value())
+        /* A squad by name, else the squads of a platoon by its name */
+        bool const by_squad = which.empty() || std::any_of(squads.value().begin(), squads.value().end(), [&](auto const& s) {
+            return lowered(s.name.str()) == lowered(which);
+        });
+        for(size_t si = 0; si < squads.value().size(); si++)
         {
-            if(!which.empty() && lowered(squad.name.str()) != lowered(which))
+            auto const& squad = squads.value()[si];
+            if(!which.empty() && (by_squad ? lowered(squad.name.str()) != lowered(which)
+                                           : platoon_name(*encounter, squad) != lowered(which)))
                 continue;
-            i16 const type = squad.actor_type;
-            if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
-                continue;
-            auto const* unit = unit_of(palette.value()[type]);
-            if(!unit)
-                continue;
-            blam::tagref_t const held = weapon_of(palette.value()[type]);
-            /* Squad starting locations, 28 bytes like the encounter's */
-            auto const& block = reinterpret_cast<
-                blam::reference<blam::scn::ai::squad_spawn> const&>(
-                squad.start_locations);
-            auto starts = block.data(m_magic);
+            auto starts = squad.start_locations.data(m_magic);
             if(!starts.has_value() || starts.value().empty())
                 continue;
             u32 const count = std::max<u32>(squad.normal_diff_count, 1);
             for(u32 i = 0; i < count && i < starts.value().size(); i++)
-            {
-                auto const&      start  = starts.value()[i];
-                u32 const        net_id = script_net_id_base | m_next_actor++;
-                GameEvent        ev{.type = GameEvent::SpawnObject};
-                SpawnObjectEvent spawn{
-                    .object       = *unit,
-                    .position     = start.position,
-                    .rotation     = glm::angleAxis(start.yaw, Vecf3{0.f, 0.f, 1.f}),
-                    .net_id       = net_id,
-                    .server_owned = true,
-                    .held         = held,
-                };
-                p.template subsystem<GameEventBus>().inject(ev, &spawn);
-                m_spawning.insert(net_id);
-                /* Both the encounter and its squad name it */
-                m_actors[lowered(name)].push_back(net_id);
-                m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
-            }
+                place_actor(p, name, *encounter, encounter_idx, si, starts.value()[i]);
         }
+    }
+
+    /* One more actor of a squad, or of any of the encounter's squads, at
+     * one of its starting locations: the Flood pouring out of vents */
+    void ai_spawn_actor(Proxy& p, std::string const& path)
+    {
+        auto const slash = path.find('/');
+        auto const name  = std::string_view(path).substr(0, slash);
+        auto const which = slash == std::string::npos
+                               ? std::string_view{}
+                               : std::string_view(path).substr(slash + 1);
+        auto const [encounter, encounter_idx] = encounter_named(name);
+        auto squads = encounter ? encounter->squads.data(m_magic) : decltype(encounter->squads.data(m_magic)){};
+        if(!encounter || !squads.has_value())
+            return log(fmt::format("ai_spawn_actor: no encounter {}", path));
+        std::vector<size_t> fits;
+        for(size_t si = 0; si < squads.value().size(); si++)
+            if(auto starts = squads.value()[si].start_locations.data(m_magic);
+               starts.has_value() && !starts.value().empty() &&
+               (which.empty() || lowered(squads.value()[si].name.str()) == lowered(which) ||
+                platoon_name(*encounter, squads.value()[si]) == lowered(which)))
+                fits.push_back(si);
+        if(fits.empty())
+            return log(fmt::format("ai_spawn_actor: no squad {}", path));
+        size_t const si     = fits[m_spawn_random() % fits.size()];
+        if(std::getenv("BLAM_DEBUG_AI"))
+            log(fmt::format("ai_spawn_actor: {} squad {}", path, squads.value()[si].name.str()));
+        auto         starts = squads.value()[si].start_locations.data(m_magic);
+        place_actor(p, name, *encounter, encounter_idx, si, starts.value()[m_spawn_random() % starts.value().size()]);
+    }
+
+    /* An actor of the squad at a starting location, its names, its slot,
+     * and once it is there its state's stance and the location's list */
+    void place_actor(
+        Proxy&                              p,
+        std::string_view                    name,
+        blam::scn::ai::encounter const&     encounter,
+        i16                                 encounter_idx,
+        size_t                              si,
+        blam::scn::ai::squad_location const& start)
+    {
+        auto squads  = encounter.squads.data(m_magic);
+        auto palette = m_scenario->ai.actor_palette.data(m_magic);
+        auto lists   = m_scenario->ai.command_lists.data(m_magic);
+        if(!squads.has_value() || !palette.has_value())
+            return;
+        auto const& squad = squads.value()[si];
+        /* A location's own actor type beats the squad's */
+        i16 const type = start.actor_type >= 0 ? start.actor_type : squad.actor_type;
+        if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
+            return;
+        auto const* unit = unit_of(palette.value()[type]);
+        if(!unit)
+            return;
+        u32 const        net_id = script_net_id_base | m_next_actor++;
+        GameEvent        ev{.type = GameEvent::SpawnObject};
+        SpawnObjectEvent spawn{
+            .object       = *unit,
+            .position     = start.position,
+            .rotation     = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
+            .net_id       = net_id,
+            .server_owned = true,
+            .held         = weapon_of(palette.value()[type]),
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &spawn);
+        m_spawning.insert(net_id);
+        using state_t     = blam::scn::ai::state_t;
+        auto const  state = start.initial_state != state_t::none ? start.initial_state : squad.initial_state;
+        m_actor_slots[net_id] = {
+            .encounter  = encounter_idx,
+            .squad      = static_cast<i16>(si),
+            .variant    = type,
+            .team       = static_cast<u16>(encounter.team_index),
+            .post       = start.position,
+            .idle_state = static_cast<i16>(state)};
+        /* The encounter, its squad and its platoon name it */
+        m_actors[lowered(name)].push_back(net_id);
+        m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
+        if(auto toon = platoon_name(encounter, squad); !toon.empty())
+            m_actors[fmt::format("{}/{}", lowered(name), toon)].push_back(net_id);
+        auto const* list = lists.has_value() && start.command_list >= 0 &&
+                                   static_cast<size_t>(start.command_list) < lists.value().size()
+                               ? &lists.value()[static_cast<size_t>(start.command_list)]
+                               : nullptr;
+        m_deferred.push_back({net_id, [this, state, list](Proxy& p, u64 id) {
+                                  if(auto* anim = p.template get<AnimationPlayback>(id))
+                                      anim->stance = stance_of(state);
+                                  if(list)
+                                      start_commands(p, id, *list);
+                              }});
+    }
+
+    /* The unit (stance) an actor animates from in a state */
+    static char const* stance_of(blam::scn::ai::state_t state)
+    {
+        using state_t = blam::scn::ai::state_t;
+        switch(state)
+        {
+        case state_t::sleeping:
+            return "asleep";
+        case state_t::alert:
+            return "alert";
+        case state_t::fleeing:
+            return "flee";
+        default:
+            return "stand";
+        }
+    }
+
+    /* One spawned elsewhere joins as ai_place's do, by the names of `like` */
+    void recruit_spawned(EnlistActorEvent const& recruit)
+    {
+        i16 variant = -1;
+        if(auto palette = m_scenario->ai.actor_palette.data(m_magic); palette.has_value())
+            for(size_t i = 0; i < palette.value().size() && variant < 0; i++)
+                if(palette.value()[i].tag_id == recruit.variant.tag_id)
+                    variant = static_cast<i16>(i);
+        m_actor_slots[recruit.net_id] = {
+            .encounter = recruit.encounter,
+            .squad     = recruit.squad,
+            .variant   = variant,
+            .team      = recruit.team,
+            .post      = recruit.post};
+        m_spawning.insert(recruit.net_id);
+        for(auto& [_, ids] : m_actors)
+            if(std::find(ids.begin(), ids.end(), recruit.like) != ids.end())
+                ids.push_back(recruit.net_id);
+    }
+
+    /* A placed unit is told its squad once it exists, and fights by it */
+    void enlist(Proxy& p, u64 id, u32 net_id)
+    {
+        auto slot = m_actor_slots.find(net_id);
+        if(slot == m_actor_slots.end())
+            return;
+        if(auto* actor = p.template get<Actor>(id))
+        {
+            using team_t = blam::scn::unit::team_t;
+            actor->encounter = slot->second.encounter;
+            actor->squad     = slot->second.squad;
+            actor->variant   = slot->second.variant;
+            actor->idle_state = slot->second.idle_state;
+            actor->post      = slot->second.post;
+            actor->team      = slot->second.team;
+            /* The encounter's default is the unit tag's own team */
+            if(actor->team == 0)
+                if(auto const* model = p.template get<Model>(id); model && model->origin_object)
+                    if(auto unit = model->origin_object->template data<blam::scn::unit>(m_magic);
+                       unit.has_value())
+                        actor->team = static_cast<u16>(unit.value()[0].default_team);
+            if(std::getenv("BLAM_DEBUG_AI"))
+                cDebug(
+                    "ai: enlist {} encounter {} squad {} team {} scripted {}",
+                    id,
+                    actor->encounter,
+                    actor->squad,
+                    actor->team,
+                    actor->scripted);
+        } else if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug("ai: enlist {}: no Actor component", id);
+        m_actor_slots.erase(slot);
     }
 
     blam::tagref_t const* unit_of(blam::tagref_t const& variant_ref) const
@@ -2661,6 +3903,15 @@ struct BlamScript
         return variant.value()->weapon;
     }
 
+    /* The lowered name of a squad's platoon, empty without one */
+    std::string platoon_name(blam::scn::ai::encounter const& encounter, blam::scn::ai::squad const& squad) const
+    {
+        auto platoons = encounter.platoons.data(m_magic);
+        if(!platoons.has_value() || squad.platoon >= platoons.value().size())
+            return {};
+        return lowered(platoons.value()[squad.platoon].name.str());
+    }
+
     std::vector<u32> ai_spawning(std::string_view path) const
     {
         std::vector<u32> out;
@@ -2671,12 +3922,26 @@ struct BlamScript
         return out;
     }
 
+    /* Those of them still alive; their bodies stay on as objects */
+    size_t ai_living(Proxy& p, std::string_view path) const
+    {
+        auto const units = ai_actors(p, path);
+        return static_cast<size_t>(std::count_if(units.begin(), units.end(), [&p](u64 id) {
+            auto const* status = p.template get<BipedStatus>(id);
+            return !status || !status->dead;
+        }));
+    }
+
     std::vector<u64> ai_actors(Proxy& p, std::string_view path) const
     {
         std::vector<u64> out;
         auto             it = m_actors.find(lowered(path));
         if(it == m_actors.end())
+        {
+            if(std::getenv("BLAM_DEBUG_AI") && m_unnamed.insert(lowered(path)).second)
+                cDebug("script: no actors named {}", path);
             return out;
+        }
         for(u32 net_id : it->second)
             if(u64 const id = live_entity(p, net_id))
                 out.push_back(id);
@@ -2771,6 +4036,13 @@ struct BlamScript
     /* Where a body is tested against volumes, above its feet */
     static constexpr f32 body_middle = .3f;
     static constexpr f32 eye_height  = .6f;
+    static constexpr f32 first_person_fov = 70.f;
+    /* Off the body a gaze reaches without turning it, radians */
+    static constexpr f32 look_reach = 1.5708f;
+    /* Ticks a gaze renewed every tick outlasts its last renewal */
+    static constexpr f32 gaze_ticks = 3.f;
+    /* How long a conversation's listeners keep looking, seconds */
+    static constexpr f32 conversation_gaze = 4.f;
     /* How far a look test wants the view turned, radians */
     static constexpr f32 look_test = .25f;
 
@@ -2792,8 +4064,18 @@ struct BlamScript
     std::set<u32>                           m_spawning;
     std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> m_deferred;
     std::set<u64>                           m_hovering;
+    u64                                     m_first_person{0};
+    u32                                     m_camera_gen{0}; /*!< Bumped as the camera is set */
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, commands_t>               m_commands;
+    std::map<blam::scn::ai::conversation const*, conversation_t> m_conversations;
+    static constexpr f32 offer_radius = 6.f; /* wu from a stopped vehicle allies climb in from */
+    static constexpr f32 offer_speed  = 1.f; /* wu/s a vehicle counts as stopped below */
+    u32                  m_offer_ticks{0};
+    static constexpr libc_types::i64 player_claim_ticks = 60;
+    std::map<std::pair<u64, std::string>, libc_types::i64> m_player_claims; /* vehicle, seat: tick asked */
+    mutable std::set<std::string> m_unnamed; /* ai paths that named nobody, logged once */
+    std::minstd_rand              m_spawn_random{4321};
     struct scaling_t
     {
         f32 from{1.f};
@@ -2815,6 +4097,17 @@ struct BlamScript
     std::set<u32>                           m_recreate;
     std::map<u32, i32>                      m_queued_recordings; /* spawning net id: its recording's length */
     std::map<std::tuple<blam::antr::header const*, std::string, std::string>, Vecf2> m_walk_speeds;
+    /* Squads of the units ai_place is spawning, by net id */
+    struct actor_slot_t
+    {
+        i16   encounter{-1};
+        i16   squad{-1};
+        i16   variant{-1};
+        u16   team{0};
+        Vecf3 post{};
+        i16   idle_state{0};
+    };
+    std::map<u32, actor_slot_t> m_actor_slots;
     action_tests_t                          m_tests;
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
     std::set<u32>                           m_loops;
@@ -2836,12 +4129,22 @@ struct BlamScript
         action_tests_t                          tests;
         std::map<u32, libc_types::i64>          impulses;
         std::set<u32>                           loops;
+        std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> deferred;
+        std::set<u32>                           spawning;
+        std::map<u32, i32>                      queued;
+        std::map<u32, actor_slot_t>             slots;
+        std::map<u64, u32>                      nets; /*!< Entities it names, by net id */
     };
     std::optional<saved_t> m_saved;
     bool                   m_save_now{false};
     bool                   m_restore_now{false};
+    u32                    m_restore_wait{0}; /*!< Frames left to wait for respawns */
+    /* How long a revert waits for the checkpoint's objects */
+    static constexpr u32 restore_frames = 30;
     std::shared_ptr<GameEventBus::queue_type<WorldSaveEvent>>    m_save_queue;
     std::shared_ptr<GameEventBus::queue_type<WorldRestoreEvent>> m_restore_queue;
+    std::shared_ptr<GameEventBus::queue_type<EnlistActorEvent>>  m_enlist_queue;
+    std::vector<EnlistActorEvent>                                m_recruits;
     Proxy*                                  m_proxy{nullptr};
 
     std::vector<std::string>   m_log;
@@ -2865,6 +4168,8 @@ void alloc_scripting(compo::EntityContainer& e)
         0, [&script](GameEvent&, WorldSaveEvent*) { script.m_save_now = true; });
     script.m_restore_queue = gbus.addQueuedEventFunction<WorldRestoreEvent>(
         0, [&script](GameEvent&, WorldRestoreEvent*) { script.m_restore_now = true; });
+    script.m_enlist_queue = gbus.addQueuedEventFunction<EnlistActorEvent>(
+        0, [&script](GameEvent&, EnlistActorEvent* recruit) { script.m_recruits.push_back(*recruit); });
     gbus.addEventFunction<MapChangedEvent<halo_version>>(
         0, [&script](auto&, MapChangedEvent<halo_version>* changed) {
             script.load_from(changed->container, changed->scenario);

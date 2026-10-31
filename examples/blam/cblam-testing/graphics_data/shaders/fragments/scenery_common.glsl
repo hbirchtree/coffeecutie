@@ -31,7 +31,8 @@ struct InstanceData {
     uint light_uv;
     uint light_dir;
     uvec2 cut_bones; /* clipped away: a player's own body above its legs */
-    uvec2 cut_padding;
+    float inflate; /* out along the normals, wu */
+    uint  cut_padding;
 };
 
 layout(binding = 0, std140) uniform MatrixStore
@@ -111,6 +112,9 @@ void main()
         local_bin    = skin * local_bin;
     }
 #endif
+
+    /* A shield's shell stands off the body */
+    local_pos.xyz += normalize(local_normal.xyz) * matrices.data[gl_InstanceID].inflate;
 
 #ifndef GL_ES
     /* Whichever bone a vertex mostly follows decides if it is cut */

@@ -54,8 +54,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     struct state_t
     {
         f32  cooldown{0.f};
+        f32  cooldown2{0.f};    /* a mounted gun's second trigger */
         f32  illumination{0.f}; /* the flash, 1 as it fires */
         bool firing{false};     /* held last frame */
+        bool firing2{false};
         bool fired{false};      /* shot this frame */
         f32  reloading{0.f};    /* seconds left */
         f32  striking{0.f};     /* melee, seconds left */
@@ -165,15 +167,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* A trigger that charges fires as it is let go: its partner's
              * shot once charged */
             bool const charges = trigger.charging_time > 0.f && triggers.value().size() > 1;
+            /* A mounted gun's second trigger fires alongside its first:
+             * the tank's gun, the banshee's fuel rod */
+            bool const held2 = mounted && triggers.value().size() > 1 && !charges &&
+                               input.intent.fire2 && state.striking <= 0.f;
             auto const& gun_tag = weapon.value()[0];
             /* The trigger is looked at once a tick */
             for(auto const& tick : ticks)
             {
-                f32 const dt   = tick.seconds;
-                state.fired    = false;
-                state.cooldown = std::max(state.cooldown - dt, 0.f);
+                f32 const dt    = tick.seconds;
+                f32 const hurry = dt * info.speed_scale();
+                state.fired     = false;
+                state.cooldown  = std::max(state.cooldown - hurry, 0.f);
                 if(state.reloading > 0.f &&
-                   (state.reloading -= dt) <= 0.f && magazine)
+                   (state.reloading -= hurry) <= 0.f && magazine)
                     refill(*ammo, *magazine);
                 bool const loaded =
                     !magazine || ammo->rounds_loaded >= per_shot;
@@ -217,6 +224,27 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                          static_cast<u16>(fires));
                 }
                 state.firing = held;
+                state.cooldown2 = std::max(state.cooldown2 - dt, 0.f);
+                if(held2)
+                {
+                    trigger_t const& second = triggers.value()[1];
+                    f32 const        rate2  = second.maximum_rate_of_fire.y > 0.f
+                                                  ? second.maximum_rate_of_fire.y
+                                                  : second.maximum_rate_of_fire.x;
+                    bool const repeats2 =
+                        rate2 > 0.f &&
+                        (second.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
+                            trigger_t::flags_t::none;
+                    if((repeats2 || !state.firing2) && state.cooldown2 <= 0.f)
+                    {
+                        if(rate2 > 0.f)
+                            state.cooldown2 += 1.f / rate2;
+                        state.fired        = true;
+                        state.illumination = 1.f;
+                        pull(p, ent.id(), info, cam, *weapon_tag, false, 1);
+                    }
+                }
+                state.firing2 = held2;
                 if(ammo)
                     ammo->charged = charges && state.charge >= trigger.charging_time;
                 if(trigger.illumination_recovery_time > 0.f)
@@ -252,7 +280,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     /* The authority hands out what bodies walk over, local and remote alike:
      * ammo for what they carry, a weapon into a free slot, or a swap when
-     * they press use */
+     * they press use. A weapon given up for ammo lies on with what is left */
     void pick_up(Proxy& p, BlamFiles<halo_version> const& files)
     {
         std::set<u64> taken;
@@ -270,10 +298,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(grace > 0)
                 continue;
             if(info.riding.vehicle || !info.mode.physics || !biped_in_play(info, cam, net) ||
-               !equip.held(files.load_generation))
+               equip.load_generation != files.load_generation)
                 continue;
-            Vecf3 const body =
-                cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f};
             for(auto item : p.template select<Model, NetworkInfo>())
             {
                 auto [model, item_net] = item.components();
@@ -287,32 +313,96 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     equip.equipment.begin(), equip.equipment.end(), [tag](auto const& kind) {
                         return kind.tag == tag && kind.left < kind.most;
                     });
-                if(!grenade && !tag->matches(blam::tag_class_t::weap))
+                bool const powerup = !grenade && wanted_powerup(p, ent.id(), info, *tag, files);
+                /* Ammo for a carried weapon with room for it */
+                bool const ammo =
+                    !grenade && !powerup && tag->matches(blam::tag_class_t::eqip) &&
+                    std::any_of(equip.weapons.begin(), equip.weapons.end(), [&](auto const& w) {
+                        return ammo_pack_rounds(w, tag->tag_id, files.container.magic) > 0;
+                    });
+                if(!grenade && !powerup && !ammo && !tag->matches(blam::tag_class_t::weap))
                     continue;
-                /* Items rest against the body, below its middle */
-                Vecf3 const to = model.position - body;
-                if(glm::length(Vecf2(to)) > pickup_reach ||
-                   std::abs(to.z) > info.biped.height)
+                if(!within_pickup_reach(info, cam, model.position))
                     continue;
-                bool const carried = grenade || equip.weapons[0].tag == tag ||
-                                     equip.weapons[1].tag == tag;
+                auto const* same = equip.weapons[0].tag == tag   ? &equip.weapons[0]
+                                   : equip.weapons[1].tag == tag ? &equip.weapons[1]
+                                                                 : nullptr;
+                bool const carried = grenade || powerup || ammo || same;
                 if(!carried && equip.weapons[1].weapon && !pressed)
                     continue;
+                auto rounds = model.item_rounds.value_or(std::array<u16, 2>{});
+                if(tag->matches(blam::tag_class_t::weap) && !model.item_rounds)
+                    if(auto weapon = tag->template data<weapon_t>(files.container.magic);
+                       weapon.has_value())
+                        rounds = initial_rounds(weapon.value(), files.container.magic);
+                bool emptied = true;
+                if(same)
+                {
+                    /* Into the reserve as much as fits, its reserve given first */
+                    i32 const room = reserve_room(*same, files.container.magic);
+                    if(room <= 0 || rounds[0] + rounds[1] == 0)
+                        continue;
+                    u16 const from_reserve = static_cast<u16>(std::min<i32>(room, rounds[1]));
+                    u16 const from_loaded =
+                        static_cast<u16>(std::min<i32>(room - from_reserve, rounds[0]));
+                    model.item_rounds = std::array<u16, 2>{
+                        static_cast<u16>(rounds[0] - from_loaded),
+                        static_cast<u16>(rounds[1] - from_reserve)};
+                    emptied = *model.item_rounds == std::array<u16, 2>{};
+                    rounds  = {from_loaded, from_reserve};
+                }
                 taken.insert(item.id());
-                auto&              game = p.template subsystem<GameEventBus>();
-                DespawnObjectEvent gone{.net_id = item_net.instance_id};
-                GameEvent          despawn{.type = GameEvent::DespawnObject};
-                game.inject(despawn, &gone);
+                auto& game = p.template subsystem<GameEventBus>();
+                if(emptied)
+                {
+                    DespawnObjectEvent gone{.net_id = item_net.instance_id};
+                    GameEvent          despawn{.type = GameEvent::DespawnObject};
+                    game.inject(despawn, &gone);
+                }
                 EquipWeaponEvent equip_ev{
                     .entity_id = ent.id(),
                     .weapon    = tag->tag_id,
                     .mode      = EquipWeaponEvent::pick_up,
                     .age       = model.item_age,
+                    .rounds    = rounds,
                 };
                 GameEvent ev{.type = GameEvent::EquipWeapon};
                 game.inject(ev, &equip_ev);
                 break;
             }
+        }
+    }
+
+    /* A powerup is taken unless it would do nothing or its kind is still
+     * active: health at full health, an over shield while overcharged */
+    static bool wanted_powerup(
+        Proxy&                         p,
+        u64                            player,
+        PlayerInfo const&              info,
+        blam::tag_t const&             tag,
+        BlamFiles<halo_version> const& files)
+    {
+        using powerup_t = blam::scn::equipment::powerup_type_t;
+        if(!tag.matches(blam::tag_class_t::eqip))
+            return false;
+        auto eqip = tag.template data<blam::scn::equipment>(files.container.magic);
+        if(!eqip.has_value())
+            return false;
+        auto const* status = p.template get<BipedStatus>(player);
+        switch(eqip.value()[0].powerup_type)
+        {
+        case powerup_t::health:
+            return status && status->body < 1.f;
+        case powerup_t::over_shield:
+            return status && status->maximum_shield() > 0.f && status->shield <= 1.f;
+        case powerup_t::double_speed:
+            return info.powerups.speed <= 0.f;
+        case powerup_t::active_camouflage:
+            return info.powerups.camouflage <= 0.f;
+        case powerup_t::full_spectrum_vision:
+            return info.powerups.vision <= 0.f;
+        default:
+            return false;
         }
     }
 
@@ -450,6 +540,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         auto const& magic = files.container.magic;
         if(shot.thrown)
             return thrown(p, shot, files);
+        if(shot.windup)
+            return;
         if(shot.melee)
             return struck(p, shot, files);
 
@@ -577,12 +669,18 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         bool const replica = p.template subsystem<NetworkState>().replica;
         blam::tag_index_view<halo_version> index(files.container);
         auto tag = index.find(shot.weapon.tag_id);
-        if(tag == index.end() || !(*tag).matches(blam::tag_class_t::weap))
+        if(tag == index.end())
             return;
-        auto weapon = (*tag).template data<weapon_t>(magic);
-        if(!weapon.has_value() || !weapon.value()[0].player_melee_damage.valid())
+        /* A weapon's melee, or a unit's own (claws, the Flood's lunge) */
+        blam::tagref_t melee{};
+        if((*tag).matches(blam::tag_class_t::jpt))
+            melee = shot.weapon;
+        else if(auto weapon = (*tag).template data<weapon_t>(magic);
+                (*tag).matches(blam::tag_class_t::weap) && weapon.has_value())
+            melee = weapon.value()[0].player_melee_damage;
+        if(!melee.valid())
             return;
-        auto jpt = index.template data<blam::scn::damage_effect>(weapon.value()[0].player_melee_damage);
+        auto jpt = index.template data<blam::scn::damage_effect>(melee);
         /* A body in reach before a wall, else the wall */
         std::optional<std::pair<Physics::Raycast, Vecf3>> struck_at;
         /* Level and a little low, for the short: grunts and jackals */
@@ -608,12 +706,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         if(!struck_at)
             return;
         auto const& [ray, dir] = *struck_at;
-        landed(p, weapon.value()[0], jpt.has_value() ? jpt.value() : nullptr, ray, files);
+        landed(p, jpt.has_value() ? jpt.value() : nullptr, ray, files);
         if(replica || ray.entity_id == 0)
             return;
         auto const* target = p.template get<PlayerInfo>(ray.entity_id);
         ObjectHitEvent hit{
-            .damage         = weapon.value()[0].player_melee_damage,
+            .damage         = melee,
             .target         = ray.entity_id,
             .shooter        = shot.shooter,
             .target_player  = target ? target->player_idx : ObjectHitEvent::no_player,
@@ -633,7 +731,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     /* A blow is heard twice: the weapon's thump, and the globals' melee
      * sound for the material struck */
     void landed(
-        Proxy& p, weapon_t const& weapon, blam::scn::damage_effect const* jpt,
+        Proxy& p, blam::scn::damage_effect const* jpt,
         Physics::Raycast const& ray, BlamFiles<halo_version> const& files)
     {
         auto const& magic = files.container.magic;
@@ -1072,8 +1170,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return held && p.template get<Model>(held->held) ? held->held : 0;
     }
 
-    /* The weapon's export inputs, through its object functions, onto the
-     * first-person model: what turns its muzzle flash on */
+    /* The weapon's export inputs, through its object functions, onto its
+     * models: what turns its muzzle flash on, the needles it has left */
     void drive_functions(
         Proxy&               p,
         u64                  player,
@@ -1091,9 +1189,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
         f32 const charged =
             charging_time > 0.f && state.charge >= 0.f ? std::min(state.charge / charging_time, 1.f) : 0.f;
+        /* What is loaded, as a share of the magazine */
+        auto        triggers = weapon.triggers.data(magic);
+        auto const* magazine = gun && triggers.has_value() && !triggers.value().empty()
+                                   ? magazine_of(weapon, triggers.value()[0], magic)
+                                   : nullptr;
+        f32 const loaded = magazine && magazine->rounds_loaded_maximum > 0
+                               ? std::min(
+                                     static_cast<f32>(gun->rounds_loaded) /
+                                         magazine->rounds_loaded_maximum,
+                                     1.f)
+                               : 1.f;
         std::array<f32, 4> in{};
         for(size_t i = 0; i < in.size(); i++)
-            in[i] = input_value(weapon.weapon_inputs[i], state, held, gun, charged);
+            in[i] = input_value(weapon.weapon_inputs[i], state, held, gun, charged, loaded);
 
         std::array<f32, 4> out = in;
         auto functions         = weapon.functions.data(magic);
@@ -1101,6 +1210,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             for(size_t i = 0; i < out.size() && i < functions.value().size(); i++)
                 out[i] = blam_functions::evaluate(functions.value()[i], in, out);
         model->object_function = out;
+        if(auto* held = gun && gun->held ? p.template get<Model>(gun->held) : nullptr)
+            held->object_function = out;
         hum(p, player, id, *model, out, magic);
     }
 
@@ -1164,7 +1275,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     static f32 input_value(
         input_t input, state_t const& state, bool held, BipedEquipment::weapon_t const* gun,
-        f32 charged)
+        f32 charged, f32 loaded)
     {
         switch(input)
         {
@@ -1186,6 +1297,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             return held ? 1.f : 0.f;
         case input_t::primary_ammunition:
         case input_t::secondary_ammunition:
+            return loaded;
         case input_t::ready:
             return 1.f;
         default:
@@ -1214,11 +1326,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     /* Hand busy after letting go */
     static constexpr f32 throw_recovery = .4f;
 
-    /* Across the ground from the middle of the body */
-    static constexpr f32 pickup_reach = .8f;
-
     /* Ahead of the eye, clear of the body that fires */
-    static constexpr f32 muzzle_distance = .4f;
+    static constexpr f32 muzzle_distance = WeaponFireEvent::muzzle_distance;
     static constexpr f32 melee_time      = .8f;  /* s, a strike to the next */
     static constexpr f32 melee_reach     = 1.2f; /* wu, from the eye */
     static constexpr f32 melee_spread    = .15f; /* rad, the side rays */

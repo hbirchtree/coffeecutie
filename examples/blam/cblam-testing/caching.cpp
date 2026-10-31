@@ -194,11 +194,45 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     //            portal_color_ptr++;
     //        }
 
+    /* Fog volumes by region: the palette entry's tag, and the planes the
+     * region lies behind */
+    if(auto regions = section.fog_regions.data(bsp_magic); regions.has_value())
+    {
+        auto palette = section.fog_palettes.data(bsp_magic);
+        auto planes  = section.fog_planes.data(bsp_magic);
+        for(auto const& [ri, region] : stl_types::const_enumerate(regions.value()))
+        {
+            BSPItem::FogVolume volume;
+            if(palette.has_value() && region.fog_palette >= 0 &&
+               static_cast<size_t>(region.fog_palette) < palette.value().size())
+            {
+                auto const& ref = palette.value()[region.fog_palette].fog;
+                if(auto it = index.find(ref); ref.valid() && it != index.end())
+                    if(auto data = (*it).template data<blam::scn::fog>(magic); data.has_value())
+                        volume.tag = data.value();
+            }
+            if(planes.has_value())
+                for(auto const& plane : planes.value())
+                    if(plane.front_region == static_cast<i16>(ri))
+                        volume.planes.push_back(Vecf4(plane.normal, plane.offset));
+            out.fogs.push_back(std::move(volume));
+        }
+    }
+
+    /* A cluster names its fog region with the top bit set */
+    auto fog_of = [&out](i16 fog) -> i16 {
+        if(fog == -1)
+            return -1;
+        auto const region = static_cast<size_t>(fog & 0x7fff);
+        return region < out.fogs.size() && out.fogs[region].tag ? static_cast<i16>(region) : -1;
+    };
+
     auto bclusters = section.clusters.data(bsp_magic).value();
     for(blam::bsp::cluster const& cluster : bclusters)
     {
         out.clusters.push_back({
             .cluster = &cluster,
+            .fog     = fog_of(cluster.fog),
         });
         BSPItem::Cluster& it          = out.clusters.back();
         auto              portal_idxs = cluster.portals.data(bsp_magic).value();
@@ -842,13 +876,15 @@ bool ModelCache<V>::sample_animation(
     u32                          frame,
     u32                          node_count,
     std::vector<Quatf>&          rot,
-    std::vector<Vecf3>&          trans)
+    std::vector<Vecf3>&          trans,
+    std::vector<f32>&            scale)
 {
     auto default_bytes_opt = anim.default_data.data(magic);
     auto frame_bytes_opt   = anim.frame_data.data(magic);
     if(anim.is_compressed())
         return frame_bytes_opt.has_value() &&
-               blam::antr::sample_compressed(anim, frame_bytes_opt.value(), frame, node_count, rot, trans);
+               blam::antr::sample_compressed(
+                   anim, frame_bytes_opt.value(), frame, node_count, rot, trans, &scale);
     if(!default_bytes_opt.has_value() ||
        (!frame_bytes_opt.has_value() && anim.frame_size > 0))
         return false;
@@ -860,7 +896,8 @@ bool ModelCache<V>::sample_animation(
         frame,
         node_count,
         rot,
-        trans);
+        trans,
+        &scale);
 }
 
 /* Whether the foot frame came up between two frame positions, wrapping
@@ -1003,18 +1040,27 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
 template void ModelCache<halo_version>::advance_playback(
     AnimationPlayback&, f32);
 
+/* Exact where both agree, so unscaled nodes stay at 1 */
+static f32 mix_scale(f32 a, f32 b, f32 t)
+{
+    return a == b ? a : glm::mix(a, b, t);
+}
+
 /* Blends `from` toward `to` by t, node by node */
 static void mix_into(
     std::vector<Quatf>&       rot,
     std::vector<Vecf3>&       trans,
+    std::vector<f32>&         scale,
     std::vector<Quatf> const& to_rot,
     std::vector<Vecf3> const& to_trans,
+    std::vector<f32> const&   to_scale,
     f32                       t)
 {
     for(size_t i = 0; i < rot.size(); i++)
     {
         rot[i]   = glm::slerp(rot[i], to_rot[i], t);
         trans[i] = glm::mix(trans[i], to_trans[i], t);
+        scale[i] = mix_scale(scale[i], to_scale[i], t);
     }
 }
 
@@ -1040,16 +1086,16 @@ bool ModelCache<V>::sample_grid(
     auto frame = [&](i32 c, i32 r) {
         return static_cast<u32>(std::min(r * cols + c, clip.frame_count - 1));
     };
-    if(!sample_animation(clip, frame(c0, r0), n, m_layer_rot, m_layer_trans))
+    if(!sample_animation(clip, frame(c0, r0), n, m_layer_rot, m_layer_trans, m_layer_scale))
         return false;
-    if(fx > 0.f && sample_animation(clip, frame(c1, r0), n, m_ref_rot, m_ref_trans))
-        mix_into(m_layer_rot, m_layer_trans, m_ref_rot, m_ref_trans, fx);
+    if(fx > 0.f && sample_animation(clip, frame(c1, r0), n, m_ref_rot, m_ref_trans, m_ref_scale))
+        mix_into(m_layer_rot, m_layer_trans, m_layer_scale, m_ref_rot, m_ref_trans, m_ref_scale, fx);
     if(fy <= 0.f ||
-       !sample_animation(clip, frame(c0, r1), n, m_row_rot, m_row_trans))
+       !sample_animation(clip, frame(c0, r1), n, m_row_rot, m_row_trans, m_row_scale))
         return true;
-    if(fx > 0.f && sample_animation(clip, frame(c1, r1), n, m_ref_rot, m_ref_trans))
-        mix_into(m_row_rot, m_row_trans, m_ref_rot, m_ref_trans, fx);
-    mix_into(m_layer_rot, m_layer_trans, m_row_rot, m_row_trans, fy);
+    if(fx > 0.f && sample_animation(clip, frame(c1, r1), n, m_ref_rot, m_ref_trans, m_ref_scale))
+        mix_into(m_row_rot, m_row_trans, m_row_scale, m_ref_rot, m_ref_trans, m_ref_scale, fx);
+    mix_into(m_layer_rot, m_layer_trans, m_layer_scale, m_row_rot, m_row_trans, m_row_scale, fy);
     return true;
 }
 
@@ -1098,6 +1144,7 @@ void ModelCache<V>::evaluate_pose(
      * the model as its vertices already stand. */
     m_rot.assign(k, Quatf(1, 0, 0, 0));
     m_trans.assign(k, Vecf3(0));
+    m_scale.assign(k, 1.f);
     for(u32 i = 0; i < n; i++)
     {
         if(node_of(i) >= k)
@@ -1148,14 +1195,15 @@ void ModelCache<V>::evaluate_pose(
                                              : f0;
             f32 const blend = position - std::floor(position);
 
-            if(!sample_animation(*clip, f0, k, m_layer_rot, m_layer_trans))
+            if(!sample_animation(*clip, f0, k, m_layer_rot, m_layer_trans, m_layer_scale))
                 continue;
 
             /* Source runs at 30Hz, we do not, so ride between the two
              * frames. */
             if(f1 != f0 && blend > 0.f &&
-               sample_animation(*clip, f1, k, m_ref_rot, m_ref_trans))
-                mix_into(m_layer_rot, m_layer_trans, m_ref_rot, m_ref_trans, blend);
+               sample_animation(*clip, f1, k, m_ref_rot, m_ref_trans, m_ref_scale))
+                mix_into(
+                    m_layer_rot, m_layer_trans, m_layer_scale, m_ref_rot, m_ref_trans, m_ref_scale, blend);
         }
 
 
@@ -1174,7 +1222,8 @@ void ModelCache<V>::evaluate_pose(
             if(w <= 0.f)
                 break;
             base_weight += w;
-            mix_into(m_rot, m_trans, m_layer_rot, m_layer_trans, w / base_weight);
+            mix_into(
+                m_rot, m_trans, m_scale, m_layer_rot, m_layer_trans, m_layer_scale, w / base_weight);
             break;
         }
         case blam::antr::anim_type::replacement:
@@ -1185,6 +1234,8 @@ void ModelCache<V>::evaluate_pose(
                     m_rot[i] = glm::slerp(m_rot[i], m_layer_rot[i], w);
                 if(clip->has_translation(i))
                     m_trans[i] = glm::mix(m_trans[i], m_layer_trans[i], w);
+                if(clip->has_scale(i))
+                    m_scale[i] = mix_scale(m_scale[i], m_layer_scale[i], w);
             }
             break;
         case blam::antr::anim_type::overlay:
@@ -1197,6 +1248,8 @@ void ModelCache<V>::evaluate_pose(
                                glm::slerp(Quatf(1, 0, 0, 0), m_layer_rot[i], w);
                 if(clip->has_translation(i))
                     m_trans[i] += m_layer_trans[i] * w;
+                if(clip->has_scale(i))
+                    m_scale[i] *= mix_scale(1.f, m_layer_scale[i], w);
             }
             break;
         }
@@ -1208,6 +1261,8 @@ void ModelCache<V>::evaluate_pose(
     for(u32 i = 0; i < k; i++)
     {
         Matf4a local(glm::mat4_cast(m_rot[i]));
+        for(u32 axis = 0; axis < 3; axis++)
+            local[axis] *= m_scale[i];
         local[3] = Vecf4a(m_trans[i], 1.f);
         /* Graph roots name themselves or -1, neither below i */
         u32 parent = remap ? static_cast<u32>(m_node_parents[i])
@@ -1478,11 +1533,31 @@ void ShaderCache<V>::populate_material(
                 ->as<blam::shader::shader_chicago<blam::pc_version_t>>();
 
         auto maps = info->maps.data(magic).value();
+        /* A numeric counter: the first map's frames are digits, and the
+         * part shows one digit of the first function times the limit */
+        bool const numeric =
+            (static_cast<u8>(info->transparent.flags) &
+             static_cast<u8>(chicago::flags_t::numeric)) != 0 &&
+            context && context->object_function[0] >= 0.f && !maps.empty();
         for(auto i : range<>(4))
         {
             auto id = shader.schi.maps.at(i);
             if(!shader.schi.maps.at(i).valid())
                 continue;
+            if(numeric && i == 0)
+            {
+                u32 const limit = std::max<u32>(info->transparent.numeric_counter_limit, 1);
+                u32       n     = static_cast<u32>(std::lround(
+                    std::clamp(context->object_function[0], 0.f, 1.f) * limit));
+                if(static_cast<u32>(info->ex_flags) &
+                   static_cast<u32>(chicago::extra_flags::numeric_countdown_timer))
+                    n = limit - n;
+                for(u8 place = 0; place < context->numeric_place; place++)
+                    n /= 10;
+                if(auto digit = bitm_cache.resolve(maps[0].map.map, static_cast<i16>(n % 10));
+                   digit.valid())
+                    id = digit;
+            }
             BitmapItem const& bitm =
                 *bitm_cache.assign_atlas_data(mat.maps[i], id);
             chicago::map_t const& map = maps[i];

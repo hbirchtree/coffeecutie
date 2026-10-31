@@ -449,11 +449,11 @@ struct player_starting_profile
     tagref_t  secondary_weapon;
     u16       rounds2_loaded;
     u16       rounds2_total;
-    u16       frag_grenades;
-    u16       plasma_nades;
-    u16       c_nades;
-    u16       d_nades;
-    u32       padding2[4];
+    u8        frag_grenades;
+    u8        plasma_nades;
+    u8        c_nades;
+    u8        d_nades;
+    u32       padding2[5];
 };
 
 static_assert(sizeof(player_starting_profile) == 104);
@@ -607,34 +607,41 @@ struct actor
     actor_flags_t    flags;
     actor_ex_flags_t extra_flags;
     u32              padding[3];
-    actor_type_t     type;
+    actor_type_t     type; /* u16 and its pad */
 
     struct perception_t /* perception */
     {
         f32     max_vision_dist;
         angle_t central_vision;
         angle_t max_vision;
+        u32     padding0;
         angle_t peripheral_vision;
         f32     peripheral_dist;
+        u32     padding1;
         Vecf3   stand_gun_offset;
         Vecf3   crouch_gun_offset;
         f32     hearing_dist;
-        f32     projectile_awareness; /* [0,1] */
-        f32     vehicle_awareness;    /* [0,1] */
+        f32     projectile_awareness; /* notice projectile chance, [0,1] */
+        f32     vehicle_awareness;    /* notice vehicle chance, [0,1] */
+        u32     padding2[2];
         f32     combat_perception_time;
         f32     guard_perception_time;
+        f32     noncombat_perception_time;
+        f32     inverse_perception_times[3]; /* cache, per tick */
+        u32     padding3[2];
     } perception;
 
     struct movement_t
     {
-        f32 dive_into_cover_change;
-        f32 emerge_from_cover_chance;
-        f32 dive_from_grenade_chance;
-        f32 pathfinding_radius;
-        f32 glass_ignorance_chance;
-        f32 stationary_movement_dist;
-        f32 free_flying_sidestep;
-        f32 begin_moving_angle;
+        f32     dive_into_cover_change;
+        f32     emerge_from_cover_chance;
+        f32     dive_from_grenade_chance;
+        f32     pathfinding_radius;
+        f32     glass_ignorance_chance;
+        f32     stationary_movement_dist;
+        f32     free_flying_sidestep;
+        angle_t begin_moving_angle;
+        u32     padding;
     } movement;
 
     struct looking_t
@@ -657,7 +664,10 @@ struct actor
         Vecf2       combat_idle_facing;
         Vecf2       combat_idle_aiming;
         Vecf2       combat_idle_looking;
+        u32         padding0[2];
+        u32         cache[4];
         tagref_t    do_not_use_1;
+        u32         padding1[67];
         tagref_t    do_not_use_2;
     } looking;
 
@@ -666,24 +676,52 @@ struct actor
         danger_trigger_t unreachable_danger_trigger;
         danger_trigger_t vehicle_danger_trigger;
         danger_trigger_t player_danger_trigger;
+        u16              padding0;
         Vecf2            danger_trigger_time;
-        f32              friends_killed_trigger;
-        f32              friends_retreating_trigger;
+        i16              friends_killed_trigger;
+        i16              friends_retreating_trigger;
+        u32              padding1[3];
         Vecf2            retreat_time;
+        u32              padding2[2];
     } unopposable;
 
     struct panic_t
     {
         Vecf2        cowering_time;
         f32          friend_killed_panic_change;
-        actor_type_t leader_type;
+        actor_type_t leader_type; /* u16 and its pad */
         f32          leader_killed_panic_change;
         f32          panic_damage_threshold;
         f32          surprise_distance;
+        u32          padding[7];
     } panic;
 
     struct defensive_t
     {
+        Vecf2 hide_behind_cover_time;
+        f32   hide_target_not_visible_time;
+        f32   hide_shield_fraction;
+        f32   attack_shield_fraction;
+        f32   pursue_shield_fraction;
+        u32   padding0[4];
+        u16   defensive_crouch_type;
+        u16   padding1;
+        f32   attacking_crouch_threshold;
+        f32   defending_crouch_threshold;
+        f32   min_stand_time;
+        f32   min_crouch_time;
+        f32   defending_hide_time_modifier;
+        f32   attacking_evasion_threshold;
+        f32   defending_evasion_threshold;
+        f32   evasion_seek_cover_chance;
+        f32   evasion_delay_time;
+        f32   max_seek_cover_distance;
+        f32   cover_damage_threshold;
+        f32   stalking_discovery_time;
+        f32   stalking_max_distance;
+        angle_t stationary_facing_angle;
+        f32   change_facing_stand_time;
+        u32   padding2;
     } defensive;
 
     struct pursuit_t
@@ -691,12 +729,26 @@ struct actor
         Vecf2 uncover_delay_time;
         Vecf2 target_search_time;
         Vecf2 pursuit_position_time;
-        f32   num_positions_coord;
-        f32   num_positions_normal;
+        i16   num_positions_coord;
+        i16   num_positions_normal;
+        u32   padding[8];
     } pursuit;
 
     struct berserk_t
     {
+        f32   melee_attack_delay;
+        f32   melee_fudge_distance;
+        f32   melee_charge_time;
+        Vecf2 melee_leap_range;
+        f32   melee_leap_velocity;
+        f32   melee_leap_chance;
+        f32   melee_leap_ballistic;
+        f32   berserk_damage_amount;
+        f32   berserk_damage_threshold;
+        f32   berserk_proximity;
+        f32   suicide_sensing_dist;
+        f32   berserk_grenade_chance;
+        u32   padding[3];
     } berserk;
 
     struct firing_positions_t
@@ -705,6 +757,7 @@ struct actor
         Vecf2 combat_position_time;
         f32   old_position_avoid_dist;
         f32   friend_avoid_dist;
+        u32   padding[10];
     } firing_positions;
 
     struct communication_t
@@ -713,6 +766,18 @@ struct actor
         Vecf2 combat_idle_speech_time;
     } communication;
 };
+
+static_assert(offsetof(actor, perception) == 24);
+static_assert(offsetof(actor, perception) + offsetof(actor::perception_t, hearing_dist) == 76);
+static_assert(offsetof(actor, movement) == 128);
+static_assert(offsetof(actor, looking) == 164);
+static_assert(offsetof(actor, unopposable) == 616);
+static_assert(offsetof(actor, panic) == 664);
+static_assert(offsetof(actor, defensive) == 720);
+static_assert(offsetof(actor, pursuit) == 828);
+static_assert(offsetof(actor, berserk) == 888);
+static_assert(offsetof(actor, firing_positions) == 952);
+static_assert(offsetof(actor, communication) == 1016);
 
 using actor_variant_ref = tagref_t;
 
@@ -755,13 +820,18 @@ namespace ai {
 
 enum class state_t : i16
 {
-    unknown_1 = 0,
-    unknown_2 = 2,
-    unknown_3 = 6,
-    unknown_4 = 7,
-    unknown_5 = 9,
-    unknown_6 = 10,
-    unknown_7 = 11,
+    none,
+    sleeping,
+    alert,
+    moving_repeat_same_position,
+    moving_loop,
+    moving_loop_back_and_forth,
+    moving_loop_randomly,
+    moving_randomly,
+    guarding,
+    guarding_at_guard_position,
+    searching,
+    fleeing,
 };
 
 struct animation_ref
@@ -827,10 +897,48 @@ struct platoon
 struct firing_position
 {
     Vecf3 position;
-    u16   unknown1;
-    u16   unknown_idx;
+    u16   group;   /* A = 0; squads select positions by these bits */
+    u16   cluster; /* BSP cluster, cache only */
     u32   unknown[2];
 };
+
+/* Where an actor of a squad starts, and what it does from there */
+struct squad_location
+{
+    enum flags_t : u8
+    {
+        none     = 0x0,
+        required = 0x1,
+    };
+
+    Vecf3   position;
+    f32     facing; /* radians */
+    u16     unknown;
+    u8      sequence_id;
+    flags_t flags;
+    state_t return_state;
+    state_t initial_state;
+    i16     actor_type;   /* into the actor palette, -1 = the squad's */
+    i16     command_list; /* into the scenario's command lists, -1 = none */
+};
+
+static_assert(sizeof(squad_location) == 28);
+
+/* A point a squad's actors walk between while nothing is happening */
+struct squad_move_position
+{
+    Vecf3   position;
+    angle_t facing;
+    f32     weight;
+    Vecf2   time; /* seconds to stay */
+    i16     animation;
+    u8      sequence_id;
+    u8      padding0;
+    u32     padding1[11];
+    u32     surface_index; /* cache */
+};
+
+static_assert(sizeof(squad_move_position) == 80);
 
 struct squad
 {
@@ -850,10 +958,14 @@ struct squad
     u32               unk2[3];
     u16               normal_diff_count;
     u16               insane_diff_count;
-    u32               unk3[20];
-    reference<u8> start_locations;
-    u32               unk4[3];
+    u32                       unk3[17];
+    reference<squad_move_position> move_positions;
+    reference<squad_location> start_locations;
+    u32                       unk4[3];
 };
+
+static_assert(offsetof(squad, start_locations) == 0xd0);
+static_assert(sizeof(squad) == 232);
 
 struct squad_spawn
 {
@@ -868,9 +980,9 @@ static_assert(sizeof(squad_spawn) == 28);
 
 struct encounter
 {
-    bl_string_var<16> name;
+    bl_string name;
 
-    enum flags_t : u16
+    enum flags_t : u32
     {
         none                       = 0x0,
         not_initially_created      = 0x1,
@@ -896,6 +1008,8 @@ struct encounter
         unused_9,
     } team_index;
 
+    u16 padding;
+
     enum search_behavior_t : u16
     {
         search_normal,
@@ -905,13 +1019,14 @@ struct encounter
 
     i16                        manual_bsp_index;
     Vecf2                      respawn_delay;
-    u32                        unk[24];
+    u32                        unk[19];
     reference<squad>           squads;
     reference<platoon>         platoons;
     reference<firing_position> firing_positions;
     reference<squad_spawn>     start_locations;
 };
 
+static_assert(offsetof(encounter, squads) == 0x80);
 static_assert(sizeof(encounter) == 176);
 
 struct command_list_command
@@ -999,6 +1114,8 @@ static_assert(sizeof(command_list) == 96);
 
 struct conversation_participant
 {
+    u16 padding0;
+
     enum flags_t : u16
     {
         none           = 0x0,
@@ -1019,14 +1136,16 @@ struct conversation_participant
         radio_sergeant,
     } selection_type;
 
-    actor_type_t actor_type;
-    i16          use_this_object; // references object_names list
-    i16          set_new_name;    // references object_names list
-    u32          padding[10];
-    bl_string    encounter_name;
+    u16       actor_type;      // actor_type_t
+    i16       use_this_object; // references object_names list
+    i16       set_new_name;    // references object_names list
+    u32       padding[6];
+    bl_string encounter_name;
+    u32       padding1[4];
 };
 
 static_assert(sizeof(conversation_participant) == 84);
+static_assert(offsetof(conversation_participant, encounter_name) == 36);
 
 struct conversation_line
 {
@@ -1041,15 +1160,16 @@ struct conversation_line
     } flags;
 
     i16                              participant;
-    i16                              addressee;
+    i16                              addressee; /* 0 none, 1 player, 2 participant */
     i16                              addressee_participant;
+    u32                              padding0;
     f32                              line_delay_time;
+    u32                              padding1[3];
     tagref_typed_t<tag_class_t::snd> variants[6];
-
-    u32 padding[4];
 };
 
 static_assert(sizeof(conversation_line) == 124);
+static_assert(offsetof(conversation_line, variants) == 28);
 
 struct conversation
 {
@@ -1169,6 +1289,69 @@ struct shader_index
 };
 
 using skybox_ref = tagref_t;
+
+/*! Planar fog: a volume under a BSP fog plane, denser with depth below it
+ *  and with the distance seen through it */
+struct fog
+{
+    static constexpr tag_class_t tag_class = tag_class_t::fog;
+
+    enum class flags_t : u32
+    {
+        none                = 0x0,
+        is_water            = 0x1,
+        atmosphere_dominant = 0x2,
+        fog_screen_only     = 0x4,
+    };
+
+    flags_t flags;
+    u32     padding[21];
+    f32     maximum_density;
+    u32     padding2;
+    f32     opaque_distance; /*!< wu seen through it, fully fogged */
+    u32     padding3;
+    f32     opaque_depth; /*!< wu below the plane, fully fogged */
+    u32     padding4[2];
+    f32     distance_to_water_plane;
+    Vecf3   color;
+
+    struct screen_layers_t
+    {
+        u16   flags;
+        i16   layer_count;
+        Vecf2 distance_gradient;
+        Vecf2 density_gradient;
+        f32   start_distance_from_plane;
+        u32   padding;
+        u32   color_argb;
+        f32   rotation_multiplier;
+        f32   strafing_multiplier;
+        f32   zoom_multiplier;
+        u32   padding2[2];
+        f32   map_scale;
+        tagref_typed_t<tag_class_t::bitm> map;
+        f32   animation_period;
+        u32   padding3;
+        Vecf2 wind_velocity;
+        Vecf2 wind_period;
+        f32   wind_acceleration_weight;
+        f32   wind_perpendicular_weight;
+        u32   padding4[2];
+    } screen;
+
+    tagref_typed_t<tag_class_t::lsnd> background_sound;
+    tagref_typed_t<tag_class_t::snde> sound_environment;
+    u32                               padding5[30];
+};
+
+C_FLAGS(fog::flags_t, u32)
+
+static_assert(offsetof(fog, maximum_density) == 88);
+static_assert(offsetof(fog, color) == 120);
+static_assert(offsetof(fog, screen) == 132);
+static_assert(offsetof(fog, screen.map) == 188);
+static_assert(offsetof(fog, background_sound) == 244);
+static_assert(sizeof(fog) == 396);
 
 struct skybox
 {

@@ -31,6 +31,7 @@ using AnimationControllerManifest = compo::SubsystemManifest<
         const Attachment,
         const BipedEquipment,
         const BipedStatus,
+        const Actor,
         HeldObject,
         AnimationPlayback>,
     type_list_t<
@@ -94,6 +95,7 @@ struct AnimationController
         animate_first_person(p, files);
         animate_faces(p);
         animate_turrets(p);
+        animate_objects(p, files);
         end_actions(p);
 
         auto& cache = p.template subsystem<ModelCache<halo_version>>();
@@ -143,6 +145,7 @@ struct AnimationController
         std::array<i32, UnitSlot::hovering + 1> unit_slots{};
         std::array<i32, 10>                     weapon_slots{};
         blam::antr::screen_bounds               aim{};
+        blam::antr::screen_bounds               look{};
 
         stance_t()
         {
@@ -205,6 +208,7 @@ struct AnimationController
                 i < out.unit_slots.size() && i < refs.value().size();
                 i++)
                 out.unit_slots[i] = refs.value()[i].animation;
+        out.look     = found->looking_bounds;
         auto weapons = found->weapons.data(magic);
         if(!weapons.has_value() || weapons.value().empty())
             return out;
@@ -307,7 +311,7 @@ struct AnimationController
                 p,
                 player.id(),
                 anim,
-                cam.camera.position - Vecf3{0.f, 0.f, biped.eye_height},
+                cam.camera.position - Vecf3{0.f, 0.f, info.eye_height()},
                 look,
                 weapon,
                 info.mode.physics && !info.is_remote() && data
@@ -315,22 +319,33 @@ struct AnimationController
                     : std::nullopt,
                 grounded,
                 dt,
-                "stand",
+                info.crouched ? "crouch" : "stand",
                 dead(p, player.id()));
         }
 
+        update_gazes(p, dt);
         for(auto npc : p.template select<Model, ObjectPhysics, AnimationPlayback>())
         {
             auto [model, physics, anim] = npc.components();
             if(!loaded || !physics.upright || !anim.graph)
                 continue;
             seen.insert(npc.id());
+            /* Aimed wherever its body faces, as a player's aim follows the
+             * camera */
+            Vecf3 look = model.rotation * Vecf3{1.f, 0.f, 0.f};
+            f32   yaw  = 0.f;
+            if(Vecf3 const to = anim.aiming; glm::length(Vecf2(to)) > 1e-3f)
+            {
+                f32 const pitch = std::atan2(to.z, glm::length(Vecf2(to)));
+                yaw  = std::atan2(look.x * to.y - look.y * to.x, look.x * to.x + look.y * to.y);
+                look = Vecf3{Vecf2(look) * std::cos(pitch), std::sin(pitch)};
+            }
             animate_unit(
                 p,
                 npc.id(),
                 anim,
                 model.position,
-                model.rotation * Vecf3{1.f, 0.f, 0.f},
+                look,
                 held_label(p, npc.id(), files),
                 physics.authority == ObjectPhysics::Simulated
                     ? std::optional(physics.walking)
@@ -339,11 +354,35 @@ struct AnimationController
                 physics.grounded || physics.scripted,
                 dt,
                 anim.stance,
-                dead(p, npc.id()));
+                dead(p, npc.id()),
+                yaw);
         }
 
         for(auto it = m_walkers.begin(); it != m_walkers.end();)
             it = seen.contains(it->first) ? std::next(it) : m_walkers.erase(it);
+    }
+
+    /* An actor aims at what it fights, and peers are sent that; any gaze
+     * lapses unless renewed */
+    void update_gazes(Proxy& p, f32 dt)
+    {
+        for(auto ent : p.template select<Actor, Model, AnimationPlayback>())
+        {
+            auto [actor, model, anim] = ent.components();
+            Vecf3 const to =
+                actor.target ? actor.last_seen - model.position : Vecf3{};
+            if(glm::length(Vecf2(to)) > 1e-3f)
+                anim.gaze(glm::normalize(to), {}, actor_gaze_hold);
+        }
+        for(auto ent : p.template select<AnimationPlayback>())
+        {
+            auto& anim = ent.template get<AnimationPlayback>();
+            if(anim.gaze_hold <= 0.f)
+                continue;
+            anim.gaze_hold = std::max(anim.gaze_hold - dt, 0.f);
+            if(anim.gaze_hold <= 0.f)
+                anim.gaze({}, {}, 0.f);
+        }
     }
 
     /* Base layers from how a unit moves */
@@ -358,7 +397,8 @@ struct AnimationController
         bool               grounded,
         f32                dt,
         std::string const& unit = "stand",
-        bool               dead = false)
+        bool               dead = false,
+        f32                yaw  = 0.f) /* aim, counter-clockwise from `look` */
     {
         auto& walker = m_walkers[id];
         if(dead)
@@ -481,13 +521,15 @@ struct AnimationController
             st[Slot::aim_still],
             st.aim,
             pitch,
-            1.f - moving);
+            1.f - moving,
+            yaw);
         aim(anim.layers[AnimationPlayback::aim_move_slot],
             graph,
             st[Slot::aim_move],
             st.aim,
             pitch,
-            moving);
+            moving,
+            yaw);
 
         /* Feet are probed for once the clocks have moved */
         walker.running = speed > run_threshold;
@@ -784,6 +826,40 @@ struct AnimationController
                               unit_flags::none;
             m_aimed.insert(id);
         }
+        /* Anyone else at the gun turns it where they aim */
+        for(auto rider : p.template select<ObjectPhysics, AnimationPlayback>())
+        {
+            auto const& physics = rider.template get<ObjectPhysics>();
+            Vecf3 const aiming = rider.template get<AnimationPlayback>().aiming;
+            u64 const   id = physics.seated && glm::dot(aiming, aiming) > 1e-6f
+                                 ? physics.seated_in
+                                 : 0;
+            auto* anim = id ? p.template get<AnimationPlayback>(id) : nullptr;
+            auto const* model = id ? p.template get<Model>(id) : nullptr;
+            if(!anim || !anim->graph || !model || !model->origin_object ||
+               m_aimed.contains(id))
+                continue;
+            auto unit = model->origin_object->template data<blam::scn::unit>(magic);
+            if(!unit.has_value())
+                continue;
+            auto seats = unit.value()[0].seats.data(magic);
+            if(!seats.has_value() || physics.seat < 0 || static_cast<size_t>(physics.seat) >= seats.value().size() ||
+               (seats.value()[physics.seat].flags & seat_flags::gunner) == seat_flags::none)
+                continue;
+            auto const& st    = stance(p, anim->graph, "stand", "fixed");
+            Vecf3 const local = glm::conjugate(model->rotation) * aiming;
+            auto&       layer = anim->layers[AnimationPlayback::turret_slot];
+            aim(layer,
+                anim->graph,
+                st[Slot::aim_still],
+                st.aim,
+                std::asin(std::clamp(local.z, -1.f, 1.f)),
+                1.f,
+                std::atan2(local.y, local.x));
+            layer.grid_wrap = (unit.value()[0].unit_flags & unit_flags::circular_aiming) !=
+                              unit_flags::none;
+            m_aimed.insert(id);
+        }
     }
 
     /* An overlay posed at `at` (0..1) along its frames, by grid */
@@ -830,6 +906,12 @@ struct AnimationController
             if(a == st[move])
                 return true;
         return false;
+    }
+
+    /* Within `below` under zero and `above` over it */
+    static f32 clamp_to(f32 v, f32 below, f32 above)
+    {
+        return std::clamp(v, -below, above);
     }
 
     /* Aim grids are columns right to left, rows bottom to top */
@@ -898,11 +980,91 @@ struct AnimationController
                 layer.weight = weight;
             };
             frame(AnimationPlayback::talk_slot, st[UnitSlot::talk], 0.f, anim.mouth);
+            /* The head turns from where the unit aims toward where it looks */
+            auto const* model = p.template get<Model>(ent.id());
+            Vecf3 const gaze  = anim.looking;
+            if(!model || glm::dot(gaze, gaze) < 1e-6f || st[UnitSlot::look] < 0)
+            {
+                if(anim.layers[AnimationPlayback::look_slot].graph)
+                    anim.stop(AnimationPlayback::look_slot);
+            } else
+            {
+                Vecf3 const body   = model->rotation * Vecf3{1.f, 0.f, 0.f};
+                Vecf3 const from   = glm::dot(anim.aiming, anim.aiming) > 1e-6f
+                                         ? anim.aiming
+                                         : body;
+                auto const  angles = [](Vecf3 const& v) {
+                    return Vecf2{
+                        std::atan2(v.y, v.x),
+                        std::atan2(v.z, glm::length(Vecf2(v)))};
+                };
+                Vecf2 const at = angles(gaze) - angles(from);
+                f32 const   yaw =
+                    glm::mod(at.x + glm::pi<f32>(), glm::two_pi<f32>()) -
+                    glm::pi<f32>();
+                aim(anim.layers[AnimationPlayback::look_slot],
+                    anim.graph,
+                    st[UnitSlot::look],
+                    st.look,
+                    clamp_to(
+                        at.y,
+                        st.look.down_pitch_per_frame *
+                            st.look.down_pitch_frame_count,
+                        st.look.up_pitch_per_frame *
+                            st.look.up_pitch_frame_count),
+                    1.f,
+                    clamp_to(
+                        yaw,
+                        st.look.right_yaw_per_frame * st.look.right_frame_count,
+                        st.look.left_yaw_per_frame * st.look.left_frame_count));
+            }
             frame(
                 AnimationPlayback::emotion_slot,
                 st[UnitSlot::emotions],
                 std::max<f32>(anim.emotion, 0.f) / 30.f,
                 anim.emotion >= 0 ? 1.f : 0.f);
+        }
+    }
+
+    /* The graph's object animation follows an object function: its frame,
+     * or its weight */
+    void animate_objects(Proxy& p, BlamFiles<halo_version> const& files)
+    {
+        using controls_t  = blam::antr::object::function_controls_t;
+        auto const& magic = files.container.magic;
+        for(auto ent : p.template select<Model, AnimationPlayback>())
+        {
+            auto& anim = ent.template get<AnimationPlayback>();
+            if(!anim.graph || anim.graph->objects.count == 0)
+                continue;
+            auto objects = anim.graph->objects.data(magic);
+            auto clips   = anim.graph->animations.data(magic);
+            if(!objects.has_value() || objects.value().empty() || !clips.has_value())
+                continue;
+            auto const& object = objects.value()[0];
+            auto const  fn     = static_cast<u32>(object.function);
+            i32 const   clip   = object.animation.animation;
+            f32 const   value =
+                fn < 4 ? ent.template get<Model>().object_function[fn] : -1.f;
+            if(value < 0.f || clip < 0 || static_cast<size_t>(clip) >= clips.value().size())
+                continue;
+            /* Without units the idle picked is this same clip, running free */
+            auto& idle = anim.layers[AnimationPlayback::base_slot];
+            if(idle.graph == anim.graph && idle.animation == static_cast<u32>(clip) && !idle.paused)
+                anim.stop(AnimationPlayback::base_slot);
+            auto& layer = anim.layers[AnimationPlayback::object_slot];
+            bool const by_frame = object.function_controls == controls_t::frame;
+            if(layer.graph != anim.graph || layer.animation != static_cast<u32>(clip))
+                layer = AnimationLayer{
+                    .graph     = anim.graph,
+                    .animation = static_cast<u32>(clip),
+                    .loop      = !by_frame,
+                    .paused    = by_frame,
+                };
+            auto const& animation = clips.value()[clip];
+            if(by_frame)
+                layer.time = value * std::max(animation.frame_count - 1, 0) / animation.frame_rate();
+            layer.weight = by_frame ? 1.f : value;
         }
     }
 
@@ -968,7 +1130,45 @@ struct AnimationController
                                                    : -1;
             if(i32 const pose = hold >= 0 ? hold : clip(fp_slot::idle); pose >= 0)
                 anim.crossfade(anim.graph, static_cast<u32>(pose), blend_time);
+            /* The ammunition overlay holds the frame of what is loaded: the
+             * needler's needles leave as it fires */
+            if(i32 const ammo = clip(fp_slot::ammunition); ammo >= 0 && gun)
+                hold_ammunition(anim, static_cast<u32>(ammo), *gun, magic);
         }
+    }
+
+    void hold_ammunition(
+        AnimationPlayback&                    anim,
+        u32                                   clip,
+        BipedEquipment::weapon_t const&       gun,
+        blam::map_ptr const&                  magic)
+    {
+        auto clips = anim.graph->animations.data(magic);
+        if(!clips.has_value() || clip >= clips.value().size() || !gun.tag)
+            return;
+        auto weapon = gun.tag->template data<blam::scn::weapon>(magic);
+        if(!weapon.has_value())
+            return;
+        auto triggers  = weapon.value()[0].triggers.data(magic);
+        auto magazines = weapon.value()[0].magazines.data(magic);
+        if(!triggers.has_value() || triggers.value().empty() || !magazines.has_value() ||
+           triggers.value()[0].magazine < 0 ||
+           static_cast<size_t>(triggers.value()[0].magazine) >= magazines.value().size())
+            return;
+        auto const& magazine = magazines.value()[triggers.value()[0].magazine];
+        if(magazine.rounds_loaded_maximum <= 0)
+            return;
+        f32 const loaded =
+            std::min(static_cast<f32>(gun.rounds_loaded) / magazine.rounds_loaded_maximum, 1.f);
+        auto const& animation = clips.value()[clip];
+        auto&       layer     = anim.layers[AnimationPlayback::state_slot];
+        layer.graph     = anim.graph;
+        layer.animation = clip;
+        layer.loop      = false;
+        layer.paused    = true;
+        layer.finished  = false;
+        layer.weight    = 1.f;
+        layer.time = loaded * std::max(animation.frame_count - 1, 0) / animation.frame_rate();
     }
 
     /* One-shot actions and overlays fade once they have played out */
@@ -1125,16 +1325,21 @@ struct AnimationController
     {
         auto const* info = p.template get<PlayerInfo>(shot.shooter);
         auto const* anim = p.template get<AnimationPlayback>(shot.shooter);
-        if(shot.vehicle || shot.thrown || !info || info->riding.vehicle || !anim ||
-           !anim->graph)
+        if(shot.vehicle || shot.thrown || (info && info->riding.vehicle) || !anim || !anim->graph)
             return;
-        i32 const clip = stance(p, anim->graph, "stand", held_label(p, shot.shooter, files))
-            [shot.melee ? WeaponSlot::melee : WeaponSlot::fire_1];
+        /* Others' strikes swing as they wind up; the blow itself and their
+         * shots leave the body as it is */
+        if(!info && !shot.windup)
+            return;
+        auto const& clips = stance(p, anim->graph, "stand", held_label(p, shot.shooter, files));
+        i32 clip = clips[shot.melee ? WeaponSlot::melee : WeaponSlot::fire_1];
+        if(shot.melee && clip < 0)
+            clip = clips[Slot::melee];
         auto anims = anim->graph->animations.data(files.container.magic);
-        /* A base clip would stop it walking */
+        /* A base clip would stop a player walking */
         if(clip < 0 || !anims.has_value() ||
            static_cast<size_t>(clip) >= anims.value().size() ||
-           anims.value()[clip].type == blam::antr::anim_type::base)
+           (info && anims.value()[clip].type == blam::antr::anim_type::base))
             return;
         apply(p, {.entity = shot.shooter, .animation = clip, .fade = 0.f});
     }
@@ -1166,7 +1371,7 @@ struct AnimationController
         auto const* cam  = p.template get<PlayerCamera>(entity);
         if(info && cam)
             return cam->camera.position -
-                   Vecf3{0.f, 0.f, info->biped.eye_height};
+                   Vecf3{0.f, 0.f, info->eye_height()};
         if(auto const* model = p.template get<Model>(entity))
             return model->position;
         return {};
@@ -1278,6 +1483,7 @@ struct AnimationController
     static constexpr f32 blend_time     = .15f; /* s */
     static constexpr f32 land_blend_time = .08f;
     static constexpr f32 air_delay       = .1f; /* s off the ground */
+    static constexpr f32 actor_gaze_hold = .25f; /* s an actor's aim outlasts its last renewal */
     /* About a 1.4 wu drop under Halo's gravity */
     static constexpr f32 hard_landing_speed = 3.f; /* wu/s */
 

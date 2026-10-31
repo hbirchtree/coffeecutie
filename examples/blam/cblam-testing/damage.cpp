@@ -10,22 +10,27 @@
 #include "sounds.h"
 #include "ticks.h"
 
+#include <blam/volta/blam_actor.h>
+#include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_effects.h>
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 
 #include <map>
+#include <set>
 #include <random>
 
 using DamageManifest = compo::SubsystemManifest<
     type_list_t<
         BipedStatus,
         BipedEquipment,
-        const PlayerInfo,
+        PlayerInfo,
         const PlayerCamera,
         Model,
-        const ObjectPhysics>,
+        const ObjectPhysics,
+        const Actor,
+        const NetworkInfo>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
@@ -60,17 +65,31 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         auto hits   = std::exchange(m_hits, {});
         auto areas  = std::exchange(m_areas, {});
         auto struck = std::exchange(m_struck, {});
-        for(auto const& vitality : std::exchange(m_vitality, {}))
+        auto vitalities = std::exchange(m_vitality, {});
+        for(auto const& vitality : vitalities)
             take(p, vitality);
         m_respawn_queue->poll();
         auto respawns = std::exchange(m_respawns, {});
+        m_pickup_queue->poll();
+        auto pickups = std::exchange(m_pickups, {});
 
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         m_magic           = &files.container.magic;
         m_index.emplace(files.container);
+        /* What was dying goes with the map it was on */
+        if(std::exchange(m_generation, files.load_generation) != files.load_generation)
+        {
+            m_dying.clear();
+            m_gone.clear();
+            m_destroyed.clear();
+            m_broods.clear();
+        }
         for(auto const& area : areas)
             blast(p, area);
-        if(!p.template subsystem<NetworkState>().replica)
+        bool const authority = !p.template subsystem<NetworkState>().replica;
+        for(auto const& pickup : pickups)
+            power_up(p, pickup, authority);
+        if(authority)
         {
             for(auto const& hit : hits)
                 if(auto const* jpt = damage_of(hit.damage))
@@ -85,9 +104,79 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 run_down(p, s);
             for(auto const& respawn : respawns)
                 revive(p, respawn);
+            for(auto const& vitality : vitalities)
+                put_down(p, vitality);
+            fall_apart(p, dt);
+            let_out(p, areas, dt);
         }
         recharge(p, dt);
+        wear_off(p, dt);
         export_functions(p);
+    }
+
+    /* ---- Powerups ---- */
+
+    /* Shield and health are the authority's to give; the timed ones run on
+     * every peer that hears of the pickup */
+    void power_up(Proxy& p, EquipWeaponEvent const& pickup, bool authority)
+    {
+        using powerup_t = blam::scn::equipment::powerup_type_t;
+        auto it         = m_index->find(pickup.weapon);
+        if(it == m_index->end() || !(*it).matches(blam::tag_class_t::eqip))
+            return;
+        auto eqip = (*it).template data<blam::scn::equipment>(*m_magic);
+        auto* info   = p.template get<PlayerInfo>(pickup.entity_id);
+        auto* status = p.template get<BipedStatus>(pickup.entity_id);
+        if(!eqip.has_value() || !info || !status || status->dead)
+            return;
+        f32 const time = eqip.value()[0].powerup_time;
+        switch(eqip.value()[0].powerup_type)
+        {
+        case powerup_t::over_shield:
+            if(!authority || status->maximum_shield() <= 0.f)
+                return;
+            if(status->shield <= 0.f)
+                shield_down(p, pickup.entity_id, false);
+            status->shield           = BipedStatus::over_shield;
+            status->overcharge_decay = time > 0.f ? (BipedStatus::over_shield - 1.f) / time : 0.f;
+            status->stunned          = 0.f;
+            break;
+        case powerup_t::health:
+            if(!authority)
+                return;
+            status->body = 1.f;
+            break;
+        case powerup_t::active_camouflage:
+            info->powerups.camouflage = time;
+            return;
+        case powerup_t::double_speed:
+            info->powerups.speed = time;
+            return;
+        case powerup_t::full_spectrum_vision:
+            info->powerups.vision = time;
+            return;
+        default:
+            return;
+        }
+        tell(p, pickup.entity_id, *status);
+    }
+
+    /* Timed powerups run out, and are lost with the body; a player's own
+     * peer says whether it is camouflaged */
+    void wear_off(Proxy& p, f32 dt)
+    {
+        for(auto ent : p.template select<PlayerInfo>())
+        {
+            auto& info   = ent.template get<PlayerInfo>();
+            auto& left   = info.powerups;
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            if(status && status->dead)
+                left = {};
+            for(f32* t : {&left.camouflage, &left.speed, &left.vision})
+                *t = std::max(*t - dt, 0.f);
+            if(!info.is_remote())
+                info.camouflaged = left.camouflage > 0.f;
+        }
     }
 
     /* ---- Blows ---- */
@@ -148,9 +237,12 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                u.has_value() && (u.value()[0].unit_flags & flags_t::not_instantly_killed_by_melee) !=
                                     flags_t::none)
                 return false;
+        bool const shielded = status->shield > 0.f;
         status->shield = 0.f;
         status->body   = 0.f;
         status->dead   = true;
+        if(shielded)
+            shield_down(p, unit, true);
         last_words(p, unit, true);
         tell(p, unit, *status, {}, 0.f, false, false, true);
         killed(p, unit, killer);
@@ -165,7 +257,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             return;
         auto const& coll   = *status->coll;
         f32         amount = uniform(jpt.upper_bound) * scale;
-        f32         shield_mult = 1.f, body_mult = 1.f;
+        f32         shield_mult = 1.f, body_mult = 1.f, leak = 0.f;
+        u16         struck      = blam::scn::material_type_count;
         if(i16 const material = material_of(p, unit, part); material >= 0)
             if(auto materials = coll.materials.data(*m_magic);
                materials.has_value() &&
@@ -174,17 +267,24 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 auto const& m = materials.value()[material];
                 shield_mult   = m.shield_damage_multiplier;
                 body_mult     = m.body_damage_multiplier;
-                if(m.material_type < blam::scn::material_type_count &&
-                   jpt.material_modifiers[m.material_type] > 0.f)
-                    amount *= jpt.material_modifiers[m.material_type];
+                leak          = m.shield_leak_percentage;
+                struck        = m.material_type;
             }
+        /* Up, the shield is what is struck: the damage is modified for its
+         * material, not the part's behind it */
+        bool const shielded = status->shield > 0.f && status->maximum_shield() > 0.f &&
+                              shield_mult > 0.f;
+        amount *= modifier_of(jpt, shielded ? coll.shield_material_type : struck);
         /* A spent arm shield is down: what struck it reaches the body */
         if(body_mult <= 0.f && status->shield <= 0.f)
             body_mult = 1.f;
         bool const headshot =
             head && (jpt.damage_flags & flag_t::can_cause_headshots) != flag_t::none;
         bool const violent = amount >= status->maximum_body();
-        apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot);
+        f32 const  before  = status->shield;
+        apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot, leak);
+        if(before > 0.f && status->shield <= 0.f)
+            shield_down(p, unit, true);
         if(status->dead)
             last_words(p, unit, violent);
         tell(p, unit, *status, {}, 0.f, false, false, violent);
@@ -192,15 +292,30 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             killed(p, unit, killer);
     }
 
-    /* Shield first, then whatever gets past it into the body. Unshielded,
-     * a headshot from a weapon that can make one kills */
+    /* A jpt!'s modifier for a material type. A list with any entry set is
+     * authored, and a zero in it means nothing gets through; a blank list
+     * leaves the damage alone */
+    static f32 modifier_of(jpt_t const& jpt, u16 material)
+    {
+        if(material >= blam::scn::material_type_count)
+            return 1.f;
+        bool authored = false;
+        for(u32 i = 0; i < blam::scn::material_type_count; i++)
+            authored = authored || jpt.material_modifiers[i] != 0.f;
+        return authored ? jpt.material_modifiers[material] : 1.f;
+    }
+
+    /* Shield first, with `leak` of the blow passing through it, then
+     * whatever gets past it into the body. Unshielded, a headshot from a
+     * weapon that can make one kills */
     void apply(
         BipedStatus& status,
         f32          amount,
         f32          shield_mult,
         f32          body_mult,
         flag_t       flags,
-        bool         headshot)
+        bool         headshot,
+        f32          leak = 0.f)
     {
         auto const& coll       = *status.coll;
         f32 const   max_shield = status.maximum_shield();
@@ -216,9 +331,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(shielded && (flags & flag_t::skips_shields) == flag_t::none)
         {
             status.recent_shield = 1.f;
-            f32 const soak = status.shield * max_shield / shield_mult;
-            status.shield  = std::max(status.shield - amount * shield_mult / max_shield, 0.f);
-            amount         = std::max(amount - soak, 0.f);
+            f32 const leaked = amount * std::clamp(leak, 0.f, 1.f);
+            f32 const soak   = status.shield * max_shield / shield_mult;
+            status.shield    = std::max(status.shield - amount * shield_mult / max_shield, 0.f);
+            amount           = std::max(amount - soak, 0.f) + leaked;
         }
         if(amount <= 0.f || body_mult <= 0.f ||
            (flags & flag_t::only_hurts_shields) != flag_t::none)
@@ -229,6 +345,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(status.body < dead_below)
             status.body = 0.f;
         status.dead = status.body <= 0.f;
+        /* The dead keep no shield up, a jackal's gate included */
+        if(status.dead)
+            status.shield = 0.f;
     }
 
     /* Everything near enough takes some, less further out */
@@ -293,7 +412,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 0.f,
                 1.f));
         f32 const total = status->maximum_body() + std::max(status->maximum_shield(), 0.f);
+        f32 const before = status->shield;
         apply(*status, share * total, 1.f, 1.f, flag_t::none, false);
+        if(before > 0.f && status->shield <= 0.f)
+            shield_down(p, struck.unit, true);
         if(status->dead)
             last_words(p, struck.unit, true);
         tell(p, struck.unit, *status, {}, 0.f, false, false, true);
@@ -315,18 +437,209 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             auto const* cam = p.template get<PlayerCamera>(unit);
             if(!cam || info->riding.vehicle != 0)
                 return std::nullopt;
-            return cam->camera.position - Vecf3{0.f, 0.f, info->biped.eye_offset()};
+            return cam->camera.position - Vecf3{0.f, 0.f, info->eye_offset()};
         }
         if(auto const* model = p.template get<Model>(unit))
             return model->position + Vecf3{0.f, 0.f, unit_middle};
         return std::nullopt;
     }
 
+    /* ---- Destroyed after dying ---- */
+
+    blam::scn::unit const* unit_of(Proxy& p, u64 unit) const
+    {
+        auto const* model = p.template get<Model>(unit);
+        if(!model || !model->origin_object)
+            return nullptr;
+        auto u = model->origin_object->template data<blam::scn::unit>(*m_magic);
+        return u.has_value() ? &u.value()[0] : nullptr;
+    }
+
+    /* A unit its tag destroys after dying (flood carriers and infection
+     * forms) goes once its kill animation has played */
+    void doom(Proxy& p, u64 unit)
+    {
+        using flags_t = blam::scn::unit::unit_flags_t;
+        auto const* u = unit_of(p, unit);
+        if(u && (u->unit_flags & flags_t::destroyed_after_dying) != flags_t::none &&
+           !m_destroyed.contains(unit))
+            m_dying.emplace(unit, kill_time(*u));
+    }
+
+    f32 kill_time(blam::scn::unit const& u) const
+    {
+        auto const* graph = tag_data<blam::antr::header>(u.anim_graph, blam::tag_class_t::antr);
+        if(!graph)
+            return 0.f;
+        auto animations = graph->animations.data(*m_magic);
+        if(!animations.has_value())
+            return 0.f;
+        for(auto const& animation : animations.value())
+            if(animation.name.str().find("kill") != std::string_view::npos)
+                return animation.frame_count / animation.frame_rate();
+        return 0.f;
+    }
+
+    /* A death raised elsewhere: a script's, done already, or one asked for
+     * (a carrier at its target) */
+    void put_down(Proxy& p, UnitVitalityEvent const& vitality)
+    {
+        auto* status = p.template get<BipedStatus>(vitality.unit);
+        if(!status || vitality.origin != MapLoadEvent::Local || !vitality.dead ||
+           vitality.destroyed)
+            return;
+        if(status->dead)
+            return doom(p, vitality.unit);
+        status->shield = status->body = 0.f;
+        status->dead   = true;
+        last_words(p, vitality.unit, false);
+        tell(p, vitality.unit, *status);
+        killed(p, vitality.unit, ObjectHitEvent::no_player);
+    }
+
+    /* Its time up, a dead unit bursts and is taken away the frame after,
+     * once everyone has been told */
+    void fall_apart(Proxy& p, f32 dt)
+    {
+        for(u32 net_id : std::exchange(m_gone, {}))
+        {
+            GameEvent          ev{.type = GameEvent::DespawnObject};
+            DespawnObjectEvent gone{.net_id = net_id};
+            p.template subsystem<GameEventBus>().inject(ev, &gone);
+        }
+        std::erase_if(m_destroyed, [&p](u64 unit) { return !p.template get<BipedStatus>(unit); });
+        for(auto it = m_dying.begin(); it != m_dying.end();)
+        {
+            auto const* status = p.template get<BipedStatus>(it->first);
+            if(status && status->dead && (it->second -= dt) > 0.f)
+            {
+                ++it;
+                continue;
+            }
+            if(status && status->dead)
+            {
+                burst(p, it->first);
+                hatch(p, it->first);
+                tell(p, it->first, *status, {}, 0.f, false, false, false, true);
+                if(auto const* net = p.template get<NetworkInfo>(it->first); net && net->instance_id)
+                    m_gone.push_back(net->instance_id);
+                m_destroyed.insert(it->first);
+            }
+            it = m_dying.erase(it);
+        }
+    }
+
+    /* Its coll's body destroyed effect, where it lies */
+    void burst(Proxy& p, u64 unit)
+    {
+        if(auto const* status = p.template get<BipedStatus>(unit); status && status->coll)
+            play_at(p, unit, status->coll->body_destroyed_effect);
+    }
+
+    void play_at(Proxy& p, u64 unit, blam::tagref_t const& effect)
+    {
+        auto centre = centre_of(p, unit);
+        if(!effect.valid() || !centre)
+            return;
+        GameEvent        ev{.type = GameEvent::SpawnEffect};
+        SpawnEffectEvent play{
+            .effect    = effect,
+            .position  = *centre,
+            .direction = {0.f, 0.f, 1.f},
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &play);
+    }
+
+    /* What a unit carries, its tag's spawned actors, kept in until its
+     * burst has gone off so that it does not kill them */
+    void hatch(Proxy& p, u64 unit)
+    {
+        auto const* u     = unit_of(p, unit);
+        auto const* model = p.template get<Model>(unit);
+        if(!u || !model)
+            return;
+        auto const* actv =
+            tag_data<blam::scn::actor_variant>(u->spawned_actor, blam::tag_class_t::actv);
+        if(!actv || !actv->unit.valid())
+            return;
+        i32 const least = std::max<i32>(u->spawned_actor_count[0], 0);
+        i32 const most  = std::max<i32>(u->spawned_actor_count[1], least);
+        brood_t   brood{
+              .at      = model->position,
+              .burst   = centre_of(p, unit).value_or(model->position),
+              .variant = u->spawned_actor,
+              .unit    = actv->unit,
+              .weapon  = actv->weapon,
+              .count   = std::uniform_int_distribution<i32>(least, most)(m_random),
+              .speed   = u->spawned_velocity,
+              .wait    = hatch_wait,
+        };
+        if(auto const* actor = p.template get<Actor>(unit))
+        {
+            brood.encounter = actor->encounter;
+            brood.squad     = actor->squad;
+            brood.team      = actor->team;
+        }
+        if(auto const* net = p.template get<NetworkInfo>(unit))
+            brood.like = net->instance_id;
+        if(brood.count > 0)
+            m_broods.push_back(brood);
+    }
+
+    /* Thrown out at the unit tag's spawned velocity, they join its squad */
+    void let_out(Proxy& p, std::vector<AreaDamageEvent> const& areas, f32 dt)
+    {
+        auto& bus = p.template subsystem<GameEventBus>();
+        for(auto it = m_broods.begin(); it != m_broods.end();)
+        {
+            /* Out the frame after the burst, once its blast has thrown what it will */
+            bool const went_off = std::any_of(areas.begin(), areas.end(), [&it](AreaDamageEvent const& a) {
+                return glm::distance(a.position, it->burst) < 1e-2f;
+            });
+            if(went_off)
+                it->wait = 0.f;
+            if(went_off || (it->wait -= dt) > 0.f)
+            {
+                ++it;
+                continue;
+            }
+            for(i32 i = 0; i < it->count; i++)
+            {
+                f32 const   turn = std::uniform_real_distribution<f32>(0.f, glm::two_pi<f32>())(m_random);
+                Vecf3 const out{std::cos(turn), std::sin(turn), 0.f};
+                SpawnObjectEvent spawn{
+                    .object       = it->unit,
+                    .position     = it->at + out * hatch_spread + Vecf3{0.f, 0.f, spawn_lift},
+                    .rotation     = glm::angleAxis(turn, Vecf3{0.f, 0.f, 1.f}),
+                    .server_owned = true,
+                    .velocity     = glm::normalize(out + Vecf3{0.f, 0.f, 1.f}) * it->speed,
+                    .held         = it->weapon,
+                };
+                GameEvent ev{.type = GameEvent::SpawnObject};
+                bus.inject(ev, &spawn);
+                if(spawn.net_id == 0 || it->encounter < 0)
+                    continue;
+                GameEvent        enlist_ev{.type = GameEvent::EnlistActor};
+                EnlistActorEvent enlist{
+                    .net_id    = spawn.net_id,
+                    .variant   = it->variant,
+                    .like      = it->like,
+                    .encounter = it->encounter,
+                    .squad     = it->squad,
+                    .team      = it->team,
+                    .post      = spawn.position,
+                };
+                bus.inject(enlist_ev, &enlist);
+            }
+            it = m_broods.erase(it);
+        }
+    }
+
     /* ---- What everyone sees ---- */
 
     void tell(Proxy& p, u64 unit, BipedStatus const& status,
               std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f, bool arrived = false,
-              bool fresh = false, bool violent = false)
+              bool fresh = false, bool violent = false, bool destroyed = false)
     {
         auto const*       info = p.template get<PlayerInfo>(unit);
         GameEvent         ev{.type = GameEvent::UnitVitality};
@@ -341,13 +654,17 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .respawn_facing = facing,
             .arrived        = arrived,
             .fresh          = fresh,
+            .destroyed      = destroyed,
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
     }
 
-    /* Its dialogue's death line, loud or quiet by how it went */
+    /* Its coll's body depleted effect, and its dialogue's death line, loud
+     * or quiet by how it went */
     void last_words(Proxy& p, u64 unit, bool violent)
     {
+        if(auto const* status = p.template get<BipedStatus>(unit); status && status->coll)
+            play_at(p, unit, status->coll->body_depleted_effect);
         auto const* model  = p.template get<Model>(unit);
         auto*       sounds = p.template service<comp_app::EventBus<SoundEvent>>();
         if(!model || !model->origin_object || !sounds)
@@ -381,6 +698,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         GameEvent       ev{.type = GameEvent::UnitKilled};
         UnitKilledEvent kill{.unit = unit, .player = player_of(p, unit), .killer = killer};
         p.template subsystem<GameEventBus>().inject(ev, &kill);
+        doom(p, unit);
     }
 
     /* What the authority says is left; a player of ours that comes back to
@@ -391,12 +709,18 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(!status || vitality.origin != MapLoadEvent::Remote)
             return;
         status->body       = vitality.body;
+        status->overcharge_decay = vitality.overcharge_decay;
         if(vitality.shield < status->shield)
             status->recent_shield = 1.f;
+        bool const was_up = status->shield > 0.f;
         status->shield     = vitality.shield;
+        if(was_up != (status->shield > 0.f))
+            shield_down(p, vitality.unit, was_up);
         if(vitality.dead && !status->dead)
             last_words(p, vitality.unit, vitality.violent);
         status->dead       = vitality.dead;
+        if(vitality.destroyed)
+            burst(p, vitality.unit);
         if(vitality.shield < 1.f)
             status->stunned = status->coll ? status->coll->stun_time : default_stun;
         if(auto const* info = p.template get<PlayerInfo>(vitality.unit);
@@ -408,6 +732,27 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         }
         if(vitality.respawn_at && vitality.arrived)
             arrive(p, vitality.unit, *vitality.respawn_at);
+    }
+
+    /* Its shield gone, with the coll's depletion effect, or back: the
+     * loader turns off and on what the tags tie to it */
+    void shield_down(Proxy& p, u64 unit, bool down)
+    {
+        auto const* status = p.template get<BipedStatus>(unit);
+        if(down && status && status->coll && status->coll->shield_depleted_effect.valid())
+            if(auto centre = centre_of(p, unit))
+            {
+                GameEvent        ev{.type = GameEvent::SpawnEffect};
+                SpawnEffectEvent play{
+                    .effect    = status->coll->shield_depleted_effect,
+                    .position  = *centre,
+                    .direction = {0.f, 0.f, 1.f},
+                };
+                p.template subsystem<GameEventBus>().inject(ev, &play);
+            }
+        GameEvent           ev{.type = GameEvent::ShieldDepleted};
+        ShieldDepletedEvent state{.unit = unit, .depleted = down};
+        p.template subsystem<GameEventBus>().inject(ev, &state);
     }
 
     /* The players' respawn effect where it comes back, standing up */
@@ -458,8 +803,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(!status || (!status->dead && !respawn.restore))
             return;
         bool const shielded = status->maximum_shield() > 0.f;
+        bool const was_down = status->shield <= 0.f;
         status->body        = respawn.restore ? respawn.body : 1.f;
         status->shield      = shielded ? (respawn.restore ? respawn.shield : 1.f) : 0.f;
+        if(was_down && status->shield > 0.f)
+            shield_down(p, respawn.unit, false);
         status->dead        = status->body <= 0.f;
         status->stunned = 0.f;
         tell(p, respawn.unit, *status, respawn.position, respawn.facing, respawn.arrive,
@@ -484,6 +832,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         {
             auto& status = unit.template get<BipedStatus>();
             status.recent_shield = std::max(status.recent_shield - dt / recent_fade, 0.f);
+            /* An over shield runs down to a full one */
+            if(status.shield > 1.f)
+                status.shield = std::max(status.shield - status.overcharge_decay * dt, 1.f);
+            if(status.shield <= 1.f)
+                status.overcharge_decay = 0.f;
             if(status.dead || !status.coll || status.maximum_shield() <= 0.f ||
                status.shield >= 1.f)
                 continue;
@@ -493,7 +846,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             f32 const full = status.coll->recharge_time > 0.f
                                  ? status.coll->recharge_time
                                  : default_recharge;
-            status.shield = std::min(status.shield + dt / full, 1.f);
+            bool const was_down = status.shield <= 0.f;
+            status.shield       = std::min(status.shield + dt / full, 1.f);
+            if(was_down && status.shield > 0.f)
+                shield_down(p, unit.id(), false);
         }
     }
 
@@ -562,6 +918,24 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     static constexpr f32 recent_fade = .75f; /* seconds a shield hit glows */
     static constexpr f32   default_recharge = 2.f;  /* s */
     static constexpr f32   dead_below       = 1e-4f;
+    static constexpr f32   hatch_wait       = .5f;  /* s, at most, for the burst */
+    static constexpr f32   hatch_spread     = .3f;  /* wu */
+
+    struct brood_t
+    {
+        Vecf3          at{};
+        Vecf3          burst{};
+        blam::tagref_t variant{};
+        blam::tagref_t unit{};
+        blam::tagref_t weapon{};
+        i32            count{0};
+        f32            speed{0.f};
+        f32            wait{0.f};
+        i16            encounter{-1};
+        i16            squad{-1};
+        u16            team{0};
+        u32            like{0};
+    };
 
     std::unique_ptr<TickQueue> m_ticks;
     std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>>    m_hit_queue;
@@ -574,6 +948,13 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<Physics::UnitStruck> m_struck;
     std::shared_ptr<GameEventBus::queue_type<RespawnUnitEvent>> m_respawn_queue;
     std::vector<RespawnUnitEvent>    m_respawns;
+    std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>> m_pickup_queue;
+    std::vector<EquipWeaponEvent>    m_pickups;
+    std::map<u64, f32>               m_dying; /* unit: seconds until destroyed */
+    std::vector<u32>                 m_gone;  /* net ids, despawned next frame */
+    std::set<u64>                    m_destroyed;
+    u32                              m_generation{0};
+    std::vector<brood_t>             m_broods;
 
     blam::map_ptr const*                              m_magic{nullptr};
     std::optional<blam::tag_index_view<halo_version>> m_index;
@@ -593,6 +974,11 @@ void alloc_damage(compo::EntityContainer& e)
     damage.m_respawn_queue = game.addQueuedEventFunction<RespawnUnitEvent>(
         0, [&damage](GameEvent&, RespawnUnitEvent* respawn) {
             damage.m_respawns.push_back(*respawn);
+        });
+    damage.m_pickup_queue = game.addQueuedEventFunction<EquipWeaponEvent>(
+        0, [&damage](GameEvent&, EquipWeaponEvent* equip) {
+            if(equip->mode == EquipWeaponEvent::pick_up)
+                damage.m_pickups.push_back(*equip);
         });
     damage.m_area_queue = game.addQueuedEventFunction<AreaDamageEvent>(
         0, [&damage](GameEvent&, AreaDamageEvent* area) {
