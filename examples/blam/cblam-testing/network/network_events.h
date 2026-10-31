@@ -13,6 +13,8 @@
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/vectors/glm_vector_types.h>
 
+#include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace net_messages {
@@ -577,8 +579,10 @@ struct alignas(8) ObjectSync
     {
         none     = 0x0,
         sleeping = 0x1,
-        crouched = 0x2, /*!< A unit down on its knees: its stance */
-        asleep   = 0x4, /*!< A unit lying asleep: its stance */
+        crouched = 0x2,  /*!< A unit down on its knees: its stance */
+        asleep   = 0x4,  /*!< A unit lying asleep: its stance */
+        aiming   = 0x8,  /*!< A unit aiming off its body: `aim` */
+        looking  = 0x10, /*!< A unit looking off its aim: `look` */
     };
 
     u64     tick{0}; /*!< Server tick this is the state after */
@@ -588,6 +592,30 @@ struct alignas(8) ObjectSync
     Vecf4   angular_velocity;
     u32     net_id{0};
     flags_t flags{none};
+    i16     aim[2]{}; /*!< World yaw, pitch in pi/32768 */
+    i16     look[2]{};
+
+    static constexpr f32 angle_unit = 3.14159265f / 32768.f;
+
+    static void pack(i16 (&out)[2], Vecf3 const& dir)
+    {
+        auto const unit = [](f32 a) {
+            return static_cast<i16>(
+                std::clamp<long>(std::lround(a / angle_unit), -32767, 32767));
+        };
+        out[0] = unit(std::atan2(dir.y, dir.x));
+        out[1] =
+            unit(std::atan2(dir.z, std::sqrt(dir.x * dir.x + dir.y * dir.y)));
+    }
+
+    static Vecf3 unpack(i16 const (&in)[2])
+    {
+        f32 const yaw = in[0] * angle_unit, pitch = in[1] * angle_unit;
+        return Vecf3{
+            std::cos(pitch) * std::cos(yaw),
+            std::cos(pitch) * std::sin(yaw),
+            std::sin(pitch)};
+    }
 };
 
 struct alignas(8) Screenshot
@@ -710,7 +738,7 @@ static_assert(sizeof(SpawnRequest) == 56);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 52);
 static_assert(sizeof(Message<CameraSync>) == 72);
-static_assert(sizeof(ObjectSync) == 80);
+static_assert(sizeof(ObjectSync) == 88);
 static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(RiderSync) == 16);
 static_assert(sizeof(EquipmentSync) == 24);

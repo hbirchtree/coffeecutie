@@ -3180,7 +3180,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(physics.mass <= 0.f || net.instance_id == 0)
                 continue;
             auto const* anim = p.get<AnimationPlayback>(object.id());
-            ObjectSync const sync{
+            ObjectSync sync{
                 .tick             = tick,
                 .rotation         = model.rotation,
                 .position         = Vecf4(model.position, 0),
@@ -3192,9 +3192,24 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     (anim && anim->stance == "crouch" ? ObjectSync::crouched : ObjectSync::none) |
                     (anim && anim->stance == "asleep" ? ObjectSync::asleep : ObjectSync::none)),
             };
+            /* Where a unit aims and looks; one doing either is kept current */
+            bool const aims  = anim && glm::dot(anim->aiming, anim->aiming) > 1e-6f;
+            bool const looks = anim && glm::dot(anim->looking, anim->looking) > 1e-6f;
+            bool const gazing = (aims || looks) && !p.get<PlayerInfo>(object.id());
+            if(gazing && aims)
+            {
+                ObjectSync::pack(sync.aim, anim->aiming);
+                sync.flags = static_cast<ObjectSync::flags_t>(sync.flags | ObjectSync::aiming);
+            }
+            if(gazing && looks)
+            {
+                ObjectSync::pack(sync.look, anim->looking);
+                sync.flags = static_cast<ObjectSync::flags_t>(sync.flags | ObjectSync::looking);
+            }
             all.push_back(sync);
             auto& was_asleep = m_object_asleep[net.instance_id];
-            if(!physics.sleeping)
+            auto& was_gazing = m_object_gazing[net.instance_id];
+            if(!physics.sleeping || gazing || was_gazing)
             {
                 changed.push_back(sync);
                 changed_nets.push_back(&net);
@@ -3202,6 +3217,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             else if(!was_asleep)
                 settled.push_back(sync);
             was_asleep = physics.sleeping;
+            was_gazing = gazing;
         }
 
         std::set<HSteamNetConnection> fresh, current;
@@ -4990,6 +5006,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr size_t object_history_size = 32;
     u64                     m_synced_tick{0};
     std::map<u32, bool>                      m_object_asleep;
+    std::map<u32, bool>                      m_object_gazing;
     /* Last seat sent per player index; the client's own, to the server */
     std::map<u32, SeatSync>                  m_sent_seats;
     std::map<u32, RiderSync>                 m_sent_riders; /* unit net id */
@@ -5055,6 +5072,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr u64         max_spacing       = 15;
     /* Past its newest state, a stream carries on along its velocity this long */
     static constexpr libc_types::f64 max_extrapolation = 10.;
+    /* A unit's gaze outlasts its last sync this long, s */
+    static constexpr libc_types::f32 gaze_hold = .3f;
 
     /* Ticks between a stream's states, smoothed: a slow sender, or one
      * sent to rarely, is shown further behind so there is always a next
@@ -5296,6 +5315,24 @@ struct ObjectFollower
                     anim->stance = (to.flags & ObjectSync::asleep)     ? "asleep"
                                    : (to.flags & ObjectSync::crouched) ? "crouch"
                                                                        : "stand";
+                /* And its gaze, which lapses unless the server keeps it up */
+                if(auto* anim = p.get<AnimationPlayback>(object.id());
+                   anim && !p.get<PlayerInfo>(object.id()) &&
+                   (to.flags & (ObjectSync::aiming | ObjectSync::looking)))
+                {
+                    auto const gaze = [&](ObjectSync::flags_t flag, i16 const(&a)[2], i16 const(&b)[2]) {
+                        if(!(to.flags & flag))
+                            return Vecf3{};
+                        Vecf3 const v = (from.flags & flag)
+                                            ? glm::mix(ObjectSync::unpack(a), ObjectSync::unpack(b), alpha)
+                                            : ObjectSync::unpack(b);
+                        return glm::dot(v, v) > 1e-6f ? glm::normalize(v) : ObjectSync::unpack(b);
+                    };
+                    anim->gaze(
+                        gaze(ObjectSync::aiming, from.aim, to.aim),
+                        gaze(ObjectSync::looking, from.look, to.look),
+                        Networking::gaze_hold);
+                }
                 /* Run dry: carry on as it was going, a little way */
                 if(f64 const past = at - static_cast<f64>(to.tick); past > 0. && !(to.flags & ObjectSync::sleeping))
                 {
