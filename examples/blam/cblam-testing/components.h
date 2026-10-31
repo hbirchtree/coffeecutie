@@ -302,6 +302,8 @@ struct Model
     blam::tag_t const* origin_object{nullptr};
     /*! A weapon on the ground: the battery it was dropped with */
     libc_types::f32 item_age{0.f};
+    /*! And the rounds left in it; see SpawnObjectEvent::rounds */
+    std::optional<std::array<libc_types::u16, 2>> item_rounds;
 
     /*! Active camouflage: drawn as a refraction of what is behind it */
     bool camouflaged{false};

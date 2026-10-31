@@ -2003,7 +2003,8 @@ struct ResourceLoader
         }
 
         Model& model = ent.template get<Model>();
-        model.item_age = spawn.age;
+        model.item_age    = spawn.age;
+        model.item_rounds = spawn.rounds;
         if(model_it != index.end())
         {
             model.tag          = &(*model_it);
@@ -3016,16 +3017,9 @@ struct ResourceLoader
         if(!weapon.has_value())
             return {};
         BipedEquipment::weapon_t out{.weapon = weapon.value(), .tag = tag};
-        auto triggers  = weapon.value()->triggers.data(magic);
-        auto magazines = weapon.value()->magazines.data(magic);
-        if(!triggers.has_value() || triggers.value().empty() || !magazines.has_value())
-            return out;
-        auto const index = triggers.value()[0].magazine;
-        if(index < 0 || static_cast<size_t>(index) >= magazines.value().size())
-            return out;
-        auto const& magazine = magazines.value()[index];
-        out.rounds_loaded    = static_cast<u16>(std::max<i16>(magazine.rounds_loaded_maximum, 0));
-        out.rounds_total     = static_cast<u16>(std::max<i16>(magazine.rounds_total_initial, 0));
+        auto const rounds = initial_rounds(out.weapon, magic);
+        out.rounds_loaded = rounds[0];
+        out.rounds_total  = rounds[1];
         return out;
     }
 
@@ -3088,7 +3082,12 @@ struct ResourceLoader
             for(auto* carried : {&held, &slung})
                 if(carried->tag == tag)
                 {
-                    take_ammo(*carried, armed(tag, files), files);
+                    /* Into the reserve, as much as fits */
+                    carried->rounds_total = static_cast<u16>(
+                        carried->rounds_total +
+                        std::min<i32>(
+                            change.rounds[0] + change.rounds[1],
+                            reserve_room(*carried, files.container.magic)));
                     return;
                 }
         /* The other weapon is drawn, or a new one taken; the one in hand is
@@ -3107,6 +3106,11 @@ struct ResourceLoader
                 drop(held, cam, info.biped.eye_height);
             held     = armed(tag, files);
             held.age = change.age;
+            if(change.mode == EquipWeaponEvent::pick_up)
+            {
+                held.rounds_loaded = change.rounds[0];
+                held.rounds_total  = change.rounds[1];
+            }
         }
         equip.reloading = false;
     }
@@ -3135,24 +3139,6 @@ struct ResourceLoader
         sounds->inject(ev, &play);
     }
 
-    /* A full magazine's worth, up to what can be carried */
-    static void take_ammo(
-        BipedEquipment::weapon_t&       carried,
-        BipedEquipment::weapon_t const& found,
-        BlamFiles<Ver> const&           files)
-    {
-        auto const& magic     = files.container.magic;
-        auto        triggers  = carried.weapon->triggers.data(magic);
-        auto        magazines = carried.weapon->magazines.data(magic);
-        i32         cap       = std::numeric_limits<u16>::max();
-        if(triggers.has_value() && !triggers.value().empty() && magazines.has_value())
-            if(auto const i = triggers.value()[0].magazine;
-               i >= 0 && static_cast<size_t>(i) < magazines.value().size())
-                cap = magazines.value()[i].rounds_reserved_maximum;
-        carried.rounds_total = static_cast<u16>(std::clamp<i32>(
-            carried.rounds_total + found.rounds_loaded, 0, std::max(cap, 0)));
-    }
-
     /* The dead drop what they carried; only their own peer spawns it, as
      * everyone else is told */
     void let_go(BipedEquipment& equip, PlayerCamera const& cam, PlayerInfo const& info)
@@ -3162,7 +3148,7 @@ struct ResourceLoader
         {
             for(auto const& weapon : equip.weapons)
                 if(weapon.tag)
-                    drop(weapon.tag, cam, info.biped.eye_height, turn++, weapon.age);
+                    drop(weapon, cam, info.biped.eye_height, turn++);
             for(auto const& carried : equip.equipment)
                 for(u16 i = 0; carried.tag && i < carried.left; i++)
                     drop(carried.tag, cam, info.biped.eye_height, turn++);
@@ -3265,16 +3251,20 @@ struct ResourceLoader
                 arm(p, unit, *tag, *model, files);
     }
 
-    /* Thrown down ahead of the feet, through the usual spawn path */
-    void drop(BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height)
+    /* Thrown down ahead of the feet, through the usual spawn path, with
+     * the battery and rounds it had */
+    void drop(
+        BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height,
+        f32 turn = 0.f)
     {
-        drop(weapon.tag, cam, eye_height, 0.f, weapon.age);
+        drop(weapon.tag, cam, eye_height, turn, weapon.age,
+             std::array<u16, 2>{weapon.rounds_loaded, weapon.rounds_total});
     }
 
     /* Tossed ahead, each `turn` a little further round */
     void drop(
         blam::tag_t const* tag, PlayerCamera const& cam, f32 eye_height, f32 turn = 0.f,
-        f32 age = 0.f)
+        f32 age = 0.f, std::optional<std::array<u16, 2>> rounds = std::nullopt)
     {
         Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
         Vecf3 const ahead   = glm::length(Vecf2(forward)) > 1e-3f
@@ -3287,6 +3277,7 @@ struct ResourceLoader
             .server_owned = true,
             .velocity     = flat + Vecf3{0.f, 0.f, 1.f},
             .age          = age,
+            .rounds       = rounds,
         };
         GameEvent ev{.type = GameEvent::SpawnObject};
         game_bus->inject(ev, &spawn);
