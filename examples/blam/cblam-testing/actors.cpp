@@ -226,6 +226,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 route_knee      = .2f;  /* wu above the feet, for what is low */
     static constexpr f32 body_radius     = .3f;  /* wu either side of a walking body */
     static constexpr f32 steer_ahead     = 2.f;  /* wu ahead obstacles are steered round */
+    static constexpr f32 default_windup  = .35f; /* s before a blow lands, a swing without a key frame */
+    static constexpr f32 lunge_reach     = 3.f;  /* wu a target comes within to be lunged at */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
@@ -346,10 +348,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     actor.goal = position_of(kind, actor.position);
             }
             /* Unarmed, or with nowhere to fight from: it closes in, to arm's
-             * reach or the near edge of the range it fights at */
-            bool const charge = !armed || actor.position < 0;
-            f32 const  close  = !armed ? std::max(actv.melee_range * .8f, .5f)
-                                       : std::max(actv.desired_combat_range.x, 2.f);
+             * reach or the near edge of the range it fights at; a target come
+             * close is lunged at to strike */
+            f32 const  apart  = glm::distance(model.position, actor.last_seen);
+            bool const lunge  = actv.melee_range > 0.f && actor.seen_ago < look_period * 2.f &&
+                               apart < std::max(actv.melee_range * 2.f, lunge_reach);
+            bool const charge = !armed || lunge || actor.position < 0;
+            f32 const  close  = !armed || lunge ? std::max(actv.melee_range * .8f, .5f)
+                                                : std::max(actv.desired_combat_range.x, 2.f);
             bool const there  = charge ? glm::distance(model.position, actor.last_seen) <= close
                                        : glm::distance(model.position, actor.goal) <= arrive_radius;
             if(!there)
@@ -1530,7 +1536,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         actor.melee_in -= look_period / 8.f;
-        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > actv.melee_range)
+        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > actv.melee_range * 1.3f)
+        {
+            /* Out of reach: a swing under way is called off */
+            actor.swinging  = false;
+            actor.strike_in = 0.f;
+            return false;
+        }
+        if(!actor.swinging && glm::distance(model.position, actor.last_seen) > actv.melee_range)
             return false;
         /* A carrier form at its target falls over and bursts */
         if(kind.actor->type == blam::scn::actor_type_t::carrier_form)
@@ -1540,8 +1553,16 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             p.template subsystem<GameEventBus>().inject(ev, &death);
             return true;
         }
-        if(actor.melee_in > 0.f)
+        /* Winding up: the blow lands at the swing's key frame, if the target
+         * is still within reach */
+        if(actor.strike_in > 0.f)
+        {
+            if((actor.strike_in -= look_period / 8.f) > 0.f)
+                return true;
+            actor.strike_in = 0.f;
+        } else if(actor.melee_in > 0.f)
             return true;
+        bool const windup = actor.strike_in == 0.f && actor.melee_in <= 0.f && !actor.swinging;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         auto const* equip = p.template get<BipedEquipment>(id);
         auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
@@ -1553,7 +1574,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     with = unit.value()[0].melee_damage;
         if(!with.valid())
             return false;
-        actor.melee_in = 1.5f;
         Vecf3 const eye = eye_of(p, id);
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
@@ -1561,11 +1581,27 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .shooter    = id,
             .player_idx = ObjectHitEvent::no_player,
             .melee      = true,
+            .windup     = windup,
             .position   = eye,
             .direction  = glm::normalize(actor.last_seen + chest_of(p, actor.target) - eye),
             .target     = actor.target,
         };
         p.template subsystem<GameEventBus>().inject(ev, &shot);
+        if(windup)
+        {
+            /* The swing first, the blow at its key frame */
+            auto const* anim = p.template get<AnimationPlayback>(id);
+            std::string const weapon =
+                gun && gun->weapon ? std::string(gun->weapon->label.str()) : std::string("unarmed");
+            f32 const key = anim && anim->graph ? melee_key_time(*anim->graph, *s_magic, weapon) : 0.f;
+            actor.strike_in = key > 0.f ? key : default_windup;
+            actor.swinging  = true;
+            if(std::getenv("BLAM_DEBUG_AI"))
+                cDebug("ai: {} winds up at {} ({:.2f} s)", id, actor.target, actor.strike_in);
+            return true;
+        }
+        actor.swinging = false;
+        actor.melee_in = 1.5f;
         if(std::getenv("BLAM_DEBUG_AI"))
             cDebug("ai: {} strikes {}", id, actor.target);
         return true;

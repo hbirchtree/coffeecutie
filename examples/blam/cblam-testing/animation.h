@@ -255,6 +255,43 @@ struct AnimationPlayback
     }
 };
 
+/* Seconds into a unit's melee swing (holding `weapon`) that the blow lands:
+ * its clip's key frame; 0 without one */
+inline libc_types::f32 melee_key_time(
+    blam::antr::header const& graph, blam::map_ptr const& magic, std::string_view weapon)
+{
+    using Slot   = blam::antr::unit_weapon::animation_idx_t;
+    auto units   = graph.units.data(magic);
+    auto anims   = graph.animations.data(magic);
+    if(!units.has_value() || !anims.has_value())
+        return 0.f;
+    for(auto const& unit : units.value())
+    {
+        if(unit.label.str() != "stand")
+            continue;
+        auto weapons = unit.weapons.data(magic);
+        if(!weapons.has_value() || weapons.value().empty())
+            return 0.f;
+        auto const* held = &weapons.value()[0];
+        for(auto const& candidate : weapons.value())
+            if(candidate.name.str() == weapon)
+                held = &candidate;
+        libc_types::i16 clip = -1;
+        if(auto types = held->weapon_types.data(magic); types.has_value())
+            for(auto const& type : types.value())
+                if(auto refs = type.animations.data(magic);
+                   type.label.str() == weapon && refs.has_value() &&
+                   refs.value().size() > static_cast<size_t>(blam::antr::weapon_animation_idx_t::melee))
+                    clip = refs.value()[static_cast<size_t>(blam::antr::weapon_animation_idx_t::melee)].animation;
+        if(auto refs = held->animations.data(magic); clip < 0 && refs.has_value() && refs.value().size() > Slot::melee)
+            clip = refs.value()[Slot::melee].animation;
+        if(clip < 0 || static_cast<size_t>(clip) >= anims.value().size())
+            return 0.f;
+        return std::max<libc_types::i16>(anims.value()[clip].key_frame, 0) / 30.f;
+    }
+    return 0.f;
+}
+
 /* Ground speed of a move clip of a unit (stance) holding a weapon, from
  * its root motion; the stance's first weapon stands in for one it lacks,
  * 0 when the graph has none */
