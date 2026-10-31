@@ -1223,16 +1223,21 @@ struct AnimationController
     {
         auto const* info = p.template get<PlayerInfo>(shot.shooter);
         auto const* anim = p.template get<AnimationPlayback>(shot.shooter);
-        if(shot.vehicle || shot.thrown || !info || info->riding.vehicle || !anim ||
-           !anim->graph)
+        if(shot.vehicle || shot.thrown || (info && info->riding.vehicle) || !anim || !anim->graph)
             return;
-        i32 const clip = stance(p, anim->graph, "stand", held_label(p, shot.shooter, files))
-            [shot.melee ? WeaponSlot::melee : WeaponSlot::fire_1];
+        /* Others' strikes swing as they wind up; the blow itself and their
+         * shots leave the body as it is */
+        if(!info && !shot.windup)
+            return;
+        auto const& clips = stance(p, anim->graph, "stand", held_label(p, shot.shooter, files));
+        i32 clip = clips[shot.melee ? WeaponSlot::melee : WeaponSlot::fire_1];
+        if(shot.melee && clip < 0)
+            clip = clips[Slot::melee];
         auto anims = anim->graph->animations.data(files.container.magic);
-        /* A base clip would stop it walking */
+        /* A base clip would stop a player walking */
         if(clip < 0 || !anims.has_value() ||
            static_cast<size_t>(clip) >= anims.value().size() ||
-           anims.value()[clip].type == blam::antr::anim_type::base)
+           (info && anims.value()[clip].type == blam::antr::anim_type::base))
             return;
         apply(p, {.entity = shot.shooter, .animation = clip, .fade = 0.f});
     }

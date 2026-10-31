@@ -171,9 +171,11 @@ class CombatSync
                         .vehicle    = vehicle,
                         .seed       = shot.seed,
                         .trigger    = shot.trigger,
-                        .flags      = shot.thrown  ? WeaponFire::thrown
-                                      : shot.melee ? WeaponFire::melee
-                                                   : WeaponFire::none,
+                        .flags      = static_cast<WeaponFire::flags_t>(
+                            (shot.thrown  ? WeaponFire::thrown
+                             : shot.melee ? WeaponFire::melee
+                                          : WeaponFire::none) |
+                            (shot.windup ? WeaponFire::windup : WeaponFire::none)),
                         .target        = target,
                         .target_player = target_player,
                         .shooter       = shooter,
@@ -475,6 +477,7 @@ class CombatSync
             .trigger    = wire.trigger,
             .thrown     = thrown,
             .melee      = (wire.flags & WeaponFire::melee) != 0,
+            .windup     = (wire.flags & WeaponFire::windup) != 0,
             .position   = Vecf3(wire.position),
             .direction  = glm::normalize(direction),
             .target     = target,

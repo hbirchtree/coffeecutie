@@ -463,6 +463,7 @@ struct WeaponFireEvent
     libc_types::u16      trigger{0};
     bool                 thrown{false}; /*!< By hand: `weapon` is the grenade's proj */
     bool                 melee{false};  /*!< A strike with `weapon`, nothing fired */
+    bool                 windup{false}; /*!< A strike begun: its swing plays, nothing lands yet */
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
     libc_types::u64      target{0}; /*!< The unit the reticle rested on, which guided shots seek */

@@ -402,6 +402,7 @@ struct alignas(8) WeaponFire
         none   = 0x0,
         thrown = 0x1, /*!< A grenade, `weapon` its proj */
         melee  = 0x2, /*!< A strike with `weapon` */
+        windup = 0x4, /*!< Its swing only, the blow follows */
     } flags{none};
     u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
     u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */

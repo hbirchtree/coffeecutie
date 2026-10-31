@@ -501,6 +501,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         auto const& magic = files.container.magic;
         if(shot.thrown)
             return thrown(p, shot, files);
+        if(shot.windup)
+            return;
         if(shot.melee)
             return struck(p, shot, files);
 
