@@ -3646,6 +3646,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             for(auto& [connection, state] : m_connections)
                 for(auto const& [_, player] : state.players)
                     if(player.biped.exists() && player.biped.id() == pickup.entity_id)
+                    {
+                        auto const report = m_remote_weapons.find(player.idx);
+                        m_handouts[player.idx] = {
+                            report != m_remote_weapons.end() ? report->second : EquipmentSync{},
+                            std::chrono::steady_clock::now()};
                         send_single(
                             connection,
                             Message<WeaponPickup>({
@@ -3654,6 +3659,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                 .age        = pickup.age,
                                 .rounds     = pickup.rounds,
                             }));
+                    }
     }
 
     /* Every census_period a peer hears which replicated objects live here,
@@ -3733,6 +3739,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             /* The dead hold nothing, whatever was last reported */
             if(auto const* status = p.get<BipedStatus>(player.id()); status && status->dead)
                 continue;
+            /* What the server just handed out is not undone by a report from
+             * before it */
+            if(auto held = m_handouts.find(info.player_idx); held != m_handouts.end())
+            {
+                if(held->second.first == it->second &&
+                   std::chrono::steady_clock::now() - held->second.second < handout_hold)
+                    continue;
+                m_handouts.erase(held);
+            }
             if(auto* equip = p.get<BipedEquipment>(player.id()))
             {
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
@@ -5013,6 +5028,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::vector<GameScoreSync>               m_sent_scores;
     std::map<u64, DeviceSync>                m_sent_devices;
     std::map<u32, EquipmentSync>             m_remote_weapons;
+    /* A remote player's report as it was when the server handed it
+     * something, and when: held off until the peer answers */
+    std::map<u32, std::pair<EquipmentSync, std::chrono::steady_clock::time_point>> m_handouts;
+    static constexpr auto handout_hold = std::chrono::seconds(2);
     /* What was last asked of each remote body not shown yet, and in which load */
     std::map<u64, std::pair<u32, EquipmentSync>> m_equip_asked;
     std::vector<ObjectDespawn>               m_despawns;
