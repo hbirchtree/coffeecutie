@@ -802,6 +802,40 @@ struct AnimationController
                               unit_flags::none;
             m_aimed.insert(id);
         }
+        /* An actor at the gun turns it at what it fights */
+        for(auto rider : p.template select<Actor, ObjectPhysics>())
+        {
+            auto const& actor   = rider.template get<Actor>();
+            auto const& physics = rider.template get<ObjectPhysics>();
+            u64 const   id      = physics.seated ? physics.seated_in : 0;
+            auto*       anim    = id && actor.target ? p.template get<AnimationPlayback>(id) : nullptr;
+            auto const* model   = id ? p.template get<Model>(id) : nullptr;
+            if(!anim || !anim->graph || !model || !model->origin_object || m_aimed.contains(id))
+                continue;
+            auto unit = model->origin_object->template data<blam::scn::unit>(magic);
+            if(!unit.has_value())
+                continue;
+            auto seats = unit.value()[0].seats.data(magic);
+            if(!seats.has_value() || physics.seat < 0 || static_cast<size_t>(physics.seat) >= seats.value().size() ||
+               (seats.value()[physics.seat].flags & seat_flags::gunner) == seat_flags::none)
+                continue;
+            Vecf3 const to = actor.last_seen + Vecf3{0.f, 0.f, .5f} - model->position;
+            if(glm::dot(to, to) < 1e-4f)
+                continue;
+            auto const& st    = stance(p, anim->graph, "stand", "fixed");
+            Vecf3 const local = glm::conjugate(model->rotation) * glm::normalize(to);
+            auto&       layer = anim->layers[AnimationPlayback::turret_slot];
+            aim(layer,
+                anim->graph,
+                st[Slot::aim_still],
+                st.aim,
+                std::asin(std::clamp(local.z, -1.f, 1.f)),
+                1.f,
+                std::atan2(local.y, local.x));
+            layer.grid_wrap = (unit.value()[0].unit_flags & unit_flags::circular_aiming) !=
+                              unit_flags::none;
+            m_aimed.insert(id);
+        }
     }
 
     /* An overlay posed at `at` (0..1) along its frames, by grid */
