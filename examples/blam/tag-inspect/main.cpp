@@ -1900,6 +1900,12 @@ void dump_actor_variant(blam::scn::actor_variant const* actor)
     fmt::print("    weapon={}\n", name_of(actor->weapon));
     fmt::print("    equipment={}\n", name_of(actor->equipment));
     fmt::print(
+        "    drops: no grenades {:.2f} loaded {} ammo {}..{}\n",
+        actor->dont_drop_grenades_chance,
+        actor->drop_weapon_loaded,
+        actor->drop_weapon_ammo[0],
+        actor->drop_weapon_ammo[1]);
+    fmt::print(
         "    crouch chance={:g} time={:g} run_time={:g}\n",
         actor->initial_crouch_chance,
         actor->crouch_time,
