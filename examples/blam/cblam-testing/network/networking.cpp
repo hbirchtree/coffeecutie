@@ -3541,6 +3541,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             (info.camouflaged ? EquipmentSync::camouflaged : 0));
         for(size_t i = 0; i < out.grenades.size() && i < equip->equipment.size(); i++)
             out.grenades[i] = static_cast<u8>(std::min<u16>(equip->equipment[i].left, 255));
+        out.reserve = {held.rounds_total, slung.rounds_total};
         return out;
     }
 
@@ -3739,6 +3740,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 /* Thrown where it is played, so counted there */
                 for(size_t i = 0; i < it->second.grenades.size() && i < equip->equipment.size(); i++)
                     equip->equipment[i].left = it->second.grenades[i];
+                /* Likewise reserves, which the authority's ammo pickups go by */
+                for(size_t i = 0; i < equip->weapons.size(); i++)
+                    if(auto& weapon = equip->weapons[i];
+                       weapon.tag && weapon.tag->tag_id == (i ? it->second.slung : it->second.weapon))
+                        weapon.rounds_total = it->second.reserve[i];
             }
             auto const known = equipment_of(p, player.id(), info);
             if(known.weapon == it->second.weapon && known.slung == it->second.slung)

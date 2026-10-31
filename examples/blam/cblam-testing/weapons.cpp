@@ -314,11 +314,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                         return kind.tag == tag && kind.left < kind.most;
                     });
                 bool const powerup = !grenade && wanted_powerup(p, ent.id(), info, *tag, files);
-                if(!grenade && !powerup && !tag->matches(blam::tag_class_t::weap))
+                /* Ammo for a carried weapon with room for it */
+                bool const ammo =
+                    !grenade && !powerup && tag->matches(blam::tag_class_t::eqip) &&
+                    std::any_of(equip.weapons.begin(), equip.weapons.end(), [&](auto const& w) {
+                        return ammo_pack_rounds(w, tag->tag_id, files.container.magic) > 0;
+                    });
+                if(!grenade && !powerup && !ammo && !tag->matches(blam::tag_class_t::weap))
                     continue;
                 if(!within_pickup_reach(info, cam, model.position))
                     continue;
-                bool const carried = grenade || powerup || equip.weapons[0].tag == tag ||
+                bool const carried = grenade || powerup || ammo || equip.weapons[0].tag == tag ||
                                      equip.weapons[1].tag == tag;
                 if(!carried && equip.weapons[1].weapon && !pressed)
                     continue;

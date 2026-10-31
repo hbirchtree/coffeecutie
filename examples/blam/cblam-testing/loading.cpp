@@ -18,6 +18,7 @@
 #include "selected_version.h"
 #include "shader_cache.h"
 #include "types.h"
+#include "weapons.h"
 #include <algorithm>
 #include <map>
 #include <optional>
@@ -3066,7 +3067,15 @@ struct ResourceLoader
         auto&       [held, slung] = equip.weapons;
         auto const* tag           = weapon_tag(change.weapon);
         if(!tag)
+        {
+            /* An ammo pack, into the weapons it is for */
+            if(change.mode == EquipWeaponEvent::pick_up)
+                for(auto* carried : {&held, &slung})
+                    carried->rounds_total = static_cast<u16>(
+                        carried->rounds_total +
+                        ammo_pack_rounds(*carried, change.weapon, files.container.magic));
             return;
+        }
         if(change.mode == EquipWeaponEvent::replicate)
         {
             if(held.tag != tag)
