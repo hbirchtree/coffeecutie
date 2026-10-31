@@ -320,6 +320,7 @@ struct alignas(8) EquipmentSync
     flags_t            flags{none};
     blam::tag_index<>  slung{};
     std::array<libc_types::u8, 4> grenades{}; /*!< Of each kind the globals list */
+    std::array<libc_types::u16, 2> reserve{}; /*!< Rounds in reserve, held then slung */
 
     bool operator==(EquipmentSync const&) const = default;
 };
