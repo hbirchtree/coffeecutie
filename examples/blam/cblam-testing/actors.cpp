@@ -12,6 +12,7 @@
 #include "animation.h"
 
 #include <blam/volta/blam_actor.h>
+#include <blam/volta/blam_collision.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_scenario.h>
 #include <coffee/components/proxy.h>
@@ -66,6 +67,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return true;
     }
 
+    /* An object pathfinding sphere the AI walks round */
+    struct obstacle_t
+    {
+        Vecf3 center{};
+        f32   radius{0.f};
+        u64   entity{0};
+    };
+
     /* What an actor is, by its squad */
     struct kind_t
     {
@@ -106,8 +115,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             m_generation = files.load_generation;
             m_kinds.clear();
             m_links.clear();
+            m_spheres.clear();
         }
         hear(p);
+        if((m_obstacles_in -= dt) <= 0.f)
+        {
+            m_obstacles_in = 1.f;
+            gather_obstacles(p);
+        }
         if((m_platoon_in -= dt) <= 0.f)
         {
             m_platoon_in = 1.f;
@@ -208,6 +223,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 default_speed   = 2.f;  /* wu/s, a graph without a stride */
     static constexpr f32 eye_height      = .6f;  /* wu above the feet, a biped without a camera height */
     static constexpr f32 route_height    = .5f;  /* wu above the feet a walk is checked at */
+    static constexpr f32 route_knee      = .2f;  /* wu above the feet, for what is low */
+    static constexpr f32 body_radius     = .3f;  /* wu either side of a walking body */
+    static constexpr f32 steer_ahead     = 2.f;  /* wu ahead obstacles are steered round */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
@@ -1066,6 +1084,17 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         /* Around what is in the way, by its encounter's positions */
         Vecf3 to = waypoint(p, id, actor, model, kind, goal, dt) - model.position;
         to.z     = 0.f;
+        /* And round an obstacle just ahead, on the side nearer its way */
+        if(glm::dot(to, to) > 1e-6f)
+            if(auto const* o = obstacle_on(
+                   model.position, model.position + glm::normalize(to) * std::min(glm::length(to), steer_ahead), actor.board))
+            {
+                Vecf3 off = model.position - o->center;
+                off.z     = 0.f;
+                Vecf3 const round = glm::cross(Vecf3{0, 0, 1}, glm::normalize(off));
+                bool const  left  = (glm::dot(round, to) >= 0.f) != actor.steer_other;
+                to                = (left ? round : -round) * glm::length(to);
+            }
         f32 const left = std::max(glm::length(to), 1e-3f);
         if(anim.stance != "stand")
             anim.stance = "stand";
@@ -1084,15 +1113,85 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
     /* Nothing solid at waist height between two points; units in the way
      * move on */
-    bool walkable(Proxy& p, u64 self, Vecf3 const& a, Vecf3 const& b)
+    bool walkable(Proxy& p, u64 self, Vecf3 const& a, Vecf3 const& b, u64 aboard = 0)
     {
-        Physics::Event   ev{Physics::Event::Raycast};
-        Physics::Raycast ray{
-            .from = a + Vecf3{0, 0, route_height}, .to = b + Vecf3{0, 0, route_height}, .ignore = self};
-        p.template subsystem<PhysicsBus>().process(ev, &ray);
-        return !ray.hit ||
-               (ray.entity_id != 0 &&
-                (p.template get<Actor>(ray.entity_id) || p.template get<PlayerInfo>(ray.entity_id)));
+        /* A body's width, at the knee and the waist */
+        Vecf3 flat = b - a;
+        flat.z     = 0.f;
+        Vecf3 const side = glm::dot(flat, flat) > 1e-6f ? glm::normalize(Vecf3{-flat.y, flat.x, 0.f}) : Vecf3{};
+        for(f32 const height : {route_knee, route_height})
+            for(f32 const across : {0.f, body_radius, -body_radius})
+            {
+                Vecf3 const lift = Vecf3{0, 0, height} + side * across;
+                Physics::Event   ev{Physics::Event::Raycast};
+                Physics::Raycast ray{.from = a + lift, .to = b + lift, .ignore = self};
+                p.template subsystem<PhysicsBus>().process(ev, &ray);
+                if(ray.hit && !(ray.entity_id != 0 && (ray.entity_id == aboard || p.template get<Actor>(ray.entity_id) ||
+                                                       p.template get<PlayerInfo>(ray.entity_id))))
+                    return false;
+            }
+        /* Around what the AI is told to keep clear of */
+        return !obstacle_on(a, b, aboard);
+    }
+
+    /* The first object pathfinding sphere a walk from a to b runs into */
+    obstacle_t const* obstacle_on(Vecf3 const& a, Vecf3 const& b, u64 aboard = 0) const
+    {
+        Vecf2 const      from{a}, to{b};
+        Vecf2 const      step = to - from;
+        f32 const        len2 = glm::dot(step, step);
+        obstacle_t const* first = nullptr;
+        f32               along = std::numeric_limits<f32>::max();
+        for(auto const& o : m_obstacles)
+        {
+            if(o.entity == aboard || o.center.z + o.radius < std::min(a.z, b.z) - .5f ||
+               o.center.z - o.radius > std::max(a.z, b.z) + 1.5f)
+                continue;
+            Vecf2 const c{o.center};
+            f32 const   t = len2 > 0.f ? std::clamp(glm::dot(c - from, step) / len2, 0.f, 1.f) : 0.f;
+            f32 const   d = glm::distance(from + step * t, c);
+            /* Already inside one, or going into one: only what lies
+             * between counts */
+            if(glm::distance(from, c) < o.radius + body_radius || glm::distance(to, c) < o.radius + body_radius)
+                continue;
+            if(d < o.radius + body_radius && t < along)
+            {
+                along = t;
+                first = &o;
+            }
+        }
+        return first;
+    }
+
+    /* Objects' pathfinding spheres, as they stand, every second */
+    void gather_obstacles(Proxy& p)
+    {
+        m_obstacles.clear();
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        blam::tag_index_view<halo_version> index(files.container);
+        for(auto ent : p.template select<Model>())
+        {
+            auto const& model = ent.template get<Model>();
+            auto const* tag   = model.origin_object;
+            if(!tag || p.template get<Actor>(ent.id()) || p.template get<PlayerInfo>(ent.id()) ||
+               !(tag->matches(blam::tag_class_t::scen) || tag->matches(blam::tag_class_t::vehi) ||
+                 tag->matches(blam::tag_class_t::mach) || tag->matches(blam::tag_class_t::ctrl)))
+                continue;
+            auto [spheres, fresh] = m_spheres.try_emplace(tag);
+            if(fresh)
+                if(auto object = tag->template data<blam::scn::object>(*s_magic); object.has_value())
+                    if(auto coll_tag = index.find(object.value()[0].collider.tag_id); coll_tag != index.end())
+                        if(auto coll = (*coll_tag).template data<blam::coll::header>(*s_magic); coll.has_value())
+                            if(auto list = coll.value()[0].pathfinding_spheres.data(*s_magic); list.has_value())
+                                for(auto const& s : list.value())
+                                    spheres->second.push_back({s.center, s.radius});
+            for(auto const& [center, radius] : spheres->second)
+                m_obstacles.push_back({
+                    .center = Vecf3(model.transform * Vecf4(center, 1.f)),
+                    .radius = radius,
+                    .entity = ent.id(),
+                });
+        }
     }
 
     /* The positions a position has a clear walk to, found once each */
@@ -1176,7 +1275,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         {
             actor.route_goal = goal;
             actor.route.clear();
-            if(!walkable(p, id, model.position, goal))
+            if(!walkable(p, id, model.position, goal, actor.board))
                 actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
             actor.stuck_at = model.position;
             actor.stuck_in = stuck_time;
@@ -1184,7 +1283,25 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if((actor.stuck_in -= dt) <= 0.f)
         {
             if(glm::distance(model.position, actor.stuck_at) < stuck_distance)
+            {
+                if(std::getenv("BLAM_DEBUG_AI"))
+                {
+                    f32 nearest = 1e9f, radius = 0.f;
+                    for(auto const& o : m_obstacles)
+                        if(f32 const d = glm::distance(Vecf2(o.center), Vecf2(model.position)) - o.radius; d < nearest)
+                        {
+                            nearest = d;
+                            radius  = o.radius;
+                        }
+                    cDebug(
+                        "ai: {} stalled at {:.1f} {:.1f} goal {:.1f} {:.1f} route {} next {:.1f} {:.1f} obstacle {:.1f} r {:.1f}",
+                        id, model.position.x, model.position.y, goal.x, goal.y, actor.route.size(),
+                        actor.route.empty() ? goal.x : position_of(kind, actor.route.front()).x,
+                        actor.route.empty() ? goal.y : position_of(kind, actor.route.front()).y, nearest, radius);
+                }
+                actor.steer_other = !actor.steer_other;
                 actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+            }
             actor.stuck_at = model.position;
             actor.stuck_in = stuck_time;
         }
@@ -1588,6 +1705,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     u32                                                              m_generation{0};
     std::map<std::tuple<i16, i16, i16>, kind_t>                      m_kinds;
     std::map<i16, std::vector<std::optional<std::vector<i32>>>>      m_links; /* encounter: per position */
+    std::vector<obstacle_t>                                          m_obstacles;
+    std::map<blam::tag_t const*, std::vector<std::pair<Vecf3, f32>>> m_spheres; /* object tag: its spheres */
+    f32                                                              m_obstacles_in{0.f};
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
     f32                                                              m_debug_in{0.f};
