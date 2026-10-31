@@ -3611,10 +3611,15 @@ struct BlamScript
         auto squads = encounter->squads.data(m_magic);
         if(!squads.has_value())
             return;
+        /* A squad by name, else the squads of a platoon by its name */
+        bool const by_squad = which.empty() || std::any_of(squads.value().begin(), squads.value().end(), [&](auto const& s) {
+            return lowered(s.name.str()) == lowered(which);
+        });
         for(size_t si = 0; si < squads.value().size(); si++)
         {
             auto const& squad = squads.value()[si];
-            if(!which.empty() && lowered(squad.name.str()) != lowered(which))
+            if(!which.empty() && (by_squad ? lowered(squad.name.str()) != lowered(which)
+                                           : platoon_name(*encounter, squad) != lowered(which)))
                 continue;
             auto starts = squad.start_locations.data(m_magic);
             if(!starts.has_value() || starts.value().empty())
@@ -3642,7 +3647,8 @@ struct BlamScript
         for(size_t si = 0; si < squads.value().size(); si++)
             if(auto starts = squads.value()[si].start_locations.data(m_magic);
                starts.has_value() && !starts.value().empty() &&
-               (which.empty() || lowered(squads.value()[si].name.str()) == lowered(which)))
+               (which.empty() || lowered(squads.value()[si].name.str()) == lowered(which) ||
+                platoon_name(*encounter, squads.value()[si]) == lowered(which)))
                 fits.push_back(si);
         if(fits.empty())
             return log(fmt::format("ai_spawn_actor: no squad {}", path));
