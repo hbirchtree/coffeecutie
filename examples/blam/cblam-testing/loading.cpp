@@ -3179,10 +3179,36 @@ struct ResourceLoader
         auto& equip = *p.template get<BipedEquipment>(unit);
         equip       = {.load_generation = files.load_generation};
         equip.weapons[0] = armed(&weapon, files);
-        auto const hand  = model.tag ? bind_marker_prefix(*model.tag, hand_marker, files.container.magic)
-                                     : std::nullopt;
-        equip.weapons[0].held = respawn_held(p, unit, 0, &weapon, files, hand);
+        equip.weapons[0].held = respawn_held(
+            p, unit, 0, &weapon, files, npc_hand(p, unit, equip.weapons[0].weapon, model, files));
         armed_npcs[unit]      = equip.weapons[0].held;
+    }
+
+    /* The hand its graph's standing stance holds the weapon in: jackals
+     * hold theirs in the left, the shield on the right */
+    std::optional<bound_marker_t> npc_hand(
+        Proxy& p, u64 unit, blam::scn::weapon const* weapon, Model const& model, BlamFiles<Ver> const& files)
+    {
+        if(!model.tag)
+            return std::nullopt;
+        auto const& magic = files.container.magic;
+        auto const* anim  = p.template get<AnimationPlayback>(unit);
+        if(!anim || !anim->graph)
+            return bind_marker_prefix(*model.tag, hand_marker, magic);
+        if(auto units = anim->graph->units.data(magic); units.has_value())
+            for(auto const& stance : units.value())
+            {
+                auto weapons = stance.weapons.data(magic);
+                if(stance.label.str() != "stand" || !weapons.has_value() || weapons.value().empty())
+                    continue;
+                auto const* held = &weapons.value()[0];
+                for(auto const& candidate : weapons.value())
+                    if(weapon && candidate.name.str() == weapon->label.str())
+                        held = &candidate;
+                if(auto hand = bind_marker_node(*model.tag, held->hand_marker.str(), magic))
+                    return hand;
+            }
+        return bind_marker_prefix(*model.tag, hand_marker, magic);
     }
 
     /* The dead let go, and a gone NPC takes its weapon model with it; the
