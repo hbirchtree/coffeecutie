@@ -145,6 +145,7 @@ struct AnimationController
         std::array<i32, UnitSlot::hovering + 1> unit_slots{};
         std::array<i32, 10>                     weapon_slots{};
         blam::antr::screen_bounds               aim{};
+        blam::antr::screen_bounds               look{};
 
         stance_t()
         {
@@ -207,6 +208,7 @@ struct AnimationController
                 i < out.unit_slots.size() && i < refs.value().size();
                 i++)
                 out.unit_slots[i] = refs.value()[i].animation;
+        out.look     = found->looking_bounds;
         auto weapons = found->weapons.data(magic);
         if(!weapons.has_value() || weapons.value().empty())
             return out;
@@ -321,19 +323,18 @@ struct AnimationController
                 dead(p, player.id()));
         }
 
+        update_gazes(p, dt);
         for(auto npc : p.template select<Model, ObjectPhysics, AnimationPlayback>())
         {
             auto [model, physics, anim] = npc.components();
             if(!loaded || !physics.upright || !anim.graph)
                 continue;
             seen.insert(npc.id());
-            /* An actor aims at its target wherever its body faces, as a
-             * player's aim follows the camera */
-            auto const* actor = p.template get<Actor>(npc.id());
-            Vecf3       look  = model.rotation * Vecf3{1.f, 0.f, 0.f};
-            f32         yaw   = 0.f;
-            if(Vecf3 const to = actor && actor->target ? actor->last_seen - model.position : Vecf3{};
-               glm::length(Vecf2(to)) > 1e-3f)
+            /* Aimed wherever its body faces, as a player's aim follows the
+             * camera */
+            Vecf3 look = model.rotation * Vecf3{1.f, 0.f, 0.f};
+            f32   yaw  = 0.f;
+            if(Vecf3 const to = anim.aiming; glm::length(Vecf2(to)) > 1e-3f)
             {
                 f32 const pitch = std::atan2(to.z, glm::length(Vecf2(to)));
                 yaw  = std::atan2(look.x * to.y - look.y * to.x, look.x * to.x + look.y * to.y);
@@ -359,6 +360,29 @@ struct AnimationController
 
         for(auto it = m_walkers.begin(); it != m_walkers.end();)
             it = seen.contains(it->first) ? std::next(it) : m_walkers.erase(it);
+    }
+
+    /* An actor aims at what it fights, and peers are sent that; any gaze
+     * lapses unless renewed */
+    void update_gazes(Proxy& p, f32 dt)
+    {
+        for(auto ent : p.template select<Actor, Model, AnimationPlayback>())
+        {
+            auto [actor, model, anim] = ent.components();
+            Vecf3 const to =
+                actor.target ? actor.last_seen - model.position : Vecf3{};
+            if(glm::length(Vecf2(to)) > 1e-3f)
+                anim.gaze(glm::normalize(to), {}, actor_gaze_hold);
+        }
+        for(auto ent : p.template select<AnimationPlayback>())
+        {
+            auto& anim = ent.template get<AnimationPlayback>();
+            if(anim.gaze_hold <= 0.f)
+                continue;
+            anim.gaze_hold = std::max(anim.gaze_hold - dt, 0.f);
+            if(anim.gaze_hold <= 0.f)
+                anim.gaze({}, {}, 0.f);
+        }
     }
 
     /* Base layers from how a unit moves */
@@ -802,15 +826,18 @@ struct AnimationController
                               unit_flags::none;
             m_aimed.insert(id);
         }
-        /* An actor at the gun turns it at what it fights */
-        for(auto rider : p.template select<Actor, ObjectPhysics>())
+        /* Anyone else at the gun turns it where they aim */
+        for(auto rider : p.template select<ObjectPhysics, AnimationPlayback>())
         {
-            auto const& actor   = rider.template get<Actor>();
             auto const& physics = rider.template get<ObjectPhysics>();
-            u64 const   id      = physics.seated ? physics.seated_in : 0;
-            auto*       anim    = id && actor.target ? p.template get<AnimationPlayback>(id) : nullptr;
-            auto const* model   = id ? p.template get<Model>(id) : nullptr;
-            if(!anim || !anim->graph || !model || !model->origin_object || m_aimed.contains(id))
+            Vecf3 const aiming = rider.template get<AnimationPlayback>().aiming;
+            u64 const   id = physics.seated && glm::dot(aiming, aiming) > 1e-6f
+                                 ? physics.seated_in
+                                 : 0;
+            auto* anim = id ? p.template get<AnimationPlayback>(id) : nullptr;
+            auto const* model = id ? p.template get<Model>(id) : nullptr;
+            if(!anim || !anim->graph || !model || !model->origin_object ||
+               m_aimed.contains(id))
                 continue;
             auto unit = model->origin_object->template data<blam::scn::unit>(magic);
             if(!unit.has_value())
@@ -819,11 +846,8 @@ struct AnimationController
             if(!seats.has_value() || physics.seat < 0 || static_cast<size_t>(physics.seat) >= seats.value().size() ||
                (seats.value()[physics.seat].flags & seat_flags::gunner) == seat_flags::none)
                 continue;
-            Vecf3 const to = actor.last_seen + Vecf3{0.f, 0.f, .5f} - model->position;
-            if(glm::dot(to, to) < 1e-4f)
-                continue;
             auto const& st    = stance(p, anim->graph, "stand", "fixed");
-            Vecf3 const local = glm::conjugate(model->rotation) * glm::normalize(to);
+            Vecf3 const local = glm::conjugate(model->rotation) * aiming;
             auto&       layer = anim->layers[AnimationPlayback::turret_slot];
             aim(layer,
                 anim->graph,
@@ -882,6 +906,12 @@ struct AnimationController
             if(a == st[move])
                 return true;
         return false;
+    }
+
+    /* Within `below` under zero and `above` over it */
+    static f32 clamp_to(f32 v, f32 below, f32 above)
+    {
+        return std::clamp(v, -below, above);
     }
 
     /* Aim grids are columns right to left, rows bottom to top */
@@ -950,6 +980,44 @@ struct AnimationController
                 layer.weight = weight;
             };
             frame(AnimationPlayback::talk_slot, st[UnitSlot::talk], 0.f, anim.mouth);
+            /* The head turns from where the unit aims toward where it looks */
+            auto const* model = p.template get<Model>(ent.id());
+            Vecf3 const gaze  = anim.looking;
+            if(!model || glm::dot(gaze, gaze) < 1e-6f || st[UnitSlot::look] < 0)
+            {
+                if(anim.layers[AnimationPlayback::look_slot].graph)
+                    anim.stop(AnimationPlayback::look_slot);
+            } else
+            {
+                Vecf3 const body   = model->rotation * Vecf3{1.f, 0.f, 0.f};
+                Vecf3 const from   = glm::dot(anim.aiming, anim.aiming) > 1e-6f
+                                         ? anim.aiming
+                                         : body;
+                auto const  angles = [](Vecf3 const& v) {
+                    return Vecf2{
+                        std::atan2(v.y, v.x),
+                        std::atan2(v.z, glm::length(Vecf2(v)))};
+                };
+                Vecf2 const at = angles(gaze) - angles(from);
+                f32 const   yaw =
+                    glm::mod(at.x + glm::pi<f32>(), glm::two_pi<f32>()) -
+                    glm::pi<f32>();
+                aim(anim.layers[AnimationPlayback::look_slot],
+                    anim.graph,
+                    st[UnitSlot::look],
+                    st.look,
+                    clamp_to(
+                        at.y,
+                        st.look.down_pitch_per_frame *
+                            st.look.down_pitch_frame_count,
+                        st.look.up_pitch_per_frame *
+                            st.look.up_pitch_frame_count),
+                    1.f,
+                    clamp_to(
+                        yaw,
+                        st.look.right_yaw_per_frame * st.look.right_frame_count,
+                        st.look.left_yaw_per_frame * st.look.left_frame_count));
+            }
             frame(
                 AnimationPlayback::emotion_slot,
                 st[UnitSlot::emotions],
@@ -1415,6 +1483,7 @@ struct AnimationController
     static constexpr f32 blend_time     = .15f; /* s */
     static constexpr f32 land_blend_time = .08f;
     static constexpr f32 air_delay       = .1f; /* s off the ground */
+    static constexpr f32 actor_gaze_hold = .25f; /* s an actor's aim outlasts its last renewal */
     /* About a 1.4 wu drop under Halo's gravity */
     static constexpr f32 hard_landing_speed = 3.f; /* wu/s */
 

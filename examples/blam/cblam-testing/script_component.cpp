@@ -2815,17 +2815,25 @@ struct BlamScript
                 if(auto const* model = p.template get<Model>(who(line.addressee_participant)))
                     at = model->position;
             auto const* mouth = speaker ? p.template get<Model>(speaker) : nullptr;
+            Vecf3 const eye{0.f, 0.f, eye_height};
             if(speaker && at)
-                turn(p, speaker, *at);
-            if((line.flags & line_t::addressee_looking_at_speaker) && mouth && line.addressee == 2)
-                turn(p, who(line.addressee_participant), mouth->position);
+                look_at(p, speaker, *at + eye, conversation_gaze);
+            if((line.flags & line_t::addressee_looking_at_speaker) && mouth &&
+               line.addressee == 2)
+                look_at(
+                    p,
+                    who(line.addressee_participant),
+                    mouth->position + eye,
+                    conversation_gaze);
             for(u64 id : c.participants)
                 if(id && id != speaker)
                 {
                     if((line.flags & line_t::everyone_look_at_speaker) && mouth)
-                        turn(p, id, mouth->position);
-                    else if((line.flags & line_t::everyone_look_at_addressee) && at)
-                        turn(p, id, *at);
+                        look_at(
+                            p, id, mouth->position + eye, conversation_gaze);
+                    else if(
+                        (line.flags & line_t::everyone_look_at_addressee) && at)
+                        look_at(p, id, *at + eye, conversation_gaze);
                 }
             f32 seconds = line.line_delay_time;
             for(auto const& variant : line.variants)
@@ -2865,6 +2873,27 @@ struct BlamScript
             }
         }
         return best;
+    }
+
+    /* A unit looks at a point for `hold` seconds, turning its body only
+     * when its head and aim can't reach; players look where they please */
+    void look_at(Proxy& p, u64 who, Vecf3 const& at, f32 hold)
+    {
+        auto* model = p.template get<Model>(who);
+        auto* anim  = p.template get<AnimationPlayback>(who);
+        if(!model || p.template get<PlayerInfo>(who))
+            return;
+        Vecf3 const d = at - (model->position + Vecf3{0.f, 0.f, eye_height});
+        if(d.x * d.x + d.y * d.y <= 1e-4f)
+            return;
+        Vecf3 const body = model->rotation * Vecf3{1.f, 0.f, 0.f};
+        f32 const   off  = std::abs(
+            std::atan2(
+                body.x * d.y - body.y * d.x, body.x * d.x + body.y * d.y));
+        if(!anim || off > look_reach)
+            turn(p, who, at);
+        if(anim)
+            anim->gaze(glm::normalize(d), glm::normalize(d), hold);
     }
 
     /* A unit faces a point; players look where they please */
@@ -2988,9 +3017,15 @@ struct BlamScript
                 case atom::look:
                 case atom::look_object:
                 case atom::look_player: {
-                    auto const at = c.atom_type == atom::look_object ? object(c.object_name) : point(c.point_1);
+                    auto const at =
+                        c.atom_type == atom::look_object ? object(c.object_name)
+                        : c.atom_type == atom::look_player
+                            ? player_near(p, it->first).transform([](Vecf3 v) {
+                                  return v + Vecf3{0.f, 0.f, eye_height};
+                              })
+                            : point(c.point_1);
                     if(at)
-                        face(*at);
+                        look_at(p, it->first, *at, gaze_ticks / tick_rate);
                     if(run.ticks++ >= static_cast<i32>(c.param1 * tick_rate))
                         next();
                     else
@@ -3050,6 +3085,9 @@ struct BlamScript
         std::optional<flight_t> flight;
         /*! Flying: the pose before the last tick, to draw between */
         std::optional<std::pair<Vecf3, Quatf>> from;
+        /*! A biped's body yaw, which lags the recorded facing */
+        std::optional<f32> body;
+        bool               turning{false};
         /*! As drawn last frame, which the game seated its riders off */
         std::optional<Matf4> drawn;
         /*! From last frame's drawing to this one's */
@@ -3225,9 +3263,20 @@ struct BlamScript
                 walk(p, it->entity, it->velocity);
             else
                 model->position += it->velocity * dt;
-            model->rotation    = glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) *
-                              glm::angleAxis(upright ? 0.f : -facing.pitch_radians(), Vecf3{0.f, 1.f, 0.f});
+            auto* anim = upright ? p.template get<AnimationPlayback>(it->entity)
+                                 : nullptr;
+            f32 const body  = anim ? body_yaw(*it, *model, yaw, input) : yaw;
+            model->rotation = glm::angleAxis(body, Vecf3{0.f, 0.f, 1.f}) *
+                              glm::angleAxis(
+                                  upright ? 0.f : -facing.pitch_radians(),
+                                  Vecf3{0.f, 1.f, 0.f});
             model->update_matrix();
+            /* The head and aim follow the recording; the body lags it */
+            if(anim)
+                anim->gaze(
+                    input.aiming().direction(),
+                    input.looking().direction(),
+                    gaze_ticks / tick_rate);
 
             if(it->play.advance())
             {
@@ -3241,6 +3290,46 @@ struct BlamScript
                 m_hovering.insert(id);
             stop_recording(p, id, end);
         }
+    }
+
+    /* A biped turns its body toward where it faces at its moving turning
+     * speed while it walks; standing, only once the facing strays past its
+     * stationary turning threshold, and then all the way round */
+    f32 body_yaw(
+        recording_t&                            r,
+        Model const&                            model,
+        f32                                     facing,
+        blam::scn::recorded::input_state const& input)
+    {
+        using namespace blam::scn::recorded;
+        auto const exact = [&] {
+            r.body    = facing;
+            r.turning = false;
+            return facing;
+        };
+        if(!model.origin_object || input.held(control_exact_facing) || !r.body)
+            return exact();
+        auto biped =
+            model.origin_object->template data<blam::scn::biped>(m_magic);
+        if(!biped.has_value())
+            return exact();
+        auto const& tag = biped.value()[0];
+        f32 const   off =
+            glm::mod(facing - *r.body + glm::pi<f32>(), glm::two_pi<f32>()) -
+            glm::pi<f32>();
+        bool const moving = input.movement.x != 0.f || input.movement.y != 0.f;
+        if(moving || std::abs(off) > tag.stationary_turning_threshold)
+            r.turning = true;
+        if(r.turning)
+        {
+            f32 const speed = tag.moving_turning_speed > 0.f
+                                  ? tag.moving_turning_speed
+                                  : glm::two_pi<f32>();
+            f32 const step  = speed / tick_rate;
+            *r.body += std::clamp(off, -step, step);
+            r.turning = moving || std::abs(off) > step;
+        }
+        return *r.body;
     }
 
     /* A human plane as Halo flies one: the throttle sets a speed the nose
@@ -3948,6 +4037,12 @@ struct BlamScript
     static constexpr f32 body_middle = .3f;
     static constexpr f32 eye_height  = .6f;
     static constexpr f32 first_person_fov = 70.f;
+    /* Off the body a gaze reaches without turning it, radians */
+    static constexpr f32 look_reach = 1.5708f;
+    /* Ticks a gaze renewed every tick outlasts its last renewal */
+    static constexpr f32 gaze_ticks = 3.f;
+    /* How long a conversation's listeners keep looking, seconds */
+    static constexpr f32 conversation_gaze = 4.f;
     /* How far a look test wants the view turned, radians */
     static constexpr f32 look_test = .25f;
 
