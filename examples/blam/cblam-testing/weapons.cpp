@@ -313,7 +313,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     equip.equipment.begin(), equip.equipment.end(), [tag](auto const& kind) {
                         return kind.tag == tag && kind.left < kind.most;
                     });
-                bool const powerup = !grenade && wanted_powerup(p, ent.id(), *tag, files);
+                bool const powerup = !grenade && wanted_powerup(p, ent.id(), info, *tag, files);
                 if(!grenade && !powerup && !tag->matches(blam::tag_class_t::weap))
                     continue;
                 if(!within_pickup_reach(info, cam, model.position))
@@ -340,10 +340,14 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         }
     }
 
-    /* A powerup is taken unless it would do nothing: health at full health,
-     * an over shield already full */
+    /* A powerup is taken unless it would do nothing or its kind is still
+     * active: health at full health, an over shield while overcharged */
     static bool wanted_powerup(
-        Proxy& p, u64 player, blam::tag_t const& tag, BlamFiles<halo_version> const& files)
+        Proxy&                         p,
+        u64                            player,
+        PlayerInfo const&              info,
+        blam::tag_t const&             tag,
+        BlamFiles<halo_version> const& files)
     {
         using powerup_t = blam::scn::equipment::powerup_type_t;
         if(!tag.matches(blam::tag_class_t::eqip))
@@ -357,11 +361,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         case powerup_t::health:
             return status && status->body < 1.f;
         case powerup_t::over_shield:
-            return status && status->maximum_shield() > 0.f && status->shield < BipedStatus::over_shield;
+            return status && status->maximum_shield() > 0.f && status->shield <= 1.f;
         case powerup_t::double_speed:
+            return info.powerups.speed <= 0.f;
         case powerup_t::active_camouflage:
+            return info.powerups.camouflage <= 0.f;
         case powerup_t::full_spectrum_vision:
-            return true;
+            return info.powerups.vision <= 0.f;
         default:
             return false;
         }
