@@ -1385,7 +1385,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 const reach = actv.maximum_firing_distance > 0.f ? actv.maximum_firing_distance : 20.f;
         if(glm::distance(model.position, actor.last_seen) > reach)
             return;
-        f32 const rate = actv.rate_of_fire > 0.f ? actv.rate_of_fire : 3.f;
+        /* None given: as fast as its weapon fires */
+        f32 const rate = actv.rate_of_fire > 0.f ? actv.rate_of_fire : weapon_rate(gun->tag);
         if(actor.burst_left <= 0)
         {
             f32 const seconds = uniform(actv.burst_duration, 1.f);
@@ -1421,6 +1422,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = 1.f / rate;
         else
             actor.fire_in = uniform(actv.burst_separation, 1.f);
+    }
+
+    /* Shots a second a weapon's first trigger fires at most */
+    f32 weapon_rate(blam::tag_t const* tag) const
+    {
+        if(tag)
+            if(auto weapon = tag->template data<blam::scn::weapon>(*s_magic); weapon.has_value())
+                if(auto triggers = weapon.value()[0].triggers.data(*s_magic);
+                   triggers.has_value() && !triggers.value().empty() &&
+                   triggers.value()[0].maximum_rate_of_fire.y > 0.f)
+                    return triggers.value()[0].maximum_rate_of_fire.y;
+        return 3.f;
     }
 
     bool holds_gun(Proxy& p, u64 id)
@@ -1506,7 +1519,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 dir + side * (unit_spread(m_random) * actv.projectile_error) +
                 up * (unit_spread(m_random) * actv.projectile_error));
         }
-        f32 const rate = actv.rate_of_fire > 0.f ? actv.rate_of_fire : 3.f;
+        /* The gun's own rate, not what the gunner carries */
+        f32 const rate = weapon_rate(&(*weapon));
         if(actor.burst_left <= 0)
         {
             actor.burst_left = std::max(1, static_cast<i32>(uniform(actv.burst_duration, 1.f) * rate));
