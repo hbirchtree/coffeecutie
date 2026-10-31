@@ -3215,11 +3215,14 @@ struct ResourceLoader
             }
             if(model && equip && equip->weapons[0].tag && !replica)
             {
+                auto const& gun = equip->weapons[0];
                 SpawnObjectEvent spawn{
-                    .object       = equip->weapons[0].tag->as_ref(),
+                    .object       = gun.tag->as_ref(),
                     .position     = model->position + Vecf3{0.f, 0.f, drop_lift},
                     .server_owned = true,
                     .velocity     = model->rotation * Vecf3{1.f, 0.f, 1.f},
+                    .age          = gun.age,
+                    .rounds       = std::array<u16, 2>{gun.rounds_loaded, gun.rounds_total},
                 };
                 GameEvent ev{.type = GameEvent::SpawnObject};
                 game_bus->inject(ev, &spawn);

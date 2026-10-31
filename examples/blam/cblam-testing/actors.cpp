@@ -8,6 +8,7 @@
 #include "selected_version.h"
 #include "sounds.h"
 #include "ticks.h"
+#include "weapons.h"
 
 #include "animation.h"
 
@@ -30,7 +31,7 @@ using ActorManifest = compo::SubsystemManifest<
         Model,
         AnimationPlayback,
         const BipedStatus,
-        const BipedEquipment,
+        BipedEquipment,
         const ObjectPhysics,
         const PlayerInfo,
         const PlayerCamera>,
@@ -138,6 +139,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     ride(p, ent.id(), actor, model, *kind, physics, dt);
                 continue;
             }
+            if(auto const* kind = kind_of(p, actor); kind && kind->variant)
+            {
+                if(!status.dead)
+                    stock(p, ent.id(), actor, *kind);
+                else if(!actor.dropped)
+                    drop_belongings(p, ent.id(), actor, model, *kind);
+            }
+            actor.dropped = status.dead;
             if(!actor.active() || actor.braindead || status.dead || !physics.upright || physics.seated)
             {
                 /* What it last walked at, it would keep walking at */
@@ -231,6 +240,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
+    static constexpr f32 drop_lift       = .4f;  /* wu above the feet belongings fall from */
+    static constexpr f32 drop_speed      = 1.5f; /* wu/s they are tossed out at */
+    static constexpr f32 drop_spread     = 1.3f; /* rad between them */
     static constexpr f32 flyby_reach     = 60.f; /* wu out a passing shot is followed */
     static constexpr f32 link_reach      = 10.f; /* wu between positions a route steps */
     static constexpr u32 max_expansions  = 2000;
@@ -1643,15 +1655,83 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return true;
     }
 
+    /* Its variant's grenades, dealt the first time they are asked for */
+    void deal_grenades(Actor& actor, actv_t const& actv)
+    {
+        if(actor.grenades >= 0)
+            return;
+        actor.grenades = static_cast<i16>(between(actv.grenade_count));
+    }
+
+    /* Within a min, max pair of counts */
+    i32 between(i16 const (&range)[2])
+    {
+        return range[1] > range[0] ? range[0] + static_cast<i32>(m_random() % (range[1] - range[0] + 1))
+                                   : std::max<i16>(range[0], 0);
+    }
+
+    /* What its weapon holds when dropped, by its variant: a share of the
+     * magazine (or battery) and some reserve. Actors don't spend rounds,
+     * so this is set once for each weapon taken in hand */
+    void stock(Proxy& p, u64 id, Actor& actor, kind_t const& kind)
+    {
+        auto* equip = p.template get<BipedEquipment>(id);
+        if(!equip || !kind.variant)
+            return;
+        auto& gun = equip->weapons[0];
+        if(!gun.weapon || gun.held == actor.stocked)
+            return;
+        actor.stocked      = gun.held;
+        actv_t const& actv = *kind.variant;
+        if(actv.drop_weapon_loaded.y <= 0.f && actv.drop_weapon_ammo[1] <= 0)
+            return;
+        f32 const loaded = std::clamp(uniform(actv.drop_weapon_loaded, actv.drop_weapon_loaded.x), 0.f, 1.f);
+        if(auto const* magazine = first_magazine(gun.weapon, *s_magic); magazine && magazine->rounds_loaded_maximum > 0)
+        {
+            gun.rounds_loaded = static_cast<u16>(std::lround(loaded * std::max<i16>(magazine->rounds_loaded_maximum, 0)));
+            gun.rounds_total  = static_cast<u16>(between(actv.drop_weapon_ammo));
+        } else
+            gun.age = 1.f - loaded;
+        if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug("ai: {} stocks {}/{} age {:.2f}", id, gun.rounds_loaded, gun.rounds_total, gun.age);
+    }
+
+    /* Dead: what grenades it had left fall out, unless its variant says
+     * they don't this time, and so does its variant's equipment */
+    void drop_belongings(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind)
+    {
+        actv_t const& actv = *kind.variant;
+        f32           turn = 0.f;
+        auto          toss = [&](blam::tagref_t const& what) {
+            turn += drop_spread;
+            Vecf3 const out = glm::angleAxis(turn, Vecf3{0.f, 0.f, 1.f}) * (model.rotation * Vecf3{1.f, 0.f, 0.f});
+            SpawnObjectEvent spawn{
+                .object       = what,
+                .position     = model.position + out * .2f + Vecf3{0.f, 0.f, drop_lift},
+                .server_owned = true,
+                .velocity     = out * drop_speed + Vecf3{0.f, 0.f, drop_speed},
+            };
+            GameEvent ev{.type = GameEvent::SpawnObject};
+            p.template subsystem<GameEventBus>().inject(ev, &spawn);
+        };
+        deal_grenades(actor, actv);
+        u32 dropped = 0;
+        if(actor.grenades > 0 && !chance(actv.dont_drop_grenades_chance))
+            if(auto const* grenade = grenade_of(p, actv.grenade_type); grenade && grenade->equipment.valid())
+                for(; dropped < static_cast<u32>(actor.grenades); dropped++)
+                    toss(static_cast<blam::tagref_t const&>(grenade->equipment));
+        if(actv.equipment.valid())
+            toss(static_cast<blam::tagref_t const&>(actv.equipment));
+        if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug("ai: {} drops {} of {} grenades", id, dropped, actor.grenades);
+        actor.grenades = 0;
+    }
+
     /* Now and then, in range, a grenade lobbed at the target */
     void throw_grenade(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind)
     {
         actv_t const& actv = *kind.variant;
-        if(actor.grenades < 0)
-            actor.grenades = static_cast<i16>(
-                actv.grenade_count[1] > actv.grenade_count[0]
-                    ? actv.grenade_count[0] + m_random() % (actv.grenade_count[1] - actv.grenade_count[0] + 1)
-                    : std::max<i16>(actv.grenade_count[0], 0));
+        deal_grenades(actor, actv);
         if(actor.grenades == 0 || actv.grenade_chance <= 0.f)
             return;
         actor.grenade_in -= look_period / 8.f;
@@ -1691,6 +1771,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     /* The globals' grenade of a type, by its projectile */
     blam::tagref_t const* grenade_projectile(Proxy& p, blam::scn::grenade_type_t type)
     {
+        auto const* grenade = grenade_of(p, type);
+        return grenade && grenade->projectile.valid() ? &static_cast<blam::tagref_t const&>(grenade->projectile)
+                                                      : nullptr;
+    }
+
+    /* The globals' grenade of a type */
+    blam::globals::grenade const* grenade_of(Proxy& p, blam::scn::grenade_type_t type)
+    {
         if(m_grenades.empty())
         {
             auto const& files = p.template subsystem<BlamFiles<halo_version>>();
@@ -1703,10 +1791,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 return nullptr;
             if(auto grenades = globals.value()->grenades.data(*s_magic); grenades.has_value())
                 for(auto const& grenade : grenades.value())
-                    m_grenades.push_back(&static_cast<blam::tagref_t const&>(grenade.projectile));
+                    m_grenades.push_back(&grenade);
         }
         size_t const i = static_cast<size_t>(type);
-        return i < m_grenades.size() && m_grenades[i]->valid() ? m_grenades[i] : nullptr;
+        return i < m_grenades.size() ? m_grenades[i] : nullptr;
     }
 
     /* ---- Tags ---- */
@@ -1786,7 +1874,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     f32                                                              m_debug_top{0.f};
     std::map<std::pair<blam::antr::header const*, std::string>, f32> m_strides;
     std::minstd_rand                                                 m_random{12345};
-    std::vector<blam::tagref_t const*>                               m_grenades;
+    std::vector<blam::globals::grenade const*>                       m_grenades;
 };
 
 void alloc_actors(compo::EntityContainer& e)
