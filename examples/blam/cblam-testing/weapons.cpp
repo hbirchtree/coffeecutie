@@ -280,7 +280,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     /* The authority hands out what bodies walk over, local and remote alike:
      * ammo for what they carry, a weapon into a free slot, or a swap when
-     * they press use */
+     * they press use. A weapon given up for ammo lies on with what is left */
     void pick_up(Proxy& p, BlamFiles<halo_version> const& files)
     {
         std::set<u64> taken;
@@ -324,20 +324,47 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     continue;
                 if(!within_pickup_reach(info, cam, model.position))
                     continue;
-                bool const carried = grenade || powerup || ammo || equip.weapons[0].tag == tag ||
-                                     equip.weapons[1].tag == tag;
+                auto const* same = equip.weapons[0].tag == tag   ? &equip.weapons[0]
+                                   : equip.weapons[1].tag == tag ? &equip.weapons[1]
+                                                                 : nullptr;
+                bool const carried = grenade || powerup || ammo || same;
                 if(!carried && equip.weapons[1].weapon && !pressed)
                     continue;
+                auto rounds = model.item_rounds.value_or(std::array<u16, 2>{});
+                if(tag->matches(blam::tag_class_t::weap) && !model.item_rounds)
+                    if(auto weapon = tag->template data<weapon_t>(files.container.magic);
+                       weapon.has_value())
+                        rounds = initial_rounds(weapon.value(), files.container.magic);
+                bool emptied = true;
+                if(same)
+                {
+                    /* Into the reserve as much as fits, its reserve given first */
+                    i32 const room = reserve_room(*same, files.container.magic);
+                    if(room <= 0 || rounds[0] + rounds[1] == 0)
+                        continue;
+                    u16 const from_reserve = static_cast<u16>(std::min<i32>(room, rounds[1]));
+                    u16 const from_loaded =
+                        static_cast<u16>(std::min<i32>(room - from_reserve, rounds[0]));
+                    model.item_rounds = std::array<u16, 2>{
+                        static_cast<u16>(rounds[0] - from_loaded),
+                        static_cast<u16>(rounds[1] - from_reserve)};
+                    emptied = *model.item_rounds == std::array<u16, 2>{};
+                    rounds  = {from_loaded, from_reserve};
+                }
                 taken.insert(item.id());
-                auto&              game = p.template subsystem<GameEventBus>();
-                DespawnObjectEvent gone{.net_id = item_net.instance_id};
-                GameEvent          despawn{.type = GameEvent::DespawnObject};
-                game.inject(despawn, &gone);
+                auto& game = p.template subsystem<GameEventBus>();
+                if(emptied)
+                {
+                    DespawnObjectEvent gone{.net_id = item_net.instance_id};
+                    GameEvent          despawn{.type = GameEvent::DespawnObject};
+                    game.inject(despawn, &gone);
+                }
                 EquipWeaponEvent equip_ev{
                     .entity_id = ent.id(),
                     .weapon    = tag->tag_id,
                     .mode      = EquipWeaponEvent::pick_up,
                     .age       = model.item_age,
+                    .rounds    = rounds,
                 };
                 GameEvent ev{.type = GameEvent::EquipWeapon};
                 game.inject(ev, &equip_ev);

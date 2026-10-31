@@ -333,6 +333,7 @@ struct alignas(8) WeaponPickup
     u32               player_idx{0};
     blam::tag_index<> weapon{};
     f32               age{0.f}; /*!< Its battery, as it lay */
+    std::array<u16, 2> rounds{}; /*!< See EquipWeaponEvent::rounds */
 };
 
 /*! A client reached a sync point, or the server released it for all */
@@ -650,6 +651,7 @@ struct alignas(8) PlayerSpawn
 struct alignas(8) SpawnRequest
 {
     static constexpr auto message_type = MessageBase::SpawnRequest;
+    static constexpr u16  no_rounds    = 0xFFFF;
 
     Vecf4     position{};
     Quatf     direction{};
@@ -657,6 +659,8 @@ struct alignas(8) SpawnRequest
     u32       request_id{EntitySpawn::no_request};
     u32       announce{0};
     f32       age{0.f}; /*!< See SpawnObjectEvent::age */
+    /*! See SpawnObjectEvent::rounds; no_rounds for none */
+    std::array<u16, 2> rounds{no_rounds, no_rounds};
 };
 
 struct alignas(8) PlayerSyncEntry
@@ -706,7 +710,7 @@ static_assert(sizeof(Message<GameJoin>) == 68);
 static_assert(sizeof(Message<MapVerify>) == 32);
 static_assert(sizeof(EntityTag) == 12);
 static_assert(sizeof(EntitySpawn) == 64);
-static_assert(sizeof(SpawnRequest) == 56);
+static_assert(sizeof(SpawnRequest) == 64);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 52);
 static_assert(sizeof(Message<CameraSync>) == 72);
