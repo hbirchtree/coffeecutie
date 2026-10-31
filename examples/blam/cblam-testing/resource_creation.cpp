@@ -657,6 +657,15 @@ void create_resources(compo::EntityContainer& e)
                                      entity.template get<BipedEquipment>().equipment)
                                      grenades.push_back(kind.left);
                                  player["grenades"] = std::move(grenades);
+                                 nlohmann::json weapons = nlohmann::json::array();
+                                 for(auto const& weapon :
+                                     entity.template get<BipedEquipment>().weapons)
+                                     weapons.push_back({
+                                         {"tag_id", weapon.tag ? weapon.tag->tag_id.value() : 0},
+                                         {"loaded", weapon.rounds_loaded},
+                                         {"reserve", weapon.rounds_total},
+                                     });
+                                 player["weapons"] = std::move(weapons);
                              }
                      {
                          auto const* game = &e.subsystem_cast<GameState>();

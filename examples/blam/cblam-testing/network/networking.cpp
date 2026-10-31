@@ -652,6 +652,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .request_id = request_id,
                 .announce   = spawn.announce,
                 .age        = spawn.age,
+                .rounds     = spawn.rounds.value_or(std::array<u16, 2>{
+                    SpawnRequest::no_rounds, SpawnRequest::no_rounds}),
             }));
     }
 
@@ -3557,6 +3559,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             (info.camouflaged ? EquipmentSync::camouflaged : 0));
         for(size_t i = 0; i < out.grenades.size() && i < equip->equipment.size(); i++)
             out.grenades[i] = static_cast<u8>(std::min<u16>(equip->equipment[i].left, 255));
+        out.reserve = {held.rounds_total, slung.rounds_total};
         return out;
     }
 
@@ -3659,13 +3662,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             for(auto& [connection, state] : m_connections)
                 for(auto const& [_, player] : state.players)
                     if(player.biped.exists() && player.biped.id() == pickup.entity_id)
+                    {
+                        auto const report = m_remote_weapons.find(player.idx);
+                        m_handouts[player.idx] = {
+                            report != m_remote_weapons.end() ? report->second : EquipmentSync{},
+                            std::chrono::steady_clock::now()};
                         send_single(
                             connection,
                             Message<WeaponPickup>({
                                 .player_idx = player.idx,
                                 .weapon     = pickup.weapon,
                                 .age        = pickup.age,
+                                .rounds     = pickup.rounds,
                             }));
+                    }
     }
 
     /* Every census_period a peer hears which replicated objects live here,
@@ -3745,6 +3755,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             /* The dead hold nothing, whatever was last reported */
             if(auto const* status = p.get<BipedStatus>(player.id()); status && status->dead)
                 continue;
+            /* What the server just handed out is not undone by a report from
+             * before it */
+            if(auto held = m_handouts.find(info.player_idx); held != m_handouts.end())
+            {
+                if(held->second.first == it->second &&
+                   std::chrono::steady_clock::now() - held->second.second < handout_hold)
+                    continue;
+                m_handouts.erase(held);
+            }
             if(auto* equip = p.get<BipedEquipment>(player.id()))
             {
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
@@ -3755,6 +3774,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 /* Thrown where it is played, so counted there */
                 for(size_t i = 0; i < it->second.grenades.size() && i < equip->equipment.size(); i++)
                     equip->equipment[i].left = it->second.grenades[i];
+                /* Likewise reserves, which the authority's ammo pickups go by */
+                for(size_t i = 0; i < equip->weapons.size(); i++)
+                    if(auto& weapon = equip->weapons[i];
+                       weapon.tag && weapon.tag->tag_id == (i ? it->second.slung : it->second.weapon))
+                        weapon.rounds_total = it->second.reserve[i];
             }
             auto const known = equipment_of(p, player.id(), info);
             if(known.weapon == it->second.weapon && known.slung == it->second.slung)
@@ -4150,6 +4174,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .rotation = request.direction,
                 .net_id = SpawnObjectEvent::dynamic_net_id_base + m_next_net_id++,
                 .age      = request.age,
+                .rounds   = request.rounds[0] == SpawnRequest::no_rounds
+                                ? std::nullopt
+                                : std::optional(request.rounds),
                 .announce = request.announce != 0,
             };
             m_game_bus.inject(ev, &spawn);
@@ -4357,6 +4384,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .weapon    = pickup.weapon,
                 .mode      = EquipWeaponEvent::pick_up,
                 .age       = pickup.age,
+                .rounds    = pickup.rounds,
             };
             GameEvent ev{.type = GameEvent::EquipWeapon};
             m_game_bus.inject(ev, &equip);
@@ -5017,6 +5045,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::vector<GameScoreSync>               m_sent_scores;
     std::map<u64, DeviceSync>                m_sent_devices;
     std::map<u32, EquipmentSync>             m_remote_weapons;
+    /* A remote player's report as it was when the server handed it
+     * something, and when: held off until the peer answers */
+    std::map<u32, std::pair<EquipmentSync, std::chrono::steady_clock::time_point>> m_handouts;
+    static constexpr auto handout_hold = std::chrono::seconds(2);
     /* What was last asked of each remote body not shown yet, and in which load */
     std::map<u64, std::pair<u32, EquipmentSync>> m_equip_asked;
     std::vector<ObjectDespawn>               m_despawns;
