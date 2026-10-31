@@ -1149,6 +1149,8 @@ struct Actor
     libc_types::f32 reposition_in{0.f};
     libc_types::i16 grenades{-1};      /*!< Left to throw, -1 = not yet dealt */
     libc_types::f32 grenade_in{0.f};   /*!< Until the next throw is considered */
+    bool            dropped{true};     /*!< Dead and its belongings let go; found dead, it has none */
+    libc_types::u64 stocked{0};        /*!< The held weapon given its drop ammunition */
     libc_types::f32 melee_in{0.f};
     libc_types::u64 board{0};           /*!< ai_go_to_vehicle: the vehicle it runs to */
     libc_types::f32 board_radius{1.5f}; /*!< Near enough to be seated */
