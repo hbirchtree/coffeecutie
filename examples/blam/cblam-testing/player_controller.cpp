@@ -596,8 +596,8 @@ struct PlayerController
         auto const&  biped = info.biped;
         Vecf2 const& move  = input.intent.move;
         info.crouched      = input.intent.crouch;
-        /* Crouch shares LCtrl with the boost, which it overrides */
-        f32 const    pace  = info.crouched ? biped.crouch_speed : input.accel;
+        /* No boost on a body: the triggers fire, LCtrl crouches */
+        f32 const    pace  = info.crouched ? biped.crouch_speed : 1.f;
         f32 const    along = move.x >= 0.f ? biped.run_speed : biped.back_speed;
         Vecf3 const  dir   = (planar(basis.forward) * move.x * along +
                            planar(basis.right) * move.y * biped.strafe_speed) *
