@@ -3,6 +3,7 @@
 #include "access.h"
 #include "allocators.h"
 #include "caching/caching.h"
+#include "game_tag.h"
 #include "types.h"
 
 #include <blam/volta/blam_antr.h>
@@ -1482,8 +1483,10 @@ struct BipedEquipment
     blam::scn::biped const* biped{nullptr};
     struct weapon_t
     {
+        /*! Halo 1's tag, null for another game's weapon */
         blam::scn::weapon const* weapon{nullptr};
         blam::tag_t const*       tag{nullptr};
+        GameTag<blam::tag_class_t::weap> id{};
         /*! Its third-person model, in the biped's hand */
         u64 held{0};
         u16 rounds_loaded{0};
@@ -1499,8 +1502,10 @@ struct BipedEquipment
     };
     struct equipment_t
     {
+        /*! Halo 1's tag, null for another game's equipment */
         blam::scn::equipment const* equip{nullptr};
         blam::tag_t const*          tag{nullptr};
+        GameTag<blam::tag_class_t::eqip> id{};
         u16                         most{0}; /*!< What can be carried */
         u16                         left{0};
         std::chrono::seconds        time_left{};

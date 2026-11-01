@@ -696,7 +696,8 @@ void create_resources(compo::EntityContainer& e)
                                  for(auto const& weapon :
                                      entity.template get<BipedEquipment>().weapons)
                                      weapons.push_back({
-                                         {"tag_id", weapon.tag ? weapon.tag->tag_id.value() : 0},
+                                         {"tag_id", weapon.id.valid() ? weapon.id.tag : 0},
+                                         {"game", weapon.id.game},
                                          {"loaded", weapon.rounds_loaded},
                                          {"reserve", weapon.rounds_total},
                                      });
