@@ -1673,7 +1673,7 @@ struct H2MapLoader : compo::SubsystemBase
                      : std::nullopt);
         if(view_tag && jmad_tag)
             fp.weapon =
-                add(view_tag, view_animation(map, pool, *jmad_tag, *view_tag, "first_person:idle"));
+                add(view_tag, view_animation(map, pool, *jmad_tag, *view_tag, "first_person:idle", hands_tag));
 
         /* The body stands as the third-person unit does holding the weapon */
         std::optional<u32> stance;
@@ -1730,7 +1730,8 @@ struct H2MapLoader : compo::SubsystemBase
         dim::raw_pool const&         pool,
         dim::tag_t const&            jmad_tag,
         dim::tag_t const&            mode_tag,
-        std::string_view             clip)
+        std::string_view             clip,
+        dim::tag_t const*            rig_tag = nullptr)
     {
         auto const* graph = jmad_tag.template data<dim::anim::header_t>(map.magic());
         auto const* model = mode_tag.template data<geo::model_header_t>(map.magic());
@@ -1748,13 +1749,22 @@ struct H2MapLoader : compo::SubsystemBase
         size_t const joints = skeleton.value().size();
         if(!chosen || chosen->node_count != joints)
             return std::nullopt;
-        /* The model's node of that name at rest, else the graph's own */
-        auto       defaults = dim::graph_pose(map, *graph, joints);
-        auto const rest     = dim::model_pose(map, *model);
-        for(size_t i = 0; i < joints; i++)
-            for(size_t n = 0; n < nodes.value().size(); n++)
-                if(map.string(nodes.value()[n].name) == map.string(skeleton.value()[i].name))
-                    defaults[i] = rest[n];
+        /* The model's node of that name at rest, else the rig's (the hands a
+         * first-person weapon shares a graph with), else the graph's own */
+        auto defaults = dim::graph_pose(map, *graph, joints);
+        auto rest_of  = [&](geo::model_header_t const& from) {
+            auto const from_nodes = from.nodes.data(map.magic());
+            if(from_nodes.has_error())
+                return;
+            auto const rest = dim::model_pose(map, from);
+            for(size_t i = 0; i < joints; i++)
+                for(size_t n = 0; n < from_nodes.value().size(); n++)
+                    if(map.string(from_nodes.value()[n].name) == map.string(skeleton.value()[i].name))
+                        defaults[i] = rest[n];
+        };
+        if(auto const* rig = rig_tag ? rig_tag->template data<geo::model_header_t>(map.magic()) : nullptr)
+            rest_of(*rig);
+        rest_of(*model);
         auto decoded = dim::decode_animation(map, pool, *graph, *chosen, defaults);
         if(!decoded)
             return std::nullopt;
