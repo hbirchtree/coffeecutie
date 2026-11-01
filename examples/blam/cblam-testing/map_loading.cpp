@@ -301,6 +301,9 @@ static void load_resources(
 
                 GameEvent ev{.type = GameEvent::MapAllLoaded};
                 e.subsystem_cast<GameEventBus>().process(ev, nullptr);
+                GameEvent       ready_ev{.type = GameEvent::WorldReady};
+                WorldReadyEvent ready{.game = MapGameEvent::halo1};
+                e.subsystem_cast<GameEventBus>().process(ready_ev, &ready);
             }))
         .assume_value();
 
