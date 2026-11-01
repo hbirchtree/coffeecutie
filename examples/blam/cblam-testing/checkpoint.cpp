@@ -5,6 +5,8 @@
 #include "data.h"
 #include "game_events.h"
 #include "network/networking.h"
+#include "animation.h"
+#include "save_state.h"
 #include "selected_version.h"
 #include "spawn_points.h"
 
@@ -31,10 +33,10 @@ using CheckpointManifest = compo::SubsystemManifest<
     empty_list_t>;
 
 /* The world as a checkpoint left it: which networked objects there were,
- * where, how fast and how hurt, where each player stood with what in hand,
- * and the structure section. Going back despawns what came since, spawns
- * again what went, and puts the rest back; replicas follow through the
- * usual spawns, despawns, object syncs and vitality */
+ * where each player stood with what in hand, and the structure section.
+ * Going back despawns what came since and spawns again what went; what the
+ * objects were like is SaveState's. Replicas follow through the usual
+ * spawns, despawns, object syncs and vitality */
 struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, CheckpointManifest>
 {
     using type  = CheckpointSystem;
@@ -45,15 +47,13 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
         this->priority = 908;
     }
 
+    /* What it takes to spawn it again */
     struct object_t
     {
         blam::tagref_t object{};
         Vecf3          position{};
         Quatf          rotation{1.f, 0.f, 0.f, 0.f};
-        Vecf3          linear_velocity{};
-        Vecf3          angular_velocity{};
-        std::optional<BipedStatus> status;
-        blam::tagref_t             held{}; /*!< A unit's weapon in hand */
+        blam::tagref_t held{}; /*!< A unit's weapon in hand */
     };
 
     struct player_t
@@ -122,13 +122,6 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 .position = model.position,
                 .rotation = model.rotation,
             };
-            if(auto const* physics = p.template get<ObjectPhysics>(entity.id()))
-            {
-                object.linear_velocity  = physics->linear_velocity;
-                object.angular_velocity = physics->angular_velocity;
-            }
-            if(auto const* status = p.template get<BipedStatus>(entity.id()))
-                object.status = *status;
             if(auto const* equip = p.template get<BipedEquipment>(entity.id());
                equip && equip->weapons[0].tag)
                 object.held = equip->weapons[0].tag->as_ref();
@@ -305,30 +298,6 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
 
     void place(Proxy& p, u64 entity, object_t const& object)
     {
-        if(auto* model = p.template get<Model>(entity))
-        {
-            model->position = object.position;
-            model->rotation = object.rotation;
-            model->update_matrix();
-        }
-        if(auto* physics = p.template get<ObjectPhysics>(entity))
-        {
-            physics->linear_velocity  = object.linear_velocity;
-            physics->angular_velocity = object.angular_velocity;
-            physics->teleported       = true;
-        }
-        if(auto* status = p.template get<BipedStatus>(entity); status && object.status)
-        {
-            *status = *object.status;
-            GameEvent         ev{.type = GameEvent::UnitVitality};
-            UnitVitalityEvent vitality{
-                .unit   = entity,
-                .body   = status->body,
-                .shield = status->shield,
-                .dead   = status->dead,
-            };
-            p.template subsystem<GameEventBus>().inject(ev, &vitality);
-        }
         /* The dead let go of their weapon; the loader arms it again */
         if(auto* equip = p.template get<BipedEquipment>(entity);
            equip && object.held.valid() && !equip->weapons[0].tag)
@@ -352,8 +321,35 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
     std::map<u64, seating_t>   m_seating; /*!< By player entity */
 };
 
+/* Where objects were, how fast and how hurt */
+static void bind_objects(compo::EntityContainer& e, SaveState& save)
+{
+    auto const moved = [](compo::EntityContainer&, u64, Model& model) { model.update_matrix(); };
+    save.bind(e, &Model::position).then(moved);
+    save.bind(e, &Model::rotation).then(moved);
+    save.bind(e, &Model::item_rounds);
+    save.bind(e, &ObjectPhysics::linear_velocity)
+        .then([](compo::EntityContainer&, u64, ObjectPhysics& physics) { physics.teleported = true; });
+    save.bind(e, &ObjectPhysics::angular_velocity);
+    save.bind<BipedStatus>(e).then([](compo::EntityContainer& e, u64 id, BipedStatus& status) {
+        GameEvent         ev{.type = GameEvent::UnitVitality};
+        UnitVitalityEvent vitality{
+            .unit   = id,
+            .body   = status.body,
+            .shield = status.shield,
+            .dead   = status.dead,
+        };
+        e.subsystem_cast<GameEventBus>().inject(ev, &vitality);
+    });
+    save.bind(e, &AnimationPlayback::stance);
+    save.bind(e, &AnimationPlayback::emotion);
+    save.bind(e, &PlayerInfo::powerups).players();
+    save.bind(e, &PlayerInfo::camouflaged).players();
+}
+
 void alloc_checkpoints(compo::EntityContainer& e)
 {
+    bind_objects(e, e.subsystem_cast<SaveState>());
     auto& checkpoints = e.register_subsystem_inplace<CheckpointSystem>();
     auto& game        = e.subsystem_cast<GameEventBus>();
     checkpoints.m_save_queue = game.addQueuedEventFunction<WorldSaveEvent>(

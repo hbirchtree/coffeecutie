@@ -8,6 +8,7 @@
 #include "selected_version.h"
 #include "sounds.h"
 #include "ticks.h"
+#include "save_state.h"
 #include "weapons.h"
 
 #include "animation.h"
@@ -1880,6 +1881,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 void alloc_actors(compo::EntityContainer& e)
 {
     auto& actors   = e.register_subsystem_inplace<ActorSystem>();
+    e.subsystem_cast<SaveState>()
+        .bind<Actor>(e)
+        .entity(&Actor::target)
+        .entity(&Actor::board)
+        .entity(&Actor::stocked)
+        .create();
     auto& gbus     = e.subsystem_cast<GameEventBus>();
     actors.m_ticks = std::make_unique<TickQueue>(gbus);
     gbus.addEventFunction<MapLoadEvent>(0, [&actors](auto&, auto*) {

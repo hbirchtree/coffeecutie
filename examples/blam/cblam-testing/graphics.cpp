@@ -25,6 +25,7 @@
 #endif
 #include "impact_sounds.h"
 #include "checkpoint.h"
+#include "save_state.h"
 #include "game_mode.h"
 #include "actors.h"
 #include "damage.h"
@@ -306,6 +307,8 @@ i32 blam_main()
             }
             e.register_subsystem_inplace<BlamFiles<halo_version>>();
             e.register_subsystem_inplace<LoadingStatus>();
+            /* Before anything that binds what it keeps across checkpoints */
+            alloc_save_state(e);
 
             alloc_resource_loader(e);
             alloc_occluder(e);
