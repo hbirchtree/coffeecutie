@@ -527,6 +527,7 @@ struct SoundSystem
         p.subsystem(sound_pref);
         snd.listener().template set_property<oaf::listener_property::gain>(
             sound_pref->master_volume);
+        m_cut_lines = sound_pref->cut_lines;
 
         f32 dt = 0.f;
         if(!first_frame)
@@ -676,20 +677,26 @@ struct SoundSystem
                     .active = {.role = select_first_role(track)},
                     .source = snd.alloc_source(),
                 });
-            /* A one-shot plays one of its permutations, picked at random;
-             * each chains through its own pieces to the end */
+            /* A one-shot plays one of its permutations, picked at random
+             * by their skip fractions (1 = never, how cut lines are kept in
+             * the tags); each chains through its own pieces to the end */
             if(!item.looping_sound && !item.looping)
                 if(auto bufs = track.buffers.find(meta.active.role);
                    bufs != track.buffers.end() && !bufs->second.empty())
                 {
-                    u32 const count = std::min<u32>(
-                        bufs->second.front().count,
-                        bufs->second.front().permutations.size());
+                    auto const& perms = bufs->second.front().permutations;
+                    u32 const   count = std::min<u32>(bufs->second.front().count, perms.size());
                     if(count > 1)
                     {
-                        u32 const pick =
-                            std::uniform_int_distribution<u32>(0, count - 1)(
-                                m_permutation_rng);
+                        std::vector<f32> weights(count, 1.f);
+                        if(!m_cut_lines)
+                            for(u32 i = 0; i < count; i++)
+                                if(perms[i].permutation)
+                                    weights[i] = std::clamp(1.f - perms[i].permutation->skip_fraction, 0.f, 1.f);
+                        if(std::all_of(weights.begin(), weights.end(), [](f32 w) { return w <= 0.f; }))
+                            std::fill(weights.begin(), weights.end(), 1.f);
+                        u32 const pick = std::discrete_distribution<u32>(weights.begin(), weights.end())(
+                            m_permutation_rng);
                         meta.active.permutation_group = pick;
                         meta.active.permutation       = pick;
                     }
@@ -722,6 +729,7 @@ struct SoundSystem
     }
 
     std::minstd_rand m_permutation_rng{std::random_device{}()};
+    bool m_cut_lines{false}; /*!< SoundPreferences::cut_lines, as of this frame */
 
     f32 random_in(Vecf2 bounds)
     {
