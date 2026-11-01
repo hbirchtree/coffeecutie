@@ -56,6 +56,19 @@ void apply_web_mapping(SDL_Gamepad* gamepad, SDL_JoystickID instance)
 {
     if(SDL_GetNumJoystickHats(SDL_GetGamepadJoystick(gamepad)) > 0)
         return;
+    /* Android browsers lay out every pad in W3C standard order, even when
+     * they don't report the mapping as "standard" */
+    using namespace platform::info;
+    if(os::emscripten::underlying_platform() == PlatformAndroid)
+    {
+        SDL_SetGamepadMapping(
+            instance,
+            "*,*,a:b0,b:b1,x:b2,y:b3,leftshoulder:b4,rightshoulder:b5,"
+            "lefttrigger:b6,righttrigger:b7,back:b8,start:b9,leftstick:b10,"
+            "rightstick:b11,dpup:b12,dpdown:b13,dpleft:b14,dpright:b15,"
+            "guide:b16,leftx:a0,lefty:a1,rightx:a2,righty:a3,");
+        return;
+    }
     auto vendor  = SDL_GetGamepadVendor(gamepad);
     auto product = SDL_GetGamepadProduct(gamepad);
     auto guid    = fmt::format(

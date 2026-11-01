@@ -152,6 +152,33 @@ inline std::optional<std::string> browser_name()
     return std::nullopt;
 }
 
+/* Host OS as told by the user agent; Android UAs also say Linux */
+inline Platform underlying_platform()
+{
+#ifdef COFFEE_WASM
+    auto ua_ = detail::user_agent();
+    if(!ua_)
+        return PlatformWeb;
+    std::string_view ua = ua_;
+    auto has = [ua](std::string_view s) { return ua.find(s) != ua.npos; };
+    Platform out = PlatformWeb;
+    if(has("Android"))
+        out = PlatformAndroid;
+    else if(has("iPhone") || has("iPad") || has("iPod"))
+        out = PlatformMacIOS;
+    else if(has("Macintosh"))
+        out = PlatformMac;
+    else if(has("Windows"))
+        out = PlatformWindows;
+    else if(has("Linux") || has("CrOS"))
+        out = PlatformLinux;
+    ::free(ua_);
+    return out;
+#else
+    return PlatformWeb;
+#endif
+}
+
 inline std::optional<std::string> version()
 {
 #ifdef COFFEE_WASM
