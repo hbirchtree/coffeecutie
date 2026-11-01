@@ -322,11 +322,12 @@
   <section class="content">
     <p>
       Drop Halo CE, Halo 2 or Halo 3 <code>.map</code> files, or a whole
-      <code>maps</code> folder. Each file is identified by its contents, Xbox
-      maps are decompressed and their textures unswizzled, textures can be
-      transcoded for this GPU, and the result is kept in this browser for
-      BlamGraphics to load without downloading anything. Nothing leaves your
-      machine.
+      <code>maps</code> folder.
+      The maps will be stored locally in your browser, optimized for performance,
+      and made available to play only on this machine.
+      If you want to optimize for mobile GPUs not supporting Xbox texture formats,
+      specify the transcode option. This will lower resource usage when playing,
+      but will take a while to process.
     </p>
 
     <div id="drop" class="plasma disabled" tabindex="0" role="button"
@@ -335,7 +336,7 @@
       <span>or click to choose files</span>
     </div>
     <input id="picker" type="file" multiple hidden>
-    <div id="runtime-status">Loading the map decoder…</div>
+    <div id="runtime-status">Loading the map decoder...</div>
 
     <div class="options">
       <label for="resource-target">
@@ -351,11 +352,11 @@
     </div>
     <div class="options">
       <label for="transcode-target">
-        Transcode Halo PC, Custom Edition and Xbox textures to
+        Transcode Halo textures to
       </label>
       <select id="transcode-target">
-        <option value="">nothing, store them as they are (BCn)</option>
-        <option value="ES3">ETC2, for GPUs without BCn (most phones)</option>
+        <option value="">Keep as-is</option>
+        <option value="ES3">Mobile GPU-friendly (ETC2)</option>
       </select>
     </div>
     <p id="gpu-caps"></p>
@@ -365,9 +366,7 @@
         Optimize for performance
       </label>
       <span>
-        (Xbox textures are stored unswizzled, so BlamGraphics does not have
-        to while loading. Unchecked, maps are stored as they are, apart from
-        the transcoding above.)
+        (Performs simple optimizations at upload-time, lowering memory usage)
       </span>
     </div>
   </section>
