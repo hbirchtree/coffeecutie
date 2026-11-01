@@ -1,5 +1,8 @@
 #include "player_spawn.h"
 
+#include "../blam_files.h"
+#include "../selected_version.h"
+
 void update_camera_aspect(compo::EntityContainer& e);
 
 namespace world {
@@ -61,6 +64,21 @@ void place_local_cameras(
         input.input_mode  = PlayerInput::input_mode_t::game;
     }
     update_camera_aspect(container);
+}
+
+void arm_local_players(
+    compo::EntityContainer& container, std::array<BipedEquipment::weapon_t, 2> const& loadout)
+{
+    u32 const generation = container.subsystem_cast<BlamFiles<halo_version>>().load_generation;
+    for(auto entity : container.select<PlayerInfo, BipedEquipment>())
+    {
+        if(entity.get<PlayerInfo>().is_remote())
+            continue;
+        auto& equip           = entity.get<BipedEquipment>();
+        equip                 = {};
+        equip.weapons         = loadout;
+        equip.load_generation = generation;
+    }
 }
 
 } // namespace world

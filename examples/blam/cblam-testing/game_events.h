@@ -121,6 +121,36 @@ struct MapGameEvent
     } game{halo1};
 };
 
+/*! A tag in whichever game's map is loaded: the game, and the tag's handle
+ * there. The classes say which tags it may name */
+template<blam::tag_class_t... Classes>
+struct GameTag
+{
+    MapGameEvent::game_t game{MapGameEvent::halo1};
+    libc_types::u32      tag{0xFFFFFFFF};
+
+    template<std::endian E, blam::tag_class_t... Other>
+    static constexpr GameTag of(
+        MapGameEvent::game_t game, blam::basic_tag_index<E, Other...> const& id)
+    {
+        return {game, id.value()};
+    }
+
+    constexpr bool valid() const
+    {
+        return tag != 0xFFFFFFFF;
+    }
+
+    /*! Game in the top bits (0x4831 Halo 1, 0x4832 Halo 2, 0x4833 Halo 3),
+     * tag below */
+    constexpr libc_types::u64 key() const
+    {
+        return (static_cast<libc_types::u64>(0x4831 + game) << 48) | tag;
+    }
+
+    constexpr bool operator==(GameTag const&) const = default;
+};
+
 /*! A map's world is loaded and can be spawned into, whichever game it is
  * from: sent once, after the loader has placed the local players */
 struct WorldReadyEvent
@@ -469,7 +499,8 @@ struct WeaponFireEvent
     static constexpr libc_types::f32 muzzle_distance = .4f;
 
     MapLoadEvent::Origin origin{MapLoadEvent::Local};
-    blam::tagref_t       weapon{};  /*!< weap */
+    blam::tagref_t       weapon{};  /*!< weap, Halo 1's */
+    GameTag<blam::tag_class_t::weap> id{}; /*!< Any game's weapon */
     libc_types::u64      shooter{0}; /*!< Player entity */
     libc_types::u64      vehicle{0}; /*!< Whose weapon it is, 0 = held */
     libc_types::u32      player_idx{0};

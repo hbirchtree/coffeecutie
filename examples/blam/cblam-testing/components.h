@@ -3,7 +3,7 @@
 #include "access.h"
 #include "allocators.h"
 #include "caching.h"
-#include "game_tag.h"
+#include "game_events.h"
 #include "types.h"
 
 #include <blam/volta/blam_antr.h>
@@ -1460,6 +1460,13 @@ struct BipedEquipment
     bool throwing{false};  /*!< A grenade, from wind-up to recovery */
     u8   zoom{0};          /*!< The held weapon's zoom level, 0 = none */
 
+    /*! The weapon in hand, any game's */
+    weapon_t const* drawn(u32 generation) const
+    {
+        return generation == load_generation && weapons[0].id.valid() ? &weapons[0] : nullptr;
+    }
+
+    /*! The weapon in hand, if it is Halo 1's */
     weapon_t const* held(u32 generation) const
     {
         return generation == load_generation && weapons[0].weapon
