@@ -193,7 +193,10 @@ struct base_instance_sampler_t
 struct base_instance_sampler_list
 {
     std::vector<base_instance_sampler_t> slots;
-    libc_types::u32                      first_unit{0};
+    /* Lowest unit to bind at; samplers bound at fixed units do not advance
+     * the running unit count, so a list sharing a program with them names
+     * its shader binding here */
+    libc_types::u32 first_unit{0};
 };
 
 template<typename... Textures>

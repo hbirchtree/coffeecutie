@@ -956,7 +956,7 @@ inline bool apply_command_modifier(
     if(list.slots.empty())
         return true;
 
-    list.first_unit = bookkeeping.sampler_idx;
+    list.first_unit = std::max(list.first_unit, bookkeeping.sampler_idx);
     u32 index       = list.first_unit;
 
     for(auto const& slot : list.slots)

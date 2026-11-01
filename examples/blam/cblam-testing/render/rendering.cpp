@@ -2547,7 +2547,8 @@ struct MeshRenderer
         size_t                                 bucket,
         std::shared_ptr<gfx::texture_t> const& fallback)
     {
-        gfx::base_instance_sampler_list slots;
+        /* binding = 12 in the shader; unit 0 is source_bc1's */
+        gfx::base_instance_sampler_list slots{.first_unit = 12};
         if(fallback)
             slots.slots.push_back(
                 gfx::base_instance_sampler_t{
