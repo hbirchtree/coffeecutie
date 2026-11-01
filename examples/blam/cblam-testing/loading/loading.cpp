@@ -2913,7 +2913,17 @@ struct ResourceLoader
         LoadingStatus const* loading;
         p.subsystem(loading);
         if(loading->loaded_map != LoadingStatus::loaded)
+        {
+            /* The map's biped and view models go with it, mounted again from
+             * the next one */
+            if(biped_model.model.valid() || !player_bipeds.empty() || !first_person_models.empty())
+            {
+                biped_model = {};
+                player_bipeds.clear();
+                first_person_models.clear();
+            }
             return;
+        }
         if(biped_model.load_generation != files.load_generation)
         {
             biped_model = {

@@ -260,9 +260,14 @@ struct ForgeController : compo::RestrictedSubsystem<ForgeController, ForgeContro
      * generation moves as a load starts: wait for the map itself */
     void refresh_catalog(BlamFiles<halo_version> const& files, LoadingStatus const& loading)
     {
-        if(files.load_generation == m_catalog_generation ||
-           loading.loaded_map != LoadingStatus::loaded)
+        if(files.load_generation == m_catalog_generation)
             return;
+        if(loading.loaded_map != LoadingStatus::loaded)
+        {
+            m_groups.clear();
+            m_menus.clear();
+            return;
+        }
         m_catalog_generation = files.load_generation;
         m_groups.clear();
         m_menus.clear();

@@ -43,6 +43,7 @@ using WeaponManifest = compo::SubsystemManifest<
         GameEventBus,
         PhysicsBus,
         const NetworkState,
+        const LoadingStatus,
         const BlamFiles<halo_version>,
         const GameState,
         const AllegianceState>,
@@ -94,6 +95,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             m_grenades.clear();
             m_zooms_heard.clear();
         }
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+            return;
         auto const& magic = files.container.magic;
         zoom_sounds(p, files);
         mark_reticles(p, files);

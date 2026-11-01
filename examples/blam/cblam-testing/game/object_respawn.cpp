@@ -42,16 +42,16 @@ struct ObjectRespawn : compo::RestrictedSubsystem<ObjectRespawn, ObjectRespawnMa
         f32 dt = 0.f;
         for(auto const& tick : m_ticks->take())
             dt += tick.seconds;
-        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
-           p.template subsystem<NetworkState>().replica)
-            return;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        auto const& state = p.template subsystem<GameState>();
         if(m_load_generation != files.load_generation)
         {
             m_load_generation = files.load_generation;
             m_slots.clear();
         }
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
+           p.template subsystem<NetworkState>().replica)
+            return;
+        auto const& state = p.template subsystem<GameState>();
         if(state.kind != GameState::kind_t::multiplayer || dt <= 0.f)
             return;
 
