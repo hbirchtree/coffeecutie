@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gamepad Probe</title>
+<style>
+  :root { --bg:#fafaf8; --fg:#1d1d1b; --mut:#6b6b66; --card:#fff; --line:#e2e1dc; --acc:#2a62c9; --ok:#2e7d4f; --warn:#b4541a; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161615; --fg:#ecebe6; --mut:#9a9992; --card:#201f1d; --line:#34332f; --acc:#7aa5f0; --ok:#6cc08f; --warn:#e8945c; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.45 system-ui, sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.3rem; margin:0 0 4px; }
+  .mut { color:var(--mut); font-size:.9rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; margin:12px 0; }
+  .prompt { font-size:1.6rem; font-weight:600; margin:6px 0; }
+  .warn { color:var(--warn); font-weight:600; }
+  .ok { color:var(--ok); font-weight:600; }
+  button { font:inherit; padding:10px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--fg); margin:4px 4px 0 0; }
+  button.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+  table { border-collapse:collapse; width:100%; font:13px/1.3 ui-monospace, monospace; }
+  td, th { border-bottom:1px solid var(--line); padding:3px 6px; text-align:left; }
+  .grid { display:flex; flex-wrap:wrap; gap:4px; font:12px ui-monospace, monospace; }
+  .cell { border:1px solid var(--line); border-radius:4px; padding:2px 5px; min-width:54px; }
+  .cell.on { background:var(--acc); color:#fff; border-color:var(--acc); }
+  pre { white-space:pre-wrap; word-break:break-all; font:12px ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Gamepad probe</h1>
+  <div class="mut">Press a button on the pad to wake it up, then follow the prompts. Results are sent to the dev box at the end.</div>
+
+  <div id="secure" class="card warn" hidden></div>
+
+  <div class="card" id="padinfo">No gamepad seen yet. Press any button on the pad.</div>
+
+  <div class="card">
+    <div class="mut" id="step-count"></div>
+    <div class="prompt" id="prompt">Waiting for pad</div>
+    <div class="mut" id="hint"></div>
+    <div id="seen" class="mut"></div>
+    <button id="skip">Skip (not on this pad)</button>
+    <button id="redo">Redo previous</button>
+    <button id="send" class="primary">Send results now</button>
+    <div id="status" class="mut"></div>
+  </div>
+
+  <div class="card">
+    <div class="mut">Live raw state</div>
+    <div class="grid" id="live"></div>
+  </div>
+
+  <div class="card">
+    <div class="mut">Recorded</div>
+    <table id="results"><thead><tr><th>Input</th><th>Buttons</th><th>Axes</th></tr></thead><tbody></tbody></table>
+  </div>
+</main>
+<script>
+"use strict";
+const STEPS = [
+  ["A", "bottom face button"], ["B", "right face button"], ["X", "left face button"], ["Y", "top face button"],
+  ["LB", "left shoulder (bumper)"], ["RB", "right shoulder (bumper)"],
+  ["LT", "left trigger, press fully"], ["RT", "right trigger, press fully"],
+  ["Back", "Back / Select / View / Share"], ["Start", "Start / Menu / Options"],
+  ["L3", "click left stick"], ["R3", "click right stick"],
+  ["D-up", "d-pad up"], ["D-down", "d-pad down"], ["D-left", "d-pad left"], ["D-right", "d-pad right"],
+  ["Guide", "Home / Guide / logo button"],
+  ["LS right", "push left stick fully RIGHT, then let go"], ["LS down", "push left stick fully DOWN, then let go"],
+  ["RS right", "push right stick fully RIGHT, then let go"], ["RS down", "push right stick fully DOWN, then let go"],
+];
+
+const $ = id => document.getElementById(id);
+const results = [];
+const events = [];
+let step = 0, padIndex = null, baseline = null, hits = null, quietSince = 0, sent = false;
+
+if (!window.isSecureContext || !navigator.getGamepads) {
+  $("secure").hidden = false;
+  $("secure").textContent = "Not a secure context or no Gamepad API: Chrome hides gamepads on plain http. Open the https:// address.";
+}
+
+window.addEventListener("gamepadconnected", e => {
+  events.push({t: performance.now(), type: "connected", index: e.gamepad.index, id: e.gamepad.id, mapping: e.gamepad.mapping});
+  if (padIndex === null) padIndex = e.gamepad.index;
+});
+window.addEventListener("gamepaddisconnected", e => {
+  events.push({t: performance.now(), type: "disconnected", index: e.gamepad.index, id: e.gamepad.id});
+});
+
+function pads() { return [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean); }
+function pad() {
+  const all = pads();
+  if (padIndex === null && all.length) padIndex = all[0].index;
+  return all.find(p => p.index === padIndex) || null;
+}
+function snap(p) {
+  return {buttons: p.buttons.map(b => ({p: b.pressed, v: b.value})), axes: [...p.axes]};
+}
+function describe(p) {
+  return {index: p.index, id: p.id, mapping: p.mapping, buttons: p.buttons.length, axes: p.axes.length,
+          connected: p.connected, vibration: !!p.vibrationActuator};
+}
+
+function startStep() {
+  const p = pad();
+  baseline = p ? snap(p) : null;
+  hits = {buttons: new Map(), axes: new Map()};
+  quietSince = 0;
+  if (step >= STEPS.length) {
+    $("prompt").textContent = "Done";
+    $("hint").textContent = "Thanks. Sending results.";
+    $("step-count").textContent = "";
+    send();
+    return;
+  }
+  $("step-count").textContent = `Step ${step + 1} of ${STEPS.length}`;
+  $("prompt").textContent = STEPS[step][0];
+  $("hint").textContent = STEPS[step][1] + ". Press and release.";
+  $("seen").textContent = "";
+}
+
+function record(skipped) {
+  const r = {label: STEPS[step][0], skipped: !!skipped,
+             buttons: [...hits.buttons.entries()].map(([i, v]) => ({i, max: +v.toFixed(3)})),
+             axes: [...hits.axes.entries()].map(([i, a]) => ({i, from: +a.from.toFixed(3), peak: +a.peak.toFixed(3)}))};
+  results[step] = r;
+  renderResults();
+  step++;
+  startStep();
+}
+
+function renderResults() {
+  const tb = $("results").querySelector("tbody");
+  tb.innerHTML = "";
+  for (const r of results) {
+    if (!r) continue;
+    const tr = document.createElement("tr");
+    const b = r.skipped ? "skipped" : r.buttons.map(x => `b${x.i}(${x.max})`).join(" ") || "-";
+    const a = r.skipped ? "" : r.axes.map(x => `a${x.i} ${x.from}→${x.peak}`).join(" ") || "-";
+    tr.innerHTML = `<td>${r.label}</td><td>${b}</td><td>${a}</td>`;
+    tb.appendChild(tr);
+  }
+}
+
+function tick() {
+  const p = pad();
+  if (p) {
+    $("padinfo").innerHTML = "";
+    const all = pads().map(describe);
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify(all, null, 1);
+    $("padinfo").appendChild(pre);
+    if (!baseline) startStep();
+
+    const live = $("live");
+    live.innerHTML = "";
+    p.buttons.forEach((b, i) => {
+      const d = document.createElement("div");
+      d.className = "cell" + (b.pressed || b.value > 0.5 ? " on" : "");
+      d.textContent = `b${i} ${b.value.toFixed(2)}`;
+      live.appendChild(d);
+    });
+    p.axes.forEach((a, i) => {
+      const d = document.createElement("div");
+      d.className = "cell" + (Math.abs(a) > 0.5 ? " on" : "");
+      d.textContent = `a${i} ${a.toFixed(2)}`;
+      live.appendChild(d);
+    });
+
+    if (baseline && step < STEPS.length) {
+      let active = false;
+      p.buttons.forEach((b, i) => {
+        const base = baseline.buttons[i] || {p: false, v: 0};
+        const on = (b.pressed && !base.p) || b.value - base.v > 0.5;
+        if (on) {
+          active = true;
+          hits.buttons.set(i, Math.max(hits.buttons.get(i) || 0, b.value));
+        }
+      });
+      p.axes.forEach((a, i) => {
+        const from = baseline.axes[i] ?? 0;
+        if (Math.abs(a - from) > 0.5) {
+          active = true;
+          const h = hits.axes.get(i);
+          if (!h || Math.abs(a - from) > Math.abs(h.peak - h.from)) hits.axes.set(i, {from, peak: a});
+        }
+      });
+      const any = hits.buttons.size || hits.axes.size;
+      if (any) {
+        $("seen").textContent = "Seen: " + [...hits.buttons.keys()].map(i => "b" + i).concat([...hits.axes.keys()].map(i => "a" + i)).join(" ") + (active ? " (release to continue)" : "");
+      }
+      const now = performance.now();
+      if (any && !active) {
+        if (!quietSince) quietSince = now;
+        else if (now - quietSince > 350) record(false);
+      } else {
+        quietSince = 0;
+      }
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+$("skip").onclick = () => { if (step < STEPS.length) { hits = {buttons: new Map(), axes: new Map()}; record(true); } };
+$("redo").onclick = () => { if (step > 0) { step--; results.length = step; renderResults(); startStep(); } };
+$("send").onclick = () => send(true);
+
+async function send(manual) {
+  if (sent && !manual) return;
+  const p = pad();
+  let uaData = null;
+  try {
+    if (navigator.userAgentData)
+      uaData = await navigator.userAgentData.getHighEntropyValues(["platform", "platformVersion", "model", "architecture", "fullVersionList"]);
+  } catch (e) {}
+  const body = {
+    when: new Date().toISOString(),
+    userAgent: navigator.userAgent, userAgentData: uaData, secure: window.isSecureContext,
+    pads: pads().map(describe), finalState: p ? snap(p) : null,
+    results: results.filter(Boolean), events,
+  };
+  $("status").textContent = "Sending...";
+  try {
+    const r = await fetch("report", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    $("status").innerHTML = r.ok ? '<span class="ok">Sent. You can close this page.</span>' : `<span class="warn">Server said ${r.status}</span>`;
+    sent = r.ok;
+  } catch (e) {
+    $("status").innerHTML = `<span class="warn">Send failed: ${e}</span>`;
+  }
+}
+
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
