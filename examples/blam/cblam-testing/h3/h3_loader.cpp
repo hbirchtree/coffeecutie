@@ -347,8 +347,9 @@ struct H3MapLoader : compo::SubsystemBase
      * SoundItems, registered under their tag */
     static u64 sound_key(el::tag_reference<> const& ref)
     {
-        return h3_ids | ref.tag_id.value();
+        return ExternalSound{MapGameEvent::halo3, ref.tag_id.value()}.key();
     }
+    static_assert(ExternalSound{MapGameEvent::halo3, 0}.key() == h3_ids);
 
     static f32 db_gain(f32 db)
     {
