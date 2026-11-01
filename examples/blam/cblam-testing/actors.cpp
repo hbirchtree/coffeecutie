@@ -237,7 +237,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 body_radius     = .3f;  /* wu either side of a walking body */
     static constexpr f32 steer_ahead     = 2.f;  /* wu ahead obstacles are steered round */
     static constexpr f32 default_windup  = .35f; /* s before a blow lands, a swing without a key frame */
-    static constexpr f32 lunge_reach     = 3.f;  /* wu a target comes within to be lunged at */
+    static constexpr f32 lunge_reach     = 3.f;  /* wu a target comes within to be charged, at least */
+    static constexpr f32 strike_reach    = 1.5f; /* wu, feet to feet, a blow lands within */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
@@ -352,23 +353,26 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 actor.state_in = uniform_max(actr.pursuit.pursuit_position_time);
                 break;
             }
-            bool const armed = holds_gun(p, id);
-            if(armed && actor.reposition_in <= 0.f)
+            /* A target within its melee range is charged to arm's reach, and
+             * given up past its abort range; with nothing to shoot, or
+             * nowhere to fight from, it closes in regardless */
+            f32 const  apart  = glm::distance(model.position, actor.last_seen);
+            bool const seen   = actor.seen_ago < look_period * 2.f;
+            f32 const  begin  = std::max(actv.melee_range, lunge_reach);
+            f32 const  give_up = std::max(actv.melee_abort_range, begin * 1.5f);
+            if(actv.melee_range > 0.f && seen && apart < (actor.charging ? give_up : begin))
+                actor.charging = true;
+            else if(!seen || apart > give_up || actv.melee_range <= 0.f)
+                actor.charging = false;
+            bool const charge = actor.charging || !holds_gun(p, id) || actor.position < 0;
+            if(!charge && actor.reposition_in <= 0.f)
             {
                 actor.reposition_in = reposition_time;
                 actor.position      = pick_position(p, actor, model, kind, actor.last_seen, false);
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
-            /* Unarmed, or with nowhere to fight from: it closes in, to arm's
-             * reach or the near edge of the range it fights at; a target come
-             * close is lunged at to strike */
-            f32 const  apart  = glm::distance(model.position, actor.last_seen);
-            bool const lunge  = actv.melee_range > 0.f && actor.seen_ago < look_period * 2.f &&
-                               apart < std::max(actv.melee_range * 2.f, lunge_reach);
-            bool const charge = !armed || lunge || actor.position < 0;
-            f32 const  close  = !armed || lunge ? std::max(actv.melee_range * .8f, .5f)
-                                                : std::max(actv.desired_combat_range.x, 2.f);
+            f32 const close = charge ? strike_reach * .8f : std::max(actv.desired_combat_range.x, 2.f);
             bool const there  = charge ? glm::distance(model.position, actor.last_seen) <= close
                                        : glm::distance(model.position, actor.goal) <= arrive_radius;
             if(!there)
@@ -1471,11 +1475,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return 3.f;
     }
 
+    /* A weapon it can shoot with: not a sword, nor anything to one its
+     * variant says only strikes */
     bool holds_gun(Proxy& p, u64 id)
     {
         auto const* equip = p.template get<BipedEquipment>(id);
         auto const* gun   = equip ? equip->held(p.template subsystem<BlamFiles<halo_version>>().load_generation) : nullptr;
-        return gun && gun->tag;
+        if(!gun || !gun->tag || !gun->weapon || gun->weapon->triggers.count == 0)
+            return false;
+        auto const* actor = p.template get<Actor>(id);
+        auto const* kind  = actor ? kind_of(p, *actor) : nullptr;
+        return !kind || !kind->variant ||
+               (kind->variant->flags & actv_t::flags_t::cannot_use_ranged_weapons) == actv_t::flags_t::none;
     }
 
     /* ---- Riding ---- */
@@ -1585,14 +1596,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         actor.melee_in -= look_period / 8.f;
-        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > actv.melee_range * 1.3f)
+        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > strike_reach * 1.3f)
         {
             /* Out of reach: a swing under way is called off */
             actor.swinging  = false;
             actor.strike_in = 0.f;
             return false;
         }
-        if(!actor.swinging && glm::distance(model.position, actor.last_seen) > actv.melee_range)
+        if(!actor.swinging && glm::distance(model.position, actor.last_seen) > strike_reach)
             return false;
         /* A carrier form at its target falls over and bursts */
         if(kind.actor->type == blam::scn::actor_type_t::carrier_form)
@@ -1652,7 +1663,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.swinging = false;
         actor.melee_in = 1.5f;
         if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} strikes {}", id, actor.target);
+            cDebug("ai: {} strikes {} at {:.2f} wu", id, actor.target, glm::distance(model.position, actor.last_seen));
         return true;
     }
 
