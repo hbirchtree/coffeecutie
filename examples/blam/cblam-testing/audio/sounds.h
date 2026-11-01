@@ -66,6 +66,21 @@ struct AlternateSoundEvent
     bool alternate{true};
 };
 
+/*! A sound another game's loader decoded and registered with SoundCache:
+ * which game, and its tag there. key() is what the sound events and
+ * SoundCache::external take */
+struct ExternalSound
+{
+    MapGameEvent::game_t game;
+    libc_types::u32      tag;
+
+    /*! Game in the top bits (0x4832 Halo 2, 0x4833 Halo 3), tag below */
+    constexpr libc_types::u64 key() const
+    {
+        return (static_cast<libc_types::u64>(0x4831 + game) << 48) | tag;
+    }
+};
+
 struct PlaySoundEvent
 {
     static constexpr auto event_type = SoundEvent::play_sound;
