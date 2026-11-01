@@ -1,4 +1,5 @@
 #include "h2_bitmap.h"
+#include "h2_map.h"
 #include "h2_scene.h"
 #include "../world/column_grid.h"
 #include "../world/texels.h"
@@ -135,9 +136,14 @@ struct H2MapLoader : compo::SubsystemBase
     using type = H2MapLoader;
 
     H2MapLoader(
-        compo::EntityContainer& e, H2Scene& scene, H2ShellData& shell, H2SoundBank& bank)
+        compo::EntityContainer& e,
+        H2Scene&                scene,
+        H2Map&                  map,
+        H2ShellData&            shell,
+        H2SoundBank&            bank)
         : m_container(e)
         , m_scene(scene)
+        , m_map(map)
         , m_shell(shell)
         , m_bank(bank)
     {
@@ -256,11 +262,10 @@ struct H2MapLoader : compo::SubsystemBase
 
     void finish_fetch(MapLoadEvent const& load, std::shared_ptr<comp_app::FileMapper::Resource> file)
     {
-        /* Everything worth keeping is copied out by the load */
         m_fetch.reset();
         dim::raw_pool pool;
         side_pool(pool);
-        load_cache(load, static_cast<BytesConst>(*file), pool);
+        load_cache(load, file, pool);
         m_container.subsystem_cast<LoadingStatus>().end();
     }
 
@@ -362,9 +367,13 @@ struct H2MapLoader : compo::SubsystemBase
         }};
 
 
+    /* The map stays held by H2Map once loaded */
     bool load_cache(
-        MapLoadEvent const& load, BytesConst const& bytes, dim::raw_pool& pool)
+        MapLoadEvent const&                             load,
+        std::shared_ptr<comp_app::FileMapper::Resource> file,
+        dim::raw_pool&                                  pool)
     {
+        auto const bytes = static_cast<BytesConst>(*file);
         world::announce_game(m_container, MapGameEvent::halo2);
         unload();
         world::clear_world(m_container);
@@ -379,8 +388,10 @@ struct H2MapLoader : compo::SubsystemBase
         if(auto map = dim::map_container<dim::xbox_version_t>::from_bytes(
                bytes, dim::xbox_version);
            map.has_value())
-            loaded = load_map(map.value(), pool);
-        else if(auto map = dim::map_container<dim::vista_version_t>::from_bytes(
+        {
+            if((loaded = load_map(map.value(), pool)))
+                m_map.hold(map.value(), file);
+        } else if(auto map = dim::map_container<dim::vista_version_t>::from_bytes(
                     bytes, dim::vista_version);
                 map.has_value())
         {
@@ -395,7 +406,8 @@ struct H2MapLoader : compo::SubsystemBase
                 pool.file_size(dim::raw_file_t::mainmenu),
                 pool.file_size(dim::raw_file_t::shared),
                 pool.file_size(dim::raw_file_t::single_player_shared));
-            loaded = load_map(vista, pool);
+            if((loaded = load_map(vista, pool)))
+                m_map.hold(vista, file, std::move(shared));
         }
         else
             cWarning(
@@ -442,6 +454,7 @@ struct H2MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        m_map.release();
         m_source.reset();
         m_player_unit.reset();
         m_shell.loaded = false;
@@ -3507,6 +3520,7 @@ struct H2MapLoader : compo::SubsystemBase
 
     compo::EntityContainer& m_container;
     H2Scene&                m_scene;
+    H2Map&                  m_map;
     H2ShellData&            m_shell;
     H2SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
@@ -3561,8 +3575,9 @@ void alloc_h2(compo::EntityContainer& e)
     e.register_subsystem_inplace<H2Visibility>();
     auto& shell  = e.register_subsystem_inplace<H2ShellData>();
     auto& bank   = e.register_subsystem_inplace<H2SoundBank>();
+    auto& map    = e.register_subsystem_inplace<H2Map>();
     auto& loader = e.register_subsystem_inplace<H2MapLoader>(
-        std::ref(e), std::ref(scene), std::ref(shell), std::ref(bank));
+        std::ref(e), std::ref(scene), std::ref(map), std::ref(shell), std::ref(bank));
     world::consume_map_loads(e, loader);
     alloc_h2_occluder(e);
     alloc_h2_renderer(e);
