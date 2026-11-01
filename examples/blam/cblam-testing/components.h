@@ -1123,6 +1123,8 @@ struct Actor
     libc_types::f32 strike_in{0.f};     /*!< Until a swing's blow lands */
     bool            swinging{false};    /*!< A swing is under way */
     bool            charging{false};    /*!< Closing to arm's reach to strike */
+    libc_types::f32 taunt_in{0.f};      /*!< Until it crows over a kill, 0 = none due */
+    bool            taunt_player{false}; /*!< The kill was a player */
     libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
     bool            scripted{false}; /*!< A command list or recording has it */
     bool            may_fight{false}; /*!< Its command list lets it break off for an enemy */
