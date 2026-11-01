@@ -20,7 +20,28 @@ PlayerInfo* ensure_local_player(compo::EntityContainer& container)
     return &info;
 }
 
-void place_local_cameras(compo::EntityContainer& container, Vecf3 const& position, f32 yaw)
+void reset_players_between_games(compo::EntityContainer& container)
+{
+    auto last = std::make_shared<MapGameEvent::game_t>(MapGameEvent::halo1);
+    container.subsystem_cast<GameEventBus>().addEventFunction<MapGameEvent>(
+        0, [&container, last](GameEvent&, MapGameEvent* map) {
+            bool const back_to_halo1 = map->game == MapGameEvent::halo1 && *last != MapGameEvent::halo1;
+            *last                    = map->game;
+            if(!back_to_halo1)
+                return;
+            for(auto entity : container.select<PlayerInfo>())
+            {
+                auto& info = entity.get<PlayerInfo>();
+                if(info.is_remote())
+                    continue;
+                info.mode.physics = false;
+                info.biped        = {};
+            }
+        });
+}
+
+void place_local_cameras(
+    compo::EntityContainer& container, Vecf3 const& position, f32 yaw, PlayerInfo::biped_shape_t const* unit)
 {
     static const glm::mat3 bsp_basis_inv{{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
     for(auto entity : container.select<PlayerCamera, PlayerInfo, PlayerInput>())
@@ -34,8 +55,9 @@ void place_local_cameras(compo::EntityContainer& container, Vecf3 const& positio
         cam.camera_opts.world_basis   = bsp_basis_inv;
         cam.camera.position           = position;
         cam.camera.rotation           = glm::angleAxis(glm::pi<f32>() - yaw, Vecf3{0.f, 1.f, 0.f});
-        /* No collision mesh to stand on: fly */
-        info.mode.physics = false;
+        if(unit)
+            info.biped = *unit;
+        info.mode.physics = unit != nullptr;
         input.input_mode  = PlayerInput::input_mode_t::game;
     }
     update_camera_aspect(container);

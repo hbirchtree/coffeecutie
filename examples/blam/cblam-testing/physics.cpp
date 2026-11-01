@@ -2767,6 +2767,11 @@ struct PhysicsSystem
          * floor to make bodies on */
         if(!cache.sections.empty())
             return false;
+        return has_static_body();
+    }
+
+    bool has_static_body() const
+    {
         for(auto const& [_, body] : m_bodies)
             if(body.world_body && body.world_body->getInvMass() == 0.f)
                 return true;
@@ -2949,7 +2954,7 @@ struct PhysicsSystem
     footing_t hold_off_steep(Body const& body, btVector3& vel) const
     {
         footing_t out;
-        if(body.slope_up <= 0.f || !m_world_body)
+        if(body.slope_up <= 0.f || (!m_world_body && !has_static_body()))
             return out;
         btRigidBody const* self    = body.world_body.get();
         btVector3 const    current = self->getLinearVelocity();
