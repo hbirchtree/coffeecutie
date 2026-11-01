@@ -8,6 +8,7 @@
 #include "network/networking.h"
 #include "object_functions.h"
 #include "physics.h"
+#include "save_state.h"
 #include "selected_version.h"
 #include "sounds.h"
 #include "ticks.h"
@@ -543,6 +544,22 @@ struct ProjectileSystem
 void alloc_projectiles(compo::EntityContainer& e)
 {
     auto& projectiles = e.register_subsystem_inplace<ProjectileSystem>();
+    /* Shots in flight, grenades and casings lying about go on a restore */
+    e.subsystem_cast<SaveState>().on_restore([](compo::EntityContainer& e) {
+        std::set<u64> doomed;
+        for(auto const& ent : e.select<Model>())
+        {
+            auto const& model = ent.template get<Model>();
+            bool const  spent = e.get<Projectile>(ent.id()) ||
+                               (model.tag && model.tag->matches(blam::tag_class_t::garb));
+            if(!spent)
+                continue;
+            doomed.insert(ent.id());
+            for(auto const& part : model.parts)
+                doomed.insert(part.id());
+        }
+        e.remove_entity_if([&doomed](compo::Entity const& entity) { return doomed.contains(entity.id); });
+    });
     projectiles.m_ticks =
         std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
     projectiles.m_blast_queue =

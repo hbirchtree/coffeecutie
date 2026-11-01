@@ -7,6 +7,7 @@
 #include "physics.h"
 #include "selected_version.h"
 #include "sounds.h"
+#include "save_state.h"
 #include "ticks.h"
 
 #include <blam/volta/blam_particles.h>
@@ -2517,4 +2518,18 @@ void alloc_effects(compo::EntityContainer& e)
             0, [&effects](GameEvent&, SpawnEffectEvent* spawn) {
                 effects.m_requests.push_back(*spawn);
             });
+
+    /* A checkpoint keeps the marks left on the world; what was playing goes,
+     * and what plays on its objects starts over where they are put back */
+    auto& save = e.subsystem_cast<SaveState>();
+    save.bind(effects, &EffectSystem::m_effect_decals);
+    save.on_restore([&effects](compo::EntityContainer&) {
+        std::erase_if(effects.m_effects, [](auto const& effect) { return !effect.attached; });
+        std::erase_if(effects.m_systems, [](auto const& system) { return !system.attached; });
+        std::erase_if(effects.m_lights, [](auto const& light) { return light.life >= 0.f; });
+        for(auto& contrail : effects.m_contrails)
+            contrail.points.clear();
+        effects.m_particles.clear();
+        effects.m_requests.clear();
+    });
 }
