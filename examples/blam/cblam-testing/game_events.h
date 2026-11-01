@@ -107,6 +107,7 @@ struct GameEvent
         FlagCommand,
         FlagTouch,
         KillFeed,
+        WorldReady,
     };
 
     EventType type{None};
@@ -124,6 +125,15 @@ struct MapGameEvent
         halo2,
         halo3,
     } game{halo1};
+};
+
+/*! A map's world is loaded and can be spawned into, whichever game it is
+ * from: sent once, after the loader has placed the local players */
+struct WorldReadyEvent
+{
+    static constexpr auto event_type = GameEvent::WorldReady;
+
+    MapGameEvent::game_t game{MapGameEvent::halo1};
 };
 
 struct MapLoadEvent
