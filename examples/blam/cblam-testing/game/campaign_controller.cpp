@@ -53,10 +53,20 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
         auto const save  = std::exchange(m_asked, {});
         if(std::exchange(m_cancel, false))
             m_save_wait = std::nullopt;
-        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
-           p.template subsystem<NetworkState>().replica)
-            return;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+        {
+            /* The level is gone: nobody waits to respawn into it */
+            if(m_load_generation != files.load_generation)
+            {
+                m_waiting.clear();
+                m_health.clear();
+                m_started = false;
+            }
+            return;
+        }
+        if(p.template subsystem<NetworkState>().replica)
+            return;
         auto&       state = p.template subsystem<GameState>();
         if(m_load_generation != files.load_generation)
             begin(files);

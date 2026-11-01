@@ -40,6 +40,7 @@ using WeaponManifest = compo::SubsystemManifest<
         GameEventBus,
         PhysicsBus,
         const NetworkState,
+        const LoadingStatus,
         const BlamFiles<halo_version>>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
@@ -87,6 +88,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             m_shots.clear();
             m_grenades.clear();
         }
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+            return;
         auto const& magic = files.container.magic;
 
         std::set<u64> live;

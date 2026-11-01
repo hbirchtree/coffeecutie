@@ -2795,7 +2795,15 @@ struct ResourceLoader
         LoadingStatus const* loading;
         p.subsystem(loading);
         if(loading->loaded_map != LoadingStatus::loaded)
+        {
+            /* The map's biped goes with it, mounted again from the next one */
+            if(biped_model.model.valid() || !player_bipeds.empty())
+            {
+                biped_model = {};
+                player_bipeds.clear();
+            }
             return;
+        }
         if(biped_model.load_generation != files.load_generation)
         {
             biped_model = {
