@@ -10,6 +10,7 @@
 #include "cinematic.h"
 #include "components.h"
 #include "data.h"
+#include "network/networking.h"
 #include "physics.h"
 #include "ui.h"
 
@@ -32,7 +33,8 @@ using PlayerControllerManifest = compo::SubsystemManifest<
         RenderingParameters,
         GameEventBus,
         const CinematicState,
-        const GameState>,
+        const GameState,
+        const NetworkState>,
     type_list_t<
         comp_app::ControllerInput,
         comp_app::MouseInput
