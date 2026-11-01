@@ -156,6 +156,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 continue;
             }
             auto const* kind = kind_of(p, actor);
+            taunt(p, ent.id(), actor, model, dt);
             if(std::getenv("BLAM_DEBUG_AI") && (m_debug_in -= dt) <= 0.f)
             {
                 m_debug_in = 3.f;
@@ -239,6 +240,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 default_windup  = .35f; /* s before a blow lands, a swing without a key frame */
     static constexpr f32 lunge_reach     = 3.f;  /* wu a target comes within to be charged, at least */
     static constexpr f32 strike_reach    = 1.5f; /* wu, feet to feet, a blow lands within */
+    static constexpr f32 taunt_chance    = .6f;
+    static constexpr f32 taunt_spacing   = 2.5f; /* s between any two taunts */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
@@ -343,6 +346,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         case state_t::combat: {
             if(!alive(p, actor.target))
             {
+                /* Seen fall, it may crow over it in a moment */
+                if(actor.seen_ago < look_period * 2.f && chance(taunt_chance))
+                {
+                    actor.taunt_in     = uniform({.5f, 1.5f});
+                    actor.taunt_player = p.template get<PlayerInfo>(actor.target) != nullptr;
+                }
                 actor.target = 0;
                 enter(actor, state_t::idle);
                 break;
@@ -1591,6 +1600,56 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = uniform(actv.burst_separation, 1.f);
     }
 
+    /* A kill it saw is crowed over, one voice at a time */
+    void taunt(Proxy& p, u64 id, Actor& actor, Model const& model, f32 dt)
+    {
+        m_taunt_in -= dt;
+        if(actor.taunt_in <= 0.f || (actor.taunt_in -= dt) > 0.f)
+            return;
+        actor.taunt_in = 0.f;
+        if(m_taunt_in > 0.f)
+            return;
+        auto const* dialogue = dialogue_of(p, id);
+        auto*       sounds   = p.template service<comp_app::EventBus<SoundEvent>>();
+        if(!dialogue || !sounds)
+            return;
+        auto const& line = actor.taunt_player && dialogue->killed_enemy_player.valid()
+                               ? dialogue->killed_enemy_player
+                               : dialogue->killed_enemy;
+        if(!line.valid())
+            return;
+        m_taunt_in = taunt_spacing;
+        SoundEvent     ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{
+            .sound    = &static_cast<blam::tagref_t const&>(line),
+            .position = model.position + Vecf3{0.f, 0.f, .5f},
+        };
+        sounds->inject(ev, &play);
+        if(std::getenv("BLAM_DEBUG_AI"))
+            cDebug("ai: {} taunts ({})", id, actor.taunt_player ? "player" : "enemy");
+    }
+
+    /* The unit's first dialogue variant */
+    blam::scn::unit_dialogue const* dialogue_of(Proxy& p, u64 id)
+    {
+        auto const* model = p.template get<Model>(id);
+        if(!model || !model->origin_object)
+            return nullptr;
+        auto unit = model->origin_object->template data<blam::scn::unit>(*s_magic);
+        if(!unit.has_value())
+            return nullptr;
+        auto variants = unit.value()[0].dialogue_variants.data(*s_magic);
+        if(!variants.has_value() || variants.value().empty() || !variants.value()[0].dialogue.valid())
+            return nullptr;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        blam::tag_index_view<halo_version> index(files.container);
+        auto it = index.find(variants.value()[0].dialogue.tag_id);
+        if(it == index.end())
+            return nullptr;
+        auto data = (*it).template data<blam::scn::unit_dialogue>(*s_magic);
+        return data.has_value() ? data.value() : nullptr;
+    }
+
     /* Within arm's reach of its target it strikes with what it holds */
     bool strike(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind)
     {
@@ -1887,6 +1946,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     std::map<std::pair<blam::antr::header const*, std::string>, f32> m_strides;
     std::minstd_rand                                                 m_random{12345};
     std::vector<blam::globals::grenade const*>                       m_grenades;
+    f32                                                              m_taunt_in{0.f};
 };
 
 void alloc_actors(compo::EntityContainer& e)
