@@ -48,6 +48,20 @@ struct basic_tag_index
         return value() != 0xFFFFFFFF;
     }
 
+    /*! The handle whose value() is `value` */
+    static basic_tag_index of(libc_types::u32 value)
+    {
+        basic_tag_index out{};
+        if constexpr(E == std::endian::little)
+            out.raw = to_le(value);
+        else
+        {
+            value = detail::byteswap<libc_types::u32, E>(value);
+            std::memcpy(out.raw.raw.data(), &value, sizeof(value));
+        }
+        return out;
+    }
+
     /*! The null handle */
     static constexpr basic_tag_index none()
     {
