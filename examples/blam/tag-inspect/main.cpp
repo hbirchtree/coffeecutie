@@ -76,6 +76,7 @@ size_t        g_scan_window   = 0;
 bool          g_find_refs     = false;
 bool          g_dump_player   = false;
 bool          g_dump_scenario = false;
+bool          g_dump_encounters = false;
 bool          g_dump_bones    = false;
 bool          g_dump_recanim  = false;
 bool          g_check_lookup  = false;
@@ -2892,6 +2893,55 @@ void dump_spawn_hex(blam::map_container<Ver> const& map)
 /* The scenario never names the globals tag; it supplies where a player spawns
  * and with what, while globals supplies the unit itself. Printed together so
  * the split is visible. */
+/* The AI's encounters: their squads, what each is made of and where it starts */
+template<typename Ver = blam::xbox_version_t>
+void dump_encounters(blam::map_container<Ver> const& map)
+{
+    auto scn = map.scenario();
+    if(!scn.has_value())
+    {
+        fmt::print("no scenario tag\n");
+        return;
+    }
+    auto const* s       = scn.value();
+    auto        palette = s->ai.actor_palette.data(map.magic);
+    auto const  variant = [&](i16 i) -> std::string {
+        if(!palette.has_value() || i < 0 || static_cast<size_t>(i) >= palette.value().size())
+            return "-";
+        return std::string(name_of(palette.value()[static_cast<size_t>(i)]));
+    };
+    fmt::print("encounters: {}\n", s->ai.encounters.count);
+    each(map.magic, s->ai.encounters, [&](u32 e, blam::scn::ai::encounter const& enc) {
+        fmt::print(
+            "  [{}] {} team={} flags={:#x} squads={} firing_positions={}\n",
+            e,
+            enc.name.str(),
+            static_cast<u32>(enc.team_index),
+            static_cast<u32>(enc.flags),
+            enc.squads.count,
+            enc.firing_positions.count);
+        each(map.magic, enc.squads, [&](u32 q, blam::scn::ai::squad const& squad) {
+            fmt::print(
+                "    squad [{}] {} actor={} count={}/{} platoon={}\n",
+                q,
+                squad.name.str(),
+                variant(squad.actor_type),
+                squad.normal_diff_count,
+                squad.insane_diff_count,
+                squad.platoon);
+            each(map.magic, squad.start_locations, [&](blam::scn::ai::squad_location const& loc) {
+                fmt::print(
+                    "      at {:.1f} {:.1f} {:.1f} facing={:.2f}{}\n",
+                    loc.position.x,
+                    loc.position.y,
+                    loc.position.z,
+                    loc.facing,
+                    loc.actor_type >= 0 ? " actor=" + variant(loc.actor_type) : "");
+            });
+        });
+    });
+}
+
 template<typename Ver = blam::xbox_version_t>
 void dump_scenario(blam::map_container<Ver> const& map)
 {
@@ -4804,6 +4854,11 @@ void open_map(
         dump_scenario<Ver>(map);
         return;
     }
+    if(g_dump_encounters)
+    {
+        dump_encounters<Ver>(map);
+        return;
+    }
 
     if(g_dump_recanim)
     {
@@ -4896,6 +4951,9 @@ int inspect_main()
         ("dump-scenario",
          "Print scenario type, starting profiles and spawn locations")
         //
+        ("dump-encounters",
+         "Print the AI encounters, their squads and start locations")
+        //
         ("dump-spawn-hex",
          "Hexdump the first few instances of each scenario spawn block")
         //
@@ -4938,6 +4996,7 @@ int inspect_main()
     g_find_refs     = arguments.count("find-refs") > 0;
     g_dump_player   = arguments.count("dump-player-biped") > 0;
     g_dump_scenario = arguments.count("dump-scenario") > 0;
+    g_dump_encounters = arguments.count("dump-encounters") > 0;
     g_spawn_hex     = arguments.count("dump-spawn-hex") > 0;
     g_spawn_hex_limit = static_cast<u32>(
         arguments.as_optional<int>("spawn-hex-count").value_or(3));
