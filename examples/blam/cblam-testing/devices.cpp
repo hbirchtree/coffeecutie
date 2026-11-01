@@ -470,7 +470,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         if(!clips.has_value())
             return;
         auto const& animation = clips.value()[*clip];
-        f32 const   rate      = animation.frame_rate();
+        f32 const   rate      = frame_rate(animation);
         layer.graph     = anim.graph;
         layer.animation = static_cast<u32>(*clip);
         layer.loop      = loops;
@@ -478,7 +478,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         layer.finished  = false;
         layer.weight    = 1.f;
         /* Round and round, the last frame blends into the first */
-        layer.time = device.position * std::max(animation.frame_count - (loops ? 0 : 1), 0) / rate;
+        layer.time = device.position * std::max(static_cast<i32>(frame_count(animation)) - (loops ? 0 : 1), 0) / rate;
     }
 
     std::optional<i16> position_clip(blam::antr::header const* graph) const
