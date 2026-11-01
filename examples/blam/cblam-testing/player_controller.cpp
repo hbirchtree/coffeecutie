@@ -453,6 +453,7 @@ struct PlayerController
                 ui,
                 info.seat_idx,
                 to_menu ? UINavigation::open : UINavigation::close);
+            pause_for_menus(p);
         }
 
         /* Headless there is no mouse to grab */
@@ -471,6 +472,22 @@ struct PlayerController
         /* Resampled every frame */
         input.movement = {};
         input.accel    = 1.f;
+    }
+
+    /* A local game stands still while any seat has its menu open; a
+     * networked one runs on, as its peers do */
+    void pause_for_menus(Proxy& p)
+    {
+        auto const& net = p.subsystem<NetworkState>();
+        if(net.client_state != NetworkState::ClientState::None ||
+           net.server_state != NetworkState::ServerState::None)
+            return;
+        bool in_menu = false;
+        for(auto ent : p.select<PlayerInput>())
+            in_menu |= ent.template get<PlayerInput>().input_mode == PlayerInput::input_mode_t::menu;
+        GameEvent            ev{.type = GameEvent::SimulationPause};
+        SimulationPauseEvent pause{.paused = in_menu};
+        p.subsystem<GameEventBus>().inject(ev, &pause);
     }
 
     static void navigate(
