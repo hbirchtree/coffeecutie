@@ -231,6 +231,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        m_player_unit.reset();
         m_water = {};
         m_footsteps = nullptr;
         m_step_from.reset();
@@ -890,13 +891,14 @@ struct H3MapLoader : compo::SubsystemBase
         if(!scnr)
             return false;
 
+        m_player_unit = player_unit();
         Vecf3 eye{0.f, 0.f, 1.f};
         f32   yaw = 0.f;
         i16   bsp = 0;
         auto  starts = scnr->starting_locations.span(magic);
         if(!starts.empty())
         {
-            eye = starts[0].position.value() + Vecf3{0.f, 0.f, 0.6f};
+            eye = starts[0].position.value() + Vecf3{0.f, 0.f, m_player_unit ? m_player_unit->eye_height : 0.6f};
             yaw = starts[0].facing.value().x;
             bsp = std::max<i16>(starts[0].bsp.value(), 0);
         }
@@ -1504,6 +1506,67 @@ struct H3MapLoader : compo::SubsystemBase
             fixed,
             hidden,
             m_scene.lights.size());
+    }
+
+    /* How the player's unit moves: the third-person biped's capsule, camera,
+     * jump and slope, the globals' ground speeds */
+    std::optional<PlayerInfo::biped_shape_t> player_unit() const
+    {
+        auto const& map     = *m_map;
+        auto const  globals = map.find<el::phys::globals_t>();
+        if(!globals)
+            return std::nullopt;
+        /* The first with hands is the Chief, as first person picks it */
+        el::phys::player_representation_t const* player = nullptr;
+        for(auto const& representation : map.span(globals->player_representations))
+            if(map.get<el::render_model_t>(representation.first_person_hands))
+            {
+                player = &representation;
+                break;
+            }
+        auto const biped = player ? map.get<el::biped_t>(player->third_person_unit) : el::tagged<el::biped_t>{};
+        if(!biped)
+            return std::nullopt;
+        PlayerInfo::biped_shape_t shape;
+        f32 const radius = biped->radius.value(), height = biped->height_standing.value();
+        f32 const eye    = biped->standing_camera_height.value();
+        if(radius > 0.f && height > 0.f && eye > 0.f)
+        {
+            shape.radius     = radius;
+            shape.height     = height;
+            shape.eye_height = eye;
+        }
+        if(f32 const crouch = biped->crouching_camera_height.value(); crouch > 0.f)
+            shape.crouch_eye_height = crouch;
+        if(f32 const time = biped->crouch_transition_time.value(); time > 0.f)
+            shape.crouch_time = time;
+        if(f32 const jump = biped->jump_velocity.value(); jump > 0.f)
+            shape.jump_velocity = jump;
+        if(f32 const slope = biped->maximum_slope_angle.value(); slope > 0.f)
+            shape.max_slope = slope;
+        if(auto info = map.span(globals->player_information); !info.empty())
+        {
+            if(f32 const run = info[0].run_forward.value(); run > 0.f)
+                shape.run_speed = run;
+            if(f32 const back = info[0].run_backward.value(); back > 0.f)
+                shape.back_speed = back;
+            if(f32 const side = info[0].run_sideways.value(); side > 0.f)
+                shape.strafe_speed = side;
+        }
+        cDebug(
+            "H3: player unit {}: radius {} height {} eye {} (crouched {}), run {}/{}/{}, jump {}, slope {} (cos {})",
+            map.name_of(player->third_person_unit),
+            shape.radius,
+            shape.height,
+            shape.eye_height,
+            shape.crouch_eye_height,
+            shape.run_speed,
+            shape.back_speed,
+            shape.strafe_speed,
+            shape.jump_velocity,
+            shape.max_slope,
+            biped->cosine_maximum_slope_angle.value());
+        return shape;
     }
 
     /* The player's first-person hands and the starting weapon's first-person
@@ -2983,7 +3046,7 @@ struct H3MapLoader : compo::SubsystemBase
         /* H3_CAMO=1 starts the player camouflaged */
         if(auto* info = world::ensure_local_player(m_container))
             info->camouflaged = platform::env::var("H3_CAMO").value_or("0") != "0";
-        world::place_local_cameras(m_container, position, yaw);
+        world::place_local_cameras(m_container, position, yaw, m_player_unit ? &*m_player_unit : nullptr);
     }
 
     compo::EntityContainer& m_container;
@@ -2994,6 +3057,7 @@ struct H3MapLoader : compo::SubsystemBase
     std::shared_ptr<comp_app::FileMapper::Resource>              m_file;
     std::shared_ptr<comp_app::FileMapper::FetchSet>              m_fetch; /*!< The files on their way in */
     std::shared_ptr<comp_app::FileMapper::FetchSet>              m_sides; /*!< The side caches in use */
+    std::optional<PlayerInfo::biped_shape_t>                     m_player_unit; /*!< None: the player flies */
     std::vector<std::shared_ptr<comp_app::FileMapper::Resource>> m_side_files;
     std::vector<std::unique_ptr<el::map_container>>              m_side_maps;
     std::unique_ptr<el::map_container>                           m_map;

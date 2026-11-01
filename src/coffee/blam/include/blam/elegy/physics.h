@@ -387,11 +387,25 @@ struct player_representation_t
 
 static_assert(sizeof(player_representation_t) == 0x54);
 
+/*! How players move on foot, world units per second */
+struct player_information_t
+{
+    be<f32>              walking_speed;
+    be<f32>              run_forward;
+    be<f32>              run_backward;
+    be<f32>              run_sideways;
+    be<f32>              run_acceleration;
+    std::array<u8, 0xAC> unknown_0;
+};
+
+static_assert(sizeof(player_information_t) == 0xC0);
+
 struct globals_t
 {
     static constexpr tag_class_t tag_class = tag_class_t::matg;
 
-    std::array<u8, 0x164>                      unknown_0;
+    std::array<u8, 0x158>                      unknown_0;
+    tag_block<player_information_t>            player_information;
     tag_block<player_representation_t>         player_representations;
     std::array<u8, 0xC>                        unknown_1;
     tag_block<global_material_t>               materials;
@@ -406,6 +420,7 @@ struct globals_t
     }
 };
 
+static_assert(offsetof(globals_t, player_information) == 0x158);
 static_assert(offsetof(globals_t, player_representations) == 0x164);
 static_assert(offsetof(globals_t, materials) == 0x17C);
 
