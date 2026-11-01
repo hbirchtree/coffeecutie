@@ -191,6 +191,10 @@
             {
                 "source": "mesh/cone.obj",
                 "name": "cone"
+            },
+            {
+                "source": "mesh/cloudy.obj",
+                "name": "cloudy"
             }
         ],
         "text": [
@@ -205,7 +209,10 @@
             {"source":"shaders/loading_scene.frag", "name": "loading_scene_frag"},
             {"source":"shaders/loading_zoom.frag", "name": "loading_zoom_frag"},
             {"source":"shaders/monitor.vert", "name": "monitor_vert"},
-            {"source":"shaders/monitor.frag", "name": "monitor_frag"}
+            {"source":"shaders/monitor.frag", "name": "monitor_frag"},
+            {"source":"shaders/gravity_storm.vert", "name": "gravity_storm_vert"},
+            {"source":"shaders/gravity_cloud.frag", "name": "gravity_cloud_frag"},
+            {"source":"shaders/gravity_wind.frag", "name": "gravity_wind_frag"}
         ]
     }
 }
