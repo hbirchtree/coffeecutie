@@ -680,6 +680,21 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
 {
     ProfContext _;
     auto&       gbus = e.subsystem_cast<GameEventBus>();
+    /* Another game's map: the Halo 1 one is gone, and the systems that hold
+     * state from it see the generation move and let it go */
+    gbus.addEventFunction<MapGameEvent>(0, [&e](GameEvent&, MapGameEvent* map) {
+        if(map->game == MapGameEvent::halo1)
+            return;
+        auto& files   = e.subsystem_cast<BlamFiles<halo_version>>();
+        auto& loading = e.subsystem_cast<LoadingStatus>();
+        if(files.fetch)
+            files.fetch->cancel();
+        loading.loaded_map     = LoadingStatus::none;
+        loading.loaded_bitmaps = LoadingStatus::none;
+        loading.loaded_sounds  = LoadingStatus::none;
+        loading.init_started   = false;
+        files.load_generation++;
+    });
     gbus.addEventFunction<MapLoadByNameEvent>(
         0, [&e](GameEvent&, MapLoadByNameEvent* load) {
             auto&        files = e.subsystem_cast<BlamFiles<halo_version>>();

@@ -939,8 +939,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             cinematic.title.reset();
         auto const& files   = p.template subsystem<BlamFiles<halo_version>>();
         auto const& loading = p.template subsystem<LoadingStatus>();
-        if(loading.loaded_map != LoadingStatus::loaded ||
-           files.container.map->map_type == blam::maptype_t::ui)
+        if(loading.loaded_map != LoadingStatus::loaded)
+        {
+            if(m_magic)
+                unload();
+            return;
+        }
+        if(files.container.map->map_type == blam::maptype_t::ui)
             return;
         if(scene.generation != files.load_generation)
             load(files);
@@ -1041,6 +1046,18 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     }
 
     /* What this map's HUD is drawn from */
+    /* The map's HUD tags go with it; load() takes the next map's */
+    void unload()
+    {
+        m_magic           = nullptr;
+        m_unit_huds       = {};
+        m_digits          = nullptr;
+        m_hudg            = nullptr;
+        m_messages        = nullptr;
+        m_global_messages = nullptr;
+        m_grenades.clear();
+    }
+
     void load(BlamFiles<halo_version> const& files)
     {
         m_magic       = &files.container.magic;

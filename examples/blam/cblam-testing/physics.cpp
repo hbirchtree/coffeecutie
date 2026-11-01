@@ -853,7 +853,8 @@ struct PhysicsSystem
         bool needs_rebuild = bsp_cache->active_section != m_built_section;
         if(!needs_rebuild && !m_world_body)
             needs_rebuild = find_section_item(*bsp_cache) != nullptr;
-        if(needs_rebuild)
+        /* Another game's map brings its own ground */
+        if(needs_rebuild && loading->loaded_map == LoadingStatus::loaded)
             rebuild_world(*bsp_cache);
 
         /* Without ground, new bodies would fall through the map */

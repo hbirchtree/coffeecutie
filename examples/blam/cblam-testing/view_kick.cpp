@@ -38,10 +38,19 @@ struct ViewKick : compo::RestrictedSubsystem<ViewKick, ViewKickManifest>
         m_last = t;
         m_shot_queue->poll();
         auto shots = std::exchange(m_shots, {});
-        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
-            return;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        if(m_load_generation != files.load_generation)
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+        {
+            if(m_load_generation == files.load_generation)
+                return;
+            m_load_generation = files.load_generation;
+            m_index.reset();
+            m_seats.clear();
+            for(auto ent : p.template select<PlayerCamera>())
+                ent.template get<PlayerCamera>().kick = {};
+            return;
+        }
+        if(m_load_generation != files.load_generation || !m_index)
         {
             m_load_generation = files.load_generation;
             m_index.emplace(files.container);

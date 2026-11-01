@@ -61,14 +61,22 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         m_restore_queue->poll();
         bool const save    = std::exchange(m_save, false);
         bool const restore = std::exchange(m_restore, false);
+        auto const& files  = p.template subsystem<BlamFiles<halo_version>>();
+        auto&       groups = p.template subsystem<DeviceGroups>();
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
         {
             m_uses.clear();
             m_syncs.clear();
+            /* The groups go with their map; reset from the next one */
+            if(groups.load_generation != files.load_generation && !groups.values.empty())
+            {
+                auto const generation  = groups.load_generation;
+                groups                 = {};
+                groups.load_generation = generation;
+                m_saved.reset();
+            }
             return;
         }
-        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        auto&       groups = p.template subsystem<DeviceGroups>();
         m_magic            = &files.container.magic;
         if(groups.load_generation != files.load_generation)
         {
