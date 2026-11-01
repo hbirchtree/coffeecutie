@@ -20,6 +20,7 @@
 #include <blam/dimeter/animation.h>
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/collision.h>
+#include <blam/dimeter/firing.h>
 #include <blam/dimeter/fog.h>
 #include <blam/dimeter/geometry.h>
 #include <blam/dimeter/lightmap.h>
@@ -457,6 +458,7 @@ struct H2MapLoader : compo::SubsystemBase
         m_map.release();
         m_source.reset();
         m_player_unit.reset();
+        m_loadout = {};
         m_shell.loaded = false;
         m_bank.loaded  = false;
         m_scene.loaded = false;
@@ -1639,10 +1641,14 @@ struct H2MapLoader : compo::SubsystemBase
             return;
 
         /* The view model and its animations from the starting weapon */
-        dim::tag_t const* weapon_tag = nullptr;
+        dim::tag_t const*                            weapon_tag = nullptr;
+        dim::scn::player_starting_profile_t const* profile    = nullptr;
         if(auto profiles = scenario.player_starting_profiles.data(map.magic());
            !profiles.has_error() && !profiles.value().empty())
-            weapon_tag = map.tag_at(profiles.value()[0].primary_weapon.tag_id);
+        {
+            profile    = &profiles.value()[0];
+            weapon_tag = map.tag_at(profile->primary_weapon.tag_id);
+        }
         if(auto palette = scenario.weapon_palette.data(map.magic());
            !weapon_tag && !palette.has_error() && !palette.value().empty())
             weapon_tag = map.tag_at(palette.value()[0].tag.tag_id);
@@ -1653,6 +1659,17 @@ struct H2MapLoader : compo::SubsystemBase
                 weapon_tag = &tag;
         auto const* weapon =
             weapon_tag ? weapon_tag->template data<dim::obj::weapon_t>(map.magic()) : nullptr;
+        if(profile && weapon_tag == map.tag_at(profile->primary_weapon.tag_id))
+            m_loadout = {
+                armed(map, weapon_tag, profile->primary_rounds_loaded_raw, profile->primary_rounds_total_raw),
+                armed(
+                    map,
+                    map.tag_at(profile->secondary_weapon.tag_id),
+                    profile->secondary_rounds_loaded_raw,
+                    profile->secondary_rounds_total_raw),
+            };
+        else
+            m_loadout = {armed(map, weapon_tag)};
         dim::tag_t const* jmad_tag = nullptr;
         dim::tag_t const* view_tag = nullptr;
         if(weapon)
@@ -3482,6 +3499,37 @@ struct H2MapLoader : compo::SubsystemBase
     {
         world::ensure_local_player(m_container);
         world::place_local_cameras(m_container, position, yaw, m_player_unit ? &*m_player_unit : nullptr);
+        world::arm_local_players(m_container, m_loadout);
+    }
+
+    /* A weapon as a player starts with it: the profile's rounds, else a full
+     * magazine and its initial reserve */
+    template<typename V>
+    static BipedEquipment::weapon_t armed(
+        dim::map_container<V> const& map, dim::tag_t const* tag, i16 loaded = 0, i16 total = 0)
+    {
+        auto const* weapon = tag ? tag->template data<dim::obj::weapon_t>(map.magic()) : nullptr;
+        if(!weapon)
+            return {};
+        BipedEquipment::weapon_t out{
+            .id = GameTag<blam::tag_class_t::weap>::of(MapGameEvent::halo2, tag->tag_id),
+        };
+        loaded = from_le(loaded);
+        total  = from_le(total);
+        if(loaded > 0 || total > 0)
+        {
+            out.rounds_loaded = static_cast<u16>(std::max<i16>(loaded, 0));
+            out.rounds_total  = static_cast<u16>(std::max<i16>(total, 0));
+            return out;
+        }
+        auto const modes = firing_modes(*weapon, map);
+        if(auto const* magazine =
+               modes.empty() ? nullptr : modes[0].barrel->magazine.resolve(map.span(weapon->magazines)))
+        {
+            out.rounds_loaded = static_cast<u16>(std::max<i16>(magazine->rounds_loaded_maximum(), 0));
+            out.rounds_total  = static_cast<u16>(std::max<i16>(magazine->rounds_total_initial(), 0));
+        }
+        return out;
     }
 
     /* How the player's unit moves: the third-person biped's capsule, camera
@@ -3526,6 +3574,7 @@ struct H2MapLoader : compo::SubsystemBase
     gfx::system*            m_api{nullptr};
     std::optional<MapLoadEvent> m_source;
     std::optional<PlayerInfo::biped_shape_t> m_player_unit; /* None: the player flies */
+    std::array<BipedEquipment::weapon_t, 2>  m_loadout;     /* In hand, slung */
     std::shared_ptr<comp_app::FileMapper::FetchSet> m_fetch; /* The files on their way in */
     bool                        m_scripted_shown{false};
     std::vector<std::string> m_font_table;
