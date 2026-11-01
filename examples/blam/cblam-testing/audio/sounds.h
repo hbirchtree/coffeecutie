@@ -1,7 +1,7 @@
 #pragma once
 
 #include "data.h"
-#include "game_tag.h"
+#include "game_events.h"
 
 struct SoundEvent
 {
