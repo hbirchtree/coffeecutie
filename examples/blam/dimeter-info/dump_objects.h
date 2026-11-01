@@ -387,7 +387,56 @@ inline void dump_object(h2::map_container<V> const& map, h2::tag_t const& tag)
                 from_le(b.rounds_between_tracers_raw),
                 sid(map, b.optional_barrel_marker_name),
                 from_le(b.flags));
+            fmt::print(
+                "      error min={} [{}, {}] projectiles/shot={} distribution={} angle={} "
+                "heat/round={} age/round={}\n      projectile {} damage {}\n",
+                from_le(b.minimum_error),
+                from_le(b.error_angle[0]),
+                from_le(b.error_angle[1]),
+                b.projectiles_per_shot(),
+                from_le(b.distribution_function),
+                from_le(b.distribution_angle),
+                from_le(b.heat_generated_per_round),
+                from_le(b.age_generated_per_round),
+                tag_label(map, b.projectile),
+                tag_label(map, b.damage_effect));
+            each(map, b.firing_effects, [&](size_t j, obj::firing_effect_t const& f) {
+                fmt::print(
+                    "      firing {}: shots [{}, {}] effect {} damage {}\n",
+                    j,
+                    from_le(f.shot_count[0]),
+                    from_le(f.shot_count[1]),
+                    tag_label(map, f.firing_effect),
+                    tag_label(map, f.firing_damage));
+            });
         });
+        break;
+    }
+    case obj::object_type_t::projectile: {
+        if(size < sizeof(obj::projectile_t))
+            break;
+        auto const& pr = *reinterpret_cast<obj::projectile_t const*>(o);
+        fmt::print(
+            "  projectile: flags={:#x} timer [{}, {}] velocity {} -> {} range={} gravity air={} "
+            "water={} guided [{}, {}] radius={}\n    impact effect {} damage {}\n"
+            "    detonation air {} ground {} damage {} attached {}\n",
+            from_le(pr.projectile_flags),
+            from_le(pr.timer[0]),
+            from_le(pr.timer[1]),
+            from_le(pr.initial_velocity),
+            from_le(pr.final_velocity),
+            from_le(pr.maximum_range),
+            from_le(pr.air_gravity_scale),
+            from_le(pr.water_gravity_scale),
+            from_le(pr.guided_angular_velocity[0]),
+            from_le(pr.guided_angular_velocity[1]),
+            from_le(pr.collision_radius),
+            tag_label(map, pr.impact_effect),
+            tag_label(map, pr.impact_damage),
+            tag_label(map, pr.airborne_detonation_effect),
+            tag_label(map, pr.ground_detonation_effect),
+            tag_label(map, pr.detonation_damage),
+            tag_label(map, pr.attached_detonation_damage));
         break;
     }
     case obj::object_type_t::equipment: {
@@ -1070,7 +1119,35 @@ inline void dump_any(h2::map_container<V> const& map, h2::tag_t const& tag)
         dump_itmc(map, tag);
     else if(tag.matches(blam::tag_class_t::matg))
         dump_matg(map, tag);
-    else if(derives_from(map, tag.tag_class, "obje"))
+    else if(tag.matches(blam::tag_class_t::jpt))
+    {
+        if(auto const* d = tag.template data<obj::damage_effect_t>(map.magic()))
+            fmt::print(
+                "  damage: radius [{}, {}] cutoff={} flags={:#x}/{:#x} lower={} upper [{}, {}] "
+                "acceleration={} aoe core={}\n  impulse {}s rotation={} pushback={} jitter [{}, {}]"
+                "\n  shake {}s translation={} rotation={} wobble period={} weight={}\n  sound {}\n",
+                from_le(d->radius[0]),
+                from_le(d->radius[1]),
+                from_le(d->cutoff_scale),
+                from_le(d->flags),
+                from_le(d->damage_flags),
+                from_le(d->damage_lower_bound),
+                from_le(d->damage_upper_bound[0]),
+                from_le(d->damage_upper_bound[1]),
+                from_le(d->instantaneous_acceleration),
+                from_le(d->area_of_effect_core_radius),
+                from_le(d->impulse_duration),
+                from_le(d->impulse_rotation),
+                from_le(d->impulse_pushback),
+                from_le(d->impulse_jitter[0]),
+                from_le(d->impulse_jitter[1]),
+                from_le(d->shake_duration),
+                from_le(d->shake_random_translation),
+                from_le(d->shake_random_rotation),
+                from_le(d->shake_wobble_period),
+                from_le(d->shake_wobble_weight),
+                tag_label(map, d->sound));
+    } else if(derives_from(map, tag.tag_class, "obje"))
         dump_object(map, tag);
     else
         dump_tag(map, tag, false);

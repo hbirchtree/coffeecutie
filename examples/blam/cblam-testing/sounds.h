@@ -1,6 +1,7 @@
 #pragma once
 
 #include "data.h"
+#include "game_events.h"
 
 struct SoundEvent
 {
@@ -45,6 +46,11 @@ struct UpdateSoundEvent
     libc_types::f32 gain{1.f};
     libc_types::f32 pitch{1.f};
 };
+
+/*! A sound another game's loader decoded and registered with SoundCache:
+ * which game, and its tag there. key() is what the sound events and
+ * SoundCache::external take */
+using ExternalSound = GameTag<blam::tag_class_t::snd>;
 
 struct PlaySoundEvent
 {

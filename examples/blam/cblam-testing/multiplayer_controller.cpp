@@ -53,10 +53,19 @@ struct MultiplayerController
         m_rejoin_queue->poll();
         auto kills   = std::exchange(m_kills, {});
         auto rejoins = std::exchange(m_rejoins, {});
-        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
-           p.template subsystem<NetworkState>().replica)
-            return;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+        {
+            /* The game's rules go with its map */
+            if(m_load_generation != files.load_generation)
+            {
+                m_waiting.clear();
+                m_vm.reset();
+            }
+            return;
+        }
+        if(p.template subsystem<NetworkState>().replica)
+            return;
         auto&       state = p.template subsystem<GameState>();
         m_state           = &state;
         if(m_load_generation != files.load_generation)

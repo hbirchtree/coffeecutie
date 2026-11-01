@@ -853,7 +853,8 @@ struct PhysicsSystem
         bool needs_rebuild = bsp_cache->active_section != m_built_section;
         if(!needs_rebuild && !m_world_body)
             needs_rebuild = find_section_item(*bsp_cache) != nullptr;
-        if(needs_rebuild)
+        /* Another game's map brings its own ground */
+        if(needs_rebuild && loading->loaded_map == LoadingStatus::loaded)
             rebuild_world(*bsp_cache);
 
         /* Without ground, new bodies would fall through the map */
@@ -2795,7 +2796,7 @@ struct PhysicsSystem
     footing_t hold_off_steep(Body const& body, btVector3& vel) const
     {
         footing_t out;
-        if(body.slope_up <= 0.f || !m_world_body)
+        if(body.slope_up <= 0.f || !has_ground())
             return out;
         btRigidBody const* self    = body.world_body.get();
         btVector3 const    current = self->getLinearVelocity();

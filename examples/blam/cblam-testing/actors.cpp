@@ -107,10 +107,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     return n;
                 }());
         }
-        if(dt <= 0.f || !m_scenario ||
-           p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
-           p.template subsystem<NetworkState>().replica)
-            return;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         if(m_generation != files.load_generation)
         {
@@ -119,6 +115,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             m_links.clear();
             m_spheres.clear();
         }
+        if(dt <= 0.f || !m_scenario ||
+           p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
+           p.template subsystem<NetworkState>().replica)
+            return;
         hear(p);
         if((m_obstacles_in -= dt) <= 0.f)
         {
