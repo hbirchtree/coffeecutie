@@ -443,6 +443,7 @@ struct H2MapLoader : compo::SubsystemBase
     void unload()
     {
         m_source.reset();
+        m_player_unit.reset();
         m_shell.loaded = false;
         m_bank.loaded  = false;
         m_scene.loaded = false;
@@ -765,7 +766,7 @@ struct H2MapLoader : compo::SubsystemBase
                 eye               = Vecf3{
                     from_le(spawn.position[0]),
                     from_le(spawn.position[1]),
-                    from_le(spawn.position[2]) + 0.6f};
+                    from_le(spawn.position[2]) + (m_player_unit ? m_player_unit->eye_height : 0.6f)};
                 yaw = glm::radians(from_le(spawn.facing_degrees));
             }
         cDebug("H2: camera at ({}, {}, {}), yaw {}", eye.x, eye.y, eye.z, yaw);
@@ -1678,6 +1679,21 @@ struct H2MapLoader : compo::SubsystemBase
         std::optional<u32> stance;
         auto const         unit = map.template get<dim::obj::biped_t>(rep->third_person_unit);
         auto const         unit_view = dim::object_view::of(map, rep->third_person_unit);
+        if(unit)
+        {
+            m_player_unit = player_unit(map, *globals, *unit);
+            cDebug(
+                "H2: player unit {}: radius {} height {} eye {} (crouched {}), run {}/{}/{}, jump {}",
+                map.name_of(*map.tag_at(rep->third_person_unit.tag_id)),
+                m_player_unit->radius,
+                m_player_unit->height,
+                m_player_unit->eye_height,
+                m_player_unit->crouch_eye_height,
+                m_player_unit->run_speed,
+                m_player_unit->back_speed,
+                m_player_unit->strafe_speed,
+                m_player_unit->jump_velocity);
+        }
         auto const*        graph_tag = unit_view.animation.tag;
         std::string weapon_class =
             weapon ? std::string(map.string(weapon->weapon_class)) : std::string{};
@@ -3442,7 +3458,41 @@ struct H2MapLoader : compo::SubsystemBase
     void place_camera(Vecf3 const& position, f32 yaw)
     {
         world::ensure_local_player(m_container);
-        world::place_local_cameras(m_container, position, yaw);
+        world::place_local_cameras(m_container, position, yaw, m_player_unit ? &*m_player_unit : nullptr);
+    }
+
+    /* How the player's unit moves: the third-person biped's capsule, camera
+     * and jump, the globals' ground speeds */
+    template<typename V>
+    static PlayerInfo::biped_shape_t player_unit(
+        dim::map_container<V> const& map, dim::obj::matg::globals_t const& globals, dim::obj::biped_t const& unit)
+    {
+        PlayerInfo::biped_shape_t shape;
+        f32 const radius = from_le(unit.radius), height = from_le(unit.height_standing);
+        f32 const eye = from_le(unit.standing_camera_height);
+        if(radius > 0.f && height > 0.f && eye > 0.f)
+        {
+            shape.radius     = radius;
+            shape.height     = height;
+            shape.eye_height = eye;
+        }
+        if(f32 const crouch = from_le(unit.crouching_camera_height); crouch > 0.f)
+            shape.crouch_eye_height = crouch;
+        if(f32 const time = from_le(unit.crouch_transition_time); time > 0.f)
+            shape.crouch_time = time;
+        if(f32 const jump = from_le(unit.jump_velocity); jump > 0.f)
+            shape.jump_velocity = jump;
+        if(auto info = globals.player_information.data(map.magic()); !info.has_error() && !info.value().empty())
+        {
+            auto const& player = info.value()[0];
+            if(f32 const run = from_le(player.run_forward); run > 0.f)
+                shape.run_speed = run;
+            if(f32 const back = from_le(player.run_backward); back > 0.f)
+                shape.back_speed = back;
+            if(f32 const side = from_le(player.run_sideways); side > 0.f)
+                shape.strafe_speed = side;
+        }
+        return shape;
     }
 
     compo::EntityContainer& m_container;
@@ -3451,6 +3501,7 @@ struct H2MapLoader : compo::SubsystemBase
     H2SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
     std::optional<MapLoadEvent> m_source;
+    std::optional<PlayerInfo::biped_shape_t> m_player_unit; /* None: the player flies */
     std::shared_ptr<comp_app::FileMapper::FetchSet> m_fetch; /* The files on their way in */
     bool                        m_scripted_shown{false};
     std::vector<std::string> m_font_table;

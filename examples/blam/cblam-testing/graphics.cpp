@@ -22,6 +22,7 @@
 #endif
 #if defined(BLAM_DIMETER) || defined(BLAM_ELEGY)
 #include "world/map_lifecycle.h"
+#include "world/player_spawn.h"
 #endif
 #include "impact_sounds.h"
 #include "checkpoint.h"
@@ -329,6 +330,7 @@ i32 blam_main()
             alloc_actors(e);
 #if defined(BLAM_DIMETER) || defined(BLAM_ELEGY)
             world::dispatch_map_loads(e);
+            world::reset_players_between_games(e);
 #endif
 #if defined(BLAM_DIMETER)
             h2::alloc_h2(e);

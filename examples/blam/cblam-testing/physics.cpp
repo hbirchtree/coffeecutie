@@ -2796,7 +2796,7 @@ struct PhysicsSystem
     footing_t hold_off_steep(Body const& body, btVector3& vel) const
     {
         footing_t out;
-        if(body.slope_up <= 0.f || !m_world_body)
+        if(body.slope_up <= 0.f || !has_ground())
             return out;
         btRigidBody const* self    = body.world_body.get();
         btVector3 const    current = self->getLinearVelocity();

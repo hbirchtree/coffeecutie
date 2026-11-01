@@ -274,9 +274,14 @@ void alloc_camera_control(compo::EntityContainer& e)
             camera.incoming_controls.push_back(*control);
         });
     game_bus.addEventData({
-        1024, [&camera](GameEvent& e, void*) {
-            /* Before the new map's scripts move the camera */
-            if(e.type != GameEvent::MapChanged)
+        1024, [&camera](GameEvent& e, void* data) {
+            /* Before the new map's scripts move the camera; Halo 2 and 3
+             * maps say so once they are ready */
+            if(e.type == GameEvent::WorldReady)
+            {
+                if(static_cast<WorldReadyEvent const*>(data)->game == MapGameEvent::halo1)
+                    return;
+            } else if(e.type != GameEvent::MapChanged)
                 return;
             camera.incoming_lerps.clear();
             camera.incoming_controls.clear();
