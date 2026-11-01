@@ -776,6 +776,7 @@ struct H2MapLoader : compo::SubsystemBase
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", map.name()));
         m_scene.loaded = true;
+        world::announce_world_ready(m_container, MapGameEvent::halo2);
 
         /* mainmenu.map brings the shell with it */
         std::vector<ShellFontFile> fonts;
