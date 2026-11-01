@@ -1606,7 +1606,7 @@ struct BlamScript
             f32 left = 0.f;
             for(u64 id : objects_of(p, arg(0)))
                 if(auto it = m_custom.find(id); it != m_custom.end())
-                    left = std::max(left, static_cast<f32>(it->second.clip->frame_count - it->second.frame));
+                    left = std::max(left, static_cast<f32>(static_cast<i32>(frame_count(*it->second.clip)) - it->second.frame));
             if(opcode == op::unit_is_playing_custom_animation)
                 return value_t::boolean(left > 0.f);
             return value_t::number(type_t::short_, left);
@@ -3076,7 +3076,7 @@ struct BlamScript
         {
             auto* model = p.template get<Model>(it->first);
             auto& state = it->second;
-            if(!model || state.frame >= state.clip->frame_count)
+            if(!model || state.frame >= static_cast<i32>(frame_count(*state.clip)))
             {
                 u64 const id = (it++)->first;
                 if(model && m_held.contains(id))
