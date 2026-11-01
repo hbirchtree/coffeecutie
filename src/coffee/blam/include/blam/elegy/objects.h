@@ -299,6 +299,36 @@ struct weapon_first_person_t
 
 static_assert(sizeof(weapon_first_person_t) == 0x20);
 
+/*! biped ("bipd"), as far as moving one goes */
+struct biped_t
+{
+    static constexpr tag_class_t tag_class = tag_class_t::bipd;
+
+    object_t              object;
+    std::array<u8, 0x220> unit; /*!< unit_t, not decoded */
+    be<f32>               jump_velocity; /*!< World units per second */
+    std::array<u8, 0x1C>  unknown_0;
+    be<f32>               standing_camera_height;
+    be<f32>               crouching_camera_height;
+    be<f32>               crouch_transition_time;
+    std::array<u8, 0x4C>  unknown_1;
+    be<f32>               height_standing;
+    be<f32>               height_crouching;
+    be<f32>               radius;
+    std::array<u8, 0x34>  unknown_2;
+    be<f32>               maximum_slope_angle;
+    std::array<u8, 0x18>  unknown_3;
+    be<f32>               cosine_maximum_slope_angle;
+    std::array<u8, 0xF0>  unknown_4;
+};
+
+static_assert(offsetof(biped_t, jump_velocity) == 0x318);
+static_assert(offsetof(biped_t, standing_camera_height) == 0x338);
+static_assert(offsetof(biped_t, height_standing) == 0x390);
+static_assert(offsetof(biped_t, maximum_slope_angle) == 0x3D0);
+static_assert(offsetof(biped_t, cosine_maximum_slope_angle) == 0x3EC);
+static_assert(sizeof(biped_t) == 0x4E0);
+
 /*! weapon ("weap") */
 struct weapon_t
 {
