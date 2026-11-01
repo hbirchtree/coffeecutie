@@ -2428,6 +2428,7 @@ struct PhysicsSystem
         bool               frozen{false};
         btVector3          anchor{0, 0, 0}; /*!< Where it has stayed near */
         u32                still{0};        /*!< Frames it has stayed there */
+        u32                grounded{0};     /*!< Frames on the ground, however it moves */
     };
 
     /* The dead lie where they fell: on the ground still, but in no one's
@@ -2446,8 +2447,9 @@ struct PhysicsSystem
             /* A body made again since was added standing */
             bool const lying = laid != m_corpses.end() && laid->second.body == rigid;
             if(dead && lying && !laid->second.frozen && rigid->getInvMass() > 0.f &&
-               settled(laid->second, rigid->getWorldTransform().getOrigin()) &&
-               on_ground(*rigid, true))
+               on_ground(*rigid, true) &&
+               (settled(laid->second, rigid->getWorldTransform().getOrigin()) ||
+                ++laid->second.grounded >= corpse_rest_frames))
                 freeze(id, laid->second);
             if(dead == lying)
                 continue;
@@ -2458,6 +2460,10 @@ struct PhysicsSystem
                 m_corpses[id] = {.body = rigid};
             else
                 m_corpses.erase(id);
+            /* Walking bodies glide; the dead drag and come to rest */
+            rigid->setFriction(dead ? corpse_friction : 0.f);
+            rigid->setRollingFriction(dead ? corpse_rolling_friction : 0.f);
+            rigid->setDamping(dead ? corpse_damping : 0.f, dead ? corpse_damping : 0.f);
             add_to_world(*rigid, body.group);
         }
         std::erase_if(m_corpses, [this](auto const& c) { return !m_bodies.contains(c.first); });
@@ -2485,8 +2491,9 @@ struct PhysicsSystem
     /* Thrown, it flies in the bind shape: posed, it meets the ground badly */
     void thaw(u64 id, corpse_t& corpse)
     {
-        corpse.frozen = false;
-        corpse.still  = 0;
+        corpse.frozen   = false;
+        corpse.still    = 0;
+        corpse.grounded = 0;
         auto& body = m_bodies.at(id);
         if(!body.child_bones.empty())
         {
@@ -3155,7 +3162,8 @@ struct PhysicsSystem
     void set_linear_velocity(Physics::Velocity const& velocity)
     {
         auto body_it = m_bodies.find(velocity.entity_id);
-        if(body_it == m_bodies.end())
+        /* The dead don't walk */
+        if(body_it == m_bodies.end() || m_corpses.contains(velocity.entity_id))
             return;
         entity_body& body = (*body_it).second;
         /* No cDebug here: biped movement sends this every frame */
@@ -3669,6 +3677,11 @@ struct PhysicsSystem
     /* A corpse that stays this near one spot this many frames lies still */
     static constexpr f32 settled_drift  = .05f; /* wu */
     static constexpr u32 settled_frames = 15;
+    /* Frames on the ground after which a corpse is still, sliding or not */
+    static constexpr u32 corpse_rest_frames      = 180;
+    static constexpr f32 corpse_friction         = 1.f;
+    static constexpr f32 corpse_rolling_friction = .1f;
+    static constexpr f32 corpse_damping          = .3f;
     static constexpr f32 corpse_lean    = .7071f; /* sin 45 */
     /* How fast carried momentum is lost, wu/s^2 */
     static constexpr f32 carried_ground_decel = 12.f;
