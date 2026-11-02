@@ -55,6 +55,7 @@ coffee_application(
         object_respawn.cpp
         checkpoint.cpp
         save_state.cpp
+        nav_mesh.cpp
         devices.cpp
         effects.cpp
         weapons.cpp
