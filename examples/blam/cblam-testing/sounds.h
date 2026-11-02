@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdlib>
 #include "data.h"
 
 struct SoundEvent
@@ -80,9 +79,8 @@ struct SoundPreferences : compo::SubsystemBase
     using type = SoundPreferences;
 
     f32 master_volume{1.f};
-    /* Play the permutations the tags skip: lines recorded and left out of
-     * the game. BLAM_CUT_LINES turns it on from the start */
-    bool cut_lines{std::getenv("BLAM_CUT_LINES") != nullptr};
+    /* Play the permutations the tags skip: lines recorded and left out */
+    bool cut_lines{false};
 };
 
 void alloc_sound_system(compo::EntityContainer& e, bool enabled);

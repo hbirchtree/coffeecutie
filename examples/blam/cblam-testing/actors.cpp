@@ -91,22 +91,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 dt = 0.f;
         for(auto const& tick : m_ticks->take())
             dt += tick.seconds;
-        if(std::getenv("BLAM_DEBUG_AI") && (m_debug_top -= .033f) <= 0.f)
-        {
-            m_debug_top = 3.f;
-            cDebug(
-                "ai: tick dt {} scenario {} loaded {} replica {} actors {}",
-                dt,
-                m_scenario != nullptr,
-                p.template subsystem<LoadingStatus>().loaded_map == LoadingStatus::loaded,
-                p.template subsystem<NetworkState>().replica,
-                [&] {
-                    size_t n = 0;
-                    for(auto ent : p.template select<Actor>())
-                        n += ent.template get<Actor>().active() ? 1 : 0;
-                    return n;
-                }());
-        }
         if(dt <= 0.f || !m_scenario ||
            p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
            p.template subsystem<NetworkState>().replica)
@@ -157,25 +141,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             auto const* kind = kind_of(p, actor);
             taunt(p, ent.id(), actor, model, dt);
-            if(std::getenv("BLAM_DEBUG_AI") && (m_debug_in -= dt) <= 0.f)
-            {
-                m_debug_in = 3.f;
-                cDebug(
-                    "ai: {} state {} scripted {} may_fight {} target {} kind {}/{}/{} team {} at {:.1f} {:.1f} squad {} pos {}",
-                    ent.id(),
-                    static_cast<int>(actor.state),
-                    actor.scripted,
-                    actor.may_fight,
-                    actor.target,
-                    kind != nullptr,
-                    kind && kind->variant,
-                    kind && kind->actor,
-                    actor.team,
-                    model.position.x,
-                    model.position.y,
-                    actor.squad,
-                    actor.position);
-            }
             if(!kind || !kind->variant || !kind->actor)
                 continue;
             /* Sent to a vehicle: it runs there, whatever else it was doing,
@@ -183,19 +148,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(actor.board)
             {
                 auto const* vehicle = p.template get<Model>(actor.board);
-                if(std::getenv("BLAM_DEBUG_AI") && vehicle && (actor.look_in -= dt) <= 0.f)
-                {
-                    actor.look_in = 2.f;
-                    cDebug(
-                        "ai: {} boarding {} distance {} at {} {} {} moving {}",
-                        ent.id(),
-                        actor.board,
-                        glm::distance(Vecf2(model.position), Vecf2(vehicle->position)),
-                        model.position.x,
-                        model.position.y,
-                        model.position.z,
-                        actor.moving);
-                }
                 if(!vehicle)
                     actor.board = 0;
                 else if(glm::distance(Vecf2(model.position), Vecf2(vehicle->position)) > actor.board_radius)
@@ -474,8 +426,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.rest < 0.f)
         {
             actor.rest = health;
-            if(std::getenv("BLAM_DEBUG_AI"))
-                cDebug("ai: {} asleep", id);
         }
         bool const woken = actor.target != 0 || actor.state != state_t::idle || health < actor.rest;
         if(!woken)
@@ -483,13 +433,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             stop(p, id, actor);
             return true;
         }
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug(
-                "ai: {} wakes: target {} state {} hurt {}",
-                id,
-                actor.target,
-                static_cast<int>(actor.state),
-                health < actor.rest);
         anim.stance = "stand";
         actor.rest  = -1.f;
         actor.fire_in = std::max(actor.fire_in, 1.f); /* getting up */
@@ -1338,21 +1281,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         {
             if(glm::distance(model.position, actor.stuck_at) < stuck_distance)
             {
-                if(std::getenv("BLAM_DEBUG_AI"))
-                {
-                    f32 nearest = 1e9f, radius = 0.f;
-                    for(auto const& o : m_obstacles)
-                        if(f32 const d = glm::distance(Vecf2(o.center), Vecf2(model.position)) - o.radius; d < nearest)
-                        {
-                            nearest = d;
-                            radius  = o.radius;
-                        }
-                    cDebug(
-                        "ai: {} stalled at {:.1f} {:.1f} goal {:.1f} {:.1f} route {} next {:.1f} {:.1f} obstacle {:.1f} r {:.1f}",
-                        id, model.position.x, model.position.y, goal.x, goal.y, actor.route.size(),
-                        actor.route.empty() ? goal.x : position_of(kind, actor.route.front()).x,
-                        actor.route.empty() ? goal.y : position_of(kind, actor.route.front()).y, nearest, radius);
-                }
                 actor.steer_other = !actor.steer_other;
                 actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
             }
@@ -1579,8 +1507,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.burst_left <= 0)
         {
             actor.burst_left = std::max(1, static_cast<i32>(uniform(actv.burst_duration, 1.f) * rate));
-            if(std::getenv("BLAM_DEBUG_AI"))
-                cDebug("ai: {} fires {}'s gun at {}", id, vehicle, actor.target);
         }
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
@@ -1625,8 +1551,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .position = model.position + Vecf3{0.f, 0.f, .5f},
         };
         sounds->inject(ev, &play);
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} taunts ({})", id, actor.taunt_player ? "player" : "enemy");
     }
 
     /* The unit's first dialogue variant */
@@ -1715,14 +1639,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             f32 const key = anim && anim->graph ? melee_key_time(*anim->graph, *s_magic, weapon) : 0.f;
             actor.strike_in = key > 0.f ? key : default_windup;
             actor.swinging  = true;
-            if(std::getenv("BLAM_DEBUG_AI"))
-                cDebug("ai: {} winds up at {} ({:.2f} s)", id, actor.target, actor.strike_in);
             return true;
         }
         actor.swinging = false;
         actor.melee_in = 1.5f;
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} strikes {} at {:.2f} wu", id, actor.target, glm::distance(model.position, actor.last_seen));
         return true;
     }
 
@@ -1763,8 +1683,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             gun.rounds_total  = static_cast<u16>(between(actv.drop_weapon_ammo));
         } else
             gun.age = 1.f - loaded;
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} stocks {}/{} age {:.2f}", id, gun.rounds_loaded, gun.rounds_total, gun.age);
     }
 
     /* Dead: what grenades it had left fall out, unless its variant says
@@ -1793,8 +1711,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     toss(static_cast<blam::tagref_t const&>(grenade->equipment));
         if(actv.equipment.valid())
             toss(static_cast<blam::tagref_t const&>(actv.equipment));
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} drops {} of {} grenades", id, dropped, actor.grenades);
         actor.grenades = 0;
     }
 
@@ -1835,8 +1751,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .target     = actor.target,
         };
         p.template subsystem<GameEventBus>().inject(ev, &shot);
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} throws a grenade at {} ({} left)", id, actor.target, actor.grenades);
     }
 
     /* The globals' grenade of a type, by its projectile */
@@ -1941,8 +1855,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     f32                                                              m_obstacles_in{0.f};
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
-    f32                                                              m_debug_in{0.f};
-    f32                                                              m_debug_top{0.f};
     std::map<std::pair<blam::antr::header const*, std::string>, f32> m_strides;
     std::minstd_rand                                                 m_random{12345};
     std::vector<blam::globals::grenade const*>                       m_grenades;
