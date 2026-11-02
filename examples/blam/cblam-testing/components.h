@@ -1116,6 +1116,7 @@ struct Actor
     libc_types::f32 gaze_in{0.f};    /*!< Until its head turns elsewhere, idle */
     libc_types::f32 rest{-1.f};      /*!< Body and shield as it fell asleep, -1 awake */
     std::vector<libc_types::i32> route; /*!< Firing positions to walk through to its goal */
+    std::vector<Vecf3>           path;  /*!< Points to walk through to it, off the nav mesh */
     Vecf3           route_goal{};
     Vecf3           stuck_at{};      /*!< Where it was when progress was last checked */
     libc_types::f32 stuck_in{0.f};

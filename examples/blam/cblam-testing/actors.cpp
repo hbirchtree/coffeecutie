@@ -1,8 +1,10 @@
 #include "actors.h"
 #include "blam_files.h"
+#include "caching.h"
 #include "components.h"
 #include "game_events.h"
 #include "model_markers.h"
+#include "nav_mesh.h"
 #include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
@@ -39,6 +41,7 @@ using ActorManifest = compo::SubsystemManifest<
     type_list_t<
         GameEventBus,
         PhysicsBus,
+        const BSPCache<halo_version>,
         const NetworkState,
         const LoadingStatus,
         const BlamFiles<halo_version>>,
@@ -103,6 +106,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             m_links.clear();
             m_spheres.clear();
         }
+        refresh_nav(p);
         hear(p);
         if((m_obstacles_in -= dt) <= 0.f)
         {
@@ -1264,16 +1268,46 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return {};
     }
 
-    /* Where to head now: the goal itself, or the next position of a route
-     * around what blocks the way; a walk that stalls is planned again */
+    /* The section's floors as a graph, built again as the section changes */
+    void refresh_nav(Proxy& p)
+    {
+        auto const&    cache = p.template subsystem<BSPCache<halo_version>>();
+        BSPItem const* item  = nullptr;
+        for(auto const& [_, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section && !candidate.coll_surfaces.empty())
+                item = &candidate;
+        if(item == m_nav_item)
+            return;
+        m_nav_item = item;
+        m_nav.clear();
+        if(item)
+        {
+            m_nav.build(*item);
+            cDebug(
+                "ai: nav mesh for section {}: {} floors, {} links", cache.active_section, m_nav.nodes.size(),
+                m_nav.links.size());
+        }
+    }
+
+    /* Where to head now: the goal itself, or the next point of a route
+     * around what blocks the way: over the section's floors, else through
+     * the encounter's positions; a walk that stalls is planned again */
     Vecf3 waypoint(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind, Vecf3 const& goal, f32 dt)
     {
+        /* The floors know nothing of what stands on them: a first leg the
+         * rays find blocked hands over to the positions */
+        auto const replan = [&] {
+            actor.route.clear();
+            actor.path = m_nav.route(model.position, goal);
+            if(!actor.path.empty() && !walkable(p, id, model.position, actor.path.front(), actor.board))
+                actor.path.clear();
+            if(actor.path.empty() && !walkable(p, id, model.position, goal, actor.board))
+                actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+        };
         if(glm::distance(goal, actor.route_goal) > 1.f)
         {
             actor.route_goal = goal;
-            actor.route.clear();
-            if(!walkable(p, id, model.position, goal, actor.board))
-                actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+            replan();
             actor.stuck_at = model.position;
             actor.stuck_in = stuck_time;
         }
@@ -1282,11 +1316,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(glm::distance(model.position, actor.stuck_at) < stuck_distance)
             {
                 actor.steer_other = !actor.steer_other;
-                actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+                replan();
             }
             actor.stuck_at = model.position;
             actor.stuck_in = stuck_time;
         }
+        /* Points reached, or that can be cut straight past, are dropped */
+        while(actor.path.size() > 1 &&
+              (glm::distance(Vecf2(model.position), Vecf2(actor.path.front())) < arrive_radius * 2.f ||
+               walkable(p, id, model.position, actor.path[1], actor.board)))
+            actor.path.erase(actor.path.begin());
+        if(!actor.path.empty())
+            return actor.path.front();
         while(!actor.route.empty() &&
               glm::distance(Vecf2(model.position), Vecf2(position_of(kind, actor.route.front()))) < arrive_radius * 2.f)
             actor.route.erase(actor.route.begin());
@@ -1859,6 +1900,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     std::minstd_rand                                                 m_random{12345};
     std::vector<blam::globals::grenade const*>                       m_grenades;
     f32                                                              m_taunt_in{0.f};
+    NavMesh                                                          m_nav;
+    BSPItem const*                                                   m_nav_item{nullptr};
 };
 
 void alloc_actors(compo::EntityContainer& e)
