@@ -1121,6 +1121,7 @@ struct Actor
     Vecf3           stuck_at{};      /*!< Where it was when progress was last checked */
     libc_types::f32 stuck_in{0.f};
     bool            steer_other{false}; /*!< Round obstacles the other way, after stalling */
+    libc_types::f32 unstick_in{0.f};    /*!< Stepping sideways out of whatever held it */
     libc_types::f32 strike_in{0.f};     /*!< Until a swing's blow lands */
     bool            swinging{false};    /*!< A swing is under way */
     bool            charging{false};    /*!< Closing to arm's reach to strike */

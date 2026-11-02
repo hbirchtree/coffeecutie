@@ -193,6 +193,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 route_knee      = .2f;  /* wu above the feet, for what is low */
     static constexpr f32 body_radius     = .3f;  /* wu either side of a walking body */
     static constexpr f32 steer_ahead     = 2.f;  /* wu ahead obstacles are steered round */
+    static constexpr f32 fallback_obstacle = 3.f; /* wu, the most an object's bounds count for */
     static constexpr f32 default_windup  = .35f; /* s before a blow lands, a swing without a key frame */
     static constexpr f32 lunge_reach     = 3.f;  /* wu a target comes within to be charged, at least */
     static constexpr f32 strike_reach    = 1.5f; /* wu, feet to feet, a blow lands within */
@@ -209,6 +210,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr u32 max_expansions  = 2000;
     static constexpr f32 stuck_time      = 2.f;  /* s between progress checks */
     static constexpr f32 stuck_distance  = .5f;  /* wu less than which is no progress */
+    static constexpr f32 unstick_time    = .7f;  /* s spent stepping aside after stalling */
     static constexpr std::string_view trigger_marker = "primary trigger";
 
     void think(
@@ -286,6 +288,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         switch(actor.state)
         {
         case state_t::idle:
+            /* Enlisted with no post: where it stands is its post */
+            if(actor.post == Vecf3{})
+                actor.post = model.position;
             /* Migrated: to its new squad's guard positions, running */
             if(actor.migrated && actor.position < 0)
             {
@@ -312,6 +317,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 enter(actor, state_t::idle);
                 break;
             }
+            if(actor.last_seen == Vecf3{})
+                if(auto const* seen = p.template get<Model>(actor.target))
+                    actor.last_seen = seen->position;
             if(actor.seen_ago > uniform_max(actr.pursuit.target_search_time))
             {
                 enter(actor, state_t::pursuit);
@@ -1096,6 +1104,21 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 bool const  left  = (glm::dot(round, to) >= 0.f) != actor.steer_other;
                 to                = (left ? round : -round) * glm::length(to);
             }
+        /* Standing in one, it edges out as it goes */
+        if(auto const* o = obstacle_at(model.position, goal, actor.board); o && glm::dot(to, to) > 1e-6f)
+        {
+            Vecf3 out = model.position - o->center;
+            out.z     = 0.f;
+            if(glm::dot(out, out) > 1e-6f)
+                to = glm::normalize(glm::normalize(to) + glm::normalize(out)) * glm::length(to);
+        }
+        /* Held by something unseen, it steps aside for a moment */
+        if(actor.unstick_in > 0.f && glm::dot(to, to) > 1e-6f)
+        {
+            actor.unstick_in -= dt;
+            Vecf3 const side = glm::cross(Vecf3{0, 0, 1}, glm::normalize(to));
+            to               = (actor.steer_other ? -side : side) * std::max(glm::length(to), 1.f);
+        }
         f32 const left = std::max(glm::length(to), 1e-3f);
         if(anim.stance != "stand")
             anim.stance = "stand";
@@ -1133,6 +1156,17 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
         /* Around what the AI is told to keep clear of */
         return !obstacle_on(a, b, aboard);
+    }
+
+    /* The obstacle a point stands inside, unless the goal is in it too */
+    obstacle_t const* obstacle_at(Vecf3 const& at, Vecf3 const& goal, u64 aboard = 0) const
+    {
+        for(auto const& o : m_obstacles)
+            if(o.entity != aboard && std::abs(o.center.z - at.z) < o.radius + 1.f &&
+               glm::distance(Vecf2(at), Vecf2(o.center)) < o.radius + body_radius &&
+               glm::distance(Vecf2(goal), Vecf2(o.center)) >= o.radius + body_radius)
+                return &o;
+        return nullptr;
     }
 
     /* The first object pathfinding sphere a walk from a to b runs into */
@@ -1181,11 +1215,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             auto [spheres, fresh] = m_spheres.try_emplace(tag);
             if(fresh)
                 if(auto object = tag->template data<blam::scn::object>(*s_magic); object.has_value())
+                {
                     if(auto coll_tag = index.find(object.value()[0].collider.tag_id); coll_tag != index.end())
                         if(auto coll = (*coll_tag).template data<blam::coll::header>(*s_magic); coll.has_value())
                             if(auto list = coll.value()[0].pathfinding_spheres.data(*s_magic); list.has_value())
                                 for(auto const& s : list.value())
                                     spheres->second.push_back({s.center, s.radius});
+                    /* Scenery with none, such as boulders and crates, is kept
+                     * clear of by its bounds, which are generous */
+                    auto const& o = object.value()[0];
+                    if(spheres->second.empty() && !tag->matches(blam::tag_class_t::vehi) && o.bound_radius > 0.f)
+                        spheres->second.push_back({o.bound_offset, std::min(o.bound_radius, fallback_obstacle) * .7f});
+                }
             for(auto const& [center, radius] : spheres->second)
                 m_obstacles.push_back({
                     .center = Vecf3(model.transform * Vecf4(center, 1.f)),
@@ -1313,9 +1354,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         }
         if((actor.stuck_in -= dt) <= 0.f)
         {
-            if(glm::distance(model.position, actor.stuck_at) < stuck_distance)
+            /* Jostled about near the goal is not stuck */
+            if(glm::distance(model.position, actor.stuck_at) < stuck_distance &&
+               glm::distance(Vecf2(model.position), Vecf2(goal)) > stuck_distance * 3.f)
             {
                 actor.steer_other = !actor.steer_other;
+                actor.unstick_in  = unstick_time;
                 replan();
             }
             actor.stuck_at = model.position;
