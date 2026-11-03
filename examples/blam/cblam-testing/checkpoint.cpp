@@ -14,6 +14,7 @@
 #include <coffee/components/restricted_subsystem.h>
 
 #include <map>
+#include <set>
 
 using CheckpointManifest = compo::SubsystemManifest<
     type_list_t<
@@ -86,6 +87,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
     {
         m_save_queue->poll();
         m_restore_queue->poll();
+        m_spawn_queue->poll();
         bool const save    = std::exchange(m_save, false);
         bool const restore = std::exchange(m_restore, false);
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
@@ -98,11 +100,34 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             m_pending.clear();
             m_seating.clear();
         }
+        if(m_generation != generation)
+        {
+            m_generation = generation;
+            m_spawning.clear();
+        }
+        land(p);
         if(save)
             take(p, generation);
         if(restore && m_snapshot)
             put_back(p);
         settle(p);
+    }
+
+    /* A spawn asked for is on its way until its entity is there (the
+     * loader takes frames over a biped's model); one the scripts asked for
+     * in the frame they saved in is kept, so going back does not lose an
+     * encounter placed just before the checkpoint */
+    void land(Proxy& p)
+    {
+        if(m_spawning.empty())
+            return;
+        std::set<u32> live;
+        for(auto entity : p.template select<Model, NetworkInfo>())
+            if(auto const id = entity.template get<NetworkInfo>().instance_id; m_spawning.contains(id))
+                live.insert(id);
+        std::erase_if(m_spawning, [&live](auto const& s) { return live.contains(s.first) || s.second.second == 0; });
+        for(auto& [_, s] : m_spawning)
+            s.second--;
     }
 
     /* ---- Taking ---- */
@@ -129,6 +154,8 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 object.held = equip->weapons[0].tag->as_ref();
             out.objects[net.instance_id] = object;
         }
+        for(auto const& [net_id, s] : m_spawning)
+            out.objects.try_emplace(net_id, s.first);
         for(auto entity : p.template select<PlayerInfo, PlayerCamera, NetworkInfo, BipedStatus>())
         {
             auto [info, cam, net, status] = entity.components();
@@ -317,8 +344,12 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
 
     std::shared_ptr<GameEventBus::queue_type<WorldSaveEvent>>    m_save_queue;
     std::shared_ptr<GameEventBus::queue_type<WorldRestoreEvent>> m_restore_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnObjectEvent>>  m_spawn_queue;
     bool                       m_save{false};
     bool                       m_restore{false};
+    u32                        m_generation{0};
+    /*! Spawns asked for and not yet there: what they are, frames left */
+    std::map<u32, std::pair<object_t, u32>> m_spawning;
     std::optional<snapshot_t>  m_snapshot;
     std::map<u32, u32>         m_pending; /*!< Net id, frames left */
     std::map<u64, seating_t>   m_seating; /*!< By player entity */
@@ -359,4 +390,18 @@ void alloc_checkpoints(compo::EntityContainer& e)
         0, [&checkpoints](GameEvent&, WorldSaveEvent*) { checkpoints.m_save = true; });
     checkpoints.m_restore_queue = game.addQueuedEventFunction<WorldRestoreEvent>(
         0, [&checkpoints](GameEvent&, WorldRestoreEvent*) { checkpoints.m_restore = true; });
+    checkpoints.m_spawn_queue = game.addQueuedEventFunction<SpawnObjectEvent>(
+        0, [&checkpoints](GameEvent&, SpawnObjectEvent* spawn) {
+            if(!spawn->server_owned || spawn->net_id == 0 || spawn->local_only)
+                return;
+            checkpoints.m_spawning[spawn->net_id] = {
+                CheckpointSystem::object_t{
+                    .object        = spawn->object,
+                    .position      = spawn->position,
+                    .rotation      = spawn->rotation,
+                    .held          = spawn->held,
+                    .change_colors = spawn->change_colors,
+                },
+                CheckpointSystem::pending_frames};
+        });
 }
