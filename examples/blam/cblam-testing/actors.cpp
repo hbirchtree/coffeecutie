@@ -40,7 +40,8 @@ using ActorManifest = compo::SubsystemManifest<
         const ObjectPhysics,
         const PhysicsData,
         const PlayerInfo,
-        const PlayerCamera>,
+        const PlayerCamera,
+        const Projectile>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
@@ -267,6 +268,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.stance_in -= dt;
         actor.state_in -= dt;
         actor.reposition_in -= dt;
+        react(p, id, actor, status, actr);
 
         /* A look around now and then: the nearest enemy in view */
         if(actor.look_in <= 0.f)
@@ -372,7 +374,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 actor.charging = true;
             else if(!seen || apart > give_up || actv.melee_range <= 0.f)
                 actor.charging = false;
-            bool const charge = actor.charging || !holds_gun(p, id) || actor.position < 0;
+            bool const charge = actor.charging || actor.berserk || !holds_gun(p, id) || actor.position < 0;
             if(!charge && actor.reposition_in <= 0.f)
             {
                 actor.reposition_in = reposition_time;
@@ -406,7 +408,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(actor.seen_ago < look_period * 2.f && !(actor.covering && there))
             {
                 face(model, actor.last_seen);
-                if(!strike(p, id, actor, model, kind))
+                if(!strike(p, id, actor, model, kind) && !actor.berserk)
                     fire(p, id, actor, model, kind, dt);
                 throw_grenade(p, id, actor, model, kind);
             }
@@ -488,8 +490,53 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return false;
     }
 
+    /* Blows and stuck grenades change its mind. A grenade stuck on it
+     * sends it berserk by its chance, else fleeing for its cowering time;
+     * so does a blow past its panic threshold, and one leaving it beaten
+     * below its berserk threshold. Berserk, it charges to strike until its
+     * target is gone */
+    void react(Proxy& p, u64 id, Actor& actor, BipedStatus const& status, actr_t const& actr)
+    {
+        f32 const took  = actor.hurt_body >= 0.f ? actor.hurt_body - status.body : 0.f;
+        actor.hurt_body = status.body;
+        bool charge = false, flee = false;
+        u64  stuck  = 0;
+        for(auto ent : p.template select<Projectile>())
+            if(auto const& flight = ent.template get<Projectile>(); flight.attached && flight.attached_to == id)
+            {
+                stuck = ent.id();
+                break;
+            }
+        if(stuck && stuck != actor.stuck_by)
+        {
+            if(chance(actr.berserk.berserk_grenade_chance))
+                charge = true;
+            else
+                flee = true;
+        }
+        actor.stuck_by = stuck;
+        if(took > 0.f && actr.panic.panic_damage_threshold > 0.f && took >= actr.panic.panic_damage_threshold)
+            flee = true;
+        if(took > 0.f && actr.berserk.berserk_damage_amount > 0.f &&
+           status.body <= actr.berserk.berserk_damage_threshold &&
+           1.f - status.body >= actr.berserk.berserk_damage_amount)
+            charge = true;
+        if(charge && alive(p, actor.target))
+        {
+            if(actor.state != state_t::combat)
+                enter(actor, state_t::combat);
+            actor.berserk = true;
+        } else if(flee && !actor.berserk && actor.state != state_t::retreat && actr.panic.cowering_time.y > 0.f)
+        {
+            enter(actor, state_t::retreat);
+            actor.state_in = uniform(actr.panic.cowering_time);
+        }
+    }
+
     void enter(Actor& actor, state_t state)
     {
+        if(state != state_t::combat)
+            actor.berserk = false;
         actor.state         = state;
         actor.position      = -1;
         actor.reposition_in = 0.f;

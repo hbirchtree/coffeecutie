@@ -1125,6 +1125,9 @@ struct Actor
     libc_types::f32 strike_in{0.f};     /*!< Until a swing's blow lands */
     bool            swinging{false};    /*!< A swing is under way */
     bool            charging{false};    /*!< Closing to arm's reach to strike */
+    bool            berserk{false};     /*!< Charges to strike whatever it holds, until its target is gone */
+    libc_types::f32 hurt_body{-1.f};    /*!< Its body a frame ago, for what a blow took; -1 unknown */
+    libc_types::u64 stuck_by{0};        /*!< The grenade stuck on it it has noticed */
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     libc_types::f32 taunt_in{0.f};      /*!< Until it crows over a kill, 0 = none due */
     bool            taunt_player{false}; /*!< The kill was a player */
