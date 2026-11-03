@@ -171,6 +171,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
              * when the list allows a fight */
             if(actor.scripted)
             {
+                /* A command list's go-to, by its routes */
+                if(actor.walk_to &&
+                   glm::distance(Vecf2(model.position), Vecf2(*actor.walk_to)) > actor.walk_radius)
+                    move_toward(p, ent.id(), actor, model, anim, *kind, *actor.walk_to, dt, false);
+                else if(actor.walk_to)
+                    stop(p, ent.id(), actor);
                 if(actor.may_fight && !actor.blind && (actor.look_in -= dt) <= 0.f)
                 {
                     actor.look_in = look_period;
@@ -186,6 +192,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 }
                 continue;
             }
+            actor.walk_to.reset();
             toughen(actor, status);
             think(p, ent.id(), actor, model, anim, status, *kind, dt);
         }
