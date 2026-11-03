@@ -1128,7 +1128,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             anim.stance = "stand";
         f32 const speed = stride(p, id, anim, kind) * (running ? 1.f : .6f);
         Vecf3 const dir = to / left;
-        if(actor.seen_ago > look_period * 2.f || actor.state != state_t::combat)
+        if(actor.seen_ago > look_period * 2.f || actor.state != state_t::combat ||
+           !can_stride(p, id, anim, model, dir))
             face(model, model.position + dir);
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity walking{
@@ -1400,23 +1401,58 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         model.rotation = glm::angleAxis(std::atan2(to.y, to.x), Vecf3{0.f, 0.f, 1.f});
     }
 
-    /* Its run, from its move clip holding what it holds */
-    f32 stride(Proxy& p, u64 id, AnimationPlayback const& anim, kind_t const&)
+    /* Stride directions, as the bits of stride_t::clips */
+    static constexpr blam::antr::unit_weapon::animation_idx_t moves[4] = {
+        blam::antr::unit_weapon::animation_idx_t::move_front,
+        blam::antr::unit_weapon::animation_idx_t::move_back,
+        blam::antr::unit_weapon::animation_idx_t::move_left,
+        blam::antr::unit_weapon::animation_idx_t::move_right};
+
+    struct stride_t
     {
-        using Slot = blam::antr::unit_weapon::animation_idx_t;
+        f32 speed{0.f};
+        u8  clips{0}; /*!< Bits in moves order: which strides it has */
+    };
+
+    /* Its run and the strides it has, from its move clips holding what it
+     * holds */
+    stride_t const& strides(Proxy& p, u64 id, AnimationPlayback const& anim)
+    {
+        static stride_t const none{.speed = default_speed, .clips = 0xf};
         if(!anim.graph)
-            return default_speed;
+            return none;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         auto const* equip = p.template get<BipedEquipment>(id);
         auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
         std::string const weapon = gun ? std::string(gun->weapon->label.str()) : std::string("unarmed");
-        auto [it, fresh] = m_strides.try_emplace(std::pair{anim.graph, weapon}, 0.f);
+        auto [it, fresh] = m_strides.try_emplace(std::pair{anim.graph, weapon});
         if(fresh)
         {
-            f32 front = move_speed(*anim.graph, Slot::move_front, *s_magic, "stand", weapon);
-            it->second = front > 0.f ? front : default_speed;
+            f32 front = move_speed(*anim.graph, moves[0], *s_magic, "stand", weapon);
+            it->second.speed = front > 0.f ? front : default_speed;
+            for(size_t i = 0; i < 4; i++)
+                if(move_clip(*anim.graph, moves[i], *s_magic, "stand", weapon) >= 0)
+                    it->second.clips |= static_cast<u8>(1u << i);
         }
         return it->second;
+    }
+
+    f32 stride(Proxy& p, u64 id, AnimationPlayback const& anim, kind_t const&)
+    {
+        return strides(p, id, anim).speed;
+    }
+
+    /* Whether it can stride a way while facing as it does: the clip for
+     * that direction is in its graph. A hunter only walks forward */
+    bool can_stride(Proxy& p, u64 id, AnimationPlayback const& anim, Model const& model, Vecf3 const& dir)
+    {
+        u8 const clips = strides(p, id, anim).clips;
+        if(clips == 0xf)
+            return true;
+        Vecf3 const local = glm::conjugate(model.rotation) * dir;
+        size_t const way  = std::abs(local.x) >= std::abs(local.y) ? (local.x >= 0.f ? 0 : 1)
+                                                                   : (local.y >= 0.f ? 2 : 3);
+        return (clips & (1u << way)) != 0;
     }
 
     /* At its position it ducks and rises by its variant's times */
@@ -2062,7 +2098,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     f32                                                              m_obstacles_in{0.f};
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
-    std::map<std::pair<blam::antr::header const*, std::string>, f32> m_strides;
+    std::map<std::pair<blam::antr::header const*, std::string>, stride_t> m_strides;
     std::minstd_rand                                                 m_random{12345};
     std::vector<blam::globals::grenade const*>                       m_grenades;
     f32                                                              m_taunt_in{0.f};

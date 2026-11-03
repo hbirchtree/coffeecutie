@@ -309,10 +309,9 @@ inline libc_types::f32 melee_key_time(
     return 0.f;
 }
 
-/* Ground speed of a move clip of a unit (stance) holding a weapon, from
- * its root motion; the stance's first weapon stands in for one it lacks,
- * 0 when the graph has none */
-inline libc_types::f32 move_speed(
+/* The clip a unit (stance) holding a weapon has in a slot; the stance's
+ * first weapon stands in for one it lacks, -1 when the graph has none */
+inline libc_types::i16 move_clip(
     blam::antr::header const&                 graph,
     blam::antr::unit_weapon::animation_idx_t  slot,
     blam::map_ptr const&                      magic,
@@ -322,25 +321,39 @@ inline libc_types::f32 move_speed(
     auto units = graph.units.data(magic);
     auto anims = graph.animations.data(magic);
     if(!units.has_value() || !anims.has_value())
-        return 0.f;
+        return -1;
     blam::antr::unit const* stand = nullptr;
     for(auto const& unit : units.value())
         if(unit.label.str() == stance)
             stand = &unit;
     if(!stand)
-        return 0.f;
+        return -1;
     auto weapons = stand->weapons.data(magic);
     if(!weapons.has_value() || weapons.value().empty())
-        return 0.f;
+        return -1;
     auto const* held = &weapons.value()[0];
     for(auto const& candidate : weapons.value())
         if(!weapon.empty() && candidate.name.str() == weapon)
             held = &candidate;
     auto refs = held->animations.data(magic);
     if(!refs.has_value() || static_cast<size_t>(slot) >= refs.value().size())
-        return 0.f;
+        return -1;
     libc_types::i16 const index = refs.value()[slot].animation;
-    if(index < 0 || static_cast<size_t>(index) >= anims.value().size())
+    return index >= 0 && static_cast<size_t>(index) < anims.value().size() ? index : -1;
+}
+
+/* Ground speed of a move clip of a unit (stance) holding a weapon, from
+ * its root motion; 0 when the graph has none */
+inline libc_types::f32 move_speed(
+    blam::antr::header const&                 graph,
+    blam::antr::unit_weapon::animation_idx_t  slot,
+    blam::map_ptr const&                      magic,
+    std::string_view                          stance = "stand",
+    std::string_view                          weapon = {})
+{
+    auto anims = graph.animations.data(magic);
+    libc_types::i16 const index = move_clip(graph, slot, magic, stance, weapon);
+    if(index < 0 || !anims.has_value())
         return 0.f;
     auto const& clip   = anims.value()[index];
     libc_types::u32 const stride = clip.frame_info_stride();
