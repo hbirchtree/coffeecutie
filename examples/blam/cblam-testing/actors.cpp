@@ -36,6 +36,7 @@ using ActorManifest = compo::SubsystemManifest<
         const BipedStatus,
         BipedEquipment,
         const ObjectPhysics,
+        const PhysicsData,
         const PlayerInfo,
         const PlayerCamera>,
     type_list_t<
@@ -199,6 +200,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 strike_reach    = 1.5f; /* wu, feet to feet, a blow lands within */
     static constexpr f32 taunt_chance    = .6f;
     static constexpr f32 taunt_spacing   = 2.5f; /* s between any two taunts */
+    static constexpr f32 halo_gravity    = 9.81f / 3.048f; /* wu/s^2 */
+    static constexpr f32 tick_rate       = 30.f;
+    static constexpr f32 lob_limit       = 1.2217f; /* rad, 70 degrees: steeper lobs fall to the flat shot */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
@@ -1458,7 +1462,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
         Vecf3 const muzzle = trigger_of(p, *gun).value_or(
             eye + glm::normalize(aim - eye) * WeaponFireEvent::muzzle_distance);
-        Vecf3       dir    = glm::normalize(aim - muzzle);
+        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, gun->tag, false));
         /* Its aim wanders by the variant's error */
         if(actv.projectile_error > 0.f)
         {
@@ -1486,6 +1490,90 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     }
 
     /* Shots a second a weapon's first trigger fires at most */
+    /* How a weapon's first trigger's projectile flies, when gravity bends
+     * it: its speed, what pulls it down, and whether the AI lobs it */
+    struct arc_t
+    {
+        f32  speed;   /* wu/s */
+        f32  gravity; /* wu/s^2 */
+        bool lob;     /* the high arc, over cover */
+    };
+
+    std::optional<arc_t> arc_of(Proxy& p, blam::tag_t const* tag, bool mounted) const
+    {
+        using flags_t = blam::scn::projectile::flags_t;
+        if(!tag)
+            return std::nullopt;
+        auto weapon = tag->template data<blam::scn::weapon>(*s_magic);
+        if(!weapon.has_value())
+            return std::nullopt;
+        auto triggers = weapon.value()[0].triggers.data(*s_magic);
+        if(!triggers.has_value() || triggers.value().empty() || !triggers.value()[0].projectile.valid())
+            return std::nullopt;
+        blam::tag_index_view<halo_version> index(p.template subsystem<BlamFiles<halo_version>>().container);
+        auto proj_tag = index.find(triggers.value()[0].projectile.tag_id);
+        if(proj_tag == index.end())
+            return std::nullopt;
+        auto proj = (*proj_tag).template data<blam::scn::projectile>(*s_magic);
+        if(!proj.has_value() || proj.value()[0].air_gravity_scale <= 0.f || proj.value()[0].initial_velocity <= 0.f)
+            return std::nullopt;
+        auto const& tag_ = proj.value()[0];
+        return arc_t{
+            .speed   = tag_.initial_velocity * tick_rate,
+            .gravity = halo_gravity * tag_.air_gravity_scale,
+            .lob     = mounted && (tag_.projectile_flags & flags_t::ai_must_use_ballistic_aiming) != flags_t::none,
+        };
+    }
+
+    /* Where a target is heading, to lead it */
+    Vecf3 velocity_of(Proxy& p, u64 id)
+    {
+        if(auto const* data = p.template get<PhysicsData>(id); data && data->enabled)
+            return data->velocity;
+        if(auto const* physics = p.template get<ObjectPhysics>(id))
+            return physics->linear_velocity;
+        return {};
+    }
+
+    /* The way to shoot from `muzzle` to land on `aim`: straight at it, or
+     * along the arc that drops there, led by where the target will be by
+     * then; out of reach, as far as it will go */
+    Vecf3 aim_direction(Proxy& p, Actor const& actor, Vecf3 const& muzzle, Vecf3 const& aim, std::optional<arc_t> arc)
+    {
+        if(!arc)
+            return glm::normalize(aim - muzzle);
+        Vecf3 const lead = velocity_of(p, actor.target);
+        Vecf3       at   = aim;
+        Vecf3       dir  = glm::normalize(aim - muzzle);
+        for(u32 pass = 0; pass < 3; pass++)
+        {
+            Vecf3 const r = at - muzzle;
+            f32 const   d = glm::length(Vecf2(r));
+            f32 const   v = arc->speed, g = arc->gravity;
+            if(d < 1e-3f)
+                return glm::normalize(r);
+            Vecf3 const flat = Vecf3{r.x, r.y, 0.f} / d;
+            f32 const   disc = v * v * v * v - g * (g * d * d + 2.f * r.z * v * v);
+            f32         angle, time;
+            if(disc < 0.f)
+            {
+                angle = glm::quarter_pi<f32>();
+                time  = d / (v * std::cos(angle));
+            } else
+            {
+                /* Lobbed over cover where the arc stays reasonable, flat
+                 * when the target is too close for that */
+                f32 const root = std::sqrt(disc);
+                f32 const high = std::atan((v * v + root) / (g * d));
+                angle = arc->lob && high <= lob_limit ? high : std::atan((v * v - root) / (g * d));
+                time  = d / (v * std::cos(angle));
+            }
+            dir = flat * std::cos(angle) + Vecf3{0.f, 0.f, std::sin(angle)};
+            at  = aim + lead * time;
+        }
+        return dir;
+    }
+
     f32 weapon_rate(blam::tag_t const* tag) const
     {
         if(tag)
@@ -1577,7 +1665,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             at = at * anim->pose[static_cast<size_t>(marker->node)];
         Vecf3 const muzzle = Vecf3((at * marker->transform)[3]);
         Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
-        Vecf3       dir    = glm::normalize(aim - muzzle);
+        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, &(*weapon), true));
         if(actv.projectile_error > 0.f)
         {
             std::uniform_real_distribution<f32> unit_spread(-1.f, 1.f);
