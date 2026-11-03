@@ -54,6 +54,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
         Vecf3          position{};
         Quatf          rotation{1.f, 0.f, 0.f, 0.f};
         blam::tagref_t held{}; /*!< A unit's weapon in hand */
+        std::array<u32, 4> change_colors{};
     };
 
     struct player_t
@@ -118,9 +119,10 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
             if(net.instance_id == 0 || p.template get<PlayerInfo>(entity.id()))
                 continue;
             object_t object{
-                .object   = net.object,
-                .position = model.position,
-                .rotation = model.rotation,
+                .object        = net.object,
+                .position      = model.position,
+                .rotation      = model.rotation,
+                .change_colors = model.change_colors,
             };
             if(auto const* equip = p.template get<BipedEquipment>(entity.id());
                equip && equip->weapons[0].tag)
@@ -200,9 +202,10 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 .object       = object.object,
                 .position     = object.position,
                 .rotation     = object.rotation,
-                .net_id       = net_id,
-                .server_owned = true,
-                .held         = object.held,
+                .net_id        = net_id,
+                .server_owned  = true,
+                .held          = object.held,
+                .change_colors = object.change_colors,
             };
             game.inject(ev, &spawn);
             m_pending[net_id] = pending_frames;

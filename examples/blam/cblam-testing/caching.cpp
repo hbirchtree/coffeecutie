@@ -1919,14 +1919,16 @@ void ShaderCache<V>::populate_material(
                 if((i + 1) > colors.size())
                     break;
                 auto perms = colors[i].permutations.data(magic).value();
+                /* The alpha names the source, 1..4, for an object to put
+                 * its own colour in its place */
                 if(perms.empty())
                 {
-                    mat.material.inputs[0] = Vecf4(colors[i].lower_bound, 1.f);
+                    mat.material.inputs[0] = Vecf4(colors[i].lower_bound, static_cast<f32>(i + 1));
                     break;
                 }
                 // TODO: Figure out what weights on permutations actually mean
                 // The game doesn't use them, but chooses one that's not [0]
-                mat.material.inputs[0] = Vecf4(perms[0].upper_bound, 1.f);
+                mat.material.inputs[0] = Vecf4(perms[0].upper_bound, static_cast<f32>(i + 1));
             } while(false);
         }
 

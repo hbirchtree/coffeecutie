@@ -598,6 +598,7 @@ void create_resources(compo::EntityContainer& e)
                              {"tag_id", net.object.tag_id},
                              {"tag_class",
                               blam::to_string(net.object.class_id())},
+                             {"change_colors", model.change_colors},
                              {"position",
                               nlohmann::json{
                                   model.position.x,
