@@ -278,6 +278,15 @@ static Quatf spawn_rotation_to_quat(SpawnType const* spawn)
     return Quatf(Vecf3(0, 0, spawn->facing));
 }
 
+/*! A colour as an object carries it: rgb8 with bit 24 set, so 0 is none */
+inline libc_types::u32 pack_color(Vecf3 const& c)
+{
+    auto const byte = [](libc_types::f32 v) {
+        return static_cast<libc_types::u32>(glm::clamp(v, 0.f, 1.f) * 255.f + .5f);
+    };
+    return 0x01000000u | byte(c.x) | (byte(c.y) << 8) | (byte(c.z) << 16);
+}
+
 struct Model
 {
     using value_type = Model;
@@ -336,6 +345,8 @@ struct Model
 
     std::array<libc_types::f32, 4> object_function{{-1.f, -1.f, -1.f, -1.f}};
     libc_types::f32                meter_value{-1.f};
+    /*! Its own change colours A..D, packed as pack_color(); 0 = the tag's */
+    std::array<libc_types::u32, 4> change_colors{};
 
     template<typename T>
     void initialize(T const* spawn)

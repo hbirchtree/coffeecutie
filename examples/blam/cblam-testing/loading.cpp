@@ -2003,8 +2003,9 @@ struct ResourceLoader
         }
 
         Model& model = ent.template get<Model>();
-        model.item_age    = spawn.age;
-        model.item_rounds = spawn.rounds;
+        model.item_age      = spawn.age;
+        model.item_rounds   = spawn.rounds;
+        model.change_colors = spawn.change_colors;
         if(model_it != index.end())
         {
             model.tag          = &(*model_it);

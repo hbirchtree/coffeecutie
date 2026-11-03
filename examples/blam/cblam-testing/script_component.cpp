@@ -3725,12 +3725,13 @@ struct BlamScript
         u32 const        net_id = script_net_id_base | m_next_actor++;
         GameEvent        ev{.type = GameEvent::SpawnObject};
         SpawnObjectEvent spawn{
-            .object       = *unit,
-            .position     = start.position,
-            .rotation     = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
-            .net_id       = net_id,
-            .server_owned = true,
-            .held         = weapon_of(palette.value()[type]),
+            .object        = *unit,
+            .position      = start.position,
+            .rotation      = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
+            .net_id        = net_id,
+            .server_owned  = true,
+            .held          = weapon_of(palette.value()[type]),
+            .change_colors = colors_of(palette.value()[type]),
         };
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
         m_spawning.insert(net_id);
@@ -3831,6 +3832,27 @@ struct BlamScript
         if(!variant.has_value() || !variant.value()->unit.valid())
             return nullptr;
         return &static_cast<blam::tagref_t const&>(variant.value()->unit);
+    }
+
+    /* The variant's change colours, each somewhere between its bounds: a
+     * major's red, a commander's gold */
+    std::array<u32, 4> colors_of(blam::tagref_t const& variant_ref)
+    {
+        std::array<u32, 4> out{};
+        auto tag = m_tags.find(variant_ref.tag_id);
+        if(tag == m_tags.end())
+            return out;
+        auto variant = (*tag).template data<blam::scn::actor_variant>(m_magic);
+        if(!variant.has_value())
+            return out;
+        auto colors = variant.value()->change_colors.data(m_magic);
+        if(!colors.has_value())
+            return out;
+        std::uniform_real_distribution<f32> unit(0.f, 1.f);
+        for(size_t i = 0; i < out.size() && i < colors.value().size(); i++)
+            out[i] = pack_color(
+                glm::mix(colors.value()[i].lower_bound, colors.value()[i].upper_bound, unit(m_spawn_random)));
+        return out;
     }
 
     /* What the variant fights with, if anything */

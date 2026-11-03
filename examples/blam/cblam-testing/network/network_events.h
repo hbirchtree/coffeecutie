@@ -662,6 +662,7 @@ struct alignas(8) EntitySpawn
     u32       response_id{no_request};
     u32       announce{0}; /*!< See SpawnObjectEvent::announce */
     blam::tag_index<> held{}; /*!< A unit's weapon, weap tag id */
+    u32       change_colors[4]{}; /*!< See SpawnObjectEvent::change_colors */
 };
 
 struct alignas(8) PlayerSpawn
@@ -737,7 +738,7 @@ struct alignas(8) NegotiateExtension
 static_assert(sizeof(Message<GameJoin>) == 68);
 static_assert(sizeof(Message<MapVerify>) == 32);
 static_assert(sizeof(EntityTag) == 12);
-static_assert(sizeof(EntitySpawn) == 64);
+static_assert(sizeof(EntitySpawn) == 80);
 static_assert(sizeof(SpawnRequest) == 64);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 52);

@@ -33,6 +33,7 @@ struct InstanceData {
     uvec2 cut_bones; /* clipped away: a player's own body above its legs */
     float inflate; /* out along the normals, wu */
     uint  cut_padding;
+    uvec4 change_colors; /* the object's own A..D, rgb8 with bit 24 set */
 };
 
 layout(binding = 0, std140) uniform MatrixStore
