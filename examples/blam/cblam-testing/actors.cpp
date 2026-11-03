@@ -1443,20 +1443,24 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        auto const* equip = p.template get<BipedEquipment>(id);
-        auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
-        if(!gun || !gun->tag || actor.fire_in > 0.f)
+        auto*       equip = p.template get<BipedEquipment>(id);
+        auto*       gun   = equip ? equip->held(files.load_generation) : nullptr;
+        if(!gun || !gun->tag)
+            return;
+        firing_t const firing = firing_of(gun->tag);
+        /* A charging trigger shows how far along it is */
+        gun->charge = firing.single && firing.charging > 0.f && actor.burst_left == 1 && actor.fire_in > 0.f
+                          ? 1.f - actor.fire_in / firing.charging
+                          : 0.f;
+        if(actor.fire_in > 0.f)
             return;
         f32 const reach = actv.maximum_firing_distance > 0.f ? actv.maximum_firing_distance : 20.f;
         if(glm::distance(model.position, actor.last_seen) > reach)
             return;
         /* None given: as fast as its weapon fires */
-        f32 const rate = actv.rate_of_fire > 0.f ? actv.rate_of_fire : weapon_rate(gun->tag);
-        if(actor.burst_left <= 0)
-        {
-            f32 const seconds = uniform(actv.burst_duration, 1.f);
-            actor.burst_left  = std::max(1, static_cast<i32>(seconds * rate));
-        }
+        f32 const rate = actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate;
+        if(!begin_burst(actor, actv, firing, rate))
+            return;
         /* As a player's: from the gun's muzzle in its hand, at what it looks at */
         Vecf3 const eye    = eye_of(p, id);
         Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
@@ -1489,7 +1493,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = uniform(actv.burst_separation, 1.f);
     }
 
-    /* Shots a second a weapon's first trigger fires at most */
     /* How a weapon's first trigger's projectile flies, when gravity bends
      * it: its speed, what pulls it down, and whether the AI lobs it */
     struct arc_t
@@ -1574,15 +1577,47 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return dir;
     }
 
-    f32 weapon_rate(blam::tag_t const* tag) const
+    /* How a weapon's first trigger fires: its top rate, and whether a pull
+     * charges up to one shot (hunter cannon) rather than repeating */
+    struct firing_t
     {
+        f32  rate{3.f};
+        f32  charging{0.f};
+        bool single{false};
+    };
+
+    firing_t firing_of(blam::tag_t const* tag) const
+    {
+        using flags_t = blam::scn::weapon::trigger_t::flags_t;
+        firing_t out;
         if(tag)
             if(auto weapon = tag->template data<blam::scn::weapon>(*s_magic); weapon.has_value())
                 if(auto triggers = weapon.value()[0].triggers.data(*s_magic);
-                   triggers.has_value() && !triggers.value().empty() &&
-                   triggers.value()[0].maximum_rate_of_fire.y > 0.f)
-                    return triggers.value()[0].maximum_rate_of_fire.y;
-        return 3.f;
+                   triggers.has_value() && !triggers.value().empty())
+                {
+                    auto const& trigger = triggers.value()[0];
+                    if(trigger.maximum_rate_of_fire.y > 0.f)
+                        out.rate = trigger.maximum_rate_of_fire.y;
+                    out.charging = trigger.charging_time;
+                    out.single   = (trigger.flags & flags_t::does_not_repeat_automatically) != flags_t::none;
+                }
+        return out;
+    }
+
+    /* Starts a burst: so many shots at the rate, or one shot a pull after
+     * the trigger has charged. True once a shot may go */
+    bool begin_burst(Actor& actor, actv_t const& actv, firing_t const& firing, f32 rate)
+    {
+        if(actor.burst_left > 0)
+            return true;
+        if(!firing.single)
+        {
+            actor.burst_left = std::max(1, static_cast<i32>(uniform(actv.burst_duration, 1.f) * rate));
+            return true;
+        }
+        actor.burst_left = 1;
+        actor.fire_in    = firing.charging;
+        return firing.charging <= 0.f;
     }
 
     /* A weapon it can shoot with: not a sword, nor anything to one its
@@ -1676,11 +1711,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 up * (unit_spread(m_random) * actv.projectile_error));
         }
         /* The gun's own rate, not what the gunner carries */
-        f32 const rate = weapon_rate(&(*weapon));
-        if(actor.burst_left <= 0)
-        {
-            actor.burst_left = std::max(1, static_cast<i32>(uniform(actv.burst_duration, 1.f) * rate));
-        }
+        firing_t const firing = firing_of(&(*weapon));
+        if(!begin_burst(actor, actv, firing, firing.rate))
+            return;
+        f32 const rate = firing.rate;
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
             .weapon     = (*weapon).as_ref(),

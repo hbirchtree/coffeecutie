@@ -268,6 +268,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             return !live.contains(e.first);
         });
 
+        drive_held(p, files.load_generation, magic);
         hush(p);
         m_fire_queue->poll();
         for(auto const& shot : std::exchange(m_shots, {}))
@@ -1212,7 +1213,36 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         model->object_function = out;
         if(auto* held = gun && gun->held ? p.template get<Model>(gun->held) : nullptr)
             held->object_function = out;
+        if(auto* equip = gun ? p.template get<BipedEquipment>(player) : nullptr)
+            equip->weapons[0].exports = out;
         hum(p, player, id, *model, out, magic);
+    }
+
+    /* What a unit other than a player holds exports as well: its charge,
+     * heat and age through its functions, onto the model in its hand and
+     * for the holder to import (a hunter's cannon flare) */
+    void drive_held(Proxy& p, u32 generation, blam::map_ptr const& magic)
+    {
+        for(auto ent : p.template select<BipedEquipment>())
+        {
+            if(p.template get<PlayerInfo>(ent.id()))
+                continue;
+            auto* gun = ent.template get<BipedEquipment>().held(generation);
+            if(!gun || !gun->weapon)
+                continue;
+            auto const& weapon = *gun->weapon;
+            std::array<f32, 4> in{};
+            for(size_t i = 0; i < in.size(); i++)
+                in[i] = input_value(weapon.weapon_inputs[i], state_t{}, false, gun, gun->charge, 1.f);
+            std::array<f32, 4> out = in;
+            auto functions         = weapon.functions.data(magic);
+            if(functions.has_value())
+                for(size_t i = 0; i < out.size() && i < functions.value().size(); i++)
+                    out[i] = blam_functions::evaluate(functions.value()[i], in, out);
+            gun->exports = out;
+            if(auto* held = gun->held ? p.template get<Model>(gun->held) : nullptr)
+                held->object_function = out;
+        }
     }
 
     /* Looping sounds on the weapon in hand, each as loud as its function,
