@@ -2937,14 +2937,27 @@ struct BlamScript
                     auto const to = point(c.point_1);
                     Vecf3 const d = to ? *to - model->position : Vecf3{};
                     f32 const   left = glm::length(d);
+                    auto* actor = p.template get<Actor>(it->first);
                     if(!to || left <= run.radius)
                     {
+                        if(actor)
+                            actor->walk_to.reset();
                         next();
                         break;
                     }
-                    f32 const step = std::min(left, walk_speeds(p, it->first).x * dt);
-                    face(*to);
-                    model->position += d / left * step;
+                    /* An actor walks it by its routes, on its feet; anything
+                     * else is carried straight there */
+                    if(actor && walks(p, it->first))
+                    {
+                        actor->walk_to     = *to;
+                        actor->walk_radius = run.radius;
+                        carry(p, it->first, false);
+                    } else
+                    {
+                        f32 const step = std::min(left, walk_speeds(p, it->first).x * dt);
+                        face(*to);
+                        model->position += d / left * step;
+                    }
                     waits = true;
                     break;
                 }
