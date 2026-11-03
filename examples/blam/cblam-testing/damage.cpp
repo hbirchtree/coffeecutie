@@ -870,10 +870,18 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             auto functions = obj.value()[0].functions.data(*m_magic);
             if(!functions.has_value() || functions.value().empty())
                 continue;
+            /* An input left unnamed takes what the held weapon exports:
+             * a hunter's biped lights its cannon by the gun's charge */
+            auto const* equip = p.template get<BipedEquipment>(ent.id());
+            auto const* gun   = equip ? equip->held(m_generation) : nullptr;
             std::array<f32, 4> in{};
             for(size_t i = 0; i < in.size(); i++)
                 switch(obj.value()[0].export_.inputs[i])
                 {
+                case input::none:
+                    if(gun && gun->exports[i] >= 0.f)
+                        in[i] = gun->exports[i];
+                    break;
                 case input::body_vitality:
                     in[i] = status.body;
                     break;
