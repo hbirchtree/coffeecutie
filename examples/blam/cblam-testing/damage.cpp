@@ -2,7 +2,9 @@
 
 #include "blam_files.h"
 #include "components.h"
+#include "difficulty.h"
 #include "game_events.h"
+#include "game_mode.h"
 #include "network/networking.h"
 #include "object_functions.h"
 #include "physics.h"
@@ -34,6 +36,7 @@ using DamageManifest = compo::SubsystemManifest<
     type_list_t<
         GameEventBus,
         PhysicsBus,
+        const GameState,
         const NetworkState,
         const BlamFiles<halo_version>>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
@@ -83,6 +86,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             m_gone.clear();
             m_destroyed.clear();
             m_broods.clear();
+            m_difficulty = difficulty_block(files);
         }
         for(auto const& area : areas)
             blast(p, area);
@@ -257,6 +261,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             return;
         auto const& coll   = *status->coll;
         f32         amount = uniform(jpt.upper_bound) * scale;
+        /* An enemy's blow on a player is scaled for the difficulty */
+        if(killer == ObjectHitEvent::no_player && p.template get<PlayerInfo>(unit))
+            amount *= difficulty_scale(
+                m_difficulty, &blam::globals::difficulty::enemy_damage, p.template subsystem<GameState>().difficulty);
         f32         shield_mult = 1.f, body_mult = 1.f, leak = 0.f;
         u16         struck      = blam::scn::material_type_count;
         if(i16 const material = material_of(p, unit, part); material >= 0)
@@ -962,6 +970,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<u32>                 m_gone;  /* net ids, despawned next frame */
     std::set<u64>                    m_destroyed;
     u32                              m_generation{0};
+    blam::globals::difficulty const* m_difficulty{nullptr};
     std::vector<brood_t>             m_broods;
 
     blam::map_ptr const*                              m_magic{nullptr};

@@ -2,7 +2,9 @@
 #include "blam_files.h"
 #include "caching.h"
 #include "components.h"
+#include "difficulty.h"
 #include "game_events.h"
+#include "game_mode.h"
 #include "model_markers.h"
 #include "nav_mesh.h"
 #include "network/networking.h"
@@ -33,7 +35,7 @@ using ActorManifest = compo::SubsystemManifest<
         Actor,
         Model,
         AnimationPlayback,
-        const BipedStatus,
+        BipedStatus,
         BipedEquipment,
         const ObjectPhysics,
         const PhysicsData,
@@ -43,6 +45,7 @@ using ActorManifest = compo::SubsystemManifest<
         GameEventBus,
         PhysicsBus,
         const BSPCache<halo_version>,
+        const GameState,
         const NetworkState,
         const LoadingStatus,
         const BlamFiles<halo_version>>,
@@ -106,7 +109,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             m_kinds.clear();
             m_links.clear();
             m_spheres.clear();
+            m_difficulty = difficulty_block(files);
         }
+        m_level = p.template subsystem<GameState>().difficulty;
         refresh_nav(p);
         hear(p);
         if((m_obstacles_in -= dt) <= 0.f)
@@ -180,8 +185,33 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 }
                 continue;
             }
+            toughen(actor, status);
             think(p, ent.id(), actor, model, anim, status, *kind, dt);
         }
+    }
+
+    /* The difficulty's scale on a row, 1 without a globals block */
+    f32 scaled(f32 const (blam::globals::difficulty::*row)[4]) const
+    {
+        return difficulty_scale(m_difficulty, row, m_level);
+    }
+
+    /* Its vitality for the difficulty, once: an enemy's and a friend's by
+     * their own rows */
+    void toughen(Actor& actor, BipedStatus& status)
+    {
+        if(actor.toughened || !status.coll)
+            return;
+        actor.toughened = true;
+        bool const foe   = enemies(actor.team, team_t::player);
+        f32 const  scale = scaled(
+            foe ? &blam::globals::difficulty::enemy_vitality : &blam::globals::difficulty::friend_vitality);
+        if(scale == 1.f)
+            return;
+        if(status.coll->maximum_body_vitality > 0.f)
+            status.max_body = status.coll->maximum_body_vitality * scale;
+        if(status.coll->maximum_shield_vitality > 0.f)
+            status.max_shield = status.coll->maximum_shield_vitality * scale;
     }
 
   private:
@@ -248,7 +278,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(seen != actor.target)
                 {
                     actor.target  = seen;
-                    actor.fire_in = uniform(actv.first_burst_delay_time);
+                    actor.fire_in = uniform(actv.first_burst_delay_time) *
+                                    scaled(&blam::globals::difficulty::new_target_delay);
                     actor.burst_left = 0;
                     alert_squad(p, id, actor, actr);
                 }
@@ -1494,7 +1525,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(glm::distance(model.position, actor.last_seen) > reach)
             return;
         /* None given: as fast as its weapon fires */
-        f32 const rate = actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate;
+        f32 const rate = (actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate) *
+                         scaled(&blam::globals::difficulty::rate_of_fire);
         if(!begin_burst(actor, actv, firing, rate))
             return;
         /* As a player's: from the gun's muzzle in its hand, at what it looks at */
@@ -1503,14 +1535,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Vecf3 const muzzle = trigger_of(p, *gun).value_or(
             eye + glm::normalize(aim - eye) * WeaponFireEvent::muzzle_distance);
         Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, gun->tag, false));
-        /* Its aim wanders by the variant's error */
-        if(actv.projectile_error > 0.f)
+        /* Its aim wanders by the variant's error, scaled for the difficulty */
+        if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
         {
             std::uniform_real_distribution<f32> unit(-1.f, 1.f);
             Vecf3 const side = glm::normalize(glm::cross(dir, Vecf3{0, 0, 1}));
             Vecf3 const up   = glm::cross(side, dir);
-            dir = glm::normalize(
-                dir + side * (unit(m_random) * actv.projectile_error) + up * (unit(m_random) * actv.projectile_error));
+            dir = glm::normalize(dir + side * (unit(m_random) * error) + up * (unit(m_random) * error));
         }
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
@@ -1526,7 +1557,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(--actor.burst_left > 0)
             actor.fire_in = 1.f / rate;
         else
-            actor.fire_in = uniform(actv.burst_separation, 1.f);
+            actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
     }
 
     /* How a weapon's first trigger's projectile flies, when gravity bends
@@ -1737,20 +1768,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Vecf3 const muzzle = Vecf3((at * marker->transform)[3]);
         Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
         Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, &(*weapon), true));
-        if(actv.projectile_error > 0.f)
+        if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
         {
             std::uniform_real_distribution<f32> unit_spread(-1.f, 1.f);
             Vecf3 const side = glm::normalize(glm::cross(dir, Vecf3{0, 0, 1}));
             Vecf3 const up   = glm::cross(side, dir);
-            dir = glm::normalize(
-                dir + side * (unit_spread(m_random) * actv.projectile_error) +
-                up * (unit_spread(m_random) * actv.projectile_error));
+            dir = glm::normalize(dir + side * (unit_spread(m_random) * error) + up * (unit_spread(m_random) * error));
         }
         /* The gun's own rate, not what the gunner carries */
         firing_t const firing = firing_of(&(*weapon));
-        if(!begin_burst(actor, actv, firing, firing.rate))
+        f32 const      rate   = firing.rate * scaled(&blam::globals::difficulty::rate_of_fire);
+        if(!begin_burst(actor, actv, firing, rate))
             return;
-        f32 const rate = firing.rate;
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
             .weapon     = (*weapon).as_ref(),
@@ -1766,7 +1795,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(--actor.burst_left > 0)
             actor.fire_in = 1.f / rate;
         else
-            actor.fire_in = uniform(actv.burst_separation, 1.f);
+            actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
     }
 
     /* A kill it saw is crowed over, one voice at a time */
@@ -2101,6 +2130,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     std::map<std::pair<blam::antr::header const*, std::string>, stride_t> m_strides;
     std::minstd_rand                                                 m_random{12345};
     std::vector<blam::globals::grenade const*>                       m_grenades;
+    blam::globals::difficulty const*                                 m_difficulty{nullptr};
+    u16                                                              m_level{1};
     f32                                                              m_taunt_in{0.f};
     NavMesh                                                          m_nav;
     BSPItem const*                                                   m_nav_item{nullptr};
