@@ -794,20 +794,23 @@
     const caps = detectGpu();
     const out = document.getElementById('gpu-caps');
     if (!caps.webgl2) {
-      out.textContent = 'This browser has no WebGL 2, which BlamGraphics needs.';
+      out.textContent = 'This browser has no WebGL 2, make sure hardware acceleration is enabled.';
       return;
     }
-    const yes = ok => ok ? 'yes' : 'no';
+    const formats = [caps.s3tc && 'BCn', caps.etc && 'ETC2'].filter(Boolean);
+    if (!formats.length) {
+      out.textContent = 'This GPU supports neither BCn nor ETC2 through ' +
+                        'WebGL 2, textures are decoded in software.';
+      return;
+    }
     let advice;
     if (caps.s3tc)
-      advice = 'Maps work here as they are.';
-    else if (caps.etc)
-      advice = 'Without BCn every texture is decoded in software, ' +
-               'transcoding to ETC2 keeps them compressed on the GPU.';
+      advice = 'Maps work without texture transcoding.';
     else
-      advice = 'Neither is available, textures are decoded in software.';
-    out.textContent = `This GPU, through WebGL 2: BCn ${yes(caps.s3tc)}, ` +
-                      `ETC2 ${yes(caps.etc)}. ${advice}`;
+      advice = 'BCn decodes in software, ' +
+               'transcoding to ETC2 will reduce memory usage.';
+    out.textContent = `This GPU supports, through WebGL 2, ` +
+                      `${formats.join(' and ')}. ${advice}`;
     if (!caps.s3tc && caps.etc)
       transcodeSelect.value = 'ES3';
   }
