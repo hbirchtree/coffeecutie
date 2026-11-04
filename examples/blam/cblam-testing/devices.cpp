@@ -260,22 +260,28 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         std::vector<f32>         values;
         std::vector<bool>        spent;
         std::map<u32, DeviceState> devices; /*!< By net id */
+        /*! The devices of sections not loaded, and those loaded as they
+         *  would be remembered: a section left and come back to */
+        std::map<u32, DeviceGroups::remembered_t> remembered;
     };
 
     void keep(Proxy& p, DeviceGroups const& groups)
     {
-        saved_t out{.values = groups.values, .spent = groups.spent};
+        saved_t out{.values = groups.values, .spent = groups.spent, .remembered = groups.remembered};
         for(auto entity : p.template select<DeviceState, NetworkInfo>())
         {
             auto [device, net] = entity.components();
-            if(net.instance_id != 0)
-                out.devices[net.instance_id] = device;
+            if(net.instance_id == 0)
+                continue;
+            out.devices[net.instance_id]    = device;
+            out.remembered[net.instance_id] = remember(device);
         }
         m_saved = std::move(out);
     }
 
     /* Straight to where they were headed, without moving or sounding; replicas
-     * follow through the groups and a snap */
+     * follow through the groups and a snap. A device whose section is not
+     * loaded comes back by what was remembered of it */
     void put_back(Proxy& p, DeviceGroups& groups)
     {
         if(m_saved->values.size() == groups.values.size())
@@ -283,6 +289,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
             groups.values = m_saved->values;
             groups.spent  = m_saved->spent;
         }
+        groups.remembered = m_saved->remembered;
         for(auto entity : p.template select<DeviceState, NetworkInfo>())
         {
             auto [device, net] = entity.components();
@@ -362,15 +369,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
                 pose(*anim, device);
             export_functions(p, device, model, was_power, was, dt);
             if(net && net->instance_id != 0)
-                groups.remembered[net->instance_id] = {
-                    .position        = device.position,
-                    .position_target = device.position_target,
-                    .power           = device.power,
-                    .power_target    = device.power_target,
-                    .automatic       = device.automatic,
-                    .one_sided       = (device.kind_flags & DeviceState::one_sided) != 0,
-                    .used            = device.used,
-                };
+                groups.remembered[net->instance_id] = remember(device);
         }
         std::erase_if(m_known, [&p](u64 id) { return !p.template get<DeviceState>(id); });
     }
@@ -421,6 +420,19 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
     };
 
     /* Built again as its section loads, it is as it was left */
+    static DeviceGroups::remembered_t remember(DeviceState const& device)
+    {
+        return {
+            .position        = device.position,
+            .position_target = device.position_target,
+            .power           = device.power,
+            .power_target    = device.power_target,
+            .automatic       = device.automatic,
+            .one_sided       = (device.kind_flags & DeviceState::one_sided) != 0,
+            .used            = device.used,
+        };
+    }
+
     static void recall(DeviceState& device, DeviceGroups::remembered_t const& r)
     {
         device.position        = r.position.value_or(device.position);
