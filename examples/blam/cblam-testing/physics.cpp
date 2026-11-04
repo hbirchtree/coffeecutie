@@ -857,7 +857,7 @@ struct PhysicsSystem
             rebuild_world(*bsp_cache);
 
         /* Without ground, new bodies would fall through the map */
-        if(has_ground())
+        if(has_ground(*bsp_cache))
         {
             reconcile_player_bodies(p);
             reconcile_object_bodies(p, true);
@@ -2607,10 +2607,14 @@ struct PhysicsSystem
 
     /* The BSP world mesh, or a static body adopted from elsewhere (RS2
      * regions, Halo 2 collision) */
-    bool has_ground() const
+    bool has_ground(BSPCache<V> const& cache) const
     {
         if(m_world_body)
             return true;
+        /* A section's mesh on its way: the scenery's static bodies are no
+         * floor to make bodies on */
+        if(!cache.sections.empty())
+            return false;
         for(auto const& [_, body] : m_bodies)
             if(body.world_body && body.world_body->getInvMass() == 0.f)
                 return true;
