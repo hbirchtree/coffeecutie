@@ -1581,14 +1581,16 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         /* None given: as fast as its weapon fires */
         f32 const rate = (actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate) *
                          scaled(&blam::globals::difficulty::rate_of_fire);
+        bool const starting = actor.burst_left <= 0;
         if(!begin_burst(actor, actv, firing, rate))
             return;
         /* As a player's: from the gun's muzzle in its hand, at what it looks at */
         Vecf3 const eye    = eye_of(p, id);
-        Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
+        Vecf3 const target = actor.last_seen + chest_of(p, actor.target);
+        Vecf3 const aim    = burst_aim(actor, actv, target, starting);
         Vecf3 const muzzle = trigger_of(p, *gun).value_or(
             eye + glm::normalize(aim - eye) * WeaponFireEvent::muzzle_distance);
-        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, gun->tag, false));
+        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, gun->tag, false), leading(actv));
         /* Its aim wanders by the variant's error, scaled for the difficulty */
         if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
         {
@@ -1612,6 +1614,40 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = 1.f / rate;
         else
             actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
+    }
+
+    /* How far ahead of a moving target it aims: its variant's leading, as
+     * much as the difficulty allows (none on Normal) */
+    f32 leading(actv_t const& actv) const
+    {
+        return actv.target_leading * scaled(&blam::globals::difficulty::target_leading);
+    }
+
+    /* Where a burst goes. It opens off the target by the variant's burst
+     * origin radius and walks back onto it by the return length a shot,
+     * following the target only as well as its tracking, scaled by the
+     * difficulty, lets it: on Normal a burst stays on where the target was
+     * when it began */
+    Vecf3 burst_aim(Actor& actor, actv_t const& actv, Vecf3 const& target, bool starting)
+    {
+        f32 const tracking =
+            glm::clamp(actv.target_tracking * scaled(&blam::globals::difficulty::target_tracking), 0.f, 1.f);
+        if(starting)
+        {
+            actor.burst_from = target;
+            std::uniform_real_distribution<f32> unit(-1.f, 1.f);
+            Vecf3 const off{unit(m_random), unit(m_random), unit(m_random) * .5f};
+            f32 const   radius = actv.burst_origin_radius * scaled(&blam::globals::difficulty::burst_error);
+            actor.burst_aim    = target + (glm::dot(off, off) > 1e-6f ? glm::normalize(off) * radius : Vecf3{});
+            return actor.burst_aim;
+        }
+        actor.burst_from = glm::mix(actor.burst_from, target, tracking);
+        Vecf3 const to   = actor.burst_from - actor.burst_aim;
+        f32 const   left = glm::length(to);
+        f32 const   step = uniform(actv.burst_return_length);
+        if(left > 1e-4f)
+            actor.burst_aim += to / left * std::min(step, left);
+        return actor.burst_aim;
     }
 
     /* How a weapon's first trigger's projectile flies, when gravity bends
@@ -1662,11 +1698,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     /* The way to shoot from `muzzle` to land on `aim`: straight at it, or
      * along the arc that drops there, led by where the target will be by
      * then; out of reach, as far as it will go */
-    Vecf3 aim_direction(Proxy& p, Actor const& actor, Vecf3 const& muzzle, Vecf3 const& aim, std::optional<arc_t> arc)
+    Vecf3 aim_direction(
+        Proxy& p, Actor const& actor, Vecf3 const& muzzle, Vecf3 const& aim, std::optional<arc_t> arc, f32 leading)
     {
-        if(!arc)
+        if(!arc || leading <= 0.f)
             return glm::normalize(aim - muzzle);
-        Vecf3 const lead = velocity_of(p, actor.target);
+        Vecf3 const lead = velocity_of(p, actor.target) * leading;
         Vecf3       at   = aim;
         Vecf3       dir  = glm::normalize(aim - muzzle);
         for(u32 pass = 0; pass < 3; pass++)
@@ -1821,7 +1858,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             at = at * anim->pose[static_cast<size_t>(marker->node)];
         Vecf3 const muzzle = Vecf3((at * marker->transform)[3]);
         Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
-        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, &(*weapon), true));
+        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, &(*weapon), true), leading(actv));
         if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
         {
             std::uniform_real_distribution<f32> unit_spread(-1.f, 1.f);

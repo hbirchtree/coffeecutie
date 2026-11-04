@@ -1137,6 +1137,8 @@ struct Actor
     bool            swinging{false};    /*!< A swing is under way */
     bool            charging{false};    /*!< Closing to arm's reach to strike */
     bool            berserk{false};     /*!< Charges to strike whatever it holds, until its target is gone */
+    Vecf3           burst_aim{};        /*!< Where the burst is aimed now: off the target at first, returning */
+    Vecf3           burst_from{};       /*!< The target as the burst tracks it */
     libc_types::f32 hurt_body{-1.f};    /*!< Its body a frame ago, for what a blow took; -1 unknown */
     libc_types::u64 stuck_by{0};        /*!< The grenade stuck on it it has noticed */
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
