@@ -693,6 +693,8 @@ ModelItem<V> ModelCache<V>::predict_impl(
     out.mesh   = {};
     out.header = header;
     out.tag    = &(*index.find(mod2));
+    if(before_upload)
+        before_upload();
 
     Span<const blam::shader::shader_desc> shaders;
     if(auto const& shaders_ = header->shaders.data(magic); shaders_.has_error())
