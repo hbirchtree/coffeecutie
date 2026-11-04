@@ -372,6 +372,7 @@ struct SpawnObjectEvent
     bool announce{false};
     /*! A unit's own change colours, see Model::change_colors */
     std::array<libc_types::u32, 4> change_colors{};
+    bool camouflaged{false}; /*!< A unit born under active camouflage */
 };
 
 struct DespawnObjectEvent

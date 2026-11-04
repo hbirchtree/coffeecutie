@@ -663,6 +663,7 @@ struct alignas(8) EntitySpawn
     u32       announce{0}; /*!< See SpawnObjectEvent::announce */
     blam::tag_index<> held{}; /*!< A unit's weapon, weap tag id */
     u32       change_colors[4]{}; /*!< See SpawnObjectEvent::change_colors */
+    u32       camouflaged{0};     /*!< See SpawnObjectEvent::camouflaged */
 };
 
 struct alignas(8) PlayerSpawn

@@ -3732,6 +3732,7 @@ struct BlamScript
             .server_owned  = true,
             .held          = weapon_of(palette.value()[type]),
             .change_colors = colors_of(palette.value()[type]),
+            .camouflaged   = camouflaged(palette.value()[type]),
         };
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
         m_spawning.insert(net_id);
@@ -3832,6 +3833,18 @@ struct BlamScript
         if(!variant.has_value() || !variant.value()->unit.valid())
             return nullptr;
         return &static_cast<blam::tagref_t const&>(variant.value()->unit);
+    }
+
+    /* Born unseen: the variant's active camouflage flag */
+    bool camouflaged(blam::tagref_t const& variant_ref) const
+    {
+        using flags_t = blam::scn::actor_variant::flags_t;
+        auto tag = m_tags.find(variant_ref.tag_id);
+        if(tag == m_tags.end())
+            return false;
+        auto variant = (*tag).template data<blam::scn::actor_variant>(m_magic);
+        return variant.has_value() &&
+               (variant.value()->flags & (flags_t::active_camouflage | flags_t::super_active_camouflage)) != flags_t::none;
     }
 
     /* The variant's change colours, each somewhere between its bounds: a

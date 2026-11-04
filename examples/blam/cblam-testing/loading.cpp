@@ -2014,6 +2014,7 @@ struct ResourceLoader
         model.item_age      = spawn.age;
         model.item_rounds   = spawn.rounds;
         model.change_colors = spawn.change_colors;
+        model.camouflaged   = spawn.camouflaged;
         if(model_it != index.end())
         {
             model.tag          = &(*model_it);
@@ -3254,9 +3255,17 @@ struct ResourceLoader
         {
             auto const& [equip, status] = unit.components();
             auto const& weapon          = equip.weapons[0];
-            if(weapon.tag && !weapon.weapon && !status.dead &&
-               !p.template get<PlayerInfo>(unit.id()))
+            if(p.template get<PlayerInfo>(unit.id()))
+                continue;
+            if(weapon.tag && !weapon.weapon && !status.dead)
                 unarmed.emplace_back(unit.id(), weapon.tag);
+            /* A unit born camouflaged, and what it holds */
+            if(auto const* model = p.template get<Model>(unit.id()); model && model->camouflaged)
+            {
+                camouflage(p, *model, true);
+                if(auto const* held = p.template get<Model>(weapon.held))
+                    camouflage(p, *held, true);
+            }
         }
         for(auto const& [unit, tag] : unarmed)
             if(auto const* model = p.template get<Model>(unit))
