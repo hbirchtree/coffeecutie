@@ -187,23 +187,31 @@ struct ResourceLoader
     } current;
 
     /* ModelCache::predict_impl copies vertices straight into vert_buffer /
-     * element_buffer, so the model buffers have to be mapped for the whole
-     * span of any predict() call. Mapped once around the frame's batch —
-     * mapping per request would cost a GPU sync each time. */
+     * element_buffer, so they are mapped around the frame's batch, but
+     * only on the first miss: a map waits for the GPU to be done drawing
+     * from them, and most spawns find their mesh cached */
     struct model_buffer_scope_t
     {
         model_buffer_scope_t(BlamResources& gpu, ModelCache<Ver>& cache)
             : m_gpu(gpu)
             , m_cache(cache)
         {
-            auto vert              = m_gpu.model_buf->map(0);
-            auto index             = m_gpu.model_index->map(0);
-            m_cache.vert_buffer    = Bytes::ofContainer(vert);
-            m_cache.element_buffer = Bytes::ofContainer(index);
+            m_cache.before_upload = [this] {
+                if(m_mapped)
+                    return;
+                m_mapped               = true;
+                auto vert              = m_gpu.model_buf->map(0);
+                auto index             = m_gpu.model_index->map(0);
+                m_cache.vert_buffer    = Bytes::ofContainer(vert);
+                m_cache.element_buffer = Bytes::ofContainer(index);
+            };
         }
 
         ~model_buffer_scope_t()
         {
+            m_cache.before_upload = {};
+            if(!m_mapped)
+                return;
             m_gpu.model_buf->unmap();
             m_gpu.model_index->unmap();
             m_cache.vert_buffer    = {};
@@ -212,6 +220,7 @@ struct ResourceLoader
 
         BlamResources&   m_gpu;
         ModelCache<Ver>& m_cache;
+        bool             m_mapped{false};
     };
 
     ResourceLoader()
@@ -281,8 +290,7 @@ struct ResourceLoader
            pending_shields.empty())
             return;
 
-        /* Everything below can reach ModelCache::predict(), so the model
-         * buffers stay mapped across the whole batch. */
+        /* Everything below can reach ModelCache::predict() */
         model_buffer_scope_t model_buffers(resources, model_cache);
 
         if(section_changed)
