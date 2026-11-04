@@ -898,7 +898,9 @@ struct PhysicsSystem
                     if(body.world_body && body.world_body->getInvMass() > 0.f)
                         m_before_step[body.world_body.get()] =
                             body.world_body->getLinearVelocity();
-                m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
+                /* One 60 Hz step a step: four 120 Hz substeps cost twice
+                 * the frame for nothing a walking crowd needs */
+                m_world->stepSimulation(step_seconds, 1, step_seconds);
                 m_steps++;
                 report_impacts();
                 bleed_carried();
