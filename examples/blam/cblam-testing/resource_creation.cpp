@@ -2,6 +2,7 @@
 #include "resource_creation.h"
 
 #include "blam_files.h"
+#include "caching.h"
 #include "network/networking.h"
 #include "components.h"
 #include "data.h"
@@ -690,6 +691,7 @@ void create_resources(compo::EntityContainer& e)
                              {"scores", std::move(scores)},
                          };
                      }
+                     state["section"] = e.subsystem_cast<BSPCache<halo_version>>().active_section;
                      state["objects"] = nlohmann::json::array();
                      for(auto& [_, object] : objects)
                          state["objects"].push_back(std::move(object));
