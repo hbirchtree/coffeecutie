@@ -193,7 +193,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 continue;
             }
             actor.walk_to.reset();
-            toughen(actor, status);
+            toughen(actor, status, *kind->variant);
             think(p, ent.id(), actor, model, anim, status, *kind, dt);
         }
     }
@@ -204,9 +204,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return difficulty_scale(m_difficulty, row, m_level);
     }
 
-    /* Its vitality for the difficulty, once: an enemy's and a friend's by
-     * their own rows */
-    void toughen(Actor& actor, BipedStatus& status)
+    /* Its vitality, once: the variant's where it gives one (a stealth
+     * elite's shield of none, a major's 150), else the coll's, scaled for
+     * the difficulty by an enemy's or a friend's row */
+    void toughen(Actor& actor, BipedStatus& status, actv_t const& actv)
     {
         if(actor.toughened || !status.coll)
             return;
@@ -214,12 +215,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         bool const foe   = enemies(actor.team, team_t::player);
         f32 const  scale = scaled(
             foe ? &blam::globals::difficulty::enemy_vitality : &blam::globals::difficulty::friend_vitality);
-        if(scale == 1.f)
-            return;
-        if(status.coll->maximum_body_vitality > 0.f)
-            status.max_body = status.coll->maximum_body_vitality * scale;
-        if(status.coll->maximum_shield_vitality > 0.f)
-            status.max_shield = status.coll->maximum_shield_vitality * scale;
+        f32 const body   = actv.body_vitality > 0.f ? actv.body_vitality : status.coll->maximum_body_vitality;
+        f32 const shield = actv.body_vitality > 0.f ? actv.shield_vitality : status.coll->maximum_shield_vitality;
+        if(body > 0.f)
+            status.max_body = body * scale;
+        status.max_shield = shield * scale;
+        if(shield <= 0.f)
+            status.shield = 0.f;
     }
 
   private:

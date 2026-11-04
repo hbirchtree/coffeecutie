@@ -56,6 +56,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
         Quatf          rotation{1.f, 0.f, 0.f, 0.f};
         blam::tagref_t held{}; /*!< A unit's weapon in hand */
         std::array<u32, 4> change_colors{};
+        bool               camouflaged{false};
     };
 
     struct player_t
@@ -148,6 +149,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 .position      = model.position,
                 .rotation      = model.rotation,
                 .change_colors = model.change_colors,
+                .camouflaged   = model.camouflaged,
             };
             if(auto const* equip = p.template get<BipedEquipment>(entity.id());
                equip && equip->weapons[0].tag)
@@ -233,6 +235,7 @@ struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, Checkpoin
                 .server_owned  = true,
                 .held          = object.held,
                 .change_colors = object.change_colors,
+                .camouflaged   = object.camouflaged,
             };
             game.inject(ev, &spawn);
             m_pending[net_id] = pending_frames;
@@ -401,6 +404,7 @@ void alloc_checkpoints(compo::EntityContainer& e)
                     .rotation      = spawn->rotation,
                     .held          = spawn->held,
                     .change_colors = spawn->change_colors,
+                    .camouflaged   = spawn->camouflaged,
                 },
                 CheckpointSystem::pending_frames};
         });
