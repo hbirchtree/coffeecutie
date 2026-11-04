@@ -234,7 +234,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 steer_ahead     = 2.f;  /* wu ahead obstacles are steered round */
     static constexpr f32 fallback_obstacle = 3.f; /* wu, the most an object's bounds count for */
     static constexpr f32 default_windup  = .35f; /* s before a blow lands, a swing without a key frame */
-    static constexpr f32 lunge_reach     = 3.f;  /* wu a target comes within to be charged, at least */
     static constexpr f32 strike_reach    = 1.5f; /* wu, feet to feet, a blow lands within */
     static constexpr f32 taunt_chance    = .6f;
     static constexpr f32 taunt_spacing   = 2.5f; /* s between any two taunts */
@@ -314,6 +313,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             enter(actor, state_t::retreat);
             actor.state_in = uniform(actr.unopposable.retreat_time);
         }
+        /* Shields beaten down to its hiding fraction, it keeps its head
+         * down behind its position until they are back to its attacking
+         * fraction, or its hiding time is up */
+        if(actor.state == state_t::combat && !actor.covering && actr.defensive.hide_shield_fraction > 0.f &&
+           status.maximum_shield() > 0.f && status.shield < actr.defensive.hide_shield_fraction)
+        {
+            actor.covering      = true;
+            actor.reposition_in = uniform(actr.defensive.hide_behind_cover_time, 2.f);
+        }
         /* Stared down a barrel: a chance to dive for a spot the target
          * cannot see, now and then */
         if(actor.state == state_t::combat && actor.look_in >= look_period - 1e-3f &&
@@ -375,13 +383,16 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
              * nowhere to fight from, it closes in regardless */
             f32 const  apart  = glm::distance(model.position, actor.last_seen);
             bool const seen   = actor.seen_ago < look_period * 2.f;
-            f32 const  begin  = std::max(actv.melee_range, lunge_reach);
-            f32 const  give_up = std::max(actv.melee_abort_range, begin * 1.5f);
-            if(actv.melee_range > 0.f && seen && apart < (actor.charging ? give_up : begin))
+            f32 const  begin  = actv.melee_range;
+            f32 const  give_up = std::max(actv.melee_abort_range, begin * 1.25f);
+            if(begin > 0.f && seen && apart < (actor.charging ? give_up : begin))
                 actor.charging = true;
-            else if(!seen || apart > give_up || actv.melee_range <= 0.f)
+            else if(!seen || apart > give_up || begin <= 0.f)
                 actor.charging = false;
-            bool const charge = actor.charging || actor.berserk || !holds_gun(p, id) || actor.position < 0;
+            /* To arm's reach to strike; with a gun but nowhere to fight
+             * from, only to the far edge of the range it fights at */
+            bool const strikes = actor.charging || actor.berserk || !holds_gun(p, id);
+            bool const charge  = strikes || actor.position < 0;
             if(!charge && actor.reposition_in <= 0.f)
             {
                 actor.reposition_in = reposition_time;
@@ -389,7 +400,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
-            f32 const close = charge ? strike_reach * .8f : std::max(actv.desired_combat_range.x, 2.f);
+            f32 const close = strikes ? strike_reach * .8f : std::max(actv.desired_combat_range.y, 2.f);
             bool const there  = charge ? glm::distance(model.position, actor.last_seen) <= close
                                        : glm::distance(model.position, actor.goal) <= arrive_radius;
             if(!there)
@@ -401,7 +412,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 {
                     /* Down behind it until it dares to look again */
                     anim.stance = "crouch";
-                    if(actor.reposition_in <= 0.f ||
+                    bool const recovered = actr.defensive.attack_shield_fraction > 0.f &&
+                                           status.shield >= actr.defensive.attack_shield_fraction;
+                    if(actor.reposition_in <= 0.f || recovered ||
                        (actor.look_in >= look_period - 1e-3f &&
                         chance(actr.movement.emerge_from_cover_chance * .25f)))
                     {
