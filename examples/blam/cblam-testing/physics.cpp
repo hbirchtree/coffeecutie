@@ -838,6 +838,7 @@ struct PhysicsSystem
         p.subsystem(loading);
 
         auto const ticks = m_ticks->take();
+        m_frame_seconds  = static_cast<f32>(ticks.size()) * TickClock::tick_seconds;
         m_blast_queue->poll();
         auto const blasts = std::exchange(m_blasts, {});
         if(loading->loading)
@@ -1314,6 +1315,16 @@ struct PhysicsSystem
                     m_glides[id] = {body.getWorldTransform(), transform};
                 else
                     body.setWorldTransform(transform);
+                /* A body a script moves keeps the velocity of that motion,
+                 * so what it is let go with is how its carrier flew, not
+                 * what it had before it was picked up */
+                if(physics.scripted && m_frame_seconds > 0.f)
+                {
+                    auto const last = m_carried_at.find(id);
+                    if(last != m_carried_at.end() && glm::distance(origin, last->second) < deck_leap)
+                        physics.linear_velocity = (origin - last->second) / m_frame_seconds;
+                    m_carried_at[id] = origin;
+                }
                 /* Moving as its simulator says, so a deck carries what
                  * stands on it */
                 auto const& lin = physics.linear_velocity;
@@ -1361,6 +1372,7 @@ struct PhysicsSystem
             remove_body(it->first);
             if(!frozen.contains(it->first))
                 m_object_sections.erase(it->first);
+            m_carried_at.erase(it->first);
             it = m_object_bodies.erase(it);
         }
     }
@@ -3662,6 +3674,8 @@ struct PhysicsSystem
     std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
     /* The section an object's body was made in */
     std::map<u64, i16> m_object_sections;
+    std::map<u64, Vecf3> m_carried_at; /* where a script-moved body was put last frame */
+    f32                  m_frame_seconds{0.f};
     /* The section the world mesh was built from */
     BSPItem const* m_world_item{nullptr};
 
