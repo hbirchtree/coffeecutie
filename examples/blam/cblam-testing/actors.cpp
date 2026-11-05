@@ -429,10 +429,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             if(actor.seen_ago < look_period * 2.f && !(actor.covering && there))
             {
-                face(model, actor.last_seen);
-                if(!strike(p, id, actor, model, kind) && !actor.berserk)
-                    fire(p, id, actor, model, kind, dt);
-                throw_grenade(p, id, actor, model, kind);
+                /* Its body comes round as its biped turns; it only shoots
+                 * what its aim can reach, within the turning threshold */
+                turn(actor, model, actor.last_seen, dt, actor.moving);
+                if(facing(model, actor.last_seen))
+                {
+                    if(!strike(p, id, actor, model, kind) && !actor.berserk)
+                        fire(p, id, actor, model, kind, dt);
+                    throw_grenade(p, id, actor, model, kind);
+                }
             }
             break;
         }
@@ -1230,7 +1235,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Vecf3 const dir = to / left;
         if(actor.seen_ago > look_period * 2.f || actor.state != state_t::combat ||
            !can_stride(p, id, anim, model, dir))
-            face(model, model.position + dir);
+            turn(actor, model, model.position + dir, dt, true);
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity walking{
             .entity_id = id, .velocity = dir * std::min(speed, left / std::max(dt, 1e-3f)), .preserve_z = true};
@@ -1493,12 +1498,63 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         p.template subsystem<PhysicsBus>().process(ev, &still);
     }
 
-    static void face(Model& model, Vecf3 const& at)
+    /* How a body turns: its biped's turning speed, and how far a standing
+     * body lets its facing stray before it comes round at all */
+    struct turning_t
+    {
+        f32 speed{glm::two_pi<f32>()};
+        f32 threshold{0.f};
+    };
+
+    turning_t turning_of(Model const& model)
+    {
+        auto [it, fresh] = m_turning.try_emplace(model.origin_object);
+        if(fresh && model.origin_object)
+            if(auto biped = model.origin_object->template data<blam::scn::biped>(*s_magic); biped.has_value())
+            {
+                if(biped.value()[0].moving_turning_speed > 0.f)
+                    it->second.speed = biped.value()[0].moving_turning_speed;
+                it->second.threshold = biped.value()[0].stationary_turning_threshold;
+            }
+        return it->second;
+    }
+
+    static f32 yaw_of(Model const& model)
+    {
+        Vecf3 const forward = model.rotation * Vecf3{1.f, 0.f, 0.f};
+        return std::atan2(forward.y, forward.x);
+    }
+
+    /* The turn from its facing to `at`, -pi to pi */
+    static f32 off_by(Model const& model, Vecf3 const& at)
     {
         Vecf3 const to = at - model.position;
         if(glm::dot(Vecf2(to), Vecf2(to)) < 1e-6f)
+            return 0.f;
+        return glm::mod(std::atan2(to.y, to.x) - yaw_of(model) + glm::pi<f32>(), glm::two_pi<f32>()) - glm::pi<f32>();
+    }
+
+    /* Its body comes round toward `at` at its turning speed. Standing, it
+     * holds until its facing strays past the threshold, then turns all
+     * the way: a hunter is slow to meet a flank */
+    void turn(Actor& actor, Model& model, Vecf3 const& at, f32 dt, bool moving)
+    {
+        turning_t const t   = turning_of(model);
+        f32 const       off = off_by(model, at);
+        if(moving || std::abs(off) > t.threshold)
+            actor.turning = true;
+        if(!actor.turning)
             return;
-        model.rotation = glm::angleAxis(std::atan2(to.y, to.x), Vecf3{0.f, 0.f, 1.f});
+        f32 const step = t.speed * dt;
+        model.rotation = glm::angleAxis(yaw_of(model) + std::clamp(off, -step, step), Vecf3{0.f, 0.f, 1.f});
+        actor.turning  = moving || std::abs(off) > step;
+    }
+
+    /* Whether its aim reaches `at` without the body turning further */
+    bool facing(Model const& model, Vecf3 const& at)
+    {
+        turning_t const t = turning_of(model);
+        return std::abs(off_by(model, at)) <= std::max(t.threshold, .35f) + .1f;
     }
 
     /* Stride directions, as the bits of stride_t::clips */
@@ -2234,6 +2290,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
     std::map<std::pair<blam::antr::header const*, std::string>, stride_t> m_strides;
+    std::map<blam::tag_t const*, turning_t>                               m_turning;
     std::minstd_rand                                                 m_random{12345};
     std::vector<blam::globals::grenade const*>                       m_grenades;
     blam::globals::difficulty const*                                 m_difficulty{nullptr};

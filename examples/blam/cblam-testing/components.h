@@ -1124,6 +1124,7 @@ struct Actor
     libc_types::f32 move_wait{0.f};  /*!< Until it walks on from there */
     bool            move_back{false}; /*!< Walking a back-and-forth patrol in reverse */
     libc_types::f32 glance_in{0.f};  /*!< Until it looks somewhere else, idle */
+    bool            turning{false};  /*!< Its body is coming round to its facing */
     libc_types::f32 gaze_in{0.f};    /*!< Until its head turns elsewhere, idle */
     libc_types::f32 rest{-1.f};      /*!< Body and shield as it fell asleep, -1 awake */
     std::vector<libc_types::i32> route; /*!< Firing positions to walk through to its goal */
