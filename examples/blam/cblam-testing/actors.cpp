@@ -242,6 +242,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 grenade_notice  = 8.f;  /* wu, a grenade's AI perception radius, for slow shots without one */
     static constexpr f32 slow_shot_speed = 20.f; /* wu/s and under, an explosive shot is seen coming */
     static constexpr f32 grenade_dodge_time = 2.f; /* s spent getting away from one */
+    static constexpr f32 spread_weight   = 2.f;  /* wu of cost for a position on a platoon mate's bearing */
+    static constexpr f32 flank_weight    = 1.5f; /* wu of cost for a position straight in the target's face */
     static constexpr f32 taunt_chance    = .6f;
     static constexpr f32 taunt_spacing   = 2.5f; /* s between any two taunts */
     static constexpr f32 halo_gravity    = 9.81f / 3.048f; /* wu/s^2 */
@@ -1084,6 +1086,23 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Vecf2 const range = kind.variant->desired_combat_range.y > 0.f
                                 ? kind.variant->desired_combat_range
                                 : Vecf2{3.f, 12.f};
+        /* Mates of its encounter spread out round the target rather than
+         * all come at it one way, and a spot in the target's face costs
+         * more than one off to its side */
+        std::vector<Vecf2> bearings;
+        if(!away)
+            for(auto other : p.template select<Actor>())
+            {
+                auto const& theirs = other.template get<Actor>();
+                if(&theirs != &actor && theirs.encounter == actor.encounter && theirs.position >= 0 &&
+                   static_cast<size_t>(theirs.position) < positions.value().size())
+                {
+                    Vecf2 const b = Vecf2(positions.value()[static_cast<size_t>(theirs.position)].position) - Vecf2(target);
+                    if(glm::dot(b, b) > 1e-4f)
+                        bearings.push_back(glm::normalize(b));
+                }
+            }
+        Vecf2 const faces = target_facing(p, actor.target);
         i32 best      = -1;
         f32 best_cost = std::numeric_limits<f32>::max();
         for(size_t i = 0; i < positions.value().size(); i++)
@@ -1104,6 +1123,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                                     : to_target > range.y ? to_target - range.y
                                                           : 0.f;
                 cost = outside * 3.f + to_me;
+                Vecf2 const b = Vecf2(fp.position) - Vecf2(target);
+                if(glm::dot(b, b) > 1e-4f)
+                {
+                    Vecf2 const dir = glm::normalize(b);
+                    for(auto const& mate : bearings)
+                        cost += spread_weight * std::max(glm::dot(dir, mate), 0.f);
+                    cost += flank_weight * std::max(glm::dot(dir, faces), 0.f);
+                }
             }
             if(cost < best_cost)
             {
@@ -1112,6 +1139,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
         }
         return best;
+    }
+
+    /* Which way the target looks, flat; zero for one with no facing */
+    Vecf2 target_facing(Proxy& p, u64 target)
+    {
+        Vecf3 forward{};
+        if(auto const* cam = p.template get<PlayerCamera>(target))
+            forward = glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f};
+        else if(auto const* model = p.template get<Model>(target))
+            forward = model->rotation * Vecf3{1.f, 0.f, 0.f};
+        Vecf2 const flat(forward);
+        return glm::dot(flat, flat) > 1e-4f ? glm::normalize(flat) : Vecf2{};
     }
 
     /* Placed to patrol: it walks its squad's move positions, in order, back
