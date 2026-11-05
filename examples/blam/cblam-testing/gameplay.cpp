@@ -335,9 +335,11 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             Vecf2 const flat  = Vecf2(view);
             f32 const   yaw   = glm::dot(flat, flat) > 1e-6f ? std::atan2(flat.y, flat.x) : 0.f;
             f32 const   pitch = std::asin(std::clamp(view.z, -1.f, 1.f));
+            /* The track's points stand off the seat's camera marker, which
+             * on a turret rides the gun, so the view clears it */
+            Vecf3 const base = eye && *eye ? Vecf3(vehicle->transform * (**eye)[3]) : vehicle->position;
             if(auto behind = known ? track_point(p, *vehicle, (*seats)[seat], pitch) : std::nullopt)
-                cam.camera.position =
-                    vehicle->position + glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) * *behind;
+                cam.camera.position = base + glm::angleAxis(yaw, Vecf3{0.f, 0.f, 1.f}) * *behind;
             else
                 cam.camera.position =
                     vehicle->position + Vecf3{0.f, 0.f, chase_height} -

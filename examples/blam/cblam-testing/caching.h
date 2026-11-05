@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <functional>
+
 #include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_font.h>
@@ -112,6 +114,9 @@ struct ModelCache
 
     Bytes vert_buffer, element_buffer;
     u32   vert_ptr, element_ptr;
+    /*! Called before a miss writes into the buffers: the loader maps them
+     *  only then, as a map waits for the GPU to be done drawing from them */
+    std::function<void()> before_upload;
 
     /* ES2: compressed normals are rewritten as snorm8x4 on upload */
     bool snorm8_normals{false};

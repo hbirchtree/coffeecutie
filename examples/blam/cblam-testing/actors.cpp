@@ -1,8 +1,12 @@
 #include "actors.h"
 #include "blam_files.h"
+#include "caching.h"
 #include "components.h"
+#include "difficulty.h"
 #include "game_events.h"
+#include "game_mode.h"
 #include "model_markers.h"
+#include "nav_mesh.h"
 #include "network/networking.h"
 #include "physics.h"
 #include "selected_version.h"
@@ -31,14 +35,18 @@ using ActorManifest = compo::SubsystemManifest<
         Actor,
         Model,
         AnimationPlayback,
-        const BipedStatus,
+        BipedStatus,
         BipedEquipment,
         const ObjectPhysics,
+        const PhysicsData,
         const PlayerInfo,
-        const PlayerCamera>,
+        const PlayerCamera,
+        const Projectile>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
+        const BSPCache<halo_version>,
+        const GameState,
         const NetworkState,
         const LoadingStatus,
         const BlamFiles<halo_version>>,
@@ -91,22 +99,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 dt = 0.f;
         for(auto const& tick : m_ticks->take())
             dt += tick.seconds;
-        if(std::getenv("BLAM_DEBUG_AI") && (m_debug_top -= .033f) <= 0.f)
-        {
-            m_debug_top = 3.f;
-            cDebug(
-                "ai: tick dt {} scenario {} loaded {} replica {} actors {}",
-                dt,
-                m_scenario != nullptr,
-                p.template subsystem<LoadingStatus>().loaded_map == LoadingStatus::loaded,
-                p.template subsystem<NetworkState>().replica,
-                [&] {
-                    size_t n = 0;
-                    for(auto ent : p.template select<Actor>())
-                        n += ent.template get<Actor>().active() ? 1 : 0;
-                    return n;
-                }());
-        }
         if(dt <= 0.f || !m_scenario ||
            p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
            p.template subsystem<NetworkState>().replica)
@@ -118,7 +110,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             m_kinds.clear();
             m_links.clear();
             m_spheres.clear();
+            m_difficulty = difficulty_block(files);
         }
+        m_level = p.template subsystem<GameState>().difficulty;
+        refresh_nav(p);
         hear(p);
         if((m_obstacles_in -= dt) <= 0.f)
         {
@@ -156,25 +151,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 continue;
             }
             auto const* kind = kind_of(p, actor);
-            if(std::getenv("BLAM_DEBUG_AI") && (m_debug_in -= dt) <= 0.f)
-            {
-                m_debug_in = 3.f;
-                cDebug(
-                    "ai: {} state {} scripted {} may_fight {} target {} kind {}/{}/{} team {} at {:.1f} {:.1f} squad {} pos {}",
-                    ent.id(),
-                    static_cast<int>(actor.state),
-                    actor.scripted,
-                    actor.may_fight,
-                    actor.target,
-                    kind != nullptr,
-                    kind && kind->variant,
-                    kind && kind->actor,
-                    actor.team,
-                    model.position.x,
-                    model.position.y,
-                    actor.squad,
-                    actor.position);
-            }
+            taunt(p, ent.id(), actor, model, dt);
             if(!kind || !kind->variant || !kind->actor)
                 continue;
             /* Sent to a vehicle: it runs there, whatever else it was doing,
@@ -182,19 +159,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(actor.board)
             {
                 auto const* vehicle = p.template get<Model>(actor.board);
-                if(std::getenv("BLAM_DEBUG_AI") && vehicle && (actor.look_in -= dt) <= 0.f)
-                {
-                    actor.look_in = 2.f;
-                    cDebug(
-                        "ai: {} boarding {} distance {} at {} {} {} moving {}",
-                        ent.id(),
-                        actor.board,
-                        glm::distance(Vecf2(model.position), Vecf2(vehicle->position)),
-                        model.position.x,
-                        model.position.y,
-                        model.position.z,
-                        actor.moving);
-                }
                 if(!vehicle)
                     actor.board = 0;
                 else if(glm::distance(Vecf2(model.position), Vecf2(vehicle->position)) > actor.board_radius)
@@ -207,6 +171,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
              * when the list allows a fight */
             if(actor.scripted)
             {
+                /* A command list's go-to, by its routes */
+                if(actor.walk_to &&
+                   glm::distance(Vecf2(model.position), Vecf2(*actor.walk_to)) > actor.walk_radius)
+                    move_toward(p, ent.id(), actor, model, anim, *kind, *actor.walk_to, dt, false);
+                else if(actor.walk_to)
+                    stop(p, ent.id(), actor);
                 if(actor.may_fight && !actor.blind && (actor.look_in -= dt) <= 0.f)
                 {
                     actor.look_in = look_period;
@@ -222,8 +192,36 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 }
                 continue;
             }
+            actor.walk_to.reset();
+            toughen(actor, status, *kind->variant);
             think(p, ent.id(), actor, model, anim, status, *kind, dt);
         }
+    }
+
+    /* The difficulty's scale on a row, 1 without a globals block */
+    f32 scaled(f32 const (blam::globals::difficulty::*row)[4]) const
+    {
+        return difficulty_scale(m_difficulty, row, m_level);
+    }
+
+    /* Its vitality, once: the variant's where it gives one (a stealth
+     * elite's shield of none, a major's 150), else the coll's, scaled for
+     * the difficulty by an enemy's or a friend's row */
+    void toughen(Actor& actor, BipedStatus& status, actv_t const& actv)
+    {
+        if(actor.toughened || !status.coll)
+            return;
+        actor.toughened = true;
+        bool const foe   = enemies(actor.team, team_t::player);
+        f32 const  scale = scaled(
+            foe ? &blam::globals::difficulty::enemy_vitality : &blam::globals::difficulty::friend_vitality);
+        f32 const body   = actv.body_vitality > 0.f ? actv.body_vitality : status.coll->maximum_body_vitality;
+        f32 const shield = actv.body_vitality > 0.f ? actv.shield_vitality : status.coll->maximum_shield_vitality;
+        if(body > 0.f)
+            status.max_body = body * scale;
+        status.max_shield = shield * scale;
+        if(shield <= 0.f)
+            status.shield = 0.f;
     }
 
   private:
@@ -236,8 +234,21 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 route_knee      = .2f;  /* wu above the feet, for what is low */
     static constexpr f32 body_radius     = .3f;  /* wu either side of a walking body */
     static constexpr f32 steer_ahead     = 2.f;  /* wu ahead obstacles are steered round */
+    static constexpr f32 fallback_obstacle = 3.f; /* wu, the most an object's bounds count for */
     static constexpr f32 default_windup  = .35f; /* s before a blow lands, a swing without a key frame */
-    static constexpr f32 lunge_reach     = 3.f;  /* wu a target comes within to be lunged at */
+    static constexpr f32 strike_reach    = 1.5f; /* wu, feet to feet, a blow lands within */
+    static constexpr f32 grenade_danger  = 2.5f; /* wu, a grenade without a danger radius is dived from within */
+    static constexpr f32 dodge_lookahead = 1.5f; /* s ahead a shot's path is judged */
+    static constexpr f32 grenade_notice  = 8.f;  /* wu, a grenade's AI perception radius, for slow shots without one */
+    static constexpr f32 slow_shot_speed = 20.f; /* wu/s and under, an explosive shot is seen coming */
+    static constexpr f32 grenade_dodge_time = 2.f; /* s spent getting away from one */
+    static constexpr f32 spread_weight   = 2.f;  /* wu of cost for a position on a platoon mate's bearing */
+    static constexpr f32 flank_weight    = 1.5f; /* wu of cost for a position straight in the target's face */
+    static constexpr f32 taunt_chance    = .6f;
+    static constexpr f32 taunt_spacing   = 2.5f; /* s between any two taunts */
+    static constexpr f32 halo_gravity    = 9.81f / 3.048f; /* wu/s^2 */
+    static constexpr f32 tick_rate       = 30.f;
+    static constexpr f32 lob_limit       = 1.2217f; /* rad, 70 degrees: steeper lobs fall to the flat shot */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
@@ -249,6 +260,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr u32 max_expansions  = 2000;
     static constexpr f32 stuck_time      = 2.f;  /* s between progress checks */
     static constexpr f32 stuck_distance  = .5f;  /* wu less than which is no progress */
+    static constexpr f32 unstick_time    = .7f;  /* s spent stepping aside after stalling */
     static constexpr std::string_view trigger_marker = "primary trigger";
 
     void think(
@@ -271,6 +283,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.stance_in -= dt;
         actor.state_in -= dt;
         actor.reposition_in -= dt;
+        react(p, id, actor, status, actr);
 
         /* A look around now and then: the nearest enemy in view */
         if(actor.look_in <= 0.f)
@@ -282,7 +295,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(seen != actor.target)
                 {
                     actor.target  = seen;
-                    actor.fire_in = uniform(actv.first_burst_delay_time);
+                    actor.fire_in = uniform(actv.first_burst_delay_time) *
+                                    scaled(&blam::globals::difficulty::new_target_delay);
                     actor.burst_left = 0;
                     alert_squad(p, id, actor, actr);
                 }
@@ -292,7 +306,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(actor.state == state_t::idle || actor.state == state_t::pursuit)
                     enter(actor, state_t::combat);
             }
+            dodge_grenades(p, id, actor, model, actr);
         }
+        if(actor.state != state_t::retreat)
+            actor.danger.reset();
         /* Ordered back: away from its target until told otherwise */
         if(actor.order == Actor::order_t::retreat && actor.state != state_t::retreat)
         {
@@ -307,6 +324,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         {
             enter(actor, state_t::retreat);
             actor.state_in = uniform(actr.unopposable.retreat_time);
+        }
+        /* Shields beaten down to its hiding fraction, it keeps its head
+         * down behind its position until they are back to its attacking
+         * fraction, or its hiding time is up */
+        if(actor.state == state_t::combat && !actor.covering && actr.defensive.hide_shield_fraction > 0.f &&
+           status.maximum_shield() > 0.f && status.shield < actr.defensive.hide_shield_fraction)
+        {
+            actor.covering      = true;
+            actor.reposition_in = uniform(actr.defensive.hide_behind_cover_time, 2.f);
         }
         /* Stared down a barrel: a chance to dive for a spot the target
          * cannot see, now and then */
@@ -326,6 +352,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         switch(actor.state)
         {
         case state_t::idle:
+            /* Enlisted with no post: where it stands is its post */
+            if(actor.post == Vecf3{})
+                actor.post = model.position;
             /* Migrated: to its new squad's guard positions, running */
             if(actor.migrated && actor.position < 0)
             {
@@ -342,33 +371,48 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         case state_t::combat: {
             if(!alive(p, actor.target))
             {
+                /* Seen fall, it may crow over it in a moment */
+                if(actor.seen_ago < look_period * 2.f && chance(taunt_chance))
+                {
+                    actor.taunt_in     = uniform({.5f, 1.5f});
+                    actor.taunt_player = p.template get<PlayerInfo>(actor.target) != nullptr;
+                }
                 actor.target = 0;
                 enter(actor, state_t::idle);
                 break;
             }
+            if(actor.last_seen == Vecf3{})
+                if(auto const* seen = p.template get<Model>(actor.target))
+                    actor.last_seen = seen->position;
             if(actor.seen_ago > uniform_max(actr.pursuit.target_search_time))
             {
                 enter(actor, state_t::pursuit);
                 actor.state_in = uniform_max(actr.pursuit.pursuit_position_time);
                 break;
             }
-            bool const armed = holds_gun(p, id);
-            if(armed && actor.reposition_in <= 0.f)
+            /* A target within its melee range is charged to arm's reach, and
+             * given up past its abort range; with nothing to shoot, or
+             * nowhere to fight from, it closes in regardless */
+            f32 const  apart  = glm::distance(model.position, actor.last_seen);
+            bool const seen   = actor.seen_ago < look_period * 2.f;
+            f32 const  begin  = actv.melee_range;
+            f32 const  give_up = std::max(actv.melee_abort_range, begin * 1.25f);
+            if(begin > 0.f && seen && apart < (actor.charging ? give_up : begin))
+                actor.charging = true;
+            else if(!seen || apart > give_up || begin <= 0.f)
+                actor.charging = false;
+            /* To arm's reach to strike; with a gun but nowhere to fight
+             * from, only to the far edge of the range it fights at */
+            bool const strikes = actor.charging || actor.berserk || !holds_gun(p, id);
+            bool const charge  = strikes || actor.position < 0;
+            if(!charge && actor.reposition_in <= 0.f)
             {
                 actor.reposition_in = reposition_time;
                 actor.position      = pick_position(p, actor, model, kind, actor.last_seen, false);
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
-            /* Unarmed, or with nowhere to fight from: it closes in, to arm's
-             * reach or the near edge of the range it fights at; a target come
-             * close is lunged at to strike */
-            f32 const  apart  = glm::distance(model.position, actor.last_seen);
-            bool const lunge  = actv.melee_range > 0.f && actor.seen_ago < look_period * 2.f &&
-                               apart < std::max(actv.melee_range * 2.f, lunge_reach);
-            bool const charge = !armed || lunge || actor.position < 0;
-            f32 const  close  = !armed || lunge ? std::max(actv.melee_range * .8f, .5f)
-                                                : std::max(actv.desired_combat_range.x, 2.f);
+            f32 const close = strikes ? strike_reach * .8f : std::max(actv.desired_combat_range.y, 2.f);
             bool const there  = charge ? glm::distance(model.position, actor.last_seen) <= close
                                        : glm::distance(model.position, actor.goal) <= arrive_radius;
             if(!there)
@@ -380,7 +424,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 {
                     /* Down behind it until it dares to look again */
                     anim.stance = "crouch";
-                    if(actor.reposition_in <= 0.f ||
+                    bool const recovered = actr.defensive.attack_shield_fraction > 0.f &&
+                                           status.shield >= actr.defensive.attack_shield_fraction;
+                    if(actor.reposition_in <= 0.f || recovered ||
                        (actor.look_in >= look_period - 1e-3f &&
                         chance(actr.movement.emerge_from_cover_chance * .25f)))
                     {
@@ -393,10 +439,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             if(actor.seen_ago < look_period * 2.f && !(actor.covering && there))
             {
-                face(model, actor.last_seen);
-                if(!strike(p, id, actor, model, kind))
-                    fire(p, id, actor, model, kind, dt);
-                throw_grenade(p, id, actor, model, kind);
+                /* Its body comes round as its biped turns; it only shoots
+                 * what its aim can reach, within the turning threshold */
+                turn(actor, model, actor.last_seen, dt, actor.moving);
+                if(facing(model, actor.last_seen))
+                {
+                    if(!strike(p, id, actor, model, kind) && !actor.berserk)
+                        fire(p, id, actor, model, kind, dt);
+                    throw_grenade(p, id, actor, model, kind);
+                }
             }
             break;
         }
@@ -428,7 +479,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(actor.position < 0 || actor.reposition_in <= 0.f)
             {
                 actor.reposition_in = reposition_time;
-                actor.position      = pick_position(p, actor, model, kind, actor.last_seen, true);
+                actor.position =
+                    pick_position(p, actor, model, kind, actor.danger.value_or(actor.last_seen), true);
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
@@ -461,8 +513,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.rest < 0.f)
         {
             actor.rest = health;
-            if(std::getenv("BLAM_DEBUG_AI"))
-                cDebug("ai: {} asleep", id);
         }
         bool const woken = actor.target != 0 || actor.state != state_t::idle || health < actor.rest;
         if(!woken)
@@ -470,13 +520,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             stop(p, id, actor);
             return true;
         }
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug(
-                "ai: {} wakes: target {} state {} hurt {}",
-                id,
-                actor.target,
-                static_cast<int>(actor.state),
-                health < actor.rest);
         anim.stance = "stand";
         actor.rest  = -1.f;
         actor.fire_in = std::max(actor.fire_in, 1.f); /* getting up */
@@ -485,8 +528,53 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return false;
     }
 
+    /* Blows and stuck grenades change its mind. A grenade stuck on it
+     * sends it berserk by its chance, else fleeing for its cowering time;
+     * so does a blow past its panic threshold, and one leaving it beaten
+     * below its berserk threshold. Berserk, it charges to strike until its
+     * target is gone */
+    void react(Proxy& p, u64 id, Actor& actor, BipedStatus const& status, actr_t const& actr)
+    {
+        f32 const took  = actor.hurt_body >= 0.f ? actor.hurt_body - status.body : 0.f;
+        actor.hurt_body = status.body;
+        bool charge = false, flee = false;
+        u64  stuck  = 0;
+        for(auto ent : p.template select<Projectile>())
+            if(auto const& flight = ent.template get<Projectile>(); flight.attached && flight.attached_to == id)
+            {
+                stuck = ent.id();
+                break;
+            }
+        if(stuck && stuck != actor.stuck_by)
+        {
+            if(chance(actr.berserk.berserk_grenade_chance))
+                charge = true;
+            else
+                flee = true;
+        }
+        actor.stuck_by = stuck;
+        if(took > 0.f && actr.panic.panic_damage_threshold > 0.f && took >= actr.panic.panic_damage_threshold)
+            flee = true;
+        if(took > 0.f && actr.berserk.berserk_damage_amount > 0.f &&
+           status.body <= actr.berserk.berserk_damage_threshold &&
+           1.f - status.body >= actr.berserk.berserk_damage_amount)
+            charge = true;
+        if(charge && alive(p, actor.target))
+        {
+            if(actor.state != state_t::combat)
+                enter(actor, state_t::combat);
+            actor.berserk = true;
+        } else if(flee && !actor.berserk && actor.state != state_t::retreat && actr.panic.cowering_time.y > 0.f)
+        {
+            enter(actor, state_t::retreat);
+            actor.state_in = uniform(actr.panic.cowering_time);
+        }
+    }
+
     void enter(Actor& actor, state_t state)
     {
+        if(state != state_t::combat)
+            actor.berserk = false;
         actor.state         = state;
         actor.position      = -1;
         actor.reposition_in = 0.f;
@@ -812,6 +900,66 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return best;
     }
 
+    /* A unit of its own side standing between its muzzle and its aim */
+    bool friend_before(Proxy& p, u64 self, Actor const& actor, Vecf3 const& from, Vecf3 const& to)
+    {
+        Physics::Event   ev{Physics::Event::Raycast};
+        Physics::Raycast ray{.from = from, .to = to, .ignore = self};
+        p.template subsystem<PhysicsBus>().process(ev, &ray);
+        if(!ray.hit || ray.entity_id == 0 || ray.entity_id == actor.target)
+            return false;
+        auto const* theirs = p.template get<Actor>(ray.entity_id);
+        if(theirs)
+            return !enemies(actor.team, static_cast<team_t>(theirs->team));
+        return p.template get<PlayerInfo>(ray.entity_id) && !enemies(actor.team, team_t::player);
+    }
+
+    /* A projectile the AI notices: one its tag gives an AI perception
+     * radius (grenades), or a slow explosive shot (fuel rod, rocket,
+     * mortar) noticed as a grenade is. A grenade armed within its danger
+     * radius, or a shot about to pass within it: by its chance to dive, it
+     * gets away from where that will be for a moment */
+    void dodge_grenades(Proxy& p, u64, Actor& actor, Model const& model, actr_t const& actr)
+    {
+        if(actr.movement.dive_from_grenade_chance <= 0.f || actor.state == state_t::retreat)
+            return;
+        for(auto ent : p.template select<Projectile, Model>())
+        {
+            auto [flight, where] = ent.components();
+            if(!flight.tag || flight.attached)
+                continue;
+            bool const slow_shot = flight.tag->detonation_effect.valid() &&
+                                   flight.tag->initial_velocity * tick_rate > 0.f &&
+                                   flight.tag->initial_velocity * tick_rate <= slow_shot_speed;
+            f32 const noticed = flight.tag->ai_perception_radius > 0.f ? flight.tag->ai_perception_radius
+                                : slow_shot                             ? grenade_notice
+                                                                        : 0.f;
+            if(noticed <= 0.f)
+                continue;
+            f32 const danger = flight.tag->danger_radius > 0.f ? flight.tag->danger_radius : grenade_danger;
+            Vecf3 const to    = model.position - where.position;
+            if(glm::length(to) > noticed)
+                continue;
+            /* Where it comes nearest over the next while, on its way */
+            Vecf3 nearest = where.position;
+            f32 const speed2 = glm::dot(flight.velocity, flight.velocity);
+            if(speed2 > 1.f)
+            {
+                f32 const t = std::clamp(glm::dot(to, flight.velocity) / speed2, 0.f, dodge_lookahead);
+                nearest     = where.position + flight.velocity * t;
+            } else if(flight.timer < 0.f)
+                continue; /* lying there unarmed */
+            if(glm::distance(nearest, model.position) > danger)
+                continue;
+            if(!chance(actr.movement.dive_from_grenade_chance))
+                return;
+            actor.danger = nearest;
+            enter(actor, state_t::retreat);
+            actor.state_in = grenade_dodge_time;
+            return;
+        }
+    }
+
     bool clear(Proxy& p, u64 self, Vecf3 const& from, Vecf3 const& to, u64 target, u64 vehicle = 0)
     {
         Physics::Event   ev{Physics::Event::Raycast};
@@ -938,6 +1086,23 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Vecf2 const range = kind.variant->desired_combat_range.y > 0.f
                                 ? kind.variant->desired_combat_range
                                 : Vecf2{3.f, 12.f};
+        /* Mates of its encounter spread out round the target rather than
+         * all come at it one way, and a spot in the target's face costs
+         * more than one off to its side */
+        std::vector<Vecf2> bearings;
+        if(!away)
+            for(auto other : p.template select<Actor>())
+            {
+                auto const& theirs = other.template get<Actor>();
+                if(&theirs != &actor && theirs.encounter == actor.encounter && theirs.position >= 0 &&
+                   static_cast<size_t>(theirs.position) < positions.value().size())
+                {
+                    Vecf2 const b = Vecf2(positions.value()[static_cast<size_t>(theirs.position)].position) - Vecf2(target);
+                    if(glm::dot(b, b) > 1e-4f)
+                        bearings.push_back(glm::normalize(b));
+                }
+            }
+        Vecf2 const faces = target_facing(p, actor.target);
         i32 best      = -1;
         f32 best_cost = std::numeric_limits<f32>::max();
         for(size_t i = 0; i < positions.value().size(); i++)
@@ -958,6 +1123,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                                     : to_target > range.y ? to_target - range.y
                                                           : 0.f;
                 cost = outside * 3.f + to_me;
+                Vecf2 const b = Vecf2(fp.position) - Vecf2(target);
+                if(glm::dot(b, b) > 1e-4f)
+                {
+                    Vecf2 const dir = glm::normalize(b);
+                    for(auto const& mate : bearings)
+                        cost += spread_weight * std::max(glm::dot(dir, mate), 0.f);
+                    cost += flank_weight * std::max(glm::dot(dir, faces), 0.f);
+                }
             }
             if(cost < best_cost)
             {
@@ -966,6 +1139,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
         }
         return best;
+    }
+
+    /* Which way the target looks, flat; zero for one with no facing */
+    Vecf2 target_facing(Proxy& p, u64 target)
+    {
+        Vecf3 forward{};
+        if(auto const* cam = p.template get<PlayerCamera>(target))
+            forward = glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f};
+        else if(auto const* model = p.template get<Model>(target))
+            forward = model->rotation * Vecf3{1.f, 0.f, 0.f};
+        Vecf2 const flat(forward);
+        return glm::dot(flat, flat) > 1e-4f ? glm::normalize(flat) : Vecf2{};
     }
 
     /* Placed to patrol: it walks its squad's move positions, in order, back
@@ -1136,13 +1321,29 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 bool const  left  = (glm::dot(round, to) >= 0.f) != actor.steer_other;
                 to                = (left ? round : -round) * glm::length(to);
             }
+        /* Standing in one, it edges out as it goes */
+        if(auto const* o = obstacle_at(model.position, goal, actor.board); o && glm::dot(to, to) > 1e-6f)
+        {
+            Vecf3 out = model.position - o->center;
+            out.z     = 0.f;
+            if(glm::dot(out, out) > 1e-6f)
+                to = glm::normalize(glm::normalize(to) + glm::normalize(out)) * glm::length(to);
+        }
+        /* Held by something unseen, it steps aside for a moment */
+        if(actor.unstick_in > 0.f && glm::dot(to, to) > 1e-6f)
+        {
+            actor.unstick_in -= dt;
+            Vecf3 const side = glm::cross(Vecf3{0, 0, 1}, glm::normalize(to));
+            to               = (actor.steer_other ? -side : side) * std::max(glm::length(to), 1.f);
+        }
         f32 const left = std::max(glm::length(to), 1e-3f);
         if(anim.stance != "stand")
             anim.stance = "stand";
         f32 const speed = stride(p, id, anim, kind) * (running ? 1.f : .6f);
         Vecf3 const dir = to / left;
-        if(actor.seen_ago > look_period * 2.f || actor.state != state_t::combat)
-            face(model, model.position + dir);
+        if(actor.seen_ago > look_period * 2.f || actor.state != state_t::combat ||
+           !can_stride(p, id, anim, model, dir))
+            turn(actor, model, model.position + dir, dt, true);
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity walking{
             .entity_id = id, .velocity = dir * std::min(speed, left / std::max(dt, 1e-3f)), .preserve_z = true};
@@ -1173,6 +1374,17 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
         /* Around what the AI is told to keep clear of */
         return !obstacle_on(a, b, aboard);
+    }
+
+    /* The obstacle a point stands inside, unless the goal is in it too */
+    obstacle_t const* obstacle_at(Vecf3 const& at, Vecf3 const& goal, u64 aboard = 0) const
+    {
+        for(auto const& o : m_obstacles)
+            if(o.entity != aboard && std::abs(o.center.z - at.z) < o.radius + 1.f &&
+               glm::distance(Vecf2(at), Vecf2(o.center)) < o.radius + body_radius &&
+               glm::distance(Vecf2(goal), Vecf2(o.center)) >= o.radius + body_radius)
+                return &o;
+        return nullptr;
     }
 
     /* The first object pathfinding sphere a walk from a to b runs into */
@@ -1221,11 +1433,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             auto [spheres, fresh] = m_spheres.try_emplace(tag);
             if(fresh)
                 if(auto object = tag->template data<blam::scn::object>(*s_magic); object.has_value())
+                {
                     if(auto coll_tag = index.find(object.value()[0].collider.tag_id); coll_tag != index.end())
                         if(auto coll = (*coll_tag).template data<blam::coll::header>(*s_magic); coll.has_value())
                             if(auto list = coll.value()[0].pathfinding_spheres.data(*s_magic); list.has_value())
                                 for(auto const& s : list.value())
                                     spheres->second.push_back({s.center, s.radius});
+                    /* Scenery with none, such as boulders and crates, is kept
+                     * clear of by its bounds, which are generous */
+                    auto const& o = object.value()[0];
+                    if(spheres->second.empty() && !tag->matches(blam::tag_class_t::vehi) && o.bound_radius > 0.f)
+                        spheres->second.push_back({o.bound_offset, std::min(o.bound_radius, fallback_obstacle) * .7f});
+                }
             for(auto const& [center, radius] : spheres->second)
                 m_obstacles.push_back({
                     .center = Vecf3(model.transform * Vecf4(center, 1.f)),
@@ -1308,44 +1527,69 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return {};
     }
 
-    /* Where to head now: the goal itself, or the next position of a route
-     * around what blocks the way; a walk that stalls is planned again */
+    /* The section's floors as a graph, built again as the section changes */
+    void refresh_nav(Proxy& p)
+    {
+        auto const&    cache = p.template subsystem<BSPCache<halo_version>>();
+        BSPItem const* item  = nullptr;
+        for(auto const& [_, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section && !candidate.coll_surfaces.empty())
+                item = &candidate;
+        if(item == m_nav_item)
+            return;
+        m_nav_item = item;
+        m_nav.clear();
+        if(item)
+        {
+            m_nav.build(*item);
+            cDebug(
+                "ai: nav mesh for section {}: {} floors, {} links", cache.active_section, m_nav.nodes.size(),
+                m_nav.links.size());
+        }
+    }
+
+    /* Where to head now: the goal itself, or the next point of a route
+     * around what blocks the way: over the section's floors, else through
+     * the encounter's positions; a walk that stalls is planned again */
     Vecf3 waypoint(Proxy& p, u64 id, Actor& actor, Model const& model, kind_t const& kind, Vecf3 const& goal, f32 dt)
     {
+        /* The floors know nothing of what stands on them: a first leg the
+         * rays find blocked hands over to the positions */
+        auto const replan = [&] {
+            actor.route.clear();
+            actor.path = m_nav.route(model.position, goal);
+            if(!actor.path.empty() && !walkable(p, id, model.position, actor.path.front(), actor.board))
+                actor.path.clear();
+            if(actor.path.empty() && !walkable(p, id, model.position, goal, actor.board))
+                actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+        };
         if(glm::distance(goal, actor.route_goal) > 1.f)
         {
             actor.route_goal = goal;
-            actor.route.clear();
-            if(!walkable(p, id, model.position, goal, actor.board))
-                actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+            replan();
             actor.stuck_at = model.position;
             actor.stuck_in = stuck_time;
         }
         if((actor.stuck_in -= dt) <= 0.f)
         {
-            if(glm::distance(model.position, actor.stuck_at) < stuck_distance)
+            /* Jostled about near the goal is not stuck */
+            if(glm::distance(model.position, actor.stuck_at) < stuck_distance &&
+               glm::distance(Vecf2(model.position), Vecf2(goal)) > stuck_distance * 3.f)
             {
-                if(std::getenv("BLAM_DEBUG_AI"))
-                {
-                    f32 nearest = 1e9f, radius = 0.f;
-                    for(auto const& o : m_obstacles)
-                        if(f32 const d = glm::distance(Vecf2(o.center), Vecf2(model.position)) - o.radius; d < nearest)
-                        {
-                            nearest = d;
-                            radius  = o.radius;
-                        }
-                    cDebug(
-                        "ai: {} stalled at {:.1f} {:.1f} goal {:.1f} {:.1f} route {} next {:.1f} {:.1f} obstacle {:.1f} r {:.1f}",
-                        id, model.position.x, model.position.y, goal.x, goal.y, actor.route.size(),
-                        actor.route.empty() ? goal.x : position_of(kind, actor.route.front()).x,
-                        actor.route.empty() ? goal.y : position_of(kind, actor.route.front()).y, nearest, radius);
-                }
                 actor.steer_other = !actor.steer_other;
-                actor.route = plan(p, id, kind, actor.encounter, model.position, goal);
+                actor.unstick_in  = unstick_time;
+                replan();
             }
             actor.stuck_at = model.position;
             actor.stuck_in = stuck_time;
         }
+        /* Points reached, or that can be cut straight past, are dropped */
+        while(actor.path.size() > 1 &&
+              (glm::distance(Vecf2(model.position), Vecf2(actor.path.front())) < arrive_radius * 2.f ||
+               walkable(p, id, model.position, actor.path[1], actor.board)))
+            actor.path.erase(actor.path.begin());
+        if(!actor.path.empty())
+            return actor.path.front();
         while(!actor.route.empty() &&
               glm::distance(Vecf2(model.position), Vecf2(position_of(kind, actor.route.front()))) < arrive_radius * 2.f)
             actor.route.erase(actor.route.begin());
@@ -1362,31 +1606,117 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         p.template subsystem<PhysicsBus>().process(ev, &still);
     }
 
-    static void face(Model& model, Vecf3 const& at)
+    /* How a body turns: its biped's turning speed, and how far a standing
+     * body lets its facing stray before it comes round at all */
+    struct turning_t
+    {
+        f32 speed{glm::two_pi<f32>()};
+        f32 threshold{0.f};
+    };
+
+    turning_t turning_of(Model const& model)
+    {
+        auto [it, fresh] = m_turning.try_emplace(model.origin_object);
+        if(fresh && model.origin_object)
+            if(auto biped = model.origin_object->template data<blam::scn::biped>(*s_magic); biped.has_value())
+            {
+                if(biped.value()[0].moving_turning_speed > 0.f)
+                    it->second.speed = biped.value()[0].moving_turning_speed;
+                it->second.threshold = biped.value()[0].stationary_turning_threshold;
+            }
+        return it->second;
+    }
+
+    static f32 yaw_of(Model const& model)
+    {
+        Vecf3 const forward = model.rotation * Vecf3{1.f, 0.f, 0.f};
+        return std::atan2(forward.y, forward.x);
+    }
+
+    /* The turn from its facing to `at`, -pi to pi */
+    static f32 off_by(Model const& model, Vecf3 const& at)
     {
         Vecf3 const to = at - model.position;
         if(glm::dot(Vecf2(to), Vecf2(to)) < 1e-6f)
-            return;
-        model.rotation = glm::angleAxis(std::atan2(to.y, to.x), Vecf3{0.f, 0.f, 1.f});
+            return 0.f;
+        return glm::mod(std::atan2(to.y, to.x) - yaw_of(model) + glm::pi<f32>(), glm::two_pi<f32>()) - glm::pi<f32>();
     }
 
-    /* Its run, from its move clip holding what it holds */
-    f32 stride(Proxy& p, u64 id, AnimationPlayback const& anim, kind_t const&)
+    /* Its body comes round toward `at` at its turning speed. Standing, it
+     * holds until its facing strays past the threshold, then turns all
+     * the way: a hunter is slow to meet a flank */
+    void turn(Actor& actor, Model& model, Vecf3 const& at, f32 dt, bool moving)
     {
-        using Slot = blam::antr::unit_weapon::animation_idx_t;
+        turning_t const t   = turning_of(model);
+        f32 const       off = off_by(model, at);
+        if(moving || std::abs(off) > t.threshold)
+            actor.turning = true;
+        if(!actor.turning)
+            return;
+        f32 const step = t.speed * dt;
+        model.rotation = glm::angleAxis(yaw_of(model) + std::clamp(off, -step, step), Vecf3{0.f, 0.f, 1.f});
+        actor.turning  = moving || std::abs(off) > step;
+    }
+
+    /* Whether its aim reaches `at` without the body turning further */
+    bool facing(Model const& model, Vecf3 const& at)
+    {
+        turning_t const t = turning_of(model);
+        return std::abs(off_by(model, at)) <= std::max(t.threshold, .35f) + .1f;
+    }
+
+    /* Stride directions, as the bits of stride_t::clips */
+    static constexpr blam::antr::unit_weapon::animation_idx_t moves[4] = {
+        blam::antr::unit_weapon::animation_idx_t::move_front,
+        blam::antr::unit_weapon::animation_idx_t::move_back,
+        blam::antr::unit_weapon::animation_idx_t::move_left,
+        blam::antr::unit_weapon::animation_idx_t::move_right};
+
+    struct stride_t
+    {
+        f32 speed{0.f};
+        u8  clips{0}; /*!< Bits in moves order: which strides it has */
+    };
+
+    /* Its run and the strides it has, from its move clips holding what it
+     * holds */
+    stride_t const& strides(Proxy& p, u64 id, AnimationPlayback const& anim)
+    {
+        static stride_t const none{.speed = default_speed, .clips = 0xf};
         if(!anim.graph)
-            return default_speed;
+            return none;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         auto const* equip = p.template get<BipedEquipment>(id);
         auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
         std::string const weapon = gun ? std::string(gun->weapon->label.str()) : std::string("unarmed");
-        auto [it, fresh] = m_strides.try_emplace(std::pair{anim.graph, weapon}, 0.f);
+        auto [it, fresh] = m_strides.try_emplace(std::pair{anim.graph, weapon});
         if(fresh)
         {
-            f32 front = move_speed(*anim.graph, Slot::move_front, *s_magic, "stand", weapon);
-            it->second = front > 0.f ? front : default_speed;
+            f32 front = move_speed(*anim.graph, moves[0], *s_magic, "stand", weapon);
+            it->second.speed = front > 0.f ? front : default_speed;
+            for(size_t i = 0; i < 4; i++)
+                if(move_clip(*anim.graph, moves[i], *s_magic, "stand", weapon) >= 0)
+                    it->second.clips |= static_cast<u8>(1u << i);
         }
         return it->second;
+    }
+
+    f32 stride(Proxy& p, u64 id, AnimationPlayback const& anim, kind_t const&)
+    {
+        return strides(p, id, anim).speed;
+    }
+
+    /* Whether it can stride a way while facing as it does: the clip for
+     * that direction is in its graph. A hunter only walks forward */
+    bool can_stride(Proxy& p, u64 id, AnimationPlayback const& anim, Model const& model, Vecf3 const& dir)
+    {
+        u8 const clips = strides(p, id, anim).clips;
+        if(clips == 0xf)
+            return true;
+        Vecf3 const local = glm::conjugate(model.rotation) * dir;
+        size_t const way  = std::abs(local.x) >= std::abs(local.y) ? (local.x >= 0.f ? 0 : 1)
+                                                                   : (local.y >= 0.f ? 2 : 3);
+        return (clips & (1u << way)) != 0;
     }
 
     /* At its position it ducks and rises by its variant's times */
@@ -1413,34 +1743,49 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        auto const* equip = p.template get<BipedEquipment>(id);
-        auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
-        if(!gun || !gun->tag || actor.fire_in > 0.f)
+        auto*       equip = p.template get<BipedEquipment>(id);
+        auto*       gun   = equip ? equip->held(files.load_generation) : nullptr;
+        if(!gun || !gun->tag)
+            return;
+        firing_t const firing = firing_of(gun->tag);
+        /* A charging trigger shows how far along it is */
+        gun->charge = firing.single && firing.charging > 0.f && actor.burst_left == 1 && actor.fire_in > 0.f
+                          ? 1.f - actor.fire_in / firing.charging
+                          : 0.f;
+        if(actor.fire_in > 0.f)
             return;
         f32 const reach = actv.maximum_firing_distance > 0.f ? actv.maximum_firing_distance : 20.f;
         if(glm::distance(model.position, actor.last_seen) > reach)
             return;
         /* None given: as fast as its weapon fires */
-        f32 const rate = actv.rate_of_fire > 0.f ? actv.rate_of_fire : weapon_rate(gun->tag);
-        if(actor.burst_left <= 0)
-        {
-            f32 const seconds = uniform(actv.burst_duration, 1.f);
-            actor.burst_left  = std::max(1, static_cast<i32>(seconds * rate));
-        }
+        f32 const rate = (actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate) *
+                         scaled(&blam::globals::difficulty::rate_of_fire);
+        bool const starting = actor.burst_left <= 0;
+        if(!begin_burst(actor, actv, firing, rate))
+            return;
         /* As a player's: from the gun's muzzle in its hand, at what it looks at */
         Vecf3 const eye    = eye_of(p, id);
-        Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
+        Vecf3 const target = actor.last_seen + chest_of(p, actor.target);
+        Vecf3 const aim    = burst_aim(actor, actv, target, starting);
         Vecf3 const muzzle = trigger_of(p, *gun).value_or(
             eye + glm::normalize(aim - eye) * WeaponFireEvent::muzzle_distance);
-        Vecf3       dir    = glm::normalize(aim - muzzle);
-        /* Its aim wanders by the variant's error */
-        if(actv.projectile_error > 0.f)
+        /* A friend in the line of fire: the burst waits, and it looks for
+         * another spot */
+        if(starting && friend_before(p, id, actor, muzzle, aim))
+        {
+            actor.burst_left    = 0;
+            actor.fire_in       = look_period;
+            actor.reposition_in = 0.f;
+            return;
+        }
+        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, gun->tag, false), leading(actv));
+        /* Its aim wanders by the variant's error, scaled for the difficulty */
+        if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
         {
             std::uniform_real_distribution<f32> unit(-1.f, 1.f);
             Vecf3 const side = glm::normalize(glm::cross(dir, Vecf3{0, 0, 1}));
             Vecf3 const up   = glm::cross(side, dir);
-            dir = glm::normalize(
-                dir + side * (unit(m_random) * actv.projectile_error) + up * (unit(m_random) * actv.projectile_error));
+            dir = glm::normalize(dir + side * (unit(m_random) * error) + up * (unit(m_random) * error));
         }
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
@@ -1456,26 +1801,183 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(--actor.burst_left > 0)
             actor.fire_in = 1.f / rate;
         else
-            actor.fire_in = uniform(actv.burst_separation, 1.f);
+            actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
     }
 
-    /* Shots a second a weapon's first trigger fires at most */
-    f32 weapon_rate(blam::tag_t const* tag) const
+    /* How far ahead of a moving target it aims: its variant's leading, as
+     * much as the difficulty allows (none on Normal) */
+    f32 leading(actv_t const& actv) const
     {
+        return actv.target_leading * scaled(&blam::globals::difficulty::target_leading);
+    }
+
+    /* Where a burst goes. It opens off the target by the variant's burst
+     * origin radius and walks back onto it by the return length a shot,
+     * following the target only as well as its tracking, scaled by the
+     * difficulty, lets it: on Normal a burst stays on where the target was
+     * when it began */
+    Vecf3 burst_aim(Actor& actor, actv_t const& actv, Vecf3 const& target, bool starting)
+    {
+        f32 const tracking =
+            glm::clamp(actv.target_tracking * scaled(&blam::globals::difficulty::target_tracking), 0.f, 1.f);
+        if(starting)
+        {
+            actor.burst_from = target;
+            std::uniform_real_distribution<f32> unit(-1.f, 1.f);
+            Vecf3 const off{unit(m_random), unit(m_random), unit(m_random) * .5f};
+            f32 const   radius = actv.burst_origin_radius * scaled(&blam::globals::difficulty::burst_error);
+            actor.burst_aim    = target + (glm::dot(off, off) > 1e-6f ? glm::normalize(off) * radius : Vecf3{});
+            return actor.burst_aim;
+        }
+        actor.burst_from = glm::mix(actor.burst_from, target, tracking);
+        Vecf3 const to   = actor.burst_from - actor.burst_aim;
+        f32 const   left = glm::length(to);
+        f32 const   step = uniform(actv.burst_return_length);
+        if(left > 1e-4f)
+            actor.burst_aim += to / left * std::min(step, left);
+        return actor.burst_aim;
+    }
+
+    /* How a weapon's first trigger's projectile flies, when gravity bends
+     * it: its speed, what pulls it down, and whether the AI lobs it */
+    struct arc_t
+    {
+        f32  speed;   /* wu/s */
+        f32  gravity; /* wu/s^2 */
+        bool lob;     /* the high arc, over cover */
+    };
+
+    std::optional<arc_t> arc_of(Proxy& p, blam::tag_t const* tag, bool mounted) const
+    {
+        using flags_t = blam::scn::projectile::flags_t;
+        if(!tag)
+            return std::nullopt;
+        auto weapon = tag->template data<blam::scn::weapon>(*s_magic);
+        if(!weapon.has_value())
+            return std::nullopt;
+        auto triggers = weapon.value()[0].triggers.data(*s_magic);
+        if(!triggers.has_value() || triggers.value().empty() || !triggers.value()[0].projectile.valid())
+            return std::nullopt;
+        blam::tag_index_view<halo_version> index(p.template subsystem<BlamFiles<halo_version>>().container);
+        auto proj_tag = index.find(triggers.value()[0].projectile.tag_id);
+        if(proj_tag == index.end())
+            return std::nullopt;
+        auto proj = (*proj_tag).template data<blam::scn::projectile>(*s_magic);
+        if(!proj.has_value() || proj.value()[0].air_gravity_scale <= 0.f || proj.value()[0].initial_velocity <= 0.f)
+            return std::nullopt;
+        auto const& tag_ = proj.value()[0];
+        return arc_t{
+            .speed   = tag_.initial_velocity * tick_rate,
+            .gravity = halo_gravity * tag_.air_gravity_scale,
+            .lob     = mounted && (tag_.projectile_flags & flags_t::ai_must_use_ballistic_aiming) != flags_t::none,
+        };
+    }
+
+    /* Where a target is heading, to lead it */
+    Vecf3 velocity_of(Proxy& p, u64 id)
+    {
+        if(auto const* data = p.template get<PhysicsData>(id); data && data->enabled)
+            return data->velocity;
+        if(auto const* physics = p.template get<ObjectPhysics>(id))
+            return physics->linear_velocity;
+        return {};
+    }
+
+    /* The way to shoot from `muzzle` to land on `aim`: straight at it, or
+     * along the arc that drops there, led by where the target will be by
+     * then; out of reach, as far as it will go */
+    Vecf3 aim_direction(
+        Proxy& p, Actor const& actor, Vecf3 const& muzzle, Vecf3 const& aim, std::optional<arc_t> arc, f32 leading)
+    {
+        if(!arc || leading <= 0.f)
+            return glm::normalize(aim - muzzle);
+        Vecf3 const lead = velocity_of(p, actor.target) * leading;
+        Vecf3       at   = aim;
+        Vecf3       dir  = glm::normalize(aim - muzzle);
+        for(u32 pass = 0; pass < 3; pass++)
+        {
+            Vecf3 const r = at - muzzle;
+            f32 const   d = glm::length(Vecf2(r));
+            f32 const   v = arc->speed, g = arc->gravity;
+            if(d < 1e-3f)
+                return glm::normalize(r);
+            Vecf3 const flat = Vecf3{r.x, r.y, 0.f} / d;
+            f32 const   disc = v * v * v * v - g * (g * d * d + 2.f * r.z * v * v);
+            f32         angle, time;
+            if(disc < 0.f)
+            {
+                angle = glm::quarter_pi<f32>();
+                time  = d / (v * std::cos(angle));
+            } else
+            {
+                /* Lobbed over cover where the arc stays reasonable, flat
+                 * when the target is too close for that */
+                f32 const root = std::sqrt(disc);
+                f32 const high = std::atan((v * v + root) / (g * d));
+                angle = arc->lob && high <= lob_limit ? high : std::atan((v * v - root) / (g * d));
+                time  = d / (v * std::cos(angle));
+            }
+            dir = flat * std::cos(angle) + Vecf3{0.f, 0.f, std::sin(angle)};
+            at  = aim + lead * time;
+        }
+        return dir;
+    }
+
+    /* How a weapon's first trigger fires: its top rate, and whether a pull
+     * charges up to one shot (hunter cannon) rather than repeating */
+    struct firing_t
+    {
+        f32  rate{3.f};
+        f32  charging{0.f};
+        bool single{false};
+    };
+
+    firing_t firing_of(blam::tag_t const* tag) const
+    {
+        using flags_t = blam::scn::weapon::trigger_t::flags_t;
+        firing_t out;
         if(tag)
             if(auto weapon = tag->template data<blam::scn::weapon>(*s_magic); weapon.has_value())
                 if(auto triggers = weapon.value()[0].triggers.data(*s_magic);
-                   triggers.has_value() && !triggers.value().empty() &&
-                   triggers.value()[0].maximum_rate_of_fire.y > 0.f)
-                    return triggers.value()[0].maximum_rate_of_fire.y;
-        return 3.f;
+                   triggers.has_value() && !triggers.value().empty())
+                {
+                    auto const& trigger = triggers.value()[0];
+                    if(trigger.maximum_rate_of_fire.y > 0.f)
+                        out.rate = trigger.maximum_rate_of_fire.y;
+                    out.charging = trigger.charging_time;
+                    out.single   = (trigger.flags & flags_t::does_not_repeat_automatically) != flags_t::none;
+                }
+        return out;
     }
 
+    /* Starts a burst: so many shots at the rate, or one shot a pull after
+     * the trigger has charged. True once a shot may go */
+    bool begin_burst(Actor& actor, actv_t const& actv, firing_t const& firing, f32 rate)
+    {
+        if(actor.burst_left > 0)
+            return true;
+        if(!firing.single)
+        {
+            actor.burst_left = std::max(1, static_cast<i32>(uniform(actv.burst_duration, 1.f) * rate));
+            return true;
+        }
+        actor.burst_left = 1;
+        actor.fire_in    = firing.charging;
+        return firing.charging <= 0.f;
+    }
+
+    /* A weapon it can shoot with: not a sword, nor anything to one its
+     * variant says only strikes */
     bool holds_gun(Proxy& p, u64 id)
     {
         auto const* equip = p.template get<BipedEquipment>(id);
         auto const* gun   = equip ? equip->held(p.template subsystem<BlamFiles<halo_version>>().load_generation) : nullptr;
-        return gun && gun->tag;
+        if(!gun || !gun->tag || !gun->weapon || gun->weapon->triggers.count == 0)
+            return false;
+        auto const* actor = p.template get<Actor>(id);
+        auto const* kind  = actor ? kind_of(p, *actor) : nullptr;
+        return !kind || !kind->variant ||
+               (kind->variant->flags & actv_t::flags_t::cannot_use_ranged_weapons) == actv_t::flags_t::none;
     }
 
     /* ---- Riding ---- */
@@ -1529,6 +2031,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actv_t const& actv = *kind.variant;
         if(actor.fire_in > 0.f)
             return;
+        f32 const reach = actv.maximum_firing_distance > 0.f ? actv.maximum_firing_distance : 20.f;
+        if(glm::distance(body.position, actor.last_seen) > reach)
+            return;
         auto weapons = unit.weapons.data(*s_magic);
         if(!weapons.has_value() || weapons.value().empty() || !body.tag)
             return;
@@ -1544,24 +2049,19 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             at = at * anim->pose[static_cast<size_t>(marker->node)];
         Vecf3 const muzzle = Vecf3((at * marker->transform)[3]);
         Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
-        Vecf3       dir    = glm::normalize(aim - muzzle);
-        if(actv.projectile_error > 0.f)
+        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, &(*weapon), true), leading(actv));
+        if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
         {
             std::uniform_real_distribution<f32> unit_spread(-1.f, 1.f);
             Vecf3 const side = glm::normalize(glm::cross(dir, Vecf3{0, 0, 1}));
             Vecf3 const up   = glm::cross(side, dir);
-            dir = glm::normalize(
-                dir + side * (unit_spread(m_random) * actv.projectile_error) +
-                up * (unit_spread(m_random) * actv.projectile_error));
+            dir = glm::normalize(dir + side * (unit_spread(m_random) * error) + up * (unit_spread(m_random) * error));
         }
         /* The gun's own rate, not what the gunner carries */
-        f32 const rate = weapon_rate(&(*weapon));
-        if(actor.burst_left <= 0)
-        {
-            actor.burst_left = std::max(1, static_cast<i32>(uniform(actv.burst_duration, 1.f) * rate));
-            if(std::getenv("BLAM_DEBUG_AI"))
-                cDebug("ai: {} fires {}'s gun at {}", id, vehicle, actor.target);
-        }
+        firing_t const firing = firing_of(&(*weapon));
+        f32 const      rate   = firing.rate * scaled(&blam::globals::difficulty::rate_of_fire);
+        if(!begin_burst(actor, actv, firing, rate))
+            return;
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
             .weapon     = (*weapon).as_ref(),
@@ -1577,7 +2077,55 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(--actor.burst_left > 0)
             actor.fire_in = 1.f / rate;
         else
-            actor.fire_in = uniform(actv.burst_separation, 1.f);
+            actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
+    }
+
+    /* A kill it saw is crowed over, one voice at a time */
+    void taunt(Proxy& p, u64 id, Actor& actor, Model const& model, f32 dt)
+    {
+        m_taunt_in -= dt;
+        if(actor.taunt_in <= 0.f || (actor.taunt_in -= dt) > 0.f)
+            return;
+        actor.taunt_in = 0.f;
+        if(m_taunt_in > 0.f)
+            return;
+        auto const* dialogue = dialogue_of(p, id);
+        auto*       sounds   = p.template service<comp_app::EventBus<SoundEvent>>();
+        if(!dialogue || !sounds)
+            return;
+        auto const& line = actor.taunt_player && dialogue->killed_enemy_player.valid()
+                               ? dialogue->killed_enemy_player
+                               : dialogue->killed_enemy;
+        if(!line.valid())
+            return;
+        m_taunt_in = taunt_spacing;
+        SoundEvent     ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{
+            .sound    = &static_cast<blam::tagref_t const&>(line),
+            .position = model.position + Vecf3{0.f, 0.f, .5f},
+        };
+        sounds->inject(ev, &play);
+    }
+
+    /* The unit's first dialogue variant */
+    blam::scn::unit_dialogue const* dialogue_of(Proxy& p, u64 id)
+    {
+        auto const* model = p.template get<Model>(id);
+        if(!model || !model->origin_object)
+            return nullptr;
+        auto unit = model->origin_object->template data<blam::scn::unit>(*s_magic);
+        if(!unit.has_value())
+            return nullptr;
+        auto variants = unit.value()[0].dialogue_variants.data(*s_magic);
+        if(!variants.has_value() || variants.value().empty() || !variants.value()[0].dialogue.valid())
+            return nullptr;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        blam::tag_index_view<halo_version> index(files.container);
+        auto it = index.find(variants.value()[0].dialogue.tag_id);
+        if(it == index.end())
+            return nullptr;
+        auto data = (*it).template data<blam::scn::unit_dialogue>(*s_magic);
+        return data.has_value() ? data.value() : nullptr;
     }
 
     /* Within arm's reach of its target it strikes with what it holds */
@@ -1585,14 +2133,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         actor.melee_in -= look_period / 8.f;
-        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > actv.melee_range * 1.3f)
+        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > strike_reach * 1.3f)
         {
             /* Out of reach: a swing under way is called off */
             actor.swinging  = false;
             actor.strike_in = 0.f;
             return false;
         }
-        if(!actor.swinging && glm::distance(model.position, actor.last_seen) > actv.melee_range)
+        if(!actor.swinging && glm::distance(model.position, actor.last_seen) > strike_reach)
             return false;
         /* A carrier form at its target falls over and bursts */
         if(kind.actor->type == blam::scn::actor_type_t::carrier_form)
@@ -1645,14 +2193,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             f32 const key = anim && anim->graph ? melee_key_time(*anim->graph, *s_magic, weapon) : 0.f;
             actor.strike_in = key > 0.f ? key : default_windup;
             actor.swinging  = true;
-            if(std::getenv("BLAM_DEBUG_AI"))
-                cDebug("ai: {} winds up at {} ({:.2f} s)", id, actor.target, actor.strike_in);
             return true;
         }
         actor.swinging = false;
         actor.melee_in = 1.5f;
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} strikes {}", id, actor.target);
         return true;
     }
 
@@ -1693,8 +2237,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             gun.rounds_total  = static_cast<u16>(between(actv.drop_weapon_ammo));
         } else
             gun.age = 1.f - loaded;
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} stocks {}/{} age {:.2f}", id, gun.rounds_loaded, gun.rounds_total, gun.age);
     }
 
     /* Dead: what grenades it had left fall out, unless its variant says
@@ -1723,8 +2265,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     toss(static_cast<blam::tagref_t const&>(grenade->equipment));
         if(actv.equipment.valid())
             toss(static_cast<blam::tagref_t const&>(actv.equipment));
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} drops {} of {} grenades", id, dropped, actor.grenades);
         actor.grenades = 0;
     }
 
@@ -1765,8 +2305,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .target     = actor.target,
         };
         p.template subsystem<GameEventBus>().inject(ev, &shot);
-        if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: {} throws a grenade at {} ({} left)", id, actor.target, actor.grenades);
     }
 
     /* The globals' grenade of a type, by its projectile */
@@ -1871,11 +2409,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     f32                                                              m_obstacles_in{0.f};
     std::map<std::pair<i16, i16>, platoon_t>                         m_platoons;
     f32                                                              m_platoon_in{0.f};
-    f32                                                              m_debug_in{0.f};
-    f32                                                              m_debug_top{0.f};
-    std::map<std::pair<blam::antr::header const*, std::string>, f32> m_strides;
+    std::map<std::pair<blam::antr::header const*, std::string>, stride_t> m_strides;
+    std::map<blam::tag_t const*, turning_t>                               m_turning;
     std::minstd_rand                                                 m_random{12345};
     std::vector<blam::globals::grenade const*>                       m_grenades;
+    blam::globals::difficulty const*                                 m_difficulty{nullptr};
+    u16                                                              m_level{1};
+    f32                                                              m_taunt_in{0.f};
+    NavMesh                                                          m_nav;
+    BSPItem const*                                                   m_nav_item{nullptr};
 };
 
 void alloc_actors(compo::EntityContainer& e)

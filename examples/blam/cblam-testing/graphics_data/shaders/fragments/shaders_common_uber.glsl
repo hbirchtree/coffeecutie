@@ -105,6 +105,7 @@ struct InstanceData {
     uvec2 cut_bones; /* clipped away: a player's own body above its legs */
     float inflate;
     uint  cut_padding;
+    uvec4 change_colors; /* the object's own A..D, rgb8 with bit 24 set */
 };
 
 layout(binding = 0, std140) uniform MatrixStore
@@ -1156,7 +1157,22 @@ vec4 shader_model(in Material mat)
     bool detail_mask_multi_alpha = (flags & SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA) != 0;
     bool detail_mask_multi_alpha_inv = (flags & SOSO_FLAG_DETAIL_MASK_MULTI_ALPHA_INV) != 0;
 
+    /* The material's change colour, its alpha naming the source A..D (1..4)
+     * so an object with its own colour there shows that one instead */
     vec4 primary_change_color = mat.material.input2;
+    {
+        int src = int(primary_change_color.a + 0.5) - 1;
+        primary_change_color.a = primary_change_color.a > 0.5 ? 1.0 : 0.0;
+#if USE_MODEL_SHADERS == 1
+        if(src >= 0 && src < 4)
+        {
+            uint own = matrices.data[frag.instanceId].change_colors[src];
+            if((own >> 24) != 0u)
+                primary_change_color.rgb = vec3(
+                    float(own & 0xffu), float((own >> 8) & 0xffu), float((own >> 16) & 0xffu)) / 255.0;
+        }
+#endif
+    }
 
     vec4 detail = get_color(detail_map_id, mat);
     bool has_detail = (mat.maps[detail_map_id].layer >> 24) != 0;

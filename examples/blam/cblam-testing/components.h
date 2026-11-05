@@ -278,6 +278,15 @@ static Quatf spawn_rotation_to_quat(SpawnType const* spawn)
     return Quatf(Vecf3(0, 0, spawn->facing));
 }
 
+/*! A colour as an object carries it: rgb8 with bit 24 set, so 0 is none */
+inline libc_types::u32 pack_color(Vecf3 const& c)
+{
+    auto const byte = [](libc_types::f32 v) {
+        return static_cast<libc_types::u32>(glm::clamp(v, 0.f, 1.f) * 255.f + .5f);
+    };
+    return 0x01000000u | byte(c.x) | (byte(c.y) << 8) | (byte(c.z) << 16);
+}
+
 struct Model
 {
     using value_type = Model;
@@ -336,6 +345,8 @@ struct Model
 
     std::array<libc_types::f32, 4> object_function{{-1.f, -1.f, -1.f, -1.f}};
     libc_types::f32                meter_value{-1.f};
+    /*! Its own change colours A..D, packed as pack_color(); 0 = the tag's */
+    std::array<libc_types::u32, 4> change_colors{};
 
     template<typename T>
     void initialize(T const* spawn)
@@ -1113,15 +1124,30 @@ struct Actor
     libc_types::f32 move_wait{0.f};  /*!< Until it walks on from there */
     bool            move_back{false}; /*!< Walking a back-and-forth patrol in reverse */
     libc_types::f32 glance_in{0.f};  /*!< Until it looks somewhere else, idle */
+    bool            turning{false};  /*!< Its body is coming round to its facing */
+    std::optional<Vecf3> danger{};   /*!< A grenade it is getting away from */
     libc_types::f32 gaze_in{0.f};    /*!< Until its head turns elsewhere, idle */
     libc_types::f32 rest{-1.f};      /*!< Body and shield as it fell asleep, -1 awake */
     std::vector<libc_types::i32> route; /*!< Firing positions to walk through to its goal */
+    std::vector<Vecf3>           path;  /*!< Points to walk through to it, off the nav mesh */
     Vecf3           route_goal{};
     Vecf3           stuck_at{};      /*!< Where it was when progress was last checked */
     libc_types::f32 stuck_in{0.f};
     bool            steer_other{false}; /*!< Round obstacles the other way, after stalling */
+    libc_types::f32 unstick_in{0.f};    /*!< Stepping sideways out of whatever held it */
     libc_types::f32 strike_in{0.f};     /*!< Until a swing's blow lands */
     bool            swinging{false};    /*!< A swing is under way */
+    bool            charging{false};    /*!< Closing to arm's reach to strike */
+    bool            berserk{false};     /*!< Charges to strike whatever it holds, until its target is gone */
+    Vecf3           burst_aim{};        /*!< Where the burst is aimed now: off the target at first, returning */
+    Vecf3           burst_from{};       /*!< The target as the burst tracks it */
+    libc_types::f32 hurt_body{-1.f};    /*!< Its body a frame ago, for what a blow took; -1 unknown */
+    libc_types::u64 stuck_by{0};        /*!< The grenade stuck on it it has noticed */
+    bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
+    std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
+    libc_types::f32 walk_radius{.35f};
+    libc_types::f32 taunt_in{0.f};      /*!< Until it crows over a kill, 0 = none due */
+    bool            taunt_player{false}; /*!< The kill was a player */
     libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
     bool            scripted{false}; /*!< A command list or recording has it */
     bool            may_fight{false}; /*!< Its command list lets it break off for an enemy */
@@ -1437,6 +1463,9 @@ struct BipedEquipment
         f32  age{0.f};         /*!< Battery spent, 0 to 1 */
         bool overheated{false}; /*!< Venting until it cools to recovery */
         bool charged{false};    /*!< Its trigger held to a full charge */
+        f32  charge{0.f};       /*!< How far an actor has charged it, 0 to 1 */
+        /*! Its object functions' outputs: what its holder may import */
+        std::array<f32, 4> exports{{-1.f, -1.f, -1.f, -1.f}};
     };
     struct equipment_t
     {
@@ -1456,6 +1485,12 @@ struct BipedEquipment
     u8   zoom{0};          /*!< The held weapon's zoom level, 0 = none */
 
     weapon_t const* held(u32 generation) const
+    {
+        return generation == load_generation && weapons[0].weapon
+                   ? &weapons[0]
+                   : nullptr;
+    }
+    weapon_t* held(u32 generation)
     {
         return generation == load_generation && weapons[0].weapon
                    ? &weapons[0]

@@ -103,6 +103,46 @@ struct material
 
 static_assert(sizeof(material) == 884);
 
+/*! What each difficulty level scales, easy to legendary: what enemies and
+ *  friends take and deal, and how actors shoot */
+struct difficulty
+{
+    f32 enemy_damage[4];
+    f32 enemy_vitality[4];
+    f32 enemy_score[4];
+    f32 enemy_recharge[4];
+    f32 friend_damage[4];
+    f32 friend_vitality[4];
+    f32 friend_score[4];
+    f32 friend_recharge[4];
+    f32 infection_forms_toughness[4];
+    u32 padding0[4];
+    f32 rate_of_fire[4];
+    f32 projectile_error[4];
+    f32 burst_error[4];
+    f32 new_target_delay[4];
+    f32 burst_separation[4];
+    f32 target_tracking[4];
+    f32 target_leading[4];
+    f32 overcharge_chance[4];
+    f32 special_fire_chance[4];
+    f32 guidance_vs_player[4];
+    f32 melee_delay_base[4];
+    f32 melee_delay_scale[4];
+    f32 grenade_chance_scale[4];
+    f32 grenade_timer_scale[4];
+    f32 unused_scale[4]; /* authored (1.2, 1, .8, .5), unnamed */
+    u32 padding1[8];
+    f32 major_upgrade_normal[4];
+    f32 major_upgrade_few[4];
+    f32 major_upgrade_many[4];
+    f32 player_vehicle_ram_chance[4];
+    u32 padding2[12];
+    u32 padding3[25];
+};
+
+static_assert(sizeof(difficulty) == 644);
+
 /*! Only the blocks that name the player's unit and hands are decoded; everything
  *  ahead of them is skipped by offset, because the rest of the globals tag has
  *  no description we can check a layout against.
@@ -113,7 +153,8 @@ struct globals
 {
     static constexpr tag_class_t tag_class = tag_class_t::matg;
 
-    u32                                padding[0x128 / 4];
+    u32                                padding[0x11c / 4];
+    reference<difficulty>              difficulty_levels;
     reference<grenade>                 grenades;
     reference<u32>                     rasterizer_data; /* not decoded */
     reference<interface_bitmaps>       interface;

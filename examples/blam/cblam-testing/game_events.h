@@ -370,6 +370,9 @@ struct SpawnObjectEvent
     std::optional<std::array<libc_types::u16, 2>> rounds;
     /*! Plays its creation effect, or the players' respawn effect if it has none */
     bool announce{false};
+    /*! A unit's own change colours, see Model::change_colors */
+    std::array<libc_types::u32, 4> change_colors{};
+    bool camouflaged{false}; /*!< A unit born under active camouflage */
 };
 
 struct DespawnObjectEvent

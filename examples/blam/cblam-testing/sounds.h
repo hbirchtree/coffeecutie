@@ -79,6 +79,8 @@ struct SoundPreferences : compo::SubsystemBase
     using type = SoundPreferences;
 
     f32 master_volume{1.f};
+    /* Play the permutations the tags skip: lines recorded and left out */
+    bool cut_lines{false};
 };
 
 void alloc_sound_system(compo::EntityContainer& e, bool enabled);

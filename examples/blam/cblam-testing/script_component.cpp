@@ -236,6 +236,7 @@ struct BlamScript
             run_commands(p);
             offer_vehicles(p);
             board_vehicles(p);
+            drop_dead_riders(p);
             run_conversations(p);
             scale_objects(p);
             send_walks(p);
@@ -965,14 +966,6 @@ struct BlamScript
                 });
             return {};
         case op::vehicle_load_magic:
-            if(std::getenv("BLAM_DEBUG_AI"))
-                log(fmt::format(
-                    "vehicle_load_magic: {} {} units {} pending {} vehicle pending {}",
-                    text_of(arg(0)),
-                    text_of(arg(1)),
-                    arg(2).objects.size(),
-                    arg(2).pending.size(),
-                    arg(0).pending.size()));
             with_objects(
                 p,
                 arg(0),
@@ -1395,33 +1388,6 @@ struct BlamScript
             if(enc < 0 || sq < 0)
                 return log(fmt::format("ai_migrate: no squad {}", path)), value_t{};
             auto const from = lowered(text_of(arg(0)));
-            if(std::getenv("BLAM_DEBUG_AI"))
-            {
-                log(fmt::format("ai_migrate: {} from {} to {}", ai_actors(p, from).size(), from, path));
-                auto const& e  = m_scenario->ai.encounters.data(m_magic).value()[enc];
-                auto const& s  = e.squads.data(m_magic).value()[sq];
-                auto        fp = e.firing_positions.data(m_magic);
-                std::map<u32, std::string> per_group;
-                if(fp.has_value())
-                {
-                    std::map<u32, std::pair<Vecf3, u32>> sum;
-                    for(auto const& f : fp.value())
-                    {
-                        sum[f.group].first += f.position;
-                        sum[f.group].second++;
-                    }
-                    for(auto const& [g, s] : sum)
-                    {
-                        Vecf3 const c = s.first / static_cast<f32>(s.second);
-                        per_group[g] = fmt::format("{}@({:.0f},{:.0f})", s.second, c.x, c.y);
-                    }
-                }
-                log(fmt::format(
-                    "  squad {:x} {:x} {:x} / {:x} {:x} {:x} positions by group {}",
-                    s.attacking, s.attacking_search, s.attacking_guard,
-                    s.defending, s.defending_search, s.defending_guard,
-                    per_group));
-            }
             for(u64 id : ai_actors(p, from))
                 if(auto* actor = p.template get<Actor>(id))
                 {
@@ -1907,8 +1873,6 @@ struct BlamScript
             });
             carry(p, unit, true);
             seated(p, unit, vehicle, static_cast<i16>(seat_idx));
-            if(std::getenv("BLAM_DEBUG_AI"))
-                log(fmt::format("seat: {} in {} seat {}", unit, vehicle, label));
             return;
         }
         log(fmt::format("seat: no free {} seat for {} in {}", seat, unit, vehicle));
@@ -2497,15 +2461,6 @@ struct BlamScript
             next->second->board_seat   = blam::bl_string::from(label).value_or(blam::bl_string{});
             ++next;
         }
-        if(std::getenv("BLAM_DEBUG_AI") && (!passengers || next != idle.begin()))
-            log(fmt::format(
-                "ai_go_to_vehicle: {} of {} ({} free) sent to {} seats '{}' held {}",
-                next - idle.begin(),
-                units.size(),
-                idle.size(),
-                vehicle,
-                seat,
-                held.size()));
     }
 
     /* Allies near a stopped vehicle a player sits in climb into its free
@@ -2545,6 +2500,18 @@ struct BlamScript
 
     /* Those sent to a vehicle sit once they are at it; a seat already
      * taken is given up on */
+    /* The dead do not keep their seats: a rider killed falls off its
+     * vehicle, with its motion */
+    void drop_dead_riders(Proxy& p)
+    {
+        std::vector<u64> dead;
+        for(auto const& r : m_riders)
+            if(auto const* status = p.template get<BipedStatus>(r.unit); status && status->dead)
+                dead.push_back(r.unit);
+        for(u64 unit : dead)
+            unseat(p, unit);
+    }
+
     void board_vehicles(Proxy& p)
     {
         for(auto ent : p.template select<Actor, Model>())
@@ -2561,13 +2528,6 @@ struct BlamScript
                 continue;
             if(vehicle && !riding)
                 seat_unit(p, id, actor.board, std::string(actor.board_seat.str()), true);
-            if(std::getenv("BLAM_DEBUG_AI"))
-                log(fmt::format(
-                    "ai_go_to_vehicle: {} at {} seat {} seated {}",
-                    id,
-                    actor.board,
-                    actor.board_seat.str(),
-                    std::any_of(m_riders.begin(), m_riders.end(), [id](rider_t const& r) { return r.unit == id; })));
             actor.board = 0;
         }
     }
@@ -2692,26 +2652,6 @@ struct BlamScript
         auto           parts = conv->participants.data(m_magic);
         auto           names = m_scenario->objects.object_names.data(m_magic);
         std::set<u64>  taken;
-        if(std::getenv("BLAM_DEBUG_AI") && parts.has_value())
-        {
-            for(auto const& part : parts.value())
-                log(fmt::format(
-                    "  part flags {} selection {} type {} object {} encounter '{}'",
-                    static_cast<int>(part.flags),
-                    static_cast<int>(part.selection_type),
-                    static_cast<int>(part.actor_type),
-                    part.use_this_object,
-                    part.encounter_name.str()));
-            if(auto lines = conv->lines.data(m_magic); lines.has_value())
-                for(auto const& line : lines.value())
-                    log(fmt::format(
-                        "  line flags {} participant {} addressee {}/{} delay {}",
-                        static_cast<int>(line.flags),
-                        line.participant,
-                        line.addressee,
-                        line.addressee_participant,
-                        line.line_delay_time));
-        }
         if(parts.has_value())
             for(auto const& part : parts.value())
             {
@@ -2866,8 +2806,6 @@ struct BlamScript
                 break;
             }
             c.until = m_vm.now() + static_cast<libc_types::i64>(seconds * tick_rate);
-            if(std::getenv("BLAM_DEBUG_AI"))
-                log(fmt::format("ai_conversation: {} line {} by {} for {}s", conv->name.str(), c.line, speaker, seconds));
         }
     }
 
@@ -3012,14 +2950,27 @@ struct BlamScript
                     auto const to = point(c.point_1);
                     Vecf3 const d = to ? *to - model->position : Vecf3{};
                     f32 const   left = glm::length(d);
+                    auto* actor = p.template get<Actor>(it->first);
                     if(!to || left <= run.radius)
                     {
+                        if(actor)
+                            actor->walk_to.reset();
                         next();
                         break;
                     }
-                    f32 const step = std::min(left, walk_speeds(p, it->first).x * dt);
-                    face(*to);
-                    model->position += d / left * step;
+                    /* An actor walks it by its routes, on its feet; anything
+                     * else is carried straight there */
+                    if(actor && walks(p, it->first))
+                    {
+                        actor->walk_to     = *to;
+                        actor->walk_radius = run.radius;
+                        carry(p, it->first, false);
+                    } else
+                    {
+                        f32 const step = std::min(left, walk_speeds(p, it->first).x * dt);
+                        face(*to);
+                        model->position += d / left * step;
+                    }
                     waits = true;
                     break;
                 }
@@ -3757,8 +3708,6 @@ struct BlamScript
         if(fits.empty())
             return log(fmt::format("ai_spawn_actor: no squad {}", path));
         size_t const si     = fits[m_spawn_random() % fits.size()];
-        if(std::getenv("BLAM_DEBUG_AI"))
-            log(fmt::format("ai_spawn_actor: {} squad {}", path, squads.value()[si].name.str()));
         auto         starts = squads.value()[si].start_locations.data(m_magic);
         place_actor(p, name, *encounter, encounter_idx, si, starts.value()[m_spawn_random() % starts.value().size()]);
     }
@@ -3789,12 +3738,14 @@ struct BlamScript
         u32 const        net_id = script_net_id_base | m_next_actor++;
         GameEvent        ev{.type = GameEvent::SpawnObject};
         SpawnObjectEvent spawn{
-            .object       = *unit,
-            .position     = start.position,
-            .rotation     = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
-            .net_id       = net_id,
-            .server_owned = true,
-            .held         = weapon_of(palette.value()[type]),
+            .object        = *unit,
+            .position      = start.position,
+            .rotation      = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
+            .net_id        = net_id,
+            .server_owned  = true,
+            .held          = weapon_of(palette.value()[type]),
+            .change_colors = colors_of(palette.value()[type]),
+            .camouflaged   = camouflaged(palette.value()[type]),
         };
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
         m_spawning.insert(net_id);
@@ -3882,16 +3833,7 @@ struct BlamScript
                     if(auto unit = model->origin_object->template data<blam::scn::unit>(m_magic);
                        unit.has_value())
                         actor->team = static_cast<u16>(unit.value()[0].default_team);
-            if(std::getenv("BLAM_DEBUG_AI"))
-                cDebug(
-                    "ai: enlist {} encounter {} squad {} team {} scripted {}",
-                    id,
-                    actor->encounter,
-                    actor->squad,
-                    actor->team,
-                    actor->scripted);
-        } else if(std::getenv("BLAM_DEBUG_AI"))
-            cDebug("ai: enlist {}: no Actor component", id);
+        }
         m_actor_slots.erase(slot);
     }
 
@@ -3904,6 +3846,39 @@ struct BlamScript
         if(!variant.has_value() || !variant.value()->unit.valid())
             return nullptr;
         return &static_cast<blam::tagref_t const&>(variant.value()->unit);
+    }
+
+    /* Born unseen: the variant's active camouflage flag */
+    bool camouflaged(blam::tagref_t const& variant_ref) const
+    {
+        using flags_t = blam::scn::actor_variant::flags_t;
+        auto tag = m_tags.find(variant_ref.tag_id);
+        if(tag == m_tags.end())
+            return false;
+        auto variant = (*tag).template data<blam::scn::actor_variant>(m_magic);
+        return variant.has_value() &&
+               (variant.value()->flags & (flags_t::active_camouflage | flags_t::super_active_camouflage)) != flags_t::none;
+    }
+
+    /* The variant's change colours, each somewhere between its bounds: a
+     * major's red, a commander's gold */
+    std::array<u32, 4> colors_of(blam::tagref_t const& variant_ref)
+    {
+        std::array<u32, 4> out{};
+        auto tag = m_tags.find(variant_ref.tag_id);
+        if(tag == m_tags.end())
+            return out;
+        auto variant = (*tag).template data<blam::scn::actor_variant>(m_magic);
+        if(!variant.has_value())
+            return out;
+        auto colors = variant.value()->change_colors.data(m_magic);
+        if(!colors.has_value())
+            return out;
+        std::uniform_real_distribution<f32> unit(0.f, 1.f);
+        for(size_t i = 0; i < out.size() && i < colors.value().size(); i++)
+            out[i] = pack_color(
+                glm::mix(colors.value()[i].lower_bound, colors.value()[i].upper_bound, unit(m_spawn_random)));
+        return out;
     }
 
     /* What the variant fights with, if anything */
@@ -3953,8 +3928,6 @@ struct BlamScript
         auto             it = m_actors.find(lowered(path));
         if(it == m_actors.end())
         {
-            if(std::getenv("BLAM_DEBUG_AI") && m_unnamed.insert(lowered(path)).second)
-                cDebug("script: no actors named {}", path);
             return out;
         }
         for(u32 net_id : it->second)
@@ -4089,7 +4062,6 @@ struct BlamScript
     u32                  m_offer_ticks{0};
     static constexpr libc_types::i64 player_claim_ticks = 60;
     std::map<std::pair<u64, std::string>, libc_types::i64> m_player_claims; /* vehicle, seat: tick asked */
-    mutable std::set<std::string> m_unnamed; /* ai paths that named nobody, logged once */
     std::minstd_rand              m_spawn_random{4321};
     struct scaling_t
     {

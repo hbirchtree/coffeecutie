@@ -280,6 +280,7 @@ struct BlamBspWidget
                     e.subsystem(pref);
                     ImGui::SliderFloat(
                         "Master volume", &pref->master_volume, 0.f, 1.f);
+                    ImGui::Checkbox("Play cut dialogue lines", &pref->cut_lines);
                     if(ImGui::BeginCombo("Sound", sound_tester.selected
                             ? sound_tester.selected : ""))
                     {

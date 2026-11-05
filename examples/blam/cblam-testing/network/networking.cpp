@@ -697,6 +697,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 },
             .held = spawn.held.valid() ? spawn.held.tag_id : blam::tag_index<>{},
         };
+        std::copy(spawn.change_colors.begin(), spawn.change_colors.end(), wire.change_colors);
+        wire.camouflaged = spawn.camouflaged ? 1 : 0;
         /* Late joiners see it as already there */
         m_dynamic_spawns.push_back(wire);
         wire.announce = spawn.announce;
@@ -4747,6 +4749,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 local.object.tag_class = blam::basic_tag_class<std::endian::little>::of(spawn.tag.tag_class);
                 local.object.tag_id    = {spawn.tag.tag_id};
                 local.announce         = spawn.announce != 0;
+                std::copy(std::begin(spawn.change_colors), std::end(spawn.change_colors), local.change_colors.begin());
+                local.camouflaged = spawn.camouflaged != 0;
                 if(spawn.held.value() != 0)
                 {
                     local.held.tag_class =

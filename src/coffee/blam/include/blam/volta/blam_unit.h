@@ -337,10 +337,20 @@ struct unit_dialogue
     tagref_typed_t<tag_class_t::snd> death_agonizing;
     tagref_typed_t<tag_class_t::snd> death_instant;
     tagref_typed_t<tag_class_t::snd> death_flying;
+    u32                              padding3[4];
+    /* Hurting people: damaged/hurt friend and enemy, by weapon */
+    tagref_typed_t<tag_class_t::snd> hurting[32];
+    /* Killing people */
+    tagref_typed_t<tag_class_t::snd> killed_enemy;
+    tagref_typed_t<tag_class_t::snd> killed_enemy_cm; /* close/melee */
+    tagref_typed_t<tag_class_t::snd> killed_enemy_player;
+    tagref_typed_t<tag_class_t::snd> killed_enemy_player_cm;
 };
 static_assert(offsetof(unit_dialogue, pain_body_minor) == 0x70);
 static_assert(offsetof(unit_dialogue, death_quiet) == 0xf0);
 static_assert(offsetof(unit_dialogue, death_flying) == 0x140);
+static_assert(offsetof(unit_dialogue, killed_enemy) == 0x360);
+static_assert(offsetof(unit_dialogue, killed_enemy_player) == 0x380);
 
 struct unit : object
 {

@@ -89,9 +89,11 @@ struct alignas(16) PerInstanceData
     /* Pushed out along the normals, wu: a shield's shell */
     f32 inflate{0.f};
     u32 padding{0};
+    /* The object's own change colours A..D, see Model::change_colors */
+    std::array<u32, 4> change_colors{};
 };
 
-static_assert(sizeof(PerInstanceData) == 96);
+static_assert(sizeof(PerInstanceData) == 112);
 
 using draw_data_t = gfx::draw_command::data_t;
 
@@ -1251,8 +1253,9 @@ struct DrawListBuilder
                  glm::length(Vecf3(model.transform[2]))});
             pass.caster_bounds[instance_id] = Vecf4(
                 Vecf3(model.transform[3]), model.render_radius * scale);
-            pid.bone_base = kBoneUnposed;
-            pid.inflate   = inflation(smodel, model);
+            pid.bone_base     = kBoneUnposed;
+            pid.inflate       = inflation(smodel, model);
+            pid.change_colors = model.change_colors;
             auto const& light = object_light(p, smodel.parent, model);
             pid.light_layer   = light.layer;
             {

@@ -2,7 +2,9 @@
 
 #include "blam_files.h"
 #include "components.h"
+#include "difficulty.h"
 #include "game_events.h"
+#include "game_mode.h"
 #include "network/networking.h"
 #include "object_functions.h"
 #include "physics.h"
@@ -34,6 +36,7 @@ using DamageManifest = compo::SubsystemManifest<
     type_list_t<
         GameEventBus,
         PhysicsBus,
+        const GameState,
         const NetworkState,
         const BlamFiles<halo_version>>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
@@ -83,6 +86,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             m_gone.clear();
             m_destroyed.clear();
             m_broods.clear();
+            m_difficulty = difficulty_block(files);
         }
         for(auto const& area : areas)
             blast(p, area);
@@ -224,12 +228,20 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         return info ? info->player_idx : ObjectHitEvent::no_player;
     }
 
+    /* A player out of physics mode is forging, and nothing hurts it */
+    bool forging(Proxy& p, u64 unit) const
+    {
+        auto const* info = p.template get<PlayerInfo>(unit);
+        return info && !info->mode.physics;
+    }
+
     /* A strike in the back kills, unless the unit's tag says it shrugs
      * such off (hunters) */
     bool assassinate(Proxy& p, u64 unit, u32 killer)
     {
         auto* status = p.template get<BipedStatus>(unit);
-        if(!status || !status->coll || status->dead || status->invulnerable)
+        if(!status || !status->coll || status->dead || status->invulnerable ||
+           forging(p, unit))
             return false;
         using flags_t = blam::scn::unit::unit_flags_t;
         if(auto const* model = p.template get<Model>(unit); model && model->origin_object)
@@ -253,10 +265,15 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     void hurt(Proxy& p, u64 unit, jpt_t const& jpt, f32 scale, i16 part, bool head, u32 killer)
     {
         auto* status = p.template get<BipedStatus>(unit);
-        if(!status || !status->coll || status->dead || status->invulnerable)
+        if(!status || !status->coll || status->dead || status->invulnerable ||
+           forging(p, unit))
             return;
         auto const& coll   = *status->coll;
         f32         amount = uniform(jpt.upper_bound) * scale;
+        /* An enemy's blow on a player is scaled for the difficulty */
+        if(killer == ObjectHitEvent::no_player && p.template get<PlayerInfo>(unit))
+            amount *= difficulty_scale(
+                m_difficulty, &blam::globals::difficulty::enemy_damage, p.template subsystem<GameState>().difficulty);
         f32         shield_mult = 1.f, body_mult = 1.f, leak = 0.f;
         u16         struck      = blam::scn::material_type_count;
         if(i16 const material = material_of(p, unit, part); material >= 0)
@@ -401,7 +418,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     void run_down(Proxy& p, Physics::UnitStruck const& struck)
     {
         auto* status = p.template get<BipedStatus>(struck.unit);
-        if(!status || !status->coll || status->dead || status->invulnerable)
+        if(!status || !status->coll || status->dead || status->invulnerable ||
+           forging(p, struck.unit))
             return;
         bool const  player = p.template get<PlayerInfo>(struck.unit) != nullptr;
         f32 const   share = glm::mix(
@@ -870,10 +888,18 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             auto functions = obj.value()[0].functions.data(*m_magic);
             if(!functions.has_value() || functions.value().empty())
                 continue;
+            /* An input left unnamed takes what the held weapon exports:
+             * a hunter's biped lights its cannon by the gun's charge */
+            auto const* equip = p.template get<BipedEquipment>(ent.id());
+            auto const* gun   = equip ? equip->held(m_generation) : nullptr;
             std::array<f32, 4> in{};
             for(size_t i = 0; i < in.size(); i++)
                 switch(obj.value()[0].export_.inputs[i])
                 {
+                case input::none:
+                    if(gun && gun->exports[i] >= 0.f)
+                        in[i] = gun->exports[i];
+                    break;
                 case input::body_vitality:
                     in[i] = status.body;
                     break;
@@ -954,6 +980,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<u32>                 m_gone;  /* net ids, despawned next frame */
     std::set<u64>                    m_destroyed;
     u32                              m_generation{0};
+    blam::globals::difficulty const* m_difficulty{nullptr};
     std::vector<brood_t>             m_broods;
 
     blam::map_ptr const*                              m_magic{nullptr};

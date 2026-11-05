@@ -617,7 +617,19 @@ class MassPointAction : public btActionInterface
         btVector3 const&  down) const
     {
         btVector3 const to = at + down * reach;
-        btCollisionWorld::ClosestRayResultCallback ground(at, to);
+        /* Not off what the body is still inside of and let out of: a
+         * warthog dropped by a pelican would spring off its hull */
+        struct ray_t : btCollisionWorld::ClosestRayResultCallback
+        {
+            btRigidBody const* self{};
+            using ClosestRayResultCallback::ClosestRayResultCallback;
+            bool needsCollision(btBroadphaseProxy* proxy) const override
+            {
+                return ClosestRayResultCallback::needsCollision(proxy) &&
+                       self->checkCollideWith(static_cast<btCollisionObject const*>(proxy->m_clientObject));
+            }
+        } ground(at, to);
+        ground.self                  = &m_body;
         ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
         world->rayTest(at, to, ground);
         if(!ground.hasHit())
@@ -635,8 +647,15 @@ class MassPointAction : public btActionInterface
         struct deepest_t : btCollisionWorld::ContactResultCallback
         {
             btCollisionObject const* self{};
+            btRigidBody const*       owner{};
             f32                      depth{0.f};
             btVector3                normal{0, 0, 1};
+
+            bool needsCollision(btBroadphaseProxy* proxy) const override
+            {
+                return ContactResultCallback::needsCollision(proxy) &&
+                       owner->checkCollideWith(static_cast<btCollisionObject const*>(proxy->m_clientObject));
+            }
 
             btScalar addSingleResult(
                 btManifoldPoint&                cp,
@@ -662,6 +681,7 @@ class MassPointAction : public btActionInterface
         transform.setOrigin(at);
         m_probes[i]->setWorldTransform(transform);
         deepest.self                  = m_probes[i].get();
+        deepest.owner                 = &m_body;
         deepest.m_collisionFilterGroup = btBroadphaseProxy::DefaultFilter;
         deepest.m_collisionFilterMask  = btBroadphaseProxy::StaticFilter;
         world->contactTest(m_probes[i].get(), deepest);
@@ -838,6 +858,7 @@ struct PhysicsSystem
         p.subsystem(loading);
 
         auto const ticks = m_ticks->take();
+        m_frame_seconds  = static_cast<f32>(ticks.size()) * TickClock::tick_seconds;
         m_blast_queue->poll();
         auto const blasts = std::exchange(m_blasts, {});
         if(loading->loading)
@@ -857,7 +878,7 @@ struct PhysicsSystem
             rebuild_world(*bsp_cache);
 
         /* Without ground, new bodies would fall through the map */
-        if(has_ground())
+        if(has_ground(*bsp_cache))
         {
             reconcile_player_bodies(p);
             reconcile_object_bodies(p, true);
@@ -898,7 +919,9 @@ struct PhysicsSystem
                     if(body.world_body && body.world_body->getInvMass() > 0.f)
                         m_before_step[body.world_body.get()] =
                             body.world_body->getLinearVelocity();
-                m_world->stepSimulation(step_seconds, 4, step_seconds / 2);
+                /* One 60 Hz step a step: four 120 Hz substeps cost twice
+                 * the frame for nothing a walking crowd needs */
+                m_world->stepSimulation(step_seconds, 1, step_seconds);
                 m_steps++;
                 report_impacts();
                 bleed_carried();
@@ -1312,6 +1335,16 @@ struct PhysicsSystem
                     m_glides[id] = {body.getWorldTransform(), transform};
                 else
                     body.setWorldTransform(transform);
+                /* A body a script moves keeps the velocity of that motion,
+                 * so what it is let go with is how its carrier flew, not
+                 * what it had before it was picked up */
+                if(physics.scripted && m_frame_seconds > 0.f)
+                {
+                    auto const last = m_carried_at.find(id);
+                    if(last != m_carried_at.end() && glm::distance(origin, last->second) < deck_leap)
+                        physics.linear_velocity = (origin - last->second) / m_frame_seconds;
+                    m_carried_at[id] = origin;
+                }
                 /* Moving as its simulator says, so a deck carries what
                  * stands on it */
                 auto const& lin = physics.linear_velocity;
@@ -1359,6 +1392,7 @@ struct PhysicsSystem
             remove_body(it->first);
             if(!frozen.contains(it->first))
                 m_object_sections.erase(it->first);
+            m_carried_at.erase(it->first);
             it = m_object_bodies.erase(it);
         }
     }
@@ -2607,10 +2641,14 @@ struct PhysicsSystem
 
     /* The BSP world mesh, or a static body adopted from elsewhere (RS2
      * regions, Halo 2 collision) */
-    bool has_ground() const
+    bool has_ground(BSPCache<V> const& cache) const
     {
         if(m_world_body)
             return true;
+        /* A section's mesh on its way: the scenery's static bodies are no
+         * floor to make bodies on */
+        if(!cache.sections.empty())
+            return false;
         for(auto const& [_, body] : m_bodies)
             if(body.world_body && body.world_body->getInvMass() == 0.f)
                 return true;
@@ -3656,6 +3694,8 @@ struct PhysicsSystem
     std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
     /* The section an object's body was made in */
     std::map<u64, i16> m_object_sections;
+    std::map<u64, Vecf3> m_carried_at; /* where a script-moved body was put last frame */
+    f32                  m_frame_seconds{0.f};
     /* The section the world mesh was built from */
     BSPItem const* m_world_item{nullptr};
 
