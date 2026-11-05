@@ -237,6 +237,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 fallback_obstacle = 3.f; /* wu, the most an object's bounds count for */
     static constexpr f32 default_windup  = .35f; /* s before a blow lands, a swing without a key frame */
     static constexpr f32 strike_reach    = 1.5f; /* wu, feet to feet, a blow lands within */
+    static constexpr f32 grenade_danger  = 2.5f; /* wu, a grenade without a danger radius is dived from within */
+    static constexpr f32 dodge_lookahead = 1.5f; /* s ahead a shot's path is judged */
+    static constexpr f32 grenade_notice  = 8.f;  /* wu, a grenade's AI perception radius, for slow shots without one */
+    static constexpr f32 slow_shot_speed = 20.f; /* wu/s and under, an explosive shot is seen coming */
+    static constexpr f32 grenade_dodge_time = 2.f; /* s spent getting away from one */
     static constexpr f32 taunt_chance    = .6f;
     static constexpr f32 taunt_spacing   = 2.5f; /* s between any two taunts */
     static constexpr f32 halo_gravity    = 9.81f / 3.048f; /* wu/s^2 */
@@ -299,7 +304,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(actor.state == state_t::idle || actor.state == state_t::pursuit)
                     enter(actor, state_t::combat);
             }
+            dodge_grenades(p, id, actor, model, actr);
         }
+        if(actor.state != state_t::retreat)
+            actor.danger.reset();
         /* Ordered back: away from its target until told otherwise */
         if(actor.order == Actor::order_t::retreat && actor.state != state_t::retreat)
         {
@@ -469,7 +477,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(actor.position < 0 || actor.reposition_in <= 0.f)
             {
                 actor.reposition_in = reposition_time;
-                actor.position      = pick_position(p, actor, model, kind, actor.last_seen, true);
+                actor.position =
+                    pick_position(p, actor, model, kind, actor.danger.value_or(actor.last_seen), true);
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
@@ -901,6 +910,52 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(theirs)
             return !enemies(actor.team, static_cast<team_t>(theirs->team));
         return p.template get<PlayerInfo>(ray.entity_id) && !enemies(actor.team, team_t::player);
+    }
+
+    /* A projectile the AI notices: one its tag gives an AI perception
+     * radius (grenades), or a slow explosive shot (fuel rod, rocket,
+     * mortar) noticed as a grenade is. A grenade armed within its danger
+     * radius, or a shot about to pass within it: by its chance to dive, it
+     * gets away from where that will be for a moment */
+    void dodge_grenades(Proxy& p, u64, Actor& actor, Model const& model, actr_t const& actr)
+    {
+        if(actr.movement.dive_from_grenade_chance <= 0.f || actor.state == state_t::retreat)
+            return;
+        for(auto ent : p.template select<Projectile, Model>())
+        {
+            auto [flight, where] = ent.components();
+            if(!flight.tag || flight.attached)
+                continue;
+            bool const slow_shot = flight.tag->detonation_effect.valid() &&
+                                   flight.tag->initial_velocity * tick_rate > 0.f &&
+                                   flight.tag->initial_velocity * tick_rate <= slow_shot_speed;
+            f32 const noticed = flight.tag->ai_perception_radius > 0.f ? flight.tag->ai_perception_radius
+                                : slow_shot                             ? grenade_notice
+                                                                        : 0.f;
+            if(noticed <= 0.f)
+                continue;
+            f32 const danger = flight.tag->danger_radius > 0.f ? flight.tag->danger_radius : grenade_danger;
+            Vecf3 const to    = model.position - where.position;
+            if(glm::length(to) > noticed)
+                continue;
+            /* Where it comes nearest over the next while, on its way */
+            Vecf3 nearest = where.position;
+            f32 const speed2 = glm::dot(flight.velocity, flight.velocity);
+            if(speed2 > 1.f)
+            {
+                f32 const t = std::clamp(glm::dot(to, flight.velocity) / speed2, 0.f, dodge_lookahead);
+                nearest     = where.position + flight.velocity * t;
+            } else if(flight.timer < 0.f)
+                continue; /* lying there unarmed */
+            if(glm::distance(nearest, model.position) > danger)
+                continue;
+            if(!chance(actr.movement.dive_from_grenade_chance))
+                return;
+            actor.danger = nearest;
+            enter(actor, state_t::retreat);
+            actor.state_in = grenade_dodge_time;
+            return;
+        }
     }
 
     bool clear(Proxy& p, u64 self, Vecf3 const& from, Vecf3 const& to, u64 target, u64 vehicle = 0)
