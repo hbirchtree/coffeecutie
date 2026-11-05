@@ -228,12 +228,20 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         return info ? info->player_idx : ObjectHitEvent::no_player;
     }
 
+    /* A player out of physics mode is forging, and nothing hurts it */
+    bool forging(Proxy& p, u64 unit) const
+    {
+        auto const* info = p.template get<PlayerInfo>(unit);
+        return info && !info->mode.physics;
+    }
+
     /* A strike in the back kills, unless the unit's tag says it shrugs
      * such off (hunters) */
     bool assassinate(Proxy& p, u64 unit, u32 killer)
     {
         auto* status = p.template get<BipedStatus>(unit);
-        if(!status || !status->coll || status->dead || status->invulnerable)
+        if(!status || !status->coll || status->dead || status->invulnerable ||
+           forging(p, unit))
             return false;
         using flags_t = blam::scn::unit::unit_flags_t;
         if(auto const* model = p.template get<Model>(unit); model && model->origin_object)
@@ -257,7 +265,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     void hurt(Proxy& p, u64 unit, jpt_t const& jpt, f32 scale, i16 part, bool head, u32 killer)
     {
         auto* status = p.template get<BipedStatus>(unit);
-        if(!status || !status->coll || status->dead || status->invulnerable)
+        if(!status || !status->coll || status->dead || status->invulnerable ||
+           forging(p, unit))
             return;
         auto const& coll   = *status->coll;
         f32         amount = uniform(jpt.upper_bound) * scale;
@@ -409,7 +418,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     void run_down(Proxy& p, Physics::UnitStruck const& struck)
     {
         auto* status = p.template get<BipedStatus>(struck.unit);
-        if(!status || !status->coll || status->dead || status->invulnerable)
+        if(!status || !status->coll || status->dead || status->invulnerable ||
+           forging(p, struck.unit))
             return;
         bool const  player = p.template get<PlayerInfo>(struck.unit) != nullptr;
         f32 const   share = glm::mix(
