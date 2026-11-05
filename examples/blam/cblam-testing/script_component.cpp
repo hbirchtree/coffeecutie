@@ -236,6 +236,7 @@ struct BlamScript
             run_commands(p);
             offer_vehicles(p);
             board_vehicles(p);
+            drop_dead_riders(p);
             run_conversations(p);
             scale_objects(p);
             send_walks(p);
@@ -2499,6 +2500,18 @@ struct BlamScript
 
     /* Those sent to a vehicle sit once they are at it; a seat already
      * taken is given up on */
+    /* The dead do not keep their seats: a rider killed falls off its
+     * vehicle, with its motion */
+    void drop_dead_riders(Proxy& p)
+    {
+        std::vector<u64> dead;
+        for(auto const& r : m_riders)
+            if(auto const* status = p.template get<BipedStatus>(r.unit); status && status->dead)
+                dead.push_back(r.unit);
+        for(u64 unit : dead)
+            unseat(p, unit);
+    }
+
     void board_vehicles(Proxy& p)
     {
         for(auto ent : p.template select<Actor, Model>())
