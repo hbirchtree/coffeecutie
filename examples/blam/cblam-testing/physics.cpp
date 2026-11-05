@@ -617,7 +617,19 @@ class MassPointAction : public btActionInterface
         btVector3 const&  down) const
     {
         btVector3 const to = at + down * reach;
-        btCollisionWorld::ClosestRayResultCallback ground(at, to);
+        /* Not off what the body is still inside of and let out of: a
+         * warthog dropped by a pelican would spring off its hull */
+        struct ray_t : btCollisionWorld::ClosestRayResultCallback
+        {
+            btRigidBody const* self{};
+            using ClosestRayResultCallback::ClosestRayResultCallback;
+            bool needsCollision(btBroadphaseProxy* proxy) const override
+            {
+                return ClosestRayResultCallback::needsCollision(proxy) &&
+                       self->checkCollideWith(static_cast<btCollisionObject const*>(proxy->m_clientObject));
+            }
+        } ground(at, to);
+        ground.self                  = &m_body;
         ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
         world->rayTest(at, to, ground);
         if(!ground.hasHit())
@@ -635,8 +647,15 @@ class MassPointAction : public btActionInterface
         struct deepest_t : btCollisionWorld::ContactResultCallback
         {
             btCollisionObject const* self{};
+            btRigidBody const*       owner{};
             f32                      depth{0.f};
             btVector3                normal{0, 0, 1};
+
+            bool needsCollision(btBroadphaseProxy* proxy) const override
+            {
+                return ContactResultCallback::needsCollision(proxy) &&
+                       owner->checkCollideWith(static_cast<btCollisionObject const*>(proxy->m_clientObject));
+            }
 
             btScalar addSingleResult(
                 btManifoldPoint&                cp,
@@ -662,6 +681,7 @@ class MassPointAction : public btActionInterface
         transform.setOrigin(at);
         m_probes[i]->setWorldTransform(transform);
         deepest.self                  = m_probes[i].get();
+        deepest.owner                 = &m_body;
         deepest.m_collisionFilterGroup = btBroadphaseProxy::DefaultFilter;
         deepest.m_collisionFilterMask  = btBroadphaseProxy::StaticFilter;
         world->contactTest(m_probes[i].get(), deepest);
