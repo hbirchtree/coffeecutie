@@ -889,6 +889,20 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return best;
     }
 
+    /* A unit of its own side standing between its muzzle and its aim */
+    bool friend_before(Proxy& p, u64 self, Actor const& actor, Vecf3 const& from, Vecf3 const& to)
+    {
+        Physics::Event   ev{Physics::Event::Raycast};
+        Physics::Raycast ray{.from = from, .to = to, .ignore = self};
+        p.template subsystem<PhysicsBus>().process(ev, &ray);
+        if(!ray.hit || ray.entity_id == 0 || ray.entity_id == actor.target)
+            return false;
+        auto const* theirs = p.template get<Actor>(ray.entity_id);
+        if(theirs)
+            return !enemies(actor.team, static_cast<team_t>(theirs->team));
+        return p.template get<PlayerInfo>(ray.entity_id) && !enemies(actor.team, team_t::player);
+    }
+
     bool clear(Proxy& p, u64 self, Vecf3 const& from, Vecf3 const& to, u64 target, u64 vehicle = 0)
     {
         Physics::Event   ev{Physics::Event::Raycast};
@@ -1661,6 +1675,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Vecf3 const aim    = burst_aim(actor, actv, target, starting);
         Vecf3 const muzzle = trigger_of(p, *gun).value_or(
             eye + glm::normalize(aim - eye) * WeaponFireEvent::muzzle_distance);
+        /* A friend in the line of fire: the burst waits, and it looks for
+         * another spot */
+        if(starting && friend_before(p, id, actor, muzzle, aim))
+        {
+            actor.burst_left    = 0;
+            actor.fire_in       = look_period;
+            actor.reposition_in = 0.f;
+            return;
+        }
         Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, gun->tag, false), leading(actv));
         /* Its aim wanders by the variant's error, scaled for the difficulty */
         if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
@@ -1913,6 +1936,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         if(actor.fire_in > 0.f)
+            return;
+        f32 const reach = actv.maximum_firing_distance > 0.f ? actv.maximum_firing_distance : 20.f;
+        if(glm::distance(body.position, actor.last_seen) > reach)
             return;
         auto weapons = unit.weapons.data(*s_magic);
         if(!weapons.has_value() || weapons.value().empty() || !body.tag)
