@@ -1,5 +1,5 @@
 {
-    "comment": "On bloodgulch, moves the camera to the cave for cluster testing",
+    "comment": "The moving bloodgulch views with scenery rendering off, BSP only",
     "events": [
         {"time": 1000, "type": "render_param", "render_scenery": false},
         {"time": 1000, "type": "camera", "position" :[119.427414, -183.3026, 7.780891], "rotation":[0.9190232, 0.050596938, 0.39035165, 0.021490876]}, 

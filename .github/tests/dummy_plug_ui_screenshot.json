@@ -1,4 +1,5 @@
 {
+    "comment": "GL 3.3 llvmpipe at 640x480: one mouse move, then a UI overlay capture",
     "graphics": {
         "window": {
             "width": 640,

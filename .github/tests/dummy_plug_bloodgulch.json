@@ -1,5 +1,5 @@
 {
-    "comment": "On bloodgulch, moves the camera to the cave for cluster testing",
+    "comment": "Bloodgulch views: whole valley from the red side, blue base, the cave",
     "events": [
         {"time": 1000, "type": "camera", "position" :[119.427414, -183.3026, 7.780891], "rotation":[0.9190232, 0.050596938, 0.39035165, 0.021490876]},
         {"time": 1500, "type":"screenshot","name":"bloodgulch_full"},

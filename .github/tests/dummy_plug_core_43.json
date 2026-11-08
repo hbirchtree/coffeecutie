@@ -1,4 +1,5 @@
 {
+  "comment": "Same smoke test as dummy_plug.json, pinned to core GL 4.3",
   "graphics": {
     "window": {
       "width": 640,

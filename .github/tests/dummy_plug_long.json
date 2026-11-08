@@ -1,4 +1,5 @@
 {
+    "comment": "Default context held 50 s with one key press, for stability soaks",
     "events": [
         {"time": 1000, "type":"key", "key": "CK_w", "duration": 40000}
     ],

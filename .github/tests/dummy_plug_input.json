@@ -1,4 +1,5 @@
 {
+    "comment": "Same smoke test as dummy_plug.json on the default context: keys, mouse, two pads to split screen",
     "events": [
         {"time": 0,    "type":"screenshot", "name":"start"},
         {"time": 5000, "type":"key", "key": "CK_s", "duration": 3000},

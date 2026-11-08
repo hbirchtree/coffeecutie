@@ -1,5 +1,5 @@
 {
-    "comment": "On bloodgulch, moves the camera to the cave for cluster testing",
+    "comment": "Bloodgulch, 35 s, two key presses, no captures",
     "events": [
         {"time": 1000, "type":"key", "key": "CK_w", "duration": 12000},
         {"time": 13000, "type":"key", "key": "CK_a", "duration": 10000}

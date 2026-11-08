@@ -1,4 +1,5 @@
 {
+    "comment": "llvmpipe GL 4.6 at 1920x1920 for 5 s with no events at all",
     "graphics": {
         "window": {
             "width": 1920,
