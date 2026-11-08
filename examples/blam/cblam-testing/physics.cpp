@@ -829,8 +829,9 @@ struct PhysicsSystem
 
     PhysicsSystem()
     {
-        // Ordering constraint: before Occluder and DrawListBuilder
-        this->priority = 897;
+        /* After everything that moves bodies or asks the world questions;
+         * PhysicsStep and PhysicsApply follow */
+        this->priority = 3069;
         m_config       = std::make_unique<btDefaultCollisionConfiguration>();
         m_dispatcher = std::make_unique<btCollisionDispatcher>(m_config.get());
         m_broadphase = std::make_unique<btDbvtBroadphase>();
@@ -857,8 +858,8 @@ struct PhysicsSystem
         p.subsystem(bsp_cache);
         p.subsystem(loading);
 
-        auto const ticks = m_ticks->take();
-        m_frame_seconds  = static_cast<f32>(ticks.size()) * TickClock::tick_seconds;
+        auto ticks      = m_ticks->take();
+        m_frame_seconds = static_cast<f32>(ticks.size()) * TickClock::tick_seconds;
         m_blast_queue->poll();
         auto const blasts = std::exchange(m_blasts, {});
         if(loading->loading)
@@ -896,24 +897,32 @@ struct PhysicsSystem
             return;
 
         separate_released();
-        u32 const steps = static_cast<u32>(ticks.size()) * steps_per_tick;
-        u32       step_no = 0;
         if(ticks.empty())
         {
             glide(1.f);
             return;
         }
+        f32 const seconds =
+            static_cast<f32>(ticks.size()) * TickClock::tick_seconds;
+        /* The camera moved once this frame: what it holds is carried there
+         * over all the time this frame's ticks cover */
+        carry_grabbed(p, seconds);
+        m_pending = std::move(ticks);
+        m_stepped = seconds;
+    }
 
+    /* The frame's ticks, run by PhysicsStep: Bullet and this subsystem's
+     * own state only, so it can run beside the frame's drawing */
+    void step()
+    {
+        auto const ticks   = std::exchange(m_pending, {});
+        u32 const  steps   = static_cast<u32>(ticks.size()) * steps_per_tick;
+        u32        step_no = 0;
         for(auto const& tick : ticks)
         {
             for(u32 step = 0; step < steps_per_tick; step++)
             {
                 glide(static_cast<f32>(++step_no) / static_cast<f32>(steps));
-                /* The camera moved once this frame: the first step carries
-                 * it there, over all the time this frame's ticks cover */
-                bool const first = &tick == &ticks.front() && step == 0;
-                carry_grabbed(
-                    p, first ? ticks.size() * TickClock::tick_seconds : 0.f);
                 m_before_step.clear();
                 for(auto const& [_, body] : m_bodies)
                     if(body.world_body && body.world_body->getInvMass() > 0.f)
@@ -929,11 +938,24 @@ struct PhysicsSystem
             }
             record_bipeds(tick.tick);
         }
+    }
+
+    /* What the steps moved, into the components; run by PhysicsApply once
+     * the frame is drawn */
+    template<class P>
+    void apply(P& p)
+    {
+        if(m_stepped <= 0.f)
+            return;
+        f32 const seconds = std::exchange(m_stepped, 0.f);
+        for(auto& impact : std::exchange(m_impacts, {}))
+        {
+            Physics::Event event{Physics::Event::Impact};
+            m_bus->process(event, &impact);
+        }
         m_glides.clear();
-        /* Models show the state after these ticks, for whatever reads them
-         * later this frame */
         reconcile_object_bodies(p);
-        report_struck(static_cast<f32>(ticks.size()) * TickClock::tick_seconds);
+        report_struck(seconds);
 
         /* Sensor overlaps (trigger volumes): narrowphase still generates
          * contact manifolds for CF_NO_CONTACT_RESPONSE bodies, the solver
@@ -1207,7 +1229,8 @@ struct PhysicsSystem
 
     /* World objects with an ObjectPhysics get one body each. Simulated
      * ones carry their Model along; followers are carried by it. */
-    void reconcile_object_bodies(Proxy& p, bool glide = false)
+    template<class P>
+    void reconcile_object_bodies(P& p, bool glide = false)
     {
         using Shape = Physics::BodyCreationShape;
         std::set<u64> live, frozen;
@@ -1358,6 +1381,10 @@ struct PhysicsSystem
                     body.forceActivationState(state);
                 continue;
             }
+            /* Before a step nothing has moved since the last one wrote the
+             * models, and the interpolator has drawn over them since */
+            if(glide)
+                continue;
             physics.sleeping = !body.isActive();
             if(physics.sleeping)
             {
@@ -1949,7 +1976,8 @@ struct PhysicsSystem
      * debug line pass (RenderingParameters::debug_markers gates it).
      * Vertex slot is reserved once (acquire_strip), the 16 line-strip
      * points are rewritten every frame. */
-    void update_probe_marker(Proxy& p)
+    template<class P>
+    void update_probe_marker(P& p)
     {
         DebugMarkers* markers;
         p.subsystem(markers);
@@ -2978,7 +3006,6 @@ struct PhysicsSystem
             m_last_impact[id] = m_steps;
             auto const& point = manifold->getContactPoint(best);
             btVector3 const at = point.getPositionWorldOnA();
-            Physics::Event  event{Physics::Event::Impact};
             Physics::Impact impact{
                 .entity_id = id,
                 .other     = a_world || b_world
@@ -2991,7 +3018,7 @@ struct PhysicsSystem
                              : b_world ? surface_shader(point.m_index1)
                                        : nullptr,
             };
-            m_bus->process(event, &impact);
+            m_impacts.push_back(impact);
         }
     }
 
@@ -3585,7 +3612,8 @@ struct PhysicsSystem
     }
 
     /* A box around each posed hull piece, red for the head */
-    void draw_hulls(Proxy& p, DebugMarkers& markers)
+    template<class P>
+    void draw_hulls(P& p, DebugMarkers& markers)
     {
         size_t used = 0;
         for(auto& [entity, body] : m_bodies)
@@ -3628,8 +3656,9 @@ struct PhysicsSystem
 
     /* The n-th pooled marker, made on demand; entities do not outlive a
      * map change, so a vanished one is remade */
+    template<class P>
     DebugMarkers::strip_slot_t const* hull_marker(
-        Proxy& p, DebugMarkers& markers, size_t n)
+        P& p, DebugMarkers& markers, size_t n)
     {
         if(n < m_hull_markers.size() &&
            !p.template get<DebugDraw>(m_hull_markers[n].entity))
@@ -3833,6 +3862,10 @@ struct PhysicsSystem
     std::map<u64, glide_t> m_glides;
     std::map<u64, u32>   m_last_impact;
     std::map<btRigidBody const*, btVector3> m_before_step;
+    /* This frame's ticks, from start_restricted to step() to apply() */
+    std::vector<TickEvent>       m_pending;
+    f32                          m_stepped{0.f};
+    std::vector<Physics::Impact> m_impacts;
     static constexpr f32 ground_probe_up   = .2f;
     static constexpr f32 ground_probe_down = .15f;
     static constexpr f32 ground_contact_slop = .05f; /* wu */
@@ -3866,12 +3899,77 @@ struct PhysicsSystem
     std::unique_ptr<TickQueue> m_ticks;
 };
 
+template<typename V>
+using PhysicsStepManifest = compo::
+    SubsystemManifest<empty_list_t, type_list_t<PhysicsSystem<V>>, empty_list_t>;
+
+/* The frame's Bullet steps, on a worker while the frame is drawn: between
+ * PhysicsSystem and PhysicsApply, which are all it conflicts with */
+template<typename V>
+struct PhysicsStep
+    : compo::RestrictedSubsystem<PhysicsStep<V>, PhysicsStepManifest<V>>
+{
+    using type  = PhysicsStep<V>;
+    using Proxy = compo::proxy_of<PhysicsStepManifest<V>>;
+
+    PhysicsStep()
+    {
+        this->priority = 3070;
+    }
+
+    bool parallel_safe() const override
+    {
+        return true;
+    }
+
+    void start_restricted(Proxy& p, compo::time_point const&)
+    {
+        p.template subsystem<PhysicsSystem<V>>().step();
+    }
+};
+
+template<typename V>
+using PhysicsApplyManifest = compo::SubsystemManifest<
+    type_list_t<
+        DebugDraw,
+        Model,
+        ObjectPhysics,
+        PhysicsData,
+        PlayerCamera,
+        const PlayerInfo,
+        const NetworkInfo,
+        const AnimationPlayback,
+        const BipedStatus>,
+    type_list_t<PhysicsSystem<V>, DebugMarkers>,
+    empty_list_t>;
+
+/* After the frame is drawn: what the steps moved, into the components */
+template<typename V>
+struct PhysicsApply
+    : compo::RestrictedSubsystem<PhysicsApply<V>, PhysicsApplyManifest<V>>
+{
+    using type  = PhysicsApply<V>;
+    using Proxy = compo::proxy_of<PhysicsApplyManifest<V>>;
+
+    PhysicsApply()
+    {
+        this->priority = 3073;
+    }
+
+    void start_restricted(Proxy& p, compo::time_point const&)
+    {
+        p.template subsystem<PhysicsSystem<V>>().apply(p);
+    }
+};
+
 void alloc_physics(compo::EntityContainer& container)
 {
     ProfContext _;
     auto&       phys_bus = container.register_subsystem_inplace<PhysicsBus>();
     auto&       physics =
         container.register_subsystem_inplace<PhysicsSystem<halo_version>>();
+    container.register_subsystem_inplace<PhysicsStep<halo_version>>();
+    container.register_subsystem_inplace<PhysicsApply<halo_version>>();
     physics.m_bus   = &phys_bus;
     physics.m_ticks = std::make_unique<TickQueue>(
         container.subsystem_cast<GameEventBus>());
