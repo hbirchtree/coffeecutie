@@ -1124,6 +1124,10 @@ struct EffectSystem
                 fx.created = true;
                 if(ev.skip_fraction <= 0.f || uniform(0.f, 1.f) >= ev.skip_fraction)
                     create(p, fx, ev);
+                else
+                    /* A skipped event takes no time: a chain of chances with
+                     * a certain last one picks exactly one of them */
+                    fx.duration = 0.f;
             }
             if(fx.time < fx.delay + fx.duration)
                 break;
