@@ -70,8 +70,9 @@ struct CameraControl
 
     CameraControl()
     {
-        // Run just before MeshRenderer to keep it up to date
-        this->priority = 3070;
+        /* Before the physics step is handed off: its rays need the world
+         * still, and the renderer follows */
+        this->priority = 3068;
     }
 
     /* The cinematic view in its own space, and the transform out of it: the
