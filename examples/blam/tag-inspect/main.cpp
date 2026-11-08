@@ -1320,18 +1320,26 @@ void dump_weapon(blam::scn::weapon const* weapon)
             t.error,
             t.error_angle);
         fmt::print(
-            "          charging={:g} {} first_person_offset={:g}\n",
+            "          charging={:g} charged={:g} spew={:g} {} "
+            "first_person_offset={:g}\n",
             t.charging_time,
+            t.charged_time,
+            t.spew_time,
             name_of(t.charging_effect),
             t.first_person_offset);
         each(g_magic, t.firing_effects, [](auto const& e) {
             fmt::print(
                 "          firing_effect shots={}..{} effect={} "
+                "damage={}\n            misfire={} damage={} empty={} "
                 "damage={}\n",
                 e.shot_count[0],
                 e.shot_count[1],
                 name_of(e.firing_effect),
-                name_of(e.firing_damage));
+                name_of(e.firing_damage),
+                name_of(e.misfire_effect),
+                name_of(e.misfire_damage),
+                name_of(e.empty_effect),
+                name_of(e.empty_damage));
         });
     });
 }
