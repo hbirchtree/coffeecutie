@@ -1,4 +1,5 @@
 {
+ "comment": "First-person weapon in physics mode on a real GPU: idle, reload animation, back to idle",
  "graphics": {
   "window": {
    "width": 1280,

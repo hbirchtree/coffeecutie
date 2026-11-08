@@ -1,4 +1,5 @@
 {
+    "comment": "Smoke test across every GL and ES profile on llvmpipe at 640x360: start screenshot, keyboard and mouse input, then two synthetic pads join for a split-screen screenshot",
     "graphics": {
         "window": {"width": 640, "height": 360, "depth": 16},
         "software_renderer": "llvmpipe",

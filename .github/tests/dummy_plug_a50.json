@@ -1,4 +1,5 @@
 {
+    "comment": "Captures various cases on a50.map: control room, prison and its overlook, wraith hangar, transporter, covenant shield",
     "graphics": {
         "window": {
             "width": 1440,

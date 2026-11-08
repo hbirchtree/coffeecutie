@@ -1,4 +1,5 @@
 {
+    "comment": "Real GPU on a surfaceless EGL context at 1920x1920, one key press, 15 s: does the hardware path start",
     "graphics": {
         "window": {
             "width": 1920,

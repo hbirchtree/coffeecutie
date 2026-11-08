@@ -20,7 +20,7 @@
         "channels": 2,
         "format": "f32"
     },
-    "comment": "On a30.map, moves the camera to the cave for cluster testing",
+    "comment": "a30.map vistas: mountain stream, open landscape, forerunner cave, station and bridge",
     "events": [
         {"time":  500, "type": "camera", "fov": 70},
         {"time":  500, "type": "render_param", "exposure": 1.0, "comment": "the Xbox has no tonemap, so compare at 1:1"},
