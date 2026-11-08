@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "bitmap_cache.h"
 #include "effects.h"
 #include "graphics_api.h"
@@ -140,11 +142,17 @@ struct EffectDrawer
 
     void alloc_vertices(gfx::api& api)
     {
-        buffer = api.alloc_buffer(
-            gfx::buffers::vertex,
-            semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);
-        buffer->alloc();
-        array = api.alloc_vertex_array();
+        /* A ring: the frame writes a buffer no draw in flight still reads,
+         * whatever the driver makes of a discard */
+        for(auto& b : buffers)
+        {
+            b = api.alloc_buffer(
+                gfx::buffers::vertex,
+                semantic::RSCA::WriteOnly | semantic::RSCA::Streaming);
+            b->alloc();
+        }
+        buffer = buffers[0];
+        array  = api.alloc_vertex_array();
         array->alloc();
         array->add(gfx::vertex_attribute::from_member(&vertex_t::position));
         array->add(gfx::vertex_attribute::from_member(&vertex_t::axis).at(1));
@@ -621,7 +629,22 @@ struct EffectDrawer
 
     void upload()
     {
-        if(!vertices.empty())
-            buffer->commit(semantic::Bytes::ofContainer(vertices).view);
+        if(vertices.empty())
+            return;
+        current = (current + 1) % buffers.size();
+        buffer  = buffers[current];
+        array->set_buffer(gfx::buffers::vertex, buffer, 0);
+        auto const bytes = semantic::Bytes::ofContainer(vertices).view;
+        if(bytes.size() > capacities[current])
+        {
+            capacities[current] = bytes.size() * 2;
+            buffer->commit(capacities[current]);
+        }
+        buffer->discard();
+        buffer->update(0, bytes);
     }
+
+    std::array<std::shared_ptr<gfx::buffer_t>, 3> buffers;
+    std::array<size_t, 3>                         capacities{};
+    u32                                           current{0};
 };
