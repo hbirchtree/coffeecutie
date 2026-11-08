@@ -63,17 +63,17 @@ float soft_visibility(
     float radius = csm_occluder_info.w;
     float reach  = csm_occluder_info.z * depth_per_world;
     float lit    = 0.0;
-    for(int y = -2; y <= 2; y++)
-        for(int x = -2; x <= 2; x++)
+    for(int y = -1; y <= 1; y++)
+        for(int x = -1; x <= 1; x++)
         {
-            vec2  o     = vec2(x, y) * 0.5 * radius;
+            vec2  o     = vec2(x, y) * radius;
             vec2  at    = clamp(uv + o * uv_per_world, rect.xy, rect.zw);
             float tilt  = length(o) * slope * depth_per_world;
             float wall  = texture(map, at).r;
             /* Geometry beyond the reach leaves its shade to the baked light */
             lit += max(step(z - bias - tilt, wall), step(wall, z - reach));
         }
-    return lit * (1.0 / 25.0);
+    return lit * (1.0 / 9.0);
 }
 
 /* Static visibility from the world occluder map, for cascades without
