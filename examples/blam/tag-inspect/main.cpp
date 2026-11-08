@@ -2694,7 +2694,8 @@ void dump_antr(blam::antr::header const* animation)
         auto anim_type = magic_enum::enum_name(anim.type);
         fmt::print(
             "    animation {}: name={} type={} frames={} loop={} key={},{} "
-            "sound={}@{} feet L@{} R@{} next={} nodes={} checksum={:#010x}{}\n",
+            "sound={}@{} feet L@{} R@{} next={} nodes={} checksum={:#010x}{}"
+            " rot={:#x},{:#x} trans={:#x},{:#x} size={}\n",
             i,
             anim.name.str(),
             anim_type,
@@ -2709,8 +2710,13 @@ void dump_antr(blam::antr::header const* animation)
             anim.next_animation,
             anim.node_count,
             static_cast<u32>(anim.node_list_checksum),
-            anim.is_compressed() ? " compressed" : "");
-        if(g_dump_overlay_frames && anim.type == blam::antr::anim_type::overlay)
+            anim.is_compressed() ? " compressed" : "",
+            static_cast<u32>(anim.node_rot_flags[0]),
+            static_cast<u32>(anim.node_rot_flags[1]),
+            static_cast<u32>(anim.node_trans_flags[0]),
+            static_cast<u32>(anim.node_trans_flags[1]),
+            anim.frame_size);
+        if(g_dump_overlay_frames)
             dump_overlay_frames(anim);
     });
 }
@@ -4936,7 +4942,7 @@ int inspect_main()
         //
         ("dump-mirrors", "Walk BSP clusters and report their mirror blocks")
         ("dump-overlay-frames",
-         "For antr overlays, print each frame's node deltas")
+         "For antr animations, print each frame's node values")
         //
         ("scan-tagrefs",
          "Scan this many bytes of each tag for embedded tag references",
