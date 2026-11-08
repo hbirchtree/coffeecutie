@@ -1109,10 +1109,32 @@ struct AnimationController
             };
             /* The weapon's state picks what the hands hold: vents open while
              * it cools, the charge while it is full, else idle */
-            auto const* equip =
-                p.template get<BipedEquipment>(ent.template get<Attachment>().parent);
+            u64 const   owner = ent.template get<Attachment>().parent;
+            auto const* equip = p.template get<BipedEquipment>(owner);
             auto const* gun     = equip ? equip->held(files.load_generation) : nullptr;
             bool const  venting = gun && gun->overheated;
+            /* The hands and weapon sway with the walk: the graph's moving
+             * overlay, weighted and paced by the owner's speed */
+            if(i32 const sway = clip(fp_slot::moving); sway >= 0)
+            {
+                auto const walker = m_walkers.find(owner);
+                f32 const  speed  = walker != m_walkers.end()
+                                        ? glm::length(Vecf2(walker->second.velocity))
+                                        : 0.f;
+                f32 const moving =
+                    std::clamp((speed - walk_threshold) / walk_threshold, 0.f, 1.f);
+                auto& layer = anim.layers[AnimationPlayback::sway_slot];
+                if(layer.graph != anim.graph || layer.animation != static_cast<u32>(sway))
+                    layer = AnimationLayer{
+                        .graph     = anim.graph,
+                        .animation = static_cast<u32>(sway),
+                        .weight    = 0.f,
+                        .loop      = true,
+                    };
+                layer.target = moving;
+                layer.fade   = 1.f / blend_time;
+                layer.rate   = std::clamp(speed / stride_speed, .5f, 2.f);
+            }
             if(bool& was = m_fp_venting[ent.id()]; venting != was)
             {
                 was = venting;
