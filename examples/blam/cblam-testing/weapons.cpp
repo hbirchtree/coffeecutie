@@ -196,13 +196,31 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 bool const able = loaded && state.reloading <= 0.f && state.cooldown <= 0.f &&
                                   (!ammo || !spent(*ammo, gun_tag));
                 i32 fires = -1;
+                /* A fresh pull on nothing to fire: the dry click */
+                bool const dry = magazine ? !loaded && ammo->rounds_total < per_shot
+                                          : ammo && spent(*ammo, gun_tag);
+                if(held && !state.firing && dry && state.reloading <= 0.f)
+                    dry_pull(p, ent.id(), trigger);
                 if(charges)
                 {
                     if(held && !state.firing && able)
                         state.charge = 0.f;
                     else if(held && state.charge >= 0.f)
+                    {
                         state.charge += dt;
-                    else if(!held && state.charge >= 0.f)
+                        /* Held charged for too long: what the trigger then
+                         * does, let off or blown */
+                        using action_t = trigger_t::overcharged_action_t;
+                        if(trigger.overcharged_action != action_t::none &&
+                           state.charge >= trigger.charging_time + trigger.charged_time)
+                        {
+                            if(trigger.overcharged_action == action_t::discharge)
+                                fires = 1;
+                            else if(ammo)
+                                detonate(p, ent.id(), *ammo, gun_tag);
+                            state.charge = -1.f;
+                        }
+                    } else if(!held && state.charge >= 0.f)
                     {
                         fires        = state.charge >= trigger.charging_time ? 1 : 0;
                         state.charge = -1.f;
@@ -214,14 +232,24 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     trigger_t const& pulled = triggers.value()[fires];
                     if(rate > 0.f)
                         state.cooldown += 1.f / rate;
-                    state.fired        = true;
-                    state.illumination = 1.f;
-                    if(magazine)
-                        ammo->rounds_loaded -= per_shot;
-                    if(ammo)
-                        heat_up(p, ent.id(), *ammo, gun_tag, pulled);
-                    pull(p, ent.id(), info, cam, *weapon_tag, false,
-                         static_cast<u16>(fires));
+                    state.fired = true;
+                    /* A battery run low misfires some of its pulls */
+                    bool const misfires =
+                        ammo && gun_tag.age_misfire_start > 0.f &&
+                        ammo->age >= gun_tag.age_misfire_start &&
+                        chance() < gun_tag.age_misfire_chance;
+                    if(misfires)
+                        misfire(p, ent.id(), pulled);
+                    else
+                    {
+                        state.illumination = 1.f;
+                        if(magazine)
+                            ammo->rounds_loaded -= per_shot;
+                        if(ammo)
+                            heat_up(p, ent.id(), *ammo, gun_tag, pulled);
+                        pull(p, ent.id(), info, cam, *weapon_tag, false,
+                             static_cast<u16>(fires));
+                    }
                 }
                 state.firing = held;
                 state.cooldown2 = std::max(state.cooldown2 - dt, 0.f);
@@ -880,7 +908,39 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 gun.age >= 1.f);
     }
 
-    /* A shot warms the weapon and drains its battery; too hot, it vents */
+    f32 chance()
+    {
+        return std::uniform_real_distribution<f32>(0.f, 1.f)(m_rng);
+    }
+
+    /* An effect off the weapon in hand, following the first-person one */
+    void hand_effect(Proxy& p, u64 player, blam::tagref_t const& effect)
+    {
+        if(!effect.valid())
+            return;
+        auto const* cam = p.template get<PlayerCamera>(player);
+        SpawnEffectEvent spawn{
+            .effect    = effect,
+            .position  = cam ? cam->camera.position : Vecf3{},
+            .direction = cam ? glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f}
+                             : Vecf3{1.f, 0.f, 0.f},
+            .parent    = first_person(p, player, true),
+        };
+        GameEvent ev{.type = GameEvent::SpawnEffect};
+        p.template subsystem<GameEventBus>().inject(ev, &spawn);
+    }
+
+    /* The weapon blows up in hand: its detonation effect, then it vents */
+    void detonate(
+        Proxy& p, u64 player, BipedEquipment::weapon_t& gun, weapon_t const& tag)
+    {
+        gun.heat       = std::max(gun.heat, tag.overheated_threshold);
+        gun.overheated = true;
+        hand_effect(p, player, tag.overheat_detonation);
+    }
+
+    /* A shot warms the weapon and drains its battery; too hot, it vents, or
+     * past its detonation threshold it may blow instead */
     void heat_up(
         Proxy& p, u64 player, BipedEquipment::weapon_t& gun, weapon_t const& tag,
         trigger_t const& pulled)
@@ -890,19 +950,47 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         if(tag.overheated_threshold <= 0.f || gun.heat < tag.overheated_threshold ||
            gun.overheated)
             return;
-        gun.overheated = true;
-        if(!tag.overheated.valid())
+        bool const detonates = tag.heat_detonation_threshold > 0.f &&
+                               gun.heat >= tag.heat_detonation_threshold &&
+                               chance() < tag.heat_detonation_fraction &&
+                               tag.overheat_detonation.valid();
+        if(detonates)
+            detonate(p, player, gun, tag);
+        else
+        {
+            gun.overheated = true;
+            hand_effect(p, player, tag.overheated);
+        }
+    }
+
+    /* The pull fizzles: the trigger's misfire effect, and its damage to
+     * whoever holds it */
+    void misfire(Proxy& p, u64 player, trigger_t const& pulled)
+    {
+        auto effects = pulled.firing_effects.data(
+            p.template subsystem<BlamFiles<halo_version>>().container.magic);
+        if(!effects.has_value() || effects.value().empty())
+            return;
+        auto const& effect = effects.value()[0];
+        hand_effect(p, player, effect.misfire_effect);
+        if(!effect.misfire_damage.valid())
             return;
         auto const* cam = p.template get<PlayerCamera>(player);
-        SpawnEffectEvent vent{
-            .effect    = tag.overheated,
-            .position  = cam ? cam->camera.position : Vecf3{},
-            .direction = cam ? glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f}
-                             : Vecf3{1.f, 0.f, 0.f},
-            .parent    = first_person(p, player, true),
+        AreaDamageEvent area{
+            .damage   = effect.misfire_damage,
+            .position = cam ? cam->camera.position : Vecf3{},
+            .shooter  = player,
         };
-        GameEvent ev{.type = GameEvent::SpawnEffect};
-        p.template subsystem<GameEventBus>().inject(ev, &vent);
+        GameEvent ev{.type = GameEvent::AreaDamage};
+        p.template subsystem<GameEventBus>().inject(ev, &area);
+    }
+
+    void dry_pull(Proxy& p, u64 player, trigger_t const& trigger)
+    {
+        auto effects = trigger.firing_effects.data(
+            p.template subsystem<BlamFiles<halo_version>>().container.magic);
+        if(effects.has_value() && !effects.value().empty())
+            hand_effect(p, player, effects.value()[0].empty_effect);
     }
 
     /* Tops the magazine up from what is carried */
