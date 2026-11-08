@@ -1,0 +1,1297 @@
+{
+ "graphics": {
+  "window": {
+   "width": 960,
+   "height": 540,
+   "depth": 24
+  },
+  "gl": [
+   {
+    "major": 4,
+    "minor": 6
+   }
+  ],
+  "gles": []
+ },
+ "comment": "Physics pile: 100 ghosts stacked 5x5x4 north of the bloodgulch spawn settle into one island; the player then walks into it and is dropped into its middle. Run with COFFEE_ECS_SCHEDULE=<frame> for PhysicsStep's cost in the frame schedule report. Xbox bloodgulch.",
+ "end_time": 48000,
+ "events": [
+  {
+   "time": 300,
+   "type": "render_param",
+   "debug_markers": false
+  },
+  {
+   "time": 500,
+   "type": "controller_connect",
+   "index": 0
+  },
+  {
+   "time": 700,
+   "type": "camera",
+   "physics": true
+  },
+  {
+   "time": 3000,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -148.0,
+    3.5
+   ],
+   "yaw": 0
+  },
+  {
+   "time": 3050,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -145.6,
+    3.5
+   ],
+   "yaw": 53
+  },
+  {
+   "time": 3100,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -143.2,
+    3.5
+   ],
+   "yaw": 106
+  },
+  {
+   "time": 3150,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -140.8,
+    3.5
+   ],
+   "yaw": 159
+  },
+  {
+   "time": 3200,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -138.4,
+    3.5
+   ],
+   "yaw": 212
+  },
+  {
+   "time": 3250,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -148.0,
+    3.5
+   ],
+   "yaw": 37
+  },
+  {
+   "time": 3300,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -145.6,
+    3.5
+   ],
+   "yaw": 90
+  },
+  {
+   "time": 3350,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -143.2,
+    3.5
+   ],
+   "yaw": 143
+  },
+  {
+   "time": 3400,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -140.8,
+    3.5
+   ],
+   "yaw": 196
+  },
+  {
+   "time": 3450,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -138.4,
+    3.5
+   ],
+   "yaw": 249
+  },
+  {
+   "time": 3500,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -148.0,
+    3.5
+   ],
+   "yaw": 74
+  },
+  {
+   "time": 3550,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -145.6,
+    3.5
+   ],
+   "yaw": 127
+  },
+  {
+   "time": 3600,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -143.2,
+    3.5
+   ],
+   "yaw": 180
+  },
+  {
+   "time": 3650,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -140.8,
+    3.5
+   ],
+   "yaw": 233
+  },
+  {
+   "time": 3700,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -138.4,
+    3.5
+   ],
+   "yaw": 286
+  },
+  {
+   "time": 3750,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -148.0,
+    3.5
+   ],
+   "yaw": 111
+  },
+  {
+   "time": 3800,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -145.6,
+    3.5
+   ],
+   "yaw": 164
+  },
+  {
+   "time": 3850,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -143.2,
+    3.5
+   ],
+   "yaw": 217
+  },
+  {
+   "time": 3900,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -140.8,
+    3.5
+   ],
+   "yaw": 270
+  },
+  {
+   "time": 3950,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -138.4,
+    3.5
+   ],
+   "yaw": 323
+  },
+  {
+   "time": 4000,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -148.0,
+    3.5
+   ],
+   "yaw": 148
+  },
+  {
+   "time": 4050,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -145.6,
+    3.5
+   ],
+   "yaw": 201
+  },
+  {
+   "time": 4100,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -143.2,
+    3.5
+   ],
+   "yaw": 254
+  },
+  {
+   "time": 4150,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -140.8,
+    3.5
+   ],
+   "yaw": 307
+  },
+  {
+   "time": 4200,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -138.4,
+    3.5
+   ],
+   "yaw": 0
+  },
+  {
+   "time": 4250,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -148.0,
+    5.1
+   ],
+   "yaw": 90
+  },
+  {
+   "time": 4300,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -145.6,
+    5.1
+   ],
+   "yaw": 143
+  },
+  {
+   "time": 4350,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -143.2,
+    5.1
+   ],
+   "yaw": 196
+  },
+  {
+   "time": 4400,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -140.8,
+    5.1
+   ],
+   "yaw": 249
+  },
+  {
+   "time": 4450,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -138.4,
+    5.1
+   ],
+   "yaw": 302
+  },
+  {
+   "time": 4500,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -148.0,
+    5.1
+   ],
+   "yaw": 127
+  },
+  {
+   "time": 4550,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -145.6,
+    5.1
+   ],
+   "yaw": 180
+  },
+  {
+   "time": 4600,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -143.2,
+    5.1
+   ],
+   "yaw": 233
+  },
+  {
+   "time": 4650,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -140.8,
+    5.1
+   ],
+   "yaw": 286
+  },
+  {
+   "time": 4700,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -138.4,
+    5.1
+   ],
+   "yaw": 339
+  },
+  {
+   "time": 4750,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -148.0,
+    5.1
+   ],
+   "yaw": 164
+  },
+  {
+   "time": 4800,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -145.6,
+    5.1
+   ],
+   "yaw": 217
+  },
+  {
+   "time": 4850,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -143.2,
+    5.1
+   ],
+   "yaw": 270
+  },
+  {
+   "time": 4900,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -140.8,
+    5.1
+   ],
+   "yaw": 323
+  },
+  {
+   "time": 4950,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -138.4,
+    5.1
+   ],
+   "yaw": 16
+  },
+  {
+   "time": 5000,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -148.0,
+    5.1
+   ],
+   "yaw": 201
+  },
+  {
+   "time": 5050,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -145.6,
+    5.1
+   ],
+   "yaw": 254
+  },
+  {
+   "time": 5100,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -143.2,
+    5.1
+   ],
+   "yaw": 307
+  },
+  {
+   "time": 5150,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -140.8,
+    5.1
+   ],
+   "yaw": 0
+  },
+  {
+   "time": 5200,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -138.4,
+    5.1
+   ],
+   "yaw": 53
+  },
+  {
+   "time": 5250,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -148.0,
+    5.1
+   ],
+   "yaw": 238
+  },
+  {
+   "time": 5300,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -145.6,
+    5.1
+   ],
+   "yaw": 291
+  },
+  {
+   "time": 5350,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -143.2,
+    5.1
+   ],
+   "yaw": 344
+  },
+  {
+   "time": 5400,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -140.8,
+    5.1
+   ],
+   "yaw": 37
+  },
+  {
+   "time": 5450,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -138.4,
+    5.1
+   ],
+   "yaw": 90
+  },
+  {
+   "time": 5500,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -148.0,
+    6.7
+   ],
+   "yaw": 180
+  },
+  {
+   "time": 5550,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -145.6,
+    6.7
+   ],
+   "yaw": 233
+  },
+  {
+   "time": 5600,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -143.2,
+    6.7
+   ],
+   "yaw": 286
+  },
+  {
+   "time": 5650,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -140.8,
+    6.7
+   ],
+   "yaw": 339
+  },
+  {
+   "time": 5700,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -138.4,
+    6.7
+   ],
+   "yaw": 32
+  },
+  {
+   "time": 5750,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -148.0,
+    6.7
+   ],
+   "yaw": 217
+  },
+  {
+   "time": 5800,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -145.6,
+    6.7
+   ],
+   "yaw": 270
+  },
+  {
+   "time": 5850,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -143.2,
+    6.7
+   ],
+   "yaw": 323
+  },
+  {
+   "time": 5900,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -140.8,
+    6.7
+   ],
+   "yaw": 16
+  },
+  {
+   "time": 5950,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -138.4,
+    6.7
+   ],
+   "yaw": 69
+  },
+  {
+   "time": 6000,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -148.0,
+    6.7
+   ],
+   "yaw": 254
+  },
+  {
+   "time": 6050,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -145.6,
+    6.7
+   ],
+   "yaw": 307
+  },
+  {
+   "time": 6100,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -143.2,
+    6.7
+   ],
+   "yaw": 0
+  },
+  {
+   "time": 6150,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -140.8,
+    6.7
+   ],
+   "yaw": 53
+  },
+  {
+   "time": 6200,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -138.4,
+    6.7
+   ],
+   "yaw": 106
+  },
+  {
+   "time": 6250,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -148.0,
+    6.7
+   ],
+   "yaw": 291
+  },
+  {
+   "time": 6300,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -145.6,
+    6.7
+   ],
+   "yaw": 344
+  },
+  {
+   "time": 6350,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -143.2,
+    6.7
+   ],
+   "yaw": 37
+  },
+  {
+   "time": 6400,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -140.8,
+    6.7
+   ],
+   "yaw": 90
+  },
+  {
+   "time": 6450,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -138.4,
+    6.7
+   ],
+   "yaw": 143
+  },
+  {
+   "time": 6500,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -148.0,
+    6.7
+   ],
+   "yaw": 328
+  },
+  {
+   "time": 6550,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -145.6,
+    6.7
+   ],
+   "yaw": 21
+  },
+  {
+   "time": 6600,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -143.2,
+    6.7
+   ],
+   "yaw": 74
+  },
+  {
+   "time": 6650,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -140.8,
+    6.7
+   ],
+   "yaw": 127
+  },
+  {
+   "time": 6700,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -138.4,
+    6.7
+   ],
+   "yaw": 180
+  },
+  {
+   "time": 6750,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -148.0,
+    8.3
+   ],
+   "yaw": 270
+  },
+  {
+   "time": 6800,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -145.6,
+    8.3
+   ],
+   "yaw": 323
+  },
+  {
+   "time": 6850,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -143.2,
+    8.3
+   ],
+   "yaw": 16
+  },
+  {
+   "time": 6900,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -140.8,
+    8.3
+   ],
+   "yaw": 69
+  },
+  {
+   "time": 6950,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    94.0,
+    -138.4,
+    8.3
+   ],
+   "yaw": 122
+  },
+  {
+   "time": 7000,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -148.0,
+    8.3
+   ],
+   "yaw": 307
+  },
+  {
+   "time": 7050,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -145.6,
+    8.3
+   ],
+   "yaw": 0
+  },
+  {
+   "time": 7100,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -143.2,
+    8.3
+   ],
+   "yaw": 53
+  },
+  {
+   "time": 7150,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -140.8,
+    8.3
+   ],
+   "yaw": 106
+  },
+  {
+   "time": 7200,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    96.0,
+    -138.4,
+    8.3
+   ],
+   "yaw": 159
+  },
+  {
+   "time": 7250,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -148.0,
+    8.3
+   ],
+   "yaw": 344
+  },
+  {
+   "time": 7300,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -145.6,
+    8.3
+   ],
+   "yaw": 37
+  },
+  {
+   "time": 7350,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -143.2,
+    8.3
+   ],
+   "yaw": 90
+  },
+  {
+   "time": 7400,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -140.8,
+    8.3
+   ],
+   "yaw": 143
+  },
+  {
+   "time": 7450,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    98.0,
+    -138.4,
+    8.3
+   ],
+   "yaw": 196
+  },
+  {
+   "time": 7500,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -148.0,
+    8.3
+   ],
+   "yaw": 21
+  },
+  {
+   "time": 7550,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -145.6,
+    8.3
+   ],
+   "yaw": 74
+  },
+  {
+   "time": 7600,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -143.2,
+    8.3
+   ],
+   "yaw": 127
+  },
+  {
+   "time": 7650,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -140.8,
+    8.3
+   ],
+   "yaw": 180
+  },
+  {
+   "time": 7700,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    100.0,
+    -138.4,
+    8.3
+   ],
+   "yaw": 233
+  },
+  {
+   "time": 7750,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -148.0,
+    8.3
+   ],
+   "yaw": 58
+  },
+  {
+   "time": 7800,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -145.6,
+    8.3
+   ],
+   "yaw": 111
+  },
+  {
+   "time": 7850,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -143.2,
+    8.3
+   ],
+   "yaw": 164
+  },
+  {
+   "time": 7900,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -140.8,
+    8.3
+   ],
+   "yaw": 217
+  },
+  {
+   "time": 7950,
+   "type": "spawn_object",
+   "tag": "vehicles\\ghost\\ghost_mp",
+   "class": "vehi",
+   "position": [
+    102.0,
+    -138.4,
+    8.3
+   ],
+   "yaw": 270
+  },
+  {
+   "time": 20000,
+   "type": "dump_state"
+  },
+  {
+   "time": 22000,
+   "type": "camera",
+   "position": [
+    98.0,
+    -158.0,
+    3.0
+   ],
+   "rotation": [
+    0,
+    90
+   ],
+   "physics": false
+  },
+  {
+   "time": 23500,
+   "type": "camera",
+   "physics": true
+  },
+  {
+   "time": 25000,
+   "type": "controller_axis",
+   "axis": "LEFT_Y",
+   "value": -1.0,
+   "duration": 6000,
+   "index": 0
+  },
+  {
+   "time": 31000,
+   "type": "dump_state"
+  },
+  {
+   "time": 32000,
+   "type": "camera",
+   "position": [
+    98.0,
+    -143.0,
+    9.0
+   ],
+   "rotation": [
+    0,
+    90
+   ],
+   "physics": false
+  },
+  {
+   "time": 33500,
+   "type": "camera",
+   "physics": true
+  },
+  {
+   "time": 38000,
+   "type": "dump_state"
+  },
+  {
+   "time": 46000,
+   "type": "dump_state"
+  }
+ ]
+}
