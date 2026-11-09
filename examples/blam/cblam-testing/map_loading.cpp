@@ -74,6 +74,17 @@ static void load_bitmaps(compo::EntityContainer& e, blam::map_ptr const& magic)
     }
 }
 
+/* loc.map holds the fonts, strings and HUD messages a Custom Edition map
+ * only indexes; it is in hand before the map counts as loaded */
+static void localize(compo::EntityContainer& e, std::shared_ptr<comp_app::FileMapper::Resource> loc)
+{
+    auto& files    = e.subsystem_cast<BlamFiles<halo_version>>();
+    files.loc_file = std::move(loc);
+    e.subsystem_cast<FontCache<halo_version>>().localize(
+        files.loc_file ? std::optional(blam::map_ptr(static_cast<BytesConst>(*files.loc_file)))
+                       : std::nullopt);
+}
+
 static void load_sounds(compo::EntityContainer& e, blam::map_ptr const& magic)
 {
     auto& files          = e.subsystem_cast<BlamFiles<halo_version>>();
@@ -431,6 +442,8 @@ static MapListingEvent list_maps(
         (listing.directory.path() / "bitmaps.map").url(listing.directory.flags);
     listing.sound_file =
         (listing.directory.path() / "sounds.map").url(listing.directory.flags);
+    listing.loc_file =
+        (listing.directory.path() / "loc.map").url(listing.directory.flags);
 
     auto maps_ = platform::file::list(listing.directory);
     if(maps_.has_error())
@@ -597,8 +610,8 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     struct pending_t
     {
         std::shared_ptr<result_type>   map;
-        std::shared_ptr<AsyncResource> bitmaps, sounds;
-        bool                           bitmaps_in{false}, finished{false};
+        std::shared_ptr<AsyncResource> bitmaps, sounds, loc;
+        bool                           bitmaps_in{false}, loc_in{false}, finished{false};
     };
     auto  pending = std::make_shared<pending_t>();
     auto* main    = rq::runtime_queue::GetCurrentQueue().value();
@@ -609,9 +622,11 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         [&e, pending, map_load_fun, load_is_stale]() mutable {
             if(load_is_stale())
                 return;
-            if(!pending->finished && pending->map && (!separate_files || pending->bitmaps_in))
+            if(!pending->finished && pending->map &&
+               (!separate_files || (pending->bitmaps_in && pending->loc_in)))
             {
                 pending->finished = true;
+                localize(e, std::move(pending->loc));
                 map_load_fun(std::move(*pending->map), std::move(pending->bitmaps));
             }
             if(pending->finished && pending->sounds)
@@ -620,6 +635,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                 files.sound_file = std::move(pending->sounds);
                 load_sounds(e, blam::map_ptr(static_cast<BytesConst>(*files.sound_file)));
             }
+
         });
 
     /* Parsed on the background worker, handed back to the main queue */
@@ -643,14 +659,15 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     using comp_app::FileMapper;
     std::vector<FileMapper::fetch_entry> entries;
     constexpr std::size_t                none = ~std::size_t(0);
-    std::size_t                          map_i = none, bitmaps_i = none, sounds_i = none;
+    std::size_t map_i = none, bitmaps_i = none, sounds_i = none, loc_i = none;
     map_i = entries.size(), entries.push_back({.url = *load.file});
     if(separate_files)
     {
         bitmaps_i = entries.size(), entries.push_back({.url = listing.bitmap_file});
+        loc_i     = entries.size(), entries.push_back({.url = listing.loc_file, .optional = true});
         sounds_i  = entries.size(), entries.push_back({.url = listing.sound_file, .optional = true});
     }
-    auto on_ready = [pending, finish, read_map, load_is_stale, worker, map_i, bitmaps_i, sounds_i](
+    auto on_ready = [pending, finish, read_map, load_is_stale, worker, map_i, bitmaps_i, sounds_i, loc_i](
                         FileMapper::FetchSet& set, std::size_t i) {
         if(load_is_stale())
             return;
@@ -666,6 +683,12 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         } else if(i == sounds_i)
         {
             pending->sounds = set.resource(i);
+            (*finish)();
+        } else if(i == loc_i)
+        {
+            /* Optional: absent is settled too */
+            pending->loc    = set.resource(i);
+            pending->loc_in = true;
             (*finish)();
         }
     };

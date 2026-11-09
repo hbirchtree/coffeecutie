@@ -16,6 +16,8 @@ struct BlamFiles : compo::SubsystemBase
     std::shared_ptr<comp_app::FileMapper::Resource> map_file;
     std::shared_ptr<comp_app::FileMapper::Resource> bitmap_file;
     std::shared_ptr<comp_app::FileMapper::Resource> sound_file;
+    /* Custom Edition's loc.map, holding the tags the map only indexes */
+    std::shared_ptr<comp_app::FileMapper::Resource> loc_file;
     /* The map and its companions on their way in */
     std::shared_ptr<comp_app::FileMapper::FetchSet> fetch;
 

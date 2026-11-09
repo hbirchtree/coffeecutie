@@ -39,6 +39,7 @@ struct GlyphEntry
 struct FontItem
 {
     blam::font const*                   font{nullptr};
+    blam::map_ptr                       magic{}; /*!< What its pointers resolve with */
     u32                                 atlas_layer{0};
     u32                                 atlas_size{0};
     std::unordered_map<u16, GlyphEntry> glyph_map;

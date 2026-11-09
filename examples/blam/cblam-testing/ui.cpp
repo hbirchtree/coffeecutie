@@ -2621,8 +2621,7 @@ void load_ui_items(
         hud_font = fonts.predict(
             data.container.map->map_type == blam::maptype_t::multiplayer ? hg->multi_player_font
                                                                           : hg->single_player_font);
-
-        std::vector<std::u16string> texts;
+std::vector<std::u16string> texts;
         if(auto list = tag_view.template data<blam::ui::unicode_string_list>(
                hg->alternate_icon_text);
            list.has_value())

@@ -31,33 +31,54 @@ struct FontCache
     std::shared_ptr<gfx::sampler_t>             font_sampler;
     gfx::api*                                   api;
     u32                                         atlas_layer{0};
+    std::optional<blam::map_ptr>                m_loc{};
 
     inline void load_from(blam::map_container<V> const& map)
     {
         index       = blam::tag_index_view(map);
         magic       = map.magic;
         atlas_layer = 0;
+        if(m_loc)
+            index.add_atlas(blam::atlas_type_t::localization, *m_loc);
         evict_all();
+    }
+
+    /* The fonts a Custom Edition map indexes live in loc.map; set before
+     * the map's fonts are asked for */
+    inline void localize(std::optional<blam::map_ptr> loc)
+    {
+        m_loc = loc;
+        if(m_loc)
+            index.add_atlas(blam::atlas_type_t::localization, *m_loc);
     }
 
     virtual FontItem predict_impl(blam::tagref_t const& font_tag)
     {
-        blam::font const* font = get_id(font_tag);
-        return FontItem{
-            .font        = font,
-            .atlas_layer = 0,
-        };
+        FontItem out{.atlas_layer = 0};
+        auto     tag_it = index.find(font_tag);
+        if(tag_it == index.end())
+            return out;
+        if(auto loc = index.template localized<blam::font>(*tag_it); loc)
+        {
+            out.font  = loc->first;
+            out.magic = loc->second;
+        } else if(auto data = (*tag_it).template data<blam::font>(magic); data.has_value())
+        {
+            out.font  = data.value();
+            out.magic = magic;
+        }
+return out;
     }
 
     virtual blam::font const* get_id(blam::tagref_t const& font_tag)
     {
-        if(auto tag_it = index.find(font_tag); tag_it == index.end())
+        auto tag_it = index.find(font_tag);
+        if(tag_it == index.end())
             return nullptr;
-        else if(auto data = (*tag_it).template data<blam::font>(magic);
-                !data.has_value())
-            return nullptr;
-        else
-            return data.value();
+        if(auto loc = index.template localized<blam::font>(*tag_it); loc)
+            return loc->first;
+        auto data = (*tag_it).template data<blam::font>(magic);
+        return data.has_value() ? data.value() : nullptr;
     }
 
     /* One transparent texel between glyphs, so a filter tap at the edge of one
@@ -112,7 +133,7 @@ struct FontCache
     {
         if(!item.font)
             return {};
-        auto chars = item.font->characters.data(magic);
+        auto chars = item.font->characters.data(item.magic);
         return chars.has_value() ? chars.value()
                                  : Span<const blam::font::character_t>{};
     }
@@ -196,7 +217,7 @@ struct FontCache
                             static_cast<u32>(bw) * static_cast<u32>(bh);
                         auto pix = font_item.font
                                        ->pixel_data(ch.pixel_offset, data_size)
-                                       .data(magic);
+                                       .data(font_item.magic);
                         if(pix.has_value())
                         {
                             auto const* src =
