@@ -684,6 +684,39 @@ void dump_ustr(blam::ui::unicode_string_list const* info)
     });
 }
 
+void dump_hmt(blam::hud_message_text const* info)
+{
+    auto text = info->text(g_magic);
+    fmt::print(
+        "  text_chars={} elements={} messages={}\n",
+        text.has_value() ? text.value().size() : 0,
+        count_of(g_magic, info->elements),
+        count_of(g_magic, info->messages));
+    auto elements = info->elements.data(g_magic);
+    each(g_magic, info->messages, [&](auto const& m) {
+        fmt::print(
+            "    \"{}\" text_start={} elements={}+{}:", m.name.str(), m.text_start, m.element_start, m.element_count);
+        size_t at = static_cast<size_t>(std::max<libc_types::i16>(m.text_start, 0));
+        for(libc_types::i32 i = 0; elements.has_value() && i < m.element_count; i++)
+        {
+            size_t const e = static_cast<size_t>(m.element_start) + i;
+            if(e >= elements.value().size())
+                break;
+            auto const& el = elements.value()[e];
+            if(el.type == blam::hud_message_text::element_t::type_t::text)
+            {
+                std::string run;
+                for(libc_types::i32 c = 0; c < el.data && text.has_value() && at + c < text.value().size(); c++)
+                    run += static_cast<char>(text.value()[at + c] & 0x7f);
+                fmt::print(" text({})\"{}\"", libc_types::i32(el.data), run);
+                at += static_cast<size_t>(std::max<libc_types::i8>(el.data, 0));
+            } else
+                fmt::print(" icon({})", libc_types::i32(el.data));
+        }
+        fmt::print("\n");
+    });
+}
+
 void dump_soul(blam::ui_item_collection const* info)
 {
     each(g_magic, info->widget_definitions, [](auto const& dela) {
@@ -1844,6 +1877,136 @@ void dump_hud_meter(
         argb(meter.disabled_color),
         meter.opacity,
         meter.translucency);
+    fmt::print(
+        "      sequence={} min_value={} alpha_mult={} alpha_bias={} value_scale={}\n",
+        meter.sequence_index,
+        meter.minimum_meter_value,
+        meter.alpha_multiplier,
+        meter.alpha_bias,
+        meter.value_scale);
+}
+
+void dump_weapon_hud(blam::weapon_hud_interface const* hud)
+{
+    using hud_t = blam::weapon_hud_interface;
+    fmt::print("  [wphi]\n    child_hud={}\n    ", name_of(hud->child_hud));
+    print_enum("anchor", hud->screen_alignment.anchor);
+    fmt::print("\n");
+    dump_block(
+        "static_elements", hud->screen_alignment.static_elements, [](hud_t::static_element_t const& el) {
+            fmt::print("state={} map={}\n", int(el.state_attached_to), int(el.can_use_on_map_type));
+            dump_hud_background("  background", el.background);
+        });
+    dump_block("meter_elements", hud->meter_elements, [](hud_t::meter_element_t const& el) {
+        fmt::print("state={} map={}\n", int(el.state_attached_to), int(el.can_use_on_map_type));
+        dump_hud_meter("  meter", el.meter);
+    });
+    dump_block("number_elements", hud->number_elements, [](hud_t::number_element_t const& el) {
+        fmt::print(
+            "state={} map={} digits={} flags={:#x} weapon_flags={:#x} color={} ",
+            int(el.state_attached_to),
+            int(el.can_use_on_map_type),
+            el.number.maximum_number_digits,
+            u32(el.number.flags),
+            u32(el.number.weapon_flags),
+            argb(el.number.colors.default_color));
+        print_hud_placement(el.number);
+        fmt::print("\n");
+    });
+    dump_block("overlay_elements", hud->overlay_elements, [](hud_t::overlay_element_t const& el) {
+        fmt::print(
+            "state={} map={} bitmap={}\n",
+            int(el.state_attached_to),
+            int(el.can_use_on_map_type),
+            name_of(el.overlay_bitmap));
+        dump_block("  overlays", el.overlays, [](hud_t::overlay_t const& ov) {
+            fmt::print(
+                "type={:#x} flags={:#x} sequence={} rate={} color={} ",
+                u32(ov.type),
+                u32(ov.flags),
+                ov.sequence_index,
+                ov.frame_rate,
+                argb(ov.colors.default_color));
+            print_hud_placement(ov);
+            fmt::print("\n");
+        });
+    });
+    fmt::print(
+        "    crosshairs={} screen_effects={}\n",
+        count_of(g_magic, hud->crosshairs),
+        count_of(g_magic, hud->screen_effects));
+    each(g_magic, hud->crosshairs, [](size_t i, auto const& ch) {
+        fmt::print(
+            "      crosshair {}: type={} bitmap={} map_type={}\n",
+            i,
+            u32(ch.crosshair_type),
+            name_of(ch.crosshair_bitmap),
+            u32(ch.can_use_on_map_type));
+        each(g_magic, ch.crosshair_overlays, [](size_t j, auto const& ov) {
+            fmt::print(
+                "        overlay {}: seq={} frame_rate={} flags=0x{:x} color={}",
+                j,
+                ov.sequence_index,
+                ov.frame_rate,
+                u32(ov.flags),
+                argb(ov.colors.default_color));
+            print_hud_placement(ov);
+            fmt::print("\n");
+        });
+    });
+    each(g_magic, hud->screen_effects, [](size_t i, auto const& fx) {
+        fmt::print(
+            "      screen_effect {}: mask flags=0x{:x} full={} split={} convolution flags=0x{:x} fov_in=({}, {}) radius_out=({}, {})\n",
+            i,
+            u32(fx.mask.flags),
+            name_of(fx.mask.mask_fullscreen),
+            name_of(fx.mask.mask_splitscreen),
+            u32(fx.convolution.flags),
+            fx.convolution.fov_in_bounds.x,
+            fx.convolution.fov_in_bounds.y,
+            fx.convolution.radius_out_bounds.x,
+            fx.convolution.radius_out_bounds.y);
+    });
+}
+
+void dump_grenade_hud(blam::grenade_hud_interface const* hud)
+{
+    fmt::print("  [grhi]\n    ");
+    print_enum("anchor", hud->anchor);
+    fmt::print("\n");
+    dump_hud_background("background", hud->grenade_hud_background);
+    dump_hud_background("total_background", hud->total_grenades_background);
+    auto const& n = hud->total_grenades_numbers;
+    fmt::print(
+        "    numbers: digits={} flags={:#x} fractional={} flash_cutoff={} color={} ",
+        n.maximum_number_digits,
+        u32(n.flags),
+        n.number_of_fractional_digits,
+        n.flash_cutoff,
+        argb(n.colors.default_color));
+    print_hud_placement(n);
+    fmt::print("\n    overlays: {} ", name_of(hud->total_grenades_overlays.overlay_bitmap));
+    dump_block(
+        "", hud->total_grenades_overlays.overlays, [](blam::grenade_hud_interface::overlay_t const& ov) {
+            fmt::print("type={:#x} sequence={} color={} ", u32(ov.type), ov.sequence_index, argb(ov.colors.default_color));
+            print_hud_placement(ov);
+            fmt::print("\n");
+        });
+    fmt::print("    warning_sounds={}\n", count_of(g_magic, hud->warning_sounds));
+}
+
+void dump_hud_number(blam::hud_number const* n)
+{
+    fmt::print(
+        "  [hud#] digits={} bitmap_digit_width={} screen_digit_width={} offset=({},{}) "
+        "decimal_point_width={} colon_width={}\n",
+        name_of(n->digits_bitmap),
+        n->bitmap_digit_width,
+        n->screen_digit_width,
+        n->x_offset,
+        n->y_offset,
+        n->decimal_point_width,
+        n->colon_width);
 }
 
 void dump_unit_hud(blam::unit_hud_interface const* hud)
@@ -2236,10 +2399,12 @@ void dump_collision(blam::coll::header const* coll)
         coll->recharge_time,
         coll->shield_damaged_threshold);
     fmt::print(
-        "    body effects: damaged={} depleted={} destroyed={}\n",
+        "    body effects: damaged={} (at {}) depleted={} destroyed={} (at {})\n",
         name_of(coll->body_damaged_effect),
+        coll->body_damaged_threshold,
         name_of(coll->body_depleted_effect),
-        name_of(coll->body_destroyed_effect));
+        name_of(coll->body_destroyed_effect),
+        coll->body_destroyed_threshold);
     fmt::print(
         "    shield effects: damaged={} depleted={} recharging={}\n",
         name_of(coll->shield_damaged_effect),
@@ -2628,6 +2793,10 @@ void dump_antr(blam::antr::header const* animation)
 {
     fmt::print("  objects={}\n", animation->objects.count);
     fmt::print("  units={}\n", animation->units.count);
+    fmt::print("  sounds={}\n", count_of(g_magic, animation->sound_refs));
+    each(g_magic, animation->sound_refs, [](size_t i, auto const& ref) {
+        fmt::print("    sound {}: {}\n", i, name_of(ref.sound));
+    });
     auto print_bounds = [](char const* what, blam::antr::screen_bounds const& b) {
         fmt::print(
             "      {}: yaw/frame R={:.4f} L={:.4f} frames R={} L={} pitch/frame "
@@ -2948,6 +3117,26 @@ void dump_encounters(blam::map_container<Ver> const& map)
             static_cast<u32>(enc.flags),
             enc.squads.count,
             enc.firing_positions.count);
+        each(map.magic, enc.firing_positions, [&](u32 q, blam::scn::ai::firing_position const& fp) {
+            fmt::print(
+                "    firing position [{}] group={} at {:.1f} {:.1f} {:.1f}\n",
+                q,
+                static_cast<char>('A' + fp.group),
+                fp.position.x,
+                fp.position.y,
+                fp.position.z);
+        });
+        each(map.magic, enc.platoons, [&](u32 q, blam::scn::ai::platoon const& pl) {
+            fmt::print(
+                "    platoon [{}] {} flags={:#x} attack/defend when {} of {} maneuver when {} of {}\n",
+                q,
+                pl.name.str(),
+                static_cast<u32>(pl.flags),
+                static_cast<u32>(pl.change_attacking_defending.event),
+                pl.change_attacking_defending.target,
+                static_cast<u32>(pl.maneuver_when.event),
+                pl.maneuver_when.target);
+        });
         each(map.magic, enc.squads, [&](u32 q, blam::scn::ai::squad const& squad) {
             fmt::print(
                 "    squad [{}] {} actor={} count={}/{} platoon={}\n",
@@ -2957,6 +3146,18 @@ void dump_encounters(blam::map_container<Ver> const& map)
                 squad.normal_diff_count,
                 squad.insane_diff_count,
                 squad.platoon);
+            fmt::print(
+                "      states initial={} return={} unk1=[{:08x}] groups atk={:x}/{:x}/{:x} def={:x}/{:x}/{:x} pursue={:x}\n",
+                static_cast<int>(squad.initial_state),
+                static_cast<int>(squad.return_state),
+                fmt::join(squad.unk1, " "),
+                squad.attacking,
+                squad.attacking_search,
+                squad.attacking_guard,
+                squad.defending,
+                squad.defending_search,
+                squad.defending_guard,
+                squad.pursuing);
             each(map.magic, squad.start_locations, [&](blam::scn::ai::squad_location const& loc) {
                 fmt::print(
                     "      at {:.1f} {:.1f} {:.1f} facing={:.2f}{}\n",
@@ -3246,6 +3447,18 @@ void dump_scenario(blam::map_container<Ver> const& map)
         fmt::print(
             "  {} pos={:.2f} extents={:.2f}\n", volume.name.str(), volume.position, volume.extents);
     });
+
+    /* 380076 = 19001 nodes (PC, Xbox, CE); 655396 = 32767 nodes (MCC) */
+    fmt::print(
+        "script bytecode size: {} strings={} scripts={} globals={} references={} unk1={} unk2={} unk3={}\n",
+        s->script.script_bytecode_size,
+        s->script.script_string_segment.count,
+        s->script.scripts.count,
+        s->script.globals.count,
+        s->script.references.count,
+        s->script.unknown1.count,
+        s->script.unknown2.count,
+        s->script.unknown3.count);
 
     fmt::print(
         "player_starting_locations: {}\n",
@@ -3630,7 +3843,12 @@ void dump_tag_data(blam::tag_index_view<Ver> const& index, blam::tag_t const& ta
 {
     auto name  = tag.to_name().to_string(g_magic);
     auto klass = tag.tagclass[0].str();
-    fmt::print("=== [{}] {} id=0x{:x}\n", klass, name, tag.tag_id);
+    fmt::print(
+        "=== [{}] {} id=0x{:x}{}\n",
+        klass,
+        name,
+        tag.tag_id,
+        tag.storage == blam::tag_storage_t::external ? " (indexed: resource map)" : "");
 
     auto data = tag.data<libc_types::u8 const>(g_magic);
 
@@ -4361,7 +4579,12 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
 
     auto name  = tag.to_name().to_string(g_magic);
     auto klass = tag.tagclass[0].str();
-    fmt::print("=== [{}] {} id=0x{:x}\n", klass, name, tag.tag_id);
+    fmt::print(
+        "=== [{}] {} id=0x{:x}{}\n",
+        klass,
+        name,
+        tag.tag_id,
+        tag.storage == blam::tag_storage_t::external ? " (indexed: resource map)" : "");
 
     auto header_of = [&](auto* type) {
         using T   = std::remove_const_t<std::remove_pointer_t<decltype(type)>>;
@@ -4427,9 +4650,38 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         if(auto* info = header_of((blam::unit_hud_interface*)nullptr))
             dump_unit_hud(info);
         break;
+    case blam::tag_class_t::wphi:
+        if(auto* info = header_of((blam::weapon_hud_interface*)nullptr))
+            dump_weapon_hud(info);
+        break;
+    case blam::tag_class_t::grhi:
+        if(auto* info = header_of((blam::grenade_hud_interface*)nullptr))
+            dump_grenade_hud(info);
+        break;
+    case blam::tag_class_t::hud:
+        if(auto* info = header_of((blam::hud_number*)nullptr))
+            dump_hud_number(info);
+        break;
     case blam::tag_class_t::actv:
         if(auto* info = header_of((blam::scn::actor_variant*)nullptr))
             dump_actor_variant(info);
+        break;
+    case blam::tag_class_t::actr:
+        if(auto* info = header_of((blam::scn::actor*)nullptr))
+        {
+            auto const& seen = info->perception;
+            fmt::print(
+                "  vision dist={} central={:.2f} max={:.2f} peripheral={:.2f}@{} hearing={} perception combat={} guard={} noncombat={}\n",
+                seen.max_vision_dist,
+                static_cast<float>(seen.central_vision),
+                static_cast<float>(seen.max_vision),
+                static_cast<float>(seen.peripheral_vision),
+                seen.peripheral_dist,
+                seen.hearing_dist,
+                seen.combat_perception_time,
+                seen.guard_perception_time,
+                seen.noncombat_perception_time);
+        }
         break;
     /* The rest of what derives from obje stops at the object header */
     case blam::tag_class_t::scen:
@@ -4540,6 +4792,10 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
     case blam::tag_class_t::ustr:
         if(auto* info = header_of((blam::ui::unicode_string_list*)nullptr))
             dump_ustr(info);
+        break;
+    case blam::tag_class_t::hmt:
+        if(auto* info = header_of((blam::hud_message_text*)nullptr))
+            dump_hmt(info);
         break;
     case blam::tag_class_t::smet:
         if(auto* info = header_of((blam::shader::shader_meter*)nullptr))
