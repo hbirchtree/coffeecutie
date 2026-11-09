@@ -1303,10 +1303,15 @@ void dump_weapon(blam::scn::weapon const* weapon)
     dump_block("triggers", weapon->triggers, [](weapon_t::trigger_t const& t) {
         print_flags("flags", t.flags);
         fmt::print(
-            "rate_of_fire={:g} magazine={} rounds_per_shot={}\n",
+            "rate_of_fire={:g} accel={:g} decel={:g} blurred={:g} magazine={} "
+            "rounds_per_shot={} min_loaded={}\n",
             t.maximum_rate_of_fire,
+            t.acceleration_time,
+            t.deceleration_time,
+            t.blurred_rate_of_fire,
             t.magazine,
-            t.rounds_per_shot);
+            t.rounds_per_shot,
+            t.minimum_rounds_loaded);
         fmt::print("          ");
         print_enum("prediction", t.prediction_type);
         print_enum("noise", t.firing_noise);
@@ -2736,6 +2741,15 @@ void dump_mode(blam::mod2::header<Ver> const* info)
     fmt::print("  markers={}\n", count_of(g_magic, info->markers));
     each(g_magic, info->markers, [](size_t i, auto const& marker) {
         fmt::print("    marker {}: name={}\n", i, marker.name.str());
+        each(g_magic, marker.instances, [](auto const& inst) {
+            fmt::print(
+                "      region={} permutation={} node={} pos={:g} rot={:g}\n",
+                inst.region_idx,
+                inst.permutation_idx,
+                inst.node_idx,
+                inst.position,
+                inst.rotation);
+        });
     });
     fmt::print("  regions={}\n", count_of(g_magic, info->regions));
     each(g_magic, info->regions, [](size_t i, auto const& region) {
