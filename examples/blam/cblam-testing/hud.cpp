@@ -4,6 +4,7 @@
 #include "blam_files.h"
 #include "cinematic.h"
 #include "components.h"
+#include "devices.h"
 #include "selected_version.h"
 #include "ui.h"
 #include "ui_data.h"
@@ -32,6 +33,7 @@ using HudManifest = compo::SubsystemManifest<
         const BipedStatus,
         const PlayerInput,
         const Actor,
+        const DeviceState,
         const Model>,
     type_list_t<
         HudScene,
@@ -966,24 +968,14 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         return Vecf4(Vecf3(color), 1.f);
     }
 
-    /* A weapon at its feet it would swap the one in hand for */
-    blam::scn::weapon const* offered(Proxy& p, PlayerInfo const& info, PlayerCamera const& cam, BipedEquipment const& equip)
+    /* The weapon a press of use would swap the one in hand for */
+    blam::scn::weapon const* offered(Proxy& p, PlayerInfo const& info)
     {
-        if(info.riding.vehicle || !equip.weapons[1].weapon)
+        auto const* model = info.offered.weapon ? p.template get<Model>(info.offered.weapon) : nullptr;
+        if(!model || !model->origin_object)
             return nullptr;
-        for(auto item : p.template select<Model, NetworkInfo>())
-        {
-            auto [model, net] = item.components();
-            auto const* tag   = model.origin_object;
-            if(!tag || !tag->matches(blam::tag_class_t::weap) || net.instance_id == 0 ||
-               SpawnObjectEvent::is_impostor(net.instance_id) || p.template get<PlayerInfo>(item.id()) ||
-               equip.weapons[0].tag == tag || equip.weapons[1].tag == tag ||
-               !within_pickup_reach(info, cam, model.position))
-                continue;
-            if(auto weapon = tag->template data<blam::scn::weapon>(*m_magic); weapon.has_value())
-                return weapon.value();
-        }
-        return nullptr;
+        auto weapon = model->origin_object->template data<blam::scn::weapon>(*m_magic);
+        return weapon.has_value() ? weapon.value() : nullptr;
     }
 
     /* The scripts' help text, and what the player could pick up */
@@ -1011,7 +1003,18 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             });
             return;
         }
-        auto const* weapon = offered(p, info, cam, equip);
+        if(auto runs = device_prompt(p, info, cam); !runs.empty())
+        {
+            Vecf4 const text = m_hudg->text_color;
+            m_view->texts.push_back({
+                .runs  = std::move(runs),
+                .at    = at,
+                .color = Vecf4(text.y, text.z, text.w, 1.f),
+                .below = !m_view->texts.empty(),
+            });
+            return;
+        }
+        auto const* weapon = offered(p, info);
         auto hud = weapon && weapon->hud_interface.valid() ? m_index.find(weapon->hud_interface.tag_id) : m_index.end();
         if(hud == m_index.end())
             return;
@@ -1053,6 +1056,22 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(!text.has_value())
             return std::nullopt;
         return run_t{.text = std::u16string(text.value())};
+    }
+
+    /* "Press X to <word>" for a control in reach whose object names one in
+     * the hudg's icon text, else "Press X to touch device" */
+    std::vector<run_t> device_prompt(Proxy& p, PlayerInfo const& info, PlayerCamera const& cam)
+    {
+        if(info.riding.vehicle != 0)
+            return {};
+        auto const aimed = aimed_control(p, cam);
+        if(!aimed.usable)
+            return {};
+        auto const* control = p.template get<DeviceState>(aimed.id)->control;
+        if(i16 const word = control->export_.hud_msg.index; word > 0)
+            if(auto const run = icon_text(word))
+                return message_of(m_global_messages, m_global_magic, "custom_device", std::span(&*run, 1));
+        return message_of(m_global_messages, m_global_magic, "touch_device");
     }
 
     /* The objective the scripts set, as text */

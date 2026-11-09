@@ -1,5 +1,7 @@
 #pragma once
 
+#include "components.h"
+
 #include <coffee/components/entity_container.h>
 #include <coffee/components/subsystem.h>
 
@@ -59,5 +61,50 @@ struct DeviceGroups : compo::SubsystemBase
         return true;
     }
 };
+
+/*! The control a player's use presses: in reach, nearest the view centre.
+ *  `usable` when it would take the press rather than deny it */
+struct aimed_control_t
+{
+    libc_types::u64 id{0};
+    bool            usable{false};
+};
+
+template<typename Proxy>
+aimed_control_t aimed_control(Proxy& p, PlayerCamera const& cam)
+{
+    using f32 = libc_types::f32;
+    constexpr f32 use_reach = 1.5f;
+    constexpr f32 use_cone  = .5f; /* cos 60 deg */
+
+    Vecf3 const     eye   = cam.camera.position;
+    Vecf3 const     look  = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+    aimed_control_t best  = {};
+    f32             aimed = use_cone;
+    for(auto entity : p.template select<DeviceState, Model>())
+    {
+        auto [device, model] = entity.components();
+        if(!device.control)
+            continue;
+        Vecf3 const to = model.position - eye;
+        f32 const   d  = glm::length(to);
+        if(d > use_reach || d <= 0.f)
+            continue;
+        if(f32 const a = glm::dot(to / d, look); a > aimed)
+        {
+            aimed   = a;
+            best.id = entity.id();
+        }
+    }
+    if(best.id == 0)
+        return best;
+    auto const& device = *p.template get<DeviceState>(best.id);
+    auto const& model  = *p.template get<Model>(best.id);
+    bool const  both   = device.kind_flags & DeviceState::both_sides;
+    bool const  facing = glm::dot(eye - model.position, model.rotation * Vecf3{1.f, 0.f, 0.f}) >= 0.f;
+    best.usable        = !(device.flags & DeviceState::not_usable) && device.power > 0.f &&
+                  !device.used && (both || facing);
+    return best;
+}
 
 void alloc_devices(compo::EntityContainer& e);

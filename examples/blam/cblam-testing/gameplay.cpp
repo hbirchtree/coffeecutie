@@ -6,6 +6,7 @@
 #include "model_markers.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "weapons.h"
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
@@ -24,7 +25,8 @@ using GameplayManifest = compo::SubsystemManifest<
         Model,
         const ObjectPhysics,
         PhysicsData,
-        const AnimationPlayback>,
+        const AnimationPlayback,
+        const BipedEquipment>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
@@ -94,16 +96,11 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             };
             physics.process(grab_ev, &grab);
 
+            offer(p, player.id(), info, cam, playing);
             bool& was_using = m_using[player.id()];
             if(playing && input.intent.use && !was_using)
                 use(p, game, player.id(), info, cam);
             was_using = input.intent.use;
-            /* What a press would board, for the HUD's prompt */
-            auto const seat = playing && info.riding.vehicle == 0 && info.mode.physics
-                                  ? nearest_seat(p, info, cam)
-                                  : std::nullopt;
-            info.offered.vehicle = seat ? seat->first : 0;
-            info.offered.seat    = seat ? seat->second : -1;
 
             if(info.riding.vehicle != 0)
                 ride(p, player.id(), info, cam, net);
@@ -192,7 +189,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         return out;
     }
 
-    /* A rider gets out; anyone else gets in the closest vehicle in reach */
+    /* A rider gets out; anyone else boards the seat on offer */
     void use(
         Proxy&              p,
         GameEventBus&       game,
@@ -207,71 +204,118 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             game.process(ev, &exit);
             return;
         }
-        auto const seat = nearest_seat(p, info, cam);
-        if(!seat)
+        if(info.offered.vehicle == 0 || info.offered.seat < 0)
             return;
-        auto const seats = seats_of(p, *p.template get<Model>(seat->first));
-        if(!seats)
+        auto const* vehicle = p.template get<Model>(info.offered.vehicle);
+        auto const  seats   = vehicle ? seats_of(p, *vehicle) : std::nullopt;
+        if(!seats || static_cast<size_t>(info.offered.seat) >= seats->size())
             return;
         GameEvent             ev{.type = GameEvent::UnitEnterVehicle};
         UnitEnterVehicleEvent enter{
-            .unit = player, .vehicle = seat->first, .seat = (*seats)[seat->second].label};
+            .unit    = player,
+            .vehicle = info.offered.vehicle,
+            .seat    = (*seats)[info.offered.seat].label};
         game.process(ev, &enter);
     }
 
-    /* The nearest free seat of the nearest vehicle in reach: what a press
-     * of use boards */
+    /* How squarely the view looks at a point: the cosine to it */
+    static f32 facing(PlayerCamera const& cam, Vecf3 const& at)
+    {
+        Vecf3 const view = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+        Vecf3 const to   = at - cam.camera.position;
+        return glm::dot(to, to) > 1e-6f ? glm::dot(view, glm::normalize(to)) : 1.f;
+    }
+
+    /* What a press of use would do: the seat in reach, or the weapon it
+     * would swap for, whichever is nearer the centre of the view */
+    void offer(Proxy& p, u64 player, PlayerInfo& info, PlayerCamera const& cam, bool playing)
+    {
+        info.offered = {};
+        if(!playing || info.riding.vehicle != 0 || !info.mode.physics)
+            return;
+        auto const seat   = nearest_seat(p, info, cam);
+        auto const weapon = nearest_weapon(p, player, info, cam);
+        f32 const  seat_facing =
+            seat ? facing(cam, entry_point(p, *p.template get<Model>(seat->first), seat->second)
+                                   .value_or(cam.camera.position))
+                 : -2.f;
+        if(weapon && weapon->second > seat_facing)
+            info.offered.weapon = weapon->first;
+        else if(seat)
+        {
+            info.offered.vehicle = seat->first;
+            info.offered.seat    = seat->second;
+        }
+    }
+
+    /* The weapon within arm's reach it would swap the one in hand for,
+     * the one looked at most squarely, with how squarely */
+    std::optional<std::pair<u64, f32>> nearest_weapon(
+        Proxy& p, u64 player, PlayerInfo const& info, PlayerCamera const& cam)
+    {
+        auto const* equip = p.template get<BipedEquipment>(player);
+        if(!equip || !equip->weapons[1].weapon)
+            return std::nullopt;
+        std::optional<std::pair<u64, f32>> best;
+        for(auto item : p.template select<Model, NetworkInfo>())
+        {
+            auto [model, net] = item.components();
+            auto const* tag   = model.origin_object;
+            if(!tag || !tag->matches(blam::tag_class_t::weap) || net.instance_id == 0 ||
+               SpawnObjectEvent::is_impostor(net.instance_id) ||
+               p.template get<PlayerInfo>(item.id()) || equip->weapons[0].tag == tag ||
+               equip->weapons[1].tag == tag || !within_pickup_reach(info, cam, model.position))
+                continue;
+            f32 const square = facing(cam, model.position);
+            if(!best || square > best->second)
+                best = std::pair{item.id(), square};
+        }
+        return best;
+    }
+
+    /* The free seat whose entry point is nearest the feet, within arm's
+     * reach of it */
     std::optional<std::pair<u64, i16>> nearest_seat(
         Proxy& p, PlayerInfo const& info, PlayerCamera const& cam)
     {
         Vecf3 const feet =
             cam.camera.position - Vecf3{0, 0, info.eye_height()};
-        u64 nearest  = 0;
-        f32 distance = vehicle_reach;
+        using seat_flags = blam::scn::unit::seat_t::seat_flags_t;
+        f32 closest = seat_reach;
+        std::optional<std::pair<u64, i16>> chosen;
         for(auto object : p.template select<Model, ObjectPhysics>())
         {
-            auto [model, physics] = object.components();
-            if(!physics.drive)
+            auto [vehicle, physics] = object.components();
+            if(!physics.drive || glm::distance(vehicle.position, feet) > vehicle_reach)
                 continue;
-            if(f32 d = glm::distance(model.position, feet); d < distance)
+            auto const taken = taken_seats(p, object.id());
+            auto const seats = seats_of(p, vehicle);
+            if(!seats)
+                continue;
+            bool driven = false;
+            for(i16 i = 0; i < static_cast<i16>(seats->size()); i++)
+                if(taken.contains(i) &&
+                   ((*seats)[i].flags & seat_flags::driver) != seat_flags::none)
+                    driven = true;
+            for(i16 i = 0; i < static_cast<i16>(seats->size()); i++)
             {
-                nearest  = object.id();
-                distance = d;
+                if(taken.contains(i))
+                    continue;
+                /* A tank's side seats wait for its driver */
+                if(!driven && ((*seats)[i].flags & seat_flags::not_valid_without_driver) !=
+                                  seat_flags::none)
+                    continue;
+                auto const& at = entry_point(p, vehicle, i);
+                if(!at || std::abs(at->z - feet.z) > seat_rise)
+                    continue;
+                if(f32 d = glm::distance(Vecf2(*at), Vecf2(feet)); d < closest)
+                {
+                    closest = d;
+                    chosen  = std::pair{object.id(), i};
+                }
             }
         }
-        if(nearest == 0)
-            return std::nullopt;
-        auto const& vehicle = *p.template get<Model>(nearest);
-        auto const  taken   = taken_seats(p, nearest);
-        f32         closest = std::numeric_limits<f32>::max();
-        i16         chosen  = -1;
-        auto const  seats   = seats_of(p, vehicle);
-        using seat_flags = blam::scn::unit::seat_t::seat_flags_t;
-        bool driven      = false;
-        for(i16 i = 0; seats && i < static_cast<i16>(seats->size()); i++)
-            if(taken.contains(i) &&
-               ((*seats)[i].flags & seat_flags::driver) != seat_flags::none)
-                driven = true;
-        for(i16 i = 0; seats && i < static_cast<i16>(seats->size()); i++)
-        {
-            if(taken.contains(i))
-                continue;
-            /* A tank's side seats wait for its driver */
-            if(!driven && ((*seats)[i].flags & seat_flags::not_valid_without_driver) !=
-                              seat_flags::none)
-                continue;
-            auto const& at = entry_point(p, vehicle, i);
-            if(!at)
-                continue;
-            if(f32 d = glm::distance(*at, feet); d < closest)
-            {
-                closest = d;
-                chosen  = i;
-            }
-        }
-        if(chosen < 0)
-            return std::nullopt;
-        return std::pair{nearest, chosen};
+        return chosen;
     }
 
     using seats_t = semantic::Span<blam::scn::unit::seat_t const>;
@@ -292,6 +336,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         return seats.value();
     }
 
+    /* Seats players sit in, and those the scripts and AI seated */
     std::set<i16> taken_seats(Proxy& p, u64 vehicle)
     {
         std::set<i16> taken;
@@ -299,6 +344,10 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             if(auto const& riding = rider.template get<PlayerInfo>().riding;
                riding.vehicle == vehicle)
                 taken.insert(riding.seat);
+        for(auto rider : p.template select<ObjectPhysics>())
+            if(auto const& body = rider.template get<ObjectPhysics>();
+               body.seated && body.seated_in == vehicle && !p.template get<PlayerInfo>(rider.id()))
+                taken.insert(body.seat);
         return taken;
     }
 
@@ -441,11 +490,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         auto seats = unit.value()[0].seats.data(magic);
         if(!seats.has_value())
             return;
-        std::set<i16> taken;
-        for(auto rider : p.template select<PlayerInfo>())
-            if(auto const& riding = rider.template get<PlayerInfo>().riding;
-               riding.vehicle == enter.vehicle)
-                taken.insert(riding.seat);
+        auto const taken = taken_seats(p, enter.vehicle);
         using flags_t    = blam::scn::unit::seat_t::seat_flags_t;
         auto const label = enter.seat.str();
         for(i16 i = 0; i < static_cast<i16>(seats.value().size()); i++)
@@ -569,7 +614,9 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             net->changes.viewport = net->changes.transform = true;
     }
 
-    static constexpr f32 vehicle_reach  = 2.5f;
+    static constexpr f32 vehicle_reach  = 6.f;  /* wu, from its origin: worth looking at its seats */
+    static constexpr f32 seat_reach     = .9f;  /* wu, from the feet to a seat's entry point */
+    static constexpr f32 seat_rise      = 1.2f; /* wu, how far above or below the feet an entry point may sit */
     static constexpr f32 chase_height   = 1.2f;
     static constexpr f32 chase_distance = 3.5f;
     static constexpr f32 exit_distance  = 1.6f;

@@ -187,35 +187,13 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         auto const* cam  = p.template get<PlayerCamera>(player);
         if(!info || !cam || info->riding.vehicle != 0)
             return;
-        Vecf3 const eye  = cam->camera.position;
-        Vecf3 const look = glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f};
-        u64 best  = 0;
-        f32 aimed = use_cone;
-        for(auto entity : p.template select<DeviceState, Model>())
-        {
-            auto [device, model] = entity.components();
-            if(!device.control)
-                continue;
-            Vecf3 const to = model.position - eye;
-            f32 const   d  = glm::length(to);
-            if(d > use_reach || d <= 0.f)
-                continue;
-            if(f32 const a = glm::dot(to / d, look); a > aimed)
-            {
-                aimed = a;
-                best  = entity.id();
-            }
-        }
-        if(best == 0)
+        auto const aimed = aimed_control(p, *cam);
+        if(aimed.id == 0)
             return;
-        auto&       device = *p.template get<DeviceState>(best);
-        auto const& model  = *p.template get<Model>(best);
+        auto&       device = *p.template get<DeviceState>(aimed.id);
+        auto const& model  = *p.template get<Model>(aimed.id);
         auto const& tag    = *device.control;
-        bool const  both   = device.kind_flags & DeviceState::both_sides;
-        bool const  facing = glm::dot(eye - model.position, model.rotation * Vecf3{1.f, 0.f, 0.f}) >= 0.f;
-        bool const  usable = !(device.flags & DeviceState::not_usable) && device.power > 0.f &&
-                            !device.used && (both || facing);
-        if(!usable)
+        if(!aimed.usable)
             return sound(p, tag.deny, model);
         using type_t = blam::scn::device_control::control_type_t;
         f32 const now = device.position_target;
@@ -531,8 +509,6 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
     static constexpr f32 unit_radius               = .3f;
     static constexpr f32 default_activation_radius = 1.5f;
     /* A control is used from this close, looked at within this cone */
-    static constexpr f32 use_reach = 1.5f;
-    static constexpr f32 use_cone  = .5f; /* cos 60 deg */
     static constexpr u64 sound_base = 0x4445564900000000ULL; /* 'DEVI' */
 
     std::unique_ptr<TickQueue>                                      m_ticks;
