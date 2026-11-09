@@ -65,7 +65,9 @@ class MassPointAction : public btActionInterface
     {
         for(auto const& point : m_data->points)
         {
-            auto sphere = std::make_unique<btSphereShape>(point.radius);
+            /* A point smaller than a fall takes in a step would pass the
+             * ground between looks (the cursed D20 spawners' 3 cm ones) */
+            auto sphere = std::make_unique<btSphereShape>(std::max(point.radius, min_point_radius));
             auto probe  = std::make_unique<btCollisionObject>();
             probe->setCollisionShape(sphere.get());
             m_spheres.push_back(std::move(sphere));
@@ -198,7 +200,10 @@ class MassPointAction : public btActionInterface
                                 (touch.depth - data.ground_depth) -
                             std::sqrt(bottom_stiffness) * damping *
                                 std::min(vn, 0.f);
-                push = std::max(push, 0.f);
+                /* No more than stops its fall and lifts it out in a step: a
+                 * shallow spring hit fast would otherwise throw it */
+                f32 const most = share * (std::max(-vn, 0.f) + touch.depth / dt) / dt;
+                push = std::clamp(push, 0.f, most);
                 m_body.applyImpulse(touch.normal * (push * dt), rel);
 
                 /* ground_friction: slide fraction removed per 30 Hz tick */
@@ -367,6 +372,13 @@ class MassPointAction : public btActionInterface
             accel = std::clamp(-speed / dt, -d.deceleration_or_accel(), d.deceleration_or_accel());
             m_braking = m_handbrake && std::abs(speed) > .1f;
         }
+        /* Its engine holds the pace up a slope, through the level push it
+         * gets, as steep as climb_grade; past that it labours */
+        btVector3 const heading3 = body.getBasis() * btVector3(1, 0, 0);
+        f32 const       level    = std::max(f32(btVector3(heading3.x(), heading3.y(), 0.f).length()), .3f);
+        f32 const       most     = climb_grade * m_body.getGravity().length();
+        if(f32 const downhill = m_body.getGravity().dot(heading3) / level; accel * downhill < 0.f)
+            accel -= std::clamp(downhill, -most, most);
         size_t          pushing  = 0;
         for(auto const& touch : touches)
             pushing += traction(m_data->points[touch.point]);
@@ -557,6 +569,8 @@ class MassPointAction : public btActionInterface
     static constexpr f32 bottom_stiffness       = 10.f;
     /* How far past a wheel its ray looks for the ground */
     static constexpr f32 suspension_reach       = .5f;
+    /* Steepest slope, as rise over run, an engine climbs at its pace */
+    static constexpr f32 climb_grade            = .7f;
     static constexpr f32 ground_rest_fraction   = 1.f / 4.f;
 
   public:
@@ -651,10 +665,12 @@ class MassPointAction : public btActionInterface
             f32                      depth{0.f};
             btVector3                normal{0, 0, 1};
 
+            /* Not riders, which sit in the hull taking no contacts */
             bool needsCollision(btBroadphaseProxy* proxy) const override
             {
-                return ContactResultCallback::needsCollision(proxy) &&
-                       owner->checkCollideWith(static_cast<btCollisionObject const*>(proxy->m_clientObject));
+                auto const* other = static_cast<btCollisionObject const*>(proxy->m_clientObject);
+                return ContactResultCallback::needsCollision(proxy) && owner->checkCollideWith(other) &&
+                       other->hasContactResponse();
             }
 
             btScalar addSingleResult(
@@ -800,6 +816,7 @@ class MassPointAction : public btActionInterface
     bool                                            m_recorded{false};
     bool                                            m_reversing{false};
     std::vector<f32>                                m_depths;
+    static constexpr f32                            min_point_radius = .15f; /* wu; stock tags have .22 and up */
     size_t                                          m_supporting{0};
     std::vector<f32>                                m_heights;
     f32                                             m_slip{0.f};
@@ -2638,10 +2655,12 @@ struct PhysicsSystem
                 &body, filter::DefaultFilter, all ^ filter::DebrisFilter);
             break;
         case Physics::BodyCreationShape::Grounded:
-            /* Mass points carry it; the hulls (a warthog's coll tires are
-             * smaller than its mass point ones) only stop hard landings */
+            /* Mass points carry it and meet the level for it, as Halo's do;
+             * the coll hull sits so low it caught the ground on every bump,
+             * a jolt or a stall each time. It still meets other bodies */
             m_world->addRigidBody(
-                &body, filter::DefaultFilter, all ^ filter::DebrisFilter);
+                &body, filter::DefaultFilter,
+                all ^ filter::DebrisFilter ^ filter::StaticFilter);
             break;
         case Physics::BodyCreationShape::Item:
             m_world->addRigidBody(
