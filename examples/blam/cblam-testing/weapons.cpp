@@ -62,6 +62,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         f32  reloading{0.f};    /* seconds left */
         f32  striking{0.f};     /* melee, seconds left */
         f32  charge{-1.f};      /* held while charging, s; <0 when not */
+        f32  spin{0.f};         /* rate of fire wound up, 0 to 1 */
         blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
 
@@ -143,7 +144,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 state.reloading = 0.f;
                 pull(p, ent.id(), info, cam, *weapon_tag, true);
             }
-            bool const held = input.intent.fire && !throwing && state.striking <= 0.f;
+            bool const pulled = input.intent.fire && !throwing && state.striking <= 0.f;
 
             /* Bodies switch, reload and run dry; vehicle guns don't */
             auto* ammo = vehicle ? nullptr : &equip->weapons[0];
@@ -157,11 +158,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 ammo ? magazine_of(weapon.value()[0], trigger, magic) : nullptr;
             i16 const per_shot = std::max<i16>(trigger.rounds_per_shot, 1);
 
-            /* A rate of zero fires once a pull */
-            f32 const rate = trigger.maximum_rate_of_fire.y > 0.f ? trigger.maximum_rate_of_fire.y
-                                                                  : trigger.maximum_rate_of_fire.x;
+            /* A rate of zero fires once a pull. A trigger with a spin-up
+             * winds from its first rate to its last over the acceleration
+             * time, and keeps firing while it winds down after release */
+            bool const spins = trigger.acceleration_time > 0.f &&
+                               trigger.maximum_rate_of_fire.y > trigger.maximum_rate_of_fire.x;
             bool const repeats =
-                rate > 0.f &&
+                (trigger.maximum_rate_of_fire.x > 0.f || trigger.maximum_rate_of_fire.y > 0.f) &&
                 (trigger.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
                     trigger_t::flags_t::none;
             /* A trigger that charges fires as it is let go: its partner's
@@ -193,8 +196,23 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 }
                 if(ammo)
                     cool(*ammo, gun_tag, dt);
-                bool const able = loaded && state.reloading <= 0.f && state.cooldown <= 0.f &&
-                                  (!ammo || !spent(*ammo, gun_tag));
+                bool const ready = loaded && state.reloading <= 0.f &&
+                                   (!ammo || !spent(*ammo, gun_tag));
+                bool const able = ready && state.cooldown <= 0.f;
+                if(spins)
+                {
+                    if(pulled && ready)
+                        state.spin = std::min(state.spin + dt / trigger.acceleration_time, 1.f);
+                    else if(trigger.deceleration_time > 0.f)
+                        state.spin = std::max(state.spin - dt / trigger.deceleration_time, 0.f);
+                    else
+                        state.spin = 0.f;
+                }
+                f32 const rate =
+                    spins ? glm::mix(trigger.maximum_rate_of_fire.x, trigger.maximum_rate_of_fire.y, state.spin)
+                    : trigger.maximum_rate_of_fire.y > 0.f ? trigger.maximum_rate_of_fire.y
+                                                           : trigger.maximum_rate_of_fire.x;
+                bool const held = pulled || (spins && state.spin > 0.f);
                 i32 fires = -1;
                 /* A fresh pull on nothing to fire: the dry click */
                 bool const dry = magazine ? !loaded && ammo->rounds_total < per_shot
@@ -288,7 +306,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             {
                 equip->reloading = state.reloading > 0.f;
                 drive_functions(
-                    p, ent.id(), weapon.value()[0], state, held, magic, ammo,
+                    p, ent.id(), weapon.value()[0], state, pulled || state.spin > 0.f, magic, ammo,
                     charges ? trigger.charging_time : 0.f);
             }
         }
