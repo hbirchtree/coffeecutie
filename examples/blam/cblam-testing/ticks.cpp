@@ -202,14 +202,15 @@ bool ticked(MotionProxy& p, u64 id)
 /* Further than this in a tick is a teleport, not motion */
 constexpr f32 max_tick_move = 10.f;
 
-/*! Before a frame's ticks, keeps the pose they start from */
+/*! Before the frame's steps are written back, keeps the pose they start
+ *  from: the next frame draws between the two */
 struct MotionSnapshot : compo::RestrictedSubsystem<MotionSnapshot, MotionManifest>
 {
     using type = MotionSnapshot;
 
     MotionSnapshot()
     {
-        this->priority = 760;
+        this->priority = 3072; /* just ahead of PhysicsApply */
     }
 
     void start_restricted(MotionProxy& p, time_point const&)
@@ -249,7 +250,9 @@ struct MotionInterpolator
 
     void start_restricted(MotionProxy& p, time_point const&)
     {
-        f32 const alpha = p.subsystem<TickClock>().alpha();
+        /* This frame's ticks are written back after the drawing, so their
+         * frame draws the interval before them run on past its end */
+        f32 const alpha = p.subsystem<TickClock>().alpha() + (m_ticks->take().empty() ? 0.f : 1.f);
         for(auto ent : p.select<Model>())
         {
             auto& model = ent.get<Model>();
@@ -301,6 +304,8 @@ struct MotionInterpolator
             model.position  = Vecf3(model.transform[3]);
         }
     }
+
+    std::unique_ptr<TickQueue> m_ticks;
 };
 
 } // namespace
@@ -309,7 +314,8 @@ void alloc_ticks(compo::EntityContainer& e)
 {
     auto& snapshot   = e.register_subsystem_inplace<MotionSnapshot>();
     snapshot.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
-    e.register_subsystem_inplace<MotionInterpolator>();
+    auto& interpolator   = e.register_subsystem_inplace<MotionInterpolator>();
+    interpolator.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
     auto& clock = e.register_subsystem_inplace<TickClock>();
     clock.m_pause_queue =
         e.subsystem_cast<GameEventBus>().addQueuedEventFunction<SimulationPauseEvent>(
