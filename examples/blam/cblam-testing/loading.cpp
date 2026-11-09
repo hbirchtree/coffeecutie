@@ -2002,8 +2002,8 @@ struct ResourceLoader
                 glm::length(spawn.velocity) > 0.f
                     ? spawn.velocity
                     : spawn.rotation * Vecf3{1.f, 0.f, 0.f} *
-                          (proj->initial_velocity > 0.f ? proj->initial_velocity * 30.f
-                                                        : throw_speed);
+                          (proj->initial_velocity != 0.f ? proj->initial_velocity * 30.f
+                                                         : throw_speed);
             if(proj->detonation_timer_starts ==
                    blam::scn::projectile::timer_starts_t::immediately &&
                proj->timer.y > 0.f)

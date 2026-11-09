@@ -107,8 +107,9 @@ struct ProjectileSystem
         {
             f32 const along =
                 std::min(flight.travelled / tag.maximum_range, 1.f);
+            /* Negative tag speeds fire backwards; the heading is set */
             flight.velocity *=
-                glm::mix(tag.initial_velocity, tag.final_velocity, along) *
+                std::abs(glm::mix(tag.initial_velocity, tag.final_velocity, along)) *
                 ticks_per_second / speed;
         }
         if(flight.resting)
