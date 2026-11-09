@@ -793,6 +793,18 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                     .at    = at,
                     .color = flashing(m_hudg->help_text_colors, cinematic.help.flash, cinematic.help.elapsed),
                 });
+        /* A seat in reach is what use boards, so its prompt comes first */
+        if(auto runs = seat_prompt(p, info); !runs.empty())
+        {
+            Vecf4 const text = m_hudg->text_color;
+            m_view->texts.push_back({
+                .runs  = std::move(runs),
+                .at    = at,
+                .color = Vecf4(text.y, text.z, text.w, 1.f),
+                .below = !m_view->texts.empty(),
+            });
+            return;
+        }
         auto const* weapon = offered(p, info, cam, equip);
         auto hud = weapon && weapon->hud_interface.valid() ? m_index.find(weapon->hud_interface.tag_id) : m_index.end();
         if(hud == m_index.end())
@@ -818,6 +830,42 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 .color = Vecf4(text.y, text.z, text.w, 1.f),
                 .below = !m_view->texts.empty(),
             });
+    }
+
+    /* A string of the hudg's icon text list, as a run */
+    std::optional<run_t> icon_text(i32 index)
+    {
+        auto const* list = m_hudg ? data_of<blam::ui::unicode_string_list>(m_hudg->alternate_icon_text) : nullptr;
+        if(!list)
+            return std::nullopt;
+        auto subs = list->data.data(*m_magic);
+        if(!subs.has_value() || index < 0 || static_cast<size_t>(index) >= subs.value().size())
+            return std::nullopt;
+        auto text = subs.value()[index].str(*m_magic);
+        if(!text.has_value())
+            return std::nullopt;
+        return run_t{.text = std::u16string(text.value())};
+    }
+
+    /* "Press X to enter <seat> seat of <vehicle>": the seat's and the
+     * vehicle's words are indices into the hudg's icon text */
+    std::vector<run_t> seat_prompt(Proxy& p, PlayerInfo const& info)
+    {
+        auto const* vehicle = info.offered.vehicle ? p.template get<Model>(info.offered.vehicle) : nullptr;
+        if(!vehicle || !vehicle->origin_object || info.offered.seat < 0)
+            return {};
+        auto unit = vehicle->origin_object->template data<blam::scn::unit>(*m_magic);
+        if(!unit.has_value())
+            return {};
+        auto seats = unit.value()[0].seats.data(*m_magic);
+        if(!seats.has_value() || static_cast<size_t>(info.offered.seat) >= seats.value().size())
+            return {};
+        auto const role = icon_text(seats.value()[info.offered.seat].hud_text_message_index);
+        auto const name = icon_text(unit.value()[0].export_.hud_msg.index);
+        if(!role || !name)
+            return {};
+        std::array<run_t, 2> const values{*role, *name};
+        return message_of(m_global_messages, "enter_vehicle", values);
     }
 
     /* ---- Scoreboard ---- */

@@ -98,6 +98,12 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             if(playing && input.intent.use && !was_using)
                 use(p, game, player.id(), info, cam);
             was_using = input.intent.use;
+            /* What a press would board, for the HUD's prompt */
+            auto const seat = playing && info.riding.vehicle == 0 && info.mode.physics
+                                  ? nearest_seat(p, info, cam)
+                                  : std::nullopt;
+            info.offered.vehicle = seat ? seat->first : 0;
+            info.offered.seat    = seat ? seat->second : -1;
 
             if(info.riding.vehicle != 0)
                 ride(p, player.id(), info, cam, net);
@@ -201,6 +207,23 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             game.process(ev, &exit);
             return;
         }
+        auto const seat = nearest_seat(p, info, cam);
+        if(!seat)
+            return;
+        auto const seats = seats_of(p, *p.template get<Model>(seat->first));
+        if(!seats)
+            return;
+        GameEvent             ev{.type = GameEvent::UnitEnterVehicle};
+        UnitEnterVehicleEvent enter{
+            .unit = player, .vehicle = seat->first, .seat = (*seats)[seat->second].label};
+        game.process(ev, &enter);
+    }
+
+    /* The nearest free seat of the nearest vehicle in reach: what a press
+     * of use boards */
+    std::optional<std::pair<u64, i16>> nearest_seat(
+        Proxy& p, PlayerInfo const& info, PlayerCamera const& cam)
+    {
         Vecf3 const feet =
             cam.camera.position - Vecf3{0, 0, info.eye_height()};
         u64 nearest  = 0;
@@ -217,13 +240,12 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             }
         }
         if(nearest == 0)
-            return;
-        GameEvent             ev{.type = GameEvent::UnitEnterVehicle};
-        UnitEnterVehicleEvent enter{.unit = player, .vehicle = nearest};
-        auto const&           vehicle = *p.template get<Model>(nearest);
-        auto const            taken   = taken_seats(p, nearest);
-        f32                   closest = std::numeric_limits<f32>::max();
-        auto const            seats   = seats_of(p, vehicle);
+            return std::nullopt;
+        auto const& vehicle = *p.template get<Model>(nearest);
+        auto const  taken   = taken_seats(p, nearest);
+        f32         closest = std::numeric_limits<f32>::max();
+        i16         chosen  = -1;
+        auto const  seats   = seats_of(p, vehicle);
         using seat_flags = blam::scn::unit::seat_t::seat_flags_t;
         bool driven      = false;
         for(i16 i = 0; seats && i < static_cast<i16>(seats->size()); i++)
@@ -243,13 +265,13 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
                 continue;
             if(f32 d = glm::distance(*at, feet); d < closest)
             {
-                closest    = d;
-                enter.seat = (*seats)[i].label;
+                closest = d;
+                chosen  = i;
             }
         }
-        if(closest == std::numeric_limits<f32>::max())
-            return;
-        game.process(ev, &enter);
+        if(chosen < 0)
+            return std::nullopt;
+        return std::pair{nearest, chosen};
     }
 
     using seats_t = semantic::Span<blam::scn::unit::seat_t const>;
