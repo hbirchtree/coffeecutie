@@ -377,6 +377,11 @@ static void bind_objects(compo::EntityContainer& e, SaveState& save)
             .dead   = status.dead,
         };
         e.subsystem_cast<GameEventBus>().inject(ev, &vitality);
+        /* What the tags tie to the shield (a jackal's gate) follows it
+         * back; the loader leaves an unchanged one alone */
+        GameEvent           shield_ev{.type = GameEvent::ShieldDepleted};
+        ShieldDepletedEvent shield{.unit = id, .depleted = status.shield <= 0.f};
+        e.subsystem_cast<GameEventBus>().inject(shield_ev, &shield);
     });
     save.bind(e, &AnimationPlayback::stance);
     save.bind(e, &AnimationPlayback::emotion);
