@@ -1053,6 +1053,13 @@ struct PlayerInfo
         Vecf2 pitch_range{-1.5f, 1.5f}; /*!< How far the seat looks down and up */
     } riding;
 
+    /*! The seat a press of use would take, for the HUD's prompt */
+    struct
+    {
+        u64 vehicle{0};
+        i16 seat{-1};
+    } offered;
+
     struct
     {
         bool physics{false};
