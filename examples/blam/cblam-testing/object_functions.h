@@ -67,7 +67,32 @@ inline f32 evaluate(
         v += *s;
     if(auto s = value_of(fn.scale_result_by))
         v *= *s;
+    /* Bounds other than 0..1 map or clip the result; an additive function's
+     * result is the step it adds each tick */
+    using mode_t = blam::scn::object::function_t::bounds_mode_t;
+    if(f32 const lo = fn.bounds.x, hi = fn.bounds.y; hi > lo && (lo != 0.f || hi != 1.f))
+        switch(fn.bounds_mode)
+        {
+        case mode_t::scale_to_fit:
+            v = lo + std::clamp(v, 0.f, 1.f) * (hi - lo);
+            break;
+        case mode_t::clip_and_normalize:
+            v = (std::clamp(v, lo, hi) - lo) / (hi - lo);
+            break;
+        default:
+            v = std::clamp(v, lo, hi);
+            break;
+        }
+    /* A last factor; 0 leaves it be (the cursed banshee's flap step) */
+    if(fn.scale_by > 0.f)
+        v *= fn.scale_by;
     return std::clamp(v, 0.f, 1.f);
+}
+
+inline bool additive(blam::scn::object::function_t const& fn)
+{
+    using flags_t = blam::scn::object::function_t::flags_t;
+    return (fn.flags & flags_t::additive) != flags_t::none;
 }
 
 /* Every function in turn, then off where the one it turns off with is */

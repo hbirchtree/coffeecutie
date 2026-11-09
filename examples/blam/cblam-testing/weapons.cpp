@@ -63,6 +63,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         f32  striking{0.f};     /* melee, seconds left */
         f32  charge{-1.f};      /* held while charging, s; <0 when not */
         f32  spin{0.f};         /* rate of fire wound up, 0 to 1 */
+        bool spins{false};      /* the trigger winds up at all */
         blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
 
@@ -163,6 +164,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
              * time, and keeps firing while it winds down after release */
             bool const spins = trigger.acceleration_time > 0.f &&
                                trigger.maximum_rate_of_fire.y > trigger.maximum_rate_of_fire.x;
+            state.spins      = spins;
             bool const repeats =
                 (trigger.maximum_rate_of_fire.x > 0.f || trigger.maximum_rate_of_fire.y > 0.f) &&
                 (trigger.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
@@ -308,7 +310,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 drive_functions(
                     p, ent.id(), weapon.value()[0], state, pulled || state.spin > 0.f, magic, ammo,
                     charges ? trigger.charging_time : 0.f);
-            }
+            } else
+                drive_vehicle(
+                    p, vehicle, weapon.value()[0], state, pulled || state.spin > 0.f, magic,
+                    static_cast<u32>(ticks.size()));
         }
         std::erase_if(m_states, [&live](auto const& e) {
             return !live.contains(e.first);
@@ -1345,6 +1350,96 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         hum(p, player, id, *model, out, magic);
     }
 
+    /* A vehicle's object functions as its gun fires: its seats' power and
+     * engine, and for an input it leaves unnamed its gun's export, so the
+     * gun's rate of fire can drive the hull (the cursed ghost spins). An
+     * additive function keeps what it summed, wrapping, a tick at a time */
+    void drive_vehicle(
+        Proxy&               p,
+        u64                  vehicle,
+        weapon_t const&      weapon,
+        state_t const&       state,
+        bool                 held,
+        blam::map_ptr const& magic,
+        u32                  ticks)
+    {
+        auto* model = p.template get<Model>(vehicle);
+        if(!model || !model->origin_object)
+            return;
+        auto vehi = model->origin_object->template data<blam::scn::vehicle>(magic);
+        if(!vehi.has_value())
+            return;
+        auto const& v = vehi.value()[0];
+
+        std::array<f32, 4> gun{};
+        for(size_t i = 0; i < gun.size(); i++)
+            gun[i] = input_value(weapon.weapon_inputs[i], state, held, nullptr, 0.f, 1.f);
+        std::array<f32, 4> gun_out = gun;
+        if(auto functions = weapon.functions.data(magic); functions.has_value())
+            for(size_t i = 0; i < gun_out.size() && i < functions.value().size(); i++)
+                gun_out[i] = blam_functions::evaluate(functions.value()[i], gun, gun_out);
+
+        auto const* body   = p.template get<ObjectPhysics>(vehicle);
+        f32 const   engine = body ? std::min(std::abs(body->vehicle.throttle), 1.f) : 0.f;
+        /* Speed along the hull, as a share of the tag's top speeds (wu per tick) */
+        f32 const along = body ? glm::dot(body->linear_velocity, model->rotation * Vecf3{1.f, 0.f, 0.f}) /
+                                     static_cast<f32>(TickClock::rate)
+                               : 0.f;
+        auto share = [](f32 speed, f32 top) { return top > 0.f ? std::clamp(speed / top, 0.f, 1.f) : 0.f; };
+        using unit_in_t = blam::scn::unit::unit_function_in_t;
+        using vehi_in_t = blam::scn::vehicle::vehicle_function_in_t;
+        std::array<f32, 4> in{};
+        for(size_t i = 0; i < in.size(); i++)
+        {
+            std::optional<f32> value;
+            switch(v.unit_inputs[i])
+            {
+            case unit_in_t::driver_seat_power:
+            case unit_in_t::gunner_seat_power:
+                value = 1.f;
+                break;
+            default:
+                break;
+            }
+            if(!value)
+                switch(v.vehicle_inputs[i])
+                {
+                case vehi_in_t::engine_hack:
+                case vehi_in_t::thrust:
+                case vehi_in_t::hover:
+                    value = engine;
+                    break;
+                case vehi_in_t::speed_absolute:
+                    value = share(std::abs(along), along >= 0.f ? v.maximum_forward_speed : std::abs(v.maximum_reverse_speed));
+                    break;
+                case vehi_in_t::speed_forward:
+                    value = share(along, v.maximum_forward_speed);
+                    break;
+                case vehi_in_t::speed_backward:
+                    value = share(-along, std::abs(v.maximum_reverse_speed));
+                    break;
+                default:
+                    break;
+                }
+            in[i] = value ? *value : gun_out[i];
+        }
+        std::array<f32, 4> out = in;
+        if(auto functions = v.functions.data(magic); functions.has_value())
+            for(size_t i = 0; i < out.size() && i < functions.value().size(); i++)
+            {
+                f32 const value = blam_functions::evaluate(functions.value()[i], in, out);
+                if(!blam_functions::additive(functions.value()[i]))
+                {
+                    out[i] = value;
+                    continue;
+                }
+                f32 const was = std::max(model->object_function[i], 0.f);
+                f32 const sum = was + value * static_cast<f32>(ticks);
+                out[i]        = sum - std::floor(sum);
+            }
+        model->object_function = out;
+    }
+
     /* What a unit other than a player holds exports as well: its charge,
      * heat and age through its functions, onto the model in its hand and
      * for the holder to import (a hunter's cannon flare) */
@@ -1451,7 +1546,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         case input_t::primary_firing_on:
             return state.fired ? 1.f : 0.f;
         case input_t::primary_rate_of_fire:
-            return held ? 1.f : 0.f;
+            return state.spins ? state.spin : held ? 1.f : 0.f;
         case input_t::primary_ammunition:
         case input_t::secondary_ammunition:
             return loaded;
