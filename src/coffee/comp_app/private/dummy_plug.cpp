@@ -14,6 +14,8 @@
 #include <peripherals/stl/enumerate.h>
 
 #include <algorithm>
+#include <array>
+#include <cstdio>
 #include <chrono>
 #include <optional>
 
@@ -64,6 +66,7 @@ enum class type_t
     controller_connect,
     controller_button,
     controller_axis,
+    cs, /* a whole controller state */
 
     custom,
 };
@@ -253,6 +256,62 @@ void queue_input_event(
                     ~static_cast<libc_types::u16>(1u << bit);
             });
         }
+        break;
+    }
+    case type_t::cs: {
+        /* The whole pad at once: "state" is 4 hex digits of buttons then
+         * six axis bytes in hex (signed, -127..127, triggers 0..127), "i"
+         * the controller; what differs from the pad's state then goes out
+         * as presses, releases and axis moves */
+        const auto controller = event.value("i", event.value("index", 0u));
+        const auto hex        = event.value("state", std::string());
+        libc_types::u16    buttons = 0;
+        std::array<i16, 6> axes{};
+        if(hex.size() >= 16)
+        {
+            buttons = static_cast<libc_types::u16>(std::stoul(hex.substr(0, 4), nullptr, 16));
+            for(size_t a = 0; a < axes.size(); a++)
+                axes[a] = static_cast<i16>(
+                    static_cast<libc_types::i8>(std::stoul(hex.substr(4 + a * 2, 2), nullptr, 16)) * 258);
+        }
+        if(!controllers)
+            break;
+        mutate_future(start_time, [bus, controllers, controller, buttons, axes] {
+            auto&   state = controllers->ensure(controller);
+            CIEvent ev;
+            ev.type = CIEvent::Controller;
+            for(u8 b = 0; b < 16; b++)
+            {
+                bool const now = (buttons >> b) & 1, was = (state.buttons.d >> b) & 1;
+                if(now == was)
+                    continue;
+                CIControllerAtomicEvent atomic = {
+                    .index        = b,
+                    .controller   = static_cast<u8>(controller),
+                    .button_state = now,
+                    .axis         = false,
+                };
+                if(bus)
+                    bus->inject(ev, &atomic);
+            }
+            for(u8 a = 0; a < axes.size(); a++)
+            {
+                if(state.axes.d[a] == axes[a])
+                    continue;
+                CIControllerAtomicEvent atomic = {
+                    .value        = axes[a],
+                    .index        = a,
+                    .controller   = static_cast<u8>(controller),
+                    .button_state = false,
+                    .axis         = true,
+                };
+                if(bus)
+                    bus->inject(ev, &atomic);
+            }
+            state.buttons.d = buttons;
+            for(u8 a = 0; a < axes.size(); a++)
+                state.axes.d[a] = axes[a];
+        });
         break;
     }
     case type_t::controller_connect: {
@@ -529,7 +588,7 @@ void fork_dummy_plugs(
         std::exit(1);
     }
 
-    dummy_plug.config  = nlohmann::json::parse(config_content.data());
+    dummy_plug.config = nlohmann::json::parse(config_content.data());
     auto const& config = dummy_plug.config;
 
     if(config.empty())
@@ -577,11 +636,7 @@ void fork_dummy_plugs(
                app_info->state() != comp_app::interfaces::AppInfo::loaded)
                 return;
             if(!dummy_plug.pending_actions.empty())
-            {
-                if(!dummy_plug.step_between_captures)
-                    return;
-                dummy_plug.step_between_captures = false;
-            }
+                return;
             dummy_plug.frame_index++;
         });
         rq::runtime_queue::OverrideClock(
@@ -826,7 +881,10 @@ struct DummyPlugDrain : compo::SubsystemBase
 
     virtual void start_frame(ContainerProxy&, time_point const&) final
     {
-        if(m_config->screenshot_armed || m_config->step_between_captures)
+        if(m_config->screenshot_armed)
+            return;
+        /* One frame passes between a capture and the next action */
+        if(std::exchange(m_config->step_between_captures, false))
             return;
         while(!m_config->pending_actions.empty())
         {
@@ -1055,12 +1113,14 @@ void insert_dummy_plug(
                         continue;
                     const auto type = type_to_enum(event, "type");
 
-                    cDebug("- {}: {}", magic_enum::enum_name(type), event.dump());
+                    if(type != type_t::cs)
+                        cDebug("- {}: {}", magic_enum::enum_name(type), event.dump());
 
                     switch(type)
                     {
                     case type_t::controller_axis:
                     case type_t::controller_button:
+                    case type_t::cs:
                     case type_t::controller_connect:
                     case type_t::key:
                     case type_t::mouse_button:
@@ -1238,8 +1298,11 @@ void insert_dummy_plug(
 }
 
 namespace {
-/* Writes what the controllers did as dummy plug events, coarsely: a stick
- * is noted when it crosses a step, a button with how long it was held */
+/* Writes what the controllers did as dummy plug events: sampled every
+ * `interval` ms as whole pad states ("cs"), one event when any button or
+ * axis changed since the last written, which stays compact over a long run
+ * of small stick moves. Or coarsely: a stick is noted when it crosses a
+ * step, a button with how long it was held */
 struct InputRecorder
     : compo::SubsystemBase
     , AppLoadableService
@@ -1248,11 +1311,15 @@ struct InputRecorder
     using services = detail::subsystem_list<InputRecorder>;
     using f32      = libc_types::f32;
     using u32      = libc_types::u32;
+    using u64      = libc_types::u64;
     using u8       = libc_types::u8;
 
-    InputRecorder(std::string path, f32 step)
+    InputRecorder(std::string path, f32 step, u32 interval, u8 quantum, dummy_plug::Config const* plug)
         : m_path(std::move(path))
         , m_step(step)
+        , m_interval(interval)
+        , m_quantum(quantum)
+        , m_plug(plug)
     {
         priority = 31;
     }
@@ -1267,13 +1334,28 @@ struct InputRecorder
         auto* controllers = p.service<comp_app::ControllerInput>();
         if(!controllers)
             return;
+        /* A replay's clock starts once the app is loaded: so does this one */
+        if(auto* app = p.service<comp_app::AppInfo>();
+           app && app->state() != comp_app::interfaces::AppInfo::loaded)
+            return;
         if(!m_start)
+        {
             m_start = t;
+            if(m_plug && m_plug->tick_clock)
+                m_first_tick = m_plug->tick_clock();
+        }
         u32 const now = static_cast<u32>(
             std::chrono::duration_cast<std::chrono::milliseconds>(t - *m_start).count());
         m_end = now;
         if(m_seen.size() < controllers->count())
             m_seen.resize(controllers->count());
+        /* Sampled by the app's ticks when it has them: the app hands over
+         * the state each tick consumed (tick_input), so nothing here is
+         * sampled; else on the interval's grid */
+        bool const by_tick = m_interval > 0 && m_plug && m_plug->tick_clock;
+        bool       sample  = !by_tick && (m_interval == 0 || !m_next_sample || now >= *m_next_sample);
+        if(sample && m_interval > 0)
+            m_next_sample = (m_next_sample ? *m_next_sample : now) + m_interval;
         for(u32 i = 0; i < controllers->count(); i++)
         {
             auto const state = controllers->state(i);
@@ -1282,6 +1364,12 @@ struct InputRecorder
             {
                 seen.connected = true;
                 m_events.push_back({{"time", now}, {"type", "controller_connect"}, {"index", i}});
+            }
+            if(m_interval > 0)
+            {
+                if(sample)
+                    sample_pad(i, state, seen, now);
+                continue;
             }
             for(u8 a = 0; a < 6; a++)
             {
@@ -1326,7 +1414,64 @@ struct InputRecorder
         bool                                 connected{false};
         std::array<f32, 6>                   axes{};
         std::array<std::optional<u32>, 16>   pressed{};
+        /* Sampled mode: what was last written */
+        libc_types::u16                      buttons{0};
+        std::array<libc_types::i8, 6>        pad{};
+        bool                                 written{false};
     };
+
+  public:
+    /* The state a tick consumed, from the app */
+    void tick_input(u64 tick, u32 index, libc_types::u16 buttons, std::array<libc_types::i16, 6> const& axes)
+    {
+        if(!m_start || !m_first_tick)
+            return;
+        if(m_seen.size() <= index)
+            m_seen.resize(index + 1);
+        Coffee::Input::CIControllerState state{};
+        state.buttons.d = buttons;
+        for(u8 a = 0; a < 6; a++)
+            state.axes.d[a] = axes[a];
+        /* Floored on whole microseconds per tick, as the replay's frames are */
+        u64 const tick_us = 1'000'000 / std::max<u32>(m_plug ? m_plug->ticks_per_second : 30, 1);
+        u32 const stamp   = static_cast<u32>((tick - std::min(tick, *m_first_tick)) * tick_us / 1000);
+        sample_pad(index, state, m_seen[index], stamp);
+    }
+
+  private:
+    /* One pad state as the plug plays it back, a "cs" event: 4 hex digits
+     * of buttons then six axis bytes, written only when it differs from
+     * the last */
+    void sample_pad(u32 index, Coffee::Input::CIControllerState const& state, controller_t& seen, u32 now)
+    {
+        std::array<libc_types::i8, 6> pad{};
+        for(u8 a = 0; a < 6; a++)
+        {
+            long value = std::lround(state.axes.d[a] / 258.f);
+            /* Live sticks jitter; a quantum keeps a held stick to one state */
+            if(m_quantum > 1)
+                value = std::lround(static_cast<f32>(value) / m_quantum) * m_quantum;
+            pad[a] = static_cast<libc_types::i8>(std::clamp(value, -127l, 127l));
+        }
+        if(seen.written && seen.buttons == state.buttons.d && seen.pad == pad)
+            return;
+        seen.written = true;
+        seen.buttons = state.buttons.d;
+        seen.pad     = pad;
+        char hex[24];
+        std::snprintf(
+            hex,
+            sizeof(hex),
+            "%04x%02x%02x%02x%02x%02x%02x",
+            static_cast<unsigned>(state.buttons.d),
+            static_cast<unsigned>(static_cast<u8>(pad[0])),
+            static_cast<unsigned>(static_cast<u8>(pad[1])),
+            static_cast<unsigned>(static_cast<u8>(pad[2])),
+            static_cast<unsigned>(static_cast<u8>(pad[3])),
+            static_cast<unsigned>(static_cast<u8>(pad[4])),
+            static_cast<unsigned>(static_cast<u8>(pad[5])));
+        m_events.push_back({{"time", now}, {"type", "cs"}, {"i", index}, {"state", hex}});
+    }
 
     f32 quantise(f32 value) const
     {
@@ -1343,7 +1488,10 @@ struct InputRecorder
     void write()
     {
         /* Buttons still held at the end are let go there */
-        for(u32 i = 0; i < m_seen.size(); i++)
+        for(u32 i = 0; i < m_seen.size() && m_interval > 0; i++)
+            if(m_seen[i].written && (m_seen[i].buttons != 0 || m_seen[i].pad != std::array<libc_types::i8, 6>{}))
+                sample_pad(i, {}, m_seen[i], m_end);
+        for(u32 i = 0; i < m_seen.size() && m_interval == 0; i++)
             for(u8 b = 0; b < 16; b++)
                 if(auto const at = m_seen[i].pressed[b])
                     m_events.push_back({
@@ -1361,17 +1509,37 @@ struct InputRecorder
             {"end_time", m_end + 1000},
             {"events", m_events},
         };
+        /* Tick-stamped states replay frame-locked, a tick a frame */
+        if(m_interval > 0 && m_plug && m_plug->tick_clock)
+            out["frame_delta"] = 1000.0 / std::max<u32>(m_plug->ticks_per_second, 1);
         auto file = Coffee::Resource(
             platform::url::constructors::MkUrl(m_path, semantic::RSCA::SystemFile));
-        auto const text = out.dump(4);
+        /* One event a line: readable, and a long recording stays small */
+        std::string text = "{\n";
+        for(auto const& [key, value] : out.items())
+            if(key != "events")
+                text += "    \"" + key + "\": " + value.dump() + ",\n";
+        text += "    \"events\": [\n";
+        for(size_t i = 0; i < m_events.size(); i++)
+            text += "        " + m_events[i].dump() + (i + 1 < m_events.size() ? ",\n" : "\n");
+        text += "    ]\n}\n";
         file = semantic::BytesConst::ofString(std::string_view(text));
         Coffee::FileCommit(
             file, semantic::RSCA::NewFile | semantic::RSCA::Discard | semantic::RSCA::WriteOnly);
-        cDebug("Recorded {} input events to {}", m_events.size(), m_path);
+        cDebug(
+            "Recorded {} input events to {}, ticks from {}",
+            m_events.size(),
+            m_path,
+            m_first_tick.value_or(0));
     }
 
     std::string                 m_path;
     f32                         m_step;
+    u32                         m_interval; /*!< ms between pad samples, 0 = per frame, coarse */
+    u8                          m_quantum;  /*!< Sampled axes snap to multiples of this, 8-bit */
+    dummy_plug::Config const*   m_plug;
+    std::optional<u64>          m_first_tick; /*!< The tick a replay's clock would start on */
+    std::optional<u32>          m_next_sample;
     std::optional<time_point>   m_start;
     u32                         m_end{0};
     std::vector<controller_t>   m_seen;
@@ -1379,15 +1547,34 @@ struct InputRecorder
 };
 } // namespace
 
-void insert_input_recorder(AppLoadableService::entity_container& container)
+void insert_input_recorder(
+    AppLoadableService::entity_container& container, dummy_plug::Config& dummy_plug)
 {
     auto const path = platform::env::var("DUMMY_PLUG_RECORD");
     if(!path)
         return;
-    libc_types::f32 step = .25f;
+    /* The stick step: coarse mode's grid, and in sampled mode the 8-bit
+     * quantum when given (0.05 = multiples of 6) */
+    libc_types::f32 step    = .25f;
+    libc_types::u8  quantum = 0;
     if(auto const s = platform::env::var("DUMMY_PLUG_RECORD_STEP"))
-        step = std::max(std::stof(*s), .01f);
-    auto& recorder = container.register_subsystem_inplace<InputRecorder>(*path, step);
+    {
+        step    = std::max(std::stof(*s), .01f);
+        quantum = static_cast<libc_types::u8>(std::clamp(std::lround(step * 127.f), 1l, 64l));
+    }
+    /* Sampled pad states every so many ms, stamped by tick so a replay
+     * lands where the run did; 0 for the coarse wall-clock events */
+    libc_types::u32 interval = 33;
+    if(auto const s = platform::env::var("DUMMY_PLUG_RECORD_INTERVAL"))
+        interval = static_cast<libc_types::u32>(std::max(std::stoi(*s), 0));
+    auto& recorder = container.register_subsystem_inplace<InputRecorder>(
+        *path, step, interval, quantum, &dummy_plug);
+    if(interval > 0)
+        dummy_plug.tick_input = [&recorder](
+                                    libc_types::u64 tick, libc_types::u32 index, libc_types::u16 buttons,
+                                    std::array<libc_types::i16, 6> const& axes) {
+            recorder.tick_input(tick, index, buttons, axes);
+        };
     container.register_subsystem_services<InputRecorder>(&recorder);
     cDebug("Recording input to {}", *path);
 }
@@ -1436,6 +1623,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(
     {
     case type_t::controller_axis:
     case type_t::controller_button:
+    case type_t::cs:
     case type_t::controller_connect:
     case type_t::key:
     case type_t::mouse_button:
