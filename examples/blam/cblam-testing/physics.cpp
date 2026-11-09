@@ -1370,7 +1370,7 @@ struct PhysicsSystem
                 if(m_bodies.contains(id))
                 {
                     auto& body = *m_bodies.at(id).world_body;
-                    seat_contact(body, physics.seated);
+                    seat_contact(body, physics.seated || !physics.collideable);
                     if(physics.friction >= 0.f)
                         body.setFriction(physics.friction);
                     if(physics.restitution >= 0.f)
@@ -1396,7 +1396,7 @@ struct PhysicsSystem
             if(it == m_bodies.end())
                 continue;
             btRigidBody& body = *it->second.world_body;
-            seat_contact(body, physics.seated);
+            seat_contact(body, physics.seated || !physics.collideable);
             if(follower)
             {
                 btTransform transform;

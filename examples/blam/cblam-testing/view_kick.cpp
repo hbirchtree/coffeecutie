@@ -37,7 +37,9 @@ struct ViewKick : compo::RestrictedSubsystem<ViewKick, ViewKickManifest>
                               : 0.f;
         m_last = t;
         m_shot_queue->poll();
+        m_effect_queue->poll();
         auto shots = std::exchange(m_shots, {});
+        script_effect(dt);
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
             return;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
@@ -66,6 +68,15 @@ struct ViewKick : compo::RestrictedSubsystem<ViewKick, ViewKickManifest>
                 kick.t += dt;
             }
             std::erase_if(seat.kicks, [](kick_t const& k) { return k.t >= k.length; });
+            if(m_effect.intensity > 0.f)
+            {
+                std::uniform_real_distribution<f32> unit(-1.f, 1.f);
+                Vecf3 const pitch_yaw_roll{m_effect.rotation.y, m_effect.rotation.x, m_effect.rotation.z};
+                cam.kick.turn += Vecf3{unit(m_random), unit(m_random), unit(m_random)} * pitch_yaw_roll *
+                                 m_effect.intensity;
+                cam.kick.shift += Vecf3{unit(m_random), unit(m_random), unit(m_random)} *
+                                  m_effect.translation * m_effect.intensity;
+            }
             /* Damped, a touch under critical; small steps keep it stable at
              * any frame rate */
             for(f32 left = dt; left > 0.f; left -= spring_step)
@@ -78,6 +89,48 @@ struct ViewKick : compo::RestrictedSubsystem<ViewKick, ViewKickManifest>
             cam.kick.weapon += seat.spring;
             cam.kick.shift.y += seat.spring.z;
         }
+    }
+
+    struct effect_t
+    {
+        Vecf3 translation{};
+        Vecf3 rotation{}; /*!< radians, yaw pitch roll */
+        f32   intensity{0.f};
+        f32   from{0.f};
+        f32   to{0.f};
+        f32   t{0.f};
+        f32   length{0.f};
+    };
+
+    void effect(PlayerEffectEvent const& ev)
+    {
+        using kind_t = PlayerEffectEvent::kind_t;
+        switch(ev.kind)
+        {
+        case kind_t::max_translation:
+            m_effect.translation = ev.value;
+            break;
+        case kind_t::max_rotation:
+            m_effect.rotation = glm::radians(ev.value);
+            break;
+        case kind_t::start:
+        case kind_t::stop:
+            m_effect.from   = m_effect.intensity;
+            m_effect.to     = ev.kind == kind_t::start ? ev.value.x : 0.f;
+            m_effect.t      = 0.f;
+            m_effect.length = ev.seconds;
+            if(ev.seconds <= 0.f)
+                m_effect.intensity = m_effect.to;
+            break;
+        }
+    }
+
+    void script_effect(f32 dt)
+    {
+        if(m_effect.t >= m_effect.length)
+            return;
+        m_effect.t         = std::min(m_effect.t + dt, m_effect.length);
+        m_effect.intensity = glm::mix(m_effect.from, m_effect.to, m_effect.t / m_effect.length);
     }
 
     struct kick_t
@@ -219,6 +272,8 @@ struct ViewKick : compo::RestrictedSubsystem<ViewKick, ViewKickManifest>
 
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_shot_queue;
     std::vector<WeaponFireEvent>                               m_shots;
+    std::shared_ptr<GameEventBus::queue_type<PlayerEffectEvent>> m_effect_queue;
+    effect_t                                                   m_effect;
     std::optional<time_point>                                  m_last;
     u32                                                        m_load_generation{0};
     std::optional<blam::tag_index_view<halo_version>>          m_index;
@@ -231,4 +286,6 @@ void alloc_view_kick(compo::EntityContainer& e)
     auto& kick        = e.register_subsystem_inplace<ViewKick>();
     kick.m_shot_queue = e.subsystem_cast<GameEventBus>().addQueuedEventFunction<WeaponFireEvent>(
         0, [&kick](GameEvent&, WeaponFireEvent* shot) { kick.m_shots.push_back(*shot); });
+    kick.m_effect_queue = e.subsystem_cast<GameEventBus>().addQueuedEventFunction<PlayerEffectEvent>(
+        0, [&kick](GameEvent&, PlayerEffectEvent* ev) { kick.effect(*ev); });
 }

@@ -73,6 +73,7 @@ struct sound_unit_t
         std::shared_ptr<oaf::filter_t>             filter; /* occlusion */
         std::shared_ptr<oaf::filter_t>             send_filter;
         f32 base_gain{1.f}; /* before occlusion, without EFX */
+        u16 sound_class{SoundItem::props_t::no_class};
         f32 max_distance{0.f}; /* snd! max distance, 0 = unlimited */
         f32 range_applied{1.f};
     };
@@ -216,6 +217,47 @@ struct SoundSystem
 
     std::vector<sound_unit_t> singleshot_sounds;
 
+    /* sound_class_set_gain, per snd! class, eased toward the target */
+    struct class_gain_t
+    {
+        f32 now{1.f};
+        f32 target{1.f};
+        f32 rate{0.f}; /* per second */
+    };
+    std::array<class_gain_t, 64> class_gains{};
+
+    f32 class_gain(u16 sound_class) const
+    {
+        return sound_class < class_gains.size() ? class_gains[sound_class].now : 1.f;
+    }
+
+    void ease_class_gains(f32 dt)
+    {
+        u64 changed = 0;
+        for(u32 c = 0; c < class_gains.size(); c++)
+        {
+            auto& g = class_gains[c];
+            if(g.now == g.target)
+                continue;
+            f32 const step = g.rate * dt;
+            g.now = std::abs(g.target - g.now) <= step ? g.target : g.now + std::copysign(step, g.target - g.now);
+            changed |= u64(1) << c;
+        }
+        if(!changed)
+            return;
+        auto refresh = [this, changed](sound_unit_t& unit) {
+            for(auto& track : unit.tracks)
+                if(track.sound_class < 64 && (changed >> track.sound_class & 1u) && track.source)
+                    set_gain(unit, track, track.base_gain);
+        };
+        for(auto& [id, unit] : active_sounds)
+            refresh(unit);
+        for(auto& [id, unit] : fading_sounds)
+            refresh(unit);
+        for(auto& unit : singleshot_sounds)
+            refresh(unit);
+    }
+
     std::vector<std::shared_ptr<oaf::buffer_t>> buffers;
     std::vector<std::shared_ptr<oaf::source_t>> sources;
 
@@ -246,7 +288,8 @@ struct SoundSystem
             LoopSoundEvent,
             PlaySoundEvent,
             BackgroundSoundTransitionEvent,
-            UpdateSoundEvent>
+            UpdateSoundEvent,
+            ClassGainEvent>
             data{};
     };
 
@@ -479,6 +522,9 @@ struct SoundSystem
         case SoundEvent::update_sound:
             out.data = *reinterpret_cast<UpdateSoundEvent const*>(data);
             break;
+        case SoundEvent::class_gain:
+            out.data = *reinterpret_cast<ClassGainEvent const*>(data);
+            break;
         default:
             break;
         }
@@ -553,6 +599,7 @@ struct SoundSystem
             apply_pending_cluster(p.template subsystem<BSPCache<Ver>>());
         update_environment(dt);
         update_occlusion(p, dt);
+        ease_class_gains(dt);
 
         std::vector<u64> finished;
         for(auto& [id, sound] : active_sounds)
@@ -703,6 +750,7 @@ struct SoundSystem
             if(props_it == track.props.end())
                 continue;
             auto const& props = props_it->second;
+            meta.sound_class  = props.sound_class;
             /* Music is mixed already, panning and HRTF only colour it */
             if(props.music)
                 meta.source->set_direct_channels(true);
@@ -978,7 +1026,7 @@ struct SoundSystem
         meta.range_applied = range_gain(unit, meta);
         f32 occlusion      = occlusion_uses_efx() ? 0.f : unit.occlusion;
         meta.source->template set_property<oaf::source_property::gain>(
-            gain * meta.range_applied *
+            gain * meta.range_applied * class_gain(meta.sound_class) *
             (1.f - occlusion_tuning.gain_only *
                        std::pow(occlusion, occlusion_tuning.curve)));
     }
@@ -1436,6 +1484,7 @@ struct SoundSystem
             fading_sounds.clear();
             singleshot_sounds.clear();
             queued_events.clear();
+            class_gains = {};
             /* These point into the old map */
             environment.ref     = nullptr;
             environment.target  = 0.f;
@@ -1446,6 +1495,21 @@ struct SoundSystem
         if(ev.type == SoundEvent::stop_sound)
         {
             active_sounds.erase(ev.entity_id);
+            return;
+        }
+        if(ev.type == SoundEvent::class_gain)
+        {
+            if(!data)
+                return;
+            auto const& change = *static_cast<ClassGainEvent const*>(data);
+            for(u32 c = 0; c < class_gains.size(); c++)
+                if(change.classes >> c & 1u)
+                {
+                    auto& g  = class_gains[c];
+                    g.target = change.gain;
+                    g.rate   = change.seconds > 0.f ? std::abs(change.gain - g.now) / change.seconds
+                                                    : std::numeric_limits<f32>::infinity();
+                }
             return;
         }
 

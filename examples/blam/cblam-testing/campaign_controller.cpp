@@ -51,6 +51,8 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
         auto       rejoins = std::exchange(m_rejoins, {});
         bool const won     = std::exchange(m_won, false);
         auto const save  = std::exchange(m_asked, {});
+        if(std::exchange(m_cancel, false))
+            m_save_wait = std::nullopt;
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
            p.template subsystem<NetworkState>().replica)
             return;
@@ -149,6 +151,7 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
         WorldSaveEvent save{};
         p.template subsystem<GameEventBus>().inject(ev, &save);
         state.saves++;
+        state.reverted_since_save = false;
     }
 
     void next_level(Proxy& p, BlamFiles<halo_version> const& files)
@@ -183,6 +186,7 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
                 WorldRestoreEvent restore{};
                 p.template subsystem<GameEventBus>().inject(ev, &restore);
                 state.reverts++;
+                state.reverted_since_save = true;
                 m_waiting.clear();
                 m_health.clear();
                 m_save_wait = std::nullopt;
@@ -235,6 +239,7 @@ struct CampaignController : compo::RestrictedSubsystem<CampaignController, Campa
     std::vector<u64>                                           m_rejoins;
     bool                                                       m_won{false};
     std::optional<f32>                                         m_asked; /*!< Longest timeout asked */
+    bool                                                       m_cancel{false};
 
     u32                m_load_generation{0};
     std::map<u64, f32> m_waiting; /*!< Seconds left */
@@ -259,6 +264,9 @@ void alloc_campaign_controller(compo::EntityContainer& e)
         0, [&mode](GameEvent&, GameWonEvent*) { mode.m_won = true; });
     mode.m_checkpoint_queue = game.addQueuedEventFunction<CheckpointEvent>(
         0, [&mode](GameEvent&, CheckpointEvent* save) {
-            mode.m_asked = CampaignController::sooner(mode.m_asked, save->timeout);
+            if(save->cancel)
+                mode.m_asked.reset(), mode.m_cancel = true;
+            else
+                mode.m_asked = CampaignController::sooner(mode.m_asked, save->timeout);
         });
 }

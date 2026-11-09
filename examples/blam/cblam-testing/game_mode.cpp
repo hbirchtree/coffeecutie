@@ -74,6 +74,7 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
         state.winner      = -1;
         state.time_left   = -1.f;
         state.saves = state.reverts = 0;
+        state.reverted_since_save = false;
         state.quiet  = true;
         state.saving = false;
     }

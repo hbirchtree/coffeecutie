@@ -286,7 +286,8 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         for(auto object : p.template select<Model, ObjectPhysics>())
         {
             auto [vehicle, physics] = object.components();
-            if(!physics.drive || glm::distance(vehicle.position, feet) > vehicle_reach)
+            if(!physics.drive || !physics.player_enterable ||
+               glm::distance(vehicle.position, feet) > vehicle_reach)
                 continue;
             auto const taken = taken_seats(p, object.id());
             auto const seats = seats_of(p, vehicle);

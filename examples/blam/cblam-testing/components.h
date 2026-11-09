@@ -864,6 +864,8 @@ struct ObjectPhysics
     bool  upright{false}; /*!< Bipeds: never tip, hulls follow the pose */
     /*! Items: Hz of a spring turning the model's +X (its tip) up, 0 = none */
     f32   tip_up{0.f};
+    bool  player_enterable{true}; /*!< unit_set_enterable_by_player */
+    bool  collideable{true};      /*!< object_set_collideable: false passes through all */
     /*! The physics material; < 0 keeps the default */
     f32   friction{-1.f};
     f32   restitution{-1.f};

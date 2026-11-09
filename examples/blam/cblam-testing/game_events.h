@@ -101,6 +101,7 @@ struct GameEvent
         SyncPoint,
         MapGame,
         EnlistActor,
+        PlayerEffect,
     };
 
     EventType type{None};
@@ -446,6 +447,24 @@ struct PlayerTickInputEvent
     bool resync{false}; /*!< The clock skipped ahead to this tick */
 };
 
+/*! A script's shake of the players' views: its limits, and its intensity
+ *  ramped up or down over some seconds */
+struct PlayerEffectEvent
+{
+    static constexpr auto event_type = GameEvent::PlayerEffect;
+
+    enum kind_t : libc_types::u8
+    {
+        max_translation, /*!< wu */
+        max_rotation,    /*!< degrees, yaw pitch roll */
+        start,           /*!< value.x the intensity, reached over seconds */
+        stop,            /*!< back to none over seconds */
+    } kind{start};
+
+    Vecf3           value{};
+    libc_types::f32 seconds{0.f};
+};
+
 /*! Stops or restarts the simulation clock; drawing carries on */
 struct SimulationPauseEvent
 {
@@ -609,6 +628,7 @@ struct CheckpointEvent
 
     /*! Seconds to wait for a quiet moment; 0 saves now, infinity waits */
     libc_types::f32 timeout{8.f};
+    bool            cancel{false}; /*!< game_save_cancel: drop the one waiting */
 };
 
 /*! The game mode takes a checkpoint: every system keeps what it owns */

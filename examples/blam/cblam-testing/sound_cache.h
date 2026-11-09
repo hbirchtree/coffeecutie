@@ -59,6 +59,8 @@ struct SoundItem
         f32  min_distance{0.f};
         f32  max_distance{0.f};
         bool music{false};
+        u16  sound_class{no_class}; /*!< snd! class, for sound_class_set_gain */
+        static constexpr u16 no_class = 0xffff;
     };
 
     struct track_t
@@ -245,6 +247,7 @@ struct SoundCache
                           .min_distance  = props->min_distance > 0.f ? props->min_distance : defaults.x,
                           .max_distance  = props->max_distance > 0.f ? props->max_distance : defaults.y,
                           .music         = props->type == blam::sound::sound::music,
+                          .sound_class   = static_cast<u16>(props->type),
                     };
                 }
             }
