@@ -335,6 +335,11 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         {
             auto [info, cam, net, equip] = ent.components();
             bool const pressed           = std::exchange(m_use_pressed[ent.id()], false);
+            /* Held, it takes the next weapon it walks over, one a press */
+            bool& spent_press = m_swapped[ent.id()];
+            if(!m_using[ent.id()])
+                spent_press = false;
+            bool const held = m_using[ent.id()] && !spent_press;
             /* Back from the dead, it is still where it fell for a moment:
              * what it dropped there is not its own again */
             auto& grace = m_revived[ent.id()];
@@ -375,8 +380,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                                    : equip.weapons[1].tag == tag ? &equip.weapons[1]
                                                                  : nullptr;
                 bool const carried = grenade || powerup || ammo || same;
-                if(!carried && equip.weapons[1].weapon && !pressed)
+                if(!carried && equip.weapons[1].weapon && !pressed && !held)
                     continue;
+                if(!carried && equip.weapons[1].weapon)
+                    spent_press = true;
                 auto rounds = model.item_rounds.value_or(std::array<u16, 2>{});
                 if(tag->matches(blam::tag_class_t::weap) && !model.item_rounds)
                     if(auto weapon = tag->template data<weapon_t>(files.container.magic);
@@ -1104,7 +1111,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         /* Once the map's globals can be read */
         if(m_grenades.empty())
             load_grenades(p.template subsystem<BlamFiles<halo_version>>());
-        if(cycle && !kinds.empty() && state.windup < 0.f)
+        /* Out of the chosen type, the next one carried is chosen */
+        bool const empty = equip.grenade >= kinds.size() || kinds[equip.grenade].left == 0;
+        if((cycle || empty) && !kinds.empty() && state.windup < 0.f)
             /* The next type there are any of */
             for(size_t i = 1; i <= kinds.size(); i++)
                 if(kinds[(equip.grenade + i) % kinds.size()].left > 0)
@@ -1495,6 +1504,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     /* Use presses per player, from every seat's and client's tick input */
     std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>> m_use_queue;
+    std::map<u64, bool> m_swapped; /* this hold of use already swapped */
     std::map<u64, bool> m_using, m_use_pressed;
     std::map<u64, u32>  m_revived; /*!< Frames until it may pick things up */
     static constexpr u32 revive_grace = 30;
