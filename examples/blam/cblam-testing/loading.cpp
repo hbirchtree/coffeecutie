@@ -3572,16 +3572,22 @@ void alloc_resource_loader(compo::EntityContainer& e)
         0, [&loader](GameEvent&, ShieldDepletedEvent* shield) {
             loader.pending_shields.push_back(*shield);
         });
+    loader.permutation_queue = game_bus.addQueuedEventFunction<SetPermutationEvent>(
+        0, [&loader](GameEvent&, SetPermutationEvent* change) {
+            loader.pending_permutations.push_back(*change);
+        });
     loader.mount_model_queue = game_bus.addQueuedEventFunction<MountModelEvent>(
         0, [&loader](GameEvent&, MountModelEvent* spawn) {
             loader.pending_mounts.push_back(*spawn);
         });
     loader.equip_weapon_queue = game_bus.addQueuedEventFunction<EquipWeaponEvent>(
         0, [&loader](GameEvent&, EquipWeaponEvent* equip) {
-            /* The latest per body counts */
-            std::erase_if(loader.pending_equips, [equip](EquipWeaponEvent const& e) {
-                return e.entity_id == equip->entity_id;
-            });
+            /* A snapshot of what a body carries replaces what came before;
+             * pick-ups and draws add up */
+            if(equip->mode == EquipWeaponEvent::replicate)
+                std::erase_if(loader.pending_equips, [equip](EquipWeaponEvent const& e) {
+                    return e.entity_id == equip->entity_id;
+                });
             loader.pending_equips.push_back(*equip);
         });
     /* Above 0 so Networking's stamping handler runs first and the queued copy
