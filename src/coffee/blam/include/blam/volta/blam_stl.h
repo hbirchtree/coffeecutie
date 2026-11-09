@@ -274,6 +274,28 @@ class tag_index_view
             std::make_pair(type, atlas_view::from_data(data.data())));
     }
 
+    /* A tag indexed into loc.map (Custom Edition fonts, strings and HUD
+     * messages): its struct and the magic its pointers, relative to the
+     * blob, resolve with */
+    template<typename T>
+    std::optional<std::pair<T const*, map_ptr>> localized(tag_t const& tag) const
+    {
+        if(tag.storage != tag_storage_t::external || !tag.matches(T::tag_class))
+            return std::nullopt;
+        auto atlas = m_atlases.find(atlas_type_t::localization);
+        if(atlas == m_atlases.end())
+            return std::nullopt;
+        auto loc = atlas->second.header->by_name(tag.to_name().to_string(m_ptr));
+        if(!loc)
+            return std::nullopt;
+        auto const file = atlas->second.magic.data();
+        u32 const  at = from_le((*loc)->offset), size = from_le((*loc)->size);
+        if(size < sizeof(T) || at > file.size() || size > file.size() - at)
+            return std::nullopt;
+        auto const blob = file.subspan(at, size);
+        return std::make_pair(reinterpret_cast<T const*>(blob.data()), map_ptr(blob));
+    }
+
     iterator begin() const
     {
         return span().begin();

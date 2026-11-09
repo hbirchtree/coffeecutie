@@ -156,7 +156,11 @@ struct unicode_string
     inline result<ucs_string, error_msg> str(
         map_ptr const& magic, u16 off = 0) const
     {
-        if(auto str_data = data.data(magic); str_data.has_error())
+        /* The block's count is not the string's size (loc.map writes the
+         * pointer there); `length` is, in bytes */
+        reference<unicode_var<1>> const sized{
+            to_le<u32>(std::max<u32>(from_le(length) / sizeof(char16_t), 1u)), data.offset};
+        if(auto str_data = sized.data(magic); str_data.has_error())
             return stl_types::failure(str_data.error());
         else
             return str_data.value()[0].str(off);

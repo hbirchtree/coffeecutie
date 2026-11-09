@@ -100,14 +100,15 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
 
     std::optional<frame_t> frame_of(blam::tagref_t const& bitmap, i16 sequence, i16 frame)
     {
-        auto tag = bitmap.valid() ? m_index.find(bitmap.tag_id) : m_index.end();
-        if(tag == m_index.end())
+        if(!bitmap.valid())
             return std::nullopt;
-        auto header = (*tag).template data<blam::bitm::header_t>(*m_magic);
-        if(!header.has_value())
+        /* Custom Edition keeps most HUD bitmaps in bitmaps.map */
+        auto found = m_index.template resource<blam::bitm::header_t>(bitmap.tag_id);
+        if(!found)
             return std::nullopt;
-        auto images    = header.value()->images.data(*m_magic);
-        auto sequences = header.value()->sequences.data(*m_magic);
+        auto const& [tag, header_ptr, magic] = *found;
+        auto images    = header_ptr->images.data(magic);
+        auto sequences = header_ptr->sequences.data(magic);
         if(!images.has_value() || images.value().empty())
             return std::nullopt;
         frame_t out{.sprite = {.bitmap = &bitmap}};
@@ -116,7 +117,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
            static_cast<size_t>(sequence) < sequences.value().size())
         {
             auto const& seq     = sequences.value()[sequence];
-            auto        sprites = seq.sprites.data(*m_magic);
+            auto        sprites = seq.sprites.data(magic);
             if(sprites.has_value() && !sprites.value().empty())
             {
                 auto const& sprite =
@@ -859,13 +860,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         auto const& b = buttons.value()[button];
         if((static_cast<u8>(b.flags) & static_cast<u8>(flags_t::use_text_from_string_list)) == 0)
             return icon_run({b.sequence_index, b.width_offset, b.offset, b.color, static_cast<u8>(b.flags)}, icon_color());
-        auto const* list = data_of<blam::ui::unicode_string_list>(m_hudg->alternate_icon_text);
+        auto const list = located_of<blam::ui::unicode_string_list>(m_hudg->alternate_icon_text);
         if(!list)
             return std::nullopt;
-        auto subs = list->data.data(*m_magic);
+        auto subs = list->first->data.data(list->second);
         if(!subs.has_value() || b.text_index < 0 || static_cast<size_t>(b.text_index) >= subs.value().size())
             return std::nullopt;
-        auto text = subs.value()[b.text_index].str(*m_magic);
+        auto text = subs.value()[b.text_index].str(list->second);
         if(!text.has_value())
             return std::nullopt;
         return run_t{.text = std::u16string(text.value())};
@@ -881,14 +882,17 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     /* A message as runs of text and icons; `values` stand in for the icons
      * past the actions */
     std::vector<run_t> message_of(
-        blam::hud_message_text const* hmt, std::string_view name, std::span<run_t const> values = {})
+        blam::hud_message_text const* hmt,
+        blam::map_ptr const&          magic,
+        std::string_view              name,
+        std::span<run_t const>        values = {})
     {
         std::vector<run_t> out;
         if(!hmt)
             return out;
-        auto messages = hmt->messages.data(*m_magic);
-        auto elements = hmt->elements.data(*m_magic);
-        auto text     = hmt->text(*m_magic);
+        auto messages = hmt->messages.data(magic);
+        auto elements = hmt->elements.data(magic);
+        auto text     = hmt->text(magic);
         if(!messages.has_value() || !elements.has_value() || !text.has_value())
             return out;
         auto const message = std::find_if(messages.value().begin(), messages.value().end(), [name](auto const& m) {
@@ -988,7 +992,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return;
         Vecf2 const at = place(m_hudg->anchor, m_hudg->placement.anchor_offset, Vecf2());
         if(cinematic.help.shown && !cinematic.help.message.empty())
-            if(auto runs = message_of(m_messages, cinematic.help.message); !runs.empty())
+            if(auto runs = message_of(m_messages, *m_magic, cinematic.help.message); !runs.empty())
                 m_view->texts.push_back({
                     .runs  = std::move(runs),
                     .at    = at,
@@ -1024,7 +1028,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(!icon)
             return;
         Vecf4 const text = m_hudg->text_color;
-        if(auto runs = message_of(m_global_messages, "swap_weapon", std::span(&*icon, 1)); !runs.empty())
+        if(auto runs = message_of(m_global_messages, m_global_magic, "swap_weapon", std::span(&*icon, 1)); !runs.empty())
             m_view->texts.push_back({
                 .runs  = std::move(runs),
                 .at    = at,
@@ -1036,13 +1040,15 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     /* A string of the hudg's icon text list, as a run */
     std::optional<run_t> icon_text(i32 index)
     {
-        auto const* list = m_hudg ? data_of<blam::ui::unicode_string_list>(m_hudg->alternate_icon_text) : nullptr;
+        if(!m_hudg)
+            return std::nullopt;
+        auto const list = located_of<blam::ui::unicode_string_list>(m_hudg->alternate_icon_text);
         if(!list)
             return std::nullopt;
-        auto subs = list->data.data(*m_magic);
+        auto subs = list->first->data.data(list->second);
         if(!subs.has_value() || index < 0 || static_cast<size_t>(index) >= subs.value().size())
             return std::nullopt;
-        auto text = subs.value()[index].str(*m_magic);
+        auto text = subs.value()[index].str(list->second);
         if(!text.has_value())
             return std::nullopt;
         return run_t{.text = std::u16string(text.value())};
@@ -1066,7 +1072,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(!role || !name)
             return {};
         std::array<run_t, 2> const values{*role, *name};
-        return message_of(m_global_messages, "enter_vehicle", values);
+        return message_of(m_global_messages, m_global_magic, "enter_vehicle", values);
     }
 
     /* ---- Scoreboard ---- */
@@ -1290,11 +1296,35 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         return data.has_value() ? data.value() : nullptr;
     }
 
+    /* A tag's data with the magic its pointers need: the map's, or the
+     * loc.map blob's for a tag a Custom Edition map only indexes */
+    template<typename T>
+    std::optional<std::pair<T const*, blam::map_ptr>> located_of(blam::tagref_t const& ref) const
+    {
+        auto tag = ref.valid() ? m_index.find(ref.tag_id) : m_index.end();
+        if(tag == m_index.end() || !(*tag).matches(T::tag_class))
+            return std::nullopt;
+        if(auto loc = m_index.template localized<T>(*tag); loc)
+            return loc;
+        auto data = (*tag).template data<T>(*m_magic);
+        if(!data.has_value())
+            return std::nullopt;
+        return std::make_pair(data.value(), *m_magic);
+    }
+
     /* What this map's HUD is drawn from */
     void load(BlamFiles<halo_version> const& files)
     {
         m_magic       = &files.container.magic;
         m_index       = blam::tag_index_view<halo_version>(files.container);
+        if(files.loc_file)
+            m_index.add_atlas(
+                blam::atlas_type_t::localization,
+                blam::map_ptr(static_cast<semantic::BytesConst>(*files.loc_file)));
+        if(files.bitmap_file)
+            m_index.add_atlas(
+                blam::atlas_type_t::bitmaps,
+                blam::map_ptr(static_cast<semantic::BytesConst>(*files.bitmap_file)));
         m_multiplayer = files.container.map->map_type == blam::maptype_t::multiplayer;
         m_unit_huds   = {};
         m_digits      = nullptr;
@@ -1317,19 +1347,21 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             m_blip = bitmaps.value()[0].motion_sensor_blip_bitmap;
         if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
             if((m_hudg = data_of<blam::hud_globals>(bitmaps.value()[0].hud_globals)))
-                m_global_messages = data_of<blam::hud_message_text>(m_hudg->hud_messages);
-        if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
+                if(auto hmt = located_of<blam::hud_message_text>(m_hudg->hud_messages); hmt)
+                    std::tie(m_global_messages, m_global_magic) = *hmt;
+if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
             if(auto digits = m_index.find(bitmaps.value()[0].hud_digits_definition.tag_id);
                bitmaps.value()[0].hud_digits_definition.valid() && digits != m_index.end())
                 if(auto d = (*digits).template data<blam::hud_number>(*m_magic); d.has_value())
                     m_digits = d.value();
         if(m_digits)
-            if(auto tag = m_index.find(m_digits->digits_bitmap.tag_id); tag != m_index.end())
-                if(auto header = (*tag).template data<blam::bitm::header_t>(*m_magic); header.has_value())
-                    if(auto seqs = header.value()->sequences.data(*m_magic);
-                       seqs.has_value() && !seqs.value().empty())
-                        if(auto sprites = seqs.value()[0].sprites.data(*m_magic); sprites.has_value())
-                            m_digit_sprites = sprites.value().size() >= 10;
+            if(auto found = m_index.template resource<blam::bitm::header_t>(m_digits->digits_bitmap.tag_id))
+            {
+                auto const& [tag, header, magic] = *found;
+                if(auto seqs = header->sequences.data(magic); seqs.has_value() && !seqs.value().empty())
+                    if(auto sprites = seqs.value()[0].sprites.data(magic); sprites.has_value())
+                        m_digit_sprites = sprites.value().size() >= 10;
+            }
 
         if(auto grenades = g.grenades.data(*m_magic); grenades.has_value())
             for(auto const& grenade : grenades.value())
@@ -1392,6 +1424,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     blam::tagref_t                       m_blip{}; /*!< matg's motion sensor blip */
     blam::hud_message_text const*        m_messages{nullptr};        /*!< The scenario's */
     blam::hud_message_text const*        m_global_messages{nullptr}; /*!< The hudg's */
+    blam::map_ptr                        m_global_magic{};           /*!< What it resolves with */
     bool                                 m_digit_sprites{false};
     /* Each grenade type's equipment, and the HUD that counts it */
     std::vector<std::pair<blam::scn::equipment const*, blam::tag_t const*>> m_grenades;
