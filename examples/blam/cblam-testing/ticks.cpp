@@ -86,7 +86,8 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
     u64 const until  = m_pause_at ? std::min(now, *m_pause_at) : now;
 
     auto& bus  = p.subsystem<GameEventBus>();
-    auto  emit = [&bus](u64 tick, bool resync) {
+    auto  emit = [this, &bus](u64 tick, bool resync) {
+        m_simulated++;
         GameEvent ev{.type = GameEvent::Tick};
         TickEvent data{.tick = tick, .seconds = tick_seconds, .resync = resync};
         bus.inject(ev, &data);

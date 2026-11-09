@@ -2,6 +2,10 @@
 #include "ticks.h"
 
 #include <coffee/comp_app/app_events.h>
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+#include <coffee/comp_app/bundle.h>
+#include <coffee/comp_app/dummy_plug.h>
+#endif
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 #include <coffee/core/Scene>
@@ -78,7 +82,12 @@ struct PlayerController
     void start_restricted(Proxy& p, time_point const& t)
     {
         duration const dt          = frame_delta(t);
-        auto*          mouse       = p.service<comp_app::MouseInput>();
+        auto const [ticks, tick_dt] = ticks_elapsed(p);
+        /* Plugs and recordings read sticks by the tick, so input replays
+         * the same at any frame rate; a recording at the 8 bits it keeps */
+        bool const recording = record_input && *record_input;
+        bool const by_tick   = recording || (plug_enabled && *plug_enabled);
+        auto*          mouse        = p.service<comp_app::MouseInput>();
         auto*          controllers = p.service<comp_app::ControllerInput>();
         auto&          ui          = p.subsystem<UIEventBus>();
         auto&          physics     = p.subsystem<PhysicsBus>();
@@ -103,7 +112,35 @@ struct PlayerController
             auto [cam, input, info, net, model] = player.components();
             if(info.permissions.camera)
             {
-                sample(input, cam, controllers, dt, info.mode.physics);
+                sample(input, cam, controllers, by_tick ? tick_dt : dt, info.mode.physics, recording);
+                if(by_tick && controllers && cam.controller.index)
+                    look_past_tick(p, player.id(), input, cam, *controllers, recording);
+                /* Freecam's step is for one reference frame: as many as time
+                 * has passed, or by the tick, drawn on past the last one */
+                if(!by_tick && !info.mode.physics)
+                    input.movement *= std::chrono::duration<f32>(dt).count() /
+                                      std::chrono::duration<f32>(freecam_reference).count();
+                else if(!info.mode.physics)
+                {
+                    Vecf3 const past = input.movement * freecam_steps_per_tick *
+                                       p.template subsystem<TickClock>().alpha();
+                    input.movement = input.movement * freecam_steps_per_tick * static_cast<f32>(ticks) +
+                                     past - std::exchange(m_freecam_past[player.id()], past);
+                }
+                /* What the ticks this frame played, for a recording */
+                if(ticks > 0 && recording && controllers && cam.controller.index &&
+                   !info.is_remote())
+                {
+                    auto const state = pad_state(*controllers, *cam.controller.index, true);
+                    std::array<libc_types::i16, 6> axes{};
+                    for(size_t a = 0; a < axes.size(); a++)
+                        axes[a] = state.axes.d[a];
+                    (*record_input)(
+                        p.template subsystem<TickClock>().simulated() - ticks + 1,
+                        *cam.controller.index,
+                        state.buttons.d,
+                        axes);
+                }
                 if(info.is_remote() && info.mode.simulated)
                     take_remote_input(player.id(), input, cam);
                 /* Scripts take the controls away; looking around stays
@@ -188,6 +225,10 @@ struct PlayerController
                                      std::pair{intent.crouch, InputIntent::crouch}})
                 if(held)
                     intents |= what;
+            /* The tick plays the view it stepped to, not what is drawn past it */
+            auto       ticked = cam.camera;
+            if(auto const past = m_past_tick_applied.find(player.id()); past != m_past_tick_applied.end())
+                cam.camera_.rotate(ticked, -past->second.x, -past->second.y);
             Vecf2 const look = std::exchange(m_look[player.id()], Vecf2{}) /
                                static_cast<f32>(ticks.size());
             for(auto const& tick : ticks)
@@ -199,13 +240,63 @@ struct PlayerController
                     .tick       = tick.tick,
                     .move       = intent.move,
                     .look       = look,
-                    .view       = cam.camera.rotation,
+                    .view       = ticked.rotation,
                     .intents    = intents,
                     .resync     = tick.resync,
                 };
                 game.inject(ev, &data);
             }
         }
+    }
+
+    /* The ticks simulated since the last frame, and as time */
+    std::pair<libc_types::u64, duration> ticks_elapsed(Proxy& p)
+    {
+        auto const  tick = p.template subsystem<TickClock>().simulated();
+        auto const  last = std::exchange(m_last_tick, tick);
+        libc_types::u64 const n = last && tick > *last ? tick - *last : 0;
+        return {
+            n,
+            std::chrono::duration_cast<duration>(
+                std::chrono::microseconds(static_cast<libc_types::i64>(n) * TickClock::tick_us))};
+    }
+
+    /* A pad's state, at the 8 bits an axis a recording keeps if asked, so a
+     * live run and its replay read the same sticks */
+    static Coffee::Input::CIControllerState pad_state(
+        comp_app::interfaces::ControllerInput const& controllers, libc_types::u32 index, bool coarse)
+    {
+        auto state = controllers.state(index);
+        if(coarse)
+            for(auto& axis : state.axes.d)
+                axis = static_cast<i16>(std::clamp(std::lround(axis / 258.f), -127l, 127l) * 258);
+        return state;
+    }
+
+    /* Ticks decide how far the stick has turned the view; frames between
+     * them draw it on by how far the clock is past the last, taken back
+     * again as the next tick lands, so looking stays smooth */
+    void look_past_tick(
+        Proxy&                                       p,
+        u64                                          id,
+        PlayerInput&                                 input,
+        PlayerCamera const&                          cam,
+        comp_app::interfaces::ControllerInput const& controllers,
+        bool                                         coarse)
+    {
+        Vecf2 past{};
+        Vecf3 unused_move{};
+        f32   unused_accel = 0.f;
+        controller_sample_input(
+            past,
+            unused_move,
+            unused_accel,
+            cam.controller.opts,
+            pad_state(controllers, *cam.controller.index, coarse),
+            std::chrono::duration_cast<duration>(std::chrono::microseconds(static_cast<libc_types::i64>(
+                p.template subsystem<TickClock>().alpha() * TickClock::tick_us))));
+        input.look_delta += past - std::exchange(m_past_tick[id], past);
+        m_past_tick_applied[id] = past;
     }
 
     duration frame_delta(time_point const& t)
@@ -225,7 +316,8 @@ struct PlayerController
         PlayerCamera const&                    cam,
         comp_app::interfaces::ControllerInput* controllers,
         duration const&                        dt,
-        bool                                   physics)
+        bool                                   physics,
+        bool                                   coarse)
     {
         using namespace Coffee::Input;
         bool const pad      = controllers && cam.controller.index.has_value();
@@ -233,7 +325,7 @@ struct PlayerController
         bool const in_menu =
             input.input_mode == PlayerInput::input_mode_t::menu;
         CIControllerState const state =
-            pad ? controllers->state(*cam.controller.index)
+            pad ? pad_state(*controllers, *cam.controller.index, coarse)
                 : CIControllerState{};
         auto const& b   = state.buttons.e;
         auto        key = [&input](u16 k) {
@@ -245,17 +337,21 @@ struct PlayerController
                        : 0.f;
         };
 
+        /* Looking takes the time passed; freecam's step and boost are what
+         * they would be at the reference rate, scaled by time when moved */
         if(pad)
+        {
+            Vecf3 no_move{};
+            f32   no_accel = 0.f;
+            Vecf2 no_look{};
             controller_sample_input(
-                input.look_delta,
-                input.movement,
-                input.accel,
-                cam.controller.opts,
-                state,
-                dt);
+                input.look_delta, no_move, no_accel, cam.controller.opts, state, dt);
+            controller_sample_input(
+                no_look, input.movement, input.accel, cam.controller.opts, state, freecam_reference);
+        }
         if(keyboard)
             StandardCamera::sample_keys(
-                input.keys, cam.camera_opts, input.movement, input.accel, dt);
+                input.keys, cam.camera_opts, input.movement, input.accel, freecam_reference);
 
         if(pad)
         {
@@ -707,6 +803,7 @@ struct PlayerController
         cam.camera.fieldOfView = glm::degrees(
             2.f * std::atan(std::tan(glm::radians(state.fov) * .5f) / magnification));
         input.look_delta /= magnification;
+        m_past_tick_applied[id] /= magnification;
     }
 
     /* A driver steers where they look; the chase camera is Gameplay's */
@@ -828,6 +925,18 @@ struct PlayerController
     }
 
     time_point                m_last_time{};
+    std::optional<libc_types::u64> m_last_tick{};
+    /*! The plug's input recorder, told what each tick played */
+    std::function<void(
+        libc_types::u64, libc_types::u32, libc_types::u16, std::array<libc_types::i16, 6> const&)> const*
+        record_input{nullptr};
+    bool const* plug_enabled{nullptr}; /*!< A dummy plug is driving */
+    std::map<u64, Vecf2> m_past_tick;         /*!< Stick look drawn past the last tick */
+    std::map<u64, Vecf2> m_past_tick_applied; /*!< The same, as zoom left it */
+    std::map<u64, Vecf3> m_freecam_past;      /*!< Freecam drawn past the last tick */
+    static constexpr f32 freecam_steps_per_tick = 2.f;
+    /*! Freecam speeds are tuned as steps at this frame time */
+    static constexpr std::chrono::microseconds freecam_reference{16667};
     std::unique_ptr<TickQueue> m_ticks;
     std::shared_ptr<GameEventBus::queue_type<PlayerTickInputEvent>>
                                         m_remote_queue;
@@ -846,6 +955,13 @@ void alloc_player_controller(compo::EntityContainer& e)
 
     auto& controller   = e.register_subsystem_inplace<PlayerController>();
     controller.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
+#if defined(FEATURE_ENABLE_ComponentBundleSetup_DummyPlug)
+    /* The input recorder hears what each tick played */
+    auto& plug_config       = e.subsystem_cast<comp_app::AppLoader>()
+                            .config<comp_app::dummy_plug::Config>();
+    controller.record_input = &plug_config.tick_input;
+    controller.plug_enabled = &plug_config.enabled;
+#endif
     controller.m_remote_queue =
         e.subsystem_cast<GameEventBus>()
             .addQueuedEventFunction<PlayerTickInputEvent>(

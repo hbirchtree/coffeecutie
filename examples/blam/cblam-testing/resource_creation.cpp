@@ -528,6 +528,7 @@ void create_resources(compo::EntityContainer& e)
                          {"tick", clock.tick()},
                          {"paused", clock.paused()},
                          {"resyncs", clock.resyncs()},
+                                 {"simulated", clock.simulated()},
                      };
 
                      nlohmann::json& players = state["players"];

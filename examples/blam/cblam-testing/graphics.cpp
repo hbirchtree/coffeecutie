@@ -639,6 +639,14 @@ i32 blam_main()
                         .count() -
                     origin);
             };
+            /* Input recordings are stamped by tick */
+            {
+                auto& plug = e.subsystem_cast<comp_app::AppLoader>()
+                                 .config<comp_app::dummy_plug::Config>();
+                plug.ticks_per_second = TickClock::rate;
+                plug.tick_clock       = [&clock = e.subsystem_cast<TickClock>()]()
+                    -> std::optional<libc_types::u64> { return clock.simulated(); };
+            }
 #endif
 #if defined(BLAM_CURSED_ENABLED)
             cursed::setup_cursed_loaders(e);

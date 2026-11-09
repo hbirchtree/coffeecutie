@@ -46,6 +46,13 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
         return m_tick;
     }
 
+    /*! Ticks actually raised so far: unlike tick(), a peer that skipped
+     *  ahead does not count what it dropped */
+    libc_types::u64 simulated() const
+    {
+        return m_simulated;
+    }
+
     /*! How far the present is past the last tick, 0..1 */
     libc_types::f32 alpha() const
     {
@@ -100,6 +107,8 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
     std::optional<libc_types::u64>  m_pause_at;
 
     libc_types::u64 m_tick{0};
+
+    libc_types::u64 m_simulated{0};
     libc_types::f32 m_alpha{0.f};
     libc_types::u32 m_resyncs{0};
     bool            m_started{false};

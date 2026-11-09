@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <array>
 #include <functional>
 #include <mutex>
 #include <optional>
@@ -51,6 +52,20 @@ struct Config : comp_app::Config<Config>
      *  start the session. Called from any thread. */
     std::function<std::optional<compo::clock::duration>()> session_clock{};
     bool                                                   session{false};
+
+    /*! The app's simulation tick, when it has one: the input recorder
+     *  stamps pad states by the tick that first saw them, so a replay
+     *  lands them on the same ticks whatever the frame rate was */
+    std::function<std::optional<libc_types::u64>()> tick_clock{};
+    libc_types::u32                                 ticks_per_second{30};
+
+    /*! Set by the input recorder: the app calls it with the pad state its
+     *  simulation consumed from a tick on, so the recording holds exactly
+     *  what was played */
+    std::function<void(
+        libc_types::u64 tick, libc_types::u32 controller, libc_types::u16 buttons,
+        std::array<libc_types::i16, 6> const& axes)>
+        tick_input{};
 
     /*! A "sync" event reaches the app as a dummy event named "sync"; what
      *  follows it waits until the app releases its name here, e.g. once
@@ -106,6 +121,7 @@ void insert_dummy_plug(
 
 /*! With DUMMY_PLUG_RECORD=<path>, what the controllers do is written there
  *  as a dummy plug on exit; DUMMY_PLUG_RECORD_STEP sets the stick step */
-void insert_input_recorder(AppLoadableService::entity_container& container);
+void insert_input_recorder(
+    AppLoadableService::entity_container& container, dummy_plug::Config& dummy_plug);
 
 } // namespace comp_app::dummy_plug

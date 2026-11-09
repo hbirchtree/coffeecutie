@@ -14,6 +14,8 @@
 #include "physics.h"
 #include "ui.h"
 
+struct TickClock;
+
 /* Samples each seat's devices and routes input to its menu, freecam,
  * body or vehicle. Also builds camera matrices. */
 using PlayerControllerManifest = compo::SubsystemManifest<
@@ -34,7 +36,8 @@ using PlayerControllerManifest = compo::SubsystemManifest<
         GameEventBus,
         const CinematicState,
         const GameState,
-        const NetworkState>,
+        const NetworkState,
+        const TickClock>,
     type_list_t<
         comp_app::ControllerInput,
         comp_app::MouseInput
