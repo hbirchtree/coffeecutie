@@ -12,6 +12,7 @@ struct SoundEvent
         stop_sound,
         background_sound_transition,
         update_sound,
+        class_gain,
     } type;
 
     libc_types::u64 entity_id{0};
@@ -37,6 +38,16 @@ struct LoopSoundEvent
 };
 
 /*! Moves a looping sound for `entity_id`, scales its gain and pitch */
+/*! sound_class_set_gain: the classes' volume eases to `gain` */
+struct ClassGainEvent
+{
+    static constexpr auto event_type = SoundEvent::class_gain;
+
+    libc_types::u64 classes{0}; /*!< Bit per snd! class */
+    libc_types::f32 gain{1.f};
+    libc_types::f32 seconds{0.f};
+};
+
 struct UpdateSoundEvent
 {
     static constexpr auto event_type = SoundEvent::update_sound;

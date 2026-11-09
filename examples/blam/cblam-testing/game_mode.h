@@ -55,8 +55,12 @@ struct GameState : compo::SubsystemBase
      *  back; below 0, never */
     f32 vehicle_respawn{default_vehicle_respawn};
     static constexpr f32 default_vehicle_respawn = 60.f;
+    bool                   ai_enabled{true}; /*!< Scripts' ai_enable: actors think */
     u32                    saves{0};   /*!< Checkpoints taken */
     u32                    reverts{0}; /*!< Times sent back to one */
+    /*! Sent back since the last checkpoint: game_reverted, which a skipped
+     *  cutscene is told apart by */
+    bool reverted_since_save{false};
     /*! Campaign, on the authority: nobody hurt for a while, so the fallen
      *  may come back and a checkpoint may be taken */
     bool quiet{true};

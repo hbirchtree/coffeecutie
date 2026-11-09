@@ -104,7 +104,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         m_allegiance = &p.template subsystem<AllegianceState>();
         if(dt <= 0.f || !m_scenario ||
            p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
-           p.template subsystem<NetworkState>().replica)
+           p.template subsystem<NetworkState>().replica ||
+           !p.template subsystem<GameState>().ai_enabled)
             return;
         m_allegiance->advance(dt);
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();

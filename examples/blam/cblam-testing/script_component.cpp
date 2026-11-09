@@ -66,7 +66,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
     type_list_t<
         GameEventBus,
         CinematicState,
-        const GameState,
+        GameState,
         const TickClock,
         DeviceGroups,
         AllegianceState,
@@ -834,6 +834,7 @@ struct BlamScript
         case op::camera_set:
             m_first_person = 0;
             m_camera_gen++;
+            m_camera_end = m_vm.now() + static_cast<libc_types::i64>(arg(1).as_real());
             camera_set(p, text_of(arg(0)), arg(1).as_real(), 0);
             return {};
         case op::camera_set_first_person: {
@@ -849,6 +850,7 @@ struct BlamScript
             m_first_person     = 0;
             m_camera_gen++;
             auto const objects = objects_of(p, arg(2));
+            m_camera_end       = m_vm.now() + static_cast<libc_types::i64>(arg(1).as_real());
             camera_set(p, text_of(arg(0)), arg(1).as_real(), objects.empty() ? 0 : objects.front());
             return {};
         }
@@ -1029,6 +1031,36 @@ struct BlamScript
                     anim->emotion = emotion;
             });
             return {};
+        /* A class of sounds (or classes, by prefix: "ambient", "vehicle")
+         * eases to a gain over so many ticks */
+        case op::sound_class_set_gain: {
+            using type_t          = blam::sound::sound::type_t;
+            std::string const which = lowered(text_of(arg(0)));
+            ClassGainEvent change{.gain = arg(1).as_real(), .seconds = arg(2).as_real() / tick_rate};
+            for(auto const& [value, name] : magic_enum::enum_entries<type_t>())
+                if(static_cast<u32>(value) < 64 && name.starts_with(which))
+                    change.classes |= u64(1) << static_cast<u32>(value);
+            if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>(); sounds && change.classes)
+            {
+                SoundEvent ev{.type = SoundEvent::class_gain};
+                sounds->inject(ev, &change);
+            }
+            return {};
+        }
+        /* Cut short: its last playing stops */
+        case op::sound_impulse_stop: {
+            auto it = m_impulse_ids.find(static_cast<u32>(arg(0).integer));
+            if(it == m_impulse_ids.end())
+                return {};
+            if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>())
+            {
+                SoundEvent stop{.type = SoundEvent::stop_sound, .entity_id = it->second};
+                sounds->inject(stop, nullptr);
+            }
+            m_impulse_ids.erase(it);
+            m_impulses.erase(static_cast<u32>(arg(0).integer));
+            return {};
+        }
         case op::sound_impulse_time: {
             /* What is left of it, 0 once played out or never started */
             auto it = m_impulses.find(static_cast<u32>(arg(0).integer));
@@ -1072,6 +1104,32 @@ struct BlamScript
                     });
                 });
             return {};
+        case op::unit_set_enterable_by_player:
+            with_objects(p, arg(0), [on = arg(1).truthy()](Proxy& p, u64 id) {
+                if(auto* physics = p.template get<ObjectPhysics>(id))
+                    physics->player_enterable = on;
+            });
+            return {};
+        /* A damage effect on objects, from nobody */
+        case op::damage_object: {
+            auto const tag = m_tags.find(static_cast<u32>(arg(0).integer));
+            if(tag == m_tags.end() || !(*tag).matches(blam::tag_class_t::jpt))
+                return {};
+            for(u64 id : objects_of(p, arg(1)))
+            {
+                auto const* model = p.template get<Model>(id);
+                auto const* info  = p.template get<PlayerInfo>(id);
+                ObjectHitEvent hit{
+                    .damage        = (*tag).as_ref(),
+                    .target        = id,
+                    .target_player = info ? info->player_idx : ObjectHitEvent::no_player,
+                    .point         = model ? model->position : Vecf3{},
+                };
+                GameEvent ev{.type = GameEvent::ObjectHit};
+                p.template subsystem<GameEventBus>().inject(ev, &hit);
+            }
+            return {};
+        }
         /* Its riders, in seat order of boarding */
         case op::vehicle_riders: {
             std::vector<u64> out;
@@ -1254,6 +1312,19 @@ struct BlamScript
                     custom_animation(p, id, graph, name, blend);
                 });
             return value_t::boolean(true);
+        /* Scenery plays a clip of a graph by name */
+        case op::scenery_animation_start:
+        case op::scenery_animation_start_at_frame:
+            with_objects(
+                p,
+                arg(0),
+                [this,
+                 graph = graph_of(arg(1)),
+                 name  = std::string(text_of(arg(2))),
+                 frame = opcode == op::scenery_animation_start_at_frame
+                             ? static_cast<i32>(arg(3).as_real())
+                             : 0](Proxy& p, u64 id) { custom_animation(p, id, graph, name, false, frame); });
+            return {};
         case op::unit_custom_animation_at_frame:
             with_objects(
                 p,
@@ -1359,13 +1430,25 @@ struct BlamScript
             p.template subsystem<GameEventBus>().inject(ev, &save);
             return {};
         }
+        case op::game_save_cancel: {
+            GameEvent       ev{.type = GameEvent::Checkpoint};
+            CheckpointEvent cancel{.cancel = true};
+            p.template subsystem<GameEventBus>().inject(ev, &cancel);
+            return {};
+        }
+        case op::object_set_collideable:
+            with_objects(p, arg(0), [solid = arg(1).truthy()](Proxy& p, u64 id) {
+                if(auto* physics = p.template get<ObjectPhysics>(id))
+                    physics->collideable = solid;
+            });
+            return {};
         case op::game_saving:
             return value_t::boolean(p.template subsystem<GameState>().saving);
         case op::game_safe_to_save:
         case op::game_all_quiet:
             return value_t::boolean(p.template subsystem<GameState>().quiet);
         case op::game_reverted:
-            return value_t::boolean(p.template subsystem<GameState>().reverts > 0);
+            return value_t::boolean(p.template subsystem<GameState>().reverted_since_save);
         /* No dialogue system to wait on: lines may always start */
         case op::game_safe_to_speak:
             return value_t::boolean(true);
@@ -1376,6 +1459,7 @@ struct BlamScript
             WorldRestoreEvent restore{};
             p.template subsystem<GameEventBus>().inject(ev, &restore);
             p.template subsystem<GameState>().reverts++;
+            p.template subsystem<GameState>().reverted_since_save = true;
             return {};
         }
         case op::game_won: {
@@ -1463,6 +1547,28 @@ struct BlamScript
         }
         case op::ai_living_count:
             return value_t::number(type_t::short_, static_cast<f32>(ai_living(p, text_of(arg(0)))));
+        /* The scripts' switch for every actor's thinking */
+        case op::ai:
+            p.template subsystem<GameState>().ai_enabled = arg(0).truthy();
+            return {};
+        /* How far into a fight the squad is: 0 nobody left, 1 at its post,
+         * 2 falling back, 4 hunting, 5 engaged */
+        case op::ai_status: {
+            i32 status = 0;
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+            {
+                auto const* actor  = p.template get<Actor>(id);
+                auto const* vitals = p.template get<BipedStatus>(id);
+                if(!actor || (vitals && vitals->dead))
+                    continue;
+                i32 const here = actor->state == Actor::state_t::combat    ? 5
+                                 : actor->state == Actor::state_t::pursuit ? 4
+                                 : actor->state == Actor::state_t::retreat ? 2
+                                                                           : 1;
+                status = std::max(status, here);
+            }
+            return value_t::number(type_t::short_, static_cast<f32>(status));
+        }
         case op::ai_living_fraction:
         case op::ai_strength: {
             auto const it    = m_actors.find(lowered(text_of(arg(0))));
@@ -1483,6 +1589,33 @@ struct BlamScript
                     /* Where it stands was picked for the old order */
                     actor->position = -1;
                 }
+            return {};
+        case op::player_effect_set_max_translation:
+        case op::player_effect_set_max_rotation:
+        case op::player_effect_start:
+        case op::player_effect_stop: {
+            using kind_t = PlayerEffectEvent::kind_t;
+            PlayerEffectEvent effect{};
+            if(opcode == op::player_effect_set_max_translation || opcode == op::player_effect_set_max_rotation)
+            {
+                effect.kind  = opcode == op::player_effect_set_max_translation ? kind_t::max_translation
+                                                                              : kind_t::max_rotation;
+                effect.value = Vecf3{arg(0).as_real(), arg(1).as_real(), arg(2).as_real()};
+            } else if(opcode == op::player_effect_start)
+            {
+                effect.value.x = arg(0).as_real();
+                effect.seconds = arg(1).as_real();
+            } else
+            {
+                effect.kind    = kind_t::stop;
+                effect.seconds = arg(0).as_real();
+            }
+            GameEvent ev{.type = GameEvent::PlayerEffect};
+            p.template subsystem<GameEventBus>().inject(ev, &effect);
+            return {};
+        }
+        /* No rumble motors to drive */
+        case op::player_effect_set_max_rumble:
             return {};
         case op::ai_timer_expire:
             for(u64 id : ai_actors(p, text_of(arg(0))))
@@ -1912,6 +2045,8 @@ struct BlamScript
              .type      = SoundEvent::play_sound,
              .entity_id = looping ? loop_id(sound) : script_impulse_base | m_next_impulse++,
         };
+        if(!looping)
+            m_impulse_ids[static_cast<u32>(sound.integer)] = ev.entity_id;
         PlaySoundEvent play{
             .sound_tag = tag,
             .position  = model ? model->position : Vecf3{},
@@ -2327,7 +2462,12 @@ struct BlamScript
     }
 
     void custom_animation(
-        Proxy& p, u64 id, blam::antr::header const* graph, std::string const& name, bool blend, i32 frame = 0)
+        Proxy&                    p,
+        u64                       id,
+        blam::antr::header const* graph,
+        std::string const&        name,
+        bool                      blend,
+        i32                       frame = 0)
     {
         if(!graph)
             return log(fmt::format("custom_animation: no graph for {}", name));
@@ -3906,7 +4046,8 @@ struct BlamScript
     /* Ticks left of the cutscene camera's move */
     f32 camera_time(Proxy& p) const
     {
-        f32 out = 0.f;
+        /* A camera_set this tick has not reached the lerps yet */
+        f32 out = static_cast<f32>(std::max<libc_types::i64>(m_camera_end - m_vm.now(), 0));
         for(auto camera : p.template select<CameraLerp>())
             for(auto const& lerp : camera.template get<CameraLerp>().lerps)
                 if(lerp.cinematic)
@@ -4319,6 +4460,7 @@ struct BlamScript
     std::map<std::string, std::vector<u32>> m_actors;
     u32                                     m_next_actor{1};
     u64                                     m_next_impulse{1};
+    std::map<u32, u64>                      m_impulse_ids; /*!< The last playing of each impulse */
     std::vector<recording_t>                m_recordings;
     std::vector<rider_t>                    m_riders;
     std::map<std::pair<blam::tag_t const*, i16>, std::optional<Matf4>> m_seat_markers;
@@ -4328,6 +4470,7 @@ struct BlamScript
     std::set<u64>                           m_hovering;
     u64                                     m_first_person{0};
     u32                                     m_camera_gen{0}; /*!< Bumped as the camera is set */
+    libc_types::i64                         m_camera_end{0}; /*!< Tick the last camera_set arrives */
     std::map<u64, custom_t>                 m_custom;
     std::map<u64, commands_t>               m_commands;
     std::map<blam::scn::ai::conversation const*, conversation_t> m_conversations;
