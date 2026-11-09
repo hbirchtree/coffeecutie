@@ -93,12 +93,13 @@ struct ProjectileSystem
                 if(flight.attached && flight.attached_to)
                     hit(p, flight, model, flight.attached_to, tag.attached_detonation_damage,
                         model.position, {0, 0, 1}, -1, false);
-                return detonate(p, flight, model.position, {0, 0, 1}, nullptr);
+                return detonate(p, flight, model.position, model.rotation * Vecf3{1.f, 0.f, 0.f}, nullptr);
             }
         }
+        /* Gone off on its own, its effect faces the way it does */
         if(tag.maximum_range > 0.f && flight.travelled >= tag.maximum_range)
             return detonate(
-                p, flight, model.position, -direction(flight), nullptr);
+                p, flight, model.position, model.rotation * Vecf3{1.f, 0.f, 0.f}, nullptr);
 
         /* Speed eases from initial to final over the range, until it bounces */
         f32 const speed = glm::length(flight.velocity);

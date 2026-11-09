@@ -1,4 +1,5 @@
 #include "effects.h"
+#include "network/networking.h"
 
 #include "blam_files.h"
 #include "components.h"
@@ -39,7 +40,8 @@ using EffectManifest = compo::SubsystemManifest<
         const LoadingStatus,
         const BlamFiles<halo_version>,
         const BSPCache<halo_version>,
-        const TickClock>,
+        const TickClock,
+        const NetworkState>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 namespace {
@@ -71,7 +73,18 @@ struct place_t
 {
     Vecf3 position{};
     Vecf3 forward{1.f, 0.f, 0.f};
+    std::optional<Vecf3> up{}; /*!< Else perpendicular to forward, as the game picks */
 };
+
+/* The game's perpendicular: off the axis forward least leans along */
+inline Vecf3 perpendicular(Vecf3 const& v)
+{
+    Vecf3 const a = glm::abs(v);
+    Vecf3 const out = a.x <= a.y && a.x <= a.z ? Vecf3{0.f, v.z, -v.y}
+                      : a.y <= a.z             ? Vecf3{-v.z, 0.f, v.x}
+                                               : Vecf3{v.y, -v.x, 0.f};
+    return glm::length(out) > 1e-6f ? glm::normalize(out) : Vecf3{0.f, 0.f, 1.f};
+}
 
 /* How a point_physics moves things */
 struct motion_t
@@ -860,6 +873,8 @@ struct EffectSystem
             .forward  = glm::length(Vecf3(at[0])) > 1e-6f
                             ? glm::normalize(Vecf3(at[0]))
                             : Vecf3{1.f, 0.f, 0.f},
+            .up       = glm::length(Vecf3(at[2])) > 1e-6f ? std::optional(glm::normalize(Vecf3(at[2])))
+                                                          : std::nullopt,
         };
     }
 
@@ -1218,7 +1233,9 @@ struct EffectSystem
                 emit(p, fx, burst);
     }
 
-    /* Debris and projectiles, local to this peer like the effect itself */
+    /* Debris and projectiles are local to this peer like the effect itself;
+     * anything else it makes (a weapon dropped, a vehicle, a biped) is the
+     * authority's to spawn, and reaches the others as any object does */
     void spawn_part_object(
         Proxy&                   p,
         effect_instance_t const& fx,
@@ -1227,14 +1244,27 @@ struct EffectSystem
     {
         Vecf3 const dir     = cone(at.forward, part.velocity_cone_angle);
         bool const  garbage = class_of(part.type) == blam::tag_class_t::garb;
+        bool const  projectile = class_of(part.type) == blam::tag_class_t::proj;
+        bool const  local   = garbage || projectile;
+        if(!local && p.template subsystem<NetworkState>().replica)
+            return;
+        /* Placed in the location's frame, its forward and up; the cone only
+         * scatters where it flies. A projectile faces where it goes */
+        Quatf rotation = glm::angleAxis(std::atan2(dir.y, dir.x), Vecf3{0, 0, 1}) *
+                         glm::angleAxis(-std::asin(std::clamp(dir.z, -1.f, 1.f)), Vecf3{0, 1, 0});
+        if(!projectile)
+        {
+            Vecf3 const x = at.forward;
+            Vecf3 up      = at.up.value_or(perpendicular(x));
+            up            = up - x * glm::dot(up, x);
+            up            = glm::length(up) > 1e-6f ? glm::normalize(up) : perpendicular(x);
+            rotation      = glm::quat_cast(Matf3(x, glm::cross(up, x), up));
+        }
         SpawnObjectEvent spawn{
             .object   = part.type,
             .position = at.position,
-            .rotation =
-                glm::angleAxis(std::atan2(dir.y, dir.x), Vecf3{0, 0, 1}) *
-                glm::angleAxis(
-                    -std::asin(std::clamp(dir.z, -1.f, 1.f)), Vecf3{0, 1, 0}),
-            .local_only = true,
+            .rotation = rotation,
+            .local_only = local,
             /* Born inside the object the effect hangs off, it must not strike it */
             .owner      = fx.parent,
             /* Tag velocities are per tick */
