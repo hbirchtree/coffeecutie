@@ -385,7 +385,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                                    : equip.weapons[1].tag == tag ? &equip.weapons[1]
                                                                  : nullptr;
                 bool const carried = grenade || powerup || ammo || same;
-                if(!carried && equip.weapons[1].weapon && !pressed && !held)
+                /* A swap takes a press, and only for the weapon on offer:
+                 * a seat nearer the centre of the view wins the press */
+                if(!carried && equip.weapons[1].weapon &&
+                   (!(pressed || held) || info.offered.weapon != item.id()))
                     continue;
                 if(!carried && equip.weapons[1].weapon)
                     spent_press = true;

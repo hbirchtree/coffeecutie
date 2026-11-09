@@ -1053,11 +1053,14 @@ struct PlayerInfo
         Vecf2 pitch_range{-1.5f, 1.5f}; /*!< How far the seat looks down and up */
     } riding;
 
-    /*! The seat a press of use would take, for the HUD's prompt */
+    /*! What a press of use would do, for the HUD's prompt and the press
+     *  itself: board this seat, or swap for this weapon; whichever sits
+     *  nearer the centre of the view */
     struct
     {
         u64 vehicle{0};
         i16 seat{-1};
+        u64 weapon{0}; /*!< The weapon's entity */
     } offered;
 
     struct
