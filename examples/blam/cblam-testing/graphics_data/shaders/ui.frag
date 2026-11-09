@@ -138,13 +138,20 @@ void main()
         out_color = color;
     else if(source == TEX_FONT)
         out_color = background_color;
-    /* Lit where the texel's alpha ramp is under the fill; the shape is in
-     * its color channels */
+    /* Lit where the texel's alpha ramp is under the fill: a bar empties
+     * from its high end, the icon's side; the shape is in its color
+     * channels */
     else if((extra.x & METER) != 0u)
     {
-        bool lit = background_color.a <= uintBitsToFloat(extra.z);
+        /* PC meters keep the ramp in alpha and the shape in rgb; the Xbox
+         * intensity (A8Y8) ones hold the ramp in luminance, the shape in
+         * alpha */
+        bool  xbox  = source == TEX_A8Y8;
+        float ramp  = xbox ? background_color.r : background_color.a;
+        float shape = xbox ? background_color.a
+                           : max(background_color.r, max(background_color.g, background_color.b));
+        bool lit = ramp <= uintBitsToFloat(extra.z);
         vec4 tint = lit ? color : unpack_rgba8(extra.y);
-        float shape = max(background_color.r, max(background_color.g, background_color.b));
         out_color = vec4(tint.rgb, tint.a) * shape;
     }
     /* HUD: bitmaps carry their coverage in the color channels, and a

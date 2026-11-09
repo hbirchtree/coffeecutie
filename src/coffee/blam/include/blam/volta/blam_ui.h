@@ -1388,9 +1388,16 @@ struct hud_globals
     reference<button_icon_t>              button_icons; /*!< A, B, X, Y, ... */
     unit_hud_interface::colors_t          help_text_colors;
     tagref_typed_t<tag_class_t::hmt>      hud_messages;
+    u32                                   padding_2[112]; /*!< objective colours, waypoints */
+    tagref_typed_t<tag_class_t::wphi>     default_weapon_hud;
+    f32                                   motion_sensor_range; /*!< world units */
+    f32                                   motion_sensor_velocity_sensitivity;
+    f32                                   motion_sensor_scale;
 };
 
 static_assert(sizeof(hud_globals::button_icon_t) == 16);
+static_assert(offsetof(hud_globals, default_weapon_hud) == 0x2c0);
+static_assert(offsetof(hud_globals, motion_sensor_range) == 0x2d0);
 static_assert(offsetof(hud_globals, placement) == 0x24);
 static_assert(offsetof(hud_globals, single_player_font) == 0x48);
 static_assert(offsetof(hud_globals, icon_bitmap) == 0xa4);
