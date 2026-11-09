@@ -381,7 +381,14 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             auto const centre = centre_of(p, unit.id());
             if(!centre)
                 continue;
-            f32 const d = glm::distance(*centre, area.position);
+            /* Measured to the body's bounding sphere, as Halo does: a blast
+             * at the muzzle reaches the one holding the gun */
+            auto const* model  = p.template get<Model>(unit.id());
+            auto const* info   = p.template get<PlayerInfo>(unit.id());
+            f32         radius = model ? model->render_radius : 0.f;
+            if(info)
+                radius = std::max(radius, info->biped.height * .5f);
+            f32 const d = std::max(glm::distance(*centre, area.position) - radius, 0.f);
             if(d > jpt->radius.y)
                 continue;
             f32 const inner = std::min(jpt->radius.x, jpt->radius.y);
