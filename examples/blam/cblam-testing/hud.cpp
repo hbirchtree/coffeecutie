@@ -30,6 +30,7 @@ using HudManifest = compo::SubsystemManifest<
         const BipedEquipment,
         const BipedStatus,
         const PlayerInput,
+        const Actor,
         const Model>,
     type_list_t<
         HudScene,
@@ -197,13 +198,53 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         push(anchor, bg, bg.interface_bitmap, bg.sequence_index, color_of(bg.colors.default_color));
     }
 
-    /* Lit up to `value` (0..1) along the meter bitmap's alpha ramp */
-    void meter(anchor_t anchor, unit_hud_interface::meter_base_t const& m, f32 value)
+    /* The alpha a texel must stay under to light, as the shader reads it:
+     * the value in the meter's units through the tag's multiplier and
+     * bias, never under the tag's minimum. An ammo meter counts rounds; a
+     * fraction is scaled by value_scale, or without one to the range the
+     * multiplier and bias leave (health: 8 cells of 30 past a bias of 15) */
+    static f32 fill_of(unit_hud_interface::meter_base_t const& m, f32 value, bool fraction)
     {
-        f32 const low   = m.minimum_meter_value / 255.f;
-        f32 const fill  = value > 0.f ? low + (1.f - low) * std::clamp(value, 0.f, 1.f) : 0.f;
-        Vecf4 const lit = glm::mix(color_of(m.color_at_minimum), color_of(m.color_at_maximum), value);
-        push(anchor, m, m.meter_bitmap, m.sequence_index, lit, fill, color_of(m.empty_color));
+        f32 const mult = std::max<f32>(m.alpha_multiplier, 1.f);
+        if(fraction)
+            value = std::clamp(value, 0.f, 1.f) *
+                    (m.value_scale > 0 ? m.value_scale : (255.f - m.alpha_bias) / mult);
+        f32 const alpha = std::max<f32>(m.minimum_meter_value, value * mult + m.alpha_bias);
+        return std::min(alpha, 255.f) / 255.f;
+    }
+
+    /* Lit up to `value` along the meter bitmap's alpha ramp, in a colour
+     * of its own if given */
+    void meter(
+        anchor_t                                anchor,
+        unit_hud_interface::meter_base_t const& m,
+        f32                                     value,
+        bool                                    fraction = true,
+        std::optional<Vecf4>                    color    = std::nullopt)
+    {
+        f32 const t   = fraction ? std::clamp(value, 0.f, 1.f) : 1.f;
+        Vecf4     lit = color ? *color
+                              : glm::mix(color_of(m.color_at_minimum), color_of(m.color_at_maximum), t);
+        /* The tags leave these colours' alpha at 0: a lit bar is solid */
+        if(lit.a <= 0.f)
+            lit.a = 1.f;
+        push(anchor, m, m.meter_bitmap, m.sequence_index, lit, fill_of(m, value, fraction),
+             color_of(m.empty_color));
+    }
+
+    /* What a bar has just lost, lit in its flash colour under the bar
+     * itself, fading out */
+    void damage_flash(
+        anchor_t                                anchor,
+        unit_hud_interface::meter_base_t const& m,
+        f32                                     peak,
+        f32                                     strength)
+    {
+        if(strength <= 0.f)
+            return;
+        Vecf4 const flash = color_of(m.flash_color);
+        push(anchor, m, m.meter_bitmap, m.sequence_index,
+             Vecf4(Vecf3(flash) * strength, strength), fill_of(m, peak, true), Vecf4(0.f));
     }
 
     /* Digits in the hud# font, right-aligned in their field */
@@ -255,21 +296,34 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
 
     /* ---- Unit ---- */
 
-    /* The HUD's warning sounds latch to what the shield and health enter */
+    /* Per seat: what its bars held last frame and what is still lit */
+    struct warning_t
+    {
+        f32 shield{1.f};
+        f32 body{1.f};
+        f32 shield_peak{1.f}; /*!< What the bar had before the blows */
+        f32 body_peak{1.f};
+        f32 shield_flash{0.f}; /*!< Seconds the loss stays lit */
+        f32 body_flash{0.f};
+        u32 latched{0}; /*!< sound_t::latched_to_t bits in effect */
+    };
+
+    /* The HUD's warning sounds latch to what the shield and health enter;
+     * the shield hit plays for every blow */
     void warning_sounds(
-        Proxy& p, u64 id, unit_hud_interface const& hud, BipedStatus const& status)
+        Proxy&                    p,
+        warning_t&                watch,
+        unit_hud_interface const& hud,
+        BipedStatus const&        status,
+        bool                      shield_hit)
     {
         using latch_t = unit_hud_interface::sound_t::latched_to_t;
         auto sounds   = hud.hud_warning_sounds.data(*m_magic);
         if(!sounds.has_value() || sounds.value().empty())
             return;
-        auto& watch = m_warnings[id];
-        u32   now   = 0;
+        u32 now = 0;
         if(status.shield > watch.shield + 1e-4f && watch.shield < 1.f)
             now |= static_cast<u32>(latch_t::shield_recharging);
-        /* Struck, not an over shield running down */
-        if(status.shield < watch.shield - 1e-4f && status.recent_shield > 0.f)
-            now |= static_cast<u32>(latch_t::shield_damaged);
         if(status.shield <= 0.f)
             now |= static_cast<u32>(latch_t::shield_empty) |
                    static_cast<u32>(latch_t::shield_low);
@@ -277,9 +331,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             now |= static_cast<u32>(latch_t::health_low);
         if(status.body <= 0.f)
             now |= static_cast<u32>(latch_t::health_empty);
-        u32 const entered = now & ~watch.latched;
-        watch.latched     = now;
-        watch.shield      = status.shield;
+        u32 entered   = now & ~watch.latched;
+        watch.latched = now;
+        if(shield_hit)
+            entered |= static_cast<u32>(latch_t::shield_damaged);
         if(!entered)
             return;
         auto* bus = p.template service<comp_app::EventBus<SoundEvent>>();
@@ -308,10 +363,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         Vecf4 const high = color_of(authored ? hud.overcharge_maximum_color : m.flash_color);
         Vecf4 const below = color_of(
             blank(hud.overcharge_empty_color) ? m.color_at_maximum : hud.overcharge_empty_color);
-        value          = std::clamp(value, 0.f, 1.f);
-        f32 const low_fill = m.minimum_meter_value / 255.f;
+        value = std::clamp(value, 0.f, 1.f);
         push(hud.anchor, m, m.meter_bitmap, m.sequence_index, glm::mix(low, high, value),
-             low_fill + (1.f - low_fill) * value, below);
+             fill_of(m, value, true), below);
     }
 
     void unit_hud(
@@ -319,19 +373,155 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     {
         f32 const shield = status.shield;
         f32 const health = status.body;
-        warning_sounds(p, id, hud, status);
+        auto&     watch  = m_warnings[id];
+        /* A blow holds what it took lit for a moment; an over shield
+         * running down is not one */
+        bool const shield_hit = shield < watch.shield - 1e-4f && status.recent_shield > 0.f;
+        bool const body_hit   = health < watch.body - 1e-4f;
+        if(shield_hit)
+        {
+            watch.shield_peak  = std::max(watch.shield_peak, std::min(watch.shield, 1.f));
+            watch.shield_flash = damage_flash_seconds;
+        }
+        if(body_hit)
+        {
+            watch.body_peak  = std::max(watch.body_peak, watch.body);
+            watch.body_flash = damage_flash_seconds;
+        }
+        watch.shield_flash = std::max(watch.shield_flash - m_dt, 0.f);
+        watch.body_flash   = std::max(watch.body_flash - m_dt, 0.f);
+        if(watch.shield_flash <= 0.f)
+            watch.shield_peak = shield;
+        if(watch.body_flash <= 0.f)
+            watch.body_peak = health;
+        warning_sounds(p, watch, hud, status, shield_hit);
+        watch.shield = shield;
+        watch.body   = health;
+
         background(hud.anchor, hud.unit_hud_background);
         background(hud.anchor, hud.shield_panel_background);
         if(shield > 1.f)
             overcharge(hud, (shield - 1.f) / (BipedStatus::over_shield - 1.f));
         else
+        {
+            damage_flash(hud.anchor, hud.shield_panel_meter, watch.shield_peak,
+                         watch.shield_flash / damage_flash_seconds);
             meter(hud.anchor, hud.shield_panel_meter, shield);
+        }
         background(hud.anchor, hud.health_panel_background);
-        meter(hud.anchor, hud.health_panel_meter, health);
+        damage_flash(hud.anchor, hud.health_panel_meter, watch.body_peak,
+                     watch.body_flash / damage_flash_seconds);
+        /* Health shows in three bands, not a blend: the max colour, the
+         * medium one, then the min colour */
+        using mflags_t = unit_hud_interface::meter_base_t::meter_flags_t;
+        auto const& hm = hud.health_panel_meter;
+        std::optional<Vecf4> band;
+        if((hm.flags & mflags_t::use_min_max_for_state_changes) != mflags_t::none)
+            band = health > hud.max_color_health_fraction_cutoff ? color_of(hm.color_at_maximum)
+                   : health > hud.min_color_health_fraction_cutoff
+                       ? color_of(hud.medium_health_left_color)
+                       : color_of(hm.color_at_minimum);
+        meter(hud.anchor, hm, health, true, band);
         /* The motion sensor keeps to the bottom left */
         background(anchor_t::bottom_left, hud.motion_sensor_background);
         background(anchor_t::bottom_left, hud.motion_sensor_foreground);
+        motion_sensor(p, id, hud);
     }
+
+    /* Blips for what moves within the sensor's range, the view's forward
+     * up: foes red, friends yellow, a vehicle's larger */
+    void motion_sensor(Proxy& p, u64 self, unit_hud_interface const& hud)
+    {
+        auto const* info = p.template get<PlayerInfo>(self);
+        auto const* cam  = p.template get<PlayerCamera>(self);
+        if(!info || !cam || !m_hudg)
+            return;
+        auto const& fg    = hud.motion_sensor_foreground;
+        auto        frame = frame_of(fg.interface_bitmap, fg.sequence_index, 0);
+        if(!frame)
+            return;
+        auto blip = frame_of(m_blip, 0, 0);
+        if(!blip)
+            return;
+        Vecf2 const size   = frame->size * scale_of(fg);
+        Vecf2 const centre = place(anchor_t::bottom_left, fg.anchor_offset, size) + size * .5f;
+        f32 const   radius = std::min(size.x, size.y) * .5f * sensor_ring;
+        f32 const   range  = m_hudg->motion_sensor_range > 0.f ? m_hudg->motion_sensor_range : 20.f;
+
+        Vecf3 const view    = glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f};
+        Vecf2 const forward = glm::dot(Vecf2(view), Vecf2(view)) > 1e-6f ? glm::normalize(Vecf2(view))
+                                                                           : Vecf2{1.f, 0.f};
+        Vecf2 const right{forward.y, -forward.x};
+        auto const& game   = p.template subsystem<GameState>();
+        auto const  my_team = [&]() -> i16 {
+            if(game.kind != GameState::kind_t::multiplayer || !game.teams)
+                return -1;
+            for(auto const& pl : game.players)
+                if(pl.player_idx == info->player_idx)
+                    return pl.team;
+            return -1;
+        }();
+        for(auto ent : p.template select<Model>())
+        {
+            if(ent.id() == self || ent.id() == info->riding.vehicle)
+                continue;
+            auto const& model = ent.template get<Model>();
+            auto const* tag   = model.origin_object;
+            if(!tag || !model.tick_posed)
+                continue;
+            bool const vehicle = tag->matches(blam::tag_class_t::vehi);
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            auto const* other  = p.template get<PlayerInfo>(ent.id());
+            if(!vehicle && (!status || status->dead))
+                continue;
+            if(other && other->riding.vehicle)
+                continue;
+            /* Standing still, or crouched along, it is not seen */
+            f32 const speed = glm::distance(model.position, model.tick_position) * tick_rate;
+            if(speed < sensor_speed)
+                continue;
+            Vecf2 const rel = Vecf2(model.position - cam->camera.position);
+            f32 const   d   = glm::length(rel);
+            if(d > range)
+                continue;
+            bool foe = true;
+            if(other)
+            {
+                if(my_team >= 0)
+                    for(auto const& pl : game.players)
+                        if(pl.player_idx == other->player_idx)
+                            foe = pl.team != my_team;
+                if(game.kind != GameState::kind_t::multiplayer)
+                    foe = false;
+            } else if(auto const* actor = p.template get<Actor>(ent.id()))
+                foe = hostile(actor->team);
+            else if(!vehicle)
+                continue;
+            Vecf2 const at = centre + Vecf2(glm::dot(rel, right), -glm::dot(rel, forward)) * (radius / range);
+            f32 const   half = (vehicle ? blip_vehicle : blip_unit) * .5f;
+            auto        dot  = *blip;
+            dot.sprite.min   = at - Vecf2(half);
+            dot.sprite.max   = at + Vecf2(half);
+            dot.sprite.color = foe ? blip_foe : blip_friend;
+            m_view->sprites.push_back(dot.sprite);
+        }
+    }
+
+    /* Players and humans stand together; everyone else is against them */
+    static bool hostile(u16 team)
+    {
+        using team_t = blam::scn::unit::team_t;
+        auto const t = static_cast<team_t>(team);
+        return t != team_t::player && t != team_t::human;
+    }
+
+    static constexpr f32   tick_rate    = 30.f;
+    static constexpr f32   sensor_ring  = .9f;  /* of the dial, used for blips */
+    static constexpr f32   sensor_speed = .5f;  /* wu/s, slower goes unseen */
+    static constexpr f32   blip_unit    = 5.f;  /* HUD px */
+    static constexpr f32   blip_vehicle = 8.f;
+    static inline Vecf4 const blip_foe{1.f, .15f, .1f, 1.f};
+    static inline Vecf4 const blip_friend{1.f, .9f, .2f, 1.f};
 
     /* ---- Weapon ---- */
 
@@ -354,6 +544,14 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         default:
             return 0.f;
         }
+    }
+
+    /* Rounds are shown as they are, heat and age as a fraction */
+    static bool counts(attached_t to)
+    {
+        return to == attached_t::total_ammo || to == attached_t::loaded_ammo ||
+               to == attached_t::secondary_weapon_total_ammo ||
+               to == attached_t::secondary_weapon_loaded_ammo;
     }
 
     bool on_this_map(weapon_hud_interface::use_on_map_type_t type) const
@@ -381,7 +579,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(auto meters = hud.meter_elements.data(*m_magic); meters.has_value())
             for(auto const& el : meters.value())
                 if(on_this_map(el.can_use_on_map_type))
-                    meter(anchor, el.meter, value_of(el.state_attached_to, s, true));
+                {
+                    bool const fraction = !counts(el.state_attached_to);
+                    meter(anchor, el.meter, value_of(el.state_attached_to, s, fraction), fraction);
+                }
         if(auto numbers = hud.number_elements.data(*m_magic); numbers.has_value())
             for(auto const& el : numbers.value())
             {
@@ -973,6 +1174,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         auto& cinematic = p.template subsystem<CinematicState>();
         f32 const dt    = m_last != time_point{} ? std::chrono::duration<f32>(t - m_last).count() : 0.f;
         m_last          = t;
+        m_dt            = dt;
         cinematic.fade.elapsed += dt;
         cinematic.help.elapsed += dt;
         scene.fade = Vecf4(cinematic.fade.color, cinematic.fade.opacity());
@@ -1112,6 +1314,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         auto const& g = *globals.value();
 
         if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
+            m_blip = bitmaps.value()[0].motion_sensor_blip_bitmap;
+        if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
             if((m_hudg = data_of<blam::hud_globals>(bitmaps.value()[0].hud_globals)))
                 m_global_messages = data_of<blam::hud_message_text>(m_hudg->hud_messages);
         if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.value().empty())
@@ -1166,10 +1370,12 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     }
 
     static constexpr u32 max_child_depth  = 4;
+    static constexpr f32 damage_flash_seconds = .5f;
     /* Bars of a letterbox, and how long they take to come in */
     static constexpr f32 letterbox_height  = .125f;
     static constexpr f32 letterbox_seconds = .5f;
     time_point           m_last{};
+    f32                  m_dt{0.f};
     static constexpr f32 low_ammo_fraction = .25f;
     /* 7.5% in from each edge of 640x480 */
     static inline Vecf2 const safe_inset{48.f, 36.f};
@@ -1180,14 +1386,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     std::array<blam::tag_t const*, 2>    m_unit_huds{}; /*!< Full, split screen */
     /* Dims the view and lifts it green */
     static inline Vecf4 const vision_tint{.04f, .22f, .06f, .4f};
-    struct warning_t
-    {
-        f32 shield{1.f};
-        u32 latched{0}; /*!< sound_t::latched_to_t bits in effect */
-    };
     std::map<u64, warning_t> m_warnings; /*!< Per seat */
     blam::hud_number const*              m_digits{nullptr};
     blam::hud_globals const*             m_hudg{nullptr};
+    blam::tagref_t                       m_blip{}; /*!< matg's motion sensor blip */
     blam::hud_message_text const*        m_messages{nullptr};        /*!< The scenario's */
     blam::hud_message_text const*        m_global_messages{nullptr}; /*!< The hudg's */
     bool                                 m_digit_sprites{false};
