@@ -276,10 +276,10 @@ struct MotionInterpolator
             cam.drawn_eye    = cam.camera.position;
             if(cam.tick_eye && ticked_eye(p, info) &&
                glm::distance(*cam.tick_eye, cam.camera.position) <= max_tick_move)
-            {
                 cam.drawn_eye = glm::mix(*cam.tick_eye, cam.camera.position, alpha);
-                build_camera_matrix(cam, cam.drawn_eye + cam.view_offset);
-            }
+            /* The view as the models hang: a rider's seat moved the eye after
+             * the controller built it */
+            build_camera_matrix(cam, cam.drawn_eye + cam.view_offset);
             /* First-person models hang off the eye as drawn, once this
              * frame's ticks have moved the camera */
             for(auto held : p.select<Attachment, Model>())

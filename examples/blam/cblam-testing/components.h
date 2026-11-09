@@ -1487,6 +1487,7 @@ struct BipedEquipment
         f32  age{0.f};         /*!< Battery spent, 0 to 1 */
         bool overheated{false}; /*!< Venting until it cools to recovery */
         bool charged{false};    /*!< Its trigger held to a full charge */
+        bool charging{false};   /*!< Its trigger held, charging or charged */
         f32  charge{0.f};       /*!< How far an actor has charged it, 0 to 1 */
         /*! Its object functions' outputs: what its holder may import */
         std::array<f32, 4> exports{{-1.f, -1.f, -1.f, -1.f}};

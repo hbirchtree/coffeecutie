@@ -1098,7 +1098,8 @@ struct PhysicsSystem
             auto          player = player_;
             PlayerCamera& camera = player.template get<PlayerCamera>();
             auto          info   = p.template get<PlayerInfo>(player.id());
-            if(!info || !info->mode.physics ||
+            /* A rider's eye is its seat's, set where it rides */
+            if(!info || !info->mode.physics || info->riding.vehicle != 0 ||
                (info->is_remote() && !info->mode.simulated))
                 continue;
             auto phys_it = m_bodies.find(player.id());

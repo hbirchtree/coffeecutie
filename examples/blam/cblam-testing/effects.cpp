@@ -203,6 +203,7 @@ struct EffectSystem
         place_t       place{};
         Vecf3         velocity{};
         u64           parent{0};
+        u64           marker_parent{0}; /* markers the parent lacks */
         u64           shooter{0}; /* blamed for its damage */
         bool          attached{false}; /* loops while its object lives */
         scale_t       scale{};
@@ -898,6 +899,10 @@ struct EffectSystem
         std::string const name = location_name(fx, index);
         if(name == "gravity")
             return {fx.place.position, {0.f, 0.f, -1.f}};
+        if(fx.marker_parent != 0 && !name.empty() && name != "normal" &&
+           !has_marker(p, fx.parent, name) && has_marker(p, fx.marker_parent, name))
+            if(auto at = marker_place(p, fx.marker_parent, name))
+                return *at;
         if(fx.parent != 0 && name != "normal")
             if(auto at = marker_place(p, fx.parent, name))
                 return *at;
@@ -927,8 +932,9 @@ struct EffectSystem
                     .tag      = tag,
                     .place    = place,
                     .velocity = request.velocity,
-                    .parent   = request.parent,
-                    .shooter  = request.shooter,
+                    .parent        = request.parent,
+                    .marker_parent = request.marker_parent,
+                    .shooter       = request.shooter,
                 });
                 m_effects.back().audience     = audience_of(p, request.parent);
                 m_effects.back().visuals_only = request.visuals_only;

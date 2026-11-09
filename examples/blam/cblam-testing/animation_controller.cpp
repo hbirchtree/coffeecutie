@@ -92,7 +92,7 @@ struct AnimationController
             animate_bipeds(p, dt);
             animate_vehicles(p, dt);
         }
-        animate_first_person(p, files);
+        animate_first_person(p, files, dt);
         animate_faces(p);
         animate_turrets(p);
         animate_objects(p, files);
@@ -1089,7 +1089,7 @@ struct AnimationController
     }
 
     /* First-person models return to idle once a requested clip ends */
-    void animate_first_person(Proxy& p, BlamFiles<halo_version> const& files)
+    void animate_first_person(Proxy& p, BlamFiles<halo_version> const& files, f32 dt)
     {
         using fp_slot     = blam::antr::first_person_weapon;
         auto const& magic = files.container.magic;
@@ -1135,6 +1135,7 @@ struct AnimationController
                 layer.fade   = 1.f / blend_time;
                 layer.rate   = std::clamp(speed / stride_speed, .5f, 2.f);
             }
+            first_person_lag(p, anim, owner, clip(fp_slot::overlays), dt);
             if(bool& was = m_fp_venting[ent.id()]; venting != was)
             {
                 was = venting;
@@ -1148,7 +1149,7 @@ struct AnimationController
             if(custom_playing(ent.id(), anim))
                 continue;
             i32 const hold = venting                 ? clip(fp_slot::overheated)
-                             : gun && gun->charged ? clip(fp_slot::overcharged)
+                             : gun && gun->charging ? clip(fp_slot::overcharged)
                                                    : -1;
             if(i32 const pose = hold >= 0 ? hold : clip(fp_slot::idle); pose >= 0)
                 anim.crossfade(anim.graph, static_cast<u32>(pose), blend_time);
@@ -1156,6 +1157,79 @@ struct AnimationController
              * needler's needles leave as it fires */
             if(i32 const ammo = clip(fp_slot::ammunition); ammo >= 0 && gun)
                 hold_ammunition(anim, static_cast<u32>(ammo), *gun, magic);
+        }
+    }
+
+    /* The hands trail the body: the graph's overlays clip is one pose per
+     * direction, two frames to an axis (ahead/back, left/right, turning,
+     * looking, falling), each weighted by how fast the owner moves that way
+     * and posed the way the hands fall behind */
+    void first_person_lag(Proxy& p, AnimationPlayback& anim, u64 owner, i32 clip, f32 dt)
+    {
+        auto const stop = [&anim] {
+            for(u32 i = 0; i < AnimationPlayback::fp_sway_axes; i++)
+                if(anim.layers[AnimationPlayback::fp_sway_slot + i].graph)
+                    anim.stop(AnimationPlayback::fp_sway_slot + i);
+        };
+        auto const* cam = p.template get<PlayerCamera>(owner);
+        /* A rider's hands go where the vehicle carries them */
+        auto const* rider = p.template get<PlayerInfo>(owner);
+        if(clip < 0 || !cam || (rider && rider->riding.vehicle))
+            return stop();
+        auto&       lag  = m_fp_lag[owner];
+        Vecf3 const view = glm::transpose(Matf3(cam->rotation)) * Vecf3{0.f, 0.f, -1.f};
+        f32 const   yaw  = std::atan2(view.y, view.x);
+        f32 const   pitch = std::asin(std::clamp(view.z, -1.f, 1.f));
+        Vecf2       turn{};
+        if(lag.seen && dt > 0.f)
+            turn = Vecf2(std::remainder(yaw - lag.yaw, glm::two_pi<f32>()), pitch - lag.pitch) / dt;
+        lag.seen  = true;
+        lag.yaw   = yaw;
+        lag.pitch = pitch;
+        /* A turn is jittery frame to frame; the hands ease after it */
+        lag.turn += (turn - lag.turn) * (dt > 0.f ? 1.f - std::exp(-dt * lag_response) : 1.f);
+
+        auto const  walker   = m_walkers.find(owner);
+        Vecf3 const velocity = walker != m_walkers.end() ? walker->second.velocity : Vecf3{};
+        Vecf2 const forward  = glm::dot(Vecf2(view), Vecf2(view)) > 1e-6f
+                                   ? glm::normalize(Vecf2(view))
+                                   : Vecf2{1.f, 0.f};
+        Vecf2 const left{-forward.y, forward.x};
+        /* Frames: 0/1 root back/ahead, 2/3 root left/right, 4/5 hands yawed
+         * left/right, 6/7 hands pitched up/down, 8 root pulled back */
+        struct axis_t
+        {
+            u32 positive, negative;
+            f32 value, full;
+        };
+        axis_t const axes[AnimationPlayback::fp_sway_axes] = {
+            {0, 1, glm::dot(Vecf2(velocity), forward), stride_speed},
+            {3, 2, glm::dot(Vecf2(velocity), left), stride_speed},
+            {5, 4, lag.turn.x, lag_turn_rate},
+            {7, 6, lag.turn.y, lag_turn_rate},
+            {8, 8, std::abs(velocity.z), lag_fall_speed},
+        };
+        for(u32 i = 0; i < AnimationPlayback::fp_sway_axes; i++)
+        {
+            auto const& axis   = axes[i];
+            u32 const   slot   = AnimationPlayback::fp_sway_slot + i;
+            auto&       layer  = anim.layers[slot];
+            f32 const   weight = std::clamp(std::abs(axis.value) / axis.full, 0.f, 1.f);
+            if(weight < 1e-3f)
+            {
+                if(layer.graph)
+                    anim.stop(slot);
+                continue;
+            }
+            if(layer.graph != anim.graph || layer.animation != static_cast<u32>(clip))
+                layer = AnimationLayer{
+                    .graph     = anim.graph,
+                    .animation = static_cast<u32>(clip),
+                    .loop      = false,
+                    .paused    = true,
+                };
+            layer.time   = static_cast<f32>(axis.value >= 0.f ? axis.positive : axis.negative) / 30.f;
+            layer.weight = weight;
         }
     }
 
@@ -1503,6 +1577,9 @@ struct AnimationController
     static constexpr f32 run_threshold  = 2.5f;
     static constexpr f32 stride_speed   = 1.5f;
     static constexpr f32 blend_time     = .15f; /* s */
+    static constexpr f32 lag_response   = 10.f; /* 1/s, how fast the hands follow a turn */
+    static constexpr f32 lag_turn_rate  = 3.f;  /* rad/s at which the hands trail fully */
+    static constexpr f32 lag_fall_speed = 4.f;  /* wu/s */
     static constexpr f32 land_blend_time = .08f;
     static constexpr f32 air_delay       = .1f; /* s off the ground */
     static constexpr f32 actor_gaze_hold = .25f; /* s an actor's aim outlasts its last renewal */
@@ -1557,6 +1634,13 @@ struct AnimationController
     std::set<u64>                                m_aimed; /* turrets a gunner turns */
     std::vector<PlayModelAnimationEvent>         m_requests;
     std::map<u64, bool>                          m_fp_venting; /*!< By fp model */
+    struct fp_lag_t
+    {
+        bool  seen{false};
+        f32   yaw{0.f}, pitch{0.f};
+        Vecf2 turn{}; /*!< Eased yaw and pitch rates, rad/s */
+    };
+    std::map<u64, fp_lag_t> m_fp_lag; /*!< By owner */
     std::vector<WeaponFireEvent>                 m_shots;
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     std::map<u64, f32>                           m_wheel_turn;
