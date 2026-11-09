@@ -1229,9 +1229,8 @@ struct EffectSystem
             .local_only = true,
             /* Born inside the object the effect hangs off, it must not strike it */
             .owner      = fx.parent,
-            /* Debris barely moves on its own; Halo flings it with the same
-             * event's jpt! instantaneous acceleration, not applied yet */
-            .velocity = dir * uniform(part.velocity_bounds) + fx.velocity,
+            /* Tag velocities are per tick */
+            .velocity = dir * uniform(part.velocity_bounds) * ticks_per_second + fx.velocity,
             .angular_velocity = cone(Vecf3{0, 0, 1}, glm::pi<f32>()) *
                                 uniform(part.angular_velocity_bounds),
             .lifetime = garbage ? debris_lifetime : 0.f,
