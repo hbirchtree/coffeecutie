@@ -313,7 +313,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 }
                 state.firing2 = held2;
                 if(ammo)
-                    ammo->charged = charges && state.charge >= trigger.charging_time;
+                {
+                    ammo->charged  = charges && state.charge >= trigger.charging_time;
+                    ammo->charging = charges && state.charge >= 0.f;
+                }
                 if(trigger.illumination_recovery_time > 0.f)
                     state.illumination = std::max(
                         state.illumination -
@@ -708,11 +711,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             auto const& effect = effects.value()[pick].firing_effect;
             auto const play = [&](u64 parent, bool visuals_only) {
                 SpawnEffectEvent spawn{
-                    .effect       = effect,
-                    .position     = shot.position,
-                    .direction    = forward,
-                    .parent       = parent,
-                    .visuals_only = visuals_only,
+                    .effect        = effect,
+                    .position      = shot.position,
+                    .direction     = forward,
+                    .parent        = parent,
+                    .marker_parent = parent == first ? third : 0,
+                    .visuals_only  = visuals_only,
                 };
                 GameEvent ev{.type = GameEvent::SpawnEffect};
                 game.inject(ev, &spawn);

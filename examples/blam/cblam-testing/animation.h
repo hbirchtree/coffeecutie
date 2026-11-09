@@ -77,7 +77,9 @@ struct AnimationPlayback
         object_slot   = 15, /* the graph's object animation, by an object function */
         look_slot     = 16, /* units: the head turned toward `looking` */
         sway_slot     = 17, /* first person: the moving overlay, by the walk */
-        max_layers    = 18,
+        fp_sway_slot  = 18, /* first person: the overlays frames, one axis each */
+        fp_sway_axes  = 5,
+        max_layers    = 23,
     };
 
     std::array<AnimationLayer, max_layers> layers{};

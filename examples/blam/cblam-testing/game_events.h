@@ -401,6 +401,9 @@ struct SpawnEffectEvent
     Vecf3           direction{1.f, 0.f, 0.f}; /*!< Forward, e.g. a surface normal */
     Vecf3           velocity{};               /*!< Inherited by what it creates */
     libc_types::u64 parent{0};                /*!< Followed while it plays */
+    /*! Where a location's marker is missing on the parent, e.g. the gun in
+     *  hand behind a first-person view */
+    libc_types::u64 marker_parent{0};
     /*! Another view of an effect played elsewhere: only what is seen */
     bool visuals_only{false};
     libc_types::u64 shooter{0}; /*!< Whose shot it is: blamed for the damage it does */
