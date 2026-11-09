@@ -539,10 +539,16 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             for(u32 i = 0; i < barrels; i++)
             {
                 WeaponFireEvent barrel = shot;
-                mount(p, barrel, info.riding.vehicle, i);
+                Vecf3           bore{};
+                mount(p, barrel, info.riding.vehicle, i, &bore);
                 Vecf3 const to = target - barrel.position;
+                /* A barrel set off the gun's own line keeps that offset */
                 if(glm::dot(to, forward) > 0.f)
-                    barrel.direction = glm::normalize(to);
+                {
+                    Quatf const spread = glm::normalize(Quatf(
+                        1.f + glm::dot(bore, barrel.direction), glm::cross(bore, barrel.direction)));
+                    barrel.direction = spread * glm::normalize(to);
+                }
                 p.template subsystem<GameEventBus>().inject(ev, &barrel);
             }
             return;
@@ -552,7 +558,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     /* From the gun's marker as the vehicle stands, along its barrel; a gun
      * the gunner turns points where they look */
-    void mount(Proxy& p, WeaponFireEvent& shot, u64 vehicle, u32 instance)
+    /* `bore` gets the gun's own forward, before the marker's offset */
+    void mount(
+        Proxy& p, WeaponFireEvent& shot, u64 vehicle, u32 instance, Vecf3* bore = nullptr)
     {
         auto const* model = p.template get<Model>(vehicle);
         if(!model || !model->tag)
@@ -569,12 +577,16 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         auto const  node = static_cast<size_t>(marker->node);
         if(anim && marker->node >= 0 && node < anim->pose.size())
             at = at * anim->pose[node];
+        if(bore)
+            *bore = glm::normalize(Vecf3(at[0]));
         at                 = at * marker->transform;
         Vecf3 const barrel = Vecf3(at[0]);
         shot.vehicle       = vehicle;
         shot.position      = Vecf3(at[3]);
         if(glm::dot(barrel, barrel) > 1e-6f)
             shot.direction = glm::normalize(barrel);
+        else if(bore)
+            shot.direction = *bore;
     }
 
     /* Projectiles from the shot's origin, the firing effect at the muzzle */
