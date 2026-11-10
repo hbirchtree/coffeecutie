@@ -1,0 +1,49 @@
+{
+    "graphics": {
+        "window": {
+            "width": 1440,
+            "height": 1080,
+            "depth": 24
+        },
+        "_software_renderer": "llvmpipe",
+        "gl": [
+            {
+                "major": 4,
+                "minor": 6
+            }
+        ],
+        "gles": [],
+        "screenshot_quality": 80
+    },
+    "audio": {
+        "frequency": 48000,
+        "channels": 2,
+        "format": "f32"
+    },
+    "comment": "Captures various cases on b30.map; bumped wall, waves, water, sky",
+    "events": [
+        {
+            "index": 0,
+            "time": 51,
+            "type": "controller_connect"
+        },
+        {"time": 30000, "type": "camera", "position" :[-57.837524, 38.448414, 5.534324], "rotation":[-0.7344694, -0.036754075, 0.67679894, 0.033868156],"comment":"Looking at battlefield"},
+        {"time": 120000, "type": "camera", "position" :[41.48941, 62.870308, 3.188953], "rotation":[-0.6408526, 0.023876268, 0.76676065, -0.028567173],"comment":"Outside the crack"},
+        {"time": 150000, "type": "camera", "position" :[25.690985, 45.46425, 13.287535], "rotation":[0.42489985, -0.035164345, -0.90147537, 0.07460531],"comment":"In the crack"},
+        {"time": 160000, "type": "camera", "position" :[-0.89385724, 19.990332, 11.869295], "rotation":[-0.006694496, -0.0008735488, -0.9915671, -0.12941912],"comment":"Inside security override"},
+        {"time": 200000, "type": "camera", "position" :[36.298286, 20.207506, 10.802137], "rotation":[-0.013982379, 0.00035992643, 0.999571, -0.02573342],"comment":"At security override"},
+        {"time": 205000,"type": "controller_button","button": "BACK","duration": 120,"index": 0},
+        {"time": 220000,"type": "controller_button","button": "X","duration": 120,"index": 0,"comment":"Activates security override"},
+        {"time": 225000,"type": "controller_button","button": "BACK","duration": 120,"index": 0},
+        {"time": 270000, "type": "camera", "position" :[25.74076, 20.118341, 10.740741], "rotation":[0.99996215, 0.008103354, 0.003182083, 2.5807125e-05],"comment":"Trigger downed pelican"},
+        {"time": 280000, "type": "camera", "position" :[12.897838, 23.40158, 11.367894], "rotation":[-0.9899091, -0.014282175, 0.14096788, 0.0020339133],"comment":"Trigger invis elites"},
+        {"time": 290000, "type": "camera", "position" :[-9.338494, 28.726673, 13.628357], "rotation":[0.8252212, 0.024222132, 0.56404734, 0.016556023],"comment":"Cortana cargo message"},
+        {"time": 320000, "type": "camera", "position" :[63.18965, 0.10147686, 3.4259899], "rotation":[-0.8601577, -0.010102311, 0.5098929, 0.005988563],"comment":"Covenant dance music"},
+        {"time": 330000, "type": "camera", "position" :[24.481855, -22.097065, 10.135689], "rotation":[-0.9999907, 0.0037235345, -0.0021566825, 8.049454e-06],"comment":"Map room entry"},
+        {"time": 340000, "type": "camera", "position" :[6.1214247, -13.164836, 4.8854795], "rotation":[-0.98925215, -0.14621314, 0.0013707273, 0.00020291602],"comment":"Section change"},
+        {"time": 350000, "type": "camera", "position" :[2.155057, -25.072311, 2.7613988], "rotation":[0.6944764, 0.010418416, -0.71935904, -0.01079214],"comment":"Shafted"},
+        {"time": 360000, "type": "camera", "position" :[-1.7878952, -27.28406, 2.9736943], "rotation":[-0.9988071, -0.048238948, 0.007571828, 0.0003656145],"comment":"Starting look into shaft"}
+    ],
+    "frame_delta": 60,
+    "end_time": 500000
+}
