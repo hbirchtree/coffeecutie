@@ -1,13 +1,16 @@
 #pragma once
 
 /* Sound for Xbox maps: permutations stream out of the mapped map as they
- * play, paged in by the map's own page cache, and are decoded and mixed on the
- * CPU for the audio DMA. Only the DMA hand-off runs in the interrupt; mixing
- * is done from frame stages, ahead by a few blocks to ride out a slow frame. */
+ * play, read into the map's page cache without stopping the game for the disc,
+ * and are decoded and mixed on the CPU for the audio DMA. Only the DMA hand-off
+ * runs in the interrupt; mixing is done from frame stages, ahead by a few
+ * blocks to ride out a slow frame. */
 
 #include <blam/common/endian.h>
 #include <blam/volta/blam_sound.h>
 #include <blam/volta/blam_stl.h>
+
+#include <platforms/gekko/paged_mmap.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -185,7 +188,7 @@ class mixer_t
     }
 
     /* map: the mapped map file, which has to stay mapped while sounds play */
-    void begin(u8 const* map)
+    void begin(platform::file::gekko::vmem::mapping map)
     {
         s_self = this;
         m_map  = map;
@@ -262,6 +265,7 @@ class mixer_t
     /* Mix whatever the DMA has room for */
     void pump()
     {
+        platform::file::gekko::vmem::poll();
         while(m_filled - m_playing < kBlocks - 2)
         {
             i16* block = m_blocks[m_filled % kBlocks];
@@ -269,6 +273,7 @@ class mixer_t
             DCFlushRange(block, kBlockBytes);
             m_filled = m_filled + 1;
         }
+        request_reads();
     }
 
   private:
@@ -278,6 +283,7 @@ class mixer_t
     static constexpr u32 kBlocks       = 8;
     static constexpr u32 kVoices       = 12;
     static constexpr u32 kMaxSameSound = 3;
+    static constexpr u32 kReadAhead    = 8192; // bytes a voice keeps in front
     static constexpr i32 kHeadroom     = 96; // 8.8: gunshots peak at full scale
 
     struct voice_t
@@ -292,9 +298,10 @@ class mixer_t
         u32 step{0}; // source samples per output frame, 16.16
         u32 pos{0};  // in pcm, 16.16
 
-        i32 volume[2]{0, 0};     // 8.8
-        i16 next{-1};            // follow-on permutation
-        u32 at_file{0}, left{0}; // compressed bytes still to come
+        i32  volume[2]{0, 0};     // 8.8
+        i16  next{-1};            // follow-on permutation
+        u32  at_file{0}, left{0}; // compressed bytes still to come
+        bool waiting{false};      // for its next block to come off the disc
 
         // [0] repeats the last block's end, for interpolating over the seam
         i16 pcm[2][kAdpcmSamples + 1];
@@ -359,27 +366,70 @@ class mixer_t
         v.next        = p.next;
     }
 
-    /* The next block's samples into pcm; false when the sound is over */
-    bool next_block(voice_t& v)
+    /* The first byte of what the voice needs next not yet off the disc */
+    std::optional<u32> missing(voice_t const& v, u32 span) const
+    {
+        namespace vmem  = platform::file::gekko::vmem;
+        u32 const here  = std::min(v.left, span);
+        auto      first = vmem::first_missing(m_map, v.at_file, here);
+        if(first || here == span || v.next < 0)
+            return first;
+        auto const& s = m_bank.sounds[v.sound];
+        if(static_cast<u32>(v.next) >= s.count)
+            return first;
+        auto const& p = m_bank.permutations[s.first + v.next];
+        return vmem::first_missing(
+            m_map, p.file_off, std::min(p.size, span - here));
+    }
+
+    /* One read at a time: voices run dry first, then those about to */
+    void request_reads()
+    {
+        namespace vmem = platform::file::gekko::vmem;
+        for(u32 span : {kAdpcmBlock * 2, kReadAhead})
+            for(auto const& v : m_voices)
+                if(v.active && (span == kReadAhead || v.waiting))
+                    if(auto at = missing(v, span))
+                    {
+                        vmem::request(m_map, *at);
+                        return;
+                    }
+    }
+
+    enum class block_t
+    {
+        decoded,
+        waiting, // not off the disc yet
+        over,
+    };
+
+    /* The next block's samples into pcm */
+    block_t next_block(voice_t& v)
     {
         u32 const block = kAdpcmBlock * v.channels;
         while(v.left < block)
         {
             if(v.next < 0)
-                return false;
+                return block_t::over;
             auto const& s = m_bank.sounds[v.sound];
             if(static_cast<u32>(v.next) >= s.count)
-                return false;
+                return block_t::over;
             start_permutation(v, s.first + v.next);
         }
+        v.waiting =
+            platform::file::gekko::vmem::first_missing(m_map, v.at_file, block)
+                .has_value();
+        if(v.waiting)
+            return block_t::waiting;
         for(u32 c = 0; c < v.channels; c++)
         {
             v.pcm[c][0] = v.pcm[c][kAdpcmSamples];
-            decode_adpcm_block(m_map + v.at_file, v.channels, c, &v.pcm[c][1]);
+            decode_adpcm_block(
+                m_map.base + v.at_file, v.channels, c, &v.pcm[c][1]);
         }
         v.at_file += block;
         v.left -= block;
-        return true;
+        return block_t::decoded;
     }
 
     void mix(i16* out)
@@ -394,11 +444,11 @@ class mixer_t
             {
                 if(v.pos >= kAdpcmSamples << 16)
                 {
-                    if(!next_block(v))
-                    {
+                    auto const got = next_block(v);
+                    if(got == block_t::over)
                         v.active = false;
+                    if(got != block_t::decoded)
                         break;
-                    }
                     v.pos -= kAdpcmSamples << 16;
                 }
                 u32 const i    = v.pos >> 16;
@@ -418,13 +468,13 @@ class mixer_t
                 std::clamp((m_mix[s] * kHeadroom) >> 8, -32768, 32767));
     }
 
-    bank_t const& m_bank;
-    u8 const*     m_map{nullptr};
-    voice_t       m_voices[kVoices];
-    i32           m_mix[kFrames * 2];
-    glm::vec3     m_ear{0.f}, m_right{0.f, -1.f, 0.f};
-    u32           m_seed{0x2F6E2B1u};
-    u32           m_plays{0};
+    bank_t const&                        m_bank;
+    platform::file::gekko::vmem::mapping m_map;
+    voice_t                              m_voices[kVoices];
+    i32                                  m_mix[kFrames * 2];
+    glm::vec3                            m_ear{0.f}, m_right{0.f, -1.f, 0.f};
+    u32                                  m_seed{0x2F6E2B1u};
+    u32                                  m_plays{0};
 
     i16 m_blocks[kBlocks][kFrames * 2] ATTRIBUTE_ALIGN(32);
     i16 m_silence[kFrames * 2] ATTRIBUTE_ALIGN(32);

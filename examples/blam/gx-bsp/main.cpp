@@ -4640,7 +4640,7 @@ i32 coffee_main(i32, cstring_w*)
 #if defined(COFFEE_GEKKO)
     PAD_Init();
     start_network();
-    g_audio.begin(g_map_window.base);
+    g_audio.begin(g_map_window);
 #endif
 
     compo::EntityContainer frames;
