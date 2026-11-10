@@ -80,6 +80,9 @@ into a bootable BlamGX `.gcm`, the same as `MapTranscode --target Gekko
 its apploader are fetched from `gamecube/` next to the page, which the Deploy
 job fills from the same CI run. Without that folder, the section stays disabled.
 
+Filling in the gateway adds `gateway.txt` to the disc, see
+`examples/blam/gx-bsp/README.md`. Left empty, BlamGX stays offline.
+
 `BlamMapUpload.html#gamecube` shows only this section, for embedding.
 
 ## How files are identified

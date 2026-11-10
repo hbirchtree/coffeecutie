@@ -205,7 +205,7 @@
       color: var(--muted);
     }
 
-    select {
+    select, input[type=text] {
       background: var(--background-solid);
       color: var(--accent);
       border: 1px solid var(--accent);
@@ -406,6 +406,20 @@
       load faster. The map stays on this machine and is not stored by this page.
       In Dolphin, tick Config &gt; Advanced &gt; Enable MMU before opening the disc.
     </p>
+    <div class="options">
+      <label for="gc-gateway">
+        BlamGCGateway, as the console reaches it (empty to stay offline)
+      </label>
+      <input id="gc-gateway" type="text" spellcheck="false"
+             placeholder="192.168.1.20:27790">
+    </div>
+    <div class="options">
+      <label for="gc-server">
+        Server, as the gateway reaches it (empty for the gateway's own)
+      </label>
+      <input id="gc-server" type="text" spellcheck="false"
+             placeholder="127.0.0.1:27105">
+    </div>
     <div id="gc-drop" class="plasma drop-zone disabled" tabindex="0" role="button"
          aria-label="Drop a map here to build a GameCube disc, or click to choose">
       <strong>Drop a map for the disc</strong>
@@ -1393,6 +1407,8 @@
 
   const gcDrop = document.getElementById('gc-drop');
   const gcPicker = document.getElementById('gc-picker');
+  const gcGateway = document.getElementById('gc-gateway');
+  const gcServer = document.getElementById('gc-server');
   const gcStatus = document.getElementById('gc-status');
   const gcDownload = document.getElementById('gc-download');
   let gcVersion = null;
@@ -1404,6 +1420,32 @@
 
   function gcIdle() {
     gcDrop.classList.toggle('disabled', !ready || !gcVersion);
+  }
+
+  /* BlamGX takes these through inet_addr(), so IPv4 only */
+  const GC_ENDPOINT =
+    /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)(?::(\d{1,5}))?$/;
+
+  function gcValidEndpoint(text, needsPort) {
+    const match = GC_ENDPOINT.exec(text);
+    if (!match)
+      return false;
+    return match[1] ? +match[1] >= 1 && +match[1] <= 65535 : !needsPort;
+  }
+
+  /* Contents of gateway.txt, null to stay offline */
+  function gcGatewayConfig() {
+    const gateway = gcGateway.value.trim();
+    const server = gcServer.value.trim();
+    if (!gateway && server)
+      throw new Error('A server needs a gateway to reach it through');
+    if (!gateway)
+      return null;
+    if (!gcValidEndpoint(gateway, false))
+      throw new Error('The gateway must be an IPv4 address, with an optional :port');
+    if (server && !gcValidEndpoint(server, true))
+      throw new Error('The server must be an IPv4 address and :port');
+    return (server ? `${gateway} ${server}` : gateway) + '\n';
   }
 
   const gcAlign = value => Math.ceil(value / 32) * 32;
@@ -1477,6 +1519,7 @@
     let holdsBitmaps = false;
 
     try {
+      const gatewayConfig = gcGatewayConfig();
       gcSet('Reading the files...', 'busy');
       const items = [];
       for (const file of files) {
@@ -1518,6 +1561,8 @@
         holdsBitmaps = false;
         discFiles.push({ name: 'bitmaps.map', data: new Blob([transcodeEnd()]) });
       }
+      if (gatewayConfig !== null)
+        discFiles.push({ name: 'gateway.txt', data: new Blob([gatewayConfig]) });
       const disc = buildGcm(dol, apploader, discFiles);
 
       if (gcDownload.href)
