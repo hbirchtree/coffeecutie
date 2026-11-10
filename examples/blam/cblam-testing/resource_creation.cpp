@@ -4,6 +4,7 @@
 #include "blam_files.h"
 #include "caching.h"
 #include "network/networking.h"
+#include "allegiance.h"
 #include "components.h"
 #include "data.h"
 #include "journal.h"
@@ -644,6 +645,25 @@ void create_resources(compo::EntityContainer& e)
                                           blam::scn::machine::machine_type_t::door},
                              };
                          }
+                     for(auto const& entity : e.select<Actor, NetworkInfo>())
+                         if(auto it = objects.find(
+                                entity.template get<NetworkInfo>().instance_id);
+                            it != objects.end())
+                         {
+                             auto const& actor = entity.template get<Actor>();
+                             it->second["actor"] = {
+                                 {"team", actor.team},
+                                 {"targets_player",
+                                  actor.target != 0 && e.get<PlayerInfo>(actor.target) != nullptr},
+                             };
+                         }
+                     nlohmann::json grudges = nlohmann::json::array();
+                     for(auto const& g : e.subsystem_cast<AllegianceState>().grudges)
+                         grudges.push_back({
+                             {"team", static_cast<u16>(g.team)},
+                             {"strain", g.strain},
+                             {"left", g.left},
+                         });
                      for(auto& player : players)
                          for(auto const& entity : e.select<PlayerInfo, BipedStatus>())
                              if(entity.template get<PlayerInfo>().player_idx ==
@@ -693,6 +713,7 @@ void create_resources(compo::EntityContainer& e)
                          };
                      }
                      state["section"] = e.subsystem_cast<BSPCache<halo_version>>().active_section;
+                     state["grudges"] = std::move(grudges);
                      state["objects"] = nlohmann::json::array();
                      for(auto& [_, object] : objects)
                          state["objects"].push_back(std::move(object));

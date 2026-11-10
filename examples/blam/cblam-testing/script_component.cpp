@@ -4,6 +4,7 @@
 
 #include "blam_files.h"
 #include "caching.h"
+#include "allegiance.h"
 #include "cinematic.h"
 #include "components.h"
 #include "data.h"
@@ -68,6 +69,7 @@ using BlamScriptManifest = compo::SubsystemManifest<
         const GameState,
         const TickClock,
         DeviceGroups,
+        AllegianceState,
         const NetworkState,
         const BlamFiles<halo_version>,
         const SoundCache<halo_version>,
@@ -270,6 +272,8 @@ struct BlamScript
             .queued     = m_queued_recordings,
             .slots      = m_actor_slots,
             .objective  = p.template subsystem<CinematicState>().objective,
+            .allegiances = p.template subsystem<AllegianceState>().pairs,
+            .grudges     = p.template subsystem<AllegianceState>().grudges,
         };
         auto const name = [&](u64 id) {
             if(auto const* net = p.template get<NetworkInfo>(id); net && net->instance_id)
@@ -371,6 +375,11 @@ struct BlamScript
 
         m_vm         = std::move(saved.vm);
         p.template subsystem<CinematicState>().objective = saved.objective;
+        {
+            auto& allegiance   = p.template subsystem<AllegianceState>();
+            allegiance.pairs   = saved.allegiances;
+            allegiance.grudges = saved.grudges;
+        }
         m_actors     = std::move(saved.actors);
         m_next_actor = saved.next_actor;
         m_recordings = std::move(saved.recordings);
@@ -476,6 +485,11 @@ struct BlamScript
         add(o.bipeds, ScenarioGroup::Biped);
         add(o.equips, ScenarioGroup::Equipment);
         add(o.weapon_spawns, ScenarioGroup::Weapon);
+    }
+
+    static AllegianceState::team_t team_of(value_t const& v)
+    {
+        return static_cast<AllegianceState::team_t>(static_cast<u16>(v.integer));
     }
 
     std::string_view text_of(value_t const& v) const
@@ -858,6 +872,20 @@ struct BlamScript
             help.elapsed = 0.f;
             log(fmt::format("help text: {}", help.message));
             return {};
+        }
+        /* Allegiances between teams, a team literal in the low short */
+        case op::ai_allegiance:
+            p.template subsystem<AllegianceState>().ally(team_of(arg(0)), team_of(arg(1)));
+            return {};
+        case op::ai_allegiance_remove:
+            p.template subsystem<AllegianceState>().separate(team_of(arg(0)), team_of(arg(1)));
+            return {};
+        case op::ai_allegiance_broken: {
+            using team_t      = AllegianceState::team_t;
+            auto const& state = p.template subsystem<AllegianceState>();
+            team_t const a = team_of(arg(0)), b = team_of(arg(1));
+            return value_t::boolean(
+                (a == team_t::player && state.betrayed(b)) || (b == team_t::player && state.betrayed(a)));
         }
         case op::hud_set_objective_text:
             p.template subsystem<CinematicState>().objective = std::string(text_of(arg(0)));
@@ -4127,6 +4155,8 @@ struct BlamScript
         std::map<u32, actor_slot_t>             slots;
         std::map<u64, u32>                      nets; /*!< Entities it names, by net id */
         std::string                             objective;
+        decltype(AllegianceState::pairs)        allegiances;
+        decltype(AllegianceState::grudges)      grudges;
     };
     std::optional<saved_t> m_saved;
     bool                   m_save_now{false};

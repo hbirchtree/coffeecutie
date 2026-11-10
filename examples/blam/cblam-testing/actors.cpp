@@ -1,6 +1,7 @@
 #include "actors.h"
 #include "blam_files.h"
 #include "caching.h"
+#include "allegiance.h"
 #include "components.h"
 #include "difficulty.h"
 #include "game_events.h"
@@ -49,7 +50,8 @@ using ActorManifest = compo::SubsystemManifest<
         const GameState,
         const NetworkState,
         const LoadingStatus,
-        const BlamFiles<halo_version>>,
+        const BlamFiles<halo_version>,
+        AllegianceState>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 /* Encounter units fight by their actor tags: they watch for enemies, take
@@ -99,10 +101,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 dt = 0.f;
         for(auto const& tick : m_ticks->take())
             dt += tick.seconds;
+        m_allegiance = &p.template subsystem<AllegianceState>();
         if(dt <= 0.f || !m_scenario ||
            p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
            p.template subsystem<NetworkState>().replica)
             return;
+        m_allegiance->advance(dt);
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         if(m_generation != files.load_generation)
         {
@@ -212,7 +216,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.toughened || !status.coll)
             return;
         actor.toughened = true;
-        bool const foe   = enemies(actor.team, team_t::player);
+        bool const foe   = !m_allegiance->allied(static_cast<team_t>(actor.team), team_t::player);
         f32 const  scale = scaled(
             foe ? &blam::globals::difficulty::enemy_vitality : &blam::globals::difficulty::friend_vitality);
         f32 const body   = actv.body_vitality > 0.f ? actv.body_vitality : status.coll->maximum_body_vitality;
@@ -1045,14 +1049,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return false;
     }
 
-    /* Players and humans stand together; everyone else fights them and
-     * each other */
-    static bool enemies(u16 mine, team_t theirs)
+    /* Teams fight unless allied, and a betrayed team fights the players */
+    bool enemies(u16 mine, team_t theirs) const
     {
-        auto const side = [](team_t t) {
-            return t == team_t::player || t == team_t::human ? 1 : static_cast<int>(t) + 2;
-        };
-        return side(static_cast<team_t>(mine)) != side(theirs);
+        return m_allegiance->hostile(static_cast<team_t>(mine), theirs);
     }
 
     bool alive(Proxy& p, u64 unit)
@@ -2418,11 +2418,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     f32                                                              m_taunt_in{0.f};
     NavMesh                                                          m_nav;
     BSPItem const*                                                   m_nav_item{nullptr};
+    AllegianceState*                                                 m_allegiance{nullptr};
 };
 
 void alloc_actors(compo::EntityContainer& e)
 {
-    auto& actors   = e.register_subsystem_inplace<ActorSystem>();
+    auto& actors     = e.register_subsystem_inplace<ActorSystem>();
+    auto& allegiance = e.register_subsystem_inplace<AllegianceState>();
     e.subsystem_cast<SaveState>()
         .bind<Actor>(e)
         .entity(&Actor::target)
@@ -2431,8 +2433,9 @@ void alloc_actors(compo::EntityContainer& e)
         .create();
     auto& gbus     = e.subsystem_cast<GameEventBus>();
     actors.m_ticks = std::make_unique<TickQueue>(gbus);
-    gbus.addEventFunction<MapLoadEvent>(0, [&actors](auto&, auto*) {
+    gbus.addEventFunction<MapLoadEvent>(0, [&actors, &allegiance](auto&, auto*) {
         actors.m_scenario = nullptr;
+        allegiance.reset();
         actors.m_heard.clear();
         actors.m_platoons.clear();
         actors.m_grenades.clear();
