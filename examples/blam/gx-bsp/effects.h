@@ -2,8 +2,8 @@
 
 /* Effects as sprites: effe bursts of part particles, and mgs2 light volumes
  * (plasma bolts' glow). Decoded while the map is mapped into what drawing
- * them needs, as the map is let go after loading; their sprite sheets are
- * uploaded with the other textures. */
+ * them needs, as tags would page in off the disc mid-game; their sprite sheets
+ * are uploaded with the other textures. */
 
 #include <blam/common/endian.h>
 #include <blam/volta/blam_bitm.h>
@@ -19,6 +19,7 @@
 #include <optional>
 #include <vector>
 
+#include "audio.h"
 #include "sprites.h"
 
 namespace gx_effects {
@@ -85,6 +86,7 @@ struct event_t
 {
     glm::vec2            delay{0.f};
     std::vector<burst_t> bursts;
+    std::vector<u32>     sounds;
 };
 
 struct effect_t
@@ -119,6 +121,7 @@ class library_t
     std::vector<volume_t>                   volumes;
     std::vector<particle_t>                 particles;
     std::vector<effect_t>                   effects;
+    gx_audio::bank_t                        bank;
 
     template<typename V, typename Ref>
     std::optional<u32> effect(blam::map_container<V> const& c, Ref const& ref)
@@ -136,37 +139,41 @@ class library_t
         {
             event_t e{.delay = le(ev.delay_bounds)};
             auto    bursts = ev.particles.data(c.magic);
-            if(bursts.has_error())
-                continue;
-            for(auto const& b : bursts.value())
-            {
-                auto const part = particle(c, b.particle_type);
-                if(!part)
-                    continue;
-                using flags = blam::scn::effect::particle_t::flags_t;
-                e.bursts.push_back({
-                    .particle = *part,
-                    .count =
-                        {static_cast<f32>(from_le(b.count.x)),
-                         static_cast<f32>(from_le(b.count.y))},
-                    .velocity = le(b.velocity),
-                    .radius   = le(b.radius),
-                    .spread   = le(b.distribution_radius),
-                    .spin     = le(b.angular_velocity),
-                    .cone     = from_le(b.velocity_cone_angle),
-                    .tint =
-                        {rgba(b.tint_lower_bound), rgba(b.tint_upper_bound)},
-                    .offset =
-                        {from_le(b.relative_offset.x),
-                         from_le(b.relative_offset.y),
-                         from_le(b.relative_offset.z)},
-                    .direction = le(b.relative_direction),
-                    .random_angle =
-                        (from_le(b.flags) & flags::random_initial_angle) !=
-                        flags::none,
-                });
-            }
-            if(!e.bursts.empty())
+            if(auto parts = ev.parts.data(c.magic); !parts.has_error())
+                for(auto const& p : parts.value())
+                    if(auto s = bank.sound(c, p.type))
+                        e.sounds.push_back(*s);
+            if(!bursts.has_error())
+                for(auto const& b : bursts.value())
+                {
+                    auto const part = particle(c, b.particle_type);
+                    if(!part)
+                        continue;
+                    using flags = blam::scn::effect::particle_t::flags_t;
+                    e.bursts.push_back({
+                        .particle = *part,
+                        .count =
+                            {static_cast<f32>(from_le(b.count.x)),
+                             static_cast<f32>(from_le(b.count.y))},
+                        .velocity = le(b.velocity),
+                        .radius   = le(b.radius),
+                        .spread   = le(b.distribution_radius),
+                        .spin     = le(b.angular_velocity),
+                        .cone     = from_le(b.velocity_cone_angle),
+                        .tint =
+                            {rgba(b.tint_lower_bound),
+                             rgba(b.tint_upper_bound)},
+                        .offset =
+                            {from_le(b.relative_offset.x),
+                             from_le(b.relative_offset.y),
+                             from_le(b.relative_offset.z)},
+                        .direction = le(b.relative_direction),
+                        .random_angle =
+                            (from_le(b.flags) & flags::random_initial_angle) !=
+                            flags::none,
+                    });
+                }
+            if(!e.bursts.empty() || !e.sounds.empty())
                 out.events.push_back(std::move(e));
         }
         if(out.events.empty())
@@ -174,6 +181,23 @@ class library_t
         effects.push_back(std::move(out));
         return m_effects[ref.tag_id.value()] =
                    static_cast<u32>(effects.size() - 1);
+    }
+
+    /* The sounds of a sound_or_effect reference, for what plays no particles */
+    template<typename V, typename Ref>
+    std::vector<u32> sounds_of(blam::map_container<V> const& c, Ref const& ref)
+    {
+        std::vector<u32> out;
+        if(auto s = bank.sound(c, ref))
+            out.push_back(*s);
+        else if(auto const* fx = data_of<blam::scn::effect>(c, ref))
+            if(auto events = fx->events.data(c.magic); !events.has_error())
+                for(auto const& ev : events.value())
+                    if(auto parts = ev.parts.data(c.magic); !parts.has_error())
+                        for(auto const& p : parts.value())
+                            if(auto s = bank.sound(c, p.type))
+                                out.push_back(*s);
+        return out;
     }
 
     template<typename V, typename Ref>
@@ -329,8 +353,9 @@ class library_t
 class system_t
 {
   public:
-    explicit system_t(library_t const& lib)
+    system_t(library_t const& lib, gx_audio::mixer_t& audio)
         : m_lib(lib)
+        , m_audio(audio)
     {
     }
 
@@ -480,7 +505,10 @@ class system_t
     {
         glm::vec3 x, y;
         basis(p.forward, x, y);
-        for(auto const& b : m_lib.effects[p.effect].events[p.event].bursts)
+        auto const& event = m_lib.effects[p.effect].events[p.event];
+        for(u32 sound : event.sounds)
+            m_audio.play(sound, p.at);
+        for(auto const& b : event.bursts)
         {
             auto const&     def   = m_lib.particles[b.particle];
             f32 const       yaw   = b.direction.x;
@@ -520,6 +548,7 @@ class system_t
     }
 
     library_t const&       m_lib;
+    gx_audio::mixer_t&     m_audio;
     std::vector<pending_t> m_pending;
     std::vector<live_t>    m_live;
     u32                    m_seed{0x9E3779B9u};

@@ -104,6 +104,10 @@ the body and fires its weapons:
 | X | jump |
 | Y | swap weapons |
 
+On Xbox maps, weapons, impacts and explosions make sound. Their samples stream
+out of the mapped map file as they play, so the map stays mapped; PC maps are
+silent, as their sounds are in a separate file.
+
 The console gets its address over DHCP. In Dolphin, use the HLE broadband
 adapter, and point `gateway.txt` at the PC's LAN address rather than
 `127.0.0.1`:
