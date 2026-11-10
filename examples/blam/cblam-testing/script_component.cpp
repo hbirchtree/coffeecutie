@@ -269,6 +269,7 @@ struct BlamScript
             .spawning   = m_spawning,
             .queued     = m_queued_recordings,
             .slots      = m_actor_slots,
+            .objective  = p.template subsystem<CinematicState>().objective,
         };
         auto const name = [&](u64 id) {
             if(auto const* net = p.template get<NetworkInfo>(id); net && net->instance_id)
@@ -369,6 +370,7 @@ struct BlamScript
             unseat(p, r.unit);
 
         m_vm         = std::move(saved.vm);
+        p.template subsystem<CinematicState>().objective = saved.objective;
         m_actors     = std::move(saved.actors);
         m_next_actor = saved.next_actor;
         m_recordings = std::move(saved.recordings);
@@ -857,6 +859,9 @@ struct BlamScript
             log(fmt::format("help text: {}", help.message));
             return {};
         }
+        case op::hud_set_objective_text:
+            p.template subsystem<CinematicState>().objective = std::string(text_of(arg(0)));
+            return {};
         case op::enable_hud_help_flash:
             p.template subsystem<CinematicState>().help.flash = arg(0).truthy();
             return {};
@@ -4121,6 +4126,7 @@ struct BlamScript
         std::map<u32, i32>                      queued;
         std::map<u32, actor_slot_t>             slots;
         std::map<u64, u32>                      nets; /*!< Entities it names, by net id */
+        std::string                             objective;
     };
     std::optional<saved_t> m_saved;
     bool                   m_save_now{false};
@@ -4142,14 +4148,15 @@ struct BlamScript
 
 void alloc_scripting(compo::EntityContainer& e)
 {
-    e.register_subsystem_inplace<CinematicState>();
-    auto& script   = e.register_subsystem_inplace<BlamScript<halo_version>>();
+    auto& cinematic = e.register_subsystem_inplace<CinematicState>();
+    auto& script    = e.register_subsystem_inplace<BlamScript<halo_version>>();
     auto& gbus     = e.subsystem_cast<GameEventBus>();
     script.m_ticks = std::make_unique<TickQueue>(gbus);
     gbus.addEventFunction<MapLoadEvent>(
-        0, [&script](auto&, auto*) {
+        0, [&script, &cinematic](auto&, auto*) {
             script.m_scenario = nullptr;
             script.m_saved.reset();
+            cinematic.objective.clear();
         });
     script.m_save_queue = gbus.addQueuedEventFunction<WorldSaveEvent>(
         0, [&script](GameEvent&, WorldSaveEvent*) { script.m_save_now = true; });
