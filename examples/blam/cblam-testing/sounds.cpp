@@ -595,8 +595,6 @@ struct SoundSystem
         auto num_cleared = std::erase_if(singleshot_sounds, [](sound_unit_t const& unit) {
             return unit.finished;
         });
-        if(num_cleared > 0)
-            cDebug("Cleaned up {} singleshot sounds", num_cleared);
 
         for(auto const player : p.template select<PlayerInfo, PlayerCamera>())
         {
@@ -720,7 +718,6 @@ struct SoundSystem
                 oaf::source_property::rolloff_factor>(1.f);
             meta.max_distance = max_distance;
         }
-        cDebug("Created sound unit tracks={}", tracks.size());
         return sound_unit_t{
             .index  = sound,
             .tracks = std::move(tracks),
@@ -1402,12 +1399,6 @@ struct SoundSystem
             if(target != unit.occlusion_target)
             {
                 unit.occlusion_target = target;
-                cDebug(
-                    "Sound {} at {} occlusion {:.2f} from {}",
-                    index.name_of(unit.source),
-                    *unit.position,
-                    target,
-                    listener_pos);
             }
             unit.occlusion += (target - unit.occlusion) * blend;
             if(reapply)

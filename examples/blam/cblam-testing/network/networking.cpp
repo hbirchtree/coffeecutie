@@ -1419,23 +1419,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                      return;
                  if(is_server())
                  {
-                     cDebug(
-                         "Distributing {} event",
-                         magic_enum::enum_name(event.type));
                      forward_game_event<ServerStateUpdate>(event, data);
                      forward_game_event<ServerPlayerStateUpdate>(event, data);
                      return;
                  } else if(is_client_network_event(event))
                  {
-                     cDebug(
-                         "Forwarding {} event",
-                         magic_enum::enum_name(event.type));
                      forward_game_event<ServerCameraControl>(event, data);
-                 } else
-                 {
-                     cDebug(
-                         "Not forwarding {} event",
-                         magic_enum::enum_name(event.type));
                  }
              }});
         m_game_bus.addEventFunction<SyncPointEvent>(
