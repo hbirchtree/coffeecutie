@@ -18,6 +18,8 @@
 #include <ogc/audio.h>
 #include <ogc/cache.h>
 
+#include "sound_paths.h"
+
 #include <algorithm>
 #include <cstring>
 #include <map>
@@ -188,10 +190,11 @@ class mixer_t
     }
 
     /* map: the mapped map file, which has to stay mapped while sounds play */
-    void begin(platform::file::gekko::vmem::mapping map)
+    void begin(platform::file::gekko::vmem::mapping map, paths_t const& paths)
     {
-        s_self = this;
-        m_map  = map;
+        s_self  = this;
+        m_map   = map;
+        m_paths = &paths;
         std::memset(m_blocks, 0, sizeof(m_blocks));
         std::memset(m_silence, 0, sizeof(m_silence));
         DCFlushRange(m_blocks, sizeof(m_blocks));
@@ -203,14 +206,29 @@ class mixer_t
         AUDIO_StartDMA();
     }
 
-    /* Where the sounds are heard from; `right` is the ear's axis */
-    void listen(glm::vec3 const& at, glm::vec3 const& right)
+    /* Where the sounds are heard from; `right` is the ear's axis. One voice
+     * a frame looks again at the structure around it */
+    void listen(glm::vec3 const& at, glm::vec3 const& right, f32 dt)
     {
         m_ear   = at;
         m_right = right;
+        for(u32 i = 0; i < kVoices; i++)
+        {
+            auto& v = m_voices[(m_sense_next + i) % kVoices];
+            if(v.active)
+            {
+                sense(v);
+                m_sense_next = (m_sense_next + i + 1) % kVoices;
+                break;
+            }
+        }
+        f32 const blend = std::min(1.f, dt / kOcclusionSmoothing);
         for(auto& v : m_voices)
             if(v.active)
+            {
+                v.occlusion += (v.occlusion_target - v.occlusion) * blend;
                 spatialize(v);
+            }
     }
 
     void play(u32 sound, glm::vec3 const& at)
@@ -259,6 +277,9 @@ class mixer_t
         v.pos      = kAdpcmSamples << 16; // decode on the first sample
         std::memset(v.pcm, 0, sizeof(v.pcm));
         start_permutation(v, s.first + pick);
+        v.lowpassed[0] = v.lowpassed[1] = 0;
+        sense(v);
+        v.occlusion = v.occlusion_target;
         spatialize(v);
     }
 
@@ -285,6 +306,9 @@ class mixer_t
     static constexpr u32 kMaxSameSound = 3;
     static constexpr u32 kReadAhead    = 8192; // bytes a voice keeps in front
     static constexpr i32 kHeadroom     = 96; // 8.8: gunshots peak at full scale
+    static constexpr f32 kOcclusionSmoothing = .3f; // seconds
+    // What full occlusion costs, as BlamGraphics' dry path
+    static constexpr f32 kOccludedGain = .65f, kOccludedHighs = .85f;
 
     struct voice_t
     {
@@ -302,6 +326,13 @@ class mixer_t
         i16  next{-1};            // follow-on permutation
         u32  at_file{0}, left{0}; // compressed bytes still to come
         bool waiting{false};      // for its next block to come off the disc
+
+        f32       occlusion{0.f}, occlusion_target{0.f};
+        bool      routed{false};
+        glm::vec3 route_through{0.f};
+        f32       route_length{0.f};
+        i32       lowpass{256}; // 8.8, of the difference taken each sample
+        i32       lowpassed[2]{0, 0};
 
         // [0] repeats the last block's end, for interpolating over the seam
         i16 pcm[2][kAdpcmSamples + 1];
@@ -337,19 +368,55 @@ class mixer_t
         return v.volume[0] + v.volume[1];
     }
 
+    /* What stands between this voice and the ear */
+    void sense(voice_t& v)
+    {
+        v.occlusion_target = 0.f;
+        v.routed           = false;
+        if(!m_paths || !m_paths->hears_from(m_ear))
+            return;
+        auto const open = m_paths->open_near(v.at, m_ear);
+        if(!open)
+            return;
+        v.occlusion_target = m_paths->occlusion(m_ear, *open);
+        if(v.occlusion_target <= 0.f)
+            return;
+        if(auto const way = m_paths->route(*open, m_ear))
+        {
+            v.routed        = true;
+            v.route_through = way->through;
+            v.route_length  = way->length;
+        }
+    }
+
     void spatialize(voice_t& v)
     {
-        auto const&     s        = m_bank.sounds[v.sound];
-        glm::vec3 const to       = v.at - m_ear;
-        f32 const       distance = glm::length(to);
-        f32             gain     = distance <= s.near  ? 1.f
-                                   : distance >= s.far ? 0.f
-                                                       : s.near / distance;
-        gain *= v.gain * v.perm_gain;
+        auto const& s        = m_bank.sounds[v.sound];
+        glm::vec3   to       = v.at - m_ear;
+        f32         distance = glm::length(to);
+        // The more it's blocked, the more it comes the way round it can
+        if(v.routed && distance > 1e-3f)
+        {
+            glm::vec3 const by    = v.route_through - m_ear;
+            f32 const       reach = glm::length(by);
+            if(reach > 1e-3f)
+            {
+                to       = glm::mix(to / distance, by / reach, v.occlusion);
+                distance = glm::mix(distance, v.route_length, v.occlusion);
+            }
+        }
+        f32 gain = distance <= s.near  ? 1.f
+                   : distance >= s.far ? 0.f
+                                       : s.near / distance;
+        gain *= v.gain * v.perm_gain *
+                (1.f - kOccludedGain * v.occlusion * v.occlusion);
+        v.lowpass =
+            static_cast<i32>((1.f - kOccludedHighs * v.occlusion) * 256.f);
         // Panned by how far off to the side it is
+        f32 const span = glm::length(to);
         f32 const pan =
-            distance > 1e-3f && v.channels == 1
-                ? std::clamp(glm::dot(to / distance, m_right), -1.f, 1.f)
+            span > 1e-3f && v.channels == 1
+                ? std::clamp(glm::dot(to / span, m_right), -1.f, 1.f)
                 : 0.f;
         v.volume[0] =
             static_cast<i32>(gain * (1.f - std::max(pan, 0.f) * .7f) * 256.f);
@@ -455,11 +522,16 @@ class mixer_t
                 i32 const frac = static_cast<i32>((v.pos & 0xFFFF) >> 1);
                 auto      at   = [&](u32 c) {
                     i32 const a = v.pcm[c][i], b = v.pcm[c][i + 1];
-                    return a + (((b - a) * frac) >> 15);
+                    i32 const sample = a + (((b - a) * frac) >> 15);
+                    v.lowpassed[c] +=
+                        ((sample - v.lowpassed[c]) * v.lowpass) >> 8;
+                    return v.lowpassed[c];
                 };
+                i32 const left  = at(0);
+                i32 const right = other ? at(other) : left;
                 // The DMA takes right before left
-                m_mix[f * 2 + 1] += (at(0) * v.volume[0]) >> 8;
-                m_mix[f * 2] += (at(other) * v.volume[1]) >> 8;
+                m_mix[f * 2 + 1] += (left * v.volume[0]) >> 8;
+                m_mix[f * 2] += (right * v.volume[1]) >> 8;
                 v.pos += v.step;
             }
         }
@@ -470,6 +542,8 @@ class mixer_t
 
     bank_t const&                        m_bank;
     platform::file::gekko::vmem::mapping m_map;
+    paths_t const*                       m_paths{nullptr};
+    u32                                  m_sense_next{0};
     voice_t                              m_voices[kVoices];
     i32                                  m_mix[kFrames * 2];
     glm::vec3                            m_ear{0.f}, m_right{0.f, -1.f, 0.f};
