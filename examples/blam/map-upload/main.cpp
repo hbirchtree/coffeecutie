@@ -94,6 +94,7 @@ struct transcode_session_t
 {
     std::optional<mtx::kernel_fn> kernel;
     bool                          deswizzle{true};
+    bool                          gx_vertices{false};
     bool                          cube_faces{false};
     /* Original bitmaps.map, malloc()ed by the page and owned from here */
     libc_types::u8*    bitmaps{nullptr};
@@ -438,13 +439,15 @@ EMSCRIPTEN_KEEPALIVE void blam_upload_result_free()
 /*!
  * \brief Pick the kernel for blam_upload_transcode_map(): ES3 (ETC2),
  * ES2, PowerVR or Gekko, see mtx::make_kernel(), or "" for none. With
- * deswizzle, Xbox textures stored swizzled are made linear.
+ * deswizzle, Xbox textures stored swizzled are made linear. gx_vertices
+ * writes a map only BlamGX can read.
  */
 EMSCRIPTEN_KEEPALIVE i32 blam_upload_transcode_target(
-    char const* target, i32 deswizzle)
+    char const* target, i32 deswizzle, i32 gx_vertices)
 {
     last_error.clear();
-    transcode.deswizzle = deswizzle != 0;
+    transcode.deswizzle   = deswizzle != 0;
+    transcode.gx_vertices = gx_vertices != 0;
     if(!*target)
     {
         transcode.kernel = mtx::kernel_fn{};
@@ -514,6 +517,7 @@ EMSCRIPTEN_KEEPALIVE i32 blam_upload_transcode_map(char* data, u32 size)
                     .threads =
                         std::max(1u, std::thread::hardware_concurrency()),
                     .deswizzle  = t.deswizzle,
+                    .gx_vertices = t.gx_vertices,
                     .cube_faces = t.cube_faces,
                     .cache      = &t.cache,
                     .progress =

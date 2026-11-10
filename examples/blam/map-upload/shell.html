@@ -149,7 +149,7 @@
       .plasma::before { animation: none; }
     }
 
-    #drop {
+    .drop-zone {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -164,22 +164,22 @@
       cursor: pointer;
       transition: background-color 0.3s, border-color 0.3s, opacity 0.3s;
     }
-    #drop strong {
+    .drop-zone strong {
       font-size: 1.2rem;
       text-transform: uppercase;
       color: var(--accent);
       filter: drop-shadow(2px 2px 2px black);
     }
-    #drop span { color: var(--muted); }
-    #drop:hover, #drop:focus-visible, #drop.over {
+    .drop-zone span { color: var(--muted); }
+    .drop-zone:hover, .drop-zone:focus-visible, .drop-zone.over {
       background-color: var(--focused-hover);
       border-style: solid;
       outline: none;
     }
-    #drop:hover::before, #drop:focus-visible::before { opacity: 0.15; }
-    #drop.over::before { opacity: 0.3; }
-    #drop.disabled { opacity: 0.5; cursor: progress; }
-    #drop.disabled::before { opacity: 0; }
+    .drop-zone:hover::before, .drop-zone:focus-visible::before { opacity: 0.15; }
+    .drop-zone.over::before { opacity: 0.3; }
+    .drop-zone.disabled { opacity: 0.5; cursor: progress; }
+    .drop-zone.disabled::before { opacity: 0; }
 
     #runtime-status { color: var(--muted); margin-top: 12px; }
     #runtime-status:empty { display: none; }
@@ -261,6 +261,13 @@
     td.status-warn { color: var(--warn); }
     td.status-bad { color: var(--bad); }
     td.status-busy { color: var(--accent); }
+    /* #gamecube shows only that section, for embedding in an iframe */
+    .container:has(#gamecube:target) > :not(#gamecube) { display: none; }
+    #gc-status { color: var(--muted); margin-top: 12px; }
+    #gc-status.status-ok { color: var(--ok); }
+    #gc-status.status-warn { color: var(--warn); }
+    #gc-status.status-bad { color: var(--bad); }
+    #gc-status.status-busy { color: var(--accent); }
     .empty { color: var(--muted); font-style: italic; }
 
     .stored-list {
@@ -330,7 +337,7 @@
       but will take a while to process.
     </p>
 
-    <div id="drop" class="plasma disabled" tabindex="0" role="button"
+    <div id="drop" class="plasma drop-zone disabled" tabindex="0" role="button"
          aria-label="Drop map files here or click to choose">
       <strong>Drop maps here</strong>
       <span>or click to choose files</span>
@@ -389,6 +396,24 @@
     <h2>Stored maps</h2>
     <p id="storage-usage"></p>
     <div id="stored"></div>
+  </section>
+
+  <section class="content" id="gamecube">
+    <h2>GameCube disc</h2>
+    <p>
+      Drop one Halo PC or Xbox map, with <code>bitmaps.map</code> for PC, to get
+      a bootable <code>.gcm</code> of BlamGX with that map on it. Xbox maps
+      load faster. The map stays on this machine and is not stored by this page.
+      In Dolphin, tick Config &gt; Advanced &gt; Enable MMU before opening the disc.
+    </p>
+    <div id="gc-drop" class="plasma drop-zone disabled" tabindex="0" role="button"
+         aria-label="Drop a map here to build a GameCube disc, or click to choose">
+      <strong>Drop a map for the disc</strong>
+      <span>or click to choose files</span>
+    </div>
+    <input id="gc-picker" type="file" multiple hidden>
+    <p id="gc-status">Looking for the GameCube build...</p>
+    <p><a id="gc-download" hidden>Download the disc again</a></p>
   </section>
 </div>
 
@@ -685,7 +710,7 @@
 
   /* Holds the original bitmaps.map in wasm for the maps transcoded after */
   /* target '' for no texture target; deswizzle makes Xbox textures linear */
-  function transcodeTarget(target, deswizzle) {
+  function transcodeTarget(target, deswizzle, gxVertices = false) {
     /* NUL-terminated; a '\0' escape would reach the page as U+FFFD once
      * the release build minifies it into a raw NUL */
     const text = new TextEncoder().encode(target);
@@ -693,18 +718,22 @@
     bytes.set(text);
     const name = toHeap(bytes);
     try {
-      if (!Module._blam_upload_transcode_target(name, deswizzle ? 1 : 0))
+      if (!Module._blam_upload_transcode_target(name, deswizzle ? 1 : 0, gxVertices ? 1 : 0))
         throw new Error(cString(Module._blam_upload_error(), 256));
     } finally {
       Module._free(name);
     }
   }
 
-  async function transcodeBegin(target, bitmapsFile) {
-    transcodeTarget(target, optimize.checked);
+  async function transcodeHoldBitmaps(bitmapsFile) {
     /* Owned by wasm from here, freed by blam_upload_transcode_end() */
     const ptr = toHeap(new Uint8Array(await bitmapsFile.arrayBuffer()));
     Module._blam_upload_transcode_begin(ptr, bitmapsFile.size);
+  }
+
+  async function transcodeBegin(target, bitmapsFile) {
+    transcodeTarget(target, optimize.checked);
+    await transcodeHoldBitmaps(bitmapsFile);
   }
 
   /* Runs on a wasm thread, onProgress(done, total) counts images to encode.
@@ -1350,31 +1379,214 @@
     }
   }
 
+  /* ---------- GameCube disc ---------- */
+
+  /* Published next to this page by the CI run that built it */
+  const GC_DIR = 'gamecube/';
+  const GC_DOL = 'BlamGX.elf.dol';
+  const GC_APPLOADER = 'gc_apploader.elf.img';
+  const GC_LOADING = 'loading.tpl';
+  /* BlamGX opens this name, whichever map it is */
+  const GC_MAP_NAME = 'bloodgulch.map';
+  const GC_DISC_SIZE = 1459978240;
+  const GC_BOOT_SIZE = 0x2440;
+
+  const gcDrop = document.getElementById('gc-drop');
+  const gcPicker = document.getElementById('gc-picker');
+  const gcStatus = document.getElementById('gc-status');
+  const gcDownload = document.getElementById('gc-download');
+  let gcVersion = null;
+
+  function gcSet(text, tone) {
+    gcStatus.textContent = text;
+    gcStatus.className = tone ? 'status-' + tone : '';
+  }
+
+  function gcIdle() {
+    gcDrop.classList.toggle('disabled', !ready || !gcVersion);
+  }
+
+  const gcAlign = value => Math.ceil(value / 32) * 32;
+
+  /* Same layout as toolchain/desktop/make_gcm.py. Every part, the last one
+   * included, ends on 32 bytes: dvd.h reads in aligned spans. */
+  function buildGcm(dol, apploader, files) {
+    const sorted = [...files].sort(
+      (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    const encoder = new TextEncoder();
+    const names = sorted.map(file => encoder.encode(file.name));
+    const stringsOffset = (sorted.length + 1) * 12;
+    const fstSize = names.reduce((sum, name) => sum + name.length + 1,
+                                 stringsOffset + 1);
+    const dolOffset = gcAlign(GC_BOOT_SIZE + apploader.size);
+    const fstOffset = gcAlign(dolOffset + dol.size);
+
+    const fst = new Uint8Array(fstSize);
+    const fstView = new DataView(fst.buffer);
+    fst[0] = 1;
+    fstView.setUint32(8, sorted.length + 1);
+    let nameOffset = 1;
+    let dataOffset = gcAlign(fstOffset + fstSize);
+    sorted.forEach((file, i) => {
+      const entry = (i + 1) * 12;
+      fstView.setUint32(entry, nameOffset);
+      fstView.setUint32(entry + 4, dataOffset);
+      fstView.setUint32(entry + 8, file.data.size);
+      fst.set(names[i], stringsOffset + nameOffset);
+      nameOffset += names[i].length + 1;
+      dataOffset = gcAlign(dataOffset + file.data.size);
+    });
+    if (dataOffset > GC_DISC_SIZE)
+      throw new Error('This is too large for a GameCube disc');
+
+    const boot = new Uint8Array(GC_BOOT_SIZE);
+    const bootView = new DataView(boot.buffer);
+    boot.set(encoder.encode('COFE01'), 0);
+    bootView.setUint32(0x1C, 0xC2339F3D);
+    boot.set(encoder.encode('coffeecutie'), 0x20);
+    bootView.setUint32(0x420, dolOffset);
+    bootView.setUint32(0x424, fstOffset);
+    bootView.setUint32(0x428, fstSize);
+    bootView.setUint32(0x42C, fstSize);
+
+    const parts = [];
+    const add = (part, size) =>
+      parts.push(part, new Uint8Array(gcAlign(size) - size));
+    add(boot, boot.length);
+    add(apploader, apploader.size);
+    add(dol, dol.size);
+    add(fst, fst.length);
+    for (const file of sorted)
+      add(file.data, file.data.size);
+    return new Blob(parts, { type: 'application/octet-stream' });
+  }
+
+  async function gcFetch(name) {
+    const response = await fetch(GC_DIR + name, { cache: 'no-cache' });
+    if (!response.ok)
+      throw new Error(`${name} could not be fetched (HTTP ${response.status})`);
+    return response.blob();
+  }
+
+  async function buildDisc(files) {
+    if (busy || !ready || !gcVersion || !files.length)
+      return;
+    busy = true;
+    drop.classList.add('disabled');
+    gcDrop.classList.add('disabled');
+    let holdsBitmaps = false;
+
+    try {
+      gcSet('Reading the files...', 'busy');
+      const items = [];
+      for (const file of files) {
+        if (file.size > MAX_FILE_SIZE)
+          continue;
+        const info = await identify(file);
+        items.push({ file, info, kind: KINDS[info.kind] || KINDS[0] });
+      }
+      const maps = items.filter(item => ['pc', 'xbox'].includes(item.kind.prefix));
+      if (maps.length !== 1)
+        throw new Error('Drop exactly one Halo PC or Xbox map');
+      const { file, info, kind } = maps[0];
+      const bitmaps = items.find(item => item.kind.resource === 'bitmaps.map');
+      if (kind.prefix === 'pc' && !bitmaps)
+        throw new Error('A Halo PC map needs its bitmaps.map dropped with it');
+
+      gcSet('Fetching BlamGX...', 'busy');
+      const [dol, apploader, loading] = await Promise.all(
+        [GC_DOL, GC_APPLOADER, GC_LOADING].map(gcFetch));
+
+      gcSet('Transcoding...', 'busy');
+      transcodeTarget('Gekko', true, true);
+      if (kind.prefix === 'pc') {
+        await transcodeHoldBitmaps(bitmaps.file);
+        holdsBitmaps = true;
+      }
+      const bytes = new Uint8Array(
+        info.compressed ? await decompress(file) : await file.arrayBuffer());
+      const map = await transcodeMap(bytes, (done, total) => {
+        if (total)
+          gcSet(`Transcoding: ${done} of ${total} images`, 'busy');
+      });
+
+      const discFiles = [
+        { name: GC_MAP_NAME, data: new Blob([map.data]) },
+        { name: GC_LOADING, data: loading },
+      ];
+      if (holdsBitmaps) {
+        holdsBitmaps = false;
+        discFiles.push({ name: 'bitmaps.map', data: new Blob([transcodeEnd()]) });
+      }
+      const disc = buildGcm(dol, apploader, discFiles);
+
+      if (gcDownload.href)
+        URL.revokeObjectURL(gcDownload.href);
+      const stem = file.name.toLowerCase().replace(/\.map$/, '')
+        .replace(/[^a-z0-9_-]/g, '_');
+      gcDownload.href = URL.createObjectURL(disc);
+      gcDownload.download = `BlamGX-${stem}.gcm`;
+      gcDownload.hidden = false;
+      gcDownload.click();
+      gcSet(`Done, ${(disc.size / 1048576).toFixed(0)} MiB, ` +
+            `${map.converted} images converted.`, 'ok');
+    } catch (e) {
+      gcSet(String(e.message || e), 'bad');
+    } finally {
+      if (holdsBitmaps) {
+        Module._blam_upload_transcode_end();
+        Module._blam_upload_result_free();
+      }
+      /* Otherwise the next upload could inherit the Gekko kernel */
+      transcodeTarget('', true);
+      busy = false;
+      drop.classList.remove('disabled');
+      gcIdle();
+    }
+  }
+
+  async function gcInit() {
+    try {
+      const response = await fetch(GC_DIR + 'VERSION', { cache: 'no-cache' });
+      if (!response.ok)
+        throw new Error();
+      gcVersion = (await response.text()).trim();
+      gcSet(`GameCube build ${gcVersion.slice(0, 9)}`);
+    } catch (e) {
+      gcSet('No GameCube build is published next to this page.', 'warn');
+    }
+    gcIdle();
+  }
+
   /* ---------- Wiring ---------- */
 
-  drop.addEventListener('click', () => { if (ready && !busy) picker.click(); });
-  drop.addEventListener('keydown', event => {
-    if ((event.key === 'Enter' || event.key === ' ') && ready && !busy) {
+  function wireDrop(target, input, available, onFiles) {
+    target.addEventListener('click', () => { if (available()) input.click(); });
+    target.addEventListener('keydown', event => {
+      if ((event.key === 'Enter' || event.key === ' ') && available()) {
+        event.preventDefault();
+        input.click();
+      }
+    });
+    input.addEventListener('change', () => {
+      onFiles([...input.files]);
+      input.value = '';
+    });
+    target.addEventListener('dragover', event => {
       event.preventDefault();
-      picker.click();
-    }
-  });
-  picker.addEventListener('change', () => {
-    upload([...picker.files]);
-    picker.value = '';
-  });
-  drop.addEventListener('dragover', event => {
-    event.preventDefault();
-    drop.classList.add('over');
-  });
-  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-  drop.addEventListener('drop', async event => {
-    event.preventDefault();
-    drop.classList.remove('over');
-    if (!ready || busy)
-      return;
-    upload(await collectDrop(event.dataTransfer));
-  });
+      target.classList.add('over');
+    });
+    target.addEventListener('dragleave', () => target.classList.remove('over'));
+    target.addEventListener('drop', async event => {
+      event.preventDefault();
+      target.classList.remove('over');
+      if (available())
+        onFiles(await collectDrop(event.dataTransfer));
+    });
+  }
+
+  wireDrop(drop, picker, () => ready && !busy, upload);
+  wireDrop(gcDrop, gcPicker, () => ready && !busy && gcVersion, buildDisc);
   /* Dropping next to the target should not navigate away to the file */
   window.addEventListener('dragover', event => event.preventDefault());
   window.addEventListener('drop', event => event.preventDefault());
@@ -1386,6 +1598,7 @@
       ready = true;
       drop.classList.remove('disabled');
       runtimeStatus.textContent = '';
+      gcIdle();
     },
     onAbort: what => {
       runtimeStatus.textContent = 'The map decoder failed to load: ' + what;
@@ -1393,6 +1606,7 @@
   };
 
   showGpuCaps();
+  gcInit();
   if (!hasOpfs())
     runtimeStatus.textContent = 'This browser has no OPFS, maps cannot be stored.';
   else

@@ -72,6 +72,16 @@ level map stored without the `bitmaps.map` it belongs with is marked
 "Textures out of sync", and one dropped without `bitmaps.map` while the
 stored one is transcoded is skipped.
 
+## GameCube disc
+
+The GameCube section turns one Halo PC or Xbox map (with `bitmaps.map` for PC)
+into a bootable BlamGX `.gcm`, the same as `MapTranscode --target Gekko
+--gx-vertices` followed by `make_gcm.py`. Nothing is stored in OPFS. BlamGX and
+its apploader are fetched from `gamecube/` next to the page, which the Deploy
+job fills from the same CI run. Without that folder, the section stays disabled.
+
+`BlamMapUpload.html#gamecube` shows only this section, for embedding.
+
 ## How files are identified
 
 Only the first 2 KiB of a file (12 KiB for Halo 3) is read for this
