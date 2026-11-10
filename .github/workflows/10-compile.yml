@@ -268,6 +268,8 @@ jobs:
         variant: ${{ matrix.variant }}
         artifact: ${{ matrix.artifact }}
         target: BlamGX
+    - name: Adding disc files to artifacts
+      run: cp source/multi_build/${{matrix.artifact}}/examples/blam/gx-bsp/BlamGX_assets/loading.tpl source/multi_build/${{matrix.artifact}}/bin/
     - name: Uploading artifacts
       uses: actions/upload-artifact@v7
       with:
@@ -1258,6 +1260,7 @@ jobs:
     needs:
     - Linux
     - macOS
+    - Gekko
     - Test_wasm_swiftshader
     permissions:
       actions: read
@@ -1284,6 +1287,11 @@ jobs:
         cp -r artifacts/web-wasm32-emscripten-webgl2-mcc _site/mcc/bin
         cp -r artifacts/web-wasm32-emscripten-webgl2-trial _site/trial/bin
         cp -r artifacts/web-wasm32-emscripten-webgl2-xbox _site/xbox/bin
+        if [ -f artifacts/console-powerpc-eabi-cube/BlamGX.elf.dol ] && [ -d _site/bin/BlamMapUpload.bundle ]; then
+          mkdir -p _site/bin/BlamMapUpload.bundle/gamecube
+          cp artifacts/console-powerpc-eabi-cube/{BlamGX.elf.dol,gc_apploader.elf.img,loading.tpl} _site/bin/BlamMapUpload.bundle/gamecube/
+          echo "${GITHUB_SHA}" > _site/bin/BlamMapUpload.bundle/gamecube/VERSION
+        fi
         for f in $(find artifacts/ -mindepth 1 -maxdepth 1); do pushd $f; [[ -f apps.tar ]] && (tar xvf apps.tar && rm apps.tar); tar Jcvf ../../_site/downloads/$(basename $f).tar.xz .; popd; done
     - name: Uploading GitHub Pages examples
       uses: actions/upload-pages-artifact@v4
