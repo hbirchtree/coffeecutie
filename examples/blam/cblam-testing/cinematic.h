@@ -77,6 +77,17 @@ struct CinematicState : compo::SubsystemBase
         bool crosshair{true};
     } hud_parts;
 
+    /* The HUD countdown: hud_set_timer_time and friends */
+    struct timer_t
+    {
+        libc_types::i64 ticks{0};   /*!< left */
+        libc_types::i64 warning{0}; /*!< ticks left below which it warns */
+        libc_types::u16 corner{0};  /*!< hud_corner: top_left .. bottom_right */
+        libc_types::i16 x{0}, y{0};
+        bool            shown{false};
+        bool            paused{false};
+    } timer;
+
     bool letterbox{false};
     /*! Between cinematic_start and cinematic_stop: split screen gives way to
      *  one view of the whole window */
