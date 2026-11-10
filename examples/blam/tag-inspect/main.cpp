@@ -3147,9 +3147,11 @@ void dump_encounters(blam::map_container<Ver> const& map)
                 squad.insane_diff_count,
                 squad.platoon);
             fmt::print(
-                "      states initial={} return={} unk1=[{:08x}] groups atk={:x}/{:x}/{:x} def={:x}/{:x}/{:x} pursue={:x}\n",
+                "      states initial={} return={} flags={:#x} delay={} unk1=[{:08x}] groups atk={:x}/{:x}/{:x} def={:x}/{:x}/{:x} pursue={:x}\n",
                 static_cast<int>(squad.initial_state),
                 static_cast<int>(squad.return_state),
+                static_cast<u32>(squad.flags),
+                squad.delay_time,
                 fmt::join(squad.unk1, " "),
                 squad.attacking,
                 squad.attacking_search,

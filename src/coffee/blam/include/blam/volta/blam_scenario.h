@@ -861,7 +861,7 @@ struct platoon
 {
     bl_string name;
 
-    enum flags_t : u16
+    enum flags_t : u32
     {
         none,
         flee_when_maneuvering          = 0x1,
@@ -869,10 +869,10 @@ struct platoon
         start_in_defending_state       = 0x4,
     } flags;
 
+    u32 unused1[3];
+
     struct cause_t
     {
-        i16 target;
-
         enum event_t : u16
         {
             never,
@@ -886,13 +886,18 @@ struct platoon
             one_alive,
             all_dead,
         } event;
+
+        i16 target; /*!< Platoon watched; none = the whole encounter */
+        u32 padding;
     };
 
     cause_t change_attacking_defending;
+    u32     unused2;
     cause_t maneuver_when;
-
-    u32 padding[32];
+    u32     padding[26];
 };
+
+static_assert(sizeof(platoon) == 172);
 
 struct firing_position
 {
@@ -947,7 +952,19 @@ struct squad
     u16               platoon;
     state_t           initial_state;
     state_t           return_state;
-    u32               unk1[11];
+
+    enum class flags_t : u32
+    {
+        none                    = 0x0,
+        never_search            = 0x2,
+        start_timer_immediately = 0x4,  /*!< Not only once the encounter sees an enemy */
+        no_timer_delay_forever  = 0x8,  /*!< Held until ai_timer_expire */
+        magic_sight_after_timer = 0x10, /*!< Knows where the players are when it runs out */
+        automatic_migration     = 0x20,
+    } flags;
+
+    u32               unk1[9];
+    f32               delay_time; /*!< Seconds the squad holds its posts once its timer runs */
     u32               attacking;
     u32               attacking_search;
     u32               attacking_guard;
@@ -963,6 +980,8 @@ struct squad
     reference<squad_location> start_locations;
     u32                       unk4[3];
 };
+
+C_FLAGS(squad::flags_t, u32)
 
 static_assert(offsetof(squad, start_locations) == 0xd0);
 static_assert(sizeof(squad) == 232);
