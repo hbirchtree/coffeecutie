@@ -1,6 +1,7 @@
 #include "damage.h"
 
 #include "blam_files.h"
+#include "allegiance.h"
 #include "components.h"
 #include "difficulty.h"
 #include "game_events.h"
@@ -38,7 +39,8 @@ using DamageManifest = compo::SubsystemManifest<
         PhysicsBus,
         const GameState,
         const NetworkState,
-        const BlamFiles<halo_version>>,
+        const BlamFiles<halo_version>,
+        AllegianceState>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 /* Units lose shield and body to what strikes them. The authority (the
@@ -292,6 +294,20 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         bool const shielded = status->shield > 0.f && status->maximum_shield() > 0.f &&
                               shield_mult > 0.f;
         amount *= modifier_of(jpt, shielded ? coll.shield_material_type : struck);
+        /* A player's blow on a friend is softened by its coll, and strains
+         * its team's patience */
+        auto const* actor = killer != ObjectHitEvent::no_player ? p.template get<Actor>(unit) : nullptr;
+        if(actor)
+        {
+            using team_t = blam::scn::unit::team_t;
+            auto&      allegiance = p.template subsystem<AllegianceState>();
+            auto const team       = static_cast<team_t>(actor->team);
+            if(allegiance.allied(team, team_t::player))
+            {
+                amount *= 1.f - std::clamp(coll.friendly_damage_resistance, 0.f, 1.f);
+                allegiance.betray(team, amount / std::max(status->maximum_body(), 1.f));
+            }
+        }
         /* A spent arm shield is down: what struck it reaches the body */
         if(body_mult <= 0.f && status->shield <= 0.f)
             body_mult = 1.f;
