@@ -315,7 +315,7 @@ static u32                      g_kind_count[kind_count] = {};
 static blam::tag_index<> g_player_model = blam::tag_index<>::none();
 
 /* What the server can name at run time, prepared while the map is mapped:
- * the map is let go after loading */
+ * paging tags in mid-game would stall */
 struct catalog_entry
 {
     blam::tag_index<> model{blam::tag_index<>::none()};
@@ -325,11 +325,13 @@ struct catalog_entry
     std::string       label;        // weap: picks the holder's animations
     std::optional<u32> volume;       // proj: the glow it flies in, mgs2
     std::optional<u32> detonation;   // proj: effe where it ends
+    std::vector<u32>   fire_sounds;  // weap: trigger 0's first firing effect
     f32                fuse{0.f}; // proj: seconds to detonation, 0 = on impact
 };
 
 static std::map<blam::tag_index<>, catalog_entry> g_catalog;
 static gx_effects::library_t                      g_fx_lib;
+static gx_audio::mixer_t                          g_audio{g_fx_lib.bank};
 static Matf4 g_hand{1.f}; // the player biped's "right hand", model space
 static i32   g_hand_node = -1; // the node it hangs off
 
@@ -1137,6 +1139,7 @@ static blam::tag_index<> player_biped_id(blam::map_container<V> const& c)
 template<typename V>
 static void build_catalog(blam::map_container<V> const& c)
 {
+    g_fx_lib.bank.enabled = g_xbox;
     u32 const   cnt = from_le(c.tags->tag_count);
     auto const* tg  = c.tags->tags(c.map);
     for(u32 i = 0; i < cnt; i++)
@@ -1163,7 +1166,13 @@ static void build_catalog(blam::map_container<V> const& c)
             {
                 if(auto tr = w.value()->triggers.data(c.magic);
                    !tr.has_error() && !tr.value().empty())
+                {
                     e.projectile = tr.value()[0].projectile.tag_id;
+                    if(auto fe = tr.value()[0].firing_effects.data(c.magic);
+                       !fe.has_error() && !fe.value().empty())
+                        e.fire_sounds =
+                            g_fx_lib.sounds_of(c, fe.value()[0].firing_effect);
+                }
                 e.label = std::string(w.value()->label.str());
             }
         if(proj)
@@ -1318,7 +1327,7 @@ static std::map<std::string, stance_t> g_stances; // by weapon label
 
 static constexpr char const* kUnarmed = "unarmed";
 
-/* A clip's bytes into g_clips, as the map is let go after loading */
+/* A clip's bytes into g_clips, to play without paging the map */
 template<typename V>
 static i32 copy_clip(
     blam::map_container<V> const& c, blam::antr::animation const& a)
@@ -2998,7 +3007,7 @@ struct projectile_t
 static std::vector<projectile_t> g_projectiles;
 static constexpr f32             kGravity        = 3.27f; // wu/s^2, 9.8 m/s^2
 static constexpr f32             kProjectileLife = 3.f;   // s, if nothing hits
-static gx_effects::system_t      g_fx{g_fx_lib};
+static gx_effects::system_t      g_fx{g_fx_lib, g_audio};
 static gx_sprites::batcher_t     g_sprites;
 static constexpr f32         kEyeHeight = 0.62f;
 /* From the bind pose's hanging hand up to where an aiming one is */
@@ -3466,7 +3475,7 @@ static void poll_network(u32 frame)
         auto it = g_net_objects.find(e.net_id);
         if(it == g_net_objects.end())
         {
-            // Only what the catalogue has: the map is let go by now
+            // Only what the catalogue has: tags stay out of the frame loop
             auto entry = g_catalog.find(e.tag_id);
             if(entry == g_catalog.end() ||
                !g_models.contains(entry->second.model))
@@ -3518,6 +3527,9 @@ static void poll_network(u32 frame)
             s.thrown ? s.weapon : weapon->second.projectile;
         if(s.player_idx == g_net.player_idx() && !s.thrown)
             g_fp_pose.fired = true;
+        if(!s.thrown)
+            for(u32 sound : weapon->second.fire_sounds)
+                g_audio.play(sound, s.position);
         auto p = g_catalog.find(proj);
         if(p == g_catalog.end())
             return;
@@ -4024,6 +4036,19 @@ struct game_t
 #endif
     }
 
+    void listen()
+    {
+        g_audio.listen(
+            g_cam_pos,
+            glm::normalize(glm::cross(cam_forward(), Vecf3{0.f, 0.f, 1.f})));
+        g_audio.pump();
+    }
+
+    void pump_audio()
+    {
+        g_audio.pump();
+    }
+
     void draw_sky()
     {
         /* The sky: around the camera, behind everything, out of the fog */
@@ -4349,18 +4374,23 @@ struct frame_stage : compo::SubsystemBase
 inline void game_t::add_stages(compo::EntityContainer& frames)
 {
     u32  next = 0;
-    auto add  = [&]<auto Work>() {
-        frames.register_subsystem_inplace<frame_stage<Work>>(this, next += 100);
+    auto add  = [&]<auto Work, u32 Slot = 0>() {
+        frames.register_subsystem_inplace<frame_stage<Work, Slot>>(
+            this, next += 100);
     };
     add.template operator()<&game_t::controls>();
     add.template operator()<&game_t::network>();
     add.template operator()<&game_t::view>();
     add.template operator()<&game_t::combat>();
     add.template operator()<&game_t::poses>();
+    add.template operator()<&game_t::listen>();
     add.template operator()<&game_t::draw_sky>();
     add.template operator()<&game_t::draw_structure>();
+    // Mixing goes between the slow stages, to stay ahead of the DMA
+    add.template operator()<&game_t::pump_audio, 1>();
     add.template operator()<&game_t::draw_objects>();
     add.template operator()<&game_t::draw_shots>();
+    add.template operator()<&game_t::pump_audio, 2>();
     add.template operator()<&game_t::draw_water>();
     add.template operator()<&game_t::draw_sprites>();
     add.template operator()<&game_t::draw_first_person>();
@@ -4584,6 +4614,9 @@ i32 coffee_main(i32, cstring_w*)
     }
     load_phase("gpu");
 #if defined(COFFEE_GEKKO)
+    LOG("sounds: %u of them, %u permutations",
+        static_cast<unsigned>(g_fx_lib.bank.sounds.size()),
+        static_cast<unsigned>(g_fx_lib.bank.permutations.size()));
     g_loading.finish();
     platform::file::gekko::vmem::set_stage_progress(nullptr);
 #endif
@@ -4600,10 +4633,6 @@ i32 coffee_main(i32, cstring_w*)
         g_dxt_bytes / 1024);
     LOG("mem free after load: %u KiB", free_mem() / 1024);
 
-#if defined(COFFEE_GEKKO)
-    platform::file::gekko::vmem::unmap(g_map_window);
-    LOG("mem free after unmap: %u KiB", free_mem() / 1024);
-#endif
     LOG("load took %u ms",
         static_cast<unsigned>(ticks_to_millisecs(gettime() - load_start)));
 
@@ -4611,6 +4640,7 @@ i32 coffee_main(i32, cstring_w*)
 #if defined(COFFEE_GEKKO)
     PAD_Init();
     start_network();
+    g_audio.begin(g_map_window.base);
 #endif
 
     compo::EntityContainer frames;
