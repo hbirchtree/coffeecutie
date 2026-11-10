@@ -402,16 +402,33 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         watch.shield = shield;
         watch.body   = health;
 
-        background(hud.anchor, hud.unit_hud_background);
-        background(hud.anchor, hud.shield_panel_background);
-        if(shield > 1.f)
-            overcharge(hud, (shield - 1.f) / (BipedStatus::over_shield - 1.f));
-        else
+        auto const& shown = p.template subsystem<CinematicState>().hud_parts;
+        if(shown.health || shown.shield)
+            background(hud.anchor, hud.unit_hud_background);
+        if(shown.shield)
         {
-            damage_flash(hud.anchor, hud.shield_panel_meter, watch.shield_peak,
-                         watch.shield_flash / damage_flash_seconds);
-            meter(hud.anchor, hud.shield_panel_meter, shield);
+            background(hud.anchor, hud.shield_panel_background);
+            if(shield > 1.f)
+                overcharge(hud, (shield - 1.f) / (BipedStatus::over_shield - 1.f));
+            else
+            {
+                damage_flash(hud.anchor, hud.shield_panel_meter, watch.shield_peak,
+                             watch.shield_flash / damage_flash_seconds);
+                meter(hud.anchor, hud.shield_panel_meter, shield);
+            }
         }
+        if(shown.health)
+            health_panel(hud, watch, health);
+        if(!shown.motion_sensor)
+            return;
+        /* The motion sensor keeps to the bottom left */
+        background(anchor_t::bottom_left, hud.motion_sensor_background);
+        background(anchor_t::bottom_left, hud.motion_sensor_foreground);
+        motion_sensor(p, id, hud);
+    }
+
+    void health_panel(unit_hud_interface const& hud, warning_t const& watch, f32 health)
+    {
         background(hud.anchor, hud.health_panel_background);
         damage_flash(hud.anchor, hud.health_panel_meter, watch.body_peak,
                      watch.body_flash / damage_flash_seconds);
@@ -426,10 +443,6 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                        ? color_of(hud.medium_health_left_color)
                        : color_of(hm.color_at_minimum);
         meter(hud.anchor, hm, health, true, band);
-        /* The motion sensor keeps to the bottom left */
-        background(anchor_t::bottom_left, hud.motion_sensor_background);
-        background(anchor_t::bottom_left, hud.motion_sensor_foreground);
-        motion_sensor(p, id, hud);
     }
 
     /* Blips for what moves within the sensor's range, the view's forward
@@ -628,7 +641,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(auto crosshairs = hud.crosshairs.data(*m_magic); crosshairs.has_value())
             for(auto const& ch : crosshairs.value())
             {
-                if(!on_this_map(ch.can_use_on_map_type) || !shown(ch.crosshair_type))
+                if(!m_crosshair || !on_this_map(ch.can_use_on_map_type) || !shown(ch.crosshair_type))
                     continue;
                 auto overlays = ch.crosshair_overlays.data(*m_magic);
                 if(!overlays.has_value())
@@ -1287,6 +1300,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 if(auto hud = unit->template data<unit_hud_interface>(*m_magic);
                    hud.has_value())
                     unit_hud(p, id, *hud.value(), *status);
+            m_crosshair = p.template subsystem<CinematicState>().hud_parts.crosshair;
             if(riding.mounted.weapon)
             {
                 auto hud = m_index.find(riding.mounted.weapon->hud_interface.tag_id);
@@ -1443,6 +1457,7 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
     static inline Vecf2 const safe_inset{48.f, 36.f};
 
     blam::map_ptr const*                 m_magic{nullptr};
+    bool                                 m_crosshair{true}; /*!< hud_show_crosshair */
     blam::tag_index_view<halo_version>   m_index;
     bool                                 m_multiplayer{false};
     std::array<blam::tag_t const*, 2>    m_unit_huds{}; /*!< Full, split screen */

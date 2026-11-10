@@ -68,6 +68,15 @@ struct CinematicState : compo::SubsystemBase
      * shown in the pause menu */
     std::string objective;
 
+    /* hud_show_*: parts of the unit HUD scripts hide */
+    struct hud_parts_t
+    {
+        bool health{true};
+        bool shield{true};
+        bool motion_sensor{true};
+        bool crosshair{true};
+    } hud_parts;
+
     bool letterbox{false};
     /*! Between cinematic_start and cinematic_stop: split screen gives way to
      *  one view of the whole window */

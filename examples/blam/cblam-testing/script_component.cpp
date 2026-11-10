@@ -781,6 +781,19 @@ struct BlamScript
             return {};
 
         /* Trigger volumes */
+        /* Players left outside the volume join the others at the flag */
+        case op::volume_teleport_players_not_inside: {
+            auto const* volume = named(m_scenario->trigger_volumes, text_of(arg(0)));
+            if(!volume)
+                return {};
+            std::vector<u64> outside;
+            for(auto player : p.template select<PlayerInfo, Model>())
+                if(!volume->contains(player.template get<Model>().position + Vecf3{0.f, 0.f, body_middle}))
+                    outside.push_back(player.id());
+            for(u64 id : outside)
+                teleport(p, id, text_of(arg(1)));
+            return {};
+        }
         case op::volume_test_object:
         case op::volume_test_objects:
         case op::volume_test_objects_all: {
@@ -887,6 +900,18 @@ struct BlamScript
             return value_t::boolean(
                 (a == team_t::player && state.betrayed(b)) || (b == team_t::player && state.betrayed(a)));
         }
+        case op::hud_show_health:
+            p.template subsystem<CinematicState>().hud_parts.health = arg(0).truthy();
+            return {};
+        case op::hud_show_shield:
+            p.template subsystem<CinematicState>().hud_parts.shield = arg(0).truthy();
+            return {};
+        case op::hud_show_motion_sensor:
+            p.template subsystem<CinematicState>().hud_parts.motion_sensor = arg(0).truthy();
+            return {};
+        case op::hud_show_crosshair:
+            p.template subsystem<CinematicState>().hud_parts.crosshair = arg(0).truthy();
+            return {};
         case op::hud_set_objective_text:
             p.template subsystem<CinematicState>().objective = std::string(text_of(arg(0)));
             return {};
@@ -952,6 +977,12 @@ struct BlamScript
                     }
                 });
             return {};
+        case op::unit_impervious:
+            with_objects(p, arg(0), [harmless = arg(1).truthy()](Proxy& p, u64 id) {
+                if(auto* status = p.template get<BipedStatus>(id))
+                    status->invulnerable = harmless;
+            });
+            return {};
         case op::object_cannot_take_damage:
         case op::object_can_take_damage:
             with_objects(p, arg(0), [harmless = opcode == op::object_cannot_take_damage](Proxy& p, u64 id) {
@@ -1008,6 +1039,17 @@ struct BlamScript
                     });
                 });
             return {};
+        /* Whether any of the units sits in the vehicle's seat */
+        case op::vehicle_test_seat_list: {
+            auto const vehicles = objects_of(p, arg(0));
+            if(vehicles.empty())
+                return value_t::boolean(false);
+            std::string const seat = lowered(text_of(arg(1)));
+            for(u64 unit : objects_of(p, arg(2)))
+                if(in_seat(p, unit, vehicles.front(), seat))
+                    return value_t::boolean(true);
+            return value_t::boolean(false);
+        }
         case op::unit_exit_vehicle:
             with_objects(p, arg(0), [this](Proxy& p, u64 unit) { unseat(p, unit); });
             return {};
@@ -1226,6 +1268,18 @@ struct BlamScript
             return value_t::boolean(p.template subsystem<GameState>().quiet);
         case op::game_reverted:
             return value_t::boolean(p.template subsystem<GameState>().reverts > 0);
+        /* No dialogue system to wait on: lines may always start */
+        case op::game_safe_to_speak:
+            return value_t::boolean(true);
+        /* Back to the last checkpoint */
+        case op::game_revert:
+        case op::game_lost: {
+            GameEvent         ev{.type = GameEvent::WorldRestore};
+            WorldRestoreEvent restore{};
+            p.template subsystem<GameEventBus>().inject(ev, &restore);
+            p.template subsystem<GameState>().reverts++;
+            return {};
+        }
         case op::game_won: {
             GameEvent    ev{.type = GameEvent::GameWon};
             GameWonEvent won{};
@@ -1486,10 +1540,19 @@ struct BlamScript
         }
 
         case op::ai_kill:
+        case op::ai_kill_silent:
         case op::ai_erase:
             for(u64 id : ai_actors(p, text_of(arg(0))))
                 despawn(p, id);
             return {};
+        case op::ai_erase_all: {
+            std::vector<u64> all;
+            for(auto ent : p.template select<Actor>())
+                all.push_back(ent.id());
+            for(u64 id : all)
+                despawn(p, id);
+            return {};
+        }
         /* Vehicles: they run to it and take the seat */
         case op::ai_go_to_vehicle: {
             auto const vehicles = objects_of(p, arg(1));
@@ -1995,6 +2058,25 @@ struct BlamScript
                 body.update_matrix();
             }
         }
+    }
+
+    /* A unit in a seat of the vehicle whose label holds `seat` */
+    bool in_seat(Proxy& p, u64 unit, u64 vehicle, std::string_view seat)
+    {
+        for(auto const& rider : m_riders)
+            if(rider.unit == unit && rider.vehicle == vehicle)
+                return lowered(rider.seat).find(seat) != std::string::npos;
+        auto const* info  = p.template get<PlayerInfo>(unit);
+        auto const* model = p.template get<Model>(vehicle);
+        if(!info || info->riding.vehicle != vehicle || !model || !model->origin_object)
+            return false;
+        auto vehi = model->origin_object->template data<blam::scn::unit>(m_magic);
+        if(!vehi.has_value())
+            return false;
+        auto seats = vehi.value()[0].seats.data(m_magic);
+        i16 const at = info->riding.seat;
+        return seats.has_value() && at >= 0 && static_cast<size_t>(at) < seats.value().size() &&
+               lowered(seats.value()[at].label.str()).find(seat) != std::string::npos;
     }
 
     /* A seat's marker on its vehicle, in the bind pose */
@@ -4187,6 +4269,7 @@ void alloc_scripting(compo::EntityContainer& e)
             script.m_scenario = nullptr;
             script.m_saved.reset();
             cinematic.objective.clear();
+            cinematic.hud_parts = {};
         });
     script.m_save_queue = gbus.addQueuedEventFunction<WorldSaveEvent>(
         0, [&script](GameEvent&, WorldSaveEvent*) { script.m_save_now = true; });
