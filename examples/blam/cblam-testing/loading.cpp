@@ -165,6 +165,10 @@ struct ResourceLoader
         spawn_model_queue;
     std::shared_ptr<GameEventBus::queue_type<ShieldDepletedEvent>>
         shield_queue;
+    std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> fire_queue;
+    /* Camouflage shows its wearer for a moment after each shot */
+    static constexpr std::chrono::milliseconds reveal_time{1000};
+    std::map<u64, compo::time_point>           revealed_until;
     std::vector<ShieldDepletedEvent> pending_shields;
     std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>
         mount_model_queue;
@@ -267,6 +271,8 @@ struct ResourceLoader
         spawn_object_queue->poll();
         despawn_object_queue->poll();
         shield_queue->poll();
+        fire_queue->poll();
+        std::erase_if(revealed_until, [&t](auto const& r) { return r.second <= t; });
 
         reconcile_player_bipeds(p, files);
         disarm_npcs(p);
@@ -2881,13 +2887,14 @@ struct ResourceLoader
             }
             weapon.held = biped.held;
             /* Camouflage covers the body, what it holds and its own view of them */
-            camouflage(p, model, info.camouflaged);
+            bool const cloaked = info.camouflaged && !dead && !revealed_until.contains(player.id());
+            camouflage(p, model, cloaked);
             if(auto const* held = p.template get<Model>(biped.held))
-                camouflage(p, *held, info.camouflaged);
+                camouflage(p, *held, cloaked);
             if(auto fp = first_person_models.find(player.id()); fp != first_person_models.end())
                 for(u64 id : fp->second.models)
                     if(auto const* view = p.template get<Model>(id))
-                        camouflage(p, *view, info.camouflaged);
+                        camouflage(p, *view, cloaked);
         }
         /* Changes for bodies not shown yet wait for them */
         std::erase_if(pending_equips, [&](EquipWeaponEvent const& e) {
@@ -3264,12 +3271,14 @@ struct ResourceLoader
                 continue;
             if(weapon.tag && !weapon.weapon && !status.dead)
                 unarmed.emplace_back(unit.id(), weapon.tag);
-            /* A unit born camouflaged, and what it holds */
+            /* A unit born camouflaged, and what it holds: shown dead, and
+             * for a moment after it fires */
             if(auto const* model = p.template get<Model>(unit.id()); model && model->camouflaged)
             {
-                camouflage(p, *model, true);
+                bool const cloaked = !status.dead && !revealed_until.contains(unit.id());
+                camouflage(p, *model, cloaked);
                 if(auto const* held = p.template get<Model>(weapon.held))
-                    camouflage(p, *held, true);
+                    camouflage(p, *held, cloaked);
             }
         }
         for(auto const& [unit, tag] : unarmed)
@@ -3567,6 +3576,11 @@ void alloc_resource_loader(compo::EntityContainer& e)
     loader.spawn_model_queue = game_bus.addQueuedEventFunction<SpawnModelEvent>(
         0, [&loader](GameEvent&, SpawnModelEvent* spawn) {
             loader.pending_models.push_back(*spawn);
+        });
+    loader.fire_queue = game_bus.addQueuedEventFunction<WeaponFireEvent>(
+        0, [&loader](GameEvent&, WeaponFireEvent* shot) {
+            if(shot->shooter)
+                loader.revealed_until[shot->shooter] = loader.now + loader.reveal_time;
         });
     loader.shield_queue = game_bus.addQueuedEventFunction<ShieldDepletedEvent>(
         0, [&loader](GameEvent&, ShieldDepletedEvent* shield) {

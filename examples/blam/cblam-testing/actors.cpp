@@ -255,6 +255,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 lob_limit       = 1.2217f; /* rad, 70 degrees: steeper lobs fall to the flat shot */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
+    static constexpr f32 camouflage_sight = 2.f; /* wu within which camouflage is noticed */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
     static constexpr f32 drop_lift       = .4f;  /* wu above the feet belongings fall from */
     static constexpr f32 drop_speed      = 1.5f; /* wu/s they are tossed out at */
@@ -844,10 +845,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 const   heard   = (seen.hearing_dist > 0.f ? seen.hearing_dist : 15.f) * footstep_share;
         u64   best     = 0;
         f32   best_d   = std::numeric_limits<f32>::max();
-        auto  consider = [&](u64 other, Model const& target, u64 vehicle, bool quiet) {
+        auto  consider = [&](u64 other, Model const& target, u64 vehicle, bool quiet, bool cloaked) {
             Vecf3 const to = target.position + chest_of(p, other) - eye;
             f32 const   d  = glm::length(to);
             if(d >= best_d || d < 1e-3f)
+                return;
+            /* Camouflage goes unseen and unheard but up close; its shots
+             * still give it away (hear) */
+            if(cloaked && d > camouflage_sight)
                 return;
             /* Out to full range ahead, less toward the edge of its sight,
              * a short way out of the corner of its eye; a known target is
@@ -889,7 +894,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             auto [info, target, status] = player.components();
             if(!info.mode.physics || status.dead || !enemies(actor.team, team_t::player))
                 continue;
-            consider(player.id(), target, info.riding.vehicle, info.crouched || !moving(player.id()));
+            consider(player.id(), target, info.riding.vehicle, info.crouched || !moving(player.id()),
+                     info.camouflaged || target.camouflaged);
         }
         for(auto other : p.template select<Actor, Model, BipedStatus>())
         {
@@ -899,7 +905,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             auto const* physics = p.template get<ObjectPhysics>(other.id());
             auto const* anim    = p.template get<AnimationPlayback>(other.id());
             u64 const   vehicle = physics && physics->seated ? physics->seated_in : 0;
-            consider(other.id(), target, vehicle, (anim && anim->stance == "crouch") || !moving(other.id()));
+            consider(other.id(), target, vehicle, (anim && anim->stance == "crouch") || !moving(other.id()),
+                     target.camouflaged);
         }
         return best;
     }
