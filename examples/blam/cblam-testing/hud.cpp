@@ -997,6 +997,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(!m_hudg)
             return;
         Vecf2 const at = place(m_hudg->anchor, m_hudg->placement.anchor_offset, Vecf2());
+        countdown(cinematic.timer);
         if(cinematic.help.shown && !cinematic.help.message.empty())
             if(auto runs = message_of(m_messages, *m_magic, cinematic.help.message); !runs.empty())
                 m_view->texts.push_back({
@@ -1086,6 +1087,27 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 return message_of(m_global_messages, m_global_magic, "custom_device", std::span(&*run, 1));
         return message_of(m_global_messages, m_global_magic, "touch_device");
     }
+
+    /* The scripts' countdown as m:ss, in the hudg's text colour until it
+     * runs into its warning time */
+    void countdown(CinematicState::timer_t const& timer)
+    {
+        if(!timer.shown)
+            return;
+        auto const seconds = (std::max<libc_types::i64>(timer.ticks, 0) + 29) / 30;
+        auto const text    = fmt::format("{}:{:02}", seconds / 60, seconds % 60);
+        Vecf4 const normal = m_hudg->text_color;
+        bool const  warn   = timer.ticks <= timer.warning;
+        m_view->texts.push_back({
+            .runs  = {{.text = std::u16string(text.begin(), text.end())}},
+            .at    = place(static_cast<anchor_t>(std::min<u16>(timer.corner, 4)),
+                        blam::vec2i16{timer.x, timer.y},
+                        Vecf2(countdown_width, countdown_height)),
+            .color = warn ? Vecf4(1.f, .25f, .2f, 1.f) : Vecf4(normal.y, normal.z, normal.w, 1.f),
+        });
+    }
+    static constexpr f32 countdown_width  = 36.f; /* px, "0:00" in the HUD font */
+    static constexpr f32 countdown_height = 14.f;
 
     /* The objective the scripts set, as text */
     std::u16string objective_text(std::string_view name)

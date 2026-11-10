@@ -233,6 +233,8 @@ struct BlamScript
                 return id != 0;
             });
             m_vm.tick();
+            if(auto& timer = p.template subsystem<CinematicState>().timer; !timer.paused && timer.ticks > 0)
+                timer.ticks--;
             play_recordings(p);
             play_custom(p);
             run_commands(p);
@@ -274,6 +276,7 @@ struct BlamScript
             .objective  = p.template subsystem<CinematicState>().objective,
             .allegiances = p.template subsystem<AllegianceState>().pairs,
             .grudges     = p.template subsystem<AllegianceState>().grudges,
+            .timer       = p.template subsystem<CinematicState>().timer,
         };
         auto const name = [&](u64 id) {
             if(auto const* net = p.template get<NetworkInfo>(id); net && net->instance_id)
@@ -375,6 +378,7 @@ struct BlamScript
 
         m_vm         = std::move(saved.vm);
         p.template subsystem<CinematicState>().objective = saved.objective;
+        p.template subsystem<CinematicState>().timer     = saved.timer;
         {
             auto& allegiance   = p.template subsystem<AllegianceState>();
             allegiance.pairs   = saved.allegiances;
@@ -912,6 +916,30 @@ struct BlamScript
         case op::hud_show_crosshair:
             p.template subsystem<CinematicState>().hud_parts.crosshair = arg(0).truthy();
             return {};
+        /* The HUD countdown, in minutes and seconds */
+        case op::hud_set_timer_time:
+            p.template subsystem<CinematicState>().timer.ticks =
+                static_cast<libc_types::i64>((arg(0).as_real() * 60.f + arg(1).as_real()) * tick_rate);
+            return {};
+        case op::hud_set_timer_warning_time:
+            p.template subsystem<CinematicState>().timer.warning =
+                static_cast<libc_types::i64>((arg(0).as_real() * 60.f + arg(1).as_real()) * tick_rate);
+            return {};
+        case op::hud_set_timer_position: {
+            auto& timer  = p.template subsystem<CinematicState>().timer;
+            timer.x      = static_cast<i16>(arg(0).as_real());
+            timer.y      = static_cast<i16>(arg(1).as_real());
+            timer.corner = static_cast<u16>(arg(2).integer);
+            return {};
+        }
+        case op::show_hud_timer:
+            p.template subsystem<CinematicState>().timer.shown = arg(0).truthy();
+            return {};
+        case op::pause_hud_timer:
+            p.template subsystem<CinematicState>().timer.paused = arg(0).truthy();
+            return {};
+        case op::hud_get_timer_ticks:
+            return value_t::number(type_t::long_, static_cast<f32>(p.template subsystem<CinematicState>().timer.ticks));
         case op::hud_set_objective_text:
             p.template subsystem<CinematicState>().objective = std::string(text_of(arg(0)));
             return {};
@@ -956,6 +984,7 @@ struct BlamScript
             });
             return {};
         case op::unit_set_current_vitality:
+        case op::units_set_current_vitality:
             with_objects(
                 p, arg(0), [this, body = arg(1).as_real(), shield = arg(2).as_real()](Proxy& p, u64 id) {
                     if(auto* status = p.template get<BipedStatus>(id))
@@ -1038,6 +1067,71 @@ struct BlamScript
                         seat_unit(p, unit, vehicle, seat, false);
                     });
                 });
+            return {};
+        /* Its riders, in seat order of boarding */
+        case op::vehicle_riders: {
+            std::vector<u64> out;
+            for(u64 vehicle : objects_of(p, arg(0)))
+            {
+                for(auto const& rider : m_riders)
+                    if(rider.vehicle == vehicle)
+                        out.push_back(rider.unit);
+                for(auto player : p.template select<PlayerInfo>())
+                    if(player.template get<PlayerInfo>().riding.vehicle == vehicle)
+                        out.push_back(player.id());
+            }
+            return list(std::move(out));
+        }
+        /* Whether the unit holds the weapon, out and ready */
+        case op::unit_has_weapon_readied: {
+            auto const units = objects_of(p, arg(0));
+            auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+            auto const* equip = units.empty() ? nullptr : p.template get<BipedEquipment>(units.front());
+            auto const* held  = equip ? equip->held(files.load_generation) : nullptr;
+            auto const  kind  = m_tags.find(static_cast<u32>(arg(1).integer));
+            return value_t::boolean(held && held->tag && kind != m_tags.end() && held->tag->as_ref().tag_id == (*kind).as_ref().tag_id);
+        }
+        case op::unit_get_total_grenade_count: {
+            auto const units = objects_of(p, arg(0));
+            auto const* equip = units.empty() ? nullptr : p.template get<BipedEquipment>(units.front());
+            i32 count = 0;
+            if(equip)
+                for(auto const& kind : equip->equipment)
+                    count += kind.left;
+            return value_t::number(type_t::short_, static_cast<f32>(count));
+        }
+        /* No night vision in campaign: the flashlight is all there is */
+        case op::unit_solo_player_integrated_night_vision_is_active:
+            return value_t::boolean(false);
+        /* Hints and housekeeping the original's streaming and debugging
+         * needed: nothing to do here */
+        case op::objects_predict:
+        case op::object_type_predict:
+        case op::object_beautify:
+        case op::object_pvs_activate:
+        case op::object_pvs_set_camera:
+        case op::object_pvs_set_object:
+        case op::object_pvs_clear:
+        case op::garbage_collect_now:
+        case op::inspect:
+        case op::cls:
+        case op::rasterizer_model_ambient_reflection_tint:
+        case op::rasterizer_lights_reset_for_new_map:
+        case op::render_lights:
+        case op::time_code_show:
+        case op::time_code_start:
+        case op::cinematic_set_near_clip_distance:
+        case op::cinematic_suppress_bsp_object_creation:
+        case op::cinematic_skip_start_internal:
+        case op::cinematic_skip_stop_internal:
+        case op::ai_force_active:
+        case op::ai_allow_dormant:
+        case op::ai_renew:
+        case op::ai_free:
+        case op::ai_link_activation:
+        case op::ai_reconnect:
+        case op::breakable_surfaces_enable:
+        case op::breakable_surfaces_reset:
             return {};
         /* Whether any of the units sits in the vehicle's seat */
         case op::vehicle_test_seat_list: {
@@ -1446,7 +1540,8 @@ struct BlamScript
             }
             return {};
         }
-        case op::ai_migrate: {
+        case op::ai_migrate:
+        case op::ai_migrate_and_speak: {
             /* The actors join another encounter's squad, named like ai_place */
             auto const path  = std::string(text_of(arg(1)));
             auto const slash = path.find('/');
@@ -1539,6 +1634,31 @@ struct BlamScript
             return value_t::number(type_t::short_, static_cast<f32>(status));
         }
 
+        case op::ai_braindead_by_unit:
+            with_objects(p, arg(0), [on = arg(1).truthy()](Proxy& p, u64 id) {
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->braindead = on;
+            });
+            return {};
+        case op::ai_berserk:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->berserk = arg(1).truthy();
+            return {};
+        case op::ai_try_to_fight_nothing:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->target = 0;
+            return {};
+        case op::ai_follow_target_disable:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->follow_players = false;
+            return {};
+        case op::ai_exit_vehicle:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                unseat(p, id);
+            return {};
         case op::ai_kill:
         case op::ai_kill_silent:
         case op::ai_erase:
@@ -4239,6 +4359,7 @@ struct BlamScript
         std::string                             objective;
         decltype(AllegianceState::pairs)        allegiances;
         decltype(AllegianceState::grudges)      grudges;
+        CinematicState::timer_t                 timer;
     };
     std::optional<saved_t> m_saved;
     bool                   m_save_now{false};
@@ -4270,6 +4391,7 @@ void alloc_scripting(compo::EntityContainer& e)
             script.m_saved.reset();
             cinematic.objective.clear();
             cinematic.hud_parts = {};
+            cinematic.timer     = {};
         });
     script.m_save_queue = gbus.addQueuedEventFunction<WorldSaveEvent>(
         0, [&script](GameEvent&, WorldSaveEvent*) { script.m_save_now = true; });
