@@ -29,6 +29,9 @@
 #include <malloc.h>
 #include <string.h>
 
+#include <algorithm>
+#include <optional>
+
 namespace platform::file::gekko::vmem {
 
 namespace detail {
@@ -177,6 +180,16 @@ inline pte_t* g_frame_pte[kPoolPages] = {}; // its PTE slot
 inline u32  g_fault_count = 0;
 inline bool g_failed      = false;
 
+// One read off the disc in the background, see request()
+constexpr u32        kStreamBytes    = 0x4000;
+inline dvdcmdblk     g_stream_cmd    = {};
+inline u8*           g_stream_buf    = nullptr;
+inline u32           g_stream_va     = 0;
+inline u32           g_stream_len    = 0;
+inline volatile bool g_stream_busy   = false;
+inline volatile bool g_stream_done   = false;
+inline volatile s32  g_stream_result = 0;
+
 inline u32 align_up(u32 v)
 {
     return (v + kPageSize - 1) & ~(kPageSize - 1);
@@ -291,6 +304,17 @@ inline u32 alloc_frame()
     return idx;
 }
 
+/* Does this page of the region only exist on the disc? */
+inline bool on_disc(region_t const& r, u32 off)
+{
+    if(r.aram || !r.dvd)
+        return false;
+    for(u32 i = 0; i < r.span_count; i++)
+        if(off - r.spans[i].off < r.spans[i].size)
+            return false;
+    return true;
+}
+
 inline void fill_and_map(region_t const& r, u32 va)
 {
     u32 const off   = va - r.base;
@@ -346,6 +370,9 @@ inline void dsi_handler(unsigned exid, PPCContext* ctx)
             region_t const& r = g_regions[i];
             if(r.active && dar >= r.base && dar < r.base + r.size)
             {
+                // The drive is taken by a background read
+                if(g_stream_busy && on_disc(r, dar - r.base))
+                    break;
                 g_fault_count++;
                 if(g_fault_count > 0x40000) // safety valve: never hang headless
                 {
@@ -524,6 +551,107 @@ inline mapping map(char const* name)
 }
 
 /* Drop a mapping: free its frames/PTEs, region slot, and VA/ARAM ranges. */
+namespace detail {
+
+inline region_t const* region_of(mapping const& m)
+{
+    for(u32 i = 0; i < kMaxRegions; i++)
+        if(g_regions[i].active &&
+           g_regions[i].base == reinterpret_cast<u32>(m.base))
+            return &g_regions[i];
+    return nullptr;
+}
+
+inline bool page_mapped(u32 va)
+{
+    for(u32 i = 0; i < kPoolPages; i++)
+        if(g_frame_va[i] == va)
+            return true;
+    return false;
+}
+
+inline void stream_done(s32 result, dvdcmdblk*)
+{
+    g_stream_result = result;
+    g_stream_done   = true;
+}
+
+} // namespace detail
+
+/* Streaming a mapping without stopping the game for the disc: ask with
+ * first_missing() what isn't in the page cache, request() it, and poll() until
+ * it is. While a request is out, reading a page first_missing() names faults
+ * into a panic, as the drive can't be shared. */
+inline std::optional<u32> first_missing(mapping const& m, u32 off, u32 size)
+{
+    auto const* r = detail::region_of(m);
+    if(!r)
+        return std::nullopt;
+    for(u32 page = off & ~(detail::kPageSize - 1); page < off + size;
+        page += detail::kPageSize)
+        if(detail::on_disc(*r, page) && !detail::page_mapped(r->base + page))
+            return page;
+    return std::nullopt;
+}
+
+/* Start reading the pages from `off` on; false while one is already out */
+inline bool request(mapping const& m, u32 off)
+{
+    auto const* r = detail::region_of(m);
+    if(!r || detail::g_stream_busy)
+        return false;
+    if(!detail::g_stream_buf)
+        detail::g_stream_buf =
+            static_cast<u8*>(memalign(32, detail::kStreamBytes));
+    if(!detail::g_stream_buf)
+        return false;
+    u32 const page = off & ~(detail::kPageSize - 1);
+    u32 const len =
+        std::min(detail::kStreamBytes, detail::align_up(r->size) - page);
+    DCInvalidateRange(detail::g_stream_buf, len);
+    detail::g_stream_va   = r->base + page;
+    detail::g_stream_len  = len;
+    detail::g_stream_done = false;
+    detail::g_stream_busy = true;
+    if(!DVD_ReadAbsAsyncPrio(
+           &detail::g_stream_cmd,
+           detail::g_stream_buf,
+           len,
+           static_cast<s64>(r->disc_off + page),
+           detail::stream_done,
+           2))
+    {
+        detail::g_stream_busy = false;
+        return false;
+    }
+    return true;
+}
+
+/* A finished read goes into the page cache */
+inline void poll()
+{
+    using namespace detail;
+    if(!g_stream_done)
+        return;
+    g_stream_done = false;
+    if(g_stream_result >= 0)
+    {
+        DCInvalidateRange(g_stream_buf, g_stream_len);
+        for(u32 at = 0; at < g_stream_len; at += kPageSize)
+        {
+            u32 const va = g_stream_va + at;
+            if(page_mapped(va))
+                continue;
+            u32 const idx   = alloc_frame();
+            u8*       frame = g_pool + idx * kPageSize;
+            memcpy(frame, g_stream_buf + at, kPageSize);
+            g_frame_pte[idx] = map_page(va, virt_to_phys(frame));
+            g_frame_va[idx]  = va;
+        }
+    }
+    g_stream_busy = false;
+}
+
 inline void unmap(mapping const& m)
 {
     if(!m)
