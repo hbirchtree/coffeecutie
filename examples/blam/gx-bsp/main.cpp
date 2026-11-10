@@ -332,6 +332,7 @@ struct catalog_entry
 static std::map<blam::tag_index<>, catalog_entry> g_catalog;
 static gx_effects::library_t                      g_fx_lib;
 static gx_audio::mixer_t                          g_audio{g_fx_lib.bank};
+static gx_audio::paths_t                          g_sound_paths;
 static Matf4 g_hand{1.f}; // the player biped's "right hand", model space
 static i32   g_hand_node = -1; // the node it hangs off
 
@@ -778,6 +779,14 @@ static void build_cluster_lookup(
     g_coll_planes.assign(planes.value().begin(), planes.value().end());
     for(auto const& l : leaves.value())
         g_leaf_cluster.push_back(from_le(l.cluster));
+    if(auto portals = hdr.cluster_portals.data(bm); !portals.has_error())
+        for(auto const& p : portals.value())
+            g_sound_paths.add_portal(
+                {from_le(p.front_cluster),
+                 from_le(p.back_cluster),
+                 {from_le(p.centroid.x),
+                  from_le(p.centroid.y),
+                  from_le(p.centroid.z)}});
 }
 
 // Cluster index containing point, or nullopt for solid/outside-the-BSP points.
@@ -4040,7 +4049,8 @@ struct game_t
     {
         g_audio.listen(
             g_cam_pos,
-            glm::normalize(glm::cross(cam_forward(), Vecf3{0.f, 0.f, 1.f})));
+            glm::normalize(glm::cross(cam_forward(), Vecf3{0.f, 0.f, 1.f})),
+            dt);
         g_audio.pump();
     }
 
@@ -4640,7 +4650,8 @@ i32 coffee_main(i32, cstring_w*)
 #if defined(COFFEE_GEKKO)
     PAD_Init();
     start_network();
-    g_audio.begin(g_map_window);
+    g_sound_paths.set(g_coll_nodes, g_coll_planes, cluster_at);
+    g_audio.begin(g_map_window, g_sound_paths);
 #endif
 
     compo::EntityContainer frames;
