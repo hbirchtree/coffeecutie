@@ -10,6 +10,7 @@
  * vertices are expanded on the way, since GX can't read either map's layout.
  */
 
+#include <coffee/components/components.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
@@ -3133,9 +3134,41 @@ static std::optional<Vecf3> structure_hit(Vecf3 const& a, Vecf3 const& b)
     return std::nullopt;
 }
 
+/* Shots in flight, and where they end */
+static void step_combat(f32 dt)
+{
+    for(auto& p : g_projectiles)
+    {
+        p.age += dt;
+        p.prev = p.pos;
+        if(p.resting)
+            continue;
+        p.vel.z -= kGravity * p.gravity * dt;
+        Vecf3 const next = p.pos + p.vel * dt;
+        auto const  hit  = structure_hit(p.pos, next);
+        p.pos            = hit.value_or(next);
+        p.resting        = hit.has_value();
+    }
+    // Shots end on the structure, grenades when their fuse runs out
+    std::erase_if(g_projectiles, [](projectile_t const& p) {
+        auto const entry = g_catalog.find(p.tag);
+        f32 const  fuse  = entry != g_catalog.end() ? entry->second.fuse : 0.f;
+        bool const done =
+            fuse > 0.f ? p.age >= fuse : p.resting || p.age > kProjectileLife;
+        if(done && entry != g_catalog.end() && entry->second.detonation &&
+           (p.resting || fuse > 0.f))
+            g_fx.spawn(
+                *entry->second.detonation,
+                p.pos,
+                glm::length(p.vel) > 1e-3f ? -p.vel : Vecf3{0, 0, 1});
+        return done;
+    });
+    g_fx.step(dt);
+}
+
 /* Held weapons on remote bipeds, then shots in flight */
 template<typename DrawModel>
-static void draw_combat(Matf4 const& mv, f32 dt, DrawModel&& draw_model)
+static void draw_combat(Matf4 const& mv, DrawModel&& draw_model)
 {
     for(auto const& [player, weapon] : g_held)
     {
@@ -3172,33 +3205,6 @@ static void draw_combat(Matf4 const& mv, f32 dt, DrawModel&& draw_model)
             true);
     }
 
-    for(auto& p : g_projectiles)
-    {
-        p.age += dt;
-        p.prev = p.pos;
-        if(p.resting)
-            continue;
-        p.vel.z -= kGravity * p.gravity * dt;
-        Vecf3 const next = p.pos + p.vel * dt;
-        auto const  hit  = structure_hit(p.pos, next);
-        p.pos            = hit.value_or(next);
-        p.resting        = hit.has_value();
-    }
-    // Shots end on the structure, grenades when their fuse runs out
-    std::erase_if(g_projectiles, [](projectile_t const& p) {
-        auto const entry = g_catalog.find(p.tag);
-        f32 const  fuse  = entry != g_catalog.end() ? entry->second.fuse : 0.f;
-        bool const done =
-            fuse > 0.f ? p.age >= fuse : p.resting || p.age > kProjectileLife;
-        if(done && entry != g_catalog.end() && entry->second.detonation &&
-           (p.resting || fuse > 0.f))
-            g_fx.spawn(
-                *entry->second.detonation,
-                p.pos,
-                glm::length(p.vel) > 1e-3f ? -p.vel : Vecf3{0, 0, 1});
-        return done;
-    });
-    g_fx.step(dt);
     g_fx.draw(g_sprites);
     for(auto const& p : g_projectiles)
     {
@@ -3623,6 +3629,745 @@ static void poll_network(u32 frame)
 }
 #endif
 
+/* The game as compo runs it: each frame is a list of stages in priority
+ * order, so that work can be slotted in between them. */
+#if defined(FEATURE_ENABLE_Gexxo)
+struct game_t
+{
+    using stage_t    = gexxo::program_t::stage_t;
+    using channel_t  = gexxo::program_t::channel_t;
+    using combiner_t = stage_t::combiner_t;
+    using bind_t     = gexxo::texture_binding_t;
+
+    game_t(gexxo::api& gfx_, std::shared_ptr<gexxo::rendertarget_t> rt_)
+        : gfx(gfx_)
+        , rt(std::move(rt_))
+    {
+        // diffuse * lightmap: stage0 = diffuse (tex0@tc0), stage1 = *lightmap
+        // (tex1@tc1)
+        prog_diff_lm           = gfx.alloc_program();
+        prog_diff_lm->channels = {channel_t{.channel = channel_t::color0a0}};
+        prog_diff_lm->stages   = {
+            stage_t{
+                  .stage    = stage_t::stage0,
+                  .op       = stage_t::replace,
+                  .texcoord = stage_t::texcoord0,
+                  .texmap   = stage_t::texmap0},
+            stage_t{
+                  .stage    = stage_t::stage1,
+                  .op       = stage_t::modulate_prev,
+                  .texcoord = stage_t::texcoord1,
+                  .texmap   = stage_t::texmap1},
+        };
+        // diffuse * detail(2x) * lightmap (senv with a detail map)
+        prog_diff_det_lm           = gfx.alloc_program();
+        prog_diff_det_lm->channels = {
+            channel_t{.channel = channel_t::color0a0}};
+        prog_diff_det_lm->stages = {
+            stage_t{
+                .stage    = stage_t::stage0,
+                .op       = stage_t::replace,
+                .texcoord = stage_t::texcoord0,
+                .texmap   = stage_t::texmap0},
+            stage_t{
+                .stage    = stage_t::stage1,
+                .op       = stage_t::modulate_prev_2x,
+                .texcoord = stage_t::texcoord2,
+                .texmap   = stage_t::texmap2},
+            stage_t{
+                .stage    = stage_t::stage2,
+                .op       = stage_t::modulate_prev,
+                .texcoord = stage_t::texcoord1,
+                .texmap   = stage_t::texmap1},
+        };
+        // diffuse only (page has no lightmap)
+        prog_diff           = gfx.alloc_program();
+        prog_diff->channels = {channel_t{.channel = channel_t::color0a0}};
+        prog_diff->stages   = {stage_t{
+              .stage    = stage_t::stage0,
+              .op       = stage_t::replace,
+              .texcoord = stage_t::texcoord0,
+              .texmap   = stage_t::texmap0}};
+        // lightmap only (material has no diffuse): with one tex-gen only
+        // texcoord0 is generated, so output the lightmap UV (vertex TEX1) into
+        // texcoord0.
+        prog_lm           = gfx.alloc_program();
+        prog_lm->channels = {channel_t{.channel = channel_t::color0a0}};
+        prog_lm->stages   = {stage_t{
+              .stage    = stage_t::stage0,
+              .op       = stage_t::replace,
+              .texcoord = stage_t::texcoord0,
+              .texmap   = stage_t::texmap0}};
+        // Objects: diffuse * (ambient + sun), or just the lit material colour
+        channel_t const lit{
+            .channel          = channel_t::color0a0,
+            .lighting         = true,
+            .ambient_src      = channel_t::src_reg,
+            .diffuse_src      = channel_t::src_reg,
+            .light_mask       = GX_LIGHT0,
+            .diffuse_function = channel_t::diffuse_clamp,
+        };
+        prog_obj                = gfx.alloc_program();
+        prog_obj->channels      = {lit};
+        prog_obj->stages        = {stage_t{
+                   .stage    = stage_t::stage0,
+                   .op       = stage_t::modulate,
+                   .texcoord = stage_t::texcoord0,
+                   .texmap   = stage_t::texmap0}};
+        prog_obj_flat           = gfx.alloc_program();
+        prog_obj_flat->channels = {lit};
+        prog_obj_flat->stages   = {
+            stage_t{.stage = stage_t::stage0, .op = stage_t::pass}};
+
+        /* Reflective models: base * light + sphere * tint * mask. The mask is
+         * the multipurpose map's red on Xbox; PC keeps it in alpha, which the
+         * GX formats drop, so PC parts go unmasked */
+        GX_SetTevSwapModeTable(
+            GX_TEV_SWAP1, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
+        gx_sotr::load_swap_table();
+        stage_t const reflect_base{
+            .stage    = stage_t::stage0,
+            .op       = stage_t::modulate,
+            .texcoord = stage_t::texcoord0,
+            .texmap   = stage_t::texmap0};
+        stage_t const reflect_sphere{
+            .stage    = stage_t::stage1,
+            .op       = stage_t::custom,
+            .texcoord = stage_t::texcoord1,
+            .texmap   = stage_t::texmap2,
+            .color    = channel_t::color_null,
+            .color_combiner =
+                combiner_t{
+                    .a   = GX_CC_ZERO,
+                    .b   = GX_CC_TEXC,
+                    .c   = GX_CC_KONST,
+                    .d   = GX_CC_ZERO,
+                    .out = GX_TEVREG0},
+            .konst_color = GX_TEV_KCSEL_K0};
+        prog_reflect           = gfx.alloc_program();
+        prog_reflect->channels = {lit};
+        prog_reflect->stages   = {
+            reflect_base,
+            reflect_sphere,
+            stage_t{
+                  .stage    = stage_t::stage2,
+                  .op       = stage_t::custom,
+                  .texcoord = stage_t::texcoord0,
+                  .texmap   = stage_t::texmap1,
+                  .color    = channel_t::color_null,
+                  .color_combiner =
+                    combiner_t{
+                          .a = GX_CC_ZERO,
+                          .b = GX_CC_C0,
+                          .c = GX_CC_TEXC,
+                          .d = GX_CC_CPREV},
+                  .tex_swap = GX_TEV_SWAP1}};
+        prog_reflect_unmasked           = gfx.alloc_program();
+        prog_reflect_unmasked->channels = {lit};
+        prog_reflect_unmasked->stages   = {
+            reflect_base,
+            reflect_sphere,
+            stage_t{
+                  .stage          = stage_t::stage2,
+                  .op             = stage_t::custom,
+                  .color          = channel_t::color_null,
+                  .color_combiner = combiner_t{
+                      .a = GX_CC_ZERO,
+                      .b = GX_CC_C0,
+                      .c = GX_CC_ONE,
+                      .d = GX_CC_CPREV}}};
+
+        /* Water: two ripple layers flowing apart, averaged, tinted, with the
+         * sky's colour on top; alpha from the material colour */
+        combiner_t const keep_alpha{
+            GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV};
+        prog_water           = gfx.alloc_program();
+        prog_water->channels = {channel_t{.channel = channel_t::color0a0}};
+        prog_water->stages   = {
+            stage_t{
+                  .stage    = stage_t::stage0,
+                  .op       = stage_t::custom,
+                  .texcoord = stage_t::texcoord0,
+                  .texmap   = stage_t::texmap0,
+                  .color_combiner =
+                      {GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC},
+                  .alpha_combiner =
+                      {GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA}},
+            stage_t{
+                  .stage    = stage_t::stage1,
+                  .op       = stage_t::custom,
+                  .texcoord = stage_t::texcoord1,
+                  .texmap   = stage_t::texmap0,
+                  .color    = channel_t::color_null,
+                  .color_combiner =
+                      {GX_CC_CPREV, GX_CC_TEXC, GX_CC_HALF, GX_CC_ZERO},
+                  .alpha_combiner = keep_alpha},
+            stage_t{
+                  .stage = stage_t::stage2,
+                  .op    = stage_t::custom,
+                  .color = channel_t::color_null,
+                  .color_combiner =
+                      {.a     = GX_CC_ZERO,
+                       .b     = GX_CC_CPREV,
+                       .c     = GX_CC_KONST,
+                       .d     = GX_CC_ZERO,
+                       .scale = GX_CS_SCALE_2},
+                  .alpha_combiner = keep_alpha,
+                  .konst_color    = GX_TEV_KCSEL_K0},
+            stage_t{
+                  .stage = stage_t::stage3,
+                  .op    = stage_t::custom,
+                  .color = channel_t::color_null,
+                  .color_combiner =
+                      {GX_CC_ZERO, GX_CC_KONST, GX_CC_HALF, GX_CC_CPREV},
+                  .alpha_combiner = keep_alpha,
+                  .konst_color    = GX_TEV_KCSEL_K1},
+        };
+
+        /* With its reflection: the sky above added on top instead, its lookup
+         * thrown about by the first ripple layer */
+        prog_water_shiny            = gfx.alloc_program();
+        prog_water_shiny->channels  = prog_water->channels;
+        prog_water_shiny->stages    = prog_water->stages;
+        prog_water_shiny->stages[3] = stage_t{
+            .stage          = stage_t::stage3,
+            .op             = stage_t::custom,
+            .texcoord       = stage_t::texcoord2,
+            .texmap         = stage_t::texmap1,
+            .color          = channel_t::color_null,
+            .color_combiner = {GX_CC_TEXC, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV},
+            .alpha_combiner = keep_alpha,
+            .warp_by        = 0};
+        prog_water_shiny->indirect = {
+            {.texcoord = stage_t::texcoord0, .texmap = stage_t::texmap0}};
+        water_epoch = gettime();
+
+        GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+        g_sprites.begin(gfx);
+    }
+
+    /* A model's parts at a modelview; lit models take the sun, chicago
+     * parts their own blend */
+    void draw_model(
+        model_t&                  model,
+        Matf4 const&              smv,
+        bool                      lit,
+        std::vector<Matf4> const* skin = nullptr,
+        lens_t const*             lens = nullptr)
+    {
+        Matf4 const smvs[1] = {smv};
+        for(auto& part : model.parts)
+        {
+            if(!part.vao || !part.vao->m_element_buffer || part.hidden)
+                continue;
+            if(!lit && !part.diffuse)
+                continue;
+            gexxo::draw_command cmd{
+                .call =
+                    {.indexed   = true,
+                     .instanced = true,
+                     .mode      = gexxo::drawing::primitive::triangle_strip},
+                .data =
+                    {
+                        .elements =
+                            {.count = static_cast<u32>(part.indices.size()),
+                             .type  = semantic::type_t::u16},
+                        .arrays =
+                            {.count = static_cast<u32>(part.verts.size())},
+                        .instances = {.count = 1},
+                    },
+                .program             = !lit           ? prog_diff
+                                       : part.diffuse ? prog_obj
+                                                      : prog_obj_flat,
+                .vertices            = part.vao,
+                .instance_transforms = gsl::span<Matf4 const>(smvs, 1),
+                .material_color      = Vecf4{1.f},
+            };
+            if(lens)
+                cmd.perspective = *lens;
+            if(part.diffuse)
+                cmd.textures = {bind_t{.texture = part.diffuse}};
+            if(part.chicago_program)
+            {
+                cmd.program            = part.chicago_program;
+                cmd.textures           = part.chicago_maps;
+                cmd.texture_transforms = part.chicago_uv;
+            }
+            Matf4 sotr_uvs[4];
+            if(part.sotr_program)
+            {
+                auto const& info   = *part.sotr;
+                cmd.program        = part.sotr_program;
+                cmd.textures       = part.sotr_maps;
+                cmd.material_color = gx_sotr::material_color();
+                for(u32 i = 0; i < info.maps.size(); i++)
+                    sotr_uvs[i] = sotr_uv(info.maps[i], g_secs);
+                cmd.texture_transforms =
+                    gsl::span<Matf4 const>(sotr_uvs, info.maps.size());
+                for(u32 k = 0; k < part.sotr_konst.size(); k++)
+                    cmd.konst_colors[k] =
+                        sotr_konst(info, part.sotr_konst[k], g_secs);
+            }
+            Matf4 const reflect_mtx[1] = {gx_reflection::texgen(smv)};
+            if(lit && part.diffuse && part.reflection)
+            {
+                bool const masked = g_xbox && part.multipurpose;
+                cmd.program = masked ? prog_reflect : prog_reflect_unmasked;
+                cmd.textures.push_back(
+                    bind_t{
+                        .texture  = part.reflection->sphere,
+                        .texmap   = stage_t::texmap2,
+                        .texcoord = stage_t::texcoord1,
+                        .gen_src  = bind_t::src_normal,
+                        .gen_mtx  = GX_TEXMTX0});
+                if(masked)
+                    cmd.textures.push_back(
+                        bind_t{
+                            .texture  = part.multipurpose,
+                            .texmap   = stage_t::texmap1,
+                            .texcoord = stage_t::texcoord0});
+                cmd.texture_transforms = gsl::span<Matf4 const>(reflect_mtx, 1);
+                cmd.konst_colors[0]    = Vecf4(part.reflection_tint, 1.f);
+            }
+            gexxo::cull_state const cull{.front_face = false};
+            auto                    submit = [&](gexxo::draw_command const& c) {
+                switch(part.blend)
+                {
+                case blend_t::opaque:
+                    // Model base map alpha is a mask (change colour,
+                    // specular), not coverage
+                    gfx.submit(c, cull, gexxo::blend_state{.opaque = true});
+                    break;
+                case blend_t::add:
+                    gfx.submit(c, cull, gexxo::blend_state{.additive = true});
+                    break;
+                case blend_t::multiply:
+                    gfx.submit(c, cull, gexxo::blend_state{.multiply = true});
+                    break;
+                case blend_t::alpha:
+                    gfx.submit(c, cull, gexxo::blend_state{});
+                    break;
+                }
+            };
+            if(!skin || part.batches.empty())
+            {
+                submit(cmd);
+                continue;
+            }
+            // Posed: each batch through its palette, in one submit
+            static std::vector<Matf4>                        palettes;
+            static std::vector<gexxo::draw_command::batch_t> batches;
+            palettes.resize(part.batches.size() * gx_skin::palette_size);
+            batches.clear();
+            for(u32 i = 0; i < part.batches.size(); i++)
+            {
+                auto const& b       = part.batches[i];
+                Matf4*      palette = &palettes[i * gx_skin::palette_size];
+                for(u32 k = 0; k < b.keys.size(); k++)
+                    palette[k] = smv * gx_skin::matrix(b.keys[k], *skin);
+                batches.push_back(
+                    {b.vao.get(),
+                     b.index_count,
+                     gsl::span<Matf4 const>(palette, b.keys.size())});
+            }
+            cmd.call.mode          = gexxo::drawing::primitive::triangle;
+            cmd.data.elements.type = semantic::type_t::u16;
+            cmd.batches            = batches;
+            submit(cmd);
+        }
+    }
+
+    void controls()
+    {
+        u64 const now_t = gettime();
+        dt              = ticks_to_microsecs(now_t - last_t) / 1e6f;
+        g_secs += std::clamp(dt, 0.f, 0.2f);
+        last_t = now_t;
+        if(dt <= 0.f || dt > 0.2f)
+            dt = 1.f / 50.f; // clamp first/stalled frames
+        update_camera(dt);
+    }
+
+    void network()
+    {
+#if defined(COFFEE_GEKKO)
+        poll_network(frame);
+#endif
+    }
+
+    void view()
+    {
+        sky = active_sky();
+        rt->clear(
+            sky ? Vecf4(sky->fog_color, 1.f) : Vecf4{0.06f, 0.06f, 0.09f, 1.f},
+            1.f,
+            0);
+        mv     = make_modelview(0.f);
+        mvs[0] = mv;
+        fr     = make_frustum(g_proj * mv);
+        drawn = culled = 0;
+        water.clear();
+    }
+
+    void combat()
+    {
+#if defined(COFFEE_GEKKO)
+        step_combat(dt);
+#endif
+    }
+
+    void poses()
+    {
+#if defined(COFFEE_GEKKO)
+        update_poses(dt, fr);
+        held_view = g_walking ? update_first_person(dt) : nullptr;
+#endif
+    }
+
+    void draw_sky()
+    {
+        /* The sky: around the camera, behind everything, out of the fog */
+        set_fog(nullptr);
+        if(sky && g_models.contains(sky->model))
+        {
+            auto& model = g_models[sky->model];
+            Matf4 view  = mv;
+            view[3]     = Vecf4{0.f, 0.f, 0.f, 1.f};
+            f32 const extent =
+                glm::length(model.center) + std::max(model.radius, 1.f);
+            GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+            draw_model(model, glm::scale(view, Vecf3{50.f / extent}), false);
+            GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+        }
+        set_fog(sky);
+    }
+
+    void draw_structure()
+    {
+        for(auto& page : g_pages)
+        {
+            if(!page.vao || !page.vao->m_element_buffer)
+                continue; // skip incomplete (e.g. OOM-interrupted) builds
+            for(auto& sm : page.submeshes)
+            {
+                if(!sphere_visible(fr, sm.center, sm.radius))
+                {
+                    culled++;
+                    continue;
+                }
+                drawn++;
+                if(sm.water)
+                {
+                    water.push_back({&page, &sm});
+                    continue;
+                }
+                gexxo::draw_command cmd{
+                    .call =
+                        {.indexed   = true,
+                         .instanced = true,
+                         .mode      = gexxo::drawing::primitive::triangle},
+                    .data =
+                        {
+                            .elements =
+                                {.count  = sm.index_count,
+                                 .offset = sm.index_offset,
+                                 .type   = semantic::type_t::u16},
+                            .arrays =
+                                {.count = static_cast<u32>(page.verts.size())},
+                            .instances = {.count = 1},
+                        },
+                    .vertices            = page.vao,
+                    .instance_transforms = gsl::span<Matf4 const>(mvs, 1),
+                };
+                if(sm.diffuse && sm.detail && page.lightmap)
+                {
+                    cmd.program  = prog_diff_det_lm;
+                    cmd.textures = {
+                        bind_t{
+                            .texture  = sm.diffuse,
+                            .texmap   = stage_t::texmap0,
+                            .texcoord = stage_t::texcoord0,
+                            .gen_src  = bind_t::src_tex0},
+                        bind_t{
+                            .texture  = sm.detail,
+                            .texmap   = stage_t::texmap2,
+                            .texcoord = stage_t::texcoord2,
+                            .gen_src  = bind_t::src_tex2},
+                        bind_t{
+                            .texture  = page.lightmap,
+                            .texmap   = stage_t::texmap1,
+                            .texcoord = stage_t::texcoord1,
+                            .gen_src  = bind_t::src_tex1},
+                    };
+                } else if(sm.diffuse && page.lightmap)
+                {
+                    cmd.program  = prog_diff_lm;
+                    cmd.textures = {
+                        bind_t{
+                            .texture  = sm.diffuse,
+                            .texmap   = stage_t::texmap0,
+                            .texcoord = stage_t::texcoord0,
+                            .gen_src  = bind_t::src_tex0},
+                        bind_t{
+                            .texture  = page.lightmap,
+                            .texmap   = stage_t::texmap1,
+                            .texcoord = stage_t::texcoord1,
+                            .gen_src  = bind_t::src_tex1},
+                    };
+                } else if(sm.diffuse)
+                {
+                    cmd.program  = prog_diff;
+                    cmd.textures = {bind_t{.texture = sm.diffuse}};
+                } else if(page.lightmap)
+                {
+                    cmd.program  = prog_lm;
+                    cmd.textures = {bind_t{
+                        .texture  = page.lightmap,
+                        .texmap   = stage_t::texmap0,
+                        .texcoord = stage_t::texcoord0,
+                        .gen_src  = bind_t::src_tex1}};
+                } else
+                    continue;
+                gfx.submit(cmd, gexxo::cull_state{.front_face = false});
+            }
+        }
+    }
+
+    void draw_objects()
+    {
+        // Objects: each instance's model parts at camera * model transform.
+        load_sun(mv, sky ? *sky : sky_t{});
+        bake_reflections(mv);
+        for(auto const& inst : g_objects)
+        {
+            if(inst.hidden)
+                continue;
+            if(!sphere_visible(fr, inst.center, inst.radius))
+            {
+                culled++;
+                continue;
+            }
+            auto it = g_models.find(inst.model_id);
+            if(it == g_models.end())
+                continue;
+            drawn++;
+            std::vector<Matf4> const* skin = nullptr;
+#if defined(COFFEE_GEKKO)
+            if(auto pose = g_posed.find(&inst - g_objects.data());
+               pose != g_posed.end() && !pose->second.skin.empty())
+                skin = &pose->second.skin;
+#endif
+            draw_model(it->second, mv * inst.xform, true, skin);
+        }
+    }
+
+    void draw_shots()
+    {
+#if defined(COFFEE_GEKKO)
+        draw_combat(mv, [this](auto&&... args) {
+            draw_model(std::forward<decltype(args)>(args)...);
+        });
+#endif
+    }
+
+    void draw_water()
+    {
+        // Water last, over what's beneath it, without writing depth
+        f32 const   secs = ticks_to_microsecs(gettime() - water_epoch) / 1e6f;
+        Vecf3 const sky_tint =
+            sky ? glm::mix(sky->fog_color, Vecf3{1.f}, 0.4f) : Vecf3{0.5f};
+        for(auto [page, sm] : water)
+        {
+            if(!sm->ripple)
+                continue;
+            Vecf2 const flow  = sm->ripple_flow * secs;
+            auto        layer = [&](Vecf2 const& offset, f32 scale) {
+                return glm::scale(
+                    glm::translate(Matf4{1.f}, Vecf3{offset, 0.f}),
+                    Vecf3{scale, scale, 1.f});
+            };
+            Matf4 const ripples[3] = {
+                layer(flow, sm->ripple_scale),
+                layer(Vecf2{-flow.y, flow.x} * 0.7f, sm->ripple_scale * 0.83f),
+                gx_reflection::hemisphere_texgen(g_cam_pos, kWaterSkyExtent)};
+            gexxo::draw_command cmd{
+                .call =
+                    {.indexed   = true,
+                     .instanced = true,
+                     .mode      = gexxo::drawing::primitive::triangle},
+                .data =
+                    {
+                        .elements =
+                            {.count  = sm->index_count,
+                             .offset = sm->index_offset,
+                             .type   = semantic::type_t::u16},
+                        .arrays =
+                            {.count = static_cast<u32>(page->verts.size())},
+                        .instances = {.count = 1},
+                    },
+                .program  = prog_water,
+                .vertices = page->vao,
+                .textures =
+                    {bind_t{
+                         .texture  = sm->ripple,
+                         .texmap   = stage_t::texmap0,
+                         .texcoord = stage_t::texcoord0,
+                         .gen_mtx  = GX_TEXMTX0},
+                     bind_t{
+                         .texture  = sm->ripple,
+                         .texmap   = stage_t::texmap0,
+                         .texcoord = stage_t::texcoord1,
+                         .gen_mtx  = GX_TEXMTX1}},
+                .instance_transforms = gsl::span<Matf4 const>(mvs, 1),
+                .material_color      = Vecf4{1.f, 1.f, 1.f, 0.7f},
+                .konst_colors =
+                    {Vecf4(sm->water_tint, 1.f), Vecf4(sky_tint, 1.f)},
+                .texture_transforms = gsl::span<Matf4 const>(ripples, 2),
+            };
+            if(sm->water_sky)
+            {
+                // Ripple normals' green and blue push the lookup a few texels
+                constexpr f32 warp = 0.75f;
+                cmd.program        = prog_water_shiny;
+                cmd.textures.push_back(
+                    bind_t{
+                        .texture  = sm->water_sky,
+                        .texmap   = stage_t::texmap1,
+                        .texcoord = stage_t::texcoord2,
+                        .gen_type = bind_t::mtx3x4,
+                        .gen_src  = bind_t::src_position,
+                        .gen_mtx  = GX_TEXMTX0 + 2 * 3});
+                cmd.texture_transforms = gsl::span<Matf4 const>(ripples, 3);
+                cmd.indirect_matrix    = gexxo::draw_command::indirect_matrix_t{
+                       .rows  = {{{0.f, 0.f, warp}, {0.f, warp, 0.f}}},
+                       .scale = -5};
+            }
+            // Over what's beneath it, without writing depth
+            gfx.submit(
+                cmd,
+                gexxo::cull_state{.front_face = false},
+                gexxo::blend_state{},
+                gexxo::depth_state{.write = false});
+        }
+    }
+
+    void draw_sprites()
+    {
+        g_sprites.flush(mv);
+    }
+
+    void draw_first_person()
+    {
+#if defined(COFFEE_GEKKO)
+        if(auto const* fp = held_view)
+        {
+            // Over everything, in the nearest sliver of depth
+            set_fog(nullptr);
+            gexxo::detail::depth_range(0.f, 0.05f);
+            draw_model(
+                g_models[g_hands],
+                kViewFromFirstPerson,
+                true,
+                &g_fp_pose.hands,
+                &kFirstPersonLens);
+            if(auto m = g_models.find(fp->model);
+               m != g_models.end() && !fp->weapon.empty())
+                draw_model(
+                    m->second,
+                    kViewFromFirstPerson,
+                    true,
+                    &g_fp_pose.held,
+                    &kFirstPersonLens);
+            gexxo::detail::depth_range(0.f, 1.f);
+        }
+#endif
+    }
+
+    void present()
+    {
+        gexxo::swapBuffers();
+
+        if((frame % 60) == 59)
+        {
+            u64 const now  = gettime();
+            f32 const secs = ticks_to_microsecs(now - window_start) / 1e6f;
+            LOG("fps=%d.%02d  drawn=%u culled=%u",
+                static_cast<int>(60.f / secs),
+                static_cast<int>(6000.f / secs) % 100,
+                drawn,
+                culled);
+            window_start = now;
+        }
+        frame++;
+    }
+
+    /* In the order the frame runs them */
+    void add_stages(compo::EntityContainer& frames);
+
+  private:
+    gexxo::api&                            gfx;
+    std::shared_ptr<gexxo::rendertarget_t> rt;
+
+    std::shared_ptr<gexxo::program_t> prog_diff, prog_diff_det_lm, prog_diff_lm,
+        prog_lm, prog_obj, prog_obj_flat, prog_reflect, prog_reflect_unmasked,
+        prog_water, prog_water_shiny;
+    u64 water_epoch{0};
+
+    f32                                         dt{0.f};
+    u32                                         frame{0};
+    u64                                         last_t{gettime()};
+    u64                                         window_start{gettime()};
+    sky_t const*                                sky{nullptr};
+    Matf4                                       mv{1.f};
+    Matf4                                       mvs[1];
+    frustum_t                                   fr{};
+    u32                                         drawn{0}, culled{0};
+    std::vector<std::pair<page_t*, submesh_t*>> water;
+    first_person_t const*                       held_view{nullptr};
+};
+
+/* One stage of a frame; `Slot` tells apart stages running the same work */
+template<auto Work, u32 Slot = 0>
+struct frame_stage : compo::SubsystemBase
+{
+    using type = frame_stage;
+
+    frame_stage(game_t* game_, u32 stage)
+        : game(game_)
+    {
+        priority = stage;
+    }
+
+    void start_frame(ContainerProxy&, time_point const&) final
+    {
+        (game->*Work)();
+    }
+
+    game_t* game;
+};
+
+inline void game_t::add_stages(compo::EntityContainer& frames)
+{
+    u32  next = 0;
+    auto add  = [&]<auto Work>() {
+        frames.register_subsystem_inplace<frame_stage<Work>>(this, next += 100);
+    };
+    add.template operator()<&game_t::controls>();
+    add.template operator()<&game_t::network>();
+    add.template operator()<&game_t::view>();
+    add.template operator()<&game_t::combat>();
+    add.template operator()<&game_t::poses>();
+    add.template operator()<&game_t::draw_sky>();
+    add.template operator()<&game_t::draw_structure>();
+    add.template operator()<&game_t::draw_objects>();
+    add.template operator()<&game_t::draw_shots>();
+    add.template operator()<&game_t::draw_water>();
+    add.template operator()<&game_t::draw_sprites>();
+    add.template operator()<&game_t::draw_first_person>();
+    add.template operator()<&game_t::present>();
+}
+#endif
+
 i32 coffee_main(i32, cstring_w*)
 {
 #if defined(FEATURE_ENABLE_Gexxo)
@@ -3862,621 +4607,16 @@ i32 coffee_main(i32, cstring_w*)
     LOG("load took %u ms",
         static_cast<unsigned>(ticks_to_millisecs(gettime() - load_start)));
 
-    using stage_t   = gexxo::program_t::stage_t;
-    using channel_t = gexxo::program_t::channel_t;
-
-    // diffuse * lightmap: stage0 = diffuse (tex0@tc0), stage1 = *lightmap
-    // (tex1@tc1)
-    auto prog_diff_lm      = gfx.alloc_program();
-    prog_diff_lm->channels = {channel_t{.channel = channel_t::color0a0}};
-    prog_diff_lm->stages   = {
-        stage_t{
-              .stage    = stage_t::stage0,
-              .op       = stage_t::replace,
-              .texcoord = stage_t::texcoord0,
-              .texmap   = stage_t::texmap0},
-        stage_t{
-              .stage    = stage_t::stage1,
-              .op       = stage_t::modulate_prev,
-              .texcoord = stage_t::texcoord1,
-              .texmap   = stage_t::texmap1},
-    };
-    // diffuse * detail(2x) * lightmap (senv with a detail map)
-    auto prog_diff_det_lm      = gfx.alloc_program();
-    prog_diff_det_lm->channels = {channel_t{.channel = channel_t::color0a0}};
-    prog_diff_det_lm->stages   = {
-        stage_t{
-              .stage    = stage_t::stage0,
-              .op       = stage_t::replace,
-              .texcoord = stage_t::texcoord0,
-              .texmap   = stage_t::texmap0},
-        stage_t{
-              .stage    = stage_t::stage1,
-              .op       = stage_t::modulate_prev_2x,
-              .texcoord = stage_t::texcoord2,
-              .texmap   = stage_t::texmap2},
-        stage_t{
-              .stage    = stage_t::stage2,
-              .op       = stage_t::modulate_prev,
-              .texcoord = stage_t::texcoord1,
-              .texmap   = stage_t::texmap1},
-    };
-    // diffuse only (page has no lightmap)
-    auto prog_diff      = gfx.alloc_program();
-    prog_diff->channels = {channel_t{.channel = channel_t::color0a0}};
-    prog_diff->stages   = {stage_t{
-          .stage    = stage_t::stage0,
-          .op       = stage_t::replace,
-          .texcoord = stage_t::texcoord0,
-          .texmap   = stage_t::texmap0}};
-    // lightmap only (material has no diffuse): with one tex-gen only texcoord0
-    // is generated, so output the lightmap UV (vertex TEX1) into texcoord0.
-    auto prog_lm      = gfx.alloc_program();
-    prog_lm->channels = {channel_t{.channel = channel_t::color0a0}};
-    prog_lm->stages   = {stage_t{
-          .stage    = stage_t::stage0,
-          .op       = stage_t::replace,
-          .texcoord = stage_t::texcoord0,
-          .texmap   = stage_t::texmap0}};
-    // Objects: diffuse * (ambient + sun), or just the lit material colour
-    channel_t const lit{
-        .channel          = channel_t::color0a0,
-        .lighting         = true,
-        .ambient_src      = channel_t::src_reg,
-        .diffuse_src      = channel_t::src_reg,
-        .light_mask       = GX_LIGHT0,
-        .diffuse_function = channel_t::diffuse_clamp,
-    };
-    auto prog_obj           = gfx.alloc_program();
-    prog_obj->channels      = {lit};
-    prog_obj->stages        = {stage_t{
-               .stage    = stage_t::stage0,
-               .op       = stage_t::modulate,
-               .texcoord = stage_t::texcoord0,
-               .texmap   = stage_t::texmap0}};
-    auto prog_obj_flat      = gfx.alloc_program();
-    prog_obj_flat->channels = {lit};
-    prog_obj_flat->stages   = {
-        stage_t{.stage = stage_t::stage0, .op = stage_t::pass}};
-
-    /* Reflective models: base * light + sphere * tint * mask. The mask is
-     * the multipurpose map's red on Xbox; PC keeps it in alpha, which the
-     * GX formats drop, so PC parts go unmasked */
-    using combiner_t = stage_t::combiner_t;
-    GX_SetTevSwapModeTable(
-        GX_TEV_SWAP1, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
-    gx_sotr::load_swap_table();
-    stage_t const reflect_base{
-        .stage    = stage_t::stage0,
-        .op       = stage_t::modulate,
-        .texcoord = stage_t::texcoord0,
-        .texmap   = stage_t::texmap0};
-    stage_t const reflect_sphere{
-        .stage    = stage_t::stage1,
-        .op       = stage_t::custom,
-        .texcoord = stage_t::texcoord1,
-        .texmap   = stage_t::texmap2,
-        .color    = channel_t::color_null,
-        .color_combiner =
-            combiner_t{
-                .a   = GX_CC_ZERO,
-                .b   = GX_CC_TEXC,
-                .c   = GX_CC_KONST,
-                .d   = GX_CC_ZERO,
-                .out = GX_TEVREG0},
-        .konst_color = GX_TEV_KCSEL_K0};
-    auto prog_reflect      = gfx.alloc_program();
-    prog_reflect->channels = {lit};
-    prog_reflect->stages   = {
-        reflect_base,
-        reflect_sphere,
-        stage_t{
-              .stage    = stage_t::stage2,
-              .op       = stage_t::custom,
-              .texcoord = stage_t::texcoord0,
-              .texmap   = stage_t::texmap1,
-              .color    = channel_t::color_null,
-              .color_combiner =
-                combiner_t{
-                      .a = GX_CC_ZERO,
-                      .b = GX_CC_C0,
-                      .c = GX_CC_TEXC,
-                      .d = GX_CC_CPREV},
-              .tex_swap = GX_TEV_SWAP1}};
-    auto prog_reflect_unmasked      = gfx.alloc_program();
-    prog_reflect_unmasked->channels = {lit};
-    prog_reflect_unmasked->stages   = {
-        reflect_base,
-        reflect_sphere,
-        stage_t{
-              .stage          = stage_t::stage2,
-              .op             = stage_t::custom,
-              .color          = channel_t::color_null,
-              .color_combiner = combiner_t{
-                  .a = GX_CC_ZERO,
-                  .b = GX_CC_C0,
-                  .c = GX_CC_ONE,
-                  .d = GX_CC_CPREV}}};
-
-    /* Water: two ripple layers flowing apart, averaged, tinted, with the
-     * sky's colour on top; alpha from the material colour */
-    combiner_t const keep_alpha{
-        GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV};
-    auto prog_water      = gfx.alloc_program();
-    prog_water->channels = {channel_t{.channel = channel_t::color0a0}};
-    prog_water->stages   = {
-        stage_t{
-              .stage          = stage_t::stage0,
-              .op             = stage_t::custom,
-              .texcoord       = stage_t::texcoord0,
-              .texmap         = stage_t::texmap0,
-              .color_combiner = {GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC},
-              .alpha_combiner = {GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA}},
-        stage_t{
-              .stage          = stage_t::stage1,
-              .op             = stage_t::custom,
-              .texcoord       = stage_t::texcoord1,
-              .texmap         = stage_t::texmap0,
-              .color          = channel_t::color_null,
-              .color_combiner = {GX_CC_CPREV, GX_CC_TEXC, GX_CC_HALF, GX_CC_ZERO},
-              .alpha_combiner = keep_alpha},
-        stage_t{
-              .stage = stage_t::stage2,
-              .op    = stage_t::custom,
-              .color = channel_t::color_null,
-              .color_combiner =
-                  {.a     = GX_CC_ZERO,
-                   .b     = GX_CC_CPREV,
-                   .c     = GX_CC_KONST,
-                   .d     = GX_CC_ZERO,
-                   .scale = GX_CS_SCALE_2},
-              .alpha_combiner = keep_alpha,
-              .konst_color    = GX_TEV_KCSEL_K0},
-        stage_t{
-              .stage = stage_t::stage3,
-              .op    = stage_t::custom,
-              .color = channel_t::color_null,
-              .color_combiner =
-                  {GX_CC_ZERO, GX_CC_KONST, GX_CC_HALF, GX_CC_CPREV},
-              .alpha_combiner = keep_alpha,
-              .konst_color    = GX_TEV_KCSEL_K1},
-    };
-
-    /* With its reflection: the sky above added on top instead, its lookup
-     * thrown about by the first ripple layer */
-    auto prog_water_shiny       = gfx.alloc_program();
-    prog_water_shiny->channels  = prog_water->channels;
-    prog_water_shiny->stages    = prog_water->stages;
-    prog_water_shiny->stages[3] = stage_t{
-        .stage          = stage_t::stage3,
-        .op             = stage_t::custom,
-        .texcoord       = stage_t::texcoord2,
-        .texmap         = stage_t::texmap1,
-        .color          = channel_t::color_null,
-        .color_combiner = {GX_CC_TEXC, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV},
-        .alpha_combiner = keep_alpha,
-        .warp_by        = 0};
-    prog_water_shiny->indirect = {
-        {.texcoord = stage_t::texcoord0, .texmap = stage_t::texmap0}};
-    u64 const water_epoch = gettime();
-
-    using bind_t = gexxo::texture_binding_t;
-
-    GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
-
-    g_sprites.begin(gfx);
+    game_t game(gfx, rt);
 #if defined(COFFEE_GEKKO)
     PAD_Init();
     start_network();
 #endif
 
-    u64 window_start = gettime();
-    u64 last_t       = gettime();
-    for(int i = 0;; i++)
-    {
-        u64 const now_t = gettime();
-        f32       dt    = ticks_to_microsecs(now_t - last_t) / 1e6f;
-        g_secs += std::clamp(dt, 0.f, 0.2f);
-        last_t          = now_t;
-        if(dt <= 0.f || dt > 0.2f)
-            dt = 1.f / 50.f; // clamp first/stalled frames
-        update_camera(dt);
-#if defined(COFFEE_GEKKO)
-        poll_network(static_cast<u32>(i));
-#endif
-
-        sky_t const* sky = active_sky();
-        rt->clear(
-            sky ? Vecf4(sky->fog_color, 1.f) : Vecf4{0.06f, 0.06f, 0.09f, 1.f},
-            1.f,
-            0);
-        Matf4 const     mv     = make_modelview(0.f);
-        Matf4 const     mvs[1] = {mv};
-        frustum_t const fr     = make_frustum(g_proj * mv);
-        u32             drawn = 0, culled = 0;
-#if defined(COFFEE_GEKKO)
-        update_poses(dt, fr);
-#endif
-
-        /* A model's parts at a modelview; lit models take the sun, chicago
-         * parts their own blend */
-        auto draw_model = [&](model_t&                  model,
-                              Matf4 const&              smv,
-                              bool                      lit,
-                              std::vector<Matf4> const* skin = nullptr,
-                              lens_t const*             lens = nullptr) {
-            Matf4 const smvs[1] = {smv};
-            for(auto& part : model.parts)
-            {
-                if(!part.vao || !part.vao->m_element_buffer || part.hidden)
-                    continue;
-                if(!lit && !part.diffuse)
-                    continue;
-                gexxo::draw_command cmd{
-                    .call =
-                        {.indexed   = true,
-                         .instanced = true,
-                         .mode = gexxo::drawing::primitive::triangle_strip},
-                    .data =
-                        {
-                            .elements =
-                                {.count = static_cast<u32>(part.indices.size()),
-                                 .type  = semantic::type_t::u16},
-                            .arrays =
-                                {.count = static_cast<u32>(part.verts.size())},
-                            .instances = {.count = 1},
-                        },
-                    .program             = !lit           ? prog_diff
-                                           : part.diffuse ? prog_obj
-                                                          : prog_obj_flat,
-                    .vertices            = part.vao,
-                    .instance_transforms = gsl::span<Matf4 const>(smvs, 1),
-                    .material_color      = Vecf4{1.f},
-                };
-                if(lens)
-                    cmd.perspective = *lens;
-                if(part.diffuse)
-                    cmd.textures = {bind_t{.texture = part.diffuse}};
-                if(part.chicago_program)
-                {
-                    cmd.program            = part.chicago_program;
-                    cmd.textures           = part.chicago_maps;
-                    cmd.texture_transforms = part.chicago_uv;
-                }
-                Matf4 sotr_uvs[4];
-                if(part.sotr_program)
-                {
-                    auto const& info   = *part.sotr;
-                    cmd.program        = part.sotr_program;
-                    cmd.textures       = part.sotr_maps;
-                    cmd.material_color = gx_sotr::material_color();
-                    for(u32 i = 0; i < info.maps.size(); i++)
-                        sotr_uvs[i] = sotr_uv(info.maps[i], g_secs);
-                    cmd.texture_transforms =
-                        gsl::span<Matf4 const>(sotr_uvs, info.maps.size());
-                    for(u32 k = 0; k < part.sotr_konst.size(); k++)
-                        cmd.konst_colors[k] =
-                            sotr_konst(info, part.sotr_konst[k], g_secs);
-                }
-                Matf4 const reflect_mtx[1] = {gx_reflection::texgen(smv)};
-                if(lit && part.diffuse && part.reflection)
-                {
-                    bool const masked = g_xbox && part.multipurpose;
-                    cmd.program = masked ? prog_reflect : prog_reflect_unmasked;
-                    cmd.textures.push_back(
-                        bind_t{
-                            .texture  = part.reflection->sphere,
-                            .texmap   = stage_t::texmap2,
-                            .texcoord = stage_t::texcoord1,
-                            .gen_src  = bind_t::src_normal,
-                            .gen_mtx  = GX_TEXMTX0});
-                    if(masked)
-                        cmd.textures.push_back(
-                            bind_t{
-                                .texture  = part.multipurpose,
-                                .texmap   = stage_t::texmap1,
-                                .texcoord = stage_t::texcoord0});
-                    cmd.texture_transforms =
-                        gsl::span<Matf4 const>(reflect_mtx, 1);
-                    cmd.konst_colors[0] = Vecf4(part.reflection_tint, 1.f);
-                }
-                gexxo::cull_state const cull{.front_face = false};
-                auto submit = [&](gexxo::draw_command const& c) {
-                    switch(part.blend)
-                    {
-                    case blend_t::opaque:
-                        // Model base map alpha is a mask (change colour,
-                        // specular), not coverage
-                        gfx.submit(c, cull, gexxo::blend_state{.opaque = true});
-                        break;
-                    case blend_t::add:
-                        gfx.submit(
-                            c, cull, gexxo::blend_state{.additive = true});
-                        break;
-                    case blend_t::multiply:
-                        gfx.submit(
-                            c, cull, gexxo::blend_state{.multiply = true});
-                        break;
-                    case blend_t::alpha:
-                        gfx.submit(c, cull, gexxo::blend_state{});
-                        break;
-                    }
-                };
-                if(!skin || part.batches.empty())
-                {
-                    submit(cmd);
-                    continue;
-                }
-                // Posed: each batch through its palette, in one submit
-                static std::vector<Matf4>                        palettes;
-                static std::vector<gexxo::draw_command::batch_t> batches;
-                palettes.resize(part.batches.size() * gx_skin::palette_size);
-                batches.clear();
-                for(u32 i = 0; i < part.batches.size(); i++)
-                {
-                    auto const& b       = part.batches[i];
-                    Matf4*      palette = &palettes[i * gx_skin::palette_size];
-                    for(u32 k = 0; k < b.keys.size(); k++)
-                        palette[k] = smv * gx_skin::matrix(b.keys[k], *skin);
-                    batches.push_back(
-                        {b.vao.get(),
-                         b.index_count,
-                         gsl::span<Matf4 const>(palette, b.keys.size())});
-                }
-                cmd.call.mode          = gexxo::drawing::primitive::triangle;
-                cmd.data.elements.type = semantic::type_t::u16;
-                cmd.batches            = batches;
-                submit(cmd);
-            }
-        };
-
-        /* The sky: around the camera, behind everything, out of the fog */
-        set_fog(nullptr);
-        if(sky && g_models.contains(sky->model))
-        {
-            auto& model = g_models[sky->model];
-            Matf4 view  = mv;
-            view[3]     = Vecf4{0.f, 0.f, 0.f, 1.f};
-            f32 const extent =
-                glm::length(model.center) + std::max(model.radius, 1.f);
-            GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
-            draw_model(model, glm::scale(view, Vecf3{50.f / extent}), false);
-            GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
-        }
-        set_fog(sky);
-        std::vector<std::pair<page_t*, submesh_t*>> water;
-
-        for(auto& page : g_pages)
-        {
-            if(!page.vao || !page.vao->m_element_buffer)
-                continue; // skip incomplete (e.g. OOM-interrupted) builds
-            for(auto& sm : page.submeshes)
-            {
-                if(!sphere_visible(fr, sm.center, sm.radius))
-                {
-                    culled++;
-                    continue;
-                }
-                drawn++;
-                if(sm.water)
-                {
-                    water.push_back({&page, &sm});
-                    continue;
-                }
-                gexxo::draw_command cmd{
-                    .call =
-                        {.indexed   = true,
-                         .instanced = true,
-                         .mode      = gexxo::drawing::primitive::triangle},
-                    .data =
-                        {
-                            .elements =
-                                {.count  = sm.index_count,
-                                 .offset = sm.index_offset,
-                                 .type   = semantic::type_t::u16},
-                            .arrays =
-                                {.count = static_cast<u32>(page.verts.size())},
-                            .instances = {.count = 1},
-                        },
-                    .vertices            = page.vao,
-                    .instance_transforms = gsl::span<Matf4 const>(mvs, 1),
-                };
-                if(sm.diffuse && sm.detail && page.lightmap)
-                {
-                    cmd.program  = prog_diff_det_lm;
-                    cmd.textures = {
-                        bind_t{
-                            .texture  = sm.diffuse,
-                            .texmap   = stage_t::texmap0,
-                            .texcoord = stage_t::texcoord0,
-                            .gen_src  = bind_t::src_tex0},
-                        bind_t{
-                            .texture  = sm.detail,
-                            .texmap   = stage_t::texmap2,
-                            .texcoord = stage_t::texcoord2,
-                            .gen_src  = bind_t::src_tex2},
-                        bind_t{
-                            .texture  = page.lightmap,
-                            .texmap   = stage_t::texmap1,
-                            .texcoord = stage_t::texcoord1,
-                            .gen_src  = bind_t::src_tex1},
-                    };
-                } else if(sm.diffuse && page.lightmap)
-                {
-                    cmd.program  = prog_diff_lm;
-                    cmd.textures = {
-                        bind_t{
-                            .texture  = sm.diffuse,
-                            .texmap   = stage_t::texmap0,
-                            .texcoord = stage_t::texcoord0,
-                            .gen_src  = bind_t::src_tex0},
-                        bind_t{
-                            .texture  = page.lightmap,
-                            .texmap   = stage_t::texmap1,
-                            .texcoord = stage_t::texcoord1,
-                            .gen_src  = bind_t::src_tex1},
-                    };
-                } else if(sm.diffuse)
-                {
-                    cmd.program  = prog_diff;
-                    cmd.textures = {bind_t{.texture = sm.diffuse}};
-                } else if(page.lightmap)
-                {
-                    cmd.program  = prog_lm;
-                    cmd.textures = {bind_t{
-                        .texture  = page.lightmap,
-                        .texmap   = stage_t::texmap0,
-                        .texcoord = stage_t::texcoord0,
-                        .gen_src  = bind_t::src_tex1}};
-                } else
-                    continue;
-                gfx.submit(cmd, gexxo::cull_state{.front_face = false});
-            }
-        }
-
-        // Objects: each instance's model parts at camera * model transform.
-        load_sun(mv, sky ? *sky : sky_t{});
-        bake_reflections(mv);
-        for(auto const& inst : g_objects)
-        {
-            if(inst.hidden)
-                continue;
-            if(!sphere_visible(fr, inst.center, inst.radius))
-            {
-                culled++;
-                continue;
-            }
-            auto it = g_models.find(inst.model_id);
-            if(it == g_models.end())
-                continue;
-            drawn++;
-            std::vector<Matf4> const* skin = nullptr;
-#if defined(COFFEE_GEKKO)
-            if(auto pose = g_posed.find(&inst - g_objects.data());
-               pose != g_posed.end() && !pose->second.skin.empty())
-                skin = &pose->second.skin;
-#endif
-            draw_model(it->second, mv * inst.xform, true, skin);
-        }
-#if defined(COFFEE_GEKKO)
-        draw_combat(mv, dt, draw_model);
-#endif
-        // Water last, over what's beneath it, without writing depth
-        f32 const   secs = ticks_to_microsecs(gettime() - water_epoch) / 1e6f;
-        Vecf3 const sky_tint =
-            sky ? glm::mix(sky->fog_color, Vecf3{1.f}, 0.4f) : Vecf3{0.5f};
-        for(auto [page, sm] : water)
-        {
-            if(!sm->ripple)
-                continue;
-            Vecf2 const flow  = sm->ripple_flow * secs;
-            auto        layer = [&](Vecf2 const& offset, f32 scale) {
-                return glm::scale(
-                    glm::translate(Matf4{1.f}, Vecf3{offset, 0.f}),
-                    Vecf3{scale, scale, 1.f});
-            };
-            Matf4 const ripples[3] = {
-                layer(flow, sm->ripple_scale),
-                layer(Vecf2{-flow.y, flow.x} * 0.7f, sm->ripple_scale * 0.83f),
-                gx_reflection::hemisphere_texgen(g_cam_pos, kWaterSkyExtent)};
-            gexxo::draw_command cmd{
-                .call =
-                    {.indexed   = true,
-                     .instanced = true,
-                     .mode      = gexxo::drawing::primitive::triangle},
-                .data =
-                    {
-                        .elements =
-                            {.count  = sm->index_count,
-                             .offset = sm->index_offset,
-                             .type   = semantic::type_t::u16},
-                        .arrays =
-                            {.count = static_cast<u32>(page->verts.size())},
-                        .instances = {.count = 1},
-                    },
-                .program  = prog_water,
-                .vertices = page->vao,
-                .textures =
-                    {bind_t{
-                         .texture  = sm->ripple,
-                         .texmap   = stage_t::texmap0,
-                         .texcoord = stage_t::texcoord0,
-                         .gen_mtx  = GX_TEXMTX0},
-                     bind_t{
-                         .texture  = sm->ripple,
-                         .texmap   = stage_t::texmap0,
-                         .texcoord = stage_t::texcoord1,
-                         .gen_mtx  = GX_TEXMTX1}},
-                .instance_transforms = gsl::span<Matf4 const>(mvs, 1),
-                .material_color      = Vecf4{1.f, 1.f, 1.f, 0.7f},
-                .konst_colors =
-                    {Vecf4(sm->water_tint, 1.f), Vecf4(sky_tint, 1.f)},
-                .texture_transforms = gsl::span<Matf4 const>(ripples, 2),
-            };
-            if(sm->water_sky)
-            {
-                // Ripple normals' green and blue push the lookup a few texels
-                constexpr f32 warp = 0.75f;
-                cmd.program        = prog_water_shiny;
-                cmd.textures.push_back(
-                    bind_t{
-                        .texture  = sm->water_sky,
-                        .texmap   = stage_t::texmap1,
-                        .texcoord = stage_t::texcoord2,
-                        .gen_type = bind_t::mtx3x4,
-                        .gen_src  = bind_t::src_position,
-                        .gen_mtx  = GX_TEXMTX0 + 2 * 3});
-                cmd.texture_transforms = gsl::span<Matf4 const>(ripples, 3);
-                cmd.indirect_matrix    = gexxo::draw_command::indirect_matrix_t{
-                       .rows  = {{{0.f, 0.f, warp}, {0.f, warp, 0.f}}},
-                       .scale = -5};
-            }
-            // Over what's beneath it, without writing depth
-            gfx.submit(
-                cmd,
-                gexxo::cull_state{.front_face = false},
-                gexxo::blend_state{},
-                gexxo::depth_state{.write = false});
-        }
-        g_sprites.flush(mv);
-#if defined(COFFEE_GEKKO)
-        if(g_walking)
-            if(auto const* fp = update_first_person(dt))
-            {
-                // Over everything, in the nearest sliver of depth
-                set_fog(nullptr);
-                gexxo::detail::depth_range(0.f, 0.05f);
-                draw_model(
-                    g_models[g_hands],
-                    kViewFromFirstPerson,
-                    true,
-                    &g_fp_pose.hands,
-                    &kFirstPersonLens);
-                if(auto m = g_models.find(fp->model);
-                   m != g_models.end() && !fp->weapon.empty())
-                    draw_model(
-                        m->second,
-                        kViewFromFirstPerson,
-                        true,
-                        &g_fp_pose.held,
-                        &kFirstPersonLens);
-                gexxo::detail::depth_range(0.f, 1.f);
-            }
-#endif
-        gexxo::swapBuffers();
-
-        if((i % 60) == 59)
-        {
-            u64 const now  = gettime();
-            f32 const secs = ticks_to_microsecs(now - window_start) / 1e6f;
-            LOG("fps=%d.%02d  drawn=%u culled=%u",
-                static_cast<int>(60.f / secs),
-                static_cast<int>(6000.f / secs) % 100,
-                drawn,
-                culled);
-            window_start = now;
-        }
-    }
+    compo::EntityContainer frames;
+    game.add_stages(frames);
+    for(;;)
+        frames.exec();
 #endif
     return stage == 0 ? 0 : 1;
 }
