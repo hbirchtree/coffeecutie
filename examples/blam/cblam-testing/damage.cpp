@@ -88,8 +88,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             m_gone.clear();
             m_destroyed.clear();
             m_broods.clear();
-            m_difficulty = difficulty_block(files);
         }
+        /* Looked up each frame: a map loading in replaces what a cached
+         * pointer saw */
+        m_difficulty = difficulty_block(files);
         for(auto const& area : areas)
             blast(p, area);
         bool const authority = !p.template subsystem<NetworkState>().replica;
