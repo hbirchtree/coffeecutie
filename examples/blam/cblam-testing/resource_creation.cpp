@@ -689,6 +689,7 @@ void create_resources(compo::EntityContainer& e)
                                          {"reserve", weapon.rounds_total},
                                      });
                                  player["weapons"] = std::move(weapons);
+                                 player["zoom"]    = entity.template get<BipedEquipment>().zoom;
                              }
                      {
                          auto const* game = &e.subsystem_cast<GameState>();
