@@ -64,6 +64,10 @@ struct CinematicState : compo::SubsystemBase
         f32         elapsed{0.f}; /* since it was set */
     } help;
 
+    /* hud_set_objective_text: a message of the scenario's hud messages,
+     * shown in the pause menu */
+    std::string objective;
+
     bool letterbox{false};
     /*! Between cinematic_start and cinematic_stop: split screen gives way to
      *  one view of the whole window */

@@ -617,6 +617,7 @@ i32 blam_main()
             alloc_ui_system(e);
             alloc_profile_provider(e);
             alloc_game_setup_provider(e);
+            alloc_objective_provider(e);
             alloc_networking(
                 e,
                 arguments.count("gateway-auth-key")

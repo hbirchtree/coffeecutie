@@ -6,6 +6,7 @@
 #include "components.h"
 #include "selected_version.h"
 #include "ui.h"
+#include "ui_data.h"
 #include "weapons.h"
 
 #include <blam/volta/blam_bitm.h>
@@ -1054,6 +1055,16 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         return run_t{.text = std::u16string(text.value())};
     }
 
+    /* The objective the scripts set, as text */
+    std::u16string objective_text(std::string_view name)
+    {
+        std::u16string out;
+        if(m_magic)
+            for(auto const& run : message_of(m_messages, *m_magic, name))
+                out += run.text;
+        return out;
+    }
+
     /* "Press X to enter <seat> seat of <vehicle>": the seat's and the
      * vehicle's words are indices into the hudg's icon text */
     std::vector<run_t> seat_prompt(Proxy& p, PlayerInfo const& info)
@@ -1437,4 +1448,16 @@ void alloc_hud(compo::EntityContainer& e)
 {
     e.register_subsystem_inplace<HudScene>();
     e.register_subsystem_inplace<HudSystem>();
+}
+
+void alloc_objective_provider(compo::EntityContainer& e)
+{
+    auto& hud       = e.subsystem_cast<HudSystem>();
+    auto& cinematic = e.subsystem_cast<CinematicState>();
+    e.subsystem_cast<UIDataSource>().bind_text(
+        "mission_objective_text", [&hud, &cinematic](std::u16string_view text) {
+            if(cinematic.objective.empty())
+                return std::u16string(text);
+            return hud.objective_text(cinematic.objective);
+        });
 }

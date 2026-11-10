@@ -78,3 +78,5 @@ struct HudScene : compo::SubsystemBase
 
 /* Unit, weapon and grenade HUD interfaces for each local seat */
 void alloc_hud(compo::EntityContainer& e);
+/* The pause menu's objective text box, from hud_set_objective_text */
+void alloc_objective_provider(compo::EntityContainer& e);
