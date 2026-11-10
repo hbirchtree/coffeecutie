@@ -761,6 +761,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         Vecf3 const side = glm::cross(shot.direction, Vecf3{0.f, 0.f, 1.f});
         Vecf3 const right =
             glm::dot(side, side) > 1e-6f ? glm::normalize(side) : Vecf3{0.f, 1.f, 0.f};
+        /* A unit's blow reaches the target it swung at: a hunter stands
+         * further off than a player's arm */
+        f32 reach = melee_reach;
+        if(shot.player_idx == ObjectHitEvent::no_player && shot.target)
+            if(auto const* aim = p.template get<Model>(shot.target))
+                reach = std::clamp(glm::distance(shot.position, aim->position) + .25f, melee_reach, unit_melee_reach);
         for(f32 const dip : {0.f, -melee_dip})
             for(f32 const turn : {0.f, melee_spread, -melee_spread})
         {
@@ -769,7 +775,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             Physics::Event   ev{Physics::Event::Raycast};
             Physics::Raycast ray{
                 .from   = shot.position,
-                .to     = shot.position + dir * melee_reach,
+                .to     = shot.position + dir * reach,
                 .ignore = shot.shooter,
                 .rewind = replica ? std::nullopt : shot.view_tick,
             };
@@ -1585,6 +1591,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr f32 muzzle_distance = WeaponFireEvent::muzzle_distance;
     static constexpr f32 melee_time      = .8f;  /* s, a strike to the next */
     static constexpr f32 melee_reach     = 1.2f; /* wu, from the eye */
+    static constexpr f32 unit_melee_reach = 3.f; /* wu, an NPC's longest blow */
     static constexpr f32 melee_spread    = .15f; /* rad, the side rays */
     static constexpr f32 melee_dip       = .35f; /* rad, the low rays */
     static constexpr f32 aim_reach       = 100.f; /* wu, a reticle on nothing */

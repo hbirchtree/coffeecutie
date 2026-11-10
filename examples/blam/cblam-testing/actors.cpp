@@ -2170,8 +2170,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         auto const* equip = p.template get<BipedEquipment>(id);
         auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
-        /* Unarmed, it strikes with its own melee damage */
-        blam::tagref_t with = gun && gun->tag ? gun->tag->as_ref() : blam::tagref_t{};
+        /* Unarmed, or with a gun that has no blow of its own (a hunter's
+         * fuel rod), it strikes with its own melee damage */
+        blam::tagref_t with = gun && gun->tag && gun->weapon && gun->weapon->player_melee_damage.valid()
+                                  ? gun->tag->as_ref()
+                                  : blam::tagref_t{};
         if(!with.valid())
             if(auto const* body = p.template get<Model>(id); body && body->origin_object)
                 if(auto unit = body->origin_object->template data<blam::scn::unit>(*s_magic); unit.has_value())
