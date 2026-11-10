@@ -1163,6 +1163,10 @@ struct Actor
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
     libc_types::f32 walk_radius{.35f};
     libc_types::f32 taunt_in{0.f};      /*!< Until it crows over a kill, 0 = none due */
+    bool            timed{false};       /*!< Its squad's timer is set up */
+    bool            delay_running{false};
+    bool            delay_up{false};    /*!< The timer just ran out */
+    libc_types::f32 delay{0.f};         /*!< Its squad's timer: seconds it holds its post */
     bool            taunt_player{false}; /*!< The kill was a player */
     libc_types::u16 team{0}; /*!< blam::scn::unit::team_t */
     bool            scripted{false}; /*!< A command list or recording has it */

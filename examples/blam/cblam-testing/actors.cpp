@@ -250,6 +250,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 grenade_dodge_time = 2.f; /* s spent getting away from one */
     static constexpr f32 spread_weight   = 2.f;  /* wu of cost for a position on a platoon mate's bearing */
     static constexpr f32 flank_weight    = 1.5f; /* wu of cost for a position straight in the target's face */
+    static constexpr f32 move_reach      = 15.f; /* wu, the farthest firing position an actor on foot moves to */
+    static constexpr f32 near_weight     = 8.f;  /* points for staying put while the target is in range */
     static constexpr f32 taunt_chance    = .6f;
     static constexpr f32 taunt_spacing   = 2.5f; /* s between any two taunts */
     static constexpr f32 halo_gravity    = 9.81f / 3.048f; /* wu/s^2 */
@@ -315,6 +317,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             dodge_grenades(p, id, actor, model, actr);
         }
+        squad_timer(p, actor, model, kind, dt);
         if(actor.state != state_t::retreat)
             actor.danger.reset();
         /* Ordered back: away from its target until told otherwise */
@@ -362,14 +365,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             /* Enlisted with no post: where it stands is its post */
             if(actor.post == Vecf3{})
                 actor.post = model.position;
-            /* Migrated: to its new squad's guard positions, running */
-            if(actor.migrated && actor.position < 0)
+            /* Migrated, or ordered to attack: to the squad's guard
+             * positions for that, running */
+            if((actor.migrated || actor.order == Actor::order_t::attack) && actor.position < 0)
             {
                 actor.position = guard_position(p, actor, model, kind);
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
-            if(actor.migrated && actor.position >= 0)
+            if((actor.migrated || actor.order == Actor::order_t::attack) && actor.position >= 0)
                 move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
             else if(!patrol(p, id, actor, model, anim, kind, dt))
                 move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
@@ -411,8 +415,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             /* To arm's reach to strike; with a gun but nowhere to fight
              * from, only to the far edge of the range it fights at */
             bool const strikes = actor.charging || actor.berserk || !holds_gun(p, id);
-            bool const charge  = strikes || actor.position < 0;
-            if(!charge && actor.reposition_in <= 0.f)
+            bool const held    = holding(actor);
+            bool const charge  = strikes || (!held && actor.position < 0);
+            if(held && !strikes)
+                actor.goal = actor.post;
+            else if(!strikes && actor.reposition_in <= 0.f)
             {
                 actor.reposition_in = reposition_time;
                 actor.position      = pick_position(p, actor, model, kind, actor.last_seen, false);
@@ -466,13 +473,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             /* It searches from its squad's positions nearest where the target
              * was, never off them: not into water under a hovering dropship */
-            if(actor.position < 0)
+            if(holding(actor))
+                actor.goal = actor.post;
+            else if(actor.position < 0)
             {
                 actor.position = pick_position(p, actor, model, kind, actor.last_seen, false);
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
-            if(actor.position >= 0 && glm::distance(model.position, actor.goal) > arrive_radius)
+            if((actor.position >= 0 || holding(actor)) && glm::distance(model.position, actor.goal) > arrive_radius)
                 move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
             else
                 stop(p, id, actor);
@@ -578,6 +587,65 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         }
     }
 
+    /* Its squad's timer runs once the encounter sees an enemy, or from the
+     * start; until it is up the actor fights from its post. A squad told to
+     * delay forever waits for ai_timer_expire or an attack order */
+    void squad_timer(Proxy& p, Actor& actor, Model const& model, kind_t const& kind, f32 dt)
+    {
+        using flags_t = blam::scn::ai::squad::flags_t;
+        using enum_helpers::feval;
+        auto const flags = kind.squad->flags;
+        if(!actor.timed)
+        {
+            actor.timed         = true;
+            actor.delay         = feval(flags & flags_t::no_timer_delay_forever) ? std::numeric_limits<f32>::infinity()
+                                                                                 : kind.squad->delay_time;
+            actor.delay_running = feval(flags & flags_t::start_timer_immediately);
+        }
+        if(actor.order == Actor::order_t::attack && actor.delay > 0.f)
+            actor.delay = 0.f;
+        if(actor.delay > 0.f)
+        {
+            actor.delay_running = actor.delay_running || actor.target != 0 || encounter_aware(p, actor);
+            if(actor.delay_running && std::isfinite(actor.delay) && (actor.delay -= dt) <= 0.f)
+            {
+                actor.delay    = 0.f;
+                actor.delay_up = true;
+            }
+        }
+        if(!actor.delay_up)
+            return;
+        actor.delay_up = false;
+        if(!feval(flags & flags_t::magic_sight_after_timer))
+            return;
+        if(u64 const player = nearest_player(p, model))
+            if(auto const* seen = p.template get<Model>(player))
+            {
+                actor.target    = player;
+                actor.last_seen = seen->position;
+                actor.seen_ago  = 0.f;
+                if(actor.state == state_t::idle || actor.state == state_t::pursuit)
+                    enter(actor, state_t::combat);
+            }
+    }
+
+    static bool holding(Actor const& actor)
+    {
+        return actor.delay > 0.f;
+    }
+
+    /* Someone in its encounter has an enemy in mind */
+    bool encounter_aware(Proxy& p, Actor const& actor)
+    {
+        for(auto other : p.template select<Actor>())
+        {
+            auto const& theirs = other.template get<Actor>();
+            if(theirs.encounter == actor.encounter && theirs.target != 0)
+                return true;
+        }
+        return false;
+    }
+
     void enter(Actor& actor, state_t state)
     {
         if(state != state_t::combat)
@@ -673,11 +741,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     pl.leaders++;
             }
         }
+        std::map<i16, platoon_t> whole;
         for(auto& [key, pl] : now)
         {
             auto& kept = m_platoons[key];
             kept.alive = pl.alive;
-            kept.total = pl.total;
+            kept.total = std::max(kept.total, pl.total);
+            whole[key.first].alive += kept.alive;
+            whole[key.first].total += kept.total;
+        }
+        for(auto& [key, pl] : now)
+        {
+            auto& kept = m_platoons[key];
             auto platoons = platoons_of(p, key.first);
             if(!platoons.has_value() || key.second < 0 ||
                static_cast<size_t>(key.second) >= platoons.value().size())
@@ -690,12 +765,16 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 kept.defending = (tag.flags & flags_t::start_in_defending_state) != 0;
                 kept.leaders   = pl.leaders;
             }
-            /* The cause watches a platoon: another, or this one */
-            auto const& cause = tag.change_attacking_defending;
-            auto const  watched_key = std::pair{key.first, cause.target >= 0 ? cause.target : key.second};
-            auto        watched = now.find(watched_key);
-            if(cause.event != cause_t::never && watched != now.end() && holds(cause.event, watched->second))
-                kept.defending = !kept.defending;
+            /* The cause watches a platoon, or the whole encounter, and
+             * switches the platoon out of its starting state for good */
+            auto const& cause    = tag.change_attacking_defending;
+            bool const  switched = (tag.flags & flags_t::start_in_defending_state) == 0;
+            auto const  watched  = m_platoons.find(std::pair{key.first, cause.target});
+            platoon_t const& of  = cause.target >= 0 && static_cast<size_t>(cause.target) < platoons.value().size()
+                                       ? (watched != m_platoons.end() ? watched->second : platoon_t{})
+                                       : whole[key.first];
+            if(pl.alive > 0 && kept.defending != switched && cause.event != cause_t::never && holds(cause.event, of))
+                kept.defending = switched;
             /* Leaders gone: the followers scatter */
             if(pl.leaders == 0 && kept.leaders > 0)
                 panic(p, key);
@@ -717,7 +796,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         case event_t::dead_25: return dead * 4 >= pl.total;
         case event_t::dead_50: return dead * 2 >= pl.total;
         case event_t::dead_75: return dead * 4 >= pl.total * 3;
-        case event_t::one_alive: return pl.alive == 1;
+        case event_t::one_alive: return pl.alive <= 1;
         case event_t::all_dead: return pl.alive == 0;
         default: return false;
         }
@@ -1112,8 +1191,17 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 }
             }
         Vecf2 const faces = target_facing(p, actor.target);
+        /* As the original weighs a spot to fight from: in reach of the
+         * target, inside the combat band, near where it stands while the
+         * target is in range, and with a line to it; nothing farther off
+         * than it would walk */
+        f32 const firing  = kind.variant->maximum_firing_distance > 0.f ? kind.variant->maximum_firing_distance : 20.f;
+        f32 const current = glm::distance(model.position, target);
+        f32 const nearby  = current > firing ? 0.f : (1.f - current / firing) * near_weight;
+        Vecf3 const aim   = target + chest_of(p, actor.target);
         i32 best      = -1;
         f32 best_cost = std::numeric_limits<f32>::max();
+        std::vector<i32> beyond;
         for(size_t i = 0; i < positions.value().size(); i++)
         {
             auto const& fp = positions.value()[i];
@@ -1128,10 +1216,20 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 cost = -to_target + to_me * .25f;
             else
             {
-                f32 const outside = to_target < range.x ? range.x - to_target
-                                    : to_target > range.y ? to_target - range.y
-                                                          : 0.f;
-                cost = outside * 3.f + to_me;
+                if(to_me > move_reach)
+                {
+                    beyond.push_back(static_cast<i32>(i));
+                    continue;
+                }
+                f32 score = to_target < firing * .8f ? 10.f : firing * .8f / to_target * 10.f;
+                if(range.y > 0.f && to_target < range.y)
+                {
+                    f32 const inside = std::min(range.y - to_target, to_target - range.x);
+                    score += inside > 2.f ? 20.f : inside > 0.f ? 10.f * inside : 0.f;
+                }
+                score += std::max(0.f, 1.f - to_me / move_reach) * nearby;
+                score += clear(p, 0, fp.position + Vecf3{0.f, 0.f, eye_height}, aim, actor.target) ? 15.f : 5.f;
+                cost = -score;
                 Vecf2 const b = Vecf2(fp.position) - Vecf2(target);
                 if(glm::dot(b, b) > 1e-4f)
                 {
@@ -1147,6 +1245,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 best      = static_cast<i32>(i);
             }
         }
+        /* None in reach: any of its own, to get back among them */
+        if(best < 0 && !beyond.empty())
+            best = beyond[m_random() % beyond.size()];
         return best;
     }
 
@@ -1780,7 +1881,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             eye + glm::normalize(aim - eye) * WeaponFireEvent::muzzle_distance);
         /* A friend in the line of fire: the burst waits, and it looks for
          * another spot */
-        if(starting && friend_before(p, id, actor, muzzle, aim))
+        if(starting && (friend_before(p, id, actor, muzzle, aim) ||
+                        friends_in_blast(p, id, actor, actor.last_seen, blast_of(p, projectile_of(gun->tag)))))
         {
             actor.burst_left    = 0;
             actor.fire_in       = look_period;
@@ -1855,6 +1957,63 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32  gravity; /* wu/s^2 */
         bool lob;     /* the high arc, over cover */
     };
+
+    /* A projectile's blast as the AI sees it: its danger radius, or a
+     * slow explosive shot's as a grenade's; 0 for what does not blow up */
+    f32 blast_of(Proxy& p, blam::tagref_t const& ref) const
+    {
+        if(!ref.valid())
+            return 0.f;
+        blam::tag_index_view<halo_version> index(p.template subsystem<BlamFiles<halo_version>>().container);
+        auto tag = index.find(ref.tag_id);
+        if(tag == index.end() || !(*tag).matches(blam::tag_class_t::proj))
+            return 0.f;
+        auto proj = (*tag).template data<blam::scn::projectile>(*s_magic);
+        if(!proj.has_value())
+            return 0.f;
+        auto const& shot = proj.value()[0];
+        if(shot.danger_radius > 0.f)
+            return shot.danger_radius;
+        bool const slow = shot.detonation_effect.valid() && shot.initial_velocity * tick_rate > 0.f &&
+                          shot.initial_velocity * tick_rate <= slow_shot_speed;
+        return slow ? grenade_danger : 0.f;
+    }
+
+    /* The gun's first trigger's projectile */
+    static blam::tagref_t projectile_of(blam::tag_t const* tag)
+    {
+        if(!tag)
+            return {};
+        auto weapon = tag->template data<blam::scn::weapon>(*s_magic);
+        if(!weapon.has_value())
+            return {};
+        auto triggers = weapon.value()[0].triggers.data(*s_magic);
+        return triggers.has_value() && !triggers.value().empty() ? triggers.value()[0].projectile
+                                                                 : blam::tagref_t{};
+    }
+
+    /* Whether a blast at `at` would catch the actor itself or a friend;
+     * the Flood do not care */
+    bool friends_in_blast(Proxy& p, u64 self, Actor const& actor, Vecf3 const& at, f32 radius)
+    {
+        if(radius <= 0.f || static_cast<team_t>(actor.team) == team_t::flood)
+            return false;
+        for(auto other : p.template select<Actor, Model, BipedStatus>())
+        {
+            auto [theirs, model, status] = other.components();
+            if(status.dead || (other.id() != self && enemies(actor.team, static_cast<team_t>(theirs.team))))
+                continue;
+            if(glm::distance(model.position, at) <= radius)
+                return true;
+        }
+        if(enemies(actor.team, team_t::player))
+            return false;
+        for(auto player : p.template select<PlayerInfo, Model, BipedStatus>())
+            if(auto [info, model, status] = player.components();
+               !status.dead && glm::distance(model.position, at) <= radius)
+                return true;
+        return false;
+    }
 
     std::optional<arc_t> arc_of(Proxy& p, blam::tag_t const* tag, bool mounted) const
     {
@@ -2027,6 +2186,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(!seats.has_value() || physics.seat < 0 || static_cast<size_t>(physics.seat) >= seats.value().size())
             return;
         auto const flags = seats.value()[static_cast<size_t>(physics.seat)].flags;
+        /* A carrier's seats take AI as passengers, not fighters */
+        if((flags & flags_t::allow_ai_noncombatants) != flags_t::none)
+            return;
         if((flags & flags_t::gunner) != flags_t::none)
             fire_mounted(p, id, actor, physics.seated_in, *vehicle, unit.value()[0], kind);
         else if((flags & flags_t::allows_weapons) != flags_t::none)
@@ -2295,7 +2457,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(d < actv.grenade_ranges.x || d > actv.grenade_ranges.y || !chance(actv.grenade_chance))
             return;
         blam::tagref_t const* projectile = grenade_projectile(p, actv.grenade_type);
-        if(!projectile)
+        if(!projectile || friends_in_blast(p, id, actor, actor.last_seen, blast_of(p, *projectile)))
             return;
         actor.grenades--;
         Vecf3 const eye  = eye_of(p, id);

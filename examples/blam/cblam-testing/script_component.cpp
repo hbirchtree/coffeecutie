@@ -1476,9 +1476,22 @@ struct BlamScript
         case op::ai_retreat:
             for(u64 id : ai_actors(p, text_of(arg(0))))
                 if(auto* actor = p.template get<Actor>(id))
+                {
                     actor->order = opcode == op::ai_attack   ? Actor::order_t::attack
                                    : opcode == op::ai_defend ? Actor::order_t::defend
                                                              : Actor::order_t::retreat;
+                    /* Where it stands was picked for the old order */
+                    actor->position = -1;
+                }
+            return {};
+        case op::ai_timer_expire:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id); actor && actor->delay > 0.f)
+                {
+                    actor->timed    = true;
+                    actor->delay    = 0.f;
+                    actor->delay_up = true;
+                }
             return {};
         case op::ai_braindead:
         case op::ai_set_blind:
@@ -2409,7 +2422,7 @@ struct BlamScript
         auto const custom = m_custom.find(id);
         bool const moved  = (playing_recording(id) && !rolls(p, id)) ||
                            (custom != m_custom.end() && custom->second.moves);
-        return m_hovering.contains(id) || riding(id) || m_commands.contains(id) ||
+        return m_hovering.contains(id) || riding(id) || listed(id) ||
                std::any_of(m_attached.begin(), m_attached.end(), [id](attached_t const& a) { return a.child == id; }) ||
                (moved && !walks(p, id));
     }
@@ -2631,6 +2644,13 @@ struct BlamScript
                 (list.flags & (flags_t::allow_initiative | flags_t::allow_targeting)) != 0;
         }
         carry(p, id, true);
+    }
+
+    /* Following a command list still under way */
+    bool listed(u64 id) const
+    {
+        auto it = m_commands.find(id);
+        return it != m_commands.end() && !it->second.done;
     }
 
     void stop_commands(Proxy& p, u64 id)
@@ -2932,7 +2952,7 @@ struct BlamScript
         if(!c.done && (conv->flags & conv_t::stop_other_actions))
             for(u64 id : c.participants)
                 if(auto* actor = id ? p.template get<Actor>(id) : nullptr;
-                   actor && !actor->scripted && !m_commands.contains(id))
+                   actor && !actor->scripted && !listed(id))
                 {
                     actor->scripted = true;
                     actor->moving   = false;
@@ -2946,7 +2966,7 @@ struct BlamScript
     {
         c.done = true;
         for(u64 id : c.held)
-            if(auto* actor = p.template get<Actor>(id); actor && !m_commands.contains(id))
+            if(auto* actor = p.template get<Actor>(id); actor && !listed(id))
                 actor->scripted = false;
         c.held.clear();
     }
@@ -3141,6 +3161,19 @@ struct BlamScript
                 continue;
             }
             auto& run   = it->second;
+            /* Its list played out, the actor is its own again; the list is
+             * kept for ai_command_list_status */
+            if(run.done)
+            {
+                if(auto* actor = p.template get<Actor>(it->first); actor && actor->scripted)
+                {
+                    actor->scripted = false;
+                    if(!playing_recording(it->first) && !m_hovering.contains(it->first))
+                        stand(p, it->first);
+                }
+                ++it;
+                continue;
+            }
             auto point  = [&](i16 i) -> std::optional<Vecf3> {
                 if(!pts.has_value() || i < 0 || static_cast<size_t>(i) >= pts.value().size())
                     return std::nullopt;

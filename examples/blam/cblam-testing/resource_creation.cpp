@@ -653,8 +653,20 @@ void create_resources(compo::EntityContainer& e)
                              auto const& actor = entity.template get<Actor>();
                              it->second["actor"] = {
                                  {"team", actor.team},
+                                 {"encounter", actor.encounter},
+                                 {"squad", actor.squad},
+                                 {"position", actor.position},
                                  {"targets_player",
                                   actor.target != 0 && e.get<PlayerInfo>(actor.target) != nullptr},
+                                 {"state", static_cast<int>(actor.state)},
+                                 {"target", actor.target != 0},
+                                 {"seen_ago", actor.seen_ago},
+                                 {"order", static_cast<int>(actor.order)},
+                                 {"blind", actor.blind},
+                                 {"deaf", actor.deaf},
+                                 {"braindead", actor.braindead},
+                                 {"scripted", actor.scripted},
+                                 {"active", actor.active()},
                              };
                          }
                      nlohmann::json grudges = nlohmann::json::array();
