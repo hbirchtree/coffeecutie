@@ -670,6 +670,10 @@ struct BlamScript
                         device->power_target = to;
                     else
                         device->position_target = to;
+                    /* An automatic door opened by script stays open its
+                     * open time, as if a unit had just walked through */
+                    if(opcode != op::device_set_power && to > 0.f && device->machine)
+                        device->open_left = std::max(device->open_left, device->machine->door_open_time);
                     if(opcode == op::device_set_position_immediate)
                     {
                         device->position = to;
