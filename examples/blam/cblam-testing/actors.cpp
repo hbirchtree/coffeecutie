@@ -114,8 +114,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             m_kinds.clear();
             m_links.clear();
             m_spheres.clear();
-            m_difficulty = difficulty_block(files);
         }
+        /* Looked up each frame: a map loading in replaces what a cached
+         * pointer saw */
+        m_difficulty = difficulty_block(files);
         m_level = p.template subsystem<GameState>().difficulty;
         refresh_nav(p);
         hear(p);
