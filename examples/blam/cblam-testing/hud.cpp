@@ -180,9 +180,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         i16                                          sequence,
         Vecf4 const&                                 color,
         f32                                          fill  = -1.f,
-        Vecf4 const&                                 empty = {})
+        Vecf4 const&                                 empty = {},
+        i16                                          sprite = 0)
     {
-        auto frame = frame_of(bitmap, sequence, 0);
+        auto frame = frame_of(bitmap, sequence, sprite);
         if(!frame)
             return;
         Vecf2 const size = frame->size * scale_of(base);
@@ -588,6 +589,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return;
         auto const&    hud    = *data.value();
         anchor_t const anchor = hud.screen_alignment.anchor;
+        if(depth == 0)
+            scope_mask(hud, s.zoom > 0);
 
         if(auto statics = hud.screen_alignment.static_elements.data(*m_magic); statics.has_value())
             for(auto const& el : statics.value())
@@ -650,9 +653,17 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 auto const hidden = s.zoom > 0 ? flags_t::dont_show_when_zoomed
                                                 : flags_t::show_only_when_zoomed;
                 for(auto const& ov : overlays.value())
-                    if((ov.flags & hidden) == flags_t::none && !blank(ov.colors.default_color))
-                        push(anchor_t::center, ov, ch.crosshair_bitmap, ov.sequence_index,
-                             color_of(ov.colors.default_color));
+                {
+                    if((ov.flags & hidden) != flags_t::none || blank(ov.colors.default_color))
+                        continue;
+                    /* A zoom readout's sequence has a sprite per zoom level */
+                    i16 const level = ch.crosshair_type == crosshair_t::crosshair_type_t::zoom &&
+                                              (ov.flags & flags_t::one_zoom_level) == flags_t::none
+                                          ? static_cast<i16>(std::max(s.zoom - 1, 0))
+                                          : i16(0);
+                    push(anchor_t::center, ov, ch.crosshair_bitmap, ov.sequence_index,
+                         color_of(ov.colors.default_color), -1.f, {}, level);
+                }
             }
 
         if(auto elements = hud.overlay_elements.data(*m_magic); elements.has_value())
@@ -1109,6 +1120,31 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     static constexpr f32 countdown_width  = 36.f; /* px, "0:00" in the HUD font */
     static constexpr f32 countdown_height = 14.f;
 
+    /* A screen effect's mask over the whole view, under the rest of the
+     * HUD: the sniper scope's vignette */
+    void scope_mask(weapon_hud_interface const& hud, bool zoomed)
+    {
+        using flags_t = weapon_hud_interface::screen_effect_t::flags_t;
+        auto effects  = hud.screen_effects.data(*m_magic);
+        if(!effects.has_value())
+            return;
+        for(auto const& fx : effects.value())
+        {
+            if((static_cast<u16>(fx.mask.flags) & static_cast<u16>(flags_t::only_when_zoomed)) && !zoomed)
+                continue;
+            auto const& bitmap = m_split && fx.mask.mask_splitscreen.valid() ? fx.mask.mask_splitscreen
+                                                                             : fx.mask.mask_fullscreen;
+            auto frame = frame_of(bitmap, 0, 0);
+            if(!frame)
+                continue;
+            frame->sprite.min   = Vecf2(0.f);
+            frame->sprite.max   = Vecf2(m_width, HudScene::height);
+            /* The mask's alpha is how much of the view it blacks out */
+            frame->sprite.color = Vecf4(0.f, 0.f, 0.f, 1.f);
+            m_view->sprites.insert(m_view->sprites.begin(), frame->sprite);
+        }
+    }
+
     /* The objective the scripts set, as text */
     std::u16string objective_text(std::string_view name)
     {
@@ -1317,6 +1353,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             m_width = out.width;
 
             size_t const split  = seats.size() > 1 ? 1 : 0;
+            m_split             = split != 0;
             auto const   riding = rider_of(p, *info);
             if(auto const* unit = riding.hud ? riding.hud : m_unit_huds[split])
                 if(auto hud = unit->template data<unit_hud_interface>(*m_magic);
@@ -1480,6 +1517,7 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
 
     blam::map_ptr const*                 m_magic{nullptr};
     bool                                 m_crosshair{true}; /*!< hud_show_crosshair */
+    bool                                 m_split{false};    /*!< Views share the window */
     blam::tag_index_view<halo_version>   m_index;
     bool                                 m_multiplayer{false};
     std::array<blam::tag_t const*, 2>    m_unit_huds{}; /*!< Full, split screen */
