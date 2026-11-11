@@ -3650,7 +3650,7 @@ struct BlamScript
                            up * (drag.z * glm::dot(f.velocity, up)));
 
         model.position += f.velocity;
-        /* Its mass points rest on what is below, not on its own riders */
+        /* Its mass points rest on what is below, not on bodies */
         Physics::Event   ev{Physics::Event::Raycast};
         Physics::Raycast ray{
             .from   = model.position + Vecf3{0.f, 0.f, ground_probe},
@@ -3660,7 +3660,9 @@ struct BlamScript
         for(u32 pass = 0; pass < max_rider_passes; pass++)
         {
             p.template subsystem<PhysicsBus>().process(ev, &ray);
-            if(!ray.hit || !rides(p, ray.entity_id, id))
+            /* A body aboard, seated or standing in the bay, is no ground:
+             * resting on one lifts the ship, and the body with it */
+            if(!ray.hit || (!rides(p, ray.entity_id, id) && !p.template get<BipedStatus>(ray.entity_id)))
                 break;
             ray = {.from = ray.point - Vecf3{0.f, 0.f, rider_skip}, .to = ray.to, .ignore = id};
         }
