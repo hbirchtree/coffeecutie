@@ -77,6 +77,8 @@ def main():
     gid = args.game_id.encode()[:6]
     header[4:4 + len(gid)] = gid
     header[0xB] = 1  # GC controller 1
+    header[0x9D] = 1     # English
+    header[0xA3] = 0x31  # USA: 0 is no country, and can end up in SYSCONF
     struct.pack_into("<QQ", header, 0xD, int(end * 60), polls)
     # Playback stops past this many CPU ticks (Gekko: 486 MHz)
     struct.pack_into("<Q", header, 0xED, int((end + 60) * 486_000_000))
