@@ -153,6 +153,7 @@ struct ResourceLoader
         blam::tag_t const*                                              weapon{nullptr};
 
         blam::scn::biped const*       biped{nullptr};
+        blam::tag_t const*            tag{nullptr};
         std::optional<bound_marker_t> hand; /*!< Where it holds a weapon */
     } biped_model;
 
@@ -2192,6 +2193,16 @@ struct ResourceLoader
     /*! The biped a player spawns as on this map */
     blam::scn::biped const* player_biped(BlamFiles<Ver> const& files)
     {
+        if(auto const* tag = player_biped_tag(files))
+            if(auto biped = tag->template data<blam::scn::biped>(files.container.magic);
+               biped.has_value())
+                return biped.value();
+        cWarning("Got not biped model :(");
+        return nullptr;
+    }
+
+    blam::tag_t const* player_biped_tag(BlamFiles<Ver> const& files)
+    {
         auto const& magic    = files.container.magic;
         auto        globals_ = index.tag_of("globals\\globals");
         if(!globals_.has_value())
@@ -2213,10 +2224,7 @@ struct ResourceLoader
                sp.has_value() && !sp.value().empty())
                 unit = sp.value()[0].unit;
         if(auto unit_ = index.find(unit); unit_ != index.end())
-            if(auto biped = unit_->template data<blam::scn::biped>(magic);
-               biped.has_value())
-                return biped.value();
-        cWarning("Got not biped model :(");
+            return &(*unit_);
         return nullptr;
     }
 
@@ -2752,6 +2760,7 @@ struct ResourceLoader
             if(auto const* biped = player_biped(files))
             {
                 biped_model.biped = biped;
+                biped_model.tag   = player_biped_tag(files);
                 biped_model.model = biped->model;
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
                     biped_model.hand = bind_marker_prefix(
@@ -2836,6 +2845,7 @@ struct ResourceLoader
             cam.camera.position.z +=
                 biped_model.shape.eye_height - info.biped.eye_height;
             info.biped = biped_model.shape;
+            model.colors_of = biped_model.tag;
             live.insert(player.id());
             /* Once per load, so a model that fails to mount isn't retried */
             auto& biped = player_bipeds[player.id()];

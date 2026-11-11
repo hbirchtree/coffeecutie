@@ -1829,7 +1829,7 @@ struct DrawListBuilder
         ctxt.object_function = model.object_function;
         ctxt.meter_value     = model.meter_value;
 
-        blam::tag_t const* tag = model.origin_object;
+        blam::tag_t const* tag = model.origin_object ? model.origin_object : model.colors_of;
         if(m_render_params.color_changing && tag)
             switch(tag->tag_class())
             {
@@ -4524,7 +4524,7 @@ struct LegacyMeshRenderer
         typename ShaderCache<Ver>::material_context ctxt;
         ctxt.object_function   = model.object_function;
         ctxt.meter_value       = model.meter_value;
-        blam::tag_t const* tag = model.origin_object;
+        blam::tag_t const* tag = model.origin_object ? model.origin_object : model.colors_of;
         if(props.color_changing && tag)
             switch(tag->tag_class())
             {

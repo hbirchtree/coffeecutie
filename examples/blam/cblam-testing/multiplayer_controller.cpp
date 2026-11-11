@@ -25,7 +25,7 @@
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
 
 using MultiplayerManifest = compo::SubsystemManifest<
-    type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus, const Model>,
+    type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus, Model>,
     type_list_t<
         GameState,
         GameEventBus,
@@ -74,6 +74,7 @@ struct MultiplayerController
         if(state.kind != GameState::kind_t::multiplayer)
             return;
         announcer(p, state, dt);
+        team_colors(p, state);
         if(replica)
             return;
         for(auto const& kill : kills)
@@ -92,12 +93,14 @@ struct MultiplayerController
             over(state);
         }
         respawn(p, state, files, dt);
+        place(p, state, files);
     }
 
     void begin(GameState& state, BlamFiles<halo_version> const& files, GameSetup const& setup, bool replica)
     {
         m_load_generation = files.load_generation;
         m_waiting.clear();
+        m_placed.clear();
         m_vm.reset();
         m_local_vm.reset();
         m_seen.clear();
@@ -425,6 +428,42 @@ struct MultiplayerController
         }
     }
 
+    /* A team game puts each player first at one of its team's start points */
+    void place(Proxy& p, GameState const& state, BlamFiles<halo_version> const& files)
+    {
+        if(!state.teams || state.phase == GameState::phase_t::over)
+            return;
+        for(auto ent : p.template select<PlayerInfo, BipedStatus>())
+        {
+            auto [info, status] = ent.components();
+            if(status.dead || !state.player(info.player_idx) || m_placed.contains(info.player_idx))
+                continue;
+            auto const spot = spot_for(p, state, files, info);
+            if(!spot)
+                continue;
+            m_placed.insert(info.player_idx);
+            GameEvent        ev{.type = GameEvent::RespawnUnit};
+            RespawnUnitEvent respawn{
+                .unit = ent.id(), .position = spot->first, .facing = spot->second, .place = true};
+            p.template subsystem<GameEventBus>().inject(ev, &respawn);
+        }
+    }
+
+    /* Players wear their team's colour as change colour C, which cyborg_mp leaves to the game */
+    static void team_colors(Proxy& p, GameState const& state)
+    {
+        if(!state.teams)
+            return;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto [info, model] = ent.components();
+            auto const* player = state.player(info.player_idx);
+            if(!player || player->team < 0)
+                continue;
+            model.change_colors[2] = pack_color(player->team == 0 ? Vecf3{1.f, 0.f, 0.f} : Vecf3{0.f, 0.f, 1.f});
+        }
+    }
+
     /* A start point for this game type and team, far from enemies */
     spawn_points::spot_t spot_for(
         Proxy& p, GameState const& state, BlamFiles<halo_version> const& files, PlayerInfo const& info)
@@ -475,6 +514,7 @@ struct MultiplayerController
     std::unique_ptr<vm_t>      m_vm;
     f32                        m_respawn_delay{default_delay};
     std::map<u64, f32>         m_waiting; /*!< Seconds left */
+    std::set<u32>              m_placed;  /*!< Players put at their team's start */
 
     hsc_builder::program_t<BC>      m_local_program;
     std::unique_ptr<vm_t>           m_local_vm;

@@ -674,6 +674,7 @@ struct RespawnUnitEvent
     libc_types::f32 body{1.f};
     libc_types::f32 shield{1.f};
     bool            arrive{false}; /*!< Plays the respawn effect there */
+    bool            place{false};  /*!< Moves a living unit too, as a fresh spawn */
 };
 
 /*! A level's script says it is finished */

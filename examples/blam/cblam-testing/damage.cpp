@@ -849,7 +849,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     void revive(Proxy& p, RespawnUnitEvent const& respawn)
     {
         auto* status = p.template get<BipedStatus>(respawn.unit);
-        if(!status || (!status->dead && !respawn.restore))
+        if(!status || (!status->dead && !respawn.restore && !respawn.place))
             return;
         bool const shielded = status->maximum_shield() > 0.f;
         bool const was_down = status->shield <= 0.f;
