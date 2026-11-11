@@ -245,6 +245,7 @@ struct Raycast
     Vecf3                 from{};
     Vecf3                 to{};
     u64                   ignore{0}; /*!< Entity the ray passes through */
+    u64                   ignore_also{0}; /*!< And another, e.g. a vehicle's shooter */
     /*! Trace bipeds where they were at this tick */
     std::optional<libc_types::u64> rewind{};
 

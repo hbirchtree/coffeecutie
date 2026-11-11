@@ -180,7 +180,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
             /* A rate of zero fires once a pull. A trigger with a spin-up
              * winds from its first rate to its last over the acceleration
-             * time, and keeps firing while it winds down after release */
+             * time; let go, it winds down without firing (the barrel spins on) */
             bool const spins = trigger.acceleration_time > 0.f &&
                                trigger.maximum_rate_of_fire.y > trigger.maximum_rate_of_fire.x;
             state.spins      = spins;
@@ -233,7 +233,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     spins ? glm::mix(trigger.maximum_rate_of_fire.x, trigger.maximum_rate_of_fire.y, state.spin)
                     : trigger.maximum_rate_of_fire.y > 0.f ? trigger.maximum_rate_of_fire.y
                                                            : trigger.maximum_rate_of_fire.x;
-                bool const held = pulled || (spins && state.spin > 0.f);
+                bool const held = pulled;
                 i32 fires = -1;
                 /* A fresh pull on nothing to fire: the dry click */
                 bool const dry = magazine ? !loaded && ammo->rounds_total < per_shot
