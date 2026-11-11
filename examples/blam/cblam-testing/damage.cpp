@@ -454,10 +454,22 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(!obj.has_value())
             return nullptr;
         auto const* coll = tag_data<blam::coll::header>(obj.value()[0].collider, blam::tag_class_t::coll);
-        if(!coll || coll->maximum_body_vitality <= 0.f ||
-           (!coll->body_depleted_effect.valid() && !coll->body_destroyed_effect.valid()))
+        if(!coll || coll->maximum_body_vitality <= 0.f)
+            return nullptr;
+        if(!coll->body_depleted_effect.valid() && !coll->body_destroyed_effect.valid() &&
+           !destroyed_dead(*model))
             return nullptr;
         return coll;
+    }
+
+    /* A vehicle gone as soon as it dies (the cursed D20 spawners) */
+    bool destroyed_dead(Model const& model) const
+    {
+        using flags_t = blam::scn::unit::unit_flags_t;
+        if(!model.origin_object->matches(blam::tag_class_t::vehi))
+            return false;
+        auto u = model.origin_object->template data<blam::scn::unit>(*m_magic);
+        return u.has_value() && (u.value()[0].unit_flags & flags_t::destroyed_after_dying) != flags_t::none;
     }
 
     /* Spent, it plays its depleted effect on itself; past its destroyed
@@ -466,7 +478,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     {
         f32& body         = m_object_body.try_emplace(entity, 1.f).first->second;
         f32 const before  = body;
-        if(before <= coll.body_destroyed_threshold)
+        auto const* model = p.template get<Model>(entity);
+        f32 const   gone  = model && destroyed_dead(*model) ? 0.f : std::min(coll.body_destroyed_threshold, 0.f);
+        if(before <= gone)
             return;
         body -= uniform(jpt.upper_bound) * scale / coll.maximum_body_vitality;
         auto const play = [&](blam::tagref_t const& effect, u64 parent) {
@@ -479,7 +493,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         };
         if(before > 0.f && body <= 0.f)
             play(coll.body_depleted_effect, entity);
-        if(body > coll.body_destroyed_threshold)
+        if(body > gone)
             return;
         play(coll.body_destroyed_effect, 0);
         if(auto const* net = p.template get<NetworkInfo>(entity); net && net->instance_id)

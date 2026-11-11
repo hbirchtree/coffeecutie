@@ -1138,6 +1138,7 @@ struct Actor
     libc_types::i16 encounter{-1};
     libc_types::i16 squad{-1};
     libc_types::i16 variant{-1}; /*!< Its actor palette entry, kept across migrations */
+    libc_types::u32 actv{0};     /*!< Its variant's tag, when outside any encounter (a vehicle's built-in gunner) */
     bool            migrated{false}; /*!< ai_migrate moved it: it guards its squad's positions, not its post */
     libc_types::i16 idle_state{0};   /*!< blam::scn::ai::state_t it was placed in: patrols, guarding */
     libc_types::i32 move_at{-1};     /*!< The squad move position it patrols toward */
@@ -1208,7 +1209,7 @@ struct Actor
 
     bool active() const
     {
-        return encounter >= 0;
+        return encounter >= 0 || actv != 0;
     }
 };
 
