@@ -113,6 +113,9 @@ struct MessageBase
 
         /* Units a script sat in vehicles */
         RiderSync,
+
+        /* The scripts' HUD nav points */
+        NavPointSync,
     } type{None};
 
     u32 request{};
@@ -461,11 +464,28 @@ struct alignas(8) GameStateSync
     f32             time_left{-1.f}; /*!< Whole seconds */
     i16             team_scores[2]{};
     u16             difficulty{1};
-    u16             padding{0};
+    u16             nav_points{0}; /*!< How many NavPointSync follow */
     u32             saves{0};
     u32             reverts{0};
 
     bool operator==(GameStateSync const&) const = default;
+};
+
+/*! A nav point (GameState::nav_point_t); all of them go out when any
+ *  changes, after the GameStateSync that counts them */
+struct alignas(8) NavPointSync
+{
+    static constexpr auto message_type = MessageBase::NavPointSync;
+
+    Vecf3 position{};
+    f32   offset{0.f};
+    u32   object{0}; /*!< Net id; 0 marks the position */
+    i16   team{-1};
+    i16   unit{-1}; /*!< Player index of a player's body, which has no net id */
+    i32   player{-1};
+    char  arrow[28]{};
+
+    bool operator==(NavPointSync const&) const = default;
 };
 
 /*! One player's score; the whole table goes out when any of it changes */

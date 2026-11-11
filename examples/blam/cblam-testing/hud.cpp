@@ -525,6 +525,99 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         }
     }
 
+    /* The scripts' nav points this player is shown: the waypoint arrow over
+     * the spot when it is in view, else at the screen's edge turned toward
+     * it */
+    void nav_points(Proxy& p, PlayerInfo const& info, PlayerCamera const& cam)
+    {
+        using team_t  = blam::scn::unit::team_t;
+        using flags_t = blam::hud_globals::waypoint_arrow_t::flags_t;
+        auto const& game = p.template subsystem<GameState>();
+        auto const& navs = game.nav_points;
+        if(navs.empty() || !m_hudg)
+            return;
+        auto arrows = m_hudg->waypoint_arrows.data(*m_magic);
+        if(!arrows.has_value())
+            return;
+        Vecf4 const inset = m_hudg->waypoint_offsets; /* top, bottom, left, right */
+        Vecf2 const lo{inset.z, inset.x};
+        Vecf2 const hi{m_width - inset.w, HudScene::height - inset.y};
+        for(auto const& nav : navs)
+        {
+            /* Players are all of the player team to the scripts */
+            if(nav.player >= 0 ? nav.player != static_cast<i32>(info.player_idx)
+                               : nav.team != static_cast<i16>(team_t::player))
+                continue;
+            auto const* arrow = [&]() -> blam::hud_globals::waypoint_arrow_t const* {
+                for(auto const& a : arrows.value())
+                    if(a.name.str() == nav.arrow)
+                        return &a;
+                return arrows.value().empty() ? nullptr : &arrows.value()[0];
+            }();
+            if(!arrow)
+                continue;
+            Vecf3 at = nav.position;
+            if(nav.object || nav.unit >= 0 || nav.net)
+            {
+                auto const* model = p.template get<Model>(marked(p, nav));
+                if(!model)
+                    continue;
+                at = model->position;
+            }
+            at.z += nav.offset;
+            Vecf4 const clip   = cam.matrix * Vecf4(at, 1.f);
+            bool const  behind = clip.w <= 1e-4f;
+            Vecf2 const ndc    = Vecf2(clip) / std::max(std::abs(clip.w), 1e-4f);
+            Vecf2       spot{(ndc.x * .5f + .5f) * m_width, (.5f - ndc.y * .5f) * HudScene::height};
+            bool const  inside = !behind && glm::all(glm::greaterThanEqual(spot, lo)) &&
+                                glm::all(glm::lessThanEqual(spot, hi));
+            auto frame = frame_of(
+                m_hudg->waypoint_arrow_bitmap, inside ? arrow->on_screen_sequence : arrow->off_screen_sequence, 0);
+            if(!frame)
+                continue;
+            f32 turn = 0.f;
+            if(!inside)
+            {
+                /* Out along the way to it, to the inset edge */
+                Vecf2 const middle = (lo + hi) * .5f;
+                Vecf2       dir    = Vecf2(ndc.x, -ndc.y);
+                if(glm::dot(dir, dir) < 1e-8f)
+                    dir = {0.f, 1.f};
+                Vecf2 const half = (hi - lo) * .5f;
+                f32 const   t    = std::min(
+                    std::abs(dir.x) > 1e-6f ? half.x / std::abs(dir.x) : 1e9f,
+                    std::abs(dir.y) > 1e-6f ? half.y / std::abs(dir.y) : 1e9f);
+                spot = middle + dir * t;
+                if((arrow->flags & flags_t::dont_rotate_when_pointing_offscreen) == flags_t::none)
+                    turn = std::atan2(dir.x, -dir.y);
+            }
+            auto        sprite = frame->sprite;
+            Vecf4 const color  = color_of(arrow->color);
+            sprite.min         = spot - frame->size * .5f;
+            sprite.max         = spot + frame->size * .5f;
+            /* Lit in full colour; the opacity only lets the world show through */
+            sprite.color       = Vecf4(Vecf3(color), arrow->opacity);
+            sprite.rotation    = turn;
+            m_view->sprites.push_back(sprite);
+        }
+    }
+
+    /* What a nav point marks: an object, a player's body, or an object
+     * the server named that may only now have arrived */
+    u64 marked(Proxy& p, GameState::nav_point_t const& nav)
+    {
+        if(nav.object)
+            return nav.object;
+        for(auto ent : p.template select<PlayerInfo>())
+            if(nav.unit >= 0 && ent.template get<PlayerInfo>().player_idx == static_cast<u32>(nav.unit))
+                return ent.id();
+        if(nav.net)
+            for(auto ent : p.template select<NetworkInfo>())
+                if(ent.template get<NetworkInfo>().instance_id == nav.net)
+                    return ent.id();
+        return 0;
+    }
+
     /* Players and humans stand together; everyone else is against them */
     static bool hostile(u16 team)
     {
@@ -1384,6 +1477,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                         grenade_hud(hud, carried.left);
             }
             messages(p, cinematic, *info, *cam, *equip);
+            nav_points(p, *info, *cam);
         }
         m_view = nullptr;
     }

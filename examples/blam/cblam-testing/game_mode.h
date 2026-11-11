@@ -5,7 +5,10 @@
 #include <coffee/components/entity_container.h>
 #include <coffee/components/subsystem.h>
 
+#include <peripherals/typing/vectors/vector_types.h>
+
 #include <array>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -65,6 +68,24 @@ struct GameState : compo::SubsystemBase
      *  may come back and a checkpoint may be taken */
     bool quiet{true};
     bool saving{false}; /*!< A checkpoint waits for quiet */
+
+    /*! A HUD marker over a spot or an object, drawn in one of hudg's
+     *  waypoint arrows for a team or one player */
+    struct nav_point_t
+    {
+        std::string                      arrow;  /*!< The waypoint arrow's name */
+        std::string                      flag;   /*!< The cutscene flag marked; empty for an object */
+        typing::vector_types::Vecf3      position{};
+        libc_types::u64                  object{0};
+        i32                              unit{-1}; /*!< A player's body, by player index */
+        libc_types::u32                  net{0};   /*!< An object not yet here, by net id */
+        f32                              offset{0.f}; /*!< wu above it */
+        i16                              team{-1};    /*!< unit team_t; -1 for one player */
+        i32                              player{-1};  /*!< player index, when not a team's */
+
+        bool operator==(nav_point_t const&) const = default;
+    };
+    std::vector<nav_point_t> nav_points;
 
     player_t* player(u32 player_idx)
     {

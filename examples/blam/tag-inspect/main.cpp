@@ -4668,6 +4668,28 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         if(auto* info = header_of((blam::scn::actor_variant*)nullptr))
             dump_actor_variant(info);
         break;
+    case blam::tag_class_t::hudg:
+        if(auto* info = header_of((blam::hud_globals*)nullptr))
+        {
+            fmt::print(
+                "  waypoint offsets={} multiplayer hud scale={}\n",
+                info->waypoint_offsets,
+                info->multiplayer_hud_scale);
+            each(g_magic, info->waypoint_arrows, [&](u32 i, blam::hud_globals::waypoint_arrow_t const& arrow) {
+                fmt::print(
+                    "  arrow [{}] {} color={:08x} opacity={} translucency={} sequences on={} off={} occluded={} flags={:#x}\n",
+                    i,
+                    arrow.name.str(),
+                    std::bit_cast<u32>(arrow.color),
+                    arrow.opacity,
+                    arrow.translucency,
+                    arrow.on_screen_sequence,
+                    arrow.off_screen_sequence,
+                    arrow.occluded_sequence,
+                    static_cast<u32>(arrow.flags));
+            });
+        }
+        break;
     case blam::tag_class_t::actr:
         if(auto* info = header_of((blam::scn::actor*)nullptr))
         {
