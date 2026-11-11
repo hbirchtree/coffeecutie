@@ -205,7 +205,8 @@
       color: var(--muted);
     }
 
-    select, input[type=text] {
+    /* Not [type=text]: the release build drops that default attribute */
+    select, .options input:not([type=checkbox]) {
       background: var(--background-solid);
       color: var(--accent);
       border: 1px solid var(--accent);
@@ -214,7 +215,7 @@
       font: inherit;
       max-width: 100%;
     }
-    select:focus {
+    select:focus, .options input:not([type=checkbox]):focus {
       border-color: var(--color);
       outline: 1px solid var(--color);
     }
@@ -427,7 +428,7 @@
     </div>
     <input id="gc-picker" type="file" multiple hidden>
     <p id="gc-status">Looking for the GameCube build...</p>
-    <p><a id="gc-download" hidden>Download the disc again</a></p>
+    <p id="gc-download-row" hidden><a id="gc-download" class="pill"></a></p>
   </section>
 </div>
 
@@ -1411,6 +1412,7 @@
   const gcServer = document.getElementById('gc-server');
   const gcStatus = document.getElementById('gc-status');
   const gcDownload = document.getElementById('gc-download');
+  const gcDownloadRow = document.getElementById('gc-download-row');
   let gcVersion = null;
 
   function gcSet(text, tone) {
@@ -1571,7 +1573,8 @@
         .replace(/[^a-z0-9_-]/g, '_');
       gcDownload.href = URL.createObjectURL(disc);
       gcDownload.download = `BlamGX-${stem}.gcm`;
-      gcDownload.hidden = false;
+      gcDownload.textContent = `Download ${gcDownload.download}`;
+      gcDownloadRow.hidden = false;
       gcDownload.click();
       gcSet(`Done, ${(disc.size / 1048576).toFixed(0)} MiB, ` +
             `${map.converted} images converted.`, 'ok');
