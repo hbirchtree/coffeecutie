@@ -116,6 +116,9 @@ struct MessageBase
 
         /* The scripts' HUD nav points */
         NavPointSync,
+
+        /* A player's death, for the kill messages */
+        KillFeed,
     } type{None};
 
     u32 request{};
@@ -492,6 +495,17 @@ struct alignas(8) NavPointSync
     char  arrow[24]{};
 
     bool operator==(NavPointSync const&) const = default;
+};
+
+/*! A player's death, as the server's kill messages tell it (KillFeedEvent) */
+struct alignas(8) KillFeed
+{
+    static constexpr auto message_type = MessageBase::KillFeed;
+
+    u32 victim{0};
+    u32 killer{0};
+    u32 cause{0};
+    u32 padding{0};
 };
 
 /*! One player's score; the whole table goes out when any of it changes */

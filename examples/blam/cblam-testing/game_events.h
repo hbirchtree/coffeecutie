@@ -105,6 +105,7 @@ struct GameEvent
         Announce,
         FlagCommand,
         FlagTouch,
+        KillFeed,
     };
 
     EventType type{None};
@@ -402,6 +403,7 @@ struct SpawnEffectEvent
     libc_types::u64 parent{0};                /*!< Followed while it plays */
     /*! Another view of an effect played elsewhere: only what is seen */
     bool visuals_only{false};
+    libc_types::u64 shooter{0}; /*!< Whose shot it is: blamed for the damage it does */
 };
 
 /*! A simulation tick passed (TickClock). Raised in order, a few per frame
@@ -585,9 +587,31 @@ struct UnitKilledEvent
 {
     static constexpr auto event_type = GameEvent::UnitKilled;
 
+    /*! What did it: a player, a vehicle (driven by `killer`, or no one),
+     *  or anything else, which Halo calls the guardians */
+    enum cause_t : libc_types::u8
+    {
+        other,
+        player_cause,
+        vehicle,
+    };
+
     libc_types::u64 unit{0};
     libc_types::u32 player{ObjectHitEvent::no_player}; /*!< When a player died */
     libc_types::u32 killer{ObjectHitEvent::no_player}; /*!< A player, if one did it */
+    cause_t         cause{other};
+};
+
+/*! A player's death, as the kill messages tell it: from the authority, and
+ *  on to everyone */
+struct KillFeedEvent
+{
+    static constexpr auto event_type = GameEvent::KillFeed;
+
+    libc_types::u32           victim{0};
+    libc_types::u32           killer{ObjectHitEvent::no_player};
+    UnitKilledEvent::cause_t  cause{UnitKilledEvent::other};
+    bool                      remote{false}; /*!< Came from the server */
 };
 
 /*! The multiplayer announcer here: one of matg's multiplayer sounds */

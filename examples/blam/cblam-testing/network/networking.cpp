@@ -1428,6 +1428,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                      forward_game_event<ServerCameraControl>(event, data);
                  }
              }});
+        /* The server's kill messages are seen everywhere */
+        m_game_bus.addEventFunction<KillFeedEvent>(0, [this](GameEvent&, KillFeedEvent* feed) {
+            if(!is_server() || feed->remote)
+                return;
+            std::set<HSteamNetConnection> verified;
+            for(auto const& [connection, state] : m_connections)
+                if(state.verified)
+                    verified.insert(connection);
+            if(!verified.empty())
+                send_all(
+                    Message<KillFeed>(KillFeed{.victim = feed->victim, .killer = feed->killer, .cause = feed->cause}),
+                    k_nSteamNetworkingSend_Reliable,
+                    verified);
+        });
         m_game_bus.addEventFunction<SyncPointEvent>(
             0, [this](GameEvent&, SyncPointEvent* sync) {
                 if(sync->released)
@@ -4520,6 +4534,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             if(sync.nav_points == 0)
                 game.nav_points.clear();
+            break;
+        }
+        case MessageBase::KillFeed: {
+            auto const&   heard = payload.value<KillFeed>();
+            GameEvent     ev{.type = GameEvent::KillFeed};
+            KillFeedEvent feed{
+                .victim = heard.victim,
+                .killer = heard.killer,
+                .cause  = static_cast<UnitKilledEvent::cause_t>(heard.cause),
+                .remote = true,
+            };
+            m_game_bus.inject(ev, &feed);
             break;
         }
         case MessageBase::NavPointSync: {

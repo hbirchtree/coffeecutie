@@ -202,7 +202,7 @@ struct ProjectileSystem
         if(ray.entity_id != 0)
             struck(p, flight, model, ray);
         if(response)
-            play(p, response->default_effect, ray.point, ray.normal, {});
+            play(p, response->default_effect, ray.point, ray.normal, {}, flight.shooter);
 
         switch(what)
         {
@@ -419,7 +419,8 @@ struct ProjectileSystem
             return false;
         for(auto* other : stuck)
             other->combined = true;
-        play(p, flight.tag->super_detonation, host.position + Vecf3{0.f, 0.f, aim_height(p, host)}, {0, 0, 1}, {});
+        play(p, flight.tag->super_detonation, host.position + Vecf3{0.f, 0.f, aim_height(p, host)}, {0, 0, 1}, {},
+             flight.shooter);
         return true;
     }
 
@@ -432,9 +433,9 @@ struct ProjectileSystem
         blam::tagref_t const* effect)
     {
         blam::tagref_t const& own = flight.tag->detonation_effect;
-        play(p, own, at, normal, {});
+        play(p, own, at, normal, {}, flight.shooter);
         if(effect && effect->tag_id != own.tag_id)
-            play(p, *effect, at, normal, {});
+            play(p, *effect, at, normal, {}, flight.shooter);
         return false;
     }
 
@@ -506,7 +507,8 @@ struct ProjectileSystem
         blam::tagref_t const& effect,
         Vecf3 const&          at,
         Vecf3 const&          direction,
-        Vecf3 const&          velocity)
+        Vecf3 const&          velocity,
+        u64                   shooter = 0)
     {
         if(!effect.valid())
             return;
@@ -516,6 +518,7 @@ struct ProjectileSystem
             .position  = at,
             .direction = direction,
             .velocity  = velocity,
+            .shooter   = shooter,
         };
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
     }
