@@ -2229,6 +2229,7 @@ struct BlamScript
         Matf4       marker{1};
         i32         node{-1}; /*!< The vehicle node the marker hangs off */
         std::string stance;   /*!< Its own, before it sat */
+        Vecf3       base{};   /*!< The vehicle's origin, as last placed */
     };
 
     /* ---- Health ---- */
@@ -2418,12 +2419,13 @@ struct BlamScript
     /* Riders sit where their seats are as the vehicle moves */
     void place_riders(Proxy& p)
     {
-        for(auto const& rider : m_riders)
+        for(auto& rider : m_riders)
         {
             auto const* vehicle = p.template get<Model>(rider.vehicle);
             auto*       unit    = p.template get<Model>(rider.unit);
             if(!vehicle || !unit)
                 continue;
+            rider.base = vehicle->position;
             /* Off the marker's node as the vehicle is posed */
             Matf4       at   = vehicle->transform;
             auto const* anim = p.template get<AnimationPlayback>(rider.vehicle);
@@ -3041,9 +3043,20 @@ struct BlamScript
     {
         std::vector<u64> dead;
         for(auto const& r : m_riders)
-            if(auto const* status = p.template get<BipedStatus>(r.unit);
-               (status && status->dead) || !p.template get<Model>(r.vehicle))
+        {
+            bool const gone = !p.template get<Model>(r.vehicle);
+            if(auto const* status = p.template get<BipedStatus>(r.unit); (status && status->dead) || gone)
                 dead.push_back(r.unit);
+            /* Its vehicle taken away, it stands where it was, not under the
+             * floor a toppled seat had sunk to */
+            if(auto* model = gone ? p.template get<Model>(r.unit) : nullptr)
+            {
+                Vecf3 const forward = model->rotation * Vecf3{1, 0, 0};
+                model->position.z   = std::max(model->position.z, r.base.z);
+                model->rotation     = glm::angleAxis(std::atan2(forward.y, forward.x), Vecf3{0, 0, 1});
+                model->update_matrix();
+            }
+        }
         for(u64 unit : dead)
             unseat(p, unit);
     }

@@ -27,7 +27,8 @@ using GameplayManifest = compo::SubsystemManifest<
         const ObjectPhysics,
         PhysicsData,
         const AnimationPlayback,
-        const BipedEquipment>,
+        const BipedEquipment,
+        const BipedStatus>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
@@ -97,6 +98,14 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
                          info.riding.vehicle == 0,
             };
             physics.process(grab_ev, &grab);
+
+            /* The dead give up their seat, so they come back on foot */
+            if(auto const* status = p.template get<BipedStatus>(player.id());
+               status && status->dead && info.riding.vehicle != 0)
+            {
+                m_leaving.erase(player.id());
+                leave_vehicle(p, player.id());
+            }
 
             offer(p, player.id(), info, cam, playing);
             bool& was_using = m_using[player.id()];
