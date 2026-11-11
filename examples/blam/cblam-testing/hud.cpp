@@ -1279,6 +1279,101 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         return std::u16string(text.begin(), text.end());
     }
 
+    /* ---- Kill messages ---- */
+
+    /* PC maps' ui\multiplayer_game_text, by place; Xbox maps carry none and
+     * get the same words */
+    enum game_text_t : size_t
+    {
+        text_guardians     = 76,
+        text_vehicle       = 77,
+        text_killed_by     = 78,
+        text_betrayed_by   = 79,
+        text_suicide       = 81,
+        text_you_betrayed  = 82,
+        text_you_killed    = 88,
+    };
+
+    std::u16string game_text(game_text_t index, std::string_view fallback) const
+    {
+        return index < m_game_text.size() && !m_game_text[index].empty() ? m_game_text[index] : wide(fallback);
+    }
+
+    /* %s filled in order */
+    static std::u16string fill(std::u16string const& format, std::initializer_list<std::u16string> names)
+    {
+        std::u16string out;
+        auto           name = names.begin();
+        for(size_t i = 0; i < format.size(); i++)
+            if(format[i] == u'%' && i + 1 < format.size() && format[i + 1] == u's' && name != names.end())
+            {
+                out += *name++;
+                i++;
+            } else
+                out += format[i];
+        return out;
+    }
+
+    /* The deaths of the last few seconds, as this player is told them: their
+     * own kills as theirs, betrayals as such, the rest by what did it */
+    void kill_feed(Proxy& p, PlayerInfo const& viewer)
+    {
+        if(m_feed.empty() || !m_hudg)
+            return;
+        auto const& game    = p.template subsystem<GameState>();
+        auto const  name_of = [&p](u32 player_idx) {
+            for(auto player : p.template select<PlayerInfo>())
+                if(auto const& info = player.template get<PlayerInfo>();
+                   info.player_idx == player_idx && !info.name.empty())
+                    return wide(info.name);
+            return wide(fmt::format("Player {}", player_idx + 1));
+        };
+        auto const teammates = [&game](u32 a, u32 b) {
+            auto const *x = game.player(a), *y = game.player(b);
+            return game.teams && x && y && x->team >= 0 && x->team == y->team;
+        };
+        std::u16string text;
+        for(auto const& [kill, _] : m_feed)
+        {
+            bool const by_player = kill.killer != ObjectHitEvent::no_player;
+            std::u16string line;
+            if(by_player && kill.killer == kill.victim)
+                line = fill(game_text(text_suicide, "%s committed suicide"), {name_of(kill.victim)});
+            else if(by_player && kill.killer == viewer.player_idx)
+                line = teammates(kill.killer, kill.victim)
+                           ? fill(game_text(text_you_betrayed, "You betrayed %s"), {name_of(kill.victim)})
+                           : fill(game_text(text_you_killed, "You killed %s"), {name_of(kill.victim)});
+            else if(by_player)
+                line = fill(
+                    teammates(kill.killer, kill.victim) ? game_text(text_betrayed_by, "%s was betrayed by %s")
+                                                        : game_text(text_killed_by, "%s was killed by %s"),
+                    {name_of(kill.victim), name_of(kill.killer)});
+            else if(kill.cause == UnitKilledEvent::vehicle)
+                line = fill(game_text(text_vehicle, "%s was killed by a vehicle"), {name_of(kill.victim)});
+            else
+                line = fill(game_text(text_guardians, "%s was killed by the guardians"), {name_of(kill.victim)});
+            if(!text.empty())
+                text += u'\n';
+            text += line;
+        }
+        Vecf4 const color = m_hudg->text_color;
+        m_view->texts.push_back({
+            .runs  = {{.text = std::move(text)}},
+            .at    = {safe_inset.x, HudScene::height - safe_inset.y - feed_bottom - feed_line * m_feed.size()},
+            .color = Vecf4(color.y, color.z, color.w, 1.f),
+        });
+    }
+
+    struct feed_t
+    {
+        KillFeedEvent kill;
+        f32           age{0.f};
+    };
+    static constexpr f32    feed_seconds = 6.f;   /* a message stays, my pick */
+    static constexpr size_t feed_lines   = 4;
+    static constexpr f32    feed_line    = 14.f;  /* HUD px */
+    static constexpr f32    feed_bottom  = 110.f; /* HUD px above the bottom, clear of the motion sensor */
+
     /* Everyone's score, best first */
     void scoreboard(Proxy& p, GameState const& game, Vecf2 window)
     {
@@ -1378,6 +1473,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         f32 const dt    = m_last != time_point{} ? std::chrono::duration<f32>(t - m_last).count() : 0.f;
         m_last          = t;
         m_dt            = dt;
+        if(m_feed_queue)
+            m_feed_queue->poll();
+        for(auto& line : m_feed)
+            line.age += dt;
+        std::erase_if(m_feed, [](feed_t const& line) { return line.age > feed_seconds; });
+        while(m_feed.size() > feed_lines)
+            m_feed.erase(m_feed.begin());
         cinematic.fade.elapsed += dt;
         cinematic.help.elapsed += dt;
         scene.fade = Vecf4(cinematic.fade.color, cinematic.fade.opacity());
@@ -1441,6 +1543,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             /* Full spectrum vision, fading out over its last second */
             if(info && info->powerups.vision > 0.f)
                 out.tint = vision_tint * std::min(info->powerups.vision, 1.f);
+            /* Deaths are told while dead too */
+            if(info && cam && cinematic.show_hud && !cam->cinematic)
+            {
+                m_view  = &out;
+                m_width = out.width;
+                kill_feed(p, *info);
+            }
             if(!info || !cam || !net || !equip || !status || !cinematic.show_hud ||
                cam->cinematic || !biped_shown(*info, *cam, *net) || !info->mode.physics ||
                status->dead)
@@ -1526,6 +1635,16 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 blam::atlas_type_t::bitmaps,
                 blam::map_ptr(static_cast<semantic::BytesConst>(*files.bitmap_file)));
         m_multiplayer = files.container.map->map_type == blam::maptype_t::multiplayer;
+        m_feed.clear();
+        m_game_text.clear();
+        if(auto text = m_index.tag_of("ui\\multiplayer_game_text"); text.has_value())
+            if(auto list = (*text)->template data<blam::ui::unicode_string_list>(*m_magic); list.has_value())
+                if(auto strings = list.value()->data.data(*m_magic); strings.has_value())
+                    for(auto const& ref : strings.value())
+                    {
+                        auto s = ref.str(*m_magic);
+                        m_game_text.emplace_back(s.has_value() ? std::u16string(s.value()) : std::u16string{});
+                    }
         m_unit_huds   = {};
         m_digits      = nullptr;
         m_grenades.clear();
@@ -1608,6 +1727,9 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
     static constexpr f32 letterbox_seconds = .5f;
     time_point           m_last{};
     f32                  m_dt{0.f};
+    std::shared_ptr<GameEventBus::queue_type<KillFeedEvent>> m_feed_queue;
+    std::vector<feed_t>                                      m_feed;
+    std::vector<std::u16string>                              m_game_text;
     static constexpr f32 low_ammo_fraction = .25f;
     /* 7.5% in from each edge of 640x480 */
     static inline Vecf2 const safe_inset{48.f, 36.f};
@@ -1638,7 +1760,9 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
 void alloc_hud(compo::EntityContainer& e)
 {
     e.register_subsystem_inplace<HudScene>();
-    e.register_subsystem_inplace<HudSystem>();
+    auto& hud         = e.register_subsystem_inplace<HudSystem>();
+    hud.m_feed_queue = e.subsystem_cast<GameEventBus>().addQueuedEventFunction<KillFeedEvent>(
+        0, [&hud](GameEvent&, KillFeedEvent* feed) { hud.m_feed.push_back({.kill = *feed}); });
 }
 
 void alloc_objective_provider(compo::EntityContainer& e)

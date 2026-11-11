@@ -203,6 +203,7 @@ struct EffectSystem
         place_t       place{};
         Vecf3         velocity{};
         u64           parent{0};
+        u64           shooter{0}; /* blamed for its damage */
         bool          attached{false}; /* loops while its object lives */
         scale_t       scale{};
 
@@ -927,6 +928,7 @@ struct EffectSystem
                     .place    = place,
                     .velocity = request.velocity,
                     .parent   = request.parent,
+                    .shooter  = request.shooter,
                 });
                 m_effects.back().audience     = audience_of(p, request.parent);
                 m_effects.back().visuals_only = request.visuals_only;
@@ -1194,7 +1196,7 @@ struct EffectSystem
                 case tag_class_t::jpt: {
                     /* The authority decides who it hurts */
                     GameEvent       ev{.type = GameEvent::AreaDamage};
-                    AreaDamageEvent area{.damage = part.type, .position = at.position};
+                    AreaDamageEvent area{.damage = part.type, .position = at.position, .shooter = fx.shooter};
                     p.template subsystem<GameEventBus>().inject(ev, &area);
                     break;
                 }

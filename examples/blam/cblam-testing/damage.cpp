@@ -470,7 +470,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             if(auto const& riding = player.template get<PlayerInfo>().riding;
                riding.vehicle == struck.vehicle && riding.driver)
                 driver = player.template get<PlayerInfo>().player_idx;
-        killed(p, struck.unit, driver);
+        killed(p, struck.unit, driver, UnitKilledEvent::vehicle);
     }
 
     std::optional<Vecf3> centre_of(Proxy& p, u64 unit) const
@@ -736,10 +736,16 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     }
 
     /* The game mode decides what a death is worth and when it ends */
-    void killed(Proxy& p, u64 unit, u32 killer)
+    void killed(Proxy& p, u64 unit, u32 killer, std::optional<UnitKilledEvent::cause_t> cause = std::nullopt)
     {
         GameEvent       ev{.type = GameEvent::UnitKilled};
-        UnitKilledEvent kill{.unit = unit, .player = player_of(p, unit), .killer = killer};
+        UnitKilledEvent kill{
+            .unit   = unit,
+            .player = player_of(p, unit),
+            .killer = killer,
+            .cause  = cause.value_or(
+                killer != ObjectHitEvent::no_player ? UnitKilledEvent::player_cause : UnitKilledEvent::other),
+        };
         p.template subsystem<GameEventBus>().inject(ev, &kill);
         doom(p, unit);
     }

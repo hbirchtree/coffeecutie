@@ -363,6 +363,12 @@ struct MultiplayerController
         if(kill.player == ObjectHitEvent::no_player)
             return;
         m_waiting[kill.unit] = m_respawn_delay;
+        if(m_game)
+        {
+            GameEvent     ev{.type = GameEvent::KillFeed};
+            KillFeedEvent feed{.victim = kill.player, .killer = kill.killer, .cause = kill.cause};
+            m_game->inject(ev, &feed);
+        }
         if(!m_vm || state.phase != GameState::phase_t::playing)
             return;
         auto set = [this](std::string_view name, u32 player) {
