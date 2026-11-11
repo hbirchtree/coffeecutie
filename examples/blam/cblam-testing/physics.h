@@ -300,13 +300,16 @@ struct UnitStruck
     f32                   speed{0.f}; /*!< How fast it came at the unit, wu/s */
 };
 
-/*! What it reaches is thrown away from it, whatever its mass */
+/*! What it reaches is thrown away from it, whatever its mass; drawn in
+ *  when the speed is negative */
 struct Blast
 {
     static constexpr auto event_type = Event::Blast;
     Vecf3                 position{};
     Vecf2                 radius{};   /*!< Full strength inside x, none past y, wu */
     f32                   speed{0.f}; /*!< Change in speed at full strength, wu/s */
+    u64                   target{0};  /*!< A direct hit: only this, along `direction` */
+    Vecf3                 direction{};
 };
 
 struct ProbeHere

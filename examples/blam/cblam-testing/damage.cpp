@@ -94,6 +94,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         m_difficulty = difficulty_block(files);
         for(auto const& area : areas)
             blast(p, area);
+        for(auto const& hit : hits)
+            shove(p, hit);
         bool const authority = !p.template subsystem<NetworkState>().replica;
         for(auto const& pickup : pickups)
             power_up(p, pickup, authority);
@@ -424,7 +426,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     {
         auto const* jpt = damage_of(area.damage);
         /* TODO: use_3d_instantaneous_acceleration, unused in stock maps */
-        if(!jpt || jpt->instantaneous_acceleration.x <= 0.f || jpt->radius.y <= 0.f)
+        if(!jpt || jpt->instantaneous_acceleration.x == 0.f || jpt->radius.y <= 0.f)
             return;
         bool const flat =
             (jpt->flags & jpt_t::flags_t::do_not_scale_damage_by_distance) !=
@@ -434,6 +436,24 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .position = area.position,
             .radius   = {flat ? jpt->radius.y : jpt->radius.x, jpt->radius.y},
             .speed    = jpt->instantaneous_acceleration.x,
+        };
+        p.template subsystem<PhysicsBus>().inject(ev, &blast);
+    }
+
+    /* A direct hit with an acceleration pushes what it struck along the
+     * shot, or pulls it back when negative (the cursed toolgun) */
+    void shove(Proxy& p, ObjectHitEvent const& hit)
+    {
+        auto const* jpt = damage_of(hit.damage);
+        if(!jpt || !hit.target || jpt->instantaneous_acceleration.x == 0.f || jpt->radius.y > 0.f ||
+           glm::length(hit.direction) <= 0.f)
+            return;
+        Physics::Event ev{Physics::Event::Blast};
+        Physics::Blast blast{
+            .position  = hit.point,
+            .speed     = jpt->instantaneous_acceleration.x,
+            .target    = hit.target,
+            .direction = glm::normalize(hit.direction),
         };
         p.template subsystem<PhysicsBus>().inject(ev, &blast);
     }
@@ -477,8 +497,15 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     {
         if(auto const* info = p.template get<PlayerInfo>(unit))
         {
+            /* A rider is where it sits */
+            if(info->riding.vehicle != 0)
+            {
+                auto const* model = p.template get<Model>(unit);
+                return model ? std::optional(model->position + Vecf3{0.f, 0.f, info->biped.height * .5f})
+                             : std::nullopt;
+            }
             auto const* cam = p.template get<PlayerCamera>(unit);
-            if(!cam || info->riding.vehicle != 0)
+            if(!cam)
                 return std::nullopt;
             return cam->camera.position - Vecf3{0.f, 0.f, info->eye_offset()};
         }
