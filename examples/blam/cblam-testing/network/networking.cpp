@@ -2803,6 +2803,24 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .saves      = game.saves,
             .reverts    = game.reverts,
         };
+        std::vector<NavPointSync> navs;
+        for(auto const& nav : game.nav_points)
+        {
+            auto const* net = nav.object ? p.get<NetworkInfo>(nav.object) : nullptr;
+            if(nav.object && (!net || net->instance_id == 0))
+                continue;
+            NavPointSync out{
+                .position = nav.position,
+                .offset   = nav.offset,
+                .object   = net ? net->instance_id : nav.net,
+                .team     = nav.team,
+                .unit     = static_cast<i16>(nav.unit),
+                .player   = nav.player,
+            };
+            std::copy_n(nav.arrow.begin(), std::min(nav.arrow.size(), sizeof(out.arrow) - 1), out.arrow);
+            navs.push_back(out);
+        }
+        state.nav_points = static_cast<u16>(navs.size());
         std::vector<GameScoreSync> scores;
         for(auto const& player : game.players)
             scores.push_back({
@@ -2816,9 +2834,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         for(auto& [connection, connection_state] : m_connections)
             if(connection_state.verified)
                 (connection_state.objects_synced ? current : fresh).insert(connection);
-        bool const changed = state != m_sent_game || scores != m_sent_scores;
+        bool const changed = state != m_sent_game || scores != m_sent_scores || navs != m_sent_navs;
         m_sent_game        = state;
         m_sent_scores      = scores;
+        m_sent_navs        = navs;
         auto send = [&](std::set<HSteamNetConnection> const& to) {
             if(to.empty())
                 return;
@@ -2827,6 +2846,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 send_all<GameScoreSync>(
                     MessageBase{MessageBase::GameScoreSync},
                     gsl::span<GameScoreSync>(scores),
+                    k_nSteamNetworkingSend_Reliable,
+                    to);
+            if(!navs.empty())
+                send_all<NavPointSync>(
+                    MessageBase{MessageBase::NavPointSync},
+                    gsl::span<NavPointSync>(navs),
                     k_nSteamNetworkingSend_Reliable,
                     to);
         };
@@ -4481,6 +4506,28 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             game.difficulty  = sync.difficulty;
             game.saves       = sync.saves;
             game.reverts     = sync.reverts;
+            if(sync.nav_points == 0)
+                game.nav_points.clear();
+            break;
+        }
+        case MessageBase::NavPointSync: {
+            auto& game = p.subsystem<GameState>();
+            game.nav_points.clear();
+            for(auto const& nav : payload.values<NavPointSync>())
+            {
+                /* An object not here yet is looked for again as drawn */
+                u64 const object = nav.object ? entity_of(p, nav.object) : 0;
+                game.nav_points.push_back({
+                    .arrow    = std::string(nav.arrow, strnlen(nav.arrow, sizeof(nav.arrow))),
+                    .position = nav.position,
+                    .object   = object,
+                    .unit     = nav.unit,
+                    .net      = object ? 0u : nav.object,
+                    .offset   = nav.offset,
+                    .team     = nav.team,
+                    .player   = nav.player,
+                });
+            }
             break;
         }
         case MessageBase::GameScoreSync: {
@@ -5036,6 +5083,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u32, EquipmentSync>             m_sent_equipment;
     GameStateSync                            m_sent_game{};
     std::vector<GameScoreSync>               m_sent_scores;
+    std::vector<NavPointSync>                m_sent_navs;
     std::map<u64, DeviceSync>                m_sent_devices;
     std::map<u32, EquipmentSync>             m_remote_weapons;
     /* A remote player's report as it was when the server handed it

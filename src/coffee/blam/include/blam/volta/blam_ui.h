@@ -1388,7 +1388,51 @@ struct hud_globals
     reference<button_icon_t>              button_icons; /*!< A, B, X, Y, ... */
     unit_hud_interface::colors_t          help_text_colors;
     tagref_typed_t<tag_class_t::hmt>      hud_messages;
-    u32                                   padding_2[112]; /*!< objective colours, waypoints */
+
+    struct objective_colors_t
+    {
+        argb8_t default_color;
+        argb8_t flashing_color;
+        f32     flash_period;
+        f32     flash_delay;
+        i16     number_of_flashes;
+        u16     flash_flags;
+        f32     flash_length;
+        argb8_t disabled_color;
+        u32     padding;
+    };
+
+    /* A nav point's look, named by the scripts that show one */
+    struct waypoint_arrow_t
+    {
+        bl_string name;
+        u32       padding_0[2];
+        argb8_t   color;
+        f32       opacity;
+        f32       translucency;
+        i16       on_screen_sequence; /*!< in waypoint_arrow_bitmap */
+        i16       off_screen_sequence;
+        i16       occluded_sequence;
+        u16       padding_1;
+        u32       padding_2[4];
+
+        enum class flags_t : u32
+        {
+            none                               = 0x0,
+            dont_rotate_when_pointing_offscreen = 0x1,
+        } flags;
+
+        u32 padding_3[6];
+    };
+
+    objective_colors_t                    objective_colors;
+    Vecf4                                 waypoint_offsets; /*!< top, bottom, left, right; pixels */
+    u32                                   padding_2[8];
+    tagref_typed_t<tag_class_t::bitm>     waypoint_arrow_bitmap;
+    reference<waypoint_arrow_t>           waypoint_arrows;
+    u32                                   padding_3[20];
+    f32                                   multiplayer_hud_scale;
+    u32                                   padding_4[64];
     tagref_typed_t<tag_class_t::wphi>     default_weapon_hud;
     f32                                   motion_sensor_range; /*!< world units */
     f32                                   motion_sensor_velocity_sensitivity;
@@ -1396,6 +1440,9 @@ struct hud_globals
 };
 
 static_assert(sizeof(hud_globals::button_icon_t) == 16);
+static_assert(sizeof(hud_globals::objective_colors_t) == 32);
+static_assert(sizeof(hud_globals::waypoint_arrow_t) == 104);
+C_FLAGS(hud_globals::waypoint_arrow_t::flags_t, u32)
 static_assert(offsetof(hud_globals, default_weapon_hud) == 0x2c0);
 static_assert(offsetof(hud_globals, motion_sensor_range) == 0x2d0);
 static_assert(offsetof(hud_globals, placement) == 0x24);

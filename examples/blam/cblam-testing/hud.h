@@ -37,6 +37,7 @@ struct HudScene : compo::SubsystemBase
          * `empty`; negative for plain sprites */
         f32   fill{-1.f};
         Vecf4 empty{0.f};
+        f32   rotation{0.f}; /*!< radians clockwise about its centre */
     };
 
     /* Messages and help text: runs of glyphs with icons between them,

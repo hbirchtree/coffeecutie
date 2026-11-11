@@ -277,6 +277,7 @@ struct BlamScript
             .allegiances = p.template subsystem<AllegianceState>().pairs,
             .grudges     = p.template subsystem<AllegianceState>().grudges,
             .timer       = p.template subsystem<CinematicState>().timer,
+            .nav_points  = p.template subsystem<GameState>().nav_points,
         };
         auto const name = [&](u64 id) {
             if(auto const* net = p.template get<NetworkInfo>(id); net && net->instance_id)
@@ -300,6 +301,9 @@ struct BlamScript
             name(id);
         for(auto const& [id, _] : m_speakers)
             name(id);
+        for(auto const& nav : m_saved->nav_points)
+            if(nav.object)
+                name(nav.object);
     }
 
     /* Whether what the checkpoint names is there again */
@@ -357,6 +361,9 @@ struct BlamScript
         std::map<u64, speaker_t> speakers;
         for(auto& [id, s] : saved.speakers)
             speakers[now(id)] = std::move(s);
+        for(auto& nav : saved.nav_points)
+            if(nav.object)
+                nav.object = now(nav.object);
 
         /* What the scripts hold, now and at the checkpoint, physics takes
          * back unless it is held still */
@@ -379,6 +386,7 @@ struct BlamScript
         m_vm         = std::move(saved.vm);
         p.template subsystem<CinematicState>().objective = saved.objective;
         p.template subsystem<CinematicState>().timer     = saved.timer;
+        p.template subsystem<GameState>().nav_points    = saved.nav_points;
         {
             auto& allegiance   = p.template subsystem<AllegianceState>();
             allegiance.pairs   = saved.allegiances;
@@ -1590,6 +1598,73 @@ struct BlamScript
                     actor->position = -1;
                 }
             return {};
+        /* Nav points: a team's, or one player's, over a flag or an object */
+        case op::activate_team_nav_point_flag:
+        case op::activate_team_nav_point_object:
+        case op::activate_nav_point_flag:
+        case op::activate_nav_point_object: {
+            bool const team = opcode == op::activate_team_nav_point_flag ||
+                              opcode == op::activate_team_nav_point_object;
+            bool const flag = opcode == op::activate_team_nav_point_flag || opcode == op::activate_nav_point_flag;
+            GameState::nav_point_t nav{.arrow = std::string(text_of(arg(0))), .offset = arg(3).as_real()};
+            if(team)
+                nav.team = static_cast<i16>(team_of(arg(1)));
+            else if(auto const units = objects_of(p, arg(1)); !units.empty())
+                if(auto const* info = p.template get<PlayerInfo>(units.front()))
+                    nav.player = static_cast<i32>(info->player_idx);
+            if(!team && nav.player < 0)
+                return {};
+            if(flag)
+            {
+                auto const* marked = named(m_scenario->cutscene.flags, text_of(arg(2)));
+                if(!marked)
+                    return log(fmt::format("nav point: no flag {}", text_of(arg(2)))), value_t{};
+                nav.flag     = std::string(text_of(arg(2)));
+                nav.position = marked->position;
+            } else if(auto const objects = objects_of(p, arg(2)); !objects.empty())
+            {
+                /* A player's body goes by its player: it has no net id */
+                if(auto const* body = p.template get<PlayerInfo>(objects.front()))
+                    nav.unit = static_cast<i32>(body->player_idx);
+                else
+                    nav.object = objects.front();
+            } else
+                return {};
+            auto& navs = p.template subsystem<GameState>().nav_points;
+            std::erase_if(navs, [&nav](auto const& other) {
+                return other.team == nav.team && other.player == nav.player && other.flag == nav.flag &&
+                       other.object == nav.object && other.unit == nav.unit;
+            });
+            navs.push_back(std::move(nav));
+            return {};
+        }
+        case op::deactivate_team_nav_point_flag:
+        case op::deactivate_team_nav_point_object:
+        case op::deactivate_nav_point_flag:
+        case op::deactivate_nav_point_object: {
+            bool const team = opcode == op::deactivate_team_nav_point_flag ||
+                              opcode == op::deactivate_team_nav_point_object;
+            bool const flag = opcode == op::deactivate_team_nav_point_flag || opcode == op::deactivate_nav_point_flag;
+            i16 const  whose_team = team ? static_cast<i16>(team_of(arg(0))) : i16{-1};
+            i32        whose_player = -1;
+            if(!team)
+                if(auto const units = objects_of(p, arg(0)); !units.empty())
+                    if(auto const* info = p.template get<PlayerInfo>(units.front()))
+                        whose_player = static_cast<i32>(info->player_idx);
+            auto const name    = flag ? std::string(text_of(arg(1))) : std::string{};
+            auto const objects = flag ? std::vector<u64>{} : objects_of(p, arg(1));
+            std::erase_if(p.template subsystem<GameState>().nav_points, [&](auto const& nav) {
+                if(nav.team != whose_team || nav.player != whose_player)
+                    return false;
+                if(flag)
+                    return nav.flag == name;
+                return std::any_of(objects.begin(), objects.end(), [&](u64 id) {
+                    auto const* body = p.template get<PlayerInfo>(id);
+                    return body ? nav.unit == static_cast<i32>(body->player_idx) : nav.object == id;
+                });
+            });
+            return {};
+        }
         case op::player_effect_set_max_translation:
         case op::player_effect_set_max_rotation:
         case op::player_effect_start:
@@ -4542,6 +4617,7 @@ struct BlamScript
         decltype(AllegianceState::pairs)        allegiances;
         decltype(AllegianceState::grudges)      grudges;
         CinematicState::timer_t                 timer;
+        std::vector<GameState::nav_point_t>     nav_points;
     };
     std::optional<saved_t> m_saved;
     bool                   m_save_now{false};
@@ -4568,7 +4644,8 @@ void alloc_scripting(compo::EntityContainer& e)
     auto& gbus     = e.subsystem_cast<GameEventBus>();
     script.m_ticks = std::make_unique<TickQueue>(gbus);
     gbus.addEventFunction<MapLoadEvent>(
-        0, [&script, &cinematic](auto&, auto*) {
+        0, [&e, &script, &cinematic](auto&, auto*) {
+            e.subsystem_cast<GameState>().nav_points.clear();
             script.m_scenario = nullptr;
             script.m_saved.reset();
             cinematic.objective.clear();

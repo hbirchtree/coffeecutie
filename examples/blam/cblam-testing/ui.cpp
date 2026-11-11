@@ -1261,6 +1261,16 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 if(!image.valid())
                     continue;
                 push_quad(data, sprite.min, sprite.max, image, sprite.uv);
+                if(sprite.rotation != 0.f)
+                {
+                    Vecf2 const centre = (sprite.min + sprite.max) * .5f;
+                    f32 const   c = std::cos(sprite.rotation), s = std::sin(sprite.rotation);
+                    for(size_t v = data.vertex_data.size() - 6; v < data.vertex_data.size(); v++)
+                    {
+                        Vecf2 const d                   = data.vertex_data[v].position - centre;
+                        data.vertex_data[v].position = centre + Vecf2(d.x * c - d.y * s, d.x * s + d.y * c);
+                    }
+                }
                 auto& inst    = data.instance_data.back();
                 inst.color    = sprite.color;
                 inst.extra[0] = premultiplied;
