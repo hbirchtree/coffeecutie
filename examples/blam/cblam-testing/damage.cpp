@@ -85,6 +85,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(std::exchange(m_generation, files.load_generation) != files.load_generation)
         {
             m_dying.clear();
+            m_object_body.clear();
             m_gone.clear();
             m_destroyed.clear();
             m_broods.clear();
@@ -104,6 +105,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             for(auto const& hit : hits)
                 if(auto const* jpt = damage_of(hit.damage))
                 {
+                    if(auto const* coll = breakable(p, hit.target))
+                    {
+                        break_object(p, hit.target, *coll, *jpt, 1.f);
+                        continue;
+                    }
                     if(hit.behind && assassinate(p, hit.target, player_of(p, hit.shooter)))
                         continue;
                     hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head, player_of(p, hit.shooter));
@@ -418,6 +424,66 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                     : 1.f - (d - inner) / std::max(jpt->radius.y - inner, 1e-3f);
             hurt(p, unit.id(), *jpt, scale, -1, false, player_of(p, area.shooter));
         }
+        for(auto ent : p.template select<Model>())
+        {
+            auto const& model = ent.template get<Model>();
+            f32 const   d = std::max(glm::distance(model.position, area.position) - model.render_radius, 0.f);
+            if(d > jpt->radius.y)
+                continue;
+            auto const* coll = breakable(p, ent.id());
+            if(!coll)
+                continue;
+            f32 const inner = std::min(jpt->radius.x, jpt->radius.y);
+            f32 const scale =
+                flat || d <= inner ? 1.f : 1.f - (d - inner) / std::max(jpt->radius.y - inner, 1e-3f);
+            break_object(p, ent.id(), *coll, *jpt, scale);
+        }
+        std::erase_if(m_object_body, [&p](auto const& e) { return !p.template get<Model>(e.first); });
+    }
+
+    /* ---- Objects that are not units ---- */
+
+    /* Its coll, where the tag gives its body something to do when spent
+     * (cursed TNT primes); other scenery and items take no harm */
+    blam::coll::header const* breakable(Proxy& p, u64 entity) const
+    {
+        auto const* model = p.template get<Model>(entity);
+        if(!model || !model->origin_object || p.template get<BipedStatus>(entity))
+            return nullptr;
+        auto obj = model->origin_object->template data<blam::scn::object>(*m_magic);
+        if(!obj.has_value())
+            return nullptr;
+        auto const* coll = tag_data<blam::coll::header>(obj.value()[0].collider, blam::tag_class_t::coll);
+        if(!coll || coll->maximum_body_vitality <= 0.f ||
+           (!coll->body_depleted_effect.valid() && !coll->body_destroyed_effect.valid()))
+            return nullptr;
+        return coll;
+    }
+
+    /* Spent, it plays its depleted effect on itself; past its destroyed
+     * threshold it plays that one and is taken away */
+    void break_object(Proxy& p, u64 entity, blam::coll::header const& coll, jpt_t const& jpt, f32 scale)
+    {
+        f32& body         = m_object_body.try_emplace(entity, 1.f).first->second;
+        f32 const before  = body;
+        if(before <= coll.body_destroyed_threshold)
+            return;
+        body -= uniform(jpt.upper_bound) * scale / coll.maximum_body_vitality;
+        auto const play = [&](blam::tagref_t const& effect, u64 parent) {
+            auto const* model = p.template get<Model>(entity);
+            if(!effect.valid() || !model)
+                return;
+            GameEvent        ev{.type = GameEvent::SpawnEffect};
+            SpawnEffectEvent spawn{.effect = effect, .position = model->position, .direction = {0.f, 0.f, 1.f}, .parent = parent};
+            p.template subsystem<GameEventBus>().inject(ev, &spawn);
+        };
+        if(before > 0.f && body <= 0.f)
+            play(coll.body_depleted_effect, entity);
+        if(body > coll.body_destroyed_threshold)
+            return;
+        play(coll.body_destroyed_effect, 0);
+        if(auto const* net = p.template get<NetworkInfo>(entity); net && net->instance_id)
+            m_gone.push_back(net->instance_id);
     }
 
     /* Every peer throws what it moves itself, so this is not left to the
@@ -1036,6 +1102,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<EquipWeaponEvent>    m_pickups;
     std::map<u64, f32>               m_dying; /* unit: seconds until destroyed */
     std::vector<u32>                 m_gone;  /* net ids, despawned next frame */
+    std::map<u64, f32>               m_object_body; /* breakable objects' body left, by entity */
     std::set<u64>                    m_destroyed;
     u32                              m_generation{0};
     blam::globals::difficulty const* m_difficulty{nullptr};
