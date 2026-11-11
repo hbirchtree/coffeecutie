@@ -2515,13 +2515,38 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
     kind_t const* kind_of(Proxy& p, Actor const& actor)
     {
-        auto const key = std::tuple{actor.encounter, actor.squad, actor.variant};
+        auto const key = std::tuple{actor.encounter, actor.squad, actor.variant, actor.actv};
         if(auto it = m_kinds.find(key); it != m_kinds.end())
             return &it->second;
         kind_t kind;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        blam::tag_index_view<halo_version> index(files.container);
+        auto const variant_of = [&](auto tag_id) {
+            if(auto tag = index.find(tag_id); tag != index.end())
+                if(auto variant = (*tag).template data<actv_t>(*s_magic); variant.has_value())
+                {
+                    kind.variant = variant.value();
+                    if(auto actor_tag = index.find(kind.variant->actor_definition.tag_id);
+                       actor_tag != index.end())
+                        if(auto actr = (*actor_tag).template data<actr_t>(*s_magic); actr.has_value())
+                            kind.actor = actr.value();
+                }
+        };
+        /* Outside any encounter: no positions, no orders, just its variant */
+        if(actor.encounter < 0)
+        {
+            if(actor.actv == 0)
+                return nullptr;
+            static blam::scn::ai::encounter const no_encounter{};
+            static blam::scn::ai::squad const     no_squad{};
+            kind.encounter = &no_encounter;
+            kind.squad     = &no_squad;
+            variant_of(actor.actv);
+            return &m_kinds.emplace(key, kind).first->second;
+        }
         auto encounters = m_scenario->ai.encounters.data(*s_magic);
         auto palette    = m_scenario->ai.actor_palette.data(*s_magic);
-        if(!encounters.has_value() || !palette.has_value() || actor.encounter < 0 ||
+        if(!encounters.has_value() || !palette.has_value() ||
            static_cast<size_t>(actor.encounter) >= encounters.value().size())
             return nullptr;
         kind.encounter = &encounters.value()[actor.encounter];
@@ -2531,23 +2556,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         kind.squad     = &squads.value()[actor.squad];
         /* Its own type, from where it was placed, outlasts a migration */
         i16 const type = actor.variant >= 0 ? actor.variant : kind.squad->actor_type;
-        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        blam::tag_index_view<halo_version> index(files.container);
         if(type >= 0 && static_cast<size_t>(type) < palette.value().size())
-        {
-            auto const& ref = static_cast<blam::tagref_t const&>(palette.value()[type]);
-            if(auto tag = index.find(ref.tag_id); tag != index.end())
-                if(auto variant = (*tag).template data<actv_t>(*s_magic); variant.has_value())
-                {
-                    kind.variant = variant.value();
-                    if(auto actor_tag = index.find(kind.variant->actor_definition.tag_id);
-                       actor_tag != index.end())
-                        if(auto actr = (*actor_tag).template data<actr_t>(*s_magic); actr.has_value())
-                        {
-                            kind.actor = actr.value();
-                        }
-                }
-        }
+            variant_of(static_cast<blam::tagref_t const&>(palette.value()[type]).tag_id);
         return &m_kinds.emplace(key, kind).first->second;
     }
 
@@ -2577,7 +2587,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     blam::scn::scenario<halo_version> const*                         m_scenario{nullptr};
     static inline blam::map_ptr const*                               s_magic{nullptr};
     u32                                                              m_generation{0};
-    std::map<std::tuple<i16, i16, i16>, kind_t>                      m_kinds;
+    std::map<std::tuple<i16, i16, i16, u32>, kind_t>                 m_kinds;
     std::map<i16, std::vector<std::optional<std::vector<i32>>>>      m_links; /* encounter: per position */
     std::vector<obstacle_t>                                          m_obstacles;
     std::map<blam::tag_t const*, std::vector<std::pair<Vecf3, f32>>> m_spheres; /* object tag: its spheres */

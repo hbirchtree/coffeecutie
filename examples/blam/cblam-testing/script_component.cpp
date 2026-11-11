@@ -147,6 +147,7 @@ struct BlamScript
         m_hovering.clear();
         m_spawning.clear();
         m_actor_slots.clear();
+        m_crewed.clear();
         m_despawning.clear();
         m_recreate.clear();
         m_deferred.clear();
@@ -238,6 +239,7 @@ struct BlamScript
             play_recordings(p);
             play_custom(p);
             run_commands(p);
+            crew_vehicles(p);
             offer_vehicles(p);
             board_vehicles(p);
             drop_dead_riders(p);
@@ -2223,6 +2225,7 @@ struct BlamScript
         u64         unit;
         u64         vehicle;
         std::string seat;
+        i16         seat_idx{-1};
         Matf4       marker{1};
         i32         node{-1}; /*!< The vehicle node the marker hangs off */
         std::string stance;   /*!< Its own, before it sat */
@@ -2286,7 +2289,7 @@ struct BlamScript
             });
             bool const fits = exact ? label == seat : label.find(seat) != std::string::npos;
             bool taken = std::any_of(m_riders.begin(), m_riders.end(), [&](rider_t const& r) {
-                return r.vehicle == vehicle && r.seat == label;
+                return r.vehicle == vehicle && r.seat_idx == static_cast<i16>(seat_idx);
             });
             /* A player's seat too, or one a player was just sent to */
             if(auto claim = m_player_claims.find({vehicle, label});
@@ -2298,7 +2301,21 @@ struct BlamScript
                     taken = true;
             if(!fits || taken)
                 continue;
-            auto marker = bind_marker_node(*model->tag, candidate.marker_name.str(), m_magic);
+            sit(p, unit, vehicle, *model, candidate, static_cast<i16>(seat_idx));
+            return;
+        }
+        log(fmt::format("seat: no free {} seat for {} in {}", seat, unit, vehicle));
+    }
+
+    /* Into one seat by its index: seats may share a label */
+    void sit(Proxy& p, u64 unit, u64 vehicle, Model const& model, blam::scn::unit::seat_t const& candidate, i16 seat_idx)
+    {
+        {
+            std::string label(candidate.label.str());
+            std::transform(label.begin(), label.end(), label.begin(), [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+            });
+            auto marker = bind_marker_node(*model.tag, candidate.marker_name.str(), m_magic);
             unseat(p, unit);
             /* It animates as the seat's stance, its idle when a custom
              * animation ends */
@@ -2307,18 +2324,62 @@ struct BlamScript
             if(anim)
                 anim->stance = std::string(candidate.label.str());
             m_riders.push_back({
-                .unit    = unit,
-                .vehicle = vehicle,
-                .seat    = label,
-                .marker  = marker ? marker->transform : Matf4(1),
-                .node    = marker ? marker->node : -1,
-                .stance  = std::move(own),
+                .unit     = unit,
+                .vehicle  = vehicle,
+                .seat     = label,
+                .seat_idx = seat_idx,
+                .marker   = marker ? marker->transform : Matf4(1),
+                .node     = marker ? marker->node : -1,
+                .stance   = std::move(own),
             });
             carry(p, unit, true);
-            seated(p, unit, vehicle, static_cast<i16>(seat_idx));
-            return;
+            seated(p, unit, vehicle, seat_idx);
         }
-        log(fmt::format("seat: no free {} seat for {} in {}", seat, unit, vehicle));
+    }
+
+    /* A vehicle comes with its seats' built-in gunners, each an actor of
+     * the seat's variant, outside any encounter (the cursed D20 spawners,
+     * the dropship's turret) */
+    void crew_vehicles(Proxy& p)
+    {
+        auto palette = m_scenario->ai.actor_palette.data(m_magic);
+        for(auto ent : p.template select<ObjectPhysics, Model>())
+        {
+            auto const& [physics, model] = ent.components();
+            if(!physics.drive || !model.origin_object || !m_crewed.insert(ent.id()).second)
+                continue;
+            auto u = model.origin_object->template data<blam::scn::unit>(m_magic);
+            auto seats = u.has_value() ? u.value()[0].seats.data(m_magic) : decltype(u.value()[0].seats.data(m_magic)){};
+            if(!seats.has_value())
+                continue;
+            for(size_t si = 0; si < seats.value().size(); si++)
+            {
+                auto const& variant = seats.value()[si].built_in_gunner;
+                auto const* unit    = variant.valid() ? unit_of(variant) : nullptr;
+                if(!unit)
+                    continue;
+                u32 const        net_id = script_net_id_base | m_next_actor++;
+                GameEvent        ev{.type = GameEvent::SpawnObject};
+                SpawnObjectEvent spawn{
+                    .object        = *unit,
+                    .position      = model.position,
+                    .rotation      = model.rotation,
+                    .net_id        = net_id,
+                    .server_owned  = true,
+                    .held          = weapon_of(variant),
+                    .change_colors = colors_of(variant),
+                    .camouflaged   = camouflaged(variant),
+                };
+                p.template subsystem<GameEventBus>().inject(ev, &spawn);
+                m_spawning.insert(net_id);
+                m_actor_slots[net_id] = {
+                    .post    = model.position,
+                    .actv    = variant.tag_id.value(),
+                    .vehicle = ent.id(),
+                    .seat    = static_cast<i16>(si),
+                };
+            }
+        }
     }
 
     void unseat(Proxy& p, u64 unit)
@@ -2980,7 +3041,8 @@ struct BlamScript
     {
         std::vector<u64> dead;
         for(auto const& r : m_riders)
-            if(auto const* status = p.template get<BipedStatus>(r.unit); status && status->dead)
+            if(auto const* status = p.template get<BipedStatus>(r.unit);
+               (status && status->dead) || !p.template get<Model>(r.vehicle))
                 dead.push_back(r.unit);
         for(u64 unit : dead)
             unseat(p, unit);
@@ -4317,6 +4379,7 @@ struct BlamScript
             actor->idle_state = slot->second.idle_state;
             actor->post      = slot->second.post;
             actor->team      = slot->second.team;
+            actor->actv      = slot->second.actv;
             /* The encounter's default is the unit tag's own team */
             if(actor->team == 0)
                 if(auto const* model = p.template get<Model>(id); model && model->origin_object)
@@ -4324,6 +4387,13 @@ struct BlamScript
                        unit.has_value())
                         actor->team = static_cast<u16>(unit.value()[0].default_team);
         }
+        /* A built-in gunner takes its seat */
+        if(auto const& s = slot->second; s.vehicle != 0)
+            if(auto const* model = p.template get<Model>(s.vehicle); model && model->origin_object && model->tag)
+                if(auto u = model->origin_object->template data<blam::scn::unit>(m_magic); u.has_value())
+                    if(auto seats = u.value()[0].seats.data(m_magic);
+                       seats.has_value() && s.seat >= 0 && static_cast<size_t>(s.seat) < seats.value().size())
+                        sit(p, id, s.vehicle, *model, seats.value()[s.seat], s.seat);
         m_actor_slots.erase(slot);
     }
 
@@ -4585,8 +4655,12 @@ struct BlamScript
         u16   team{0};
         Vecf3 post{};
         i16   idle_state{0};
+        u32   actv{0};    /*!< Its variant's tag, outside the palette */
+        u64   vehicle{0}; /*!< The vehicle it is the built-in gunner of */
+        i16   seat{-1};
     };
     std::map<u32, actor_slot_t> m_actor_slots;
+    std::set<u64>               m_crewed; /*!< Vehicles whose built-in gunners were made */
     action_tests_t                          m_tests;
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
     std::set<u32>                           m_loops;
