@@ -8,14 +8,21 @@
 #include "network/networking.h"
 #include "script_vm.h"
 #include "selected_version.h"
+#include "sounds.h"
 #include "spawn_points.h"
 #include "ticks.h"
+
+#include <blam/volta/blam_globals.h>
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
 
 #include <map>
 #include <random>
+#include <set>
+
+/* Sound entity ids for the announcer, one per line so a line restarts */
+constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
 
 using MultiplayerManifest = compo::SubsystemManifest<
     type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus>,
@@ -53,15 +60,18 @@ struct MultiplayerController
         m_rejoin_queue->poll();
         auto kills   = std::exchange(m_kills, {});
         auto rejoins = std::exchange(m_rejoins, {});
-        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
-           p.template subsystem<NetworkState>().replica)
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
             return;
-        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        auto&       state = p.template subsystem<GameState>();
-        m_state           = &state;
+        bool const  replica = p.template subsystem<NetworkState>().replica;
+        auto const& files   = p.template subsystem<BlamFiles<halo_version>>();
+        auto&       state   = p.template subsystem<GameState>();
+        m_state             = &state;
         if(m_load_generation != files.load_generation)
-            begin(state, files);
+            begin(state, files, replica);
         if(state.kind != GameState::kind_t::multiplayer)
+            return;
+        announcer(p, state, dt);
+        if(replica)
             return;
         for(auto const& kill : kills)
             killed(state, kill);
@@ -77,12 +87,19 @@ struct MultiplayerController
         respawn(p, state, files, dt);
     }
 
-    void begin(GameState& state, BlamFiles<halo_version> const& files)
+    void begin(GameState& state, BlamFiles<halo_version> const& files, bool replica)
     {
         m_load_generation = files.load_generation;
         m_waiting.clear();
         m_vm.reset();
+        m_local_vm.reset();
+        m_seen.clear();
+        m_kill_times.clear();
+        m_streaks.clear();
+        m_over = false;
         m_respawn_delay       = default_delay;
+        if(replica)
+            return;
         state.vehicle_respawn = GameState::default_vehicle_respawn;
         if(state.kind != GameState::kind_t::multiplayer)
             return;
@@ -96,6 +113,95 @@ struct MultiplayerController
             [this](BC opcode, vm_t::node_t const&, std::vector<script_vm::value_t>& args, vm_t::thread_t&) {
                 return native(*m_state, opcode, args);
             });
+    }
+
+    /* ---- The announcer, on every peer for its own players ---- */
+
+    /* Started once the game is known here, so a peer joining late hears the
+     * game type; it sees its players' kills and deaths as they are told */
+    void announcer(Proxy& p, GameState const& state, f32 dt)
+    {
+        m_clock += dt;
+        if(!m_local_vm)
+        {
+            m_local_program = game_modes::announcer_for<BC>(state.game_type);
+            m_local_vm      = std::make_unique<vm_t>();
+            m_local_vm->load(
+                semantic::Span<vm_t::node_t const>(m_local_program.nodes.data(), m_local_program.nodes.size()),
+                m_local_program.segment(),
+                m_local_program.scripts(),
+                semantic::Span<blam::hsc::global const>(
+                    m_local_program.globals.data(), m_local_program.globals.size()),
+                [this](BC opcode, vm_t::node_t const&, std::vector<script_vm::value_t>& args, vm_t::thread_t&) {
+                    return local_native(*m_state, opcode, args);
+                });
+            /* What happened before it started is not news */
+            for(auto const& player : state.players)
+                m_seen[player.player_idx] = {player.kills, player.deaths};
+        }
+        m_game = &p.template subsystem<GameEventBus>();
+        std::set<u32> mine;
+        for(auto ent : p.template select<PlayerInfo>())
+            if(auto const& info = ent.template get<PlayerInfo>(); !info.is_remote())
+                mine.insert(info.player_idx);
+        for(u32 idx : mine)
+        {
+            auto const* player = state.player(idx);
+            if(!player)
+                continue;
+            auto& seen = m_seen.try_emplace(idx, seen_t{player->kills, player->deaths}).first->second;
+            if(player->deaths > seen.deaths)
+                m_streaks[idx] = 0;
+            i16 const fresh = player->kills - seen.kills;
+            seen = {player->kills, player->deaths};
+            if(fresh <= 0)
+                continue;
+            auto& times = m_kill_times[idx];
+            for(i16 k = 0; k < fresh; k++)
+                times.push_back(m_clock);
+            std::erase_if(times, [this](f32 at) { return m_clock - at > kill_memory; });
+            m_streaks[idx] += fresh;
+            if(auto* slot = m_local_vm->global("event_player"))
+                *slot = script_vm::value_t::number(blam::hsc::type_t::short_, static_cast<f32>(idx));
+            m_local_vm->wake("on_local_kill");
+            m_local_vm->tick();
+        }
+        if(state.phase == GameState::phase_t::over && !std::exchange(m_over, true))
+            m_local_vm->wake("on_game_over");
+        if(dt > 0.f)
+            m_local_vm->tick();
+    }
+
+    script_vm::value_t local_native(GameState const& state, BC opcode, std::vector<script_vm::value_t>& args)
+    {
+        using script_vm::value_t;
+        using blam::hsc::type_t;
+        auto arg = [&args](size_t i) { return i < args.size() ? args[i].as_real() : 0.f; };
+        switch(static_cast<mode_op>(static_cast<u16>(opcode)))
+        {
+        case mode_op::announce: {
+            GameEvent     ev{.type = GameEvent::Announce};
+            AnnounceEvent say{.sound = static_cast<u16>(arg(0))};
+            m_game->inject(ev, &say);
+            return {};
+        }
+        case mode_op::teams:
+            return value_t::boolean(state.teams);
+        case mode_op::kills_within: {
+            auto const it = arg(0) >= 0.f ? m_kill_times.find(static_cast<u32>(arg(0))) : m_kill_times.end();
+            i16 count = 0;
+            if(it != m_kill_times.end())
+                for(f32 at : it->second)
+                    count += m_clock - at <= arg(1);
+            return value_t::number(type_t::short_, count);
+        }
+        case mode_op::kill_streak: {
+            auto const it = arg(0) >= 0.f ? m_streaks.find(static_cast<u32>(arg(0))) : m_streaks.end();
+            return value_t::number(type_t::short_, it != m_streaks.end() ? it->second : 0);
+        }
+        default:
+            return {};
+        }
     }
 
     /* ---- What the rules may do ---- */
@@ -243,7 +349,14 @@ struct MultiplayerController
             &standing);
     }
 
-    static constexpr f32 default_delay = 3.f; /* s, until the rules say */
+    static constexpr f32 default_delay = 3.f;  /* s, until the rules say */
+    static constexpr f32 kill_memory   = 30.f; /* s of kill times kept for kills_within */
+
+    struct seen_t
+    {
+        i16 kills{0};
+        i16 deaths{0};
+    };
 
     std::unique_ptr<TickQueue>                                 m_ticks;
     std::shared_ptr<GameEventBus::queue_type<UnitKilledEvent>> m_kill_queue;
@@ -257,6 +370,15 @@ struct MultiplayerController
     std::unique_ptr<vm_t>      m_vm;
     f32                        m_respawn_delay{default_delay};
     std::map<u64, f32>         m_waiting; /*!< Seconds left */
+
+    hsc_builder::program_t<BC>      m_local_program;
+    std::unique_ptr<vm_t>           m_local_vm;
+    GameEventBus*                   m_game{nullptr};
+    f32                             m_clock{0.f}; /*!< Seconds of play here */
+    bool                            m_over{false};
+    std::map<u32, seen_t>           m_seen;       /*!< By player: kills and deaths last seen */
+    std::map<u32, std::vector<f32>> m_kill_times; /*!< By player: when they killed */
+    std::map<u32, i16>              m_streaks;    /*!< By player: kills since dying */
     std::mt19937               m_random{std::random_device{}()};
 };
 
@@ -269,4 +391,30 @@ void alloc_multiplayer_controller(compo::EntityContainer& e)
         0, [&mode](GameEvent&, UnitKilledEvent* kill) { mode.m_kills.push_back(*kill); });
     mode.m_rejoin_queue = game.addQueuedEventFunction<UnitRejoinedEvent>(
         0, [&mode](GameEvent&, UnitRejoinedEvent* back) { mode.m_rejoins.push_back(back->unit); });
+    /* The announcer's lines are matg's multiplayer sounds, heard here */
+    game.addEventFunction<AnnounceEvent>(0, [&e](GameEvent&, AnnounceEvent* say) {
+        auto* sounds = e.service<comp_app::EventBus<SoundEvent>>();
+        if(!sounds)
+            return;
+        auto const& files = e.subsystem_cast<BlamFiles<halo_version>>();
+        blam::tag_index_view<halo_version> index(files.container);
+        auto globals_tag = index.tag_of("globals\\globals");
+        if(!globals_tag.has_value())
+            return;
+        auto globals = (*globals_tag)->template data<blam::globals::globals>(files.container.magic);
+        if(!globals.has_value())
+            return;
+        auto mp = globals.value()->multiplayer.data(files.container.magic);
+        if(!mp.has_value() || mp.value().empty())
+            return;
+        auto lines = mp.value()[0].sounds.data(files.container.magic);
+        if(!lines.has_value() || say->sound >= lines.value().size() || !lines.value()[say->sound].valid())
+            return;
+        SoundEvent     ev{.type = SoundEvent::play_sound, .entity_id = announcer_sound_base | say->sound};
+        PlaySoundEvent play{
+            .sound    = &static_cast<blam::tagref_t const&>(lines.value()[say->sound]),
+            .relative = true,
+        };
+        sounds->inject(ev, &play);
+    });
 }
