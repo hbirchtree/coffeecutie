@@ -1915,11 +1915,13 @@ void ShaderCache<V>::populate_material(
                     break;
                 auto unit   = context->unit;
                 auto colors = unit->change_colors.data(magic).value();
-                if(colors.empty())
-                    break;
                 auto i = static_cast<u32>(info->change_color_src) - 1u;
-                if((i + 1) > colors.size())
+                /* A slot the unit leaves out is filled by the game, e.g. a player's colour */
+                if(i >= colors.size())
+                {
+                    mat.material.inputs[0] = Vecf4(Vecf3(1.f), static_cast<f32>(i + 1));
                     break;
+                }
                 auto perms = colors[i].permutations.data(magic).value();
                 /* The alpha names the source, 1..4, for an object to put
                  * its own colour in its place */

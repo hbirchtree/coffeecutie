@@ -309,6 +309,8 @@ struct Model
 
     blam::tag_t const* tag{nullptr};
     blam::tag_t const* origin_object{nullptr};
+    /*! The unit whose change colours it wears, without an origin object (players) */
+    blam::tag_t const* colors_of{nullptr};
     /*! A weapon on the ground: the battery it was dropped with */
     libc_types::f32 item_age{0.f};
     /*! And the rounds left in it; see SpawnObjectEvent::rounds */
