@@ -102,6 +102,7 @@ struct GameEvent
         MapGame,
         EnlistActor,
         PlayerEffect,
+        Announce,
     };
 
     EventType type{None};
@@ -583,6 +584,14 @@ struct UnitKilledEvent
     libc_types::u64 unit{0};
     libc_types::u32 player{ObjectHitEvent::no_player}; /*!< When a player died */
     libc_types::u32 killer{ObjectHitEvent::no_player}; /*!< A player, if one did it */
+};
+
+/*! The multiplayer announcer here: one of matg's multiplayer sounds */
+struct AnnounceEvent
+{
+    static constexpr auto event_type = GameEvent::Announce;
+
+    libc_types::u16 sound{0}; /*!< Into matg's multiplayer sounds */
 };
 
 /*! A unit spawned outside the scripts (a carrier's infection forms) joins

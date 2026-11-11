@@ -4668,6 +4668,15 @@ void dump_tag(blam::tag_index_view<Ver> const& index, blam::tag_t const& tag)
         if(auto* info = header_of((blam::scn::actor_variant*)nullptr))
             dump_actor_variant(info);
         break;
+    case blam::tag_class_t::matg:
+        if(auto* info = header_of((blam::globals::globals*)nullptr))
+            each(g_magic, info->multiplayer, [&](u32, blam::globals::multiplayer_information const& mp) {
+                fmt::print("  multiplayer ball={:x} sounds={}\n", mp.ball.tag_id, mp.sounds.count);
+                each(g_magic, mp.sounds, [&](u32 i, auto const& ref) {
+                    fmt::print("    sound [{}] {}\n", i, ref.valid() ? name_of(ref) : std::string("-"));
+                });
+            });
+        break;
     case blam::tag_class_t::hudg:
         if(auto* info = header_of((blam::hud_globals*)nullptr))
         {

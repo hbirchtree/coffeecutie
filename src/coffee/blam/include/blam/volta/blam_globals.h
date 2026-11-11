@@ -15,6 +15,10 @@ struct multiplayer_information
     tagref_typed_t<tag_class_t::weap> flag;
     tagref_typed_t<tag_class_t::bipd> unit;
     reference<u32>                    vehicles; /* not decoded */
+    tagref_typed_t<tag_class_t::shdr> hill_shader;
+    tagref_typed_t<tag_class_t::shdr> flag_shader;
+    tagref_typed_t<tag_class_t::weap> ball;
+    reference<tagref_typed_t<tag_class_t::snd>> sounds; /*!< The announcer's, by game event */
 };
 
 static_assert(offsetof(multiplayer_information, unit) == 0x10);
