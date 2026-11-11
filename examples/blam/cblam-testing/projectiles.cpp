@@ -127,7 +127,8 @@ struct ProjectileSystem
         Vecf3 const from = model.position;
         Vecf3 const to   = from + flight.velocity * dt;
         Physics::Event   ev{Physics::Event::Raycast};
-        Physics::Raycast ray{.from = from, .to = to, .ignore = flight.owner};
+        /* A vehicle's shot passes its own shooter, who may sit in its path */
+        Physics::Raycast ray{.from = from, .to = to, .ignore = flight.owner, .ignore_also = flight.shooter};
         p.template subsystem<PhysicsBus>().process(ev, &ray);
 
         fly_by(p, flight, from, ray.hit ? ray.point : to);

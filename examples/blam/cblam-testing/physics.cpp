@@ -3169,6 +3169,7 @@ struct PhysicsSystem
             using ClosestRayResultCallback::ClosestRayResultCallback;
             int                      triangle{-1};
             btCollisionObject const* ignore{nullptr};
+            btCollisionObject const* ignore_also{nullptr};
             /* Traced separately, where they were */
             std::set<btCollisionObject const*> rewound;
             /* Riders collide with nothing, and a remote player's body keeps
@@ -3179,7 +3180,7 @@ struct PhysicsSystem
             {
                 auto const* object =
                     static_cast<btCollisionObject const*>(proxy->m_clientObject);
-                if(object == ignore || rewound.contains(object))
+                if(object == ignore || object == ignore_also || rewound.contains(object))
                     return false;
                 return bipeds.contains(object) ||
                        (object->hasContactResponse() &&
@@ -3203,6 +3204,9 @@ struct PhysicsSystem
         if(auto it = m_bodies.find(ray.ignore);
            ray.ignore != 0 && it != m_bodies.end())
             closest.ignore = it->second.world_body.get();
+        if(auto it = m_bodies.find(ray.ignore_also);
+           ray.ignore_also != 0 && it != m_bodies.end())
+            closest.ignore_also = it->second.world_body.get();
         for(auto const& [id, _] : m_player_bodies)
             if(auto it = m_bodies.find(id); it != m_bodies.end())
                 closest.bipeds.insert(it->second.world_body.get());
@@ -3216,7 +3220,7 @@ struct PhysicsSystem
             {
                 auto it    = m_bodies.find(id);
                 auto where = biped_at(id, *ray.rewind);
-                if(id == ray.ignore || it == m_bodies.end() || !where)
+                if(id == ray.ignore || id == ray.ignore_also || it == m_bodies.end() || !where)
                     continue;
                 btTransform from_at, to_at;
                 from_at.setIdentity();
