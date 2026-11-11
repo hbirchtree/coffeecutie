@@ -1209,6 +1209,10 @@ struct PhysicsSystem
                     .posed     = hulls,
                     .max_slope = shape.max_slope,
                 });
+                /* Out of a seat inside the hull: it passes through what it
+                 * overlaps until clear, instead of being shot out */
+                if(existing != m_player_bodies.end() && existing->second.riding && !riding)
+                    m_released.push_back(id);
                 m_player_bodies[id] = {
                     .kinematic = kinematic, .riding = riding, .shape = shape};
                 if(riding && m_bodies.contains(id))
