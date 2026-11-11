@@ -105,6 +105,26 @@ struct sound_t
     glm::vec2 pitch{1.f};
 };
 
+/* A looping sound's tracks and details, as a cluster's background */
+struct background_t
+{
+    struct track_t
+    {
+        u32 sound;
+        f32 gain, fade_in, fade_out;
+    };
+
+    struct detail_t
+    {
+        u32       sound;
+        glm::vec2 period, yaw, pitch, distance;
+        f32       gain;
+    };
+
+    std::vector<track_t>  tracks;
+    std::vector<detail_t> details;
+};
+
 /* The sounds something can play, read out of the map at load */
 class bank_t
 {
@@ -177,6 +197,58 @@ class bank_t
                    static_cast<u32>(sounds.size() - 1);
     }
 
+    /* A looping sound: its tracks' loops, and the details heard around them.
+     * Alternate loops wait on scripts, so details only for those are left out
+     */
+    template<typename V, typename Ref>
+    std::optional<background_t> background(
+        blam::map_container<V> const& c, Ref const& ref)
+    {
+        using blam::sound::detail_sound_t;
+        using blam::sound::looping_sound;
+        auto const* t = enabled ? blam::tag_at(c, ref.tag_id) : nullptr;
+        if(!t || !t->matches(blam::tag_class_t::lsnd))
+            return std::nullopt;
+        auto tag = t->template data<looping_sound>(c.magic);
+        if(tag.has_error())
+            return std::nullopt;
+        background_t out;
+        if(auto tracks = tag.value()->tracks.data(c.magic); !tracks.has_error())
+            for(auto const& tr : tracks.value())
+                if(auto s = sound(c, tr.loop))
+                    out.tracks.push_back({
+                        .sound    = *s,
+                        .gain     = from_le(tr.gain),
+                        .fade_in  = from_le(tr.fade_in_duration),
+                        .fade_out = from_le(tr.fade_out_duration),
+                    });
+        if(auto details = tag.value()->detail_sounds.data(c.magic);
+           !details.has_error())
+            for(auto const& d : details.value())
+            {
+                if(from_le(d.flags) &
+                   detail_sound_t::dont_play_without_alternate)
+                    continue;
+                auto const s = sound(c, d.sound);
+                if(!s)
+                    continue;
+                auto le2 = [](typing::vector_types::Vecf2 const& v) {
+                    return glm::vec2{from_le(v.x), from_le(v.y)};
+                };
+                out.details.push_back({
+                    .sound    = *s,
+                    .period   = le2(d.random_period_bounds),
+                    .yaw      = le2(d.yaw_bounds),
+                    .pitch    = le2(d.pitch_bounds),
+                    .distance = le2(d.distance_bounds),
+                    .gain     = from_le(d.gain),
+                });
+            }
+        if(out.tracks.empty() && out.details.empty())
+            return std::nullopt;
+        return out;
+    }
+
   private:
     std::map<u32, u32> m_known; // by tag id
 };
@@ -195,6 +267,9 @@ class mixer_t
         s_self  = this;
         m_map   = map;
         m_paths = &paths;
+        for(u32 i = 0; i < kAmbient; i++)
+            for(u32 h = 0; h < kParts; h++)
+                m_ambient[i].store[h] = m_ambient_store[i][h];
         std::memset(m_blocks, 0, sizeof(m_blocks));
         std::memset(m_silence, 0, sizeof(m_silence));
         DCFlushRange(m_blocks, sizeof(m_blocks));
@@ -229,9 +304,38 @@ class mixer_t
                 v.occlusion += (v.occlusion_target - v.occlusion) * blend;
                 spatialize(v);
             }
+        for(auto& v : m_ambient)
+            if(v.active)
+            {
+                v.fade   = std::clamp(v.fade + v.fade_rate * dt, 0.f, 1.f);
+                v.active = v.fade > 0.f || v.fade_rate > 0.f;
+                i32 const volume =
+                    static_cast<i32>(v.gain * v.perm_gain * v.fade * 256.f);
+                v.volume[0] = v.volume[1] = volume;
+            }
+        play_details(dt);
     }
 
-    void play(u32 sound, glm::vec3 const& at)
+    /* The cluster's background: the last one's tracks fade out as these fade
+     * in. Null keeps what plays */
+    void set_background(background_t const* background)
+    {
+        if(!background || background == m_background)
+            return;
+        for(auto& v : m_ambient)
+            if(v.active && v.fade_rate >= 0.f)
+                v.fade_rate = -1.f / std::max(v.fade_out, .1f);
+        m_background = background;
+        m_detail_timers.clear();
+        for(auto const& d : background->details)
+            m_detail_timers.push_back(uniform(d.period));
+        for(auto const& track : background->tracks)
+            start_ambient(track);
+    }
+
+    /* direct: heard as placed, with nothing in the way looked for */
+    void play(
+        u32 sound, glm::vec3 const& at, f32 gain = 1.f, bool direct = false)
     {
         if(sound >= m_bank.sounds.size())
             return;
@@ -271,7 +375,8 @@ class mixer_t
         v.sound    = sound;
         v.channels = s.channels;
         v.at       = at;
-        v.gain     = s.gain;
+        v.gain     = s.gain * gain;
+        v.direct   = direct;
         v.started  = ++m_plays;
         v.step     = static_cast<u32>((s.rate * bend / kOutputRate) * 65536.f);
         v.pos      = kAdpcmSamples << 16; // decode on the first sample
@@ -286,7 +391,14 @@ class mixer_t
     /* Mix whatever the DMA has room for */
     void pump()
     {
-        platform::file::gekko::vmem::poll();
+        if(auto done = platform::file::gekko::vmem::poll(); done.into)
+            for(auto& v : m_ambient)
+                for(u32 h = 0; h < kParts; h++)
+                    if(v.store[h] == done.into && v.half[h].asked)
+                    {
+                        v.half[h].asked = false;
+                        v.half[h].ready = done.ok;
+                    }
         while(m_filled - m_playing < kBlocks - 2)
         {
             i16* block = m_blocks[m_filled % kBlocks];
@@ -305,7 +417,16 @@ class mixer_t
     static constexpr u32 kVoices       = 12;
     static constexpr u32 kMaxSameSound = 3;
     static constexpr u32 kReadAhead    = 8192; // bytes a voice keeps in front
-    static constexpr i32 kHeadroom     = 96; // 8.8: gunshots peak at full scale
+    static constexpr u32 kAmbient      = 4;    // background tracks' own budget
+    // One of an ambient voice's buffers: whole blocks of one or two channels.
+    // Several, as a piece's last chunk can be tiny
+    static constexpr u32 kParts     = 3;
+    static constexpr u32 kHalfBytes = kAdpcmBlock * 2 * 112;
+    static constexpr f32 kDefaultFade =
+        2.f; // seconds, for tracks that give none
+    static constexpr f32 kAmbientUrgent =
+        .3f;                             // seconds left before it jumps ahead
+    static constexpr i32 kHeadroom = 96; // 8.8: gunshots peak at full scale
     static constexpr f32 kOcclusionSmoothing = .3f; // seconds
     // What full occlusion costs, as BlamGraphics' dry path
     static constexpr f32 kOccludedGain = .65f, kOccludedHighs = .85f;
@@ -333,6 +454,23 @@ class mixer_t
         f32       route_length{0.f};
         i32       lowpass{256}; // 8.8, of the difference taken each sample
         i32       lowpassed[2]{0, 0};
+
+        bool direct{false}; // nothing in the way looked for
+
+        // Background tracks: their own buffers, loop on, fade in and out
+        bool ambient{false};
+        f32  fade{1.f}, fade_rate{0.f}, fade_out{kDefaultFade};
+
+        struct half_t
+        {
+            u32  perm{0}, at{0}, len{0}, skip{0};
+            bool planned{false}, asked{false}, ready{false};
+        };
+
+        half_t half[kParts];
+        u8*    store[kParts]{};
+        u32    reading{0}, used{0};
+        u32    plan_perm{0}, plan_at{0}; // where the next half to read starts
 
         // [0] repeats the last block's end, for interpolating over the seam
         i16 pcm[2][kAdpcmSamples + 1];
@@ -373,7 +511,7 @@ class mixer_t
     {
         v.occlusion_target = 0.f;
         v.routed           = false;
-        if(!m_paths || !m_paths->hears_from(m_ear))
+        if(v.direct || !m_paths || !m_paths->hears_from(m_ear))
             return;
         auto const open = m_paths->open_near(v.at, m_ear);
         if(!open)
@@ -433,6 +571,89 @@ class mixer_t
         v.next        = p.next;
     }
 
+    f32 uniform(glm::vec2 const& bounds)
+    {
+        return glm::mix(
+            bounds.x, bounds.y, static_cast<f32>(random() & 0xFFFF) / 65535.f);
+    }
+
+    /* Each detail at its own random period, around the listener; yaw from
+     * where they face */
+    void play_details(f32 dt)
+    {
+        if(!m_background)
+            return;
+        glm::vec3 const up{0.f, 0.f, 1.f};
+        glm::vec3 const forward = glm::normalize(glm::cross(up, m_right));
+        for(size_t i = 0; i < m_detail_timers.size(); i++)
+        {
+            if((m_detail_timers[i] -= dt) > 0.f)
+                continue;
+            auto const& d       = m_background->details[i];
+            m_detail_timers[i]  = std::max(uniform(d.period), .5f);
+            f32 const       yaw = uniform(d.yaw), pitch = uniform(d.pitch);
+            glm::vec3 const offset =
+                uniform(d.distance) *
+                (forward * (std::cos(pitch) * std::cos(yaw)) +
+                 m_right * (std::cos(pitch) * std::sin(yaw)) +
+                 up * std::sin(pitch));
+            play(d.sound, m_ear + offset, d.gain, true);
+        }
+    }
+
+    void start_ambient(background_t::track_t const& track)
+    {
+        // A free one, else whichever has faded furthest
+        voice_t* slot = &m_ambient[0];
+        for(auto& v : m_ambient)
+            if(!v.active ? slot->active || v.fade < slot->fade
+                         : slot->active && v.fade < slot->fade)
+                slot = &v;
+        auto const& s = m_bank.sounds[track.sound];
+        voice_t&    v = *slot;
+        u8*         store[kParts];
+        std::copy(v.store, v.store + kParts, store);
+        v = {};
+        std::copy(store, store + kParts, v.store);
+        v.active   = true;
+        v.ambient  = true;
+        v.sound    = track.sound;
+        v.channels = s.channels;
+        v.gain     = s.gain * (track.gain > 0.f ? track.gain : 1.f);
+        v.fade     = 0.f;
+        v.fade_rate =
+            1.f / (track.fade_in > 0.f ? track.fade_in : kDefaultFade);
+        v.fade_out  = track.fade_out > 0.f ? track.fade_out : kDefaultFade;
+        v.step      = static_cast<u32>((s.rate / f32(kOutputRate)) * 65536.f);
+        v.pos       = kAdpcmSamples << 16;
+        v.plan_perm = random() % s.starts;
+    }
+
+    /* The next stretch of a background track: on through its chunks, then
+     * another piece to start, as loops go on */
+    void plan(voice_t& v, voice_t::half_t& h)
+    {
+        auto const& s     = m_bank.sounds[v.sound];
+        u32 const   block = kAdpcmBlock * v.channels;
+        for(u32 guard = 0; guard < 4; guard++)
+        {
+            auto const& p = m_bank.permutations[s.first + v.plan_perm];
+            if(v.plan_at + block <= p.size)
+            {
+                u32 const len =
+                    std::min(kHalfBytes, (p.size - v.plan_at) / block * block);
+                h         = {.perm = v.plan_perm, .at = v.plan_at, .len = len};
+                h.planned = true;
+                v.plan_at += len;
+                return;
+            }
+            v.plan_at   = 0;
+            v.plan_perm = p.next >= 0 && static_cast<u32>(p.next) < s.count
+                              ? static_cast<u32>(p.next)
+                              : random() % s.starts;
+        }
+    }
+
     /* The first byte of what the voice needs next not yet off the disc */
     std::optional<u32> missing(voice_t const& v, u32 span) const
     {
@@ -449,18 +670,76 @@ class mixer_t
             m_map, p.file_off, std::min(p.size, span - here));
     }
 
-    /* One read at a time: voices run dry first, then those about to */
+    /* Seconds a background track has read and not yet played */
+    f32 ambient_left(voice_t const& v) const
+    {
+        u32 const block = kAdpcmBlock * v.channels;
+        u32       bytes = 0;
+        for(u32 n = 0; n < kParts; n++)
+        {
+            auto const& h = v.half[(v.reading + n) % kParts];
+            if(!h.ready)
+                break;
+            bytes += h.len - (n ? 0 : v.used);
+        }
+        return static_cast<f32>(bytes / block * kAdpcmSamples) /
+               static_cast<f32>(m_bank.sounds[v.sound].rate);
+    }
+
+    /* Refill a background track's next empty half; false if the drive's busy
+     * or there's nothing to read */
+    bool read_ambient(voice_t& v)
+    {
+        namespace vmem = platform::file::gekko::vmem;
+        for(u32 n = 0; n < kParts; n++)
+        {
+            u32 const i = (v.reading + n) % kParts;
+            auto&     h = v.half[i];
+            if(!v.active || h.ready || h.asked)
+                continue;
+            if(!h.planned)
+                plan(v, h);
+            if(!h.planned)
+                continue;
+            auto const& s = m_bank.sounds[v.sound];
+            if(!vmem::read(
+                   m_map,
+                   m_bank.permutations[s.first + h.perm].file_off + h.at,
+                   h.len,
+                   v.store[i],
+                   h.skip))
+                return false;
+            h.asked = true;
+            return true;
+        }
+        return false;
+    }
+
+    /* One read at a time: voices run dry first, then background tracks about
+     * to, then reading ahead, then background tracks with time to spare */
     void request_reads()
     {
         namespace vmem = platform::file::gekko::vmem;
-        for(u32 span : {kAdpcmBlock * 2, kReadAhead})
+        auto voices    = [&](u32 span) {
             for(auto const& v : m_voices)
                 if(v.active && (span == kReadAhead || v.waiting))
                     if(auto at = missing(v, span))
                     {
                         vmem::request(m_map, *at);
-                        return;
+                        return true;
                     }
+            return false;
+        };
+        if(voices(kAdpcmBlock * 2))
+            return;
+        for(auto& v : m_ambient)
+            if(v.active && ambient_left(v) < kAmbientUrgent && read_ambient(v))
+                return;
+        if(voices(kReadAhead))
+            return;
+        for(auto& v : m_ambient)
+            if(read_ambient(v))
+                return;
     }
 
     enum class block_t
@@ -474,6 +753,8 @@ class mixer_t
     block_t next_block(voice_t& v)
     {
         u32 const block = kAdpcmBlock * v.channels;
+        if(v.ambient)
+            return next_ambient_block(v, block);
         while(v.left < block)
         {
             if(v.next < 0)
@@ -499,13 +780,51 @@ class mixer_t
         return block_t::decoded;
     }
 
+    /* From the half being played; a spent half goes back to be refilled */
+    block_t next_ambient_block(voice_t& v, u32 block)
+    {
+        auto* h = &v.half[v.reading];
+        if(h->ready && v.used + block > h->len)
+        {
+            *h        = {};
+            v.reading = (v.reading + 1) % kParts;
+            v.used    = 0;
+            h         = &v.half[v.reading];
+        }
+        if(!h->ready)
+            return block_t::waiting;
+        auto const& s = m_bank.sounds[v.sound];
+        v.perm_gain =
+            std::max(m_bank.permutations[s.first + h->perm].gain, 0.f);
+        if(v.perm_gain <= 0.f)
+            v.perm_gain = 1.f;
+        u8 const* at = v.store[v.reading] + h->skip + v.used;
+        for(u32 c = 0; c < v.channels; c++)
+        {
+            v.pcm[c][0] = v.pcm[c][kAdpcmSamples];
+            decode_adpcm_block(at, v.channels, c, &v.pcm[c][1]);
+        }
+        v.used += block;
+        return block_t::decoded;
+    }
+
     void mix(i16* out)
     {
         std::memset(m_mix, 0, sizeof(m_mix));
         for(auto& v : m_voices)
+            mix_voice(v);
+        for(auto& v : m_ambient)
+            mix_voice(v);
+        for(u32 s = 0; s < kFrames * 2; s++)
+            out[s] = static_cast<i16>(
+                std::clamp((m_mix[s] * kHeadroom) >> 8, -32768, 32767));
+    }
+
+    void mix_voice(voice_t& v)
+    {
         {
             if(!v.active)
-                continue;
+                return;
             u32 const other = v.channels - 1;
             for(u32 f = 0; f < kFrames; f++)
             {
@@ -535,9 +854,6 @@ class mixer_t
                 v.pos += v.step;
             }
         }
-        for(u32 s = 0; s < kFrames * 2; s++)
-            out[s] = static_cast<i16>(
-                std::clamp((m_mix[s] * kHeadroom) >> 8, -32768, 32767));
     }
 
     bank_t const&                        m_bank;
@@ -545,10 +861,15 @@ class mixer_t
     paths_t const*                       m_paths{nullptr};
     u32                                  m_sense_next{0};
     voice_t                              m_voices[kVoices];
-    i32                                  m_mix[kFrames * 2];
-    glm::vec3                            m_ear{0.f}, m_right{0.f, -1.f, 0.f};
-    u32                                  m_seed{0x2F6E2B1u};
-    u32                                  m_plays{0};
+    voice_t                              m_ambient[kAmbient];
+
+    background_t const* m_background{nullptr};
+    std::vector<f32>    m_detail_timers;
+    u8  m_ambient_store[kAmbient][kParts][kHalfBytes + 64] ATTRIBUTE_ALIGN(32);
+    i32 m_mix[kFrames * 2];
+    glm::vec3 m_ear{0.f}, m_right{0.f, -1.f, 0.f};
+    u32       m_seed{0x2F6E2B1u};
+    u32       m_plays{0};
 
     i16 m_blocks[kBlocks][kFrames * 2] ATTRIBUTE_ALIGN(32);
     i16 m_silence[kFrames * 2] ATTRIBUTE_ALIGN(32);
