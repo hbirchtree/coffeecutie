@@ -2,6 +2,7 @@
 
 #include "blam_files.h"
 #include "components.h"
+#include "ctf.h"
 #include "data.h"
 #include "model_markers.h"
 #include "object_functions.h"
@@ -124,18 +125,18 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(!weapon.has_value())
                 continue;
             auto triggers = weapon.value()[0].triggers.data(magic);
-            if(!triggers.has_value() || triggers.value().empty())
-                continue;
             live.insert(ent.id());
             auto& state = m_states[ent.id()];
             /* Another weapon starts afresh */
             if(state.weapon != weapon_tag)
                 state = {.weapon = weapon_tag};
-            trigger_t const& trigger = triggers.value()[0];
 
-            /* Grenades are thrown on foot, whatever is held */
+            /* Grenades are thrown on foot, unless what is held forbids it */
+            using weapon_flags_t = blam::scn::weapon::weapon_flags_t;
+            bool const no_grenades =
+                (weapon.value()[0].weapon_flags & weapon_flags_t::prevents_grenade_throwing) != weapon_flags_t::none;
             bool const throwing =
-                !riding && grenade(p, ent.id(), info, cam, *equip, ticks, toss, cycle);
+                !riding && grenade(p, ent.id(), info, cam, *equip, ticks, toss && !no_grenades, cycle);
             /* A strike on foot stops the gun until it is done */
             for(auto const& tick : ticks)
                 state.striking = std::max(state.striking - tick.seconds, 0.f);
@@ -145,7 +146,25 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 state.reloading = 0.f;
                 pull(p, ent.id(), info, cam, *weapon_tag, true);
             }
-            bool const pulled = input.intent.fire && !throwing && state.striking <= 0.f;
+            /* Nothing to fire (a flag): melee alone, and a pull lets go of it */
+            if(!triggers.has_value() || triggers.value().empty())
+            {
+                if(input.intent.fire && !throwing && state.striking <= 0.f && equip->objective.tag == weapon_tag)
+                {
+                    m_hold_fire.insert(ent.id());
+                    EquipWeaponEvent drop{
+                        .entity_id = ent.id(), .weapon = weapon_tag->tag_id, .mode = EquipWeaponEvent::drop};
+                    GameEvent ev{.type = GameEvent::EquipWeapon};
+                    p.template subsystem<GameEventBus>().inject(ev, &drop);
+                }
+                continue;
+            }
+            trigger_t const& trigger = triggers.value()[0];
+            /* The pull that let go of a flag fires nothing until released */
+            if(!input.intent.fire)
+                m_hold_fire.erase(ent.id());
+            bool const pulled =
+                input.intent.fire && !throwing && state.striking <= 0.f && !m_hold_fire.contains(ent.id());
 
             /* Bodies switch, reload and run dry; vehicle guns don't */
             auto* ammo = vehicle ? nullptr : &equip->weapons[0];
@@ -357,12 +376,19 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(info.riding.vehicle || !info.mode.physics || !biped_in_play(info, cam, net) ||
                equip.load_generation != files.load_generation)
                 continue;
+            /* Looked up once a body is equipped from this map */
+            if(m_flag_generation != files.load_generation)
+            {
+                m_flag            = flag_weapon(files);
+                m_flag_generation = files.load_generation;
+            }
             for(auto item : p.template select<Model, NetworkInfo>())
             {
                 auto [model, item_net] = item.components();
                 auto const* tag        = model.origin_object;
+                /* The flag goes by the game type's rules, not by walking over it */
                 if(item_net.instance_id == 0 ||
-                   SpawnObjectEvent::is_impostor(item_net.instance_id) || !tag ||
+                   SpawnObjectEvent::is_impostor(item_net.instance_id) || !tag || tag == m_flag ||
                    taken.contains(item.id()) || p.template get<PlayerInfo>(item.id()))
                     continue;
                 /* A grenade of a kind carried, while there is room for it */
@@ -1601,6 +1627,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr std::string_view gun_marker = "primary trigger";
 
     u32                       m_generation{0};
+    blam::tag_t const*        m_flag{nullptr}; /*!< Taken by the game type's rules, not walked over */
+    std::set<u64>             m_hold_fire;     /*!< Let go of a flag with the trigger still held */
+    u32                       m_flag_generation{0};
     std::map<u64, state_t>    m_states;
     std::map<u64, throw_t>    m_throws;
     std::vector<grenade_t>    m_grenades;

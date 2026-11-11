@@ -1393,7 +1393,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             });
         m_pickup_queue = m_game_bus.addQueuedEventFunction<EquipWeaponEvent>(
             0, [this](GameEvent&, EquipWeaponEvent* equip) {
-                if(is_server() && equip->mode == EquipWeaponEvent::pick_up)
+                if(is_server() &&
+                   (equip->mode == EquipWeaponEvent::pick_up || equip->mode == EquipWeaponEvent::remove))
                     m_pickups.push_back(*equip);
             });
         m_input_queue = m_game_bus.addQueuedEventFunction<PlayerTickInputEvent>(
@@ -2802,6 +2803,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .difficulty = game.difficulty,
             .saves      = game.saves,
             .reverts    = game.reverts,
+            .flag_carrier = {static_cast<i16>(game.flags[0].carrier), static_cast<i16>(game.flags[1].carrier)},
+            .flag_taken   = {game.flags[0].taken, game.flags[1].taken},
         };
         std::vector<NavPointSync> navs;
         for(auto const& nav : game.nav_points)
@@ -2816,6 +2819,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .team     = nav.team,
                 .unit     = static_cast<i16>(nav.unit),
                 .player   = nav.player,
+                .mp_team  = nav.mp_team,
             };
             std::copy_n(nav.arrow.begin(), std::min(nav.arrow.size(), sizeof(out.arrow) - 1), out.arrow);
             navs.push_back(out);
@@ -3567,7 +3571,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(!equip || !equip->held(p.subsystem<BlamFiles<halo_version>>().load_generation))
             return out;
         auto const& [held, slung] = equip->weapons;
-        out.weapon = held.tag ? held.tag->tag_id : blam::tag_index<>{};
+        /* A flag or ball in hand is what others see held */
+        auto const* in_hand = equip->objective.tag ? &equip->objective : &held;
+        out.weapon = in_hand->tag ? in_hand->tag->tag_id : blam::tag_index<>{};
         out.slung  = slung.tag ? slung.tag->tag_id : blam::tag_index<>{};
         out.flags  = static_cast<EquipmentSync::flags_t>(
             (equip->reloading ? EquipmentSync::reloading : 0) |
@@ -3690,6 +3696,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                 .weapon     = pickup.weapon,
                                 .age        = pickup.age,
                                 .rounds     = pickup.rounds,
+                                .remove     = pickup.mode == EquipWeaponEvent::remove,
                             }));
                     }
     }
@@ -4398,7 +4405,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             EquipWeaponEvent equip{
                 .entity_id = holder,
                 .weapon    = pickup.weapon,
-                .mode      = EquipWeaponEvent::pick_up,
+                .mode      = pickup.remove ? EquipWeaponEvent::remove : EquipWeaponEvent::pick_up,
                 .age       = pickup.age,
                 .rounds    = pickup.rounds,
             };
@@ -4506,6 +4513,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             game.difficulty  = sync.difficulty;
             game.saves       = sync.saves;
             game.reverts     = sync.reverts;
+            for(size_t t = 0; t < game.flags.size(); t++)
+            {
+                game.flags[t].carrier = sync.flag_carrier[t];
+                game.flags[t].taken   = sync.flag_taken[t] != 0;
+            }
             if(sync.nav_points == 0)
                 game.nav_points.clear();
             break;
@@ -4526,6 +4538,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .offset   = nav.offset,
                     .team     = nav.team,
                     .player   = nav.player,
+                    .mp_team  = nav.mp_team,
                 });
             }
             break;

@@ -2,6 +2,7 @@
 
 #include "blam_files.h"
 #include "components.h"
+#include "ctf.h"
 #include "data.h"
 #include "game_events.h"
 #include "network/networking.h"
@@ -67,10 +68,13 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
                                                              : GameState::kind_t::none;
         state.phase       = GameState::phase_t::playing;
         state.game_type   = setup.game_type;
-        state.teams       = false;
+        /* Capture the flag is played in teams */
+        state.teams       = setup.game_type == GameSetup::game_type_t::ctf;
         state.difficulty  = setup.difficulty;
         state.players.clear();
         state.team_scores = {};
+        state.flags       = {};
+        state.flag_reach  = .8f;
         state.winner      = -1;
         state.time_left   = -1.f;
         state.saves = state.reverts = 0;
@@ -167,4 +171,5 @@ void alloc_game_mode(compo::EntityContainer& e)
     alloc_campaign_controller(e);
     alloc_multiplayer_controller(e);
     alloc_object_respawn(e);
+    alloc_ctf_flags(e);
 }

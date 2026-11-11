@@ -82,10 +82,25 @@ struct GameState : compo::SubsystemBase
         f32                              offset{0.f}; /*!< wu above it */
         i16                              team{-1};    /*!< unit team_t; -1 for one player */
         i32                              player{-1};  /*!< player index, when not a team's */
+        i16                              mp_team{-1}; /*!< Shown only to this multiplayer team */
 
         bool operator==(nav_point_t const&) const = default;
     };
     std::vector<nav_point_t> nav_points;
+
+    /*! Capture the flag: each team's flag (red 0, blue 1). The authority
+     *  keeps them; the rest is told whether each is taken and by whom */
+    struct flag_t
+    {
+        typing::vector_types::Vecf3 base{};
+        bool                        placed{false}; /*!< The map has a base for it */
+        bool                        taken{false};  /*!< Gone from its base since an enemy took it */
+        i32                         carrier{-1};   /*!< Player index holding it */
+        f32                         idle{0.f};     /*!< Seconds lying away from its base */
+        libc_types::u64             object{0};     /*!< Where it lies, on the authority */
+    };
+    std::array<flag_t, 2> flags{};
+    f32                   flag_reach{.8f}; /*!< wu, set by the rules */
 
     player_t* player(u32 player_idx)
     {

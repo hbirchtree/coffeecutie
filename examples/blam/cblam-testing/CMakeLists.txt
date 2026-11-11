@@ -52,6 +52,7 @@ coffee_application(
         game_mode.cpp
         campaign_controller.cpp
         multiplayer_controller.cpp
+        ctf_flags.cpp
         object_respawn.cpp
         checkpoint.cpp
         save_state.cpp

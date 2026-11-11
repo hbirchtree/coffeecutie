@@ -25,12 +25,13 @@
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
 
 using MultiplayerManifest = compo::SubsystemManifest<
-    type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus>,
+    type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus, const Model>,
     type_list_t<
         GameState,
         GameEventBus,
         const NetworkState,
         const LoadingStatus,
+        const GameSetup,
         const BlamFiles<halo_version>>,
     empty_list_t>;
 
@@ -58,6 +59,8 @@ struct MultiplayerController
             dt += tick.seconds;
         m_kill_queue->poll();
         m_rejoin_queue->poll();
+        m_touch_queue->poll();
+        auto touches = std::exchange(m_touches, {});
         auto kills   = std::exchange(m_kills, {});
         auto rejoins = std::exchange(m_rejoins, {});
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
@@ -67,7 +70,7 @@ struct MultiplayerController
         auto&       state   = p.template subsystem<GameState>();
         m_state             = &state;
         if(m_load_generation != files.load_generation)
-            begin(state, files, replica);
+            begin(state, files, p.template subsystem<GameSetup>(), replica);
         if(state.kind != GameState::kind_t::multiplayer)
             return;
         announcer(p, state, dt);
@@ -77,8 +80,12 @@ struct MultiplayerController
             killed(state, kill);
         for(u64 unit : rejoins)
             m_waiting[unit] = m_respawn_delay;
+        m_proxy = &p;
+        for(auto const& touch : touches)
+            touched(state, touch);
         if(m_vm && state.phase == GameState::phase_t::playing && dt > 0.f)
             m_vm->tick();
+        m_proxy = nullptr;
         if(state.time_left > 0.f && (state.time_left -= dt) <= 0.f)
         {
             state.time_left = 0.f;
@@ -87,7 +94,7 @@ struct MultiplayerController
         respawn(p, state, files, dt);
     }
 
-    void begin(GameState& state, BlamFiles<halo_version> const& files, bool replica)
+    void begin(GameState& state, BlamFiles<halo_version> const& files, GameSetup const& setup, bool replica)
     {
         m_load_generation = files.load_generation;
         m_waiting.clear();
@@ -103,7 +110,7 @@ struct MultiplayerController
         state.vehicle_respawn = GameState::default_vehicle_respawn;
         if(state.kind != GameState::kind_t::multiplayer)
             return;
-        m_program = game_modes::rules_for<BC>(state.game_type);
+        m_program = game_modes::rules_for<BC>(setup);
         m_vm      = std::make_unique<vm_t>();
         m_vm->load(
             semantic::Span<vm_t::node_t const>(m_program.nodes.data(), m_program.nodes.size()),
@@ -113,6 +120,24 @@ struct MultiplayerController
             [this](BC opcode, vm_t::node_t const&, std::vector<script_vm::value_t>& args, vm_t::thread_t&) {
                 return native(*m_state, opcode, args);
             });
+        configure(*m_vm, setup);
+    }
+
+    /* --game-option name=value: any global of the program by that name */
+    static void configure(vm_t& vm, GameSetup const& setup)
+    {
+        using blam::hsc::type_t;
+        for(auto const& [name, text] : setup.options)
+        {
+            auto* slot = vm.global(name);
+            if(!slot)
+                continue;
+            if(slot->type == type_t::bool_)
+                *slot = script_vm::value_t::boolean(text == "true" || text == "1" || text == "yes");
+            else
+                *slot = script_vm::value_t::number(slot->type, std::strtof(text.c_str(), nullptr));
+            cDebug("Game option {} = {}", name, text);
+        }
     }
 
     /* ---- The announcer, on every peer for its own players ---- */
@@ -122,6 +147,9 @@ struct MultiplayerController
     void announcer(Proxy& p, GameState const& state, f32 dt)
     {
         m_clock += dt;
+        /* Started from what everyone is told: a peer waits for the scores */
+        if(!m_local_vm && state.players.empty())
+            return;
         if(!m_local_vm)
         {
             m_local_program = game_modes::announcer_for<BC>(state.game_type);
@@ -135,6 +163,7 @@ struct MultiplayerController
                 [this](BC opcode, vm_t::node_t const&, std::vector<script_vm::value_t>& args, vm_t::thread_t&) {
                     return local_native(*m_state, opcode, args);
                 });
+            configure(*m_local_vm, p.template subsystem<GameSetup>());
             /* What happened before it started is not news */
             for(auto const& player : state.players)
                 m_seen[player.player_idx] = {player.kills, player.deaths};
@@ -187,6 +216,14 @@ struct MultiplayerController
         }
         case mode_op::teams:
             return value_t::boolean(state.teams);
+        case mode_op::flag_taken: {
+            auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
+            return value_t::boolean(t < state.flags.size() && state.flags[t].taken);
+        }
+        case mode_op::team_score: {
+            auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
+            return value_t::number(type_t::short_, t < state.team_scores.size() ? state.team_scores[t] : 0);
+        }
         case mode_op::kills_within: {
             auto const it = arg(0) >= 0.f ? m_kill_times.find(static_cast<u32>(arg(0))) : m_kill_times.end();
             i16 count = 0;
@@ -212,7 +249,8 @@ struct MultiplayerController
         using blam::hsc::type_t;
         auto arg = [&args](size_t i) { return i < args.size() ? args[i].as_real() : 0.f; };
         auto who = [&](size_t i) { return state.player(static_cast<u32>(arg(i))); };
-        switch(static_cast<mode_op>(static_cast<u16>(opcode)))
+        auto const op = static_cast<mode_op>(static_cast<u16>(opcode));
+        switch(op)
         {
         case mode_op::score_add:
             if(auto* player = arg(0) >= 0.f ? who(0) : nullptr)
@@ -244,6 +282,49 @@ struct MultiplayerController
         case mode_op::vehicle_respawn_set:
             state.vehicle_respawn = arg(0);
             return {};
+        case mode_op::flag_give:
+        case mode_op::flag_reset: {
+            GameEvent        ev{.type = GameEvent::FlagCommand};
+            FlagCommandEvent command{
+                .kind   = op == mode_op::flag_give ? FlagCommandEvent::give : FlagCommandEvent::reset,
+                .team   = static_cast<u16>(arg(0)),
+                .player = static_cast<u32>(arg(1)),
+            };
+            if(arg(0) >= 0.f && (op == mode_op::flag_reset || arg(1) >= 0.f))
+                m_game->inject(ev, &command);
+            return {};
+        }
+        case mode_op::flag_taken:
+        case mode_op::flag_carrier:
+        case mode_op::flag_idle: {
+            auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
+            if(t >= state.flags.size())
+                return op == mode_op::flag_taken ? value_t::boolean(false)
+                                                 : value_t::number(type_t::short_, -1);
+            auto const& flag = state.flags[t];
+            if(op == mode_op::flag_taken)
+                return value_t::boolean(flag.taken);
+            if(op == mode_op::flag_idle)
+                return value_t::number(type_t::real_, flag.idle);
+            return value_t::number(type_t::short_, static_cast<f32>(flag.carrier));
+        }
+        case mode_op::flag_reach_set:
+            state.flag_reach = std::max(arg(0), 0.f);
+            return {};
+        case mode_op::team_of: {
+            auto const* player = arg(0) >= 0.f ? who(0) : nullptr;
+            return value_t::number(type_t::short_, player ? player->team : -1);
+        }
+        case mode_op::player_near_base: {
+            auto const t = static_cast<size_t>(std::max(arg(1), 0.f));
+            if(arg(0) < 0.f || t >= state.flags.size() || !state.flags[t].placed || !m_proxy)
+                return value_t::boolean(false);
+            for(auto ent : m_proxy->template select<PlayerInfo, Model>())
+                if(ent.template get<PlayerInfo>().player_idx == static_cast<u32>(arg(0)))
+                    return value_t::boolean(
+                        glm::distance(ent.template get<Model>().position, state.flags[t].base) < arg(2));
+            return value_t::boolean(false);
+        }
         default:
             return {};
         }
@@ -293,6 +374,21 @@ struct MultiplayerController
         set("event_killer", kill.killer);
         set("event_victim", kill.player);
         m_vm->wake("on_unit_killed");
+        m_vm->tick();
+    }
+
+    /* A player reached a flag on the ground: the rules say what that does */
+    void touched(GameState const& state, FlagTouchEvent const& touch)
+    {
+        if(!m_vm || state.phase != GameState::phase_t::playing)
+            return;
+        auto set = [this](std::string_view name, f32 value) {
+            if(auto* slot = m_vm->global(name))
+                *slot = script_vm::value_t::number(blam::hsc::type_t::short_, value);
+        };
+        set("event_player", static_cast<f32>(touch.player));
+        set("event_team", static_cast<f32>(touch.team));
+        m_vm->wake("on_flag_touched");
         m_vm->tick();
     }
 
@@ -362,6 +458,9 @@ struct MultiplayerController
     std::shared_ptr<GameEventBus::queue_type<UnitKilledEvent>> m_kill_queue;
     std::vector<UnitKilledEvent>                               m_kills;
     std::shared_ptr<GameEventBus::queue_type<UnitRejoinedEvent>> m_rejoin_queue;
+    std::shared_ptr<GameEventBus::queue_type<FlagTouchEvent>>    m_touch_queue;
+    std::vector<FlagTouchEvent>                                  m_touches;
+    Proxy*                                                       m_proxy{nullptr}; /*!< While the rules run */
     std::vector<u64>                                           m_rejoins;
 
     GameState*                 m_state{nullptr};
@@ -391,6 +490,8 @@ void alloc_multiplayer_controller(compo::EntityContainer& e)
         0, [&mode](GameEvent&, UnitKilledEvent* kill) { mode.m_kills.push_back(*kill); });
     mode.m_rejoin_queue = game.addQueuedEventFunction<UnitRejoinedEvent>(
         0, [&mode](GameEvent&, UnitRejoinedEvent* back) { mode.m_rejoins.push_back(back->unit); });
+    mode.m_touch_queue = game.addQueuedEventFunction<FlagTouchEvent>(
+        0, [&mode](GameEvent&, FlagTouchEvent* touch) { mode.m_touches.push_back(*touch); });
     /* The announcer's lines are matg's multiplayer sounds, heard here */
     game.addEventFunction<AnnounceEvent>(0, [&e](GameEvent&, AnnounceEvent* say) {
         auto* sounds = e.service<comp_app::EventBus<SoundEvent>>();

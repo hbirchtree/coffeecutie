@@ -26,6 +26,12 @@ struct GameSetup : compo::SubsystemBase
     libc_types::u16 difficulty{1}; /* normal */
     libc_types::u16 mp_map{0};
     game_type_t     game_type{game_type_t::slayer};
+    /* Capture the flag's variant, defaults as the first built-in one */
+    bool            ctf_flag_at_home{false};     /*!< A capture needs the team's own flag home */
+    bool            ctf_flag_must_reset{false};  /*!< A taken flag only goes back on its own, never by a touch */
+    libc_types::f32 ctf_flag_return_time{60.f};  /*!< s a dropped flag lies before going back; not a CE option */
+    /*! Game type program globals to set as it loads: name, value */
+    std::vector<std::pair<std::string, std::string>> options;
 
     GameSetup(compo::EntityContainer& e)
         : m_container(e)

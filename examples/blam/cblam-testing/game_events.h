@@ -103,6 +103,8 @@ struct GameEvent
         EnlistActor,
         PlayerEffect,
         Announce,
+        FlagCommand,
+        FlagTouch,
     };
 
     EventType type{None};
@@ -235,6 +237,8 @@ struct EquipWeaponEvent
         replicate, /*!< What its peer says it carries, `slung` included */
         pick_up,   /*!< Off the ground: ammo if carried, else as draw, dropping
                         what does not fit */
+        remove,    /*!< Taken away: out of its hands, the slung one drawn */
+        drop,      /*!< Let go of: onto the ground before it */
     };
 
     u64               entity_id{0};
@@ -592,6 +596,30 @@ struct AnnounceEvent
     static constexpr auto event_type = GameEvent::Announce;
 
     libc_types::u16 sound{0}; /*!< Into matg's multiplayer sounds */
+};
+
+/*! The game type's rules move a capture-the-flag flag (authority only) */
+struct FlagCommandEvent
+{
+    static constexpr auto event_type = GameEvent::FlagCommand;
+
+    enum kind_t : libc_types::u8
+    {
+        reset, /*!< Back to its base, out of anyone's hands */
+        give,  /*!< Into a player's hands */
+    } kind{reset};
+
+    libc_types::u16 team{0};
+    libc_types::u32 player{0};
+};
+
+/*! A player came within reach of a flag lying on the ground (authority) */
+struct FlagTouchEvent
+{
+    static constexpr auto event_type = GameEvent::FlagTouch;
+
+    libc_types::u16 team{0};
+    libc_types::u32 player{0};
 };
 
 /*! A unit spawned outside the scripts (a carrier's infection forms) joins

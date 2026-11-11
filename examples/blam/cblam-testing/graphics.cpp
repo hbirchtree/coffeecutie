@@ -186,6 +186,24 @@ i32 blam_main()
              "so nothing on the path can present its own. Not needed with a "
              "join string, which carries the key",
              cxxopts::value<std::string>());
+        options.add_options("Game")(
+            "game-type",
+            "Multiplayer game type a map given on the command line is played as, offline or "
+            "hosting (a client plays the server's): slayer, ctf",
+            cxxopts::value<std::string>())(
+            "ctf-flag-at-home",
+            "Capture the flag: a capture needs the team's own flag at home (default false)",
+            cxxopts::value<bool>())(
+            "ctf-flag-must-reset",
+            "Capture the flag: a taken flag only returns on its own, not when a teammate touches it",
+            cxxopts::value<bool>())(
+            "ctf-flag-return-time",
+            "Capture the flag: seconds a dropped flag lies before it returns (default 60)",
+            cxxopts::value<float>())(
+            "game-option",
+            "Sets a game type program global as it loads, name=value (repeatable): e.g. "
+            "score_limit=5, capture_reach=1.5, multi_kill_seconds=4",
+            cxxopts::value<std::vector<std::string>>());
         if constexpr(!compile_info::supports_command_line)
             options.add_options("Game")(
                 "map", "Which map file to load", cxxopts::value<std::string>());
@@ -617,6 +635,23 @@ i32 blam_main()
             alloc_ui_system(e);
             alloc_profile_provider(e);
             alloc_game_setup_provider(e);
+            /* The server decides the game; a client is told it */
+            if(arguments.count("game-type") && !arguments.count("server"))
+            {
+                using game_type_t = GameSetup::game_type_t;
+                auto const name   = arguments["game-type"].as<std::string>();
+                e.subsystem_cast<GameSetup>().game_type = name == "ctf" ? game_type_t::ctf : game_type_t::slayer;
+            }
+            if(arguments.count("ctf-flag-at-home"))
+                e.subsystem_cast<GameSetup>().ctf_flag_at_home = arguments["ctf-flag-at-home"].as<bool>();
+            if(arguments.count("ctf-flag-must-reset"))
+                e.subsystem_cast<GameSetup>().ctf_flag_must_reset = arguments["ctf-flag-must-reset"].as<bool>();
+            if(arguments.count("game-option"))
+                for(auto const& option : arguments["game-option"].as<std::vector<std::string>>())
+                    if(auto const eq = option.find('='); eq != std::string::npos)
+                        e.subsystem_cast<GameSetup>().options.emplace_back(option.substr(0, eq), option.substr(eq + 1));
+            if(arguments.count("ctf-flag-return-time"))
+                e.subsystem_cast<GameSetup>().ctf_flag_return_time = arguments["ctf-flag-return-time"].as<float>();
             alloc_objective_provider(e);
             alloc_networking(
                 e,

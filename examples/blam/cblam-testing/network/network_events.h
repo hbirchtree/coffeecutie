@@ -339,6 +339,7 @@ struct alignas(8) WeaponPickup
     blam::tag_index<> weapon{};
     f32               age{0.f}; /*!< Its battery, as it lay */
     std::array<u16, 2> rounds{}; /*!< See EquipWeaponEvent::rounds */
+    u32               remove{0}; /*!< Taken away instead (EquipWeaponEvent::remove) */
 };
 
 /*! A client reached a sync point, or the server released it for all */
@@ -467,6 +468,9 @@ struct alignas(8) GameStateSync
     u16             nav_points{0}; /*!< How many NavPointSync follow */
     u32             saves{0};
     u32             reverts{0};
+    i16             flag_carrier[2]{-1, -1}; /*!< Capture the flag, by team */
+    u8              flag_taken[2]{};
+    u32             padding2{0};
 
     bool operator==(GameStateSync const&) const = default;
 };
@@ -483,7 +487,9 @@ struct alignas(8) NavPointSync
     i16   team{-1};
     i16   unit{-1}; /*!< Player index of a player's body, which has no net id */
     i32   player{-1};
-    char  arrow[28]{};
+    i16   mp_team{-1};
+    i16   padding{0};
+    char  arrow[24]{};
 
     bool operator==(NavPointSync const&) const = default;
 };
@@ -768,7 +774,7 @@ static_assert(sizeof(ObjectSync) == 88);
 static_assert(sizeof(SeatSync) == 16);
 static_assert(sizeof(RiderSync) == 16);
 static_assert(sizeof(EquipmentSync) == 24);
-static_assert(sizeof(WeaponPickup) == 16);
+static_assert(sizeof(WeaponPickup) == 24);
 static_assert(sizeof(ObjectDespawn) == 4);
 static_assert(sizeof(ObjectCensus) == 8);
 static_assert(sizeof(ObjectRequest) == 4);
