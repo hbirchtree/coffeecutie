@@ -2807,32 +2807,30 @@ struct PhysicsSystem
             btRigidBody* const rigid = body.world_body.get();
             auto const         corpse = m_corpses.find(id);
             bool const frozen = corpse != m_corpses.end() && corpse->second.frozen;
-            if(!rigid || (!frozen && (rigid->getInvMass() <= 0.f || rigid->isKinematicObject())))
+            if(!rigid || (blast.target && id != blast.target) ||
+               (!frozen && (rigid->getInvMass() <= 0.f || rigid->isKinematicObject())))
                 continue;
             btVector3 lo, hi;
             rigid->getAabb(lo, hi);
             btVector3 nearest = at;
             nearest.setMax(lo);
             nearest.setMin(hi);
-            f32 const d = (nearest - at).length();
-            if(d > blast.radius.y)
+            f32 const d = blast.target ? 0.f : (nearest - at).length();
+            if(d > blast.radius.y && !blast.target)
                 continue;
             if(frozen)
                 thaw(id, corpse->second);
             f32 const scale =
                 d <= inner ? 1.f : 1.f - (d - inner) / std::max(blast.radius.y - inner, 1e-3f);
             btVector3 const centre = rigid->getCenterOfMassPosition();
-            btVector3       away   = centre - at;
+            btVector3       away   = blast.target ? btVector3(blast.direction.x, blast.direction.y, blast.direction.z)
+                                                  : centre - at;
             away = away.length2() > 1e-6f ? away.normalized() : btVector3(0, 0, 1);
-            /* The dead, and bipeds on their feet, are thrown up off the
-             * ground, not slid along it */
+            /* The dead, and bipeds on their feet, are thrown with a lift: up
+             * off a blast below, pressed down and back by one above */
             bool const upright = rigid->getAngularFactor().length2() == 0.f;
-            if((corpse != m_corpses.end() || upright) && away.z() < corpse_lean)
-            {
-                btVector3 flat(away.x(), away.y(), 0.f);
-                flat  = flat.length2() > 1e-6f ? flat.normalized() : btVector3(1, 0, 0);
-                away  = (flat + btVector3(0, 0, 1)).normalized();
-            }
+            if((corpse != m_corpses.end() || upright) && blast.speed > 0.f)
+                away = (away + btVector3(0, 0, blast_lift)).normalized();
             btVector3 const change = away * (blast.speed * scale);
             rigid->activate(true);
             if(m_player_bodies.contains(id) && !m_corpses.contains(id))
@@ -3819,7 +3817,7 @@ struct PhysicsSystem
     static constexpr f32 corpse_friction         = 1.f;
     static constexpr f32 corpse_rolling_friction = .1f;
     static constexpr f32 corpse_damping          = .3f;
-    static constexpr f32 corpse_lean    = .7071f; /* sin 45 */
+    static constexpr f32 blast_lift     = .45f;   /* added upward to a blast's push on a body */
     /* How fast carried momentum is lost, wu/s^2 */
     static constexpr f32 carried_ground_decel = 12.f;
     static constexpr f32 carried_air_decel    = .5f;

@@ -457,7 +457,7 @@ struct ProjectileSystem
                 d <= inner ? 1.f : 1.f - (d - inner) / std::max(blast.radius.y - inner, 1e-3f);
             Vecf3 dir = d > 1e-3f ? away / d : Vecf3{0, 0, 1};
             /* Thrown up off the ground, not slid along it */
-            if(dir.z < blast_lean)
+            if(blast.speed > 0.f && dir.z < blast_lean)
             {
                 Vecf2 const flat = Vecf2(dir);
                 dir = glm::normalize(
