@@ -548,6 +548,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             if(nav.player >= 0 ? nav.player != static_cast<i32>(info.player_idx)
                                : nav.team != static_cast<i16>(team_t::player))
                 continue;
+            if(nav.mp_team >= 0)
+                if(auto const* mine = game.player(info.player_idx); !mine || mine->team != nav.mp_team)
+                    continue;
             auto const* arrow = [&]() -> blam::hud_globals::waypoint_arrow_t const* {
                 for(auto const& a : arrows.value())
                     if(a.name.str() == nav.arrow)

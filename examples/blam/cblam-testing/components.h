@@ -1498,6 +1498,9 @@ struct BipedEquipment
         std::chrono::seconds        time_left{};
     };
     std::array<weapon_t, 2>  weapons;
+    /*! What does not count toward the two (a flag, a ball): in the hand
+     *  over them, which are kept */
+    weapon_t                 objective;
     std::vector<equipment_t> equipment; // grenades, powerups
     u16 grenade{0}; /*!< The equipment entry thrown, and counted on the HUD */
     /*! The map the pointers above point into */
@@ -1508,15 +1511,13 @@ struct BipedEquipment
 
     weapon_t const* held(u32 generation) const
     {
-        return generation == load_generation && weapons[0].weapon
-                   ? &weapons[0]
-                   : nullptr;
+        if(generation != load_generation)
+            return nullptr;
+        return objective.weapon ? &objective : weapons[0].weapon ? &weapons[0] : nullptr;
     }
     weapon_t* held(u32 generation)
     {
-        return generation == load_generation && weapons[0].weapon
-                   ? &weapons[0]
-                   : nullptr;
+        return const_cast<weapon_t*>(std::as_const(*this).held(generation));
     }
 };
 

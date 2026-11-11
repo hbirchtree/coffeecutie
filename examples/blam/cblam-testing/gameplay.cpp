@@ -2,6 +2,7 @@
 
 #include "blam_files.h"
 #include "components.h"
+#include "ctf.h"
 #include "data.h"
 #include "model_markers.h"
 #include "physics.h"
@@ -70,6 +71,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             m_tracks.clear();
             m_leaving.clear();
             m_markers_generation = generation;
+            m_flag_looked        = false;
         }
 
         for(auto player : p.template select<
@@ -256,12 +258,14 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         auto const* equip = p.template get<BipedEquipment>(player);
         if(!equip || !equip->weapons[1].weapon)
             return std::nullopt;
+        if(!std::exchange(m_flag_looked, true))
+            m_flag = flag_weapon(p.template subsystem<BlamFiles<halo_version>>());
         std::optional<std::pair<u64, f32>> best;
         for(auto item : p.template select<Model, NetworkInfo>())
         {
             auto [model, net] = item.components();
             auto const* tag   = model.origin_object;
-            if(!tag || !tag->matches(blam::tag_class_t::weap) || net.instance_id == 0 ||
+            if(!tag || !tag->matches(blam::tag_class_t::weap) || tag == m_flag || net.instance_id == 0 ||
                SpawnObjectEvent::is_impostor(net.instance_id) ||
                p.template get<PlayerInfo>(item.id()) || equip->weapons[0].tag == tag ||
                equip->weapons[1].tag == tag || !within_pickup_reach(info, cam, model.position))
@@ -634,6 +638,8 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
     std::map<u64, time_point> m_leaving;
     time_point                m_now{};
     u32 m_markers_generation{0};
+    blam::tag_t const* m_flag{nullptr}; /*!< Taken by the game type's rules, never offered */
+    bool               m_flag_looked{false};
 
 };
 

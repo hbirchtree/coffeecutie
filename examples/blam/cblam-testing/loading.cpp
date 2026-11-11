@@ -2879,7 +2879,7 @@ struct ResourceLoader
             if(dead && !biped.dropped)
                 let_go(equip, cam, info);
             biped.dropped = dead;
-            auto& weapon = equip.weapons[0];
+            auto& weapon = equip.objective.weapon ? equip.objective : equip.weapons[0];
             if(weapon.tag != biped.held_tag)
             {
                 biped.held_tag = weapon.tag;
@@ -3092,6 +3092,39 @@ struct ResourceLoader
                         ammo_pack_rounds(*carried, change.weapon, files.container.magic));
             return;
         }
+        /* What does not count toward the two is held over them */
+        using weapon_flags_t = blam::scn::weapon::weapon_flags_t;
+        auto const as_weapon = tag->template data<blam::scn::weapon>(files.container.magic);
+        bool const extra     = as_weapon.has_value() && (as_weapon.value()->weapon_flags &
+                                                     weapon_flags_t::doesnt_count_toward_maximum) != weapon_flags_t::none;
+        if((change.mode == EquipWeaponEvent::remove || change.mode == EquipWeaponEvent::drop) &&
+           equip.objective.tag == tag)
+        {
+            if(change.mode == EquipWeaponEvent::drop && (!info.is_remote() || info.mode.simulated))
+                drop(equip.objective, cam, info.biped.eye_height);
+            equip.objective = {};
+            return;
+        }
+        if(change.mode == EquipWeaponEvent::drop)
+            return;
+        if(extra && change.mode != EquipWeaponEvent::remove)
+        {
+            if(equip.objective.tag != tag)
+                equip.objective = armed(tag, files);
+            equip.reloading = false;
+            return;
+        }
+        if(change.mode == EquipWeaponEvent::replicate)
+            equip.objective = {};
+        if(change.mode == EquipWeaponEvent::remove)
+        {
+            if(held.tag == tag)
+                held = std::exchange(slung, {});
+            else if(slung.tag == tag)
+                slung = {};
+            equip.reloading = false;
+            return;
+        }
         if(change.mode == EquipWeaponEvent::replicate)
         {
             if(held.tag != tag)
@@ -3171,11 +3204,14 @@ struct ResourceLoader
             for(auto const& weapon : equip.weapons)
                 if(weapon.tag)
                     drop(weapon, cam, info.biped.eye_height, turn++);
+            if(equip.objective.tag)
+                drop(equip.objective, cam, info.biped.eye_height, turn++);
             for(auto const& carried : equip.equipment)
                 for(u16 i = 0; carried.tag && i < carried.left; i++)
                     drop(carried.tag, cam, info.biped.eye_height, turn++);
         }
-        equip.weapons = {};
+        equip.weapons   = {};
+        equip.objective = {};
         for(auto& carried : equip.equipment)
             carried.left = 0;
         equip.reloading = equip.throwing = false;
