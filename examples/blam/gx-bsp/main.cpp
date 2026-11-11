@@ -763,6 +763,12 @@ struct sky_t
 
 static std::vector<sky_t> g_skies;
 static std::vector<i16>   g_cluster_sky; // of the loaded BSP's clusters
+static std::vector<i16>   g_cluster_background; // into g_backgrounds
+
+/* The BSP's background sound palette, decoded once the catalogue is */
+static std::vector<blam::tagref_typed_t<blam::tag_class_t::lsnd>>
+                                                          g_background_refs;
+static std::vector<std::optional<gx_audio::background_t>> g_backgrounds;
 
 static void build_cluster_lookup(
     blam::bsp::header const& hdr, blam::bsp_ptr const& bm)
@@ -1149,6 +1155,8 @@ template<typename V>
 static void build_catalog(blam::map_container<V> const& c)
 {
     g_fx_lib.bank.enabled = g_xbox;
+    for(auto const& ref : g_background_refs)
+        g_backgrounds.push_back(g_fx_lib.bank.background(c, ref));
     u32 const   cnt = from_le(c.tags->tag_count);
     auto const* tg  = c.tags->tags(c.map);
     for(u32 i = 0; i < cnt; i++)
@@ -1940,7 +1948,13 @@ static int extract_map(semantic::BytesConst const& bytes)
         build_cluster_lookup(*hdr, bm);
         if(auto cls = hdr->clusters.data(bm); !cls.has_error())
             for(auto const& cl : cls.value())
+            {
                 g_cluster_sky.push_back(from_le(cl.sky));
+                g_cluster_background.push_back(from_le(cl.background_sound));
+            }
+        if(auto bg = hdr->background_sound.data(bm); !bg.has_error())
+            for(auto const& entry : bg.value())
+                g_background_refs.push_back(entry.bg_sound);
         LOG("cluster lookup: %u nodes, %u leaves",
             static_cast<unsigned>(g_coll_nodes.size()),
             static_cast<unsigned>(g_leaf_cluster.size()));
@@ -4047,11 +4061,24 @@ struct game_t
 
     void listen()
     {
+        listen_background();
         g_audio.listen(
             g_cam_pos,
             glm::normalize(glm::cross(cam_forward(), Vecf3{0.f, 0.f, 1.f})),
             dt);
         g_audio.pump();
+    }
+
+    /* The background of the cluster the ear is in */
+    void listen_background()
+    {
+        auto const cluster = cluster_at(g_cam_pos);
+        if(!cluster || *cluster >= g_cluster_background.size())
+            return;
+        i16 const index = g_cluster_background[*cluster];
+        if(index >= 0 && static_cast<size_t>(index) < g_backgrounds.size() &&
+           g_backgrounds[index])
+            g_audio.set_background(&*g_backgrounds[index]);
     }
 
     void pump_audio()

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <utility>
 
 namespace platform::file::gekko::vmem {
 
@@ -186,6 +187,7 @@ inline dvdcmdblk     g_stream_cmd    = {};
 inline u8*           g_stream_buf    = nullptr;
 inline u32           g_stream_va     = 0;
 inline u32           g_stream_len    = 0;
+inline u8*           g_stream_into   = nullptr; // a caller's buffer, not pages
 inline volatile bool g_stream_busy   = false;
 inline volatile bool g_stream_done   = false;
 inline volatile s32  g_stream_result = 0;
@@ -627,13 +629,55 @@ inline bool request(mapping const& m, u32 off)
     return true;
 }
 
-/* A finished read goes into the page cache */
-inline void poll()
+/* Read straight into `into` (32-byte aligned, len + 64 bytes), leaving the
+ * page cache be. The data starts `skip` bytes in. Same one-at-a-time rule */
+inline bool read(mapping const& m, u32 off, u32 len, u8* into, u32& skip)
+{
+    auto const* r = detail::region_of(m);
+    if(!r || !into || detail::g_stream_busy)
+        return false;
+    u32 const at   = r->disc_off + off;
+    u32 const from = at & ~31u;
+    skip           = at - from;
+    u32 const size = (skip + len + 31) & ~31u;
+    DCInvalidateRange(into, size);
+    detail::g_stream_into = into;
+    detail::g_stream_len  = size;
+    detail::g_stream_done = false;
+    detail::g_stream_busy = true;
+    if(!DVD_ReadAbsAsyncPrio(
+           &detail::g_stream_cmd,
+           into,
+           size,
+           static_cast<s64>(from),
+           detail::stream_done,
+           2))
+    {
+        detail::g_stream_busy = false;
+        return false;
+    }
+    return true;
+}
+
+struct finished_t
+{
+    u8*  into{nullptr}; // a read() that finished, if one did
+    bool ok{false};
+};
+
+/* A finished read goes into the page cache, or is handed back */
+inline finished_t poll()
 {
     using namespace detail;
     if(!g_stream_done)
-        return;
+        return {};
     g_stream_done = false;
+    if(u8* into = std::exchange(g_stream_into, nullptr))
+    {
+        DCInvalidateRange(into, g_stream_len);
+        g_stream_busy = false;
+        return {into, g_stream_result >= 0};
+    }
     if(g_stream_result >= 0)
     {
         DCInvalidateRange(g_stream_buf, g_stream_len);
@@ -650,6 +694,7 @@ inline void poll()
         }
     }
     g_stream_busy = false;
+    return {};
 }
 
 inline void unmap(mapping const& m)
