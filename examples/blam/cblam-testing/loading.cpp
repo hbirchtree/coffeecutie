@@ -1330,7 +1330,10 @@ struct ResourceLoader
             recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
         bool const unit = instance_tag->matches(blam::tag_class_t::bipd);
         if(unit)
+        {
             recipe.components.push_back(compo::type_hash_v<BipedStatus>());
+            recipe.components.push_back(compo::type_hash_v<Actor>());
+        }
         auto const* held = unit ? default_weapon(files, *instance_tag) : nullptr;
         if(held)
             recipe.components.push_back(compo::type_hash_v<BipedEquipment>());
@@ -1353,6 +1356,9 @@ struct ResourceLoader
         {
             auto& status = parent_.template get<BipedStatus>();
             status       = unit_status(files, instance_obj[0].collider);
+            /* Outside the AI until ai_attach, on its unit's team */
+            if(auto u = instance_tag->template data<blam::scn::unit>(magic); u.has_value())
+                parent_.template get<Actor>().team = static_cast<u16>(u.value()[0].default_team);
             /* Placed hurt, or already dead */
             if constexpr(std::is_same_v<T, blam::scn::biped_spawn>)
             {

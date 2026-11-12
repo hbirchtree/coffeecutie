@@ -1852,11 +1852,16 @@ void dump_hud_background(
     fmt::print("    {}: {} ", label, name_of(background.interface_bitmap));
     print_hud_placement(background);
     fmt::print(
-        "\n      colors default={} flashing={} disabled={} sequence={} "
-        "overlays={}\n",
+        "\n      colors default={} flashing={} disabled={} flash period={} delay={} count={} length={} flags={:#x} "
+        "sequence={} overlays={}\n",
         argb(background.colors.default_color),
         argb(background.colors.flashing_color),
         argb(background.colors.disabled_color),
+        background.colors.flash_period,
+        background.colors.flash_delay,
+        background.colors.num_flashes,
+        background.colors.flash_length,
+        static_cast<u32>(background.colors.flash_flags),
         background.sequence_index,
         count_of(g_magic, background.overlays));
 }
@@ -3147,11 +3152,12 @@ void dump_encounters(blam::map_container<Ver> const& map)
                 squad.insane_diff_count,
                 squad.platoon);
             fmt::print(
-                "      states initial={} return={} flags={:#x} delay={} unk1=[{:08x}] groups atk={:x}/{:x}/{:x} def={:x}/{:x}/{:x} pursue={:x}\n",
+                "      states initial={} return={} flags={:#x} delay={} maneuver_to={} unk1=[{:08x}] groups atk={:x}/{:x}/{:x} def={:x}/{:x}/{:x} pursue={:x}\n",
                 static_cast<int>(squad.initial_state),
                 static_cast<int>(squad.return_state),
                 static_cast<u32>(squad.flags),
                 squad.delay_time,
+                squad.maneuver_to_squad,
                 fmt::join(squad.unk1, " "),
                 squad.attacking,
                 squad.attacking_search,

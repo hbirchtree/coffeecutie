@@ -65,6 +65,7 @@ struct PlayerController
     {
         f32                fov{0.f}; /*!< Unzoomed, while zoomed */
         blam::tag_t const* weapon{nullptr};
+        libc_types::u32    unzooms{0}; /*!< CinematicState::unzooms last acted on */
     };
 
     struct menu_pad_t
@@ -145,13 +146,18 @@ struct PlayerController
                     take_remote_input(player.id(), input, cam);
                 /* Scripts take the controls away; looking around stays
                  * unless a cutscene has the camera */
-                if(!p.template subsystem<CinematicState>().input && !info.is_remote() &&
-                   input.input_mode == PlayerInput::input_mode_t::game)
+                auto const& cinematic = p.template subsystem<CinematicState>();
+                if(!info.is_remote() && input.input_mode == PlayerInput::input_mode_t::game)
                 {
-                    input.movement = {};
-                    input.intent   = {};
-                    if(cam.cinematic)
+                    if(!cinematic.input)
+                    {
+                        input.movement = {};
+                        input.intent   = {};
+                    }
+                    if((!cinematic.input && cam.cinematic) || !cinematic.camera_control)
                         input.look_delta = {};
+                    if(cinematic.invert_pitch && info.player_idx == 0)
+                        input.look_delta.y = -input.look_delta.y;
                 }
                 /* The dead wait to come back, and nobody plays on once the
                  * game is over */
@@ -779,7 +785,8 @@ struct PlayerController
         auto&       state   = m_zooms[id];
         i16 const   levels  = held ? held->weapon->zoom_levels : 0;
         bool const  pressed = std::exchange(input.intent.zoom, false);
-        if(!held || held->tag != state.weapon || seat_of(info) != seat_t::body ||
+        u32 const   unzooms = p.template subsystem<CinematicState>().unzooms;
+        if(!held || held->tag != state.weapon || seat_of(info) != seat_t::body || std::exchange(state.unzooms, unzooms) != unzooms ||
            cam.cinematic || (status && status->dead) || equip->reloading || intent.swap ||
            intent.melee || intent.grenade)
             equip->zoom = 0;
