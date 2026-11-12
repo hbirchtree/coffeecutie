@@ -170,6 +170,10 @@ struct BlamScript
             scenario->function_table(map.magic),
             globals.value(),
             [this](BC opcode, node_t const& call, std::vector<value_t>& args, thread_t& self) {
+                /* A global's initial value is worked out at load, before
+                 * there is a game to ask: (players) is no one yet */
+                if(!m_proxy)
+                    return value_t{.type = call.ret_type};
                 return native(*m_proxy, opcode, call, args, self);
             });
         m_running = true;
@@ -623,6 +627,21 @@ struct BlamScript
     }
 
     /* ---- Natives ---- */
+
+    /* MCC's table has no per-player nav points: they stand in as opcodes
+     * no script calls */
+#define BLAM_OPTIONAL_OP(name, stand_in)                                         \
+    static constexpr BC name##_op = [] {                                         \
+        if constexpr(requires { BC::name; })                                     \
+            return BC::name;                                                     \
+        else                                                                     \
+            return static_cast<BC>(stand_in);                                    \
+    }()
+    BLAM_OPTIONAL_OP(activate_nav_point_flag, -2);
+    BLAM_OPTIONAL_OP(activate_nav_point_object, -3);
+    BLAM_OPTIONAL_OP(deactivate_nav_point_flag, -4);
+    BLAM_OPTIONAL_OP(deactivate_nav_point_object, -5);
+#undef BLAM_OPTIONAL_OP
 
     value_t native(
         Proxy& p, BC opcode, node_t const& call, std::vector<value_t>& args, thread_t&)
@@ -1603,11 +1622,11 @@ struct BlamScript
         /* Nav points: a team's, or one player's, over a flag or an object */
         case op::activate_team_nav_point_flag:
         case op::activate_team_nav_point_object:
-        case op::activate_nav_point_flag:
-        case op::activate_nav_point_object: {
+        case activate_nav_point_flag_op:
+        case activate_nav_point_object_op: {
             bool const team = opcode == op::activate_team_nav_point_flag ||
                               opcode == op::activate_team_nav_point_object;
-            bool const flag = opcode == op::activate_team_nav_point_flag || opcode == op::activate_nav_point_flag;
+            bool const flag = opcode == op::activate_team_nav_point_flag || opcode == activate_nav_point_flag_op;
             GameState::nav_point_t nav{.arrow = std::string(text_of(arg(0))), .offset = arg(3).as_real()};
             if(team)
                 nav.team = static_cast<i16>(team_of(arg(1)));
@@ -1642,11 +1661,11 @@ struct BlamScript
         }
         case op::deactivate_team_nav_point_flag:
         case op::deactivate_team_nav_point_object:
-        case op::deactivate_nav_point_flag:
-        case op::deactivate_nav_point_object: {
+        case deactivate_nav_point_flag_op:
+        case deactivate_nav_point_object_op: {
             bool const team = opcode == op::deactivate_team_nav_point_flag ||
                               opcode == op::deactivate_team_nav_point_object;
-            bool const flag = opcode == op::deactivate_team_nav_point_flag || opcode == op::deactivate_nav_point_flag;
+            bool const flag = opcode == op::deactivate_team_nav_point_flag || opcode == deactivate_nav_point_flag_op;
             i16 const  whose_team = team ? static_cast<i16>(team_of(arg(0))) : i16{-1};
             i32        whose_player = -1;
             if(!team)
