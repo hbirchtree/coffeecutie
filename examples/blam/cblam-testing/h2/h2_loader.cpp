@@ -13,8 +13,8 @@
 #include "components.h"
 #include "data.h"
 #include "physics.h"
-#include "resource_creation.h"
-#include "sounds.h"
+#include "caching/resource_creation.h"
+#include "audio/sounds.h"
 
 #include <blam/dimeter/animation.h>
 #include <blam/dimeter/bitm.h>

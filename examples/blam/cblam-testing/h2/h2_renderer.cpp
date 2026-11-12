@@ -1,12 +1,12 @@
 #include "h2_scene.h"
 
 #include "data.h"
-#include "player_controller.h"
+#include "player/player_controller.h"
 #include "render/cascaded_shadows.h"
 #include "world/placement.h"
 #include "world/player_spawn.h"
 #include "world/world_gpu.h"
-#include "resource_creation.h"
+#include "caching/resource_creation.h"
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>

@@ -22,7 +22,7 @@
 #include "peripherals/semantic/enum/data_types.h"
 #include "peripherals/typing/enum/graphics/shader_stage.h"
 #include "physics.h"
-#include "resource_creation.h"
+#include "caching/resource_creation.h"
 #include "types.h"
 #include <coffee/core/task_queue/task.h>
 

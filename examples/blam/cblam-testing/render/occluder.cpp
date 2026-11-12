@@ -4,9 +4,9 @@
 
 #include "occluder.h"
 
-#include "caching.h"
+#include "caching/caching.h"
 #include "data.h"
-#include "map_marker.h"
+#include "render/map_marker.h"
 #include "selected_version.h"
 
 #include <coffee/core/CProfiling>

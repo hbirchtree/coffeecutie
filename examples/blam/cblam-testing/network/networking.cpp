@@ -1,5 +1,5 @@
-#include "game_mode.h"
-#include "devices.h"
+#include "game/game_mode.h"
+#include "world/devices.h"
 #include "network/networking.h"
 #include "network/relevance.h"
 #include "network/network_events.h"
@@ -26,7 +26,7 @@ using Coffee::Logging::cBasicPrint;
 #if defined(USE_NETWORKING)
 
 #include "components.h"
-#include "blam_files.h"
+#include "loading/blam_files.h"
 #include "data.h"
 #include "gateway_fleet_registration.h"
 #include "journal.h"

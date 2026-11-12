@@ -1,11 +1,11 @@
 #pragma once
 
-#include "blam_files.h"
-#include "caching.h"
+#include "loading/blam_files.h"
+#include "caching/caching.h"
 #include "components.h"
 #include "data.h"
 #include "peripherals/stl/string/hex.h"
-#include "resource_creation.h"
+#include "caching/resource_creation.h"
 
 #include <coffee/imgui/imgui_binding.h>
 #include <imgui.h>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "bitmap_cache.h"
-#include "blam_files.h"
+#include "caching/bitmap_cache.h"
+#include "loading/blam_files.h"
 #include "coffee/comp_app/services.h"
 #include "components.h"
 #include "data.h"

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "caching.h"
-#include "caching_item.h"
+#include "caching/caching.h"
+#include "caching/caching_item.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_bsp_structures.h>

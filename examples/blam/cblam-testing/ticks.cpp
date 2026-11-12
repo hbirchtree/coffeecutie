@@ -2,7 +2,7 @@
 
 #include "components.h"
 #include "network/networking.h"
-#include "player_controller.h"
+#include "player/player_controller.h"
 
 #include <coffee/components/proxy.h>
 

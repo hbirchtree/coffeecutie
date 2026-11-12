@@ -24,7 +24,7 @@ The app uses `compo::EntityContainer` as the central ECS registry. Components an
 | `NetworkState`   | `networking.h`    | Client/server connection state + player roster|
 | `Networking`     | `networking.cpp`  | GameNetworkingSockets-based multiplayer       |
 | `BlamMapBrowser` | `map_loader.h`    | ImGui UI for map selection and server browser |
-| `LoadingStatus`  | `loading.h`       | Tracks async map/bitmap/sound loading progress|
+| `LoadingStatus`  | `loading/loading.h`       | Tracks async map/bitmap/sound loading progress|
 | `BlamFiles`      | `blam_files.h`    | Holds loaded map container and file resources |
 | Various caches   | `*_cache.h`       | Bitmap, shader, model, BSP, sound, UI caches  |
 
@@ -50,7 +50,7 @@ Tags are bitmask flags on entities used for filtering and lifecycle:
 
 ### Threading
 
-`SoundSystem` (`sounds.cpp`) is the one subsystem that opts in to running on a worker thread (`parallel_safe()`), so it is the reference for what that costs:
+`SoundSystem` (`audio/sounds.cpp`) is the one subsystem that opts in to running on a worker thread (`parallel_safe()`), so it is the reference for what that costs:
 
 - Its manifest names everything it touches, including `SoundCache<Ver>` — which it writes, and which keeps `SoundUISystem` out of the same stage.
 - `inject()` copies the event and hands it to the audio thread at the next frame hook; `process()` remains the same-thread path. Raise sound events with `inject()`.
@@ -118,7 +118,7 @@ A client only ever moves its own player: the server applies a client's `CameraSy
 
 A player has a biped (mounted model + collision capsule) while `biped_in_play()` (`components.h`) holds: a local seat someone sits in, or a remote player that is connected and loaded, and not held before spawning (`PlayerInfo::spawned`). Two per-frame reconcilers enforce it:
 
-- `ResourceLoader::reconcile_player_bipeds()` (`loading.cpp`) mounts the map's player biped model, remounting after map loads, and copies the biped tag's collision radius/height and camera height into `PlayerInfo::biped`.
+- `ResourceLoader::reconcile_player_bipeds()` (`loading/loading.cpp`) mounts the map's player biped model, remounting after map loads, and copies the biped tag's collision radius/height and camera height into `PlayerInfo::biped`.
 - `PhysicsSystem::reconcile_player_bodies()` (`physics.cpp`) sizes capsules from `PlayerInfo::biped`: dynamic for a local seat in physics mode, kinematic (following the camera) for everyone else.
 
 Server-authoritative moves of our own player go through `place_local_player()`, which also translates the body in physics mode.
@@ -153,7 +153,7 @@ Public state exposed to UI systems:
 
 The dummy plug drives multiplayer scenarios: `.github/tests/net/dummy_plug_net_host_scenario.json` (and `dummy_plug_net_host_splitscreen.json`, with a second local seat on each side) makes the process a server and spawns a client child. Each side's `dump_state` event writes the roster and each player's biped (in play, model, body) to its journal, and `.github/tests/net/compare_journals.py <server journal> <client journal>` checks that every in-play player has a model and body under its camera, that client seats stay out of the server's index space, and that both sides agree where each player is (`MIN_IN_PLAY`, `POSITION_TOLERANCE`). CI runs both scenarios in `Test_x86_64_mesa`.
 
-## Map loading (`map_loading.cpp`)
+## Map loading (`loading/map_loading.cpp`)
 
 1. `open_map()` — clears `ObjectGC` entities, parses map file asynchronously via `FileMapper`
 2. `init_map()` — loads caches (bitmaps, BSPs, models, shaders, sounds), creates scenario entities, creates the local player entities on first load (idx 0-3, tagged `PlayerBiped`; they persist across map loads), and puts local cameras on the spawn points (`create_camera()`); models and bodies follow via the biped reconcilers
@@ -171,25 +171,28 @@ Local players are created from `shared_recipes::player_recipe`, one per seat for
 
 ## File overview
 
-| File                    | Role                                           |
-|-------------------------|-------------------------------------------------|
-| `main.cpp`              | Entry point, app setup                          |
-| `graphics.cpp`          | Component/subsystem registration, graphics init |
-| `data.h`                | Core data types: BlamCamera, GameEvent, event structs |
-| `components.h`          | ECS component definitions                       |
-| `selected_version.h`    | Compile-time Halo version selection (`pc_version_t`) |
-| `networking.cpp`        | Networking implementation (server + client)      |
-| `networking.h`          | NetworkState subsystem, `alloc_networking()`     |
-| `map_loader.h`          | ImGui game browser UI                           |
-| `map_loading.cpp`       | Map loading pipeline and entity creation         |
-| `map_loading.h`         | `setup_load_eventhandlers()` declaration         |
-| `offline_maps.cpp/h`    | Web: maps uploaded to OPFS by `examples/blam/map-upload`, loaded without network access |
-| `rendering.cpp/h`       | Render pipeline and draw calls                   |
-| `caching.cpp/h`         | Base cache infrastructure                        |
-| `*_cache.h`             | Typed caches (bitmap, shader, model, BSP, etc.)  |
-| `sounds.cpp/h`          | Sound system integration                         |
-| `ui.cpp/h`              | Additional UI components                         |
-| `graphics_api.h`        | Graphics API type aliases                        |
+Includes are rooted at this directory: `#include "ai/actors.h"`.
+
+| Directory    | Holds |
+|--------------|-------|
+| (top level)  | `graphics.cpp` (component and subsystem registration), `components.h`, `game_events.h`, `physics.cpp/h` (Bullet, vehicles, riders), `ticks.cpp/h`, `data.h`, `journal.h`, `selected_version.h` |
+| `ai/`        | Actors, allegiance, nav mesh |
+| `animation/` | Animation playback, model markers |
+| `audio/`     | Sound system, impact and vehicle sounds |
+| `caching/`   | Bitmap, shader, model and data caches; GPU resource creation |
+| `combat/`    | Weapons, projectiles, damage |
+| `debug_ui/`  | ImGui tools: map loader, BSP and texture browsers |
+| `game/`      | Game modes (campaign, multiplayer, CTF, forge), checkpoints, save state, difficulty |
+| `h2/`, `h3/` | Halo 2 and Halo 3 loaders and renderers |
+| `input/`     | Touch overlay |
+| `loading/`   | Map loading pipeline, offline (OPFS) maps, map file subsystem |
+| `network/`   | Networking, relevance, WebRTC |
+| `player/`    | Player controller, camera, view kick, use/seats/pick-ups, spawn points |
+| `poc/`       | Headless combat/netcode proof of concept |
+| `render/`    | Render pipeline, effects, occluders, debug lines, materials |
+| `scripting/` | HaloScript VM and natives, cinematics |
+| `ui/`        | Menus, profiles, game setup, HUD |
+| `world/`     | Devices, object functions, map lifecycle, placement |
 
 ## Build
 

@@ -1,0 +1,751 @@
+#include "caching/bitmap_cache.h"
+#include "loading/blam_files.h"
+#include "caching/caching.h"
+#include "coffee/comp_app/services.h"
+#include "components.h"
+#include "data.h"
+#include "network/networking.h"
+#include "loading/offline_maps.h"
+#include "physics.h"
+#include "caching/resource_creation.h"
+#include "selected_version.h"
+#include "caching/shader_cache.h"
+#include "audio/sounds.h"
+#include "task.h"
+#include "ui/ui.h"
+#include "ui/ui_caching.h"
+#include "ui/ui_profile.h"
+
+#include <algorithm>
+#include <blam/volta/blam_base_types.h>
+#include <blam/volta/blam_globals.h>
+#include <blam/volta/blam_scenario.h>
+#include <blam/volta/blam_stl.h>
+#include <blam/volta/blam_tag_classes.h>
+#include <blam/volta/blam_tag_ref.h>
+#include <coffee/comp_app/file_mapper.h>
+#include <coffee/components/entity_container.h>
+#include <coffee/core/debug/formatting.h>
+#include <magic_enum/magic_enum.hpp>
+
+#include <fmt_extensions/url_types.h>
+
+using Coffee::cDebug;
+using platform::url::Path;
+
+static void load_resources(
+    compo::EntityContainer&             e,
+    MapLoadFinishedEvent<halo_version>& finished,
+    MapChangedEvent<halo_version>&      changed);
+
+static void filter_maps(std::vector<platform::file::file_entry_t>& files)
+{
+    std::erase_if(files, [](auto const& file) {
+        Path filepath(file.name.data());
+        if(filepath.extension() != "map")
+            return true;
+        /* Resource maps, not playable ones */
+        return file.name.find("bitmaps") != std::string::npos ||
+               file.name == "sounds.map" || file.name == "loc.map";
+    });
+}
+
+static void load_bitmaps(compo::EntityContainer& e, blam::map_ptr const& magic)
+{
+    auto& api            = e.subsystem_cast<gleam::system>();
+    auto& loading_status = e.subsystem_cast<LoadingStatus>();
+    auto& bitmaps        = e.subsystem_cast<BitmapCache<halo_version>>();
+    auto& files          = e.subsystem_cast<BlamFiles<halo_version>>();
+    if constexpr(compile_info::platform::is_32bit)
+        return;
+    // bitmaps.allocate_storage();
+    loading_status.loaded_bitmaps = LoadingStatus::in_progress;
+    if(auto tex_queue = api.queue<gleam::system::queues::texture_decode>())
+    {
+        [[maybe_unused]] auto res = rq::runtime_queue::QueueImmediate(
+            tex_queue, rq::detail::duration(), [load = &loading_status] {
+                load->loaded_bitmaps = LoadingStatus::loaded;
+                load->check_all_loaded();
+            });
+    } else
+    {
+        loading_status.loaded_bitmaps = LoadingStatus::loaded;
+        loading_status.check_all_loaded();
+    }
+}
+
+/* loc.map holds the fonts, strings and HUD messages a Custom Edition map
+ * only indexes; it is in hand before the map counts as loaded */
+static void localize(compo::EntityContainer& e, std::shared_ptr<comp_app::FileMapper::Resource> loc)
+{
+    auto& files    = e.subsystem_cast<BlamFiles<halo_version>>();
+    files.loc_file = std::move(loc);
+    e.subsystem_cast<FontCache<halo_version>>().localize(
+        files.loc_file ? std::optional(blam::map_ptr(static_cast<BytesConst>(*files.loc_file)))
+                       : std::nullopt);
+}
+
+static void load_sounds(compo::EntityContainer& e, blam::map_ptr const& magic)
+{
+    auto& files          = e.subsystem_cast<BlamFiles<halo_version>>();
+    auto& sounds         = e.subsystem_cast<SoundCache<halo_version>>();
+    auto& loading_status = e.subsystem_cast<LoadingStatus>();
+    sounds.load_sounds_from(magic);
+    loading_status.loaded_sounds = LoadingStatus::loaded;
+    loading_status.check_all_loaded();
+
+    auto* sound_bus = e.service<comp_app::EventBus<SoundEvent>>();
+    if(sound_bus && files.container.map->map_type == blam::maptype_t::ui)
+    {
+        auto title_tag_name = "sound\\music\\title1\\title1";
+        auto title = sounds.index.find(title_tag_name);
+        if(title == sounds.index.end())
+        {
+            cWarning("Title track not found: {}", title_tag_name);
+            return;
+        } else
+            cDebug("Title track found, queueing");
+        SoundEvent ev{.type = SoundEvent::background_sound_transition};
+        BackgroundSoundTransitionEvent transition{
+            .sound_tag = &(*title),
+        };
+        sound_bus->process(ev, &transition);
+    }
+}
+
+static void init_map(
+    compo::EntityContainer& e, MapLoadFinishedEvent<halo_version>& finished)
+{
+    auto& loading_status = e.subsystem_cast<LoadingStatus>();
+    if(std::exchange(loading_status.init_started, true))
+    {
+        cWarning("init_map fired twice for same map load, ignoring");
+        return;
+    }
+    auto& bitmaps     = e.subsystem_cast<BitmapCache<halo_version>>();
+    auto& bsps        = e.subsystem_cast<BSPCache<halo_version>>();
+    auto& models      = e.subsystem_cast<ModelCache<halo_version>>();
+    auto& shaders     = e.subsystem_cast<ShaderCache<halo_version>>();
+    auto& sounds      = e.subsystem_cast<SoundCache<halo_version>>();
+
+    loading_status.app_info = e.service<comp_app::AppInfo>();
+
+    u32 num = 0;
+    for([[maybe_unused]] auto const& i : e.select(ObjectGC))
+        num++;
+    cDebug("Number of GC entities: {}", num);
+
+    auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+
+    GameEvent                     event{GameEvent::MapChanged};
+    MapChangedEvent<halo_version> changed{
+        .container = files.container,
+        // .bitmap_magic = blam::magic_data_t(finished.bitmap_file.view),
+        .scenario = files.container.tags
+                        ->scenario(files.container.map, files.container.magic)
+                        .value(),
+    };
+    e.subsystem_cast<GameEventBus>().inject(event, &changed);
+
+    comp_app::EventBus<SoundEvent>* sound_bus =
+        e.service<comp_app::EventBus<SoundEvent>>();
+
+    bitmaps.load_from(changed.container);
+    bsps.load_from(changed.container);
+    models.load_from(changed.container);
+    shaders.load_from(changed.container);
+    sounds.load_from(changed.container);
+
+    if(finished.bitmaps.has_value())
+        bitmaps.load_bitmaps_from(*finished.bitmaps);
+
+    bitmaps.begin_map();
+
+    event = {GameEvent::MapDataReady};
+    MapDataReadyEvent ready{};
+    e.subsystem_cast<GameEventBus>().inject(event, &ready);
+
+    load_resources(e, finished, changed);
+}
+
+static void load_resources(
+    compo::EntityContainer&             e,
+    MapLoadFinishedEvent<halo_version>& finished,
+    MapChangedEvent<halo_version>&      changed)
+{
+    auto& loading_status = e.subsystem_cast<LoadingStatus>();
+    auto& bsps           = e.subsystem_cast<BSPCache<halo_version>>();
+    auto& models         = e.subsystem_cast<ModelCache<halo_version>>();
+    auto& shaders        = e.subsystem_cast<ShaderCache<halo_version>>();
+    auto& sounds         = e.subsystem_cast<SoundCache<halo_version>>();
+    auto& ui_elements    = e.subsystem_cast<UIElementCache<halo_version>>();
+    auto& files          = e.subsystem_cast<BlamFiles<halo_version>>();
+    auto* sound_bus      = e.service<comp_app::EventBus<SoundEvent>>();
+    auto& game_bus       = e.subsystem_cast<GameEventBus>();
+
+    {
+        GameEvent     spawn{.type = GameEvent::SpawnBSP};
+        SpawnBSPEvent bsp{
+            .section_id = 0,
+        };
+        game_bus.inject(spawn, &bsp);
+    }
+    // load_scenario_bsp(e, changed);
+    // load_collision_debug(e, changed);
+    load_ui_items(e, changed);
+
+    if(finished.bitmaps.has_value())
+    {
+        // bitmaps.allocate_storage();
+        loading_status.loaded_bitmaps = LoadingStatus::loaded;
+        loading_status.check_all_loaded();
+    }
+
+    u32 num_pinfo = 0;
+    for(auto const& pinfo : e.select<PlayerInfo>())
+    {
+        auto const* info = e.get<PlayerInfo>(pinfo.id());
+        if(info && !info->is_remote())
+            ++num_pinfo;
+    }
+    auto num_seats = [&] -> u16 {
+        switch(changed.container.map->map_type)
+        {
+        case blam::maptype_t::multiplayer:
+            return 4;
+        case blam::maptype_t::singleplayer:
+            return 2;
+        case blam::maptype_t::ui:
+            return 1;
+        }
+        return 1;
+    }();
+    /* Controllers bound in the split screen lobby get a seat each */
+    std::vector<u32> lobby_controllers;
+    if(changed.container.map->map_type != blam::maptype_t::ui)
+        lobby_controllers =
+            e.subsystem_cast<LocalLobby>().seated_controllers();
+    if(!lobby_controllers.empty())
+        num_seats = static_cast<u16>(lobby_controllers.size());
+    u64 main_biped_id{0};
+    /* The menu made one seat; a lobby can ask for more */
+    if(num_pinfo == 0 || (!lobby_controllers.empty() && num_pinfo < num_seats))
+    {
+        cDebug("Creating player data");
+        auto* controllers         = e.service<comp_app::ControllerInput>();
+        auto* window              = e.service<comp_app::Windowing>();
+        u32   num_controllers     = controllers ? controllers->count() : 0,
+            allocated_controllers = 0;
+        for(auto i : range<>(num_seats))
+        {
+            if(i < num_pinfo)
+                continue;
+            // Uncomplicate the rest of the codebase by not creating
+            // more local seats than supported
+            if(i != 0 && !const_config::supports_splitscreen)
+                break;
+            auto ref = e.create_entity(shared_recipes::player_recipe);
+            for(auto frame : range<size_t>(Visibility::type::frame_count_v))
+                e.get_at<Visibility>(ref.id(), frame)->skip_render_for = i;
+            auto& info      = ref.get<PlayerInfo>();
+            info.player_idx = i;
+            info.seat_idx   = i;
+            /* On a client, seats not yet joined stay out of the server's
+             * index space */
+            if(auto const& net = e.subsystem_cast<NetworkState>(); net.remote_player_idx)
+            {
+                auto const joined = net.remote_seats.find(i);
+                info.player_idx   = joined != net.remote_seats.end()
+                                        ? joined->second
+                                        : PlayerInfo::local_only_idx_base + i;
+            }
+            auto& camera    = ref.get<PlayerCamera>();
+            if(i == 0)
+            {
+                cDebug("Keyboard seat assigned");
+                main_biped_id           = ref.id();
+                camera.keyboard.enabled = true;
+                if(auto const& name =
+                       e.subsystem_cast<NetworkState>().local_player_name)
+                    info.name = *name;
+            }
+            if(!lobby_controllers.empty())
+                camera.controller.index = lobby_controllers[i];
+            else if(num_controllers > allocated_controllers)
+            {
+                camera.controller.index = allocated_controllers;
+                ++allocated_controllers;
+            }
+        }
+    }
+    /* Local seats: menu input on ui.map, game input elsewhere */
+    bool const in_menu =
+        changed.container.map->map_type == blam::maptype_t::ui;
+    for(auto player : e.select<PlayerInfo, PlayerInput, PlayerCamera>())
+    {
+        auto [info, input, camera] = player.components();
+        if(info.is_remote())
+            continue;
+        input.input_mode = in_menu ? PlayerInput::input_mode_t::menu
+                                   : PlayerInput::input_mode_t::game;
+        if(!in_menu && info.seat_idx < lobby_controllers.size())
+            camera.controller.index = lobby_controllers[info.seat_idx];
+    }
+
+    rq::runtime_queue::Queue(
+        rq::dependent_task<void, void>::CreateSink(
+            loading_status.finished.get_future(),
+            [&e](void*) {
+                cDebug("Load finish signalled!");
+                for(auto player : e.select<PlayerInfo>())
+                {
+                    auto* player_info = e.get<PlayerInfo>(player.id());
+                    if(!player_info->is_remote())
+                    {
+                        player_info->loading_progress = 100;
+                    }
+                }
+                auto& loading    = e.subsystem_cast<LoadingStatus>();
+                loading.progress = -1;
+                loading.status   = "Complete!";
+                loading.check_all_loaded();
+
+                GameEvent ev{.type = GameEvent::MapAllLoaded};
+                e.subsystem_cast<GameEventBus>().process(ev, nullptr);
+            }))
+        .assume_value();
+
+    // For debugging: go through all the bitmaps
+    u32 num_snds{0}, num_bitms{0}, num_mod{0};
+    cDebug("Tags:");
+    blam::tag_index_view                    index(files.container);
+    std::function<void(blam::tag_t const&)> explore_tagc;
+    explore_tagc = [&](blam::tag_t const& tag) {
+        // Go through tag collections and load them
+        // I think this is the way? There are no other references to eg.
+        // the title music *other than* the tagc tags
+        auto const& magic    = files.container.magic;
+        auto        tag_coll = tag.data<blam::tag_collection_t>(magic).value();
+        auto        tags     = tag_coll->tags.data(magic).value();
+        for(auto const& tag : tags)
+        {
+            cDebug(" - tagc: {}", tag.tag_class_name());
+            switch(tag.class_id())
+            {
+            case blam::tag_class_t::Soul:
+                // Put in UI cache
+                ui_elements.explore(tag);
+                break;
+            case blam::tag_class_t::lsnd: {
+                // Put in sound cache
+                LoopSoundEvent loop = {
+                    .sound = &tag,
+                };
+                SoundEvent ev = {
+                    .type      = SoundEvent::loop_sound,
+                    .entity_id = main_biped_id,
+                };
+                if(sound_bus)
+                    sound_bus->inject(ev, &loop);
+                break;
+            }
+            case blam::tag_class_t::tagc: {
+                explore_tagc(*index.find(tag));
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    };
+
+    for(blam::tag_t const& tag : index)
+    {
+        if(tag.matches(blam::tag_class_t::bitm))
+        {
+            num_bitms++;
+        }
+        if(tag.matches(blam::tag_class_t::snd))
+        {
+            num_snds++;
+        }
+        if(tag.matches(blam::tag_class_t::mod2))
+        {
+            num_mod++;
+        }
+        if(tag.matches(blam::tag_class_t::tag_collection))
+        {
+            // explore_tagc(tag);
+        }
+    }
+
+    cDebug(
+        "Map tag summary: {} bitmaps, {} sounds, {} models",
+        num_bitms,
+        num_snds,
+        num_mod);
+
+    /* TODO: This needs a network round-trip */
+    create_camera(
+        e,
+        changed.scenario->player_start.locations.data(changed.container.magic)
+            .value());
+
+    if(auto window_config = e.service<comp_app::WindowInfo>())
+    {
+        auto map_name = files.container.map->full_mapname();
+        window_config->setName(fmt::format("Blam! : {0}", map_name));
+    }
+
+    /* With Xbox, we're done loading here */
+    if(files.container.map->version == blam::version_t::xbox)
+    {
+        loading_status.loaded_bitmaps = LoadingStatus::loaded;
+        loading_status.loaded_sounds  = LoadingStatus::loaded;
+    }
+    /* MCC doesn't have a sounds file? Or maybe it's elsewhere */
+    if(files.container.map->version == blam::version_t::mcc)
+    {
+        loading_status.loaded_sounds = LoadingStatus::loaded;
+    }
+    loading_status.loaded_map = LoadingStatus::loaded;
+    loading_status.check_all_loaded();
+
+    // TODO: One day load loc.map on PC/Custom Edition
+
+    if(files.container.map->version == blam::version_t::xbox)
+    {
+        load_bitmaps(e, files.container.magic.ptr_only());
+        load_sounds(e, files.container.magic.ptr_only());
+    }
+}
+
+static MapListingEvent list_maps(
+    compo::EntityContainer& e, MapLoadEvent const& load)
+{
+    MapListingEvent listing;
+    if(load.directory)
+    {
+        listing.directory = load.directory.value();
+    } else if(load.file)
+    {
+        using namespace platform::url::constructors;
+        auto map_dir      = (*load.file).path().dirname();
+        listing.directory = map_dir.url(load.file->flags);
+        // data.bitmap_file = std::make_unique<Resource>(
+        //     (map_dir / "bitmaps.map").url(map_file->flags));
+        // data.map_file      = std::make_unique<Resource>(*map_file);
+        // data.map_directory = map_dir.url(RSCA::SystemFile);
+    }
+
+    listing.bitmap_file =
+        (listing.directory.path() / "bitmaps.map").url(listing.directory.flags);
+    listing.sound_file =
+        (listing.directory.path() / "sounds.map").url(listing.directory.flags);
+    listing.loc_file =
+        (listing.directory.path() / "loc.map").url(listing.directory.flags);
+
+    auto maps_ = platform::file::list(listing.directory);
+    if(maps_.has_error())
+    {
+        /* Uploaded maps are listed from the OPFS snapshot taken at startup */
+        auto offline = offline_maps::list(listing.directory.internUrl);
+        if(!offline.empty())
+        {
+            std::vector<platform::file::file_entry_t> entries;
+            for(auto& name : offline)
+                entries.push_back({.name = std::move(name)});
+            maps_ = stl_types::success(std::move(entries));
+        }
+    }
+    if(maps_.has_error())
+    {
+        cDebug("Failed to list maps: {0}", maps_.error());
+    } else
+    {
+        using platform::url::constructors::MkSysUrl;
+
+        auto maps = maps_.value();
+        filter_maps(maps);
+        auto base_dir     = listing.directory.path();
+        auto base_storage = listing.directory.flags;
+        for(auto const& map : maps)
+            listing.maps.push_back((base_dir / map.name).url(base_storage));
+        std::sort(listing.maps.begin(), listing.maps.end());
+        cDebug("Maps:");
+        for(auto const& map : listing.maps)
+            cDebug(" - {0}", map.internUrl);
+    }
+
+    // TODO: Maybe cache this? Maybe map<name, url> for convenience
+
+    GameEvent list{GameEvent::MapListing};
+    e.subsystem_cast<GameEventBus>().inject(list, &listing);
+
+    cDebug("map={}, bitmap={}", load.file, listing.bitmap_file);
+
+    return listing;
+}
+
+static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
+{
+    LoadingStatus& loading = e.subsystem_cast<LoadingStatus>();
+
+    /* clear entities, evict cache entries */
+    e.remove_entity_if([&e](compo::Entity const& en) {
+        return stl_types::any_flag_of(en.tags, ObjectGC);
+    });
+
+    if(auto* sound_bus = e.service<comp_app::EventBus<SoundEvent>>())
+    {
+        SoundEvent ev = {.type = SoundEvent::clear_all};
+        sound_bus->inject(ev, nullptr);
+    }
+
+    // TODO: Decouple this from open_map so we can do MapLoadByName
+    // We also need a way to store the listed maps so we can implement that
+    auto listing = list_maps(e, load);
+
+    if(!load.file)
+    {
+        cWarning(
+            "open_map: no valid file for this load (origin={}), aborting "
+            "silently otherwise",
+            magic_enum::enum_name(load.origin));
+        return;
+    }
+
+    ProfContext _;
+
+    loading.loading = true;
+
+    using result_type = blam::map_container<halo_version>::result_type;
+
+    {
+        Physics::Event reset_ev{Physics::Event::Reset};
+        Physics::Reset reset{};
+        e.subsystem_cast<PhysicsBus>().process(reset_ev, &reset);
+    }
+
+    /* bitmaps.map and sounds.map stay held until replaced: the next map
+     * beside them gets the same files without reading them again */
+    auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+
+    loading.progress       = 0;
+    loading.loaded_map     = LoadingStatus::none;
+    loading.loaded_bitmaps = LoadingStatus::none;
+    loading.loaded_sounds  = LoadingStatus::none;
+    loading.init_started   = false;
+    loading.finished       = std::promise<void>();
+
+    auto& file_mapper   = e.subsystem_cast<comp_app::FileMapper>();
+    using AsyncResource = comp_app::FileMapper::Resource;
+
+    u32 const this_generation =
+        ++e.subsystem_cast<BlamFiles<halo_version>>().load_generation;
+    auto load_is_stale = [&e, this_generation]() {
+        return e.subsystem_cast<BlamFiles<halo_version>>().load_generation !=
+               this_generation;
+    };
+
+    std::function<void(std::string_view, i16)> progress_cb =
+        rq::runtime_queue::BindToQueue(
+            std::function<void(std::string_view, i16)>(
+                [&loading](std::string_view status, i16 progress) {
+                    loading.status = std::string(status.begin(), status.end());
+                    loading.progress   = progress;
+                    loading.loaded_map = progress == 100
+                                             ? LoadingStatus::loaded
+                                             : LoadingStatus::in_progress;
+                    loading.check_all_loaded();
+                }));
+
+    auto store_map_file = rq::runtime_queue::BindToQueue(
+        std::function<void(std::shared_ptr<AsyncResource>)>(
+            [&e, load_is_stale](std::shared_ptr<AsyncResource> resource) {
+                if(load_is_stale())
+                    return;
+                e.subsystem_cast<BlamFiles<halo_version>>().map_file =
+                    std::move(resource);
+            }));
+
+    auto map_load_fun = [&e, load_is_stale](
+                            result_type                    map,
+                            std::shared_ptr<AsyncResource> bitmap_data) -> int {
+        ProfContext _("Notifying systems of new map");
+
+        if(load_is_stale())
+        {
+            cWarning("Discarding superseded map load");
+            return -1;
+        }
+        if(map.has_error())
+        {
+            cWarning(
+                "Failed to load map: {}", magic_enum::enum_name(map.error()));
+            return -1;
+        }
+        auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+
+        files.container   = std::move(map.value());
+        files.bitmap_file = std::move(bitmap_data);
+
+        auto&     gbus = e.subsystem_cast<GameEventBus>();
+        GameEvent event{GameEvent::MapLoadFinished};
+        MapLoadFinishedEvent<halo_version> finished = {
+            .container = &files.container,
+        };
+        if(files.bitmap_file)
+            finished.bitmaps =
+                blam::map_ptr(static_cast<BytesConst>(*files.bitmap_file));
+        finished.map_name  = files.container.internal_name();
+        finished.map_title = files.container.name();
+        gbus.inject(event, &finished);
+        return 0;
+    };
+
+    constexpr bool separate_files = !std::is_same_v<halo_version, blam::xbox_version_t>;
+
+    /* What has landed so far, only touched on this (the main) queue */
+    struct pending_t
+    {
+        std::shared_ptr<result_type>   map;
+        std::shared_ptr<AsyncResource> bitmaps, sounds, loc;
+        bool                           bitmaps_in{false}, loc_in{false}, finished{false};
+    };
+    auto  pending = std::make_shared<pending_t>();
+    auto* main    = rq::runtime_queue::GetCurrentQueue().value();
+
+    /* MapLoadFinished once the map is read and, beside a PC map, bitmaps.map
+     * is in; the sounds follow it */
+    auto finish = std::make_shared<std::function<void()>>(
+        [&e, pending, map_load_fun, load_is_stale]() mutable {
+            if(load_is_stale())
+                return;
+            if(!pending->finished && pending->map &&
+               (!separate_files || (pending->bitmaps_in && pending->loc_in)))
+            {
+                pending->finished = true;
+                localize(e, std::move(pending->loc));
+                map_load_fun(std::move(*pending->map), std::move(pending->bitmaps));
+            }
+            if(pending->finished && pending->sounds)
+            {
+                auto& files      = e.subsystem_cast<BlamFiles<halo_version>>();
+                files.sound_file = std::move(pending->sounds);
+                load_sounds(e, blam::map_ptr(static_cast<BytesConst>(*files.sound_file)));
+            }
+
+        });
+
+    /* Parsed on the background worker, handed back to the main queue */
+    auto read_map = [progress_cb, store_map_file, pending, finish, main](
+                        std::shared_ptr<AsyncResource> data) mutable {
+        auto map = std::make_shared<result_type>(
+            data ? blam::map_container<halo_version>::from_bytes(
+                       *data, halo_version_v, std::move(progress_cb))
+                 : stl_types::failure(blam::map_load_error::map_file_too_small));
+        if(map->has_value())
+            store_map_file(std::move(data));
+        rq::runtime_queue::QueueImmediate(main, {}, [pending, finish, map] {
+            pending->map = map;
+            (*finish)();
+        }).assume_value();
+    };
+
+    BlamResources& resources = e.subsystem_cast<BlamResources>();
+    auto*          worker    = resources.background_worker;
+
+    using comp_app::FileMapper;
+    std::vector<FileMapper::fetch_entry> entries;
+    constexpr std::size_t                none = ~std::size_t(0);
+    std::size_t map_i = none, bitmaps_i = none, sounds_i = none, loc_i = none;
+    map_i = entries.size(), entries.push_back({.url = *load.file});
+    if(separate_files)
+    {
+        bitmaps_i = entries.size(), entries.push_back({.url = listing.bitmap_file});
+        loc_i     = entries.size(), entries.push_back({.url = listing.loc_file, .optional = true});
+        sounds_i  = entries.size(), entries.push_back({.url = listing.sound_file, .optional = true});
+    }
+    auto on_ready = [pending, finish, read_map, load_is_stale, worker, map_i, bitmaps_i, sounds_i, loc_i](
+                        FileMapper::FetchSet& set, std::size_t i) {
+        if(load_is_stale())
+            return;
+        if(i == map_i)
+            rq::runtime_queue::QueueImmediate(worker, {}, [read_map, data = set.resource(i)]() mutable {
+                read_map(std::move(data));
+            }).assume_value();
+        else if(i == bitmaps_i)
+        {
+            pending->bitmaps    = set.resource(i);
+            pending->bitmaps_in = true;
+            (*finish)();
+        } else if(i == sounds_i)
+        {
+            pending->sounds = set.resource(i);
+            (*finish)();
+        } else if(i == loc_i)
+        {
+            /* Optional: absent is settled too */
+            pending->loc    = set.resource(i);
+            pending->loc_in = true;
+            (*finish)();
+        }
+    };
+
+    if(files.fetch)
+        files.fetch->cancel();
+    files.fetch      = file_mapper.fetch_set(std::move(entries), main, std::move(on_ready));
+    loading.download = files.fetch;
+}
+
+void setup_load_eventhandlers(compo::EntityContainer& e)
+{
+    ProfContext _;
+    auto&       gbus = e.subsystem_cast<GameEventBus>();
+    gbus.addEventFunction<MapLoadByNameEvent>(
+        0, [&e](GameEvent&, MapLoadByNameEvent* load) {
+            auto&        files = e.subsystem_cast<BlamFiles<halo_version>>();
+            auto&        gbus  = e.subsystem_cast<GameEventBus>();
+            GameEvent    event{GameEvent::MapLoadStart};
+            MapLoadEvent map_load = {
+                .origin = load->origin,
+                .file   = files.map_directory /
+                        Path(load->map_name).addExtension("map"),
+            };
+            gbus.inject(event, &map_load);
+        });
+
+    gbus.addEventFunction<MapLoadEvent>(
+        0, [&e](GameEvent&, MapLoadEvent* load) {
+            auto& net_state = e.subsystem_cast<NetworkState>();
+            /* Reject local map changes while connected to a server */
+            if(load->origin == MapLoadEvent::Local &&
+               net_state.client_state == NetworkState::ClientState::Connected)
+                return;
+            cDebug("Starting MapLoad handler");
+            GameEvent    ev{GameEvent::MapGame};
+            MapGameEvent game{.game = MapGameEvent::halo1};
+            e.subsystem_cast<GameEventBus>().process(ev, &game);
+            open_map(e, *load);
+        });
+
+    gbus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
+        0,
+        [&e](GameEvent&, MapLoadFinishedEvent<halo_version>* finished) mutable {
+            cDebug("Starting MapFinished handler");
+            init_map(e, *finished);
+        });
+
+    gbus.addEventFunction<MapRequestListingEvent>(
+        0, [&e](GameEvent&, MapRequestListingEvent* request) {
+            auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+            if(request->directory)
+                files.map_directory = *request->directory;
+            list_maps(
+                e,
+                MapLoadEvent{
+                    .directory = files.map_directory,
+                });
+        });
+}

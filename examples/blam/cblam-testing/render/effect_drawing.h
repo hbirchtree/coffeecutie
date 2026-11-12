@@ -2,10 +2,10 @@
 
 #include <array>
 
-#include "bitmap_cache.h"
-#include "effects.h"
+#include "caching/bitmap_cache.h"
+#include "render/effects.h"
 #include "graphics_api.h"
-#include "shader_compiler.h"
+#include "caching/shader_compiler.h"
 
 #include <algorithm>
 #include <map>
