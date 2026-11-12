@@ -22,7 +22,7 @@
 #include <peripherals/typing/vectors/vector_types.h>
 #include <platforms/environment.h>
 
-#include "materials.h"
+#include "render/materials.h"
 #include "game_events.h"
 #include "graphics_api.h"
 

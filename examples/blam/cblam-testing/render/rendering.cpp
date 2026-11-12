@@ -3,20 +3,20 @@
 #include "render/gravity_storm.h"
 #include "render/monitors.h"
 
-#include "caching.h"
-#include "caching_item.h"
-#include "cinematic.h"
+#include "caching/caching.h"
+#include "caching/caching_item.h"
+#include "scripting/cinematic.h"
 #include "components.h"
 #include "crunched/loading_screen.h"
 #include "data.h"
 #include "loading_screen.h"
-#include "map_marker.h"
-#include "materials.h"
+#include "render/map_marker.h"
+#include "render/materials.h"
 #include "render/cascaded_shadows.h"
 #include "render/detail_objects.h"
 #include "render/legacy_materials.h"
 #include "selected_version.h"
-#include "shader_compiler.h"
+#include "caching/shader_compiler.h"
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_shaders.h>

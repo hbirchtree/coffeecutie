@@ -1,10 +1,10 @@
 #include "render/gravity_storm.h"
 
-#include "blam_files.h"
+#include "loading/blam_files.h"
 #include "components.h"
 #include "crunched/loading_screen.h"
 #include "graphics_api.h"
-#include "loading.h"
+#include "loading/loading.h"
 #include "render/rendering.h"
 #include "selected_version.h"
 

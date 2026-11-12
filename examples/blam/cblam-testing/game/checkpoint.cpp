@@ -1,0 +1,416 @@
+#include "game/checkpoint.h"
+
+#include "loading/blam_files.h"
+#include "components.h"
+#include "data.h"
+#include "game_events.h"
+#include "network/networking.h"
+#include "animation/animation.h"
+#include "game/save_state.h"
+#include "selected_version.h"
+#include "player/spawn_points.h"
+
+#include <coffee/components/proxy.h>
+#include <coffee/components/restricted_subsystem.h>
+
+#include <map>
+#include <set>
+
+using CheckpointManifest = compo::SubsystemManifest<
+    type_list_t<
+        Model,
+        ObjectPhysics,
+        BipedStatus,
+        BipedEquipment,
+        const NetworkInfo,
+        PlayerInfo,
+        const PlayerCamera>,
+    type_list_t<
+        GameEventBus,
+        BSPCache<halo_version>,
+        const NetworkState,
+        const LoadingStatus,
+        const BlamFiles<halo_version>>,
+    empty_list_t>;
+
+/* The world as a checkpoint left it: which networked objects there were,
+ * where each player stood with what in hand, and the structure section.
+ * Going back despawns what came since and spawns again what went; what the
+ * objects were like is SaveState's. Replicas follow through the usual
+ * spawns, despawns, object syncs and vitality */
+struct CheckpointSystem : compo::RestrictedSubsystem<CheckpointSystem, CheckpointManifest>
+{
+    using type  = CheckpointSystem;
+    using Proxy = compo::proxy_of<CheckpointManifest>;
+
+    CheckpointSystem()
+    {
+        this->priority = 908;
+    }
+
+    /* What it takes to spawn it again */
+    struct object_t
+    {
+        blam::tagref_t object{};
+        Vecf3          position{};
+        Quatf          rotation{1.f, 0.f, 0.f, 0.f};
+        blam::tagref_t held{}; /*!< A unit's weapon in hand */
+        std::array<u32, 4> change_colors{};
+        bool               camouflaged{false};
+    };
+
+    struct player_t
+    {
+        Vecf3       feet{};
+        f32         facing{0.f};
+        BipedStatus status;
+        std::optional<BipedEquipment> equipment; /*!< Our own players' only */
+        /*! The vehicle it sat in, by net id, and the seat's label */
+        std::optional<std::pair<u32, blam::bl_string>> seat;
+    };
+
+    struct seating_t
+    {
+        u32             vehicle{0}; /*!< Net id */
+        blam::bl_string seat{};
+        u32             frames{0}; /*!< Left to wait for the vehicle and the revival */
+    };
+
+    struct snapshot_t
+    {
+        std::map<u32, object_t> objects; /*!< By net id */
+        std::map<u32, player_t> players; /*!< By player index */
+        i16                     section{-1};
+        u32                     load_generation{0};
+    };
+
+    void start_restricted(Proxy& p, time_point const&)
+    {
+        m_save_queue->poll();
+        m_restore_queue->poll();
+        m_spawn_queue->poll();
+        bool const save    = std::exchange(m_save, false);
+        bool const restore = std::exchange(m_restore, false);
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded ||
+           p.template subsystem<NetworkState>().replica)
+            return;
+        auto const generation = p.template subsystem<BlamFiles<halo_version>>().load_generation;
+        if(m_snapshot && m_snapshot->load_generation != generation)
+        {
+            m_snapshot.reset();
+            m_pending.clear();
+            m_seating.clear();
+        }
+        if(m_generation != generation)
+        {
+            m_generation = generation;
+            m_spawning.clear();
+        }
+        land(p);
+        if(save)
+            take(p, generation);
+        if(restore && m_snapshot)
+            put_back(p);
+        settle(p);
+    }
+
+    /* A spawn asked for is on its way until its entity is there (the
+     * loader takes frames over a biped's model); one the scripts asked for
+     * in the frame they saved in is kept, so going back does not lose an
+     * encounter placed just before the checkpoint */
+    void land(Proxy& p)
+    {
+        if(m_spawning.empty())
+            return;
+        std::set<u32> live;
+        for(auto entity : p.template select<Model, NetworkInfo>())
+            if(auto const id = entity.template get<NetworkInfo>().instance_id; m_spawning.contains(id))
+                live.insert(id);
+        std::erase_if(m_spawning, [&live](auto const& s) { return live.contains(s.first) || s.second.second == 0; });
+        for(auto& [_, s] : m_spawning)
+            s.second--;
+    }
+
+    /* ---- Taking ---- */
+
+    void take(Proxy& p, u32 generation)
+    {
+        snapshot_t out{
+            .section         = p.template subsystem<BSPCache<halo_version>>().active_section,
+            .load_generation = generation,
+        };
+        for(auto entity : p.template select<Model, NetworkInfo>())
+        {
+            auto [model, net] = entity.components();
+            if(net.instance_id == 0 || p.template get<PlayerInfo>(entity.id()))
+                continue;
+            object_t object{
+                .object        = net.object,
+                .position      = model.position,
+                .rotation      = model.rotation,
+                .change_colors = model.change_colors,
+                .camouflaged   = model.camouflaged,
+            };
+            if(auto const* equip = p.template get<BipedEquipment>(entity.id());
+               equip && equip->weapons[0].tag)
+                object.held = equip->weapons[0].tag->as_ref();
+            out.objects[net.instance_id] = object;
+        }
+        for(auto const& [net_id, s] : m_spawning)
+            out.objects.try_emplace(net_id, s.first);
+        for(auto entity : p.template select<PlayerInfo, PlayerCamera, NetworkInfo, BipedStatus>())
+        {
+            auto [info, cam, net, status] = entity.components();
+            if(!biped_shown(info, cam, net))
+                continue;
+            player_t player{
+                .feet   = cam.camera.position - Vecf3{0.f, 0.f, info.eye_height()},
+                .facing = spawn_points::facing_of(cam),
+                .status = status,
+            };
+            /* Clients keep their own loadout */
+            if(auto const* equip = p.template get<BipedEquipment>(entity.id());
+               equip && !info.is_remote())
+                player.equipment = *equip;
+            if(!info.is_remote())
+                player.seat = seat_of(p, info);
+            out.players[info.player_idx] = std::move(player);
+        }
+        m_snapshot = std::move(out);
+    }
+
+    std::optional<std::pair<u32, blam::bl_string>> seat_of(Proxy& p, PlayerInfo const& info)
+    {
+        auto const* net     = p.template get<NetworkInfo>(info.riding.vehicle);
+        auto const* vehicle = p.template get<Model>(info.riding.vehicle);
+        if(!info.riding.vehicle || !net || net->instance_id == 0 || !vehicle ||
+           !vehicle->origin_object || info.riding.seat < 0)
+            return std::nullopt;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        unit  = vehicle->origin_object->template data<blam::scn::unit>(magic);
+        if(!unit.has_value())
+            return std::nullopt;
+        auto seats = unit.value()[0].seats.data(magic);
+        if(!seats.has_value() || static_cast<size_t>(info.riding.seat) >= seats.value().size())
+            return std::nullopt;
+        return std::pair{net->instance_id, seats.value()[info.riding.seat].label};
+    }
+
+    /* ---- Going back ---- */
+
+    void put_back(Proxy& p)
+    {
+        auto const& snapshot = *m_snapshot;
+        auto&       game     = p.template subsystem<GameEventBus>();
+        p.template subsystem<BSPCache<halo_version>>().active_section = snapshot.section;
+
+        std::map<u32, u64> live;
+        for(auto entity : p.template select<Model, NetworkInfo>())
+            if(auto const id = entity.template get<NetworkInfo>().instance_id;
+               id != 0 && !p.template get<PlayerInfo>(entity.id()))
+                live[id] = entity.id();
+
+        /* What came since goes; what went comes back */
+        for(auto const& [net_id, _] : live)
+            if(!snapshot.objects.contains(net_id))
+            {
+                GameEvent          ev{.type = GameEvent::DespawnObject};
+                DespawnObjectEvent despawn{.net_id = net_id};
+                game.inject(ev, &despawn);
+            }
+        m_pending.clear();
+        for(auto const& [net_id, object] : snapshot.objects)
+        {
+            if(auto it = live.find(net_id); it != live.end())
+            {
+                place(p, it->second, object);
+                continue;
+            }
+            GameEvent        ev{.type = GameEvent::SpawnObject};
+            SpawnObjectEvent spawn{
+                .object       = object.object,
+                .position     = object.position,
+                .rotation     = object.rotation,
+                .net_id        = net_id,
+                .server_owned  = true,
+                .held          = object.held,
+                .change_colors = object.change_colors,
+                .camouflaged   = object.camouflaged,
+            };
+            game.inject(ev, &spawn);
+            m_pending[net_id] = pending_frames;
+        }
+
+        m_seating.clear();
+        for(auto entity : p.template select<PlayerInfo, BipedEquipment>())
+        {
+            auto [info, equip] = entity.components();
+            auto const it = snapshot.players.find(info.player_idx);
+            if(it == snapshot.players.end())
+                continue;
+            auto const& saved = it->second;
+            GameEvent        ev{.type = GameEvent::RespawnUnit};
+            RespawnUnitEvent respawn{
+                .unit     = entity.id(),
+                .position = saved.feet,
+                .facing   = saved.facing,
+                .restore  = true,
+                .body     = saved.status.body,
+                .shield   = saved.status.shield,
+            };
+            game.inject(ev, &respawn);
+            if(saved.equipment && saved.equipment->load_generation == equip.load_generation)
+            {
+                u64 const held = equip.weapons[0].held;
+                equip          = *saved.equipment;
+                /* The hand's model is whatever it holds now */
+                equip.weapons[0].held = held;
+            }
+            /* Out of whatever it sits in now; back in its seat once up */
+            if(info.is_remote())
+                continue;
+            info.riding = {};
+            if(saved.seat)
+                m_seating[entity.id()] = {
+                    .vehicle = saved.seat->first,
+                    .seat    = saved.seat->second,
+                    .frames  = pending_frames,
+                };
+        }
+    }
+
+    /* Objects spawned again take their saved state once they exist */
+    void settle(Proxy& p)
+    {
+        seat(p);
+        if(m_pending.empty() || !m_snapshot)
+            return;
+        std::map<u32, u64> live;
+        for(auto entity : p.template select<Model, NetworkInfo>())
+            if(auto const id = entity.template get<NetworkInfo>().instance_id; m_pending.contains(id))
+                live[id] = entity.id();
+        for(auto it = m_pending.begin(); it != m_pending.end();)
+        {
+            if(auto found = live.find(it->first); found != live.end())
+            {
+                place(p, found->second, m_snapshot->objects.at(it->first));
+                it = m_pending.erase(it);
+            } else if(--it->second == 0)
+                it = m_pending.erase(it);
+            else
+                ++it;
+        }
+    }
+
+    /* Riders get back in once revived and their vehicle is there */
+    void seat(Proxy& p)
+    {
+        for(auto it = m_seating.begin(); it != m_seating.end();)
+        {
+            auto const* status  = p.template get<BipedStatus>(it->first);
+            u64         vehicle = 0;
+            for(auto entity : p.template select<Model, NetworkInfo>())
+                if(entity.template get<NetworkInfo>().instance_id == it->second.vehicle)
+                    vehicle = entity.id();
+            if(status && !status->dead && vehicle)
+            {
+                GameEvent             ev{.type = GameEvent::UnitEnterVehicle};
+                UnitEnterVehicleEvent enter{
+                    .unit    = it->first,
+                    .vehicle = vehicle,
+                    .seat    = it->second.seat,
+                };
+                p.template subsystem<GameEventBus>().inject(ev, &enter);
+                it = m_seating.erase(it);
+            } else if(!status || --it->second.frames == 0)
+                it = m_seating.erase(it);
+            else
+                ++it;
+        }
+    }
+
+    void place(Proxy& p, u64 entity, object_t const& object)
+    {
+        /* The dead let go of their weapon; the loader arms it again */
+        if(auto* equip = p.template get<BipedEquipment>(entity);
+           equip && object.held.valid() && !equip->weapons[0].tag)
+        {
+            blam::tag_index_view<halo_version> index(
+                p.template subsystem<BlamFiles<halo_version>>().container);
+            if(auto tag = index.find(object.held.tag_id); tag != index.end())
+                equip->weapons[0] = {.tag = &(*tag)};
+        }
+    }
+
+    /* How long a respawned object may take to turn up */
+    static constexpr u32 pending_frames = 300;
+
+    std::shared_ptr<GameEventBus::queue_type<WorldSaveEvent>>    m_save_queue;
+    std::shared_ptr<GameEventBus::queue_type<WorldRestoreEvent>> m_restore_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnObjectEvent>>  m_spawn_queue;
+    bool                       m_save{false};
+    bool                       m_restore{false};
+    u32                        m_generation{0};
+    /*! Spawns asked for and not yet there: what they are, frames left */
+    std::map<u32, std::pair<object_t, u32>> m_spawning;
+    std::optional<snapshot_t>  m_snapshot;
+    std::map<u32, u32>         m_pending; /*!< Net id, frames left */
+    std::map<u64, seating_t>   m_seating; /*!< By player entity */
+};
+
+/* Where objects were, how fast and how hurt */
+static void bind_objects(compo::EntityContainer& e, SaveState& save)
+{
+    auto const moved = [](compo::EntityContainer&, u64, Model& model) { model.update_matrix(); };
+    save.bind(e, &Model::position).then(moved);
+    save.bind(e, &Model::rotation).then(moved);
+    save.bind(e, &Model::item_rounds);
+    save.bind(e, &ObjectPhysics::linear_velocity)
+        .then([](compo::EntityContainer&, u64, ObjectPhysics& physics) { physics.teleported = true; });
+    save.bind(e, &ObjectPhysics::angular_velocity);
+    save.bind<BipedStatus>(e).then([](compo::EntityContainer& e, u64 id, BipedStatus& status) {
+        GameEvent         ev{.type = GameEvent::UnitVitality};
+        UnitVitalityEvent vitality{
+            .unit   = id,
+            .body   = status.body,
+            .shield = status.shield,
+            .dead   = status.dead,
+        };
+        e.subsystem_cast<GameEventBus>().inject(ev, &vitality);
+        /* What the tags tie to the shield (a jackal's gate) follows it
+         * back; the loader leaves an unchanged one alone */
+        GameEvent           shield_ev{.type = GameEvent::ShieldDepleted};
+        ShieldDepletedEvent shield{.unit = id, .depleted = status.shield <= 0.f};
+        e.subsystem_cast<GameEventBus>().inject(shield_ev, &shield);
+    });
+    save.bind(e, &AnimationPlayback::stance);
+    save.bind(e, &AnimationPlayback::emotion);
+    save.bind(e, &PlayerInfo::powerups).players();
+    save.bind(e, &PlayerInfo::camouflaged).players();
+}
+
+void alloc_checkpoints(compo::EntityContainer& e)
+{
+    bind_objects(e, e.subsystem_cast<SaveState>());
+    auto& checkpoints = e.register_subsystem_inplace<CheckpointSystem>();
+    auto& game        = e.subsystem_cast<GameEventBus>();
+    checkpoints.m_save_queue = game.addQueuedEventFunction<WorldSaveEvent>(
+        0, [&checkpoints](GameEvent&, WorldSaveEvent*) { checkpoints.m_save = true; });
+    checkpoints.m_restore_queue = game.addQueuedEventFunction<WorldRestoreEvent>(
+        0, [&checkpoints](GameEvent&, WorldRestoreEvent*) { checkpoints.m_restore = true; });
+    checkpoints.m_spawn_queue = game.addQueuedEventFunction<SpawnObjectEvent>(
+        0, [&checkpoints](GameEvent&, SpawnObjectEvent* spawn) {
+            if(!spawn->server_owned || spawn->net_id == 0 || spawn->local_only)
+                return;
+            checkpoints.m_spawning[spawn->net_id] = {
+                CheckpointSystem::object_t{
+                    .object        = spawn->object,
+                    .position      = spawn->position,
+                    .rotation      = spawn->rotation,
+                    .held          = spawn->held,
+                    .change_colors = spawn->change_colors,
+                    .camouflaged   = spawn->camouflaged,
+                },
+                CheckpointSystem::pending_frames};
+        });
+}

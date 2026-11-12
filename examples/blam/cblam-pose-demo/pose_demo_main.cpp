@@ -1,15 +1,15 @@
-#include "blam_files.h"
+#include "loading/blam_files.h"
 #include "components.h"
 #include "data.h"
 #include "journal.h"
-#include "map_marker.h"
+#include "render/map_marker.h"
 #include "network/networking.h"
 #include "physics.h"
 #include "pose_apply.h"
 #include "pose_config.h"
 #include "pose_demo_spawn.h"
 #include "render/rendering.h"
-#include "resource_creation.h"
+#include "caching/resource_creation.h"
 #include "selected_version.h"
 
 #include <coffee/core/CApplication>

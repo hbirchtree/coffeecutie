@@ -1,10 +1,10 @@
 #include "physics.h"
 
-#include "caching.h"
+#include "caching/caching.h"
 #include "coffee/core/CProfiling"
 #include "components.h"
 #include "data.h"
-#include "map_marker.h"
+#include "render/map_marker.h"
 #include "peripherals/stl/math.h"
 #include "selected_version.h"
 #include "ticks.h"

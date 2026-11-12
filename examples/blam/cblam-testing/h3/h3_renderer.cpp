@@ -1,11 +1,11 @@
 #include "h3_scene.h"
 
 #include "data.h"
-#include "player_controller.h"
+#include "player/player_controller.h"
 #include "render/cascaded_shadows.h"
 #include "world/player_spawn.h"
 #include "world/world_gpu.h"
-#include "resource_creation.h"
+#include "caching/resource_creation.h"
 
 #include <blam/common/frustum.h>
 #include <coffee/components/proxy.h>

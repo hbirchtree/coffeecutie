@@ -5,7 +5,7 @@
 
 #include "../components.h"
 #include "../data.h"
-#include "../map_marker.h"
+#include "render/map_marker.h"
 #include "../selected_version.h"
 
 #if defined(FEATURE_ENABLE_ImGui)

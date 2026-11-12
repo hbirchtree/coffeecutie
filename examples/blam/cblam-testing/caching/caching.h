@@ -1,0 +1,370 @@
+﻿#pragma once
+
+#include <functional>
+
+#include <blam/volta/blam_antr.h>
+#include <blam/volta/blam_bitm.h>
+#include <blam/volta/blam_font.h>
+#include <blam/volta/blam_scenario.h>
+#include <blam/volta/blam_sound.h>
+
+#include <peripherals/semantic/chunk_ops.h>
+#include <peripherals/stl/enumerate.h>
+#include <peripherals/typing/enum/pixels/format_transform.h>
+
+#include <coffee/graphics/apis/gleam/rhi.h>
+#include <coffee/graphics/apis/gleam/rhi_compat.h>
+
+#include <fmt_extensions/vector_types.h>
+
+#include <coffee/core/CDebug>
+
+#include "animation/animation.h"
+#include "caching/bitmap_cache.h"
+#include "caching/caching_item.h"
+#include "data.h"
+#include "caching/data_cache.h"
+#include "caching/shader_cache.h"
+#include "audio/sound_cache.h"
+#include "audio/sounds.h"
+
+struct DebugMarkers;
+
+/* ES2 has no integer vertex attributes: re-encode a signed 11/11/10 vector
+ * as snorm8x4 in the same 4 bytes, read as a normalized i8 vec. */
+inline u32 snorm8_from_r11g11b10(u32 v)
+{
+    auto to_snorm8 = [](u32 field, u32 bits) {
+        i32 const sign_bit = 1 << (bits - 1);
+        i32 const value    = field >= u32(sign_bit) ? i32(field) - (1 << bits)
+                                                    : i32(field);
+        f32 const f = std::clamp(f32(value) / f32(sign_bit - 1), -1.f, 1.f);
+        return static_cast<libc_types::i8>(std::lround(f * 127.f));
+    };
+    std::array<libc_types::i8, 4> const out = {
+        to_snorm8(v & 0x7FFu, 11),
+        to_snorm8((v >> 11) & 0x7FFu, 11),
+        to_snorm8((v >> 22) & 0x3FFu, 10),
+        0,
+    };
+    u32 packed;
+    std::memcpy(&packed, out.data(), sizeof(packed));
+    return packed;
+}
+
+template<typename Vertex>
+inline void repack_normals_snorm8(Vertex& v)
+{
+    v.normal  = snorm8_from_r11g11b10(v.normal);
+    v.binorm  = snorm8_from_r11g11b10(v.binorm);
+    v.tangent = snorm8_from_r11g11b10(v.tangent);
+}
+
+using libc_types::u8;
+using semantic::Bytes;
+using semantic::BytesConst;
+
+using compo::time_point;
+
+template<typename V>
+struct ModelCache
+    : DataCache<
+          ModelItem<V>,
+          std::tuple<blam::tag_index<>, blam::mod2::mod2_lod, u32>,
+          blam::tagref_t const&,
+          blam::mod2::mod2_lod,
+          u32>
+    , compo::SubsystemBase
+{
+    using type    = ModelCache<V>;
+    using Variant = typename std::conditional_t<
+        std::is_same_v<V, blam::xbox_version_t>,
+        blam::xbox_t,
+        blam::grbx_t>;
+
+    ModelCache(
+        BitmapCache<V>& bitm_cache,
+        ShaderCache<V>& shader_cache,
+        gfx::api*       allocator)
+        : bitm_cache(bitm_cache)
+        , shader_cache(shader_cache)
+        , allocator(allocator)
+    {
+    }
+
+    inline void load_from(blam::map_container<V> const& map)
+    {
+        version      = V::version_v;
+        tags         = map.tags;
+        index        = blam::tag_index_view(map);
+        magic        = map.magic;
+        vertex_magic = tags->vertex_magic(magic);
+        vert_ptr = 0, element_ptr = 0;
+        this->evict_all();
+    }
+
+    blam::version_t             version;
+    blam::tag_index_t<V> const* tags;
+    blam::tag_index_view<V>     index;
+    blam::map_ptr               magic;
+    blam::vertex_ptr            vertex_magic;
+    BitmapCache<V>&             bitm_cache;
+    ShaderCache<V>&             shader_cache;
+    gfx::api*                   allocator;
+
+    Bytes vert_buffer, element_buffer;
+    u32   vert_ptr, element_ptr;
+    /*! Called before a miss writes into the buffers: the loader maps them
+     *  only then, as a map waits for the GPU to be done drawing from them */
+    std::function<void()> before_upload;
+
+    /* ES2: compressed normals are rewritten as snorm8x4 on upload */
+    bool snorm8_normals{false};
+
+    blam::mod2::header<V> const* get_header(blam::tagref_t const& mod2)
+    {
+        auto header_it = index.find(mod2);
+
+        if(header_it == index.end())
+            return nullptr;
+
+        auto header =
+            (*header_it).template data<blam::mod2::header<V>>(magic).value();
+
+        return &header[0];
+    }
+
+    inline auto vertex_data(blam::mod2::part const& model)
+    {
+        return model.vertex_segment(*tags, magic).data(vertex_magic);
+    }
+
+    inline auto index_data(blam::mod2::part const& model)
+    {
+        return model.index_segment(*tags).data(vertex_magic);
+    }
+
+    /* `permutations` as mod2::header::model_at takes them */
+    virtual ModelItem<V> predict_impl(
+        blam::tagref_t const& mod2, blam::mod2::mod2_lod lod, u32 permutations) override;
+
+    /* Bones the model needs, 0 if it has no skeleton. */
+    u32 bone_count(generation_idx_t model_id);
+
+    /* Moves every layer's clock on, looping or chaining as the tag asks.
+     * Once per frame, never per viewport: chaining is not idempotent. */
+    void advance_playback(AnimationPlayback& anim, f32 delta);
+
+    /* Composes `anim`'s layers into `dest`, bone_count() matrices. Only for
+     * models that survived culling. */
+    /* `lookahead` seconds past where the layers stand, without advancing */
+    void evaluate_pose(
+        generation_idx_t         model_id,
+        AnimationPlayback const& anim,
+        Span<Matf4>              dest,
+        f32                      lookahead = 0.f);
+
+  private:
+    /* Pose scratch, reused across models so a pose allocates nothing.
+     * Main-thread only, like the subsystem that drives it. */
+    std::vector<Quatf> m_rot, m_layer_rot, m_ref_rot, m_row_rot;
+    std::vector<Vecf3> m_trans, m_layer_trans, m_ref_trans, m_row_trans;
+    std::vector<f32>   m_scale, m_layer_scale, m_ref_scale, m_row_scale;
+    std::vector<Matf4a> m_world;
+    std::vector<i16>   m_node_parents;
+
+    blam::antr::animation const* find_animation(AnimationLayer const& layer);
+    bool                         sample_grid(
+                                blam::antr::animation const& clip,
+                                AnimationLayer const&        layer,
+                                u32                          node_count);
+    bool                         sample_animation(
+                                blam::antr::animation const& anim,
+                                u32                          frame,
+                                u32                          node_count,
+                                std::vector<Quatf>&          rot,
+                                std::vector<Vecf3>&          trans,
+                                std::vector<f32>&            scale);
+
+  public:
+    virtual void evict_impl() override
+    {
+        vert_ptr    = 0;
+        element_ptr = 0;
+    }
+
+    virtual std::tuple<blam::tag_index<>, blam::mod2::mod2_lod, u32> get_id(
+        blam::tagref_t const& tag, blam::mod2::mod2_lod lod, u32 permutations) override
+    {
+        return std::make_tuple(tag.tag_id, lod, permutations);
+    }
+
+    ModelAssembly predict_regions(
+        blam::tagref_t const& tag,
+        blam::mod2::mod2_lod  max_lod      = blam::mod2::lod_high_ext,
+        u32                   permutations = 0)
+    {
+        ModelAssembly assem  = {};
+        auto          header = get_header(tag);
+
+        if(!header)
+            return {};
+
+        /* Levels that share geometry share the upload */
+        auto const key = std::make_tuple(tag.tag_id, max_lod, permutations);
+        if(!this->m_cache_key.contains(key))
+            if(auto parts = header->model_at(max_lod, magic, permutations))
+                for(u32 other = 0; other < 5; other++)
+                {
+                    auto other_lod = static_cast<blam::mod2::mod2_lod>(other);
+                    auto cached    = this->m_cache_key.find(
+                        std::make_tuple(tag.tag_id, other_lod, permutations));
+                    if(other_lod == max_lod || cached == this->m_cache_key.end())
+                        continue;
+                    auto other_parts = header->model_at(other_lod, magic, permutations);
+                    if(other_parts && other_parts->parts == parts->parts)
+                    {
+                        this->m_cache_key.emplace(key, cached->second);
+                        break;
+                    }
+                }
+
+        assem.models.push_back(this->predict(tag, max_lod, permutations));
+
+        //        for(auto const& region : header->regions.data(magic).value())
+        //        {
+        //            assem.models.emplace_back();
+        //            auto& mod = assem.models.back();
+        //            for(auto const& perm :
+        //            region.permutations.data(magic).value())
+        //            {
+        //                auto const& lod = perm.meshindex_lod.at(max_lod);
+        //                mod = this->predict(tag, lod);
+        //                break;
+        //            }
+        //        }
+
+        return assem;
+    }
+};
+
+template<typename V>
+struct BSPCache
+    : DataCache<BSPItem, blam::bsp::info const*, blam::bsp::info const&>
+    , compo::SubsystemBase
+{
+    using type = BSPCache<V>;
+
+    BSPCache(
+        BitmapCache<V>&                 bitm_cache,
+        ShaderCache<V>&                 shader_cache,
+        SoundCache<V>&                  sound_cache,
+        comp_app::EventBus<SoundEvent>* sound_bus)
+        : version(V::version_v)
+        , bitm_cache(bitm_cache)
+        , shader_cache(shader_cache)
+        , sound_cache(sound_cache)
+        , sound_bus(sound_bus)
+    {
+    }
+
+    inline void load_from(blam::map_container<V> const& map)
+    {
+        index        = blam::tag_index_view(map);
+        magic        = map.magic;
+        vertex_magic = map.tags->vertex_magic(magic);
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0;
+        evict_all();
+
+        bsp_switches.clear();
+        sections.clear();
+        active_section = 0;
+        sky_palette.clear();
+        if(auto scen_opt = map.tags->scenario(map.map, map.magic))
+        {
+            auto const* scen = scen_opt.value();
+            if(auto skyboxes = scen->info.skyboxes.data(magic))
+                for(auto const& sky_ref : skyboxes.value())
+                {
+                    blam::scn::skybox const* sky_ptr = nullptr;
+                    if(sky_ref.valid())
+                        if(auto tag = index.tag_of(sky_ref))
+                            if(auto data =
+                                   (*tag)->template data<blam::scn::skybox>(
+                                       magic);
+                               data.has_value() && data.value())
+                                sky_ptr = data.value();
+                    sky_palette.push_back(sky_ptr);
+                }
+        }
+    }
+
+    blam::version_t                       version;
+    BitmapCache<V>&                       bitm_cache;
+    ShaderCache<V>&                       shader_cache;
+    SoundCache<V>&                        sound_cache;
+    comp_app::EventBus<SoundEvent>*       sound_bus;
+    blam::tag_index_view<V>               index;
+    blam::map_ptr                         magic;
+    blam::vertex_ptr                      vertex_magic;
+    std::vector<blam::scn::skybox const*> sky_palette;
+
+    /* Structure BSP switching (scenario bsp_switch_triggers): crossing
+     * `volume` while `source` is the active section activates `destination`.
+     * Only the active section is culled/rendered. */
+    struct bsp_switch_t
+    {
+        blam::scn::trigger_volume const* volume;
+        libc_types::i16                  source;
+        libc_types::i16                  destination;
+    };
+
+    std::vector<bsp_switch_t> bsp_switches;
+    libc_types::i16           active_section{0};
+
+    /* The scenario's structure BSPs in bsp_info order */
+    std::vector<blam::bsp::info const*> sections;
+
+    /* Which section's tree holds the point */
+    std::optional<libc_types::i16> section_of_point(Vecf3 const& point) const
+    {
+        for(auto const& [i, info] : stl_types::const_enumerate(sections))
+        {
+            auto bsp_magic = info->bsp_magic(magic);
+            auto header    = info->to_bsp(bsp_magic)
+                              .to_header()
+                              .data(bsp_magic, blam::single_value);
+            if(header.has_error())
+                continue;
+            if(header.value()->cluster_for_point(point, bsp_magic))
+                return static_cast<libc_types::i16>(i);
+        }
+        return std::nullopt;
+    }
+
+    /* Drops a resident section. One section is resident at a time, so the
+     * vertex arenas simply start over. */
+    void release(generation_idx_t id)
+    {
+        this->evict(id);
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0;
+    }
+
+    Span<u8>           vert_buffer;
+    Span<u8>           light_buffer;
+    Span<blam::vert::face> element_buffer;
+
+    DebugMarkers* debug_markers{nullptr};
+
+    u32 vert_ptr, element_ptr, light_ptr;
+
+    /* ES2: compressed normals are rewritten as snorm8x4 on upload */
+    bool snorm8_normals{false};
+
+    virtual BSPItem predict_impl(blam::bsp::info const& bsp) override;
+
+    virtual blam::bsp::info const* get_id(blam::bsp::info const& bsp) override
+    {
+        return &bsp;
+    }
+};

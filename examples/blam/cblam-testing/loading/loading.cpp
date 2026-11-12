@@ -1,0 +1,3727 @@
+#include "loading/loading.h"
+#include "caching/bitmap_cache.h"
+#include "blam/volta/blam_globals.h"
+#include "blam/volta/blam_mod2.h"
+#include "blam/volta/blam_physics.h"
+#include "blam/volta/blam_scenario.h"
+#include "blam/volta/blam_stl.h"
+#include "blam/volta/blam_tag_ref.h"
+#include "loading/blam_files.h"
+#include "caching/caching.h"
+#include "caching/caching_item.h"
+#include "components.h"
+#include "data.h"
+#include "render/map_marker.h"
+#include "render/materials.h"
+#include "animation/model_markers.h"
+#include "network/networking.h"
+#include "selected_version.h"
+#include "caching/shader_cache.h"
+#include "types.h"
+#include "combat/weapons.h"
+#include <algorithm>
+#include <map>
+#include <optional>
+#include <set>
+
+template<typename Ver>
+using ResourceLoaderManifest = compo::SubsystemManifest<
+    type_list_t<
+        AnimationPlayback,
+        Attachment,
+        BipedEquipment,
+        BipedStatus,
+        BspReference,
+        DebugDraw,
+        DepthInfo,
+        DrawState,
+        HeldObject,
+        Model,
+        MultiplayerSpawn,
+        NetworkInfo,
+        ObjectPhysics,
+        ObjectSpawn,
+        Projectile,
+        ShaderData,
+        SubModel,
+        TriggerVolume,
+        Visibility,
+        WorldInfo,
+        PlayerCamera,
+        PlayerInfo>,
+    type_list_t<
+        BitmapCache<Ver>,
+        BlamFiles<Ver>,
+        BlamResources,
+        BSPCache<Ver>,
+        DebugMarkers,
+        ModelCache<Ver>,
+        ShaderCache<Ver>,
+        const LoadingStatus,
+        const NetworkState>,
+    type_list_t<
+        comp_app::EventBus<SoundEvent>
+    >>;
+
+template<typename Ver>
+struct ResourceLoader
+    : compo::
+          RestrictedSubsystem<ResourceLoader<Ver>, ResourceLoaderManifest<Ver>>
+{
+    using type  = ResourceLoader<Ver>;
+    using Proxy = compo::proxy_of<ResourceLoaderManifest<Ver>>;
+
+    blam::tag_index_view<Ver> index;
+    GameEventBus*             game_bus{nullptr};
+
+    std::vector<SpawnBSPEvent>         pending_bsps;
+    std::vector<SpawnBipedEvent>       pending_bipeds;
+    std::vector<SpawnEquipmentEvent>   pending_equipment;
+    std::vector<SpawnModelEvent>       pending_models;
+    std::vector<MountModelEvent>       pending_mounts;
+    std::vector<EquipWeaponEvent>      pending_equips;
+    std::map<u64, u64>                 armed_npcs; /*!< NPC, its weapon model */
+    std::vector<SpawnObjectEvent>      pending_objects;
+
+    struct expiry_t
+    {
+        u64               entity;
+        compo::time_point at;
+    };
+
+    std::vector<expiry_t>              expiring;
+    compo::time_point                  now{};
+    std::vector<u32>                   pending_despawns;
+    std::optional<ClusterChangedEvent> pending_cluster_change;
+
+    /*! Parts are kept here so they can go when the player entity does */
+    struct player_biped_t
+    {
+        u32              load_generation{};
+        std::vector<u64>   parts;
+        u64                held{0}; /*!< Its weapon */
+        blam::tag_t const* held_tag{nullptr};
+        bool               dropped{false}; /*!< Let go of its things on dying */
+    };
+
+    std::map<u64, player_biped_t> player_bipeds;
+
+    /*! Each local seat's first-person models (hands, weapon), by player */
+    struct first_person_t
+    {
+        std::vector<u64>   models;
+        blam::tag_t const* weapon{nullptr};
+    };
+    std::map<u64, first_person_t> first_person_models;
+
+    /*! A weapon's first-person graph, its idle and bone->node maps */
+    struct first_person_fit_t
+    {
+        blam::antr::header const*                     graph{nullptr};
+        u32                                           idle{0};
+        i32                                           ready{-1};
+        std::vector<i16>                              hands_nodes;
+        blam::tagref_typed_t<blam::tag_class_t::mod2> model{};
+        std::vector<i16>                              weapon_nodes;
+    };
+
+    /*! Per map: coll geometry by (coll, mod2) tag id, mod2 bounds */
+    struct
+    {
+        u32 load_generation{};
+        std::map<
+            std::pair<blam::tag_index<>, blam::tag_index<>>,
+            std::shared_ptr<CollisionGeometry const>>
+            collision;
+        std::map<blam::tag_index<>, std::optional<std::pair<Vecf3, Vecf3>>>
+            bounds;
+        std::map<blam::tag_index<>, std::shared_ptr<MassPoints const>>
+            mass_points;
+    } physics_cache;
+
+    struct
+    {
+        u32                                           load_generation{};
+        blam::tagref_typed_t<blam::tag_class_t::mod2> model{};
+        blam::tagref_typed_t<blam::tag_class_t::mod2> hands{};
+        PlayerInfo::biped_shape_t                     shape{};
+
+        /* Per weapon, if its graph fits the hands; bare hands take the
+         * first that does, everyone starts with the first with a model */
+        std::map<blam::tag_t const*, std::optional<first_person_fit_t>> fits;
+        std::optional<first_person_fit_t>                               hands_fit;
+        blam::tag_t const*                                              weapon{nullptr};
+
+        blam::scn::biped const*       biped{nullptr};
+        blam::tag_t const*            tag{nullptr};
+        std::optional<bound_marker_t> hand; /*!< Where it holds a weapon */
+    } biped_model;
+
+    std::shared_ptr<GameEventBus::queue_type<SpawnBSPEvent>> spawn_bsp_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnBipedEvent>>
+        spawn_biped_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnEquipmentEvent>>
+        spawn_equip_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnModelEvent>>
+        spawn_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<ShieldDepletedEvent>>
+        shield_queue;
+    std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> fire_queue;
+    /* Camouflage shows its wearer for a moment after each shot */
+    static constexpr std::chrono::milliseconds reveal_time{1000};
+    std::map<u64, compo::time_point>           revealed_until;
+    std::vector<ShieldDepletedEvent> pending_shields;
+    std::shared_ptr<GameEventBus::queue_type<SetPermutationEvent>> permutation_queue;
+    std::vector<SetPermutationEvent> pending_permutations;
+    std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>
+        mount_model_queue;
+    std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>
+        equip_weapon_queue;
+    std::shared_ptr<GameEventBus::queue_type<SpawnObjectEvent>>
+        spawn_object_queue;
+    std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>>
+        despawn_object_queue;
+    std::shared_ptr<GameEventBus::queue_type<ClusterChangedEvent>>
+        cluster_queue;
+
+    struct
+    {
+        u32 load_generation{};
+
+        i16 skybox_id{-1};
+        i16 weather_id{-1};
+        i16 section{-1};
+    } current;
+
+    /* ModelCache::predict_impl copies vertices straight into vert_buffer /
+     * element_buffer, so they are mapped around the frame's batch, but
+     * only on the first miss: a map waits for the GPU to be done drawing
+     * from them, and most spawns find their mesh cached */
+    struct model_buffer_scope_t
+    {
+        model_buffer_scope_t(BlamResources& gpu, ModelCache<Ver>& cache)
+            : m_gpu(gpu)
+            , m_cache(cache)
+        {
+            m_cache.before_upload = [this] {
+                if(m_mapped)
+                    return;
+                m_mapped               = true;
+                auto vert              = m_gpu.model_buf->map(0);
+                auto index             = m_gpu.model_index->map(0);
+                m_cache.vert_buffer    = Bytes::ofContainer(vert);
+                m_cache.element_buffer = Bytes::ofContainer(index);
+            };
+        }
+
+        ~model_buffer_scope_t()
+        {
+            m_cache.before_upload = {};
+            if(!m_mapped)
+                return;
+            m_gpu.model_buf->unmap();
+            m_gpu.model_index->unmap();
+            m_cache.vert_buffer    = {};
+            m_cache.element_buffer = {};
+        }
+
+        BlamResources&   m_gpu;
+        ModelCache<Ver>& m_cache;
+        bool             m_mapped{false};
+    };
+
+    ResourceLoader()
+    {
+        this->priority = 700;
+    }
+
+    bool main_thread_only() const override
+    {
+        return true;
+    }
+
+    void start_restricted(Proxy& p, compo::time_point const& t)
+    {
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
+        if(current.load_generation != files.load_generation)
+        {
+            // Purge resources
+            current.load_generation = files.load_generation;
+            current.skybox_id       = -1;
+            current.weather_id      = -1;
+            current.section         = -1;
+            /* Bodies that outlive the map hold its coll until they get the
+             * new one */
+            for(auto unit : p.template select<BipedStatus>())
+                unit.template get<BipedStatus>().coll = nullptr;
+        }
+        BlamResources&    resources  = p.template subsystem<BlamResources>();
+        BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
+        BSPCache<Ver>&    bsp_cache  = p.template subsystem<BSPCache<Ver>>();
+        ModelCache<Ver>&  model_cache = p.template subsystem<ModelCache<Ver>>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
+
+        index = blam::tag_index_view<Ver>(files.container);
+
+        cluster_queue->poll();
+        mount_model_queue->poll();
+        equip_weapon_queue->poll();
+        // spawn_biped_queue->poll();
+        spawn_bsp_queue->poll();
+        // spawn_equip_queue->poll();
+        spawn_model_queue->poll();
+        spawn_object_queue->poll();
+        despawn_object_queue->poll();
+        shield_queue->poll();
+        fire_queue->poll();
+        std::erase_if(revealed_until, [&t](auto const& r) { return r.second <= t; });
+
+        reconcile_player_bipeds(p, files);
+        disarm_npcs(p);
+        rearm_npcs(p, files);
+        reconcile_first_person(p, files);
+
+        now = t;
+        if(!expiring.empty())
+            expire_objects(p);
+
+        bool const section_changed = current.section >= 0 &&
+                                     pending_bsps.empty() &&
+                                     bsp_cache.active_section != current.section;
+
+        auto const lod_requests = collect_lod_requests(p);
+
+        if(!section_changed && lod_requests.empty() &&
+           !pending_cluster_change && pending_bsps.empty() &&
+           pending_models.empty() && pending_mounts.empty() &&
+           pending_objects.empty() && pending_despawns.empty() &&
+           pending_shields.empty() && pending_permutations.empty())
+            return;
+
+        /* Everything below can reach ModelCache::predict() */
+        model_buffer_scope_t model_buffers(resources, model_cache);
+
+        if(section_changed)
+            switch_section(p, bsp_cache.active_section);
+
+        for(auto const& shield : std::exchange(pending_shields, {}))
+            reshield(p, shield);
+        for(auto const& change : std::exchange(pending_permutations, {}))
+            repermute(p, change);
+
+        // Pending cluster first so we can use the shared model loading after
+        if(pending_cluster_change)
+        {
+            /* A change from before a map switch names a BSP that is gone */
+            auto const* bsp  = pending_cluster_change->bsp;
+            bool const  live =
+                bsp &&
+                std::any_of(
+                    bsp_cache.m_cache.begin(),
+                    bsp_cache.m_cache.end(),
+                    [bsp](auto const& entry) {
+                        return &entry.second == bsp && entry.second.valid();
+                    }) &&
+                pending_cluster_change->cluster < bsp->clusters.size();
+            if(live)
+            {
+                load_world_lighting(
+                    p,
+                    pending_cluster_change->bsp->clusters
+                        .at(pending_cluster_change->cluster)
+                        .cluster->sky);
+            }
+            pending_cluster_change.reset();
+        }
+
+        for(auto const& bsp_load : pending_bsps)
+        {
+            // load full-level debug markers
+            load_debug_shapes(p);
+            load_scenario_bsp(p, bsp_load.section_id);
+            load_scenario_objects(p);
+        }
+        pending_bsps.clear();
+
+        for(auto const& model_load : pending_models)
+            load_model(p, model_load.model);
+        for(auto const& model_mount : pending_mounts)
+            mount_model(p, model_mount);
+        pending_models.clear();
+        pending_mounts.clear();
+
+        /* Spawns first, so a replacement exists before its impostor goes */
+        for(auto const& object : pending_objects)
+            spawn_object(p, object);
+        pending_objects.clear();
+
+        for(auto net_id : pending_despawns)
+            despawn_object(p, net_id);
+        pending_despawns.clear();
+
+        build_lods(p, lod_requests);
+    }
+
+    std::vector<std::pair<u64, u8>> collect_lod_requests(Proxy& p)
+    {
+        std::vector<std::pair<u64, u8>> out;
+        for(auto ent : p.template select<Model, Visibility>())
+        {
+            auto [model, vis] = ent.components();
+            if(model.lod_built == 0)
+                continue;
+            for(auto const& [view, lod] : vis.lod)
+                if(lod < 5 && !((model.lod_built >> lod) & 1))
+                {
+                    out.emplace_back(ent.id(), lod);
+                    break;
+                }
+        }
+        return out;
+    }
+
+    void init_lods(
+        Proxy& p, Model& model, blam::scn::object const& object)
+    {
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        model.lod_models[0]          = model.model;
+        model.lod_built              = 1;
+        f32 const radius = object.render_bound_radius > 0.f
+                               ? object.render_bound_radius
+                               : object.bound_radius;
+        model.render_radius = radius + glm::length(object.bound_offset);
+        if(auto const* header = model_cache.get_header(object.model))
+            model.lod_cutoff = header->detail_cutoff;
+    }
+
+    void build_lods(Proxy& p, std::vector<std::pair<u64, u8>> const& requests)
+    {
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        for(auto const& [id, lod] : requests)
+        {
+            /* Despawned since it was asked for, e.g. an answered impostor */
+            auto* found = p.template get<Model>(id);
+            if(!found || !found->tag)
+                continue;
+            auto   ent   = p.ref(id);
+            Model& model = *found;
+            model.lod_built |= 1 << lod;
+            ModelAssembly assem = model_cache.predict_regions(
+                model.tag->as_ref(),
+                static_cast<blam::mod2::mod2_lod>(lod),
+                model.permutations);
+            if(assem.models.empty())
+                continue;
+            generation_idx_t const item = assem.models.at(0);
+            model.lod_models[lod]       = item;
+
+            bool aliased = false;
+            for(u32 other = 0; other < 5 && !aliased; other++)
+            {
+                if(other == lod || !((model.lod_built >> other) & 1) ||
+                   !(model.lod_models[other] == item))
+                    continue;
+                for(auto const& part : model.parts)
+                    if(auto* sub = p.template get<SubModel>(part.id());
+                       sub && ((sub->lod_mask >> other) & 1))
+                        sub->lod_mask |= 1 << lod;
+                aliased = true;
+            }
+            cDebug(
+                "LOD {} for {}: {}",
+                lod,
+                index.name_of(*model.tag),
+                aliased ? "shares geometry with a built level"
+                        : "new geometry");
+            if(aliased)
+                continue;
+
+            compo::EntityRecipe submodel = shared_recipes::submodel;
+            submodel.tags = submodel.tags | (ent.tags() & SubObjectMask);
+            /* The object's overlay coats this level too */
+            blam::scn::object const* object = nullptr;
+            if(model.origin_object)
+                if(auto data = model.origin_object->template data<blam::scn::object>(
+                       p.template subsystem<BlamFiles<Ver>>().container.magic);
+                   data.has_value())
+                    object = &data.value()[0];
+            build_submodels(
+                p,
+                ent,
+                model,
+                item,
+                submodel,
+                render_layer::world,
+                static_cast<u8>(1 << lod),
+                object);
+        }
+    }
+
+    /* Sun direction/colour and fog for the world UBO, taken from the
+     * scenario's skybox palette. Scenario-level state, so it does not wait
+     * for the objects that used to be loaded alongside it. */
+    void load_world_lighting(Proxy& p, i16 skybox_id = -1)
+    {
+        if(skybox_id == current.skybox_id)
+            return;
+
+        BlamResources&    resources = p.template subsystem<BlamResources>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
+
+        compo::EntityRef<Proxy> skybox_item;
+        for(auto skybox : p.select(ObjectSkybox))
+        {
+            if(!p.template get<Model>(skybox.id()))
+                continue;
+            skybox_item = skybox;
+        }
+
+        if(!skybox_item.exists())
+        {
+            p.create_entity(shared_recipes::skybox_model);
+            for(auto skybox : p.select(ObjectSkybox))
+            {
+                if(!p.template get<Model>(skybox.id()))
+                    continue;
+                skybox_item = skybox;
+            }
+        }
+
+        if(!skybox_item.exists())
+        {
+            cWarning("No skybox entity with a Model component");
+            return;
+        }
+
+        Model& skybox_mod = skybox_item.template get<Model>();
+        WorldInfo& world_info = skybox_item.template get<WorldInfo>();
+
+        auto& data        = p.template subsystem<BlamFiles<Ver>>();
+        auto& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto const* scenario = data.container.scenario().value_or(nullptr);
+
+        if(!scenario)
+            return;
+
+        auto const&          magic = data.container.magic;
+        blam::tag_index_view index(data.container);
+
+        current.skybox_id = skybox_id;
+
+        auto skyboxes = scenario->info.skyboxes.data(magic).value();
+        if(skybox_id != -1 && skybox_id < skyboxes.size())
+        {
+            auto const&              skybox     = skyboxes[skybox_id];
+            auto                     skybox_tag = *index.tag_of(skybox);
+            blam::scn::skybox const& skybox_ =
+                skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
+
+            world_info.skybox = &skybox_;
+
+            Span<const blam::scn::skybox::light> lights =
+                skybox_.lights.data(magic).value();
+
+            Span<materials::world_data> world_data =
+                resources.world_store->map<materials::world_data>(0);
+            if(world_data.empty())
+            {
+                resources.world_store->unmap();
+                cWarning("Skybox update without a mapped world buffer");
+                return;
+            }
+
+            for(auto& slot : world_data[0].lighting)
+                slot = {};
+            for(auto const& [i, light] : stl_types::const_enumerate(lights))
+            {
+                if(i >= std::size(world_data[0].lighting))
+                    break;
+                f32   yaw   = light.radiosity.direction.x;
+                f32   pitch = light.radiosity.direction.y;
+                Vecf3 rotation{
+                    std::cos(pitch) * std::cos(yaw),
+                    std::cos(pitch) * std::sin(yaw),
+                    std::sin(pitch),
+                };
+                /* .w carries the light's interior/exterior flags  (1 =
+                 * exteriors, 2 = interiors). */
+                world_data[0].lighting[i].light_direction = Vecf4{
+                    rotation,
+                    static_cast<f32>(light.radiosity.flags),
+                };
+                world_data[0].lighting[i].light_color = Vecf4{
+                    light.radiosity.color,
+                    light.radiosity.power,
+                };
+            }
+
+            world_data[0].fog.indoor_color =
+                Vecf4(skybox_.indoor_fog.color, skybox_.indoor_fog.density);
+            world_data[0].fog.indoor_ambient = Vecf4(
+                skybox_.indoor_ambient.color, skybox_.indoor_ambient.power);
+            world_data[0].fog.outdoor_color =
+                Vecf4(skybox_.outdoor_fog.color, skybox_.outdoor_fog.density);
+            world_data[0].fog.outdoor_ambient = Vecf4(
+                skybox_.outdoor_ambient.color, skybox_.outdoor_ambient.power);
+
+            world_data[0].fog.distances = Vecf4(
+                skybox_.indoor_fog.start_distance,
+                skybox_.indoor_fog.opaque_distance,
+                skybox_.outdoor_fog.start_distance,
+                skybox_.outdoor_fog.opaque_distance);
+
+            if(skybox_.outdoor_fog.opaque_distance < 1)
+                world_data[0].fog.distances.w = 1000.f;
+
+            world_data[0].point_count = {};
+            resources.world             = world_data[0];
+            resources.world_store->unmap();
+
+            if(skybox_.model.valid())
+                skybox_mod.tag = *index.tag_of(skybox_.model);
+            skybox_mod.origin_object = skybox_tag;
+            skybox_mod.transform     = glm::identity<Matf4>();
+
+            if(!skybox_mod.parts.empty())
+            {
+                std::set<u64> stale;
+                for(auto const& part : skybox_mod.parts)
+                    stale.insert(part.id());
+                p.remove_entity_if([&stale](compo::Entity const& e) {
+                    return stale.contains(e.id);
+                });
+                skybox_mod.parts.clear();
+            }
+
+            ModelAssembly assem = model_cache.predict_regions(
+                skybox_.model, blam::mod2::mod2_lod::lod_high_ext);
+
+            if(assem.models.empty())
+            {
+                cDebug("Invalid skybox");
+                return;
+            }
+
+            skybox_mod.model = assem.models.at(0);
+
+            for(auto const& part_id : assem.models)
+            {
+                ModelItem<Ver>& part = model_cache.get(part_id);
+                skybox_mod.model     = part_id;
+
+                for(typename ModelItem<Ver>::SubModel const& region :
+                    part.mesh.sub)
+                {
+                    if(!region.shader.valid())
+                        continue;
+
+                    auto submod =
+                        p.create_entity(shared_recipes::skybox_submodel);
+                    skybox_mod.parts.push_back(submod);
+                    SubModel& submodel  = submod.template get<SubModel>();
+                    submodel.parent     = skybox_item.id();
+                    DrawState& sub_draw = submod.template get<DrawState>();
+                    submodel.initialize<Ver>(part_id, region, sub_draw);
+
+                    ShaderData& shader_ = submod.template get<ShaderData>();
+                    ShaderItem const& shader_it =
+                        shader_cache.get(region.shader);
+                    shader_.initialize(shader_it, submodel);
+
+                    sub_draw.current_pass = shader_.get_render_pass(
+                        shader_cache, render_layer::skybox);
+
+                    // Annotate DrawState with the shader info
+                    auto shader_name = index.name_of(*shader_.shader_tag);
+                    for(auto& draw : sub_draw.draw.data)
+                        draw.debug_identifier = fmt::format(
+                            "{} {}",
+                            shader_.shader_tag->tagclass[0].str(),
+                            shader_name);
+                }
+            }
+        }
+    }
+
+    void load_sound_scenery(Proxy& p, u32 section)
+    {
+        BlamFiles<Ver>& files         = p.template subsystem<BlamFiles<Ver>>();
+        comp_app::EventBus<SoundEvent>* sound_bus =
+            p.template service<comp_app::EventBus<SoundEvent>>();
+
+        if(!sound_bus)
+            return;
+
+        auto&                           container = files.container;
+        auto const&                     magic     = container.magic;
+        blam::scn::scenario<Ver> const* scenario = container.scenario().value();
+
+        auto const& sound_scenery = scenario->objects.sound_scenery;
+        if(!sound_scenery.instances.data(magic).has_value() || !sound_scenery.palette.data(magic).has_value())
+        {
+            cWarning("No sound scenery data located");
+            return;
+        }
+        blam::tag_index_view index(container);
+        SoundEvent ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{
+            .looping = true,
+        };
+        for(auto const& placed : blam::scn::placements(sound_scenery, magic))
+        {
+            if(!placed.object)
+                continue;
+            /* The palette names the ssce object; the sound itself is an lsnd
+             * attachment on that object */
+            auto object_tag = index.tag_of(*placed.object);
+            if(!object_tag)
+                continue;
+            auto object =
+                (*object_tag)->template data<blam::scn::object>(magic);
+            if(!object.has_value())
+                continue;
+            auto attachments = object.value()[0].attachments.data(magic);
+            if(!attachments.has_value())
+                continue;
+            for(auto const& [j, attachment] :
+                stl_types::const_enumerate(attachments.value()))
+            {
+                auto const& sound =
+                    static_cast<blam::tagref_t const&>(attachment.type);
+                if(!sound.matches(blam::tag_class_t::lsnd))
+                    continue;
+                /* Stable per instance, so reloading a BSP section replaces
+                 * instead of stacking */
+                ev.entity_id =
+                    SoundEvent::sound_scenery_base | (placed.index << 8) | j;
+                play.sound    = &sound;
+                play.position = placed.placement.pos;
+                sound_bus->inject(ev, &play);
+            }
+        }
+    }
+
+    void load_debug_shapes(Proxy& p)
+    {
+        BlamFiles<Ver>& files         = p.template subsystem<BlamFiles<Ver>>();
+        DebugMarkers&   debug_markers = p.template subsystem<DebugMarkers>();
+
+        auto&                           container = files.container;
+        auto const&                     magic     = container.magic;
+        blam::scn::scenario<Ver> const* scenario = container.scenario().value();
+
+        compo::EntityRecipe map_marker  = shared_recipes::gc_marker;
+        compo::EntityRecipe trigger_obj = shared_recipes::trigger_volume;
+
+        debug_markers.map(debug_axes_verts, debug_axes_colors);
+
+        auto trigger_vols = scenario->trigger_volumes.data(magic).value();
+        for(blam::scn::trigger_volume const& trigger : trigger_vols)
+        {
+            Vecf3 origin = trigger.position;
+            Vecf3 second = trigger.position + trigger.extents;
+
+            auto           trig   = p.create_entity(trigger_obj);
+            TriggerVolume& volume = trig.template get<TriggerVolume>();
+            DebugDraw&     draw   = trig.template get<DebugDraw>();
+
+            draw = debug_markers.create_box(origin, second, Vecf3(1, 0, 0.5f));
+
+            volume.trigger_volume = &trigger;
+        }
+
+        auto player_profiles =
+            scenario->player_start.profiles.data(magic).value();
+        for(blam::scn::player_starting_profile const& profile : player_profiles)
+        {
+            cDebug(" - Profile: {}", profile.name.str());
+        }
+
+        // auto platoons = scenario->ai.platoons.data(magic).value();
+        // for(blam::scn::ai::platoon const& platoon : platoons)
+        // {
+        //     cDebug(" - Platoon: {}", platoon.unknown[0]);
+        // }
+
+        auto encounters = scenario->ai.encounters.data(magic).value();
+        for(blam::scn::ai::encounter const& enc : encounters)
+        {
+            // cDebug(" - Encounter: {}", enc.text.str());
+            auto platoons         = enc.platoons.data(magic).value();
+            auto firing_positions = enc.firing_positions.data(magic).value();
+            auto squads           = enc.squads.data(magic).value();
+            auto start_locs       = enc.start_locations.data(magic).value();
+            // for(auto const& platoon : platoons)
+            //     cDebug("   - Platoon: {}", platoon.name.str());
+            for(auto const& firing_pos : firing_positions)
+            {
+                // cDebug("   - Firing pos: {}", firing_pos.position);
+                auto  marker = p.create_entity(map_marker);
+                auto& draw   = marker.template get<DebugDraw>();
+
+                draw = debug_markers.create_marker(
+                    std::array<Vecf3, 5>{{
+                        firing_pos.position + Vecf3{.1f, .1f, 0},
+                        firing_pos.position + Vecf3{-.1f, -.1f, 0},
+                        firing_pos.position + Vecf3{0, 0, 0},
+                        firing_pos.position + Vecf3{.1f, -.1f, 0},
+                        firing_pos.position + Vecf3{-.1f, .1f, 0},
+                    }},
+                    Vecf3{1.f, 0, 0});
+            }
+            for(auto const& loc : start_locs)
+            {
+                // cDebug("   - Start location: {}", loc.position);
+                auto  marker = p.create_entity(map_marker);
+                auto& draw   = marker.template get<DebugDraw>();
+
+                draw = debug_markers.create_marker(
+                    std::array<Vecf3, 5>{{
+                        loc.position + Vecf3{0, 0, .3f},
+                        loc.position + Vecf3{0, 0, 0},
+                        loc.position + Vecf3{.1f, .1f, .1f},
+                        loc.position + Vecf3{0, 0, 0},
+                        loc.position + Vecf3{-.1f, -.1f, .1f},
+                    }},
+                    Vecf3{0, 1.f, 0});
+            }
+            for(auto const& squad : squads)
+            {
+                // cDebug("   - Squad: {}", squad.name.str());
+                // auto locations = squad.
+            }
+        }
+
+        auto mp_flags = scenario->netgame.flags.data(magic).value();
+        for(blam::scn::multiplayer_flag const& flag : mp_flags)
+        {
+            // cDebug("MP flag: {}", flag.pos);
+            auto  marker = p.create_entity(map_marker);
+            auto& draw   = marker.template get<DebugDraw>();
+
+            draw = debug_markers.create_marker(
+                std::array<Vecf3, 5>{{
+                    flag.pos,
+                    flag.pos + Vecf3{0, 0, 1.f},
+                    flag.pos + Vecf3{-0.1f, 0, 1.f},
+                    flag.pos + Vecf3{-0.1f, 0, .9f},
+                    flag.pos + Vecf3{0, 0, .9f},
+                }},
+                Vecf3{0, 0.5f, 0.5f});
+        }
+
+        auto spawns = scenario->player_start.locations.data(magic).value();
+        for(blam::scn::player_starting_location const& spawn : spawns)
+        {
+            // cDebug(" - Spawn: @{}", spawn.pos);
+            auto  marker = p.create_entity(map_marker);
+            auto& draw   = marker.template get<DebugDraw>();
+            draw         = debug_markers.create_marker(
+                std::array<Vecf3, 6>{{
+                    spawn.pos,
+                    spawn.pos + Vecf3{0, 0, 1.f},
+                    spawn.pos + Vecf3{-0.2f, 0, 1.1f},
+                    spawn.pos + Vecf3{0, 0, 1.2f},
+                    spawn.pos + Vecf3{0.2f, 0, 1.1f},
+                    spawn.pos + Vecf3{0, 0, 1.f},
+                }},
+                spawn.team_index == 0   ? Vecf3{1.f, 0, 0}
+                        : spawn.team_index == 1 ? Vecf3{0, 0, 1.f}
+                                                : Vecf3{0.5f, 1.f, 0});
+        }
+
+        auto cutscene_flags = scenario->cutscene.flags.data(magic).value();
+        for(blam::scn::cutscene_flag const& flag : cutscene_flags)
+        {
+            // cDebug(" - Cutscene flag: {}", flag.position);
+            auto  marker = p.create_entity(map_marker);
+            auto& draw   = marker.template get<DebugDraw>();
+            draw         = debug_markers.create_marker(
+                std::array<Vecf3, 5>{{
+                    flag.position,
+                    flag.position + Vecf3{0.2f, 0, 0.2f},
+                    flag.position + Vecf3{0, 0, 0.4f},
+                    flag.position + Vecf3{-0.2f, 0, 0.2f},
+                    flag.position,
+                }},
+                Vecf3{0.5f, 1.f, 0});
+        }
+
+        auto cutscene_cameras =
+            scenario->cutscene.camera_points.data(magic).value();
+        for(blam::scn::cutscene_camera_position const& cam : cutscene_cameras)
+        {
+            // cDebug(" - Camera pos: {}", cam.position);
+            auto  marker = p.create_entity(map_marker);
+            auto& draw   = marker.template get<DebugDraw>();
+            draw         = debug_markers.create_marker(
+                std::array<Vecf3, 7>{{
+                    cam.position,
+                    cam.position + Vecf3{-.1f, .1f, -.1f},
+                    cam.position + Vecf3{-.1f, -.1f, -.1f},
+                    cam.position,
+                    cam.position + Vecf3{-.1f, .1f, .1f},
+                    cam.position + Vecf3{-.1f, -.1f, .1f},
+                    cam.position,
+                }},
+                Vecf3{0.5f, 1.f, 0});
+        }
+
+        debug_markers.unmap();
+    }
+
+    void load_scenario_bsp(Proxy& p, u32 section)
+    {
+        ProfContext _(__FUNCTION__);
+
+        BlamFiles<Ver>&   files      = p.template subsystem<BlamFiles<Ver>>();
+        BitmapCache<Ver>& bitm_cache = p.template subsystem<BitmapCache<Ver>>();
+        BSPCache<Ver>&    bsp_cache  = p.template subsystem<BSPCache<Ver>>();
+        BlamResources&    gpu        = p.template subsystem<BlamResources>();
+        DebugMarkers&     debug_markers = p.template subsystem<DebugMarkers>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
+
+        /* Continue load_debug_shapes' cursor: the two-arg map() would reset it
+         * and overwrite the markers it just wrote. */
+        debug_markers.map();
+        bsp_cache.debug_markers = &debug_markers;
+
+        auto&       container = files.container;
+        auto const& magic     = container.magic;
+
+        using namespace compo;
+
+        {
+            bsp_cache.vert_buffer    = gpu.bsp_buf->map<u8>(0);
+            bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
+            bsp_cache.light_buffer   = gpu.bsp_light_buf->map<u8>(0);
+        }
+
+        /* Start loading up vertex data */
+        blam::scn::scenario<Ver> const* scenario = container.scenario().value();
+
+        auto trigger_vols = scenario->trigger_volumes.data(magic).value();
+
+        /* Structure BSP switching: collect the scenario's switch triggers so
+         * the occluder can track the active section, and start in the section
+         * the first player spawn belongs to. */
+        if(auto switches = scenario->bsp_switch_triggers.data(magic);
+           switches.has_value())
+        {
+            for(blam::scn::bsp_trigger const& sw : switches.value())
+            {
+                if(sw.trigger_volume < 0 ||
+                   static_cast<size_t>(sw.trigger_volume) >=
+                       trigger_vols.size())
+                    continue;
+                bsp_cache.bsp_switches.push_back({
+                    .volume      = &trigger_vols[sw.trigger_volume],
+                    .source      = sw.source,
+                    .destination = sw.destination,
+                });
+                cDebug(
+                    "BSP switch: {} → {} via volume '{}'",
+                    sw.source.index,
+                    sw.destination.index,
+                    trigger_vols[sw.trigger_volume].name.str());
+            }
+        }
+        bsp_cache.sections.clear();
+        if(auto bsps = scenario->bsp_info.data(magic); bsps.has_value())
+            for(blam::bsp::info const& bsp : bsps.value())
+                bsp_cache.sections.push_back(&bsp);
+
+        /* Initial active section: trust the first spawn's bsp_index unless its
+         * position resolves into a different section's BSP tree (b40's first
+         * spawn claims section 0 but sits in section 3). */
+        {
+            auto locations = scenario->player_start.locations.data(magic);
+            if(locations.has_value() && !locations.value().empty())
+            {
+                auto const& loc = locations.value()[0];
+                bsp_cache.active_section =
+                    static_cast<libc_types::i16>(loc.bsp_index);
+                /* Spawns sit on the floor, often in a solid leaf: probe up
+                 * through the body like the occluder does for scenery */
+                for(f32 up : {0.f, .5f, 2.f, 5.f})
+                    if(auto section = bsp_cache.section_of_point(
+                           loc.pos + Vecf3{0.f, 0.f, up}))
+                    {
+                        bsp_cache.active_section = *section;
+                        break;
+                    }
+            }
+            if(bsp_cache.active_section < 0 ||
+               static_cast<size_t>(bsp_cache.active_section) >=
+                   bsp_cache.sections.size())
+                bsp_cache.active_section = 0;
+            cDebug("Initial BSP section: {}", bsp_cache.active_section);
+        }
+
+        /* Only the active section is resident */
+        std::optional<generation_idx_t> mesh_id;
+        if(!bsp_cache.sections.empty())
+            mesh_id = bsp_cache.predict(
+                *bsp_cache.sections[bsp_cache.active_section]);
+
+        gpu.bsp_buf->unmap();
+        gpu.bsp_index->unmap();
+        gpu.bsp_light_buf->unmap();
+        debug_markers.unmap();
+
+        if(mesh_id)
+            spawn_bsp_chunks(p, *mesh_id);
+        current.section = bsp_cache.active_section;
+
+        load_world_lighting(p, 0);
+        load_sound_scenery(p, section);
+    }
+
+    /* One entity per BSP mesh chunk of a resident section */
+    void spawn_bsp_chunks(Proxy& p, generation_idx_t mesh_id)
+    {
+        using namespace compo;
+
+        BSPCache<Ver>&    bsp_cache = p.template subsystem<BSPCache<Ver>>();
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
+
+        EntityRecipe bsp_ = shared_recipes::bsp;
+
+        auto const& bsp = bsp_cache.get(mesh_id);
+        for(auto const& group : bsp.groups)
+            for(BSPItem::Mesh const& mesh : group.meshes)
+            {
+                auto          mesh_ent = p.create_entity(bsp_);
+                BspReference& bsp_ref  = mesh_ent.template get<BspReference>();
+
+                bsp_ref.shader         = mesh.shader;
+                bsp_ref.lightmap       = mesh.light_bitm;
+                bsp_ref.bsp            = mesh_id;
+                bsp_ref.cluster_idx    = mesh.cluster_idx;
+                bsp_ref.subcluster_idx = mesh.subcluster_idx;
+                bsp_ref.clusters       = mesh.clusters;
+                bsp_ref.bmin           = mesh.bmin;
+                bsp_ref.bmax           = mesh.bmax;
+                bsp_ref.has_bounds     = mesh.has_bounds;
+
+                bsp_ref.sort_center =
+                    mesh.mesh ? mesh.mesh->centroid : Vecf3{0};
+                DrawState& bsp_draw = mesh_ent.template get<DrawState>();
+                bsp_draw.draw.data.push_back(mesh.draw);
+
+                ShaderData&       shader_   = mesh_ent.template get<ShaderData>();
+                ShaderItem const& shader_it = shader_cache.get(mesh.shader);
+                shader_.shader              = shader_it.header;
+                shader_.shader_tag          = shader_it.tag;
+                shader_.shader_id           = mesh.shader;
+
+                bsp_draw.current_pass = shader_.get_render_pass(shader_cache);
+                bsp_draw.draw.data.back().debug_identifier = fmt::format(
+                    "{} {}",
+                    shader_it.tag->tagclass.front().str(),
+                    shader_it.tag->to_name().to_string(shader_cache.magic));
+            }
+    }
+
+    /* Scenery and light fixtures carry the sections they are placed in.
+     * "Not placed automatically" ones wait for a script to create them. */
+    static bool placed_in_section(
+        blam::scn::object_spawn const& spawn, i16 section)
+    {
+        using spawn_flags = blam::scn::object_spawn::spawn_flags;
+        if((spawn.flags & spawn_flags::automatic) != spawn_flags::none)
+            return false;
+        u16 const mask = static_cast<u16>(spawn.bsp_flags);
+        return mask == 0 || section < 0 || section >= 16 ||
+               ((mask >> section) & 1);
+    }
+
+    /* Moves the resident BSP section and the static objects placed in it */
+    void switch_section(Proxy& p, i16 section)
+    {
+        ProfContext _(__FUNCTION__);
+
+        BlamFiles<Ver>& files         = p.template subsystem<BlamFiles<Ver>>();
+        BSPCache<Ver>&  bsp_cache     = p.template subsystem<BSPCache<Ver>>();
+        BlamResources&  gpu           = p.template subsystem<BlamResources>();
+        DebugMarkers&   debug_markers = p.template subsystem<DebugMarkers>();
+
+        if(section < 0 ||
+           static_cast<size_t>(section) >= bsp_cache.sections.size())
+            return;
+        cDebug("Switching resident BSP section {} -> {}", current.section, section);
+        current.section = section;
+
+        p.remove_entity_if([](compo::Entity const& e) {
+            return stl_types::any_flag_of(e.tags, ObjectBsp);
+        });
+        for(auto const& [id, item] : bsp_cache.m_cache)
+            if(item.valid())
+                bsp_cache.release({id, bsp_cache.generation});
+
+        debug_markers.map();
+        bsp_cache.debug_markers  = &debug_markers;
+        bsp_cache.vert_buffer    = gpu.bsp_buf->map<u8>(0);
+        bsp_cache.element_buffer = gpu.bsp_index->map<blam::vert::face>(0);
+        bsp_cache.light_buffer   = gpu.bsp_light_buf->map<u8>(0);
+        auto mesh_id = bsp_cache.predict(*bsp_cache.sections[section]);
+        gpu.bsp_buf->unmap();
+        gpu.bsp_index->unmap();
+        gpu.bsp_light_buf->unmap();
+        debug_markers.unmap();
+
+        if(mesh_id.valid())
+            spawn_bsp_chunks(p, mesh_id);
+
+        /* Static objects and devices: drop the ones not placed here, spawn
+         * the ones that are and were skipped so far */
+        std::set<u32> present, doomed;
+        for(auto ent : p.template select<ObjectSpawn, NetworkInfo>())
+        {
+            auto [spawn, net] = ent.components();
+            auto const group  = SpawnObjectEvent::scenario_group(net.instance_id);
+            if(group != ScenarioGroup::Scenery && group != ScenarioGroup::LightFixture &&
+               group != ScenarioGroup::Machine && group != ScenarioGroup::Control)
+                continue;
+            if(spawn.header && !placed_in_section(*spawn.header, section))
+                doomed.insert(net.instance_id);
+            else
+                present.insert(net.instance_id);
+        }
+        for(u32 net_id : doomed)
+            despawn_object(p, net_id);
+
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+        auto const& magic = files.container.magic;
+        /* Devices too: they recall their state by net id (DeviceGroups) */
+        for(auto group_id : {ScenarioGroup::Scenery, ScenarioGroup::LightFixture,
+                             ScenarioGroup::Machine, ScenarioGroup::Control})
+            with_scenario_group(
+                *scenario, group_id, [&](auto const& group_data, u32 tags) {
+                    auto palette   = group_data.palette.data(magic);
+                    auto instances = group_data.instances.data(magic);
+                    if(palette.has_error() || instances.has_error())
+                        return;
+                    for(auto const& [i, instance] :
+                        stl_types::const_enumerate(instances.value()))
+                    {
+                        auto const net_id = SpawnObjectEvent::scenario_net_id(
+                            group_id, static_cast<u32>(i));
+                        if(present.contains(net_id) ||
+                           !placed_in_section(instance, section))
+                            continue;
+                        build_scenario_object(
+                            p, palette.value(), instance, tags, net_id);
+                    }
+                });
+    }
+
+    /* Where a placed machine or control starts: its groups' values, or
+     * what its flags say */
+    template<typename T>
+    DeviceState device_state(
+        BlamFiles<Ver>& files, blam::tag_t const& tag, T const& instance)
+    {
+        auto const& magic = files.container.magic;
+        DeviceState out{
+            .power_group    = instance.power_group.index,
+            .position_group = instance.position_group.index,
+            .flags          = static_cast<u16>(instance.device_flags),
+        };
+        if constexpr(std::is_same_v<T, blam::scn::machine_spawn>)
+        {
+            out.kind_flags = static_cast<u16>(instance.machine_flags);
+            if(auto m = tag.template data<blam::scn::machine>(magic); m.has_value())
+                out.machine = m.value();
+        } else
+        {
+            out.kind_flags = static_cast<u16>(instance.control_flags);
+            if(auto c = tag.template data<blam::scn::device_control>(magic); c.has_value())
+                out.control = c.value();
+        }
+        if(auto d = tag.template data<blam::scn::device>(magic); d.has_value())
+            out.tag = d.value();
+        out.automatic = out.machine && (out.kind_flags & DeviceState::not_automatic) == 0;
+        out.position  = (out.flags & DeviceState::initially_open) ? 1.f : 0.f;
+        out.power     = (out.flags & DeviceState::initially_off) ? 0.f : 1.f;
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        auto group = [&](i16 i) -> std::optional<f32> {
+            if(!scenario || i < 0)
+                return std::nullopt;
+            auto groups = scenario->objects.device_groups.data(magic);
+            if(!groups.has_value() || static_cast<size_t>(i) >= groups.value().size())
+                return std::nullopt;
+            return groups.value()[i].initial_value;
+        };
+        if(auto v = group(out.position_group))
+            out.position = (out.flags & DeviceState::reversed) ? 1.f - *v : *v;
+        if(auto v = group(out.power_group))
+            out.power = *v;
+        out.position_target = out.position;
+        out.power_target    = out.power;
+        return out;
+    }
+
+    /* A device machine's power comes from the scenario device group it points
+     * at. Most machines reference no group (index -1), and objects that are not
+     * devices have none at all; both report -1 so the shader falls back rather
+     * than treating them as unpowered. */
+    template<typename T>
+    libc_types::f32 device_power(BlamFiles<Ver>& files, T const& instance)
+    {
+        if constexpr(std::is_same_v<T, blam::scn::machine_spawn> ||
+            std::is_same_v<T, blam::scn::light_fixture_spawn> ||
+            std::is_same_v<T, blam::scn::control>)
+        {
+            auto const* scenario = files.container.scenario().value_or(nullptr);
+            if(!scenario || instance.power_group < 0)
+                return -1.f;
+            auto groups =
+                scenario->objects.device_groups.data(files.container.magic);
+            if(groups.has_error() ||
+               static_cast<size_t>(instance.power_group) >=
+                   groups.value().size())
+                return -1.f;
+            return groups.value()[instance.power_group].initial_value;
+        } else
+            return -1.f;
+    }
+
+    /* One scenario object palette (scenery, vehicles, bipeds, ...). Static
+     * groups are built here on every peer; dynamic ones are raised as
+     * server-owned SpawnObjectEvents. */
+    template<typename T>
+    void load_objects(
+        Proxy&                            p,
+        blam::scn::reflex_group<T> const& group,
+        ScenarioGroup                     group_id,
+        u32                               tags)
+    {
+        ProfContext _(__FUNCTION__);
+
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
+
+        auto const& magic = files.container.magic;
+
+        auto palette_opt   = group.palette.data(magic);
+        auto instances_opt = group.instances.data(magic);
+        if(palette_opt.has_error() || instances_opt.has_error())
+            return;
+
+        auto palette   = palette_opt.value();
+        auto instances = instances_opt.value();
+
+        cDebug(
+            "load_objects: {} instances, {} palette entries",
+            instances.size(),
+            palette.size());
+
+        bool const dynamic = group_id >= ScenarioGroup::Vehicle;
+        i16 const  section =
+            p.template subsystem<BSPCache<Ver>>().active_section;
+
+        for(u32 i = 0; i < instances.size(); ++i)
+        {
+            auto const net_id = SpawnObjectEvent::scenario_net_id(group_id, i);
+            if(!dynamic)
+            {
+                if(placed_in_section(instances[i], section))
+                    build_scenario_object(
+                        p, palette, instances[i], tags, net_id);
+                continue;
+            }
+            auto const& instance = instances[i];
+            using spawn_flags    = blam::scn::object_spawn::spawn_flags;
+            /* "Not placed automatically": a script creates it */
+            auto const* entry = instance.ref.resolve(palette);
+            if(!entry || (instance.flags & spawn_flags::automatic) != spawn_flags::none)
+                continue;
+            raise_spawn((*entry)[0], instance.pos, net_id);
+        }
+    }
+
+    void raise_spawn(
+        blam::tagref_t const& object, Vecf3 const& position, u32 net_id)
+    {
+        GameEvent        ev{.type = GameEvent::SpawnObject};
+        SpawnObjectEvent spawn{
+            .object       = object,
+            .position     = position,
+            .net_id       = net_id,
+            .server_owned = true,
+        };
+        game_bus->inject(ev, &spawn);
+    }
+
+    /* Resolve the instance's model, apply its idle animation frame, and build
+     * the parent + submodel entities */
+    template<typename Palette, typename T>
+    void build_scenario_object(
+        Proxy&         p,
+        Palette const& palette,
+        T const&       instance,
+        u32            tags,
+        u32            net_id)
+    {
+        using namespace compo;
+
+        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto const& magic = files.container.magic;
+
+        EntityRecipe parent = shared_recipes::model;
+        parent.tags         = parent.tags | tags;
+
+        EntityRecipe submodel = shared_recipes::submodel;
+        submodel.tags         = submodel.tags | (tags & SubObjectMask);
+
+        auto const* entry = instance.ref.resolve(palette);
+        if(!entry || !(*entry)[0].valid())
+            return;
+
+        blam::tagref_t const& tagref = (*entry)[0];
+
+        auto instance_it = index.tag_of(tagref);
+
+        if(!instance_it.has_value())
+            return;
+
+        auto const* instance_tag = *instance_it;
+
+        if(!instance_tag->valid())
+            return;
+
+        blam::scn::object const* instance_obj =
+            instance_tag->template data<blam::scn::object>(magic).value();
+
+        auto model_it = index.find(instance_obj[0].model);
+
+        if(model_it == index.end())
+            return;
+
+        auto const* mod2         = model_cache.get_header(instance_obj[0].model);
+        u32 const   permutations = mod2 ? mod2->pick_permutations(
+                                            magic, instance.desired_permutation, net_id)
+                                        : 0;
+        ModelAssembly mesh_data  = model_cache.predict_regions(
+            instance_obj[0].model, model_lod, permutations);
+
+        auto idle = find_idle_animation(p, instance_obj[0].anim_graph);
+        auto const* graph =
+            idle ? idle->graph
+                 : vehicle_graph(p, *instance_tag, instance_obj[0].anim_graph);
+
+        /* Only objects that actually animate carry the component, so
+         * static scenery pays neither the state nor a bone slot. */
+        EntityRecipe recipe = parent;
+        if(graph)
+            recipe.components.push_back(
+                compo::type_hash_v<AnimationPlayback>());
+        auto physics = object_physics(p, *instance_tag);
+        if(physics)
+            recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
+        bool const unit = instance_tag->matches(blam::tag_class_t::bipd);
+        if(unit)
+        {
+            recipe.components.push_back(compo::type_hash_v<BipedStatus>());
+            recipe.components.push_back(compo::type_hash_v<Actor>());
+        }
+        auto const* held = unit ? default_weapon(files, *instance_tag) : nullptr;
+        if(held)
+            recipe.components.push_back(compo::type_hash_v<BipedEquipment>());
+        constexpr bool device =
+            std::is_same_v<T, blam::scn::machine_spawn> || std::is_same_v<T, blam::scn::control>;
+        if constexpr(device)
+            recipe.components.push_back(compo::type_hash_v<DeviceState>());
+
+        auto parent_ = p.create_entity(recipe);
+        if(graph)
+        {
+            auto& anim = parent_.template get<AnimationPlayback>();
+            if(idle)
+                anim.layers[0] = *idle;
+            anim.graph = graph;
+        }
+        if(physics)
+            parent_.template get<ObjectPhysics>() = std::move(*physics);
+        if(unit)
+        {
+            auto& status = parent_.template get<BipedStatus>();
+            status       = unit_status(files, instance_obj[0].collider);
+            /* Outside the AI until ai_attach, on its unit's team */
+            if(auto u = instance_tag->template data<blam::scn::unit>(magic); u.has_value())
+                parent_.template get<Actor>().team = static_cast<u16>(u.value()[0].default_team);
+            /* Placed hurt, or already dead */
+            if constexpr(std::is_same_v<T, blam::scn::biped_spawn>)
+            {
+                using flags_t = blam::scn::biped_spawn::biped_flags_t;
+                if(instance.vitality > 0.f)
+                    status.body = std::min(instance.vitality, 1.f);
+                if((instance.biped_flags & flags_t::dead) != flags_t::none)
+                {
+                    status.body = status.shield = 0.f;
+                    status.dead = true;
+                }
+            }
+        }
+
+        Model&       model = parent_.template get<Model>();
+        ObjectSpawn& spawn = parent_.template get<ObjectSpawn>();
+        DepthInfo&   depth = parent_.template get<DepthInfo>();
+
+        spawn.tag           = instance_tag;
+        spawn.header        = &instance;
+        spawn.power         = device_power(files, instance);
+        if constexpr(device)
+            parent_.template get<DeviceState>() = device_state(files, *instance_tag, instance);
+        model.tag           = &(*model_it);
+        model.model         = mesh_data.models.at(0);
+        model.permutations  = permutations;
+        model.origin_object = instance_tag;
+        model.initialize(&instance);
+        init_lods(p, model, instance_obj[0]);
+        depth.position = model.position;
+
+        NetworkInfo& netinfo = parent_.template get<NetworkInfo>();
+        netinfo.object       = tagref;
+        netinfo.instance_id  = net_id;
+
+        for(auto const& model_ : mesh_data.models)
+            build_submodels(
+                p, parent_, model, model_, submodel, render_layer::world, 1,
+                &instance_obj[0]);
+        if(held)
+            arm(p, parent_.id(), *held, model, files);
+    }
+
+    /* Calls fn(group, tags) with the scenario palette group_id names */
+    template<typename Fn>
+    static void with_scenario_group(
+        blam::scn::scenario<Ver> const& scenario, ScenarioGroup group_id, Fn&& fn)
+    {
+        auto const& objects = scenario.objects;
+        switch(group_id)
+        {
+        case ScenarioGroup::Scenery:
+            fn(objects.scenery, ObjectScenery | PositioningStatic);
+            break;
+        case ScenarioGroup::LightFixture:
+            fn(objects.light_fixtures, ObjectLightFixture | PositioningStatic);
+            break;
+        case ScenarioGroup::Machine:
+            fn(objects.machines, ObjectDevice | PositioningStatic);
+            break;
+        case ScenarioGroup::Control:
+            fn(objects.controls,
+               ObjectDevice | ObjectControl | PositioningStatic);
+            break;
+        case ScenarioGroup::Vehicle:
+            fn(objects.vehicles, ObjectVehicle | PositioningDynamic);
+            break;
+        case ScenarioGroup::Biped:
+            fn(objects.bipeds, ObjectBiped | PositioningDynamic);
+            break;
+        case ScenarioGroup::Equipment:
+            fn(objects.equips, ObjectEquipment | PositioningDynamic);
+            break;
+        case ScenarioGroup::Weapon:
+            fn(objects.weapon_spawns, ObjectEquipment | PositioningDynamic);
+            break;
+        default:
+            break;
+        }
+    }
+
+    /* The idle animation in an object's animation graph. Scans unit weapons
+     * for "stand * idle*" with frame data, falling back to weapons[0] idle —
+     * weapons[0] may be a vehicle-driver slot for some bipeds. */
+    /* A vehicle's graph, for objects with no idle animation */
+    blam::antr::header const* vehicle_graph(
+        Proxy& p, blam::tag_t const& tag, blam::tagref_t const& anim_graph)
+    {
+        if(!tag.matches(blam::tag_class_t::vehi) || !anim_graph.valid())
+            return nullptr;
+        auto const& magic = p.template subsystem<BlamFiles<Ver>>().container.magic;
+        auto        antr  = index.find(anim_graph);
+        if(antr == index.end())
+            return nullptr;
+        auto header = (*antr).template data<blam::antr::header>(magic);
+        if(!header.has_value() || header.value()[0].vehicles.count == 0)
+            return nullptr;
+        return &header.value()[0];
+    }
+
+    std::optional<AnimationLayer> find_idle_animation(
+        Proxy& p, blam::tagref_t const& anim_graph)
+    {
+        if(!anim_graph.valid())
+            return std::nullopt;
+
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
+
+        auto const& magic = files.container.magic;
+
+        auto antr_it = index.find(anim_graph);
+        if(antr_it == index.end())
+            return std::nullopt;
+
+        auto antr_data = (*antr_it).template data<blam::antr::header>(magic);
+        if(!antr_data.has_value())
+            return std::nullopt;
+
+        auto const* antr_hdr = &antr_data.value()[0];
+        u32         anim_idx = 0;
+        /* A unit with no idle, a cryotube, waits on its first frame */
+        bool        held     = false;
+
+        auto all_anims_opt = antr_hdr->animations.data(magic);
+        if(auto units_opt = antr_hdr->units.data(magic);
+           units_opt.has_value() && !units_opt.value().empty() &&
+           all_anims_opt.has_value())
+        {
+            auto all_anims      = all_anims_opt.value();
+            u32  fallback       = 0;
+            bool found_fallback = false;
+            bool found_stand    = false;
+            for(auto const& unit : units_opt.value())
+            {
+                if(found_stand)
+                    break;
+                auto wpn_opt = unit.weapons.data(magic);
+                if(!wpn_opt.has_value())
+                    continue;
+                for(auto const& wpn : wpn_opt.value())
+                {
+                    auto ai_opt = wpn.animations.data(magic);
+                    if(!ai_opt.has_value() ||
+                       ai_opt.value().size() <= blam::antr::unit_weapon::idle)
+                        continue;
+                    i16 idx =
+                        ai_opt.value()[blam::antr::unit_weapon::idle].animation;
+                    if(idx < 0 || static_cast<u32>(idx) >=
+                                      static_cast<u32>(all_anims.size()))
+                        continue;
+                    if(!found_fallback)
+                    {
+                        fallback       = static_cast<u32>(idx);
+                        found_fallback = true;
+                    }
+                    auto nm = all_anims[idx].name.str();
+                    if(nm.find("stand") != std::string_view::npos &&
+                       nm.find("idle") != std::string_view::npos &&
+                       all_anims[idx].frame_size > 0)
+                    {
+                        anim_idx    = static_cast<u32>(idx);
+                        found_stand = true;
+                        break;
+                    }
+                }
+            }
+            if(!found_stand && found_fallback)
+                anim_idx = fallback;
+            held = !found_fallback;
+        }
+
+        return AnimationLayer{
+            .graph     = antr_hdr,
+            .animation = anim_idx,
+            .loop      = !held,
+            .paused    = held,
+        };
+    }
+
+    /* One submodel entity per shaded region of a loaded model. */
+    void build_submodels(
+        Proxy&                                    p,
+        compo::EntityRef<compo::EntityContainer>& parent_,
+        Model&                                    model,
+        generation_idx_t const&                   model_id,
+        compo::EntityRecipe const&                submodel,
+        render_layer                              layer    = render_layer::world,
+        u8                                        lod_mask = 0x1F,
+        blam::scn::object const*                  object   = nullptr)
+    {
+        ShaderCache<Ver>& shader_cache =
+            p.template subsystem<ShaderCache<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        ModelItem<Ver>& modelit = model_cache.get(model_id);
+        for(auto const& sub : modelit.mesh.sub)
+        {
+            if(!sub.shader.valid())
+            {
+                cWarning(
+                    "Model part dropped, shader unresolved: {}",
+                    modelit.tag ? index.name_of(*modelit.tag)
+                                : std::string_view("<unknown>"));
+                continue;
+            }
+
+            auto submod = p.create_entity(submodel);
+            model.parts.push_back(submod);
+            SubModel& submod_ = submod.template get<SubModel>();
+
+            submod_.parent      = parent_.id();
+            submod_.lod_mask    = lod_mask;
+            DrawState& sub_draw = submod.template get<DrawState>();
+            submod_.template initialize<Ver>(model_id, sub, sub_draw);
+
+            ShaderData&       shader_   = submod.template get<ShaderData>();
+            ShaderItem const& shader_it = shader_cache.get(sub.shader);
+            shader_.initialize(shader_it, submod_);
+
+            sub_draw.current_pass =
+                shader_.get_render_pass(shader_cache, layer);
+
+            // Annotate DrawState with the shader info
+            auto shader_name = index.name_of(*shader_.shader_tag);
+            for(auto& draw : sub_draw.draw.data)
+                draw.debug_identifier = fmt::format(
+                    "{} {}",
+                    shader_.shader_tag->tagclass[0].str(),
+                    shader_name);
+        }
+        /* The object's modifier shader (a shield hit) is a second coat over
+         * every part, lit by the function its intensity names */
+        if(!object || !object->shader.valid())
+            return;
+        auto const overlay = shader_cache.predict(object->shader);
+        if(!overlay.valid())
+            return;
+        ShaderItem const& overlay_it = shader_cache.get(overlay);
+        libc_types::i8    gate       = -1;
+        if(overlay_it.tag_class == blam::tag_class_t::spla)
+        {
+            auto const src = static_cast<u32>(
+                overlay_it.header->as<blam::shader::shader_plasma>()->intensity.source);
+            gate = src >= 1 && src <= 4 ? static_cast<libc_types::i8>(src - 1) : -1;
+        }
+        for(auto const& sub : modelit.mesh.sub)
+        {
+            if(!sub.shader.valid())
+                continue;
+            auto submod = p.create_entity(submodel);
+            model.parts.push_back(submod);
+            SubModel& submod_ = submod.template get<SubModel>();
+            submod_.parent    = parent_.id();
+            submod_.lod_mask  = lod_mask;
+            submod_.gate      = gate;
+            DrawState& sub_draw = submod.template get<DrawState>();
+            submod_.template initialize<Ver>(model_id, sub, sub_draw);
+            submod_.shader = overlay;
+            ShaderData& shader_ = submod.template get<ShaderData>();
+            shader_.initialize(overlay_it, submod_);
+            sub_draw.current_pass = shader_.get_render_pass(shader_cache, layer);
+        }
+    }
+
+    /* Item permutations of a netgame equipment entry's item collection */
+    using item_span =
+        typename decltype(blam::scn::item_collection::items)::span_type;
+
+    std::optional<std::pair<blam::scn::item_collection const*, item_span>>
+    netgame_items(
+        blam::scn::multiplayer_equipment const& entry,
+        blam::map_ptr const&                    magic)
+    {
+        auto item_coll_tag = index.find(entry.item);
+        if(item_coll_tag == index.end())
+            return std::nullopt;
+        auto item_coll_data =
+            (*item_coll_tag).template data<blam::scn::item_collection>(magic);
+        if(item_coll_data.has_error())
+            return std::nullopt;
+        auto const* item_coll = &item_coll_data.value()[0];
+        auto        perms     = item_coll->items.data(magic);
+        if(perms.has_error())
+            return std::nullopt;
+        return std::make_pair(item_coll, perms.value());
+    }
+
+    /* Netgame weapon/equipment spawns, which live outside the object palettes
+     * and are keyed by item collections. Raised as server-owned events. */
+    void load_multiplayer_equipment(Proxy& p)
+    {
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
+
+        auto const& magic    = files.container.magic;
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+
+        auto equipment = scenario->netgame.equipment.data(magic);
+        if(equipment.has_error())
+            return;
+
+        for(u32 e = 0; e < equipment.value().size(); ++e)
+        {
+            auto const& entry = equipment.value()[e];
+            auto        items = netgame_items(entry, magic);
+            if(!items)
+                continue;
+            for(u32 k = 0; k < items->second.size(); ++k)
+            {
+                auto const& item = items->second[k].item;
+                if(item.tag_class != blam::tag_class_t::weap &&
+                   item.tag_class != blam::tag_class_t::eqip)
+                    continue;
+                raise_spawn(
+                    item,
+                    entry.pos,
+                    SpawnObjectEvent::scenario_net_id(
+                        ScenarioGroup::NetgameEquipment, e, k));
+            }
+        }
+    }
+
+    void build_netgame_item(Proxy& p, u32 entry_idx, u32 perm_idx, u32 net_id)
+    {
+        using namespace compo;
+
+        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto const& magic    = files.container.magic;
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+
+        auto equipment = scenario->netgame.equipment.data(magic);
+        if(equipment.has_error() || entry_idx >= equipment.value().size())
+            return;
+        blam::scn::multiplayer_equipment const& equipment_ref =
+            equipment.value()[entry_idx];
+
+        auto items = netgame_items(equipment_ref, magic);
+        if(!items || perm_idx >= items->second.size())
+            return;
+        blam::scn::item_permutation const& item_perm = items->second[perm_idx];
+
+        if(item_perm.item.tag_class != blam::tag_class_t::weap &&
+           item_perm.item.tag_class != blam::tag_class_t::eqip)
+            return;
+
+        auto item_data    = index.template data<blam::scn::item>(item_perm.item);
+        auto item_tag_opt = index.tag_of(item_perm.item);
+        if(!item_data.has_value() || !item_tag_opt.has_value())
+            return;
+
+        blam::scn::item const& item     = *item_data.value();
+        blam::tag_t const*     item_tag = *item_tag_opt;
+
+        if(!item.model.valid())
+            return;
+
+        u32 const tags = ObjectEquipment | PositioningDynamic;
+
+        EntityRecipe equip = shared_recipes::multiplayer_spawn;
+        equip.tags         = equip.tags | tags;
+        auto physics       = object_physics(p, *item_tag);
+        if(physics)
+            equip.components.push_back(compo::type_hash_v<ObjectPhysics>());
+
+        EntityRecipe submodel = shared_recipes::submodel;
+        submodel.tags         = submodel.tags | (tags & SubObjectMask);
+
+        auto              set    = p.create_entity(equip);
+        Model&            model_ = set.template get<Model>();
+        MultiplayerSpawn& spawn  = set.template get<MultiplayerSpawn>();
+
+        if(physics)
+            set.template get<ObjectPhysics>() = std::move(*physics);
+        spawn.item       = &item;
+        spawn.spawn      = &equipment_ref;
+        spawn.collection = items->first;
+        model_.initialize(&equipment_ref);
+        model_.tag           = *index.tag_of(item.model);
+        model_.origin_object = item_tag;
+
+        NetworkInfo& netinfo = set.template get<NetworkInfo>();
+        netinfo.object       = item_perm.item;
+        netinfo.instance_id  = net_id;
+
+        ModelAssembly models = model_cache.predict_regions(item.model, model_lod);
+
+        for(auto const& model : models.models)
+        {
+            model_.model = model;
+            build_submodels(p, set, model_, model, submodel);
+        }
+    }
+
+    /* A scenario-placed object addressed by its scenario net id */
+    void spawn_scenario_object(Proxy& p, u32 net_id)
+    {
+        auto const group = SpawnObjectEvent::scenario_group(net_id);
+        u32 const  idx   = (net_id >> 8) & 0xFFFF;
+        u32 const  sub   = net_id & 0xFF;
+
+        if(group == ScenarioGroup::NetgameEquipment)
+            return build_netgame_item(p, idx, sub, net_id);
+
+        BlamFiles<Ver>& files    = p.template subsystem<BlamFiles<Ver>>();
+        auto const*     scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+        auto const& magic = files.container.magic;
+
+        with_scenario_group(
+            *scenario, group, [&](auto const& group_data, u32 tags) {
+                auto palette   = group_data.palette.data(magic);
+                auto instances = group_data.instances.data(magic);
+                if(palette.has_error() || instances.has_error() ||
+                   idx >= instances.value().size())
+                    return;
+                build_scenario_object(
+                    p,
+                    palette.value(),
+                    instances.value()[idx],
+                    tags,
+                    net_id);
+            });
+    }
+
+    /* Every static and dynamic object the scenario places in the world. */
+    void load_scenario_objects(Proxy& p)
+    {
+        ProfContext _(__FUNCTION__);
+
+        BlamFiles<Ver>& files = p.template subsystem<BlamFiles<Ver>>();
+
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+
+        for(auto group_id = ScenarioGroup::Scenery;
+            group_id != ScenarioGroup::NetgameEquipment;
+            group_id = static_cast<ScenarioGroup>(
+                static_cast<u32>(group_id) + 1))
+            with_scenario_group(
+                *scenario, group_id, [&](auto const& group_data, u32 tags) {
+                    load_objects(p, group_data, group_id, tags);
+                });
+
+        if(files.container.map->map_type == blam::maptype_t::multiplayer)
+            load_multiplayer_equipment(p);
+    }
+
+    void queue_spawn(SpawnBSPEvent& bsp)
+    {
+    }
+
+    void queue_spawn(SpawnBipedEvent& bsp)
+    {
+    }
+
+    void queue_spawn(SpawnModelEvent& model)
+    {
+    }
+
+    void queue_spawn(SkyboxChangedEvent& skybox)
+    {
+    }
+
+    void queue_spawn(WeatherChangedEvent& weather)
+    {
+    }
+
+    /* One model spawned on request, outside the scenario's palettes. Placed
+     * at the origin; the caller positions it through its Model component. */
+    void load_model(Proxy& p, blam::tagref_t const& model_ref)
+    {
+        using namespace compo;
+
+        if(!model_ref.valid())
+            return;
+
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto model_it = index.find(model_ref);
+        if(model_it == index.end())
+            return;
+
+        ModelAssembly mesh_data =
+            model_cache.predict_regions(model_ref, model_lod);
+        if(mesh_data.models.empty())
+        {
+            cWarning("Failed to load requested model");
+            return;
+        }
+
+        EntityRecipe parent   = shared_recipes::model;
+        EntityRecipe submodel = shared_recipes::submodel;
+
+        auto   ent   = p.create_entity(parent);
+        Model& model = ent.template get<Model>();
+
+        model.tag       = &(*model_it);
+        model.model     = mesh_data.models.at(0);
+        model.transform = glm::identity<Matf4>();
+
+        for(auto const& model_id : mesh_data.models)
+            build_submodels(p, ent, model, model_id, submodel);
+    }
+
+    static u32 object_class_tags(blam::tag_t const& tag)
+    {
+        using blam::tag_class_t;
+        if(tag.matches(tag_class_t::bipd))
+            return ObjectBiped | ObjectUnit;
+        if(tag.matches(tag_class_t::vehi))
+            return ObjectVehicle | ObjectUnit;
+        if(tag.matches(tag_class_t::ctrl))
+            return ObjectControl;
+        if(tag.matches(tag_class_t::lifi))
+            return ObjectLightFixture;
+        if(tag.matches(tag_class_t::mach))
+            return ObjectDevice;
+        if(tag.matches(tag_class_t::scen))
+            return ObjectScenery;
+        if(tag.matches(tag_class_t::weap) || tag.matches(tag_class_t::eqip) ||
+           tag.matches(tag_class_t::garb))
+            return ObjectEquipment;
+        return ObjectObject;
+    }
+
+    /* Any object tag, outside the scenario's palettes. Bipeds go through
+     * here like everything else; tying one to a player is a separate step. */
+    void spawn_object(Proxy& p, SpawnObjectEvent const& spawn)
+    {
+        using namespace compo;
+
+        if(spawn.net_id != 0)
+            for(auto ent : p.template select<NetworkInfo>())
+                if(ent.template get<NetworkInfo>().instance_id == spawn.net_id)
+                    return;
+
+        if(SpawnObjectEvent::scenario_group(spawn.net_id) !=
+           ScenarioGroup::None)
+            return spawn_scenario_object(p, spawn.net_id);
+
+        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto tag_it = index.find(spawn.object.tag_id);
+        if(tag_it == index.end() || !(*tag_it).valid() ||
+           !(*tag_it).matches(blam::tag_class_t::obje))
+        {
+            cWarning(
+                "Cannot spawn tag_id={}: not an object", spawn.object.tag_id);
+            return;
+        }
+        blam::tag_t const& object_tag = *tag_it;
+        if(spawn.object.tag_class != blam::tag_class_t::none &&
+           !object_tag.matches(spawn.object.class_id()))
+        {
+            cWarning(
+                "Cannot spawn {}: tag class {} expected, found {}",
+                index.name_of(object_tag),
+                blam::to_string(spawn.object.class_id()),
+                blam::to_string(object_tag.tag_class()));
+            return;
+        }
+
+        auto object_data =
+            object_tag.template data<blam::scn::object>(files.container.magic);
+        if(object_data.has_error())
+            return;
+        blam::scn::object const& object = object_data.value()[0];
+
+        /* Bullets and plasma are only their attachments */
+        bool const projectile = object_tag.matches(blam::tag_class_t::proj);
+        auto       model_it   = index.find(object.model);
+        if(model_it == index.end() && !projectile)
+            return;
+
+        ModelAssembly mesh_data;
+        u32           permutations = 0;
+        if(model_it != index.end())
+        {
+            auto const* mod2 = model_cache.get_header(object.model);
+            permutations = mod2 ? mod2->pick_permutations(files.container.magic, 0, spawn.net_id) : 0;
+            mesh_data = model_cache.predict_regions(object.model, model_lod, permutations);
+            if(mesh_data.models.empty())
+            {
+                cWarning(
+                    "Failed to load model for {}", index.name_of(object_tag));
+                return;
+            }
+        }
+
+        u32 const tags = object_class_tags(object_tag);
+
+        EntityRecipe recipe = shared_recipes::model;
+        recipe.tags         = recipe.tags | tags | PositioningDynamic;
+
+        EntityRecipe submodel = shared_recipes::submodel;
+        submodel.tags         = submodel.tags | (tags & SubObjectMask);
+
+        auto idle = find_idle_animation(p, object.anim_graph);
+        auto const* graph =
+            idle ? idle->graph : vehicle_graph(p, object_tag, object.anim_graph);
+        if(graph)
+            recipe.components.push_back(
+                compo::type_hash_v<AnimationPlayback>());
+        auto physics = object_physics(p, object_tag);
+        if(physics)
+            recipe.components.push_back(compo::type_hash_v<ObjectPhysics>());
+        if(projectile)
+            recipe.components.push_back(compo::type_hash_v<Projectile>());
+        bool const unit = object_tag.matches(blam::tag_class_t::bipd);
+        if(unit)
+        {
+            recipe.components.push_back(compo::type_hash_v<BipedStatus>());
+            recipe.components.push_back(compo::type_hash_v<Actor>());
+        }
+        auto const* held = unit ? weapon_tag(spawn.held.tag_id) : nullptr;
+        if(held)
+            recipe.components.push_back(compo::type_hash_v<BipedEquipment>());
+
+        auto ent = p.create_entity(recipe);
+        if(graph)
+        {
+            auto& anim = ent.template get<AnimationPlayback>();
+            if(idle)
+                anim.layers[0] = *idle;
+            anim.graph = graph;
+        }
+        if(physics)
+        {
+            auto& body            = ent.template get<ObjectPhysics>();
+            body                  = std::move(*physics);
+            body.linear_velocity  = spawn.velocity;
+            body.angular_velocity = spawn.angular_velocity;
+        }
+        if(unit)
+            ent.template get<BipedStatus>() = unit_status(files, object.collider);
+
+        if(projectile)
+        {
+            auto const* proj = object_tag.template data<blam::scn::projectile>(
+                                             files.container.magic)
+                                   .value();
+            /* Grenades get their speed from the thrower */
+            constexpr f32 throw_speed = 6.f; /* wu/s */
+            auto&         flight      = ent.template get<Projectile>();
+            flight.tag                = proj;
+            flight.owner              = spawn.owner;
+            flight.shooter            = spawn.shooter;
+            flight.target             = spawn.target;
+            flight.velocity =
+                glm::length(spawn.velocity) > 0.f
+                    ? spawn.velocity
+                    : spawn.rotation * Vecf3{1.f, 0.f, 0.f} *
+                          (proj->initial_velocity != 0.f ? proj->initial_velocity * 30.f
+                                                         : throw_speed);
+            if(proj->detonation_timer_starts ==
+                   blam::scn::projectile::timer_starts_t::immediately &&
+               proj->timer.y > 0.f)
+                flight.timer = proj->timer.y;
+        }
+
+        Model& model = ent.template get<Model>();
+        model.item_age      = spawn.age;
+        model.item_rounds   = spawn.rounds;
+        model.change_colors = spawn.change_colors;
+        model.camouflaged   = spawn.camouflaged;
+        if(model_it != index.end())
+        {
+            model.tag          = &(*model_it);
+            model.model        = mesh_data.models.at(0);
+            model.permutations = permutations;
+        }
+        model.origin_object = &object_tag;
+        init_lods(p, model, object);
+        model.position      = spawn.position;
+        model.rotation      = spawn.rotation;
+        model.update_matrix();
+
+        ent.template get<ObjectSpawn>().tag    = &object_tag;
+        ent.template get<DepthInfo>().position = model.position;
+
+        NetworkInfo& netinfo = ent.template get<NetworkInfo>();
+        netinfo.object       = object_tag.as_ref();
+        netinfo.instance_id  = spawn.net_id;
+
+        for(auto const& model_id : mesh_data.models)
+            build_submodels(
+                p, ent, model, model_id, submodel, render_layer::world, 1, &object);
+
+        if(held)
+            arm(p, ent.id(), *held, model, files);
+
+        if(spawn.lifetime > 0.f)
+            expiring.push_back(
+                {.entity = ent.id(),
+                 .at     = now +
+                       std::chrono::duration_cast<compo::time_point::duration>(
+                           std::chrono::duration<f32>(spawn.lifetime))});
+        if(object.creation_effect.valid())
+        {
+            GameEvent        ev{.type = GameEvent::SpawnEffect};
+            SpawnEffectEvent play{
+                .effect    = object.creation_effect,
+                .position  = model.position,
+                .direction = model.rotation * Vecf3{1.f, 0.f, 0.f},
+                .velocity  = spawn.velocity,
+                .parent    = ent.id(),
+            };
+            game_bus->inject(ev, &play);
+        } else if(auto const* effect = spawn.announce ? respawn_effect(files) : nullptr)
+        {
+            /* Announced without one of its own: the players', left behind
+             * where it appeared, standing up */
+            GameEvent        ev{.type = GameEvent::SpawnEffect};
+            SpawnEffectEvent play{
+                .effect    = *effect,
+                .position  = model.position,
+                .direction = {0.f, 0.f, 1.f},
+            };
+            game_bus->inject(ev, &play);
+        }
+    }
+
+    /* A unit's shield gone or back: the coll regions it takes down (flag
+     * 0x10, a jackal's gate) show their "~" permutation, or their first,
+     * which means the parts are built again */
+    void reshield(Proxy& p, ShieldDepletedEvent const& ev)
+    {
+        auto* model = p.template get<Model>(ev.unit);
+        if(!model || !model->origin_object)
+            return;
+        auto const& files = p.template subsystem<BlamFiles<Ver>>();
+        auto const& magic = files.container.magic;
+        auto        object_data =
+            model->origin_object->template data<blam::scn::object>(magic);
+        if(object_data.has_error())
+            return;
+        blam::scn::object const& object = object_data.value()[0];
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        auto const*      mod2        = model_cache.get_header(object.model);
+        auto             regions     = mod2 ? mod2->regions.data(magic) : decltype(mod2->regions.data(magic)){};
+        blam::coll::header const* coll = nullptr;
+        if(auto it = index.find(object.collider); it != index.end())
+            if(auto data = (*it).template data<blam::coll::header>(magic); data.has_value())
+                coll = data.value();
+        auto coll_regions = coll ? coll->regions.data(magic) : decltype(coll->regions.data(magic)){};
+        if(!regions.has_value() || !coll_regions.has_value())
+            return;
+        u32  permutations = model->permutations;
+        bool changed      = false;
+        for(auto const& region : coll_regions.value())
+        {
+            if(!(region.flags & 0x10))
+                continue;
+            for(auto const& [r, mod2_region] : stl_types::const_enumerate(regions.value()))
+            {
+                if(r >= 8 || mod2_region.name.str() != region.name.str())
+                    continue;
+                auto perms = mod2_region.permutations.data(magic);
+                if(!perms.has_value())
+                    continue;
+                for(auto const& [k, perm] : stl_types::const_enumerate(perms.value()))
+                {
+                    bool const off = !perm.name.str().empty() && perm.name.str()[0] == '~';
+                    if(k >= 16 || off != ev.depleted)
+                        continue;
+                    permutations = (permutations & ~(0xFu << (4 * r))) |
+                                   (static_cast<u32>(k) << (4 * r));
+                    changed = true;
+                    break;
+                }
+            }
+        }
+        if(changed)
+            rebuild(p, ev.unit, model, object, permutations);
+    }
+
+    /* object_set_permutation: by region and permutation name */
+    void repermute(Proxy& p, SetPermutationEvent const& change)
+    {
+        auto* model = p.template get<Model>(change.object);
+        if(!model || !model->origin_object)
+            return;
+        auto const& magic       = p.template subsystem<BlamFiles<Ver>>().container.magic;
+        auto        object_data = model->origin_object->template data<blam::scn::object>(magic);
+        if(object_data.has_error())
+            return;
+        blam::scn::object const& object  = object_data.value()[0];
+        auto const*              mod2    = p.template subsystem<ModelCache<Ver>>().get_header(object.model);
+        auto                     regions = mod2 ? mod2->regions.data(magic) : decltype(mod2->regions.data(magic)){};
+        if(!regions.has_value())
+            return;
+        u32 permutations = model->permutations;
+        for(auto const& [r, region] : stl_types::const_enumerate(regions.value()))
+        {
+            if(r >= 8 || (!change.region.empty() && region.name.str() != change.region))
+                continue;
+            auto perms = region.permutations.data(magic);
+            if(perms.has_value())
+                for(auto const& [k, perm] : stl_types::const_enumerate(perms.value()))
+                    if(k < 16 && perm.name.str() == change.permutation)
+                        permutations = (permutations & ~(0xFu << (4 * r))) | (static_cast<u32>(k) << (4 * r));
+        }
+        rebuild(p, change.object, model, object, permutations);
+    }
+
+    /* Its parts built again from the regions' chosen permutations */
+    void rebuild(Proxy& p, u64 id, Model* model, blam::scn::object const& object, u32 permutations)
+    {
+        if(permutations == model->permutations)
+            return;
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        ModelAssembly mesh = model_cache.predict_regions(object.model, model_lod, permutations);
+        if(mesh.models.empty())
+            return;
+        std::set<u64> doomed;
+        for(auto const& part : model->parts)
+            doomed.insert(part.id());
+        p.remove_entity_if([&doomed](compo::Entity const& e) {
+            return doomed.contains(e.id);
+        });
+        model->parts.clear();
+        model->permutations = permutations;
+        model->model        = mesh.models.at(0);
+        init_lods(p, *model, object);
+
+        auto                ent      = p.ref(id);
+        compo::EntityRecipe submodel = shared_recipes::submodel;
+        submodel.tags                = submodel.tags | (ent.tags() & SubObjectMask);
+        for(auto const& model_id : mesh.models)
+            build_submodels(p, ent, *model, model_id, submodel, render_layer::world, 1, &object);
+    }
+
+    /* Local debris whose time is up, with its submodels */
+    void expire_objects(Proxy& p)
+    {
+        std::set<u64> doomed;
+        std::erase_if(expiring, [&](expiry_t const& e) {
+            if(e.at > now)
+                return false;
+            doomed.insert(e.entity);
+            if(auto const* model = p.template get<Model>(e.entity))
+                for(auto const& part : model->parts)
+                    doomed.insert(part.id());
+            return true;
+        });
+        if(!doomed.empty())
+            p.remove_entity_if([&doomed](compo::Entity const& e) {
+                return doomed.contains(e.id);
+            });
+    }
+
+    void despawn_object(Proxy& p, u32 net_id)
+    {
+        std::set<u64> doomed;
+        for(auto ent : p.template select<Model, NetworkInfo>())
+        {
+            auto [model, net] = ent.components();
+            if(net.instance_id != net_id)
+                continue;
+            doomed.insert(ent.id());
+            for(auto const& part : model.parts)
+                doomed.insert(part.id());
+        }
+        if(!doomed.empty())
+            p.remove_entity_if([&doomed](compo::Entity const& e) {
+                return doomed.contains(e.id);
+            });
+    }
+
+    /*! The biped a player spawns as on this map */
+    blam::scn::biped const* player_biped(BlamFiles<Ver> const& files)
+    {
+        if(auto const* tag = player_biped_tag(files))
+            if(auto biped = tag->template data<blam::scn::biped>(files.container.magic);
+               biped.has_value())
+                return biped.value();
+        cWarning("Got not biped model :(");
+        return nullptr;
+    }
+
+    blam::tag_t const* player_biped_tag(BlamFiles<Ver> const& files)
+    {
+        auto const& magic    = files.container.magic;
+        auto        globals_ = index.tag_of("globals\\globals");
+        if(!globals_.has_value())
+        {
+            cWarning("Failed to find globals object");
+            return nullptr;
+        }
+        auto globals =
+            (*globals_)->template data<blam::globals::globals>(magic);
+        if(!globals.has_value())
+            return nullptr;
+        blam::tagref_typed_t<blam::tag_class_t::biped> unit{};
+        if(files.container.map->map_type == blam::maptype_t::multiplayer)
+            if(auto mp = globals.value()->multiplayer.data(magic);
+               mp.has_value() && !mp.value().empty())
+                unit = mp.value()[0].unit;
+        if(!unit.valid())
+            if(auto sp = globals.value()->player.data(magic);
+               sp.has_value() && !sp.value().empty())
+                unit = sp.value()[0].unit;
+        if(auto unit_ = index.find(unit); unit_ != index.end())
+            return &(*unit_);
+        return nullptr;
+    }
+
+    /* What players arrive with: the globals' co-op respawn effect, else
+     * their biped's creation effect */
+    blam::tagref_t const* respawn_effect(BlamFiles<Ver> const& files)
+    {
+        auto const& magic = files.container.magic;
+        if(auto globals_ = index.tag_of("globals\\globals"); globals_.has_value())
+            if(auto globals = (*globals_)->template data<blam::globals::globals>(magic);
+               globals.has_value())
+                if(auto sp = globals.value()->player.data(magic);
+                   sp.has_value() && !sp.value().empty() &&
+                   sp.value()[0].coop_respawn_effect.valid())
+                    return &static_cast<blam::tagref_t const&>(sp.value()[0].coop_respawn_effect);
+        if(auto const* biped = player_biped(files); biped && biped->creation_effect.valid())
+            return &static_cast<blam::tagref_t const&>(biped->creation_effect);
+        return nullptr;
+    }
+
+    blam::tagref_typed_t<blam::tag_class_t::mod2> first_person_hands_model(
+        BlamFiles<Ver> const& files)
+    {
+        auto const& magic    = files.container.magic;
+        auto        globals_ = index.tag_of("globals\\globals");
+        if(!globals_.has_value())
+            return {};
+        auto globals =
+            (*globals_)->template data<blam::globals::globals>(magic);
+        if(!globals.has_value())
+            return {};
+        auto fp = globals.value()->first_person.data(magic);
+        if(!fp.has_value() || fp.value().empty())
+            return {};
+        return fp.value()[0].hands;
+    }
+
+    /* Graph node per bone of `model` by name; empty if any is missing */
+    std::vector<i16> graph_nodes_of(
+        BlamFiles<Ver> const&                                files,
+        blam::tagref_typed_t<blam::tag_class_t::mod2> const& model,
+        blam::antr::header const&                            graph)
+    {
+        auto const& magic     = files.container.magic;
+        auto        model_tag = index.find(model);
+        if(model_tag == index.end())
+            return {};
+        auto mod2 = model_tag->template data<blam::mod2::header<Ver>>(magic);
+        if(!mod2.has_value())
+            return {};
+        auto bones = mod2.value()->bones.data(magic);
+        auto nodes = graph.nodes.data(magic);
+        if(!bones.has_value() || bones.value().empty() || !nodes.has_value())
+            return {};
+
+        std::vector<i16> map;
+        for(auto const& bone : bones.value())
+        {
+            auto node = std::find_if(
+                nodes.value().begin(),
+                nodes.value().end(),
+                [&bone](auto const& n) { return n.name.str() == bone.name.str(); });
+            if(node == nodes.value().end())
+                return {};
+            map.push_back(static_cast<i16>(node - nodes.value().begin()));
+        }
+        return map;
+    }
+
+    /* The weapon's first-person graph, if it covers every hands bone */
+    std::optional<first_person_fit_t> fit_first_person(
+        blam::tag_t const& tag, BlamFiles<Ver> const& files)
+    {
+        auto const& magic  = files.container.magic;
+        auto        weapon = tag.template data<blam::scn::weapon>(magic);
+        if(!weapon.has_value())
+            return std::nullopt;
+        auto graph_tag = index.find(weapon.value()->first_person_animations);
+        if(graph_tag == index.end())
+            return std::nullopt;
+        auto graph_ = graph_tag->template data<blam::antr::header>(magic);
+        if(!graph_.has_value())
+            return std::nullopt;
+        blam::antr::header const* graph = graph_.value();
+
+        auto clips = graph->animations.data(magic);
+        auto fp    = graph->first_person_weapons.data(magic);
+        if(!clips.has_value() || !fp.has_value() || fp.value().empty())
+            return std::nullopt;
+        auto slots = fp.value()[0].animations.data(magic);
+        using fp_slot = blam::antr::first_person_weapon;
+        if(!slots.has_value() || slots.value().size() <= fp_slot::idle)
+            return std::nullopt;
+        i32 const idle = slots.value()[fp_slot::idle].animation;
+        if(idle < 0 || static_cast<size_t>(idle) >= clips.value().size() ||
+           clips.value()[idle].is_compressed())
+            return std::nullopt;
+
+        auto hands = graph_nodes_of(files, biped_model.hands, *graph);
+        if(hands.empty())
+            return std::nullopt;
+        first_person_fit_t fit{
+            .graph        = graph,
+            .idle         = static_cast<u32>(idle),
+            .ready        = slots.value().size() > fp_slot::ready
+                                ? slots.value()[fp_slot::ready].animation
+                                : -1,
+            .hands_nodes  = std::move(hands),
+            .weapon_nodes = graph_nodes_of(
+                files, weapon.value()->first_person_model, *graph),
+        };
+        if(!fit.weapon_nodes.empty())
+            fit.model = weapon.value()->first_person_model;
+        return fit;
+    }
+
+    std::optional<first_person_fit_t> const& first_person_of(
+        blam::tag_t const& tag, BlamFiles<Ver> const& files)
+    {
+        auto it = biped_model.fits.find(&tag);
+        if(it == biped_model.fits.end())
+            it = biped_model.fits.emplace(&tag, fit_first_person(tag, files)).first;
+        return it->second;
+    }
+
+    /* Bare hands, and the weapon everyone starts with */
+    void fit_first_person_graph(BlamFiles<Ver> const& files)
+    {
+        for(blam::tag_t const& tag : index)
+        {
+            if(!tag.valid() || !tag.matches(blam::tag_class_t::weap))
+                continue;
+            auto const& fit = first_person_of(tag, files);
+            if(!fit)
+                continue;
+            if(!biped_model.hands_fit)
+                biped_model.hands_fit = fit;
+            if(fit->model.valid())
+            {
+                biped_model.weapon = &tag;
+                cDebug("Players start with {}", index.name_of(tag));
+                return;
+            }
+        }
+        if(!biped_model.hands_fit)
+            cDebug("No weapon's first-person graph fits the hands");
+    }
+
+    /*! A coll tag in bind pose, as one hull per node plus its exact
+     * surfaces; coll nodes mirror the mod2 skeleton by name */
+    /* Full health, by the coll tag it takes damage by */
+    BipedStatus unit_status(
+        BlamFiles<Ver> const& files, blam::tagref_t const& collider)
+    {
+        BipedStatus out{};
+        if(auto it = index.find(collider); it != index.end())
+            if(auto coll = (*it).template data<blam::coll::header>(
+                   files.container.magic);
+               coll.has_value())
+                out.coll = coll.value();
+        out.shield = out.maximum_shield() > 0.f ? 1.f : 0.f;
+        return out;
+    }
+
+    std::shared_ptr<CollisionGeometry const> object_collision(
+        BlamFiles<Ver> const& files,
+        blam::tagref_t const& collider,
+        blam::tagref_t const& model)
+    {
+        auto const& magic = files.container.magic;
+        if(physics_cache.load_generation != files.load_generation)
+            physics_cache = {.load_generation = files.load_generation};
+        auto key = std::pair{collider.tag_id, model.tag_id};
+        if(auto it = physics_cache.collision.find(key);
+           it != physics_cache.collision.end())
+            return it->second;
+        auto& out = physics_cache.collision[key];
+
+        auto coll_it = index.find(collider);
+        auto mod2_it = index.find(model);
+        if(coll_it == index.end() || mod2_it == index.end())
+            return nullptr;
+        auto coll = (*coll_it).template data<blam::coll::header>(magic);
+        auto mod2 = (*mod2_it).template data<blam::mod2::header<Ver>>(magic);
+        if(coll.has_error() || mod2.has_error())
+            return nullptr;
+        auto bones     = mod2.value()->bones.data(magic);
+        auto nodes     = coll.value()->nodes.data(magic);
+        auto materials = coll.value()->materials.data(magic);
+        if(bones.has_error() || nodes.has_error())
+            return nullptr;
+
+        /* Bind pose, the same way caching.cpp builds inv_bind */
+        auto const&        bone_span = bones.value();
+        std::vector<Matf4> world_bind(bone_span.size());
+        for(u32 i = 0; i < bone_span.size(); i++)
+        {
+            auto const& b     = bone_span[i];
+            Matf4 const local = glm::translate(Matf4(1), b.translation) *
+                                glm::mat4_cast(glm::conjugate(b.rotation));
+            world_bind[i] =
+                b.parent != blam::mod2::bone::invalid_bone && b.parent < i
+                    ? world_bind[b.parent] * local
+                    : local;
+        }
+
+        auto geometry = std::make_shared<CollisionGeometry>();
+        std::vector<i32> polygon;
+        for(auto const& node : nodes.value())
+        {
+            CollisionGeometry::node_t hull;
+            Matf4                     bind(1);
+            for(u32 i = 0; i < bone_span.size(); i++)
+                if(bone_span[i].name.str() == node.name.str())
+                {
+                    bind      = world_bind[i];
+                    hull.bone = static_cast<i32>(i);
+                    break;
+                }
+
+            std::map<i16, u32>        uses;
+            auto bsps = node.bsps.data(magic);
+            if(bsps.has_error())
+                continue;
+            for(auto const& bsp : bsps.value())
+            {
+                auto verts = bsp.vertices.data(magic);
+                auto surfs = bsp.surfaces.data(magic);
+                auto edges = bsp.edges.data(magic);
+                if(verts.has_error() || surfs.has_error() || edges.has_error())
+                    continue;
+                auto const& vs = verts.value();
+                auto const& es = edges.value();
+                for(auto const& v : vs)
+                    hull.points.push_back(Vecf3(bind * Vecf4(v.point, 1.f)));
+                /* Winged-edge walk, fanned into triangles */
+                for(u32 si = 0; si < surfs.value().size(); si++)
+                {
+                    uses[surfs.value()[si].material]++;
+                    polygon.clear();
+                    blam::collision::walk_surface(
+                        surfs.value(), es, si, [&](i32 v) { polygon.push_back(v); }, 32);
+                    i16 const kind = surfs.value()[si].material;
+                    u16 const material_type =
+                        materials.has_value() && kind >= 0 &&
+                                static_cast<size_t>(kind) < materials.value().size()
+                            ? materials.value()[kind].material_type
+                            : u16(0xFFFF);
+                    for(u32 i = 2; i < polygon.size(); i++)
+                    {
+                        bool whole = true;
+                        for(i32 corner : {polygon[0], polygon[i - 1], polygon[i]})
+                            whole = whole && corner >= 0 && static_cast<u32>(corner) < vs.size();
+                        if(!whole)
+                            continue;
+                        for(i32 corner : {polygon[0], polygon[i - 1], polygon[i]})
+                            geometry->triangles.push_back(
+                                Vecf3(bind * Vecf4(vs[corner].point, 1.f)));
+                        geometry->triangle_materials.push_back(material_type);
+                    }
+                }
+            }
+            if(hull.points.empty())
+                continue;
+            /* A node is the material most of its surfaces are */
+            auto most = std::max_element(
+                uses.begin(), uses.end(), [](auto const& a, auto const& b) {
+                    return a.second < b.second;
+                });
+            if(most != uses.end() && materials.has_value() &&
+               most->first >= 0 &&
+               static_cast<size_t>(most->first) < materials.value().size())
+            {
+                hull.head = materials.value()[most->first].flags &
+                            blam::coll::material::head;
+                hull.material      = static_cast<i16>(most->first);
+                hull.material_type = materials.value()[most->first].material_type;
+            }
+            geometry->nodes.push_back(std::move(hull));
+        }
+        /* Corners that fell outside the vertex list break the triples */
+        geometry->triangles.resize(geometry->triangles.size() / 3 * 3);
+        if(!geometry->nodes.empty())
+            out = std::move(geometry);
+        return out;
+    }
+
+    /*! A vehi tag's speeds and turning, from Halo's 30 Hz ticks */
+    std::optional<VehicleDrive> vehicle_drive(
+        blam::tag_t const& tag, blam::map_ptr const& magic)
+    {
+        auto vehicle_ = tag.template data<blam::scn::vehicle>(magic);
+        if(!vehicle_.has_value())
+            return std::nullopt;
+        blam::scn::vehicle const& vehicle = vehicle_.value()[0];
+        constexpr f32             tick    = 30.f;
+        /* Jeeps store their wheel angle in degrees (30), the banshee in
+         * radians (pi/2) */
+        auto angle = [](f32 a) {
+            return std::abs(a) > glm::two_pi<f32>() ? glm::radians(a) : a;
+        };
+        auto  seats = vehicle.powered_seats.data(magic);
+        Vecf2 power{};
+        if(seats.has_value() && !seats.value().empty())
+            power = {seats.value()[0].driver_powerup_time, seats.value()[0].driver_powerdown_time};
+        return VehicleDrive{
+            .type          = static_cast<VehicleDrive::type_t>(vehicle.vehicle_type),
+            .forward_speed = vehicle.maximum_forward_speed * tick,
+            .reverse_speed = vehicle.maximum_reverse_speed * tick,
+            .acceleration  = vehicle.speed_acceleration * tick * tick,
+            .deceleration  = vehicle.speed_deceleration * tick * tick,
+            .max_turn      = angle(vehicle.maximum_left_turn),
+            .turn_rate     = angle(vehicle.turn_rate),
+            .wheel_circumference = vehicle.wheel_circumference,
+            .slide_speed = std::max(
+                               vehicle.maximum_left_slide,
+                               vehicle.maximum_right_slide) *
+                           tick,
+            .slide_acceleration = vehicle.slide_acceleration * tick * tick,
+            .powerup            = power.x,
+            .powerdown          = power.y,
+        };
+    }
+
+    /*! A phys tag, or null if it has no mass points to stand on */
+    std::shared_ptr<MassPoints const> object_mass_points(
+        BlamFiles<Ver> const& files, blam::tagref_t const& physics)
+    {
+        if(auto it = physics_cache.mass_points.find(physics.tag_id);
+           it != physics_cache.mass_points.end())
+            return it->second;
+        auto& out = physics_cache.mass_points[physics.tag_id];
+
+        auto const& magic = files.container.magic;
+        auto        tag   = index.find(physics);
+        if(tag == index.end())
+            return nullptr;
+        auto header_ = (*tag).template data<blam::phys::header>(magic);
+        if(!header_.has_value())
+            return nullptr;
+        blam::phys::header const& header  = header_.value()[0];
+        auto                      points_ = header.mass_points.data(magic);
+        if(!points_.has_value() || points_.value().empty() || header.mass <= 0.f)
+            return nullptr;
+
+        using blam::phys::powered_mass_point;
+        auto data = std::make_shared<MassPoints>(MassPoints{
+            .mass                 = header.mass,
+            .radius               = header.radius,
+            .center_of_mass       = header.center_of_mass,
+            .moments              = header.moments,
+            .gravity_scale        = header.gravity_scale,
+            .ground_friction      = header.ground_friction,
+            .ground_depth         = header.ground_depth,
+            .ground_damp_fraction = header.ground_damp_fraction,
+            .ground_normal_k1     = header.ground_normal_k1,
+            .ground_normal_k0     = header.ground_normal_k0,
+            .air_friction         = header.air_friction,
+        });
+        if(auto powered = header.powered_mass_points.data(magic);
+           powered.has_value())
+            for(auto const& p : powered.value())
+                data->powered.push_back({
+                    .traction =
+                        (p.flags & powered_mass_point::flags_t::ground_friction) !=
+                        powered_mass_point::flags_t::none,
+                    .antigrav = (p.flags & powered_mass_point::flags_t::antigrav) !=
+                                powered_mass_point::flags_t::none,
+                    .strength      = p.antigrav_strength,
+                    .offset        = p.antigrav_offset,
+                    .height        = p.antigrav_height,
+                    .damp_fraction = p.antigrav_damp_fraction,
+                    .normal_k1     = p.antigrav_normal_k1,
+                    .normal_k0     = p.antigrav_normal_k0,
+                });
+        for(auto const& p : points_.value())
+            data->points.push_back({
+                .position      = p.position,
+                .forward       = p.forward,
+                .up            = p.up,
+                .radius        = p.radius,
+                .mass          = p.mass,
+                .powered       = p.powered_mass_point,
+                .friction      = static_cast<MassPoints::point_t::friction_t>(
+                    p.friction_type),
+                .parallel      = p.friction_parallel_scale,
+                .perpendicular = p.friction_perpendicular_scale,
+            });
+        out = std::move(data);
+        return out;
+    }
+
+    /*! Model-space bounds of a model's highest LOD */
+    std::optional<std::pair<Vecf3, Vecf3>> model_bounds(
+        ModelCache<Ver>& model_cache, blam::tagref_t const& model)
+    {
+        if(auto it = physics_cache.bounds.find(model.tag_id);
+           it != physics_cache.bounds.end())
+            return it->second;
+        auto&                                    out = physics_cache.bounds[model.tag_id];
+        blam::mod2::header<Ver> const* header = model_cache.get_header(model);
+        if(!header)
+            return out;
+        auto data = header->model_at(blam::mod2::lod_high_ext, model_cache.magic);
+        if(!data.has_value())
+            return out;
+        Vecf3 lo(std::numeric_limits<f32>::max()), hi(-std::numeric_limits<f32>::max());
+        for(auto const* part : data.value().parts)
+            if(auto verts = model_cache.vertex_data(*part); verts.has_value())
+                for(auto const& v : verts.value())
+                {
+                    lo = glm::min(lo, Vecf3(v.position));
+                    hi = glm::max(hi, Vecf3(v.position));
+                }
+        if(lo.x <= hi.x)
+            out = std::pair{lo, hi};
+        return out;
+    }
+
+    /*! How a world object collides: scenery is fixed in place, vehicles
+     * move on their coll hulls, items are boxes (grenades spheres) that
+     * only meet the world and each other */
+    std::optional<ObjectPhysics> object_physics(
+        Proxy& p, blam::tag_t const& tag)
+    {
+        using blam::tag_class_t;
+        BlamFiles<Ver>&  files       = p.template subsystem<BlamFiles<Ver>>();
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+        auto const&      magic       = files.container.magic;
+        if(physics_cache.load_generation != files.load_generation)
+            physics_cache = {.load_generation = files.load_generation};
+
+        auto object_ = tag.template data<blam::scn::object>(magic);
+        if(object_.has_error())
+            return std::nullopt;
+        blam::scn::object const& object = object_.value()[0];
+
+        if(tag.matches(tag_class_t::scen) || tag.matches(tag_class_t::vehi))
+        {
+            auto collision =
+                object_collision(files, object.collider, object.model);
+            if(!collision)
+                return std::nullopt;
+            /* A vehicle without a phys tag, such as a cryotube, stays put */
+            bool const vehicle = tag.matches(tag_class_t::vehi);
+            bool const moves   = vehicle && object.physics.valid();
+            if(!vehicle && collision->triangles.empty())
+                return std::nullopt;
+            auto mass_points = moves ? object_mass_points(files, object.physics)
+                                     : nullptr;
+            return ObjectPhysics{
+                .collision   = std::move(collision),
+                .mass_points = mass_points,
+                .drive       = vehicle ? vehicle_drive(tag, magic) : std::nullopt,
+                .mass        = !moves         ? 0.f
+                               : mass_points ? mass_points->mass
+                                             : 1000.f,
+            };
+        }
+
+        /* Doors and switches: their hulls follow the position animation */
+        if(tag.matches(tag_class_t::mach) || tag.matches(tag_class_t::ctrl))
+        {
+            auto collision =
+                object_collision(files, object.collider, object.model);
+            if(!collision)
+                return std::nullopt;
+            return ObjectPhysics{
+                .collision = std::move(collision),
+                .animated  = true,
+            };
+        }
+
+        /* Light enough to carry about in forge */
+        if(tag.matches(tag_class_t::bipd))
+        {
+            auto collision =
+                object_collision(files, object.collider, object.model);
+            if(!collision)
+                return std::nullopt;
+            auto biped = tag.template data<blam::scn::biped>(magic);
+            return ObjectPhysics{
+                .collision = std::move(collision),
+                .mass      = 1.f,
+                .upright   = true,
+                .max_slope = biped.has_value() ? biped.value()->maximum_slope_angle : 0.f,
+            };
+        }
+
+        if(!tag.matches(tag_class_t::weap) && !tag.matches(tag_class_t::eqip) &&
+           !tag.matches(tag_class_t::garb))
+            return std::nullopt;
+        auto bounds = model_bounds(model_cache, object.model);
+        if(!bounds)
+            return std::nullopt;
+        /* Thin models still need some thickness to rest on */
+        Vecf3 const half =
+            glm::max((bounds->second - bounds->first) * .5f, Vecf3(.05f));
+        ObjectPhysics out{
+            .half_extents = half,
+            .center       = (bounds->first + bounds->second) * .5f,
+            .mass         = 1.f,
+            .item         = true,
+            .tip_up       = tag.matches(tag_class_t::weap) &&
+                                    tag.to_name().to_string(magic) ==
+                                        gravity_rifle_tag
+                                ? tip_up_frequency
+                                : 0.f,
+        };
+        if(tag.matches(tag_class_t::eqip))
+            if(auto equip = tag.template data<blam::scn::equipment>(magic);
+               equip.has_value() &&
+               equip.value()[0].powerup_type ==
+                   blam::scn::equipment::powerup_type_t::grenade)
+                out.radius = (half.x + half.y + half.z) / 3.f;
+        return out;
+    }
+
+    /* Models follow biped_shown(), and are remounted after a map load */
+    void reconcile_player_bipeds(Proxy& p, BlamFiles<Ver> const& files)
+    {
+        LoadingStatus const* loading;
+        p.subsystem(loading);
+        if(loading->loaded_map != LoadingStatus::loaded)
+            return;
+        if(biped_model.load_generation != files.load_generation)
+        {
+            biped_model = {
+                .load_generation = files.load_generation,
+                .hands           = first_person_hands_model(files),
+            };
+            fit_first_person_graph(files);
+            if(auto const* biped = player_biped(files))
+            {
+                biped_model.biped = biped;
+                biped_model.tag   = player_biped_tag(files);
+                biped_model.model = biped->model;
+                if(auto mod2 = index.find(biped->model); mod2 != index.end())
+                    biped_model.hand = bind_marker_prefix(
+                        *mod2, hand_marker, files.container.magic);
+                if(biped->collision_radius > 0.f &&
+                   biped->standing_collision_height > 0.f &&
+                   biped->standing_camera_height > 0.f)
+                    biped_model.shape = {
+                        .radius     = biped->collision_radius,
+                        .height     = biped->standing_collision_height,
+                        .eye_height = biped->standing_camera_height,
+                    };
+                else
+                    cWarning("Biped has no collision size, using defaults");
+                /* The tag has it per tick, at 30 Hz */
+                if(biped->jump_velocity > 0.f)
+                    biped_model.shape.jump_velocity = biped->jump_velocity * 30.f;
+                biped_model.shape.max_slope = biped->maximum_slope_angle;
+                if(biped->pitch_range.x < biped->pitch_range.y)
+                    biped_model.shape.pitch_range = biped->pitch_range;
+                if(biped->crouching_camera_height > 0.f)
+                    biped_model.shape.crouch_eye_height = biped->crouching_camera_height;
+                if(biped->crouching_collision_height > 0.f)
+                    biped_model.shape.crouch_height = biped->crouching_collision_height;
+                if(biped->crouch_transition_time > 0.f)
+                    biped_model.shape.crouch_time = biped->crouch_transition_time;
+                if(biped->crouch_velocity_modifier > 0.f)
+                    biped_model.shape.crouch_speed = biped->crouch_velocity_modifier;
+                if(auto mod2 = index.find(biped->model); mod2 != index.end())
+                {
+                    /* The cyborg names none; its head stands in */
+                    std::string_view name = biped->camera_marker_name.str();
+                    if(auto camera = bind_marker_node(
+                           *mod2, name.empty() ? camera_marker : name, files.container.magic))
+                    {
+                        biped_model.shape.camera_marker = camera->transform;
+                        biped_model.shape.camera_node   = camera->node;
+                    }
+                }
+                biped_model.shape.collision = object_collision(
+                    files, biped->collider, biped->model);
+                auto const& magic = files.container.magic;
+                if(auto graph = index.find(biped->anim_graph);
+                   graph != index.end())
+                    if(auto antr =
+                           (*graph).template data<blam::antr::header>(magic);
+                       antr.has_value())
+                        biped_model.shape.anim_graph = &antr.value()[0];
+                if(auto const* graph = biped_model.shape.anim_graph)
+                {
+                    using Slot  = blam::antr::unit_weapon::animation_idx_t;
+                    auto& shape = biped_model.shape;
+                    if(f32 v = move_speed(*graph, Slot::move_front, magic); v > 0.f)
+                        shape.run_speed = v;
+                    if(f32 v = move_speed(*graph, Slot::move_back, magic); v > 0.f)
+                        shape.back_speed = v;
+                    if(f32 v = move_speed(*graph, Slot::move_left, magic); v > 0.f)
+                        shape.strafe_speed = v;
+                    cDebug(
+                        "Biped speeds: forward {} back {} strafe {} wu/s",
+                        shape.run_speed,
+                        shape.back_speed,
+                        shape.strafe_speed);
+                }
+                if(auto foot = index.find(biped->footsteps); foot != index.end())
+                    biped_model.shape.footsteps = &(*foot);
+                biped_model.shape.respawn_effect = respawn_effect(files);
+                biped_model.shape.load_generation = files.load_generation;
+            }
+        }
+
+        std::set<u64> live;
+        for(auto player : p.template select<
+                          PlayerCamera,
+                          PlayerInfo,
+                          NetworkInfo,
+                          BipedEquipment,
+                          Model>())
+        {
+            auto [cam, info, net, equip, model] = player.components();
+            if(!biped_model.model.valid() || !biped_shown(info, cam, net))
+                continue;
+            /* The camera is the eye, keep the feet where they were */
+            cam.camera.position.z +=
+                biped_model.shape.eye_height - info.biped.eye_height;
+            info.biped = biped_model.shape;
+            model.colors_of = biped_model.tag;
+            live.insert(player.id());
+            /* Once per load, so a model that fails to mount isn't retried */
+            auto& biped = player_bipeds[player.id()];
+            if(biped.load_generation != files.load_generation)
+            {
+                biped.load_generation = files.load_generation;
+                biped.held_tag        = nullptr;
+                pending_mounts.push_back({
+                    .model     = biped_model.model,
+                    .entity_id = player.id(),
+                });
+            }
+            /* Everyone starts with the map's weapon, until told otherwise */
+            if(equip.load_generation != files.load_generation)
+            {
+                equip = {
+                    .biped           = biped_model.biped,
+                    .load_generation = files.load_generation,
+                };
+                starting_loadout(equip, files);
+                if(auto* status = p.template get<BipedStatus>(player.id()))
+                    *status = biped_model.biped
+                                  ? unit_status(files, biped_model.biped->collider)
+                                  : BipedStatus{};
+            }
+            for(auto const& change : pending_equips)
+                if(change.entity_id == player.id())
+                {
+                    equip_weapon(equip, info, cam, change, files);
+                    if(change.mode == EquipWeaponEvent::pick_up)
+                        pickup_sound(
+                            p,
+                            change.weapon,
+                            cam.camera.position - Vecf3{0.f, 0.f, info.biped.eye_height * .5f},
+                            !info.is_remote());
+                }
+            /* Once, as it dies: a checkpoint may hand its things back
+             * before it stands up again */
+            bool const dead = p.template get<BipedStatus>(player.id()) &&
+                              p.template get<BipedStatus>(player.id())->dead;
+            if(dead && !biped.dropped)
+                let_go(equip, cam, info);
+            biped.dropped = dead;
+            auto& weapon = equip.objective.weapon ? equip.objective : equip.weapons[0];
+            if(weapon.tag != biped.held_tag)
+            {
+                biped.held_tag = weapon.tag;
+                biped.held     = respawn_held(p, player.id(), biped.held, weapon.tag, files);
+            }
+            weapon.held = biped.held;
+            /* Camouflage covers the body, what it holds and its own view of them */
+            bool const cloaked = info.camouflaged && !dead && !revealed_until.contains(player.id());
+            camouflage(p, model, cloaked);
+            if(auto const* held = p.template get<Model>(biped.held))
+                camouflage(p, *held, cloaked);
+            if(auto fp = first_person_models.find(player.id()); fp != first_person_models.end())
+                for(u64 id : fp->second.models)
+                    if(auto const* view = p.template get<Model>(id))
+                        camouflage(p, *view, cloaked);
+        }
+        /* Changes for bodies not shown yet wait for them */
+        std::erase_if(pending_equips, [&](EquipWeaponEvent const& e) {
+            return live.contains(e.entity_id) ||
+                   !p.template get<PlayerInfo>(e.entity_id);
+        });
+
+        std::set<u64> doomed;
+        for(auto it = player_bipeds.begin(); it != player_bipeds.end();)
+        {
+            if(live.contains(it->first))
+            {
+                ++it;
+                continue;
+            }
+            doomed.insert(it->second.parts.begin(), it->second.parts.end());
+            if(Model const* held = p.template get<Model>(it->second.held))
+                for(auto const& part : held->parts)
+                    doomed.insert(part.id());
+            doomed.insert(it->second.held);
+            if(auto* equip = p.template get<BipedEquipment>(it->first))
+                *equip = {};
+            if(Model* model = p.template get<Model>(it->first))
+            {
+                model->parts.clear();
+                model->tag   = nullptr;
+                model->model = {};
+            }
+            it = player_bipeds.erase(it);
+        }
+        if(!doomed.empty())
+            p.remove_entity_if([&doomed](compo::Entity const& e) {
+                return doomed.contains(e.id);
+            });
+    }
+
+    /* A camouflaged model's parts are drawn as a refraction of the scene */
+    void camouflage(Proxy& p, Model const& model, bool on)
+    {
+        auto& shaders = p.template subsystem<ShaderCache<Ver>>();
+        for(auto const& part : model.parts)
+        {
+            auto* shader = p.template get<ShaderData>(part.id());
+            auto* draw   = p.template get<DrawState>(part.id());
+            if(!shader || !draw || shader->camouflaged == on)
+                continue;
+            shader->camouflaged = on;
+            draw->current_pass  = shader->get_render_pass(
+                shaders,
+                pass_is_first_person(draw->current_pass) ? render_layer::first_person
+                                                          : render_layer::world);
+        }
+    }
+
+    /* Hands for local seats on foot; not in freecam or vehicles */
+    void reconcile_first_person(Proxy& p, BlamFiles<Ver> const& files)
+    {
+        LoadingStatus const* loading;
+        p.subsystem(loading);
+        if(loading->loaded_map != LoadingStatus::loaded)
+            return;
+        /* Nobody is in first person on the main menu */
+        bool const menu =
+            files.container.map->map_type == blam::maptype_t::ui;
+
+        std::set<u64> live;
+        for(auto player :
+            p.template select<PlayerCamera, PlayerInfo, NetworkInfo>())
+        {
+            auto [cam, info, net] = player.components();
+            /* Riders too, where their seat lets them shoot */
+            bool const armed = info.riding.vehicle && info.riding.armed && biped_shown(info, cam, net);
+            if(menu || !biped_model.hands.valid() || info.is_remote() ||
+               !info.mode.physics || !(biped_in_play(info, cam, net) || armed))
+                continue;
+            live.insert(player.id());
+            /* What it holds, else bare hands */
+            auto const* equip = p.template get<BipedEquipment>(player.id());
+            auto const* held =
+                equip ? equip->held(files.load_generation) : nullptr;
+            blam::tag_t const* weapon = held ? held->tag : nullptr;
+            auto const*        fit    = weapon ? &first_person_of(*weapon, files)
+                                               : &biped_model.hands_fit;
+            if(!*fit)
+                fit = &biped_model.hands_fit;
+            first_person_fit_t const* posed = *fit ? &**fit : nullptr;
+            /* A map load takes them with the rest of ObjectGC */
+            auto& fp = first_person_models[player.id()];
+            if(!fp.models.empty() && fp.weapon == weapon &&
+               std::all_of(fp.models.begin(), fp.models.end(), [&p](u64 id) {
+                   return p.template get<Model>(id) != nullptr;
+               }))
+                continue;
+            bool const switched = !fp.models.empty() && fp.weapon != weapon;
+            despawn_first_person(p, fp.models);
+            fp.weapon = weapon;
+            static std::vector<i16> const unposed;
+            fp.models.push_back(spawn_first_person(
+                p, player.id(), info.seat_idx, biped_model.hands, posed,
+                posed ? posed->hands_nodes : unposed));
+            if(posed && posed->model.valid())
+                fp.models.push_back(spawn_first_person(
+                    p,
+                    player.id(),
+                    info.seat_idx,
+                    posed->model,
+                    posed,
+                    posed->weapon_nodes,
+                    weapon));
+            /* A new weapon is drawn */
+            if(switched && posed && posed->ready >= 0)
+                for(u64 id : fp.models)
+                {
+                    PlayModelAnimationEvent play{
+                        .entity = id, .animation = posed->ready, .fade = 0.f};
+                    GameEvent ev{.type = GameEvent::PlayModelAnimation};
+                    game_bus->inject(ev, &play);
+                }
+        }
+
+        for(auto it = first_person_models.begin();
+            it != first_person_models.end();)
+        {
+            if(live.contains(it->first))
+            {
+                ++it;
+                continue;
+            }
+            despawn_first_person(p, it->second.models);
+            it = first_person_models.erase(it);
+        }
+    }
+
+    /* A weapon with its first trigger's magazine full */
+    static BipedEquipment::weapon_t armed(
+        blam::tag_t const* tag, BlamFiles<Ver> const& files)
+    {
+        if(!tag)
+            return {};
+        auto const& magic  = files.container.magic;
+        auto        weapon = tag->template data<blam::scn::weapon>(magic);
+        if(!weapon.has_value())
+            return {};
+        BipedEquipment::weapon_t out{.weapon = weapon.value(), .tag = tag};
+        auto const rounds = initial_rounds(out.weapon, magic);
+        out.rounds_loaded = rounds[0];
+        out.rounds_total  = rounds[1];
+        return out;
+    }
+
+    /* The weapon a unit's tag creates it holding */
+    blam::tag_t const* default_weapon(BlamFiles<Ver> const& files, blam::tag_t const& unit)
+    {
+        auto data = unit.template data<blam::scn::unit>(files.container.magic);
+        if(!data.has_value())
+            return nullptr;
+        auto weapons = data.value()[0].weapons.data(files.container.magic);
+        if(!weapons.has_value() || weapons.value().empty())
+            return nullptr;
+        return weapon_tag(weapons.value()[0].weapon.tag_id);
+    }
+
+    blam::tag_t const* weapon_tag(blam::tag_index<> id)
+    {
+        auto tag = id.value() ? index.find(id) : index.end();
+        return tag != index.end() && (*tag).matches(blam::tag_class_t::weap)
+                   ? &(*tag)
+                   : nullptr;
+    }
+
+    void equip_weapon(
+        BipedEquipment&         equip,
+        PlayerInfo const&       info,
+        PlayerCamera const&     cam,
+        EquipWeaponEvent const& change,
+        BlamFiles<Ver> const&   files)
+    {
+        /* A grenade off the ground adds to its kind */
+        if(change.mode == EquipWeaponEvent::pick_up)
+            for(auto& carried : equip.equipment)
+                if(carried.tag && carried.tag->tag_id == change.weapon)
+                {
+                    carried.left = std::min<u16>(carried.left + 1, carried.most);
+                    return;
+                }
+        auto&       [held, slung] = equip.weapons;
+        auto const* tag           = weapon_tag(change.weapon);
+        if(!tag)
+        {
+            /* An ammo pack, into the weapons it is for */
+            if(change.mode == EquipWeaponEvent::pick_up)
+                for(auto* carried : {&held, &slung})
+                    carried->rounds_total = static_cast<u16>(
+                        carried->rounds_total +
+                        ammo_pack_rounds(*carried, change.weapon, files.container.magic));
+            return;
+        }
+        /* What does not count toward the two is held over them */
+        using weapon_flags_t = blam::scn::weapon::weapon_flags_t;
+        auto const as_weapon = tag->template data<blam::scn::weapon>(files.container.magic);
+        bool const extra     = as_weapon.has_value() && (as_weapon.value()->weapon_flags &
+                                                     weapon_flags_t::doesnt_count_toward_maximum) != weapon_flags_t::none;
+        if((change.mode == EquipWeaponEvent::remove || change.mode == EquipWeaponEvent::drop) &&
+           equip.objective.tag == tag)
+        {
+            if(change.mode == EquipWeaponEvent::drop && (!info.is_remote() || info.mode.simulated))
+                drop(equip.objective, cam, info.biped.eye_height);
+            equip.objective = {};
+            return;
+        }
+        if(change.mode == EquipWeaponEvent::drop)
+            return;
+        if(extra && change.mode != EquipWeaponEvent::remove)
+        {
+            if(equip.objective.tag != tag)
+                equip.objective = armed(tag, files);
+            equip.reloading = false;
+            return;
+        }
+        if(change.mode == EquipWeaponEvent::replicate)
+            equip.objective = {};
+        if(change.mode == EquipWeaponEvent::remove)
+        {
+            if(held.tag == tag)
+                held = std::exchange(slung, {});
+            else if(slung.tag == tag)
+                slung = {};
+            equip.reloading = false;
+            return;
+        }
+        if(change.mode == EquipWeaponEvent::replicate)
+        {
+            if(held.tag != tag)
+                held = armed(tag, files);
+            if(auto const* other = weapon_tag(change.slung); slung.tag != other)
+                slung = armed(other, files);
+            return;
+        }
+        if(change.mode == EquipWeaponEvent::pick_up)
+            for(auto* carried : {&held, &slung})
+                if(carried->tag == tag)
+                {
+                    /* Into the reserve, as much as fits */
+                    carried->rounds_total = static_cast<u16>(
+                        carried->rounds_total +
+                        std::min<i32>(
+                            change.rounds[0] + change.rounds[1],
+                            reserve_room(*carried, files.container.magic)));
+                    return;
+                }
+        /* The other weapon is drawn, or a new one taken; the one in hand is
+         * slung if there is room, else dropped */
+        if(held.tag == tag)
+            return;
+        if(slung.tag == tag)
+            std::swap(held, slung);
+        else
+        {
+            if(!slung.weapon)
+                slung = held;
+            else if(
+                change.mode == EquipWeaponEvent::pick_up &&
+                (!info.is_remote() || info.mode.simulated))
+                drop(held, cam, info.biped.eye_height);
+            held     = armed(tag, files);
+            held.age = change.age;
+            if(change.mode == EquipWeaponEvent::pick_up)
+            {
+                held.rounds_loaded = change.rounds[0];
+                held.rounds_total  = change.rounds[1];
+            }
+        }
+        equip.reloading = false;
+    }
+
+    /* What a weapon or grenade sounds like taken off the ground; at the ear
+     * of the one who took it */
+    void pickup_sound(Proxy& p, blam::tag_index<> item, Vecf3 const& at, bool own)
+    {
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        auto  tag    = index.find(item);
+        if(!sounds || tag == index.end())
+            return;
+        auto const&    magic = p.template subsystem<BlamFiles<Ver>>().container.magic;
+        blam::tagref_t ref{};
+        if((*tag).matches(blam::tag_class_t::weap))
+        {
+            if(auto weapon = (*tag).template data<blam::scn::weapon>(magic); weapon.has_value())
+                ref = weapon.value()[0].pickup_sound;
+        } else if(auto equip = (*tag).template data<blam::scn::equipment>(magic); equip.has_value())
+            ref = equip.value()[0].pickup_sound;
+        auto sound = ref.valid() ? index.find(ref) : index.end();
+        if(sound == index.end())
+            return;
+        SoundEvent     ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{.sound_tag = &(*sound), .position = own ? PlaySoundEvent::in_hand : at, .relative = own};
+        sounds->inject(ev, &play);
+    }
+
+    /* The dead drop what they carried; only their own peer spawns it, as
+     * everyone else is told */
+    void let_go(BipedEquipment& equip, PlayerCamera const& cam, PlayerInfo const& info)
+    {
+        f32 turn = 0.f;
+        if(!info.is_remote())
+        {
+            for(auto const& weapon : equip.weapons)
+                if(weapon.tag)
+                    drop(weapon, cam, info.biped.eye_height, turn++);
+            if(equip.objective.tag)
+                drop(equip.objective, cam, info.biped.eye_height, turn++);
+            for(auto const& carried : equip.equipment)
+                for(u16 i = 0; carried.tag && i < carried.left; i++)
+                    drop(carried.tag, cam, info.biped.eye_height, turn++);
+        }
+        equip.weapons   = {};
+        equip.objective = {};
+        for(auto& carried : equip.equipment)
+            carried.left = 0;
+        equip.reloading = equip.throwing = false;
+    }
+
+    /* An NPC's weapon, in its own hand */
+    void arm(Proxy& p, u64 unit, blam::tag_t const& weapon, Model const& model, BlamFiles<Ver> const& files)
+    {
+        auto& equip = *p.template get<BipedEquipment>(unit);
+        equip       = {.load_generation = files.load_generation};
+        equip.weapons[0] = armed(&weapon, files);
+        equip.weapons[0].held = respawn_held(
+            p, unit, 0, &weapon, files, npc_hand(p, unit, equip.weapons[0].weapon, model, files));
+        armed_npcs[unit]      = equip.weapons[0].held;
+    }
+
+    /* The hand its graph's standing stance holds the weapon in: jackals
+     * hold theirs in the left, the shield on the right */
+    std::optional<bound_marker_t> npc_hand(
+        Proxy& p, u64 unit, blam::scn::weapon const* weapon, Model const& model, BlamFiles<Ver> const& files)
+    {
+        if(!model.tag)
+            return std::nullopt;
+        auto const& magic = files.container.magic;
+        auto const* anim  = p.template get<AnimationPlayback>(unit);
+        if(!anim || !anim->graph)
+            return bind_marker_prefix(*model.tag, hand_marker, magic);
+        if(auto units = anim->graph->units.data(magic); units.has_value())
+            for(auto const& stance : units.value())
+            {
+                auto weapons = stance.weapons.data(magic);
+                if(stance.label.str() != "stand" || !weapons.has_value() || weapons.value().empty())
+                    continue;
+                auto const* held = &weapons.value()[0];
+                for(auto const& candidate : weapons.value())
+                    if(weapon && candidate.name.str() == weapon->label.str())
+                        held = &candidate;
+                if(auto hand = bind_marker_node(*model.tag, held->hand_marker.str(), magic))
+                    return hand;
+            }
+        return bind_marker_prefix(*model.tag, hand_marker, magic);
+    }
+
+    /* The dead let go, and a gone NPC takes its weapon model with it; the
+     * authority drops what was held */
+    void disarm_npcs(Proxy& p)
+    {
+        bool const replica = p.template subsystem<NetworkState>().replica;
+        std::vector<u64> doomed;
+        for(auto it = armed_npcs.begin(); it != armed_npcs.end();)
+        {
+            auto const* model  = p.template get<Model>(it->first);
+            auto const* status = p.template get<BipedStatus>(it->first);
+            auto*       equip  = p.template get<BipedEquipment>(it->first);
+            if(model && status && !status->dead)
+            {
+                ++it;
+                continue;
+            }
+            if(model && equip && equip->weapons[0].tag && !replica)
+            {
+                auto const& gun = equip->weapons[0];
+                SpawnObjectEvent spawn{
+                    .object       = gun.tag->as_ref(),
+                    .position     = model->position + Vecf3{0.f, 0.f, drop_lift},
+                    .server_owned = true,
+                    .velocity     = model->rotation * Vecf3{1.f, 0.f, 1.f},
+                    .age          = gun.age,
+                    .rounds       = std::array<u16, 2>{gun.rounds_loaded, gun.rounds_total},
+                };
+                GameEvent ev{.type = GameEvent::SpawnObject};
+                game_bus->inject(ev, &spawn);
+            }
+            if(equip)
+                equip->weapons = {};
+            if(it->second)
+                doomed.push_back(it->second);
+            it = armed_npcs.erase(it);
+        }
+        despawn_first_person(p, doomed);
+    }
+
+    /* An NPC handed back a weapon tag alone, as a checkpoint does, takes it
+     * in hand */
+    void rearm_npcs(Proxy& p, BlamFiles<Ver> const& files)
+    {
+        std::vector<std::pair<u64, blam::tag_t const*>> unarmed;
+        for(auto unit : p.template select<BipedEquipment, BipedStatus>())
+        {
+            auto const& [equip, status] = unit.components();
+            auto const& weapon          = equip.weapons[0];
+            if(p.template get<PlayerInfo>(unit.id()))
+                continue;
+            if(weapon.tag && !weapon.weapon && !status.dead)
+                unarmed.emplace_back(unit.id(), weapon.tag);
+            /* A unit born camouflaged, and what it holds: shown dead, and
+             * for a moment after it fires */
+            if(auto const* model = p.template get<Model>(unit.id()); model && model->camouflaged)
+            {
+                bool const cloaked = !status.dead && !revealed_until.contains(unit.id());
+                camouflage(p, *model, cloaked);
+                if(auto const* held = p.template get<Model>(weapon.held))
+                    camouflage(p, *held, cloaked);
+            }
+        }
+        for(auto const& [unit, tag] : unarmed)
+            if(auto const* model = p.template get<Model>(unit))
+                arm(p, unit, *tag, *model, files);
+    }
+
+    /* Thrown down ahead of the feet, through the usual spawn path, with
+     * the battery and rounds it had */
+    void drop(
+        BipedEquipment::weapon_t const& weapon, PlayerCamera const& cam, f32 eye_height,
+        f32 turn = 0.f)
+    {
+        drop(weapon.tag, cam, eye_height, turn, weapon.age,
+             std::array<u16, 2>{weapon.rounds_loaded, weapon.rounds_total});
+    }
+
+    /* Tossed ahead, each `turn` a little further round */
+    void drop(
+        blam::tag_t const* tag, PlayerCamera const& cam, f32 eye_height, f32 turn = 0.f,
+        f32 age = 0.f, std::optional<std::array<u16, 2>> rounds = std::nullopt)
+    {
+        Vecf3 const forward = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+        Vecf3 const ahead   = glm::length(Vecf2(forward)) > 1e-3f
+                                  ? glm::normalize(Vecf3(forward.x, forward.y, 0.f))
+                                  : Vecf3{1.f, 0.f, 0.f};
+        Vecf3 const flat = glm::angleAxis(turn * drop_spread, Vecf3{0.f, 0.f, 1.f}) * ahead;
+        SpawnObjectEvent spawn{
+            .object   = tag->as_ref(),
+            .position = cam.camera.position - Vecf3{0.f, 0.f, eye_height * .5f} + flat * .5f,
+            .server_owned = true,
+            .velocity     = flat + Vecf3{0.f, 0.f, 1.f},
+            .age          = age,
+            .rounds       = rounds,
+        };
+        GameEvent ev{.type = GameEvent::SpawnObject};
+        game_bus->inject(ev, &spawn);
+    }
+
+    /* The scenario's first starting profile, else the map's first weapon */
+    void starting_loadout(BipedEquipment& equip, BlamFiles<Ver> const& files)
+    {
+        auto const& magic    = files.container.magic;
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        blam::scn::player_starting_profile const* profile = nullptr;
+        if(scenario)
+            if(auto list = scenario->player_start.profiles.data(magic);
+               list.has_value() && !list.value().empty())
+                profile = &list.value()[0];
+        auto const slot = [&](blam::tagref_t const& ref, u16 loaded, u16 total) {
+            auto tag = ref.valid() ? index.find(ref.tag_id) : index.end();
+            if(tag == index.end())
+                return BipedEquipment::weapon_t{};
+            auto out = armed(&(*tag), files);
+            if(loaded || total)
+            {
+                out.rounds_loaded = loaded;
+                out.rounds_total  = total;
+            }
+            return out;
+        };
+        if(profile)
+        {
+            equip.weapons[0] = slot(
+                profile->primary_weapon, profile->rounds1_loaded, profile->rounds1_total);
+            equip.weapons[1] = slot(
+                profile->secondary_weapon, profile->rounds2_loaded, profile->rounds2_total);
+        }
+        if(!equip.weapons[0].weapon)
+            std::swap(equip.weapons[0], equip.weapons[1]);
+        if(!equip.weapons[0].weapon)
+            equip.weapons[0] = armed(biped_model.weapon, files);
+
+        /* Grenades by the globals' types, as many as the profile or a
+         * multiplayer spawn gives */
+        auto globals_tag = index.tag_of("globals\\globals");
+        if(!globals_tag.has_value())
+            return;
+        auto globals = (*globals_tag)->template data<blam::globals::globals>(magic);
+        if(!globals.has_value())
+            return;
+        auto grenades = globals.value()->grenades.data(magic);
+        if(!grenades.has_value())
+            return;
+        std::array<u16, 4> const counts = profile ? std::array<u16, 4>{
+                                              profile->frag_grenades,
+                                              profile->plasma_nades,
+                                              profile->c_nades,
+                                              profile->d_nades}
+                                                  : std::array<u16, 4>{};
+        bool const multiplayer =
+            files.container.map->map_type == blam::maptype_t::multiplayer;
+        for(size_t i = 0; i < grenades.value().size() && i < counts.size(); i++)
+        {
+            auto tag = index.find(grenades.value()[i].equipment.tag_id);
+            if(!grenades.value()[i].equipment.valid() || tag == index.end())
+                continue;
+            auto eqip = (*tag).template data<blam::scn::equipment>(magic);
+            if(!eqip.has_value())
+                continue;
+            u16 const most = static_cast<u16>(std::max<i16>(grenades.value()[i].maximum_count, 0));
+            u16 const left = multiplayer ? static_cast<u16>(std::max<i16>(
+                                               grenades.value()[i].multiplayer_spawn_default, 0))
+                                         : counts[i];
+            equip.equipment.push_back({
+                .equip = eqip.value(),
+                .tag   = &(*tag),
+                .most  = most,
+                .left  = std::min(left, most),
+            });
+        }
+    }
+
+    /* The held weapon's own model, in the biped's hand */
+    u64 respawn_held(
+        Proxy&                p,
+        u64                   player,
+        u64                   old,
+        blam::tag_t const*    tag,
+        BlamFiles<Ver> const& files)
+    {
+        return respawn_held(p, player, old, tag, files, biped_model.hand);
+    }
+
+    u64 respawn_held(
+        Proxy&                               p,
+        u64                                  player,
+        u64                                  old,
+        blam::tag_t const*                   tag,
+        BlamFiles<Ver> const&                files,
+        std::optional<bound_marker_t> const& hand)
+    {
+        if(old)
+        {
+            std::vector<u64> models{old};
+            despawn_first_person(p, models);
+        }
+        if(!tag || !hand)
+            return 0;
+        auto weapon = tag->template data<blam::scn::weapon>(files.container.magic);
+        if(!weapon.has_value() || !weapon.value()[0].model.valid())
+            return 0;
+        auto ent = p.create_entity(shared_recipes::held_model);
+        *p.template get<HeldObject>(ent.id()) = {
+            .holder = player,
+            .node   = hand->node,
+            .offset = hand->transform,
+        };
+        p.template get<Model>(ent.id())->origin_object = tag;
+        /* Hidden from its holder's own view, like the body */
+        if(auto const* body = p.template get_at<Visibility, 0>(player))
+        {
+            p.template get_at<Visibility, 0>(ent.id())->skip_render_for =
+                body->skip_render_for;
+            p.template get_at<Visibility, 1>(ent.id())->skip_render_for =
+                body->skip_render_for;
+        }
+        pending_mounts.push_back({
+            .model     = weapon.value()[0].model,
+            .entity_id = ent.id(),
+        });
+        return ent.id();
+    }
+
+    static constexpr std::string_view hand_marker = "right hand";
+    static constexpr std::string_view camera_marker = "head";
+    static constexpr f32              drop_spread = 1.1f; /* rad between drops */
+    static constexpr f32              drop_lift   = .5f;  /* wu above an NPC's origin */
+    /* Hz; stiff enough to stand the gravity rifle on its butt */
+    static constexpr f32              tip_up_frequency = 2.f;
+    /* Health and shield, as fractions of this */
+
+    /* A model drawn at the player's eye in the first-person pass */
+    u64 spawn_first_person(
+        Proxy&                                               p,
+        u64                                                  player,
+        u32                                                  seat,
+        blam::tagref_typed_t<blam::tag_class_t::mod2> const& model,
+        first_person_fit_t const*                            fit,
+        std::vector<i16> const&                              nodes,
+        blam::tag_t const*                                   object = nullptr)
+    {
+        auto ent = p.create_entity(shared_recipes::first_person_model);
+        p.template get<Attachment>(ent.id())->parent = player;
+        /* The weapon's attachments, e.g. its muzzle flash, ride along */
+        p.template get<Model>(ent.id())->origin_object = object;
+        if(fit && !nodes.empty())
+        {
+            auto* anim       = p.template get<AnimationPlayback>(ent.id());
+            anim->graph      = fit->graph;
+            anim->bone_nodes = nodes;
+            anim->play(AnimationPlayback::base_slot, fit->graph, fit->idle);
+        }
+        /* Both buffers: it never changes, and must hold this frame */
+        p.template get_at<Visibility, 0>(ent.id())->only_render_for = seat;
+        p.template get_at<Visibility, 1>(ent.id())->only_render_for = seat;
+        pending_mounts.push_back({
+            .model        = model,
+            .entity_id    = ent.id(),
+            .first_person = true,
+        });
+        return ent.id();
+    }
+
+    void despawn_first_person(Proxy& p, std::vector<u64>& models)
+    {
+        std::set<u64> doomed;
+        for(u64 id : models)
+        {
+            if(Model const* model = p.template get<Model>(id))
+                for(auto const& part : model->parts)
+                    doomed.insert(part.id());
+            doomed.insert(id);
+        }
+        models.clear();
+        if(!doomed.empty())
+            p.remove_entity_if([&doomed](compo::Entity const& e) {
+                return doomed.contains(e.id);
+            });
+    }
+
+    void mount_model(Proxy& p, MountModelEvent const& mount)
+    {
+        if(!mount.model.valid())
+            return;
+        /* The player may have left since */
+        if(!p.template get<Model>(mount.entity_id))
+            return;
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
+
+        auto model_it = index.find(mount.model);
+        if(model_it == index.end())
+            return;
+
+        ModelAssembly mesh = model_cache.predict_regions(
+            model_it->as_ref(), blam::mod2::lod_high_ext);
+        if(mesh.models.empty())
+        {
+            cWarning(
+                "Failed to mount model {} to entity {}",
+                index.name_of(mount.model),
+                mount.entity_id);
+            return;
+        }
+
+        auto   target = p.ref(mount.entity_id);
+        Model& model  = target.template get<Model>();
+
+        /* After a map load the old parts are already gone */
+        if(!model.parts.empty())
+        {
+            std::set<u64> old_parts;
+            for(auto const& part : model.parts)
+                old_parts.insert(part.id());
+            model.parts.clear();
+            p.remove_entity_if([&old_parts](compo::Entity const& e) {
+                return old_parts.contains(e.id);
+            });
+        }
+
+        model.tag       = &(*model_it);
+        model.model     = mesh.models.at(0);
+        model.transform = glm::identity<Matf4>();
+
+        for(auto const& model_id : mesh.models)
+            build_submodels(
+                p,
+                target,
+                model,
+                model_id,
+                shared_recipes::submodel,
+                mount.first_person ? render_layer::first_person
+                                   : render_layer::world);
+
+        if(auto biped = player_bipeds.find(mount.entity_id);
+           biped != player_bipeds.end())
+        {
+            biped->second.parts.clear();
+            for(auto const& part : model.parts)
+                biped->second.parts.push_back(part.id());
+        }
+    }
+};
+
+void alloc_resource_loader(compo::EntityContainer& e)
+{
+    auto& loader = e.register_subsystem_inplace<ResourceLoader<halo_version>>();
+
+    auto& game_bus         = e.subsystem_cast<GameEventBus>();
+    loader.game_bus        = &game_bus;
+    loader.spawn_bsp_queue = game_bus.addQueuedEventFunction<SpawnBSPEvent>(
+        0, [&loader](GameEvent&, SpawnBSPEvent* spawn) {
+            loader.pending_bsps.push_back(*spawn);
+        });
+    loader.spawn_model_queue = game_bus.addQueuedEventFunction<SpawnModelEvent>(
+        0, [&loader](GameEvent&, SpawnModelEvent* spawn) {
+            loader.pending_models.push_back(*spawn);
+        });
+    loader.fire_queue = game_bus.addQueuedEventFunction<WeaponFireEvent>(
+        0, [&loader](GameEvent&, WeaponFireEvent* shot) {
+            if(shot->shooter)
+                loader.revealed_until[shot->shooter] = loader.now + loader.reveal_time;
+        });
+    loader.shield_queue = game_bus.addQueuedEventFunction<ShieldDepletedEvent>(
+        0, [&loader](GameEvent&, ShieldDepletedEvent* shield) {
+            loader.pending_shields.push_back(*shield);
+        });
+    loader.permutation_queue = game_bus.addQueuedEventFunction<SetPermutationEvent>(
+        0, [&loader](GameEvent&, SetPermutationEvent* change) {
+            loader.pending_permutations.push_back(*change);
+        });
+    loader.mount_model_queue = game_bus.addQueuedEventFunction<MountModelEvent>(
+        0, [&loader](GameEvent&, MountModelEvent* spawn) {
+            loader.pending_mounts.push_back(*spawn);
+        });
+    loader.equip_weapon_queue = game_bus.addQueuedEventFunction<EquipWeaponEvent>(
+        0, [&loader](GameEvent&, EquipWeaponEvent* equip) {
+            /* A snapshot of what a body carries replaces what came before;
+             * pick-ups and draws add up */
+            if(equip->mode == EquipWeaponEvent::replicate)
+                std::erase_if(loader.pending_equips, [equip](EquipWeaponEvent const& e) {
+                    return e.entity_id == equip->entity_id;
+                });
+            loader.pending_equips.push_back(*equip);
+        });
+    /* Above 0 so Networking's stamping handler runs first and the queued copy
+     * carries the replicated net_id */
+    loader.spawn_object_queue =
+        game_bus.addQueuedEventFunction<SpawnObjectEvent>(
+            100, [&loader](GameEvent&, SpawnObjectEvent* spawn) {
+                if(!spawn->deferred)
+                    loader.pending_objects.push_back(*spawn);
+            });
+    loader.despawn_object_queue =
+        game_bus.addQueuedEventFunction<DespawnObjectEvent>(
+            100, [&loader](GameEvent&, DespawnObjectEvent* despawn) {
+                loader.pending_despawns.push_back(despawn->net_id);
+            });
+    loader.spawn_biped_queue = game_bus.addQueuedEventFunction<SpawnBipedEvent>(
+        0, [&loader](GameEvent&, SpawnBipedEvent* spawn) {
+            loader.pending_bipeds.push_back(*spawn);
+        });
+    loader.spawn_equip_queue =
+        game_bus.addQueuedEventFunction<SpawnEquipmentEvent>(
+            0, [&loader](GameEvent&, SpawnEquipmentEvent* spawn) {
+                loader.pending_equipment.push_back(*spawn);
+            });
+    loader.cluster_queue = game_bus.addQueuedEventFunction<ClusterChangedEvent>(
+        0, [&loader](GameEvent&, ClusterChangedEvent* change) {
+            loader.pending_cluster_change = *change;
+        });
+}

@@ -10,9 +10,9 @@
 #include "components.h"
 #include "data.h"
 #include "physics.h"
-#include "resource_creation.h"
-#include "sound_cache.h"
-#include "sounds.h"
+#include "caching/resource_creation.h"
+#include "audio/sound_cache.h"
+#include "audio/sounds.h"
 
 #include <blam/elegy/animation.h>
 #include <blam/elegy/bitmap.h>

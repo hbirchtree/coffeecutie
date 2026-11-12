@@ -40,53 +40,53 @@ coffee_application(
   TARGET BlamGraphics
   TITLE "Blam Graphics"
   SOURCES
-        caching.cpp
-        camera_control.cpp
-        gameplay.cpp
-        animation_controller.cpp
-        impact_sounds.cpp
-        vehicle_sounds.cpp
-        projectiles.cpp
-        actors.cpp
-        damage.cpp
-        game_mode.cpp
-        campaign_controller.cpp
-        multiplayer_controller.cpp
-        ctf_flags.cpp
-        object_respawn.cpp
-        checkpoint.cpp
-        save_state.cpp
-        nav_mesh.cpp
-        devices.cpp
-        effects.cpp
-        weapons.cpp
-        hud.cpp
-        ticks.cpp
+        ai/actors.cpp
+        ai/nav_mesh.cpp
+        animation/animation_controller.cpp
+        audio/impact_sounds.cpp
+        audio/sounds.cpp
+        audio/vehicle_sounds.cpp
+        caching/caching.cpp
+        caching/resource_creation.cpp
+        combat/damage.cpp
+        combat/projectiles.cpp
+        combat/weapons.cpp
         debug_ui/widgets.cpp
-        forge_controller.cpp
+        game/campaign_controller.cpp
+        game/checkpoint.cpp
+        game/ctf_flags.cpp
+        game/forge_controller.cpp
+        game/game_mode.cpp
+        game/multiplayer_controller.cpp
+        game/object_respawn.cpp
+        game/save_state.cpp
         graphics.cpp
-        player_controller.cpp
-        view_kick.cpp
-        loading.cpp
-        map_loading.cpp
+        input/touch_overlay.cpp
+        loading/loading.cpp
+        loading/map_loading.cpp
+        loading/offline_maps.cpp
         network/gateway_fleet_registration.cpp
         network/networking.cpp
         network/relevance.cpp
         network/webrtc_identity.cpp
         network/webrtc_signaling.cpp
-        offline_maps.cpp
         physics.cpp
+        player/camera_control.cpp
+        player/gameplay.cpp
+        player/player_controller.cpp
+        player/view_kick.cpp
+        render/effects.cpp
         render/gravity_storm.cpp
         render/monitors.cpp
         render/occluder.cpp
         render/rendering.cpp
-        resource_creation.cpp
-        script_component.cpp
-        sounds.cpp
-        input/touch_overlay.cpp
-        ui.cpp
-        ui_game_setup.cpp
-        ui_profile.cpp
+        scripting/script_component.cpp
+        ticks.cpp
+        ui/hud.cpp
+        ui/ui.cpp
+        ui/ui_game_setup.cpp
+        ui/ui_profile.cpp
+        world/devices.cpp
   LIBRARIES Blam Core Image GLeamRHI ComponentBundleSetup
   BUNDLE_LIBRARIES ${BUNDLED_LIBS}
   SCHEMES blam halo
@@ -107,7 +107,7 @@ target_sources(BlamGraphics PRIVATE ${BLAMG_CRUNCHED_SOURCES})
 
 #target_precompile_headers(
 #  BlamGraphics PRIVATE
-#  # $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/caching.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/caching/caching.h>
 #  # $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/components.h>
 #)
 # Two of the pool go to openal-soft: its mixer and its event thread; one to
@@ -134,11 +134,11 @@ if(EMSCRIPTEN)
   # Lists maps uploaded to OPFS by BlamMapUpload before main() runs
   target_link_options(BlamGraphics PUBLIC
     -sFETCH
-    --pre-js=${CMAKE_CURRENT_SOURCE_DIR}/offline_maps_preload.js
+    --pre-js=${CMAKE_CURRENT_SOURCE_DIR}/loading/offline_maps_preload.js
   )
   set_property(
     TARGET BlamGraphics APPEND
-    PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/offline_maps_preload.js
+    PROPERTY LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/loading/offline_maps_preload.js
   )
 endif()
 if(TARGET DiscordLatte)

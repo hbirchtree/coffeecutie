@@ -1,7 +1,7 @@
 #include "pose_demo_spawn.h"
 
 #include "components.h"
-#include "materials.h"
+#include "render/materials.h"
 #include "pose_config.h"
 
 #include <blam/volta/blam_antr.h>

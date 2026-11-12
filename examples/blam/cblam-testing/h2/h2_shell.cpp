@@ -3,11 +3,11 @@
 
 #include "components.h"
 #include "data.h"
-#include "resource_creation.h"
+#include "caching/resource_creation.h"
 
 #include <coffee/comp_app/services.h>
-#include "shader_compiler.h"
-#include "ui.h"
+#include "caching/shader_compiler.h"
+#include "ui/ui.h"
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>

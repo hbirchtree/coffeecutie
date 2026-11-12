@@ -1,0 +1,2576 @@
+#include "render/effects.h"
+#include "network/networking.h"
+
+#include "loading/blam_files.h"
+#include "components.h"
+#include "data.h"
+#include "animation/model_markers.h"
+#include "physics.h"
+#include "selected_version.h"
+#include "audio/sounds.h"
+#include "game/save_state.h"
+#include "ticks.h"
+
+#include <blam/volta/blam_particles.h>
+#include <blam/volta/blam_unit.h>
+
+#include <coffee/components/proxy.h>
+#include <coffee/components/restricted_subsystem.h>
+
+#include <deque>
+#include <map>
+#include <random>
+#include <unordered_map>
+#include <unordered_set>
+
+using EffectManifest = compo::SubsystemManifest<
+    type_list_t<
+        const Model,
+        const Projectile,
+        const ObjectPhysics,
+        const PlayerCamera,
+        const PlayerInfo,
+        const Attachment,
+        const AnimationPlayback,
+        const Visibility>,
+    type_list_t<
+        EffectScene,
+        PhysicsBus,
+        GameEventBus,
+        const LoadingStatus,
+        const BlamFiles<halo_version>,
+        const BSPCache<halo_version>,
+        const TickClock,
+        const NetworkState>,
+    type_list_t<comp_app::EventBus<SoundEvent>>>;
+
+namespace {
+
+using blam::scn::antenna;
+using blam::scn::contrail;
+using blam::scn::decal_definition;
+using blam::scn::effect;
+using blam::scn::lens_flare;
+using blam::scn::light;
+using blam::scn::light_volume;
+using blam::scn::particle;
+using blam::scn::particle_system;
+using blam::scn::point_physics;
+using blend_t = EffectScene::blend_t;
+
+constexpr f32 halo_gravity = 9.81f / 3.048f; /* wu/s^2 */
+/* Air's density over a pphy's mass scale: 0.0011 at 118613.34 per unit */
+constexpr f32 air_mass_over_radius_cubed = .0011f * 118613.34f;
+
+/* Tag colors are a, r, g, b */
+Vecf4 rgba(Vecf4 const& argb)
+{
+    return {argb.y, argb.z, argb.w, argb.x};
+}
+
+/* A point and the way it faces, where something is created */
+struct place_t
+{
+    Vecf3 position{};
+    Vecf3 forward{1.f, 0.f, 0.f};
+    std::optional<Vecf3> up{}; /*!< Else perpendicular to forward, as the game picks */
+};
+
+/* The game's perpendicular: off the axis forward least leans along */
+inline Vecf3 perpendicular(Vecf3 const& v)
+{
+    Vecf3 const a = glm::abs(v);
+    Vecf3 const out = a.x <= a.y && a.x <= a.z ? Vecf3{0.f, v.z, -v.y}
+                      : a.y <= a.z             ? Vecf3{-v.z, 0.f, v.x}
+                                               : Vecf3{v.y, -v.x, 0.f};
+    return glm::length(out) > 1e-6f ? glm::normalize(out) : Vecf3{0.f, 0.f, 1.f};
+}
+
+/* How a point_physics moves things */
+struct motion_t
+{
+    f32  gravity{0.f};  /* wu/s^2, up is positive */
+    f32  drag{0.f};     /* per second, for weather */
+    f32  friction{0.f}; /* drag per second at a radius of 1 wu */
+    f32  elasticity{0.f};
+    bool collides{false};
+
+    /* The air brakes a sprite by its cross-section over its mass, which
+     * along with the air it carries grows with its volume */
+    f32 slowing(f32 radius, f32 dt) const
+    {
+        if(friction <= 0.f)
+            return 0.f;
+        return radius > 0.f ? std::min(friction * dt / radius, 1.f) : 1.f;
+    }
+
+    static motion_t from(point_physics const* pphy)
+    {
+        if(!pphy)
+            return {};
+        using flags_t = point_physics::flags_t;
+        bool const no_gravity =
+            (pphy->flags & flags_t::no_gravity) != flags_t::none;
+        return {
+            .gravity    = no_gravity ? 0.f : pphy->air_gravity_scale * halo_gravity,
+            .drag       = pphy->mass_scale > 0.f
+                              ? pphy->air_friction / pphy->mass_scale
+                              : 0.f,
+            .friction   = pphy->air_friction / (pphy->mass_scale + air_mass_over_radius_cubed),
+            .elasticity = pphy->elasticity,
+            .collides   = (pphy->flags & flags_t::collides_with_structures) !=
+                        flags_t::none,
+        };
+    }
+};
+
+} // namespace
+
+struct EffectSystem
+    : compo::RestrictedSubsystem<EffectSystem, EffectManifest>
+{
+    using type  = EffectSystem;
+    using Proxy = compo::proxy_of<EffectManifest>;
+
+    /* A sprite with a life of its own, from a part tag or a pctl state */
+    /* A part's sprite animation: its initial sequences play once, the
+     * looping ones repeat and the final ones lead into death */
+    struct animation_t
+    {
+        i16              first{0};
+        std::vector<i16> frames; /* sprites per sequence, from first */
+        i32              initial{0}, looping{0}, final{0}; /* frames each */
+
+        i32 total() const { return initial + looping + final; }
+
+        /* The sequence and frame within it at a point in the animation */
+        std::pair<i16, i16> at(f32 frame, f32 left) const
+        {
+            i32 g = static_cast<i32>(frame);
+            if(g >= initial)
+            {
+                if(final > 0 && left < final)
+                    g = initial + looping + (final - static_cast<i32>(left)) - 1;
+                else if(looping > 0)
+                    g = initial + (g - initial) % looping;
+                else
+                    g = std::min(g, initial + final - 1);
+            }
+            g = std::clamp(g, 0, std::max(total() - 1, 0));
+            i16 seq = first;
+            for(i16 n : frames)
+            {
+                if(g < n)
+                    return {seq, static_cast<i16>(g)};
+                g -= n;
+                ++seq;
+            }
+            return {first, 0};
+        }
+    };
+
+    struct sprite_particle_t
+    {
+        EffectScene::sprite_t look{};
+        Vecf4                 tint{1.f};
+        Vecf3                 velocity{};
+        motion_t              motion{};
+        f32                   age{0.f};
+        f32                   life{1.f};
+        f32                   fade_in{0.f};
+        f32                   fade_out{0.f};
+        f32                   frame{0.f};
+        f32                   pixels{128.f}; /* its sprites' width, a pctl scale's unit */
+        f32                   frame_rate{0.f};
+        f32                   spin{0.f};
+        bool                  along_velocity{false};
+        Vecf3                 heading{}; /* the way it was sent, for along_velocity at rest */
+        /* Lies across the way it moves, or its emitter's while still */
+        std::optional<Vecf3>  across;
+        bool                  dies_on_contact{false};
+        struct animation_t const* anim{nullptr};
+
+        /* Held to a marker on its parent, in the marker's forward/right/up */
+        u64         parent{0};
+        std::string marker{};
+        Vecf3       local{};
+        Vecf3       local_velocity{};
+
+        /* pctl particles walk their type's particle states */
+        particle_system::particle_state_t const* states{nullptr};
+        u32                                      state_count{0};
+        u32                                      state{0};
+        f32                                      state_time{0.f};
+        f32                                      hold{0.f};
+        f32                                      transition{0.f};
+        f32                                      size_pick{0.f};
+        f32                                      color_pick{0.f};
+    };
+
+    /* An attachment's object function; none = always full */
+    using scale_t = blam::shader::animation_src;
+
+    struct effect_instance_t
+    {
+        effect const* tag{nullptr};
+        place_t       place{};
+        Vecf3         velocity{};
+        u64           parent{0};
+        u64           marker_parent{0}; /* markers the parent lacks */
+        u64           shooter{0}; /* blamed for its damage */
+        bool          attached{false}; /* loops while its object lives */
+        scale_t       scale{};
+
+        i32  event{0};
+        f32  time{0.f};
+        f32  delay{0.f};
+        f32  duration{0.f};
+        bool started{false};
+        bool created{false};
+
+        EffectScene::audience_t audience{};
+        bool visuals_only{false}; /* no sounds, lights, decals or objects */
+    };
+
+    struct light_instance_t
+    {
+        light const* tag{nullptr};
+        place_t      place{};
+        u64          parent{0};
+        std::string  marker{};
+        f32          radius{0.f};
+        Vecf3        color{1.f};
+        f32          age{0.f};
+        f32          life{-1.f}; /* <0 = while its parent lives */
+        u64          id{0};      /* keys its lens flare's fading */
+        scale_t      scale{};
+        f32          level{1.f}; /* this frame's object function */
+    };
+
+    struct system_instance_t
+    {
+        particle_system const* tag{nullptr};
+        place_t                place{};
+        u64                    parent{0};
+        std::string            marker{};
+        Vecf3                  velocity{};
+        f32                    age{0.f};
+        bool                   attached{false};
+        scale_t                scale{};
+        EffectScene::audience_t audience{};
+
+        struct type_state_t
+        {
+            u32 state{0};
+            f32 left{0.f}; /* in the current system state */
+            f32 owed{0.f}; /* particles to create, fractional */
+            bool done{false};
+        };
+        std::vector<type_state_t> types;
+    };
+
+    struct contrail_point_t
+    {
+        Vecf3 position{};
+        Vecf3 velocity{};
+        f32   age{0.f};
+        f32   pick{0.f};
+    };
+
+    struct contrail_instance_t
+    {
+        contrail const*              tag{nullptr};
+        u64                          parent{0};
+        std::string                  marker{};
+        Vecf3                        head{};
+        bool                         has_head{false};
+        bool                         detached{false};
+        scale_t                      scale{};
+        f32                          owed{0.f};
+        std::deque<contrail_point_t> points; /* newest first */
+    };
+
+    struct volume_instance_t
+    {
+        light_volume const* tag{nullptr};
+        u64                 parent{0};
+        std::string         marker{};
+        scale_t             scale{};
+    };
+
+    EffectSystem()
+    {
+        /* After scripts draw what they fly, so attachments sit where it is
+         * drawn, not where it was a frame ago */
+        this->priority = 2049;
+    }
+
+    void start_restricted(Proxy& p, time_point const&)
+    {
+        /* Effects step with the simulation, and move on between ticks */
+        f32 dt = 0.f;
+        for(auto const& tick : m_ticks->take())
+            dt += tick.seconds;
+        m_lookahead =
+            p.template subsystem<TickClock>().alpha() * TickClock::tick_seconds;
+
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        if(files.load_generation != m_generation)
+        {
+            m_generation = files.load_generation;
+            m_effects.clear();
+            m_lights.clear();
+            m_systems.clear();
+            m_contrails.clear();
+            m_volumes.clear();
+            m_particles.clear();
+            m_attached.clear();
+            m_requests.clear();
+            m_flare_seen.clear();
+            m_weather = {};
+            m_decal_bsp = nullptr;
+            m_placed_decals.clear();
+            m_effect_decals.clear();
+            m_antennas.clear();
+            m_sprite_pixels.clear();
+            m_animations.clear();
+        }
+        m_magic = &files.container.magic;
+        m_index = blam::tag_index_view<halo_version>(files.container);
+
+        auto& scene = p.template subsystem<EffectScene>();
+        scene.clear();
+        scene.generation = files.load_generation;
+        /* A map half loaded has no tags to read */
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+            return;
+
+        attach(p);
+        m_spawn_queue->poll();
+        for(auto const& request : std::exchange(m_requests, {}))
+            spawn(p, request);
+
+        step_effects(p, dt);
+        step_lights(p, scene, dt);
+        step_systems(p, dt);
+        step_particles(p, scene, dt);
+        step_contrails(p, scene, dt);
+        draw_volumes(p, scene);
+        step_flares(p, scene, dt);
+        step_weather(p, scene, dt);
+        step_decals(p, scene, dt);
+        step_antennas(p, scene, dt);
+    }
+
+    /* ---- Decals ---- */
+
+    struct decal_instance_t
+    {
+        EffectScene::decal_t look;
+        Vecf3                center{};
+        f32                  intensity{1.f};
+        f32                  age{0.f};
+        f32 life{0.f}; /* effect decals only; placed ones stay */
+        f32 decay{0.f};
+        f32 alpha{1.f};
+    };
+
+    using triangle_t = std::array<Vecf3, 3>;
+
+    static u64 decal_cell_key(Vecf3 const& at)
+    {
+        auto const c = glm::ivec3(glm::floor(at / decal_cell));
+        return (u64(u32(c.x) & 0x1FFFFF) << 42) |
+               (u64(u32(c.y) & 0x1FFFFF) << 21) | u64(u32(c.z) & 0x1FFFFF);
+    }
+
+    /* The resident section's triangles, binned for decals to find */
+    void index_decal_triangles(BSPItem const& bsp)
+    {
+        m_decal_triangles.clear();
+        m_decal_grid.clear();
+        for(auto const& probe : bsp.light_probes)
+            for(auto const& tri : probe.triangles)
+            {
+                auto const index = static_cast<u32>(m_decal_triangles.size());
+                m_decal_triangles.push_back(tri.position);
+                Vecf3 const lo = glm::min(
+                    glm::min(tri.position[0], tri.position[1]),
+                    tri.position[2]);
+                Vecf3 const hi = glm::max(
+                    glm::max(tri.position[0], tri.position[1]),
+                    tri.position[2]);
+                for(f32 x = lo.x; x < hi.x + decal_cell; x += decal_cell)
+                    for(f32 y = lo.y; y < hi.y + decal_cell; y += decal_cell)
+                        for(f32 z = lo.z; z < hi.z + decal_cell;
+                            z += decal_cell)
+                            m_decal_grid[decal_cell_key(
+                                             glm::min(Vecf3(x, y, z), hi))]
+                                .push_back(index);
+            }
+    }
+
+    std::vector<u32> decal_candidates(Vecf3 const& lo, Vecf3 const& hi) const
+    {
+        std::vector<u32> out;
+        for(f32 x = lo.x; x < hi.x + decal_cell; x += decal_cell)
+            for(f32 y = lo.y; y < hi.y + decal_cell; y += decal_cell)
+                for(f32 z = lo.z; z < hi.z + decal_cell; z += decal_cell)
+                    if(auto it = m_decal_grid.find(
+                           decal_cell_key(glm::min(Vecf3(x, y, z), hi)));
+                       it != m_decal_grid.end())
+                        out.insert(
+                            out.end(), it->second.begin(), it->second.end());
+        std::sort(out.begin(), out.end());
+        out.erase(std::unique(out.begin(), out.end()), out.end());
+        return out;
+    }
+
+    /* Triangles wind clockwise seen from the front */
+    static Vecf3 triangle_normal(triangle_t const& t)
+    {
+        Vecf3 const n = glm::cross(t[2] - t[0], t[1] - t[0]);
+        f32 const   l = glm::length(n);
+        return l > 1e-9f ? n / l : Vecf3{};
+    }
+
+    /* The structure's triangles within a square of `radius` about `at`,
+     * clipped to it and lifted off the surface; `spin` turns it, 0..1 */
+    std::optional<decal_instance_t> make_decal(
+        decal_definition const& tag,
+        Vecf3 const&            at,
+        Vecf3 const&            normal,
+        f32                     spin)
+    {
+        if(m_decal_triangles.empty() || glm::length(normal) < 1e-4f)
+            return std::nullopt;
+        f32 const radius =
+            glm::mix(tag.radius.x, tag.radius.y, uniform(0.f, 1.f));
+        Vecf3 const n = glm::normalize(normal);
+        if(radius <= 0.f)
+            return std::nullopt;
+        Vecf3 x, y;
+        basis(n, x, y);
+        f32 const   angle = spin * glm::two_pi<f32>();
+        Vecf3 const t     = x * std::cos(angle) + y * std::sin(angle);
+        Vecf3 const b     = glm::cross(n, t);
+
+        decal_instance_t out{
+            .center    = at,
+            .intensity = uniform(tag.intensity),
+            .life      = uniform(tag.lifetime),
+            .decay     = uniform(tag.decay_time),
+        };
+        auto& look  = out.look;
+        look.bitmap = &static_cast<blam::tagref_t const&>(tag.map);
+        look.frame  = static_cast<i16>(uniform(0.f, 64.f));
+        look.blend  = tag.blend_function;
+        look.color  = Vecf4(
+            glm::mix(
+                tag.color_lower_bound,
+                tag.color_upper_bound,
+                uniform(0.f, 1.f)),
+            out.intensity);
+
+        Vecf3 const reach(radius * 1.5f);
+        for(u32 index : decal_candidates(at - reach, at + reach))
+        {
+            auto const& tri = m_decal_triangles[index];
+            if(glm::dot(triangle_normal(tri), n) < decal_min_facing)
+                continue;
+            /* Sutherland-Hodgman against the box, in decal units */
+            std::vector<Vecf3> poly;
+            for(auto const& v : tri)
+            {
+                Vecf3 const d = v - at;
+                poly.push_back(
+                    Vecf3(glm::dot(d, t), glm::dot(d, b), glm::dot(d, n)) /
+                    radius);
+            }
+            for(u32 axis = 0; axis < 3 && poly.size() >= 3; axis++)
+                for(f32 side : {-1.f, 1.f})
+                {
+                    std::vector<Vecf3> kept;
+                    for(size_t i = 0; i < poly.size(); i++)
+                    {
+                        Vecf3 const& a  = poly[i];
+                        Vecf3 const& c  = poly[(i + 1) % poly.size()];
+                        f32 const    da = 1.f - side * a[axis];
+                        f32 const    dc = 1.f - side * c[axis];
+                        if(da >= 0.f)
+                            kept.push_back(a);
+                        if((da >= 0.f) != (dc >= 0.f))
+                            kept.push_back(glm::mix(a, c, da / (da - dc)));
+                    }
+                    poly = std::move(kept);
+                }
+            /* Counter-clockwise seen from the front, as effects draw */
+            for(size_t i = 1; i + 1 < poly.size(); i++)
+                for(auto const& v : {poly[0], poly[i + 1], poly[i]})
+                {
+                    look.positions.push_back(
+                        at + (t * v.x + b * v.y + n * v.z) * radius +
+                        n * decal_lift);
+                    look.uv.push_back((Vecf2(v.x, v.y) + 1.f) * .5f);
+                }
+        }
+        if(look.positions.empty())
+            return std::nullopt;
+        return out;
+    }
+
+    void add_effect_decal(decal_instance_t decal)
+    {
+        if(m_effect_decals.size() >= max_effect_decals)
+            m_effect_decals.erase(m_effect_decals.begin());
+        m_effect_decals.push_back(std::move(decal));
+    }
+
+    /* Scenario decals lying on the resident section's surfaces */
+    void place_scenario_decals(Proxy& p)
+    {
+        m_placed_decals.clear();
+        auto scenario = p.template subsystem<BlamFiles<halo_version>>()
+                            .container.scenario();
+        if(!scenario.has_value() || !scenario.value())
+            return;
+        auto instances = scenario.value()->decals.instances.data(*m_magic);
+        auto palette   = scenario.value()->decals.palette.data(*m_magic);
+        if(!instances.has_value() || !palette.has_value())
+            return;
+        for(auto const& [i, decal] :
+            stl_types::const_enumerate(instances.value()))
+        {
+            if(decal.type < 0 ||
+               static_cast<size_t>(decal.type) >= palette.value().size())
+                continue;
+            auto const* tag = tag_data<decal_definition>(
+                palette.value()[decal.type].reference, blam::tag_class_t::deca);
+            auto const normal = surface_under_decal(decal.position);
+            if(!tag || !normal)
+                continue;
+            if(auto d = make_decal(
+                   *tag, decal.position, *normal, (decal.yaw + 128) / 256.f))
+                m_placed_decals.push_back(std::move(*d));
+        }
+    }
+
+    /* The nearest face along a short ray: where it is hit, and its normal */
+    std::optional<std::pair<Vecf3, Vecf3>> decal_surface(
+        Vecf3 const& from, Vecf3 const& way) const
+    {
+        Vecf3 const                            to = from + way * decal_reach;
+        std::optional<std::pair<Vecf3, Vecf3>> out;
+        f32                                    best = 1.f;
+        for(u32 index :
+            decal_candidates(glm::min(from, to), glm::max(from, to)))
+        {
+            auto const& tri = m_decal_triangles[index];
+            /* Moller-Trumbore over the segment */
+            Vecf3 const e1 = tri[1] - tri[0];
+            Vecf3 const e2 = tri[2] - tri[0];
+            Vecf3 const d  = to - from;
+            Vecf3 const q  = glm::cross(d, e2);
+            f32 const   a  = glm::dot(e1, q);
+            if(std::abs(a) < 1e-9f)
+                continue;
+            Vecf3 const s = from - tri[0];
+            f32 const   u = glm::dot(s, q) / a;
+            Vecf3 const r = glm::cross(s, e1);
+            f32 const   v = glm::dot(d, r) / a;
+            f32 const   t = glm::dot(e2, r) / a;
+            if(u < 0.f || v < 0.f || u + v > 1.f || t < 0.f || t >= best)
+                continue;
+            Vecf3 n = triangle_normal(tri);
+            if(glm::dot(n, way) > 0.f)
+                n = -n;
+            best = t;
+            out  = std::pair{from + d * t, n};
+        }
+        return out;
+    }
+
+    /* The face a placed decal lies on */
+    std::optional<Vecf3> surface_under_decal(Vecf3 const& at) const
+    {
+        Vecf3 const          reach(decal_surface_slack);
+        std::optional<Vecf3> out;
+        f32                  best = decal_surface_slack;
+        for(u32 index : decal_candidates(at - reach, at + reach))
+        {
+            auto const& tri = m_decal_triangles[index];
+            Vecf3 const n   = triangle_normal(tri);
+            f32 const   d   = std::abs(glm::dot(at - tri[0], n));
+            if(d >= best)
+                continue;
+            /* Inside the triangle, seen along its normal */
+            Vecf3 const p      = at - n * glm::dot(at - tri[0], n);
+            bool        inside = true;
+            for(u32 k = 0; k < 3 && inside; k++)
+                inside = glm::dot(
+                             glm::cross(tri[(k + 1) % 3] - tri[k], p - tri[k]),
+                             n) <= 1e-4f;
+            if(!inside)
+                continue;
+            best = d;
+            out  = n;
+        }
+        return out;
+    }
+
+    void step_decals(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        auto const&    cache = p.template subsystem<BSPCache<halo_version>>();
+        BSPItem const* bsp   = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() &&
+               candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        if(bsp != m_decal_bsp)
+        {
+            m_decal_bsp = bsp;
+            m_effect_decals.clear();
+            if(bsp)
+            {
+                index_decal_triangles(*bsp);
+                place_scenario_decals(p);
+            } else
+            {
+                m_decal_triangles.clear();
+                m_decal_grid.clear();
+                m_placed_decals.clear();
+            }
+        }
+
+        /* Effect decals last their lifetime, then fade over their decay */
+        for(auto& d : m_effect_decals)
+        {
+            d.age += dt;
+            d.alpha = d.age <= d.life ? 1.f
+                      : d.decay > 0.f
+                          ? std::max(0.f, 1.f - (d.age - d.life) / d.decay)
+                          : 0.f;
+        }
+        std::erase_if(
+            m_effect_decals, [](auto const& d) { return d.alpha <= 0.f; });
+
+        std::optional<Vecf3> eye;
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
+        {
+            auto [cam, info] = ent.components();
+            if(!info.is_remote() && cam.is_active())
+                eye = cam.camera.position;
+        }
+        if(!eye)
+            return;
+        for(auto* list : {&m_placed_decals, &m_effect_decals})
+            for(auto& d : *list)
+                if(glm::distance(d.center, *eye) < decal_draw_distance)
+                {
+                    d.look.color.a = d.intensity * d.alpha;
+                    scene.decals.push_back(&d.look);
+                }
+    }
+
+    /* ---- Antennas ---- */
+
+    struct antenna_instance_t
+    {
+        antenna const*     tag{nullptr};
+        u64                parent{0};
+        std::vector<Vecf3> points;
+        std::vector<Vecf3> velocity;
+    };
+
+    /* A chain of springs from the tag's marker, swaying as its object moves */
+    void step_antennas(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        for(auto it = m_antennas.begin(); it != m_antennas.end();)
+        {
+            auto&      a  = *it;
+            auto const at = marker_place(
+                p, a.parent, std::string(a.tag->attachment_marker_name.str()));
+            auto vertices = a.tag->vertices.data(*m_magic);
+            if(!at || !vertices.has_value() || vertices.value().empty())
+            {
+                it = m_antennas.erase(it);
+                continue;
+            }
+            auto const& verts = vertices.value();
+            if(a.points.size() != verts.size() + 1)
+            {
+                a.points.assign(verts.size() + 1, at->position);
+                a.velocity.assign(verts.size() + 1, Vecf3{});
+            }
+
+            a.points[0] = at->position;
+            Vecf3 dir   = at->forward;
+            for(size_t i = 0; i < verts.size(); i++)
+            {
+                auto const& v = verts[i];
+                Vecf3       x, y;
+                basis(dir, x, y);
+                dir = glm::normalize(
+                    dir * (std::cos(v.angle.y) * std::cos(v.angle.x)) +
+                    x * (std::cos(v.angle.y) * std::sin(v.angle.x)) +
+                    y * std::sin(v.angle.y));
+                Vecf3 const rest = a.points[i] + dir * v.length;
+                f32 const k = antenna_stiffness * a.tag->spring_strength_coeff *
+                              v.spring_strength_coeff;
+                Vecf3& pt  = a.points[i + 1];
+                Vecf3& vel = a.velocity[i + 1];
+                /* Small steps keep the stiff spring stable at low frame rates
+                 */
+                u32 const steps = std::max(
+                    1u, static_cast<u32>(std::ceil(dt * antenna_rate)));
+                for(u32 s = 0; s < steps; s++)
+                {
+                    f32 const h = dt / steps;
+                    vel += ((rest - pt) * k - vel * antenna_damping) * h;
+                    pt += vel * h;
+                }
+                /* Segments keep their length */
+                Vecf3 const span = pt - a.points[i];
+                f32 const   len  = glm::length(span);
+                pt = len > 1e-5f ? a.points[i] + span * (v.length / len) : rest;
+            }
+
+            EffectScene::ribbon_t ribbon{
+                .bitmap   = &static_cast<blam::tagref_t const&>(a.tag->bitmaps),
+                .sequence = verts[0].sequence_index,
+                .blend    = blam::scn::framebuffer_blending::alpha_blend,
+            };
+            f32 along = 0.f;
+            for(size_t i = 0; i < a.points.size(); i++)
+            {
+                if(i > 0)
+                    along += glm::distance(a.points[i], a.points[i - 1]);
+                ribbon.points.push_back({
+                    .position = a.points[i],
+                    .width    = antenna_width,
+                    .color = rgba(verts[std::min(i, verts.size() - 1)].color),
+                    .v     = along / std::max(a.tag->length, 1e-3f),
+                });
+            }
+            /* Ribbons are stored head first */
+            std::reverse(ribbon.points.begin(), ribbon.points.end());
+            ribbon.audience = audience_of(p, a.parent);
+            scene.ribbons.push_back(std::move(ribbon));
+            ++it;
+        }
+    }
+
+    /* ---- Tag lookups ---- */
+
+    template<typename T>
+    T const* tag_data(blam::tagref_t const& ref, blam::tag_class_t cls)
+    {
+        if(!ref.valid())
+            return nullptr;
+        auto it = m_index.find(ref);
+        if(it == m_index.end() || !(*it).matches(cls))
+            return nullptr;
+        auto data = (*it).template data<T>(*m_magic);
+        return data.has_value() ? &data.value()[0] : nullptr;
+    }
+
+    blam::tag_class_t class_of(blam::tagref_t const& ref)
+    {
+        auto it = m_index.find(ref);
+        return it == m_index.end() ? blam::tag_class_t::none
+                                   : (*it).tag_class();
+    }
+
+    /* ---- Randomness ---- */
+
+    f32 uniform(f32 a, f32 b)
+    {
+        if(b < a)
+            std::swap(a, b);
+        return a == b ? a : std::uniform_real_distribution<f32>(a, b)(m_rng);
+    }
+
+    f32 uniform(Vecf2 const& bounds)
+    {
+        return uniform(bounds.x, bounds.y);
+    }
+
+    static void basis(Vecf3 const& dir, Vecf3& x, Vecf3& y)
+    {
+        Vecf3 const up    = std::abs(dir.z) < .99f ? Vecf3{0, 0, 1} : Vecf3{1, 0, 0};
+        Vecf3 const cross = glm::cross(up, dir);
+        f32 const   len   = glm::length(cross);
+        /* No direction to speak of: any frame will do */
+        x = len > 1e-6f ? cross / len : Vecf3{0, 1, 0};
+        y = glm::cross(dir, x);
+    }
+
+    /* A direction within `angle` of dir */
+    Vecf3 cone(Vecf3 const& dir, f32 angle)
+    {
+        if(angle <= 0.f)
+            return dir;
+        f32 const z   = uniform(std::cos(std::min(angle, glm::pi<f32>())), 1.f);
+        f32 const phi = uniform(0.f, glm::two_pi<f32>());
+        f32 const r   = std::sqrt(std::max(0.f, 1.f - z * z));
+        Vecf3     x, y;
+        basis(dir, x, y);
+        return x * (r * std::cos(phi)) + y * (r * std::sin(phi)) + dir * z;
+    }
+
+    Vecf3 in_sphere(f32 radius)
+    {
+        if(radius <= 0.f)
+            return {};
+        Vecf3 const dir = cone(Vecf3{0, 0, 1}, glm::pi<f32>());
+        return dir * (radius * std::cbrt(uniform(0.f, 1.f)));
+    }
+
+    /* ---- Placement ---- */
+
+    /* Where a named marker is on an entity now, else its origin */
+    bool has_marker(Proxy& p, u64 entity, std::string const& marker)
+    {
+        auto const* model = p.template get<Model>(entity);
+        if(marker.empty() || !model || !model->tag)
+            return marker.empty();
+        auto key = std::pair{model->tag, marker};
+        auto it  = m_markers.find(key);
+        if(it == m_markers.end())
+            it = m_markers
+                     .emplace(key, bind_marker_node(*model->tag, marker, *m_magic))
+                     .first;
+        return it->second.has_value();
+    }
+
+    std::optional<place_t> marker_place(
+        Proxy& p, u64 entity, std::string const& marker)
+    {
+        auto const* model = p.template get<Model>(entity);
+        if(!model)
+            return std::nullopt;
+        Matf4 at = model->transform;
+        if(!marker.empty() && model->tag)
+        {
+            auto key = std::pair{model->tag, marker};
+            auto it  = m_markers.find(key);
+            if(it == m_markers.end())
+                it = m_markers
+                         .emplace(key, bind_marker_node(*model->tag, marker, *m_magic))
+                         .first;
+            if(it->second)
+            {
+                /* An animated model carries its markers along with the pose */
+                auto const* anim = p.template get<AnimationPlayback>(entity);
+                auto const  node = static_cast<size_t>(it->second->node);
+                if(anim && it->second->node >= 0 && node < anim->pose.size())
+                    at = at * anim->pose[node];
+                at = at * it->second->transform;
+            }
+        }
+        return place_t{
+            .position = Vecf3(at[3]),
+            .forward  = glm::length(Vecf3(at[0])) > 1e-6f
+                            ? glm::normalize(Vecf3(at[0]))
+                            : Vecf3{1.f, 0.f, 0.f},
+            .up       = glm::length(Vecf3(at[2])) > 1e-6f ? std::optional(glm::normalize(Vecf3(at[2])))
+                                                          : std::nullopt,
+        };
+    }
+
+    /* An attachment's object function, off until something sets it */
+    f32 scale_of(Proxy& p, u64 entity, scale_t scale)
+    {
+        if(scale == scale_t::none)
+            return 1.f;
+        auto const* model = p.template get<Model>(entity);
+        auto const  i     = static_cast<size_t>(scale) - 1;
+        if(!model || i >= model->object_function.size())
+            return 0.f;
+        return std::clamp(model->object_function[i], 0.f, 1.f);
+    }
+
+    Vecf3 velocity_of(Proxy& p, u64 entity)
+    {
+        if(auto const* flight = p.template get<Projectile>(entity))
+            return flight->velocity;
+        if(auto const* physics = p.template get<ObjectPhysics>(entity))
+            return physics->linear_velocity;
+        return {};
+    }
+
+    /* An effect location: a marker on its parent, or the special names */
+    std::string location_name(effect_instance_t const& fx, i16 index)
+    {
+        if(auto locations = fx.tag->locations.data(*m_magic);
+           locations.has_value() && index >= 0 &&
+           static_cast<size_t>(index) < locations.value().size())
+            return std::string(locations.value()[index].marker_name.str());
+        return {};
+    }
+
+    place_t location(Proxy& p, effect_instance_t const& fx, i16 index)
+    {
+        std::string const name = location_name(fx, index);
+        if(name == "gravity")
+            return {fx.place.position, {0.f, 0.f, -1.f}};
+        if(fx.marker_parent != 0 && !name.empty() && name != "normal" &&
+           !has_marker(p, fx.parent, name) && has_marker(p, fx.marker_parent, name))
+            if(auto at = marker_place(p, fx.marker_parent, name))
+                return *at;
+        if(fx.parent != 0 && name != "normal")
+            if(auto at = marker_place(p, fx.parent, name))
+                return *at;
+        return fx.place;
+    }
+
+    /* ---- Spawning ---- */
+
+    void spawn(Proxy& p, SpawnEffectEvent const& request)
+    {
+        place_t const place{
+            .position = request.position,
+            .forward  = glm::length(request.direction) > 0.f
+                            ? glm::normalize(request.direction)
+                            : Vecf3{1, 0, 0},
+        };
+        switch(class_of(request.effect))
+        {
+        case blam::tag_class_t::snd:
+            if(!request.visuals_only)
+                play_sound(p, request.effect, place.position);
+            break;
+        case blam::tag_class_t::effe:
+            if(auto const* tag = tag_data<effect>(request.effect, blam::tag_class_t::effe))
+            {
+                m_effects.push_back({
+                    .tag      = tag,
+                    .place    = place,
+                    .velocity = request.velocity,
+                    .parent        = request.parent,
+                    .marker_parent = request.marker_parent,
+                    .shooter       = request.shooter,
+                });
+                m_effects.back().audience     = audience_of(p, request.parent);
+                m_effects.back().visuals_only = request.visuals_only;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    /* Seen by the seats that see the model it comes off */
+    EffectScene::audience_t audience_of(Proxy& p, u64 parent)
+    {
+        auto const* vis = parent ? p.template get<Visibility>(parent) : nullptr;
+        if(!vis)
+            return {};
+        return {.only_seat = vis->only_render_for, .skip_seat = vis->skip_render_for};
+    }
+
+    /* On a first-person model, the sound stays with the one who made it */
+    void play_sound(
+        Proxy&                p,
+        blam::tagref_t const& sound,
+        Vecf3 const&          at,
+        u64                   parent    = 0,
+        bool                  on_marker = true)
+    {
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        if(!sounds || !sound.valid())
+            return;
+        SoundEvent     ev{.type = SoundEvent::play_sound};
+        PlaySoundEvent play{.sound = &sound, .position = at};
+        auto const*    held = parent ? p.template get<Attachment>(parent) : nullptr;
+        if(auto const* cam = held ? p.template get<PlayerCamera>(held->parent) : nullptr)
+        {
+            /* Listener space: right, up, back */
+            auto const& basis = cam->camera_.cached;
+            Vecf3 const d     = at - cam->drawn_eye;
+            play.relative     = true;
+            play.position     = Vecf3(
+                glm::dot(d, basis.right), glm::dot(d, basis.up), -glm::dot(d, basis.forward));
+            /* A marker the first-person model lacks: just ahead of the eye */
+            if(!on_marker)
+                play.position = Vecf3{0.f, 0.f, -missing_marker_ahead};
+        }
+        sounds->inject(ev, &play);
+    }
+
+    /* ---- Object attachments ---- */
+
+    /* Each object's attachments and widgets start once, when it is seen */
+    void attach(Proxy& p)
+    {
+        std::set<u64> live;
+        for(auto ent : p.template select<Model>())
+        {
+            auto const& model = ent.template get<Model>();
+            if(!model.origin_object)
+                continue;
+            live.insert(ent.id());
+            if(m_attached.contains(ent.id()))
+                continue;
+            m_attached.insert(ent.id());
+            auto object = model.origin_object->template data<blam::scn::object>(
+                *m_magic);
+            if(!object.has_value())
+                continue;
+            auto const& obj = object.value()[0];
+            if(auto attachments = obj.attachments.data(*m_magic);
+               attachments.has_value())
+                for(auto const& a : attachments.value())
+                    attach_one(
+                        p, ent.id(), a.type, std::string(a.marker.str()), a.primary_scale);
+            if(auto widgets = obj.widgets.data(*m_magic); widgets.has_value())
+                for(auto const& w : widgets.value())
+                    attach_one(p, ent.id(), w.widget, {}, scale_t::none);
+        }
+        for(auto it = m_attached.begin(); it != m_attached.end();)
+            it = live.contains(*it) ? std::next(it) : m_attached.erase(it);
+    }
+
+    void attach_one(
+        Proxy&                p,
+        u64                   entity,
+        blam::tagref_t const& ref,
+        std::string const&    marker,
+        scale_t               scale)
+    {
+        using blam::tag_class_t;
+        switch(class_of(ref))
+        {
+        case tag_class_t::cont:
+            if(auto const* tag = tag_data<contrail>(ref, tag_class_t::cont))
+                m_contrails.push_back(
+                    {.tag = tag, .parent = entity, .marker = marker, .scale = scale});
+            break;
+        case tag_class_t::ligh:
+            if(auto const* tag = tag_data<light>(ref, tag_class_t::ligh))
+            {
+                m_lights.push_back(make_light(tag, {}, entity, marker, -1.f));
+                m_lights.back().scale = scale;
+            }
+            break;
+        case tag_class_t::ant:
+            if(auto const* tag = tag_data<antenna>(ref, tag_class_t::ant))
+                m_antennas.push_back({.tag = tag, .parent = entity});
+            break;
+        case tag_class_t::mgs2:
+            if(auto const* tag = tag_data<light_volume>(ref, tag_class_t::mgs2))
+                /* As a widget it names its own marker */
+                m_volumes.push_back({
+                    .tag    = tag,
+                    .parent = entity,
+                    .marker = marker.empty()
+                                  ? std::string(tag->attachment_marker.str())
+                                  : marker,
+                    .scale  = scale,
+                });
+            break;
+        case tag_class_t::pctl:
+            if(auto const* tag = tag_data<particle_system>(ref, tag_class_t::pctl))
+                start_system(
+                    tag, {}, entity, marker, {}, true, scale, audience_of(p, entity));
+            break;
+        case tag_class_t::effe:
+            if(auto const* tag = tag_data<effect>(ref, tag_class_t::effe))
+            {
+                auto at = marker_place(p, entity, marker);
+                m_effects.push_back({
+                    .tag      = tag,
+                    .place    = at.value_or(place_t{}),
+                    .parent   = entity,
+                    .attached = true,
+                    .scale    = scale,
+                });
+                m_effects.back().audience = audience_of(p, entity);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    /* ---- Effects ---- */
+
+    void step_effects(Proxy& p, f32 dt)
+    {
+        for(auto it = m_effects.begin(); it != m_effects.end();)
+            it = step_effect(p, *it, dt) ? std::next(it) : m_effects.erase(it);
+    }
+
+    /* Events run in turn: wait out the delay, create, wait out the
+     * duration. False once it has finished. */
+    bool step_effect(Proxy& p, effect_instance_t& fx, f32 dt)
+    {
+        if(fx.parent != 0)
+        {
+            if(!p.template get<Model>(fx.parent))
+                return false;
+            if(scale_of(p, fx.parent, fx.scale) <= 0.f)
+                return true;
+            if(auto at = marker_place(p, fx.parent, {}))
+                fx.place.position = at->position;
+            fx.velocity = velocity_of(p, fx.parent);
+        }
+        auto events = fx.tag->events.data(*m_magic);
+        if(!events.has_value() || events.value().empty())
+            return false;
+        auto const count = static_cast<i32>(events.value().size());
+
+        fx.time += dt;
+        /* A loop of zero length runs once a frame, not forever */
+        for(i32 guard = 0; guard <= count; guard++)
+        {
+            if(fx.event >= count)
+            {
+                if(!fx.attached)
+                    return false;
+                fx.event = std::clamp<i32>(fx.tag->loop_start_event, 0, count - 1);
+                if(guard > 0)
+                    break;
+            }
+            auto const& ev = events.value()[fx.event];
+            if(!fx.started)
+            {
+                fx.started = true;
+                fx.created = false;
+                fx.delay   = uniform(ev.delay_bounds);
+                fx.duration = uniform(ev.duration_bounds);
+            }
+            if(!fx.created)
+            {
+                if(fx.time < fx.delay)
+                    break;
+                fx.created = true;
+                if(ev.skip_fraction <= 0.f || uniform(0.f, 1.f) >= ev.skip_fraction)
+                    create(p, fx, ev);
+                else
+                    /* A skipped event takes no time: a chain of chances with
+                     * a certain last one picks exactly one of them */
+                    fx.duration = 0.f;
+            }
+            if(fx.time < fx.delay + fx.duration)
+                break;
+            fx.time -= fx.delay + fx.duration;
+            fx.started = false;
+            fx.event++;
+        }
+        return true;
+    }
+
+    void create(Proxy& p, effect_instance_t const& fx, effect::event_t const& ev)
+    {
+        using blam::tag_class_t;
+        if(auto parts = ev.parts.data(*m_magic); parts.has_value())
+            for(auto const& part : parts.value())
+            {
+                if(!in_air(part.create_in))
+                    continue;
+                if(fx.visuals_only && class_of(part.type) != tag_class_t::pctl)
+                    continue;
+                place_t const at = location(p, fx, part.location);
+                switch(class_of(part.type))
+                {
+                case tag_class_t::snd:
+                    play_sound(
+                        p,
+                        part.type,
+                        at.position,
+                        fx.parent,
+                        has_marker(p, fx.parent, location_name(fx, part.location)));
+                    break;
+                case tag_class_t::ligh:
+                    if(auto const* tag = tag_data<light>(part.type, tag_class_t::ligh))
+                        m_lights.push_back(make_light(
+                            tag,
+                            at,
+                            0,
+                            {},
+                            tag->duration > 0.f ? tag->duration / ticks_per_second
+                                                : default_light_life));
+                    break;
+                case tag_class_t::pctl:
+                    if(auto const* tag = tag_data<particle_system>(
+                           part.type, tag_class_t::pctl))
+                        start_system(
+                            tag, at, 0, {}, fx.velocity, false, scale_t::none, fx.audience);
+                    break;
+                case tag_class_t::deca:
+                    if(auto const* tag = tag_data<decal_definition>(
+                           part.type, tag_class_t::deca))
+                        /* Impacts face out of the surface, "gravity" into it */
+                        for(Vecf3 const way : {-at.forward, at.forward})
+                            if(auto hit = decal_surface(at.position, way))
+                            {
+                                if(auto d = make_decal(
+                                       *tag,
+                                       hit->first,
+                                       hit->second,
+                                       uniform(0.f, 1.f)))
+                                    add_effect_decal(std::move(*d));
+                                break;
+                            }
+                    break;
+                case tag_class_t::jpt: {
+                    /* The authority decides who it hurts */
+                    GameEvent       ev{.type = GameEvent::AreaDamage};
+                    AreaDamageEvent area{.damage = part.type, .position = at.position, .shooter = fx.shooter};
+                    p.template subsystem<GameEventBus>().inject(ev, &area);
+                    break;
+                }
+                default:
+                    if(auto it = m_index.find(part.type);
+                       it != m_index.end() && (*it).matches(tag_class_t::obje))
+                        spawn_part_object(p, fx, part, at);
+                    break;
+                }
+            }
+        if(auto particles = ev.particles.data(*m_magic); particles.has_value())
+            for(auto const& burst : particles.value())
+                emit(p, fx, burst);
+    }
+
+    /* Debris and projectiles are local to this peer like the effect itself;
+     * anything else it makes (a weapon dropped, a vehicle, a biped) is the
+     * authority's to spawn, and reaches the others as any object does */
+    void spawn_part_object(
+        Proxy&                   p,
+        effect_instance_t const& fx,
+        effect::part_t const&    part,
+        place_t const&           at)
+    {
+        Vecf3 const dir     = cone(at.forward, part.velocity_cone_angle);
+        bool const  garbage = class_of(part.type) == blam::tag_class_t::garb;
+        bool const  projectile = class_of(part.type) == blam::tag_class_t::proj;
+        bool const  local   = garbage || projectile;
+        if(!local && p.template subsystem<NetworkState>().replica)
+            return;
+        /* Placed in the location's frame, its forward and up; the cone only
+         * scatters where it flies. A projectile faces where it goes */
+        Quatf rotation = glm::angleAxis(std::atan2(dir.y, dir.x), Vecf3{0, 0, 1}) *
+                         glm::angleAxis(-std::asin(std::clamp(dir.z, -1.f, 1.f)), Vecf3{0, 1, 0});
+        if(!projectile)
+        {
+            Vecf3 const x = at.forward;
+            Vecf3 up      = at.up.value_or(perpendicular(x));
+            up            = up - x * glm::dot(up, x);
+            up            = glm::length(up) > 1e-6f ? glm::normalize(up) : perpendicular(x);
+            rotation      = glm::quat_cast(Matf3(x, glm::cross(up, x), up));
+        }
+        SpawnObjectEvent spawn{
+            .object   = part.type,
+            .position = at.position,
+            .rotation = rotation,
+            .local_only = local,
+            /* Born inside the object the effect hangs off, it must not strike it */
+            .owner      = fx.parent,
+            /* Tag velocities are per tick */
+            .velocity = dir * uniform(part.velocity_bounds) * ticks_per_second + fx.velocity,
+            .angular_velocity = cone(Vecf3{0, 0, 1}, glm::pi<f32>()) *
+                                uniform(part.angular_velocity_bounds),
+            .lifetime = garbage ? debris_lifetime : 0.f,
+        };
+        GameEvent ev{.type = GameEvent::SpawnObject};
+        p.template subsystem<GameEventBus>().inject(ev, &spawn);
+    }
+
+    /* Everything happens in air for now: there is no water test yet */
+    static bool in_air(effect::create_in_t where)
+    {
+        return where == effect::create_in_t::any_environment ||
+               where == effect::create_in_t::air_only;
+    }
+
+    /* A burst of part sprites */
+    void emit(Proxy& p, effect_instance_t const& fx, effect::particle_t const& burst)
+    {
+        if(!in_air(burst.create_in))
+            return;
+        /* First-person effects play on first-person models only */
+        bool const first_person =
+            fx.parent != 0 && p.template get<Attachment>(fx.parent);
+        if(burst.create == effect::camera_mode_t::only_in_first_person && !first_person)
+            return;
+        if(burst.create == effect::camera_mode_t::only_in_third_person && first_person)
+            return;
+        auto const* part =
+            tag_data<particle>(burst.particle_type, blam::tag_class_t::part);
+        if(!part)
+            return;
+        auto const* pphy =
+            tag_data<point_physics>(part->physics, blam::tag_class_t::pphy);
+        motion_t const motion = motion_t::from(pphy);
+
+        place_t const at = location(p, fx, burst.location);
+        Vecf3         x, y;
+        basis(at.forward, x, y);
+        /* relative_direction is yaw, pitch off the location's forward */
+        f32 const   yaw   = burst.relative_direction.x;
+        f32 const   pitch = burst.relative_direction.y;
+        Vecf3 const dir   = glm::normalize(
+            at.forward * (std::cos(pitch) * std::cos(yaw)) +
+            x * (std::cos(pitch) * std::sin(yaw)) + y * std::sin(pitch));
+        Vecf3 const origin = at.position + at.forward * burst.relative_offset.x +
+                             x * burst.relative_offset.y +
+                             y * burst.relative_offset.z;
+
+        using pflags = particle::flags_t;
+        auto const has = [part](pflags f) {
+            return (part->flags & f) != pflags::none;
+        };
+        i32 const count = static_cast<i32>(
+            std::round(uniform(static_cast<f32>(burst.count.x), static_cast<f32>(burst.count.y))));
+        for(i32 i = 0; i < count && m_particles.size() < max_particles; i++)
+        {
+            sprite_particle_t s{};
+            s.look.position =
+                origin + in_sphere(uniform(burst.distribution_radius));
+            s.look.radius   = uniform(burst.radius);
+            s.look.bitmap   = &static_cast<blam::tagref_t const&>(part->bitmap);
+            s.anim          = &animation_of(*part);
+            s.look.sequence = s.anim->first;
+            s.look.blend    = part->shader.blend_function;
+            s.look.rotation =
+                (burst.flags & effect::particle_t::flags_t::random_initial_angle) !=
+                        effect::particle_t::flags_t::none
+                    ? uniform(0.f, glm::two_pi<f32>())
+                    : 0.f;
+            s.tint = glm::mix(
+                rgba(burst.tint_lower_bound),
+                rgba(burst.tint_upper_bound),
+                uniform(0.f, 1.f));
+            s.velocity = cone(dir, burst.velocity_cone_angle) *
+                             uniform(burst.velocity) +
+                         fx.velocity;
+            s.motion   = motion;
+            s.life     = std::max(uniform(part->lifespan), .05f);
+            s.fade_in  = part->fade_in_time;
+            s.fade_out = part->fade_out_time;
+            s.frame    = has(pflags::animation_starts_on_random_frame)
+                             ? uniform(0.f, static_cast<f32>(s.anim->total()))
+                             : 0.f;
+            /* Once per frame is per the original's 30 fps */
+            s.frame_rate = has(pflags::animate_once_per_frame)
+                               ? 30.f
+                               : uniform(part->animation_rate);
+            /* Without a loop the animation's end is the particle's */
+            if(s.anim->looping == 0 && s.anim->total() > 0 && s.frame_rate > 0.f)
+                s.life = std::min(
+                    s.life, (static_cast<f32>(s.anim->total()) - s.frame) / s.frame_rate);
+            s.spin       = uniform(burst.angular_velocity) *
+                     (uniform(0.f, 1.f) < .5f ? -1.f : 1.f);
+            s.along_velocity = part->orientation ==
+                               blam::scn::particle_orientation_t::parallel_to_direction;
+            s.heading = dir;
+            if(part->orientation == blam::scn::particle_orientation_t::perpendicular_to_direction)
+                s.across = dir;
+            s.dies_on_contact = has(pflags::dies_on_contact_with_structure);
+            /* A muzzle flash rides the barrel it came out of */
+            if((burst.flags & effect::particle_t::flags_t::stay_attached_to_marker) !=
+                   effect::particle_t::flags_t::none &&
+               fx.parent != 0)
+            {
+                auto const marker = location_name(fx, burst.location);
+                if(marker_place(p, fx.parent, marker))
+                {
+                    auto const to_local = [&at, &x, &y](Vecf3 const& v) {
+                        return Vecf3{
+                            glm::dot(v, at.forward), glm::dot(v, x), glm::dot(v, y)};
+                    };
+                    s.parent         = fx.parent;
+                    s.marker         = marker;
+                    s.local          = to_local(s.look.position - at.position);
+                    s.local_velocity = to_local(s.velocity - fx.velocity);
+                }
+            }
+            s.look.audience = fx.audience;
+            m_particles.push_back(s);
+        }
+    }
+
+    /* ---- Lights ---- */
+
+    light_instance_t make_light(
+        light const*        tag,
+        place_t const&      at,
+        u64                 parent,
+        std::string const&  marker,
+        f32                 life)
+    {
+        return {
+            .tag    = tag,
+            .place  = at,
+            .parent = parent,
+            .marker = marker,
+            .radius = tag->radius * uniform(tag->radius_modifier),
+            .color  = Vecf3(rgba(tag->color_upper_bound)),
+            .life = life,
+            .id   = ++m_light_ids,
+        };
+    }
+
+    static f32 falloff(blam::scn::function_type_t function, f32 t)
+    {
+        using fn = blam::scn::function_type_t;
+        t        = std::clamp(t, 0.f, 1.f);
+        switch(function)
+        {
+        case fn::early:
+            return 1.f - (1.f - t) * (1.f - t);
+        case fn::very_early:
+            return 1.f - std::pow(1.f - t, 4.f);
+        case fn::late:
+            return t * t;
+        case fn::very_late:
+            return std::pow(t, 4.f);
+        case fn::cosine:
+            return .5f - .5f * std::cos(t * glm::pi<f32>());
+        default:
+            return t;
+        }
+    }
+
+    void step_lights(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        for(auto it = m_lights.begin(); it != m_lights.end();)
+        {
+            auto& l = *it;
+            l.age += dt;
+            if(l.parent != 0)
+            {
+                auto at = marker_place(p, l.parent, l.marker);
+                if(!at)
+                {
+                    it = m_lights.erase(it);
+                    continue;
+                }
+                l.place = *at;
+                l.level = scale_of(p, l.parent, l.scale);
+            } else if(l.life >= 0.f && l.age >= l.life)
+            {
+                it = m_lights.erase(it);
+                continue;
+            }
+            /* Timed lights fade from the upper color to the lower one */
+            Vecf3 color = l.color * l.level;
+            if(l.life > 0.f)
+                color = glm::mix(
+                    color,
+                    Vecf3(rgba(l.tag->color_lower_bound)),
+                    falloff(l.tag->falloff_function, l.age / l.life));
+            if(glm::dot(color, color) <= 1e-6f)
+            {
+                ++it;
+                continue;
+            }
+            scene.lights.push_back({
+                .position = l.place.position,
+                .radius   = l.radius,
+                .color    = color,
+                .lens_flare =
+                    l.tag->lens_flare.valid()
+                        ? &static_cast<blam::tagref_t const&>(l.tag->lens_flare)
+                        : nullptr,
+                .direction   = l.place.forward,
+                .cos_falloff = l.tag->cos_falloff_angle,
+                .cos_cutoff  = l.tag->cos_cutoff_angle,
+            });
+            ++it;
+        }
+    }
+
+    /* ---- Particle systems ---- */
+
+    void start_system(
+        particle_system const* tag,
+        place_t const&         at,
+        u64                    parent,
+        std::string const&     marker,
+        Vecf3 const&           velocity,
+        bool                    attached,
+        scale_t                 scale    = scale_t::none,
+        EffectScene::audience_t audience = {})
+    {
+        system_instance_t sys{
+            .tag      = tag,
+            .place    = at,
+            .parent   = parent,
+            .marker   = marker,
+            .velocity = velocity,
+            .attached = attached,
+            .scale    = scale,
+            .audience = audience,
+        };
+        auto types = tag->particle_types.data(*m_magic);
+        if(!types.has_value())
+            return;
+        for(auto const& type : types.value())
+        {
+            system_instance_t::type_state_t state{};
+            if(auto states = type.states.data(*m_magic);
+               states.has_value() && !states.value().empty())
+                state.left = uniform(states.value()[0].duration_bounds);
+            state.owed = static_cast<f32>(type.initial_particle_count);
+            sys.types.push_back(state);
+        }
+        m_systems.push_back(std::move(sys));
+    }
+
+    void step_systems(Proxy& p, f32 dt)
+    {
+        for(auto it = m_systems.begin(); it != m_systems.end();)
+            it = step_system(p, *it, dt) ? std::next(it) : m_systems.erase(it);
+    }
+
+    bool step_system(Proxy& p, system_instance_t& sys, f32 dt)
+    {
+        if(sys.parent != 0)
+        {
+            auto at = marker_place(p, sys.parent, sys.marker);
+            if(!at)
+                return false;
+            sys.place    = *at;
+            sys.velocity = velocity_of(p, sys.parent);
+        }
+        sys.age += dt;
+        f32 const level =
+            sys.parent != 0 ? scale_of(p, sys.parent, sys.scale) : 1.f;
+        auto types = sys.tag->particle_types.data(*m_magic);
+        if(!types.has_value())
+            return false;
+        bool live = false;
+        for(size_t i = 0; i < types.value().size() && i < sys.types.size(); i++)
+        {
+            auto const& type  = types.value()[i];
+            auto&       state = sys.types[i];
+            using tflags      = particle_system::type_t::flags_t;
+            if((type.flags & tflags::disabled) != tflags::none || state.done)
+                continue;
+            auto states = type.states.data(*m_magic);
+            if(states.has_value() && state.state < states.value().size())
+            {
+                auto const& s = states.value()[state.state];
+                state.owed += s.particle_creation_rate * dt * level;
+                state.left -= dt;
+                if(state.left <= 0.f)
+                {
+                    state.state++;
+                    bool const loop =
+                        sys.attached ||
+                        (type.flags & tflags::type_states_loop) != tflags::none;
+                    if(state.state >= states.value().size() && loop)
+                        state.state = 0;
+                    if(state.state < states.value().size())
+                        state.left =
+                            uniform(states.value()[state.state].duration_bounds);
+                }
+            }
+            for(; level > 0.f && state.owed >= 1.f && m_particles.size() < max_particles;
+                state.owed -= 1.f)
+                emit_system(sys, type);
+            state.owed = std::min(state.owed, 1.f);
+            if(!states.has_value() || state.state >= states.value().size())
+                state.done = !sys.attached;
+            live = live || !state.done;
+        }
+        return live;
+    }
+
+    void emit_system(system_instance_t const& sys, particle_system::type_t const& type)
+    {
+        auto pstates = type.particle_states.data(*m_magic);
+        if(!pstates.has_value() || pstates.value().empty())
+            return;
+        sprite_particle_t s{};
+        Vecf3 const offset = in_sphere(type.radius);
+        s.look.position    = sys.place.position + offset;
+        switch(type.particle_creation_physics)
+        {
+        case particle_system::creation_physics_t::explosion:
+            s.velocity = offset * explosion_speed;
+            break;
+        case particle_system::creation_physics_t::jet:
+            s.velocity = sys.place.forward * type.radius * explosion_speed;
+            break;
+        default:
+            break;
+        }
+        s.velocity += sys.velocity;
+        s.states      = pstates.value().data();
+        s.state_count = static_cast<u32>(pstates.value().size());
+        s.size_pick   = uniform(0.f, 1.f);
+        s.color_pick  = uniform(0.f, 1.f);
+        s.spin        = uniform(s.states[0].rotation_rate) *
+                 (uniform(0.f, 1.f) < .5f ? -1.f : 1.f);
+        s.look.rotation = uniform(0.f, glm::two_pi<f32>());
+        enter_state(s, 0);
+        s.life = 0.f;
+        for(u32 i = 0; i < s.state_count; i++)
+            s.life += s.states[i].duration_bounds.y +
+                      (i + 1 < s.state_count ? s.states[i].transition_time_bounds.y : 0.f);
+        s.life = std::max(s.life, .05f);
+        s.look.audience = sys.audience;
+        m_particles.push_back(s);
+    }
+
+    void enter_state(sprite_particle_t& s, u32 state)
+    {
+        s.state      = state;
+        s.state_time = 0.f;
+        auto const& ps = s.states[state];
+        s.hold         = uniform(ps.duration_bounds);
+        s.transition   = state + 1 < s.state_count ? uniform(ps.transition_time_bounds) : 0.f;
+        s.motion = motion_t::from(
+            tag_data<point_physics>(ps.point_physics, blam::tag_class_t::pphy));
+        s.look.bitmap   = &static_cast<blam::tagref_t const&>(ps.bitmaps);
+        s.look.sequence = ps.sequence_index;
+        s.look.blend    = ps.shader.blend_function;
+        s.pixels        = sprite_pixels(*s.look.bitmap, ps.sequence_index);
+    }
+
+    animation_t const& animation_of(particle const& part)
+    {
+        auto [it, fresh] = m_animations.try_emplace(&part);
+        animation_t& anim = it->second;
+        if(!fresh)
+            return anim;
+        anim.first = part.first_sequence_index;
+        auto const* header =
+            tag_data<blam::bitm::header_t>(part.bitmap, blam::tag_class_t::bitm);
+        std::remove_cvref_t<decltype(header->sequences.data(*m_magic))> sequences;
+        if(header)
+            sequences = header->sequences.data(*m_magic);
+        i32 const counts[3] = {
+            part.initial_sequence_count,
+            part.looping_sequence_count,
+            part.final_sequence_count};
+        i32* const totals[3] = {&anim.initial, &anim.looping, &anim.final};
+        i16        seq       = anim.first;
+        for(i32 phase = 0; phase < 3; phase++)
+            for(i32 i = 0; i < counts[phase]; i++, seq++)
+            {
+                i16 n = 1;
+                if(sequences.has_value() && seq >= 0 &&
+                   static_cast<size_t>(seq) < sequences.value().size())
+                {
+                    auto const& sq      = sequences.value()[seq];
+                    auto        sprites = sq.sprites.data(*m_magic);
+                    n = sprites.has_value() && !sprites.value().empty()
+                            ? static_cast<i16>(sprites.value().size())
+                            : static_cast<i16>(std::max<u16>(sq.bitmap_count, 1));
+                }
+                anim.frames.push_back(n);
+                *totals[phase] += n;
+            }
+        return anim;
+    }
+
+    /* How wide a sequence's sprites are in their bitmap, which a pctl
+     * state's scale is per pixel of */
+    f32 sprite_pixels(blam::tagref_t const& ref, i16 sequence)
+    {
+        auto it = m_index.find(ref);
+        if(!ref.valid() || it == m_index.end())
+            return default_sprite_pixels;
+        auto const key       = std::pair{&(*it), sequence};
+        auto [cached, fresh] = m_sprite_pixels.try_emplace(key, default_sprite_pixels);
+        if(!fresh)
+            return cached->second;
+        auto const* header = tag_data<blam::bitm::header_t>(ref, blam::tag_class_t::bitm);
+        if(!header)
+            return cached->second;
+        auto sequences = header->sequences.data(*m_magic);
+        auto images    = header->images.data(*m_magic);
+        if(!sequences.has_value() || !images.has_value() || sequences.value().empty())
+            return cached->second;
+        auto const& seq = sequences.value()[std::clamp<i32>(sequence, 0, sequences.value().size() - 1)];
+        auto        sprites = seq.sprites.data(*m_magic);
+        if(!sprites.has_value() || sprites.value().empty())
+            return cached->second;
+        auto const& sprite = sprites.value()[0];
+        if(sprite.bitmap_index >= images.value().size())
+            return cached->second;
+        f32 const width = (sprite.right - sprite.left) * images.value()[sprite.bitmap_index].isize.x;
+        if(width > 0.f)
+            cached->second = width;
+        return cached->second;
+    }
+
+    /* The look of a pctl particle, blended into its next state */
+    void state_look(sprite_particle_t& s, f32 dt)
+    {
+        s.state_time += dt;
+        if(s.state_time > s.hold + s.transition && s.state + 1 < s.state_count)
+            enter_state(s, s.state + 1);
+        auto look_of = [&s](u32 i) {
+            auto const& ps     = s.states[i];
+            f32 const   radius = glm::mix(ps.scale.x, ps.scale.y, s.size_pick) *
+                               s.pixels * .5f * ps.radius_multiplier;
+            Vecf4 const color  = glm::mix(rgba(ps.color_1), rgba(ps.color_2), s.color_pick);
+            return std::pair{radius, color};
+        };
+        auto [radius, color] = look_of(s.state);
+        if(s.transition > 0.f && s.state_time > s.hold && s.state + 1 < s.state_count)
+        {
+            f32 const t        = std::min((s.state_time - s.hold) / s.transition, 1.f);
+            auto [r2, c2]      = look_of(s.state + 1);
+            radius             = glm::mix(radius, r2, t);
+            color              = glm::mix(color, c2, t);
+        }
+        s.look.radius = radius;
+        s.tint        = color;
+        if(s.state + 1 == s.state_count && s.state_time >= s.hold)
+            s.age = s.life;
+    }
+
+    /* ---- Sprites ---- */
+
+    void step_particles(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        auto& physics = p.template subsystem<PhysicsBus>();
+        for(size_t i = 0; i < m_particles.size();)
+        {
+            auto& s = m_particles[i];
+            s.age += dt;
+            if(s.states)
+                state_look(s, dt);
+            if(s.age >= s.life)
+            {
+                m_particles[i] = m_particles.back();
+                m_particles.pop_back();
+                continue;
+            }
+            std::optional<place_t> anchor =
+                s.parent ? marker_place(p, s.parent, s.marker) : std::nullopt;
+            if(!anchor)
+                s.parent = 0;
+            if(anchor)
+            {
+                /* Placed off the marker as drawn, so no lookahead */
+                s.local += s.local_velocity * dt;
+                Vecf3 x, y;
+                basis(anchor->forward, x, y);
+                s.look.position = anchor->position + anchor->forward * s.local.x +
+                                  x * s.local.y + y * s.local.z;
+            } else
+            {
+                s.velocity.z += s.motion.gravity * dt;
+                s.velocity -= s.velocity * s.motion.slowing(s.look.radius, dt);
+                Vecf3 const to = s.look.position + s.velocity * dt;
+                if(s.motion.collides || s.dies_on_contact)
+                {
+                    Physics::Event   ev{Physics::Event::Raycast};
+                    Physics::Raycast ray{.from = s.look.position, .to = to};
+                    physics.process(ev, &ray);
+                    if(ray.hit && ray.entity_id == 0)
+                    {
+                        if(s.dies_on_contact)
+                        {
+                            m_particles[i] = m_particles.back();
+                            m_particles.pop_back();
+                            continue;
+                        }
+                        Vecf3 const n = ray.normal;
+                        s.velocity =
+                            (s.velocity - 2.f * glm::dot(s.velocity, n) * n) *
+                            s.motion.elasticity;
+                        s.look.position = ray.point + n * .01f;
+                    } else
+                        s.look.position = to;
+                } else
+                    s.look.position = to;
+            }
+            s.look.rotation += s.spin * dt;
+            s.frame += s.frame_rate * dt;
+
+            f32 alpha = 1.f;
+            if(s.fade_in > 0.f && s.age < s.fade_in)
+                alpha *= s.age / s.fade_in;
+            if(s.fade_out > 0.f && s.life - s.age < s.fade_out)
+                alpha *= (s.life - s.age) / s.fade_out;
+
+            EffectScene::sprite_t look = s.look;
+            if(!anchor)
+                look.position += s.velocity * m_lookahead;
+            look.rotation += s.spin * m_lookahead;
+            look.color = s.tint * Vecf4(1.f, 1.f, 1.f, alpha);
+            look.frame = static_cast<i16>(s.frame + s.frame_rate * m_lookahead);
+            if(s.anim && s.anim->total() > 0)
+                std::tie(look.sequence, look.frame) = s.anim->at(
+                    s.frame + s.frame_rate * m_lookahead,
+                    (s.life - s.age) * s.frame_rate);
+            /* Along its direction: its velocity, or at rest the way it was sent */
+            look.axis = !s.along_velocity                ? Vecf3{}
+                        : glm::length(s.velocity) > 1e-4f ? s.velocity * TickClock::tick_seconds
+                                                          : s.heading * 1e-3f;
+            if(s.across)
+            {
+                look.flat = true;
+                look.axis = glm::length(s.velocity) > 1e-4f ? glm::normalize(s.velocity) : *s.across;
+            }
+            scene.sprites.push_back(look);
+            ++i;
+        }
+    }
+
+    /* ---- Contrails ---- */
+
+    /* How old a point is when it reaches each state, and when it dies */
+    struct timeline_t
+    {
+        std::array<f32, 8> start{};
+        std::array<f32, 8> hold_end{};
+        u32                count{0};
+        f32                life{0.f};
+    };
+
+    timeline_t timeline(contrail const& tag)
+    {
+        timeline_t out;
+        auto       states = tag.point_states.data(*m_magic);
+        if(!states.has_value())
+            return out;
+        f32 t = 0.f;
+        for(auto const& s : states.value())
+        {
+            if(out.count == out.start.size())
+                break;
+            out.start[out.count]    = t;
+            out.hold_end[out.count] = t + (s.duration.x + s.duration.y) * .5f;
+            t = out.hold_end[out.count] +
+                (s.transition_duration.x + s.transition_duration.y) * .5f;
+            out.count++;
+        }
+        /* The last state is where points end */
+        out.life = out.count ? out.hold_end[out.count - 1] : 0.f;
+        if(out.count > 1)
+            out.life = std::max(out.life, out.start[out.count - 1]);
+        return out;
+    }
+
+    std::pair<f32, Vecf4> point_look(
+        contrail const& tag, timeline_t const& tl, contrail_point_t const& pt)
+    {
+        auto states = tag.point_states.data(*m_magic);
+        if(!states.has_value() || tl.count == 0)
+            return {0.f, Vecf4(0.f)};
+        auto look_of = [&](u32 i) {
+            auto const& s = states.value()[i];
+            return std::pair{
+                s.width,
+                glm::mix(rgba(s.color_lower_bound), rgba(s.color_upper_bound), pt.pick)};
+        };
+        for(u32 i = 0; i < tl.count; i++)
+        {
+            bool const last = i + 1 == tl.count;
+            if(last || pt.age < tl.start[i + 1])
+            {
+                auto [w, c] = look_of(i);
+                if(!last && pt.age > tl.hold_end[i])
+                {
+                    f32 const t = (pt.age - tl.hold_end[i]) /
+                                  std::max(tl.start[i + 1] - tl.hold_end[i], 1e-5f);
+                    auto [w2, c2] = look_of(i + 1);
+                    w             = glm::mix(w, w2, t);
+                    c             = glm::mix(c, c2, t);
+                }
+                return {w, c};
+            }
+        }
+        return look_of(tl.count - 1);
+    }
+
+    void step_contrails(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        for(auto it = m_contrails.begin(); it != m_contrails.end();)
+        {
+            auto&            c  = *it;
+            timeline_t const tl = timeline(*c.tag);
+            for(auto& pt : c.points)
+            {
+                pt.age += dt;
+                pt.position += pt.velocity * dt;
+            }
+
+            std::optional<place_t> at;
+            if(!c.detached)
+                at = marker_place(p, c.parent, c.marker);
+            if(!at)
+                c.detached = true;
+            else
+            {
+                /* Points are laid along the path since the last frame, at
+                 * the ages they would have had */
+                /* Nothing to trail behind something standing still */
+                if(c.has_head && dt > 0.f && glm::distance(at->position, c.head) > 1e-3f)
+                {
+                    c.owed += c.tag->point_generation_rate * dt *
+                              scale_of(p, c.parent, c.scale);
+                    i32 const n = static_cast<i32>(c.owed);
+                    c.owed -= static_cast<f32>(n);
+                    /* Oldest first: last frame's head, then evenly to now */
+                    for(i32 k = n + 1; k >= 1; k--)
+                    {
+                        f32 const back =
+                            static_cast<f32>(k) / static_cast<f32>(n + 1);
+                        c.points.push_front({
+                            .position = glm::mix(at->position, c.head, back),
+                            .velocity =
+                                cone(at->forward, c.tag->point_velocity_cone_angle) *
+                                uniform(c.tag->point_velocity),
+                            .age  = dt * back,
+                            .pick = uniform(0.f, 1.f),
+                        });
+                    }
+                }
+                c.head     = at->position;
+                c.has_head = true;
+            }
+
+            /* Keep one point past the end, for the tail to reach */
+            while(c.points.size() > 1 && c.points[c.points.size() - 2].age > tl.life)
+                c.points.pop_back();
+            while(c.points.size() > max_contrail_points)
+                c.points.pop_back();
+
+            if(c.detached && (c.points.empty() || c.points.front().age > tl.life))
+            {
+                it = m_contrails.erase(it);
+                continue;
+            }
+            build_ribbon(p, scene, c, tl);
+            ++it;
+        }
+    }
+
+    void build_ribbon(
+        Proxy& p, EffectScene& scene, contrail_instance_t const& c, timeline_t const& tl)
+    {
+        EffectScene::ribbon_t ribbon{
+            .bitmap   = &static_cast<blam::tagref_t const&>(c.tag->bitmap),
+            .sequence = c.tag->first_sequence_index,
+            .blend    = c.tag->shader.blend_function,
+        };
+        auto push = [&](contrail_point_t const& pt) {
+            auto [width, color] = point_look(*c.tag, tl, pt);
+            f32 const along     = tl.life > 0.f ? std::min(pt.age / tl.life, 1.f) : 0.f;
+            ribbon.points.push_back({
+                .position = pt.position,
+                .width    = width,
+                .color    = color,
+                .v        = along * std::max(c.tag->texture_repeats_u, 1.f),
+            });
+        };
+        if(!c.detached)
+            push({.position = c.head, .age = 0.f, .pick = .5f});
+        contrail_point_t const* prev = nullptr;
+        for(auto const& pt : c.points)
+        {
+            if(pt.age > tl.life)
+            {
+                /* Cut where the path reaches the end of a point's life */
+                if(prev || !c.detached)
+                {
+                    Vecf3 const from = prev ? prev->position : c.head;
+                    f32 const   age0 = prev ? prev->age : 0.f;
+                    f32 const   t    = (tl.life - age0) / std::max(pt.age - age0, 1e-5f);
+                    push({
+                        .position = glm::mix(from, pt.position, std::clamp(t, 0.f, 1.f)),
+                        .age      = tl.life,
+                        .pick     = pt.pick,
+                    });
+                }
+                break;
+            }
+            push(pt);
+            prev = &pt;
+        }
+        ribbon.audience = audience_of(p, c.parent);
+        if(ribbon.points.size() >= 2)
+            scene.ribbons.push_back(std::move(ribbon));
+    }
+
+    /* ---- Light volumes ---- */
+
+    void draw_volumes(Proxy& p, EffectScene& scene)
+    {
+        for(auto it = m_volumes.begin(); it != m_volumes.end();)
+        {
+            auto at = marker_place(p, it->parent, it->marker);
+            if(!at)
+            {
+                it = m_volumes.erase(it);
+                continue;
+            }
+            /* Its own brightness source, e.g. a flashlight's switch */
+            f32 const level = scale_of(p, it->parent, it->scale) *
+                              scale_of(p, it->parent, it->tag->brightness_scale_source);
+            auto      frames = it->tag->frames.data(*m_magic);
+            if(level > 0.f && frames.has_value() && !frames.value().empty())
+            {
+                auto const& f     = frames.value()[0];
+                i32 const   count = std::max<i32>(it->tag->count, 1);
+                for(i32 i = 0; i < count; i++)
+                {
+                    f32 const t = count > 1 ? static_cast<f32>(i) / static_cast<f32>(count - 1) : 0.f;
+                    f32 const along =
+                        f.offset_from_marker + f.length * std::pow(t, std::max(f.offset_exponent, .01f));
+                    f32 const rt = std::pow(t, std::max(f.radius_exponent, .01f));
+                    f32 const ct = std::pow(t, std::max(f.tint_color_exponent, .01f));
+                    scene.sprites.push_back({
+                        .position = at->position + at->forward * along,
+                        .radius   = glm::mix(f.radius_hither, f.radius_yon, rt),
+                        .color    = glm::mix(
+                                     rgba(f.tint_color_hither), rgba(f.tint_color_yon), ct) *
+                                 Vecf4(1.f, 1.f, 1.f, level),
+                        .bitmap   = it->tag->map.valid()
+                                        ? &static_cast<blam::tagref_t const&>(it->tag->map)
+                                        : nullptr,
+                        .sequence = it->tag->sequence_index,
+                        .blend    = blend_t::add,
+                        .audience = audience_of(p, it->parent),
+                    });
+                }
+            }
+            ++it;
+        }
+    }
+
+    /* ---- Lens flares ---- */
+
+    struct flare_source_t
+    {
+        lens_flare const* tag{nullptr};
+        Vecf3             position{};
+        Vecf3             direction{}; /* the way it shines, zero = all ways */
+        bool              infinite{false};
+        Vecf3             color{1.f};
+        u64               key{0};
+        u64               ignore{0}; /* its own object does not hide it */
+    };
+
+    struct viewer_t
+    {
+        u32   seat{0};
+        Vecf3 eye{};
+        Matf4 view{}; /* projection * view */
+        u64   body{0}; /* the viewer's own, which the eye sits inside */
+    };
+
+    void step_flares(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        std::vector<viewer_t> viewers;
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
+        {
+            auto [cam, info] = ent.components();
+            if(info.is_remote() || info.seat_idx >= 4)
+                continue;
+            viewers.push_back(
+                {info.seat_idx, cam.camera.position, cam.matrix, ent.id()});
+        }
+        if(viewers.empty())
+            return;
+
+        std::vector<flare_source_t> sources;
+        for(auto const& l : m_lights)
+            if(auto const* lens = l.level <= 0.f ? nullptr :
+                   tag_data<lens_flare>(l.tag->lens_flare, blam::tag_class_t::lens))
+                sources.push_back({
+                    .tag       = lens,
+                    .position  = l.place.position,
+                    .direction = lens->cutoff_angle > 0.f ? l.place.forward : Vecf3{},
+                    .color     = l.color * l.level,
+                    .key       = l.id,
+                    .ignore    = l.parent,
+                });
+        structure_flares(p, viewers.front().eye, sources);
+
+        auto& physics = p.template subsystem<PhysicsBus>();
+        f32 const step = std::min(1.f, dt * flare_fade_rate);
+        m_flare_frame++;
+        for(auto const& src : sources)
+        {
+            auto [entry, fresh] = m_flare_seen.try_emplace(src.key);
+            auto& seen          = entry->second;
+            /* Rays are dear: each flare looks again every few frames */
+            bool const look =
+                fresh || (src.key + m_flare_frame) % flare_ray_interval == 0;
+            EffectScene::flare_t flare{
+                .tag      = src.tag,
+                .position = src.infinite ? src.direction : src.position,
+                .infinite = src.infinite,
+                .color    = src.color,
+            };
+            bool any = false;
+            for(auto const& v : viewers)
+            {
+                f32& target = seen.target[v.seat];
+                if(!on_screen(v.view, src))
+                    target = 0.f;
+                else if(look)
+                    target = flare_target(physics, src, v.eye, v.body);
+                f32& vis = seen.visibility[v.seat];
+                vis += (target - vis) * step;
+                flare.visibility[v.seat] = vis;
+                any = any || vis > .002f;
+            }
+            if(any)
+                scene.flares.push_back(flare);
+        }
+        std::unordered_set<u64> live;
+        for(auto const& src : sources)
+            live.insert(src.key);
+        std::erase_if(m_flare_seen, [&live](auto const& entry) {
+            return !live.contains(entry.first);
+        });
+    }
+
+    /* Off screen a flare cannot be seen, so it needs no occlusion ray */
+    static bool on_screen(Matf4 const& view, flare_source_t const& src)
+    {
+        Vecf4 const clip = view * (src.infinite ? Vecf4(src.direction, 0.f)
+                                                : Vecf4(src.position, 1.f));
+        /* Sprites reach past the edge while their centre is just outside */
+        f32 const reach = clip.w * 1.2f;
+        return clip.w > 0.f && std::abs(clip.x) < reach &&
+               std::abs(clip.y) < reach;
+    }
+
+    /* Fade by distance and angle, then nothing in the way */
+    f32 flare_target(
+        PhysicsBus& physics, flare_source_t const& src, Vecf3 const& eye, u64 viewer)
+    {
+        lens_flare const& lens = *src.tag;
+        f32               out  = 1.f;
+        Vecf3             to_eye{};
+        f32               distance = 0.f;
+        if(!src.infinite)
+        {
+            to_eye   = eye - src.position;
+            distance = glm::length(to_eye);
+            if(distance < 1e-3f)
+                return 0.f;
+            to_eye /= distance;
+            if(lens.far_fade_distance > lens.near_fade_distance)
+                out *= 1.f - std::clamp(
+                                 (distance - lens.near_fade_distance) /
+                                     (lens.far_fade_distance - lens.near_fade_distance),
+                                 0.f,
+                                 1.f);
+            if(lens.cutoff_angle > 0.f && glm::length(src.direction) > 0.f)
+            {
+                f32 const c = glm::dot(glm::normalize(src.direction), to_eye);
+                out *= glm::smoothstep(
+                    std::cos(lens.cutoff_angle), std::cos(lens.falloff_angle), c);
+            }
+        }
+        if(out <= 0.f)
+            return 0.f;
+        if((lens.flags & lens_flare::flags_t::no_occlusion_test) !=
+           lens_flare::flags_t::none)
+            return out;
+        Vecf3 const to = src.infinite
+                             ? eye + src.direction * sun_distance
+                             : src.position + to_eye * std::min(
+                                                  lens.occlusion_radius, distance * .5f);
+        /* Structure that is never drawn, such as a level's ceiling, hides nothing */
+        Vecf3 from = eye;
+        for(u32 pass = 0; pass < flare_ray_passes; pass++)
+        {
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = to, .ignore = viewer};
+            physics.process(ev, &ray);
+            if(!ray.hit)
+                break;
+            /* Sky and level bounds have no material and are never drawn */
+            bool const unseen =
+                ray.invisible || (ray.entity_id == 0 && !ray.shader);
+            if(unseen)
+            {
+                from = ray.point + glm::normalize(to - from) * flare_ray_step;
+                continue;
+            }
+            /* The structure reports entity 0, so a source without an
+             * object of its own must not discount it */
+            bool const own = src.ignore != 0 && ray.entity_id == src.ignore;
+            /* Markers sit a hair inside the fixture they light; that is not cover */
+            bool const at_source = glm::distance(ray.point, to) < flare_surface_slop;
+            if(!own && !at_source)
+                return 0.f;
+            break;
+        }
+        return out;
+    }
+
+    /* The section's flare markers, and the sun of the sky above the eye */
+    void structure_flares(Proxy& p, Vecf3 const& eye, std::vector<flare_source_t>& out)
+    {
+        auto const& cache = p.template subsystem<BSPCache<halo_version>>();
+        BSPItem const* bsp = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        if(!bsp || !bsp->mesh)
+            return;
+        auto const& magic   = bsp->bsp_magic;
+        auto        palette = bsp->mesh->lens_flares.data(magic);
+        auto        markers = bsp->mesh->lens_flare_markers.data(magic);
+        /* A handful of flare tags shared by thousands of markers */
+        std::vector<lens_flare const*> lenses;
+        if(palette.has_value())
+            for(auto const& ref : palette.value())
+                lenses.push_back(
+                    tag_data<lens_flare>(ref, blam::tag_class_t::lens));
+        if(markers.has_value())
+            for(size_t i = 0; i < markers.value().size(); i++)
+            {
+                auto const& m = markers.value()[i];
+                if(m.lens_flare < 0 ||
+                   static_cast<size_t>(m.lens_flare) >= lenses.size())
+                    continue;
+                auto const* lens = lenses[m.lens_flare];
+                if(!lens)
+                    continue;
+                out.push_back({
+                    .tag       = lens,
+                    .position  = m.position,
+                    .direction = Vecf3(m.direction[0], m.direction[1], m.direction[2]) / 127.f,
+                    .key       = (1ull << 62) | (u64(bsp->section_idx) << 20) | i,
+                });
+            }
+
+        auto cluster = bsp->find_cluster_tree(eye);
+        if(!cluster)
+            return;
+        auto clusters = bsp->mesh->clusters.data(magic);
+        auto scenario = p.template subsystem<BlamFiles<halo_version>>()
+                            .container.scenario();
+        if(!clusters.has_value() || *cluster >= clusters.value().size() ||
+           !scenario.has_value() || !scenario.value())
+            return;
+        i16 const sky = clusters.value()[*cluster].sky;
+        auto      skies = scenario.value()->info.skyboxes.data(*m_magic);
+        if(sky < 0 || !skies.has_value() || static_cast<size_t>(sky) >= skies.value().size())
+            return;
+        auto const* skybox =
+            tag_data<blam::scn::skybox>(skies.value()[sky], blam::tag_class_t::sky);
+        if(!skybox)
+            return;
+        auto lights = skybox->lights.data(*m_magic);
+        if(!lights.has_value())
+            return;
+        for(size_t i = 0; i < lights.value().size(); i++)
+        {
+            auto const& l    = lights.value()[i];
+            auto const* lens = tag_data<lens_flare>(l.lens_flare, blam::tag_class_t::lens);
+            if(!lens)
+                continue;
+            f32 const yaw   = l.radiosity.direction.x;
+            f32 const pitch = l.radiosity.direction.y;
+            out.push_back({
+                .tag       = lens,
+                .direction = Vecf3(
+                    std::cos(pitch) * std::cos(yaw),
+                    std::cos(pitch) * std::sin(yaw),
+                    std::sin(pitch)),
+                .infinite = true,
+                .color    = l.radiosity.color,
+                .key      = (2ull << 62) | i,
+            });
+        }
+    }
+
+    /* ---- Weather ---- */
+
+    struct weather_particle_t
+    {
+        Vecf3 position{};
+        Vecf3 velocity{};
+        Vecf3 wander{}; /* bugs pick a heading and change it now and then */
+        f32   radius{0.f};
+        Vecf4 color{1.f};
+        f32   rotation{0.f};
+        f32   spin{0.f};
+        f32   frame{0.f};
+        f32   frame_rate{0.f};
+    };
+
+    struct weather_type_t
+    {
+        blam::scn::weather_particle_system::particle_type_t const* tag{nullptr};
+        motion_t                                         motion{};
+        std::vector<weather_particle_t>                  particles;
+    };
+
+    struct weather_t
+    {
+        blam::scn::weather_particle_system const* tag{nullptr};
+        Vecf3                                     wind{};
+        std::vector<weather_type_t>               types;
+    } m_weather;
+
+    /* Weather of the cluster the primary eye stands in, in a box about it */
+    void step_weather(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        std::optional<Vecf3> eye;
+        for(auto ent : p.template select<PlayerCamera, PlayerInfo>())
+        {
+            auto [cam, info] = ent.components();
+            if(!info.is_remote() && info.seat_idx == 0)
+                eye = cam.camera.position;
+        }
+        auto const& cache = p.template subsystem<BSPCache<halo_version>>();
+        BSPItem const* bsp = nullptr;
+        for(auto const& [id, candidate] : cache.m_cache)
+            if(candidate.valid() && candidate.section_idx == cache.active_section)
+                bsp = &candidate;
+        blam::bsp::weather_palette const* weather = nullptr;
+        if(eye && bsp && bsp->mesh)
+            if(auto cluster = bsp->find_cluster_tree(*eye))
+            {
+                auto clusters = bsp->mesh->clusters.data(bsp->bsp_magic);
+                auto palette  = bsp->mesh->weather_palettes.data(bsp->bsp_magic);
+                if(clusters.has_value() && palette.has_value() &&
+                   *cluster < clusters.value().size())
+                {
+                    i16 const w = clusters.value()[*cluster].weather;
+                    if(w >= 0 && static_cast<size_t>(w) < palette.value().size())
+                        weather = &palette.value()[w];
+                }
+            }
+        auto const* tag = weather ? tag_data<blam::scn::weather_particle_system>(
+                                        weather->particle_system, blam::tag_class_t::rain)
+                                  : nullptr;
+        if(tag != m_weather.tag)
+            start_weather(tag, weather);
+        if(!tag || !eye)
+            return;
+
+        for(auto& type : m_weather.types)
+        {
+            auto const& t      = *type.tag;
+            f32 const   reach  = std::max(t.fade_out_end_distance, 1.f);
+            for(auto& w : type.particles)
+            {
+                if(t.acceleration_magnitude.y > 0.f &&
+                   uniform(0.f, 1.f) < dt * std::max(t.acceleration_change_rate, .5f))
+                    w.wander = cone(Vecf3{0, 0, 1}, glm::pi<f32>()) *
+                               uniform(t.acceleration_magnitude);
+                w.velocity += (Vecf3{0, 0, type.motion.gravity} + w.wander) * dt;
+                /* Drag pulls it along with the air */
+                w.velocity += (m_weather.wind - w.velocity) *
+                              std::min(1.f, type.motion.drag * dt);
+                w.position += w.velocity * dt;
+                /* Wrap around the eye, so the box goes where it goes */
+                Vecf3 rel  = w.position - *eye + reach;
+                rel        = rel - glm::floor(rel / (2.f * reach)) * (2.f * reach);
+                w.position = *eye + rel - reach;
+                w.rotation += w.spin * dt;
+                w.frame += w.frame_rate * dt;
+
+                f32 const d = glm::distance(w.position, *eye);
+                f32 const alpha =
+                    glm::smoothstep(t.fade_in_start_distance, t.fade_in_end_distance, d) *
+                    (1.f - glm::smoothstep(
+                               t.fade_out_start_distance, t.fade_out_end_distance, d));
+                if(alpha <= 0.f || sheltered(*bsp, w.position))
+                    continue;
+                bool const along =
+                    t.render_mode == blam::scn::particle_orientation_t::parallel_to_direction;
+                scene.sprites.push_back({
+                    .position = w.position + w.velocity * m_lookahead,
+                    .radius   = w.radius,
+                    .axis     = along ? w.velocity * weather_streak : Vecf3{},
+                    .rotation = w.rotation + w.spin * m_lookahead,
+                    .color    = w.color * Vecf4(1.f, 1.f, 1.f, alpha),
+                    .bitmap   = &static_cast<blam::tagref_t const&>(t.sprite_bitmap),
+                    .sequence = 0,
+                    .frame    = static_cast<i16>(w.frame),
+                    .blend    = t.shader.blend_function,
+                });
+            }
+        }
+    }
+
+    void start_weather(
+        blam::scn::weather_particle_system const* tag,
+        blam::bsp::weather_palette const*         palette)
+    {
+        m_weather = {.tag = tag};
+        if(!tag)
+            return;
+        if(auto const* wind = tag_data<blam::scn::wind>(palette->wind, blam::tag_class_t::wind))
+        {
+            Vecf3 dir = palette->wind_direction;
+            if(glm::length(dir) > 0.f)
+                dir = glm::normalize(dir);
+            m_weather.wind = dir * palette->wind_magnitude *
+                             (wind->velocity.x + wind->velocity.y) * .5f;
+        }
+        auto types = tag->particle_types.data(*m_magic);
+        if(!types.has_value())
+            return;
+        size_t wanted = 0;
+        std::vector<size_t> counts;
+        for(auto const& t : types.value())
+        {
+            f32 const reach = std::max(t.fade_out_end_distance, 1.f);
+            counts.push_back(static_cast<size_t>(
+                (t.particle_count.x + t.particle_count.y) * .5f * std::pow(2.f * reach, 3.f)));
+            wanted += counts.back();
+        }
+        /* Thinner, rather than smaller, when there would be too many */
+        f32 const thin =
+            wanted > max_weather ? static_cast<f32>(max_weather) / wanted : 1.f;
+        for(size_t i = 0; i < types.value().size(); i++)
+        {
+            auto const& t = types.value()[i];
+            weather_type_t type{
+                .tag    = &t,
+                .motion = motion_t::from(
+                    tag_data<point_physics>(t.physics, blam::tag_class_t::pphy)),
+            };
+            f32 const reach = std::max(t.fade_out_end_distance, 1.f);
+            size_t const n  = static_cast<size_t>(counts[i] * thin);
+            for(size_t k = 0; k < n; k++)
+                type.particles.push_back({
+                    .position = Vecf3(uniform(-reach, reach), uniform(-reach, reach),
+                                      uniform(-reach, reach)),
+                    .velocity = m_weather.wind,
+                    .radius   = uniform(t.particle_radius),
+                    .color    = glm::mix(
+                        rgba(t.color_lower_bound), rgba(t.color_upper_bound), uniform(0.f, 1.f)),
+                    .rotation = uniform(0.f, glm::two_pi<f32>()),
+                    .spin     = uniform(t.rotation_rate),
+                    .frame    = uniform(0.f, 16.f),
+                    .frame_rate = uniform(t.animation_rate),
+                });
+            m_weather.types.push_back(std::move(type));
+        }
+    }
+
+    /* Inside a weather polyhedron: under cover */
+    static bool sheltered(BSPItem const& bsp, Vecf3 const& at)
+    {
+        auto polyhedra = bsp.mesh->weather_polyhedras.data(bsp.bsp_magic);
+        if(!polyhedra.has_value())
+            return false;
+        for(auto const& poly : polyhedra.value())
+        {
+            if(glm::distance(at, poly.sphere.center) > poly.sphere.radius)
+                continue;
+            auto planes = poly.planes.data(bsp.bsp_magic);
+            if(!planes.has_value())
+                continue;
+            /* Planes face inward: the centre is in front of every one */
+            bool inside = true;
+            for(auto const& plane : planes.value())
+                if(glm::dot(plane.plane, at) - plane.d < 0.f)
+                {
+                    inside = false;
+                    break;
+                }
+            if(inside)
+                return true;
+        }
+        return false;
+    }
+
+    static constexpr size_t max_particles        = 4096;
+    static constexpr f32    missing_marker_ahead = 1.f; /* wu */
+    static constexpr size_t max_weather          = 3000;
+    static constexpr f32    weather_streak       = 1.f / 30.f; /* rain stretches a tick's travel */
+    static constexpr f32    flare_fade_rate      = 8.f;    /* per second */
+    static constexpr f32    sun_distance         = 2000.f; /* wu */
+    static constexpr size_t max_contrail_points  = 256;
+    static constexpr f32    default_light_life   = .25f;
+    static constexpr f32    ticks_per_second     = 30.f;
+    static constexpr f32    debris_lifetime      = 30.f; /* seconds */
+    static constexpr u64    flare_ray_interval   = 4;    /* frames */
+    static constexpr f32    flare_surface_slop   = .1f;  /* wu */
+    static constexpr u32    flare_ray_passes     = 4;
+    static constexpr f32    flare_ray_step       = .01f; /* wu past an invisible hit */
+    static constexpr f32    antenna_stiffness    = 400.f;
+    static constexpr f32    antenna_damping      = 12.f;
+    static constexpr f32    antenna_rate         = 120.f; /* steps a second */
+    static constexpr f32    antenna_width        = .02f; /* wu */
+    static constexpr f32    decal_cell           = 2.f;  /* wu, triangle bins */
+    static constexpr f32    decal_lift           = .004f; /* wu off a face */
+    static constexpr f32    decal_min_facing     = .3f;
+    static constexpr f32    decal_surface_slack  = .1f;  /* wu off a face */
+    static constexpr f32    decal_draw_distance  = 60.f;
+    static constexpr f32    decal_reach          = 2.f;  /* wu to a face */
+    static constexpr size_t max_effect_decals    = 256;
+    static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
+    static constexpr f32    default_sprite_pixels = 128.f; /* when its bitmap can't say */
+
+    u32        m_generation{0};
+
+    blam::map_ptr const*               m_magic{nullptr};
+    blam::tag_index_view<halo_version> m_index;
+    std::minstd_rand                   m_rng{std::random_device{}()};
+
+    std::vector<SpawnEffectEvent>    m_requests;
+    std::vector<effect_instance_t>   m_effects;
+    std::vector<light_instance_t>    m_lights;
+    std::vector<system_instance_t>   m_systems;
+    std::vector<contrail_instance_t> m_contrails;
+    std::vector<volume_instance_t>   m_volumes;
+    std::vector<sprite_particle_t>   m_particles;
+    std::set<u64>                    m_attached;
+    u64                              m_light_ids{0};
+
+    struct flare_seen_t
+    {
+        std::array<f32, 4> visibility{};
+        std::array<f32, 4> target{}; /* as of its last occlusion ray */
+    };
+
+    std::unordered_map<u64, flare_seen_t> m_flare_seen;
+
+    BSPItem const*                            m_decal_bsp{nullptr};
+    std::vector<triangle_t>                   m_decal_triangles;
+    std::unordered_map<u64, std::vector<u32>> m_decal_grid;
+    std::vector<decal_instance_t>             m_placed_decals;
+    std::vector<decal_instance_t>             m_effect_decals;
+    std::vector<antenna_instance_t>           m_antennas;
+    u64                                   m_flare_frame{0};
+
+    std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>>
+        m_markers;
+    std::map<std::pair<blam::tag_t const*, i16>, f32> m_sprite_pixels;
+    std::map<particle const*, animation_t>            m_animations;
+
+    std::shared_ptr<GameEventBus::queue_type<SpawnEffectEvent>> m_spawn_queue;
+    std::unique_ptr<TickQueue>                                  m_ticks;
+    f32 m_lookahead{0.f}; /*!< Seconds past the last tick, for drawing */
+};
+
+void alloc_effects(compo::EntityContainer& e)
+{
+    e.register_subsystem_inplace<EffectScene>();
+    auto& effects   = e.register_subsystem_inplace<EffectSystem>();
+    effects.m_ticks = std::make_unique<TickQueue>(e.subsystem_cast<GameEventBus>());
+    effects.m_spawn_queue =
+        e.subsystem_cast<GameEventBus>().addQueuedEventFunction<SpawnEffectEvent>(
+            0, [&effects](GameEvent&, SpawnEffectEvent* spawn) {
+                effects.m_requests.push_back(*spawn);
+            });
+
+    /* A checkpoint keeps the marks left on the world; what was playing goes,
+     * and what plays on its objects starts over where they are put back */
+    auto& save = e.subsystem_cast<SaveState>();
+    save.bind(effects, &EffectSystem::m_effect_decals);
+    save.on_restore([&effects](compo::EntityContainer&) {
+        std::erase_if(effects.m_effects, [](auto const& effect) { return !effect.attached; });
+        std::erase_if(effects.m_systems, [](auto const& system) { return !system.attached; });
+        std::erase_if(effects.m_lights, [](auto const& light) { return light.life >= 0.f; });
+        for(auto& contrail : effects.m_contrails)
+            contrail.points.clear();
+        effects.m_particles.clear();
+        effects.m_requests.clear();
+    });
+}

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "bitmap_cache.h"
-#include "caching.h"
+#include "caching/bitmap_cache.h"
+#include "caching/caching.h"
 #include "components.h"
 #include "graphics_api.h"
-#include "materials.h"
-#include "shader_compiler.h"
+#include "render/materials.h"
+#include "caching/shader_compiler.h"
 
 #include <coffee/core/CProfiling>
 #include <fmt/format.h>

@@ -1,7 +1,7 @@
 #include "map_lifecycle.h"
 
 #include "../physics.h"
-#include "../sounds.h"
+#include "audio/sounds.h"
 
 #include <coffee/core/task_queue/task.h>
 #include <platforms/environment.h>
