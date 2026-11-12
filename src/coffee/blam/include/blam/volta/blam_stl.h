@@ -316,12 +316,10 @@ class tag_index_view
         return find(tag_unwrapped);
     }
 
-    /*! The tag a reference names, end() when it names none */
+    /*! The tag a reference names, end() when it names none. Its runtime
+     *  word is left set in MCC maps, so only the handle counts */
     iterator find(tagref_t const& tag) const
     {
-        if(tag.unknown != 0)
-            Throw(undefined_behavior("invalid tagref_t"));
-
         return find(tag.tag_id);
     }
 

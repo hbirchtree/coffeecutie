@@ -343,12 +343,12 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     auto lightmaps_     = section.lightmaps.data(bsp_magic);
     auto leaves_        = section.leaves.data(bsp_magic);
     auto leaf_surfaces_ = section.leaf_surfaces.data(bsp_magic);
-    auto nodes_         = section.nodes.data(bsp_magic);
     auto clusters_      = section.clusters.data(bsp_magic);
 
-    if(surfaces_.has_error())
+    if(surfaces_.has_error() || lightmaps_.has_error() || leaves_.has_error() ||
+       leaf_surfaces_.has_error() || clusters_.has_error())
     {
-        cDebug("Error finding submeshes");
+        cWarning("BSP: a render block lies outside the map");
         return {};
     }
 
@@ -356,7 +356,6 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
     auto lightmaps     = lightmaps_.value();
     auto leaves        = leaves_.value();
     auto leaf_surfaces = leaf_surfaces_.value();
-    auto nodes         = nodes_.value();
     auto clusters      = clusters_.value();
 
     cDebug(
@@ -366,7 +365,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
         lightmaps.size(),
         leaves.size(),
         leaf_surfaces.size(),
-        nodes.size(),
+        section.nodes.count,
         clusters.size());
 
     std::map<i32, std::vector<blam::vert::face const*>> node_surfaces;
@@ -520,8 +519,12 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                         mat.vertices().data(bsp_magic),
                         mat.light_verts().data(bsp_magic));
             }();
-            if(!vr.has_value() || !lr.has_value())
+            auto const faces_r = mat.indices(section).data(bsp_magic);
+            if(!vr.has_value() || !lr.has_value() || !faces_r.has_value())
+            {
+                cWarning("BSP: material {} has no vertices or faces", mat.shader.tag_id.value());
                 continue;
+            }
             auto vertices       = vr.value();
             auto light_vertices = lr.value();
 
@@ -534,7 +537,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
                 light_bitm,
                 vertices,
                 light_vertices,
-                mat.indices(section).data(bsp_magic));
+                faces_r);
 
             std::copy(
                 vertices.begin(),
@@ -560,7 +563,7 @@ BSPItem BSPCache<V>::predict_impl(const blam::bsp::info& bsp)
              * before; boundary-straddling faces group by their full owner set
              * so the occluder can hide them when no owner is visible.
              * Faces with no owner at all (empty set) are always visible. */
-            auto faces     = mat.indices(section).data(bsp_magic).value();
+            auto faces     = faces_r.value();
             u32  mat_start = mat.surfaces.count;
             u32  mat_end   = mat_start + mat.surfaces.offset;
             u32  vert_base = vert_ptr / mat.vertex_size();
