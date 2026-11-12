@@ -90,6 +90,7 @@ struct sound_unit_t
     bool                    fading_out{false};
     bool                    queued_all{false};
     bool                    finished{false};
+    bool                    alternate{false}; /* Loops on its tracks' alternates */
 
     /* World position, empty for listener-relative sounds */
     std::optional<Vecf3> position{};
@@ -333,6 +334,15 @@ struct SoundSystem
         }
     }
 
+    /* The loop a track plays next: its alternate while the sound is set to
+     * it and the track has one */
+    static SoundItem::role_t looped(sound_unit_t const& sound, SoundItem::track_t const& track)
+    {
+        return sound.alternate && track.buffers.contains(SoundItem::role_t::alt_loop)
+                   ? SoundItem::role_t::alt_loop
+                   : SoundItem::role_t::loop;
+    }
+
     /* Returns true if the sound played to a non-looping end and should be
      * removed.  Applies effective_volume as the OAF source gain multiplier. */
     bool update_sound_tracks(
@@ -399,10 +409,17 @@ struct SoundSystem
                 switch(meta.active.role)
                 {
                 case role_t::start:
-                    meta.active.role        = role_t::loop;
+                    meta.active.role        = looped(sound, track);
                     meta.active.permutation = 0;
                     break;
                 case role_t::loop:
+                    /* Turned to its alternate between rounds of the loop */
+                    if(looped(sound, track) == role_t::alt_loop)
+                    {
+                        meta.active.role        = role_t::alt_loop;
+                        meta.active.permutation = 0;
+                        break;
+                    }
                     // Check first which permutation group it's at
                     // In title theme this has three groups, so switch between them
                     meta.active.permutation_group ++;
@@ -417,7 +434,7 @@ struct SoundSystem
                     }
                     break;
                 case role_t::alt_loop:
-                    meta.active.role        = role_t::loop;
+                    meta.active.role        = looped(sound, track);
                     meta.active.permutation = 0;
                     break;
                 case role_t::end:
@@ -1495,6 +1512,12 @@ struct SoundSystem
         if(ev.type == SoundEvent::stop_sound)
         {
             active_sounds.erase(ev.entity_id);
+            return;
+        }
+        if(ev.type == SoundEvent::alternate)
+        {
+            if(auto it = active_sounds.find(ev.entity_id); it != active_sounds.end() && data)
+                it->second.alternate = static_cast<AlternateSoundEvent const*>(data)->alternate;
             return;
         }
         if(ev.type == SoundEvent::class_gain)

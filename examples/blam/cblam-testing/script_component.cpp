@@ -19,6 +19,7 @@
 #include "ticks.h"
 
 #include <blam/volta/blam_actor.h>
+#include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_antr_sample.h>
 #include <blam/volta/blam_recorded_animation.h>
 #include <blam/volta/blam_scenario.h>
@@ -135,6 +136,7 @@ struct BlamScript
         m_commands.clear();
         m_scaling.clear();
         m_suspended.clear();
+        m_enterable.clear();
         m_walk_speeds.clear();
         m_conversations.clear();
         m_tests = {};
@@ -245,6 +247,7 @@ struct BlamScript
             run_commands(p);
             crew_vehicles(p);
             offer_vehicles(p);
+            enter_enterable(p);
             board_vehicles(p);
             drop_dead_riders(p);
             run_conversations(p);
@@ -628,8 +631,8 @@ struct BlamScript
 
     /* ---- Natives ---- */
 
-    /* MCC's table has no per-player nav points: they stand in as opcodes
-     * no script calls */
+    /* What one table names and another doesn't (MCC's lacks per-player nav
+     * points, CE's distance to object) stands in as an opcode no script calls */
 #define BLAM_OPTIONAL_OP(name, stand_in)                                         \
     static constexpr BC name##_op = [] {                                         \
         if constexpr(requires { BC::name; })                                     \
@@ -641,6 +644,11 @@ struct BlamScript
     BLAM_OPTIONAL_OP(activate_nav_point_object, -3);
     BLAM_OPTIONAL_OP(deactivate_nav_point_flag, -4);
     BLAM_OPTIONAL_OP(deactivate_nav_point_object, -5);
+    BLAM_OPTIONAL_OP(vehicle_driver, -6);
+    BLAM_OPTIONAL_OP(vehicle_gunner, -7);
+    BLAM_OPTIONAL_OP(vehicle_test_seat, -8);
+    BLAM_OPTIONAL_OP(objects_distance_to_object, -9);
+    BLAM_OPTIONAL_OP(unit_has_weapon, -10);
 #undef BLAM_OPTIONAL_OP
 
     value_t native(
@@ -1103,6 +1111,14 @@ struct BlamScript
             if(!loops(arg(0)) || m_loops.insert(static_cast<u32>(arg(0).integer)).second)
                 play(p, arg(0), objects_of(p, arg(1)), true);
             return {};
+        case op::sound_looping_set_alternate:
+            if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>())
+            {
+                SoundEvent          ev{.type = SoundEvent::alternate, .entity_id = loop_id(arg(0))};
+                AlternateSoundEvent alternate{.alternate = arg(1).truthy()};
+                sounds->inject(ev, &alternate);
+            }
+            return {};
         case op::sound_looping_stop:
             m_loops.erase(static_cast<u32>(arg(0).integer));
             if(auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>())
@@ -1172,6 +1188,106 @@ struct BlamScript
                         out.push_back(player.id());
             }
             return list(std::move(out));
+        }
+        /* Who sits where the seat's flags say: the driver's, a gunner's,
+         * or one by its label */
+        case vehicle_driver_op:
+        case vehicle_gunner_op: {
+            using seat_flags_t = blam::scn::unit::seat_t::seat_flags_t;
+            auto const want = opcode == vehicle_driver_op ? seat_flags_t::driver : seat_flags_t::gunner;
+            auto const vehicles = objects_of(p, arg(0));
+            value_t out{.type = call.ret_type};
+            if(!vehicles.empty())
+                for(auto const& [unit, seat] : occupants(p, vehicles.front()))
+                    if(seat && (static_cast<u32>(seat->flags) & static_cast<u32>(want)))
+                    {
+                        out.objects.push_back(unit);
+                        break;
+                    }
+            return out;
+        }
+        case vehicle_test_seat_op: {
+            auto const vehicles = objects_of(p, arg(0));
+            auto const units    = objects_of(p, arg(2));
+            std::string const label = lowered(text_of(arg(1)));
+            bool found = false;
+            if(!vehicles.empty() && !units.empty())
+                for(auto const& [unit, seat] : occupants(p, vehicles.front()))
+                    found |= unit == units.front() && seat &&
+                             lowered(seat->label.str()).find(label) != std::string::npos;
+            return value_t::boolean(found);
+        }
+        /* The nearest of the objects to the one, -1 with none */
+        case objects_distance_to_object_op: {
+            auto const  to    = objects_of(p, arg(1));
+            auto const* there = to.empty() ? nullptr : p.template get<Model>(to.front());
+            f32         best  = -1.f;
+            for(u64 id : objects_of(p, arg(0)))
+                if(auto const* here = p.template get<Model>(id); here && there)
+                {
+                    f32 const d = glm::distance(here->position, there->position);
+                    best = best < 0.f ? d : std::min(best, d);
+                }
+            return value_t::number(type_t::real_, best);
+        }
+        /* A starting profile's weapons and grenades for the players: its
+         * weapons in place of theirs when reset, else picked up */
+        case op::player_add_equipment: {
+            auto profiles = m_scenario->player_start.profiles.data(m_magic);
+            auto const at = static_cast<size_t>(static_cast<u16>(arg(1).integer));
+            if(!profiles.has_value() || at >= profiles.value().size())
+                return {};
+            auto const& profile = profiles.value()[at];
+            bool const  reset   = arg(2).truthy();
+            auto&       bus     = p.template subsystem<GameEventBus>();
+            auto const  give    = [&bus](EquipWeaponEvent equip) {
+                GameEvent ev{.type = GameEvent::EquipWeapon};
+                bus.inject(ev, &equip);
+            };
+            /* Grenades by the globals' kinds, in the profile's order */
+            std::vector<blam::tag_index<>> grenade_kinds;
+            if(auto globals_tag = m_tags.tag_of("globals\\globals"); globals_tag.has_value())
+                if(auto globals = (*globals_tag)->template data<blam::globals::globals>(m_magic); globals.has_value())
+                    if(auto kinds = globals.value()->grenades.data(m_magic); kinds.has_value())
+                        for(auto const& kind : kinds.value())
+                            grenade_kinds.push_back(kind.equipment.tag_id);
+            std::array<u16, 4> const grenades{
+                profile.frag_grenades, profile.plasma_nades, profile.c_nades, profile.d_nades};
+            for(u64 unit : objects_of(p, arg(0)))
+            {
+                if(!p.template get<PlayerInfo>(unit))
+                    continue;
+                if(reset && profile.primary_weapon.valid())
+                    give({.entity_id = unit,
+                          .weapon    = profile.primary_weapon.tag_id,
+                          .slung     = profile.secondary_weapon.valid() ? profile.secondary_weapon.tag_id
+                                                                        : blam::tag_index<>{},
+                          .mode      = EquipWeaponEvent::replicate});
+                else
+                    for(auto const& [weapon, loaded, total] :
+                        {std::tuple{profile.primary_weapon, profile.rounds1_loaded, profile.rounds1_total},
+                         std::tuple{profile.secondary_weapon, profile.rounds2_loaded, profile.rounds2_total}})
+                        if(weapon.valid())
+                            give({.entity_id = unit,
+                                  .weapon    = weapon.tag_id,
+                                  .mode      = EquipWeaponEvent::pick_up,
+                                  .rounds    = {loaded, total}});
+                for(size_t i = 0; i < grenade_kinds.size() && i < grenades.size(); i++)
+                    for(u16 n = 0; n < grenades[i]; n++)
+                        give({.entity_id = unit, .weapon = grenade_kinds[i], .mode = EquipWeaponEvent::pick_up});
+            }
+            return {};
+        }
+        /* Whether the unit carries the weapon, in hand or slung */
+        case unit_has_weapon_op: {
+            auto const  units = objects_of(p, arg(0));
+            auto const* equip = units.empty() ? nullptr : p.template get<BipedEquipment>(units.front());
+            auto const  kind  = m_tags.find(static_cast<u32>(arg(1).integer));
+            bool        has   = false;
+            if(equip && kind != m_tags.end())
+                for(auto const& w : equip->weapons)
+                    has |= w.tag && w.tag->as_ref().tag_id == (*kind).as_ref().tag_id;
+            return value_t::boolean(has);
         }
         /* Whether the unit holds the weapon, out and ready */
         case op::unit_has_weapon_readied: {
@@ -1367,6 +1483,24 @@ struct BlamScript
                 });
             return value_t::boolean(true);
         /* Suspended, a unit hangs where it is: no physics moves it */
+        case op::object_set_permutation:
+            for(u64 id : objects_of(p, arg(0)))
+            {
+                GameEvent           ev{.type = GameEvent::SetPermutation};
+                SetPermutationEvent change{
+                    .object      = id,
+                    .region      = std::string(text_of(arg(1))),
+                    .permutation = std::string(text_of(arg(2))),
+                };
+                p.template subsystem<GameEventBus>().inject(ev, &change);
+            }
+            return {};
+        /* Its weapon and grenades die with it */
+        case op::unit_doesnt_drop_items:
+            for(u64 id : objects_of(p, arg(0)))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->keeps_items = true;
+            return {};
         case op::unit_suspended:
             for(u64 id : objects_of(p, arg(0)))
             {
@@ -1920,6 +2054,18 @@ struct BlamScript
             return {};
         }
         /* Vehicles: they run to it and take the seat */
+        case op::ai_vehicle_enterable_distance:
+            for(u64 vehicle : objects_of(p, arg(0)))
+                m_enterable[vehicle].distance = arg(1).as_real();
+            return {};
+        case op::ai_vehicle_enterable_actor_type:
+            for(u64 vehicle : objects_of(p, arg(0)))
+                m_enterable[vehicle].actor_type = static_cast<i32>(arg(1).integer);
+            return {};
+        case op::ai_vehicle_enterable_disable:
+            for(u64 vehicle : objects_of(p, arg(0)))
+                m_enterable.erase(vehicle);
+            return {};
         case op::ai_go_to_vehicle: {
             auto const vehicles = objects_of(p, arg(1));
             if(!vehicles.empty())
@@ -1967,6 +2113,27 @@ struct BlamScript
                 log(fmt::format("unhandled: {}", blam::hsc::bc::to_string(opcode)));
             return value_t::of(call.ret_type);
         }
+    }
+
+    /* Each unit in the vehicle and the seat it holds, AI and players */
+    std::vector<std::pair<u64, blam::scn::unit::seat_t const*>> occupants(Proxy& p, u64 vehicle)
+    {
+        std::vector<std::pair<u64, blam::scn::unit::seat_t const*>> out;
+        auto const* model = p.template get<Model>(vehicle);
+        auto u = model && model->origin_object ? model->origin_object->template data<blam::scn::unit>(m_magic)
+                                               : decltype(model->origin_object->template data<blam::scn::unit>(m_magic)){};
+        auto seats = u.has_value() ? u.value()[0].seats.data(m_magic) : decltype(u.value()[0].seats.data(m_magic)){};
+        auto const seat_at = [&](i32 i) -> blam::scn::unit::seat_t const* {
+            return seats.has_value() && i >= 0 && static_cast<size_t>(i) < seats.value().size() ? &seats.value()[i]
+                                                                                                : nullptr;
+        };
+        for(auto const& r : m_riders)
+            if(r.vehicle == vehicle)
+                out.emplace_back(r.unit, seat_at(r.seat_idx));
+        for(auto player : p.template select<PlayerInfo>())
+            if(auto const& info = player.template get<PlayerInfo>(); info.riding.vehicle == vehicle)
+                out.emplace_back(player.id(), seat_at(info.riding.seat));
+        return out;
     }
 
     /* ---- World ---- */
@@ -3051,6 +3218,40 @@ struct BlamScript
             }
             if(!near.empty())
                 board(p, near, info.riding.vehicle, {}, true);
+        }
+    }
+
+    /* ai_vehicle_enterable_*: free actors near it, of its kind and team
+     * when it has them, get in on their own */
+    void enter_enterable(Proxy& p)
+    {
+        using team_t = blam::scn::unit::team_t;
+        if(m_offer_ticks != 0 || m_enterable.empty())
+            return;
+        std::erase_if(m_enterable, [&p](auto const& e) { return !p.template get<Model>(e.first); });
+        for(auto const& [vehicle, enterable] : m_enterable)
+        {
+            auto const* model = p.template get<Model>(vehicle);
+            auto        unit  = model->origin_object ? model->origin_object->template data<blam::scn::unit>(m_magic)
+                                                     : decltype(model->origin_object->template data<blam::scn::unit>(m_magic)){};
+            team_t const own  = unit.has_value() ? unit.value()[0].default_team : team_t::none;
+            std::vector<u64> near;
+            for(auto other : p.template select<Actor, Model>())
+            {
+                auto const& actor = other.template get<Actor>();
+                if(!actor.active() || actor.board || actor.scripted || actor.braindead ||
+                   (own != team_t::none && static_cast<team_t>(actor.team) != own) ||
+                   glm::distance(other.template get<Model>().position, model->position) > enterable.distance)
+                    continue;
+                if(auto const* status = p.template get<BipedStatus>(other.id()); status && status->dead)
+                    continue;
+                if(enterable.actor_type >= 0 &&
+                   actor_type_of(p, other.id()) != static_cast<blam::scn::actor_type_t>(enterable.actor_type))
+                    continue;
+                near.push_back(other.id());
+            }
+            if(!near.empty())
+                board(p, near, vehicle, {});
         }
     }
 
@@ -4666,6 +4867,12 @@ struct BlamScript
     };
     std::map<u64, scaling_t> m_scaling;
     std::set<u64>            m_suspended;
+    struct enterable_t
+    {
+        f32 distance{0.f};
+        i32 actor_type{-1}; /*!< Any, unless set */
+    };
+    std::map<u64, enterable_t> m_enterable; /*!< ai_vehicle_enterable_* */
     std::set<u64>                           m_held; /* attached, looping their custom clip */
     std::map<u64, Vecf3>                    m_walking;
     struct speaker_t

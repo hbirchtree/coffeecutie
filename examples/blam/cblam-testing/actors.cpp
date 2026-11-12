@@ -146,7 +146,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             {
                 if(!status.dead)
                     stock(p, ent.id(), actor, *kind);
-                else if(!actor.dropped)
+                else if(!actor.dropped && !actor.keeps_items)
                     drop_belongings(p, ent.id(), actor, model, *kind);
             }
             actor.dropped = status.dead;

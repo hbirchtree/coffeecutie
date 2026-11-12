@@ -90,6 +90,7 @@ struct GameEvent
         AreaDamage,
         UnitVitality,
         ShieldDepleted,
+        SetPermutation,
         UnitKilled,
         UnitRejoined,
         RespawnUnit,
@@ -546,6 +547,17 @@ struct AreaDamageEvent
 /*! A unit's body and shield as the authority has them, fractions of its coll
  *  tag's maxima. Replicas take them as given */
 /*! A unit's shield gone, or back: what its tags turn off and on for that */
+/*! object_set_permutation: a region of an object (all of them when empty)
+ *  shows the permutation of that name */
+struct SetPermutationEvent
+{
+    static constexpr auto event_type = GameEvent::SetPermutation;
+
+    libc_types::u64 object{0};
+    std::string     region;
+    std::string     permutation;
+};
+
 struct ShieldDepletedEvent
 {
     static constexpr auto event_type = GameEvent::ShieldDepleted;

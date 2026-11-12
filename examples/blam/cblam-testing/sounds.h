@@ -13,6 +13,7 @@ struct SoundEvent
         background_sound_transition,
         update_sound,
         class_gain,
+        alternate, /*!< sound_looping_set_alternate: AlternateSoundEvent */
     } type;
 
     libc_types::u64 entity_id{0};
@@ -55,6 +56,14 @@ struct UpdateSoundEvent
     Vecf3           position{};
     libc_types::f32 gain{1.f};
     libc_types::f32 pitch{1.f};
+};
+
+/*! A looping sound's tracks turn to their alternate loops, or back */
+struct AlternateSoundEvent
+{
+    static constexpr auto event_type = SoundEvent::alternate;
+
+    bool alternate{true};
 };
 
 struct PlaySoundEvent

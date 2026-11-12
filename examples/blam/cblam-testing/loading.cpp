@@ -171,6 +171,8 @@ struct ResourceLoader
     static constexpr std::chrono::milliseconds reveal_time{1000};
     std::map<u64, compo::time_point>           revealed_until;
     std::vector<ShieldDepletedEvent> pending_shields;
+    std::shared_ptr<GameEventBus::queue_type<SetPermutationEvent>> permutation_queue;
+    std::vector<SetPermutationEvent> pending_permutations;
     std::shared_ptr<GameEventBus::queue_type<MountModelEvent>>
         mount_model_queue;
     std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>
@@ -294,7 +296,7 @@ struct ResourceLoader
            !pending_cluster_change && pending_bsps.empty() &&
            pending_models.empty() && pending_mounts.empty() &&
            pending_objects.empty() && pending_despawns.empty() &&
-           pending_shields.empty())
+           pending_shields.empty() && pending_permutations.empty())
             return;
 
         /* Everything below can reach ModelCache::predict() */
@@ -305,6 +307,8 @@ struct ResourceLoader
 
         for(auto const& shield : std::exchange(pending_shields, {}))
             reshield(p, shield);
+        for(auto const& change : std::exchange(pending_permutations, {}))
+            repermute(p, change);
 
         // Pending cluster first so we can use the shared model loading after
         if(pending_cluster_change)
@@ -2129,9 +2133,45 @@ struct ResourceLoader
                 }
             }
         }
-        if(!changed || permutations == model->permutations)
-            return;
+        if(changed)
+            rebuild(p, ev.unit, model, object, permutations);
+    }
 
+    /* object_set_permutation: by region and permutation name */
+    void repermute(Proxy& p, SetPermutationEvent const& change)
+    {
+        auto* model = p.template get<Model>(change.object);
+        if(!model || !model->origin_object)
+            return;
+        auto const& magic       = p.template subsystem<BlamFiles<Ver>>().container.magic;
+        auto        object_data = model->origin_object->template data<blam::scn::object>(magic);
+        if(object_data.has_error())
+            return;
+        blam::scn::object const& object  = object_data.value()[0];
+        auto const*              mod2    = p.template subsystem<ModelCache<Ver>>().get_header(object.model);
+        auto                     regions = mod2 ? mod2->regions.data(magic) : decltype(mod2->regions.data(magic)){};
+        if(!regions.has_value())
+            return;
+        u32 permutations = model->permutations;
+        for(auto const& [r, region] : stl_types::const_enumerate(regions.value()))
+        {
+            if(r >= 8 || (!change.region.empty() && region.name.str() != change.region))
+                continue;
+            auto perms = region.permutations.data(magic);
+            if(perms.has_value())
+                for(auto const& [k, perm] : stl_types::const_enumerate(perms.value()))
+                    if(k < 16 && perm.name.str() == change.permutation)
+                        permutations = (permutations & ~(0xFu << (4 * r))) | (static_cast<u32>(k) << (4 * r));
+        }
+        rebuild(p, change.object, model, object, permutations);
+    }
+
+    /* Its parts built again from the regions' chosen permutations */
+    void rebuild(Proxy& p, u64 id, Model* model, blam::scn::object const& object, u32 permutations)
+    {
+        if(permutations == model->permutations)
+            return;
+        ModelCache<Ver>& model_cache = p.template subsystem<ModelCache<Ver>>();
         ModelAssembly mesh = model_cache.predict_regions(object.model, model_lod, permutations);
         if(mesh.models.empty())
             return;
@@ -2146,7 +2186,7 @@ struct ResourceLoader
         model->model        = mesh.models.at(0);
         init_lods(p, *model, object);
 
-        auto                ent      = p.ref(ev.unit);
+        auto                ent      = p.ref(id);
         compo::EntityRecipe submodel = shared_recipes::submodel;
         submodel.tags                = submodel.tags | (ent.tags() & SubObjectMask);
         for(auto const& model_id : mesh.models)
