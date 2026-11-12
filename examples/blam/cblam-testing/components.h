@@ -992,6 +992,7 @@ struct PlayerInfo
         f32 strafe_speed{2.25f};
         f32 jump_velocity{2.3f}; /*!< wu/s, from the biped tag */
         f32 crouch_eye_height{0.35f};
+        f32 crouch_height{0.5f}; /*!< What it stands up to crouched */
         f32 crouch_time{0.2f};  /*!< Seconds to crouch or stand up */
         f32 crouch_speed{0.5f}; /*!< Ground speeds scale by this crouched */
         f32 max_slope{0.785398f}; /*!< Steepest ground walked up, radians, from the biped tag */

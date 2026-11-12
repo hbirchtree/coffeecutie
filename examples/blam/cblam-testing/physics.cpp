@@ -3666,10 +3666,20 @@ struct PhysicsSystem
                                                                   : compound->getChildTransform(i)));
             }
             btVector3 const lift(0, 0, lifted ? *body.bind_floor - floor : 0.f);
+            /* A player crouched fits under what its tag's crouching height
+             * does, whatever its crouch pose keeps up */
+            auto const* info = p.template get<PlayerInfo>(entity);
+            f32 const   top  = info && info->crouch > 0.f
+                                   ? body.child_offset.z + glm::mix(info->biped.height, info->biped.crouch_height, info->crouch)
+                                   : std::numeric_limits<f32>::max();
             /* Only the hull pieces move; the foot keeps its place */
             for(size_t i = 0; i < posed.size(); i++)
             {
                 posed[i].setOrigin(posed[i].getOrigin() + lift);
+                btVector3 lo, hi;
+                compound->getChildShape(static_cast<int>(i))->getAabb(posed[i], lo, hi);
+                if(hi.z() > top)
+                    posed[i].setOrigin(posed[i].getOrigin() - btVector3(0, 0, hi.z() - top));
                 compound->updateChildTransform(static_cast<int>(i), posed[i], false);
             }
             compound->recalculateLocalAabb();
