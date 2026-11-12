@@ -1676,7 +1676,12 @@ struct scenario
     inline result<string_segment_ref, error_msg> string_segment(
         map_ptr const& magic) const
     {
-        if(auto string_base_chunk = script.script_string_segment.data(magic);
+        /* Its size is the word before; some tools leave this count 0 (the
+         * cursed-v2 and cursed-again maps), the strings still there */
+        auto segment = script.script_string_segment;
+        if(script.script_function_table_offset > 0)
+            segment.count = script.script_function_table_offset;
+        if(auto string_base_chunk = segment.data(magic);
            string_base_chunk.has_error())
             return stl_types::failure(string_base_chunk.error());
         else if(auto chunk = string_base_chunk.value(); true)
