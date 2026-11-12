@@ -73,6 +73,7 @@ struct MultiplayerController
             begin(state, files, p.template subsystem<GameSetup>(), replica);
         if(state.kind != GameState::kind_t::multiplayer)
             return;
+        state.over_for = state.phase == GameState::phase_t::over ? state.over_for + dt : 0.f;
         announcer(p, state, dt);
         team_colors(p, state);
         if(replica)
