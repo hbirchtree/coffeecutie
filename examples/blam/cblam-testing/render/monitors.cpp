@@ -256,6 +256,9 @@ struct CameraMonitors
                         gfx::uniform_pair{
                             {"color"sv},
                             semantic::SpanOne<const Vecf3>(part.color)}),
+                    gfx::cull_state{
+                        .front_face = false,
+                    },
                     state,
                     stencil);
                 if(res)
