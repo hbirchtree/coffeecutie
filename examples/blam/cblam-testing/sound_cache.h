@@ -281,6 +281,8 @@ struct SoundCache
             sounds[SoundItem::start] = parse_simple_sound(track.start);
             sounds[SoundItem::loop]  = parse_simple_sound(track.loop);
             sounds[SoundItem::end]   = parse_simple_sound(track.end);
+            sounds[SoundItem::alt_loop] = parse_simple_sound(track.alternate_loop);
+            sounds[SoundItem::alt_end]  = parse_simple_sound(track.alternate_end);
             std::erase_if(sounds, [](auto const& p) {
                 return std::get<1>(p.second) == nullptr;
             });
