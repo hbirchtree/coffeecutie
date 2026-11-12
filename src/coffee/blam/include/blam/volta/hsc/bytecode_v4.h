@@ -8,17 +8,18 @@ namespace blam::hsc::bc {
 /* Master Chief Collection maps, engine build 01.03.43.0000.
  *
  * Read back from the maps: every group node names its function in the
- * script string segment, so the entries here are what the 10 MCC
- * campaign maps actually use. Unmeasured slots are left as _dummy_N
- * rather than guessed -- MCC inserts whole runs of functions relative
- * to PC (PC 20..28 lands at MCC 21..48), so shifting the PC table into
- * the gaps would mostly be wrong. Entries past the measured range
- * exist only so the shared signature table compiles; their values are
- * not real opcodes.
+ * script string segment (blam_script_dumper --opcode-names). Plain entries
+ * are what the 10 stock MCC campaign maps and the 30 cursed-again maps
+ * use. Entries marked "by CE order" were never called, but sit between two
+ * measured neighbours that are the same distance apart here as in the
+ * PC/CE table, so they take the PC/CE names between them. The rest stay
+ * _dummy_N: MCC inserts whole runs of functions relative to PC (PC 20..28
+ * lands at MCC 21..48), so shifting the PC table into those gaps would
+ * mostly be wrong. Entries past max_opcode exist only so the shared
+ * signature table compiles; their values are not real opcodes.
  *
- * MCC matches PC exactly only up to opcode 19; sleep_until is 20 on PC
- * and 21 here. v3 is deliberately left free for CE Anniversary, which
- * sits between this and the PC/CE table and has not been checked.
+ * v3 is deliberately left free for CE Anniversary, which sits between
+ * this and the PC/CE table and has not been checked.
  */
 enum class v4 : libc_types::i16
 {
@@ -36,7 +37,7 @@ enum class v4 : libc_types::i16
     sub_,
     mul_,
     div_,
-    _dummy_11,
+    min_,
     max_,
     equal,
     nequal,
@@ -50,8 +51,8 @@ enum class v4 : libc_types::i16
     wake,
     inspect,
     unit,
-    _dummy_25,
-    _dummy_26,
+    sound, /* by CE order */
+    effect, /* by CE order */
     _dummy_27,
     not_,
     _dummy_29,
@@ -65,11 +66,11 @@ enum class v4 : libc_types::i16
     _dummy_37,
     _dummy_38,
     _dummy_39,
-    _dummy_40,
+    bitwise_and,
     _dummy_41,
     _dummy_42,
     _dummy_43,
-    _dummy_44,
+    bitwise_right_shift,
     _dummy_45,
     _dummy_46,
     _dummy_47,
@@ -115,12 +116,12 @@ enum class v4 : libc_types::i16
     random_range,
     real_random_range,
     _dummy_89,
-    _dummy_90,
+    physics_set_gravity,
     _dummy_91,
     numeric_countdown_timer_set,
-    _dummy_93,
+    numeric_countdown_timer_get, /* by CE order */
     numeric_countdown_timer_stop,
-    _dummy_95,
+    numeric_countdown_timer_restart, /* by CE order */
     breakable_surfaces_enable,
     recording_play,
     recording_play_and_delete,
@@ -129,7 +130,7 @@ enum class v4 : libc_types::i16
     recording_time,
     object_set_ranged_attack_inhibited,
     object_set_melee_attack_inhibited,
-    _dummy_104,
+    objects_dump_mem, /* by CE order */
     object_set_collideable,
     object_set_scale,
     objects_attach,
@@ -145,53 +146,53 @@ enum class v4 : libc_types::i16
     object_pvs_set_camera,
     object_pvs_clear,
     render_lights,
-    _dummy_120,
+    scenery_get_animation_time,
     scenery_animation_start,
     scenery_animation_start_at_frame,
-    _dummy_123,
-    _dummy_124,
+    render_effects, /* by CE order */
+    unit_can_blink, /* by CE order */
     unit_open,
     unit_close,
-    _dummy_127,
-    _dummy_128,
+    unit_kill,
+    unit_kill_silent, /* by CE order */
     unit_get_custom_animation_time,
     unit_stop_custom_animation,
     unit_custom_animation_at_frame,
     custom_animation,
     custom_animation_list,
-    _dummy_134,
-    _dummy_135,
+    unit_is_playing_custom_animation, /* by CE order */
+    unit_aim_without_turning, /* by CE order */
     unit_set_emotion,
     unit_set_enterable_by_player,
     unit_enter_vehicle,
     vehicle_test_seat_list,
-    _dummy_140,
-    _dummy_141,
+    vehicle_test_seat,
+    unit_set_emotion_animation, /* by CE order */
     unit_exit_vehicle,
     unit_set_maximum_vitality,
-    _dummy_144,
+    units_set_maximum_vitality, /* by CE order */
     unit_set_current_vitality,
     units_set_current_vitality,
     vehicle_load_magic,
     vehicle_unload,
-    _dummy_149,
+    magic_seat_name, /* by CE order */
     unit_set_seat,
     _dummy_151,
     vehicle_riders,
-    _dummy_153,
-    _dummy_154,
+    vehicle_driver,
+    vehicle_gunner,
     unit_get_health,
     unit_get_shield,
     unit_get_total_grenade_count,
-    _dummy_158,
+    unit_has_weapon,
     unit_has_weapon_readied,
     unit_doesnt_drop_items,
     unit_impervious,
     unit_suspended,
     unit_solo_player_integrated_night_vision_is_active,
     units_set_desired_flashlight_state,
-    _dummy_165,
-    _dummy_166,
+    unit_set_desired_flashlight_state,
+    unit_get_current_flashlight_state,
     device_set_never_appears_locked,
     device_get_power,
     device_set_power,
@@ -210,7 +211,7 @@ enum class v4 : libc_types::i16
     _dummy_182,
     _dummy_183,
     _dummy_184,
-    _dummy_185,
+    cheat_all_vehicles,
     _dummy_186,
     _dummy_187,
     _dummy_188,
@@ -225,15 +226,15 @@ enum class v4 : libc_types::i16
     ai_kill_silent,
     ai_erase,
     ai_erase_all,
-    _dummy_200,
-    _dummy_201,
+    ai_select, /* by CE order */
+    ai_deselect, /* by CE order */
     ai_spawn_actor,
-    _dummy_203,
+    ai_set_respawn, /* by CE order */
     ai_set_deaf,
     ai_set_blind,
     ai_magically_see_encounter,
     ai_magically_see_players,
-    _dummy_208,
+    ai_timer_start, /* by CE order */
     _dummy_209,
     ai_timer_expire,
     ai_attack,
@@ -249,11 +250,11 @@ enum class v4 : libc_types::i16
     ai_living_count,
     ai_living_fraction,
     ai_strength,
-    _dummy_224,
+    ai_swarm_count,
     ai_nonswarm_count,
     ai_actors,
     ai_go_to_vehicle,
-    _dummy_228,
+    ai_go_to_vehicle_override,
     ai_going_to_vehicle,
     ai_exit_vehicle,
     ai_braindead,
@@ -269,28 +270,28 @@ enum class v4 : libc_types::i16
     ai_command_list,
     ai_command_list_by_unit,
     ai_command_list_advance,
-    _dummy_244,
+    ai_command_list_advance_by_unit, /* by CE order */
     ai_command_list_status,
-    _dummy_246,
+    ai_is_attacking, /* by CE order */
     ai_force_active,
-    _dummy_248,
-    _dummy_249,
-    _dummy_250,
+    ai_force_active_by_unit, /* by CE order */
+    ai_set_return_state, /* by CE order */
+    ai_set_current_state, /* by CE order */
     ai_playfight,
     ai_status,
     ai_reconnect,
     ai_vehicle_encounter,
     ai_vehicle_enterable_distance,
-    _dummy_256,
+    ai_vehicle_enterable_team, /* by CE order */
     ai_vehicle_enterable_actor_type,
-    _dummy_258,
+    ai_vehicle_enterable_actors, /* by CE order */
     ai_vehicle_enterable_disable,
-    _dummy_260,
-    _dummy_261,
+    ai_look_at_object,
+    ai_stop_looking,
     ai_automatic_migration_target,
     ai_follow_target_disable,
     ai_follow_target_players,
-    _dummy_265,
+    ai_follow_target_unit, /* by CE order */
     ai_follow_target_ai,
     ai_follow_distance,
     ai_conversation,
@@ -300,14 +301,14 @@ enum class v4 : libc_types::i16
     ai_conversation_status,
     ai_link_activation,
     ai_berserk,
-    _dummy_275,
-    _dummy_276,
+    ai_set_team, /* by CE order */
+    ai_allow_charge, /* by CE order */
     ai_allow_dormant,
     ai_allegiance_broken,
     camera_control,
     camera_set,
     camera_set_relative,
-    _dummy_282,
+    camera_set_animation, /* by CE order */
     camera_set_first_person,
     camera_set_dead,
     camera_time,
@@ -324,7 +325,7 @@ enum class v4 : libc_types::i16
     _dummy_296,
     game_difficulty_get,
     game_difficulty_get_real,
-    _dummy_299,
+    map_reset,
     _dummy_300,
     _dummy_301,
     _dummy_302,
@@ -354,7 +355,7 @@ enum class v4 : libc_types::i16
     ai,
     ai_dialogue_triggers,
     ai_grenades,
-    _dummy_329,
+    ai_lines, /* by CE order */
     _dummy_330,
     _dummy_331,
     _dummy_332,
@@ -369,7 +370,7 @@ enum class v4 : libc_types::i16
     cinematic_skip_stop_internal,
     cinematic_show_letterbox,
     cinematic_set_title,
-    _dummy_344,
+    cinematic_set_title_delayed, /* by CE order */
     cinematic_suppress_bsp_object_creation,
     game_won,
     game_lost,
@@ -377,7 +378,7 @@ enum class v4 : libc_types::i16
     game_all_quiet,
     game_safe_to_speak,
     game_is_cooperative,
-    _dummy_352,
+    game_is_authoritative,
     game_save,
     game_save_cancel,
     game_save_no_timeout,
@@ -393,35 +394,35 @@ enum class v4 : libc_types::i16
     _dummy_365,
     mcc_mission_segment,
     game_skip_ticks,
-    _dummy_368,
+    sound_impulse_predict,
     sound_impulse_start,
     sound_impulse_time,
     sound_impulse_stop,
-    _dummy_372,
+    sound_looping_predict, /* by CE order */
     sound_looping_start,
     sound_looping_stop,
-    _dummy_375,
+    sound_looping_set_scale, /* by CE order */
     sound_looping_set_alternate,
-    _dummy_377,
-    _dummy_378,
-    _dummy_379,
-    _dummy_380,
-    _dummy_381,
-    _dummy_382,
-    _dummy_383,
-    _dummy_384,
-    _dummy_385,
-    _dummy_386,
+    debug_sounds_enable, /* by CE order */
+    debug_sounds_distances, /* by CE order */
+    debug_sounds_wet, /* by CE order */
+    sound_enable,
+    sound_set_master_gain, /* by CE order */
+    sound_get_master_gain, /* by CE order */
+    sound_set_music_gain, /* by CE order */
+    sound_get_music_gain, /* by CE order */
+    sound_set_effects_gain, /* by CE order */
+    sound_get_effects_gain, /* by CE order */
     sound_class_set_gain,
     vehicle_hover,
     players_unzoom_all,
     player_enable_input,
     player_camera_control,
     player_action_test_reset,
-    _dummy_393,
+    player_action_test_jump,
     player_action_test_primary_trigger,
     player_action_test_grenade_trigger,
-    _dummy_396,
+    player_action_test_zoom,
     player_action_test_action,
     player_action_test_accept,
     player_action_test_back,
@@ -436,9 +437,9 @@ enum class v4 : libc_types::i16
     show_hud,
     show_hud_help_text,
     enable_hud_help_flash,
-    _dummy_411,
-    _dummy_412,
-    _dummy_413,
+    hud_help_flash_restart, /* by CE order */
+    activate_nav_point_flag, /* by CE order */
+    activate_nav_point_object, /* by CE order */
     activate_team_nav_point_flag,
     activate_team_nav_point_object,
     breadcrumbs_activate_team_nav_point_position,
@@ -457,7 +458,7 @@ enum class v4 : libc_types::i16
     player_effect_set_max_translation,
     player_effect_set_max_rotation,
     player_effect_set_max_vibrate,
-    _dummy_432,
+    player_effect_set_max_rumble,
     player_effect_start,
     player_effect_stop,
     hud_show_health,
@@ -467,7 +468,7 @@ enum class v4 : libc_types::i16
     hud_show_motion_sensor,
     hud_blink_motion_sensor,
     hud_show_crosshair,
-    _dummy_442,
+    hud_clear_messages, /* by CE order */
     hud_set_help_text,
     hud_set_objective_text,
     hud_set_timer_time,
@@ -481,11 +482,11 @@ enum class v4 : libc_types::i16
     _dummy_453,
     _dummy_454,
     _dummy_455,
-    _dummy_456,
-    _dummy_457,
+    rasterizer_decals_flush,
+    rasterizer_fps_accumulate, /* by CE order */
     rasterizer_model_ambient_reflection_tint,
     rasterizer_lights_reset_for_new_map,
-    _dummy_460,
+    script_screen_effect_set_value, /* by CE order */
     cinematic_screen_effect_start,
     cinematic_screen_effect_set_convolution,
     cinematic_screen_effect_set_filter,
@@ -496,26 +497,18 @@ enum class v4 : libc_types::i16
     player0_look_invert_pitch,
     player0_look_pitch_is_inverted,
     player0_joystick_set_is_normal,
-    _dummy_471,
+    ui_widget_show_path, /* by CE order */
     display_scenario_help,
 
     max_opcode = 550,
 
     /* Named by the signature table, but no map emits them and their real
      * opcode is unknown; past max_opcode so they cannot claim a real slot. */
-    ai_follow_target_unit,
-    ai_set_respawn,
     milliseconds,
-    min_,
     player_action_test_move_relative_all_directions,
-    player_action_test_zoom,
-    player_effect_set_max_rumble,
     seconds,
     sound_looping_set_alternate_,
     thread_sleep,
-    unit_is_playing_custom_animation,
-    unit_kill,
-    unit_kill_silent,
 };
 
 std::string_view to_string(v4 opcode);

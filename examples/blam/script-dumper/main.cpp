@@ -18,8 +18,38 @@ using Coffee::Logging::cWarning;
 using libc_types::i32;
 using libc_types::u16;
 
+/* Each call's opcode beside the function name its name node points at in
+ * the string segment: what the compiler's table called that opcode */
 template<blam::is_game_version Ver>
-void open_map(std::string path, std::string output, std::string script)
+void dump_opcode_names(
+    blam::scn::scenario<Ver> const& scenario, blam::map_container<Ver> const& map, std::string const& out)
+{
+    auto const bytecode = scenario.bytecode(map.magic);
+    auto const strings  = scenario.string_segment(map.magic);
+    if(strings.has_error())
+        return;
+    auto const& text = strings.value().data;
+    auto        fp   = fopen(out.c_str(), "a");
+    if(!fp)
+        return;
+    for(auto const& op : bytecode)
+    {
+        if(op.exp_type != blam::hsc::expression_t::group)
+            continue;
+        auto const pos = static_cast<size_t>(static_cast<libc_types::u16>(op.long_)) + 1;
+        if(static_cast<libc_types::u16>(op.long_) == blam::hsc::terminator || pos >= bytecode.size())
+            continue;
+        auto const at = static_cast<size_t>(bytecode[pos].data_ptr);
+        if(at >= text.size() || (at > 0 && text[at - 1] != '\0'))
+            continue;
+        auto const name = text.substr(at, text.find('\0', at) - at);
+        fprintf(fp, "%d\t%.*s\n", static_cast<int>(op.opcode), static_cast<int>(name.size()), name.data());
+    }
+    fclose(fp);
+}
+
+template<blam::is_game_version Ver>
+void open_map(std::string path, std::string output, std::string script, std::string names)
 {
     Coffee::Resource map_file(platform::url::constructors::MkUrl(path));
     if(!Coffee::FileMap(map_file))
@@ -35,6 +65,8 @@ void open_map(std::string path, std::string output, std::string script)
     }
     blam::map_container<Ver>        map      = std::move(map_.value());
     blam::scn::scenario<Ver> const* scenario = map.scenario().value();
+    if(!names.empty())
+        dump_opcode_names(*scenario, map, names);
     auto                            fp       = fopen(output.c_str(), "w+");
     // Scripting
     auto bytecode = scenario->bytecode(map.magic);
@@ -237,6 +269,10 @@ int dumper_main()
          "Version of Halo: pc xbox custom trial mcc",
          cxxopts::value<std::string>())
         //
+        ("opcode-names",
+         "Append each call's opcode and its function's name to this file",
+         cxxopts::value<std::string>())
+        //
         ;
 
     auto& args      = Coffee::GetInitArgs();
@@ -257,22 +293,23 @@ int dumper_main()
     std::string script_recomp;
     if(arguments.unmatched().size() >= 3)
         script_recomp = arguments.unmatched().at(2);
+    auto const names = arguments.as_optional<std::string>("opcode-names").value_or("");
 
     if(selected_version == "pc")
         open_map<blam::pc_version_t>(
-            arguments.unmatched().at(0), decomped, script_recomp);
+            arguments.unmatched().at(0), decomped, script_recomp, names);
     if(selected_version == "xbox")
         open_map<blam::xbox_version_t>(
-            arguments.unmatched().at(0), decomped, script_recomp);
+            arguments.unmatched().at(0), decomped, script_recomp, names);
     if(selected_version == "custom")
         open_map<blam::custom_version_t>(
-            arguments.unmatched().at(0), decomped, script_recomp);
+            arguments.unmatched().at(0), decomped, script_recomp, names);
     if(selected_version == "trial")
         open_map<blam::trial_version_t>(
-            arguments.unmatched().at(0), decomped, script_recomp);
+            arguments.unmatched().at(0), decomped, script_recomp, names);
     if(selected_version == "mcc")
         open_map<blam::mcc_version_t>(
-            arguments.unmatched().at(0), decomped, script_recomp);
+            arguments.unmatched().at(0), decomped, script_recomp, names);
 
     std::quick_exit(0);
 }
