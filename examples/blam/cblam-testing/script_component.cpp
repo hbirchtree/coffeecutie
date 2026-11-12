@@ -137,6 +137,7 @@ struct BlamScript
         m_scaling.clear();
         m_suspended.clear();
         m_enterable.clear();
+        m_vehicle_squads.clear();
         m_walk_speeds.clear();
         m_conversations.clear();
         m_tests = {};
@@ -233,6 +234,7 @@ struct BlamScript
         {
             settle_despawns(p);
             run_deferred(p);
+            maneuvers(p);
             std::erase_if(m_spawning, [this, &p](u32 net_id) {
                 u64 const id = live_entity(p, net_id);
                 if(id)
@@ -461,6 +463,8 @@ struct BlamScript
         state.playing   = false;
         state.show_hud  = true;
         state.input     = true;
+        state.camera_control = true;
+        state.invert_pitch   = false;
         log("stopped every script");
     }
 
@@ -648,6 +652,7 @@ struct BlamScript
     BLAM_OPTIONAL_OP(bitwise_and, -11);
     BLAM_OPTIONAL_OP(bitwise_right_shift, -12);
     BLAM_OPTIONAL_OP(mcc_mission_segment, -13);
+    BLAM_OPTIONAL_OP(player_action_test_jump, -14);
 #undef BLAM_OPTIONAL_OP
 
     value_t native(
@@ -958,6 +963,15 @@ struct BlamScript
         case op::hud_show_crosshair:
             p.template subsystem<CinematicState>().hud_parts.crosshair = arg(0).truthy();
             return {};
+        case op::hud_blink_health:
+            p.template subsystem<CinematicState>().hud_blink.health = arg(0).truthy();
+            return {};
+        case op::hud_blink_shield:
+            p.template subsystem<CinematicState>().hud_blink.shield = arg(0).truthy();
+            return {};
+        case op::hud_blink_motion_sensor:
+            p.template subsystem<CinematicState>().hud_blink.motion_sensor = arg(0).truthy();
+            return {};
         /* The HUD countdown, in minutes and seconds */
         case op::hud_set_timer_time:
             p.template subsystem<CinematicState>().timer.ticks =
@@ -990,6 +1004,9 @@ struct BlamScript
             return {};
         case op::player_enable_input:
             p.template subsystem<CinematicState>().input = arg(0).truthy();
+            return {};
+        case op::player_camera_control:
+            p.template subsystem<CinematicState>().camera_control = arg(0).truthy();
             return {};
 
         /* Sounds: an object's, or at the listener without one */
@@ -1429,10 +1446,20 @@ struct BlamScript
             return value_t::boolean(m_tests.primary);
         case op::player_action_test_grenade_trigger:
             return value_t::boolean(m_tests.grenade);
+        case op::player_action_test_zoom:
+            return value_t::boolean(m_tests.zoom);
+        case player_action_test_jump_op:
+            return value_t::boolean(m_tests.jump);
+        case op::players_unzoom_all:
+            p.template subsystem<CinematicState>().unzooms++;
+            return {};
         case op::player0_joystick_set_is_normal:
             return value_t::boolean(true);
         case op::player0_look_pitch_is_inverted:
-            return value_t::boolean(false);
+            return value_t::boolean(p.template subsystem<CinematicState>().invert_pitch);
+        case op::player0_look_invert_pitch:
+            p.template subsystem<CinematicState>().invert_pitch = arg(0).truthy();
+            return {};
         case op::objects_can_see_object: {
             auto const  targets = objects_of(p, arg(1));
             auto const* target  = targets.empty() ? nullptr : p.template get<Model>(targets.front());
@@ -1446,6 +1473,7 @@ struct BlamScript
 
         /* Animations of the unit's own, or the cutscene's */
         case op::custom_animation:
+        case op::custom_animation_list:
             with_objects(
                 p,
                 arg(0),
@@ -1669,6 +1697,14 @@ struct BlamScript
             ai_spawn_actor(p, std::string(text_of(arg(0))));
             return {};
         /* Those alive that are not infection forms, which swarm */
+        case op::ai_swarm_count: {
+            i32 count = 0;
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto const* status = p.template get<BipedStatus>(id);
+                   (!status || !status->dead) && actor_type_of(p, id) == blam::scn::actor_type_t::infection_form)
+                    count++;
+            return value_t::number(type_t::short_, static_cast<f32>(count));
+        }
         case op::ai_nonswarm_count: {
             auto const units = ai_actors(p, text_of(arg(0)));
             i32        count = 0;
@@ -1728,6 +1764,19 @@ struct BlamScript
         /* The scripts' switch for every actor's thinking */
         case op::ai:
             p.template subsystem<GameState>().ai_enabled = arg(0).truthy();
+            return {};
+        case op::ai_grenades:
+            p.template subsystem<GameState>().ai_grenades = arg(0).truthy();
+            return {};
+        case op::ai_dialogue_triggers:
+            p.template subsystem<GameState>().ai_dialogue = arg(0).truthy();
+            return {};
+        case op::ai_prefer_target:
+            for(u64 id : objects_of(p, arg(0)))
+                if(arg(1).truthy())
+                    p.template subsystem<GameState>().preferred_targets.insert(id);
+                else
+                    p.template subsystem<GameState>().preferred_targets.erase(id);
             return {};
         /* How far into a fight the squad is: 0 nobody left, 1 at its post,
          * 2 falling back, 4 hunting, 5 engaged */
@@ -1936,62 +1985,56 @@ struct BlamScript
             return {};
         }
         case op::ai_migrate:
-        case op::ai_migrate_and_speak: {
-            /* The actors join another encounter's squad, named like ai_place */
-            auto const path  = std::string(text_of(arg(1)));
-            auto const slash = path.find('/');
-            auto const ename = lowered(path.substr(0, slash));
-            auto const sname = slash == std::string::npos ? std::string{} : lowered(path.substr(slash + 1));
-            i16         enc = -1, sq = -1;
-            std::string toon;
-            if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
-                for(size_t i = 0; i < list.value().size() && enc < 0; i++)
-                    if(lowered(list.value()[i].name.str()) == ename)
-                    {
-                        enc = static_cast<i16>(i);
-                        if(auto squads = list.value()[i].squads.data(m_magic); squads.has_value())
-                        {
-                            for(size_t j = 0; j < squads.value().size() && sq < 0; j++)
-                                if(sname.empty() || lowered(squads.value()[j].name.str()) == sname)
-                                    sq = static_cast<i16>(j);
-                            /* A platoon: its first squad */
-                            for(size_t j = 0; j < squads.value().size() && sq < 0; j++)
-                                if(platoon_name(list.value()[i], squads.value()[j]) == sname)
-                                    sq = static_cast<i16>(j);
-                            if(sq >= 0)
-                                toon = platoon_name(list.value()[i], squads.value()[sq]);
-                        }
-                    }
-            if(enc < 0 || sq < 0)
-                return log(fmt::format("ai_migrate: no squad {}", path)), value_t{};
-            auto const from = lowered(text_of(arg(0)));
-            for(u64 id : ai_actors(p, from))
-                if(auto* actor = p.template get<Actor>(id))
-                {
-                    actor->encounter = enc;
-                    actor->squad     = sq;
-                    actor->migrated  = true;
-                    actor->position  = -1;
-                    actor->order     = Actor::order_t::none;
-                }
-            /* The names follow them: out of their old encounter and squad,
-             * into the new */
-            if(auto it = m_actors.find(from); it != m_actors.end())
+        case op::ai_migrate_and_speak:
+            migrate(p, ai_actors(p, lowered(text_of(arg(0)))), std::string(text_of(arg(1))));
+            return {};
+        /* Units named directly, actors already, join the squad */
+        case op::ai_migrate_by_unit:
+        case op::ai_attach:
+            with_objects(p, arg(0), [this, path = std::string(text_of(arg(1)))](Proxy& p, u64 id) {
+                migrate(p, {id}, path);
+            });
+            return {};
+        /* Back to their squad's starting locations, or only those standing
+         * on nothing (left behind in an unloaded section) */
+        case op::ai_teleport_to_starting_location:
+        case op::ai_teleport_to_starting_location_if_unsupported: {
+            bool const only_unsupported = opcode == op::ai_teleport_to_starting_location_if_unsupported;
+            std::map<std::pair<i16, i16>, size_t> taken;
+            for(u64 id : ai_actors(p, lowered(text_of(arg(0)))))
             {
-                std::set<u32> const moved(it->second.begin(), it->second.end());
-                for(auto& [name, ids] : m_actors)
-                    std::erase_if(ids, [&moved](u32 id) { return moved.contains(id); });
-                m_actors[ename].insert(m_actors[ename].end(), moved.begin(), moved.end());
-                if(!sname.empty())
-                    m_actors[ename + "/" + sname].insert(
-                        m_actors[ename + "/" + sname].end(), moved.begin(), moved.end());
-                if(!toon.empty() && toon != sname)
-                    m_actors[ename + "/" + toon].insert(
-                        m_actors[ename + "/" + toon].end(), moved.begin(), moved.end());
+                auto* actor = p.template get<Actor>(id);
+                auto* model = p.template get<Model>(id);
+                auto const* squad = actor ? squad_of(*actor) : nullptr;
+                auto starts = squad ? squad->start_locations.data(m_magic) : decltype(squad->start_locations.data(m_magic)){};
+                if(!model || !starts.has_value() || starts.value().empty())
+                    continue;
+                if(only_unsupported && supported(p, id, model->position))
+                    continue;
+                auto const& at  = starts.value()[taken[{actor->encounter, actor->squad}]++ % starts.value().size()];
+                model->position = at.position;
+                model->rotation = glm::angleAxis(at.facing, Vecf3{0.f, 0.f, 1.f});
+                model->update_matrix();
+                actor->post     = at.position;
+                actor->position = -1;
+                if(auto* physics = p.template get<ObjectPhysics>(id))
+                    physics->teleported = true;
             }
             return {};
         }
+        /* Its squad's maneuver, now */
+        case op::ai_maneuver:
+            for(u64 id : ai_actors(p, lowered(text_of(arg(0)))))
+                if(auto* actor = p.template get<Actor>(id))
+                    if(auto const* squad = squad_of(*actor); squad && squad->maneuver_to_squad >= 0)
+                        actor->maneuver = squad->maneuver_to_squad;
+            maneuvers(p);
+            return {};
         case op::ai_maneuver_enable:
+            for(u64 id : ai_actors(p, lowered(text_of(arg(0)))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->no_maneuver = !arg(1).truthy();
+            return {};
         case op::ai_free_units:
         case op::ai_playfight:
             return {};
@@ -2063,7 +2106,8 @@ struct BlamScript
         case op::ai_erase_all: {
             std::vector<u64> all;
             for(auto ent : p.template select<Actor>())
-                all.push_back(ent.id());
+                if(ent.template get<Actor>().active())
+                    all.push_back(ent.id());
             for(u64 id : all)
                 despawn(p, id);
             return {};
@@ -2080,6 +2124,15 @@ struct BlamScript
         case op::ai_vehicle_enterable_disable:
             for(u64 vehicle : objects_of(p, arg(0)))
                 m_enterable.erase(vehicle);
+            return {};
+        /* Who rides the vehicle belongs to the squad, already aboard or later */
+        case op::ai_vehicle_encounter:
+            with_objects(p, arg(0), [this, path = std::string(text_of(arg(1)))](Proxy& p, u64 vehicle) {
+                m_vehicle_squads[vehicle] = path;
+                for(auto const& [unit, seat] : occupants(p, vehicle))
+                    if(auto const* actor = p.template get<Actor>(unit); actor && actor->active())
+                        migrate(p, {unit}, path);
+            });
             return {};
         case op::ai_go_to_vehicle: {
             auto const vehicles = objects_of(p, arg(1));
@@ -2127,6 +2180,111 @@ struct BlamScript
             if(m_unhandled.insert(static_cast<u32>(opcode)).second)
                 log(fmt::format("unhandled: {}", blam::hsc::bc::to_string(opcode)));
             return value_t::of(call.ret_type);
+        }
+    }
+
+    /* The actors join another encounter's squad, named like ai_place */
+    void migrate(Proxy& p, std::vector<u64> const& units, std::string const& path)
+    {
+        auto const slash = path.find('/');
+        auto const ename = lowered(path.substr(0, slash));
+        auto const sname = slash == std::string::npos ? std::string{} : lowered(path.substr(slash + 1));
+        i16         enc = -1, sq = -1;
+        u16         team = 0;
+        std::string toon;
+        if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
+            for(size_t i = 0; i < list.value().size() && enc < 0; i++)
+                if(lowered(list.value()[i].name.str()) == ename)
+                {
+                    enc  = static_cast<i16>(i);
+                    team = static_cast<u16>(list.value()[i].team_index);
+                    if(auto squads = list.value()[i].squads.data(m_magic); squads.has_value())
+                    {
+                        for(size_t j = 0; j < squads.value().size() && sq < 0; j++)
+                            if(sname.empty() || lowered(squads.value()[j].name.str()) == sname)
+                                sq = static_cast<i16>(j);
+                        /* A platoon: its first squad */
+                        for(size_t j = 0; j < squads.value().size() && sq < 0; j++)
+                            if(platoon_name(list.value()[i], squads.value()[j]) == sname)
+                                sq = static_cast<i16>(j);
+                        if(sq >= 0)
+                            toon = platoon_name(list.value()[i], squads.value()[sq]);
+                    }
+                }
+        if(enc < 0 || sq < 0)
+            return log(fmt::format("ai_migrate: no squad {}", path));
+        std::set<u32> moved;
+        for(u64 id : units)
+            if(auto* actor = p.template get<Actor>(id))
+            {
+                if(auto const* net = p.template get<NetworkInfo>(id); net && net->instance_id)
+                    moved.insert(net->instance_id);
+                /* A unit new to the AI (ai_attach) fights for the encounter */
+                if(actor->encounter < 0 && actor->actv == 0)
+                    actor->team = team;
+                actor->encounter = enc;
+                actor->squad     = sq;
+                actor->migrated  = true;
+                actor->position  = -1;
+                actor->order     = Actor::order_t::none;
+            }
+        /* The names follow them: out of their old encounter and squad,
+         * into the new */
+        if(!moved.empty())
+        {
+            for(auto& [name, ids] : m_actors)
+                std::erase_if(ids, [&moved](u32 id) { return moved.contains(id); });
+            m_actors[ename].insert(m_actors[ename].end(), moved.begin(), moved.end());
+            if(!sname.empty())
+                m_actors[ename + "/" + sname].insert(
+                    m_actors[ename + "/" + sname].end(), moved.begin(), moved.end());
+            if(!toon.empty() && toon != sname)
+                m_actors[ename + "/" + toon].insert(
+                    m_actors[ename + "/" + toon].end(), moved.begin(), moved.end());
+        }
+    }
+
+    blam::scn::ai::squad const* squad_of(Actor const& actor) const
+    {
+        auto list = m_scenario->ai.encounters.data(m_magic);
+        if(!list.has_value() || actor.encounter < 0 || static_cast<size_t>(actor.encounter) >= list.value().size())
+            return nullptr;
+        auto squads = list.value()[actor.encounter].squads.data(m_magic);
+        if(!squads.has_value() || actor.squad < 0 || static_cast<size_t>(actor.squad) >= squads.value().size())
+            return nullptr;
+        return &squads.value()[actor.squad];
+    }
+
+    /* Ground close enough below to stand on */
+    bool supported(Proxy& p, u64 id, Vecf3 const& at)
+    {
+        Physics::Event   ev{Physics::Event::Raycast};
+        Physics::Raycast ray{.from = at + Vecf3{0.f, 0.f, .5f}, .to = at - Vecf3{0.f, 0.f, support_reach}, .ignore = id};
+        p.template subsystem<PhysicsBus>().process(ev, &ray);
+        return ray.hit;
+    }
+    static constexpr f32 support_reach = 2.f;
+
+    /* Maneuvering actors join the squad their platoon sends them to */
+    void maneuvers(Proxy& p)
+    {
+        if(!m_scenario)
+            return;
+        auto list = m_scenario->ai.encounters.data(m_magic);
+        if(!list.has_value())
+            return;
+        for(auto ent : p.template select<Actor>())
+        {
+            auto& actor = ent.template get<Actor>();
+            if(actor.maneuver < 0)
+                continue;
+            i16 const to = std::exchange(actor.maneuver, -1);
+            if(actor.encounter < 0 || static_cast<size_t>(actor.encounter) >= list.value().size())
+                continue;
+            auto const& enc    = list.value()[actor.encounter];
+            auto        squads = enc.squads.data(m_magic);
+            if(squads.has_value() && static_cast<size_t>(to) < squads.value().size())
+                migrate(p, {ent.id()}, fmt::format("{}/{}", enc.name.str(), squads.value()[to].name.str()));
         }
     }
 
@@ -2536,6 +2694,9 @@ struct BlamScript
             });
             carry(p, unit, true);
             seated(p, unit, vehicle, seat_idx);
+            if(auto it = m_vehicle_squads.find(vehicle); it != m_vehicle_squads.end())
+                if(auto const* actor = p.template get<Actor>(unit); actor && actor->active())
+                    migrate(p, {unit}, it->second);
         }
     }
 
@@ -2710,7 +2871,7 @@ struct BlamScript
     {
         std::optional<Vecf2> from; /* yaw, pitch at the reset */
         f32  left{0.f}, right{0.f}, up{0.f}, down{0.f}; /* furthest turned */
-        bool action{false}, accept{false}, back{false}, primary{false}, grenade{false};
+        bool action{false}, accept{false}, back{false}, primary{false}, grenade{false}, zoom{false}, jump{false};
     };
     /* Kept across resets, so a button already down does not answer a test */
     debounced_button_t m_accept_button{}, m_back_button{};
@@ -2779,6 +2940,8 @@ struct BlamScript
             m_back_button.frame_end();
             m_tests.primary |= input.intent.fire;
             m_tests.grenade |= input.intent.grenade || input.grenade.current;
+            m_tests.zoom |= input.zoom.current || input.zoom.previous;
+            m_tests.jump |= input.jump.current || input.jump.previous;
         }
     }
 
@@ -4888,6 +5051,7 @@ struct BlamScript
         i32 actor_type{-1}; /*!< Any, unless set */
     };
     std::map<u64, enterable_t> m_enterable; /*!< ai_vehicle_enterable_* */
+    std::map<u64, std::string> m_vehicle_squads; /*!< ai_vehicle_encounter */
     std::set<u64>                           m_held; /* attached, looping their custom clip */
     std::map<u64, Vecf3>                    m_walking;
     struct speaker_t
@@ -4978,6 +5142,7 @@ void alloc_scripting(compo::EntityContainer& e)
             script.m_saved.reset();
             cinematic.objective.clear();
             cinematic.hud_parts = {};
+            cinematic.hud_blink = {};
             cinematic.timer     = {};
         });
     script.m_save_queue = gbus.addQueuedEventFunction<WorldSaveEvent>(

@@ -196,11 +196,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         m_view->sprites.push_back(frame->sprite);
     }
 
-    void background(anchor_t anchor, unit_hud_interface::background_t const& bg)
+    void background(anchor_t anchor, unit_hud_interface::background_t const& bg, bool blink = false)
     {
         if(blank(bg.colors.default_color))
             return;
-        push(anchor, bg, bg.interface_bitmap, bg.sequence_index, color_of(bg.colors.default_color));
+        bool const on = lit(bg.colors, blink, m_blink_time);
+        push(anchor, bg, bg.interface_bitmap, bg.sequence_index,
+             color_of(on ? bg.colors.flashing_color : bg.colors.default_color));
     }
 
     /* The alpha a texel must stay under to light, as the shader reads it:
@@ -404,11 +406,12 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         watch.body   = health;
 
         auto const& shown = p.template subsystem<CinematicState>().hud_parts;
+        auto const& blink = p.template subsystem<CinematicState>().hud_blink;
         if(shown.health || shown.shield)
             background(hud.anchor, hud.unit_hud_background);
         if(shown.shield)
         {
-            background(hud.anchor, hud.shield_panel_background);
+            background(hud.anchor, hud.shield_panel_background, blink.shield);
             if(shield > 1.f)
                 overcharge(hud, (shield - 1.f) / (BipedStatus::over_shield - 1.f));
             else
@@ -419,18 +422,18 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             }
         }
         if(shown.health)
-            health_panel(hud, watch, health);
+            health_panel(hud, watch, health, blink.health);
         if(!shown.motion_sensor)
             return;
         /* The motion sensor keeps to the bottom left */
-        background(anchor_t::bottom_left, hud.motion_sensor_background);
-        background(anchor_t::bottom_left, hud.motion_sensor_foreground);
+        background(anchor_t::bottom_left, hud.motion_sensor_background, blink.motion_sensor);
+        background(anchor_t::bottom_left, hud.motion_sensor_foreground, blink.motion_sensor);
         motion_sensor(p, id, hud);
     }
 
-    void health_panel(unit_hud_interface const& hud, warning_t const& watch, f32 health)
+    void health_panel(unit_hud_interface const& hud, warning_t const& watch, f32 health, bool blink = false)
     {
-        background(hud.anchor, hud.health_panel_background);
+        background(hud.anchor, hud.health_panel_background, blink);
         damage_flash(hud.anchor, hud.health_panel_meter, watch.body_peak,
                      watch.body_flash / damage_flash_seconds);
         /* Health shows in three bands, not a blend: the max colour, the
@@ -1070,20 +1073,25 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
 
     /* Flashing for its first few beats of each period, as hudg's help text
      * colors say */
-    static Vecf4 flashing(unit_hud_interface::colors_t const& c, bool flash, f32 t)
+    static bool lit(unit_hud_interface::colors_t const& c, bool flash, f32 t)
     {
         using flags_t = unit_hud_interface::colors_t::flash_flags_t;
-        bool lit      = false;
+        bool on       = false;
         if(flash && c.flash_period > 0.f)
         {
             f32 const in   = std::fmod(t, c.flash_period);
             f32 const beat = c.flash_length + c.flash_delay;
             i32 const n    = beat > 0.f ? static_cast<i32>(in / beat) : 0;
-            lit            = n < c.num_flashes && in - n * beat < c.flash_length;
+            on             = n < c.num_flashes && in - n * beat < c.flash_length;
         }
         if((c.flash_flags & flags_t::reverse_default_flashing_colors) != flags_t::none)
-            lit = !lit;
-        Vecf4 const color = color_of(lit ? c.flashing_color : c.default_color);
+            on = !on;
+        return on;
+    }
+
+    static Vecf4 flashing(unit_hud_interface::colors_t const& c, bool flash, f32 t)
+    {
+        Vecf4 const color = color_of(lit(c, flash, t) ? c.flashing_color : c.default_color);
         /* Glyphs are drawn over the world, not added to it */
         return Vecf4(Vecf3(color), 1.f);
     }
@@ -1473,6 +1481,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         f32 const dt    = m_last != time_point{} ? std::chrono::duration<f32>(t - m_last).count() : 0.f;
         m_last          = t;
         m_dt            = dt;
+        m_blink_time += dt;
         if(m_feed_queue)
             m_feed_queue->poll();
         for(auto& line : m_feed)
@@ -1727,6 +1736,7 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
     static constexpr f32 letterbox_seconds = .5f;
     time_point           m_last{};
     f32                  m_dt{0.f};
+    f32                  m_blink_time{0.f}; /*!< Clock the hud_blink_* flashes beat to */
     std::shared_ptr<GameEventBus::queue_type<KillFeedEvent>> m_feed_queue;
     std::vector<feed_t>                                      m_feed;
     std::vector<std::u16string>                              m_game_text;

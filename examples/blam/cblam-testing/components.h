@@ -1141,6 +1141,8 @@ struct Actor
     libc_types::i16 variant{-1}; /*!< Its actor palette entry, kept across migrations */
     libc_types::u32 actv{0};     /*!< Its variant's tag, when outside any encounter (a vehicle's built-in gunner) */
     bool            migrated{false}; /*!< ai_migrate moved it: it guards its squad's positions, not its post */
+    libc_types::i16 maneuver{-1};    /*!< Squad its platoon's maneuver sends it to; scripts move it there */
+    bool            no_maneuver{false}; /*!< ai_maneuver_enable false: its platoon's cause won't move it */
     libc_types::i16 idle_state{0};   /*!< blam::scn::ai::state_t it was placed in: patrols, guarding */
     libc_types::i32 move_at{-1};     /*!< The squad move position it patrols toward */
     libc_types::f32 move_wait{0.f};  /*!< Until it walks on from there */

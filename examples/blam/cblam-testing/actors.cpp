@@ -119,7 +119,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         /* Looked up each frame: a map loading in replaces what a cached
          * pointer saw */
         m_difficulty = difficulty_block(files);
-        m_level = p.template subsystem<GameState>().difficulty;
+        m_level    = p.template subsystem<GameState>().difficulty;
+        m_grenades_ok = p.template subsystem<GameState>().ai_grenades;
+        m_preferred   = &p.template subsystem<GameState>().preferred_targets;
+        m_dialogue_ok = p.template subsystem<GameState>().ai_dialogue;
         refresh_nav(p);
         hear(p);
         if((m_obstacles_in -= dt) <= 0.f)
@@ -713,6 +716,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         bool defending{false};
         bool started{false};
+        bool maneuvered{false};
         u32  alive{0};
         u32  total{0};
         u32  leaders{0}; /*!< Living actors of the leader type */
@@ -776,10 +780,35 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                                        : whole[key.first];
             if(pl.alive > 0 && kept.defending != switched && cause.event != cause_t::never && holds(cause.event, of))
                 kept.defending = switched;
+            /* Its maneuver cause sends its squads on to theirs, once */
+            auto const& when   = tag.maneuver_when;
+            auto const  seen   = m_platoons.find(std::pair{key.first, when.target});
+            platoon_t const& w = when.target >= 0 && static_cast<size_t>(when.target) < platoons.value().size()
+                                     ? (seen != m_platoons.end() ? seen->second : platoon_t{})
+                                     : whole[key.first];
+            if(!kept.maneuvered && pl.alive > 0 && when.event != cause_t::never && holds(when.event, w))
+            {
+                kept.maneuvered = true;
+                maneuver(p, key);
+            }
             /* Leaders gone: the followers scatter */
             if(pl.leaders == 0 && kept.leaders > 0)
                 panic(p, key);
             kept.leaders = pl.leaders;
+        }
+    }
+
+    void maneuver(Proxy& p, std::pair<i16, i16> const& key)
+    {
+        for(auto ent : p.template select<Actor, BipedStatus>())
+        {
+            auto [actor, status] = ent.components();
+            if(actor.encounter != key.first || actor.no_maneuver || status.dead)
+                continue;
+            auto const* kind = kind_of(p, actor);
+            if(kind && kind->squad && kind->squad->platoon == static_cast<u16>(key.second) &&
+               kind->squad->maneuver_to_squad >= 0)
+                actor.maneuver = kind->squad->maneuver_to_squad;
         }
     }
 
@@ -930,7 +959,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         auto  consider = [&](u64 other, Model const& target, u64 vehicle, bool quiet, bool cloaked) {
             Vecf3 const to = target.position + chest_of(p, other) - eye;
             f32 const   d  = glm::length(to);
-            if(d >= best_d || d < 1e-3f)
+            /* A preferred target counts as much nearer */
+            f32 const rank = m_preferred && m_preferred->contains(other) ? d * preferred_scale : d;
+            if(rank >= best_d || d < 1e-3f)
                 return;
             /* Camouflage goes unseen and unheard but up close; its shots
              * still give it away (hear) */
@@ -964,7 +995,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     return;
             }
             best   = other;
-            best_d = d;
+            best_d = rank;
         };
         auto moving = [&p](u64 other) {
             auto const* physics = p.template get<ObjectPhysics>(other);
@@ -2259,7 +2290,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.taunt_in <= 0.f || (actor.taunt_in -= dt) > 0.f)
             return;
         actor.taunt_in = 0.f;
-        if(m_taunt_in > 0.f)
+        if(m_taunt_in > 0.f || !m_dialogue_ok)
             return;
         auto const* dialogue = dialogue_of(p, id);
         auto*       sounds   = p.template service<comp_app::EventBus<SoundEvent>>();
@@ -2448,7 +2479,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         deal_grenades(actor, actv);
-        if(actor.grenades == 0 || actv.grenade_chance <= 0.f)
+        if(!m_grenades_ok || actor.grenades == 0 || actv.grenade_chance <= 0.f)
             return;
         actor.grenade_in -= look_period / 8.f;
         if(actor.grenade_in > 0.f)
@@ -2600,6 +2631,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     std::vector<blam::globals::grenade const*>                       m_grenades;
     blam::globals::difficulty const*                                 m_difficulty{nullptr};
     u16                                                              m_level{1};
+    bool                                                             m_grenades_ok{true};
+    bool                                                             m_dialogue_ok{true};
+    std::set<u64> const*                                             m_preferred{nullptr};
+    static constexpr f32                                             preferred_scale = .25f;
     f32                                                              m_taunt_in{0.f};
     NavMesh                                                          m_nav;
     BSPItem const*                                                   m_nav_item{nullptr};
@@ -2618,7 +2653,12 @@ void alloc_actors(compo::EntityContainer& e)
         .create();
     auto& gbus     = e.subsystem_cast<GameEventBus>();
     actors.m_ticks = std::make_unique<TickQueue>(gbus);
-    gbus.addEventFunction<MapLoadEvent>(0, [&actors, &allegiance](auto&, auto*) {
+    gbus.addEventFunction<MapLoadEvent>(0, [&actors, &allegiance, &e](auto&, auto*) {
+        auto& game        = e.subsystem_cast<GameState>();
+        game.ai_enabled   = true;
+        game.ai_grenades  = true;
+        game.ai_dialogue  = true;
+        game.preferred_targets.clear();
         actors.m_scenario = nullptr;
         allegiance.reset();
         actors.m_heard.clear();

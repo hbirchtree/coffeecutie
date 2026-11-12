@@ -963,7 +963,9 @@ struct squad
         automatic_migration     = 0x20,
     } flags;
 
-    u32               unk1[9];
+    u32               unk1[8];
+    u16               unk1b;
+    i16               maneuver_to_squad; /*!< Where its platoon's maneuver takes it, -1 = stays */
     f32               delay_time; /*!< Seconds the squad holds its posts once its timer runs */
     u32               attacking;
     u32               attacking_search;

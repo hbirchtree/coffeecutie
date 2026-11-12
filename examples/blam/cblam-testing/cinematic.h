@@ -76,6 +76,13 @@ struct CinematicState : compo::SubsystemBase
         bool motion_sensor{true};
         bool crosshair{true};
     } hud_parts;
+    /*! hud_blink_*: panels flash in their backgrounds' flashing colours */
+    struct hud_blink_t
+    {
+        bool health{false};
+        bool shield{false};
+        bool motion_sensor{false};
+    } hud_blink;
 
     /* The HUD countdown: hud_set_timer_time and friends */
     struct timer_t
@@ -94,4 +101,7 @@ struct CinematicState : compo::SubsystemBase
     bool playing{false};
     bool show_hud{true};
     bool input{true};
+    bool camera_control{true}; /*!< player_camera_control: players may look around */
+    bool invert_pitch{false};  /*!< player0_look_invert_pitch: player 0 looks up by pushing down */
+    libc_types::u32 unzooms{0}; /*!< players_unzoom_all calls: each takes every zoom back out */
 };

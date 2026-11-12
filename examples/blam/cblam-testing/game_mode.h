@@ -8,6 +8,7 @@
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include <array>
+#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -67,6 +68,9 @@ struct GameState : compo::SubsystemBase
     f32 vehicle_respawn{default_vehicle_respawn};
     static constexpr f32 default_vehicle_respawn = 60.f;
     bool                   ai_enabled{true}; /*!< Scripts' ai_enable: actors think */
+    bool                   ai_grenades{true}; /*!< Scripts' ai_grenades: actors throw them */
+    bool                   ai_dialogue{true}; /*!< ai_dialogue_triggers: actors speak up in combat */
+    std::set<libc_types::u64> preferred_targets; /*!< ai_prefer_target: picked over nearer ones */
     u32                    saves{0};   /*!< Checkpoints taken */
     u32                    reverts{0}; /*!< Times sent back to one */
     /*! Sent back since the last checkpoint: game_reverted, which a skipped
