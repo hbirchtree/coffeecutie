@@ -77,6 +77,9 @@ struct UIScreen
     blam::vec4i16        box{0, 0, 640, 480};
     generation_idx_t     home; /*!< shown by UINavigation::open */
     std::vector<frame_t> stack; /*!< back() is on screen; empty = closed */
+    /* Pause menus by split-screen player count, sorted; opened in the
+     * pausing player's viewport */
+    std::vector<std::pair<u32, generation_idx_t>> variants;
 
     /* Selected value of each spinner_list, until settings back them */
     std::vector<std::pair<blam::ui_element const*, u16>> spinner_values;
@@ -865,6 +868,37 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             cDebug("UI: return to main menu requested, closing instead");
             screen.stack.clear();
         }
+    }
+
+    /* The pause menu sized for the split, over the pausing seat's view:
+     * one, two stacked, or quarters as the world is drawn */
+    void place_pause(UIScreen& screen, HudScene const& hud, u32 seat) const
+    {
+        u32 const views = std::max<u32>(hud.views.size(), 1);
+        u32       k     = 0;
+        for(u32 i = 0; i < hud.views.size(); i++)
+            if(hud.views[i].seat == seat)
+                k = i;
+        screen.seat  = seat;
+        screen.home  = screen.variants.back().second;
+        screen.box.x = screen.box.y = 0;
+        /* PC ships only the full-screen menu */
+        if(screen.variants.back().first < views)
+            return;
+        for(auto const& [players, widget] : screen.variants)
+            if(players >= views)
+            {
+                screen.home = widget;
+                break;
+            }
+        /* UI space is 480 high and centred, so a wide screen's quarters
+         * are centred off the 4:3 ones */
+        f32 const aspect = screen_size.y > 0.f ? screen_size.x / screen_size.y : 4.f / 3.f;
+        f32 const centre = 320.f + (k % 2 ? 120.f : -120.f) * aspect;
+        screen.box.x     = views <= 2 ? 0 : static_cast<i16>(centre - 160.f);
+        screen.box.y = views <= 1   ? 0
+                       : views == 2 ? static_cast<i16>(240 * k)
+                                    : static_cast<i16>(240 * (k / 2));
     }
 
     /* Events enter at the root and move down the focus path while the
@@ -2014,7 +2048,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 if(!screen.accepts(nav.seat_idx))
                     continue;
                 bool const was_open = !screen.stack.empty();
+                if(nav.action == UINavigation::open && !was_open && !screen.variants.empty())
+                    place_pause(screen, e.subsystem<HudScene>(), nav.seat_idx);
                 apply(screen, nav);
+                if(!screen.variants.empty() && screen.stack.empty())
+                    screen.seat = UIScreen::any_seat;
                 if(was_open && screen.stack.empty() &&
                    nav.action != UINavigation::close)
                 {
@@ -2553,6 +2591,8 @@ void load_ui_items(
         auto  ref    = e.create_entity(rec);
         auto& screen = ref.get<UIScreen>();
         screen.home  = selected_id;
+        for(auto const& v : pause_variants)
+            screen.variants.emplace_back(v.players, v.id);
         /* The UI map is the main menu, so it starts open */
         if(data.container.map->map_type == blam::maptype_t::ui)
         {
