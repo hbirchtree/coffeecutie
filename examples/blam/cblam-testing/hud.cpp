@@ -1523,7 +1523,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return input && input->scores;
         });
         if(game.kind == GameState::kind_t::multiplayer &&
-           (asked || game.phase == GameState::phase_t::over))
+           (asked || game.shows_results()))
             scoreboard(p, game, screen);
         Vecf2 const view = seats.size() <= 1   ? screen
                            : seats.size() == 2 ? Vecf2(screen.x, screen.y / 2)

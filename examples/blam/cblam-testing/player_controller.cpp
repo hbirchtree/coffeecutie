@@ -155,8 +155,7 @@ struct PlayerController
                 }
                 /* The dead wait to come back, and nobody plays on once the
                  * game is over */
-                bool const over =
-                    p.template subsystem<GameState>().phase == GameState::phase_t::over;
+                bool const over = p.template subsystem<GameState>().shows_results();
                 if(auto const* status = p.template get<BipedStatus>(player.id());
                    ((status && status->dead) || over) && info.mode.physics)
                 {
