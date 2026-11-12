@@ -644,11 +644,10 @@ struct BlamScript
     BLAM_OPTIONAL_OP(activate_nav_point_object, -3);
     BLAM_OPTIONAL_OP(deactivate_nav_point_flag, -4);
     BLAM_OPTIONAL_OP(deactivate_nav_point_object, -5);
-    BLAM_OPTIONAL_OP(vehicle_driver, -6);
-    BLAM_OPTIONAL_OP(vehicle_gunner, -7);
-    BLAM_OPTIONAL_OP(vehicle_test_seat, -8);
     BLAM_OPTIONAL_OP(objects_distance_to_object, -9);
-    BLAM_OPTIONAL_OP(unit_has_weapon, -10);
+    BLAM_OPTIONAL_OP(bitwise_and, -11);
+    BLAM_OPTIONAL_OP(bitwise_right_shift, -12);
+    BLAM_OPTIONAL_OP(mcc_mission_segment, -13);
 #undef BLAM_OPTIONAL_OP
 
     value_t native(
@@ -1191,10 +1190,10 @@ struct BlamScript
         }
         /* Who sits where the seat's flags say: the driver's, a gunner's,
          * or one by its label */
-        case vehicle_driver_op:
-        case vehicle_gunner_op: {
+        case op::vehicle_driver:
+        case op::vehicle_gunner: {
             using seat_flags_t = blam::scn::unit::seat_t::seat_flags_t;
-            auto const want = opcode == vehicle_driver_op ? seat_flags_t::driver : seat_flags_t::gunner;
+            auto const want = opcode == op::vehicle_driver ? seat_flags_t::driver : seat_flags_t::gunner;
             auto const vehicles = objects_of(p, arg(0));
             value_t out{.type = call.ret_type};
             if(!vehicles.empty())
@@ -1206,7 +1205,7 @@ struct BlamScript
                     }
             return out;
         }
-        case vehicle_test_seat_op: {
+        case op::vehicle_test_seat: {
             auto const vehicles = objects_of(p, arg(0));
             auto const units    = objects_of(p, arg(2));
             std::string const label = lowered(text_of(arg(1)));
@@ -1279,7 +1278,7 @@ struct BlamScript
             return {};
         }
         /* Whether the unit carries the weapon, in hand or slung */
-        case unit_has_weapon_op: {
+        case op::unit_has_weapon: {
             auto const  units = objects_of(p, arg(0));
             auto const* equip = units.empty() ? nullptr : p.template get<BipedEquipment>(units.front());
             auto const  kind  = m_tags.find(static_cast<u32>(arg(1).integer));
@@ -1494,6 +1493,22 @@ struct BlamScript
                 };
                 p.template subsystem<GameEventBus>().inject(ev, &change);
             }
+            return {};
+        /* MCC's bit operations on longs */
+        case bitwise_and_op:
+        case bitwise_right_shift_op: {
+            /* Exact as longs: as reals they'd lose bits past 2^24 */
+            auto const whole = [](value_t const& v) {
+                return static_cast<u32>(v.type == type_t::real_ ? static_cast<i32>(v.real) : v.integer);
+            };
+            u32 const a = whole(arg(0)), b = whole(arg(1));
+            u32 const r = opcode == bitwise_and_op ? (a & b) : (b < 32 ? a >> b : 0u);
+            value_t   out = value_t::number(call.ret_type, static_cast<f32>(static_cast<i32>(r)));
+            out.integer   = static_cast<i32>(r);
+            return out;
+        }
+        /* MCC's mission progress for its menus: nothing here keeps it */
+        case mcc_mission_segment_op:
             return {};
         /* Its weapon and grenades die with it */
         case op::unit_doesnt_drop_items:
