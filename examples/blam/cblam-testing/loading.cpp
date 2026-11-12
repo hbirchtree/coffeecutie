@@ -2783,6 +2783,8 @@ struct ResourceLoader
                     biped_model.shape.pitch_range = biped->pitch_range;
                 if(biped->crouching_camera_height > 0.f)
                     biped_model.shape.crouch_eye_height = biped->crouching_camera_height;
+                if(biped->crouching_collision_height > 0.f)
+                    biped_model.shape.crouch_height = biped->crouching_collision_height;
                 if(biped->crouch_transition_time > 0.f)
                     biped_model.shape.crouch_time = biped->crouch_transition_time;
                 if(biped->crouch_velocity_modifier > 0.f)
