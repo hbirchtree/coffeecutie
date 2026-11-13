@@ -1,7 +1,9 @@
 #include "render/rendering.h"
 #include "render/effect_drawing.h"
+#ifndef DISABLE_GAMEPLAY_RENDERERS
 #include "render/gravity_storm.h"
 #include "render/monitors.h"
+#endif
 
 #include "caching/caching.h"
 #include "caching/caching_item.h"
@@ -5405,8 +5407,10 @@ void alloc_renderer(EntityContainer& container)
             std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
             std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
         container.register_subsystem_inplace<RenderHooks>();
+#ifndef DISABLE_GAMEPLAY_RENDERERS
         alloc_gravity_storm(container);
         alloc_monitors(container);
+#endif
 #ifndef DISABLE_LOADING_SCREEN
         container.register_subsystem_inplace<LoadingScreen>();
 #endif

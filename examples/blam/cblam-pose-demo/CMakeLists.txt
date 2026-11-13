@@ -51,6 +51,8 @@ target_compile_definitions(BlamPoseDemo
     PUBLIC
     -DBLAM_HALO_VERSION=${BLAM_HALO_VERSION}
     -DDISABLE_LOADING_SCREEN=1
+    # Gravity storm and monitors draw game objects the demo has none of
+    -DDISABLE_GAMEPLAY_RENDERERS=1
 )
 
 set_target_properties(
