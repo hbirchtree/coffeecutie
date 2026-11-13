@@ -123,8 +123,8 @@ DVD_DIR=$P/sys/main.dol .github/tests/dolphin/dolphin.sh \
 
 ## Without a disc
 
-Booted without one (say a DOL from Swiss), BlamGX looks for its files in a
-`BlamGX` folder on the SD card instead: the map, `loading.tpl`, `gateway.txt`
+Booted without one (say a DOL from Swiss), asset paths resolve to a `BlamGX`
+folder on the SD card instead, so BlamGX finds its files there: the map, `loading.tpl`, `gateway.txt`
 and, for PC maps, `bitmaps.map`, as they are in the disc's `files/`. An SD2SP2
 is tried first, then an adapter in either memory card slot.
 

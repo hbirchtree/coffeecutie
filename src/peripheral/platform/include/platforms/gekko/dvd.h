@@ -287,6 +287,12 @@ inline bool mount()
     return true;
 }
 
+/* Whether a disc was found and its files are at dvd:/ */
+inline bool mounted()
+{
+    return detail::g_ready;
+}
+
 /* Convenience direct read (whole file by basename). */
 inline bool read_file(std::string const& name, std::vector<u8>& out)
 {

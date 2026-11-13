@@ -363,36 +363,28 @@ static blam::map_ptr            g_internal_magic;
 #if defined(COFFEE_GEKKO)
 static platform::file::gekko::vmem::mapping g_map_window;
 
-/* Without a disc, the game's files come from this folder on the SD card */
-static constexpr char const* kSdFolder = "sd:/BlamGX/";
-
-static std::string sd_path(char const* name)
+/* A game file's path: on the disc when there is one, else in the app's folder
+ * on the SD card, as asset URLs resolve */
+static std::string game_path(char const* name)
 {
-    return std::string(kSdFolder) + name;
+    return *platform::url::constructors::MkUrl(name, RSCA::AssetFile);
 }
 
-/* A game file's size, off the disc when there is one, else the SD card */
 static std::optional<u32> game_file_size(char const* name)
 {
-    if(auto const* e = platform::file::gekko::dvd::detail::find(name))
-        return e->size;
     struct stat st{};
-    if(stat(sd_path(name).c_str(), &st) == 0 && st.st_size >= 0)
+    if(stat(game_path(name).c_str(), &st) == 0 && st.st_size >= 0)
         return static_cast<u32>(st.st_size);
     return std::nullopt;
 }
 
 static bool read_game_file(char const* name, void* dst, u32 len, u32 off = 0)
 {
-    namespace dvd = platform::file::gekko::dvd;
-    if(auto const* e = dvd::detail::find(name))
-        return off + len <= e->size &&
-               dvd::detail::read_at(dst, len, e->off + off);
     // Kept open: bitmaps.map is read an image at a time
     static std::map<std::string, FILE*> open;
     auto&                               file = open[name];
     if(!file)
-        file = fopen(sd_path(name).c_str(), "rb");
+        file = fopen(game_path(name).c_str(), "rb");
     return file && fseek(file, static_cast<long>(off), SEEK_SET) == 0 &&
            fread(dst, 1, len, file) == len;
 }
@@ -401,14 +393,10 @@ static bool read_game_file(char const* name, void* dst, u32 len, u32 off = 0)
 static semantic::BytesConst load_map_bytes()
 {
 #if defined(COFFEE_GEKKO)
-    namespace vmem = platform::file::gekko::vmem;
-    g_map_window   = vmem::map(MAP_NAME);
-    if(!g_map_window)
-    {
-        g_map_window = vmem::map_file(sd_path(MAP_NAME).c_str());
-        if(g_map_window)
-            LOG("map from the SD card");
-    }
+    auto const url =
+        platform::url::constructors::MkUrl(MAP_NAME, RSCA::AssetFile);
+    LOG("map at %s", (*url).c_str());
+    g_map_window = platform::file::gekko::vmem::map(url);
     if(!g_map_window)
         return {};
     return semantic::BytesConst::ofBytes(g_map_window.base, g_map_window.size);

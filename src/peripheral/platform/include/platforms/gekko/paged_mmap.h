@@ -15,7 +15,8 @@
  * eviction; unmapping a region frees its frames.
  */
 
-#include <platforms/gekko/dvd.h> // FST lookup for DVD-backed regions
+#include <platforms/gekko/dvd.h>
+#include <url/url.h> // FST lookup for DVD-backed regions
 
 #include <tuxedo/ppc/context.h>
 #include <tuxedo/ppc/exception.h>
@@ -615,6 +616,18 @@ inline mapping map_file(char const* path)
             detail::g_aram.free(aoff, rounded);
     }
     return {reinterpret_cast<u8*>(static_cast<uintptr_t>(base)), size};
+}
+
+/* Map an asset by URL: off the disc for dvd:/ paths, else through the
+ * filesystem. Where assets resolve to (disc or SD card) is the URL's say */
+inline mapping map(url::Url const& file)
+{
+    std::string const          path = *file;
+    constexpr std::string_view disc = "dvd:/";
+    if(path.starts_with(disc))
+        return map(
+            path.substr(path.find_first_not_of('/', disc.size())).c_str());
+    return map_file(path.c_str());
 }
 
 /* Drop a mapping: free its frames/PTEs, region slot, and VA/ARAM ranges. */
