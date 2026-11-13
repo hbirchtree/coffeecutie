@@ -1,6 +1,6 @@
 coffee_application(
   TARGET BlamGX
-  TITLE "Blam BSP (GX)"
+  TITLE "BlamGX"
   SOURCES main.cpp
   LIBRARIES Core EntComp ComponentBundleSetup Blam
   RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/resources

@@ -12,6 +12,10 @@
 #include <platforms/pimpl_state.h>
 #include <platforms/profiling.h>
 
+#if defined(COFFEE_GEKKO)
+#include <platforms/gekko/dvd.h>
+#endif
+
 #if defined(COFFEE_EMSCRIPTEN)
 #include <fmt/core.h>
 #include <platforms/emscripten/fsio.h>
@@ -265,8 +269,12 @@ STATICINLINE SystemPaths& GetSystemPaths()
 
 #elif defined(COFFEE_GEKKO)
 
-    /* DVD for read-only assets, SD for config/tmp */
-    paths.assetDir  = MkUrl("dvd:/", RSCA::SystemFile);
+    /* Assets off the disc when there is one, else from the app's folder on
+     * the SD card; SD for config/tmp */
+    paths.assetDir =
+        file::gekko::dvd::mounted()
+            ? MkUrl("dvd:/", RSCA::SystemFile)
+            : MkUrl("sd:/" + appData.application_name, RSCA::SystemFile);
     paths.configDir = MkUrl("sd:/", RSCA::SystemFile);
     paths.tempDir   = MkUrl("sd:/", RSCA::SystemFile);
     paths.cacheDir  = paths.tempDir;
