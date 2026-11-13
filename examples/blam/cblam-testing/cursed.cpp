@@ -62,7 +62,10 @@ struct RS2CacheLoader
         , loader(cache_path)
     {
         this->priority = 3080;
-        region_vao     = api.alloc_vertex_array();
+        /* The RS2 world lies far outside the Halo section's box */
+        Physics::Event open{.type = Physics::Event::OpenBounds};
+        physics.process(open, nullptr);
+        region_vao = api.alloc_vertex_array();
         region_vao->alloc();
         region_vao->add(
             gfx::vertex_attribute{
