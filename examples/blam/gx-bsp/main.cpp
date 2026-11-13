@@ -59,6 +59,7 @@
 #include <ogc/pad.h>
 #include <platforms/gekko/dvd.h>
 #include <platforms/gekko/paged_mmap.h>
+#include <sys/stat.h>
 
 #include "effects.h"
 #include "loading_screen.h"
@@ -361,12 +362,53 @@ static blam::map_ptr            g_internal_magic;
 
 #if defined(COFFEE_GEKKO)
 static platform::file::gekko::vmem::mapping g_map_window;
+
+/* Without a disc, the game's files come from this folder on the SD card */
+static constexpr char const* kSdFolder = "sd:/BlamGX/";
+
+static std::string sd_path(char const* name)
+{
+    return std::string(kSdFolder) + name;
+}
+
+/* A game file's size, off the disc when there is one, else the SD card */
+static std::optional<u32> game_file_size(char const* name)
+{
+    if(auto const* e = platform::file::gekko::dvd::detail::find(name))
+        return e->size;
+    struct stat st{};
+    if(stat(sd_path(name).c_str(), &st) == 0 && st.st_size >= 0)
+        return static_cast<u32>(st.st_size);
+    return std::nullopt;
+}
+
+static bool read_game_file(char const* name, void* dst, u32 len, u32 off = 0)
+{
+    namespace dvd = platform::file::gekko::dvd;
+    if(auto const* e = dvd::detail::find(name))
+        return off + len <= e->size &&
+               dvd::detail::read_at(dst, len, e->off + off);
+    // Kept open: bitmaps.map is read an image at a time
+    static std::map<std::string, FILE*> open;
+    auto&                               file = open[name];
+    if(!file)
+        file = fopen(sd_path(name).c_str(), "rb");
+    return file && fseek(file, static_cast<long>(off), SEEK_SET) == 0 &&
+           fread(dst, 1, len, file) == len;
+}
 #endif
 
 static semantic::BytesConst load_map_bytes()
 {
 #if defined(COFFEE_GEKKO)
-    g_map_window = platform::file::gekko::vmem::map(MAP_NAME);
+    namespace vmem = platform::file::gekko::vmem;
+    g_map_window   = vmem::map(MAP_NAME);
+    if(!g_map_window)
+    {
+        g_map_window = vmem::map_file(sd_path(MAP_NAME).c_str());
+        if(g_map_window)
+            LOG("map from the SD card");
+    }
     if(!g_map_window)
         return {};
     return semantic::BytesConst::ofBytes(g_map_window.base, g_map_window.size);
@@ -416,12 +458,11 @@ static gx_loading::screen_t g_loading;
 /* The loading still, made from loading.png by the resource build */
 static void start_loading_screen(gexxo::api& gfx)
 {
-    namespace dvd = platform::file::gekko::dvd;
-    auto const* e = dvd::detail::find("loading.tpl");
-    if(!e)
+    auto const size = game_file_size("loading.tpl");
+    if(!size)
         return;
-    std::vector<u8> tpl(e->size);
-    if(!dvd::detail::read_at(tpl.data(), e->size, e->off))
+    std::vector<u8> tpl(*size);
+    if(!read_game_file("loading.tpl", tpl.data(), *size))
         return;
     g_loading.begin(gfx, tpl);
     platform::file::gekko::vmem::set_stage_progress(
@@ -2088,15 +2129,8 @@ static bool read_bitmap_pixels(
 #if defined(COFFEE_GEKKO)
     if(shared)
     {
-        static u32 const bmap_off = [] {
-            auto const* e =
-                platform::file::gekko::dvd::detail::find("bitmaps.map");
-            return e ? e->off : 0u;
-        }();
-        if(!bmap_off)
-            return false;
-        return platform::file::gekko::dvd::detail::read_at(
-            out.data(), size, bmap_off + from_le(img.offset));
+        return read_game_file(
+            "bitmaps.map", out.data(), size, from_le(img.offset));
     }
 #endif
     auto pix =
@@ -3040,12 +3074,11 @@ static Vecf4 const kAimingHand{0.1f, 0.f, 0.15f, 0.f};
  * no networking */
 static void start_network()
 {
-    namespace dvd = platform::file::gekko::dvd;
-    auto const* e = dvd::detail::find("gateway.txt");
-    if(!e || !e->size || e->size > 256)
+    auto const size = game_file_size("gateway.txt");
+    if(!size || !*size || *size > 256)
         return;
-    std::string cfg(e->size, '\0');
-    if(!dvd::detail::read_at(cfg.data(), e->size, e->off))
+    std::string cfg(*size, '\0');
+    if(!read_game_file("gateway.txt", cfg.data(), *size))
         return;
     while(!cfg.empty() && std::isspace(static_cast<u8>(cfg.back())))
         cfg.pop_back();

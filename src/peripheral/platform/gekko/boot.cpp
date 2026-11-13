@@ -66,7 +66,9 @@ void mount_storage()
     } else
         printf("- DVD mount failed (no disc?)\n");
 
-    if(fatMountSimple("sd", &__io_gcsda))
+    // SD2SP2 under the console first, then an adapter in either card slot
+    if(fatMountSimple("sd", &__io_gcsd2) || fatMountSimple("sd", &__io_gcsda) ||
+       fatMountSimple("sd", &__io_gcsdb))
         printf("- SD mounted read/write at sd:/\n");
     else
         printf("- SD not present (sd:/ unavailable)\n");
