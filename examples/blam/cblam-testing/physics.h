@@ -48,6 +48,7 @@ struct Event
                 * simulation before the old map's memory goes away. */
         UnitStruck, /*!< A moving vehicle ran into a unit */
         Blast,      /*!< An explosion throws what is near */
+        OpenBounds, /*!< Bounds stop at the section's box, for worlds beyond it */
     } type{};
 };
 
@@ -317,6 +318,11 @@ struct ProbeHere
 struct Reset
 {
     static constexpr auto event_type = Event::Reset;
+};
+
+struct OpenBounds
+{
+    static constexpr auto event_type = Event::OpenBounds;
 };
 
 } // namespace Physics

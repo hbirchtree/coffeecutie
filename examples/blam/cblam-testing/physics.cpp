@@ -2063,31 +2063,51 @@ struct PhysicsSystem
     }
 
     /* Planes on the section's world bounds, facing in: objects flung out of
-     * the level stop at its box instead of falling forever */
+     * the level stop at its box instead of falling forever. Open bounds are
+     * slabs instead, which leave far-off places (the RS2 world) alone */
     void build_bounds(BSPItem const& item)
     {
         clear_bounds();
         auto [p1, p2]  = item.mesh->world_bounds.points();
         Vecf3 const lo = glm::min(p1, p2);
         Vecf3 const hi = glm::max(p1, p2);
-        std::array<std::pair<btVector3, f32>, 6> const planes = {{
-            {{0, 0, 1}, lo.z},
-            {{0, 0, -1}, -hi.z},
-            {{1, 0, 0}, lo.x},
-            {{-1, 0, 0}, -hi.x},
-            {{0, 1, 0}, lo.y},
-            {{0, -1, 0}, -hi.y},
-        }};
-        for(auto const& [normal, distance] : planes)
-        {
-            auto shape = std::make_unique<btStaticPlaneShape>(normal, distance);
-            btRigidBody::btRigidBodyConstructionInfo info(0.f, nullptr, shape.get());
-            info.m_startWorldTransform.setIdentity();
-            auto body = std::make_unique<btRigidBody>(info);
-            body->setFriction(1.f);
-            m_world->addRigidBody(body.get());
-            m_bounds.push_back({std::move(shape), std::move(body)});
-        }
+        Vecf3 const centre = (lo + hi) * .5f;
+        Vecf3 const half   = (hi - lo) * .5f + bounds_depth;
+        for(u32 axis = 0; axis < 3; axis++)
+            for(f32 sign : {1.f, -1.f})
+            {
+                f32 const face = sign > 0.f ? lo[axis] : hi[axis];
+                btTransform at;
+                at.setIdentity();
+                std::unique_ptr<btCollisionShape> shape;
+                if(m_open_bounds)
+                {
+                    Vecf3 extent = half, origin = centre;
+                    extent[axis] = bounds_depth * .5f;
+                    origin[axis] = face - sign * bounds_depth * .5f;
+                    shape        = std::make_unique<btBoxShape>(
+                        btVector3(extent.x, extent.y, extent.z));
+                    at.setOrigin(btVector3(origin.x, origin.y, origin.z));
+                } else
+                {
+                    btVector3 normal(0, 0, 0);
+                    normal[axis] = sign;
+                    shape = std::make_unique<btStaticPlaneShape>(normal, sign * face);
+                }
+                btRigidBody::btRigidBodyConstructionInfo info(0.f, nullptr, shape.get());
+                info.m_startWorldTransform = at;
+                auto body = std::make_unique<btRigidBody>(info);
+                body->setFriction(1.f);
+                m_world->addRigidBody(body.get());
+                m_bounds.push_back({std::move(shape), std::move(body)});
+            }
+    }
+
+    void open_bounds()
+    {
+        m_open_bounds = true;
+        if(m_world_item && m_world_item->mesh && !m_bounds.empty())
+            build_bounds(*m_world_item);
     }
 
     void clear_bounds()
@@ -3499,9 +3519,12 @@ struct PhysicsSystem
     std::unique_ptr<btBvhTriangleMeshShape>     m_world_shape;
     std::unique_ptr<btRigidBody>                m_world_body;
     std::vector<std::pair<
-        std::unique_ptr<btStaticPlaneShape>,
+        std::unique_ptr<btCollisionShape>,
         std::unique_ptr<btRigidBody>>>
         m_bounds;
+    bool m_open_bounds{false};
+    /* Thickness of open bounds, wu */
+    static constexpr f32 bounds_depth = 64.f;
     std::unique_ptr<btSphereShape>              m_probe_shape;
     std::unique_ptr<btRigidBody>                m_probe_body;
 
@@ -4041,6 +4064,10 @@ void alloc_physics(compo::EntityContainer& container)
     phys_bus.addEventFunction<Physics::Reset>(
         0, [&physics](Physics::Event&, Physics::Reset*) {
             physics.reset_world();
+        });
+    phys_bus.addEventFunction<Physics::OpenBounds>(
+        0, [&physics](Physics::Event&, Physics::OpenBounds*) {
+            physics.open_bounds();
         });
     physics.m_blast_queue = phys_bus.addQueuedEventFunction<Physics::Blast>(
         0, [&physics](Physics::Event&, Physics::Blast* blast) {
