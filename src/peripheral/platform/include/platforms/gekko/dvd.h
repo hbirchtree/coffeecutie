@@ -15,6 +15,7 @@
  */
 
 #include <ogc/dvd.h>
+#include <ogc/lwp_watchdog.h>
 
 #include <sys/iosupport.h>
 #include <sys/reent.h>
@@ -253,7 +254,23 @@ inline bool mount()
         return true;
 
     DVD_Init();
-    DVD_Mount();
+    // DVD_Mount() waits for a disc to be put in; without one, carry on
+    static dvdcmdblk mounting;
+    if(!DVD_MountAsync(&mounting, nullptr))
+        return false;
+    for(u64 const start = gettime();;)
+    {
+        s32 const state = DVD_GetCmdBlockStatus(&mounting);
+        if(state == DVD_STATE_END)
+            break;
+        if(state == DVD_STATE_FATAL_ERROR || state == DVD_STATE_NO_DISK ||
+           state == DVD_STATE_COVER_OPEN || state == DVD_STATE_CANCELED ||
+           ticks_to_millisecs(gettime() - start) > 5000)
+        {
+            DVD_CancelAllAsync(nullptr);
+            return false;
+        }
+    }
 
     u8* h = static_cast<u8*>(memalign(32, 0x40));
     if(!h)
