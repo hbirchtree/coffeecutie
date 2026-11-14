@@ -626,7 +626,7 @@ jobs:
     if: ${{ always() }}
     name: "Software render test (SwiftShader, ${{ matrix.variant }}-emscripten, WebGL2)"
     needs: WebAssembly
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       actions: read
@@ -692,7 +692,7 @@ jobs:
     - Linux
     - WebAssembly
     - WebRTCGateway
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       actions: read
@@ -802,7 +802,7 @@ jobs:
     needs:
     - WebAssembly
     - WebRTCGateway
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       actions: read
@@ -879,7 +879,7 @@ jobs:
     needs:
     - Linux
     - WebAssembly
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       actions: read
