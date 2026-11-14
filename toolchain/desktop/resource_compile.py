@@ -194,8 +194,11 @@ def shader_dependencies(shader_file: str, cache_directory: str):
 
 def run(program, *args):
     program = PROGRAMS[program]
-    process_args = [program, *args]
-    ret = subprocess.run(process_args, capture_output=True)
+    process_args = ['env', 'SELF_CALL=1', program, *args]
+    ret = subprocess.run(
+        process_args,
+        capture_output=True,
+    )
     if ret.returncode != 0:
         # Raise instead of exit() so the failure propagates out of the
         # worker thread and is reported when futures are drained.
