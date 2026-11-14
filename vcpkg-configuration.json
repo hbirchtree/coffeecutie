@@ -28,7 +28,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-graphics",
-            "baseline": "0e315c105e5e2205405eaa20606d08f515f13a86",
+            "baseline": "49a7be1ef2efb95bfa772b3acc7c4fe80f58021b",
             "packages": [
                 "angle",
                 "bc7enc",
