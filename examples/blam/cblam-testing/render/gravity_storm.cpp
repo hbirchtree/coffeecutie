@@ -97,7 +97,8 @@ struct GravityStorm
     static constexpr f32 lightning_flash     = .35f; /* s of the whole bolt */
     static constexpr f32 lightning_reach_min = 10.f; /* wu from the storm */
     static constexpr f32 lightning_reach_max = 60.f;
-    static constexpr f32 lightning_width     = .35f; /* across, per wu tall */
+    /* Y-up, ground at y = 0, cloud end at y = 16.5 */
+    static constexpr f32 lightning_mesh_height = 16.5f;
     /* The mesh is quads A..D, triangulated as tris k and k + 4; A strikes */
     static constexpr u32 lightning_quads = 4;
 
@@ -506,13 +507,12 @@ struct GravityStorm
             Vecf3 const to_eye = view.position - ground;
             f32 const   facing = std::atan2(to_eye.y, to_eye.x) - glm::half_pi<f32>();
             f32 const   mirror = lightning_hash(slot, cycle, 4) < .5f ? -1.f : 1.f;
-            /* The mesh is 4 tall, z in [-2, 2], texture top at +z */
+            f32 const   scale  = height / lightning_mesh_height;
             Matf4 const model =
-                glm::translate(Matf4(1), ground + Vecf3{0, 0, height * .5f}) *
+                glm::translate(Matf4(1), ground) *
                 glm::rotate(Matf4(1), facing, Vecf3{0, 0, 1}) *
-                glm::scale(
-                    Matf4(1),
-                    Vecf3{mirror * height * lightning_width, 1.f, height} / 4.f);
+                glm::scale(Matf4(1), Vecf3{mirror * scale, scale, scale}) *
+                glm::rotate(Matf4(1), glm::half_pi<f32>(), Vecf3{1, 0, 0});
 
             gfx::view_state    state   = view.state;
             gfx::stencil_state stencil = view.stencil;
