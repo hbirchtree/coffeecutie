@@ -280,7 +280,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(magazine && state.reloading <= 0.f && ammo->rounds_total > 0 &&
                ammo->rounds_loaded < rounds_loaded_maximum(*magazine) && (intent.reload || !loaded))
             {
-                state.reloading = std::max(reload_time(*magazine), dt);
+                state.reloading = std::max({reload_time(*magazine), ammo->reload_length, dt});
                 intent.reload   = false;
             }
             if(ammo)
@@ -619,6 +619,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .direction  = forward,
         };
         GameEvent ev{.type = GameEvent::WeaponFire};
+        if(auto* equip = !melee && !on_mount ? p.template get<BipedEquipment>(player) : nullptr)
+            equip->shots++;
         /* What the reticle rests on: a unit there is what guided shots seek */
         Vecf3 target = cam.camera.position + forward * aim_reach;
         if(!melee)
