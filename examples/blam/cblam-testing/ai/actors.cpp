@@ -1092,7 +1092,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return !ray.hit || ray.entity_id == target || (vehicle && ray.entity_id == vehicle);
     }
 
-    /* Squad mates within earshot take the target too */
+    /* Its whole encounter learns of the target, and allies within earshot */
     void alert_squad(Proxy& p, u64 id, Actor const& actor, actr_t const& actr)
     {
         auto const* model = p.template get<Model>(id);
@@ -1102,9 +1102,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         for(auto other : p.template select<Actor, Model, BipedStatus>())
         {
             auto [theirs, target, status] = other.components();
-            if(other.id() == id || theirs.encounter != actor.encounter || theirs.squad != actor.squad ||
-               status.dead || theirs.target != 0 ||
-               glm::distance(target.position, model->position) > reach)
+            if(other.id() == id || !theirs.active() || status.dead || theirs.target != 0 || theirs.braindead ||
+               theirs.deaf || theirs.scripted)
+                continue;
+            bool const encounter = actor.encounter >= 0 && theirs.encounter == actor.encounter;
+            bool const nearby    = theirs.team == actor.team &&
+                                glm::distance(target.position, model->position) <= reach;
+            if(!encounter && !nearby)
                 continue;
             theirs.target    = actor.target;
             theirs.last_seen = actor.last_seen;
@@ -2234,7 +2238,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actv_t const& actv = *kind.variant;
         if(actor.fire_in > 0.f)
             return;
-        f32 const reach = actv.maximum_firing_distance > 0.f ? actv.maximum_firing_distance : 20.f;
+        /* A mounted gun reaches as far as its gunner sees */
+        f32 reach = actv.maximum_firing_distance > 0.f ? actv.maximum_firing_distance : 20.f;
+        if(kind.actor && kind.actor->perception.max_vision_dist > reach)
+            reach = kind.actor->perception.max_vision_dist;
         if(glm::distance(body.position, actor.last_seen) > reach)
             return;
         auto weapons = unit.weapons.data(*s_magic);
