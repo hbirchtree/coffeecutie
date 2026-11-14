@@ -3262,6 +3262,9 @@ struct PhysicsSystem
             for(auto const& [id, _] : m_biped_history)
                 if(auto it = m_bodies.find(id); it != m_bodies.end())
                     closest.rewound.insert(it->second.world_body.get());
+        /* The bounds box only catches what falls out; nothing stands on it */
+        for(auto const& bound : m_bounds)
+            closest.skip.insert(bound.second.get());
         m_world->rayTest(from, to, closest);
         if(ray.rewind)
             for(auto const& [id, _] : m_biped_history)
