@@ -264,7 +264,7 @@ struct section
     {
         // count is a host literal -> store little-endian; header_offset is a
         // little-endian map field -> leave as-is (reference::data un-swaps it).
-        return {to_le<u32>(1), {header_offset}};
+        return {to_le<u32>(1), header_offset};
     }
 };
 
