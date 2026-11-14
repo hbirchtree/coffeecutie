@@ -538,11 +538,11 @@ struct vm
             u16 const cond  = static_cast<u16>(frame.args[0].integer);
             thread.every    = frame.args.size() > 1 ? std::max<u16>(static_cast<u16>(frame.args[1].as_real()), 1) : 1;
             thread.timeout  = frame.args.size() > 2 ? m_now + static_cast<i64>(frame.args[2].as_real()) : -1;
-            if(evaluate_now(cond).truthy())
-                return finish(thread, value_t::of(n.ret_type));
+            /* First looked at the tick after: threads woken alongside it
+             * (an encounter being placed) have had their turn */
             auto out = finish(thread, value_t::of(n.ret_type));
             thread.until   = cond;
-            thread.wake_at = m_now + thread.every;
+            thread.wake_at = m_now + 1;
             thread.status  = status_t::sleeping;
             return out;
         }

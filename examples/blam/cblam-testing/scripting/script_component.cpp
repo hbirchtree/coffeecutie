@@ -1779,20 +1779,26 @@ struct BlamScript
                 else
                     p.template subsystem<GameState>().preferred_targets.erase(id);
             return {};
-        /* How far into a fight the squad is: 0 nobody left, 1 at its post,
-         * 2 falling back, 4 hunting, 5 engaged */
+        /* The most alarmed of the squad: 0 nobody, 1 inactive, 2 at
+         * ease, 3 guarding, 4 searching, 5 knows its target, 6 fighting
+         * one in view */
         case op::ai_status: {
-            i32 status = 0;
+            using state_t = Actor::state_t;
+            i32 status    = 0;
             for(u64 id : ai_actors(p, text_of(arg(0))))
             {
                 auto const* actor  = p.template get<Actor>(id);
                 auto const* vitals = p.template get<BipedStatus>(id);
                 if(!actor || (vitals && vitals->dead))
                     continue;
-                i32 const here = actor->state == Actor::state_t::combat    ? 5
-                                 : actor->state == Actor::state_t::pursuit ? 4
-                                 : actor->state == Actor::state_t::retreat ? 2
-                                                                           : 1;
+                bool const guarding = actor->idle_state == static_cast<i16>(blam::scn::ai::state_t::guarding) ||
+                                      actor->idle_state == static_cast<i16>(blam::scn::ai::state_t::guarding_at_guard_position);
+                i32 const here = actor->braindead                   ? 1
+                                 : actor->state == state_t::combat  ? (actor->seen_ago <= seen_recently ? 6 : 5)
+                                 : actor->state == state_t::retreat ? 5
+                                 : actor->state == state_t::pursuit ? 4
+                                 : guarding                         ? 3
+                                                                    : 2;
                 status = std::max(status, here);
             }
             return value_t::number(type_t::short_, static_cast<f32>(status));
@@ -4890,13 +4896,17 @@ struct BlamScript
     }
 
     /* Those of them still alive; their bodies stay on as objects */
+    static constexpr f32 seen_recently = 2.f; /* seconds */
+
+    /* Placed this tick counts too: the scripts read it the line after */
     size_t ai_living(Proxy& p, std::string_view path) const
     {
         auto const units = ai_actors(p, path);
-        return static_cast<size_t>(std::count_if(units.begin(), units.end(), [&p](u64 id) {
-            auto const* status = p.template get<BipedStatus>(id);
-            return !status || !status->dead;
-        }));
+        return ai_spawning(path).size() +
+               static_cast<size_t>(std::count_if(units.begin(), units.end(), [&p](u64 id) {
+                   auto const* status = p.template get<BipedStatus>(id);
+                   return !status || !status->dead;
+               }));
     }
 
     std::vector<u64> ai_actors(Proxy& p, std::string_view path) const
