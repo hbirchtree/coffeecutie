@@ -1279,6 +1279,7 @@ struct PlayerInput
     debounced_button_t grenade_switch{};
     debounced_button_t melee{};
     debounced_button_t zoom{};
+    debounced_button_t flashlight{}; /*!< Toggle; no flashlight yet */
     bool               crouch{false}; /*!< Held */
     bool               scores{false}; /*!< Held: the scoreboard */
 
@@ -1325,6 +1326,7 @@ struct PlayerInput
         grenade_switch.frame_end();
         melee.frame_end();
         zoom.frame_end();
+        flashlight.frame_end();
     }
 };
 
