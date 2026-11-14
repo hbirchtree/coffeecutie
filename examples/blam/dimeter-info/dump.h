@@ -1,6 +1,6 @@
 #pragma once
 
-/* Decoded dumps of Halo 2 tags, the dimeter counterpart of tag-inspect:
+/* Decoded dumps of Halo 2 tags, the dimeter counterpart of volta-info:
  * answer format questions from the tag data instead of from a frame. */
 
 #include <blam/dimeter/bitm.h>

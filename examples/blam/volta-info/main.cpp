@@ -5236,7 +5236,7 @@ void open_map(
 int inspect_main()
 {
     cxxopts::Options options(
-        "Blam Tag Inspect", "Dump decoded tag data from a Halo .map file");
+        "Halo 1 Map Info", "Dump decoded tag data from a Halo .map file");
     options.add_options("Help")("h,help", "Show this help info");
     options.positional_help("[map file]");
 

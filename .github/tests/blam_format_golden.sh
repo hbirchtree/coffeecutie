@@ -24,12 +24,12 @@ h1() {
     local version=$1 map=$2 name
     name=h1/$version-$(basename "$(dirname "$map")")-$(basename "$map" .map)
     [ -f "$map" ] || return
-    run blam_tag_inspect "$name/list.txt" --halo-version "$version" -l "$map"
-    run blam_tag_inspect "$name/check-lookup.txt" --halo-version "$version" --check-lookup "$map"
-    run blam_tag_inspect "$name/scenario.txt" --halo-version "$version" --dump-scenario "$map"
-    run blam_tag_inspect "$name/player.txt" --halo-version "$version" --dump-player-biped "$map"
+    run VoltaInfo "$name/list.txt" --halo-version "$version" -l "$map"
+    run VoltaInfo "$name/check-lookup.txt" --halo-version "$version" --check-lookup "$map"
+    run VoltaInfo "$name/scenario.txt" --halo-version "$version" --dump-scenario "$map"
+    run VoltaInfo "$name/player.txt" --halo-version "$version" --dump-player-biped "$map"
     for class in scnr matg mod2 bitm sbsp antr; do
-        run blam_tag_inspect "$name/class-$class.txt" --halo-version "$version" -c "$class" "$map"
+        run VoltaInfo "$name/class-$class.txt" --halo-version "$version" -c "$class" "$map"
     done
 }
 

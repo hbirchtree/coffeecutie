@@ -21,14 +21,14 @@ if(BUILD_BLAM AND NOT (
     GAMECUBE OR
     WII)
 )
-  # Apple's Clang yells at tag-inspect
+  # Apple's Clang yells at volta-info
   add_subdirectory(blam/dimeter-info)
   if(BUILD_BLAM_ELEGY)
     add_subdirectory(blam/elegy-info)
   endif()
   add_subdirectory(blam/map-decompress)
   add_subdirectory(blam/script-dumper)
-  add_subdirectory(blam/tag-inspect)
+  add_subdirectory(blam/volta-info)
 endif()
 
 # Stores maps in the browser for the web builds of BlamGraphics
