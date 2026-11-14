@@ -931,6 +931,15 @@ void create_resources(compo::EntityContainer& e)
                      SimulationPauseEvent pause{.paused = ev.data.value("paused", true)};
                      e.subsystem_cast<GameEventBus>().inject(pause_ev, &pause);
                  }
+                 if(ev.event == "script_call")
+                 {
+                     /* {"function": "ai_erase", "args": ["beach_lz"]} */
+                     ScriptCallEvent call{.function = ev.data.value("function", std::string{})};
+                     for(auto const& arg : ev.data.value("args", nlohmann::json::array()))
+                         call.args.push_back(arg.is_string() ? arg.get<std::string>() : arg.dump());
+                     GameEvent call_ev{.type = GameEvent::ScriptCall};
+                     e.subsystem_cast<GameEventBus>().inject(call_ev, &call);
+                 }
                  if(ev.event == "equip_weapon")
                  {
                      /* {"seat": n, "weapon": "weapons\\pistol\\pistol"} */
