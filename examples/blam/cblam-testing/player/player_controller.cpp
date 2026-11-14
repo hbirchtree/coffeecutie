@@ -144,6 +144,8 @@ struct PlayerController
                 }
                 if(info.is_remote() && info.mode.simulated)
                     take_remote_input(player.id(), input, cam);
+                else if(info.is_remote())
+                    take_remote_swap(player.id(), input);
                 /* Scripts take the controls away; looking around stays
                  * unless a cutscene has the camera */
                 auto const& cinematic = p.template subsystem<CinematicState>();
@@ -212,6 +214,10 @@ struct PlayerController
      * look is shared out over the ticks it spans */
     void tick_inputs(Proxy& p)
     {
+        /* A swap is the server's to make: the press waits for a tick to carry it */
+        for(auto player : p.select<PlayerCamera, PlayerInput, PlayerInfo>())
+            if(auto [cam, input, info] = player.components(); !info.is_remote() && input.intent.swap)
+                m_presses[player.id()] |= InputIntent::swap;
         auto const ticks = m_ticks->take();
         if(ticks.empty())
             return;
@@ -222,7 +228,7 @@ struct PlayerController
             if(info.is_remote() || !cam.is_active())
                 continue;
             auto const& intent  = input.intent;
-            InputIntent intents = InputIntent::none;
+            InputIntent intents = std::exchange(m_presses[player.id()], InputIntent::none);
             for(auto [held, what] : {std::pair{intent.fire, InputIntent::fire},
                                      std::pair{intent.grab, InputIntent::grab},
                                      std::pair{intent.use, InputIntent::use},
@@ -671,6 +677,15 @@ struct PlayerController
         input.intent.crouch = held(InputIntent::crouch);
     }
 
+    /* A body its peer moves still switches weapons here */
+    void take_remote_swap(u64 id, PlayerInput& input)
+    {
+        auto& pressed = m_remote_presses[id];
+        if((pressed & InputIntent::swap) != InputIntent::none)
+            input.intent.swap = true;
+        pressed = InputIntent::none;
+    }
+
     /* Walking the biped; physics moves the camera after its body */
     void route_body(
         Proxy&              p,
@@ -951,6 +966,7 @@ struct PlayerController
                                         m_remote_queue;
     std::map<u64, PlayerTickInputEvent> m_remote_inputs; /*!< Newest per body */
     std::map<u64, InputIntent> m_remote_presses; /*!< Not yet acted on */
+    std::map<u64, InputIntent> m_presses;        /*!< Local, not yet sent */
     std::map<u64, f32>         m_dead_for; /*!< Seconds dead, for the camera */
     std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */
     std::map<u64, jump_t>     m_jumps;
