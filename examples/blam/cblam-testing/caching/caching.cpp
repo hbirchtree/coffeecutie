@@ -1007,7 +1007,6 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
         /* A blend's feet are the lead's, or they would double up */
         if(!follower)
         {
-<<<<<<< Updated upstream
             if(foot_down(
                    *clip, clip->left_foot_frame_index, before, after, start))
                 anim.footsteps |= AnimationPlayback::left_foot;
@@ -1022,19 +1021,6 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
                    after,
                    start))
                 anim.cues[anim.cue_count++] = {layer.graph, clip->sound_index};
-=======
-            if(auto const feet = foot_frames(*clip))
-            {
-                if(foot_down((*feet)[0], count, before, after, start))
-                    anim.footsteps |= AnimationPlayback::left_foot;
-                if(foot_down((*feet)[1], count, before, after, start))
-                    anim.footsteps |= AnimationPlayback::right_foot;
-            }
-            if(auto const key = sound_key(*clip);
-               key && anim.cue_count < anim.cues.size() &&
-               key_passed(key->frame, static_cast<i32>(count), before, after, start))
-                anim.cues[anim.cue_count++] = {layer.graph, static_cast<i16>(key->sound)};
->>>>>>> Stashed changes
         }
         if(layer.time < length)
             continue;
