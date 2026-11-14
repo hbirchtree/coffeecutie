@@ -263,6 +263,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 lob_limit       = 1.2217f; /* rad, 70 degrees: steeper lobs fall to the flat shot */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 sighting_memory = 1.f;  /* s a target out of view still draws a new burst */
+    static constexpr f32 threat_range    = 25.f; /* wu: other fighting enemies whose sight a spot avoids */
+    static constexpr size_t max_threats  = 4;
+    static constexpr f32 threat_weight   = 6.f;  /* score off a spot per other enemy that sees it */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 camouflage_sight = 2.f; /* wu within which camouflage is noticed */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
@@ -1228,6 +1231,24 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 }
             }
         Vecf2 const faces = target_facing(p, actor.target);
+        /* Other enemies already fighting nearby: a spot in their sight
+         * costs too, so it takes cover from more than its own target */
+        std::vector<std::tuple<f32, Vecf3, u64>> threats;
+        if(!away)
+        {
+            for(auto other : p.template select<Actor, Model, BipedStatus>())
+            {
+                auto const& [theirs, at, status] = other.components();
+                if(other.id() == actor.target || status.dead || !theirs.active() || theirs.target == 0 ||
+                   theirs.state != state_t::combat || !enemies(actor.team, static_cast<team_t>(theirs.team)))
+                    continue;
+                if(f32 const d = glm::distance(at.position, model.position); d <= threat_range)
+                    threats.emplace_back(d, at.position + Vecf3{0.f, 0.f, eye_height}, other.id());
+            }
+            std::sort(threats.begin(), threats.end(), [](auto const& a, auto const& b) { return std::get<0>(a) < std::get<0>(b); });
+            if(threats.size() > max_threats)
+                threats.resize(max_threats);
+        }
         /* As the original weighs a spot to fight from: in reach of the
          * target, inside the combat band, near where it stands while the
          * target is in range, and with a line to it; nothing farther off
@@ -1266,6 +1287,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 }
                 score += std::max(0.f, 1.f - to_me / move_reach) * nearby;
                 score += clear(p, 0, fp.position + Vecf3{0.f, 0.f, eye_height}, aim, actor.target) ? 15.f : 5.f;
+                for(auto const& [d, eye, who] : threats)
+                    if(clear(p, who, eye, fp.position + Vecf3{0.f, 0.f, eye_height * .5f}, 0))
+                        score -= threat_weight;
                 cost = -score;
                 Vecf2 const b = Vecf2(fp.position) - Vecf2(target);
                 if(glm::dot(b, b) > 1e-4f)
