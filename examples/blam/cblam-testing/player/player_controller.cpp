@@ -372,7 +372,8 @@ struct PlayerController
             input.swap |= b.y;
             input.reload |= b.x;
             input.grenade |= state.axes.e.t_l > trigger_pressed;
-            input.grenade_switch |= b.b_l;
+            input.grenade_switch |= b.p_left;
+            input.flashlight |= b.p_right;
             input.zoom |= b.s_r;
             /* B strikes in play and backs out of menus; back also toggles
              * freecam */
@@ -391,14 +392,16 @@ struct PlayerController
             input.swap |= key(CK_HTab);
             input.reload |= key(CK_r);
             input.grenade_switch |= key(CK_g);
-            input.melee |= key(CK_q);
-            input.zoom |= key(CK_z);
+            input.melee |= key(CK_f);
+            input.flashlight |= key(CK_q);
+            input.zoom |= key(CK_z) || (input.mouse_buttons & CIMouseButtonEvent::MiddleButton) != 0;
             /* Grabs in forge, throws in physics mode */
             input.grenade |= (input.mouse_buttons & CIMouseButtonEvent::RightButton) != 0;
             input.back |= (!in_menu && key(CK_v)) || (in_menu && key(CK_BackSpace));
         }
 
-        input.scores = (pad && b.p_down) || (keyboard && key(CK_F1));
+        /* Not in freecam or forge, where the d-pad and keys do other things */
+        input.scores = physics && ((pad && b.p_up) || (keyboard && key(CK_F1)));
         input.crouch = (pad && b.s_l) || (keyboard && key(CK_LCtrl));
 
         auto& intent = input.intent;
@@ -443,7 +446,7 @@ struct PlayerController
         if(f32 len2 = glm::dot(move, move); len2 > 1.f)
             move /= std::sqrt(len2);
         intent.move = move;
-        intent.use  = (pad && b.x) || (keyboard && key(CK_f));
+        intent.use  = (pad && b.x) || (keyboard && key(CK_e));
         intent.crouch = input.crouch && physics;
         intent.grab = (pad && state.axes.e.t_r > trigger_pressed) ||
                       (keyboard &&
