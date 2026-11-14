@@ -1704,6 +1704,25 @@ struct H2MapLoader : compo::SubsystemBase
         if(view_tag && jmad_tag)
             fp.weapon =
                 add(view_tag, view_animation(map, pool, *jmad_tag, *view_tag, "first_person:idle", hands_tag));
+        auto clip = [&](std::string_view name) {
+            H2Scene::first_person_t::clip_t out;
+            if(!jmad_tag || !hands_tag)
+                return out;
+            out.hands = view_animation(map, pool, *jmad_tag, *hands_tag, name).value_or(-1);
+            if(view_tag)
+                out.weapon = view_animation(map, pool, *jmad_tag, *view_tag, name, hands_tag).value_or(-1);
+            return out;
+        };
+        fp.fire         = clip("first_person:fire_1:var1");
+        fp.reload_full  = clip("first_person:reload_full");
+        fp.reload_empty = clip("first_person:reload_empty");
+        for(i32 a : {fp.reload_full.hands, fp.reload_full.weapon})
+            if(a >= 0)
+            {
+                auto const& anim = m_scene.animations[static_cast<size_t>(a)];
+                m_loadout[0].reload_length =
+                    std::max(m_loadout[0].reload_length, static_cast<f32>(anim.frames) / anim.rate);
+            }
 
         /* The body stands as the third-person unit does holding the weapon */
         std::optional<u32> stance;

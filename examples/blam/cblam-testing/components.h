@@ -1551,6 +1551,9 @@ struct BipedEquipment
         f32  age{0.f};         /*!< Battery spent, 0 to 1 */
         bool overheated{false}; /*!< Venting until it cools to recovery */
         bool charged{false};    /*!< Its trigger held to a full charge */
+        /*! Seconds a reload takes where the magazine leaves it to the
+         * first-person animation (Halo 2 and 3) */
+        f32 reload_length{0.f};
         bool charging{false};   /*!< Its trigger held, charging or charged */
         f32  charge{0.f};       /*!< How far an actor has charged it, 0 to 1 */
         /*! Its object functions' outputs: what its holder may import */
@@ -1575,6 +1578,7 @@ struct BipedEquipment
     /*! The map the pointers above point into */
     u32  load_generation{0};
     bool reloading{false}; /*!< The held weapon, as everyone sees it */
+    u16  shots{0};         /*!< Shots fired, counting up; a view model fires on a change */
     bool throwing{false};  /*!< A grenade, from wind-up to recovery */
     u8   zoom{0};          /*!< The held weapon's zoom level, 0 = none */
     libc_types::i8 aimed{0}; /*!< What the reticle rests on: 1 an enemy, -1 a friend */

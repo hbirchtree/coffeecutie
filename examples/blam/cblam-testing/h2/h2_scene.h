@@ -355,6 +355,13 @@ struct H2Scene : compo::SubsystemBase
         i32   weapon{-1};
         i32   body{-1};
         Vecf3 eye{0.f, 0.f, 0.6f}; /*!< Body space, as posed */
+        /*! A clip played once over the idle, into animations */
+        struct clip_t
+        {
+            i32 hands{-1};
+            i32 weapon{-1};
+        };
+        clip_t fire, reload_full, reload_empty;
     } first_person;
 };
 

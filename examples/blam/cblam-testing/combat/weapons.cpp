@@ -320,7 +320,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             {
                 /* Held through the first-person reload, as Halo does
                  * for a magazine with no reload time of its own */
-                f32 clip = 0.f;
+                f32 clip = ammo->reload_length;
                 if constexpr(halo1)
                     clip = fp_reload_seconds(p, *weapon, ammo->rounds_loaded == 0);
                 state.reloading = std::max({reload_time(*magazine), clip, dt});
@@ -667,7 +667,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
-        auto const*     equip    = p.template get<BipedEquipment>(player);
+        auto*           equip    = p.template get<BipedEquipment>(player);
         WeaponFireEvent shot{
             .weapon     = h1_tag ? h1_tag->as_ref() : blam::tagref_t{},
             .id         = weapon,
@@ -683,6 +683,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .direction  = forward,
         };
         GameEvent ev{.type = GameEvent::WeaponFire};
+        if(equip && !melee && !on_mount)
+            equip->shots++;
         /* What the reticle rests on: a unit there is what guided shots seek */
         Vecf3 target = cam.camera.position + forward * aim_reach;
         if(!melee)
