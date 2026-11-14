@@ -173,6 +173,11 @@
                 "format": "rgb565"
             },
             {
+                "source": "textures/lightning.png",
+                "name": "lightning",
+                "format": "rgb565"
+            },
+            {
                 "source": "textures/forge_ui.png",
                 "name": "forge_ui",
                 "format": "r8",
@@ -195,6 +200,10 @@
             {
                 "source": "mesh/cloudy.obj",
                 "name": "cloudy"
+            },
+            {
+                "source": "mesh/lightning.obj",
+                "name": "lightning"
             }
         ],
         "text": [
@@ -212,7 +221,8 @@
             {"source":"shaders/monitor.frag", "name": "monitor_frag"},
             {"source":"shaders/gravity_storm.vert", "name": "gravity_storm_vert"},
             {"source":"shaders/gravity_cloud.frag", "name": "gravity_cloud_frag"},
-            {"source":"shaders/gravity_wind.frag", "name": "gravity_wind_frag"}
+            {"source":"shaders/gravity_wind.frag", "name": "gravity_wind_frag"},
+            {"source":"shaders/gravity_lightning.frag", "name": "gravity_lightning_frag"}
         ]
     }
 }

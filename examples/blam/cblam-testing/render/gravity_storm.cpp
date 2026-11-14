@@ -101,6 +101,11 @@ struct GravityStorm
     std::shared_ptr<gfx::vertex_array_t> storm_vao;
     std::shared_ptr<gfx::program_t>      storm_cloud_program;
     std::shared_ptr<gfx::program_t>      storm_wind_program;
+    // Lightning vert data is in the other VBO
+    gfx::draw_command::data_t            lightning_draw;
+    std::shared_ptr<gfx::vertex_array_t> lightning_vao;
+    std::shared_ptr<gfx::program_t>      lightning_program;
+    std::shared_ptr<gfx::texture_2d_t>   lightning_tex;
     bool                                 storm_failed{false};
     time_point                           m_now{};
 
@@ -137,6 +142,8 @@ struct GravityStorm
             storm_program(blam::loading::gravity_cloud_frag, "storm cloud");
         storm_wind_program =
             storm_program(blam::loading::gravity_wind_frag, "storm wind");
+        lightning_program =
+            storm_program(blam::loading::gravity_lightning_frag, "storm lightning");
         if(!storm_cloud_program || !storm_wind_program)
         {
             storm_failed = true;
@@ -147,19 +154,27 @@ struct GravityStorm
         auto const& cloud_v = blam::loading::cloudy_cone_vertices;
         auto const& wind_i  = blam::loading::cone_cone_indices;
         auto const& wind_v  = blam::loading::cone_cone_vertices;
+        auto const& lightning_i  = blam::loading::lightning_plane_indices;
+        auto const& lightning_v  = blam::loading::lightning_plane_vertices;
 
         storm_ebo = m_api->alloc_buffer(gfx::buffers::element, semantic::RSCA::ReadOnly);
         storm_vbo = m_api->alloc_buffer(gfx::buffers::vertex, semantic::RSCA::ReadOnly);
         storm_ebo->alloc();
         storm_vbo->alloc();
         storm_ebo->commit(
-            gsl::span(cloud_i).size_bytes() + gsl::span(wind_i).size_bytes());
+            gsl::span(cloud_i).size_bytes() +
+            gsl::span(wind_i).size_bytes() +
+            gsl::span(lightning_i).size_bytes());
         storm_vbo->commit(
-            gsl::span(cloud_v).size_bytes() + gsl::span(wind_v).size_bytes());
+            gsl::span(cloud_v).size_bytes() +
+            gsl::span(wind_v).size_bytes() +
+            gsl::span(lightning_v).size_bytes());
         storm_ebo->update(0, gsl::span(cloud_i));
         storm_ebo->update(gsl::span(cloud_i).size_bytes(), gsl::span(wind_i));
+        storm_ebo->update(gsl::span(cloud_i).size_bytes() + gsl::span(wind_i).size_bytes(), gsl::span(lightning_i));
         storm_vbo->update(0, gsl::span(cloud_v));
         storm_vbo->update(gsl::span(cloud_v).size_bytes(), gsl::span(wind_v));
+        storm_ebo->update(gsl::span(cloud_v).size_bytes() + gsl::span(wind_v).size_bytes(), gsl::span(lightning_v));
 
         storm_cloud_draw.elements = {
             .count = static_cast<u32>(cloud_i.size()),
@@ -169,6 +184,12 @@ struct GravityStorm
             .count         = static_cast<u32>(wind_i.size()),
             .offset        = gsl::span(cloud_i).size_bytes(),
             .vertex_offset = static_cast<u32>(cloud_v.size()),
+            .type          = semantic::type_t::u16,
+        };
+        lightning_draw.elements = {
+            .count         = static_cast<u32>(lightning_i.size()),
+            .offset        = gsl::span(cloud_i).size_bytes() + gsl::span(wind_i).size_bytes(),
+            .vertex_offset = static_cast<u32>(cloud_v.size() + wind_v.size()),
             .type          = semantic::type_t::u16,
         };
 
@@ -192,9 +213,22 @@ struct GravityStorm
         storm_vao->set_buffer(gfx::buffers::element, storm_ebo);
         storm_vao->set_buffer(gfx::buffers::vertex, storm_vbo, 0);
 
+        lightning_vao = m_api->alloc_vertex_array();
+        lightning_vao->alloc();
+        lightning_vao->add(gfx::vertex_attribute::from_member(&crunch::vertex::position).at(0));
+        lightning_vao->add(gfx::vertex_attribute::from_member(&crunch::vertex::texcoord).at(1));
+        lightning_vao->set_attribute_names({
+            {"pos", 0},
+            {"tex", 1},
+        });
+        lightning_vao->force_attribute_names();
+        lightning_vao->set_buffer(gfx::buffers::element, storm_ebo);
+        lightning_vao->set_buffer(gfx::buffers::vertex, storm_vbo, 0);
+
         m_api->debug().annotate(*storm_ebo, "storm_ebo");
         m_api->debug().annotate(*storm_vbo, "storm_vbo");
         m_api->debug().annotate(*storm_vao, "storm_vao");
+        m_api->debug().annotate(*lightning_vao, "lightning_vao");
         return true;
     }
 
@@ -354,6 +388,7 @@ struct GravityStorm
     /* One viewport's storms, after the sky */
     void draw(stage_t, view_t const& view) override
     {
+        using namespace std::string_view_literals;
         if(m_storms.empty() || !load_storm())
             return;
 
@@ -404,6 +439,26 @@ struct GravityStorm
                     strength,
                     wind.bands,
                     wind.density);
+                auto view_state = view.state;
+                auto res = m_api->submit({
+                        .program       = lightning_program,
+                        .vertices      = lightning_vao,
+                        .render_target = view.target,
+                        .call          = gfx::draw_command::call_spec_t{.indexed = true},
+                        .data          = {lightning_draw},
+                    },
+                    gfx::make_uniform_list(
+                        typing::graphics::ShaderStage::Vertex,
+                        gfx::uniform_pair{
+                            {"camera"sv}, semantic::SpanOne(view.camera)},
+                        gfx::uniform_pair{{"model"sv}, semantic::SpanOne(model)}),
+                    // gfx::blend_state{.additive = true},
+                    view_state);
+                if(res.has_value())
+                {
+                    auto [err, msg] = *res;
+                    cWarning("Error drawing lightning: {}", msg);
+                }
             }
         }
     }
