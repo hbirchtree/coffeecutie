@@ -107,6 +107,7 @@ struct GameEvent
         FlagCommand,
         FlagTouch,
         KillFeed,
+        ScriptCall,
     };
 
     EventType type{None};
@@ -615,6 +616,16 @@ struct UnitKilledEvent
     libc_types::u32 player{ObjectHitEvent::no_player}; /*!< When a player died */
     libc_types::u32 killer{ObjectHitEvent::no_player}; /*!< A player, if one did it */
     cause_t         cause{other};
+};
+
+/*! Testing: a script function called by name, its arguments as written in
+ *  the map's scripts (names, numbers) */
+struct ScriptCallEvent
+{
+    static constexpr auto event_type = GameEvent::ScriptCall;
+
+    std::string              function;
+    std::vector<std::string> args;
 };
 
 /*! A player's death, as the kill messages tell it: from the authority, and

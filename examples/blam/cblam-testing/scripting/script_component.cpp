@@ -212,6 +212,9 @@ struct BlamScript
         m_save_queue->poll();
         m_restore_queue->poll();
         m_enlist_queue->poll();
+        m_call_queue->poll();
+        for(auto const& call : std::exchange(m_calls, {}))
+            plug_call(p, call);
         for(auto const& recruit : std::exchange(m_recruits, {}))
             recruit_spawned(recruit);
         if(std::exchange(m_save_now, false))
@@ -2299,6 +2302,49 @@ struct BlamScript
             if(squads.has_value() && static_cast<size_t>(to) < squads.value().size())
                 migrate(p, {ent.id()}, fmt::format("{}/{}", enc.name.str(), squads.value()[to].name.str()));
         }
+    }
+
+    /* A test's call of a script function: the opcode from the map's own
+     * call of it, names as the map's strings, numbers as reals */
+    void plug_call(Proxy& p, ScriptCallEvent const& call)
+    {
+        if(!m_scenario)
+            return;
+        node_t const* fn = nullptr;
+        for(auto const& n : m_scenario->bytecode(m_magic))
+            if(n.exp_type == blam::hsc::expression_t::expression && n.data_ptr < m_strings.data.size() &&
+               n.valid() && text_at(n.data_ptr) == call.function)
+            {
+                fn = &n;
+                break;
+            }
+        if(!fn)
+            return log(fmt::format("script_call: {} not called by this map", call.function));
+        std::vector<value_t> args;
+        for(auto const& arg : call.args)
+        {
+            char*     end  = nullptr;
+            f32 const real = std::strtof(arg.c_str(), &end);
+            if(end && *end == '\0' && !arg.empty())
+            {
+                args.push_back(value_t::number(type_t::real_, real));
+                continue;
+            }
+            std::string const needle = std::string(1, '\0') + arg + std::string(1, '\0');
+            auto const        at     = m_strings.data.find(needle);
+            if(at == std::string_view::npos)
+                return log(fmt::format("script_call: no string {}", arg));
+            args.push_back({.type = type_t::string_, .name = static_cast<u32>(at + 1)});
+        }
+        thread_t self{};
+        native(p, fn->opcode, *fn, args, self);
+        log(fmt::format("script_call: {}", call.function));
+    }
+
+    std::string_view text_at(u32 offset) const
+    {
+        auto const end = m_strings.data.find('\0', offset);
+        return m_strings.data.substr(offset, end == std::string_view::npos ? std::string_view::npos : end - offset);
     }
 
     /* Each unit in the vehicle and the seat it holds, AI and players */
@@ -5139,6 +5185,8 @@ struct BlamScript
     static constexpr u32 restore_frames = 30;
     std::shared_ptr<GameEventBus::queue_type<WorldSaveEvent>>    m_save_queue;
     std::shared_ptr<GameEventBus::queue_type<WorldRestoreEvent>> m_restore_queue;
+    std::shared_ptr<GameEventBus::queue_type<ScriptCallEvent>>   m_call_queue;
+    std::vector<ScriptCallEvent>                                 m_calls;
     std::shared_ptr<GameEventBus::queue_type<EnlistActorEvent>>  m_enlist_queue;
     std::vector<EnlistActorEvent>                                m_recruits;
     Proxy*                                  m_proxy{nullptr};
@@ -5169,6 +5217,8 @@ void alloc_scripting(compo::EntityContainer& e)
         0, [&script](GameEvent&, WorldSaveEvent*) { script.m_save_now = true; });
     script.m_restore_queue = gbus.addQueuedEventFunction<WorldRestoreEvent>(
         0, [&script](GameEvent&, WorldRestoreEvent*) { script.m_restore_now = true; });
+    script.m_call_queue = gbus.addQueuedEventFunction<ScriptCallEvent>(
+        0, [&script](GameEvent&, ScriptCallEvent* call) { script.m_calls.push_back(*call); });
     script.m_enlist_queue = gbus.addQueuedEventFunction<EnlistActorEvent>(
         0, [&script](GameEvent&, EnlistActorEvent* recruit) { script.m_recruits.push_back(*recruit); });
     gbus.addEventFunction<MapChangedEvent<halo_version>>(
