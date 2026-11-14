@@ -1276,6 +1276,15 @@ struct PhysicsSystem
     }
 
     /* A script's rider sits inside its vehicle's hull, and would shove it */
+    /* Riders push nothing, but bullets still find them */
+    void seated(u64 id, u64 vehicle)
+    {
+        if(vehicle)
+            m_seated[id] = vehicle;
+        else
+            m_seated.erase(id);
+    }
+
     static void seat_contact(btRigidBody& body, bool seated)
     {
         int const flags = seated ? body.getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE
@@ -1376,6 +1385,7 @@ struct PhysicsSystem
                 {
                     auto& body = *m_bodies.at(id).world_body;
                     seat_contact(body, physics.seated || !physics.collideable);
+                    seated(id, physics.seated && physics.collideable ? physics.seated_in : 0);
                     if(physics.friction >= 0.f)
                         body.setFriction(physics.friction);
                     if(physics.restitution >= 0.f)
@@ -1402,6 +1412,7 @@ struct PhysicsSystem
                 continue;
             btRigidBody& body = *it->second.world_body;
             seat_contact(body, physics.seated || !physics.collideable);
+            seated(id, physics.seated && physics.collideable ? physics.seated_in : 0);
             if(follower)
             {
                 btTransform transform;
@@ -2753,6 +2764,7 @@ struct PhysicsSystem
         if(m_markers)
             m_markers->release_strip(it->second.debug_slot);
         m_bodies.erase(it);
+        m_seated.erase(entity_id);
         wake_dynamic_bodies();
     }
 
@@ -3197,6 +3209,7 @@ struct PhysicsSystem
             btCollisionObject const* ignore_also{nullptr};
             /* Traced separately, where they were */
             std::set<btCollisionObject const*> rewound;
+            std::set<btCollisionObject const*> skip;
             /* Riders collide with nothing, and a remote player's body keeps
              * off what its owner pushes, but both are there to be hit */
             std::set<btCollisionObject const*> bipeds;
@@ -3205,7 +3218,7 @@ struct PhysicsSystem
             {
                 auto const* object =
                     static_cast<btCollisionObject const*>(proxy->m_clientObject);
-                if(object == ignore || object == ignore_also || rewound.contains(object))
+                if(object == ignore || object == ignore_also || rewound.contains(object) || skip.contains(object))
                     return false;
                 return bipeds.contains(object) ||
                        (object->hasContactResponse() &&
@@ -3235,6 +3248,16 @@ struct PhysicsSystem
         for(auto const& [id, _] : m_player_bodies)
             if(auto it = m_bodies.find(id); it != m_bodies.end())
                 closest.bipeds.insert(it->second.world_body.get());
+        /* Except those aboard what the ray passes through: a vehicle's
+         * guns don't hit its own crew */
+        for(auto const& [id, vehicle] : m_seated)
+            if(auto it = m_bodies.find(id); it != m_bodies.end())
+            {
+                if(ray.ignore != 0 && (vehicle == ray.ignore || vehicle == ray.ignore_also))
+                    closest.skip.insert(it->second.world_body.get());
+                else
+                    closest.bipeds.insert(it->second.world_body.get());
+            }
         if(ray.rewind)
             for(auto const& [id, _] : m_biped_history)
                 if(auto it = m_bodies.find(id); it != m_bodies.end())
@@ -3551,6 +3574,7 @@ struct PhysicsSystem
     bool m_open_bounds{false};
     /* Thickness of open bounds, wu */
     static constexpr f32 bounds_depth = 64.f;
+    std::map<u64, u64>                          m_seated; /*!< Riders and their vehicles: hit by rays though they push nothing */
     std::unique_ptr<btSphereShape>              m_probe_shape;
     std::unique_ptr<btRigidBody>                m_probe_body;
 
