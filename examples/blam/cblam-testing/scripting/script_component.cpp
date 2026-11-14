@@ -1602,6 +1602,7 @@ struct BlamScript
                 stop_custom(p, id);
             return {};
         case op::unit_get_custom_animation_time:
+        case op::scenery_get_animation_time:
         case op::unit_is_playing_custom_animation: {
             f32 left = 0.f;
             for(u64 id : objects_of(p, arg(0)))
@@ -2134,6 +2135,8 @@ struct BlamScript
                         migrate(p, {unit}, path);
             });
             return {};
+        /* Also past whatever would keep them out; ours keeps none out */
+        case op::ai_go_to_vehicle_override:
         case op::ai_go_to_vehicle: {
             auto const vehicles = objects_of(p, arg(1));
             if(!vehicles.empty())
