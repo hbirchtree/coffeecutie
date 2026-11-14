@@ -1,6 +1,7 @@
 #pragma once
 
 #include "data.h"
+#include "game_events.h"
 
 struct SoundEvent
 {
@@ -65,6 +66,11 @@ struct AlternateSoundEvent
 
     bool alternate{true};
 };
+
+/*! A sound another game's loader decoded and registered with SoundCache:
+ * which game, and its tag there. key() is what the sound events and
+ * SoundCache::external take */
+using ExternalSound = GameTag<blam::tag_class_t::snd>;
 
 struct PlaySoundEvent
 {

@@ -1,4 +1,5 @@
 #include "h3_scene.h"
+#include "h3_map.h"
 #include "../world/column_grid.h"
 #include "../world/placement.h"
 #include "../world/texels.h"
@@ -17,6 +18,7 @@
 #include <blam/elegy/animation.h>
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/decorator.h>
+#include <blam/elegy/firing.h>
 #include <blam/elegy/physics.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
@@ -176,9 +178,10 @@ struct H3MapLoader : compo::SubsystemBase
 {
     using type = H3MapLoader;
 
-    H3MapLoader(compo::EntityContainer& e, H3Scene& scene, H3SoundBank& bank)
+    H3MapLoader(compo::EntityContainer& e, H3Scene& scene, H3Map& map, H3SoundBank& bank)
         : m_container(e)
         , m_scene(scene)
+        , m_held(map)
         , m_bank(bank)
     {
     }
@@ -231,6 +234,7 @@ struct H3MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        m_player_unit.reset();
         m_water = {};
         m_footsteps = nullptr;
         m_step_from.reset();
@@ -266,6 +270,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_switches.clear();
         m_zone_set = -1;
         m_loader.reset();
+        m_held.map = nullptr;
         m_map.reset();
         m_file.reset();
     }
@@ -297,8 +302,9 @@ struct H3MapLoader : compo::SubsystemBase
             cWarning("H3: not a loadable Halo 3 cache");
             return false;
         }
-        m_map    = std::make_unique<el::map_container>(map.value());
-        auto res = el::resource_loader::create(*m_map);
+        m_map      = std::make_unique<el::map_container>(map.value());
+        m_held.map = m_map.get();
+        auto res   = el::resource_loader::create(*m_map);
         if(!res)
         {
             cWarning("H3: no resource tables");
@@ -334,6 +340,7 @@ struct H3MapLoader : compo::SubsystemBase
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", m_map->name()));
         m_scene.loaded = true;
+        world::announce_world_ready(m_container, MapGameEvent::halo3);
         /* The Halo 1 systems key off LoadingStatus; only the app state says
          * "loaded" (which is what the dummy plug waits for) */
         if(auto* app_info = m_container.service<comp_app::AppInfo>())
@@ -345,8 +352,9 @@ struct H3MapLoader : compo::SubsystemBase
      * SoundItems, registered under their tag */
     static u64 sound_key(el::tag_reference<> const& ref)
     {
-        return h3_ids | ref.tag_id.value();
+        return ExternalSound{MapGameEvent::halo3, ref.tag_id.value()}.key();
     }
+    static_assert(ExternalSound{MapGameEvent::halo3, 0}.key() == h3_ids);
 
     static f32 db_gain(f32 db)
     {
@@ -889,13 +897,14 @@ struct H3MapLoader : compo::SubsystemBase
         if(!scnr)
             return false;
 
+        m_player_unit = player_unit();
         Vecf3 eye{0.f, 0.f, 1.f};
         f32   yaw = 0.f;
         i16   bsp = 0;
         auto  starts = scnr->starting_locations.span(magic);
         if(!starts.empty())
         {
-            eye = starts[0].position.value() + Vecf3{0.f, 0.f, 0.6f};
+            eye = starts[0].position.value() + Vecf3{0.f, 0.f, m_player_unit ? m_player_unit->eye_height : 0.6f};
             yaw = starts[0].facing.value().x;
             bsp = std::max<i16>(starts[0].bsp.value(), 0);
         }
@@ -1505,6 +1514,67 @@ struct H3MapLoader : compo::SubsystemBase
             m_scene.lights.size());
     }
 
+    /* How the player's unit moves: the third-person biped's capsule, camera,
+     * jump and slope, the globals' ground speeds */
+    std::optional<PlayerInfo::biped_shape_t> player_unit() const
+    {
+        auto const& map     = *m_map;
+        auto const  globals = map.find<el::phys::globals_t>();
+        if(!globals)
+            return std::nullopt;
+        /* The first with hands is the Chief, as first person picks it */
+        el::phys::player_representation_t const* player = nullptr;
+        for(auto const& representation : map.span(globals->player_representations))
+            if(map.get<el::render_model_t>(representation.first_person_hands))
+            {
+                player = &representation;
+                break;
+            }
+        auto const biped = player ? map.get<el::biped_t>(player->third_person_unit) : el::tagged<el::biped_t>{};
+        if(!biped)
+            return std::nullopt;
+        PlayerInfo::biped_shape_t shape;
+        f32 const radius = biped->radius.value(), height = biped->height_standing.value();
+        f32 const eye    = biped->standing_camera_height.value();
+        if(radius > 0.f && height > 0.f && eye > 0.f)
+        {
+            shape.radius     = radius;
+            shape.height     = height;
+            shape.eye_height = eye;
+        }
+        if(f32 const crouch = biped->crouching_camera_height.value(); crouch > 0.f)
+            shape.crouch_eye_height = crouch;
+        if(f32 const time = biped->crouch_transition_time.value(); time > 0.f)
+            shape.crouch_time = time;
+        if(f32 const jump = biped->jump_velocity.value(); jump > 0.f)
+            shape.jump_velocity = jump;
+        if(f32 const slope = biped->maximum_slope_angle.value(); slope > 0.f)
+            shape.max_slope = slope;
+        if(auto info = map.span(globals->player_information); !info.empty())
+        {
+            if(f32 const run = info[0].run_forward.value(); run > 0.f)
+                shape.run_speed = run;
+            if(f32 const back = info[0].run_backward.value(); back > 0.f)
+                shape.back_speed = back;
+            if(f32 const side = info[0].run_sideways.value(); side > 0.f)
+                shape.strafe_speed = side;
+        }
+        cDebug(
+            "H3: player unit {}: radius {} height {} eye {} (crouched {}), run {}/{}/{}, jump {}, slope {} (cos {})",
+            map.name_of(player->third_person_unit),
+            shape.radius,
+            shape.height,
+            shape.eye_height,
+            shape.crouch_eye_height,
+            shape.run_speed,
+            shape.back_speed,
+            shape.strafe_speed,
+            shape.jump_velocity,
+            shape.max_slope,
+            biped->cosine_maximum_slope_angle.value());
+        return shape;
+    }
+
     /* The player's first-person hands and the starting weapon's first-person
      * model, playing the weapon's idle */
     void load_first_person(el::scenario_t const& scnr, Vecf3 const& eye)
@@ -1545,8 +1615,16 @@ struct H3MapLoader : compo::SubsystemBase
             views.empty() ? el::tagged<el::animation_graph_t>{} : map.get<el::animation_graph_t>(views[0].animations);
         if(auto const* idle = graph ? graph->find(map, "first_person:idle") : nullptr)
         {
-            fp.graph = graph.data;
-            fp.idle  = el::decode_animation(map, *m_loader, *graph, *idle, el::default_pose(map, *graph, fp.models));
+            fp.graph      = graph.data;
+            auto const at = el::default_pose(map, *graph, fp.models);
+            fp.idle       = el::decode_animation(map, *m_loader, *graph, *idle, at);
+            auto clip     = [&](std::string_view name) -> std::optional<el::decoded_animation_t> {
+                auto const* found = graph->find(map, name);
+                return found ? el::decode_animation(map, *m_loader, *graph, *found, at) : std::nullopt;
+            };
+            fp.fire         = clip("first_person:fire_1:var1");
+            fp.reload_full  = clip("first_person:reload_full");
+            fp.reload_empty = clip("first_person:reload_empty");
             for(auto const& node : map.span(graph->nodes))
                 fp.names.push_back(node.name);
         }
@@ -1570,13 +1648,21 @@ struct H3MapLoader : compo::SubsystemBase
      * idle, between frames blended */
     std::vector<std::vector<Matf4>> first_person_skin(f32 frame) const
     {
+        auto const& fp = m_first_person;
+        if(!fp.idle)
+            return std::vector<std::vector<Matf4>>(fp.models.size());
+        return first_person_skin(*fp.idle, frame, true);
+    }
+
+    /* The same `frame` frames into a clip, looping or held on its last */
+    std::vector<std::vector<Matf4>> first_person_skin(
+        el::decoded_animation_t const& clip, f32 frame, bool loop) const
+    {
         auto const&                     fp = m_first_person;
         std::vector<std::vector<Matf4>> out(fp.models.size());
-        if(!fp.idle)
-            return out;
-        u32 const frames = fp.idle->frames;
-        auto const [f0, f1, t] = world::loop_frame(frame, frames);
-        auto      a = fp.idle->frame(f0), b = fp.idle->frame(f1);
+        u32 const  frames      = clip.frames;
+        auto const [f0, f1, t] = loop ? world::loop_frame(frame, frames) : world::once_frame(frame, frames);
+        auto      a = clip.frame(f0), b = clip.frame(f1);
         std::vector<el::node_pose_t> pose(a.size());
         for(size_t i = 0; i < pose.size(); i++)
             pose[i] = {
@@ -1633,7 +1719,29 @@ struct H3MapLoader : compo::SubsystemBase
             return;
         if(fp.start == time_point{})
             fp.start = now;
-        auto const skins = first_person_skin(std::chrono::duration<f32>(now - fp.start).count() * 30.f);
+        /* What the weapon began doing plays once, then the idle again */
+        for(auto e : m_container.select<PlayerInfo, BipedEquipment>())
+        {
+            if(!world::is_local_seat(e.get<PlayerInfo>()))
+                continue;
+            using kind_t      = world::view_actions_t::kind_t;
+            auto const  kind  = fp.actions.observe(e.get<BipedEquipment>());
+            auto const* begun = kind == kind_t::fire           ? &fp.fire
+                                : kind == kind_t::reload_full  ? &fp.reload_full
+                                : kind == kind_t::reload_empty ? &fp.reload_empty
+                                                               : nullptr;
+            if(begun && *begun)
+            {
+                fp.action       = &**begun;
+                fp.action_start = now;
+            }
+            break;
+        }
+        f32 const into = std::chrono::duration<f32>(now - fp.action_start).count() * 30.f;
+        if(fp.action && into >= static_cast<f32>(fp.action->frames - 1))
+            fp.action = nullptr;
+        auto const skins = fp.action ? first_person_skin(*fp.action, into, false)
+                                     : first_person_skin(std::chrono::duration<f32>(now - fp.start).count() * 30.f);
         for(auto& mesh : fp.meshes)
         {
             m_decoded = mesh.bind;
@@ -2982,17 +3090,69 @@ struct H3MapLoader : compo::SubsystemBase
         /* H3_CAMO=1 starts the player camouflaged */
         if(auto* info = world::ensure_local_player(m_container))
             info->camouflaged = platform::env::var("H3_CAMO").value_or("0") != "0";
-        world::place_local_cameras(m_container, position, yaw);
+        world::place_local_cameras(m_container, position, yaw, m_player_unit ? &*m_player_unit : nullptr);
+        world::arm_local_players(m_container, loadout());
+    }
+
+    /* The scenario's first starting profile: what is in hand and slung */
+    std::array<BipedEquipment::weapon_t, 2> loadout() const
+    {
+        auto const scnr = m_map->find<el::scenario_t>();
+        if(!scnr)
+            return {};
+        auto const profiles = m_map->span(scnr->starting_profiles);
+        if(profiles.empty())
+            return {};
+        auto const& profile = profiles[0];
+        std::array<BipedEquipment::weapon_t, 2> out{
+            armed(profile.primary_weapon, profile.primary_rounds_loaded.value(), profile.primary_rounds_total.value()),
+            armed(
+                profile.secondary_weapon,
+                profile.secondary_rounds_loaded.value(),
+                profile.secondary_rounds_total.value()),
+        };
+        /* The view model is the primary's */
+        if(auto const& reload = m_first_person.reload_full)
+            out[0].reload_length = static_cast<f32>(reload->frames) / 30.f;
+        return out;
+    }
+
+    /* A weapon as a player starts with it: the profile's rounds, else a full
+     * magazine and its initial reserve */
+    BipedEquipment::weapon_t armed(el::tag_reference<> const& ref, i16 loaded, i16 total) const
+    {
+        auto const weapon = m_map->get<el::weapon_t>(ref);
+        if(!weapon)
+            return {};
+        BipedEquipment::weapon_t out{
+            .id = GameTag<blam::tag_class_t::weap>::of(MapGameEvent::halo3, ref.tag_id),
+        };
+        if(loaded > 0 || total > 0)
+        {
+            out.rounds_loaded = static_cast<u16>(std::max<i16>(loaded, 0));
+            out.rounds_total  = static_cast<u16>(std::max<i16>(total, 0));
+            return out;
+        }
+        auto const modes = firing_modes(*weapon, *m_map);
+        if(auto const* magazine =
+               modes.empty() ? nullptr : el::at(m_map->span(weapon->magazines), modes[0].barrel->magazine.value()))
+        {
+            out.rounds_loaded = static_cast<u16>(std::max<i16>(magazine->rounds_loaded_maximum.value(), 0));
+            out.rounds_total  = static_cast<u16>(std::max<i16>(magazine->rounds_total_initial.value(), 0));
+        }
+        return out;
     }
 
     compo::EntityContainer& m_container;
     H3Scene&                m_scene;
+    H3Map&                  m_held;
     H3SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
 
     std::shared_ptr<comp_app::FileMapper::Resource>              m_file;
     std::shared_ptr<comp_app::FileMapper::FetchSet>              m_fetch; /*!< The files on their way in */
     std::shared_ptr<comp_app::FileMapper::FetchSet>              m_sides; /*!< The side caches in use */
+    std::optional<PlayerInfo::biped_shape_t>                     m_player_unit; /*!< None: the player flies */
     std::vector<std::shared_ptr<comp_app::FileMapper::Resource>> m_side_files;
     std::vector<std::unique_ptr<el::map_container>>              m_side_maps;
     std::unique_ptr<el::map_container>                           m_map;
@@ -3072,6 +3232,10 @@ struct H3MapLoader : compo::SubsystemBase
     {
         el::animation_graph_t const*           graph{nullptr};
         std::optional<el::decoded_animation_t> idle;
+        std::optional<el::decoded_animation_t> fire, reload_full, reload_empty;
+        world::view_actions_t                  actions;
+        el::decoded_animation_t const*         action{nullptr}; /*!< Playing over the idle */
+        time_point                             action_start{};
         std::vector<el::string_id>             names; /*!< The graph's nodes */
         std::vector<el::render_model_t const*> models;
         std::vector<FirstPersonMesh>           meshes;
@@ -3095,8 +3259,9 @@ void alloc_h3(compo::EntityContainer& e)
 {
     auto& scene  = e.register_subsystem_inplace<H3Scene>();
     auto& bank   = e.register_subsystem_inplace<H3SoundBank>();
+    auto& map    = e.register_subsystem_inplace<H3Map>();
     auto& loader = e.register_subsystem_inplace<H3MapLoader>(
-        std::ref(e), std::ref(scene), std::ref(bank));
+        std::ref(e), std::ref(scene), std::ref(map), std::ref(bank));
     world::consume_map_loads(e, loader);
     e.subsystem_cast<PhysicsBus>().addEventFunction<Physics::Impact>(
         0, [&loader](Physics::Event&, Physics::Impact* impact) { loader.on_impact(*impact); });

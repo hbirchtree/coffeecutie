@@ -12,10 +12,18 @@
 #include "selected_version.h"
 #include "audio/sounds.h"
 #include "ticks.h"
+#include "world/game_maps.h"
 
 #include <blam/volta/blam_antr.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_unit.h>
+#include <blam/volta/blam_weapon_firing.h>
+#if defined(BLAM_DIMETER)
+#include <blam/dimeter/firing.h>
+#endif
+#if defined(BLAM_ELEGY)
+#include <blam/elegy/firing.h>
+#endif
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
@@ -36,11 +44,7 @@ using WeaponManifest = compo::SubsystemManifest<
         BipedEquipment,
         Model,
         const ObjectPhysics>,
-    type_list_t<
-        GameEventBus,
-        PhysicsBus,
-        const NetworkState,
-        const BlamFiles<halo_version>>,
+    world::with_game_maps_t<GameEventBus, PhysicsBus, const NetworkState, const LoadingStatus>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
@@ -51,6 +55,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     using weapon_t  = blam::scn::weapon;
     using trigger_t = weapon_t::trigger_t;
     using input_t   = weapon_t::weapon_function_in_t;
+    using weapon_id = GameTag<blam::tag_class_t::weap>;
+
+    /* A body's presses this frame */
+    struct intent_t
+    {
+        bool swap{false};
+        bool reload{false};
+        bool toss{false};
+        bool cycle{false};
+        bool strike{false};
+    };
 
     struct state_t
     {
@@ -65,7 +80,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         f32  charge{-1.f};      /* held while charging, s; <0 when not */
         f32  spin{0.f};         /* rate of fire wound up, 0 to 1 */
         bool spins{false};      /* the trigger winds up at all */
-        blam::tag_t const* weapon{nullptr}; /* what it is for */
+        i16  burst{0};          /* shots left of the last pull */
+        weapon_id weapon{};     /* what it is for */
     };
 
     WeaponSystem()
@@ -87,7 +103,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             m_shots.clear();
             m_grenades.clear();
         }
-        auto const& magic = files.container.magic;
+        if(!world::world_loaded(p))
+            return;
+        bool const halo1 =
+            p.template subsystem<LoadingStatus>().loaded_map == LoadingStatus::loaded;
 
         std::set<u64> live;
         for(auto ent : p.template select<
@@ -98,248 +117,40 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         {
             auto [input, info, cam, net] = ent.components();
             /* Presses are taken whether or not they can be acted on */
-            bool const swap   = std::exchange(input.intent.swap, false);
-            bool       reload = std::exchange(input.intent.reload, false);
-            bool const toss   = std::exchange(input.intent.grenade, false);
-            bool const cycle  = std::exchange(input.intent.grenade_switch, false);
-            bool const strike = std::exchange(input.intent.melee, false);
+            intent_t intent{
+                .swap   = std::exchange(input.intent.swap, false),
+                .reload = std::exchange(input.intent.reload, false),
+                .toss   = std::exchange(input.intent.grenade, false),
+                .cycle  = std::exchange(input.intent.grenade_switch, false),
+                .strike = std::exchange(input.intent.melee, false),
+            };
             /* A gunner fires the vehicle's weapon, a body its own, and so
              * does a passenger whose seat allows it; the free camera has
              * nothing to shoot with */
             u64 const   riding  = info.riding.vehicle;
-            auto const* mounted = riding ? mounted_weapon(p, info, files) : nullptr;
+            auto const* mounted = riding && halo1 ? mounted_weapon(p, info, files) : nullptr;
             bool const  armed   = riding && !mounted && info.riding.armed;
-            u64 const   vehicle = mounted ? riding : 0;
             auto*       equip   = p.template get<BipedEquipment>(ent.id());
-            auto const* carried =
-                equip ? equip->held(files.load_generation) : nullptr;
-            auto const* weapon_tag = mounted                       ? mounted
-                                     : (!riding || armed) && carried ? carried->tag
-                                                                     : nullptr;
+            auto const* carried = equip ? equip->drawn(files.load_generation) : nullptr;
+            weapon_id const weapon =
+                mounted                         ? weapon_id::of(MapGameEvent::halo1, mounted->tag_id)
+                : (!riding || armed) && carried ? carried->id
+                                                : weapon_id{};
             /* A remote body the server simulates fires here too */
-            if((info.is_remote() && !info.mode.simulated) || !weapon_tag ||
+            if((info.is_remote() && !info.mode.simulated) || !weapon.valid() ||
                (riding ? info.riding.exiting
                        : !info.mode.physics || !biped_in_play(info, cam, net)))
                 continue;
-            auto weapon = weapon_tag->template data<weapon_t>(magic);
-            if(!weapon.has_value())
-                continue;
-            auto triggers = weapon.value()[0].triggers.data(magic);
-            live.insert(ent.id());
-            auto& state = m_states[ent.id()];
-            /* Another weapon starts afresh */
-            if(state.weapon != weapon_tag)
-                state = {.weapon = weapon_tag};
-
-            /* Grenades are thrown on foot, unless what is held forbids it */
-            using weapon_flags_t = blam::scn::weapon::weapon_flags_t;
-            bool const no_grenades =
-                (weapon.value()[0].weapon_flags & weapon_flags_t::prevents_grenade_throwing) != weapon_flags_t::none;
-            bool const throwing =
-                !riding && grenade(p, ent.id(), info, cam, *equip, ticks, toss && !no_grenades, cycle);
-            /* A strike on foot stops the gun until it is done */
-            for(auto const& tick : ticks)
-                state.striking = std::max(state.striking - tick.seconds, 0.f);
-            if(strike && !riding && !throwing && state.striking <= 0.f)
-            {
-                state.striking  = melee_time;
-                state.reloading = 0.f;
-                pull(p, ent.id(), info, cam, *weapon_tag, true);
-            }
-            /* Nothing to fire (a flag): melee alone, and a pull lets go of it */
-            if(!triggers.has_value() || triggers.value().empty())
-            {
-                if(input.intent.fire && !throwing && state.striking <= 0.f && equip->objective.tag == weapon_tag)
-                {
-                    m_hold_fire.insert(ent.id());
-                    EquipWeaponEvent drop{
-                        .entity_id = ent.id(), .weapon = weapon_tag->tag_id, .mode = EquipWeaponEvent::drop};
-                    GameEvent ev{.type = GameEvent::EquipWeapon};
-                    p.template subsystem<GameEventBus>().inject(ev, &drop);
-                }
-                continue;
-            }
-            trigger_t const& trigger = triggers.value()[0];
-            /* The pull that let go of a flag fires nothing until released */
-            if(!input.intent.fire)
-                m_hold_fire.erase(ent.id());
-            bool const pulled =
-                input.intent.fire && !throwing && state.striking <= 0.f && !m_hold_fire.contains(ent.id());
-
-            /* Bodies switch, reload and run dry; vehicle guns don't */
-            auto* ammo = vehicle ? nullptr : &equip->weapons[0];
-            if(ammo && swap && equip->weapons[1].weapon)
-            {
-                std::swap(equip->weapons[0], equip->weapons[1]);
-                equip->reloading = false;
-                continue;
-            }
-            auto const* magazine =
-                ammo ? magazine_of(weapon.value()[0], trigger, magic) : nullptr;
-            i16 const per_shot = std::max<i16>(trigger.rounds_per_shot, 1);
-
-            /* A rate of zero fires once a pull. A trigger with a spin-up
-             * winds from its first rate to its last over the acceleration
-             * time; let go, it winds down without firing (the barrel spins on) */
-            bool const spins = trigger.acceleration_time > 0.f &&
-                               trigger.maximum_rate_of_fire.y > trigger.maximum_rate_of_fire.x;
-            state.spins      = spins;
-            bool const repeats =
-                (trigger.maximum_rate_of_fire.x > 0.f || trigger.maximum_rate_of_fire.y > 0.f) &&
-                (trigger.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
-                    trigger_t::flags_t::none;
-            /* A trigger that charges fires as it is let go: its partner's
-             * shot once charged */
-            bool const charges = trigger.charging_time > 0.f && triggers.value().size() > 1;
-            /* A mounted gun's second trigger fires alongside its first:
-             * the tank's gun, the banshee's fuel rod */
-            bool const held2 = mounted && triggers.value().size() > 1 && !charges &&
-                               input.intent.fire2 && state.striking <= 0.f;
-            auto const& gun_tag = weapon.value()[0];
-            /* The trigger is looked at once a tick */
-            for(auto const& tick : ticks)
-            {
-                f32 const dt    = tick.seconds;
-                f32 const hurry = dt * info.speed_scale();
-                state.fired     = false;
-                state.cooldown  = std::max(state.cooldown - hurry, 0.f);
-                if(state.reloading > 0.f &&
-                   (state.reloading -= hurry) <= 0.f && magazine)
-                    refill(*ammo, *magazine);
-                bool const loaded =
-                    !magazine || ammo->rounds_loaded >= per_shot;
-                if(magazine && state.reloading <= 0.f && ammo->rounds_total > 0 &&
-                   ammo->rounds_loaded < magazine->rounds_loaded_maximum &&
-                   (reload || !loaded))
-                {
-                    state.reloading = std::max(magazine->reload_time, dt);
-                    reload          = false;
-                }
-                if(ammo)
-                    cool(*ammo, gun_tag, dt);
-                bool const ready = loaded && state.reloading <= 0.f &&
-                                   (!ammo || !spent(*ammo, gun_tag));
-                bool const able = ready && state.cooldown <= 0.f;
-                if(spins)
-                {
-                    if(pulled && ready)
-                        state.spin = std::min(state.spin + dt / trigger.acceleration_time, 1.f);
-                    else if(trigger.deceleration_time > 0.f)
-                        state.spin = std::max(state.spin - dt / trigger.deceleration_time, 0.f);
-                    else
-                        state.spin = 0.f;
-                }
-                f32 const rate =
-                    spins ? glm::mix(trigger.maximum_rate_of_fire.x, trigger.maximum_rate_of_fire.y, state.spin)
-                    : trigger.maximum_rate_of_fire.y > 0.f ? trigger.maximum_rate_of_fire.y
-                                                           : trigger.maximum_rate_of_fire.x;
-                bool const held = pulled;
-                i32 fires = -1;
-                /* A fresh pull on nothing to fire: the dry click */
-                bool const dry = magazine ? !loaded && ammo->rounds_total < per_shot
-                                          : ammo && spent(*ammo, gun_tag);
-                if(held && !state.firing && dry && state.reloading <= 0.f)
-                    dry_pull(p, ent.id(), trigger);
-                if(charges)
-                {
-                    if(held && !state.firing && able)
-                        state.charge = 0.f;
-                    else if(held && state.charge >= 0.f)
-                    {
-                        state.charge += dt;
-                        /* Held charged for too long: what the trigger then
-                         * does, let off or blown */
-                        using action_t = trigger_t::overcharged_action_t;
-                        if(trigger.overcharged_action != action_t::none &&
-                           state.charge >= trigger.charging_time + trigger.charged_time)
-                        {
-                            if(trigger.overcharged_action == action_t::discharge)
-                                fires = 1;
-                            else if(ammo)
-                                detonate(p, ent.id(), *ammo, gun_tag);
-                            state.charge = -1.f;
-                        }
-                    } else if(!held && state.charge >= 0.f)
-                    {
-                        fires        = state.charge >= trigger.charging_time ? 1 : 0;
-                        state.charge = -1.f;
-                    }
-                } else if(held && (repeats || !state.firing))
-                    fires = 0;
-                if(fires >= 0 && able)
-                {
-                    trigger_t const& pulled = triggers.value()[fires];
-                    if(rate > 0.f)
-                        state.cooldown += 1.f / rate;
-                    state.fired = true;
-                    /* A battery run low misfires some of its pulls */
-                    bool const misfires =
-                        ammo && gun_tag.age_misfire_start > 0.f &&
-                        ammo->age >= gun_tag.age_misfire_start &&
-                        chance() < gun_tag.age_misfire_chance;
-                    if(misfires)
-                        misfire(p, ent.id(), pulled);
-                    else
-                    {
-                        state.illumination = 1.f;
-                        if(magazine)
-                            ammo->rounds_loaded -= per_shot;
-                        if(ammo)
-                            heat_up(p, ent.id(), *ammo, gun_tag, pulled);
-                        pull(p, ent.id(), info, cam, *weapon_tag, false,
-                             static_cast<u16>(fires));
-                    }
-                }
-                state.firing = held;
-                state.cooldown2 = std::max(state.cooldown2 - dt, 0.f);
-                if(held2)
-                {
-                    trigger_t const& second = triggers.value()[1];
-                    f32 const        rate2  = second.maximum_rate_of_fire.y > 0.f
-                                                  ? second.maximum_rate_of_fire.y
-                                                  : second.maximum_rate_of_fire.x;
-                    bool const repeats2 =
-                        rate2 > 0.f &&
-                        (second.flags & trigger_t::flags_t::does_not_repeat_automatically) ==
-                            trigger_t::flags_t::none;
-                    if((repeats2 || !state.firing2) && state.cooldown2 <= 0.f)
-                    {
-                        if(rate2 > 0.f)
-                            state.cooldown2 += 1.f / rate2;
-                        state.fired        = true;
-                        state.illumination = 1.f;
-                        pull(p, ent.id(), info, cam, *weapon_tag, false, 1);
-                    }
-                }
-                state.firing2 = held2;
-                if(ammo)
-                {
-                    ammo->charged  = charges && state.charge >= trigger.charging_time;
-                    ammo->charging = charges && state.charge >= 0.f;
-                }
-                if(trigger.illumination_recovery_time > 0.f)
-                    state.illumination = std::max(
-                        state.illumination -
-                            dt / trigger.illumination_recovery_time,
-                        0.f);
-                else if(!state.fired)
-                    state.illumination = 0.f;
-            }
-
-            if(!vehicle)
-            {
-                equip->reloading = state.reloading > 0.f;
-                drive_functions(
-                    p, ent.id(), weapon.value()[0], state, pulled || state.spin > 0.f, magic, ammo,
-                    charges ? trigger.charging_time : 0.f);
-            } else
-                drive_vehicle(
-                    p, vehicle, weapon.value()[0], state, pulled || state.spin > 0.f, magic,
-                    static_cast<u32>(ticks.size()));
+            world::with_map(p, weapon.game, [&](auto const& map) {
+                operate(p, ent.id(), input, info, cam, equip, mounted, map, weapon, ticks, intent, live);
+            });
         }
         std::erase_if(m_states, [&live](auto const& e) {
             return !live.contains(e.first);
         });
+        if(!halo1)
+            return;
+        auto const& magic = files.container.magic;
 
         drive_held(p, files.load_generation, magic);
         hush(p);
@@ -350,6 +161,259 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         m_use_queue->poll();
         if(!p.template subsystem<NetworkState>().replica)
             pick_up(p, files);
+    }
+
+    /* One body's weapon over this frame's ticks: rate of fire, magazine,
+     * heat and charge, read from any game's weapon through its firing
+     * overloads. Spin-up, misfires, overcharge, the dry click, a carried
+     * flag and mounted guns are Halo 1's so far */
+    template<typename Map>
+    void operate(
+        Proxy&                        p,
+        u64                           id,
+        PlayerInput&                  input,
+        PlayerInfo const&             info,
+        PlayerCamera const&           cam,
+        BipedEquipment*               equip,
+        blam::tag_t const*            mounted,
+        Map const&                    map,
+        weapon_id                     weapon_tag,
+        std::vector<TickEvent> const& ticks,
+        intent_t&                     intent,
+        std::set<u64>&                live)
+    {
+        constexpr bool halo1  = world::game_of<Map>::game == MapGameEvent::halo1;
+        auto const     weapon = world::lookup<typename world::game_of<Map>::weapon>(map, weapon_tag);
+        if(!weapon)
+            return;
+        auto const         modes  = firing_modes(*weapon, map);
+        blam::tag_t const* h1_tag = nullptr;
+        if constexpr(halo1)
+            h1_tag = weapon.tag;
+        live.insert(id);
+        auto& state = m_states[id];
+        /* Another weapon starts afresh */
+        if(state.weapon != weapon_tag)
+            state = {.weapon = weapon_tag};
+        u64 const riding  = info.riding.vehicle;
+        u64 const vehicle = mounted ? riding : 0;
+
+        /* Grenades are thrown on foot, unless what is held forbids it */
+        bool throwing = false;
+        if constexpr(halo1)
+        {
+            using weapon_flags_t = blam::scn::weapon::weapon_flags_t;
+            bool const no_grenades =
+                (weapon->weapon_flags & weapon_flags_t::prevents_grenade_throwing) != weapon_flags_t::none;
+            throwing = !riding &&
+                       grenade(p, id, info, cam, *equip, ticks, intent.toss && !no_grenades, intent.cycle);
+        }
+        /* A strike on foot stops the gun until it is done */
+        for(auto const& tick : ticks)
+            state.striking = std::max(state.striking - tick.seconds, 0.f);
+        if(intent.strike && !riding && !throwing && state.striking <= 0.f)
+        {
+            state.striking  = melee_time;
+            state.reloading = 0.f;
+            pull(p, id, info, cam, weapon_tag, h1_tag, mounted != nullptr, true);
+        }
+        /* Nothing to fire (a flag): melee alone, and a pull lets go of it */
+        if(modes.empty())
+        {
+            if constexpr(halo1)
+                if(input.intent.fire && !throwing && state.striking <= 0.f &&
+                   equip->objective.tag == h1_tag)
+                {
+                    m_hold_fire.insert(id);
+                    EquipWeaponEvent drop{
+                        .entity_id = id, .weapon = h1_tag->tag_id, .mode = EquipWeaponEvent::drop};
+                    GameEvent ev{.type = GameEvent::EquipWeapon};
+                    p.template subsystem<GameEventBus>().inject(ev, &drop);
+                }
+            return;
+        }
+        auto const& trigger = modes[0];
+        /* The pull that let go of a flag fires nothing until released */
+        if(!input.intent.fire)
+            m_hold_fire.erase(id);
+        bool const pulled =
+            input.intent.fire && !throwing && state.striking <= 0.f && !m_hold_fire.contains(id);
+
+        /* Bodies switch, reload and run dry; vehicle guns don't */
+        auto* ammo = vehicle ? nullptr : &equip->weapons[0];
+        if(ammo && intent.swap && equip->weapons[1].id.valid())
+        {
+            std::swap(equip->weapons[0], equip->weapons[1]);
+            equip->reloading = false;
+            return;
+        }
+        auto const* magazine = ammo ? magazine_of(*weapon, trigger, map) : nullptr;
+        i16 const   per_shot = std::max<i16>(rounds_per_shot(trigger), 1);
+
+        /* A rate of zero fires once a pull. A trigger with a spin-up
+         * winds from its first rate to its last over the acceleration
+         * time; let go, it winds down without firing (the barrel spins on) */
+        bool spins = false;
+        if constexpr(halo1)
+            spins = trigger.acceleration_time > 0.f &&
+                    trigger.maximum_rate_of_fire.y > trigger.maximum_rate_of_fire.x;
+        state.spins          = spins;
+        bool const automatic = repeats(trigger);
+        /* A trigger that charges fires as it is let go: its partner's
+         * shot once charged */
+        f32 const  charge_time = charging_time(trigger);
+        bool const charges     = charge_time > 0.f && modes.size() > 1;
+        /* A mounted gun's second trigger fires alongside its first:
+         * the tank's gun, the banshee's fuel rod */
+        bool const held2 = mounted && modes.size() > 1 && !charges && input.intent.fire2 &&
+                           state.striking <= 0.f;
+        /* The trigger is looked at once a tick */
+        for(auto const& tick : ticks)
+        {
+            f32 const dt    = tick.seconds;
+            f32 const hurry = dt * info.speed_scale();
+            state.fired     = false;
+            state.cooldown  = std::max(state.cooldown - hurry, 0.f);
+            if(state.reloading > 0.f && (state.reloading -= hurry) <= 0.f && magazine)
+                refill(*ammo, *magazine);
+            bool const loaded = !magazine || ammo->rounds_loaded >= per_shot;
+            if(magazine && state.reloading <= 0.f && ammo->rounds_total > 0 &&
+               ammo->rounds_loaded < rounds_loaded_maximum(*magazine) && (intent.reload || !loaded))
+            {
+                state.reloading = std::max({reload_time(*magazine), ammo->reload_length, dt});
+                intent.reload   = false;
+            }
+            if(ammo)
+                cool(*ammo, *weapon, dt);
+            bool const ready =
+                loaded && state.reloading <= 0.f && (!ammo || !spent(*ammo, *weapon));
+            bool const able = ready && state.cooldown <= 0.f;
+            f32        rate = rate_of_fire(trigger);
+            if constexpr(halo1)
+                if(spins)
+                {
+                    if(pulled && ready)
+                        state.spin = std::min(state.spin + dt / trigger.acceleration_time, 1.f);
+                    else if(trigger.deceleration_time > 0.f)
+                        state.spin = std::max(state.spin - dt / trigger.deceleration_time, 0.f);
+                    else
+                        state.spin = 0.f;
+                    rate = glm::mix(
+                        trigger.maximum_rate_of_fire.x, trigger.maximum_rate_of_fire.y, state.spin);
+                }
+            bool const held  = pulled;
+            i32        fires = -1;
+            /* A fresh pull on nothing to fire: the dry click */
+            if constexpr(halo1)
+            {
+                bool const dry = magazine ? !loaded && ammo->rounds_total < per_shot
+                                          : ammo && spent(*ammo, *weapon);
+                if(held && !state.firing && dry && state.reloading <= 0.f)
+                    dry_pull(p, id, trigger);
+            }
+            if(charges)
+            {
+                if(held && !state.firing && able)
+                    state.charge = 0.f;
+                else if(held && state.charge >= 0.f)
+                {
+                    state.charge += dt;
+                    /* Held charged for too long: what the trigger then
+                     * does, let off or blown */
+                    if constexpr(halo1)
+                    {
+                        using action_t = trigger_t::overcharged_action_t;
+                        if(trigger.overcharged_action != action_t::none &&
+                           state.charge >= trigger.charging_time + trigger.charged_time)
+                        {
+                            if(trigger.overcharged_action == action_t::discharge)
+                                fires = 1;
+                            else if(ammo)
+                                detonate(p, id, *ammo, *weapon);
+                            state.charge = -1.f;
+                        }
+                    }
+                } else if(!held && state.charge >= 0.f)
+                {
+                    fires        = state.charge >= charge_time ? 1 : 0;
+                    state.charge = -1.f;
+                }
+            } else if(held && (automatic || !state.firing))
+            {
+                fires = 0;
+                if(!automatic && able)
+                    state.burst = shots_per_pull(trigger) - 1;
+            } else if(state.burst > 0)
+            {
+                fires = 0;
+                if(able)
+                    state.burst--;
+            }
+            if(fires >= 0 && able)
+            {
+                auto const& mode = modes[fires];
+                if(rate > 0.f)
+                    state.cooldown += 1.f / rate;
+                state.fired = true;
+                /* A battery run low misfires some of its pulls */
+                bool misfires = false;
+                if constexpr(halo1)
+                {
+                    misfires = ammo && weapon->age_misfire_start > 0.f &&
+                               ammo->age >= weapon->age_misfire_start &&
+                               chance() < weapon->age_misfire_chance;
+                    if(misfires)
+                        misfire(p, id, mode);
+                }
+                if(!misfires)
+                {
+                    state.illumination = 1.f;
+                    if(magazine)
+                        ammo->rounds_loaded -= per_shot;
+                    if(ammo)
+                        heat_up(p, id, *ammo, *weapon, mode);
+                    pull(p, id, info, cam, weapon_tag, h1_tag, mounted != nullptr, false,
+                         static_cast<u16>(fires));
+                }
+            }
+            state.firing    = held;
+            state.cooldown2 = std::max(state.cooldown2 - dt, 0.f);
+            if(held2)
+            {
+                f32 const  rate2      = rate_of_fire(modes[1]);
+                bool const automatic2 = repeats(modes[1]);
+                if((automatic2 || !state.firing2) && state.cooldown2 <= 0.f)
+                {
+                    if(rate2 > 0.f)
+                        state.cooldown2 += 1.f / rate2;
+                    state.fired        = true;
+                    state.illumination = 1.f;
+                    pull(p, id, info, cam, weapon_tag, h1_tag, true, false, 1);
+                }
+            }
+            state.firing2 = held2;
+            if(ammo)
+            {
+                ammo->charged  = charges && state.charge >= charge_time;
+                ammo->charging = charges && state.charge >= 0.f;
+            }
+            if(f32 const recovery = illumination_recovery_time(trigger); recovery > 0.f)
+                state.illumination = std::max(state.illumination - dt / recovery, 0.f);
+            else if(!state.fired)
+                state.illumination = 0.f;
+        }
+
+        if(!vehicle)
+        {
+            equip->reloading = state.reloading > 0.f;
+            if constexpr(halo1)
+                drive_functions(
+                    p, id, *weapon, state, pulled || state.spin > 0.f, map, ammo,
+                    charges ? charge_time : 0.f);
+        } else if constexpr(halo1)
+            drive_vehicle(
+                p, vehicle, *weapon, state, pulled || state.spin > 0.f, map.magic,
+                static_cast<u32>(ticks.size()));
     }
 
     /* The authority hands out what bodies walk over, local and remote alike:
@@ -534,14 +598,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         u64                 player,
         PlayerInfo const&   info,
         PlayerCamera const& cam,
-        blam::tag_t const&  weapon,
+        weapon_id           weapon,
+        blam::tag_t const*  h1_tag,
+        bool                on_mount,
         bool                melee   = false,
         u16                 trigger = 0)
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
         WeaponFireEvent shot{
-            .weapon     = weapon.as_ref(),
+            .weapon     = h1_tag ? h1_tag->as_ref() : blam::tagref_t{},
+            .id         = weapon,
             .shooter    = player,
             .player_idx = info.player_idx,
             .seed       = static_cast<u32>(m_rng()),
@@ -552,6 +619,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .direction  = forward,
         };
         GameEvent ev{.type = GameEvent::WeaponFire};
+        if(auto* equip = !melee && !on_mount ? p.template get<BipedEquipment>(player) : nullptr)
+            equip->shots++;
         /* What the reticle rests on: a unit there is what guided shots seek */
         Vecf3 target = cam.camera.position + forward * aim_reach;
         if(!melee)
@@ -568,10 +637,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 if(ray.entity_id && is_unit(p, ray.entity_id))
                     shot.target = ray.entity_id;
             }
-            if(!shot.target)
-                shot.target = autoaimed(p, player, info, cam.camera.position, forward, weapon);
+            if(!shot.target && h1_tag)
+                shot.target = autoaimed(p, player, info, cam.camera.position, forward, *h1_tag);
         }
-        if(info.riding.vehicle != 0 && &weapon == mounted_weapon(p, info, files_of(p)))
+        if(on_mount)
         {
             /* Every barrel fires at once, each at what the reticle rests
              * on, however the gun itself is posed */
@@ -960,33 +1029,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return 0;
     }
 
-    static weapon_t::magazine_t const* magazine_of(
-        weapon_t const& weapon, trigger_t const& trigger, blam::map_ptr const& magic)
-    {
-        auto magazines = weapon.magazines.data(magic);
-        if(trigger.magazine < 0 || !magazines.has_value() ||
-           static_cast<size_t>(trigger.magazine) >= magazines.value().size())
-            return nullptr;
-        /* Energy weapons name one that loads no rounds: they fire on charge */
-        auto const& magazine = magazines.value()[trigger.magazine];
-        return magazine.rounds_loaded_maximum > 0 ? &magazine : nullptr;
-    }
-
     /* Heat bleeds off; a vented weapon fires again once cool enough */
-    static void cool(BipedEquipment::weapon_t& gun, weapon_t const& tag, f32 dt)
+    template<typename Weapon>
+    static void cool(BipedEquipment::weapon_t& gun, Weapon const& tag, f32 dt)
     {
-        gun.heat = std::max(gun.heat - tag.heat_loss_rate * dt, 0.f);
-        if(gun.overheated && gun.heat <= tag.heat_recovery_threshold)
+        gun.heat = std::max(gun.heat - heat_loss_rate(tag) * dt, 0.f);
+        if(gun.overheated && gun.heat <= heat_recovery_threshold(tag))
             gun.overheated = false;
     }
 
     /* Venting, or a battery run flat where that stops it */
-    static bool spent(BipedEquipment::weapon_t const& gun, weapon_t const& tag)
+    template<typename Weapon>
+    static bool spent(BipedEquipment::weapon_t const& gun, Weapon const& tag)
     {
-        using flags_t = weapon_t::weapon_flags_t;
-        return gun.overheated ||
-               ((tag.weapon_flags & flags_t::cannot_fire_at_maximum_age) != flags_t::none &&
-                gun.age >= 1.f);
+        return gun.overheated || (stops_at_maximum_age(tag) && gun.age >= 1.f);
     }
 
     f32 chance()
@@ -1022,15 +1078,26 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     /* A shot warms the weapon and drains its battery; too hot, it vents, or
      * past its detonation threshold it may blow instead */
+    template<typename Weapon, typename Mode>
     void heat_up(
-        Proxy& p, u64 player, BipedEquipment::weapon_t& gun, weapon_t const& tag,
-        trigger_t const& pulled)
+        Proxy& p, u64 player, BipedEquipment::weapon_t& gun, Weapon const& tag,
+        Mode const& pulled)
     {
-        gun.heat += pulled.heat_generated_per_round;
-        gun.age = std::min(gun.age + pulled.age_generated_per_round, 1.f);
-        if(tag.overheated_threshold <= 0.f || gun.heat < tag.overheated_threshold ||
+        gun.heat += heat_per_round(pulled);
+        gun.age = std::min(gun.age + age_per_round(pulled), 1.f);
+        if(overheated_threshold(tag) <= 0.f || gun.heat < overheated_threshold(tag) ||
            gun.overheated)
             return;
+        if constexpr(!std::is_same_v<Weapon, weapon_t>)
+        {
+            gun.overheated = true;
+            return;
+        } else
+            vent(p, player, gun, tag);
+    }
+
+    void vent(Proxy& p, u64 player, BipedEquipment::weapon_t& gun, weapon_t const& tag)
+    {
         bool const detonates = tag.heat_detonation_threshold > 0.f &&
                                gun.heat >= tag.heat_detonation_threshold &&
                                chance() < tag.heat_detonation_fraction &&
@@ -1075,10 +1142,11 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     }
 
     /* Tops the magazine up from what is carried */
-    static void refill(BipedEquipment::weapon_t& ammo, weapon_t::magazine_t const& magazine)
+    template<typename Magazine>
+    static void refill(BipedEquipment::weapon_t& ammo, Magazine const& magazine)
     {
         u16 const room = static_cast<u16>(
-            std::max<i32>(magazine.rounds_loaded_maximum - ammo.rounds_loaded, 0));
+            std::max<i32>(rounds_loaded_maximum(magazine) - ammo.rounds_loaded, 0));
         u16 const taken = std::min(room, ammo.rounds_total);
         ammo.rounds_loaded += taken;
         ammo.rounds_total -= taken;
@@ -1350,22 +1418,21 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         weapon_t const&      weapon,
         state_t const&       state,
         bool                 held,
-        blam::map_ptr const& magic,
+        blam::map_container<halo_version> const& map,
         BipedEquipment::weapon_t const* gun,
-        f32                  charging_time)
+        f32                  charge_time)
     {
+        auto const& magic = map.magic;
         u64 const id = first_person(p, player, true);
         if(id == 0)
             return;
         auto* model = p.template get<Model>(id);
 
         f32 const charged =
-            charging_time > 0.f && state.charge >= 0.f ? std::min(state.charge / charging_time, 1.f) : 0.f;
+            charge_time > 0.f && state.charge >= 0.f ? std::min(state.charge / charge_time, 1.f) : 0.f;
         /* What is loaded, as a share of the magazine */
-        auto        triggers = weapon.triggers.data(magic);
-        auto const* magazine = gun && triggers.has_value() && !triggers.value().empty()
-                                   ? magazine_of(weapon, triggers.value()[0], magic)
-                                   : nullptr;
+        auto const  modes    = firing_modes(weapon, map);
+        auto const* magazine = gun && !modes.empty() ? magazine_of(weapon, modes[0], map) : nullptr;
         f32 const loaded = magazine && magazine->rounds_loaded_maximum > 0
                                ? std::min(
                                      static_cast<f32>(gun->rounds_loaded) /

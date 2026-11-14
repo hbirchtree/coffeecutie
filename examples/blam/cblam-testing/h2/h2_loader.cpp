@@ -1,4 +1,5 @@
 #include "h2_bitmap.h"
+#include "h2_map.h"
 #include "h2_scene.h"
 #include "../world/column_grid.h"
 #include "../world/texels.h"
@@ -19,6 +20,7 @@
 #include <blam/dimeter/animation.h>
 #include <blam/dimeter/bitm.h>
 #include <blam/dimeter/collision.h>
+#include <blam/dimeter/firing.h>
 #include <blam/dimeter/fog.h>
 #include <blam/dimeter/geometry.h>
 #include <blam/dimeter/lightmap.h>
@@ -135,9 +137,14 @@ struct H2MapLoader : compo::SubsystemBase
     using type = H2MapLoader;
 
     H2MapLoader(
-        compo::EntityContainer& e, H2Scene& scene, H2ShellData& shell, H2SoundBank& bank)
+        compo::EntityContainer& e,
+        H2Scene&                scene,
+        H2Map&                  map,
+        H2ShellData&            shell,
+        H2SoundBank&            bank)
         : m_container(e)
         , m_scene(scene)
+        , m_map(map)
         , m_shell(shell)
         , m_bank(bank)
     {
@@ -256,11 +263,10 @@ struct H2MapLoader : compo::SubsystemBase
 
     void finish_fetch(MapLoadEvent const& load, std::shared_ptr<comp_app::FileMapper::Resource> file)
     {
-        /* Everything worth keeping is copied out by the load */
         m_fetch.reset();
         dim::raw_pool pool;
         side_pool(pool);
-        load_cache(load, static_cast<BytesConst>(*file), pool);
+        load_cache(load, file, pool);
         m_container.subsystem_cast<LoadingStatus>().end();
     }
 
@@ -362,9 +368,13 @@ struct H2MapLoader : compo::SubsystemBase
         }};
 
 
+    /* The map stays held by H2Map once loaded */
     bool load_cache(
-        MapLoadEvent const& load, BytesConst const& bytes, dim::raw_pool& pool)
+        MapLoadEvent const&                             load,
+        std::shared_ptr<comp_app::FileMapper::Resource> file,
+        dim::raw_pool&                                  pool)
     {
+        auto const bytes = static_cast<BytesConst>(*file);
         world::announce_game(m_container, MapGameEvent::halo2);
         unload();
         world::clear_world(m_container);
@@ -379,8 +389,10 @@ struct H2MapLoader : compo::SubsystemBase
         if(auto map = dim::map_container<dim::xbox_version_t>::from_bytes(
                bytes, dim::xbox_version);
            map.has_value())
-            loaded = load_map(map.value(), pool);
-        else if(auto map = dim::map_container<dim::vista_version_t>::from_bytes(
+        {
+            if((loaded = load_map(map.value(), pool)))
+                m_map.hold(map.value(), file);
+        } else if(auto map = dim::map_container<dim::vista_version_t>::from_bytes(
                     bytes, dim::vista_version);
                 map.has_value())
         {
@@ -395,7 +407,8 @@ struct H2MapLoader : compo::SubsystemBase
                 pool.file_size(dim::raw_file_t::mainmenu),
                 pool.file_size(dim::raw_file_t::shared),
                 pool.file_size(dim::raw_file_t::single_player_shared));
-            loaded = load_map(vista, pool);
+            if((loaded = load_map(vista, pool)))
+                m_map.hold(vista, file, std::move(shared));
         }
         else
             cWarning(
@@ -442,7 +455,10 @@ struct H2MapLoader : compo::SubsystemBase
 
     void unload()
     {
+        m_map.release();
         m_source.reset();
+        m_player_unit.reset();
+        m_loadout = {};
         m_shell.loaded = false;
         m_bank.loaded  = false;
         m_scene.loaded = false;
@@ -765,7 +781,7 @@ struct H2MapLoader : compo::SubsystemBase
                 eye               = Vecf3{
                     from_le(spawn.position[0]),
                     from_le(spawn.position[1]),
-                    from_le(spawn.position[2]) + 0.6f};
+                    from_le(spawn.position[2]) + (m_player_unit ? m_player_unit->eye_height : 0.6f)};
                 yaw = glm::radians(from_le(spawn.facing_degrees));
             }
         cDebug("H2: camera at ({}, {}, {}), yaw {}", eye.x, eye.y, eye.z, yaw);
@@ -776,6 +792,7 @@ struct H2MapLoader : compo::SubsystemBase
         if(auto window = m_container.service<comp_app::WindowInfo>())
             window->setName(fmt::format("Blam! : {}", map.name()));
         m_scene.loaded = true;
+        world::announce_world_ready(m_container, MapGameEvent::halo2);
 
         /* mainmenu.map brings the shell with it */
         std::vector<ShellFontFile> fonts;
@@ -1624,10 +1641,14 @@ struct H2MapLoader : compo::SubsystemBase
             return;
 
         /* The view model and its animations from the starting weapon */
-        dim::tag_t const* weapon_tag = nullptr;
+        dim::tag_t const*                            weapon_tag = nullptr;
+        dim::scn::player_starting_profile_t const* profile    = nullptr;
         if(auto profiles = scenario.player_starting_profiles.data(map.magic());
            !profiles.has_error() && !profiles.value().empty())
-            weapon_tag = map.tag_at(profiles.value()[0].primary_weapon.tag_id);
+        {
+            profile    = &profiles.value()[0];
+            weapon_tag = map.tag_at(profile->primary_weapon.tag_id);
+        }
         if(auto palette = scenario.weapon_palette.data(map.magic());
            !weapon_tag && !palette.has_error() && !palette.value().empty())
             weapon_tag = map.tag_at(palette.value()[0].tag.tag_id);
@@ -1638,6 +1659,17 @@ struct H2MapLoader : compo::SubsystemBase
                 weapon_tag = &tag;
         auto const* weapon =
             weapon_tag ? weapon_tag->template data<dim::obj::weapon_t>(map.magic()) : nullptr;
+        if(profile && weapon_tag == map.tag_at(profile->primary_weapon.tag_id))
+            m_loadout = {
+                armed(map, weapon_tag, profile->primary_rounds_loaded_raw, profile->primary_rounds_total_raw),
+                armed(
+                    map,
+                    map.tag_at(profile->secondary_weapon.tag_id),
+                    profile->secondary_rounds_loaded_raw,
+                    profile->secondary_rounds_total_raw),
+            };
+        else
+            m_loadout = {armed(map, weapon_tag)};
         dim::tag_t const* jmad_tag = nullptr;
         dim::tag_t const* view_tag = nullptr;
         if(weapon)
@@ -1671,12 +1703,46 @@ struct H2MapLoader : compo::SubsystemBase
                      : std::nullopt);
         if(view_tag && jmad_tag)
             fp.weapon =
-                add(view_tag, view_animation(map, pool, *jmad_tag, *view_tag, "first_person:idle"));
+                add(view_tag, view_animation(map, pool, *jmad_tag, *view_tag, "first_person:idle", hands_tag));
+        auto clip = [&](std::string_view name) {
+            H2Scene::first_person_t::clip_t out;
+            if(!jmad_tag || !hands_tag)
+                return out;
+            out.hands = view_animation(map, pool, *jmad_tag, *hands_tag, name).value_or(-1);
+            if(view_tag)
+                out.weapon = view_animation(map, pool, *jmad_tag, *view_tag, name, hands_tag).value_or(-1);
+            return out;
+        };
+        fp.fire         = clip("first_person:fire_1:var1");
+        fp.reload_full  = clip("first_person:reload_full");
+        fp.reload_empty = clip("first_person:reload_empty");
+        for(i32 a : {fp.reload_full.hands, fp.reload_full.weapon})
+            if(a >= 0)
+            {
+                auto const& anim = m_scene.animations[static_cast<size_t>(a)];
+                m_loadout[0].reload_length =
+                    std::max(m_loadout[0].reload_length, static_cast<f32>(anim.frames) / anim.rate);
+            }
 
         /* The body stands as the third-person unit does holding the weapon */
         std::optional<u32> stance;
         auto const         unit = map.template get<dim::obj::biped_t>(rep->third_person_unit);
         auto const         unit_view = dim::object_view::of(map, rep->third_person_unit);
+        if(unit)
+        {
+            m_player_unit = player_unit(map, *globals, *unit);
+            cDebug(
+                "H2: player unit {}: radius {} height {} eye {} (crouched {}), run {}/{}/{}, jump {}",
+                map.name_of(*map.tag_at(rep->third_person_unit.tag_id)),
+                m_player_unit->radius,
+                m_player_unit->height,
+                m_player_unit->eye_height,
+                m_player_unit->crouch_eye_height,
+                m_player_unit->run_speed,
+                m_player_unit->back_speed,
+                m_player_unit->strafe_speed,
+                m_player_unit->jump_velocity);
+        }
         auto const*        graph_tag = unit_view.animation.tag;
         std::string weapon_class =
             weapon ? std::string(map.string(weapon->weapon_class)) : std::string{};
@@ -1713,7 +1779,8 @@ struct H2MapLoader : compo::SubsystemBase
         dim::raw_pool const&         pool,
         dim::tag_t const&            jmad_tag,
         dim::tag_t const&            mode_tag,
-        std::string_view             clip)
+        std::string_view             clip,
+        dim::tag_t const*            rig_tag = nullptr)
     {
         auto const* graph = jmad_tag.template data<dim::anim::header_t>(map.magic());
         auto const* model = mode_tag.template data<geo::model_header_t>(map.magic());
@@ -1731,13 +1798,22 @@ struct H2MapLoader : compo::SubsystemBase
         size_t const joints = skeleton.value().size();
         if(!chosen || chosen->node_count != joints)
             return std::nullopt;
-        /* The model's node of that name at rest, else the graph's own */
-        auto       defaults = dim::graph_pose(map, *graph, joints);
-        auto const rest     = dim::model_pose(map, *model);
-        for(size_t i = 0; i < joints; i++)
-            for(size_t n = 0; n < nodes.value().size(); n++)
-                if(map.string(nodes.value()[n].name) == map.string(skeleton.value()[i].name))
-                    defaults[i] = rest[n];
+        /* The model's node of that name at rest, else the rig's (the hands a
+         * first-person weapon shares a graph with), else the graph's own */
+        auto defaults = dim::graph_pose(map, *graph, joints);
+        auto rest_of  = [&](geo::model_header_t const& from) {
+            auto const from_nodes = from.nodes.data(map.magic());
+            if(from_nodes.has_error())
+                return;
+            auto const rest = dim::model_pose(map, from);
+            for(size_t i = 0; i < joints; i++)
+                for(size_t n = 0; n < from_nodes.value().size(); n++)
+                    if(map.string(from_nodes.value()[n].name) == map.string(skeleton.value()[i].name))
+                        defaults[i] = rest[n];
+        };
+        if(auto const* rig = rig_tag ? rig_tag->template data<geo::model_header_t>(map.magic()) : nullptr)
+            rest_of(*rig);
+        rest_of(*model);
         auto decoded = dim::decode_animation(map, pool, *graph, *chosen, defaults);
         if(!decoded)
             return std::nullopt;
@@ -3441,15 +3517,83 @@ struct H2MapLoader : compo::SubsystemBase
     void place_camera(Vecf3 const& position, f32 yaw)
     {
         world::ensure_local_player(m_container);
-        world::place_local_cameras(m_container, position, yaw);
+        world::place_local_cameras(m_container, position, yaw, m_player_unit ? &*m_player_unit : nullptr);
+        world::arm_local_players(m_container, m_loadout);
+    }
+
+    /* A weapon as a player starts with it: the profile's rounds, else a full
+     * magazine and its initial reserve */
+    template<typename V>
+    static BipedEquipment::weapon_t armed(
+        dim::map_container<V> const& map, dim::tag_t const* tag, i16 loaded = 0, i16 total = 0)
+    {
+        auto const* weapon = tag ? tag->template data<dim::obj::weapon_t>(map.magic()) : nullptr;
+        if(!weapon)
+            return {};
+        BipedEquipment::weapon_t out{
+            .id = GameTag<blam::tag_class_t::weap>::of(MapGameEvent::halo2, tag->tag_id),
+        };
+        loaded = from_le(loaded);
+        total  = from_le(total);
+        if(loaded > 0 || total > 0)
+        {
+            out.rounds_loaded = static_cast<u16>(std::max<i16>(loaded, 0));
+            out.rounds_total  = static_cast<u16>(std::max<i16>(total, 0));
+            return out;
+        }
+        auto const modes = firing_modes(*weapon, map);
+        if(auto const* magazine =
+               modes.empty() ? nullptr : modes[0].barrel->magazine.resolve(map.span(weapon->magazines)))
+        {
+            out.rounds_loaded = static_cast<u16>(std::max<i16>(magazine->rounds_loaded_maximum(), 0));
+            out.rounds_total  = static_cast<u16>(std::max<i16>(magazine->rounds_total_initial(), 0));
+        }
+        return out;
+    }
+
+    /* How the player's unit moves: the third-person biped's capsule, camera
+     * and jump, the globals' ground speeds */
+    template<typename V>
+    static PlayerInfo::biped_shape_t player_unit(
+        dim::map_container<V> const& map, dim::obj::matg::globals_t const& globals, dim::obj::biped_t const& unit)
+    {
+        PlayerInfo::biped_shape_t shape;
+        f32 const radius = from_le(unit.radius), height = from_le(unit.height_standing);
+        f32 const eye = from_le(unit.standing_camera_height);
+        if(radius > 0.f && height > 0.f && eye > 0.f)
+        {
+            shape.radius     = radius;
+            shape.height     = height;
+            shape.eye_height = eye;
+        }
+        if(f32 const crouch = from_le(unit.crouching_camera_height); crouch > 0.f)
+            shape.crouch_eye_height = crouch;
+        if(f32 const time = from_le(unit.crouch_transition_time); time > 0.f)
+            shape.crouch_time = time;
+        if(f32 const jump = from_le(unit.jump_velocity); jump > 0.f)
+            shape.jump_velocity = jump;
+        if(auto info = globals.player_information.data(map.magic()); !info.has_error() && !info.value().empty())
+        {
+            auto const& player = info.value()[0];
+            if(f32 const run = from_le(player.run_forward); run > 0.f)
+                shape.run_speed = run;
+            if(f32 const back = from_le(player.run_backward); back > 0.f)
+                shape.back_speed = back;
+            if(f32 const side = from_le(player.run_sideways); side > 0.f)
+                shape.strafe_speed = side;
+        }
+        return shape;
     }
 
     compo::EntityContainer& m_container;
     H2Scene&                m_scene;
+    H2Map&                  m_map;
     H2ShellData&            m_shell;
     H2SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
     std::optional<MapLoadEvent> m_source;
+    std::optional<PlayerInfo::biped_shape_t> m_player_unit; /* None: the player flies */
+    std::array<BipedEquipment::weapon_t, 2>  m_loadout;     /* In hand, slung */
     std::shared_ptr<comp_app::FileMapper::FetchSet> m_fetch; /* The files on their way in */
     bool                        m_scripted_shown{false};
     std::vector<std::string> m_font_table;
@@ -3499,8 +3643,9 @@ void alloc_h2(compo::EntityContainer& e)
     e.register_subsystem_inplace<H2Visibility>();
     auto& shell  = e.register_subsystem_inplace<H2ShellData>();
     auto& bank   = e.register_subsystem_inplace<H2SoundBank>();
+    auto& map    = e.register_subsystem_inplace<H2Map>();
     auto& loader = e.register_subsystem_inplace<H2MapLoader>(
-        std::ref(e), std::ref(scene), std::ref(shell), std::ref(bank));
+        std::ref(e), std::ref(scene), std::ref(map), std::ref(shell), std::ref(bank));
     world::consume_map_loads(e, loader);
     alloc_h2_occluder(e);
     alloc_h2_renderer(e);

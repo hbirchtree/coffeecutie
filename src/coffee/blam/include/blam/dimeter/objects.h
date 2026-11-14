@@ -640,6 +640,125 @@ static_assert(offsetof(biped_t, jump_velocity) == 0x1F8);
 static_assert(offsetof(biped_t, height_standing) == 0x268);
 static_assert(sizeof(biped_t) == 0x314);
 
+/*! proj, as far as flying, detonating and damaging go */
+struct alignas(4) projectile_t : object_t
+{
+    static constexpr tag_class_t tag_class = tag_class_t::proj;
+
+    u32                              projectile_flags;
+    u16                              detonation_timer_starts;
+    u16                              impact_noise;
+    f32                              ai_perception_radius;
+    f32                              collision_radius;
+    f32                              arming_time;
+    f32                              danger_radius;
+    Vecf2                            timer; /*!< Seconds */
+    f32                              minimum_velocity;
+    f32                              maximum_range;
+    u16                              detonation_noise;
+    i16                              super_detonation_projectile_count;
+    tag_reference<tag_class_t::effe> detonation_started;
+    tag_reference<tag_class_t::effe> airborne_detonation_effect;
+    tag_reference<tag_class_t::effe> ground_detonation_effect;
+    tag_reference<tag_class_t::jpt>  detonation_damage;
+    tag_reference<tag_class_t::jpt>  attached_detonation_damage;
+    tag_reference<tag_class_t::effe> super_detonation;
+    tag_reference<tag_class_t::jpt>  super_detonation_damage;
+    tag_reference<tag_class_t::snd>  detonation_sound;
+    u8                               damage_reporting_type;
+    u8                               unknown_0[3];
+    tag_reference<tag_class_t::jpt>  attached_super_detonation_damage;
+    f32                              material_effect_radius;
+    tag_reference<tag_class_t::snd>  flyby_sound;
+    tag_reference<tag_class_t::effe> impact_effect;
+    tag_reference<tag_class_t::jpt>  impact_damage;
+    f32                              boarding_detonation_time;
+    tag_reference<tag_class_t::jpt>  boarding_detonation_damage;
+    tag_reference<tag_class_t::jpt>  boarding_attached_detonation_damage;
+    f32                              air_gravity_scale;
+    Vecf2                            air_damage_range;
+    f32                              water_gravity_scale;
+    Vecf2                            water_damage_range;
+    f32                              initial_velocity; /*!< World units per second */
+    f32                              final_velocity;
+    Vecf2                            guided_angular_velocity; /*!< Radians per second */
+    Vecf2                            acceleration_range;
+    f32                              runtime_acceleration_bound_inverse;
+    f32                              targeted_leading_fraction;
+    tag_block<u8>                    material_responses; /*!< 0x58 each, not decoded */
+};
+
+static_assert(offsetof(projectile_t, projectile_flags) == 0xBC);
+static_assert(offsetof(projectile_t, timer) == 0xD4);
+static_assert(offsetof(projectile_t, impact_damage) == 0x148);
+static_assert(offsetof(projectile_t, air_gravity_scale) == 0x164);
+static_assert(offsetof(projectile_t, initial_velocity) == 0x17C);
+static_assert(sizeof(projectile_t) == 0x1A4);
+
+/*! jpt!, as far as dealing damage and shaking the camera go */
+struct alignas(4) damage_effect_t
+{
+    static constexpr tag_class_t tag_class = tag_class_t::jpt;
+
+    Vecf2                           radius;
+    f32                             cutoff_scale;
+    u32                             flags;
+    u16                             side_effect;
+    u16                             category;
+    u32                             damage_flags;
+    f32                             area_of_effect_core_radius;
+    f32                             damage_lower_bound;
+    Vecf2                           damage_upper_bound;
+    f32                             damage_inner_cone_angle;
+    f32                             damage_outer_cone_angle;
+    f32                             active_camouflage_damage;
+    f32                             stun;
+    f32                             maximum_stun;
+    f32                             stun_time;
+    f32                             instantaneous_acceleration;
+    f32                             rider_direct_damage_scale;
+    f32                             rider_maximum_transfer_damage_scale;
+    f32                             rider_minimum_transfer_damage_scale;
+    string_id                       general_damage;
+    string_id                       specific_damage;
+    f32                             ai_stun_radius;
+    Vecf2                           ai_stun_bounds;
+    f32                             shake_radius;
+    f32                             emp_radius;
+    tag_block<u8>                   player_responses; /*!< 0x4C each, not decoded */
+    /* Camera impulse */
+    f32                             impulse_duration;
+    u16                             impulse_fade_function;
+    u16                             unknown_0;
+    f32                             impulse_rotation; /*!< Radians */
+    f32                             impulse_pushback;
+    Vecf2                           impulse_jitter;
+    /* Camera shaking */
+    f32                             shake_duration;
+    u16                             shake_falloff_function;
+    u16                             unknown_1;
+    f32                             shake_random_translation;
+    f32                             shake_random_rotation; /*!< Radians */
+    u16                             shake_wobble_function;
+    u16                             unknown_2;
+    f32                             shake_wobble_period;
+    f32                             shake_wobble_weight;
+    tag_reference<tag_class_t::snd> sound;
+    f32                             forward_velocity;
+    f32                             forward_radius;
+    f32                             forward_exponent;
+    f32                             outward_velocity;
+    f32                             outward_radius;
+    f32                             outward_exponent;
+};
+
+static_assert(offsetof(damage_effect_t, instantaneous_acceleration) == 0x40);
+static_assert(offsetof(damage_effect_t, player_responses) == 0x6C);
+static_assert(offsetof(damage_effect_t, impulse_duration) == 0x74);
+static_assert(offsetof(damage_effect_t, shake_duration) == 0x8C);
+static_assert(offsetof(damage_effect_t, sound) == 0xA8);
+static_assert(sizeof(damage_effect_t) == 0xC8);
+
 enum class vehicle_type_t : u16
 {
     human_tank = 0,
@@ -981,6 +1100,20 @@ enum class barrel_prediction_t : u16
     instant,
 };
 
+/*! What a barrel plays and deals as it fires, by shot count */
+struct alignas(4) firing_effect_t
+{
+    std::array<i16, 2>               shot_count; /*!< Lower, upper */
+    tag_reference<tag_class_t::effe> firing_effect;
+    tag_reference<tag_class_t::effe> misfire_effect;
+    tag_reference<tag_class_t::effe> empty_effect;
+    tag_reference<tag_class_t::jpt>  firing_damage;
+    tag_reference<tag_class_t::jpt>  misfire_damage;
+    tag_reference<tag_class_t::jpt>  empty_damage;
+};
+
+static_assert(sizeof(firing_effect_t) == 0x34);
+
 struct alignas(4) barrel_t
 {
     barrel_flags_t          flags;
@@ -1000,14 +1133,49 @@ struct alignas(4) barrel_t
     barrel_prediction_t     prediction_type;
     u16                     firing_noise;
     f32                     acceleration_time_2;
-    u8                      unknown_0[0xEC - 0x3C];
+    f32                     deceleration_time_2;
+    Vecf2                   damage_error;
+    f32                     acceleration_time_3;
+    f32                     deceleration_time_3;
+    f32                     dual_error_acceleration_rate;
+    f32                     dual_error_deceleration_rate;
+    f32                     minimum_error;   /*!< Radians */
+    Vecf2                   error_angle;     /*!< Radians, at rest .. firing */
+    f32                     dual_wield_damage_scale;
+    u16                     distribution_function; /*!< 0 point, 1 horizontal fan */
+    i16                     projectiles_per_shot_raw;
+    f32                     distribution_angle; /*!< Radians */
+    f32                     minimum_error_2;
+    Vecf2                   error_angle_2;
+    Vecf3                   first_person_offset;
+    u8                      damage_reporting_type;
+    u8                      unknown_0;
+    i16                     unknown_1;
+    tag_reference<tag_class_t::proj> projectile;
+    tag_reference<tag_class_t::jpt>  damage_effect; /*!< Hitscan barrels deal this */
+    f32                     ejection_port_recovery_time;
+    f32                     illumination_recovery_time;
+    f32                     heat_generated_per_round;
+    f32                     age_generated_per_round;
+    f32                     overload_time;
+    u8                      unknown_2[0xE4 - 0xB0];
+    tag_block<firing_effect_t> firing_effects;
 
     inline i16 rounds_per_shot() const
     {
         return from_le(rounds_per_shot_raw);
     }
+    inline i16 projectiles_per_shot() const
+    {
+        return from_le(projectiles_per_shot_raw);
+    }
 };
 
+static_assert(offsetof(barrel_t, minimum_error) == 0x58);
+static_assert(offsetof(barrel_t, projectiles_per_shot_raw) == 0x6A);
+static_assert(offsetof(barrel_t, projectile) == 0x8C);
+static_assert(offsetof(barrel_t, heat_generated_per_round) == 0xA4);
+static_assert(offsetof(barrel_t, firing_effects) == 0xE4);
 static_assert(sizeof(barrel_t) == 0xEC);
 
 struct alignas(4) first_person_t

@@ -577,7 +577,7 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             if(index < 0 || static_cast<size_t>(index) >= anims.value().size())
                 return 0.f;
             auto const& clip = anims.value()[index];
-            return static_cast<f32>(clip.frame_count) / clip.frame_rate();
+            return static_cast<f32>(frame_count(clip)) / frame_rate(clip);
         }
         return 0.f;
     }

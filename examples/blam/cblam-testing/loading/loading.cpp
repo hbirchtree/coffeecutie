@@ -2795,7 +2795,15 @@ struct ResourceLoader
         LoadingStatus const* loading;
         p.subsystem(loading);
         if(loading->loaded_map != LoadingStatus::loaded)
+        {
+            /* The map's biped goes with it, mounted again from the next one */
+            if(biped_model.model.valid() || !player_bipeds.empty())
+            {
+                biped_model = {};
+                player_bipeds.clear();
+            }
             return;
+        }
         if(biped_model.load_generation != files.load_generation)
         {
             biped_model = {
@@ -3096,7 +3104,11 @@ struct ResourceLoader
         auto        weapon = tag->template data<blam::scn::weapon>(magic);
         if(!weapon.has_value())
             return {};
-        BipedEquipment::weapon_t out{.weapon = weapon.value(), .tag = tag};
+        BipedEquipment::weapon_t out{
+            .weapon = weapon.value(),
+            .tag    = tag,
+            .id     = GameTag<blam::tag_class_t::weap>::of(MapGameEvent::halo1, tag->tag_id),
+        };
         auto const rounds = initial_rounds(out.weapon, magic);
         out.rounds_loaded = rounds[0];
         out.rounds_total  = rounds[1];
@@ -3480,6 +3492,7 @@ struct ResourceLoader
             equip.equipment.push_back({
                 .equip = eqip.value(),
                 .tag   = &(*tag),
+                .id    = GameTag<blam::tag_class_t::eqip>::of(MapGameEvent::halo1, (*tag).tag_id),
                 .most  = most,
                 .left  = std::min(left, most),
             });

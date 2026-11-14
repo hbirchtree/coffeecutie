@@ -39,6 +39,14 @@ inline void announce_game(compo::EntityContainer& container, MapGameEvent::game_
     container.subsystem_cast<GameEventBus>().process(ev, &map);
 }
 
+/*! Tells the game's world is loaded and its local players are placed */
+inline void announce_world_ready(compo::EntityContainer& container, MapGameEvent::game_t game)
+{
+    GameEvent       ev{GameEvent::WorldReady};
+    WorldReadyEvent ready{.game = game};
+    container.subsystem_cast<GameEventBus>().process(ev, &ready);
+}
+
 /*! The game a map's header (its first 0x3000 bytes) says it is from;
  * anything not Halo 2 or 3 is left to the Halo 1 loader */
 MapGameEvent::game_t detect_game(semantic::BytesConst const& head);
