@@ -80,6 +80,27 @@ bool blank(blam::argb8_t c)
     return c.r == 0 && c.g == 0 && c.b == 0 && c.a == 0;
 }
 
+/* MCC lays its HUD out on a 1280x960 canvas (tag offsets twice ours),
+ * every bitmap at twice that again, unflagged */
+template<typename V>
+constexpr libc_types::f32 hud_canvas_scale(V)
+{
+    return 1.f;
+}
+constexpr libc_types::f32 hud_canvas_scale(blam::mcc_version_t)
+{
+    return .5f;
+}
+template<typename V>
+constexpr libc_types::f32 hud_bitmap_scale(V)
+{
+    return 1.f;
+}
+constexpr libc_types::f32 hud_bitmap_scale(blam::mcc_version_t)
+{
+    return .25f;
+}
+
 } // namespace
 
 struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
@@ -144,7 +165,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
      * keep to the title-safe frame */
     Vecf2 place(anchor_t anchor, blam::vec2i16 offset, Vecf2 size) const
     {
-        Vecf2 const o = Vecf2(offset.x, offset.y) + (anchor == anchor_t::center ? Vecf2() : safe_inset);
+        Vecf2 const o = Vecf2(offset.x, offset.y) * offset_scale + (anchor == anchor_t::center ? Vecf2() : safe_inset);
         switch(anchor)
         {
         case anchor_t::top_right:
@@ -160,6 +181,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         }
     }
 
+    static constexpr f32 offset_scale = hud_canvas_scale(halo_version_v);
+    static constexpr f32 sprite_scale = hud_bitmap_scale(halo_version_v);
+
     /* Bitmaps drawn for high resolutions are twice the size they show at */
     static Vecf2 scale_of(unit_hud_interface::background_base_t const& base)
     {
@@ -170,7 +194,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         return Vecf2(
                    base.width_scale > 0.f ? base.width_scale : 1.f,
                    base.height_scale > 0.f ? base.height_scale : 1.f) *
-               (high_res ? .5f : 1.f);
+               (high_res ? .5f : 1.f) * sprite_scale;
     }
 
     void push(
@@ -599,8 +623,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             }
             auto        sprite = frame->sprite;
             Vecf4 const color  = color_of(arrow->color);
-            sprite.min         = spot - frame->size * .5f;
-            sprite.max         = spot + frame->size * .5f;
+            sprite.min         = spot - frame->size * (offset_scale * .5f);
+            sprite.max         = spot + frame->size * (offset_scale * .5f);
             /* Lit in full colour; the opacity only lets the world show through */
             sprite.color       = Vecf4(Vecf3(color), arrow->opacity);
             sprite.rotation    = turn;
@@ -963,14 +987,16 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(!frame)
             return std::nullopt;
         auto const  has    = [&icon](flags_t f) { return (icon.flags & static_cast<u8>(f)) != 0; };
-        Vecf2 const offset = Vecf2(icon.offset.x, icon.offset.y);
+        Vecf2 const offset = Vecf2(icon.offset.x, icon.offset.y) * offset_scale;
+        frame->size        *= sprite_scale;
         frame->sprite.min   = offset;
         frame->sprite.max   = offset + frame->size;
         frame->sprite.color = has(flags_t::override_default_color) ? color_of(icon.color) : color;
         return run_t{
             .icon    = frame->sprite,
-            .advance = has(flags_t::width_offset_is_absolute_icon_width) ? static_cast<f32>(icon.width_offset)
-                                                                         : frame->size.x + icon.width_offset,
+            .advance = has(flags_t::width_offset_is_absolute_icon_width)
+                           ? icon.width_offset * offset_scale
+                           : frame->size.x + icon.width_offset * offset_scale,
         };
     }
 
