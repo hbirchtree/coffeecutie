@@ -171,7 +171,7 @@ The cyborg's shoulders are much wider than a person's, so hands clasped
 together on the subject still come out apart on the model. Closing that needs
 IK onto the wrist landmark, not a direction.
 
-`blam_tag_inspect --dump-bones` prints a model's bind pose, including each
+`VoltaInfo --dump-bones` prints a model's bind pose, including each
 bone's local axes in model space; that is where `aim_axis` comes from. For
 `bip01 l upperarm` the bone's local X runs down the arm.
 
@@ -316,9 +316,9 @@ root motion and the microphone, so a bone only moves when a pose moves it. Both
 run under Xvfb against a real GL backend — SwiftShader loses the WebGL context
 on this bundle, and everything after that is fallout rather than a result.
 
-`blam_tag_inspect --dump-bones <map>` prints the bind pose a mapping has to be
+`VoltaInfo --dump-bones <map>` prints the bind pose a mapping has to be
 written against, which is the offline half of the same question:
 
 ```
-blam_tag_inspect -c mod2 -n cyborg --dump-bones /path/to/bloodgulch.map
+VoltaInfo -c mod2 -n cyborg --dump-bones /path/to/bloodgulch.map
 ```
