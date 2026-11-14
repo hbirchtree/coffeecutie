@@ -1998,6 +1998,8 @@ struct BlamScript
         /* Units named directly, actors already, join the squad */
         case op::ai_migrate_by_unit:
         case op::ai_attach:
+            if(auto const spawning = spawning_of(arg(0)); !spawning.empty())
+                migrate(p, {}, std::string(text_of(arg(1))), spawning);
             with_objects(p, arg(0), [this, path = std::string(text_of(arg(1)))](Proxy& p, u64 id) {
                 migrate(p, {id}, path);
             });
@@ -2193,7 +2195,7 @@ struct BlamScript
     }
 
     /* The actors join another encounter's squad, named like ai_place */
-    void migrate(Proxy& p, std::vector<u64> const& units, std::string const& path)
+    void migrate(Proxy& p, std::vector<u64> const& units, std::string const& path, std::vector<u32> const& spawning = {})
     {
         auto const slash = path.find('/');
         auto const ename = lowered(path.substr(0, slash));
@@ -2229,7 +2231,7 @@ struct BlamScript
                 if(auto const* net = p.template get<NetworkInfo>(id); net && net->instance_id)
                     moved.insert(net->instance_id);
                 /* A unit new to the AI (ai_attach) fights for the encounter */
-                if(actor->encounter < 0 && actor->actv == 0)
+                if(actor->encounter < 0 && actor->actv == 0 && team != 0)
                     actor->team = team;
                 actor->encounter = enc;
                 actor->squad     = sq;
@@ -2237,6 +2239,8 @@ struct BlamScript
                 actor->position  = -1;
                 actor->order     = Actor::order_t::none;
             }
+        /* Still being made: named now, so the next line's ai_actors finds them */
+        moved.insert(spawning.begin(), spawning.end());
         /* The names follow them: out of their old encounter and squad,
          * into the new */
         if(!moved.empty())
