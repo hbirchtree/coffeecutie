@@ -97,8 +97,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                        NetworkInfo>())
         {
             auto [input, info, cam, net] = ent.components();
-            /* Presses are taken whether or not they can be acted on */
-            bool const swap   = std::exchange(input.intent.swap, false);
+            /* Presses are taken whether or not they can be acted on; a
+             * client's swap is the server's to make */
+            bool const swap   = std::exchange(input.intent.swap, false) &&
+                              !p.template subsystem<NetworkState>().replica;
             bool       reload = std::exchange(input.intent.reload, false);
             bool const toss   = std::exchange(input.intent.grenade, false);
             bool const cycle  = std::exchange(input.intent.grenade_switch, false);
@@ -116,6 +118,14 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             auto const* weapon_tag = mounted                       ? mounted
                                      : (!riding || armed) && carried ? carried->tag
                                                                      : nullptr;
+            /* A body its peer moves switches here, and does nothing else */
+            if(info.is_remote() && !info.mode.simulated && swap && !riding && equip &&
+               equip->weapons[1].weapon)
+            {
+                std::swap(equip->weapons[0], equip->weapons[1]);
+                equip->reloading = false;
+                continue;
+            }
             /* A remote body the server simulates fires here too */
             if((info.is_remote() && !info.mode.simulated) || !weapon_tag ||
                (riding ? info.riding.exiting

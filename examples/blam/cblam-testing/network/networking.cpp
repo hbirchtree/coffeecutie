@@ -2589,6 +2589,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             send_object_sync(p, t);
         }
         equip_remote_players(p);
+        hold_as_server_says(p);
         /* Riders whose units had not arrived yet */
         std::erase_if(m_waiting_riders, [&](auto& waiting) {
             return seat_rider(p, waiting.first) || ++waiting.second > max_rider_wait;
@@ -3833,13 +3834,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 for(size_t i = 0; i < it->second.grenades.size() && i < equip->equipment.size(); i++)
                     equip->equipment[i].left = it->second.grenades[i];
                 /* Likewise reserves, which the authority's ammo pickups go by */
-                for(size_t i = 0; i < equip->weapons.size(); i++)
-                    if(auto& weapon = equip->weapons[i];
-                       weapon.tag && weapon.tag->tag_id == (i ? it->second.slung : it->second.weapon))
-                        weapon.rounds_total = it->second.reserve[i];
+                for(auto& weapon : equip->weapons)
+                    if(!weapon.tag)
+                        continue;
+                    else if(weapon.tag->tag_id == it->second.weapon)
+                        weapon.rounds_total = it->second.reserve[0];
+                    else if(weapon.tag->tag_id == it->second.slung)
+                        weapon.rounds_total = it->second.reserve[1];
             }
+            /* Which of the two is held is the server's to say */
             auto const known = equipment_of(p, player.id(), info);
-            if(known.weapon == it->second.weapon && known.slung == it->second.slung)
+            if((known.weapon == it->second.weapon && known.slung == it->second.slung) ||
+               (known.weapon == it->second.slung && known.slung == it->second.weapon))
                 continue;
             /* Tag ids are the map's own: a report from the last map waits for
              * the next */
@@ -3863,6 +3869,25 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             };
             GameEvent        ev{.type = GameEvent::EquipWeapon};
             m_game_bus.inject(ev, &equip);
+        }
+    }
+
+    /* The server switches a client's weapons; its own pair, swapped round */
+    void hold_as_server_says(Proxy& p)
+    {
+        for(auto const& [idx, held] : std::exchange(m_server_held, {}))
+        {
+            u64 const   player = own_player(p, idx);
+            auto*       equip  = p.get<BipedEquipment>(player);
+            auto const* info   = p.get<PlayerInfo>(player);
+            if(!equip || !info || held.slung == blam::tag_index<>{})
+                continue;
+            if(auto const known = equipment_of(p, player, *info);
+               known.weapon == held.slung && known.slung == held.weapon)
+            {
+                std::swap(equip->weapons[0], equip->weapons[1]);
+                equip->reloading = false;
+            }
         }
     }
 
@@ -4442,6 +4467,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             for(auto const& held : payload.values<EquipmentSync>())
                 if(!own_idx(held.player_idx))
                     m_remote_weapons[held.player_idx] = held;
+                else
+                    m_server_held[held.player_idx] = held;
             break;
         }
         case MessageBase::WeaponPickup: {
@@ -5164,6 +5191,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::vector<NavPointSync>                m_sent_navs;
     std::map<u64, DeviceSync>                m_sent_devices;
     std::map<u32, EquipmentSync>             m_remote_weapons;
+    std::map<u32, EquipmentSync>             m_server_held; /*!< Own players, as the server has them */
     /* A remote player's report as it was when the server handed it
      * something, and when: held off until the peer answers */
     std::map<u32, std::pair<EquipmentSync, std::chrono::steady_clock::time_point>> m_handouts;
