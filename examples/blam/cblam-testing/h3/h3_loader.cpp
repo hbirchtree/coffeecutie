@@ -1,4 +1,5 @@
 #include "h3_scene.h"
+#include "h3_map.h"
 #include "../world/column_grid.h"
 #include "../world/placement.h"
 #include "../world/texels.h"
@@ -17,6 +18,7 @@
 #include <blam/elegy/animation.h>
 #include <blam/elegy/bitmap.h>
 #include <blam/elegy/decorator.h>
+#include <blam/elegy/firing.h>
 #include <blam/elegy/physics.h>
 #include <blam/elegy/shader.h>
 #include <blam/elegy/sound.h>
@@ -176,9 +178,10 @@ struct H3MapLoader : compo::SubsystemBase
 {
     using type = H3MapLoader;
 
-    H3MapLoader(compo::EntityContainer& e, H3Scene& scene, H3SoundBank& bank)
+    H3MapLoader(compo::EntityContainer& e, H3Scene& scene, H3Map& map, H3SoundBank& bank)
         : m_container(e)
         , m_scene(scene)
+        , m_held(map)
         , m_bank(bank)
     {
     }
@@ -267,6 +270,7 @@ struct H3MapLoader : compo::SubsystemBase
         m_switches.clear();
         m_zone_set = -1;
         m_loader.reset();
+        m_held.map = nullptr;
         m_map.reset();
         m_file.reset();
     }
@@ -298,8 +302,9 @@ struct H3MapLoader : compo::SubsystemBase
             cWarning("H3: not a loadable Halo 3 cache");
             return false;
         }
-        m_map    = std::make_unique<el::map_container>(map.value());
-        auto res = el::resource_loader::create(*m_map);
+        m_map      = std::make_unique<el::map_container>(map.value());
+        m_held.map = m_map.get();
+        auto res   = el::resource_loader::create(*m_map);
         if(!res)
         {
             cWarning("H3: no resource tables");
@@ -3048,10 +3053,57 @@ struct H3MapLoader : compo::SubsystemBase
         if(auto* info = world::ensure_local_player(m_container))
             info->camouflaged = platform::env::var("H3_CAMO").value_or("0") != "0";
         world::place_local_cameras(m_container, position, yaw, m_player_unit ? &*m_player_unit : nullptr);
+        world::arm_local_players(m_container, loadout());
+    }
+
+    /* The scenario's first starting profile: what is in hand and slung */
+    std::array<BipedEquipment::weapon_t, 2> loadout() const
+    {
+        auto const scnr = m_map->find<el::scenario_t>();
+        if(!scnr)
+            return {};
+        auto const profiles = m_map->span(scnr->starting_profiles);
+        if(profiles.empty())
+            return {};
+        auto const& profile = profiles[0];
+        return {
+            armed(profile.primary_weapon, profile.primary_rounds_loaded.value(), profile.primary_rounds_total.value()),
+            armed(
+                profile.secondary_weapon,
+                profile.secondary_rounds_loaded.value(),
+                profile.secondary_rounds_total.value()),
+        };
+    }
+
+    /* A weapon as a player starts with it: the profile's rounds, else a full
+     * magazine and its initial reserve */
+    BipedEquipment::weapon_t armed(el::tag_reference<> const& ref, i16 loaded, i16 total) const
+    {
+        auto const weapon = m_map->get<el::weapon_t>(ref);
+        if(!weapon)
+            return {};
+        BipedEquipment::weapon_t out{
+            .id = GameTag<blam::tag_class_t::weap>::of(MapGameEvent::halo3, ref.tag_id),
+        };
+        if(loaded > 0 || total > 0)
+        {
+            out.rounds_loaded = static_cast<u16>(std::max<i16>(loaded, 0));
+            out.rounds_total  = static_cast<u16>(std::max<i16>(total, 0));
+            return out;
+        }
+        auto const modes = firing_modes(*weapon, *m_map);
+        if(auto const* magazine =
+               modes.empty() ? nullptr : el::at(m_map->span(weapon->magazines), modes[0].barrel->magazine.value()))
+        {
+            out.rounds_loaded = static_cast<u16>(std::max<i16>(magazine->rounds_loaded_maximum.value(), 0));
+            out.rounds_total  = static_cast<u16>(std::max<i16>(magazine->rounds_total_initial.value(), 0));
+        }
+        return out;
     }
 
     compo::EntityContainer& m_container;
     H3Scene&                m_scene;
+    H3Map&                  m_held;
     H3SoundBank&            m_bank;
     gfx::system*            m_api{nullptr};
 
@@ -3161,8 +3213,9 @@ void alloc_h3(compo::EntityContainer& e)
 {
     auto& scene  = e.register_subsystem_inplace<H3Scene>();
     auto& bank   = e.register_subsystem_inplace<H3SoundBank>();
+    auto& map    = e.register_subsystem_inplace<H3Map>();
     auto& loader = e.register_subsystem_inplace<H3MapLoader>(
-        std::ref(e), std::ref(scene), std::ref(bank));
+        std::ref(e), std::ref(scene), std::ref(map), std::ref(bank));
     world::consume_map_loads(e, loader);
     e.subsystem_cast<PhysicsBus>().addEventFunction<Physics::Impact>(
         0, [&loader](Physics::Event&, Physics::Impact* impact) { loader.on_impact(*impact); });

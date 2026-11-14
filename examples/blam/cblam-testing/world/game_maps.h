@@ -14,6 +14,12 @@
 #include <blam/dimeter/objects.h>
 #endif
 
+#if defined(BLAM_ELEGY)
+#include "h3/h3_map.h"
+
+#include <blam/elegy/objects.h>
+#endif
+
 namespace world {
 
 /*! A system's services, and those it needs to look tags up in any game's map */
@@ -22,6 +28,9 @@ using with_game_maps_t = type_list_t<
     Services...,
 #if defined(BLAM_DIMETER)
     const h2::H2Map,
+#endif
+#if defined(BLAM_ELEGY)
+    const h3::H3Map,
 #endif
     const BlamFiles<halo_version>>;
 
@@ -45,6 +54,15 @@ struct game_of<blam::dimeter::map_container<V>>
 };
 #endif
 
+#if defined(BLAM_ELEGY)
+template<>
+struct game_of<blam::elegy::map_container>
+{
+    static constexpr auto game = MapGameEvent::halo3;
+    using weapon               = blam::elegy::weapon_t;
+};
+#endif
+
 /*! f(map) with `game`'s loaded map as its own container; not called when
  * that game is not built in or has nothing loaded */
 template<typename Proxy, typename F>
@@ -58,6 +76,11 @@ inline void with_map(Proxy& p, MapGameEvent::game_t game, F&& f)
 #if defined(BLAM_DIMETER)
     case MapGameEvent::halo2:
         p.template subsystem<h2::H2Map>().visit(f);
+        break;
+#endif
+#if defined(BLAM_ELEGY)
+    case MapGameEvent::halo3:
+        p.template subsystem<h3::H3Map>().visit(f);
         break;
 #endif
     default:
@@ -81,6 +104,10 @@ inline bool world_loaded(Proxy& p)
         return true;
 #if defined(BLAM_DIMETER)
     if(p.template subsystem<h2::H2Map>().loaded())
+        return true;
+#endif
+#if defined(BLAM_ELEGY)
+    if(p.template subsystem<h3::H3Map>().loaded())
         return true;
 #endif
     return false;
