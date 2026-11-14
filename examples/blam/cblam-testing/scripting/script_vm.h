@@ -86,6 +86,7 @@ struct vm
         u16                  node;
         u16                  cursor{blam::hsc::terminator}; /* next argument */
         bool                 started{false};
+        bool                 body{false}; /* a script call: its arguments are in */
         std::vector<value_t> args;
         std::vector<u16>     order; /* begin_random */
     };
@@ -95,6 +96,9 @@ struct vm
         blam::hsc::function_declaration const* script{nullptr};
         status_t                               status{status_t::dormant};
         std::vector<frame_t>                   stack;
+        /* Each running static script's arguments, by the stack depth of its
+         * body's frame */
+        std::vector<std::pair<size_t, std::vector<value_t>>> params;
 
         /* Sleeping: until this tick, or until `until` is true, looked at
          * every `every` ticks and given up on at `timeout` */
@@ -178,6 +182,7 @@ struct vm
         auto& thread  = m_threads[index];
         thread.status = status_t::finished;
         thread.stack.clear();
+        thread.params.clear();
         thread.until = blam::hsc::terminator;
     }
 
@@ -312,6 +317,12 @@ struct vm
         }
         case expression_t::script_ref:
             return call_script(thread, frame, *n);
+        /* A static script's parameter, by its index */
+        case expression_t::param_ref: {
+            if(!thread.params.empty() && static_cast<size_t>(n->long_) < thread.params.back().second.size())
+                return finish(thread, thread.params.back().second[n->long_]);
+            return finish(thread, value_t::of(n->ret_type));
+        }
         case expression_t::group:
             return call(thread, frame, *n);
         default:
@@ -348,6 +359,8 @@ struct vm
     std::optional<value_t> finish(thread_t& thread, value_t value)
     {
         thread.stack.pop_back();
+        while(!thread.params.empty() && thread.params.back().first >= thread.stack.size())
+            thread.params.pop_back();
         if(thread.stack.empty())
             return value;
         thread.stack.back().args.push_back(std::move(value));
@@ -386,12 +399,17 @@ struct vm
 
     std::optional<value_t> call_script(thread_t& thread, frame_t& frame, node_t const& n)
     {
-        if(!frame.started)
+        /* Its arguments first, then its body with them bound */
+        if(!frame.body)
         {
-            frame.started  = true;
+            if(next_argument(frame, n))
+                return descend(thread);
+            frame.body     = true;
             auto const* fn = script_named(text(node(static_cast<u16>(n.long_))->data_ptr));
             if(!fn)
                 return finish(thread, value_t::of(n.ret_type));
+            thread.params.emplace_back(thread.stack.size(), std::move(frame.args));
+            frame.args.clear();
             thread.stack.push_back({.node = fn->index});
             return std::nullopt;
         }
