@@ -89,6 +89,18 @@ struct GravityStorm
     static constexpr f32 storm_cloud_scale  = 40.f;
     static constexpr f32 storm_cloud_height = 45.f;
 
+    /* Bolts from the cloud base to the ground, each slot striking anew
+     * every period or so somewhere around the storm */
+    static constexpr u32 lightning_slots     = 3;
+    static constexpr f32 lightning_period    = 2.4f; /* s */
+    static constexpr f32 lightning_leader    = .08f; /* s of the strike alone */
+    static constexpr f32 lightning_flash     = .35f; /* s of the whole bolt */
+    static constexpr f32 lightning_reach_min = 10.f; /* wu from the storm */
+    static constexpr f32 lightning_reach_max = 60.f;
+    static constexpr f32 lightning_width     = .35f; /* across, per wu tall */
+    /* The mesh is quads A..D, triangulated as tris k and k + 4; A strikes */
+    static constexpr u32 lightning_quads = 4;
+
     gfx::api*                            m_api;
     std::vector<gravity_storm_t>         m_storms;
     time_point                           m_storm_time{};
@@ -101,11 +113,11 @@ struct GravityStorm
     std::shared_ptr<gfx::vertex_array_t> storm_vao;
     std::shared_ptr<gfx::program_t>      storm_cloud_program;
     std::shared_ptr<gfx::program_t>      storm_wind_program;
-    // Lightning vert data is in the other VBO
     gfx::draw_command::data_t            lightning_draw;
-    std::shared_ptr<gfx::vertex_array_t> lightning_vao;
+    std::vector<gfx::draw_command::data_t> lightning_strike_draw;
     std::shared_ptr<gfx::program_t>      lightning_program;
     std::shared_ptr<gfx::texture_2d_t>   lightning_tex;
+    std::shared_ptr<gfx::sampler_t>      lightning_sampler;
     bool                                 storm_failed{false};
     time_point                           m_now{};
 
@@ -144,7 +156,7 @@ struct GravityStorm
             storm_program(blam::loading::gravity_wind_frag, "storm wind");
         lightning_program =
             storm_program(blam::loading::gravity_lightning_frag, "storm lightning");
-        if(!storm_cloud_program || !storm_wind_program)
+        if(!storm_cloud_program || !storm_wind_program || !lightning_program)
         {
             storm_failed = true;
             return false;
@@ -174,7 +186,7 @@ struct GravityStorm
         storm_ebo->update(gsl::span(cloud_i).size_bytes() + gsl::span(wind_i).size_bytes(), gsl::span(lightning_i));
         storm_vbo->update(0, gsl::span(cloud_v));
         storm_vbo->update(gsl::span(cloud_v).size_bytes(), gsl::span(wind_v));
-        storm_ebo->update(gsl::span(cloud_v).size_bytes() + gsl::span(wind_v).size_bytes(), gsl::span(lightning_v));
+        storm_vbo->update(gsl::span(cloud_v).size_bytes() + gsl::span(wind_v).size_bytes(), gsl::span(lightning_v));
 
         storm_cloud_draw.elements = {
             .count = static_cast<u32>(cloud_i.size()),
@@ -192,6 +204,22 @@ struct GravityStorm
             .vertex_offset = static_cast<u32>(cloud_v.size() + wind_v.size()),
             .type          = semantic::type_t::u16,
         };
+        for(u32 tri : {0u, lightning_quads})
+        {
+            auto& strike = lightning_strike_draw.emplace_back(lightning_draw);
+            strike.elements.count = 3;
+            strike.elements.offset += tri * 3 * sizeof(u16);
+        }
+
+        auto const& bolt = blam::loading::lightning_desc;
+        lightning_tex = m_api->alloc_texture(gfx::textures::d2, pix_fmt::RGB565, 1);
+        lightning_tex->alloc(size_3d<u32>(bolt.width, bolt.height, 1));
+        lightning_tex->upload(
+            gsl::span(blam::loading::lightning_data),
+            Veci2{0, 0},
+            size_2d<i32>(bolt.width, bolt.height));
+        lightning_sampler = lightning_tex->sampler();
+        lightning_sampler->alloc();
 
         storm_vao = m_api->alloc_vertex_array();
         storm_vao->alloc();
@@ -213,22 +241,9 @@ struct GravityStorm
         storm_vao->set_buffer(gfx::buffers::element, storm_ebo);
         storm_vao->set_buffer(gfx::buffers::vertex, storm_vbo, 0);
 
-        lightning_vao = m_api->alloc_vertex_array();
-        lightning_vao->alloc();
-        lightning_vao->add(gfx::vertex_attribute::from_member(&crunch::vertex::position).at(0));
-        lightning_vao->add(gfx::vertex_attribute::from_member(&crunch::vertex::texcoord).at(1));
-        lightning_vao->set_attribute_names({
-            {"pos", 0},
-            {"tex", 1},
-        });
-        lightning_vao->force_attribute_names();
-        lightning_vao->set_buffer(gfx::buffers::element, storm_ebo);
-        lightning_vao->set_buffer(gfx::buffers::vertex, storm_vbo, 0);
-
         m_api->debug().annotate(*storm_ebo, "storm_ebo");
         m_api->debug().annotate(*storm_vbo, "storm_vbo");
         m_api->debug().annotate(*storm_vao, "storm_vao");
-        m_api->debug().annotate(*lightning_vao, "lightning_vao");
         return true;
     }
 
@@ -439,26 +454,100 @@ struct GravityStorm
                     strength,
                     wind.bands,
                     wind.density);
-                auto view_state = view.state;
-                auto res = m_api->submit({
-                        .program       = lightning_program,
-                        .vertices      = lightning_vao,
-                        .render_target = view.target,
-                        .call          = gfx::draw_command::call_spec_t{.indexed = true},
-                        .data          = {lightning_draw},
-                    },
-                    gfx::make_uniform_list(
-                        typing::graphics::ShaderStage::Vertex,
-                        gfx::uniform_pair{
-                            {"camera"sv}, semantic::SpanOne(view.camera)},
-                        gfx::uniform_pair{{"model"sv}, semantic::SpanOne(model)}),
-                    // gfx::blend_state{.additive = true},
-                    view_state);
-                if(res.has_value())
+            }
+            draw_lightning(view, storm, age);
+        }
+    }
+
+    static f32 lightning_hash(u32 slot, u32 cycle, u32 salt)
+    {
+        u32 h = slot * 0x9e3779b9u ^ cycle * 0x85ebca6bu ^ salt * 0xc2b2ae35u;
+        h ^= h >> 16;
+        h *= 0x7feb352du;
+        h ^= h >> 15;
+        h *= 0x846ca68bu;
+        h ^= h >> 16;
+        return static_cast<f32>(h >> 8) / static_cast<f32>(1u << 24);
+    }
+
+    /* Each slot strikes once a period at a fresh spot: the leader quad, then
+     * the whole bolt flickering out */
+    void draw_lightning(view_t const& view, gravity_storm_t const& storm, f32 age)
+    {
+        using namespace std::string_view_literals;
+        f32 const envelope = storm_envelope(storm, age, 1.f);
+        if(envelope <= 0.f)
+            return;
+        f32 const height = storm_cloud_height;
+        for(u32 slot = 0; slot < lightning_slots; slot++)
+        {
+            f32 const t =
+                age + lightning_period * static_cast<f32>(slot) / lightning_slots;
+            auto const cycle = static_cast<u32>(t / lightning_period);
+            f32 const start  = lightning_hash(slot, cycle, 0) *
+                              (lightning_period - lightning_leader - lightning_flash);
+            f32 const local  = t - static_cast<f32>(cycle) * lightning_period - start;
+            if(local < 0.f || local > lightning_leader + lightning_flash ||
+               lightning_hash(slot, cycle, 1) < .2f)
+                continue;
+            bool const leader = local < lightning_leader;
+            f32 const  fade   = leader ? 1.f
+                                       : 1.f - (local - lightning_leader) / lightning_flash;
+            /* Two dips while it fades */
+            f32 const flicker = .6f + .4f * std::abs(std::cos(fade * 9.f));
+            f32 const strength = envelope * fade * flicker;
+
+            f32 const angle = lightning_hash(slot, cycle, 2) * glm::two_pi<f32>();
+            f32 const reach = glm::mix(
+                lightning_reach_min, lightning_reach_max, lightning_hash(slot, cycle, 3));
+            Vecf3 const ground =
+                storm.position + reach * Vecf3{std::cos(angle), std::sin(angle), 0.f};
+            /* Faces the viewer about the vertical, mirrored at random */
+            Vecf3 const to_eye = view.position - ground;
+            f32 const   facing = std::atan2(to_eye.y, to_eye.x) - glm::half_pi<f32>();
+            f32 const   mirror = lightning_hash(slot, cycle, 4) < .5f ? -1.f : 1.f;
+            /* The mesh is 4 tall, z in [-2, 2], texture top at +z */
+            Matf4 const model =
+                glm::translate(Matf4(1), ground + Vecf3{0, 0, height * .5f}) *
+                glm::rotate(Matf4(1), facing, Vecf3{0, 0, 1}) *
+                glm::scale(
+                    Matf4(1),
+                    Vecf3{mirror * height * lightning_width, 1.f, height} / 4.f);
+
+            gfx::view_state    state   = view.state;
+            gfx::stencil_state stencil = view.stencil;
+            auto               res     = m_api->submit(
                 {
-                    auto [err, msg] = *res;
-                    cWarning("Error drawing lightning: {}", msg);
-                }
+                    .program       = lightning_program,
+                    .vertices      = storm_vao,
+                    .render_target = view.target,
+                    .call          = {.indexed = true},
+                    .data = leader ? lightning_strike_draw
+                                   : std::vector{lightning_draw},
+                },
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{{"camera"sv}, semantic::SpanOne(view.camera)},
+                    gfx::uniform_pair{{"model"sv}, semantic::SpanOne(model)}),
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Fragment,
+                    gfx::uniform_pair{
+                        {"strength"sv}, semantic::SpanOne<const f32>(strength)}),
+                gfx::make_sampler_list(gfx::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"bolt", 0},
+                    lightning_sampler}),
+                gfx::blend_state{.additive = true},
+                gfx::depth_extended_state{.depth_write = false},
+                state,
+                stencil);
+            if(res)
+            {
+                auto [err, msg] = *res;
+                cWarning(
+                    "Failed to draw lightning: {}: {}",
+                    gleam::detail::draw_error_to_string(err),
+                    msg);
             }
         }
     }
