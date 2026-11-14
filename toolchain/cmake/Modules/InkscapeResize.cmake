@@ -1,11 +1,14 @@
 find_program(INKSCAPE_PROGRAM inkscape)
 find_program(MAGICK_PROGRAM NAMES magick convert)
 
+# SELF_CALL skips Inkscape's shared DBus probe, which races between parallel instances
+set(INKSCAPE_COMMAND ${CMAKE_COMMAND} -E env SELF_CALL=1 "${INKSCAPE_PROGRAM}")
+
 macro(INKSCAPE_RESIZE_SVG TARGET SOURCE MIPSIZE OUTPUT)
   add_custom_command(
     TARGET ${TARGET}
     PRE_BUILD
-    COMMAND "${INKSCAPE_PROGRAM}" -w ${MIPSIZE} -h ${MIPSIZE}
+    COMMAND ${INKSCAPE_COMMAND} -w ${MIPSIZE} -h ${MIPSIZE}
             --export-type=png -o "${OUTPUT}" "${SOURCE}"
   )
 endmacro()
@@ -37,11 +40,11 @@ function(SVG_TO_ANDROID_MIPMAPS SOURCE OUTPUT_DIR OUTPUTS_VAR)
       OUTPUT "${dir}/ic_launcher.png" "${dir}/ic_launcher_round.png"
              "${dir}/ic_launcher_foreground.png"
       COMMAND ${CMAKE_COMMAND} -E make_directory "${dir}"
-      COMMAND "${INKSCAPE_PROGRAM}" -w ${legacy} -h ${legacy}
+      COMMAND ${INKSCAPE_COMMAND} -w ${legacy} -h ${legacy}
               --export-type=png -o "${dir}/ic_launcher.png" "${SOURCE}"
       COMMAND ${CMAKE_COMMAND} -E copy "${dir}/ic_launcher.png"
               "${dir}/ic_launcher_round.png"
-      COMMAND "${INKSCAPE_PROGRAM}" -w ${safe} -h ${safe}
+      COMMAND ${INKSCAPE_COMMAND} -w ${safe} -h ${safe}
               --export-type=png -o "${dir}/ic_launcher_foreground.png" "${SOURCE}"
       COMMAND "${MAGICK_PROGRAM}" "${dir}/ic_launcher_foreground.png"
               -background none -gravity center -extent ${canvas}x${canvas}
