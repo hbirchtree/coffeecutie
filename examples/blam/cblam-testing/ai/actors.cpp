@@ -262,6 +262,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 tick_rate       = 30.f;
     static constexpr f32 lob_limit       = 1.2217f; /* rad, 70 degrees: steeper lobs fall to the flat shot */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
+    static constexpr f32 sighting_memory = 1.f;  /* s a target out of view still draws a new burst */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
     static constexpr f32 camouflage_sight = 2.f; /* wu within which camouflage is noticed */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
@@ -1907,6 +1908,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 const rate = (actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate) *
                          scaled(&blam::globals::difficulty::rate_of_fire);
         bool const starting = actor.burst_left <= 0;
+        /* A burst starts on a target in view, not at the cover it went behind */
+        if(starting && actor.seen_ago > sighting_memory)
+            return;
         if(!begin_burst(actor, actv, firing, rate))
             return;
         /* As a player's: from the gun's muzzle in its hand, at what it looks at */
@@ -2270,6 +2274,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         /* The gun's own rate, not what the gunner carries */
         firing_t const firing = firing_of(&(*weapon));
         f32 const      rate   = firing.rate * scaled(&blam::globals::difficulty::rate_of_fire);
+        if(actor.burst_left <= 0 && actor.seen_ago > sighting_memory)
+            return;
         if(!begin_burst(actor, actv, firing, rate))
             return;
         GameEvent       ev{.type = GameEvent::WeaponFire};
