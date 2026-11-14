@@ -4536,6 +4536,9 @@ struct BlamScript
 
     /* To a cutscene camera point over `ticks`, in an object's space if
      * given */
+    /* A camera point's field of view of 0 is the default */
+    static constexpr f32 default_camera_fov = 70.f;
+
     void camera_set(Proxy& p, std::string_view point_name, f32 ticks, u64 relative_to)
     {
         auto const* point = named(m_scenario->cutscene.camera_points, point_name);
@@ -4558,7 +4561,7 @@ struct BlamScript
                 .rotation    = rotation,
                 .duration    = std::chrono::milliseconds(static_cast<libc_types::i64>(ticks * 1000.f / tick_rate)),
                 .cinematic   = true,
-                .fov         = glm::degrees(point->fov),
+                .fov         = point->fov > 0.f ? glm::degrees(point->fov) : default_camera_fov,
                 .relative_to = relative_to,
             };
             p.template subsystem<GameEventBus>().inject(ev, &lerp);
