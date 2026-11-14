@@ -2008,9 +2008,9 @@ struct ResourceLoader
             auto const* proj = object_tag.template data<blam::scn::projectile>(
                                              files.container.magic)
                                    .value();
-            /* Grenades get their speed from the thrower */
-            constexpr f32 throw_speed = 6.f; /* wu/s */
-            auto&         flight      = ent.template get<Projectile>();
+            /* Thrown grenades bring their speed; a projectile of no speed
+             * stays where it is made (the lag rifle's buffer) */
+            auto& flight = ent.template get<Projectile>();
             flight.tag                = proj;
             flight.owner              = spawn.owner;
             flight.shooter            = spawn.shooter;
@@ -2018,9 +2018,7 @@ struct ResourceLoader
             flight.velocity =
                 glm::length(spawn.velocity) > 0.f
                     ? spawn.velocity
-                    : spawn.rotation * Vecf3{1.f, 0.f, 0.f} *
-                          (proj->initial_velocity != 0.f ? proj->initial_velocity * 30.f
-                                                         : throw_speed);
+                    : spawn.rotation * Vecf3{1.f, 0.f, 0.f} * (proj->initial_velocity * 30.f);
             if(proj->detonation_timer_starts ==
                    blam::scn::projectile::timer_starts_t::immediately &&
                proj->timer.y > 0.f)
