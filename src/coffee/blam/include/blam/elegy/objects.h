@@ -329,19 +329,117 @@ static_assert(offsetof(biped_t, maximum_slope_angle) == 0x3D0);
 static_assert(offsetof(biped_t, cosine_maximum_slope_angle) == 0x3EC);
 static_assert(sizeof(biped_t) == 0x4E0);
 
+/*! A weapon's magazine, as far as loading and reloading go */
+struct magazine_t
+{
+    be<u32>                flags;
+    be<i16>                rounds_recharged;
+    be<i16>                rounds_total_initial;
+    be<i16>                rounds_total_maximum;
+    be<i16>                rounds_loaded_maximum;
+    be<i16>                rounds_inventory_maximum;
+    be<i16>                unknown_0;
+    be<f32>                reload_time;
+    be<i16>                rounds_reloaded;
+    be<i16>                unknown_1;
+    be<f32>                chamber_time;
+    std::array<u8, 0x64>   unknown_2; /*!< Effects, ammo pack equipment */
+};
+
+static_assert(sizeof(magazine_t) == 0x80);
+
+enum class trigger_behavior_t : u16
+{
+    spew = 0,
+    latch,
+    latch_autofire,
+    charge,
+    latch_zoom,
+    latch_rocketlauncher,
+    spew_charge,
+    sword_charge,
+};
+
+/*! A weapon's trigger: how it is pulled, and the barrels it fires */
+struct trigger_t
+{
+    be<u32>                flags;
+    be<u16>                input;
+    be<trigger_behavior_t> behavior;
+    be<i16>                primary_barrel;
+    be<i16>                secondary_barrel;
+    be<u16>                prediction;
+    be<i16>                unknown_0;
+    be<f32>                autofire_time;
+    be<f32>                autofire_throw;
+    be<u16>                secondary_action;
+    be<u16>                primary_action;
+    be<f32>                charging_time;
+    be<f32>                charged_time;
+    be<u16>                overcharged_action;
+    be<i16>                cancelled_trigger_throw;
+    std::array<u8, 0x68>   unknown_1; /*!< Effects, lock-on */
+};
+
+static_assert(sizeof(trigger_t) == 0x90);
+
+/*! A weapon's barrel: its rate, rounds and magazine */
+struct barrel_t
+{
+    be<u32>                flags;
+    be<Vecf2>              rounds_per_second;
+    be<f32>                acceleration_time;
+    be<f32>                deceleration_time;
+    be<f32>                barrel_spin_scale;
+    be<f32>                blurred_rate_of_fire;
+    std::array<be<i16>, 2> shots_per_fire;
+    be<f32>                fire_recovery_time;
+    be<f32>                soft_recovery_fraction;
+    be<i16>                magazine;
+    be<i16>                rounds_per_shot;
+    be<i16>                minimum_rounds_loaded;
+    be<i16>                rounds_between_tracers;
+    std::array<u8, 0xB0>   unknown_0; /*!< Error, projectile, damage */
+    be<f32>                illumination_recovery_time;
+    be<f32>                heat_generated_per_round;
+    be<f32>                age_generated_per_round;
+    std::array<u8, 0x48>   unknown_1; /*!< Angle change, firing effects */
+};
+
+static_assert(offsetof(barrel_t, magazine) == 0x28);
+static_assert(offsetof(barrel_t, illumination_recovery_time) == 0xE0);
+static_assert(sizeof(barrel_t) == 0x134);
+
 /*! weapon ("weap") */
 struct weapon_t
 {
     static constexpr tag_class_t tag_class = tag_class_t::weap;
 
     object_t                         object;
-    std::array<u8, 0x324>            unknown_0;
+    std::array<u8, 0xEC>             unknown_0;
+    be<f32>                          heat_recovery_threshold;
+    be<f32>                          overheated_threshold;
+    be<f32>                          heat_detonation_threshold;
+    be<f32>                          heat_detonation_fraction;
+    be<f32>                          heat_loss_per_second;
+    be<f32>                          heat_illumination;
+    be<f32>                          overheated_heat_loss_per_second;
+    std::array<u8, 0x21C>            unknown_1;
     tag_block<weapon_first_person_t> first_person;
-    std::array<u8, 0xB0>             unknown_1;
+    tag_reference<>                  hud_interface;
+    tag_block<u8>                    predicted_resources;
+    tag_block<magazine_t>            magazines;
+    tag_block<trigger_t>             triggers;
+    tag_block<barrel_t>              barrels;
+    std::array<u8, 0x70>             unknown_2;
     be<Vecf3>                        first_person_offset;
 };
 
+static_assert(offsetof(weapon_t, heat_recovery_threshold) == 0x1E4);
+static_assert(offsetof(weapon_t, heat_loss_per_second) == 0x1F4);
 static_assert(offsetof(weapon_t, first_person) == 0x41C);
+static_assert(offsetof(weapon_t, magazines) == 0x444);
+static_assert(offsetof(weapon_t, barrels) == 0x45C);
 static_assert(offsetof(weapon_t, first_person_offset) == 0x4D8);
 
 enum class light_type_t : u16

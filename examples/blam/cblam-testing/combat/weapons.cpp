@@ -21,6 +21,9 @@
 #if defined(BLAM_DIMETER)
 #include <blam/dimeter/firing.h>
 #endif
+#if defined(BLAM_ELEGY)
+#include <blam/elegy/firing.h>
+#endif
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
