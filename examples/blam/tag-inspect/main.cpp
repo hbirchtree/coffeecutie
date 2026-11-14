@@ -3177,6 +3177,21 @@ void dump_encounters(blam::map_container<Ver> const& map)
             });
         });
     });
+    fmt::print("command lists: {}\n", s->ai.command_lists.count);
+    each(map.magic, s->ai.command_lists, [&](u32 c, blam::scn::ai::command_list const& list) {
+        fmt::print("  [{}] {} flags={:#x} commands={}\n", c, list.name.str(), static_cast<u32>(list.flags), list.commands.count);
+        each(map.magic, list.commands, [&](u32 i, blam::scn::ai::command_list_command const& cmd) {
+            fmt::print(
+                "    {} atom={} mod={} p={} {} pt={} {}\n",
+                i,
+                static_cast<u32>(cmd.atom_type),
+                cmd.atom_modifier,
+                cmd.param1,
+                cmd.param2,
+                cmd.point_1,
+                cmd.point_2);
+        });
+    });
 }
 
 template<typename Ver = blam::xbox_version_t>
