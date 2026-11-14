@@ -3618,6 +3618,7 @@ void dump_recorded_animations(blam::map_container<Ver> const& map)
         rec::playback play(stream.value());
         u32           moving   = 0;
         u16           buttons  = 0;
+        u32           crouched = 0, jumped = 0;
         i32           turned   = 0;
         i16           prev_yaw = play.state().facing().yaw;
         do
@@ -3633,14 +3634,18 @@ void dump_recorded_animations(blam::map_container<Ver> const& map)
             turned += step < 0 ? -step : step;
             prev_yaw = in.facing().yaw;
             buttons |= in.buttons;
+            crouched += (in.buttons & rec::control_crouch) != 0;
+            jumped += (in.buttons & rec::control_jump) != 0;
         } while(play.advance());
 
         fmt::print("    ticks decoded={}", play.tick());
         if(play.tick() != static_cast<u32>(anim.length_of_animation))
             fmt::print(" (MISMATCH, header says {})", anim.length_of_animation);
         fmt::print(
-            " moving={} turned={:.0f}deg buttons={:#06x}",
+            " moving={} crouched={} jumped={} turned={:.0f}deg buttons={:#06x}",
             moving,
+            crouched,
+            jumped,
             turned * 360.f / rec::control_vector::units_per_turn,
             buttons);
         /* Named by hand: the flag values run past magic_enum's default
