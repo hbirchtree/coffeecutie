@@ -6,7 +6,10 @@ if(PORT STREQUAL "openal-soft")
   set(VCPKG_LIBRARY_LINKAGE dynamic)
 endif()
 # Chainloaded toolchain skips vcpkg's -fPIC; static deps end up in shared ports
-set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_POSITION_INDEPENDENT_CODE=ON)
+set(VCPKG_CMAKE_CONFIGURE_OPTIONS
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+  -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
+)
 
 set(VCPKG_CMAKE_SYSTEM_NAME Linux)
 
