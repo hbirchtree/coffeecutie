@@ -396,6 +396,18 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
     [[maybe_unused]] i32 source   = AInputEvent_getSource(event);
     i32                  deviceId = AInputEvent_getDeviceId(event);
 
+    /* Only gamepad keys open a pad: a device's other keys (volume, back,
+     * a pad's media interface) would otherwise each become a new pad */
+    if(type == AINPUT_EVENT_TYPE_KEY)
+    {
+        i32 const key = AKeyEvent_getKeyCode(event);
+        bool const pad_key =
+            (key >= AKEYCODE_BUTTON_A && key <= AKEYCODE_BUTTON_MODE) ||
+            (key >= AKEYCODE_DPAD_UP && key <= AKEYCODE_DPAD_RIGHT);
+        if(!pad_key)
+            return false;
+    }
+
     auto controllers = m_container->service<anative::ControllerInput>();
     auto it          = controllers->m_mapping.find(deviceId);
 
@@ -479,6 +491,20 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
             break;
         case AKEYCODE_BUTTON_MODE:
             buttons.guide = pressed;
+            break;
+
+        /* Some pads send the d-pad as keys rather than a hat */
+        case AKEYCODE_DPAD_UP:
+            buttons.p_up = pressed;
+            break;
+        case AKEYCODE_DPAD_DOWN:
+            buttons.p_down = pressed;
+            break;
+        case AKEYCODE_DPAD_LEFT:
+            buttons.p_left = pressed;
+            break;
+        case AKEYCODE_DPAD_RIGHT:
+            buttons.p_right = pressed;
             break;
 
         default:
@@ -899,8 +925,9 @@ bool AndroidEventBus::handleInputEvent(AInputEvent* event)
     i32 type   = AInputEvent_getType(event);
     i32 source = AInputEvent_getSource(event);
 
-    if(source & AINPUT_SOURCE_GAMEPAD ||
-       feval<i32>(source, AINPUT_SOURCE_JOYSTICK))
+    /* Both carry class bits a keyboard shares, so match all of them */
+    if((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD ||
+       (source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK)
     {
         if(handleGamepadEvent(event))
             return true;
