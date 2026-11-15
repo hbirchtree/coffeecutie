@@ -230,6 +230,8 @@ struct BlamMapBrowser
 
     static void simulation_controls(NetworkState& net)
     {
+        if(net.clock_authority)
+            ImGui::Checkbox("Clients may use the free camera", &net.allow_freecam);
         if(!ImGui::CollapsingHeader("Network simulation"))
             return;
         auto& sim = net.simulation;

@@ -1040,6 +1040,7 @@ struct PlayerInfo
     {
         bool move{true};
         bool camera{true};
+        bool freecam{true}; /*!< May leave the body for the free camera */
     } permissions;
 
     biped_shape_t biped{};

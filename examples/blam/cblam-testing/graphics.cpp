@@ -170,6 +170,10 @@ i32 blam_main()
             //
             ("relay-only",
              "Always relay traffic, no peer-to-peer",
+             cxxopts::value<bool>()->default_value("false"))
+            //
+            ("no-freecam",
+             "Keep clients in their bodies: no free camera, and no forge",
              cxxopts::value<bool>()->default_value("false"));
         options.add_options("Networking (client)")
             //
@@ -852,7 +856,8 @@ i32 blam_main()
                         .type   = ServerConnectEvent::Listen,
                         .remote = arguments["listen"].as<std::string>(),
                     };
-                    connect.relay_only = arguments["relay-only"].as<bool>();
+                    connect.relay_only    = arguments["relay-only"].as<bool>();
+                    connect.allow_freecam = !arguments["no-freecam"].as<bool>();
                     if(arguments.count("gateway-register"))
                     {
                         connect.gateway_register_url =

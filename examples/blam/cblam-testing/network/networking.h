@@ -45,6 +45,7 @@ struct NetworkState : compo::SubsystemBase
     using server_time_point = std::chrono::steady_clock::time_point;
 
     bool clock_authority{false}; /*!< This process is the server */
+    bool allow_freecam{true}; /*!< Server: clients may leave their bodies for the free camera */
     bool replica{false}; /*!< Joined to a server, which decides what is hit */
 
     /*! The server's tick clock, on a client: `tick` began at server time

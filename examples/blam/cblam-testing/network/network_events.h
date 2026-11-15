@@ -271,6 +271,7 @@ struct UpdatePermission
         Movement,
         Camera,
         Action,
+        Freecam,
     } permission;
 
     u16 mode{0};
