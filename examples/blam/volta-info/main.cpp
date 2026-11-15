@@ -4149,7 +4149,7 @@ void dump_snd(blam::tag_index_view<Ver> const& index, blam::tagref_t const& ref)
         for(auto [pi, perm] : stl_types::enumerate(p))
             fmt::print(
                 "      perm[{:>3}] '{}' next={:>3} gain={} skip={} "
-                "buffer_size={} sample_size={} decoded={} mouth={} subtitles={}\n",
+                "buffer_size={} sample_size={} sample_offset={:#x} decoded={} mouth={} subtitles={}\n",
                 pi,
                 perm.name.str(),
                 perm.next_permutation_idx,
@@ -4157,6 +4157,7 @@ void dump_snd(blam::tag_index_view<Ver> const& index, blam::tagref_t const& ref)
                 perm.skip_fraction,
                 perm.buffer_size,
                 perm.sample_size,
+                perm.sample_offset,
                 perm.decoded_size,
                 perm.mouth_size,
                 perm.subtitle_size);
