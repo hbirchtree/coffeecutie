@@ -69,6 +69,12 @@ class CombatSync
     /* How far back a client's shot may look: its ping and some slack */
     static constexpr auto rewind_slack = std::chrono::milliseconds(250);
     static constexpr auto max_rewind   = std::chrono::milliseconds(1000);
+    /* A client's shots against its trigger's rate: twice it over time (a
+     * speed powerup, jitter), in bursts of up to a second's worth */
+    static constexpr f32 rate_slack    = 2.f;
+    static constexpr f32 burst_seconds = 1.f;
+    static constexpr f32 min_burst     = 4.f;
+    static constexpr f32 default_rate  = 10.f; /* A trigger with none: as fast as one clicks */
 
     CombatSync(GameEventBus& bus, journal_t journal)
         : m_bus(bus)
@@ -233,6 +239,7 @@ class CombatSync
         }
         bool const fired =
             glm::distance(Vecf3(wire.position), anchor) <= reach &&
+            may_fire(p, from.player, wire) &&
             fire(p, from.player, wire, rewind_for(p, from, wire.view_tick));
         m_journal(
             fired ? "net_weapon_fire" : "net_weapon_fire_reject",
@@ -433,6 +440,61 @@ class CombatSync
         return std::clamp(view_tick, now > ticks ? now - ticks : 0, now);
     }
 
+    /* A client's shot from a living body, with a weapon it carries, no
+     * faster than the weapon fires */
+    template<typename Proxy>
+    bool may_fire(Proxy& p, u64 player, WeaponFire const& wire)
+    {
+        if(auto const* status = p.template get<BipedStatus>(player); status && status->dead)
+            return false;
+        bool const thrown = wire.flags & WeaponFire::thrown;
+        bool const melee  = wire.flags & (WeaponFire::melee | WeaponFire::windup);
+        if(!thrown && wire.vehicle == 0)
+        {
+            auto const* equip   = p.template get<BipedEquipment>(player);
+            auto const  carries = [&wire](auto const& carried) {
+                return carried.tag && carried.tag->tag_id == wire.weapon;
+            };
+            if(!equip ||
+               !(carries(equip->weapons[0]) || carries(equip->weapons[1]) || carries(equip->objective)))
+                return false;
+        }
+        if(thrown || melee)
+            return true;
+        f32 const rate     = rate_of(wire);
+        f32 const capacity = std::max(rate * burst_seconds, min_burst);
+        auto const now     = std::chrono::steady_clock::now();
+        auto [it, fresh]   = m_fire_budget.try_emplace(wire.player_idx, fire_budget_t{capacity, now});
+        auto& budget       = it->second;
+        f32 const dt       = std::chrono::duration<f32>(now - budget.at).count();
+        budget.tokens      = std::min(capacity, budget.tokens + dt * rate * rate_slack);
+        budget.at          = now;
+        if(budget.tokens < 1.f)
+            return false;
+        budget.tokens -= 1.f;
+        return true;
+    }
+
+    /* Shots a second, at the trigger's fastest */
+    f32 rate_of(WeaponFire const& wire) const
+    {
+        if(!m_map)
+            return default_rate;
+        blam::tag_index_view<halo_version> index(*m_map);
+        auto tag = index.find(wire.weapon);
+        if(tag == index.end() || !(*tag).valid() || !(*tag).matches(blam::tag_class_t::weap))
+            return default_rate;
+        auto weapon = (*tag).template data<blam::scn::weapon>(m_map->magic);
+        if(!weapon.has_value())
+            return default_rate;
+        auto triggers = weapon.value()[0].triggers.data(m_map->magic);
+        if(!triggers.has_value() || wire.trigger >= triggers.value().size())
+            return default_rate;
+        auto const& rates = triggers.value()[wire.trigger].maximum_rate_of_fire;
+        f32 const   rate  = std::max(rates.x, rates.y);
+        return rate > 0.f ? rate : default_rate;
+    }
+
     /* Someone else's shot, fired here by `shooter` */
     template<typename Proxy>
     bool fire(
@@ -503,6 +565,13 @@ class CombatSync
     journal_t     m_journal;
     blam::map_container<halo_version> const* m_map{nullptr};
     u64 m_view_tick{0};
+
+    struct fire_budget_t
+    {
+        f32                                   tokens;
+        std::chrono::steady_clock::time_point at;
+    };
+    std::map<u32, fire_budget_t> m_fire_budget; /*!< Per client player */
 
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>>  m_hit_queue;
