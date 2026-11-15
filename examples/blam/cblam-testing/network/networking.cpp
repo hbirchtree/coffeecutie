@@ -678,6 +678,71 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return "class not requestable";
     }
 
+    /* What a client drops: near one of its players, a weapon or grenade it
+     * carried a moment ago and no more rounds than it had, a few at a time.
+     * Forge spawns are left to the free camera's permission */
+    template<typename Connection>
+    std::string_view check_drop(Proxy& p, Connection& from, SpawnRequest& request, blam::tag_t const& tag)
+    {
+        /* Forge places what it likes, from the free camera */
+        for(auto& [_, player] : from.players)
+            if(auto const* info = player.biped.exists() ? p.get<PlayerInfo>(player.biped.id()) : nullptr;
+               info && !info->mode.physics && info->permissions.camera)
+                return {};
+        auto const now    = std::chrono::steady_clock::now();
+        auto&      budget = m_drop_budget[from.idx];
+        if(budget.at == std::chrono::steady_clock::time_point{})
+            budget = {max_drops, now};
+        budget.tokens = std::min(
+            max_drops, budget.tokens + std::chrono::duration<f32>(now - budget.at).count() * drops_per_second);
+        budget.at = now;
+        if(budget.tokens < 1.f)
+            return "too many drops";
+        bool near = false;
+        for(auto& [_, player] : from.players)
+            if(auto const* cam = player.biped.exists() ? p.get<PlayerCamera>(player.biped.id()) : nullptr)
+                near |= glm::distance(cam->camera.position, Vecf3(request.position)) <= max_drop_offset;
+        if(!near)
+            return "too far from its players";
+        if(tag.matches(blam::tag_class_t::weap) || tag.matches(blam::tag_class_t::eqip))
+        {
+            carried_t* carried = nullptr;
+            for(auto& [_, player] : from.players)
+                if(auto it = m_carried.find(carried_key(player.idx, tag.tag_id));
+                   it != m_carried.end() && now - it->second.at < carried_window && it->second.count > 0)
+                    carried = &it->second;
+            if(!carried)
+                return "not carried";
+            carried->count--;
+            if(tag.matches(blam::tag_class_t::weap) && request.rounds[0] != SpawnRequest::no_rounds)
+            {
+                request.rounds[0] = std::min(request.rounds[0], carried->loaded);
+                request.rounds[1] = std::min(request.rounds[1], carried->reserve);
+            }
+        }
+        budget.tokens -= 1.f;
+        return {};
+    }
+
+    /* What the server's copy of a client's player carries, as of now */
+    template<typename Magic>
+    void note_carried(BipedEquipment const& equip, u32 player_idx, Magic const& magic)
+    {
+        auto const now = std::chrono::steady_clock::now();
+        for(auto const& weapon : equip.weapons)
+            if(weapon.tag && weapon.weapon)
+            {
+                auto magazines = weapon.weapon->magazines.data(magic);
+                u16 const loaded = magazines.has_value() && !magazines.value().empty()
+                                       ? static_cast<u16>(std::max<i16>(magazines.value()[0].rounds_loaded_maximum, 0))
+                                       : SpawnRequest::no_rounds;
+                m_carried[carried_key(player_idx, weapon.tag->tag_id)] = {now, 1, loaded, weapon.rounds_total};
+            }
+        for(auto const& kind : equip.equipment)
+            if(kind.tag && kind.left > 0)
+                m_carried[carried_key(player_idx, kind.tag->tag_id)] = {now, kind.left, 0, 0};
+    }
+
     void replicate_spawn(
         SpawnObjectEvent const& spawn,
         HSteamNetConnection     requester  = k_HSteamNetConnection_Invalid,
@@ -3476,6 +3541,47 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
+    /* A client's seat, as the server allows it: a living body near the
+     * vehicle, a seat it has that nobody else holds, driving only from the
+     * driver's seat */
+    std::optional<SeatSync> may_seat(Proxy& p, u64 player, SeatSync seat)
+    {
+        auto const& info = *p.get<PlayerInfo>(player);
+        if(seat.vehicle == 0)
+            return seat;
+        if(auto const* status = p.get<BipedStatus>(player); (status && status->dead) || !info.mode.physics)
+            return std::nullopt;
+        auto const& files = p.subsystem<BlamFiles<halo_version>>();
+        for(auto object : p.template select<NetworkInfo, ObjectPhysics, Model>())
+        {
+            auto [net, physics, model] = object.components();
+            if(net.instance_id != seat.vehicle || !physics.drive)
+                continue;
+            auto const* cam = p.get<PlayerCamera>(player);
+            bool const  same = info.riding.vehicle == object.id();
+            if(!same && (!cam || glm::distance(cam->camera.position, model.position) > max_seat_reach))
+                return std::nullopt;
+            if(!model.origin_object)
+                return std::nullopt;
+            auto unit = model.origin_object->template data<blam::scn::unit>(files.container.magic);
+            if(!unit.has_value())
+                return std::nullopt;
+            auto seats = unit.value()[0].seats.data(files.container.magic);
+            if(!seats.has_value() || seat.seat < 0 || static_cast<size_t>(seat.seat) >= seats.value().size())
+                return std::nullopt;
+            for(auto other : p.select<PlayerInfo>())
+                if(other.id() != player && other.get<PlayerInfo>().riding.vehicle == object.id() &&
+                   other.get<PlayerInfo>().riding.seat == seat.seat)
+                    return std::nullopt;
+            using seat_flags_t = blam::scn::unit::seat_t::seat_flags_t;
+            bool const driver = (seats.value()[seat.seat].flags & seat_flags_t::driver) != seat_flags_t::none;
+            seat.flags = static_cast<SeatSync::flags_t>(
+                (seat.flags & ~SeatSync::driver) | (driver ? SeatSync::driver : 0));
+            return seat;
+        }
+        return std::nullopt;
+    }
+
     /* Every player's seat as it changes, and all riders to a fresh peer */
     void send_seats(Proxy& p)
     {
@@ -3832,6 +3938,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             if(auto* equip = p.get<BipedEquipment>(player.id()))
             {
+                if(is_server())
+                    note_carried(*equip, info.player_idx, p.subsystem<BlamFiles<halo_version>>().container.magic);
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
                 equip->throwing  = it->second.flags & EquipmentSync::throwing;
                 /* Its own peer runs its camouflage */
@@ -4205,7 +4313,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             /* Only ever the sender's own players */
             for(auto const& seat : payload.values<SeatSync>())
                 if(auto* player = player_info.own(seat.player_idx))
-                    apply_seat(p, player->biped.get<PlayerInfo>(), seat);
+                    if(auto const allowed = may_seat(p, player->biped.id(), seat))
+                        apply_seat(p, player->biped.get<PlayerInfo>(), *allowed);
             break;
         }
         case MessageBase::EquipmentSync: {
@@ -4279,9 +4388,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::SpawnRequest: {
-            auto const&        request = payload.value<SpawnRequest>();
+            auto               request = payload.value<SpawnRequest>();
             blam::tag_t const* tag     = nullptr;
             auto reason = check_spawn_request(player_info.verified, request, tag);
+            if(reason.empty())
+                reason = check_drop(p, player_info, request, *tag);
             journal(
                 reason.empty() ? "net_spawn_accept" : "net_spawn_reject",
                 {{"player_idx", player_info.idx},
@@ -5252,6 +5363,30 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::map<u32, EquipmentSync>             m_server_held; /*!< Own players, as the server has them */
     std::map<u32, EquipmentSync>             m_last_reports; /*!< Each client player's, on the server */
+    /* What a client's players carried lately, by player and tag: what they may drop */
+    struct carried_t
+    {
+        std::chrono::steady_clock::time_point at;
+        u16                                   count{0};
+        u16                                   loaded{0};
+        u16                                   reserve{0};
+    };
+    std::map<u64, carried_t> m_carried;
+    static u64 carried_key(u32 player_idx, blam::tag_index<> tag)
+    {
+        return u64(player_idx) << 32 | tag.value();
+    }
+    static constexpr auto carried_window = std::chrono::seconds(5);
+    struct drop_budget_t
+    {
+        f32                                   tokens{0.f};
+        std::chrono::steady_clock::time_point at{};
+    };
+    std::map<u32, drop_budget_t> m_drop_budget; /*!< By connection's seat 0 player */
+    static constexpr f32 max_drops        = 8.f;
+    static constexpr f32 drops_per_second = 2.f;
+    static constexpr f32 max_drop_offset  = 8.f; /* wu from the dropper's eye */
+    static constexpr f32 max_seat_reach   = 8.f; /* wu from the vehicle's origin */
     /* A remote player's report as it was when the server handed it
      * something, and when: held off until the peer answers */
     std::map<u32, std::pair<EquipmentSync, std::chrono::steady_clock::time_point>> m_handouts;
