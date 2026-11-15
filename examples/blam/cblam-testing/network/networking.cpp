@@ -3814,9 +3814,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto        it   = m_remote_weapons.find(info.player_idx);
             if(!info.is_remote() || it == m_remote_weapons.end())
                 continue;
-            /* The dead hold nothing, whatever was last reported */
+            /* The dead hold nothing, whatever was last reported; a respawn
+             * starts the count afresh */
             if(auto const* status = p.get<BipedStatus>(player.id()); status && status->dead)
+            {
+                m_last_reports.erase(info.player_idx);
                 continue;
+            }
             /* What the server just handed out is not undone by a report from
              * before it */
             if(auto held = m_handouts.find(info.player_idx); held != m_handouts.end())
@@ -3833,17 +3837,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 /* Its own peer runs its camouflage */
                 p.get<PlayerInfo>(player.id())->camouflaged =
                     it->second.flags & EquipmentSync::camouflaged;
-                /* Thrown where it is played, so counted there */
-                for(size_t i = 0; i < it->second.grenades.size() && i < equip->equipment.size(); i++)
-                    equip->equipment[i].left = it->second.grenades[i];
-                /* Likewise reserves, which the authority's ammo pickups go by */
-                for(auto& weapon : equip->weapons)
-                    if(!weapon.tag)
-                        continue;
-                    else if(weapon.tag->tag_id == it->second.weapon)
-                        weapon.rounds_total = it->second.reserve[0];
-                    else if(weapon.tag->tag_id == it->second.slung)
-                        weapon.rounds_total = it->second.reserve[1];
+                if(is_server())
+                    spend_reserves(*equip, info.player_idx, it->second);
+                else
+                {
+                    /* As the server counts them */
+                    for(size_t i = 0; i < it->second.grenades.size() && i < equip->equipment.size(); i++)
+                        equip->equipment[i].left = it->second.grenades[i];
+                    for(auto& weapon : equip->weapons)
+                        if(auto const reserve = reserve_of(it->second, weapon))
+                            weapon.rounds_total = *reserve;
+                }
             }
             /* Which of the two is held is the server's to say */
             auto const known = equipment_of(p, player.id(), info);
@@ -3855,6 +3859,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto const& files = p.subsystem<BlamFiles<halo_version>>();
             if(!is_weapon(files, it->second.weapon) ||
                (it->second.slung != blam::tag_index<>{} && !is_weapon(files, it->second.slung)))
+                continue;
+            /* A client gives up weapons; it gets them from the server */
+            if(is_server() && !carries(p.get<BipedEquipment>(player.id()), files.load_generation, it->second))
                 continue;
             /* A body not shown yet takes it when it is; once is enough */
             u32 const generation = files.load_generation;
@@ -3875,6 +3882,50 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
+    /* What a report says is left in reserve for `weapon`, if it carries it */
+    static std::optional<u16> reserve_of(EquipmentSync const& report, BipedEquipment::weapon_t const& weapon)
+    {
+        if(!weapon.tag)
+            return std::nullopt;
+        if(weapon.tag->tag_id == report.weapon)
+            return report.reserve[0];
+        if(weapon.tag->tag_id == report.slung)
+            return report.reserve[1];
+        return std::nullopt;
+    }
+
+    /* A client's reserves go down by what it spends between reports; what
+     * fills them up is the server's pickups */
+    void spend_reserves(BipedEquipment& equip, u32 player_idx, EquipmentSync const& report)
+    {
+        if(auto last = m_last_reports.find(player_idx); last != m_last_reports.end())
+            for(auto& weapon : equip.weapons)
+            {
+                auto const before = reserve_of(last->second, weapon);
+                auto const now    = reserve_of(report, weapon);
+                if(before && now && *now < *before)
+                    weapon.rounds_total =
+                        static_cast<u16>(std::max<i32>(weapon.rounds_total - (*before - *now), 0));
+            }
+        m_last_reports[player_idx] = report;
+    }
+
+    /* Every weapon a report names is one the server's copy has */
+    static bool carries(BipedEquipment const* equip, u32 generation, EquipmentSync const& report)
+    {
+        if(!equip || equip->load_generation != generation)
+            return false;
+        auto const has = [equip](blam::tag_index<> weapon) {
+            if(weapon == blam::tag_index<>{})
+                return true;
+            for(auto const* carried : {&equip->weapons[0], &equip->weapons[1], &equip->objective})
+                if(carried->tag && carried->tag->tag_id == weapon)
+                    return true;
+            return false;
+        };
+        return has(report.weapon) && has(report.slung);
+    }
+
     /* The server switches a client's weapons; its own pair, swapped round */
     void hold_as_server_says(Proxy& p)
     {
@@ -3883,10 +3934,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             u64 const   player = own_player(p, idx);
             auto*       equip  = p.get<BipedEquipment>(player);
             auto const* info   = p.get<PlayerInfo>(player);
-            if(!equip || !info || held.slung == blam::tag_index<>{})
+            if(!equip || !info)
                 continue;
+            /* Its grenades, as the server counts them */
+            for(size_t i = 0; i < held.grenades.size() && i < equip->equipment.size(); i++)
+                equip->equipment[i].left = held.grenades[i];
             if(auto const known = equipment_of(p, player, *info);
-               known.weapon == held.slung && known.slung == held.weapon)
+               held.slung != blam::tag_index<>{} && known.weapon == held.slung && known.slung == held.weapon)
             {
                 std::swap(equip->weapons[0], equip->weapons[1]);
                 equip->reloading = false;
@@ -5197,6 +5251,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u64, DeviceSync>                m_sent_devices;
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::map<u32, EquipmentSync>             m_server_held; /*!< Own players, as the server has them */
+    std::map<u32, EquipmentSync>             m_last_reports; /*!< Each client player's, on the server */
     /* A remote player's report as it was when the server handed it
      * something, and when: held off until the peer answers */
     std::map<u32, std::pair<EquipmentSync, std::chrono::steady_clock::time_point>> m_handouts;
