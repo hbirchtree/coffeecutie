@@ -944,7 +944,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     }
 
     /* A respawn starts with the map's loadout again, as the loader hands it
-     * out to a new player; a client's own players are its to equip */
+     * out to a new player; the server keeps its own count of a client's */
     void reequip(Proxy& p, u64 player)
     {
         if(auto* equip = p.template get<BipedEquipment>(player))
@@ -968,11 +968,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         status->stunned = 0.f;
         tell(p, respawn.unit, *status, respawn.position, respawn.facing, respawn.arrive,
              !respawn.restore);
-        if(auto const* info = p.template get<PlayerInfo>(respawn.unit);
-           info && !info->is_remote())
+        if(auto const* info = p.template get<PlayerInfo>(respawn.unit))
         {
-            restart(p, respawn.unit, *info, respawn.position, respawn.facing);
-            if(!respawn.restore)
+            if(!info->is_remote())
+                restart(p, respawn.unit, *info, respawn.position, respawn.facing);
+            if(!respawn.restore && (!info->is_remote() || !p.template subsystem<NetworkState>().replica))
                 reequip(p, respawn.unit);
         }
         if(respawn.arrive)

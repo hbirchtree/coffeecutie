@@ -10,6 +10,7 @@
 #include "selected_version.h"
 #include "ticks.h"
 
+#include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_tag_index.h>
 #include <nlohmann/json.hpp>
 
@@ -459,7 +460,9 @@ class CombatSync
                !(carries(equip->weapons[0]) || carries(equip->weapons[1]) || carries(equip->objective)))
                 return false;
         }
-        if(thrown || melee)
+        if(thrown)
+            return spend_grenade(p, player, wire.weapon);
+        if(melee)
             return true;
         f32 const rate     = rate_of(wire);
         f32 const capacity = std::max(rate * burst_seconds, min_burst);
@@ -473,6 +476,35 @@ class CombatSync
             return false;
         budget.tokens -= 1.f;
         return true;
+    }
+
+    /* The server counts a client's grenades: one of the kind that throws
+     * `projectile`, if it has one */
+    template<typename Proxy>
+    bool spend_grenade(Proxy& p, u64 player, blam::tag_index<> projectile)
+    {
+        auto* equip = p.template get<BipedEquipment>(player);
+        if(!equip || !m_map)
+            return false;
+        blam::tag_index_view<halo_version> index(*m_map);
+        auto globals_tag = index.tag_of("globals\\globals");
+        if(!globals_tag.has_value())
+            return false;
+        auto globals = (*globals_tag)->template data<blam::globals::globals>(m_map->magic);
+        if(!globals.has_value())
+            return false;
+        auto grenades = globals.value()->grenades.data(m_map->magic);
+        if(!grenades.has_value())
+            return false;
+        for(auto const& grenade : grenades.value())
+            if(grenade.projectile.tag_id == projectile)
+                for(auto& kind : equip->equipment)
+                    if(kind.tag && kind.tag->tag_id == grenade.equipment.tag_id && kind.left > 0)
+                    {
+                        kind.left--;
+                        return true;
+                    }
+        return false;
     }
 
     /* Shots a second, at the trigger's fastest */
