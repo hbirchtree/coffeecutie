@@ -107,7 +107,10 @@ STATICINLINE SystemPaths& GetSystemPaths()
         return paths;
 
     auto prefix      = file::ResourcePrefix();
-    prefix_available = prefix.has_value();
+    prefix_available = prefix.has_value() ||
+        compile_info::platform::is_android ||
+        compile_info::platform::is_emscripten ||
+        compile_info::platform::is_ios;
 
     paths.assetDir  = invalid_url();
     paths.cacheDir  = invalid_url();
