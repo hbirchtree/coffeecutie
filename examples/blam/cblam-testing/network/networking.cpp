@@ -1300,6 +1300,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             0, [this](GameEvent&, ServerConnectEvent* connect) {
                 cDebug("Connection requested to server: {}", connect->remote);
                 m_relay_only = connect->relay_only;
+                if(connect->type == ServerConnectEvent::Listen)
+                    m_net_state.allow_freecam = connect->allow_freecam;
                 if(connect->type == ServerConnectEvent::Peer)
                     connect_symmetric(connect->remote);
                 else if(connect->type == ServerConnectEvent::Server)
@@ -2628,6 +2630,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     net.sent_physics     = info.mode.physics;
                     net.sent_crouched    = info.crouched;
                 };
+
+                /* The free camera, as the server allows it */
+                if(info.is_remote() && info.permissions.freecam != m_net_state.allow_freecam)
+                    for(auto& [conn, state] : m_connections)
+                        if(state.own(info.player_idx))
+                        {
+                            info.permissions.freecam = m_net_state.allow_freecam;
+                            send_permission(conn, info.player_idx, UpdatePermission::Freecam,
+                                            info.permissions.freecam ? 1 : 0);
+                            break;
+                        }
 
                 /* Lock before moving to birds-eye, move to spawn before
                  * unlocking, so a body never drags the camera along */
@@ -4237,7 +4250,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             /* A body walked here goes where its inputs take it, once in */
             bool const simulated = sync.flags & CameraSync::simulated;
             bool const walked    = info.mode.simulated && info.mode.physics;
-            info.mode.physics    = sync.flags & CameraSync::physics;
+            /* Out of its body only where the server allows it */
+            info.mode.physics    = (sync.flags & CameraSync::physics) || !info.permissions.freecam;
             info.mode.simulated  = simulated;
             /* Only a body on its feet crouches */
             info.crouched = (sync.flags & CameraSync::crouched) && info.mode.physics && !info.riding.vehicle;
@@ -5232,6 +5246,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     break;
                 case UpdatePermission::Movement:
                     info.permissions.move = perm.mode != 0;
+                    break;
+                case UpdatePermission::Freecam:
+                    info.permissions.freecam = perm.mode != 0;
+                    if(!info.permissions.freecam)
+                        info.mode.physics = true;
                     break;
                 }
                 break;

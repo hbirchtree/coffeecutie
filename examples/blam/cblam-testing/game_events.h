@@ -845,6 +845,9 @@ struct ServerConnectEvent
 
     std::string remote;
 
+    /* Only used with type == Listen: clients may use the free camera */
+    bool allow_freecam{true};
+
     /* Only used with type == Listen: if set, additionally register this
      * server with a webrtc-gateway fleet registry so browser clients can
      * reach it (see gateway_fleet_registration.h). Empty = don't

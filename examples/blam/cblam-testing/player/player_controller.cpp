@@ -700,7 +700,7 @@ struct PlayerController
     {
         // TODO: Check for changes in position on physics movement
         net.changes.transform = net.changes.viewport = true;
-        if(playing && input.back)
+        if(playing && input.back && info.permissions.freecam)
             info.mode.physics = false;
 
         /* Flatten so looking down doesn't push into the floor */
