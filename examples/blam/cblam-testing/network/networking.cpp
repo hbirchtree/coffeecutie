@@ -2618,7 +2618,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     /* Our own seats go out as send_streams schedules them;
                      * a remote player we moved is told, and everyone, at once */
                     if(info.is_remote())
+                    {
                         send_all(Message<CameraSync>(CameraSync(sync)));
+                        m_moves.erase(info.player_idx);
+                    }
                     else
                         m_latest_cameras[info.player_idx] = sync;
                     net.changes.viewport = net.changes.transform = false;
@@ -4056,6 +4059,39 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
     }
 
+    /* Where a client's body may have got to since its last report: as far
+     * as max_move_speed carries it, up to max_move_burst at once. Death and
+     * the respawn after it start the count afresh */
+    Vecf3 limit_move(Proxy& p, u64 player, u32 player_idx, Vecf3 to)
+    {
+        auto const now = std::chrono::steady_clock::now();
+        if(auto const* status = p.get<BipedStatus>(player); status && status->dead)
+        {
+            m_moves[player_idx] = {to, max_move_burst, now, now + respawn_grace};
+            return to;
+        }
+        auto [it, fresh] = m_moves.try_emplace(player_idx, move_t{to, max_move_burst, now, now});
+        auto& move       = it->second;
+        if(fresh || now < move.grace)
+        {
+            move.at = to;
+            move.t  = now;
+            return to;
+        }
+        move.allowance = std::min(
+            max_move_burst, move.allowance + std::chrono::duration<f32>(now - move.t).count() * max_move_speed);
+        move.t         = now;
+        f32 const step = glm::distance(move.at, to);
+        if(step > move.allowance)
+        {
+            journal("net_move_limited", {{"player_idx", player_idx}, {"distance", step}});
+            to = move.at + (to - move.at) * (move.allowance / step);
+        }
+        move.allowance -= std::min(step, move.allowance);
+        move.at = to;
+        return to;
+    }
+
     /* Every correction of a followed object goes through here */
     static void follow(
         Model&            model,
@@ -4207,13 +4243,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             info.crouched = (sync.flags & CameraSync::crouched) && info.mode.physics && !info.riding.vehicle;
             if(simulated && walked)
                 break;
-            auto& cam           = player->biped.get<PlayerCamera>();
-            cam.camera.position = world_of(p, sync);
+            auto& cam = player->biped.get<PlayerCamera>();
+            /* A body on its own feet goes no faster than anything moves it */
+            Vecf3 to = world_of(p, sync);
+            if(info.mode.physics && !info.riding.vehicle && sync.deck == 0)
+                to = limit_move(p, player->biped.id(), player->idx, to);
+            else
+                m_moves.erase(player->idx);
+            cam.camera.position = to;
             cam.camera.rotation = sync.rotation;
 
             /* Passed on to the others as send_streams schedules it */
             m_latest_cameras[player->idx] = {
-                .position      = sync.position,
+                .position      = sync.deck == 0 ? Vecf4(to, sync.position.w) : sync.position,
                 .rotation      = sync.rotation,
                 .target_player = player->idx,
                 .flags         = sync.flags,
@@ -5363,6 +5405,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::map<u32, EquipmentSync>             m_server_held; /*!< Own players, as the server has them */
     std::map<u32, EquipmentSync>             m_last_reports; /*!< Each client player's, on the server */
+    struct move_t
+    {
+        Vecf3                                 at;
+        f32                                   allowance{0.f};
+        std::chrono::steady_clock::time_point t;
+        std::chrono::steady_clock::time_point grace; /*!< Taken as it comes until then */
+    };
+    std::map<u32, move_t> m_moves; /*!< Each client player's body on foot */
+    static constexpr f32  max_move_speed = 30.f; /* wu/s: a fall, a blast */
+    static constexpr f32  max_move_burst = 10.f; /* wu, of jitter */
+    static constexpr auto respawn_grace  = std::chrono::seconds(3);
     /* What a client's players carried lately, by player and tag: what they may drop */
     struct carried_t
     {
