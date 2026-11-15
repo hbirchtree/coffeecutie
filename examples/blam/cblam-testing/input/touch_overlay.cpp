@@ -75,6 +75,16 @@ i16 merge_axis(i16 a, i16 b)
     return std::abs(b) > std::abs(a) ? b : a;
 }
 
+bool pad_in_use(TouchOverlay::controller_map const& pad)
+{
+    constexpr i16 threshold = 8192;
+    if(pad.buttons.d)
+        return true;
+    return std::any_of(std::begin(pad.axes.d), std::end(pad.axes.d), [](i16 v) {
+        return std::abs(v) > threshold;
+    });
+}
+
 } // namespace
 
 TouchOverlay::TouchOverlay()
@@ -84,13 +94,22 @@ TouchOverlay::TouchOverlay()
 
 void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
 {
-    active = false;
+    in_game = false;
     for(auto player : proxy.select<PlayerInfo, PlayerInput>())
     {
         auto [info, input] = player.components();
         if(info.seat_idx == 0)
-            active = input.input_mode == PlayerInput::input_mode_t::game;
+            in_game = input.input_mode == PlayerInput::input_mode_t::game;
     }
+    /* On a pad being picked up, so a resting stick off-centre doesn't
+     * hide the controls again after a touch */
+    bool pad_used = false;
+    for(u32 i = 0; platform && i < platform->count(); ++i)
+        pad_used |= pad_in_use(platform->state(i));
+    if(pad_used && !pad_was_used)
+        hidden = true;
+    pad_was_used = pad_used;
+    active       = in_game && !hidden;
     if(!active)
     {
         fingers.clear();
@@ -229,7 +248,15 @@ void TouchOverlay::draw(ScreenClear& screen, f32 height) const
 
 void TouchOverlay::operator()(CIEvent& ev, CITouchMotionEvent* event)
 {
-    if(!active || event->hover)
+    if(event->hover)
+        return;
+    /* Touching the screen brings the controls back */
+    if(in_game && hidden && event->current == event->origin)
+    {
+        hidden = false;
+        active = true;
+    }
+    if(!active)
         return;
 
     auto [it, down] = fingers.try_emplace(event->finger);

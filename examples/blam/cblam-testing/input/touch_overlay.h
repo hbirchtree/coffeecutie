@@ -87,6 +87,9 @@ struct TouchOverlay
     std::map<u16, finger_t> fingers;
     Vecf2                   screen_size{};
     f32                     stick_radius{1.f};
+    bool                    in_game{false};
+    bool                    hidden{false}; /* A pad is in use, until touched */
+    bool                    pad_was_used{false};
     bool                    active{false};
 };
 
