@@ -2389,12 +2389,12 @@ struct MeshRenderer
                         .sampler});
 #endif
         if(m_api->feature_info().texture.tex.gl.etc2 &&
-           m_api->limits().textures.texture_units > 14)
+           m_api->limits().textures.texture_units > 15)
         {
             samplers.push_back(
                 gleam::sampler_definition_t{
                     typing::graphics::ShaderStage::Fragment,
-                    {"source_etc2_rgb"sv, 13},
+                    {"source_etc2_rgb"sv, 14},
                     bitm_cache
                         .template get_bucket<gfx::compat::texture_2da_t>(
                             CompFmt(
@@ -2403,7 +2403,7 @@ struct MeshRenderer
             samplers.push_back(
                 gleam::sampler_definition_t{
                     typing::graphics::ShaderStage::Fragment,
-                    {"source_etc2_rgba"sv, 14},
+                    {"source_etc2_rgba"sv, 15},
                     bitm_cache
                         .template get_bucket<gfx::compat::texture_2da_t>(
                             CompFmt(
