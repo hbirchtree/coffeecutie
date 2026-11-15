@@ -161,9 +161,12 @@ struct SoundCache
         std::vector<SoundItem::pitch_range_t>& ranges, sound_ptr const& sound_)
     {
         auto [tag, sound, heap] = sound_;
-        auto ranges_            = *index.deref(*tag, sound->pitch_ranges_);
-        if(ranges_.empty())
+        if(!tag || !sound)
             return;
+        auto found = index.deref(*tag, sound->pitch_ranges_);
+        if(!found.has_value() || found->empty())
+            return;
+        auto ranges_ = *found;
         for(auto const& range : ranges_)
         {
             ranges.emplace_back(
@@ -315,10 +318,9 @@ struct SoundCache
             parse_loop_sound(out, tag);
             break;
         case blam::tag_class_t::snd:
-            out.tracks.push_back({.sounds = {
-                { SoundItem::main,
-                  parse_simple_sound(tag) }
-            }});
+            /* Nothing to play without its data */
+            if(auto sound = parse_simple_sound(tag); std::get<1>(sound))
+                out.tracks.push_back({.sounds = {{SoundItem::main, sound}}});
             break;
         default:
             break;

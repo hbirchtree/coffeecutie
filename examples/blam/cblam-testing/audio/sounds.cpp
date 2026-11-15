@@ -213,6 +213,7 @@ struct SoundSystem
     } occlusion_tuning, occlusion_tuning_applied;
 
     std::map<u64, sound_unit_t> active_sounds;
+    std::set<libc_types::u32>   unplayable; /*!< Tags with nothing to play, this map */
     std::map<u64, sound_unit_t> fading_sounds;
     u64                         next_fade_id{0x8000000000000000ULL};
 
@@ -698,9 +699,12 @@ struct SoundSystem
         if(!found)
             return {};
         blam::tagref_t const& tagref = *found;
+        if(unplayable.contains(tagref.tag_id.value()))
+            return {};
         auto sound = sound_cache.predict(tagref);
         if(!sound.valid())
         {
+            unplayable.insert(tagref.tag_id.value());
             cWarning("Tried to load sound, failed: {}", index.name_of(tagref));
             return {};
         }
@@ -1500,6 +1504,7 @@ struct SoundSystem
             active_sounds.clear();
             fading_sounds.clear();
             singleshot_sounds.clear();
+            unplayable.clear();
             queued_events.clear();
             class_gains = {};
             /* These point into the old map */
