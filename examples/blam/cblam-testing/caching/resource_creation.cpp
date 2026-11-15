@@ -597,6 +597,7 @@ void create_resources(compo::EntityContainer& e)
                              {"loading_progress", info.loading_progress},
                              {"connected", net.connected},
                              {"physics", info.mode.physics},
+                             {"crouched", info.crouched},
                              {"position", vec(cam.camera.position)},
                              {"rotation",
                               {cam.camera.rotation.w,

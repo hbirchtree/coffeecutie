@@ -311,6 +311,7 @@ struct alignas(8) CameraSync
         none      = 0x0,
         physics   = 0x1, /*!< PlayerInfo::mode.physics */
         simulated = 0x2, /*!< PlayerInfo::mode.simulated */
+        crouched  = 0x4, /*!< PlayerInfo::crouched */
     };
 
     Vecf4   position; /*!< In the deck's frame when standing on one */

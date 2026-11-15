@@ -222,7 +222,8 @@ std::string to_string(MapFingerprint const& fp)
 
 CameraSync::flags_t camera_flags_of(PlayerInfo const& info)
 {
-    return info.mode.physics ? CameraSync::physics : CameraSync::none;
+    return static_cast<CameraSync::flags_t>(
+        (info.mode.physics ? CameraSync::physics : 0) | (info.crouched ? CameraSync::crouched : 0));
 }
 
 
@@ -2514,7 +2515,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 auto& net  = entity.get<NetworkInfo>();
                 if(!is_networked(entity.id(), info))
                     continue;
-                if(!info.is_remote() && info.mode.physics != net.sent_physics)
+                if(!info.is_remote() && (info.mode.physics != net.sent_physics || info.crouched != net.sent_crouched))
                     net.changes.viewport = true;
 
                 // Server-enforced viewport/transform permissions
@@ -2543,7 +2544,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     if(!net.changes.viewport)
                         return;
                     if(!camera_moved(entity.id(), cam) &&
-                       info.mode.physics == net.sent_physics)
+                       info.mode.physics == net.sent_physics && info.crouched == net.sent_crouched)
                     {
                         net.changes.viewport = net.changes.transform = false;
                         return;
@@ -2557,6 +2558,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         m_latest_cameras[info.player_idx] = sync;
                     net.changes.viewport = net.changes.transform = false;
                     net.sent_physics     = info.mode.physics;
+                    net.sent_crouched    = info.crouched;
                 };
 
                 /* Lock before moving to birds-eye, move to spawn before
@@ -2708,7 +2710,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         Proxy& p, u64 entity, PlayerInfo const& info, PlayerCamera const& camera, NetworkInfo& net)
     {
         auto& sent = m_own_seats[entity];
-        bool const mode  = info.mode.physics != net.sent_physics;
+        bool const mode  = info.mode.physics != net.sent_physics || info.crouched != net.sent_crouched;
         bool const moved = (net.changes.viewport || net.changes.transform) && camera_moved(entity, camera);
         /* Every frame it moves, so one lost is soon replaced; where it comes
          * to rest, or a change of mode, is not */
@@ -2723,6 +2725,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                 : k_nSteamNetworkingSend_UnreliableNoNagle);
             net.changes.viewport = net.changes.transform = false;
             net.sent_physics     = info.mode.physics;
+            net.sent_crouched    = info.crouched;
         }
         if(SeatSync const seat = seat_of(p, info); sent.seat != seat)
         {
@@ -4038,6 +4041,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             bool const walked    = info.mode.simulated && info.mode.physics;
             info.mode.physics    = sync.flags & CameraSync::physics;
             info.mode.simulated  = simulated;
+            /* Only a body on its feet crouches */
+            info.crouched = (sync.flags & CameraSync::crouched) && info.mode.physics && !info.riding.vehicle;
             if(simulated && walked)
                 break;
             auto& cam           = player->biped.get<PlayerCamera>();
@@ -5543,6 +5548,7 @@ struct ObjectFollower
                 }
                 cam.camera.rotation = glm::slerp(from.rotation, to.rotation, alpha);
                 info.mode.physics   = to.flags & CameraSync::physics;
+                info.crouched       = to.flags & CameraSync::crouched;
             }
         }
     }

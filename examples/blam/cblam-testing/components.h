@@ -946,6 +946,7 @@ struct NetworkInfo
         bool permissions : 1 {false};
     } changes;
     bool sent_physics{false};
+    bool sent_crouched{false};
 
     /*! How much this object matters to each player who sees it, from
      *  NetworkRelevance on the server; Networking sends it to each by this */
