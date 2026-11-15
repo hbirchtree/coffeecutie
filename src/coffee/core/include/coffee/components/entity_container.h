@@ -446,6 +446,19 @@ struct EntityContainer : stl_types::non_copy
         return C_DCAST<typename Service::type>(it->second);
     }
 
+    /*!
+     * \brief Point a service slot at another subsystem, returning the
+     * previous holder so it can be wrapped.
+     */
+    template<is_tag_type Service>
+    typename Service::type* replace_service(SubsystemBase* subsystem)
+    {
+        auto& slot     = services[typeid(Service).hash_code()];
+        auto* previous = slot ? C_DCAST<typename Service::type>(slot) : nullptr;
+        slot           = subsystem;
+        return previous;
+    }
+
     template<is_subsystem Service>
     ServiceRef<Service> service_ref();
 
