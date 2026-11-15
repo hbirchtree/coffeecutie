@@ -4261,8 +4261,18 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             /* A body on its own feet goes no faster than anything moves it */
             Vecf3 to = world_of(p, sync);
             if(info.mode.physics && !info.riding.vehicle && sync.deck == 0)
+            {
                 to = limit_move(p, player->biped.id(), player->idx, to);
-            else
+                /* Held back: its peer is put where the server has it */
+                if(glm::distance(to, world_of(p, sync)) > 1e-3f)
+                    send_all(Message<CameraSync>({
+                        .position      = Vecf4(to, sync.position.w),
+                        .rotation      = sync.rotation,
+                        .target_player = player->idx,
+                        .flags         = sync.flags,
+                        .tick          = tick_now(p),
+                    }));
+            } else
                 m_moves.erase(player->idx);
             cam.camera.position = to;
             cam.camera.rotation = sync.rotation;
