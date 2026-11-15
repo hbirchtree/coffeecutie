@@ -43,36 +43,41 @@ void GestureDetector::SetConfiguration(AConfiguration* config)
 //--------------------------------------------------------------------------------
 GESTURE_STATE TapDetector::Detect(const AInputEvent* motion_event)
 {
-    if(AMotionEvent_getPointerCount(motion_event) > 1)
-    {
-        // Only support single touch
-        return false;
-    }
-
     int32_t      action = AMotionEvent_getAction(motion_event);
     unsigned int flags  = action & AMOTION_EVENT_ACTION_MASK;
+    size_t       index  = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >>
+                   AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+    int32_t id = AMotionEvent_getPointerId(motion_event, index);
     switch(flags)
     {
     case AMOTION_EVENT_ACTION_DOWN:
-        down_pointer_id_ = AMotionEvent_getPointerId(motion_event, 0);
-        down_x_          = AMotionEvent_getX(motion_event, 0);
-        down_y_          = AMotionEvent_getY(motion_event, 0);
+        down_.clear();
+        [[fallthrough]];
+    case AMOTION_EVENT_ACTION_POINTER_DOWN:
+        down_[id] = {
+            AMotionEvent_getX(motion_event, index),
+            AMotionEvent_getY(motion_event, index),
+            AMotionEvent_getEventTime(motion_event),
+        };
         break;
-    case AMOTION_EVENT_ACTION_UP: {
-        int64_t eventTime = AMotionEvent_getEventTime(motion_event);
-        int64_t downTime  = AMotionEvent_getDownTime(motion_event);
-        if(eventTime - downTime <= TAP_TIMEOUT)
+    case AMOTION_EVENT_ACTION_CANCEL:
+        down_.clear();
+        break;
+    case AMOTION_EVENT_ACTION_UP:
+    case AMOTION_EVENT_ACTION_POINTER_UP: {
+        auto it = down_.find(id);
+        if(it == down_.end())
+            break;
+        auto const down = it->second;
+        down_.erase(it);
+        if(AMotionEvent_getEventTime(motion_event) - down.time > TAP_TIMEOUT)
+            break;
+        float x = AMotionEvent_getX(motion_event, index) - down.x;
+        float y = AMotionEvent_getY(motion_event, index) - down.y;
+        if(x * x + y * y < TOUCH_SLOP * TOUCH_SLOP * dp_factor_)
         {
-            if(down_pointer_id_ == AMotionEvent_getPointerId(motion_event, 0))
-            {
-                float x = AMotionEvent_getX(motion_event, 0) - down_x_;
-                float y = AMotionEvent_getY(motion_event, 0) - down_y_;
-                if(x * x + y * y < TOUCH_SLOP * TOUCH_SLOP * dp_factor_)
-                {
-                    LOGI("TapDetector: Tap detected");
-                    return GESTURE_STATE_ACTION;
-                }
-            }
+            tapped_index_ = static_cast<int32_t>(index);
+            return GESTURE_STATE_ACTION;
         }
         break;
     }

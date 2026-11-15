@@ -805,6 +805,13 @@ bool AndroidEventBus::handleTouchEvent(AInputEvent* event)
                     .origin   = pos,
                     .previous = pos,
                 });
+            /* Tell consumers a finger is down before it moves */
+            CITouchMotionEvent down{};
+            out.type      = CITouchMotionEvent::event_type;
+            down.finger   = pointer_id;
+            down.origin   = down.previous = down.current = pos;
+            down.pressure = AMotionEvent_getPressure(event, pointer_idx);
+            m_inputBus->inject(out, &down);
             break;
         }
         case AMOTION_EVENT_ACTION_MOVE: {
@@ -855,8 +862,11 @@ bool AndroidEventBus::handleTouchEvent(AInputEvent* event)
     }
     if(auto state = m_tapDetector->Detect(event); state != GESTURE_STATE_NONE)
     {
-        CITouchTapEvent tap;
-        tap.pos = {AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0)};
+        auto const      tapped = m_tapDetector->TappedIndex();
+        CITouchTapEvent tap{};
+        tap.pos = {
+            AMotionEvent_getX(event, tapped), AMotionEvent_getY(event, tapped)};
+        tap.finger  = AMotionEvent_getPointerId(event, tapped);
         tap.pressed = state != GESTURE_STATE_END;
         out.type    = CITouchTapEvent::event_type;
         m_inputBus->inject(out, &tap);

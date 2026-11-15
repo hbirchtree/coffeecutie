@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <map>
+
 #include <vector>
 
 #include "JNIHelper.h"
@@ -77,9 +79,14 @@ class GestureDetector
 class TapDetector : public GestureDetector
 {
   private:
-    int32_t down_pointer_id_;
-    float   down_x_;
-    float   down_y_;
+    struct down_t
+    {
+        float   x, y;
+        int64_t time;
+    };
+    /* Per pointer, so a finger taps while another is held down */
+    std::map<int32_t, down_t> down_;
+    int32_t                   tapped_index_{0};
 
   public:
     TapDetector()
@@ -91,6 +98,12 @@ class TapDetector : public GestureDetector
     }
 
     virtual GESTURE_STATE Detect(const AInputEvent* motion_event);
+
+    /* Pointer index of the last detected tap within its event */
+    int32_t TappedIndex() const
+    {
+        return tapped_index_;
+    }
 };
 
 /******************************************************************

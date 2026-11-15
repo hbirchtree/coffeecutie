@@ -1158,6 +1158,9 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
         }
     }
 
+    /* Same limits as Android's tap detector */
+    constexpr libc_types::u64 tap_timeout_ns = 180'000'000;
+    constexpr libc_types::f32 tap_slop       = 0.025f;
     // Finger coordinates are normalized; scale to what the framebuffer reports
     Vecf2 window_px{1.f};
     if(auto fb = m_container->service<comp_app::GraphicsFramebuffer>())
@@ -1179,12 +1182,17 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
         const Vecf2 pos = Vecf2(event.tfinger.x, event.tfinger.y) * window_px;
         if(event.type == SDL_EVENT_FINGER_DOWN)
         {
-            m_fingers[event.tfinger.fingerID] = {pos, pos};
+            m_fingers[event.tfinger.fingerID] = {pos, pos, event.tfinger.timestamp};
             if(m_fingers.size() == 2)
             {
                 auto [a, b] = pinch_pair();
                 m_pinch     = pinch_t{(a + b) / 2.f, glm::length(a - b)};
             }
+            CITouchMotionEvent down{};
+            down.finger   = static_cast<libc_types::u16>(event.tfinger.fingerID);
+            down.origin   = down.previous = down.current = pos;
+            down.pressure = event.tfinger.pressure;
+            EMIT_IEVENT(down)
             continue;
         }
         auto it = m_fingers.find(event.tfinger.fingerID);
@@ -1210,6 +1218,19 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
             EMIT_IEVENT(pinch)
             if(move.end)
                 m_pinch = std::nullopt;
+        }
+        /* A short release near where it went down is a tap, per finger so
+         * one can tap while another holds a stick */
+        if(event.type == SDL_EVENT_FINGER_UP &&
+           event.tfinger.timestamp - it->second.down_ns <= tap_timeout_ns &&
+           glm::length(move.delta()) < tap_slop * glm::min(window_px.x, window_px.y))
+        {
+            CITouchTapEvent tap{};
+            tap.pos      = pos;
+            tap.finger   = move.finger;
+            tap.pressure = static_cast<libc_types::u16>(event.tfinger.pressure * 65535.f);
+            tap.pressed  = true;
+            EMIT_IEVENT(tap)
         }
         if(move.end)
             m_fingers.erase(it);

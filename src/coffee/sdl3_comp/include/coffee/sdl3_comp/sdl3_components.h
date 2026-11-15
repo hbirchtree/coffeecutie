@@ -265,6 +265,7 @@ struct MouseInput
     struct finger_t
     {
         typing::vector_types::Vecf2 origin, previous;
+        libc_types::u64             down_ns{0};
     };
     struct pinch_t
     {
