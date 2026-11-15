@@ -252,6 +252,15 @@ void create_resources(compo::EntityContainer& e)
                     connect->connected ? "" : "dis",
                     name,
                     connect->player_index);
+                /* A pad a seat already reads (seated at load, or the touch
+                 * overlay's pad 0) must not also open a split screen seat */
+                bool seated = false;
+                for(auto player : e.select<PlayerCamera, PlayerInfo>())
+                {
+                    auto [cam, info] = player.components();
+                    seated |= !info.is_remote() &&
+                              cam.controller.index == connect->player_index;
+                }
                 for(auto player :
                     e.select<PlayerCamera, PlayerInfo, NetworkInfo>())
                 {
@@ -261,6 +270,8 @@ void create_resources(compo::EntityContainer& e)
                         continue;
                     if(connect->connected)
                     {
+                        if(seated)
+                            break;
                         /* Assign controller to the first seat without one; a
                          * keyboard-only seat can take a controller too (usual
                          * local setup, and the dummy plug's synthetic
