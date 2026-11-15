@@ -26,10 +26,12 @@ layout(location = 15, binding = 5) uniform sampler2DArray source_r8;
 layout(location = 16, binding = 6) uniform sampler2DArray source_rg8;
 layout(location = 17, binding = 7) uniform sampler2DArray source_rgba4;
 layout(location = 18, binding = 8) uniform sampler2DArray source_rgba8;
+#if USE_TEXTURE_3D == 1
+layout(location = 34, binding = 13) uniform sampler3D source_rg8_3d;
+#endif
+#if SUPPORT_ETC2 == 1
 layout(location = 32, binding = 13) uniform sampler2DArray source_etc2_rgb;
 layout(location = 33, binding = 14) uniform sampler2DArray source_etc2_rgba;
-#if USE_TEXTURE_3D == 1
-layout(location = 34, binding = 18) uniform sampler3D source_rg8_3d;
 #endif
 
 #if USE_REFLECTIONS == 1 && USE_ARRAY_CUBEMAP == 1
@@ -341,10 +343,12 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
         return fetch_map(source_rgba4, c).bgra;
     else if(source == TEX_RGBA8)
         return fetch_map(source_rgba8, c).bgra;
+#if SUPPORT_ETC2 == 1
     else if(source == TEX_ETC2_RGB)
         return fetch_map(source_etc2_rgb, c);
     else if(source == TEX_ETC2_RGBA)
         return fetch_map(source_etc2_rgba, c);
+#endif
     return vec4(vec3(1), 1);
 }
 

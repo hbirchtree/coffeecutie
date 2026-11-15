@@ -32,6 +32,7 @@ std::vector<button_t> default_buttons()
         button(CK_BUTTON_Y, {600, 560, 192, 192}, true),
         trigger(kind_t::trigger_left, {560, 300, 192, 240}),
         trigger(kind_t::trigger_right, {760, 300, 192, 240}),
+        button(CK_BUTTON_BACK, {800, 560, 192, 192}),
         button(CK_BUTTON_START, {800, 560, 192, 192}),
         button(CK_BUTTON_LB, {0, 760, 192, 160}),
         button(CK_BUTTON_RB, {200, 760, 192, 160}),
@@ -174,6 +175,7 @@ void TouchOverlay::layout(Vecf2 const& screen)
     place(CK_BUTTON_RB, {screen.x - .7f * s, .55f * s}, 1.f);
     place(CK_BUTTON_LB, {screen.x - 1.8f * s, .55f * s}, 1.f);
     place(CK_BUTTON_START, {screen.x * .5f, .6f * s}, .8f);
+    place(CK_BUTTON_BACK, {screen.x * .4f, .6f * s}, .5f);
     place(CK_BUTTON_POV_UP, dpad + Vecf2{0, -.75f * s}, 1.f);
     place(CK_BUTTON_POV_DOWN, dpad + Vecf2{0, .75f * s}, 1.f);
     place(CK_BUTTON_POV_LEFT, dpad + Vecf2{-.75f * s, 0}, 1.f);

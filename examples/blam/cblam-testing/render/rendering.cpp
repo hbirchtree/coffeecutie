@@ -2378,11 +2378,11 @@ struct MeshRenderer
 #if GLEAM_MAX_VERSION >= 0x301 || GLEAM_MAX_VERSION_ES >= 0x300
         /* Plasma noise volumes */
         if(m_api->feature_info().texture.texture_3d &&
-           m_api->limits().textures.texture_units > 18)
+           m_api->limits().textures.texture_units > 13)
             samplers.push_back(
                 gleam::sampler_definition_t{
                     typing::graphics::ShaderStage::Fragment,
-                    {"source_rg8_3d"sv, 18},
+                    {"source_rg8_3d"sv, 13},
                     bitm_cache
                         .template get_bucket<gfx::texture_3d_t>(
                             PixDesc(pix_fmt::RG8), blam::bitm::type_t::tex_3d)
