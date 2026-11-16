@@ -245,5 +245,3 @@ if(BUILD_BLAM_DIMETER OR BUILD_BLAM_ELEGY)
     )
 endif()
 
-# Combat/netcode proof-of-concept (headless BlamPoc)
-add_subdirectory(poc)

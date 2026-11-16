@@ -190,7 +190,6 @@ Includes are rooted at this directory: `#include "ai/actors.h"`.
 | `loading/`   | Map loading pipeline, offline (OPFS) maps, map file subsystem |
 | `network/`   | Networking, relevance, WebRTC |
 | `player/`    | Player controller, camera, view kick, use/seats/pick-ups, spawn points |
-| `poc/`       | Headless combat/netcode proof of concept |
 | `render/`    | Render pipeline, effects, occluders, debug lines, materials |
 | `scripting/` | HaloScript VM and natives, cinematics |
 | `ui/`        | Menus, profiles, game setup, HUD |
