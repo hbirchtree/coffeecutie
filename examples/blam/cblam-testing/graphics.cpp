@@ -39,9 +39,6 @@
 #include "physics.h"
 #include "player/player_controller.h"
 #include "player/view_kick.h"
-#if defined(POC_COMBAT)
-#include "poc/app_combat.h"
-#endif
 #include "render/occluder.h"
 #include "render/rendering.h"
 #include "caching/resource_creation.h"
@@ -360,9 +357,6 @@ i32 blam_main()
 #endif
             setup_load_eventhandlers(e);
             alloc_camera_control(e);
-#if defined(POC_COMBAT)
-            alloc_poc_combat(e);
-#endif
 
             auto& params = e.register_subsystem_inplace<RenderingParameters>();
             if(arguments.contains("gfx-tex-resolution"))
