@@ -123,6 +123,9 @@ struct MessageBase
         /* A player's death, for the kill messages */
         KillFeed,
         PlayerChat,
+
+        /* A player teleported or respawned: never blended across */
+        PlayerWarp,
     } type{None};
 
     u32 request{};
@@ -556,6 +559,19 @@ struct alignas(8) KillFeed
     u32 killer{0};
     u32 cause{0};
     u32 padding{0};
+};
+
+/*! A player moved by a teleport (respawns are teleports): its owner tells
+ *  the server, which passes it on stamped with the server tick it was at.
+ *  Peers drop what they have of the player from before, so it never slides
+ *  across */
+struct alignas(8) PlayerWarp
+{
+    static constexpr auto message_type = MessageBase::PlayerWarp;
+
+    u32 player_idx{0};
+    u32 padding{0};
+    u64 tick{0}; /*!< Server tick, 0 from clients */
 };
 
 /*! One player's score; the whole table goes out when any of it changes */
