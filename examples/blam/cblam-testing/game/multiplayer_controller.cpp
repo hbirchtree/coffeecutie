@@ -25,7 +25,7 @@
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
 
 using MultiplayerManifest = compo::SubsystemManifest<
-    type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus, Model>,
+    type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus, const Attachment, Model>,
     type_list_t<
         GameState,
         GameEventBus,
@@ -450,11 +450,13 @@ struct MultiplayerController
         }
     }
 
-    /* Players wear their team's colour as change colour C, which cyborg_mp leaves to the game */
+    /* Players wear their team's colour as change colour C, which cyborg_mp
+     * leaves to the game; their first-person arms too */
     static void team_colors(Proxy& p, GameState const& state)
     {
         if(!state.teams)
             return;
+        std::map<u64, u32> worn;
         for(auto ent : p.template select<PlayerInfo, Model>())
         {
             auto [info, model] = ent.components();
@@ -462,6 +464,13 @@ struct MultiplayerController
             if(!player || player->team < 0)
                 continue;
             model.change_colors[2] = pack_color(player->team == 0 ? Vecf3{1.f, 0.f, 0.f} : Vecf3{0.f, 0.f, 1.f});
+            worn[ent.id()]         = model.change_colors[2];
+        }
+        for(auto ent : p.template select<Attachment, Model>())
+        {
+            auto [attached, model] = ent.components();
+            if(auto it = worn.find(attached.parent); it != worn.end())
+                model.change_colors[2] = it->second;
         }
     }
 
