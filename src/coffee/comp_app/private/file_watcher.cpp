@@ -5,28 +5,14 @@
 
 namespace comp_app {
 
-constexpr auto needs_await = compile_info::platform::is_emscripten;
-
 void FileWatcher::start_frame(compo::ContainerProxy&, const compo::time_point&)
 {
-    std::vector<Url> finished;
+    /* /config is mounted before anything runs (WasmFS on OPFS on web), so a
+     * file is there or it is not; polling it only blocked frames behind
+     * whatever the OPFS thread was writing */
     for(auto& [file, info] : m_pending)
-    {
-        auto expired = !info.deadline.has_value() ||
-                       compo::clock::now() > info.deadline.value();
-#if !defined(COFFEE_GEKKO)
-        auto exists = platform::file::exists(file);
-        if(!exists.has_value() && needs_await && !expired)
-            continue;
-#else
-        /* No filesystem watching on GameCube; resolve immediately. */
-        (void)expired;
-#endif
         info.promise.set_value(file);
-        finished.push_back(file);
-    }
-    for(auto const& file : finished)
-        m_pending.erase(file);
+    m_pending.clear();
 }
 
 std::future<FileWatcher::Url> FileWatcher::await(
