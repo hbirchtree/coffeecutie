@@ -15,7 +15,7 @@
         "gles": [],
         "screenshot_quality": 60
     },
-    "comment": "Server side of the object spawn replication test (run_client_server_test.sh with SERVER_DUMMY_PLUG_CONFIG/CLIENT_DUMMY_PLUG_CONFIG pointed at the spawn configs, EXPECT_OBJECTS=4). Spawns made before a client verifies its map reach it through the join backlog (CLIENT_DELAY exercises that), later ones are broadcast live. Biped, vehicle, weapon and scenery (a bush, easy to spot in screenshots) all take the same spawn path.",
+    "comment": "Server side of the object spawn replication test (`run.py net --scenario spawn`). Spawns made before a client verifies its map reach it through the join backlog (--client-delay exercises that), later ones are broadcast live. Biped, vehicle, weapon and scenery (a bush, easy to spot in screenshots) all take the same spawn path.",
     "events": [
         {
             "time": 1000,

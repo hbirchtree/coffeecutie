@@ -492,80 +492,44 @@ jobs:
           dummy_plug: dummy_plug_core_43.json
         - variant: core_45
           dummy_plug: dummy_plug_core_45.json
-        # Multiplayer: this one config makes the process a server
-        # (net_listen) and fork+execs a client child seeded with the
-        # client scenario config (dummy plug "spawn" support) — server and
-        # client run in the same job, journals compared afterwards. Boots
-        # bloodgulch, switches to beavercreek mid-session.
+        # The host plug makes the process a server and fork+execs a client
+        # child; journals are compared afterwards. Boots bloodgulch,
+        # switches to beavercreek mid-session.
         - variant: net_multiplayer
           dummy_plug: net/dummy_plug_net_host_scenario.json
-          boot_map: bloodgulch.map
-          journal_check: 'true'
-          skip_audio: 'true'
-        # Same, with a second split screen seat on each side: the server's
-        # must reach the client as a remote player, the client's must stay
-        # out of the server's index space, and every seat needs its biped.
+          args: --map bloodgulch.map --journal-check net_multiplayer --no-audio
+        # A second split screen seat on each side
         - variant: net_splitscreen
           dummy_plug: net/dummy_plug_net_host_splitscreen.json
-          boot_map: bloodgulch.map
-          journal_check: 'true'
-          skip_audio: 'true'
+          args: --map bloodgulch.map --journal-check net_splitscreen --no-audio
     steps:
     - uses: actions/checkout@v7
       with:
         path: source
-    - name: Installing AppImage/media dependencies
+    - name: Installing xvfb/ffmpeg
       run: |
         sudo apt update
-        sudo apt install libfuse2 ffmpeg xvfb mesa-utils
+        sudo apt install ffmpeg xvfb
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi artifacts
       uses: actions/download-artifact@v8
       with:
         name: desktop-x86_64-buildroot-linux-gnu-multi
         path: artifacts/
-    - name: Relocating artifacts
-      run: |
-        mkdir -p source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
-        mv artifacts/* source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/
-        chmod +x source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/packaged/*/*
-    - name: Run dummy plug tests
-      run: |
-        DUMMY_PLUG=${{ matrix.dummy_plug }} BOOT_MAP=${{ matrix.boot_map }} xvfb-run --auto-servernum source/.github/tests/test_blam_graphics.sh
-    - name: Verify multiplayer journals
-      if: matrix.journal_check == 'true'
-      run: |
-        SERVER_JOURNAL="$BLAM_TEST_OUTPUT_DIR/journal.jsonl"
-        CLIENT_JOURNAL="$BLAM_TEST_OUTPUT_DIR/client0/journal.jsonl"
-        if python3 source/.github/tests/net/compare_journals.py --scenario ${{ matrix.variant }} "$SERVER_JOURNAL" "$CLIENT_JOURNAL"; then
-          exit 0
-        fi
-        echo "::group::merged journal timeline"
-        python3 source/.github/tests/net/compare_journals.py --timeline "$SERVER_JOURNAL" "$CLIENT_JOURNAL" || true
-        echo "::endgroup::"
-        exit 1
-    - name: Convert audio samples to .wav
-      if: ${{ always() && matrix.skip_audio != 'true' }}
-      run: |
-        if [ -f "$BLAM_TEST_OUTPUT_DIR/rendered_audio" ]; then
-          ffmpeg -f f32le -ar 48k -ac 2 -i "$BLAM_TEST_OUTPUT_DIR/rendered_audio" -c:a copy "$BLAM_TEST_OUTPUT_DIR/rendered_audio.wav"
-          rm "$BLAM_TEST_OUTPUT_DIR/rendered_audio"
-        fi
+    - name: Sysroot cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/blamtest-cache/sysroot
+        key: test-sysroot-v2.3
+    - name: Run dummy plug test
+      run: >
+        xvfb-run --auto-servernum python3 source/.github/tests/run.py dummy-plug
+        ${{ matrix.dummy_plug }} --artifacts artifacts --out /tmp/blam_test ${{ matrix.args }}
     - name: Uploading test artifacts
-      if: ${{ always() && matrix.skip_audio != 'true' }}
+      if: always()
       uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_test_${{ matrix.variant }}
-        path: "${{ env.BLAM_TEST_OUTPUT_DIR }}"
-        if-no-files-found: error
-    - name: Uploading test artifacts (no audio)
-      if: ${{ always() && matrix.skip_audio == 'true' }}
-      uses: actions/upload-artifact@v7
-      with:
-        name: dummy_plug_test_${{ matrix.variant }}
-        path: |
-          ${{ env.BLAM_TEST_OUTPUT_DIR }}
-          !${{ env.BLAM_TEST_OUTPUT_DIR }}/**/rendered_audio
-          !${{ env.BLAM_TEST_OUTPUT_DIR }}/**/rendered_audio.wav
+        path: /tmp/blam_test
         if-no-files-found: error
   Test_x86_64_mesa_gles:
     name: "llvmpipe ${{ matrix.variant }}"
@@ -591,36 +555,30 @@ jobs:
     - uses: actions/checkout@v7
       with:
         path: source
-    - name: Installing AppImage/media dependencies
+    - name: Installing xvfb/ffmpeg
       run: |
         sudo apt update
-        sudo apt install libfuse2 ffmpeg xvfb mesa-utils
+        sudo apt install ffmpeg xvfb
     - name: Downloading desktop-x86_64-buildroot-linux-gnu-multi-gles artifacts
       uses: actions/download-artifact@v8
       with:
         name: desktop-x86_64-buildroot-linux-gnu-multi-gles
         path: artifacts/
-    - name: Relocating artifacts
-      run: |
-        mkdir -p source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi
-        mv artifacts/* source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/
-        chmod +x source/multi_build/desktop-x86_64-buildroot-linux-gnu-multi/packaged/*/*
-    - name: Run dummy plug tests
-      run: |
-        DUMMY_PLUG=${{ matrix.dummy_plug }} xvfb-run --auto-servernum source/.github/tests/test_blam_graphics.sh
-    - name: Convert audio samples to .wav
-      if: always()
-      run: |
-        if [ -f "$BLAM_TEST_OUTPUT_DIR/rendered_audio" ]; then
-          ffmpeg -f f32le -ar 48k -ac 2 -i "$BLAM_TEST_OUTPUT_DIR/rendered_audio" -c:a copy "$BLAM_TEST_OUTPUT_DIR/rendered_audio.wav"
-          rm "$BLAM_TEST_OUTPUT_DIR/rendered_audio"
-        fi
+    - name: Sysroot cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/blamtest-cache/sysroot
+        key: test-sysroot-v2.3
+    - name: Run dummy plug test
+      run: >
+        xvfb-run --auto-servernum python3 source/.github/tests/run.py dummy-plug
+        ${{ matrix.dummy_plug }} --artifacts artifacts --out /tmp/blam_test
     - name: Uploading test artifacts
       if: always()
       uses: actions/upload-artifact@v7
       with:
         name: dummy_plug_test_${{ matrix.variant }}
-        path: "${{ env.BLAM_TEST_OUTPUT_DIR }}"
+        path: /tmp/blam_test
         if-no-files-found: error
   Test_wasm_swiftshader:
     if: ${{ always() }}
@@ -677,15 +635,10 @@ jobs:
         path: /tmp/blam_webgl
         if-no-files-found: error
   Test_webrtc_wasm_client:
-    # Exercises the actual target scenario for the WebRTC DataChannel
-    # transport (examples/blam/cblam-testing/WEBRTC_TRANSPORT.md): a wasm
-    # BlamGraphics client, headless in Chromium, connecting through one
-    # webrtc-gateway to a fleet-registered native BlamGraphics server
-    # (the same single-gateway topology as production). Unlike
-    # Test_wasm_swiftshader this isn't a rendering test -- it's a
-    # network-handshake test, verified via console-log markers (join
-    # confirmation + roster sync), since comp_app::dummy_plug/Journal
-    # doesn't exist on the wasm side (see .github/tests/web/README.md).
+    # A wasm client, headless in Chromium, through one webrtc-gateway to a
+    # fleet-registered native server: the production topology for the
+    # DataChannel transport (examples/blam/cblam-testing/WEBRTC_TRANSPORT.md).
+    # Verified by the client's console markers; wasm has no dummy plug.
     if: ${{ always() }}
     name: "Wasm <-> GW <-> x86_64"
     needs:
@@ -721,66 +674,16 @@ jobs:
       with:
         name: webrtc-gateway-linux-amd64
         path: gateway_artifacts/
-    - name: Installing Mesa/EGL dependencies
-      run: |
-        sudo apt update
-        sudo apt install mesa-utils
-    - name: Acquire the sysroot for the desktop x86_64 platform
-      run: |
-        # Same sysroot tarball .github/tests/test_blam_graphics.sh uses --
-        mkdir -p sysroot/lib full-sysroot
-        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.3 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
-        find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
-        find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
-    - name: Locating server binary and assets
-      id: server
-      run: |
-        BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
-        ASSETS_DIR=$(find server_artifacts -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
-        DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
-        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
-        chmod +x "$BINARY"
-        echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
-        echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
-        echo "dri_path=$DRI_PATH" >> "$GITHUB_OUTPUT"
-        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
-    - name: Locating wasm client bundle
-      id: bundle
-      run: |
-        BUNDLE=$(find client_artifacts -type d -name BlamGraphics.bundle | head -n 1)
-        echo "dir=$PWD/$BUNDLE" >> "$GITHUB_OUTPUT"
-    - name: Downloading test assets
-      run: |
-        # Xbox maps are self-contained; every peer must load the same map
-        mkdir -p maps/xbox_ex/
-        wget -q -O maps/xbox_ex/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/xbox_ex/bloodgulch.map
-    - name: Installing gateway binary
-      run: |
-        mkdir -p source/tools/webrtc-gateway
-        cp gateway_artifacts/gateway source/tools/webrtc-gateway/gateway
-        chmod +x source/tools/webrtc-gateway/gateway
+    - name: Sysroot cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/blamtest-cache/sysroot
+        key: test-sysroot-v2.3
     - name: Run WebRTC wasm-client test
-      env:
-        LIBGL_ALWAYS_SOFTWARE: "1"
-        GALLIUM_DRIVER: llvmpipe
-        LIBGL_DRIVERS_PATH: ${{ steps.server.outputs.dri_path }}
-        MESA_LOADER_DRIVER_PATH: ${{ steps.server.outputs.dri_path }}
-        LIBGL_DRI3_DISABLE: "1"
-        EGL_PLATFORM: surfaceless
-        SERVER_BINARY: ${{ steps.server.outputs.binary }}
-        SERVER_LD: ${{ steps.server.outputs.ld }}
-        SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
-        RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
-        MAP: ${{ github.workspace }}/maps/xbox_ex/bloodgulch.map
-        CI: "true"
-        # More headroom than the script's own local-dev defaults: a shared
-        # CI runner's cold SwiftShader + headless Chromium boot can run
-        # slower than a dev machine.
-        RUN_TIMEOUT: "150"
-        BOOT_TIMEOUT_MS: "60000"
-        CONNECT_TIMEOUT_MS: "90000"
-      run: |
-        source/.github/tests/web/run_webrtc_web_client_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/webrtc_wasm_client_test
+      run: >
+        python3 source/.github/tests/run.py web-client client_artifacts
+        --artifacts server_artifacts --gateway-bin gateway_artifacts/gateway
+        --out /tmp/webrtc_wasm_client_test
     - name: Uploading test artifacts
       if: always()
       uses: actions/upload-artifact@v7
@@ -789,14 +692,9 @@ jobs:
         path: /tmp/webrtc_wasm_client_test
         if-no-files-found: error
   Test_webrtc_wasm_pair:
-    # Wasm on BOTH sides: one browser page hosts (registering with
-    # transport=webrtc), the other connects, and the gateway bridges their
-    # two DataChannels -- no UDP in the path at all. Test_webrtc_wasm_client
-    # covers the DataChannel<->UDP relay; this covers the
-    # DataChannel<->DataChannel bridge (handleHostSignal) with a real
-    # browser at each end, which nothing else does. Same script, same
-    # markers, SERVER_ROLE=wasm -- so there is no native server, no
-    # sysroot and no Mesa/EGL setup to do here.
+    # Wasm on both sides: one page hosts (transport=webrtc), the other
+    # connects, and the gateway bridges the two DataChannels. The only
+    # coverage of handleHostSignal with a real browser at each end.
     if: ${{ always() }}
     name: "Wasm <-> GW <-> Wasm"
     needs:
@@ -826,39 +724,16 @@ jobs:
       with:
         name: webrtc-gateway-linux-amd64
         path: gateway_artifacts/
-    - name: Locating wasm bundle
-      id: bundle
-      run: |
-        BUNDLE=$(find client_artifacts -type d -name BlamGraphics.bundle | head -n 1)
-        echo "dir=$PWD/$BUNDLE" >> "$GITHUB_OUTPUT"
-    - name: Downloading test assets
-      run: |
-        # Xbox maps are self-contained; every peer must load the same map
-        mkdir -p maps/xbox_ex/
-        wget -q -O maps/xbox_ex/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/xbox_ex/bloodgulch.map
-    - name: Installing gateway binary
-      run: |
-        mkdir -p source/tools/webrtc-gateway
-        cp gateway_artifacts/gateway source/tools/webrtc-gateway/gateway
-        chmod +x source/tools/webrtc-gateway/gateway
+    # Two software-rendered pages on one small runner tick slowly (64 s from
+    # connect request to SDP answer measured), and the host's heartbeats
+    # ride its frame loop, so the gateway's 30 s registration TTL is raised.
     - name: Run WebRTC wasm-to-wasm test
-      env:
-        SERVER_ROLE: wasm
-        MAP: ${{ github.workspace }}/maps/xbox_ex/bloodgulch.map
-        CI: "true"
-        # Two software-rendered wasm pages share one small runner, so both
-        # pages tick slowly: measured 64s from the client's connect request
-        # to the gateway's SDP answer alone, with frame-loop gaps up to 36s.
-        BOOT_TIMEOUT_MS: "90000"
-        CONNECT_TIMEOUT_MS: "240000"
-        HOST_READY_TIMEOUT_MS: "180000"
-        # The host's heartbeats ride its frame loop, so those same stalls
-        # exceed the gateway's 30s default TTL -- the registration was being
-        # swept while the client was still connecting, leaving nothing to
-        # attach the host side of the bridge to.
-        GATEWAY_EXTRA_ARGS: "-registration-ttl 180s"
-      run: |
-        source/.github/tests/web/run_webrtc_web_client_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/webrtc_wasm_pair_test
+      run: >
+        python3 source/.github/tests/run.py web-client client_artifacts
+        --server-role wasm --gateway-bin gateway_artifacts/gateway
+        --boot-timeout-ms 90000 --connect-timeout-ms 240000 --host-ready-timeout-ms 180000
+        --gateway-args "-registration-ttl 180s"
+        --out /tmp/webrtc_wasm_pair_test
     - name: Uploading test artifacts
       if: always()
       uses: actions/upload-artifact@v7
@@ -867,13 +742,10 @@ jobs:
         path: /tmp/webrtc_wasm_pair_test
         if-no-files-found: error
   Test_webrtc_nat_punch:
-    # Same wasm-client/native-server scenario as Test_webrtc_wasm_client,
-    # but against a real gateway deployed on the internet (the
-    # WEBRTC_GATEWAY_SERVER secret) instead of one on loopback: the runner
-    # sits behind NAT with no port forwarding, so registration and relay
-    # can only work if the server's own UDP punches opened the mappings.
-    # Skipped when the secret isn't available (forks, PRs from forks).
-    # Replaces an earlier docker MASQUERADE topology that never passed.
+    # As Test_webrtc_wasm_client, but against a gateway deployed on the
+    # internet (WEBRTC_GATEWAY_SERVER secret): the runner sits behind NAT
+    # with no port forwarding, so it only works if the server's own UDP
+    # punches opened the mappings. Skipped without the secret (forks).
     if: ${{ always() }}
     name: "Wasm <-> FW <-> GW <-> x86_64"
     needs:
@@ -904,64 +776,17 @@ jobs:
       with:
         name: web-wasm32-emscripten-webgl2-xbox
         path: client_artifacts/
-    - name: Installing Mesa/EGL dependencies
-      run: |
-        sudo apt update
-        sudo apt install mesa-utils
-    - name: Acquire the sysroot for the desktop x86_64 platform
-      run: |
-        # Same sysroot tarball the other server-running test jobs use --
-        # the server binary and its whole Mesa/EGL stack come from it.
-        mkdir -p sysroot/lib full-sysroot
-        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.3 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
-        find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
-        find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
-    - name: Locating server binary and assets
-      id: server
-      run: |
-        BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
-        ASSETS_DIR=$(find server_artifacts -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
-        DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
-        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
-        chmod +x "$BINARY"
-        echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
-        echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
-        echo "dri_path=$DRI_PATH" >> "$GITHUB_OUTPUT"
-        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
-    - name: Locating wasm client bundle
-      id: bundle
-      run: |
-        BUNDLE=$(find client_artifacts -type d -name BlamGraphics.bundle | head -n 1)
-        echo "dir=$PWD/$BUNDLE" >> "$GITHUB_OUTPUT"
-    - name: Downloading test assets
-      run: |
-        # Xbox maps are self-contained; every peer must load the same map
-        mkdir -p maps/xbox_ex/
-        wget -q -O maps/xbox_ex/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/xbox_ex/bloodgulch.map
+    - name: Sysroot cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/blamtest-cache/sysroot
+        key: test-sysroot-v2.3
     - name: Run WebRTC NAT punch-through test
-      # No secret (fork PRs) means no gateway to test against -- skip
-      # rather than fail; the loopback path is still covered by
-      # Test_webrtc_wasm_client.
       if: ${{ env.GATEWAY_URL != '' }}
-      env:
-        LIBGL_ALWAYS_SOFTWARE: "1"
-        GALLIUM_DRIVER: llvmpipe
-        LIBGL_DRIVERS_PATH: ${{ steps.server.outputs.dri_path }}
-        MESA_LOADER_DRIVER_PATH: ${{ steps.server.outputs.dri_path }}
-        LIBGL_DRI3_DISABLE: "1"
-        EGL_PLATFORM: surfaceless
-        SERVER_BINARY: ${{ steps.server.outputs.binary }}
-        SERVER_LD: ${{ steps.server.outputs.ld }}
-        SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
-        RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
-        MAP: ${{ github.workspace }}/maps/xbox_ex/bloodgulch.map
-        CI: "true"
-        RUN_TIMEOUT: "150"
-        BOOT_TIMEOUT: "90"
-        BOOT_TIMEOUT_MS: "60000"
-        CONNECT_TIMEOUT_MS: "90000"
-      run: |
-        source/.github/tests/net/run_webrtc_nat_punch_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/webrtc_nat_punch_test
+      run: >
+        python3 source/.github/tests/run.py nat-punch client_artifacts
+        --artifacts server_artifacts --boot-timeout 90
+        --out /tmp/webrtc_nat_punch_test
     - name: Uploading test artifacts
       if: ${{ always() && env.GATEWAY_URL != '' }}
       uses: actions/upload-artifact@v7
@@ -970,16 +795,9 @@ jobs:
         path: /tmp/webrtc_nat_punch_test
         if-no-files-found: error
   Test_pinned_cert:
-    # Native client and native server over plain UDP, with the server
-    # presenting a certificate signed by its own Ed25519 key and the client
-    # pinning the matching public key. No gateway and no browser: the point
-    # is that this authenticates the GNS session itself, so it holds for a
-    # topology that has no second encrypted hop to fall back on.
-    #
-    # All three outcomes are checked in one run, because any one of them
-    # passes for the wrong reason on its own: the right key must connect,
-    # the wrong key must be refused, and a client given no key at all must
-    # still connect (unauthenticated) rather than be locked out.
+    # Native client and server over plain UDP, the server's certificate
+    # signed by its own Ed25519 key and pinned by the client: the right key
+    # connects authenticated, a wrong key is refused, no key still connects.
     if: ${{ always() }}
     name: x86_64 <-🔒-> x86_64
     needs: Linux
@@ -999,56 +817,15 @@ jobs:
       with:
         name: desktop-x86_64-buildroot-linux-gnu-multi
         path: server_artifacts/
-    - name: Installing Mesa/EGL dependencies
-      run: |
-        sudo apt update
-        sudo apt install mesa-utils
-    - name: Acquire the sysroot for the desktop x86_64 platform
-      run: |
-        # Same sysroot tarball the other server-running test jobs use --
-        # both processes here are that binary, run through its own loader.
-        mkdir -p sysroot/lib full-sysroot
-        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.3 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
-        find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
-        find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
-    - name: Locating binary and assets
-      id: server
-      run: |
-        BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
-        ASSETS_DIR=$(find server_artifacts -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
-        DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
-        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
-        chmod +x "$BINARY"
-        echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
-        echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
-        echo "dri_path=$DRI_PATH" >> "$GITHUB_OUTPUT"
-        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
-    - name: Downloading test assets
-      run: |
-        # Xbox maps are self-contained; every peer must load the same map
-        mkdir -p maps/xbox_ex/
-        wget -q -O maps/xbox_ex/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/xbox_ex/bloodgulch.map
+    - name: Sysroot cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/blamtest-cache/sysroot
+        key: test-sysroot-v2.3
     - name: Run pinned certificate test
-      env:
-        LIBGL_ALWAYS_SOFTWARE: "1"
-        GALLIUM_DRIVER: llvmpipe
-        LIBGL_DRIVERS_PATH: ${{ steps.server.outputs.dri_path }}
-        MESA_LOADER_DRIVER_PATH: ${{ steps.server.outputs.dri_path }}
-        LIBGL_DRI3_DISABLE: "1"
-        EGL_PLATFORM: surfaceless
-        SERVER_BINARY: ${{ steps.server.outputs.binary }}
-        SERVER_LD: ${{ steps.server.outputs.ld }}
-        SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
-        RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
-        MAP: ${{ github.workspace }}/maps/xbox_ex/bloodgulch.map
-        CI: "true"
-        # Three server/client pairs run in sequence, each booting a map on a
-        # software rasterizer, so the per-pair budget is what matters here
-        # rather than the total.
-        BOOT_TIMEOUT: "120"
-        RUN_TIMEOUT: "150"
-      run: |
-        source/.github/tests/net/run_pinned_cert_test.sh /tmp/pinned_cert_test
+      run: >
+        python3 source/.github/tests/run.py pinned-cert
+        --artifacts server_artifacts --out /tmp/pinned_cert_test
     - name: Uploading test artifacts
       if: always()
       uses: actions/upload-artifact@v7
@@ -1073,27 +850,16 @@ jobs:
         include:
         - route: no-gateway
           title: 'x86_64 <-> x86_64'
-          script: run_client_server_test.sh
         - route: direct
           title: 'x86_64 <-> x86_64 <--> GW'
-          script: run_webrtc_client_server_test.sh
         - route: relay
           title: 'x86_64 <-relay-> GW <-relay-> x86_64'
-          script: run_webrtc_client_server_test.sh
-          relay_only: "1"
         - route: webrtc-hosted
           title: 'x86_64 <-> GW <-> Wasm'
-          script: run_webrtc_client_server_test.sh
-          server_transport: webrtc
         - route: relay-only-server
           title: 'x86_64 <-> GW <-relay-only-> x86_64'
-          script: run_webrtc_client_server_test.sh
-          server_relay_only: "1"
         - route: relay-only-webrtc-server
           title: 'x86_64 <-> GW <-webrtc-> x86_64'
-          script: run_webrtc_client_server_test.sh
-          server_transport: webrtc
-          server_relay_only: "1"
     steps:
     - uses: actions/checkout@v7
       with:
@@ -1108,65 +874,16 @@ jobs:
       with:
         name: webrtc-gateway-linux-amd64
         path: gateway_artifacts/
-    - name: Installing Mesa/EGL dependencies
-      run: |
-        sudo apt update
-        sudo apt install mesa-utils
-    - name: Acquire the sysroot for the desktop x86_64 platform
-      run: |
-        # Same sysroot tarball the other server-running test jobs use --
-        # both processes here are that binary, run through its own loader.
-        mkdir -p sysroot/lib full-sysroot
-        (cd full-sysroot && gh release -R hbirchtree/coffeecutie-automation-tools download v2.3 -p desktop_x86_64-buildroot-linux-gnu_*_target.tar.xz && tar xf *.tar.xz && rm *.tar.xz)
-        find "$PWD/full-sysroot/usr/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
-        find "$PWD/full-sysroot/lib" -maxdepth 1 -name "*.so*" -exec ln -sf {} "$PWD/sysroot/lib/" \;
-    - name: Locating binary and assets
-      id: server
-      run: |
-        BINARY=$(find server_artifacts -name BlamGraphics -type f | head -n 1)
-        ASSETS_DIR=$(find server_artifacts -path "*/blam_graphics.AppDir/assets" -type d | head -n 1)
-        DRI_PATH=$(find "$PWD/full-sysroot" -name dri -type d | head -n 1)
-        SYS_LD=$(find "$PWD/full-sysroot" -name "ld-linux-x86-64.so.2" | head -n 1)
-        chmod +x "$BINARY"
-        echo "binary=$PWD/$BINARY" >> "$GITHUB_OUTPUT"
-        echo "assets=$PWD/$ASSETS_DIR" >> "$GITHUB_OUTPUT"
-        echo "dri_path=$DRI_PATH" >> "$GITHUB_OUTPUT"
-        echo "ld=$SYS_LD" >> "$GITHUB_OUTPUT"
-    - name: Installing gateway binary
-      run: |
-        mkdir -p source/tools/webrtc-gateway
-        cp gateway_artifacts/gateway source/tools/webrtc-gateway/gateway
-        chmod +x source/tools/webrtc-gateway/gateway
-    - name: Downloading test assets
-      run: |
-        # Xbox maps are self-contained; every peer must load the same map
-        mkdir -p maps/xbox_ex/
-        wget -q -O maps/xbox_ex/bloodgulch.map --header="Authorization: $MAP_ACCESS_TOKEN" https://maps.speen.dev/xbox_ex/bloodgulch.map
+    - name: Sysroot cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ runner.temp }}/blamtest-cache/sysroot
+        key: test-sysroot-v2.3
     - name: Run ${{ matrix.route }} route test
-      env:
-        LIBGL_ALWAYS_SOFTWARE: "1"
-        GALLIUM_DRIVER: llvmpipe
-        LIBGL_DRIVERS_PATH: ${{ steps.server.outputs.dri_path }}
-        MESA_LOADER_DRIVER_PATH: ${{ steps.server.outputs.dri_path }}
-        LIBGL_DRI3_DISABLE: "1"
-        EGL_PLATFORM: surfaceless
-        SERVER_BINARY: ${{ steps.server.outputs.binary }}
-        SERVER_LD: ${{ steps.server.outputs.ld }}
-        SERVER_LIB_PATH: ${{ github.workspace }}/sysroot/lib
-        RESOURCE_DIR: ${{ steps.server.outputs.assets }}/
-        MAP: ${{ github.workspace }}/maps/xbox_ex/bloodgulch.map
-        CI: "true"
-        # Defaulted rather than left unset: the scripts treat an empty
-        # RELAY_ONLY as "set", which would force the relay everywhere.
-        RELAY_ONLY: ${{ matrix.relay_only || '0' }}
-        SERVER_RELAY_ONLY: ${{ matrix.server_relay_only || '0' }}
-        SERVER_TRANSPORT: ${{ matrix.server_transport || 'udp' }}
-        # Two map boots on a software rasterizer, plus ICE or a relay punch
-        # before either side gets going.
-        BOOT_TIMEOUT: "120"
-        RUN_TIMEOUT: "150"
-      run: |
-        source/.github/tests/net/${{ matrix.script }} /tmp/native_route_test
+      run: >
+        python3 source/.github/tests/run.py net --route ${{ matrix.route }}
+        --artifacts server_artifacts --gateway-bin gateway_artifacts/gateway
+        --out /tmp/native_route_test
     - name: Uploading test artifacts
       if: always()
       uses: actions/upload-artifact@v7
