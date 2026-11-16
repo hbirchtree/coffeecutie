@@ -2310,6 +2310,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
     BitmapItem out;
     out.header = &bitm;
     out.tag    = bitm_tag;
+    out.magic  = curr_magic;
 
     if(auto image_ = bitm.images.data(curr_magic); image_.has_value())
     {
