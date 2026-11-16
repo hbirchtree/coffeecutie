@@ -2,6 +2,8 @@
 
 #include "selected_version.h"
 
+#include <url/url.h>
+
 #include <array>
 #include <optional>
 #include <string>
@@ -53,5 +55,9 @@ std::vector<std::string> list(std::string_view directory);
 
 /* /maps/<prefix>/ui.map when it was uploaded for this build's version */
 std::optional<std::string> default_map();
+
+/* A map or map directory named by the user, in the category ?map= loads as:
+ * fetched where there is no command line, a plain file path elsewhere */
+platform::url::Url map_url(std::string_view path);
 
 } // namespace offline_maps

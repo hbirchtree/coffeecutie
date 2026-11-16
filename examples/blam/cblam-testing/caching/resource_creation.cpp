@@ -8,6 +8,7 @@
 #include "components.h"
 #include "data.h"
 #include "journal.h"
+#include "loading/offline_maps.h"
 #include "render/map_marker.h"
 #include "peripherals/constants.h"
 #include "physics.h"
@@ -149,8 +150,21 @@ void setup_config(compo::EntityContainer& e, bool map_selected)
             {
                 using namespace platform::url::constructors;
                 GameEvent ev{.type = GameEvent::MapRequestListing};
+                auto dir = prefs["directory"].get<std::string>();
+                if constexpr(!compile_info::supports_command_line)
+                {
+                    /* Older builds stored the dereferenced /assets/... path */
+                    auto root = *MkUrl("x", RSCA::AssetFile);
+                    root.pop_back();
+                    if(dir.starts_with(root))
+                        dir = dir.substr(root.size());
+                    else if(dir + "/" == root)
+                        dir = ".";
+                    if(dir.empty())
+                        dir = ".";
+                }
                 MapRequestListingEvent list{
-                    .directory = MkUrl(prefs["directory"]),
+                    .directory = offline_maps::map_url(dir),
                 };
                 game_bus.inject(ev, &list);
                 auto& net_state = e.subsystem_cast<NetworkState>();
@@ -169,8 +183,9 @@ void setup_config(compo::EntityContainer& e, bool map_selected)
 
     game_bus.addEventFunction<MapListingEvent>(
             0, [update_config](GameEvent&, MapListingEvent* list){
+        /* The URL as given, not dereferenced: on web that is /assets/... */
         update_config({
-            .directory = *list->directory,
+            .directory = list->directory.internUrl,
         });
     });
 }
@@ -990,7 +1005,7 @@ void create_resources(compo::EntityContainer& e)
                          gbus.process(event, &load);
                          return;
                      }
-                     Url map_filename = MkUrl(path, RSCA::SystemFile);
+                     Url map_filename = offline_maps::map_url(path);
                      Url map_dir =
                          map_filename.path().dirname().url(map_filename.flags);
 

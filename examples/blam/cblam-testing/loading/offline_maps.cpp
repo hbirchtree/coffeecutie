@@ -1,5 +1,6 @@
 #include "loading/offline_maps.h"
 
+#include <peripherals/constants.h>
 #include <peripherals/identify/system.h>
 
 #include <algorithm>
@@ -93,5 +94,14 @@ std::optional<std::string> default_map()
 }
 
 #endif
+
+platform::url::Url map_url(std::string_view path)
+{
+    using semantic::RSCA;
+    return platform::url::constructors::MkUrl(
+        resolve(path),
+        compile_info::supports_command_line ? RSCA::SystemFile
+                                            : RSCA::AssetFile);
+}
 
 } // namespace offline_maps

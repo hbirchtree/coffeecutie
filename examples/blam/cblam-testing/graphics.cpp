@@ -770,8 +770,21 @@ i32 blam_main()
                     map_filename = MkUrl(*offline, RSCA::AssetFile);
                     map_was_selected = true;
                 }
-            if(auto info = platform::file::file_info(map_filename);
-               info.has_value())
+            /* A remote directory cannot be stat'ed: on web, ?map= naming no
+             * .map file is the directory maps are loaded from */
+            const bool map_dir_given = !compile_info::supports_command_line &&
+                                       arguments.count("map") &&
+                                       !map_filename.internUrl.ends_with(".map");
+            if(map_dir_given)
+            {
+                while(map_filename.internUrl.size() > 1 &&
+                      map_filename.internUrl.ends_with('/'))
+                    map_filename.internUrl.pop_back();
+                map_dir          = map_filename;
+                map_filename     = {};
+                map_was_selected = true;
+            } else if(auto info = platform::file::file_info(map_filename);
+                      info.has_value())
             {
                 if(info.value().mode == platform::file::mode_t::directory)
                 {
@@ -828,7 +841,8 @@ i32 blam_main()
                     load.file = map_filename;
                     map_was_selected = true;
                 } else
-                    load.file = MkUrl("ui.map", RSCA::AssetFile);
+                    load.file = map_dir_given ? map_dir / "ui.map"
+                                              : MkUrl("ui.map", RSCA::AssetFile);
                 gbus.inject(event, &load);
 
                 if(arguments.count("listen"))
