@@ -133,6 +133,8 @@ def _artifact_engine(args, env):
             MESA_LOADER_DRIVER_PATH=str(dri),
             LIBGL_DRI3_DISABLE="1",
             EGL_PLATFORM="surfaceless",
+            # glvnd otherwise looks for the host's vendor files, absent on a bare runner
+            __EGL_VENDOR_LIBRARY_DIRS=str(sysroot / "usr" / "share" / "glvnd" / "egl_vendor.d"),
         )
     lib_path = ":".join(str(d) for d in lib_dirs if d.is_dir())
     # Inherited by the dummy plug's re-exec of itself through the loader

@@ -542,12 +542,38 @@ def run_nat_punch(args):
             raise
 
         checks, info = run_wasm_client(args, bundle, out, f"{gw_url}#{args.server_id}", map_path)
+        if not checks[0][1]:
+            _probe_origin(gw_url)
         # Our side of the NAT: the gateway asked for a per-client relay punch
         marker = "relay punch started for"
         checks.append(("server punched a per-client relay port", log_has(server.log_path, marker)))
         dump_matching("server.log", server.log_path, SERVER_LINES + "|" + re.escape(marker))
         verdict("NAT punch result", checks, info)
     log(f"PASS  (logs in {out})")
+
+
+def _upgrade_status(gw_url, path, origin=None):
+    """The HTTP status a websocket upgrade gets, as a browser would send it."""
+    url = re.sub(r"^ws(s?)://", r"http\1://", gw_url.split("#")[0]) + path
+    res = subprocess.run(
+        ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}", "--http1.1", "--max-time", "10",
+         "-H", "Connection: Upgrade", "-H", "Upgrade: websocket",
+         "-H", "Sec-WebSocket-Version: 13", "-H", "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
+         *(["-H", f"Origin: {origin}"] if origin else []), url],
+        capture_output=True, text=True,
+    )
+    return res.stdout.strip() or "none"
+
+
+def _probe_origin(gw_url):
+    # A refused origin reaches the page only as a bare websocket "error"
+    page_origin = "http://127.0.0.1"
+    status = _upgrade_status(gw_url, "/server-signal", page_origin)
+    if status == "403":
+        log(f"  the gateway refuses pages from {page_origin} (403 on upgrade): "
+            "run it with -allowed-origins listing every origin pages are served from")
+    else:
+        log(f"  origin probe: upgrade from {page_origin} answered {status}")
 
 
 def _explain_registration_failure(server_log, gw_url):
