@@ -186,7 +186,7 @@ def fetch_sysroot(cache):
 
 
 def fetch_maps(args, names):
-    """Resolves map names to paths, downloading what isn't on disk.
+    """Resolves map names to a path, downloading what isn't on disk.
 
     Every map lands in one directory, since a map switch loads by name from
     the directory of the current map.
@@ -194,27 +194,33 @@ def fetch_maps(args, names):
     if Path(args.map).is_file():
         return Path(args.map).resolve()
     names = list(dict.fromkeys(Path(n).name for n in names))
-    if args.map_dir in ("pc", "custom"):
-        names += ["bitmaps.map", "sounds.map"]
-    local = LOCAL_MAP_ROOT / args.map_dir
-    if all((local / n).is_file() for n in names):
-        return local / names[0]
+    return locate_maps(args.map_dir, names, args.cache) / names[0]
 
-    out = args.cache / "maps" / args.map_dir
+
+def locate_maps(map_dir, names, cache):
+    """A directory holding all of names: /mnt/blam's, or the download cache."""
+    names = list(names)
+    if map_dir in ("pc", "custom"):
+        names += ["bitmaps.map", "sounds.map"]
+    local = LOCAL_MAP_ROOT / map_dir
+    if all((local / n).is_file() for n in names):
+        return local
+
+    out = cache / "maps" / map_dir
     out.mkdir(parents=True, exist_ok=True)
     token = os.environ.get("MAP_ACCESS_TOKEN")
-    for name in names:
+    for name in dict.fromkeys(names):
         dest = out / name
         if dest.is_file() and dest.stat().st_size > 0:
             continue
         if not token:
             raise SetupError(f"{name} is not in {local} and MAP_ACCESS_TOKEN is unset")
-        log(f"Downloading {args.map_dir}/{name}")
+        log(f"Downloading {map_dir}/{name}")
         req = urllib.request.Request(
-            f"{MAP_SERVER}/{args.map_dir}/{name}", headers={"Authorization": token}
+            f"{MAP_SERVER}/{map_dir}/{name}", headers={"Authorization": token}
         )
         tmp = dest.with_suffix(".part")
         with urllib.request.urlopen(req) as res, open(tmp, "wb") as f:
             shutil.copyfileobj(res, f)
         tmp.rename(dest)
-    return out / names[0]
+    return out

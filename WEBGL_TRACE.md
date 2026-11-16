@@ -27,7 +27,7 @@ This defines `GLW_ENABLE_TRACE`. On Emscripten it also links `-lwebsocket.js`.
 - Starts `.github/tests/web/gl_trace_server.mjs` and stops it after the run.
 - Adds `gleamDebug=<level>`, `gleamDebugFrames=frame` and
   `gleamDebugPort=<port>` to the page URL.
-- Without `--serve`, the headless `webgl_smoke.mjs` run is traced. With
+- Without `--serve`, the headless `run.py webgl` run is traced. With
   `--serve`, it serves the bundle so you can open it in your own browser. The
   collector runs until you stop it.
 - Output goes to `/tmp/remote-run-web/<preset>/gltrace/`, or to

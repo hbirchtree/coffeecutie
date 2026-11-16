@@ -58,26 +58,15 @@ jobs:
       with:
         name: pr-${{ matrix.build }}-vcpkg-logs
         path: /usr/local/share/vcpkg/buildtrees/*/*.log
-    - name: Locating WebGL bundle
-      id: bundle
-      run: |
-        BUNDLE=$(find source/multi_build/${{ matrix.build }}/install/bin -type d -name BlamGraphics.bundle | head -n 1)
-        echo "Found bundle: $BUNDLE"
-        echo "dir=$BUNDLE" >> "$GITHUB_OUTPUT"
     # Without a token there is no map: the app falls back to ui.map, which 404s,
     # and keeps rendering. Still catches boot crashes, wasm traps, missing WebGL2
     # and a dead render loop.
     - name: Run WebGL software-render smoke test
       env:
-        CI: "true"
-        RUN_SECONDS: "30"
-        MAPS: "xbox_ex/beavercreek.map"
         MAP_ACCESS_TOKEN: ${{ secrets.MAP_ACCESS_TOKEN }}
-      run: |
-        if [ -n "$MAP_ACCESS_TOKEN" ]; then
-          export ARGS="map=xbox_ex/beavercreek.map"
-        fi
-        source/.github/tests/web/run_webgl_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/blam_webgl
+      run: >
+        python3 source/.github/tests/run.py webgl source/multi_build/${{ matrix.build }}/install/bin
+        --map xbox_ex/beavercreek.map --run-seconds 30 --out /tmp/blam_webgl
     - name: Uploading test artifacts
       if: always()
       uses: actions/upload-artifact@v7

@@ -5,13 +5,10 @@ import atexit
 import base64
 import contextlib
 import json
-import os
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
-import threading
 import time
 from pathlib import Path
 
@@ -29,6 +26,7 @@ from .common import (
     log,
     log_has,
     run_checked,
+    run_tee,
     wait_for_log,
     wait_for_port,
 )
@@ -98,7 +96,7 @@ def run_dummy_plug(args):
     log(f"Output : {out}")
     argv = engine.argv(map_path)
     with group("Running BlamGraphics"):
-        rc = _run_tee(argv, engine.environ(out, plug), out / "output.txt", args.run_timeout, engine.cwd)
+        rc = run_tee(argv, engine.environ(out, plug), out / "output.txt", args.run_timeout, engine.cwd)
         log(f"Return code: {rc}")
 
     _convert_audio(out, keep=not args.no_audio)
@@ -109,39 +107,6 @@ def run_dummy_plug(args):
             out / "journal.jsonl", out / "client0" / "journal.jsonl", args.journal_check
         ):
             raise TestFailure("journal comparison failed")
-
-
-def _run_tee(argv, env, log_path, timeout, cwd):
-    """Streams the engine's output to the console and a file."""
-    proc = subprocess.Popen(
-        [str(a) for a in argv],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        stdin=subprocess.DEVNULL,
-        env=env,
-        cwd=cwd,
-        start_new_session=True,
-    )
-
-    def pump():
-        with open(log_path, "wb") as out:
-            for line in proc.stdout:
-                out.write(line)
-                sys.stdout.buffer.write(line)
-                sys.stdout.flush()
-
-    reader = threading.Thread(target=pump, daemon=True)
-    reader.start()
-    try:
-        rc = proc.wait(timeout)
-    except subprocess.TimeoutExpired:
-        log(f"FAIL: killed after {timeout}s")
-        with contextlib.suppress(ProcessLookupError):
-            os.killpg(proc.pid, signal.SIGKILL)
-        proc.wait()
-        rc = Proc.TIMED_OUT
-    reader.join(5)
-    return rc
 
 
 def _convert_audio(out, keep):

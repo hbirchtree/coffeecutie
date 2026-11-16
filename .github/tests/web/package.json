@@ -3,10 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Headless software-rendered WebGL smoke test for the emscripten BlamGraphics build",
-  "scripts": {
-    "test": "node webgl_smoke.mjs"
-  },
+  "description": "Playwright drivers for the browser tests in .github/tests/run.py",
   "dependencies": {
     "playwright": "^1.49.0"
   }

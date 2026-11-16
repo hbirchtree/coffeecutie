@@ -7,6 +7,7 @@ import signal
 import socket
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -135,6 +136,39 @@ class Proc:
         for proc in reversed(cls.live):
             proc.kill()
         cls.live.clear()
+
+
+def run_tee(argv, env, log_path, timeout, cwd):
+    """Streams the engine's output to the console and a file."""
+    proc = subprocess.Popen(
+        [str(a) for a in argv],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        stdin=subprocess.DEVNULL,
+        env=env,
+        cwd=cwd,
+        start_new_session=True,
+    )
+
+    def pump():
+        with open(log_path, "wb") as out:
+            for line in proc.stdout:
+                out.write(line)
+                sys.stdout.buffer.write(line)
+                sys.stdout.flush()
+
+    reader = threading.Thread(target=pump, daemon=True)
+    reader.start()
+    try:
+        rc = proc.wait(timeout)
+    except subprocess.TimeoutExpired:
+        log(f"FAIL: killed after {timeout}s")
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait()
+        rc = Proc.TIMED_OUT
+    reader.join(5)
+    return rc
 
 
 def wait_until(check, timeout, proc, what):

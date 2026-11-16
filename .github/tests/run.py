@@ -11,6 +11,12 @@ are fetched as needed. Exit code: 0 pass, 1 fail, 2 could not run.
   run.py pinned-cert --out DIR
   run.py web-client [BUNDLE] --server-role wasm --out DIR
   run.py nat-punch [BUNDLE] --out DIR      (GATEWAY_URL in the environment)
+  run.py webgl [BUNDLE] --map xbox_ex/beavercreek.map --out DIR
+  run.py pose-arms [BUNDLE] --out DIR
+  run.py pose-webcam [BUNDLE] --out DIR
+
+Browser tests run Playwright drivers from .github/tests/web; BUNDLE is the
+bundle itself or a directory to search (default: multi_build).
 """
 
 import argparse
@@ -35,11 +41,14 @@ def main():
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    def command(name, func, help, out, add=None):
+    def command(name, func, help, out, add=None, engine_args=True):
         p = sub.add_parser(name, help=help)
         p.set_defaults(func=func)
         p.add_argument("--out", type=Path, default=Path(out), help="output directory")
-        engine.add_engine_args(p)
+        if engine_args:
+            engine.add_engine_args(p)
+        else:
+            p.add_argument("--cache", type=Path, default=engine.default_cache())
         if add:
             add(p)
         return p
@@ -69,6 +78,12 @@ def main():
             "/tmp/webrtc_web_client_test", web.add_web_client_args)
     command("nat-punch", web.run_nat_punch, "wasm client via a remote gateway, server behind NAT",
             "/tmp/webrtc_nat_punch_test", web.add_nat_punch_args)
+    command("webgl", web.run_webgl, "wasm build boots and renders (SwiftShader)",
+            "/tmp/webgl_test", web.add_webgl_args, engine_args=False)
+    command("pose-arms", web.run_pose_arms, "pose demo arm retargeting, synthetic poses",
+            "/tmp/pose_demo_arms", web.add_pose_arms_args, engine_args=False)
+    command("pose-webcam", web.run_pose_webcam, "pose demo fake webcam -> Kalidokit chain",
+            "/tmp/pose_demo_webcam", web.add_pose_webcam_args, engine_args=False)
 
     args = parser.parse_args()
     install_signal_cleanup()
