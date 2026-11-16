@@ -82,6 +82,8 @@ def add_webgl_args(p):
     p.add_argument("--page", default="BlamGraphics.html")
     p.add_argument("--name", default="webgl2_swiftshader", help="screenshot/video base name")
     p.add_argument("--map", dest="web_map", help="map under the map server, e.g. xbox_ex/beavercreek.map")
+    p.add_argument("--serve-map", action="append", default=[],
+                   help="also serve this map without loading it (repeatable)")
     p.add_argument("--query", default="", help="extra page parameters, a=b&c=d")
     p.add_argument("--run-seconds", type=int, default=12)
     p.add_argument("--min-frames", type=int, default=5)
@@ -110,11 +112,14 @@ def run_webgl(args):
             files = {}
         else:
             query.append(f"map={args.web_map}")
+    files.update(map_files(args, args.serve_map) or {})
     events = []
     if args.dummy_plug:
         plug = json.loads(plug_path(args.dummy_plug).read_text())
         events = sorted((e for e in plug.get("events", []) if e.get("type")),
                         key=lambda e: e.get("time", 0))
+        # Live events need the engine's dummy plug event bus
+        query.append("dummy_plug")
 
     browser = browser_profile(GPU + ["--enable-gpu-rasterization", "--disable-software-rasterizer"]
                               if args.gpu else SWIFTSHADER, headless=not args.gpu)
