@@ -1497,6 +1497,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                      forward_game_event<ServerCameraControl>(event, data);
                  }
              }});
+        m_game_bus.addEventFunction<PlayerTeleportEvent>(0, [this](GameEvent&, PlayerTeleportEvent* teleport) {
+            m_warped.push_back(teleport->entity_id);
+        });
         /* The server's kill messages are seen everywhere */
         m_game_bus.addEventFunction<KillFeedEvent>(0, [this](GameEvent&, KillFeedEvent* feed) {
             if(!is_server() || feed->remote)
@@ -2461,6 +2464,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         apply_simulation();
         clock_tick();
         session_tick();
+        send_warps(p);
         if(is_server())
         {
 #if defined(USE_WEBRTC_TRANSPORT)
@@ -2736,6 +2740,28 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static u64 tick_now(Proxy& p)
     {
         return p.subsystem<TickClock>().tick();
+    }
+
+    /* Our players' teleports, for peers to cut their history at */
+    void send_warps(Proxy& p)
+    {
+        for(u64 id : std::exchange(m_warped, {}))
+        {
+            auto const* info = id ? p.get<PlayerInfo>(id) : nullptr;
+            if(!info || info->is_remote())
+                continue;
+            if(is_server())
+                send_all(Message<PlayerWarp>({.player_idx = info->player_idx, .tick = tick_now(p)}));
+            else if(m_connection && joined(*info))
+                send_single(m_connection, Message<PlayerWarp>({.player_idx = info->player_idx}));
+        }
+    }
+
+    /* Peers' players blend only between syncs from after their last warp */
+    void cut_history(u32 player_idx, u64 tick)
+    {
+        m_warp_ticks[player_idx] = tick;
+        std::erase_if(m_player_history[player_idx], [tick](CameraSync const& sync) { return sync.tick <= tick; });
     }
 
     /*! A local seat the server has given a player */
@@ -4188,6 +4214,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_object_history.clear();
         m_object_spacing.clear();
         m_player_history.clear();
+        m_warp_ticks.clear();
         m_driven.clear();
         for(auto object : p.select<ObjectPhysics>())
             object.get<ObjectPhysics>().authority = ObjectPhysics::Simulated;
@@ -4297,6 +4324,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         case MessageBase::TickInput: {
             receive_inputs(connection, payload.values<TickInput>());
+            break;
+        }
+        case MessageBase::PlayerWarp: {
+            /* Only the sender's own players; what was waiting to be passed
+             * on from before goes too */
+            auto const& warp   = payload.value<PlayerWarp>();
+            auto*       player = player_info.own(warp.player_idx);
+            if(!player)
+                break;
+            m_latest_cameras.erase(player->idx);
+            send_all(Message<PlayerWarp>({.player_idx = player->idx, .tick = tick_now(p)}));
             break;
         }
         case MessageBase::SyncPoint: {
@@ -4838,6 +4876,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 game.nav_points.clear();
             break;
         }
+        case MessageBase::PlayerWarp: {
+            auto const& warp = payload.value<PlayerWarp>();
+            if(!own_idx(warp.player_idx))
+                cut_history(warp.player_idx, warp.tick);
+            break;
+        }
         case MessageBase::KillFeed: {
             auto const&   heard = payload.value<KillFeed>();
             GameEvent     ev{.type = GameEvent::KillFeed};
@@ -4959,6 +5003,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     continue;
                 /* Shown a few ticks behind, between the syncs around then */
                 auto& history = m_player_history[sync.target_player];
+                if(auto warp = m_warp_ticks.find(sync.target_player);
+                   warp != m_warp_ticks.end() && sync.tick <= warp->second)
+                    break;
                 if(history.empty() || history.back().tick < sync.tick)
                 {
                     note_lag(tick_now(p), sync.tick);
@@ -5515,6 +5562,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr u64                     driven_timeout = 30;
     /* Remote players' cameras by player index, newest last */
     std::map<u32, std::deque<CameraSync>>    m_player_history;
+    std::map<u32, u64>                       m_warp_ticks; /*!< Server tick of each player's last warp */
+    std::vector<u64>                         m_warped;     /*!< Our players teleported since last frame */
     /* Ticks a server state is old on arrival: raised at once, lowered
      * slowly, so interpolation stays behind what has come. Only the
      * newest state yet says, a sleeping object's is sent as it was */
