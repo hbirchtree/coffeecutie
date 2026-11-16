@@ -6,6 +6,7 @@
 #include "data.h"
 #include "physics.h"
 #include "selected_version.h"
+#include "animation/model_markers.h"
 #include "audio/sounds.h"
 #include "ticks.h"
 
@@ -97,6 +98,7 @@ struct AnimationController
         animate_turrets(p);
         animate_objects(p, files);
         end_actions(p);
+        reach_for_held(p, files);
 
         auto& cache = p.template subsystem<ModelCache<halo_version>>();
         for(auto ent : p.template select<AnimationPlayback>())
@@ -1088,6 +1090,80 @@ struct AnimationController
         return false;
     }
 
+    /* Each holder's left hand on its weapon's grip */
+    void reach_for_held(Proxy& p, BlamFiles<halo_version> const& files)
+    {
+        if(m_reach_generation != files.load_generation)
+        {
+            m_reach_generation = files.load_generation;
+            m_grips.clear();
+        }
+        for(u64 id : std::exchange(m_reaching, {}))
+            if(auto* anim = p.template get<AnimationPlayback>(id))
+                anim->reach.reset();
+        for(auto ent : p.template select<HeldObject, Model>())
+        {
+            auto [held, model] = ent.components();
+            auto*       anim   = p.template get<AnimationPlayback>(held.holder);
+            auto const* body   = p.template get<Model>(held.holder);
+            if(!held.shown || !anim || !body || !body->tag || !model.tag || held.node < 0)
+                continue;
+            auto [it, fresh] = m_grips.try_emplace({body->tag, model.tag});
+            if(fresh)
+                it->second = grip(*body->tag, *model.tag, held, files.container.magic);
+            if(!it->second)
+                continue;
+            anim->reach = it->second;
+            m_reaching.push_back(held.holder);
+        }
+    }
+
+    /* Weapons mark where each kind of holder's left hand goes, "left hand
+     * cyborg", "left hand marine": the one the body's model is named for */
+    static std::optional<AnimationPlayback::reach_t> grip(
+        blam::tag_t const& body, blam::tag_t const& weapon, HeldObject const& held, blam::map_ptr const& magic)
+    {
+        constexpr std::string_view prefix = "left hand";
+        auto const                 name   = body.to_name().to_string(magic);
+        auto const                 mod2   = weapon.data<blam::mod2::header<halo_version>>(magic);
+        if(!mod2.has_value())
+            return std::nullopt;
+        auto markers = mod2.value()[0].markers.data(magic);
+        if(!markers.has_value())
+            return std::nullopt;
+        std::string marker;
+        for(auto const& m : markers.value())
+        {
+            std::string_view const label = m.name.str();
+            if(!label.starts_with(prefix))
+                continue;
+            auto const kind = label.substr(prefix.size());
+            if(kind.empty() ? marker.empty() : (kind.size() > 1 && name.find(kind.substr(1)) != std::string::npos))
+                marker = std::string(label);
+        }
+        auto const target = marker.empty() ? std::nullopt : bind_marker_node(weapon, marker, magic);
+        auto const bones  = body.data<blam::mod2::header<halo_version>>(magic);
+        if(!target || !bones.has_value())
+            return std::nullopt;
+        auto const nodes = bones.value()[0].bones.data(magic);
+        if(!nodes.has_value())
+            return std::nullopt;
+        /* The marker's frame is the hand's turned half about its x */
+        AnimationPlayback::reach_t out{
+            .anchor = static_cast<i16>(held.node),
+            .target = held.offset * target->transform *
+                      glm::mat4_cast(glm::angleAxis(glm::pi<f32>(), Vecf3{1.f, 0.f, 0.f})),
+        };
+        constexpr std::array<std::string_view, 3> arm{"bip01 l upperarm", "bip01 l forearm", "bip01 l hand"};
+        for(size_t i = 0; i < nodes.value().size(); i++)
+            for(size_t j = 0; j < arm.size(); j++)
+                if(nodes.value()[i].name.str() == arm[j])
+                    out.arm[j] = static_cast<i16>(i);
+        if(std::ranges::find(out.arm, i16{-1}) != out.arm.end())
+            return std::nullopt;
+        return out;
+    }
+
     /* First-person models return to idle once a requested clip ends */
     void animate_first_person(Proxy& p, BlamFiles<halo_version> const& files, f32 dt)
     {
@@ -1632,6 +1708,10 @@ struct AnimationController
     std::map<u64, walker_t>                      m_walkers;
     std::map<u64, custom_t>                      m_custom;
     std::set<u64>                                m_aimed; /* turrets a gunner turns */
+    /* Left-hand grips by (body, weapon) model, and who reached last frame */
+    std::map<std::pair<blam::tag_t const*, blam::tag_t const*>, std::optional<AnimationPlayback::reach_t>> m_grips;
+    std::vector<u64> m_reaching;
+    u32              m_reach_generation{0};
     std::vector<PlayModelAnimationEvent>         m_requests;
     std::map<u64, bool>                          m_fp_venting; /*!< By fp model */
     struct fp_lag_t
