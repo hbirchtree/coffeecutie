@@ -538,6 +538,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
     u32 const this_generation =
         ++e.subsystem_cast<BlamFiles<halo_version>>().load_generation;
+    /* Players outlive the map; the biped they wear does not */
+    for(auto ent : e.select<Model>())
+        ent.template get<Model>().colors_of = nullptr;
     auto load_is_stale = [&e, this_generation]() {
         return e.subsystem_cast<BlamFiles<halo_version>>().load_generation !=
                this_generation;
