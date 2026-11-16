@@ -941,6 +941,26 @@ void create_resources(compo::EntityContainer& e)
                      GameEvent call_ev{.type = GameEvent::ScriptCall};
                      e.subsystem_cast<GameEventBus>().inject(call_ev, &call);
                  }
+                 if(ev.event == "kill")
+                 {
+                     /* {"seat": n}: that seat's player dies, as by unit_kill */
+                     u32 const seat = ev.data.value("seat", 0u);
+                     for(auto const& en : e.select<PlayerInfo>())
+                     {
+                         auto const& info = en.template get<PlayerInfo>();
+                         if(info.seat_idx != seat || info.is_remote())
+                             continue;
+                         GameEvent         kill_ev{.type = GameEvent::UnitVitality};
+                         UnitVitalityEvent kill{
+                             .unit   = en.id(),
+                             .player = info.player_idx,
+                             .body   = 0.f,
+                             .shield = 0.f,
+                             .dead   = true,
+                         };
+                         e.subsystem_cast<GameEventBus>().inject(kill_ev, &kill);
+                     }
+                 }
                  if(ev.event == "equip_weapon")
                  {
                      /* {"seat": n, "weapon": "weapons\\pistol\\pistol"} */
