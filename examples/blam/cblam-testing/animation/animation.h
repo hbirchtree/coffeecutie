@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstring>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -146,6 +147,17 @@ struct AnimationPlayback
     /* Graph node per model bone, e.g. first-person hands + weapon share one
      * graph. Empty = node i drives bone i. */
     std::vector<libc_types::i16> bone_nodes;
+
+    /* The left hand put on the held weapon's grip: the arm's model bones
+     * (upper, fore, hand) and a target riding `anchor`, offset like a
+     * HeldObject's. Fades out while an action (reload, melee, throw) plays */
+    struct reach_t
+    {
+        std::array<libc_types::i16, 3> arm{-1, -1, -1};
+        libc_types::i16                anchor{-1};
+        typing::vector_types::Matf4    target{1};
+    };
+    std::optional<reach_t> reach;
 
     /* Starts `animation` from `graph` on `slot`, from the beginning. */
     void play(

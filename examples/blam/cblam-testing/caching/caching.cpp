@@ -21,6 +21,83 @@ using Profiler = Coffee::Profiler;
 
 namespace {
 
+/* The shortest turn taking direction `from` onto `to` */
+Quatf arc(Vecf3 const& from, Vecf3 const& to)
+{
+    f32 const c = glm::dot(from, to);
+    if(c < -.9999f)
+    {
+        Vecf3 side = glm::cross(from, Vecf3{1.f, 0.f, 0.f});
+        if(glm::dot(side, side) < 1e-6f)
+            side = glm::cross(from, Vecf3{0.f, 1.f, 0.f});
+        return glm::angleAxis(glm::pi<f32>(), glm::normalize(side));
+    }
+    Vecf3 const axis = glm::cross(from, to);
+    return glm::normalize(Quatf(1.f + c, axis.x, axis.y, axis.z));
+}
+
+/* Two-bone reach of `arm` (upper, fore, hand nodes) toward `target`, by
+ * `weight`; everything below each bone moves with it. The elbow keeps to
+ * the side the pose bends it */
+template<typename Parent>
+void reach_arm(
+    std::vector<Matf4a>&      world,
+    Parent const&             parent_of,
+    std::array<u32, 3> const& arm,
+    Matf4 const&              target,
+    f32                       weight)
+{
+    u32 const k = static_cast<u32>(world.size());
+    for(u32 node : arm)
+        if(node >= k)
+            return;
+    auto const under = [&](u32 node, u32 root) {
+        for(u32 i = node; i < k;)
+        {
+            if(i == root)
+                return true;
+            u32 const up = parent_of(i);
+            if(up >= i)
+                return false;
+            i = up;
+        }
+        return false;
+    };
+    auto const turn = [&](u32 root, Vecf3 const& pivot, Quatf const& by) {
+        Matf4a const m(
+            glm::translate(Matf4(1), pivot) * glm::mat4_cast(by) * glm::translate(Matf4(1), -pivot));
+        for(u32 j = root; j < k; j++)
+            if(under(j, root))
+                world[j] = m * world[j];
+    };
+    auto const at = [&](u32 node) { return Vecf3(Matf4(world[node])[3]); };
+
+    Vecf3 const s = at(arm[0]), e = at(arm[1]), h = at(arm[2]);
+    Vecf3 const goal = glm::mix(h, Vecf3(target[3]), weight);
+    f32 const   a    = glm::distance(s, e);
+    f32 const   b    = glm::distance(e, h);
+    f32         d    = glm::distance(s, goal);
+    if(a < 1e-5f || b < 1e-5f || d < 1e-5f)
+        return;
+    Vecf3 const dir = (goal - s) / d;
+    d               = std::clamp(d, std::abs(a - b) + 1e-4f, a + b - 1e-4f);
+    Vecf3 bend      = (e - s) - dir * glm::dot(e - s, dir);
+    if(glm::dot(bend, bend) < 1e-10f)
+        return;
+    bend              = glm::normalize(bend);
+    f32 const   cos_s = std::clamp((a * a + d * d - b * b) / (2.f * a * d), -1.f, 1.f);
+    Vecf3 const elbow = s + dir * (a * cos_s) + bend * (a * std::sqrt(1.f - cos_s * cos_s));
+    turn(arm[0], s, arc(glm::normalize(e - s), glm::normalize(elbow - s)));
+    Vecf3 const wrist = at(arm[2]);
+    if(glm::distance(wrist, elbow) > 1e-5f && glm::distance(goal, elbow) > 1e-5f)
+        turn(arm[1], elbow, arc(glm::normalize(wrist - elbow), glm::normalize(goal - elbow)));
+    /* The hand turns to the grip */
+    Matf4 const hand(world[arm[2]]);
+    Quatf const now  = glm::normalize(glm::quat_cast(Matf3(hand)));
+    Quatf const want = glm::slerp(now, glm::normalize(glm::quat_cast(Matf3(target))), weight);
+    turn(arm[2], Vecf3(hand[3]), want * glm::inverse(now));
+}
+
 template<typename Bytes, typename LightBytes, typename Faces>
 void add_light_probe(
     BSPItem&                   out,
@@ -1275,6 +1352,27 @@ void ModelCache<V>::evaluate_pose(
         m_world[i] = (parent != blam::mod2::bone::invalid_bone && parent < i)
                          ? m_world[parent] * local
                          : local;
+    }
+
+    if(anim.reach)
+    {
+        auto const& reach = *anim.reach;
+        auto const  bone  = [&](i16 b) {
+            return b >= 0 && static_cast<u32>(b) < n ? node_of(static_cast<u32>(b)) : k;
+        };
+        u32 const anchor = bone(reach.anchor);
+        auto const& action = anim.layers[AnimationPlayback::action_slot];
+        f32 const   weight = action.active() && !action.finished ? 1.f - std::clamp(action.weight, 0.f, 1.f) : 1.f;
+        if(anchor < k && weight > 0.f)
+            reach_arm(
+                m_world,
+                [&](u32 i) {
+                    return remap ? static_cast<u32>(m_node_parents[i]) : static_cast<u32>(bones[i].parent);
+                },
+                {bone(reach.arm[0]), bone(reach.arm[1]), bone(reach.arm[2])},
+                Matf4(m_world[anchor] * Matf4a(item.inv_bind[static_cast<u32>(reach.anchor)])) *
+                    reach.target,
+                weight);
     }
 
     for(u32 i = 0; i < n; i++)
