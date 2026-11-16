@@ -440,12 +440,7 @@ struct ResourceLoader
             compo::EntityRecipe submodel = shared_recipes::submodel;
             submodel.tags = submodel.tags | (ent.tags() & SubObjectMask);
             /* The object's overlay coats this level too */
-            blam::scn::object const* object = nullptr;
-            if(model.origin_object)
-                if(auto data = model.origin_object->template data<blam::scn::object>(
-                       p.template subsystem<BlamFiles<Ver>>().container.magic);
-                   data.has_value())
-                    object = &data.value()[0];
+            blam::scn::object const* object = overlay_object(p, model);
             build_submodels(
                 p,
                 ent,
@@ -1536,6 +1531,18 @@ struct ResourceLoader
             .loop      = !held,
             .paused    = held,
         };
+    }
+
+    /* Whose modifier shader coats a model: its object, or for a player
+     * the biped it wears */
+    blam::scn::object const* overlay_object(Proxy& p, Model const& model)
+    {
+        auto const* tag = model.origin_object ? model.origin_object : model.colors_of;
+        if(!tag)
+            return nullptr;
+        auto data = tag->template data<blam::scn::object>(
+            p.template subsystem<BlamFiles<Ver>>().container.magic);
+        return data.has_value() ? &data.value()[0] : nullptr;
     }
 
     /* One submodel entity per shaded region of a loaded model. */
@@ -3646,7 +3653,9 @@ struct ResourceLoader
                 model_id,
                 shared_recipes::submodel,
                 mount.first_person ? render_layer::first_person
-                                   : render_layer::world);
+                                   : render_layer::world,
+                0x1F,
+                mount.first_person ? nullptr : overlay_object(p, model));
 
         if(auto biped = player_bipeds.find(mount.entity_id);
            biped != player_bipeds.end())

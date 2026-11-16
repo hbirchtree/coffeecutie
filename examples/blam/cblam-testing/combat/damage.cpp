@@ -1018,9 +1018,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         for(auto ent : p.template select<BipedStatus, Model>())
         {
             auto [status, model] = ent.components();
-            if(!model.origin_object)
+            /* Players have no origin object, only the biped they wear */
+            auto const* tag = model.origin_object ? model.origin_object : model.colors_of;
+            if(!tag)
                 continue;
-            auto obj = model.origin_object->template data<object>(*m_magic);
+            auto obj = tag->template data<object>(*m_magic);
             if(!obj.has_value())
                 continue;
             auto functions = obj.value()[0].functions.data(*m_magic);
