@@ -189,15 +189,17 @@ struct EffectDrawer
         auto first = cache.resolve(*bitmap, 0);
         if(!first.valid())
             return out;
-        auto const* header = cache.find(first)->second.header;
+        auto const& found  = cache.find(first)->second;
+        auto const* header = found.header;
+        auto const& magic  = found.magic;
         /* A negative sequence names the image directly */
         i16 index = sequence < 0 ? frame : 0;
-        if(auto sequences = header->sequences.data(cache.magic);
+        if(auto sequences = header->sequences.data(magic);
            sequences.has_value() && sequence >= 0 &&
            static_cast<size_t>(sequence) < sequences.value().size())
         {
             auto const& seq     = sequences.value()[static_cast<size_t>(sequence)];
-            auto        sprites = seq.sprites.data(cache.magic);
+            auto        sprites = seq.sprites.data(magic);
             if(sprites.has_value() && !sprites.value().empty())
             {
                 auto const& sprite =
@@ -208,7 +210,7 @@ struct EffectDrawer
                 if(extent.x > 0.f && extent.y > 0.f)
                     out.pivot = glm::clamp(
                         sprite.registration_point / extent, Vecf2(0.f), Vecf2(1.f));
-                if(auto images = header->images.data(cache.magic);
+                if(auto images = header->images.data(magic);
                    images.has_value() && sprite.bitmap_index < images.value().size())
                 {
                     auto const& size = images.value()[sprite.bitmap_index].isize;

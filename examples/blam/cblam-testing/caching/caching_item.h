@@ -311,6 +311,8 @@ struct BitmapItem
 {
     blam::bitm::header_t const* header{nullptr};
     blam::tag_t const*          tag{nullptr};
+    /*! What the header's blocks resolve with: CE keeps many in bitmaps.map */
+    blam::map_ptr magic{};
 
     struct
     {

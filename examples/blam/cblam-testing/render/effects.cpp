@@ -341,6 +341,9 @@ struct EffectSystem
         }
         m_magic = &files.container.magic;
         m_index = blam::tag_index_view<halo_version>(files.container);
+        if(files.bitmap_file)
+            m_index.add_atlas(
+                blam::atlas_type_t::bitmaps, blam::map_ptr(static_cast<semantic::BytesConst>(*files.bitmap_file)));
 
         auto& scene = p.template subsystem<EffectScene>();
         scene.clear();
@@ -953,6 +956,19 @@ struct EffectSystem
     }
 
     /* ---- Tag lookups ---- */
+
+    /* A bitmap's header and what its blocks resolve with: CE keeps many in
+     * bitmaps.map */
+    std::optional<std::pair<blam::bitm::header_t const*, blam::map_ptr>> bitmap_of(blam::tagref_t const& ref)
+    {
+        if(!ref.valid() || ref.tag_class != blam::tag_class_t::bitm)
+            return std::nullopt;
+        auto found = m_index.template resource<blam::bitm::header_t>(ref);
+        if(!found)
+            return std::nullopt;
+        auto const& [tag, header, magic] = *found;
+        return std::pair{header, magic};
+    }
 
     template<typename T>
     T const* tag_data(blam::tagref_t const& ref, blam::tag_class_t cls)
@@ -1834,11 +1850,10 @@ struct EffectSystem
         if(!fresh)
             return anim;
         anim.first = part.first_sequence_index;
-        auto const* header =
-            tag_data<blam::bitm::header_t>(part.bitmap, blam::tag_class_t::bitm);
-        std::remove_cvref_t<decltype(header->sequences.data(*m_magic))> sequences;
-        if(header)
-            sequences = header->sequences.data(*m_magic);
+        auto const bitmap = bitmap_of(part.bitmap);
+        std::remove_cvref_t<decltype(bitmap->first->sequences.data(*m_magic))> sequences;
+        if(bitmap)
+            sequences = bitmap->first->sequences.data(bitmap->second);
         i32 const counts[3] = {
             part.initial_sequence_count,
             part.looping_sequence_count,
@@ -1853,7 +1868,7 @@ struct EffectSystem
                    static_cast<size_t>(seq) < sequences.value().size())
                 {
                     auto const& sq      = sequences.value()[seq];
-                    auto        sprites = sq.sprites.data(*m_magic);
+                    auto        sprites = sq.sprites.data(bitmap->second);
                     n = sprites.has_value() && !sprites.value().empty()
                             ? static_cast<i16>(sprites.value().size())
                             : static_cast<i16>(std::max<u16>(sq.bitmap_count, 1));
@@ -1875,15 +1890,16 @@ struct EffectSystem
         auto [cached, fresh] = m_sprite_pixels.try_emplace(key, default_sprite_pixels);
         if(!fresh)
             return cached->second;
-        auto const* header = tag_data<blam::bitm::header_t>(ref, blam::tag_class_t::bitm);
-        if(!header)
+        auto const bitmap = bitmap_of(ref);
+        if(!bitmap)
             return cached->second;
-        auto sequences = header->sequences.data(*m_magic);
-        auto images    = header->images.data(*m_magic);
+        auto const& [header, magic] = *bitmap;
+        auto sequences = header->sequences.data(magic);
+        auto images    = header->images.data(magic);
         if(!sequences.has_value() || !images.has_value() || sequences.value().empty())
             return cached->second;
         auto const& seq = sequences.value()[std::clamp<i32>(sequence, 0, sequences.value().size() - 1)];
-        auto        sprites = seq.sprites.data(*m_magic);
+        auto        sprites = seq.sprites.data(magic);
         if(!sprites.has_value() || sprites.value().empty())
             return cached->second;
         auto const& sprite = sprites.value()[0];
