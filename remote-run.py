@@ -1194,17 +1194,16 @@ def run_web(device_name, device, preset_name, preset, extra_args, script_dir, bu
 
     param_str = "&".join(f"{k}={v}" for k, v in params.items())
 
-    merged_env = {
-        "BUNDLE_DIR": staged_bundle,
-        "PAGE": page_name,
-        "OUT_DIR": out_dir,
-        "SCREENSHOT_NAME": preset_name,
-        "ARGS": param_str,
-    }
-
+    test_cmd = [
+        sys.executable, os.path.join(script_dir, ".github", "tests", "run.py"), "webgl",
+        staged_bundle, "--page", page_name, "--out", out_dir, "--name", preset_name,
+    ]
+    if param_str:
+        test_cmd += ["--query", param_str]
     dummy_plug_cfg = preset.get("env", {}).get("DUMMY_PLUG_CONFIG")
     if dummy_plug_cfg:
-        merged_env["DUMMY_PLUG"] = ev(dummy_plug_cfg)
+        test_cmd += ["--dummy-plug", ev(dummy_plug_cfg)]
+    merged_env = {}
 
     setup_cmds = [
         ["mkdir", "-p", web_scratch],
@@ -1233,8 +1232,6 @@ def run_web(device_name, device, preset_name, preset, extra_args, script_dir, bu
         if remote_dir:
             setup_cmds.append(['mkdir', '-p', remote_dir])
         setup_cmds.append(['rsync', '-av', '--checksum', local_abs, remote_path])
-
-    test_cmd = ["node", os.path.join(harness_dir, "webgl_smoke.mjs")]
 
     if dry_run:
         print_dry_run(setup_cmds + [test_cmd])

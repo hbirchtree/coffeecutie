@@ -163,7 +163,7 @@ the body: a T-pose comes out crossed, and crossed arms come out T-posed.
 That error is invisible in any clip where the arms stay near the body's
 midline, which is most seated footage — `arms_down`, `arms_up`, `arms_forward`
 and `elbow_bend` all pass with the sign inverted. The `t_pose` and
-`arms_crossed` cases in `pose_demo_arms.mjs` exist to catch it, and both fail
+`arms_crossed` cases in `run.py pose-arms` exist to catch it, and both fail
 if it is flipped back.
 
 **What it does not fix.** Aim matches bone *directions*, not wrist positions.
@@ -290,15 +290,15 @@ can be deleted.
 
 # Tests
 
-Two harnesses in `.github/tests/web/`, answering different questions.
+Two tests in `.github/tests/run.py`, answering different questions.
 
-`pose_demo_kalidokit_smoke.mjs` runs the real pipeline: Chrome's fake webcam
+`pose-webcam` runs the real pipeline: Chrome's fake webcam
 plays a video of a person, and the test passes if MediaPipe and Kalidokit
 produce pose payloads at all. It says the chain is live; it says nothing about
 whether the retargeting is right, because the input is a video and the output
 is a picture.
 
-`run_pose_demo_arms.sh` (driving `pose_demo_arms.mjs`) asks the other question.
+`pose-arms` asks the other question.
 It skips the webcam entirely, injects exact quaternions as `pose_apply` events,
 and reads the resulting bone positions back out of the engine with the
 `dump_pose` event, so each case is a known input checked against a measured
@@ -308,7 +308,7 @@ where the bind pose put it, which is what catches a basis change leaking across
 the body.
 
 ```
-.github/tests/web/run_pose_demo_arms.sh [BUNDLE_DIR] [OUT_DIR]
+.github/tests/run.py pose-arms [BUNDLE_DIR] --out OUT_DIR
 ```
 
 It freezes the idle animation (via a near-zero `fps`) and turns off smoothing,

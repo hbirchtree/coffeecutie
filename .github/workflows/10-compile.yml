@@ -597,10 +597,8 @@ jobs:
         include:
           # wasm32 is the explicit PC build, wasm64 the default Xbox one
           - variant: wasm32
-            maps: pc/beavercreek.map pc/bitmaps.map pc/sounds.map
             map: pc/beavercreek.map
           - variant: wasm64
-            maps: xbox_ex/beavercreek.map
             map: xbox_ex/beavercreek.map
     steps:
     - uses: actions/checkout@v7
@@ -614,20 +612,10 @@ jobs:
       with:
         name: web-${{ matrix.variant }}-emscripten-webgl2
         path: artifacts/
-    - name: Locating WebGL bundle
-      id: bundle
-      run: |
-        BUNDLE=$(find artifacts -type d -name BlamGraphics.bundle | head -n 1)
-        echo "Found bundle: $BUNDLE"
-        echo "dir=$BUNDLE" >> "$GITHUB_OUTPUT"
     - name: Run WebGL software-render smoke test
-      env:
-        CI: "true"
-        RUN_SECONDS: "30"
-        MAPS: ${{ matrix.maps }}
-        ARGS: "map=${{ matrix.map }}"
-      run: |
-        source/.github/tests/web/run_webgl_test.sh "${{ steps.bundle.outputs.dir }}" /tmp/blam_webgl
+      run: >
+        python3 source/.github/tests/run.py webgl artifacts --map ${{ matrix.map }}
+        --run-seconds 30 --out /tmp/blam_webgl
     - name: Uploading test artifacts
       uses: actions/upload-artifact@v7
       with:

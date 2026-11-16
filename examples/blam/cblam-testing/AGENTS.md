@@ -153,7 +153,7 @@ Public state exposed to UI systems:
 
 The dummy plug drives multiplayer scenarios: `.github/tests/net/dummy_plug_net_host_scenario.json` (and `dummy_plug_net_host_splitscreen.json`, with a second local seat on each side) makes the process a server and spawns a client child. Each side's `dump_state` event writes the roster and each player's biped (in play, model, body) to its journal, and `.github/tests/net/compare_journals.py <server journal> <client journal>` checks that every in-play player has a model and body under its camera, that client seats stay out of the server's index space, and that both sides agree where each player is (`MIN_IN_PLAY`, `POSITION_TOLERANCE`). CI runs both scenarios in `Test_x86_64_mesa`.
 
-`.github/tests/run.py` runs these and the other integration tests the way CI does (`dummy-plug`, `net --route/--scenario`, `scenarios`, `pinned-cert`, `web-client`, `nat-punch`): locally through `cb run`, or against a downloaded CI artifact with `--artifacts`.
+`.github/tests/run.py` runs these and the other integration tests the way CI does (`dummy-plug`, `net --route/--scenario`, `scenarios`, `pinned-cert`, and the browser tests `webgl`, `web-client`, `nat-punch`, `pose-arms`, `pose-webcam`): locally through `cb run`, or against a downloaded CI artifact with `--artifacts`.
 
 ## Map loading (`loading/map_loading.cpp`)
 
