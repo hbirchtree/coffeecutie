@@ -18,6 +18,15 @@
         {
             "kind": "git",
             "repository": "https://github.com/Microsoft/vcpkg",
+            "baseline": "8f363bdc11359ede4bc51e5eb32a2617538049c8",
+            "packages": [
+                "curl",
+                "openssl"
+            ]
+        },
+        {
+            "kind": "git",
+            "repository": "https://github.com/Microsoft/vcpkg",
             "baseline": "1de2026f28ead93ff1773e6e680387643e914ea1",
             "packages": [
                 "spirv-cross",
