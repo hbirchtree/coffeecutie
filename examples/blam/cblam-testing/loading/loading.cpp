@@ -3557,6 +3557,9 @@ struct ResourceLoader
         p.template get<Attachment>(ent.id())->parent = player;
         /* The weapon's attachments, e.g. its muzzle flash, ride along */
         p.template get<Model>(ent.id())->origin_object = object;
+        /* Bare arms wear the body's change colours */
+        if(!object)
+            p.template get<Model>(ent.id())->colors_of = biped_model.tag;
         if(fit && !nodes.empty())
         {
             auto* anim       = p.template get<AnimationPlayback>(ent.id());
