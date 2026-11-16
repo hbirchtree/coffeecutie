@@ -578,6 +578,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             if(nav.mp_team >= 0)
                 if(auto const* mine = game.player(info.player_idx); !mine || mine->team != nav.mp_team)
                     continue;
+            /* Not over one's own head: a flag carrier's marker is for the team */
+            if(nav.unit == static_cast<i32>(info.player_idx))
+                continue;
             auto const* arrow = [&]() -> blam::hud_globals::waypoint_arrow_t const* {
                 for(auto const& a : arrows.value())
                     if(a.name.str() == nav.arrow)
