@@ -21,7 +21,7 @@
 
 namespace {
 
-/* A unit quad in its XY plane, facing +Z; the rings draw on it */
+/* A unit quad in its XY plane, facing +Z; the circles draw on it */
 const std::array<crunch::vertex, 4> ring_quad_vertices = {{
     {{-1.f, -1.f, 0.f}, {0.f, 0.f}, {255, 255, 255, 255}, {32768, 32768, 65535}},
     {{1.f, -1.f, 0.f}, {1.f, 0.f}, {255, 255, 255, 255}, {32768, 32768, 65535}},
@@ -47,7 +47,7 @@ using GravityStormManifest = compo::SubsystemManifest<
 
 /* A gravity rifle on the ground or in a player's hand calls down a storm: a
  * funnel of cloud in the sky over it and red wind around it, crunched meshes.
- * Holstered, it calms. Holding its trigger charges it: a wall of gold rings
+ * Holstered, it calms. Holding its trigger charges it: a wall of gold circles
  * rises before its wielder, one more the longer it is held. */
 template<typename V>
 struct GravityStorm
