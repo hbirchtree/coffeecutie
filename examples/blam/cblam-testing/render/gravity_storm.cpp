@@ -47,8 +47,8 @@ using GravityStormManifest = compo::SubsystemManifest<
 
 /* A gravity rifle on the ground or in a player's hand calls down a storm: a
  * funnel of cloud in the sky over it and red wind around it, crunched meshes.
- * Holstered, it calms. Holding its trigger charges it: gold rings gather
- * round its wielder, one more the longer it is held. */
+ * Holstered, it calms. Holding its trigger charges it: a wall of gold rings
+ * rises before its wielder, one more the longer it is held. */
 template<typename V>
 struct GravityStorm
     : compo::RestrictedSubsystem<GravityStorm<V>, GravityStormManifest<V>>
@@ -122,20 +122,22 @@ struct GravityStorm
     struct ring_charge_t
     {
         Vecf3 centre;    /*!< The wielder's chest */
+        Vecf3 forward{1, 0, 0}; /*!< Where they look, level */
         f32   held{0.f}; /*!< s the trigger has been held */
         f32   shown{1.f}; /*!< Falls to 0 once let go */
         bool  firing{false};
         bool  found{false};
     };
 
-    static constexpr u32 ring_most     = 12;
-    static constexpr f32 ring_interval = .35f; /* s between new rings */
+    /* Rows fill from the middle out to either side, then stack up */
+    static constexpr u32 ring_per_row  = 9;
+    static constexpr u32 ring_most     = 3 * ring_per_row;
+    static constexpr f32 ring_interval = .2f;  /* s between new rings */
     static constexpr f32 ring_grow     = .3f;  /* s to open up */
     static constexpr f32 ring_fade     = .4f;  /* s to close once let go */
-    static constexpr f32 ring_radius   = .12f; /* wu */
-    static constexpr f32 ring_orbit    = .45f; /* wu from the wielder */
-    static constexpr f32 ring_widen    = .03f; /* wu further out per ring */
-    static constexpr f32 ring_spin     = .6f;  /* rad/s about the wielder */
+    static constexpr f32 ring_radius   = .25f; /* wu */
+    static constexpr f32 ring_spacing  = .6f;  /* wu between centres */
+    static constexpr f32 ring_ahead    = 1.5f; /* wu before the wielder */
     static constexpr f32 ring_chest    = .4f;  /* wu over the wielder's feet */
 
     gfx::api*                            m_api;
@@ -414,13 +416,20 @@ struct GravityStorm
                     entity.template get<BipedEquipment>().held(generation);
                 if(!held || held->tag != m_gravity_rifle)
                     continue;
-                Vecf3 centre;
-                if(auto const* model = p.template get<Model>(entity.id()))
-                    centre = model->position + Vecf3{0, 0, ring_chest};
-                else if(auto const* cam = p.template get<PlayerCamera>(entity.id()))
+                auto const* model = p.template get<Model>(entity.id());
+                auto const* cam   = p.template get<PlayerCamera>(entity.id());
+                Vecf3       centre;
+                Vecf3       forward;
+                if(model)
+                {
+                    centre  = model->position + Vecf3{0, 0, ring_chest};
+                    forward = model->rotation * Vecf3{1, 0, 0};
+                } else if(cam)
                     centre = cam->camera.position - Vecf3{0, 0, .2f};
                 else
                     continue;
+                if(cam)
+                    forward = glm::transpose(Matf3(cam->rotation)) * Vecf3{0, 0, -1};
                 bool const firing =
                     entity.template get<PlayerInput>().intent.fire;
                 auto it = m_charges.find(entity.id());
@@ -435,6 +444,8 @@ struct GravityStorm
                 if(firing && !charge.firing)
                     charge = ring_charge_t{};
                 charge.centre = centre;
+                if(Vecf2 const level{forward}; glm::length(level) > 1e-3f)
+                    charge.forward = Vecf3(glm::normalize(level), 0.f);
                 charge.firing = firing;
                 charge.found  = true;
             }
@@ -591,8 +602,8 @@ struct GravityStorm
         return 1.f + t * t * (2.70158f * t + 1.70158f);
     }
 
-    /* One ring per interval held, spread round the wielder by the golden
-     * angle, each further out than the last */
+    /* One ring per interval held, on a wall facing the wielder's look: a
+     * row out from the middle, then the next row up, set off by half */
     void draw_rings(view_t const& view)
     {
         using namespace std::string_view_literals;
@@ -611,15 +622,17 @@ struct GravityStorm
                     ring_radius * ring_open(age / ring_grow) * close;
                 if(size <= 0.f)
                     continue;
-                f32 const angle = fi * 2.3999632f + now * ring_spin;
-                f32 const lift =
-                    (lightning_hash(i, static_cast<u32>(id), 5) - .5f) * .4f +
-                    std::sin(now * 1.7f + fi) * .03f;
-                Vecf3 const out{std::cos(angle), std::sin(angle), 0.f};
-                Vecf3 const across{-out.y, out.x, 0.f};
-                Vecf3 const at = charge.centre +
-                                 out * (ring_orbit + ring_widen * fi) +
-                                 Vecf3{0, 0, lift};
+                u32 const row  = i / ring_per_row;
+                u32 const k    = i % ring_per_row;
+                f32 const side = k % 2 ? 1.f : -1.f;
+                f32 const x    = side * static_cast<f32>((k + 1) / 2) * ring_spacing +
+                              (row % 2 ? ring_spacing * .5f : 0.f);
+                f32 const y = static_cast<f32>(row) * ring_spacing * .87f +
+                              std::sin(now * 1.7f + fi) * .03f;
+                Vecf3 const out = -charge.forward;
+                Vecf3 const across{charge.forward.y, -charge.forward.x, 0.f};
+                Vecf3 const at = charge.centre + charge.forward * ring_ahead +
+                                 across * x + Vecf3{0, 0, y};
                 rings.push_back(ring_t{
                     .model = Matf4(
                         Vecf4(across * size, 0.f),
