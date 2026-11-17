@@ -222,7 +222,9 @@
             {"source":"shaders/gravity_storm.vert", "name": "gravity_storm_vert"},
             {"source":"shaders/gravity_cloud.frag", "name": "gravity_cloud_frag"},
             {"source":"shaders/gravity_wind.frag", "name": "gravity_wind_frag"},
-            {"source":"shaders/gravity_lightning.frag", "name": "gravity_lightning_frag"}
+            {"source":"shaders/gravity_lightning.frag", "name": "gravity_lightning_frag"},
+            {"source":"shaders/gravity_ring.vert", "name": "gravity_ring_vert"},
+            {"source":"shaders/gravity_ring.frag", "name": "gravity_ring_frag"}
         ]
     }
 }

@@ -16,7 +16,21 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <vector>
+
+namespace {
+
+/* A unit quad in its XY plane, facing +Z; the rings draw on it */
+const std::array<crunch::vertex, 4> ring_quad_vertices = {{
+    {{-1.f, -1.f, 0.f}, {0.f, 0.f}, {255, 255, 255, 255}, {32768, 32768, 65535}},
+    {{1.f, -1.f, 0.f}, {1.f, 0.f}, {255, 255, 255, 255}, {32768, 32768, 65535}},
+    {{1.f, 1.f, 0.f}, {1.f, 1.f}, {255, 255, 255, 255}, {32768, 32768, 65535}},
+    {{-1.f, 1.f, 0.f}, {0.f, 1.f}, {255, 255, 255, 255}, {32768, 32768, 65535}},
+}};
+constexpr std::array<u16, 6> ring_quad_indices = {{0, 1, 2, 0, 2, 3}};
+
+} // namespace
 
 template<typename V>
 using GravityStormManifest = compo::SubsystemManifest<
@@ -26,13 +40,15 @@ using GravityStormManifest = compo::SubsystemManifest<
         const Attachment,
         const BipedEquipment,
         const PlayerInfo,
-        const PlayerCamera>,
+        const PlayerCamera,
+        const PlayerInput>,
     type_list_t<const BlamFiles<V>, const LoadingStatus>,
     empty_list_t>;
 
 /* A gravity rifle on the ground or in a player's hand calls down a storm: a
  * funnel of cloud in the sky over it and red wind around it, crunched meshes.
- * Holstered, it calms. */
+ * Holstered, it calms. Holding its trigger charges it: gold rings gather
+ * round its wielder, one more the longer it is held. */
 template<typename V>
 struct GravityStorm
     : compo::RestrictedSubsystem<GravityStorm<V>, GravityStormManifest<V>>
@@ -102,8 +118,30 @@ struct GravityStorm
     /* The mesh is quads A..D, triangulated as tris k and k + 4; A strikes */
     static constexpr u32 lightning_quads = 4;
 
+    /* Rings round a wielder holding the trigger */
+    struct ring_charge_t
+    {
+        Vecf3 centre;    /*!< The wielder's chest */
+        f32   held{0.f}; /*!< s the trigger has been held */
+        f32   shown{1.f}; /*!< Falls to 0 once let go */
+        bool  firing{false};
+        bool  found{false};
+    };
+
+    static constexpr u32 ring_most     = 12;
+    static constexpr f32 ring_interval = .35f; /* s between new rings */
+    static constexpr f32 ring_grow     = .3f;  /* s to open up */
+    static constexpr f32 ring_fade     = .4f;  /* s to close once let go */
+    static constexpr f32 ring_radius   = .12f; /* wu */
+    static constexpr f32 ring_orbit    = .45f; /* wu from the wielder */
+    static constexpr f32 ring_widen    = .03f; /* wu further out per ring */
+    static constexpr f32 ring_spin     = .6f;  /* rad/s about the wielder */
+    static constexpr f32 ring_chest    = .4f;  /* wu over the wielder's feet */
+
     gfx::api*                            m_api;
     std::vector<gravity_storm_t>         m_storms;
+    std::map<u64, ring_charge_t>         m_charges;
+    f32                                  m_ring_clock{0.f}; /*!< s, wraps hourly */
     time_point                           m_storm_time{};
     blam::tag_t const*                   m_gravity_rifle{nullptr};
     u32                                  m_gravity_rifle_generation{~0u};
@@ -119,17 +157,21 @@ struct GravityStorm
     std::shared_ptr<gfx::program_t>      lightning_program;
     std::shared_ptr<gfx::texture_2d_t>   lightning_tex;
     std::shared_ptr<gfx::sampler_t>      lightning_sampler;
+    gfx::draw_command::data_t            ring_draw;
+    std::shared_ptr<gfx::program_t>      ring_program;
     bool                                 storm_failed{false};
     time_point                           m_now{};
 
     std::shared_ptr<gfx::program_t> storm_program(
-        std::string_view frag, std::string_view name)
+        std::string_view frag,
+        std::string_view name,
+        std::string_view vert = blam::loading::gravity_storm_vert)
     {
         auto program = m_api->alloc_program();
         program->add(
             gfx::program_t::stage_t::Vertex,
-            m_api->alloc_shader(semantic::mem_chunk<const char>::ofContainer(
-                blam::loading::gravity_storm_vert)));
+            m_api->alloc_shader(
+                semantic::mem_chunk<const char>::ofContainer(vert)));
         program->add(
             gfx::program_t::stage_t::Fragment,
             m_api->alloc_shader(
@@ -157,7 +199,12 @@ struct GravityStorm
             storm_program(blam::loading::gravity_wind_frag, "storm wind");
         lightning_program =
             storm_program(blam::loading::gravity_lightning_frag, "storm lightning");
-        if(!storm_cloud_program || !storm_wind_program || !lightning_program)
+        ring_program = storm_program(
+            blam::loading::gravity_ring_frag,
+            "storm ring",
+            blam::loading::gravity_ring_vert);
+        if(!storm_cloud_program || !storm_wind_program || !lightning_program ||
+           !ring_program)
         {
             storm_failed = true;
             return false;
@@ -174,20 +221,24 @@ struct GravityStorm
         storm_vbo = m_api->alloc_buffer(gfx::buffers::vertex, semantic::RSCA::ReadOnly);
         storm_ebo->alloc();
         storm_vbo->alloc();
-        storm_ebo->commit(
-            gsl::span(cloud_i).size_bytes() +
-            gsl::span(wind_i).size_bytes() +
-            gsl::span(lightning_i).size_bytes());
-        storm_vbo->commit(
-            gsl::span(cloud_v).size_bytes() +
-            gsl::span(wind_v).size_bytes() +
-            gsl::span(lightning_v).size_bytes());
+        auto const& ring_i = ring_quad_indices;
+        auto const& ring_v = ring_quad_vertices;
+        size_t const ring_i_at = gsl::span(cloud_i).size_bytes() +
+                                 gsl::span(wind_i).size_bytes() +
+                                 gsl::span(lightning_i).size_bytes();
+        size_t const ring_v_at = gsl::span(cloud_v).size_bytes() +
+                                 gsl::span(wind_v).size_bytes() +
+                                 gsl::span(lightning_v).size_bytes();
+        storm_ebo->commit(ring_i_at + gsl::span(ring_i).size_bytes());
+        storm_vbo->commit(ring_v_at + gsl::span(ring_v).size_bytes());
         storm_ebo->update(0, gsl::span(cloud_i));
         storm_ebo->update(gsl::span(cloud_i).size_bytes(), gsl::span(wind_i));
         storm_ebo->update(gsl::span(cloud_i).size_bytes() + gsl::span(wind_i).size_bytes(), gsl::span(lightning_i));
         storm_vbo->update(0, gsl::span(cloud_v));
         storm_vbo->update(gsl::span(cloud_v).size_bytes(), gsl::span(wind_v));
         storm_vbo->update(gsl::span(cloud_v).size_bytes() + gsl::span(wind_v).size_bytes(), gsl::span(lightning_v));
+        storm_ebo->update(ring_i_at, gsl::span(ring_i));
+        storm_vbo->update(ring_v_at, gsl::span(ring_v));
 
         storm_cloud_draw.elements = {
             .count = static_cast<u32>(cloud_i.size()),
@@ -204,6 +255,13 @@ struct GravityStorm
             .offset        = gsl::span(cloud_i).size_bytes() + gsl::span(wind_i).size_bytes(),
             .vertex_offset = static_cast<u32>(cloud_v.size() + wind_v.size()),
             .type          = semantic::type_t::u16,
+        };
+        ring_draw.elements = {
+            .count         = static_cast<u32>(ring_i.size()),
+            .offset        = ring_i_at,
+            .vertex_offset = static_cast<u32>(
+                cloud_v.size() + wind_v.size() + lightning_v.size()),
+            .type = semantic::type_t::u16,
         };
         for(u32 tri : {0u, lightning_quads})
         {
@@ -288,6 +346,7 @@ struct GravityStorm
             m_gravity_rifle_generation = files.load_generation;
             m_gravity_rifle            = nullptr;
             m_storms.clear();
+            m_charges.clear();
             if(files.container.map && files.container.tags)
                 for(blam::tag_t const& tag :
                     blam::tag_index_view(files.container))
@@ -336,6 +395,60 @@ struct GravityStorm
         }
         std::erase_if(m_storms, [](gravity_storm_t const& storm) {
             return !storm.found && storm.strength <= 0.f;
+        });
+
+        update_charges(p, files.load_generation, dt);
+    }
+
+    /* Each wielder holding the trigger charges; let go, the rings close */
+    void update_charges(Proxy& p, u32 generation, f32 dt)
+    {
+        m_ring_clock = std::fmod(m_ring_clock + dt, 3600.f);
+        for(auto& [id, charge] : m_charges)
+            charge.found = false;
+        if(m_gravity_rifle)
+            for(auto const& entity :
+                p.template select<BipedEquipment, PlayerInfo, PlayerInput>())
+            {
+                auto const* held =
+                    entity.template get<BipedEquipment>().held(generation);
+                if(!held || held->tag != m_gravity_rifle)
+                    continue;
+                Vecf3 centre;
+                if(auto const* model = p.template get<Model>(entity.id()))
+                    centre = model->position + Vecf3{0, 0, ring_chest};
+                else if(auto const* cam = p.template get<PlayerCamera>(entity.id()))
+                    centre = cam->camera.position - Vecf3{0, 0, .2f};
+                else
+                    continue;
+                bool const firing =
+                    entity.template get<PlayerInput>().intent.fire;
+                auto it = m_charges.find(entity.id());
+                if(it == m_charges.end())
+                {
+                    if(!firing)
+                        continue;
+                    it = m_charges.emplace(entity.id(), ring_charge_t{}).first;
+                }
+                auto& charge = it->second;
+                /* Pulled again while the last rings close: start over */
+                if(firing && !charge.firing)
+                    charge = ring_charge_t{};
+                charge.centre = centre;
+                charge.firing = firing;
+                charge.found  = true;
+            }
+        for(auto& [id, charge] : m_charges)
+        {
+            if(!charge.found)
+                charge.firing = false;
+            if(charge.firing)
+                charge.held += dt;
+            else
+                charge.shown -= dt / ring_fade;
+        }
+        std::erase_if(m_charges, [](auto const& entry) {
+            return entry.second.shown <= 0.f;
         });
     }
 
@@ -405,7 +518,7 @@ struct GravityStorm
     void draw(stage_t, view_t const& view) override
     {
         using namespace std::string_view_literals;
-        if(m_storms.empty() || !load_storm())
+        if((m_storms.empty() && m_charges.empty()) || !load_storm())
             return;
 
         auto _ = m_api->debug().scope("Gravity storms");
@@ -457,6 +570,112 @@ struct GravityStorm
                     wind.density);
             }
             draw_lightning(view, storm, age);
+        }
+        draw_rings(view);
+    }
+
+    struct ring_t
+    {
+        Matf4 model;
+        Vecf3 across;
+        Vecf3 out;
+        f32   age;
+        f32   strength;
+        f32   distance;
+    };
+
+    /* A ring opens past its size and settles */
+    static f32 ring_open(f32 t)
+    {
+        t = std::clamp(t, 0.f, 1.f) - 1.f;
+        return 1.f + t * t * (2.70158f * t + 1.70158f);
+    }
+
+    /* One ring per interval held, spread round the wielder by the golden
+     * angle, each further out than the last */
+    void draw_rings(view_t const& view)
+    {
+        using namespace std::string_view_literals;
+        f32 const now = m_ring_clock;
+        std::vector<ring_t> rings;
+        for(auto const& [id, charge] : m_charges)
+        {
+            u32 const count = std::min(
+                ring_most, 1 + static_cast<u32>(charge.held / ring_interval));
+            f32 const close = ring_open(charge.shown);
+            for(u32 i = 0; i < count; i++)
+            {
+                f32 const fi  = static_cast<f32>(i);
+                f32 const age = charge.held - fi * ring_interval;
+                f32 const size =
+                    ring_radius * ring_open(age / ring_grow) * close;
+                if(size <= 0.f)
+                    continue;
+                f32 const angle = fi * 2.3999632f + now * ring_spin;
+                f32 const lift =
+                    (lightning_hash(i, static_cast<u32>(id), 5) - .5f) * .4f +
+                    std::sin(now * 1.7f + fi) * .03f;
+                Vecf3 const out{std::cos(angle), std::sin(angle), 0.f};
+                Vecf3 const across{-out.y, out.x, 0.f};
+                Vecf3 const at = charge.centre +
+                                 out * (ring_orbit + ring_widen * fi) +
+                                 Vecf3{0, 0, lift};
+                rings.push_back(ring_t{
+                    .model = Matf4(
+                        Vecf4(across * size, 0.f),
+                        Vecf4(0.f, 0.f, size, 0.f),
+                        Vecf4(out * size, 0.f),
+                        Vecf4(at, 1.f)),
+                    .across   = across,
+                    .out      = out,
+                    .age      = age,
+                    .strength = std::clamp(charge.shown, 0.f, 1.f),
+                    .distance = glm::distance(at, view.position),
+                });
+            }
+        }
+        /* Back to front, they blend over each other */
+        std::sort(rings.begin(), rings.end(), [](ring_t const& a, ring_t const& b) {
+            return a.distance > b.distance;
+        });
+        Vecf3 const up{0, 0, 1};
+        for(auto const& ring : rings)
+        {
+            gfx::view_state    state   = view.state;
+            gfx::stencil_state stencil = view.stencil;
+            auto               res     = m_api->submit(
+                {
+                    .program       = ring_program,
+                    .vertices      = storm_vao,
+                    .render_target = view.target,
+                    .call          = {.indexed = true},
+                    .data          = {ring_draw},
+                },
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Vertex,
+                    gfx::uniform_pair{{"camera"sv}, semantic::SpanOne(view.camera)},
+                    gfx::uniform_pair{{"model"sv}, semantic::SpanOne(ring.model)}),
+                gfx::make_uniform_list(
+                    typing::graphics::ShaderStage::Fragment,
+                    gfx::uniform_pair{{"time"sv}, semantic::SpanOne<const f32>(ring.age)},
+                    gfx::uniform_pair{
+                        {"strength"sv}, semantic::SpanOne<const f32>(ring.strength)},
+                    gfx::uniform_pair{{"eye"sv}, semantic::SpanOne(view.position)},
+                    gfx::uniform_pair{{"axis_t"sv}, semantic::SpanOne(ring.across)},
+                    gfx::uniform_pair{{"axis_b"sv}, semantic::SpanOne(up)},
+                    gfx::uniform_pair{{"axis_n"sv}, semantic::SpanOne(ring.out)}),
+                gfx::blend_state{.premultiplied = true},
+                gfx::depth_extended_state{.depth_write = false},
+                state,
+                stencil);
+            if(res)
+            {
+                auto [err, msg] = *res;
+                cWarning(
+                    "Failed to draw ring: {}: {}",
+                    gleam::detail::draw_error_to_string(err),
+                    msg);
+            }
         }
     }
 
