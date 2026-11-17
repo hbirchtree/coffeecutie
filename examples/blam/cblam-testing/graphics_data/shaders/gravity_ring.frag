@@ -57,5 +57,11 @@ void main()
     float crest = 0.5 + 0.5 * sin(phase);
     float body  = 1.0 - smoothstep(0.0, 1.0, r);
     float alpha = body * (0.55 + 0.45 * crest * front) * strength;
-    gl_FragColor = vec4(col * alpha, alpha);
+
+    /* A glint off a light over the viewer's shoulder, catching the crests */
+    vec3  light = normalize(v + vec3(0.0, 0.0, 1.2) + axis_t * 0.4);
+    float spec  = pow(max(dot(n, normalize(light + v)), 0.0), 48.0) *
+                 body * strength;
+    vec3 glint = mix(gold, vec3(1.0), 0.6) * spec * 1.5;
+    gl_FragColor = vec4(col * alpha + glint, min(alpha + spec * 0.5, 1.0));
 }
