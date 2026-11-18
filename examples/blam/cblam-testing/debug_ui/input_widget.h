@@ -3,13 +3,18 @@
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/imgui/imgui_binding.h>
 
+#include <fmt/format.h>
+
+#include <deque>
+
 using InputDebugManifest = compo::SubsystemManifest<
     compo::empty_list_t,
     type_safety::empty_list_t,
     compo::type_list_t<
         comp_app::ControllerInput,
         comp_app::KeyboardInput,
-        comp_app::MouseInput>>;
+        comp_app::MouseInput,
+        comp_app::BasicEventBus<Coffee::Input::CIEvent>>>;
 
 struct InputDebugWidget
     : compo::RestrictedSubsystem<InputDebugWidget, InputDebugManifest>
@@ -37,10 +42,70 @@ struct InputDebugWidget
         return ImVec4(r, g, b, 1);
     }
 
+    /* Code points, as the debug font has no glyphs past Latin */
+    static std::string code_points(std::string_view utf8)
+    {
+        std::string out;
+        for(size_t i = 0; i < utf8.size();)
+        {
+            auto const     lead  = static_cast<unsigned char>(utf8[i]);
+            size_t const   count = lead < 0x80 ? 1 : lead < 0xE0 ? 2 : lead < 0xF0 ? 3 : 4;
+            char32_t       point = count == 1 ? lead : lead & (0x7F >> count);
+            for(size_t j = 1; j < count && i + j < utf8.size(); j++)
+                point = (point << 6) | (static_cast<unsigned char>(utf8[i + j]) & 0x3F);
+            out += fmt::format("U+{:04X} ", static_cast<libc_types::u32>(point));
+            i += count;
+        }
+        return out;
+    }
+
+    /* What input methods sent: written text and compositions */
+    void text_input(Proxy& e)
+    {
+        using namespace Coffee::Input;
+
+        if(!m_listening)
+            if(auto bus = e.service<comp_app::BasicEventBus<CIEvent>>())
+            {
+                m_listening = true;
+                bus->addEventFunction<CIWriteEvent>(0, [this](CIEvent&, CIWriteEvent* write) {
+                    m_composition.clear();
+                    log(fmt::format("write {}", code_points(write->text)));
+                });
+                bus->addEventFunction<CIWEditEvent>(0, [this](CIEvent&, CIWEditEvent* edit) {
+                    m_composition = edit->text;
+                    log(fmt::format("edit  {}caret {}", code_points(edit->text), edit->cursor));
+                });
+            }
+
+        if(ImGui::Begin("Text input"))
+        {
+            ImGui::InputText("##field", m_field.data(), m_field.size());
+            ImGui::Text("Composing: %s", code_points(m_composition).c_str());
+            if(ImGui::Button("Clear"))
+            {
+                m_log.clear();
+                m_field.fill('\0');
+            }
+            for(auto const& line : m_log)
+                ImGui::TextUnformatted(line.c_str());
+        }
+        ImGui::End();
+    }
+
+    void log(std::string line)
+    {
+        m_log.push_front(std::move(line));
+        if(m_log.size() > 32)
+            m_log.pop_back();
+    }
+
     void start_restricted(Proxy& e, time_point const&)
     {
         using libc_types::f32;
         using libc_types::i16;
+
+        text_input(e);
 
         auto* controllers = e.service<comp_app::ControllerInput>();
 
@@ -118,4 +183,10 @@ struct InputDebugWidget
         }
         ImGui::End();
     }
+
+  private:
+    std::array<char, 256>   m_field{};
+    std::string             m_composition;
+    std::deque<std::string> m_log;
+    bool                    m_listening{false};
 };
