@@ -403,11 +403,6 @@ static void load_resources(
         loading_status.loaded_bitmaps = LoadingStatus::loaded;
         loading_status.loaded_sounds  = LoadingStatus::loaded;
     }
-    /* MCC doesn't have a sounds file? Or maybe it's elsewhere */
-    if(files.container.map->version == blam::version_t::mcc)
-    {
-        loading_status.loaded_sounds = LoadingStatus::loaded;
-    }
     loading_status.loaded_map = LoadingStatus::loaded;
     loading_status.check_all_loaded();
 
@@ -611,7 +606,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     {
         std::shared_ptr<result_type>   map;
         std::shared_ptr<AsyncResource> bitmaps, sounds, loc;
-        bool                           bitmaps_in{false}, loc_in{false}, finished{false};
+        bool bitmaps_in{false}, sounds_in{false}, loc_in{false}, finished{false};
     };
     auto  pending = std::make_shared<pending_t>();
     auto* main    = rq::runtime_queue::GetCurrentQueue().value();
@@ -631,9 +626,17 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
             }
             if(pending->finished && pending->sounds)
             {
-                auto& files      = e.subsystem_cast<BlamFiles<halo_version>>();
-                files.sound_file = std::move(pending->sounds);
+                auto& files        = e.subsystem_cast<BlamFiles<halo_version>>();
+                files.sound_file   = std::move(pending->sounds);
+                pending->sounds_in = false;
                 load_sounds(e, blam::map_ptr(static_cast<BytesConst>(*files.sound_file)));
+            } else if(pending->finished && std::exchange(pending->sounds_in, false))
+            {
+                /* No sounds.map beside it: the map plays silent */
+                cWarning("No sounds.map next to the map, sounds are off");
+                auto& loading         = e.subsystem_cast<LoadingStatus>();
+                loading.loaded_sounds = LoadingStatus::loaded;
+                loading.check_all_loaded();
             }
 
         });
@@ -682,7 +685,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
             (*finish)();
         } else if(i == sounds_i)
         {
-            pending->sounds = set.resource(i);
+            /* Optional too: absent, the map plays silent */
+            pending->sounds    = set.resource(i);
+            pending->sounds_in = true;
             (*finish)();
         } else if(i == loc_i)
         {

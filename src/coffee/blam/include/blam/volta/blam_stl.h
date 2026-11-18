@@ -270,8 +270,12 @@ class tag_index_view
 
     void add_atlas(atlas_type_t type, map_ptr const& data)
     {
-        m_atlases.insert(
-            std::make_pair(type, atlas_view::from_data(data.data())));
+        auto view = atlas_view::from_data(data.data());
+        /* MCC finds every sound permutation's samples by name */
+        if constexpr(std::is_same_v<Ver, mcc_version_t>)
+            if(type == atlas_type_t::sounds)
+                view.index_names();
+        m_atlases.insert(std::make_pair(type, std::move(view)));
     }
 
     /* A tag indexed into loc.map (Custom Edition fonts, strings and HUD
@@ -440,7 +444,16 @@ class tag_index_view
         if(it == end())
             return std::nullopt;
         tag_t const& tag = (*it);
-        if(tag.storage == tag_storage_t::internal)
+        bool const borrowed = borrows_sound(tag);
+        /* The rest of MCC's sounds play from a retail sounds.map's samples,
+         * found by name; without one there is nothing to play */
+        if(std::is_same_v<Ver, mcc_version_t> && !borrowed)
+        {
+            if(!sample_entry(tag, 0, 0))
+                return std::nullopt;
+            return std::make_tuple(&tag, tag.data<T>(m_ptr).value(), m_ptr);
+        }
+        if(tag.storage == tag_storage_t::internal && !borrowed)
             return std::make_tuple(&tag, tag.data<T>(m_ptr).value(), m_ptr);
         auto atlas_ = m_atlases.find(atlas_type_t::sounds);
         if(atlas_ == m_atlases.end())
@@ -456,7 +469,51 @@ class tag_index_view
                      .value()[0],
                 atlas.magic);
         }
+        /* Its samples are in an MCC sounds.map nobody has */
         return std::nullopt;
+    }
+
+    /* MCC keeps its sounds in the map but no sounds.map of their samples (it
+     * plays FMOD banks); a sound that a Custom Edition sounds.map beside it
+     * also has comes whole from there, laid out as CE has it */
+    bool borrows_sound(tag_t const& tag) const
+    {
+        if constexpr(!std::is_same_v<Ver, mcc_version_t>)
+            return false;
+        auto atlas = m_atlases.find(atlas_type_t::sounds);
+        return atlas != m_atlases.end() && atlas->second.find(tag.to_name().to_string(m_ptr));
+    }
+
+    /* A retail sounds.map keeps each permutation's samples under
+     * "<tag>__<pitch range>__<permutation>" */
+    std::optional<locator_block const*> sample_entry(tag_t const& tag, u32 range, u32 permutation) const
+    {
+        auto atlas = m_atlases.find(atlas_type_t::sounds);
+        if(atlas == m_atlases.end())
+            return std::nullopt;
+        std::string name(tag.to_name().to_string(m_ptr));
+        name += "__" + std::to_string(range) + "__" + std::to_string(permutation);
+        return atlas->second.find(name);
+    }
+
+    /*! A permutation's samples: MCC's from a retail sounds.map by name,
+     *  since its own offsets are for a file it never shipped */
+    std::optional<gsl::span<char const>> sound_samples(
+        tag_t const& tag, u32 range, u32 permutation, sound::pitch_permutation_t const& perm) const
+    {
+        if constexpr(std::is_same_v<Ver, mcc_version_t>)
+            if(!borrows_sound(tag))
+            {
+                auto entry = sample_entry(tag, range, permutation);
+                if(!entry || from_le((*entry)->size) != perm.sample_size)
+                    return std::nullopt;
+                auto ref   = perm.sample_data();
+                ref.offset = (*entry)->offset;
+                if(auto val = ref.data(m_atlases.find(atlas_type_t::sounds)->second.magic); val.has_value())
+                    return val.value();
+                return std::nullopt;
+            }
+        return deref(tag, perm.sample_data());
     }
 
     template<typename T>
@@ -474,14 +531,14 @@ class tag_index_view
     {
         // If we receive a pointer like this, we don't know if it's within the
         // map or not, so try both approaches?
-        constexpr bool use_relative_offset =
-            std::is_same_v<Ver, custom_version_t> &&
-            (std::is_same_v<T, sound::pitch_permutation_t> ||
-             std::is_same_v<T, sound::pitch_range_t>);
+        constexpr bool relative_type =
+            std::is_same_v<T, sound::pitch_permutation_t> || std::is_same_v<T, sound::pitch_range_t>;
+        bool const borrowed = borrows_sound(tag);
         // Custom Edition keeps external sounds in sounds.map as the sound
         // struct followed by its pitch ranges. The pitch range pointer is
         // stale; permutation offsets are relative to the end of the struct.
-        if(use_relative_offset && tag.storage == tag_storage_t::external)
+        if(relative_type &&
+           ((std::is_same_v<Ver, custom_version_t> && tag.storage == tag_storage_t::external) || borrowed))
         {
             auto atlas_ = m_atlases.find(atlas_type_t::sounds);
             if(atlas_ == m_atlases.end())
@@ -495,6 +552,12 @@ class tag_index_view
                 base += from_le(ref.offset);
             ref.offset = to_le(base);
             if(auto val = ref.data(atlas.magic); val.has_value())
+                return val.value();
+            return std::nullopt;
+        }
+        if(borrowed)
+        {
+            if(auto val = ref.data(m_atlases.find(atlas_type_t::sounds)->second.magic); val.has_value())
                 return val.value();
             return std::nullopt;
         }
