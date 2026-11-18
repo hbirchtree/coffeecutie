@@ -1578,6 +1578,12 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             /* Full spectrum vision, fading out over its last second */
             if(info && info->powerups.vision > 0.f)
                 out.tint = vision_tint * std::min(info->powerups.vision, 1.f);
+            /* A teleporter's white flash, fading */
+            if(info && info->teleport_flash > 0.f)
+            {
+                f32 const a = teleport_flash_peak * info->teleport_flash;
+                out.tint    = out.tint * (1.f - a) + Vecf4(a);
+            }
             /* Deaths are told while dead too */
             if(info && cam && cinematic.show_hud && !cam->cinematic)
             {
@@ -1778,6 +1784,7 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
     std::array<blam::tag_t const*, 2>    m_unit_huds{}; /*!< Full, split screen */
     /* Dims the view and lifts it green */
     static inline Vecf4 const vision_tint{.04f, .22f, .06f, .4f};
+    static constexpr f32      teleport_flash_peak    = .8f;
     std::map<u64, warning_t> m_warnings; /*!< Per seat */
     blam::hud_number const*              m_digits{nullptr};
     blam::hud_globals const*             m_hudg{nullptr};

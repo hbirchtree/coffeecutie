@@ -1088,6 +1088,7 @@ struct PlayerInfo
         f32 speed{0.f};
         f32 vision{0.f};
     } powerups;
+    f32 teleport_flash{0.f}; /*!< A teleporter's flash on its screen: 1 at the hop, fading to 0 */
 
     /*! Double speed scales walking, firing and reloading */
     f32 speed_scale() const

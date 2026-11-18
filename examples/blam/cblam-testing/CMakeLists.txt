@@ -60,6 +60,7 @@ coffee_application(
         game/multiplayer_controller.cpp
         game/object_respawn.cpp
         game/save_state.cpp
+        game/teleporters.cpp
         graphics.cpp
         input/touch_overlay.cpp
         loading/loading.cpp
