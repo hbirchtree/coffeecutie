@@ -169,6 +169,7 @@ struct SoundCache
         auto ranges_ = *found;
         for(auto const& range : ranges_)
         {
+            u32 const range_idx = static_cast<u32>(&range - ranges_.data());
             ranges.emplace_back(
                 SoundItem::pitch_range_t{
                     .range = &range,
@@ -186,7 +187,8 @@ struct SoundCache
                         .gain        = perm.gain,
                         .next        = perm.next_permutation_idx,
                     });
-                auto data_ = index.deref(*tag, perm.sample_data());
+                u32 const perm_idx = static_cast<u32>(&perm - perms_.value().data());
+                auto      data_    = index.sound_samples(*tag, range_idx, perm_idx, perm);
                 if(!data_.has_value())
                     continue;
                 auto  data    = data_.value();

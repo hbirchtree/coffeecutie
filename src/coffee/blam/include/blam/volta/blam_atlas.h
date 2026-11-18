@@ -4,6 +4,10 @@
 #include "blam_magic_data.h"
 #include "blam_reference.h"
 
+#include <memory>
+#include <string_view>
+#include <unordered_map>
+
 namespace blam {
 
 struct locator_block
@@ -80,6 +84,18 @@ struct atlas_view
 {
     map_ptr            magic;
     tag_atlas_t const* header;
+    /*! Its entries by name, when index_names() built them */
+    std::shared_ptr<std::unordered_map<std::string_view, locator_block const*> const> names;
+
+    inline std::optional<locator_block const*> find(std::string_view name) const
+    {
+        if(!names)
+            return header->by_name(name);
+        auto it = names->find(name);
+        if(it == names->end())
+            return std::nullopt;
+        return it->second;
+    }
 
     static inline atlas_view from_data(semantic::Span<const u8> const& data)
     {
@@ -87,6 +103,15 @@ struct atlas_view
             .magic  = map_ptr(data),
             .header = tag_atlas_t::from_data(data),
         };
+    }
+
+    /*! For an atlas looked up by name many times over */
+    inline void index_names()
+    {
+        auto index = std::make_shared<std::unordered_map<std::string_view, locator_block const*>>();
+        for(auto const& loc : header->locators())
+            index->emplace(header->get_name(loc), &loc);
+        names = std::move(index);
     }
 
     static inline atlas_view from_ptr(map_ptr const& data)
