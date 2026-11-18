@@ -802,7 +802,11 @@ void create_resources(compo::EntityContainer& e)
                  if(ev.event == "spawn_object")
                  {
                      /* {"tag": "<name>", "class": "bipd", "position": [x,y,z],
-                      *  "yaw": deg, "server": bool, "held": "<weap name>"} --
+                      *  "yaw": deg, "server": bool, "held": "<weap name>",
+                      *  "ahead": wu, "player": idx} -- "ahead" puts it at
+                      * the feet of seat 0 (or of player "player", remote
+                      * too), that far along its view, in place of
+                      * "position"; 
                       * class is optional, but
                       * names repeat across classes. On a server the spawn is
                       * replicated; on a client, "server" requests it from the
@@ -846,6 +850,22 @@ void create_resources(compo::EntityContainer& e)
                              (*pos)[0].get<f32>(),
                              (*pos)[1].get<f32>(),
                              (*pos)[2].get<f32>()};
+                     if(auto ahead = ev.data.find("ahead"); ahead != ev.data.end())
+                         for(auto player : e.select<PlayerCamera, PlayerInfo>())
+                         {
+                             auto const& info = player.get<PlayerInfo>();
+                             if(ev.data.contains("player")
+                                    ? info.player_idx != ev.data.value("player", 0u)
+                                    : info.seat_idx != 0 || info.is_remote())
+                                 continue;
+                             auto const& cam  = player.get<PlayerCamera>();
+                             Vecf3       view = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+                             view.z           = 0.f;
+                             if(glm::dot(view, view) > 1e-6f)
+                                 view = glm::normalize(view);
+                             spawn.position = cam.camera.position + view * ahead->get<f32>() -
+                                              Vecf3{0.f, 0.f, info.eye_height()};
+                         }
                      spawn.rotation =
                          glm::angleAxis(
                              ev.data.value("yaw", 0.f) * glm::pi<f32>() / 180.f,
