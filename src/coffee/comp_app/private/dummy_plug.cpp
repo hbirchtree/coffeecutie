@@ -68,6 +68,8 @@ enum class type_t
     controller_axis,
     cs, /* a whole controller state */
 
+    text, /* written text, or an input method's composition */
+
     custom,
 };
 
@@ -351,6 +353,28 @@ void queue_input_event(
             std::chrono::milliseconds(event.value("duration", 0u));
         key.mod = CIKeyEvent::NoneModifier;
         emit_future_event(start_time + unpress_delay, ievent, key);
+        break;
+    }
+    case type_t::text: {
+        auto text = event.value("text", std::string());
+        if(event.value("composing", false))
+        {
+            ievent.type = CIEvent::TextEdit;
+            Coffee::Input::CIWEditEvent edit;
+            /* The caret defaults to the composition's end */
+            libc_types::i32 end = text.empty() ? -1 : 0;
+            for(char c : text)
+                end += (static_cast<unsigned char>(c) & 0xC0) != 0x80;
+            edit.cursor = event.value("cursor", end);
+            edit.text   = std::move(text);
+            emit_future_event(start_time, ievent, edit);
+        } else
+        {
+            ievent.type = CIEvent::TextInput;
+            Coffee::Input::CIWriteEvent write;
+            write.text = std::move(text);
+            emit_future_event(start_time, ievent, write);
+        }
         break;
     }
     case type_t::mouse_move: {
@@ -1123,6 +1147,7 @@ void insert_dummy_plug(
                     case type_t::cs:
                     case type_t::controller_connect:
                     case type_t::key:
+                    case type_t::text:
                     case type_t::mouse_button:
                     case type_t::mouse_move: {
                         auto shifted    = event;
@@ -1626,6 +1651,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void coffee_dummy_plug_event(
     case type_t::cs:
     case type_t::controller_connect:
     case type_t::key:
+    case type_t::text:
     case type_t::mouse_button:
     case type_t::mouse_move: {
         if(auto* input_bus =
