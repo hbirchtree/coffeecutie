@@ -131,7 +131,7 @@ struct GravityStorm
 
     /* Rows fill out to either side of the wielder, then stack up */
     static constexpr u32 ring_per_row  = 8;
-    static constexpr u32 ring_most     = 3 * ring_per_row;
+    static constexpr u32 ring_most     = 8 * ring_per_row;
     static constexpr f32 ring_interval = .2f;  /* s between new rings */
     static constexpr f32 ring_grow     = .3f;  /* s to open up */
     static constexpr f32 ring_fade     = .4f;  /* s to close once let go */
