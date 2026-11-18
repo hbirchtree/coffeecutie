@@ -227,7 +227,7 @@ struct CIScrollEvent : BaseEvent<CIEvent::Scroll>
 };
 
 /*!
- * \brief Text input event, rich variant
+ * \brief Text written, as UTF-8; it ends any composition in progress
  */
 struct CIWriteEvent : BaseEvent<CIEvent::TextInput>
 {
@@ -235,13 +235,15 @@ struct CIWriteEvent : BaseEvent<CIEvent::TextInput>
 };
 
 /*!
- * \brief Text editing event, modifies a text input field
+ * \brief Text an input method is composing (Hangul syllables, a kana
+ * reading), shown at the caret but not yet written. Empty when the
+ * composition ends; while it is not, editing keys belong to the input method
  */
 struct CIWEditEvent : BaseEvent<CIEvent::TextEdit>
 {
-    i32         cursor; /*!< Cursor position*/
-    i32         len;    /*!< Text length*/
-    std::string text;   /*!< Current text*/
+    i32         cursor{-1}; /*!< Caret in the composition, in code points*/
+    i32         len{-1};    /*!< Selected code points from the caret*/
+    std::string text;       /*!< The whole composition, UTF-8*/
 };
 
 /*!
