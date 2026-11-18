@@ -3031,7 +3031,7 @@ struct MeshRenderer
            p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
             return;
         if(m_players.empty() ||
-           (scene.sprites.empty() && scene.ribbons.empty() &&
+           (scene.sprites.empty() && scene.ribbons.empty() && scene.meshes.empty() &&
             scene.flares.empty() && scene.decals.empty()) ||
            !m_effects.load(*m_api))
             return;
@@ -3799,7 +3799,7 @@ struct LegacyMeshRenderer
            p.template subsystem<LoadingStatus>().loaded_map !=
                LoadingStatus::loaded)
             return;
-        if(scene.sprites.empty() && scene.ribbons.empty() &&
+        if(scene.sprites.empty() && scene.ribbons.empty() && scene.meshes.empty() &&
            scene.flares.empty() && scene.decals.empty())
             return;
 
