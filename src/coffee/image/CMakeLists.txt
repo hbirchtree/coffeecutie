@@ -3,7 +3,7 @@ find_package(Stb REQUIRED)
 coffee_library(
   TARGET Image
   LIBRARIES Core
-  SOURCES private/cimage.cpp
+  SOURCES private/cimage.cpp private/font.cpp
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
               $<INSTALL_INTERFACE:include>
 )
