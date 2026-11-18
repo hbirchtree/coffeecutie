@@ -4000,11 +4000,20 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                             weapon.rounds_total = *reserve;
                 }
             }
-            /* Which of the two is held is the server's to say */
+            /* Which of the two is held is the server's to say: it takes a
+             * client's swap from its presses, a client the server's order */
             auto const known = equipment_of(p, player.id(), info);
-            if((known.weapon == it->second.weapon && known.slung == it->second.slung) ||
-               (known.weapon == it->second.slung && known.slung == it->second.weapon))
+            if(known.weapon == it->second.weapon && known.slung == it->second.slung)
                 continue;
+            if(known.weapon == it->second.slung && known.slung == it->second.weapon)
+            {
+                if(auto* equip = p.get<BipedEquipment>(player.id()); equip && !is_server())
+                {
+                    std::swap(equip->weapons[0], equip->weapons[1]);
+                    equip->reloading = false;
+                }
+                continue;
+            }
             /* Tag ids are the map's own: a report from the last map waits for
              * the next */
             auto const& files = p.subsystem<BlamFiles<halo_version>>();
