@@ -6,6 +6,7 @@ coffee_library(
 )
 
 if(EMSCRIPTEN)
+  target_sources(SDL3Components PRIVATE private/web_text_input.cpp)
   target_compile_options(SDL3Components PUBLIC -sUSE_SDL=3 -Wno-experimental)
   target_link_options(SDL3Components PUBLIC -sUSE_SDL=3 -Wno-experimental)
 else()

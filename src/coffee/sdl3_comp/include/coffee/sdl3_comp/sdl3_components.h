@@ -237,6 +237,14 @@ struct KeyboardInput
 
     virtual void startWriting() const final;
     virtual void stopWriting() const final;
+    virtual void setTextArea(
+        comp_app::position_t const& origin,
+        comp_app::size_2d_t const&  size,
+        libc_types::i32             cursor) const final;
+
+  private:
+    /* The browser's EditContext carries text, not SDL */
+    mutable bool m_editContext{false};
 };
 
 struct MouseInput

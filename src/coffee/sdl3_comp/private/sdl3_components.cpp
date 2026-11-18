@@ -19,6 +19,7 @@
 #include <emscripten/html5_webgl.h>
 
 #include "web_gamepad_db.h"
+#include "web_text_input.h"
 #endif
 
 #include <coffee/core/debug/formatting.h>
@@ -1084,6 +1085,8 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     while(SDL_PeepEvents(
         &event, 1, SDL_GETEVENT, SDL_EVENT_TEXT_EDITING, SDL_EVENT_TEXT_INPUT))
     {
+        if(m_editContext)
+            continue;
         switch(event.type)
         {
         case SDL_EVENT_TEXT_EDITING: {
@@ -1104,18 +1107,66 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
             break;
         }
     }
+
+#if defined(COFFEE_EMSCRIPTEN)
+    while(auto text = web_text_input::next())
+    {
+        if(text->composing)
+        {
+            CIWEditEvent edit;
+            edit.cursor = text->cursor;
+            edit.text   = std::move(text->text);
+            EMIT_IEVENT(edit)
+        } else
+        {
+            CIWriteEvent write;
+            write.text = std::move(text->text);
+            EMIT_IEVENT(write)
+        }
+    }
+#endif
 }
 
 void KeyboardInput::startWriting() const
 {
+    /* Also on the web, where it keeps SDL from cancelling keydown */
     if(active_window)
         SDL_StartTextInput(active_window);
+#if defined(COFFEE_EMSCRIPTEN)
+    m_editContext = web_text_input::start();
+#endif
 }
 
 void KeyboardInput::stopWriting() const
 {
     if(active_window)
         SDL_StopTextInput(active_window);
+#if defined(COFFEE_EMSCRIPTEN)
+    if(m_editContext)
+        web_text_input::stop();
+#endif
+    m_editContext = false;
+}
+
+void KeyboardInput::setTextArea(
+    comp_app::position_t const& origin,
+    comp_app::size_2d_t const&  size,
+    libc_types::i32             cursor) const
+{
+#if defined(COFFEE_EMSCRIPTEN)
+    web_text_input::area(origin.x, origin.y, size.w, size.h, cursor);
+#else
+    if(!active_window)
+        return;
+    /* Pixels to window coordinates, which differ on high-DPI displays */
+    int w = 0, pw = 0;
+    SDL_GetWindowSize(active_window, &w, nullptr);
+    SDL_GetWindowSizeInPixels(active_window, &pw, nullptr);
+    float const    scale = pw > 0 ? static_cast<float>(w) / pw : 1.f;
+    auto const     to    = [scale](int v) { return static_cast<int>(v * scale); };
+    SDL_Rect const rect{to(origin.x), to(origin.y), to(size.w), to(size.h)};
+    SDL_SetTextInputArea(active_window, &rect, to(cursor));
+#endif
 }
 
 void MouseInput::load(entity_container& e, comp_app::app_error&)

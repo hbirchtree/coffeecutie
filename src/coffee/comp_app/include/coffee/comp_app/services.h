@@ -425,6 +425,16 @@ struct KeyboardInput
     {
     }
 
+    /*! Where text is being written, in window pixels, so an input method
+     *  can put its candidate list beside it; `cursor` is the caret's x
+     *  offset into the area */
+    virtual void setTextArea(
+        position_t const& /*origin*/,
+        size_2d_t const& /*size*/,
+        libc_types::i32 /*cursor*/) const
+    {
+    }
+
     virtual KeyModifiers key(libc_types::u32) const
     {
         return KeyModifiers::NoneModifier;
