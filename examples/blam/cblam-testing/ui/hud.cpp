@@ -20,6 +20,7 @@
 #include <coffee/components/restricted_subsystem.h>
 
 #include <array>
+#include <map>
 #include <span>
 #include <string>
 #include "audio/sounds.h"
@@ -489,7 +490,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(!blip)
             return;
         Vecf2 const size   = frame->size * scale_of(fg);
-        Vecf2 const centre = place(anchor_t::bottom_left, fg.anchor_offset, size) + size * .5f;
+        Vecf2 const corner = place(anchor_t::bottom_left, fg.anchor_offset, size);
+        Vecf2 const centre = corner + size * .5f;
+        m_sensor_top[m_view->seat] = corner.y;
         f32 const   radius = std::min(size.x, size.y) * .5f * sensor_ring;
         f32 const   range  = m_hudg->motion_sensor_range > 0.f ? m_hudg->motion_sensor_range : 20.f;
 
@@ -1393,10 +1396,14 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 text += u'\n';
             text += line;
         }
-        Vecf4 const color = m_hudg->text_color;
+        /* Above the motion sensor, where it was last drawn; the top left
+         * is the prompts' */
+        auto const  sensor = m_sensor_top.find(m_view->seat);
+        f32 const   top    = sensor != m_sensor_top.end() ? sensor->second : HudScene::height - safe_inset.y - feed_bottom;
+        Vecf4 const color  = m_hudg->text_color;
         m_view->texts.push_back({
             .runs  = {{.text = std::move(text)}},
-            .at    = {safe_inset.x, HudScene::height - safe_inset.y - feed_bottom - feed_line * m_feed.size()},
+            .at    = {safe_inset.x, top - feed_gap - feed_line * m_feed.size()},
             .color = Vecf4(color.y, color.z, color.w, 1.f),
         });
     }
@@ -1409,7 +1416,9 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     static constexpr f32    feed_seconds = 6.f;   /* a message stays, my pick */
     static constexpr size_t feed_lines   = 4;
     static constexpr f32    feed_line    = 14.f;  /* HUD px */
-    static constexpr f32    feed_bottom  = 110.f; /* HUD px above the bottom, clear of the motion sensor */
+    static constexpr f32    feed_gap     = 6.f;   /* HUD px over the motion sensor */
+    static constexpr f32    feed_bottom  = 110.f; /* HUD px above the bottom, with no sensor seen yet */
+    std::map<u32, f32>      m_sensor_top;         /* HUD y of each seat's motion sensor */
 
     /* Everyone's score, best first */
     void scoreboard(Proxy& p, GameState const& game, Vecf2 window)
@@ -1587,17 +1596,19 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 f32 const a = teleport_flash_peak * info->teleport_flash;
                 out.tint    = out.tint * (1.f - a) + Vecf4(a);
             }
-            /* Deaths are told while dead too */
-            if(info && cam && cinematic.show_hud && !cam->cinematic)
-            {
-                m_view  = &out;
-                m_width = out.width;
-                kill_feed(p, *info);
-            }
             if(!info || !cam || !net || !equip || !status || !cinematic.show_hud ||
                cam->cinematic || !biped_shown(*info, *cam, *net) || !info->mode.physics ||
                status->dead)
+            {
+                /* Deaths are told while dead too */
+                if(info && cam && cinematic.show_hud && !cam->cinematic)
+                {
+                    m_view  = &out;
+                    m_width = out.width;
+                    kill_feed(p, *info);
+                }
                 continue;
+            }
             m_view  = &out;
             m_width = out.width;
 
@@ -1633,6 +1644,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                         grenade_hud(hud, carried.left);
             }
             messages(p, cinematic, *info, *cam, *equip);
+            kill_feed(p, *info);
             nav_points(p, *info, *cam);
         }
         m_view = nullptr;
@@ -1680,6 +1692,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 blam::map_ptr(static_cast<semantic::BytesConst>(*files.bitmap_file)));
         m_multiplayer = files.container.map->map_type == blam::maptype_t::multiplayer;
         m_feed.clear();
+        m_sensor_top.clear();
         m_game_text.clear();
         if(auto text = m_index.tag_of("ui\\multiplayer_game_text"); text.has_value())
             if(auto list = (*text)->template data<blam::ui::unicode_string_list>(*m_magic); list.has_value())
