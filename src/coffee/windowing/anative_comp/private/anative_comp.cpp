@@ -213,27 +213,52 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 /*idx*/) const
     return "Generic Controller";
 }
 
+void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
+{
+    using namespace Coffee::Input;
+
+    if(!m_editor)
+        return;
+    auto bus = p.service<comp_app::BasicEventBus<CIEvent>>();
+    while(auto text = android::text_input::next())
+    {
+        CIEvent event;
+        if(text->composing)
+        {
+            CIWEditEvent edit;
+            edit.text   = std::move(text->text);
+            edit.cursor = edit.text.empty() ? -1 : 0;
+            /* The caret sits after the composition */
+            for(char c : edit.text)
+                edit.cursor += (static_cast<unsigned char>(c) & 0xC0) != 0x80;
+            event.type = CIEvent::TextEdit;
+            bus->process(event, &edit);
+        } else
+        {
+            CIWriteEvent write;
+            write.text = std::move(text->text);
+            event.type = CIEvent::TextInput;
+            bus->process(event, &write);
+        }
+    }
+}
+
 void KeyboardInput::startWriting() const
 {
-    // #if ANDROID_API_LEVEL >= 23
-    //     if(auto window = android::activity_manager().window())
-    //         ANativeActivity_showSoftInput(
-    //             (*window).activity, ANATIVEACTIVITY_SHOW_SOFT_INPUT_FORCED);
-    // #endif
     m_writing = true;
-    android::input_method_manager::show_soft_input();
+    m_editor  = android::text_input::start();
+    if(!m_editor)
+        android::input_method_manager::show_soft_input();
 }
 
 void KeyboardInput::stopWriting() const
 {
-    // #if ANDROID_API_LEVEL >= 23
-    //     if(auto window = android::activity_manager().window())
-    //         ANativeActivity_hideSoftInput(
-    //             (*window).activity,
-    //             ANATIVEACTIVITY_HIDE_SOFT_INPUT_IMPLICIT_ONLY);
-    // #endif
     m_writing = false;
-    android::input_method_manager::hide_soft_input();
+    if(m_editor)
+        android::text_input::stop();
+    else
+        android::input_method_manager::hide_soft_input();
+    m_editor = false;
 }
 
 bool MouseInput::mouseGrabbed() const

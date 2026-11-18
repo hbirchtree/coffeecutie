@@ -440,6 +440,100 @@ void input_method_manager::hide_soft_input()
     input_method_manager[hideSoftInputFromWindow](token, 0);
 }
 
+namespace {
+
+/* The activity as its own class, which FindClass cannot see from here */
+jnipp::wrapping::jobject own_activity()
+{
+    auto getClass = "getClass"_jmethod.ret("java.lang.Class");
+    auto type     = app_objects::activity()[getClass]();
+    return jnipp::wrapping::jclass(
+        static_cast<::jclass>(type.object.instance),
+        "dev.speen.CoffeeNativeActivity")(coffee_app->activity->clazz);
+}
+
+std::string to_utf8(std::u16string const& units)
+{
+    std::string out;
+    for(size_t i = 0; i < units.size(); ++i)
+    {
+        char32_t point = units[i];
+        if(point >= 0xD800 && point < 0xDC00 && i + 1 < units.size() &&
+           units[i + 1] >= 0xDC00 && units[i + 1] < 0xE000)
+            point = 0x10000 + ((point - 0xD800) << 10) + (units[++i] - 0xDC00);
+        else if(point >= 0xD800 && point < 0xE000)
+            point = 0xFFFD;
+        if(point < 0x80)
+            out += static_cast<char>(point);
+        else if(point < 0x800)
+            out += {static_cast<char>(0xC0 | (point >> 6)), static_cast<char>(0x80 | (point & 0x3F))};
+        else if(point < 0x10000)
+            out += {
+                static_cast<char>(0xE0 | (point >> 12)),
+                static_cast<char>(0x80 | ((point >> 6) & 0x3F)),
+                static_cast<char>(0x80 | (point & 0x3F)),
+            };
+        else
+            out += {
+                static_cast<char>(0xF0 | (point >> 18)),
+                static_cast<char>(0x80 | ((point >> 12) & 0x3F)),
+                static_cast<char>(0x80 | ((point >> 6) & 0x3F)),
+                static_cast<char>(0x80 | (point & 0x3F)),
+            };
+    }
+    return out;
+}
+
+} // namespace
+
+bool text_input::start()
+{
+    auto startTextInput = "startTextInput"_jmethod;
+    try
+    {
+        own_activity()[startTextInput]();
+        return true;
+    } catch(jnipp::java_exception const&)
+    {
+        /* Not our activity */
+        return false;
+    }
+}
+
+void text_input::stop()
+{
+    auto stopTextInput = "stopTextInput"_jmethod;
+    try
+    {
+        own_activity()[stopTextInput]();
+    } catch(jnipp::java_exception const&)
+    {
+    }
+}
+
+std::optional<text_input::event> text_input::next()
+{
+    /* UTF-16 units: jnipp's strings come through JNI's modified UTF-8 */
+    auto pollTextInput = "pollTextInput"_jmethod.ret<re::char_array_>();
+    try
+    {
+        auto units = own_activity()[pollTextInput]();
+        if(!units.arrayRef.instance)
+            return std::nullopt;
+        std::u16string utf16;
+        for(auto unit : *units)
+            utf16.push_back(static_cast<char16_t>(unit));
+        auto utf8 = to_utf8(utf16);
+        /* "w" + text written, "e" + the composition */
+        if(utf8.empty())
+            return std::nullopt;
+        return event{utf8.front() == 'e', utf8.substr(1)};
+    } catch(jnipp::java_exception const&)
+    {
+        return std::nullopt;
+    }
+}
+
 libc_types::i32 key_character_map::unicode_char(
     libc_types::i32 device, libc_types::i32 keycode, libc_types::i32 meta)
 {

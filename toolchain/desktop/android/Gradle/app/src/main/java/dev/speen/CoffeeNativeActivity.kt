@@ -2,13 +2,17 @@ package dev.speen
 
 import android.annotation.SuppressLint
 import android.app.NativeActivity
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
+import java.util.ArrayDeque
 
 @Suppress("DEPRECATION")
 class CoffeeNativeActivity : NativeActivity() {
@@ -44,6 +48,37 @@ class CoffeeNativeActivity : NativeActivity() {
 
         makeFullscreen();
     }
+
+    private val textEvents = ArrayDeque<String>()
+    private var textView: TextInputView? = null
+
+    private fun inputMethods() =
+        getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+    /* Called from native code: soft keyboard and input method on our editor */
+    fun startTextInput() = runOnUiThread {
+        val view = textView ?: TextInputView(this) { event ->
+            synchronized(textEvents) { textEvents.add(event) }
+        }.also {
+            addContentView(it, ViewGroup.LayoutParams(1, 1))
+            textView = it
+        }
+        view.requestFocus()
+        view.post { inputMethods().showSoftInput(view, 0) }
+    }
+
+    fun stopTextInput() = runOnUiThread {
+        val view = textView ?: return@runOnUiThread
+        inputMethods().hideSoftInputFromWindow(view.windowToken, 0)
+        view.clearFocus()
+        inputMethods().restartInput(view)
+        synchronized(textEvents) { textEvents.clear() }
+    }
+
+    /* Called from native code until null: "w" + text written, "e" + the
+     * composition, as UTF-16 */
+    fun pollTextInput(): CharArray? =
+        synchronized(textEvents) { textEvents.poll() }?.toCharArray()
 
     @SuppressLint("ObsoleteSdkInt")
     fun makeFullscreen() {
