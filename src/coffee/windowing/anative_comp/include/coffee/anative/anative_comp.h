@@ -79,10 +79,18 @@ struct KeyboardInput
     : comp_app::interfaces::BasicKeyboardInput
     , comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
 {
+    using readable_services = comp_app::subsystem_list<
+        comp_app::BasicEventBus<Coffee::Input::CIEvent>>;
+    using proxy_type = comp_app::detail::restricted::proxy_t<KeyboardInput>;
+
+    void start_restricted(proxy_type& p, time_point const&);
+
     void startWriting() const;
     void stopWriting() const;
 
     mutable bool m_writing{false};
+    /* Input methods write through the activity's editor view */
+    mutable bool m_editor{false};
 };
 
 struct MouseInput

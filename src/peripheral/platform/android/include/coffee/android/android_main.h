@@ -156,6 +156,23 @@ struct input_method_manager
     static void hide_soft_input();
 };
 
+/* Text from input methods, through an editor view of the activity's own
+ * (dev.speen.CoffeeNativeActivity): NativeActivity's view has none, so soft
+ * keyboards and their compositions never reach native code without it */
+struct text_input
+{
+    struct event
+    {
+        bool        composing{false}; /* else written */
+        std::string text;             /* UTF-8 */
+    };
+
+    /* False if the activity has no such editor */
+    static bool                 start();
+    static void                 stop();
+    static std::optional<event> next();
+};
+
 struct key_character_map
 {
     /* Unicode code point for the key, 0 if it produces none */
