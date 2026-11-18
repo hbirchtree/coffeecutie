@@ -2253,6 +2253,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         gsl::span<T> const&           multi = {},
         int                           flags = k_nSteamNetworkingSend_Reliable,
         std::set<HSteamNetConnection> connections = {},
+        gsl::span<const char>         trailing    = {},
         u16                           lane        = 0)
     {
         if(m_connections.empty() || multi.empty())
@@ -2261,7 +2262,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         // TODO: Add data size validation
 
         auto const payload_size =
-            sizeof(MessageBase) + multi.size() * sizeof(T);
+            sizeof(MessageBase) + multi.size() * sizeof(T) + trailing.size();
         char* payload_buf = new char[payload_size];
 
         auto* header       = reinterpret_cast<MessageBase*>(payload_buf);
@@ -2272,6 +2273,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
         auto* values = reinterpret_cast<T*>(payload_buf + sizeof(MessageBase));
         memcpy(values, multi.data(), multi.size_bytes());
+        if constexpr(has_trailing_data<T>)
+            if(!trailing.empty())
+            {
+                if(multi.size() != 1)
+                    throw std::out_of_range("messages with trailing data cannot be multi-valued");
+                header->set_trailing_size<T>(trailing.size_bytes());
+                memcpy(
+                    payload_buf + sizeof(MessageBase) + multi.size_bytes(),
+                    trailing.data(),
+                    trailing.size_bytes());
+            }
 
         std::vector<SteamNetworkingMessage_t*> messages;
         for(auto const& [connection, info] : m_connections)
@@ -2308,6 +2320,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         Message<T>&&                  data,
         int                           flags = k_nSteamNetworkingSend_Reliable,
         std::set<HSteamNetConnection> connections = {},
+        gsl::span<const char>         trailing = {},
         u16                           lane        = 0)
     {
         return send_all<T>(
@@ -2315,6 +2328,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             gsl::span<T>(&data.data, 1),
             flags,
             connections,
+            trailing,
             lane);
     }
 
@@ -2337,7 +2351,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         SyncPoint released{.released = 1};
         name.copy(released.name.data(), released.name.size() - 1);
         for(auto connection : verified)
-            send_single(connection, Message<SyncPoint>(SyncPoint(released)));
+            send_single(connection, Message<SyncPoint>(SyncPoint(released)), {});
         m_syncs.erase(point);
         cDebug("Sync point \"{}\" released for {} client(s)", name, verified.size());
         GameEvent      ev{.type = GameEvent::SyncPoint};
@@ -2347,11 +2361,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     template<typename T>
     void send_single(
-        HSteamNetConnection connection,
-        Message<T>&&        data,
-        int                 flags = k_nSteamNetworkingSend_Reliable)
+        HSteamNetConnection   connection,
+        Message<T>&&          data,
+        int                   flags = k_nSteamNetworkingSend_Reliable,
+        gsl::span<const char> trailing = {})
     {
-        return send_all(std::move(data), flags, {connection});
+        return send_all(std::move(data), flags, {connection}, trailing);
     }
 
     void start_restricted(Proxy& p, time_point const& t)
@@ -2420,7 +2435,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     message->Release();
                     continue;
                 }
-                server_receive_payload(p, message->m_conn, payload);
+                server_receive_payload(p, message->m_conn, payload, message->GetSize());
                 message->Release();
             }
 
@@ -2620,7 +2635,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     message->Release();
                     continue;
                 }
-                client_receive_payload(p, payload);
+                client_receive_payload(p, payload, message->GetSize());
                 message->Release();
             }
             /* Others are shown where they were a few ticks ago */
@@ -2736,6 +2751,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     }),
                     k_nSteamNetworkingSend_UnreliableNoNagle,
                     {m_connection},
+                    {},
                     FRAME_UPDATE_LANE);
     }
 
@@ -2764,6 +2780,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }),
             k_nSteamNetworkingSend_UnreliableNoNagle,
             {m_connection},
+            {},
             FRAME_UPDATE_LANE);
     }
 
@@ -2937,6 +2954,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             gsl::span<TickInput>(batch),
             k_nSteamNetworkingSend_UnreliableNoNagle,
             {m_connection},
+            {},
             FRAME_UPDATE_LANE);
     }
 
@@ -3045,6 +3063,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 gsl::span<ObjectImpact>(impacts),
                 k_nSteamNetworkingSend_UnreliableNoNagle,
                 std::move(targets),
+                {},
                 FRAME_UPDATE_LANE);
     }
 
@@ -3145,6 +3164,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             held ? k_nSteamNetworkingSend_UnreliableNoNagle
                  : k_nSteamNetworkingSend_Reliable,
             {m_connection},
+            {},
             FRAME_UPDATE_LANE);
         sent = held;
     }
@@ -3394,6 +3414,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     gsl::span<ObjectSync>(objects),
                     k_nSteamNetworkingSend_UnreliableNoNagle,
                     {connection},
+                    {},
                     FRAME_UPDATE_LANE);
         }
     }
@@ -3968,7 +3989,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     }
 
     void server_receive_payload(
-        Proxy& p, HSteamNetConnection connection, MessageBase const& payload)
+        Proxy& p, HSteamNetConnection connection, MessageBase const& payload, size_t packet_length)
     {
         auto& player_info = m_connections[connection];
         switch(payload.type)
@@ -4264,9 +4285,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             bool const  match  = theirs == m_fingerprint;
             journal(
                 match ? "net_map_verified" : "net_map_mismatch",
-                {{"player_idx", player_info.idx},
-                 {"fingerprint", to_string(theirs)},
-                 {"expected", to_string(m_fingerprint)}});
+                {
+                    {"player_idx", player_info.idx},
+                    {"fingerprint", to_string(theirs)},
+                    {"expected", to_string(m_fingerprint)},
+                });
             if(!match)
             {
                 cWarning(
@@ -4294,6 +4317,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     k_nSteamNetworkingSend_Reliable,
                     {connection});
             }
+            break;
+        }
+        case MessageBase::PlayerChat: {
+            auto [chat, message] = payload.value_with_trailing<PlayerChatMessage>(packet_length);
+            if(!chat)
+                break;
+            cDebug(
+                "Chat message received: {} bytes: {}",
+                message.size(),
+                std::string_view(message.data(), message.size()));
             break;
         }
         case MessageBase::GameEvent: {
@@ -4401,7 +4434,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             {m_connection});
     }
 
-    void client_receive_payload(Proxy& p, MessageBase const& payload)
+    void client_receive_payload(Proxy& p, MessageBase const& payload, size_t packet_length)
     {
         switch(payload.type)
         {
@@ -4724,6 +4757,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 Message<PlayerJoin>({
                     .player_name = *blam::bl_string::from(player_name),
                 }));
+            const char sample_msg[] = "meow meow I'm a 고양이";
+            send_single(
+                m_connection,
+                Message<PlayerChatMessage>({}),
+                k_nSteamNetworkingSend_Reliable,
+                gsl::span<const char>(sample_msg, sizeof(sample_msg) - 1));
             m_pending_seats = {0};
             break;
         }

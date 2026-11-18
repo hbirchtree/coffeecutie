@@ -19,6 +19,9 @@
 
 namespace net_messages {
 
+template<class T>
+concept has_trailing_data = requires(T v) { T::has_trailing_data; };
+
 using libc_types::i16;
 using libc_types::i64;
 using libc_types::u16;
@@ -119,6 +122,7 @@ struct MessageBase
 
         /* A player's death, for the kill messages */
         KillFeed,
+        PlayerChat,
     } type{None};
 
     u32 request{};
@@ -139,6 +143,18 @@ struct MessageBase
 
     template<typename T>
     gsl::span<const T> values() const;
+
+    template<typename T>
+    requires has_trailing_data<T>
+    std::pair<T const*, gsl::span<const char>> value_with_trailing(size_t packet_length) const;
+
+    template<typename T>
+    requires has_trailing_data<T>
+    void set_trailing_size(size_t size_bytes)
+    {
+        Message<T>* impl = static_cast<Message<T>*>(this);
+        impl->data.*(T::trailing_length_member) = size_bytes;
+    }
 };
 
 C_FLAGS(MessageBase::Flags, u32)
@@ -167,6 +183,38 @@ gsl::span<const T> MessageBase::values() const
 {
     Message<T> const* impl = static_cast<Message<T> const*>(this);
     return gsl::make_span(&impl->data, num_values);
+}
+
+template<typename T>
+requires has_trailing_data<T>
+std::pair<T const*, gsl::span<const char>> MessageBase::value_with_trailing(size_t packet_length) const
+{
+    /* Keep your head on straight for the wire format:
+     * |===============|----|
+     * | MessageBase   |    |
+     * |===============|    |
+     * |               |    |=> Message<T>
+     * | T             |    |
+     * |               |    |
+     * |===============|----|
+     * |               |
+     * | Trailing data |
+     * |               |
+     * |===============|
+     */
+    Message<T> const* impl = static_cast<Message<T> const*>(this);
+    const char* message_base = reinterpret_cast<const char*>(this);
+    const char* trailing_base = message_base + sizeof(Message<T>);
+
+    if(sizeof(Message<T>) > packet_length)
+        return {nullptr, {}};
+
+    auto byte_size = impl->data.*(T::trailing_length_member);
+
+    if(num_values != 1 || (sizeof(Message<T>) + byte_size) > packet_length)
+        return {nullptr, {}};
+
+    return {&impl->data, gsl::span<const char>(trailing_base, byte_size)};
 }
 
 /*! Identifies the tag data a peer has loaded. Tag ids and object classes
@@ -768,6 +816,22 @@ struct alignas(8) NegotiateExtension
 
         u64 raw[10];
     } data;
+};
+
+struct alignas(8) PlayerChatMessage
+{
+    static constexpr auto message_type = MessageBase::PlayerChat;
+    static constexpr bool has_trailing_data = true;
+
+    enum chat_type_t
+    {
+        Self            = 0,
+        WordsOfTheWorld = 1,
+    } chat_type{Self};
+    u32 message_byte_length{}; // Length of the payload in bytes, not UTF-8 characters
+
+    static constexpr u32 PlayerChatMessage::* trailing_length_member = &PlayerChatMessage::message_byte_length;
+    static constexpr auto max_trailing_length = 1024;
 };
 
 /*
