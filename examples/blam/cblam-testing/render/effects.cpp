@@ -8,6 +8,7 @@
 #include "physics.h"
 #include "selected_version.h"
 #include "audio/sounds.h"
+#include "game/game_mode.h"
 #include "game/save_state.h"
 #include "ticks.h"
 
@@ -32,11 +33,13 @@ using EffectManifest = compo::SubsystemManifest<
         const PlayerInfo,
         const Attachment,
         const AnimationPlayback,
-        const Visibility>,
+        const Visibility,
+        const BipedEquipment>,
     type_list_t<
         EffectScene,
         PhysicsBus,
         GameEventBus,
+        const GameState,
         const LoadingStatus,
         const BlamFiles<halo_version>,
         const BSPCache<halo_version>,
@@ -332,6 +335,7 @@ struct EffectSystem
             m_placed_decals.clear();
             m_effect_decals.clear();
             m_antennas.clear();
+            m_flags.clear();
             m_sprite_pixels.clear();
             m_animations.clear();
         }
@@ -360,6 +364,7 @@ struct EffectSystem
         step_weather(p, scene, dt);
         step_decals(p, scene, dt);
         step_antennas(p, scene, dt);
+        step_flags(p, scene, dt);
     }
 
     /* ---- Decals ---- */
@@ -760,6 +765,193 @@ struct EffectSystem
         }
     }
 
+    /* ---- Flags ---- */
+
+    struct flag_instance_t
+    {
+        blam::scn::flag const* tag{nullptr};
+        u64                    parent{0};
+        std::vector<Vecf3>     points;   /* column by column, each top down */
+        std::vector<Vecf3>     previous; /* where each was a step ago */
+        f32                    pending{0.f}; /* seconds not yet stepped */
+    };
+
+    /* A cloth of width x height cells: the attached edge pinned along the
+     * tag's markers, the rest pulled by gravity and the wind */
+    void step_flags(Proxy& p, EffectScene& scene, f32 dt)
+    {
+        for(auto it = m_flags.begin(); it != m_flags.end();)
+        {
+            auto& f      = *it;
+            auto  marks  = f.tag->attachment_points.data(*m_magic);
+            u32 const cols = static_cast<u32>(std::max<i16>(f.tag->width, 0)) + 1;
+            u32 const rows = static_cast<u32>(std::max<i16>(f.tag->height, 0)) + 1;
+            if(!p.template get<Model>(f.parent) || !marks.has_value() || marks.value().empty() ||
+               cols < 2 || rows < 2)
+            {
+                it = m_flags.erase(it);
+                continue;
+            }
+            /* The attached edge: down from each marker to the next */
+            std::vector<std::optional<Vecf3>> pins(rows);
+            {
+                std::optional<Vecf3> prev;
+                u32                  prev_row = 0, row = 0;
+                for(auto const& mark : marks.value())
+                {
+                    auto const at = marker_place(p, f.parent, std::string(mark.marker_name.str()));
+                    if(!at || row >= rows)
+                        break;
+                    for(u32 r = prev ? prev_row : row; r <= row; r++)
+                        pins[r] = prev && row > prev_row
+                                      ? glm::mix(*prev, at->position, f32(r - prev_row) / f32(row - prev_row))
+                                      : at->position;
+                    prev     = at->position;
+                    prev_row = row;
+                    row += static_cast<u32>(std::max<i16>(mark.height_to_next, 0));
+                }
+            }
+            if(!pins[0])
+            {
+                ++it;
+                continue;
+            }
+            u32 last = 0;
+            for(u32 r = 0; r < rows; r++)
+                if(pins[r])
+                    last = r;
+            Vecf3 const down = last > 0 && glm::distance(*pins[last], *pins[0]) > 1e-4f
+                                   ? glm::normalize(*pins[last] - *pins[0])
+                                   : Vecf3{0.f, 0.f, -1.f};
+            f32 const cw = f.tag->cell_width, ch = f.tag->cell_height;
+            auto const at = [rows](u32 c, u32 r) { return c * rows + r; };
+            if(f.points.size() != cols * rows)
+            {
+                Vecf3 out = glm::cross(down, Vecf3{0.f, 0.f, 1.f});
+                out       = glm::length(out) > 1e-4f ? glm::normalize(out) : Vecf3{1.f, 0.f, 0.f};
+                f.points.resize(cols * rows);
+                for(u32 c = 0; c < cols; c++)
+                    for(u32 r = 0; r < rows; r++)
+                        f.points[at(c, r)] = *pins[0] + down * (r * ch) + out * (c * cw);
+                f.previous = f.points;
+            }
+
+            f.pending = std::min(f.pending + dt, flag_step * flag_max_steps);
+            for(; f.pending >= flag_step; f.pending -= flag_step)
+            {
+                f32 const   h    = flag_step;
+                Vecf3 const pull = Vecf3{0.f, 0.f, -flag_gravity};
+                for(u32 c = 0; c < cols; c++)
+                    for(u32 r = 0; r < rows; r++)
+                    {
+                        Vecf3&      x    = f.points[at(c, r)];
+                        Vecf3&      prev = f.previous[at(c, r)];
+                        Vecf3 const vel  = (x - prev) / h;
+                        Vecf3 const acc  = pull + (m_weather.wind - vel) * flag_drag;
+                        Vecf3 const next = x + (x - prev) * (1.f - flag_damping) + acc * (h * h);
+                        prev = x;
+                        x    = next;
+                    }
+                /* Cells keep their size; the attached edge stays put */
+                auto const hold = [&](u32 a, u32 b, f32 rest) {
+                    Vecf3&      pa   = f.points[a];
+                    Vecf3&      pb   = f.points[b];
+                    Vecf3 const d    = pb - pa;
+                    f32 const   len  = glm::length(d);
+                    if(len < 1e-6f)
+                        return;
+                    Vecf3 const fix = d * ((len - rest) / len * .5f);
+                    pa += fix;
+                    pb -= fix;
+                };
+                f32 const diag = std::sqrt(cw * cw + ch * ch);
+                for(u32 pass = 0; pass < flag_passes; pass++)
+                {
+                    for(u32 c = 0; c < cols; c++)
+                        for(u32 r = 0; r < rows; r++)
+                        {
+                            if(c + 1 < cols)
+                                hold(at(c, r), at(c + 1, r), cw);
+                            if(r + 1 < rows)
+                                hold(at(c, r), at(c, r + 1), ch);
+                            if(c + 1 < cols && r + 1 < rows)
+                            {
+                                hold(at(c, r), at(c + 1, r + 1), diag);
+                                hold(at(c + 1, r), at(c, r + 1), diag);
+                            }
+                        }
+                    for(u32 r = 0; r < rows; r++)
+                        if(pins[r])
+                            f.points[at(0, r)] = f.previous[at(0, r)] = *pins[r];
+                }
+            }
+
+            /* Coloured for the team it belongs to */
+            u32 const team   = flag_team(p, f.parent);
+            auto const* bmp  = flag_bitmap(team == 1 ? f.tag->blue_flag_shader : f.tag->red_flag_shader);
+            if(bmp)
+            {
+                EffectScene::mesh_t mesh{
+                    .bitmap   = bmp,
+                    .blend    = blam::scn::framebuffer_blending::alpha_blend,
+                    .audience = audience_of(p, f.parent),
+                };
+                auto const corner = [&](u32 c, u32 r) {
+                    mesh.positions.push_back(f.points[at(c, r)]);
+                    mesh.uv.push_back({f32(c) / f32(cols - 1), f32(r) / f32(rows - 1)});
+                };
+                for(u32 c = 0; c + 1 < cols; c++)
+                    for(u32 r = 0; r + 1 < rows; r++)
+                    {
+                        corner(c, r), corner(c + 1, r), corner(c + 1, r + 1);
+                        corner(c, r), corner(c + 1, r + 1), corner(c, r + 1);
+                    }
+                scene.meshes.push_back(std::move(mesh));
+            }
+            ++it;
+        }
+    }
+
+    /* A CTF flag's team: its marker names it when it lies about, the
+     * game's carrier when someone holds it */
+    u32 flag_team(Proxy& p, u64 entity)
+    {
+        auto const& state = p.template subsystem<GameState>();
+        for(auto const& nav : state.nav_points)
+            if(nav.object == entity && nav.flag == "ctf:1")
+                return 1;
+        /* Held in third person, or on the carrier's first-person model */
+        auto const* fp    = p.template get<Attachment>(entity);
+        u64 const   owner = fp ? fp->parent : 0;
+        for(auto ent : p.template select<PlayerInfo, BipedEquipment>())
+        {
+            auto [info, equip] = ent.components();
+            if(equip.objective.held != entity && ent.id() != owner)
+                continue;
+            for(u32 t = 0; t < state.flags.size(); t++)
+                if(state.flags[t].carrier == static_cast<i32>(info.player_idx))
+                    return t;
+        }
+        return 0;
+    }
+
+    /* The cloth's texture: its shader's first map, chicago on PC and
+     * transparent generic on Xbox */
+    blam::tagref_t const* flag_bitmap(blam::tagref_t const& shader)
+    {
+        auto const first = [this](auto const* tag) -> blam::tagref_t const* {
+            if(!tag)
+                return nullptr;
+            auto maps = tag->maps.data(*m_magic);
+            if(!maps.has_value() || maps.value().empty())
+                return nullptr;
+            return &static_cast<blam::tagref_t const&>(maps.value()[0].map.map);
+        };
+        if(auto const* map = first(tag_data<blam::shader::shader_chicago<blam::pc_version_t>>(shader, blam::tag_class_t::schi)))
+            return map;
+        return first(tag_data<blam::shader::shader_transparent>(shader, blam::tag_class_t::sotr));
+    }
+
     /* ---- Tag lookups ---- */
 
     template<typename T>
@@ -1052,6 +1244,10 @@ struct EffectSystem
                 m_lights.push_back(make_light(tag, {}, entity, marker, -1.f));
                 m_lights.back().scale = scale;
             }
+            break;
+        case tag_class_t::flag:
+            if(auto const* tag = tag_data<blam::scn::flag>(ref, tag_class_t::flag))
+                m_flags.push_back({.tag = tag, .parent = entity});
             break;
         case tag_class_t::ant:
             if(auto const* tag = tag_data<antenna>(ref, tag_class_t::ant))
@@ -2537,6 +2733,14 @@ struct EffectSystem
     std::vector<decal_instance_t>             m_placed_decals;
     std::vector<decal_instance_t>             m_effect_decals;
     std::vector<antenna_instance_t>           m_antennas;
+    std::vector<flag_instance_t>              m_flags;
+    /* Cloth: stepped at a fixed rate, a little gravity, mostly the air */
+    static constexpr f32 flag_step      = 1.f / 60.f;
+    static constexpr f32 flag_max_steps = 4.f;
+    static constexpr f32 flag_gravity   = 1.5f; /* wu/s^2 */
+    static constexpr f32 flag_drag      = 3.f;
+    static constexpr f32 flag_damping   = .02f;
+    static constexpr u32 flag_passes    = 4;
     u64                                   m_flare_frame{0};
 
     std::map<std::pair<blam::tag_t const*, std::string>, std::optional<bound_marker_t>>

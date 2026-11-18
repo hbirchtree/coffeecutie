@@ -816,6 +816,56 @@ static_assert(sizeof(antenna::vertex) == 128);
 static_assert(offsetof(antenna, spring_strength_coeff) == 0x90);
 static_assert(offsetof(antenna, vertices) == 0xc4);
 
+/* A cloth hung off its object's markers, e.g. the CTF flag's */
+struct flag
+{
+    static constexpr tag_class_t tag_class = tag_class_t::flag;
+
+    enum class trailing_edge_t : u16
+    {
+        flat,
+        concave_triangular,
+        convex_triangular,
+        trapezoid_short_top,
+        trapezoid_short_bottom,
+    };
+
+    enum class attached_edge_t : u16
+    {
+        flat,
+        concave_triangular,
+    };
+
+    /* Down the attached edge: this marker, then `height_to_next` cells on */
+    struct attachment_point
+    {
+        i16       height_to_next;
+        u16       padding[9];
+        bl_string marker_name;
+    };
+
+    u32               padding;
+    trailing_edge_t   trailing_edge_shape;
+    i16               trailing_edge_shape_offset;
+    attached_edge_t   attached_edge_shape;
+    u16               padding1;
+    i16               width;  // cells out from the attached edge
+    i16               height; // cells down it
+    f32               cell_width;
+    f32               cell_height;
+    tagref_t          red_flag_shader;
+    tagref_typed_t<tag_class_t::pphy> physics;
+    f32               wind_noise;
+    u32               padding2[2];
+    tagref_t          blue_flag_shader;
+    reference<attachment_point> attachment_points;
+};
+
+static_assert(sizeof(flag::attachment_point) == 52);
+static_assert(offsetof(flag, red_flag_shader) == 0x18);
+static_assert(offsetof(flag, blue_flag_shader) == 0x44);
+static_assert(sizeof(flag) == 96);
+
 namespace ai {
 
 enum class state_t : i16

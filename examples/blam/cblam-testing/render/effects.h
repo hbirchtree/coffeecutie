@@ -102,8 +102,20 @@ struct EffectScene : compo::SubsystemBase
         std::array<f32, 4>           visibility{};
     };
 
+    /* Textured triangles in the world, e.g. a flag's cloth */
+    struct mesh_t
+    {
+        blam::tagref_t const* bitmap{nullptr};
+        blend_t               blend{blend_t::alpha_blend};
+        Vecf4                 color{1.f};
+        std::vector<Vecf3>    positions; /* triangles */
+        std::vector<Vec2>     uv;
+        audience_t            audience{};
+    };
+
     std::vector<sprite_t> sprites;
     std::vector<ribbon_t> ribbons;
+    std::vector<mesh_t>   meshes;
     std::vector<light_t>  lights;
     std::vector<flare_t>  flares;
     std::vector<decal_t const*>
@@ -116,6 +128,7 @@ struct EffectScene : compo::SubsystemBase
     {
         sprites.clear();
         ribbons.clear();
+        meshes.clear();
         lights.clear();
         flares.clear();
         decals.clear();

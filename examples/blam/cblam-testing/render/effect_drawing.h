@@ -343,6 +343,24 @@ struct EffectDrawer
             heard(s->audience);
         for(auto const& r : scene.ribbons)
             heard(r.audience);
+        for(auto const& m : scene.meshes)
+            heard(m.audience);
+        /* What one view holds (first-person models) goes over the world */
+        std::stable_partition(audiences.begin(), audiences.end(), [](auto const& a) { return !a.only_seat; });
+        /* Cloth layers far to near, as sprites do */
+        std::vector<std::pair<f32, EffectScene::mesh_t const*>> meshes;
+        for(auto const& m : scene.meshes)
+        {
+            Vecf3 middle{0.f};
+            for(auto const& v : m.positions)
+                middle += v;
+            if(!m.positions.empty())
+                middle /= static_cast<f32>(m.positions.size());
+            meshes.emplace_back(glm::distance(middle, eye), &m);
+        }
+        std::stable_sort(meshes.begin(), meshes.end(), [](auto const& a, auto const& b) {
+            return a.first > b.first;
+        });
         auto const in = [&](EffectScene::audience_t const& mine,
                             EffectScene::audience_t const& audience) {
             return seat ? mine.sees(*seat) : mine == audience;
@@ -378,6 +396,9 @@ struct EffectDrawer
             for(auto const& r : scene.ribbons)
                 if(group_of(r.blend) == group && in(r.audience, audience))
                     add_ribbon(cache, r);
+            for(auto const& [_, m] : meshes)
+                if(group_of(m->blend) == group && in(m->audience, audience))
+                    add_mesh(cache, *m);
             batch.count = static_cast<u32>(vertices.size()) - batch.offset;
             if(batch.count > 0)
                 batches.push_back(batch);
@@ -440,6 +461,24 @@ struct EffectDrawer
                     glm::mix(img.rect.x, img.rect.z, d.uv[i].x),
                     glm::mix(img.rect.w, img.rect.y, d.uv[i].y)),
                 .color  = d.color,
+                .atlas  = img.atlas,
+                .source = Vecf4(img.format, img.layer, 3.f, img.opaque),
+            });
+    }
+
+    /* World triangles, drawn as decals are */
+    void add_mesh(BitmapCache<V>& cache, EffectScene::mesh_t const& m)
+    {
+        image_t const& img = image(cache, m.bitmap, 0, 0);
+        if(!img.ok)
+            return;
+        for(size_t i = 0; i < m.positions.size(); i++)
+            vertices.push_back({
+                .position = m.positions[i],
+                .tex      = Vecf2(
+                    glm::mix(img.rect.x, img.rect.z, m.uv[i].x),
+                    glm::mix(img.rect.w, img.rect.y, m.uv[i].y)),
+                .color  = m.color,
                 .atlas  = img.atlas,
                 .source = Vecf4(img.format, img.layer, 3.f, img.opaque),
             });
