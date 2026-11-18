@@ -868,7 +868,7 @@ blam::antr::animation const* ModelCache<V>::find_animation(
         return nullptr;
 
     auto const& anim = anims[layer.animation];
-    if(anim.frame_count <= 0 || anim.frame_size < 0)
+    if(frame_count(anim) == 0 || anim.frame_size < 0)
         return nullptr;
 
     return &anim;
@@ -907,13 +907,10 @@ bool ModelCache<V>::sample_animation(
 
 /* Whether the foot frame came up between two frame positions, wrapping
  * through the loop start when the second is behind the first */
-static bool foot_down(
-    blam::antr::animation const& clip, i32 foot, f32 from, f32 to, f32 start)
+static bool foot_down(i32 foot, u32 count, f32 from, f32 to, f32 start)
 {
-    /* Both unset means none; turn animations count past their own end */
-    bool const unset =
-        clip.left_foot_frame_index == 0 && clip.right_foot_frame_index == 0;
-    if(unset || foot < 0 || foot >= clip.frame_count)
+    /* Turn animations count past their own end */
+    if(foot < 0 || foot >= static_cast<i32>(count))
         return false;
     f32 const f = static_cast<f32>(foot);
     if(to >= from)
@@ -980,8 +977,8 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
         if(!clip)
             continue;
 
-        f32 const rate   = clip->frame_rate();
-        f32 const length = static_cast<f32>(clip->frame_count) / rate;
+        f32 const rate   = frame_rate(*clip);
+        f32 const length = static_cast<f32>(frame_count(*clip)) / rate;
         f32 const before = layer.time * rate;
         bool const follower = layer.sync && lead && &layer != lead &&
                               lead_phase >= 0.f;
@@ -993,7 +990,7 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
         if(layer.time >= length && layer.loop)
         {
             /* A looping animation restarts at loop_frame, not at zero. */
-            f32 const start = static_cast<f32>(clip->loop_start_frame()) / rate;
+            f32 const start = static_cast<f32>(loop_frame(*clip)) / rate;
             f32 const span  = length - start;
             layer.time      = span > 0.f
                                   ? start + std::fmod(layer.time - start, span)
@@ -1003,24 +1000,22 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
             lead_phase = length > 0.f ? layer.time / length : 0.f;
 
         f32 const after = layer.time * rate;
-        f32 const start = static_cast<f32>(clip->loop_start_frame());
+        f32 const start = static_cast<f32>(loop_frame(*clip));
+        u32 const count = frame_count(*clip);
         /* A blend's feet are the lead's, or they would double up */
         if(!follower)
         {
-            if(foot_down(
-                   *clip, clip->left_foot_frame_index, before, after, start))
-                anim.footsteps |= AnimationPlayback::left_foot;
-            if(foot_down(
-                   *clip, clip->right_foot_frame_index, before, after, start))
-                anim.footsteps |= AnimationPlayback::right_foot;
-            if(clip->sound_index >= 0 && anim.cue_count < anim.cues.size() &&
-               key_passed(
-                   clip->sound_frame_index,
-                   clip->frame_count,
-                   before,
-                   after,
-                   start))
-                anim.cues[anim.cue_count++] = {layer.graph, clip->sound_index};
+            if(auto const feet = foot_frames(*clip))
+            {
+                if(foot_down((*feet)[0], count, before, after, start))
+                    anim.footsteps |= AnimationPlayback::left_foot;
+                if(foot_down((*feet)[1], count, before, after, start))
+                    anim.footsteps |= AnimationPlayback::right_foot;
+            }
+            if(auto const key = sound_key(*clip);
+               key && anim.cue_count < anim.cues.size() &&
+               key_passed(key->frame, static_cast<i32>(count), before, after, start))
+                anim.cues[anim.cue_count++] = {layer.graph, key->sound};
         }
         if(layer.time < length)
             continue;
@@ -1030,9 +1025,9 @@ void ModelCache<V>::advance_playback(AnimationPlayback& anim, f32 delta)
 
         /* Chain where the tag says to, else hold the last frame. One step
          * per call, so a cyclic next_animation cannot spin. */
-        if(clip->next_animation >= 0)
+        if(auto const next = next_clip(*clip))
         {
-            layer.animation = static_cast<u32>(clip->next_animation);
+            layer.animation = *next;
             layer.time      = 0.f;
         } else
         {
@@ -1075,7 +1070,7 @@ bool ModelCache<V>::sample_grid(
     blam::antr::animation const& clip, AnimationLayer const& layer, u32 n)
 {
     i32 const cols = layer.grid_columns;
-    i32 const rows = std::max(1, clip.frame_count / cols);
+    i32 const rows = std::max(1, static_cast<i32>(frame_count(clip)) / cols);
     f32 const x    = layer.grid_wrap
                          ? std::fmod(std::fmod(layer.cell.x, f32(cols)) + cols,
                                      f32(cols))
@@ -1089,7 +1084,7 @@ bool ModelCache<V>::sample_grid(
     f32 const fy   = y - static_cast<f32>(r0);
 
     auto frame = [&](i32 c, i32 r) {
-        return static_cast<u32>(std::min(r * cols + c, clip.frame_count - 1));
+        return static_cast<u32>(std::min(r * cols + c, static_cast<i32>(frame_count(clip)) - 1));
     };
     if(!sample_animation(clip, frame(c0, r0), n, m_layer_rot, m_layer_trans, m_layer_scale))
         return false;
@@ -1168,8 +1163,8 @@ void ModelCache<V>::evaluate_pose(
         if(!clip)
             continue;
 
-        f32 const rate  = clip->frame_rate();
-        u32 const count = static_cast<u32>(clip->frame_count);
+        f32 const rate  = frame_rate(*clip);
+        u32 const count = frame_count(*clip);
 
         if(layer.grid_columns > 0)
         {
@@ -1185,7 +1180,7 @@ void ModelCache<V>::evaluate_pose(
                 if(time >= length)
                 {
                     f32 const start =
-                        static_cast<f32>(clip->loop_start_frame()) / rate;
+                        static_cast<f32>(loop_frame(*clip)) / rate;
                     time = layer.loop && length > start
                                ? start + std::fmod(time - start, length - start)
                                : length - 1.f / rate;
@@ -1196,7 +1191,7 @@ void ModelCache<V>::evaluate_pose(
             if(f0 >= count)
                 f0 = count - 1;
             u32 const f1    = f0 + 1 < count ? f0 + 1
-                              : layer.loop   ? clip->loop_start_frame()
+                              : layer.loop   ? loop_frame(*clip)
                                              : f0;
             f32 const blend = position - std::floor(position);
 
@@ -1214,13 +1209,13 @@ void ModelCache<V>::evaluate_pose(
 
         f32 const w = std::clamp(layer.weight, 0.f, 1.f);
 
-        auto const type = layer.animated_only &&
-                                  clip->type == blam::antr::anim_type::base
-                              ? blam::antr::anim_type::replacement
-                              : clip->type;
+        using blam::anim::blend_t;
+        using blam::anim::channel_t;
+        auto const type = layer.animated_only && blend(*clip) == blend_t::base ? blend_t::replacement
+                                                                                : blend(*clip);
         switch(type)
         {
-        case blam::antr::anim_type::base:
+        case blend_t::base:
         {
             /* Sets the whole skeleton; base layers average by weight, so
              * the first replaces the bind pose outright */
@@ -1231,29 +1226,29 @@ void ModelCache<V>::evaluate_pose(
                 m_rot, m_trans, m_scale, m_layer_rot, m_layer_trans, m_layer_scale, w / base_weight);
             break;
         }
-        case blam::antr::anim_type::replacement:
+        case blend_t::replacement:
             /* Only the nodes it animates; a lower layer keeps the rest. */
             for(u32 i = 0; i < k; i++)
             {
-                if(clip->has_rotation(i))
+                if(animates(*clip, i, channel_t::rotation))
                     m_rot[i] = glm::slerp(m_rot[i], m_layer_rot[i], w);
-                if(clip->has_translation(i))
+                if(animates(*clip, i, channel_t::translation))
                     m_trans[i] = glm::mix(m_trans[i], m_layer_trans[i], w);
-                if(clip->has_scale(i))
+                if(animates(*clip, i, channel_t::scale))
                     m_scale[i] = mix_scale(m_scale[i], m_layer_scale[i], w);
             }
             break;
-        case blam::antr::anim_type::overlay:
+        case blend_t::overlay:
             /* Frames are deltas from the neutral pose (identity at an aim
              * grid's centre), added to what is already posed. */
             for(u32 i = 0; i < k; i++)
             {
-                if(clip->has_rotation(i))
+                if(animates(*clip, i, channel_t::rotation))
                     m_rot[i] = m_rot[i] *
                                glm::slerp(Quatf(1, 0, 0, 0), m_layer_rot[i], w);
-                if(clip->has_translation(i))
+                if(animates(*clip, i, channel_t::translation))
                     m_trans[i] += m_layer_trans[i] * w;
-                if(clip->has_scale(i))
+                if(animates(*clip, i, channel_t::scale))
                     m_scale[i] *= mix_scale(1.f, m_layer_scale[i], w);
             }
             break;

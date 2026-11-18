@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <blam/volta/blam_antr.h>
+#include <blam/volta/blam_antr_sample.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include "types.h"
@@ -375,5 +376,5 @@ inline libc_types::f32 move_speed(
         std::memcpy(&delta, bytes.value().data() + i * stride, sizeof(delta));
         moved += glm::length(delta);
     }
-    return moved * clip.frame_rate() / static_cast<libc_types::f32>(frames);
+    return moved * frame_rate(clip) / static_cast<libc_types::f32>(frames);
 }

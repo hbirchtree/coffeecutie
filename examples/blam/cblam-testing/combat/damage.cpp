@@ -626,7 +626,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             return 0.f;
         for(auto const& animation : animations.value())
             if(animation.name.str().find("kill") != std::string_view::npos)
-                return animation.frame_count / animation.frame_rate();
+                return static_cast<f32>(frame_count(animation)) / frame_rate(animation);
         return 0.f;
     }
 

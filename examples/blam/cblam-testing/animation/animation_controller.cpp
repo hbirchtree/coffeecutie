@@ -877,7 +877,7 @@ struct AnimationController
             layer = AnimationLayer{};
             return;
         }
-        i32 const frames = anims.value()[animation].frame_count;
+        i32 const frames = static_cast<i32>(frame_count(anims.value()[animation]));
         if(frames <= 0)
         {
             layer = AnimationLayer{};

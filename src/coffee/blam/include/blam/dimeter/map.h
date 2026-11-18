@@ -300,6 +300,8 @@ struct map_container
     u32                meta_mask{0};
 
     Span<const u8> data;
+    /*! What `data` lives in, when the container holds it */
+    std::shared_ptr<void const> keep;
 
     /*! Vista: the map every tag this one lists as null is borrowed from
      * (shared.map or single_player_shared.map); same table numbering */
@@ -579,7 +581,8 @@ inline std::optional<map_container<V>> load_shared(
             if(!side.has_value() || from_le(side.value().index->tag_count) !=
                                         from_le(map.index->tag_count))
                 continue;
-            pool.shared_file = slot;
+            pool.shared_file  = slot;
+            side.value().keep = bytes->keep;
             return side.value();
         }
         return std::nullopt;

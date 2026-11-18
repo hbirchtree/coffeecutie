@@ -61,14 +61,22 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         m_restore_queue->poll();
         bool const save    = std::exchange(m_save, false);
         bool const restore = std::exchange(m_restore, false);
+        auto const& files  = p.template subsystem<BlamFiles<halo_version>>();
+        auto&       groups = p.template subsystem<DeviceGroups>();
         if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
         {
             m_uses.clear();
             m_syncs.clear();
+            /* The groups go with their map; reset from the next one */
+            if(groups.load_generation != files.load_generation && !groups.values.empty())
+            {
+                auto const generation  = groups.load_generation;
+                groups                 = {};
+                groups.load_generation = generation;
+                m_saved.reset();
+            }
             return;
         }
-        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
-        auto&       groups = p.template subsystem<DeviceGroups>();
         m_magic            = &files.container.magic;
         if(groups.load_generation != files.load_generation)
         {
@@ -452,7 +460,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         if(!clips.has_value())
             return;
         auto const& animation = clips.value()[*clip];
-        f32 const   rate      = animation.frame_rate();
+        f32 const   rate      = frame_rate(animation);
         layer.graph     = anim.graph;
         layer.animation = static_cast<u32>(*clip);
         layer.loop      = loops;
@@ -460,7 +468,7 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
         layer.finished  = false;
         layer.weight    = 1.f;
         /* Round and round, the last frame blends into the first */
-        layer.time = device.position * std::max(animation.frame_count - (loops ? 0 : 1), 0) / rate;
+        layer.time = device.position * std::max(static_cast<i32>(frame_count(animation)) - (loops ? 0 : 1), 0) / rate;
     }
 
     std::optional<i16> position_clip(blam::antr::header const* graph) const

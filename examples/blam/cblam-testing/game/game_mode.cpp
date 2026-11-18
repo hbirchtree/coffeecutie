@@ -41,9 +41,13 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
     {
         m_kill_queue->poll();
         auto kills = std::exchange(m_kills, {});
-        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
-            return;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+        {
+            if(m_load_generation != files.load_generation)
+                m_in_play.clear();
+            return;
+        }
         auto&       state = p.template subsystem<GameState>();
         if(m_load_generation != files.load_generation)
             begin(p, state, files);

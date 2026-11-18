@@ -3,6 +3,7 @@
 #include "access.h"
 #include "allocators.h"
 #include "caching/caching.h"
+#include "game_events.h"
 #include "types.h"
 
 #include <blam/volta/blam_antr.h>
@@ -1482,8 +1483,10 @@ struct BipedEquipment
     blam::scn::biped const* biped{nullptr};
     struct weapon_t
     {
+        /*! Halo 1's tag, null for another game's weapon */
         blam::scn::weapon const* weapon{nullptr};
         blam::tag_t const*       tag{nullptr};
+        GameTag<blam::tag_class_t::weap> id{};
         /*! Its third-person model, in the biped's hand */
         u64 held{0};
         u16 rounds_loaded{0};
@@ -1492,6 +1495,9 @@ struct BipedEquipment
         f32  age{0.f};         /*!< Battery spent, 0 to 1 */
         bool overheated{false}; /*!< Venting until it cools to recovery */
         bool charged{false};    /*!< Its trigger held to a full charge */
+        /*! Seconds a reload takes where the magazine leaves it to the
+         * first-person animation (Halo 2 and 3) */
+        f32 reload_length{0.f};
         bool charging{false};   /*!< Its trigger held, charging or charged */
         f32  charge{0.f};       /*!< How far an actor has charged it, 0 to 1 */
         /*! Its object functions' outputs: what its holder may import */
@@ -1499,8 +1505,10 @@ struct BipedEquipment
     };
     struct equipment_t
     {
+        /*! Halo 1's tag, null for another game's equipment */
         blam::scn::equipment const* equip{nullptr};
         blam::tag_t const*          tag{nullptr};
+        GameTag<blam::tag_class_t::eqip> id{};
         u16                         most{0}; /*!< What can be carried */
         u16                         left{0};
         std::chrono::seconds        time_left{};
@@ -1514,9 +1522,19 @@ struct BipedEquipment
     /*! The map the pointers above point into */
     u32  load_generation{0};
     bool reloading{false}; /*!< The held weapon, as everyone sees it */
+    u16  shots{0};         /*!< Shots fired, counting up; a view model fires on a change */
     bool throwing{false};  /*!< A grenade, from wind-up to recovery */
     u8   zoom{0};          /*!< The held weapon's zoom level, 0 = none */
 
+    /*! The weapon in hand, any game's */
+    weapon_t const* drawn(u32 generation) const
+    {
+        if(generation != load_generation)
+            return nullptr;
+        return objective.id.valid() ? &objective : weapons[0].id.valid() ? &weapons[0] : nullptr;
+    }
+
+    /*! The weapon in hand, if it is Halo 1's */
     weapon_t const* held(u32 generation) const
     {
         if(generation != load_generation)

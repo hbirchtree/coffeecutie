@@ -63,10 +63,20 @@ struct MultiplayerController
         auto touches = std::exchange(m_touches, {});
         auto kills   = std::exchange(m_kills, {});
         auto rejoins = std::exchange(m_rejoins, {});
-        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
-            return;
         bool const  replica = p.template subsystem<NetworkState>().replica;
         auto const& files   = p.template subsystem<BlamFiles<halo_version>>();
+        if(p.template subsystem<LoadingStatus>().loaded_map != LoadingStatus::loaded)
+        {
+            /* The game's rules go with its map */
+            if(m_load_generation != files.load_generation)
+            {
+                m_waiting.clear();
+                m_placed.clear();
+                m_vm.reset();
+                m_local_vm.reset();
+            }
+            return;
+        }
         auto&       state   = p.template subsystem<GameState>();
         m_state             = &state;
         if(m_load_generation != files.load_generation)
