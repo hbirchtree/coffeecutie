@@ -266,6 +266,23 @@ void ImGuiSystem::load(entity_container& e, comp_app::app_error&)
     m_im_data->time = 0.;
 
     auto proxy = Proxy(e);
+    /* A text field's caret, so the input method puts its candidates there */
+    if(auto keyboard = proxy.service<comp_app::KeyboardInput>())
+    {
+        auto& platform                 = ImGui::GetPlatformIO();
+        platform.Platform_ImeUserData  = const_cast<void*>(static_cast<void const*>(keyboard));
+        platform.Platform_SetImeDataFn = [](ImGuiContext*, ImGuiViewport*, ImGuiPlatformImeData* data) {
+            if(!data->WantVisible)
+                return;
+            auto*      keyboard = static_cast<comp_app::interfaces::KeyboardInput const*>(ImGui::GetPlatformIO().Platform_ImeUserData);
+            auto const scale    = ImGui::GetIO().DisplayFramebufferScale.x;
+            keyboard->setTextArea(
+                {static_cast<i32>(data->InputPos.x * scale), static_cast<i32>(data->InputPos.y * scale)},
+                {1, static_cast<i32>(data->InputLineHeight * scale)},
+                0);
+        };
+    }
+
     setup_inputs(proxy);
     setup_graphics_data(proxy);
 }
