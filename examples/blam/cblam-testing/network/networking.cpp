@@ -1,4 +1,5 @@
 #include "game/game_mode.h"
+#include "game/teleporters.h"
 #include "world/devices.h"
 #include "network/networking.h"
 #include "network/relevance.h"
@@ -4095,6 +4096,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             max_move_burst, move.allowance + std::chrono::duration<f32>(now - move.t).count() * max_move_speed);
         move.t         = now;
         f32 const step = glm::distance(move.at, to);
+        if(step > move.allowance && teleporter_hop(p.subsystem<BlamFiles<halo_version>>(), move.at, to))
+        {
+            move.at = to;
+            return to;
+        }
         if(step > move.allowance)
         {
             journal("net_move_limited", {{"player_idx", player_idx}, {"distance", step}});
@@ -5651,6 +5657,16 @@ struct ObjectFollower
         this->priority = 790;
     }
 
+    /* Further apart than a body moves in the time between: a teleport */
+    static bool jumped(CameraSync const& a, CameraSync const& b)
+    {
+        if(a.deck != 0 || b.deck != 0 || b.tick <= a.tick)
+            return false;
+        f32 const seconds = static_cast<f32>(static_cast<f64>(b.tick - a.tick) * TickClock::tick_seconds);
+        return glm::distance(Vecf3(a.position), Vecf3(b.position)) >
+               Networking::max_move_speed * seconds + Networking::max_move_burst;
+    }
+
     static Vecf3 world_of(Proxy& p, Networking const& net, CameraSync const& sync)
     {
         if(sync.deck)
@@ -5805,16 +5821,18 @@ struct ObjectFollower
             if(auto pose = around(it->second, at))
             {
                 auto const& [from, to, alpha] = *pose;
-                /* Each off its deck as the deck stands this frame */
+                /* Each off its deck as the deck stands this frame; across a
+                 * teleport or a respawn it is at one end or the other */
                 cam.camera.position =
-                    glm::mix(world_of(p, net, from), world_of(p, net, to), alpha);
+                    jumped(from, to) ? world_of(p, net, alpha < 1.f ? from : to)
+                                     : glm::mix(world_of(p, net, from), world_of(p, net, to), alpha);
                 /* Run dry: carry on along its last step, a little way */
                 if(f64 const past = at - static_cast<f64>(to.tick);
                    past > 0. && it->second.size() >= 2 && to.deck == 0)
                 {
                     auto const& prev = it->second[it->second.size() - 2];
                     f64 const   span = static_cast<f64>(to.tick - prev.tick);
-                    if(span > 0. && span <= static_cast<f64>(Networking::max_spacing))
+                    if(span > 0. && span <= static_cast<f64>(Networking::max_spacing) && !jumped(prev, to))
                         cam.camera.position += (Vecf3(to.position) - Vecf3(prev.position)) *
                                                static_cast<f32>(std::min(past, Networking::max_extrapolation) / span);
                 }

@@ -3,6 +3,7 @@
 #include "loading/blam_files.h"
 #include "components.h"
 #include "game/ctf.h"
+#include "game/teleporters.h"
 #include "data.h"
 #include "game_events.h"
 #include "network/networking.h"
@@ -172,4 +173,5 @@ void alloc_game_mode(compo::EntityContainer& e)
     alloc_multiplayer_controller(e);
     alloc_object_respawn(e);
     alloc_ctf_flags(e);
+    alloc_teleporters(e);
 }
