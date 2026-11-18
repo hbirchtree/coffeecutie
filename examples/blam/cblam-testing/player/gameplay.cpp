@@ -8,6 +8,7 @@
 #include "physics.h"
 #include "selected_version.h"
 #include "combat/weapons.h"
+#include "network/networking.h"
 
 #include <coffee/components/proxy.h>
 #include <coffee/components/restricted_subsystem.h>
@@ -33,7 +34,8 @@ using GameplayManifest = compo::SubsystemManifest<
         GameEventBus,
         PhysicsBus,
         const BlamFiles<halo_version>,
-        const LoadingStatus>,
+        const LoadingStatus,
+        const NetworkState>,
     empty_list_t>;
 
 /* Seat labels as scripts spell them, whatever the case */
@@ -83,7 +85,12 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         {
             auto [info, input, cam, net] = player.components();
             if(info.is_remote())
+            {
+                /* The server hands out swaps by what a client's body looks at */
+                if(!p.template subsystem<NetworkState>().replica)
+                    offer(p, player.id(), info, cam, true);
                 continue;
+            }
             bool const playing =
                 input.input_mode == PlayerInput::input_mode_t::game;
 
