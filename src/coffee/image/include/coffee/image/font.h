@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <span>
@@ -8,18 +9,32 @@
 
 namespace image::font {
 
-/*! A string set on one line at one size, in pixels. The bitmap holds all
- *  of its ink: the pen starts `origin_x` in from its left edge, on a
- *  baseline `baseline` down from its top */
+/*! Where text may go. Lines wrap at spaces (and between CJK characters) to
+ *  fit `max_width`; a word wider than that breaks between characters; '\n'
+ *  starts a new line. Past `max_lines` the rest is dropped and the last
+ *  line kept ends in "..." (U+2026). Nothing is drawn wider than
+ *  `max_width` */
+struct text_bounds
+{
+    float max_width{std::numeric_limits<float>::infinity()};
+    int   max_lines{0}; /*!< 0 for no limit */
+};
+
+/*! Text set at one size, in pixels. The bitmap holds all of its ink: the
+ *  pen starts `origin_x` in from its left edge, the first line's baseline
+ *  `baseline` down from its top, each next line `line_advance` lower */
 struct text_metrics
 {
-    float advance{0.f}; /*!< how far the pen travels over the string */
-    float ascent{0.f};  /*!< the font's, above the baseline */
+    float advance{0.f}; /*!< the widest line's pen travel */
+    float ascent{0.f};  /*!< the font's, above a baseline */
     float descent{0.f}; /*!< the font's, below it */
     int   width{0};
     int   height{0};
     int   origin_x{0};
     int   baseline{0};
+    int   line_advance{0};
+    int   lines{0};
+    bool  truncated{false}; /*!< lines were dropped to keep to max_lines */
 
     bool empty() const
     {
@@ -63,12 +78,13 @@ class typeface
     typeface& operator=(typeface&&) noexcept;
     ~typeface();
 
-    /*! Invalid UTF-8 is measured and drawn as U+FFFD */
-    text_metrics measure(std::string_view utf8, float pixels_per_em) const;
+    /*! Invalid UTF-8 is set as U+FFFD; control characters other than '\n'
+     *  are left out */
+    text_metrics measure(std::string_view utf8, float pixels_per_em, text_bounds bounds = {}) const;
 
-    /*! The string's coverage, as measure() lays it out, into the target's
+    /*! The text's coverage, as measure() lays it out, into the target's
      *  top-left width x height (cleared first); false if it does not fit */
-    bool rasterize(std::string_view utf8, float pixels_per_em, coverage_target target) const;
+    bool rasterize(std::string_view utf8, float pixels_per_em, coverage_target target, text_bounds bounds = {}) const;
 
     /*! The rasterizer behind it: stb_truetype, or the browser's canvas */
     struct backend;

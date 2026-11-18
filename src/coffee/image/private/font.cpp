@@ -17,18 +17,49 @@
 
 namespace image::font {
 
+namespace {
+
+constexpr float none = std::numeric_limits<float>::infinity();
+
+/* One line as set: the font's vertical metrics, how far the pen travels,
+ * and its ink from the pen's start on the baseline (above is positive);
+ * the ink is +-inf where nothing is drawn */
+struct line_ink
+{
+    float advance{0.f};
+    float ascent{0.f};
+    float descent{0.f};
+    float gap{0.f};
+    float left{none}, right{-none}, top{-none}, bottom{-none};
+
+    void add(float l, float r, float t, float b)
+    {
+        left   = std::min(left, l);
+        right  = std::max(right, r);
+        top    = std::max(top, t);
+        bottom = std::max(bottom, b);
+    }
+};
+
+} // namespace
+
 struct typeface::backend
 {
     virtual ~backend() = default;
 
-    virtual text_metrics measure(std::u32string_view text, float pixels_per_em) const = 0;
-    virtual bool rasterize(
-        std::u32string_view text, float pixels_per_em, text_metrics const& at, coverage_target target) const = 0;
+    virtual line_ink measure(std::u32string_view line, float pixels_per_em) const = 0;
+
+    /* The lines, each `at.line_advance` under the last, the pen at
+     * `at.origin_x`; into a target already cleared to at's size */
+    virtual void rasterize(
+        std::span<std::u32string const> lines, float pixels_per_em, text_metrics const& at,
+        coverage_target target) const = 0;
 };
 
 namespace {
 
 constexpr char32_t replacement = U'�';
+constexpr char32_t ellipsis    = U'…';
 
 /* The next code point of `text`, consumed; a malformed sequence gives one
  * U+FFFD for its valid start, as browsers decode it */
@@ -66,26 +97,178 @@ char32_t next_code_point(std::string_view& text)
     return point;
 }
 
-/* One line's characters: control characters draw nothing */
+/* The characters: "\r\n" and '\r' become '\n', tabs spaces, other control
+ * characters draw nothing */
 std::u32string decode(std::string_view utf8)
 {
     std::u32string out;
     out.reserve(utf8.size());
+    char32_t previous = 0;
     while(!utf8.empty())
-        if(char32_t const point = next_code_point(utf8); point >= 0x20 && (point < 0x7F || point > 0x9F))
+    {
+        char32_t point = next_code_point(utf8);
+        if(point == U'\n' && previous == U'\r')
+        {
+            previous = point;
+            continue;
+        }
+        previous = point;
+        if(point == U'\r')
+            point = U'\n';
+        else if(point == U'\t')
+            point = U' ';
+        if(point == U'\n' || (point >= 0x20 && (point < 0x7F || point > 0x9F)))
             out.push_back(point);
+    }
     return out;
 }
 
-/* Bitmap bounds around the pen's travel and the ink, both from the pen's
- * start on the baseline; ink above it is positive */
-text_metrics frame(float advance, float ascent, float descent, float ink_left, float ink_right, float ink_top, float ink_bottom)
+/* Belongs to the character before it: combining marks, variation
+ * selectors, joiners and what they join, skin tones, Hangul jamo vowels
+ * and finals */
+bool attached(char32_t point, char32_t before)
 {
-    text_metrics out{.advance = advance, .ascent = ascent, .descent = descent};
-    out.origin_x = static_cast<int>(std::ceil(std::max(0.f, -ink_left)));
-    out.baseline = static_cast<int>(std::ceil(std::max(ascent, ink_top)));
-    out.width    = out.origin_x + static_cast<int>(std::ceil(std::max(advance, ink_right)));
-    out.height   = out.baseline + static_cast<int>(std::ceil(std::max(descent, ink_bottom)));
+    return (point >= 0x0300 && point <= 0x036F) || (point >= 0x1AB0 && point <= 0x1AFF) ||
+           (point >= 0x1DC0 && point <= 0x1DFF) || (point >= 0x20D0 && point <= 0x20FF) ||
+           (point >= 0xFE20 && point <= 0xFE2F) || (point >= 0xFE00 && point <= 0xFE0F) ||
+           (point >= 0xE0100 && point <= 0xE01EF) || (point >= 0x1F3FB && point <= 0x1F3FF) ||
+           (point >= 0x1160 && point <= 0x11FF) || (point >= 0xD7B0 && point <= 0xD7FF) || point == 0x200D ||
+           before == 0x200D;
+}
+
+/* Written without spaces between words: ideographs and kana. Korean has
+ * spaces, so Hangul is not */
+bool cjk(char32_t point)
+{
+    return (point >= 0x2E80 && point <= 0x9FFF && !(point >= 0x3130 && point <= 0x318F)) ||
+           (point >= 0xF900 && point <= 0xFAFF) || (point >= 0xFF00 && point <= 0xFF60) ||
+           (point >= 0x20000 && point <= 0x3FFFF);
+}
+
+/* A line may end before `text[i]` */
+bool breakable(std::u32string_view text, std::size_t i)
+{
+    if(i == 0 || i >= text.size())
+        return true;
+    if(attached(text[i], text[i - 1]))
+        return false;
+    return text[i - 1] == U' ' || cjk(text[i - 1]) || cjk(text[i]);
+}
+
+/* Between characters, for a word too wide to keep whole */
+bool boundary(std::u32string_view text, std::size_t i)
+{
+    return i == 0 || i >= text.size() || !attached(text[i], text[i - 1]);
+}
+
+std::u32string_view trimmed(std::u32string_view text)
+{
+    while(!text.empty() && text.back() == U' ')
+        text.remove_suffix(1);
+    return text;
+}
+
+struct layout
+{
+    std::vector<std::u32string> lines;
+    text_metrics                metrics;
+};
+
+/* Lines to fit the bounds, greedily: as many whole words as fit, else as
+ * many characters */
+layout lay_out(typeface::backend const& face, std::u32string_view text, float pixels_per_em, text_bounds bounds)
+{
+    layout out;
+    auto const fits = [&](std::u32string_view line) {
+        return !std::isfinite(bounds.max_width) || face.measure(trimmed(line), pixels_per_em).advance <= bounds.max_width;
+    };
+    auto const full = [&] { return bounds.max_lines > 0 && out.lines.size() >= static_cast<std::size_t>(bounds.max_lines); };
+
+    std::size_t start = 0;
+    while(start <= text.size() && !text.empty())
+    {
+        std::size_t const      newline   = text.find(U'\n', start);
+        std::u32string_view    paragraph = text.substr(start, newline == std::u32string_view::npos ? text.npos : newline - start);
+        do
+        {
+            if(full())
+            {
+                out.metrics.truncated = true;
+                break;
+            }
+            std::size_t end = 0;
+            for(std::size_t i = 1; i <= paragraph.size(); i++)
+                if(breakable(paragraph, i))
+                {
+                    if(!fits(paragraph.substr(0, i)))
+                        break;
+                    end = i;
+                }
+            if(end == 0)
+            {
+                end = paragraph.empty() ? 0 : 1;
+                while(end < paragraph.size() && !boundary(paragraph, end))
+                    end++;
+                for(std::size_t i = end + 1; i <= paragraph.size(); i++)
+                    if(boundary(paragraph, i))
+                    {
+                        if(!fits(paragraph.substr(0, i)))
+                            break;
+                        end = i;
+                    }
+            }
+            out.lines.emplace_back(trimmed(paragraph.substr(0, end)));
+            paragraph.remove_prefix(end);
+            while(!paragraph.empty() && paragraph.front() == U' ')
+                paragraph.remove_prefix(1);
+        } while(!paragraph.empty());
+        if(out.metrics.truncated || newline == std::u32string_view::npos)
+            break;
+        start = newline + 1;
+    }
+    if(out.metrics.truncated && !out.lines.empty())
+    {
+        auto& last = out.lines.back();
+        while(!last.empty() && !fits(last + ellipsis))
+        {
+            last.pop_back();
+            while(!last.empty() && !boundary(last, last.size()))
+                last.pop_back();
+            while(!last.empty() && last.back() == U' ')
+                last.pop_back();
+        }
+        last += ellipsis;
+    }
+    if(out.lines.empty())
+        return out;
+
+    /* Each line's ink together, the first's top and the last's bottom
+     * hanging out of the line spacing */
+    std::vector<line_ink> inks;
+    for(auto const& line : out.lines)
+        inks.push_back(face.measure(line, pixels_per_em));
+    auto const& first = inks.front();
+    auto&       m     = out.metrics;
+    m.ascent          = first.ascent;
+    m.descent         = first.descent;
+    m.lines           = static_cast<int>(out.lines.size());
+    m.line_advance    = static_cast<int>(std::ceil(first.ascent + first.descent + first.gap));
+    float left = 0.f, right = 0.f;
+    for(auto const& ink : inks)
+    {
+        m.advance = std::max(m.advance, ink.advance);
+        right     = std::max({right, ink.advance, std::isfinite(ink.right) ? ink.right : 0.f});
+        if(std::isfinite(ink.left))
+            left = std::min(left, ink.left);
+    }
+    float const top    = std::isfinite(first.top) ? first.top : 0.f;
+    float const bottom = std::isfinite(inks.back().bottom) ? inks.back().bottom : 0.f;
+    m.origin_x         = static_cast<int>(std::ceil(-left));
+    m.baseline         = static_cast<int>(std::ceil(std::max(m.ascent, top)));
+    m.height = m.baseline + (m.lines - 1) * m.line_advance + static_cast<int>(std::ceil(std::max(m.descent, bottom)));
+    m.width  = m.origin_x + static_cast<int>(std::ceil(right));
+    if(std::isfinite(bounds.max_width))
+        m.width = std::min(m.width, m.origin_x + static_cast<int>(std::ceil(std::max(bounds.max_width, 0.f))));
     return out;
 }
 
@@ -95,7 +278,8 @@ bool fits(text_metrics const& at, coverage_target const& target)
         return true;
     auto const width  = static_cast<std::size_t>(at.width);
     auto const height = static_cast<std::size_t>(at.height);
-    return target.stride >= width && target.pixels.size() >= target.stride * (height - 1) + width;
+    return target.stride >= width && target.stride <= std::numeric_limits<int>::max() &&
+           target.pixels.size() >= target.stride * (height - 1) + width;
 }
 
 void clear(text_metrics const& at, coverage_target const& target)
@@ -112,41 +296,46 @@ class stb_backend final : public typeface::backend
     {
     }
 
-    text_metrics measure(std::u32string_view text, float pixels_per_em) const override
+    line_ink measure(std::u32string_view line, float pixels_per_em) const override
     {
-        return lay_out(text, pixels_per_em, nullptr);
+        return place(line, pixels_per_em, nullptr);
     }
 
-    bool rasterize(
-        std::u32string_view text, float pixels_per_em, text_metrics const& at, coverage_target target) const override
+    void rasterize(
+        std::span<std::u32string const> lines, float pixels_per_em, text_metrics const& at,
+        coverage_target target) const override
     {
-        std::vector<placed> glyphs;
-        lay_out(text, pixels_per_em, &glyphs);
+        std::vector<placed>        glyphs;
         std::vector<unsigned char> scratch;
-        for(auto const& glyph : glyphs)
+        for(std::size_t row = 0; row < lines.size(); row++)
         {
-            int const width  = glyph.x1 - glyph.x0;
-            int const height = glyph.y1 - glyph.y0;
-            if(width <= 0 || height <= 0)
-                continue;
-            scratch.assign(static_cast<std::size_t>(width) * height, 0);
-            stbtt_MakeGlyphBitmapSubpixel(
-                glyph.face, scratch.data(), width, height, width, glyph.scale, glyph.scale, glyph.shift, 0.f,
-                glyph.index);
-            /* Neighbours can overlap: keep the stronger coverage */
-            int const left = at.origin_x + glyph.pen + glyph.x0;
-            int const top  = at.baseline + glyph.y0;
-            for(int y = 0; y < height; y++)
-                for(int x = 0; x < width; x++)
-                {
-                    int const tx = left + x, ty = top + y;
-                    if(tx < 0 || ty < 0 || tx >= at.width || ty >= at.height)
-                        continue;
-                    auto& texel = target.pixels[ty * target.stride + tx];
-                    texel = std::max(texel, static_cast<std::byte>(scratch[y * width + x]));
-                }
+            glyphs.clear();
+            place(lines[row], pixels_per_em, &glyphs);
+            int const baseline = at.baseline + static_cast<int>(row) * at.line_advance;
+            for(auto const& glyph : glyphs)
+            {
+                int const width  = glyph.x1 - glyph.x0;
+                int const height = glyph.y1 - glyph.y0;
+                if(width <= 0 || height <= 0)
+                    continue;
+                scratch.assign(static_cast<std::size_t>(width) * height, 0);
+                stbtt_MakeGlyphBitmapSubpixel(
+                    glyph.face, scratch.data(), width, height, width, glyph.scale, glyph.scale, glyph.shift, 0.f,
+                    glyph.index);
+                /* Neighbours can overlap: keep the stronger coverage */
+                int const left = at.origin_x + glyph.pen + glyph.x0;
+                int const top  = baseline + glyph.y0;
+                for(int y = 0; y < height; y++)
+                    for(int x = 0; x < width; x++)
+                    {
+                        int const tx = left + x, ty = top + y;
+                        if(tx < 0 || ty < 0 || tx >= at.width || ty >= at.height)
+                            continue;
+                        auto& texel = target.pixels[ty * target.stride + tx];
+                        texel       = std::max(texel, static_cast<std::byte>(scratch[y * width + x]));
+                    }
+            }
         }
-        return true;
     }
 
   private:
@@ -170,17 +359,17 @@ class stb_backend final : public typeface::backend
         return {&m_faces.front(), stbtt_FindGlyphIndex(&m_faces.front(), static_cast<int>(replacement))};
     }
 
-    text_metrics lay_out(std::u32string_view text, float pixels_per_em, std::vector<placed>* out) const
+    line_ink place(std::u32string_view line, float pixels_per_em, std::vector<placed>* out) const
     {
         auto const& primary = m_faces.front();
         float const scale   = stbtt_ScaleForMappingEmToPixels(&primary, pixels_per_em);
         int         ascent = 0, descent = 0, gap = 0;
         stbtt_GetFontVMetrics(&primary, &ascent, &descent, &gap);
+        line_ink ink{.ascent = ascent * scale, .descent = -descent * scale, .gap = gap * scale};
 
-        constexpr float none = std::numeric_limits<float>::infinity();
-        float pen = 0.f, ink_left = none, ink_right = -none, ink_top = -none, ink_bottom = -none;
+        float                                 pen = 0.f;
         std::pair<stbtt_fontinfo const*, int> previous{nullptr, 0};
-        for(char32_t point : text)
+        for(char32_t point : line)
         {
             auto const [face, index] = find(point);
             float const face_scale   = stbtt_ScaleForMappingEmToPixels(face, pixels_per_em);
@@ -194,21 +383,15 @@ class stb_backend final : public typeface::backend
             stbtt_GetGlyphBitmapBoxSubpixel(
                 face, index, face_scale, face_scale, glyph.shift, 0.f, &glyph.x0, &glyph.y0, &glyph.x1, &glyph.y1);
             if(glyph.x1 > glyph.x0 && glyph.y1 > glyph.y0)
-            {
-                ink_left   = std::min(ink_left, static_cast<float>(glyph.pen + glyph.x0));
-                ink_right  = std::max(ink_right, static_cast<float>(glyph.pen + glyph.x1));
-                ink_top    = std::max(ink_top, static_cast<float>(-glyph.y0));
-                ink_bottom = std::max(ink_bottom, static_cast<float>(glyph.y1));
-            }
+                ink.add(glyph.pen + glyph.x0, glyph.pen + glyph.x1, -glyph.y0, glyph.y1);
             int advance = 0, bearing = 0;
             stbtt_GetGlyphHMetrics(face, index, &advance, &bearing);
             pen += advance * face_scale;
             if(out)
                 out->push_back(glyph);
         }
-        if(ink_left == none)
-            ink_left = ink_right = ink_top = ink_bottom = 0.f;
-        return frame(pen, ascent * scale, -descent * scale, ink_left, ink_right, ink_top, ink_bottom);
+        ink.advance = pen;
+        return ink;
     }
 
     std::vector<stbtt_fontinfo> m_faces;
@@ -241,9 +424,10 @@ EM_JS(void, coffee_font_canvas_measure,
               Number(out) / 4);
       });
 
+/* Lines split on '\n', one under the other */
 EM_JS(void, coffee_font_canvas_draw,
       (char const* family, int family_length, char const* text, int text_length, float pixels, int origin_x,
-       int baseline, int width, int height, unsigned char* out, int stride), {
+       int baseline, int line_advance, int width, int height, unsigned char* out, int stride), {
           if(!globalThis.coffeeFontCanvas)
               globalThis.coffeeFontCanvas = new OffscreenCanvas(1, 1).getContext('2d', {willReadFrequently : true});
           const context = globalThis.coffeeFontCanvas;
@@ -253,7 +437,9 @@ EM_JS(void, coffee_font_canvas_draw,
           context.font          = pixels + 'px ' + UTF8ToString(Number(family), family_length);
           context.textBaseline  = 'alphabetic';
           context.fillStyle     = '#fff';
-          context.fillText(UTF8ToString(Number(text), text_length), origin_x, baseline);
+          const lines           = UTF8ToString(Number(text), text_length).split('\n');
+          for(let i = 0; i < lines.length; i++)
+              context.fillText(lines[i], origin_x, baseline + i * line_advance);
           const rgba = context.getImageData(0, 0, width, height).data;
           const base = Number(out);
           for(let y = 0; y < height; y++)
@@ -277,9 +463,8 @@ EM_JS(int, coffee_font_canvas_add, (unsigned char const* data, int length, char 
 EM_JS_DEPS(coffee_font_js_deps, "$UTF8ToString");
 
 /* The cleaned characters as UTF-8 again, for the browser */
-std::string encode(std::u32string_view text)
+void encode(std::u32string_view text, std::string& out)
 {
-    std::string out;
     for(char32_t point : text)
         if(point < 0x80)
             out += static_cast<char>(point);
@@ -291,7 +476,6 @@ std::string encode(std::u32string_view text)
         else
             out += {static_cast<char>(0xF0 | point >> 18), static_cast<char>(0x80 | (point >> 12 & 0x3F)),
                     static_cast<char>(0x80 | (point >> 6 & 0x3F)), static_cast<char>(0x80 | (point & 0x3F))};
-    return out;
 }
 
 class canvas_backend final : public typeface::backend
@@ -302,27 +486,35 @@ class canvas_backend final : public typeface::backend
     {
     }
 
-    text_metrics measure(std::u32string_view text, float pixels_per_em) const override
+    line_ink measure(std::u32string_view line, float pixels_per_em) const override
     {
-        if(text.empty())
-            return {};
-        std::string const utf8 = encode(text);
-        float             m[7]{};
+        std::string utf8;
+        encode(line, utf8);
+        float m[7]{};
         coffee_font_canvas_measure(
             m_families.data(), static_cast<int>(m_families.size()), utf8.data(), static_cast<int>(utf8.size()),
             pixels_per_em, m);
-        return frame(m[0], m[1], m[2], -m[3], m[4], m[5], m[6]);
+        line_ink ink{.advance = m[0], .ascent = m[1], .descent = m[2]};
+        if(!line.empty())
+            ink.add(-m[3], m[4], m[5], m[6]);
+        return ink;
     }
 
-    bool rasterize(
-        std::u32string_view text, float pixels_per_em, text_metrics const& at, coverage_target target) const override
+    void rasterize(
+        std::span<std::u32string const> lines, float pixels_per_em, text_metrics const& at,
+        coverage_target target) const override
     {
-        std::string const utf8 = encode(text);
+        std::string utf8;
+        for(auto const& line : lines)
+        {
+            if(&line != &lines.front())
+                utf8 += '\n';
+            encode(line, utf8);
+        }
         coffee_font_canvas_draw(
             m_families.data(), static_cast<int>(m_families.size()), utf8.data(), static_cast<int>(utf8.size()),
-            pixels_per_em, at.origin_x, at.baseline, at.width, at.height,
+            pixels_per_em, at.origin_x, at.baseline, at.line_advance, at.width, at.height,
             reinterpret_cast<unsigned char*>(target.pixels.data()), static_cast<int>(target.stride));
-        return true;
     }
 
   private:
@@ -386,21 +578,21 @@ typeface::typeface(typeface&&) noexcept            = default;
 typeface& typeface::operator=(typeface&&) noexcept = default;
 typeface::~typeface()                              = default;
 
-text_metrics typeface::measure(std::string_view utf8, float pixels_per_em) const
+text_metrics typeface::measure(std::string_view utf8, float pixels_per_em, text_bounds bounds) const
 {
-    return m_impl->measure(decode(utf8), pixels_per_em);
+    return lay_out(*m_impl, decode(utf8), pixels_per_em, bounds).metrics;
 }
 
-bool typeface::rasterize(std::string_view utf8, float pixels_per_em, coverage_target target) const
+bool typeface::rasterize(std::string_view utf8, float pixels_per_em, coverage_target target, text_bounds bounds) const
 {
-    std::u32string const text = decode(utf8);
-    text_metrics const   at   = m_impl->measure(text, pixels_per_em);
-    if(!fits(at, target) || target.stride > std::numeric_limits<int>::max())
+    auto const set = lay_out(*m_impl, decode(utf8), pixels_per_em, bounds);
+    if(!fits(set.metrics, target))
         return false;
-    if(at.empty())
+    if(set.metrics.empty())
         return true;
-    clear(at, target);
-    return m_impl->rasterize(text, pixels_per_em, at, target);
+    clear(set.metrics, target);
+    m_impl->rasterize(set.lines, pixels_per_em, set.metrics, target);
+    return true;
 }
 
 } // namespace image::font
