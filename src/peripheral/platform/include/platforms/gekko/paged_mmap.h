@@ -15,7 +15,8 @@
  * eviction; unmapping a region frees its frames.
  */
 
-#include <platforms/gekko/dvd.h> // FST lookup for DVD-backed regions
+#include <platforms/gekko/dvd.h>
+#include <url/url.h> // FST lookup for DVD-backed regions
 
 #include <tuxedo/ppc/context.h>
 #include <tuxedo/ppc/exception.h>
@@ -25,9 +26,12 @@
 #include <ogc/aram.h>
 #include <ogc/cache.h>
 
+#include <fcntl.h>
 #include <gctypes.h>
 #include <malloc.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <optional>
@@ -86,6 +90,7 @@ struct region_t
 
     span_t spans[kMaxSpans] = {};
     u32    span_count       = 0;
+    int    fd               = -1; // a file through the filesystem, not the disc
 };
 
 inline pte_t*          g_htab       = nullptr;
@@ -309,12 +314,21 @@ inline u32 alloc_frame()
 /* Does this page of the region only exist on the disc? */
 inline bool on_disc(region_t const& r, u32 off)
 {
-    if(r.aram || !r.dvd)
+    if(r.aram || (!r.dvd && r.fd < 0))
         return false;
     for(u32 i = 0; i < r.span_count; i++)
         if(off - r.spans[i].off < r.spans[i].size)
             return false;
     return true;
+}
+
+/* A file region's bytes, through the filesystem. Fine from the fault handler
+ * too: nothing else uses the card, so its locks are never contended */
+inline bool file_read(region_t const& r, void* dst, u32 len, u32 off)
+{
+    return ::lseek(r.fd, static_cast<off_t>(off), SEEK_SET) ==
+               static_cast<off_t>(off) &&
+           ::read(r.fd, dst, len) >= 0;
 }
 
 inline void fill_and_map(region_t const& r, u32 va)
@@ -330,7 +344,7 @@ inline void fill_and_map(region_t const& r, u32 va)
         while(AR_GetDMAStatus())
             ;
         DCInvalidateRange(frame, kPageSize);
-    } else if(r.dvd)
+    } else if(r.dvd || r.fd >= 0)
     {
         for(u32 i = 0; i < r.span_count; i++)
         {
@@ -349,9 +363,16 @@ inline void fill_and_map(region_t const& r, u32 va)
             g_frame_va[idx]  = va;
             return;
         }
-        di_read(virt_to_phys(frame), kPageSize, r.disc_off + off);
-        PPCSyncInner();
-        DCInvalidateRange(frame, kPageSize);
+        if(r.fd >= 0)
+        {
+            file_read(r, frame, std::min(kPageSize, r.size - off), off);
+            DCFlushRange(frame, kPageSize);
+        } else
+        {
+            di_read(virt_to_phys(frame), kPageSize, r.disc_off + off);
+            PPCSyncInner();
+            DCInvalidateRange(frame, kPageSize);
+        }
     } else
     {
         memcpy(frame, r.ram + off, kPageSize);
@@ -373,7 +394,7 @@ inline void dsi_handler(unsigned exid, PPCContext* ctx)
             if(r.active && dar >= r.base && dar < r.base + r.size)
             {
                 // The drive is taken by a background read
-                if(g_stream_busy && on_disc(r, dar - r.base))
+                if(g_stream_busy && r.fd < 0 && on_disc(r, dar - r.base))
                     break;
                 g_fault_count++;
                 if(g_fault_count > 0x40000) // safety valve: never hang headless
@@ -422,7 +443,8 @@ inline void ensure_init()
 using progress_fn                   = void (*)(u32 done, u32 total);
 inline progress_fn g_stage_progress = nullptr;
 
-inline bool stage_to_aram(u32 disc_off, u32 size, u32 aram_off)
+inline bool stage_to_aram(
+    u32 disc_off, u32 size, u32 aram_off, region_t const* file = nullptr)
 {
     u32 const need = (size + 31) & ~31u;
 
@@ -433,7 +455,10 @@ inline bool stage_to_aram(u32 disc_off, u32 size, u32 aram_off)
     for(u32 pos = 0; pos < need; pos += kChunk)
     {
         u32 const n = (need - pos < kChunk) ? (need - pos) : kChunk;
-        dvd::detail::read_at(bounce, n, disc_off + pos);
+        if(file)
+            file_read(*file, bounce, n, disc_off + pos);
+        else
+            dvd::detail::read_at(bounce, n, disc_off + pos);
         DCFlushRange(bounce, n);
         AR_StartDMA(AR_MRAMTOARAM, virt_to_phys(bounce), aram_off + pos, n);
         while(AR_GetDMAStatus())
@@ -552,6 +577,59 @@ inline mapping map(char const* name)
     return {reinterpret_cast<u8*>(static_cast<uintptr_t>(base)), e->size};
 }
 
+/* Map a file through the filesystem (e.g. "sd:/..."): staged into ARAM if it
+ * fits, else paged off the card */
+inline mapping map_file(char const* path)
+{
+    int const fd = ::open(path, O_RDONLY);
+    if(fd < 0)
+        return {};
+    struct stat st{};
+    if(::fstat(fd, &st) != 0 || st.st_size <= 0)
+    {
+        ::close(fd);
+        return {};
+    }
+    detail::ensure_init();
+    int const slot    = detail::find_free_region();
+    u32 const size    = static_cast<u32>(st.st_size);
+    u32 const rounded = detail::align_up(size);
+    u32 const base    = slot < 0 ? 0 : detail::g_va.alloc(rounded);
+    if(!base)
+    {
+        ::close(fd);
+        return {};
+    }
+    auto& r  = detail::g_regions[slot];
+    r        = {};
+    r.active = true;
+    r.base   = base;
+    r.size   = size;
+    r.fd     = fd;
+    if(u32 const aoff = detail::g_aram.alloc(rounded))
+    {
+        if(detail::stage_to_aram(0, size, aoff, &r))
+        {
+            r.aram     = true;
+            r.aram_off = aoff;
+        } else
+            detail::g_aram.free(aoff, rounded);
+    }
+    return {reinterpret_cast<u8*>(static_cast<uintptr_t>(base)), size};
+}
+
+/* Map an asset by URL: off the disc for dvd:/ paths, else through the
+ * filesystem. Where assets resolve to (disc or SD card) is the URL's say */
+inline mapping map(url::Url const& file)
+{
+    std::string const          path = *file;
+    constexpr std::string_view disc = "dvd:/";
+    if(path.starts_with(disc))
+        return map(
+            path.substr(path.find_first_not_of('/', disc.size())).c_str());
+    return map_file(path.c_str());
+}
+
 /* Drop a mapping: free its frames/PTEs, region slot, and VA/ARAM ranges. */
 namespace detail {
 
@@ -615,6 +693,15 @@ inline bool request(mapping const& m, u32 off)
     detail::g_stream_len  = len;
     detail::g_stream_done = false;
     detail::g_stream_busy = true;
+    // A card barely seeks: read it now, picked up by poll() all the same
+    if(r->fd >= 0)
+    {
+        u32 const  have = std::min(len, r->size - page);
+        bool const ok = detail::file_read(*r, detail::g_stream_buf, have, page);
+        DCFlushRange(detail::g_stream_buf, len);
+        detail::stream_done(ok ? static_cast<s32>(have) : -1, nullptr);
+        return true;
+    }
     if(!DVD_ReadAbsAsyncPrio(
            &detail::g_stream_cmd,
            detail::g_stream_buf,
@@ -636,7 +723,7 @@ inline bool read(mapping const& m, u32 off, u32 len, u8* into, u32& skip)
     auto const* r = detail::region_of(m);
     if(!r || !into || detail::g_stream_busy)
         return false;
-    u32 const at   = r->disc_off + off;
+    u32 const at   = (r->fd >= 0 ? 0 : r->disc_off) + off;
     u32 const from = at & ~31u;
     skip           = at - from;
     u32 const size = (skip + len + 31) & ~31u;
@@ -645,6 +732,13 @@ inline bool read(mapping const& m, u32 off, u32 len, u8* into, u32& skip)
     detail::g_stream_len  = size;
     detail::g_stream_done = false;
     detail::g_stream_busy = true;
+    if(r->fd >= 0)
+    {
+        bool const ok = detail::file_read(*r, into + skip, len, off);
+        DCFlushRange(into, size);
+        detail::stream_done(ok ? static_cast<s32>(len) : -1, nullptr);
+        return true;
+    }
     if(!DVD_ReadAbsAsyncPrio(
            &detail::g_stream_cmd,
            into,
@@ -714,6 +808,8 @@ inline void unmap(mapping const& m)
             detail::g_aram.free(r.aram_off, rounded);
         for(u32 s = 0; s < r.span_count; s++)
             detail::g_aram.free(r.spans[s].aram_off, r.spans[s].size);
+        if(r.fd >= 0)
+            ::close(r.fd);
         r = {};
         break;
     }
@@ -735,7 +831,7 @@ inline bool stage(mapping const& m, u32 off, u32 size)
             continue;
         if(r.aram)
             return true; // the whole file is in ARAM already
-        if(!r.dvd || r.span_count == detail::kMaxSpans)
+        if((!r.dvd && r.fd < 0) || r.span_count == detail::kMaxSpans)
             return false;
         u32 const start = off & ~(detail::kPageSize - 1);
         u32 const end =
@@ -747,7 +843,10 @@ inline bool stage(mapping const& m, u32 off, u32 size)
         // The disc image ends 32B-aligned, not page-aligned
         u32 const avail = r.size - start;
         if(!detail::stage_to_aram(
-               r.disc_off + start, len < avail ? len : avail, aoff))
+               r.fd >= 0 ? start : r.disc_off + start,
+               len < avail ? len : avail,
+               aoff,
+               r.fd >= 0 ? &r : nullptr))
         {
             detail::g_aram.free(aoff, len);
             return false;
