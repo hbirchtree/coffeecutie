@@ -75,7 +75,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-ports",
-            "baseline": "cb12dfb061d258c1862d332bbd96c9e51e45d734",
+            "baseline": "c89125b457955efa7b0f8d939f37831d26d7e5db",
             "packages": [
                 "datachannel-wasm",
                 "ffmpeg-decoders",
