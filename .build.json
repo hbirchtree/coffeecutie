@@ -5,7 +5,7 @@
             "repo": "hbirchtree/coffeecutie-automation-tools"
         },
         "emsdk": {
-            "version": "6.0.5"
+            "version": "7.0.0"
         }
     }
 }
