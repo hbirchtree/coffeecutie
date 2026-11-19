@@ -10,7 +10,9 @@ endif()
 
 if(BUILD_BLAM AND BUILD_GLEAM)
   add_subdirectory(blam/cblam-testing)
-  add_subdirectory(blam/cblam-pose-demo)
+  if(NOT (ANDROID OR APPLE OR MINGW))
+    add_subdirectory(blam/cblam-pose-demo)
+  endif()
 endif()
 
 if(BUILD_BLAM AND NOT (
