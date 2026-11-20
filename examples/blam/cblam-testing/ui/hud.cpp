@@ -43,7 +43,7 @@ using HudManifest = compo::SubsystemManifest<
         PostProcessParameters,
         ScreenText,
         const GameState,
-        const ChatState,
+        ChatState,
         const BlamFiles<halo_version>,
         const LoadingStatus>,
     type_list_t<comp_app::GraphicsFramebuffer, comp_app::EventBus<SoundEvent>>>;
@@ -1392,7 +1392,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
      * typeface, which has the characters chat needs */
     void kill_feed(Proxy& p, PlayerInfo const& viewer)
     {
-        auto const& chat   = p.template subsystem<ChatState>();
+        auto&       chat   = p.template subsystem<ChatState>();
         bool const  typing = chat.typing && chat.typing->seat == viewer.seat_idx;
         if((m_feed.empty() && !typing) || !m_hudg)
             return;
@@ -1452,6 +1452,16 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         auto const sensor = m_sensor_top.find(m_view->seat);
         f32 const  top = sensor != m_sensor_top.end() ? sensor->second : HudScene::height - safe_inset.y - feed_bottom;
         f32        baseline = top - feed_gap - feed_descent - feed_line * (lines.size() - 1);
+        if(typing)
+        {
+            f32 const y = baseline + feed_line * (lines.size() - 1) - feed_em;
+            chat.typing->area = {
+                static_cast<i32>(m_view_px.x + safe_inset.x * m_view_px.z),
+                static_cast<i32>(m_view_px.y + y * m_view_px.z),
+                static_cast<i32>(m_width * feed_width * m_view_px.z),
+                static_cast<i32>(feed_line * m_view_px.z),
+            };
+        }
         for(auto& [text, color] : lines)
         {
             m_view->typeset.push_back({
@@ -1651,6 +1661,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 .seat  = seat,
                 .width = HudScene::height * view.x / std::max(view.y, 1.f),
             });
+            {
+                size_t const k = scene.views.size() - 1;
+                Vecf2 const  at = seats.size() <= 1   ? Vecf2(0.f)
+                                  : seats.size() == 2 ? Vecf2(0.f, view.y * k)
+                                                      : Vecf2(view.x * (k % 2), view.y * (k / 2));
+                m_view_px = Vecf3(at, view.y / HudScene::height);
+            }
             auto const* info   = p.template get<PlayerInfo>(id);
             auto const* cam    = p.template get<PlayerCamera>(id);
             auto const* net    = p.template get<NetworkInfo>(id);
@@ -1888,6 +1905,7 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
     PostProcessParameters* m_post{nullptr};
     Vecf4                  m_view_rect{0.f, 0.f, 1.f, 1.f}; /*!< m_view's, see view_rect */
     f32                    m_fov{0.f}; /*!< m_view's, radians */
+    Vecf3                  m_view_px{0.f, 0.f, 1.f}; /*!< m_view's top left in window pixels, and pixels per unit */
     f32               m_width{640.f};
 };
 

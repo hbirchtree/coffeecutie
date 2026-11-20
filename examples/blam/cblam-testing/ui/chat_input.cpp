@@ -68,7 +68,7 @@ struct ChatInput : compo::RestrictedSubsystem<ChatInput, ChatInputManifest>
         if(state.typing && (!input || !multiplayer || input->input_mode != mode_t::chat))
             close();
 
-        bool opened = false;
+        bool opened = false, send = false;
         for(auto const& event : std::exchange(m_events, {}))
         {
             if(auto const* key = std::get_if<CIKeyEvent>(&event))
@@ -91,17 +91,12 @@ struct ChatInput : compo::RestrictedSubsystem<ChatInput, ChatInputManifest>
                     }
                     continue;
                 }
+                /* Sent once this frame's text is in: keys come before it,
+                 * and Enter may be what commits a composition */
                 if((key->key == CK_EnterCR || key->key == CK_EnterNL || key->key == CK_KP_Enter) &&
                    !repeat)
-                {
-                    if(!state.typing->text.empty())
-                    {
-                        GameEvent    ev{.type = GameEvent::ChatSay};
-                        ChatSayEvent say{.player_idx = info->player_idx, .text = state.typing->text};
-                        p.template subsystem<GameEventBus>().inject(ev, &say);
-                    }
-                    close();
-                } else if(key->key == CK_Escape && !repeat)
+                    send = true;
+                else if(key->key == CK_Escape && !repeat)
                     close();
                 else if(key->key == CK_BackSpace && state.typing->composing.empty())
                     pop_character(state.typing->text);
@@ -119,6 +114,25 @@ struct ChatInput : compo::RestrictedSubsystem<ChatInput, ChatInputManifest>
                     state.typing->composing = utf8::replace_invalid(edit->text);
             }
         }
+        if(send && state.typing)
+        {
+            auto text = state.typing->text + state.typing->composing;
+            if(!text.empty())
+            {
+                GameEvent    ev{.type = GameEvent::ChatSay};
+                ChatSayEvent say{.player_idx = info->player_idx, .text = std::move(text)};
+                p.template subsystem<GameEventBus>().inject(ev, &say);
+            }
+            close();
+        }
+        /* The input method's candidates go by the line, as the HUD drew it */
+        if(state.typing && keyboard && state.typing->area != m_area)
+        {
+            m_area           = state.typing->area;
+            auto const& area = state.typing->area;
+            keyboard->setTextArea({area[0], area[1]}, {area[2], area[3]}, 0);
+        } else if(!state.typing)
+            m_area = {};
     }
 
     /* The last whole character */
@@ -133,7 +147,8 @@ struct ChatInput : compo::RestrictedSubsystem<ChatInput, ChatInputManifest>
 
     static constexpr size_t max_bytes = 200;
 
-    std::vector<event_t> m_events;
+    std::vector<event_t>           m_events;
+    std::array<libc_types::i32, 4> m_area{}; /*!< As last given to the input method */
     bool                 m_typing{false}; /*!< keys are chat's, not the game's */
 };
 

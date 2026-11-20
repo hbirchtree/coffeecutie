@@ -3,6 +3,7 @@
 #include <coffee/components/entity_container.h>
 #include <coffee/components/subsystem.h>
 
+#include <array>
 #include <optional>
 #include <string>
 
@@ -16,6 +17,9 @@ struct ChatState : compo::SubsystemBase
         libc_types::u32 seat{0};
         std::string     text;      /*!< UTF-8, written so far */
         std::string     composing; /*!< UTF-8, still in the input method */
+        /*! Where the HUD draws its line, in window pixels: left, top,
+         *  width, height; for the input method's candidates */
+        std::array<libc_types::i32, 4> area{};
     };
 
     std::optional<typing_t> typing;
