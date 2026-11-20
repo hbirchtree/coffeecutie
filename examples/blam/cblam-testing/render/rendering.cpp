@@ -1911,6 +1911,7 @@ struct MeshRenderer
         f32   focal{1.f};
         f32   aspect{1.f};
         bool  cinematic{false}; /* a cutscene camera: no first-person view */
+        bool  scoped{false};    /* nor through a scope */
     };
 
     gfx::api*            m_api;
@@ -3354,6 +3355,7 @@ struct MeshRenderer
                 .focal    = 1.f / std::tan(glm::radians(cam.cinematic ? cam.cinematic->fov : cam.camera.fieldOfView) * .5f),
                 .aspect   = cam.camera.aspect,
                 .cinematic = cam.cinematic.has_value(),
+                .scoped    = cam.scoped,
             });
         }
         std::sort(
@@ -3675,7 +3677,7 @@ struct MeshRenderer
             auto pass = static_cast<Passes>(pi);
             for(auto i : stl_types::range<u32>(m_players.size()))
             {
-                if(m_players[i].cinematic)
+                if(m_players[i].cinematic || m_players[i].scoped)
                     continue;
                 if(pass == Pass_FP_Opaque)
                     render_pass(
@@ -4508,7 +4510,7 @@ struct LegacyMeshRenderer
         Coffee::Profiler::PopContext();
 
         /* The seat's own view models, which Visibility keeps to it */
-        if(cam.cinematic)
+        if(cam.cinematic || cam.scoped)
             return;
         Coffee::Profiler::PushContext("legacy_render: Enhanced first person");
         for(i32 pi = Pass_FP_Opaque; pi <= Pass_LastFP; ++pi)

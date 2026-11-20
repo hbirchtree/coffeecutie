@@ -824,6 +824,7 @@ struct PlayerController
         else if(pressed && levels > 0)
             equip->zoom = static_cast<u8>((equip->zoom + 1) % (levels + 1));
         state.weapon = held ? held->tag : nullptr;
+        cam.scoped   = equip->zoom > 0;
         if(equip->zoom == 0)
         {
             if(state.fov > 0.f)

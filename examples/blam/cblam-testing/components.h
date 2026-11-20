@@ -1394,6 +1394,8 @@ struct PlayerCamera
         u64   relative_to{0}; /*!< position and rotation in its space */
     };
     std::optional<cinematic_t> cinematic;
+    /*! Looking through a scope: no first-person view */
+    bool scoped{false};
     /*! The whole window's aspect, which a cutscene is drawn at, and this
      *  seat's share of it in split screen */
     f32 screen_aspect{0.f};
