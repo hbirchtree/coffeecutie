@@ -1257,6 +1257,7 @@ struct PlayerInput
     {
         game,
         menu,
+        chat, /*!< Typing a chat line: no play, no menu */
     } input_mode{input_mode_t::game};
 
     StandardCamera::Reg keys; /*!< held keys, from KeyboardInput */

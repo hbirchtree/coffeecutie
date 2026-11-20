@@ -1,5 +1,6 @@
 #include "ui/hud.h"
 #include "game/game_mode.h"
+#include "ui/chat_input.h"
 
 #include "loading/blam_files.h"
 #include "scripting/cinematic.h"
@@ -41,6 +42,7 @@ using HudManifest = compo::SubsystemManifest<
         CinematicState,
         ScreenText,
         const GameState,
+        const ChatState,
         const BlamFiles<halo_version>,
         const LoadingStatus>,
     type_list_t<comp_app::GraphicsFramebuffer, comp_app::EventBus<SoundEvent>>>;
@@ -1358,11 +1360,15 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         return out;
     }
 
-    /* The deaths of the last few seconds, as this player is told them: their
-     * own kills as theirs, betrayals as such, the rest by what did it */
+    /* The deaths and chat of the last few seconds, as this player is told
+     * them: their own kills as theirs, betrayals as such, the rest by what
+     * did it; under them, the line this seat is typing. Set in the full
+     * typeface, which has the characters chat needs */
     void kill_feed(Proxy& p, PlayerInfo const& viewer)
     {
-        if(m_feed.empty() || !m_hudg)
+        auto const& chat   = p.template subsystem<ChatState>();
+        bool const  typing = chat.typing && chat.typing->seat == viewer.seat_idx;
+        if((m_feed.empty() && !typing) || !m_hudg)
             return;
         auto const& game    = p.template subsystem<GameState>();
         auto const  name_of = [&p](u32 player_idx) {
@@ -1376,10 +1382,24 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto const *x = game.player(a), *y = game.player(b);
             return game.teams && x && y && x->team >= 0 && x->team == y->team;
         };
-        std::u16string text;
-        for(auto const& [kill, _] : m_feed)
+        Vecf4 const kill_color = Vecf4(m_hudg->text_color.y, m_hudg->text_color.z, m_hudg->text_color.w, 1.f);
+        std::vector<std::pair<std::string, Vecf4>> lines;
+        for(auto const& entry : m_feed)
         {
-            bool const by_player = kill.killer != ObjectHitEvent::no_player;
+            if(entry.chat)
+            {
+                std::string name;
+                for(auto player : p.template select<PlayerInfo>())
+                    if(auto const& info = player.template get<PlayerInfo>();
+                       info.player_idx == entry.chat->player_idx && !info.name.empty())
+                        name = info.name;
+                if(name.empty())
+                    name = fmt::format("Player {}", entry.chat->player_idx + 1);
+                lines.emplace_back(name + ": " + entry.chat->text, chat_color);
+                continue;
+            }
+            auto const& kill      = entry.kill;
+            bool const  by_player = kill.killer != ObjectHitEvent::no_player;
             std::u16string line;
             if(by_player && kill.killer == kill.victim)
                 line = fill(game_text(text_suicide, "%s committed suicide"), {name_of(kill.victim)});
@@ -1396,29 +1416,42 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 line = fill(game_text(text_vehicle, "%s was killed by a vehicle"), {name_of(kill.victim)});
             else
                 line = fill(game_text(text_guardians, "%s was killed by the guardians"), {name_of(kill.victim)});
-            if(!text.empty())
-                text += u'\n';
-            text += line;
+            lines.emplace_back(utf8::utf16to8(line), kill_color);
         }
-        /* Above the motion sensor, where it was last drawn; the top left
-         * is the prompts' */
-        auto const  sensor = m_sensor_top.find(m_view->seat);
-        f32 const   top    = sensor != m_sensor_top.end() ? sensor->second : HudScene::height - safe_inset.y - feed_bottom;
-        Vecf4 const color  = m_hudg->text_color;
-        m_view->texts.push_back({
-            .runs  = {{.text = std::move(text)}},
-            .at    = {safe_inset.x, top - feed_gap - feed_line * m_feed.size()},
-            .color = Vecf4(color.y, color.z, color.w, 1.f),
-        });
+        if(typing)
+            lines.emplace_back(
+                "Say: " + chat.typing->text + chat.typing->composing + "_", chat_color);
+        /* Above the motion sensor, where it was last drawn, newest lowest;
+         * the top left is the prompts' */
+        auto const sensor = m_sensor_top.find(m_view->seat);
+        f32 const  top = sensor != m_sensor_top.end() ? sensor->second : HudScene::height - safe_inset.y - feed_bottom;
+        f32        baseline = top - feed_gap - feed_descent - feed_line * (lines.size() - 1);
+        for(auto& [text, color] : lines)
+        {
+            m_view->typeset.push_back({
+                .text      = std::move(text),
+                .at        = {safe_inset.x, baseline},
+                .size      = feed_em,
+                .max_width = m_width * feed_width,
+                .color     = color,
+            });
+            baseline += feed_line;
+        }
     }
 
     struct feed_t
     {
-        KillFeedEvent kill;
-        f32           age{0.f};
+        KillFeedEvent                kill;
+        std::optional<ChatLineEvent> chat;
+        f32                          age{0.f};
     };
     static constexpr f32    feed_seconds = 6.f;   /* a message stays, my pick */
-    static constexpr size_t feed_lines   = 4;
+    static constexpr f32    chat_seconds = 12.f;  /* a chat line, longer, my pick */
+    static constexpr size_t feed_lines   = 6;
+    static constexpr f32    feed_em      = 11.f;  /* HUD units */
+    static constexpr f32    feed_descent = 3.f;   /* HUD units under a baseline */
+    static constexpr f32    feed_width   = .5f;   /* of the view, past which a line is cut */
+    static inline Vecf4 const chat_color{1.f, 1.f, 1.f, 1.f};
     static constexpr f32    feed_line    = 14.f;  /* HUD px */
     static constexpr f32    feed_gap     = 6.f;   /* HUD px over the motion sensor */
     static constexpr f32    feed_bottom  = 110.f; /* HUD px above the bottom, with no sensor seen yet */
@@ -1526,9 +1559,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         m_blink_time += dt;
         if(m_feed_queue)
             m_feed_queue->poll();
+        if(m_chat_queue)
+            m_chat_queue->poll();
         for(auto& line : m_feed)
             line.age += dt;
-        std::erase_if(m_feed, [](feed_t const& line) { return line.age > feed_seconds; });
+        std::erase_if(m_feed, [](feed_t const& line) {
+            return line.age > (line.chat ? chat_seconds : feed_seconds);
+        });
         while(m_feed.size() > feed_lines)
             m_feed.erase(m_feed.begin());
         cinematic.fade.elapsed += dt;
@@ -1790,6 +1827,7 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
     f32                  m_dt{0.f};
     f32                  m_blink_time{0.f}; /*!< Clock the hud_blink_* flashes beat to */
     std::shared_ptr<GameEventBus::queue_type<KillFeedEvent>> m_feed_queue;
+    std::shared_ptr<GameEventBus::queue_type<ChatLineEvent>> m_chat_queue;
     std::vector<feed_t>                                      m_feed;
     std::vector<std::u16string>                              m_game_text;
     static constexpr f32 low_ammo_fraction = .25f;
@@ -1826,6 +1864,8 @@ void alloc_hud(compo::EntityContainer& e)
     auto& hud         = e.register_subsystem_inplace<HudSystem>();
     hud.m_feed_queue = e.subsystem_cast<GameEventBus>().addQueuedEventFunction<KillFeedEvent>(
         0, [&hud](GameEvent&, KillFeedEvent* feed) { hud.m_feed.push_back({.kill = *feed}); });
+    hud.m_chat_queue = e.subsystem_cast<GameEventBus>().addQueuedEventFunction<ChatLineEvent>(
+        0, [&hud](GameEvent&, ChatLineEvent* line) { hud.m_feed.push_back({.chat = *line}); });
 }
 
 void alloc_objective_provider(compo::EntityContainer& e)
