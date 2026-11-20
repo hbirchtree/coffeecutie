@@ -79,6 +79,7 @@
             "packages": [
                 "datachannel-wasm",
                 "ffmpeg-decoders",
+                "fmt",
                 "gamenetworkingsockets",
                 "openal-soft",
                 "sdl3"
