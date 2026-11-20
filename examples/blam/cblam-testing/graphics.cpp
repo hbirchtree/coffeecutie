@@ -35,6 +35,7 @@
 #include "ticks.h"
 #include "combat/weapons.h"
 #include "ui/hud.h"
+#include "ui/chat_input.h"
 #include "audio/vehicle_sounds.h"
 #include "physics.h"
 #include "player/player_controller.h"
@@ -344,6 +345,7 @@ i32 blam_main()
             alloc_effects(e);
             alloc_weapons(e);
             alloc_hud(e);
+            alloc_chat_input(e);
             alloc_scripting(e);
             alloc_actors(e);
 #if defined(BLAM_DIMETER) || defined(BLAM_ELEGY)

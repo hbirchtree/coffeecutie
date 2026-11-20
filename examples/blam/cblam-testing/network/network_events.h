@@ -847,6 +847,7 @@ struct alignas(8) PlayerChatMessage
         WordsOfTheWorld = 1,
     } chat_type{Self};
     u32 message_byte_length{}; // Length of the payload in bytes, not UTF-8 characters
+    u32 player_idx{};          // Who says it; the server checks a client's
 
     static constexpr u32 PlayerChatMessage::* trailing_length_member = &PlayerChatMessage::message_byte_length;
     static constexpr auto max_trailing_length = 1024;

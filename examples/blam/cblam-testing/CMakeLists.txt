@@ -84,6 +84,7 @@ coffee_application(
         scripting/script_component.cpp
         ticks.cpp
         ui/hud.cpp
+        ui/chat_input.cpp
         ui/ui.cpp
         ui/ui_game_setup.cpp
         ui/ui_profile.cpp

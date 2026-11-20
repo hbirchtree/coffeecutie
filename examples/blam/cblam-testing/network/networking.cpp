@@ -14,6 +14,7 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
+#include <utf8cpp/utf8.h>
 #include <deque>
 #include <gsl/span_ext>
 #include <peripherals/stl/base64.h>
@@ -1465,6 +1466,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     return s.tag.instance_id == gone->net_id;
                 });
             });
+        m_chat_queue = m_game_bus.addQueuedEventFunction<ChatSayEvent>(
+            0, [this](GameEvent&, ChatSayEvent* say) { m_says.push_back(*say); });
         m_pickup_queue = m_game_bus.addQueuedEventFunction<EquipWeaponEvent>(
             0, [this](GameEvent&, EquipWeaponEvent* equip) {
                 if(is_server() &&
@@ -2464,6 +2467,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(m_pickup_queue)
             m_pickup_queue->poll();
         m_net_state.replica = !is_server() && m_connection;
+        if(m_chat_queue)
+            m_chat_queue->poll();
+        send_chats();
         send_combat(p);
         apply_simulation();
         clock_tick();
@@ -4181,6 +4187,73 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         m_left_server = true;
     }
 
+    /* What a chat line may be: valid UTF-8, no control characters, trimmed,
+     * and cut on a character to max_chat_bytes */
+    static std::optional<std::string> chat_text(std::string_view raw)
+    {
+        std::string const text = utf8::replace_invalid(std::string(raw));
+        std::string       out;
+        for(auto it = text.begin(); it != text.end();)
+        {
+            auto const     start = it;
+            char32_t const c     = utf8::next(it, text.end());
+            if(c < 0x20 || (c >= 0x7F && c < 0xA0))
+                continue;
+            if(out.size() + static_cast<size_t>(it - start) > max_chat_bytes)
+                break;
+            out.append(start, it);
+        }
+        auto const first = out.find_first_not_of(' ');
+        if(first == std::string::npos)
+            return std::nullopt;
+        return out.substr(first, out.find_last_not_of(' ') - first + 1);
+    }
+
+    /* What local players said: to the server, from the server to everyone,
+     * or shown at once in a game without one */
+    void send_chats()
+    {
+        for(auto const& say : std::exchange(m_says, {}))
+        {
+            auto text = chat_text(say.text);
+            if(!text)
+                continue;
+            if(is_server())
+                relay_chat(say.player_idx, std::move(*text));
+            else if(m_connection)
+                send_single(
+                    m_connection,
+                    Message<PlayerChatMessage>({.player_idx = say.player_idx}),
+                    k_nSteamNetworkingSend_Reliable,
+                    gsl::span<const char>(text->data(), text->size()));
+            else
+                show_chat(say.player_idx, std::move(*text));
+        }
+    }
+
+    /* The server passes a line on to every client, and shows it */
+    void relay_chat(u32 player_idx, std::string text)
+    {
+        std::set<HSteamNetConnection> verified;
+        for(auto const& [connection, state] : m_connections)
+            if(state.verified)
+                verified.insert(connection);
+        if(!verified.empty())
+            send_all(
+                Message<PlayerChatMessage>({.player_idx = player_idx}),
+                k_nSteamNetworkingSend_Reliable,
+                std::move(verified),
+                gsl::span<const char>(text.data(), text.size()));
+        show_chat(player_idx, std::move(text));
+    }
+
+    void show_chat(u32 player_idx, std::string text)
+    {
+        GameEvent     ev{GameEvent::ChatLine};
+        ChatLineEvent line{.player_idx = player_idx, .text = std::move(text)};
+        m_game_bus.inject(ev, &line);
+    }
+
     void server_gone(
         ServerDisconnectedEvent::reason_t reason,
         std::string                       message,
@@ -4242,6 +4315,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         cDebug(
             "peer={} disconnected ({})", connection, client_name(connection));
+        m_chat_times.erase(connection);
         if(auto it = m_connections.find(connection); it != m_connections.end())
             for(auto& [_, seat] : it->second.players)
             {
@@ -4683,10 +4757,22 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto [chat, message] = payload.value_with_trailing<PlayerChatMessage>(packet_length);
             if(!chat)
                 break;
-            cDebug(
-                "Chat message received: {} bytes: {}",
-                message.size(),
-                std::string_view(message.data(), message.size()));
+            /* Only for a player this connection seats, and not too often */
+            bool const own = std::any_of(
+                player_info.players.begin(), player_info.players.end(), [&chat](auto const& seat) {
+                    return seat.second.idx == chat->player_idx;
+                });
+            auto const now   = std::chrono::steady_clock::now();
+            auto&      times = m_chat_times[connection];
+            std::erase_if(times, [now](auto const& at) { return now - at > chat_window; });
+            if(!own || times.size() >= chat_burst)
+            {
+                cDebug("Dropped chat from {}", client_name(connection));
+                break;
+            }
+            times.push_back(now);
+            if(auto text = chat_text(std::string_view(message.data(), message.size())))
+                relay_chat(chat->player_idx, std::move(*text));
             break;
         }
         case MessageBase::GameEvent: {
@@ -5128,12 +5214,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 Message<PlayerJoin>({
                     .player_name = *blam::bl_string::from(player_name),
                 }));
-            const char sample_msg[] = "meow meow I'm a 고양이";
-            send_single(
-                m_connection,
-                Message<PlayerChatMessage>({}),
-                k_nSteamNetworkingSend_Reliable,
-                gsl::span<const char>(sample_msg, sizeof(sample_msg) - 1));
             m_pending_seats = {0};
             break;
         }
@@ -5244,6 +5324,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
                 m_game_bus.inject(ev, &local);
             }
+            break;
+        }
+        case MessageBase::PlayerChat: {
+            auto [chat, message] = payload.value_with_trailing<PlayerChatMessage>(packet_length);
+            if(chat)
+                if(auto text = chat_text(std::string_view(message.data(), message.size())))
+                    show_chat(chat->player_idx, std::move(*text));
             break;
         }
         case MessageBase::GameLeave: {
@@ -5544,6 +5631,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::map<u32, EquipmentSync>             m_server_held; /*!< Own players, as the server has them */
     std::string m_removed_because; /*!< The server's GameLeave reason, until it closes */
+    std::shared_ptr<GameEventBus::queue_type<ChatSayEvent>> m_chat_queue;
+    std::vector<ChatSayEvent>                               m_says;
+    std::map<HSteamNetConnection, std::vector<std::chrono::steady_clock::time_point>> m_chat_times;
+    static constexpr size_t max_chat_bytes = 200;
+    static constexpr size_t chat_burst     = 5; /*!< lines a client may send within chat_window */
+    static constexpr auto   chat_window    = std::chrono::seconds(5);
     std::map<u32, EquipmentSync>             m_last_reports; /*!< Each client player's, on the server */
     struct move_t
     {

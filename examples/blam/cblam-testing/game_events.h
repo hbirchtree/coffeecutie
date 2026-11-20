@@ -108,6 +108,8 @@ struct GameEvent
         FlagTouch,
         KillFeed,
         ScriptCall,
+        ChatSay,
+        ChatLine,
     };
 
     EventType type{None};
@@ -638,6 +640,25 @@ struct KillFeedEvent
     libc_types::u32           killer{ObjectHitEvent::no_player};
     UnitKilledEvent::cause_t  cause{UnitKilledEvent::other};
     bool                      remote{false}; /*!< Came from the server */
+};
+
+/*! A local player says something; Networking takes it to the server, or
+ *  straight to the HUD in a game without one */
+struct ChatSayEvent
+{
+    static constexpr auto event_type = GameEvent::ChatSay;
+
+    libc_types::u32 player_idx{0};
+    std::string     text; /*!< UTF-8 */
+};
+
+/*! A chat line to show, as the server relayed it */
+struct ChatLineEvent
+{
+    static constexpr auto event_type = GameEvent::ChatLine;
+
+    libc_types::u32 player_idx{0};
+    std::string     text; /*!< UTF-8, checked */
 };
 
 /*! The multiplayer announcer here: one of matg's multiplayer sounds */

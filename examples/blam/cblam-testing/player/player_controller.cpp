@@ -347,6 +347,19 @@ struct PlayerController
                        ? convert_i16_f(raw)
                        : 0.f;
         };
+        /* The keys are chat's while it is typed into */
+        if(input.input_mode == PlayerInput::input_mode_t::chat)
+        {
+            auto& intent    = input.intent;
+            input.movement  = {};
+            intent.move     = {};
+            intent.throttle = intent.steer = 0.f;
+            intent.use = intent.grab = intent.jump = intent.fire = intent.fire2 = false;
+            intent.swap = intent.reload = false;
+            intent.grenade = intent.grenade_switch = intent.melee = false;
+            intent.zoom = intent.crouch = false;
+            return;
+        }
 
         /* Looking takes the time passed; freecam's step and boost are what
          * they would be at the reference rate, scaled by time when moved */
