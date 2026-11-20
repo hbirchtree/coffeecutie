@@ -24,6 +24,12 @@ uniform int tone_curve;
 uniform vec4 rgb_comp_defocus;
 // Simulated gaussian blur
 uniform vec2 blur_distance;
+// Scopes' radial blur: each view's min and size, and how much of the way to
+// its centre it smears where its mask is opaque
+uniform sampler2D zoom_mask;
+uniform vec4      zoom_views[4];
+uniform vec4      zoom_spans;
+uniform int       zoom_count;
 
 // Creates chromatic aberration
 vec4 rgb_defocus()
@@ -83,6 +89,30 @@ vec3 pwl_gamma(vec3 x)
         step(0.125, x));
 }
 
+vec4 zoom_blur(vec4 color)
+{
+    vec2 uv = offset + in_tex * scale;
+    for(int i = 0; i < 4; i++)
+    {
+        if(i >= zoom_count)
+            break;
+        vec4 view  = zoom_views[i];
+        vec2 local = (uv - view.xy) / view.zw;
+        if(local.x < 0.0 || local.y < 0.0 || local.x > 1.0 || local.y > 1.0)
+            continue;
+        // The mask's first row is the view's top
+        float reach = zoom_spans[i] * texture2D(zoom_mask, vec2(local.x, 1.0 - local.y)).r;
+        if(reach <= 0.0)
+            return color;
+        vec2 centre = view.xy + view.zw * 0.5;
+        vec4 sum    = color;
+        for(int t = 1; t < 12; t++)
+            sum += texture2D(source, mix(uv, centre, reach * float(t) / 11.0)) * tint;
+        return sum / 12.0;
+    }
+    return color;
+}
+
 vec4 plain_sample()
 {
     return texture2D(source, offset + in_tex * scale).rgba * tint;
@@ -96,6 +126,8 @@ void main()
         : mode == 1
           ? gaussian_blur_sample()
           : plain_sample();
+    if(zoom_count > 0)
+        color = zoom_blur(color);
     if(tone_curve == 1)
     {
         vec3 x    = clamp(color.rgb, vec3(0.0), vec3(1.4938016));

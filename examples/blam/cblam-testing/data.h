@@ -181,6 +181,17 @@ struct PostProcessParameters : compo::SubsystemBase
     f32   camo_scale{0.05f};
     bool  bloom{true}; /*!< Halo 3 */
 
+    /*! A scope's radial blur over one local view: its screen effect's
+     *  convolution, as strong as its mask's alpha */
+    struct zoom_blur_t
+    {
+        Vecf4 view{0.f, 0.f, 1.f, 1.f}; /*!< min and size in the composite, from the bottom left */
+        libc_types::f32 span{0.f}; /*!< how much of the way to the view's centre it smears, at full mask */
+        blam::tagref_t const* mask{nullptr};
+        libc_types::i16       image{0};
+    };
+    std::vector<zoom_blur_t> zoom_blurs; /*!< Rebuilt by the HUD every frame */
+
     bool forge_overlay{false};
 
     bool doom_mode{false};

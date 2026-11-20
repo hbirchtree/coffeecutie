@@ -162,6 +162,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         solid     = 0x4, /* the color alone */
         premultiplied = 0x8, /* the texel's color is its coverage, and the
                               * color's alpha how much it covers */
+        darken = 0x10, /* the texel's brightness is how dark what is behind turns */
     };
 
     struct atlas_intermediate_t
@@ -1406,8 +1407,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     struct hud_batch_t
     {
         Matf3 matrix;
-        u32   count;
-        bool  premultiplied;
+        u32               count;
+        gfx::blend_state  blend;
     };
 
     /* Each seat's HUD, mapped onto its viewport; one batch per view */
@@ -1427,6 +1428,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                            : Vecf2(-1.f + size.x * (k % 2), 1.f - size.y * (k / 2));
             Matf3 const matrix = glm::translate(Matf3(1), top_left) *
                                  glm::scale(Matf3(1), Vecf2(size.x / view.width, -size.y / HudScene::height));
+            if(!view.masks.empty())
+            {
+                u32 const masks_first = static_cast<u32>(data.vertex_data.size());
+                for(auto const& mask : view.masks)
+                {
+                    auto const image = bitm_cache.resolve(*mask.bitmap, mask.image);
+                    if(!image.valid() || data.instance_data.size() >= m_instance_slots)
+                        continue;
+                    push_quad(data, mask.min, mask.max, image, mask.uv);
+                    data.instance_data.back().extra[0] = darken;
+                }
+                if(u32 const count = static_cast<u32>(data.vertex_data.size()) - masks_first)
+                    out.push_back({matrix, count, {.premultiplied = true}});
+            }
             u32 const first = static_cast<u32>(data.vertex_data.size());
             if(view.tint.a > 0.f)
                 push_solid(data, {0.f, 0.f}, {view.width, HudScene::height}, view.tint);
@@ -1468,7 +1483,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                                                                          : font_cache.end();
             if(font != font_cache.end() && font->second.font)
                 lay_out_hud_text(view, font->second, data, lines);
-            out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - first, true});
+            out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - first, {.premultiplied = true}});
             if(lines.empty() && view.typeset.empty())
                 continue;
             u32 const text_first = static_cast<u32>(data.vertex_data.size());
@@ -1484,7 +1499,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     (font_source << 24) | font->second.atlas_layer);
             /* Pixels per HUD unit in this view's viewport */
             push_typeset(view, screen_size.y * size.y * .5f / HudScene::height, data);
-            out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - text_first, false});
+            out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - text_first, {}});
         }
 
         /* Letterbox bars and the fade go over the whole screen */
@@ -1498,7 +1513,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(scene.fade.a > 0.f)
             push_solid(data, {-1.f, -1.f}, {1.f, 1.f}, scene.fade);
         if(data.vertex_data.size() > first)
-            out.push_back({Matf3(1), static_cast<u32>(data.vertex_data.size()) - first, false});
+            out.push_back({Matf3(1), static_cast<u32>(data.vertex_data.size()) - first, {}});
         return out;
     }
 
@@ -1970,7 +1985,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     void draw_legacy(
         std::vector<vertex_t> const&                          verts,
         std::vector<instance_vertex_t> const&                 instances,
-        std::vector<std::tuple<Matf3, u32, u32, bool>> const& ranges)
+        std::vector<std::tuple<Matf3, u32, u32, gfx::blend_state>> const& ranges)
     {
         using namespace std::string_view_literals;
         if(!load_legacy())
@@ -2008,7 +2023,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         f32 const la_textures =
             api.feature_info().texture.tex.ext.rg8 ? 0.f : 1.f;
 #endif
-        for(auto const& [matrix, offset, count, premultiplied] : ranges)
+        for(auto const& [matrix, offset, count, blend] : ranges)
             for(u32 first = offset; first < offset + count;)
             {
                 u32 const source = instances.at(first / 6).texture_source.x;
@@ -2062,7 +2077,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             typing::graphics::ShaderStage::Fragment,
                             {"source"sv, 0},
                             m_legacy_sampler}),
-                    gfx::blend_state{.premultiplied = premultiplied});
+                    gfx::blend_state{blend});
                 first = last;
             }
     }
@@ -2361,18 +2376,18 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
         if(m_legacy)
         {
-            std::vector<std::tuple<Matf3, u32, u32, bool>> ranges;
+            std::vector<std::tuple<Matf3, u32, u32, gfx::blend_state>> ranges;
             u32                                            hud_offset = 0;
-            for(auto const& [matrix, count, premultiplied] : hud_batches)
+            for(auto const& [matrix, count, blend] : hud_batches)
             {
-                ranges.emplace_back(matrix, hud_offset, count, premultiplied);
+                ranges.emplace_back(matrix, hud_offset, count, blend);
                 hud_offset += count;
             }
             ranges.emplace_back(
-                screen_scale, hud_vert_count, ui_vert_count, false);
-            ranges.emplace_back(cursor_scale, text_start, text_count, false);
+                screen_scale, hud_vert_count, ui_vert_count, gfx::blend_state{});
+            ranges.emplace_back(cursor_scale, text_start, text_count, gfx::blend_state{});
             if(cursor_visible)
-                ranges.emplace_back(cursor_scale, cursor_start, 6, false);
+                ranges.emplace_back(cursor_scale, cursor_start, 6, gfx::blend_state{});
             draw_legacy(vertex_data, instance_vertex_data, ranges);
             return;
         }
@@ -2398,7 +2413,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                              .sampler;
         };
 
-        auto do_submit = [&](Matf3 const& matrix, u32 offset, u32 count, bool premultiplied = false) {
+        auto do_submit = [&](Matf3 const& matrix, u32 offset, u32 count, gfx::blend_state blend = {}) {
             api.submit(
                 gfx::draw_command{
                     .program  = ui_painter,
@@ -2493,13 +2508,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         .buffer = instance_vertices->slice(0),
                         .stride = 0,
                     }),
-                gfx::blend_state{.premultiplied = premultiplied});
+                blend);
         };
 
         u32 hud_offset = 0;
-        for(auto const& [matrix, count, premultiplied] : hud_batches)
+        for(auto const& [matrix, count, blend] : hud_batches)
         {
-            do_submit(matrix, hud_offset, count, premultiplied);
+            do_submit(matrix, hud_offset, count, blend);
             hud_offset += count;
         }
         if(ui_vert_count > 0)

@@ -743,6 +743,55 @@ struct BitmapCache
         return count ? sum / static_cast<f32>(count) : Vecf4(.5f);
     }
 
+    /*! A bitmap's top level as alpha alone, row-major, and its size; none
+     *  for formats without a plain alpha byte */
+    std::optional<std::pair<std::vector<u8>, Veci2>> alpha_plane(generation_idx_t bitm)
+    {
+        using blam::bitm::format_t;
+        auto it = find(bitm);
+        if(it == m_cache.end() || !it->second.image.mip)
+            return std::nullopt;
+        auto const* img = it->second.image.mip;
+        u32         bpp = 0, at = 0;
+        switch(img->format)
+        {
+        case format_t::A8:
+        case format_t::AY8:
+            bpp = 1;
+            break;
+        case format_t::A8Y8:
+            bpp = 2, at = 1;
+            break;
+        case format_t::ARGB8: /* B, G, R, A */
+            bpp = 4, at = 3;
+            break;
+        default:
+            return std::nullopt;
+        }
+        Veci2 const  size{img->isize.x, img->isize.y};
+        size_t const texels = static_cast<size_t>(size.x) * static_cast<size_t>(size.y);
+        semantic::Span<const u8> data = img->data(img->shared() ? bitm_magic : magic.ptr_only(), 0);
+        if(texels == 0 || data.size() < texels * bpp)
+            return std::nullopt;
+        std::vector<u8> linear;
+        if(static_cast<u16>(img->flags) & static_cast<u16>(blam::bitm::flags_t::swizzled))
+        {
+            linear.resize(texels * bpp);
+            if(!blam::swizzle::deswizzle_bytes(
+                   semantic::Span<const u8>(data.data(), texels * bpp),
+                   semantic::Span<u8>(linear.data(), linear.size()),
+                   static_cast<u32>(size.x),
+                   static_cast<u32>(size.y),
+                   bpp))
+                return std::nullopt;
+            data = semantic::Span<const u8>(linear.data(), linear.size());
+        }
+        std::vector<u8> out(texels);
+        for(size_t i = 0; i < texels; i++)
+            out[i] = data[i * bpp + at];
+        return std::make_pair(std::move(out), size);
+    }
+
     u32 get_atlas_layer(generation_idx_t bitm)
     {
         if(!bitm.valid())

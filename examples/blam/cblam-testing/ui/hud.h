@@ -74,6 +74,9 @@ struct HudScene : compo::SubsystemBase
         std::vector<sprite_t>  sprites;
         std::vector<text_t>    texts;
         std::vector<typeset_t> typeset;
+        /* Screen effect masks, under the rest: a texel's brightness is how
+         * dark it turns what is behind; its alpha is the scope's blur */
+        std::vector<sprite_t> masks;
         /* Over the whole view, under its HUD; premultiplied */
         Vecf4 tint{0.f};
     };

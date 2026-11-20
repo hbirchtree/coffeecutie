@@ -5178,6 +5178,21 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     i32   tonemap = postprocess.tonemap ? 1 : 0;
     i32   overlay_tonemap = 1;
 
+    /* Scopes' blurs, all with the first's mask */
+    std::array<Vecf4, 4> zoom_views{};
+    Vecf4                zoom_spans{0.f};
+    i32                  zoom_count = 0;
+    for(auto const& blur : postprocess.zoom_blurs)
+        if(zoom_count < 4 && blur.mask &&
+           (zoom_count > 0 || zoom_mask_for(api, e.subsystem<BitmapCache<halo_version>>(), blur)))
+        {
+            zoom_views[zoom_count] = blur.view;
+            zoom_spans[zoom_count] = blur.span;
+            zoom_count++;
+        }
+    i32 const no_zoom = 0;
+    auto      zoom_sampler = zoom_mask_sampler ? zoom_mask_sampler : offscreen_sampler;
+
     auto params_v = gfx::make_uniform_list(
         typing::graphics::ShaderStage::Vertex,
         gfx::uniform_pair{{"transform"sv}, semantic::SpanOne(transform)});
@@ -5194,7 +5209,10 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)},
         gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)},
         gfx::uniform_pair{{"tone_curve"}, semantic::SpanOne(postprocess.tone_curve)},
-        gfx::uniform_pair{{"tonemap"}, semantic::SpanOne(tonemap)});
+        gfx::uniform_pair{{"tonemap"}, semantic::SpanOne(tonemap)},
+        gfx::uniform_pair{{"zoom_views"}, semantic::Span<const Vecf4>(zoom_views.data(), zoom_views.size())},
+        gfx::uniform_pair{{"zoom_spans"}, semantic::SpanOne(zoom_spans)},
+        gfx::uniform_pair{{"zoom_count"}, semantic::SpanOne(zoom_count)});
 
     // clang-format off
     auto composite_result = api.submit(gfx::draw_command{
@@ -5206,11 +5224,17 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
                     },
                     .data = {{ .arrays = { .count = 4, }}},
                 },
-                gfx::make_sampler_list(gfx::sampler_definition_t{
-                    typing::graphics::ShaderStage::Fragment,
-                    {"source"sv},
-                    blur_source,
-                }),
+                gfx::make_sampler_list(
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"source"sv, 0},
+                        blur_source,
+                    },
+                    gfx::sampler_definition_t{
+                        typing::graphics::ShaderStage::Fragment,
+                        {"zoom_mask"sv, 1},
+                        zoom_sampler,
+                    }),
                 params_v,
                 std::move(params_f));
     // clang-format on
@@ -5240,7 +5264,10 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
         gfx::uniform_pair{{"mode"}, semantic::SpanOne(effect_mode)},
         gfx::uniform_pair{{"tint"}, semantic::SpanOne(tint)},
         gfx::uniform_pair{{"tone_curve"}, semantic::SpanOne(no_curve)},
-        gfx::uniform_pair{{"tonemap"}, semantic::SpanOne(overlay_tonemap)});
+        gfx::uniform_pair{{"tonemap"}, semantic::SpanOne(overlay_tonemap)},
+        gfx::uniform_pair{{"zoom_views"}, semantic::Span<const Vecf4>(zoom_views.data(), zoom_views.size())},
+        gfx::uniform_pair{{"zoom_spans"}, semantic::SpanOne(zoom_spans)},
+        gfx::uniform_pair{{"zoom_count"}, semantic::SpanOne(no_zoom)});
 
     for(screen_quad_t const& draw : extra_quads)
     {
@@ -5280,6 +5307,32 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     }
 
     extra_quads.clear();
+}
+
+bool ScreenClear::zoom_mask_for(
+    gfx::system& api, BitmapCache<halo_version>& cache, PostProcessParameters::zoom_blur_t const& blur)
+{
+    auto const key = cache.resolve(*blur.mask, blur.image);
+    if(zoom_mask_of == key)
+        return zoom_mask != nullptr;
+    /* Not cached yet: asked again next frame */
+    auto plane = cache.alpha_plane(key);
+    if(!plane)
+        return false;
+    zoom_mask_of            = key;
+    auto const& [alpha, size] = *plane;
+    std::vector<u8> rgba(alpha.size() * 4);
+    for(size_t i = 0; i < alpha.size(); i++)
+        std::fill_n(rgba.begin() + static_cast<std::ptrdiff_t>(i * 4), 4, alpha[i]);
+    zoom_mask = api.alloc_texture(gfx::textures::d2, PixDesc(pix_fmt::RGBA8), 1);
+    zoom_mask->alloc(size_3d<u32>{static_cast<u32>(size.x), static_cast<u32>(size.y), 1});
+    zoom_mask->upload(semantic::Span<const u8>(rgba.data(), rgba.size()), Veci2{}, size);
+    zoom_mask_sampler = zoom_mask->sampler();
+    zoom_mask_sampler->alloc();
+    zoom_mask_sampler->set_filtering(typing::Filtering::Linear, typing::Filtering::Linear);
+    zoom_mask_sampler->set_edge_policy(0, typing::WrapPolicy::Clamp);
+    zoom_mask_sampler->set_edge_policy(1, typing::WrapPolicy::Clamp);
+    return true;
 }
 
 void ScreenClear::load_resources(gleam::system& api, BlamResources& resources)
