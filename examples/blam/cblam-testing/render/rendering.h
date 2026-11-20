@@ -12,6 +12,7 @@
 #include "components.h"
 #include "data.h"
 #include "render/effects.h"
+#include "selected_version.h"
 
 #include <coffee/components/subsystem.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
@@ -24,7 +25,7 @@ using ScreenClearManifest = compo::SubsystemManifest<
         const PlayerInfo,
         const PlayerInput,
         const PhysicsData>,
-    type_list_t<gfx::system, BlamResources, PostProcessParameters>,
+    type_list_t<gfx::system, BlamResources, PostProcessParameters, BitmapCache<halo_version>>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 
 struct ScreenClear
@@ -60,6 +61,12 @@ struct ScreenClear
                                     blur_chain_samplers;
     std::shared_ptr<gfx::program_t> blur_down_program;
     std::shared_ptr<gfx::program_t> blur_up_program;
+
+    /* A scope's mask, its alpha in every channel, for the zoom blur */
+    bool zoom_mask_for(gfx::system& api, BitmapCache<halo_version>& cache, PostProcessParameters::zoom_blur_t const& blur);
+    std::shared_ptr<gfx::texture_2d_t> zoom_mask;
+    std::shared_ptr<gfx::sampler_t>    zoom_mask_sampler;
+    std::optional<generation_idx_t>    zoom_mask_of;
 
     struct screen_quad_t
     {

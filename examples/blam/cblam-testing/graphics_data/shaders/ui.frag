@@ -54,6 +54,7 @@ const uint USE_ALPHA = 1u;
 const uint METER     = 2u;
 const uint SOLID     = 4u;
 const uint PREMULTIPLIED = 8u;
+const uint DARKEN    = 16u;
 
 vec4 unpack_rgba8(uint v)
 {
@@ -162,6 +163,9 @@ void main()
         vec3 cover = source == TEX_A8 ? vec3(background_color.a) : background_color.rgb;
         out_color = vec4(color.rgb * cover, color.a * background_color.a);
     }
+    /* Screen effect masks: grey halves what is behind, white blacks it out */
+    else if((extra.x & DARKEN) != 0u)
+        out_color = vec4(0.0, 0.0, 0.0, max(background_color.r, max(background_color.g, background_color.b)));
     else if((extra.x & USE_ALPHA) != 0u)
         out_color = vec4(color.rgb * background_color.rgb, background_color.a * color.a);
     else

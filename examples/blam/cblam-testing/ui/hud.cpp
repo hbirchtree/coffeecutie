@@ -40,6 +40,7 @@ using HudManifest = compo::SubsystemManifest<
     type_list_t<
         HudScene,
         CinematicState,
+        PostProcessParameters,
         ScreenText,
         const GameState,
         const ChatState,
@@ -1263,7 +1264,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     static constexpr f32 countdown_height = 14.f;
 
     /* A screen effect's mask over the whole view, under the rest of the
-     * HUD: the sniper scope's vignette */
+     * HUD: the sniper scope's frame */
     void scope_mask(weapon_hud_interface const& hud, bool zoomed)
     {
         using flags_t = weapon_hud_interface::screen_effect_t::flags_t;
@@ -1279,12 +1280,37 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto frame = frame_of(bitmap, 0, 0);
             if(!frame)
                 continue;
-            frame->sprite.min   = Vecf2(0.f);
-            frame->sprite.max   = Vecf2(m_width, HudScene::height);
-            /* The mask's alpha is how much of the view it blacks out */
-            frame->sprite.color = Vecf4(0.f, 0.f, 0.f, 1.f);
-            m_view->sprites.insert(m_view->sprites.begin(), frame->sprite);
+            frame->sprite.min = Vecf2(0.f);
+            frame->sprite.max = Vecf2(m_width, HudScene::height);
+            m_view->masks.push_back(frame->sprite);
+            /* Its blur grows as the view narrows */
+            auto const& conv = fx.convolution;
+            if((static_cast<u16>(conv.flags) & static_cast<u16>(flags_t::only_when_zoomed)) && !zoomed)
+                continue;
+            Vecf2 const fov = conv.fov_in_bounds;
+            f32 const   t   = fov.x > fov.y ? std::clamp((fov.x - m_fov) / (fov.x - fov.y), 0.f, 1.f) : 1.f;
+            f32 const   radius = glm::mix(conv.radius_out_bounds.x, conv.radius_out_bounds.y, t);
+            if(radius > 0.f && m_post)
+                m_post->zoom_blurs.push_back({
+                    .view  = m_view_rect,
+                    .span  = radius * blur_span,
+                    .mask  = &static_cast<blam::tagref_t const&>(bitmap),
+                    .image = 0,
+                });
         }
+    }
+    /* Of the way to the view's centre, per pixel of convolution radius */
+    static constexpr f32 blur_span = 1.f / 80.f;
+
+    /* A view's place in the composite, from the bottom left, split as the
+     * viewports are */
+    static Vecf4 view_rect(size_t k, size_t views)
+    {
+        if(views <= 1)
+            return {0.f, 0.f, 1.f, 1.f};
+        if(views == 2)
+            return {0.f, k == 0 ? .5f : 0.f, 1.f, .5f};
+        return {.5f * static_cast<f32>(k % 2), k < 2 ? .5f : 0.f, .5f, .5f};
     }
 
     /* The objective the scripts set, as text */
@@ -1550,6 +1576,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     {
         auto& scene = p.template subsystem<HudScene>();
         scene.views.clear();
+        m_post = &p.template subsystem<PostProcessParameters>();
+        m_post->zoom_blurs.clear();
 
         /* Cutscenes cover it all */
         auto& cinematic = p.template subsystem<CinematicState>();
@@ -1650,8 +1678,10 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 }
                 continue;
             }
-            m_view  = &out;
-            m_width = out.width;
+            m_view      = &out;
+            m_width     = out.width;
+            m_view_rect = view_rect(scene.views.size() - 1, seats.size());
+            m_fov       = glm::radians(cam->camera.fieldOfView);
 
             size_t const split  = seats.size() > 1 ? 1 : 0;
             m_split             = split != 0;
@@ -1855,6 +1885,9 @@ if(auto bitmaps = g.interface.data(*m_magic); bitmaps.has_value() && !bitmaps.va
     std::vector<std::pair<blam::scn::equipment const*, blam::tag_t const*>> m_grenades;
 
     HudScene::view_t* m_view{nullptr};
+    PostProcessParameters* m_post{nullptr};
+    Vecf4                  m_view_rect{0.f, 0.f, 1.f, 1.f}; /*!< m_view's, see view_rect */
+    f32                    m_fov{0.f}; /*!< m_view's, radians */
     f32               m_width{640.f};
 };
 

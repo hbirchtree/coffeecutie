@@ -85,6 +85,9 @@ void main()
         vec3 cover = abs(format - TEX_A8) < 0.5 ? vec3(background.a) : background.rgb;
         gl_FragColor = vec4(color.rgb * cover, color.a * background.a);
     }
+    /* Screen effect masks: grey halves what is behind, white blacks it out */
+    else if(flag(16.0))
+        gl_FragColor = vec4(0.0, 0.0, 0.0, max(background.r, max(background.g, background.b)));
     else if(flag(1.0))
         gl_FragColor = vec4(color.rgb * background.rgb, background.a * color.a);
     else
