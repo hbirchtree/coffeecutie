@@ -402,21 +402,19 @@
   <section class="content" id="gamecube">
     <h2>GameCube disc</h2>
     <p>
-      Drop one Halo PC or Xbox map, with <code>bitmaps.map</code> for PC, to get
-      a bootable <code>.gcm</code> of BlamGX with that map on it. Xbox maps
-      load faster. The map stays on this machine and is not stored by this page.
+      Drop a Halo Xbox map to get a bootable <code>.gcm</code> of BlamGX with that map on it.
       In Dolphin, tick Config &gt; Advanced &gt; Enable MMU before opening the disc.
     </p>
     <div class="options">
       <label for="gc-gateway">
-        BlamGCGateway, as the console reaches it (empty to stay offline)
+        Gateway IP address for the console (empty to stay offline)
       </label>
       <input id="gc-gateway" type="text" spellcheck="false"
              placeholder="192.168.1.20:27790">
     </div>
     <div class="options">
       <label for="gc-server">
-        Server, as the gateway reaches it (empty for the gateway's own)
+        Server IP, reachable from the gateway (empty lets the gateway decide)
       </label>
       <input id="gc-server" type="text" spellcheck="false"
              placeholder="127.0.0.1:27105">
