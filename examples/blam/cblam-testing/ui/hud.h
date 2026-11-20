@@ -56,12 +56,24 @@ struct HudScene : compo::SubsystemBase
         bool               below{false}; /*!< under the text before it instead */
     };
 
+    /* A line set in a full typeface rather than the HUD font, for text
+     * that font lacks the characters of: chat */
+    struct typeset_t
+    {
+        std::string text;            /*!< UTF-8, one line */
+        Vecf2       at{};            /*!< start of its baseline */
+        f32         size{12.f};      /*!< em, in HUD units */
+        f32         max_width{0.f};  /*!< cut short with "..." past this; 0 = none */
+        Vecf4       color{1.f};
+    };
+
     struct view_t
     {
-        u32                   seat{0};
-        f32                   width{640.f};
-        std::vector<sprite_t> sprites;
-        std::vector<text_t>   texts;
+        u32                    seat{0};
+        f32                    width{640.f};
+        std::vector<sprite_t>  sprites;
+        std::vector<text_t>    texts;
+        std::vector<typeset_t> typeset;
         /* Over the whole view, under its HUD; premultiplied */
         Vecf4 tint{0.f};
     };

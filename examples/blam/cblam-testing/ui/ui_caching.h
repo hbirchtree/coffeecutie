@@ -31,6 +31,13 @@ struct FontCache
     std::shared_ptr<gfx::sampler_t>             font_sampler;
     gfx::api*                                   api;
     u32                                         atlas_layer{0};
+    /* A layer past the fonts' for text set in a typeface, at least this
+     * big; reallocating clears it, so its users start over on a new
+     * generation */
+    static constexpr i32 typeset_size{1024};
+    u32                  typeset_layer{0};
+    u32                  typeset_atlas{0};
+    u32                  typeset_generation{0};
     std::optional<blam::map_ptr>                m_loc{};
 
     inline void load_from(blam::map_container<V> const& map)
@@ -146,7 +153,7 @@ return out;
         constexpr i32 kMinAtlas = 256;
         constexpr i32 kMaxAtlas = 2048;
 
-        i32 atlas_size = kMinAtlas;
+        i32 atlas_size = std::max(kMinAtlas, typeset_size);
         while(atlas_size < kMaxAtlas)
         {
             bool all_fit = true;
@@ -177,7 +184,10 @@ return out;
             gleam::size_3d<u32>{
                 static_cast<u32>(atlas_size),
                 static_cast<u32>(atlas_size),
-                static_cast<u32>(m_cache.size())});
+                static_cast<u32>(m_cache.size() + 1)});
+        typeset_layer = static_cast<u32>(m_cache.size());
+        typeset_atlas = static_cast<u32>(atlas_size);
+        typeset_generation++;
         font_sampler->alloc();
         api->debug().annotate(*font_textures, "fonts_r8");
 
