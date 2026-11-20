@@ -354,7 +354,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         if(!sounds.has_value() || sounds.value().empty())
             return;
         u32 now = 0;
-        if(status.shield > watch.shield + 1e-4f && watch.shield < 1.f)
+        /* The shield fills by ticks, so frames between them see it hold:
+         * recharging lasts until it is full or drops */
+        bool const recharging = (watch.latched & static_cast<u32>(latch_t::shield_recharging)) != 0;
+        if((status.shield > watch.shield + 1e-4f && watch.shield < 1.f) ||
+           (recharging && status.shield >= watch.shield - 1e-4f && status.shield < 1.f))
             now |= static_cast<u32>(latch_t::shield_recharging);
         if(status.shield <= 0.f)
             now |= static_cast<u32>(latch_t::shield_empty) |
