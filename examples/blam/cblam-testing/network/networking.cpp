@@ -3776,7 +3776,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         out.flags  = static_cast<EquipmentSync::flags_t>(
             (equip->reloading ? EquipmentSync::reloading : 0) |
             (equip->throwing ? EquipmentSync::throwing : 0) |
-            (info.camouflaged ? EquipmentSync::camouflaged : 0));
+            (info.camouflaged ? EquipmentSync::camouflaged : 0) |
+            (static_cast<u32>(equip->zoom) << EquipmentSync::zoom_shift));
         for(size_t i = 0; i < out.grenades.size() && i < equip->equipment.size(); i++)
             out.grenades[i] = static_cast<u8>(std::min<u16>(equip->equipment[i].left, 255));
         out.reserve = {held.rounds_total, slung.rounds_total};
@@ -3995,6 +3996,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     note_carried(*equip, info.player_idx, p.subsystem<BlamFiles<halo_version>>().container.magic);
                 equip->reloading = it->second.flags & EquipmentSync::reloading;
                 equip->throwing  = it->second.flags & EquipmentSync::throwing;
+                equip->zoom      = static_cast<u8>(
+                    (it->second.flags & EquipmentSync::zoom_mask) >> EquipmentSync::zoom_shift);
                 /* Its own peer runs its camouflage */
                 p.get<PlayerInfo>(player.id())->camouflaged =
                     it->second.flags & EquipmentSync::camouflaged;

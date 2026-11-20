@@ -374,7 +374,9 @@ struct alignas(8) EquipmentSync
         reloading   = 0x1,
         throwing    = 0x2,
         camouflaged = 0x4,
+        zoom_mask   = 0xFF00, /*!< The held weapon's zoom level, from bit 8 */
     };
+    static constexpr u32 zoom_shift = 8;
 
     u32                player_idx{0};
     blam::tag_index<>  weapon{}; /*!< Tag ids, 0 for none */

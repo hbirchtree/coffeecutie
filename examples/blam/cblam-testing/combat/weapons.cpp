@@ -86,8 +86,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             m_fire_queue->poll();
             m_shots.clear();
             m_grenades.clear();
+            m_zooms_heard.clear();
         }
         auto const& magic = files.container.magic;
+        zoom_sounds(p, files);
 
         std::set<u64> live;
         for(auto ent : p.template select<
@@ -852,6 +854,31 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         };
         GameEvent hit_ev{.type = GameEvent::ObjectHit};
         game.inject(hit_ev, &hit);
+    }
+
+    /* Each step in or out of a scope is heard from its body, local or not */
+    void zoom_sounds(Proxy& p, BlamFiles<halo_version> const& files)
+    {
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        for(auto ent : p.template select<PlayerCamera, BipedEquipment>())
+        {
+            auto [cam, equip] = ent.components();
+            auto const* held  = equip.held(files.load_generation);
+            auto const  was   = std::exchange(
+                m_zooms_heard[ent.id()], {held ? held->tag : nullptr, equip.zoom});
+            if(!sounds || !held || was.first != held->tag || was.second == equip.zoom)
+                continue;
+            auto const& sound =
+                equip.zoom > was.second ? held->weapon->zoom_in_sound : held->weapon->zoom_out_sound;
+            if(!sound.valid())
+                continue;
+            SoundEvent     ev{.type = SoundEvent::play_sound};
+            PlaySoundEvent play{
+                .sound    = &static_cast<blam::tagref_t const&>(sound),
+                .position = cam.camera.position,
+            };
+            sounds->inject(ev, &play);
+        }
     }
 
     /* A blow is heard twice: the weapon's thump, and the globals' melee
@@ -1651,6 +1678,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     std::set<u64>             m_hold_fire;     /*!< Let go of a flag with the trigger still held */
     u32                       m_flag_generation{0};
     std::map<u64, state_t>    m_states;
+    /*! The held weapon and its zoom level as last heard, by body */
+    std::map<u64, std::pair<blam::tag_t const*, u8>> m_zooms_heard;
     std::map<u64, throw_t>    m_throws;
     std::vector<grenade_t>    m_grenades;
     std::minstd_rand          m_rng{std::random_device{}()};
