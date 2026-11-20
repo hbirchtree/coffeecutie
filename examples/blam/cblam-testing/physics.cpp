@@ -3354,7 +3354,8 @@ struct PhysicsSystem
         ride_deck(
             body,
             velocity.jump == 0.f &&
-                btVector3(vel.x(), vel.y(), 0.f).length2() < 1e-4f);
+                btVector3(vel.x(), vel.y(), 0.f).length2() < 1e-4f,
+            velocity.jump != 0.f);
         body.walked    = btVector3(vel.x(), vel.y(), 0.f);
         body.walked_at = m_frame;
         vel += body.carried;
@@ -3616,6 +3617,7 @@ struct PhysicsSystem
         /* What it stands on, and where on it, in its space */
         u64       deck{0};
         btVector3 deck_spot{0, 0, 0};
+        bool      leapt{false}; /*!< Off its deck by a jump, not down yet */
         /* Lowest point of its hulls in the bind pose, body space */
         std::optional<f32> bind_floor;
         /* Ground less upright than this it can't walk up; 0 = any */
@@ -3624,9 +3626,18 @@ struct PhysicsSystem
 
     /* Carried along by what it stands on, and still after stepping off;
      * standing still, it holds its spot on the deck as that turns and
-     * brakes under it */
-    void ride_deck(entity_body& body, bool standing)
+     * brakes under it. A jump leaves the deck, with its speed, until it
+     * comes back down */
+    void ride_deck(entity_body& body, bool standing, bool jumping)
     {
+        if(jumping)
+            body.leapt = true;
+        else if(body.leapt)
+        {
+            if(!on_ground(*body.world_body, true) || body.world_body->getLinearVelocity().z() > landed_rise)
+                return;
+            body.leapt = false;
+        }
         auto const*     deck = deck_under(*body.world_body);
         btVector3 const at   = body.world_body->getCenterOfMassPosition();
         /* Standing still, a deck that leapt out from under it (a slow
@@ -3649,6 +3660,12 @@ struct PhysicsSystem
         btTransform const& frame = deck->getWorldTransform();
         btVector3          v     = deck->getVelocityInLocalPoint(
             at - deck->getCenterOfMassPosition());
+        if(jumping)
+        {
+            body.deck    = 0;
+            body.carried = btVector3(v.x(), v.y(), 0.f);
+            return;
+        }
         btVector3 const drift = frame * body.deck_spot - at;
         if(standing && body.deck == id && drift.length2() < deck_reach * deck_reach)
             v += drift * deck_hold;
@@ -3892,6 +3909,7 @@ struct PhysicsSystem
     static constexpr f32 carried_air_decel    = .5f;
     /* How fast a rider standing on a deck is pulled back to its spot, 1/s */
     static constexpr f32 deck_hold = 10.f;
+    static constexpr f32 landed_rise = .1f; /* wu/s, still rising off a deck */
     /* Knocked further than this, it takes a new spot */
     static constexpr f32 deck_reach = .3f; /* wu */
     /* How deep a lagged body may sink into another before it holds back,
