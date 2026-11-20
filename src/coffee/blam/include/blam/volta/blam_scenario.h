@@ -410,7 +410,8 @@ struct item_collection
     static constexpr tag_class_t tag_class = tag_class_t::itmc;
 
     reference<item_permutation> items;
-    u32                         spawn_time;
+    u16                         spawn_time; // in seconds, 0 = default
+    u16                         padding_;
 };
 
 struct multiplayer_equipment
@@ -425,16 +426,18 @@ struct multiplayer_equipment
 
     gamemode_t types[4];
 
-    u32 team_idx;
-    u32 spawn_time; // in seconds, 0 = default
+    u16 team_idx;
+    u16 spawn_time; // in seconds, 0 = default
 
-    u32 padding[11];
+    u32 padding[12];
 
     Vecf3    pos;
     f32      facing;
     tagref_t item;
     u32      unk3[12];
 };
+
+static_assert(sizeof(multiplayer_equipment) == 144);
 
 C_FLAGS(multiplayer_equipment::equipment_flag, u16);
 
