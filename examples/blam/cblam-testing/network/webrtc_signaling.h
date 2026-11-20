@@ -55,6 +55,8 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
 
     bool Ready() const;
     bool Failed() const;
+    /*! Why it failed, for the player */
+    std::string Error() const;
 
     /*! What the server said it can speak, most-preferred first. Valid
      * once Ready(). */
@@ -79,6 +81,8 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
     void Release() override;
 
   private:
+    /*! Fails it, keeping the first reason */
+    void fail(std::string why);
     void onWebSocketOpen();
     void onWebSocketMessage(std::string const& text);
     void sendJSON(std::string const& json);
@@ -110,6 +114,7 @@ class GatewayConnectBootstrap final : public ISteamNetworkingConnectionSignaling
     bool                     m_haveSessionId{false};
     bool                     m_dataChannelOpen{false};
     bool                     m_failed{false};
+    std::string              m_error;
     bool                     m_peerConnectionTaken{false};
     bool                     m_dataChannelTaken{false};
     bool                     m_gatheringComplete{false};
@@ -253,6 +258,10 @@ class GatewayServerRegistration final
 
     /*! True once the gateway has confirmed the registration. */
     bool Active() const;
+    /*! The gateway couldn't be reached or refused the registration; why,
+     *  for the player, in Error() */
+    bool        Failed() const;
+    std::string Error() const;
 
     /* ISteamNetworkingSignalingRecvContext */
     ISteamNetworkingConnectionSignaling* OnConnectRequest(
@@ -295,6 +304,7 @@ class GatewayServerRegistration final
 
     std::mutex                            m_mutex;
     bool                                  m_active{false};
+    std::string                           m_error;
     std::string                           m_trackingId;
     std::chrono::steady_clock::time_point m_lastHeartbeat{};
     /* Set just before each ReceivedP2PCustomSignal call, consumed by

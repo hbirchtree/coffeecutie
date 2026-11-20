@@ -899,7 +899,8 @@ struct ServerDisconnectEvent
     static constexpr auto event_type = GameEvent::ServerDisconnect;
 };
 
-/* The server went away; only host_left is a clean close */
+/* The server went away, or ours couldn't start; only host_left is a clean
+ * close */
 struct ServerDisconnectedEvent
 {
     static constexpr auto event_type = GameEvent::ServerDisconnected;
@@ -910,8 +911,10 @@ struct ServerDisconnectedEvent
         join_failed,     /*!< Never got in */
         connection_lost, /*!< Timed out while connected */
         closed,          /*!< Closed by the peer for another reason */
+        hosting_failed,  /*!< Ours couldn't take players */
     } reason{closed};
-    std::string detail; /*!< GNS's end reason text */
+    std::string message; /*!< What went wrong, for the player */
+    std::string detail;  /*!< GNS's end reason text */
 };
 
 struct ServerJoinInfo

@@ -51,8 +51,7 @@ void GatewayConnectBootstrap::Start()
     });
     m_dc->onError([this](std::string error) {
         cWarning("webrtc_signaling: data channel error: {}", error);
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_failed = true;
+        fail("the connection to the server failed: " + error);
     });
 
     m_pc->onGatheringStateChange(
@@ -65,8 +64,7 @@ void GatewayConnectBootstrap::Start()
                 cWarning(
                     "webrtc_signaling: gathering complete but no local "
                     "description");
-                std::lock_guard<std::mutex> lock(m_mutex);
-                m_failed = true;
+                fail("no network route could be set up");
                 return;
             }
             {
@@ -79,10 +77,7 @@ void GatewayConnectBootstrap::Start()
     m_pc->onStateChange([this](rtc::PeerConnection::State state) {
         if(state == rtc::PeerConnection::State::Failed ||
            state == rtc::PeerConnection::State::Closed)
-        {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_failed = true;
-        }
+            fail("no network route to the server could be found");
     });
 
     m_ws = std::make_shared<rtc::WebSocket>();
@@ -99,8 +94,7 @@ void GatewayConnectBootstrap::Start()
     });
     m_ws->onError([this](std::string error) {
         cWarning("webrtc_signaling: signaling websocket error: {}", error);
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_failed = true;
+        fail("couldn't reach the gateway (" + error + ")");
     });
 
     m_ws->open(
@@ -176,8 +170,7 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
         if(sdp.empty() || sessionId.empty())
         {
             cWarning("webrtc_signaling: malformed answer message");
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_failed = true;
+            fail("the gateway sent a malformed answer");
             return;
         }
         m_pc->setRemoteDescription(rtc::Description(sdp, "answer"));
@@ -219,8 +212,7 @@ void GatewayConnectBootstrap::onWebSocketMessage(std::string const& text)
         cWarning(
             "webrtc_signaling: gateway error: {}",
             msg.value("data", std::string()));
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_failed = true;
+        fail("the gateway refused: " + msg.value("data", std::string()));
     } else
     {
         cWarning("webrtc_signaling: unexpected signal message type {}", type);
@@ -264,6 +256,20 @@ bool GatewayConnectBootstrap::Failed() const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_failed;
+}
+
+std::string GatewayConnectBootstrap::Error() const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_error;
+}
+
+void GatewayConnectBootstrap::fail(std::string why)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if(!m_failed)
+        m_error = std::move(why);
+    m_failed = true;
 }
 
 std::shared_ptr<rtc::PeerConnection> GatewayConnectBootstrap::
@@ -593,8 +599,11 @@ void GatewayServerRegistration::Start()
         }
         onWebSocketMessage(std::get<std::string>(data));
     });
-    m_ws->onError([](std::string error) {
+    m_ws->onError([this](std::string error) {
         cWarning("webrtc_signaling: server-signal websocket error: {}", error);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if(m_error.empty())
+            m_error = "couldn't reach the gateway (" + error + ")";
     });
     m_ws->open(m_gatewayUrl + "/server-signal");
 }
@@ -623,6 +632,20 @@ bool GatewayServerRegistration::Active() const
     std::lock_guard<std::mutex> lock(
         const_cast<GatewayServerRegistration*>(this)->m_mutex);
     return m_active;
+}
+
+bool GatewayServerRegistration::Failed() const
+{
+    std::lock_guard<std::mutex> lock(
+        const_cast<GatewayServerRegistration*>(this)->m_mutex);
+    return !m_error.empty();
+}
+
+std::string GatewayServerRegistration::Error() const
+{
+    std::lock_guard<std::mutex> lock(
+        const_cast<GatewayServerRegistration*>(this)->m_mutex);
+    return m_error;
 }
 
 void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
@@ -707,6 +730,10 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
         cWarning(
             "webrtc_signaling: gateway error: {}",
             msg.value("data", std::string()));
+        /* Once active, an error is about one message, not the registration */
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if(!m_active && m_error.empty())
+            m_error = "the gateway refused to host the game: " + msg.value("data", std::string());
     } else
     {
         cWarning(
