@@ -14,7 +14,10 @@
 #include "ui/ui_data.h"
 #include "ui/ui_keyboard.h"
 
+#include <coffee/core/files/cfiles.h>
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
+#include <coffee/image/font.h>
+#include <utf8cpp/utf8.h>
 #include <glm/gtx/matrix_transform_2d.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <peripherals/semantic/chunk.h>
@@ -218,6 +221,30 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     UIElementCache<halo_version>& ui_cache;
     BitmapCache<halo_version>&    bitm_cache;
     FontCache<halo_version>&      font_cache;
+
+    /* Lines set in a full typeface, each rasterized once into the font
+     * atlas's spare layer, where its coverage is drawn like a glyph's */
+    struct typeset_key_t
+    {
+        std::string text;
+        u32         px;
+        u32         max_width;
+
+        auto operator<=>(typeset_key_t const&) const = default;
+    };
+    struct typeset_entry_t
+    {
+        Vecf4 uv;     /*!< as glyph_uv */
+        Vecf2 size;   /*!< px */
+        Vecf2 origin; /*!< pen start of the baseline in it, px */
+    };
+    std::optional<image::font::typeface>       m_typeface;
+    std::unique_ptr<Coffee::Resource>          m_typeface_file;
+    bool                                       m_typeface_tried{false};
+    std::map<typeset_key_t, typeset_entry_t>   m_typeset;
+    u32                                        m_typeset_generation{~0u};
+    Veci2                                      m_typeset_shelf{0, 0};
+    i32                                        m_typeset_shelf_height{0};
 
     std::shared_ptr<gfx::program_t>      ui_painter;
     std::shared_ptr<gfx::buffer_t>       vertices;
@@ -1208,6 +1235,122 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             });
     }
 
+    /* The platform's typeface where it draws text (the browser), else the
+     * bundled font file; none without either, and the HUD font stands in */
+    void load_typeface()
+    {
+        using namespace Coffee::resource_literals;
+        if(std::exchange(m_typeface_tried, true))
+            return;
+        std::vector<image::font::font_file> files;
+        m_typeface_file = std::make_unique<Coffee::Resource>("fonts/NotoSansKR-Regular.otf"_rsc);
+        if(Coffee::FileMap(*m_typeface_file))
+            files.push_back({.data = std::as_bytes(std::span(
+                                 m_typeface_file->data_ro.data(), m_typeface_file->data_ro.size()))});
+        m_typeface = image::font::typeface::platform("sans-serif", files);
+        if(!m_typeface && !files.empty())
+            m_typeface = image::font::typeface::open(files);
+        if(!m_typeface)
+            cWarning("No typeface for chat: the HUD font draws it");
+    }
+
+    /* A line's place in the spare layer, set the first time it is asked
+     * for; when the layer is full, everything is set again from scratch */
+    typeset_entry_t const* typeset(std::string const& text, f32 px, f32 max_width)
+    {
+        auto& textures = font_cache.font_textures;
+        if(!m_typeface || !textures || font_cache.typeset_atlas == 0 || text.empty())
+            return nullptr;
+        i32 const atlas = static_cast<i32>(font_cache.typeset_atlas);
+        if(m_typeset_generation != font_cache.typeset_generation)
+        {
+            m_typeset.clear();
+            m_typeset_shelf        = {0, 0};
+            m_typeset_shelf_height = 0;
+            m_typeset_generation   = font_cache.typeset_generation;
+        }
+        typeset_key_t key{text, static_cast<u32>(px + .5f), static_cast<u32>(max_width)};
+        if(auto it = m_typeset.find(key); it != m_typeset.end())
+            return &it->second;
+        image::font::text_bounds const bounds{
+            .max_width = max_width > 0.f ? max_width : std::numeric_limits<f32>::infinity(),
+            .max_lines = 1,
+        };
+        auto const metrics = m_typeface->measure(text, static_cast<f32>(key.px), bounds);
+        if(metrics.empty())
+            return nullptr;
+        /* Rows a multiple of 4 wide for the upload, a texel apart */
+        i32 const w = (metrics.width + 1 + 3) & ~3;
+        i32 const h = metrics.height + 1;
+        if(w > atlas || h > atlas)
+            return nullptr;
+        if(m_typeset_shelf.x + w > atlas)
+            m_typeset_shelf = {0, m_typeset_shelf.y + std::exchange(m_typeset_shelf_height, 0)};
+        if(m_typeset_shelf.y + h > atlas)
+        {
+            m_typeset.clear();
+            m_typeset_shelf        = {0, 0};
+            m_typeset_shelf_height = 0;
+        }
+        std::vector<std::byte> coverage(static_cast<size_t>(w) * h);
+        if(!m_typeface->rasterize(
+               text, static_cast<f32>(key.px), {.pixels = coverage, .stride = static_cast<size_t>(w)}, bounds))
+            return nullptr;
+        textures->upload(
+            semantic::Span<const u8>(reinterpret_cast<u8 const*>(coverage.data()), coverage.size()),
+            Veci3{m_typeset_shelf.x, m_typeset_shelf.y, static_cast<i32>(font_cache.typeset_layer)},
+            Veci3{w, h, 1});
+        f32 const size = static_cast<f32>(atlas);
+        auto& entry = m_typeset[std::move(key)] = typeset_entry_t{
+            .uv     = Vecf4(w / size, h / size, m_typeset_shelf.x / size, m_typeset_shelf.y / size),
+            .size   = Vecf2(w, h),
+            .origin = Vecf2(metrics.origin_x, metrics.baseline),
+        };
+        m_typeset_shelf.x += w;
+        m_typeset_shelf_height = std::max(m_typeset_shelf_height, h);
+        return &entry;
+    }
+
+    /* A view's typeset lines, `scale` px to a HUD unit; in the HUD font
+     * where there is no typeface */
+    void push_typeset(HudScene::view_t const& view, f32 scale, widget_data_t& data)
+    {
+        constexpr u32 font_source = 15u; /* TEX_FONT */
+        load_typeface();
+        for(auto const& line : view.typeset)
+        {
+            if(data.instance_data.size() >= m_instance_slots)
+                break;
+            if(auto const* set = typeset(line.text, line.size * scale, line.max_width * scale))
+            {
+                Vecf2 const min = line.at - set->origin / scale;
+                Vecf2 const max = min + set->size / scale;
+                std::array<vertex_t, 6> const verts = {{
+                    {{min.x, min.y}, {0, 0}},
+                    {{max.x, min.y}, {1, 0}},
+                    {{max.x, max.y}, {1, 1}},
+                    {{min.x, min.y}, {0, 0}},
+                    {{max.x, max.y}, {1, 1}},
+                    {{min.x, max.y}, {0, 1}},
+                }};
+                data.vertex_data.insert(data.vertex_data.end(), verts.begin(), verts.end());
+                instance_vertex_t inst{};
+                inst.color            = line.color;
+                inst.tex_scale_offset = set->uv;
+                inst.texture_source.x = (font_source << 24) | font_cache.typeset_layer;
+                data.instance_data.push_back(inst);
+                continue;
+            }
+            auto const font = m_hud_font.valid() ? font_cache.find(m_hud_font) : font_cache.end();
+            if(font == font_cache.end() || !font->second.font)
+                continue;
+            auto const wide = utf8::utf8to16(utf8::replace_invalid(line.text));
+            push_glyphs(
+                data, font->second, wide, line.at.x, line.at.y, line.color,
+                (font_source << 24) | font->second.atlas_layer);
+        }
+    }
+
     Vecf2 image_size(generation_idx_t const& im)
     {
         atlas_intermediate_t tmp{};
@@ -1326,7 +1469,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             if(font != font_cache.end() && font->second.font)
                 lay_out_hud_text(view, font->second, data, lines);
             out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - first, true});
-            if(lines.empty())
+            if(lines.empty() && view.typeset.empty())
                 continue;
             u32 const text_first = static_cast<u32>(data.vertex_data.size());
             constexpr u32 font_source = 15u; /* TEX_FONT */
@@ -1339,6 +1482,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     line.pen.y,
                     line.color,
                     (font_source << 24) | font->second.atlas_layer);
+            /* Pixels per HUD unit in this view's viewport */
+            push_typeset(view, screen_size.y * size.y * .5f / HudScene::height, data);
             out.push_back({matrix, static_cast<u32>(data.vertex_data.size()) - text_first, false});
         }
 
