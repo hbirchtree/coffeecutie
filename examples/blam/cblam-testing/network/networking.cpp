@@ -98,6 +98,11 @@ namespace {
 
 using namespace net_messages;
 
+/* Why a server closes a client, past GNS's generic app close (the server
+ * stopping): the client says so */
+constexpr int close_server_full = k_ESteamNetConnectionEnd_App_Min + 1;
+constexpr int close_removed     = k_ESteamNetConnectionEnd_App_Min + 2;
+
 const std::map<std::string_view, std::pair<Vecf3, Quatf>> birds_eye_positions =
     {
         {
@@ -1730,8 +1735,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto auth = parse_auth_param(remote.substr(hash + 1));
             if(auth.type != AuthType::Ed25519)
             {
-                cWarning("Refusing to connect, bad server key in {}", remote);
-                m_net_state.client_state = NetworkState::ClientState::Error;
+                join_failed("The server key in the address isn't valid.");
                 return;
             }
             m_client_auth = std::move(auth);
@@ -1739,8 +1743,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         SteamNetworkingIPAddr server;
         if(!server.ParseString(address.c_str()))
         {
-            cWarning("Failed to parse server IP: {}", address);
-            m_net_state.client_state = NetworkState::ClientState::Error;
+            join_failed(fmt::format("\"{}\" isn't a server address.", address));
             return;
         }
         auto config = create_callbacks();
@@ -1749,8 +1752,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_impl->ConnectByIPAddress(server, config.size(), config.data());
         if(m_connection == k_HSteamNetConnection_Invalid)
         {
-            cWarning("Failed to set up connection to: {}", remote);
-            m_net_state.client_state = NetworkState::ClientState::Error;
+            join_failed(fmt::format("Couldn't start a connection to {}.", address));
             return;
         }
         configure_weights(m_connection);
@@ -1780,15 +1782,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         auto parsed = parse_webrtc_url(gatewayUrl);
         if(parsed.server_id.empty())
         {
-            cWarning("Failed to parse gateway URL: {}", gatewayUrl);
-            m_net_state.client_state = NetworkState::ClientState::Error;
+            join_failed(fmt::format("\"{}\" doesn't name a game on a gateway.", gatewayUrl));
             return;
         }
         m_client_auth = parsed.auth;
         if(m_client_auth.type == AuthType::Invalid)
         {
-            cWarning("Refusing to connect, bad server key in {}", gatewayUrl);
-            m_net_state.client_state = NetworkState::ClientState::Error;
+            join_failed("The server key in the address isn't valid.");
             return;
         }
         cDebug(
@@ -1818,10 +1818,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         if(m_webrtcBootstrap->Failed())
         {
-            cWarning("WebRTC gateway bootstrap failed");
+            auto why = m_webrtcBootstrap->Error();
             m_webrtcBootstrap->Release(); // deletes itself
-            m_webrtcBootstrap        = nullptr;
-            m_net_state.client_state = NetworkState::ClientState::Error;
+            m_webrtcBootstrap = nullptr;
+            join_failed(fmt::format("Couldn't reach the game: {}.", why.empty() ? "the gateway failed" : why));
             return;
         }
         if(!m_webrtcBootstrap->Ready())
@@ -1835,10 +1835,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                 metadata, m_client_auth.ed25519_public_key);
             if(!verified)
             {
-                cWarning("WebRTC server metadata verification failed");
                 m_webrtcBootstrap->Release();
-                m_webrtcBootstrap        = nullptr;
-                m_net_state.client_state = NetworkState::ClientState::Error;
+                m_webrtcBootstrap = nullptr;
+                join_failed("The server's identity doesn't match the key in its address.");
                 return;
             }
             m_expected_server_identity = metadata.value("identity", "");
@@ -1847,12 +1846,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_expected_server_identity);
         } else if(m_client_auth.type != AuthType::None)
         {
-            cWarning(
-                "WebRTC server did not provide signed metadata, but auth was "
-                "expected");
             m_webrtcBootstrap->Release();
-            m_webrtcBootstrap        = nullptr;
-            m_net_state.client_state = NetworkState::ClientState::Error;
+            m_webrtcBootstrap = nullptr;
+            join_failed("The server didn't prove its identity, though the address has its key.");
             return;
         }
 
@@ -1929,8 +1925,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         if(m_connection == k_HSteamNetConnection_Invalid)
         {
-            cWarning("Failed to establish WebRTC DataChannel connection");
-            m_net_state.client_state = NetworkState::ClientState::Error;
+            join_failed("Couldn't open a connection to the game.");
             return;
         }
         configure_weights(m_connection);
@@ -1953,8 +1948,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         SteamNetworkingIPAddr server;
         if(!server.ParseString(local.c_str()))
         {
-            cWarning("Failed to parse server IP: {}", local);
-            m_net_state.server_state = NetworkState::ServerState::Error;
+            hosting_failed(fmt::format("\"{}\" isn't an address to host on.", local));
             return;
         }
         ensure_server_identity();
@@ -1962,8 +1956,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_impl->CreateListenSocketIP(server, config.size(), config.data());
         if(m_socket == k_HSteamListenSocket_Invalid)
         {
-            cWarning("Failed to start listening on {}", local);
-            m_net_state.server_state = NetworkState::ServerState::Error;
+            hosting_failed(fmt::format("Couldn't host on {}; is the port in use?", local));
             return;
         }
         m_poll_group = m_impl->CreatePollGroup();
@@ -2040,10 +2033,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         }
         if(serverId.empty())
         {
-            cWarning(
-                "WebRTC-hosted server needs a server ID: pass "
-                "--listen {}#<id> or --gateway-server-id <id>",
-                gatewayUrl);
+            hosting_failed(fmt::format("Hosting through {} needs a game id: {}#<id>.", gatewayUrl, gatewayUrl));
             return;
         }
 
@@ -2124,7 +2114,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
                 if(m_connections.size() >= 3)
                 {
-                    m_impl->CloseConnection(info->m_hConn, 10, nullptr, false);
+                    m_impl->CloseConnection(info->m_hConn, close_server_full, "server full", false);
                     break;
                 }
                 configure_weights(info->m_hConn);
@@ -2149,7 +2139,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             if(m_connections.size() >= 3)
             {
-                m_impl->CloseConnection(info->m_hConn, 10, nullptr, false);
+                m_impl->CloseConnection(info->m_hConn, close_server_full, "server full", false);
                 break;
             }
             configure_weights(info->m_hConn);
@@ -2244,7 +2234,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                                                 : remote_identity);
                     m_impl->CloseConnection(
                         info->m_hConn, 0, "identity mismatch", false);
-                    m_net_state.client_state = NetworkState::ClientState::Error;
+                    m_connections.erase(info->m_hConn);
+                    m_connection = {};
+                    join_failed("The server answering isn't the one the address names.");
                     return;
                 }
                 cDebug(
@@ -2259,17 +2251,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             {
                 /* Never got in, e.g. a certificate the pinned key did not
                  * sign. GNS holds the connection until it is closed. */
-                cWarning(
-                    "Failed to connect to server {}: {}",
-                    client_name(info->m_hConn),
-                    info->m_info.m_szEndDebug);
-                m_net_state.error        = info->m_info.m_szEndDebug;
-                m_net_state.client_state = NetworkState::ClientState::Error;
                 m_impl->CloseConnection(info->m_hConn, 0, nullptr, false);
                 m_connections.erase(info->m_hConn);
                 m_connection = {};
-                server_gone(
-                    ServerDisconnectedEvent::join_failed,
+                join_failed(
+                    "Couldn't connect to the server. " + end_reason_text(info->m_info),
                     info->m_info.m_szEndDebug);
                 break;
             }
@@ -2281,6 +2267,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             close_server_connection(info->m_hConn, false);
             server_gone(
                 ServerDisconnectedEvent::connection_lost,
+                "Lost the connection to the server. " + end_reason_text(info->m_info),
                 info->m_info.m_szEndDebug);
             break;
         case k_ESteamNetworkingConnectionState_ClosedByPeer:
@@ -2296,10 +2283,21 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 info->m_hConn,
                 info->m_info.m_eState ==
                     k_ESteamNetworkingConnectionState_ClosedByPeer);
-            server_gone(
-                by_app ? ServerDisconnectedEvent::host_left
-                       : ServerDisconnectedEvent::closed,
-                info->m_info.m_szEndDebug);
+            auto removed = std::exchange(m_removed_because, {});
+            if(reason == close_server_full)
+                server_gone(ServerDisconnectedEvent::join_failed, "The server is full.");
+            else if(reason == close_removed || !removed.empty())
+                server_gone(
+                    ServerDisconnectedEvent::closed,
+                    removed.empty() ? "The server removed you from the game."
+                                    : "The server removed you from the game: " + removed + ".");
+            else if(by_app)
+                server_gone(ServerDisconnectedEvent::host_left, {});
+            else
+                server_gone(
+                    ServerDisconnectedEvent::closed,
+                    "The server closed the connection. " + end_reason_text(info->m_info),
+                    info->m_info.m_szEndDebug);
             break;
         }
         case k_ESteamNetworkingConnectionState_None: {
@@ -2445,7 +2443,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
 #if defined(USE_WEBRTC_TRANSPORT)
         poll_webrtc_bootstrap();
-        if(m_webrtcServer)
+        if(m_webrtcServer && m_webrtcServer->Failed())
+        {
+            /* The gateway is the only way in to a WebRTC-hosted game */
+            auto why = m_webrtcServer->Error();
+            stop_server();
+            hosting_failed(fmt::format("Couldn't host the game: {}.", why));
+        } else if(m_webrtcServer)
             m_webrtcServer->PollPendingAccepts();
         if(m_fleetRegistration)
         {
@@ -4178,14 +4182,56 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     }
 
     void server_gone(
-        ServerDisconnectedEvent::reason_t reason, char const* detail)
+        ServerDisconnectedEvent::reason_t reason,
+        std::string                       message,
+        char const*                       detail = nullptr)
     {
         GameEvent               ev{GameEvent::ServerDisconnected};
         ServerDisconnectedEvent gone{
-            .reason = reason,
-            .detail = detail ? detail : "",
+            .reason  = reason,
+            .message = std::move(message),
+            .detail  = detail ? detail : "",
         };
         m_game_bus.inject(ev, &gone);
+    }
+
+    /* Couldn't get into a game: out of it, saying why */
+    void join_failed(std::string message, char const* detail = nullptr)
+    {
+        cWarning("Failed to join: {} ({})", message, detail ? detail : "");
+        m_net_state.error        = message;
+        m_net_state.client_state = NetworkState::ClientState::Error;
+        server_gone(ServerDisconnectedEvent::join_failed, std::move(message), detail);
+    }
+
+    /* Ours can't take players: out of the game, saying why */
+    void hosting_failed(std::string message)
+    {
+        cWarning("Failed to host: {}", message);
+        m_net_state.error        = message;
+        m_net_state.server_state = NetworkState::ServerState::Error;
+        server_gone(ServerDisconnectedEvent::hosting_failed, std::move(message));
+    }
+
+    /* A GNS end reason, for the player */
+    static std::string end_reason_text(SteamNetConnectionInfo_t const& info)
+    {
+        switch(info.m_eEndReason)
+        {
+        case k_ESteamNetConnectionEnd_Misc_Timeout:
+            return "The server stopped answering.";
+        case k_ESteamNetConnectionEnd_Remote_BadCert:
+        case k_ESteamNetConnectionEnd_Remote_BadCrypt:
+            return "The server's identity doesn't match the key in its address.";
+        case k_ESteamNetConnectionEnd_Misc_P2P_Rendezvous:
+        case k_ESteamNetConnectionEnd_Misc_P2P_NAT_Firewall:
+            return "No network route to the server could be found.";
+        case k_ESteamNetConnectionEnd_Local_OfflineMode:
+        case k_ESteamNetConnectionEnd_Local_NetworkConfig:
+            return "This device has no working network connection.";
+        default:
+            return std::string(info.m_szEndDebug);
+        }
     }
 
     void server_close_peer_connection(
@@ -4615,9 +4661,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     connection,
                     Message<GameLeave>({
                         .reason = *blam::bl_string_var<128>::from(
-                            "map data differs from server"),
+                            "your map differs from the server's"),
                     }));
-                server_close_peer_connection(connection, 0, true);
+                server_close_peer_connection(connection, close_removed, true, "map differs");
                 break;
             }
             player_info.verified = true;
@@ -5204,6 +5250,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto reason = std::string(payload.value<GameLeave>().reason.str());
             cWarning("Server asked us to leave: {}", reason);
             journal("net_game_leave", {{"reason", reason}});
+            /* Said when the connection closes */
+            m_removed_because = std::move(reason);
             break;
         }
         case MessageBase::PlayerSync: {
@@ -5495,6 +5543,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::map<u64, DeviceSync>                m_sent_devices;
     std::map<u32, EquipmentSync>             m_remote_weapons;
     std::map<u32, EquipmentSync>             m_server_held; /*!< Own players, as the server has them */
+    std::string m_removed_because; /*!< The server's GameLeave reason, until it closes */
     std::map<u32, EquipmentSync>             m_last_reports; /*!< Each client player's, on the server */
     struct move_t
     {

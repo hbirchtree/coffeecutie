@@ -9,6 +9,8 @@
 #include "ui/ui_data.h"
 #include "ui/ui_profile.h"
 
+#include <utf8cpp/utf8.h>
+
 #include <coffee/core/CDebug>
 #include <magic_enum/magic_enum.hpp>
 
@@ -131,6 +133,38 @@ std::optional<std::string_view> next_campaign_map(std::string_view map)
 
 namespace {
 
+/* Lines as short as the stock error strings': the error box's text area
+ * reaches under its frame on the right, so wrapping to it overflows */
+std::u16string break_lines(std::u16string_view text)
+{
+    constexpr size_t line_length = 24;
+    std::u16string   out;
+    size_t           line = 0;
+    while(!text.empty())
+    {
+        auto const end  = text.find(u' ');
+        auto       word = text.substr(0, end);
+        text.remove_prefix(end == std::u16string_view::npos ? text.size() : end + 1);
+        while(!word.empty())
+        {
+            if(line > 0 && line + 1 + word.size() > line_length)
+            {
+                out += u'\n';
+                line = 0;
+            } else if(line > 0)
+            {
+                out += u' ';
+                ++line;
+            }
+            auto const part = word.substr(0, line_length);
+            out += part;
+            line += part.size();
+            word.remove_prefix(part.size());
+        }
+    }
+    return out;
+}
+
 bool in_menu(compo::EntityContainer& e)
 {
     auto const* map = e.subsystem_cast<BlamFiles<halo_version>>().container.map;
@@ -140,10 +174,10 @@ bool in_menu(compo::EntityContainer& e)
 
 } // namespace
 
-void GameSetup::leave(std::optional<u16> message, std::string detail)
+void GameSetup::leave(std::string message)
 {
-    if(message)
-        m_error = error_t{*message, std::move(detail)};
+    if(!message.empty())
+        m_error = std::move(message);
     if(!in_menu(m_container))
         start("ui");
 }
@@ -165,14 +199,7 @@ void GameSetup::start_frame(ContainerProxy&, time_point const&)
     }
     if(!m_error || !in_menu(m_container))
         return;
-    auto const strings =
-        strings_of(m_container, "ui\\shell\\strings\\displayed_error_messages");
-    m_error_text = m_error->message < strings.size()
-                       ? strings[m_error->message]
-                       : std::u16string{};
-    if(!m_error->detail.empty())
-        m_error_text += u"\n" + std::u16string(
-                                    m_error->detail.begin(), m_error->detail.end());
+    m_error_text = break_lines(utf8::utf8to16(utf8::replace_invalid(*m_error)));
     m_error.reset();
     UIEvent      ev{.type = UIEvent::open_widget};
     UIOpenWidget open{.widget = "ui\\shell\\error\\error_modal_fullscreen"};
@@ -278,28 +305,31 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
     data.on_function(func_t::pause_game_return_to_main_menu, leave_game);
     data.on_function(func_t::mp_game_player_quit, leave_game);
 
-    /* Dropped by the server: back to the menu, with a dialog unless the
-     * host simply left. displayed_error_messages: 4 game closed down,
-     * 6 connection lost, 7 failed to join */
+    /* Out of a network game: back to the menu, with a dialog saying why
+     * unless the host simply left */
     e.subsystem_cast<GameEventBus>().addEventFunction<ServerDisconnectedEvent>(
         0, [&setup](GameEvent&, ServerDisconnectedEvent* gone) {
             using reason_t = ServerDisconnectedEvent::reason_t;
-            std::optional<u16> message;
-            switch(gone->reason)
-            {
-            case reason_t::closed:
-                message = 4;
-                break;
-            case reason_t::connection_lost:
-                message = 6;
-                break;
-            case reason_t::join_failed:
-                message = 7;
-                break;
-            case reason_t::host_left:
-                break;
-            }
-            setup.leave(message, gone->detail);
+            std::string message = gone->message;
+            if(message.empty())
+                switch(gone->reason)
+                {
+                case reason_t::closed:
+                    message = "The server closed the connection.";
+                    break;
+                case reason_t::connection_lost:
+                    message = "Lost the connection to the server.";
+                    break;
+                case reason_t::join_failed:
+                    message = "Couldn't join the game.";
+                    break;
+                case reason_t::hosting_failed:
+                    message = "Couldn't host the game.";
+                    break;
+                case reason_t::host_left:
+                    break;
+                }
+            setup.leave(std::move(message));
         });
     data.bind_text("error_text_box", [&setup](std::u16string_view text) {
         return setup.error_text().empty() ? std::u16string(text)
