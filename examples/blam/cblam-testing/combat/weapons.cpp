@@ -550,6 +550,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
+        auto const*     equip    = p.template get<BipedEquipment>(player);
         WeaponFireEvent shot{
             .weapon     = weapon.as_ref(),
             .shooter    = player,
@@ -557,6 +558,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .seed       = static_cast<u32>(m_rng()),
             .trigger    = trigger,
             .melee      = melee,
+            .zoomed     = equip && equip->zoom > 0,
             .position   = melee ? cam.camera.position
                                 : cam.camera.position + forward * muzzle_distance,
             .direction  = forward,
@@ -681,7 +683,11 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             bool const resolve = Projectile::hitscan(*proj) &&
                                  !p.template subsystem<NetworkState>().replica;
             i32 const count = std::max<i32>(trigger.projectiles_per_shot, 1);
-            f32 const error = std::max(trigger.error_angle.x, trigger.minimum_error);
+            /* A scope steadies a trigger whose error is for unzoomed shots */
+            bool const steady =
+                shot.zoomed &&
+                (trigger.flags & trigger_t::flags_t::use_error_when_unzoomed) != trigger_t::flags_t::none;
+            f32 const error = steady ? 0.f : std::max(trigger.error_angle.x, trigger.minimum_error);
             for(i32 i = 0; i < count; i++)
             {
                 f32 const spread =

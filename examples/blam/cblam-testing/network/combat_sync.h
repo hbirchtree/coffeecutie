@@ -182,7 +182,8 @@ class CombatSync
                             (shot.thrown  ? WeaponFire::thrown
                              : shot.melee ? WeaponFire::melee
                                           : WeaponFire::none) |
-                            (shot.windup ? WeaponFire::windup : WeaponFire::none)),
+                            (shot.windup ? WeaponFire::windup : WeaponFire::none) |
+                            (shot.zoomed ? WeaponFire::zoomed : WeaponFire::none)),
                         .target        = target,
                         .target_player = target_player,
                         .shooter       = shooter,
@@ -572,6 +573,7 @@ class CombatSync
             .thrown     = thrown,
             .melee      = (wire.flags & WeaponFire::melee) != 0,
             .windup     = (wire.flags & WeaponFire::windup) != 0,
+            .zoomed     = (wire.flags & WeaponFire::zoomed) != 0,
             .position   = Vecf3(wire.position),
             .direction  = glm::normalize(direction),
             .target     = target,
