@@ -2664,9 +2664,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(!squads.has_value() || actor.squad < 0 || static_cast<size_t>(actor.squad) >= squads.value().size())
             return nullptr;
         kind.squad     = &squads.value()[actor.squad];
-        /* Its own type, from where it was placed, outlasts a migration */
+        /* Its own type, from where it was placed, outlasts a migration; a
+         * major it was upgraded to is its own tag */
         i16 const type = actor.variant >= 0 ? actor.variant : kind.squad->actor_type;
-        if(type >= 0 && static_cast<size_t>(type) < palette.value().size())
+        if(actor.actv != 0)
+            variant_of(blam::tag_index<>{.raw = actor.actv});
+        else if(type >= 0 && static_cast<size_t>(type) < palette.value().size())
             variant_of(static_cast<blam::tagref_t const&>(palette.value()[type]).tag_id);
         return &m_kinds.emplace(key, kind).first->second;
     }

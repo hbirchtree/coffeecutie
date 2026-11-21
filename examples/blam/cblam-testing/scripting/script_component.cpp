@@ -5,6 +5,7 @@
 #include "loading/blam_files.h"
 #include "caching/caching.h"
 #include "ai/allegiance.h"
+#include "game/difficulty.h"
 #include "scripting/cinematic.h"
 #include "components.h"
 #include "data.h"
@@ -4765,7 +4766,10 @@ struct BlamScript
         i16 const type = start.actor_type >= 0 ? start.actor_type : squad.actor_type;
         if(type < 0 || static_cast<size_t>(type) >= palette.value().size())
             return;
-        auto const* unit = unit_of(palette.value()[type]);
+        /* Some come as their variant's major: red, gold or cloaked */
+        blam::tagref_t const& placed  = palette.value()[type];
+        blam::tagref_t const  variant = major_of(p, placed, squad.major_upgrade).value_or(placed);
+        auto const* unit = unit_of(variant);
         if(!unit)
             return;
         u32 const        net_id = script_net_id_base | m_next_actor++;
@@ -4776,9 +4780,9 @@ struct BlamScript
             .rotation      = glm::angleAxis(start.facing, Vecf3{0.f, 0.f, 1.f}),
             .net_id        = net_id,
             .server_owned  = true,
-            .held          = weapon_of(palette.value()[type]),
-            .change_colors = colors_of(palette.value()[type]),
-            .camouflaged   = camouflaged(palette.value()[type]),
+            .held          = weapon_of(variant),
+            .change_colors = colors_of(variant),
+            .camouflaged   = camouflaged(variant),
         };
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
         m_spawning.insert(net_id);
@@ -4790,7 +4794,8 @@ struct BlamScript
             .variant    = type,
             .team       = static_cast<u16>(encounter.team_index),
             .post       = start.position,
-            .idle_state = static_cast<i16>(state)};
+            .idle_state = static_cast<i16>(state),
+            .actv       = variant.tag_id == placed.tag_id ? 0u : variant.tag_id.value()};
         /* The encounter, its squad and its platoon name it */
         m_actors[lowered(name)].push_back(net_id);
         m_actors[fmt::format("{}/{}", lowered(name), lowered(squad.name.str()))].push_back(net_id);
@@ -4899,6 +4904,29 @@ struct BlamScript
         auto variant = (*tag).template data<blam::scn::actor_variant>(m_magic);
         return variant.has_value() &&
                (variant.value()->flags & (flags_t::active_camouflage | flags_t::super_active_camouflage)) != flags_t::none;
+    }
+
+    /* The variant's major, if the squad's upgrade and the difficulty's
+     * chance make this one of them */
+    std::optional<blam::tagref_t> major_of(
+        Proxy& p, blam::tagref_t const& variant_ref, blam::scn::ai::squad::major_upgrade_t upgrade)
+    {
+        using upgrade_t = blam::scn::ai::squad::major_upgrade_t;
+        auto tag = m_tags.find(variant_ref.tag_id);
+        if(tag == m_tags.end() || upgrade == upgrade_t::none)
+            return std::nullopt;
+        auto variant = (*tag).template data<blam::scn::actor_variant>(m_magic);
+        if(!variant.has_value() || !variant.value()->major_variant.valid())
+            return std::nullopt;
+        auto const* block = difficulty_block(p.template subsystem<BlamFiles<halo_version>>());
+        u16 const   level = p.template subsystem<GameState>().difficulty;
+        f32 const   odds  = upgrade == upgrade_t::all  ? 1.f
+                            : upgrade == upgrade_t::few  ? difficulty_scale(block, &blam::globals::difficulty::major_upgrade_few, level)
+                            : upgrade == upgrade_t::many ? difficulty_scale(block, &blam::globals::difficulty::major_upgrade_many, level)
+                                                         : difficulty_scale(block, &blam::globals::difficulty::major_upgrade_normal, level);
+        if(std::uniform_real_distribution<f32>(0.f, 1.f)(m_spawn_random) >= odds)
+            return std::nullopt;
+        return static_cast<blam::tagref_t const&>(variant.value()->major_variant);
     }
 
     /* The variant's change colours, each somewhere between its bounds: a

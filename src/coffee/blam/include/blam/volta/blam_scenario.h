@@ -1030,7 +1030,18 @@ struct squad
     u32               unk2[3];
     u16               normal_diff_count;
     u16               insane_diff_count;
-    u32                       unk3[17];
+    /*! How many of its actors are their variant's major instead, by the
+     *  globals' chance for the difficulty */
+    enum class major_upgrade_t : u16
+    {
+        normal,
+        few,
+        many,
+        none,
+        all,
+    } major_upgrade;
+    u16                       padding_major;
+    u32                       unk3[16];
     reference<squad_move_position> move_positions;
     reference<squad_location> start_locations;
     u32                       unk4[3];

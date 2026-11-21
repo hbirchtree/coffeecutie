@@ -136,12 +136,12 @@ struct difficulty
     f32 grenade_chance_scale[4];
     f32 grenade_timer_scale[4];
     f32 unused_scale[4]; /* authored (1.2, 1, .8, .5), unnamed */
-    u32 padding1[8];
+    u32 padding1[12];
     f32 major_upgrade_normal[4];
     f32 major_upgrade_few[4];
     f32 major_upgrade_many[4];
     f32 player_vehicle_ram_chance[4];
-    u32 padding2[12];
+    u32 padding2[8];
     u32 padding3[25];
 };
 
