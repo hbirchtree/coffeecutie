@@ -103,6 +103,19 @@ using namespace net_messages;
  * stopping): the client says so */
 constexpr int close_server_full = k_ESteamNetConnectionEnd_App_Min + 1;
 constexpr int close_removed     = k_ESteamNetConnectionEnd_App_Min + 2;
+constexpr int close_password_required = k_ESteamNetConnectionEnd_App_Min + 3;
+constexpr int close_wrong_password    = k_ESteamNetConnectionEnd_App_Min + 4;
+
+/* How long a connection may take to give the server's password */
+constexpr auto password_grace = std::chrono::seconds(10);
+
+/* A password as it goes on the wire, cut to fit */
+std::array<char, net_messages::ClientAuth::max_length> password_bytes(std::string_view password)
+{
+    std::array<char, net_messages::ClientAuth::max_length> out{};
+    std::copy_n(password.begin(), std::min(password.size(), out.size()), out.begin());
+    return out;
+}
 
 const std::map<std::string_view, std::pair<Vecf3, Quatf>> birds_eye_positions =
     {
@@ -298,7 +311,55 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return true;
     }
 
-    auto generate_game_join()
+    /* The game invite, once there is a map to invite to */
+    void invite(HSteamNetConnection connection)
+    {
+        if(!m_map)
+            return;
+        auto& state = m_connections[connection];
+        send_single(connection, generate_game_join());
+        state.invited          = true;
+        state.loading_progress = 0;
+        state.last_seen        = std::nullopt;
+    }
+
+    /* A connection's password, compared in constant time; it is invited on a
+     * match and closed on anything else */
+    void admit(HSteamNetConnection connection, ClientAuth const& auth)
+    {
+        auto const want = password_bytes(m_server_password);
+        u8         diff = 0;
+        for(size_t i = 0; i < want.size(); i++)
+            diff |= static_cast<u8>(want[i] ^ auth.password[i]);
+        if(diff != 0)
+        {
+            bool const none = auth.password[0] == 0;
+            journal("net_auth_refused", {{"peer", client_name(connection)}, {"given", !none}});
+            server_close_peer_connection(
+                connection,
+                none ? close_password_required : close_wrong_password,
+                false,
+                none ? "password required" : "wrong password");
+            return;
+        }
+        m_connections[connection].authorized = true;
+        journal("net_auth_ok", {{"peer", client_name(connection)}});
+        invite(connection);
+    }
+
+    /* Connections that never gave the password */
+    void expire_unauthorized()
+    {
+        auto const                       now = std::chrono::steady_clock::now();
+        std::vector<HSteamNetConnection> late;
+        for(auto const& [connection, state] : m_connections)
+            if(!state.authorized && now > state.auth_by)
+                late.push_back(connection);
+        for(auto connection : late)
+            server_close_peer_connection(connection, close_password_required, false, "password required");
+    }
+
+    Message<GameJoin> generate_game_join()
     {
         return Message<GameJoin>({
             .map_name = m_map ? *blam::bl_string::from(m_map->internal_name())
@@ -1328,6 +1389,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             0, [this](GameEvent&, ServerConnectEvent* connect) {
                 cDebug("Connection requested to server: {}", connect->remote);
                 m_relay_only = connect->relay_only;
+                if(connect->password.size() > ClientAuth::max_length)
+                    cWarning("Password longer than {} bytes, only those are used", ClientAuth::max_length);
+                if(connect->type == ServerConnectEvent::Listen)
+                    m_server_password = connect->password;
+                else
+                    m_join_password = connect->password;
                 if(connect->type == ServerConnectEvent::Listen)
                     m_net_state.allow_freecam = connect->allow_freecam;
                 if(connect->type == ServerConnectEvent::Peer)
@@ -1599,6 +1666,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
                 for(auto& [connection, state] : m_connections)
                 {
+                    if(!state.authorized)
+                        continue;
                     if(state.invited)
                     {
                         send_single(
@@ -2135,7 +2204,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
                 configure_weights(info->m_hConn);
                 m_connections[info->m_hConn] = connection_state_t{
-                    .idx = m_next_remote_idx++,
+                    .idx        = m_next_remote_idx++,
+                    .authorized = m_server_password.empty(),
+                    .auth_by    = std::chrono::steady_clock::now() + password_grace,
                 };
                 break;
             }
@@ -2160,7 +2231,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             configure_weights(info->m_hConn);
             m_connections[info->m_hConn] = connection_state_t{
-                .idx = m_next_remote_idx++,
+                .idx        = m_next_remote_idx++,
+                .authorized = m_server_password.empty(),
+                .auth_by    = std::chrono::steady_clock::now() + password_grace,
             };
             break;
         }
@@ -2182,12 +2255,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
              * game invite yet — MapLoadFinishedEvent below catches this
              * connection up once m_map is set, so this isn't a permanent
              * miss. */
-            if(!m_map)
-                break;
-            send_single(info->m_hConn, generate_game_join());
-            m_connections[info->m_hConn].invited          = true;
-            m_connections[info->m_hConn].loading_progress = 0;
-            m_connections[info->m_hConn].last_seen        = std::nullopt;
+            if(m_connections[info->m_hConn].authorized)
+                invite(info->m_hConn);
             break;
         }
 
@@ -2260,6 +2329,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     m_expected_server_identity);
             }
 #endif
+            /* A password goes only to a server proven to hold the key the
+             * address names; anyone could be answering an address without */
+            if(!m_join_password.empty() && !(authenticated && m_client_auth.type == AuthType::Ed25519))
+            {
+                m_impl->CloseConnection(info->m_hConn, 0, "unverified server", false);
+                m_connections.erase(info->m_hConn);
+                m_connection = {};
+                join_failed("Not sending the password: the address doesn't name the server's key, so it can't be verified.");
+                return;
+            }
+            send_single(info->m_hConn, Message<ClientAuth>({.password = password_bytes(m_join_password)}));
             break;
         }
         case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
@@ -2302,6 +2382,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             auto removed = std::exchange(m_removed_because, {});
             if(reason == close_server_full)
                 server_gone(ServerDisconnectedEvent::join_failed, "The server is full.");
+            else if(reason == close_password_required)
+                server_gone(ServerDisconnectedEvent::join_failed, "The server needs a password.");
+            else if(reason == close_wrong_password)
+                server_gone(ServerDisconnectedEvent::join_failed, "Wrong password.");
             else if(reason == close_removed || !removed.empty())
                 server_gone(
                     ServerDisconnectedEvent::closed,
@@ -2375,6 +2459,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         for(auto const& [connection, info] : m_connections)
         {
             if(!connections.empty() && !connections.contains(connection))
+                continue;
+            /* Nothing reaches a connection before it gave the password */
+            if(!info.authorized)
                 continue;
             messages.push_back(m_utils->AllocateMessage(0));
             auto& message      = messages.back();
@@ -2533,6 +2620,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
+                /* Until it has given the password, all it may send is that */
+                auto const peer = m_connections.find(message->m_conn);
+                if(peer == m_connections.end() || !peer->second.authorized ||
+                   payload.type == MessageBase::ClientAuth)
+                {
+                    if(peer != m_connections.end() && !peer->second.authorized &&
+                       payload.type == MessageBase::ClientAuth)
+                        admit(message->m_conn, payload.value<ClientAuth>());
+                    message->Release();
+                    continue;
+                }
                 if(payload.type == MessageBase::ClockSync)
                 {
                     clock_reply(
@@ -2545,6 +2643,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 server_receive_payload(p, message->m_conn, payload, message->GetSize());
                 message->Release();
             }
+
+            expire_unauthorized();
 
             if(m_needs_local_init && !m_local_player_info.empty())
             {
@@ -4478,6 +4578,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             VALIDATE(NavPointSync, NavPointSync)
             VALIDATE(KillFeed, KillFeed)
             VALIDATE(PlayerChat, PlayerChatMessage)
+            VALIDATE(ClientAuth, ClientAuth)
             VALIDATE(PlayerWarp, PlayerWarp)
         case MessageBase::GameEvent:
             return validate_game_event(payload, packet_length);
@@ -5671,6 +5772,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         std::optional<time_point>         last_seen{};
         bool                              invited{false};
         bool verified{false}; /*!< Map fingerprint matched ours */
+        bool authorized{true}; /*!< Gave the server's password, if it has one */
+        std::chrono::steady_clock::time_point auth_by{}; /*!< Closed if not by then */
         bool tick_synced{false}; /*!< Has had the server's tick clock */
         /* Its input streams, counted since last journaled */
         u64 inputs{0};
@@ -5944,6 +6047,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     /* Client-side auth, from the join URL fragment or --server-key. */
     webrtc_signaling::WebrtcAuth m_client_auth;
+    std::string m_server_password; /*!< Listening: what clients must give */
+    std::string m_join_password;   /*!< Joining: what to give the server */
     std::string                  m_expected_server_identity;
     /* Base64 of the key pinned for the next connection. SetString keeps the
      * pointer rather than copying, so this has to outlive the connect call. */

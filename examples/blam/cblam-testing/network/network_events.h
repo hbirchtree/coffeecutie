@@ -126,6 +126,9 @@ struct MessageBase
 
         /* A player teleported or respawned: never blended across */
         PlayerWarp,
+
+        /* Client -> server first: the join password */
+        ClientAuth,
     } type{None};
 
     u32 request{};
@@ -276,6 +279,16 @@ struct MapVerify
     static constexpr auto message_type = MessageBase::MapVerify;
 
     MapFingerprint fingerprint{};
+};
+
+/*! Client -> server as soon as it is connected; a server with a password
+ *  admits nothing else until this matches it */
+struct ClientAuth
+{
+    static constexpr auto message_type = MessageBase::ClientAuth;
+    static constexpr libc_types::u32 max_length = 64;
+
+    std::array<char, max_length> password{};
 };
 
 struct GameLoadState
@@ -893,6 +906,7 @@ struct alignas(8) PlayerChatMessage
  */
 static_assert(sizeof(Message<GameJoin>) == 68);
 static_assert(sizeof(Message<MapVerify>) == 32);
+static_assert(sizeof(Message<ClientAuth>) == sizeof(MessageBase) + 64);
 static_assert(sizeof(EntityTag) == 12);
 static_assert(sizeof(EntitySpawn) == 80);
 static_assert(sizeof(SpawnRequest) == 64);
