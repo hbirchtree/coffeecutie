@@ -177,6 +177,20 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     stop(p, ent.id(), actor);
                 continue;
             }
+            /* A grenade coming: it runs from it, whatever it was doing, and
+             * then takes up its command list or its fight again */
+            if(kind->actor)
+                dodge_grenades(p, ent.id(), actor, model, *kind->actor);
+            if(actor.dodge_in > 0.f)
+            {
+                actor.dodge_in -= dt;
+                Vecf3 away = model.position - actor.dodge_from;
+                away.z     = 0.f;
+                if(glm::dot(away, away) < 1e-4f)
+                    away = model.rotation * Vecf3{0.f, 1.f, 0.f};
+                move_toward(p, ent.id(), actor, model, anim, *kind, model.position + glm::normalize(away) * dodge_reach, dt, true);
+                continue;
+            }
             /* Under a command list it only watches, and asks to be let go
              * when the list allows a fight */
             if(actor.scripted)
@@ -265,6 +279,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 grenade_notice  = 8.f;  /* wu, a grenade's AI perception radius, for slow shots without one */
     static constexpr f32 slow_shot_speed = 20.f; /* wu/s and under, an explosive shot is seen coming */
     static constexpr f32 grenade_dodge_time = 2.f; /* s spent getting away from one */
+    static constexpr f32 dodge_reach        = 3.f; /* wu ahead it runs for, away from the grenade */
     static constexpr f32 spread_weight   = 2.f;  /* wu of cost for a position on a platoon mate's bearing */
     static constexpr f32 flank_weight    = 1.5f; /* wu of cost for a position straight in the target's face */
     static constexpr f32 move_reach      = 15.f; /* wu, the farthest firing position an actor on foot moves to */
@@ -336,7 +351,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(actor.state == state_t::idle || actor.state == state_t::pursuit)
                     enter(actor, state_t::combat);
             }
-            dodge_grenades(p, id, actor, model, actr);
         }
         squad_timer(p, actor, model, kind, dt);
         if(actor.state != state_t::retreat)
@@ -1055,7 +1069,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
      * gets away from where that will be for a moment */
     void dodge_grenades(Proxy& p, u64, Actor& actor, Model const& model, actr_t const& actr)
     {
-        if(actr.movement.dive_from_grenade_chance <= 0.f || actor.state == state_t::retreat)
+        if(actr.movement.dive_from_grenade_chance <= 0.f || actor.dodge_in > 0.f)
             return;
         for(auto ent : p.template select<Projectile, Model>())
         {
@@ -1085,11 +1099,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 continue; /* lying there unarmed */
             if(glm::distance(nearest, model.position) > danger)
                 continue;
-            if(!chance(actr.movement.dive_from_grenade_chance))
+            /* Each grenade gets one roll of its chance */
+            if(std::exchange(actor.dodged, ent.id()) == ent.id() || !chance(actr.movement.dive_from_grenade_chance))
                 return;
-            actor.danger = nearest;
-            enter(actor, state_t::retreat);
-            actor.state_in = grenade_dodge_time;
+            actor.dodge_from = nearest;
+            actor.dodge_in   = grenade_dodge_time;
             return;
         }
     }

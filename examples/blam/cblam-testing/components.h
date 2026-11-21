@@ -1170,6 +1170,9 @@ struct Actor
     Vecf3           burst_from{};       /*!< The target as the burst tracks it */
     libc_types::f32 hurt_body{-1.f};    /*!< Its body a frame ago, for what a blow took; -1 unknown */
     libc_types::u64 stuck_by{0};        /*!< The grenade stuck on it it has noticed */
+    libc_types::u64 dodged{0};          /*!< The last grenade it chose whether to dodge */
+    f32             dodge_in{0.f};      /*!< s left getting away from dodge_from */
+    Vecf3           dodge_from{};
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
     f32                  walk_best{0.f};  /*!< Nearest it has got to walk_to, wu */
