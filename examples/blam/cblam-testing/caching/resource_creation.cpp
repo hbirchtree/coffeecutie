@@ -801,7 +801,7 @@ void create_resources(compo::EntityContainer& e)
                  }
                  if(ev.event == "spawn_object")
                  {
-                     /* {"tag": "<name>", "class": "bipd", "position": [x,y,z],
+                     /* {"tag": "<name>" or "tag_id": "e72805b4", "class": "bipd", "position": [x,y,z],
                       *  "yaw": deg, "server": bool, "held": "<weap name>",
                       *  "ahead": wu, "player": idx} -- "ahead" puts it at
                       * the feet of seat 0 (or of player "player", remote
@@ -831,6 +831,14 @@ void create_resources(compo::EntityContainer& e)
                          return it != index.end() && (*it).matches(blam::tag_class_t::obje) ? &*it : nullptr;
                      };
                      blam::tag_t const* found = named(name, cls);
+                     /* "tag_id": maps whose names are protected */
+                     if(auto id = ev.data.find("tag_id"); !found && id != ev.data.end())
+                     {
+                         u32 const raw = id->is_string() ? static_cast<u32>(std::stoul(id->get<std::string>(), nullptr, 16))
+                                                         : id->get<u32>();
+                         if(auto it = index.find(blam::tag_index<>{.raw = raw}); it != index.end() && (*it).matches(blam::tag_class_t::obje))
+                             found = &*it;
+                     }
                      if(!found)
                      {
                          cWarning("spawn_object: no object tag named {}", name);
