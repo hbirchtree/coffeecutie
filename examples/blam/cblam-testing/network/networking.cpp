@@ -2332,8 +2332,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(m_connections.empty() || multi.empty())
             return;
 
-        // TODO: Add data size validation
-
         auto const payload_size =
             sizeof(MessageBase) + multi.size() * sizeof(T) + trailing.size();
         char* payload_buf = new char[payload_size];
@@ -2351,6 +2349,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             {
                 if(multi.size() != 1)
                     throw std::out_of_range("messages with trailing data cannot be multi-valued");
+                if(T::max_trailing_length <= trailing.size_bytes())
+                    throw std::out_of_range("message too long for trailing data");
                 header->set_trailing_size<T>(trailing.size_bytes());
                 memcpy(
                     payload_buf + sizeof(MessageBase) + multi.size_bytes(),

@@ -158,6 +158,13 @@ struct MessageBase
         Message<T>* impl = static_cast<Message<T>*>(this);
         impl->data.*(T::trailing_length_member) = size_bytes;
     }
+
+    template<typename T>
+    requires has_trailing_data<T>
+    auto max_trailing_size() const
+    {
+        return T::max_trailing_length;
+    }
 };
 
 C_FLAGS(MessageBase::Flags, u32)
@@ -868,9 +875,9 @@ struct alignas(8) PlayerChatMessage
 
     enum chat_type_t
     {
-        Self            = 0,
+        Player          = 0,
         WordsOfTheWorld = 1,
-    } chat_type{Self};
+    } chat_type{Player};
     u32 message_byte_length{}; // Length of the payload in bytes, not UTF-8 characters
     u32 player_idx{};          // Who says it; the server checks a client's
 
