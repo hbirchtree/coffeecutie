@@ -4940,13 +4940,47 @@ struct BlamScript
         auto variant = (*tag).template data<blam::scn::actor_variant>(m_magic);
         if(!variant.has_value())
             return out;
-        auto colors = variant.value()->change_colors.data(m_magic);
-        if(!colors.has_value())
+        std::uniform_real_distribution<f32> roll(0.f, 1.f);
+        if(auto colors = variant.value()->change_colors.data(m_magic); colors.has_value())
+            for(size_t i = 0; i < out.size() && i < colors.value().size(); i++)
+                out[i] = pack_color(
+                    glm::mix(colors.value()[i].lower_bound, colors.value()[i].upper_bound, roll(m_spawn_random)));
+        /* What it leaves out comes from the unit's own: a permutation by
+         * weight, somewhere between its bounds (a jackal's shield) */
+        auto const* unit_ref = unit_of(variant_ref);
+        auto        unit_tag = unit_ref ? m_tags.find(unit_ref->tag_id) : m_tags.end();
+        if(unit_tag == m_tags.end())
             return out;
-        std::uniform_real_distribution<f32> unit(0.f, 1.f);
-        for(size_t i = 0; i < out.size() && i < colors.value().size(); i++)
-            out[i] = pack_color(
-                glm::mix(colors.value()[i].lower_bound, colors.value()[i].upper_bound, unit(m_spawn_random)));
+        auto unit = (*unit_tag).template data<blam::scn::unit>(m_magic);
+        if(!unit.has_value())
+            return out;
+        auto own = unit.value()[0].change_colors.data(m_magic);
+        if(!own.has_value())
+            return out;
+        for(size_t i = 0; i < out.size() && i < own.value().size(); i++)
+        {
+            if(out[i] != 0)
+                continue;
+            auto const& color = own.value()[i];
+            Vecf3       lower = color.lower_bound, upper = color.upper_bound;
+            if(auto perms = color.permutations.data(m_magic); perms.has_value() && !perms.value().empty())
+            {
+                f32 total = 0.f;
+                for(auto const& perm : perms.value())
+                    total += std::max(perm.weight, 0.f);
+                f32  pick   = roll(m_spawn_random) * total;
+                auto chosen = &perms.value().back();
+                for(auto const& perm : perms.value())
+                    if((pick -= std::max(perm.weight, 0.f)) < 0.f)
+                    {
+                        chosen = &perm;
+                        break;
+                    }
+                lower = chosen->lower_bound;
+                upper = chosen->upper_bound;
+            }
+            out[i] = pack_color(glm::mix(lower, upper, roll(m_spawn_random)));
+        }
         return out;
     }
 
