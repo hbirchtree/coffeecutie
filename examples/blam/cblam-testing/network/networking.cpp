@@ -2507,6 +2507,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     m_poll_group, &message, 1);
                 if(num_msgs < 1)
                     break;
+                if(message->GetSize() < sizeof(MessageBase))
+                {
+                    // Malformed or malicious message
+                    message->Release();
+                    continue;
+                }
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
                 if(payload.type == MessageBase::ClockSync)
@@ -2725,6 +2731,12 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     m_connection, &message, 1);
                 if(num_msgs < 1)
                     break;
+                if(message->GetSize() < sizeof(MessageBase))
+                {
+                    // Malformed or malicious message
+                    message->Release();
+                    continue;
+                }
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
                 if(payload.type == MessageBase::ClockSync)
@@ -4392,9 +4404,33 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return 0;
     }
 
+    bool validate_payload(MessageBase const& payload, size_t packet_length)
+    {
+        if(sizeof(MessageBase) > packet_length)
+            return false;
+
+#define VALIDATE(etype, ctype) \
+    case MessageBase:: etype: return MessageValidator < ctype > {&payload, packet_length}.valid();
+
+        switch(payload.type)
+        {
+            VALIDATE(CameraSync, CameraSync)
+            VALIDATE(GameJoin, GameJoin)
+            VALIDATE(GameLoadState, GameLoadState)
+        }
+        unreachable();
+    }
+
     void server_receive_payload(
         Proxy& p, HSteamNetConnection connection, MessageBase const& payload, size_t packet_length)
     {
+        if(!validate_payload(payload, packet_length))
+        {
+            // TODO: If one connection is sending a lot of bad data, kick
+            // We could probably make this a strike system
+            return;
+        }
+
         auto& player_info = m_connections[connection];
         switch(payload.type)
         {
@@ -4757,13 +4793,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         case MessageBase::PlayerChat: {
-            auto [chat, message] = payload.value_with_trailing<PlayerChatMessage>(packet_length);
-            if(!chat)
-                break;
+            auto [chat, message] = payload.value_with_trailing<PlayerChatMessage>();
             /* Only for a player this connection seats, and not too often */
             bool const own = std::any_of(
                 player_info.players.begin(), player_info.players.end(), [&chat](auto const& seat) {
-                    return seat.second.idx == chat->player_idx;
+                    return seat.second.idx == chat.player_idx;
                 });
             auto const now   = std::chrono::steady_clock::now();
             auto&      times = m_chat_times[connection];
@@ -4775,7 +4809,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             }
             times.push_back(now);
             if(auto text = chat_text(std::string_view(message.data(), message.size())))
-                relay_chat(chat->player_idx, std::move(*text));
+                relay_chat(chat.player_idx, std::move(*text));
             break;
         }
         case MessageBase::GameEvent: {
@@ -4885,6 +4919,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     void client_receive_payload(Proxy& p, MessageBase const& payload, size_t packet_length)
     {
+        if(!validate_payload(payload, packet_length))
+            return;
+
         switch(payload.type)
         {
         case MessageBase::EquipmentSync: {

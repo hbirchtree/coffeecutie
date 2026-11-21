@@ -149,7 +149,7 @@ struct MessageBase
 
     template<typename T>
     requires has_trailing_data<T>
-    std::pair<T const*, gsl::span<const char>> value_with_trailing(size_t packet_length) const;
+    std::pair<T const&, gsl::span<const char>> value_with_trailing() const;
 
     template<typename T>
     requires has_trailing_data<T>
@@ -175,6 +175,39 @@ struct Message : MessageBase
 };
 
 template<typename T>
+struct MessageValidator
+{
+    MessageBase const* base{};
+    size_t packet_length{};
+
+    Message<T> const* typed() const
+    {
+        return static_cast<Message<T> const*>(base);
+    }
+
+    bool valid() const
+    {
+        static_assert(sizeof(Message<T>) == sizeof(MessageBase) + sizeof(T));
+        if(sizeof(MessageBase) > packet_length)
+            return false;
+        if constexpr(has_trailing_data<T>)
+        {
+            if(base->num_values != 1)
+                return false;
+            const auto* impl = typed();
+            const auto trailer_size = impl->data.*(T::trailing_length_member);
+            return sizeof(Message<T>) + trailer_size == packet_length;
+        } else if(base->num_values < 1)
+            return false;
+        else if(base->num_values >= 1)
+        {
+            const auto expected = sizeof(MessageBase) + sizeof(T) * base->num_values;
+            return expected == packet_length;
+        }
+    }
+};
+
+template<typename T>
 T const& MessageBase::value() const
 {
     Message<T> const* impl = static_cast<Message<T> const*>(this);
@@ -190,8 +223,9 @@ gsl::span<const T> MessageBase::values() const
 
 template<typename T>
 requires has_trailing_data<T>
-std::pair<T const*, gsl::span<const char>> MessageBase::value_with_trailing(size_t packet_length) const
+std::pair<T const&, gsl::span<const char>> MessageBase::value_with_trailing() const
 {
+    static_assert(sizeof(Message<T>) == sizeof(MessageBase) + sizeof(T));
     /* Keep your head on straight for the wire format:
      * |===============|----|
      * | MessageBase   |    |
@@ -208,15 +242,7 @@ std::pair<T const*, gsl::span<const char>> MessageBase::value_with_trailing(size
     Message<T> const* impl = static_cast<Message<T> const*>(this);
     const char* message_base = reinterpret_cast<const char*>(this);
     const char* trailing_base = message_base + sizeof(Message<T>);
-
-    if(sizeof(Message<T>) > packet_length)
-        return {nullptr, {}};
-
     auto byte_size = impl->data.*(T::trailing_length_member);
-
-    if(num_values != 1 || (sizeof(Message<T>) + byte_size) > packet_length)
-        return {nullptr, {}};
-
     return {&impl->data, gsl::span<const char>(trailing_base, byte_size)};
 }
 
