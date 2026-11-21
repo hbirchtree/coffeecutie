@@ -139,6 +139,12 @@ i32 blam_main()
              "server with, so browser clients can be routed to it",
              cxxopts::value<std::string>())
             //
+            ("password",
+             "With --listen, the password clients must give to join; with "
+             "--server, the one to give (only sent to a server whose key the "
+             "address pins)",
+             cxxopts::value<std::string>())
+            //
             ("net-lag",
              "Simulated round-trip latency added to this process's packets, ms",
              cxxopts::value<libc_types::u32>())
@@ -164,12 +170,6 @@ i32 blam_main()
              "Path to the server's Ed25519 private key PEM, which signs its "
              "certificate and WebRTC metadata. Generated if the file does not "
              "exist. Without it, a server generates a key in memory each run",
-             cxxopts::value<std::string>())
-            //
-            ("password",
-             "With --listen, the password clients must give to join; with "
-             "--server, the one to give (only sent to a server whose key the "
-             "address pins)",
              cxxopts::value<std::string>())
             //
             ("relay-only",
