@@ -181,11 +181,20 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
              * when the list allows a fight */
             if(actor.scripted)
             {
-                /* A command list's go-to, by its routes */
-                if(actor.walk_to &&
-                   glm::distance(Vecf2(model.position), Vecf2(*actor.walk_to)) > actor.walk_radius)
-                    move_toward(p, ent.id(), actor, model, anim, *kind, *actor.walk_to, dt, false);
-                else if(actor.walk_to)
+                /* A command list's go-to, by its routes; one it gets no
+                 * nearer to for a while it gives up, rather than push at it */
+                f32 const left = actor.walk_to ? glm::distance(Vecf2(model.position), Vecf2(*actor.walk_to)) : 0.f;
+                if(actor.walk_to && !actor.walk_done && left > actor.walk_radius)
+                {
+                    if(left < actor.walk_best - walk_progress)
+                        actor.walk_best = left, actor.walk_stall = 0.f;
+                    else if((actor.walk_stall += dt) > walk_give_up)
+                        actor.walk_done = true;
+                    if(actor.walk_done)
+                        stop(p, ent.id(), actor);
+                    else
+                        move_toward(p, ent.id(), actor, model, anim, *kind, *actor.walk_to, dt, false);
+                } else if(actor.walk_to)
                     stop(p, ent.id(), actor);
                 if(actor.may_fight && !actor.blind && (actor.look_in -= dt) <= 0.f)
                 {
@@ -237,6 +246,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
   private:
     static constexpr f32 look_period     = .25f; /* s between looks around */
     static constexpr f32 arrive_radius   = .35f; /* wu */
+    static constexpr f32 drift_speed     = .05f; /* wu/s a standing actor is let slide before it is held */
+    static constexpr f32 post_leeway     = 1.f;  /* wu a standing actor may be pushed off its spot before it walks back */
+    static constexpr f32 walk_progress   = .25f; /* wu nearer a go-to that counts as getting there */
+    static constexpr f32 walk_give_up    = 3.f;  /* s without that before a go-to is given up */
     static constexpr f32 reposition_time = 4.f;  /* s between picking positions */
     static constexpr f32 default_speed   = 2.f;  /* wu/s, a graph without a stride */
     static constexpr f32 eye_height      = .6f;  /* wu above the feet, a biped without a camera height */
@@ -1338,11 +1351,25 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             return false;
         auto const& all = moves.value();
         i32 const   n   = static_cast<i32>(all.size());
+        /* Mates of its squad already stand at some; it keeps off those */
+        std::set<i32> used;
+        for(auto other : p.template select<Actor>())
+            if(auto const& theirs = other.template get<Actor>();
+               other.id() != id && theirs.encounter == actor.encounter && theirs.squad == actor.squad && theirs.move_at >= 0)
+                used.insert(theirs.move_at);
+        auto free = [&](i32 i) { return static_cast<i32>(used.size()) >= n || !used.contains(i); };
         auto pick = [&]() -> i32 {
             switch(mode)
             {
-            case ai_state_t::moving_repeat_same_position:
-                return actor.move_at < 0 ? static_cast<i32>(m_random() % n) : actor.move_at;
+            case ai_state_t::moving_repeat_same_position: {
+                if(actor.move_at >= 0)
+                    return actor.move_at;
+                i32 const first = static_cast<i32>(m_random() % n);
+                for(i32 i = 0; i < n; i++)
+                    if(free((first + i) % n))
+                        return (first + i) % n;
+                return first;
+            }
             case ai_state_t::moving_loop:
                 return (actor.move_at + 1) % n;
             case ai_state_t::moving_loop_back_and_forth: {
@@ -1356,11 +1383,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             default: {
                 f32 total = 0.f;
-                for(auto const& m : all)
-                    total += std::max(m.weight, 1e-3f);
+                for(i32 i = 0; i < n; i++)
+                    total += free(i) ? std::max(all[i].weight, 1e-3f) : 0.f;
                 f32 roll = std::uniform_real_distribution<f32>(0.f, total)(m_random);
                 for(i32 i = 0; i < n; i++)
-                    if((roll -= std::max(all[i].weight, 1e-3f)) <= 0.f)
+                    if(free(i) && (roll -= std::max(all[i].weight, 1e-3f)) <= 0.f)
                         return i;
                 return n - 1;
             }
@@ -1369,7 +1396,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.move_at < 0)
             actor.move_at = pick();
         auto const& at = all[static_cast<size_t>(actor.move_at)];
-        if(glm::distance(Vecf2(model.position), Vecf2(at.position)) > arrive_radius * 2.f)
+        /* Once there, a shove does not send it back */
+        f32 const reach = actor.moving ? arrive_radius * 2.f : post_leeway;
+        if(glm::distance(Vecf2(model.position), Vecf2(at.position)) > reach)
         {
             move_toward(p, id, actor, model, anim, kind, at.position, dt, false);
             actor.move_wait = uniform(at.time, 2.f);
@@ -1769,8 +1798,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
     void stop(Proxy& p, u64 id, Actor& actor)
     {
+        /* Standing, it holds its ground: a push from a mate beside it
+         * would have it slide about where it stands */
         if(!actor.moving)
-            return;
+        {
+            auto const* physics = p.template get<ObjectPhysics>(id);
+            if(!physics || glm::length(Vecf2(physics->linear_velocity)) < drift_speed)
+                return;
+        }
         actor.moving = false;
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity still{.entity_id = id, .velocity = {}, .preserve_z = true};
