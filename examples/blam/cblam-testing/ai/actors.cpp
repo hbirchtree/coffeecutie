@@ -341,14 +341,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         squad_timer(p, actor, model, kind, dt);
         if(actor.state != state_t::retreat)
             actor.danger.reset();
-        /* Ordered back: away from its target until told otherwise */
-        if(actor.order == Actor::order_t::retreat && actor.state != state_t::retreat)
-        {
-            enter(actor, state_t::retreat);
-            actor.state_in = 1e9f;
-        } else if(actor.order != Actor::order_t::retreat && actor.state == state_t::retreat &&
-                  actor.state_in > 1e8f)
-            actor.state_in = 0.f;
         /* Beaten: give ground for a while */
         if(actor.state == state_t::combat && status.shield <= 0.f && status.body < .5f &&
            actr.unopposable.retreat_time.y > 0.f)
@@ -875,7 +867,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
     bool defending(Proxy& p, Actor const& actor, kind_t const& kind)
     {
-        if(actor.order == Actor::order_t::defend)
+        /* Ordered back, it fights on from its defending positions */
+        if(actor.order == Actor::order_t::defend || actor.order == Actor::order_t::retreat)
             return true;
         if(actor.order == Actor::order_t::attack)
             return false;
