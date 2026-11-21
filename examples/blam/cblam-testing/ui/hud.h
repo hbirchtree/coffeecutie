@@ -60,11 +60,17 @@ struct HudScene : compo::SubsystemBase
      * that font lacks the characters of: chat */
     struct typeset_t
     {
-        std::string text;            /*!< UTF-8, one line */
+        struct run_t
+        {
+            std::string text; /*!< UTF-8 */
+            Vecf4       color{1.f};
+        };
+        std::vector<run_t> runs;     /*!< One line, each after the last */
         Vecf2       at{};            /*!< start of its baseline */
         f32         size{12.f};      /*!< em, in HUD units */
         f32         max_width{0.f};  /*!< cut short with "..." past this; 0 = none */
-        Vecf4       color{1.f};
+        bool        shadow{false};   /*!< a black copy under it, a unit down and right */
+        Vecf4       backing{0.f};    /*!< a box behind it, max_width wide; alpha 0 for none */
     };
 
     struct view_t

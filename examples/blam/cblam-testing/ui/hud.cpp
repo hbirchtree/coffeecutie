@@ -1409,7 +1409,8 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             return game.teams && x && y && x->team >= 0 && x->team == y->team;
         };
         Vecf4 const kill_color = Vecf4(m_hudg->text_color.y, m_hudg->text_color.z, m_hudg->text_color.w, 1.f);
-        std::vector<std::pair<std::string, Vecf4>> lines;
+        using run_t = HudScene::typeset_t::run_t;
+        std::vector<std::vector<run_t>> lines;
         for(auto const& entry : m_feed)
         {
             if(entry.chat)
@@ -1421,7 +1422,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                         name = info.name;
                 if(name.empty())
                     name = fmt::format("Player {}", entry.chat->player_idx + 1);
-                lines.emplace_back(name + ": " + entry.chat->text, chat_color);
+                /* Its speaker in their team's colour */
+                auto const* speaker = game.player(entry.chat->player_idx);
+                Vecf4 const color   = !game.teams || !speaker ? name_color
+                                      : speaker->team == 0    ? red
+                                      : speaker->team == 1    ? blue
+                                                              : name_color;
+                lines.push_back({{name + ":", color}, {" " + entry.chat->text, chat_color}});
                 continue;
             }
             auto const& kill      = entry.kill;
@@ -1442,37 +1449,41 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                 line = fill(game_text(text_vehicle, "%s was killed by a vehicle"), {name_of(kill.victim)});
             else
                 line = fill(game_text(text_guardians, "%s was killed by the guardians"), {name_of(kill.victim)});
-            lines.emplace_back(utf8::utf16to8(line), kill_color);
+            lines.push_back({{utf8::utf16to8(line), kill_color}});
         }
-        if(typing)
-            lines.emplace_back(
-                "Say: " + chat.typing->text + chat.typing->composing + "_", chat_color);
-        /* Above the motion sensor, where it was last drawn, newest lowest;
-         * the top left is the prompts' */
+        /* Above the motion sensor, oldest on top; the line being typed has
+         * the row under them to itself. The top left is the prompts' */
         auto const sensor = m_sensor_top.find(m_view->seat);
         f32 const  top = sensor != m_sensor_top.end() ? sensor->second : HudScene::height - safe_inset.y - feed_bottom;
-        f32        baseline = top - feed_gap - feed_descent - feed_line * (lines.size() - 1);
-        if(typing)
-        {
-            f32 const y = baseline + feed_line * (lines.size() - 1) - feed_em;
-            chat.typing->area = {
-                static_cast<i32>(m_view_px.x + safe_inset.x * m_view_px.z),
-                static_cast<i32>(m_view_px.y + y * m_view_px.z),
-                static_cast<i32>(m_width * feed_width * m_view_px.z),
-                static_cast<i32>(feed_line * m_view_px.z),
-            };
-        }
-        for(auto& [text, color] : lines)
+        f32 const  input    = top - feed_gap - feed_descent;
+        f32        baseline = input - feed_line - feed_input_gap - feed_line * (static_cast<f32>(lines.size()) - 1.f);
+        for(auto& runs : lines)
         {
             m_view->typeset.push_back({
-                .text      = std::move(text),
+                .runs      = std::move(runs),
                 .at        = {safe_inset.x, baseline},
                 .size      = feed_em,
                 .max_width = m_width * feed_width,
-                .color     = color,
+                .shadow    = true,
             });
             baseline += feed_line;
         }
+        if(!typing)
+            return;
+        m_view->typeset.push_back({
+            .runs      = {{"Say:", name_color}, {" " + chat.typing->text + chat.typing->composing + "_", chat_color}},
+            .at        = {safe_inset.x, input},
+            .size      = feed_em,
+            .max_width = m_width * feed_width,
+            .shadow    = true,
+            .backing   = typing_backing,
+        });
+        chat.typing->area = {
+            static_cast<i32>(m_view_px.x + safe_inset.x * m_view_px.z),
+            static_cast<i32>(m_view_px.y + (input - feed_em) * m_view_px.z),
+            static_cast<i32>(m_width * feed_width * m_view_px.z),
+            static_cast<i32>(feed_line * m_view_px.z),
+        };
     }
 
     struct feed_t
@@ -1483,11 +1494,14 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     };
     static constexpr f32    feed_seconds = 6.f;   /* a message stays, my pick */
     static constexpr f32    chat_seconds = 12.f;  /* a chat line, longer, my pick */
-    static constexpr size_t feed_lines   = 6;
+    static constexpr size_t feed_lines   = 7;
     static constexpr f32    feed_em      = 11.f;  /* HUD units */
     static constexpr f32    feed_descent = 3.f;   /* HUD units under a baseline */
     static constexpr f32    feed_width   = .5f;   /* of the view, past which a line is cut */
     static inline Vecf4 const chat_color{1.f, 1.f, 1.f, 1.f};
+    static inline Vecf4 const name_color{1.f, .85f, .4f, 1.f}; /* a speaker with no team, my pick */
+    static inline Vecf4 const typing_backing{0.f, 0.f, 0.f, .5f};
+    static constexpr f32    feed_input_gap = 4.f; /* HUD px between the feed and the line typed */
     static constexpr f32    feed_line    = 14.f;  /* HUD px */
     static constexpr f32    feed_gap     = 6.f;   /* HUD px over the motion sensor */
     static constexpr f32    feed_bottom  = 110.f; /* HUD px above the bottom, with no sensor seen yet */
