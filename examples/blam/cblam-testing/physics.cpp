@@ -2835,6 +2835,28 @@ struct PhysicsSystem
 
     /* Only bodies simulated here are thrown; whoever simulates the rest
      * throws them. A walking player keeps the push as carried momentum */
+    /* The level's structure between two points, off the surface `a` sits on */
+    bool walled(btVector3 const& a, btVector3 const& b) const
+    {
+        btVector3 const along = b - a;
+        if(!m_world_body || along.length2() < 1e-6f)
+            return false;
+        btVector3 const from = a + along.normalized() * blast_start;
+        struct ray_t : btCollisionWorld::ClosestRayResultCallback
+        {
+            btCollisionObject const* world{};
+            using ClosestRayResultCallback::ClosestRayResultCallback;
+            bool needsCollision(btBroadphaseProxy* proxy) const override
+            {
+                return proxy->m_clientObject == world && ClosestRayResultCallback::needsCollision(proxy);
+            }
+        } ray(from, b);
+        ray.world = m_world_body.get();
+        m_world->rayTest(from, b, ray);
+        return ray.hasHit();
+    }
+    static constexpr f32 blast_start = .02f; /* wu */
+
     void push(Physics::Blast const& blast)
     {
         btVector3 const at(blast.position.x, blast.position.y, blast.position.z);
@@ -2854,6 +2876,9 @@ struct PhysicsSystem
             nearest.setMin(hi);
             f32 const d = blast.target ? 0.f : (nearest - at).length();
             if(d > blast.radius.y && !blast.target)
+                continue;
+            /* A wall or floor between them shields it */
+            if(!blast.target && walled(at, rigid->getCenterOfMassPosition()))
                 continue;
             if(frozen)
                 thaw(id, corpse->second);
