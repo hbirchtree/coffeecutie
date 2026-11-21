@@ -3970,7 +3970,12 @@ struct BlamScript
                     Vecf3 const d = to ? *to - model->position : Vecf3{};
                     f32 const   left = glm::length(d);
                     auto* actor = p.template get<Actor>(it->first);
-                    if(!to || left <= run.radius)
+                    /* An actor is there by its feet, or when it gave up */
+                    bool const there = actor && walks(p, it->first)
+                                           ? glm::length(Vecf2(d)) <= run.radius ||
+                                                 (actor->walk_to == to && actor->walk_done)
+                                           : left <= run.radius;
+                    if(!to || there)
                     {
                         if(actor)
                             actor->walk_to.reset();
@@ -3981,6 +3986,9 @@ struct BlamScript
                      * else is carried straight there */
                     if(actor && walks(p, it->first))
                     {
+                        if(actor->walk_to != to)
+                            actor->walk_best = std::numeric_limits<f32>::max(), actor->walk_stall = 0.f,
+                            actor->walk_done = false;
                         actor->walk_to     = *to;
                         actor->walk_radius = run.radius;
                         carry(p, it->first, false);

@@ -1172,6 +1172,9 @@ struct Actor
     libc_types::u64 stuck_by{0};        /*!< The grenade stuck on it it has noticed */
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
+    f32                  walk_best{0.f};  /*!< Nearest it has got to walk_to, wu */
+    f32                  walk_stall{0.f}; /*!< s since it last got nearer */
+    bool                 walk_done{false}; /*!< walk_to given up as out of reach */
     libc_types::f32 walk_radius{.35f};
     libc_types::f32 taunt_in{0.f};      /*!< Until it crows over a kill, 0 = none due */
     bool            timed{false};       /*!< Its squad's timer is set up */
