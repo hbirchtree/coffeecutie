@@ -93,6 +93,10 @@ class GatewayFleetRegistration final
      * challenge and is actively routing browsers to this server. */
     bool Active() const;
 
+    /*! The id it is registered under: the one it was given, or the one the
+     *  gateway assigned in register-pending. Empty until then. */
+    std::string ServerId() const;
+
     /*! Gateway relay addresses whose browser session has ended since the
      * last call. The gateway reuses relay ports, so a connection still
      * open on one would swallow the next client's handshake. */

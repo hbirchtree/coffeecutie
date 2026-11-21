@@ -258,6 +258,10 @@ class GatewayServerRegistration final
 
     /*! True once the gateway has confirmed the registration. */
     bool Active() const;
+
+    /*! The id it is registered under: the one it was given, or the one the
+     *  gateway assigned in register-pending. Empty until then. */
+    std::string ServerId() const;
     /*! The gateway couldn't be reached or refused the registration; why,
      *  for the player, in Error() */
     bool        Failed() const;

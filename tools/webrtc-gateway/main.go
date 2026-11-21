@@ -1422,6 +1422,7 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 			// nonce here.
 			reply := signalMessage{
 				Type:             "register-pending",
+				ServerID:         id,
 				ServerTrackingID: entry.trackingID,
 			}
 			if entry.supports(transportWebRTC) {
@@ -1483,8 +1484,14 @@ func handleServerSignal(w http.ResponseWriter, r *http.Request) {
 }
 
 func beginRegistration(conn *websocket.Conn, m signalMessage, origin, originIP string) (string, *registeredServer, error) {
+	publicKey, err := parseServerPublicKey(m.PublicKey)
+	if err != nil {
+		return "", nil, fmt.Errorf("register: %w", err)
+	}
+	// Without one, the server is named after its key and told the name in
+	// register-pending.
 	if m.ServerID == "" {
-		return "", nil, fmt.Errorf("register: missing serverId")
+		m.ServerID = assignedServerID(publicKey)
 	}
 	if len(m.ServerID) > maxServerIDLength {
 		return "", nil, fmt.Errorf("register: serverId longer than %d characters", maxServerIDLength)
@@ -1492,10 +1499,6 @@ func beginRegistration(conn *websocket.Conn, m signalMessage, origin, originIP s
 	transports, err := parseTransports(m)
 	if err != nil {
 		return "", nil, err
-	}
-	publicKey, err := parseServerPublicKey(m.PublicKey)
-	if err != nil {
-		return "", nil, fmt.Errorf("register: %w", err)
 	}
 	// The ID belongs to whichever key last proved it. A different key is
 	// refused before any challenge, so a squatter learns nothing about the
@@ -1663,6 +1666,7 @@ func completeChallenge(id string, srv *registeredServer, nonceHex, signature str
 	srv.writeMu.Lock()
 	err = srv.conn.WriteJSON(signalMessage{
 		Type:             "register-active",
+		ServerID:         id,
 		ServerTransports: transports,
 		ServerTrackingID: srv.trackingID,
 	})

@@ -3,12 +3,15 @@ package main
 import (
 	"bytes"
 	"crypto/ed25519"
+	"crypto/sha256"
+	"encoding/base32"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -24,6 +27,14 @@ import (
 // string, and pin it themselves.
 
 const registerSignaturePrefix = "coffee-gateway-register-v1\n"
+
+// assignedServerID names a server that registered without a serverId after
+// its key, so a server that keeps its key keeps its ID.
+func assignedServerID(key ed25519.PublicKey) string {
+	digest := sha256.Sum256(key)
+	encoded := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(digest[:])
+	return "g-" + strings.ToLower(encoded[:12])
+}
 
 func parseServerPublicKey(b64 string) (ed25519.PublicKey, error) {
 	if b64 == "" {

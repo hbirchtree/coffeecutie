@@ -55,6 +55,21 @@ func TestParseServerPublicKey(t *testing.T) {
 	}
 }
 
+func TestAssignedServerID(t *testing.T) {
+	pub, _, _ := testKey(t)
+	other, _, _ := testKey(t)
+	id := assignedServerID(pub)
+	if id != assignedServerID(pub) {
+		t.Fatal("same key, different id")
+	}
+	if id == assignedServerID(other) {
+		t.Fatal("two keys share an id")
+	}
+	if len(id) > maxServerIDLength || strings.Trim(id, "abcdefghijklmnopqrstuvwxyz234567-") != "" {
+		t.Fatalf("id %q is not url-safe lowercase", id)
+	}
+}
+
 func TestServerIDOwnership(t *testing.T) {
 	pub, _, _ := testKey(t)
 	other, _, _ := testKey(t)
