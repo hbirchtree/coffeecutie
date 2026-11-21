@@ -368,13 +368,35 @@ struct AnimationController
      * lapses unless renewed */
     void update_gazes(Proxy& p, f32 dt)
     {
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
         for(auto ent : p.template select<Actor, Model, AnimationPlayback>())
         {
             auto [actor, model, anim] = ent.components();
             Vecf3 const to =
                 actor.target ? actor.last_seen - model.position : Vecf3{};
-            if(glm::length(Vecf2(to)) > 1e-3f)
-                anim.gaze(glm::normalize(to), {}, actor_gaze_hold);
+            bool const has = glm::dot(anim.aiming, anim.aiming) > 1e-6f;
+            if(glm::length(Vecf2(to)) <= 1e-3f && !has)
+                continue;
+            /* Its aim swings round at its unit's aiming speed, and back to
+             * where it faces once it has nothing to aim at */
+            f32 speed = default_aim_speed;
+            if(model.origin_object)
+                if(auto unit = model.origin_object->template data<blam::scn::unit>(magic);
+                   unit.has_value() && unit.value()[0].aiming_velocity_maximum > 0.f)
+                    speed = unit.value()[0].aiming_velocity_maximum;
+            Vecf3 const facing = model.rotation * Vecf3{1.f, 0.f, 0.f};
+            Vecf3 const want   = glm::length(Vecf2(to)) > 1e-3f ? glm::normalize(to) : facing;
+            Vecf3 const from   = has ? glm::normalize(anim.aiming) : facing;
+            f32 const   apart  = std::acos(std::clamp(glm::dot(from, want), -1.f, 1.f));
+            f32 const   step   = speed * dt;
+            Vecf3       axis   = glm::cross(from, want);
+            if(glm::dot(axis, axis) < 1e-8f)
+                axis = Vecf3{0.f, 0.f, 1.f};
+            Vecf3 const now = apart <= step ? want : glm::normalize(glm::angleAxis(step, glm::normalize(axis)) * from);
+            if(!actor.target && apart <= step)
+                anim.gaze({}, anim.looking, anim.gaze_hold);
+            else
+                anim.gaze(now, {}, actor_gaze_hold);
         }
         for(auto ent : p.template select<AnimationPlayback>())
         {
@@ -1659,6 +1681,7 @@ struct AnimationController
     static constexpr f32 land_blend_time = .08f;
     static constexpr f32 air_delay       = .1f; /* s off the ground */
     static constexpr f32 actor_gaze_hold = .25f; /* s an actor's aim outlasts its last renewal */
+    static constexpr f32 default_aim_speed = 3.14159265f; /* rad/s, for units whose tag gives none */
     /* About a 1.4 wu drop under Halo's gravity */
     static constexpr f32 hard_landing_speed = 3.f; /* wu/s */
 
