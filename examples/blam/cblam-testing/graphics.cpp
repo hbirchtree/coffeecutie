@@ -166,6 +166,12 @@ i32 blam_main()
              "exist. Without it, a server generates a key in memory each run",
              cxxopts::value<std::string>())
             //
+            ("password",
+             "With --listen, the password clients must give to join; with "
+             "--server, the one to give (only sent to a server whose key the "
+             "address pins)",
+             cxxopts::value<std::string>())
+            //
             ("relay-only",
              "Always relay traffic, no peer-to-peer",
              cxxopts::value<bool>()->default_value("false"))
@@ -826,6 +832,8 @@ i32 blam_main()
                     .remote = arguments["server"].as<std::string>(),
                 };
                 connect.relay_only = arguments["relay-only"].as<bool>();
+                if(arguments.count("password"))
+                    connect.password = arguments["password"].as<std::string>();
                 if(arguments.count("server-key"))
                     connect.server_public_key =
                         arguments["server-key"].as<std::string>();
@@ -854,6 +862,8 @@ i32 blam_main()
                     };
                     connect.relay_only    = arguments["relay-only"].as<bool>();
                     connect.allow_freecam = !arguments["no-freecam"].as<bool>();
+                    if(arguments.count("password"))
+                        connect.password = arguments["password"].as<std::string>();
                     if(arguments.count("gateway-register"))
                     {
                         connect.gateway_register_url =

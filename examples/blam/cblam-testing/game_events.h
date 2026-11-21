@@ -890,6 +890,10 @@ struct ServerConnectEvent
 
     /* Never use a direct route, in either role, both as server and client */
     bool relay_only{false};
+
+    /* Listen: what a client must send to join. Server: what to send, only
+     * to a server whose key the address pins. Empty = none */
+    std::string password;
 };
 
 struct ServerConnectedEvent
