@@ -238,6 +238,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         Vecf4 uv;     /*!< as glyph_uv */
         Vecf2 size;   /*!< px */
         Vecf2 origin; /*!< pen start of the baseline in it, px */
+        f32   advance{0.f}; /*!< pen travel, px */
     };
     std::optional<image::font::typeface>       m_typeface;
     std::unique_ptr<Coffee::Resource>          m_typeface_file;
@@ -1305,7 +1306,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         auto& entry = m_typeset[std::move(key)] = typeset_entry_t{
             .uv     = Vecf4(w / size, h / size, m_typeset_shelf.x / size, m_typeset_shelf.y / size),
             .size   = Vecf2(w, h),
-            .origin = Vecf2(metrics.origin_x, metrics.baseline),
+            .origin  = Vecf2(metrics.origin_x, metrics.baseline),
+            .advance = metrics.advance,
         };
         m_typeset_shelf.x += w;
         m_typeset_shelf_height = std::max(m_typeset_shelf_height, h);
@@ -1316,41 +1318,71 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
      * where there is no typeface */
     void push_typeset(HudScene::view_t const& view, f32 scale, widget_data_t& data)
     {
-        constexpr u32 font_source = 15u; /* TEX_FONT */
         load_typeface();
         for(auto const& line : view.typeset)
         {
-            if(data.instance_data.size() >= m_instance_slots)
-                break;
-            if(auto const* set = typeset(line.text, line.size * scale, line.max_width * scale))
-            {
-                Vecf2 const min = line.at - set->origin / scale;
-                Vecf2 const max = min + set->size / scale;
-                std::array<vertex_t, 6> const verts = {{
-                    {{min.x, min.y}, {0, 0}},
-                    {{max.x, min.y}, {1, 0}},
-                    {{max.x, max.y}, {1, 1}},
-                    {{min.x, min.y}, {0, 0}},
-                    {{max.x, max.y}, {1, 1}},
-                    {{min.x, max.y}, {0, 1}},
-                }};
-                data.vertex_data.insert(data.vertex_data.end(), verts.begin(), verts.end());
-                instance_vertex_t inst{};
-                inst.color            = line.color;
-                inst.tex_scale_offset = set->uv;
-                inst.texture_source.x = (font_source << 24) | font_cache.typeset_layer;
-                data.instance_data.push_back(inst);
-                continue;
-            }
-            auto const font = m_hud_font.valid() ? font_cache.find(m_hud_font) : font_cache.end();
-            if(font == font_cache.end() || !font->second.font)
-                continue;
-            auto const wide = utf8::utf8to16(utf8::replace_invalid(line.text));
-            push_glyphs(
-                data, font->second, wide, line.at.x, line.at.y, line.color,
-                (font_source << 24) | font->second.atlas_layer);
+            if(line.backing.a > 0.f)
+                push_solid(
+                    data,
+                    line.at - Vecf2(backing_pad, line.size + backing_pad),
+                    line.at + Vecf2(line.max_width + backing_pad, line.size * backing_descent + backing_pad),
+                    line.backing);
+            if(line.shadow)
+                push_runs(line, line.at + Vecf2(shadow_offset), Vecf4(0.f, 0.f, 0.f, 1.f), scale, data);
+            push_runs(line, line.at, std::nullopt, scale, data);
         }
     }
+
+    /* A line's runs from `at`, each in its color or all in `color` */
+    void push_runs(
+        HudScene::typeset_t const& line, Vecf2 at, std::optional<Vecf4> color, f32 scale, widget_data_t& data)
+    {
+        constexpr u32 font_source = 15u; /* TEX_FONT */
+        if(!m_typeface)
+        {
+            auto const font = m_hud_font.valid() ? font_cache.find(m_hud_font) : font_cache.end();
+            if(font == font_cache.end() || !font->second.font || line.runs.empty())
+                return;
+            std::string text;
+            for(auto const& run : line.runs)
+                text += run.text;
+            auto const wide = utf8::utf8to16(utf8::replace_invalid(text));
+            push_glyphs(
+                data, font->second, wide, at.x, at.y, color.value_or(line.runs.front().color),
+                (font_source << 24) | font->second.atlas_layer);
+            return;
+        }
+        f32 pen = 0.f; /* HUD units along the line */
+        for(auto const& run : line.runs)
+        {
+            f32 const room = line.max_width > 0.f ? line.max_width - pen : 0.f;
+            if(data.instance_data.size() >= m_instance_slots || (line.max_width > 0.f && room <= 0.f))
+                break;
+            auto const* set = typeset(run.text, line.size * scale, room * scale);
+            if(!set)
+                continue;
+            Vecf2 const min = at + Vecf2(pen, 0.f) - set->origin / scale;
+            Vecf2 const max = min + set->size / scale;
+            std::array<vertex_t, 6> const verts = {{
+                {{min.x, min.y}, {0, 0}},
+                {{max.x, min.y}, {1, 0}},
+                {{max.x, max.y}, {1, 1}},
+                {{min.x, min.y}, {0, 0}},
+                {{max.x, max.y}, {1, 1}},
+                {{min.x, max.y}, {0, 1}},
+            }};
+            data.vertex_data.insert(data.vertex_data.end(), verts.begin(), verts.end());
+            instance_vertex_t inst{};
+            inst.color            = color.value_or(run.color);
+            inst.tex_scale_offset = set->uv;
+            inst.texture_source.x = (font_source << 24) | font_cache.typeset_layer;
+            data.instance_data.push_back(inst);
+            pen += set->advance / scale;
+        }
+    }
+    static constexpr f32 shadow_offset   = 1.f;  /* HUD units */
+    static constexpr f32 backing_pad     = 2.f;  /* HUD units around a line */
+    static constexpr f32 backing_descent = .3f;  /* of the em, under the baseline */
 
     Vecf2 image_size(generation_idx_t const& im)
     {
