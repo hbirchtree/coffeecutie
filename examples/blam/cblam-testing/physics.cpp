@@ -3618,6 +3618,7 @@ struct PhysicsSystem
         u64       deck{0};
         btVector3 deck_spot{0, 0, 0};
         bool      leapt{false}; /*!< Off its deck by a jump, not down yet */
+        f32       crouch_seen{0.f}; /*!< Its player's crouch as last posed */
         /* Lowest point of its hulls in the bind pose, body space */
         std::optional<f32> bind_floor;
         /* Ground less upright than this it can't walk up; 0 = any */
@@ -3736,6 +3737,21 @@ struct PhysicsSystem
             /* A player crouched fits under what its tag's crouching height
              * does, whatever its crouch pose keeps up */
             auto const* info = p.template get<PlayerInfo>(entity);
+            /* Crouched in the air it tucks its legs: the feet come up and
+             * the head stays, as Halo's crouch jump */
+            if(info && simulated)
+            {
+                f32 const change = info->crouch - std::exchange(body.crouch_seen, info->crouch);
+                /* A body just leaving the ground on a jump counts as up */
+                bool const airborne = !on_ground(*body.world_body, true) ||
+                                      body.world_body->getLinearVelocity().z() > takeoff_speed;
+                if(change != 0.f && airborne)
+                {
+                    btTransform t = body.world_body->getWorldTransform();
+                    t.setOrigin(t.getOrigin() + btVector3(0, 0, change * (info->biped.height - info->biped.crouch_height)));
+                    body.world_body->setWorldTransform(t);
+                }
+            }
             f32 const   top  = info && info->crouch > 0.f
                                    ? body.child_offset.z + glm::mix(info->biped.height, info->biped.crouch_height, info->crouch)
                                    : std::numeric_limits<f32>::max();
@@ -3912,6 +3928,7 @@ struct PhysicsSystem
     static constexpr f32 landed_rise = .1f; /* wu/s, still rising off a deck */
     /* Knocked further than this, it takes a new spot */
     static constexpr f32 deck_reach = .3f; /* wu */
+    static constexpr f32 takeoff_speed = .5f; /* wu/s up past which a grounded body is jumping */
     /* How deep a lagged body may sink into another before it holds back,
      * and how upright a contact is that it stands on instead */
     static constexpr f32 lagged_overlap  = .01f; /* wu */
