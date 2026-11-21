@@ -1136,7 +1136,7 @@ struct Actor
         none,    /*!< Its platoon decides */
         attack,  /*!< ai_attack: the attacking positions */
         defend,  /*!< ai_defend: the defending positions */
-        retreat, /*!< ai_retreat: away from its target, no shooting */
+        retreat, /*!< ai_retreat: back to the defending positions, still fighting */
     };
 
     libc_types::i16 encounter{-1};
