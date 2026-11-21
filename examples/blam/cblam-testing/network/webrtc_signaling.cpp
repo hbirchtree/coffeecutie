@@ -612,7 +612,7 @@ void GatewayServerRegistration::sendRegister()
 {
     nlohmann::json register_msg{
         {"type", "register"},
-        {"serverId", m_serverId},
+        {"serverId", ServerId()},
         {"publicKey", m_key.public_key_base64()},
         {"serverTransports", nlohmann::json::array({"webrtc"})},
     };
@@ -632,6 +632,13 @@ bool GatewayServerRegistration::Active() const
     std::lock_guard<std::mutex> lock(
         const_cast<GatewayServerRegistration*>(this)->m_mutex);
     return m_active;
+}
+
+std::string GatewayServerRegistration::ServerId() const
+{
+    std::lock_guard<std::mutex> lock(
+        const_cast<GatewayServerRegistration*>(this)->m_mutex);
+    return m_serverId;
 }
 
 bool GatewayServerRegistration::Failed() const
@@ -685,6 +692,12 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
     {
         /* The gateway's challenge: its nonce signed bound to our id, so the
          * id is registered under our key and no other */
+        if(auto assigned = msg.value("serverId", std::string()); !assigned.empty())
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if(m_serverId.empty())
+                m_serverId = assigned;
+        }
         auto nonceHex   = msg.value("nonce", std::string());
         auto nonceBytes = hex_decode(nonceHex);
         if(nonceBytes.empty())
@@ -694,7 +707,7 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
         }
         std::string nonce(nonceBytes.begin(), nonceBytes.end());
         auto        signature =
-            m_key.sign(gateway_registration_challenge(m_serverId, nonce));
+            m_key.sign(gateway_registration_challenge(ServerId(), nonce));
         if(signature.empty())
         {
             cWarning(
@@ -703,7 +716,7 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
         }
         nlohmann::json response{
             {"type", "challenge-response"},
-            {"serverId", m_serverId},
+            {"serverId", ServerId()},
             {"nonce", nonceHex},
             {"signature",
              b64::encode(
@@ -723,7 +736,7 @@ void GatewayServerRegistration::onWebSocketMessage(std::string const& text)
         cDebug(
             "webrtc_signaling: registration active for serverId={} [{}] "
             "(webrtc-hosted)",
-            m_serverId,
+            ServerId(),
             trackingId.empty() ? "no tracking id" : trackingId);
     } else if(type == "error")
     {

@@ -1191,6 +1191,27 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         install_self_signed_cert();
     }
 
+    /* A gateway-registered server's join string, once it knows its id: the
+     * one it asked for, or the one the gateway assigned it */
+    void publish_gateway_join(std::string const& gateway_url)
+    {
+        m_pending_join_gateway = gateway_url;
+        poll_gateway_join();
+    }
+    void poll_gateway_join()
+    {
+#if defined(USE_WEBRTC_TRANSPORT)
+        if(m_pending_join_gateway.empty())
+            return;
+        std::string id = m_webrtcServer ? m_webrtcServer->ServerId()
+                         : m_fleetRegistration ? m_fleetRegistration->ServerId()
+                                               : std::string();
+        if(id.empty())
+            return;
+        publish_join_string(std::exchange(m_pending_join_gateway, {}), id);
+#endif
+    }
+
     /* address is ip:port, or a gateway URL when server_id is set */
     void publish_join_string(
         std::string const& address, std::string const& server_id = {})
@@ -1364,9 +1385,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                        NetworkState::ServerState::Listening)
                         return;
                     if(registered)
-                        publish_join_string(
-                            connect->gateway_register_url,
-                            connect->gateway_server_id);
+                        publish_gateway_join(connect->gateway_register_url);
                     else
                         publish_join_string(local_name());
                 }
@@ -2034,12 +2053,6 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             if(serverId.empty())
                 serverId = local.substr(hash + 1);
         }
-        if(serverId.empty())
-        {
-            hosting_failed(fmt::format("Hosting through {} needs a game id: {}#<id>.", gatewayUrl, gatewayUrl));
-            return;
-        }
-
         cDebug(
             "Starting WebRTC-hosted server: gateway={} serverId={}",
             gatewayUrl,
@@ -2078,7 +2091,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         // reads GetListenSocketAddress, which m_socket doesn't have here)
         // -- leave unset until there's a sensible thing to show.
         m_net_state.server_state = NetworkState::ServerState::Listening;
-        publish_join_string(gatewayUrl, serverId);
+        publish_gateway_join(gatewayUrl);
     }
 #endif
 
@@ -2459,6 +2472,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_fleetRegistration->Poll();
             close_relayed_connections(m_fleetRegistration->TakeClosedRelays());
         }
+        poll_gateway_join();
 #endif
         if(m_spawn_queue)
             m_spawn_queue->poll();
@@ -5628,6 +5642,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::optional<time_point>         m_connection_last_seen{};
     bool                              m_join_confirmed{false};
     bool                              m_left_server{false};
+    std::string m_pending_join_gateway; /*!< Its join string waits on the gateway's id */
 #if defined(USE_WEBRTC_TRANSPORT)
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcBootstrap{nullptr};
     webrtc_signaling::GatewayConnectBootstrap* m_webrtcDirectKeepAlive{nullptr};

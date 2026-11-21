@@ -285,10 +285,16 @@ void GatewayFleetRegistration::onWebSocketMessage(std::string const& text)
         cDebug(
             "webrtc_signaling: gateway_fleet_registration: registration "
             "active for serverId={} [{}] (challenge passed)",
-            m_serverId,
+            ServerId(),
             m_trackingId.empty() ? "no tracking id" : m_trackingId);
     } else if(type == "register-pending")
     {
+        if(auto assigned = msg.value("serverId", std::string()); !assigned.empty())
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if(m_serverId.empty())
+                m_serverId = assigned;
+        }
 #if !defined(COFFEE_WASM) && !defined(_WIN32)
         int punchPort = msg.value("punchPort", 0);
         if(punchPort <= 0 || punchPort > 65535)
@@ -358,7 +364,7 @@ void GatewayFleetRegistration::sendRegister()
      * declared one could only mislead. */
     nlohmann::json reg{
         {"type", "register"},
-        {"serverId", m_serverId},
+        {"serverId", ServerId()},
         {"publicKey", m_key.public_key_base64()},
         {"serverTransports",
          m_relayOnly ? nlohmann::json::array({"relay"})
@@ -374,7 +380,7 @@ void GatewayFleetRegistration::sendHeartbeat()
 {
     nlohmann::json hb{
         {"type", "heartbeat"},
-        {"serverId", m_serverId},
+        {"serverId", ServerId()},
     };
     if(!m_ws->send(hb.dump()))
         cWarning(
@@ -396,7 +402,7 @@ void GatewayFleetRegistration::sendRegistrationPunch()
             return;
         target = m_gatewayAddr;
     }
-    std::string payload = kRegisterPunchPrefix + m_serverId;
+    std::string payload = kRegisterPunchPrefix + ServerId();
     ::sendto(
         m_challengeSock,
         payload.data(),
@@ -434,7 +440,7 @@ void GatewayFleetRegistration::pollChallengeSocket()
      * the key the id is registered under. Active only on the gateway's ack. */
     std::string nonce(buf, static_cast<size_t>(n));
     auto        signature =
-        m_key.sign(gateway_registration_challenge(m_serverId, nonce));
+        m_key.sign(gateway_registration_challenge(ServerId(), nonce));
     if(signature.empty())
     {
         cWarning(
@@ -444,7 +450,7 @@ void GatewayFleetRegistration::pollChallengeSocket()
     }
     nlohmann::json response{
         {"type", "challenge-response"},
-        {"serverId", m_serverId},
+        {"serverId", ServerId()},
         {"nonce", hex::encode(nonce)},
         {"signature",
          b64::encode(
@@ -613,6 +619,12 @@ bool GatewayFleetRegistration::Active() const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_active;
+}
+
+std::string GatewayFleetRegistration::ServerId() const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_serverId;
 }
 
 void GatewayFleetRegistration::drainIncomingSignals()

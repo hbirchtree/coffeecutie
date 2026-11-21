@@ -858,11 +858,10 @@ i32 blam_main()
                     {
                         connect.gateway_register_url =
                             arguments["gateway-register"].as<std::string>();
-                        connect.gateway_server_id =
-                            arguments.count("gateway-server-id")
-                                ? arguments["gateway-server-id"]
-                                      .as<std::string>()
-                                : std::string("default");
+                        /* Without one, the gateway assigns it */
+                        if(arguments.count("gateway-server-id"))
+                            connect.gateway_server_id =
+                                arguments["gateway-server-id"].as<std::string>();
                         if(arguments.count("gateway-auth-key"))
                             connect.gateway_auth_key =
                                 arguments["gateway-auth-key"].as<std::string>();
