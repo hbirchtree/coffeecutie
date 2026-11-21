@@ -65,7 +65,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-devkit",
-            "baseline": "51a297cf939e933d442cff73d1f3d8441ae3c80d",
+            "baseline": "a98ec017a1a1636f3cf3d58e899ed97591828c2f",
             "packages": [
                 "gctools",
                 "libogc",

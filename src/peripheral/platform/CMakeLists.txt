@@ -201,11 +201,13 @@ if(GAMECUBE OR WII)
       gekko/boot.cpp
   )
   find_package(libogc CONFIG REQUIRED)
-  target_link_libraries(
-    PeripheralPlatform
-    PRIVATE
-      libogc::gdbstub
-  )
+  if(GAMECUBE)
+    target_link_libraries(
+      PeripheralPlatform
+      PRIVATE
+        libogc::gdbstub
+    )
+  endif()
 
   # Max files the demand-paged mmap window can map at once (paged_mmap.h).
   set(GEKKO_MMAP_MAX_REGIONS "8"
