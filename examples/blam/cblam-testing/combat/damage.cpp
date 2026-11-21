@@ -415,7 +415,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             if(info)
                 radius = std::max(radius, info->biped.height * .5f);
             f32 const d = std::max(glm::distance(*centre, area.position) - radius, 0.f);
-            if(d > jpt->radius.y)
+            if(d > jpt->radius.y || shielded(p, area.position, *centre, unit.id()))
                 continue;
             f32 const inner = std::min(jpt->radius.x, jpt->radius.y);
             f32 const scale =
@@ -431,7 +431,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             if(d > jpt->radius.y)
                 continue;
             auto const* coll = breakable(p, ent.id());
-            if(!coll)
+            if(!coll || shielded(p, area.position, model.position, ent.id()))
                 continue;
             f32 const inner = std::min(jpt->radius.x, jpt->radius.y);
             f32 const scale =
@@ -440,6 +440,33 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         }
         std::erase_if(m_object_body, [&p](auto const& e) { return !p.template get<Model>(e.first); });
     }
+
+    /* The level stands between a blast and what it would reach: walls and
+     * floors shield, objects in the way do not */
+    bool shielded(Proxy& p, Vecf3 from, Vecf3 const& to, u64 target)
+    {
+        Vecf3 const along = to - from;
+        if(glm::dot(along, along) < 1e-6f)
+            return false;
+        Vecf3 const dir  = glm::normalize(along);
+        from += dir * blast_start;
+        u64 past = 0;
+        for(i32 i = 0; i < blast_casts; i++)
+        {
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = to, .ignore = target, .ignore_also = past};
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            if(!ray.hit)
+                return false;
+            if(ray.entity_id == 0)
+                return true;
+            past = ray.entity_id;
+            from = ray.point + dir * blast_start;
+        }
+        return false;
+    }
+    static constexpr f32 blast_start = .02f; /* wu off the surface a blast sits on */
+    static constexpr i32 blast_casts = 4;    /* objects it looks past for a wall */
 
     /* ---- Objects that are not units ---- */
 
