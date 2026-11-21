@@ -185,25 +185,21 @@ struct MessageValidator
         return static_cast<Message<T> const*>(base);
     }
 
+    /* Exactly what the sender's header says it holds; subtracting and
+     * dividing, so no peer-chosen count can overflow the check */
     bool valid() const
     {
         static_assert(sizeof(Message<T>) == sizeof(MessageBase) + sizeof(T));
-        if(sizeof(MessageBase) > packet_length)
+        if(packet_length < sizeof(Message<T>) || base->num_values < 1)
             return false;
+        size_t const body = packet_length - sizeof(MessageBase);
         if constexpr(has_trailing_data<T>)
         {
-            if(base->num_values != 1)
-                return false;
-            const auto* impl = typed();
-            const auto trailer_size = impl->data.*(T::trailing_length_member);
-            return sizeof(Message<T>) + trailer_size == packet_length;
-        } else if(base->num_values < 1)
-            return false;
-        else if(base->num_values >= 1)
-        {
-            const auto expected = sizeof(MessageBase) + sizeof(T) * base->num_values;
-            return expected == packet_length;
-        }
+            size_t const trailing = typed()->data.*(T::trailing_length_member);
+            return base->num_values == 1 && trailing <= T::max_trailing_length &&
+                   trailing == body - sizeof(T);
+        } else
+            return body % sizeof(T) == 0 && base->num_values == body / sizeof(T);
     }
 };
 
@@ -243,7 +239,7 @@ std::pair<T const&, gsl::span<const char>> MessageBase::value_with_trailing() co
     const char* message_base = reinterpret_cast<const char*>(this);
     const char* trailing_base = message_base + sizeof(Message<T>);
     auto byte_size = impl->data.*(T::trailing_length_member);
-    return {&impl->data, gsl::span<const char>(trailing_base, byte_size)};
+    return {impl->data, gsl::span<const char>(trailing_base, byte_size)};
 }
 
 /*! Identifies the tag data a peer has loaded. Tag ids and object classes
