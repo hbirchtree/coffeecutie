@@ -146,13 +146,15 @@ struct DeviceSystem : compo::RestrictedSubsystem<DeviceSystem, DevicesManifest>
                                   : default_activation_radius;
             Vecf3 const ahead  = model.rotation * Vecf3{1.f, 0.f, 0.f};
             Vecf3 const centre = model.position + model.rotation * middle_of(physics);
+            /* One-sided, it opens only for units behind its forward axis:
+             * the side b40's entrance doors are walked up to from */
             bool const  one_sided = device.kind_flags & DeviceState::one_sided;
             bool        near      = false;
             for(Vecf3 const& unit : units)
             {
                 Vecf3 const to = unit - centre;
                 if(glm::length(to) <= reach + unit_radius &&
-                   (!one_sided || glm::dot(to, ahead) >= 0.f))
+                   (!one_sided || glm::dot(to, ahead) <= 0.f))
                     near = true;
             }
             if(near)
