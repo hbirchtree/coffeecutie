@@ -9,6 +9,8 @@
 #include "network/networking.h"
 #include "physics.h"
 #include "combat/projectiles.h"
+#include "ai/allegiance.h"
+#include "game/game_mode.h"
 #include "selected_version.h"
 #include "audio/sounds.h"
 #include "ticks.h"
@@ -35,12 +37,15 @@ using WeaponManifest = compo::SubsystemManifest<
         const BipedStatus,
         BipedEquipment,
         Model,
-        const ObjectPhysics>,
+        const ObjectPhysics,
+        const Actor>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
         const NetworkState,
-        const BlamFiles<halo_version>>,
+        const BlamFiles<halo_version>,
+        const GameState,
+        const AllegianceState>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
@@ -90,6 +95,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         }
         auto const& magic = files.container.magic;
         zoom_sounds(p, files);
+        mark_reticles(p, files);
 
         std::set<u64> live;
         for(auto ent : p.template select<
@@ -857,6 +863,60 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     }
 
     /* Each step in or out of a scope is heard from its body, local or not */
+    /* What each reticle rests on, by the shot's own reach and autoaim,
+     * for the HUD to tint it */
+    void mark_reticles(Proxy& p, BlamFiles<halo_version> const& files)
+    {
+        for(auto ent : p.template select<PlayerInfo, PlayerCamera, BipedEquipment>())
+        {
+            auto [info, cam, equip] = ent.components();
+            equip.aimed             = 0;
+            /* A gunner's is the vehicle's gun; a passenger aims its own */
+            auto const*        held    = equip.held(files.load_generation);
+            blam::tag_t const* mounted = info.riding.vehicle ? mounted_weapon(p, info, files) : nullptr;
+            blam::tag_t const* weapon  = mounted ? mounted : held ? held->tag : nullptr;
+            if(!weapon || !info.mode.physics || cam.cinematic)
+                continue;
+            Matf3 const      to_world = glm::transpose(Matf3(cam.rotation));
+            Vecf3 const      forward  = to_world * Vecf3{0.f, 0.f, -1.f};
+            Physics::Event   ray_ev{Physics::Event::Raycast};
+            Physics::Raycast ray{
+                .from   = cam.camera.position,
+                .to     = cam.camera.position + forward * aim_reach,
+                .ignore = info.riding.vehicle ? info.riding.vehicle : ent.id()};
+            p.template subsystem<PhysicsBus>().process(ray_ev, &ray);
+            u64 target = ray.hit && ray.entity_id && ray.entity_id != ent.id() && is_unit(p, ray.entity_id)
+                             ? ray.entity_id
+                             : 0;
+            if(!target)
+                target = autoaimed(p, ent.id(), info, cam.camera.position, forward, *weapon);
+            equip.aimed = side_of(p, info, target);
+        }
+    }
+
+    /* 1 for a unit that fights the player, -1 for one on its side */
+    static libc_types::i8 side_of(Proxy& p, PlayerInfo const& me, u64 unit)
+    {
+        using team_t = AllegianceState::team_t;
+        if(!unit)
+            return 0;
+        if(auto const* status = p.template get<BipedStatus>(unit); status && status->dead)
+            return 0;
+        if(auto const* other = p.template get<PlayerInfo>(unit))
+        {
+            auto const& state = p.template subsystem<GameState>();
+            if(state.kind != GameState::kind_t::multiplayer)
+                return -1;
+            auto const *a = state.player(me.player_idx), *b = state.player(other->player_idx);
+            return state.teams && a && b && a->team >= 0 && a->team == b->team ? -1 : 1;
+        }
+        if(auto const* actor = p.template get<Actor>(unit); actor && actor->active())
+            return p.template subsystem<AllegianceState>().hostile(static_cast<team_t>(actor->team), team_t::player)
+                       ? 1
+                       : -1;
+        return 0;
+    }
+
     void zoom_sounds(Proxy& p, BlamFiles<halo_version> const& files)
     {
         auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();

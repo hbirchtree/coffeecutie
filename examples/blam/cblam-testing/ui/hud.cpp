@@ -70,6 +70,7 @@ struct state_t
     f32 heat{0.f};
     f32 battery{1.f}; /*!< What is left of it */
     u8  zoom{0};      /*!< Zoom level, 0 = none */
+    libc_types::i8 aimed{0}; /*!< The reticle is on an enemy (1) or a friend (-1) */
 };
 
 /* Drawn premultiplied: alpha is how much of what is behind an element it
@@ -77,6 +78,20 @@ struct state_t
 Vecf4 color_of(blam::argb8_t c)
 {
     return Vecf4(c.r, c.g, c.b, c.a) / 255.f;
+}
+
+/* A reticle that flashes when active takes its flashing colour over an
+ * enemy, and a friend's green over a friend, at its own alpha */
+template<typename Overlay>
+Vecf4 reticle_color(Overlay const& ov, libc_types::i8 aimed)
+{
+    using flags_t       = typename Overlay::flags_t;
+    Vecf4 const resting = color_of(ov.colors.default_color);
+    if(aimed == 0 || (ov.flags & flags_t::flashes_when_active) == flags_t::none)
+        return resting;
+    Vecf3 const friend_color{0.f, 1.f, 0.f};
+    Vecf3 const tint = aimed > 0 ? Vecf3(color_of(ov.colors.flashing_color)) : friend_color;
+    return Vecf4(tint * resting.a, resting.a);
 }
 
 bool blank(blam::argb8_t c)
@@ -798,7 +813,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                                           ? static_cast<i16>(std::max(s.zoom - 1, 0))
                                           : i16(0);
                     push(anchor_t::center, ov, ch.crosshair_bitmap, ov.sequence_index,
-                         color_of(ov.colors.default_color), -1.f, {}, level);
+                         reticle_color(ov, s.aimed), -1.f, {}, level);
                 }
             }
 
@@ -1725,17 +1740,21 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             if(riding.mounted.weapon)
             {
                 auto hud = m_index.find(riding.mounted.weapon->hud_interface.tag_id);
+                auto s = state_of(riding.mounted, {}, *m_magic);
+                s.aimed = equip->aimed;
                 weapon_hud(
                     riding.mounted.weapon->hud_interface.valid() && hud != m_index.end() ? &(*hud)
                                                                                         : nullptr,
-                    state_of(riding.mounted, {}, *m_magic));
+                    s);
             } else if(auto const* held = riding.armed ? equip->held(files.load_generation) : nullptr)
             {
                 auto hud = m_index.find(held->weapon->hud_interface.tag_id);
+                auto s  = state_of(*held, equip->weapons[1], *m_magic, equip->zoom);
+                s.aimed = equip->aimed;
                 weapon_hud(
                     held->weapon->hud_interface.valid() && hud != m_index.end() ? &(*hud)
                                                                                 : nullptr,
-                    state_of(*held, equip->weapons[1], *m_magic, equip->zoom));
+                    s);
             }
             /* The grenades it would throw */
             if(equip->grenade < equip->equipment.size())
