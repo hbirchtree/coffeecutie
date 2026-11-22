@@ -380,6 +380,8 @@ struct SpawnObjectEvent
     libc_types::f32 age{0.f};           /*!< A weapon's battery spent, 0 to 1 */
     /*! A weapon's rounds, loaded then reserve; none for what its magazine starts with */
     std::optional<std::array<libc_types::u16, 2>> rounds;
+    /*! Dropped by a unit: tidied away once it has lain a while */
+    bool litter{false};
     /*! Plays its creation effect, or the players' respawn effect if it has none */
     bool announce{false};
     /*! A unit's own change colours, see Model::change_colors */

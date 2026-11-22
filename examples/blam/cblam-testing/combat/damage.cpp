@@ -87,6 +87,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         {
             m_dying.clear();
             m_fall_grace.clear();
+            m_corpse_age.clear();
             m_fall_top.clear();
             m_launched.clear();
             m_object_body.clear();
@@ -131,6 +132,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             fallen_too_far(p);
             slammed(p, dt);
             fall_apart(p, dt);
+            clear_corpses(p, dt);
             let_out(p, areas, dt);
         }
         recharge(p, dt);
@@ -841,6 +843,48 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         }
     }
 
+    /* Dead NPCs are taken away quietly: in multiplayer after a while, and
+     * anywhere the oldest past a cap; never from under a player's feet */
+    void clear_corpses(Proxy& p, f32 dt)
+    {
+        std::vector<Vecf3> players;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+            if(ent.template get<PlayerInfo>().spawned)
+                players.push_back(ent.template get<Model>().position);
+        bool const timed = p.template subsystem<GameState>().kind == GameState::kind_t::multiplayer;
+        std::vector<std::pair<f32, u64>> bodies;
+        std::set<u64>                    lying;
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto const& [status, model] = ent.components();
+            auto const* net             = p.template get<NetworkInfo>(ent.id());
+            if(!status.dead || !net || net->instance_id == 0 || !p.template get<Actor>(ent.id()) ||
+               m_dying.contains(ent.id()) || m_destroyed.contains(ent.id()))
+                continue;
+            lying.insert(ent.id());
+            f32& age = m_corpse_age[ent.id()];
+            age += dt;
+            bool const near = std::any_of(players.begin(), players.end(), [&](Vecf3 const& at) {
+                return glm::distance(at, model.position) < corpse_clear_distance;
+            });
+            if(!near)
+                bodies.emplace_back(age, ent.id());
+        }
+        std::erase_if(m_corpse_age, [&](auto const& kv) { return !lying.contains(kv.first); });
+        std::sort(bodies.begin(), bodies.end(), std::greater<>());
+        size_t const over = lying.size() > max_corpses ? lying.size() - max_corpses : 0;
+        for(size_t i = 0; i < bodies.size(); i++)
+        {
+            if(i >= over && !(timed && bodies[i].first >= corpse_time))
+                continue;
+            auto const id = bodies[i].second;
+            GameEvent          ev{.type = GameEvent::DespawnObject};
+            DespawnObjectEvent gone{.net_id = p.template get<NetworkInfo>(id)->instance_id};
+            p.template subsystem<GameEventBus>().inject(ev, &gone);
+            m_destroyed.insert(id);
+        }
+    }
+
     /* Its coll's body destroyed effect, where it lies */
     void burst(Proxy& p, u64 unit)
     {
@@ -1274,6 +1318,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<AreaDamageEvent>     m_areas;
     std::vector<UnitVitalityEvent>   m_vitality;
     std::map<u64, f32>               m_fall_grace; /*!< s until out of the world kills again */
+    std::map<u64, f32>               m_corpse_age; /*!< s each dead NPC has lain */
+    static constexpr f32             corpse_time           = 45.f;
+    static constexpr size_t          max_corpses           = 48;
+    static constexpr f32             corpse_clear_distance = 3.f;
     std::map<u64, f32>               m_fall_top;   /*!< Highest point since last on the ground */
     struct launched_t
     {

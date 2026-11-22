@@ -96,6 +96,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         auto const& magic = files.container.magic;
         zoom_sounds(p, files);
         mark_reticles(p, files);
+        if(!p.template subsystem<NetworkState>().replica)
+        {
+            f32 dt = 0.f;
+            for(auto const& tick : ticks)
+                dt += tick.seconds;
+            tidy_litter(p, dt);
+        }
 
         std::set<u64> live;
         for(auto ent : p.template select<
@@ -872,6 +879,40 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     }
 
     /* Each step in or out of a scope is heard from its body, local or not */
+    /* What units dropped goes once it has lain a while, unless a player is
+     * right by it */
+    void tidy_litter(Proxy& p, f32 dt)
+    {
+        std::set<u64> held;
+        std::vector<Vecf3> players;
+        for(auto ent : p.template select<BipedEquipment>())
+            for(auto const& w : ent.template get<BipedEquipment>().weapons)
+                if(w.held)
+                    held.insert(w.held);
+        for(auto ent : p.template select<PlayerInfo, Model>())
+            if(ent.template get<PlayerInfo>().spawned)
+                players.push_back(ent.template get<Model>().position);
+        std::set<u64> lying;
+        for(auto ent : p.template select<Model, NetworkInfo>())
+        {
+            auto const& [model, net] = ent.components();
+            if(!model.litter || net.instance_id == 0 || held.contains(ent.id()))
+                continue;
+            lying.insert(ent.id());
+            if((m_litter[ent.id()] += dt) < litter_time)
+                continue;
+            if(std::any_of(players.begin(), players.end(), [&](Vecf3 const& at) {
+                   return glm::distance(at, model.position) < litter_clear_distance;
+               }))
+                continue;
+            GameEvent          ev{.type = GameEvent::DespawnObject};
+            DespawnObjectEvent gone{.net_id = net.instance_id};
+            p.template subsystem<GameEventBus>().inject(ev, &gone);
+            lying.erase(ent.id());
+        }
+        std::erase_if(m_litter, [&](auto const& kv) { return !lying.contains(kv.first); });
+    }
+
     /* What each reticle rests on, by the shot's own reach and autoaim,
      * for the HUD to tint it */
     void mark_reticles(Proxy& p, BlamFiles<halo_version> const& files)
@@ -1798,6 +1839,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr f32 melee_spread    = .15f; /* rad, the side rays */
     static constexpr f32 melee_dip       = .35f; /* rad, the low rays */
     static constexpr f32 aim_reach       = 100.f; /* wu, a reticle on nothing */
+    static constexpr f32 litter_time     = 45.f;  /* s a dropped item lies before it goes */
+    static constexpr f32 litter_clear_distance = 3.f; /* wu: never taken from under a player's feet */
+    std::map<u64, f32>   m_litter; /*!< s each dropped item has lain */
     static constexpr f32 autoaim_height  = .6f;   /* wu above a unit's origin */
     static constexpr f32 behind_cos      = .5f;  /* within 60 deg of its facing */
     /* Vehicle guns: where they fire from, and how far the crosshair looks */

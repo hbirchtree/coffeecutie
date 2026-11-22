@@ -315,6 +315,8 @@ struct Model
     libc_types::f32 item_age{0.f};
     /*! And the rounds left in it; see SpawnObjectEvent::rounds */
     std::optional<std::array<libc_types::u16, 2>> item_rounds;
+    /*! Dropped by a unit; see SpawnObjectEvent::litter */
+    bool litter{false};
 
     /*! Active camouflage: drawn as a refraction of what is behind it */
     bool camouflaged{false};

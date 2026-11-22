@@ -2035,6 +2035,7 @@ struct ResourceLoader
         Model& model = ent.template get<Model>();
         model.item_age      = spawn.age;
         model.item_rounds   = spawn.rounds;
+        model.litter        = spawn.litter;
         model.change_colors = spawn.change_colors;
         model.camouflaged   = spawn.camouflaged;
         if(model_it != index.end())
@@ -3344,6 +3345,7 @@ struct ResourceLoader
                     .velocity     = model->rotation * Vecf3{1.f, 0.f, 1.f},
                     .age          = gun.age,
                     .rounds       = std::array<u16, 2>{gun.rounds_loaded, gun.rounds_total},
+                    .litter       = true,
                 };
                 GameEvent ev{.type = GameEvent::SpawnObject};
                 game_bus->inject(ev, &spawn);
@@ -3412,6 +3414,7 @@ struct ResourceLoader
             .velocity     = flat + Vecf3{0.f, 0.f, 1.f},
             .age          = age,
             .rounds       = rounds,
+            .litter       = true,
         };
         GameEvent ev{.type = GameEvent::SpawnObject};
         game_bus->inject(ev, &spawn);
