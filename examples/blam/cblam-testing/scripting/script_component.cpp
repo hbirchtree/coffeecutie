@@ -152,6 +152,8 @@ struct BlamScript
         m_spawning.clear();
         m_actor_slots.clear();
         m_crewed.clear();
+        m_placed_initial = false;
+        m_respawn_in.clear();
         m_despawning.clear();
         m_recreate.clear();
         m_deferred.clear();
@@ -245,6 +247,8 @@ struct BlamScript
                     enlist(p, id, net_id);
                 return id != 0;
             });
+            place_initial(p);
+            respawn_encounters(p);
             m_vm.tick();
             if(auto& timer = p.template subsystem<CinematicState>().timer; !timer.paused && timer.ticks > 0)
                 timer.ticks--;
@@ -4686,6 +4690,60 @@ struct BlamScript
         return {nullptr, -1};
     }
 
+    /* Encounters not flagged otherwise are there from the start */
+    void place_initial(Proxy& p)
+    {
+        if(std::exchange(m_placed_initial, true))
+            return;
+        using flags_t = blam::scn::ai::encounter::flags_t;
+        if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
+            for(auto const& encounter : list.value())
+                if(!(encounter.flags & flags_t::not_initially_created))
+                    ai_place(p, std::string(encounter.name.str()));
+    }
+
+    /* A respawning encounter's squads are kept at strength: each one short
+     * gets an actor back at one of its starts after the respawn delay */
+    void respawn_encounters(Proxy& p)
+    {
+        using flags_t = blam::scn::ai::encounter::flags_t;
+        auto list     = m_scenario->ai.encounters.data(m_magic);
+        if(!list.has_value())
+            return;
+        for(size_t ei = 0; ei < list.value().size(); ei++)
+        {
+            auto const& encounter = list.value()[ei];
+            auto        squads    = encounter.squads.data(m_magic);
+            if(!(encounter.flags & flags_t::respawn_enabled) || !squads.has_value())
+                continue;
+            auto const name = lowered(encounter.name.str());
+            for(size_t si = 0; si < squads.value().size(); si++)
+            {
+                auto const& squad  = squads.value()[si];
+                auto        starts = squad.start_locations.data(m_magic);
+                if(!starts.has_value() || starts.value().empty())
+                    continue;
+                size_t const want = std::min<size_t>(std::max<u32>(squad.normal_diff_count, 1), starts.value().size());
+                auto const   path = fmt::format("{}/{}", name, lowered(squad.name.str()));
+                auto const   key  = std::pair{ei, si};
+                if(ai_living(p, path) >= want)
+                {
+                    m_respawn_in.erase(key);
+                    continue;
+                }
+                auto [it, fresh] = m_respawn_in.try_emplace(key, 0.f);
+                if(fresh)
+                    it->second = std::uniform_real_distribution<f32>(
+                        encounter.respawn_delay.x, std::max(encounter.respawn_delay.x, encounter.respawn_delay.y))(m_spawn_random);
+                if((it->second -= 1.f / tick_rate) > 0.f)
+                    continue;
+                m_respawn_in.erase(it);
+                place_actor(p, name, encounter, static_cast<i16>(ei), si,
+                            starts.value()[m_spawn_random() % starts.value().size()]);
+            }
+        }
+    }
+
     void ai_place(Proxy& p, std::string const& path)
     {
         auto const slash = path.find('/');
@@ -5215,6 +5273,8 @@ struct BlamScript
     };
     std::map<u32, actor_slot_t> m_actor_slots;
     std::set<u64>               m_crewed; /*!< Vehicles whose built-in gunners were made */
+    bool                        m_placed_initial{false};
+    std::map<std::pair<size_t, size_t>, f32> m_respawn_in; /*!< s until a squad gets an actor back */
     action_tests_t                          m_tests;
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
     std::set<u32>                           m_loops;
