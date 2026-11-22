@@ -2538,6 +2538,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 .position     = model.position + out * .2f + Vecf3{0.f, 0.f, drop_lift},
                 .server_owned = true,
                 .velocity     = out * drop_speed + Vecf3{0.f, 0.f, drop_speed},
+                .litter       = true,
             };
             GameEvent ev{.type = GameEvent::SpawnObject};
             p.template subsystem<GameEventBus>().inject(ev, &spawn);
