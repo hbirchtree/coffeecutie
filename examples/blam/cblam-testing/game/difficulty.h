@@ -19,6 +19,20 @@ inline blam::globals::difficulty const* difficulty_block(BlamFiles<halo_version>
     return levels.has_value() && !levels.value().empty() ? &levels.value()[0] : nullptr;
 }
 
+/* The globals' falling damage block, null without one */
+inline blam::globals::falling_damage const* falling_block(BlamFiles<halo_version> const& files)
+{
+    blam::tag_index_view<halo_version> index(files.container);
+    auto globals_tag = index.tag_of("globals\\globals");
+    if(!globals_tag.has_value())
+        return nullptr;
+    auto globals = (*globals_tag)->template data<blam::globals::globals>(files.container.magic);
+    if(!globals.has_value())
+        return nullptr;
+    auto falling = globals.value()->falling.data(files.container.magic);
+    return falling.has_value() && !falling.value().empty() ? &falling.value()[0] : nullptr;
+}
+
 /* A row's scale at a level (easy 0 to legendary 3), 1 without a block */
 inline libc_types::f32 difficulty_scale(
     blam::globals::difficulty const* block,
