@@ -1530,6 +1530,7 @@ struct BipedEquipment
     bool reloading{false}; /*!< The held weapon, as everyone sees it */
     bool throwing{false};  /*!< A grenade, from wind-up to recovery */
     u8   zoom{0};          /*!< The held weapon's zoom level, 0 = none */
+    libc_types::i8 aimed{0}; /*!< What the reticle rests on: 1 an enemy, -1 a friend */
 
     weapon_t const* held(u32 generation) const
     {
