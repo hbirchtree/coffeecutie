@@ -178,8 +178,10 @@ struct ObjectRespawn : compo::RestrictedSubsystem<ObjectRespawn, ObjectRespawnMa
         };
         GameEvent ev{.type = GameEvent::SpawnObject};
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
-        slot.net_id  = 0;
-        slot.pending = true;
+        /* Known at once: one that rolls off its spot is still this slot's,
+         * not left for another to be made beside it */
+        slot.net_id  = spawn.net_id;
+        slot.pending = spawn.net_id == 0;
         slot.waited  = 0.f;
     }
 
