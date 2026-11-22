@@ -32,6 +32,7 @@ using DamageManifest = compo::SubsystemManifest<
         const PlayerCamera,
         Model,
         const ObjectPhysics,
+        const PhysicsData,
         const Actor,
         const NetworkInfo>,
     type_list_t<
@@ -86,6 +87,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         {
             m_dying.clear();
             m_fall_grace.clear();
+            m_fall_top.clear();
             m_object_body.clear();
             m_gone.clear();
             m_destroyed.clear();
@@ -94,6 +96,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         /* Looked up each frame: a map loading in replaces what a cached
          * pointer saw */
         m_difficulty = difficulty_block(files);
+        m_falling    = falling_block(files);
         for(auto const& area : areas)
             blast(p, area);
         for(auto const& hit : hits)
@@ -124,6 +127,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             for(auto const& vitality : vitalities)
                 put_down(p, vitality);
             fallen_out(p, dt);
+            fallen_too_far(p);
             fall_apart(p, dt);
             let_out(p, areas, dt);
         }
@@ -707,6 +711,40 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         }
     }
 
+    /* No landing hurts, but a fall past the globals' maximum falling
+     * distance is death before the ground is reached */
+    void fallen_too_far(Proxy& p)
+    {
+        f32 const most = m_falling ? m_falling->maximum_falling_distance : 0.f;
+        if(most <= 0.f)
+            return;
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto [status, model] = ent.components();
+            auto const* info     = p.template get<PlayerInfo>(ent.id());
+            auto const* object   = p.template get<ObjectPhysics>(ent.id());
+            auto const* body     = p.template get<PhysicsData>(ent.id());
+            bool const  held     = (info && (info->riding.vehicle || !info->mode.physics)) ||
+                              (object && (object->scripted || object->seated || object->teleported));
+            bool const grounded = (body && body->grounded) || (object && object->grounded);
+            /* A fall is counted from where the unit was first seen */
+            f32& top = m_fall_top.try_emplace(ent.id(), model.position.z).first->second;
+            if(status.dead || held || grounded || !(body || object))
+            {
+                top = model.position.z;
+                continue;
+            }
+            top = std::max(top, model.position.z);
+            if(top - model.position.z <= most)
+                continue;
+            status.shield = status.body = 0.f;
+            status.dead   = true;
+            last_words(p, ent.id(), true);
+            tell(p, ent.id(), status);
+            killed(p, ent.id(), ObjectHitEvent::no_player);
+        }
+    }
+
     /* Its time up, a dead unit bursts and is taken away the frame after,
      * once everyone has been told */
     void fall_apart(Proxy& p, f32 dt)
@@ -1172,6 +1210,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<AreaDamageEvent>     m_areas;
     std::vector<UnitVitalityEvent>   m_vitality;
     std::map<u64, f32>               m_fall_grace; /*!< s until out of the world kills again */
+    std::map<u64, f32>               m_fall_top;   /*!< Highest point since last on the ground */
+    blam::globals::falling_damage const* m_falling{nullptr};
     static constexpr f32             revive_grace = 1.f;
     std::vector<Physics::UnitStruck> m_struck;
     std::shared_ptr<GameEventBus::queue_type<RespawnUnitEvent>> m_respawn_queue;
