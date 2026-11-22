@@ -3578,6 +3578,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return rated ? std::pair{priority, period} : std::pair{1.f, u64(1)};
     }
 
+    /* A share of what the connection can send a tick, never under the
+     * floor; held back while what was queued has not gone */
+    size_t tick_budget_of(HSteamNetConnection connection) const
+    {
+        SteamNetConnectionRealTimeStatus_t status{};
+        if(m_impl->GetConnectionRealTimeStatus(connection, &status, 0, nullptr) != k_EResultOK ||
+           status.m_nSendRateBytesPerSecond <= 0)
+            return tick_budget;
+        size_t const rate = static_cast<size_t>(status.m_nSendRateBytesPerSecond * stream_share / TickClock::rate);
+        size_t const budget = std::max(tick_budget, rate);
+        return static_cast<size_t>(status.m_cbPendingUnreliable) > budget ? tick_budget / 2 : budget;
+    }
+
     /* Each connection gets the players and moving objects due to it by
      * their rating, the most overdue for their worth first, within a byte
      * budget a tick. A player switching mode or deck is told reliably */
@@ -3641,7 +3654,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 return a.score > b.score;
             });
 
-            size_t                  budget = tick_budget;
+            size_t                  budget = tick_budget_of(connection);
             std::vector<ObjectSync> objects;
             for(auto const& d : due)
             {
@@ -5827,6 +5840,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr u64    interp_ticks        = 3;
     /* Bytes of players and moving objects a connection is sent a tick, ~60 KB/s */
     static constexpr size_t tick_budget = 2048;
+    static constexpr f32    stream_share = .6f; /* of the send rate, for streams */
     /* The longest a stream waits for its next state, in ticks */
     static constexpr u64    max_period  = 30;
     /* Ticks without a new state before a player counts as come to rest */
