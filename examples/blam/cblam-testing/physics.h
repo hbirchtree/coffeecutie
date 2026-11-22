@@ -250,6 +250,9 @@ struct Raycast
     u64                   ignore_also{0}; /*!< And another, e.g. a vehicle's shooter */
     /*! Trace bipeds where they were at this tick */
     std::optional<libc_types::u64> rewind{};
+    /*! And this one where it was at its own tick */
+    u64                            rewind_unit{0};
+    std::optional<libc_types::u64> unit_rewind{};
 
     bool                  hit{false};
     f32                   fraction{1.f};

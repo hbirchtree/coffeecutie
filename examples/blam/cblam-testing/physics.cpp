@@ -3247,19 +3247,24 @@ struct PhysicsSystem
         m_bus->process(event, &hit);
     }
 
-    /* Where each biped's body was at each tick, for rays that look back */
+    /* Where each living biped's body was at each tick, players' and
+     * actors', for rays that look back */
     void record_bipeds(u64 tick)
     {
-        std::erase_if(m_biped_history, [this](auto const& e) {
-            return !m_player_bodies.contains(e.first);
+        auto const standing = [this](u64 id, auto const& body) {
+            return body.group == Physics::BodyCreationShape::Character && body.world_body &&
+                   !m_corpses.contains(id);
+        };
+        std::erase_if(m_biped_history, [&](auto const& e) {
+            auto it = m_bodies.find(e.first);
+            return it == m_bodies.end() || !standing(e.first, it->second);
         });
-        for(auto const& [id, _] : m_player_bodies)
+        for(auto const& [id, body] : m_bodies)
         {
-            auto it = m_bodies.find(id);
-            if(it == m_bodies.end())
+            if(!standing(id, body))
                 continue;
             auto& history = m_biped_history[id];
-            history.push_back({tick, it->second.world_body->getWorldTransform()});
+            history.push_back({tick, body.world_body->getWorldTransform()});
             while(history.size() > biped_history_ticks)
                 history.pop_front();
         }
@@ -3355,8 +3360,13 @@ struct PhysicsSystem
             for(auto const& [id, _] : m_biped_history)
             {
                 auto it    = m_bodies.find(id);
-                auto where = biped_at(id, *ray.rewind);
+                auto where = biped_at(id, id == ray.rewind_unit && ray.unit_rewind ? *ray.unit_rewind : *ray.rewind);
                 if(id == ray.ignore || id == ray.ignore_also || it == m_bodies.end() || !where)
+                    continue;
+                /* Nowhere near the ray then */
+                btVector3 const centre = where->getOrigin();
+                btScalar const  along  = std::clamp((centre - from).dot(to - from) / (to - from).length2(), btScalar(0), btScalar(1));
+                if((from + (to - from) * along - centre).length2() > rewind_reach * rewind_reach)
                     continue;
                 btTransform from_at, to_at;
                 from_at.setIdentity();
@@ -3982,6 +3992,7 @@ struct PhysicsSystem
     using biped_sample_t = std::pair<u64, btTransform>;
     std::map<u64, std::deque<biped_sample_t>> m_biped_history;
     static constexpr size_t biped_history_ticks = TickClock::rate * 6 / 5;
+    static constexpr btScalar rewind_reach = 4; /* Past any biped's hull from its origin */
     std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
     /* The section an object's body was made in */
     std::map<u64, i16> m_object_sections;

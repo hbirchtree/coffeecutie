@@ -3046,7 +3046,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Shots and hits, where CombatSync says they go */
     void send_combat(Proxy& p)
     {
-        m_combat.collect(p, is_server(), m_connection && m_join_confirmed);
+        /* The tick an object is played back at here, as apply_simulation
+         * shows it */
+        auto const shown_at = [this, &p](u32 net_id) -> u64 {
+            auto const& clock = p.subsystem<TickClock>();
+            libc_types::f64 const at = static_cast<libc_types::f64>(clock.tick()) + clock.alpha() - m_sync_lag -
+                             stream_delay(m_object_spacing, net_id);
+            return at > 1. ? static_cast<u64>(std::lround(at)) : 1;
+        };
+        m_combat.collect(p, is_server(), m_connection && m_join_confirmed, shown_at);
         auto route = [this](net_combat::route_t const& route) {
             std::set<HSteamNetConnection> targets;
             if(route.to == net_combat::route_t::server)

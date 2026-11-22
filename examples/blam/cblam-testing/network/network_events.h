@@ -516,6 +516,8 @@ struct alignas(8) WeaponFire
     u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
     u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */
     u32 shooter{0};                /*!< Net id of a shooter that is no player: an actor */
+    u32 padding{0};
+    u64 target_tick{0};            /*!< Server tick `target` was shown at, 0 = view_tick */
 };
 
 /*! A hit the server decided (ObjectHitEvent), to every peer */
@@ -925,7 +927,7 @@ static_assert(sizeof(ObjectCensus) == 8);
 static_assert(sizeof(ObjectRequest) == 4);
 static_assert(sizeof(SyncPoint) == 64);
 static_assert(sizeof(DriveInput) == 32);
-static_assert(sizeof(WeaponFire) == 72);
+static_assert(sizeof(WeaponFire) == 88);
 static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);

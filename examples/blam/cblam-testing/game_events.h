@@ -514,6 +514,8 @@ struct WeaponFireEvent
     /*! The tick the shooter saw others at; the authority traces bipeds
      *  back there */
     std::optional<libc_types::u64> view_tick{};
+    /*! And `target`, played back on its own delay, at this one */
+    std::optional<libc_types::u64> target_tick{};
 };
 
 /*! A shot struck an object or a biped, as the authority (the server, or a
