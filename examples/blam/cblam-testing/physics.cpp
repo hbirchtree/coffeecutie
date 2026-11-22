@@ -987,6 +987,7 @@ struct PhysicsSystem
                 report_impacts();
                 bleed_carried();
                 hold_walkers_off_steep();
+                unstick();
             }
             record_bipeds(tick.tick);
         }
@@ -1683,6 +1684,54 @@ struct PhysicsSystem
             if(m_world_item->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
                 return true;
         return false;
+    }
+
+    /* A body pushed into solid structure (a wall, through the floor) can't
+     * find its way out of the hollow mesh: back to where it was last in
+     * the open, still */
+    void unstick()
+    {
+        if(!m_world_item || !m_world_item->mesh)
+            return;
+        for(auto& [id, body] : m_bodies)
+        {
+            auto* rb = body.world_body.get();
+            if(!rb || rb->getInvMass() <= 0.f || !rb->isActive())
+                continue;
+            btVector3 const at = rb->getCenterOfMassPosition();
+            Vecf3 const     point{at.x(), at.y(), at.z()};
+            if(m_world_item->find_cluster_tree(point) ||
+               m_world_item->find_cluster_tree(point + Vecf3{0.f, 0.f, .1f}))
+            {
+                body.open_at     = rb->getWorldTransform();
+                body.has_open    = true;
+                body.solid_steps = 0;
+                body.rescues     = 0;
+                continue;
+            }
+            /* Clusterless right at a surface is the render tree's edge, not
+             * solid: only through a collision surface since is */
+            btVector3 const was = body.open_at.getOrigin() +
+                                  (at - rb->getWorldTransform().getOrigin());
+            Vecf3 const     from{was.x(), was.y(), was.z()};
+            auto const      hit = body.has_open ? m_world_item->raycast(from, point) : std::nullopt;
+            /* Deep behind the surface crossed, not resting on it */
+            if(!hit || glm::dot(from + (point - from) * hit->t - point, hit->normal) < unstick_depth)
+            {
+                body.solid_steps = 0;
+                continue;
+            }
+            /* Put back again and again, something else holds it there */
+            if(++body.solid_steps < unstick_steps || body.rescues >= unstick_tries)
+                continue;
+            body.rescues++;
+            rb->setWorldTransform(body.open_at);
+            rb->setInterpolationWorldTransform(body.open_at);
+            rb->setLinearVelocity(btVector3(0, 0, 0));
+            rb->setAngularVelocity(btVector3(0, 0, 0));
+            rb->setInterpolationLinearVelocity(btVector3(0, 0, 0));
+            body.solid_steps = 0;
+        }
     }
 
     /* Fallen through the level onto the floor of its bounds: no cluster
@@ -3621,6 +3670,9 @@ struct PhysicsSystem
     /* Thickness of open bounds, wu */
     static constexpr f32 bounds_depth = 64.f;
     static constexpr f32 out_of_world_depth = 1.f; /* wu above the bounds floor */
+    static constexpr u32 unstick_steps      = 3;   /* in solid this long before it is put back */
+    static constexpr f32 unstick_depth      = .2f; /* wu behind a surface to count as in it */
+    static constexpr u32 unstick_tries      = 3;
     std::map<u64, u64>                          m_seated; /*!< Riders and their vehicles: hit by rays though they push nothing */
     std::unique_ptr<btSphereShape>              m_probe_shape;
     std::unique_ptr<btRigidBody>                m_probe_body;
@@ -3651,6 +3703,11 @@ struct PhysicsSystem
         Vecf3                                   child_offset{};
         /* Step it was made in; it settles silently for a while */
         u32 created{0};
+        /* Where it was last in open space, and steps it has since been in solid */
+        btTransform open_at{btTransform::getIdentity()};
+        bool        has_open{false};
+        u32         solid_steps{0};
+        u32         rescues{0}; /*!< Times put back since last in the open by itself */
         /* Horizontal momentum kept after exiting a vehicle, or stepping off
          * a moving one */
         btVector3 carried{0, 0, 0};
