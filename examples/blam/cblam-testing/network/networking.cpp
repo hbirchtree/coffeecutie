@@ -833,6 +833,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         };
         std::copy(spawn.change_colors.begin(), spawn.change_colors.end(), wire.change_colors);
         wire.camouflaged = spawn.camouflaged ? 1 : 0;
+        wire.velocity[0] = spawn.velocity.x;
+        wire.velocity[1] = spawn.velocity.y;
+        wire.velocity[2] = spawn.velocity.z;
         /* Late joiners see it as already there */
         m_dynamic_spawns.push_back(wire);
         wire.announce = spawn.announce;
@@ -4478,6 +4481,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     void leave_server(Proxy& p)
     {
         m_object_history.clear();
+        m_spawned_at.clear();
         m_object_spacing.clear();
         m_player_history.clear();
         m_warp_ticks.clear();
@@ -5538,6 +5542,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 local.announce         = spawn.announce != 0;
                 std::copy(std::begin(spawn.change_colors), std::end(spawn.change_colors), local.change_colors.begin());
                 local.camouflaged = spawn.camouflaged != 0;
+                local.velocity    = Vecf3(spawn.velocity[0], spawn.velocity[1], spawn.velocity[2]);
+                m_spawned_at[spawn.tag.instance_id] = tick_now(p);
                 if(spawn.held.value() != 0)
                 {
                     local.held.tag_class =
@@ -5922,6 +5928,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>> m_despawn_queue;
     std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>   m_pickup_queue;
     std::map<u32, std::deque<ObjectSync>>    m_object_history;
+    std::map<u32, u64>                       m_spawned_at; /*!< Tick each server object was made here */
     /* On the server, vehicles their client drivers simulate: what they sent,
      * and how many ticks it arrives behind */
     struct driven_t
@@ -5951,7 +5958,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr f32         spacing_margin    = 1.5f;
     static constexpr u64         max_spacing       = 15;
     /* Past its newest state, a stream carries on along its velocity this long */
-    static constexpr libc_types::f64 max_extrapolation = 10.;
+    static constexpr libc_types::f64 max_extrapolation = 30.; /* ticks: the slowest stream's period */
+    static constexpr libc_types::f64 dry_ticks         = 2.;
+    static constexpr libc_types::f64 fresh_ticks       = 150.;
     /* A unit's gaze outlasts its last sync this long, s */
     static constexpr libc_types::f32 gaze_hold = .3f;
 
@@ -6191,11 +6200,30 @@ struct ObjectFollower
                 physics.authority = ObjectPhysics::Simulated;
                 continue;
             }
-            physics.authority = ObjectPhysics::Follower;
+            /* An item, not driven: the client's own physics can carry it
+             * where the server has not yet said */
+            bool const item = !physics.drive && !p.get<AnimationPlayback>(object.id());
             auto it = net.m_object_history.find(info.instance_id);
             if(info.instance_id == 0 || it == net.m_object_history.end())
+            {
+                /* Fresh from the server and not yet heard of: it flies as
+                 * thrown until its first state comes */
+                auto const born = net.m_spawned_at.find(info.instance_id);
+                bool const fresh = item && born != net.m_spawned_at.end() &&
+                                   static_cast<f64>(born->second) + Networking::fresh_ticks > now;
+                physics.authority = fresh ? ObjectPhysics::Simulated : ObjectPhysics::Follower;
                 continue;
+            }
             f64 const at = now - Networking::stream_delay(net.m_object_spacing, info.instance_id);
+            /* Run dry while moving: carried on by the client's physics from
+             * the last velocity it was given */
+            if(auto const& last = it->second.back();
+               item && at - static_cast<f64>(last.tick) > Networking::dry_ticks && !(last.flags & ObjectSync::sleeping))
+            {
+                physics.authority = ObjectPhysics::Simulated;
+                continue;
+            }
+            physics.authority = ObjectPhysics::Follower;
             if(auto pose = around(it->second, at))
             {
                 auto const& [from, to, alpha] = *pose;

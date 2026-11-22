@@ -815,6 +815,8 @@ struct alignas(8) EntitySpawn
     blam::tag_index<> held{}; /*!< A unit's weapon, weap tag id */
     u32       change_colors[4]{}; /*!< See SpawnObjectEvent::change_colors */
     u32       camouflaged{0};     /*!< See SpawnObjectEvent::camouflaged */
+    f32       velocity[3]{};      /*!< What it was thrown or dropped with */
+    u32       padding{0};
 };
 
 struct alignas(8) PlayerSpawn
@@ -908,7 +910,7 @@ static_assert(sizeof(Message<GameJoin>) == 68);
 static_assert(sizeof(Message<MapVerify>) == 32);
 static_assert(sizeof(Message<ClientAuth>) == sizeof(MessageBase) + 64);
 static_assert(sizeof(EntityTag) == 12);
-static_assert(sizeof(EntitySpawn) == 80);
+static_assert(sizeof(EntitySpawn) == 96);
 static_assert(sizeof(SpawnRequest) == 64);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 52);
