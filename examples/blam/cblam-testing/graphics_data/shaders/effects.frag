@@ -24,6 +24,17 @@ layout(location = 20, binding = 10) uniform sampler2DArray source_rgb5a1;
 
 layout(location = 0) out vec4 out_color;
 
+/* Past the levels the image filled the atlas holds nothing: the level is
+ * picked here and kept to those */
+vec4 tap(sampler2DArray s, vec3 coord, vec4 grad, float max_lod)
+{
+    vec2  size = vec2(textureSize(s, 0).xy);
+    vec2  dx   = grad.xy * size;
+    vec2  dy   = grad.zw * size;
+    float lod  = 0.5 * log2(max(max(dot(dx, dx), dot(dy, dy)), 1e-8));
+    return textureLod(s, coord, clamp(lod, 0.0, max_lod));
+}
+
 vec4 sample_texture()
 {
     uint  format = uint(frag.source.x + 0.5);
@@ -31,8 +42,10 @@ vec4 sample_texture()
     /* Ribbons repeat along their length within the atlas tile */
     vec2 uv     = frag.source.z > 0.5 && frag.source.z < 1.5 ? fract(frag.tex) : frag.tex;
     vec3 coord  = vec3(uv * frag.atlas.xy + frag.atlas.zw, layer);
-    /* The atlas holds more levels than the image filled */
-    float lod_bias = -floor(frag.source.w / 16.0 + 0.001);
+    float max_lod = floor(frag.source.w / 16.0 + 0.001);
+    /* From the unwrapped coordinate, so a ribbon's repeat seam picks no level */
+    vec2 at   = frag.tex * frag.atlas.xy;
+    vec4 grad = vec4(dFdx(at), dFdy(at));
     if(format == 0u)
     {
         /* No bitmap: a soft round glow */
@@ -41,37 +54,37 @@ vec4 sample_texture()
         return vec4(1.0, 1.0, 1.0, a * a);
     }
     if(format == 1u)
-        return texture(source_bc1, coord, lod_bias);
+        return tap(source_bc1, coord, grad, max_lod);
     if(format == 2u)
-        return texture(source_bc2, coord, lod_bias);
+        return tap(source_bc2, coord, grad, max_lod);
     if(format == 3u)
-        return texture(source_bc3, coord, lod_bias);
+        return tap(source_bc3, coord, grad, max_lod);
     if(format == 4u)
-        return vec4(texture(source_rgb565, coord, lod_bias).rgb, 1.0);
+        return vec4(tap(source_rgb565, coord, grad, max_lod).rgb, 1.0);
     /* Luminance/alpha formats upload as one channel */
     if(format == 9u)
-        return vec4(1.0, 1.0, 1.0, texture(source_r8, coord, lod_bias).r);
+        return vec4(1.0, 1.0, 1.0, tap(source_r8, coord, grad, max_lod).r);
     if(format == 10u)
-        return vec4(texture(source_r8, coord, lod_bias).rrr, 1.0);
+        return vec4(tap(source_r8, coord, grad, max_lod).rrr, 1.0);
     if(format == 11u || format == 5u)
-        return texture(source_r8, coord, lod_bias).rrrr;
+        return tap(source_r8, coord, grad, max_lod).rrrr;
     if(format == 12u)
     {
-        vec2 la = texture(source_rg8, coord, lod_bias).rg;
+        vec2 la = tap(source_rg8, coord, grad, max_lod).rg;
         return vec4(la.rrr, la.g);
     }
     if(format == 6u)
-        return texture(source_rg8, coord, lod_bias).rrrg;
+        return tap(source_rg8, coord, grad, max_lod).rrrg;
     /* A4R4G4B4 reads as (A, R, G, B) */
     if(format == 7u)
-        return texture(source_rgba4, coord, lod_bias).gbar;
+        return tap(source_rgba4, coord, grad, max_lod).gbar;
     /* A8R8G8B8 bytes are B, G, R, A */
     if(format == 8u)
-        return texture(source_rgba8, coord, lod_bias).bgra;
+        return tap(source_rgba8, coord, grad, max_lod).bgra;
     if(format == 13u)
-        return texture(source_etc2_rgb, coord, lod_bias);
+        return tap(source_etc2_rgb, coord, grad, max_lod);
     if(format == 14u)
-        return texture(source_etc2_rgba, coord, lod_bias);
+        return tap(source_etc2_rgba, coord, grad, max_lod);
     if(format == 15u)
     {
         /* D3D A1R5G5B5 words, uploaded as GL 5_5_5_1: rebuild the word */

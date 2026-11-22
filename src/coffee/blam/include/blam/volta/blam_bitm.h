@@ -243,7 +243,7 @@ struct image_t
     format_t   format;    /*!< Format of image*/
     flags_t    flags;     /*!< Flags present in image*/
     bl_point_t reg_pnt;   /*!< I have no idea what this is.*/
-    u16        mipmaps;   /*!< Number of mipmaps*/
+    u16        mipmaps;   /*!< Levels below the base: 0..mipmaps are stored */
     u16        pixOffset; /*!< Pixel offset when in use*/
     u32        offset;    /*!< Data offset*/
     u32        size;      /*!< Data size in bytes*/
@@ -311,7 +311,7 @@ struct image_t
     inline u32 layer_chain_bytes() const
     {
         u32 out = 0;
-        for(u16 i = 0; i < (mipmaps ? mipmaps : 1); i++)
+        for(u16 i = 0; i <= mipmaps; i++)
             out += layer_mip_bytes(i);
         return out;
     }
@@ -353,7 +353,7 @@ struct image_t
     inline Span<const u8> cube_face(
         map_ptr const& magic, u32 face, u16 mipmap = 0) const
     {
-        if(mipmap != 0 && mipmap >= mipmaps)
+        if(mipmap > mipmaps)
             Throw(undefined_behavior("mipmap out of range"));
         if(face >= 6)
             Throw(undefined_behavior("cube face out of range"));
@@ -369,7 +369,7 @@ struct image_t
 #if defined(GLEAM_USE_CORE) || defined(GLEAM_USE_ES) || defined(GLEAM_DUMMY)
         using namespace typing::pixels::properties;
 
-        if(mipmap != 0 && mipmap >= mipmaps)
+        if(mipmap > mipmaps)
             Throw(undefined_behavior("mipmap out of range"));
 
         auto mipsize = isize;
@@ -428,7 +428,7 @@ struct image_t
                 .value();
         }
 #elif defined(COFFEE_GEKKO)
-        if(mipmap != 0 && mipmap >= mipmaps)
+        if(mipmap > mipmaps)
             Throw(undefined_behavior("mipmap out of range"));
 
         u32 const layers     = type == type_t::tex_cube ? 6u
