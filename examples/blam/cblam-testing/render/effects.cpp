@@ -385,9 +385,12 @@ struct EffectSystem
 
     using triangle_t = std::array<Vecf3, 3>;
 
-    static u64 decal_cell_key(Vecf3 const& at)
+    static glm::ivec3 decal_cell_of(Vecf3 const& at)
     {
-        auto const c = glm::ivec3(glm::floor(at / decal_cell));
+        return glm::ivec3(glm::floor(at / decal_cell));
+    }
+    static u64 decal_cell_key(glm::ivec3 const& c)
+    {
         return (u64(u32(c.x) & 0x1FFFFF) << 42) |
                (u64(u32(c.y) & 0x1FFFFF) << 21) | u64(u32(c.z) & 0x1FFFFF);
     }
@@ -397,38 +400,49 @@ struct EffectSystem
     {
         m_decal_triangles.clear();
         m_decal_grid.clear();
+        m_decal_large.clear();
         for(auto const& probe : bsp.light_probes)
             for(auto const& tri : probe.triangles)
             {
                 auto const index = static_cast<u32>(m_decal_triangles.size());
                 m_decal_triangles.push_back(tri.position);
-                Vecf3 const lo = glm::min(
-                    glm::min(tri.position[0], tri.position[1]),
-                    tri.position[2]);
-                Vecf3 const hi = glm::max(
-                    glm::max(tri.position[0], tri.position[1]),
-                    tri.position[2]);
-                for(f32 x = lo.x; x < hi.x + decal_cell; x += decal_cell)
-                    for(f32 y = lo.y; y < hi.y + decal_cell; y += decal_cell)
-                        for(f32 z = lo.z; z < hi.z + decal_cell;
-                            z += decal_cell)
-                            m_decal_grid[decal_cell_key(
-                                             glm::min(Vecf3(x, y, z), hi))]
-                                .push_back(index);
+                auto const [lo, hi] = decal_bounds(tri.position);
+                glm::ivec3 const a = decal_cell_of(lo), b = decal_cell_of(hi);
+                glm::i64vec3 const span = glm::i64vec3(b - a) + glm::i64vec3(1);
+                /* Outdoor terrain spans thousands of cells: kept aside and
+                 * tested by its box instead */
+                if(span.x * span.y * span.z > decal_max_cells)
+                {
+                    m_decal_large.push_back(index);
+                    continue;
+                }
+                for(i32 x = a.x; x <= b.x; x++)
+                    for(i32 y = a.y; y <= b.y; y++)
+                        for(i32 z = a.z; z <= b.z; z++)
+                            m_decal_grid[decal_cell_key({x, y, z})].push_back(index);
             }
+    }
+
+    static std::pair<Vecf3, Vecf3> decal_bounds(triangle_t const& t)
+    {
+        return {glm::min(glm::min(t[0], t[1]), t[2]), glm::max(glm::max(t[0], t[1]), t[2])};
     }
 
     std::vector<u32> decal_candidates(Vecf3 const& lo, Vecf3 const& hi) const
     {
         std::vector<u32> out;
-        for(f32 x = lo.x; x < hi.x + decal_cell; x += decal_cell)
-            for(f32 y = lo.y; y < hi.y + decal_cell; y += decal_cell)
-                for(f32 z = lo.z; z < hi.z + decal_cell; z += decal_cell)
-                    if(auto it = m_decal_grid.find(
-                           decal_cell_key(glm::min(Vecf3(x, y, z), hi)));
-                       it != m_decal_grid.end())
-                        out.insert(
-                            out.end(), it->second.begin(), it->second.end());
+        glm::ivec3 const a = decal_cell_of(lo), b = decal_cell_of(hi);
+        for(i32 x = a.x; x <= b.x; x++)
+            for(i32 y = a.y; y <= b.y; y++)
+                for(i32 z = a.z; z <= b.z; z++)
+                    if(auto it = m_decal_grid.find(decal_cell_key({x, y, z})); it != m_decal_grid.end())
+                        out.insert(out.end(), it->second.begin(), it->second.end());
+        for(u32 index : m_decal_large)
+        {
+            auto const [tlo, thi] = decal_bounds(m_decal_triangles[index]);
+            if(glm::all(glm::lessThanEqual(tlo, hi)) && glm::all(glm::lessThanEqual(lo, thi)))
+                out.push_back(index);
+        }
         std::sort(out.begin(), out.end());
         out.erase(std::unique(out.begin(), out.end()), out.end());
         return out;
@@ -2746,6 +2760,8 @@ struct EffectSystem
     BSPItem const*                            m_decal_bsp{nullptr};
     std::vector<triangle_t>                   m_decal_triangles;
     std::unordered_map<u64, std::vector<u32>> m_decal_grid;
+    std::vector<u32> m_decal_large; /*!< Triangles too big to bin */
+    static constexpr libc_types::i64 decal_max_cells = 64;
     std::vector<decal_instance_t>             m_placed_decals;
     std::vector<decal_instance_t>             m_effect_decals;
     std::vector<antenna_instance_t>           m_antennas;
