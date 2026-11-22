@@ -1683,6 +1683,21 @@ struct PhysicsSystem
         return false;
     }
 
+    /* Fallen through the level onto the floor of its bounds: no cluster
+     * holds it, so no real floor is under it */
+    bool out_of_world(Vecf3 const& pos) const
+    {
+        if(!m_world_item || !m_world_item->mesh || m_open_bounds)
+            return false;
+        auto [p1, p2] = m_world_item->mesh->world_bounds.points();
+        if(pos.z > std::min(p1.z, p2.z) + out_of_world_depth)
+            return false;
+        for(f32 up : {0.f, .5f, 1.f})
+            if(m_world_item->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
+                return false;
+        return true;
+    }
+
     /* This section's ground somewhere below; otherwise it lies on another
      * section's and would fall through this one */
     bool grounded(Vecf3 const& pos) const
@@ -3603,6 +3618,7 @@ struct PhysicsSystem
     bool m_open_bounds{false};
     /* Thickness of open bounds, wu */
     static constexpr f32 bounds_depth = 64.f;
+    static constexpr f32 out_of_world_depth = 1.f; /* wu above the bounds floor */
     std::map<u64, u64>                          m_seated; /*!< Riders and their vehicles: hit by rays though they push nothing */
     std::unique_ptr<btSphereShape>              m_probe_shape;
     std::unique_ptr<btRigidBody>                m_probe_body;
@@ -4215,6 +4231,10 @@ void alloc_physics(compo::EntityContainer& container)
     phys_bus.addEventFunction<Physics::Raycast>(
         0, [&physics](Physics::Event&, Physics::Raycast* ray) {
             physics.raycast(*ray);
+        });
+    phys_bus.addEventFunction<Physics::OutOfWorld>(
+        0, [&physics](Physics::Event&, Physics::OutOfWorld* query) {
+            query->out = physics.out_of_world(query->position);
         });
     phys_bus.addEventFunction<Physics::Drive>(
         0, [&physics](Physics::Event&, Physics::Drive* drive) {
