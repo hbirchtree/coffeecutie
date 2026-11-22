@@ -360,7 +360,8 @@ struct alignas(8) CameraSync
         crouched  = 0x4, /*!< PlayerInfo::crouched */
     };
 
-    Vecf4   position; /*!< In the deck's frame when standing on one */
+    Vecf4   position; /*!< In the deck's frame when standing on one; w is
+                       *   PlayerInfo::crouch, how far down the eye has gone */
     Quatf   rotation;
     u32     target_player{0xFFFF};
     f32     fade{1.f};
@@ -516,6 +517,8 @@ struct alignas(8) WeaponFire
     u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
     u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */
     u32 shooter{0};                /*!< Net id of a shooter that is no player: an actor */
+    u32 padding{0};
+    u64 target_tick{0};            /*!< Server tick `target` was shown at, 0 = view_tick */
 };
 
 /*! A hit the server decided (ObjectHitEvent), to every peer */
@@ -815,6 +818,8 @@ struct alignas(8) EntitySpawn
     blam::tag_index<> held{}; /*!< A unit's weapon, weap tag id */
     u32       change_colors[4]{}; /*!< See SpawnObjectEvent::change_colors */
     u32       camouflaged{0};     /*!< See SpawnObjectEvent::camouflaged */
+    f32       velocity[3]{};      /*!< What it was thrown or dropped with */
+    u32       padding{0};
 };
 
 struct alignas(8) PlayerSpawn
@@ -908,7 +913,7 @@ static_assert(sizeof(Message<GameJoin>) == 68);
 static_assert(sizeof(Message<MapVerify>) == 32);
 static_assert(sizeof(Message<ClientAuth>) == sizeof(MessageBase) + 64);
 static_assert(sizeof(EntityTag) == 12);
-static_assert(sizeof(EntitySpawn) == 80);
+static_assert(sizeof(EntitySpawn) == 96);
 static_assert(sizeof(SpawnRequest) == 64);
 static_assert(sizeof(Message<ClockSync>) == 48);
 static_assert(sizeof(Message<PlayerJoin>) == 52);
@@ -923,7 +928,7 @@ static_assert(sizeof(ObjectCensus) == 8);
 static_assert(sizeof(ObjectRequest) == 4);
 static_assert(sizeof(SyncPoint) == 64);
 static_assert(sizeof(DriveInput) == 32);
-static_assert(sizeof(WeaponFire) == 72);
+static_assert(sizeof(WeaponFire) == 88);
 static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);

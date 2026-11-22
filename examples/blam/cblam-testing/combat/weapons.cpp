@@ -848,6 +848,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 .to     = shot.position + dir * reach,
                 .ignore = shot.shooter,
                 .rewind = replica ? std::nullopt : shot.view_tick,
+                .rewind_unit = shot.target,
+                .unit_rewind = replica ? std::nullopt : shot.target_tick,
             };
             p.template subsystem<PhysicsBus>().process(ev, &ray);
             if(ray.hit && (!struck_at || (ray.entity_id != 0 && struck_at->first.entity_id == 0)))
@@ -1057,6 +1059,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .to     = shot.position + direction * Projectile::reach(proj),
             .ignore = shot.vehicle ? shot.vehicle : shot.shooter,
             .rewind = shot.view_tick,
+            .rewind_unit = shot.target,
+            .unit_rewind = shot.target_tick,
         };
         p.template subsystem<PhysicsBus>().process(ev, &ray);
         if(!ray.hit || ray.entity_id == 0)

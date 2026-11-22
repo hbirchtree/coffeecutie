@@ -120,8 +120,8 @@ class CombatSync
 
     /*! This peer's shots and the hits it decided, as messages: a client's
      *  shots to the server, the server's shots and hits to its clients */
-    template<typename Proxy>
-    void collect(Proxy& p, bool server, bool joined)
+    template<typename Proxy, typename ShownAt>
+    void collect(Proxy& p, bool server, bool joined, ShownAt&& shown_at)
     {
         m_fire_queue->poll();
         m_hit_queue->poll();
@@ -187,6 +187,7 @@ class CombatSync
                         .target        = target,
                         .target_player = target_player,
                         .shooter       = shooter,
+                        .target_tick   = server || target == 0 ? 0 : shown_at(target),
                     },
                 .route = {server ? route_t::clients : route_t::server},
             });
@@ -242,7 +243,8 @@ class CombatSync
         bool const fired =
             glm::distance(Vecf3(wire.position), anchor) <= reach &&
             may_fire(p, from.player, wire) &&
-            fire(p, from.player, wire, rewind_for(p, from, wire.view_tick));
+            fire(p, from.player, wire, rewind_for(p, from, wire.view_tick),
+                 rewind_for(p, from, wire.target_tick));
         m_journal(
             fired ? "net_weapon_fire" : "net_weapon_fire_reject",
             {{"player_idx", wire.player_idx}, {"weapon", wire.weapon}});
@@ -534,7 +536,8 @@ class CombatSync
         Proxy&             p,
         u64                shooter,
         WeaponFire const&  wire,
-        std::optional<u64> view_tick = {})
+        std::optional<u64> view_tick   = {},
+        std::optional<u64> target_tick = {})
     {
         if(!m_map)
             return false;
@@ -578,6 +581,7 @@ class CombatSync
             .direction  = glm::normalize(direction),
             .target     = target,
             .view_tick  = view_tick,
+            .target_tick = target != 0 ? target_tick : std::nullopt,
         };
         m_bus.inject(ev, &shot);
         return true;

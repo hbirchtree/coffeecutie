@@ -195,7 +195,9 @@ struct PlayerController
             cam.view_offset    = dead ? death_view(p, player.id(), cam, dt) : Vecf3{};
             if(!dead)
                 m_dead_for.erase(player.id());
-            ease_crouch(cam, info, info.crouched && seat_of(info) == seat_t::body, dt);
+            /* A remote player's crouch comes with its camera */
+            if(!info.is_remote())
+                ease_crouch(cam, info, info.crouched && seat_of(info) == seat_t::body, dt);
             update_camera(cam);
             if(info.riding.vehicle == 0 && !dead)
                 place_biped(cam, info, model);
