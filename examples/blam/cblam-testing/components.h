@@ -1169,11 +1169,15 @@ struct Actor
     bool            berserk{false};     /*!< Charges to strike whatever it holds, until its target is gone */
     Vecf3           burst_aim{};        /*!< Where the burst is aimed now: off the target at first, returning */
     Vecf3           burst_from{};       /*!< The target as the burst tracks it */
+    libc_types::f32 spread{0.f};        /*!< Its gun's error from held fire, 0 to 1 of the error angles */
     libc_types::f32 hurt_body{-1.f};    /*!< Its body a frame ago, for what a blow took; -1 unknown */
     libc_types::u64 stuck_by{0};        /*!< The grenade stuck on it it has noticed */
     libc_types::u64 dodged{0};          /*!< The last grenade it chose whether to dodge */
     f32             dodge_in{0.f};      /*!< s left getting away from dodge_from */
     Vecf3           dodge_from{};
+    f32             evade_in{0.f};      /*!< s until it sidesteps another shot */
+    bool            fallen{false};      /*!< Its death has been seen by those it led */
+    bool            panicking{false};   /*!< Fleeing in a panic: it runs in its flee stance */
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
     f32                  walk_best{0.f};  /*!< Nearest it has got to walk_to, wu */
