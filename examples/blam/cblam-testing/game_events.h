@@ -411,6 +411,9 @@ struct SpawnEffectEvent
     /*! Another view of an effect played elsewhere: only what is seen */
     bool visuals_only{false};
     libc_types::u64 shooter{0}; /*!< Whose shot it is: blamed for the damage it does */
+    /*! How what struck was travelling, for an impact's incident and
+     *  reflection locations; zero for none */
+    Vecf3 incident{};
 };
 
 /*! A simulation tick passed (TickClock). Raised in order, a few per frame
