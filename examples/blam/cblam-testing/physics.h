@@ -49,6 +49,7 @@ struct Event
         UnitStruck, /*!< A moving vehicle ran into a unit */
         Blast,      /*!< An explosion throws what is near */
         OpenBounds, /*!< Bounds stop at the section's box, for worlds beyond it */
+        OutOfWorld, /*!< Whether a point fell out of the level, answered in place */
     } type{};
 };
 
@@ -327,6 +328,14 @@ struct Reset
 struct OpenBounds
 {
     static constexpr auto event_type = Event::OpenBounds;
+};
+
+/*! Down at the active section's bounds floor and in no cluster: fallen out */
+struct OutOfWorld
+{
+    static constexpr auto event_type = Event::OutOfWorld;
+    Vecf3                 position{};
+    bool                  out{false};
 };
 
 } // namespace Physics

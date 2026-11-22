@@ -85,6 +85,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(std::exchange(m_generation, files.load_generation) != files.load_generation)
         {
             m_dying.clear();
+            m_fall_grace.clear();
             m_object_body.clear();
             m_gone.clear();
             m_destroyed.clear();
@@ -122,6 +123,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 revive(p, respawn);
             for(auto const& vitality : vitalities)
                 put_down(p, vitality);
+            fallen_out(p, dt);
             fall_apart(p, dt);
             let_out(p, areas, dt);
         }
@@ -674,6 +676,37 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         killed(p, vitality.unit, ObjectHitEvent::no_player);
     }
 
+    /* A living unit that fell out of the level dies there; one just brought
+     * back is left a moment to be moved to its spawn */
+    void fallen_out(Proxy& p, f32 dt)
+    {
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto [status, model] = ent.components();
+            f32& grace           = m_fall_grace[ent.id()];
+            if(status.dead)
+            {
+                grace = revive_grace;
+                continue;
+            }
+            if(grace > 0.f)
+            {
+                grace -= dt;
+                continue;
+            }
+            Physics::Event      ev{Physics::Event::OutOfWorld};
+            Physics::OutOfWorld query{.position = model.position};
+            p.template subsystem<PhysicsBus>().process(ev, &query);
+            if(!query.out)
+                continue;
+            status.shield = status.body = 0.f;
+            status.dead   = true;
+            last_words(p, ent.id(), false);
+            tell(p, ent.id(), status);
+            killed(p, ent.id(), ObjectHitEvent::no_player);
+        }
+    }
+
     /* Its time up, a dead unit bursts and is taken away the frame after,
      * once everyone has been told */
     void fall_apart(Proxy& p, f32 dt)
@@ -1138,6 +1171,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<ObjectHitEvent>      m_hits;
     std::vector<AreaDamageEvent>     m_areas;
     std::vector<UnitVitalityEvent>   m_vitality;
+    std::map<u64, f32>               m_fall_grace; /*!< s until out of the world kills again */
+    static constexpr f32             revive_grace = 1.f;
     std::vector<Physics::UnitStruck> m_struck;
     std::shared_ptr<GameEventBus::queue_type<RespawnUnitEvent>> m_respawn_queue;
     std::vector<RespawnUnitEvent>    m_respawns;
