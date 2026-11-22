@@ -2178,21 +2178,15 @@ struct PhysicsSystem
                 f32 const face = sign > 0.f ? lo[axis] : hi[axis];
                 btTransform at;
                 at.setIdentity();
-                std::unique_ptr<btCollisionShape> shape;
-                if(m_open_bounds)
-                {
-                    Vecf3 extent = half, origin = centre;
-                    extent[axis] = bounds_depth * .5f;
-                    origin[axis] = face - sign * bounds_depth * .5f;
-                    shape        = std::make_unique<btBoxShape>(
-                        btVector3(extent.x, extent.y, extent.z));
-                    at.setOrigin(btVector3(origin.x, origin.y, origin.z));
-                } else
-                {
-                    btVector3 normal(0, 0, 0);
-                    normal[axis] = sign;
-                    shape = std::make_unique<btStaticPlaneShape>(normal, sign * face);
-                }
+                /* A slab just outside the face, not a plane: a plane's box is
+                 * the whole world, so every hull of every body kept a contact
+                 * pair with each of the six */
+                Vecf3 extent = half, origin = centre;
+                extent[axis] = bounds_depth * .5f;
+                origin[axis] = face - sign * bounds_depth * .5f;
+                auto shape   = std::unique_ptr<btCollisionShape>(
+                    std::make_unique<btBoxShape>(btVector3(extent.x, extent.y, extent.z)));
+                at.setOrigin(btVector3(origin.x, origin.y, origin.z));
                 btRigidBody::btRigidBodyConstructionInfo info(0.f, nullptr, shape.get());
                 info.m_startWorldTransform = at;
                 auto body = std::make_unique<btRigidBody>(info);
