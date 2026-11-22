@@ -1126,6 +1126,8 @@ struct PhysicsSystem
             data->position = {origin.x(), origin.y(), origin.z()};
             data->grounded = on_ground(*it->second.world_body, true);
             data->walking  = walking_of(it->second);
+            auto const& v  = it->second.world_body->getLinearVelocity();
+            data->moving   = {v.x(), v.y(), v.z()};
             data->deck     = it->second.deck;
         }
         for(auto const& [entity, _] : m_object_bodies)
