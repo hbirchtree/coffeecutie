@@ -2547,8 +2547,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         u32 dropped = 0;
         if(actor.grenades > 0 && !chance(actv.dont_drop_grenades_chance))
             if(auto const* grenade = grenade_of(p, actv.grenade_type); grenade && grenade->equipment.valid())
-                for(; dropped < static_cast<u32>(actor.grenades); dropped++)
+            {
+                /* No more than a player could carry, whatever it threw from */
+                u32 const most = std::min<u32>(actor.grenades, std::max<i16>(grenade->maximum_count, 1));
+                for(; dropped < most; dropped++)
                     toss(static_cast<blam::tagref_t const&>(grenade->equipment));
+            }
         if(actv.equipment.valid())
             toss(static_cast<blam::tagref_t const&>(actv.equipment));
         actor.grenades = 0;
