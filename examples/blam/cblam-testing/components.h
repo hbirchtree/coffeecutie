@@ -922,6 +922,7 @@ struct PhysicsData
     bool kinematic{false};
     bool grounded{false};
     Vecf3 walking{}; /*!< Its own stride, pushes left out */
+    Vecf3 moving{};  /*!< The body's velocity, as of the last physics step */
     u64   deck{0};   /*!< The vehicle it stands on, 0 on the ground */
 
     u64 grabbed{0}; /*!< Entity this player carries (forge), 0 = none */
