@@ -32,6 +32,7 @@ using DamageManifest = compo::SubsystemManifest<
         const PlayerCamera,
         Model,
         const ObjectPhysics,
+        const PhysicsData,
         const Actor,
         const NetworkInfo>,
     type_list_t<
@@ -85,6 +86,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(std::exchange(m_generation, files.load_generation) != files.load_generation)
         {
             m_dying.clear();
+            m_fall_grace.clear();
+            m_fall_top.clear();
+            m_launched.clear();
             m_object_body.clear();
             m_gone.clear();
             m_destroyed.clear();
@@ -93,6 +97,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         /* Looked up each frame: a map loading in replaces what a cached
          * pointer saw */
         m_difficulty = difficulty_block(files);
+        m_falling    = falling_block(files);
         for(auto const& area : areas)
             blast(p, area);
         for(auto const& hit : hits)
@@ -122,6 +127,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 revive(p, respawn);
             for(auto const& vitality : vitalities)
                 put_down(p, vitality);
+            fallen_out(p, dt);
+            fallen_too_far(p);
+            slammed(p, dt);
             fall_apart(p, dt);
             let_out(p, areas, dt);
         }
@@ -545,6 +553,62 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .speed    = jpt->instantaneous_acceleration.x,
         };
         p.template subsystem<PhysicsBus>().inject(ev, &blast);
+        for(auto ent : p.template select<BipedStatus, Model>())
+            if(glm::distance(ent.template get<Model>().position, area.position) <= jpt->radius.y)
+                launch(ent.id(), player_of(p, area.shooter));
+    }
+
+    /* Thrown: for a while, what it slams into hurts it */
+    void launch(u64 unit, u32 by)
+    {
+        m_launched[unit] = {.left = launch_window, .by = by};
+    }
+
+    /* A launched unit stopped hard by a wall, the floor or an object takes
+     * the globals' falling damage by how fast it hit: from nothing at a
+     * harmful fall's speed to all of it at a lethal one's, and on past it */
+    void slammed(Proxy& p, f32 dt)
+    {
+        if(dt <= 0.f || !m_falling)
+            return;
+        auto const* falling = damage_of(m_falling->falling);
+        Vecf2 const heights = m_falling->harmful_falling_distance;
+        f32 const   harmful = std::sqrt(2.f * halo_gravity * heights.x);
+        f32 const   lethal  = std::sqrt(2.f * halo_gravity * std::max(heights.y, heights.x + 1.f));
+        for(auto it = m_launched.begin(); it != m_launched.end();)
+        {
+            auto* status      = p.template get<BipedStatus>(it->first);
+            auto const* model = p.template get<Model>(it->first);
+            auto&       l     = it->second;
+            if(!status || !model || status->dead || (l.left -= dt) <= 0.f)
+            {
+                it = m_launched.erase(it);
+                continue;
+            }
+            auto const* body     = p.template get<PhysicsData>(it->first);
+            auto const* object   = p.template get<ObjectPhysics>(it->first);
+            Vecf3 const velocity = body && body->enabled ? body->moving
+                                   : object              ? object->linear_velocity
+                                                         : Vecf3{};
+            /* Moved faster than anything flies: teleported, start over */
+            if(glm::length(velocity) > teleport_speed)
+            {
+                l.primed = false;
+                ++it;
+                continue;
+            }
+            f32 const lost = glm::length(l.velocity - velocity);
+            if(l.primed && glm::length(velocity) < glm::length(l.velocity) && lost > harmful)
+            {
+                if(falling)
+                    hurt(p, it->first, *falling, (lost - harmful) / (lethal - harmful), -1, false, l.by);
+                it = m_launched.erase(it);
+                continue;
+            }
+            l.velocity = velocity;
+            l.primed   = true;
+            ++it;
+        }
     }
 
     /* A direct hit with an acceleration pushes what it struck along the
@@ -563,6 +627,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .direction = glm::normalize(hit.direction),
         };
         p.template subsystem<PhysicsBus>().inject(ev, &blast);
+        if(p.template get<BipedStatus>(hit.target))
+            launch(hit.target, player_of(p, hit.shooter));
     }
 
     /* A vehicle hurts what it runs into by how fast it came. A player in full
@@ -672,6 +738,75 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         last_words(p, vitality.unit, false);
         tell(p, vitality.unit, *status);
         killed(p, vitality.unit, ObjectHitEvent::no_player);
+    }
+
+    /* A living unit that fell out of the level dies there; one just brought
+     * back is left a moment to be moved to its spawn */
+    void fallen_out(Proxy& p, f32 dt)
+    {
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto [status, model] = ent.components();
+            f32& grace           = m_fall_grace[ent.id()];
+            if(status.dead)
+            {
+                grace = revive_grace;
+                continue;
+            }
+            if(grace > 0.f)
+            {
+                grace -= dt;
+                continue;
+            }
+            /* A forge camera passes through walls and voids at will */
+            if(auto const* info = p.template get<PlayerInfo>(ent.id());
+               info && (!info->mode.physics || info->riding.vehicle))
+                continue;
+            Physics::Event      ev{Physics::Event::OutOfWorld};
+            Physics::OutOfWorld query{.position = model.position};
+            p.template subsystem<PhysicsBus>().process(ev, &query);
+            if(!query.out)
+                continue;
+            status.shield = status.body = 0.f;
+            status.dead   = true;
+            last_words(p, ent.id(), false);
+            tell(p, ent.id(), status);
+            killed(p, ent.id(), ObjectHitEvent::no_player);
+        }
+    }
+
+    /* No landing hurts, but a fall past the globals' maximum falling
+     * distance is death before the ground is reached */
+    void fallen_too_far(Proxy& p)
+    {
+        f32 const most = m_falling ? m_falling->maximum_falling_distance : 0.f;
+        if(most <= 0.f)
+            return;
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto [status, model] = ent.components();
+            auto const* info     = p.template get<PlayerInfo>(ent.id());
+            auto const* object   = p.template get<ObjectPhysics>(ent.id());
+            auto const* body     = p.template get<PhysicsData>(ent.id());
+            bool const  held     = (info && (info->riding.vehicle || !info->mode.physics)) ||
+                              (object && (object->scripted || object->seated || object->teleported));
+            bool const grounded = (body && body->grounded) || (object && object->grounded);
+            /* A fall is counted from where the unit was first seen */
+            f32& top = m_fall_top.try_emplace(ent.id(), model.position.z).first->second;
+            if(status.dead || held || grounded || !(body || object))
+            {
+                top = model.position.z;
+                continue;
+            }
+            top = std::max(top, model.position.z);
+            if(top - model.position.z <= most)
+                continue;
+            status.shield = status.body = 0.f;
+            status.dead   = true;
+            last_words(p, ent.id(), true);
+            tell(p, ent.id(), status);
+            killed(p, ent.id(), ObjectHitEvent::no_player);
+        }
     }
 
     /* Its time up, a dead unit bursts and is taken away the frame after,
@@ -1138,6 +1273,21 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<ObjectHitEvent>      m_hits;
     std::vector<AreaDamageEvent>     m_areas;
     std::vector<UnitVitalityEvent>   m_vitality;
+    std::map<u64, f32>               m_fall_grace; /*!< s until out of the world kills again */
+    std::map<u64, f32>               m_fall_top;   /*!< Highest point since last on the ground */
+    struct launched_t
+    {
+        f32   left{0.f}; /*!< s it still counts as thrown */
+        u32   by{ObjectHitEvent::no_player};
+        Vecf3 velocity{};
+        bool  primed{false};
+    };
+    std::map<u64, launched_t>        m_launched;
+    static constexpr f32             launch_window = 3.f;
+    static constexpr f32             teleport_speed = 50.f; /* wu/s */
+    static constexpr f32             halo_gravity  = 9.81f / 3.048f; /* wu/s^2 */
+    blam::globals::falling_damage const* m_falling{nullptr};
+    static constexpr f32             revive_grace = 1.f;
     std::vector<Physics::UnitStruck> m_struck;
     std::shared_ptr<GameEventBus::queue_type<RespawnUnitEvent>> m_respawn_queue;
     std::vector<RespawnUnitEvent>    m_respawns;
