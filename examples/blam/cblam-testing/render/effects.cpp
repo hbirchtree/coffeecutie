@@ -104,8 +104,11 @@ struct motion_t
     {
         if(friction <= 0.f)
             return 0.f;
-        return radius > 0.f ? std::min(friction * dt / radius, 1.f) : 1.f;
+        /* A sprite still too small to see (a jet's first, invisible state)
+         * would otherwise stop dead where it was made */
+        return std::min(friction * dt / std::max(radius, least_drag_radius), 1.f);
     }
+    static constexpr f32 least_drag_radius = .1f; /* wu */
 
     static motion_t from(point_physics const* pphy)
     {
@@ -1819,8 +1822,15 @@ struct EffectSystem
             s.velocity = offset * explosion_speed;
             break;
         case particle_system::creation_physics_t::jet:
-            s.velocity = sys.place.forward * type.radius * explosion_speed;
+        {
+            /* The first constant is the jet's speed, in feet per second */
+            auto k = type.physics_constants.data(*m_magic);
+            f32 const speed = k.has_value() && !k.value().empty() && k.value()[0].k > 0.f
+                                  ? k.value()[0].k * feet_to_wu
+                                  : type.radius * explosion_speed;
+            s.velocity = sys.place.forward * speed;
             break;
+        }
         default:
             break;
         }
@@ -1933,8 +1943,8 @@ struct EffectSystem
             enter_state(s, s.state + 1);
         auto look_of = [&s](u32 i) {
             auto const& ps     = s.states[i];
-            f32 const   radius = glm::mix(ps.scale.x, ps.scale.y, s.size_pick) *
-                               s.pixels * .5f * ps.radius_multiplier;
+            /* The radius multiplier is its collision's, not its sprite's */
+            f32 const   radius = glm::mix(ps.scale.x, ps.scale.y, s.size_pick) * s.pixels * .5f;
             Vecf4 const color  = glm::mix(rgba(ps.color_1), rgba(ps.color_2), s.color_pick);
             return std::pair{radius, color};
         };
@@ -2731,6 +2741,7 @@ struct EffectSystem
     static constexpr f32    decal_reach          = 2.f;  /* wu to a face */
     static constexpr size_t max_effect_decals    = 256;
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
+    static constexpr f32    feet_to_wu           = .1f;
     static constexpr f32    default_sprite_pixels = 128.f; /* when its bitmap can't say */
 
     u32        m_generation{0};
