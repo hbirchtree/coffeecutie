@@ -479,25 +479,26 @@ struct trigger_volume
 {
     u32       unk;
     bl_string name;
-    f32       unk2[9]; /* likely 3×Vecf3 orientation axes */
-    Vecf3     position;
-    Vecf3     extents; /* volume spans position .. position + extents
-                          (verified against b40 'null' and door volumes) */
+    f32       parameters[3]; /* unused */
+    Vecf3     forward;
+    Vecf3     up;
+    Vecf3     position; /* a corner */
+    Vecf3     extents;  /* along forward, left (up x forward) and up */
 
     inline bool contains(Vecf3 const& point) const
     {
-        auto in = [](f32 v, f32 a, f32 b) {
-            if(a > b)
-            {
-                f32 t = a;
-                a     = b;
-                b     = t;
-            }
-            return v >= a && v <= b;
+        auto in = [](f32 v, f32 extent) {
+            return extent >= 0.f ? v >= 0.f && v <= extent : v <= 0.f && v >= extent;
         };
-        Vecf3 hi = position + extents;
-        return in(point.x, position.x, hi.x) && in(point.y, position.y, hi.y) &&
-               in(point.z, position.z, hi.z);
+        Vecf3 const local = point - position;
+        Vecf3 const left{
+            up.y * forward.z - up.z * forward.y,
+            up.z * forward.x - up.x * forward.z,
+            up.x * forward.y - up.y * forward.x};
+        auto dot = [&local](Vecf3 const& axis) {
+            return local.x * axis.x + local.y * axis.y + local.z * axis.z;
+        };
+        return in(dot(forward), extents.x) && in(dot(left), extents.y) && in(dot(up), extents.z);
     }
 };
 
