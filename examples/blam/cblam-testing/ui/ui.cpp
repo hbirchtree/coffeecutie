@@ -1779,6 +1779,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                                 if(auto const* pick = m_data->index(input.function))
                                     if(auto const picked = (*pick)(); picked && *picked >= 0)
                                         item_image = static_cast<u16>(*picked);
+                    /* A generated list's chosen item looks focused: the list
+                     * itself holds the focus */
+                    bool const chosen = layout.item_root && layout.list && layout.item && layout.list->get &&
+                                        !layout.row && *layout.item == layout.list->get();
                     auto const& im =
                         item_image
                             ? el.background[std::min<size_t>(
@@ -1787,7 +1791,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             ? (*layout.index < el.background.size()
                                    ? el.background[*layout.index]
                                    : el.background[0])
-                        : el.focused && el.background.size() >= 2
+                        : (el.focused || chosen) && el.background.size() >= 2
                             ? el.background[1]
                             : el.background[0];
                     push_image(data, min, max, im);
