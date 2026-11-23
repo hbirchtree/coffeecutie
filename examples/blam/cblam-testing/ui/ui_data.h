@@ -44,6 +44,10 @@ struct UIDataSource : compo::SubsystemBase
     using setter_t   = std::function<void(libc_types::u16)>;
     /* Gets the tag's text, returns what to show */
     using text_t = std::function<std::u16string(std::u16string_view)>;
+    /* The same, told the seat whose screen shows it (a split screen quadrant's) */
+    using seat_text_t = std::function<std::u16string(std::u16string_view, libc_types::u32 seat)>;
+    /* Which of a text box's own strings shows, for one whose game data input picks it */
+    using index_t = std::function<std::optional<libc_types::i32>()>;
 
     struct value_t
     {
@@ -80,6 +84,17 @@ struct UIDataSource : compo::SubsystemBase
         m_texts[std::string(widget)] = std::move(text);
     }
 
+    void bind_seat_text(std::string_view widget, seat_text_t&& text)
+    {
+        m_seat_texts[std::string(widget)] = std::move(text);
+    }
+
+    /* Keyed by the text box's game data input */
+    void bind_index(data_function_t input, index_t&& pick)
+    {
+        m_indices[input] = std::move(pick);
+    }
+
     /* Keyed by the list widget's game data input */
     void bind_list(data_function_t input, list_t&& list)
     {
@@ -107,6 +122,18 @@ struct UIDataSource : compo::SubsystemBase
         return it != m_texts.end() ? &it->second : nullptr;
     }
 
+    seat_text_t const* seat_text(std::string_view widget) const
+    {
+        auto it = m_seat_texts.find(std::string(widget));
+        return it != m_seat_texts.end() ? &it->second : nullptr;
+    }
+
+    index_t const* index(data_function_t input) const
+    {
+        auto it = m_indices.find(input);
+        return it != m_indices.end() ? &it->second : nullptr;
+    }
+
     list_t const* list(data_function_t input) const
     {
         auto it = m_lists.find(input);
@@ -122,6 +149,8 @@ struct UIDataSource : compo::SubsystemBase
     std::unordered_map<blam::ui_element::function_t, function_t> m_functions;
     std::unordered_map<std::string, value_t>        m_values;
     std::unordered_map<std::string, text_t>         m_texts;
+    std::unordered_map<std::string, seat_text_t>    m_seat_texts;
+    std::unordered_map<data_function_t, index_t>    m_indices;
     std::unordered_map<data_function_t, list_t>     m_lists;
     libc_types::u64                                 m_token{0};
 };
