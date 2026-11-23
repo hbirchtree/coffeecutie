@@ -87,14 +87,20 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
     /* Players are counted from when they are first in the game */
     void join(Proxy& p, GameState& state)
     {
+        auto const& setup = p.template subsystem<GameSetup>();
         for(auto player : p.template select<PlayerInfo, PlayerCamera, NetworkInfo>())
         {
             auto [info, cam, net] = player.components();
             if(!biped_shown(info, cam, net) || state.player(info.player_idx))
                 continue;
+            /* A local seat plays on the team its controller chose */
+            auto const pad  = cam.controller.index.value_or(info.seat_idx);
+            i16 const  team = !info.is_remote() && pad < setup.seat_team.size()
+                                  ? static_cast<i16>(setup.seat_team[pad] & 1)
+                                  : static_cast<i16>(info.player_idx % 2);
             state.players.push_back({
                 .player_idx = info.player_idx,
-                .team = state.teams ? static_cast<i16>(info.player_idx % 2) : i16(-1),
+                .team       = state.teams ? team : i16(-1),
             });
         }
     }

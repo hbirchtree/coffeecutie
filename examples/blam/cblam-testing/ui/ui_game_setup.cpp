@@ -220,7 +220,9 @@ constexpr libc_types::i32 captures           = 22;
 constexpr libc_types::i32 minutes            = 23;
 constexpr libc_types::i32 frags              = 24;
 constexpr libc_types::i32 laps               = 25;
+constexpr libc_types::i32 red_team           = 17;
 constexpr libc_types::i32 choose_teams       = 26;
+constexpr libc_types::i32 form_two_teams     = 27;
 constexpr libc_types::i32 juggernaut         = 32;
 constexpr libc_types::i32 waiting_for_player = 35;
 } // namespace pregame_text
@@ -301,9 +303,15 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
     data.on_function(func_t::start_new_game, start_campaign);
 
     data.on_function(
-        func_t::net_game_speed_start, [&setup, mp_maps](UIFunctionCall const&) {
+        func_t::net_game_speed_start, [&e, &setup, mp_maps](UIFunctionCall const&) {
             if(setup.mp_map >= mp_maps->entries.size())
                 return ui_result_t::failed;
+            /* A team game needs someone on each side */
+            auto const& lobby = e.subsystem_cast<LocalLobby>();
+            if(setup.game_type == GameSetup::game_type_t::ctf && lobby.seated_controllers().size() > 1 &&
+               !lobby.both_teams())
+                return ui_result_t::failed;
+            setup.seat_team = lobby.team;
             auto const map = multiplayer_maps[mp_maps->entries[setup.mp_map]];
             Coffee::Logging::cDebug(
                 "UI: multiplayer {} ({})",
@@ -457,7 +465,9 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
     data.bind_index(input_t::mp_game_directions, [&setup, &lobby]() -> std::optional<i32> {
         if(lobby.seated_controllers().size() < 2)
             return pregame_text::waiting_for_player;
-        return setup.game_type == t::ctf ? pregame_text::choose_teams : pregame_text::blank;
+        if(setup.game_type != t::ctf)
+            return pregame_text::blank;
+        return lobby.both_teams() ? pregame_text::choose_teams : pregame_text::form_two_teams;
     });
     /* The rules' own defaults, as each game type program declares them */
     data.bind_text("score_limit_value_text_box", [&setup, option, juggernaut](std::u16string_view) {
@@ -512,17 +522,25 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
         auto const seats = lobby.seated_controllers();
         return row < seats.size() ? std::optional<u32>(seats[row]) : std::nullopt;
     };
-    auto const player_rows = [&setup, &profiles, &lobby, joined] {
+    auto const game_text   = std::make_shared<std::vector<std::u16string>>();
+    auto const player_rows = [&e, &setup, &profiles, &lobby, joined, game_text] {
         return UIDataSource::list_t{
             .count = [&lobby] { return static_cast<u16>(std::max<size_t>(lobby.seated_controllers().size(), 1)); },
             .get   = [] { return u16(0); },
             .set   = [](u16) {},
-            .text  = [&setup, &profiles, &lobby, joined](std::string_view widget, u16 row) -> std::u16string {
+            .text  = [&e, &setup, &profiles, &lobby, joined, game_text](std::string_view widget, u16 row) -> std::u16string {
                 auto const seat = joined(row).value_or(0);
                 if(widget == "local_player_name")
                     return profiles.at(lobby.profile_of(seat)).name;
-                if(widget == "team_spinner" && setup.game_type != t::ctf)
-                    return u" ";
+                if(widget == "team_spinner")
+                {
+                    if(setup.game_type != t::ctf)
+                        return u" ";
+                    if(game_text->empty())
+                        *game_text = strings_of(e, "ui\\multiplayer_game_text");
+                    auto const at = static_cast<size_t>(pregame_text::red_team + (lobby.team[seat] & 1));
+                    return at < game_text->size() ? (*game_text)[at] : std::u16string{};
+                }
                 return {};
             },
             /* controller_graphic: 0 is the empty port */

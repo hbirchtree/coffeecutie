@@ -71,6 +71,18 @@ struct LocalLobby : compo::SubsystemBase
     std::array<bool, 4> profile_chosen{};
     /*! Each controller's profile, by index; the first profile until chosen */
     std::array<libc_types::i32, 4> profile{};
+    /*! Each controller's team in a team game: red 0, blue 1 */
+    std::array<libc_types::i16, 4> team{0, 1, 0, 1};
+
+    /*! Whether the joined controllers make up both teams */
+    bool both_teams() const
+    {
+        std::array<bool, 2> seen{};
+        for(libc_types::u32 i = 0; i < joined.size(); ++i)
+            if(joined[i])
+                seen[static_cast<size_t>(team[i] & 1)] = true;
+        return seen[0] && seen[1];
+    }
 
     /*! The profile a controller plays with */
     libc_types::i32 profile_of(libc_types::u32 controller) const

@@ -253,8 +253,22 @@ void alloc_profile_provider(compo::EntityContainer& e)
     data.on_function(func_t::join_controller_to_mp_game, [&lobby](UIFunctionCall const& call) {
         if(call.seat >= lobby.joined.size())
             return ui_result_t::failed;
+        /* A newcomer evens out the teams */
+        std::array<int, 2> sizes{};
+        for(libc_types::u32 i = 0; i < lobby.joined.size(); ++i)
+            if(lobby.joined[i])
+                sizes[static_cast<size_t>(lobby.team[i] & 1)]++;
+        if(!lobby.joined[call.seat])
+            lobby.team[call.seat] = sizes[1] < sizes[0] ? 1 : 0;
         lobby.joined[call.seat] = true;
         Coffee::Logging::cDebug("UI: controller {} joined", call.seat);
+        return ui_result_t::ok;
+    });
+    /* Left and right on the pregame screen move the pressing controller over */
+    data.on_function(func_t::swap_player_team, [&lobby](UIFunctionCall const& call) {
+        if(call.seat >= lobby.joined.size() || !lobby.joined[call.seat])
+            return ui_result_t::failed;
+        lobby.team[call.seat] ^= 1;
         return ui_result_t::ok;
     });
     data.on_function(
