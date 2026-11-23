@@ -518,6 +518,22 @@ struct MultiplayerController
             state.nav_points = std::move(navs);
             return {};
         }
+        case mode_op::team_set:
+            if(auto* player = arg(0) >= 0.f ? who(0) : nullptr)
+                player->team = static_cast<i16>(arg(1));
+            return {};
+        case mode_op::team_count: {
+            i16 n = 0;
+            for(auto const& player : state.players)
+                n += player.team == static_cast<i16>(arg(0));
+            return value_t::number(type_t::short_, n);
+        }
+        case mode_op::random_player: {
+            if(state.players.empty())
+                return value_t::number(type_t::short_, -1.f);
+            auto const pick = std::uniform_int_distribution<size_t>(0, state.players.size() - 1)(m_random);
+            return value_t::number(type_t::short_, static_cast<f32>(state.players[pick].player_idx));
+        }
         case mode_op::team_of: {
             auto const* player = arg(0) >= 0.f ? who(0) : nullptr;
             return value_t::number(type_t::short_, player ? player->team : -1);
@@ -561,6 +577,13 @@ struct MultiplayerController
             return;
         state.phase  = GameState::phase_t::over;
         state.winner = leader(state).first;
+        /* Infection: any human standing at the end holds out */
+        if(state.game_type == GameSetup::game_type_t::infection)
+            state.winner = std::any_of(state.players.begin(), state.players.end(), [](auto const& player) {
+                               return player.team == 0;
+                           })
+                               ? 0
+                               : GameState::infected_team;
     }
 
     /* ---- Deaths ---- */
@@ -707,8 +730,9 @@ struct MultiplayerController
         }
         if(auto last = m_last_spot.find(info.player_idx); last != m_last_spot.end())
             around.last = last->second;
-        auto picked = spawn_points::pick(
-            files, m_random, around, spawn_points::game_mode_of(state.game_type), me ? me->team : i16(-1));
+        /* Infection's sides share the free for all start points */
+        i16 const team = me && state.game_type != GameSetup::game_type_t::infection ? me->team : i16(-1);
+        auto picked = spawn_points::pick(files, m_random, around, spawn_points::game_mode_of(state.game_type), team);
         if(!picked)
             return std::nullopt;
         m_last_spot[info.player_idx] = picked->second;

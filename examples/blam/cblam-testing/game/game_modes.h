@@ -63,6 +63,11 @@ enum class mode_op : libc_types::u16
     race_count,   /*!< (race_count): the track's checkpoints */
     race_next,    /*!< (race_next <player>): the checkpoint they go for */
     race_advance, /*!< (race_advance <player>): on to the next, round to the first after the last */
+
+    /* Infection, on the authority */
+    team_set,      /*!< (team_set <player> <team>) */
+    team_count,    /*!< (team_count <team>): its players */
+    random_player, /*!< (random_player): any one in the game, -1 for none */
 };
 
 /* matg's multiplayer sounds, by their place in the block */
@@ -811,6 +816,73 @@ hsc_builder::program_t<BC> race_announcer()
     return std::move(b).build();
 }
 
+/* Infection: a few seconds in, one random player is infected (team 1); a
+ * human who dies joins them. Infected kills score. No humans left and the
+ * infected win; holding out until time runs out, the humans do */
+template<typename BC>
+hsc_builder::program_t<BC> infection()
+{
+    using hsc_builder::script_type_t;
+    using hsc_builder::type_t;
+    hsc_builder::builder<BC> b;
+    auto const short_g = [&b](char const* name) { return b.global(name, type_t::short_); };
+    auto const is      = [&](auto a, auto c) { return b.call(BC::equal, type_t::bool_, {a, c}); };
+    auto const team    = [&](auto who) { return b.call(op<BC>(mode_op::team_of), type_t::short_, {who}); };
+    auto const count   = [&](libc_types::i16 t) { return b.call(op<BC>(mode_op::team_count), type_t::short_, {b.short_(t)}); };
+
+    b.declare_global("time_limit", type_t::real_, b.real(600.f));
+    b.declare_global("respawn_delay", type_t::real_, b.real(3.f));
+    b.declare_global("infect_after", type_t::short_, b.short_(90)); /* ticks until the first is picked */
+    b.declare_global("event_killer", type_t::short_, b.short_(-1));
+    b.declare_global("event_victim", type_t::short_, b.short_(-1));
+
+    b.script(
+        "setup",
+        script_type_t::startup,
+        b.begin({
+            b.call(op<BC>(mode_op::respawn_delay_set), type_t::void_, {b.global("respawn_delay", type_t::real_)}),
+            b.call(op<BC>(mode_op::time_limit_set), type_t::void_, {b.global("time_limit", type_t::real_)}),
+        }));
+    /* Patient zero, once someone is playing; again should the infected all leave */
+    b.script(
+        "patient_zero",
+        script_type_t::continuous,
+        b.begin({
+            b.call(BC::sleep, type_t::void_, {short_g("infect_after")}),
+            b.if_(
+                b.call(
+                    BC::and_,
+                    type_t::bool_,
+                    {is(count(1), b.short_(0)), b.call(BC::greater, type_t::bool_, {count(0), b.short_(0)})}),
+                b.call(
+                    op<BC>(mode_op::team_set),
+                    type_t::void_,
+                    {b.call(op<BC>(mode_op::random_player), type_t::short_, {}), b.short_(1)})),
+        }));
+    b.script(
+        "on_unit_killed",
+        script_type_t::dormant,
+        b.begin({
+            b.if_(
+                b.call(
+                    BC::and_,
+                    type_t::bool_,
+                    {is(team(short_g("event_killer")), b.short_(1)),
+                     b.call(BC::not_, type_t::bool_, {is(short_g("event_killer"), short_g("event_victim"))})}),
+                b.call(op<BC>(mode_op::score_add), type_t::void_, {short_g("event_killer"), b.short_(1)})),
+            b.if_(
+                is(team(short_g("event_victim")), b.short_(0)),
+                b.call(op<BC>(mode_op::team_set), type_t::void_, {short_g("event_victim"), b.short_(1)})),
+            b.if_(
+                b.call(
+                    BC::and_,
+                    type_t::bool_,
+                    {is(count(0), b.short_(0)), b.call(BC::greater, type_t::bool_, {count(1), b.short_(0)})}),
+                b.call(op<BC>(mode_op::game_over), type_t::void_, {})),
+        }));
+    return std::move(b).build();
+}
+
 /* The announcer for a game type */
 template<typename BC>
 hsc_builder::program_t<BC> announcer_for(GameSetup::game_type_t type)
@@ -844,6 +916,8 @@ hsc_builder::program_t<BC> rules_for(GameSetup const& setup)
         return koth<BC>();
     case GameSetup::game_type_t::race:
         return race<BC>();
+    case GameSetup::game_type_t::infection:
+        return infection<BC>();
     default:
         return slayer<BC>(25, 0.f);
     }

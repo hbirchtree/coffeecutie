@@ -200,8 +200,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 left = {};
             for(f32* t : {&left.camouflage, &left.speed, &left.vision})
                 *t = std::max(*t - dt, 0.f);
+            /* Infection's infected fade from sight crouching */
             if(!info.is_remote())
-                info.camouflaged = left.camouflage > 0.f;
+                info.camouflaged = left.camouflage > 0.f ||
+                                   (info.crouched && p.template subsystem<GameState>().infected(info.player_idx));
         }
     }
 

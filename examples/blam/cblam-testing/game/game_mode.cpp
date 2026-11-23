@@ -69,8 +69,9 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
                                                              : GameState::kind_t::none;
         state.phase       = GameState::phase_t::playing;
         state.game_type   = setup.game_type;
-        /* Capture the flag is played in teams */
-        state.teams       = setup.game_type == GameSetup::game_type_t::ctf;
+        /* Capture the flag is played in teams, as is Infection: humans and infected */
+        state.teams       = setup.game_type == GameSetup::game_type_t::ctf ||
+                      setup.game_type == GameSetup::game_type_t::infection;
         state.difficulty  = setup.difficulty;
         state.players.clear();
         state.team_scores = {};
@@ -97,7 +98,9 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
              * else joins the smaller team (a peer's seats number from 4n) */
             auto const pad  = cam.controller.index.value_or(info.seat_idx);
             i16        team = 0;
-            if(!info.is_remote() && pad < setup.seat_team.size())
+            if(setup.game_type == GameSetup::game_type_t::infection)
+                team = 0; /* everyone starts human; the rules infect one */
+            else if(!info.is_remote() && pad < setup.seat_team.size())
                 team = static_cast<i16>(setup.seat_team[pad] & 1);
             else
             {

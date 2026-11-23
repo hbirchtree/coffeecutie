@@ -656,6 +656,7 @@ i32 blam_main()
                                     : name == "oddball" || name == "juggernaut" ? game_type_t::oddball
                                     : name == "koth"                            ? game_type_t::koth
                                     : name == "race"                            ? game_type_t::race
+                                    : name == "infection"                       ? game_type_t::infection
                                                                                  : game_type_t::slayer;
                 /* Juggernaut is one of Oddball's ball types */
                 if(name == "juggernaut")

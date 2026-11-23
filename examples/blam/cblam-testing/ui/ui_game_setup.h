@@ -21,6 +21,7 @@ struct GameSetup : compo::SubsystemBase
         slayer,
         oddball,
         race,
+        infection, /*!< Not Halo's: humans hold out against the infected */
     };
 
     libc_types::u16 level{0};
