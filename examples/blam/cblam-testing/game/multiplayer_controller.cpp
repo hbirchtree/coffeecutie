@@ -58,9 +58,13 @@ struct MultiplayerController
 
     void start_restricted(Proxy& p, time_point const&)
     {
-        f32 dt = 0.f;
+        f32 dt    = 0.f;
+        u32 steps = 0;
         for(auto const& tick : m_ticks->take())
+        {
             dt += tick.seconds;
+            steps++;
+        }
         m_kill_queue->poll();
         m_rejoin_queue->poll();
         m_touch_queue->poll();
@@ -78,7 +82,7 @@ struct MultiplayerController
         if(state.kind != GameState::kind_t::multiplayer)
             return;
         state.over_for = state.phase == GameState::phase_t::over ? state.over_for + dt : 0.f;
-        announcer(p, state, dt);
+        announcer(p, state, dt, steps);
         team_colors(p, state);
         if(replica)
             return;
@@ -89,7 +93,8 @@ struct MultiplayerController
         m_proxy = &p;
         for(auto const& touch : touches)
             touched(state, touch);
-        if(m_vm && state.phase == GameState::phase_t::playing && dt > 0.f)
+        /* Once a game tick, so the rules' sleeps are in ticks */
+        for(u32 i = 0; m_vm && state.phase == GameState::phase_t::playing && i < steps; i++)
             m_vm->tick();
         m_proxy = nullptr;
         if(state.time_left > 0.f && (state.time_left -= dt) <= 0.f)
@@ -152,7 +157,7 @@ struct MultiplayerController
 
     /* Started once the game is known here, so a peer joining late hears the
      * game type; it sees its players' kills and deaths as they are told */
-    void announcer(Proxy& p, GameState const& state, f32 dt)
+    void announcer(Proxy& p, GameState const& state, f32 dt, u32 steps)
     {
         m_clock += dt;
         /* Started from what everyone is told: a peer waits for the scores */
@@ -207,7 +212,8 @@ struct MultiplayerController
         }
         if(state.phase == GameState::phase_t::over && !std::exchange(m_over, true))
             m_local_vm->wake("on_game_over");
-        if(dt > 0.f)
+        /* Once a game tick, as the rules */
+        for(u32 i = 0; i < steps; i++)
             m_local_vm->tick();
     }
 
