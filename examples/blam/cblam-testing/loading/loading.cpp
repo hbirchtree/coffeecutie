@@ -20,6 +20,7 @@
 #include "types.h"
 #include "combat/weapons.h"
 #include "player/spawn_points.h"
+#include "game/game_mode.h"
 #include "ui/ui_game_setup.h"
 #include <algorithm>
 #include <map>
@@ -61,6 +62,7 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         ModelCache<Ver>,
         ShaderCache<Ver>,
         const GameSetup,
+        const GameState,
         const LoadingStatus,
         const NetworkState>,
     type_list_t<
@@ -2964,7 +2966,7 @@ struct ResourceLoader
             bool const dead = p.template get<BipedStatus>(player.id()) &&
                               p.template get<BipedStatus>(player.id())->dead;
             if(dead && !biped.dropped)
-                let_go(equip, cam, info);
+                let_go(equip, cam, info, p.template subsystem<GameState>().infected(info.player_idx));
             biped.dropped = dead;
             auto& weapon = equip.objective.weapon ? equip.objective : equip.weapons[0];
             if(weapon.tag != biped.held_tag)
@@ -3283,7 +3285,8 @@ struct ResourceLoader
 
     /* The dead drop what they carried; only their own peer spawns it, as
      * everyone else is told */
-    void let_go(BipedEquipment& equip, PlayerCamera const& cam, PlayerInfo const& info)
+    /* An infected body's ball goes with it */
+    void let_go(BipedEquipment& equip, PlayerCamera const& cam, PlayerInfo const& info, bool infected)
     {
         f32 turn = 0.f;
         if(!info.is_remote())
@@ -3291,7 +3294,7 @@ struct ResourceLoader
             for(auto const& weapon : equip.weapons)
                 if(weapon.tag)
                     drop(weapon, cam, info.biped.eye_height, turn++);
-            if(equip.objective.tag)
+            if(equip.objective.tag && !infected)
                 drop(equip.objective, cam, info.biped.eye_height, turn++);
             for(auto const& carried : equip.equipment)
                 for(u16 i = 0; carried.tag && i < carried.left; i++)

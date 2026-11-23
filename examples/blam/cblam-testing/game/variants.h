@@ -26,6 +26,8 @@ struct variant_t
     game_type_t             type;
     std::array<option_t, 3> options{};
     bool                    complete{true}; /*!< false: some of its rules aren't played yet */
+    std::u16string_view     name{};        /*!< Ours, past ui.map's list: its own words */
+    std::u16string_view     description{};
 };
 
 constexpr libc_types::u16 first_description = 10;
@@ -33,7 +35,7 @@ constexpr libc_types::u16 first_description = 10;
 /* Incomplete ones lack: lives, starting loadouts, weapon sets, invisibility,
  * motion tracker and health options, respawn time growth, team play outside
  * capture the flag */
-constexpr std::array<variant_t, 26> all = {{
+constexpr std::array<variant_t, 27> all = {{
     {"slayer", game_type_t::slayer, {{{"score_limit", "15"}}}},
     {"slayer_pro", game_type_t::slayer, {{{"score_limit", "25"}}}, false},
     {"elimination", game_type_t::slayer, {}, false},
@@ -60,6 +62,12 @@ constexpr std::array<variant_t, 26> all = {{
     {"team_ball", game_type_t::oddball, {{{"score_limit", "120"}, {"respawn_delay", "10"}}}, false},
     {"team_king", game_type_t::koth, {{{"score_limit", "120"}, {"respawn_delay", "10"}}}, false},
     {"team_slayer", game_type_t::slayer, {{{"score_limit", "50"}}}, false},
+    {"infection",
+     game_type_t::infection,
+     {{{"time_limit", "600"}}},
+     true,
+     u"Infection",
+     u"One player starts\ninfected. The humans\nmust survive till\ntime runs out.\nDon't die!"},
 }};
 
 /* Sets the game up as the variant: its type and its rules' globals */

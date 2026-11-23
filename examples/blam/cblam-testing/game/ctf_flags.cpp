@@ -60,6 +60,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         auto&       state = p.template subsystem<GameState>();
         if(m_load_generation != files.load_generation)
             begin(state, files);
+        arm_infected(p, state);
         bool const ctf     = state.game_type == GameSetup::game_type_t::ctf;
         bool const oddball = state.game_type == GameSetup::game_type_t::oddball;
         for(size_t team = 0; team < state.flags.size(); team++)
@@ -310,6 +311,38 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         flag.idle    = 0.f;
     }
 
+    /* Infection's infected each hold a ball they cannot let go of, so it
+     * shows they only strike; a cured or human body gives it up */
+    void arm_infected(Proxy& p, GameState const& state)
+    {
+        auto const* ball = m_weapon[GameState::ball];
+        if(state.game_type != GameSetup::game_type_t::infection || state.kind != GameState::kind_t::multiplayer ||
+           !ball)
+            return;
+        auto& game = p.template subsystem<GameEventBus>();
+        for(auto ent : p.template select<PlayerInfo, BipedEquipment>())
+        {
+            auto [info, equip] = ent.components();
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            bool const  dead   = status && status->dead;
+            bool const  holds  = equip.objective.tag == ball;
+            bool const  wants  = state.infected(info.player_idx) && !dead;
+            if(holds == wants || dead)
+            {
+                m_arming.erase(ent.id());
+                continue;
+            }
+            if(wants && !m_arming.insert(ent.id()).second)
+                continue;
+            EquipWeaponEvent equip_ev{
+                .entity_id = ent.id(),
+                .weapon    = ball->tag_id,
+                .mode      = wants ? EquipWeaponEvent::pick_up : EquipWeaponEvent::remove};
+            GameEvent ev{.type = GameEvent::EquipWeapon};
+            game.inject(ev, &equip_ev);
+        }
+    }
+
     /* Out of play: out of hands and off the map until reset */
     void remove(Proxy& p, GameState& state, size_t team)
     {
@@ -398,6 +431,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
     std::set<std::pair<size_t, u32>>                            m_touching;
     std::array<i32, 3>                                          m_released{-1, -1, -1}; /*!< Let go of it, still in reach */
     std::vector<Vecf3>                                          m_ball_spawns;
+    std::set<u64>                                               m_arming; /*!< Infected handed their ball */
     std::mt19937                                                m_random{std::random_device{}()};
 };
 

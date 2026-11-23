@@ -114,11 +114,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             auto [input, info, cam, net] = ent.components();
             /* Presses are taken whether or not they can be acted on; a
              * client's swap is the server's to make */
-            bool const swap   = std::exchange(input.intent.swap, false) &&
-                              !p.template subsystem<NetworkState>().replica;
+            /* Infection's infected only strike */
+            bool const infected = p.template subsystem<GameState>().infected(info.player_idx);
+            bool const swap     = std::exchange(input.intent.swap, false) &&
+                              !p.template subsystem<NetworkState>().replica && !infected;
             /* Reload is acted on a tick: a press between ticks waits for one */
-            bool       reload = !ticks.empty() && std::exchange(input.intent.reload, false);
-            bool const toss   = std::exchange(input.intent.grenade, false);
+            bool       reload = !ticks.empty() && std::exchange(input.intent.reload, false) && !infected;
+            bool const toss   = std::exchange(input.intent.grenade, false) && !infected;
             bool const cycle  = std::exchange(input.intent.grenade_switch, false);
             bool const strike = std::exchange(input.intent.melee, false);
             /* A gunner fires the vehicle's weapon, a body its own, and so
@@ -191,8 +193,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* The pull that let go of a flag fires nothing until released */
             if(!input.intent.fire)
                 m_hold_fire.erase(ent.id());
-            bool const pulled =
-                input.intent.fire && !throwing && state.striking <= 0.f && !m_hold_fire.contains(ent.id());
+            bool const pulled = input.intent.fire && !throwing && state.striking <= 0.f &&
+                                !m_hold_fire.contains(ent.id()) && !infected;
 
             /* Bodies switch, reload and run dry; vehicle guns don't */
             auto* ammo = vehicle ? nullptr : &equip->weapons[0];
@@ -403,6 +405,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             else if(grace > 0)
                 grace--;
             if(grace > 0)
+                continue;
+            /* Infection's infected take nothing up */
+            if(p.template subsystem<GameState>().infected(info.player_idx))
                 continue;
             if(info.riding.vehicle || !info.mode.physics || !biped_in_play(info, cam, net) ||
                equip.load_generation != files.load_generation)

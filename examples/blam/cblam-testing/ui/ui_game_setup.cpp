@@ -407,14 +407,19 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
             },
             .set  = [&setup](u16 value) { variants::apply(setup, value); },
             .text = [game_names](std::string_view widget, u16 item) {
-                auto const& from = widget.ends_with("_data") ? game_names->descriptions : game_names->names;
+                bool const data = widget.ends_with("_data");
+                if(item < variants::all.size() && !variants::all[item].name.empty())
+                    return std::u16string(data ? variants::all[item].description : variants::all[item].name);
+                auto const& from = data ? game_names->descriptions : game_names->names;
                 auto const  at   = widget.ends_with("_data") ? item + variants::first_description : item;
                 return at < from.size() ? from[at] : std::u16string{};
             },
             /* game_type_grafix by the variant's type */
             .image = [](u16 item) {
-                for(u16 i = 0; item < variants::all.size() && i < game_types.size(); ++i)
-                    if(game_types[i].type == variants::all[item].type)
+                using t         = GameSetup::game_type_t;
+                auto const type = item < variants::all.size() ? variants::all[item].type : t::slayer;
+                for(u16 i = 0; i < game_types.size(); ++i)
+                    if(game_types[i].type == (type == t::infection ? t::slayer : type))
                         return i;
                 return u16(0);
             },
@@ -441,6 +446,7 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
         case t::ctf:
             return pregame_text::ctf;
         case t::slayer:
+        case t::infection: /* no words of its own in the game's strings */
             return pregame_text::slayer;
         case t::oddball:
             return juggernaut() ? pregame_text::juggernaut : pregame_text::oddball;
@@ -513,6 +519,7 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
         case t::koth:
             return 1;
         case t::slayer:
+        case t::infection:
             return 2;
         case t::oddball:
             return 3;

@@ -139,6 +139,14 @@ struct GameState : compo::SubsystemBase
         return const_cast<GameState*>(this)->player(player_idx);
     }
 
+    /*! Infection's infected are its team 1 */
+    static constexpr i16 infected_team = 1;
+    bool infected(u32 player_idx) const
+    {
+        auto const* p = player(player_idx);
+        return game_type == GameSetup::game_type_t::infection && p && p->team == infected_team;
+    }
+
     static std::string_view title(GameSetup::game_type_t type, bool teams)
     {
         using t = GameSetup::game_type_t;
@@ -152,6 +160,8 @@ struct GameState : compo::SubsystemBase
             return "Oddball";
         case t::race:
             return "Race";
+        case t::infection:
+            return "Infection";
         default:
             return teams ? "Team Slayer" : "Slayer";
         }
