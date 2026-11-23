@@ -8,6 +8,7 @@
 #include "ui/ui_caching.h"
 #include "ui/ui_data.h"
 #include "ui/ui_profile.h"
+#include "game/variants.h"
 
 #include <utf8cpp/utf8.h>
 
@@ -271,10 +272,8 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
     data.on_function(
         func_t::mp_profiles_list_initialize, [&e, game_names](UIFunctionCall const&) {
             game_names->entries.clear();
-            for(u16 i = 0; i < game_types.size(); ++i)
-                game_names->entries.push_back(game_types[i].name);
-            game_names->names = strings_of(e, "ui\\multiplayer_game_text");
-            game_names->descriptions.clear();
+            game_names->names        = strings_of(e, "ui\\default_multiplayer_game_setting_names");
+            game_names->descriptions = strings_of(e, "ui\\shell\\strings\\game_variant_descriptions");
             return ui_result_t::ok;
         });
     data.on_function(func_t::mp_profiles_list_dispose, ok);
@@ -403,38 +402,46 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
             },
             .image = [mp_maps](u16 item) { return mp_maps->entries.at(item); },
         });
-    /* Built-in game types only; saved variants would go first */
+    /* The built-in variants; saved ones would go first */
     data.bind_list(
         input_t::mp_profile_list_update,
         list_t{
-            .count = [] { return static_cast<u16>(game_types.size()); },
+            .count = [] { return static_cast<u16>(variants::all.size()); },
             .get   = [&setup] {
-                for(u16 i = 0; i < game_types.size(); ++i)
-                    if(game_types[i].type == setup.game_type)
+                if(setup.variant < variants::all.size())
+                    return setup.variant;
+                for(u16 i = 0; i < variants::all.size(); ++i)
+                    if(variants::all[i].type == setup.game_type)
                         return i;
                 return u16(0);
             },
-            .set = [&setup](u16 value) {
-                if(value < game_types.size())
-                    setup.game_type = game_types[value].type;
-            },
+            .set  = [&setup](u16 value) { variants::apply(setup, value); },
             .text = [game_names](std::string_view widget, u16 item) {
-                /* No description string for the built-in ones */
-                return widget.ends_with("_data") ? std::u16string{}
-                                                 : game_names->text(widget, item);
+                auto const& from = widget.ends_with("_data") ? game_names->descriptions : game_names->names;
+                auto const  at   = widget.ends_with("_data") ? item + variants::first_description : item;
+                return at < from.size() ? from[at] : std::u16string{};
             },
-            .image = [](u16 item) { return item; },
+            /* game_type_grafix by the variant's type */
+            .image = [](u16 item) {
+                for(u16 i = 0; item < variants::all.size() && i < game_types.size(); ++i)
+                    if(game_types[i].type == variants::all[item].type)
+                        return i;
+                return u16(0);
+            },
         });
 
     /* The pregame screen's summary of the game about to start: its text
      * boxes pick from ui\multiplayer_game_text by their game data input */
     auto const& lobby    = e.subsystem_cast<LocalLobby>();
     auto const& profiles = e.subsystem_cast<PlayerProfile>();
+    /* The last word on a global: the variant's, then any given on top */
     auto const  option   = [&setup](std::string_view name) -> std::optional<int> {
-        for(auto const& [key, value] : setup.options)
-            if(key == name)
-                return std::atoi(value.c_str());
-        return std::nullopt;
+        std::optional<int> out;
+        for(auto const* from : {&setup.variant_options, &setup.options})
+            for(auto const& [key, value] : *from)
+                if(key == name)
+                    out = std::atoi(value.c_str());
+        return out;
     };
     auto const juggernaut = [option] { return option("ball_type").value_or(0) == 2; };
     using t = GameSetup::game_type_t;

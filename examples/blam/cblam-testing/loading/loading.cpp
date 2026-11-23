@@ -19,9 +19,12 @@
 #include "caching/shader_cache.h"
 #include "types.h"
 #include "combat/weapons.h"
+#include "player/spawn_points.h"
+#include "ui/ui_game_setup.h"
 #include <algorithm>
 #include <map>
 #include <optional>
+#include <random>
 #include <set>
 
 template<typename Ver>
@@ -57,6 +60,7 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         DebugMarkers,
         ModelCache<Ver>,
         ShaderCache<Ver>,
+        const GameSetup,
         const LoadingStatus,
         const NetworkState>,
     type_list_t<
@@ -73,6 +77,7 @@ struct ResourceLoader
 
     blam::tag_index_view<Ver> index;
     GameEventBus*             game_bus{nullptr};
+    std::mt19937              m_item_random{std::random_device{}()}; /*!< Item collections' picks */
 
     std::vector<SpawnBSPEvent>         pending_bsps;
     std::vector<SpawnBipedEvent>       pending_bipeds;
@@ -1219,6 +1224,8 @@ struct ResourceLoader
             palette.size());
 
         bool const dynamic = group_id >= ScenarioGroup::Vehicle;
+        bool const multiplayer =
+            files.container.map && files.container.map->map_type == blam::maptype_t::multiplayer;
         i16 const  section =
             p.template subsystem<BSPCache<Ver>>().active_section;
 
@@ -1238,6 +1245,11 @@ struct ResourceLoader
             auto const* entry = instance.ref.resolve(palette);
             if(!entry || (instance.flags & spawn_flags::automatic) != spawn_flags::none)
                 continue;
+            /* A multiplayer map's vehicles are each in some game types' sets */
+            if constexpr(std::is_same_v<T, blam::scn::vehicle_spawn>)
+                if(multiplayer &&
+                   !spawn_points::vehicle_in(instance.spawn_flags, p.template subsystem<GameSetup>().game_type))
+                    continue;
             raise_spawn((*entry)[0], instance.pos, net_id);
         }
     }
@@ -1668,24 +1680,35 @@ struct ResourceLoader
         if(equipment.has_error())
             return;
 
+        using gm        = blam::scn::gamemode_t;
+        auto const mode = spawn_points::game_mode_of(p.template subsystem<GameSetup>().game_type);
         for(u32 e = 0; e < equipment.value().size(); ++e)
         {
             auto const& entry = equipment.value()[e];
-            auto        items = netgame_items(entry, magic);
-            if(!items)
+            /* Its game types; none named is every one */
+            bool const any_named = std::any_of(std::begin(entry.types), std::end(entry.types), [](gm t) {
+                return t != gm::none;
+            });
+            if(any_named && std::none_of(std::begin(entry.types), std::end(entry.types), [mode](gm t) {
+                   return spawn_points::fits(t, mode);
+               }))
                 continue;
-            for(u32 k = 0; k < items->second.size(); ++k)
-            {
-                auto const& item = items->second[k].item;
-                if(item.tag_class != blam::tag_class_t::weap &&
-                   item.tag_class != blam::tag_class_t::eqip)
-                    continue;
-                raise_spawn(
-                    item,
-                    entry.pos,
-                    SpawnObjectEvent::scenario_net_id(
-                        ScenarioGroup::NetgameEquipment, e, k));
-            }
+            auto items = netgame_items(entry, magic);
+            if(!items || items->second.empty())
+                continue;
+            /* A collection puts down one of its items, by weight */
+            f32 total = 0.f;
+            for(auto const& perm : items->second)
+                total += std::max(perm.weight, 0.f);
+            f32 roll = std::uniform_real_distribution<f32>(0.f, total)(m_item_random);
+            u32 k    = 0;
+            for(; k + 1 < items->second.size(); ++k)
+                if((roll -= std::max(items->second[k].weight, 0.f)) < 0.f)
+                    break;
+            auto const& item = items->second[k].item;
+            if(item.tag_class != blam::tag_class_t::weap && item.tag_class != blam::tag_class_t::eqip)
+                continue;
+            raise_spawn(item, entry.pos, SpawnObjectEvent::scenario_net_id(ScenarioGroup::NetgameEquipment, e, k));
         }
     }
 

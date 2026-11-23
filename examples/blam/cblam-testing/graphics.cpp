@@ -27,6 +27,7 @@
 #include "game/checkpoint.h"
 #include "game/save_state.h"
 #include "game/game_mode.h"
+#include "game/variants.h"
 #include "ai/actors.h"
 #include "combat/damage.h"
 #include "world/devices.h"
@@ -198,6 +199,10 @@ i32 blam_main()
             "game-type",
             "Multiplayer game type a map given on the command line is played as, offline or "
             "hosting (a client plays the server's): slayer, ctf, oddball, juggernaut, koth, race",
+            cxxopts::value<std::string>())(
+            "game-variant",
+            "A built-in variant instead, as the Xbox shell lists them: slayer, slayer_pro, oddball, "
+            "reverse_tag, juggernaut, king, crazy_king, race, ctf, ctf_pro, ... (game/variants.h)",
             cxxopts::value<std::string>())(
             "ctf-flag-at-home",
             "Capture the flag: a capture needs the team's own flag at home (default false)",
@@ -655,6 +660,14 @@ i32 blam_main()
                 /* Juggernaut is one of Oddball's ball types */
                 if(name == "juggernaut")
                     setup.options.emplace_back("ball_type", "2");
+            }
+            if(arguments.count("game-variant") && !arguments.count("server"))
+            {
+                auto const name = arguments["game-variant"].as<std::string>();
+                if(auto index = variants::find(name))
+                    variants::apply(e.subsystem_cast<GameSetup>(), *index);
+                else
+                    cWarning("Unknown game variant {}", name);
             }
             if(arguments.count("ctf-flag-at-home"))
                 e.subsystem_cast<GameSetup>().ctf_flag_at_home = arguments["ctf-flag-at-home"].as<bool>();

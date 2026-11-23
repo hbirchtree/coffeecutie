@@ -46,6 +46,29 @@ inline blam::scn::gamemode_t game_mode_of(GameSetup::game_type_t type)
     }
 }
 
+/* Whether something placed for `placed` is in a game of `mode` */
+inline bool fits(blam::scn::gamemode_t placed, blam::scn::gamemode_t mode)
+{
+    using gm = blam::scn::gamemode_t;
+    return placed == mode || placed == gm::all_games || (placed == gm::all_except_ctf && mode != gm::ctf) ||
+           (placed == gm::all_except_race_ctf && mode != gm::ctf && mode != gm::race);
+}
+
+/* A placed vehicle's default sets by game type; race has none of its own and
+ * takes slayer's. Xbox maps set no flags: there every one is placed */
+inline bool vehicle_in(blam::scn::vehicle_spawn::multiplayer_spawn_flags_t flags, GameSetup::game_type_t type)
+{
+    using f = blam::scn::vehicle_spawn::multiplayer_spawn_flags_t;
+    using t = GameSetup::game_type_t;
+    if(flags == f::none_spawn)
+        return true;
+    f const wanted = type == t::ctf       ? f::ctf_default
+                     : type == t::koth    ? f::king_default
+                     : type == t::oddball ? f::oddball_default
+                                          : f::slayer_default;
+    return (flags & wanted) != f::none_spawn;
+}
+
 /* The facing a teleport turns the camera to; its inverse, pitch left out */
 inline f32 facing_of(PlayerCamera const& cam)
 {
@@ -91,9 +114,7 @@ inline std::optional<std::pair<spot_t, size_t>> pick(
         auto const& spot = spots.value()[i];
         bool const  fits = mode == gm::none ||
                           std::any_of(std::begin(spot.types), std::end(spot.types), [mode](gm t) {
-                              return t == mode || t == gm::all_games ||
-                                     (t == gm::all_except_ctf && mode != gm::ctf) ||
-                                     (t == gm::all_except_race_ctf && mode != gm::ctf && mode != gm::race);
+                              return spawn_points::fits(t, mode);
                           });
         bool const ours  = team < 0 || spot.team_index == static_cast<u16>(team);
         bool const taken = std::any_of(around.standing.begin(), around.standing.end(), [&spot](Vecf3 const& at) {

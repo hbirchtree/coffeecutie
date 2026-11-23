@@ -33,7 +33,10 @@ struct GameSetup : compo::SubsystemBase
     libc_types::f32 ctf_flag_return_time{60.f};  /*!< s a dropped flag lies before going back; not a CE option */
     /*! A team game's team by controller, as the pregame screen chose them */
     std::array<libc_types::i16, 4> seat_team{0, 1, 0, 1};
-    /*! Game type program globals to set as it loads: name, value */
+    /*! The built-in variant chosen (variants::all), and the globals it sets */
+    libc_types::u16                                  variant{0xFFFF};
+    std::vector<std::pair<std::string, std::string>> variant_options;
+    /*! Game type program globals to set as it loads, after the variant's: name, value */
     std::vector<std::pair<std::string, std::string>> options;
 
     GameSetup(compo::EntityContainer& e)
