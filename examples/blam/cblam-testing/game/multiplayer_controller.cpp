@@ -23,6 +23,10 @@
 
 /* Sound entity ids for the announcer, one per line so a line restarts */
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
+/* Where a seat's line comes from, inside the default reference distance so
+ * it is no quieter: half ahead, most of the way to its side */
+constexpr libc_types::f32 announcer_pan = .7f;
+constexpr libc_types::f32 announcer_ahead = .5f;
 
 using MultiplayerManifest = compo::SubsystemManifest<
     type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus, const Attachment, Model>,
@@ -197,7 +201,9 @@ struct MultiplayerController
             if(auto* slot = m_local_vm->global("event_player"))
                 *slot = script_vm::value_t::number(blam::hsc::type_t::short_, static_cast<f32>(idx));
             m_local_vm->wake("on_local_kill");
+            m_speaking_for = idx;
             m_local_vm->tick();
+            m_speaking_for.reset();
         }
         if(state.phase == GameState::phase_t::over && !std::exchange(m_over, true))
             m_local_vm->wake("on_game_over");
@@ -214,7 +220,7 @@ struct MultiplayerController
         {
         case mode_op::announce: {
             GameEvent     ev{.type = GameEvent::Announce};
-            AnnounceEvent say{.sound = static_cast<u16>(arg(0))};
+            AnnounceEvent say{.sound = static_cast<u16>(arg(0)), .player = m_speaking_for};
             m_game->inject(ev, &say);
             return {};
         }
@@ -534,8 +540,29 @@ struct MultiplayerController
     std::map<u32, seen_t>           m_seen;       /*!< By player: kills and deaths last seen */
     std::map<u32, std::vector<f32>> m_kill_times; /*!< By player: when they killed */
     std::map<u32, i16>              m_streaks;    /*!< By player: kills since dying */
+    std::optional<u32>              m_speaking_for; /*!< The local player a kill line is for */
     std::mt19937               m_random{std::random_device{}()};
 };
+
+/* A line for one seat comes from its column when the screen is split in
+ * quarters; a top/bottom split has no side to give it */
+static Vecf3 announcer_side(compo::EntityContainer& e, std::optional<u32> player)
+{
+    if(!player)
+        return {};
+    std::vector<std::pair<u32, u32>> seats;
+    for(auto ent : e.select<PlayerCamera, PlayerInfo>())
+        if(auto const& [cam, info] = ent.components(); !info.is_remote() && cam.is_active())
+            seats.emplace_back(info.seat_idx, info.player_idx);
+    if(seats.size() < 3)
+        return {};
+    std::sort(seats.begin(), seats.end());
+    auto const at = std::find_if(seats.begin(), seats.end(), [&](auto const& s) { return s.second == *player; });
+    if(at == seats.end())
+        return {};
+    f32 const side = (at - seats.begin()) % 2 == 0 ? -1.f : 1.f;
+    return Vecf3{side * announcer_pan, 0.f, -announcer_ahead};
+}
 
 void alloc_multiplayer_controller(compo::EntityContainer& e)
 {
@@ -570,6 +597,7 @@ void alloc_multiplayer_controller(compo::EntityContainer& e)
         SoundEvent     ev{.type = SoundEvent::play_sound, .entity_id = announcer_sound_base | say->sound};
         PlaySoundEvent play{
             .sound    = &static_cast<blam::tagref_t const&>(lines.value()[say->sound]),
+            .position = announcer_side(e, say->player),
             .relative = true,
         };
         sounds->inject(ev, &play);

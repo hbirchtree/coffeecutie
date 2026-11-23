@@ -672,6 +672,8 @@ struct AnnounceEvent
     static constexpr auto event_type = GameEvent::Announce;
 
     libc_types::u16 sound{0}; /*!< Into matg's multiplayer sounds */
+    /*! The local player it is for, heard from their side of a split screen */
+    std::optional<libc_types::u32> player{};
 };
 
 /*! The game type's rules move a capture-the-flag flag (authority only) */
