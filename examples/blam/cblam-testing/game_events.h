@@ -686,8 +686,9 @@ struct FlagCommandEvent
 
     enum kind_t : libc_types::u8
     {
-        reset, /*!< Back to its base, out of anyone's hands */
-        give,  /*!< Into a player's hands */
+        reset,  /*!< Back to its base, out of anyone's hands */
+        give,   /*!< Into a player's hands */
+        remove, /*!< Out of play until reset */
     } kind{reset};
 
     libc_types::u16 team{0};

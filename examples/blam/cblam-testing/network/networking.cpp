@@ -3105,8 +3105,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .difficulty = game.difficulty,
             .saves      = game.saves,
             .reverts    = game.reverts,
-            .flag_carrier = {static_cast<i16>(game.flags[0].carrier), static_cast<i16>(game.flags[1].carrier)},
-            .flag_taken   = {game.flags[0].taken, game.flags[1].taken},
+            .flag_carrier = {static_cast<i16>(game.flags[0].carrier), static_cast<i16>(game.flags[1].carrier),
+                             static_cast<i16>(game.flags[2].carrier)},
+            .flag_taken   = {game.flags[0].taken, game.flags[1].taken, game.flags[2].taken},
+            .timed        = game.timed,
+            .juggernaut   = game.juggernaut,
+            .hill         = game.hill,
+            .hill_holder  = game.hill_holder,
+            .capture_blocked = game.capture_blocked,
         };
         std::vector<NavPointSync> navs;
         for(auto const& nav : game.nav_points)
@@ -5264,6 +5270,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 game.flags[t].carrier = sync.flag_carrier[t];
                 game.flags[t].taken   = sync.flag_taken[t] != 0;
             }
+            game.juggernaut  = sync.juggernaut;
+            game.timed       = sync.timed != 0;
+            game.hill        = sync.hill;
+            game.hill_holder = sync.hill_holder;
+            game.capture_blocked = sync.capture_blocked;
             if(sync.nav_points == 0)
                 game.nav_points.clear();
             break;

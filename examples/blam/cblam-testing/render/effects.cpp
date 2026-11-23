@@ -9,9 +9,11 @@
 #include "selected_version.h"
 #include "audio/sounds.h"
 #include "game/game_mode.h"
+#include "game/hills.h"
 #include "game/save_state.h"
 #include "ticks.h"
 
+#include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_particles.h>
 #include <blam/volta/blam_unit.h>
 
@@ -340,6 +342,7 @@ struct EffectSystem
             m_effect_decals.clear();
             m_antennas.clear();
             m_flags.clear();
+            m_hills.reset();
             m_sprite_pixels.clear();
             m_animations.clear();
         }
@@ -371,6 +374,7 @@ struct EffectSystem
         step_weather(p, scene, dt);
         step_decals(p, scene, dt);
         step_antennas(p, scene, dt);
+        draw_hill(p, scene, files, dt);
         step_flags(p, scene, dt);
     }
 
@@ -954,6 +958,67 @@ struct EffectSystem
                     return t;
         }
         return 0;
+    }
+
+    /* ---- King of the hill ---- */
+
+    /* The hill in play: a fence of the globals' hill shader standing along
+     * its outline, the pattern sliding round it */
+    void draw_hill(Proxy& p, EffectScene& scene, BlamFiles<halo_version> const& files, f32 dt)
+    {
+        auto const& state = p.template subsystem<GameState>();
+        if(state.game_type != GameSetup::game_type_t::koth || state.hill < 0)
+            return;
+        if(!m_hills)
+            m_hills = hills::of(files);
+        if(static_cast<size_t>(state.hill) >= m_hills->size())
+            return;
+        auto const& hull = (*m_hills)[static_cast<size_t>(state.hill)].hull;
+        auto const* bmp  = hill_bitmap();
+        if(hull.size() < 2 || !bmp)
+            return;
+        m_hill_slide = std::fmod(m_hill_slide + dt / hill_slide_period, 1.f);
+        /* The panels are in its colour; its alpha is only their circuit lines */
+        EffectScene::mesh_t mesh{.bitmap = bmp, .blend = blend_t::add, .ignore_alpha = true};
+        /* A mesh's uv covers its image once: cut where the pattern repeats */
+        Vecf3 const up{0.f, 0.f, hill_fence_height};
+        auto const  corner = [&mesh](Vecf3 const& at, f32 u, f32 v) {
+            mesh.positions.push_back(at);
+            mesh.uv.push_back({u, v});
+        };
+        f32 along = m_hill_slide;
+        for(size_t i = 0; i < hull.size(); i++)
+        {
+            Vecf3 const a = hull[i], b = hull[(i + 1) % hull.size()];
+            f32 const   span = glm::distance(Vecf2(a), Vecf2(b)) / hill_tile;
+            for(f32 done = 0.f; done < span;)
+            {
+                f32 const   u0   = along - std::floor(along);
+                f32 const   step = std::min(1.f - u0, span - done);
+                Vecf3 const p0   = glm::mix(a, b, done / span);
+                Vecf3 const p1   = glm::mix(a, b, (done + step) / span);
+                f32 const   u1   = u0 + step;
+                corner(p0, u0, 0.f), corner(p1, u1, 0.f), corner(p1 + up, u1, 1.f);
+                corner(p0, u0, 0.f), corner(p1 + up, u1, 1.f), corner(p0 + up, u0, 1.f);
+                done += step;
+                along += step;
+            }
+        }
+        scene.meshes.push_back(std::move(mesh));
+    }
+
+    blam::tagref_t const* hill_bitmap()
+    {
+        auto globals_tag = m_index.tag_of("globals\\globals");
+        if(!globals_tag.has_value())
+            return nullptr;
+        auto globals = (*globals_tag)->template data<blam::globals::globals>(*m_magic);
+        if(!globals.has_value())
+            return nullptr;
+        auto mp = globals.value()->multiplayer.data(*m_magic);
+        if(!mp.has_value() || mp.value().empty())
+            return nullptr;
+        return flag_bitmap(mp.value()[0].hill_shader);
     }
 
     /* The cloth's texture: its shader's first map, chicago on PC and
@@ -2744,6 +2809,9 @@ struct EffectSystem
     static constexpr f32    flare_fade_rate      = 8.f;    /* per second */
     static constexpr f32    sun_distance         = 2000.f; /* wu */
     static constexpr size_t max_contrail_points  = 256;
+    static constexpr f32    hill_fence_height    = 1.f; /* wu, as tall as a repeat is wide (square bitmap) */
+    static constexpr f32    hill_tile            = 1.f; /* wu of fence a repeat of its pattern spans */
+    static constexpr f32    hill_slide_period    = 3.f; /* s; the shader's u slide */
     static constexpr f32    default_light_life   = .25f;
     static constexpr f32    ticks_per_second     = 30.f;
     static constexpr f32    debris_lifetime      = 30.f; /* seconds */
@@ -2777,6 +2845,8 @@ struct EffectSystem
     std::vector<light_instance_t>    m_lights;
     std::vector<system_instance_t>   m_systems;
     std::vector<contrail_instance_t> m_contrails;
+    std::optional<std::vector<hills::hill_t>> m_hills; /* built once a map is loaded */
+    f32                                       m_hill_slide{0.f};
     std::vector<volume_instance_t>   m_volumes;
     std::vector<sprite_particle_t>   m_particles;
     std::set<u64>                    m_attached;

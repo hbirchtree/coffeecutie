@@ -5,6 +5,7 @@
 #include "data.h"
 #include "game_events.h"
 #include "game/game_modes.h"
+#include "game/hills.h"
 #include "network/networking.h"
 #include "scripting/script_vm.h"
 #include "selected_version.h"
@@ -24,6 +25,16 @@
 
 /* Sound entity ids for the announcer, one per line so a line restarts */
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
+constexpr std::string_view juggernaut_marker   = "juggernaut";
+constexpr std::string_view hill_marker         = "koth:hill";
+/* How long a blocked capture stays known after the rules last saw it, s */
+constexpr libc_types::f32 capture_blocked_hold = .5f;
+/* A hill's reach, my picks: below and above its flags, and around a hill
+ * of fewer than three */
+constexpr std::string_view race_marker = "race:";
+/* How near a race checkpoint counts as reaching it, wu; my pick, wide for
+ * vehicles */
+constexpr libc_types::f32 checkpoint_reach = 3.f;
 /* Where a seat's line comes from, inside the default reference distance so
  * it is no quieter: half ahead, most of the way to its side */
 constexpr libc_types::f32 announcer_pan = .7f;
@@ -61,9 +72,13 @@ struct MultiplayerController
 
     void start_restricted(Proxy& p, time_point const&)
     {
-        f32 dt = 0.f;
+        f32 dt    = 0.f;
+        u32 steps = 0;
         for(auto const& tick : m_ticks->take())
+        {
             dt += tick.seconds;
+            steps++;
+        }
         m_kill_queue->poll();
         m_rejoin_queue->poll();
         m_touch_queue->poll();
@@ -81,7 +96,7 @@ struct MultiplayerController
         if(state.kind != GameState::kind_t::multiplayer)
             return;
         state.over_for = state.phase == GameState::phase_t::over ? state.over_for + dt : 0.f;
-        announcer(p, state, dt);
+        announcer(p, state, dt, steps);
         team_colors(p, state);
         if(replica)
             return;
@@ -90,9 +105,14 @@ struct MultiplayerController
         for(u64 unit : rejoins)
             m_waiting[unit] = m_respawn_delay;
         m_proxy = &p;
+        hold_hill(p, state);
+        if((state.capture_blocked_for -= dt) <= 0.f)
+            state.capture_blocked = -1;
+        run_track(p, state);
         for(auto const& touch : touches)
             touched(state, touch);
-        if(m_vm && state.phase == GameState::phase_t::playing && dt > 0.f)
+        /* Once a game tick, so the rules' sleeps are in ticks */
+        for(u32 i = 0; m_vm && state.phase == GameState::phase_t::playing && i < steps; i++)
             m_vm->tick();
         m_proxy = nullptr;
         if(state.time_left > 0.f && (state.time_left -= dt) <= 0.f)
@@ -132,6 +152,127 @@ struct MultiplayerController
                 return native(*m_state, opcode, args);
             });
         configure(*m_vm, setup);
+        state.juggernaut  = -1;
+        /* Oddball's Juggernaut variant counts kills */
+        auto const* ball_type = m_vm->global("ball_type");
+        state.timed           = setup.game_type == GameSetup::game_type_t::koth ||
+                      (setup.game_type == GameSetup::game_type_t::oddball && (!ball_type || ball_type->as_real() != 2.f));
+        state.hill        = -1;
+        state.hill_holder = -1;
+        build_hills(files);
+        build_track(files);
+        m_race_next.clear();
+        m_at_checkpoint.clear();
+    }
+
+    /* ---- Race ---- */
+
+    /* The race_track flags, in their index order */
+    void build_track(BlamFiles<halo_version> const& files)
+    {
+        m_track.clear();
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+        auto flags = scenario->netgame.flags.data(files.container.magic);
+        if(!flags.has_value())
+            return;
+        std::vector<std::pair<u16, Vecf3>> points;
+        for(auto const& flag : flags.value())
+            if(flag.type == blam::scn::multiplayer_flag::flag_type_t::race_track)
+                points.emplace_back(flag.team_index, flag.pos);
+        std::stable_sort(points.begin(), points.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+        for(auto const& [_, at] : points)
+            m_track.push_back(at);
+    }
+
+    /* A player reaching the checkpoint they go for: the rules hear it once
+     * as they arrive. Each is shown the way to theirs */
+    void run_track(Proxy& p, GameState& state)
+    {
+        if(state.game_type != GameSetup::game_type_t::race || m_track.empty() || !m_vm ||
+           state.phase != GameState::phase_t::playing)
+            return;
+        std::set<u32> arrived;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            u32 const   idx    = ent.template get<PlayerInfo>().player_idx;
+            if((status && status->dead) || !state.player(idx))
+                continue;
+            auto const next = static_cast<size_t>(m_race_next[idx]) % m_track.size();
+            if(glm::distance(ent.template get<Model>().position, m_track[next]) > checkpoint_reach)
+                continue;
+            arrived.insert(idx);
+            if(m_at_checkpoint.contains(idx))
+                continue;
+            if(auto* slot = m_vm->global("event_player"))
+                *slot = script_vm::value_t::number(blam::hsc::type_t::short_, static_cast<f32>(idx));
+            m_vm->wake("on_checkpoint");
+            m_vm->tick();
+        }
+        m_at_checkpoint = std::move(arrived);
+
+        auto navs = state.nav_points;
+        std::erase_if(navs, [](auto const& nav) { return nav.flag.starts_with(race_marker); });
+        for(auto const& player : state.players)
+            navs.push_back({
+                .arrow    = "default",
+                .flag     = std::string(race_marker) + std::to_string(player.player_idx),
+                .position = m_track[static_cast<size_t>(m_race_next[player.player_idx]) % m_track.size()],
+                .offset   = .6f,
+                .player   = static_cast<i32>(player.player_idx),
+            });
+        if(navs != state.nav_points)
+            state.nav_points = std::move(navs);
+    }
+
+    /* ---- King of the hill ---- */
+
+    void build_hills(BlamFiles<halo_version> const& files)
+    {
+        m_hills = hills::of(files);
+    }
+
+    /* Who is in the hill in play, for the rules and everyone's announcer */
+    void hold_hill(Proxy& p, GameState& state)
+    {
+        if(state.game_type != GameSetup::game_type_t::koth || state.hill < 0 ||
+           static_cast<size_t>(state.hill) >= m_hills.size())
+        {
+            state.hill_holder = -1;
+            return;
+        }
+        auto const&   hill = m_hills[static_cast<size_t>(state.hill)];
+        std::set<i32> sides;
+        i16           holder = -1;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            if((status && status->dead) || !hill.holds(ent.template get<Model>().position))
+                continue;
+            u32 const   idx    = ent.template get<PlayerInfo>().player_idx;
+            auto const* player = state.player(idx);
+            sides.insert(state.teams && player ? player->team : static_cast<i32>(idx));
+            holder = static_cast<i16>(idx);
+        }
+        state.hill_holder = sides.size() > 1 ? GameState::contested : holder;
+    }
+
+    void place_hill(GameState& state, i32 index)
+    {
+        state.hill = index >= 0 && static_cast<size_t>(index) < m_hills.size() ? static_cast<i16>(index) : -1;
+        auto navs  = state.nav_points;
+        std::erase_if(navs, [](auto const& nav) { return nav.flag == hill_marker; });
+        if(state.hill >= 0)
+            navs.push_back({
+                .arrow    = "default",
+                .flag     = std::string(hill_marker),
+                .position = m_hills[static_cast<size_t>(state.hill)].centre,
+                .offset   = .6f,
+                .team     = static_cast<i16>(blam::scn::unit::team_t::player),
+            });
+        state.nav_points = std::move(navs);
     }
 
     /* --game-option name=value: any global of the program by that name */
@@ -155,7 +296,7 @@ struct MultiplayerController
 
     /* Started once the game is known here, so a peer joining late hears the
      * game type; it sees its players' kills and deaths as they are told */
-    void announcer(Proxy& p, GameState const& state, f32 dt)
+    void announcer(Proxy& p, GameState const& state, f32 dt, u32 steps)
     {
         m_clock += dt;
         /* Started from what everyone is told: a peer waits for the scores */
@@ -210,7 +351,8 @@ struct MultiplayerController
         }
         if(state.phase == GameState::phase_t::over && !std::exchange(m_over, true))
             m_local_vm->wake("on_game_over");
-        if(dt > 0.f)
+        /* Once a game tick, as the rules */
+        for(u32 i = 0; i < steps; i++)
             m_local_vm->tick();
     }
 
@@ -233,6 +375,12 @@ struct MultiplayerController
             auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
             return value_t::boolean(t < state.flags.size() && state.flags[t].taken);
         }
+        case mode_op::hill_holder:
+            return value_t::number(type_t::short_, state.hill_holder);
+        case mode_op::hill_index:
+            return value_t::number(type_t::short_, state.hill);
+        case mode_op::capture_blocked:
+            return value_t::number(type_t::short_, state.capture_blocked);
         case mode_op::team_score: {
             auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
             return value_t::number(type_t::short_, t < state.team_scores.size() ? state.team_scores[t] : 0);
@@ -296,14 +444,17 @@ struct MultiplayerController
             state.vehicle_respawn = arg(0);
             return {};
         case mode_op::flag_give:
-        case mode_op::flag_reset: {
+        case mode_op::flag_reset:
+        case mode_op::flag_remove: {
             GameEvent        ev{.type = GameEvent::FlagCommand};
             FlagCommandEvent command{
-                .kind   = op == mode_op::flag_give ? FlagCommandEvent::give : FlagCommandEvent::reset,
+                .kind   = op == mode_op::flag_give    ? FlagCommandEvent::give
+                          : op == mode_op::flag_remove ? FlagCommandEvent::remove
+                                                       : FlagCommandEvent::reset,
                 .team   = static_cast<u16>(arg(0)),
                 .player = static_cast<u32>(arg(1)),
             };
-            if(arg(0) >= 0.f && (op == mode_op::flag_reset || arg(1) >= 0.f))
+            if(arg(0) >= 0.f && (op != mode_op::flag_give || arg(1) >= 0.f))
                 m_game->inject(ev, &command);
             return {};
         }
@@ -324,6 +475,46 @@ struct MultiplayerController
         case mode_op::flag_reach_set:
             state.flag_reach = std::max(arg(0), 0.f);
             return {};
+        case mode_op::race_count:
+            return value_t::number(type_t::short_, static_cast<f32>(m_track.size()));
+        case mode_op::race_next:
+            return value_t::number(type_t::short_, arg(0) >= 0.f ? m_race_next[static_cast<u32>(arg(0))] : -1);
+        case mode_op::race_advance:
+            if(arg(0) >= 0.f && !m_track.empty())
+            {
+                auto& next = m_race_next[static_cast<u32>(arg(0))];
+                next       = static_cast<i16>((next + 1) % static_cast<i16>(m_track.size()));
+            }
+            return {};
+        case mode_op::capture_blocked_set:
+            state.capture_blocked     = arg(0) >= 0.f ? static_cast<i16>(arg(0)) : i16(-1);
+            state.capture_blocked_for = capture_blocked_hold;
+            return {};
+        case mode_op::hill_count:
+            return value_t::number(type_t::short_, static_cast<f32>(m_hills.size()));
+        case mode_op::hill_set:
+            place_hill(state, static_cast<i32>(arg(0)));
+            return {};
+        case mode_op::hill_holder:
+            return value_t::number(type_t::short_, state.hill_holder);
+        case mode_op::hill_index:
+            return value_t::number(type_t::short_, state.hill);
+        case mode_op::juggernaut_set: {
+            state.juggernaut = arg(0) >= 0.f ? static_cast<i32>(arg(0)) : -1;
+            /* Everyone sees who is it */
+            auto navs = state.nav_points;
+            std::erase_if(navs, [](auto const& nav) { return nav.flag == juggernaut_marker; });
+            if(state.juggernaut >= 0)
+                navs.push_back({
+                    .arrow  = "default",
+                    .flag   = std::string(juggernaut_marker),
+                    .unit   = state.juggernaut,
+                    .offset = .6f,
+                    .team   = static_cast<i16>(blam::scn::unit::team_t::player),
+                });
+            state.nav_points = std::move(navs);
+            return {};
+        }
         case mode_op::team_of: {
             auto const* player = arg(0) >= 0.f ? who(0) : nullptr;
             return value_t::number(type_t::short_, player ? player->team : -1);
@@ -550,6 +741,10 @@ struct MultiplayerController
     std::map<u32, std::vector<f32>> m_kill_times; /*!< By player: when they killed */
     std::map<u32, i16>              m_streaks;    /*!< By player: kills since dying */
     std::optional<u32>              m_speaking_for; /*!< The local player a kill line is for */
+    std::vector<hills::hill_t>      m_hills;
+    std::vector<Vecf3>              m_track;         /*!< Race checkpoints in order */
+    std::map<u32, i16>              m_race_next;     /*!< By player: the checkpoint they go for */
+    std::set<u32>                   m_at_checkpoint; /*!< Players at theirs, heard of already */
     std::mt19937               m_random{std::random_device{}()};
 };
 

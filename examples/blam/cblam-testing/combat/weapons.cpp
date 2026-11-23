@@ -171,10 +171,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 state.reloading = 0.f;
                 pull(p, ent.id(), info, cam, *weapon_tag, true);
             }
-            /* Nothing to fire (a flag): melee alone, and a pull lets go of it */
+            /* Nothing to fire (a flag): melee alone; a pull, or switching
+             * back to a weapon, lets go of it */
             if(!triggers.has_value() || triggers.value().empty())
             {
-                if(input.intent.fire && !throwing && state.striking <= 0.f && equip->objective.tag == weapon_tag)
+                if((swap || (input.intent.fire && !throwing && state.striking <= 0.f)) &&
+                   equip->objective.tag == weapon_tag)
                 {
                     m_hold_fire.insert(ent.id());
                     EquipWeaponEvent drop{
@@ -408,15 +410,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(m_flag_generation != files.load_generation)
             {
                 m_flag            = flag_weapon(files);
+                m_ball            = flag_weapon(files, true);
                 m_flag_generation = files.load_generation;
             }
             for(auto item : p.template select<Model, NetworkInfo>())
             {
                 auto [model, item_net] = item.components();
                 auto const* tag        = model.origin_object;
-                /* The flag goes by the game type's rules, not by walking over it */
+                /* The flag and the ball go by the game type's rules, not by
+                 * walking over them */
                 if(item_net.instance_id == 0 ||
-                   SpawnObjectEvent::is_impostor(item_net.instance_id) || !tag || tag == m_flag ||
+                   SpawnObjectEvent::is_impostor(item_net.instance_id) || !tag || tag == m_flag || tag == m_ball ||
                    taken.contains(item.id()) || p.template get<PlayerInfo>(item.id()))
                     continue;
                 /* A grenade of a kind carried, while there is room for it */
@@ -1853,6 +1857,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     u32                       m_generation{0};
     blam::tag_t const*        m_flag{nullptr}; /*!< Taken by the game type's rules, not walked over */
+    blam::tag_t const*        m_ball{nullptr}; /*!< Oddball's, likewise */
     std::set<u64>             m_hold_fire;     /*!< Let go of a flag with the trigger still held */
     u32                       m_flag_generation{0};
     std::map<u64, state_t>    m_states;
