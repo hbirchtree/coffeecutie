@@ -116,6 +116,10 @@ class MassPointAction : public btActionInterface
             m_throttle = m_strafe = 0.f;
             m_handbrake = false;
         }
+        /* Flown, or its engine still running down, it never sleeps: asleep
+         * mid-air nothing would lift it or let it fall */
+        if(!m_body.isStaticOrKinematicObject() && m_drive && (was_driven || (m_lifting > 0 && m_power > 0.f)))
+            m_body.activate();
         if(m_body.isStaticOrKinematicObject() || !m_body.isActive())
             return;
         /* A turret's gunner only turns it: nothing drives or lifts it, and
@@ -514,8 +518,13 @@ class MassPointAction : public btActionInterface
                               : accel;
         m_body.applyCentralImpulse(forward * (mass * coast * dt));
         btVector3 const slip = velocity - forward * speed;
-        m_body.applyCentralImpulse(
-            slip * (-mass * std::min(1.f, flight_grip * dt)));
+        f32 const       grip = std::min(1.f, flight_grip * dt);
+        m_body.applyCentralImpulse(slip * (-mass * grip));
+        /* Let go of the stick, it also sinks slowly: pulled down against the
+         * bleeds above, it settles at about coast_sink */
+        if(std::abs(m_throttle) <= stick_deadzone)
+            m_body.applyCentralImpulse(
+                btVector3(0, 0, mass * grip * (-coast_sink_pull - f32(velocity.z()))));
     }
 
     /* Damped spring turning the body to `nose` and `up` */
@@ -600,6 +609,7 @@ class MassPointAction : public btActionInterface
     static constexpr f32 flight_grip            = 2.f;  /* 1/s */
     static constexpr f32 halo_tick_rate         = 30.f; /* Hz */
     static constexpr f32 hover_grip             = 3.f;  /* 1/s */
+    static constexpr f32 coast_sink_pull        = 1.4f; /* wu/s; a banshee let go sinks at ~.3, my pick */
     /* Of forward speed, for a scout's tag-less strafe and reverse */
     static constexpr f32 scout_slide            = .9f;
     static constexpr f32 scout_reverse          = .9f;
