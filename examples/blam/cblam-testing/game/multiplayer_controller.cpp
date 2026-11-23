@@ -11,6 +11,7 @@
 #include "audio/sounds.h"
 #include "player/spawn_points.h"
 #include "ticks.h"
+#include "ui/ui_profile.h"
 
 #include <blam/volta/blam_globals.h>
 
@@ -47,6 +48,8 @@ using MultiplayerManifest = compo::SubsystemManifest<
         const NetworkState,
         const LoadingStatus,
         const GameSetup,
+        const PlayerProfile,
+        const LocalLobby,
         const BlamFiles<halo_version>>,
     empty_list_t>;
 
@@ -695,19 +698,25 @@ struct MultiplayerController
 
     /* Players wear their team's colour as change colour C, which cyborg_mp
      * leaves to the game; their first-person arms too */
+    /* Teams wear theirs; without teams, a seat here wears its profile's */
     static void team_colors(Proxy& p, GameState const& state)
     {
-        if(!state.teams)
-            return;
+        auto const&        profiles = p.template subsystem<PlayerProfile>();
+        auto const&        lobby    = p.template subsystem<LocalLobby>();
         std::map<u64, u32> worn;
         for(auto ent : p.template select<PlayerInfo, Model>())
         {
             auto [info, model] = ent.components();
             auto const* player = state.player(info.player_idx);
-            if(!player || player->team < 0)
+            auto const* cam    = p.template get<PlayerCamera>(ent.id());
+            if(state.teams && player && player->team >= 0)
+                model.change_colors[2] = pack_color(player->team == 0 ? Vecf3{1.f, 0.f, 0.f} : Vecf3{0.f, 0.f, 1.f});
+            else if(!state.teams && !info.is_remote() && cam && cam->controller.index)
+                model.change_colors[2] = pack_color(
+                    PlayerProfile::colors.at(profiles.at(lobby.profile_of(*cam->controller.index)).color).rgb);
+            else
                 continue;
-            model.change_colors[2] = pack_color(player->team == 0 ? Vecf3{1.f, 0.f, 0.f} : Vecf3{0.f, 0.f, 1.f});
-            worn[ent.id()]         = model.change_colors[2];
+            worn[ent.id()] = model.change_colors[2];
         }
         for(auto ent : p.template select<Attachment, Model>())
         {

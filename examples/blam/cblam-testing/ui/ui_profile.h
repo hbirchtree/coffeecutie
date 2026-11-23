@@ -2,18 +2,18 @@
 
 #include <coffee/components/entity_container.h>
 
+#include <peripherals/typing/vectors/vector_types.h>
+
 #include <array>
 #include <string>
 #include <vector>
 
-/* The local player's profile, as the shell UI edits it. Values are indices
- * into the spinners' own string lists until real settings exist. */
+/* Players' profiles, as the shell UI edits them and profiles.json keeps
+ * them: each with a colour and controls. Control values are indices into the
+ * spinners' own string lists */
 struct PlayerProfile : compo::SubsystemBase
 {
     using type = PlayerProfile;
-
-    std::u16string name{u"Player"};
-    std::u16string game_setting_name;
 
     struct controls_t
     {
@@ -22,7 +22,43 @@ struct PlayerProfile : compo::SubsystemBase
         libc_types::u16 vibration{0};     /* YES */
         libc_types::u16 invert_flight{1}; /* NO */
         libc_types::u16 auto_center{1};   /* NO */
-    } controls;
+    };
+
+    struct profile_t
+    {
+        std::u16string  name{u"Player"};
+        libc_types::u16 color{0}; /*!< Into colors */
+        controls_t      controls;
+    };
+
+    std::vector<profile_t> profiles{profile_t{}};
+    libc_types::u16        editing{0};  /*!< The one the edit screens show */
+    libc_types::u16        selected{0}; /*!< Focused in a profile list */
+    std::u16string         game_setting_name;
+
+    /* CE's armour colours, in its picker's order */
+    struct color_t
+    {
+        char16_t const*                 name;
+        typing::vector_types::Vecf3 rgb;
+    };
+    static std::array<color_t, 18> const colors;
+
+    profile_t& edited()
+    {
+        if(editing >= profiles.size())
+            editing = 0;
+        return profiles.at(editing);
+    }
+
+    profile_t const& at(libc_types::i32 index) const
+    {
+        return profiles.at(index >= 0 && static_cast<size_t>(index) < profiles.size() ? static_cast<size_t>(index) : 0);
+    }
+
+    /* profiles.json, beside config.json */
+    void load();
+    void save() const;
 };
 
 /* Controllers that joined a split screen lobby, indexed by controller; the
@@ -33,6 +69,14 @@ struct LocalLobby : compo::SubsystemBase
 
     std::array<bool, 4> joined{};
     std::array<bool, 4> profile_chosen{};
+    /*! Each controller's profile, by index; the first profile until chosen */
+    std::array<libc_types::i32, 4> profile{};
+
+    /*! The profile a controller plays with */
+    libc_types::i32 profile_of(libc_types::u32 controller) const
+    {
+        return controller < profile.size() ? profile[controller] : 0;
+    }
 
     std::vector<libc_types::u32> seated_controllers() const
     {
