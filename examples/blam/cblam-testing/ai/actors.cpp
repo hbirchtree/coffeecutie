@@ -295,7 +295,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr size_t max_threats  = 4;
     static constexpr f32 threat_weight   = 6.f;  /* score off a spot per other enemy that sees it */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
-    static constexpr f32 camouflage_sight = 2.f; /* wu within which camouflage is noticed */
+    static constexpr f32 camouflage_sight = 1.f; /* wu within which camouflage is noticed: arm's reach, my pick */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
     static constexpr f32 drop_lift       = .4f;  /* wu above the feet belongings fall from */
     static constexpr f32 drop_speed      = 1.5f; /* wu/s they are tossed out at */
@@ -645,7 +645,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.delay_up = false;
         if(!feval(flags & flags_t::magic_sight_after_timer))
             return;
-        if(u64 const player = nearest_player(p, model))
+        if(u64 const player = nearest_player(p, model, true))
             if(auto const* seen = p.template get<Model>(player))
             {
                 actor.target    = player;
@@ -890,7 +890,16 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return it != m_platoons.end() && it->second.defending;
     }
 
-    u64 nearest_player(Proxy& p, Model const& model)
+    static bool cloaked(Proxy& p, u64 unit)
+    {
+        auto const* info  = p.template get<PlayerInfo>(unit);
+        auto const* model = p.template get<Model>(unit);
+        return (info && info->camouflaged) || (model && model->camouflaged);
+    }
+
+    /* The nearest living player; `sighted` leaves out the camouflaged but
+     * up close, for knowing where one is rather than following */
+    u64 nearest_player(Proxy& p, Model const& model, bool sighted = false)
     {
         u64 best   = 0;
         f32 best_d = std::numeric_limits<f32>::max();
@@ -899,7 +908,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             auto [info, target, status] = player.components();
             if(!info.mode.physics || status.dead)
                 continue;
-            if(f32 const d = glm::distance(target.position, model.position); d < best_d)
+            f32 const d = glm::distance(target.position, model.position);
+            if(sighted && (info.camouflaged || target.camouflaged) && d > camouflage_sight)
+                continue;
+            if(d < best_d)
             {
                 best_d = d;
                 best   = player.id();
@@ -1136,7 +1148,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 continue;
             theirs.target    = actor.target;
             theirs.last_seen = actor.last_seen;
-            theirs.seen_ago  = look_period * 1.5f;
+            /* Told of someone camouflaged, they search; they don't shoot unseen */
+            theirs.seen_ago  = cloaked(p, actor.target) ? sighting_memory * 2.f : look_period * 1.5f;
             theirs.fire_in   = std::max(theirs.fire_in, 1.f);
             if(theirs.state == state_t::idle)
                 enter(theirs, state_t::combat);
