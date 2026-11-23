@@ -5,6 +5,7 @@
 #include "data.h"
 #include "game_events.h"
 #include "game/game_modes.h"
+#include "game/hills.h"
 #include "network/networking.h"
 #include "scripting/script_vm.h"
 #include "selected_version.h"
@@ -30,9 +31,6 @@ constexpr std::string_view hill_marker         = "koth:hill";
 constexpr libc_types::f32 capture_blocked_hold = .5f;
 /* A hill's reach, my picks: below and above its flags, and around a hill
  * of fewer than three */
-constexpr libc_types::f32 hill_below  = .5f;
-constexpr libc_types::f32 hill_above  = 2.5f;
-constexpr libc_types::f32 hill_radius = 2.f;
 constexpr std::string_view race_marker = "race:";
 /* How near a race checkpoint counts as reaching it, wu; my pick, wide for
  * vehicles */
@@ -227,78 +225,10 @@ struct MultiplayerController
 
     /* ---- King of the hill ---- */
 
-    /* Each hill is the hill_flag netgame flags of one index: the ground
-     * they outline (their convex hull), and some height above it */
     void build_hills(BlamFiles<halo_version> const& files)
     {
-        m_hills.clear();
-        auto const* scenario = files.container.scenario().value_or(nullptr);
-        if(!scenario)
-            return;
-        auto flags = scenario->netgame.flags.data(files.container.magic);
-        if(!flags.has_value())
-            return;
-        std::map<u16, std::vector<Vecf3>> corners;
-        for(auto const& flag : flags.value())
-            if(flag.type == blam::scn::multiplayer_flag::flag_type_t::hill_flag)
-                corners[flag.team_index].push_back(flag.pos);
-        for(auto const& [_, points] : corners)
-        {
-            hill_t hill{.low = points.front().z, .high = points.front().z};
-            std::vector<Vecf2> flat;
-            for(auto const& at : points)
-            {
-                hill.centre += at / static_cast<f32>(points.size());
-                hill.low  = std::min(hill.low, at.z);
-                hill.high = std::max(hill.high, at.z);
-                flat.emplace_back(at);
-            }
-            hill.hull = convex_hull(std::move(flat));
-            m_hills.push_back(std::move(hill));
-        }
+        m_hills = hills::of(files);
     }
-
-    static std::vector<Vecf2> convex_hull(std::vector<Vecf2> points)
-    {
-        std::sort(points.begin(), points.end(), [](auto const& a, auto const& b) {
-            return a.x < b.x || (a.x == b.x && a.y < b.y);
-        });
-        if(points.size() < 3)
-            return points;
-        auto const cross = [](Vecf2 o, Vecf2 a, Vecf2 b) { return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x); };
-        std::vector<Vecf2> hull(points.size() * 2);
-        size_t             k = 0;
-        for(size_t i = 0; i < points.size(); hull[k++] = points[i++])
-            while(k >= 2 && cross(hull[k - 2], hull[k - 1], points[i]) <= 0.f)
-                k--;
-        for(size_t i = points.size() - 1, t = k + 1; i > 0; hull[k++] = points[--i])
-            while(k >= t && cross(hull[k - 2], hull[k - 1], points[i - 1]) <= 0.f)
-                k--;
-        hull.resize(k - 1);
-        return hull;
-    }
-
-    struct hill_t
-    {
-        std::vector<Vecf2> hull; /*!< Counter-clockwise */
-        Vecf3              centre{};
-        f32                low{0.f}, high{0.f};
-
-        bool holds(Vecf3 const& at) const
-        {
-            if(at.z < low - hill_below || at.z > high + hill_above)
-                return false;
-            if(hull.size() < 3)
-                return glm::distance(Vecf2(at), Vecf2(centre)) <= hill_radius;
-            for(size_t i = 0; i < hull.size(); i++)
-            {
-                Vecf2 const a = hull[i], b = hull[(i + 1) % hull.size()];
-                if((b.x - a.x) * (at.y - a.y) - (b.y - a.y) * (at.x - a.x) < 0.f)
-                    return false;
-            }
-            return true;
-        }
-    };
 
     /* Who is in the hill in play, for the rules and everyone's announcer */
     void hold_hill(Proxy& p, GameState& state)
@@ -803,7 +733,7 @@ struct MultiplayerController
     std::map<u32, std::vector<f32>> m_kill_times; /*!< By player: when they killed */
     std::map<u32, i16>              m_streaks;    /*!< By player: kills since dying */
     std::optional<u32>              m_speaking_for; /*!< The local player a kill line is for */
-    std::vector<hill_t>             m_hills;
+    std::vector<hills::hill_t>      m_hills;
     std::vector<Vecf3>              m_track;         /*!< Race checkpoints in order */
     std::map<u32, i16>              m_race_next;     /*!< By player: the checkpoint they go for */
     std::set<u32>                   m_at_checkpoint; /*!< Players at theirs, heard of already */
