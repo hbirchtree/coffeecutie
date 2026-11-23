@@ -43,11 +43,15 @@ enum class mode_op : libc_types::u16
     kills_within, /*!< (kills_within <player> <real seconds>): their kills that recent */
     kill_streak,  /*!< (kill_streak <player>): their kills since last dying */
     team_score,   /*!< (team_score <team>) */
+
+    /* Juggernaut, on the authority */
+    juggernaut_set, /*!< (juggernaut_set <player>): marks who is it, -1 for nobody */
 };
 
 /* matg's multiplayer sounds, by their place in the block */
 enum class announcer : libc_types::i16
 {
+    play_ball     = 0,
     game_over     = 1,
     double_kill   = 14,
     triple_kill   = 15,
@@ -60,10 +64,15 @@ enum class announcer : libc_types::i16
     red_team_has_the_flag   = 11,
     red_team_flag_returned  = 12,
     red_team_score          = 13,
+    oddball                 = 19,
     slayer                  = 21,
     capture_the_flag        = 22,
+    team_oddball            = 33,
     team_slayer             = 35,
 };
+
+/* Oddball's ball, among capture the flag's flags (GameState::ball) */
+constexpr libc_types::i16 ball_slot = 2;
 
 /* Kills this close together are one multi-kill; my pick */
 constexpr libc_types::f32 multi_kill_seconds = 4.f;
@@ -233,6 +242,129 @@ hsc_builder::program_t<BC> ctf(GameSetup const& variant)
     return std::move(b).build();
 }
 
+/* Oddball, as CE plays it: the ball starts at one of its spawns; whoever
+ * touches it on the ground takes it and scores a point a second carrying it.
+ * Dropped, it lies until picked up or gone back (30 s, my pick). First to
+ * the limit wins. Ball type 2 is Juggernaut instead: no ball, the first to
+ * kill is it, only it scores kills, and whoever kills it takes over */
+template<typename BC>
+hsc_builder::program_t<BC> oddball()
+{
+    using hsc_builder::script_type_t;
+    using hsc_builder::type_t;
+    hsc_builder::builder<BC> b;
+    auto const short_g = [&b](char const* name) { return b.global(name, type_t::short_); };
+    auto const ball    = [&b] { return b.short_(ball_slot); };
+    auto const carrier = [&] { return b.call(op<BC>(mode_op::flag_carrier), type_t::short_, {ball()}); };
+    auto const juggernaut_game = [&] { return b.call(BC::equal, type_t::bool_, {short_g("ball_type"), b.short_(2)}); };
+    auto const check_limit = [&](char const* limit) {
+        return b.if_(
+            b.call(
+                BC::gequals,
+                type_t::bool_,
+                {b.call(op<BC>(mode_op::leader_score), type_t::short_, {}), short_g(limit)}),
+            b.call(op<BC>(mode_op::game_over), type_t::void_, {}));
+    };
+    auto const crown = [&](auto who) {
+        return b.begin({
+            b.set("juggernaut", type_t::short_, who),
+            b.call(op<BC>(mode_op::juggernaut_set), type_t::void_, {short_g("juggernaut")}),
+        });
+    };
+
+    b.declare_global("score_limit", type_t::short_, b.short_(120)); /* seconds carried */
+    b.declare_global("kill_limit", type_t::short_, b.short_(15));   /* Juggernaut's */
+    b.declare_global("ball_type", type_t::short_, b.short_(0));
+    b.declare_global("ball_return_time", type_t::real_, b.real(30.f));
+    b.declare_global("flag_reach", type_t::real_, b.real(.8f));
+    b.declare_global("respawn_delay", type_t::real_, b.real(5.f));
+    b.declare_global("juggernaut", type_t::short_, b.short_(-1));
+    b.declare_global("event_killer", type_t::short_, b.short_(-1));
+    b.declare_global("event_victim", type_t::short_, b.short_(-1));
+    b.declare_global("event_player", type_t::short_, b.short_(-1));
+    b.declare_global("event_team", type_t::short_, b.short_(-1));
+
+    b.script(
+        "setup",
+        script_type_t::startup,
+        b.begin({
+            b.call(op<BC>(mode_op::respawn_delay_set), type_t::void_, {b.global("respawn_delay", type_t::real_)}),
+            b.call(op<BC>(mode_op::time_limit_set), type_t::void_, {b.real(0.f)}),
+            b.call(op<BC>(mode_op::flag_reach_set), type_t::void_, {b.global("flag_reach", type_t::real_)}),
+            b.if_(
+                b.call(BC::not_, type_t::bool_, {juggernaut_game()}),
+                b.call(op<BC>(mode_op::flag_reset), type_t::void_, {ball()})),
+        }));
+    b.script(
+        "on_flag_touched",
+        script_type_t::dormant,
+        b.if_(
+            b.call(
+                BC::and_,
+                type_t::bool_,
+                {b.call(BC::equal, type_t::bool_, {short_g("event_team"), ball()}),
+                 b.call(BC::less, type_t::bool_, {carrier(), b.short_(0)})}),
+            b.call(op<BC>(mode_op::flag_give), type_t::void_, {ball(), short_g("event_player")})));
+    b.script(
+        "carried",
+        script_type_t::continuous,
+        b.begin({
+            b.call(BC::sleep, type_t::void_, {b.short_(30)}),
+            b.if_(
+                b.call(BC::gequals, type_t::bool_, {carrier(), b.short_(0)}),
+                b.begin({
+                    b.call(op<BC>(mode_op::score_add), type_t::void_, {carrier(), b.short_(1)}),
+                    check_limit("score_limit"),
+                })),
+        }));
+    b.script(
+        "ball_return",
+        script_type_t::continuous,
+        b.if_(
+            b.call(
+                BC::and_,
+                type_t::bool_,
+                {b.call(op<BC>(mode_op::flag_taken), type_t::bool_, {ball()}),
+                 b.call(BC::less, type_t::bool_, {carrier(), b.short_(0)}),
+                 b.call(
+                     BC::greater,
+                     type_t::bool_,
+                     {b.call(op<BC>(mode_op::flag_idle), type_t::real_, {ball()}),
+                      b.global("ball_return_time", type_t::real_)})}),
+            b.call(op<BC>(mode_op::flag_reset), type_t::void_, {ball()})));
+
+    auto const killer   = [&] { return short_g("event_killer"); };
+    auto const victim   = [&] { return short_g("event_victim"); };
+    auto const is       = [&](auto a, auto c) { return b.call(BC::equal, type_t::bool_, {a, c}); };
+    auto const no_kill  = b.call(BC::or_, type_t::bool_, {is(killer(), b.short_(-1)), is(killer(), victim())});
+    b.script(
+        "on_unit_killed",
+        script_type_t::dormant,
+        b.if_(
+            juggernaut_game(),
+            b.begin({
+                b.if_(
+                    no_kill,
+                    /* It fell by its own hand or the world's: the next kill crowns */
+                    b.if_(is(victim(), short_g("juggernaut")), crown(b.short_(-1))),
+                    b.if_(
+                        b.call(
+                            BC::or_,
+                            type_t::bool_,
+                            {b.call(BC::less, type_t::bool_, {short_g("juggernaut"), b.short_(0)}),
+                             is(victim(), short_g("juggernaut"))}),
+                        b.begin({
+                            crown(killer()),
+                            b.call(op<BC>(mode_op::score_add), type_t::void_, {killer(), b.short_(1)}),
+                        }),
+                        b.if_(
+                            is(killer(), short_g("juggernaut")),
+                            b.call(op<BC>(mode_op::score_add), type_t::void_, {killer(), b.short_(1)})))),
+                check_limit("kill_limit"),
+            })));
+    return std::move(b).build();
+}
+
 /* An announcer line, played here */
 template<typename BC>
 auto announce_line(hsc_builder::builder<BC>& b, announcer sound)
@@ -358,6 +490,24 @@ hsc_builder::program_t<BC> ctf_announcer()
     return std::move(b).build();
 }
 
+/* Oddball's announcer: the game type as it starts or is joined */
+template<typename BC>
+hsc_builder::program_t<BC> oddball_announcer()
+{
+    using hsc_builder::script_type_t;
+    using hsc_builder::type_t;
+    hsc_builder::builder<BC> b;
+    announce_kills(b);
+    b.script(
+        "announce_game",
+        script_type_t::startup,
+        b.if_(
+            b.call(op<BC>(mode_op::teams), type_t::bool_, {}),
+            announce_line(b, announcer::team_oddball),
+            announce_line(b, announcer::oddball)));
+    return std::move(b).build();
+}
+
 /* The announcer for a game type */
 template<typename BC>
 hsc_builder::program_t<BC> announcer_for(GameSetup::game_type_t type)
@@ -366,6 +516,8 @@ hsc_builder::program_t<BC> announcer_for(GameSetup::game_type_t type)
     {
     case GameSetup::game_type_t::ctf:
         return ctf_announcer<BC>();
+    case GameSetup::game_type_t::oddball:
+        return oddball_announcer<BC>();
     default:
         return slayer_announcer<BC>();
     }
@@ -379,6 +531,8 @@ hsc_builder::program_t<BC> rules_for(GameSetup const& setup)
     {
     case GameSetup::game_type_t::ctf:
         return ctf<BC>(setup);
+    case GameSetup::game_type_t::oddball:
+        return oddball<BC>();
     default:
         return slayer<BC>(25, 0.f);
     }

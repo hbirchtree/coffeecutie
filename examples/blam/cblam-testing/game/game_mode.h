@@ -100,8 +100,9 @@ struct GameState : compo::SubsystemBase
     };
     std::vector<nav_point_t> nav_points;
 
-    /*! Capture the flag: each team's flag (red 0, blue 1). The authority
-     *  keeps them; the rest is told whether each is taken and by whom */
+    /*! Capture the flag: each team's flag (red 0, blue 1), and Oddball's
+     *  ball (2). The authority keeps them; the rest is told whether each is
+     *  taken and by whom */
     struct flag_t
     {
         typing::vector_types::Vecf3 base{};
@@ -111,7 +112,9 @@ struct GameState : compo::SubsystemBase
         f32                         idle{0.f};     /*!< Seconds lying away from its base */
         libc_types::u64             object{0};     /*!< Where it lies, on the authority */
     };
-    std::array<flag_t, 2> flags{};
+    std::array<flag_t, 3> flags{};
+    static constexpr size_t ball = 2; /*!< Oddball's, among the flags */
+    i32                   juggernaut{-1}; /*!< Juggernaut: the player index who is it */
     f32                   flag_reach{.8f}; /*!< wu, set by the rules */
 
     player_t* player(u32 player_idx)

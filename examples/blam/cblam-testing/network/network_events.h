@@ -571,8 +571,10 @@ struct alignas(8) GameStateSync
     u16             nav_points{0}; /*!< How many NavPointSync follow */
     u32             saves{0};
     u32             reverts{0};
-    i16             flag_carrier[2]{-1, -1}; /*!< Capture the flag, by team */
-    u8              flag_taken[2]{};
+    i16             flag_carrier[3]{-1, -1, -1}; /*!< Capture the flag by team, then Oddball's ball */
+    u8              flag_taken[3]{};
+    u8              padding1{0};
+    i32             juggernaut{-1};
     u32             padding2{0};
 
     bool operator==(GameStateSync const&) const = default;

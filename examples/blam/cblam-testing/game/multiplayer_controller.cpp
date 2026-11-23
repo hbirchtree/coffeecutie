@@ -23,6 +23,7 @@
 
 /* Sound entity ids for the announcer, one per line so a line restarts */
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
+constexpr std::string_view juggernaut_marker   = "juggernaut";
 /* Where a seat's line comes from, inside the default reference distance so
  * it is no quieter: half ahead, most of the way to its side */
 constexpr libc_types::f32 announcer_pan = .7f;
@@ -327,6 +328,16 @@ struct MultiplayerController
         case mode_op::flag_reach_set:
             state.flag_reach = std::max(arg(0), 0.f);
             return {};
+        case mode_op::juggernaut_set: {
+            state.juggernaut = arg(0) >= 0.f ? static_cast<i32>(arg(0)) : -1;
+            /* Everyone sees who is it */
+            auto navs = state.nav_points;
+            std::erase_if(navs, [](auto const& nav) { return nav.flag == juggernaut_marker; });
+            if(state.juggernaut >= 0)
+                navs.push_back({.arrow = "default", .flag = std::string(juggernaut_marker), .unit = state.juggernaut, .offset = .6f});
+            state.nav_points = std::move(navs);
+            return {};
+        }
         case mode_op::team_of: {
             auto const* player = arg(0) >= 0.f ? who(0) : nullptr;
             return value_t::number(type_t::short_, player ? player->team : -1);
