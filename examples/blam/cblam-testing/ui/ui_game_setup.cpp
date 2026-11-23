@@ -514,6 +514,14 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
         }
         return std::nullopt;
     });
+    /* The chosen map, by its place in mp_map_list and mp_map_grafix */
+    auto const chosen_map = [&setup, mp_maps]() -> std::optional<i32> {
+        if(setup.mp_map >= mp_maps->entries.size())
+            return std::nullopt;
+        return static_cast<i32>(mp_maps->entries[setup.mp_map]);
+    };
+    data.bind_index(input_t::mp_set_textbox_map_name, chosen_map);
+    data.bind_index(input_t::mp_set_bitmap_for_map, chosen_map);
     /* No countdown to start: its label stays hidden */
     data.bind_text("autostart_label", [](std::u16string_view) { return std::u16string{}; });
     /* The pregame's players: one row a joined controller, with its profile;
