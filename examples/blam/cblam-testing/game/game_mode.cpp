@@ -93,11 +93,20 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
             auto [info, cam, net] = player.components();
             if(!biped_shown(info, cam, net) || state.player(info.player_idx))
                 continue;
-            /* A local seat plays on the team its controller chose */
+            /* A local seat plays on the team its controller chose; anyone
+             * else joins the smaller team (a peer's seats number from 4n) */
             auto const pad  = cam.controller.index.value_or(info.seat_idx);
-            i16 const  team = !info.is_remote() && pad < setup.seat_team.size()
-                                  ? static_cast<i16>(setup.seat_team[pad] & 1)
-                                  : static_cast<i16>(info.player_idx % 2);
+            i16        team = 0;
+            if(!info.is_remote() && pad < setup.seat_team.size())
+                team = static_cast<i16>(setup.seat_team[pad] & 1);
+            else
+            {
+                std::array<size_t, 2> sizes{};
+                for(auto const& other : state.players)
+                    if(other.team >= 0)
+                        sizes[static_cast<size_t>(other.team & 1)]++;
+                team = sizes[1] < sizes[0] ? 1 : 0;
+            }
             state.players.push_back({
                 .player_idx = info.player_idx,
                 .team       = state.teams ? team : i16(-1),

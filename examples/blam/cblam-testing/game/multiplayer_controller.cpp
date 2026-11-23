@@ -129,6 +129,7 @@ struct MultiplayerController
         m_load_generation = files.load_generation;
         m_waiting.clear();
         m_placed.clear();
+        m_last_spot.clear();
         m_vm.reset();
         m_local_vm.reset();
         m_seen.clear();
@@ -676,30 +677,40 @@ struct MultiplayerController
         }
     }
 
-    /* A start point for this game type and team, far from enemies */
+    /* A start point for this game type and team, safe from enemies */
     spawn_points::spot_t spot_for(
         Proxy& p, GameState const& state, BlamFiles<halo_version> const& files, PlayerInfo const& info)
     {
-        auto const* me = state.player(info.player_idx);
-        std::vector<Vecf3> enemies, standing;
+        auto const*            me = state.player(info.player_idx);
+        spawn_points::around_t around;
         for(auto other : p.template select<PlayerInfo, PlayerCamera, BipedStatus>())
         {
             auto [oinfo, cam, status] = other.components();
             auto const* them = state.player(oinfo.player_idx);
-            if(status.dead || oinfo.player_idx == info.player_idx)
-                continue;
             Vecf3 const feet = cam.camera.position - Vecf3{0.f, 0.f, oinfo.eye_height()};
-            standing.push_back(feet);
+            /* Seats not in the game are nobody; where anyone fell, this
+             * player too, is no place to come back */
+            if(!them)
+                continue;
+            if(status.dead)
+            {
+                around.deaths.push_back(feet);
+                continue;
+            }
+            if(oinfo.player_idx == info.player_idx)
+                continue;
+            around.standing.push_back(feet);
             if(!(me && them && me->team >= 0 && me->team == them->team))
-                enemies.push_back(feet);
+                around.enemies.push_back(feet);
         }
-        return spawn_points::pick(
-            files,
-            m_random,
-            enemies,
-            spawn_points::game_mode_of(state.game_type),
-            me ? me->team : i16(-1),
-            &standing);
+        if(auto last = m_last_spot.find(info.player_idx); last != m_last_spot.end())
+            around.last = last->second;
+        auto picked = spawn_points::pick(
+            files, m_random, around, spawn_points::game_mode_of(state.game_type), me ? me->team : i16(-1));
+        if(!picked)
+            return std::nullopt;
+        m_last_spot[info.player_idx] = picked->second;
+        return picked->first;
     }
 
     static constexpr f32 default_delay = 3.f;  /* s, until the rules say */
@@ -742,6 +753,7 @@ struct MultiplayerController
     std::map<u32, i16>              m_race_next;     /*!< By player: the checkpoint they go for */
     std::set<u32>                   m_at_checkpoint; /*!< Players at theirs, heard of already */
     std::mt19937               m_random{std::random_device{}()};
+    std::map<u32, size_t>      m_last_spot; /*!< Each player's last start point */
 };
 
 /* A line for one seat comes from its column when the screen is split in
