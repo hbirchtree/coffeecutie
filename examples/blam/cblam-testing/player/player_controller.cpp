@@ -741,7 +741,16 @@ struct PlayerController
         };
         /* Each way at its own clip's speed; |move| <= 1 keeps diagonals
          * within the faster of the two */
-        auto const&  basis = cam.camera_.cached;
+        /* Walked by the view the tick stepped to, not what is drawn past
+         * it, so the heading is the same at any frame rate */
+        StandardCamera ticked_basis = cam.camera_;
+        if(auto const past = m_past_tick_applied.find(id); past != m_past_tick_applied.end())
+        {
+            auto ticked = cam.camera;
+            ticked_basis.rotate(ticked, -past->second.x, -past->second.y);
+            ticked_basis.refresh_basis(ticked, cam.camera_opts);
+        }
+        auto const&  basis = ticked_basis.cached;
         auto const&  biped = info.biped;
         Vecf2 const& move  = input.intent.move;
         info.crouched      = input.intent.crouch;

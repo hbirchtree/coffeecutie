@@ -116,7 +116,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
              * client's swap is the server's to make */
             bool const swap   = std::exchange(input.intent.swap, false) &&
                               !p.template subsystem<NetworkState>().replica;
-            bool       reload = std::exchange(input.intent.reload, false);
+            /* Reload is acted on a tick: a press between ticks waits for one */
+            bool       reload = !ticks.empty() && std::exchange(input.intent.reload, false);
             bool const toss   = std::exchange(input.intent.grenade, false);
             bool const cycle  = std::exchange(input.intent.grenade_switch, false);
             bool const strike = std::exchange(input.intent.melee, false);
