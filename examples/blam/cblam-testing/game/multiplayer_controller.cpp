@@ -26,6 +26,8 @@
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
 constexpr std::string_view juggernaut_marker   = "juggernaut";
 constexpr std::string_view hill_marker         = "koth:hill";
+/* How long a blocked capture stays known after the rules last saw it, s */
+constexpr libc_types::f32 capture_blocked_hold = .5f;
 /* A hill's reach, my picks: below and above its flags, and around a hill
  * of fewer than three */
 constexpr libc_types::f32 hill_below  = .5f;
@@ -106,6 +108,8 @@ struct MultiplayerController
             m_waiting[unit] = m_respawn_delay;
         m_proxy = &p;
         hold_hill(p, state);
+        if((state.capture_blocked_for -= dt) <= 0.f)
+            state.capture_blocked = -1;
         run_track(p, state);
         for(auto const& touch : touches)
             touched(state, touch);
@@ -440,6 +444,8 @@ struct MultiplayerController
             return value_t::number(type_t::short_, state.hill_holder);
         case mode_op::hill_index:
             return value_t::number(type_t::short_, state.hill);
+        case mode_op::capture_blocked:
+            return value_t::number(type_t::short_, state.capture_blocked);
         case mode_op::team_score: {
             auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
             return value_t::number(type_t::short_, t < state.team_scores.size() ? state.team_scores[t] : 0);
@@ -541,6 +547,10 @@ struct MultiplayerController
                 auto& next = m_race_next[static_cast<u32>(arg(0))];
                 next       = static_cast<i16>((next + 1) % static_cast<i16>(m_track.size()));
             }
+            return {};
+        case mode_op::capture_blocked_set:
+            state.capture_blocked     = arg(0) >= 0.f ? static_cast<i16>(arg(0)) : i16(-1);
+            state.capture_blocked_for = capture_blocked_hold;
             return {};
         case mode_op::hill_count:
             return value_t::number(type_t::short_, static_cast<f32>(m_hills.size()));

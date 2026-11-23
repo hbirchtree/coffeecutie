@@ -3107,6 +3107,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .juggernaut   = game.juggernaut,
             .hill         = game.hill,
             .hill_holder  = game.hill_holder,
+            .capture_blocked = game.capture_blocked,
         };
         std::vector<NavPointSync> navs;
         for(auto const& nav : game.nav_points)
@@ -5267,6 +5268,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             game.juggernaut  = sync.juggernaut;
             game.hill        = sync.hill;
             game.hill_holder = sync.hill_holder;
+            game.capture_blocked = sync.capture_blocked;
             if(sync.nav_points == 0)
                 game.nav_points.clear();
             break;

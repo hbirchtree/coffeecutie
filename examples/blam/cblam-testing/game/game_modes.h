@@ -53,6 +53,11 @@ enum class mode_op : libc_types::u16
     hill_holder, /*!< (hill_holder): a player holding it alone (or their team), -1 nobody, -2 contested */
     hill_index,  /*!< (hill_index): the hill in play, -1 for none */
 
+    /* Capture the flag: a carrier at their base who may not score yet; the
+     * announcer reads it back as (capture_blocked) */
+    capture_blocked_set, /*!< (capture_blocked_set <player>) */
+    capture_blocked,     /*!< (capture_blocked): that player, -1 for none */
+
     /* Race, on the authority */
     race_count,   /*!< (race_count): the track's checkpoints */
     race_next,    /*!< (race_next <player>): the checkpoint they go for */
@@ -81,6 +86,7 @@ enum class announcer : libc_types::i16
     team_oddball            = 33,
     team_slayer             = 35,
     hill_move               = 30,
+    flag_failure            = 28,
     team_king_of_the_hill   = 32,
     king_of_the_hill        = 36,
     race                    = 20,
@@ -94,6 +100,8 @@ constexpr libc_types::i16 ball_slot = 2;
 
 /* How often the takers of a flag hear they still have it (20 s) */
 constexpr libc_types::i16 flag_reminder_ticks = 600;
+/* The flag-failure line repeats no sooner than this (4 s) */
+constexpr libc_types::i16 flag_failure_ticks = 120;
 
 /* Kills this close together are one multi-kill; my pick */
 constexpr libc_types::f32 multi_kill_seconds = 4.f;
@@ -243,7 +251,18 @@ hsc_builder::program_t<BC> ctf(GameSetup const& variant)
                             {b.call(op<BC>(mode_op::leader_score), type_t::short_, {}),
                              b.global("score_limit", type_t::short_)}),
                         b.call(op<BC>(mode_op::game_over), type_t::void_, {})),
-                })));
+                }),
+                /* At base with their own flag away: no score, and they hear why */
+                b.if_(
+                    b.call(
+                        BC::and_,
+                        type_t::bool_,
+                        {b.call(BC::gequals, type_t::bool_, {carrier(b.short_(enemy)), b.short_(0)}),
+                         b.call(
+                             op<BC>(mode_op::player_near_base),
+                             type_t::bool_,
+                             {carrier(b.short_(enemy)), b.short_(own), b.global("capture_reach", type_t::real_)})}),
+                    b.call(op<BC>(mode_op::capture_blocked_set), type_t::void_, {carrier(b.short_(enemy))}))));
         b.script(
             own == 0 ? "red_return" : "blue_return",
             script_type_t::continuous,
@@ -629,6 +648,16 @@ hsc_builder::program_t<BC> ctf_announcer()
         });
     };
     b.script("watch_flags", script_type_t::continuous, b.begin({flag_lines(0), flag_lines(1), remember()}));
+    /* A carrier kept from scoring hears it, no more than every 4 s */
+    b.script(
+        "flag_failure",
+        script_type_t::continuous,
+        b.if_(
+            b.call(BC::gequals, type_t::bool_, {b.call(op<BC>(mode_op::capture_blocked), type_t::short_, {}), b.short_(0)}),
+            b.begin({
+                announce_line(b, announcer::flag_failure),
+                b.call(BC::sleep, type_t::void_, {b.short_(flag_failure_ticks)}),
+            })));
     /* While a flag is away its takers are reminded they have it */
     for(i16 flag = 0; flag < 2; flag++)
         b.script(

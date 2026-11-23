@@ -120,6 +120,8 @@ struct GameState : compo::SubsystemBase
      *  for nobody, contested for more than one side */
     i16                   hill_holder{-1};
     static constexpr i16  contested = -2;
+    i16                   capture_blocked{-1}; /*!< A carrier kept from scoring, for a moment */
+    f32                   capture_blocked_for{0.f};
     f32                   flag_reach{.8f}; /*!< wu, set by the rules */
 
     player_t* player(u32 player_idx)
