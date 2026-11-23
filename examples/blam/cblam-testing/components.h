@@ -1038,6 +1038,10 @@ struct PlayerInfo
     u32         player_idx{0};
     u32         seat_idx{0};
     u32         loading_progress{100};
+    /*! Their profile's armour colour, an index into PlayerProfile::colors;
+     *  none_color without one */
+    static constexpr u16 none_color = 0xFFFF;
+    u16         color{none_color};
 
     struct permissions_t
     {

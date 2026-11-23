@@ -711,22 +711,18 @@ struct MultiplayerController
 
     /* Players wear their team's colour as change colour C, which cyborg_mp
      * leaves to the game; their first-person arms too */
-    /* Teams wear theirs; without teams, a seat here wears its profile's */
+    /* Teams wear theirs; without teams, each player their profile's */
     static void team_colors(Proxy& p, GameState const& state)
     {
-        auto const&        profiles = p.template subsystem<PlayerProfile>();
-        auto const&        lobby    = p.template subsystem<LocalLobby>();
         std::map<u64, u32> worn;
         for(auto ent : p.template select<PlayerInfo, Model>())
         {
             auto [info, model] = ent.components();
             auto const* player = state.player(info.player_idx);
-            auto const* cam    = p.template get<PlayerCamera>(ent.id());
             if(state.teams && player && player->team >= 0)
                 model.change_colors[2] = pack_color(player->team == 0 ? Vecf3{1.f, 0.f, 0.f} : Vecf3{0.f, 0.f, 1.f});
-            else if(!state.teams && !info.is_remote() && cam && cam->controller.index)
-                model.change_colors[2] = pack_color(
-                    PlayerProfile::colors.at(profiles.at(lobby.profile_of(*cam->controller.index)).color).rgb);
+            else if(!state.teams && info.color < PlayerProfile::colors.size())
+                model.change_colors[2] = pack_color(PlayerProfile::colors[info.color].rgb);
             else
                 continue;
             worn[ent.id()] = model.change_colors[2];
