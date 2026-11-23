@@ -280,7 +280,9 @@ struct MultiplayerController
     static void configure(vm_t& vm, GameSetup const& setup)
     {
         using blam::hsc::type_t;
-        for(auto const& [name, text] : setup.options)
+        auto options = setup.variant_options;
+        options.insert(options.end(), setup.options.begin(), setup.options.end());
+        for(auto const& [name, text] : options)
         {
             auto* slot = vm.global(name);
             if(!slot)
