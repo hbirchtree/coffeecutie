@@ -206,6 +206,27 @@ void GameSetup::start_frame(ContainerProxy&, time_point const&)
     m_container.subsystem_cast<UIEventBus>().inject(ev, &open);
 }
 
+/* Strings of ui\multiplayer_game_text, as the pregame's text boxes index them */
+namespace pregame_text {
+constexpr libc_types::i32 blank              = 1;
+constexpr libc_types::i32 ctf                = 3;
+constexpr libc_types::i32 slayer             = 4;
+constexpr libc_types::i32 oddball            = 5;
+constexpr libc_types::i32 koth               = 6;
+constexpr libc_types::i32 race               = 7;
+constexpr libc_types::i32 team_game          = 12;
+constexpr libc_types::i32 free_for_all       = 13;
+constexpr libc_types::i32 captures           = 22;
+constexpr libc_types::i32 minutes            = 23;
+constexpr libc_types::i32 frags              = 24;
+constexpr libc_types::i32 laps               = 25;
+constexpr libc_types::i32 red_team           = 17;
+constexpr libc_types::i32 choose_teams       = 26;
+constexpr libc_types::i32 form_two_teams     = 27;
+constexpr libc_types::i32 juggernaut         = 32;
+constexpr libc_types::i32 waiting_for_player = 35;
+} // namespace pregame_text
+
 void alloc_game_setup_provider(compo::EntityContainer& e)
 {
     using func_t  = blam::ui_element::function_t;
@@ -282,9 +303,15 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
     data.on_function(func_t::start_new_game, start_campaign);
 
     data.on_function(
-        func_t::net_game_speed_start, [&setup, mp_maps](UIFunctionCall const&) {
+        func_t::net_game_speed_start, [&e, &setup, mp_maps](UIFunctionCall const&) {
             if(setup.mp_map >= mp_maps->entries.size())
                 return ui_result_t::failed;
+            /* A team game needs someone on each side */
+            auto const& lobby = e.subsystem_cast<LocalLobby>();
+            if(setup.game_type == GameSetup::game_type_t::ctf && lobby.seated_controllers().size() > 1 &&
+               !lobby.both_teams())
+                return ui_result_t::failed;
+            setup.seat_team = lobby.team;
             auto const map = multiplayer_maps[mp_maps->entries[setup.mp_map]];
             Coffee::Logging::cDebug(
                 "UI: multiplayer {} ({})",
@@ -342,18 +369,28 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
                    ? u16(0)
                    : std::min<u16>(value, static_cast<u16>(src->entries.size() - 1));
     };
-    data.bind_list(
-        input_t::solo_level_select_update,
-        list_t{
+    auto const level_list = [&setup, levels, clamp_to] {
+        return list_t{
             .count = [levels] { return static_cast<u16>(levels->entries.size()); },
             .get   = [&setup] { return setup.level; },
             .set   = [&setup, levels, clamp_to](
                        u16 value) { setup.level = clamp_to(levels, value); },
-            .text  = [levels](std::string_view widget, u16 item) {
-                return levels->text(widget, item);
+            /* Its own boxes only: a PC row's text on one line */
+            .text = [levels](std::string_view widget, u16 item) {
+                if((!widget.ends_with("_name") && !widget.ends_with("_data") && widget != "list_item_text") ||
+                   widget == "current_profile_name")
+                    return std::u16string{};
+                auto text = levels->text(widget, item);
+                if(widget == "list_item_text")
+                    std::replace(text.begin(), text.end(), u'\n', u' ');
+                return text;
             },
             .image = [levels](u16 item) { return levels->entries.at(item); },
-        });
+        };
+    };
+    data.bind_list(input_t::solo_level_select_update, level_list());
+    /* PC's column list of the same levels */
+    data.bind_list(input_t::solo_map_list_update, level_list());
     data.bind_list(
         input_t::mp_level_select_update,
         list_t{
@@ -388,4 +425,154 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
             },
             .image = [](u16 item) { return item; },
         });
+
+    /* The pregame screen's summary of the game about to start: its text
+     * boxes pick from ui\multiplayer_game_text by their game data input */
+    auto const& lobby    = e.subsystem_cast<LocalLobby>();
+    auto const& profiles = e.subsystem_cast<PlayerProfile>();
+    auto const  option   = [&setup](std::string_view name) -> std::optional<int> {
+        for(auto const& [key, value] : setup.options)
+            if(key == name)
+                return std::atoi(value.c_str());
+        return std::nullopt;
+    };
+    auto const juggernaut = [option] { return option("ball_type").value_or(0) == 2; };
+    using t = GameSetup::game_type_t;
+    data.bind_index(input_t::mp_set_textbox_game_ruleset, [&setup, juggernaut]() -> std::optional<i32> {
+        switch(setup.game_type)
+        {
+        case t::ctf:
+            return pregame_text::ctf;
+        case t::slayer:
+            return pregame_text::slayer;
+        case t::oddball:
+            return juggernaut() ? pregame_text::juggernaut : pregame_text::oddball;
+        case t::koth:
+            return pregame_text::koth;
+        case t::race:
+            return pregame_text::race;
+        }
+        return std::nullopt;
+    });
+    data.bind_index(input_t::mp_set_textbox_teams_noteams, [&setup]() -> std::optional<i32> {
+        return setup.game_type == t::ctf ? pregame_text::team_game : pregame_text::free_for_all;
+    });
+    data.bind_index(input_t::mp_set_textbox_score_limit_type, [&setup, juggernaut]() -> std::optional<i32> {
+        switch(setup.game_type)
+        {
+        case t::ctf:
+            return pregame_text::captures;
+        case t::koth:
+            return pregame_text::minutes;
+        case t::oddball:
+            return juggernaut() ? pregame_text::frags : pregame_text::minutes;
+        case t::race:
+            return pregame_text::laps;
+        default:
+            return pregame_text::frags;
+        }
+    });
+    data.bind_index(input_t::mp_game_directions, [&setup, &lobby]() -> std::optional<i32> {
+        if(lobby.seated_controllers().size() < 2)
+            return pregame_text::waiting_for_player;
+        if(setup.game_type != t::ctf)
+            return pregame_text::blank;
+        return lobby.both_teams() ? pregame_text::choose_teams : pregame_text::form_two_teams;
+    });
+    /* The rules' own defaults, as each game type program declares them */
+    data.bind_text("score_limit_value_text_box", [&setup, option, juggernaut](std::u16string_view) {
+        int value = 0;
+        switch(setup.game_type)
+        {
+        case t::ctf:
+            value = option("score_limit").value_or(3);
+            break;
+        case t::koth:
+            value = (option("score_limit").value_or(120) + 59) / 60;
+            break;
+        case t::oddball:
+            value = juggernaut() ? option("kill_limit").value_or(15) : (option("score_limit").value_or(120) + 59) / 60;
+            break;
+        case t::race:
+            value = option("score_limit").value_or(3);
+            break;
+        default:
+            value = option("score_limit").value_or(25);
+            break;
+        }
+        auto const text = std::to_string(value);
+        return std::u16string(text.begin(), text.end());
+    });
+    data.bind_text("number_of_players_text_box", [&lobby](std::u16string_view) {
+        auto const text = std::to_string(std::max<size_t>(lobby.seated_controllers().size(), 1));
+        return std::u16string(text.begin(), text.end());
+    });
+    /* game_type_grafix: CTF, KOTH, Slayer, Oddball, Race */
+    data.bind_index(input_t::mp_set_bitmap_for_ruleset, [&setup]() -> std::optional<i32> {
+        switch(setup.game_type)
+        {
+        case t::ctf:
+            return 0;
+        case t::koth:
+            return 1;
+        case t::slayer:
+            return 2;
+        case t::oddball:
+            return 3;
+        case t::race:
+            return 4;
+        }
+        return std::nullopt;
+    });
+    /* The chosen map, by its place in mp_map_list and mp_map_grafix */
+    auto const chosen_map = [&setup, mp_maps]() -> std::optional<i32> {
+        if(setup.mp_map >= mp_maps->entries.size())
+            return std::nullopt;
+        return static_cast<i32>(mp_maps->entries[setup.mp_map]);
+    };
+    data.bind_index(input_t::mp_set_textbox_map_name, chosen_map);
+    data.bind_index(input_t::mp_set_bitmap_for_map, chosen_map);
+    /* No countdown to start: its label stays hidden */
+    data.bind_text("autostart_label", [](std::u16string_view) { return std::u16string{}; });
+    /* The pregame's players: one row a joined controller, with its profile;
+     * teams only in a team game */
+    auto const joined = [&lobby](u16 row) -> std::optional<u32> {
+        auto const seats = lobby.seated_controllers();
+        return row < seats.size() ? std::optional<u32>(seats[row]) : std::nullopt;
+    };
+    auto const game_text   = std::make_shared<std::vector<std::u16string>>();
+    auto const player_rows = [&e, &setup, &profiles, &lobby, joined, game_text] {
+        return UIDataSource::list_t{
+            .count = [&lobby] { return static_cast<u16>(std::max<size_t>(lobby.seated_controllers().size(), 1)); },
+            .get   = [] { return u16(0); },
+            .set   = [](u16) {},
+            .text  = [&e, &setup, &profiles, &lobby, joined, game_text](std::string_view widget, u16 row) -> std::u16string {
+                auto const seat = joined(row).value_or(0);
+                if(widget == "local_player_name")
+                    return profiles.at(lobby.profile_of(seat)).name;
+                if(widget == "team_spinner")
+                {
+                    if(setup.game_type != t::ctf)
+                        return u" ";
+                    if(game_text->empty())
+                        *game_text = strings_of(e, "ui\\multiplayer_game_text");
+                    auto const at = static_cast<size_t>(pregame_text::red_team + (lobby.team[seat] & 1));
+                    return at < game_text->size() ? (*game_text)[at] : std::u16string{};
+                }
+                return {};
+            },
+            /* controller_graphic: 0 is the empty port */
+            .image = [](u16) { return u16(1); },
+        };
+    };
+    data.bind_list(input_t::splitscreen_pregame_status_update, player_rows());
+    /* System link shows this machine's players the same way */
+    data.bind_list(input_t::network_pregame_status_update, player_rows());
+    /* Each quadrant names the profile its controller picked */
+    data.bind_seat_text("qtr_screen_profile_selected_name", [&lobby, &profiles](std::u16string_view, u32 seat) {
+        return profiles.at(lobby.profile_of(seat)).name;
+    });
+    data.bind_seat_text("local_player_name", [&lobby, &profiles](std::u16string_view, u32 seat) {
+        return profiles.at(lobby.profile_of(seat)).name;
+    });
 }

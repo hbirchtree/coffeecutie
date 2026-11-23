@@ -2,6 +2,7 @@
 
 #include <coffee/components/entity_container.h>
 
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
@@ -30,6 +31,8 @@ struct GameSetup : compo::SubsystemBase
     bool            ctf_flag_at_home{false};     /*!< A capture needs the team's own flag home */
     bool            ctf_flag_must_reset{false};  /*!< A taken flag only goes back on its own, never by a touch */
     libc_types::f32 ctf_flag_return_time{60.f};  /*!< s a dropped flag lies before going back; not a CE option */
+    /*! A team game's team by controller, as the pregame screen chose them */
+    std::array<libc_types::i16, 4> seat_team{0, 1, 0, 1};
     /*! Game type program globals to set as it loads: name, value */
     std::vector<std::pair<std::string, std::string>> options;
 

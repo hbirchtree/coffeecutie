@@ -343,6 +343,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         UIDataSource::list_t const* list{nullptr};
         std::optional<u16>          item{};
         bool                        item_root{false};
+        /* Rows the engine fills below a widget whose game data input names
+         * them, e.g. the pregame's players: repeated children by order */
+        UIDataSource::list_t const* rows{nullptr};
+        bool                        row{false}; /*!< item is a row's; its text only replaces when given */
+        /* A column list's row: 1 the focused one, 0 another, -1 not a row */
+        libc_types::i8 column_row{-1};
     };
 
     Vecf2 window_to_ui(Vecf2 const& point)
@@ -407,14 +413,22 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         /* Its bounds are screen-absolute, and its images follow the list's
          * focused item */
         if(el.extended_description.valid())
+        {
+            /* A column list's rows also name the focused item for it */
+            auto const* described =
+                el.ui_element->widget_type == blam::ui_element::widget_type_t::column_list ? rows_of(el) : nullptr;
             traverse_widget(
                 el.extended_description,
                 layout_data_t{
                     .origin = layout.origin,
                     .frame  = layout.origin,
                     .index  = focused.value_or(0),
+                    .list   = described,
+                    .item   = described ? std::optional<u16>(focused.value_or(0)) : std::nullopt,
+                    .row    = described != nullptr,
                 },
                 visit);
+        }
 
         if(el.children.empty())
             return;
@@ -424,18 +438,60 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         auto const children = children_opt.value();
         /* Generated items are centred on the selected one */
         auto const* list     = list_of(el);
+        auto const* rows     = list ? nullptr : rows_of(el);
+        if(!rows)
+            rows = layout.rows;
+        /* Children sharing a tag are a widget's rows, in order; so are a
+         * column list's list_item children, whatever their tags */
+        std::map<std::string_view, u16> row_counts, row_at;
+        auto const column_item = [this](auto const& child) {
+            auto const* item = find_item(child);
+            return item && item->tag_name.find("list_item") != std::string_view::npos;
+        };
+        bool const column = rows && !list && el.ui_element->widget_type == blam::ui_element::widget_type_t::column_list &&
+                            std::any_of(el.children.begin(), el.children.end(), column_item);
+        if(rows && !list)
+            for(auto const& child : el.children)
+                if(auto const* item = find_item(child))
+                    row_counts[item->tag_name]++;
         i32 const   first    = list ? static_cast<i32>(list->get()) -
                                     static_cast<i32>(el.children.size() / 2)
                                     : 0;
         for(auto const& [i, child] : stl_types::const_enumerate(el.children))
         {
             std::optional<u16> item = layout.item;
+            bool               row  = layout.row;
+            auto const*        from = list ? list : layout.list;
+            /* A column row's selection arrows show only while it has focus;
+             * its scroll buttons never, the rows are never scrolled */
+            if(layout.column_row >= 0)
+            {
+                std::string_view const name = children[i].name.str();
+                if(name.starts_with("scroll_") || (name == "list_item_arrows" && layout.column_row == 0))
+                    continue;
+            }
             if(list)
             {
                 i32 const at = first + static_cast<i32>(i);
                 if(at < 0 || at >= static_cast<i32>(list->count()))
                     continue;
                 item = static_cast<u16>(at);
+            } else if(column && column_item(child))
+            {
+                if(i >= rows->count())
+                    continue;
+                item = static_cast<u16>(i);
+                row  = true;
+                from = rows;
+            } else if(auto const* child_item = rows ? find_item(child) : nullptr;
+                      child_item && row_counts[child_item->tag_name] > 1)
+            {
+                u16 const at = row_at[child_item->tag_name]++;
+                if(at >= rows->count())
+                    continue;
+                item = at;
+                row  = true;
+                from = rows;
             }
             auto const& meta = children[i];
             auto        slot = layout.slot;
@@ -453,9 +509,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     .index       = layout.index,
                     .stack_frame = layout.stack_frame,
                     .slot        = std::move(slot),
-                    .list        = list ? list : layout.list,
+                    .list        = from,
                     .item        = item,
                     .item_root   = list != nullptr,
+                    .rows        = rows,
+                    .row         = row,
+                    .column_row  = column && column_item(child) ? static_cast<libc_types::i8>(focused == i ? 1 : 0) : libc_types::i8(-1),
                 },
                 visit);
         }
@@ -481,6 +540,22 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     static bool has_flag(UIElementItem const& el, blam::ui_element::flags_t f)
     {
         return static_cast<u32>(el.ui_element->flags) & static_cast<u32>(f);
+    }
+
+    /* The provider's rows, for a widget whose game data input fills the
+     * repeated children below it */
+    UIDataSource::list_t const* rows_of(UIElementItem const& el) const
+    {
+        using items_t = blam::ui_element::list_items_t;
+        if(!m_data || (el.ui_element->list_items.flags & items_t::list_items_generated_in_code))
+            return nullptr;
+        auto inputs = el.ui_element->data_inputs.data(bitm_cache.magic);
+        if(!inputs.has_value())
+            return nullptr;
+        for(auto const& input : inputs.value())
+            if(auto const* rows = m_data->list(input.function))
+                return rows;
+        return nullptr;
     }
 
     /* The provider's list, for a widget whose items are generated in code */
@@ -1724,12 +1799,23 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     /* Description images hold one image per list item, as
                      * do a generated item's pictures; elsewhere image 1 is
                      * the focused look */
-                    auto const item_image =
+                    auto item_image =
                         layout.item && !layout.item_root && layout.list &&
                                 layout.list->image
                             ? std::optional<u16>(
                                   layout.list->image(*layout.item))
                             : std::nullopt;
+                    /* A game data input may pick the picture, as it does text */
+                    if(!item_image && m_data)
+                        if(auto inputs = el.ui_element->data_inputs.data(bitm_cache.magic); inputs.has_value())
+                            for(auto const& input : inputs.value())
+                                if(auto const* pick = m_data->index(input.function))
+                                    if(auto const picked = (*pick)(); picked && *picked >= 0)
+                                        item_image = static_cast<u16>(*picked);
+                    /* A generated list's chosen item looks focused: the list
+                     * itself holds the focus */
+                    bool const chosen = layout.item_root && layout.list && layout.item && layout.list->get &&
+                                        !layout.row && *layout.item == layout.list->get();
                     auto const& im =
                         item_image
                             ? el.background[std::min<size_t>(
@@ -1738,7 +1824,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             ? (*layout.index < el.background.size()
                                    ? el.background[*layout.index]
                                    : el.background[0])
-                        : el.focused && el.background.size() >= 2
+                        : (el.focused || chosen) && el.background.size() >= 2
                             ? el.background[1]
                             : el.background[0];
                     push_image(data, min, max, im);
@@ -1770,12 +1856,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     return true;
 
                 auto const& tb = el.ui_element->text_box;
-                /* Some generated item templates name no font */
+                /* Some generated item templates name no font, or one with no glyphs */
                 auto const font_id =
                     el.font_id.valid() ? el.font_id : m_default_font;
                 if(!font_id.valid())
                     return false;
                 auto font_it = font_cache.find(font_id);
+                if((font_it == font_cache.end() || font_it->second.glyph_map.empty()) && m_default_font.valid())
+                    font_it = font_cache.find(m_default_font);
                 if(font_it == font_cache.end())
                     return false;
                 FontItem const& font_item = font_it->second;
@@ -1785,6 +1873,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 /* A spinner shows its selected value from the same list */
                 i32 str_idx = is_spinner ? spinner_get(screen, el)
                                          : tb.string_list_index;
+                /* A game data input may pick which of its strings shows */
+                if(!is_spinner && m_data)
+                    if(auto inputs = el.ui_element->data_inputs.data(bitm_cache.magic); inputs.has_value())
+                        for(auto const& input : inputs.value())
+                            if(auto const* pick = m_data->index(input.function))
+                                if(auto const picked = (*pick)())
+                                    str_idx = *picked;
                 std::u16string_view text;
                 if(str_idx >= 0 &&
                    static_cast<size_t>(str_idx) < el.text_strings.size())
@@ -1798,10 +1893,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         provided = (*bound)(text);
                         text     = provided;
                     }
+                if(m_data)
+                    if(auto const* bound = m_data->seat_text(el.tag_name))
+                    {
+                        provided = (*bound)(text, screen ? screen->seat : UIScreen::any_seat);
+                        text     = provided;
+                    }
                 if(layout.list && layout.item && layout.list->text)
                 {
-                    provided = layout.list->text(el.tag_name, *layout.item);
-                    text     = provided;
+                    auto given = layout.list->text(el.tag_name, *layout.item);
+                    if(!layout.row || !given.empty())
+                    {
+                        provided = std::move(given);
+                        text     = provided;
+                    }
                 }
                 if(text.empty())
                     return false;
@@ -2610,21 +2715,12 @@ void load_ui_items(
         if(name.find("pause_game_options") == std::string_view::npos)
             continue;
 
-        auto us_opt =
-            tag.template data<blam::ui::unicode_string_list>(data.container.magic);
-        if(!us_opt.has_value())
-            continue;
-        auto subs_opt = us_opt.value()->data.data(data.container.magic);
-        if(!subs_opt.has_value() || subs_opt.value().empty())
-            continue;
-
         std::vector<std::u16string> strings;
-        for(auto const& ref : subs_opt.value())
-        {
-            auto s = ref.str(data.container.magic);
-            if(!s.has_error() && !s.value().empty())
-                strings.emplace_back(s.value());
-        }
+        for(auto& text : ui_elements.strings_of(tag))
+            if(!text.empty())
+                strings.push_back(std::move(text));
+        if(strings.empty())
+            continue;
 
         bool is_mp = name.find("multiplayer") != std::string_view::npos;
         if(is_mp || pause_strings.empty())

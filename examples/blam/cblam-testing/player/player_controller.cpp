@@ -43,6 +43,8 @@ struct PlayerController
     /* Re-arms a jump the ground probe never saw leave the ground */
     static constexpr duration jump_cooldown   = 300ms;
     static constexpr i16      trigger_pressed = 8192;
+    /* The sensitivity spinner's default, as shown: the stick's base speed */
+    static constexpr f32 default_sensitivity = 3.f;
 
     /* What a seat's movement goes to */
     enum class seat_t
@@ -97,11 +99,22 @@ struct PlayerController
 
         /* A cutscene's single view covers the whole window */
         auto const cutscene = cutscene_seat(p, p.template subsystem<CinematicState>().playing);
+        auto const& profiles = p.template subsystem<PlayerProfile>();
+        auto const& lobby    = p.template subsystem<LocalLobby>();
         for(auto player : p.select<PlayerCamera, PlayerInfo>())
         {
             auto [cam, info] = player.components();
             if(f32 const aspect = cutscene ? cam.screen_aspect : cam.split_aspect; aspect > 0.f)
                 cam.camera.aspect = aspect;
+            /* The seat's profile decides how its stick looks */
+            if(!info.is_remote() && cam.controller.index)
+            {
+                auto const&          controls = profiles.at(lobby.profile_of(*cam.controller.index)).controls;
+                ControllerOpts const base{};
+                f32 const            scale = static_cast<f32>(controls.sensitivity + 1) / default_sensitivity;
+                cam.controller.opts.sens.look.x = base.sens.look.x * scale;
+                cam.controller.opts.sens.look.y = base.sens.look.y * scale * (controls.invert_look == 0 ? 1.f : -1.f);
+            }
         }
         for(auto player : p.select<
                           PlayerCamera,

@@ -11,6 +11,7 @@
 #include "components.h"
 #include "data.h"
 #include "network/networking.h"
+#include "ui/ui_profile.h"
 #include "physics.h"
 #include "ui/ui.h"
 
@@ -37,7 +38,9 @@ using PlayerControllerManifest = compo::SubsystemManifest<
         const CinematicState,
         const GameState,
         const NetworkState,
-        const TickClock>,
+        const TickClock,
+        const PlayerProfile,
+        const LocalLobby>,
     type_list_t<
         comp_app::ControllerInput,
         comp_app::MouseInput

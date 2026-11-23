@@ -80,9 +80,10 @@ static void localize(compo::EntityContainer& e, std::shared_ptr<comp_app::FileMa
 {
     auto& files    = e.subsystem_cast<BlamFiles<halo_version>>();
     files.loc_file = std::move(loc);
-    e.subsystem_cast<FontCache<halo_version>>().localize(
-        files.loc_file ? std::optional(blam::map_ptr(static_cast<BytesConst>(*files.loc_file)))
-                       : std::nullopt);
+    auto const map = files.loc_file ? std::optional(blam::map_ptr(static_cast<BytesConst>(*files.loc_file)))
+                                    : std::nullopt;
+    e.subsystem_cast<FontCache<halo_version>>().localize(map);
+    e.subsystem_cast<UIElementCache<halo_version>>().localize(map);
 }
 
 static void load_sounds(compo::EntityContainer& e, blam::map_ptr const& magic)
