@@ -30,6 +30,10 @@ constexpr std::string_view hill_marker         = "koth:hill";
 constexpr libc_types::f32 hill_below  = .5f;
 constexpr libc_types::f32 hill_above  = 2.5f;
 constexpr libc_types::f32 hill_radius = 2.f;
+constexpr std::string_view race_marker = "race:";
+/* How near a race checkpoint counts as reaching it, wu; my pick, wide for
+ * vehicles */
+constexpr libc_types::f32 checkpoint_reach = 3.f;
 /* Where a seat's line comes from, inside the default reference distance so
  * it is no quieter: half ahead, most of the way to its side */
 constexpr libc_types::f32 announcer_pan = .7f;
@@ -99,6 +103,7 @@ struct MultiplayerController
             m_waiting[unit] = m_respawn_delay;
         m_proxy = &p;
         hold_hill(p, state);
+        run_track(p, state);
         for(auto const& touch : touches)
             touched(state, touch);
         /* Once a game tick, so the rules' sleeps are in ticks */
@@ -146,6 +151,71 @@ struct MultiplayerController
         state.hill        = -1;
         state.hill_holder = -1;
         build_hills(files);
+        build_track(files);
+        m_race_next.clear();
+        m_at_checkpoint.clear();
+    }
+
+    /* ---- Race ---- */
+
+    /* The race_track flags, in their index order */
+    void build_track(BlamFiles<halo_version> const& files)
+    {
+        m_track.clear();
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+        auto flags = scenario->netgame.flags.data(files.container.magic);
+        if(!flags.has_value())
+            return;
+        std::vector<std::pair<u16, Vecf3>> points;
+        for(auto const& flag : flags.value())
+            if(flag.type == blam::scn::multiplayer_flag::flag_type_t::race_track)
+                points.emplace_back(flag.team_index, flag.pos);
+        std::stable_sort(points.begin(), points.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+        for(auto const& [_, at] : points)
+            m_track.push_back(at);
+    }
+
+    /* A player reaching the checkpoint they go for: the rules hear it once
+     * as they arrive. Each is shown the way to theirs */
+    void run_track(Proxy& p, GameState& state)
+    {
+        if(state.game_type != GameSetup::game_type_t::race || m_track.empty() || !m_vm ||
+           state.phase != GameState::phase_t::playing)
+            return;
+        std::set<u32> arrived;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            u32 const   idx    = ent.template get<PlayerInfo>().player_idx;
+            if((status && status->dead) || !state.player(idx))
+                continue;
+            auto const next = static_cast<size_t>(m_race_next[idx]) % m_track.size();
+            if(glm::distance(ent.template get<Model>().position, m_track[next]) > checkpoint_reach)
+                continue;
+            arrived.insert(idx);
+            if(m_at_checkpoint.contains(idx))
+                continue;
+            if(auto* slot = m_vm->global("event_player"))
+                *slot = script_vm::value_t::number(blam::hsc::type_t::short_, static_cast<f32>(idx));
+            m_vm->wake("on_checkpoint");
+            m_vm->tick();
+        }
+        m_at_checkpoint = std::move(arrived);
+
+        auto navs = state.nav_points;
+        std::erase_if(navs, [](auto const& nav) { return nav.flag.starts_with(race_marker); });
+        for(auto const& player : state.players)
+            navs.push_back({
+                .arrow    = "default",
+                .flag     = std::string(race_marker) + std::to_string(player.player_idx),
+                .position = m_track[static_cast<size_t>(m_race_next[player.player_idx]) % m_track.size()],
+                .offset   = .6f,
+                .player   = static_cast<i32>(player.player_idx),
+            });
+        if(navs != state.nav_points)
+            state.nav_points = std::move(navs);
     }
 
     /* ---- King of the hill ---- */
@@ -458,6 +528,17 @@ struct MultiplayerController
         case mode_op::flag_reach_set:
             state.flag_reach = std::max(arg(0), 0.f);
             return {};
+        case mode_op::race_count:
+            return value_t::number(type_t::short_, static_cast<f32>(m_track.size()));
+        case mode_op::race_next:
+            return value_t::number(type_t::short_, arg(0) >= 0.f ? m_race_next[static_cast<u32>(arg(0))] : -1);
+        case mode_op::race_advance:
+            if(arg(0) >= 0.f && !m_track.empty())
+            {
+                auto& next = m_race_next[static_cast<u32>(arg(0))];
+                next       = static_cast<i16>((next + 1) % static_cast<i16>(m_track.size()));
+            }
+            return {};
         case mode_op::hill_count:
             return value_t::number(type_t::short_, static_cast<f32>(m_hills.size()));
         case mode_op::hill_set:
@@ -698,6 +779,9 @@ struct MultiplayerController
     std::map<u32, i16>              m_streaks;    /*!< By player: kills since dying */
     std::optional<u32>              m_speaking_for; /*!< The local player a kill line is for */
     std::vector<hill_t>             m_hills;
+    std::vector<Vecf3>              m_track;         /*!< Race checkpoints in order */
+    std::map<u32, i16>              m_race_next;     /*!< By player: the checkpoint they go for */
+    std::set<u32>                   m_at_checkpoint; /*!< Players at theirs, heard of already */
     std::mt19937               m_random{std::random_device{}()};
 };
 

@@ -197,7 +197,7 @@ i32 blam_main()
         options.add_options("Game")(
             "game-type",
             "Multiplayer game type a map given on the command line is played as, offline or "
-            "hosting (a client plays the server's): slayer, ctf, oddball, juggernaut, koth",
+            "hosting (a client plays the server's): slayer, ctf, oddball, juggernaut, koth, race",
             cxxopts::value<std::string>())(
             "ctf-flag-at-home",
             "Capture the flag: a capture needs the team's own flag at home (default false)",
@@ -650,6 +650,7 @@ i32 blam_main()
                 setup.game_type   = name == "ctf"                                ? game_type_t::ctf
                                     : name == "oddball" || name == "juggernaut" ? game_type_t::oddball
                                     : name == "koth"                            ? game_type_t::koth
+                                    : name == "race"                            ? game_type_t::race
                                                                                  : game_type_t::slayer;
                 /* Juggernaut is one of Oddball's ball types */
                 if(name == "juggernaut")

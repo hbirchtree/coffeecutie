@@ -52,6 +52,11 @@ enum class mode_op : libc_types::u16
     hill_set,    /*!< (hill_set <short>): the hill in play */
     hill_holder, /*!< (hill_holder): a player holding it alone (or their team), -1 nobody, -2 contested */
     hill_index,  /*!< (hill_index): the hill in play, -1 for none */
+
+    /* Race, on the authority */
+    race_count,   /*!< (race_count): the track's checkpoints */
+    race_next,    /*!< (race_next <player>): the checkpoint they go for */
+    race_advance, /*!< (race_advance <player>): on to the next, round to the first after the last */
 };
 
 /* matg's multiplayer sounds, by their place in the block */
@@ -78,6 +83,8 @@ enum class announcer : libc_types::i16
     hill_move               = 30,
     team_king_of_the_hill   = 32,
     king_of_the_hill        = 36,
+    race                    = 20,
+    team_race               = 34,
     hill_contested          = 39,
     hill_controlled         = 40,
 };
@@ -449,6 +456,54 @@ hsc_builder::program_t<BC> koth()
     return std::move(b).build();
 }
 
+/* Race: the track is the race_track flags in order. Reaching the one a
+ * player goes for moves them on; past the last they have run a lap and
+ * score. First to the laps wins */
+template<typename BC>
+hsc_builder::program_t<BC> race()
+{
+    using hsc_builder::script_type_t;
+    using hsc_builder::type_t;
+    hsc_builder::builder<BC> b;
+    auto const player = [&b] { return b.global("event_player", type_t::short_); };
+
+    b.declare_global("score_limit", type_t::short_, b.short_(3)); /* laps */
+    b.declare_global("respawn_delay", type_t::real_, b.real(3.f));
+    b.declare_global("event_killer", type_t::short_, b.short_(-1));
+    b.declare_global("event_victim", type_t::short_, b.short_(-1));
+    b.declare_global("event_player", type_t::short_, b.short_(-1));
+
+    b.script(
+        "setup",
+        script_type_t::startup,
+        b.begin({
+            b.call(op<BC>(mode_op::respawn_delay_set), type_t::void_, {b.global("respawn_delay", type_t::real_)}),
+            b.call(op<BC>(mode_op::time_limit_set), type_t::void_, {b.real(0.f)}),
+        }));
+    b.script(
+        "on_checkpoint",
+        script_type_t::dormant,
+        b.begin({
+            b.call(op<BC>(mode_op::race_advance), type_t::void_, {player()}),
+            b.if_(
+                b.call(
+                    BC::equal,
+                    type_t::bool_,
+                    {b.call(op<BC>(mode_op::race_next), type_t::short_, {player()}), b.short_(0)}),
+                b.begin({
+                    b.call(op<BC>(mode_op::score_add), type_t::void_, {player(), b.short_(1)}),
+                    b.if_(
+                        b.call(
+                            BC::gequals,
+                            type_t::bool_,
+                            {b.call(op<BC>(mode_op::leader_score), type_t::short_, {}),
+                             b.global("score_limit", type_t::short_)}),
+                        b.call(op<BC>(mode_op::game_over), type_t::void_, {})),
+                })),
+        }));
+    return std::move(b).build();
+}
+
 /* An announcer line, played here */
 template<typename BC>
 auto announce_line(hsc_builder::builder<BC>& b, announcer sound)
@@ -644,6 +699,24 @@ hsc_builder::program_t<BC> koth_announcer()
     return std::move(b).build();
 }
 
+/* Race's announcer: the game type as it starts or is joined */
+template<typename BC>
+hsc_builder::program_t<BC> race_announcer()
+{
+    using hsc_builder::script_type_t;
+    using hsc_builder::type_t;
+    hsc_builder::builder<BC> b;
+    announce_kills(b);
+    b.script(
+        "announce_game",
+        script_type_t::startup,
+        b.if_(
+            b.call(op<BC>(mode_op::teams), type_t::bool_, {}),
+            announce_line(b, announcer::team_race),
+            announce_line(b, announcer::race)));
+    return std::move(b).build();
+}
+
 /* The announcer for a game type */
 template<typename BC>
 hsc_builder::program_t<BC> announcer_for(GameSetup::game_type_t type)
@@ -656,6 +729,8 @@ hsc_builder::program_t<BC> announcer_for(GameSetup::game_type_t type)
         return oddball_announcer<BC>();
     case GameSetup::game_type_t::koth:
         return koth_announcer<BC>();
+    case GameSetup::game_type_t::race:
+        return race_announcer<BC>();
     default:
         return slayer_announcer<BC>();
     }
@@ -673,6 +748,8 @@ hsc_builder::program_t<BC> rules_for(GameSetup const& setup)
         return oddball<BC>();
     case GameSetup::game_type_t::koth:
         return koth<BC>();
+    case GameSetup::game_type_t::race:
+        return race<BC>();
     default:
         return slayer<BC>(25, 0.f);
     }
