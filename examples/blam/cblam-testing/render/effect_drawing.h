@@ -481,7 +481,9 @@ struct EffectDrawer
                     glm::mix(img.rect.w, img.rect.y, m.uv[i].y)),
                 .color  = m.color,
                 .atlas  = img.atlas,
-                .source = Vecf4(img.format, img.layer, 3.f, img.opaque),
+                .source = Vecf4(
+                    img.format, img.layer, 3.f,
+                    img.opaque + (m.ignore_alpha && std::fmod(img.opaque, 16.f) < .5f ? 1.f : 0.f)),
             });
     }
 

@@ -111,6 +111,7 @@ struct EffectScene : compo::SubsystemBase
         std::vector<Vecf3>    positions; /* triangles */
         std::vector<Vec2>     uv;
         audience_t            audience{};
+        bool                  ignore_alpha{false}; /*!< The colour is all; alpha holds something else */
     };
 
     std::vector<sprite_t> sprites;

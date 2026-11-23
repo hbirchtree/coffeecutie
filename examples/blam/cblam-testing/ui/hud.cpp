@@ -1534,8 +1534,6 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         std::u16string line = fill(game_text(text_standing_time, "%s (%d seconds)"), {word});
         if(auto at = line.find(u"%d"); at != std::u16string::npos)
             line.replace(at, 2, wide(std::to_string(own)));
-        if(!line.empty() && line[0] >= u'a' && line[0] <= u'z')
-            line[0] = static_cast<char16_t>(line[0] - u'a' + u'A');
         Vecf4 const color = Vecf4(m_hudg->text_color.y, m_hudg->text_color.z, m_hudg->text_color.w, 1.f);
         m_view->typeset.push_back({
             .runs   = {{utf8::utf16to8(line), color}},

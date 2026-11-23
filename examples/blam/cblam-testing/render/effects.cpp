@@ -977,7 +977,8 @@ struct EffectSystem
         if(hull.size() < 2 || !bmp)
             return;
         m_hill_slide = std::fmod(m_hill_slide + dt / hill_slide_period, 1.f);
-        EffectScene::mesh_t mesh{.bitmap = bmp, .blend = blend_t::add};
+        /* The panels are in its colour; its alpha is only their circuit lines */
+        EffectScene::mesh_t mesh{.bitmap = bmp, .blend = blend_t::add, .ignore_alpha = true};
         /* A mesh's uv covers its image once: cut where the pattern repeats */
         Vecf3 const up{0.f, 0.f, hill_fence_height};
         auto const  corner = [&mesh](Vecf3 const& at, f32 u, f32 v) {
@@ -996,8 +997,8 @@ struct EffectSystem
                 Vecf3 const p0   = glm::mix(a, b, done / span);
                 Vecf3 const p1   = glm::mix(a, b, (done + step) / span);
                 f32 const   u1   = u0 + step;
-                corner(p0, u0, 1.f), corner(p1, u1, 1.f), corner(p1 + up, u1, 0.f);
-                corner(p0, u0, 1.f), corner(p1 + up, u1, 0.f), corner(p0 + up, u0, 0.f);
+                corner(p0, u0, 0.f), corner(p1, u1, 0.f), corner(p1 + up, u1, 1.f);
+                corner(p0, u0, 0.f), corner(p1 + up, u1, 1.f), corner(p0 + up, u0, 1.f);
                 done += step;
                 along += step;
             }
@@ -2786,7 +2787,7 @@ struct EffectSystem
     static constexpr f32    flare_fade_rate      = 8.f;    /* per second */
     static constexpr f32    sun_distance         = 2000.f; /* wu */
     static constexpr size_t max_contrail_points  = 256;
-    static constexpr f32    hill_fence_height    = .6f; /* wu */
+    static constexpr f32    hill_fence_height    = 1.f; /* wu, as tall as a repeat is wide (square bitmap) */
     static constexpr f32    hill_tile            = 1.f; /* wu of fence a repeat of its pattern spans */
     static constexpr f32    hill_slide_period    = 3.f; /* s; the shader's u slide */
     static constexpr f32    default_light_life   = .25f;
