@@ -254,6 +254,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
                     .arrow  = "default",
                     .flag   = std::string(marker_prefix) + "ball",
                     .offset = marker_lift,
+                    .team   = static_cast<i16>(blam::scn::unit::team_t::player),
                 };
                 if(flag.carrier >= 0)
                     ball.unit = flag.carrier;

@@ -336,6 +336,7 @@ struct MultiplayerController
                 .flag     = std::string(hill_marker),
                 .position = m_hills[static_cast<size_t>(state.hill)].centre,
                 .offset   = .6f,
+                .team     = static_cast<i16>(blam::scn::unit::team_t::player),
             });
         state.nav_points = std::move(navs);
     }
@@ -570,7 +571,13 @@ struct MultiplayerController
             auto navs = state.nav_points;
             std::erase_if(navs, [](auto const& nav) { return nav.flag == juggernaut_marker; });
             if(state.juggernaut >= 0)
-                navs.push_back({.arrow = "default", .flag = std::string(juggernaut_marker), .unit = state.juggernaut, .offset = .6f});
+                navs.push_back({
+                    .arrow  = "default",
+                    .flag   = std::string(juggernaut_marker),
+                    .unit   = state.juggernaut,
+                    .offset = .6f,
+                    .team   = static_cast<i16>(blam::scn::unit::team_t::player),
+                });
             state.nav_points = std::move(navs);
             return {};
         }
