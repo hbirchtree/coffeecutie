@@ -101,15 +101,12 @@ class MassPointAction : public btActionInterface
 
     void updateAction(btCollisionWorld* world, btScalar dt) override
     {
-        if(m_body.isStaticOrKinematicObject() || !m_body.isActive())
-            return;
         /* A driver stays aboard through slow or late frames; their stick
          * only counts while fresh. Lift and handbrake need the driver, not
-         * the input, or a banshee drops between frames. */
-        /* A turret's gunner only turns it: nothing drives or lifts it, and
-         * it holds its ground like a parked jeep */
-        bool const driven = m_drive && m_driver_left > 0 &&
-                            m_drive->type != VehicleDrive::turret;
+         * the input, or a banshee drops between frames. It lapses on a body
+         * that is moved for us too, e.g. one a client drives, which the
+         * engine's sound still reads */
+        bool const was_driven = m_driver_left > 0;
         if(m_driver_left > 0)
             m_driver_left--;
         if(m_input_left > 0)
@@ -119,6 +116,12 @@ class MassPointAction : public btActionInterface
             m_throttle = m_strafe = 0.f;
             m_handbrake = false;
         }
+        if(m_body.isStaticOrKinematicObject() || !m_body.isActive())
+            return;
+        /* A turret's gunner only turns it: nothing drives or lifts it, and
+         * it holds its ground like a parked jeep */
+        bool const driven = m_drive && was_driven &&
+                            m_drive->type != VehicleDrive::turret;
         /* The driver's seat powers the engine up and down over the tag's
          * times: a hovercraft lifts off as it is boarded, settles when left */
         if(m_drive && m_lifting > 0)
