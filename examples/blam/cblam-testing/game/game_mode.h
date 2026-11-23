@@ -115,6 +115,11 @@ struct GameState : compo::SubsystemBase
     std::array<flag_t, 3> flags{};
     static constexpr size_t ball = 2; /*!< Oddball's, among the flags */
     i32                   juggernaut{-1}; /*!< Juggernaut: the player index who is it */
+    i16                   hill{-1};        /*!< King of the hill: the hill in play */
+    /*! Who holds it: a player (with teams, any of the one team in it), -1
+     *  for nobody, contested for more than one side */
+    i16                   hill_holder{-1};
+    static constexpr i16  contested = -2;
     f32                   flag_reach{.8f}; /*!< wu, set by the rules */
 
     player_t* player(u32 player_idx)

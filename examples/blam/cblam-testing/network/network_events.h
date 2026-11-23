@@ -575,7 +575,8 @@ struct alignas(8) GameStateSync
     u8              flag_taken[3]{};
     u8              padding1{0};
     i32             juggernaut{-1};
-    u32             padding2{0};
+    i16             hill{-1};
+    i16             hill_holder{-1};
 
     bool operator==(GameStateSync const&) const = default;
 };

@@ -24,6 +24,12 @@
 /* Sound entity ids for the announcer, one per line so a line restarts */
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
 constexpr std::string_view juggernaut_marker   = "juggernaut";
+constexpr std::string_view hill_marker         = "koth:hill";
+/* A hill's reach, my picks: below and above its flags, and around a hill
+ * of fewer than three */
+constexpr libc_types::f32 hill_below  = .5f;
+constexpr libc_types::f32 hill_above  = 2.5f;
+constexpr libc_types::f32 hill_radius = 2.f;
 /* Where a seat's line comes from, inside the default reference distance so
  * it is no quieter: half ahead, most of the way to its side */
 constexpr libc_types::f32 announcer_pan = .7f;
@@ -92,6 +98,7 @@ struct MultiplayerController
         for(u64 unit : rejoins)
             m_waiting[unit] = m_respawn_delay;
         m_proxy = &p;
+        hold_hill(p, state);
         for(auto const& touch : touches)
             touched(state, touch);
         /* Once a game tick, so the rules' sleeps are in ticks */
@@ -135,6 +142,125 @@ struct MultiplayerController
                 return native(*m_state, opcode, args);
             });
         configure(*m_vm, setup);
+        state.juggernaut  = -1;
+        state.hill        = -1;
+        state.hill_holder = -1;
+        build_hills(files);
+    }
+
+    /* ---- King of the hill ---- */
+
+    /* Each hill is the hill_flag netgame flags of one index: the ground
+     * they outline (their convex hull), and some height above it */
+    void build_hills(BlamFiles<halo_version> const& files)
+    {
+        m_hills.clear();
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+        auto flags = scenario->netgame.flags.data(files.container.magic);
+        if(!flags.has_value())
+            return;
+        std::map<u16, std::vector<Vecf3>> corners;
+        for(auto const& flag : flags.value())
+            if(flag.type == blam::scn::multiplayer_flag::flag_type_t::hill_flag)
+                corners[flag.team_index].push_back(flag.pos);
+        for(auto const& [_, points] : corners)
+        {
+            hill_t hill{.low = points.front().z, .high = points.front().z};
+            std::vector<Vecf2> flat;
+            for(auto const& at : points)
+            {
+                hill.centre += at / static_cast<f32>(points.size());
+                hill.low  = std::min(hill.low, at.z);
+                hill.high = std::max(hill.high, at.z);
+                flat.emplace_back(at);
+            }
+            hill.hull = convex_hull(std::move(flat));
+            m_hills.push_back(std::move(hill));
+        }
+    }
+
+    static std::vector<Vecf2> convex_hull(std::vector<Vecf2> points)
+    {
+        std::sort(points.begin(), points.end(), [](auto const& a, auto const& b) {
+            return a.x < b.x || (a.x == b.x && a.y < b.y);
+        });
+        if(points.size() < 3)
+            return points;
+        auto const cross = [](Vecf2 o, Vecf2 a, Vecf2 b) { return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x); };
+        std::vector<Vecf2> hull(points.size() * 2);
+        size_t             k = 0;
+        for(size_t i = 0; i < points.size(); hull[k++] = points[i++])
+            while(k >= 2 && cross(hull[k - 2], hull[k - 1], points[i]) <= 0.f)
+                k--;
+        for(size_t i = points.size() - 1, t = k + 1; i > 0; hull[k++] = points[--i])
+            while(k >= t && cross(hull[k - 2], hull[k - 1], points[i - 1]) <= 0.f)
+                k--;
+        hull.resize(k - 1);
+        return hull;
+    }
+
+    struct hill_t
+    {
+        std::vector<Vecf2> hull; /*!< Counter-clockwise */
+        Vecf3              centre{};
+        f32                low{0.f}, high{0.f};
+
+        bool holds(Vecf3 const& at) const
+        {
+            if(at.z < low - hill_below || at.z > high + hill_above)
+                return false;
+            if(hull.size() < 3)
+                return glm::distance(Vecf2(at), Vecf2(centre)) <= hill_radius;
+            for(size_t i = 0; i < hull.size(); i++)
+            {
+                Vecf2 const a = hull[i], b = hull[(i + 1) % hull.size()];
+                if((b.x - a.x) * (at.y - a.y) - (b.y - a.y) * (at.x - a.x) < 0.f)
+                    return false;
+            }
+            return true;
+        }
+    };
+
+    /* Who is in the hill in play, for the rules and everyone's announcer */
+    void hold_hill(Proxy& p, GameState& state)
+    {
+        if(state.game_type != GameSetup::game_type_t::koth || state.hill < 0 ||
+           static_cast<size_t>(state.hill) >= m_hills.size())
+        {
+            state.hill_holder = -1;
+            return;
+        }
+        auto const&   hill = m_hills[static_cast<size_t>(state.hill)];
+        std::set<i32> sides;
+        i16           holder = -1;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            if((status && status->dead) || !hill.holds(ent.template get<Model>().position))
+                continue;
+            u32 const   idx    = ent.template get<PlayerInfo>().player_idx;
+            auto const* player = state.player(idx);
+            sides.insert(state.teams && player ? player->team : static_cast<i32>(idx));
+            holder = static_cast<i16>(idx);
+        }
+        state.hill_holder = sides.size() > 1 ? GameState::contested : holder;
+    }
+
+    void place_hill(GameState& state, i32 index)
+    {
+        state.hill = index >= 0 && static_cast<size_t>(index) < m_hills.size() ? static_cast<i16>(index) : -1;
+        auto navs  = state.nav_points;
+        std::erase_if(navs, [](auto const& nav) { return nav.flag == hill_marker; });
+        if(state.hill >= 0)
+            navs.push_back({
+                .arrow    = "default",
+                .flag     = std::string(hill_marker),
+                .position = m_hills[static_cast<size_t>(state.hill)].centre,
+                .offset   = .6f,
+            });
+        state.nav_points = std::move(navs);
     }
 
     /* --game-option name=value: any global of the program by that name */
@@ -237,6 +363,10 @@ struct MultiplayerController
             auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
             return value_t::boolean(t < state.flags.size() && state.flags[t].taken);
         }
+        case mode_op::hill_holder:
+            return value_t::number(type_t::short_, state.hill_holder);
+        case mode_op::hill_index:
+            return value_t::number(type_t::short_, state.hill);
         case mode_op::team_score: {
             auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
             return value_t::number(type_t::short_, t < state.team_scores.size() ? state.team_scores[t] : 0);
@@ -328,6 +458,15 @@ struct MultiplayerController
         case mode_op::flag_reach_set:
             state.flag_reach = std::max(arg(0), 0.f);
             return {};
+        case mode_op::hill_count:
+            return value_t::number(type_t::short_, static_cast<f32>(m_hills.size()));
+        case mode_op::hill_set:
+            place_hill(state, static_cast<i32>(arg(0)));
+            return {};
+        case mode_op::hill_holder:
+            return value_t::number(type_t::short_, state.hill_holder);
+        case mode_op::hill_index:
+            return value_t::number(type_t::short_, state.hill);
         case mode_op::juggernaut_set: {
             state.juggernaut = arg(0) >= 0.f ? static_cast<i32>(arg(0)) : -1;
             /* Everyone sees who is it */
@@ -558,6 +697,7 @@ struct MultiplayerController
     std::map<u32, std::vector<f32>> m_kill_times; /*!< By player: when they killed */
     std::map<u32, i16>              m_streaks;    /*!< By player: kills since dying */
     std::optional<u32>              m_speaking_for; /*!< The local player a kill line is for */
+    std::vector<hill_t>             m_hills;
     std::mt19937               m_random{std::random_device{}()};
 };
 

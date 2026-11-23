@@ -3105,6 +3105,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                              static_cast<i16>(game.flags[2].carrier)},
             .flag_taken   = {game.flags[0].taken, game.flags[1].taken, game.flags[2].taken},
             .juggernaut   = game.juggernaut,
+            .hill         = game.hill,
+            .hill_holder  = game.hill_holder,
         };
         std::vector<NavPointSync> navs;
         for(auto const& nav : game.nav_points)
@@ -5262,7 +5264,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 game.flags[t].carrier = sync.flag_carrier[t];
                 game.flags[t].taken   = sync.flag_taken[t] != 0;
             }
-            game.juggernaut = sync.juggernaut;
+            game.juggernaut  = sync.juggernaut;
+            game.hill        = sync.hill;
+            game.hill_holder = sync.hill_holder;
             if(sync.nav_points == 0)
                 game.nav_points.clear();
             break;

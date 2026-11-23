@@ -46,6 +46,12 @@ enum class mode_op : libc_types::u16
 
     /* Juggernaut, on the authority */
     juggernaut_set, /*!< (juggernaut_set <player>): marks who is it, -1 for nobody */
+
+    /* King of the hill; the announcer has the last two too */
+    hill_count,  /*!< (hill_count): the map's hills */
+    hill_set,    /*!< (hill_set <short>): the hill in play */
+    hill_holder, /*!< (hill_holder): a player holding it alone (or their team), -1 nobody, -2 contested */
+    hill_index,  /*!< (hill_index): the hill in play, -1 for none */
 };
 
 /* matg's multiplayer sounds, by their place in the block */
@@ -69,6 +75,11 @@ enum class announcer : libc_types::i16
     capture_the_flag        = 22,
     team_oddball            = 33,
     team_slayer             = 35,
+    hill_move               = 30,
+    team_king_of_the_hill   = 32,
+    king_of_the_hill        = 36,
+    hill_contested          = 39,
+    hill_controlled         = 40,
 };
 
 /* Oddball's ball, among capture the flag's flags (GameState::ball) */
@@ -365,6 +376,79 @@ hsc_builder::program_t<BC> oddball()
     return std::move(b).build();
 }
 
+/* King of the hill: whoever holds the hill alone, or whose team alone is
+ * in it, scores a point a second there. With a moving hill it goes on to
+ * the next every so often (60 s, my pick). First to the limit wins */
+template<typename BC>
+hsc_builder::program_t<BC> koth()
+{
+    using hsc_builder::script_type_t;
+    using hsc_builder::type_t;
+    hsc_builder::builder<BC> b;
+    auto const holder = [&b] { return b.call(op<BC>(mode_op::hill_holder), type_t::short_, {}); };
+
+    b.declare_global("score_limit", type_t::short_, b.short_(120)); /* seconds held */
+    b.declare_global("moving_hill", type_t::bool_, b.boolean(false));
+    b.declare_global("hill_move_time", type_t::real_, b.real(60.f));
+    b.declare_global("respawn_delay", type_t::real_, b.real(3.f));
+    b.declare_global("event_killer", type_t::short_, b.short_(-1));
+    b.declare_global("event_victim", type_t::short_, b.short_(-1));
+
+    b.script(
+        "setup",
+        script_type_t::startup,
+        b.begin({
+            b.call(op<BC>(mode_op::respawn_delay_set), type_t::void_, {b.global("respawn_delay", type_t::real_)}),
+            b.call(op<BC>(mode_op::time_limit_set), type_t::void_, {b.real(0.f)}),
+            b.call(op<BC>(mode_op::hill_set), type_t::void_, {b.short_(0)}),
+        }));
+    b.script(
+        "held",
+        script_type_t::continuous,
+        b.begin({
+            b.call(BC::sleep, type_t::void_, {b.short_(30)}),
+            b.if_(
+                b.call(BC::gequals, type_t::bool_, {holder(), b.short_(0)}),
+                b.begin({
+                    b.call(op<BC>(mode_op::score_add), type_t::void_, {holder(), b.short_(1)}),
+                    b.if_(
+                        b.call(
+                            BC::gequals,
+                            type_t::bool_,
+                            {b.call(op<BC>(mode_op::leader_score), type_t::short_, {}),
+                             b.global("score_limit", type_t::short_)}),
+                        b.call(op<BC>(mode_op::game_over), type_t::void_, {})),
+                })),
+        }));
+    auto const index = [&b] { return b.call(op<BC>(mode_op::hill_index), type_t::short_, {}); };
+    auto const count = [&b] { return b.call(op<BC>(mode_op::hill_count), type_t::short_, {}); };
+    b.script(
+        "move",
+        script_type_t::continuous,
+        b.if_(
+            b.call(
+                BC::and_,
+                type_t::bool_,
+                {b.global("moving_hill", type_t::bool_), b.call(BC::greater, type_t::bool_, {count(), b.short_(1)})}),
+            b.begin({
+                b.call(
+                    BC::sleep,
+                    type_t::void_,
+                    {b.call(BC::mul_, type_t::real_, {b.global("hill_move_time", type_t::real_), b.real(30.f)})}),
+                b.if_(
+                    b.call(
+                        BC::gequals,
+                        type_t::bool_,
+                        {b.call(BC::add_, type_t::short_, {index(), b.short_(1)}), count()}),
+                    b.call(op<BC>(mode_op::hill_set), type_t::void_, {b.short_(0)}),
+                    b.call(
+                        op<BC>(mode_op::hill_set),
+                        type_t::void_,
+                        {b.call(BC::add_, type_t::short_, {index(), b.short_(1)})})),
+            })));
+    return std::move(b).build();
+}
+
 /* An announcer line, played here */
 template<typename BC>
 auto announce_line(hsc_builder::builder<BC>& b, announcer sound)
@@ -508,6 +592,58 @@ hsc_builder::program_t<BC> oddball_announcer()
     return std::move(b).build();
 }
 
+/* King of the hill's announcer: the hill taken, fought over or moved, as
+ * every peer sees it */
+template<typename BC>
+hsc_builder::program_t<BC> koth_announcer()
+{
+    using hsc_builder::script_type_t;
+    using hsc_builder::type_t;
+    hsc_builder::builder<BC> b;
+    announce_kills(b);
+    auto const holder = [&b] { return b.call(op<BC>(mode_op::hill_holder), type_t::short_, {}); };
+    auto const index  = [&b] { return b.call(op<BC>(mode_op::hill_index), type_t::short_, {}); };
+    b.declare_global("last_holder", type_t::short_, b.short_(-1));
+    b.declare_global("last_hill", type_t::short_, b.short_(-1));
+    b.script(
+        "announce_game",
+        script_type_t::startup,
+        b.begin({
+            b.set("last_holder", type_t::short_, holder()),
+            b.set("last_hill", type_t::short_, index()),
+            b.if_(
+                b.call(op<BC>(mode_op::teams), type_t::bool_, {}),
+                announce_line(b, announcer::team_king_of_the_hill),
+                announce_line(b, announcer::king_of_the_hill)),
+        }));
+    auto const changed = [&](auto now, char const* was) {
+        return b.call(BC::not_, type_t::bool_, {b.call(BC::equal, type_t::bool_, {now, b.global(was, type_t::short_)})});
+    };
+    b.script(
+        "watch_hill",
+        script_type_t::continuous,
+        b.begin({
+            b.if_(
+                b.call(
+                    BC::and_,
+                    type_t::bool_,
+                    {changed(index(), "last_hill"),
+                     b.call(BC::gequals, type_t::bool_, {b.global("last_hill", type_t::short_), b.short_(0)})}),
+                announce_line(b, announcer::hill_move)),
+            b.if_(
+                changed(holder(), "last_holder"),
+                b.if_(
+                    b.call(BC::equal, type_t::bool_, {holder(), b.short_(-2)}),
+                    announce_line(b, announcer::hill_contested),
+                    b.if_(
+                        b.call(BC::gequals, type_t::bool_, {holder(), b.short_(0)}),
+                        announce_line(b, announcer::hill_controlled)))),
+            b.set("last_holder", type_t::short_, holder()),
+            b.set("last_hill", type_t::short_, index()),
+        }));
+    return std::move(b).build();
+}
+
 /* The announcer for a game type */
 template<typename BC>
 hsc_builder::program_t<BC> announcer_for(GameSetup::game_type_t type)
@@ -518,6 +654,8 @@ hsc_builder::program_t<BC> announcer_for(GameSetup::game_type_t type)
         return ctf_announcer<BC>();
     case GameSetup::game_type_t::oddball:
         return oddball_announcer<BC>();
+    case GameSetup::game_type_t::koth:
+        return koth_announcer<BC>();
     default:
         return slayer_announcer<BC>();
     }
@@ -533,6 +671,8 @@ hsc_builder::program_t<BC> rules_for(GameSetup const& setup)
         return ctf<BC>(setup);
     case GameSetup::game_type_t::oddball:
         return oddball<BC>();
+    case GameSetup::game_type_t::koth:
+        return koth<BC>();
     default:
         return slayer<BC>(25, 0.f);
     }
