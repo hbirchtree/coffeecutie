@@ -744,7 +744,10 @@ struct PlayerController
         Vecf2 const& move  = input.intent.move;
         info.crouched      = input.intent.crouch;
         /* No boost on a body: the triggers fire, LCtrl crouches */
-        f32 const    pace  = info.crouched ? biped.crouch_speed : 1.f;
+        /* Reverse Tag's "it" runs slowly: a timed game with someone it */
+        auto const&  game  = p.template subsystem<GameState>();
+        bool const   it    = game.timed && game.juggernaut >= 0 && game.juggernaut == static_cast<i32>(info.player_idx);
+        f32 const    pace  = (info.crouched ? biped.crouch_speed : 1.f) * (it ? reverse_tag_pace : 1.f);
         f32 const    along = move.x >= 0.f ? biped.run_speed : biped.back_speed;
         Vecf3 const  dir   = (planar(basis.forward) * move.x * along +
                            planar(basis.right) * move.y * biped.strafe_speed) *
@@ -995,6 +998,7 @@ struct PlayerController
                                         m_remote_queue;
     std::map<u64, PlayerTickInputEvent> m_remote_inputs; /*!< Newest per body */
     std::map<u64, InputIntent> m_remote_presses; /*!< Not yet acted on */
+    static constexpr libc_types::f32 reverse_tag_pace = .6f; /* of a run, my pick */
     std::map<u64, InputIntent> m_presses;        /*!< Local, not yet sent */
     std::map<u64, f32>         m_dead_for; /*!< Seconds dead, for the camera */
     std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */

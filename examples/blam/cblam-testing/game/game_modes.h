@@ -320,8 +320,9 @@ hsc_builder::program_t<BC> ctf(GameSetup const& variant)
 /* Oddball, as CE plays it: the ball starts at one of its spawns; whoever
  * touches it on the ground takes it and scores a point a second carrying it.
  * Dropped, it lies until picked up or gone back (30 s, my pick). First to
- * the limit wins. Ball type 2 is Juggernaut instead: no ball, the first to
- * kill is it, only it scores kills, and whoever kills it takes over */
+ * the limit wins. Ball types 1 and 2 have no ball: the first to kill is
+ * "it", and whoever kills it takes over. In Reverse Tag (1) it scores a
+ * point a second, in Juggernaut (2) only it scores kills */
 template<typename BC>
 hsc_builder::program_t<BC> oddball()
 {
@@ -332,6 +333,7 @@ hsc_builder::program_t<BC> oddball()
     auto const ball    = [&b] { return b.short_(ball_slot); };
     auto const carrier = [&] { return b.call(op<BC>(mode_op::flag_carrier), type_t::short_, {ball()}); };
     auto const juggernaut_game = [&] { return b.call(BC::equal, type_t::bool_, {short_g("ball_type"), b.short_(2)}); };
+    auto const tag_game        = [&] { return b.call(BC::gequals, type_t::bool_, {short_g("ball_type"), b.short_(1)}); };
     auto const check_limit = [&](char const* limit) {
         return b.if_(
             b.call(
@@ -367,7 +369,7 @@ hsc_builder::program_t<BC> oddball()
             b.call(op<BC>(mode_op::time_limit_set), type_t::void_, {b.real(0.f)}),
             b.call(op<BC>(mode_op::flag_reach_set), type_t::void_, {b.global("flag_reach", type_t::real_)}),
             b.if_(
-                b.call(BC::not_, type_t::bool_, {juggernaut_game()}),
+                b.call(BC::not_, type_t::bool_, {tag_game()}),
                 b.call(op<BC>(mode_op::flag_reset), type_t::void_, {ball()})),
         }));
     b.script(
@@ -390,7 +392,17 @@ hsc_builder::program_t<BC> oddball()
                 b.begin({
                     b.call(op<BC>(mode_op::score_add), type_t::void_, {carrier(), b.short_(1)}),
                     check_limit("score_limit"),
-                })),
+                }),
+                b.if_(
+                    b.call(
+                        BC::and_,
+                        type_t::bool_,
+                        {b.call(BC::equal, type_t::bool_, {short_g("ball_type"), b.short_(1)}),
+                         b.call(BC::gequals, type_t::bool_, {short_g("juggernaut"), b.short_(0)})}),
+                    b.begin({
+                        b.call(op<BC>(mode_op::score_add), type_t::void_, {short_g("juggernaut"), b.short_(1)}),
+                        check_limit("score_limit"),
+                    }))),
         }));
     b.script(
         "ball_return",
@@ -416,7 +428,7 @@ hsc_builder::program_t<BC> oddball()
         "on_unit_killed",
         script_type_t::dormant,
         b.if_(
-            juggernaut_game(),
+            tag_game(),
             b.begin({
                 b.if_(
                     no_kill,
@@ -430,12 +442,14 @@ hsc_builder::program_t<BC> oddball()
                              is(victim(), short_g("juggernaut"))}),
                         b.begin({
                             crown(killer()),
-                            b.call(op<BC>(mode_op::score_add), type_t::void_, {killer(), b.short_(1)}),
+                            b.if_(
+                                juggernaut_game(),
+                                b.call(op<BC>(mode_op::score_add), type_t::void_, {killer(), b.short_(1)})),
                         }),
                         b.if_(
-                            is(killer(), short_g("juggernaut")),
+                            b.call(BC::and_, type_t::bool_, {juggernaut_game(), is(killer(), short_g("juggernaut"))}),
                             b.call(op<BC>(mode_op::score_add), type_t::void_, {killer(), b.short_(1)})))),
-                check_limit("kill_limit"),
+                b.if_(juggernaut_game(), check_limit("kill_limit")),
             })));
     return std::move(b).build();
 }
