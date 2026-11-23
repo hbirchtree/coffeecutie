@@ -92,6 +92,9 @@ enum class announcer : libc_types::i16
 /* Oddball's ball, among capture the flag's flags (GameState::ball) */
 constexpr libc_types::i16 ball_slot = 2;
 
+/* How often the takers of a flag hear they still have it (20 s) */
+constexpr libc_types::i16 flag_reminder_ticks = 600;
+
 /* Kills this close together are one multi-kill; my pick */
 constexpr libc_types::f32 multi_kill_seconds = 4.f;
 
@@ -626,6 +629,19 @@ hsc_builder::program_t<BC> ctf_announcer()
         });
     };
     b.script("watch_flags", script_type_t::continuous, b.begin({flag_lines(0), flag_lines(1), remember()}));
+    /* While a flag is away its takers are reminded they have it */
+    for(i16 flag = 0; flag < 2; flag++)
+        b.script(
+            flag == 0 ? "remind_red" : "remind_blue",
+            script_type_t::continuous,
+            b.if_(
+                taken(flag),
+                b.begin({
+                    b.call(BC::sleep, type_t::void_, {b.short_(flag_reminder_ticks)}),
+                    b.if_(
+                        taken(flag),
+                        announce_line(b, flag == 0 ? announcer::blue_team_has_the_flag : announcer::red_team_has_the_flag)),
+                })));
     return std::move(b).build();
 }
 
