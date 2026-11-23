@@ -211,9 +211,11 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
                 if(!flag)
                     continue;
                 bool const reach = within_pickup_reach(info, cam, flag->position, state.flag_reach);
+                /* Let go of: theirs again once they have walked off from it,
+                 * not while it is still tossed up out of reach */
                 if(m_released[team] == static_cast<i32>(info.player_idx))
                 {
-                    if(!reach)
+                    if(glm::distance(Vecf2(flag->position), Vecf2(cam.camera.position)) > state.flag_reach + release_margin)
                         m_released[team] = -1;
                     continue;
                 }
@@ -356,6 +358,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
     static constexpr f32  marker_lift   = .6f;  /* wu above what a marker is over */
     static constexpr auto marker_prefix = std::string_view("ctf:");
     static constexpr f32 spawn_lift  = .2f;  /* wu above its base */
+    static constexpr f32 release_margin = 1.f; /* wu past reach a carrier who let go must step */
 
     std::unique_ptr<TickQueue>                                  m_ticks;
     std::shared_ptr<GameEventBus::queue_type<FlagCommandEvent>> m_command_queue;
