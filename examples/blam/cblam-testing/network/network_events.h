@@ -328,6 +328,7 @@ struct PlayerJoin
 
     blam::bl_string player_name;
     u32             seat{0}; /*!< Which of the client's own seats */
+    u32             color{0xFFFF}; /*!< Their profile's armour colour */
 };
 
 struct PlayerJoinConfirm
@@ -864,9 +865,11 @@ struct alignas(8) PlayerSyncEntry
     u32             loading_progress{100};
     u32             connected{0x0};
     u32             spawned{0x0};
+    u32             color{0xFFFF}; /*!< Their profile's armour colour */
+    u32             padding{0};
 };
 
-static_assert(sizeof(PlayerSyncEntry) == 48);
+static_assert(sizeof(PlayerSyncEntry) == 56);
 
 struct alignas(8) NegotiateExtension
 {
@@ -922,7 +925,7 @@ static_assert(sizeof(EntityTag) == 12);
 static_assert(sizeof(EntitySpawn) == 96);
 static_assert(sizeof(SpawnRequest) == 64);
 static_assert(sizeof(Message<ClockSync>) == 48);
-static_assert(sizeof(Message<PlayerJoin>) == 52);
+static_assert(sizeof(Message<PlayerJoin>) == 56);
 static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 88);
 static_assert(sizeof(SeatSync) == 16);

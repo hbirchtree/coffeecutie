@@ -107,9 +107,11 @@ struct PlayerController
             if(f32 const aspect = cutscene ? cam.screen_aspect : cam.split_aspect; aspect > 0.f)
                 cam.camera.aspect = aspect;
             /* The seat's profile decides how its stick looks */
-            if(!info.is_remote() && cam.controller.index)
+            if(!info.is_remote())
             {
-                auto const&          controls = profiles.at(lobby.profile_of(*cam.controller.index)).controls;
+                auto const&          profile  = profiles.at(lobby.profile_of(cam.controller.index.value_or(info.seat_idx)));
+                auto const&          controls = profile.controls;
+                info.color                    = profile.color;
                 ControllerOpts const base{};
                 f32 const            scale = static_cast<f32>(controls.sensitivity + 1) / default_sensitivity;
                 cam.controller.opts.sens.look.x = base.sens.look.x * scale;

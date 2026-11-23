@@ -1,6 +1,7 @@
 #include "game/game_mode.h"
 #include "game/teleporters.h"
 #include "world/devices.h"
+#include "ui/ui_profile.h"
 #include "network/networking.h"
 #include "network/relevance.h"
 #include "network/network_events.h"
@@ -81,6 +82,8 @@ using NetworkingManifest = compo::SubsystemManifest<
         PhysicsBus,
         const DeviceGroups,
         const TickClock,
+        const PlayerProfile,
+        const LocalLobby,
         const BlamFiles<halo_version>>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
@@ -879,6 +882,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .loading_progress = 100,
                 .connected        = 0xFFFF,
                 .spawned          = info.spawned ? 0xFFFFu : 0x0u,
+                .color            = info.color,
             });
         }
         for(auto const& [_, state] : m_connections)
@@ -894,6 +898,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .connected =
                         player.biped.get<NetworkInfo>().connected ? 0xFFFFu : 0x0u,
                     .spawned = info.spawned ? 0xFFFFu : 0x0u,
+                    .color   = info.color,
                 });
             }
         MessageBase header{.type = MessageBase::PlayerSync};
@@ -2951,11 +2956,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 continue;
             if(info.name.empty())
                 info.name = get_random_name();
+            /* The seat's profile colour, whether or not it was set on the
+             * seat yet */
+            info.color = p.subsystem<PlayerProfile>()
+                             .at(p.subsystem<LocalLobby>().profile_of(cam.controller.index.value_or(info.seat_idx)))
+                             .color;
             send_single(
                 m_connection,
                 Message<PlayerJoin>({
                     .player_name = *blam::bl_string::from(info.name),
                     .seat        = info.seat_idx,
+                    .color       = info.color,
                 }));
         }
     }
@@ -4852,7 +4863,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 info.seat_idx   = 0xFFFF; /* Not one of our local seats */
             }
 
-            (*player.player_info).name = player_join.player_name.str();
+            (*player.player_info).name  = player_join.player_name.str();
+            (*player.player_info).color = static_cast<u16>(player_join.color);
 
             send_single(
                 connection,
@@ -5475,6 +5487,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_connection,
                 Message<PlayerJoin>({
                     .player_name = *blam::bl_string::from(player_name),
+                    .color       = p.subsystem<PlayerProfile>().at(p.subsystem<LocalLobby>().profile_of(0)).color,
                 }));
             m_pending_seats = {0};
             break;
@@ -5677,6 +5690,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         info->name             = std::string(player.name.str());
                         info->loading_progress = player.loading_progress;
                         if(info->is_remote())
+                            info->color = static_cast<u16>(player.color);
+                        if(info->is_remote())
                             info->spawned = player.spawned == 0xFFFF;
                     }
                     auto* net_info = p.get<NetworkInfo>(it->second);
@@ -5690,6 +5705,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     auto  ref  = p.create_entity(shared_recipes::player_recipe);
                     auto& info = ref.get<PlayerInfo>();
                     info.name  = std::string(player.name.str());
+                    info.color = static_cast<u16>(player.color);
                     info.player_idx       = player.player_idx;
                     info.loading_progress = player.loading_progress;
                     info.remote           = "remote";
