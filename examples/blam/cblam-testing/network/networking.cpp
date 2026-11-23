@@ -3115,6 +3115,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .flag_carrier = {static_cast<i16>(game.flags[0].carrier), static_cast<i16>(game.flags[1].carrier),
                              static_cast<i16>(game.flags[2].carrier)},
             .flag_taken   = {game.flags[0].taken, game.flags[1].taken, game.flags[2].taken},
+            .timed        = game.timed,
             .juggernaut   = game.juggernaut,
             .hill         = game.hill,
             .hill_holder  = game.hill_holder,
@@ -5278,6 +5279,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 game.flags[t].taken   = sync.flag_taken[t] != 0;
             }
             game.juggernaut  = sync.juggernaut;
+            game.timed       = sync.timed != 0;
             game.hill        = sync.hill;
             game.hill_holder = sync.hill_holder;
             game.capture_blocked = sync.capture_blocked;

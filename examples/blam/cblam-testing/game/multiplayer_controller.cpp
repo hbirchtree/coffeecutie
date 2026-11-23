@@ -154,6 +154,10 @@ struct MultiplayerController
             });
         configure(*m_vm, setup);
         state.juggernaut  = -1;
+        /* Oddball's Juggernaut variant counts kills */
+        auto const* ball_type = m_vm->global("ball_type");
+        state.timed           = setup.game_type == GameSetup::game_type_t::koth ||
+                      (setup.game_type == GameSetup::game_type_t::oddball && (!ball_type || ball_type->as_real() != 2.f));
         state.hill        = -1;
         state.hill_holder = -1;
         build_hills(files);

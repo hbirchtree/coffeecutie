@@ -1379,6 +1379,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         text_suicide       = 81,
         text_you_betrayed  = 82,
         text_you_killed    = 88,
+        text_even          = 134,
+        text_winning       = 135,
+        text_losing        = 136,
+        text_tied          = 137,
+        text_standing_time = 155,
     };
 
     std::u16string game_text(game_text_t index, std::string_view fallback) const
@@ -1500,6 +1505,46 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             static_cast<i32>(feed_line * m_view_px.z),
         };
     }
+
+    /* Timed games: where this player (or team) stands, and its time so far */
+    void standing(Proxy& p, PlayerInfo const& viewer)
+    {
+        auto const& game = p.template subsystem<GameState>();
+        auto const* mine = game.player(viewer.player_idx);
+        if(game.kind != GameState::kind_t::multiplayer || !game.timed || !mine || !m_hudg)
+            return;
+        i32  own = mine->score, best_other = 0;
+        bool anyone = false;
+        if(game.teams && mine->team >= 0)
+        {
+            own        = game.team_scores[static_cast<size_t>(mine->team & 1)];
+            best_other = game.team_scores[static_cast<size_t>(1 - (mine->team & 1))];
+            anyone     = true;
+        } else
+            for(auto const& other : game.players)
+                if(other.player_idx != viewer.player_idx)
+                {
+                    best_other = anyone ? std::max<i32>(best_other, other.score) : other.score;
+                    anyone     = true;
+                }
+        auto const word = !anyone            ? game_text(text_even, "even")
+                          : own > best_other ? game_text(text_winning, "winning")
+                          : own < best_other ? game_text(text_losing, "losing")
+                                             : game_text(text_tied, "tied");
+        std::u16string line = fill(game_text(text_standing_time, "%s (%d seconds)"), {word});
+        if(auto at = line.find(u"%d"); at != std::u16string::npos)
+            line.replace(at, 2, wide(std::to_string(own)));
+        if(!line.empty() && line[0] >= u'a' && line[0] <= u'z')
+            line[0] = static_cast<char16_t>(line[0] - u'a' + u'A');
+        Vecf4 const color = Vecf4(m_hudg->text_color.y, m_hudg->text_color.z, m_hudg->text_color.w, 1.f);
+        m_view->typeset.push_back({
+            .runs   = {{utf8::utf16to8(line), color}},
+            .at     = {safe_inset.x, safe_inset.y + standing_top},
+            .size   = feed_em,
+            .shadow = true,
+        });
+    }
+    static constexpr f32 standing_top = 44.f; /* HUD px under the safe inset: below the weapon panel, my pick */
 
     struct feed_t
     {
@@ -1766,6 +1811,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             }
             messages(p, cinematic, *info, *cam, *equip);
             kill_feed(p, *info);
+            standing(p, *info);
             nav_points(p, *info, *cam);
         }
         m_view = nullptr;

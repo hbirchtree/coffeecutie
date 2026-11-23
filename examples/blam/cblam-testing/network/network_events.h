@@ -574,7 +574,7 @@ struct alignas(8) GameStateSync
     u32             reverts{0};
     i16             flag_carrier[3]{-1, -1, -1}; /*!< Capture the flag by team, then Oddball's ball */
     u8              flag_taken[3]{};
-    u8              padding1{0};
+    u8              timed{0};
     i32             juggernaut{-1};
     i16             hill{-1};
     i16             hill_holder{-1};
