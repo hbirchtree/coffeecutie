@@ -110,6 +110,7 @@ struct GameState : compo::SubsystemBase
         bool                        taken{false};  /*!< Gone from its base since an enemy took it */
         i32                         carrier{-1};   /*!< Player index holding it */
         f32                         idle{0.f};     /*!< Seconds lying away from its base */
+        bool                        removed{false}; /*!< Out of play, e.g. the attackers' in single flag */
         libc_types::u64             object{0};     /*!< Where it lies, on the authority */
     };
     std::array<flag_t, 3> flags{};

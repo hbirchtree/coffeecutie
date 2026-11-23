@@ -36,6 +36,7 @@ enum class mode_op : libc_types::u16
     team_of,          /*!< (team_of <player>) */
     player_near_base, /*!< (player_near_base <player> <team> <real wu>): within that of the team's base */
     flag_reach_set,   /*!< (flag_reach_set <real wu>): how near a player touches a flag */
+    flag_remove,      /*!< (flag_remove <team>): out of play until reset */
 
     /* The announcer's, on each peer */
     announce,     /*!< (announce <short sound>): matg's multiplayer sound, played here */
@@ -183,8 +184,23 @@ hsc_builder::program_t<BC> ctf(GameSetup const& variant)
     auto const taken   = [&b](auto t) { return b.call(op<BC>(mode_op::flag_taken), type_t::bool_, {t}); };
     auto const carrier = [&b](auto t) { return b.call(op<BC>(mode_op::flag_carrier), type_t::short_, {t}); };
     auto const reset   = [&b](auto t) { return b.call(op<BC>(mode_op::flag_reset), type_t::void_, {t}); };
+    auto const single  = [&b] { return b.global("single_flag", type_t::bool_); };
+    auto const defender = [&b] { return b.global("defender", type_t::short_); };
+    /* The defenders' flag leaves play and the other team's comes in */
+    auto const swap_sides = [&] {
+        return b.begin({
+            b.call(op<BC>(mode_op::flag_remove), type_t::void_, {defender()}),
+            b.set("defender", type_t::short_, b.call(BC::sub_, type_t::short_, {b.short_(1), defender()})),
+            reset(defender()),
+        });
+    };
 
     b.declare_global("score_limit", type_t::short_, b.short_(3));
+    /* Single flag: one team defends its flag, the other scores by taking it
+     * home; they swap on a capture or when the time is up (3 min, my pick) */
+    b.declare_global("single_flag", type_t::bool_, b.boolean(false));
+    b.declare_global("single_flag_time", type_t::real_, b.real(180.f));
+    b.declare_global("defender", type_t::short_, b.short_(0));
     b.declare_global("flag_at_home", type_t::bool_, b.boolean(variant.ctf_flag_at_home));
     b.declare_global("flag_must_reset", type_t::bool_, b.boolean(variant.ctf_flag_must_reset));
     b.declare_global("flag_return_time", type_t::real_, b.real(variant.ctf_flag_return_time));
@@ -203,7 +219,25 @@ hsc_builder::program_t<BC> ctf(GameSetup const& variant)
             b.call(op<BC>(mode_op::respawn_delay_set), type_t::void_, {b.global("respawn_delay", type_t::real_)}),
             b.call(op<BC>(mode_op::time_limit_set), type_t::void_, {b.real(0.f)}),
             b.call(op<BC>(mode_op::flag_reach_set), type_t::void_, {b.global("flag_reach", type_t::real_)}),
+            b.if_(
+                single(),
+                b.call(
+                    op<BC>(mode_op::flag_remove),
+                    type_t::void_,
+                    {b.call(BC::sub_, type_t::short_, {b.short_(1), defender()})})),
         }));
+    b.script(
+        "single_flag_timer",
+        script_type_t::continuous,
+        b.if_(
+            single(),
+            b.begin({
+                b.call(
+                    BC::sleep,
+                    type_t::void_,
+                    {b.call(BC::mul_, type_t::real_, {b.global("single_flag_time", type_t::real_), b.real(30.f)})}),
+                swap_sides(),
+            })));
     b.script(
         "on_flag_touched",
         script_type_t::dormant,
@@ -244,6 +278,7 @@ hsc_builder::program_t<BC> ctf(GameSetup const& variant)
                 b.begin({
                     b.call(op<BC>(mode_op::score_add), type_t::void_, {carrier(b.short_(enemy)), b.short_(1)}),
                     reset(b.short_(enemy)),
+                    b.if_(single(), swap_sides()),
                     b.if_(
                         b.call(
                             BC::gequals,

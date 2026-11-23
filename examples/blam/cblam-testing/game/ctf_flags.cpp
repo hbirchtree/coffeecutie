@@ -70,7 +70,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
 
         /* The ball waits for the rules to put it in play */
         for(size_t team = 0; team < GameState::ball; team++)
-            if(m_active[team] && state.flags[team].placed && !m_spawned[team])
+            if(m_active[team] && state.flags[team].placed && !m_spawned[team] && !state.flags[team].removed)
                 spawn(p, state, team);
         carriers(p, state);
         lying(p, state, dt);
@@ -79,6 +79,8 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
             {
                 if(command.kind == FlagCommandEvent::give)
                     give(p, state, command.team, command.player);
+                else if(command.kind == FlagCommandEvent::remove)
+                    remove(p, state, command.team);
                 else
                     reset(p, state, command.team);
             }
@@ -166,7 +168,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         for(size_t team = 0; team < state.flags.size(); team++)
         {
             auto& flag = state.flags[team];
-            if(!m_active[team])
+            if(!m_active[team] || flag.removed)
                 continue;
             if(flag.object && !flags.contains(flag.object))
                 flag.object = 0;
@@ -241,7 +243,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         for(size_t team = 0; team < state.flags.size(); team++)
         {
             auto const& flag = state.flags[team];
-            if(!flag.placed || !m_active[team])
+            if(!flag.placed || !m_active[team] || flag.removed)
                 continue;
             /* The ball, for everyone: in play once it is somewhere */
             if(team == GameState::ball)
@@ -307,9 +309,33 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         flag.idle    = 0.f;
     }
 
-    void reset(Proxy& p, GameState& state, size_t team)
+    /* Out of play: out of hands and off the map until reset */
+    void remove(Proxy& p, GameState& state, size_t team)
     {
         auto& flag = state.flags[team];
+        if(flag.carrier >= 0)
+            for(auto ent : p.template select<PlayerInfo>())
+                if(ent.template get<PlayerInfo>().player_idx == static_cast<u32>(flag.carrier))
+                {
+                    EquipWeaponEvent equip{
+                        .entity_id = ent.id(), .weapon = m_weapon[team]->tag_id, .mode = EquipWeaponEvent::remove};
+                    GameEvent ev{.type = GameEvent::EquipWeapon};
+                    p.template subsystem<GameEventBus>().inject(ev, &equip);
+                }
+        despawn(p, flag.object);
+        flag.carrier     = -1;
+        flag.object      = 0;
+        flag.taken       = false;
+        flag.idle        = 0.f;
+        flag.removed     = true;
+        m_spawned[team]  = true;
+        m_released[team] = -1;
+    }
+
+    void reset(Proxy& p, GameState& state, size_t team)
+    {
+        auto& flag   = state.flags[team];
+        flag.removed = false;
         if(flag.carrier >= 0)
             for(auto ent : p.template select<PlayerInfo>())
                 if(ent.template get<PlayerInfo>().player_idx == static_cast<u32>(flag.carrier))

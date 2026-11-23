@@ -509,14 +509,17 @@ struct MultiplayerController
             state.vehicle_respawn = arg(0);
             return {};
         case mode_op::flag_give:
-        case mode_op::flag_reset: {
+        case mode_op::flag_reset:
+        case mode_op::flag_remove: {
             GameEvent        ev{.type = GameEvent::FlagCommand};
             FlagCommandEvent command{
-                .kind   = op == mode_op::flag_give ? FlagCommandEvent::give : FlagCommandEvent::reset,
+                .kind   = op == mode_op::flag_give    ? FlagCommandEvent::give
+                          : op == mode_op::flag_remove ? FlagCommandEvent::remove
+                                                       : FlagCommandEvent::reset,
                 .team   = static_cast<u16>(arg(0)),
                 .player = static_cast<u32>(arg(1)),
             };
-            if(arg(0) >= 0.f && (op == mode_op::flag_reset || arg(1) >= 0.f))
+            if(arg(0) >= 0.f && (op != mode_op::flag_give || arg(1) >= 0.f))
                 m_game->inject(ev, &command);
             return {};
         }
