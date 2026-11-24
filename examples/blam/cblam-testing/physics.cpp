@@ -1683,6 +1683,14 @@ struct PhysicsSystem
         }
     }
 
+    /* Outside the active section's bounds box altogether */
+    bool outside_section(Vecf3 const& pos) const
+    {
+        auto [p1, p2] = m_world_item->mesh->world_bounds.points();
+        return !glm::all(glm::greaterThanEqual(pos, glm::min(p1, p2))) ||
+               !glm::all(glm::lessThanEqual(pos, glm::max(p1, p2)));
+    }
+
     /* Whether an object is in the active section */
     bool in_active_section(Vecf3 const& pos) const
     {
@@ -1747,6 +1755,14 @@ struct PhysicsSystem
                 continue;
             btVector3 const at = rb->getCenterOfMassPosition();
             Vecf3 const     point{at.x(), at.y(), at.z()};
+            /* Past open bounds (the RS2 world) no cluster is ever around:
+             * the level's walls say nothing of it */
+            if(m_open_bounds && outside_section(point))
+            {
+                body.has_open    = false;
+                body.solid_steps = 0;
+                continue;
+            }
             if(m_world_item->find_cluster_tree(point) ||
                m_world_item->find_cluster_tree(point + Vecf3{0.f, 0.f, .1f}))
             {
