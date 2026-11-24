@@ -110,6 +110,7 @@ struct GameEvent
         ScriptCall,
         ChatSay,
         ChatLine,
+        PostgameChoice,
     };
 
     EventType type{None};
@@ -930,6 +931,14 @@ struct ServerCameraControl
 struct ServerDisconnectEvent
 {
     static constexpr auto event_type = GameEvent::ServerDisconnect;
+};
+
+/*! A button pressed on the postgame carnage report */
+struct PostgameChoiceEvent
+{
+    static constexpr auto event_type = GameEvent::PostgameChoice;
+
+    bool pick_game{false}; /*!< A: on to another game; else B: quit */
 };
 
 /* The server went away, or ours couldn't start; only host_left is a clean

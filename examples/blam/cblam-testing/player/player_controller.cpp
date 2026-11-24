@@ -179,6 +179,16 @@ struct PlayerController
                 /* The dead wait to come back, and nobody plays on once the
                  * game is over */
                 bool const over = p.template subsystem<GameState>().shows_results();
+                /* The carnage report's A and B, once, from any seat here */
+                if(!over)
+                    m_postgame_sent = false;
+                else if(!info.is_remote() && !m_postgame_sent && (input.accept || input.back || input.melee))
+                {
+                    m_postgame_sent = true;
+                    GameEvent           ev{.type = GameEvent::PostgameChoice};
+                    PostgameChoiceEvent choice{.pick_game = static_cast<bool>(input.accept)};
+                    p.subsystem<GameEventBus>().inject(ev, &choice);
+                }
                 if(auto const* status = p.template get<BipedStatus>(player.id());
                    ((status && status->dead) || over) && info.mode.physics)
                 {
@@ -999,6 +1009,7 @@ struct PlayerController
                                         m_remote_queue;
     std::map<u64, PlayerTickInputEvent> m_remote_inputs; /*!< Newest per body */
     std::map<u64, InputIntent> m_remote_presses; /*!< Not yet acted on */
+    bool                       m_postgame_sent{false};
     static constexpr libc_types::f32 reverse_tag_pace = .6f; /* of a run, my pick */
     static constexpr libc_types::f32 infected_pace    = 1.2f; /* Infection's infected outrun the humans */
     std::map<u64, InputIntent> m_presses;        /*!< Local, not yet sent */

@@ -198,6 +198,12 @@ void GameSetup::start_frame(ContainerProxy&, time_point const&)
         m_container.subsystem_cast<GameEventBus>().inject(ev, &load);
         return;
     }
+    if(m_open && in_menu(m_container))
+    {
+        UIEvent      ev{.type = UIEvent::open_widget};
+        UIOpenWidget open{.widget = *std::exchange(m_open, std::nullopt)};
+        m_container.subsystem_cast<UIEventBus>().inject(ev, &open);
+    }
     if(!m_error || !in_menu(m_container))
         return;
     m_error_text = break_lines(utf8::utf8to16(utf8::replace_invalid(*m_error)));
@@ -329,6 +335,18 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
         return ui_result_t::ok;
     };
     data.on_function(func_t::pause_game_return_to_main_menu, leave_game);
+    /* The carnage report's buttons: B back to the menu, A on to the
+     * split screen map select; out of a network game either way */
+    e.subsystem_cast<GameEventBus>().addEventFunction<PostgameChoiceEvent>(
+        0, [&e, &setup](GameEvent&, PostgameChoiceEvent* choice) {
+            GameEvent             ev{GameEvent::ServerDisconnect};
+            ServerDisconnectEvent disconnect{};
+            e.subsystem_cast<GameEventBus>().inject(ev, &disconnect);
+            if(choice->pick_game)
+                setup.open_in_menu(
+                    "ui\\shell\\main_menu\\multiplayer_type_select\\split_screen\\splitscreen_map_select_postgame_wrapper");
+            setup.start("ui");
+        });
     data.on_function(func_t::mp_game_player_quit, leave_game);
 
     /* Out of a network game: back to the menu, with a dialog saying why
