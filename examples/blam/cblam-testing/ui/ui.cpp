@@ -288,6 +288,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     std::vector<button_icon_t> m_button_icons;
     /* The shader's instance array, UI_INSTANCES */
     size_t m_instance_slots{512};
+    /* Scroll position of each PC column list */
+    std::map<blam::ui_element const*, u16> m_column_first;
 
     /* Tokens become private-use characters until they are drawn */
     static constexpr char16_t first_icon_char = 0xE000;
@@ -415,8 +417,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(el.extended_description.valid())
         {
             /* A column list's rows also name the focused item for it */
-            auto const* described =
-                el.ui_element->widget_type == blam::ui_element::widget_type_t::column_list ? rows_of(el) : nullptr;
+            auto const* described = column_rows(el).empty() ? nullptr : rows_of(el);
             traverse_widget(
                 el.extended_description,
                 layout_data_t{
@@ -424,7 +425,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     .frame  = layout.origin,
                     .index  = focused.value_or(0),
                     .list   = described,
-                    .item   = described ? std::optional<u16>(focused.value_or(0)) : std::nullopt,
+                    .item   = described ? std::optional<u16>(described->get()) : std::nullopt,
                     .row    = described != nullptr,
                 },
                 visit);
@@ -442,14 +443,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(!rows)
             rows = layout.rows;
         /* Children sharing a tag are a widget's rows, in order; so are a
-         * column list's list_item children, whatever their tags */
+         * column list's list_item children, scrolled to the selection */
         std::map<std::string_view, u16> row_counts, row_at;
-        auto const column_item = [this](auto const& child) {
-            auto const* item = find_item(child);
-            return item && item->tag_name.find("list_item") != std::string_view::npos;
-        };
-        bool const column = rows && !list && el.ui_element->widget_type == blam::ui_element::widget_type_t::column_list &&
-                            std::any_of(el.children.begin(), el.children.end(), column_item);
+        auto const shown  = column_rows(el);
+        u16 const  scroll = shown.empty() ? 0 : column_first(el, static_cast<u16>(shown.size()));
         if(rows && !list)
             for(auto const& child : el.children)
                 if(auto const* item = find_item(child))
@@ -476,11 +473,12 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 if(at < 0 || at >= static_cast<i32>(list->count()))
                     continue;
                 item = static_cast<u16>(at);
-            } else if(column && column_item(child))
+            } else if(auto const at = std::find(shown.begin(), shown.end(), i); at != shown.end())
             {
-                if(i >= rows->count())
+                u16 const shows = scroll + static_cast<u16>(at - shown.begin());
+                if(shows >= rows->count())
                     continue;
-                item = static_cast<u16>(i);
+                item = shows;
                 row  = true;
                 from = rows;
             } else if(auto const* child_item = rows ? find_item(child) : nullptr;
@@ -514,7 +512,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     .item_root   = list != nullptr,
                     .rows        = rows,
                     .row         = row,
-                    .column_row  = column && column_item(child) ? static_cast<libc_types::i8>(focused == i ? 1 : 0) : libc_types::i8(-1),
+                    .column_row  = std::find(shown.begin(), shown.end(), i) == shown.end() ? libc_types::i8(-1)
+                                   : item == rows->get()                              ? libc_types::i8(1)
+                                                                                      : libc_types::i8(0),
                 },
                 visit);
         }
@@ -574,17 +574,62 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return nullptr;
     }
 
-    /* A column list's items take focus with no handlers of their own */
+    /* A column list's items take focus with no handlers of their own, but
+     * not its headings: bare text with no background */
     bool focusable_child(UIElementItem const& parent, UIElementItem const& child)
     {
         using flags_t = blam::ui_element::flags_t;
-        if(child.visible &&
+        bool const heading = child.ui_element->widget_type == blam::ui_element::widget_type_t::text_box &&
+                             child.background.empty() && !focusable(child);
+        if(child.visible && !heading &&
            parent.ui_element->widget_type ==
                blam::ui_element::widget_type_t::column_list &&
            (has_flag(parent, flags_t::dpad_ud_tabs_through_items) ||
             has_flag(parent, flags_t::dpad_lr_tabs_through_items)))
             return true;
         return focusable(child);
+    }
+
+    /* A PC column list's rows: its list_item children, past any chooser
+     * above them. They show a window of the list's items. */
+    std::vector<u16> column_rows(UIElementItem const& el)
+    {
+        std::vector<u16> out;
+        if(el.ui_element->widget_type != blam::ui_element::widget_type_t::column_list || list_of(el) ||
+           !rows_of(el))
+            return out;
+        for(auto const& [i, child] : stl_types::const_enumerate(el.children))
+            if(auto const* item = find_item(child);
+               item && item->tag_name.find("list_item") != std::string::npos &&
+               item->tag_name.find("chooser") == std::string::npos)
+                out.push_back(static_cast<u16>(i));
+        return out;
+    }
+
+    /* The first item a column list's rows show, scrolled just enough to
+     * keep the selection in view */
+    u16 column_first(UIElementItem const& el, u16 shown)
+    {
+        auto const* rows  = rows_of(el);
+        u16 const   count = rows->count();
+        u16 const   sel   = rows->get();
+        auto&       first = m_column_first[el.ui_element];
+        if(sel < first)
+            first = sel;
+        else if(shown > 0 && sel >= first + shown)
+            first = sel - shown + 1;
+        first = std::min<u16>(first, count > shown ? count - shown : 0);
+        return first;
+    }
+
+    /* The row showing the selection */
+    std::optional<u16> column_focus(UIElementItem const& el)
+    {
+        auto const shown = column_rows(el);
+        if(shown.empty())
+            return std::nullopt;
+        u16 const at = rows_of(el)->get() - column_first(el, static_cast<u16>(shown.size()));
+        return shown[std::min<size_t>(at, shown.size() - 1)];
     }
 
     /* Can the widget, or anything below it, take input? */
@@ -643,6 +688,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     break;
                 idx = *first;
             }
+            if(auto const shown = column_rows(*el); std::find(shown.begin(), shown.end(), idx) != shown.end())
+                idx = column_focus(*el).value_or(idx);
             std::vector<u16> const slot(
                 frame.focus.begin(), frame.focus.begin() + depth + 1);
             el = find_item(frame.at(slot, el->children[idx]));
@@ -679,6 +726,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return t::a_btn;
     }
 
+    /* PC's back and cancel buttons, and screens that take B themselves */
+    static bool backs_out(blam::ui_element::function_t function)
+    {
+        using f = blam::ui_element::function_t;
+        return function == f::mouse_emit_back_event || function == f::gamespy_back_handler ||
+               function == f::controls_back_handler;
+    }
+
     /* Returns true if the widget has a handler for the event */
     bool run_handlers(
         UIScreen&               screen,
@@ -690,7 +745,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(!handlers.has_value())
             return false;
 
-        bool handled = false;
+        bool handled = false, goes_back = false;
         for(auto const& eh : handlers.value())
         {
             /* PC tags put confirm on the left mouse button, or on a
@@ -712,9 +767,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 m_pending.back().slot = slot;
             else
                 finish_handler(screen, el, eh, result == ui_result_t::ok, slot);
+            goes_back |= backs_out(eh.function);
             if(screen.stack.empty())
                 break;
         }
+        /* Once, though a button's mouse handler matches its A too */
+        if(goes_back)
+            go_back(screen);
         return handled;
     }
 
@@ -867,7 +926,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             screen.stack.clear();
         else if(has(eh_t::flags_t::close_current_widget) &&
                 !screen.stack.empty())
+        {
+            /* Closing itself runs its deleted handlers, e.g. the update
+             * check's OK opening the server list */
+            auto const closed = screen.stack.back().widget;
             screen.stack.pop_back();
+            if(auto* gone = find_item(closed))
+                run_handlers(screen, *gone, eh_t::type_t::deleted);
+        }
         else if(has(eh_t::flags_t::go_back_to_previous_widget))
             go_back(screen);
 
@@ -1078,7 +1144,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         for(size_t depth = path.size() - 1; depth-- > 0;)
             if(tabs_through_children(*path[depth]))
             {
-                m_selected = frame.focus[depth];
+                auto const shown = column_rows(*path[depth]);
+                m_selected =
+                    shown.empty() ? frame.focus[depth] : rows_of(*path[depth])->get();
                 break;
             }
 
@@ -1135,6 +1203,31 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 (horizontal &&
                  (has_flag(el, flags_t::dpad_lr_tabs_through_children) ||
                   has_flag(el, flags_t::dpad_lr_tabs_through_items)));
+            if(auto const shown = column_rows(el); tabs && vertical && depth + 1 < path.size() && !shown.empty())
+            {
+                /* Within the rows the selection moves and they scroll; past
+                 * either end focus leaves them, and comes back to it */
+                auto&      idx    = frame.focus[depth];
+                auto const* rows  = rows_of(el);
+                bool const on_row = std::find(shown.begin(), shown.end(), idx) != shown.end();
+                i32 const  sel    = static_cast<i32>(rows->get()) + step;
+                if(on_row && sel >= 0 && sel < static_cast<i32>(rows->count()))
+                {
+                    rows->set(static_cast<u16>(sel));
+                    idx = column_focus(el).value_or(idx);
+                    frame.focus.resize(depth + 1);
+                    return;
+                }
+                if(on_row)
+                    idx = step > 0 ? shown.back() : shown.front();
+                if(auto next = next_focusable(el, idx + step, step))
+                {
+                    bool const into = std::find(shown.begin(), shown.end(), *next) != shown.end();
+                    idx             = into ? column_focus(el).value_or(*next) : *next;
+                    frame.focus.resize(depth + 1);
+                }
+                return;
+            }
             if(tabs && depth + 1 < path.size())
             {
                 auto& idx  = frame.focus[depth];
