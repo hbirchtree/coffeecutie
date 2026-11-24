@@ -77,6 +77,22 @@ struct list_source_t
     }
 };
 
+/* PC's column list over an Xbox list's items: each row's text on one line,
+ * none for the screen's other text boxes */
+UIDataSource::list_t column_of(UIDataSource::list_t list)
+{
+    list.text = [text = std::move(list.text)](std::string_view widget, u16 item) {
+        bool const own = widget.ends_with("_name") || widget.ends_with("_data") || widget == "list_item_text";
+        if(!own || widget == "current_profile_name")
+            return std::u16string{};
+        auto out = text(widget, item);
+        if(widget == "list_item_text")
+            std::replace(out.begin(), out.end(), u'\n', u' ');
+        return out;
+    };
+    return list;
+}
+
 std::vector<std::u16string> strings_of(
     compo::EntityContainer& e, std::string_view tag_name)
 {
@@ -282,6 +298,10 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
             game_names->descriptions = strings_of(e, "ui\\shell\\strings\\game_variant_descriptions");
             return ui_result_t::ok;
         });
+    /* PC's multiplayer menu: nothing to update, the OK goes straight on */
+    data.on_function(func_t::mp_type_set_mode, ok);
+    data.on_function(func_t::checking_for_updates_ok, ok);
+    data.on_function(func_t::checking_for_updates_dismiss, ok);
     data.on_function(func_t::mp_profiles_list_dispose, ok);
     data.on_function(func_t::mp_profile_set_for_game, ok);
 
@@ -306,9 +326,14 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
     };
     data.on_function(func_t::main_menu_switch_to_solo_game, start_campaign);
     data.on_function(func_t::start_new_game, start_campaign);
+    /* PC's difficulty rows: picking one starts, as its OK would */
+    data.on_function(func_t::difficulty_item_select, [&setup, start_campaign](UIFunctionCall const& call) {
+        if(call.selected)
+            setup.difficulty = *call.selected;
+        return start_campaign(call);
+    });
 
-    data.on_function(
-        func_t::net_game_speed_start, [&e, &setup, mp_maps](UIFunctionCall const&) {
+    auto start_multiplayer = [&e, &setup, mp_maps](UIFunctionCall const&) {
             if(setup.mp_map >= mp_maps->entries.size())
                 return ui_result_t::failed;
             /* A team game needs someone on each side */
@@ -324,7 +349,25 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
                 magic_enum::enum_name(setup.game_type));
             setup.start(std::string(map));
             return ui_result_t::ok;
-        });
+        };
+    data.on_function(func_t::net_game_speed_start, start_multiplayer);
+    /* PC's server setup: the same game, hosted on Halo PC's port */
+    data.on_function(func_t::ss_start_game, [&e, &data, start_multiplayer](UIFunctionCall const& call) {
+        /* No pregame screen to join from: every controller plugged in plays */
+        if(auto* pads = e.service<comp_app::ControllerInput>())
+            for(u32 i = 0; i < pads->count(); ++i)
+                data.call(UIFunctionCall{.function = func_t::join_controller_to_mp_game, .seat = i});
+        if(start_multiplayer(call) != ui_result_t::ok)
+            return ui_result_t::failed;
+        GameEvent          ev{GameEvent::ServerConnect};
+        ServerConnectEvent connect{
+            .type   = ServerConnectEvent::Listen,
+            .remote = "0.0.0.0:2302",
+        };
+        e.subsystem_cast<GameEventBus>().inject(ev, &connect);
+        return ui_result_t::ok;
+    });
+    data.on_function(func_t::server_settings_init, ok);
 
     /* QUIT / LEAVE GAME: disconnect, then load ui.map */
     auto leave_game = [&e, &setup](UIFunctionCall const&) {
@@ -392,25 +435,15 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
             .get   = [&setup] { return setup.level; },
             .set   = [&setup, levels, clamp_to](
                        u16 value) { setup.level = clamp_to(levels, value); },
-            /* Its own boxes only: a PC row's text on one line */
-            .text = [levels](std::string_view widget, u16 item) {
-                if((!widget.ends_with("_name") && !widget.ends_with("_data") && widget != "list_item_text") ||
-                   widget == "current_profile_name")
-                    return std::u16string{};
-                auto text = levels->text(widget, item);
-                if(widget == "list_item_text")
-                    std::replace(text.begin(), text.end(), u'\n', u' ');
-                return text;
+            .text  = [levels](std::string_view widget, u16 item) {
+                return levels->text(widget, item);
             },
             .image = [levels](u16 item) { return levels->entries.at(item); },
         };
     };
     data.bind_list(input_t::solo_level_select_update, level_list());
-    /* PC's column list of the same levels */
-    data.bind_list(input_t::solo_map_list_update, level_list());
-    data.bind_list(
-        input_t::mp_level_select_update,
-        list_t{
+    data.bind_list(input_t::solo_map_list_update, column_of(level_list()));
+    auto const mp_map_list = list_t{
             .count = [mp_maps] { return static_cast<u16>(mp_maps->entries.size()); },
             .get   = [&setup] { return setup.mp_map; },
             .set   = [&setup, mp_maps, clamp_to](
@@ -419,11 +452,11 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
                 return mp_maps->text(widget, item);
             },
             .image = [mp_maps](u16 item) { return mp_maps->entries.at(item); },
-        });
+        };
+    data.bind_list(input_t::mp_level_select_update, list_t(mp_map_list));
+    data.bind_list(input_t::mp_map_list_update, column_of(mp_map_list));
     /* The built-in variants; saved ones would go first */
-    data.bind_list(
-        input_t::mp_profile_list_update,
-        list_t{
+    auto const variant_list = list_t{
             .count = [] { return static_cast<u16>(variants::all.size()); },
             .get   = [&setup] {
                 if(setup.variant < variants::all.size())
@@ -451,7 +484,9 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
                         return i;
                 return u16(0);
             },
-        });
+        };
+    data.bind_list(input_t::mp_profile_list_update, list_t(variant_list));
+    data.bind_list(input_t::gt_select_list_update, column_of(variant_list));
 
     /* The pregame screen's summary of the game about to start: its text
      * boxes pick from ui\multiplayer_game_text by their game data input */
