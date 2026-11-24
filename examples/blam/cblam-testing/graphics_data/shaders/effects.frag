@@ -108,10 +108,13 @@ void main()
     if(mod(frag.source.w, 16.0) > 0.5)
         c.a = 1.0;
     c *= frag.color;
+    /* A decal multiplies by its colour alone, grey being no change; its
+     * texture's alpha isn't a mask, only its fade is */
+    float weight = frag.source.z > 2.5 ? frag.color.a : c.a;
     if(blend_mode > 2.5)
-        out_color = vec4(mix(vec3(1.0), 2.0 * c.rgb, c.a), 1.0);
+        out_color = vec4(mix(vec3(1.0), 2.0 * c.rgb, weight), 1.0);
     else if(blend_mode > 1.5)
-        out_color = vec4(mix(vec3(1.0), c.rgb, c.a), 1.0);
+        out_color = vec4(mix(vec3(1.0), c.rgb, weight), 1.0);
     else
         out_color = c;
 }
