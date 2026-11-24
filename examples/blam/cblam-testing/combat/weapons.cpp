@@ -69,6 +69,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         f32  striking{0.f};     /* melee, seconds left */
         f32  charge{-1.f};      /* held while charging, s; <0 when not */
         f32  spin{0.f};         /* rate of fire wound up, 0 to 1 */
+        f32  error{0.f};        /* held fire's spread, 0 to 1 of its error angles */
         bool spins{false};      /* the trigger winds up at all */
         blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
@@ -242,7 +243,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                    ammo->rounds_loaded < magazine->rounds_loaded_maximum &&
                    (reload || !loaded))
                 {
-                    state.reloading = std::max(magazine->reload_time, dt);
+                    /* Held through the first-person reload, as Halo does
+                     * for a magazine with no reload time of its own */
+                    state.reloading = std::max(
+                        {magazine->reload_time,
+                         fp_reload_seconds(p, gun_tag, ammo->rounds_loaded == 0),
+                         dt});
                     reload          = false;
                 }
                 if(ammo)
@@ -317,10 +323,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                         if(ammo)
                             heat_up(p, ent.id(), *ammo, gun_tag, pulled);
                         pull(p, ent.id(), info, cam, *weapon_tag, false,
-                             static_cast<u16>(fires));
+                             static_cast<u16>(fires), state.error);
                     }
                 }
                 state.firing = held;
+                /* Held, the spread widens over the error acceleration time;
+                 * let go, it narrows over the deceleration time */
+                if(held && ready)
+                    state.error = trigger.error_acceleration_time > 0.f
+                                      ? std::min(state.error + dt / trigger.error_acceleration_time, 1.f)
+                                      : 1.f;
+                else
+                    state.error = trigger.error_deceleration_time > 0.f
+                                      ? std::max(state.error - dt / trigger.error_deceleration_time, 0.f)
+                                      : 0.f;
                 state.cooldown2 = std::max(state.cooldown2 - dt, 0.f);
                 if(held2)
                 {
@@ -448,13 +464,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 auto const* same = equip.weapons[0].tag == tag   ? &equip.weapons[0]
                                    : equip.weapons[1].tag == tag ? &equip.weapons[1]
                                                                  : nullptr;
+                /* The same battery weapon with more charge is a swap */
+                bool const fresher = same && fresher_battery(*same, model.item_age, files.container.magic);
+                if(fresher)
+                    same = nullptr;
                 bool const carried = grenade || powerup || ammo || same;
                 /* A swap takes a press, and only for the weapon on offer:
                  * a seat nearer the centre of the view wins the press */
-                if(!carried && equip.weapons[1].weapon &&
-                   (!(pressed || held) || info.offered.weapon != item.id()))
+                bool const swap = !carried && (equip.weapons[1].weapon || fresher);
+                if(swap && (!(pressed || held) || info.offered.weapon != item.id()))
                     continue;
-                if(!carried && equip.weapons[1].weapon)
+                if(swap)
                     spent_press = true;
                 auto rounds = model.item_rounds.value_or(std::array<u16, 2>{});
                 if(tag->matches(blam::tag_class_t::weap) && !model.item_rounds)
@@ -571,7 +591,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerCamera const& cam,
         blam::tag_t const&  weapon,
         bool                melee   = false,
-        u16                 trigger = 0)
+        u16                 trigger = 0,
+        f32                 error   = 0.f)
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
@@ -584,6 +605,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .trigger    = trigger,
             .melee      = melee,
             .zoomed     = equip && equip->zoom > 0,
+            .error      = error,
             .position   = melee ? cam.camera.position
                                 : cam.camera.position + forward * muzzle_distance,
             .direction  = forward,
@@ -721,7 +743,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             bool const steady =
                 shot.zoomed &&
                 (trigger.flags & trigger_t::flags_t::use_error_when_unzoomed) != trigger_t::flags_t::none;
-            f32 const error = steady ? 0.f : std::max(trigger.error_angle.x, trigger.minimum_error);
+            f32 const error = steady ? 0.f
+                                     : glm::mix(std::max(trigger.error_angle.x, trigger.minimum_error),
+                                                std::max(trigger.error_angle.y, trigger.minimum_error),
+                                                glm::clamp(shot.error, 0.f, 1.f));
             for(i32 i = 0; i < count; i++)
             {
                 f32 const spread =
@@ -789,7 +814,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 continue;
             auto const& anim = ent.template get<AnimationPlayback>();
             i32 const   clip = fire_clip(anim, magic);
-            if(clip < 0)
+            if(clip < 0 || (fp_clip(anim, magic, fp_slot::fire_1) < 0 && playing(anim, clip)))
                 continue;
             PlayModelAnimationEvent play{
                 .entity    = ent.id(),
@@ -1096,6 +1121,33 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     using fp_slot = blam::antr::first_person_weapon;
 
+    /* How long a weapon's first-person reload clip plays, at 30 frames a
+     * second; 0 without one */
+    f32 fp_reload_seconds(Proxy& p, blam::scn::weapon const& gun, bool empty)
+    {
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto const& magic = files.container.magic;
+        blam::tag_index_view<halo_version> index(files.container);
+        auto tag = index.find(gun.first_person_animations.tag_id);
+        if(!gun.first_person_animations.valid() || tag == index.end())
+            return 0.f;
+        auto graph = (*tag).template data<blam::antr::header>(magic);
+        if(!graph.has_value())
+            return 0.f;
+        auto fp = graph.value()[0].first_person_weapons.data(magic);
+        auto anims = graph.value()[0].animations.data(magic);
+        if(!fp.has_value() || fp.value().empty() || !anims.has_value())
+            return 0.f;
+        auto slots = fp.value()[0].animations.data(magic);
+        size_t const slot = empty ? fp_slot::reload_empty : fp_slot::reload_full;
+        if(!slots.has_value() || slots.value().size() <= slot)
+            return 0.f;
+        i32 const clip = slots.value()[slot].animation;
+        if(clip < 0 || static_cast<size_t>(clip) >= anims.value().size())
+            return 0.f;
+        return std::max<f32>(anims.value()[static_cast<size_t>(clip)].frame_count, 0.f) / 30.f;
+    }
+
     static i32 fp_clip(AnimationPlayback const& anim, blam::map_ptr const& magic, size_t slot)
     {
         if(!anim.graph)
@@ -1109,9 +1161,28 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return slots.value()[slot].animation;
     }
 
+    /* Its fire-1 slot, or the clip the assault rifle leaves out of its slots */
     static i32 fire_clip(AnimationPlayback const& anim, blam::map_ptr const& magic)
     {
-        return fp_clip(anim, magic, fp_slot::fire_1);
+        if(i32 const clip = fp_clip(anim, magic, fp_slot::fire_1); clip >= 0 || !anim.graph)
+            return clip;
+        auto anims = anim.graph->animations.data(magic);
+        if(!anims.has_value())
+            return -1;
+        for(i32 i = 0; i < static_cast<i32>(anims.value().size()); i++)
+            if(anims.value()[i].name.str() == "first-person firing")
+                return i;
+        return -1;
+    }
+
+    /* A base clip still playing, left to run on through a burst */
+    static bool playing(AnimationPlayback const& anim, i32 clip)
+    {
+        for(u32 i = AnimationPlayback::base_slot; i < AnimationPlayback::base_slot + AnimationPlayback::base_slots; i++)
+            if(auto const& layer = anim.layers[i]; layer.graph == anim.graph &&
+               layer.animation == static_cast<u32>(clip) && !layer.finished && layer.target > 0.f)
+                return true;
+        return false;
     }
 
     /* The player's first-person weapon model, or its hands */

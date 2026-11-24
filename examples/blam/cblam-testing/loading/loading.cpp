@@ -2895,6 +2895,15 @@ struct ResourceLoader
                     biped_model.shape.crouch_time = biped->crouch_transition_time;
                 if(biped->crouch_velocity_modifier > 0.f)
                     biped_model.shape.crouch_speed = biped->crouch_velocity_modifier;
+                biped_model.shape.hard_death = biped->hard_death_threshold;
+                if((biped->unit_flags & blam::scn::unit::unit_flags_t::resists_pings) ==
+                   blam::scn::unit::unit_flags_t::none)
+                {
+                    if(biped->soft_ping_threshold > 0.f || biped->soft_ping_interrupt_time > 0.f)
+                        biped_model.shape.soft_ping = biped->soft_ping_threshold;
+                    if(biped->hard_ping_threshold > 0.f || biped->hard_ping_interrupt_time > 0.f)
+                        biped_model.shape.hard_ping = biped->hard_ping_threshold;
+                }
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
                 {
                     /* The cyborg names none; its head stands in */
@@ -3255,6 +3264,15 @@ struct ResourceLoader
             for(auto* carried : {&held, &slung})
                 if(carried->tag == tag)
                 {
+                    /* A fresher battery of its kind replaces it, dropped */
+                    if(fresher_battery(*carried, change.age, files.container.magic))
+                    {
+                        if(!info.is_remote() || info.mode.simulated)
+                            drop(*carried, cam, info.biped.eye_height);
+                        *carried     = armed(tag, files);
+                        carried->age = change.age;
+                        return;
+                    }
                     /* Into the reserve, as much as fits */
                     carried->rounds_total = static_cast<u16>(
                         carried->rounds_total +

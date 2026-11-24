@@ -518,7 +518,7 @@ struct alignas(8) WeaponFire
     u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
     u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */
     u32 shooter{0};                /*!< Net id of a shooter that is no player: an actor */
-    u32 padding{0};
+    f32 error{0.f};                /*!< Held fire's spread, 0 to 1 */
     u64 target_tick{0};            /*!< Server tick `target` was shown at, 0 = view_tick */
 };
 
@@ -552,9 +552,9 @@ struct alignas(8) UnitVitality
     f32 shield{1.f};
     u32 dead{0}; /*!< 1: dead, 2: violently, 4: destroyed */
     u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect, 4: re-equipped */
-    Vecf4 respawn{};
+    Vecf4 respawn{}; /*!< Dying instead: the killing blow's way */
     f32   overcharge_decay{0.f}; /*!< Over shield lost per second */
-    u32   padding{0};
+    u32   blow_flags{0};         /*!< Dying: BipedStatus::blow_flags */
 };
 
 /*! The game being played, as the server keeps it (GameState) */

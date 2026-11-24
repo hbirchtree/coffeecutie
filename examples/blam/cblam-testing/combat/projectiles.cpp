@@ -264,6 +264,10 @@ struct ProjectileSystem
                     : nullptr);
         case response_t::disappear:
         default:
+            /* Gone, yet a shot with a detonation of its own still sets it
+             * off: fuel rods, charged plasma */
+            if(tag.detonation_effect.valid())
+                return detonate(p, flight, ray.point, ray.normal, nullptr);
             return false;
         }
     }

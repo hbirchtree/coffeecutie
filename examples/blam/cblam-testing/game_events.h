@@ -512,6 +512,7 @@ struct WeaponFireEvent
     bool                 melee{false};  /*!< A strike with `weapon`, nothing fired */
     bool                 windup{false}; /*!< A strike begun: its swing plays, nothing lands yet */
     bool                 zoomed{false}; /*!< Through a scope: a trigger with error only unzoomed has none */
+    libc_types::f32      error{0.f};    /*!< How far held fire has spread it, 0 to 1 of the error angles */
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
     libc_types::u64      target{0}; /*!< The unit the reticle rested on, which guided shots seek */
@@ -598,6 +599,10 @@ struct UnitVitalityEvent
     bool                 fresh{false};   /*!< A respawn, not a checkpoint: starts over equipped */
     libc_types::f32      overcharge_decay{0.f}; /*!< BipedStatus' */
     bool destroyed{false}; /*!< Dead and gone: its coll's destroyed effect plays */
+    /*! The killing blow, or one it flinched from, as BipedStatus has it */
+    Vecf3          blow{};
+    libc_types::u8 blow_flags{0};
+    bool           ping{false}; /*!< Alive: `blow` is one to flinch from */
 };
 
 /*! A player's seat came back into the game after leaving it; it waits to

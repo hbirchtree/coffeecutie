@@ -12,6 +12,7 @@
 #include "ui/ui_data.h"
 #include "combat/weapons.h"
 
+#include <blam/volta/blam_effects.h>
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_strings.h>
@@ -1867,6 +1868,26 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             /* Full spectrum vision, fading out over its last second */
             if(info && info->powerups.vision > 0.f)
                 out.tint = vision_tint * std::min(info->powerups.vision, 1.f);
+            /* A damage effect's flash, fading: lighten adds its colour,
+             * darken dims, the rest lay their colour over */
+            if(info && info->damage_flash.left > 0.f && info->damage_flash.duration > 0.f)
+            {
+                using type_t      = blam::scn::damage_effect::screen_flash_type_t;
+                auto const& flash = info->damage_flash;
+                f32 const   a     = flash.intensity * flash.left / flash.duration;
+                switch(static_cast<type_t>(flash.type))
+                {
+                case type_t::lighten:
+                    out.tint += Vecf4(flash.color * a, 0.f);
+                    break;
+                case type_t::darken:
+                    out.tint = out.tint * (1.f - a) + Vecf4(0.f, 0.f, 0.f, a);
+                    break;
+                default:
+                    out.tint = out.tint * (1.f - a) + Vecf4(flash.color * a, a);
+                    break;
+                }
+            }
             /* A teleporter's white flash, fading */
             if(info && info->teleport_flash > 0.f)
             {

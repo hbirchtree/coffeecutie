@@ -99,6 +99,7 @@ enum class announcer : libc_types::i16
     team_race               = 34,
     hill_contested          = 39,
     hill_controlled         = 40,
+    ting                    = 43, /*!< A shot of yours struck another player */
 };
 
 /* Oddball's ball, among capture the flag's flags (GameState::ball) */

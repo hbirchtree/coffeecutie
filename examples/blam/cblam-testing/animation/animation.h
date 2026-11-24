@@ -80,7 +80,8 @@ struct AnimationPlayback
         sway_slot     = 17, /* first person: the moving overlay, by the walk */
         fp_sway_slot  = 18, /* first person: the overlays frames, one axis each */
         fp_sway_axes  = 5,
-        max_layers    = 23,
+        ping_slot     = 23, /* units: the flinch from a blow */
+        max_layers    = 24,
     };
 
     std::array<AnimationLayer, max_layers> layers{};
