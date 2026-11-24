@@ -606,7 +606,16 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     shot.target = ray.entity_id;
             }
             if(!shot.target)
-                shot.target = autoaimed(p, player, info, cam.camera.position, forward, weapon);
+            {
+                shot.target = autoaimed(
+                    p, player, info, cam.camera.position, forward, weapon, magnification(p, equip, weapon));
+                /* Bullet magnetism: a shot just off an enemy bends onto it */
+                if(auto const onto = magnetized(p, info, shot.target, cam.camera.position, forward))
+                {
+                    target         = *onto;
+                    shot.direction = glm::normalize(*onto - shot.position);
+                }
+            }
         }
         if(info.riding.vehicle != 0 && &weapon == mounted_weapon(p, info, files_of(p)))
         {
@@ -942,7 +951,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                              ? ray.entity_id
                              : 0;
             if(!target)
-                target = autoaimed(p, ent.id(), info, cam.camera.position, forward, *weapon);
+                target = autoaimed(p, ent.id(), info, cam.camera.position, forward, *weapon, magnification(p, &equip, *weapon));
             equip.aimed = side_of(p, info, target);
         }
     }
@@ -1449,14 +1458,18 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerInfo const&  info,
         Vecf3 const&       eye,
         Vecf3 const&       forward,
-        blam::tag_t const& weapon)
+        blam::tag_t const& weapon,
+        f32                zoom = 1.f)
     {
-        auto data = weapon.template data<weapon_t>(files_of(p).container.magic);
+        using flags_t = weapon_t::weapon_flags_t;
+        auto data     = weapon.template data<weapon_t>(files_of(p).container.magic);
         if(!data.has_value())
             return 0;
-        f32 const angle = data.value()[0].autoaim_angle;
+        /* The cone is on screen, so a scope narrows it as it magnifies */
+        f32 const angle = data.value()[0].autoaim_angle / std::max(zoom, 1.f);
         f32 const range = data.value()[0].autoaim_range;
-        if(angle <= 0.f || range <= 0.f)
+        if(angle <= 0.f || range <= 0.f ||
+           ((data.value()[0].weapon_flags & flags_t::aim_assists_only_when_zoomed) != flags_t::none && zoom <= 1.f))
             return 0;
         u64 best      = 0;
         f32 best_cos  = std::cos(angle);
@@ -1464,7 +1477,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         {
             u64 const id = unit.id();
             if(id == player || id == info.riding.vehicle ||
-               unit.template get<BipedStatus>().dead)
+               unit.template get<BipedStatus>().dead || side_of(p, info, id) < 0)
                 continue;
             Vecf3 const to = unit.template get<Model>().position + Vecf3{0.f, 0.f, autoaim_height} - eye;
             f32 const   d  = glm::length(to);
@@ -1482,6 +1495,45 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             best_cos = c;
         }
         return best;
+    }
+
+    /* The scope's magnification, 1 unzoomed; as the camera's */
+    static f32 magnification(Proxy& p, BipedEquipment const* equip, blam::tag_t const& weapon)
+    {
+        auto data = weapon.template data<weapon_t>(files_of(p).container.magic);
+        if(!equip || equip->zoom == 0 || !data.has_value() || data.value()[0].zoom_levels <= 0)
+            return 1.f;
+        i32 const   levels = data.value()[0].zoom_levels;
+        Vecf2 const range  = data.value()[0].zoom_magnification_range;
+        return std::max(
+            levels > 1 ? glm::mix(range.x, range.y, (equip->zoom - 1.f) / (levels - 1.f)) : range.x, 1.f);
+    }
+
+    /* Where a shot bends to on an enemy: the point of its body's axis
+     * nearest the reticle's line */
+    std::optional<Vecf3> magnetized(Proxy& p, PlayerInfo const& info, u64 target, Vecf3 const& eye, Vecf3 const& forward)
+    {
+        auto const* model = p.template get<Model>(target);
+        if(!model || side_of(p, info, target) <= 0)
+            return std::nullopt;
+        f32 height = 2.f * autoaim_height;
+        if(model->origin_object && model->origin_object->matches(blam::tag_class_t::bipd))
+            if(auto biped = model->origin_object->template data<blam::scn::biped>(files_of(p).container.magic);
+               biped.has_value() && biped.value()[0].standing_collision_height > 0.f)
+                height = biped.value()[0].standing_collision_height;
+        /* Feet to the top of the head, the axis crouched or not */
+        Vecf3 const low  = model->position + Vecf3{0.f, 0.f, height * .1f};
+        Vecf3 const axis = Vecf3{0.f, 0.f, height * .8f};
+        /* Nearest points of the line and the axis */
+        Vecf3 const w = eye - low;
+        f32 const   b = glm::dot(forward, axis), c = glm::dot(axis, axis);
+        f32 const   d = glm::dot(forward, w), e = glm::dot(axis, w);
+        f32 const   den = c - b * b;
+        f32 const   t = std::clamp(den > 1e-6f ? (e - b * d) / den : 0.f, 0.f, 1.f);
+        Vecf3 const onto = low + axis * t;
+        if(glm::dot(onto - eye, forward) <= 0.f)
+            return std::nullopt;
+        return onto;
     }
 
     static bool is_unit(Proxy& p, u64 id)
