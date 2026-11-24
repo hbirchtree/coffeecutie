@@ -3039,6 +3039,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
            physics->authority != ObjectPhysics::Simulated ||
            std::exchange(m_driven_ticks[info.riding.vehicle], tick) == tick)
             return;
+        /* What the server said of it is stale while it's driven here; once
+         * let go, it waits for the server's next word rather than going
+         * back to where it was when the driving began */
+        m_object_history.erase(net->instance_id);
         send_all(
             Message<ObjectSync>({
                 .tick             = tick,
