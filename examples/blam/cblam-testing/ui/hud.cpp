@@ -471,7 +471,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         }
         if(shown.health)
             health_panel(hud, watch, health, blink.health);
-        if(!shown.motion_sensor)
+        if(!shown.motion_sensor || p.template subsystem<GameState>().no_tracker)
             return;
         /* The motion sensor keeps to the bottom left */
         background(anchor_t::bottom_left, hud.motion_sensor_background, blink.motion_sensor);

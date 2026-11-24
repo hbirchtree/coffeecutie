@@ -140,8 +140,10 @@ struct MultiplayerController
                         out = std::strtof(value.c_str(), nullptr);
             return out;
         };
-        m_lives  = static_cast<i32>(option("lives"));
-        m_growth = option("respawn_growth");
+        m_lives          = static_cast<i32>(option("lives"));
+        m_growth         = option("respawn_growth");
+        state.no_tracker = option("no_tracker") != 0.f;
+        state.unseen     = static_cast<GameState::unseen_t>(std::clamp(static_cast<i32>(option("unseen")), 0, 2));
         m_vm.reset();
         m_local_vm.reset();
         m_seen.clear();

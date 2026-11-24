@@ -579,7 +579,8 @@ struct alignas(8) GameStateSync
     i16             hill{-1};
     i16             hill_holder{-1};
     i16             capture_blocked{-1};
-    u16             padding3{0};
+    u8              no_tracker{0};
+    u8              unseen{0};
     u32             padding4{0};
 
     bool operator==(GameStateSync const&) const = default;

@@ -3120,6 +3120,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .hill         = game.hill,
             .hill_holder  = game.hill_holder,
             .capture_blocked = game.capture_blocked,
+            .no_tracker      = game.no_tracker,
+            .unseen          = static_cast<libc_types::u8>(game.unseen),
         };
         std::vector<NavPointSync> navs;
         for(auto const& nav : game.nav_points)
@@ -5283,6 +5285,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             game.hill        = sync.hill;
             game.hill_holder = sync.hill_holder;
             game.capture_blocked = sync.capture_blocked;
+            game.no_tracker      = sync.no_tracker != 0;
+            game.unseen          = static_cast<GameState::unseen_t>(std::min<libc_types::u8>(sync.unseen, 2));
             if(sync.nav_points == 0)
                 game.nav_points.clear();
             break;

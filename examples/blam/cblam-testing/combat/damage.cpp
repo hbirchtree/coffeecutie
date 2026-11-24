@@ -203,7 +203,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             /* Infection's infected fade from sight crouching */
             if(!info.is_remote())
                 info.camouflaged = left.camouflage > 0.f ||
-                                   (info.crouched && p.template subsystem<GameState>().infected(info.player_idx));
+                                   (info.crouched && p.template subsystem<GameState>().infected(info.player_idx)) ||
+                                   p.template subsystem<GameState>().unseen_by_game(info.player_idx);
         }
     }
 
