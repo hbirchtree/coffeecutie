@@ -226,6 +226,7 @@ struct EffectSystem
         u64           parent{0};
         u64           marker_parent{0}; /* markers the parent lacks */
         u64           shooter{0}; /* blamed for its damage */
+        Vecf3         incident{};  /* what struck's travel, for impact locations */
         bool          attached{false}; /* loops while its object lives */
         scale_t       scale{};
 
@@ -1199,11 +1200,28 @@ struct EffectSystem
         return {};
     }
 
+    static std::optional<Vecf3> impact_way(effect_instance_t const& fx, std::string_view name)
+    {
+        if(glm::dot(fx.incident, fx.incident) < 1e-8f)
+            return std::nullopt;
+        Vecf3 const in = glm::normalize(fx.incident);
+        if(name == "incident")
+            return -in;
+        if(name == "negative incident")
+            return in;
+        if(name == "reflection")
+            return glm::reflect(in, fx.place.forward);
+        return std::nullopt;
+    }
+
     place_t location(Proxy& p, effect_instance_t const& fx, i16 index)
     {
         std::string const name = location_name(fx, index);
         if(name == "gravity")
             return {fx.place.position, {0.f, 0.f, -1.f}};
+        /* An impact's: back the way the shot came, on through, or off the surface */
+        if(auto way = impact_way(fx, name))
+            return {fx.place.position, *way};
         if(fx.marker_parent != 0 && !name.empty() && name != "normal" &&
            !has_marker(p, fx.parent, name) && has_marker(p, fx.marker_parent, name))
             if(auto at = marker_place(p, fx.marker_parent, name))
@@ -1240,6 +1258,7 @@ struct EffectSystem
                     .parent        = request.parent,
                     .marker_parent = request.marker_parent,
                     .shooter       = request.shooter,
+                    .incident      = request.incident,
                 });
                 m_effects.back().audience     = audience_of(p, request.parent);
                 m_effects.back().visuals_only = request.visuals_only;
@@ -1495,8 +1514,11 @@ struct EffectSystem
                 case tag_class_t::deca:
                     if(auto const* tag = tag_data<decal_definition>(
                            part.type, tag_class_t::deca))
-                        /* Impacts face out of the surface, "gravity" into it */
-                        for(Vecf3 const way : {-at.forward, at.forward})
+                        /* Impacts face out of the surface, "gravity" into it; an
+                         * incident or reflection one goes only the way it points */
+                        for(Vecf3 const way : impact_way(fx, location_name(fx, part.location))
+                                                  ? std::initializer_list<Vecf3>{at.forward}
+                                                  : std::initializer_list<Vecf3>{-at.forward, at.forward})
                             if(auto hit = decal_surface(at.position, way))
                             {
                                 if(auto d = make_decal(
