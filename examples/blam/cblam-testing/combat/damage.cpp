@@ -763,6 +763,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 grace -= dt;
                 continue;
             }
+            /* A forge camera passes through walls and voids at will */
+            if(auto const* info = p.template get<PlayerInfo>(ent.id());
+               info && (!info->mode.physics || info->riding.vehicle))
+                continue;
             Physics::Event      ev{Physics::Event::OutOfWorld};
             Physics::OutOfWorld query{.position = model.position};
             p.template subsystem<PhysicsBus>().process(ev, &query);
