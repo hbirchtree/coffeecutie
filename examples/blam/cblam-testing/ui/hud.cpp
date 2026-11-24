@@ -1,6 +1,7 @@
 #include "ui/hud.h"
 #include "game/game_mode.h"
 #include "ui/chat_input.h"
+#include "ui/ui_profile.h"
 
 #include "loading/blam_files.h"
 #include "scripting/cinematic.h"
@@ -1638,6 +1639,118 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         }
     }
 
+    /* As the Xbox draws it after a game: team totals, then each player's
+     * place, name, score, kills, assists and deaths; B quits, A picks the
+     * next game. Laid out in 640x480 HUD units, centred on wider screens */
+    void carnage_report(Proxy& p, GameState const& game, HudScene& scene, Vecf2 screen, u32 seat)
+    {
+        using run_t = HudScene::typeset_t::run_t;
+        auto&       view  = scene.views.emplace_back(HudScene::view_t{
+                   .seat  = seat,
+                   .width = HudScene::height * screen.x / std::max(screen.y, 1.f),
+        });
+        f32 const   left  = (view.width - 640.f) * .5f;
+        /* Clip space: black bands above and below a blue panel */
+        auto band = [&scene](f32 top, f32 bottom, Vecf4 color) {
+            scene.backdrops.push_back({
+                .min   = {-1.f, 1.f - bottom / HudScene::height * 2.f},
+                .max   = {1.f, 1.f - top / HudScene::height * 2.f},
+                .color = color,
+            });
+        };
+        band(0.f, HudScene::height, report_black);
+        band(report_panel_top, report_panel_mid, report_panel_light);
+        band(report_panel_mid, report_panel_bottom, report_panel_dark);
+        band(report_panel_bottom, report_panel_bottom + 1.f, report_title);
+        auto text = [&](std::string s, f32 x, f32 y, Vecf4 color, f32 size = report_em) {
+            view.typeset.push_back({
+                .runs   = {{std::move(s), color}},
+                .at     = {left + x, y},
+                .size   = size,
+                .shadow = true,
+            });
+        };
+        auto name_of = [&p](u32 player_idx) {
+            for(auto player : p.template select<PlayerInfo>())
+                if(auto const& info = player.template get<PlayerInfo>();
+                   info.player_idx == player_idx && !info.name.empty())
+                    return std::string(info.name);
+            return fmt::format("Player {}", player_idx + 1);
+        };
+        auto colour_of = [&](GameState::player_t const& player) {
+            if(game.teams && player.team >= 0)
+                return player.team == 0 ? red : blue;
+            for(auto ent : p.template select<PlayerInfo>())
+                if(auto const& info = ent.template get<PlayerInfo>();
+                   info.player_idx == player.player_idx && info.color < PlayerProfile::colors.size())
+                    return Vecf4(PlayerProfile::colors[info.color].rgb, 1.f);
+            return plain;
+        };
+
+        text("POSTGAME CARNAGE REPORT", 64.f, 57.f, report_title, report_title_em);
+        f32 y = 83.f;
+        if(game.teams)
+        {
+            std::array<i32, 2> order{0, 1};
+            if(game.team_scores[1] > game.team_scores[0])
+                std::swap(order[0], order[1]);
+            for(i32 team : order)
+            {
+                text(team == 0 ? "Red Team" : "Blue Team", 51.f, y, report_heading);
+                text(std::to_string(game.team_scores[static_cast<size_t>(team)]), 205.f, y, report_heading);
+                y += report_row;
+            }
+            y += report_row;
+        }
+        static constexpr std::array<std::pair<std::string_view, f32>, 6> columns = {{
+            {"Place", 51.f}, {"Name", 127.f}, {"Score", 253.f}, {"Kills", 354.f}, {"Assists", 415.f}, {"Deaths", 505.f},
+        }};
+        for(auto const& [title, x] : columns)
+            text(std::string(title), x, y, report_heading);
+        y += report_row;
+        auto ranked = game.players;
+        std::stable_sort(ranked.begin(), ranked.end(), [](auto const& a, auto const& b) {
+            return a.score != b.score ? a.score > b.score : a.kills > b.kills;
+        });
+        static constexpr std::array<std::string_view, 16> places = {
+            "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th",
+            "9th", "10th", "11th", "12th", "13th", "14th", "15th", "16th"};
+        for(size_t i = 0; i < ranked.size() && i < places.size(); i++)
+        {
+            auto const& player = ranked[i];
+            text(std::string(places[i]), 51.f, y, report_place);
+            text(name_of(player.player_idx), 127.f, y, colour_of(player));
+            text(std::to_string(player.score), 253.f, y, plain);
+            text(std::to_string(player.kills), 354.f, y, plain);
+            text("0", 415.f, y, plain);
+            text(std::to_string(player.deaths), 505.f, y, plain);
+            y += report_row;
+        }
+        /* B =quit  A =pick game, the buttons in their colours */
+        for(auto const& [x, button, color, what] :
+            {std::tuple{385.f, "B", report_b, " =quit"}, std::tuple{470.f, "A", report_a, " =pick game"}})
+            view.typeset.push_back({
+                .runs   = {{button, color}, {what, report_heading}},
+                .at     = {left + x, 428.f},
+                .size   = report_em,
+                .shadow = true,
+            });
+    }
+    static constexpr f32 report_em          = 20.f;
+    static constexpr f32 report_title_em    = 38.f;
+    static constexpr f32 report_row         = 21.f;
+    static constexpr f32 report_panel_top    = 61.f;
+    static constexpr f32 report_panel_mid    = 200.f;
+    static constexpr f32 report_panel_bottom = 409.f;
+    static inline Vecf4 const report_black{0.f, 0.f, 0.f, 1.f};
+    static inline Vecf4 const report_panel_light{.03f, .11f, .24f, 1.f};
+    static inline Vecf4 const report_panel_dark{.01f, .05f, .12f, 1.f};
+    static inline Vecf4 const report_title{.12f, .55f, 1.f, 1.f};
+    static inline Vecf4 const report_heading{.6f, .78f, 1.f, 1.f};
+    static inline Vecf4 const report_place{1.f, 1.f, 0.f, 1.f};
+    static inline Vecf4 const report_b{.95f, .3f, .25f, 1.f};
+    static inline Vecf4 const report_a{.3f, .9f, .3f, 1.f};
+
     /* In 640x480 HUD units */
     static constexpr f32 scoreboard_top   = 110.f;
     static constexpr f32 scoreboard_row   = 22.f;
@@ -1658,6 +1771,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     {
         auto& scene = p.template subsystem<HudScene>();
         scene.views.clear();
+        scene.backdrops.clear();
         m_post = &p.template subsystem<PostProcessParameters>();
         m_post->zoom_blurs.clear();
 
@@ -1720,8 +1834,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto const* input = p.template get<PlayerInput>(seat.second);
             return input && input->scores;
         });
-        if(game.kind == GameState::kind_t::multiplayer &&
-           (asked || game.shows_results()))
+        /* A finished game: the carnage report, over the whole screen */
+        if(game.kind == GameState::kind_t::multiplayer && game.shows_results() && !seats.empty())
+        {
+            carnage_report(p, game, scene, screen, seats.front().first);
+            return;
+        }
+        if(game.kind == GameState::kind_t::multiplayer && asked)
             scoreboard(p, game, screen);
         Vecf2 const view = seats.size() <= 1   ? screen
                            : seats.size() == 2 ? Vecf2(screen.x, screen.y / 2)

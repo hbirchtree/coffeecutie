@@ -1522,6 +1522,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     std::vector<hud_batch_t> push_hud(HudScene const& scene, widget_data_t data)
     {
         std::vector<hud_batch_t> out;
+        if(!scene.backdrops.empty())
+        {
+            u32 const first = static_cast<u32>(data.vertex_data.size());
+            for(auto const& panel : scene.backdrops)
+                push_solid(data, panel.min, panel.max, panel.color);
+            out.push_back({Matf3(1), static_cast<u32>(data.vertex_data.size()) - first, {}});
+        }
         size_t const views = scene.views.size();
         for(size_t k = 0; k < views; k++)
         {

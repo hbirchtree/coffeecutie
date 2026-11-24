@@ -56,6 +56,12 @@ struct GameSetup : compo::SubsystemBase
      * shows in an error box once ui.map is up */
     void leave(std::string message);
 
+    /* A shell widget to open once ui.map is up, e.g. the postgame map select */
+    void open_in_menu(std::string widget)
+    {
+        m_open = std::move(widget);
+    }
+
     std::u16string const& error_text() const
     {
         return m_error_text;
@@ -77,6 +83,7 @@ struct GameSetup : compo::SubsystemBase
     compo::EntityContainer&    m_container;
     std::optional<std::string> m_pending;
     std::optional<std::string> m_error;
+    std::optional<std::string> m_open;
     std::u16string             m_error_text;
 };
 
