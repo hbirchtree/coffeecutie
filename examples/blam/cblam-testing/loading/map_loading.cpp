@@ -288,6 +288,8 @@ static void load_resources(
             continue;
         input.input_mode = in_menu ? PlayerInput::input_mode_t::menu
                                    : PlayerInput::input_mode_t::game;
+        /* A game starts in the body; the free camera is a toggle away */
+        info.mode.physics = !in_menu;
         if(!in_menu && info.seat_idx < lobby_controllers.size())
             camera.controller.index = lobby_controllers[info.seat_idx];
     }
