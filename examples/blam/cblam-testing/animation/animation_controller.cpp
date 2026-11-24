@@ -728,12 +728,11 @@ struct AnimationController
             };
             using V = blam::antr::vehicle;
 
-            /* Canopy shut with a driver. Banshee clip names are inverted:
-             * "closing" ends open, "opening" ends shut */
+            /* Canopy shut with a driver, open without one */
             auto const& st = stance(p, graph, "stand", "");
             i32 const   canopy = driven.contains(ent.id())
-                                     ? st[UnitSlot::opening]
-                                     : st[UnitSlot::closing];
+                                     ? st[UnitSlot::closing]
+                                     : st[UnitSlot::opening];
             auto& base = anim.layers[0];
             if(canopy < 0)
                 base = AnimationLayer{};
