@@ -76,6 +76,54 @@ static void load_bitmaps(compo::EntityContainer& e, blam::map_ptr const& magic)
 
 /* loc.map holds the fonts, strings and HUD messages a Custom Edition map
  * only indexes; it is in hand before the map counts as loaded */
+/* Custom Edition "protection" overwrites tag classes in the index, where
+ * the game never looks but this engine does: objects get theirs back from
+ * their own object type, bitmaps from their images' sentinels */
+template<typename V>
+static void repair_classes(blam::map_container<V>& map)
+{
+    if constexpr(!std::is_same_v<V, blam::custom_version_t>)
+        return;
+    using cls = blam::tag_class_t;
+    static constexpr std::array<cls, 12> by_type = {{
+        cls::bipd, cls::vehi, cls::weap, cls::eqip, cls::garb, cls::proj,
+        cls::scen, cls::mach, cls::ctrl, cls::lifi, cls::none, cls::ssce,
+    }};
+    auto const tags = map.tag_span();
+    std::vector<blam::tag_t> out(tags.begin(), tags.end());
+    u32 fixed = 0;
+    for(auto& tag : out)
+    {
+        if(!tag.valid() || tag.storage != blam::tag_storage_t::internal)
+            continue;
+        cls want = cls::none;
+        if(tag.matches(cls::obje))
+        {
+            if(auto object = tag.template data<blam::scn::object>(map.magic); object.has_value())
+                if(auto const type = static_cast<size_t>(object.value()[0].type); type < by_type.size())
+                    want = by_type[type];
+        } else if(!tag.matches(cls::bitm) && tag.tagclass_e[1] == cls::none)
+        {
+            if(auto bitmap = tag.template data<blam::bitm::header_t>(map.magic); bitmap.has_value())
+                if(auto images = bitmap.value()->images.data(map.magic);
+                   images.has_value() && !images.value().empty() &&
+                   std::all_of(images.value().begin(), images.value().end(), [](auto const& image) {
+                       auto const sentinel = std::string_view(image.sentinel.data.data(), 4);
+                       return sentinel == "bitm" || sentinel == "mtib";
+                   }))
+                    want = cls::bitm;
+        }
+        if(want == cls::none || tag.tagclass_e[0] == want)
+            continue;
+        tag.tagclass_e[0] = want;
+        fixed++;
+    }
+    if(fixed == 0)
+        return;
+    cDebug("Restored the class of {} protected tags", fixed);
+    map.repaired = std::make_shared<std::vector<blam::tag_t> const>(std::move(out));
+}
+
 static void localize(compo::EntityContainer& e, std::shared_ptr<comp_app::FileMapper::Resource> loc)
 {
     auto& files    = e.subsystem_cast<BlamFiles<halo_version>>();
@@ -589,6 +637,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
         files.container   = std::move(map.value());
         files.bitmap_file = std::move(bitmap_data);
+        repair_classes(files.container);
 
         auto&     gbus = e.subsystem_cast<GameEventBus>();
         GameEvent event{GameEvent::MapLoadFinished};
