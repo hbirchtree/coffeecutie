@@ -1001,6 +1001,7 @@ struct PhysicsSystem
                 bleed_carried();
                 hold_walkers_off_steep();
                 unstick();
+                lift_sunk_walkers();
             }
             record_bipeds(tick.tick);
         }
@@ -1702,6 +1703,39 @@ struct PhysicsSystem
     /* A body pushed into solid structure (a wall, through the floor) can't
      * find its way out of the hollow mesh: back to where it was last in
      * the open, still */
+    /* A hard landing sinks a walker's feet into the ground, where its
+     * capsule catches on the terrain's edges and won't walk: lifted back
+     * on top of the ground under it */
+    void lift_sunk_walkers()
+    {
+        for(auto& [id, body] : m_bodies)
+        {
+            if(body.group != Physics::BodyCreationShape::Character || !body.world_body ||
+               body.world_body->getInvMass() <= 0.f || m_corpses.contains(id))
+                continue;
+            btVector3 lo, hi;
+            body.world_body->getAabb(lo, hi);
+            btTransform     at   = body.world_body->getWorldTransform();
+            btVector3 const from = at.getOrigin();
+            btVector3 const to   = from - btVector3(0, 0, from.z() - lo.z() + sunk_most);
+            btCollisionWorld::ClosestRayResultCallback ground(from, to);
+            ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
+            m_world->rayTest(from, to, ground);
+            if(!ground.hasHit())
+                continue;
+            f32 const sunk = f32(ground.m_hitPointWorld.z() - lo.z());
+            if(sunk <= sunk_tolerance || sunk > sunk_most)
+                continue;
+            at.getOrigin() += btVector3(0, 0, sunk);
+            body.world_body->setWorldTransform(at);
+            if(auto* motion = body.world_body->getMotionState())
+                motion->setWorldTransform(at);
+            btVector3 v = body.world_body->getLinearVelocity();
+            v.setZ(std::max(f32(v.z()), 0.f));
+            body.world_body->setLinearVelocity(v);
+        }
+    }
+
     void unstick()
     {
         if(!m_world_item || !m_world_item->mesh)
@@ -3687,6 +3721,8 @@ struct PhysicsSystem
     /* Thickness of open bounds, wu */
     static constexpr f32 bounds_depth = 64.f;
     static constexpr f32 out_of_world_depth = 1.f; /* wu above the bounds floor */
+    static constexpr f32 sunk_tolerance     = .02f; /* wu of feet in the ground left alone */
+    static constexpr f32 sunk_most          = .5f;  /* wu; deeper is a wall or floor above, not ground */
     static constexpr u32 unstick_steps      = 3;   /* in solid this long before it is put back */
     static constexpr f32 unstick_depth      = .2f; /* wu behind a surface to count as in it */
     static constexpr u32 unstick_tries      = 3;
