@@ -117,6 +117,20 @@ struct GameState : compo::SubsystemBase
     static constexpr size_t ball = 2; /*!< Oddball's, among the flags */
     i32                   juggernaut{-1}; /*!< Juggernaut: the player index who is it */
     bool                  timed{false};   /*!< Scores are seconds (King of the hill, Oddball) */
+    bool                  no_tracker{false}; /*!< Nobody has a motion tracker */
+    /*! Who is camouflaged by the game: nobody, everyone, or whoever is "it" */
+    enum class unseen_t : libc_types::u8
+    {
+        nobody,
+        everyone,
+        it,
+    } unseen{unseen_t::nobody};
+
+    bool unseen_by_game(u32 player_idx) const
+    {
+        return unseen == unseen_t::everyone ||
+               (unseen == unseen_t::it && juggernaut >= 0 && juggernaut == static_cast<i32>(player_idx));
+    }
     i16                   hill{-1};        /*!< King of the hill: the hill in play */
     /*! Who holds it: a player (with teams, any of the one team in it), -1
      *  for nobody, contested for more than one side */

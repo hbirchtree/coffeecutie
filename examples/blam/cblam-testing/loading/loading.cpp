@@ -1682,8 +1682,10 @@ struct ResourceLoader
         if(equipment.has_error())
             return;
 
-        using gm        = blam::scn::gamemode_t;
-        auto const mode = spawn_points::game_mode_of(p.template subsystem<GameSetup>().game_type);
+        using gm         = blam::scn::gamemode_t;
+        auto const& setup = p.template subsystem<GameSetup>();
+        auto const mode   = spawn_points::game_mode_of(setup.game_type);
+        blam::tagref_t const* set_weapon = weapon_set_ref(setup, equipment.value(), magic);
         for(u32 e = 0; e < equipment.value().size(); ++e)
         {
             auto const& entry = equipment.value()[e];
@@ -1707,11 +1709,33 @@ struct ResourceLoader
             for(; k + 1 < items->second.size(); ++k)
                 if((roll -= std::max(items->second[k].weight, 0.f)) < 0.f)
                     break;
-            auto const& item = items->second[k].item;
-            if(item.tag_class != blam::tag_class_t::weap && item.tag_class != blam::tag_class_t::eqip)
+            auto const* item = &items->second[k].item;
+            if(item->tag_class != blam::tag_class_t::weap && item->tag_class != blam::tag_class_t::eqip)
                 continue;
-            raise_spawn(item, entry.pos, SpawnObjectEvent::scenario_net_id(ScenarioGroup::NetgameEquipment, e, k));
+            /* A weapon set puts its weapon wherever a weapon was placed */
+            if(set_weapon && item->tag_class == blam::tag_class_t::weap)
+                item = set_weapon;
+            raise_spawn(*item, entry.pos, SpawnObjectEvent::scenario_net_id(ScenarioGroup::NetgameEquipment, e, k));
         }
+    }
+
+    /* The weapon set's weapon, by a reference the map's items already hold;
+     * none without a set, or with one the map doesn't place */
+    template<typename Entries, typename Magic>
+    blam::tagref_t const* weapon_set_ref(GameSetup const& setup, Entries const& equipment, Magic const& magic)
+    {
+        if(setup.weapon_set.empty())
+            return nullptr;
+        auto set = index.tag_of(setup.weapon_set);
+        if(!set.has_value())
+            return nullptr;
+        for(auto const& entry : equipment)
+            if(auto items = netgame_items(entry, magic))
+                for(auto const& perm : items->second)
+                    if(auto found = perm.item.valid() ? index.find(perm.item) : index.end();
+                       found != index.end() && &(*found) == *set)
+                        return &perm.item;
+        return nullptr;
     }
 
     void build_netgame_item(Proxy& p, u32 entry_idx, u32 perm_idx, u32 net_id)
@@ -1740,9 +1764,14 @@ struct ResourceLoader
         if(item_perm.item.tag_class != blam::tag_class_t::weap &&
            item_perm.item.tag_class != blam::tag_class_t::eqip)
             return;
+        /* A weapon set's weapon wherever a weapon was placed */
+        blam::tagref_t const* item_ref = &item_perm.item;
+        if(item_ref->tag_class == blam::tag_class_t::weap)
+            if(auto const* set = weapon_set_ref(p.template subsystem<GameSetup>(), equipment.value(), magic))
+                item_ref = set;
 
-        auto item_data    = index.template data<blam::scn::item>(item_perm.item);
-        auto item_tag_opt = index.tag_of(item_perm.item);
+        auto item_data    = index.template data<blam::scn::item>(*item_ref);
+        auto item_tag_opt = index.tag_of(*item_ref);
         if(!item_data.has_value() || !item_tag_opt.has_value())
             return;
 
@@ -1777,7 +1806,7 @@ struct ResourceLoader
         model_.origin_object = item_tag;
 
         NetworkInfo& netinfo = set.template get<NetworkInfo>();
-        netinfo.object       = item_perm.item;
+        netinfo.object       = *item_ref;
         netinfo.instance_id  = net_id;
 
         ModelAssembly models = model_cache.predict_regions(item.model, model_lod);
@@ -2944,7 +2973,7 @@ struct ResourceLoader
                     .biped           = biped_model.biped,
                     .load_generation = files.load_generation,
                 };
-                starting_loadout(equip, files);
+                starting_loadout(equip, files, p.template subsystem<GameSetup>());
                 if(auto* status = p.template get<BipedStatus>(player.id()))
                     *status = biped_model.biped
                                   ? unit_status(files, biped_model.biped->collider)
@@ -3447,7 +3476,7 @@ struct ResourceLoader
     }
 
     /* The scenario's first starting profile, else the map's first weapon */
-    void starting_loadout(BipedEquipment& equip, BlamFiles<Ver> const& files)
+    void starting_loadout(BipedEquipment& equip, BlamFiles<Ver> const& files, GameSetup const& setup)
     {
         auto const& magic    = files.container.magic;
         auto const* scenario = files.container.scenario().value_or(nullptr);
@@ -3468,7 +3497,17 @@ struct ResourceLoader
             }
             return out;
         };
-        if(profile)
+        bool const multiplayer = files.container.map->map_type == blam::maptype_t::multiplayer;
+        if(multiplayer && !setup.start_weapons.empty())
+        {
+            /* The variant's loadout instead of the map's */
+            for(size_t i = 0; i < equip.weapons.size(); i++)
+            {
+                auto tag = i < setup.start_weapons.size() ? index.tag_of(setup.start_weapons[i])
+                                                          : std::optional<blam::tag_t const*>{};
+                equip.weapons[i] = tag.has_value() ? armed(*tag, files) : BipedEquipment::weapon_t{};
+            }
+        } else if(profile)
         {
             equip.weapons[0] = slot(
                 profile->primary_weapon, profile->rounds1_loaded, profile->rounds1_total);
@@ -3497,8 +3536,6 @@ struct ResourceLoader
                                               profile->c_nades,
                                               profile->d_nades}
                                                   : std::array<u16, 4>{};
-        bool const multiplayer =
-            files.container.map->map_type == blam::maptype_t::multiplayer;
         for(size_t i = 0; i < grenades.value().size() && i < counts.size(); i++)
         {
             auto tag = index.find(grenades.value()[i].equipment.tag_id);
@@ -3508,9 +3545,10 @@ struct ResourceLoader
             if(!eqip.has_value())
                 continue;
             u16 const most = static_cast<u16>(std::max<i16>(grenades.value()[i].maximum_count, 0));
-            u16 const left = multiplayer ? static_cast<u16>(std::max<i16>(
-                                               grenades.value()[i].multiplayer_spawn_default, 0))
-                                         : counts[i];
+            u16 const left = !multiplayer               ? counts[i]
+                             : setup.start_grenades >= 0 ? static_cast<u16>(setup.start_grenades)
+                                                         : static_cast<u16>(std::max<i16>(
+                                                               grenades.value()[i].multiplayer_spawn_default, 0));
             equip.equipment.push_back({
                 .equip = eqip.value(),
                 .tag   = &(*tag),

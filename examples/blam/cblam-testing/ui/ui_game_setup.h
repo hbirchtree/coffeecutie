@@ -37,6 +37,11 @@ struct GameSetup : compo::SubsystemBase
     /*! The built-in variant chosen (variants::all), and the globals it sets */
     libc_types::u16                                  variant{0xFFFF};
     std::vector<std::pair<std::string, std::string>> variant_options;
+    /*! What players start with in multiplayer, by tag name; none for the map's own */
+    std::vector<std::string> start_weapons;
+    libc_types::i16          start_grenades{-1}; /*!< Of each kind; below 0 for the map's */
+    /*! Every weapon placed on the map is this one instead; empty for as placed */
+    std::string weapon_set;
     /*! Game type program globals to set as it loads, after the variant's: name, value */
     std::vector<std::pair<std::string, std::string>> options;
 
