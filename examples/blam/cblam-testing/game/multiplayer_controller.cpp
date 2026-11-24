@@ -130,6 +130,18 @@ struct MultiplayerController
         m_waiting.clear();
         m_placed.clear();
         m_last_spot.clear();
+        m_deaths.clear();
+        /* Lives and respawn growth are the engine's, by the variant's word */
+        auto const option = [&setup](std::string_view name) {
+            f32 out = 0.f;
+            for(auto const* from : {&setup.variant_options, &setup.options})
+                for(auto const& [key, value] : *from)
+                    if(key == name)
+                        out = std::strtof(value.c_str(), nullptr);
+            return out;
+        };
+        m_lives  = static_cast<i32>(option("lives"));
+        m_growth = option("respawn_growth");
         m_vm.reset();
         m_local_vm.reset();
         m_seen.clear();
@@ -588,11 +600,16 @@ struct MultiplayerController
 
     /* ---- Deaths ---- */
 
-    void killed(GameState const& state, UnitKilledEvent const& kill)
+    void killed(GameState& state, UnitKilledEvent const& kill)
     {
         if(kill.player == ObjectHitEvent::no_player)
             return;
-        m_waiting[kill.unit] = m_respawn_delay;
+        /* Each death longer to come back from; out of lives, not at all */
+        i32 const deaths = ++m_deaths[kill.player];
+        if(m_lives <= 0 || deaths < m_lives)
+            m_waiting[kill.unit] = m_respawn_delay + m_growth * static_cast<f32>(deaths);
+        else
+            last_standing(state);
         if(m_game)
         {
             GameEvent     ev{.type = GameEvent::KillFeed};
@@ -611,6 +628,25 @@ struct MultiplayerController
         set("event_victim", kill.player);
         m_vm->wake("on_unit_killed");
         m_vm->tick();
+    }
+
+    /* With lives: the last player, or the last team, with any left wins */
+    void last_standing(GameState& state)
+    {
+        if(state.phase != GameState::phase_t::playing || state.players.size() < 2)
+            return;
+        std::set<i32> sides;
+        i32           last = -1;
+        for(auto const& player : state.players)
+            if(m_deaths[player.player_idx] < m_lives)
+            {
+                sides.insert(state.teams ? player.team : static_cast<i32>(player.player_idx));
+                last = state.teams ? player.team : static_cast<i32>(player.player_idx);
+            }
+        if(sides.size() > 1)
+            return;
+        over(state);
+        state.winner = last;
     }
 
     /* A player reached a flag on the ground: the rules say what that does */
@@ -780,6 +816,9 @@ struct MultiplayerController
     std::set<u32>                   m_at_checkpoint; /*!< Players at theirs, heard of already */
     std::mt19937               m_random{std::random_device{}()};
     std::map<u32, size_t>      m_last_spot; /*!< Each player's last start point */
+    std::map<u32, i32>         m_deaths;    /*!< Each player's deaths this game */
+    i32                        m_lives{0};  /*!< Each player's; 0 for no limit */
+    f32                        m_growth{0.f}; /*!< s more to respawn a death */
 };
 
 /* A line for one seat comes from its column when the screen is split in
