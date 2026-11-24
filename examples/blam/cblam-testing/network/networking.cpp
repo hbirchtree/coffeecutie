@@ -979,8 +979,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             sync.deck     = net->instance_id;
             sync.position = glm::inverse(model->transform) * Vecf4(cam.camera.position, 1.f);
-            sync.position.w = 0.f;
         }
+        sync.position.w = info.crouch;
         return sync;
     }
 
@@ -6339,13 +6339,22 @@ struct ObjectFollower
                 {
                     auto const& prev = it->second[it->second.size() - 2];
                     f64 const   span = static_cast<f64>(to.tick - prev.tick);
+                    /* The feet's step: a crouch moves the eye, not the body */
+                    auto const eye = [&info](f32 crouch) {
+                        return glm::mix(info.biped.eye_height, info.biped.crouch_eye_height, crouch);
+                    };
+                    Vecf3 step = Vecf3(to.position) - Vecf3(prev.position);
+                    step.z -= eye(to.position.w) - eye(prev.position.w);
                     if(span > 0. && span <= static_cast<f64>(Networking::max_spacing) && !jumped(prev, to))
-                        cam.camera.position += (Vecf3(to.position) - Vecf3(prev.position)) *
-                                               static_cast<f32>(std::min(past, Networking::max_extrapolation) / span);
+                        cam.camera.position +=
+                            step * static_cast<f32>(std::min(past, Networking::max_extrapolation) / span);
                 }
                 cam.camera.rotation = glm::slerp(from.rotation, to.rotation, alpha);
                 info.mode.physics   = to.flags & CameraSync::physics;
                 info.crouched       = to.flags & CameraSync::crouched;
+                /* The eye's own depth, so its feet are where the sender's are */
+                info.crouch = jumped(from, to) ? (alpha < 1.f ? from : to).position.w
+                                               : glm::mix(from.position.w, to.position.w, alpha);
             }
         }
     }

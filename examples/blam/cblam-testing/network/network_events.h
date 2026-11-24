@@ -361,7 +361,8 @@ struct alignas(8) CameraSync
         crouched  = 0x4, /*!< PlayerInfo::crouched */
     };
 
-    Vecf4   position; /*!< In the deck's frame when standing on one */
+    Vecf4   position; /*!< In the deck's frame when standing on one; w is
+                       *   PlayerInfo::crouch, how far down the eye has gone */
     Quatf   rotation;
     u32     target_player{0xFFFF};
     f32     fade{1.f};
