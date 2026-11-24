@@ -347,6 +347,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
          * them, e.g. the pregame's players: repeated children by order */
         UIDataSource::list_t const* rows{nullptr};
         bool                        row{false}; /*!< item is a row's; its text only replaces when given */
+        /* A column list's row: 1 the focused one, 0 another, -1 not a row */
+        libc_types::i8 column_row{-1};
     };
 
     Vecf2 window_to_ui(Vecf2 const& point)
@@ -411,14 +413,22 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         /* Its bounds are screen-absolute, and its images follow the list's
          * focused item */
         if(el.extended_description.valid())
+        {
+            /* A column list's rows also name the focused item for it */
+            auto const* described =
+                el.ui_element->widget_type == blam::ui_element::widget_type_t::column_list ? rows_of(el) : nullptr;
             traverse_widget(
                 el.extended_description,
                 layout_data_t{
                     .origin = layout.origin,
                     .frame  = layout.origin,
                     .index  = focused.value_or(0),
+                    .list   = described,
+                    .item   = described ? std::optional<u16>(focused.value_or(0)) : std::nullopt,
+                    .row    = described != nullptr,
                 },
                 visit);
+        }
 
         if(el.children.empty())
             return;
@@ -431,8 +441,15 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         auto const* rows     = list ? nullptr : rows_of(el);
         if(!rows)
             rows = layout.rows;
-        /* Children sharing a tag are a widget's rows, in order */
+        /* Children sharing a tag are a widget's rows, in order; so are a
+         * column list's list_item children, whatever their tags */
         std::map<std::string_view, u16> row_counts, row_at;
+        auto const column_item = [this](auto const& child) {
+            auto const* item = find_item(child);
+            return item && item->tag_name.find("list_item") != std::string_view::npos;
+        };
+        bool const column = rows && !list && el.ui_element->widget_type == blam::ui_element::widget_type_t::column_list &&
+                            std::any_of(el.children.begin(), el.children.end(), column_item);
         if(rows && !list)
             for(auto const& child : el.children)
                 if(auto const* item = find_item(child))
@@ -445,12 +462,27 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             std::optional<u16> item = layout.item;
             bool               row  = layout.row;
             auto const*        from = list ? list : layout.list;
+            /* A column row's selection arrows show only while it has focus;
+             * its scroll buttons never, the rows are never scrolled */
+            if(layout.column_row >= 0)
+            {
+                std::string_view const name = children[i].name.str();
+                if(name.starts_with("scroll_") || (name == "list_item_arrows" && layout.column_row == 0))
+                    continue;
+            }
             if(list)
             {
                 i32 const at = first + static_cast<i32>(i);
                 if(at < 0 || at >= static_cast<i32>(list->count()))
                     continue;
                 item = static_cast<u16>(at);
+            } else if(column && column_item(child))
+            {
+                if(i >= rows->count())
+                    continue;
+                item = static_cast<u16>(i);
+                row  = true;
+                from = rows;
             } else if(auto const* child_item = rows ? find_item(child) : nullptr;
                       child_item && row_counts[child_item->tag_name] > 1)
             {
@@ -482,6 +514,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     .item_root   = list != nullptr,
                     .rows        = rows,
                     .row         = row,
+                    .column_row  = column && column_item(child) ? static_cast<libc_types::i8>(focused == i ? 1 : 0) : libc_types::i8(-1),
                 },
                 visit);
         }

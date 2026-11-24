@@ -386,18 +386,28 @@ void alloc_game_setup_provider(compo::EntityContainer& e)
                    ? u16(0)
                    : std::min<u16>(value, static_cast<u16>(src->entries.size() - 1));
     };
-    data.bind_list(
-        input_t::solo_level_select_update,
-        list_t{
+    auto const level_list = [&setup, levels, clamp_to] {
+        return list_t{
             .count = [levels] { return static_cast<u16>(levels->entries.size()); },
             .get   = [&setup] { return setup.level; },
             .set   = [&setup, levels, clamp_to](
                        u16 value) { setup.level = clamp_to(levels, value); },
-            .text  = [levels](std::string_view widget, u16 item) {
-                return levels->text(widget, item);
+            /* Its own boxes only: a PC row's text on one line */
+            .text = [levels](std::string_view widget, u16 item) {
+                if((!widget.ends_with("_name") && !widget.ends_with("_data") && widget != "list_item_text") ||
+                   widget == "current_profile_name")
+                    return std::u16string{};
+                auto text = levels->text(widget, item);
+                if(widget == "list_item_text")
+                    std::replace(text.begin(), text.end(), u'\n', u' ');
+                return text;
             },
             .image = [levels](u16 item) { return levels->entries.at(item); },
-        });
+        };
+    };
+    data.bind_list(input_t::solo_level_select_update, level_list());
+    /* PC's column list of the same levels */
+    data.bind_list(input_t::solo_map_list_update, level_list());
     data.bind_list(
         input_t::mp_level_select_update,
         list_t{
