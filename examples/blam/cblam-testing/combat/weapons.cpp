@@ -1472,27 +1472,33 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
            ((data.value()[0].weapon_flags & flags_t::aim_assists_only_when_zoomed) != flags_t::none && zoom <= 1.f))
             return 0;
         u64 best      = 0;
-        f32 best_cos  = std::cos(angle);
+        f32 best_miss = 0.f;
         for(auto unit : p.template select<Model, BipedStatus>())
         {
             u64 const id = unit.id();
             if(id == player || id == info.riding.vehicle ||
                unit.template get<BipedStatus>().dead || side_of(p, info, id) < 0)
                 continue;
-            Vecf3 const to = unit.template get<Model>().position + Vecf3{0.f, 0.f, autoaim_height} - eye;
+            /* Off its body's axis, widened by its autoaim width */
+            f32         width = 0.f;
+            auto const  onto  = body_point(p, unit.template get<Model>(), eye, forward, &width);
+            if(!onto)
+                continue;
+            Vecf3 const to = *onto - eye;
             f32 const   d  = glm::length(to);
             if(d < 1e-3f || d > range)
                 continue;
-            f32 const c = glm::dot(to / d, forward);
-            if(c <= best_cos)
+            f32 const off  = std::acos(std::clamp(glm::dot(to / d, forward), -1.f, 1.f));
+            f32 const miss = off - (angle + std::atan(width / d));
+            if(miss > 0.f || (best && miss >= best_miss))
                 continue;
             Physics::Event   ray_ev{Physics::Event::Raycast};
-            Physics::Raycast ray{.from = eye, .to = eye + to, .ignore = player};
+            Physics::Raycast ray{.from = eye, .to = *onto, .ignore = player};
             p.template subsystem<PhysicsBus>().process(ray_ev, &ray);
             if(ray.hit && ray.entity_id != id)
                 continue;
-            best     = id;
-            best_cos = c;
+            best      = id;
+            best_miss = miss;
         }
         return best;
     }
@@ -1509,18 +1515,30 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             levels > 1 ? glm::mix(range.x, range.y, (equip->zoom - 1.f) / (levels - 1.f)) : range.x, 1.f);
     }
 
-    /* Where a shot bends to on an enemy: the point of its body's axis
-     * nearest the reticle's line */
+    /* Where a shot bends to on a unit not on the shooter's side */
     std::optional<Vecf3> magnetized(Proxy& p, PlayerInfo const& info, u64 target, Vecf3 const& eye, Vecf3 const& forward)
     {
         auto const* model = p.template get<Model>(target);
-        if(!model || side_of(p, info, target) <= 0)
+        if(!model || side_of(p, info, target) < 0)
             return std::nullopt;
-        f32 height = 2.f * autoaim_height;
+        return body_point(p, *model, eye, forward);
+    }
+
+    /* The point of a unit's body axis nearest the reticle's line; `width`
+     * gets its biped's autoaim width */
+    std::optional<Vecf3> body_point(
+        Proxy& p, Model const& unit, Vecf3 const& eye, Vecf3 const& forward, f32* width = nullptr)
+    {
+        Model const* model  = &unit;
+        f32          height = 2.f * autoaim_height;
         if(model->origin_object && model->origin_object->matches(blam::tag_class_t::bipd))
             if(auto biped = model->origin_object->template data<blam::scn::biped>(files_of(p).container.magic);
                biped.has_value() && biped.value()[0].standing_collision_height > 0.f)
+            {
                 height = biped.value()[0].standing_collision_height;
+                if(width)
+                    *width = biped.value()[0].autoaim_width;
+            }
         /* Feet to the top of the head, the axis crouched or not */
         Vecf3 const low  = model->position + Vecf3{0.f, 0.f, height * .1f};
         Vecf3 const axis = Vecf3{0.f, 0.f, height * .8f};
