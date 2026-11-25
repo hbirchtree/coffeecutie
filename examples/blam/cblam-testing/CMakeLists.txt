@@ -88,6 +88,7 @@ coffee_application(
         ui/ui.cpp
         ui/ui_game_setup.cpp
         ui/ui_profile.cpp
+        ui/ui_server_browser.cpp
         world/devices.cpp
   LIBRARIES Blam Core Image GLeamRHI ComponentBundleSetup
   BUNDLE_LIBRARIES ${BUNDLED_LIBS}

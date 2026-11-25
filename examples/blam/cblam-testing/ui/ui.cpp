@@ -397,7 +397,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         generation_idx_t const& item, layout_data_t const& layout, Fn&& visit)
     {
         UIElementItem& el = ui_cache.find(item)->second;
-        if(!el.visible)
+        if(!el.visible || (m_data && !m_data->shown(el.tag_name)))
             return;
 
         auto& bounds = el.ui_element->bounds;
@@ -600,7 +600,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             return out;
         for(auto const& [i, child] : stl_types::const_enumerate(el.children))
             if(auto const* item = find_item(child);
-               item && item->tag_name.find("list_item") != std::string::npos &&
+               item && (item->tag_name.find("list_item") != std::string::npos ||
+                        item->tag_name.starts_with("server_item_")) &&
                item->tag_name.find("chooser") == std::string::npos)
                 out.push_back(static_cast<u16>(i));
         return out;
@@ -637,7 +638,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     {
         using widget_type = blam::ui_element::widget_type_t;
 
-        if(!el.visible)
+        if(!el.visible || (m_data && !m_data->shown(el.tag_name)))
             return false;
         /* Takes left/right itself, with no handlers or children */
         if(el.ui_element->widget_type == widget_type::spinner_list)
