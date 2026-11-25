@@ -124,6 +124,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         m_preferred   = &p.template subsystem<GameState>().preferred_targets;
         m_dialogue_ok = p.template subsystem<GameState>().ai_dialogue;
         refresh_nav(p);
+        if(m_fire_queue)
+            m_fire_queue->poll();
         hear(p);
         if((m_obstacles_in -= dt) <= 0.f)
         {
