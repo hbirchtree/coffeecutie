@@ -103,6 +103,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             blast(p, area);
         for(auto const& hit : hits)
             shove(p, hit);
+        ting(p, hits, areas);
         bool const authority = !p.template subsystem<NetworkState>().replica;
         for(auto const& pickup : pickups)
             power_up(p, pickup, authority);
@@ -638,6 +639,49 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         for(auto ent : p.template select<BipedStatus, Model>())
             if(glm::distance(ent.template get<Model>().position, area.position) <= jpt->radius.y)
                 launch(ent.id(), player_of(p, area.shooter));
+    }
+
+    /* In multiplayer a shot of a local player's that strikes another player
+     * tings for them, once a frame however many pellets landed */
+    void ting(Proxy& p, std::vector<ObjectHitEvent> const& hits, std::vector<AreaDamageEvent> const& areas)
+    {
+        if(p.template subsystem<GameState>().kind != GameState::kind_t::multiplayer)
+            return;
+        std::set<u32> heard;
+        /* A blast of theirs reaching another player does too */
+        for(auto const& area : areas)
+        {
+            auto const* shooter = p.template get<PlayerInfo>(area.shooter);
+            auto const* jpt     = damage_of(area.damage);
+            if(!shooter || shooter->is_remote() || !jpt || jpt->radius.y <= 0.f || jpt->upper_bound.y <= 0.f ||
+               heard.contains(shooter->player_idx))
+                continue;
+            for(auto unit : p.template select<PlayerInfo, BipedStatus>())
+            {
+                auto const centre = centre_of(p, unit.id());
+                if(unit.id() == area.shooter || unit.template get<BipedStatus>().dead || !centre ||
+                   glm::distance(*centre, area.position) > jpt->radius.y ||
+                   shielded(p, area.position, *centre, unit.id()))
+                    continue;
+                heard.insert(shooter->player_idx);
+                GameEvent     ev{.type = GameEvent::Announce};
+                AnnounceEvent say{.sound = ting_sound, .player = shooter->player_idx};
+                p.template subsystem<GameEventBus>().inject(ev, &say);
+                break;
+            }
+        }
+        for(auto const& hit : hits)
+        {
+            auto const* shooter = p.template get<PlayerInfo>(hit.shooter);
+            auto const* target  = p.template get<PlayerInfo>(hit.target);
+            auto const* status  = p.template get<BipedStatus>(hit.target);
+            if(!shooter || !target || shooter->is_remote() || hit.shooter == hit.target || !status ||
+               status->dead || !heard.insert(shooter->player_idx).second)
+                continue;
+            GameEvent     ev{.type = GameEvent::Announce};
+            AnnounceEvent say{.sound = ting_sound, .player = shooter->player_idx};
+            p.template subsystem<GameEventBus>().inject(ev, &say);
+        }
     }
 
     /* Thrown: for a while, what it slams into hurts it */
@@ -1378,6 +1422,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     static constexpr f32   spawn_lift       = .05f; /* wu */
     static constexpr f32   default_stun     = 1.f;  /* s */
     static constexpr f32   blow_waist       = .35f; /* wu above the feet, without a biped height */
+    static constexpr u16   ting_sound       = 43;   /* matg's multiplayer sounds: game_modes::announcer::ting */
     static constexpr f32 recent_fade = .75f; /* seconds a shield hit glows */
     static constexpr f32   default_recharge = 2.f;  /* s */
     static constexpr f32   dead_below       = 1e-4f;
