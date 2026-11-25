@@ -789,7 +789,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 continue;
             auto const& anim = ent.template get<AnimationPlayback>();
             i32 const   clip = fire_clip(anim, magic);
-            if(clip < 0)
+            if(clip < 0 || (fp_clip(anim, magic, fp_slot::fire_1) < 0 && playing(anim, clip)))
                 continue;
             PlayModelAnimationEvent play{
                 .entity    = ent.id(),
@@ -1109,9 +1109,28 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return slots.value()[slot].animation;
     }
 
+    /* Its fire-1 slot, or the clip the assault rifle leaves out of its slots */
     static i32 fire_clip(AnimationPlayback const& anim, blam::map_ptr const& magic)
     {
-        return fp_clip(anim, magic, fp_slot::fire_1);
+        if(i32 const clip = fp_clip(anim, magic, fp_slot::fire_1); clip >= 0 || !anim.graph)
+            return clip;
+        auto anims = anim.graph->animations.data(magic);
+        if(!anims.has_value())
+            return -1;
+        for(i32 i = 0; i < static_cast<i32>(anims.value().size()); i++)
+            if(anims.value()[i].name.str() == "first-person firing")
+                return i;
+        return -1;
+    }
+
+    /* A base clip still playing, left to run on through a burst */
+    static bool playing(AnimationPlayback const& anim, i32 clip)
+    {
+        for(u32 i = AnimationPlayback::base_slot; i < AnimationPlayback::base_slot + AnimationPlayback::base_slots; i++)
+            if(auto const& layer = anim.layers[i]; layer.graph == anim.graph &&
+               layer.animation == static_cast<u32>(clip) && !layer.finished && layer.target > 0.f)
+                return true;
+        return false;
     }
 
     /* The player's first-person weapon model, or its hands */
