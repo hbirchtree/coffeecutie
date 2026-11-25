@@ -1957,12 +1957,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     return true;
 
                 auto const& tb = el.ui_element->text_box;
-                /* Some generated item templates name no font */
+                /* Some generated item templates name no font, or one with no glyphs */
                 auto const font_id =
                     el.font_id.valid() ? el.font_id : m_default_font;
                 if(!font_id.valid())
                     return false;
                 auto font_it = font_cache.find(font_id);
+                if((font_it == font_cache.end() || font_it->second.glyph_map.empty()) && m_default_font.valid())
+                    font_it = font_cache.find(m_default_font);
                 if(font_it == font_cache.end())
                     return false;
                 FontItem const& font_item = font_it->second;
