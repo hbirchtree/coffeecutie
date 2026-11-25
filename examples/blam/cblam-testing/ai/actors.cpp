@@ -289,6 +289,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 halo_gravity    = 9.81f / 3.048f; /* wu/s^2 */
     static constexpr f32 tick_rate       = 30.f;
     static constexpr f32 lob_limit       = 1.2217f; /* rad, 70 degrees: steeper lobs fall to the flat shot */
+    static constexpr f32 grenade_seen    = 1.f;   /* s since the target was in view, for "visible target" */
+    static constexpr f32 grenade_lead    = .5f;   /* how far ahead of a moving target a grenade is thrown */
+    static constexpr f32 grenade_miss    = 2.f;   /* wu a throw may land from its target, at the least */
+    static constexpr f32 grenade_drift   = 2.f;   /* wu friends are kept clear by, past the blast: it rolls, they walk */
+    static constexpr f32 grenade_flight  = 4.f;   /* s of a throw's arc that is traced */
+    static constexpr f32 grenade_step    = .05f;  /* s per traced segment */
+    static constexpr f32 grenade_throw_speed = 10.f; /* wu/s, for a unit whose tag names none */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 sighting_memory = 1.f;  /* s a target out of view still draws a new burst */
     static constexpr f32 threat_range    = 25.f; /* wu: other fighting enemies whose sight a spot avoids */
@@ -2582,20 +2589,33 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.grenade_in > 0.f)
             return;
         actor.grenade_in = actv.grenade_check_time > 0.f ? actv.grenade_check_time : 2.f;
+        using stimulus_t = actv_t::grenade_stimulus_t;
         f32 const d = glm::distance(model.position, actor.last_seen);
         if(d < actv.grenade_ranges.x || d > actv.grenade_ranges.y || !chance(actv.grenade_chance))
             return;
+        /* Some never throw, some only at a target in view */
+        if(actv.grenade_stimulus == stimulus_t::never ||
+           (actv.grenade_stimulus == stimulus_t::visible_target && actor.seen_ago > grenade_seen))
+            return;
+        if(actv.minimum_enemy_count > 1 &&
+           enemies_near(p, actor, actor.last_seen, std::max(actv.enemy_radius, 1.f)) < actv.minimum_enemy_count)
+            return;
         blam::tagref_t const* projectile = grenade_projectile(p, actv.grenade_type);
-        if(!projectile || friends_in_blast(p, id, actor, actor.last_seen, blast_of(p, *projectile)))
+        if(!projectile)
+            return;
+        Vecf3 const eye = eye_of(p, id);
+        auto const  arc = throw_arc(p, model, actv, *projectile);
+        if(!arc)
+            return;
+        Vecf3 const dir = aim_direction(p, actor, eye, actor.last_seen, arc, grenade_lead);
+        /* Where it comes down: short of the target behind a wall it bounces
+         * back from, it isn't thrown; nor where friends would be caught */
+        auto const lands = landing(p, id, eye + dir * WeaponFireEvent::muzzle_distance, dir * arc->speed, arc->gravity);
+        f32 const  blast = std::max(blast_of(p, *projectile), actv.collateral_damage_radius);
+        if(!lands || glm::distance(*lands, actor.last_seen) > std::max(blast, grenade_miss) ||
+           friends_in_blast(p, id, actor, *lands, blast + grenade_drift))
             return;
         actor.grenades--;
-        Vecf3 const eye  = eye_of(p, id);
-        Vecf3       flat = actor.last_seen - eye;
-        f32 const   len  = glm::length(flat);
-        if(len < 1e-3f)
-            return;
-        /* Lofted a little, more the farther it goes */
-        Vecf3 const dir = glm::normalize(flat / len + Vecf3{0, 0, std::clamp(len / 20.f, .15f, .5f)});
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
             .weapon     = *projectile,
@@ -2608,6 +2628,65 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .target     = actor.target,
         };
         p.template subsystem<GameEventBus>().inject(ev, &shot);
+    }
+
+    /* How an actor's grenade flies: the unit's throwing speed, the
+     * projectile's fall, tossed flat or lobbed high as its variant says */
+    std::optional<arc_t> throw_arc(Proxy& p, Model const& model, actv_t const& actv, blam::tagref_t const& projectile)
+    {
+        blam::tag_index_view<halo_version> index(p.template subsystem<BlamFiles<halo_version>>().container);
+        auto proj_tag = index.find(projectile.tag_id);
+        if(proj_tag == index.end())
+            return std::nullopt;
+        auto proj = (*proj_tag).template data<blam::scn::projectile>(*s_magic);
+        if(!proj.has_value())
+            return std::nullopt;
+        f32 speed = grenade_throw_speed;
+        if(model.origin_object)
+            if(auto u = model.origin_object->template data<blam::scn::unit>(*s_magic);
+               u.has_value() && u.value()[0].grenade_velocity > 0.f)
+                speed = u.value()[0].grenade_velocity;
+        return arc_t{
+            .speed   = speed,
+            .gravity = halo_gravity * std::max(proj.value()[0].air_gravity_scale, 0.f),
+            .lob     = actv.trajectory_type == actv_t::trajectory_type_t::lob,
+        };
+    }
+
+    /* Where a throw first meets the world or a body, along its arc */
+    std::optional<Vecf3> landing(Proxy& p, u64 self, Vecf3 from, Vecf3 velocity, f32 gravity)
+    {
+        for(f32 t = 0.f; t < grenade_flight; t += grenade_step)
+        {
+            Vecf3 const to = from + velocity * grenade_step + Vecf3{0.f, 0.f, -.5f * gravity * grenade_step * grenade_step};
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = to, .ignore = self};
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            if(ray.hit)
+                return ray.point;
+            velocity.z -= gravity * grenade_step;
+            from = to;
+        }
+        return std::nullopt;
+    }
+
+    /* Living enemies of the actor within `radius` of a point */
+    i32 enemies_near(Proxy& p, Actor const& actor, Vecf3 const& at, f32 radius)
+    {
+        i32 count = 0;
+        for(auto other : p.template select<Actor, Model, BipedStatus>())
+        {
+            auto [theirs, model, status] = other.components();
+            if(!status.dead && enemies(actor.team, static_cast<team_t>(theirs.team)) &&
+               glm::distance(model.position, at) <= radius)
+                count++;
+        }
+        if(enemies(actor.team, team_t::player))
+            for(auto player : p.template select<PlayerInfo, Model, BipedStatus>())
+                if(auto [info, model, status] = player.components();
+                   !status.dead && glm::distance(model.position, at) <= radius)
+                    count++;
+        return count;
     }
 
     /* The globals' grenade of a type, by its projectile */
