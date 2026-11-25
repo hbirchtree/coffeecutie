@@ -1184,6 +1184,7 @@ struct Actor
     libc_types::u64 dodged{0};          /*!< The last grenade it chose whether to dodge */
     f32             dodge_in{0.f};      /*!< s left getting away from dodge_from */
     Vecf3           dodge_from{};
+    f32             evade_in{0.f};      /*!< s until it sidesteps another shot */
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
     f32                  walk_best{0.f};  /*!< Nearest it has got to walk_to, wu */

@@ -282,6 +282,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 slow_shot_speed = 20.f; /* wu/s and under, an explosive shot is seen coming */
     static constexpr f32 grenade_dodge_time = 2.f; /* s spent getting away from one */
     static constexpr f32 dodge_reach        = 3.f; /* wu ahead it runs for, away from the grenade */
+    static constexpr f32 evade_time         = .5f; /* s of a sidestep off a shot's line */
+    static constexpr f32 evade_delay        = 2.f; /* s between sidesteps, when its actor names none */
     static constexpr f32 spread_weight   = 2.f;  /* wu of cost for a position on a platoon mate's bearing */
     static constexpr f32 flank_weight    = 1.5f; /* wu of cost for a position straight in the target's face */
     static constexpr f32 move_reach      = 15.f; /* wu, the farthest firing position an actor on foot moves to */
@@ -335,6 +337,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.look_in -= dt;
         actor.fire_in -= dt;
         actor.stance_in -= dt;
+        actor.evade_in -= dt;
         actor.state_in -= dt;
         actor.reposition_in -= dt;
         react(p, id, actor, status, actr);
@@ -1129,6 +1132,26 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         }
     }
 
+    /* Fire past it: a sidestep off the line, then not again for its
+     * evasion delay. The thresholds read as a rate, higher on elites */
+    void evade(Actor& actor, Model const& model, actr_t const& actr, Vecf3 const& by)
+    {
+        auto const& defensive = actr.defensive;
+        f32 const   rate      = actor.state == state_t::combat && !actor.covering ? defensive.attacking_evasion_threshold
+                                                                                  : defensive.defending_evasion_threshold;
+        if(actor.dodge_in > 0.f || actor.evade_in > 0.f || actor.berserk || rate <= 0.f)
+            return;
+        actor.evade_in = defensive.evasion_delay_time > 0.f ? defensive.evasion_delay_time : evade_delay;
+        if(!chance(1.f - std::exp(-rate)))
+            return;
+        Vecf3 off = model.position - by;
+        off.z     = 0.f;
+        if(glm::dot(off, off) < 1e-4f)
+            off = model.rotation * Vecf3{0.f, chance(.5f) ? 1.f : -1.f, 0.f};
+        actor.dodge_from = model.position - glm::normalize(off);
+        actor.dodge_in   = evade_time;
+    }
+
     bool clear(Proxy& p, u64 self, Vecf3 const& from, Vecf3 const& to, u64 target, u64 vehicle = 0)
     {
         Physics::Event   ev{Physics::Event::Raycast};
@@ -1177,21 +1200,23 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(!actor.active() || actor.scripted || actor.deaf || actor.braindead || status.dead ||
                    ent.id() == shot.shooter)
                     continue;
-                /* Busy with a target in view already */
-                if(actor.target && actor.seen_ago < look_period * 4.f)
-                    continue;
                 auto const* kind = kind_of(p, actor);
                 auto const* actr = kind ? kind->actor : nullptr;
-                f32 const   reach = actr && actr->perception.hearing_dist > 0.f ? actr->perception.hearing_dist : 15.f;
-                bool const  near  = glm::distance(model.position, shot.position) <= reach;
                 /* A shot past its head, by its chance to notice one */
                 Vecf3 const head  = model.position + Vecf3{0, 0, eye_height};
                 f32 const   along = glm::dot(head - shot.position, shot.direction);
-                bool const  past  = along > 0.f && along < flyby_reach &&
-                                   glm::distance(shot.position + shot.direction * along, head) < flyby_radius &&
+                Vecf3 const by    = shot.position + shot.direction * along;
+                bool const  past  = along > 0.f && along < flyby_reach && glm::distance(by, head) < flyby_radius &&
                                    chance(actr && actr->perception.projectile_awareness > 0.f
                                               ? actr->perception.projectile_awareness
                                               : .5f);
+                if(past && actr && enemy_unit(p, actor, shot.shooter))
+                    evade(actor, model, *actr, by);
+                /* Busy with a target in view already */
+                if(actor.target && actor.seen_ago < look_period * 4.f)
+                    continue;
+                f32 const  reach = actr && actr->perception.hearing_dist > 0.f ? actr->perception.hearing_dist : 15.f;
+                bool const near  = glm::distance(model.position, shot.position) <= reach;
                 if(!near && !past)
                     continue;
                 actor.last_seen = shot.position;
