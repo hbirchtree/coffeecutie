@@ -136,8 +136,8 @@ i32 blam_main()
         options.add_options("Networking (shared)")
             //
             ("gateway-register",
-             "webrtc-gateway /server-signal URL to register this --listen "
-             "server with, so browser clients can be routed to it",
+             "webrtc-gateway to register this --listen server with, "
+             "ws://host[:port], so browser clients can be routed to it",
              cxxopts::value<std::string>())
             //
             ("password",
