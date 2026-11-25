@@ -22,6 +22,7 @@
 #include "peripherals/semantic/enum/data_types.h"
 #include "peripherals/typing/enum/graphics/shader_stage.h"
 #include "physics.h"
+#include "render/rendering.h"
 #include "caching/resource_creation.h"
 #include "types.h"
 #include <coffee/core/task_queue/task.h>
@@ -47,6 +48,7 @@ using RS2CacheLoaderManifest = compo::SubsystemManifest<
 
 struct RS2CacheLoader
     : public compo::RestrictedSubsystem<RS2CacheLoader, RS2CacheLoaderManifest>
+    , RenderHook
 {
     using Proxy = compo::proxy_of<RS2CacheLoaderManifest>;
     using type  = RS2CacheLoader;
@@ -725,27 +727,6 @@ struct RS2CacheLoader
         if(!camera)
             return;
 
-        auto vert_u = gfx::make_uniform_list(
-            typing::graphics::ShaderStage::Vertex,
-            gfx::uniform_pair<Matf4 const>{
-                {"camera"}, semantic::SpanOne<const Matf4>(camera->matrix)},
-            gfx::uniform_pair<const f32>{
-                {"world_scale"}, semantic::SpanOne(world_scale)});
-        auto frag_u = gfx::make_uniform_list(
-            typing::graphics::ShaderStage::Fragment,
-            gfx::uniform_pair<const i32>{
-                {"f_texture_ids"},
-                semantic::Span<const i32>(
-                    region_draw_textures.data(),
-                    std::min<size_t>(region_draw_textures.size(), 256)),
-            });
-        auto frag_sampler = gfx::make_sampler_list(
-            gfx::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"f_textures"},
-                region_sampler,
-            });
-
         auto current_region = Veci2{last_region.x, last_region.y};
 #if defined(FEATURE_ENABLE_ImGui)
         if(ImGui::Begin("Cursed Control"))
@@ -839,22 +820,49 @@ struct RS2CacheLoader
             request_surrounding(current_region.x, current_region.y);
             last_region = current_region;
         }
+    }
 
-        auto res = api.submit(
+    /* Drawn with the opaque world, so the sky, transparents and effects go over it */
+    void draw(stage_t, view_t const& view) override
+    {
+        if(region_draws.empty())
+            return;
+        auto vert_u = gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Vertex,
+            gfx::uniform_pair<Matf4 const>{
+                {"camera"}, semantic::SpanOne<const Matf4>(view.camera)},
+            gfx::uniform_pair<const f32>{
+                {"world_scale"}, semantic::SpanOne(world_scale)});
+        auto frag_u = gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Fragment,
+            gfx::uniform_pair<const i32>{
+                {"f_texture_ids"},
+                semantic::Span<const i32>(
+                    region_draw_textures.data(),
+                    std::min<size_t>(region_draw_textures.size(), 256)),
+            });
+        auto frag_sampler = gfx::make_sampler_list(
+            gfx::sampler_definition_t{
+                typing::graphics::ShaderStage::Fragment,
+                {"f_textures"},
+                region_sampler,
+            });
+
+        gfx::view_state    state   = view.state;
+        gfx::stencil_state stencil = view.stencil;
+        auto               res     = api.submit(
             {
                 .program  = region_program,
                 .vertices = region_vao,
-                .render_target =
-                    p.template subsystem<BlamResources>().offscreen,
+                .render_target = view.target,
                 .call = {.indexed = true, .instanced = true},
                 .data = region_draws,
             },
             vert_u,
             frag_u,
             frag_sampler,
-            gfx::view_state{
-                .depth = gfx::depth_state{.reversed = true},
-            },
+            state,
+            stencil,
             gfx::cull_state{
                 .front_face = false,
             });
@@ -925,11 +933,12 @@ void setup_cursed_loaders(compo::EntityContainer& e)
                 },
         };
         auto world_entity = e.create_entity(recipe);
-        e.register_subsystem_inplace<RS2CacheLoader>(
+        auto& loader = e.register_subsystem_inplace<RS2CacheLoader>(
             std::ref(e.subsystem_cast<gfx::system>()),
             std::ref(physics_bus),
             world_entity,
             cache.value());
+        e.subsystem_cast<RenderHooks>().add(RenderHook::AfterOpaque, &loader);
     }
 }
 
