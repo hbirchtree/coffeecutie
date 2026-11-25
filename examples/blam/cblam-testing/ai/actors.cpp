@@ -127,6 +127,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(m_fire_queue)
             m_fire_queue->poll();
         hear(p);
+        leaders_fallen(p);
         if((m_obstacles_in -= dt) <= 0.f)
         {
             m_obstacles_in = 1.f;
@@ -284,6 +285,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 dodge_reach        = 3.f; /* wu ahead it runs for, away from the grenade */
     static constexpr f32 evade_time         = .5f; /* s of a sidestep off a shot's line */
     static constexpr f32 evade_delay        = 2.f; /* s between sidesteps, when its actor names none */
+    static constexpr f32 leader_fall_reach  = 10.f; /* wu a leader's death is seen from by its followers */
     static constexpr f32 spread_weight   = 2.f;  /* wu of cost for a position on a platoon mate's bearing */
     static constexpr f32 flank_weight    = 1.5f; /* wu of cost for a position straight in the target's face */
     static constexpr f32 move_reach      = 15.f; /* wu, the farthest firing position an actor on foot moves to */
@@ -828,6 +830,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             /* Leaders gone: the followers scatter */
             if(pl.leaders == 0 && kept.leaders > 0)
+            if(pl.leaders == 0 && kept.leaders > 0)
                 panic(p, key);
             kept.leaders = pl.leaders;
         }
@@ -871,6 +874,36 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static bool leads(actr_t const& actr)
     {
         return actr.panic.leader_type == actr.type || actr.panic.leader_type == blam::scn::actor_type_t::none;
+    }
+
+    /* A leader falling in sight scatters followers of its side, whatever
+     * encounter they are in */
+    void leaders_fallen(Proxy& p)
+    {
+        for(auto ent : p.template select<Actor, Model, BipedStatus>())
+        {
+            auto [actor, model, status] = ent.components();
+            if(!status.dead || std::exchange(actor.fallen, true))
+                continue;
+            auto const* kind = kind_of(p, actor);
+            if(!kind || !kind->actor)
+                continue;
+            auto const type = kind->actor->type;
+            for(auto other : p.template select<Actor, Model, BipedStatus>())
+            {
+                auto [theirs, at, alive] = other.components();
+                auto const* them = kind_of(p, theirs);
+                if(alive.dead || !theirs.active() || theirs.scripted || theirs.berserk || theirs.team != actor.team ||
+                   !them || !them->actor || them->actor->panic.leader_type != type || leads(*them->actor) ||
+                   theirs.state == state_t::retreat)
+                    continue;
+                if(glm::distance(at.position, model.position) > leader_fall_reach ||
+                   !chance(them->actor->panic.leader_killed_panic_change))
+                    continue;
+                enter(theirs, state_t::retreat);
+                theirs.state_in = uniform(them->actor->panic.cowering_time, 5.f);
+            }
+        }
     }
 
     void panic(Proxy& p, std::pair<i16, i16> const& key)
