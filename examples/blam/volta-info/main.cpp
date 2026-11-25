@@ -2857,6 +2857,16 @@ void dump_antr(blam::antr::header const* animation)
         print_slots(weapon.animations);
     });
     fmt::print("  devices={}\n", animation->devices.count);
+    fmt::print("  unit_damages={}\n", animation->unit_damages.count);
+    {
+        auto clips = animation->animations.data(g_magic);
+        each(g_magic, animation->unit_damages, [&](size_t i, auto const& index) {
+            std::string_view name = "-";
+            if(clips.has_value() && index >= 0 && static_cast<size_t>(index) < clips.value().size())
+                name = clips.value()[static_cast<size_t>(index)].name.str();
+            fmt::print("    unit_damage {}: animation={} {}\n", i, index, name);
+        });
+    }
     fmt::print("  nodes={}\n", animation->nodes.count);
     each(g_magic, animation->nodes, [](size_t i, auto const& node) {
         auto joint = magic_enum::enum_name(node.joint_flags);
