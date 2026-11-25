@@ -343,13 +343,54 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot, leak);
         if(before > 0.f && status->shield <= 0.f)
             shield_down(p, unit, true);
+        bool pinged = false;
         if(status->dead)
             mark_blow(p, unit, *status, amount, head || headshot, blow, at);
+        else
+            pinged = mark_ping(p, unit, *status, amount, head || headshot, blow, at);
         if(status->dead)
             last_words(p, unit, violent);
-        tell(p, unit, *status, {}, 0.f, false, false, violent);
+        tell(p, unit, *status, {}, 0.f, false, false, violent, false, pinged);
         if(status->dead)
             killed(p, unit, killer);
+    }
+
+    /* A blow past the unit's soft or hard ping threshold makes it flinch */
+    bool mark_ping(
+        Proxy& p, u64 unit, BipedStatus& status, f32 amount, bool head, Vecf3 const& blow, std::optional<Vecf3> at)
+    {
+        auto const* model = p.template get<Model>(unit);
+        if(!model || glm::dot(blow, blow) < 1e-8f)
+            return false;
+        f32 soft = -1.f, hard = -1.f, height = blow_waist * 2.f;
+        if(auto const* info = p.template get<PlayerInfo>(unit))
+        {
+            soft   = info->biped.soft_ping;
+            hard   = info->biped.hard_ping;
+            height = info->biped.height;
+        } else if(model->origin_object)
+            if(auto u = model->origin_object->template data<blam::scn::unit>(*m_magic); u.has_value())
+            {
+                using flags_t = blam::scn::unit::unit_flags_t;
+                auto const& t = u.value()[0];
+                if((t.unit_flags & flags_t::resists_pings) == flags_t::none)
+                {
+                    if(t.soft_ping_threshold > 0.f || t.soft_ping_interrupt_time > 0.f)
+                        soft = t.soft_ping_threshold;
+                    if(t.hard_ping_threshold > 0.f || t.hard_ping_interrupt_time > 0.f)
+                        hard = t.hard_ping_threshold;
+                }
+            }
+        f32 const share = amount / std::max(status.maximum_body(), 1e-3f);
+        bool const hard_ping = hard >= 0.f && share >= hard;
+        if(!hard_ping && !(soft >= 0.f && share >= soft))
+            return false;
+        status.blow       = blow;
+        status.blow_flags = (hard_ping ? BipedStatus::blow_hard : 0) | (head ? BipedStatus::blow_head : 0);
+        if(at && at->z > model->position.z + height * .5f)
+            status.blow_flags |= BipedStatus::blow_high;
+        status.pings++;
+        return true;
     }
 
     /* How the killing blow struck: hard past the unit's hard death
@@ -1034,7 +1075,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
 
     void tell(Proxy& p, u64 unit, BipedStatus const& status,
               std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f, bool arrived = false,
-              bool fresh = false, bool violent = false, bool destroyed = false)
+              bool fresh = false, bool violent = false, bool destroyed = false, bool ping = false)
     {
         auto const*       info = p.template get<PlayerInfo>(unit);
         GameEvent         ev{.type = GameEvent::UnitVitality};
@@ -1050,8 +1091,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .arrived        = arrived,
             .fresh          = fresh,
             .destroyed      = destroyed,
-            .blow           = status.dead ? status.blow : Vecf3{},
-            .blow_flags     = status.dead ? status.blow_flags : libc_types::u8(0),
+            .blow           = status.dead || ping ? status.blow : Vecf3{},
+            .blow_flags     = status.dead || ping ? status.blow_flags : libc_types::u8(0),
+            .ping           = ping && !status.dead,
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
     }
@@ -1122,8 +1164,13 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(vitality.dead && !status->dead)
             last_words(p, vitality.unit, vitality.violent);
         status->dead       = vitality.dead;
-        status->blow       = vitality.blow;
-        status->blow_flags = vitality.blow_flags;
+        if(vitality.dead || vitality.ping)
+        {
+            status->blow       = vitality.blow;
+            status->blow_flags = vitality.blow_flags;
+        }
+        if(vitality.ping)
+            status->pings++;
         if(vitality.destroyed)
             burst(p, vitality.unit);
         if(vitality.shield < 1.f)

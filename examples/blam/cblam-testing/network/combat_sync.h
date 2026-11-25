@@ -138,10 +138,10 @@ class CombatSync
                     {
                         wire->respawned = 1u | (vitality.arrived ? 2u : 0u) | (vitality.fresh ? 4u : 0u);
                         wire->respawn   = Vecf4(*vitality.respawn_at, vitality.respawn_facing);
-                    } else if(vitality.dead)
+                    } else if(vitality.dead || vitality.ping)
                     {
                         wire->respawn    = Vecf4(vitality.blow, 0.f);
-                        wire->blow_flags = vitality.blow_flags;
+                        wire->blow_flags = vitality.blow_flags | (vitality.ping ? ping_flag : 0u);
                     }
                     m_vitality.push_back({.message = *wire, .route = {route_t::clients}});
                 }
@@ -407,10 +407,11 @@ class CombatSync
             .overcharge_decay = wire.overcharge_decay,
             .destroyed        = (wire.dead & 4) != 0,
         };
-        if(!wire.respawned && vitality.dead)
+        if(!wire.respawned && (vitality.dead || (wire.blow_flags & ping_flag)))
         {
             vitality.blow       = Vecf3(wire.respawn);
             vitality.blow_flags = static_cast<u8>(wire.blow_flags);
+            vitality.ping       = !vitality.dead && (wire.blow_flags & ping_flag);
         }
         if(wire.respawned)
         {
@@ -623,6 +624,8 @@ class CombatSync
     std::shared_ptr<GameEventBus::queue_type<WeaponFireEvent>> m_fire_queue;
     std::shared_ptr<GameEventBus::queue_type<ObjectHitEvent>>  m_hit_queue;
     std::shared_ptr<GameEventBus::queue_type<UnitVitalityEvent>> m_vitality_queue;
+    /*! A living unit's vitality that carries a blow it flinched from */
+    static constexpr u32 ping_flag = 0x100;
     std::vector<UnitVitalityEvent>                               m_local_vitality;
     std::vector<outgoing_t<UnitVitality>>                        m_vitality;
     std::map<u32, UnitVitality>                                  m_unplaced;

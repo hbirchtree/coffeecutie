@@ -1000,6 +1000,9 @@ struct PlayerInfo
         f32 crouch_time{0.2f};  /*!< Seconds to crouch or stand up */
         f32 crouch_speed{0.5f}; /*!< Ground speeds scale by this crouched */
         f32 hard_death{0.f};    /*!< The unit's hard death threshold, of its body */
+        /*! Its ping thresholds, of its body; below 0, it never pings so */
+        f32 soft_ping{-1.f};
+        f32 hard_ping{-1.f};
         f32 max_slope{0.785398f}; /*!< Steepest ground walked up, radians, from the biped tag */
         /*! How far the camera looks down and up, radians; the cyborg's
          * tag leaves it empty */
@@ -1484,6 +1487,8 @@ struct BipedStatus
     Vecf3                          blow{};
     libc_types::u8                 blow_flags{0};
     static constexpr libc_types::u8 blow_hard = 0x1, blow_head = 0x2, blow_high = 0x4;
+    /*! Blows it flinched from, by `blow`: a new one plays its ping */
+    libc_types::u8 pings{0};
 
     /*! What an over shield charges the shield to */
     static constexpr f32 over_shield = 3.f;

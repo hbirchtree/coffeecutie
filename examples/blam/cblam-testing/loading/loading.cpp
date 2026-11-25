@@ -2896,6 +2896,14 @@ struct ResourceLoader
                 if(biped->crouch_velocity_modifier > 0.f)
                     biped_model.shape.crouch_speed = biped->crouch_velocity_modifier;
                 biped_model.shape.hard_death = biped->hard_death_threshold;
+                if((biped->unit_flags & blam::scn::unit::unit_flags_t::resists_pings) ==
+                   blam::scn::unit::unit_flags_t::none)
+                {
+                    if(biped->soft_ping_threshold > 0.f || biped->soft_ping_interrupt_time > 0.f)
+                        biped_model.shape.soft_ping = biped->soft_ping_threshold;
+                    if(biped->hard_ping_threshold > 0.f || biped->hard_ping_interrupt_time > 0.f)
+                        biped_model.shape.hard_ping = biped->hard_ping_threshold;
+                }
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
                 {
                     /* The cyborg names none; its head stands in */

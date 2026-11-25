@@ -433,6 +433,13 @@ struct AnimationController
             walker.state  = walker_t::ground;
             walker.killed = false;
         }
+        /* A new blow it flinches from */
+        if(auto const* status = p.template get<BipedStatus>(id); status && status->pings != walker.pings)
+        {
+            walker.pings = status->pings;
+            ping(p, id, anim);
+        }
+        settle_ping(p, id, anim);
         Vecf3 velocity{};
         if(walker.seen && dt > 0.f)
             velocity = (feet - walker.feet) / dt;
@@ -592,14 +599,90 @@ struct AnimationController
         walker.killed         = clip != st[UnitSlot::landing_dead] && clip != st[UnitSlot::airborne_dead];
         anim.stop(AnimationPlayback::aim_slot);
         anim.stop(AnimationPlayback::aim_move_slot);
+        anim.stop(AnimationPlayback::ping_slot);
         if(auto* layer = anim.crossfade(anim.graph, clip, found ? 0.f : blend_time, false);
            layer && found)
             layer->time = std::numeric_limits<f32>::max();
     }
 
-    /* The graph's unit damage clip for the killing blow: soft or hard kill,
-     * from the front, left, right or back, to the gut, chest or head */
     i32 kill_clip(Proxy& p, u64 id, AnimationPlayback const& anim)
+    {
+        auto const* status = p.template get<BipedStatus>(id);
+        return status ? damage_clip(p, id, anim, status->blow_flags & BipedStatus::blow_hard ? 3u : 2u) : -1;
+    }
+
+    /* Its flinch from the last blow, over whatever it is doing: one of the
+     * ping's variants, chained after the first */
+    void ping(Proxy& p, u64 id, AnimationPlayback& anim)
+    {
+        auto& walker = m_walkers[id];
+        auto const* status = p.template get<BipedStatus>(id);
+        if(!status)
+            return;
+        bool const hard = status->blow_flags & BipedStatus::blow_hard;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        clips = anim.graph->animations.data(magic);
+        /* A flinch under way plays out unless a harder blow lands; restarted
+         * by every round of a burst it would never get past its first frames */
+        if(auto const& now = anim.layers[AnimationPlayback::ping_slot];
+           now.active() && clips.has_value() && now.animation < clips.value().size() && (walker.ping_hard || !hard))
+        {
+            auto const& playing = clips.value()[now.animation];
+            if(now.time < playing.frame_count / playing.frame_rate() * (2.f / 3.f))
+                return;
+        }
+        i32 clip = damage_clip(p, id, anim, hard ? 1u : 0u);
+        if(clip < 0)
+            return;
+        if(clips.has_value())
+        {
+            std::vector<i32> variants;
+            for(i32 at = clip; at >= 0 && static_cast<size_t>(at) < clips.value().size() && variants.size() < 8;
+                at = clips.value()[at].next_animation)
+                variants.push_back(at);
+            clip = variants[m_ping_pick++ % variants.size()];
+        }
+        /* A hard ping is a base clip: it takes over the nodes it animates */
+        anim.layers[AnimationPlayback::ping_slot] = AnimationLayer{
+            .graph         = anim.graph,
+            .animation     = static_cast<u32>(clip),
+            .animated_only = true,
+            .loop          = false,
+        };
+        walker.ping_clip = clip;
+        walker.ping_hard = hard;
+    }
+
+    /* The flinch fades out as it ends, rather than chaining into its other
+     * variants or holding its last frame */
+    void settle_ping(Proxy& p, u64 id, AnimationPlayback& anim)
+    {
+        auto const& walker = m_walkers[id];
+        auto& layer = anim.layers[AnimationPlayback::ping_slot];
+        if(!layer.graph || layer.target == 0.f)
+            return;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        clips = layer.graph->animations.data(magic);
+        if(!clips.has_value() || static_cast<i32>(layer.animation) != walker.ping_clip ||
+           layer.animation >= clips.value().size())
+        {
+            anim.stop(AnimationPlayback::ping_slot);
+            return;
+        }
+        auto const& clip     = clips.value()[layer.animation];
+        f32 const   length   = clip.frame_count / clip.frame_rate();
+        f32 const   fade_out = std::min(.15f, length * .25f);
+        if(layer.finished || layer.time >= length - fade_out)
+        {
+            layer.target = 0.f;
+            layer.fade   = 1.f / fade_out;
+        }
+    }
+
+    /* The graph's unit damage clip for a blow: soft or hard ping (0, 1) or
+     * kill (2, 3), from the front, left, right or back, to the gut, chest
+     * or head */
+    i32 damage_clip(Proxy& p, u64 id, AnimationPlayback const& anim, u32 type)
     {
         auto const* status = p.template get<BipedStatus>(id);
         auto const* model  = p.template get<Model>(id);
@@ -613,7 +696,6 @@ struct AnimationController
         Vecf3 const from  = glm::inverse(model->rotation) * -status->blow;
         f32 const   angle = glm::degrees(std::atan2(from.y, from.x));
         u32 const   side  = std::abs(angle) <= 45.f ? 0u : angle > 45.f && angle <= 135.f ? 1u : angle < -45.f && angle >= -135.f ? 2u : 3u;
-        u32 const   type  = status->blow_flags & BipedStatus::blow_hard ? 3u : 2u;
         u32 const   part  = status->blow_flags & BipedStatus::blow_head ? 2u : status->blow_flags & BipedStatus::blow_high ? 1u : 0u;
         size_t const at   = type * unit_damage_types + side * unit_damage_parts + part;
         return at < clips.value().size() ? clips.value()[at] : -1;
@@ -1711,6 +1793,7 @@ struct AnimationController
      * right and back, each by 11 body parts (gut, chest, head first) */
     static constexpr size_t unit_damage_parts = 11;
     static constexpr size_t unit_damage_types = 4 * unit_damage_parts;
+    u32                     m_ping_pick{0}; /*!< Steps through a ping's variants */
     static constexpr f32 lag_response   = 10.f; /* 1/s, how fast the hands follow a turn */
     static constexpr f32 lag_turn_rate  = 3.f;  /* rad/s at which the hands trail fully */
     static constexpr f32 lag_fall_speed = 4.f;  /* wu/s */
@@ -1737,6 +1820,9 @@ struct AnimationController
         f32   fall_speed{0.f}; /* fastest descent this fall, wu/s */
         i32   land_animation{-1};
         bool  killed{false}; /*!< Dead by a unit damage clip, kept to its end */
+        u8    pings{0};      /*!< BipedStatus::pings last flinched at */
+        i32   ping_clip{-1}; /*!< the flinch it plays */
+        bool  ping_hard{false};
         /* The seat it sits in, {0, -1} standing */
         std::pair<u64, i16> seat{0, -1};
         bool                entering{false};
