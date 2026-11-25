@@ -46,6 +46,60 @@ func TestMetadataQueryRoundTrip(t *testing.T) {
 	}
 }
 
+func TestServerListCarriesKeyAndMetadata(t *testing.T) {
+	key := make([]byte, 32)
+	key[0] = 7
+	workingSet.servers.Lock()
+	workingSet.servers.registry["listed"] = &registeredServer{
+		active:     true,
+		trackingID: "S-SECRET",
+		originIP:   "203.0.113.9",
+		publicKey:  key,
+		metadata: &serverMetadata{
+			raw:        []byte(`{"map":"bloodgulch","password":true}`),
+			receivedAt: time.Now(),
+		},
+	}
+	workingSet.servers.registry["inactive"] = &registeredServer{publicKey: key}
+	workingSet.servers.Unlock()
+	t.Cleanup(func() {
+		workingSet.servers.Lock()
+		delete(workingSet.servers.registry, "listed")
+		delete(workingSet.servers.registry, "inactive")
+		workingSet.servers.Unlock()
+	})
+
+	rec := httptest.NewRecorder()
+	handleServerList(rec, httptest.NewRequest(http.MethodGet, "/server-list", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	body := rec.Body.String()
+	if strings.Contains(body, "S-SECRET") || strings.Contains(body, "203.0.113.9") {
+		t.Fatalf("listing leaks private fields: %s", body)
+	}
+	var list ServerList
+	if err := json.Unmarshal([]byte(body), &list); err != nil {
+		t.Fatal(err)
+	}
+	var found *ServerListing
+	for i := range list.Servers {
+		if list.Servers[i].Name == "inactive" {
+			t.Fatalf("inactive server listed")
+		}
+		if list.Servers[i].Name == "listed" {
+			found = &list.Servers[i]
+		}
+	}
+	if found == nil {
+		t.Fatalf("server not listed: %s", body)
+	}
+	if !found.Private || found.Key != "BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" ||
+		!strings.Contains(string(found.Metadata), "bloodgulch") {
+		t.Fatalf("unexpected listing: %+v", *found)
+	}
+}
+
 func TestMetadataQueryMissingServer(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/metadata?server=does-not-exist", nil)
 	rec := httptest.NewRecorder()

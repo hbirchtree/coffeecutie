@@ -405,6 +405,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                            static_cast<u32>(m_connections.size());
         meta["player_count"]     = player_count;
         meta["player_count_max"] = 16;
+        meta["password"]         = !m_server_password.empty();
 
         if(m_server_auth.type == AuthType::Ed25519 && m_server_key)
             meta = sign_metadata_ed25519(std::move(meta), m_server_key);
