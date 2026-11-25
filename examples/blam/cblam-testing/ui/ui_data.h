@@ -95,6 +95,19 @@ struct UIDataSource : compo::SubsystemBase
         m_indices[input] = std::move(pick);
     }
 
+    /* Whether a widget, by tag name, is drawn and takes focus; the engine
+     * hides some sub-screens until its functions open them */
+    void bind_shown(std::string_view widget, std::function<bool()>&& shown)
+    {
+        m_shown[std::string(widget)] = std::move(shown);
+    }
+
+    bool shown(std::string_view widget) const
+    {
+        auto it = m_shown.find(std::string(widget));
+        return it == m_shown.end() || it->second();
+    }
+
     /* Keyed by the list widget's game data input */
     void bind_list(data_function_t input, list_t&& list)
     {
@@ -152,5 +165,6 @@ struct UIDataSource : compo::SubsystemBase
     std::unordered_map<std::string, seat_text_t>    m_seat_texts;
     std::unordered_map<data_function_t, index_t>    m_indices;
     std::unordered_map<data_function_t, list_t>     m_lists;
+    std::unordered_map<std::string, std::function<bool()>> m_shown;
     libc_types::u64                                 m_token{0};
 };

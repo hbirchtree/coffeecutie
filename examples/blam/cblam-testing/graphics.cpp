@@ -49,6 +49,7 @@
 #include "audio/sounds.h"
 #include "ui/ui.h"
 #include "ui/ui_game_setup.h"
+#include "ui/ui_server_browser.h"
 #include "ui/ui_profile.h"
 #include "ui/ui_caching.h"
 
@@ -181,6 +182,11 @@ i32 blam_main()
              "Keep clients in their bodies: no free camera, and no forge",
              cxxopts::value<bool>()->default_value("false"));
         options.add_options("Networking (client)")
+            //
+            ("gateway",
+             "webrtc-gateway whose servers the join screen lists, "
+             "ws://host[:port] or wss://host[:port]",
+             cxxopts::value<std::string>())
             //
             ("server",
              "Server to connect to on startup. Pass the join string the "
@@ -646,6 +652,7 @@ i32 blam_main()
             alloc_ui_system(e);
             alloc_profile_provider(e);
             alloc_game_setup_provider(e);
+            alloc_server_browser(e, arguments.count("gateway") ? arguments["gateway"].as<std::string>() : std::string());
             /* The server decides the game; a client is told it */
             if(arguments.count("game-type") && !arguments.count("server"))
             {
