@@ -286,6 +286,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 evade_time         = .5f; /* s of a sidestep off a shot's line */
     static constexpr f32 evade_delay        = 2.f; /* s between sidesteps, when its actor names none */
     static constexpr f32 leader_fall_reach  = 10.f; /* wu a leader's death is seen from by its followers */
+    static constexpr char const* flee_stance = "flee";
     static constexpr f32 spread_weight   = 2.f;  /* wu of cost for a position on a platoon mate's bearing */
     static constexpr f32 flank_weight    = 1.5f; /* wu of cost for a position straight in the target's face */
     static constexpr f32 move_reach      = 15.f; /* wu, the farthest firing position an actor on foot moves to */
@@ -343,6 +344,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.state_in -= dt;
         actor.reposition_in -= dt;
         react(p, id, actor, status, actr);
+        /* The flee stance is only a run */
+        if(anim.stance == flee_stance && (!actor.panicking || !actor.moving))
+            anim.stance = "stand";
 
         /* A look around now and then: the nearest enemy in view */
         if(actor.look_in <= 0.f)
@@ -624,7 +628,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         } else if(flee && !actor.berserk && actor.state != state_t::retreat && actr.panic.cowering_time.y > 0.f)
         {
             enter(actor, state_t::retreat);
-            actor.state_in = uniform(actr.panic.cowering_time);
+            actor.state_in  = uniform(actr.panic.cowering_time);
+            actor.panicking = true;
         }
     }
 
@@ -696,6 +701,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.reposition_in = 0.f;
         actor.stance_in     = 0.f;
         actor.covering      = false;
+        actor.panicking     = false;
     }
 
     bool chance(f32 probability)
@@ -901,7 +907,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                    !chance(them->actor->panic.leader_killed_panic_change))
                     continue;
                 enter(theirs, state_t::retreat);
-                theirs.state_in = uniform(them->actor->panic.cowering_time, 5.f);
+                theirs.state_in  = uniform(them->actor->panic.cowering_time, 5.f);
+                theirs.panicking = true;
             }
         }
     }
@@ -920,7 +927,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(!chance(kind->actor->panic.leader_killed_panic_change))
                 continue;
             enter(actor, state_t::retreat);
-            actor.state_in = uniform(kind->actor->panic.cowering_time, 5.f);
+            actor.state_in  = uniform(kind->actor->panic.cowering_time, 5.f);
+            actor.panicking = true;
         }
     }
 
@@ -1624,8 +1632,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             to               = (actor.steer_other ? -side : side) * std::max(glm::length(to), 1.f);
         }
         f32 const left = std::max(glm::length(to), 1e-3f);
-        if(anim.stance != "stand")
-            anim.stance = "stand";
+        char const* const stance = actor.panicking && flees(p, id, anim) ? flee_stance : "stand";
+        if(anim.stance != stance)
+            anim.stance = stance;
         f32 const speed = stride(p, id, anim, kind) * (running ? 1.f : .6f);
         Vecf3 const dir = to / left;
         if(actor.seen_ago > look_period * 2.f || actor.state != state_t::combat ||
@@ -2010,6 +2019,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         size_t const way  = std::abs(local.x) >= std::abs(local.y) ? (local.x >= 0.f ? 0 : 1)
                                                                    : (local.y >= 0.f ? 2 : 3);
         return (clips & (1u << way)) != 0;
+    }
+
+    /* Its graph has a run in the flee stance for what it holds */
+    bool flees(Proxy& p, u64 id, AnimationPlayback const& anim)
+    {
+        if(!anim.graph)
+            return false;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto const* equip = p.template get<BipedEquipment>(id);
+        auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
+        std::string const weapon = gun ? std::string(gun->weapon->label.str()) : std::string("unarmed");
+        return move_clip(*anim.graph, moves[0], *s_magic, flee_stance, weapon) >= 0;
     }
 
     /* At its position it ducks and rises by its variant's times */

@@ -1186,6 +1186,7 @@ struct Actor
     Vecf3           dodge_from{};
     f32             evade_in{0.f};      /*!< s until it sidesteps another shot */
     bool            fallen{false};      /*!< Its death has been seen by those it led */
+    bool            panicking{false};   /*!< Fleeing in a panic: it runs in its flee stance */
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
     f32                  walk_best{0.f};  /*!< Nearest it has got to walk_to, wu */
