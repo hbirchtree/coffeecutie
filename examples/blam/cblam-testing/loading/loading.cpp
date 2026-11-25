@@ -2895,6 +2895,7 @@ struct ResourceLoader
                     biped_model.shape.crouch_time = biped->crouch_transition_time;
                 if(biped->crouch_velocity_modifier > 0.f)
                     biped_model.shape.crouch_speed = biped->crouch_velocity_modifier;
+                biped_model.shape.hard_death = biped->hard_death_threshold;
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
                 {
                     /* The cyborg names none; its head stands in */

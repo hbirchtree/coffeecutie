@@ -118,7 +118,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                     }
                     if(hit.behind && assassinate(p, hit.target, player_of(p, hit.shooter)))
                         continue;
-                    hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head, player_of(p, hit.shooter));
+                    hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head, player_of(p, hit.shooter), hit.direction, hit.point);
                 }
             for(auto const& area : areas)
                 splash(p, area);
@@ -287,7 +287,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     }
 
     /* A jpt! landing on a unit, at `scale` of its full strength */
-    void hurt(Proxy& p, u64 unit, jpt_t const& jpt, f32 scale, i16 part, bool head, u32 killer)
+    void hurt(
+        Proxy& p, u64 unit, jpt_t const& jpt, f32 scale, i16 part, bool head, u32 killer, Vecf3 blow = {},
+        std::optional<Vecf3> at = {})
     {
         auto* status = p.template get<BipedStatus>(unit);
         if(!status || !status->coll || status->dead || status->invulnerable ||
@@ -342,10 +344,44 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(before > 0.f && status->shield <= 0.f)
             shield_down(p, unit, true);
         if(status->dead)
+            mark_blow(p, unit, *status, amount, head || headshot, blow, at);
+        if(status->dead)
             last_words(p, unit, violent);
         tell(p, unit, *status, {}, 0.f, false, false, violent);
         if(status->dead)
             killed(p, unit, killer);
+    }
+
+    /* How the killing blow struck: hard past the unit's hard death
+     * threshold, high above its waist */
+    void mark_blow(
+        Proxy& p, u64 unit, BipedStatus& status, f32 amount, bool head, Vecf3 const& blow, std::optional<Vecf3> at)
+    {
+        status.blow       = blow;
+        status.blow_flags = head ? BipedStatus::blow_head : 0;
+        auto const* model = p.template get<Model>(unit);
+        if(!model)
+            return;
+        /* A player's body keeps its biped's numbers; an AI's has its tag */
+        std::optional<f32> hard_death;
+        f32                height = blow_waist * 2.f;
+        if(auto const* info = p.template get<PlayerInfo>(unit))
+        {
+            hard_death = info->biped.hard_death;
+            height     = info->biped.height;
+        } else if(model->origin_object)
+        {
+            if(auto u = model->origin_object->template data<blam::scn::unit>(*m_magic); u.has_value())
+                hard_death = u.value()[0].hard_death_threshold;
+            if(model->origin_object->matches(blam::tag_class_t::bipd))
+                if(auto b = model->origin_object->template data<blam::scn::biped>(*m_magic);
+                   b.has_value() && b.value()[0].standing_collision_height > 0.f)
+                    height = b.value()[0].standing_collision_height;
+        }
+        if(hard_death && amount >= *hard_death * std::max(status.maximum_body(), 1e-3f))
+            status.blow_flags |= BipedStatus::blow_hard;
+        if(at && at->z > model->position.z + height * .5f)
+            status.blow_flags |= BipedStatus::blow_high;
     }
 
     /* A jpt!'s modifier for a material type. A list with any entry set is
@@ -435,7 +471,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 flat || d <= inner
                     ? 1.f
                     : 1.f - (d - inner) / std::max(jpt->radius.y - inner, 1e-3f);
-            hurt(p, unit.id(), *jpt, scale, -1, false, player_of(p, area.shooter));
+            hurt(p, unit.id(), *jpt, scale, -1, false, player_of(p, area.shooter), *centre - area.position, area.position);
         }
         for(auto ent : p.template select<Model>())
         {
@@ -1014,6 +1050,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .arrived        = arrived,
             .fresh          = fresh,
             .destroyed      = destroyed,
+            .blow           = status.dead ? status.blow : Vecf3{},
+            .blow_flags     = status.dead ? status.blow_flags : libc_types::u8(0),
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
     }
@@ -1084,6 +1122,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(vitality.dead && !status->dead)
             last_words(p, vitality.unit, vitality.violent);
         status->dead       = vitality.dead;
+        status->blow       = vitality.blow;
+        status->blow_flags = vitality.blow_flags;
         if(vitality.destroyed)
             burst(p, vitality.unit);
         if(vitality.shield < 1.f)
@@ -1290,6 +1330,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     static constexpr f32   unit_middle      = .35f; /* wu above the feet */
     static constexpr f32   spawn_lift       = .05f; /* wu */
     static constexpr f32   default_stun     = 1.f;  /* s */
+    static constexpr f32   blow_waist       = .35f; /* wu above the feet, without a biped height */
     static constexpr f32 recent_fade = .75f; /* seconds a shield hit glows */
     static constexpr f32   default_recharge = 2.f;  /* s */
     static constexpr f32   dead_below       = 1e-4f;

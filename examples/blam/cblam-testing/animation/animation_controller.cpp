@@ -426,10 +426,13 @@ struct AnimationController
     {
         auto& walker = m_walkers[id];
         if(dead)
-            return die(id, anim, stance(p, anim.graph, unit, weapon), grounded);
+            return die(p, id, anim, stance(p, anim.graph, unit, weapon), grounded);
         /* Revived: back on its feet, the death clip fading as idle takes over */
         if(walker.state == walker_t::dead)
-            walker.state = walker_t::ground;
+        {
+            walker.state  = walker_t::ground;
+            walker.killed = false;
+        }
         Vecf3 velocity{};
         if(walker.seen && dt > 0.f)
             velocity = (feet - walker.feet) / dt;
@@ -567,23 +570,53 @@ struct AnimationController
 
     /* Falls while airborne, lands dead, then lies there. One found dead,
      * such as a body placed by the map, starts out lying down */
-    void die(u64 id, AnimationPlayback& anim, stance_t const& st, bool grounded)
+    void die(Proxy& p, u64 id, AnimationPlayback& anim, stance_t const& st, bool grounded)
     {
-        auto&     walker = m_walkers[id];
-        i32 const clip = grounded || st[UnitSlot::airborne_dead] < 0
-                             ? st[UnitSlot::landing_dead]
-                             : st[UnitSlot::airborne_dead];
-        bool const found = !walker.seen;
+        auto&      walker = m_walkers[id];
+        bool const found  = !walker.seen;
+        i32        clip   = grounded || st[UnitSlot::airborne_dead] < 0
+                                ? st[UnitSlot::landing_dead]
+                                : st[UnitSlot::airborne_dead];
+        /* Killed on its feet: how the blow struck picks the fall, which then
+         * plays out */
+        if(walker.state == walker_t::dead && walker.killed)
+            return;
+        if(!found && walker.state != walker_t::dead && clip == st[UnitSlot::landing_dead])
+            if(auto const killed = kill_clip(p, id, anim); killed >= 0)
+                clip = killed;
         walker.seen      = true;
         if(clip < 0 || (walker.state == walker_t::dead && walker.land_animation == clip))
             return;
         walker.state          = walker_t::dead;
         walker.land_animation = clip;
+        walker.killed         = clip != st[UnitSlot::landing_dead] && clip != st[UnitSlot::airborne_dead];
         anim.stop(AnimationPlayback::aim_slot);
         anim.stop(AnimationPlayback::aim_move_slot);
         if(auto* layer = anim.crossfade(anim.graph, clip, found ? 0.f : blend_time, false);
            layer && found)
             layer->time = std::numeric_limits<f32>::max();
+    }
+
+    /* The graph's unit damage clip for the killing blow: soft or hard kill,
+     * from the front, left, right or back, to the gut, chest or head */
+    i32 kill_clip(Proxy& p, u64 id, AnimationPlayback const& anim)
+    {
+        auto const* status = p.template get<BipedStatus>(id);
+        auto const* model  = p.template get<Model>(id);
+        if(!status || !model || !anim.graph || glm::dot(status->blow, status->blow) < 1e-8f)
+            return -1;
+        auto const& magic  = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        clips  = anim.graph->unit_damages.data(magic);
+        if(!clips.has_value())
+            return -1;
+        /* Where it came from, in the unit's own frame: x ahead, y to its left */
+        Vecf3 const from  = glm::inverse(model->rotation) * -status->blow;
+        f32 const   angle = glm::degrees(std::atan2(from.y, from.x));
+        u32 const   side  = std::abs(angle) <= 45.f ? 0u : angle > 45.f && angle <= 135.f ? 1u : angle < -45.f && angle >= -135.f ? 2u : 3u;
+        u32 const   type  = status->blow_flags & BipedStatus::blow_hard ? 3u : 2u;
+        u32 const   part  = status->blow_flags & BipedStatus::blow_head ? 2u : status->blow_flags & BipedStatus::blow_high ? 1u : 0u;
+        size_t const at   = type * unit_damage_types + side * unit_damage_parts + part;
+        return at < clips.value().size() ? clips.value()[at] : -1;
     }
 
     /* A rider plays its seat's animations: the seat's label names a unit in
@@ -1674,6 +1707,10 @@ struct AnimationController
     static constexpr f32 run_threshold  = 2.5f;
     static constexpr f32 stride_speed   = 1.5f;
     static constexpr f32 blend_time     = .15f; /* s */
+    /* A graph's unit damages: soft and hard ping then kill, each by front, left,
+     * right and back, each by 11 body parts (gut, chest, head first) */
+    static constexpr size_t unit_damage_parts = 11;
+    static constexpr size_t unit_damage_types = 4 * unit_damage_parts;
     static constexpr f32 lag_response   = 10.f; /* 1/s, how fast the hands follow a turn */
     static constexpr f32 lag_turn_rate  = 3.f;  /* rad/s at which the hands trail fully */
     static constexpr f32 lag_fall_speed = 4.f;  /* wu/s */
@@ -1699,6 +1736,7 @@ struct AnimationController
         f32   air_time{0.f};
         f32   fall_speed{0.f}; /* fastest descent this fall, wu/s */
         i32   land_animation{-1};
+        bool  killed{false}; /*!< Dead by a unit damage clip, kept to its end */
         /* The seat it sits in, {0, -1} standing */
         std::pair<u64, i16> seat{0, -1};
         bool                entering{false};

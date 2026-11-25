@@ -598,6 +598,9 @@ struct UnitVitalityEvent
     bool                 fresh{false};   /*!< A respawn, not a checkpoint: starts over equipped */
     libc_types::f32      overcharge_decay{0.f}; /*!< BipedStatus' */
     bool destroyed{false}; /*!< Dead and gone: its coll's destroyed effect plays */
+    /*! The killing blow, as BipedStatus has it */
+    Vecf3          blow{};
+    libc_types::u8 blow_flags{0};
 };
 
 /*! A player's seat came back into the game after leaving it; it waits to

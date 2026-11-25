@@ -999,6 +999,7 @@ struct PlayerInfo
         f32 crouch_height{0.5f}; /*!< What it stands up to crouched */
         f32 crouch_time{0.2f};  /*!< Seconds to crouch or stand up */
         f32 crouch_speed{0.5f}; /*!< Ground speeds scale by this crouched */
+        f32 hard_death{0.f};    /*!< The unit's hard death threshold, of its body */
         f32 max_slope{0.785398f}; /*!< Steepest ground walked up, radians, from the biped tag */
         /*! How far the camera looks down and up, radians; the cyborg's
          * tag leaves it empty */
@@ -1478,6 +1479,11 @@ struct BipedStatus
     bool invulnerable{false};
     /*! An over shield: shield above 1 lost per second */
     f32 overcharge_decay{0.f};
+    /*! The killing blow, which picks the death animation: the way it went
+     *  (none known when zero), and how it struck */
+    Vecf3                          blow{};
+    libc_types::u8                 blow_flags{0};
+    static constexpr libc_types::u8 blow_hard = 0x1, blow_head = 0x2, blow_high = 0x4;
 
     /*! What an over shield charges the shield to */
     static constexpr f32 over_shield = 3.f;

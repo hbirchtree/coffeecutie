@@ -552,9 +552,9 @@ struct alignas(8) UnitVitality
     f32 shield{1.f};
     u32 dead{0}; /*!< 1: dead, 2: violently, 4: destroyed */
     u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect, 4: re-equipped */
-    Vecf4 respawn{};
+    Vecf4 respawn{}; /*!< Dying instead: the killing blow's way */
     f32   overcharge_decay{0.f}; /*!< Over shield lost per second */
-    u32   padding{0};
+    u32   blow_flags{0};         /*!< Dying: BipedStatus::blow_flags */
 };
 
 /*! The game being played, as the server keeps it (GameState) */

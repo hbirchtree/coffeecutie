@@ -138,6 +138,10 @@ class CombatSync
                     {
                         wire->respawned = 1u | (vitality.arrived ? 2u : 0u) | (vitality.fresh ? 4u : 0u);
                         wire->respawn   = Vecf4(*vitality.respawn_at, vitality.respawn_facing);
+                    } else if(vitality.dead)
+                    {
+                        wire->respawn    = Vecf4(vitality.blow, 0.f);
+                        wire->blow_flags = vitality.blow_flags;
                     }
                     m_vitality.push_back({.message = *wire, .route = {route_t::clients}});
                 }
@@ -403,6 +407,11 @@ class CombatSync
             .overcharge_decay = wire.overcharge_decay,
             .destroyed        = (wire.dead & 4) != 0,
         };
+        if(!wire.respawned && vitality.dead)
+        {
+            vitality.blow       = Vecf3(wire.respawn);
+            vitality.blow_flags = static_cast<u8>(wire.blow_flags);
+        }
         if(wire.respawned)
         {
             vitality.respawn_at     = Vecf3(wire.respawn);
