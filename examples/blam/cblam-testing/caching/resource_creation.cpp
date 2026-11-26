@@ -749,6 +749,7 @@ void create_resources(compo::EntityContainer& e)
                          state["game"] = {
                              {"kind", static_cast<int>(game->kind)},
                              {"phase", static_cast<int>(game->phase)},
+                             {"difficulty", game->difficulty},
                              {"winner", game->winner},
                              {"time_left", game->time_left},
                              {"team_scores", game->team_scores},
@@ -973,6 +974,15 @@ void create_resources(compo::EntityContainer& e)
                          call.args.push_back(arg.is_string() ? arg.get<std::string>() : arg.dump());
                      GameEvent call_ev{.type = GameEvent::ScriptCall};
                      e.subsystem_cast<GameEventBus>().inject(call_ev, &call);
+                 }
+                 if(ev.event == "invulnerable")
+                 {
+                     /* {"seat": n, "on": bool}: that seat's player takes no damage */
+                     u32 const  seat = ev.data.value("seat", 0u);
+                     bool const on   = ev.data.value("on", true);
+                     for(auto en : e.select<PlayerInfo, BipedStatus>())
+                         if(en.template get<PlayerInfo>().seat_idx == seat && !en.template get<PlayerInfo>().is_remote())
+                             en.template get<BipedStatus>().invulnerable = on;
                  }
                  if(ev.event == "kill")
                  {
